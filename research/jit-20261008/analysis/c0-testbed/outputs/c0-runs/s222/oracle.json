@@ -1,0 +1,75 @@
+{
+ "pass": false,
+ "score": 0.927217,
+ "details": {
+  "entities": 59,
+  "predicted": 57,
+  "matched": 57,
+  "extra": 0,
+  "missing": 2,
+  "slack": 1,
+  "pairF1": 0.9705882352941176,
+  "precision": 0.9428571428571428,
+  "recall": 1,
+  "fieldAccuracy": 0.9824561403508771,
+  "fieldAccuracyAll": 0.9491525423728814,
+  "perField": {
+   "entity_id": 0.9824561403508771,
+   "given_name": 1,
+   "family_name": 1,
+   "birth_date": 0.9473684210526315,
+   "country": 0.9824561403508771,
+   "phone_e164": 0.9824561403508771,
+   "amount_usd": 0.9824561403508771
+  },
+  "thresholds": {
+   "fieldAccuracy": 0.97,
+   "pairF1": 0.95,
+   "entitySlack": 0.02
+  },
+  "mismatches": [
+   {
+    "entity_id": 1631,
+    "field": "birth_date",
+    "expected": "2003-02-11",
+    "got": "2003-11-02"
+   },
+   {
+    "entity_id": 2535,
+    "field": "birth_date",
+    "expected": "1980-03-07",
+    "got": "1980-07-03"
+   },
+   {
+    "entity_id": 4099,
+    "field": "entity_id",
+    "expected": 4099,
+    "got": 2078
+   },
+   {
+    "entity_id": 4099,
+    "field": "birth_date",
+    "expected": "1962-05-09",
+    "got": "1962-09-05"
+   },
+   {
+    "entity_id": 2735,
+    "field": "country",
+    "expected": "BE",
+    "got": "FR"
+   },
+   {
+    "entity_id": 2735,
+    "field": "phone_e164",
+    "expected": "+3226247364",
+    "got": "+33111958631"
+   },
+   {
+    "entity_id": 2735,
+    "field": "amount_usd",
+    "expected": 229.95,
+    "got": 533.04
+   }
+  ]
+ }
+}

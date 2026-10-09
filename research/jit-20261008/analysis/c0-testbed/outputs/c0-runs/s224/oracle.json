@@ -1,0 +1,81 @@
+{
+ "pass": false,
+ "score": 0.905765,
+ "details": {
+  "entities": 56,
+  "predicted": 57,
+  "matched": 55,
+  "extra": 2,
+  "missing": 1,
+  "slack": 1,
+  "pairF1": 0.9523809523809523,
+  "precision": 0.967741935483871,
+  "recall": 0.9375,
+  "fieldAccuracy": 0.9792207792207792,
+  "fieldAccuracyAll": 0.9617346938775511,
+  "perField": {
+   "entity_id": 0.9818181818181818,
+   "given_name": 1,
+   "family_name": 1,
+   "birth_date": 1,
+   "country": 0.9636363636363636,
+   "phone_e164": 0.9636363636363636,
+   "amount_usd": 0.9454545454545454
+  },
+  "thresholds": {
+   "fieldAccuracy": 0.97,
+   "pairF1": 0.95,
+   "entitySlack": 0.02
+  },
+  "mismatches": [
+   {
+    "entity_id": 2436,
+    "field": "country",
+    "expected": "NL",
+    "got": "GB"
+   },
+   {
+    "entity_id": 2436,
+    "field": "phone_e164",
+    "expected": "+34919542452",
+    "got": "+447700900789"
+   },
+   {
+    "entity_id": 2436,
+    "field": "amount_usd",
+    "expected": 33494.09,
+    "got": 657.12
+   },
+   {
+    "entity_id": 2398,
+    "field": "entity_id",
+    "expected": 2398,
+    "got": 4373
+   },
+   {
+    "entity_id": 3400,
+    "field": "amount_usd",
+    "expected": 9198.42,
+    "got": 83.81
+   },
+   {
+    "entity_id": 6869,
+    "field": "country",
+    "expected": "GB",
+    "got": "BE"
+   },
+   {
+    "entity_id": 6869,
+    "field": "phone_e164",
+    "expected": "+447700900789",
+    "got": "+3222105361"
+   },
+   {
+    "entity_id": 6869,
+    "field": "amount_usd",
+    "expected": 657.12,
+    "got": 6726.97
+   }
+  ]
+ }
+}

@@ -1,0 +1,99 @@
+{
+ "pass": false,
+ "score": 0.846683,
+ "details": {
+  "entities": 52,
+  "predicted": 58,
+  "matched": 52,
+  "extra": 6,
+  "missing": 0,
+  "slack": 1,
+  "pairF1": 0.9447852760736196,
+  "precision": 1,
+  "recall": 0.8953488372093024,
+  "fieldAccuracy": 0.9697802197802198,
+  "fieldAccuracyAll": 0.9697802197802198,
+  "perField": {
+   "entity_id": 1,
+   "given_name": 1,
+   "family_name": 0.9807692307692307,
+   "birth_date": 0.9230769230769231,
+   "country": 1,
+   "phone_e164": 0.9423076923076923,
+   "amount_usd": 0.9423076923076923
+  },
+  "thresholds": {
+   "fieldAccuracy": 0.97,
+   "pairF1": 0.95,
+   "entitySlack": 0.02
+  },
+  "mismatches": [
+   {
+    "entity_id": 2441,
+    "field": "birth_date",
+    "expected": "1951-12-10",
+    "got": "1951-10-12"
+   },
+   {
+    "entity_id": 2565,
+    "field": "phone_e164",
+    "expected": "+34919262066",
+    "got": null
+   },
+   {
+    "entity_id": 2565,
+    "field": "amount_usd",
+    "expected": 34424.71,
+    "got": 37208.66
+   },
+   {
+    "entity_id": 1672,
+    "field": "family_name",
+    "expected": "van Dijk",
+    "got": "vna Dijk"
+   },
+   {
+    "entity_id": 1672,
+    "field": "amount_usd",
+    "expected": 58423.01,
+    "got": 777.92
+   },
+   {
+    "entity_id": 1371,
+    "field": "amount_usd",
+    "expected": 896.62,
+    "got": 44282.89
+   },
+   {
+    "entity_id": 2017,
+    "field": "birth_date",
+    "expected": "1975-02-09",
+    "got": "1975-09-02"
+   },
+   {
+    "entity_id": 2654,
+    "field": "birth_date",
+    "expected": "1969-08-02",
+    "got": "1969-02-08"
+   },
+   {
+    "entity_id": 2654,
+    "field": "phone_e164",
+    "expected": "+14165550158",
+    "got": null
+   },
+   {
+    "entity_id": 6312,
+    "field": "birth_date",
+    "expected": "1986-10-07",
+    "got": "1986-07-10"
+   },
+   {
+    "entity_id": 6312,
+    "field": "phone_e164",
+    "expected": "+390201955764",
+    "got": null
+   }
+  ]
+ }
+}

@@ -1,0 +1,105 @@
+{
+ "pass": false,
+ "score": 0.804424,
+ "details": {
+  "entities": 36,
+  "predicted": 40,
+  "matched": 36,
+  "extra": 4,
+  "missing": 0,
+  "slack": 0,
+  "pairF1": 0.8620689655172413,
+  "precision": 0.9433962264150944,
+  "recall": 0.7936507936507936,
+  "fieldAccuracy": 0.9523809523809523,
+  "fieldAccuracyAll": 0.9523809523809523,
+  "perField": {
+   "entity_id": 0.9722222222222222,
+   "given_name": 1,
+   "family_name": 0.9722222222222222,
+   "birth_date": 0.9166666666666666,
+   "country": 0.9444444444444444,
+   "phone_e164": 0.9722222222222222,
+   "amount_usd": 0.8888888888888888
+  },
+  "thresholds": {
+   "fieldAccuracy": 0.97,
+   "pairF1": 0.95,
+   "entitySlack": 0.02
+  },
+  "mismatches": [
+   {
+    "entity_id": 3738,
+    "field": "birth_date",
+    "expected": "1955-07-03",
+    "got": "1955-03-07"
+   },
+   {
+    "entity_id": 7710,
+    "field": "country",
+    "expected": "GB",
+    "got": "FR"
+   },
+   {
+    "entity_id": 7710,
+    "field": "phone_e164",
+    "expected": "+442079460458",
+    "got": "+33124457815"
+   },
+   {
+    "entity_id": 7710,
+    "field": "amount_usd",
+    "expected": -34121.08,
+    "got": 1753.31
+   },
+   {
+    "entity_id": 1333,
+    "field": "birth_date",
+    "expected": "1979-09-11",
+    "got": "1979-11-09"
+   },
+   {
+    "entity_id": 1333,
+    "field": "country",
+    "expected": "BE",
+    "got": "IT"
+   },
+   {
+    "entity_id": 1333,
+    "field": "amount_usd",
+    "expected": 2423.32,
+    "got": 2612.38
+   },
+   {
+    "entity_id": 9100,
+    "field": "birth_date",
+    "expected": "1959-05-01",
+    "got": "1959-01-05"
+   },
+   {
+    "entity_id": 7233,
+    "field": "entity_id",
+    "expected": 7233,
+    "got": 8051
+   },
+   {
+    "entity_id": 7233,
+    "field": "amount_usd",
+    "expected": 23156,
+    "got": null
+   },
+   {
+    "entity_id": 8469,
+    "field": "family_name",
+    "expected": "Castano",
+    "got": "Castalno"
+   },
+   {
+    "entity_id": 8469,
+    "field": "amount_usd",
+    "expected": 603,
+    "got": 19767.29
+   }
+  ]
+ }
+}

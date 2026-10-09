@@ -1,0 +1,45 @@
+{
+ "pass": true,
+ "score": 0.961866,
+ "details": {
+  "entities": 51,
+  "predicted": 50,
+  "matched": 50,
+  "extra": 0,
+  "missing": 1,
+  "slack": 1,
+  "pairF1": 0.9875,
+  "precision": 0.9753086419753086,
+  "recall": 1,
+  "fieldAccuracy": 0.9942857142857143,
+  "fieldAccuracyAll": 0.9747899159663865,
+  "perField": {
+   "entity_id": 1,
+   "given_name": 1,
+   "family_name": 1,
+   "birth_date": 1,
+   "country": 0.98,
+   "phone_e164": 0.98,
+   "amount_usd": 1
+  },
+  "thresholds": {
+   "fieldAccuracy": 0.97,
+   "pairF1": 0.95,
+   "entitySlack": 0.02
+  },
+  "mismatches": [
+   {
+    "entity_id": 3533,
+    "field": "country",
+    "expected": "CH",
+    "got": "FR"
+   },
+   {
+    "entity_id": 3533,
+    "field": "phone_e164",
+    "expected": "+31204002285",
+    "got": "+33404261662"
+   }
+  ]
+ }
+}

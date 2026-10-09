@@ -1,0 +1,94 @@
+s":200,"ok":true,"costUsd":0.002526745,"spentUsd":0.03355015}
+[model] {"at":"2026-10-09T10:50:25.880Z","model":"claude-haiku-5-5","status":200,"ok":true,"costUsd":0.0028882450000000002,"spentUsd":0.036438395}
+[model] {"at":"2026-10-09T10:50:43.149Z","model":"claude-haiku-5-5","status":200,"ok":true,"costUsd":0.0032058700000000004,"spentUsd":0.039644265}
+[model] {"at":"2026-10-09T10:50:43.212Z","model":"claude-haiku-5-5","status":200,"ok":true,"costUsd":0.00291837,"spentUsd":0.042562635}
+[model] {"at":"2026-10-09T10:50:57.441Z","model":"claude-haiku-5-5","status":200,"ok":true,"costUsd":0.0025351199999999996,"spentUsd":0.045097755}
+[model] {"at":"2026-10-09T10:51:00.098Z","model":"claude-haiku-5-5","status":200,"ok":true,"costUsd":0.00278412,"spentUsd":0.047881875000000004}
+[model] {"at":"2026-10-09T10:51:06.853Z","model":"claude-haiku-5-5","status":200,"ok":true,"costUsd":0.00182637,"spentUsd":0.049708245000000005}
+row 1198 BRIGHTDESK  birth 1965-09-05 country AU phone +61285800438 amount -919.00 USD
+row 1216 BRIGHTDESK  birth 1994-05-04 country JP phone +818026161269 amount null null
+row 1232 BRIGHTDESK VOID birth 1972-10-09 country IE phone +35317777691 amount 6966.82 USD
+row 1320 VERITAS VOID birth 1959-01-16 country CH phone +41315703056 amount 500.00 CHF
+row 1461 ATLAS VOID birth 1962-11-02 country IE phone +35319896433 amount 4567.62 GBP
+row 1543 VENDEX  birth null country JP phone +81313830443 amount 100.00 USD
+row 1617 VENDEX VOID birth 1982-05-01 country AT phone +4312704327 amount 3579 EUR
+row 1751 ATLAS  birth null country IT phone +390208472326 amount 578.27 GBP
+row 1826 LEDGR  birth 1965-09-05 country AU phone +61266042394 amount 670.00 EUR
+row 1997 VERITAS  birth 1965-10-20 country CH phone +15685550114 amount 22.56 CHF
+row 2210 LEDGR  birth 1955-03-11 country DE phone +4915144455727 amount -682.00 EUR
+row 2360 BRIGHTDESK  birth 1971-04-03 country JP phone +818049848125 amount 147.00 USD
+row 2592 VENDEX  birth 1989-05-18 country null phone +3226418035 amount 26877.81 EUR
+row 2672 VERITAS  birth 1994-05-04 country US phone +818026161269 amount 86.11 USD
+row 2922 BRIGHTDESK  birth 1956-03-27 country null phone +447700900415 amount 300.00 USD
+row 3295 BRIGHTDESK VOID birth 1954-06-02 country JP phone +81362394818 amount -8920.34 USD
+row 3386 ATLAS  birth 1961-09-16 country ES phone null amount null null
+row 3439 LEDGR  birth null country JP phone +13895550111 amount 50.42 EUR
+row 3502 ATLAS  birth 1974-02-24 country JP phone +818005571277 amount 82.85 GBP
+row 3522 LEDGR  birth 1977-02-07 country AT phone +4316470664 amount -51728.00 EUR
+row 3546 ATLAS  birth 1994-01-09 country IT phone null amount 1561.96 GBP
+row 3571 VERITAS  birth 1986-11-07 country SE phone +46826486212 amount -655.49 SEK
+row 3575 VERITAS  birth 1965-10-20 country CH phone +15685550114 amount 2581.00 CHF
+row 3651 ATLAS  birth 2002-08-04 country IT phone +818059292423 amount 46636.75 GBP
+row 3653 ATLAS  birth 1994-01-09 country NO phone +4723884726 amount 534.82 GBP
+row 3827 BRIGHTDESK VOID birth 1964-02-12 country CA phone null amount 354.48 USD
+row 3835 ATLAS  birth 1989-05-18 country null phone +3226418035 amount 25427.59 GBP
+row 3997 ATLAS  birth 1952-03-05 country AU phone null amount 1043.00 GBP
+row 3999 LEDGR  birth 1982-05-01 country AT phone +4314030797 amount 164.60 EUR
+row 4023 LEDGR  birth 1957-11-05 country GB phone +442079460798 amount 42277.37 EUR
+row 4041 LEDGR  birth 1965-09-05 country AU phone +61285800438 amount 32.00 EUR
+row 4081 ATLAS  birth 1995-03-07 country GB phone +442079460619 amount 2300.00 GBP
+row 4194 LEDGR  birth 1995-03-07 country GB phone +442079460619 amount 821.74 EUR
+row 4214 VENDEX  birth 1964-03-13 country DE phone +49407734178 amount 1400 EUR
+row 4225 KOBO  birth 1986-01-22 country JP phone +81328310416 amount 194777 JPY
+row 4236 VERITAS  birth 1982-11-07 country CA phone +14165550167 amount 2300.00 CAD
+row 4562 BRIGHTDESK  birth 1965-10-20 country CH phone +15685550114 amount null null
+row 4575 LEDGR  birth 1962-11-02 country IE phone +35319896433 amount 429.32 EUR
+row 4640 BRIGHTDESK  birth 1964-02-12 country CA phone +16135550120 amount 93.21 USD
+row 4649 VENDEX  birth 1964-06-05 country null phone +393206119366 amount 61.00 EUR
+row 4707 BRIGHTDESK  birth 1961-09-16 country ES phone +34915627501 amount 23885.62 USD
+row 4731 ATLAS  birth 1977-02-07 country NO phone +4743459448 amount null null
+row 4736 BRIGHTDESK  birth 1977-08-04 country null phone +4786606957 amount 5392.43 USD
+row 4765 VERITAS  birth 1986-01-22 country JP phone +81328310416 amount 5815 JPY
+row 4930 VERITAS  birth 1956-03-27 country GB phone +447700900415 amount 22.00 GBP
+row 5049 VERITAS  birth 1995-03-07 country GB phone +442079460619 amount 1400.00 GBP
+row 5183 LEDGR  birth 1968-11-25 country null phone +390245968676 amount 12300.00 EUR
+row 5226 BRIGHTDESK  birth 1964-02-12 country CA phone +16135550120 amount 1991.70 USD
+row 5248 BRIGHTDESK  birth 1972-07-10 country JP phone +46805471637 amount 200.00 USD
+row 5451 VENDEX  birth 1986-01-22 country JP phone +81328310416 amount 3972.11 USD
+row 5832 VERITAS  birth 1968-11-25 country IT phone null amount 805.70 EUR
+row 5931 ATLAS  birth 1976-04-05 country JP phone +13895550111 amount 11105.21 GBP
+row 6098 ATLAS  birth 1962-11-02 country IE phone +35319896433 amount 200.00 GBP
+row 6163 LEDGR  birth 1995-10-05 country NL phone +31203318325 amount 81.03 EUR
+row 6315 LEDGR  birth null country BE phone +3223215676 amount null null
+row 6347 VENDEX  birth 1976-04-05 country JP phone +13895550111 amount 100.00 USD
+row 6359 VENDEX  birth 1957-11-05 country CH phone +41614204541 amount 10000 USD
+row 6605 LEDGR  birth 1983-12-10 country AT phone +4318486575 amount 1300.00 EUR
+row 6671 BRIGHTDESK  birth 2002-04-08 country IT phone +393327699864 amount null null
+row 6933 KOBO  birth 1986-01-22 country JP phone +81328310416 amount 16683 JPY
+row 7083 ATLAS  birth 1972-07-10 country JP phone +46805471637 amount -400.00 GBP
+row 7104 VERITAS  birth 1982-05-01 country AT phone +4314030797 amount 500.86 EUR
+row 7195 ATLAS  birth 1956-03-27 country GB phone +447700900415 amount 34.59 GBP
+row 7210 VERITAS  birth 2002-08-04 country IT phone +818059292423 amount 2150.23 EUR
+row 7224 ATLAS  birth 2002-04-08 country IT phone +390208472326 amount 43083.00 GBP
+row 7232 ATLAS  birth 1986-11-07 country SE phone +46842996003 amount 500.00 GBP
+row 7265 BRIGHTDESK  birth 1952-03-05 country null phone +61266042394 amount 76.00 USD
+row 7658 ATLAS  birth 1947-07-14 country ES phone null amount 4106.00 GBP
+row 8118 ATLAS  birth 1964-02-12 country CA phone +16135550120 amount 15020.33 GBP
+row 8362 BRIGHTDESK  birth 2001-12-22 country US phone +15565550125 amount 19255.17 USD
+row 8367 LEDGR  birth 1946-08-11 country BE phone +3223215676 amount 104.63 EUR
+row 8370 KOBO  birth 1974-02-24 country JP phone +818005571277 amount 202265 JPY
+row 8433 LEDGR  birth 2002-04-08 country IT phone +390208472326 amount 14113.65 EUR
+row 8457 LEDGR  birth 1952-03-05 country AU phone +61266042394 amount null null
+row 8797 BRIGHTDESK  birth 1962-11-02 country null phone +35319896433 amount 10772.97 USD
+row 8804 VERITAS  birth 1964-02-12 country CA phone +16135550120 amount -105.94 CAD
+row 8839 VENDEX  birth 1954-03-04 country CA phone +14165550167 amount 104.94 USD
+row 9027 VENDEX  birth null country CA phone +16135550120 amount 1877.19 USD
+row 9209 VERITAS  birth 2000-02-10 country AU phone +390686377619 amount 2459.59 AUD
+row 9373 VENDEX  birth 1982-05-01 country AT phone +4314030797 amount 29500.00 EUR
+row 9381 LEDGR  birth 1952-03-05 country AU phone +61266042394 amount 8171.30 EUR
+row 9600 ATLAS  birth 1972-07-10 country JP phone null amount -300.00 GBP
+row 9641 VERITAS  birth 1947-07-14 country IT phone +390298299896 amount -13300.00 EUR
+row 9910 VENDEX VOID birth 1986-09-04 country ES phone +34913687392 amount 224 EUR
+row 9941 LEDGR  birth 1989-05-18 country BE phone +3226418035 amount 379.55 EUR
+extracted 85 void [1232,1320,1461,1617,3295,3827,9910]
+records 39

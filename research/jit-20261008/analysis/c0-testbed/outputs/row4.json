@@ -1,0 +1,426 @@
+{
+ "n": 24,
+ "failures": 9,
+ "metrics": [
+  {
+   "name": "primary: max(|C0-E1|, |C0-E2|)",
+   "auroc": 0.8740740740740741,
+   "ci": {
+    "lo": 0.7062937062937062,
+    "hi": 1,
+    "kept": 10000,
+    "dropped": 0
+   }
+  },
+  {
+   "name": "|C0-E1|",
+   "auroc": 0.662962962962963,
+   "ci": {
+    "lo": 0.3894736842105263,
+    "hi": 0.9117647058823529,
+    "kept": 10000,
+    "dropped": 0
+   }
+  },
+  {
+   "name": "|C0-E2|",
+   "auroc": 0.8740740740740741,
+   "ci": {
+    "lo": 0.7062937062937062,
+    "hi": 1,
+    "kept": 10000,
+    "dropped": 0
+   }
+  },
+  {
+   "name": "signed C0-E1",
+   "auroc": 0.662962962962963,
+   "ci": {
+    "lo": 0.3894736842105263,
+    "hi": 0.9117647058823529,
+    "kept": 10000,
+    "dropped": 0
+   }
+  },
+  {
+   "name": "signed C0-E2",
+   "auroc": 0.8740740740740741,
+   "ci": {
+    "lo": 0.7062937062937062,
+    "hi": 1,
+    "kept": 10000,
+    "dropped": 0
+   }
+  },
+  {
+   "name": "oracle-side reference: C0 - truthOnKept (not computable without the oracle)",
+   "auroc": 0.8333333333333334,
+   "ci": {
+    "lo": 0.5734265734265734,
+    "hi": 1,
+    "kept": 10000,
+    "dropped": 0
+   }
+  },
+  {
+   "name": "exploratory baseline: difficulty alone",
+   "auroc": 0.7666666666666667,
+   "ci": {
+    "lo": 0.5734265734265734,
+    "hi": 0.9375,
+    "kept": 10000,
+    "dropped": 0
+   }
+  }
+ ],
+ "withinDifficulty": {
+  "primary gap": 0.824,
+  "|C0-E1|": 0.657,
+  "d3": 0.8461538461538461,
+  "d4": 0.75
+ },
+ "estimatorError": {
+  "E1-truthOnKept MAE": 2.63,
+  "E2-truthOnKept MAE": 5.42,
+  "C0-truthOnKept MAE": 1.54
+ },
+ "verdict": "survives (AUROC >= 0.7)",
+ "rows": [
+  {
+   "seed": 201,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 38,
+   "e1": 35,
+   "e2": 33,
+   "truthE": 38,
+   "truthOnKept": 38,
+   "g1": 3,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 202,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 43,
+   "e1": 40,
+   "e2": 38,
+   "truthE": 43,
+   "truthOnKept": 43,
+   "g1": 3,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 203,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 43,
+   "e1": 41,
+   "e2": 38,
+   "truthE": 43,
+   "truthOnKept": 43,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 204,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 41,
+   "e1": 37,
+   "e2": 36,
+   "truthE": 41,
+   "truthOnKept": 41,
+   "g1": 4,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 205,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 34,
+   "e1": 31,
+   "e2": 29,
+   "truthE": 34,
+   "truthOnKept": 34,
+   "g1": 3,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 77
+  },
+  {
+   "seed": 206,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 47,
+   "e1": 45,
+   "e2": 42,
+   "truthE": 47,
+   "truthOnKept": 47,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 207,
+   "difficulty": 3,
+   "pass": false,
+   "nC0": 36,
+   "e1": 34,
+   "e2": 31,
+   "truthE": 36,
+   "truthOnKept": 36,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 208,
+   "difficulty": 3,
+   "pass": false,
+   "nC0": 45,
+   "e1": 37,
+   "e2": 34,
+   "truthE": 39,
+   "truthOnKept": 39,
+   "g1": 8,
+   "g2": 11,
+   "gap": 11,
+   "keptRows": 78
+  },
+  {
+   "seed": 209,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 43,
+   "e1": 41,
+   "e2": 38,
+   "truthE": 43,
+   "truthOnKept": 43,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 210,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 45,
+   "e1": 42,
+   "e2": 41,
+   "truthE": 45,
+   "truthOnKept": 45,
+   "g1": 3,
+   "g2": 4,
+   "gap": 4,
+   "keptRows": 78
+  },
+  {
+   "seed": 211,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 45,
+   "e1": 43,
+   "e2": 40,
+   "truthE": 45,
+   "truthOnKept": 45,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 212,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 39,
+   "e1": 37,
+   "e2": 34,
+   "truthE": 39,
+   "truthOnKept": 39,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 213,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 40,
+   "e1": 38,
+   "e2": 35,
+   "truthE": 40,
+   "truthOnKept": 40,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 214,
+   "difficulty": 3,
+   "pass": false,
+   "nC0": 40,
+   "e1": 34,
+   "e2": 31,
+   "truthE": 36,
+   "truthOnKept": 36,
+   "g1": 6,
+   "g2": 9,
+   "gap": 9,
+   "keptRows": 78
+  },
+  {
+   "seed": 215,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 42,
+   "e1": 40,
+   "e2": 37,
+   "truthE": 42,
+   "truthOnKept": 42,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 216,
+   "difficulty": 3,
+   "pass": true,
+   "nC0": 39,
+   "e1": 37,
+   "e2": 34,
+   "truthE": 39,
+   "truthOnKept": 39,
+   "g1": 2,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 78
+  },
+  {
+   "seed": 217,
+   "difficulty": 4,
+   "pass": false,
+   "nC0": 52,
+   "e1": 46,
+   "e2": 42,
+   "truthE": 49,
+   "truthOnKept": 49,
+   "g1": 6,
+   "g2": 10,
+   "gap": 10,
+   "keptRows": 107
+  },
+  {
+   "seed": 218,
+   "difficulty": 4,
+   "pass": false,
+   "nC0": 60,
+   "e1": 58,
+   "e2": 50,
+   "truthE": 56,
+   "truthOnKept": 56,
+   "g1": 2,
+   "g2": 10,
+   "gap": 10,
+   "keptRows": 105
+  },
+  {
+   "seed": 219,
+   "difficulty": 4,
+   "pass": true,
+   "nC0": 57,
+   "e1": 51,
+   "e2": 49,
+   "truthE": 56,
+   "truthOnKept": 56,
+   "g1": 6,
+   "g2": 8,
+   "gap": 8,
+   "keptRows": 107
+  },
+  {
+   "seed": 220,
+   "difficulty": 4,
+   "pass": false,
+   "nC0": 58,
+   "e1": 52,
+   "e2": 47,
+   "truthE": 52,
+   "truthOnKept": 52,
+   "g1": 6,
+   "g2": 11,
+   "gap": 11,
+   "keptRows": 107
+  },
+  {
+   "seed": 221,
+   "difficulty": 4,
+   "pass": true,
+   "nC0": 50,
+   "e1": 46,
+   "e2": 44,
+   "truthE": 51,
+   "truthOnKept": 51,
+   "g1": 4,
+   "g2": 6,
+   "gap": 6,
+   "keptRows": 105
+  },
+  {
+   "seed": 222,
+   "difficulty": 4,
+   "pass": false,
+   "nC0": 57,
+   "e1": 54,
+   "e2": 52,
+   "truthE": 59,
+   "truthOnKept": 59,
+   "g1": 3,
+   "g2": 5,
+   "gap": 5,
+   "keptRows": 105
+  },
+  {
+   "seed": 223,
+   "difficulty": 4,
+   "pass": false,
+   "nC0": 55,
+   "e1": 51,
+   "e2": 40,
+   "truthE": 47,
+   "truthOnKept": 47,
+   "g1": 4,
+   "g2": 15,
+   "gap": 15,
+   "keptRows": 107
+  },
+  {
+   "seed": 224,
+   "difficulty": 4,
+   "pass": false,
+   "nC0": 57,
+   "e1": 56,
+   "e2": 50,
+   "truthE": 56,
+   "truthOnKept": 55,
+   "g1": 1,
+   "g2": 7,
+   "gap": 7,
+   "keptRows": 104
+  }
+ ]
+}

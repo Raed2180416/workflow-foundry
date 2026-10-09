@@ -1,0 +1,99 @@
+{
+ "pass": false,
+ "score": 0.710466,
+ "details": {
+  "entities": 47,
+  "predicted": 55,
+  "matched": 46,
+  "extra": 9,
+  "missing": 1,
+  "slack": 0,
+  "pairF1": 0.8633879781420766,
+  "precision": 0.9753086419753086,
+  "recall": 0.7745098039215687,
+  "fieldAccuracy": 0.9658385093167702,
+  "fieldAccuracyAll": 0.9452887537993921,
+  "perField": {
+   "entity_id": 0.9130434782608695,
+   "given_name": 0.9782608695652174,
+   "family_name": 0.9782608695652174,
+   "birth_date": 0.9782608695652174,
+   "country": 1,
+   "phone_e164": 0.9782608695652174,
+   "amount_usd": 0.9347826086956522
+  },
+  "thresholds": {
+   "fieldAccuracy": 0.97,
+   "pairF1": 0.95,
+   "entitySlack": 0.02
+  },
+  "mismatches": [
+   {
+    "entity_id": 4134,
+    "field": "entity_id",
+    "expected": 4134,
+    "got": 6107
+   },
+   {
+    "entity_id": 3915,
+    "field": "entity_id",
+    "expected": 3915,
+    "got": 3951
+   },
+   {
+    "entity_id": 3915,
+    "field": "amount_usd",
+    "expected": 1156.14,
+    "got": 40367.46
+   },
+   {
+    "entity_id": 1105,
+    "field": "entity_id",
+    "expected": 1105,
+    "got": 6591
+   },
+   {
+    "entity_id": 3138,
+    "field": "entity_id",
+    "expected": 3138,
+    "got": 4475
+   },
+   {
+    "entity_id": 3138,
+    "field": "phone_e164",
+    "expected": "+33108292468",
+    "got": "+41222492294"
+   },
+   {
+    "entity_id": 1064,
+    "field": "birth_date",
+    "expected": "1957-02-01",
+    "got": "1957-01-02"
+   },
+   {
+    "entity_id": 3761,
+    "field": "family_name",
+    "expected": "Rowntree",
+    "got": "Rowsntree"
+   },
+   {
+    "entity_id": 3761,
+    "field": "amount_usd",
+    "expected": -12417.28,
+    "got": 7472.58
+   },
+   {
+    "entity_id": 7014,
+    "field": "given_name",
+    "expected": "Patricia",
+    "got": "Paticia"
+   },
+   {
+    "entity_id": 7014,
+    "field": "amount_usd",
+    "expected": -126.62,
+    "got": 3789.45
+   }
+  ]
+ }
+}

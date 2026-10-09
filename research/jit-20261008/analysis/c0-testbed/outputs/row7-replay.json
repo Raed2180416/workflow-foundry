@@ -1,0 +1,5798 @@
+{
+ "parent": {
+  "kind": "parent",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M1-del-batch-count": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M2-del-batch-check-arg": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M3-del-void-provenance": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M4-del-placeholder-date": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M5-del-date-override": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M6-widen-name-typos": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.957125,
+    "n": 37,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.944927,
+    "n": 42,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.950306,
+    "n": 42,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.906992,
+    "n": 39,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.938455,
+    "n": 33,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.916493,
+    "n": 45,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.93137,
+    "n": 35,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.907032,
+    "n": 41,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.900651,
+    "n": 43,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.903973,
+    "n": 37,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.891928,
+    "n": 38,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.776174,
+    "n": 38,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.945742,
+    "n": 41,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.907914,
+    "n": 37,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.867819,
+    "n": 51,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.78668,
+    "n": 59,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.90626,
+    "n": 55,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.766863,
+    "n": 56,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.886709,
+    "n": 48,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.895015,
+    "n": 56,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.690143,
+    "n": 52,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.868755,
+    "n": 56,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 1,
+   "differFromParent": 22,
+   "misses": 0,
+   "sameAsLive": 2
+  }
+ },
+ "M7-widen-year-range": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M8-widen-batch-count-op": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M9-widen-sentinel": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.773038,
+    "n": 41,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 1,
+   "misses": 0,
+   "sameAsLive": 23
+  }
+ },
+ "M10-widen-zero-phone": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M11-widen-config-check": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "M12-widen-phone-link": {
+  "kind": "mutant",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.946551,
+    "n": 37,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.890264,
+    "n": 41,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.950306,
+    "n": 42,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.941168,
+    "n": 40,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.859714,
+    "n": 32,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.849945,
+    "n": 43,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.947278,
+    "n": 44,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.832436,
+    "n": 50,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.794965,
+    "n": 59,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.878586,
+    "n": 55,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.811557,
+    "n": 57,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.865962,
+    "n": 48,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.893002,
+    "n": 56,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.65929,
+    "n": 54,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.857717,
+    "n": 56,
+    "sameAsParent": false,
+    "sameAsLive": false,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 6,
+   "differFromParent": 15,
+   "misses": 0,
+   "sameAsLive": 9
+  }
+ },
+ "R1-rename-locals": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R2-rename-check-fn": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R3-reorder-sections": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R4-reorder-fns": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R5-extract-void": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R6-extract-placeholder": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R7-extract-link": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R8-arrow-fns": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R9-extract-const": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ },
+ "R10-reorder-checks": {
+  "kind": "refactor",
+  "tasks": {
+   "201": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 38,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "202": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "203": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "204": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 41,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "205": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.989874,
+    "n": 34,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "206": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 47,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "207": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.983871,
+    "n": 36,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "208": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.775683,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "209": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 43,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "210": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.985507,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "211": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 45,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "212": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "213": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "214": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.804424,
+    "n": 40,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "215": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 42,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "216": {
+    "exit": 0,
+    "pass": true,
+    "score": 1,
+    "n": 39,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 12
+   },
+   "217": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.911555,
+    "n": 52,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "218": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.822658,
+    "n": 60,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "219": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.968248,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "220": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.846683,
+    "n": 58,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "221": {
+    "exit": 0,
+    "pass": true,
+    "score": 0.961866,
+    "n": 50,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "222": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.927217,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "223": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.710466,
+    "n": 55,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   },
+   "224": {
+    "exit": 0,
+    "pass": false,
+    "score": 0.905765,
+    "n": 57,
+    "sameAsParent": true,
+    "sameAsLive": true,
+    "misses": 0,
+    "calls": 16
+   }
+  },
+  "summary": {
+   "tasks": 24,
+   "pass": 15,
+   "differFromParent": 0,
+   "misses": 0,
+   "sameAsLive": 24
+  }
+ }
+}

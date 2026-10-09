@@ -1,0 +1,32 @@
+{
+ "pass": true,
+ "score": 1,
+ "details": {
+  "entities": 40,
+  "predicted": 40,
+  "matched": 40,
+  "extra": 0,
+  "missing": 0,
+  "slack": 0,
+  "pairF1": 1,
+  "precision": 1,
+  "recall": 1,
+  "fieldAccuracy": 1,
+  "fieldAccuracyAll": 1,
+  "perField": {
+   "entity_id": 1,
+   "given_name": 1,
+   "family_name": 1,
+   "birth_date": 1,
+   "country": 1,
+   "phone_e164": 1,
+   "amount_usd": 1
+  },
+  "thresholds": {
+   "fieldAccuracy": 0.97,
+   "pairF1": 0.95,
+   "entitySlack": 0.02
+  },
+  "mismatches": []
+ }
+}
