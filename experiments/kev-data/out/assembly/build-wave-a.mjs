@@ -53,7 +53,7 @@ const summary = {
   slicesOut: result ? Object.fromEntries(Object.entries(result.manifest.slices).map(([s, x]) => [s, { records: x.records, questions: x.questions, worlds: x.worlds, dropped: x.dropped, perPort: x.perPort, positionCheck: x.positionCheck, unknowable: x.unknowable, files: x.files }])) : null,
   jobMaxState: result?.manifest.jobMaxState ?? null, timing: result?.timing ?? null,
 };
-const sumDir = path.join(OUT_ROOT, '..', 'summaries');
+const sumDir = `${OUT_ROOT}-summaries`;
 mkdirSync(sumDir, { recursive: true });
 writeFileSync(path.join(sumDir, `${group}.json`), JSON.stringify(summary, null, 2) + '\n');
 writeFileSync(path.join(sumDir, `${group}.registry.json`), JSON.stringify(registry.toJSON()) + '\n');

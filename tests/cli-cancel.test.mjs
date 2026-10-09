@@ -10,9 +10,14 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { DatabaseSync } from 'node:sqlite';
 import { Store } from '../src/store.mjs';
 import { Foundry } from '../src/foundry.mjs';
 import { createDefaultRegistry } from '../src/capabilities.mjs';
+import { loadPolicy } from '../src/models/policy.mjs';
+import { ModelPort } from '../src/models/port.mjs';
+import { Journal } from '../src/journal.mjs';
+import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
 import { sandboxStatus } from '../src/sandbox.mjs';
 import { groupMembers, isRunning, processes, until } from './support/processes.mjs';
 
@@ -357,4 +362,29 @@ test('cancel and stop-all argument checks, finished and unknown runs, and no wor
   const help = await run(['--help']);
   assert.match(help.stdout, /foundry cancel RUN_ID/);
   assert.match(help.stdout, /foundry stop-all/);
+});
+
+test('--journal: a run that journaled its model calls in another database is closed by a canceller that is given that journal', { timeout: 120000 }, async t => {
+  const { dir, workspace } = scratch(t);
+  const journalFile = path.join(dir, 'journal.sqlite'), loaded = loadPolicy();
+  // Created through the library, as an experiment would: the ModelPort's journal is a file of its own, so the run is sealed against that file.
+  const external = new DatabaseSync(journalFile);
+  const provider = new ScriptedProvider(() => { throw new Error('no model call expected'); });
+  const foundry = new Foundry(workspace, { registry: createDefaultRegistry(), modelPolicy: loaded,
+    models: () => new ModelPort({ policy: loaded.policy, providers: { 'llama-server': provider, 'claude-cli': provider }, journal: new Journal(external) }) });
+  const wf = parked.wait('CancelJournal');
+  foundry.save(wf);
+  const created = foundry.createRun(wf.id);
+  assert.equal((await foundry.startRun(created.id)).status, 'waiting');
+  await foundry.close(); external.close();
+  const refused = await run(['cancel', created.id, '--workspace', workspace]);
+  assert.equal(refused.status, 1);
+  assert.equal(refused.error().code, 'JOURNAL_EXTERNAL');
+  assert.match(refused.error().message, /--journal FILE/);
+  const cancelled = await run(['cancel', created.id, '--journal', journalFile, '--workspace', workspace]);
+  assert.equal(cancelled.status, 0, cancelled.stderr);
+  assert.equal(cancelled.json().outcome, 'cancelled');
+  const verified = await run(['verify-run', created.id, '--journal', journalFile, '--workspace', workspace]);
+  assert.equal(verified.status, 0, verified.stdout.slice(0, 2000));
+  assert.equal(verified.json().status, 'cancelled');
 });
