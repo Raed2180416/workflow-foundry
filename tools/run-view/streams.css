@@ -12,7 +12,8 @@
 
 .exphead { display: grid; gap: 6px; margin-bottom: 10px; }
 .exphead .meta { font-size: .82rem; color: var(--muted); overflow-wrap: anywhere; }
-section.block { margin: 18px 0 0; display: grid; gap: 8px; }
+section.block { margin: 18px 0 0; display: grid; gap: 8px; min-width: 0; }
+section.block > *, .card > *, .detail > *, .detail .cols > * { min-width: 0; }
 section.block > h3.sec { margin: 0; }
 .note { font-size: .8rem; color: var(--muted); }
 
