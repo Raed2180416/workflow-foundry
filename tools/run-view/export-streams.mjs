@@ -26,7 +26,7 @@ const sha256b64 = text => createHash('sha256').update(text).digest('base64');
 export function bundleStreamsHtml(data, dir = here) {
   const read = f => readFileSync(path.join(dir, f), 'utf8');
   const html = read('streams.html'), css1 = read('history.css'), css2 = read('streams.css'), core = read('history-core.js'), js = read('streams.js');
-  const json = JSON.stringify(data).replace(/</g, '\\u003c').replace(/ /g, '\\u2028').replace(/ /g, '\\u2029');
+  const json = JSON.stringify(data).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
   const csp = `default-src 'none'; script-src 'sha256-${sha256b64(core)}' 'sha256-${sha256b64(js)}'; style-src 'sha256-${sha256b64(css1)}' 'sha256-${sha256b64(css2)}'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'`;
   return html
     .replace('<!--CSP-->', () => `<meta http-equiv="Content-Security-Policy" content="${csp}">`)
