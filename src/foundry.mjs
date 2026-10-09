@@ -38,13 +38,13 @@ export class Foundry {
   // modelPolicy defaults to the committed owner policy; models (a ModelPort) is never created implicitly,
   // so no workflow can spend on a model unless the host wires a port in explicitly. A host may pass
   // models as a factory store => ModelPort when its journal must live in this workspace's store.
-  constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {}, modelPolicy, models = null, codeRunner, cancelPollMs } = {}) {
+  constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {}, modelPolicy, models = null, codeRunner, cancelPollMs, cancelGraceMs } = {}) {
     if (modelPolicy === undefined) {
       try { modelPolicy = loadPolicy(); } catch (error) { modelPolicy = null; this.modelPolicyError = errorData(error); }
     }
     this.store = new Store(workspace); this.registry = registry; this.modelPolicy = modelPolicy;
     if (typeof models === 'function') models = models(this.store);
-    this.runtime = new Runtime(this.store, registry, policy, { models, modelPolicy, ...(codeRunner ? { codeRunner } : {}), ...(cancelPollMs === undefined ? {} : { cancelPollMs }) }); this.active = new Map();
+    this.runtime = new Runtime(this.store, registry, policy, { models, modelPolicy, ...(codeRunner ? { codeRunner } : {}), ...(cancelPollMs === undefined ? {} : { cancelPollMs }), ...(cancelGraceMs === undefined ? {} : { cancelGraceMs }) }); this.active = new Map();
     this.trialRunner = new TrialRunner(this, trialPolicy);
   }
   async close() { await this.trialRunner.close(); await Promise.allSettled([...this.active.values()].map(x => x.promise)); this.store.close(); }

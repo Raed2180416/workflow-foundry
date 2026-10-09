@@ -563,6 +563,9 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
   rerunOriginal = false, allTasks = false, minutes = null, perTaskUsd = null, dry = false, force = false, log = () => {} } = {}, injected = {}) {
   if (!armDir || !existsSync(armDir)) fail('BAD_ARM', `arm directory ${armDir} does not exist`);
   if (!(Number(capUsd) > 0)) fail('BAD_CAP', '--cap-usd must be positive');
+  // A NaN budget would disable the gateway's cap (every comparison with NaN is false): every number is checked.
+  for (const [flag, v] of [['--per-task-usd', perTaskUsd], ['--minutes', minutes], ['--limit', limit]]) if (v != null && !(Number.isFinite(Number(v)) && Number(v) > 0)) fail('USAGE', `${flag} must be a positive number, got ${v}`);
+  if (label != null && (/^\.*$/.test(String(label)) || /[\\/]/.test(String(label)))) fail('USAGE', `--label ${JSON.stringify(label)} is not a plain name`);
   const tierList = Array.isArray(tiers) ? tiers : String(tiers ?? '').split(',').map(s => s.trim()).filter(Boolean);
   armDir = path.resolve(armDir);
   const experiment = path.basename(path.dirname(armDir)), slug = path.basename(armDir);
@@ -575,6 +578,11 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
   assertDev({ split: def.split, where: `arm ${arm.spec ?? slug}` });
   const familyId = def.familyId;
   if (!familyId) fail('NO_ARM_RECORD', `${armFile} names no familyId`);
+  if (familyId.startsWith('sealed-')) fail('TEST_SPLIT', `family ${familyId} is a sealed bed: tier-down e2e runs on dev tasks only`);
+  // The run record must be this work directory's arm (a --run-dir of another arm would vouch for the wrong tasks).
+  if ((arm.experiment && arm.experiment !== experiment) || (arm.slug && arm.slug !== slug)) fail('ARM_MISMATCH', `${armFile} is ${arm.experiment}/${arm.slug}, the work directory is ${experiment}/${slug}`);
+  const fullBudget = Number(perTaskUsd ?? def.perTaskUsd ?? 1);
+  if (!(Number.isFinite(fullBudget) && fullBudget > 0)) fail('NO_ARM_RECORD', `per-task budget ${fullBudget} is not a positive number`);
   const deps = { ...(DEP_KEYS.every(k => k in injected) ? {} : await liveDeps()), ...injected };
   const unknown = tierList.filter(t => !deps.policyIds.includes(t));
   if (unknown.length) fail('BAD_TIERS', `not in the owner model policy: ${unknown.join(', ')}`);
@@ -636,26 +644,41 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
 
   const allowedModels = [...new Set([...(def.models ?? []), ...tierList])];
   const { port, db } = await deps.createModelPort({ journalFile: path.join(outDir, 'journal.sqlite'), allowedModels });
-  let spent = 0;
+  let spent = 0, live = 0, capRefused = 0;
   const cap = Number(capUsd);
-  // Belt and braces over the per-run gateway cap: no model call starts once the session cap is reached.
+  // Belt and braces over the per-run gateway cap: no model call starts once the session cap is reached, counting the
+  // calls of the run in progress (live) and not only finished runs.
   const metered = new Proxy(port, { get(t, k) {
-    if (k === 'call') return async req => { if (spent >= cap) throw new TierdownError('CAP', `tier-down e2e cap $${cap} reached`); const r = await t.call(req); return r; };
+    if (k === 'call') return async req => {
+      if (spent + live >= cap) { capRefused++; throw new TierdownError('CAP', `tier-down e2e cap $${cap} reached`); }
+      const r = await t.call(req);
+      live += typeof r?.costUsd === 'number' ? r.costUsd : typeof r?.costUpperUsd === 'number' ? r.costUpperUsd : 0;
+      return r;
+    };
     const v = t[k]; return typeof v === 'function' ? v.bind(t) : v;
   } });
   const timeoutMs = (minutes ?? def.compiledMinutes ?? 20) * 60 * 1000;
+  // Prompt version 2 solvers run on flow-v2.mjs, exactly as stream.mjs JitRun.flowPath does; version 1 passes nothing.
+  const pv = def.compile?.promptVersion ?? 1;
+  const flowPath = pv >= 2 ? path.join(path.dirname(fileURLToPath(import.meta.url)), (await import('./prompts.mjs')).flowFileOf({ promptVersion: pv })) : null;
+  if (flowPath && !existsSync(flowPath)) fail('NO_FLOW', `${flowPath} (prompt version ${pv}) does not exist`);
   const runOne = async (t, side, solvePath) => {
     const remaining = cap - spent;
     if (remaining <= 0) return null;
     const workdir = path.join(outDir, 'runs', `i${String(t.idx).padStart(3, '0')}-${side}`);
     rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
-    const budget = Math.min(perTaskUsd ?? def.perTaskUsd ?? 1, remaining);
+    const budget = Math.min(fullBudget, remaining), refusedBefore = capRefused;
+    live = 0;
     const rc = await deps.runCompiled({ solvePath, task: t.task, modelPort: metered, perTaskUsd: budget, timeoutMs, workdir, familyId, outputSchema: schema, allowedModels,
-      label: `tierdown-e2e:${label}:${t.idx}:${side}` });
+      label: `tierdown-e2e:${label}:${t.idx}:${side}`, ...(flowPath ? { flowPath } : {}) });
+    live = 0;
     spent += rc.costUsd ?? 0;
-    log(`#${t.idx} ${side}: ${rc.status} $${(rc.costUsd ?? 0).toFixed(4)} (spent $${spent.toFixed(4)} of $${cap})`);
+    // A run the session cap cut short (a budget below the arm's per-task budget that the gateway refused or that did not
+    // deliver, or a call the cap wrapper refused) is not a measurement of the solver: it is excluded from the comparison.
+    const truncated = capRefused > refusedBefore || (budget < fullBudget - 1e-9 && (rc.status !== 'ok' || (rc.meta?.refusals?.GATEWAY_BUDGET ?? 0) > 0));
+    log(`#${t.idx} ${side}: ${rc.status}${truncated ? ' (cut short by the cap)' : ''} $${(rc.costUsd ?? 0).toFixed(4)} (spent $${spent.toFixed(4)} of $${cap})`);
     return { status: rc.status, output: rc.output ?? null, deopt: rc.deopt ?? null, trace: rc.trace ?? [], costUsd: round(rc.costUsd ?? 0), costUnknown: !!rc.costUnknown, source: 'fresh', dir: workdir,
-      perTaskUsd: budget, error: rc.error ?? null };
+      perTaskUsd: budget, error: rc.error ?? null, truncated };
   };
   const originalPath = path.join(outDir, 'original.solve.mjs');
   try {
@@ -667,8 +690,14 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
       // The archived directory must be the run the stream recorded for this idx; otherwise rerun the original.
       if (orig && t.recordedStatus && orig.status !== t.recordedStatus) { archivedRejected = `archived status ${orig.status} is not the recorded compiledStatus ${t.recordedStatus}`; orig = null; }
       if (!orig) orig = await runOne(t, 'original', originalPath);
-      const vari = orig ? await runOne(t, 'variant', variantPath) : null;
-      if (!orig || !vari) report.stopped ??= `cap $${cap} reached at task #${t.idx}`;
+      const vari = orig && !orig.truncated ? await runOne(t, 'variant', variantPath) : null;
+      if (!orig || !vari || orig.truncated || vari.truncated) {
+        report.stopped ??= `cap $${cap} reached at task #${t.idx}`;
+        report.tasks.push({ idx: t.idx, taskKey: t.taskKey, dir: t.dir, skipped: orig?.truncated || vari?.truncated ? 'cap reached during the run: excluded' : 'cap reached',
+          ...(archivedRejected ? { archivedRejected } : {}), original: orig && { status: orig.status, source: orig.source, costUsd: orig.costUsd, perTaskUsd: orig.perTaskUsd ?? null },
+          variant: vari && { status: vari.status, costUsd: vari.costUsd, perTaskUsd: vari.perTaskUsd } });
+        continue;
+      }
       const scoreOf = async r => (!r ? null : r.status === 'ok' && r.output != null ? await deps.score(familyId, t.task, r.output) : { pass: false, score: 0, details: { status: r.status } });
       const oracle = { original: await scoreOf(orig), variant: await scoreOf(vari) };
       const strip = r => (r ? { status: r.status, source: r.source, dir: r.dir, costUsd: r.costUsd, costUnknown: r.costUnknown, deopt: r.deopt ? { kind: r.deopt.kind, name: r.deopt.name } : null,

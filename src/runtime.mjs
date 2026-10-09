@@ -161,7 +161,8 @@ export class Runtime {
   // models: a ModelPort; modelPolicy: the owner policy (loadPolicy() result or the policy object);
   // codeRunner: the sandbox (tests may inject a double). None of these enter the stored run policy.
   // cancelPollMs: how often a running execution looks for a cancel request another process recorded (`foundry cancel`, stop-all).
-  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250 } = {}) {
+  // cancelGraceMs: how long a cancelled run waits for a capability that ignores its abort signal before it abandons the call (Invocation.abandonOnCancel).
+  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000 } = {}) {
     this.store = store; this.registry = registry; this.policy = { ...policyDefaults(registry), ...clone(policy) };
     for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
     if (!Array.isArray(this.policy.allowedCapabilities) || this.policy.allowedCapabilities.some(x => !registry.get(x))) throw new FoundryError('POLICY', 'Allowed capabilities must be registered');
@@ -173,7 +174,8 @@ export class Runtime {
     if (models?.policyHash && models.policyHash !== this.modelPolicyHash) throw new FoundryError('POLICY', 'The ModelPort and the runtime were given different model policies');
     if (typeof codeRunner !== 'function') throw new FoundryError('POLICY', 'codeRunner must be a function');
     if (!Number.isSafeInteger(cancelPollMs) || cancelPollMs < 1 || cancelPollMs > 60000) throw new FoundryError('POLICY', 'cancelPollMs must be an integer of 1 to 60000');
-    this.models = models; this.codeRunner = codeRunner; this.cancelPollMs = cancelPollMs;
+    if (!Number.isSafeInteger(cancelGraceMs) || cancelGraceMs < 1 || cancelGraceMs > 600000) throw new FoundryError('POLICY', 'cancelGraceMs must be an integer of 1 to 600000');
+    this.models = models; this.codeRunner = codeRunner; this.cancelPollMs = cancelPollMs; this.cancelGraceMs = cancelGraceMs;
   }
   create(workflow, input = {}, options = {}) {
     const { modelMode = 'live', sampleSalt = null, assignment = null, identity = null, ...rest } = options;
@@ -370,6 +372,21 @@ class Invocation {
     if (seen()) return;
     this.cancelTimer = setInterval(() => { if (seen()) clearInterval(this.cancelTimer); }, this.runtime.cancelPollMs);
     this.cancelTimer.unref();
+  }
+  // A capability that ignores its abort signal would hold a cancelled run until its own timeout. When the user cancels, the call is given
+  // cancelGraceMs to stop; then `lapse` rejects with CANCELLED and the call is abandoned (its result, if it ever comes, is discarded; a task
+  // whose capability has effects is recorded uncertain by the caller). Aborts `localAbort` at once. `done()` releases the listener and timer.
+  abandonOnCancel(signal, localAbort) {
+    let timer, lapse;
+    const abandon = () => {
+      localAbort.abort();
+      if (!this.userCancelled) return;
+      timer = setTimeout(() => lapse.reject(new FoundryError('CANCELLED', 'The capability did not stop after the cancellation and was abandoned')), this.runtime.cancelGraceMs);
+    };
+    const promise = new Promise((_, reject) => { lapse = { reject }; });
+    promise.catch(() => {});
+    signal.addEventListener('abort', abandon, { once: true });
+    return { lapse: promise, done: () => { clearTimeout(timer); signal.removeEventListener('abort', abandon); } };
   }
   // Best effort: a store that was closed under a running execution reads as no request.
   readCancelRequest() { try { return this.store.cancelRequest(this.runId); } catch { return null; } }
@@ -787,7 +804,7 @@ class Invocation {
         this.charge(frameKey, node, cap.cost, { tool: node.tool, idempotencyKey, argsHash: digest(args), effects: cap.effects });
         this.requireEvidence(cap, args, frameKey, node);
         const localAbort = new AbortController();
-        const stop = () => localAbort.abort(); signal.addEventListener('abort', stop, { once: true });
+        const guard = this.abandonOnCancel(signal, localAbort);
         let settled = false, timeout, timedOut = false;
         const remaining = this.head().deadline - Date.now(), deadlineBound = remaining <= node.timeoutMs;
         const timeoutMs = Math.min(node.timeoutMs, Math.max(1, remaining));
@@ -799,7 +816,7 @@ class Invocation {
           timeout = setTimeout(() => { timedOut = true; localAbort.abort(); reject(new FoundryError('TOOL_TIMEOUT', `${node.tool} timed out`)); }, timeoutMs);
         });
         try {
-          const result = await Promise.race([execution, timer]);
+          const result = await Promise.race([execution, timer, guard.lapse]);
           // Fault injection is explicit, only available to trusted test callers.
           if (this.head().extra?.crashAfterTool === nodeKey) process.kill(process.pid, 'SIGKILL');
           this.complete(frameKey, node, result, 'completed', { state: labelState(argsLabel) }); return;
@@ -820,7 +837,7 @@ class Invocation {
             this.eventNode(frameKey, node.id, f => { f.nodes[node.id].status = 'failed'; }, 'node.failed', { error: errorData(error) });
             throw error;
           }
-        } finally { clearTimeout(timeout); signal.removeEventListener('abort', stop); }
+        } finally { clearTimeout(timeout); guard.done(); }
       } finally { if (acquired) { this.semaphore.release(); acquired = false; } }
       if (node.retry.backoffMs) {
         try { await delay(node.retry.backoffMs, undefined, { signal }); }
@@ -1073,9 +1090,9 @@ class Invocation {
     const cap = this.registry.get(node.tool), run = this.head(), nodeKey = `${frameKey}/${node.id}`;
     if (!cap || !run.policy.allowedCapabilities.includes(node.tool)) throw new FoundryError('CAPABILITY_DENIED', `Capability ${node.tool} is not permitted for this run`);
     if (cap.effects !== 'none') throw new FoundryError('VERIFY_EFFECTS', 'A verification oracle must not have effects');
-    const args = resolve(node.args, ctx), local = new AbortController(), stop = () => local.abort(), signal = this.signal();
+    const args = resolve(node.args, ctx), local = new AbortController(), signal = this.signal();
     await this.semaphore.take(signal);
-    signal.addEventListener('abort', stop, { once: true });
+    const guard = this.abandonOnCancel(signal, local);
     let timer;
     try {
       // Every dispatch reserves the oracle's cost against the run budget, as a task dispatch does (the node's step was already taken).
@@ -1087,8 +1104,9 @@ class Invocation {
       const limit = Math.min(node.timeoutMs ?? 60000, cap.maxTimeoutMs), remaining = this.head().deadline - Date.now();
       return await Promise.race([
         this.registry.execute(node.tool, args, { signal: local.signal, runId: this.runId, nodeKey, idempotencyKey: digest({ runId: this.runId, nodeKey, args }), artifactsDir: path.join(this.store.directory, 'artifacts', this.runId), store: this.store }),
-        new Promise((_, reject) => { timer = setTimeout(() => { local.abort(); reject(remaining <= limit ? deadlineStop(node.tool) : new FoundryError('TOOL_TIMEOUT', `${node.tool} timed out`)); }, Math.max(1, Math.min(limit, remaining))); })]);
-    } finally { clearTimeout(timer); signal.removeEventListener('abort', stop); this.semaphore.release(); }
+        new Promise((_, reject) => { timer = setTimeout(() => { local.abort(); reject(remaining <= limit ? deadlineStop(node.tool) : new FoundryError('TOOL_TIMEOUT', `${node.tool} timed out`)); }, Math.max(1, Math.min(limit, remaining))); }),
+        guard.lapse]);
+    } finally { clearTimeout(timer); guard.done(); this.semaphore.release(); }
   }
   async verify(node, frameKey, ctx, state, resumed) {
     const subject = resolve(node.subject, ctx), subjectLabel = labelOf(node.subject, this.labelScope(frameKey, node.subject));
