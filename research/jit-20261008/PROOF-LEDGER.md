@@ -33,7 +33,7 @@ status changes; it is the owner's single view of the programme.*
 | B2 | R2 judged branching ("inbox router"): a keyword rule is not enough | beds/wbed/r2, 18 controls, keyword rule fails 0.42–0.65 | as R1 + review-queue precision/recall gap > 0.2 | B |
 | B3 | R3 fan-out/fan-in ("statement audit"): one context cannot do it | beds/wbed/r3, N 8→48, d5 ≈ 63K tokens | as R1; sequential solve must fail on size | B |
 | B4 | R4 nested sub-workflow ("group consolidation"): reuse by hash beats re-derivation | beds/wbed/r4 (102 bed tests), scoreReuse, planted CYYDDD packs refused 24/24 | construction spend with reuse not below isolated, or wrong reuse > 5% of child calls | B; **blocker found**: slice-1 profile falsely refuses 5/18 (d3), 13/24 (d4) in-profile children (W-BED-R4-NOTES §10) |
-| B5 | R5 agentic node ("legacy dump"): an agent node with a verify predicate is necessary and buildable | beds/wbed/r5 (building, 2026-10-09 22:xx) | H/H never produces an accepted solver with an agent node, or verify misses > 1/20 wrong decodes | building |
+| B5 | R5 agentic node ("legacy dump"): an agent node with a verify predicate is necessary and buildable | beds/wbed/r5 (c3c4025: 22 tests, W-bed suite 127/127), 11 formats in three tiers (novel only at d5, split-specific), 34 controls, W-BED-R5-NOTES | H/H never produces an accepted solver with an agent node, or verify misses > 1/20 wrong decodes. Bed facts: the necessity control (dev-format parsers only) fails 14/20 at d2–d4 and 20/20 at d5; the verify (trailer with hash totals) has 0 misses in 1,100 + 400 wrong decodes (16/1,100 without the hash totals) | B. **Engine needs** for the agent node (NOTES items 10–17: verify reads the dump files, retry carries the failure reason, profile sees `files`, a shipped `decoder.mjs` never runs, budget reservation, trace step `decode-dump`) go to flow-v3 slice 2 / the E2 record |
 | B6 | R6 swarm ("wide research table"): `wide` beats best-of-n at equal tokens | — | `wide` does not beat `best_of_n` on verified success at equal tokens | — |
 | B7 | R7 effects, waits, approvals | parked (W-BED §3.7) | — | parked |
 | B8 | R8 injected faults at run time: diagnosis before repair | fault hooks in lib/faults.mjs (no-ops) | heal classifies the fault first | hooks only |
@@ -58,15 +58,15 @@ status changes; it is the owner's single view of the programme.*
 
 | # | claim | proof artifact | decision rule (LIBRARY-TESTS.md) | status |
 |---|---|---|---|---|
-| D1 | A closed vocabulary of 30 constructs + 54 patterns explains 97.8% of 1,559 workflows from 49 platforms | design/library/L0, L1 §2, tools/pattern-census.mjs | L1-a 60-item hand audit, detector precision (running 2026-10-09 22:35) | D; audit running |
-| D2 | Haiku is never overburdened: ≤ 8K input tokens per constructor call, enforced by code | LIBRARY §5.2; experiments/library/context.mjs (building) | T2 | building |
-| D3 | 12 first-slice patterns are executable cards with fixtures | experiments/library/cards (building) | T4 (≥ 36 fixtures) | building |
-| D4 | A composition checker catches wrong compositions statically | experiments/library/check.mjs (building) | T3 one mutant per code | building |
+| D1 | A closed vocabulary of 30 constructs + 54 patterns explains 97.8% of 1,559 workflows from 49 platforms | design/library/L0, L1 §2, tools/pattern-census.mjs; **AUDIT-L1.md** (L1-a, 60 stratified hand labels, fixed seeds) | L1-a: rule precision ≥ 0.85, falsifier < 0.75 | **N (L1-a fails)**: hand-audited coverage **88.4%** (Wilson 75.0–95.1, Kish n 40.3); 96.1% if Node-RED dashboard apps count as explained (owner decision, PAUSE §5); the 97.8% counts "not refused", not "explained". Rule precision 0.73 (Wilson 66.1–79.3), all detector pairs 0.65, recall 0.61. Six support-only detectors below 0.5 precision (P02, P16, P17, P18, P30, P49) to remove; P37 to split (CI push/PR starts are P38). Revise L0/L1, re-census, re-audit on a fresh draw before J1 and before any library-first paid run |
+| D2 | Haiku is never overburdened: ≤ 8K input tokens per constructor call, enforced by code | LIBRARY §5.2; experiments/library/context.mjs (`assemblePrompt` refuses with CONTEXT_OVER_CLASS_BUDGET, never truncates); tokens.mjs bound fitted on 1,243 real Haiku calls | T2 | B (T2 partial): **the L0 card measures 3,643 tokens against its 3,000 S6 allocation**, so S6 refuses it until the owner cuts the card or raises the allocation (PAUSE §5.10) |
+| D3 | 12 first-slice patterns are executable cards with fixtures | experiments/library/cards (P01…P54 card dirs, assemble.mjs, run.mjs), 36 fixtures through the real flow-v3 SDK and call host in stub mode | T4 (≥ 36 fixtures) | B (T4: 36/36 at $0; every drift fixture deopts with its expected kind; `flow.flagged` and `interpret-child` missing from slice 1, worked around) |
+| D4 | A composition checker catches wrong compositions statically | experiments/library/check.mjs (`checkTree` / `checkSolver`) | T3 one mutant per code | B (T3: 24 mutants cover all 18 codes, each fires exactly its own; the clean reference tree fires none; P07 handler argument types unchecked statically) |
 | D5 | Code-first retrieval finds the needed patterns; Jev adds recall at small k | LIBRARY §4 | L2 precision@k vs embedding baseline | — |
 | D6 | Library-first Haiku matches JIT H/H on R1–R3 at a fraction of construction cost | arm (g) | L3: parity on verified success, ≥ 30× cheaper construction | — |
 | D7 | Wrong reuse stays ≤ 0.05 without refusing most correct reuse | applicability gate | L4 kill: Wilson upper bound > 0.05 after ≥ 60 decisions | — |
 | D8 | The overburden curve has a small optimum k | — | L5 | — |
-| D9 | Corpus edge-case checklists reduce latent-defect failures | — | L6 (L6-a checklist-vs-known-failures running) | audit running |
+| D9 | Corpus edge-case checklists reduce latent-defect failures | AUDIT-L1.md §6 (L6-a: 21 recorded failure causes from DEV-NOTES, FRONTIER-GAPS, BLOCKER-SYNTHESIS, construction reports, R8 fault classes) | L6-a: ≥ 50% of recorded failure causes named by a checklist line or §9 code | **N on the strict reading**: 6/21 named (28.6%, Wilson 13.8–50.0); 57.1% counting "partly". No line for compile acceptance, recompile/heal gates, probe coverage or input drift; 15 lines proposed (§6), not applied |
 | D10 | Retrieval quality holds at 50 / 500 / 1,500 items (the utility problem) | — | L7 | — |
 | D11 | Buildability: 26.9% of corpus items buildable on existing solver code, 48.4% with the engine envelope, 65.6% if the host owns triggers; cross-run `state` is the first missing node | L1-PATTERNS §7 | engine column (BUILD-ORDER §5) | D (measured on the census) |
 
@@ -101,13 +101,15 @@ status changes; it is the owner's single view of the programme.*
 - Corpus replication families too few (D21) → corpus is a source of reference graphs, not replication.
 - C0 single-order reads wrong at a dated cutoff (D20) → one order per task is the wrong unit.
 - Slice-1 profile false refusals 30–55% on in-profile children (B4) → profile options and `novel: warn` before any paid ladder run.
+- L1-a hand audit (AUDIT-L1, 2026-10-09 night): coverage 88.4%, not 97.8%; detector precision 0.73 < 0.75 → the census is a candidate generator, not a measurement; six detectors removed, P37 split, re-census and re-audit on a fresh draw before J1 (D1).
+- L6-a: the checklists name 6/21 recorded failures → edge-case checklists are corpus trivia until the repo's own failure classes are added (D9).
 
 ## I. Proof pipeline from here (order, each unblocking the next paid proof)
 
 1. R0 finishes → export commit, ledger flip (records) → R0-K → PREREG freeze → held-out stream (A11).
 2. flow-v3 slice 2 (C2–C4, E2 freeze record) → R5/R6 beds complete → Opus reference workflows (B10) → first paid W-bed
    run R1–R4, K=2 lineages, ≈ $115–250 list (B1–B4 falsifiers).
-3. Library code steps 1–8 → audit L1-a (D1) → L2 retrieval → arm (g) pilot (D6) → L4 wrong-reuse (D7).
+3. L1 revision after the failed audit (remove six detectors, split P37, add the 15 checklist lines, re-census, re-audit on a fresh draw with the owner's 10-item blind check) → J1 held-out coverage → library code steps 3–8 → L2 retrieval → arm (g) pilot (D6) → L4 wrong-reuse (D7).
 4. Heal: T4a drift and T4b planted latent defect with the sweep (F1–F2).
 5. MCP host integration + inverted arm (G1–G2): the deployment claim, last.
 

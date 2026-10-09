@@ -112,7 +112,7 @@ it is listed, not scheduled. In the host-harness deployment, triggers (P36–P38
 
 ## Implementation status
 
-Steps 1–4 of §1 are built in `experiments/library/` (2026-10-09; commits 88473c7, f22f1a3, 82bd36f, 85e5229 on
+Steps 1–4 of §1 are built in `experiments/library/` (2026-10-09; commits 88473c7, f22f1a3, 7a11979, 297c3f6 on
 `claude/intelligent-hamilton-vg1f9a`). They cost $0: no model or Jev calls, no network, and nothing under `src/`,
 `experiments/jit/` or `experiments/lib/` changed. Tests: `node --test --test-concurrency=2 experiments/library/test/*.test.mjs`
 runs 63 tests, all green.
