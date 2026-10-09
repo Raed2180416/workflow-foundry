@@ -8,7 +8,7 @@
 // run compiled with a forced shadow, instead of trusting compiled code on inputs it never saw.
 //
 //   learnProfile(tasks)          -> profile   (tasks: task.json objects {prompt, inputs, files?}, or trace records {task})
-//   checkProfile(profile, task)  -> {novel, score, reasons, near, n}
+//   checkProfile(profile, task, {ignore?}) -> {novel, score, reasons, near, n}
 //   widenProfile(profile, task)  -> a new profile with the task merged (the input profile is not changed)
 //
 // Every feature is generic: nothing here knows a bed family. The task is walked as JSON (inputs and files; the prompt is
@@ -38,8 +38,13 @@
 // - number range: [min − m, max + m], m = max(span·numMargin.span, max(|min|,|max|)·numMargin.rel, 1e-9);
 // - counts (array lengths, string lengths, line counts): m = max(countMargin.abs, ceil(span·countMargin.span),
 //   ceil(max·countMargin.rel));
-// - enum: a short-string path is an enum while it has <= enumMax distinct values and at least enumRepeat occurrences per
-//   distinct value (so ids and names, which do not repeat, never become enums); an unseen value is novel;
+// - enum: a short-string path is an enum while it has <= enumMax distinct values, occurred in at least 2 tasks, and its
+//   values recur across tasks (Good-Turing on the per-task value sets <= enumGT), so per-task names never become enums
+//   even when they repeat inside one task; an unseen value of an enum is novel;
+// - free text: a short-string path whose seen pattern classes are all lexical (word, words, sentence, other: names,
+//   titles) is checked by type and enum only; pattern class, shape and length are checked on format paths (dates,
+//   numbers, phones, ids, codes, ...) and length, lines and vocabulary on long strings. A lexical path that suddenly
+//   carries a format class (a name field that now holds a date) is still novel;
 // - a path present in every profiled task and absent now, a new path, or a new type at a path is novel;
 // - a df map that reached its cap (PARAMS.caps) is no longer checked (it would over-report novelty).
 // A reason's ratio is rate/threshold for set features and 1 + excess/margin (or 1 + unseen share) for hard ones; the
@@ -50,7 +55,7 @@ export const PROFILE_SCHEMA = 'jit-profile/1';
 export const PARAMS = Object.freeze({
   shortMax: 80,          // a single-line string of at most this many chars is "short"
   enumMaxLen: 40,        // only strings this short are enum candidates
-  enumMax: 12, enumRepeat: 2,
+  enumMax: 12, enumGT: 0.2,
   linesMin: 3, proseMinWords: 12,
   mapKeys: 32,
   rate: Object.freeze({ k: 2, slack: 0.02, min: 0.05, max: 0.5 }),
@@ -256,10 +261,10 @@ export function widenProfile(profile, task) {
       s[k] ??= emptyDf(); addDf(s[k], set);
     }
     if (o.values.size) {
-      if (!s.values) s.values = { counts: {}, overflow: false };
+      if (!s.values) s.values = { df: {}, overflow: false };
       if (!s.values.overflow) {
-        for (const [v, c] of o.values) s.values.counts[v] = (s.values.counts[v] ?? 0) + c;
-        if (Object.keys(s.values.counts).length > PARAMS.caps.values) s.values = { counts: {}, overflow: true };
+        for (const v of o.values.keys()) s.values.df[v] = (s.values.df[v] ?? 0) + 1;
+        if (Object.keys(s.values.df).length > PARAMS.caps.values) s.values = { df: {}, overflow: true };
       }
     }
   }
@@ -275,12 +280,21 @@ export function learnProfile(tasks, params = PARAMS) {
 const enumOf = (s, P) => {
   const v = s.values;
   if (!v || v.overflow) return null;
-  const distinct = Object.keys(v.counts).length, occ = Object.values(v.counts).reduce((a, b) => a + b, 0);
-  return distinct && distinct <= P.enumMax && occ >= P.enumRepeat * distinct ? new Set(Object.keys(v.counts)) : null;
+  const distinct = Object.keys(v.df).length;
+  return distinct && distinct <= P.enumMax && s.tasks >= 2 && goodTuring(v) <= P.enumGT ? new Set(Object.keys(v.df)) : null;
 };
+// Pattern classes of free text (names, titles, labels); every other class carries a format.
+export const LEXICAL = new Set(['word', 'words', 'sentence', 'other', 'empty']);
+const isLexical = s => !!s.classes && Object.keys(s.classes.df).every(c => LEXICAL.has(c)) && !s.lines && !s.vocab;
 const parentOf = path => { const m = /^(.*?)(\[\]|\{\}|\.[^.[\]{}]+)$/.exec(path); return m ? m[1] : null; };
 
-export function checkProfile(profile, task) {
+// Size features (how much input, not what kind): an ablation can ignore them (checkProfile opts.ignore) to see what the
+// content features alone detect.
+export const SIZE_FEATURES = Object.freeze(['array-length', 'map-size', 'string-length', 'line-count']);
+
+// opts.ignore: feature names to leave out of the verdict (they are still not computed into score).
+export function checkProfile(profile, task, opts = {}) {
+  const ignore = new Set(opts.ignore ?? []);
   if (!profile || profile.schema !== PROFILE_SCHEMA) throw new Error('checkProfile: not a profile');
   const P = { ...PARAMS, ...profile.params }, ex = P.caps?.examples ?? 4;
   const obs = observe(task), checks = [];
@@ -308,10 +322,13 @@ export function checkProfile(profile, task) {
     rangeCheck('number-range', path, s.num, o.nums, r => numMargin(r, P.numMargin));
     if (s.int && o.nums.length && !o.ints) checks.push({ feature: 'non-integer', path, ratio: 2 });
     rangeCheck(o.types.has('map') ? 'map-size' : 'array-length', path, s.alen, o.alens, r => countMargin(r, P.countMargin));
-    rangeCheck('string-length', path, s.slen, o.slens, r => countMargin(r, P.countMargin));
+    const lexical = isLexical(s);
+    if (lexical) {
+      const formats = [...o.classes].filter(c => !LEXICAL.has(c));
+      if (formats.length) checks.push({ feature: 'pattern-class', path, unseen: formats.sort(), seen: Object.keys(s.classes.df).sort(), note: 'a free-text path now carries a format class', ratio: 2 });
+    } else rangeCheck('string-length', path, s.slen, o.slens, r => countMargin(r, P.countMargin));
     rangeCheck('line-count', path, s.lines, o.lineCounts, r => countMargin(r, P.countMargin));
-    setCheck('pattern-class', path, s.classes, o.classes);
-    setCheck('shape', path, s.sigs, o.sigs);
+    if (!lexical) { setCheck('pattern-class', path, s.classes, o.classes); setCheck('shape', path, s.sigs, o.sigs); }
     setCheck('line-family', path, s.lineFams, o.lineFams);
     setCheck('line-format', path, s.lineSigs, o.lineSigs);
     setCheck('vocabulary', path, s.vocab, o.vocab);
@@ -328,6 +345,7 @@ export function checkProfile(profile, task) {
     const parent = parentOf(path);
     if (!parent || obs.paths.has(parent)) checks.push({ feature: 'missing-path', path, ratio: 2 });
   }
+  for (let i = checks.length - 1; i >= 0; i--) if (ignore.has(checks[i].feature)) checks.splice(i, 1);
   const order = (a, b) => b.ratio - a.ratio || String(a.feature).localeCompare(String(b.feature)) || String(a.path).localeCompare(String(b.path));
   const reasons = checks.filter(c => c.ratio > 1).sort(order);
   const near = checks.filter(c => c.ratio <= 1).sort(order).slice(0, 3);
