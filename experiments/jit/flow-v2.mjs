@@ -24,9 +24,15 @@
 // its first tier or its samples vote was not unanimous (detail.reason: 'escalated', 'split-vote' when two valid samples
 // differed, 'failed-sample' when the valid samples agreed but some sample failed its call or check). Flags never change
 // the output or the exit code.
+// Replay (harness-only; a solver never uses it): if tools/flow-override.mjs exists, its default export override(callSite,
+// request) is consulted before every judge model call (so is createFlow({ override })). callSite: {id, name, ordinal,
+// digest, tier, tierIndex, sample}; id = `${name}#${ordinal}:${digest16}`, ordinal counts earlier calls with the same name
+// and request in this run; request: {model, system, prompt, schema, decoding}; digest = sha256(canonical(request)), no
+// salt. It returns undefined (call the model) or {value} / {error} (used instead, at $0; the judge event says overridden).
+// Without the file or option nothing changes.
 // Exit codes: 0 after done(); 75 = deopt (./deopt.json {kind: guard|invariant|judge|budget, name, detail}); anything else
 // is a crash (an uncaught exception exits 1). Every event is one JSON line in ./trace.jsonl: {at, kind, name, ...}.
-import { readFileSync, writeFileSync, appendFileSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, rmSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { callModel } from './model.mjs';
 
@@ -34,6 +40,9 @@ export const DEOPT_EXIT = 75;
 const MAX_EVENTS = 5000, MAX_TEXT = 64 * 1024, HEAD_TEXT = 2048, MAX_FLAG_NAMES = 50;
 const TRACE = 'trace.jsonl', DEOPT = 'deopt.json';
 const CALLS = new URL('./calls.jsonl', import.meta.url);   // model.mjs appends one line per call (with its costUsd) here
+const OVERRIDE = new URL('./flow-override.mjs', import.meta.url);   // replay harness only (see the header)
+const fileOverride = existsSync(OVERRIDE) ? (await import(OVERRIDE.href)).default : null;
+if (fileOverride != null && typeof fileOverride !== 'function') throw new Error('tools/flow-override.mjs must export a default function');
 
 export function canonical(v) {
   if (v === null || typeof v !== 'object') return JSON.stringify(v) ?? 'null';
@@ -42,6 +51,11 @@ export function canonical(v) {
 }
 const sha = text => createHash('sha256').update(text).digest('hex');
 const digest = v => (v === undefined ? null : sha(canonical(v)).slice(0, 16));
+// The salt-free request digest the replay override and the host memo port (run-compiled.mjs requestDigestOf) share:
+// the request exactly as tools/model.mjs posts it to the gateway.
+export const requestOf = ({ model, system = '', prompt, schema, reasoning = 'none', maxTokens }) =>
+  ({ model, system: String(system), prompt, schema, decoding: { reasoning, ...(maxTokens ? { maxTokens } : {}) } });
+export const requestDigest = request => sha(canonical(request));
 const usd = x => Math.round(x * 1e6) / 1e6;
 const short = (v, n = 300) => String(v?.message ?? v).slice(0, n);
 // A detail object in deopt.json and the trace stays small; a long one keeps its head.
@@ -54,9 +68,11 @@ const keepText = (field, text, into) => {
 
 let created = false;
 
-export function createFlow({ budgetUsd = 0.5, autoFlag = false } = {}) {
+export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileOverride } = {}) {
   if (created) throw new Error('createFlow() may be called once per process');
   created = true;
+  if (override != null && typeof override !== 'function') throw new Error('createFlow({ override }) must be a function');
+  const ordinals = new Map();   // `${name}\0${digest}` -> calls so far (replay call-site ids)
   const state = { started: Date.now(), spentUsd: 0, calls: 0, unknownCostCalls: 0, events: 0, dropped: 0, done: false, deopted: false,
     guards: {}, invariants: {}, judges: 0, flags: 0, flagNames: [], task: undefined };
   // A fresh trace per run; a stale deopt.json from an earlier run in the same directory must not be read as this run's.
@@ -152,18 +168,27 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false } = {}) {
       if (!Number.isInteger(samples) || samples < 1) throw new Error(`flow.judge(${name}): samples must be a positive integer`);
       const text = typeof prompt === 'string' ? prompt : JSON.stringify(prompt);
       const t0 = Date.now(), tiersTried = [];
-      let costUsd = 0;
+      let costUsd = 0, overridden = 0;
       const record = extra => {
-        const e = { kind: 'judge', name, ...extra, tiersTried, samples, costUsd: usd(costUsd), ms: Date.now() - t0 };
+        const e = { kind: 'judge', name, ...extra, tiersTried, samples, costUsd: usd(costUsd), ms: Date.now() - t0, ...(overridden ? { overridden } : {}) };
         keepText('system', String(system), e); keepText('prompt', text, e); e.schema = schema;
         event(e);
       };
       // One sample: the value, or the problem (a failed call or a failed check). A check may return null/undefined/true (ok),
       // false or a string (the problem); a check that throws is a problem too.
-      const ask = async model => {
-        let value, error = null, problem = null;
-        try { value = await callModel({ model, system: String(system), prompt: text, schema, reasoning, maxTokens }); } catch (e) { error = short(e); }
-        const cost = charge(); costUsd += cost;
+      const ask = async (model, tierIndex, sample) => {
+        let value, error = null, problem = null, response;
+        if (override) {
+          // The call-site id is fixed before the first await, so concurrent samples get ordinals in sample order.
+          const request = requestOf({ model, system, prompt: text, schema, reasoning, maxTokens }), d = requestDigest(request), key = `${name}\0${d}`;
+          const ordinal = ordinals.get(key) ?? 0; ordinals.set(key, ordinal + 1);
+          const callSite = { id: `${name}#${ordinal}:${d.slice(0, 16)}`, name, ordinal, digest: d, tier: model, tierIndex, sample };
+          try { response = await override(callSite, request); } catch (e) { response = { error: 'override threw: ' + short(e) }; }
+          if (response !== undefined && (response === null || typeof response !== 'object' || !('value' in response || 'error' in response))) response = { error: 'override returned neither {value} nor {error}' };
+        }
+        if (response !== undefined) { overridden++; if (response.error != null) error = short(response.error); else value = response.value; }
+        else try { value = await callModel({ model, system: String(system), prompt: text, schema, reasoning, maxTokens }); } catch (e) { error = short(e); }
+        const cost = response !== undefined ? 0 : charge(); costUsd += cost;
         if (!error && check) {
           try { const r = check(value); problem = r === null || r === undefined || r === true ? null : r === false ? 'check failed' : String(r); }
           catch (e) { problem = 'check threw: ' + short(e); }
@@ -172,7 +197,7 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false } = {}) {
       };
       for (const [k, model] of tiers.entries()) {
         if (state.spentUsd >= budgetUsd) { record({ ok: false }); deopt('budget', name, { spentUsd: usd(state.spentUsd), budgetUsd, tiersTried }); }
-        const results = await Promise.all(Array.from({ length: samples }, () => ask(model)));
+        const results = await Promise.all(Array.from({ length: samples }, (_, i) => ask(model, k, i)));
         const cost = usd(results.reduce((s, r) => s + r.cost, 0));
         // The gateway refused the call for budget: no stronger tier can help.
         if (results.some(r => /model call failed: 402\b/.test(r.error ?? ''))) {

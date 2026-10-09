@@ -1,7 +1,13 @@
 // acceptance.mjs: the default 'named' rule (unchanged) and the opt-in 'strict' rule (JIT v2.1). No model calls.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { judgeAcceptance, explainCase, noteBlocks, quotesIn, quoteOccurs, taskTexts, caseTasks, namedUnexplained, acceptanceModeOf, minPartialOf, MIN_QUOTE_CHARS, MIN_QUOTE_WORDS } from '../acceptance.mjs';
+import { judgeAcceptance, explainCase, noteBlocks, quotesIn, quoteOccurs, taskTexts, caseTasks, namedUnexplained, acceptanceModeOf, minPartialOf, MIN_QUOTE_CHARS, MIN_QUOTE_WORDS,
+  idsIn, acceptanceIdsOf, parseVerdicts, readVerdicts, ACCEPTANCE_IDS } from '../acceptance.mjs';
+import { runCase, aggregate, comparisonOf, loadComparer } from '../check-traces.mjs';
+import { taskFiles } from '../../c0/construct.mjs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 const TASK0 = { prompt: 'Fit each substrate.\nReport   Vmax in µmol/min and Km in mM.\nIgnore runs flagged as "bad baseline".', inputs: { runs: [{ id: 'r1', note: 'Replicate 3 was diluted twofold before reading.' }] } };
 const TASK1 = { prompt: 'Merge duplicate customers. Two records are the same person when the names differ by one typo and the phone matches.', inputs: {}, files: { 'notes.txt': 'Phones are compared on digits only.' } };
@@ -132,4 +138,119 @@ test('strict on real dev tasks (review repro): the records prompt sentence share
   assert.ok(sentence);
   const v = judgeAcceptance({ summary: s4([['trace-0', 'exact', 1], ['trace-1', 'diff', 0.2], ['trace-2', 'diff', 0.2]]), notes: `- trace-1, trace-2: the agent is wrong; "${sentence}"`, mode: 'strict', tasks: caseTasks(ts) });
   assert.equal(v.accepted, false); assert.deepEqual(v.acceptance.failed, ['explained']);
+});
+
+// ---- S0-6 (opt-in): case ids (exact | lenient | structured), allowSharedExplanation, and the HANDOFF §3 tolerant path ----
+
+test('acceptanceIds: exact is the default and changes nothing; an unknown value is refused', () => {
+  assert.deepEqual(ACCEPTANCE_IDS, ['exact', 'lenient', 'structured']);
+  assert.equal(acceptanceIdsOf(undefined), 'exact'); assert.throws(() => acceptanceIdsOf('fuzzy'), /acceptanceIds must be one of exact, lenient, structured/);
+  const s = summary([['trace-0', 'diff', 0.5]]);
+  assert.deepEqual(judgeAcceptance({ summary: s, notes: 'trace-0 differs', ids: 'exact' }), { unexplained: [], accepted: true }, 'no ids record at the default');
+  const strict = judgeAcceptance({ summary: s, notes: '- trace-0: "Report Vmax in µmol/min and Km in mM."', mode: 'strict', tasks, minPartial: 0.4 });
+  assert.equal('ids' in strict.acceptance, false); assert.equal('allowSharedExplanation' in strict.acceptance, false);
+});
+
+test('lenient ids: case-insensitive, lists and ranges; dossier 5 N3\'s "Trace-0, 2, 4" wording (rejected by exact) is accepted', () => {
+  assert.deepEqual([...idsIn('Trace-0, 2, 4 differ by ≤1e-5')], ['trace-0', 'trace-2', 'trace-4']);
+  assert.deepEqual([...idsIn('traces 1–3 agree')], ['trace-1', 'trace-2', 'trace-3']);
+  assert.deepEqual([...idsIn('trace-1 to trace-3; TRACE-10.')], ['trace-1', 'trace-2', 'trace-3', 'trace-10']);
+  assert.deepEqual([...idsIn('case-0 and 2, cases 5-6, case #9')], ['case-0', 'case-2', 'case-5', 'case-6', 'case-9']);
+  assert.deepEqual([...idsIn('in this case 3 rows were dropped; subtrace-4; trace-2.5; 1e-5')], [], 'a bare "case 3", a longer word and a decimal are not ids');
+  // N3: a clean compile, traces 0, 2 and 4 within 1e-5 (diffs under exact comparison), the notes wrote them as a list.
+  const n3 = summary([['trace-0', 'diff', 0.9], ['trace-1', 'exact', 1], ['trace-2', 'diff', 0.9], ['trace-3', 'exact', 1], ['trace-4', 'diff', 0.9]]);
+  const notes = 'Trace-0, 2, 4 differ by ≤1e-5 (float rounding in the fit).';
+  assert.deepEqual(judgeAcceptance({ summary: n3, notes }), { unexplained: ['trace-0', 'trace-2', 'trace-4'], accepted: false }, 'exact: the N3 false reject');
+  assert.deepEqual(judgeAcceptance({ summary: n3, notes, ids: 'lenient' }), { unexplained: [], accepted: true, ids: { mode: 'lenient', source: 'prose' } });
+  assert.deepEqual(namedUnexplained(n3.perCase, notes, 'lenient'), []);
+  // Strict with lenient ids: the note still needs its verbatim quote; only the id match is relaxed.
+  const s = summary([['trace-0', 'diff', 0.95], ['trace-1', 'exact', 1]]);
+  const v = judgeAcceptance({ summary: s, notes: '- TRACE-0: "Report Vmax in µmol/min and Km in mM."', mode: 'strict', tasks, ids: 'lenient' });
+  assert.equal(v.accepted, true); assert.deepEqual(v.acceptance.ids, { mode: 'lenient', source: 'prose' });
+  assert.equal(judgeAcceptance({ summary: s, notes: '- TRACE-0: the units decide it.', mode: 'strict', tasks, ids: 'lenient' }).accepted, false);
+});
+
+test('structured ids: verdicts.json decides each diff case (disagree explains, agree and unsure do not); prose is read only when the file is absent', () => {
+  const s = summary([['trace-0', 'diff', 0.95], ['trace-1', 'diff', 0.95], ['case-0', 'exact', 1]]);
+  const named = verdicts => judgeAcceptance({ summary: s, notes: 'trace-0 trace-1', ids: 'structured', verdicts });
+  const both = [{ case: 'trace-0', verdict: 'disagree', reason: 'units' }, { case: 'Trace-1', verdict: 'disagree', reason: 'rounding' }];
+  assert.deepEqual(named(both), { unexplained: [], accepted: true, ids: { mode: 'structured', source: 'verdicts', valid: true, verdicts: 2, malformed: 0 } });
+  assert.deepEqual(named([both[0], { case: 'trace-1', verdict: 'agree', reason: 'the agent is right' }]).unexplained, ['trace-1']);
+  assert.deepEqual(named([both[0], { case: 'trace-1', verdict: 'unsure', reason: '?' }]).unexplained, ['trace-1']);
+  assert.deepEqual(named([both[0], { case: 'trace-1', verdict: 'disagree', reason: '  ' }]).unexplained, ['trace-1'], 'a disagree needs a reason');
+  assert.deepEqual(named([both[0], { case: 'trace-1', verdict: 'maybe' }]).ids.malformed, 1);
+  assert.deepEqual(named([both[0]]).unexplained, ['trace-1'], 'present file, no verdict for the case: the prose naming trace-1 is not read');
+  assert.deepEqual(named([...both, { case: 'trace-1', verdict: 'agree', reason: 'x' }]).unexplained, ['trace-1'], 'conflicting duplicates explain nothing');
+  const bad = named({ 'trace-0': 'disagree' });
+  assert.deepEqual(bad.unexplained, ['trace-0', 'trace-1']); assert.equal(bad.ids.valid, false); assert.match(bad.ids.error, /not an array/);
+  assert.equal(named({ unreadable: 'Unexpected token' }).accepted, false);
+  assert.deepEqual(named(undefined), { unexplained: [], accepted: true, ids: { mode: 'structured', source: 'prose' } }, 'no file: the prose rule with exact ids');
+  assert.equal(parseVerdicts(null), null);
+  // Strict: the reason is the case's note, so its quote must occur verbatim in that case's task.
+  const st = summary([['trace-0', 'diff', 0.95], ['trace-1', 'exact', 1]]);
+  const strict = verdicts => judgeAcceptance({ summary: st, notes: '', mode: 'strict', tasks, ids: 'structured', verdicts });
+  const good = strict([{ case: 'trace-0', verdict: 'disagree', reason: 'the prompt says "Report Vmax in µmol/min and Km in mM." and the agent used nmol' }]);
+  assert.equal(good.accepted, true); assert.equal(good.acceptance.criteria.explained.cases[0].verified, 'Report Vmax in µmol/min and Km in mM.');
+  assert.equal(good.acceptance.criteria.explained.cases[0].verdict, 'disagree'); assert.equal(good.acceptance.ids.source, 'verdicts');
+  const para = strict([{ case: 'trace-0', verdict: 'disagree', reason: 'the units in the prompt are micromoles' }]);
+  assert.equal(para.accepted, false); assert.equal(para.acceptance.criteria.explained.cases[0].reason, 'named, but nothing quoted');
+  assert.match(strict([{ case: 'trace-0', verdict: 'agree', reason: '"Report Vmax in µmol/min and Km in mM."' }]).acceptance.criteria.explained.cases[0].reason, /^verdict agree/);
+});
+
+test('readVerdicts: undefined when the compile wrote none, the parsed file, or {unreadable}', async t => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'jit-verdicts-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
+  assert.equal(await readVerdicts(dir), undefined);
+  writeFileSync(path.join(dir, 'verdicts.json'), JSON.stringify([{ case: 'trace-0', verdict: 'disagree', reason: 'r' }]));
+  assert.deepEqual(await readVerdicts(dir), [{ case: 'trace-0', verdict: 'disagree', reason: 'r' }]);
+  writeFileSync(path.join(dir, 'verdicts.json'), '[{');
+  assert.ok((await readVerdicts(dir)).unreadable);
+});
+
+// "Shared text explains no case" against a genuine disagreement argued only from the SOP. The family's SOP sentence is in
+// every task; the only case-specific input is a number (drift 0.07), so there is no case-specific sentence to quote.
+const SOP = 'Exclude any replicate whose baseline drift exceeds five percent of the signal.';
+const sopTask = (i, drift) => ({ prompt: `Fit Michaelis-Menten parameters per substrate.\n${SOP}\nReport Vmax and Km.`, inputs: { substrate: `S${i}`, replicates: [{ id: 'r1', drift }, { id: 'r2', drift: 0.01 }] } });
+const sopTasks = caseTasks([0, 1, 2, 3].map(i => ({ task: sopTask(i, i === 1 || i === 2 ? 0.07 : 0.01) })));
+const sopCases = [['trace-0', 'exact', 1], ['trace-1', 'diff', 0.95], ['trace-2', 'exact', 1], ['trace-3', 'exact', 1]];
+
+test('strict rejects a genuine disagreement argued only from SOP boilerplate; allowSharedExplanation (default off) accepts it, one distinct quote per case still holds', () => {
+  const notes = `- trace-1: the agent kept replicate r1 (drift 0.07); the SOP says "${SOP}" so the solver drops it.`;
+  const v = (opts = {}, cases = sopCases, n = notes) => judgeAcceptance({ summary: summary(cases), notes: n, mode: 'strict', tasks: sopTasks, ...opts });
+  const def = v();
+  assert.equal(def.accepted, false, 'the shared-text rule rejects a correct, SOP-argued disagreement (a false reject)');
+  assert.deepEqual(def.acceptance.failed, ['explained']); assert.match(def.acceptance.criteria.explained.cases[0].reason, /shared text explains no case/);
+  const allowed = v({ allowSharedExplanation: true });
+  assert.equal(allowed.accepted, true); assert.equal(allowed.acceptance.criteria.explained.cases[0].verified, SOP); assert.equal(allowed.acceptance.allowSharedExplanation, true);
+  // Two cases argued from the same SOP sentence: still one distinct quote per case.
+  const two = sopCases.map(c => (c[0] === 'trace-2' ? ['trace-2', 'diff', 0.95] : c));
+  const twoNotes = `- trace-1 and trace-2: both kept r1 (drift 0.07); "${SOP}"`;
+  const same = v({ allowSharedExplanation: true }, two, twoNotes);
+  assert.equal(same.accepted, false); assert.deepEqual(same.unexplained, ['trace-2']);
+  const distinct = v({ allowSharedExplanation: true }, two, `${twoNotes}\n- trace-2: also "Fit Michaelis-Menten parameters per substrate."`);
+  assert.equal(distinct.accepted, true);
+  assert.throws(() => judgeAcceptance({ summary: summary(sopCases), notes, allowSharedExplanation: true }), /allowSharedExplanation needs acceptance 'strict'/);
+});
+
+test('HANDOFF §3 path: a tolerant within-band numeric difference is an exact case (check-traces runCase), so strict acceptance needs no note for it', async t => {
+  const root = mkdtempSync(path.join(tmpdir(), 'jit-acc-tol-')); t.after(() => rmSync(root, { recursive: true, force: true }));
+  // The solver's fit differs from the agent's by ~1e-5 relative (dossier 5 N3's size), far inside relTol 0.01.
+  writeFileSync(path.join(root, 'solve.mjs'), `console.log(JSON.stringify({ fits: [{ s: 'A', vmax: 4.02131, km: 0.51201 }] }));\n`);
+  mkdirSync(path.join(root, 'tools')); writeFileSync(path.join(root, 'tools/gateway.json'), JSON.stringify({ url: 'http://127.0.0.1:9', token: 't' }));
+  const task = { prompt: 'fit', inputs: { k: 1 } };
+  for (const [rel, content] of Object.entries({ ...taskFiles(task, 'traces/trace-0/'), 'traces/trace-0/agent-answer.json': JSON.stringify({ fits: [{ s: 'A', vmax: 4.0213, km: 0.512 }] }) })) {
+    mkdirSync(path.dirname(path.join(root, rel)), { recursive: true }); writeFileSync(path.join(root, rel), content);
+  }
+  const c = { id: 'trace-0', kind: 'trace', dir: path.join(root, 'traces/trace-0'), labelFile: path.join(root, 'traces/trace-0/agent-answer.json') };
+  const at = async cmp => aggregate([await runCase(c, { root, out: path.join(root, '.out'), toolsDir: path.join(root, 'tools'), timeoutMs: 30000, cmp })], { total: 1, cmp });
+  // The recommended kinetics config: compile.compare follows jit.compare (tolerant, relTol 0.01, absTol 1e-9, vmax and km).
+  const cmp = { ...comparisonOf({ compare: 'tolerant', relTol: 0.01, absTol: 1e-9, tolerantKeys: ['vmax', 'km'] }), comparer: await loadComparer(path.join(path.dirname(new URL(import.meta.url).pathname), '..')) };
+  const tol = await at(cmp);
+  assert.equal(tol.perCase[0].status, 'exact', JSON.stringify(tol.perCase[0])); assert.equal(tol.perCase[0].canonicalExact, false); assert.equal(tol.diffs, 0);
+  const tasks1 = caseTasks([{ task }]);
+  const v = judgeAcceptance({ summary: tol, notes: '', mode: 'strict', tasks: tasks1 });
+  assert.equal(v.accepted, true); assert.deepEqual(v.unexplained, []); assert.deepEqual(v.acceptance.criteria.explained.cases, [], 'no diff case to explain');
+  // Under canonical comparison the same output is a diff, and strict wants a quoted note for it.
+  const canon = await at(null);
+  assert.equal(canon.perCase[0].status, 'diff');
+  assert.equal(judgeAcceptance({ summary: canon, notes: '', mode: 'strict', tasks: tasks1 }).accepted, false);
 });

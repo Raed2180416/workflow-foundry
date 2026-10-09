@@ -16,7 +16,7 @@ import { startServices, Ledger } from '../lib/services.mjs';
 import { MODEL_TOOL, BUDGET_TOOL, taskFiles } from '../c0/construct.mjs';
 import { builderPrompt, promptVersionOf, flowFileOf } from './prompts.mjs';
 import { tolerance } from './compare.mjs';
-import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals } from './acceptance.mjs';
+import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals, acceptanceIdsOf, readVerdicts } from './acceptance.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // The SDK the builder reads and the host check runs follows the prompt version (prompts.mjs flowFileOf): FLOW_TOOL is
@@ -168,7 +168,7 @@ export async function hostCheck({ dir, solveSource, traces, regressions = [], mo
 // runner: the session runner (tests wrap runClaudeCode to plant a stand-in CLI binary in the workdir).
 export async function compile({ familyId, traces, previous = null, regressions = [], builderModel = 'claude-haiku-5-5', builderEffort = 'high', builderBudgetUsd = 3,
   gatewayUsd = 1.5, minutes = 30, perTaskUsd = 1, modelPort, workRoot, label, models, version = 1, checkUsd = gatewayUsd, checkMinutes = 30, checkCaseSeconds = 600,
-  promptVersion = 1, compare = 'canonical', relTol, absTol, tolerantKeys, allowLooseTolerance, acceptance = 'named', minPartial, refusals = [], runner = runClaudeCode }) {
+  promptVersion = 1, compare = 'canonical', relTol, absTol, tolerantKeys, allowLooseTolerance, acceptance = 'named', minPartial, refusals = [], runner = runClaudeCode, acceptanceIds = 'exact', allowSharedExplanation = false }) {
   if (!Array.isArray(traces) || !traces.length) throw new Error('compile: at least one trace is required');
   // JIT v2.2 (opt-in): check-traces case ids (trace-<i>) whose input the current solver refused; see acceptance.mjs applyRefusals.
   if (!Array.isArray(refusals) || refusals.some(id => !/^trace-\d+$/.test(id) || Number(id.slice(6)) >= traces.length)) throw new Error('compile: refusals must be trace-<i> ids of the given traces');
@@ -179,6 +179,10 @@ export async function compile({ familyId, traces, previous = null, regressions =
   if (acceptance === 'strict' && promptVersion < STRICT_MIN_PROMPT_VERSION) throw new Error(`compile: acceptance 'strict' needs promptVersion >= ${STRICT_MIN_PROMPT_VERSION} (earlier prompts never ask for verbatim quotes)`);
   if (acceptance !== 'strict' && minPartial != null) throw new Error('compile: minPartial needs acceptance \'strict\'');
   if (acceptance === 'strict') minPartial = minPartialOf(minPartial);
+  // S0-6 options (opt-in; at their defaults nothing below changes): how notes name cases, and the shared-text exception.
+  acceptanceIds = acceptanceIdsOf(acceptanceIds);
+  if (allowSharedExplanation && acceptance !== 'strict') throw new Error('compile: allowSharedExplanation needs acceptance \'strict\'');
+  const idOpts = { ...(acceptanceIds !== 'exact' ? { ids: acceptanceIds } : {}), ...(allowSharedExplanation ? { allowSharedExplanation: true } : {}) };
   if (!label || /[/\\]|^\.\.?$/.test(label)) throw new Error(`compile: label must be a plain directory name, got ${label}`);
   // The port must hold exactly the session's models: the gateway allow-list and execution then agree.
   const portIds = modelPort.policy.models.map(m => m.id);
@@ -215,7 +219,8 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const { summary: s, refusalCheck } = applyRefusals(check.summary, refusals);
   // A disagreement with an agent answer is acceptable only when BUILD-NOTES.md names that case (SPEC addendum 4); with
   // acceptance 'strict', also a minimum agreement and a verbatim quote from that case's task (acceptance.mjs).
-  const judged = judgeAcceptance({ summary: s, notes, mode: acceptance, minPartial, tasks: caseTasks(traces, regressions) });
+  const verdicts = acceptanceIds === 'structured' ? await readVerdicts(workdir) : undefined;   // verdicts.json beside BUILD-NOTES.md
+  const judged = judgeAcceptance({ summary: s, notes, mode: acceptance, minPartial, tasks: caseTasks(traces, regressions), ...idOpts, ...(verdicts !== undefined ? { verdicts } : {}) });
   const verdict = refusalCheck ? { ...judged, accepted: judged.accepted && refusalCheck.ok } : judged;
   const unexplained = verdict.unexplained;
   const checkTraces = {
@@ -227,7 +232,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
     // Non-default only (so a default record is unchanged): the comparison asked for, the canonical-exact diagnostic, and the
     // strict acceptance criteria (which passed, which failed).
     ...(cmp ? { compare: cmp, canonicalExact: s?.canonicalExact ?? null } : {}), ...(verdict.acceptance ? { acceptance: verdict.acceptance } : {}),
-    ...(refusalCheck ? { refusalCheck } : {}),
+    ...(refusalCheck ? { refusalCheck } : {}), ...(verdict.ids ? { ids: verdict.ids } : {}),
   };
   const builderCostUsd = r.costUsd ?? r.costUpperUsd;   // unknown builder spend is charged at its bound, never $0
   // (/tmp is private to the sandbox, so it is not listed.)
@@ -238,6 +243,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
     traceIds: traces.map(t => t.traceId ?? null), regressionIds: regressions.map(x => x.caseId ?? null),
     builderModel, builderEffort, policyHash: modelPort.policyHash ?? null, models, runId: svc.runId, flowSha256: sha(flowToolOf(promptVersion)), checkToolSha256: sha(CHECK_TOOL),
     promptVersion, ...(cmp ? { compare: cmp, compareToolSha256: sha(COMPARE_TOOL) } : {}), ...(acceptance === 'strict' ? { acceptance: { mode: acceptance, minPartial } } : {}),
+    ...(acceptanceIds !== 'exact' ? { acceptanceIds } : {}), ...(allowSharedExplanation ? { allowSharedExplanation: true } : {}),
     promptSha256: sha(prompt), artifact: solveSource == null ? null : 'solve.mjs', artifactSha256,
     builderCostUsd, builderCostReportedUsd: r.costUsd ?? null, builderCostUnknown: !!r.costUnknown, builderCostUpperUsd: r.costUpperUsd ?? null, builderBudgetUsd,
     builderUsage: r.usage ?? null, builderStreamUsage: r.streamUsage ?? null, builderSessionId: r.sessionId ?? null,

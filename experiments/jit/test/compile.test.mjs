@@ -41,7 +41,7 @@ flow.done({ promptChars: task.prompt.length, pick: v.pick });
 // A stand-in for the claude CLI (a node script; it runs inside the builder sandbox with the workdir as cwd). It records what
 // the builder saw, writes solve.mjs, runs the builder-side check-traces through the loopback gateway, then tampers with a
 // label and with the tools (the host-side check must not be moved by that) and prints stream-json events.
-const fake = ({ writeSolve = true, notes }) => `#!/opt/node24/bin/node
+const fake = ({ writeSolve = true, notes, verdicts }) => `#!/opt/node24/bin/node
 const fs = require('node:fs'), crypto = require('node:crypto'), { execFileSync } = require('node:child_process');
 fs.writeFileSync('.seen-prompt.txt', fs.readFileSync(0, 'utf8'));
 fs.writeFileSync('.seen-argv.json', JSON.stringify(process.argv.slice(2)));
@@ -57,6 +57,7 @@ fs.writeFileSync('traces/trace-2/agent-answer.json', JSON.stringify({ promptChar
 fs.writeFileSync('tools/check-traces.mjs', 'console.log(JSON.stringify({ exact: 999, clean: true }))');
 fs.writeFileSync('tools/flow.mjs', 'export const createFlow = () => { throw new Error("planted"); };');
 fs.writeFileSync('BUILD-NOTES.md', ${JSON.stringify(notes)});
+${verdicts !== undefined ? `fs.writeFileSync('verdicts.json', ${JSON.stringify(JSON.stringify(verdicts))});` : ''}
 const ev = o => process.stdout.write(JSON.stringify(o) + '\\n');
 ev({ type: 'system', subtype: 'init', session_id: 'fake-session' });
 ev({ type: 'assistant', message: { id: 'm1', usage: { input_tokens: 10, output_tokens: 20 }, content: [
@@ -285,9 +286,10 @@ test('v2.1 options are validated before anything starts; the default workdir and
   assert.deepEqual(JSON.parse(compileFiles({ ...args, compare: keyed })['tools/check-traces.json']), { compare: 'tolerant', relTol: 0.2, absTol: 1e-9, tolerantKeys: ['km', 'vmax'], allowLooseTolerance: true });
 });
 
-test('flow.mjs and flow-v2.mjs are unchanged by v2.1; prompt version 3 runs on flow-v2.mjs', () => {
+test('flow.mjs is frozen; flow-v2.mjs is pinned (unchanged by v2.1; S0-2 added the override hook); prompt version 3 runs on flow-v2.mjs', () => {
   assert.equal(sha(FLOW_TOOL), '3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b');
-  assert.equal(sha(FLOW_TOOL_V2), '0265299e42dd81868ddf2758452b8883523e7a97c5b491280111165b11eb37e0', 'flow-v2.mjs as merged in JIT v2');
+  // S0-2 added the replay override hook (inert without tools/flow-override.mjs); before it: 0265299e42dd81868ddf2758452b8883523e7a97c5b491280111165b11eb37e0 (JIT v2).
+  assert.equal(sha(FLOW_TOOL_V2), '5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223', 'flow-v2.mjs with the S0-2 override hook');
   assert.equal(flowToolOf(3), FLOW_TOOL_V2);
 });
 
@@ -330,4 +332,24 @@ test('compare tolerant + acceptance strict + prompt v3: the builder and the host
   assert.equal(boiler.record.checkTraces.accepted, false); assert.deepEqual(boiler.record.checkTraces.acceptance.failed, ['explained']);
   assert.match(boiler.record.checkTraces.acceptance.criteria.explained.cases[0].reason, /occur in every other case's task too/);
   assert.equal(para.record.checkTraces.clean, true, 'clean, and named: the default rule would have accepted it');
+});
+
+// S0-6 (opt-in): compile.acceptanceIds and allowSharedExplanation reach the host verdict and the record; defaults add nothing.
+test('acceptanceIds structured: compile reads the builder\'s verdicts.json; lenient and an unknown value', { skip }, async t => {
+  const workRoot = mkdtempSync(path.join(tmpdir(), 'jit-s06-')); t.after(() => rmSync(workRoot, { recursive: true, force: true }));
+  const { traces } = await fixture();
+  const opts = { familyId: 'records', traces, modelPort: portOf(), workRoot, models: MODELS };
+  const notes = 'Procedure in code. Trace-2: the agent answer promptChars 1 contradicts the prompt length.';
+  const yes = await compile({ ...opts, label: 'vs', acceptanceIds: 'structured', runner: runnerWith(fake({ notes, verdicts: [{ case: 'trace-2', verdict: 'disagree', reason: 'promptChars is the prompt length' }] })) });
+  assert.equal(yes.record.checkTraces.accepted, true); assert.equal(yes.record.acceptanceIds, 'structured');
+  assert.deepEqual(yes.record.checkTraces.ids, { mode: 'structured', source: 'verdicts', valid: true, verdicts: 1, malformed: 0 });
+  const no = await compile({ ...opts, label: 'vs2', acceptanceIds: 'structured', runner: runnerWith(fake({ notes, verdicts: [{ case: 'trace-2', verdict: 'agree', reason: 'the agent is right' }] })) });
+  assert.equal(no.record.checkTraces.accepted, false); assert.deepEqual(no.record.checkTraces.unexplained, ['trace-2']);
+  // "Trace-2" (capital T) in the prose: exact ids reject it, lenient ids accept it.
+  const exact = await compile({ ...opts, label: 've', runner: runnerWith(fake({ notes })) });
+  assert.equal(exact.record.checkTraces.accepted, false); assert.equal('acceptanceIds' in exact.record, false); assert.equal('ids' in exact.record.checkTraces, false);
+  const lenient = await compile({ ...opts, label: 'vl', acceptanceIds: 'lenient', runner: runnerWith(fake({ notes })) });
+  assert.equal(lenient.record.checkTraces.accepted, true); assert.deepEqual(lenient.record.checkTraces.ids, { mode: 'lenient', source: 'prose' });
+  await assert.rejects(compile({ ...opts, label: 'vx', acceptanceIds: 'fuzzy' }), /acceptanceIds must be one of/);
+  await assert.rejects(compile({ ...opts, label: 'vy', allowSharedExplanation: true }), /allowSharedExplanation needs acceptance 'strict'/);
 });
