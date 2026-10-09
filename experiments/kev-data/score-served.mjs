@@ -23,7 +23,7 @@
 // labels, targets or metadata).
 //
 // Library: parseKevText, loadKevRecords, subsetRecords, requestOf, questionKeys, scoreServed, describeServed, rawRead,
-// compareReads, floorAndRenormalize, servedClient, bridgeServedClient, readRows, permuteRead. CLI:
+// compareReads, floorAndRenormalize, servedClient, bridgeServedClient, jevConfig, jevClient, requestLedger, readRows, permuteRead. CLI:
 //   node experiments/kev-data/score-served.mjs --data <kev.jsonl> --out <rows.jsonl> \
 //        (--url http://127.0.0.1:8008 | --bridge) [--concurrency 1] [--expect-run <run>] [--reread 20] \
 //        [--limit N] [--resume] [--timeout-ms 120000] [--repeat 2] [--max-request-bytes N (default with --bridge: the daemon's limits.jsonBytes)]
@@ -32,11 +32,25 @@
 // --permute N runs POST /v1/systemone/permute on N items and writes the flip rate (§6.4 item 4) instead of scoring.
 // --url is the kev.serve base (for a local service); --bridge connects through bridge/cloud/client.mjs
 // (FOUNDRY_BRIDGE_URL or discovery) and signs every request. Exit 0 = valid run, 3 = invalid, 2 = usage.
+//
+// --jev (2026-10-09, owner direction: Jev replaces Kev for the judge program) scores against TypeSafe's hosted Jev instead:
+//   node experiments/kev-data/score-served.mjs --data <kev.jsonl> --out <rows.jsonl> --jev [--jev-model jev-latest] \
+//        [--concurrency 2] [--reread 20] [--resume] [--request-cap 1400 --request-ledger <requests.jsonl>]
+// The model id and the base URL come from policy/models.json (judgmentModels, provider kind systemone-http); the bearer is
+// whatever the environment variable the policy names holds (SystemOneClient reads FOUNDRY_SYSTEMONE_API_KEY), never a file.
+// Jev documents no /v1/models, so the served version is read from every response's `model` field and written on every row;
+// a run whose responses name more than one version is flagged (same_model false, the versions and their counts listed).
+// Every row also carries the request's `usage`. 429, 529, other 5xx, network errors and timeouts are retried with
+// exponential backoff and logged as faults (report.faults), never scored as answers; a record that still fails is a failed
+// record (the run is invalid until --resume reads it). Every attempt is logged, before it is sent, to the request ledger,
+// and a run that would take the ledger past --request-cap is refused up front; an attempt past the cap stops the run.
+// Responses are kept verbatim in <rows>.raw.jsonl; the --reread rows go to <rows>.reread.jsonl.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, truncateSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { FoundryError } from '../../src/data.mjs';
 import { SystemOneClient } from '../../src/judgment.mjs';
+import { JUDGMENT_KIND, judgmentModelById, loadPolicy } from '../../src/models/policy.mjs';
 import { canonical, sha256 } from './lib/hash.mjs';
 
 export const ROWS_SCHEMA = 'kev-data/served-rows@1';
@@ -45,6 +59,10 @@ export const PROB_DECIMALS = 4;                 // kev.api.round_prob
 export const STABLE_DP = 0.01;                  // §7.5 stability test and the 20-record raw re-read
 export const STABLE_FLIP_RATE = 0.005;          // §7.5: at most 0.5% argmax flips
 export const SERVED_MODEL = 'kev-latest';       // kev.serve MODEL_NAMES: kev-latest and jev-latest serve the same checkpoint
+export const JEV_MODEL = 'jev-latest';          // hosted Jev: a policy judgment model (policy/models.json judgmentModels), checked there
+export const JEV_RETRY = Object.freeze({ max: 6, baseMs: 2000, capMs: 60_000 });   // 2, 4, 8, 16, 32, 60 s: rate limits are undocumented
+export const JEV_CONCURRENCY = 2;
+const JEV_CREDENTIAL_ENV = 'FOUNDRY_SYSTEMONE_API_KEY';   // the variable SystemOneClient reads (src/judgment.mjs); the policy must name it
 
 const fail = (code, message, details) => new FoundryError(code, message, details);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -223,6 +241,42 @@ export async function bridgeServedClient({ timeoutMs, model, ...connectOpts } = 
   return { client, url, fetchImpl: client.bridgeFetch, served: servedClient({ url, fetchImpl: client.bridgeFetch, timeoutMs, model }) };
 }
 
+// Hosted Jev, from the policy only: the judgment model id, its provider's base URL and the name of the credential variable.
+export function jevConfig(policy, id = JEV_MODEL) {
+  const { entry, provider } = judgmentModelById(policy, id);
+  if (provider.kind !== JUDGMENT_KIND) throw fail('JEV_POLICY', `provider ${entry.provider} is not a ${JUDGMENT_KIND} provider`);
+  if ((provider.route ?? '/v1/systemone') !== '/v1/systemone') throw fail('JEV_POLICY', `provider ${entry.provider} route ${provider.route} is not the System One route SystemOneClient speaks`);
+  if (provider.credentialEnv !== JEV_CREDENTIAL_ENV) throw fail('JEV_POLICY', `provider ${entry.provider} names credential variable ${provider.credentialEnv}; SystemOneClient reads ${JEV_CREDENTIAL_ENV} only`);
+  return { model: entry.id, provider: entry.provider, url: provider.baseUrl.replace(/\/+$/, ''), credentialEnv: provider.credentialEnv };
+}
+// A SystemOneClient for Jev with the bearer from the environment variable the policy names (only that variable is handed to
+// the client). A missing variable is refused before any request; its value is never printed, logged or written.
+export function jevClient({ policy = loadPolicy().policy, model = JEV_MODEL, fetchImpl = globalThis.fetch, timeoutMs = 120_000, env = process.env } = {}) {
+  const config = jevConfig(policy, model), credential = env[config.credentialEnv];
+  if (typeof credential !== 'string' || !credential) throw fail('JEV_CREDENTIAL', `${config.credentialEnv} is not set: map the owner's key into it for this command (from the shell environment, never a file)`);
+  return { config, served: new SystemOneClient({ url: config.url, model: config.model, timeoutMs, fetchImpl, env: { [config.credentialEnv]: credential } }) };
+}
+
+// The request ledger: one line per attempted request, written BEFORE the request is sent (so a killed run never undercounts),
+// shared by every run that names the same file; take() refuses an attempt past the cap. A line holds the tag, record id, attempt
+// and request hash, never a header or a body.
+export function requestLedger({ file = null, cap = null } = {}) {
+  if (cap !== null && (!Number.isInteger(cap) || cap < 0)) throw fail('USAGE', 'the request cap must be a non-negative integer');
+  if (file) mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
+  let n = file ? readRows(file, { repair: true }).length : 0;
+  return {
+    file, cap,
+    get count() { return n; },
+    room(k) { return cap === null || n + k <= cap; },
+    take(entry) {
+      if (cap !== null && n + 1 > cap) throw fail('REQUEST_CAP', `the request cap of ${cap} is reached (${n} requests in ${file ?? 'this run'}); nothing more is sent`);
+      n++;
+      if (file) appendFileSync(file, JSON.stringify({ n, at: new Date().toISOString(), ...entry }) + '\n');
+      return n;
+    }
+  };
+}
+
 // The raw API: one POST /v1/systemone through a plain fetch, no SystemOneClient, no retries. The 20-record
 // re-read (acceptance) and the §7.5 stability reads go through here.
 export async function rawRead({ url, fetchImpl = globalThis.fetch, request, model = SERVED_MODEL, timeoutMs = 120_000, signal } = {}) {
@@ -329,65 +383,91 @@ export function readRows(file, { repair = false } = {}) {
 export async function scoreServed({
   records, served, rowsFile = null, fetchImpl = globalThis.fetch, url = null, concurrency = 1, expectRun = null, reread = 0, resume = false,
   retry = {}, signal = null, onProgress = null, pingRounds = 3, maxConsecutiveFailures = 8, inputFile = null, inputSha256 = null, model = SERVED_MODEL, timeoutMs = 120_000, repeat = 1,
-  maxRequestBytes = null      // the bridge's limits.jsonBytes: a larger request is a counted rejection, never sent (the daemon would answer 413)
+  maxRequestBytes = null,     // the bridge's limits.jsonBytes: a larger request is a counted rejection, never sent (the daemon would answer 413)
+  identityFrom = 'models',    // 'models': one GET /v1/models before and after (kev.serve); 'response': every response's `model` (hosted Jev, no /v1/models)
+  ledger = null,              // requestLedger(): every attempt logged before it is sent, and the cap enforced
+  rawFile = undefined         // verbatim responses (default with identityFrom 'response': <rows>.raw.jsonl); null = none
 } = {}) {
   if (!Array.isArray(records) || !records.length) throw fail('SERVED_INPUT', 'scoreServed needs records');
   if (!served) throw fail('SERVED_INPUT', 'scoreServed needs a SystemOneClient (servedClient or bridgeServedClient)');
-  const { max: maxRetries = 4, baseMs = 500 } = retry;
+  if (!['models', 'response'].includes(identityFrom)) throw fail('SERVED_INPUT', "identityFrom is 'models' or 'response'");
+  const perResponse = identityFrom === 'response';
+  if (perResponse && repeat > 1) throw fail('SERVED_INPUT', 'the latency repeat is a kev.serve prefix-cache read; a hosted model is not asked twice');
+  const { max: maxRetries = 4, baseMs = 500, capMs = 15_000 } = retry;
   const startedAt = new Date().toISOString(), t0 = performance.now();
 
-  // one served model at a time: read the identity first, and again at the end
-  const identity = await describeServed(served, { signal });
-  if (!runMatches(identity.run, expectRun)) throw fail('SERVED_MODEL_MISMATCH', `the service runs ${identity.run}, expected ${expectRun}`);
+  // one served model at a time: read the identity first, and again at the end (per response, for a server with no /v1/models)
+  const identity = perResponse ? { mode: 'per-response', run: null } : await describeServed(served, { signal });
+  if (!perResponse && !runMatches(identity.run, expectRun)) throw fail('SERVED_MODEL_MISMATCH', `the service runs ${identity.run}, expected ${expectRun}`);
   const rtts = [];
-  for (let i = 0; i < pingRounds; i++) { const t = performance.now(); await served.describe({ signal }); rtts.push(performance.now() - t); }
+  if (!perResponse) for (let i = 0; i < pingRounds; i++) { const t = performance.now(); await served.describe({ signal }); rtts.push(performance.now() - t); }
 
   // validate the whole file before the first request: a bad question must not cost an hour of served reads
   const questionCount = records.reduce((n, r) => n + Object.keys(r.questions).length, 0);
   for (const r of records) for (const q of Object.values(r.questions)) { const keys = questionKeys(q); labelIndex(q, keys); }
 
   const rowsByRecord = new Map();
+  if (rowsFile && resume) for (const r of readRows(rowsFile, { repair: true })) (rowsByRecord.get(r.id) ?? rowsByRecord.set(r.id, []).get(r.id)).push(r);
+  const doneIds = new Set(records.filter(r => (rowsByRecord.get(r._meta.id)?.length ?? 0) === Object.keys(r.questions).length).map(r => r._meta.id));
+  const todo = records.filter(r => !doneIds.has(r._meta.id));
+  // the request cap: a run that would take the ledger past it is refused before the first request and before any file is
+  // touched (each record is one request at least, the re-read one more per record); retries count as they happen, and an
+  // attempt past the cap stops the run
+  const plannedRequests = todo.length + (reread > 0 ? Math.min(reread, records.length) : 0);
+  if (ledger && !ledger.room(plannedRequests)) throw fail('REQUEST_CAP', `this run needs at least ${plannedRequests} requests; the ledger holds ${ledger.count} of a cap of ${ledger.cap}`);
   if (rowsFile) {
     mkdirSync(path.dirname(path.resolve(rowsFile)), { recursive: true });
-    if (resume) for (const r of readRows(rowsFile, { repair: true })) (rowsByRecord.get(r.id) ?? rowsByRecord.set(r.id, []).get(r.id)).push(r);
-    else writeFileSync(rowsFile, '');
+    if (!resume) writeFileSync(rowsFile, '');
+    else {    // rows of records that are not complete (or not in this input) are dropped, so a record is never scored twice
+      const keep = [...doneIds].flatMap(id => rowsByRecord.get(id)), total = [...rowsByRecord.values()].reduce((n, x) => n + x.length, 0);
+      if (keep.length !== total) { const tmp = `${rowsFile}.tmp`; writeFileSync(tmp, keep.map(r => JSON.stringify(r)).join('\n') + (keep.length ? '\n' : '')); renameSync(tmp, rowsFile); }
+    }
   }
-  const doneIds = new Set(records.filter(r => (rowsByRecord.get(r._meta.id)?.length ?? 0) === Object.keys(r.questions).length).map(r => r._meta.id));
-  if (rowsFile && resume) {   // rows of records that are not complete (or not in this input) are dropped, so a record is never scored twice
-    const keep = [...doneIds].flatMap(id => rowsByRecord.get(id)), total = [...rowsByRecord.values()].reduce((n, x) => n + x.length, 0);
-    if (keep.length !== total) { const tmp = `${rowsFile}.tmp`; writeFileSync(tmp, keep.map(r => JSON.stringify(r)).join('\n') + (keep.length ? '\n' : '')); renameSync(tmp, rowsFile); }
-  }
-  const todo = records.filter(r => !doneIds.has(r._meta.id));
+  const rawOut = rawFile === undefined ? (perResponse && rowsFile ? rawFileOf(rowsFile) : null) : rawFile;
+  if (rawOut) { mkdirSync(path.dirname(path.resolve(rawOut)), { recursive: true }); if (!resume) writeFileSync(rawOut, ''); }
   const coverage = { requested_records: records.length, requested_questions: questionCount, evaluated_records: doneIds.size,
     evaluated_questions: [...doneIds].reduce((n, id) => n + rowsByRecord.get(id).length, 0), rejected_records: 0, failed_records: 0, truncated_records: 0 };
-  const rejected = [], failed = [], truncated = [], samples = [], inputTokens = [], cachedSamples = [];
+  const rejected = [], failed = [], truncated = [], samples = [], inputTokens = [], cachedSamples = [], faults = [];
   const allRows = [...doneIds].flatMap(id => rowsByRecord.get(id));
   let consecutiveFailures = 0;
 
+  // one request with its retries: transient errors (429, 5xx including 529, network, a timeout once) back off exponentially and
+  // are logged as faults; a 422 is a rejection; anything else is a failed record. Never an answer.
+  const attempt = async (record, request, rq, phase) => {
+    for (let n = 0; ; n++) {
+      if (ledger) ledger.take({ tag: phase, input: inputFile, id: record._meta.id, attempt: n + 1, rq });
+      const t = performance.now();
+      try {
+        const body = await served.ask({ state: request.state, questions: request.questions, signal });
+        return { body, wallMs: performance.now() - t, attempts: n + 1 };
+      } catch (error) {
+        if (signal?.aborted || error.code === 'CANCELLED') throw error;
+        if (error.code === 'MODEL_AUTH') throw error;                                       // a refused credential ends the run
+        if (error.code === 'MODEL_CONTEXT') return { rejected: String(error.message).slice(0, 300), attempts: n + 1 };
+        const retryable = RETRYABLE.has(error.code) && n < (error.code === 'MODEL_TIMEOUT' ? Math.min(1, maxRetries) : maxRetries);
+        faults.push({ phase, id: record._meta.id, attempt: n + 1, code: error.code ?? 'ERROR', status: error.details?.status ?? null, retried: retryable, at: new Date().toISOString() });
+        if (retryable) { await sleep(Math.min(baseMs * 2 ** n, capMs)); continue; }
+        return { failed: { code: error.code ?? 'ERROR', status: error.details?.status ?? null, message: String(error.message).slice(0, 300) }, attempts: n + 1 };
+      }
+    }
+  };
   const ask = async record => {
     const request = requestOf(record), rq = sha256(canonical(request)).slice(0, 16);
     if (maxRequestBytes) {
       const bytes = Buffer.byteLength(JSON.stringify({ state: request.state, model, questions: request.questions }));
       if (bytes > maxRequestBytes) return { rejected: `the request is ${bytes} bytes, over the bridge's ${maxRequestBytes}-byte body limit (limits.jsonBytes)`, rq };
     }
-    for (let attempt = 0; ; attempt++) {
-      const t = performance.now();
-      try {
-        const body = await served.ask({ state: request.state, questions: request.questions, signal });
-        const wallMs = performance.now() - t;
-        // repeat 2 (the latency gate, §6.5): the same request again straight away, which the server answers from its state-prefix cache
-        let cached = null;
-        if (repeat > 1) { const t2 = performance.now(), again = await served.ask({ state: request.state, questions: request.questions, signal }); cached = { wallMs: performance.now() - t2, serverMs: typeof again.latency_ms === 'number' ? again.latency_ms : null }; }
-        return { body, rq, wallMs, cached };
-      } catch (error) {
-        if (signal?.aborted || error.code === 'CANCELLED') throw error;
-        if (error.code === 'MODEL_AUTH') throw error;                                       // a refused credential ends the run
-        if (error.code === 'MODEL_CONTEXT') return { rejected: String(error.message).slice(0, 300), rq };
-        if (RETRYABLE.has(error.code) && attempt < (error.code === 'MODEL_TIMEOUT' ? Math.min(1, maxRetries) : maxRetries)) { await sleep(Math.min(baseMs * 2 ** attempt, 15_000)); continue; }
-        return { failed: { code: error.code ?? 'ERROR', message: String(error.message).slice(0, 300) }, rq };
-      }
-    }
+    const got = await attempt(record, request, rq, 'score');
+    if (!got.body) return { ...got, rq };
+    // repeat 2 (the latency gate, §6.5): the same request again straight away, which the server answers from its state-prefix cache
+    let cached = null;
+    if (repeat > 1) { const t2 = performance.now(), again = await served.ask({ state: request.state, questions: request.questions, signal }); cached = { wallMs: performance.now() - t2, serverMs: typeof again.latency_ms === 'number' ? again.latency_ms : null }; }
+    return { body: got.body, rq, wallMs: got.wallMs, attempts: got.attempts, cached };
   };
+  // the served version of one response (per-response identity): its `model` field, which must be a non-empty string
+  const versionOf = body => { if (typeof body?.model !== 'string' || !body.model) throw fail('SERVED_MODEL', 'the response names no model; every row must record the version that produced it'); return body.model; };
+  const jevExtra = (body, attempts) => ({ model: versionOf(body), requested_model: model, usage: body.usage ?? null, output_tokens: body.usage?.output_tokens ?? null, attempts });
+  const withAnswerFields = (rows, body) => { for (const r of rows) { const a = body.answers[r.question]; r.choice = a?.choice ?? null; r.confidence = a?.confidence ?? null; } return rows; };
 
   const tScore = performance.now();
   await mapOrdered(todo, concurrency, async record => ({ record, ...(await ask(record)) }), async result => {
@@ -398,9 +478,14 @@ export async function scoreServed({
       if (++consecutiveFailures >= maxConsecutiveFailures) throw fail('SERVED_UNAVAILABLE', `${consecutiveFailures} records in a row failed (last: ${result.failed.code}); the service is not answering`);
       return;
     }
+    if (rawOut) appendFileSync(rawOut, JSON.stringify({ phase: 'score', id, rq, attempts: result.attempts, at: new Date().toISOString(), body }) + '\n');
     if (body.truncated === true) { coverage.truncated_records++; truncated.push({ id, state_tokens: body.usage?.state_tokens ?? null, used: body.usage?.state_tokens_used ?? null }); return; }
     let rows;
-    try { rows = rowsOf(record, body, { rq, latency_ms: body.latency_ms ?? null, wall_ms: round(wallMs, 1), input_tokens: body.usage?.input_tokens ?? null, path: 'served', run: identity.run }); }
+    try {
+      rows = rowsOf(record, body, { rq, latency_ms: body.latency_ms ?? null, wall_ms: round(wallMs, 1), input_tokens: body.usage?.input_tokens ?? null,
+        path: perResponse ? 'jev' : 'served', run: perResponse ? versionOf(body) : identity.run, ...(perResponse ? jevExtra(body, result.attempts) : {}) });
+      if (perResponse) withAnswerFields(rows, body);
+    }
     catch (error) {                          // an answer that is not a valid distribution is a failed record, counted and listed
       coverage.failed_records++; failed.push({ id, code: error.code ?? 'SERVED_ANSWER', message: String(error.message).slice(0, 300) });
       if (++consecutiveFailures >= maxConsecutiveFailures) throw fail('SERVED_UNAVAILABLE', `${consecutiveFailures} records in a row failed (last: ${error.code}); the service is not answering sensibly`);
@@ -417,33 +502,75 @@ export async function scoreServed({
   });
   const scoringSeconds = (performance.now() - tScore) / 1000;      // the scoring phase only: not the identity reads, the pings or the re-read
 
-  // the raw API re-read: records in a fixed order (hash of id), through a plain fetch, compared to the rows just written
+  // the raw API re-read: records in a fixed order (hash of id), through a plain fetch, compared to the rows just written.
+  // Per-response identity (hosted Jev): through the same authenticated client and retry rule, its rows kept in <rows>.reread.jsonl.
   let rereadReport = null;
+  const rereadVersions = new Map();
   if (reread > 0) {
-    if (!url) throw fail('SERVED_INPUT', 'a raw re-read needs the service url');
+    if (!url && !perResponse) throw fail('SERVED_INPUT', 'a raw re-read needs the service url');
     const byId = new Map(records.map(r => [r._meta.id, r]));
     const ids = [...new Set(allRows.map(r => r.id))].sort((x, y) => (sha256(x) < sha256(y) ? -1 : 1)).slice(0, reread);
     const fresh = [];
     try {
       for (const id of ids) {
-        const record = byId.get(id), body = await rawRead({ url, fetchImpl, request: requestOf(record), model, timeoutMs, signal });
-        fresh.push(...rowsOf(record, body));
+        const record = byId.get(id);
+        if (perResponse) {
+          const request = requestOf(record), rq = sha256(canonical(request)).slice(0, 16), got = await attempt(record, request, rq, 'reread');
+          if (!got.body) throw fail('SERVED_RAW', `the re-read of ${id} ${got.rejected ? `was rejected: ${got.rejected}` : `failed: ${got.failed.code}`}`);
+          if (rawOut) appendFileSync(rawOut, JSON.stringify({ phase: 'reread', id, rq, attempts: got.attempts, at: new Date().toISOString(), body: got.body }) + '\n');
+          const v = versionOf(got.body);
+          rereadVersions.set(v, (rereadVersions.get(v) ?? 0) + 1);
+          fresh.push(...withAnswerFields(rowsOf(record, got.body, { rq, path: 'jev-reread', run: v, ...jevExtra(got.body, got.attempts) }), got.body));
+        } else {
+          const body = await rawRead({ url, fetchImpl, request: requestOf(record), model, timeoutMs, signal });
+          fresh.push(...rowsOf(record, body));
+        }
       }
       const original = allRows.filter(r => ids.includes(r.id));
       rereadReport = { records: ids.length, ...compareReads(original, fresh) };
-    } catch (error) { rereadReport = { records: ids.length, agree: false, stable: false, error: `${error.code ?? 'ERROR'}: ${String(error.message).slice(0, 200)}` }; }
+    } catch (error) {
+      if (error.code === 'MODEL_AUTH' || error.code === 'REQUEST_CAP' || error.code === 'CANCELLED') throw error;
+      rereadReport = { records: ids.length, agree: false, stable: false, error: `${error.code ?? 'ERROR'}: ${String(error.message).slice(0, 200)}` };
+    }
+    if (perResponse && rowsFile) writeFileSync(rereadFileOf(rowsFile), fresh.map(r => JSON.stringify(r)).join('\n') + (fresh.length ? '\n' : ''));
+    if (perResponse && rereadReport) rereadReport.versions = Object.fromEntries(rereadVersions);
   }
 
-  const after = await describeServed(served, { signal });
-  const sameModel = after.run === identity.run;
+  // the served model: the same at the end as at the start (kev.serve), or one version across every response (hosted Jev)
+  const modelCheck = async () => {
+    const after = await describeServed(served, { signal });
+    const sameModel = after.run === identity.run;
+    return { after, sameModel };
+  };
+  // per response: the versions and the usage of every scored record in the rows file (one request each; resumed rows included),
+  // read from each record's first row; re-reads and retried attempts are not in these totals (the ledger counts attempts)
+  const versions = new Map(), usageTotals = { requests: 0, input_tokens: 0, output_tokens: 0, missing_usage: 0 };
+  if (perResponse) {
+    const firstQ = new Map(records.map(r => [r._meta.id, Object.keys(r.questions)[0]]));
+    for (const r of allRows) if (firstQ.get(r.id) === r.question) {
+      versions.set(r.model ?? null, (versions.get(r.model ?? null) ?? 0) + 1);
+      usageTotals.requests++;
+      if (typeof r.usage?.input_tokens === 'number') usageTotals.input_tokens += r.usage.input_tokens; else usageTotals.missing_usage++;
+      if (typeof r.usage?.output_tokens === 'number') usageTotals.output_tokens += r.usage.output_tokens;
+    }
+  }
+  const allVersions = new Set([...versions.keys(), ...rereadVersions.keys()]);
+  const { after, sameModel } = perResponse ? { after: null, sameModel: allVersions.size <= 1 } : await modelCheck();
+  if (perResponse) { identity.run = allVersions.size === 1 ? [...allVersions][0] : null; identity.versions = Object.fromEntries(versions); }
   const rowsSha = rowsFile && existsSync(rowsFile) ? sha256(readFileSync(rowsFile)) : null;
+  const faultCounts = {};
+  for (const f of faults) { const k = `${f.code}${f.status ? `:${f.status}` : ''}`; faultCounts[k] = (faultCounts[k] ?? 0) + 1; }
   const report = {
-    schema: ROWS_SCHEMA, started_at: startedAt, path: 'served',
+    schema: ROWS_SCHEMA, started_at: startedAt, path: perResponse ? 'jev' : 'served',
     input: { file: inputFile, sha256: inputSha256, records: records.length, questions: questionCount },
-    rows: { file: rowsFile, sha256: rowsSha, n: allRows.length },
-    served: { endpoint: url ? new URL(url).origin : null, requested_model: model, identity, identity_after: after, same_model: sameModel, expected_run: expectRun === null ? null : String(expectRun) },
-    concurrency, repeat, retry: { max: maxRetries, base_ms: baseMs }, max_request_bytes: maxRequestBytes, coverage,
+    rows: { file: rowsFile, sha256: rowsSha, n: allRows.length, ...(rawOut ? { raw: rawOut } : {}), ...(perResponse && reread > 0 && rowsFile ? { reread: rereadFileOf(rowsFile) } : {}) },
+    served: { endpoint: url ? new URL(url).origin : null, requested_model: model, identity, identity_after: after, same_model: sameModel, expected_run: expectRun === null ? null : String(expectRun),
+      ...(perResponse ? { identity_from: 'response', versions: Object.fromEntries(versions), reread_versions: Object.fromEntries(rereadVersions), model_changed: allVersions.size > 1 } : {}) },
+    concurrency, repeat, retry: { max: maxRetries, base_ms: baseMs, cap_ms: capMs }, max_request_bytes: maxRequestBytes, coverage,
     rejected, failed, truncated,
+    faults: { n: faults.length, by_code: faultCounts, list: faults },
+    ...(perResponse ? { usage: { ...usageTotals, scope: 'every scored record in the rows file, one request each; not the re-read or retried attempts (see requests and faults)' } } : {}),
+    ...(ledger ? { requests: { ledger: ledger.file, cap: ledger.cap, count_after: ledger.count } } : {}),
     reread: rereadReport,
     timing: {
       wall_seconds: round(scoringSeconds, 2), requests: samples.length,
@@ -462,12 +589,14 @@ export async function scoreServed({
 }
 
 export const reportFileOf = rowsFile => rowsFile.replace(/\.jsonl$/, '') + '.report.json';
+export const rawFileOf = rowsFile => rowsFile.replace(/\.jsonl$/, '') + '.raw.jsonl';
+export const rereadFileOf = rowsFile => rowsFile.replace(/\.jsonl$/, '') + '.reread.jsonl';
 function writeJsonAtomic(file, value) { const tmp = `${file}.tmp`; writeFileSync(tmp, JSON.stringify(value, null, 2) + '\n'); renameSync(tmp, file); }
 
 // ---- CLI ---------------------------------------------------------------------------------------------------------
 
 function parseArgs(argv) {
-  const o = { concurrency: 1, reread: 0, repeat: 1, permute: 0, resume: false, bridge: false, timeoutMs: 120_000, maxRequestBytes: 0 };
+  const o = { concurrency: null, reread: 0, repeat: 1, permute: 0, resume: false, bridge: false, jev: false, timeoutMs: 120_000, maxRequestBytes: 0, requestCap: null, requestLedger: null };
   const take = (i, name) => { if (i + 1 >= argv.length) throw fail('USAGE', `${name} needs a value`); return argv[i + 1]; };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -475,6 +604,10 @@ function parseArgs(argv) {
     else if (a === '--out') o.out = take(i++, a);
     else if (a === '--url') o.url = take(i++, a);
     else if (a === '--bridge') o.bridge = true;
+    else if (a === '--jev') o.jev = true;
+    else if (a === '--jev-model') o.jevModel = take(i++, a);
+    else if (a === '--request-cap') o.requestCap = Number(take(i++, a));
+    else if (a === '--request-ledger') o.requestLedger = take(i++, a);
     else if (a === '--concurrency') o.concurrency = Number(take(i++, a));
     else if (a === '--reread') o.reread = Number(take(i++, a));
     else if (a === '--repeat') o.repeat = Number(take(i++, a));
@@ -487,7 +620,12 @@ function parseArgs(argv) {
     else throw fail('USAGE', `unknown argument ${a}`);
   }
   if (!o.data || !o.out) throw fail('USAGE', '--data and --out are required');
-  if (!!o.url === o.bridge) throw fail('USAGE', 'give exactly one of --url or --bridge');
+  if ([!!o.url, o.bridge, o.jev].filter(Boolean).length !== 1) throw fail('USAGE', 'give exactly one of --url, --bridge or --jev');
+  if (!o.jev && (o.jevModel || o.requestCap !== null || o.requestLedger)) throw fail('USAGE', '--jev-model, --request-cap and --request-ledger go with --jev');
+  if (o.jev && (o.permute || o.repeat > 1 || o.expectRun)) throw fail('USAGE', '--permute, --repeat and --expect-run are kev.serve reads; Jev has no /permute, prefix cache or /v1/models');
+  if (o.requestCap !== null && (!Number.isInteger(o.requestCap) || o.requestCap < 0)) throw fail('USAGE', '--request-cap must be a non-negative integer');
+  if (o.requestCap !== null && !o.requestLedger) throw fail('USAGE', '--request-cap needs --request-ledger (the count is kept across runs)');
+  o.concurrency ??= o.jev ? JEV_CONCURRENCY : 1;
   for (const k of ['concurrency', 'reread', 'timeoutMs', 'repeat', 'permute', 'maxRequestBytes']) if (!Number.isInteger(o[k]) || o[k] < 0 || (!['reread', 'permute', 'maxRequestBytes'].includes(k) && o[k] < 1)) throw fail('USAGE', `--${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)} must be a positive integer`);
   return o;
 }
@@ -497,8 +635,13 @@ async function main(argv) {
   try { o = parseArgs(argv); } catch (error) { console.error(`score-served: ${error.message}`); return 2; }
   const { records, sha256: inputSha256 } = loadKevRecords(o.data);
   const subset = o.limit ? records.slice(0, o.limit) : records;
-  let served, url, fetchImpl, maxRequestBytes = o.maxRequestBytes || null;
-  if (o.bridge) {
+  let served, url, fetchImpl, maxRequestBytes = o.maxRequestBytes || null, model = SERVED_MODEL, ledger = null, retry = {};
+  if (o.jev) {
+    let config;
+    ({ config, served } = jevClient({ model: o.jevModel ?? JEV_MODEL, timeoutMs: o.timeoutMs }));     // refuses a missing credential variable
+    url = config.url; model = config.model; retry = JEV_RETRY;
+    ledger = requestLedger({ file: o.requestLedger ?? null, cap: o.requestCap });
+  } else if (o.bridge) {
     let client;
     ({ client, served, url, fetchImpl } = await bridgeServedClient({ timeoutMs: o.timeoutMs }));
     maxRequestBytes ??= (await client.info().catch(() => null))?.limits?.jsonBytes ?? 1024 * 1024;   // the daemon's body limit (bridge default 1 MiB)
@@ -514,8 +657,9 @@ async function main(argv) {
   }
   let last = 0;
   const { report } = await scoreServed({ records: subset, served, url, fetchImpl, rowsFile: o.out, concurrency: o.concurrency, expectRun: o.expectRun ?? null, reread: o.reread, repeat: o.repeat, resume: o.resume,
-    inputFile: path.basename(o.data), inputSha256, timeoutMs: o.timeoutMs, maxRequestBytes, onProgress: ({ done, total }) => { if (done - last >= 50 || done === total) { last = done; console.error(`scored ${done}/${total}`); } } });
-  console.log(JSON.stringify({ valid: report.valid, coverage: report.coverage, timing: { seconds_per_request: report.timing.seconds_per_request }, reread: report.reread, rows: report.rows }, null, 2));
+    inputFile: path.basename(o.data), inputSha256, timeoutMs: o.timeoutMs, maxRequestBytes, model, retry, ledger, identityFrom: o.jev ? 'response' : 'models', onProgress: ({ done, total }) => { if (done - last >= 50 || done === total) { last = done; console.error(`scored ${done}/${total}`); } } });
+  console.log(JSON.stringify({ valid: report.valid, coverage: report.coverage, timing: { seconds_per_request: report.timing.seconds_per_request }, reread: report.reread, rows: report.rows,
+    ...(o.jev ? { served: { requested_model: report.served.requested_model, versions: report.served.versions, model_changed: report.served.model_changed }, usage: report.usage, faults: report.faults.by_code, requests: report.requests } : {}) }, null, 2));
   return report.valid ? 0 : 3;
 }
 

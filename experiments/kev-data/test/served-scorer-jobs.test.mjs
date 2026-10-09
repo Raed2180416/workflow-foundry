@@ -67,6 +67,7 @@ import * as J from '../jobs.mjs';
 import * as SS from '../score-served.mjs';
 import { KEV, PYTHON, HF_HOME, TOKENIZER, measureRecords, validateKevFile } from '../lib/tokens.mjs';
 import * as H from '../lib/harness.mjs';
+import { loadPolicy } from '../../../src/models/policy.mjs';
 
 const TEST_FILE = fileURLToPath(import.meta.url);
 const HERE = path.dirname(TEST_FILE);
@@ -257,6 +258,184 @@ test('unit: two reads of the same requests are compared by max |dp|, mean max-p 
   assert.equal(flip.argmaxFlips, 1); assert.equal(flip.stable, false);
   const missing = SS.compareReads(a, a.slice(1));
   assert.equal(missing.missing, 1); assert.equal(missing.agree, false);
+});
+
+// =============================================================================================================
+// unit: hosted Jev (2026-10-09, owner direction: Jev replaces Kev for the judge program). A fake fetch stands in for
+// https://api.typesafe.ai; nothing here opens a connection. The key is a test value that must never reach a file.
+// =============================================================================================================
+
+const TEST_KEY = 'unit-test-key-0123456789abcdefABCDEF';
+const jevPolicy = once(() => loadPolicy().policy);
+// runbook-shaped records: a label, a src, a soft target and _meta.source, none of which may leave the machine
+const jevRecords = n => Array.from({ length: n }, (_, i) => ({
+  state: { action: { op: 'query', target: `service:unit-${i}` }, expected_effect: 'error_rate stays at or below 5%', observation: `error_rate = ${i}.00%` },
+  questions: { Q4: { type: 'choice', instructions: 'Does this observation match the expected effect of the action?', criteria: { drifted: 'something different happened', as_expected: 'the observation matches the expected effect' }, label: i % 2 ? 'drifted' : 'as_expected', src: 'kevdata_Q4', ...(i === 0 ? { target: { as_expected: 0.5, drifted: 0.5 } } : {}) } },
+  _meta: { id: `jev/${i}`, ...(i === 0 ? { source: 'unknowable' } : {}) }
+}));
+const jevAnswer = (questions, { version = 'jev-1.4.2', shift = 0 } = {}) => {
+  const answers = {};
+  for (const [qid, q] of Object.entries(questions)) {
+    const keys = Object.keys(q.criteria), w = keys.map((k, i) => 1 + ((sha(`${qid}${k}${q.instructions}`).charCodeAt(0) + i) % 7)), t = w.reduce((a, b) => a + b, 0);
+    const p = w.map(x => x / t); p[0] = Math.min(1, Math.max(0, p[0] + shift)); p[1] = 1 - p.slice(0, 1).reduce((a, b) => a + b, 0) - p.slice(2).reduce((a, b) => a + b, 0);
+    const best = keys[p.indexOf(Math.max(...p))];
+    answers[qid] = { type: 'choice', choice: best, probabilities: Object.fromEntries(keys.map((k, i) => [k, Math.round(p[i] * 1e4) / 1e4])), confidence: Math.round(Math.max(...p) * 1e4) / 1e4 };
+  }
+  return { model: version, answers, usage: { input_tokens: 150 + Object.keys(questions).length, output_tokens: 3 } };
+};
+// a fake TypeSafe endpoint: respond(call) -> { status, body } | Error (thrown as a network failure); every call is recorded
+function fakeJev(respond = () => ({ status: 200 })) {
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    const call = { url: String(url), method: init.method ?? 'GET', headers: { ...(init.headers ?? {}) }, body: init.body ? JSON.parse(init.body) : null, n: calls.length + 1 };
+    calls.push(call);
+    const r = respond(call);
+    if (r instanceof Error) throw r;
+    const body = r.body ?? (r.status === 200 ? jevAnswer(call.body.questions, r) : { error: { type: 'error', message: `status ${r.status}` } });
+    return new Response(JSON.stringify(body), { status: r.status, headers: { 'content-type': 'application/json' } });
+  };
+  return { calls, fetchImpl, client: (opts = {}) => SS.jevClient({ policy: jevPolicy(), fetchImpl, env: { FOUNDRY_SYSTEMONE_API_KEY: TEST_KEY }, ...opts }) };
+}
+const jevRun = (served, opts) => SS.scoreServed({ served, identityFrom: 'response', model: 'jev-latest', url: 'https://api.typesafe.ai', retry: { max: 6, baseMs: 1, capMs: 2 }, ...opts });
+const noKeyIn = (files) => { for (const f of files) if (existsSync(f)) assert.ok(!readFileSync(f, 'utf8').includes(TEST_KEY), `${path.basename(f)} holds no credential`); };
+
+test('unit: jev: the policy names the model, the URL and the credential variable; a missing credential is refused before any request', () => {
+  const cfg = SS.jevConfig(jevPolicy());
+  assert.deepEqual(cfg, { model: 'jev-latest', provider: 'typesafe-systemone', url: 'https://api.typesafe.ai', credentialEnv: 'FOUNDRY_SYSTEMONE_API_KEY' });
+  assert.throws(() => SS.jevConfig(jevPolicy(), 'jev-9.9.9'), e => e.code === 'MODEL_NOT_IN_POLICY', 'a model id the policy does not list');
+  const other = structuredClone(jevPolicy()); other.providers['typesafe-systemone'].credentialEnv = 'TYPESAFE_API_KEY';
+  assert.throws(() => SS.jevConfig(other), e => e.code === 'JEV_POLICY', 'SystemOneClient reads one variable only');
+  const { calls, fetchImpl } = fakeJev();
+  assert.throws(() => SS.jevClient({ policy: jevPolicy(), fetchImpl, env: {} }), e => e.code === 'JEV_CREDENTIAL' && /FOUNDRY_SYSTEMONE_API_KEY is not set/.test(e.message));
+  assert.throws(() => SS.jevClient({ policy: jevPolicy(), fetchImpl, env: { FOUNDRY_SYSTEMONE_API_KEY: '' } }), e => e.code === 'JEV_CREDENTIAL');
+  assert.equal(calls.length, 0);
+});
+
+test('unit: jev: the request carries the state and typed questions only, with the bearer from the environment; rows carry version and usage; no file holds the key', async () => {
+  const fake = fakeJev(), { served } = fake.client(), dir = H.tempDir('jev-unit-'), out = path.join(dir, 'rows.jsonl'), ledgerFile = path.join(dir, 'requests.jsonl');
+  const records = jevRecords(5), ledger = SS.requestLedger({ file: ledgerFile, cap: 100 });
+  const { report, rows } = await jevRun(served, { records, rowsFile: out, concurrency: 2, ledger, inputFile: 'unit.jsonl' });
+  assert.equal(fake.calls.length, 5, 'one POST per record, no /v1/models read');
+  for (const c of fake.calls) {
+    assert.equal(c.url, 'https://api.typesafe.ai/v1/systemone'); assert.equal(c.method, 'POST');
+    assert.equal(c.headers.authorization, `Bearer ${TEST_KEY}`); assert.equal(c.headers['content-type'], 'application/json');
+    assert.deepEqual(Object.keys(c.body).sort(), ['model', 'questions', 'state']); assert.equal(c.body.model, 'jev-latest');
+    for (const q of Object.values(c.body.questions)) assert.deepEqual(Object.keys(q).sort(), ['criteria', 'instructions', 'type']);
+    assert.ok(!/"(label|src|target)"/.test(JSON.stringify(c.body.questions)), 'no label, src or soft target leaves the machine');
+    assert.deepEqual(c.body.state, records.find(r => r.state.action.target === c.body.state.action.target).state, 'the state as the file holds it (its own keys only), never _meta');
+  }
+  assert.equal(report.valid, true); assert.equal(report.path, 'jev'); assert.equal(report.served.identity_from, 'response');
+  assert.deepEqual(report.served.versions, { 'jev-1.4.2': 5 }); assert.equal(report.served.model_changed, false); assert.equal(report.served.identity.run, 'jev-1.4.2');
+  assert.deepEqual(report.usage, { requests: 5, input_tokens: 755, output_tokens: 15, missing_usage: 0, scope: report.usage.scope });
+  assert.equal(rows.length, 5);
+  for (const r of rows) {
+    assert.equal(r.model, 'jev-1.4.2'); assert.equal(r.run, 'jev-1.4.2'); assert.equal(r.requested_model, 'jev-latest'); assert.equal(r.path, 'jev');
+    assert.deepEqual(r.usage, { input_tokens: 151, output_tokens: 3 }); assert.equal(r.attempts, 1);
+    assert.ok(Math.abs(r.p.reduce((a, b) => a + b, 0) - 1) < 1e-3); assert.equal(r.choice, r.keys[r.p.indexOf(Math.max(...r.p))]); assert.equal(typeof r.confidence, 'number');
+  }
+  assert.deepEqual(SS.readRows(out).map(r => r.id), rows.map(r => r.id));
+  const raw = SS.readRows(SS.rawFileOf(out));
+  assert.equal(raw.length, 5); assert.ok(raw.every(x => x.phase === 'score' && x.body.model === 'jev-1.4.2' && x.body.usage), 'responses kept verbatim');
+  assert.equal(SS.readRows(ledgerFile).length, 5); assert.equal(report.requests.count_after, 5);
+  noKeyIn([out, SS.rawFileOf(out), SS.reportFileOf(out), ledgerFile]);
+  assert.ok(!JSON.stringify(report).includes(TEST_KEY));
+});
+
+test('unit: jev: 429, 529 and 5xx are retried with backoff and logged as faults, never scored; a record that keeps failing is a failed record', async () => {
+  // record 1: 429, 529, then 200; record 2: a network error, then 503, then 200; the rest answer at once
+  const seen = new Map();
+  const fake = fakeJev(c => {
+    const id = c.body.state.action.target, k = (seen.get(id) ?? 0) + 1; seen.set(id, k);
+    if (id === 'service:unit-1' && k === 1) return { status: 429 };
+    if (id === 'service:unit-1' && k === 2) return { status: 529 };
+    if (id === 'service:unit-2' && k === 1) return Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNRESET' } });
+    if (id === 'service:unit-2' && k === 2) return { status: 503 };
+    return { status: 200 };
+  });
+  const { served } = fake.client(), records = jevRecords(4);
+  const { report, rows } = await jevRun(served, { records, concurrency: 1 });
+  assert.equal(report.valid, true, 'retried requests that then answer leave a valid run');
+  assert.equal(fake.calls.length, 8); assert.equal(rows.length, 4);
+  assert.deepEqual(report.faults.by_code, { 'MODEL_QUOTA:429': 1, 'MODEL_UNAVAILABLE:529': 1, MODEL_UNAVAILABLE: 1, 'MODEL_UNAVAILABLE:503': 1 });
+  assert.ok(report.faults.list.every(f => f.retried && f.phase === 'score'));
+  assert.deepEqual(rows.map(r => r.attempts), [1, 3, 3, 1]);
+  // a record that is rate-limited past its retries is a failed record: counted, listed, no row, the run invalid; never a wrong answer
+  const stuck = fakeJev(c => (c.body.state.action.target === 'service:unit-2' ? { status: 429 } : { status: 200 }));
+  const r2 = await jevRun(stuck.client().served, { records: jevRecords(4), concurrency: 1, retry: { max: 2, baseMs: 1, capMs: 1 } });
+  assert.equal(r2.report.coverage.failed_records, 1); assert.deepEqual(r2.report.failed.map(f => [f.id, f.code, f.status]), [['jev/2', 'MODEL_QUOTA', 429]]);
+  assert.ok(!r2.rows.some(r => r.id === 'jev/2')); assert.equal(r2.report.valid, false);
+  assert.equal(r2.report.faults.by_code['MODEL_QUOTA:429'], 3); assert.equal(r2.report.faults.list.filter(f => !f.retried).length, 1);
+  // a refused credential ends the run at once, without retries
+  const denied = fakeJev(() => ({ status: 401 }));
+  await assert.rejects(jevRun(denied.client().served, { records: jevRecords(3) }), e => e.code === 'MODEL_AUTH');
+  assert.equal(denied.calls.length, 1);
+  // a 422 is a rejection, not a retry
+  const invalid = fakeJev(c => (c.body.state.action.target === 'service:unit-0' ? { status: 422 } : { status: 200 }));
+  const r3 = await jevRun(invalid.client().served, { records: jevRecords(2), concurrency: 1 });
+  assert.equal(r3.report.coverage.rejected_records, 1); assert.equal(invalid.calls.length, 2); assert.equal(r3.report.valid, false);
+});
+
+test('unit: jev: a version change mid-run is flagged with both versions and invalidates the run; a response without a version is a failed record', async () => {
+  const fake = fakeJev(c => ({ status: 200, version: c.n <= 3 ? 'jev-1.4.2' : 'jev-1.5.0' })), dir = H.tempDir('jev-swap-'), out = path.join(dir, 'rows.jsonl');
+  const { report, rows } = await jevRun(fake.client().served, { records: jevRecords(5), rowsFile: out, concurrency: 1 });
+  assert.equal(report.served.model_changed, true); assert.equal(report.served.same_model, false); assert.equal(report.valid, false);
+  assert.deepEqual(report.served.versions, { 'jev-1.4.2': 3, 'jev-1.5.0': 2 }); assert.equal(report.served.identity.run, null);
+  assert.deepEqual(rows.map(r => r.model), ['jev-1.4.2', 'jev-1.4.2', 'jev-1.4.2', 'jev-1.5.0', 'jev-1.5.0'], 'each row names its own version');
+  const anon = fakeJev(c => (c.n === 2 ? { status: 200, body: { ...jevAnswer(c.body.questions), model: undefined } } : { status: 200 }));
+  const r2 = await jevRun(anon.client().served, { records: jevRecords(3), concurrency: 1 });
+  assert.equal(r2.report.coverage.failed_records, 1); assert.equal(r2.report.failed[0].code, 'SERVED_MODEL'); assert.equal(r2.report.valid, false);
+});
+
+test('unit: jev: the ledger logs every attempt before it is sent, refuses a run that would pass the cap, stops at the cap, and resume finishes the run', async () => {
+  const dir = H.tempDir('jev-cap-'), out = path.join(dir, 'rows.jsonl'), ledgerFile = path.join(dir, 'requests.jsonl'), records = jevRecords(8);
+  // refused up front: 8 records do not fit a cap of 5, and nothing is sent or written
+  const none = fakeJev();
+  await assert.rejects(jevRun(none.client().served, { records, rowsFile: out, ledger: SS.requestLedger({ file: ledgerFile, cap: 5 }) }), e => e.code === 'REQUEST_CAP');
+  assert.equal(none.calls.length, 0); assert.equal(existsSync(out), false); assert.equal(existsSync(ledgerFile) ? SS.readRows(ledgerFile).length : 0, 0);
+  // a cap of 10 with record 2 rate-limited three times: the 11th attempt is refused, the run stops, rows so far are kept
+  let hits = 0;
+  const flaky = fakeJev(c => (c.body.state.action.target === 'service:unit-2' && ++hits <= 3 ? { status: 429 } : { status: 200 }));
+  await assert.rejects(jevRun(flaky.client().served, { records, rowsFile: out, concurrency: 1, ledger: SS.requestLedger({ file: ledgerFile, cap: 10 }) }), e => e.code === 'REQUEST_CAP');
+  assert.equal(flaky.calls.length, 10, 'no request past the cap'); assert.equal(SS.readRows(ledgerFile).length, 10);
+  const kept = SS.readRows(out).length;
+  assert.ok(kept >= 6 && kept < 8, `${kept} rows kept`);
+  // the ledger is shared across runs: resume with a larger cap scores only what is missing
+  const rest = fakeJev();
+  const { report } = await jevRun(rest.client().served, { records, rowsFile: out, resume: true, ledger: SS.requestLedger({ file: ledgerFile, cap: 20 }) });
+  assert.equal(rest.calls.length, 8 - kept); assert.equal(report.valid, true); assert.equal(SS.readRows(out).length, 8);
+  assert.equal(SS.readRows(ledgerFile).length, 10 + 8 - kept); assert.deepEqual(SS.readRows(ledgerFile).map(x => x.n), Array.from({ length: 18 - kept }, (_, i) => i + 1));
+  assert.ok(SS.readRows(ledgerFile).every(x => Object.keys(x).sort().join() === 'at,attempt,id,input,n,rq,tag'), 'a ledger line holds no header or body');
+});
+
+test('unit: jev: the re-read goes through the authenticated client, is compared like the raw re-read and keeps its rows; drift beyond |dp| 0.01 invalidates the run', async () => {
+  const dir = H.tempDir('jev-reread-'), out = path.join(dir, 'rows.jsonl');
+  const same = fakeJev();
+  const { report } = await jevRun(same.client().served, { records: jevRecords(6), rowsFile: out, reread: 3, concurrency: 2 });
+  assert.equal(same.calls.length, 9); assert.ok(same.calls.every(c => c.headers.authorization === `Bearer ${TEST_KEY}`));
+  assert.equal(report.reread.records, 3); assert.equal(report.reread.agree, true); assert.equal(report.reread.argmaxFlips, 0); assert.deepEqual(report.reread.versions, { 'jev-1.4.2': 3 });
+  assert.equal(report.valid, true);
+  const rr = SS.readRows(SS.rereadFileOf(out));
+  assert.equal(rr.length, 3); assert.ok(rr.every(r => r.path === 'jev-reread' && r.model === 'jev-1.4.2'));
+  assert.equal(SS.readRows(SS.rawFileOf(out)).filter(x => x.phase === 'reread').length, 3);
+  // the second read moves p by 0.02: not within |dp| < 0.01, so the run is flagged by the unchanged validity rule
+  const drift = fakeJev(c => ({ status: 200, shift: c.n > 6 ? 0.02 : 0 }));
+  const r2 = await jevRun(drift.client().served, { records: jevRecords(6), reread: 3, concurrency: 1 });
+  assert.equal(r2.report.reread.agree, false); assert.ok(r2.report.reread.maxAbsDp >= 0.0199); assert.equal(r2.report.valid, false);
+  assert.equal(r2.report.coverage.evaluated_records, 6, 'coverage itself is complete');
+});
+
+test('unit: jev: the CLI refuses mixed or incomplete options and a missing credential variable, before any request', () => {
+  const script = path.join(HERE, '..', 'score-served.mjs'), dir = H.tempDir('jev-cli-'), data = path.join(dir, 'in.jsonl');
+  writeFileSync(data, jsonl(jevRecords(2)));
+  const { FOUNDRY_SYSTEMONE_API_KEY, NODE_TEST_CONTEXT, ...env } = process.env;
+  const run = args => spawnSync(process.execPath, [script, '--data', data, '--out', path.join(dir, 'rows.jsonl'), ...args], { encoding: 'utf8', env, timeout: 60_000 });
+  for (const args of [['--jev', '--url', 'http://127.0.0.1:1'], ['--jev', '--permute', '5'], ['--jev', '--repeat', '2'], ['--jev', '--request-cap', '10'], ['--url', 'http://127.0.0.1:1', '--request-cap', '10', '--request-ledger', 'x']]) {
+    const r = run(args);
+    assert.equal(r.status, 2, `${args.join(' ')}: ${r.stderr}`);
+  }
+  const r = run(['--jev', '--request-cap', '10', '--request-ledger', path.join(dir, 'requests.jsonl')]);
+  assert.equal(r.status, 1); assert.match(r.stderr, /JEV_CREDENTIAL: FOUNDRY_SYSTEMONE_API_KEY is not set/);
+  assert.equal(existsSync(path.join(dir, 'rows.jsonl')), false); assert.equal(existsSync(path.join(dir, 'requests.jsonl')), false);
 });
 
 // =============================================================================================================
@@ -1428,7 +1607,11 @@ test('seeded defects: each mutation of the scorer, the router, the sequence chec
     m('an upload over limits.fileBytes passes the limits', 'jobs.mjs', 'if (bytes > lim.fileBytes) errors.push(', 'if (false) errors.push(', /^unit: the laptop limits/),
     m('a kev.benchmark read has no served companion', 'jobs.mjs', 'companionRows = COMPANION_ROWS }) {', 'companionRows = 0 }) {', /^unit: every kev\.benchmark read has/),
     m('a job that read another file passes acceptance', 'jobs.mjs', 'if (!got.endsWith(`/${expect.dataset}`)) errors.push(', 'if (false) errors.push(', /^unit: the runner stops at a job/),
-    m('a request over the bridge body limit is sent', 'score-served.mjs', 'if (bytes > maxRequestBytes) return { rejected:', 'if (false) return { rejected:', /^unit: a served request over the bridge body limit/)
+    m('a request over the bridge body limit is sent', 'score-served.mjs', 'if (bytes > maxRequestBytes) return { rejected:', 'if (false) return { rejected:', /^unit: a served request over the bridge body limit/),
+    // added with the Jev mode (2026-10-09)
+    m('a rate-limited request is never retried', 'score-served.mjs', 'const retryable = RETRYABLE.has(error.code) && n <', 'const retryable = false && n <', /^unit: jev: 429|^unit: transient errors/),
+    m('a Jev version change goes unnoticed', 'score-served.mjs', '{ after: null, sameModel: allVersions.size <= 1 }', '{ after: null, sameModel: true }', /^unit: jev: a version change/),
+    m('the request cap is not enforced', 'score-served.mjs', "if (cap !== null && n + 1 > cap) throw fail('REQUEST_CAP'", "if (false) throw fail('REQUEST_CAP'", /^unit: jev: the ledger/)
   ];
   const pattern = '^unit: ', t0 = Date.now();
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });

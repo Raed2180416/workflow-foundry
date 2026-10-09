@@ -41,6 +41,7 @@ test('subsetPolicy keeps only the session models and their providers; class S is
   const sub = subsetPolicy(owner.policy, MODELS);
   assert.deepEqual(sub.models.map(m => m.id), MODELS); assert.deepEqual(Object.keys(sub.providers), ['claude-cli']);
   assert.match(sub.policyVersion, /\+only:/); assert.ok(Object.isFrozen(sub));
+  assert.ok(owner.policy.judgmentModels?.length && sub.judgmentModels === undefined, 'judgment models (hosted Jev) stay out of a session subset, with their provider');
   assert.throws(() => subsetPolicy(owner.policy, ['claude-opus-5-5', 'gpt-x']), /not in the owner policy: gpt-x/);
   const registry = createDefaultRegistry();
   const s = validateWorkflow(agentWorkflow('S'), { registry, modelPolicy: sub });

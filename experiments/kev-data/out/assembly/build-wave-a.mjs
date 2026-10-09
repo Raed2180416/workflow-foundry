@@ -12,8 +12,11 @@ import { FROZEN_SRC_COMMIT } from '../../exec/frozen-src.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT_ROOT = process.env.KEV_WAVE_A_OUT ?? '/var/tmp/foundry-work/kev/builds';
-const HELDOUT = path.join(REPO_ROOT, '.foundry', 'kev-data', 'heldout');
-const POOLS = path.join(REPO_ROOT, '.foundry', 'kev-data', 'pools', 'train');
+// KEV_WAVE_A_HELDOUT / KEV_WAVE_A_POOLS (added 2026-10-09 for the laptop rebuild after the cloud container was lost): point the
+// build at another held-out store or train-pool directory, e.g. an explicit empty stub, so a stub never sits where the real
+// re-authored material belongs. Unset, the build reads the canonical .foundry/kev-data locations as before.
+const HELDOUT = process.env.KEV_WAVE_A_HELDOUT ?? path.join(REPO_ROOT, '.foundry', 'kev-data', 'heldout');
+const POOLS = process.env.KEV_WAVE_A_POOLS ?? path.join(REPO_ROOT, '.foundry', 'kev-data', 'pools', 'train');
 const ALL_SLICES = ['train', 'calib-in', 'calib-ood', 'dev-select', 'dev-ood', 'test-in', 'test-ood'];
 const INNER_FILE = { 'records-notes': 'records-notes', kinetics: 'kinetics', runbook: 'runbook', interactive: 'interactive', 'failures-code': 'failures-code', 'construction-crossfamily': 'construction-crossfamily' };
 // static inner opts (data, no held-out text)

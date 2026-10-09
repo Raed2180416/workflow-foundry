@@ -40,12 +40,12 @@ export class SystemOneClient {
       if (timeout.aborted) throw new FoundryError('MODEL_TIMEOUT', `System One request exceeded ${this.timeoutMs} ms`);
       throw new FoundryError('MODEL_UNAVAILABLE', `System One server unreachable: ${error?.cause?.code ?? error?.message ?? 'error'}`);
     }
-    const text = await res.text();
-    if (res.status === 401 || res.status === 403) throw new FoundryError('MODEL_AUTH', `System One server refused the credential (${res.status})`);
-    if (res.status === 422) throw new FoundryError('MODEL_CONTEXT', `System One server refused the request: ${text.slice(0, 300)}`);
-    if (res.status === 429) throw new FoundryError('MODEL_QUOTA', 'System One server rate-limited the request');
-    if (res.status >= 500) throw new FoundryError('MODEL_UNAVAILABLE', `System One server error ${res.status}`);
-    if (res.status !== 200) throw new FoundryError('MODEL_FAILED', `System One server returned ${res.status}: ${text.slice(0, 300)}`);
+    const text = await res.text(), status = { status: res.status };     // the HTTP status, so a caller can log a fault by status (429, 529, 5xx)
+    if (res.status === 401 || res.status === 403) throw new FoundryError('MODEL_AUTH', `System One server refused the credential (${res.status})`, status);
+    if (res.status === 422) throw new FoundryError('MODEL_CONTEXT', `System One server refused the request: ${text.slice(0, 300)}`, status);
+    if (res.status === 429) throw new FoundryError('MODEL_QUOTA', 'System One server rate-limited the request', status);
+    if (res.status >= 500) throw new FoundryError('MODEL_UNAVAILABLE', `System One server error ${res.status}`, status);
+    if (res.status !== 200) throw new FoundryError('MODEL_FAILED', `System One server returned ${res.status}: ${text.slice(0, 300)}`, status);
     try { return JSON.parse(text); } catch { throw new FoundryError('JUDGMENT_PROTOCOL', 'System One server returned non-JSON'); }
   }
 }

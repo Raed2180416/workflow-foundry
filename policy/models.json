@@ -1,5 +1,5 @@
 {
-  "policyVersion": "2026-10-08.2",
+  "policyVersion": "2026-10-09.1",
   "owner": "Raed2180416 (decision D1, granted 2026-10-06: free choice of Haiku 4.5 / Sonnet 5.5 / Opus 5.5 plus open-weight models for any role)",
   "notes": [
     "This file is the ONLY source of model ids for the Foundry runtime. Any id not listed here is rejected (tests/model-policy.test.mjs).",
@@ -7,7 +7,8 @@
     "No silent fallback: the runtime never substitutes a model. Escalation moves up the class order only through logged events (rules E1-E7).",
     "Costs: hosted calls record the provider-reported list-price USD (claude CLI total_cost_usd, costBasis=list). Local CPU calls record API cost 0 plus an imputed compute cost = wall seconds x imputedComputeUsdPerHour/3600.",
     "2026-10-07: Claude Haiku 5.5 (claude-haiku-5-5) added as the first class-M model (owner notice: Anthropic replaced Haiku 4.5 with Haiku 5.5). Class M resolves to it; Haiku 4.5 stays listed by id for earlier pilots and tests only. Local S-class models are parked (owner decision 2026-10-07) but stay listed.",
-    "2026-10-08: claude-cli.childEnv sets CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 and FORCE_PROMPT_CACHING_5M=1 for every claude -p child (research/review-20261007/04-efficiency-rust.md change 1; re-measured in research/review-20261007/cli-flags-20261008/). Closed list of transport/telemetry/cache-pricing variables, validated in src/models/policy.mjs; each journal request records the closed-list variables the child saw (providerRequest.env). Excluded from replay keys because neither changes the decoding; the first does shorten the prompt the CLI builds (about 165 tokens; the CLI's telemetry plugin is not loaded), as a CLI version change can. The flags lower the reported cost per call, so cost per success before and after 2026-10-08 is not comparable (synthesis rule R3). A value is \"1\" (set) or null (removed from the child); \"0\" is refused because the CLI reads CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 as set (zero-probe.json). Version 2026-10-08.2 corrects this note only; the measurements in that directory ran under 2026-10-08.1."
+    "2026-10-08: claude-cli.childEnv sets CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 and FORCE_PROMPT_CACHING_5M=1 for every claude -p child (research/review-20261007/04-efficiency-rust.md change 1; re-measured in research/review-20261007/cli-flags-20261008/). Closed list of transport/telemetry/cache-pricing variables, validated in src/models/policy.mjs; each journal request records the closed-list variables the child saw (providerRequest.env). Excluded from replay keys because neither changes the decoding; the first does shorten the prompt the CLI builds (about 165 tokens; the CLI's telemetry plugin is not loaded), as a CLI version change can. The flags lower the reported cost per call, so cost per success before and after 2026-10-08 is not comparable (synthesis rule R3). A value is \"1\" (set) or null (removed from the child); \"0\" is refused because the CLI reads CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 as set (zero-probe.json). Version 2026-10-08.2 corrects this note only; the measurements in that directory ran under 2026-10-08.1.",
+    "2026-10-09: owner direction, Jev replaces Kev for the judge program; billed to the owner's TypeSafe account. Jev (TypeSafe's hosted System One judgment model) is listed under judgmentModels on the systemone-http provider typesafe-systemone: typed questions in, a probability per option out. It is not a generative model: ModelPort and class resolution read models[] only, and validatePolicy refuses a models[] entry on a systemone-http provider. The provider names its credential variable (credentialEnv), never a value; the owner maps his own key into that variable per command. jev-latest is a moving alias, so every judgment records the version the response names (its model field); TypeSafe documents no /v1/models."
   ],
   "classOrder": [
     "S",
@@ -61,6 +62,18 @@
       "imputedComputeUsdPerHour": 0.2,
       "knownGaps": [
         "llama.cpp silently drops unsupported JSON Schema keywords: keep output schemas to the portable subset (no pattern, oneOf, uniqueItems, nested $ref)"
+      ]
+    },
+    "typesafe-systemone": {
+      "kind": "systemone-http",
+      "baseUrl": "https://api.typesafe.ai",
+      "route": "/v1/systemone",
+      "credentialEnv": "FOUNDRY_SYSTEMONE_API_KEY",
+      "auth": "Authorization: Bearer <value of the environment variable named in credentialEnv>, read by src/judgment.mjs SystemOneClient. The owner provisions the key in his own shell and maps it into that variable per command; no key is read from a file, stored, logged or committed.",
+      "docs": "https://docs.typesafe.ai/api.md (checked 2026-10-09): POST /v1/systemone {model, state, questions}; answers carry the probabilities, the response carries model and usage {input_tokens, output_tokens}; errors 401 auth, 422 validation, 429 rate limit (exponential backoff), 529 overloaded (retry).",
+      "knownGaps": [
+        "no documented /v1/models: the served version is read from each response's model field",
+        "pricing and rate limits are undocumented: record usage tokens per request"
       ]
     }
   },
@@ -179,5 +192,24 @@
   "escalation": {
     "maxEscalationsPerNode": 2,
     "schemaRetriesBeforeEscalation": 1
-  }
+  },
+  "judgmentModels": [
+    {
+      "id": "jev-latest",
+      "provider": "typesafe-systemone",
+      "family": "typesafe-jev",
+      "engine": "systemone",
+      "questionTypes": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "price": {
+        "inputPerMTok": 0.042,
+        "outputPerMTok": null,
+        "source": "second-hand, unverified: Kev's author records USD 0.042 per M input tokens for Jev (kev:kev/predictors.py:210, cited in research/kev-20261007/01-kev-dossier.md \u00a75.3); TypeSafe's docs give no pricing; output price unknown (null)"
+      },
+      "note": "2026-10-09: owner direction, Jev replaces Kev for the judge program; billed to the owner's TypeSafe account."
+    }
+  ]
 }

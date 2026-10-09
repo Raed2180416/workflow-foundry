@@ -5,7 +5,7 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_POLICY_PATH, CHILD_ENV_ALLOWED, loadPolicy, validatePolicy, resolve, classIndex, nextClass, modelsForClass, assertPolicyUnchanged, modelById } from '../src/models/policy.mjs';
+import { DEFAULT_POLICY_PATH, CHILD_ENV_ALLOWED, JUDGMENT_KIND, loadPolicy, validatePolicy, resolve, classIndex, nextClass, modelsForClass, assertPolicyUnchanged, modelById, judgmentModelById } from '../src/models/policy.mjs';
 import { ModelPort } from '../src/models/port.mjs';
 import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
 import { Journal } from '../src/journal.mjs';
@@ -115,4 +115,48 @@ test('no model id outside this file: runtime source names only policy ids', () =
       if (!allowed.has(id) && !legacy.get(rel)?.test(id) && !/^(llama-server|llama\.cpp)$/.test(id)) offenders.push(`${rel}: ${id}`);
   }
   assert.deepEqual(offenders, []);
+});
+
+// 2026-10-09 (owner direction: Jev replaces Kev for the judge program). Jev is a judgment model on a systemone-http provider:
+// listed apart from models[], so no generative route reaches it, and the provider names its credential variable, never a value.
+test('judgment models: Jev is listed on a systemone-http provider, apart from the generative models, with no credential value', () => {
+  const { entry, provider } = judgmentModelById(policy, 'jev-latest');
+  assert.equal(entry.provider, 'typesafe-systemone');
+  assert.equal(provider.kind, JUDGMENT_KIND);
+  assert.match(provider.baseUrl, /^https:\/\//);
+  assert.equal(provider.credentialEnv, 'FOUNDRY_SYSTEMONE_API_KEY', 'the variable SystemOneClient reads');
+  assert.ok(!policy.models.some(m => policy.providers[m.provider].kind === JUDGMENT_KIND), 'no generative model on a judgment provider');
+  assert.throws(() => modelById(policy, 'jev-latest'), { code: 'MODEL_NOT_IN_POLICY' }, 'ModelPort never resolves a judgment model');
+  assert.throws(() => judgmentModelById(policy, 'claude-haiku-5-5'), { code: 'MODEL_NOT_IN_POLICY' });
+  assert.throws(() => judgmentModelById(policy, 'jev-1.0.0'), { code: 'MODEL_NOT_IN_POLICY' });
+  for (const cls of policy.classOrder) assert.ok(!modelsForClass(policy, cls).some(m => m.id === 'jev-latest'));
+  // nothing in the policy text looks like a bearer value
+  assert.doesNotMatch(readFileSync(DEFAULT_POLICY_PATH, 'utf8'), /Bearer [A-Za-z0-9._-]{16,}|sk-[A-Za-z0-9]{16,}/);
+});
+
+test('judgment models: validation rejects a judgment provider or model that is malformed or carries a credential', () => {
+  const cases = {
+    'generative model on a judgment provider': p => p.models.push({ id: 'jev-gen', class: 'S', family: 'typesafe-jev', provider: 'typesafe-systemone', price: { inputPerMTok: 0, outputPerMTok: 0 } }),
+    'judgment model on a generative provider': p => { p.judgmentModels[0].provider = 'claude-cli'; },
+    'judgment model on an unknown provider': p => { p.judgmentModels[0].provider = 'typesafe'; },
+    'judgment id equal to a generative id': p => { p.judgmentModels[0].id = 'claude-haiku-5-5'; },
+    'duplicate judgment id': p => p.judgmentModels.push({ ...p.judgmentModels[0] }),
+    'judgment model without family': p => { delete p.judgmentModels[0].family; },
+    'judgment model without price source': p => { delete p.judgmentModels[0].price.source; },
+    'negative judgment price': p => { p.judgmentModels[0].price.inputPerMTok = -1; },
+    'judgmentModels not a list': p => { p.judgmentModels = {}; },
+    'plain-http base url off loopback': p => { p.providers['typesafe-systemone'].baseUrl = 'http://api.typesafe.ai'; },
+    'base url missing': p => { delete p.providers['typesafe-systemone'].baseUrl; },
+    'credentialEnv that is not a variable name': p => { p.providers['typesafe-systemone'].credentialEnv = 'ts-live-0123456789abcdef'; },
+    'an apiKey field': p => { p.providers['typesafe-systemone'].apiKey = 'x'; },
+    'a token field': p => { p.providers['typesafe-systemone'].token = 'x'; },
+  };
+  for (const [name, mutate] of Object.entries(cases)) {
+    const p = mutable(); mutate(p);
+    assert.throws(() => validatePolicy(p), { code: 'MODEL_POLICY_INVALID' }, name);
+  }
+  const local = mutable(); local.providers['typesafe-systemone'].baseUrl = 'http://127.0.0.1:8008'; local.providers['typesafe-systemone'].credentialEnv = null;
+  assert.doesNotThrow(() => validatePolicy(local), 'a loopback System One server (local Kev) needs no credential');
+  const none = mutable(); delete none.judgmentModels;
+  assert.doesNotThrow(() => validatePolicy(none), 'judgmentModels is optional');
 });
