@@ -87,6 +87,12 @@ export class Journal {
   commit() {
     const staged = this.#staged;
     this.#staged = [];
+    // A recording ends at a commit boundary; one that ends inside a wake-up was truncated or forged.
+    if (this.verifying && this.#recorded.length - this.#verified < staged.length) {
+      const k = this.#recorded.length - this.#verified;
+      for (let i = 0; i < k; i++) if (canonical(this.#recorded[this.#verified + i]) !== canonical(staged[i])) throw new ReplayDivergence(this.#verified + i, this.#recorded[this.#verified + i], staged[i]);
+      throw new ReplayDivergence(this.#recorded.length, null, staged[k]);
+    }
     const fresh = [];
     for (const content of staged) {
       if (this.verifying) {

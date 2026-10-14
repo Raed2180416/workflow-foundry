@@ -6,21 +6,26 @@
 // bed's witness), every decoy equals the correct function on every probe, and the callers of a defective helper are
 // classified affected (they inherit the wrong behaviour; the root-cause rule says not to report them) or unaffected.
 // The oracle, the reference solver and every control derive from buildSweep(seed, split, difficulty).
+//
+// v1.1 (review 2026-10-14, NOTES §17): no two functions of a repository share a contract template (family, semantic
+// knobs and wording; families.mjs); a slot is converted to another family only inside its file's area pool; the
+// repository's tests pick their inputs from a shuffled probe list for every role; an execution that times out during
+// generation is a generator error, never an observation; the manifest lists the accepted classes of each defect.
 import { taskRng } from '../lib/prng.mjs';
 import { hooks } from '../lib/faults.mjs';
-import { FAMILIES } from './families.mjs';
+import { FAMILIES, acceptedClasses } from './families.mjs';
 import { LEVELS, MIN_D, MAX_D, CLASS_MIN, AREAS, LIB, NOUNS, PACKAGES, ORGS, TODOS, NOTES } from './vocab.mjs';
-import { makeContext, observe, sameObs, argsOk } from './exec.mjs';
-import { renderRepo } from './render.mjs';
+import { makeContext, observe, sameObs, argsOk, GEN_TIMEOUT_MS } from './exec.mjs';
+import { renderRepo, domainText } from './render.mjs';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 export { MIN_D, MAX_D, LEVELS };
-const TESTED_P = 0.4, TESTED_DEFECT_SHARE = 0.3, TODO_P = 0.08, NOTE_P = 0.12;
+const TESTED_P = 0.4, TESTED_DEFECT_SHARE = 0.3, TODO_P = 0.08, NOTE_P = 0.12, TEMPLATE_TRIES = 24;
 
 const worldCache = new Map();
 let verifier = null;
 export function setVerifier(fn) { verifier = fn; }
-export const redrawStats = { attempts: 0, rejects: {} };
+export const redrawStats = { attempts: 0, rejects: {}, templateRedraws: 0, templateClashes: 0 };
 
 export function buildSweep(seed, split = 'dev', difficulty = 3) {
   const key = JSON.stringify([seed, split, difficulty]);
@@ -55,6 +60,23 @@ function namer(r) {
   };
 }
 
+/** Observation used while generating: a timeout is a generator error (never part of the truth). */
+export function obsGen(ctx, name, args) {
+  const o = observe(ctx, name, args, GEN_TIMEOUT_MS);
+  if (o.throws === 'Timeout') throw new Error(`wbed-r3p: ${name} timed out on ${JSON.stringify(args).slice(0, 200)} during generation`);
+  return o;
+}
+
+/** The contract template of an instance: its family, contract text, parameter domains and parameter order, with the
+ *  parameter names and quoted literals abstracted (what a script grouping "the same contract" would key on). */
+export function templateKey(F, p) {
+  const d = F.doc(p), dom = F.domain(p), names = F.sig(p);
+  let text = [...d.lines, ...d.params, d.returns, ...dom.params.map(domainText)].join(' | ');
+  names.forEach((n, i) => { text = text.replace(new RegExp(`\\b${n}\\b`, 'g'), `$${i}`); });
+  return `${F.id}|${text.replace(/'[^']*'/g, "'$L'")}|${(p.order ?? []).join(',')}`;
+}
+const hostsSomething = F => F.can.defect.length > 0 || F.can.decoy.length > 0 || F.kind !== 'fn';
+
 function attemptSweep(spec, attempt) {
   const L = LEVELS[spec.difficulty];
   const r = taskRng('r3p', 'repo', spec, attempt);
@@ -62,9 +84,11 @@ function attemptSweep(spec, attempt) {
   const house = { rounding: r.pick(['HALF_AWAY', 'HALF_EVEN']), band: r.pick(['incl', 'excl']), pageBase: r.pick([1, 0]) };
   const pkg = { org: r.pick(ORGS), name: r.pick(PACKAGES), version: `${r.int(1, 4)}.${r.int(0, 12)}.${r.int(0, 9)}` };
 
-  // ---- files and function slots
+  // ---- files: the helpers' callers need a home inside their own area pools (billing/payments for the money callers,
+  // calendar for add-months), so one file of each is drawn first; the rest are drawn from all area files.
   const pairs = AREAS.flatMap(a => a.files.map(f => ({ area: a, path: `src/${a.dir}/${f}.js` })));
-  const chosen = r.sample(pairs, L.files - LIB.length).sort((a, b) => a.path.localeCompare(b.path));
+  const first = [r.pick(pairs.filter(x => ['billing', 'payments'].includes(x.area.dir))), r.pick(pairs.filter(x => x.area.dir === 'calendar'))];
+  const chosen = [...first, ...r.sample(pairs.filter(x => !first.includes(x)), L.files - LIB.length - first.length)].sort((a, b) => a.path.localeCompare(b.path));
   const files = [...LIB.map(l => ({ path: l.path, lib: l, pool: l.families })), ...chosen.map(c => ({ path: c.path, area: c.area, pool: c.area.families }))]
     .sort((a, b) => a.path.localeCompare(b.path));
   const slots = [];
@@ -80,11 +104,13 @@ function attemptSweep(spec, attempt) {
     }
     fams.forEach((id, i) => slots.push({ file: f, idx: i, family: id, role: { kind: 'clean' } }));
   }
-  const areaSlots = () => slots.filter(s => !s.file.lib && s.role.kind === 'clean' && FAMILIES[s.family].kind === 'fn');
-  // every helper has callers: at least one line-amount and one sum-lines (money), one add-months and one month-end (dates)
-  for (const need of ['line-amount', 'sum-lines', 'add-months', 'month-end']) {
+  // A clean self-contained slot of an area file may be converted to family `id` only when `id` is in that file's pool
+  // and not already in the file (so a converted function is never "out of its area").
+  const convertible = id => slots.filter(s => !s.file.lib && s.role.kind === 'clean' && FAMILIES[s.family].kind === 'fn' && s.file.pool.includes(id)
+    && !slots.some(o => o.file === s.file && o.family === id));
+  for (const need of ['line-amount', 'sum-lines', 'add-months', 'month-end']) { // every helper has callers
     if (slots.some(s => s.family === need)) continue;
-    const free = areaSlots();
+    const free = convertible(need);
     if (!free.length) return reject('no-caller-slot');
     r.pick(free).family = need;
   }
@@ -96,14 +122,16 @@ function attemptSweep(spec, attempt) {
   const defectiveHelpers = new Set();
   const count = Object.fromEntries(L.classes.map(c => [c, 0]));
   for (const [id, cls] of r.sample(eligibleHelpers, nH)) { helperSlot(id).role = { kind: 'defect', cls }; defectiveHelpers.add(id); count[cls]++; }
-  // enough callers that inherit each helper defect for the root-cause rule to matter (> D/9 of them: see controls.mjs)
+  // enough callers that inherit each helper defect for the root-cause rule to matter: more than the false positives the
+  // pass rule tolerates (one, or a ninth of the defects; score.mjs PASS)
   const AFFECTING = { 'round-minor': ['line-amount'], 'days-in-month': ['add-months', 'month-end'] };
-  const needAffected = Math.ceil((L.defects + 1) / 9);
+  const needAffected = Math.max(2, Math.ceil((L.defects + 1) / 9));
   for (const h of defectiveHelpers) {
     while (slots.filter(s => AFFECTING[h].includes(s.family)).length < needAffected) {
-      const free = areaSlots();
-      if (!free.length) return reject('no-caller-slot');
-      r.pick(free).family = r.pick(AFFECTING[h]);
+      const options = AFFECTING[h].flatMap(id => convertible(id).map(s => [s, id]));
+      if (!options.length) return reject('no-caller-slot');
+      const [s, id] = r.pick(options);
+      s.family = id;
     }
   }
   const callerOfDefective = s => FAMILIES[s.family].kind === 'caller' && defectiveHelpers.has(FAMILIES[s.family].helper);
@@ -117,11 +145,11 @@ function attemptSweep(spec, attempt) {
   const freeFor = (kind, cls) => slots.filter(s => s.role.kind === 'clean' && !s.file.lib && !callerOfDefective(s) && FAMILIES[s.family].can[kind].includes(cls));
   function place(kind, cls) {
     let cands = freeFor(kind, cls);
-    if (!cands.length) { // convert a free self-contained slot into a host of this class
-      const hosts = Object.values(FAMILIES).filter(f => f.kind === 'fn' && f.can[kind].includes(cls)).map(f => f.id);
-      const free = areaSlots();
-      if (!hosts.length || !free.length) return false;
-      const s = r.pick(free); s.family = r.pick(hosts); cands = [s];
+    if (!cands.length) { // convert a free self-contained slot into a host of this class from its own file's pool
+      const options = Object.values(FAMILIES).filter(f => f.kind === 'fn' && f.can[kind].includes(cls)).flatMap(f => convertible(f.id).map(s => [s, f.id]));
+      if (!options.length) return false;
+      const [s, id] = r.pick(options);
+      s.family = id; cands = [s];
     }
     let best = cands;
     if (kind === 'defect') { // spread defects: the emptiest third of the files first, then the emptiest file
@@ -144,19 +172,31 @@ function attemptSweep(spec, attempt) {
   while (dplan.length < L.decoys) dplan.push(r.pick(decoyClasses));
   for (const c of r.shuffle(dplan.slice(0, L.decoys))) if (!place('decoy', c)) return reject(`no-decoy-host:${c}`);
 
-  // ---- instances (helpers first, so callers know their names)
+  // ---- instances (helpers first, so callers know their names). No two instances share a contract template: an
+  // instance whose template is taken is re-drawn (a forked stream, same role) up to TEMPLATE_TRIES times.
   const name = namer(r);
   const fns = [];
   const ordered = [...slots.filter(s => FAMILIES[s.family].kind === 'helper'), ...slots.filter(s => FAMILIES[s.family].kind !== 'helper')];
   const helperName = {};
+  const templates = new Set();
   for (const s of ordered) {
     const F = FAMILIES[s.family];
-    const fr = r.fork(`${s.file.path}#${s.idx}`);
-    const p = F.draw(fr, { house, name }, s.role);
-    if (F.kind === 'caller') p.helper = helperName[F.helper];
+    const base = r.fork(`${s.file.path}#${s.idx}`);
+    let p = null, fr = base, key = null;
+    for (let k = 0; k <= TEMPLATE_TRIES; k++) {
+      fr = k ? base.fork(`again-${k}`) : base;
+      p = F.draw(fr, { house, name, split: spec.split }, s.role);
+      if (F.kind === 'caller') p.helper = helperName[F.helper];
+      if (!hostsSomething(F)) break;
+      key = templateKey(F, p);
+      if (!templates.has(key)) break;
+      redrawStats.templateRedraws++;
+      if (k === TEMPLATE_TRIES) redrawStats.templateClashes++;
+    }
+    if (key) templates.add(key);
     if (F.kind === 'helper') helperName[F.id] = p.name;
     fns.push({ path: s.file.path, idx: s.idx, family: F.id, kind: F.kind, helperFamily: F.helper ?? null, role: s.role.kind, cls: s.role.cls ?? null, p,
-      smell: s.role.kind === 'clean' ? null : F.smell(p), rng: fr });
+      smell: s.role.kind === 'clean' ? null : F.smell(p), rng: fr, template: key });
   }
   fns.sort((a, b) => a.path.localeCompare(b.path) || a.idx - b.idx);
   for (const f of fns) finishFn(f, house);
@@ -167,7 +207,7 @@ function attemptSweep(spec, attempt) {
   for (const f of fns) {
     for (const args of f.probes) if (!argsOk(f, args)) throw new Error(`wbed-r3p: family ${f.family} probe outside its own domain: ${JSON.stringify(args)}`);
     if (f.role === 'clean' && !(f.kind === 'caller' && defectiveHelpers.has(f.helperFamily))) { f.differs = []; continue; }
-    f.differs = f.probes.filter(a => !sameObs(observe(planted, f.name, a), observe(correct, f.name, a)));
+    f.differs = f.probes.filter(a => !sameObs(obsGen(planted, f.name, a), obsGen(correct, f.name, a)));
     if (f.role === 'decoy' && f.differs.length) throw new Error(`wbed-r3p: decoy ${f.family}/${f.p.variant} differs from the correct code on ${JSON.stringify(f.differs[0])}`);
     if (f.role === 'defect') {
       if (!f.differs.length) return reject(`defect-silent:${f.family}/${f.p.variant}`);
@@ -183,13 +223,14 @@ function attemptSweep(spec, attempt) {
   const unaffectedExpected = fns.filter(f => f.family === 'sum-lines' && defectiveHelpers.has('round-minor'));
   if (unaffectedExpected.some(f => f.affected)) throw new Error('wbed-r3p: sum-lines must be unaffected by a rounding helper defect');
 
-  // ---- repository extras: tests (non-separating probes only), TODO and note comments (independent of the roles)
+  // ---- repository extras: tests (non-separating probes only, taken from a shuffled probe list whatever the role), TODO
+  // and note comments (independent of the roles)
   const testCases = f => {
     const out = [];
-    for (const a of f.probes) {
-      const o = observe(planted, f.name, a);
+    for (const a of r.shuffle(f.probes)) {
+      const o = obsGen(planted, f.name, a);
       if (o.throws || o.returns.includes('"$') || o.argsAfter !== JSON.stringify(a)) continue;
-      if ((f.role !== 'clean' || f.differs.length) && !sameObs(o, observe(correct, f.name, a))) continue;
+      if ((f.role !== 'clean' || f.differs.length) && !sameObs(o, obsGen(correct, f.name, a))) continue;
       out.push({ args: a, expected: JSON.parse(o.returns) });
       if (out.length === 2) break;
     }
@@ -212,7 +253,8 @@ function attemptSweep(spec, attempt) {
 
   let world = { spec, attempt, L, house, pkg, files: files.map(f => ({ path: f.path, lib: Boolean(f.lib), area: f.area?.dir ?? 'lib' })), fns, planted, correct, defectiveHelpers: [...defectiveHelpers] };
   world.byName = new Map(fns.map(f => [f.name, f]));
-  world.manifest = defects.map(f => ({ id: `${f.path}#${f.name}`, file: f.path, function: f.name, class: f.cls, family: f.family, variant: f.p.variant, smell: f.smell, witness: f.witness }));
+  world.manifest = defects.map(f => ({ id: `${f.path}#${f.name}`, file: f.path, function: f.name, class: f.cls, accepted: acceptedClasses(f.family, f.p.variant, f.cls),
+    family: f.family, variant: f.p.variant, smell: f.smell, witness: f.witness }));
   world = hooks.schemaDrift(world); // R8 f1 hook point (no-op in v1)
   world.render = renderRepo(world);
   if (verifier) {
@@ -222,19 +264,24 @@ function attemptSweep(spec, attempt) {
   return world;
 }
 
-/** Sources and metadata of one function instance. */
+/** Sources and metadata of one function instance. A family's `p.order` permutes the parameters: the signature, the
+ *  JSDoc @param lines, the domain specs (and the cross-argument condition) and the probes follow it. */
 function finishFn(f, house) {
   const F = FAMILIES[f.family], p = f.p;
+  const perm = p.order ?? null, P = xs => (perm ? perm.map(i => xs[i]) : xs);
+  const unP = a => { if (!perm) return a; const out = []; perm.forEach((i, j) => { out[i] = a[j]; }); return out; };
   f.name = p.name;
-  f.params = F.sig(p);
-  f.contract = F.doc(p);
-  f.domain = F.domain(p);
+  f.params = P(F.sig(p));
+  const c = F.doc(p);
+  f.contract = { ...c, params: P(c.params) };
+  const dom = F.domain(p);
+  f.domain = { params: P(dom.params), ...(dom.where ? { where: a => dom.where(unP(a)) } : {}) };
   f.plantedBody = F.body(p, 'planted');
   f.correctBody = F.body(p, 'correct');
   const src = body => `function ${f.name}(${f.params.join(', ')}) {\n${body.split('\n').map(l => `  ${l}`).join('\n')}\n}`;
   f.plantedSource = src(f.plantedBody);
   f.correctSource = src(f.correctBody);
-  f.probes = F.probes(p, f.rng);
+  f.probes = F.probes(p, f.rng).map(P);
   f.calls = F.kind === 'caller' ? p.helper : null;
   f.house = house;
   delete f.rng;

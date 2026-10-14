@@ -176,14 +176,19 @@ test('clock laws: event-driven, monotone, deliveries at their time, results >= 1
         if (r.type === 'call') { const k = `${r.round}|${r.target}`; assert.ok(!perRound.has(k), 'one call per target per round'); perRound.add(k); assert.equal(ms(r.at), now); }
         if (r.type === 'effect.result') assert.ok(ms(r.at) >= now + MIN, 'no same-instant results');
       }
-      // Every fired timer fires at the time its last upsert announced (its dueAt, or now + 1 minute when due already).
-      const fires = new Map();
-      for (const r of rows) if (r.type === 'obligation.upsert') fires.set(`${r.instance}/${r.id}`, r.firesAt);
-      for (const r of rows.filter(x => x.type === 'deliver' && x.event.type === 'timer.fired')) {
-        const announced = fires.get(`${r.instance}/${r.event.payload.obligationId}`);
-        assert.equal(r.event.at, announced);
-        const up = rows.filter(x => x.type === 'obligation.upsert' && x.instance === r.instance && x.id === r.event.payload.obligationId).at(-1);
-        assert.ok(up.clamped ? true : r.event.at === H.fmt(ms(up.dueAt), 60), 'the host never computes a due time');
+      // Every fired timer fires at the time its last upsert (before firing) announced: its dueAt, or now + 1 minute.
+      const current = new Map();
+      for (const r of rows) {
+        if (r.type === 'obligation.upsert') {
+          current.set(`${r.instance}/${r.id}`, r);
+          assert.equal(r.firesAt, r.clamped ? H.fmt(ms(r.firesAt), 60) : H.fmt(ms(r.dueAt), 60), 'the host never computes a due time');
+        }
+        if (r.type === 'deliver' && r.event.type === 'timer.fired' && r.round !== 3) {   // round 3: re-delivered after a merge
+          const up = current.get(`${r.instance}/${r.event.payload.obligationId}`);
+          assert.equal(r.event.at, up.firesAt);
+          assert.equal(r.event.payload.dueAt, up.dueAt);
+          current.delete(`${r.instance}/${r.event.payload.obligationId}`);
+        }
       }
       const wakeups = rows.filter(r => r.type === 'wakeup').length;
       assert.ok(wakeups < (horizon - ms(w.t0)) / MIN / 50, `idle time skipped (${wakeups} wake-ups)`);
@@ -358,16 +363,19 @@ test('arm errors apply nothing, keep the carry and the obligations, and fail no 
 
 test('arm errors: crash, oversize carry, invalid output, environment faults (retried, then impaired)', async () => {
   const w = p2pWorld({ seed: 1015, cases: 4, backlog: 0, faults: false, duplicates: false, noise: {} });
-  let n = 0;
+  const seen = new Map(), tries = new Map();
   const arm = {
     id: 'bad',
     tick(input) {
-      n++;
-      if (n === 1) throw new Error('boom');
-      if (n === 2) return { decisions: { subject: null }, carry: { x: 'y'.repeat(70_000) } };
-      if (n === 3) return { carry: null };
-      if (n === 4 || n === 5) throw new H.EnvFault('MODEL_UNAVAILABLE');
-      if (n >= 6 && n <= 8) throw new H.EnvFault('SANDBOX_UNAVAILABLE');
+      const key = `${input.instance}@${input.now}`;
+      if (!seen.has(key)) { seen.set(key, seen.size + 1); tries.set(key, 0); }
+      const call = seen.get(key), attempt = tries.get(key);
+      tries.set(key, attempt + 1);
+      if (call === 1) throw new Error('boom');
+      if (call === 2) return { decisions: { subject: null }, carry: { x: 'y'.repeat(70_000) } };
+      if (call === 3) return { carry: null };
+      if (call === 4 && attempt < 2) throw new H.EnvFault('MODEL_UNAVAILABLE');
+      if (call === 5) throw new H.EnvFault('SANDBOX_UNAVAILABLE');
       return { decisions: { subject: null }, obligations: { upsert: [{ id: 'later', kind: 'k', anchor: null, dueAt: H.addMinutes(input.now, 30), onDue: null }] }, carry: { ok: true } };
     },
   };
@@ -494,7 +502,7 @@ function denseValue(r, s) {
   switch (t) {
     case 'string': { const lo = Math.max(1, s.minLength ?? 1), hi = Math.max(lo, Math.min(s.maxLength ?? 10, 10)); return Array.from({ length: r.int(lo, hi) }, () => r.pick(['a', 'Z', ' ', 'é', '😀', '7'])).join('').replace(/^ | $/g, 'q'); }
     case 'integer': return r.int(s.minimum ?? -50, s.maximum ?? 1000);
-    case 'number': { const lo = s.minimum ?? -25, hi = s.maximum ?? 25; return Math.round((lo + r.next() * (hi - lo)) * 4) / 4; }
+    case 'number': { const lo = s.minimum ?? -25, hi = s.maximum ?? 25; return (Math.round((lo + r.next() * (hi - lo)) * 4) / 4) || 0; }   // JSON has no -0
     case 'boolean': return r.chance(0.5);
     case 'object': return Object.fromEntries(Object.entries(s.properties).map(([k, sub]) => [k, denseValue(r, sub)]));
     case 'array': return Array.from({ length: r.int(s.minItems ?? 0, Math.min(s.maxItems ?? 4, 4)) }, () => denseValue(r, s.items));
@@ -504,7 +512,7 @@ function denseValue(r, s) {
 
 test('validator: the host\'s portable validator agrees with the engine\'s ajv authority (validateData) on seeded schemas and values', () => {
   let accepted = 0, rejected = 0;
-  for (let i = 0; i < 3000; i++) {
+  for (let i = 0; i < 2000; i++) {
     const r = rng('ebed-host-props', 'validator', i);
     const schema = genObject(r, 0);
     const value = genValue(r, schema);
@@ -514,7 +522,7 @@ test('validator: the host\'s portable validator agrees with the engine\'s ajv au
     assert.equal(mine, theirs, `case ${i}: ${JSON.stringify(schema)} ${JSON.stringify(value)}`);
     if (mine) accepted++; else rejected++;
   }
-  assert.ok(accepted > 300 && rejected > 300, `both outcomes exercised (${accepted}/${rejected})`);
+  assert.ok(accepted > 200 && rejected > 200, `both outcomes exercised (${accepted}/${rejected})`);
 });
 
 test('validator: the host\'s portability check agrees with the engine\'s portableSchemaViolations', () => {

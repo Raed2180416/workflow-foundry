@@ -445,8 +445,7 @@ class Host {
     const ctx = { ...this.#ctxFor(files.files), workspace: this.workspace?.dir ?? null, recordCost: row => { const c = plainCopy(row); if (c !== undefined) costs.push(c); } };
     const fn = kind === 'case' ? this.arm.tick : this.arm.sweep;
     let outcome = 'ok', output, error = null;
-    if (typeof fn !== 'function') { outcome = 'error'; error = { code: 'no-sweep-solver' }; }
-    else {
+    {
       for (let attempt = 0; ; attempt++) {
         try {
           output = await this.#withTimeout(Promise.resolve().then(() => fn.call(this.arm, structuredClone(input), ctx)));
@@ -540,6 +539,15 @@ class Host {
   async #sweepRound(due) {
     const wakes = new Map();
     if (!due.length) return wakes;
+    if (typeof this.arm?.sweep !== 'function' && this.mode !== 'replay') {
+      // An arm without a sweep solver forgoes sweeps (its choice, graded through consequences); not an arm error.
+      for (const id of due) { const sw = this.sweeps.get(id); this.stage('sweep.skipped', { sweep: id, reason: 'no-sweep-solver', events: sw.queue.splice(0).map(e => e.id) }); }
+      return wakes;
+    }
+    if (this.mode === 'replay' && !due.some(id => this.recordedCalls.has(`${this.iso(this.nowMs)}|r2|sweep|${id}`))) {
+      for (const id of due) { const sw = this.sweeps.get(id); this.stage('sweep.skipped', { sweep: id, reason: 'no-sweep-solver', events: sw.queue.splice(0).map(e => e.id) }); }
+      return wakes;
+    }
     const work = due.map(id => {
       const sw = this.sweeps.get(id);
       const evs = sw.queue.splice(0);

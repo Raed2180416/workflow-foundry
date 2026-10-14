@@ -9,7 +9,10 @@
 // any call, which also bounds sizes (no allocation a witness could blow up).
 import vm from 'node:vm';
 
-const TIMEOUT_MS = 200;
+// A call that runs longer than this is a timeout. The oracle's witness check uses TIMEOUT_MS and re-runs a timed-out call
+// once with GEN_TIMEOUT_MS before it gives up (score.mjs); generation always uses GEN_TIMEOUT_MS and treats a timeout as a
+// generator error (world.mjs obsGen), so a slow machine can never change a task. No generated body loops unboundedly.
+export const TIMEOUT_MS = 200, GEN_TIMEOUT_MS = 2000;
 const CALL = new vm.Script('__out = { r: globalThis[__name](...__args) }');
 
 /** Build a context holding the given function sources (each `function name(...) {...}`, no export keyword). */
@@ -37,11 +40,11 @@ export function canonValue(v, depth = 0) {
 
 /** Call `name` in `ctx` on a fresh copy of `args`. Observation = what a caller can see: the return value or the thrown
  *  error's name, and the arguments after the call (a mutated argument is observable). */
-export function observe(ctx, name, args) {
+export function observe(ctx, name, args, timeout = TIMEOUT_MS) {
   const copy = JSON.parse(JSON.stringify(args));
   ctx.__args = copy; ctx.__name = name; ctx.__out = null;
   let ret = null, threw = null;
-  try { CALL.runInContext(ctx, { timeout: TIMEOUT_MS }); ret = ctx.__out.r; }
+  try { CALL.runInContext(ctx, { timeout }); ret = ctx.__out.r; }
   catch (e) { threw = (e && typeof e === 'object' && typeof e.name === 'string') ? (e.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' ? 'Timeout' : e.name) : 'Thrown'; }
   return { returns: threw ? null : canonValue(ret), throws: threw, argsAfter: canonValue(copy) };
 }

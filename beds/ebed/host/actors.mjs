@@ -65,14 +65,14 @@ export function planTask({ world, actors, task, kinds, c, ordinal, createdMs, du
   const base = actors?.answer?.(world, { case: c, subject: task.subject, role: task.role, kind: task.kind, ordinal, user,
     createdAt: iso(createdMs), dueAt: iso(dueMs) }) ?? null;
   const noise = noiseDraw(world, c, task.role, task.kind, ordinal);
-  if (base === null || noise.cls === 'none') return { ...noAnswer(base === null ? 'actor-silent' : 'noise-none'), user, noise };
+  if (base === null || noise.cls === 'none') return { ...noAnswer(base === null ? 'actor-silent' : 'noise-none'), user, noise: { ...noise, applied: 'none' } };
   const delay = Math.max(1, Math.floor(base.delayMinutes ?? 60));
   let answerMs = createdMs + delay * MINUTE;
   let value = base.value;
   let cls = noise.cls;
   if (cls === 'withdraw') {
     steps.push({ atMs: answerMs, type: 'humanTask.withdrawn', payload: { taskId: task.id, user } });
-    return { user, ordinal, noise, steps };
+    return { user, ordinal, noise: { ...noise, applied: 'withdraw' }, steps };
   }
   if (cls === 'delegate') {
     const next = pool[1];

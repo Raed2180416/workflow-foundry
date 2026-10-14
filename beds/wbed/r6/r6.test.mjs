@@ -236,7 +236,7 @@ test('tests are dated by the measurement and never straddle the cut-off; test-da
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
-test('controls: CONTRACT minimums, the four required comparison controls, several relation controls', () => {
+test('controls: CONTRACT minimums, the two size stand-ins (necessity controls), several relation controls', () => {
   const names = bed.badControls.map(c => c.name);
   for (const n of ['empty', 'shuffled-or-corrupted', 'heuristic:keyword-script']) assert.ok(names.includes(n), n);
   assert.equal(new Set(names).size, names.length);

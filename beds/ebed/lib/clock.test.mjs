@@ -103,6 +103,9 @@ test('day-count deadlines: business and calendar days, rolls, end of day', () =>
   // 10 business days after Fri 2026-11-20 (Thanksgiving skipped) -> Mon 2026-12-07, due by 23:59:59 local.
   assert.deepEqual(d('2026-11-20T15:00:00-05:00', 10), ['2026-12-07', '2026-12-07T23:59:59-05:00']);
   assert.deepEqual(d('2026-11-21T02:00:00Z', 10), ['2026-12-07', '2026-12-07T23:59:59-05:00']); // = Fri 21:00 in New York
+  // The anchor's date is taken in the calendar's zone (mutant K6 survivor -> this golden): 2026-11-24T03:00Z is Mon
+  // 22:00 in New York; from Mon 23: 24 25 27 30 1 2 3 4 7 8 -> Tue Dec 8 (from the UTC date, Tue 24, it would be Dec 9).
+  assert.deepEqual(d('2026-11-24T03:00:00Z', 10), ['2026-12-08', '2026-12-08T23:59:59-05:00']);
   assert.deepEqual(d('2026-11-20T15:00:00-05:00', 10, { at: '17:00' }), ['2026-12-07', '2026-12-07T17:00:00-05:00']);
   assert.deepEqual(d('2026-11-20', 45, { unit: 'calendar' }), ['2027-01-04', '2027-01-04T23:59:59-05:00']);
   assert.deepEqual(d('2026-10-02', 30, { unit: 'calendar' }), ['2026-11-01', '2026-11-01T23:59:59-05:00']); // a Sunday, 25-hour day
