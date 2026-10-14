@@ -86,7 +86,61 @@ fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (
 
 ## Measurements ($0, dev seeds)
 
-MEASUREMENTS
+All numbers are from runs on 2026-10-14 at $0; wall times were taken with other jobs sharing the 4-core machine.
+
+**Bed health** (`tools/health.mjs`, dev seeds 1001–1030, tail mix): 17,600 cases over 120 worlds at d2–d5. Both
+reference runs (earliest and latest timing) pass every case they complete: **0 divergences, 0 oracle errors, 0 critical
+violations**.
+
+| d | cases | completed | ep0–ep2 | ep3 | go-live | s/world (2 runs + 2 gradings) |
+|---|---|---|---|---|---|---|
+| d2 | 1,938 | 1,937 (99.9%) | 100% | 99.8% | 100% | 1.95 |
+| d3 | 3,304 | 3,300 (99.9%) | 100% | 99.5% | 100% | 3.1 |
+| d4 | 3,905 | 3,899 (99.8%) | 100% | 99.4% | 100% | 3.9 |
+| d5 | 8,453 | 8,445 (99.9%) | 100% | 99.6% | 100% | 17.7 |
+
+ep4 holds no cases (arrivals stop at business day 24, DESIGN §4.8). The censored cases are late resolutions or closures
+past the horizon (`slow`, `reply-at-deadline`, `vendor-ola`, `holiday-span`). Every go-live case completes and passes,
+so the oracle's SLA engine reproduces every SLA record, escalation and notice the generator's independent engine exported.
+
+**Controls** (`tools/controls-run.mjs`, attack seeds 1211–1214, d2–d5; 16 worlds, 2,370 completed cases). `noop`, `echo`,
+`declare-every-obligation`, `escalate-everything` and `pause-everything` fail every world (bad controls fail 96–99% of
+completed cases; the passes are messages that name no incident). Necessity controls on their target cases, summed over
+d2–d5:
+
+| control (construct removed) | target cases failed |
+|---|---|
+| 24x7-no-pause (every schedule 24×7, no pause) | 2,073/2,073 (100%) |
+| never-escalate | 1,749/1,749 (100%) |
+| timer-first (closure and fail-safe taken at the deadline) | 1,386/1,386 (100%); 59 `major-without-approval` critical (d3–d5) |
+| wrong-timezone (every schedule in the system zone) | 1,072/1,072 (100%) |
+| no-holiday | 403/403 (100%) |
+| no-dedupe (every alert or report opens an incident) | 378/378 (100%) |
+| pause-ignored | 351/351 (100%) |
+| no-retroactive-start | 306/306 (100%) |
+| no-reset | 165/165 (100%) |
+| first-match-priority (first row in file order) | 154/154 (100%) |
+| breach-at-start-of-pause | 124/124 (100%) |
+| edition-at-start (d4–d5) | 35/35 (100%) |
+| no-sod (d3–d5) | 20/20 (100%); `sod` critical on every major-sod case |
+| no-correlation (caller messages not merged) | 1,004/1,055 (95%; the passes are messages that change nothing: late replies and confirmations, a reply after a reassignment) |
+
+**Goldens** (`golden.mjs`): 23 hand-derived, rule-cited goldens (G1–G18 of DESIGN §9 with G4 in three zones, plus a
+duplicate-delivery/stray golden and a records golden) pass the reference transition. Every SLA-engine control (world edit
+or engine switch) fails at least one golden, so the goldens see each construct. One hand value of DESIGN §9 was wrong
+and is corrected in the golden: G11's start record plans Wed 03-18 17:00 (1,440 business minutes from Mon 09:00 end at a
+close), not Thu 03-19 09:00.
+
+**N-version clock** (`test/e7.test.mjs`): on 300 fuzzed SLA lifecycles (four schedules, three zones, 24×7, up to six
+pauses) `sla.mjs` gives the same D, thresholds, elapsed and business-elapsed values and breach as `lib/clock.mjs`
+(exclusive boundary) and, for D, as the generator's own clock (`world.mjs`, its own zone table); one more pause never
+moves D earlier.
+
+**Discrimination sanity check:** the part-A walker (keeps every incident record of R1–R3, R6 and R7.1 but has no SLA
+engine and no deadline closures) passes 8/111 completed cases at seed 1241 d3: only the messages that name no incident.
+
+**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 54 tests (19 part A, 35 part B), about
+80 s on an idle machine.
 
 ## Readings and decisions added in part B (for review)
 
@@ -97,6 +151,7 @@ MEASUREMENTS
 | E7-B3 | A reset re-attach also requires the stop condition not to hold; an empty condition list never holds | consistent with the R4.2 attach rule; no generated definition has an empty list |
 | E7-B4 | The escalation recipient is read after every change of the due instant (S5); `priority` is not graded at the instant a later event changed it | S5 orders changes before SLA evaluation; same-instant knowledge as in the grader (E8-5) |
 | E7-B5 | Lids at instants before t0 are already recorded for go-live incidents (the export); the oracle's engine recomputes them and layer 5 compares | the generator's own SLA engine wrote the export: the reference runs cross-check two independent engines on every go-live case |
-| E7-B6 | `sod` is critical when the approval task is routed to the caller, not only when the caller answers | with actor noise the caller may withdraw or answer in free text; the routing is the separation-of-duties failure |
+| E7-B6 | `sod` is critical when the approval task is routed to the caller (also when they delegate it on), not only when the caller answers | with actor noise the caller may delegate, withdraw or answer in free text; the routing is the separation-of-duties failure |
 | E7-B7 | Necessity controls give up an effect the systems refused (4xx) instead of re-issuing it every minute | a control whose records diverged from the systems re-emitted refused effects for weeks of simulated time (hours of wall time); the reference itself never meets a refusal |
+| E7-B9 | The W5 twin test runs at d2 | from d3 the host draws approval noise from the world id (`host/actors.mjs` `noiseDraw`), which the injection twin does not share, so the twin's approval answers differ (seen at seed 1008 d3); `twins()` also regenerates without a `size` override. Both are outside this item's files (shared host; part A) |
 | E7-B8 | Necessity target cases are the cases whose required effects on the world's planned timeline change when the construct is removed (`plannedView`), or the classes the design names for hook controls | a definition independent of any arm's run |

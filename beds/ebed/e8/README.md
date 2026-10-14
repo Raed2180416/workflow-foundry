@@ -11,7 +11,7 @@ completed cases on 16 dev worlds (seeds 1241–1244 × d2–d5; 5,247 graded, 0 
 is evidence about any arm.
 
 ```sh
-node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (14 tests, ~30 s)
+node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (15 tests, ~30 s)
 node beds/ebed/e8/tools/health.mjs --seeds 1001-1030                      # bed health: reference runs, pools, censoring
 node beds/ebed/e8/tools/controls-run.mjs --seeds 1211-1214                # controls on attack worlds
 node beds/ebed/e8/tools/arm-smoke.mjs <solver.mjs> --seed 1241 --difficulty 3   # run a solver; shows no grading
@@ -41,7 +41,7 @@ The spec every arm gets is `spec/SPEC-E.md` (about 6K tokens); what is in and ou
 
 | file | what |
 |---|---|
-| `spec/SPEC-E.md` | the arm-facing rulebook (R1–R7, readings S1–S6) |
+| `spec/SPEC-E.md` | the arm-facing rulebook (R1–R7, readings S1–S14) |
 | `ledger/SEMANTICS.md` | features in/out with source lines; deviations from E-BED |
 | `systems.mjs` | the pinned systems (orders, inventory, billing, carrier, fraud, notify) |
 | `world.mjs` | `generateWorld`, `twins` (W5 injection twin) |
@@ -80,6 +80,8 @@ races the customer at the deadline), fails 52–59% of completed cases and leave
 **Goldens**: hand-derived failure points of the saga (cancel after 0–3 committed steps; collection failure; declined
 charge; unknown charge outcome committed or not; cancel after and at the collection instant; delivery before
 collection; the deadline race), each checked against the independent saga planner `beds/ebed/lib/saga.mjs` (MR11).
+With the survivor goldens of the oracle mutation work, `golden.mjs` holds 52 rule-cited goldens; which of them kill a
+mutant in a way the grader can see is in `ledger/MUTANTS.md`.
 
 ## Decisions and readings (for review)
 
@@ -98,5 +100,14 @@ collection; the deadline race), each checked against the independent saga planne
 | E8-11 | A cancel after a counted amend falls under R6.2, not R3.2 (S8; class `amend-then-cancel`, d3+) | found by specificity: the first spec left a cancel following an amend unclassified |
 | E8-12 | Steps a counted cancel or customer action supersedes before they were due are not required but stay permitted (S9: R3.1 lids at the action, R4.1 processing lids at the abort) | found by specificity (S2 4/878 false rejects on cancel-processing): a solver that never set `processing` because the cancel came first was rejected |
 | E8-13 | Goldens are a module (`golden.mjs`, 24 rule-cited cases) run by the item suite and against every oracle mutant | one set of hand-derived expectations for both the oracle's self-check and mutation killing |
+| E8-14 | One differential standard for oracle mutants (`ledger/MUTANTS.md` §0): a mutant is compared with the original as the grader reports verdicts (first divergence, else passed or open) on reachable journals, frozen as the grader freezes; killed only with a witness journal on a golden's input or a corpus difference; otherwise *equivalent (grader)*, with the reason | review (2026-10-15): 7 claimed kills came only from inputs the grader never reads (k53, recordsOf), while others with the same property were called equivalent |
+| E8-15 | The delivery order is part of SPEC-E (§1; S4 and S7 amended): within an instant, by `source` then id, so a carrier report reaches the arm before a customer action of its instant | S4 ("the collection wins") and S7 ("as far as reports have reached you") only agree under it; k146 and k150 are equivalent by it |
+| E8-16 | S10, same-instant knowledge per message: a step counts as taken before a message if taken at an earlier instant, or in the same instant by a call not given that message. Implemented in the transition (`before`) and in the grader (`oracle/view.mjs` records `given` per call; `oracle/grade.mjs` exempts a same-instant row from a withdrawal caused by a delivery its call was not given). Supersedes E8-5's "an event of the case" for delivered causes | the old N1 rule was not in SPEC-E, and the per-case rule rejected a step from a call that was given another message about the order but not the cancel (regression test in `test/e8.test.mjs`) |
+| E8-17 | S11: an order is processing from the instant it is ready, inclusive; a customer action delivered before the order it names was placed names no order yet. The transition ignores customer actions delivered before the first `order.placed` | k140's kill rested on a cancel at p, which the host delivers before the placement (`customer-portal` < `shop`): the arm cannot know the order then. Known limit: a call that answers such an action with an effect is graded against the order's subject (unreachable in generated worlds) |
+| E8-18 | S12: a review answer and a cancel in one instant: the answer decides first (approve: an R6.2 cancel; reject: R2.2, the cancel changes nothing) | former A1 (k102, k105, k107); matches the transition |
+| E8-19 | S13: endings and failures in a cancel's instant are judged by what reached the arm first: a carrier report of that instant came first (a delivery that ends the order: the cancel changes nothing; a collectionFailed: the fulfilment fails); a failed attempt in that instant did not (its result arrives a minute later). The transition now judges a failure by when it reached the arm (`failSeen`) and an ended order with `<=` | former A2/A3 (k176, k177, k185). The old time-only rule cancelled a fulfilment whose collectionFailed the arm had already acted on in its round-1 call, before the cancel reached it in round 3: not a rule an arm can follow |
+| E8-20 | S14: a step of a failing fulfilment that commits after the failure is compensated within 120 min of its commit, and the fulfilment's compensation, status and notice within 120 min of the later of failure and commit | former A4 (k230); matches the transition (as R6.2 for a cancel); unreachable on graded trajectories (R4.2 sequencing) |
+| E8-21 | Oracle defect D1 fixed: after a counted cancel, a shipment the carrier reports `collectionFailed` has the record `failed` (was `created`) | R7.1; reachable only after a missed shipment cancel, so the grader never compared it; golden `cancel-before-a-collection-failure (R6.2, R7.1)` |
+| E8-22 | Goldens pin "after the deadline" (S1) as a window opening in (D, D + 1 min] with an effect exactly at D outside it, not the 1-second encoding | review: two goldens pinned `D + 1000 ms` |
 
 Deviations from E-BED §3 E8 are listed in `ledger/SEMANTICS.md`.

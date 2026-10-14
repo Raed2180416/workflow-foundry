@@ -242,6 +242,20 @@ prompt, inputs and files, the `features.mjs` measure) over the nine example seed
 | `owner-dev`, `owner-sealed` | owner tasks | one task per job unless the owner declares N | the owner's acceptance check | – | rule | in NL0 / NL3 |
 | `sealed-1` … `sealed-4` | chosen by the NL3 session | NL3 | NL3 | – | rule | in NL3 |
 
+**Bands after M1** [P, informed by M1 and logged]. At d3, one call solved more than the W-BED §2.4 one-call gate allows
+(≤ 2/12 at each effort) on three rungs: R2 (4/12 and 3/12), R6 (6/12 at medium effort) and R3′ (12/12 and 11/12). The
+bands of `wbed-r2-hi` (d3–5), `wbed-r6` (d3–4) and `r3p` (d3–5) all include d3. All three bands are **kept**, for three
+reasons:
+- The §2.4 gate admits a rung for **W-bed claims**: a rung there must need structure. It does not admit need-router labels.
+- The need router needs both classes. A band in which one call suffices on its lower part is a valid negative region,
+  and the labels then show where the need starts, which is what C7a is about.
+- Dropping a level after seeing one-call outcomes on it would choose bands to produce labels (DESIGN §6, "bands frozen
+  before labels").
+
+What M1 does change: labels are reported per difficulty for these three jobs. For `r3p`, which is held out, the reading
+with its d3 tasks dropped is printed beside every C7a and C7b reading. M1-d5's results cannot change any band (this rule
+was fixed before they were read).
+
 Typed hard requirements: none on every non-forced job. Candidates, confirmed before D5 uses them: `runbook` = effects
 with authority, human approval (bed README; confirmed by the NL2b audit); `e8` = durable wait, schedule, effects with
 authority (E-BED; confirmed from spec-E at M1e). [P]
@@ -258,7 +272,7 @@ New ledger purposes, added to `research/jit-20261008/SEED-LEDGER.json` by decisi
 | Role (`stages.json`) | Purpose | Split | Seeds | Use |
 |---|---|---|---|---|
 | `examples` | need-example | dev | 601–609: set 1 = 601–603, set 2 = 604–606, set 3 = 607–609 | features (set 1), builders and procedure writers (set k for lineage k), never scored |
-| `probe` | need-example | dev | 601 | NR-probe and judge-H's example |
+| `probe` | need-example | dev | 601, at the band's median level | NR-probe and judge-H's probe task |
 | `trainEval` | need-label | dev | 610–621 | TRAIN evaluation tasks |
 | `trainReserve` | need-label | dev | 622–650 | TRAIN collision replacements |
 | `heldoutEval` | need-heldout | test | 8801–8812 | held-out and forced evaluation tasks |
@@ -274,21 +288,35 @@ already in the ledger as `wbed-dev` and `wbed-r3p-dev`. [D, M] Every runner call
   blocks (6, 4 or 3 tasks per level for bands of 2, 3 or 4 levels). Seed-parity halves (used by VBS\*, §5) then hold
   equal counts per level for bands of 2 and 3 levels; for 4-level bands they hold 2/1/2/1 and 1/2/1/2.
 - Example seed s runs at `band[(s − 601) mod |band|]`, so every example set covers a band of up to 3 levels (a 4-level
-  band shows 3 of its 4 levels per set). The probe seed 601 is therefore the band's lowest level.
+  band shows 3 of its 4 levels per set). Example 601 is therefore the band's lowest level.
+- **The probe task** (NR-probe and judge-H) is seed 601 at `band[floor(|band| / 2)]`, the band's median level (the upper
+  middle of an even band), with stage kind `kinds[0]`. The first draft used example 601 itself, which would have shown
+  the probe and judge-H only the band's easiest level and biased both towards direct-H. For a band of more than one level
+  the probe task differs from example 601. It is never scored and is hashed against the evaluation tasks like an example
+  (`prereg-check.mjs probeDifficulty`).
 - `wbed-stage` fixes the stage kind by position: `kinds[i mod 4]` for evaluation index i, `kinds[(s − 601) mod 4]` for
   examples (`generate({stage})` override), so each kind appears once per difficulty.
 - A collided or replaced seed is replaced by the lowest unused seed of the same split's reserve range and takes the
   replaced task's difficulty and kind. Racing top-ups reuse the same tasks; a lineage k > 3 reuses example set
   ((k − 1) mod 3) + 1 with a fresh builder session.
-- `prereg-check.mjs` exports `planTasks`, `evalDifficulty`, `exampleDifficulty` and `exampleSet` so `label-run.mjs` reads
-  this rule instead of restating it.
+- `prereg-check.mjs` exports `planTasks`, `evalDifficulty`, `exampleDifficulty`, `probeDifficulty` and `exampleSet` so
+  `label-run.mjs` reads this rule instead of restating it.
 
-**Checks run today** [M]: the ledger accepts all 1,010 planned (bed, split, seed, purpose) combinations; the 492 planned
-example and evaluation tasks of the 20 jobs with an existing non-interactive bed (TRAIN examples + 610–621; held-out examples +
-8801–8812 + 8825–8836) contain no taskHash collision between example and evaluation tasks of one family and no repeated
-evaluation task within a job (`prereg-check.mjs --hashes`). Known caveat: the anchor-bed authors exercised dev 601–640
-with $0 controls (no model; READMEs of need-qa, need-stage, need-constraint); those seeds stay admissible as dev examples
-and TRAIN tasks, and held-out evaluation uses test seeds.
+**Checks run today** [M]:
+- The ledger accepts all 1,058 planned (bed, split, seed, purpose) combinations.
+- `prereg-check.mjs --hashes` generated the 512 planned example, probe and evaluation tasks of the 20 jobs with an
+  existing non-interactive bed: TRAIN examples, probe tasks and 610–621; held-out examples, probe tasks, 8801–8812 and
+  8825–8836. It found no taskHash collision between an example or probe task and an evaluation task of one family, and
+  no repeated evaluation task within a job. The ledger refused nothing.
+- The pre-check now works as follows. Every seed is checked against the ledger (`seedRefusals`) before its task is
+  generated. Held-out families are generated and hashed only inside a child process, whose only output is counts and
+  task ids (`job:role:seed:difficulty`), never task content or hashes. This is the only use of held-out seeds before
+  Freeze, it is recorded here and in §13 (D4), and no model sees the tasks.
+- The ledger's `need-heldout` range admits every bed (`beds: ['*']`). So only `stages.json` and the checker keep TRAIN
+  jobs off it. The owner is asked to narrow it to the held-out families (§14).
+
+Known caveat: the anchor-bed authors exercised dev 601–640 with $0 controls (no model; READMEs of need-qa, need-stage,
+need-constraint). Those seeds stay admissible as dev examples and TRAIN tasks; held-out evaluation uses test seeds.
 
 ## 4. Arms, replication, engine
 
@@ -304,7 +332,7 @@ and TRAIN tasks, and held-out evaluation uses test seeds.
 | build-O (ceiling) | L_ceiling only | construct-H with `builderModel:'claude-opus-5-5'`, `builderBudgetUsd:8`; runtime model stays Haiku; on `wbed-r3-hi`, `wbed-r1-hi`, `kinetics-hi`, `synth-hi`, `r3p` | K = 1 (set 1) | `7eb484a07b3228d8` |
 | ref-R1 (ceiling) | L_ceiling only | `static@v3:beds/wbed/references/r1-reference.mjs` (sha256 `b267498f7aae…4d73d`, FROZEN.json), live judges Haiku then Sonnet on a failed check; only if the engine stamp carries `static@v3:`; on `wbed-r1-hi` | 1 draw | `2a0de67dec1761a3` |
 | ref-R3 (ceiling) | L_ceiling only | as ref-R1 with `r3-reference.mjs` (sha256 `61e6e6236d1c…f020`); on `wbed-r3-hi` | 1 draw | `a82541dae8f6f563` |
-| judge-H (baseline) | secondary | one typed Haiku call per (job, V) with `reasoning:'medium'`: reads the spec (the prompt of example 601), example 601's inputs truncated to 8K tokens, N, V, W and the five-mode menu; returns `{choice: <mode>, needsWorkflow: boolean}`; 3 draws, majority on `choice`, a three-way split goes to the mode with the lowest TRAIN-mean c + B/N in the cell; asked at V ∈ {0.10, 1, 10}, N = 10, W = V | 3 draws | `6504fc674944022d` |
+| judge-H (baseline) | secondary | one typed Haiku call per (job, V) with `reasoning:'medium'`: reads the probe task's prompt (seed 601 at the band's median level, §3.3), its inputs truncated to 8K tokens, N, V, W and the five-mode menu; returns `{choice: <mode>, needsWorkflow: boolean}`; 3 draws, majority on `choice`; a three-way split goes to the first of the three in the fixed order direct-H, agent-H, agent-H+proc, construct-H, agent-O (no label data, so judge-H's TRAIN score is not in-sample); asked at V ∈ {0.10, 1, 10}, N = 10, W = V | 3 draws | `faa0b937417f83f9` |
 | m1-call-none | M1 | `b0Call({id:'b0-call-haiku-none', model:'claude-haiku-5-5', reasoning:'none'})` as committed in `m1-run.mjs` (port default timeout 300 s, $1 per call bound) | 1 | `04c4c925502938bd` |
 | m1-call-medium | M1 | the same with `reasoning:'medium'` | 1 | `d32e71c4b1f17c09` |
 
@@ -332,16 +360,41 @@ add one draw or lineage to each mode in the job's acceptable set, up to 4 per mo
 task where it is in the draw-1 per-task acceptable set (the modes within δ of the task's best draw-1 utility). Top-ups
 use no new tasks and are charged to the stage that triggers them. [D; per-task acceptable set wording P]
 
-### 4.4 Engine stamp (ROADMAP §6 rule 13)
+### 4.4 Engine stamps (ROADMAP §6 rule 13)
 
-No paid label runs on an engine that is still changing. The stamp is taken from the launch commit in a frozen worktree
-and pasted into this section at freeze; `prereg-check.mjs --stamp` prints the record (read-only) [P]:
+No paid label runs on an engine that is still changing. The first draft had one stamp, S1, covering NL0, NL1 and judge-H
+on TRAIN. It included the whole `experiments/need-router` tree, which keeps changing until Freeze (router, evaluation,
+card). It also had no rule for the code §14 schedules between NL0 and NL1. The stamp is now split in two [P], with the
+lists in `stages.json engineStamp`, printed read-only by `prereg-check.mjs --stamp --stage <ID>`:
+
+- **Label-engine stamp** `L-<stage>`: everything that makes a label.
+  - Files: `label-run.mjs`, `prereg-check.mjs` (the task plan), `prereg-rules.mjs` (the cap meter), `metrics.mjs` (racing
+    top-ups) and `m1-run.mjs`; `experiments/jit/{seeds,stats}.mjs`; `policy/models.json`.
+  - Trees: `experiments/lib` (runner, arms, model layer), `experiments/c0` (construct, the selfCheck paragraph),
+    `src`, `beds/lib`.
+  - Canonical hashes of `stages.json`'s arms, price table, seeds, grid, derived cascades and spend meter, and of the
+    `need-*` ledger purposes and ranges.
+  - The tree of every bed directory in the transitive bed-import closure of the stage's jobs (`beds/wbed-r2` reaches
+    `beds/wbed` and `beds/records`).
+  - Node. The coordinator adds the claude CLI version and whether `stream.mjs`'s `static@v3:` arm parser is reachable
+    (decides ref-R1 and ref-R3).
+  - It is **taken at every paid stage's launch** from the launch commit and written to `runs/<id>/STAMP.json` before the
+    first paid call. `prereg-check.mjs stampDiff` compares it with the previous paid stage's stamp.
+- **Analysis stamp** `A-Freeze`: `features.mjs`, `router.mjs`, `voi.mjs`, `metrics.mjs`, `evaluate.mjs`, `card.mjs`,
+  `prereg-rules.mjs`. These may change freely until the Freeze addendum pins them (§6), because they touch no label.
+
+**Allowed differences between two paid stages' label-engine stamps:** one bed directory first used by a job whose first
+paid rows are in the later stage. Example: the `codefix-notests` generator before NL1. **Any other difference** (a file,
+a tree, a bed used by both stages, the preregistered arms, prices, seeds, grid or meter, the need ledger, Node, the CLI)
+is a §13 deviation, recorded before the later stage starts. NL0 rows are never re-run or pooled differently because of
+it; the deviation says which rows each engine produced.
 
 | Item | Value |
 |---|---|
-| Stamp S-M1 (M1 needs no new code): commit; `experiments/lib`, `experiments/need-router` trees; sha256 of `m1-run.mjs`, `beds/wbed/attacks/triviality.mjs`, `policy/models.json`; Node; claude CLI version | TBD at M1 launch |
-| Stamp S1 (NL0, NL1, judge-H on TRAIN): commit and root tree; trees of `experiments/need-router`, `experiments/lib`, `experiments/c0`, `experiments/jit`, `src`, `beds/lib`, `beds/wbed`, `beds/ebed`, `beds/wbed/references`; tree of every job's bed directory (the `wbed-rN` and `ebed-e8` directories are shims, hence the `beds/wbed` and `beds/ebed` trees); sha256 of `policy/models.json`, `stages.json`, this file, the two references; Node; claude CLI; whether `stream.mjs`'s `static@v3:` arm parser is reachable from `label-run.mjs` (decides ref-R1 and ref-R3); sha256 of the selfCheck prompt paragraph, the procedure-writer prompt and the judge-H prompt | TBD at NL0 launch (M0 code) |
-| Stamp S2 (NL2, E2E, NL2b): S1 re-taken at Freeze; any difference from S1 is a deviation (§13) and re-runs the $0 tests | TBD at Freeze |
+| S-M1 (M1, tags `m1` and `m1-d5`) | not taken: M1 launched at 21:31, before this row was filled. Reconstructed after the fact (not a launch stamp) in `stages.json` M1 `observed.*.engine`. `m1` ran on `m1-run.mjs` sha256 `478744664b95accf016fe7ea628ee856b3ab7bdb559081a0b7ac261d4c8a58e7` (e5defed); `m1-d5` on `7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692` (56c0a82). Deviation D1. |
+| L-NL0 (label engine at NL0 launch; pasted here at freeze) | TBD at NL0 launch |
+| L-NL1, L-judge-H, L-NL2p, L-NL2, L-NL2bp, L-E2E, L-NL2b, L-NL3, L-DRIFT | taken at each stage's launch into `runs/<id>/STAMP.json` and compared with the previous paid stage by `stampDiff` |
+| A-Freeze (analysis stamp) | TBD-FREEZE (the Freeze addendum, §6) |
 
 ## 5. Label protocol
 
@@ -379,10 +432,23 @@ and pasted into this section at freeze; `prereg-check.mjs --stamp` prints the re
   c + B/N). [D]
 - **NEED label:** `workflow` or `no-workflow` only when every member of A is in one class; otherwise `either`. Labels are
   computed per (V, N, W) cell; the binary label at N = 1 feeds C7a, at N = 10 the secondaries. [D]
-- **Confidence:** hierarchical bootstrap (cluster → task → replicate or lineage), 2,000 reps, seed 20261014; a label is
+- **Confidence:** per job, a bootstrap over its tasks, then over replicates or lineages (2,000 reps, seed 20261014; the
+  modes share each task draw). It has no cluster level: one job's P(best class) has a single cluster, so the first
+  draft's "cluster → task → replicate" was degenerate. This is what `metrics.mjs needLabels` computes. A label is
   confident when P(best class) ≥ 0.8. Need accuracy uses confident labels only, with **coverage** printed beside it;
   utility statistics use every cell. More than 50% of held-out jobs `either` or unconfident → "the benchmark cannot
   separate routers". [D, seed P]
+- **Missing data** [P]. A job missing any primary mode of its menu, for any reason, leaves Δ and C7a and is counted.
+  - The menu is the L_today modes minus the masked ones (direct-H on interactive families).
+  - Missing means: a mode with no row on some evaluation task, or without its first-pass replicates or lineages.
+  - Reasons include: a stage stopped at its cap (K5), an arm invalidated by K4, a run condition not met, every lineage
+    voided.
+  - Dropped jobs are printed on a "dropped" line with the missing modes. Their rows are kept and reported. If a whole
+    cluster drops, the cluster count and the floor (§7) are recomputed.
+  - A sensitivity printed as "not primary" keeps those jobs, with the missing mode removed from both menus.
+  - A conditional TRAIN job that does not run (`codefix-notests`, if its generator is not admitted) leaves TRAIN, which
+    becomes 14 jobs in 4 clusters. TRAIN counts, the θ minimum (§6), G1 and the power gate are then computed on what ran.
+    This is a preregistered outcome, not a deviation. Code: `prereg-rules.mjs missingDataRule`.
 - **Fragility** ($0) [D; values read from each bed today, M]: labels are recomputed with each numeric tolerance halved
   and doubled (for a "≥ t" threshold the allowed error 1 − t is halved and doubled; count allowances are halved rounding
   down and doubled). Jobs whose label flips are "fragile": excluded from need accuracy, kept in utility, counted.
@@ -417,13 +483,32 @@ and pasted into this section at freeze; `prereg-check.mjs --stamp` prints the re
 | Feature whitelist | `logInputTokens, logSchemaLeaves, itemLists, maxListLength, freeText, multiSource, conventionsInProse, verifiable`, median over example set 1 at the job's per-seed difficulties; for N = 1 owner tasks, the task itself. The four prose-count keys stay inputs to the keyword baseline only. [D] |
 | Banned inputs | family id, bed version, `kind`, oracle, reference, label or result files (L5) [D] |
 | Guard | typed requirements → workflow class, flagged "engine support missing" when `state`, `wait.signal`, human-task or compensation constructs are absent; `REQUIREMENT_LIBRARY` and `shapeOf` word cues only raise "ask the user"; guard recall under 0.9 in D5 → the guard asks instead of inferring [D] |
-| θ_tok, θ_fan | **TBD-FREEZE**: fitted by leave-one-cluster-out on TRAIN to maximise balanced accuracy of confident N = 1 labels; ties → larger θ [D] |
+| θ_tok, θ_fan | **TBD-FREEZE**, fitted on the confident N = 1 TRAIN labels to maximise balanced accuracy [D]. The fitting rules are [P] and are spelled out below the table. |
 | Leaf modes per (V, N, W) cell | **TBD-FREEZE**: best mean TRAIN utility within each leaf [D] |
-| NR-probe | `voi.mjs bestProbe`; probeable {direct-H, agent-H}; kMax 2 (two direct-H draws, one agent-H run); example 601; Beta(1 + s, 1 + n − s) priors from TRAIN jobs in the leaf; deployable signals only (schema validity, agreement of the two direct-H answers, agent-H turns and cost, family-handed tests), never the oracle; probe iff net EVSI > 0, its cost charged as r; mapping from deployable pass to success **TBD-FREEZE** [D] |
+| NR-probe | `voi.mjs bestProbe`; probeable {direct-H, agent-H}; kMax 2 (two direct-H draws, one agent-H run); the probe task (seed 601 at the band's median level, §3.3); Beta(1 + s, 1 + n − s) priors from TRAIN jobs in the leaf; deployable signals only (schema validity, agreement of the two direct-H answers, agent-H turns and cost, family-handed tests), never the oracle; probe iff net EVSI > 0, its cost charged as r; mapping from deployable pass to success **TBD-FREEZE** [D] |
 | NR-knn (secondary) | k ∈ {3, 5} by LOCO on TRAIN, **TBD-FREEZE**; demoted to the family-majority baseline if L8 trips [D] |
 | judge-H (secondary) | settings §4.1; prompt text pinned by sha in stamp S1 [P] |
-| Shas | `features.mjs`, `router.mjs`, `voi.mjs`, `metrics.mjs`, `evaluate.mjs`, the price table: **TBD-FREEZE** [D] |
-| Envelope | `evaluate.mjs --commit-decisions` writes every held-out decision card (`need-decision/1`); its hash is committed before the held-out matrix is joined (L6) [D] |
+| Shas | the analysis stamp A-Freeze (§4.4: `features.mjs`, `router.mjs`, `voi.mjs`, `metrics.mjs`, `evaluate.mjs`, `card.mjs`, `prereg-rules.mjs`) and the price table: **TBD-FREEZE** [D] |
+| Envelope | `evaluate.mjs --commit-decisions` writes every held-out decision card (`need-decision/1`); its hash is committed before the held-out matrix is joined (L6) [D]. The probe and judge-H rows that feed those cards run in their own envelope stage (NL2p, NL2bp), and the matrix stage (NL2, NL2b, E2E) is gated on the committed hash (§12) [P] |
+
+**Fitting θ** [P; `prereg-rules.mjs thetaFitStatus, locoFolds, fitOrRule`; the review found the first draft's rule
+degenerate under the §1.1 hypotheses]:
+- **Minimum.** θ is fitted only with at least 2 confident N = 1 positives (workflow) from at least 2 TRAIN clusters and at
+  least 2 confident negatives from at least 2 clusters.
+- **Below the minimum, H0 is "not fitted".** C7a reads INCONCLUSIVE (not fitted). NR-static, and the tuned size rule,
+  which uses the same fitting rules, have a single leaf whose mode is SBS-train's. NR-static's Δ is then 0 on every
+  non-forced job, and its C7b reading is INCONCLUSIVE. NR-probe still runs on that single leaf.
+- **This outcome is expected** under §1.1: the only hypothesised TRAIN positive is `wbed-r3-hi`, in W.
+- **Candidates.** For each key, the candidate thresholds are the midpoints between adjacent distinct values among the
+  confident TRAIN jobs, plus +∞ (the key unused). The pair with the highest balanced accuracy wins. Ties go to the larger
+  thresholds, key by key (θ_tok first).
+- **Midpoints, not edges.** A fitted θ therefore always sits between a confident negative and a confident positive, never
+  at a job's own value. The first draft's "ties → larger θ" could put θ_fan at `wbed-r3-hi`'s own median (2.98). The
+  midpoint rule puts it at 2.625, halfway to `wbed-r1-hi`'s 2.27.
+- **Leave-one-cluster-out folds.** A fold whose training part has no confident positive or no confident negative is
+  **undefined**: balanced accuracy is undefined there. It is excluded from every LOCO statistic (C7a dev numbers, σ for
+  the power gate, NR-static's LOCO Δ) and counted in the report. It is never given θ = +∞. With every TRAIN positive in W,
+  the W-held-out fold is undefined.
 
 ## 7. Metrics
 
