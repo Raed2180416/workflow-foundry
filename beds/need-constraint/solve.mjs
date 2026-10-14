@@ -59,7 +59,7 @@ export function solveNames(spec, r, style = 'syll', { forbidReserved = true } = 
       const length = style === 'cv' ? r.int(spec.minLen, spec.maxLen) : 0;
       // natural candidates first; a required letter is spliced in only if chance has not supplied it after 400 tries
       const cand = coin(r, { initial: targets[i], style, length, endSet: style === 'cv' ? spec.endSet : null, letter: tries >= 400 ? wantLetter : null });
-      if (taken.has(cand) || !checkNames(single, [cand]).pass) continue;
+      if (taken.has(cand) || (wantLetter && !cand.includes(wantLetter)) || !checkNames(single, [cand]).pass) continue;
       found = cand;
     }
     if (!found) throw new Error(`names: no candidate for slot ${i}`);

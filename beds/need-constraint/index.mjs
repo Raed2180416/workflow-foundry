@@ -150,7 +150,8 @@ export function referenceSolve(task) {
 
 /**
  * A second valid answer that differs from referenceSolve. variant 0 is the one the generator verified is distinct
- * (a different second solution for order/schedule); higher variants re-run the solver with another stream.
+ * (a different second solution for order/schedule); higher variants re-run the solver with another stream and fall
+ * back to variant 0's answer for order/schedule when the randomised search runs out of budget.
  */
 export function altSolve(task, variant = 0) {
   const { spec, truth } = rebuilt(task);
@@ -159,8 +160,8 @@ export function altSolve(task, variant = 0) {
   switch (spec.subtype) {
     case 'names': return { names: solveNames(spec, r, variant % 2 === 1 ? 'cv' : 'syll') };
     case 'sentence': return { sentence: solveSentence(spec, r, { allowRepeats: true }) };
-    case 'order': return { order: solveOrder(spec, { mode: 'random', rng: r }).solutions[0] };
-    case 'schedule': return { schedule: solveSchedule(spec, { mode: 'random', rng: r, maxNodes: 100000 }).solutions[0] };
+    case 'order': return { order: solveOrder(spec, { mode: 'random', rng: r }).solutions[0] ?? truth.solutions[1].order };
+    case 'schedule': return { schedule: solveSchedule(spec, { mode: 'random', rng: r, maxNodes: 100000 }).solutions[0] ?? truth.solutions[1].schedule };
     default: throw new Error('unknown subtype');
   }
 }

@@ -67,8 +67,8 @@ export function buildCalendar(r, { size, steps }) {
   const dateTruth = off => ({ kind: 'date', value: fmt(cal.dateOf(off)) });
 
   const ruleLines = [];
-  if (steps >= 4) ruleLines.push(`${weekdays[Math.min(...rest)]} and ${weekdays[Math.max(...rest)]} are rest days; every other weekday is a business day unless a rule below says otherwise.`);
-  if (steps >= 5) ruleLines.push('A festival day listed in "festivals" is never a business day.');
+  if (steps >= 4) ruleLines.push(`${weekdays[Math.min(...rest)]} and ${weekdays[Math.max(...rest)]} are rest days; every other day is a business day${steps >= 5 ? ' except festival days' : ''}.`);
+  if (steps >= 5) ruleLines.push('A festival day listed in "festivals" is never a business day, whatever its weekday.');
   else ruleLines.push('The "festivals" table is background information and does not affect this question.');
   if (leap) ruleLines.push(`Every year divisible by 4 has one extra day at the end of its last month, ${months[months.length - 1].month}.`);
   const intro = `Dates in the ${calName} calendar. inputs.json "calendar" lists the months of a year in order with their lengths in days, and the ${W} weekday names in order; weekdays repeat in that order without interruption, across month and year boundaries. Day 1 of the first month of year ${Y0} is a ${weekdays[anchor]}. "festivals" lists festival days, which recur every year on the same month and day. ${ruleLines.join(' ')}`;
