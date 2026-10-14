@@ -335,7 +335,7 @@ function readDb(ctx, oid) {
   };
 }
 
-function applyEvent(c, ev, env, db) {
+function applyEvent(c, ev, env, db, migrating = false) {
   const p = ev.payload ?? {};
   switch (ev.type) {
     case 'effect.result': return applyResult(c, ev, env);
@@ -343,7 +343,14 @@ function applyEvent(c, ev, env, db) {
     case 'customer.action': {
       if (normId(p.orderRef) !== c.oid) return;
       if (p.action !== 'amend' && p.action !== 'cancel') return;
-      if (!c.acts.some(a => a.id === ev.id)) c.acts.push({ id: ev.id, at: ev.at, a: p.action });
+      if (c.acts.some(a => a.id === ev.id)) return;
+      // R6.2 / S4 / S6: has the carrier collected any of the order's shipments at or before this action? Decided now, from
+      // the system of record (a shipment already collected, in transit or delivered) and from reports whose reportedAt
+      // is at or before the action; frozen in the fact so a later report cannot flip the decision.
+      const a = ms(ev.at);
+      const reported = Object.values(c.rep).some(r => ['col', 'tr', 'del'].some(s => r[s] && r[s].r <= a));
+      const recorded = !migrating && db.shp.some(s => ['collected', 'inTransit', 'delivered'].includes(s.status));
+      c.acts.push({ id: ev.id, at: ev.at, a: p.action, col: reported || recorded });
       return;
     }
     case 'carrier.status': {
@@ -357,8 +364,10 @@ function applyEvent(c, ev, env, db) {
       const slot = { collected: 'col', inTransit: 'tr', delivered: 'del', collectionFailed: 'cf' }[m];
       if (!slot) return;
       const r = (c.rep[fid] ??= {});
-      const t = ms(ev.at);
-      if (r[slot] === undefined || t < r[slot]) r[slot] = t;
+      const t = ms(ev.at);                                   // the message's time (R4.4 / R5.2 windows)
+      const rt = Number.isFinite(ms(p.reportedAt)) ? ms(p.reportedAt) : t;   // the carrier's own time of the report
+      if (!r[slot]) r[slot] = { a: t, r: rt };
+      else { r[slot].a = Math.min(r[slot].a, t); r[slot].r = Math.min(r[slot].r, rt); }
       return;
     }
     case 'humanTask.answered': {
@@ -455,20 +464,18 @@ function derive(c, db, now, pol) {
   }
   const fraudEndBy = a => fraudEnd && (fraudEnd.incl ? fraudEnd.at <= a : fraudEnd.at < a);
 
-  // carrier reports
+  // carrier reports (message times)
   const rep = fid => c.rep[fid] ?? {};
-  const postCol = fid => minOf(rep(fid).col, rep(fid).tr, rep(fid).del);
-  const colAt = minOf(...avail.map(postCol));
+  const postCol = fid => minOf(rep(fid).col?.a, rep(fid).tr?.a, rep(fid).del?.a);
 
   // per-fulfilment end of an available fulfilment, given an R6.2 cancel time (or null)
   const fulEnd = (fid, r62) => {
     const rp = rep(fid);
     let failAt = c.fails[fid] ? c.fails[fid].at : null;
-    if (rp.cf !== undefined && (postCol(fid) === null || postCol(fid) > rp.cf)) failAt = minOf(failAt, rp.cf);
+    if (rp.cf && (postCol(fid) === null || postCol(fid) > rp.cf.a)) failAt = minOf(failAt, rp.cf.a);
     const cands = [];
     if (failAt !== null) cands.push({ kind: 'failed', at: failAt, o: 0 });
-    if (rp.del !== undefined && !c.blk[fid]) cands.push({ kind: 'completed', at: rp.del, o: 1 });
-    if (rp.del !== undefined && c.blk[fid]) cands.push({ kind: 'completed', at: rp.del, o: 1 });
+    if (rp.del) cands.push({ kind: 'completed', at: rp.del.a, o: 1 });
     if (r62 !== null && r62 !== undefined && !c.blk[fid]) cands.push({ kind: 'cancelled', at: r62, o: 2 });
     cands.sort((a, b) => a.at - b.at || a.o - b.o);
     return cands[0] ?? null;
