@@ -936,6 +936,7 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     event({ kind: 'wide-end', name, span, parent, ok: true, n, done: coverage.done, failed: coverage.failed, skipped: coverage.skipped, spentUsd: usd(acc.spent), budgetUsd: wideUsd,
       ms: Date.now() - t0, ...(prefix.groups ? { prefix } : {}) });
     return value;
+    }
   }
 
   return flow;
