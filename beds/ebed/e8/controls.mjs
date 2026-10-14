@@ -71,10 +71,11 @@ export const VARIANTS = {
     return extra.length ? { ...out, effects: [...out.effects, ...extra], close: undefined } : out;
   } }) },
   'timer-first': { kind: 'necessity', classes: ['timeout', 'review-timeout', 'gl-awaiting'], variant: world => ({ due: (e, d) => (isTimeout(world, e) ? e.window.earliest - 1000 : d) }) },
-  'latest-edition-always': { kind: 'necessity', classes: ['edition'], minDifficulty: 4, variant: world => {
+  // "edition by run date" (E-BED §9.5): an edition is applied from the day it is published, not from its effectiveFrom.
+  'edition-by-publication': { kind: 'necessity', classes: ['edition'], minDifficulty: 4, variant: world => {
     const w = clone(world);
-    const last = w.rulebook.editions.at(-1);
-    w.rulebook.editions = [{ ...last, effectiveFrom: '2000-01-01', effectiveTo: null }];
+    w.rulebook.editions = w.rulebook.editions.map((e, i, all) => ({ ...e, effectiveFrom: i === 0 ? e.effectiveFrom : e.published.slice(0, 10),
+      effectiveTo: all[i + 1] ? all[i + 1].published.slice(0, 10) : null }));
     return { armWorld: w };
   } },
   'no-dedupe': { kind: 'necessity', classes: ['duplicate-order'], minDifficulty: 3, variant: () => ({ post: (out, { input, E }) => {
@@ -121,7 +122,8 @@ export function targetCases(world, id) {
     if (v.classes.includes(t.class)) return true;
     if (v.classes.includes('ooo') && Object.values(t.fulfilments ?? {}).some(f => f.ooo)) return true;
     if (v.classes.includes('duplicate-order') && t.duplicateOf) return true;
-    if (v.classes.includes('edition') && world.difficulty >= 4 && Math.abs(Date.parse(t.placedAt) - switchMs) < 3 * 24 * 60 * MIN) return true;
+    const pub = world.rulebook.editions[1]?.published;
+    if (v.classes.includes('edition') && pub && t.placedAt.slice(0, 10) >= pub.slice(0, 10) && Date.parse(t.placedAt) < switchMs) return true;
     return false;
   }).map(([c]) => c);
 }

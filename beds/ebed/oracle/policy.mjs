@@ -50,7 +50,8 @@ export function referenceArm({ item, world, timing = 'earliest', journal, id = `
       const c = inst?.binding ?? null;
       if (c === null) return { decisions: { subject: null }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], close: true, carry: null };
       const view = caseView(idx, c, now, Infinity);
-      const E = item.referenceTransition(armWorld, variant.viewFilter ? variant.viewFilter({ ...view, world: armWorld }) : { ...view, world: armWorld });
+      const armView = { ...view, world: armWorld, truth: armWorld.truth.cases[c] };
+      const E = item.referenceTransition(armWorld, variant.viewFilter ? variant.viewFilter(armView) : armView);
       const subject = E.decisions.graded.subject ?? null;
       const out = { decisions: { ...E.decisions.graded }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], carry: null };
       // An instance started by an inbound message joins the case's open instance, if there is one.
