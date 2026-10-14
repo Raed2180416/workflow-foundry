@@ -2,7 +2,11 @@
 // for the realized builds) and 9 (a late spend stop voided every cost decision). $0; deterministic seeds.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { steadyUsd, pairsOf, crw, simulate, planning, killRuleTable, CR_LEVEL, SIGMA_LINEAGE, PLANNED_STEADY } from './crw.mjs';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { steadyUsd, pairsOf, crw, decideRuns, simulate, planning, killRuleTable, CR_LEVEL, SIGMA_LINEAGE, PLANNED_STEADY } from './crw.mjs';
+import { runStream, POLICY_MODELS } from '../../../../experiments/jit/stream.mjs';
 
 const near = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b} ± ${tol}`);
 
@@ -72,4 +76,33 @@ test('kill rule KR-1 table (PREREG §9.1)', () => {
   const t = killRuleTable(), at = (g, p) => t.find(r => r.trueGap === g && r.pRef === p);
   near(at(-0, 0.6).perLineage, 0.071, 0.001, 'false kill, pRef 0.6'); near(at(-0, 0.8).pooled, 0.182, 0.001, 'pooled false kill, pRef 0.8');
   near(at(-0.1, 0.8).perLineage, 0.197, 0.001, '10-point gap'); near(at(-0.3, 0.9).pooled, 0.953, 0.001, '30-point gap pooled');
+});
+
+test('decideRuns reads two stream run directories (stream.mjs layout): pairs, verdicts, and the truncation rule', async t => {
+  const root = mkdtempSync(path.join(tmpdir(), 'crw-runs-')); t.after(() => rmSync(root, { recursive: true, force: true }));
+  const solve = path.join(root, 'S', 'solve.mjs'); mkdirSync(path.dirname(solve)); writeFileSync(solve, '// static\n');
+  const deps = {
+    policyIds: [...POLICY_MODELS], outputSchema: { type: 'object' },
+    makeTasks: async (familyId, { split, seeds, difficulty }) => seeds.map(seed => ({ familyId, task: { id: `fake:${seed}`, seed, split, difficulty, prompt: 'p', inputs: { seed } }, taskKey: `fake:${split}:d${difficulty}:s${seed}`, taskHash: `h${seed}` })),
+    createModelPort: () => ({ port: { fake: true } }),
+    score: async (f, task, output) => ({ pass: output?.v === task.seed, score: 1 }),
+    interpret: async a => ({ traceId: a.traceId, answer: { v: a.task.seed }, costUsd: 0.1 + 0.01 * (a.task.seed % 3), costUnknown: false, error: null, scripts: [], commands: [] }),
+    runCompiled: async a => ({ status: 'ok', output: { v: a.task.seed }, trace: [], costUsd: 0.01 + 0.001 * (a.task.seed % 2), costUnknown: false, latencyMs: 1, meta: { errors: {} } }),
+  };
+  const agent = 'agent:claude-haiku-5-5', stat = `static:${solve}`, dirs = [];
+  for (const [s, base] of [['a', 1], ['b', 101]]) {
+    const config = { experiment: `crw-${s}`, familyId: 'fake', split: 'dev', segments: [{ difficulty: 3, seeds: Array.from({ length: 24 }, (_, i) => base + i) }], arms: [agent, stat],
+      perTaskUsd: 1, agentBudgetUsd: 1, agentMinutes: 1, concurrency: 2 };
+    await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+    dirs.push(path.join(root, 'runs', `crw-${s}`));
+  }
+  const r = await decideRuns(stat, agent, dirs);
+  assert.equal(r.lineageArms, 0); assert.equal(r.pooled.n, 42); assert.ok(r.validity.every(v => v.status === 'valid'));
+  assert.equal(r.verdict.conditional, 'X cheaper than Y'); assert.equal(r.verdict.process, 'X cheaper than Y', 'no lineage-built arm: the two verdicts agree');
+  // The static arm of stream A loses its last 7 rows (as after a spend stop): 7/24 > 25% missing = invalid: truncated.
+  const res = path.join(dirs[0], 'static-S-solve', 'results.jsonl');
+  writeFileSync(res, readFileSync(res, 'utf8').split('\n').filter(Boolean).filter(l => JSON.parse(l).idx < 17).join('\n') + '\n');
+  const cut = await decideRuns(stat, agent, dirs, { lineageArms: 1 });
+  assert.deepEqual(cut.validity.find(v => v.arm === stat && v.stream === 'A'), { arm: stat, stream: 'A', planned: 24, impaired: 0, missingOther: 7, status: 'invalid: truncated' });
+  assert.equal(cut.verdict.conditional, 'invalid'); assert.equal(cut.pooled.n, 35);
 });

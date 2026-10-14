@@ -4,6 +4,8 @@
 //   node research/jit-20261008/analysis/wbed-s1/crw.mjs plan [--json]    planning projection from R0 records (§7.1)
 //   node research/jit-20261008/analysis/wbed-s1/crw.mjs oc [--json]      false-decision rates under the null (§7.1)
 //   node research/jit-20261008/analysis/wbed-s1/crw.mjs kill [--json]    rung kill rule KR-1, per-lineage and pooled (§9.1)
+//   node research/jit-20261008/analysis/wbed-s1/crw.mjs decide <armX> <armY> <runDirA> <runDirB> [--lineage-arms n] [--json]
+//                                                                        the rule over the slice's stream run directories
 //
 // Why two verdicts (review of 2026-10-14, finding 4). At K = 2 the between-lineage variance of a lineage-built arm's cost
 // (one compiled solver or one (e) build per lineage) cannot be estimated, and compiled cost varies 20–40× within one
@@ -23,13 +25,14 @@ import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rng } from '../../../../beds/lib/rng.mjs';
-import { normQuantile, designEffect, RHO_PREREG } from '../../../../experiments/jit/stats.mjs';
+import { normQuantile, designEffect, RHO_PREREG, envFaultCheck } from '../../../../experiments/jit/stats.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), REPO = path.resolve(HERE, '../../../..');
 export const CR_FAMILY = 3;                          // CR1, CR2, CR3 per rung (Bonferroni)
 export const CR_LEVEL = 1 - 0.05 / CR_FAMILY;        // 98.33% two-sided
 export const SIGMA_LINEAGE = 0.5;                    // declared floor: SD of a lineage-built arm's log-cost lineage effect
 export const MIN_PAIRED_SHARE = 0.75;                // V: ≥ 75% of planned steady-state tasks paired in every stream
+export const TRUNCATION_LIMIT = 0.25;                // §9.4 (ATTACK §5 decision 11): > 25% of planned tasks missing = invalid
 export const STEADY = Object.freeze({ from: 3, to: 23 });
 export const PLANNED_STEADY = STEADY.to - STEADY.from + 1;   // 21
 
@@ -99,6 +102,29 @@ export function crw(pairs, { lineageArms = 1, level = CR_LEVEL, rho = RHO_PREREG
   const verdictOf = key => (invalid.length ? 'invalid' : checks.V && checks.K && checks.F && checks[key] ? `X ${word} than Y` : 'directional, no decision');
   return { pooled: { n: pairs.length, logRatio: L, ratio: Math.exp(L) }, perStream, need, checks, ci,
     verdict: { conditional: verdictOf('C'), process: verdictOf('P') }, failed: Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k) };
+}
+
+// The rule over K stream run directories (stream.mjs layout; one directory per lineage, in stream order A, B, …). Per arm
+// and stream: "invalid: env faults" by stats.mjs envFaultCheck, else "invalid: truncated" when the rows missing without a
+// fault line exceed 25% of the planned tasks (§9.4). lineageArms is declared per pair (§7.1: CR1 1, CR2 1, CR3 2); by
+// default it counts the jit: arms, because a static: spec cannot say whether its script was built per lineage.
+export async function decideRuns(armX, armY, dirs, { lineageArms = null, planned = null, from = STEADY.from, to = STEADY.to, ...opts } = {}) {
+  const { loadRun } = await import('../../../../experiments/jit/report.mjs');
+  const pairs = [], invalid = [], validity = [];
+  for (const [i, dir] of dirs.entries()) {
+    const stream = String.fromCharCode(65 + i), arms = loadRun(dir), A = arms.find(a => a.meta.spec === armX), B = arms.find(a => a.meta.spec === armY);
+    if (!A || !B) throw new Error(`${dir}: missing arm ${!A ? armX : armY}`);
+    const N = planned ?? Math.max(0, ...arms.flatMap(a => a.rows.map(r => r.idx + 1)));
+    for (const [arm, spec] of [[A, armX], [B, armY]]) {
+      const ef = envFaultCheck({ ...arm, planned: N, kind: arm.meta.kind }), truncated = N ? ef.missingOther.length / N : 0;
+      const status = ef.invalid ? 'invalid: env faults' : truncated > TRUNCATION_LIMIT ? 'invalid: truncated' : 'valid';
+      validity.push({ arm: spec, stream, planned: N, impaired: ef.impaired, missingOther: ef.missingOther.length, status });
+      if (status !== 'valid') invalid.push(`${spec}@${stream}: ${status}`);
+    }
+    pairs.push(...pairsOf(A.rows, B.rows, { stream, from, to }));
+  }
+  const n = lineageArms ?? [armX, armY].filter(s => /^jit:/.test(s)).length;
+  return { armX, armY, lineageArms: n, validity, ...crw(pairs, { ...opts, lineageArms: n, planned: to - from + 1, invalid }) };
 }
 
 // ------------------------------------------------------------------------------------------------ operating characteristics
@@ -191,5 +217,15 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const t = killRuleTable();
     if (json) console.log(JSON.stringify(t, null, 1));
     else for (const r of t) console.log(`gap ${r.trueGap} pRef ${r.pRef}: per-lineage ${pc(r.perLineage)}, pooled ${pc(r.pooled)}`);
-  } else { console.error('usage: crw.mjs plan|oc|kill [--json]'); process.exit(2); }
+  } else if (cmd === 'decide' && process.argv.length >= 7) {
+    const args = process.argv.slice(3).filter(a => a !== '--json'), li = args.indexOf('--lineage-arms');
+    const lineageArms = li >= 0 ? Number(args.splice(li, 2)[1]) : null;
+    const [armX, armY, ...dirs] = args;
+    const r = await decideRuns(armX, armY, dirs.map(d => path.resolve(d)), { lineageArms });
+    if (json) console.log(JSON.stringify(r, null, 1));
+    else console.log([`${armX} vs ${armY} (lineage-built arms: ${r.lineageArms})`, `conditional (these builds): ${r.verdict.conditional}; process (σ_L ${SIGMA_LINEAGE}): ${r.verdict.process}`,
+      `pooled ratio ${r.pooled.ratio.toFixed(3)} over ${r.pooled.n} pairs; per stream ${r.perStream.map(s => `${s.stream} ${s.ratio.toFixed(3)} (n ${s.n})`).join(', ')}`,
+      r.ci ? `98.33% CI of the ratio: conditional ${Math.exp(r.ci.conditional.lo).toFixed(2)}–${Math.exp(r.ci.conditional.hi).toFixed(2)}; process ${Math.exp(r.ci.process.lo).toFixed(2)}–${Math.exp(r.ci.process.hi).toFixed(2)}` : 'no pairs',
+      `checks ${JSON.stringify(r.checks)}; validity ${r.validity.map(v => `${v.arm}@${v.stream} ${v.status}`).join('; ')}`].join('\n'));
+  } else { console.error('usage: crw.mjs plan|oc|kill [--json] | crw.mjs decide <armX> <armY> <runDirA> <runDirB>... [--lineage-arms n] [--json]'); process.exit(2); }
 }
