@@ -28,6 +28,8 @@ export class MockError extends Error {
 
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const KEY_SCHEMA = S.str(200, { minLength: 1 });
+/** The one error an F3 outcome carries, committed or not: it must not say which (contract §4.3, E-BED §2.7). */
+export const F3_ERROR = () => ({ code: 'timeout', reason: 'timeout' });
 
 /** Validate and freeze a system declaration; adds the read-only `status` op to every system with a keyed op. */
 export function defineSystem(def) {
@@ -180,8 +182,9 @@ export class MockSystem {
    */
   apply(op, rawArgs, key, atMs, { fault = null, ctx = {} } = {}) {
     const r = this.#apply(op, rawArgs, key, atMs, { fault, ctx });
-    // F3: the request reached the system (and committed if it could) but the caller learns nothing about the outcome.
-    return fault === 'F3' ? { ...r, status: 'unknown', result: undefined, error: { code: 'timeout', reason: 'timeout-after-commit' } } : r;
+    // F3: the request reached the system (and committed if it could) but the caller learns nothing about the outcome:
+    // the error is the same whether it committed or not (review 2026-10-14 finding 1).
+    return fault === 'F3' ? { ...r, status: 'unknown', result: undefined, error: F3_ERROR() } : r;
   }
 
   #apply(op, rawArgs, key, atMs, { fault = null, ctx = {} } = {}) {

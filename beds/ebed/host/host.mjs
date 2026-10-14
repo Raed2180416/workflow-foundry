@@ -12,7 +12,7 @@
 import { canonical, hashOf, sha256 } from '../../lib/canonical.mjs';
 import { Agenda, MINUTE, SECOND, toMs, fmt, offsetMinutes, isIsoTime, eventOrder } from './time.mjs';
 import { Journal, ReplayDivergence } from './journal.mjs';
-import { MockSystem, MockError, effectSchemas, sorSchemas } from './mocks.mjs';
+import { MockSystem, MockError, effectSchemas, sorSchemas, F3_ERROR } from './mocks.mjs';
 import { faultSchedule } from './faults.mjs';
 import { profileOf, backoffSeconds, isRetryable, mayRetry } from './profiles.mjs';
 import { planTask, checkNoise } from './actors.mjs';
@@ -36,6 +36,10 @@ export class HostError extends Error {
 
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+/** The error code a skipped `after` dependant gets, by the observed state of its predecessor (H-22). */
+const PREDECESSOR = Object.freeze({ failed: 'predecessor-failed', unknown: 'predecessor-unknown' });
+/** The observed state of a (non-batch) outcome: what the arm can tell from the result it receives. */
+const observed = r => (r.status === 'ok' ? 'committed' : r.status === 'unknown' ? 'unknown' : 'failed');
 const pad = (n, w) => String(n).padStart(w, '0');
 
 /** Normalise an item binding: { id, family, systems, schemas: { decisions?, humanTasks }, actors, specE, product? }. */
@@ -154,8 +158,9 @@ class Host {
     for (const s of this.item.family.sweeps ?? []) this.sweeps.set(s.id, { id: s.id, carry: null, tickIndex: 0, queue: [] });
     for (const id of Object.keys(world.sweepTimes ?? {})) if (!this.sweeps.has(id)) this.sweeps.set(id, { id, carry: null, tickIndex: 0, queue: [] });
     this.refIndex = new Map();
+    this.replies = new WeakSet();     // counterparty events that quote an arm-placed ref (the only events routed by ref)
     this.hostEventCase = new Map();   // counterparty events (generated on-policy) -> the truth case of the effect that caused them
-    this.pendingKeys = new Set();
+    this.pendingKeys = new Map();     // 'system\0key' -> number of emissions holding it pending (deferred or retrying)
     this.attempts = new Map();
     this.taskOrdinals = new Map();
     this.counters = { instance: 0, event: 0, emission: 0, wakeups: 0 };
@@ -219,6 +224,11 @@ class Host {
       const st = this.instances.get(e.instance)?.tasks.get(e.taskId);
       return !st || st.version !== e.version || st.state === 'closed' || (e.event.type === 'humanTask.timeout' && st.state !== 'open');
     }
+    if (e.kind === 'form') {
+      const st = this.instances.get(e.instance)?.tasks.get(e.taskId);
+      return !st || st.version !== e.version || st.state === 'closed';
+    }
+    if (e.kind === 'retry') return e.emission.state === 'abandoned';
     return false;
   }
 
@@ -278,7 +288,7 @@ class Host {
       obligations: open.flatMap(i => [...i.obligations.values()].map(o => ({ instance: i.id, id: o.id, kind: o.kind, dueAt: o.dueAt }))),
       tasks: open.flatMap(i => [...i.tasks.values()].filter(t => t.state === 'open' || t.state === 'timedOut').map(t => ({ instance: i.id, taskId: t.task.id, state: t.state }))),
       undeliveredWorldEvents: [...this.sweeps.values()].flatMap(s => s.queue.map(e => e.id)),
-      pending: [...this.pendingKeys].sort(),
+      pending: [...this.pendingKeys.keys()].sort(),
       digests: { sor: this.sorDigest(), ledger: hashOf(this.ledger.committed) },
     });
     this.journal.commit();
@@ -293,7 +303,7 @@ class Host {
 
   #newInstance(startedBy, atMs, inbound) {
     const inst = { id: `i-${pad(++this.counters.instance, 6)}`, startedBy, inbound, openedMs: atMs, lastTickMs: null, tickIndex: 0, carry: null,
-      closed: false, subject: null, touched: new Map(), docs: new Map(), obligations: new Map(), tasks: new Map(), obVersion: 0 };
+      closed: false, subject: null, touched: new Map(), docs: new Map(), obligations: new Map(), tasks: new Map(), obVersion: 0, inflight: new Set() };
     this.instances.set(inst.id, inst);
     this.stage('instance.open', { instance: inst.id, startedBy, at: this.iso(atMs), binding: this.bindingOf(inst) });
     return inst;
@@ -307,6 +317,7 @@ class Host {
     this.stage('wakeup', { at: this.iso(t), entries: entries.length });
     // Phase 0: host-internal work at this instant (world writes, platform retries, form rejections).
     for (const e of entries.filter(x => x.phase === 0)) {
+      if (this.#stale(e)) continue;      // an abandoned retry or a form entry of a closed or superseded task
       if (e.kind === 'write') this.#worldWrite(`${e.write.system}.${e.write.table}`, e.write.row, `write:${e.write.id}`);
       else if (e.kind === 'retry') this.#attempt(e.emission, 'platform-retry');
       else if (e.kind === 'form') this.stage('form.rejected', { instance: e.instance, ...e.payload });
@@ -342,7 +353,9 @@ class Host {
         this.stage('deliver', { event: ev, instance: inst.id });
         add(round1, inst, ev);
       } else if (ev.channel.kind === 'inbound') {
-        const ref = ev.payload?.ref;
+        // Only a reply the host generated in answer to an arm message that carried `ref` is routed by that ref; a world
+        // arrival is generated before the run and is never a reply, whatever its payload says (review finding 3).
+        const ref = this.replies.has(ev) ? ev.payload?.ref : undefined;
         const target = typeof ref === 'string' && this.refIndex.has(ref) ? this.instances.get(this.refIndex.get(ref)) : null;
         if (target && !target.closed) { this.stage('deliver', { event: ev, instance: target.id, route: 'ref' }); add(round1, target, ev); continue; }
         const inst = this.#newInstance({ kind: 'event', eventId: ev.id }, t, true);
@@ -638,6 +651,13 @@ class Host {
     inst.obligations.clear();
     for (const st of inst.tasks.values()) if (st.state !== 'closed') st.state = 'closed';
     this.stage('instance.close', { instance: inst.id, reason, droppedObligations: dropped });
+    // Effects still being retried by the platform, or deferred behind one, are abandoned with their instance, as a
+    // durable-execution platform stops scheduling activity attempts for a closed workflow (review finding 11; H-24).
+    for (const em of [...inst.inflight]) {
+      em.state = 'abandoned';
+      this.#release(em);
+      this.stage('effect.abandoned', { emission: em.id, reason: 'instance-closed', attempts: em.attempts });
+    }
   }
 
   #upsertObligation(inst, ob) {
@@ -665,7 +685,7 @@ class Host {
     this.stage('humanTask.created', { instance: inst.id, task, case: c, ordinal, user: plan.user, noAnswer: plan.noAnswer ?? null, noise: plan.noise, form: plan.form ?? null,
       ...(dueMsRaw <= this.nowMs ? { dueClamped: true } : {}), steps: plan.steps.map(s => ({ at: this.iso(s.atMs), type: s.type })) });
     for (const s of plan.steps) {
-      if (s.type === 'form.rejected') { this.agenda.push({ kind: 'form', atMs: s.atMs, phase: 0, source: 'actor', id: `${inst.id}/${task.id}/${version}/form`, instance: inst.id, payload: s.payload }); continue; }
+      if (s.type === 'form.rejected') { this.agenda.push({ kind: 'form', atMs: s.atMs, phase: 0, source: 'actor', id: `${inst.id}/${task.id}/${version}/form`, instance: inst.id, taskId: task.id, version, payload: s.payload }); continue; }
       const ev = { id: this.hid(), type: s.type, at: this.iso(s.atMs), source: 'actor', channel: { kind: 'instance', instance: inst.id }, payload: s.payload };
       this.agenda.push({ kind: 'task', atMs: s.atMs, phase: 1, source: ev.source, id: ev.id, instance: inst.id, taskId: task.id, version, event: ev });
     }
@@ -677,21 +697,40 @@ class Host {
   #emit(effects, origin) {
     const byKey = new Map();
     for (const eff of effects) {
-      const em = { id: `em-${pad(++this.counters.emission, 7)}`, eff, origin, attempts: 0, state: 'new', dependents: [], tags: [] };
+      const em = { id: `em-${pad(++this.counters.emission, 7)}`, eff, origin, attempts: 0, state: 'new', dependents: [], tags: [], holdsPending: false };
       if (eff.key) byKey.set(eff.key, em);
       this.stage('effect.emit', { emission: em.id, origin, effect: eff });
       if (eff.after) {
         const pred = byKey.get(eff.after);
-        if (pred.state === 'failed') { this.#skip(em, 'predecessor-failed'); continue; }
         if (pred.state === 'pending') {
           em.state = 'pending'; pred.dependents.push(em);
-          if (eff.key) this.pendingKeys.add(`${eff.system}\u0000${eff.key}`);
+          this.#hold(em);
           this.stage('effect.deferred', { emission: em.id, after: pred.id });
           continue;
         }
+        // `after` follows the outcome the arm observes (review finding 2): only an `ok` predecessor releases the
+        // dependant; an `unknown` one (F3) does not, whether or not it committed, so the arm must reconcile itself.
+        if (pred.state !== 'committed') { this.#skip(em, PREDECESSOR[pred.state] ?? 'predecessor-failed'); continue; }
       }
       this.#attempt(em, 'arm');
     }
+  }
+
+  /** An emission that is deferred or being retried holds its key as `pending` (counted: one hold per emission). */
+  #hold(em) {
+    if (em.origin.kind === 'case') this.instances.get(em.origin.instance)?.inflight.add(em);
+    if (!em.eff.key || em.holdsPending || this.systems.get(em.eff.system).def.ops[em.eff.op]?.readOnly) return;
+    em.holdsPending = true;
+    const k = `${em.eff.system}\u0000${em.eff.key}`;
+    this.pendingKeys.set(k, (this.pendingKeys.get(k) ?? 0) + 1);
+  }
+  #release(em) {
+    if (em.origin.kind === 'case') this.instances.get(em.origin.instance)?.inflight.delete(em);
+    if (!em.holdsPending) return;
+    em.holdsPending = false;
+    const k = `${em.eff.system}\u0000${em.eff.key}`;
+    const n = (this.pendingKeys.get(k) ?? 1) - 1;
+    if (n > 0) this.pendingKeys.set(k, n); else this.pendingKeys.delete(k);
   }
 
   #originChannel(origin) {
@@ -706,14 +745,16 @@ class Host {
     this.stage('effect.result', { emission: em.id, event: ev.id, at: ev.at, status: payload.status, ...(injected ? { injected: true } : {}) });
   }
 
+  /** `state` is the outcome the arm observes: committed (`ok`), unknown (F3) or failed (anything else). */
   #resolve(em, state) {
     em.state = state;
-    if (em.eff.key) this.pendingKeys.delete(`${em.eff.system}\u0000${em.eff.key}`);
+    this.#release(em);
     const deps = em.dependents.splice(0);
     for (const d of deps) {
-      if (d.eff.key) this.pendingKeys.delete(`${d.eff.system}\u0000${d.eff.key}`);
+      if (d.state === 'abandoned') continue;
+      this.#release(d);
       if (state === 'committed') { d.state = 'new'; this.#attempt(d, 'arm-deferred'); }
-      else this.#skip(d, 'predecessor-failed');
+      else this.#skip(d, PREDECESSOR[state] ?? 'predecessor-failed');
     }
   }
 
@@ -754,6 +795,7 @@ class Host {
       if (r.quoteRef && typeof args?.ref === 'string') payload.ref = args.ref;
       const ev = { id: this.hid(), type: String(r.type), at: this.iso(atMs), source: String(r.source ?? sys.id), channel: r.channel === 'world' ? { kind: 'world' } : { kind: 'inbound' }, payload,
         ...(typeof r.doc === 'string' ? { doc: r.doc } : {}), ...(r.channel === 'world' ? { sweep: String(r.sweep) } : {}) };
+      if (r.quoteRef && typeof args?.ref === 'string') this.replies.add(ev);
       this.stage('counterparty.event', { event: ev, case: c, cause: em.id });
       if (c !== null) this.hostEventCase.set(ev.id, c);
       this.agenda.push({ kind: 'event', atMs, phase: 1, source: ev.source, id: ev.id, event: ev });
@@ -775,7 +817,7 @@ class Host {
       const r = sys.read(eff.op, eff.args, this.nowMs, this.pendingKeys);
       this.stage('read', { emission: em.id, system: eff.system, op: eff.op, status: r.status });
       this.#scheduleResult(em, sys, { key: eff.key ?? null, system: eff.system, op: eff.op, status: r.status, ...(r.result ? { result: r.result } : {}), ...(r.error ? { error: r.error } : {}) }, false);
-      return this.#resolve(em, r.status === 'ok' ? 'committed' : 'failed');
+      return this.#resolve(em, observed(r));
     }
     if (op.batch) return this.#attemptBatch(em, sys, op, via);
     const inst = em.origin.kind === 'case' ? this.instances.get(em.origin.instance) : null;
@@ -803,7 +845,7 @@ class Host {
       const secs = backoffSeconds(retry, em.attempts);
       const atMs = this.nowMs + secs * SECOND;
       em.state = 'pending';
-      if (eff.key) this.pendingKeys.add(`${eff.system}\u0000${eff.key}`);
+      this.#hold(em);
       this.stage('platform.retry', { emission: em.id, attempt: em.attempts, afterSeconds: secs, at: this.iso(atMs), status: r.status });
       this.agenda.push({ kind: 'retry', atMs, phase: 0, source: 'platform', id: `${em.id}#${em.attempts + 1}`, emission: em });
       return;
@@ -812,7 +854,7 @@ class Host {
       ...(r.error ? { error: r.error } : {}), ...(r.status === 'rate-limited' ? { retryAfter: fault?.params?.retryAfterSeconds ?? 60 } : {}),
       ...(em.attempts > 1 ? { attempts: em.attempts } : {}) };
     this.#scheduleResult(em, sys, payload, injected);
-    this.#resolve(em, r.committed || r.deduped ? 'committed' : 'failed');
+    this.#resolve(em, observed(r));
   }
 
   #attemptBatch(em, sys, op, via) {
@@ -842,7 +884,7 @@ class Host {
       let r;
       if (kind === 'F1' || kind === 'F2' || kind === 'F6') r = sys.apply(eff.op, {}, null, this.nowMs, { fault: kind });   // transport outcome only
       else r = sys.applyItem(eff.op, item, args, key, this.nowMs, { fault: kind === 'F4' ? 'F4' : null, ctx: { now: this.iso(this.nowMs) } });
-      if (kind === 'F3') r = { ...r, status: 'unknown', result: undefined, error: { code: 'timeout', reason: 'timeout-after-commit' } };
+      if (kind === 'F3') r = { ...r, status: 'unknown', result: undefined, error: F3_ERROR() };
       const tags = kind ? [kind] : [];
       if (tags.length) anyInjected = true;
       if (r.deduped && !tags.length) this.stage('effect.deduped', { emission: em.id, system: eff.system, op: eff.op, key, via, batchIndex: index, status: r.status });
@@ -862,12 +904,14 @@ class Host {
       const secs = backoffSeconds(retry, em.attempts);
       const atMs = this.nowMs + secs * SECOND;
       em.state = 'pending';
+      this.#hold(em);
       this.stage('platform.retry', { emission: em.id, attempt: em.attempts, afterSeconds: secs, at: this.iso(atMs), status });
       this.agenda.push({ kind: 'retry', atMs, phase: 0, source: 'platform', id: `${em.id}#${em.attempts + 1}`, emission: em });
       return;
     }
     this.#scheduleResult(em, sys, { key: null, system: eff.system, op: eff.op, status, items, ...(em.attempts > 1 ? { attempts: em.attempts } : {}) }, anyInjected);
-    this.#resolve(em, outcomes.some(r => r.committed || r.deduped) ? 'committed' : 'failed');
+    // A batch carries no key, so nothing can name it in `after`; its state is still the observed one.
+    this.#resolve(em, status === 'ok' ? 'committed' : 'failed');
   }
 
   // ---------------------------------------------------------------------------------------------------------------
