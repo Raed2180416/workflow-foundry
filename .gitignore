@@ -26,3 +26,4 @@ research/corpus-20261006/parts/*.jsonl
 # above. The raw run directories under experiments/runs/ (SQLite journals, scratch) stay ignored.
 !research/*/runs/
 !research/*/runs/**
+beds/ebed/e8/.mutants/
