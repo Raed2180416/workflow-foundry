@@ -1,0 +1,1779 @@
+{
+ "made": "2026-10-14T13:46:19.650Z",
+ "note": "PREREG §5: mechanical features and label-vs-definition discrepancies; a recall check on the labeller, not a second labeller",
+ "rows": [
+  {
+   "platform": "windmill",
+   "id": "windmill:75",
+   "file": "flow-75.json",
+   "bytes": 10476,
+   "features": {
+    "modules": 1,
+    "types": {
+     "rawscript": 1
+    },
+    "suspend": 0,
+    "stopAfterIf": 0,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 0,
+    "branch": 0,
+    "loops": 0,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": false,
+    "whileLoops": 0,
+    "clock": 4,
+    "random": 0,
+    "codeEffects": 5,
+    "unboundedWhile": 2,
+    "state": 5,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:61",
+   "file": "flow-61.json",
+   "bytes": 2723,
+   "features": {
+    "modules": 1,
+    "types": {
+     "rawscript": 1
+    },
+    "suspend": 0,
+    "stopAfterIf": 0,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 0,
+    "branch": 0,
+    "loops": 0,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": true,
+    "whileLoops": 0,
+    "clock": 0,
+    "random": 0,
+    "codeEffects": 0,
+    "unboundedWhile": 0,
+    "state": 0,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:72",
+   "file": "flow-72.json",
+   "bytes": 2140,
+   "features": {
+    "modules": 1,
+    "types": {
+     "rawscript": 1
+    },
+    "suspend": 0,
+    "stopAfterIf": 0,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 0,
+    "branch": 0,
+    "loops": 0,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": true,
+    "whileLoops": 0,
+    "clock": 0,
+    "random": 0,
+    "codeEffects": 0,
+    "unboundedWhile": 0,
+    "state": 0,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:23",
+   "file": "flow-23.json",
+   "bytes": 3309,
+   "features": {
+    "modules": 6,
+    "types": {
+     "rawscript": 1,
+     "forloopflow": 1,
+     "script": 4
+    },
+    "suspend": 0,
+    "stopAfterIf": 1,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 1,
+    "branch": 0,
+    "loops": 1,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": false,
+    "whileLoops": 0,
+    "clock": 0,
+    "random": 0,
+    "codeEffects": 1,
+    "unboundedWhile": 0,
+    "state": 0,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:83",
+   "file": "flow-83.json",
+   "bytes": 32881,
+   "features": {
+    "modules": 14,
+    "types": {
+     "script": 6,
+     "rawscript": 6,
+     "branchone": 2
+    },
+    "suspend": 1,
+    "stopAfterIf": 0,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 0,
+    "branch": 2,
+    "loops": 0,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": false,
+    "whileLoops": 0,
+    "clock": 0,
+    "random": 0,
+    "codeEffects": 3,
+    "unboundedWhile": 0,
+    "state": 0,
+    "resume": 1
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:65",
+   "file": "flow-65.json",
+   "bytes": 2087,
+   "features": {
+    "modules": 1,
+    "types": {
+     "rawscript": 1
+    },
+    "suspend": 0,
+    "stopAfterIf": 0,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 0,
+    "branch": 0,
+    "loops": 0,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": true,
+    "whileLoops": 0,
+    "clock": 0,
+    "random": 0,
+    "codeEffects": 0,
+    "unboundedWhile": 0,
+    "state": 0,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:30",
+   "file": "flow-30.json",
+   "bytes": 1868,
+   "features": {
+    "modules": 4,
+    "types": {
+     "forloopflow": 1,
+     "script": 2,
+     "branchone": 1
+    },
+    "suspend": 0,
+    "stopAfterIf": 0,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 1,
+    "branch": 1,
+    "loops": 1,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": false,
+    "whileLoops": 0,
+    "clock": 0,
+    "random": 0,
+    "codeEffects": 0,
+    "unboundedWhile": 0,
+    "state": 0,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:35",
+   "file": "flow-35.json",
+   "bytes": 2784,
+   "features": {
+    "modules": 3,
+    "types": {
+     "script": 2,
+     "rawscript": 1
+    },
+    "suspend": 0,
+    "stopAfterIf": 1,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 0,
+    "branch": 0,
+    "loops": 0,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": false,
+    "whileLoops": 0,
+    "clock": 0,
+    "random": 0,
+    "codeEffects": 0,
+    "unboundedWhile": 0,
+    "state": 0,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:82",
+   "file": "flow-82.json",
+   "bytes": 58727,
+   "features": {
+    "modules": 19,
+    "types": {
+     "rawscript": 9,
+     "script": 7,
+     "branchall": 1,
+     "forloopflow": 2
+    },
+    "suspend": 0,
+    "stopAfterIf": 0,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 2,
+    "branch": 1,
+    "loops": 2,
+    "parallel": 3,
+    "failureModule": false,
+    "preprocessor": false,
+    "whileLoops": 0,
+    "clock": 2,
+    "random": 0,
+    "codeEffects": 14,
+    "unboundedWhile": 3,
+    "state": 0,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "windmill",
+   "id": "windmill:59",
+   "file": "flow-59.json",
+   "bytes": 2315,
+   "features": {
+    "modules": 1,
+    "types": {
+     "rawscript": 1
+    },
+    "suspend": 0,
+    "stopAfterIf": 0,
+    "retry": 0,
+    "sleep": 0,
+    "skipFailures": 0,
+    "branch": 0,
+    "loops": 0,
+    "parallel": 0,
+    "failureModule": false,
+    "preprocessor": true,
+    "whileLoops": 0,
+    "clock": 0,
+    "random": 0,
+    "codeEffects": 0,
+    "unboundedWhile": 0,
+    "state": 0,
+    "resume": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/kafka-schema-registry-compatibility-mode-drift-guard.yaml",
+   "file": "flows__kafka-schema-registry-compatibility-mode-drift-guard.yaml",
+   "bytes": 35185,
+   "features": {
+    "types": {
+     "core.http.Request": 9,
+     "kafka.TopicList": 1,
+     "core.output.OutputValues": 6,
+     "core.flow.If": 7,
+     "core.kv.Set": 4,
+     "core.flow.Loop": 3,
+     "core.log.Log": 5,
+     "slack.notifications.SlackIncomingWebhook": 2,
+     "core.flow.Pause": 1,
+     "core.execution.Fail": 1,
+     "core.trigger.Schedule": 1
+    },
+    "triggers": 1,
+    "schedule": 1,
+    "webhook": 0,
+    "errors": 1,
+    "finally": 0,
+    "pause": 1,
+    "loops": 3,
+    "ifs": 7,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 8,
+    "kv": 4,
+    "secret": 2,
+    "clock": 0,
+    "random": 0,
+    "ai": 0,
+    "scripts": 0,
+    "disabledTriggers": 1,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/stripe-to-crm-sync.yaml",
+   "file": "flows__stripe-to-crm-sync.yaml",
+   "bytes": 10671,
+   "features": {
+    "types": {
+     "core.trigger.Schedule": 1,
+     "core.kv.Get": 1,
+     "core.http.Request": 2,
+     "scripts.python.Script": 2,
+     "core.kv.Set": 1,
+     "slack.notifications.SlackIncomingWebhook": 1
+    },
+    "triggers": 1,
+    "schedule": 1,
+    "webhook": 0,
+    "errors": 0,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 0,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 2,
+    "secret": 7,
+    "clock": 4,
+    "random": 0,
+    "ai": 0,
+    "scripts": 2,
+    "disabledTriggers": 0,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/postgres-connection-saturation-guard.yaml",
+   "file": "flows__postgres-connection-saturation-guard.yaml",
+   "bytes": 9547,
+   "features": {
+    "types": {
+     "core.trigger.Schedule": 1,
+     "core.trigger.Webhook": 1,
+     "jdbc.postgresql.Query": 2,
+     "scripts.python.Script": 1,
+     "core.flow.If": 1,
+     "slack.notifications.SlackIncomingWebhook": 2,
+     "core.log.Log": 1,
+     "core.output.OutputValues": 1
+    },
+    "triggers": 2,
+    "schedule": 1,
+    "webhook": 1,
+    "errors": 1,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 1,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 0,
+    "secret": 7,
+    "clock": 1,
+    "random": 0,
+    "ai": 0,
+    "scripts": 1,
+    "disabledTriggers": 0,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/mistral-agent-workflow-run.yaml",
+   "file": "flows__mistral-agent-workflow-run.yaml",
+   "bytes": 6686,
+   "features": {
+    "types": {
+     "mistral.RunWorkflow": 1,
+     "slack.notifications.SlackIncomingWebhook": 2
+    },
+    "triggers": 0,
+    "schedule": 0,
+    "webhook": 0,
+    "errors": 1,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 0,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 0,
+    "secret": 3,
+    "clock": 0,
+    "random": 0,
+    "ai": 0,
+    "scripts": 0,
+    "disabledTriggers": 0,
+    "wait": 3
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/codedeploy-failed-deployment-sentinel.yaml",
+   "file": "flows__codedeploy-failed-deployment-sentinel.yaml",
+   "bytes": 16129,
+   "features": {
+    "types": {
+     "core.trigger.Schedule": 1,
+     "aws.cli.AwsCLI": 2,
+     "core.flow.If": 1,
+     "slack.notifications.SlackIncomingWebhook": 2,
+     "core.log.Log": 2
+    },
+    "triggers": 1,
+    "schedule": 1,
+    "webhook": 0,
+    "errors": 1,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 1,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 0,
+    "secret": 6,
+    "clock": 0,
+    "random": 0,
+    "ai": 0,
+    "scripts": 0,
+    "disabledTriggers": 1,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/github-actions-unpinned-action-audit.yaml",
+   "file": "flows__github-actions-unpinned-action-audit.yaml",
+   "bytes": 13237,
+   "features": {
+    "types": {
+     "core.flow.WorkingDirectory": 1,
+     "git.Clone": 1,
+     "scripts.python.Script": 2,
+     "core.kv.Get": 1,
+     "core.flow.If": 1,
+     "slack.notifications.SlackIncomingWebhook": 2,
+     "core.kv.Set": 1,
+     "core.trigger.Schedule": 1
+    },
+    "triggers": 1,
+    "schedule": 1,
+    "webhook": 0,
+    "errors": 1,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 1,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 2,
+    "secret": 3,
+    "clock": 0,
+    "random": 0,
+    "ai": 0,
+    "scripts": 2,
+    "disabledTriggers": 1,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/github-search.yaml",
+   "file": "flows__github-search.yaml",
+   "bytes": 3971,
+   "features": {
+    "types": {
+     "github.repositories.Search": 1,
+     "serdes.json.IonToJson": 1,
+     "core.log.Log": 1
+    },
+    "triggers": 0,
+    "schedule": 0,
+    "webhook": 0,
+    "errors": 0,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 0,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 0,
+    "secret": 0,
+    "clock": 0,
+    "random": 0,
+    "ai": 0,
+    "scripts": 0,
+    "disabledTriggers": 0,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/csv-duckdb-slack.yaml",
+   "file": "flows__csv-duckdb-slack.yaml",
+   "bytes": 5310,
+   "features": {
+    "types": {
+     "core.trigger.Schedule": 1,
+     "jdbc.duckdb.Queries": 1,
+     "slack.notifications.SlackIncomingWebhook": 1
+    },
+    "triggers": 1,
+    "schedule": 1,
+    "webhook": 0,
+    "errors": 0,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 0,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 0,
+    "secret": 1,
+    "clock": 0,
+    "random": 0,
+    "ai": 0,
+    "scripts": 0,
+    "disabledTriggers": 0,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/kestra-flow-failure-rate-gate.yaml",
+   "file": "flows__kestra-flow-failure-rate-gate.yaml",
+   "bytes": 14663,
+   "features": {
+    "types": {
+     "core.trigger.Schedule": 1,
+     "kestra.executions.Count": 2,
+     "core.flow.If": 1,
+     "slack.notifications.SlackIncomingWebhook": 2,
+     "core.log.Log": 2
+    },
+    "triggers": 1,
+    "schedule": 1,
+    "webhook": 0,
+    "errors": 1,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 1,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 0,
+    "secret": 8,
+    "clock": 6,
+    "random": 0,
+    "ai": 0,
+    "scripts": 0,
+    "disabledTriggers": 1,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "kestra",
+   "id": "kestra:flows/auditlogs-to-bigquery.yaml",
+   "file": "flows__auditlogs-to-bigquery.yaml",
+   "bytes": 7184,
+   "features": {
+    "types": {
+     "core.trigger.Schedule": 1,
+     "kafka.Consume": 1,
+     "graalvm.js.FileTransform": 1,
+     "serdes.avro.IonToAvro": 1,
+     "gcp.bigquery.Load": 1
+    },
+    "triggers": 1,
+    "schedule": 1,
+    "webhook": 0,
+    "errors": 0,
+    "finally": 0,
+    "pause": 0,
+    "loops": 0,
+    "ifs": 0,
+    "parallel": 0,
+    "subflow": 0,
+    "retry": 0,
+    "allowFailed": 0,
+    "kv": 0,
+    "secret": 1,
+    "clock": 0,
+    "random": 0,
+    "ai": 0,
+    "scripts": 0,
+    "disabledTriggers": 0,
+    "wait": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/o365groups-graph-create-group/solution/groups-graph-create-group.zip#Microsoft.Flow/flows/547270eb-3d73-4d5d-ae6a-95a00fdee507/definition.json",
+   "file": "o365groups-graph-create-group.definition.json",
+   "bytes": 7444,
+   "features": {
+    "actions": 8,
+    "types": {
+     "OpenApiConnection": 3,
+     "If": 1,
+     "Compose": 1,
+     "Foreach": 1,
+     "ParseJson": 2
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "Button",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 1,
+    "ifs": 1,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/Try-Catch-Finally/solution/PatternTry-Catch-Finally.zip#Microsoft.Flow/flows/6420a0b5-c254-42f1-9808-3370c281ca9d/definition.json",
+   "file": "Try-Catch-Finally.definition.json",
+   "bytes": 1410,
+   "features": {
+    "actions": 3,
+    "types": {
+     "Scope": 3
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "Button",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 3,
+    "runAfterFailed": 2,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/exception-handing-in-do-until-loop/solution/PatternExceptionHandingInDoUntilLoop.zip#Microsoft.Flow/flows/36b8bfc6-708f-433f-a986-e6fe922b95a2/definition.json",
+   "file": "exception-handing-in-do-until-loop.definition.json",
+   "bytes": 2488,
+   "features": {
+    "actions": 10,
+    "types": {
+     "Until": 1,
+     "Scope": 1,
+     "Compose": 1,
+     "If": 2,
+     "SetVariable": 2,
+     "InitializeVariable": 1,
+     "Terminate": 2
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "Button",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 1,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 2,
+    "scopes": 1,
+    "runAfterFailed": 1,
+    "terminate": 2,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 3,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 1,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/sharepoint-group-creation-with-user-added/solution/Knowhere365SharePointGroupAutomation.zip#Workflows/Flow-CreateSharePointGroupandEnsureUsersasMembers-2578E499-0BE1-EC11-BB3C-000D3A233A82.json",
+   "file": "sharepoint-group-creation-with-user-added.definition.json",
+   "bytes": 7562,
+   "features": {
+    "actions": 6,
+    "types": {
+     "InitializeVariable": 3,
+     "OpenApiConnection": 3
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "Button",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 3,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/site-design-homepage/solution/ApplyTemplate.zip#Microsoft.Flow/flows/0e83eecd-6ba8-411a-a0bc-2f80099564dc/definition.json",
+   "file": "site-design-homepage.definition.json",
+   "bytes": 5526,
+   "features": {
+    "actions": 8,
+    "types": {
+     "Scope": 1,
+     "OpenApiConnection": 6,
+     "Compose": 1
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "Http",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 1,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/new-employee-tip-of-the-day/solution/NewEmployeeTips.zip#Microsoft.Flow/flows/58fe7a02-48d0-40af-bf91-8e83685cb938/definition.json",
+   "file": "new-employee-tip-of-the-day.definition.json",
+   "bytes": 5649,
+   "features": {
+    "actions": 14,
+    "types": {
+     "Scope": 1,
+     "OpenApiConnection": 5,
+     "Foreach": 2,
+     "SetVariable": 1,
+     "If": 1,
+     "InitializeVariable": 4
+    },
+    "triggers": [
+     {
+      "n": "Recurrence",
+      "type": "Recurrence",
+      "recurrence": true,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 2,
+    "ifs": 1,
+    "scopes": 1,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 5,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/sharepoint-set-item-level-permissions/solution/SharePoint-Set-Item-Level-Permissions.zip#Microsoft.Flow/flows/6c1f5a59-9746-46ba-bfcf-79bedbbd8208/definition.json",
+   "file": "sharepoint-set-item-level-permissions.definition.json",
+   "bytes": 7434,
+   "features": {
+    "actions": 11,
+    "types": {
+     "InitializeVariable": 1,
+     "ParseJson": 1,
+     "Scope": 2,
+     "OpenApiConnection": 5,
+     "Foreach": 1,
+     "Compose": 1
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "Button",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 1,
+    "ifs": 0,
+    "scopes": 2,
+    "runAfterFailed": 1,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 1,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/request-review-and-approval-for-a-selected-file/solution/RequestReviewandApprovalforaSelectedFile.zip#Microsoft.Flow/flows/ff241a62-834c-430c-b3f3-b9612e3125ab/definition.json",
+   "file": "request-review-and-approval-for-a-selected-file.definition.json",
+   "bytes": 28790,
+   "features": {
+    "actions": 40,
+    "types": {
+     "ApiConnection": 15,
+     "If": 2,
+     "Until": 3,
+     "Wait": 3,
+     "SetVariable": 3,
+     "AppendToStringVariable": 4,
+     "Foreach": 3,
+     "ApiConnectionWebhook": 1,
+     "AppendToArrayVariable": 1,
+     "InitializeVariable": 5
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "ApiConnection",
+      "recurrence": false,
+      "splitOn": true
+     }
+    ],
+    "until": 3,
+    "untilNoCount": 2,
+    "foreach": 3,
+    "ifs": 2,
+    "scopes": 0,
+    "runAfterFailed": 8,
+    "terminate": 0,
+    "wait": 3,
+    "approvals": 2,
+    "switches": 0,
+    "vars": 13,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/teams-invites-via-graph-api/solution/team-guest-management-via-graph-api_20210501141125.zip#Microsoft.Flow/flows/c7c9bd68-9656-4099-8d60-0c1cb9b47415/definition.json",
+   "file": "teams-invites-via-graph-api.definition.json",
+   "bytes": 8131,
+   "features": {
+    "actions": 16,
+    "types": {
+     "OpenApiConnection": 7,
+     "Query": 1,
+     "Compose": 2,
+     "ParseJson": 1,
+     "Select": 1,
+     "Join": 1,
+     "OpenApiConnectionWebhook": 1,
+     "If": 2
+    },
+    "triggers": [
+     {
+      "n": "When_a_new_response_is_submitted",
+      "type": "OpenApiConnectionWebhook",
+      "recurrence": false,
+      "splitOn": true
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 2,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 1,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "power-automate",
+   "id": "power-automate:samples/teams-adaptive-card-reminders-from-lists/solution/TeamsAdaptiveCardRemindersFromLists.zip#Microsoft.Flow/flows/d594d2cf-7c6f-4987-84e8-98a9f52c1d08/definition.json",
+   "file": "teams-adaptive-card-reminders-from-lists.definition.json",
+   "bytes": 5899,
+   "features": {
+    "actions": 5,
+    "types": {
+     "OpenApiConnection": 2,
+     "InitializeVariable": 2,
+     "Foreach": 1
+    },
+    "triggers": [
+     {
+      "n": "Recurrence_-_Daily_(10AM)",
+      "type": "Recurrence",
+      "recurrence": true,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 1,
+    "ifs": 0,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 2,
+    "parallelSiblings": 0,
+    "clock": 2,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:inventory-management-sam/statemachine/reserve-stock-statemachine.asl.json",
+   "file": "inventory-management-sam__statemachine__reserve-stock-statemachine.asl.json",
+   "bytes": 6267,
+   "features": {
+    "states": 11,
+    "types": {
+     "Task": 7,
+     "Choice": 1,
+     "Parallel": 2,
+     "Pass": 1
+    },
+    "retry": 0,
+    "catches": 0,
+    "sync": 0,
+    "callback": 0,
+    "wait": 0,
+    "maps": 0,
+    "parallel": 2,
+    "cycles": 0,
+    "uuid": 1,
+    "clock": 0,
+    "random": 1,
+    "timeout": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:s3-sfn-lambda-bedrock/statemachine/statemachine.asl.json",
+   "file": "s3-sfn-lambda-bedrock__statemachine__statemachine.asl.json",
+   "bytes": 1226,
+   "features": {
+    "states": 6,
+    "types": {
+     "Choice": 1,
+     "Task": 4,
+     "Fail": 1
+    },
+    "retry": 0,
+    "catches": 0,
+    "sync": 0,
+    "callback": 0,
+    "wait": 0,
+    "maps": 0,
+    "parallel": 0,
+    "cycles": 0,
+    "uuid": 0,
+    "clock": 0,
+    "random": 0,
+    "timeout": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:batch-lambda-cdk/batch_lambda_cdk/statemachine/statemachine.asl.json",
+   "file": "batch-lambda-cdk__batch_lambda_cdk__statemachine__statemachine.asl.json",
+   "bytes": 753,
+   "features": {
+    "states": 2,
+    "types": {
+     "Task": 2
+    },
+    "retry": 0,
+    "catches": 0,
+    "sync": 1,
+    "callback": 0,
+    "wait": 0,
+    "maps": 0,
+    "parallel": 0,
+    "cycles": 0,
+    "uuid": 0,
+    "clock": 0,
+    "random": 0,
+    "timeout": 1
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:resource-configuration-backup-sam/statemachine/statemachine.asl.json",
+   "file": "resource-configuration-backup-sam__statemachine__statemachine.asl.json",
+   "bytes": 7297,
+   "features": {
+    "states": 10,
+    "types": {
+     "Map": 2,
+     "Task": 5,
+     "Choice": 2,
+     "Succeed": 1
+    },
+    "retry": 5,
+    "catches": 0,
+    "sync": 0,
+    "callback": 0,
+    "wait": 0,
+    "maps": 2,
+    "parallel": 0,
+    "cycles": 1,
+    "uuid": 0,
+    "clock": 2,
+    "random": 0,
+    "timeout": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:web-contact-form-processor-tf/statemachines/statemachine.asl.json",
+   "file": "web-contact-form-processor-tf__statemachines__statemachine.asl.json",
+   "bytes": 2507,
+   "features": {
+    "states": 7,
+    "types": {
+     "Task": 3,
+     "Pass": 2,
+     "Choice": 1,
+     "Succeed": 1
+    },
+    "retry": 1,
+    "catches": 0,
+    "sync": 0,
+    "callback": 0,
+    "wait": 0,
+    "maps": 0,
+    "parallel": 0,
+    "cycles": 0,
+    "uuid": 1,
+    "clock": 0,
+    "random": 1,
+    "timeout": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:synchronous-job/statemachine/statemachine.asl.json",
+   "file": "synchronous-job__statemachine__statemachine.asl.json",
+   "bytes": 1330,
+   "features": {
+    "states": 3,
+    "types": {
+     "Task": 3
+    },
+    "retry": 1,
+    "catches": 1,
+    "sync": 1,
+    "callback": 0,
+    "wait": 0,
+    "maps": 0,
+    "parallel": 0,
+    "cycles": 0,
+    "uuid": 0,
+    "clock": 0,
+    "random": 0,
+    "timeout": 1
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:text-processing-sqs-express/statemachine/statemachine.asl.json",
+   "file": "text-processing-sqs-express__statemachine__statemachine.asl.json",
+   "bytes": 1558,
+   "features": {
+    "states": 4,
+    "types": {
+     "Task": 4
+    },
+    "retry": 0,
+    "catches": 0,
+    "sync": 0,
+    "callback": 0,
+    "wait": 0,
+    "maps": 0,
+    "parallel": 0,
+    "cycles": 0,
+    "uuid": 0,
+    "clock": 0,
+    "random": 0,
+    "timeout": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:support-notifications-cdk/typescript/statemachine/statemachine.asl.json",
+   "file": "support-notifications-cdk__typescript__statemachine__statemachine.asl.json",
+   "bytes": 1928,
+   "features": {
+    "states": 4,
+    "types": {
+     "Task": 2,
+     "Choice": 1,
+     "Succeed": 1
+    },
+    "retry": 0,
+    "catches": 0,
+    "sync": 0,
+    "callback": 0,
+    "wait": 0,
+    "maps": 0,
+    "parallel": 0,
+    "cycles": 0,
+    "uuid": 0,
+    "clock": 0,
+    "random": 0,
+    "timeout": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:chain-of-responsibility-cdk/typscript/statemachine/atm_dispenser_chained.asl.json",
+   "file": "chain-of-responsibility-cdk__typscript__statemachine__atm_dispenser_chained.asl.json",
+   "bytes": 1406,
+   "features": {
+    "states": 4,
+    "types": {
+     "Task": 4
+    },
+    "retry": 4,
+    "catches": 0,
+    "sync": 0,
+    "callback": 0,
+    "wait": 0,
+    "maps": 0,
+    "parallel": 0,
+    "cycles": 0,
+    "uuid": 0,
+    "clock": 0,
+    "random": 0,
+    "timeout": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "step-functions",
+   "id": "step-functions:lookout-for-vision-inference-sam/statemachine/statemachine.asl.json",
+   "file": "lookout-for-vision-inference-sam__statemachine__statemachine.asl.json",
+   "bytes": 2713,
+   "features": {
+    "states": 8,
+    "types": {
+     "Task": 4,
+     "Choice": 2,
+     "Wait": 1,
+     "Succeed": 1
+    },
+    "retry": 1,
+    "catches": 0,
+    "sync": 0,
+    "callback": 0,
+    "wait": 1,
+    "maps": 0,
+    "parallel": 0,
+    "cycles": 1,
+    "uuid": 0,
+    "clock": 0,
+    "random": 0,
+    "timeout": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/veter.json",
+   "file": "templates__veter.json",
+   "bytes": 4358,
+   "features": {
+    "actions": 4,
+    "types": {
+     "If": 1,
+     "Xslt": 1,
+     "FlatFileDecoding": 1,
+     "XmlValidation": 1
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "Http",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 1,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/Azure-Blob-Auto-Tier.json",
+   "file": "templates__Azure-Blob-Auto-Tier.json",
+   "bytes": 4478,
+   "features": {
+    "actions": 5,
+    "types": {
+     "Foreach": 1,
+     "If": 1,
+     "ApiConnection": 2,
+     "InitializeVariable": 1
+    },
+    "triggers": [
+     {
+      "n": "Recurrence",
+      "type": "Recurrence",
+      "recurrence": true,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 1,
+    "ifs": 1,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 1,
+    "parallelSiblings": 0,
+    "clock": 1,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 1,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/twitter-to-smtp.json",
+   "file": "templates__twitter-to-smtp.json",
+   "bytes": 3910,
+   "features": {
+    "actions": 1,
+    "types": {
+     "ApiConnection": 1
+    },
+    "triggers": [
+     {
+      "n": "When_a_new_tweet_appears",
+      "type": "ApiConnection",
+      "recurrence": true,
+      "splitOn": true
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/blockchain-dataworkflow.json",
+   "file": "templates__blockchain-dataworkflow.json",
+   "bytes": 3264,
+   "features": {
+    "actions": 1,
+    "types": {
+     "ApiConnection": 1
+    },
+    "triggers": [
+     {
+      "n": "When_a_smart_contract_event_occurs",
+      "type": "ApiConnection",
+      "recurrence": true,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/dropbox-to-sharepoint.json",
+   "file": "templates__dropbox-to-sharepoint.json",
+   "bytes": 3893,
+   "features": {
+    "actions": 1,
+    "types": {
+     "ApiConnection": 1
+    },
+    "triggers": [
+     {
+      "n": "When_a_file_is_created",
+      "type": "ApiConnection",
+      "recurrence": true,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/scheduler-run-once-http.json",
+   "file": "templates__scheduler-run-once-http.json",
+   "bytes": 4215,
+   "features": {
+    "actions": 5,
+    "types": {
+     "Wait": 1,
+     "Scope": 2,
+     "Http": 2
+    },
+    "triggers": [
+     {
+      "n": "manual",
+      "type": "Request",
+      "kind": "Http",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 2,
+    "runAfterFailed": 1,
+    "terminate": 0,
+    "wait": 1,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 1,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/sap-receive-batch.json",
+   "file": "templates__sap-receive-batch.json",
+   "bytes": 4059,
+   "features": {
+    "actions": 4,
+    "types": {
+     "Foreach": 1,
+     "Compose": 1,
+     "InitializeVariable": 2
+    },
+    "triggers": [
+     {
+      "n": "When_a_message_is_received_from_SAP",
+      "type": "ApiConnectionWebhook",
+      "recurrence": false,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 1,
+    "ifs": 0,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 2,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/office-to-wunderlist.json",
+   "file": "templates__office-to-wunderlist.json",
+   "bytes": 3875,
+   "features": {
+    "actions": 1,
+    "types": {
+     "ApiConnection": 1
+    },
+    "triggers": [
+     {
+      "n": "On_new_email",
+      "type": "ApiConnection",
+      "recurrence": true,
+      "splitOn": true
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/service-bus-sessions.json",
+   "file": "templates__service-bus-sessions.json",
+   "bytes": 21558,
+   "features": {
+    "actions": 25,
+    "types": {
+     "Scope": 2,
+     "ApiConnection": 10,
+     "Query": 1,
+     "Select": 1,
+     "Terminate": 1,
+     "InitializeVariable": 1,
+     "Until": 2,
+     "If": 2,
+     "Wait": 1,
+     "SetVariable": 3,
+     "Foreach": 1
+    },
+    "triggers": [
+     {
+      "n": "When_a_message_is_received_in_a_queue_(peek-lock)",
+      "type": "ApiConnection",
+      "recurrence": true,
+      "splitOn": false
+     }
+    ],
+    "until": 2,
+    "untilNoCount": 2,
+    "foreach": 1,
+    "ifs": 2,
+    "scopes": 2,
+    "runAfterFailed": 5,
+    "terminate": 1,
+    "wait": 1,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 4,
+    "parallelSiblings": 2,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  },
+  {
+   "platform": "logic-apps",
+   "id": "logic-apps:templates/sharepoint-file-email.json",
+   "file": "templates__sharepoint-file-email.json",
+   "bytes": 5326,
+   "features": {
+    "actions": 2,
+    "types": {
+     "ApiConnection": 2
+    },
+    "triggers": [
+     {
+      "n": "When_a_file_is_created",
+      "type": "ApiConnection",
+      "recurrence": true,
+      "splitOn": false
+     }
+    ],
+    "until": 0,
+    "untilNoCount": 0,
+    "foreach": 0,
+    "ifs": 0,
+    "scopes": 0,
+    "runAfterFailed": 0,
+    "terminate": 0,
+    "wait": 0,
+    "approvals": 0,
+    "switches": 0,
+    "vars": 0,
+    "parallelSiblings": 0,
+    "clock": 0,
+    "random": 0,
+    "delayUntil": 0,
+    "pagination": 0,
+    "secretsLiteral": 0
+   },
+   "labelled": true
+  }
+ ],
+ "issues": []
+}
