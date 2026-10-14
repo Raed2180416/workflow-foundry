@@ -352,8 +352,7 @@ function applyEvent(c, ev, env, db) {
       const fulIds = db.fuls.length ? db.fuls.map(f => f.fulfilmentId) : (c.alloc ?? []).map(f => f.fulfilmentId);
       if (!fulIds.includes(fid)) return;
       // §3.3: a message about a shipment I cancelled changes nothing.
-      const shp = db.shp.find(s => s.shipmentId === p.shipmentId);
-      if (shp && shp.status === 'cancelled' && c.fl[K.shc(fid)] === undefined && db.shp.some(s => s.fulfilmentId === fid && s.status === 'cancelled')) return;
+      if (db.shp.some(s => s.shipmentId === p.shipmentId && s.status === 'cancelled')) return;
       const m = env.meaning(c.ed, p.carrier, p.code);
       const slot = { collected: 'col', inTransit: 'tr', delivered: 'del', collectionFailed: 'cf' }[m];
       if (!slot) return;
@@ -639,7 +638,7 @@ function planOrder(input, ctx, env, c, db, d, now, pol) {
   }
 
   // ---- R2.2 review tasks
-  const orderEnded = () => FRANK && ORANK[orderRow.status] === 3;
+  const orderEnded = () => ORANK[orderRow.status] === 3;
   if (c.verdict === 'review' && c.cl0 === null && !d.cancel && !d.review?.ans && !orderEnded()) {
     if (!c.tasks.length) {
       const due = d.P + DELAY.task * MIN;
