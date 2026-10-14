@@ -93,7 +93,29 @@ How far to trust the 1,022/1,022 (checked before writing it down):
   conditions.
 
 **For the need router:** on the hardest family we have (E8, a long-running saga with compensation, races and editions), construct-before
-by
-Haiku is either worthless (one shot) or perfect (with a smoke loop) at a build cost under $0.50, so "construct-before" is not one mode
+by Haiku is either worthless (one shot) or perfect (with a smoke loop) at a build cost under $0.50, so "construct-before" is not one mode
 but two, and the build loop is the lever. The agent-without-workflow mode (agent-H, `experiments/ebed/agent-arm.mjs`) passed 4/5 completed
 cases on a 2-order practice smoke at $0.008 per tick (35 ticks, one arm error); its paired run on the grading worlds comes next.
+
+## Result: B1-O (2026-10-14, one build, K = 1, dev evidence only)
+
+| arm | build | completed cases pass (same 9 worlds) | tail | critical | arm errors |
+|---|---|---|---|---|---|
+| B1-O (Opus 5.5, one shot) | $7.63, 38 turns, 32.9 min | **281/1,022 (27.5%)** | 281/651 | 0 | 820 |
+
+Every `straight` case fails (L3 missed). Cause, from the arm errors (world 1232 d2: all 32 are `invalid-output`): the solver puts one
+idempotency `key` on the batch `inventory.reserve` effect, which SPEC-E §2 keys per item ("per item ... each item carries its own
+`key`"); the host rejects the whole tick output, so no reservation is ever made and every order that needs one stalls. What passes is
+what needs no reservation (amend, review, some go-live and cancel cases). Like B1-H, one interface misreading decides the result; the
+first smoke report of a build loop shows it (`arm errors: invalid-output effects[2].key ...`).
+
+**Construct-before on E8 so far (K = 1 each):**
+
+| build | cost | pass | the deciding failure |
+|---|---|---|---|
+| Haiku, one shot (B1-H) | $0.49 | 0% | read-only ops read from an imagined file |
+| Opus, one shot (B1-O) | $7.63 | 27.5% | batch op keyed at the batch, not the items |
+| Haiku + smoke loop (B1L-H) | $0.39 | 100% | none |
+
+The feedback loop, not the builder's tier, decides construct-before on this family: a 20× cheaper builder with a loop beats the frontier
+builder without one. Lineages 2 and 3 of B1L-H measure whether that holds beyond one build.
