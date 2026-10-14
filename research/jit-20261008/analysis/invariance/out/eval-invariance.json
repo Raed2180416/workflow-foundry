@@ -53,7 +53,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -96,7 +96,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -139,7 +139,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -210,7 +210,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 5,
       "hits": 2,
@@ -257,7 +257,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -300,7 +300,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -371,7 +371,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -414,7 +414,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 5,
       "hits": 2,
@@ -461,7 +461,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 5,
       "hits": 2,
@@ -536,7 +536,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -579,7 +579,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -622,7 +622,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -693,7 +693,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -736,7 +736,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -779,7 +779,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -850,7 +850,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -893,7 +893,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -936,7 +936,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -1007,7 +1007,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -1054,7 +1054,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -1097,7 +1097,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -1168,7 +1168,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -1211,7 +1211,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -1254,7 +1254,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 4,
       "hits": 1,
@@ -1329,7 +1329,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -1372,7 +1372,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 5,
       "hits": 2,
@@ -1419,7 +1419,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 5,
       "hits": 2,
@@ -1494,7 +1494,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 4,
       "hits": 1,
@@ -1541,7 +1541,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -1588,7 +1588,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 2,
       "hits": 2,
@@ -1659,7 +1659,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 4,
       "hits": 4,
@@ -1702,7 +1702,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 6,
       "hits": 3,
@@ -1749,7 +1749,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 4,
       "hits": 4,
@@ -1820,7 +1820,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -1867,7 +1867,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -1914,7 +1914,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -1985,7 +1985,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 11,
       "hits": 11,
@@ -2028,7 +2028,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 11,
       "hits": 11,
@@ -2071,7 +2071,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 11,
       "hits": 11,
@@ -2142,7 +2142,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -2185,7 +2185,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -2228,7 +2228,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -2299,7 +2299,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -2342,7 +2342,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -2385,7 +2385,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -2456,7 +2456,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -2499,7 +2499,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -2542,7 +2542,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 10,
       "hits": 7,
@@ -2617,7 +2617,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 7,
       "hits": 4,
@@ -2664,7 +2664,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -2707,7 +2707,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 7,
       "hits": 4,
@@ -2782,7 +2782,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -2829,7 +2829,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 3,
       "hits": 1,
@@ -2876,7 +2876,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 3,
       "hits": 3,
@@ -2947,7 +2947,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -2990,7 +2990,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3033,7 +3033,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3104,7 +3104,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3147,7 +3147,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3190,7 +3190,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3265,7 +3265,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3308,7 +3308,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -3355,7 +3355,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3426,7 +3426,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3469,7 +3469,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -3516,7 +3516,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3587,7 +3587,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3634,7 +3634,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -3685,7 +3685,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3756,7 +3756,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3803,7 +3803,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3846,7 +3846,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -3925,7 +3925,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -3972,7 +3972,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -4019,7 +4019,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -4094,7 +4094,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -4141,7 +4141,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -4192,7 +4192,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 12,
       "hits": 12,
@@ -4263,7 +4263,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -4306,7 +4306,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -4353,7 +4353,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -4432,7 +4432,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -4475,7 +4475,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -4522,7 +4522,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -4593,7 +4593,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -4636,7 +4636,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 13,
       "hits": 11,
@@ -4683,7 +4683,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 13,
       "hits": 13,
@@ -4754,7 +4754,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 16,
       "hits": 14,
@@ -4805,7 +4805,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -4848,7 +4848,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -4919,7 +4919,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -4962,7 +4962,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 16,
       "hits": 14,
@@ -5009,7 +5009,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5084,7 +5084,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5127,7 +5127,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5170,7 +5170,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 16,
       "hits": 14,
@@ -5245,7 +5245,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 16,
       "hits": 14,
@@ -5292,7 +5292,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5335,7 +5335,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5406,7 +5406,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 16,
       "hits": 14,
@@ -5457,7 +5457,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5500,7 +5500,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5571,7 +5571,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 16,
       "hits": 14,
@@ -5618,7 +5618,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5661,7 +5661,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5736,7 +5736,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5783,7 +5783,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 16,
       "hits": 14,
@@ -5830,7 +5830,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 16,
       "hits": 16,
@@ -5901,7 +5901,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -5944,7 +5944,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -5987,7 +5987,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 7,
       "hits": 3,
@@ -6066,7 +6066,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6113,7 +6113,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6156,7 +6156,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6227,7 +6227,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6270,7 +6270,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6291,7 +6291,7 @@
       "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "vendex-2"
+       "name": "vendex-1"
       },
       "info": {
        "rowId": 2332,
@@ -6317,7 +6317,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6388,7 +6388,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -6431,7 +6431,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -6478,7 +6478,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -6549,7 +6549,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -6592,7 +6592,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -6635,7 +6635,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -6706,7 +6706,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 8,
       "hits": 4,
@@ -6726,9 +6726,9 @@
       "relation": "drop-singleton",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 7,
+      "requests": 8,
       "hits": 4,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "vendex-2"
@@ -6757,7 +6757,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6804,7 +6804,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6875,7 +6875,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6918,7 +6918,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -6961,7 +6961,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7032,7 +7032,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7079,7 +7079,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7126,14 +7126,14 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 8,
       "hits": 5,
       "misses": 3,
       "deopt": {
        "kind": "judge",
-       "name": "vendex-3"
+       "name": "vendex-4"
       },
       "info": {
        "rowId": 9543,
@@ -7201,7 +7201,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -7244,7 +7244,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -7291,7 +7291,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 5,
       "hits": 5,
@@ -7366,7 +7366,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7413,7 +7413,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7429,12 +7429,12 @@
       "relation": "drop-singleton",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 7,
       "hits": 2,
-      "misses": 8,
+      "misses": 5,
       "deopt": {
        "kind": "judge",
-       "name": "vendex-1"
+       "name": "vendex-0"
       },
       "info": {
        "rowId": 3372,
@@ -7460,7 +7460,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7531,7 +7531,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7578,7 +7578,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7621,7 +7621,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7696,7 +7696,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
       "requests": 10,
       "hits": 4,
@@ -7747,11 +7747,11 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 9,
+      "requests": 10,
       "hits": 4,
-      "misses": 5,
+      "misses": 6,
       "deopt": {
        "kind": "judge",
        "name": "vendex-4"
@@ -7798,7 +7798,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -7869,7 +7869,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7912,7 +7912,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -7959,7 +7959,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 6,
       "hits": 6,
@@ -8030,7 +8030,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 9,
       "hits": 9,
@@ -8073,7 +8073,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 9,
       "hits": 9,
@@ -8120,7 +8120,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 9,
       "hits": 9,
@@ -8191,7 +8191,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8234,7 +8234,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8281,7 +8281,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8352,7 +8352,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -8399,7 +8399,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -8442,7 +8442,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -8517,7 +8517,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8560,7 +8560,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8607,7 +8607,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8678,7 +8678,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -8725,7 +8725,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -8768,7 +8768,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 7,
       "hits": 7,
@@ -8839,7 +8839,7 @@
      {
       "k": 0,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8882,7 +8882,7 @@
      {
       "k": 1,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8929,7 +8929,7 @@
      {
       "k": 2,
       "relation": "duplicate-row",
-      "distribution": "in",
+      "distribution": "out",
       "status": "agree",
       "requests": 8,
       "hits": 8,
@@ -8986,12 +8986,12 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 8,
+      "requests": 7,
       "hits": 0,
-      "misses": 8,
+      "misses": 7,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D4"
+       "name": "extract:D1"
       },
       "info": {
        "runs": 20,
@@ -9008,7 +9008,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D2"
+       "name": "extract:D1"
       },
       "info": {
        "groups": 8,
@@ -9026,7 +9026,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D7"
+       "name": "extract:D1"
       },
       "info": {
        "order": [
@@ -9050,9 +9050,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 8,
+      "requests": 7,
       "hits": 0,
-      "misses": 8,
+      "misses": 7,
       "deopt": {
        "kind": "judge",
        "name": "extract:D1"
@@ -9119,7 +9119,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D1"
+       "name": "extract:D2"
       },
       "info": {
        "runs": 20,
@@ -9131,9 +9131,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 8,
+      "requests": 5,
       "hits": 0,
-      "misses": 8,
+      "misses": 5,
       "deopt": {
        "kind": "judge",
        "name": "extract:D1"
@@ -9154,7 +9154,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D8"
+       "name": "extract:D1"
       },
       "info": {
        "order": [
@@ -9211,7 +9211,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D1"
+       "name": "extract:D2"
       },
       "info": {
        "runs": 19,
@@ -9228,7 +9228,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D1"
+       "name": "extract:D2"
       },
       "info": {
        "groups": 8,
@@ -9241,12 +9241,12 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 7,
+      "requests": 8,
       "hits": 0,
-      "misses": 7,
+      "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D11"
+       "name": "extract:D2"
       },
       "info": {
        "order": [
@@ -9275,7 +9275,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D2"
+       "name": "extract:D1"
       },
       "info": {
        "runs": 19,
@@ -9287,9 +9287,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 8,
+      "requests": 7,
       "hits": 0,
-      "misses": 8,
+      "misses": 7,
       "deopt": {
        "kind": "judge",
        "name": "extract:D1"
@@ -9310,7 +9310,7 @@
       "misses": 5,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D8"
+       "name": "extract:D2"
       },
       "info": {
        "order": [
@@ -9339,7 +9339,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D1"
+       "name": "extract:D2"
       },
       "info": {
        "runs": 19,
@@ -9356,7 +9356,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D1"
+       "name": "extract:D2"
       },
       "info": {
        "groups": 8,
@@ -9374,7 +9374,7 @@
       "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D8"
+       "name": "extract:D4"
       },
       "info": {
        "order": [
@@ -9448,7 +9448,7 @@
       "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D4"
+       "name": "extract:D1"
       },
       "info": {
        "groups": 8,
@@ -9466,7 +9466,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D12"
+       "name": "extract:D1"
       },
       "info": {
        "order": [
@@ -9512,7 +9512,7 @@
       "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D1"
+       "name": "extract:D4"
       },
       "info": {
        "groups": 8,
@@ -9525,12 +9525,12 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 6,
+      "requests": 8,
       "hits": 0,
-      "misses": 6,
+      "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D6"
+       "name": "extract:D1"
       },
       "info": {
        "order": [
@@ -9554,12 +9554,12 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 5,
+      "requests": 6,
       "hits": 0,
-      "misses": 5,
+      "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D1"
+       "name": "extract:D4"
       },
       "info": {
        "runs": 19,
@@ -9594,7 +9594,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D12"
+       "name": "extract:D1"
       },
       "info": {
        "order": [
@@ -9663,12 +9663,12 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 7,
+      "requests": 8,
       "hits": 0,
-      "misses": 7,
+      "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D2"
+       "name": "extract:D1"
       },
       "info": {
        "groups": 8,
@@ -9686,7 +9686,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D5"
+       "name": "extract:D1"
       },
       "info": {
        "order": [
@@ -9715,7 +9715,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D2"
+       "name": "extract:D1"
       },
       "info": {
        "runs": 18,
@@ -9750,7 +9750,7 @@
       "misses": 8,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D7"
+       "name": "extract:D3"
       },
       "info": {
        "order": [
@@ -9814,7 +9814,7 @@
       "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D12"
+       "name": "extract:D3"
       },
       "info": {
        "order": [
@@ -9906,7 +9906,7 @@
       "misses": 7,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D4"
+       "name": "extract:D5"
       },
       "info": {
        "order": [
@@ -9935,7 +9935,7 @@
       "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D2"
+       "name": "extract:D4"
       },
       "info": {
        "runs": 18,
@@ -9947,9 +9947,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 6,
+      "requests": 5,
       "hits": 0,
-      "misses": 6,
+      "misses": 5,
       "deopt": {
        "kind": "judge",
        "name": "extract:D2"
@@ -9970,7 +9970,7 @@
       "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D6"
+       "name": "extract:D1"
       },
       "info": {
        "order": [
@@ -10034,7 +10034,7 @@
       "misses": 6,
       "deopt": {
        "kind": "judge",
-       "name": "extract:D4"
+       "name": "extract:D3"
       },
       "info": {
        "order": [
@@ -10086,9 +10086,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10150,9 +10150,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10167,9 +10167,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10214,9 +10214,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10254,7 +10254,7 @@
       "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-b"
+       "name": "prose-events-a"
       },
       "info": {
        "order": [
@@ -10306,9 +10306,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10323,9 +10323,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10341,9 +10341,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10443,9 +10443,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10535,9 +10535,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10558,7 +10558,7 @@
       "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-a"
+       "name": "prose-events-b"
       },
       "info": {
        "order": [
@@ -10599,9 +10599,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10659,9 +10659,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10751,9 +10751,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10798,9 +10798,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10815,12 +10815,12 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-b"
+       "name": "prose-events-a"
       },
       "info": {
        "groups": 8,
@@ -10833,9 +10833,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10862,9 +10862,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10897,9 +10897,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -10954,9 +10954,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11058,7 +11058,7 @@
       "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-a"
+       "name": "prose-events-b"
       },
       "info": {
        "order": [
@@ -11174,12 +11174,12 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-a"
+       "name": "prose-events-b"
       },
       "info": {
        "runs": 19,
@@ -11255,9 +11255,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11273,9 +11273,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11434,7 +11434,7 @@
       "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-a"
+       "name": "prose-events-b"
       },
       "info": {
        "order": [
@@ -11493,9 +11493,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11649,9 +11649,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11695,9 +11695,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11713,9 +11713,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11777,9 +11777,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11839,7 +11839,7 @@
       "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-a"
+       "name": "prose-events-b"
       },
       "info": {
        "runs": 19,
@@ -11851,9 +11851,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 4,
+      "requests": 3,
       "hits": 0,
-      "misses": 4,
+      "misses": 3,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11898,9 +11898,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11915,9 +11915,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -11933,12 +11933,12 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-a"
+       "name": "prose-events-b"
       },
       "info": {
        "order": [
@@ -11962,9 +11962,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -12054,9 +12054,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -12089,9 +12089,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 3,
+      "requests": 4,
       "hits": 0,
-      "misses": 3,
+      "misses": 4,
       "deopt": {
        "kind": "judge",
        "name": "prose-events-a"
@@ -12123,7 +12123,7 @@
       "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-a"
+       "name": "prose-events-b"
       },
       "info": {
        "runs": 18,
@@ -12140,7 +12140,7 @@
       "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-b"
+       "name": "prose-events-a"
       },
       "info": {
        "groups": 8,
@@ -12200,7 +12200,7 @@
       "misses": 4,
       "deopt": {
        "kind": "judge",
-       "name": "prose-events-b"
+       "name": "prose-events-a"
       },
       "info": {
        "groups": 8,
@@ -12270,9 +12270,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 9,
+      "requests": 10,
       "hits": 0,
-      "misses": 9,
+      "misses": 10,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12287,9 +12287,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 11,
+      "requests": 12,
       "hits": 0,
-      "misses": 11,
+      "misses": 12,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12305,9 +12305,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 9,
+      "requests": 12,
       "hits": 0,
-      "misses": 9,
+      "misses": 12,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12334,9 +12334,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 9,
       "hits": 0,
-      "misses": 10,
+      "misses": 9,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12369,9 +12369,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 12,
+      "requests": 10,
       "hits": 0,
-      "misses": 12,
+      "misses": 10,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12398,9 +12398,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 7,
+      "requests": 10,
       "hits": 0,
-      "misses": 7,
+      "misses": 10,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12490,9 +12490,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 12,
+      "requests": 10,
       "hits": 0,
-      "misses": 12,
+      "misses": 10,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12525,9 +12525,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 12,
       "hits": 0,
-      "misses": 10,
+      "misses": 12,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12554,9 +12554,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 12,
       "hits": 0,
-      "misses": 10,
+      "misses": 12,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12571,9 +12571,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 11,
+      "requests": 9,
       "hits": 0,
-      "misses": 11,
+      "misses": 9,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12589,9 +12589,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 8,
+      "requests": 11,
       "hits": 0,
-      "misses": 8,
+      "misses": 11,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12618,9 +12618,9 @@
       "relation": "shuffle-samples",
       "distribution": "out",
       "status": "needs-paid-judges",
-      "requests": 12,
+      "requests": 11,
       "hits": 0,
-      "misses": 12,
+      "misses": 11,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12635,9 +12635,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 11,
+      "requests": 10,
       "hits": 0,
-      "misses": 11,
+      "misses": 10,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12653,9 +12653,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 12,
+      "requests": 11,
       "hits": 0,
-      "misses": 12,
+      "misses": 11,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12809,9 +12809,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 9,
+      "requests": 10,
       "hits": 0,
-      "misses": 9,
+      "misses": 10,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12855,9 +12855,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 9,
       "hits": 0,
-      "misses": 10,
+      "misses": 9,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12873,9 +12873,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 9,
       "hits": 0,
-      "misses": 10,
+      "misses": 9,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -12947,9 +12947,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 9,
       "hits": 0,
-      "misses": 10,
+      "misses": 9,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -13011,9 +13011,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 9,
       "hits": 0,
-      "misses": 10,
+      "misses": 9,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -13075,9 +13075,9 @@
       "relation": "shuffle-series",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 9,
       "hits": 0,
-      "misses": 10,
+      "misses": 9,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -13093,9 +13093,9 @@
       "relation": "shuffle-documents",
       "distribution": "in",
       "status": "needs-paid-judges",
-      "requests": 10,
+      "requests": 8,
       "hits": 0,
-      "misses": 10,
+      "misses": 8,
       "deopt": {
        "kind": "judge",
        "name": "note-events"
@@ -13141,7 +13141,7 @@
    {
     "experiment": "jit-dev-records-1",
     "relation": "duplicate-row",
-    "distribution": "in",
+    "distribution": "out",
     "variants": 165,
     "measured": 131,
     "disagree": 0,
@@ -13154,8 +13154,7 @@
      "vendex-entries": 29,
      "vendex-1": 1,
      "vendex-2": 1,
-     "vendex-3": 1,
-     "vendex-4": 2
+     "vendex-4": 3
     }
    },
    {
@@ -13174,9 +13173,9 @@
      "vendex-entries": 16,
      "country-names": 4,
      "countries": 15,
-     "vendex-2": 2,
      "vendex-1": 2,
-     "vendex-0": 1,
+     "vendex-2": 1,
+     "vendex-0": 2,
      "vendex-3": 2,
      "vendex-4": 1,
      "vendex-5": 1
@@ -13195,10 +13194,11 @@
     "skip": 0,
     "variantNotOk": 0,
     "paidJudgeAt": {
-     "extract:D4": 5,
-     "extract:D1": 6,
+     "extract:D1": 5,
      "extract:D2": 4,
-     "prose-events-a": 26,
+     "extract:D4": 6,
+     "prose-events-a": 23,
+     "prose-events-b": 3,
      "note-events": 12
     }
    },
@@ -13215,11 +13215,10 @@
     "skip": 0,
     "variantNotOk": 0,
     "paidJudgeAt": {
-     "extract:D2": 4,
      "extract:D1": 7,
+     "extract:D2": 4,
      "extract:D4": 4,
-     "prose-events-a": 27,
-     "prose-events-b": 3,
+     "prose-events-a": 30,
      "note-events": 12
     }
    },
@@ -13236,16 +13235,13 @@
     "skip": 0,
     "variantNotOk": 0,
     "paidJudgeAt": {
-     "extract:D7": 2,
-     "extract:D2": 1,
-     "extract:D8": 3,
-     "extract:D11": 1,
-     "extract:D12": 3,
-     "extract:D6": 2,
+     "extract:D1": 7,
+     "extract:D2": 3,
+     "extract:D4": 1,
+     "extract:D3": 3,
      "extract:D5": 1,
-     "extract:D4": 2,
-     "prose-events-a": 29,
-     "prose-events-b": 1,
+     "prose-events-a": 26,
+     "prose-events-b": 4,
      "note-events": 12
     }
    }
@@ -13264,7 +13260,16 @@
      "recallMeasuredPct": 0,
      "recallUpperPct": 100,
      "falseAlarmPct": 0,
-     "verdict": "open: 18 of 18 wrong outputs have relations that only paid judge calls can run"
+     "verdict": "open: 18 of 18 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 18,
+      "wrongFlagged": 0,
+      "rightMeasurable": 37,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     },
     "firstDraw": {
      "wrong": 18,
@@ -13278,21 +13283,39 @@
      "recallMeasuredPct": 0,
      "recallUpperPct": 100,
      "falseAlarmPct": 0,
-     "verdict": "open: 18 of 18 wrong outputs have relations that only paid judge calls can run"
+     "verdict": "open: 18 of 18 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 17,
+      "wrongFlagged": 0,
+      "rightMeasurable": 34,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     },
     "inDistribution": {
      "wrong": 18,
      "wrongMeasurable": 18,
      "wrongFlagged": 0,
-     "wrongPending": 0,
+     "wrongPending": 9,
      "right": 37,
      "rightMeasurable": 37,
      "rightFlagged": 0,
      "recallLowerPct": 0,
      "recallMeasuredPct": 0,
-     "recallUpperPct": 0,
+     "recallUpperPct": 50,
      "falseAlarmPct": 0,
-     "verdict": "KILL on (i): recall < 25% even if every relation that needs paid judges flagged its output"
+     "verdict": "open: 9 of 18 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 18,
+      "wrongFlagged": 0,
+      "rightMeasurable": 37,
+      "rightFlagged": 0,
+      "wrongComplete": 9,
+      "rightComplete": 14
+     }
     },
     "byRelation": {
      "shuffle-rows": {
@@ -13307,35 +13330,62 @@
       "recallMeasuredPct": null,
       "recallUpperPct": 100,
       "falseAlarmPct": null,
-      "verdict": "open: 18 of 18 wrong outputs have relations that only paid judge calls can run"
+      "verdict": "open: 18 of 18 wrong outputs have relations that only paid judge calls can run",
+      "codePath": {
+       "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+       "wrongMeasurable": 0,
+       "wrongFlagged": 0,
+       "rightMeasurable": 0,
+       "rightFlagged": 0,
+       "wrongComplete": 0,
+       "rightComplete": 0
+      }
      },
      "duplicate-row": {
       "wrong": 18,
       "wrongMeasurable": 18,
       "wrongFlagged": 0,
-      "wrongPending": 0,
+      "wrongPending": 10,
       "right": 37,
       "rightMeasurable": 37,
       "rightFlagged": 0,
       "recallLowerPct": 0,
       "recallMeasuredPct": 0,
-      "recallUpperPct": 0,
+      "recallUpperPct": 55.6,
       "falseAlarmPct": 0,
-      "verdict": "KILL on (i): recall < 25% even if every relation that needs paid judges flagged its output"
+      "verdict": "open: 10 of 18 wrong outputs have relations that only paid judge calls can run",
+      "codePath": {
+       "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+       "wrongMeasurable": 18,
+       "wrongFlagged": 0,
+       "rightMeasurable": 37,
+       "rightFlagged": 0,
+       "wrongComplete": 8,
+       "rightComplete": 18
+      }
      },
      "drop-singleton": {
       "wrong": 18,
       "wrongMeasurable": 18,
       "wrongFlagged": 0,
-      "wrongPending": 0,
+      "wrongPending": 9,
       "right": 37,
       "rightMeasurable": 37,
       "rightFlagged": 0,
       "recallLowerPct": 0,
       "recallMeasuredPct": 0,
-      "recallUpperPct": 0,
+      "recallUpperPct": 50,
       "falseAlarmPct": 0,
-      "verdict": "KILL on (i): recall < 25% even if every relation that needs paid judges flagged its output"
+      "verdict": "open: 9 of 18 wrong outputs have relations that only paid judge calls can run",
+      "codePath": {
+       "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+       "wrongMeasurable": 18,
+       "wrongFlagged": 0,
+       "rightMeasurable": 37,
+       "rightFlagged": 0,
+       "wrongComplete": 9,
+       "rightComplete": 14
+      }
      }
     }
    },
@@ -13352,7 +13402,16 @@
      "recallMeasuredPct": 0,
      "recallUpperPct": 100,
      "falseAlarmPct": 0,
-     "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run"
+     "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 1,
+      "wrongFlagged": 0,
+      "rightMeasurable": 2,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     },
     "firstDraw": {
      "wrong": 6,
@@ -13366,7 +13425,16 @@
      "recallMeasuredPct": null,
      "recallUpperPct": 100,
      "falseAlarmPct": null,
-     "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run"
+     "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 0,
+      "wrongFlagged": 0,
+      "rightMeasurable": 0,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     },
     "inDistribution": {
      "wrong": 6,
@@ -13380,22 +13448,40 @@
      "recallMeasuredPct": null,
      "recallUpperPct": 100,
      "falseAlarmPct": null,
-     "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run"
+     "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 0,
+      "wrongFlagged": 0,
+      "rightMeasurable": 0,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     },
     "byRelation": {
      "shuffle-samples": {
       "wrong": 6,
       "wrongMeasurable": 1,
       "wrongFlagged": 0,
-      "wrongPending": 5,
+      "wrongPending": 6,
       "right": 13,
       "rightMeasurable": 2,
       "rightFlagged": 0,
       "recallLowerPct": 0,
       "recallMeasuredPct": 0,
-      "recallUpperPct": 83.3,
+      "recallUpperPct": 100,
       "falseAlarmPct": 0,
-      "verdict": "open: 5 of 6 wrong outputs have relations that only paid judge calls can run"
+      "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run",
+      "codePath": {
+       "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+       "wrongMeasurable": 1,
+       "wrongFlagged": 0,
+       "rightMeasurable": 2,
+       "rightFlagged": 0,
+       "wrongComplete": 0,
+       "rightComplete": 0
+      }
      },
      "shuffle-series": {
       "wrong": 6,
@@ -13409,7 +13495,16 @@
       "recallMeasuredPct": null,
       "recallUpperPct": 100,
       "falseAlarmPct": null,
-      "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run"
+      "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run",
+      "codePath": {
+       "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+       "wrongMeasurable": 0,
+       "wrongFlagged": 0,
+       "rightMeasurable": 0,
+       "rightFlagged": 0,
+       "wrongComplete": 0,
+       "rightComplete": 0
+      }
      },
      "shuffle-documents": {
       "wrong": 6,
@@ -13423,7 +13518,16 @@
       "recallMeasuredPct": null,
       "recallUpperPct": 100,
       "falseAlarmPct": null,
-      "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run"
+      "verdict": "open: 6 of 6 wrong outputs have relations that only paid judge calls can run",
+      "codePath": {
+       "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+       "wrongMeasurable": 0,
+       "wrongFlagged": 0,
+       "rightMeasurable": 0,
+       "rightFlagged": 0,
+       "wrongComplete": 0,
+       "rightComplete": 0
+      }
      }
     }
    }
@@ -13441,7 +13545,16 @@
     "recallMeasuredPct": 0,
     "recallUpperPct": 100,
     "falseAlarmPct": 0,
-    "verdict": "open: 24 of 24 wrong outputs have relations that only paid judge calls can run"
+    "verdict": "open: 24 of 24 wrong outputs have relations that only paid judge calls can run",
+    "codePath": {
+     "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+     "wrongMeasurable": 19,
+     "wrongFlagged": 0,
+     "rightMeasurable": 39,
+     "rightFlagged": 0,
+     "wrongComplete": 0,
+     "rightComplete": 0
+    }
    },
    "firstDraw": {
     "wrong": 24,
@@ -13455,21 +13568,39 @@
     "recallMeasuredPct": 0,
     "recallUpperPct": 100,
     "falseAlarmPct": 0,
-    "verdict": "open: 24 of 24 wrong outputs have relations that only paid judge calls can run"
+    "verdict": "open: 24 of 24 wrong outputs have relations that only paid judge calls can run",
+    "codePath": {
+     "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+     "wrongMeasurable": 17,
+     "wrongFlagged": 0,
+     "rightMeasurable": 34,
+     "rightFlagged": 0,
+     "wrongComplete": 0,
+     "rightComplete": 0
+    }
    },
    "inDistribution": {
     "wrong": 24,
     "wrongMeasurable": 18,
     "wrongFlagged": 0,
-    "wrongPending": 6,
+    "wrongPending": 15,
     "right": 50,
     "rightMeasurable": 37,
     "rightFlagged": 0,
     "recallLowerPct": 0,
     "recallMeasuredPct": 0,
-    "recallUpperPct": 25,
+    "recallUpperPct": 62.5,
     "falseAlarmPct": 0,
-    "verdict": "open: 6 of 24 wrong outputs have relations that only paid judge calls can run"
+    "verdict": "open: 15 of 24 wrong outputs have relations that only paid judge calls can run",
+    "codePath": {
+     "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+     "wrongMeasurable": 18,
+     "wrongFlagged": 0,
+     "rightMeasurable": 37,
+     "rightFlagged": 0,
+     "wrongComplete": 9,
+     "rightComplete": 14
+    }
    },
    "byRelation": {
     "shuffle-rows": {
@@ -13484,49 +13615,85 @@
      "recallMeasuredPct": null,
      "recallUpperPct": 75,
      "falseAlarmPct": null,
-     "verdict": "open: 18 of 24 wrong outputs have relations that only paid judge calls can run"
+     "verdict": "open: 18 of 24 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 0,
+      "wrongFlagged": 0,
+      "rightMeasurable": 0,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     },
     "duplicate-row": {
      "wrong": 24,
      "wrongMeasurable": 18,
      "wrongFlagged": 0,
-     "wrongPending": 0,
+     "wrongPending": 10,
      "right": 50,
      "rightMeasurable": 37,
      "rightFlagged": 0,
      "recallLowerPct": 0,
      "recallMeasuredPct": 0,
-     "recallUpperPct": 0,
+     "recallUpperPct": 41.7,
      "falseAlarmPct": 0,
-     "verdict": "KILL on (i): recall < 25% even if every relation that needs paid judges flagged its output"
+     "verdict": "open: 10 of 24 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 18,
+      "wrongFlagged": 0,
+      "rightMeasurable": 37,
+      "rightFlagged": 0,
+      "wrongComplete": 8,
+      "rightComplete": 18
+     }
     },
     "drop-singleton": {
      "wrong": 24,
      "wrongMeasurable": 18,
      "wrongFlagged": 0,
-     "wrongPending": 0,
+     "wrongPending": 9,
      "right": 50,
      "rightMeasurable": 37,
      "rightFlagged": 0,
      "recallLowerPct": 0,
      "recallMeasuredPct": 0,
-     "recallUpperPct": 0,
+     "recallUpperPct": 37.5,
      "falseAlarmPct": 0,
-     "verdict": "KILL on (i): recall < 25% even if every relation that needs paid judges flagged its output"
+     "verdict": "open: 9 of 24 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 18,
+      "wrongFlagged": 0,
+      "rightMeasurable": 37,
+      "rightFlagged": 0,
+      "wrongComplete": 9,
+      "rightComplete": 14
+     }
     },
     "shuffle-samples": {
      "wrong": 24,
      "wrongMeasurable": 1,
      "wrongFlagged": 0,
-     "wrongPending": 5,
+     "wrongPending": 6,
      "right": 50,
      "rightMeasurable": 2,
      "rightFlagged": 0,
      "recallLowerPct": 0,
      "recallMeasuredPct": 0,
-     "recallUpperPct": 20.8,
+     "recallUpperPct": 25,
      "falseAlarmPct": 0,
-     "verdict": "KILL on (i): recall < 25% even if every relation that needs paid judges flagged its output"
+     "verdict": "open: 6 of 24 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 1,
+      "wrongFlagged": 0,
+      "rightMeasurable": 2,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     },
     "shuffle-series": {
      "wrong": 24,
@@ -13540,7 +13707,16 @@
      "recallMeasuredPct": null,
      "recallUpperPct": 25,
      "falseAlarmPct": null,
-     "verdict": "open: 6 of 24 wrong outputs have relations that only paid judge calls can run"
+     "verdict": "open: 6 of 24 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 0,
+      "wrongFlagged": 0,
+      "rightMeasurable": 0,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     },
     "shuffle-documents": {
      "wrong": 24,
@@ -13554,7 +13730,16 @@
      "recallMeasuredPct": null,
      "recallUpperPct": 25,
      "falseAlarmPct": null,
-     "verdict": "open: 6 of 24 wrong outputs have relations that only paid judge calls can run"
+     "verdict": "open: 6 of 24 wrong outputs have relations that only paid judge calls can run",
+     "codePath": {
+      "what": "variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only",
+      "wrongMeasurable": 0,
+      "wrongFlagged": 0,
+      "rightMeasurable": 0,
+      "rightFlagged": 0,
+      "wrongComplete": 0,
+      "rightComplete": 0
+     }
     }
    }
   },
@@ -13567,18 +13752,19 @@
  "synthetic": {
   "records": {
    "solver": "beds/records/solve-text.mjs (reads task.inputs only)",
+   "evidence": "development (in-sample): relations were revised on this panel; the records ablations are order-free by construction",
    "tasks": 72,
    "right": 72,
    "byRelation": {
-    "shuffle-rows": {
+    "shuffle-rows@out": {
      "variants": 360,
      "flagged": 0
     },
-    "duplicate-row": {
+    "duplicate-row@out": {
      "variants": 360,
      "flagged": 0
     },
-    "drop-singleton": {
+    "drop-singleton@in": {
      "variants": 360,
      "flagged": 0
     }
@@ -13593,15 +13779,15 @@
      "wrong": 3,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 3,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 3,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 3,
        "flagged": 0
       }
@@ -13611,15 +13797,15 @@
      "wrong": 6,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 6,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 6,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 6,
        "flagged": 0
       }
@@ -13629,15 +13815,15 @@
      "wrong": 3,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 3,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 3,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 3,
        "flagged": 0
       }
@@ -13647,15 +13833,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13665,15 +13851,15 @@
      "wrong": 4,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 4,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 4,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 4,
        "flagged": 0
       }
@@ -13688,15 +13874,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13706,15 +13892,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13724,15 +13910,15 @@
      "wrong": 4,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 4,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 4,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 4,
        "flagged": 0
       }
@@ -13752,15 +13938,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13770,15 +13956,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13788,15 +13974,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13806,15 +13992,15 @@
      "wrong": 6,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 6,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 6,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 6,
        "flagged": 0
       }
@@ -13824,15 +14010,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13842,15 +14028,15 @@
      "wrong": 11,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 11,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 11,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 11,
        "flagged": 0
       }
@@ -13860,15 +14046,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13878,15 +14064,15 @@
      "wrong": 5,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 5,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 5,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 5,
        "flagged": 0
       }
@@ -13896,15 +14082,15 @@
      "wrong": 2,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 2,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 2,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 2,
        "flagged": 0
       }
@@ -13914,15 +14100,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13932,15 +14118,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13950,15 +14136,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13968,15 +14154,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -13986,15 +14172,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -14004,15 +14190,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -14022,15 +14208,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -14040,15 +14226,15 @@
      "wrong": 12,
      "flagged": 0,
      "byRelation": {
-      "shuffle-rows": {
+      "shuffle-rows@out": {
        "variants": 12,
        "flagged": 0
       },
-      "duplicate-row": {
+      "duplicate-row@out": {
        "variants": 12,
        "flagged": 0
       },
-      "drop-singleton": {
+      "drop-singleton@in": {
        "variants": 12,
        "flagged": 0
       }
@@ -14057,37 +14243,65 @@
    }
   },
   "kinetics": {
-   "solver": "beds/kinetics/attacks/whitebox-v4.mjs (white-box parser, generator source open; d3 dev 201-240)",
-   "tasks": 40,
-   "right": 29,
-   "rightByRelation": {
-    "shuffle-samples": {
-     "variants": 87,
-     "flagged": 47
+   "solver": "beds/kinetics/attacks/whitebox-v4.mjs (white-box parser, generator source open; dev 201-240 at d3 and d4)",
+   "evidence": "development (in-sample): relations were revised on this panel; the records ablations are order-free by construction",
+   "byDifficulty": {
+    "d3": {
+     "tasks": 40,
+     "right": 29,
+     "rightByRelation": {
+      "shuffle-samples@out": {
+       "variants": 87,
+       "flagged": 47
+      },
+      "shuffle-series@in": {
+       "variants": 87,
+       "flagged": 0
+      },
+      "shuffle-documents@out": {
+       "variants": 87,
+       "flagged": 2
+      }
+     },
+     "wrong": 11,
+     "wrongFlagged": 6,
+     "wrongFlaggedIn": 0,
+     "wrongByRelation": {
+      "shuffle-samples@out": {
+       "variants": 33,
+       "flagged": 14
+      },
+      "shuffle-series@in": {
+       "variants": 33,
+       "flagged": 0
+      },
+      "shuffle-documents@out": {
+       "variants": 33,
+       "flagged": 0
+      }
+     }
     },
-    "shuffle-series": {
-     "variants": 87,
-     "flagged": 0
-    },
-    "shuffle-documents": {
-     "variants": 87,
-     "flagged": 2
-    }
-   },
-   "wrong": 11,
-   "wrongFlagged": 6,
-   "wrongByRelation": {
-    "shuffle-samples": {
-     "variants": 33,
-     "flagged": 14
-    },
-    "shuffle-series": {
-     "variants": 33,
-     "flagged": 0
-    },
-    "shuffle-documents": {
-     "variants": 33,
-     "flagged": 0
+    "d4": {
+     "tasks": 30,
+     "right": 0,
+     "rightByRelation": {},
+     "wrong": 30,
+     "wrongFlagged": 25,
+     "wrongFlaggedIn": 24,
+     "wrongByRelation": {
+      "shuffle-samples@out": {
+       "variants": 90,
+       "flagged": 74
+      },
+      "shuffle-series@in": {
+       "variants": 90,
+       "flagged": 72
+      },
+      "shuffle-documents@in": {
+       "variants": 90,
+       "flagged": 72
+      }
+     }
     }
    }
   }
@@ -14095,6 +14309,7 @@
  "witness": [
   {
    "bed": "records",
+   "version": "3.0.0",
    "primary": "none",
    "tags": [
     "none"
@@ -14165,6 +14380,7 @@
   },
   {
    "bed": "kinetics",
+   "version": "4.0.0",
    "primary": "exclusion-set",
    "tags": [
     "exclusion-set",
@@ -14227,6 +14443,7 @@
   },
   {
    "bed": "wbed-r1",
+   "version": "1.0.0",
    "primary": "conservation",
    "tags": [
     "conservation",
@@ -14310,6 +14527,7 @@
   },
   {
    "bed": "wbed-r2",
+   "version": "1.0.0",
    "primary": "count",
    "tags": [
     "count"
@@ -14399,6 +14617,7 @@
   },
   {
    "bed": "wbed-r3",
+   "version": "1.1.0",
    "primary": "conservation",
    "tags": [
     "conservation",
@@ -14477,6 +14696,7 @@
   },
   {
    "bed": "wbed-r4",
+   "version": "1.0.1",
    "primary": "conservation",
    "tags": [
     "conservation",
@@ -14568,6 +14788,7 @@
   },
   {
    "bed": "wbed-r5",
+   "version": "1.0.1",
    "primary": "hash-total",
    "tags": [
     "hash-total",
@@ -14701,6 +14922,90 @@
      "flagged": 2
     }
    }
+  }
+ ],
+ "references": [
+  {
+   "rung": "r1",
+   "bed": "wbed-r1",
+   "version": "1.0.0",
+   "evidence": "development: the author fixtures 373-378 the references were written on; R3 author readings equal the bed labels (code-decided reasons included)",
+   "k": 2,
+   "runs": 24,
+   "originalOk": 24,
+   "originalPass": 24,
+   "byRelation": {
+    "shuffle-customer-rows@out": {
+     "agree": 24,
+     "disagree": 0,
+     "notOk": 0,
+     "skip": 0,
+     "error": 0
+    },
+    "shuffle-invoice-lines@out": {
+     "agree": 24,
+     "disagree": 0,
+     "notOk": 0,
+     "skip": 0,
+     "error": 0
+    },
+    "shuffle-bank-feed@out": {
+     "agree": 24,
+     "disagree": 0,
+     "notOk": 0,
+     "skip": 0,
+     "error": 0
+    },
+    "duplicate-row@out": {
+     "agree": 24,
+     "disagree": 0,
+     "notOk": 0,
+     "skip": 0,
+     "error": 0
+    },
+    "drop-idle-singleton@in": {
+     "agree": 24,
+     "disagree": 0,
+     "notOk": 0,
+     "skip": 0,
+     "error": 0
+    }
+   },
+   "examples": []
+  },
+  {
+   "rung": "r3",
+   "bed": "wbed-r3",
+   "version": "1.1.0",
+   "evidence": "development: the author fixtures 373-378 the references were written on; R3 author readings equal the bed labels (code-decided reasons included)",
+   "k": 2,
+   "runs": 24,
+   "originalOk": 24,
+   "originalPass": 24,
+   "byRelation": {
+    "shuffle-statement-files@out": {
+     "agree": 24,
+     "disagree": 0,
+     "notOk": 0,
+     "skip": 0,
+     "error": 0
+    },
+    "shuffle-ledger-lines@out": {
+     "agree": 24,
+     "disagree": 0,
+     "notOk": 0,
+     "skip": 0,
+     "error": 0
+    },
+    "drop-clean-supplier@out": {
+     "agree": 24,
+     "disagree": 0,
+     "notOk": 0,
+     "skip": 0,
+     "error": 0
+    }
+   },
+   "examples": []
   }
  ]
 }
