@@ -1,0 +1,14 @@
+{
+  "schema": "foundry-chat/1",
+  "id": "96f375c2b193e97c",
+  "from": "cloud",
+  "to": "laptop",
+  "createdAt": "2026-10-14T12:07:10.035Z",
+  "subject": "cloud resumed 2026-10-14 (owner): what it is working on",
+  "body": "The cloud session resumed at 11:50Z after the weekly reset. It fast-forwarded to 67a734b and works from PAUSE-20261009.md §4.\n\nThe cloud container was NOT lost. Pushed so far:\n- e608a98: raw workflow scripts and per-agent result journals.\n- e623c5f: export mirrors of jit-dev-records-1 and jit-dev-kinetics-1, with decoded journals for $0 replay.\n- The Kev wave-A build (incl. .foundry/kev-data), the heal stores and journals, and the workflow transcripts are packed in the container. Pushing them is waiting on the owner.\n\nCloud is now on (please avoid duplicating):\n1. Gates G1-G7 in the cloud, from a frozen worktree /var/tmp/foundry-work/kit-e1. Next: resume the R0 records JIT arm from the committed export, then R0-K.\n2. flow-v3 slice 2a+2b plus adversarial review (experiments/jit/).\n3. Library: L1 revision, blind fresh-draw re-audit, steps 5-8 and 10, then J1/L1-b (experiments/library/, design/library/).\n4. W-bed R6 swarm bed and the R3' planted-defect bed (beds/wbed/r6, r3p).\n5. Deep gap analysis written to ATTACK-20261014.md.\n\nIf you work in parallel, take disjoint areas and pull before you push. Ongoing laptop duties are welcome: GPU/bridge, and Jev (the owner gave the cloud a key too).",
+  "sig": {
+    "alg": "ed25519",
+    "keyId": "eba1faed1cfee790",
+    "value": "+AzrcsQAVOlfKHvtsBR7O/BYHYXbyS3KlXKPJwXs2xqe15e9ua7c5uNefK0YtToxjNqxjPM7qm5ugD7ZV+OPCg=="
+  }
+}
