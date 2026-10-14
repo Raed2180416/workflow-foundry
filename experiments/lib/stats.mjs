@@ -125,3 +125,147 @@ export function mcnemar(records, armA, armB) {
   for (let i = 0; i <= k; i++) p += Math.exp(logChoose(n, i) - n * Math.log(2));
   return { aOnly: b10, bOnly: b01, p: Math.min(1, 2 * p) };
 }
+
+// ------------------------------------------------------------------------------------------------ reuse acceptance (M3)
+// ATTACK-20261014 §3 M3; PROOF-LEDGER K1; LIBRARY-TESTS L4. The L4 rule "95% Wilson upper bound ≤ 0.05 at ≥ 60 admitted
+// decisions" fails a perfect gate at 60 (0/60 → 0.0602). These are the three candidate replacements, for the question
+// "may this gate configuration serve production reuse?", over ADMITTED reuse decisions (wrong = admitted and the oracle
+// fails, `classifyReuse` 'wrong'; correct = 'correct'; LIBRARY §9). Decisions cluster by parent (the calling task: every
+// entry offered to one task sees the same input), so each rule takes clusters in arrival order, [{ n, wrong }]
+// (`clustersOf` groups raw decisions), and corrects for clustering with Kish's design effect
+//   Deff = 1 + (m* − 1)·ρ,  m* = Σm²/Σm (= m for equal sizes),  ρ = max(rho, ρ̂),
+// where ρ̂ is the ANOVA intraclass correlation of the clusters seen so far (`iccAnova`; null, i.e. ignored, when not
+// estimable) and `rho` a floor that is an assumption (default RHO_REUSE_FLOOR 0.1, the value of
+// experiments/jit/stats.mjs RHO_PREREG; never measured for reuse). Counts are rescaled Rao–Scott style: x/Deff of n/Deff.
+//   (a) reuseBoundRule     one-sided 95% Wilson upper bound (z 1.645) of the effective counts ≤ 0.05; read once, on all
+//                          admitted decisions; kill if the one-sided lower bound > 0.05;
+//   (b) reuseSprt          Wald SPRT, p0 0.01 vs p1 0.05, α = β = 0.05: +ln(p1/p0) per wrong, +ln((1−p1)/(1−p0)) per
+//                          clean, the sum divided by Deff and compared with ln((1−β)/α) (kill) and ln(β/(1−α)) (serve)
+//                          after each parent; truncated at the end of the decisions (no crossing → no decision);
+//   (c) reuseSamplingPlan  single sampling n = 181, c = 4 (`samplingPlanDesign`) in effective units: read parents until
+//                          n/Deff ≥ 181, then serve iff x/Deff ≤ 4.
+// Every rule returns { decision: 'serve' | 'kill' | 'no-decision', n (decisions read), wrong, deff, ... }; only 'serve'
+// turns reuse on. Operating characteristics: experiments/lib/reuse-rule-sim.mjs.
+export const RHO_REUSE_FLOOR = 0.1;
+
+export function binomPmf(k, n, p) {
+  if (k < 0 || k > n) return 0;
+  return Math.exp(logChoose(n, k) + (k ? k * Math.log(p) : 0) + (n - k ? (n - k) * Math.log(1 - p) : 0));
+}
+// P(X ≤ k) for X ~ Binomial(n, p).
+export function binomCdf(k, n, p) {
+  if (k < 0) return 0;
+  if (k >= n) return 1;
+  let s = 0;
+  for (let i = 0; i <= k; i++) s += binomPmf(i, n, p);
+  return Math.min(1, s);
+}
+
+// Group admitted reuse decisions into clusters by `key` (default 'parent'), in order of first appearance. A decision is
+// { parent, wrong: boolean } or { parent, label: 'correct' | 'wrong' } (classifyReuse); anything else is refused, so a
+// refusal or a deopt cannot be counted as a clean reuse by accident.
+export function clustersOf(decisions, { key = 'parent' } = {}) {
+  const out = new Map();
+  for (const d of decisions) {
+    const id = d?.[key];
+    if (id == null) throw new Error(`clustersOf: decision without ${key}`);
+    const w = typeof d.wrong === 'boolean' ? d.wrong : d.label === 'wrong' ? true : d.label === 'correct' ? false : null;
+    if (w == null) throw new Error('clustersOf: each decision needs wrong: boolean or label correct|wrong (admitted decisions only)');
+    if (!out.has(id)) out.set(id, { [key]: id, n: 0, wrong: 0 });
+    const c = out.get(id); c.n++; if (w) c.wrong++;
+  }
+  return [...out.values()];
+}
+
+// Kish design effect and effective n for cluster sizes and an intraclass correlation rho.
+export function kishDeff(sizes, rho) {
+  let N = 0, N2 = 0;
+  for (const m of sizes) { N += m; N2 += m * m; }
+  return N ? 1 + (N2 / N - 1) * rho : 1;
+}
+export function kishEffectiveN(sizes, rho) { const N = sizes.reduce((a, m) => a + m, 0); return N / kishDeff(sizes, rho); }
+
+// Running sums over clusters: everything Deff and the ANOVA ICC need, O(1) per cluster.
+function clusterSums() {
+  const s = { k: 0, N: 0, X: 0, sumY2n: 0, sumN2: 0 };
+  s.add = c => { if (!c.n) return s; s.k++; s.N += c.n; s.X += c.wrong; s.sumY2n += (c.wrong * c.wrong) / c.n; s.sumN2 += c.n * c.n; return s; };
+  return s;
+}
+// ANOVA estimator of the intraclass correlation for binary data (Fleiss; Ridout, Demétrio & Firth 1999), clamped to
+// [0, 1]; null when not estimable (fewer than 2 clusters, every cluster of size 1, or no variation at all).
+function iccFromSums({ k, N, X, sumY2n, sumN2 }) {
+  if (k < 2 || N - k < 1) return null;
+  const msb = (sumY2n - (X * X) / N) / (k - 1);
+  const msw = (X - sumY2n) / (N - k);
+  const n0 = (N - sumN2 / N) / (k - 1);
+  const den = msb + (n0 - 1) * msw;
+  if (!(den > 0)) return null;
+  return Math.min(1, Math.max(0, (msb - msw) / den));
+}
+export function iccAnova(clusters) { const s = clusterSums(); for (const c of clusters) s.add(c); return iccFromSums(s); }
+
+function deffFromSums(s, { rho = RHO_REUSE_FLOOR, estimateRho = true } = {}) {
+  const mStar = s.N ? s.sumN2 / s.N : 1;
+  const rhoHat = estimateRho ? iccFromSums(s) : null;
+  const rhoUsed = Math.max(rho, rhoHat ?? 0);
+  const deff = 1 + (mStar - 1) * rhoUsed;
+  return { n: s.N, wrong: s.X, parents: s.k, mStar, rhoHat, rhoUsed, deff, nEff: s.N / deff, wrongEff: s.X / deff };
+}
+// Deff, effective n and effective wrong count of a cluster list under the M3 policy ρ = max(rho, ρ̂).
+export function clusterDeff(clusters, opts = {}) { const s = clusterSums(); for (const c of clusters) s.add(c); return deffFromSums(s, opts); }
+
+// (a) One-sided Wilson bound on the effective counts, read once on all admitted decisions.
+export function reuseBoundRule(clusters, { bound = 0.05, z = 1.645, minN = 60, rho = RHO_REUSE_FLOOR, estimateRho = true } = {}) {
+  const s = clusterDeff(clusters, { rho, estimateRho });
+  if (!s.n) return { rule: 'bound', decision: 'no-decision', reason: 'no admitted decisions', ...s };
+  const w = wilson(s.wrongEff, s.nEff, z);
+  const decision = s.n >= minN && w.hi <= bound ? 'serve' : w.lo > bound ? 'kill' : 'no-decision';
+  return { rule: 'bound', decision, upper: w.hi, lower: w.lo, bound, z, minN, ...s };
+}
+
+// (b) Wald SPRT design: per-decision log-likelihood-ratio steps and the two boundaries.
+export function sprtDesign({ p0 = 0.01, p1 = 0.05, alpha = 0.05, beta = 0.05 } = {}) {
+  if (!(p0 > 0 && p0 < p1 && p1 < 1)) throw new Error('sprtDesign: need 0 < p0 < p1 < 1');
+  if (!(alpha > 0 && alpha < 1 && beta > 0 && beta < 1)) throw new Error('sprtDesign: need 0 < alpha, beta < 1');
+  return {
+    p0, p1, alpha, beta,
+    wrongStep: Math.log(p1 / p0), cleanStep: Math.log((1 - p1) / (1 - p0)),
+    killAt: Math.log((1 - beta) / alpha), serveAt: Math.log(beta / (1 - alpha)),
+  };
+}
+export function reuseSprt(clusters, { p0 = 0.01, p1 = 0.05, alpha = 0.05, beta = 0.05, rho = RHO_REUSE_FLOOR, estimateRho = true, maxN = Infinity } = {}) {
+  const d = sprtDesign({ p0, p1, alpha, beta });
+  const s = clusterSums();
+  let llr = 0, last = deffFromSums(s, { rho, estimateRho }), statistic = 0;
+  for (const c of clusters) {
+    if (s.N + c.n > maxN) break;
+    s.add(c);
+    llr += c.wrong * d.wrongStep + (c.n - c.wrong) * d.cleanStep;
+    last = deffFromSums(s, { rho, estimateRho });
+    statistic = llr / last.deff;
+    if (statistic >= d.killAt) return { rule: 'sprt', decision: 'kill', statistic, llr, design: d, ...last };
+    if (statistic <= d.serveAt) return { rule: 'sprt', decision: 'serve', statistic, llr, design: d, ...last };
+  }
+  return { rule: 'sprt', decision: 'no-decision', reason: 'truncated: no boundary crossed', statistic, llr, design: d, ...last };
+}
+
+// (c) The smallest single sampling plan (n, c) with P(kill | p0) ≤ alpha and P(serve | p1) ≤ beta (serve iff x ≤ c).
+export function samplingPlanDesign({ p0 = 0.01, p1 = 0.05, alpha = 0.05, beta = 0.05, maxN = 5000 } = {}) {
+  for (let n = 1; n <= maxN; n++) {
+    let c = 0, cdf0 = binomCdf(0, n, p0);
+    while (1 - cdf0 > alpha && c < n) cdf0 = binomCdf(++c, n, p0);
+    const miss = binomCdf(c, n, p1);
+    if (miss <= beta) return { n, c, falseKill: 1 - cdf0, miss, p0, p1, alpha, beta };
+  }
+  return null;
+}
+export function reuseSamplingPlan(clusters, { n: planN = 181, c = 4, rho = RHO_REUSE_FLOOR, estimateRho = true } = {}) {
+  const s = clusterSums();
+  let last = deffFromSums(s, { rho, estimateRho });
+  for (const cl of clusters) {
+    s.add(cl);
+    last = deffFromSums(s, { rho, estimateRho });
+    if (last.nEff >= planN) return { rule: 'plan', decision: last.wrongEff <= c ? 'serve' : 'kill', planN, c, ...last };
+  }
+  return { rule: 'plan', decision: 'no-decision', reason: `effective n ${last.nEff.toFixed(1)} < plan n ${planN}`, planN, c, ...last };
+}
