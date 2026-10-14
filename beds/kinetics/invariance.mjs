@@ -8,7 +8,8 @@
 //                      each table leaves the answer unchanged. Prose sentences, chat lines and comments are not moved.
 //                      distribution 'out': the generator always lists a plate row's wells left to right, so this variant
 //                      also flags a solver that reads an ordinal reference as a table position (the white-box parser
-//                      attacks/whitebox-v4.mjs does: 46 of its 87 correct d3 answers are flagged, all for that reason).
+//                      attacks/whitebox-v4.mjs does: 47 of 87 variants of its 29 right d3 answers disagree, eval-invariance
+//                      part B; d3 s201 is pinned in beds/lib/metamorphic.test.mjs).
 //   shuffle-series     whole plate rows move, each keeping its left-to-right order (details at seriesKeyOf below), so the
 //                      generator's listing regularity is kept; distribution 'in'.
 //   shuffle-documents  documents carry their own ids, authors and dates; the SOP in force is named by revision and status,
