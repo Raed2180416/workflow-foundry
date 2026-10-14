@@ -348,18 +348,28 @@ def hook_env(env, fork: int = 0):
     as active (function-local datetime imports). The wrapped methods are the env's own."""
     setup, respond = env.setup_state, env.env_response
 
-    async def setup_state(state, **kw):
+    def task_of(state):
         info = state.get("info", {})
-        info = json.loads(info) if isinstance(info, str) else info
+        return json.loads(info) if isinstance(info, str) else info
+
+    async def setup_state(state, **kw):
+        info = task_of(state)
         SHIM.reset(task_seed(info.get("task_name", "?"), fork), task_base_time(info))
         with SHIM.active():
-            return await setup(state, **kw)
+            out = await setup(state, **kw)
+        GEN_SNAPSHOTS[info.get("task_name", "?")] = SHIM.generated()
+        return out
 
     async def env_response(messages, state, **kw):
         with SHIM.active():
-            return await respond(messages, state, **kw)
+            out = await respond(messages, state, **kw)
+        GEN_SNAPSHOTS[task_of(state).get("task_name", "?")] = SHIM.generated()
+        return out
     env.setup_state, env.env_response = setup_state, env_response
     return env
+
+
+GEN_SNAPSHOTS: dict[str, dict] = {}  # generator draws per task up to its last tool step (official path: one process, many tasks)
 
 
 def _vf():
@@ -632,7 +642,7 @@ def cmd_official(a):
         out[name] = {"partial_credit": metrics.get("partial_credit"), "task_completed_correctly": metrics.get("task_completed_correctly"),
                      "reward": ro.get("reward"), "assertion_results": ro.get("_assertion_results"), "final_world": ro.get("_end_state"),
                      "tool_results": tool_msgs, "error": str(ro.get("error")) if ro.get("error") else None,
-                     "stop_condition": ro.get("stop_condition")}
+                     "stop_condition": ro.get("stop_condition"), "generated": GEN_SNAPSHOTS.get(name)}
     write_json(Path(a.out), out)
     print(canon({"tasks": sorted(out), "out": a.out}))
 
@@ -767,6 +777,54 @@ def cmd_vote(a):
     print(canon({k: res[k] for k in ("k", "winner", "agreement", "majority")}))
 
 
+def _leaf_diffs(x, y, path="$"):
+    """Leaves where two JSON trees differ (structure differences are reported with their path and kind)."""
+    if isinstance(x, dict) and isinstance(y, dict):
+        if set(x) != set(y):
+            return [("keys", path, sorted(set(x) ^ set(y)), None)]
+        return [d for k in sorted(x) for d in _leaf_diffs(x[k], y[k], f"{path}.{k}")]
+    if isinstance(x, list) and isinstance(y, list):
+        if len(x) != len(y):
+            return [("length", path, len(x), len(y))]
+        return [d for i, (u, v) in enumerate(zip(x, y)) for d in _leaf_diffs(u, v, f"{path}[{i}]")]
+    if type(x) is not type(y) and not (isinstance(x, (int, float)) and isinstance(y, (int, float))):
+        return [("type", path, x, y)]
+    return [] if x == y else [("value", path, x, y)]
+
+
+def _maybe_json(s):
+    try:
+        return json.loads(s)
+    except (TypeError, ValueError):
+        return s
+
+
+def cmd_neutral(a):
+    """Shim neutrality: run A (--det off, no patches) vs run B (--det record) of the same scripts through the official
+    path. Every difference must be a leaf whose B value is a recorded generator draw; scores and assertion verdicts
+    must be equal."""
+    A, B = load_json(a.a), load_json(a.b)
+    report = {}
+    for name in sorted(set(A) | set(B)):
+        x, y = A.get(name), B.get(name)
+        if x is None or y is None:
+            report[name] = {"ok": False, "why": "missing"}
+            continue
+        is_vol = volatile_matcher(y.get("generated") or {})
+        diffs = _leaf_diffs(x["final_world"], y["final_world"])
+        tr = [d for u, v in zip(x["tool_results"], y["tool_results"]) for d in _leaf_diffs(_maybe_json(u), _maybe_json(v))]
+        alld = diffs + tr
+        unexplained = [d for d in alld if d[0] != "value" or not is_vol(d[3])]
+        verdicts = lambda r: [(q["type"], q["passed"], q["excluded"]) for q in (r.get("assertion_results") or [])]  # noqa: E731
+        same_scores = (x["partial_credit"], x["task_completed_correctly"]) == (y["partial_credit"], y["task_completed_correctly"])
+        report[name] = {"ok": not unexplained and same_scores and verdicts(x) == verdicts(y) and len(x["tool_results"]) == len(y["tool_results"]),
+                        "world_leaves_differing": len(diffs), "tool_result_leaves_differing": len(tr), "explained_by_generators": len(alld) - len(unexplained),
+                        "unexplained": [list(map(str, d))[:4] for d in unexplained[:10]], "same_scores": same_scores,
+                        "same_verdicts": verdicts(x) == verdicts(y)}
+    write_json(Path(a.out), report, indent=1)
+    print(canon({"tasks": len(report), "ok": all(r["ok"] for r in report.values())}))
+
+
 def cmd_grade(a):
     SHIM.install(a.det)
     row = load_json(a.input)
@@ -839,6 +897,11 @@ def main():
     s.add_argument("--forks", required=True)
     s.add_argument("--out", required=True)
     s.set_defaults(fn=cmd_vote)
+    s = sub.add_parser("neutral")
+    s.add_argument("--a", required=True)
+    s.add_argument("--b", required=True)
+    s.add_argument("--out", required=True)
+    s.set_defaults(fn=cmd_neutral)
     s = sub.add_parser("grade")
     common(s)
     s.add_argument("--input", required=True)

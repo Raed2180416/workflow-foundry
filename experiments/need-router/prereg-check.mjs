@@ -2,13 +2,21 @@
 // Validates research/need-router-20261014/prereg/stages.json, the machine-readable half of PREREG-NEED-V1.md, against
 //   - the seed ledger (experiments/jit/seeds.mjs seedRefusals, the same rule every runner applies through assertSeedsAllowed),
 //   - the model policy (policy/models.json: model ids and base prices),
-//   - the spend rules (each stage cap <= the $500 pause, the sum of caps <= the $1,500 session soft cap),
-//   - the preregistration text (status, every job id, stage id and arm settings hash is named in it),
-// and exports the preregistered task plan (per-seed difficulty, example sets, E2E draw) so label-run reads one rule.
-//   node experiments/need-router/prereg-check.mjs [--stages FILE] [--prereg FILE] [--hashes] [--stamp] [--json]
-//   --hashes  also generate every planned example and evaluation task of each existing bed ($0) and report taskHash
-//             collisions between example and evaluation tasks of one family (L4) and repeated evaluation tasks
-//   --stamp   print the engine-stamp record of the working tree (git trees, file shas, Node version); writes nothing
+//   - the spend rules (each stage cap <= the $500 pause, M1's tag shares within its cap, the sum of caps plus every
+//     recurring stage's cumulative cap <= the $1,500 session soft cap),
+//   - the seed and freeze rules (no test-split seed of any role before Freeze; TRAIN jobs never on test seeds; held-out,
+//     forced and sealed jobs never on TRAIN evaluation seeds; held-out probe rows only in an envelope stage that
+//     commits its decisions before any matrix stage that needs them),
+//   - the preregistration text (status, every job id, every stage id as a whole token, every arm settings hash; when
+//     frozen, no TBD-M0 and no "TBD at ... launch" left in §4.4 or §11; "dev-observed" stated when a job is),
+// and exports the preregistered task plan (per-seed difficulty, example sets, probe task, E2E draw) so label-run reads
+// one rule, and the engine stamps (label engine per paid stage, analysis at Freeze) with their comparison.
+//   node experiments/need-router/prereg-check.mjs [--stages FILE] [--prereg FILE] [--hashes] [--stamp [--stage ID]] [--json]
+//   --hashes  also generate every planned example, probe and evaluation task of each existing bed ($0), each seed checked
+//             against the ledger first, and report taskHash collisions between example and evaluation tasks of one
+//             family (L4) and repeated evaluation tasks. Held-out families are generated and hashed only inside a child
+//             process that prints counts and task ids, never task content or hashes.
+//   --stamp   print the engine-stamp records of the working tree (label engine for --stage, analysis, documents); writes nothing
 // Exit 0 when no error, 1 otherwise.
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -18,6 +26,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { loadLedger, seedRefusals } from '../jit/seeds.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const THIS_FILE = fileURLToPath(import.meta.url);
 export const STAGES_FILE = path.join(REPO, 'research/need-router-20261014/prereg/stages.json');
 export const PREREG_FILE = path.join(REPO, 'research/need-router-20261014/PREREG-NEED-V1.md');
 export const POLICY_FILE = path.join(REPO, 'policy/models.json');
@@ -33,7 +42,17 @@ export const ROLES = Object.freeze({
   e2e: { split: 'test', purposeKey: 'heldout' }, drift: { split: 'test', purposeKey: 'heldout' },
 });
 const EVAL_ROLES = new Set(['trainEval', 'heldoutEval', 'e2e', 'drift']);
-const HELDOUT_SPLITS = new Set(['heldout', 'heldout-conditional', 'sealed']);
+/** Roles on the test split: none may run before Freeze, for any job; a TRAIN job never runs on them. */
+export const TEST_ROLES = Object.freeze(new Set(Object.keys(ROLES).filter(r => ROLES[r].split === 'test')));
+/** TRAIN evaluation roles: a held-out, forced or sealed job never runs on them. */
+const DEV_EVAL_ROLES = new Set(['trainEval', 'trainReserve']);
+/** Splits held out from tuning for seed purposes (forced jobs included: runbook and e8 never touch TRAIN seeds). */
+export const HELDOUT_SPLITS = Object.freeze(new Set(['heldout', 'heldout-conditional', 'forced', 'sealed']));
+/** Splits that the E2E lane and the --hashes e2e check cover. */
+const E2E_SPLITS = new Set(['heldout', 'heldout-conditional']);
+/** Roles whose rows join the held-out matrix: decisions for their jobs must be committed first (L6). */
+const ENVELOPE_ROLES = new Set(['heldoutEval', 'e2e']);
+const HYPOTHESIS_CLASSES = ['no-workflow', 'workflow', 'either', 'pending'];
 // Special arm tokens a run may name besides the arms table: the E2E lane runs the decision card's choice.
 const SPECIAL_ARMS = new Set(['router-choice']);
 
@@ -63,6 +82,12 @@ export function exampleDifficulty(band, seed, base = 601) {
   if (!Array.isArray(band) || !band.length) throw new Error('exampleDifficulty: band must be a non-empty list');
   return band[(((seed - base) % band.length) + band.length) % band.length];
 }
+/** The probe task (NR-probe and judge-H) is seed 601 at the band's median level (the upper middle of an even band), so
+ *  the probe never reads only the band's easiest level (PREREG §3.3). */
+export function probeDifficulty(band) {
+  if (!Array.isArray(band) || !band.length) throw new Error('probeDifficulty: band must be a non-empty list');
+  return band[Math.floor(band.length / 2)];
+}
 /** need-stage jobs fix the stage kind by position (3 tasks per kind): kinds[i mod 4]. */
 const kindAt = (job, i) => (job.stageKinds ? job.stageKinds[i % job.stageKinds.length] : undefined);
 
@@ -79,6 +104,9 @@ export function planTasks(stages, jobId, role) {
     if (EVAL_ROLES.has(role)) {
       out.difficulty = evalDifficulty(job.band, i, seeds.length);
       const k = kindAt(job, i); if (k) out.stage = k;
+    } else if (role === 'probe') {
+      out.difficulty = probeDifficulty(job.band);
+      const k = kindAt(job, seed - stages.seeds.examples.from); if (k) out.stage = k;
     } else {
       out.difficulty = exampleDifficulty(job.band, seed, stages.seeds.examples.from);
       const k = kindAt(job, seed - stages.seeds.examples.from); if (k) out.stage = k;
@@ -190,8 +218,21 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
       const want = j.maxExampleTokens > arms['agent-O'].largeInputTokens ? arms['agent-O'].budgetUsdLargeInputs : arms['agent-O'].budgetUsd;
       if (j.agentOBudgetUsd !== want) err(`job ${j.id}: agentOBudgetUsd ${j.agentOBudgetUsd} != ${want} (max example input ${j.maxExampleTokens} tokens)`);
     }
-    for (const n of ['n1', 'n10']) { const h = j.hypothesis?.[n]; if (!h || !['no-workflow', 'workflow', 'either', 'pending'].includes(h.class)) err(`job ${j.id}: hypothesis.${n}.class missing or not no-workflow|workflow|either|pending`); }
+    for (const n of ['n1', 'n10']) { const h = j.hypothesis?.[n]; if (!h || !HYPOTHESIS_CLASSES.includes(h.class)) err(`job ${j.id}: hypothesis.${n}.class missing or not ${HYPOTHESIS_CLASSES.join('|')}`); }
+    // A hypothesis revised after a dev observation keeps the original row and logs what informed the revision.
+    for (const [ri, rv] of (j.hypothesis?.revisions ?? []).entries()) {
+      if (!rv.date || !rv.informedBy) err(`job ${j.id}: hypothesis.revisions[${ri}] needs a date and informedBy`);
+      for (const n of ['n1', 'n10']) if (rv[n] && !HYPOTHESIS_CLASSES.includes(rv[n].class)) err(`job ${j.id}: hypothesis.revisions[${ri}].${n}.class not ${HYPOTHESIS_CLASSES.join('|')}`);
+    }
+    if (j.devObserved != null && !(Array.isArray(j.devObserved) && j.devObserved.length)) err(`job ${j.id}: devObserved must list what observed it`);
     if (j.stageKinds && !(Array.isArray(j.stageKinds) && j.stageKinds.length && EVAL_TASKS % j.stageKinds.length === 0)) err(`job ${j.id}: stageKinds must divide ${EVAL_TASKS}`);
+  }
+  // A near or dev-observed held-out job cannot carry a claim alone: a drop sensitivity for C7a and C7b is mandatory.
+  const mandatory = stages.analysis?.mandatorySensitivities ?? [];
+  for (const j of stages.jobs ?? []) {
+    if (!HELDOUT_SPLITS.has(j.split) || !(j.near || j.devObserved || clusters[j.cluster]?.near || clusters[j.cluster]?.devObserved)) continue;
+    const ok = mandatory.some(m => (m.drop ?? []).includes(j.id) && ['C7a', 'C7b'].every(c => (m.appliesTo ?? []).includes(c)));
+    if (!ok) err(`job ${j.id} is ${j.devObserved ? 'dev-observed' : 'near'}: analysis.mandatorySensitivities must drop it for both C7a and C7b`);
   }
   // A cluster sits in one split by construction (job.split === cluster.split); TRAIN and held-out never share a family.
 

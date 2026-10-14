@@ -36,6 +36,10 @@ BED-CONTRACT v1.1 §3). You answer with decisions, effects, obligations (wake-up
   belongs to no order.
 - **Time.** All times are ISO 8601 with offset, `Europe/Amsterdam` (`calendar/cal-warehouse.json`); warehouses work
   every day of the week. Durations in this spec are calendar time.
+- **Delivery order.** Within one instant the platform delivers events in order of their `source`, alphabetically, then
+  their id: human-task events (`actor`) come before carrier messages (`carrier`), carrier messages before customer
+  actions (`customer-portal`), customer actions before placed orders (`shop`). An effect's result comes from its system
+  (`billing`, `carrier`, …) one minute after the attempt.
 
 ## 2. Systems (exact schemas in `api/<system>.schema.json`)
 
@@ -253,7 +257,8 @@ Send each required notification exactly once.
   inclusive for the party who must act by them and exclusive for the timeout that follows them (R2.2, R3.2).
 - S2 "Committed" for compensation is the system's truth as `status(key)` reports it, not what you last saw.
 - S3 One review deadline per order, from the first review task.
-- S4 A collection and a cancel in the same instant: the collection wins (R6.2).
+- S4 A collection and a cancel in the same instant: the collection wins (R6.2). This is the delivery order (§1): a carrier
+  report with the same time as a customer action always reaches you before it.
 - S5 An amend for an order with no unavailable fulfilment, or any action after D for an order that is no longer
   waiting, changes nothing.
 - S6 Collection of one fulfilment ends the customer's right to cancel the whole order (R6.2), including fulfilments not
@@ -264,7 +269,32 @@ Send each required notification exactly once.
   status and notice when the customer acts first, the R4.1 `processing` statuses when a counted cancel stops the order
   first. Taking such a step anyway (before stopping the order) is allowed.
 - S7 Whether a shipment "has been reported collected" before a cancel is judged by the report's `reportedAt` (a
-  `collected`, `inTransit` or `delivered` report all prove collection), as far as reports have reached you when you act.
+  `collected`, `inTransit` or `delivered` report all prove collection), as far as reports had reached you when the cancel
+  did; a report with the same time as the cancel has reached you (S4).
+- S10 **Same-instant knowledge.** A step counts as taken before a message about the order if you took it at an earlier
+  instant, or in the same instant in a call that had not been given that message (§1: a call can react only to what it
+  was given). A step taken in a call that had been given the message, or at a later instant, was taken after it. This
+  decides, for a counted cancel or customer action, which steps S9 relieves and which forward steps are new after a cancel
+  (R6.2: book, charge or reserve nothing new) or were already in flight.
+- S11 **The ready instant.** An order is processing from the instant it is ready (R4.1, R6.2), inclusive: a `cancel` with
+  the same time as the `approve` (R2.2) or the counted `amend` (R3.2) that made the order ready, delivered after it, is a
+  cancel during processing (R6.2). A customer action that reaches you before the order it names was placed (customer
+  actions are delivered before placed orders, §1) names no order yet (§3.2): it changes nothing for that order; answer it
+  with nothing.
+- S12 **A review answer and a cancel in one instant.** The answer reaches you first (§1). After an `approve` the order is
+  cleared and ready, so the `cancel` is a cancel during processing (S11, R6.2). After a `reject` the order is cancelled for
+  fraud (R2.2) and the `cancel` changes nothing.
+- S13 **Endings and failures in a cancel's instant.** What reached you before a `cancel` came before it. A carrier report
+  with the same time as the cancel reached you first (§1, S4): a `delivered` report that ends the order's last open
+  fulfilment means the order has already ended (R6.3: the cancel changes nothing, `cancel-refused` is allowed); a
+  `collectionFailed` report fails its fulfilment before the cancel (R5.2), and the cancel applies to the order's other
+  fulfilments (R6.2). A declined charge or a permanent carrier error reaches you with its result, one minute after the
+  attempt: one attempted in the cancel's instant did not come before the cancel, so the cancel counts and that
+  fulfilment is compensated and set `cancelled` (R6.2), not `failed`.
+- S14 **A step committing after its fulfilment failed.** A step of a failing fulfilment that commits after the failure
+  (one already in flight) is compensated within 120 min of its commit; the fulfilment's compensation, its `failed` status
+  and its `fulfilment-failed` notice are then due within 120 min of the later of the failure and that commit (as R6.2
+  does for a cancel).
 
 ## 6. Reference: the shop as originally written (for orientation only)
 

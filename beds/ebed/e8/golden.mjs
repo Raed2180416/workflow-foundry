@@ -374,13 +374,13 @@ G('steps-before-vs-after-a-processing-cancel', 'S9, S10, R4.1, R4.2, R6.2, §1',
   });
 }
 
-// R1.1, R1.4, §3.1: a second order.placed for an order already recorded "is a duplicate: no effect", so the order's items
-// stay those of the placement it was recorded from (hand-built: the generator's duplicates repeat the payload exactly).
+// R1.1, R1.4, §3.1: a second order.placed with the same order id "is a duplicate: no effect", even with other items and
+// even when it arrives before the arm has recorded the order: the order is recorded with the items of its first placement
+// (hand-built: the generator's duplicates repeat the payload exactly).
 G('duplicate-placement-changes-no-items', 'R1.1, R1.4, §3.1', tr => {
   const items = FUL.items.map(i => ({ sku: i.sku, qty: i.qty }));
   const placedAs = its => ({ orderId: O, customerId: T.customerId, placedAt: T.placedAt, currency: 'EUR', items: its, channel: 'web' });
-  const create = B.row(P + MIN, 'orders', 'create', { orderId: O, items });
-  const E = tr(W, B.view(P + 11 * MIN, T, [create], [B.ev(P, 'order.placed', placedAs(items)), B.ev(P + 10 * MIN, 'order.placed', placedAs([{ sku: items[0].sku, qty: items[0].qty + 1 }]))]));
+  const E = tr(W, B.view(P + 11 * MIN, T, [], [B.ev(P, 'order.placed', placedAs(items)), B.ev(P + 10 * MIN, 'order.placed', placedAs([{ sku: items[0].sku, qty: items[0].qty + 1 }]))]));
   const c = E.effects.required.find(e => e.lid === `create:${O}`);
   const want = [...items].sort((x, y) => (x.sku < y.sku ? -1 : 1));       // R1.1: list order is not significant
   return c && same(c.match.items, want) ? true : `create items ${JSON.stringify(c?.match.items)} after a duplicate placement, expected ${JSON.stringify(want)}`;
@@ -511,13 +511,16 @@ G('duplicate-placement-changes-no-items', 'R1.1, R1.4, §3.1', tr => {
   // amend counts (R3.2) and makes the order ready in that instant, and the order is processing from the instant it is ready
   // (S11), so the cancel is a cancel during processing (S8) and counts: the order is cancelled within 60 min of it, and
   // `processing` (not yet set) is only permitted (S9).
-  G('amend-and-cancel-in-one-instant (S11)', 'S11, S8, R3.2, R6.2, S9', tr => {
-    const a = pa + 80 * MIN;
-    const E = tr(W, Ba.view(a + MIN, Ta, [Ba.row(pa + MIN, 'orders', 'create', { orderId: Oa })], [act(Ba, a, Oa, 'amend'), act(Ba, a, Oa, 'cancel')]));
-    const w = win(E, `ost:${Oa}:cancelled`);
-    if (!w || w.earliest !== a || w.latest !== a + 60 * MIN || !has(E, `ntf:${Oa}:order-cancelled`)) return `a cancel delivered after the amend of its instant did not count: order-cancel window ${JSON.stringify(w)}`;
-    if (has(E, `ost:${Oa}:processing`)) return 'processing still required after a cancel in the ready instant';
-    return E.effects.permitted.some(p => p.op === 'setStatus' && p.match?.status === 'processing') ? true : 'processing not permitted (S9)';
+  G('amend-and-cancel-in-one-instant (S11)', 'S11, S8, R3.2, R6.2, R6.3, S9', tr => {
+    for (const a of [pa + 80 * MIN, Da]) {             // also exactly at D: both actions count in time (R3.2, S1)
+      const E = tr(W, Ba.view(a + MIN, Ta, [Ba.row(pa + MIN, 'orders', 'create', { orderId: Oa })], [act(Ba, a, Oa, 'amend'), act(Ba, a, Oa, 'cancel')]));
+      const w = win(E, `ost:${Oa}:cancelled`);
+      if (!w || w.earliest !== a || w.latest !== a + 60 * MIN || !has(E, `ntf:${Oa}:order-cancelled`)) return `a cancel delivered after the amend of its instant did not count: order-cancel window ${JSON.stringify(w)}`;
+      if (has(E, `ost:${Oa}:processing`)) return 'processing still required after a cancel in the ready instant';
+      if (!E.effects.permitted.some(p => p.op === 'setStatus' && p.match?.status === 'processing')) return 'processing not permitted (S9)';
+      if (sends([...E.effects.required, ...E.effects.permitted], 'cancel-refused')) return `cancel-refused allowed for a cancel that counts (at p + ${(a - pa) / MIN} min)`;
+    }
+    return true;
   });
 }
 
@@ -539,18 +542,28 @@ G('processing-cancels: a cancel before its placement names no order, an amend ne
   return has(E2, `chg:${F}`) ? true : 'the saga did not continue after the amend';
 });
 
-// S7, R6.2, R6.3, W2: a report other than `collected` proves collection. With held-up reports (W2) the delivery report
-// arrives first and the collection report later; a cancel between them is refused (cancel-refused within 60 min) and
-// changes nothing else, and so is a cancel after the late inTransit report, which also proves collection.
-G('delivery-report-proves-collection (S7)', 'S7, R6.2, R6.3, W2', tr => {
-  const { rows } = history(3);                 // booked at P + 4 min
-  const R = runOf(P + 4 * MIN), T1 = R + 180 * MIN, T2 = R + 1200 * MIN, a = T2 + 20 * MIN;
-  const delivered = report(T2, 'delivered');
-  const E = tr(W, B.view(a + MIN, T, rows, [placed, delivered, act(B, a, O, 'cancel')]));
-  const w = win(E, `ntf:${O}:cancel-refused`);
+// S7, S6, R6.2, R6.3, W2: a report other than `collected` proves collection. With held-up reports (W2) the delivery
+// report of one fulfilment arrives first and its collection report later; a cancel between them, while the other
+// fulfilment is still open, is refused (cancel-refused within 60 min, S6: one collection ends the right to cancel the
+// whole order) and changes nothing else.
+G('delivery-report-proves-collection (S7)', 'S7, S6, R6.2, R6.3, W2', tr => {
+  const B2 = builder(C2f), O2 = T2f.subject, p2 = Date.parse(T2f.placedAt), [F1, F2] = allocOf(W, O2);
+  const amt = f => f.items.reduce((s, i) => s + i.qty * price(W, i.sku), 0) + fee0(W, f.location);
+  const rows = [B2.row(p2 + MIN, 'orders', 'create', { orderId: O2 }),
+    ...[F1, F2].flatMap(f => f.items.map(i => B2.row(p2 + 2 * MIN, 'inventory', 'reserve', { orderId: O2, fulfilmentId: f.fulfilmentId, location: f.location, sku: i.sku, qty: i.qty }))),
+    B2.row(p2 + 3 * MIN, 'billing', 'charge', { orderId: O2, fulfilmentId: F1.fulfilmentId, customerId: T2f.customerId, amountMinor: amt(F1), currency: 'EUR' }),
+    B2.row(p2 + 4 * MIN, 'carrier', 'create', { orderId: O2, fulfilmentId: F1.fulfilmentId, location: F1.location, ref: null })];
+  const l1 = W.master.locations.find(l => l.location === F1.location);
+  const [h, m] = l1.collectionTime.split(':').map(Number);
+  let R = Date.parse(W.t0) + (h * 60 + m - 1440) * MIN;
+  while (R < p2 + 4 * MIN + POL.collectionCutoffMinutes * MIN) R += 1440 * MIN;
+  const T2 = R + 1200 * MIN, a = T2 + 20 * MIN;
+  const delivered = B2.ev(T2, 'carrier.status', { carrier: l1.carrier, code: CODES[l1.carrier].delivered, fulfilmentRef: F1.fulfilmentId, reportedAt: new Date(T2).toISOString() });
+  const E = tr(W, B2.view(a + MIN, T2f, rows, [B2.ev(p2, 'order.placed', { orderId: O2 }), delivered, act(B2, a, O2, 'cancel')]));
+  const w = win(E, `ntf:${O2}:cancel-refused`);
   if (!w || w.earliest !== a || w.latest !== a + 60 * MIN) return `cancel after a delivery report that arrived first: cancel-refused window ${JSON.stringify(w)}`;
-  if (comp(E).length || has(E, `ost:${O}:cancelled`)) return 'order stopped after a delivery report';
-  return has(E, `fst:${F}:dispatched`) && has(E, `fst:${F}:completed`) ? true : 'delivery report did not dispatch and complete the fulfilment (R4.4)';
+  if (comp(E).length || has(E, `ost:${O2}:cancelled`) || has(E, `fst:${F2.fulfilmentId}:cancelled`)) return 'order stopped after a delivery report proved collection';
+  return true;
 });
 
 // R4.1, R4.2: while nothing stops the saga, every step taken is one R4.2 asks for (steps 1-3), and R4.1 sets each available

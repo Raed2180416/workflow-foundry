@@ -108,7 +108,8 @@
    "examples": "band[(seed - 601) mod |band|]",
    "replacement": "a replaced seed is the lowest unused seed of the reserve range of the same split and takes the replaced task's difficulty (and stage kind)",
    "racing": "top-ups reuse the same tasks; a lineage k > 3 uses example set ((k - 1) mod 3) + 1 with a fresh builder session",
-   "stageKinds": "kinds[i mod 4] for evaluation index i; kinds[(seed - 601) mod 4] for examples"
+   "stageKinds": "kinds[i mod 4] for evaluation index i; kinds[(seed - 601) mod 4] for examples",
+   "probe": "the probe task is seed 601 at band[floor(|band| / 2)] (the band's median level, the upper middle of an even band), stage kind kinds[0]; NR-probe and judge-H read it"
   }
  },
  "rng": {
@@ -421,8 +422,8 @@
    "maxTokens": 16000,
    "maxBudgetUsdPerCall": 1,
    "reads": [
-    "family spec (the task prompt of example seed 601)",
-    "example 601 inputs truncated to 8000 tokens",
+    "the probe task's prompt (seed 601 at the band's median level, PREREG §3.3)",
+    "the probe task's inputs truncated to 8000 tokens",
     "N",
     "V",
     "W",
@@ -439,9 +440,9 @@
     "needsWorkflow": "boolean"
    },
    "draws": 3,
-   "vote": "majority on choice; a three-way split goes to the mode with the lowest TRAIN-mean c + B/N in the cell",
+   "vote": "majority on choice; a three-way split goes to the first of the three in the fixed order direct-H, agent-H, agent-H+proc, construct-H, agent-O (no label data)",
    "cells": "V in {0.10, 1, 10} at N = 10, W = V",
-   "settingsSha": "6504fc674944022d"
+   "settingsSha": "faa0b937417f83f9"
   },
   "m1-call-none": {
    "id": "m1-call-none",
@@ -529,7 +530,8 @@
    "families": [
     "wbed-r3p"
    ],
-   "why": "imports only wbed/lib/{contracts,faults,prng}.mjs; same author and library as W (near)"
+   "why": "imports only wbed/lib/{contracts,faults,prng}.mjs; same author and library as W (near); dev-observed by M1 (one Haiku call 12/12 and 11/12 at d3 on dev attack seeds) and by Jev-need",
+   "devObserved": true
   },
   "need-constraint": {
    "split": "heldout",
@@ -726,7 +728,8 @@
     },
     "note": "the negative control (K2: direct-H >= 10/12 per draw)"
    },
-   "agentOBudgetUsd": 4
+   "agentOBudgetUsd": 4,
+   "m1OneCallD3": "12/12, 12/12 (dev attack seeds, efforts none and medium); hypothesis rows unchanged"
   },
   {
    "requirements": [],
@@ -808,7 +811,8 @@
     },
     "note": "agent at N = 1; workflow at large N"
    },
-   "agentOBudgetUsd": 4
+   "agentOBudgetUsd": 4,
+   "m1OneCallD3": "0/12, 0/12 (18 of 24 calls timed out) (dev attack seeds, efforts none and medium); hypothesis rows unchanged"
   },
   {
    "requirements": [],
@@ -847,7 +851,9 @@
     },
     "note": "looks like branching, not worth a workflow"
    },
-   "agentOBudgetUsd": 4
+   "agentOBudgetUsd": 4,
+   "bandDecision": "kept d3 after M1 (R2 one call 4/12 and 3/12 at d3): the W-BED §2.4 gate admits rungs for W-bed claims, not need-router labels; a band where one call suffices is a valid negative region, and dropping levels after seeing one-call outcomes would choose bands to produce labels (DESIGN §6). Per-difficulty labels are reported",
+   "m1OneCallD3": "4/12, 3/12 (dev attack seeds, efforts none and medium); hypothesis rows unchanged"
   },
   {
    "requirements": [],
@@ -888,7 +894,8 @@
     },
     "note": "the strongest built-in positive; at N = 1 agent-H+proc is the likely alternative in A"
    },
-   "agentOBudgetUsd": 8
+   "agentOBudgetUsd": 8,
+   "m1OneCallD3": "8/12, 9/12 (d3 is outside its d4-5 band) (dev attack seeds, efforts none and medium); hypothesis rows unchanged"
   },
   {
    "requirements": [],
@@ -1010,7 +1017,9 @@
     },
     "note": "open (low confidence): agent or workflow"
    },
-   "agentOBudgetUsd": 8
+   "agentOBudgetUsd": 8,
+   "bandDecision": "kept d3 after M1 (R6 one call 2/12 and 6/12 at d3): the W-BED §2.4 gate admits rungs for W-bed claims, not need-router labels; a band where one call suffices is a valid negative region, and dropping levels after seeing one-call outcomes would choose bands to produce labels (DESIGN §6). Per-difficulty labels are reported",
+   "m1OneCallD3": "2/12, 6/12 (dev attack seeds, efforts none and medium); hypothesis rows unchanged"
   },
   {
    "requirements": [],
@@ -1453,9 +1462,26 @@
      "class": "workflow",
      "mode": "construct-H"
     },
-    "note": "workflow at d4-5; near held-out (same author and library as W)"
+    "note": "workflow at d4-5; near held-out (same author and library as W)",
+    "revisions": [
+     {
+      "date": "2026-10-14",
+      "informedBy": "M1 tag m1 (d3): one call solved r3p 12/12 and 11/12 on dev attack seeds",
+      "n1": {
+       "class": "either",
+       "mode": "direct-H"
+      },
+      "note": "a third of the band (d3) is solved by one call; d4-5 untested at this revision. The original row (workflow / construct-H, written before M1 was read) stays the record; this revision does not change the band"
+     }
+    ]
    },
-   "agentOBudgetUsd": 8
+   "agentOBudgetUsd": 8,
+   "devObserved": [
+    "M1 tag m1 (d3, dev attack seeds 479-490): one Haiku call passed 12/12 (effort none) and 11/12 (medium)",
+    "Jev-need (2026-10-14, hosted Jev, dev): read the 12 r3p M1 tasks and their one-call outcomes",
+    "M1 tag m1-d5 (d5, the same dev seeds): in flight at this revision; its rows were not read by this revision's author"
+   ],
+   "bandDecision": "kept d3 after M1 (R3' one call 12/12 and 11/12 at d3): the W-BED §2.4 gate admits rungs for W-bed claims, not need-router labels; a band where one call suffices is a valid negative region, and dropping levels after seeing one-call outcomes would choose bands to produce labels (DESIGN §6). Per-difficulty labels are reported; for r3p the d3-dropped reading is a mandatory sensitivity (analysis.mandatorySensitivities)"
   },
   {
    "requirements": [],
@@ -1897,8 +1923,11 @@
    "inTotals": true,
    "core": true,
    "approved": true,
-   "what": "one Haiku call per W-rung task at d3, two efforts; also the W-bed one-call admission gate (R0 >= 10/12 per effort; other rungs <= 2/12)",
-   "command": "node experiments/need-router/m1-run.mjs --cap 15",
+   "what": "one Haiku call per W-rung task, two efforts: tag m1 (8 rungs at d3, 192 calls; also the W-bed one-call admission gate: R0 >= 10/12 per effort, other rungs <= 2/12) and tag m1-d5 (R2, R3, R3', R6 at d5, 96 calls); both are development runs and both are recorded in PREREG §0, §12 and §13",
+   "command": [
+    "node experiments/need-router/m1-run.mjs --cap 15",
+    "node experiments/need-router/m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10"
+   ],
    "runs": [
     {
      "bed": "wbed-r0",
@@ -1912,7 +1941,8 @@
      "arms": [
       "m1-call-none",
       "m1-call-medium"
-     ]
+     ],
+     "tag": "m1"
     },
     {
      "bed": "wbed-r1",
@@ -1926,7 +1956,8 @@
      "arms": [
       "m1-call-none",
       "m1-call-medium"
-     ]
+     ],
+     "tag": "m1"
     },
     {
      "bed": "wbed-r2",
@@ -1940,7 +1971,8 @@
      "arms": [
       "m1-call-none",
       "m1-call-medium"
-     ]
+     ],
+     "tag": "m1"
     },
     {
      "bed": "wbed-r3",
@@ -1954,7 +1986,8 @@
      "arms": [
       "m1-call-none",
       "m1-call-medium"
-     ]
+     ],
+     "tag": "m1"
     },
     {
      "bed": "wbed-r4",
@@ -1968,7 +2001,8 @@
      "arms": [
       "m1-call-none",
       "m1-call-medium"
-     ]
+     ],
+     "tag": "m1"
     },
     {
      "bed": "wbed-r5",
@@ -1982,7 +2016,8 @@
      "arms": [
       "m1-call-none",
       "m1-call-medium"
-     ]
+     ],
+     "tag": "m1"
     },
     {
      "bed": "wbed-r6",
@@ -1996,7 +2031,8 @@
      "arms": [
       "m1-call-none",
       "m1-call-medium"
-     ]
+     ],
+     "tag": "m1"
     },
     {
      "bed": "wbed-r3p",
@@ -2010,9 +2046,140 @@
      "arms": [
       "m1-call-none",
       "m1-call-medium"
-     ]
+     ],
+     "tag": "m1"
+    },
+    {
+     "bed": "wbed-r2",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 5,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ],
+     "tag": "m1-d5"
+    },
+    {
+     "bed": "wbed-r3",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 5,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ],
+     "tag": "m1-d5"
+    },
+    {
+     "bed": "wbed-r3p",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 479,
+      "to": 490
+     },
+     "difficulty": 5,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ],
+     "tag": "m1-d5"
+    },
+    {
+     "bed": "wbed-r6",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 5,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ],
+     "tag": "m1-d5"
     }
-   ]
+   ],
+   "capShares": {
+    "m1": 5,
+    "m1-d5": 10
+   },
+   "capSharesNote": "one approved M1 cap ($15, decision 14) shared by tag; m1-run.mjs keeps one counter per process, so each tag ran on its own counter (PREREG §13 D2, D3)",
+   "observed": {
+    "m1": {
+     "status": "complete",
+     "firstRow": "2026-10-14T21:31:36Z",
+     "lastRow": "2026-10-14T22:59:47Z",
+     "committed": "f1552d4 (2026-10-14 23:00:18)",
+     "command": "node experiments/need-router/m1-run.mjs --cap 15",
+     "m1RunSha256": "478744664b95accf016fe7ea628ee856b3ab7bdb559081a0b7ac261d4c8a58e7",
+     "engine": {
+      "stamp": "not taken at launch (S-M1 was still TBD)",
+      "reconstructedFrom": "commit e5defed (2026-10-14 21:32:46, the runner's commit); whether the working tree differed at launch is unknown",
+      "trees": {
+       "experiments/lib": "eb61500a8df53f9a1b3d95cccbc93873c0adb4c2",
+       "experiments/need-router": "d2d8e266bb6f25b8701d627d59486ad01bcae730",
+       "beds/wbed": "882d3ab58f593c9a779b3303bf4dea2a892129ed"
+      },
+      "files": {
+       "beds/wbed/attacks/triviality.mjs": "726c187e425caf78945b3dc3afc7ef5ccda2306da7f194bd72a6c2c3cafc967c",
+       "policy/models.json": "96d5586281a0e8e43c73db63118189aaf18e8da5a492bb0dddfd43ab676cb4cf"
+      }
+     },
+     "calls": 192,
+     "reportedUsd": 2.9957,
+     "timeoutRowsAtZero": 26,
+     "meterUsd": 28.9957,
+     "meterNote": "PREREG §12 meter: 26 MODEL_TIMEOUT rows booked at $0 are charged at the $1 per-call bound; the provider's billing for them is unknown",
+     "onePassPerEffort": {
+      "wbed-r0": "12/12, 12/12",
+      "wbed-r1": "0/12, 0/12",
+      "wbed-r2": "4/12, 3/12",
+      "wbed-r3": "8/12, 9/12",
+      "wbed-r3p": "12/12, 11/12",
+      "wbed-r4": "0/12, 0/12",
+      "wbed-r5": "0/12, 0/12",
+      "wbed-r6": "2/12, 6/12"
+     },
+     "gates": {
+      "K2": "passed (R0 12/12 at both efforts)",
+      "wbedAdmission": "failed at d3 for R2, R3, R3' and R6 (W-BED §2.4 item 1: <= 2/12)"
+     },
+     "report": "research/need-router-20261014/runs/m1/REPORT.md"
+    },
+    "m1-d5": {
+     "status": "in flight at this revision (process started 2026-10-14 23:00); its rows were not read by this revision's author",
+     "committedRunner": "56c0a82 (2026-10-14 23:00:46)",
+     "command": "node experiments/need-router/m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10",
+     "m1RunSha256": "7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692",
+     "engine": {
+      "stamp": "not taken at launch",
+      "reconstructedFrom": "commit 56c0a82; experiments/lib differs from e5defed only in experiments/lib/arms/b0-agent.mjs, which M1 does not import",
+      "trees": {
+       "experiments/lib": "8db1228d59bb4573c929913b67dbf33592399398",
+       "experiments/need-router": "5ae989e69fa21fdd408a7252dd6bcfcb04492f55",
+       "beds/wbed": "882d3ab58f593c9a779b3303bf4dea2a892129ed"
+      },
+      "files": {
+       "beds/wbed/attacks/triviality.mjs": "726c187e425caf78945b3dc3afc7ef5ccda2306da7f194bd72a6c2c3cafc967c",
+       "policy/models.json": "96d5586281a0e8e43c73db63118189aaf18e8da5a492bb0dddfd43ab676cb4cf"
+      }
+     },
+     "calls": 96,
+     "ownCounterCapUsd": 10,
+     "results": "recorded in PREREG §0 when the run ends, before Freeze"
+    }
+   }
   },
   {
    "id": "M1e",
@@ -2498,426 +2665,15 @@
    ]
   },
   {
-   "id": "Freeze",
-   "when": "2026-10-24",
-   "grade": "development",
-   "estUsd": 0,
-   "capUsd": 0,
-   "inTotals": true,
-   "core": false,
-   "approved": true,
-   "what": "fit theta_tok, theta_fan, leaf modes, k and the probe mapping on TRAIN; hash the router; addendum; commit the held-out decisions envelope (L6)",
-   "runs": []
-  },
-  {
-   "id": "NL2",
-   "when": "2026-10-25..2026-10-28",
-   "grade": "held-out",
-   "estUsd": 206,
-   "capUsd": 270,
-   "inTotals": true,
-   "core": true,
-   "approved": false,
-   "gate": "Freeze addendum committed; G1 not refuted (K1); owner gate",
-   "what": "held-out jobs, five modes; build-O on synth-hi and r3p; NR-probe rows (decisions committed before the matrix is joined)",
-   "runs": [
-    {
-     "job": "incident",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ]
-    },
-    {
-     "job": "synth-lo",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ]
-    },
-    {
-     "job": "synth-hi",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ]
-    },
-    {
-     "job": "ownerci",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ]
-    },
-    {
-     "job": "r3p",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ]
-    },
-    {
-     "job": "need-constraint",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ]
-    },
-    {
-     "job": "far-1",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ],
-     "condition": "family admitted (written after Freeze, audited)"
-    },
-    {
-     "job": "far-2",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ],
-     "condition": "family admitted (written after Freeze, audited)"
-    },
-    {
-     "job": "synth-hi",
-     "arms": [
-      "build-O"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ]
-    },
-    {
-     "job": "r3p",
-     "arms": [
-      "build-O"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ]
-    },
-    {
-     "job": "incident",
-     "arms": [
-      "direct-H",
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe"
-    },
-    {
-     "job": "synth-lo",
-     "arms": [
-      "direct-H",
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe"
-    },
-    {
-     "job": "synth-hi",
-     "arms": [
-      "direct-H",
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe"
-    },
-    {
-     "job": "ownerci",
-     "arms": [
-      "direct-H",
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe"
-    },
-    {
-     "job": "r3p",
-     "arms": [
-      "direct-H",
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe"
-    },
-    {
-     "job": "need-constraint",
-     "arms": [
-      "direct-H",
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe"
-    },
-    {
-     "job": "far-1",
-     "arms": [
-      "direct-H",
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe",
-     "condition": "family admitted"
-    },
-    {
-     "job": "far-2",
-     "arms": [
-      "direct-H",
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe",
-     "condition": "family admitted"
-    }
-   ]
-  },
-  {
-   "id": "E2E",
-   "when": "2026-10-29..2026-11-02",
-   "grade": "held-out",
-   "estUsd": 60,
-   "capUsd": 80,
-   "inTotals": true,
-   "core": true,
-   "approved": false,
-   "gate": "NL2 reading written",
-   "what": "6 held-out non-forced jobs by the seeded draw; decision card -> owner override window (48 h, logged) -> build with self-check -> 12 fresh tasks -> delivery gated by the deployable verifier; oracle scored offline",
-   "runs": [
-    {
-     "eligible": [
-      "incident",
-      "synth-lo",
-      "synth-hi",
-      "ownerci",
-      "r3p",
-      "need-constraint",
-      "far-1",
-      "far-2",
-      "gameqa"
-     ],
-     "draw": {
-      "k": 6,
-      "seedKey": "e2eDraw",
-      "rule": "eligible = admitted held-out non-forced jobs at E2E launch"
-     },
-     "arms": [
-      "router-choice"
-     ],
-     "seedRoles": [
-      "examples",
-      "e2e"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "NL2b",
-   "when": "2026-10-29..2026-11-04",
-   "grade": "held-out",
-   "estUsd": 98,
-   "capUsd": 140,
-   "inTotals": true,
-   "core": false,
-   "approved": false,
-   "gate": "independent audit (AUDIT.md) and an agent smoke for each family",
-   "what": "gameqa (held-out) and runbook (forced stratum); direct-H masked",
-   "runs": [
-    {
-     "job": "gameqa",
-     "arms": [
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ],
-     "condition": "audit and smoke passed"
-    },
-    {
-     "job": "runbook",
-     "arms": [
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedRoles": [
-      "examples",
-      "heldoutEval"
-     ],
-     "condition": "audit and smoke passed"
-    },
-    {
-     "job": "gameqa",
-     "arms": [
-      "agent-H"
-     ],
-     "seedRoles": [
-      "probe"
-     ],
-     "purpose": "NR-probe (agent-H only: direct-H masked)",
-     "condition": "audit and smoke passed"
-    }
-   ]
-  },
-  {
-   "id": "NL3",
-   "when": "when the owner tasks arrive (target 2026-10-28)",
-   "grade": "sealed",
-   "estUsd": 190,
-   "capUsd": 240,
-   "inTotals": true,
-   "core": false,
-   "approved": false,
-   "gate": "run once by a session that tuned nothing",
-   "what": "4 sealed families plus 20-30 owner tasks",
-   "runs": [
-    {
-     "job": "sealed-1",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedsFrom": "chosen and checked by the NL3 session"
-    },
-    {
-     "job": "sealed-2",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedsFrom": "chosen and checked by the NL3 session"
-    },
-    {
-     "job": "sealed-3",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedsFrom": "chosen and checked by the NL3 session"
-    },
-    {
-     "job": "sealed-4",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedsFrom": "chosen and checked by the NL3 session"
-    },
-    {
-     "job": "owner-sealed",
-     "arms": [
-      "direct-H",
-      "agent-H",
-      "agent-O",
-      "agent-H+proc",
-      "construct-H"
-     ],
-     "seedsFrom": "owner tasks"
-    }
-   ]
-  },
-  {
    "id": "judge-H",
-   "when": "with NL1 (TRAIN) and NL2 (held-out)",
+   "when": "with NL1 (TRAIN jobs)",
    "grade": "development",
-   "estUsd": 5,
-   "capUsd": 10,
+   "estUsd": 3,
+   "capUsd": 6,
    "inTotals": true,
    "core": true,
    "approved": false,
-   "what": "the \"just ask a model\" baseline: 3 draws x 3 V positions per job, about 180 typed calls",
+   "what": "the \"just ask a model\" baseline on TRAIN: 3 draws x 3 V positions on each of the 15 TRAIN jobs (about 135 typed calls); its held-out calls run in NL2p, inside the decisions envelope",
    "runs": [
     {
      "job": "records-lo",
@@ -3053,6 +2809,134 @@
      "seedRoles": [
       "probe"
      ]
+    }
+   ],
+   "gate": "NL1 owner gate"
+  },
+  {
+   "id": "Freeze",
+   "when": "2026-10-24",
+   "grade": "development",
+   "estUsd": 0,
+   "capUsd": 0,
+   "inTotals": true,
+   "core": false,
+   "approved": true,
+   "what": "fit theta_tok, theta_fan, leaf modes, k and the probe mapping on TRAIN; hash the router; addendum; commit the held-out decisions envelope (L6)",
+   "runs": []
+  },
+  {
+   "id": "NL2p",
+   "when": "2026-10-25 (before any NL2 matrix row)",
+   "grade": "held-out",
+   "estUsd": 4,
+   "capUsd": 8,
+   "inTotals": true,
+   "core": true,
+   "approved": false,
+   "gate": "Freeze addendum committed; G1 not refuted (K1); owner gate",
+   "what": "NR-probe rows and judge-H calls on the held-out jobs (probe task only, never an evaluation seed); then evaluate.mjs --commit-decisions writes every held-out decision card and the envelope hash is committed (L6)",
+   "commitsEnvelope": true,
+   "decides": [
+    "incident",
+    "synth-lo",
+    "synth-hi",
+    "ownerci",
+    "r3p",
+    "need-constraint",
+    "far-1",
+    "far-2"
+   ],
+   "runs": [
+    {
+     "job": "incident",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "synth-lo",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "synth-hi",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "ownerci",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "r3p",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "need-constraint",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "far-1",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe",
+     "condition": "family admitted"
+    },
+    {
+     "job": "far-2",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe",
+     "condition": "family admitted"
     },
     {
      "job": "incident",
@@ -3129,6 +3013,344 @@
    ]
   },
   {
+   "id": "NL2",
+   "when": "2026-10-25..2026-10-28",
+   "grade": "held-out",
+   "estUsd": 204,
+   "capUsd": 266,
+   "inTotals": true,
+   "core": true,
+   "approved": false,
+   "gate": "NL2p decisions envelope hash committed (L6); owner gate",
+   "what": "held-out jobs, five modes; build-O on synth-hi and r3p; no probe or judge rows (they ran in NL2p)",
+   "runs": [
+    {
+     "job": "incident",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "synth-lo",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "synth-hi",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "ownerci",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "r3p",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "need-constraint",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "far-1",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ],
+     "condition": "family admitted (written after Freeze, audited)"
+    },
+    {
+     "job": "far-2",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ],
+     "condition": "family admitted (written after Freeze, audited)"
+    },
+    {
+     "job": "synth-hi",
+     "arms": [
+      "build-O"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "r3p",
+     "arms": [
+      "build-O"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    }
+   ],
+   "requiresEnvelope": [
+    "NL2p"
+   ]
+  },
+  {
+   "id": "NL2bp",
+   "when": "after the gameqa and runbook audits, before any NL2b matrix row and before E2E if gameqa is eligible",
+   "grade": "held-out",
+   "estUsd": 1,
+   "capUsd": 2,
+   "inTotals": true,
+   "core": false,
+   "approved": false,
+   "gate": "independent audit (AUDIT.md) and an agent smoke for each family; owner gate",
+   "what": "NR-probe on gameqa (agent-H only: direct-H masked) and the guard decision on runbook; then evaluate.mjs --commit-decisions and the envelope hash is committed (L6)",
+   "commitsEnvelope": true,
+   "decides": [
+    "gameqa",
+    "runbook"
+   ],
+   "runs": [
+    {
+     "job": "gameqa",
+     "arms": [
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (agent-H only: direct-H masked)",
+     "condition": "audit and smoke passed"
+    }
+   ]
+  },
+  {
+   "id": "E2E",
+   "when": "2026-10-29..2026-11-02",
+   "grade": "held-out",
+   "estUsd": 60,
+   "capUsd": 80,
+   "inTotals": true,
+   "core": true,
+   "approved": false,
+   "gate": "NL2 reading written",
+   "what": "6 held-out non-forced jobs by the seeded draw; decision card -> owner override window (48 h, logged) -> build with self-check -> 12 fresh tasks -> delivery gated by the deployable verifier; oracle scored offline",
+   "runs": [
+    {
+     "eligible": [
+      "incident",
+      "synth-lo",
+      "synth-hi",
+      "ownerci",
+      "r3p",
+      "need-constraint",
+      "far-1",
+      "far-2",
+      "gameqa"
+     ],
+     "draw": {
+      "k": 6,
+      "seedKey": "e2eDraw",
+      "rule": "eligible = admitted held-out non-forced jobs at E2E launch"
+     },
+     "arms": [
+      "router-choice"
+     ],
+     "seedRoles": [
+      "examples",
+      "e2e"
+     ]
+    }
+   ],
+   "requiresEnvelope": [
+    "NL2p",
+    "NL2bp"
+   ]
+  },
+  {
+   "id": "NL2b",
+   "when": "2026-10-29..2026-11-04",
+   "grade": "held-out",
+   "estUsd": 97,
+   "capUsd": 138,
+   "inTotals": true,
+   "core": false,
+   "approved": false,
+   "gate": "NL2bp decisions envelope hash committed (L6); independent audit and agent smoke per family",
+   "what": "gameqa (held-out) and runbook (forced stratum); direct-H masked",
+   "runs": [
+    {
+     "job": "gameqa",
+     "arms": [
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ],
+     "condition": "audit and smoke passed"
+    },
+    {
+     "job": "runbook",
+     "arms": [
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ],
+     "condition": "audit and smoke passed"
+    }
+   ],
+   "requiresEnvelope": [
+    "NL2bp"
+   ]
+  },
+  {
+   "id": "NL3",
+   "when": "when the owner tasks arrive (target 2026-10-28)",
+   "grade": "sealed",
+   "estUsd": 190,
+   "capUsd": 240,
+   "inTotals": true,
+   "core": false,
+   "approved": false,
+   "gate": "run once by a session that tuned nothing",
+   "what": "4 sealed families plus 20-30 owner tasks",
+   "runs": [
+    {
+     "job": "sealed-1",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "chosen and checked by the NL3 session"
+    },
+    {
+     "job": "sealed-2",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "chosen and checked by the NL3 session"
+    },
+    {
+     "job": "sealed-3",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "chosen and checked by the NL3 session"
+    },
+    {
+     "job": "sealed-4",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "chosen and checked by the NL3 session"
+    },
+    {
+     "job": "owner-sealed",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "owner tasks"
+    }
+   ]
+  },
+  {
    "id": "DRIFT",
    "when": "monthly after NL2",
    "grade": "diagnostic",
@@ -3137,7 +3359,7 @@
    "inTotals": false,
    "core": false,
    "approved": false,
-   "what": "model and CLI drift re-check (24 tasks): agent-H on incident and direct-H on synth-lo, one draw, fresh seeds; flagged when the Wilson intervals of the NL2 and re-check pass rates do not overlap",
+   "what": "model and CLI drift re-check (24 tasks): agent-H on incident and direct-H on synth-lo, one draw, the same 24 drift tasks each run (like with like); flagged when the Wilson intervals of the NL2 and re-check pass rates do not overlap; at most 3 runs, $24 in all, counted in the soft-cap check",
    "runs": [
     {
      "job": "incident",
@@ -3157,13 +3379,153 @@
       "drift"
      ]
     }
-   ]
+   ],
+   "recurring": {
+    "maxRuns": 3,
+    "cumulativeCapUsd": 24
+   }
   }
  ],
  "totals": {
   "estUsd": 951,
   "capUsd": 1235,
   "coreEstUsd": 663,
-  "coreCapUsd": 855
+  "coreCapUsd": 855,
+  "recurringCapUsd": 24,
+  "softCapCheckUsd": 1259
+ },
+ "revised": "2026-10-14 (adversarial review fixes: M1 recorded, C7a power precondition, G1 bound, theta minimum, stamps, meter, envelopes)",
+ "analysis": {
+  "rulesModule": "experiments/need-router/prereg-rules.mjs",
+  "c7a": {
+   "interval": "one joint exact interval for balanced accuracy: inversion of the exact unconditional test of H: BA <= b (and its mirror), jobs as independent Bernoulli trials",
+   "levelPerSide": 0.025,
+   "powerPrecondition": "the lower bound a perfect classifier would reach at the realised confident class counts must exceed 0.5; otherwise C7a reads INCONCLUSIVE (not powered) and F12 cannot trip",
+   "minimumConfidentCounts": [
+    {
+     "pos": 1,
+     "neg": 15
+    },
+    {
+     "pos": 2,
+     "neg": 4
+    },
+    {
+     "pos": 3,
+     "neg": 3
+    },
+    {
+     "pos": 4,
+     "neg": 2
+    },
+    {
+     "pos": 15,
+     "neg": 1
+    }
+   ]
+  },
+  "signFlip": {
+   "floor": "2^-(informative clusters), informative = clusters with Delta_c != 0 (the policy chose a different mode from SBS-train on some job of the cluster); printed with every reading"
+  },
+  "g1": {
+   "refute": "exact one-sided 95% cluster-level sign-flip upper bound per cell (finite only with >= 5 TRAIN clusters)",
+   "continue": "a lower bound > 0 at V = $1 in some cell: exact cluster-level, or the job-level (task -> replicate) bootstrap labelled diagnostic",
+   "fourClusters": "with 4 TRAIN clusters G1 can only read CONTINUE or OWNER-DECIDES"
+  },
+  "labelConfidence": "per job, bootstrap over tasks then replicates or lineages (no cluster level)",
+  "theta": {
+   "candidates": "midpoints between adjacent distinct values among confident TRAIN jobs, plus +infinity",
+   "ties": "larger thresholds, key by key (logInputTokens, then maxListLength)",
+   "minimum": {
+    "pos": 2,
+    "posClusters": 2,
+    "neg": 2,
+    "negClusters": 2
+   },
+   "belowMinimum": "H0 not fitted: C7a INCONCLUSIVE; NR-static and the tuned size rule have one leaf (SBS-train)",
+   "locoUndefinedFold": "a fold whose training part lacks a confident positive or negative is undefined: excluded from LOCO statistics and counted, never theta = +infinity"
+  },
+  "levels": {
+   "C7b SUPPORTED": "one-sided at the Holm level (0.025 first, 0.05 second)",
+   "C7b vs tuned size rule and judge-H": "one-sided 95%, conjunctive, no further correction",
+   "C7b REFUTED": "one-sided 95% upper bound at each V (intersection-union: no correction)",
+   "C7b HARMFUL": "Holm over the 6 (policy, V) tests of H: Delta >= 0 at familywise 0.05",
+   "C7a": "two-sided 95% exact joint interval (0.025 per side)",
+   "G1": "exact one-sided 95% per cell (intersection-union for REFUTED-PREMISE)"
+  },
+  "maskedFallback": "where a mode is masked on a job (direct-H on interactive families), SBS-train and every router take the next mode of their own TRAIN ranking for that cell; every fallback is counted and printed per policy",
+  "missingData": "a job missing any primary mode of its menu (masked modes excepted), for any reason, leaves Delta and C7a and is printed on the dropped line; a conditional job that does not run (codefix-notests) leaves TRAIN: TRAIN counts, G1 and the power gate are recomputed on what ran",
+  "mandatorySensitivities": [
+   {
+    "drop": [
+     "r3p"
+    ],
+    "appliesTo": [
+     "C7a",
+     "C7b"
+    ],
+    "why": "r3p is near (same author and library as W) and dev-observed (M1, Jev-need): a claim stands only if the reading without r3p is the same"
+   },
+   {
+    "dropTasks": {
+     "r3p": "d3"
+    },
+    "appliesTo": [
+     "C7a",
+     "C7b"
+    ],
+    "why": "the d3 third of r3p was observed in M1; printed beside every reading (not a gate)"
+   }
+  ]
+ },
+ "spendMeter": {
+  "rule": "per stage (and per M1 tag): sum over rows of max(reported, re-priced) when the row has an observed cost, else the row's bound; plus the reserved bound of every start in flight (reserved before launch); a start is refused when meter + its bound > the cap",
+  "appliesTo": "every paid runner (label-run.mjs, m1-run.mjs, judge-H, probes, DRIFT)",
+  "executable": "experiments/need-router/prereg-rules.mjs capMeter, mayStart"
+ },
+ "engineStamp": {
+  "labelEngine": {
+   "files": [
+    "experiments/need-router/label-run.mjs",
+    "experiments/need-router/prereg-check.mjs",
+    "experiments/need-router/prereg-rules.mjs",
+    "experiments/need-router/metrics.mjs",
+    "experiments/need-router/m1-run.mjs",
+    "experiments/jit/seeds.mjs",
+    "experiments/jit/stats.mjs",
+    "policy/models.json"
+   ],
+   "trees": [
+    "experiments/lib",
+    "experiments/c0",
+    "src",
+    "beds/lib"
+   ],
+   "stagesFields": [
+    "arms",
+    "priceTable",
+    "seeds",
+    "grid",
+    "derived",
+    "spendMeter"
+   ],
+   "beds": "the transitive bed-import closure of the families of the jobs in the stage",
+   "note": "metrics.mjs is in both records: label-run reads it for racing top-ups"
+  },
+  "analysis": {
+   "files": [
+    "experiments/need-router/features.mjs",
+    "experiments/need-router/router.mjs",
+    "experiments/need-router/voi.mjs",
+    "experiments/need-router/metrics.mjs",
+    "experiments/need-router/evaluate.mjs",
+    "experiments/need-router/card.mjs",
+    "experiments/need-router/prereg-rules.mjs"
+   ]
+  },
+  "allowedChanges": [
+   "a bed directory first used by a job whose first paid rows are in the later stage (for example the codefix-notests generator before NL1)"
+  ],
+  "otherwise": "any other difference between the label-engine stamps of two paid stages is a §13 deviation recorded before the later stage starts"
  }
 }

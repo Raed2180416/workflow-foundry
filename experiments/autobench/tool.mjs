@@ -77,4 +77,4 @@ const r = await send(calls);
 if (r.error) { console.error(r.error); process.exit(1); }
 if (cmd === 'call') process.stdout.write(String(r.results[0].content) + '\n');
 else for (const [i, x] of r.results.entries()) process.stdout.write(`### result ${i + 1}: ${x.name}\n${x.content}\n`);
-if (typeof r.stepsLeft === 'number' && r.stepsLeft <= 5) process.stderr.write(`(steps left: ${r.stepsLeft})\n`);
+
