@@ -1,0 +1,94 @@
+// The reference policy (BED-CONTRACT v1.1 §5.6), item-independent: an analyst-side arm that, at every case-tick,
+// emits the canonical output of the current expectation of the instance's truth case: every required logical effect
+// and human task at its window's earliest (`timing: 'earliest'`) or latest (`'latest'`), with deterministic keys (the
+// lid), and a wake-up at the next window it must act in. Its two runs through the real host define the completed and
+// censored pools (§6) and must themselves pass every case (a self-consistency check of the oracle, never evidence about
+// an arm). It reads the host's own journal (committed and staged rows) and world truth: it is not an arm under test.
+import { indexJournal, caseView } from './view.mjs';
+import { createHost } from '../host/host.mjs';
+
+const MIN = 60_000;
+const iso = (m, off) => { const d = new Date(m + off * MIN); return `${d.toISOString().slice(0, 19)}${off >= 0 ? '+' : '-'}${String(Math.floor(Math.abs(off) / 60)).padStart(2, '0')}:${String(Math.abs(off) % 60).padStart(2, '0')}`; };
+const offsetOf = s => { const m = /([+-])(\d\d):(\d\d)$/.exec(s); return m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 0; };
+
+/** Map internal argument names to the names an F5 rename makes current at `atMs` (the API file shows the same). */
+function currentNames(world, system, op, args, atMs) {
+  const renames = (world.faults ?? []).filter(f => f.kind === 'F5' && f.system === system && f.op === op && Date.parse(f.at) <= atMs);
+  if (!renames.length) return args;
+  const out = { ...args };
+  for (const r of renames) if (r.params.from in out) { out[r.params.to] = out[r.params.from]; delete out[r.params.from]; }
+  return out;
+}
+
+/**
+ * referenceArm({ item, world, timing, journal: () => rows }) → arm. `item.batch` maps 'system.op' of batch ops to
+ * { group: lid -> group key, envelope: lid -> batch args, item: lid -> item args }; `item.taskSpec(tk, ctx)` builds a task.
+ */
+export function referenceArm({ item, world, timing = 'earliest', journal, id = `reference-${timing}` }) {
+  const off = offsetOf(world.t0);
+  return {
+    id,
+    tick(input, ctx) {
+      const now = Date.parse(input.now);
+      const idx = indexJournal(world, journal(), { canonicalArgs: item.canonicalArgs });
+      const inst = idx.instances.get(input.instance);
+      const c = inst?.binding ?? null;
+      if (c === null) return { decisions: { subject: null }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], close: true, carry: null };
+      const E = item.referenceTransition(world, caseView(idx, c, now, Infinity));
+      const subject = E.decisions.graded.subject ?? null;
+      const out = { decisions: { ...E.decisions.graded }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], carry: null };
+      // An instance started by an inbound message joins the case's open instance, if there is one.
+      if (inst.startedBy?.kind === 'event' && input.carry === null && subject !== null) {
+        const other = ctx.instances({ subject }).find(r => r.instance !== input.instance);
+        if (other) return { ...out, merge: { into: other.instance } };
+      }
+      const rows = idx.ledger.filter(r => r.case === c);
+      const done = new Set(rows.filter(r => r.committed && r.key).map(r => r.key));
+      const tasksMade = idx.tasks.filter(t => t.case === c).map(t => t.task.id);
+      const due = w => (timing === 'earliest' ? w.earliest : w.latest);
+      const todo = E.effects.required.filter(e => !done.has(e.lid));
+      const ready = todo.filter(e => due(e.window) <= now && ctx.status(e.system, e.lid) !== 'pending');
+      // Effects in expectation order; a dependant goes out when its predecessors have committed, or with `after` on the
+      // one predecessor emitted earlier in this output (a batch carries one `after` for all its items).
+      const emitted = new Set();
+      const groups = new Map();
+      for (const e of ready) {
+        const deps = (e.after ?? []).filter(p => !done.has(p));
+        if (deps.length > 1 || (deps.length === 1 && !emitted.has(deps[0]))) continue;
+        const b = item.batch?.[`${e.system}.${e.op}`];
+        if (b) {
+          const g = b.group(e);
+          let grp = groups.get(g);
+          if (!grp) { grp = { system: e.system, op: e.op, args: { ...b.envelope(e), items: [] }, ...(deps.length ? { after: deps[0] } : {}) }; groups.set(g, grp); out.effects.push(grp); }
+          else if ((grp.after ?? null) !== (deps[0] ?? null)) continue;
+          grp.args.items.push({ key: e.lid, ...b.item(e) });
+        } else {
+          const args = item.fullArgs ? item.fullArgs(e, { lidRef: e.lid }) : e.args;
+          out.effects.push({ key: e.lid, system: e.system, op: e.op, args, ...(deps.length ? { after: deps[0] } : {}) });
+          emitted.add(e.lid);
+        }
+      }
+      out.effects = out.effects.map(x => ({ ...x, args: currentNames(world, x.system, x.op, x.args, now) }));
+      for (const tk of E.humanTasks.required) {
+        if (due(tk.window) > now) continue;
+        if (tasksMade.some(id => id.startsWith(`${tk.lid}#`))) continue;
+        out.humanTasks.push(item.taskSpec(tk, { now, subject, iso: m => iso(m, off) }));
+      }
+      // Wake at the next window to act in; close when the case has ended and nothing is left.
+      const future = [...todo.map(e => due(e.window)), ...E.humanTasks.required.filter(tk => !tasksMade.some(id => id.startsWith(`${tk.lid}#`))).map(tk => due(tk.window))].filter(m => m > now);
+      if (future.length) out.obligations.upsert.push({ id: 'wake', kind: 'window', anchor: null, dueAt: iso(Math.min(...future), off), onDue: null });
+      if (E.terminal && !todo.length && !out.effects.length && !out.humanTasks.length) out.close = true;
+      if (subject === null) out.close = true;
+      return out;
+    },
+  };
+}
+
+/** Run one reference run of `item` over `world` through the real host. Returns { journal rows, result }. */
+export async function runReference({ item, binding, world, timing = 'earliest', maxWakeups } = {}) {
+  const holder = {};
+  const arm = referenceArm({ item, world, timing, journal: () => [...holder.host.journal.contentRows(), ...holder.host.journal.staged] });
+  holder.host = createHost({ item: binding, world, arm, ...(maxWakeups ? { maxWakeups } : {}) });
+  const result = await holder.host.run();
+  return { rows: holder.host.journal.contentRows(), result };
+}

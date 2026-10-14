@@ -91,8 +91,10 @@ function orderExpectation(world, view, t) {
     return e;
   };
   const named = id => required.some(x => x.lid === id);
-  const fst = (F, status, rule, e, l, extra) => lid(`fst:${F}:${status}`, rule, 'orders', 'setStatus', { orderId: O, fulfilmentId: F, status }, e, l, extra);
-  const ost = (status, rule, e, l) => lid(`ost:${O}:${status}`, rule, 'orders', 'setStatus', { orderId: O, fulfilmentId: null, status }, e, l);
+  // Statuses and reservations come after the order is recorded (R1.1, R4.1): `after` the create lid while it is named.
+  const afterCreate = extra => ({ ...(extra ?? {}), after: [...new Set([...(named(`create:${O}`) ? [`create:${O}`] : []), ...((extra ?? {}).after ?? [])])] });
+  const fst = (F, status, rule, e, l, extra) => lid(`fst:${F}:${status}`, rule, 'orders', 'setStatus', { orderId: O, fulfilmentId: F, status }, e, l, afterCreate(extra));
+  const ost = (status, rule, e, l) => lid(`ost:${O}:${status}`, rule, 'orders', 'setStatus', { orderId: O, fulfilmentId: null, status }, e, l, afterCreate());
   const ntf = (about, template, rule, e, l, text) => lid(`ntf:${about}:${template}`, rule, 'notify', 'send', { to: email, about, template }, e, l, { args: { text: text ?? template, ref: null } });
 
   // Expected business records (R7) and the case's end.
@@ -238,7 +240,7 @@ function orderExpectation(world, view, t) {
     if (!s.items[0].pre) {
       for (const i of s.items) {
         const keep = i.row ? forwardOk(i.row) : cut === null;
-        if (keep) lid(`rsv:${F}:${i.sku}`, 'R4.2', 'inventory', 'reserve', { orderId: O, fulfilmentId: F, location: s.location, sku: i.sku, qty: i.qty }, tr, tr + 120 * MIN);
+        if (keep) lid(`rsv:${F}:${i.sku}`, 'R4.2', 'inventory', 'reserve', { orderId: O, fulfilmentId: F, location: s.location, sku: i.sku, qty: i.qty }, tr, tr + 120 * MIN, afterCreate());
         if (i.row) rec.reservations[`${F}/${i.sku}`] = 'active';
       }
     } else for (const i of s.items) rec.reservations[`${F}/${i.sku}`] = 'active';

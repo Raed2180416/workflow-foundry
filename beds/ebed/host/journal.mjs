@@ -103,6 +103,8 @@ export class Journal {
   get verifying() { return !!this.#recorded && this.#verified < this.#recorded.length; }
   get recordedContent() { return this.#recorded ?? []; }
   get stagedCount() { return this.#staged.length; }
+  /** Copies of the staged rows of the open wake-up (read-only; for analyst-side reference policies, never for arms). */
+  get staged() { return this.#staged.map(r => ({ ...r })); }
   /** Content rows still unverified (a complete replay must end at 0). */
   get unverified() { return this.#recorded ? this.#recorded.length - this.#verified : 0; }
 

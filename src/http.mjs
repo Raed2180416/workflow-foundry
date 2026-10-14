@@ -68,7 +68,7 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
         if (parts.length === 2 && parts[1] === 'signals') {
           const { workflowId, ...signal } = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
           const result = foundry.correlateSignal(signal, { workflowId, actor: 'http' });
-          if (result.consumedBy && !result.duplicate) foundry.startRun(result.runId).catch(error => console.error('Foundry signal resume:', error.code, error.message));
+          if ((result.consumedBy || result.resumes) && !result.duplicate) foundry.startRun(result.runId).catch(error => console.error('Foundry signal resume:', error.code, error.message));
           return json(202, result);
         }
         // Cancel every run that has not finished; an executing run is asked to stop and records its own verdict. No owner process is signalled
@@ -100,7 +100,7 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
           }
           if (parts[3] === 'signals') {
             const result = foundry.signal(parts[2], data, { actor: 'http' });
-            if (result.consumedBy && !result.duplicate) foundry.startRun(parts[2]).catch(error => console.error('Foundry signal resume:', error.code, error.message));
+            if ((result.consumedBy || result.resumes) && !result.duplicate) foundry.startRun(parts[2]).catch(error => console.error('Foundry signal resume:', error.code, error.message));
             return json(202, result);
           }
           if (parts[3] === 'resume') { foundry.startRun(parts[2]).catch(error => console.error(error.message)); return json(202, { id: parts[2], resumeRequested: true }); }

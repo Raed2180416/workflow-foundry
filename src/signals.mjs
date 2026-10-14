@@ -11,8 +11,9 @@
 //   Each signal is consumed by at most one wait; the losers of a race (the other subscriptions and the timer) are cancelled with it.
 //
 // Every input of that rule is journaled before it decides anything: the subscriptions and wakeAt in the wait's `node.started` event, each
-// signal with its receivedAt in its `signal.delivered` event, and each decision in a `wait.resolved` event. So the outcome of every wait is a
-// pure function of the chain, and replayWaits() re-derives it from the chain alone (verify-run reports any difference).
+// signal with its receivedAt in its `signal.delivered` event, and each decision (naming its delivery event by sequence number) in a
+// `wait.resolved` event. So each decision can be re-derived from the chain, and replayWaits() does so from the chain alone; verify-run
+// reports the departures it checks (the codes below). The clock is not journaled: a timeout is checked to come at or after its timer.
 import { digest, FoundryError } from './data.mjs';
 
 export const SIGNAL_NAME = /^[a-zA-Z][a-zA-Z0-9_.:-]{0,127}$/;

@@ -4,7 +4,7 @@
 // Local capabilities only: no model, no network. Development/diagnostic evidence, not sealed evaluation.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -504,4 +504,205 @@ test('wait.signal: a labelled wait carries its label into its output at run time
   const done = store.run(run.id);
   assert.equal(done.status, 'succeeded');
   assert.deepEqual([done.nodes.pay.outputLabel, done.nodes.ship.outputLabel], ['untrusted:vendor', 'untrusted:vendor']);
+});
+
+// Review of step 2 (E3 `wait-signal`): regression tests for the findings fixed (ENGINE-FREEZE §7.2, review fixes).
+const cliIn = (root, args, cwd = undefined) => {
+  const child = spawnSync(process.execPath, [cli, ...args, '--workspace', root], { encoding: 'utf8', timeout: 20000, env: { PATH: process.env.PATH ?? '' }, ...(cwd ? { cwd } : {}) });
+  assert.equal(child.status, 0, child.stderr);
+  return JSON.parse(child.stdout);
+};
+// A child process that dies (SIGKILL) right after a signal wait's node.started committed, before the wait parked or decided.
+const crashAtWaitStart = (root, runId) => spawnSync(process.execPath, ['--input-type=module', '--eval', `
+    import { Store } from ${JSON.stringify(new URL('../src/store.mjs', import.meta.url).href)};
+    import { Runtime } from ${JSON.stringify(new URL('../src/runtime.mjs', import.meta.url).href)};
+    import { createDefaultRegistry } from ${JSON.stringify(new URL('../src/capabilities.mjs', import.meta.url).href)};
+    const original = Store.prototype.updateRun;
+    Store.prototype.updateRun = function (...args) {
+      const out = original.apply(this, args), tail = this.events(args[0]).at(-1);
+      if (tail.type === 'node.started' && Array.isArray(tail.subscriptions)) process.kill(process.pid, 'SIGKILL');
+      return out;
+    };
+    await new Runtime(new Store(${JSON.stringify(root)}), createDefaultRegistry()).execute(${JSON.stringify(runId)});`], { encoding: 'utf8', timeout: 20000, env: { PATH: process.env.PATH ?? '' } });
+
+test('wait.signal: correlation is scoped to one workflow — another workflow waiting on the same name and key neither takes nor blocks the signal', async t => {
+  const root = space(t), { store, runtime } = open(t, root);
+  const gate = { id: 'ok', kind: 'human', needs: [], description: 'Release the order', question: 'Release?', answerSchema: { type: 'boolean' } };
+  const legit = base([gate, payWait({ needs: ['ok'] }), ship()], [{ op: 'gte', left: ref('nodes.ship.amount'), right: 0 }], { id: 'Legit' });
+  // Any other workflow saved into the workspace (a model can save and run one over MCP) can wait on the same signal name and key.
+  const listener = base([{ id: 'grab', kind: 'wait', needs: [], description: 'Listen', signal: 'payment.settled', correlate: ref('input.order'), schema: { type: 'object', additionalProperties: true }, timeoutMs: 300000 },
+    echo('leak', ['grab'], { got: ref('nodes.grab.payload') })], [{ op: 'exists', value: ref('nodes.leak.got') }], { id: 'Listener' });
+  assert.deepEqual(codes(listener), []);
+  store.saveWorkflow(legit); store.saveWorkflow(listener);
+  const a = await runtime.execute(runtime.create(legit, { order: 'PO-77' }).id), b = await runtime.execute(runtime.create(listener, { order: 'PO-77' }).id);
+  assert.deepEqual([a.status, b.status], ['awaiting_human', 'waiting']);
+  // The legit run has not reached its wait yet: the payment is not routed to the listener (before the fix it was, and a retry of the
+  // same id was then answered as the listener's duplicate), and nothing is recorded.
+  assert.throws(() => runtime.correlateSignal(settled('evt-1', 'PO-77', 1234.5), { workflowId: 'Legit' }), { code: 'SIGNAL_UNMATCHED' });
+  assert.equal(store.rows.header(b.id).signals, undefined, 'the listener took nothing');
+  assert.equal(store.signalRecord('evt-1'), null);
+  // Once it waits, the payment goes to it: the listener's wait on the same name and key makes it neither ambiguous nor refused.
+  runtime.answer(a.id, 'root/ok', true);
+  assert.equal((await runtime.execute(a.id)).status, 'waiting');
+  const routed = runtime.correlateSignal(settled('evt-1', 'PO-77', 1234.5), { workflowId: 'Legit' });
+  assert.deepEqual([routed.runId, routed.consumedBy, routed.correlated], [a.id, 'root/pay', true]);
+  // An id another workflow's run took is not answered as a duplicate here, and a by-id delivery can be held to a workflow too.
+  runtime.deliverSignal(b.id, settled('evt-2', 'PO-77', 1));
+  assert.throws(() => runtime.correlateSignal(settled('evt-2', 'PO-77', 1), { workflowId: 'Legit' }), { code: 'SIGNAL_CONFLICT' });
+  assert.throws(() => runtime.deliverSignal(b.id, settled('evt-3', 'PO-77', 1), { workflowId: 'Legit' }), { code: 'SIGNAL_SCOPE' });
+  await runtime.tick();
+  assert.deepEqual([store.run(a.id).status, store.run(a.id).outputs.ship.amount], ['succeeded', 1234.5]);
+  clean(store, a.id);
+
+  // A wait whose timer has run out (the tick has not come yet) takes nothing, so it is no claimant and does not make a live wait ambiguous.
+  const dated = base([payWait({ timeoutMs: undefined, at: ref('input.dueAt'), onTimeout: 'continue' }), echo('after', ['pay'], { o: ref('nodes.pay.outcome') })],
+    [{ op: 'exists', value: ref('nodes.after.o') }], { id: 'Dated' });
+  store.saveWorkflow(dated);
+  const overdue = await runtime.execute(runtime.create(dated, { order: 'PO-9', dueAt: Date.now() + 150 }).id);
+  const live = await runtime.execute(runtime.create(dated, { order: 'PO-9', dueAt: Date.now() + 300000 }).id);
+  await pastWake(store, overdue.id, 'root/pay');
+  assert.deepEqual(Object.values(runtime.correlateSignal(settled('d-1', 'PO-9', 9), { workflowId: 'Dated' })).slice(0, 1), [live.id]);
+
+  // Runs are counted, not waits: two runs with 65 matching waits each are ambiguous (a 64-row limit on waits used to hide the second run).
+  const many = base(Array.from({ length: 65 }, (_, i) => payWait({ id: `w${i}` })), [{ op: 'exists', value: ref('nodes.w0') }], { id: 'Many' });
+  store.saveWorkflow(many);
+  const m1 = await runtime.execute(runtime.create(many, { order: 'PO-M' }).id), m2 = await runtime.execute(runtime.create(many, { order: 'PO-M' }).id);
+  assert.deepEqual([m1.status, m2.status], ['waiting', 'waiting']);
+  assert.throws(() => runtime.correlateSignal(settled('m-1', 'PO-M', 1), { workflowId: 'Many' }), error => error.code === 'SIGNAL_AMBIGUOUS' && error.details.runIds.length === 2);
+});
+
+test('wait.signal: a signal id is delivered to a run once, whatever the workspace index says; a wait completes with the delivery its decision names', async t => {
+  const root = space(t), { store, runtime } = open(t, root);
+  const wf = base([payWait(), ship()], [{ op: 'gte', left: ref('nodes.ship.amount'), right: 0 }]);
+  store.saveWorkflow(wf);
+  const run = await runtime.execute(runtime.create(wf, { order: 'PO-1' }).id);
+  const first = runtime.deliverSignal(run.id, settled('pay-1', 'PO-1', 10));
+  assert.equal(first.consumedBy, 'root/pay');
+  const head = store.events(run.id).length;
+  // The workspace index (table `signals`, which no chain binds) loses the id: the run's own inbox still refuses the id with other content.
+  store.db.prepare('DELETE FROM signals WHERE id=?').run('pay-1');
+  assert.throws(() => runtime.deliverSignal(run.id, settled('pay-1', 'PO-1', 1000000)), { code: 'SIGNAL_CONFLICT' });
+  assert.deepEqual(runtime.deliverSignal(run.id, settled('pay-1', 'PO-1', 10)), { ...first, duplicate: true });
+  assert.equal(store.events(run.id).length, head, 'nothing was appended');
+  assert.deepEqual((await runtime.tick()).runs, [{ runId: run.id, status: 'succeeded' }]);
+  assert.equal(store.run(run.id).outputs.ship.amount, 10, 'before the fix, the redelivered 1000000 shipped and verify-run said ok');
+  assert.equal(events(store, run.id, 'wait.resolved')[0].deliverySeq, events(store, run.id, 'signal.delivered')[0].seq, 'the decision names its delivery event');
+  clean(store, run.id);
+
+  // The inbox entry edited away as well: the chain still holds the delivery.
+  const stripped = await runtime.execute(runtime.create(wf, { order: 'PO-2' }).id);
+  runtime.deliverSignal(stripped.id, settled('pay-2', 'PO-2', 20));
+  store.db.prepare('DELETE FROM signals WHERE id=?').run('pay-2');
+  store.updateRun(stripped.id, r => { const { 'pay-2': _, ...rest } = r.signals; r.signals = rest; }, { type: 'test.edit' });
+  assert.throws(() => runtime.deliverSignal(stripped.id, settled('pay-2', 'PO-2', 999)), { code: 'SIGNAL_CONFLICT' });
+  await assert.rejects(runtime.execute(stripped.id), { code: 'CHECKPOINT_TAMPERED' });
+
+  // A second delivery of one id forced into the chain: resume refuses the run, and verify-run names it twice over.
+  const forged = await runtime.execute(runtime.create(wf, { order: 'PO-3' }).id);
+  runtime.deliverSignal(forged.id, settled('pay-3', 'PO-3', 30));
+  const payload = { amount: 3e6 };
+  store.updateRun(forged.id, () => {}, { type: 'signal.delivered', signalId: 'pay-3', name: 'payment.settled', key: 'PO-3', keyHash: digest('PO-3'), payloadHash: digest(payload), payload, receivedAt: Date.now(), actor: 'test', consumedBy: null });
+  await assert.rejects(runtime.execute(forged.id), { code: 'CHECKPOINT_TAMPERED' });
+  const report = verifyRun(store, forged.id);
+  assert.ok(report.findings.some(f => f.code === 'WAIT_REPLAY_MISMATCH' && f.rule === 'SIGNAL_REDELIVERED'), JSON.stringify(report.findings));
+  assert.ok(report.findings.some(f => f.code === 'SIGNAL_EDITED' && /delivered twice/.test(f.message)));
+
+  // The rule on synthetic chains: the output is checked against the delivery the decision names, and a wait that ends undecided is named.
+  const start = { seq: 1, type: 'node.started', nodeKey: 'root/w', kind: 'wait', wakeAt: 1000, subscriptions: [{ signal: 'a', keyHash: null }] };
+  const parked = { seq: 2, type: 'node.waiting', nodeKey: 'root/w', wakeAt: 1000 };
+  const deliver = (seq, body, consumedBy = null) => ({ seq, type: 'signal.delivered', signalId: 's1', name: 'a', keyHash: digest(null), payloadHash: digest(body), payload: body, receivedAt: 10, consumedBy });
+  const out = body => ({ type: 'node.completed', nodeKey: 'root/w', output: { outcome: 'signal', signal: 'a', id: 's1', key: null, payload: body, at: 10 } });
+  const decided = { seq: 4, type: 'wait.resolved', nodeKey: 'root/w', outcome: 'signal', signalId: 's1', deliverySeq: 3, signal: 'a', by: 'delivery', cancelled: ['timer'] };
+  const rules = chain => replayWaits(chain).mismatches.map(m => m.code);
+  assert.deepEqual(rules([start, parked, deliver(3, { v: 1 }, 'root/w'), decided, { seq: 5, ...out({ v: 1 }) }]), []);
+  assert.deepEqual(rules([start, parked, deliver(3, { v: 1 }, 'root/w'), decided, deliver(5, { v: 999 }), { seq: 6, ...out({ v: 999 }) }]), ['SIGNAL_REDELIVERED', 'WAIT_OUTPUT']);
+  assert.deepEqual(rules([start, parked, deliver(3, { v: 1 }, 'root/w'), { ...decided, deliverySeq: 2 }]), ['WAIT_CLAIM', 'WAIT_PICK'], 'a decision naming another event as its delivery');
+  assert.deepEqual(rules([start, deliver(2, { v: 1 }), { seq: 3, ...out({ v: 1 }) }]), ['WAIT_UNDECIDED'], 'completed with no decision');
+  assert.deepEqual(rules([start, parked, { seq: 3, type: 'node.failed', nodeKey: 'root/w', error: { code: 'WAIT_TIMEOUT' } }]), ['WAIT_UNDECIDED'], 'timed out with no decision');
+  assert.deepEqual(rules([start, parked, { seq: 3, type: 'node.failed', nodeKey: 'root/w', error: { code: 'MAP_ITEM_FAILED' }, abandoned: true }, deliver(4, { v: 1 })]), [], 'a settled wait claims nothing');
+});
+
+test('wait.signal: a wait parked in a map item that failed (collect) is settled with its item, so the live wait takes the signal', async t => {
+  const root = space(t), { store, runtime } = open(t, root);
+  const body = { nodes: [
+    { id: 'w', kind: 'wait', needs: [], description: 'Wait for go', signal: 'go', timeoutMs: 300000 },
+    { id: 'boom', kind: 'assert', needs: [], description: 'Fail item 0 while its wait is parked', checks: [{ op: 'ne', left: ref('index'), right: 0 }] },
+    echo('after', ['w', 'boom'], { i: ref('index') })
+  ], acceptance: [{ op: 'exists', value: ref('nodes.after.i') }] };
+  const wf = base([{ id: 'm', kind: 'map', needs: [], description: 'Items', items: ref('input.items'), maxItems: 4, concurrency: 1, failure: 'collect', body }],
+    [{ op: 'gte', left: ref('nodes.m.count'), right: 0 }], { id: 'Orphan' });
+  store.saveWorkflow(wf);
+  const run = await runtime.execute(runtime.create(wf, { items: ['a', 'b'] }).id);
+  assert.equal(run.status, 'waiting');
+  const settledWait = run.frames['root/m:0'].nodes.w;
+  assert.deepEqual([settledWait.status, settledWait.error.code, run.frames['root/m:1'].nodes.w.status], ['failed', 'MAP_ITEM_FAILED', 'waiting']);
+  assert.deepEqual(store.timers(run.id).map(x => x.nodeKey), ['root/m:1/w'], 'the settled wait keeps no timer');
+  assert.equal(runtime.deliverSignal(run.id, { id: 'go-1', name: 'go' }).consumedBy, 'root/m:1/w', 'before the fix the failed item\'s wait took it');
+  assert.deepEqual((await runtime.tick()).runs, [{ runId: run.id, status: 'succeeded' }]);
+  const done = store.run(run.id);
+  assert.deepEqual([done.outputs.m.failed, done.outputs.m.items[1].after.i], [1, 1]);
+  clean(store, run.id);
+});
+
+test('wait.signal: a wait whose owner died before it parked is resumed by a delivery (by id and by correlation); fault hooks need the runtime option', async t => {
+  const root = space(t), first = open(t, root);
+  const wf = base([payWait(), ship()], [{ op: 'gte', left: ref('nodes.ship.amount'), right: 0 }]);
+  first.store.saveWorkflow(wf);
+  const byId = first.runtime.create(wf, { order: 'PO-I' }), byKey = first.runtime.create(wf, { order: 'PO-K' });
+  const hooked = first.runtime.create(wf, { order: 'PO-H' }, { extra: { crashAfterWaitDecision: 'root/pay' } });
+  first.runtime.deliverSignal(hooked.id, settled('h-1', 'PO-H', 7));
+  first.store.close();
+  for (const id of [byId.id, byKey.id]) assert.equal(crashAtWaitStart(root, id).signal, 'SIGKILL');
+  // A record edit cannot make a host kill itself: the run's fault hook is ignored by a runtime not built with faultHooks.
+  const child = spawnSync(process.execPath, ['--input-type=module', '--eval', `
+    import { Store } from ${JSON.stringify(new URL('../src/store.mjs', import.meta.url).href)};
+    import { Runtime } from ${JSON.stringify(new URL('../src/runtime.mjs', import.meta.url).href)};
+    import { createDefaultRegistry } from ${JSON.stringify(new URL('../src/capabilities.mjs', import.meta.url).href)};
+    const run = await new Runtime(new Store(${JSON.stringify(root)}), createDefaultRegistry()).execute(${JSON.stringify(hooked.id)});
+    console.log(run.status);`], { encoding: 'utf8', timeout: 20000, env: { PATH: process.env.PATH ?? '' } });
+  assert.deepEqual([child.signal, child.status, child.stdout.trim()], [null, 0, 'succeeded'], child.stderr);
+  const { store, runtime } = open(t, root);
+  for (const id of [byId.id, byKey.id]) {
+    const dead = store.run(id);
+    assert.deepEqual([dead.status, dead.nodes.pay.status, store.timers(id)[0].wakeAt > Date.now() + 200000], ['running', 'running', true], 'the timer is the full timeout away');
+  }
+  const delivered = runtime.deliverSignal(byId.id, settled('i-1', 'PO-I', 6));
+  assert.deepEqual([delivered.consumedBy, delivered.resumes], [null, ['root/pay']], 'buffered, and the stranded wait is due now');
+  const correlated = runtime.correlateSignal(settled('k-1', 'PO-K', 8), { workflowId: 'SignalProbe' });
+  assert.deepEqual([correlated.runId, correlated.resumes], [byKey.id, ['root/pay']], 'correlation finds a stranded wait too');
+  const ticked = await runtime.tick();
+  assert.deepEqual(ticked.runs.map(r => r.status), ['succeeded', 'succeeded']);
+  assert.deepEqual([store.run(byId.id).outputs.ship.amount, store.run(byKey.id).outputs.ship.amount], [6, 8]);
+  clean(store, byId.id); clean(store, byKey.id);
+});
+
+test('wait.signal: review P2s — taint of a wait\'s timer and keys, the deadline tie, WAIT_DEADLINE verdict, CLI --key is JSON only', async t => {
+  // In a collect map a wait that fails over an untrusted `at` (or key) decides whether the rest of its item runs, in every timeout mode.
+  const write = needs => ({ id: 'write', kind: 'task', needs, description: 'Write', tool: 'core.artifact', args: { name: 'x.txt', content: 'x' }, timeoutMs: 1000, retry: { maxAttempts: 1 } });
+  const inMap = waitNode => base([{ id: 'm', kind: 'map', needs: [], description: 'Items', items: ref('input.items'), maxItems: 4, concurrency: 1, failure: 'collect',
+    body: { nodes: [waitNode, write(['w'])], acceptance: [{ op: 'exists', value: ref('nodes.write') }] } }], [{ op: 'gte', left: ref('nodes.m.count'), right: 0 }], { labels: { 'input.due': 'untrusted:web' } });
+  for (const node of [{ id: 'w', kind: 'wait', needs: [], description: 'Until', at: ref('input.due') },
+    { id: 'w', kind: 'wait', needs: [], description: 'Signal', signal: 'go', at: ref('input.due'), onTimeout: 'continue' }])
+    assert.ok(codes(inMap(node)).includes('UNTRUSTED_CONTROL'), node.description);
+  assert.deepEqual(codes(inMap({ id: 'w', kind: 'wait', needs: [], description: 'Until', at: '2026-10-14T10:00:00Z' })), [], 'a literal time decides nothing');
+
+  const root = space(t), { store, runtime } = open(t, root);
+  // A timer exactly at the run deadline could not be honoured either (the resume stops on DEADLINE): refused when the wait starts.
+  const boundary = base([{ id: 'ok', kind: 'human', needs: [], description: 'When', question: 'Deadline?', answerSchema: { type: 'integer', minimum: 0 } },
+    payWait({ needs: ['ok'], timeoutMs: undefined, at: ref('nodes.ok.answer'), onTimeout: 'escalate' }), echo('ship', ['pay'], { a: 1 }), echo('escalate', ['pay'], { why: 'late' })],
+    [{ op: 'exists', value: ref('nodes.pay') }], { id: 'Boundary' });
+  store.saveWorkflow(boundary);
+  const tie = await runtime.execute(runtime.create(boundary, { order: 'PO-B' }).id);
+  runtime.answer(tie.id, 'root/ok', store.rows.header(tie.id).deadline);
+  const refused = await runtime.execute(tie.id);
+  assert.deepEqual([refused.status, refused.error.code, refused.verdict.verdict], ['failed', 'WAIT_DEADLINE', 'inconclusive'], 'the run\'s time budget, as DEADLINE');
+
+  // CLI: a --key that happens to name a file is still the JSON it spells.
+  const wf = base([payWait(), ship()], [{ op: 'gte', left: ref('nodes.ship.amount'), right: 0 }]);
+  store.saveWorkflow(wf);
+  const run = await runtime.execute(runtime.create(wf, { order: 42 }).id);
+  store.close();
+  const cwd = space(t);
+  writeFileSync(path.join(cwd, '42'), '"PO-OTHER"');
+  assert.equal(cliIn(root, ['signal', run.id, '--name', 'payment.settled', '--id', 'cli-42', '--key', '42', '--payload', '{"amount":1}'], cwd).consumedBy, 'root/pay');
 });

@@ -148,7 +148,8 @@ does not win against it). Later actions and repeats change nothing.
 ### 4.4 R4 Processing (one saga per fulfilment)
 
 R4.1 An order with no unavailable fulfilment is **ready** when it is cleared. When an order is ready at time t: set the
-order `processing` and every available fulfilment `processing`, within **60 min** of t.
+order `processing` and every available fulfilment `processing`, within **60 min** of t. Nothing about an order (a
+status, a reservation) is done before the order is recorded (R1.1).
 
 R4.2 For each available fulfilment, in this order (each step only after the previous step of the same fulfilment has
 committed):
