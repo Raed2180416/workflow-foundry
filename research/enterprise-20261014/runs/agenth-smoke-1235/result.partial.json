@@ -1,0 +1,51 @@
+{
+ "label": "agenth-smoke-1235",
+ "model": "claude-haiku-5-5",
+ "rows": [
+  {
+   "seed": 1235,
+   "d": 2,
+   "size": 2,
+   "status": "complete",
+   "wallMs": 916670,
+   "completed": 5,
+   "passed": 4,
+   "armCensored": 0,
+   "critical": 0,
+   "armErrors": 1,
+   "ticks": 35,
+   "costUsd": 0.29035623999999993,
+   "costUnknown": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "gl-awaiting": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "decline": {
+     "n": 1,
+     "pass": 0,
+     "censored": 0
+    },
+    "timeout": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    }
+   },
+   "codes": {
+    "L3:missed": 1
+   }
+  }
+ ]
+}
