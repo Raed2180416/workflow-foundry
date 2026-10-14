@@ -27,11 +27,14 @@ const HOSTILE_QUESTION = 'Release the hold on SO-1042? <img src=x onerror="windo
   + `${'W'.repeat(300)} evil${String.fromCodePoint(0x202E)}txt`;
 
 async function harness(t, { question = 'Release the credit hold on order SO-1042?', viewport = { width: 640, height: 900 } } = {}) {
-  const spec = compileForm({ answerSchema: SCHEMA, question, formName: 'hold' });
-  const answers = [];
-  const server = createServer(createFormHandler({ spec, token: 'tok-browser', onAnswer: a => answers.push(a) }));
+  const spec = compileForm({ answerSchema: SCHEMA, question, formName: 'hold', bind: { taskId: 'T-browser' }, allowPattern: true });
+  const answers = [], requests = [];
+  const handler = createFormHandler({ spec, onAnswer: a => answers.push(a) });
+  // The host's view of each request: the browser's own Origin and Sec-Fetch-Site headers must pass its checks.
+  const server = createServer((req, res) => { requests.push({ method: req.method, origin: req.headers.origin, site: req.headers['sec-fetch-site'] }); handler(req, res); });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const origin = `http://127.0.0.1:${server.address().port}`;
+  const start = `${origin}${handler.path}`; // the capability URL handed to the person
   const browser = await playwright.chromium.launch({ executablePath: executable, args: ['--no-sandbox'] });
   t.after(async () => { await browser.close(); await new Promise(resolve => server.close(resolve)); });
   const context = await browser.newContext({ viewport, reducedMotion: 'reduce', locale: 'en-US', timezoneId: 'UTC', serviceWorkers: 'block' });
@@ -47,7 +50,7 @@ async function harness(t, { question = 'Release the credit hold on order SO-1042
   page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') seen.console.push(`${m.type()}: ${m.text()}`); });
   page.on('pageerror', e => seen.pageErrors.push(String(e)));
   page.on('requestfailed', r => seen.failed.push(`${r.url()} ${r.failure()?.errorText}`));
-  return { spec, answers, origin, page, seen };
+  return { spec, answers, origin, start, page, seen, requests, handler };
 }
 // Chromium logs any 4xx document as "Failed to load resource"; the host answers a rejected submission with 422 on
 // purpose (machine-readable for the bed host), so exactly that line is expected once per rejection and nothing else.
@@ -60,8 +63,12 @@ const clean = (seen, { rejections = 0 } = {}) => {
 };
 
 test('browser: a person fills the form with the pointer, a planted "12abc" is rejected with a linked error summary, the corrected form yields the typed answer', { skip, timeout: 60000 }, async t => {
-  const { answers, origin, page, seen } = await harness(t);
-  await page.goto(`${origin}/`);
+  const { answers, origin, start, page, seen, requests } = await harness(t);
+  // without the capability URL the browser gets nothing
+  assert.equal((await page.goto(`${origin}/`)).status(), 403);
+  assert.doesNotMatch(await page.content(), /<form/);
+  seen.console.length = 0;
+  await page.goto(start);
   assert.equal(await page.title(), 'Release the credit hold on order SO-1042?');
   assert.equal(await page.evaluate(() => document.querySelectorAll('script, img, iframe, link, object, embed').length), 0);
   // labels drive every control (getByLabel fails if a control has no accessible name)
@@ -96,11 +103,16 @@ test('browser: a person fills the form with the pointer, a planted "12abc" is re
   assert.match(await page.locator('#answer').innerText(), /"amount": 1250.5/);
   assert.equal(await page.evaluate(() => window.__pwned), undefined);
   clean(seen, { rejections: 1 });
+  // the browser's own form posts are same-origin; under no-referrer Chromium sends Origin "null" (host.mjs allows it)
+  const posts = requests.filter(r => r.method === 'POST');
+  assert.equal(posts.length, 2);
+  for (const r of posts) assert.equal(r.site, 'same-origin', JSON.stringify(r));
+  t.diagnostic(`form POST headers seen by the host: ${JSON.stringify(posts)}`);
 });
 
 test('browser: keyboard only, in spec order (radio groups are one Tab stop), and the ARIA tree matches the declared fields', { skip, timeout: 60000 }, async t => {
-  const { spec, answers, origin, page, seen } = await harness(t);
-  await page.goto(`${origin}/`);
+  const { spec, answers, start, page, seen } = await harness(t);
+  await page.goto(start);
   // Tab order equals spec order: one stop per text control and radio group, one per checkbox, then the button
   const order = [];
   for (let i = 0; i < 12; i++) {
@@ -117,7 +129,7 @@ test('browser: keyboard only, in spec order (radio groups are one Tab stop), and
     '- textbox "Amount to release (EUR) (required)"', '- textbox "Reason (required)"', '- group "Tags (optional)"', '- checkbox "fraud-check"',
     '- group "Notify the customer (optional)"', '- textbox "Reference (optional)"', '- button "Submit answer"']) assert.ok(snapshot.includes(line), `ARIA snapshot has ${line}\n${snapshot}`);
   // complete it with the keyboard alone
-  await page.goto(`${origin}/`);
+  await page.goto(start);
   await page.keyboard.press('Tab'); // decision: first radio
   await page.keyboard.press('ArrowDown'); // selects keep-hold
   await page.keyboard.press('Tab'); await page.keyboard.type('0');
@@ -135,15 +147,15 @@ test('browser: keyboard only, in spec order (radio groups are one Tab stop), and
 });
 
 test('browser: hostile workflow text stays text, adds no element, loads nothing, and the page reflows at 320 px without horizontal scrolling', { skip, timeout: 60000 }, async t => {
-  const { origin, page, seen } = await harness(t, { question: HOSTILE_QUESTION, viewport: { width: 320, height: 640 } });
-  await page.goto(`${origin}/`);
+  const { start, page, seen } = await harness(t, { question: HOSTILE_QUESTION, viewport: { width: 320, height: 640 } });
+  await page.goto(start);
   const h1 = await page.locator('h1').innerText();
   assert.ok(h1.includes('<img src=x onerror="window.__pwned=1">') && h1.includes('<script>'), 'the markup is shown as text');
   assert.ok(h1.includes(`evil${String.fromCodePoint(0x27E6)}U+202E${String.fromCodePoint(0x27E7)}txt`), 'the bidi override is shown as a marker');
   assert.equal(await page.evaluate(() => document.querySelectorAll('img, script').length), 0);
   assert.equal(await page.evaluate(() => window.__pwned), undefined);
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal scroll at 320 px');
-  assert.deepEqual(seen.requests, [`GET ${origin}/`], 'the page made no request but itself');
+  assert.deepEqual(seen.requests, [`GET ${start}`], 'the page made no request but itself');
   clean(seen);
   // the policy is enforced, not just declared: an injected inline script does not run and is reported as a violation
   await page.evaluate(() => { const s = document.createElement('script'); s.textContent = 'window.__csp = 1'; document.body.append(s); });

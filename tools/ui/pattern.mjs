@@ -27,7 +27,7 @@ import { MessageChannel, Worker } from 'node:worker_threads';
 export const PATTERN_MAX_SOURCE = 256;
 export const PATTERN_MAX_INPUT = 256;
 export const PATTERN_MAX_PATHS = (PATTERN_MAX_INPUT + 1) ** 2;
-export const PATTERN_BUDGET_MS = 250;
+export const PATTERN_BUDGET_MS = 500;
 const MATCHER_START_MS = 10000;
 
 export function patternProblems(source) {

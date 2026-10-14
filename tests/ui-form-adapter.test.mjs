@@ -270,20 +270,32 @@ async function serve(t, handler) {
   const server = createServer(handler);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
-  return `http://127.0.0.1:${server.address().port}/`;
+  const port = server.address().port;
+  return { port, origin: `http://127.0.0.1:${port}`, url: `http://127.0.0.1:${port}${handler.path}`, server };
 }
 const post = (url, body, type = 'application/x-www-form-urlencoded') => fetch(url, { method: 'POST', headers: { 'content-type': type }, body });
+// A raw request with any headers (fetch does not let a caller set Host).
+const raw = (port, { method = 'GET', path = '/', headers = {}, body } = {}) => new Promise((resolve, reject) => {
+  const req = request({ host: '127.0.0.1', port, method, path, headers: { ...(body !== undefined ? { 'content-type': 'application/x-www-form-urlencoded', 'content-length': Buffer.byteLength(body) } : {}), ...headers } }, res => {
+    let data = ''; res.setEncoding('utf8'); res.on('data', c => { data += c; }); res.on('end', () => resolve({ status: res.statusCode, body: data, headers: res.headers }));
+  });
+  req.on('error', reject);
+  if (body !== undefined) req.write(body);
+  req.end();
+});
+const TOKEN = 'tok-7-0123456789abcdefghijklmnopqrstuvwxyz';
 
-test('host: GET renders under the strict CSP; a bad POST re-renders with errors (422); the first good POST wins (CAS) and later ones get 409', async t => {
-  const spec = holdSpec(), answers = [];
-  const handler = createFormHandler({ spec, token: 'tok-7', onAnswer: a => answers.push(a) });
-  const url = await serve(t, handler);
+test('host: GET renders under the strict CSP; a bad POST re-renders with errors (422); the first good POST wins and later ones get 409', async t => {
+  const spec = holdSpec({ taskId: 'T-hold' }), answers = [];
+  const handler = createFormHandler({ spec, token: TOKEN, onAnswer: a => answers.push(a) });
+  assert.equal(handler.path, `/?t=${TOKEN}`);
+  const { url, origin } = await serve(t, handler);
   const page = await fetch(url);
   assert.equal(page.status, 200);
   assert.equal(page.headers.get('content-security-policy'), FORM_CSP_HEADER);
   assert.equal(page.headers.get('x-content-type-options'), 'nosniff');
-  assert.match(await page.text(), /name="_token" value="tok-7"/);
-  const good = submissionFromAnswer(spec, { decision: 'release', amount: 10, reason: 'ok' }, { token: 'tok-7' }).body;
+  assert.match(await page.text(), new RegExp(`name="_token" value="${TOKEN}"`));
+  const good = submissionFromAnswer(spec, { decision: 'release', amount: 10, reason: 'ok' }, { token: TOKEN }).body;
   const bad = good.replace('answer%2Famount=10', 'answer%2Famount=12abc');
   const rejected = await post(url, bad);
   assert.equal(rejected.status, 422);
@@ -291,9 +303,8 @@ test('host: GET renders under the strict CSP; a bad POST re-renders with errors 
   assert.match(html, /There is a problem/);
   assert.match(html, /value="12abc"/, 'what the person typed is kept');
   assert.equal((await post(url, good, 'text/plain')).status, 415);
-  assert.equal((await post(url, good.replace('tok-7', 'tok-8'))).status, 422);
   assert.equal((await fetch(url, { method: 'PUT' })).status, 405);
-  assert.equal((await fetch(`${url}favicon.ico`)).status, 404);
+  assert.equal((await fetch(`${origin}/favicon.ico?t=${TOKEN}`)).status, 404);
   assert.equal(answers.length, 0);
   const accepted = await post(url, good);
   assert.equal(accepted.status, 200);
@@ -301,8 +312,128 @@ test('host: GET renders under the strict CSP; a bad POST re-renders with errors 
   assert.deepEqual(answers, [{ decision: 'release', amount: 10, reason: 'ok' }]);
   assert.equal((await post(url, good)).status, 409);
   assert.equal(answers.length, 1);
-  const big = await post(url, `_spec=x&answer%2Freason=${'a'.repeat(5 * 1024 * 1024)}`).catch(error => ({ status: error.cause?.code ?? 'reset' }));
-  assert.ok([413, 'reset', 'UND_ERR_SOCKET', 'ECONNRESET', 'EPIPE'].includes(big.status), `oversized body: ${big.status}`);
+});
+
+test('host: only the holder of the capability URL, on loopback, same-origin, can read or answer the form (review P1-2, P1-3)', async t => {
+  const spec = holdSpec({ taskId: 'T-hold' }), answers = [];
+  const handler = createFormHandler({ spec, onAnswer: a => answers.push(a) });
+  assert.match(handler.token, /^[A-Za-z0-9_-]{43}$/, 'a random 256-bit token when none is given');
+  assert.notEqual(createFormHandler({ spec }).token, handler.token);
+  const { url, origin, port } = await serve(t, handler);
+  const host = `127.0.0.1:${port}`;
+  const good = submissionFromAnswer(spec, { decision: 'release', amount: 10, reason: 'ok' }, { token: handler.token }).body;
+  const attacker = submissionFromAnswer(spec, { decision: 'release', amount: 999999, reason: 'x' }).body; // the spec hash is public
+  // without the token nothing is served, GET included, and nothing is echoed
+  for (const path of ['/', '/?t=', `/?t=${handler.token.slice(0, -1)}x`, `/?t=${handler.token}&t=${handler.token}`]) {
+    const r = await raw(port, { path, headers: { host } });
+    assert.equal(r.status, 403, path);
+    assert.doesNotMatch(r.body, /_token|<form/);
+  }
+  assert.equal((await post(`${origin}/`, attacker)).status, 403);
+  // DNS rebinding: a request naming another host gets nothing, even with the right path
+  for (const name of [`rebind.evil.example:${port}`, '127.0.0.1', `127.0.0.1:${port + 1}`, `127.0.0.1.nip.example:${port}`]) {
+    const r = await raw(port, { path: handler.path, headers: { host: name } });
+    assert.equal(r.status, 403, name);
+    assert.doesNotMatch(r.body, new RegExp(handler.token));
+  }
+  for (const name of [`localhost:${port}`, `LOCALHOST:${port}`]) assert.equal((await raw(port, { path: handler.path, headers: { host: name } })).status, 200, name);
+  // cross-site and cross-origin requests are refused before the body is read, with the token in the URL or not
+  for (const headers of [{ 'sec-fetch-site': 'cross-site' }, { 'sec-fetch-site': 'same-site' }, { origin: 'https://evil.example' }, { origin: `http://localhost:${port + 1}` }, { 'sec-fetch-site': 'none' }]) {
+    const r = await raw(port, { method: 'POST', path: handler.path, headers: { host, ...headers }, body: good });
+    assert.equal(r.status, 403, JSON.stringify(headers));
+  }
+  assert.equal((await raw(port, { path: handler.path, headers: { host, 'sec-fetch-site': 'cross-site' } })).status, 403);
+  // a browser's same-origin form post under no-referrer sends Origin: null with Sec-Fetch-Site: same-origin
+  // P1-3: an envelope failure (no or wrong _token, stale _spec) is a 403 with no form and no echoed values
+  const p9 = await raw(port, { method: 'POST', path: handler.path, headers: { host, origin: 'null', 'sec-fetch-site': 'same-origin' }, body: 'answer%2Fdecision=1&answer%2Famount=999999' });
+  assert.equal(p9.status, 403);
+  assert.doesNotMatch(p9.body, /<form|_token|999999|checked/);
+  const wrongToken = await raw(port, { method: 'POST', path: handler.path, headers: { host }, body: good.replace(encodeURIComponent(handler.token), 'x'.repeat(43)) });
+  assert.equal(wrongToken.status, 403);
+  assert.doesNotMatch(wrongToken.body, /<form|_token/);
+  assert.equal(answers.length, 0);
+  assert.equal(handler.state.refused >= 10, true);
+  const ok = await raw(port, { method: 'POST', path: handler.path, headers: { host, origin: 'null', 'sec-fetch-site': 'same-origin' }, body: good });
+  assert.equal(ok.status, 200);
+  assert.deepEqual(answers, [{ decision: 'release', amount: 10, reason: 'ok' }]);
+  // after the answer, the recorded answer is still behind the token
+  assert.equal((await raw(port, { path: '/', headers: { host } })).status, 403);
+  assert.match((await fetch(url).then(r => r.text())), /Answer recorded/);
+  // a handler needs a task-bound spec and a strong token (review P2-6)
+  assert.throws(() => createFormHandler({ spec: holdSpec() }), /bound to one task/);
+  assert.throws(() => createFormHandler({ spec, token: 'tok-7' }), /32 to 256/);
+});
+
+test('host: a malformed request is a 400 and the host keeps serving (review P1-4)', async t => {
+  const spec = compileForm({ answerSchema: { type: 'boolean' }, question: 'q', bind: { taskId: 'T-url' } });
+  const handler = createFormHandler({ spec });
+  const { port, url } = await serve(t, handler);
+  for (const target of ['http://[', 'http://a b/', 'http://%zz/']) {
+    const line = await new Promise(resolve => {
+      const c = net.connect(port, '127.0.0.1', () => c.write(`GET ${target} HTTP/1.1\r\nHost: 127.0.0.1:${port}\r\nConnection: close\r\n\r\n`));
+      let d = ''; c.on('data', x => { d += x; }); c.on('close', () => resolve(d.split('\r\n')[0])); c.on('error', e => resolve(String(e.code)));
+    });
+    assert.match(line, /^HTTP\/1\.1 4\d\d /, `${target}: ${line}`);
+  }
+  assert.equal((await fetch(url)).status, 200, 'still serving');
+});
+
+test('host: an async onAnswer is awaited; a rejection is not recorded, the person is told so, and the form stays open (review P1-5)', async t => {
+  const spec = compileForm({ answerSchema: { enum: ['yes', 'no'] }, question: 'Ok?', formName: 'a', bind: { taskId: 'T-async' } });
+  let mode = 'reject', release, calls = 0;
+  const recorded = [];
+  const handler = createFormHandler({ spec, onAnswer: async answer => {
+    calls++;
+    await null;
+    if (mode === 'reject') { const e = new Error('conflict'); e.code = 'ANSWER_CONFLICT'; throw e; }
+    if (mode === 'null') throw null; // eslint-disable-line no-throw-literal
+    if (mode === 'slow') await new Promise(resolve => { release = resolve; });
+    recorded.push(answer);
+  } });
+  const { url } = await serve(t, handler);
+  const body = submissionFromAnswer(spec, 'yes', { token: handler.token }).body;
+  const refused = await post(url, body);
+  assert.equal(refused.status, 409);
+  const html = await refused.text();
+  assert.match(html, /The answer was not recorded \(ANSWER_CONFLICT\)/);
+  assert.doesNotMatch(html, /Answer recorded/);
+  assert.equal(handler.state.answered, false);
+  mode = 'null';
+  assert.equal((await post(url, body)).status, 409, 'throw null is handled');
+  assert.equal(handler.state.answered, false);
+  // while an answer is being recorded, other posts get 409 and the first one still wins
+  mode = 'slow';
+  const first = post(url, body);
+  while (!release) await new Promise(resolve => setTimeout(resolve, 5));
+  const second = await post(url, submissionFromAnswer(spec, 'no', { token: handler.token }).body);
+  assert.equal(second.status, 409);
+  assert.match(await second.text(), /being recorded/);
+  release();
+  assert.equal((await first).status, 200);
+  assert.deepEqual(recorded, ['yes']);
+  assert.equal(handler.state.answered, true);
+  assert.equal(calls, 3);
+});
+
+test('host: oversized bodies get a delivered 413, error pages are capped, and close() ends the task (review P2-11, P2-6)', async t => {
+  const spec = compileForm({ answerSchema: { type: 'boolean' }, question: 'q', bind: { taskId: 'T-big' } });
+  const handler = createFormHandler({ spec });
+  const { url } = await serve(t, handler);
+  const big = await post(url, `_spec=x&answer=${'a'.repeat(2 * 1024 * 1024)}`);
+  assert.equal(big.status, 413);
+  // a body of thousands of unknown names: the page lists at most MAX_ERRORS problems
+  const names = Array.from({ length: 20000 }, (_, i) => `z${i.toString(36)}=`).join('&');
+  const t0 = performance.now();
+  const flood = await post(url, `_spec=${encodeURIComponent(spec.specHash)}&_token=${handler.token}&${names}`);
+  assert.equal(flood.status, 422);
+  const html = await flood.text();
+  assert.ok(html.length < 64 * 1024, `the error page is ${html.length} bytes`);
+  assert.equal((html.match(/<li>/g) ?? []).length + (html.match(/<li><a /g) ?? []).length, MAX_ERRORS);
+  assert.match(html, /more problems are not listed/);
+  assert.ok(performance.now() - t0 < 2000);
+  handler.close();
+  assert.equal((await fetch(url)).status, 410);
+  assert.equal((await post(url, submissionFromAnswer(spec, true, { token: handler.token }).body)).status, 410);
 });
 
 // ---- end to end through the real runtime ----------------------------------------------------------------------------
@@ -332,9 +463,10 @@ test('runtime: awaiting_human -> compiled form -> host re-validation -> Runtime.
   // the runtime itself also refuses an untyped amount (defence in depth)
   assert.throws(() => runtime.answer(run.id, 'root/ask', { decision: 'release', amount: '12abc', reason: 'x' }), { code: 'SCHEMA_MISMATCH' });
   let calls = 0;
-  const url = await serve(t, createFormHandler({ spec, onAnswer: answer => { calls++; runtime.answer(run.id, 'root/ask', answer); } }));
+  const handler = createFormHandler({ spec, onAnswer: answer => { calls++; runtime.answer(run.id, 'root/ask', answer); } });
+  const { url } = await serve(t, handler);
   const answer = { decision: 'release', amount: 1250.5, reason: 'Paid in full\n<script>x</script>', tags: ['vip'] };
-  const good = submissionFromAnswer(spec, answer).body;
+  const good = submissionFromAnswer(spec, answer, { token: handler.token }).body;
   assert.equal((await post(url, good.replace('answer%2Famount=1250.5', 'answer%2Famount=12abc'))).status, 422);
   assert.equal(calls, 0, 'the planted entry never reached Runtime.answer');
   assert.equal(store.rows.nodeState(run.id, 'root', 'ask').status, 'awaiting_human');
