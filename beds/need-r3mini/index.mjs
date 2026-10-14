@@ -62,7 +62,7 @@ function buildCase({ seed, split = 'dev', difficulty = 3 }) {
   const cut = chooseCut({ seed, split, difficulty, world, full, valid: o => schemaErrors(o).length === 0 });
   const c = { seed, split, difficulty, rungDifficulty, world, full, ...cut };
   cache.set(key, c);
-  if (cache.size > 64) cache.delete(cache.keys().next().value);
+  if (cache.size > 256) cache.delete(cache.keys().next().value);
   return c;
 }
 const caseOf = task => buildCase({ seed: task.seed, split: task.split, difficulty: task.difficulty });

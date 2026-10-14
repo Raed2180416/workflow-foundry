@@ -73,13 +73,13 @@ const lines = t => t.split('\n');
 function specFor(world, vendors) {
   const currencies = new Set(vendors.map(v => v.currency));
   const systems = new Set(vendors.map(v => v.system));
-  const all = quoteLines(world.quotes).map(l => `     ${l}`);
-  const keep = new Set(quoteLines(Object.fromEntries(Object.entries(world.quotes).filter(([c]) => currencies.has(c)))).map(l => `     ${l}`));
-  const allQuotes = new Set(all);
+  const indent = ls => ls.map(l => `     ${l}`);
+  const allQuotes = new Set(indent(quoteLines(world.quotes)));
+  const keepQuotes = new Set(indent(quoteLines(Object.fromEntries(Object.entries(world.quotes).filter(([c]) => currencies.has(c))))));
   const out = [];
   let inFormats = false, quotesSeen = 0, formatsKept = 0;
   for (const line of lines(world.render.auditSpec)) {
-    if (allQuotes.has(line)) { quotesSeen++; if (keep.has(line)) out.push(line); continue; }
+    if (allQuotes.has(line)) { quotesSeen++; if (keepQuotes.has(line)) out.push(line); continue; }
     if (line === 'Statement formats:') inFormats = true;
     else if (inFormats && line.startsWith('- ')) {
       const name = /^- (\w+) statements /.exec(line)?.[1];
@@ -88,7 +88,7 @@ function specFor(world, vendors) {
     }
     out.push(line);
   }
-  if (quotesSeen !== all.length) throw new Error('need-r3mini: the rung\'s quote lines were not found in its specification');
+  if (quotesSeen !== allQuotes.size) throw new Error('need-r3mini: the rung\'s quote lines were not found in its specification');
   if (formatsKept !== systems.size) throw new Error('need-r3mini: a statement-format line of the rung\'s specification was not found');
   return out.join('\n');
 }
@@ -156,7 +156,7 @@ const combos = (xs, k) => {
   return out;
 };
 
-/** A schema-valid, plain-data output is needed to compare mistakes; shape check only (the family schema is in index.mjs). */
+/** The distinct mistakes among `near` that are schema-valid (`valid`) and really change the answer, in order. */
 function plausible(truth, near, valid) {
   const out = [], seen = new Set([canonical(truth)]);
   for (const m of near) {

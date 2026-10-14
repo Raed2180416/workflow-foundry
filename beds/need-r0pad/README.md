@@ -158,5 +158,5 @@ reject reader-addressed instructions in it. The prompt note and the R0 prompt bo
 | `guard.mjs` | Forbidden strings of a task's truth, the denylist, date masking |
 | `need-r0pad.test.mjs` | node:test suite (30 tests) |
 
-Run: `node --test beds/need-r0pad/*.test.mjs` (Node 24, built-ins only; about 40 seconds, dominated by 160-task sweeps). Cold `generate` is
-under 30 ms and an oracle call under 1 ms at difficulty 5 (the tests assert both stay under 2 s).
+Run: `node --test beds/need-r0pad/*.test.mjs` (Node 24, built-ins only; about 22 seconds, dominated by 160-task sweeps). Cold `generate` is
+about 30 ms at worst and an oracle call under 1 ms at difficulty 5 (the tests assert both stay under 2 s).

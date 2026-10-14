@@ -11,7 +11,7 @@ import { buildAudit } from '../wbed/r3/world.mjs';
 import { reduce as rungReduce } from '../wbed/r3/pipeline.mjs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { toUsdCents, refKey } from '../wbed/lib/domain.mjs';
+import { toUsdCents } from '../wbed/lib/domain.mjs';
 import { canonical, sha256, estimateTokens } from '../lib/canonical.mjs';
 import { inlineRender, loadFamily } from '../../experiments/lib/beds.mjs';
 import { portableSchemaViolations } from '../../src/schema-subset.mjs';
@@ -258,7 +258,7 @@ test('no hidden truth in the task: no reason assignments, no world metadata, no 
     const us = String(u).replace(/\B(?=(\d{3})+(?!\d))/g, ','), de = String(u).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return [String(a), md ? `${u}.${f}` : String(u), md ? `${us}.${f}` : us, md ? `${de},${f}` : de];
   };
-  let checked = 0, exempt = 0;
+  let checked = 0;
   for (const d of DIFFICULTIES) for (const seed of SEEDS) {
     const task = gen(seed, d), ref = bed.referenceSolve(task), all = text(task);
     const json = JSON.stringify(task);
@@ -279,12 +279,10 @@ test('no hidden truth in the task: no reason assignments, no world metadata, no 
     // the texts that print none -- ledger, supplier list, notes, specification, prompt -- and aggregates against all text)
     const shown = printed(all);
     const shownNoStatements = printed([task.prompt, task.inputs.ledger, task.inputs.vendors, task.inputs.ap_notes, task.inputs.audit_spec].join('\n'));
-    const info = bed.describeTask(task);
-    const world = buildAudit(seed, 'dev', info.rungDifficulty);
     for (const s of ref.statements) {
       for (const v of [s.ledger_balance_minor, s.adjusted_balance_minor]) {
         if (Math.abs(v) < 1000) continue;
-        if (v === s.statement_balance_minor) { exempt++; continue; }
+        if (v === s.statement_balance_minor) continue;
         checked++;
         for (const f of forms(v, s.currency === 'JPY' ? 0 : 2)) assert.ok(!shownNoStatements.has(f.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '')) || f.replace(/[^\d]/g, '').length < 5, `${task.id}: ${s.vendor_id} derived balance ${v} printed as ${f}`);
       }
@@ -299,10 +297,8 @@ test('no hidden truth in the task: no reason assignments, no world metadata, no 
       checked++;
       assert.ok(!shown.has(String(Math.abs(cents))), `${task.id}: ${name} total printed`);
     }
-    assert.ok(world.vendors.length >= 8);
   }
   assert.ok(checked > 300, `only ${checked} derived values were checked`);
-  assert.ok(exempt >= 0);
 });
 
 test('untrusted text: the inputs carry no instruction-like strings; the prompt says they are data', () => {
@@ -481,7 +477,6 @@ test('the spec lists exactly the cut\'s currencies and billing systems, and the 
     assert.deepEqual(new Set(ref.statements.map(s => s.currency)), currencies);
     const fmt = spec.split('\n').filter(l => /^- \w+ statements /.test(l)).map(l => /^- (\w+) /.exec(l)[1]).sort();
     assert.deepEqual(fmt, [...new Set(rows.map(r => r[4]))].sort());
-    assert.ok(refKey('a-b/c d') === 'ABCD');
   }
 });
 
