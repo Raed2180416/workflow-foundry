@@ -21,7 +21,9 @@ family, not a result:
 What would refute it: an agent that can run Python (the buggy module is importable) can turn the REPL transcripts in the bug
 report and the docstring examples into its own checks, and may beat a single call. A cheap model may fail in every mode at d4 and
 d5, where the bug thread contains a wrong guess and a red-herring complaint; then no mode "suffices" and the label is not
-"one call". Nobody should assume a single call is enough at any difficulty, or for a cheap model, before the router's paired labels
+"one call". In the other direction, the red-herring comment of codefix 1.1.0 carries a surface cue (its expectation sentence has
+`expected` and `got` swapped and contradicts its own transcript, see Known limits), which makes the herring easier to reject at
+d4/d5 than designed, so a "one call suffices" label at d4/d5 is optimistic for that reason too. Nobody should assume a single call is enough at any difficulty, or for a cheap model, before the router's paired labels
 (direct call vs. agent vs. workflow modes) exist. codefix itself has no model results yet either (its README: "No model has been
 run on it").
 
@@ -64,7 +66,8 @@ part of the codefix task and not a runnable checker:
   repro shows a difference), and one for the red-herring complaint at d4+. Later bugs are described in prose only. They give example
   expected values for the reported bugs. Per codefix AUDIT F8, for killers with fixed
   arguments the repro is byte-identical to a hidden killer case, so these examples are a partial leak of the hidden suite in codefix
-  and here alike. An agent can run the module on those lines; a single call cannot.
+  and here alike. An agent can run the module on those lines; a single call cannot. They are codefix's text verbatim, including two
+  inherited rendering defects (the red-herring sentence is swapped; floats print as ints), see Known limits.
 - the **service log** (d2+): the buggy module's real outputs on generated traffic. It shows behaviour, not expected values.
 - docstrings and design notes, which are authoritative.
 - one generic design-notes sentence ("are deterministic and easy to test") in some domains. It is prose, not a test.
@@ -192,6 +195,35 @@ reports, not for the word.
   against the dev seeds used (`instanceFingerprint({seed, split, difficulty}).source` or `.reference`; it needs the hidden truth, so
   it is trusted host code), or report d4/d5 only. The bed does not deduplicate on its own, and the dev seeds 601-640 used in the tests
   contain such pairs at d1.
+- **Inherited defect: the red-herring sentence has `expected` and `got` swapped (d4/d5; found by adversarial review, open upstream).**
+  `beds/codefix/report.mjs` `herringExpectation(c, ref, wanted)` calls `expectation(c, ref, wanted)`, which renders *I expected
+  `<ref>`, but I get `<wanted>`*, while the REPL transcript above it prints `ref`, the module's documented output. The sentence
+  therefore reads as if the commenter expected today's behaviour and got something else, and it contradicts its own transcript.
+  Example (dev seed 601, d4): the transcript prints `late_fee(9100, 7)` -> `0`, the sentence says *I expected `0`, but I get `182`*.
+  Real-bug sentences are right: *expected* is the reference value and *I get* is what the transcript prints. Measured on dev 601-640
+  (`node beds/need-codefix-noverifier/measure.mjs fidelity`, real Python, 280 REPL blocks): every d4/d5 task has one herring
+  sentence (80 in all) and **72 of 80 contradict their transcript** (35 at d4, 37 at d5); the other 8 coincide only because the
+  expression (`b.allow(0)`) is printed several times with different results. All 200 real-bug sentences at d1-d5 are consistent.
+  So "the *I get* value does not occur in the transcript" flags 72 of the 80 herring sentences and none of the 200 real-bug ones,
+  with no judgment: the surface cue codefix AUDIT F6 meant to remove (F6 fixed the wording, the swapped arguments bring a different
+  cue back). Direction is a hypothesis (unmeasured): the herring is easier to reject than designed. The fix belongs upstream:
+  `herringExpectation` should return `expectation(c, wanted, ref)`, with a codefix version bump. This bed is a pure subtraction
+  and ships the text as it is (patching it here would make the pair differ in more than the verifier). When codefix is fixed, the
+  `UPSTREAM` version test and the pinned counts in the tests `inherited codefix defect, pinned` fail on purpose; then re-review and
+  remove this bullet.
+- **Inherited defect: transcripts and sentences print Python floats as ints and sort dict keys (open upstream; found by review).**
+  The codefix harness normalises results to JSON, so an integral float loses its type, and `render.mjs` `pyValue` prints the JSON
+  number. In the ratelimit domain `TokenBucket.tokens()` returns a true-division result, a float in Python (docstring: "may be
+  fractional"), and the buggy `backoff_ms(0)` returns `base_ms * 2 ** -1`, also a float; the report shows `63` where the REPL
+  prints `63.0`, and *I expected `3`* for `3.0` (dev seed 601, d1).
+  Dict keys are printed sorted (`plan_change` shows `{'charge': 0, 'credit': 0, 'net': 0}`; the module builds `credit` first). All
+  280 blocks of dev 601-640 d1-d5, replayed statement by statement against the buggy and the reference module in real Python,
+  give 1394 statements: 1370 exact, **21 float printed as int** (`tokens()`/`backoff_ms()`, d1-d5), **3 dict keys reordered**
+  (`plan_change`, d4/d5), **0 other**, so no value is misstated, only its Python repr. The expectation sentences carry the same two
+  deviations (12 of 200 *expected* values, 13 of 200 *I get* values). Risk, unmeasured and probably small: a careful solver could
+  read `63` as a hint that `tokens()` returns an int, against its docstring. The fix belongs upstream: keep the Python type of
+  results in the harness output (for example a float tag) and render dicts in insertion order, with a codefix version bump.
+  Pinned like the previous bullet.
 - **Derived bed.** Task content, the hidden suite and the controls are codefix's. If codefix changes version, instances change and
   paired labels are no longer paired; the test `bound to codefix 1.1.0` fails on purpose.
 - **Partial verifier remains (above):** REPL repros with expected values in the bug thread, equal to hidden killers for fixed-argument
@@ -206,10 +238,13 @@ reports, not for the word.
 ## Files and tests
 
 `index.mjs` (interface: `generate`, `oracle`, `referenceSolve`, `badControls`, plus `VERSION`, `UPSTREAM`, `REMOVED_INPUT_KEYS`,
-`PROMPT_EDIT` and the trusted `instanceFingerprint`), `measure.mjs` (size and collision tables), `need-codefix-noverifier.test.mjs`.
-Imports from `../codefix/` and `../lib/` are read-only; nothing outside this directory was changed.
+`PROMPT_EDIT` and the trusted `instanceFingerprint`), `fidelity.mjs` (trusted probe that replays the bug report's REPL transcripts
+and expectation sentences in real Python, for the two inherited defects above; local Python only, bed-generated modules only),
+`measure.mjs` (size and collision tables, and `measure.mjs fidelity [seeds] [split] [firstSeed]` for the transcript tables),
+`need-codefix-noverifier.test.mjs`. Imports from `../codefix/` and `../lib/` are read-only; nothing outside this directory was
+changed.
 
-Run: `node --test beds/need-codefix-noverifier/*.test.mjs` (19 tests, about 2.5 min, dominated by the Python sandbox oracle). It checks:
+Run: `node --test beds/need-codefix-noverifier/*.test.mjs` (23 tests, about 3.3 min, dominated by the Python sandbox oracle). It checks:
 
 - family metadata and role, portable output schema equal to codefix's, the codefix version pin;
 - `generate` byte-identical on repeat, the split acting as salt, argument validation, contract task shape;
@@ -225,4 +260,8 @@ Run: `node --test beds/need-codefix-noverifier/*.test.mjs` (19 tests, about 2.5 
 - per difficulty, `referenceSolve` passes and every bad control fails on 20 seeds (601-620);
 - **verdict equality**: `referenceSolve` and all eight controls give the same outputs and the same verdict objects as codefix's
   own oracle on codefix's own task, for 24 seeds at d3 and 3 seeds at each other level;
+- **inherited transcript defects, pinned** (not fixed here, see Known limits): the probe's `classify`/`replBlocks` on hand-made input
+  and on a doctored report (a wrong value is counted as `other`); the red-herring sentence is swapped at d4/d5 only (72 of 80
+  contradict, 0 of 200 real-bug sentences do, bug reports identical to codefix's); floats print as ints and dict keys sorted, with
+  no other misstatement (21 + 3 of 1394 statements); the README records both with these numbers;
 - `instanceFingerprint` is consistent with the task; token medians rise with difficulty; generate and oracle under 2 s at d5.

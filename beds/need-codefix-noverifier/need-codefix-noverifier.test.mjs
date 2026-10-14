@@ -404,7 +404,7 @@ test('inherited codefix defect, pinned: transcripts and sentences print Python f
   // The expectation sentences share the renderer, so they carry the same two deviations and nothing else.
   assert.deepEqual(f.values.bugExpected, { ok: 188, 'float-int': 12, 'dict-order': 0, other: 0 }, PIN_HINT);
   assert.deepEqual(f.values.bugGot, { ok: 187, 'float-int': 13, 'dict-order': 0, other: 0 }, PIN_HINT);
-  // The float lines come from two ratelimit functions that return true-division results, from d1 to d5.
+  // The float lines come from two ratelimit functions: tokens() (true division) and, in the buggy module, backoff_ms(0) (2 ** -1).
   const fnOf = x => x.match(/^d\d s\d+: (?:\w+\.)?(\w+)\(/)[1];
   assert.deepEqual([...new Set(f.examples['float-int'].map(fnOf))].sort(), ['backoff_ms', 'tokens']);
   assert.deepEqual([...new Set(f.examples['dict-order'].map(fnOf))], ['plan_change']);
@@ -420,7 +420,7 @@ test('inherited codefix defect, pinned: transcripts and sentences print Python f
 test('README records both inherited defects with the pinned numbers and the probe command', () => {
   const readme = readFileSync(new URL('./README.md', import.meta.url), 'utf8');
   for (const needle of ['72 of 80', 'herringExpectation', 'swapped', '63.0', 'dict keys', 'measure.mjs fidelity', 'fidelity.mjs',
-    'backoff_ms', 'tokens()', '21 ', '1370']) {
+    'backoff_ms', 'tokens()', '21 float printed as int', '1370 exact', '3 dict keys reordered', '0 other']) {
     assert.ok(readme.includes(needle), `README Known limits must mention ${needle}`);
   }
 });
