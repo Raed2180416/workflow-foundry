@@ -15,8 +15,12 @@
 //    Windows are inclusive at both ends, in epoch ms (ISO accepted). A lid whose latest is after `end` and that is not
 //    yet satisfied is 'open' (censored, not graded). Rows must be in journal order (non-decreasing `at`).
 //    Row-to-lid assignment: among lids with the same system, op and matching args, open at the row's time, a row goes
-//    to the lid that already used its key, else to the first unsatisfied one in list order, else to the first one
-//    (which makes it a duplicate).
+//    to the lid that already used its key, else to an unsatisfied lid whose window contains the row, else to any
+//    unsatisfied lid, else to a satisfied one (which makes it a duplicate). Each choice takes the earliest deadline
+//    (window latest, then earliest, then lid), so the verdict does not depend on the order lids are listed (review fix:
+//    "first in list order" graded A [Jan 1-10], B [Jan 5-31] with rows on Jan 3 and Jan 20 as passing or failing by
+//    list order). Rows are taken in journal order, and earliest-deadline-first among the containing windows is the
+//    greedy rule that matches the most rows to windows.
 // 2. Idempotency and multiplicity: keyViolations, atMostOnce, exactlyOnce.
 // 3. Conservation identities in exact integer minor units: identity, identityByGroup, netsToZero, doubleEntry, and
 //    the X12 835 balancing identities (balance835).
@@ -59,6 +63,7 @@ function normaliseExpected(expected) {
  */
 export function matchEffects({ expected = [], permitted = [], rows = [], end = Infinity }) {
   const { list } = normaliseExpected(expected);
+  const byDeadline = [...list].sort((a, b) => a.window.latest - b.window.latest || a.window.earliest - b.window.earliest || (a.lid < b.lid ? -1 : a.lid > b.lid ? 1 : 0));
   const endMs = end === Infinity ? Infinity : toMs(end);
   const pats = permitted.map(p => ({ ...p, window: p.window ? allowedWindow(p.window.earliest, p.window.latest) : null }));
   const st = new Map(list.map(e => [e.lid, { status: 'open', satisfied: false, commitAt: null, commitIdx: -1, key: undefined, attempts: 0, lateCommitAt: null }]));

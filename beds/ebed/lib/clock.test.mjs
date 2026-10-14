@@ -25,7 +25,10 @@ test('running clock: due instant, warnings, inclusive and exclusive breach', () 
   assert.equal(s.remainingMs, 3 * HOUR);
   assert.equal(s.actualElapsedMs, 21 * HOUR); // Tue 15:00 -> Wed 12:00
   assert.equal(s.totalMs, 21 * HOUR);
+  assert.equal(clockAt(SLA8, h, T('25T11:00:00')).warnings[0].reached, true); // a warning is reached at its instant
+  assert.equal(clockAt(SLA8, h, parseInstant(T('25T11:00:00')) - 1).warnings[0].reached, false);
   assert.equal(clockAt(SLA8, h, T('25T15:00:00')).breached, false); // inclusive: due by 15:00
+  assert.equal(clockAt(SLA8, h, T('25T15:00:01')).breachedAt, parseInstant(T('25T15:00:00')) + 1);
   assert.deepEqual([clockAt(SLA8, h, T('25T15:00:01')).breached, clockAt(SLA8, h, T('25T15:00:01')).outcome], [true, 'breached']);
   assert.equal(clockAt({ ...SLA8, boundary: 'exclusive' }, h, T('25T15:00:00')).breached, true);
   assert.equal(clockAt(SLA8, h, T('24T14:00:00')).outcome, 'not-started'); // history after the query time is ignored
@@ -80,6 +83,38 @@ test('reset, cancel, wall-clock targets across DST', () => {
   assert.equal(formatInstant(mins.dueAt, 'UTC'), '2026-03-07T15:00:00+00:00');
 });
 
+test('review P1: cancel or reset after the due instant keeps the breach and the warnings already reached', () => {
+  // Started Mon 09:00; 8 business hours are reached Mon 17:00; w50 (4 h) at Mon 13:00, w75 (6 h) at Mon 15:00.
+  const start = [{ at: T('23T09:00:00'), op: 'start' }];
+  const due = parseInstant(T('23T17:00:00'));
+  for (const op of ['cancel', 'reset', 'stop']) {
+    const h = [...start, { at: T('24T10:00:00'), op }];
+    const before = clockAt(SLA8, h, T('24T09:59:59'));
+    assert.deepEqual([before.breached, before.breachedAt, before.outcome], [true, due + 1, 'breached'], op);
+    for (const at of [T('24T10:00:00'), T('24T11:00:00'), '2026-12-31T00:00:00-05:00']) {
+      const s = clockAt(SLA8, h, at);
+      assert.deepEqual([s.breached, s.breachedAt], [true, due + 1], `${op} at ${at}`);
+    }
+  }
+  const c = clockAt(SLA8, [...start, { at: T('24T10:00:00'), op: 'cancel' }], T('24T11:00:00'));
+  assert.deepEqual([c.state, c.outcome, fmt(c.dueAt)], ['cancelled', 'cancelled', '2026-11-23T17:00:00-05:00']);
+  assert.deepEqual(c.warnings.map(w => [w.id, fmt(w.at), w.reached]), [['w50', '2026-11-23T13:00:00-05:00', true], ['w75', '2026-11-23T15:00:00-05:00', true]]);
+  // A reset starts a new, pending generation; the closed one keeps its breach and warnings.
+  const r = clockAt(SLA8, [...start, { at: T('24T10:00:00'), op: 'reset' }], T('24T11:00:00'));
+  assert.deepEqual([r.outcome, r.breached, fmt(r.dueAt), r.warnings.map(w => w.reached)], ['pending', true, '2026-11-25T10:00:00-05:00', [false, false]]);
+  assert.deepEqual(r.generations.map(g => [fmt(g.startedAt), fmt(g.endedAt), fmt(g.dueAt), g.breached, g.breachedAt, g.warnings.map(w => w.reached)]),
+    [['2026-11-23T09:00:00-05:00', '2026-11-24T10:00:00-05:00', '2026-11-23T17:00:00-05:00', true, due + 1, [true, true]]]);
+  // Cancelled or reset before the due instant: no breach, and none appears later.
+  for (const op of ['cancel', 'reset']) {
+    const early = clockAt(SLA8, [...start, { at: T('23T16:00:00'), op }], T('23T18:00:00'));
+    assert.deepEqual([early.breached, early.breachedAt], [false, null], op);
+  }
+  // Exclusive boundary: a cancel exactly at D is a breach (as a stop at D is).
+  const x = clockAt({ ...SLA8, boundary: 'exclusive' }, [...start, { at: T('23T17:00:00'), op: 'cancel' }], T('24T09:00:00'));
+  assert.deepEqual([x.breached, x.breachedAt], [true, due]);
+  assert.equal(clockAt(SLA8, [...start, { at: T('23T17:00:00'), op: 'cancel' }], T('24T09:00:00')).breached, false); // inclusive
+});
+
 test('illegal operations, ordering and definitions are refused', () => {
   const t = T('24T15:00:00');
   assert.equal(codeOf(() => clockAt(SLA8, [{ at: t, op: 'pause' }], t)), 'CLOCK_ILLEGAL');
@@ -100,17 +135,20 @@ test('illegal operations, ordering and definitions are refused', () => {
 
 test('day-count deadlines: business and calendar days, rolls, end of day', () => {
   const d = (anchor, n, o) => { const r = dueByDays(AP, anchor, n, o); return [r.date, fmt(r.dueAt)]; };
-  // 10 business days after Fri 2026-11-20 (Thanksgiving skipped) -> Mon 2026-12-07, due by 23:59:59 local.
-  assert.deepEqual(d('2026-11-20T15:00:00-05:00', 10), ['2026-12-07', '2026-12-07T23:59:59-05:00']);
-  assert.deepEqual(d('2026-11-21T02:00:00Z', 10), ['2026-12-07', '2026-12-07T23:59:59-05:00']); // = Fri 21:00 in New York
+  // 10 business days after Fri 2026-11-20 (Thanksgiving skipped) -> Mon 2026-12-07, due by the last millisecond of the
+  // local day (review P2: it was 23:59:59.000, so an action at 23:59:59.500 on the due date was graded late).
+  assert.deepEqual(d('2026-11-20T15:00:00-05:00', 10), ['2026-12-07', '2026-12-07T23:59:59.999-05:00']);
+  assert.equal(dueByDays(AP, '2026-11-20', 10).dueAt + 1, parseInstant('2026-12-08T00:00:00-05:00'));
+  assert.ok(parseInstant('2026-12-07T23:59:59.5-05:00') <= dueByDays(AP, '2026-11-20', 10).dueAt);
+  assert.deepEqual(d('2026-11-21T02:00:00Z', 10), ['2026-12-07', '2026-12-07T23:59:59.999-05:00']); // = Fri 21:00 in New York
   // The anchor's date is taken in the calendar's zone (mutant K6 survivor -> this golden): 2026-11-24T03:00Z is Mon
   // 22:00 in New York; from Mon 23: 24 25 27 30 1 2 3 4 7 8 -> Tue Dec 8 (from the UTC date, Tue 24, it would be Dec 9).
-  assert.deepEqual(d('2026-11-24T03:00:00Z', 10), ['2026-12-08', '2026-12-08T23:59:59-05:00']);
+  assert.deepEqual(d('2026-11-24T03:00:00Z', 10), ['2026-12-08', '2026-12-08T23:59:59.999-05:00']);
   assert.deepEqual(d('2026-11-20T15:00:00-05:00', 10, { at: '17:00' }), ['2026-12-07', '2026-12-07T17:00:00-05:00']);
-  assert.deepEqual(d('2026-11-20', 45, { unit: 'calendar' }), ['2027-01-04', '2027-01-04T23:59:59-05:00']);
-  assert.deepEqual(d('2026-10-02', 30, { unit: 'calendar' }), ['2026-11-01', '2026-11-01T23:59:59-05:00']); // a Sunday, 25-hour day
-  assert.deepEqual(d('2026-10-02', 30, { unit: 'calendar', roll: 'following' }), ['2026-11-02', '2026-11-02T23:59:59-05:00']);
-  assert.deepEqual(d('2026-10-01', 30, { unit: 'calendar', roll: 'modifiedFollowing' }), ['2026-10-30', '2026-10-30T23:59:59-04:00']); // Sat 31 -> Fri 30
+  assert.deepEqual(d('2026-11-20', 45, { unit: 'calendar' }), ['2027-01-04', '2027-01-04T23:59:59.999-05:00']);
+  assert.deepEqual(d('2026-10-02', 30, { unit: 'calendar' }), ['2026-11-01', '2026-11-01T23:59:59.999-05:00']); // a Sunday, 25-hour day
+  assert.deepEqual(d('2026-10-02', 30, { unit: 'calendar', roll: 'following' }), ['2026-11-02', '2026-11-02T23:59:59.999-05:00']);
+  assert.deepEqual(d('2026-10-01', 30, { unit: 'calendar', roll: 'modifiedFollowing' }), ['2026-10-30', '2026-10-30T23:59:59.999-04:00']); // Sat 31 -> Fri 30
   assert.equal(codeOf(() => dueByDays(AP, '2026-11-20', 10, { roll: 'following' })), 'CLOCK_INVALID');
   assert.equal(codeOf(() => dueByDays(AP, '2026-11-20', -1)), 'CLOCK_INVALID');
   assert.equal(codeOf(() => dueByDays(AP, '2026-11-20', 1, { unit: 'weeks' })), 'CLOCK_INVALID');

@@ -1,0 +1,248 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "kinetics",
+ "label": "v2-haiku55",
+ "version": 2,
+ "parentSha": "d1f86f5558098c4415e1a36a2d2cc1a625d873f578155a62c4f8ff2d0030f99a",
+ "changed": true,
+ "traceIds": [
+  "i004-interpreter-6f82c0",
+  "i003-interpreter-45d8c5",
+  "i002-interpreter-6017f5",
+  "i001-interpreter-de1239",
+  "i000-interpreter-f9a625"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "06da27b5d2ba15564bc092b1dcfa04ae6beeb6774cc95e7085ae4f08dfefb6ff",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-haiku55:f72a82b1-0000-43a8-b29d-2d9eac20f97c",
+ "flowSha256": "5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223",
+ "checkToolSha256": "8ff6cd24b342e9a549867c8c30a580943f0568bf84658ff021fbf7a9f1070bc0",
+ "promptVersion": 4,
+ "compare": {
+  "mode": "tolerant",
+  "relTol": 0.05,
+  "absTol": 1e-9,
+  "tolerantKeys": [
+   "km",
+   "vmax"
+  ]
+ },
+ "compareToolSha256": "77b623a9b86b039bba53715afdd6f8d125456e0be8db833aeac14b0ad2164e5c",
+ "acceptance": {
+  "mode": "strict",
+  "minPartial": 0.9
+ },
+ "promptSha256": "c1520edb4abe780266680673a3fcd438ed3f86881d44df5c375801e6cd61b643",
+ "artifact": "solve.mjs",
+ "artifactSha256": "0e95be9297a08264ab44c7e887e473b8a679be69c3b1290799a9eb77191937f3",
+ "builderCostUsd": 0.04249117000000001,
+ "builderCostReportedUsd": 0.04249117000000001,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.04249117000000001,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 40,
+  "cache_creation_input_tokens": 84714,
+  "cache_read_input_tokens": 1133137,
+  "output_tokens": 28426,
+  "output_tokens_details": {
+   "thinking_tokens": 20330
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 84714,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 722,
+    "cache_read_input_tokens": 90701,
+    "cache_creation_input_tokens": 510,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 510
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 40,
+  "outputTokens": 146,
+  "cacheReadTokens": 1133137,
+  "cacheWriteTokens": 84714
+ },
+ "builderSessionId": "90d2874c-f756-4af3-a15c-fa30f86953fe",
+ "gatewayCostUsd": 0.9382631250000004,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 91,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.194440245,
+ "constructionCostUsd": 0.9807542950000004,
+ "compileCostUsd": 1.1751945400000006,
+ "startedAt": "2026-10-14T14:25:01.315Z",
+ "durationMs": 434815,
+ "builderMs": 388709,
+ "minutes": 30,
+ "turns": 21,
+ "toolUses": 20,
+ "builderError": null,
+ "builderCheckRuns": 3,
+ "checkTraces": {
+  "exact": 3,
+  "partial": 0.6,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 45908,
+    "costUsd": 0.070755,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i002-interpreter-6017f5"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 43490,
+    "costUsd": 0.066907,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i001-interpreter-de1239"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 40254,
+    "costUsd": 0.056778,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i000-interpreter-f9a625"
+   }
+  ],
+  "cases": 5,
+  "labeled": 5,
+  "exactRate": 0.6,
+  "diffs": 0,
+  "deoptKinds": {
+   "guard": 2
+  },
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.194440245,
+  "calls": 24,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 46087,
+  "error": null,
+  "compare": {
+   "mode": "tolerant",
+   "relTol": 0.05,
+   "absTol": 1e-9,
+   "tolerantKeys": [
+    "km",
+    "vmax"
+   ]
+  },
+  "canonicalExact": 0,
+  "acceptance": {
+   "mode": "strict",
+   "compare": "tolerant",
+   "minQuoteChars": 12,
+   "minQuoteWords": 3,
+   "criteria": {
+    "clean": {
+     "ok": true
+    },
+    "agreement": {
+     "ok": true,
+     "partial": 1,
+     "minPartial": 0.9,
+     "partialOk": true,
+     "exactTraces": 3,
+     "labelledTraces": 3,
+     "exactOk": true
+    },
+    "explained": {
+     "ok": true,
+     "cases": []
+    }
+   },
+   "passed": [
+    "clean",
+    "agreement",
+    "explained"
+   ],
+   "failed": []
+  },
+  "refusalCheck": {
+   "cases": [
+    "trace-0",
+    "trace-1"
+   ],
+   "kept": [
+    "trace-0",
+    "trace-1"
+   ],
+   "handled": [],
+   "lost": [],
+   "missing": [],
+   "failed": [],
+   "ok": true
+  }
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure (code)\nParses five notebook shapes (fixed-width reader, markdown plates, CSV, summary sheets, bench-log paragraphs). Instrument raw exports override transcribed rates. Units, mAU conversion, the 1:500 dilution rescale and SOP exclusions (flag, bubble, temperature) are applied in code. Fit: grid search plus golden section, unweighted least squares per condition; inhibitor conditions fix Vmax to the inhibitor-free reference.\n\n## Judges\n- `label-condition` (haiku, opus): only labels code cannot map; index and condition_id enum checked.\n- `doc-units` (haiku, opus): per document; quote checked against sources; unit must match inline or header units.\n- `dilutions` (haiku, opus): one item per condition; quote checked.\n- `well-events` (opus, sonnet, medium): SOP prose events; ids and quotes checked against sources.\n\n## Guards and invariants\nGuards: sample-pattern, raw-export-header/unit, fixed-width-columns/row, reread-row, mau-conversion, md-columns, md-header-units, csv-columns, summary-row, **summary-header (new)**, bench-sentence, bench-unparsed-id, sop-shape, raw-ids-known, inhibitor-reference.\nInvariants: unique-wells, levels-per-condition, planned-levels, values-finite, doc-scale-consistent, fit-sane.\n\n**Change:** `summary-header` deopts on a `Condition:` line not in the single-header form `(replicates rN = plate P row X)`. Trace-1's D11 puts two replicates on one header with `|`-joined rows, so its wells were never parsed; the relabel judge then named unknown ids on every tier ($0.08). No check was loosened. Trace-2..4 headers all match, so they are unaffected.\n\n## check-traces result\n- trace-2, trace-3, trace-4: exact (partial 100%). No crash, no timeout.\n- trace-0: deopt, guard `bench-unparsed-id`, by design. Quote: \"DR-0486: 6.12×10^2 at 0.5.\" The units sit only in the prose header, and I could not reproduce the agent's answer within budget.\n- trace-1: deopt, guard `summary-header`, by design. Quote: \"Condition: 30C/pH6.0 (replicates r3 = plate 5 row A, r4 = plate 6 row E)\". Out-of-scope shape.\n\nDisagreements with agent answers: none among answered cases. The two refused cases give no answer, so \"regressions\" pass by deopt. Spend: about $0.94 of $1.5.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i004-interpreter-6f82c0",
+   "i003-interpreter-45d8c5",
+   "i002-interpreter-6017f5",
+   "i001-interpreter-de1239",
+   "i000-interpreter-f9a625"
+  ],
+  "regressionIds": [],
+  "previousSha": "d1f86f5558098c4415e1a36a2d2cc1a625d873f578155a62c4f8ff2d0030f99a"
+ }
+}

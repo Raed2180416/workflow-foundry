@@ -1,0 +1,19 @@
+{
+ "experiment": "jit-r0-kinetics",
+ "spec": "agent:claude-haiku-5-5",
+ "slug": "agent-claude-haiku-5-5",
+ "kind": "agent",
+ "hash": "2e292709027b2786",
+ "def": {
+  "spec": "agent:claude-haiku-5-5",
+  "familyId": "kinetics",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "agentMinutes": 15,
+  "agentEffort": null,
+  "models": [
+   "claude-haiku-5-5"
+  ]
+ }
+}

@@ -1,0 +1,340 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "kinetics",
+ "label": "v4-haiku55",
+ "version": 4,
+ "parentSha": "fac4094113741dfa486a81f3ba446c6bc28a272ffa872812463c9bed4d2c9bac",
+ "changed": true,
+ "traceIds": [
+  "i008-shadow-d97496",
+  "i007-interpreter-e0a4d9",
+  "i005-interpreter-2423c0",
+  "i004-interpreter-6f82c0",
+  "i003-interpreter-45d8c5",
+  "i002-interpreter-6017f5",
+  "i001-interpreter-de1239",
+  "i000-interpreter-f9a625"
+ ],
+ "regressionIds": [
+  "reg-008-302dd0"
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "06da27b5d2ba15564bc092b1dcfa04ae6beeb6774cc95e7085ae4f08dfefb6ff",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v4-haiku55:06a97d0f-3fe0-44cf-b301-e0c418cfc0e0",
+ "flowSha256": "5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223",
+ "checkToolSha256": "8ff6cd24b342e9a549867c8c30a580943f0568bf84658ff021fbf7a9f1070bc0",
+ "promptVersion": 4,
+ "compare": {
+  "mode": "tolerant",
+  "relTol": 0.05,
+  "absTol": 1e-9,
+  "tolerantKeys": [
+   "km",
+   "vmax"
+  ]
+ },
+ "compareToolSha256": "77b623a9b86b039bba53715afdd6f8d125456e0be8db833aeac14b0ad2164e5c",
+ "acceptance": {
+  "mode": "strict",
+  "minPartial": 0.9
+ },
+ "promptSha256": "25ef1779d83057ee80d0d23534fcdb299d7e2210694d09e8f28b36949ffbb889",
+ "artifact": "solve.mjs",
+ "artifactSha256": "b0106c1d06766f673df29b453a6960a9aac776a1f1a2bc9d14f2b59c17bf369c",
+ "builderCostUsd": 0.36702478000000005,
+ "builderCostReportedUsd": 0.36702478000000005,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.36702478000000005,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 76,
+  "cache_creation_input_tokens": 152094,
+  "cache_read_input_tokens": 4092184,
+  "output_tokens": 66629,
+  "output_tokens_details": {
+   "thinking_tokens": 47970
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 152094,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1045,
+    "cache_read_input_tokens": 157547,
+    "cache_creation_input_tokens": 1044,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1044
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 76,
+  "outputTokens": 308,
+  "cacheReadTokens": 4092184,
+  "cacheWriteTokens": 152094
+ },
+ "builderSessionId": "bf9d465a-9cc2-4d15-9c53-59bef8aa5955",
+ "gatewayCostUsd": 1.3359433350000003,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 87,
+ "gatewayErrors": {},
+ "gatewayRefusals": {
+  "GATEWAY_BUDGET": 3
+ },
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 1.278931665,
+ "constructionCostUsd": 1.7029681150000004,
+ "compileCostUsd": 2.9818997800000004,
+ "startedAt": "2026-10-14T14:50:50.430Z",
+ "durationMs": 629475,
+ "builderMs": 477052,
+ "minutes": 30,
+ "turns": 46,
+ "toolUses": 45,
+ "builderError": null,
+ "builderCheckRuns": 4,
+ "checkTraces": {
+  "exact": 9,
+  "partial": 1,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "case-0",
+    "kind": "regression",
+    "exitCode": 0,
+    "ms": 37118,
+    "costUsd": 0.143961,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "reg-008-302dd0"
+   },
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 45680,
+    "costUsd": 0.07317,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i008-shadow-d97496"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 47140,
+    "costUsd": 0.169454,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i007-interpreter-e0a4d9"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 53831,
+    "costUsd": 0.096036,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i005-interpreter-2423c0"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 53484,
+    "costUsd": 0.188896,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i004-interpreter-6f82c0"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 36171,
+    "costUsd": 0.146666,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i003-interpreter-45d8c5"
+   },
+   {
+    "id": "trace-5",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 37639,
+    "costUsd": 0.138063,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i002-interpreter-6017f5"
+   },
+   {
+    "id": "trace-6",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 36626,
+    "costUsd": 0.147641,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i001-interpreter-de1239"
+   },
+   {
+    "id": "trace-7",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 53078,
+    "costUsd": 0.175044,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i000-interpreter-f9a625"
+   }
+  ],
+  "cases": 9,
+  "labeled": 9,
+  "exactRate": 1,
+  "diffs": 0,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 1,
+  "regressionsPassed": 1,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 1.278931665,
+  "calls": 73,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 152399,
+  "error": null,
+  "compare": {
+   "mode": "tolerant",
+   "relTol": 0.05,
+   "absTol": 1e-9,
+   "tolerantKeys": [
+    "km",
+    "vmax"
+   ]
+  },
+  "canonicalExact": 0,
+  "acceptance": {
+   "mode": "strict",
+   "compare": "tolerant",
+   "minQuoteChars": 12,
+   "minQuoteWords": 3,
+   "criteria": {
+    "clean": {
+     "ok": true
+    },
+    "agreement": {
+     "ok": true,
+     "partial": 1,
+     "minPartial": 0.9,
+     "partialOk": true,
+     "exactTraces": 8,
+     "labelledTraces": 8,
+     "exactOk": true
+    },
+    "explained": {
+     "ok": true,
+     "cases": []
+    }
+   },
+   "passed": [
+    "clean",
+    "agreement",
+    "explained"
+   ],
+   "failed": []
+  },
+  "refusalCheck": {
+   "cases": [
+    "trace-1",
+    "trace-2",
+    "trace-3",
+    "trace-4"
+   ],
+   "kept": [],
+   "handled": [
+    "trace-1",
+    "trace-2",
+    "trace-3",
+    "trace-4"
+   ],
+   "lost": [],
+   "missing": [],
+   "failed": [],
+   "ok": true
+  }
+ },
+ "notes": "# BUILD-NOTES (solve.mjs, kinetics compile v4)\n\n## Status: not accepted\nTraces 5, 6, 7 were not re-run after these changes: the gateway cap ($1.5) is spent, so the full check cannot finish. Their earlier live runs were exact. Their `.check/` folders now hold budget deopts; ignore them.\n\n## Changes in this pass\n1. **CSV re-read (new shape).** `csvRereadOf` reads a clean re-read from a CSV QC note \"re-read …: <number>, no flag\". It is applied after the judges, so the well-events prompt is unchanged. Case: trace-0 and case-0 (same inputs). Quote: \"SAT; first read flagged OVR; re-read at lower gain: 2.819e2, no flag\". C5 km now matches the expected 252.74. trace-4's \"re-read: 2.13E-03\" has no \"no flag\", so it is unaffected.\n2. **Declared [S] unit not overridable (tightened).** The doc-units check used to accept a judge's [S] unit that contradicted the inline or header unit whenever `corrected` was true. It now rejects any contradiction and escalates. All corrections in the traces change rates only. Case: trace-2. Haiku said nM for a row \"B01 QD-0696 1.2 uM 53.12\"; Opus escalation returns µM and the run is exact.\n\n## Judges (haiku → opus; well-events opus → sonnet)\ndoc-units (unit of [S] and rate), dilutions (per-condition enzyme dilution), label-condition (unmapped labels only), well-events (exclusions, relabels, swaps). Each quote must occur in sources.\n\n## Guards and invariants\nUnchanged: format guards per document, unique wells, planned-levels, levels-per-condition, values finite, doc-scale-consistent, fit-sane, inhibitor-reference.\n\n## check-traces (replay where prompts are unchanged)\n- case-0 exact; trace-0 exact (same inputs); trace-1, 3, 4 exact.\n- trace-2 exact (live Opus unit escalation and well-events).\n- trace-5, 6, 7 not re-run.\n- No disagreements with agent answers among completed cases.\n\n## Process note\nReplay harness: /tmp/replay (outside tools/). Validation overspent the budget (a live Opus call of about $0.2 after the trace-2 change).\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i008-shadow-d97496",
+   "i007-interpreter-e0a4d9",
+   "i005-interpreter-2423c0",
+   "i004-interpreter-6f82c0",
+   "i003-interpreter-45d8c5",
+   "i002-interpreter-6017f5",
+   "i001-interpreter-de1239",
+   "i000-interpreter-f9a625"
+  ],
+  "regressionIds": [
+   "reg-008-302dd0"
+  ],
+  "previousSha": "fac4094113741dfa486a81f3ba446c6bc28a272ffa872812463c9bed4d2c9bac"
+ }
+}

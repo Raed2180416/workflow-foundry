@@ -1,0 +1,298 @@
+{
+ "schema": "jit-export/1",
+ "experiment": "jit-r0-kinetics",
+ "files": {
+  "agent-claude-haiku-5-5/arm.json": {
+   "sha256": "2a8c9f9272bac2b365545bf39ffbf8b2a13154207f3de39f221598fdc1bf0cc9",
+   "bytes": 374
+  },
+  "agent-claude-haiku-5-5/events.jsonl": {
+   "sha256": "075f16d85a6c209c51d65fc9365514e804fb83d466f45d782c9fa2b486d6f6f0",
+   "bytes": 12346
+  },
+  "agent-claude-haiku-5-5/results.jsonl": {
+   "sha256": "323f4fddb7badfe5bb89afd4c3956d2138a93b2c9efddf3963594b99566ddb77",
+   "bytes": 54901
+  },
+  "agent-claude-haiku-5-5/traces/i000-interpreter-d71403.json": {
+   "sha256": "6c108f7e8e2db0d433a6369d314f829927f49d8a6d43aba0060b00e4e6c63465",
+   "bytes": 64101
+  },
+  "agent-claude-haiku-5-5/traces/i001-interpreter-89e576.json": {
+   "sha256": "700a554d6d289994600cd75786e25aaf78835afd68096c5fede0fd49106c8a75",
+   "bytes": 54581
+  },
+  "agent-claude-haiku-5-5/traces/i002-interpreter-437fd5.json": {
+   "sha256": "0528e354489d470c17a39b5e3689f906e34f6be7913e2791a13d548506b4d5fb",
+   "bytes": 56602
+  },
+  "agent-claude-haiku-5-5/traces/i003-interpreter-64335e.json": {
+   "sha256": "20c4b59b544abcfc8ae70db5e629e7710b947ecabf77b55a2857dade53a55058",
+   "bytes": 58232
+  },
+  "agent-claude-haiku-5-5/traces/i004-interpreter-6696f0.json": {
+   "sha256": "8120aca3f5615b50de4f02912df7f0e359ab8359882577de963ae3fefd59725a",
+   "bytes": 62038
+  },
+  "agent-claude-haiku-5-5/traces/i005-interpreter-76ac3b.json": {
+   "sha256": "82256d7f896f4e77464adf0677ef529907cbdac13f2c7f5cbdd0702736170b79",
+   "bytes": 60876
+  },
+  "agent-claude-haiku-5-5/traces/i006-interpreter-6ae35a.json": {
+   "sha256": "4a650909d96bd6110623950fa213d353fbe2e69b8c5c2675540de2b453721cfb",
+   "bytes": 53834
+  },
+  "agent-claude-haiku-5-5/traces/i007-interpreter-eaaa5a.json": {
+   "sha256": "b191c5a681e7e50c039d40be5f5f5e9ebcaa5f2882e87cd122ed73a906ccf142",
+   "bytes": 51275
+  },
+  "agent-claude-haiku-5-5/traces/i008-interpreter-c7fb7d.json": {
+   "sha256": "57bad4a45f0c204ccff73f673e3de0c0203935b88fd9b939a7e98b83918142cb",
+   "bytes": 52492
+  },
+  "agent-claude-haiku-5-5/traces/i009-interpreter-1530c9.json": {
+   "sha256": "60123290d66ec69e0925b52eaa3e6b40bfdf4ca8d3658a87e866980863ab0be7",
+   "bytes": 56387
+  },
+  "agent-claude-haiku-5-5/traces/i010-interpreter-3c230a.json": {
+   "sha256": "1d7cb893076a2f85664c10572a92747d415ba1594a5d1c7f5d97ce0a0cb6143f",
+   "bytes": 67791
+  },
+  "agent-claude-haiku-5-5/traces/i011-interpreter-447047.json": {
+   "sha256": "5456f8414f0ea5c9b8fafacddb3fa74aa7d35dd70a6aa5eaf6a53913992cbf2c",
+   "bytes": 57925
+  },
+  "agent-claude-haiku-5-5/traces/i012-interpreter-f84fa6.json": {
+   "sha256": "4454f15dfc29696054d0345f90c2ac15660c455f4103a13034d9daf3b97db3d7",
+   "bytes": 59875
+  },
+  "agent-claude-haiku-5-5/traces/i013-interpreter-962ed0.json": {
+   "sha256": "5da6030da833458803519de60962c2c6d93c1ba9de02c5a4f69251bd32beab7c",
+   "bytes": 54234
+  },
+  "agent-claude-haiku-5-5/traces/i014-interpreter-676361.json": {
+   "sha256": "6a359c7d2eb58109a00c19d268e21e531f1ecaf69f350af3a123097c50f40d81",
+   "bytes": 65352
+  },
+  "agent-claude-haiku-5-5/traces/i015-interpreter-fbb68c.json": {
+   "sha256": "a0de22e09650cb0d9ec600a527e2bb4d6f782d8b6e4ca714189f70eee3dbb0f2",
+   "bytes": 52238
+  },
+  "agent-claude-haiku-5-5/traces/i016-interpreter-65fc5d.json": {
+   "sha256": "4fddf52a691d9eda7a6562fc49b28c893ca49c417f24db38d2ebfd8898561484",
+   "bytes": 76073
+  },
+  "agent-claude-haiku-5-5/traces/i017-interpreter-51b541.json": {
+   "sha256": "9b50ba502309ed63b909d51c7d4bd87bbd9f31ec7ac41b5e18b4f8219398da62",
+   "bytes": 63002
+  },
+  "agent-claude-haiku-5-5/traces/i018-interpreter-7d3527.json": {
+   "sha256": "23a153221b0330178570d74212228261960bccfdacde64e70787631e018e5e3f",
+   "bytes": 70454
+  },
+  "agent-claude-haiku-5-5/traces/i019-interpreter-952828.json": {
+   "sha256": "c18f08c86616af99d33a83fb11166eff6fc79f9f3355d600f9b093fc3941b4e5",
+   "bytes": 68242
+  },
+  "agent-claude-haiku-5-5/traces/i020-interpreter-82f2c7.json": {
+   "sha256": "17604ff8b5255542e7ab192b264344a218c8a14c71c7db9171b6b131721dae66",
+   "bytes": 70707
+  },
+  "agent-claude-haiku-5-5/traces/i021-interpreter-c89b54.json": {
+   "sha256": "dfd3f40473447f6285aa04e239aab9fd2679ac4bd539c93bf8ab70a293b63ff8",
+   "bytes": 79024
+  },
+  "agent-claude-haiku-5-5/traces/i022-interpreter-b4bc64.json": {
+   "sha256": "8752a1de990af4b6c8005c18812bf7f86db953c37339261bd523ba84387aba78",
+   "bytes": 79486
+  },
+  "agent-claude-haiku-5-5/traces/i023-interpreter-01202f.json": {
+   "sha256": "d1f1bd07a6c0f51d762d954c1bfc4774fdce34e58f7d30e132c9b2dd1f2e8a05",
+   "bytes": 72567
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/arm.json": {
+   "sha256": "126cfe2bd152ce659404e82772001b68c88d1775186e26e56faf71c41571ead0",
+   "bytes": 1312
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/events.jsonl": {
+   "sha256": "47a9c551cb96121e304351998295cc95140af2f17fa89ed8e265107f9db71a7b",
+   "bytes": 43441
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/journal.jsonl": {
+   "sha256": "0cf1619b67ff3566014797438eac7574078e2790d9c1b223ed05bffc9b2cdc82",
+   "bytes": 36752394
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/regressions/reg-008-302dd0.json": {
+   "sha256": "073a8710f67f8ff6b157a275d97e90f1ed5e632e5c026ba1c84efbf215674394",
+   "bytes": 49828
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/regressions/reg-009-2d0ca9.json": {
+   "sha256": "7479775556b8212bc5104341e65adec3756e21633f69ef05f30304cedb29c26f",
+   "bytes": 52842
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/results.jsonl": {
+   "sha256": "578d268ac96e29e87fbe2b8340b7da959e564ae226a738baa20194fbdc00c859",
+   "bytes": 72641
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v1-haiku55/compile.json": {
+   "sha256": "71c6d819d5a1b4e621d79a2cc8a205a9ce423cd8171f1e68a09a4954844c733e",
+   "bytes": 6279
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v1-haiku55/solve.mjs": {
+   "sha256": "7a933232d8b4026d4e96ab5c0584469217667c5998897fcda7b5d436f2104577",
+   "bytes": 29662
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v1-opus55/BUILD-NOTES.md": {
+   "sha256": "049f5afa03277161b993452af367772e9e7e0556d6a441a12e2019b58f25fb5f",
+   "bytes": 2121
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v1-opus55/compile.json": {
+   "sha256": "e78a6af7d96eae224a852bd11f303e84db53d040662696282560e5301575ff2d",
+   "bytes": 7157
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v1-opus55/solve.mjs": {
+   "sha256": "d1f86f5558098c4415e1a36a2d2cc1a625d873f578155a62c4f8ff2d0030f99a",
+   "bytes": 27508
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v2-haiku55/BUILD-NOTES.md": {
+   "sha256": "356fbafbd8ba0c09554ad8aba6e3e0ee0218fdd642930b48083111f280d4cfa5",
+   "bytes": 2222
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v2-haiku55/compile.json": {
+   "sha256": "bf26246ab8f45107f67ad6675897085b5f4a270b4ef2cd0392d116db827fee57",
+   "bytes": 7759
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v2-haiku55/solve.mjs": {
+   "sha256": "0e95be9297a08264ab44c7e887e473b8a679be69c3b1290799a9eb77191937f3",
+   "bytes": 27824
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v3-haiku55/BUILD-NOTES.md": {
+   "sha256": "84bc3abdfacb0656c856c097e160e940e08f406ec287945c0180ee8ed1c56d53",
+   "bytes": 1838
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v3-haiku55/compile.json": {
+   "sha256": "831542d76770218e9e71053ca18b8767f20b9c99786085abec8c1b6dcd6a3349",
+   "bytes": 8591
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v3-haiku55/solve.mjs": {
+   "sha256": "fac4094113741dfa486a81f3ba446c6bc28a272ffa872812463c9bed4d2c9bac",
+   "bytes": 29880
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v4-haiku55/BUILD-NOTES.md": {
+   "sha256": "6176dfa20ddf33ddf014d495fc6e285d9b748797947023fca5df1a666556c5e6",
+   "bytes": 1989
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v4-haiku55/compile.json": {
+   "sha256": "31d51bcc70651947684a3405fd17f8f78eaeddff636aa15c4047a199e6ebf644",
+   "bytes": 9343
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v4-haiku55/solve.mjs": {
+   "sha256": "b0106c1d06766f673df29b453a6960a9aac776a1f1a2bc9d14f2b59c17bf369c",
+   "bytes": 30499
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v5-haiku55/BUILD-NOTES.md": {
+   "sha256": "8ab32deaaaef3bcffb7ae3cb2d37b5b42252a613b2931f3c0506a421566a86a7",
+   "bytes": 1999
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v5-haiku55/compile.json": {
+   "sha256": "fdefb17e916476e9a6a36eae20ed61035d55176cceaec69cf5d04cecd361c24f",
+   "bytes": 9835
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v5-haiku55/solve.mjs": {
+   "sha256": "b03a89ca887966bd2d35d648c33f69b036f1570a4162847a0fd0b021e45c6acf",
+   "bytes": 31947
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v6-haiku55/BUILD-NOTES.md": {
+   "sha256": "6ae1fb052b42ad313b3464fa7e2e7a74bb76c64ce667acd86a626849cb0ea521",
+   "bytes": 2016
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v6-haiku55/compile.json": {
+   "sha256": "aaa373c8023ee0934b8c213dff7d759f310ffe3c9ff53f93cee58f0bf8ddfdd7",
+   "bytes": 10014
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v6-haiku55/solve.mjs": {
+   "sha256": "b03a89ca887966bd2d35d648c33f69b036f1570a4162847a0fd0b021e45c6acf",
+   "bytes": 31947
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v6-opus55/BUILD-NOTES.md": {
+   "sha256": "bb6b32a6b0f0217d323d4487fdbdc9e47fdf27f53662342de74a662b4da35c76",
+   "bytes": 1904
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v6-opus55/compile.json": {
+   "sha256": "3b7632ac5128547998f9413717aef1aaf14ec4be1136c366740d4c61c7dae033",
+   "bytes": 13083
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/solvers/v6-opus55/solve.mjs": {
+   "sha256": "3aefcbc647c2021d1a9facae3b55c3f53ff4417873da1b0bd98c0f337c103f8a",
+   "bytes": 33435
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i000-interpreter-f9a625.json": {
+   "sha256": "57f76de02c4f02e508690b222be867c942843eb9559c9bdf4492c5b36c98cf70",
+   "bytes": 49615
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i001-interpreter-de1239.json": {
+   "sha256": "894ea8538c53d0bcac992a53db55bbf01ea30c8e09eb0f913a16f4a180c81b08",
+   "bytes": 49955
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i002-interpreter-6017f5.json": {
+   "sha256": "a0edc956059ce03f6bbe733f19b5dddf861686ba8b991a1c9febfc40dbc2c88c",
+   "bytes": 47253
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i003-interpreter-45d8c5.json": {
+   "sha256": "c0f11dc78bf54c9c5cce689e32bc5a3b8d6170ff75db0a70c2a0eaafdc7fe6b7",
+   "bytes": 51402
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i004-interpreter-6f82c0.json": {
+   "sha256": "25217966b6ea3519b8772c4bc8f4134cee06646e19e2977201a6f737d6ceb83b",
+   "bytes": 56196
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i005-interpreter-2423c0.json": {
+   "sha256": "9eb61069a18065d0d7f7c256819fb84cff3705dc20f00e09306bd03c8322c229",
+   "bytes": 51018
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i006-adjudicator-0e895a.json": {
+   "sha256": "9f86fe1ab721d4142a41501e62c976f02ff0ca5303244293d0964116d732971f",
+   "bytes": 49671
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i006-shadow-66d619.json": {
+   "sha256": "90befd9e1dcf549af845172f86c37c23b723ec273683cdf8317aee5f0c1d0909",
+   "bytes": 48763
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i007-interpreter-e0a4d9.json": {
+   "sha256": "85045d9699f095cb466046e2c90c06b4e48fd6f8d9ea788d9882059cc5fe3983",
+   "bytes": 49431
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i008-adjudicator-1eef7e.json": {
+   "sha256": "1b5b7c337b9fc1d2589de78048119bc7fae436f6aae1f7d144462ab53f707f68",
+   "bytes": 48610
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i008-shadow-d97496.json": {
+   "sha256": "6c9d99444e64124e8b8599eb6f53eaf007c0ef355a0a7fcd70b5c6cd07afda0f",
+   "bytes": 48425
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i009-adjudicator-f0d3f8.json": {
+   "sha256": "ea56ed093f3e2e6db9e06726f0032baeeb027ff4146e9760a3b497a77d6c40ed",
+   "bytes": 51606
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i009-shadow-49fec8.json": {
+   "sha256": "8691ec4453191140c1ab754fa11d6a6165e46d79e19bb37043027941f78477c2",
+   "bytes": 51419
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i010-shadow-587406.json": {
+   "sha256": "4113eebee83fcff71b5a372229ca8ade08f3e409cd22fadf5ec9a194926221a8",
+   "bytes": 52380
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i011-interpreter-626d64.json": {
+   "sha256": "9811d53083f761c517f97341c45cca5474880fbc106e4710b7739e47b9da9f1e",
+   "bytes": 55138
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i012-interpreter-2abde7.json": {
+   "sha256": "f75a3b4abe4e96ca0578288fd49e20cdd4828f4cd35150877bf7bad52ce0696b",
+   "bytes": 52969
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5/traces/i013-shadow-8a5c12.json": {
+   "sha256": "0a687ed36511775b467e56370f39d4e51f2c92848f1661019d217a7457f79372",
+   "bytes": 52973
+  }
+ }
+}

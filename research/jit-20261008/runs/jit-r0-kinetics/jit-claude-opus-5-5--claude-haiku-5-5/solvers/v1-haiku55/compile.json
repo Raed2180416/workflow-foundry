@@ -1,0 +1,279 @@
+{
+ "arm": "jit-compile",
+ "kind": "compile",
+ "familyId": "kinetics",
+ "label": "v1-haiku55",
+ "version": 1,
+ "parentSha": null,
+ "changed": true,
+ "traceIds": [
+  "i002-interpreter-6017f5",
+  "i001-interpreter-de1239",
+  "i000-interpreter-f9a625"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "06da27b5d2ba15564bc092b1dcfa04ae6beeb6774cc95e7085ae4f08dfefb6ff",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v1-haiku55:9961cef3-6f6a-4f9b-87fa-0dc33a5ed051",
+ "flowSha256": "5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223",
+ "checkToolSha256": "8ff6cd24b342e9a549867c8c30a580943f0568bf84658ff021fbf7a9f1070bc0",
+ "promptVersion": 4,
+ "compare": {
+  "mode": "tolerant",
+  "relTol": 0.05,
+  "absTol": 1e-9,
+  "tolerantKeys": [
+   "km",
+   "vmax"
+  ]
+ },
+ "compareToolSha256": "77b623a9b86b039bba53715afdd6f8d125456e0be8db833aeac14b0ad2164e5c",
+ "acceptance": {
+  "mode": "strict",
+  "minPartial": 0.9
+ },
+ "promptSha256": "66511b0ef18e8f931eeaf2fe5bfc2023459e636f37a27f611198505e88b5f22d",
+ "artifact": "solve.mjs",
+ "artifactSha256": "7a933232d8b4026d4e96ab5c0584469217667c5998897fcda7b5d436f2104577",
+ "builderCostUsd": 3,
+ "builderCostReportedUsd": null,
+ "builderCostUnknown": true,
+ "builderCostUpperUsd": 3,
+ "builderBudgetUsd": 3,
+ "builderUsage": null,
+ "builderStreamUsage": {
+  "inputTokens": 80,
+  "outputTokens": 283,
+  "cacheReadTokens": 5435946,
+  "cacheWriteTokens": 217139
+ },
+ "builderSessionId": "5b0d98ea-da08-4a97-a8e9-bf73858385ab",
+ "gatewayCostUsd": 1.4430175800000005,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 380,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.221931195,
+ "constructionCostUsd": 4.44301758,
+ "compileCostUsd": 4.664948775,
+ "startedAt": "2026-10-14T13:30:21.823Z",
+ "durationMs": 2311796,
+ "builderMs": 2125658,
+ "minutes": 30,
+ "turns": null,
+ "toolUses": 42,
+ "builderError": {
+  "code": "EXECUTOR_TIMEOUT",
+  "exitCode": null,
+  "stderr": ""
+ },
+ "builderCheckRuns": 10,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.87,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 138505,
+    "costUsd": 0.061561,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.967,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.excluded_samples[5]",
+      "got": "<missing>",
+      "want": "\"PX-0522\""
+     }
+    ],
+    "note": "$.excluded_samples[5]: got <missing> want \"PX-0522\"",
+    "ref": "i002-interpreter-6017f5"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 123472,
+    "costUsd": 0.069637,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.737,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.excluded_samples[1]",
+      "got": "<missing>",
+      "want": "\"MW-0494\""
+     },
+     {
+      "path": "$.excluded_samples[5]",
+      "got": "<missing>",
+      "want": "\"MW-0627\""
+     },
+     {
+      "path": "$.excluded_samples[got 2]",
+      "got": "\"MW-0586\"",
+      "want": "<not expected>"
+     },
+     {
+      "path": "$.excluded_samples[got 3]",
+      "got": "\"MW-0587\"",
+      "want": "<not expected>"
+     },
+     {
+      "path": "$.excluded_samples[got 4]",
+      "got": "\"MW-0588\"",
+      "want": "<not expected>"
+     }
+    ],
+    "note": "$.excluded_samples[1]: got <missing> want \"MW-0494\"; $.excluded_samples[5]: got <missing> want \"MW-0627\"; +8 more",
+    "ref": "i001-interpreter-de1239"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 185895,
+    "costUsd": 0.090734,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.906,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.conditions[1].km",
+      "got": "25.656988509085316",
+      "want": "20.51718359333944"
+     },
+     {
+      "path": "$.excluded_samples[4]",
+      "got": "<missing>",
+      "want": "\"PX-0180\""
+     },
+     {
+      "path": "$.excluded_samples[got 7]",
+      "got": "\"PX-0340\"",
+      "want": "<not expected>"
+     }
+    ],
+    "note": "$.conditions[1].km: got 25.656988509085316 want 20.51718359333944; $.excluded_samples[4]: got <missing> want \"PX-0180\"; +1 more",
+    "ref": "i000-interpreter-f9a625"
+   }
+  ],
+  "cases": 3,
+  "labeled": 3,
+  "exactRate": 0,
+  "diffs": 3,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [
+   "trace-0",
+   "trace-1",
+   "trace-2"
+  ],
+  "accepted": false,
+  "costUsd": 0.221931195,
+  "calls": 65,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 186112,
+  "error": null,
+  "compare": {
+   "mode": "tolerant",
+   "relTol": 0.05,
+   "absTol": 1e-9,
+   "tolerantKeys": [
+    "km",
+    "vmax"
+   ]
+  },
+  "canonicalExact": 0,
+  "acceptance": {
+   "mode": "strict",
+   "compare": "tolerant",
+   "minQuoteChars": 12,
+   "minQuoteWords": 3,
+   "criteria": {
+    "clean": {
+     "ok": true
+    },
+    "agreement": {
+     "ok": false,
+     "partial": 0.87,
+     "minPartial": 0.9,
+     "partialOk": false,
+     "exactTraces": 0,
+     "labelledTraces": 3,
+     "exactOk": false
+    },
+    "explained": {
+     "ok": false,
+     "cases": [
+      {
+       "id": "trace-0",
+       "mentioned": false,
+       "quotes": [],
+       "verified": null,
+       "ok": false,
+       "reason": "not named in BUILD-NOTES.md"
+      },
+      {
+       "id": "trace-1",
+       "mentioned": false,
+       "quotes": [],
+       "verified": null,
+       "ok": false,
+       "reason": "not named in BUILD-NOTES.md"
+      },
+      {
+       "id": "trace-2",
+       "mentioned": false,
+       "quotes": [],
+       "verified": null,
+       "ok": false,
+       "reason": "not named in BUILD-NOTES.md"
+      }
+     ]
+    }
+   },
+   "passed": [
+    "clean"
+   ],
+   "failed": [
+    "agreement",
+    "explained"
+   ]
+  }
+ },
+ "notes": null,
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i002-interpreter-6017f5",
+   "i001-interpreter-de1239",
+   "i000-interpreter-f9a625"
+  ],
+  "regressionIds": [],
+  "previousSha": null
+ }
+}

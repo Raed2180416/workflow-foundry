@@ -117,12 +117,30 @@ function reach(def, st, need) {
 }
 
 /**
+ * Due instant, breach and warnings of one generation. `gen` is { state, segments, segStart } (a closed generation has
+ * state 'closed'); `until` is the instant its breach is judged at: the query time while it is open, its end (stop,
+ * cancel or reset) once closed. breachedAt is the earliest query time at which `breached` reads true.
+ */
+function judge(def, gen, until) {
+  const dueAt = reach(def, gen, def.targetMs);
+  const inclusive = def.boundary === 'inclusive';
+  const breached = dueAt !== null && (inclusive ? until > dueAt : until >= dueAt);
+  const warnings = def.warnings.map(w => {
+    const wAt = reach(def, gen, w.thresholdMs);
+    return { id: w.id, percent: w.percent, at: wAt, reached: wAt !== null && wAt <= until };
+  });
+  return { dueAt, breached, breachedAt: breached ? (inclusive ? dueAt + 1 : dueAt) : null, warnings };
+}
+
+/**
  * Snapshot of a clock at instant `at` (ISO or ms), counting only history entries with at <= `at`:
  *   { id, state, startedAt, endedAt, resets, totalMs, actualElapsedMs, actualPauseMs, businessElapsedMs,
- *     businessPauseMs, targetMs, activeMs, remainingMs, dueAt, breached, outcome, warnings: [{ id, percent, at,
- *     reached }], anomalies }
- * Instants are epoch ms; business fields are null without a calendar. outcome: 'not-started' | 'pending' | 'met' |
- * 'breached' | 'cancelled'.
+ *     businessPauseMs, targetMs, activeMs, remainingMs, dueAt, breached, breachedAt, outcome, warnings: [{ id,
+ *     percent, at, reached }], generations: [{ startedAt, endedAt, dueAt, breached, breachedAt, warnings }], anomalies }
+ * Instants are epoch ms; business fields are null without a calendar. Every field except `breached`, `breachedAt` and
+ * `generations` describes the current generation (since the last reset). outcome (current generation):
+ * 'not-started' | 'pending' | 'met' | 'breached' | 'cancelled' (a cancelled clock may still be `breached`).
+ * `breached` is true iff some generation, this one included, breached by `at`; it is monotone in `at`.
  */
 export function clockAt(definition, history, at, { onIllegal = 'throw' } = {}) {
   const def = defineClock(definition);
@@ -137,36 +155,31 @@ export function clockAt(definition, history, at, { onIllegal = 'throw' } = {}) {
   const businessElapsedMs = sumBiz(segs), businessPauseMs = sumBiz(pauses);
   const activeMs = def.business ? businessElapsedMs : actualElapsedMs;
   const started = st.state !== 'idle';
-  const dueAt = started ? reach(def, st, def.targetMs) : null;
-  let breached = false, outcome;
+  const closed = st.state === 'stopped' || st.state === 'cancelled';
+  const cur = started ? judge(def, st, closed ? st.endedAt : now) : { dueAt: null, breached: false, breachedAt: null, warnings: def.warnings.map(w => ({ id: w.id, percent: w.percent, at: null, reached: false })) };
+  const generations = st.generations.map(g => ({ startedAt: g.startedAt, endedAt: g.endedAt, ...judge(def, { state: 'closed', segments: g.segments }, g.endedAt) }));
+  let outcome;
   if (!started) outcome = 'not-started';
   else if (st.state === 'cancelled') outcome = 'cancelled';
-  else if (st.state === 'stopped') {
-    breached = dueAt !== null && (def.boundary === 'inclusive' ? st.endedAt > dueAt : st.endedAt >= dueAt);
-    outcome = breached ? 'breached' : 'met';
-  } else {
-    breached = dueAt !== null && (def.boundary === 'inclusive' ? now > dueAt : now >= dueAt);
-    outcome = breached ? 'breached' : 'pending';
-  }
-  const warnings = def.warnings.map(w => {
-    const wAt = started && st.state !== 'cancelled' ? reach(def, st, w.thresholdMs) : null;
-    const until = st.state === 'stopped' ? st.endedAt : now;
-    return { id: w.id, percent: w.percent, at: wAt, reached: wAt !== null && wAt <= until };
-  });
+  else if (st.state === 'stopped') outcome = cur.breached ? 'breached' : 'met';
+  else outcome = cur.breached ? 'breached' : 'pending';
+  const breachTimes = [...generations, cur].filter(g => g.breached).map(g => g.breachedAt);
   return {
     id: def.id, state: st.state, startedAt: st.startedAt, endedAt: st.endedAt, resets: st.resets,
     totalMs: started ? (st.endedAt ?? now) - st.startedAt : 0,
     actualElapsedMs, actualPauseMs, businessElapsedMs, businessPauseMs,
     targetMs: def.targetMs, activeMs, remainingMs: Math.max(0, def.targetMs - activeMs),
-    dueAt, breached, outcome, warnings, anomalies: st.anomalies,
+    dueAt: cur.dueAt, breached: breachTimes.length > 0, breachedAt: breachTimes.length ? Math.min(...breachTimes) : null,
+    outcome, warnings: cur.warnings, generations, anomalies: st.anomalies,
   };
 }
 
 /**
  * A day-count deadline: n business days (calendar's business-day reading) or n calendar days after the anchor's local
  * date in the calendar's zone, optionally rolled ('none' | 'following' | 'preceding' | 'modifiedFollowing' |
- * 'modifiedPreceding'; calendar days only), due at the end of that local day (the last whole second, inclusive) or at a
- * given local time 'HH:MM'. Returns { date, dueAt } (dueAt in epoch ms).
+ * 'modifiedPreceding'; calendar days only), due at the end of that local day (its last millisecond, inclusive: any
+ * instant on the due date is on time; review fix, it was the last whole second) or at a given local time 'HH:MM'.
+ * Returns { date, dueAt } (dueAt in epoch ms).
  */
 export function dueByDays(cal, anchor, n, { unit = 'business', roll = 'none', at = 'end-of-day' } = {}) {
   const c = calendar(cal);
@@ -178,6 +191,6 @@ export function dueByDays(cal, anchor, n, { unit = 'business', roll = 'none', at
     date = addBusinessDays(c, anchorDate, n);
   } else if (unit === 'calendar') date = rollDate(c, addCalendarDays(anchorDate, n), roll);
   else fail('CLOCK_INVALID', `unit must be business or calendar, not ${unit}`);
-  const dueAt = at === 'end-of-day' ? dayBounds(date, c.tz).end - SECOND : fromLocal(date, at, c.tz);
+  const dueAt = at === 'end-of-day' ? dayBounds(date, c.tz).end - 1 : fromLocal(date, at, c.tz);
   return { date, dueAt };
 }
