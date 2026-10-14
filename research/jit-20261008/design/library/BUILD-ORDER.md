@@ -300,3 +300,83 @@ tool-coercion line (0/38). This is the bar the port and baselines b2 and b3 must
 - **T10 / the L6-a re-run:** a hand audit (step 9). A mechanical check that the 15 new lines carry their failure ids
   would confirm only that they were added.
 - **P2–P7:** paid steps.
+
+### M4 typed enumeration, coverage half (2026-10-14, $0; ATTACK-20261014 §3 M4, PROOF-LEDGER K6)
+
+**Decision under the M4 rule: KILL, on the count clause.** At depth ≤ 4, with types and the declared temporal
+constraints, all 33 tasks have more than 100 type-valid compositions:
+- 2,000 on each W-bed rung (R1, R2, R3 × seeds 373–378);
+- 2,000–12,308 on the 15 card fixtures (2,000 on P01's fixture, whose inputs hold no list, like the W-bed tasks).
+
+Coverage is 33/33, so the correct composition is always in the set. Read over the 18 distinct type problems (15 fixtures
+plus three rungs, since the TaskSpec types are per rung), the result is the same. The M4 kill mode holds: the cards'
+types are too coarse to prune, so the composer question stays "not now". The g vs g-enum Haiku comparison is not worth
+its $5–15 as specified. No model, Jev or network call was made. Output: `out/M4-enumeration.{json,md}`.
+
+**Why the counts are large** [M].
+- Card inputs are free text ("any (ITEMS reads it)"). The only typing the cards carry is that a `path` reader needs a
+  list, and that a fixed `fragment.out` must be compatible with the goal.
+- Three cards are universal adapters: P01 (any value to a slot-typed output), P54 (`fn` PARTS to a slot-typed COMBINE)
+  and P20 (a judge to an untyped `result`).
+- The W-bed inputs are text and maps of text, with no list. So types fix only the first position {P01, P20, P54} and
+  the last {P01, P12, P54}: 3 × 15 × 15 × 3 = 2,025 at depth 4, and 2,171 in all.
+- The ten temporal pairs remove 171 of these (7.9%).
+- With the schemas exactly as declared, the counts are 54,240 (every sequence) or 50,624.
+
+**Gold** (`fixtures/enumerate-gold.mjs`, sha256 `29f28d00…`). It was committed in `e9868ec` at 14:30 UTC, before
+`enumerate.mjs` existed.
+- Card fixtures: exactly [card].
+- W-bed: the judged steps of the bed's reference outline, mapped to cards, as an ordered subsequence. R1 is [P03, P16];
+  R2 is [P07, P09] in either order; R3 is [P17, P15 or P12].
+- The W-bed golds need depth 4 (R1, R2) or 3 (R3). Under a fixed code order (length, then S4 rank) the first correct
+  candidate ranks 163 (R1), 212 (R2) and 16 (R3), against Haiku's planned top 20.
+- Secondary gold, the BUILD-ORDER §4 sets: the best single candidate holds 4 of 6 (R1; six cannot fit in four
+  positions), 2 of 3 (R2) and 3 of 3 (R3).
+- Soundness (tested): each card's own fixture and the three step-6 scripted plans are enumerated.
+
+**Sensitivities** (diagnostic, not the rule; all over 33 tasks). None passes both halves.
+
+| setting | tasks over 100 | coverage |
+|---|---|---|
+| each card at most once | 33 | 33/33 |
+| alphabet = the S4 code ranker's shown set | 29 | 27/33 |
+| depth ≤ 3 | 33 | 21/33 |
+| all three | 3 | 15/33 |
+
+**Files.**
+- `enumerate.mjs`: types derived from card.json, the layers raw / typed / temporal, the DFS, and the rule.
+- `m4.mjs`: the task sets and the measurement.
+- `tools/m4-coverage.mjs`: writes the outputs.
+- `fixtures/enumerate-gold.mjs`: the gold.
+- `test/enumerate.test.mjs`: 8 tests. They cover the interfaces; the closed-output assumption, against 24+ fixture
+  outputs; the type predicates; temporal semantics; DFS = brute force; soundness; the rule; and reproduction of the
+  committed result.
+- The library suite runs 127 tests, all green (26 s at `--test-concurrency=2`).
+
+**Card change.** A `temporal` field was added to P03, P07, P16, P17 and P54. Each rule quotes its source line: J1 of
+P03, P17's checklist, the companions of P54 and P58, and the ATTACK's "dedupe before aggregate". P58–P60 are frozen by
+hash, so the rule P58 < P60 lives in `enumerate.mjs` `FROZEN_TEMPORAL`. "Validate before act" declares nothing, because
+a tier-S solver performs no effect.
+
+**Deviations.**
+- No type field was added. Readers and list needs are derived from slot types.
+- Outputs are closed at the top level, because skeletons return exactly the declared keys (tested).
+- The goal check is compatibility, not subsumption.
+- P54 children and P07 handler hashes are not enumerated, so a decomposed solution does not cover a core.
+- The six W-bed seeds give identical counts, so the effective n is 3.
+- A card-fixture gold is one card, so fixture coverage checks the typing more than composition.
+- The readings of P03's "calculation" and of "aggregate" are [I].
+- The W-bed gold is this author's mapping of the bed outlines [I]. No reference workflow (arm c) exists yet.
+- Type-valid is not data-flow-valid. Each card returns only its own output, so for example [P01, P17, P15, P12] is
+  type-valid although P12 cannot see P15's report. The counts are upper bounds for a data-flow typing that the cards do
+  not declare.
+
+**Not done.**
+- Haiku ranking of the top 20, and g vs g-enum on R1–R3 dev: paid, and moot after the kill.
+- S9 probe filtering: live.
+- FD, key and conservation constraints mined from accepted interpreter outputs: no accepted W-bed outputs exist.
+
+**What would change the answer** [I]. Each is a design change, not a tuning:
+- a per-card data-flow contract (fields read, fields passed through);
+- slot types known before S6;
+- per-task constraints from the TaskSpec (APE's mechanism).

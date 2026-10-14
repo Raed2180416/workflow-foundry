@@ -1,0 +1,4963 @@
+{
+ "schema": "library-m4-enumeration/1",
+ "generatedBy": "experiments/library/tools/m4-coverage.mjs",
+ "costUsd": 0,
+ "modelCalls": 0,
+ "jevCalls": 0,
+ "files": {
+  "enumerate": "a6f978bf89e0177910abc5503e2f962fdf0171fd3f3270148b051300723dc939",
+  "gold": "29f28d00351c3726c17a61b12ca2591356d6d494270a26ad41519dad9da9d9fa",
+  "m4": "2707c2045524d1085a5edd2d97a79668fb0c0546ea36c31c95273d4776a49514"
+ },
+ "cardDigests": {
+  "P01": "2edb792907d3737ff3cb1ac8c26e51b7d22824a2b3ddb9d146a01a9cd01eceb9",
+  "P03": "8f77b1e53af3ad48a943cc6d8f97c794bbb81ee04537cd44d8deaa130c364bbc",
+  "P07": "e1b2e089f88670af5990c7a3d58f9edfed23b9eb2eb76588d2586e187f1446cb",
+  "P08": "87d99d11cf7e149ed5247ced2766b4ec5c0f7fd4500b395f3ca255b0736c8adc",
+  "P09": "586d42de54be1c2219e7e22433d54fd51a224fcdf7e26dfbdc96e6a7dc788906",
+  "P12": "5aba43609568ae902dc9073d155f4c9480e67bbe0bc35938b95cd7859fa4ce44",
+  "P13": "3e83fa32a4f75beb9db572666d97b732f72675c66b3af862dee9ededed0d0bac",
+  "P15": "46726acb8aa51c791c7464101a45b1834d3e6abfa663ecd5218bd24dabc117a8",
+  "P16": "1d6405d6bfdbd310c695fb52e3d06ffc63be3444bda14fa6946f9f4002e909fd",
+  "P17": "f6560b1af660a5de8ce42816a35c13cb88b8d83d9417bb3ca4e928dc2f713387",
+  "P20": "a5748f3857f0f8dff1b08c6fb30f17f564713d2e8aa1f33d6acfbdae2a5d23e9",
+  "P54": "fa2dae3cf0604f3c04fd9f39fe42e04d454abb6ed24ac0c8190ce5508b3618c9",
+  "P58": "5f53c4b0fa3a99eae20ab1f24fbdbcdf165b8ccbd14de5a51a3802ec72a644ad",
+  "P59": "867bfb67d07cc86a3814f08608ca61cf6cce7106ffb74bde228003c8c72fba1c",
+  "P60": "9b125abc4610032fca1f5f2064a1c5c48d22e5c49b5e1c12b01d7d3243cd9c5b"
+ },
+ "rule": {
+  "maxCandidates": 100,
+  "overShare": 0.5,
+  "minCoverage": 0.8,
+  "text": "kill if > 100 candidates at depth <= 4 on more than half the tasks, or coverage < 80% (ATTACK-20261014 §3 M4)",
+  "layer": "temporal",
+  "maxDepth": 4
+ },
+ "cards": [
+  {
+   "id": "P01",
+   "readers": [],
+   "needsLists": 0,
+   "out": "slot-typed"
+  },
+  {
+   "id": "P03",
+   "readers": [
+    {
+     "slot": "SOURCES",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "rows",
+    "review"
+   ]
+  },
+  {
+   "id": "P07",
+   "readers": [
+    {
+     "slot": "ITEMS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "routed"
+   ]
+  },
+  {
+   "id": "P08",
+   "readers": [
+    {
+     "slot": "ITEMS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "keep",
+    "drop"
+   ]
+  },
+  {
+   "id": "P09",
+   "readers": [
+    {
+     "slot": "ITEMS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "decided",
+    "review_queue"
+   ]
+  },
+  {
+   "id": "P12",
+   "readers": [
+    {
+     "slot": "ITEMS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": "slot-typed"
+  },
+  {
+   "id": "P13",
+   "readers": [
+    {
+     "slot": "ITEMS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "items"
+   ]
+  },
+  {
+   "id": "P15",
+   "readers": [
+    {
+     "slot": "PARTS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "report",
+    "failed"
+   ]
+  },
+  {
+   "id": "P16",
+   "readers": [
+    {
+     "slot": "ROWS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "clusters"
+   ]
+  },
+  {
+   "id": "P17",
+   "readers": [
+    {
+     "slot": "LEFT",
+     "type": "path"
+    },
+    {
+     "slot": "RIGHT",
+     "type": "path"
+    }
+   ],
+   "needsLists": 2,
+   "out": [
+    "adjustments",
+    "unexplained"
+   ]
+  },
+  {
+   "id": "P20",
+   "readers": [
+    {
+     "slot": "GEN",
+     "type": "judge"
+    }
+   ],
+   "needsLists": 0,
+   "out": [
+    "tries",
+    "review",
+    "result"
+   ]
+  },
+  {
+   "id": "P54",
+   "readers": [
+    {
+     "slot": "PARTS",
+     "type": "fn"
+    }
+   ],
+   "needsLists": 0,
+   "out": "slot-typed"
+  },
+  {
+   "id": "P58",
+   "readers": [
+    {
+     "slot": "ITEMS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "decisions",
+    "noMatch"
+   ]
+  },
+  {
+   "id": "P59",
+   "readers": [
+    {
+     "slot": "SAGAS",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "plans"
+   ]
+  },
+  {
+   "id": "P60",
+   "readers": [
+    {
+     "slot": "CASES",
+     "type": "path"
+    }
+   ],
+   "needsLists": 1,
+   "out": [
+    "clocks"
+   ]
+  }
+ ],
+ "temporal": [
+  {
+   "pair": "P03<P12",
+   "source": "J1: 'Must values be read out of free text ... before any calculation?'; calculation read as the fan cards that compute totals or differences (P12 REDUCE, P15 AGG with a minor-unit identity, P17 AMOUNT/ADJUST) [I] (ATTACK-20261014 M4, added 2026-10-14)"
+  },
+  {
+   "pair": "P03<P15",
+   "source": "J1: 'Must values be read out of free text ... before any calculation?'; calculation read as the fan cards that compute totals or differences (P12 REDUCE, P15 AGG with a minor-unit identity, P17 AMOUNT/ADJUST) [I] (ATTACK-20261014 M4, added 2026-10-14)"
+  },
+  {
+   "pair": "P03<P17",
+   "source": "J1: 'Must values be read out of free text ... before any calculation?'; calculation read as the fan cards that compute totals or differences (P12 REDUCE, P15 AGG with a minor-unit identity, P17 AMOUNT/ADJUST) [I] (ATTACK-20261014 M4, added 2026-10-14)"
+  },
+  {
+   "pair": "P03<P58",
+   "source": "P58 companions: P03 'inputs read from text first' (declared here because P58-P60 are frozen by hash, FROZEN-P58-P60.json)"
+  },
+  {
+   "pair": "P16<P12",
+   "source": "ATTACK-20261014 M4 'dedupe before aggregate'; aggregate read as P12 (map -> code reduce) and P15 (fan-in aggregate) [I] (added 2026-10-14)"
+  },
+  {
+   "pair": "P16<P15",
+   "source": "ATTACK-20261014 M4 'dedupe before aggregate'; aggregate read as P12 (map -> code reduce) and P15 (fan-in aggregate) [I] (added 2026-10-14)"
+  },
+  {
+   "pair": "P16<P17",
+   "source": "checklist (L1-PATTERNS §4 P17): 'A duplicate on one side goes to P16 first'; skeleton guard unique-ids (ATTACK-20261014 M4, added 2026-10-14)"
+  },
+  {
+   "pair": "P54<P15",
+   "source": "companions: P15 'a quorum over the parts that came back' (ATTACK-20261014 M4, added 2026-10-14)"
+  },
+  {
+   "pair": "P58<P07",
+   "source": "P58 companions: P07 'dispatch on the decided outcome' (declared here because P58-P60 are frozen by hash, FROZEN-P58-P60.json; ATTACK-20261014 M4, added 2026-10-14)"
+  },
+  {
+   "pair": "P58<P60",
+   "source": "P60 companions: P58 'targets by a decision table' (P58 and P60 are frozen by hash, FROZEN-P58-P60.json, so the rule is declared here)"
+  }
+ ],
+ "decision": {
+  "all": {
+   "tasks": 33,
+   "over": 33,
+   "overShare": 1,
+   "covered": 33,
+   "coverage": 1,
+   "kill": true,
+   "reasons": [
+    "> 100 candidates on 33 of 33 tasks (more than half)"
+   ]
+  },
+  "distinctProblems": {
+   "tasks": 18,
+   "over": 18,
+   "overShare": 1,
+   "covered": 18,
+   "coverage": 1,
+   "kill": true,
+   "reasons": [
+    "> 100 candidates on 18 of 18 tasks (more than half)"
+   ]
+  },
+  "fixtures": {
+   "tasks": 15,
+   "over": 15,
+   "overShare": 1,
+   "covered": 15,
+   "coverage": 1,
+   "kill": true,
+   "reasons": [
+    "> 100 candidates on 15 of 15 tasks (more than half)"
+   ]
+  },
+  "wbed": {
+   "tasks": 18,
+   "over": 18,
+   "overShare": 1,
+   "covered": 18,
+   "coverage": 1,
+   "kill": true,
+   "reasons": [
+    "> 100 candidates on 18 of 18 tasks (more than half)"
+   ]
+  }
+ },
+ "sensitivityDecisions": {
+  "distinct": {
+   "tasks": 33,
+   "over": 33,
+   "overShare": 1,
+   "covered": 33,
+   "coverage": 1,
+   "kill": true,
+   "reasons": [
+    "> 100 candidates on 33 of 33 tasks (more than half)"
+   ]
+  },
+  "s4Alphabet": {
+   "tasks": 33,
+   "over": 29,
+   "overShare": 0.8787878787878788,
+   "covered": 27,
+   "coverage": 0.8181818181818182,
+   "kill": true,
+   "reasons": [
+    "> 100 candidates on 29 of 33 tasks (more than half)"
+   ]
+  },
+  "depth3": {
+   "tasks": 33,
+   "over": 33,
+   "overShare": 1,
+   "covered": 21,
+   "coverage": 0.6363636363636364,
+   "kill": true,
+   "reasons": [
+    "> 100 candidates on 33 of 33 tasks (more than half)",
+    "coverage 21/33 < 80%"
+   ]
+  },
+  "all": {
+   "tasks": 33,
+   "over": 3,
+   "overShare": 0.09090909090909091,
+   "covered": 15,
+   "coverage": 0.45454545454545453,
+   "kill": true,
+   "reasons": [
+    "coverage 15/33 < 80%"
+   ]
+  }
+ },
+ "rows": [
+  {
+   "set": "fixtures",
+   "id": "fixture:P01",
+   "card": "P01",
+   "inputSource": "inputs (code)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 27,
+     "byDepth": [
+      1,
+      2,
+      6,
+      18
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 3,
+     "byDepth": [
+      1,
+      1,
+      1
+     ],
+     "covered": true
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P01"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P15",
+     "P12",
+     "P01"
+    ],
+    "goldRank": 1,
+    "top5": [
+     "P01",
+     "P54",
+     "P01>P12",
+     "P01>P01",
+     "P20>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P03",
+   "card": "P03",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 50624,
+     "byDepth": [
+      14,
+      210,
+      3150,
+      47250
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 3616
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 10049,
+     "byDepth": [
+      4,
+      52,
+      702,
+      9291
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 31007
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 6296,
+     "byDepth": [
+      4,
+      48,
+      553,
+      5691
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 188,
+     "byDepth": [
+      3,
+      11,
+      39,
+      135
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 758,
+     "byDepth": [
+      4,
+      52,
+      702
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 24,
+     "byDepth": [
+      3,
+      8,
+      13
+     ],
+     "covered": true
+    }
+   },
+   "total": 10049,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P03"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P13",
+     "P03",
+     "P01"
+    ],
+    "goldRank": 2,
+    "top5": [
+     "P12",
+     "P03",
+     "P01",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P07",
+   "card": "P07",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 11613,
+     "byDepth": [
+      4,
+      55,
+      783,
+      10771
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 29443
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7432,
+     "byDepth": [
+      4,
+      51,
+      625,
+      6752
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 170,
+     "byDepth": [
+      2,
+      8,
+      32,
+      128
+     ],
+     "covered": false
+    },
+    "depth3": {
+     "total": 842,
+     "byDepth": [
+      4,
+      55,
+      783
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 20,
+     "byDepth": [
+      2,
+      6,
+      12
+     ],
+     "covered": false
+    }
+   },
+   "total": 11613,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P07"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P13",
+     "P15",
+     "P01"
+    ],
+    "goldRank": 3,
+    "top5": [
+     "P12",
+     "P01",
+     "P07",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P08",
+   "card": "P08",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 11613,
+     "byDepth": [
+      4,
+      55,
+      783,
+      10771
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 29443
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7399,
+     "byDepth": [
+      4,
+      51,
+      624,
+      6720
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 80,
+     "byDepth": [
+      2,
+      6,
+      18,
+      54
+     ],
+     "covered": false
+    },
+    "depth3": {
+     "total": 842,
+     "byDepth": [
+      4,
+      55,
+      783
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 10,
+     "byDepth": [
+      2,
+      4,
+      4
+     ],
+     "covered": false
+    }
+   },
+   "total": 11613,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P08"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P13",
+     "P01"
+    ],
+    "goldRank": 3,
+    "top5": [
+     "P12",
+     "P01",
+     "P08",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P09",
+   "card": "P09",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 11613,
+     "byDepth": [
+      4,
+      55,
+      783,
+      10771
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 29443
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7399,
+     "byDepth": [
+      4,
+      51,
+      624,
+      6720
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 170,
+     "byDepth": [
+      2,
+      8,
+      32,
+      128
+     ],
+     "covered": false
+    },
+    "depth3": {
+     "total": 842,
+     "byDepth": [
+      4,
+      55,
+      783
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 20,
+     "byDepth": [
+      2,
+      6,
+      12
+     ],
+     "covered": false
+    }
+   },
+   "total": 11613,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P09"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P13",
+     "P15",
+     "P01"
+    ],
+    "goldRank": 3,
+    "top5": [
+     "P12",
+     "P01",
+     "P09",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P12",
+   "card": "P12",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 10125,
+     "byDepth": [
+      3,
+      42,
+      630,
+      9450
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 40499
+     }
+    },
+    "temporal": {
+     "total": 8585,
+     "byDepth": [
+      3,
+      41,
+      581,
+      7960
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 32471
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 5475,
+     "byDepth": [
+      3,
+      38,
+      463,
+      4971
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 170,
+     "byDepth": [
+      2,
+      8,
+      32,
+      128
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 625,
+     "byDepth": [
+      3,
+      41,
+      581
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 20,
+     "byDepth": [
+      2,
+      6,
+      12
+     ],
+     "covered": true
+    }
+   },
+   "total": 8585,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P15",
+     "P13",
+     "P01"
+    ],
+    "goldRank": 1,
+    "top5": [
+     "P12",
+     "P01",
+     "P54",
+     "P12>P12",
+     "P15>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P13",
+   "card": "P13",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 11613,
+     "byDepth": [
+      4,
+      55,
+      783,
+      10771
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 29443
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7399,
+     "byDepth": [
+      4,
+      51,
+      624,
+      6720
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 222,
+     "byDepth": [
+      3,
+      12,
+      45,
+      162
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 842,
+     "byDepth": [
+      4,
+      55,
+      783
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 28,
+     "byDepth": [
+      3,
+      9,
+      16
+     ],
+     "covered": true
+    }
+   },
+   "total": 11613,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P13"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P13",
+     "P12",
+     "P03",
+     "P01"
+    ],
+    "goldRank": 1,
+    "top5": [
+     "P13",
+     "P12",
+     "P01",
+     "P54",
+     "P13>P13"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P15",
+   "card": "P15",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 11613,
+     "byDepth": [
+      4,
+      55,
+      783,
+      10771
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 29443
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7493,
+     "byDepth": [
+      4,
+      51,
+      627,
+      6811
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 390,
+     "byDepth": [
+      3,
+      15,
+      69,
+      303
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 842,
+     "byDepth": [
+      4,
+      55,
+      783
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 47,
+     "byDepth": [
+      3,
+      12,
+      32
+     ],
+     "covered": true
+    }
+   },
+   "total": 11613,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P15"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P15",
+     "P13",
+     "P03",
+     "P01"
+    ],
+    "goldRank": 2,
+    "top5": [
+     "P12",
+     "P15",
+     "P01",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P16",
+   "card": "P16",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 10369,
+     "byDepth": [
+      4,
+      53,
+      722,
+      9590
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 30687
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 6507,
+     "byDepth": [
+      4,
+      49,
+      570,
+      5884
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 80,
+     "byDepth": [
+      2,
+      6,
+      18,
+      54
+     ],
+     "covered": false
+    },
+    "depth3": {
+     "total": 779,
+     "byDepth": [
+      4,
+      53,
+      722
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 10,
+     "byDepth": [
+      2,
+      4,
+      4
+     ],
+     "covered": false
+    }
+   },
+   "total": 10369,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P16"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P13",
+     "P01"
+    ],
+    "goldRank": 3,
+    "top5": [
+     "P12",
+     "P01",
+     "P16",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P17",
+   "card": "P17",
+   "inputSource": "inputs (code)",
+   "inputListSites": 2,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 14464,
+     "byDepth": [
+      4,
+      60,
+      900,
+      13500
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 39776
+     }
+    },
+    "temporal": {
+     "total": 12308,
+     "byDepth": [
+      4,
+      59,
+      834,
+      11411
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 4796,
+      "output": 31016
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7917,
+     "byDepth": [
+      4,
+      55,
+      669,
+      7189
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 390,
+     "byDepth": [
+      3,
+      15,
+      69,
+      303
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 897,
+     "byDepth": [
+      4,
+      59,
+      834
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 47,
+     "byDepth": [
+      3,
+      12,
+      32
+     ],
+     "covered": true
+    }
+   },
+   "total": 12308,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P17"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P17",
+     "P12",
+     "P13",
+     "P16",
+     "P01"
+    ],
+    "goldRank": 1,
+    "top5": [
+     "P17",
+     "P12",
+     "P01",
+     "P54",
+     "P17>P17"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P20",
+   "card": "P20",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 11613,
+     "byDepth": [
+      4,
+      55,
+      783,
+      10771
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 29443
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7399,
+     "byDepth": [
+      4,
+      51,
+      624,
+      6720
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 80,
+     "byDepth": [
+      2,
+      6,
+      18,
+      54
+     ],
+     "covered": false
+    },
+    "depth3": {
+     "total": 842,
+     "byDepth": [
+      4,
+      55,
+      783
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 10,
+     "byDepth": [
+      2,
+      4,
+      4
+     ],
+     "covered": false
+    }
+   },
+   "total": 11613,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P20"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P13",
+     "P01"
+    ],
+    "goldRank": 3,
+    "top5": [
+     "P12",
+     "P01",
+     "P20",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P54",
+   "card": "P54",
+   "inputSource": "inputs (code)",
+   "inputListSites": 2,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 10848,
+     "byDepth": [
+      3,
+      45,
+      675,
+      10125
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 43392
+     }
+    },
+    "temporal": {
+     "total": 9100,
+     "byDepth": [
+      3,
+      44,
+      619,
+      8434
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 4796,
+      "output": 34224
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 5812,
+     "byDepth": [
+      3,
+      41,
+      495,
+      5273
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 428,
+     "byDepth": [
+      2,
+      12,
+      66,
+      348
+     ],
+     "covered": false
+    },
+    "depth3": {
+     "total": 666,
+     "byDepth": [
+      3,
+      44,
+      619
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 47,
+     "byDepth": [
+      2,
+      10,
+      35
+     ],
+     "covered": false
+    }
+   },
+   "total": 9100,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P54"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P15",
+     "P16",
+     "P13",
+     "P17",
+     "P01"
+    ],
+    "goldRank": 3,
+    "top5": [
+     "P12",
+     "P01",
+     "P54",
+     "P12>P12",
+     "P15>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P58",
+   "card": "P58",
+   "inputSource": "inputs (code)",
+   "inputListSites": 1,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 13500,
+     "byDepth": [
+      4,
+      56,
+      840,
+      12600
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 0,
+      "output": 37124
+     }
+    },
+    "temporal": {
+     "total": 10557,
+     "byDepth": [
+      4,
+      53,
+      731,
+      9769
+     ],
+     "pruned": {
+      "input": 1,
+      "temporal": 4363,
+      "output": 30499
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 6664,
+     "byDepth": [
+      4,
+      49,
+      579,
+      6032
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 1038,
+     "byDepth": [
+      3,
+      21,
+      138,
+      876
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 788,
+     "byDepth": [
+      4,
+      53,
+      731
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 104,
+     "byDepth": [
+      3,
+      18,
+      83
+     ],
+     "covered": true
+    }
+   },
+   "total": 10557,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P58"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P13",
+     "P15",
+     "P03",
+     "P58",
+     "P01",
+     "P59"
+    ],
+    "goldRank": 2,
+    "top5": [
+     "P12",
+     "P58",
+     "P01",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P59",
+   "card": "P59",
+   "inputSource": "inputs (code)",
+   "inputListSites": 2,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 14464,
+     "byDepth": [
+      4,
+      60,
+      900,
+      13500
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 39776
+     }
+    },
+    "temporal": {
+     "total": 12308,
+     "byDepth": [
+      4,
+      59,
+      834,
+      11411
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 4796,
+      "output": 31016
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7855,
+     "byDepth": [
+      4,
+      55,
+      667,
+      7129
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 1986,
+     "byDepth": [
+      3,
+      27,
+      222,
+      1734
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 897,
+     "byDepth": [
+      4,
+      59,
+      834
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 176,
+     "byDepth": [
+      3,
+      24,
+      149
+     ],
+     "covered": true
+    }
+   },
+   "total": 12308,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P59"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P13",
+     "P15",
+     "P16",
+     "P17",
+     "P59",
+     "P01",
+     "P03",
+     "P58"
+    ],
+    "goldRank": 2,
+    "top5": [
+     "P12",
+     "P59",
+     "P01",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "fixtures",
+   "id": "fixture:P60",
+   "card": "P60",
+   "inputSource": "inputs (code)",
+   "inputListSites": 2,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 14464,
+     "byDepth": [
+      4,
+      60,
+      900,
+      13500
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 39776
+     }
+    },
+    "temporal": {
+     "total": 12308,
+     "byDepth": [
+      4,
+      59,
+      834,
+      11411
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 4796,
+      "output": 31016
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 7889,
+     "byDepth": [
+      4,
+      55,
+      668,
+      7162
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 2244,
+     "byDepth": [
+      3,
+      27,
+      234,
+      1980
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 897,
+     "byDepth": [
+      4,
+      59,
+      834
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 187,
+     "byDepth": [
+      3,
+      24,
+      160
+     ],
+     "covered": true
+    }
+   },
+   "total": 12308,
+   "covered": true,
+   "covering": {
+    "count": 1,
+    "minDepth": 1,
+    "examples": [
+     "P60"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P12",
+     "P15",
+     "P13",
+     "P16",
+     "P17",
+     "P60",
+     "P07",
+     "P09",
+     "P01"
+    ],
+    "goldRank": 2,
+    "top5": [
+     "P12",
+     "P60",
+     "P01",
+     "P54",
+     "P12>P12"
+    ]
+   }
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r1:dev:d3:373",
+   "rung": "r1",
+   "seed": 373,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 1763,
+     "byDepth": [
+      2,
+      9,
+      123,
+      1629
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 91,
+     "byDepth": [
+      2,
+      7,
+      82
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 9,
+    "minDepth": 4,
+    "examples": [
+     "P01>P03>P16>P01",
+     "P01>P03>P16>P12",
+     "P01>P03>P16>P54",
+     "P20>P03>P16>P01",
+     "P20>P03>P16>P12",
+     "P20>P03>P16>P54",
+     "P54>P03>P16>P01",
+     "P54>P03>P16>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P07",
+     "P15",
+     "P20",
+     "P16",
+     "P17",
+     "P60",
+     "P59",
+     "P08",
+     "P09",
+     "P54",
+     "P01"
+    ],
+    "goldRank": 163,
+    "top5": [
+     "P54",
+     "P01",
+     "P20>P12",
+     "P54>P12",
+     "P01>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "executable": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 4,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r1:dev:d3:374",
+   "rung": "r1",
+   "seed": 374,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 1763,
+     "byDepth": [
+      2,
+      9,
+      123,
+      1629
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 91,
+     "byDepth": [
+      2,
+      7,
+      82
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 9,
+    "minDepth": 4,
+    "examples": [
+     "P01>P03>P16>P01",
+     "P01>P03>P16>P12",
+     "P01>P03>P16>P54",
+     "P20>P03>P16>P01",
+     "P20>P03>P16>P12",
+     "P20>P03>P16>P54",
+     "P54>P03>P16>P01",
+     "P54>P03>P16>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P07",
+     "P15",
+     "P20",
+     "P16",
+     "P17",
+     "P60",
+     "P59",
+     "P08",
+     "P09",
+     "P54",
+     "P01"
+    ],
+    "goldRank": 163,
+    "top5": [
+     "P54",
+     "P01",
+     "P20>P12",
+     "P54>P12",
+     "P01>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "executable": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 4,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r1:dev:d3:375",
+   "rung": "r1",
+   "seed": 375,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 1763,
+     "byDepth": [
+      2,
+      9,
+      123,
+      1629
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 91,
+     "byDepth": [
+      2,
+      7,
+      82
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 9,
+    "minDepth": 4,
+    "examples": [
+     "P01>P03>P16>P01",
+     "P01>P03>P16>P12",
+     "P01>P03>P16>P54",
+     "P20>P03>P16>P01",
+     "P20>P03>P16>P12",
+     "P20>P03>P16>P54",
+     "P54>P03>P16>P01",
+     "P54>P03>P16>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P07",
+     "P15",
+     "P20",
+     "P16",
+     "P17",
+     "P60",
+     "P59",
+     "P08",
+     "P09",
+     "P54",
+     "P01"
+    ],
+    "goldRank": 163,
+    "top5": [
+     "P54",
+     "P01",
+     "P20>P12",
+     "P54>P12",
+     "P01>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "executable": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 4,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r1:dev:d3:376",
+   "rung": "r1",
+   "seed": 376,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 1763,
+     "byDepth": [
+      2,
+      9,
+      123,
+      1629
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 91,
+     "byDepth": [
+      2,
+      7,
+      82
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 9,
+    "minDepth": 4,
+    "examples": [
+     "P01>P03>P16>P01",
+     "P01>P03>P16>P12",
+     "P01>P03>P16>P54",
+     "P20>P03>P16>P01",
+     "P20>P03>P16>P12",
+     "P20>P03>P16>P54",
+     "P54>P03>P16>P01",
+     "P54>P03>P16>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P07",
+     "P15",
+     "P20",
+     "P16",
+     "P17",
+     "P60",
+     "P59",
+     "P08",
+     "P09",
+     "P54",
+     "P01"
+    ],
+    "goldRank": 163,
+    "top5": [
+     "P54",
+     "P01",
+     "P20>P12",
+     "P54>P12",
+     "P01>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "executable": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 4,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r1:dev:d3:377",
+   "rung": "r1",
+   "seed": 377,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 1763,
+     "byDepth": [
+      2,
+      9,
+      123,
+      1629
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 91,
+     "byDepth": [
+      2,
+      7,
+      82
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 9,
+    "minDepth": 4,
+    "examples": [
+     "P01>P03>P16>P01",
+     "P01>P03>P16>P12",
+     "P01>P03>P16>P54",
+     "P20>P03>P16>P01",
+     "P20>P03>P16>P12",
+     "P20>P03>P16>P54",
+     "P54>P03>P16>P01",
+     "P54>P03>P16>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P07",
+     "P15",
+     "P20",
+     "P16",
+     "P17",
+     "P60",
+     "P59",
+     "P08",
+     "P09",
+     "P54",
+     "P01"
+    ],
+    "goldRank": 163,
+    "top5": [
+     "P54",
+     "P01",
+     "P20>P12",
+     "P54>P12",
+     "P01>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "executable": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 4,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r1:dev:d3:378",
+   "rung": "r1",
+   "seed": 378,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 1763,
+     "byDepth": [
+      2,
+      9,
+      123,
+      1629
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 91,
+     "byDepth": [
+      2,
+      7,
+      82
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 9,
+    "minDepth": 4,
+    "examples": [
+     "P01>P03>P16>P01",
+     "P01>P03>P16>P12",
+     "P01>P03>P16>P54",
+     "P20>P03>P16>P01",
+     "P20>P03>P16>P12",
+     "P20>P03>P16>P54",
+     "P54>P03>P16>P01",
+     "P54>P03>P16>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P07",
+     "P15",
+     "P20",
+     "P16",
+     "P17",
+     "P60",
+     "P59",
+     "P08",
+     "P09",
+     "P54",
+     "P01"
+    ],
+    "goldRank": 163,
+    "top5": [
+     "P54",
+     "P01",
+     "P20>P12",
+     "P54>P12",
+     "P01>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "executable": [
+     "P01",
+     "P03",
+     "P13",
+     "P16",
+     "P17",
+     "P20"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 4,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r2:dev:d3:373",
+   "rung": "r2",
+   "seed": 373,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 50624,
+     "byDepth": [
+      14,
+      210,
+      3150,
+      47250
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 3616
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 597,
+     "byDepth": [
+      1,
+      4,
+      48,
+      544
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 34,
+     "byDepth": [
+      1,
+      3,
+      30
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 18,
+    "minDepth": 4,
+    "examples": [
+     "P01>P07>P09>P01",
+     "P01>P07>P09>P12",
+     "P01>P07>P09>P54",
+     "P01>P09>P07>P01",
+     "P01>P09>P07>P12",
+     "P01>P09>P07>P54",
+     "P20>P07>P09>P01",
+     "P20>P07>P09>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P09",
+     "P08",
+     "P07",
+     "P15",
+     "P20",
+     "P58",
+     "P01",
+     "P16",
+     "P17"
+    ],
+    "goldRank": 212,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P07",
+     "P08",
+     "P09",
+     "P05"
+    ],
+    "executable": [
+     "P07",
+     "P08",
+     "P09"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 2,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r2:dev:d3:374",
+   "rung": "r2",
+   "seed": 374,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 50624,
+     "byDepth": [
+      14,
+      210,
+      3150,
+      47250
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 3616
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 597,
+     "byDepth": [
+      1,
+      4,
+      48,
+      544
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 34,
+     "byDepth": [
+      1,
+      3,
+      30
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 18,
+    "minDepth": 4,
+    "examples": [
+     "P01>P07>P09>P01",
+     "P01>P07>P09>P12",
+     "P01>P07>P09>P54",
+     "P01>P09>P07>P01",
+     "P01>P09>P07>P12",
+     "P01>P09>P07>P54",
+     "P20>P07>P09>P01",
+     "P20>P07>P09>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P09",
+     "P08",
+     "P07",
+     "P15",
+     "P20",
+     "P58",
+     "P01",
+     "P16",
+     "P17"
+    ],
+    "goldRank": 212,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P07",
+     "P08",
+     "P09",
+     "P05"
+    ],
+    "executable": [
+     "P07",
+     "P08",
+     "P09"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 2,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r2:dev:d3:375",
+   "rung": "r2",
+   "seed": 375,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 50624,
+     "byDepth": [
+      14,
+      210,
+      3150,
+      47250
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 3616
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 597,
+     "byDepth": [
+      1,
+      4,
+      48,
+      544
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 34,
+     "byDepth": [
+      1,
+      3,
+      30
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 18,
+    "minDepth": 4,
+    "examples": [
+     "P01>P07>P09>P01",
+     "P01>P07>P09>P12",
+     "P01>P07>P09>P54",
+     "P01>P09>P07>P01",
+     "P01>P09>P07>P12",
+     "P01>P09>P07>P54",
+     "P20>P07>P09>P01",
+     "P20>P07>P09>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P09",
+     "P08",
+     "P07",
+     "P15",
+     "P20",
+     "P58",
+     "P01",
+     "P16",
+     "P17"
+    ],
+    "goldRank": 212,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P07",
+     "P08",
+     "P09",
+     "P05"
+    ],
+    "executable": [
+     "P07",
+     "P08",
+     "P09"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 2,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r2:dev:d3:376",
+   "rung": "r2",
+   "seed": 376,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 50624,
+     "byDepth": [
+      14,
+      210,
+      3150,
+      47250
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 3616
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 597,
+     "byDepth": [
+      1,
+      4,
+      48,
+      544
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 34,
+     "byDepth": [
+      1,
+      3,
+      30
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 18,
+    "minDepth": 4,
+    "examples": [
+     "P01>P07>P09>P01",
+     "P01>P07>P09>P12",
+     "P01>P07>P09>P54",
+     "P01>P09>P07>P01",
+     "P01>P09>P07>P12",
+     "P01>P09>P07>P54",
+     "P20>P07>P09>P01",
+     "P20>P07>P09>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P09",
+     "P08",
+     "P07",
+     "P15",
+     "P20",
+     "P58",
+     "P01",
+     "P16",
+     "P17"
+    ],
+    "goldRank": 212,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P07",
+     "P08",
+     "P09",
+     "P05"
+    ],
+    "executable": [
+     "P07",
+     "P08",
+     "P09"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 2,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r2:dev:d3:377",
+   "rung": "r2",
+   "seed": 377,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 50624,
+     "byDepth": [
+      14,
+      210,
+      3150,
+      47250
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 3616
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 597,
+     "byDepth": [
+      1,
+      4,
+      48,
+      544
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 34,
+     "byDepth": [
+      1,
+      3,
+      30
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 18,
+    "minDepth": 4,
+    "examples": [
+     "P01>P07>P09>P01",
+     "P01>P07>P09>P12",
+     "P01>P07>P09>P54",
+     "P01>P09>P07>P01",
+     "P01>P09>P07>P12",
+     "P01>P09>P07>P54",
+     "P20>P07>P09>P01",
+     "P20>P07>P09>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P09",
+     "P08",
+     "P07",
+     "P15",
+     "P20",
+     "P58",
+     "P01",
+     "P16",
+     "P17"
+    ],
+    "goldRank": 212,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P07",
+     "P08",
+     "P09",
+     "P05"
+    ],
+    "executable": [
+     "P07",
+     "P08",
+     "P09"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 2,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r2:dev:d3:378",
+   "rung": "r2",
+   "seed": 378,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 50624,
+     "byDepth": [
+      14,
+      210,
+      3150,
+      47250
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 3616
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 597,
+     "byDepth": [
+      1,
+      4,
+      48,
+      544
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": false
+    },
+    "all": {
+     "total": 34,
+     "byDepth": [
+      1,
+      3,
+      30
+     ],
+     "covered": false
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 18,
+    "minDepth": 4,
+    "examples": [
+     "P01>P07>P09>P01",
+     "P01>P07>P09>P12",
+     "P01>P07>P09>P54",
+     "P01>P09>P07>P01",
+     "P01>P09>P07>P12",
+     "P01>P09>P07>P54",
+     "P20>P07>P09>P01",
+     "P20>P07>P09>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P09",
+     "P08",
+     "P07",
+     "P15",
+     "P20",
+     "P58",
+     "P01",
+     "P16",
+     "P17"
+    ],
+    "goldRank": 212,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P07",
+     "P08",
+     "P09",
+     "P05"
+    ],
+    "executable": [
+     "P07",
+     "P08",
+     "P09"
+    ],
+    "bestCandidateRecall": 0.6666666666666666,
+    "bestHits": 2,
+    "fullContainmentPossible": false
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r3:dev:d3:373",
+   "rung": "r3",
+   "seed": 373,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 709,
+     "byDepth": [
+      1,
+      4,
+      52,
+      652
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 37,
+     "byDepth": [
+      1,
+      3,
+      33
+     ],
+     "covered": true
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 93,
+    "minDepth": 3,
+    "examples": [
+     "P01>P01>P17>P12",
+     "P01>P03>P17>P12",
+     "P01>P07>P17>P12",
+     "P01>P08>P17>P12",
+     "P01>P09>P17>P12",
+     "P01>P12>P17>P12",
+     "P01>P13>P17>P12",
+     "P01>P15>P17>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P17",
+     "P07",
+     "P15",
+     "P16",
+     "P20",
+     "P60",
+     "P59",
+     "P01",
+     "P08",
+     "P09"
+    ],
+    "goldRank": 16,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P12",
+     "P14",
+     "P15",
+     "P17"
+    ],
+    "executable": [
+     "P12",
+     "P15",
+     "P17"
+    ],
+    "bestCandidateRecall": 1,
+    "bestHits": 3,
+    "fullContainmentPossible": true
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r3:dev:d3:374",
+   "rung": "r3",
+   "seed": 374,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 709,
+     "byDepth": [
+      1,
+      4,
+      52,
+      652
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 37,
+     "byDepth": [
+      1,
+      3,
+      33
+     ],
+     "covered": true
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 93,
+    "minDepth": 3,
+    "examples": [
+     "P01>P01>P17>P12",
+     "P01>P03>P17>P12",
+     "P01>P07>P17>P12",
+     "P01>P08>P17>P12",
+     "P01>P09>P17>P12",
+     "P01>P12>P17>P12",
+     "P01>P13>P17>P12",
+     "P01>P15>P17>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P17",
+     "P07",
+     "P15",
+     "P16",
+     "P20",
+     "P60",
+     "P59",
+     "P01",
+     "P08",
+     "P09"
+    ],
+    "goldRank": 16,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P12",
+     "P14",
+     "P15",
+     "P17"
+    ],
+    "executable": [
+     "P12",
+     "P15",
+     "P17"
+    ],
+    "bestCandidateRecall": 1,
+    "bestHits": 3,
+    "fullContainmentPossible": true
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r3:dev:d3:375",
+   "rung": "r3",
+   "seed": 375,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 709,
+     "byDepth": [
+      1,
+      4,
+      52,
+      652
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 37,
+     "byDepth": [
+      1,
+      3,
+      33
+     ],
+     "covered": true
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 93,
+    "minDepth": 3,
+    "examples": [
+     "P01>P01>P17>P12",
+     "P01>P03>P17>P12",
+     "P01>P07>P17>P12",
+     "P01>P08>P17>P12",
+     "P01>P09>P17>P12",
+     "P01>P12>P17>P12",
+     "P01>P13>P17>P12",
+     "P01>P15>P17>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P17",
+     "P07",
+     "P15",
+     "P16",
+     "P20",
+     "P60",
+     "P59",
+     "P01",
+     "P08",
+     "P09"
+    ],
+    "goldRank": 16,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P12",
+     "P14",
+     "P15",
+     "P17"
+    ],
+    "executable": [
+     "P12",
+     "P15",
+     "P17"
+    ],
+    "bestCandidateRecall": 1,
+    "bestHits": 3,
+    "fullContainmentPossible": true
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r3:dev:d3:376",
+   "rung": "r3",
+   "seed": 376,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 709,
+     "byDepth": [
+      1,
+      4,
+      52,
+      652
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 37,
+     "byDepth": [
+      1,
+      3,
+      33
+     ],
+     "covered": true
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 93,
+    "minDepth": 3,
+    "examples": [
+     "P01>P01>P17>P12",
+     "P01>P03>P17>P12",
+     "P01>P07>P17>P12",
+     "P01>P08>P17>P12",
+     "P01>P09>P17>P12",
+     "P01>P12>P17>P12",
+     "P01>P13>P17>P12",
+     "P01>P15>P17>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P17",
+     "P07",
+     "P15",
+     "P16",
+     "P20",
+     "P60",
+     "P59",
+     "P01",
+     "P08",
+     "P09"
+    ],
+    "goldRank": 16,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P12",
+     "P14",
+     "P15",
+     "P17"
+    ],
+    "executable": [
+     "P12",
+     "P15",
+     "P17"
+    ],
+    "bestCandidateRecall": 1,
+    "bestHits": 3,
+    "fullContainmentPossible": true
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r3:dev:d3:377",
+   "rung": "r3",
+   "seed": 377,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 709,
+     "byDepth": [
+      1,
+      4,
+      52,
+      652
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 37,
+     "byDepth": [
+      1,
+      3,
+      33
+     ],
+     "covered": true
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 93,
+    "minDepth": 3,
+    "examples": [
+     "P01>P01>P17>P12",
+     "P01>P03>P17>P12",
+     "P01>P07>P17>P12",
+     "P01>P08>P17>P12",
+     "P01>P09>P17>P12",
+     "P01>P12>P17>P12",
+     "P01>P13>P17>P12",
+     "P01>P15>P17>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P17",
+     "P07",
+     "P15",
+     "P16",
+     "P20",
+     "P60",
+     "P59",
+     "P01",
+     "P08",
+     "P09"
+    ],
+    "goldRank": 16,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P12",
+     "P14",
+     "P15",
+     "P17"
+    ],
+    "executable": [
+     "P12",
+     "P15",
+     "P17"
+    ],
+    "bestCandidateRecall": 1,
+    "bestHits": 3,
+    "fullContainmentPossible": true
+   },
+   "scriptedPlanEnumerated": true
+  },
+  {
+   "set": "wbed",
+   "id": "wbed-r3:dev:d3:378",
+   "rung": "r3",
+   "seed": 378,
+   "inputSource": "TaskSpec (step-6 script)",
+   "inputListSites": 0,
+   "layers": {
+    "raw": {
+     "total": 54240,
+     "byDepth": [
+      15,
+      225,
+      3375,
+      50625
+     ],
+     "pruned": {
+      "input": 0,
+      "temporal": 0,
+      "output": 0
+     }
+    },
+    "typed": {
+     "total": 2171,
+     "byDepth": [
+      2,
+      9,
+      135,
+      2025
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 0,
+      "output": 8677
+     }
+    },
+    "temporal": {
+     "total": 2000,
+     "byDepth": [
+      2,
+      9,
+      132,
+      1857
+     ],
+     "pruned": {
+      "input": 12,
+      "temporal": 774,
+      "output": 7624
+     }
+    }
+   },
+   "sensitivities": {
+    "distinct": {
+     "total": 1086,
+     "byDepth": [
+      2,
+      7,
+      89,
+      988
+     ],
+     "covered": true
+    },
+    "s4Alphabet": {
+     "total": 709,
+     "byDepth": [
+      1,
+      4,
+      52,
+      652
+     ],
+     "covered": true
+    },
+    "depth3": {
+     "total": 143,
+     "byDepth": [
+      2,
+      9,
+      132
+     ],
+     "covered": true
+    },
+    "all": {
+     "total": 37,
+     "byDepth": [
+      1,
+      3,
+      33
+     ],
+     "covered": true
+    }
+   },
+   "total": 2000,
+   "covered": true,
+   "covering": {
+    "count": 93,
+    "minDepth": 3,
+    "examples": [
+     "P01>P01>P17>P12",
+     "P01>P03>P17>P12",
+     "P01>P07>P17>P12",
+     "P01>P08>P17>P12",
+     "P01>P09>P17>P12",
+     "P01>P12>P17>P12",
+     "P01>P13>P17>P12",
+     "P01>P15>P17>P12"
+    ]
+   },
+   "codeOrder": {
+    "ranking": [
+     "P03",
+     "P13",
+     "P12",
+     "P17",
+     "P07",
+     "P15",
+     "P16",
+     "P20",
+     "P60",
+     "P59",
+     "P01",
+     "P08",
+     "P09"
+    ],
+    "goldRank": 16,
+    "top5": [
+     "P01",
+     "P54",
+     "P20>P12",
+     "P01>P12",
+     "P54>P12"
+    ]
+   },
+   "inputCrossCheck": {
+    "listSitesTaskSpec": 0,
+    "listSitesInputs": 0,
+    "totalFromInputs": 2000,
+    "agrees": true
+   },
+   "declared": {
+    "members": [
+     "P12",
+     "P14",
+     "P15",
+     "P17"
+    ],
+    "executable": [
+     "P12",
+     "P15",
+     "P17"
+    ],
+    "bestCandidateRecall": 1,
+    "bestHits": 3,
+    "fullContainmentPossible": true
+   },
+   "scriptedPlanEnumerated": true
+  }
+ ]
+}

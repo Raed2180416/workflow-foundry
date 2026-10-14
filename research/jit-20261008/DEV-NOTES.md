@@ -758,3 +758,67 @@ It does not beat them per success on kinetics. Success parity with Opus fails: 2
 2. R0-K's flag-forced shadows make the floor's cost assumption moot.
 3. The next $0 lever to price is a records comparator at the oracle's own thresholds plus a Haiku-agent shadow tier. Both
    are engine changes.
+
+**D28. M4, code enumerates and Haiku ranks: the coverage half is killed on its count clause. At depth ≤ 4, every task
+has more than 100 type-valid compositions, while coverage is 100% ($0; ATTACK-20261014 §3 M4, PROOF-LEDGER K6).**
+
+*Development evidence only: card fixtures and W-bed dev seeds 373–378. No model, Jev or network call was made, and no
+Haiku ranking was run. The gold (`experiments/library/fixtures/enumerate-gold.mjs`, sha256 `29f28d00…`) was committed in
+`e9868ec` before the enumerator existed. Code: `experiments/library/enumerate.mjs`, `m4.mjs` and
+`tools/m4-coverage.mjs`. Output: `research/jit-20261008/design/library/out/M4-enumeration.{json,md}`. Tests:
+`experiments/library/test/enumerate.test.mjs` (8). The details are in design/library/BUILD-ORDER.md, "Implementation
+status", M4.*
+
+**1. Method.**
+- The alphabet is the 15 executable tier-S cards. A composition is S5's plan: cards in order, each reading the task
+  inputs and the previous card's output.
+- Types are derived by code from card.json:
+  - a `path` reader named in `fragment.in` needs a list;
+  - `fn` and `judge` readers accept any value;
+  - a null `fragment.out` is slot-typed;
+  - fixed outputs are closed at the top level and must be compatible with the goal.
+- Temporal constraints are a new `temporal` field on P03, P07, P16, P17 and P54, each rule quoting its source line, plus
+  one rule between the frozen cards P58 and P60. That makes ten pairs.
+- Tasks:
+  - the positive fixture of each card (gold: exactly [card]);
+  - W-bed R1–R3 × seeds 373–378 with the step-6 TaskSpecs. The gold is the judged steps of the bed outline as an ordered
+    subsequence: R1 [P03, P16]; R2 [P07, P09] in either order; R3 [P17, P15 or P12].
+
+**2. Result** (the rule's layer: types + temporal, depth ≤ 4).
+
+| task set | candidates per task | tasks over 100 | coverage |
+|---|---|---|---|
+| W-bed R1, R2, R3 (same on all 6 seeds) | 2,000 each (2 / 9 / 132 / 1,857 by depth) | 18 of 18 | 18/18 |
+| card fixtures | 2,000–12,308 | 15 of 15 | 15/15 |
+| all | — | 33 of 33 | 33/33 |
+
+- With types alone the W-bed count is 2,171. With the schemas as declared it is 54,240 (R2 50,624). The temporal pairs
+  remove 7.9% on W-bed and 8–26% on the fixtures.
+- Under a fixed code order (length, then S4 rank), the first correct W-bed candidate ranks 163 (R1), 212 (R2) and 16
+  (R3).
+- Sensitivities, over 33 tasks, as tasks over 100 and coverage:
+  - each card at most once: 33, 33/33;
+  - the S4 shown set as alphabet: 29, 27/33;
+  - depth ≤ 3: 33, 21/33;
+  - all three: 3, 15/33.
+
+  None passes both halves.
+
+**3. Why.**
+- Card inputs are untyped ("any (ITEMS reads it)").
+- P01, P54 and P20 accept any value, and P01, P12 and P54 can emit any value.
+- On list-free inputs the types fix only the first position (3 cards) and the last (3 cards): 3 × 15 × 15 × 3 at depth 4.
+- What distinguishes the correct plan, which judged structure the task needs, is semantic, not a type. This is the
+  APE finding ("type-only composition exceeds 100 workflows at length 4"), now measured on our cards.
+
+**4. Caveats.**
+- The W-bed gold is the author's mapping of the bed outlines to cards [I]. No reference workflow exists yet.
+- A fixture gold is one card, so fixture coverage checks the typing.
+- The W-bed effective n is 3.
+- Type-valid is not data-flow-valid, so the counts are upper bounds for a data-flow typing the cards do not declare.
+
+**Consequences.**
+1. Do not spend the $5–15 on g vs g-enum as specified.
+2. The composer question stays "not now".
+3. Enumeration becomes viable only after a design change: per-card data-flow contracts, slot types known before S6, or
+   per-task constraints from the TaskSpec. Re-run `tools/m4-coverage.mjs` after any of these.
