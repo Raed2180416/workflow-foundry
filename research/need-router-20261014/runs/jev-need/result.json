@@ -1,0 +1,93 @@
+{
+ "n": 96,
+ "errors": 0,
+ "model": "jev-1.13.0",
+ "jevModel": "jev-latest",
+ "aurocJev": 0.5299609205384281,
+ "aurocSmallInput": 0.7064698219713418,
+ "families": [
+  {
+   "key": "wbed-r0:dev:d3",
+   "n": 12,
+   "pass": 12,
+   "p": 2.67,
+   "direct": 8.849999999999998,
+   "passRate": 1,
+   "meanPSingle": 0.2225,
+   "meanPDirect": 0.7374999999999998
+  },
+  {
+   "key": "wbed-r1:dev:d3",
+   "n": 12,
+   "pass": 0,
+   "p": 1.0299999999999998,
+   "direct": 1.3900000000000001,
+   "passRate": 0,
+   "meanPSingle": 0.08583333333333332,
+   "meanPDirect": 0.11583333333333334
+  },
+  {
+   "key": "wbed-r2:dev:d3",
+   "n": 12,
+   "pass": 4,
+   "p": 4.01,
+   "direct": 4.079999999999999,
+   "passRate": 0.3333333333333333,
+   "meanPSingle": 0.33416666666666667,
+   "meanPDirect": 0.3399999999999999
+  },
+  {
+   "key": "wbed-r3:dev:d3",
+   "n": 12,
+   "pass": 12,
+   "p": 2.34,
+   "direct": 2.9299999999999997,
+   "passRate": 1,
+   "meanPSingle": 0.19499999999999998,
+   "meanPDirect": 0.24416666666666664
+  },
+  {
+   "key": "wbed-r3p:dev:d3",
+   "n": 12,
+   "pass": 12,
+   "p": 0.4,
+   "direct": 1.0399999999999998,
+   "passRate": 1,
+   "meanPSingle": 0.03333333333333333,
+   "meanPDirect": 0.08666666666666666
+  },
+  {
+   "key": "wbed-r4:dev:d3",
+   "n": 12,
+   "pass": 0,
+   "p": 1.8699999999999999,
+   "direct": 2.45,
+   "passRate": 0,
+   "meanPSingle": 0.15583333333333332,
+   "meanPDirect": 0.2041666666666667
+  },
+  {
+   "key": "wbed-r5:dev:d3",
+   "n": 12,
+   "pass": 0,
+   "p": 0.8800000000000001,
+   "direct": 1.6099999999999999,
+   "passRate": 0,
+   "meanPSingle": 0.07333333333333335,
+   "meanPDirect": 0.13416666666666666
+  },
+  {
+   "key": "wbed-r6:dev:d3",
+   "n": 12,
+   "pass": 7,
+   "p": 0.29000000000000004,
+   "direct": 0.22999999999999998,
+   "passRate": 0.5833333333333334,
+   "meanPSingle": 0.02416666666666667,
+   "meanPDirect": 0.019166666666666665
+  }
+ ],
+ "spearmanFamily": -0.047619047619047616,
+ "accuracyAt05": 0.5104166666666666,
+ "baseRate": 0.4895833333333333
+}
