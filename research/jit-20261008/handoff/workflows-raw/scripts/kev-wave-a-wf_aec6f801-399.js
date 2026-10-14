@@ -1,0 +1,11 @@
+export const meta = {
+  name: 'kev-wave-a',
+  description: 'Kev data factory wave A: build each group (records, kinetics, failures-code, construction-crossfamily) per JUDGE-BUILD-PLAN.json, then adversarial review and fix',
+  phases: [{ title: 'Build' }, { title: 'Review' }],
+}
+const RULES = args.rules
+const run = await pipeline(args.groups,
+  g => agent(`${RULES}\n\nYOUR GROUP: "${g}". Read its entry in research/kev-20261007/JUDGE-BUILD-PLAN.json (scope, outputs, acceptanceTests, estimatedRecords, cutLine) and the program sections it cites. TASK (build): implement the group completely, meeting every acceptance test (as node:test tests in its test file), using the contracts-lib APIs (experiments/kev-data/README.md). Run the group's tests and the contracts-lib tests (node --test experiments/kev-data/test/*.test.mjs). Report: files written, each acceptance test pass/fail/deferred-under-cutLine with reason, measured record counts per slice, surface-diversity numbers, and every spec ambiguity you resolved.`, { label: `build:${g}`, phase: 'Build', model: 'sonnet', effort: 'xhigh' }),
+  (rep, g) => agent(`${RULES}\n\nYOUR GROUP: "${g}" (entry in research/kev-20261007/JUDGE-BUILD-PLAN.json). TASK (adversarial review, then fix): another agent built this group (report below). Verify every acceptance test truly holds (seed defects and confirm the tests fail), hunt for label leakage and shortcuts (bag-of-words probe via lib/probe.mjs on train vs held-out slices; partial-input baselines; held-out wording/template leaks into train; reserved worlds; test-split seeds used only for test slices and never inspected), check labels come only from generator truth/simulators/oracles/replays (never an LLM), that the program's decidability audit (§2.7) is implemented, and that nothing was written under src/ or other frozen paths. Then FIX every P0/P1 defect yourself (edit only this group's outputs and its test file), re-run all kev-data tests, and return: defects found (P0/P1/P2) with what you fixed, final acceptance status, and open items.\n\nBUILD REPORT:\n${rep}`, { label: `review:${g}`, phase: 'Review', model: 'opus', effort: 'xhigh' }).then(r => ({ group: g, build: rep, review: r })),
+)
+return run

@@ -1,0 +1,3 @@
+{"type":"launched"}
+{"type":"started","key":"v2:4f7d06d99ee4e13ce9e6f87a53cf3d649f30f819e0ab75a4723663f929f9093a","agentId":"a7dbacfaf12dcddec","label":"build:incident","phase":"Build"}
+{"type":"started","key":"v2:950f44a029f267d3c88ccfa1866e6afe9270133768cc8c93f18777609e99a294","agentId":"a855cd53a8c53cfd6","label":"build:synth","phase":"Build"}
