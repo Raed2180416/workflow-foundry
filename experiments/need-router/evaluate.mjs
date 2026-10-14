@@ -45,14 +45,14 @@ export const PROSE_FEATURES = Object.freeze(['effectVerbs', 'timeWords', 'humanW
 export const MIN_USEFUL = 0.03;                     // minimum useful effect, success-equivalents per task (decision 1)
 export const CO_PRIMARY = Object.freeze(['NR-static', 'NR-probe']);
 export const N1 = makeCell(1, 1, 1);                // the intrinsic-need reading (C7a): V = $1, W = V, N = 1
-export const SEED_RANGES = Object.freeze({ example: [601, 609], train: [610, 650], heldout: [8801, 8824], e2e: [8825, 8836], drift: [8837, 8848] });
+export const SEED_RANGES = Object.freeze({ example: [601, 609], train: [610, 650], heldout: [8801, 8824], e2e: [8825, 8836], drift: [8837, 8848], sealed: null });
 export const MATRIX_FORMAT = `A labels root holds one directory per stage (or is one): jobs.json, matrix.jsonl, builds.jsonl, decisions.jsonl.
 jobs.json      { "<job>": { cluster, split: train|heldout|sealed|e2e, family, kind?, band?, forced?, near?, features: {<8 trusted keys>, <prose keys>?},
                  requirements?: [typed hard requirements], verifier?, modes?|masked?, text?, paraphrases?, exampleSeeds?, exampleHashes?,
                  tolerance?: { scoreThreshold }, metamorph?: { of: <job>, expect: same|different } } }   (label-free; written before labels)
-matrix.jsonl   one row per job x mode x task x replicate: { job, mode, task, rep, seed, taskHash, pass, delivered, schemaValid, selfVerdict,
+matrix.jsonl   (or label-run's rows.jsonl) one row per job x mode x task x replicate: { job, mode, task, rep, seed, taskHash, pass, delivered, schemaValid, selfVerdict,
                  deployableVerdict, score?, passAt?, usdRepriced, usdReported, usdImputed, ms, tokens, error, at? }   (metrics.mjs needTable)
-builds.jsonl   one row per job x built/guided mode x lineage: { job, mode, rep, usd, usdImputed?, failed, minutes, artifactSha, runSolverCalls,
+builds.jsonl   (builds.final.jsonl preferred) one row per job x built/guided mode x lineage: { job, mode, rep, usd, usdImputed?, failed, minutes, artifactSha, runSolverCalls,
                  hiddenPathAttempts, nestedModelAttempts, scoreChecks, probeSeeds }
 decisions.jsonl recorded policies: { policy: judge-H|NR-probe|NR-probe-oracle, job, cell: <cell key>|null, mode, routingUsd, pred?: {p, usd}, needsWorkflow? }`;
 
@@ -81,7 +81,9 @@ export function loadLabels(root, { trainOnly = false } = {}) {
     const hasTrain = Object.values(J).some(m => m.split === 'train');
     if (trainOnly && !hasTrain) { skipped.stages.push(path.relative(ROOT, dir)); continue; }
     stages.push(path.relative(ROOT, dir));
-    for (const [file, out] of [['matrix.jsonl', rows], ['builds.jsonl', builds]]) for (const r of readJsonl(path.join(dir, file))) {
+    // label-run.mjs --out names: rows.jsonl (matrix rows) and builds.final.jsonl (its builds.jsonl is the append log).
+    const pick = names => names.map(n => path.join(dir, n)).find(f => existsSync(f)) ?? path.join(dir, names[0]);
+    for (const [file, out] of [[pick(['matrix.jsonl', 'rows.jsonl']), rows], [pick(['builds.final.jsonl', 'builds.jsonl']), builds]]) for (const r of readJsonl(file)) {
       if (trainOnly && meta[r.job]?.split !== 'train') { skipped.rows += 1; continue; }
       out.push(r);
     }
@@ -466,8 +468,12 @@ export function hullAt(hull, x) {
   return hull[hull.length - 1].y;
 }
 
-/** Slider calibration at N = 10, W = V: predicted against realised success (±0.10) and $ per task (±30%); realised values non-decreasing in V. */
-export function sliderCalibration(labels, decP, jobs, { N = 10, wOverV = 1, Vs = V_GRID, tolP = 0.10, tolUsd = 0.30 } = {}) {
+/**
+ * Slider calibration at N = 10, W = V: predicted against realised success (±0.10) and $ per task (±30%); realised success
+ * and $ per task non-decreasing in V. A fall in realised success smaller than the program's noise floor (δ = 0.03,
+ * FLOOR_POINTS) is not counted as a decrease (`monotoneTolP`; 0 restores the literal rule); dollars are strict.
+ */
+export function sliderCalibration(labels, decP, jobs, { N = 10, wOverV = 1, Vs = V_GRID, tolP = 0.10, tolUsd = 0.30, monotoneTolP = DELTA } = {}) {
   const positions = Vs.map(V => {
     const c = makeCell(V, N, wOverV), ds = jobs.map(j => [j, decP.get(j).get(c.key)]);
     const real = { p: avg(ds.map(([j, d]) => labels.stats(j, d.mode).s)), usd: avg(ds.map(([j, d]) => labels.usd(j, c, d.mode) + d.routingUsd / N)) };
@@ -477,7 +483,7 @@ export function sliderCalibration(labels, decP, jobs, { N = 10, wOverV = 1, Vs =
     return { V, real, pred, miss };
   });
   const sorted = [...positions].sort((a, b) => a.V - b.V);
-  const monotone = sorted.every((x, i) => !i || (x.real.p >= sorted[i - 1].real.p - 1e-9 && x.real.usd >= sorted[i - 1].real.usd - 1e-9));
+  const monotone = sorted.every((x, i) => !i || (x.real.p >= sorted[i - 1].real.p - monotoneTolP - 1e-9 && x.real.usd >= sorted[i - 1].real.usd - 1e-9));
   const misses = positions.filter(x => x.miss).length, predicted = positions.every(x => x.pred);
   return { positions, misses, monotone, predicted, calibrated: predicted && misses <= 1 && monotone };
 }
@@ -546,11 +552,16 @@ export function readingOf({ headline, perV, vsTuned = null, vsJudge = null, slid
 }
 
 // ------------------------------------------------------------------------------------------------------ leak tests
-/** L4: every evaluation seed is in its split's range and allowed by the owner's ledger; examples are disjoint from evaluation tasks. */
+/**
+ * L4: every evaluation seed is in its split's range and allowed by the owner's ledger; examples are disjoint from
+ * evaluation tasks. Sealed families (their own seeds, run by a session that tuned nothing) and seedless owner tasks
+ * (`meta.seedless`) have no ledger range: they are listed as not checked, never passed silently.
+ */
 export function seedChecks(table, meta, { ledger = null, ranges = SEED_RANGES } = {}) {
-  const L = ledger ?? loadLedger(), problems = [];
+  const L = ledger ?? loadLedger(), problems = [], notChecked = [];
   for (const job of table.jobs) {
     const m = meta[job], split = m.split, range = ranges[split], purpose = split === 'train' ? 'need-label' : 'need-heldout', ledgerSplit = split === 'train' ? 'dev' : 'test';
+    if (m.seedless || range === null) { notChecked.push(job); continue; }
     const seeds = new Set(), hashes = new Set();
     for (const t of table.taskIds(job)) {
       const s = table.seedOf(job, t), h = table.hashOf(job, t);
@@ -564,7 +575,7 @@ export function seedChecks(table, meta, { ledger = null, ranges = SEED_RANGES } 
     for (const s of ex) { if (s < ranges.example[0] || s > ranges.example[1]) problems.push(`${job}: example seed ${s} outside ${ranges.example.join('-')}`); if (seeds.has(s)) problems.push(`${job}: example seed ${s} is also an evaluation seed`); }
     for (const h of m.exampleHashes ?? []) if (hashes.has(h)) problems.push(`${job}: an example task hash equals an evaluation task hash`);
   }
-  return { ok: !problems.length, problems };
+  return { ok: !problems.length, problems, notChecked };
 }
 
 /** L5: the router modules import no bed score, oracle or reference, and no result file; the trusted features are whitelisted. */
@@ -656,9 +667,10 @@ export function metamorphic(choose, jobs, { meta, labels = null, modesOf, policy
   const route = (v, c, sv) => { const d = choose(v, c, policy.shortcut ? sv : undefined); return typeof d === 'string' ? d : d.mode; };
   const rate = (pairs) => ({ n: pairs.length, flips: pairs.filter(x => x.flip).length, flipRate: pairs.length ? pairs.filter(x => x.flip).length / pairs.length : 0, examples: pairs.filter(x => x.flip).slice(0, 5) });
   const out = { pairs: [], pad: null, inject: null, paraphrase: null, nOff: null, monotone: null };
-  for (const j of Object.keys(meta)) {
+  // Declared pairs are checked whatever the split (r0-pad and r3-mini are TRAIN jobs): a decision-level check needs no label.
+  for (const j of Object.keys(meta).sort()) {
     const mm = meta[j].metamorph;
-    if (!mm || !meta[mm.of] || (!jobs.includes(j) && !jobs.includes(mm.of))) continue;
+    if (!mm || !meta[mm.of]) continue;
     for (const c of cells) {
       const a = route(view(mm.of), c, sview(mm.of)), b = route(view(j), c, sview(j));
       out.pairs.push({ job: j, of: mm.of, cell: c.key, expect: mm.expect, routes: [a, b], ok: mm.expect === 'different' ? a !== b : a === b });
@@ -720,7 +732,7 @@ export function commitDecisions({ rows, builds = [], meta, recorded = [], polici
   }
   for (const r of recorded) if (targets.includes(r.job)) decisions.push({ policy: r.policy, job: r.job, cell: r.cell ?? '*', mode: r.mode, needsWorkflow: r.needsWorkflow ?? null, routingUsd: r.routingUsd ?? 0, recorded: true });
   decisions.sort((a, b) => (a.policy + a.job + a.cell < b.policy + b.job + b.cell ? -1 : 1));
-  const payload = { schema: 'need-decisions/1', cells: cells.map(c => c.key), policies: [...new Set(decisions.map(d => d.policy))], targets,
+  const payload = { schema: 'need-decisions/1', reps, seed, labelSet, cells: cells.map(c => c.key), policies: [...new Set(decisions.map(d => d.policy))], targets,
     routerShas: Object.fromEntries(ROUTER_FILES.map(f => [f, fileSha(path.join(HERE, f))])), trainRows: sha256(canonical(rows)), trainBuilds: sha256(canonical(builds)), decisions };
   return { createdAt, sha256: sha256(canonical(payload)), payload };
 }
@@ -918,7 +930,8 @@ export function evaluate({ rows, builds = [], meta, recorded = [], split = 'held
     const L4 = seedChecks(table, meta, { ledger });
     const L5 = importPurity();
     const L6 = split === 'train' ? { ok: true, assessed: false, note: 'development split: no envelope' }
-      : verifyEnvelope(committed, commitDecisions({ rows: rows.filter(r => meta[r.job]?.split === 'train'), builds: builds.filter(b => meta[b.job]?.split === 'train'), meta, recorded, policies, cells, reps, seed, registry, cascades, labelSet, createdAt: committed?.createdAt }),
+      : verifyEnvelope(committed, commitDecisions({ rows: rows.filter(r => meta[r.job]?.split === 'train'), builds: builds.filter(b => meta[b.job]?.split === 'train'), meta, recorded, policies, cells,
+        reps: committed?.payload?.reps ?? reps, seed: committed?.payload?.seed ?? seed, registry, cascades, labelSet: committed?.payload?.labelSet ?? labelSet, createdAt: committed?.createdAt }),
         { firstHeldoutRowAt: rows.filter(r => meta[r.job]?.split !== 'train' && r.at).map(r => r.at).sort()[0] ?? null });
     const L7 = buildIsolation(builds, table, meta);
     const knn = fitted.get('NR-knn')?.[fitted.get('NR-knn').length - 1];
@@ -937,14 +950,17 @@ export function evaluate({ rows, builds = [], meta, recorded = [], split = 'held
   }
   const blocked = [];
   if (leaks?.f6) blocked.push('F6: a leak test failed; the evaluator is invalid');
-  if (table.voided.length) blocked.push(`${table.voided.length} voided lineage(s): claims blocked until rerun`);
+  const voided = table.voided.filter(v => !modeInfo(v.mode, registry).cascade);
+  if (voided.length) blocked.push(`${voided.length} voided lineage(s): claims blocked until rerun`);
   if (validity.invalidArms.length) blocked.push(`${validity.invalidArms.length} arm(s) over the 25% environment-fault limit`);
   return {
     schema: 'need-evaluation/1', split, grade: split === 'train' ? 'development (leave-one-cluster-out on TRAIN)' : split === 'heldout' ? 'held-out' : split,
     labelSet, cells: cells.map(c => c.key), headline: HEADLINE.key, modes, jobs: { train: TRAIN.length, eval: EVAL.length, forced: FORCED.length, clusters: [...new Set(EVAL.map(clusterOf))].length },
     folds: folds.map(f => ({ heldOutCluster: f.heldOutCluster ?? null, train: f.train.length, eval: f.eval.length })), missingRecorded: Object.fromEntries([...missing].filter(([, v]) => v.length)),
     fittedRule: fitted.get('NR-static')?.map(f => f.fitted) ?? null, primary, holm: { pValues: Object.fromEntries(CO_PRIMARY.map((n, i) => [n, coP[i]])), adjusted: H.adjusted },
-    c7a: { ...c7a, majority }, g1, scores, decomposition, hull: { points: fixedPts, hull, gap: hullGap }, validity, forced, ceiling, leaks, metamorph, blocked,
+    c7a: { ...c7a, majority }, g1, scores, decomposition, hull: { points: fixedPts, hull, gap: hullGap }, validity, forced, ceiling, leaks, metamorph,
+    falsifiers: { F5: metamorph ? Object.fromEntries(CO_PRIMARY.filter(n => metamorph[n]).map(n => [n, metamorph[n].f5])) : null, F6: leaks?.f6 ?? null,
+      F11: built.selfTest.f11, F12: c7a['NR-static'] ? (c7a['NR-static'].N1.balancedAccuracy?.lo ?? 1) <= 0.5 : null }, blocked,
   };
 }
 

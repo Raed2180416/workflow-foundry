@@ -6,6 +6,7 @@ import path from 'node:path';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, chmodSync, rmSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { runClaudeCode, nestedModelUses } from '../../src/executors/claude-code.mjs';
+import { runSandboxed } from '../../src/executors/sandboxed-command.mjs';
 import { buildKit, SCRIPT_KIT_ALLOW } from '../lib/kit.mjs';
 import { makeTasks, loadFamily } from '../lib/beds.mjs';
 import { startServices, Ledger } from '../lib/services.mjs';
@@ -88,16 +89,75 @@ export function taskFiles(task, prefix = '') {
 const sha = text => createHash('sha256').update(text).digest('hex');
 const sameSet = (a, b) => a.length === b.length && [...a].sort().every((x, i) => x === [...b].sort()[i]);
 
+// Need router v1 (research/need-router-20261014/DESIGN.md §1, PREREG-NEED-V1.md §4.1): with selfCheck the B1 builder must
+// also deliver check.mjs, run after every task on the solver's answer (runSelfCheck) and recorded as selfVerdict. This
+// paragraph is appended to the builder prompt only when selfCheck is set, so every other caller's prompt (and its
+// promptSha256) is unchanged. Its sha256 is part of the engine stamp (PREREG §4.4).
+export const SELF_CHECK_FILE = 'check.mjs';
+export const SELF_CHECK_PARAGRAPH = `
+Also deliver ./check.mjs, a self-check that runs on every answer your solver gives: node check.mjs task.json answer.json must exit 0 when the answer looks right for that task and exit 1 when it does not. An answer it rejects is not delivered, so it should reject wrong answers and pass right ones. It reads only those two files (task.json as in the probes, answer.json as your solver prints it), makes no model calls and has no network; it runs in the same environment as the solver. Check what can be checked without knowing the right answer: the output schema, the rules the task states, consistency with the inputs. Test it on the probes, for example: ./tools/run-solver probes/probe-0 > a.json; node check.mjs probes/probe-0/task.json a.json; echo $?`;
+
+// Per-message token usage of a stream-json transcript (one entry per assistant message id, its last usage, as
+// streamUsageOf counts): [input, output, cacheRead, cacheWrite, model]. A re-pricer prices each request at its own
+// prompt-size tier; the session aggregate cannot. null when the transcript is missing.
+export function messageUsageOf(transcriptFile) {
+  let text;
+  try { text = readFileSync(transcriptFile, 'utf8'); } catch { return null; }
+  const byMsg = new Map();
+  for (const line of text.split('\n')) {
+    if (!line) continue;
+    let e; try { e = JSON.parse(line); } catch { continue; }
+    if (e?.type === 'assistant' && e.message?.id && e.message.usage) byMsg.set(e.message.id, { model: e.message.model ?? null, u: e.message.usage });
+  }
+  return [...byMsg.values()].map(({ model, u }) => [u.input_tokens ?? 0, u.output_tokens ?? 0, u.cache_read_input_tokens ?? 0, u.cache_creation_input_tokens ?? 0, model]);
+}
+// Bash tool uses that ran the build-time test loop (./tools/run-solver): how much the builder tested without an oracle.
+export const runSolverCallsOf = (toolUses = []) => toolUses.filter(u => u?.name === 'Bash' && /run-solver/.test(String(u.input?.command ?? ''))).length;
+
+// Post-run self-check: node check.mjs task.json answer.json in a fresh directory beside the trial (task files, the
+// answer, check.mjs only), sandboxed with no network and no gateway, so it cannot call a model. Exit 0 = pass, 1 = fail,
+// anything else (crash, timeout) = error. No answer: nothing to check (selfVerdict null). runner: tests substitute one.
+export async function runSelfCheck({ checkPath, task, output, workdir, timeoutMs = 60 * 1000, runner = runSandboxed }) {
+  if (output == null) return { selfVerdict: null, reason: 'no answer' };
+  const dir = path.join(workdir, '.selfcheck');
+  rmSync(dir, { recursive: true, force: true }); mkdirSync(dir, { recursive: true });
+  const files = { ...taskFiles(task), [SELF_CHECK_FILE]: readFileSync(checkPath, 'utf8'), 'answer.json': JSON.stringify(output) };
+  for (const [rel, content] of Object.entries(files)) { mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); writeFileSync(path.join(dir, rel), content); }
+  let r;
+  try { r = await runner({ command: 'node', args: [SELF_CHECK_FILE, 'task.json', 'answer.json'], workdir: dir, timeoutMs, network: false }); }
+  catch (error) { return { selfVerdict: null, error: { code: error.code ?? 'SELF_CHECK_LAUNCH', message: String(error.message ?? error).slice(0, 300) } }; }
+  if (!r.sandboxReady && !r.timedOut) return { selfVerdict: null, error: { code: 'SANDBOX_UNAVAILABLE', message: String(r.stderr ?? '').slice(-300) } };
+  const selfVerdict = r.timedOut ? 'error' : r.code === 0 ? 'pass' : r.code === 1 ? 'fail' : 'error';
+  return { selfVerdict, exitCode: r.code ?? null, timedOut: !!r.timedOut, stderrTail: String(r.stderr ?? '').slice(-400), ms: r.durationMs ?? null };
+}
+
+// Probe tasks: probeSeeds is a list of seeds at one difficulty (C0), or of {seed, difficulty, stage?} for per-seed
+// difficulty on banded jobs (need router: example set k, each seed at its preregistered difficulty). Builders see dev
+// tasks only (L7).
+async function probeTasksOf(familyId, probeSeeds, difficulty) {
+  if (probeSeeds.every(Number.isInteger)) return { perSeed: false, tasks: (await makeTasks(familyId, { split: 'dev', seeds: probeSeeds, difficulty })).map(t => t.task) };
+  const fam = await loadFamily(familyId);
+  return { perSeed: true, tasks: probeSeeds.map(p => {
+    const s = Number.isInteger(p) ? { seed: p, difficulty } : p;
+    if (!Number.isInteger(s?.seed) || !Number.isInteger(s?.difficulty)) throw new Error(`construct: a probe seed needs an integer seed and difficulty: ${JSON.stringify(p)}`);
+    if ((s.split ?? 'dev') !== 'dev') throw new Error(`construct: probe tasks come from the dev split only (L7), got ${s.split}`);
+    return fam.generate({ seed: s.seed, split: 'dev', difficulty: s.difficulty, ...(s.stage ? { stage: s.stage } : {}) });
+  }) };
+}
+
+// selfCheck (B1 only): append SELF_CHECK_PARAGRAPH and record check.mjs. executor: the session runner (tests and --dry
+// substitute a stub with runClaudeCode's result shape); kitBase: where the kit is built (default /opt/foundry-kit).
 export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2, 3], difficulty = 3, builderModel = 'claude-opus-5-5', builderEffort = 'high', builderBudgetUsd = 8,
-  constructionModelUsd = 2, perTaskUsd = 1, minutes = 45, scoreChecks = 12, modelPort, workRoot, label, models }) {
+  constructionModelUsd = 2, perTaskUsd = 1, minutes = 45, scoreChecks = 12, modelPort, workRoot, label, models, selfCheck = false, executor = runClaudeCode, kitBase }) {
   if (!['F', 'B1'].includes(arm)) throw new Error(`unknown construction arm ${arm}`);
+  if (selfCheck && arm !== 'B1') throw new Error('construct: selfCheck is defined for the B1 arm only');
   // The port must hold exactly the session's models (createModelPort({ allowedModels })): the builder's policy file,
   // the gateway allow-list and execution then agree, and no other model (no local one) is reachable.
   const portIds = modelPort.policy.models.map(m => m.id);
   if (!sameSet(portIds, models)) throw new Error(`construct: the model port policy (${portIds.join(', ')}) must be exactly the session models (${models.join(', ')})`);
   const fam = await loadFamily(familyId);
-  const kit = arm === 'F' ? buildKit() : buildKit({ allow: SCRIPT_KIT_ALLOW });
-  const probes = (await makeTasks(familyId, { split: 'dev', seeds: probeSeeds, difficulty })).map(t => t.task);
+  const kit = arm === 'F' ? buildKit({ base: kitBase }) : buildKit({ base: kitBase, allow: SCRIPT_KIT_ALLOW });
+  const { perSeed, tasks: probes } = await probeTasksOf(familyId, probeSeeds, difficulty);
   const ledger = new Ledger({ capUsd: constructionModelUsd, label });
   // Fresh run id: a re-run after an environment fault must not be served this label's earlier journaled answers.
   const svc = await startServices({ modelPort, ledger, familyId, probes, scoreLimit: scoreChecks, runId: `construct:${label}:${randomUUID()}`, allowedModels: models });
@@ -116,13 +176,13 @@ export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2
   }
   if (arm === 'B1') files['tools/run-solver'] = RUN_SOLVER;
   const classes = models.map(id => `${modelPort.policy.models.find(m => m.id === id)?.class} = ${id}`).join(', ');
-  const prompt = builderPrompt(arm, { probes: probes.length, minutes, constructionModelUsd, perTaskUsd, scoreChecks, models, classes, kitDir: kit.dir });
+  const prompt = builderPrompt(arm, { probes: probes.length, minutes, constructionModelUsd, perTaskUsd, scoreChecks, models, classes, kitDir: kit.dir }) + (selfCheck ? SELF_CHECK_PARAGRAPH : '');
   const started = Date.now();
   let r;
   try {
     for (const [rel, content] of Object.entries(files)) { mkdirSync(path.dirname(path.join(workdir, rel)), { recursive: true }); writeFileSync(path.join(workdir, rel), content); }
     for (const exe of ['tools/foundry', 'tools/run-solver']) if (files[exe]) chmodSync(path.join(workdir, exe), 0o755);
-    r = await runClaudeCode({ model: builderModel, prompt, workdir, files: {}, kitDir: kit.dir, budgetUsd: builderBudgetUsd, timeoutMs: minutes * 60 * 1000 + 5 * 60 * 1000, effort: builderEffort,
+    r = await executor({ model: builderModel, prompt, workdir, files: {}, kitDir: kit.dir, budgetUsd: builderBudgetUsd, timeoutMs: minutes * 60 * 1000 + 5 * 60 * 1000, effort: builderEffort,
       env: arm === 'F' ? { FOUNDRY_MODEL_GATEWAY_URL: svc.url, FOUNDRY_MODEL_GATEWAY_TOKEN: svc.token } : {} });
   } catch (error) {
     // runClaudeCode throws only before the CLI starts (model id, sandbox, workspace): nothing was spent.
@@ -134,8 +194,9 @@ export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2
   // (/tmp is private to the sandbox, so it is not listed.)
   const outside = u => (JSON.stringify(u.input ?? '').match(/\/(?:home|root|opt|mnt|var|run|srv|media|etc|proc)\/[\w.\/-]*/g) ?? [])
     .filter(p => !p.startsWith(workdir) && !p.startsWith(kit.dir));
+  const checkPath = path.join(workdir, SELF_CHECK_FILE), check = selfCheck && existsSync(checkPath) ? SELF_CHECK_FILE : null;
   const record = {
-    arm, armId, familyId, label, difficulty, probeSeeds, builderModel, builderEffort, kitHash: kit.hash, kitDir: kit.dir, policyHash: modelPort.policyHash, models, runId: svc.runId,
+    arm, armId, familyId, label, difficulty: perSeed ? null : difficulty, probeSeeds, builderModel, builderEffort, kitHash: kit.hash, kitDir: kit.dir, policyHash: modelPort.policyHash, models, runId: svc.runId,
     promptSha256: sha(prompt), artifact, artifactSha256: artifact ? sha(readFileSync(artifactPath)) : null,
     builderCostUsd, builderCostReportedUsd: r.costUsd ?? null, builderCostUnknown: !!r.costUnknown, builderCostUpperUsd: r.costUpperUsd ?? null, builderBudgetUsd,
     builderUsage: r.usage ?? null, builderStreamUsage: r.streamUsage ?? null, builderSessionId: r.sessionId ?? null,
@@ -147,7 +208,10 @@ export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2
     // Transcript scans: nestedModelAttempts > 0 voids the construction (pre-registered); outsidePaths is reviewed by hand.
     hiddenPathAttempts: r.toolUses.filter(u => outside(u).length).length, outsidePaths: [...new Set(r.toolUses.flatMap(outside))].slice(0, 100),
     nestedModelAttempts: nestedModelUses(r.toolUses),
+    // Need router v1 additions (additive; selfCheck is false and check null for C0 callers).
+    runSolverCalls: runSolverCallsOf(r.toolUses), builderMessageUsage: r.transcript ? messageUsageOf(r.transcript) : null,
+    selfCheck: !!selfCheck, check, checkSha256: check ? sha(readFileSync(checkPath)) : null,
   };
   writeFileSync(path.join(workdir, 'construction.json'), JSON.stringify(record, null, 1));
-  return { record, workdir, artifactPath: artifact ? artifactPath : null };
+  return { record, workdir, artifactPath: artifact ? artifactPath : null, checkPath: check ? checkPath : null };
 }

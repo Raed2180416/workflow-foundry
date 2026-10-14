@@ -73,6 +73,10 @@ export function renderReport({ ledger, health = [], worlds = [], title = null })
   L.push(`Extractor: ${ledger.extractor?.model ?? '?'} (${ledger.extractor?.prompt ?? '?'}). Practice worlds only; no property sees world truth or the bed oracle. A \`pass\` means "no counterexample in n instances", not proof.`, '');
   L.push('## 1. Run health', '');
   for (const hl of health) L.push(`- world ${hl.world} (d${hl.difficulty}): ${hl.status}; ${hl.ticks} ticks, ${hl.effects} effects emitted, ${hl.refused} refused tick outputs${hl.firstRefusal ? ` (first: "${hl.firstRefusal}")` : ''}`);
+  const refused = health.reduce((n, hl) => n + (hl.refused ?? 0), 0);
+  // Observed 2026-10-14 (B1-O on E8): every reserve the build proposed was refused, so requirements about reserving were
+  // never triggered and read `untested`, not `fail`. The user must see that before reading an untested row as harmless.
+  if (refused) L.push('', `**Warning:** the platform refused ${refused} tick outputs, and nothing in them was applied. A requirement about an action that only ever appears in refused outputs shows \`untested\` unless its check reads \`t.refused\`, so an \`untested\` row here is not evidence that the build does that action correctly.`);
   L.push('', '## 2. Status', '');
   L.push(`| id | quote (first 80 chars) | kind | triggered ${worlds.join('/')} | status | flags |`, '|---|---|---|---|---|---|');
   const counts = {};

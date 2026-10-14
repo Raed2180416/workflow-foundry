@@ -302,8 +302,8 @@ export const MODES = Object.freeze({
   'agent-H+proc': { cls: 'workflow', kind: 'guided' },
   'construct-H': { cls: 'workflow', kind: 'built' },
   'build-O': { cls: 'workflow', kind: 'built', ceiling: true },
-  'ref-R1': { cls: 'workflow', kind: 'built', ceiling: true },
-  'ref-R3': { cls: 'workflow', kind: 'built', ceiling: true },
+  'ref-R1': { cls: 'workflow', kind: 'built', ceiling: true, prebuilt: true },
+  'ref-R3': { cls: 'workflow', kind: 'built', ceiling: true, prebuilt: true },
 });
 /** Derived at $0 from the paired rows (DESIGN §1). Triggers are deployable signals only, never the oracle. */
 export const CASCADES = Object.freeze([
@@ -400,7 +400,9 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
     for (const m of modes) {
       const c = cells.get(KEY(job, m));
       if (!c) continue;
-      const L = lineages.get(KEY(job, m));
+      const L = lineages.get(KEY(job, m)), info = modeInfo(m, registry);
+      // A built or guided mode without build rows would lose its build cost silently: refuse it.
+      if (!L && (info.kind === 'built' || info.kind === 'guided') && !info.prebuilt && !info.cascade) throw new Error(`${job}/${m}: a ${info.kind} mode with no build row (its build cost would be lost)`);
       c.lineage = !!L;
       if (L) {
         for (const [t, reps] of c.byTask) for (const rep of reps.keys()) if (!L.has(rep)) throw new Error(`${job}/${m}/${t}: a row for lineage ${rep}, which has no build row`);

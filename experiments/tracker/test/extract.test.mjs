@@ -54,6 +54,21 @@ test('extraction: one journaled call; the model sees the text as data and no cod
   assert.match(extractPrompt('x'), /when-then/);
 });
 
+test('low coverage (fewer entries than uncovered normative sentences) is flagged, never silently used', async () => {
+  const text = 'You must record the order. Never charge twice. Each item carries its own key. Send the notice within 60 min.';
+  const one = [{ quote: 'Never charge twice.', kind: 'never', summary: 'no double charge', context: [] }];
+  const all = [one[0], { quote: 'You must record the order.', kind: 'must', summary: 'record', context: [] }, { quote: 'Each item carries its own key.', kind: 'must', summary: 'keys', context: [] },
+    { quote: 'Send the notice within 60 min.', kind: 'deadline', summary: 'notice', context: [] }];
+  const { port: p1 } = portWith(() => ({ value: { entries: one } }));
+  const { ledger: bad } = await extractLedger({ port: p1, modelId: HAIKU, text });
+  assert.equal(bad.extractor.lowCoverage, true, '1 entry against 3 uncovered normative sentences');
+  assert.equal(bad.uncovered.length, 3);
+  const { port: p2 } = portWith(() => ({ value: { entries: all } }));
+  const { ledger: good } = await extractLedger({ port: p2, modelId: HAIKU, text, sampleIndex: 1 });
+  assert.equal(good.extractor.lowCoverage, undefined);
+  assert.equal(good.uncovered.length, 0);
+});
+
 test('a failed extraction call throws (nothing is invented in its place)', async () => {
   const { port } = portWith(() => ({ value: { nope: true } }));
   await assert.rejects(extractLedger({ port, modelId: HAIKU, text: SPEC }), /extraction failed: MODEL_SCHEMA/);

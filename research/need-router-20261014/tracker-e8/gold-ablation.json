@@ -1,0 +1,7 @@
+{
+ "about": "Gold-ledger ablation (PREREG §b): the frozen clauses R4.2c and U05 as ledger entries, quoted verbatim from SPEC-E; properties still written by Haiku. Summaries are the gold's own wording (gold.json U05.what; the R4.2c anchor itself). No context quotes, as frozen. Run only because the primary extraction left line 47 (U05) uncovered.",
+ "entries": [
+  { "quote": "If a batch comes back `partial`, resubmit only the failed items, with their original keys, inside the same window.", "kind": "when-then", "summary": "If a batch comes back partial, resubmit only the failed items, with their original keys, inside the same window.", "context": [] },
+  { "quote": "batch: reserves each item of one fulfilment at its location; each item carries its own `key`", "kind": "must", "summary": "§2 reserve: each item carries its own key", "context": [] }
+ ]
+}

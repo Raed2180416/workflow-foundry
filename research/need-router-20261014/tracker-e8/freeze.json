@@ -1,0 +1,25 @@
+{
+ "frozenAt": "2026-10-14T22:05:29.545Z",
+ "gitHead": "906fd72326b0da28e8baf582578735bc321b73c7",
+ "files": {
+  "research/need-router-20261014/tracker-e8/PREREG.md": "29ebc4a8efbbf394a4a1027fe13c94e726806fd05e58fd23e679455982a22c3e",
+  "research/need-router-20261014/tracker-e8/gold.json": "77034dd7e5ad4815feb9d4864699ae3ec0d8e91f2bc39ca8ad5c1d4355059a43",
+  "research/need-router-20261014/tracker-e8/teeth.json": "23c81345772e7c147244a0542d48753c2cdded6dd6e8aac0f02d1108da6f8021"
+ },
+ "trackerCode": {
+  "experiments/tracker/checks.mjs": "2724bd829b8ef583286bf749411152f3f74ed2c8d668224ccdbdd76748a39807",
+  "experiments/tracker/eval-e8.mjs": "6bef07be13528ff5663aee8381413a0525d987fa081e578d6e9e63afd85bb10e",
+  "experiments/tracker/extract.mjs": "bd3bb709c0c1a8dd01a5bbe7a635cab568cdb1476b0883fd3bd40ba90ae57952",
+  "experiments/tracker/ledger.mjs": "2d0a6483eba7d6ab755a1ebd8149b18b9eb2da4d821089dae8c7c9fce0b215da",
+  "experiments/tracker/report.mjs": "a245b927d1074bd3906cdc2b6656965c4cf0e7e532788f5b2a5df55b50a5e83f",
+  "experiments/tracker/run.mjs": "510eb4703f1d4f252af7167953e75d4809c1ae7241adc02346b4772e018f6577",
+  "experiments/tracker/trace.mjs": "74466688eaef54f86e610327fbcf9a7a961e68e3ad4b04305818c64866b32f09"
+ },
+ "builds": {
+  "b1lh-e8-1": "837f2255e912809d761328972348f12e4d869d0966720b4cb7503d933626bb0b",
+  "b1lh-e8-3": "1056e57ed7bf9aaf71ccf8c6ed2824c1a37237c86a1e0af5c5093441d5e2fc86",
+  "b1o-e8-1": "ee4ce62df68fc2a3cfb678a4497fc5526b6bf3a8fa9607c8bfb2b951102c2790"
+ },
+ "specE": "c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1",
+ "policy": "96d5586281a0e8e43c73db63118189aaf18e8da5a492bb0dddfd43ab676cb4cf"
+}

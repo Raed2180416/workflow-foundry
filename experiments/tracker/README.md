@@ -17,15 +17,16 @@ The tracker works only from the user's own text:
 No property, extractor or writer ever sees world truth, the bed oracle or a build's code. The analyst uses the oracle
 in the evaluation (design §5) only to label the tracker's alarms.
 
-**Status: built and tested at $0.** No extraction or property-writing run has been made. Design §5 requires these to be
-frozen in `research/need-router-20261014/` before any extraction run:
-
-- the gold lists,
-- the control → SPEC-E id map,
-- the expected outcomes,
-- the thresholds,
-- the model ids,
-- the budget.
+**Status: first paid run made (2026-10-14), development / diagnostic.** The report is
+[research/need-router-20261014/tracker-e8/REPORT.md](../../research/need-router-20261014/tracker-e8/REPORT.md); the
+frozen plan is `PREREG.md` in the same folder.
+- **Cost:** $0.13 and about 6 min one-off (Haiku extraction plus 78 Haiku-written properties). A re-check costs $0.
+- **Caught:** lineage 3's line-162 defect, 4/4.
+- **Missed:** B1-O's batch keying.
+- **False alarms:** 16 false-alarming requirements on lineage 1 and 21 on the reference runs, almost all property bugs
+  where the writer guessed the trace vocabulary.
+- **Not yet usable as a verdict.** The next step is a writer prompt and trace API revision, preregistered as a new
+  version.
 
 ## Files
 
@@ -37,6 +38,7 @@ frozen in `research/need-router-20261014/` before any extraction run:
 | `checks.mjs` | The property sandbox, the contrast pair (G2), the writer (rewrites, then one logged escalation), the §3 status rules and G3. |
 | `report.mjs` | `report.md`: run health, the status table (with possibly-missed sentences), and failing instances with trace excerpts. |
 | `run.mjs` | The runner and CLI. Builds run on the practice worlds, then properties, statuses and per-build files. `calibrate` is G4. |
+| `eval-e8.mjs` | Analyst-side only, never imported by the tracker. `score` is the mechanical extraction recall against a frozen gold. `adjudicate` joins a build's failing instances to the bed oracle's verdicts on the same run. |
 | `test/*.test.mjs` | Leak test, projection, helpers, ledger mechanics, extraction and writer with a scripted model, sandbox, contrast, status rules, G1/G3, spend cap, and end to end on the three frozen E8 builds. |
 
 ## How to run
@@ -44,7 +46,7 @@ frozen in `research/need-router-20261014/` before any extraction run:
 All commands are run from the repository root.
 
 ```sh
-# tests ($0, scripted model, no paid call; about 25 s, most of it the end-to-end run on practice world 1237)
+# tests ($0, scripted model, no paid call; about 20 s, most of it the end-to-end run on practice world 1237)
 node --test experiments/tracker/test/*.test.mjs
 
 # the whole pipeline: extract, write a property per entry, check builds (metered: --budget caps model spend, default $2)
@@ -106,7 +108,7 @@ entries not yet written left pending.
   run twice, on two worlds that differ only in truth labels: the traces are byte-identical and carry no truth case id.
 - **Model-written code is untrusted.**
   - Solvers run only through `beds/ebed/host/sandbox-arm.mjs`.
-  - Properties run in the same executor sandbox: user, mount and pid namespaces, no network namespace, and every host
+  - Properties run in the same executor sandbox: user, mount and pid namespaces, an empty network namespace, and every host
     home and work root hidden. The sandbox directory holds only the trace and the property sources.
   - Each property runs in a fresh `vm` context:
     - no `process`, `require`, `import()`, `fetch`, `eval` or `new Function`;

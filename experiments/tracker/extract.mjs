@@ -68,6 +68,11 @@ export async function extractLedger({ port, modelId, text, source = {}, sampleIn
       returned: r.value.entries.length } });
   ledger.extractor.kept = ledger.requirements.length;
   ledger.extractor.dropped = ledger.dropped.length;
+  ledger.extractor.turns = r.meta?.numTurns ?? null;     // > 2 on the claude CLI: its structured-output answer was re-asked
+  // Low coverage: more normative sentences left uncovered than entries kept. Observed 2026-10-14 on SPEC-E: a Haiku sample
+  // whose schema-valid answer, after CLI re-asks, held one entry (93 uncovered), and every Sonnet sample (36-40 entries,
+  // 60-62 uncovered). Nothing is invented in its place; the caller is told, and the coverage list says where to look.
+  if (ledger.requirements.length < ledger.uncovered.length) ledger.extractor.lowCoverage = true;
   return { ledger, call: r };
 }
 

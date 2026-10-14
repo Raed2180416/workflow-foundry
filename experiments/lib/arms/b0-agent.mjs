@@ -1,10 +1,36 @@
 // B0 (plain executor) and B0+N (plain executor with append-only notes) on Claude Code headless.
 // Same tools and per-task budget as every other agent arm; the repo and oracles are hidden.
+// procedureFile (need router v1, agent-H+proc): the agent gets PROCEDURE.md (written once per lineage by a procedure
+// writer from example tasks) and one prompt line telling it to follow it and write checks.json; the checks it reports
+// become the row's selfVerdict (all true = pass).
 import path from 'node:path';
 import { mkdirSync, readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { runClaudeCode, readJsonFile, nestedModelUses } from '../../../src/executors/claude-code.mjs';
 import { solverView, loadFamily } from '../beds.mjs';
 import { startServices, Ledger } from '../services.mjs';
+import { messageUsageOf } from '../../c0/construct.mjs';
+
+// The one prompt line of agent-H+proc (PREREG-NEED-V1 §4.1); its sha256 is part of the engine stamp.
+export const PROCEDURE_FILE = 'PROCEDURE.md', CHECKS_FILE = 'checks.json';
+export const PROCEDURE_LINE = 'Follow the procedure in ./PROCEDURE.md. Before you finish, write ./checks.json: a JSON array with one {"check": "<the check as written>", "pass": true or false} entry for each check listed in PROCEDURE.md, judged against your final answer.';
+const sha16 = text => createHash('sha256').update(text).digest('hex').slice(0, 16);
+// Hidden-path scan of an agent session (need router v1: a draw that reaches outside its workdir is voided). The same
+// host roots as construct()'s builder scan (experiments/c0/construct.mjs, its `outside` closure, which other code reads
+// as text and is therefore left as it is); /tmp is private to the sandbox, so it is not listed.
+const HOST_ROOTS = ['home', 'root', 'opt', 'mnt', 'var', 'run', 'srv', 'media', 'etc', 'proc'];
+const HOST_PATH = new RegExp(`/(?:${HOST_ROOTS.join('|')})/[\\w./-]*`, 'g');
+export function outsidePaths(toolUses = [], allowedRoots = []) {
+  const outside = u => (JSON.stringify(u?.input ?? '').match(HOST_PATH) ?? []).filter(p => !allowedRoots.some(r => r && p.startsWith(r)));
+  return { attempts: toolUses.filter(u => outside(u).length).length, paths: [...new Set(toolUses.flatMap(outside))] };
+}
+/** The self-verdict an agent reported in checks.json: 'pass' when every check passed, 'fail' when any failed, null when
+ *  the file is missing, empty or not a list of {pass: boolean} (the object form {"<check>": boolean} is accepted too). */
+export function checksVerdict(checks) {
+  const list = Array.isArray(checks) ? checks.map(c => c?.pass) : checks && typeof checks === 'object' ? Object.values(checks) : null;
+  if (!list || !list.length || !list.every(v => typeof v === 'boolean')) return null;
+  return list.every(Boolean) ? 'pass' : 'fail';
+}
 
 // Client the agent runs inside its sandbox to drive an interactive bed through the host env service.
 export const ENV_CLIENT = `#!/usr/bin/env node
@@ -29,9 +55,14 @@ const instructions = schema => [
   '```json', JSON.stringify(schema, null, 1), '```',
 ].join('\n');
 
-// binary: the CLI to run (tests substitute a stand-in; not part of the arm definition).
-export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, notes = false, effort = null, binary = 'claude' }) {
-  const def = { kind: notes ? 'b0n-agent' : 'b0-agent', model, budgetUsd, timeoutMs, effort, tools: 'default', notesWords: notes ? 200 : 0 };
+// binary: the CLI to run (tests substitute a stand-in; not part of the arm definition). executor: the session runner
+// (runClaudeCode; tests and label-run --dry substitute a stub with its result shape; not part of the definition either).
+// procedureFile: a host path read once here; its sha enters the definition (each lineage is its own arm version). Without
+// it the definition, the prompt and the arm hash are exactly as before.
+export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, notes = false, effort = null, binary = 'claude', procedureFile = null, executor = runClaudeCode }) {
+  const procedure = procedureFile ? readFileSync(procedureFile, 'utf8') : null;
+  const def = { kind: notes ? 'b0n-agent' : 'b0-agent', model, budgetUsd, timeoutMs, effort, tools: 'default', notesWords: notes ? 200 : 0,
+    ...(procedure !== null ? { procedureSha: sha16(procedure), procedureLineSha: sha16(PROCEDURE_LINE) } : {}) };
   return {
     id, def, stateful: notes,
     async run({ task, familyId, outputSchema, workdir, state }) {
@@ -50,13 +81,19 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
         files['notes.md'] = state.notes;
         prompt += '\n\n./notes.md holds lessons you wrote after earlier tasks of this same kind. Read it first.';
       }
+      if (procedure !== null) { files[PROCEDURE_FILE] = procedure; prompt += `\n\n${PROCEDURE_LINE}`; }
       let r;
-      try { r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs, effort, binary }); }
+      try { r = await executor({ model, prompt, workdir, files, budgetUsd, timeoutMs, effort, binary }); }
       finally { await svc?.close(); }
+      const outside = outsidePaths(r.toolUses, [workdir]);
+      const checks = procedure !== null ? readJsonFile(workdir, CHECKS_FILE) : undefined;
       // A killed session (no result event) is charged at its budget bound, never $0; costUnknown marks it.
       return { output: readJsonFile(workdir, 'answer.json'), costUsd: r.costUsd ?? r.costUpperUsd, costUnknown: r.costUnknown, latencyMs: r.durationMs, error: r.error,
         meta: { turns: r.turns, tools: r.toolUses.length, costUnknown: r.costUnknown, costUpperUsd: r.costUpperUsd, streamUsage: r.streamUsage,
-          nestedModelAttempts: nestedModelUses(r.toolUses), sessionId: r.sessionId } };
+          nestedModelAttempts: nestedModelUses(r.toolUses), sessionId: r.sessionId,
+          // Need router v1 additions: per-message usage for the one re-priced cost meter, and the hidden-path scan.
+          messageUsage: r.transcript ? messageUsageOf(r.transcript) : null, hiddenPathAttempts: outside.attempts, outsidePaths: outside.paths.slice(0, 20),
+          ...(procedure !== null ? { selfVerdict: checksVerdict(checks), checks: Array.isArray(checks) ? checks.length : checks && typeof checks === 'object' ? Object.keys(checks).length : 0 } : {}) } };
     },
     // B0+N: after the oracle, the same model appends lessons given only the outcome bit.
     async afterTask({ task, result, verdict, workdir, state }) {
@@ -69,7 +106,7 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
         'Keep the whole file under 200 words. Write general lessons for future tasks of this kind, not answers to this specific task.',
       ].join('\n');
       const files = { 'notes.md': state.notes ?? '', 'answer.json': JSON.stringify(result.output ?? null, null, 1) };
-      const r = await runClaudeCode({ model, prompt, workdir: dir, files, budgetUsd: Math.min(0.3, budgetUsd), timeoutMs: 5 * 60 * 1000, binary });
+      const r = await executor({ model, prompt, workdir: dir, files, budgetUsd: Math.min(0.3, budgetUsd), timeoutMs: 5 * 60 * 1000, binary });
       const updated = existsSync(path.join(dir, 'notes.md')) ? readFileSync(path.join(dir, 'notes.md'), 'utf8') : state.notes;
       state.notes = (updated ?? '').split(/\s+/).slice(0, 260).join(' ');
       return { costUsd: r.costUsd ?? r.costUpperUsd };

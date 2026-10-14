@@ -152,8 +152,8 @@ export async function checkBuilds({ ledger, builds, item, practice = PRACTICE, o
     writeFileSync(path.join(dir, 'health.json'), JSON.stringify(health, null, 1) + '\n');
     writeFileSync(path.join(dir, 'report.md'), renderReport({ ledger: d.judged, health, worlds: d.runs.map(r => r.world), title: d.label }));
     if (keepTraces) for (const r of d.runs) writeFileSync(path.join(dir, `trace-${r.world}.json`), JSON.stringify(r.trace));
-    if (sus.size) log(`  G3: ${sus.size} requirement(s) fail on every build: ${[...sus].join(', ')}`);
   }
+  if (sus.size) log(`  G3: ${sus.size} requirement(s) fail on every build: ${[...sus].join(', ')}`);
   return done;
 }
 
@@ -162,6 +162,7 @@ export async function checkBuilds({ ledger, builds, item, practice = PRACTICE, o
 export async function writeChecks({ ledger, port, writer, escalate, reasoning = 'low', concurrency = 4, runId = 'tracker', log = () => {}, contrastOpts = {} }) {
   const todo = ledger.requirements.filter(needsCheck);
   let next = 0, stopped = null;
+  const errors = [];
   const work = async () => {
     while (next < todo.length && !stopped) {
       const r = todo[next++];
@@ -171,13 +172,14 @@ export async function writeChecks({ ledger, port, writer, escalate, reasoning = 
         log(`  ${r.id} ${r.check.contrastOk ? 'ok' : r.check.observable === false ? 'not observable' : 'NOT TRUSTWORTHY'} (${r.check.attempts.length} call${r.check.attempts.length > 1 ? 's' : ''}${r.check.escalated ? ', escalated' : ''})`);
       } catch (e) {
         if (e instanceof BudgetError || e?.code === 'TRACKER_BUDGET') { stopped = e; break; }
-        r.check = { version: r.check?.version ?? 1, fn: null, contrastOk: false, attempts: [], unclear: `writer error: ${String(e?.message ?? e).slice(0, 200)}` };
-        log(`  ${r.id} writer error: ${String(e?.message ?? e).slice(0, 200)}`);
+        // An error of the machinery (not a verdict on the property): the entry stays pending for the next `write`.
+        errors.push({ id: r.id, error: String(e?.message ?? e).slice(0, 300) });
+        log(`  ${r.id} writer error (left pending): ${String(e?.message ?? e).slice(0, 200)}`);
       }
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, concurrency) }, work));
-  return { written: todo.filter(r => r.check && !needsCheck(r)).length, pending: ledger.requirements.filter(needsCheck).length, stopped };
+  return { written: todo.filter(r => r.check && !needsCheck(r)).length, pending: ledger.requirements.filter(needsCheck).length, stopped, errors };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -283,6 +285,7 @@ export async function main(argv = process.argv.slice(2), { log = s => console.lo
       const { ledger } = await extractLedger({ port, modelId: writer, text, source: { file: rel(opts.text) }, sampleIndex: s });
       writeLedger(path.join(out, samples > 1 ? `ledger.s${s}.json` : 'ledger.json'), ledger);
       log(`extract sample ${s}: ${ledger.requirements.length} entries kept, ${ledger.dropped.length} dropped, ${ledger.uncovered.length} uncovered sentences ($${(ledger.extractor.costUsd ?? 0).toFixed(4)})`);
+      if (ledger.extractor.lowCoverage) log(`  WARNING sample ${s}: low coverage, ${ledger.uncovered.length} normative sentences uncovered against ${ledger.requirements.length} entries kept${ledger.extractor.turns ? ` (${ledger.extractor.turns} CLI turns)` : ''}; review the coverage list or draw another sample before writing checks`);
       first ??= ledger;
     }
     if (samples > 1) writeLedger(path.join(out, 'ledger.json'), first);

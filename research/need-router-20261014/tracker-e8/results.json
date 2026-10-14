@@ -1,0 +1,6639 @@
+{
+ "about": "Requirement tracker on E8, run 2026-10-14 under research/need-router-20261014/tracker-e8/PREREG.md (development/diagnostic, practice worlds 1235-1237 only). Raw run directory: /var/tmp/foundry-work/tracker/e8-eval (journals, traces, adjudication files; not committed).",
+ "freeze": {
+  "frozenAt": "2026-10-14T22:05:29.545Z",
+  "gitHead": "906fd72326b0da28e8baf582578735bc321b73c7",
+  "files": {
+   "research/need-router-20261014/tracker-e8/PREREG.md": "29ebc4a8efbbf394a4a1027fe13c94e726806fd05e58fd23e679455982a22c3e",
+   "research/need-router-20261014/tracker-e8/gold.json": "77034dd7e5ad4815feb9d4864699ae3ec0d8e91f2bc39ca8ad5c1d4355059a43",
+   "research/need-router-20261014/tracker-e8/teeth.json": "23c81345772e7c147244a0542d48753c2cdded6dd6e8aac0f02d1108da6f8021"
+  },
+  "trackerCode": {
+   "experiments/tracker/checks.mjs": "2724bd829b8ef583286bf749411152f3f74ed2c8d668224ccdbdd76748a39807",
+   "experiments/tracker/eval-e8.mjs": "6bef07be13528ff5663aee8381413a0525d987fa081e578d6e9e63afd85bb10e",
+   "experiments/tracker/extract.mjs": "bd3bb709c0c1a8dd01a5bbe7a635cab568cdb1476b0883fd3bd40ba90ae57952",
+   "experiments/tracker/ledger.mjs": "2d0a6483eba7d6ab755a1ebd8149b18b9eb2da4d821089dae8c7c9fce0b215da",
+   "experiments/tracker/report.mjs": "a245b927d1074bd3906cdc2b6656965c4cf0e7e532788f5b2a5df55b50a5e83f",
+   "experiments/tracker/run.mjs": "510eb4703f1d4f252af7167953e75d4809c1ae7241adc02346b4772e018f6577",
+   "experiments/tracker/trace.mjs": "74466688eaef54f86e610327fbcf9a7a961e68e3ad4b04305818c64866b32f09"
+  },
+  "builds": {
+   "b1lh-e8-1": "837f2255e912809d761328972348f12e4d869d0966720b4cb7503d933626bb0b",
+   "b1lh-e8-3": "1056e57ed7bf9aaf71ccf8c6ed2824c1a37237c86a1e0af5c5093441d5e2fc86",
+   "b1o-e8-1": "ee4ce62df68fc2a3cfb678a4497fc5526b6bf3a8fa9607c8bfb2b951102c2790"
+  },
+  "specE": "c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1",
+  "policy": "96d5586281a0e8e43c73db63118189aaf18e8da5a492bb0dddfd43ab676cb4cf"
+ },
+ "models": {
+  "extract": "claude-haiku-5-5",
+  "write": "claude-haiku-5-5",
+  "escalate": "claude-sonnet-5-5",
+  "extractArm2": "claude-sonnet-5-5",
+  "policy": "policy/models.json 2026-10-09.1"
+ },
+ "spend": {
+  "byStep": {
+   "extract-haiku": {
+    "calls": 3,
+    "usd": 0.034394,
+    "latencyMsSum": 199283,
+    "models": {
+     "claude-haiku-5-5": 3
+    }
+   },
+   "write-primary": {
+    "calls": 80,
+    "usd": 0.116595,
+    "latencyMsSum": 914630,
+    "models": {
+     "claude-haiku-5-5": 80
+    }
+   },
+   "write-ablation": {
+    "calls": 2,
+    "usd": 0.002949,
+    "latencyMsSum": 23439,
+    "models": {
+     "claude-haiku-5-5": 2
+    }
+   },
+   "extract-sonnet": {
+    "calls": 3,
+    "usd": 0.174656,
+    "latencyMsSum": 75772,
+    "models": {
+     "claude-sonnet-5-5": 3
+    }
+   }
+  },
+  "totalUsd": 0.328594,
+  "capUsd": 3,
+  "trackerPipelineUsd": 0.128182
+ },
+ "wall": {
+  "extractHaikuPerSampleS": [
+   68.2,
+   72.4,
+   58.6
+  ],
+  "extractSonnetPerSampleS": [
+   26.5,
+   27.2,
+   22
+  ],
+  "writePrimaryS": 237,
+  "writeAblationS": 18,
+  "checkThreeBuildsS": [
+   42,
+   74
+  ],
+  "calibrateS": 148,
+  "adjudicatePerBuildS": 35,
+  "note": "writePrimary from write.start/write.end (22:09:59-22:13:56Z), concurrency 4; check measured twice (74 s under load from parallel adjudication); each check covers 3 builds x 3 worlds incl. the sandboxed solver runs."
+ },
+ "extraction": {
+  "haiku": [
+   {
+    "sample": 0,
+    "entries": 78,
+    "returned": 79,
+    "dropped": 1,
+    "droppedShare": 0.012658227848101266,
+    "idRecall": 0.7666666666666667,
+    "idsCovered": 23,
+    "idsMissed": [
+     "R3.1",
+     "S1",
+     "S2",
+     "S3",
+     "S4",
+     "S9",
+     "S7"
+    ],
+    "uRecall": 0.8,
+    "uMissed": [
+     "U01",
+     "U05",
+     "U07"
+    ],
+    "clauseCoverage": 0.7368421052631579,
+    "clausesMissed": [
+     "R1.2a",
+     "R1.2b",
+     "R1.3b",
+     "R2.2b",
+     "R2.2c",
+     "R2.2f",
+     "R3.1a",
+     "R5.1a",
+     "R5.1b",
+     "R5.1c",
+     "R6.2a",
+     "R7.2a",
+     "S1a",
+     "S1b",
+     "S2a",
+     "S3a",
+     "S4a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "guardYield": 0.5,
+    "guardCaught": [
+     "R1.3b",
+     "R2.2c",
+     "R3.1a",
+     "R6.2a",
+     "R7.2a",
+     "S1a",
+     "S1b",
+     "S3a",
+     "S9a",
+     "S7a"
+    ],
+    "nonNormative": [],
+    "uncovered": 37,
+    "kinds": {
+     "must": 27,
+     "never": 24,
+     "order": 4,
+     "deadline": 19,
+     "when-then": 4
+    },
+    "costUsd": 0.011586575,
+    "latencyMs": 68249,
+    "model": "claude-haiku-5-5"
+   },
+   {
+    "sample": 1,
+    "entries": 83,
+    "returned": 84,
+    "dropped": 1,
+    "droppedShare": 0.011904761904761904,
+    "idRecall": 0.9333333333333333,
+    "idsCovered": 28,
+    "idsMissed": [
+     "S3",
+     "S4"
+    ],
+    "uRecall": 0.8,
+    "uMissed": [
+     "U01",
+     "U05",
+     "U14"
+    ],
+    "clauseCoverage": 0.8026315789473685,
+    "clausesMissed": [
+     "R2.2b",
+     "R2.2c",
+     "R2.2h",
+     "R3.2a",
+     "R4.3a",
+     "R5.1a",
+     "R5.1d",
+     "R5.1e",
+     "R5.2a",
+     "R6.2a",
+     "R7.2a",
+     "S1a",
+     "S3a",
+     "S4a",
+     "S8a"
+    ],
+    "guardYield": 0.5333333333333333,
+    "guardCaught": [
+     "R2.2h",
+     "R3.2a",
+     "R5.1e",
+     "R5.2a",
+     "R6.2a",
+     "R7.2a",
+     "S1a",
+     "S3a"
+    ],
+    "nonNormative": [],
+    "uncovered": 34,
+    "kinds": {
+     "must": 29,
+     "never": 22,
+     "order": 4,
+     "when-then": 7,
+     "deadline": 21
+    },
+    "costUsd": 0.011276645,
+    "latencyMs": 72398,
+    "model": "claude-haiku-5-5"
+   },
+   {
+    "sample": 2,
+    "entries": 1,
+    "returned": 1,
+    "dropped": 0,
+    "droppedShare": 0,
+    "idRecall": 0,
+    "idsCovered": 0,
+    "idsMissed": [
+     "R1.1",
+     "R1.2",
+     "R1.3",
+     "R1.4",
+     "R2.1",
+     "R2.2",
+     "R3.1",
+     "R3.2",
+     "R4.1",
+     "R4.2",
+     "R4.3",
+     "R4.4",
+     "R4.5",
+     "R5.1",
+     "R5.2",
+     "R6.1",
+     "R6.2",
+     "R6.3",
+     "R6.4",
+     "R7.1",
+     "R7.2",
+     "S1",
+     "S2",
+     "S3",
+     "S4",
+     "S5",
+     "S6",
+     "S8",
+     "S9",
+     "S7"
+    ],
+    "uRecall": 0.06666666666666667,
+    "uMissed": [
+     "U01",
+     "U03",
+     "U04",
+     "U05",
+     "U06",
+     "U07",
+     "U08",
+     "U09",
+     "U10",
+     "U11",
+     "U12",
+     "U13",
+     "U14",
+     "U15"
+    ],
+    "clauseCoverage": 0,
+    "clausesMissed": [
+     "R1.1a",
+     "R1.1b",
+     "R1.2a",
+     "R1.2b",
+     "R1.2c",
+     "R1.3a",
+     "R1.3b",
+     "R1.4a",
+     "R2.1a",
+     "R2.1b",
+     "R2.1c",
+     "R2.1d",
+     "R2.2a",
+     "R2.2b",
+     "R2.2c",
+     "R2.2d",
+     "R2.2e",
+     "R2.2f",
+     "R2.2g",
+     "R2.2h",
+     "R3.1a",
+     "R3.2a",
+     "R3.2b",
+     "R3.2c",
+     "R3.2d",
+     "R3.2e",
+     "R3.2f",
+     "R4.1a",
+     "R4.1b",
+     "R4.2a",
+     "R4.2b",
+     "R4.2c",
+     "R4.2d",
+     "R4.2e",
+     "R4.2f",
+     "R4.3a",
+     "R4.4a",
+     "R4.4b",
+     "R4.4c",
+     "R4.4d",
+     "R4.4e",
+     "R4.5a",
+     "R5.1a",
+     "R5.1b",
+     "R5.1c",
+     "R5.1d",
+     "R5.1e",
+     "R5.1f",
+     "R5.2a",
+     "R5.2b",
+     "R5.2c",
+     "R5.2d",
+     "R6.1a",
+     "R6.2a",
+     "R6.2b",
+     "R6.2c",
+     "R6.2d",
+     "R6.2e",
+     "R6.3a",
+     "R6.3b",
+     "R6.4a",
+     "R6.4b",
+     "R7.1a",
+     "R7.2a",
+     "R7.2b",
+     "R7.2c",
+     "S1a",
+     "S1b",
+     "S2a",
+     "S3a",
+     "S4a",
+     "S5a",
+     "S6a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "guardYield": 0.8421052631578947,
+    "guardCaught": [
+     "R1.1a",
+     "R1.1b",
+     "R1.2a",
+     "R1.2b",
+     "R1.2c",
+     "R1.3a",
+     "R1.3b",
+     "R2.1a",
+     "R2.1c",
+     "R2.1d",
+     "R2.2c",
+     "R2.2d",
+     "R2.2e",
+     "R2.2f",
+     "R2.2h",
+     "R3.1a",
+     "R3.2a",
+     "R3.2b",
+     "R3.2c",
+     "R3.2d",
+     "R3.2e",
+     "R3.2f",
+     "R4.1a",
+     "R4.1b",
+     "R4.2a",
+     "R4.2b",
+     "R4.2c",
+     "R4.2d",
+     "R4.2e",
+     "R4.3a",
+     "R4.4a",
+     "R4.4b",
+     "R4.4c",
+     "R4.5a",
+     "R5.1a",
+     "R5.1b",
+     "R5.1c",
+     "R5.1d",
+     "R5.1e",
+     "R5.1f",
+     "R5.2a",
+     "R5.2b",
+     "R5.2c",
+     "R5.2d",
+     "R6.1a",
+     "R6.2a",
+     "R6.2b",
+     "R6.2c",
+     "R6.2d",
+     "R6.3a",
+     "R6.3b",
+     "R6.4a",
+     "R6.4b",
+     "R7.1a",
+     "R7.2a",
+     "R7.2b",
+     "R7.2c",
+     "S1a",
+     "S1b",
+     "S3a",
+     "S5a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "nonNormative": [],
+    "uncovered": 93,
+    "kinds": {
+     "never": 1
+    },
+    "costUsd": 0.011531244999999999,
+    "latencyMs": 58636,
+    "model": "claude-haiku-5-5"
+   }
+  ],
+  "sonnet": [
+   {
+    "sample": 0,
+    "entries": 36,
+    "returned": 36,
+    "dropped": 0,
+    "droppedShare": 0,
+    "idRecall": 0.5333333333333333,
+    "idsCovered": 16,
+    "idsMissed": [
+     "R1.2",
+     "R1.3",
+     "R4.3",
+     "R6.1",
+     "R7.1",
+     "S1",
+     "S2",
+     "S3",
+     "S4",
+     "S5",
+     "S6",
+     "S8",
+     "S9",
+     "S7"
+    ],
+    "uRecall": 0.2,
+    "uMissed": [
+     "U01",
+     "U02",
+     "U03",
+     "U04",
+     "U05",
+     "U06",
+     "U07",
+     "U08",
+     "U10",
+     "U11",
+     "U12",
+     "U14"
+    ],
+    "clauseCoverage": 0.5131578947368421,
+    "clausesMissed": [
+     "R1.2a",
+     "R1.2b",
+     "R1.2c",
+     "R1.3a",
+     "R1.3b",
+     "R2.1b",
+     "R2.2a",
+     "R2.2b",
+     "R2.2c",
+     "R2.2d",
+     "R2.2g",
+     "R2.2h",
+     "R3.2a",
+     "R3.2b",
+     "R4.2a",
+     "R4.3a",
+     "R4.4d",
+     "R5.1a",
+     "R5.1e",
+     "R5.2a",
+     "R5.2d",
+     "R6.1a",
+     "R6.2a",
+     "R6.3b",
+     "R7.1a",
+     "R7.2a",
+     "R7.2c",
+     "S1a",
+     "S1b",
+     "S2a",
+     "S3a",
+     "S4a",
+     "S5a",
+     "S6a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "guardYield": 0.7027027027027027,
+    "guardCaught": [
+     "R1.2a",
+     "R1.2b",
+     "R1.2c",
+     "R1.3a",
+     "R1.3b",
+     "R2.2c",
+     "R2.2d",
+     "R2.2h",
+     "R3.2a",
+     "R3.2b",
+     "R4.2a",
+     "R4.3a",
+     "R5.1e",
+     "R5.2a",
+     "R6.1a",
+     "R6.2a",
+     "R7.1a",
+     "R7.2a",
+     "R7.2c",
+     "S1a",
+     "S1b",
+     "S3a",
+     "S5a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "nonNormative": [],
+    "uncovered": 62,
+    "kinds": {
+     "never": 6,
+     "deadline": 21,
+     "must": 3,
+     "when-then": 4,
+     "order": 2
+    },
+    "costUsd": 0.073264,
+    "latencyMs": 26540,
+    "model": "claude-sonnet-5-5"
+   },
+   {
+    "sample": 1,
+    "entries": 40,
+    "returned": 40,
+    "dropped": 0,
+    "droppedShare": 0,
+    "idRecall": 0.5666666666666667,
+    "idsCovered": 17,
+    "idsMissed": [
+     "R1.2",
+     "R1.3",
+     "R4.3",
+     "R7.1",
+     "S1",
+     "S2",
+     "S3",
+     "S4",
+     "S5",
+     "S6",
+     "S8",
+     "S9",
+     "S7"
+    ],
+    "uRecall": 0.26666666666666666,
+    "uMissed": [
+     "U01",
+     "U02",
+     "U03",
+     "U04",
+     "U05",
+     "U06",
+     "U07",
+     "U08",
+     "U10",
+     "U11",
+     "U14"
+    ],
+    "clauseCoverage": 0.5657894736842105,
+    "clausesMissed": [
+     "R1.2a",
+     "R1.2b",
+     "R1.2c",
+     "R1.3a",
+     "R1.3b",
+     "R2.1a",
+     "R2.1b",
+     "R2.2a",
+     "R2.2b",
+     "R2.2c",
+     "R2.2d",
+     "R2.2g",
+     "R2.2h",
+     "R3.2a",
+     "R3.2b",
+     "R4.2a",
+     "R4.3a",
+     "R5.1e",
+     "R5.2a",
+     "R5.2d",
+     "R6.2a",
+     "R7.1a",
+     "R7.2a",
+     "S1a",
+     "S1b",
+     "S2a",
+     "S3a",
+     "S4a",
+     "S5a",
+     "S6a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "guardYield": 0.7575757575757576,
+    "guardCaught": [
+     "R1.2a",
+     "R1.2b",
+     "R1.2c",
+     "R1.3a",
+     "R1.3b",
+     "R2.1a",
+     "R2.2c",
+     "R2.2d",
+     "R2.2h",
+     "R3.2a",
+     "R3.2b",
+     "R4.2a",
+     "R4.3a",
+     "R5.1e",
+     "R5.2a",
+     "R6.2a",
+     "R7.1a",
+     "R7.2a",
+     "S1a",
+     "S1b",
+     "S3a",
+     "S5a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "nonNormative": [],
+    "uncovered": 60,
+    "kinds": {
+     "never": 10,
+     "deadline": 21,
+     "when-then": 4,
+     "order": 2,
+     "must": 3
+    },
+    "costUsd": 0.0559347,
+    "latencyMs": 27197,
+    "model": "claude-sonnet-5-5"
+   },
+   {
+    "sample": 2,
+    "entries": 36,
+    "returned": 36,
+    "dropped": 0,
+    "droppedShare": 0,
+    "idRecall": 0.5666666666666667,
+    "idsCovered": 17,
+    "idsMissed": [
+     "R1.2",
+     "R1.3",
+     "R4.3",
+     "R7.1",
+     "S1",
+     "S2",
+     "S3",
+     "S4",
+     "S5",
+     "S6",
+     "S8",
+     "S9",
+     "S7"
+    ],
+    "uRecall": 0.13333333333333333,
+    "uMissed": [
+     "U01",
+     "U02",
+     "U03",
+     "U04",
+     "U05",
+     "U06",
+     "U07",
+     "U08",
+     "U09",
+     "U10",
+     "U11",
+     "U12",
+     "U14"
+    ],
+    "clauseCoverage": 0.5263157894736842,
+    "clausesMissed": [
+     "R1.2a",
+     "R1.2b",
+     "R1.2c",
+     "R1.3a",
+     "R1.3b",
+     "R2.1a",
+     "R2.1b",
+     "R2.2a",
+     "R2.2b",
+     "R2.2c",
+     "R2.2d",
+     "R2.2g",
+     "R2.2h",
+     "R3.2a",
+     "R3.2b",
+     "R4.2a",
+     "R4.3a",
+     "R4.4d",
+     "R5.1e",
+     "R5.2a",
+     "R5.2d",
+     "R6.2a",
+     "R6.3b",
+     "R7.1a",
+     "R7.2a",
+     "R7.2c",
+     "S1a",
+     "S1b",
+     "S2a",
+     "S3a",
+     "S4a",
+     "S5a",
+     "S6a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "guardYield": 0.7222222222222222,
+    "guardCaught": [
+     "R1.2a",
+     "R1.2b",
+     "R1.2c",
+     "R1.3a",
+     "R1.3b",
+     "R2.1a",
+     "R2.2c",
+     "R2.2d",
+     "R2.2h",
+     "R3.2a",
+     "R3.2b",
+     "R4.2a",
+     "R4.3a",
+     "R5.1e",
+     "R5.2a",
+     "R6.2a",
+     "R7.1a",
+     "R7.2a",
+     "R7.2c",
+     "S1a",
+     "S1b",
+     "S3a",
+     "S5a",
+     "S8a",
+     "S9a",
+     "S7a"
+    ],
+    "nonNormative": [],
+    "uncovered": 61,
+    "kinds": {
+     "deadline": 21,
+     "never": 6,
+     "when-then": 6,
+     "order": 2,
+     "must": 1
+    },
+    "costUsd": 0.045457199999999996,
+    "latencyMs": 22035,
+    "model": "claude-sonnet-5-5"
+   }
+  ],
+  "means": {
+   "haiku": {
+    "idRecall": 0.5667,
+    "uRecall": 0.5556,
+    "clauseCoverage": 0.5132
+   },
+   "haikuValidSamples01": {
+    "idRecall": 0.85,
+    "clauseCoverage": 0.7697
+   },
+   "sonnet": {
+    "idRecall": 0.5556,
+    "uRecall": 0.2,
+    "clauseCoverage": 0.5351
+   }
+  },
+  "switchRule": "fires on the letter (Haiku mean id recall 0.567 < 0.95) but Sonnet is not better (0.556, clause coverage 0.535 vs 0.513): no switch recommended; owner decision",
+  "haikuSample2": "raw failure: 17,774 output tokens, 4 CLI turns (structured output re-asked), final schema-valid answer held 1 entry; kept as measured"
+ },
+ "writing": {
+  "entries": 78,
+  "calls": 80,
+  "contrastOk": 77,
+  "rewritten": [
+   "Q-038",
+   "Q-071"
+  ],
+  "escalations": 0,
+  "notObservable": [
+   "Q-012"
+  ],
+  "notTrustworthy": 0
+ },
+ "builds": {
+  "b1lh-e8-1": {
+   "build": {
+    "file": "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+    "sha256": "837f2255e912809d761328972348f12e4d869d0966720b4cb7503d933626bb0b"
+   },
+   "health": [
+    {
+     "world": 1235,
+     "difficulty": 2,
+     "status": "complete",
+     "ticks": 593,
+     "effects": 675,
+     "refused": 0,
+     "firstRefusal": null,
+     "runMs": 2916,
+     "projectMs": 14,
+     "traceBytes": 501461
+    },
+    {
+     "world": 1236,
+     "difficulty": 3,
+     "status": "complete",
+     "ticks": 1082,
+     "effects": 1215,
+     "refused": 0,
+     "firstRefusal": null,
+     "runMs": 4162,
+     "projectMs": 26,
+     "traceBytes": 940773
+    },
+    {
+     "world": 1237,
+     "difficulty": 5,
+     "status": "complete",
+     "ticks": 2861,
+     "effects": 3161,
+     "refused": 0,
+     "firstRefusal": null,
+     "runMs": 9128,
+     "projectMs": 56,
+     "traceBytes": 2399391
+    }
+   ],
+   "counts": {
+    "untested": 44,
+    "pass": 17,
+    "fail": 16,
+    "unclear": 1
+   },
+   "suspects": [
+    "Q-005",
+    "Q-011",
+    "Q-018",
+    "Q-019",
+    "Q-021",
+    "Q-024",
+    "Q-025",
+    "Q-027",
+    "Q-031",
+    "Q-035",
+    "Q-040",
+    "Q-064",
+    "Q-072"
+   ],
+   "requirements": {
+    "Q-001": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-002": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 4,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-003": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-004": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 35,
+       "pass": 35,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 80,
+       "pass": 80,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-005": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 228,
+       "pass": 0,
+       "fail": 228,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 488,
+       "pass": 0,
+       "fail": 488,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1260,
+       "pass": 0,
+       "fail": 1260,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "no decision effect carries the order id as subject"
+     }
+    },
+    "Q-006": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 49,
+       "pass": 49,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-007": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 56,
+       "pass": 0,
+       "fail": 56,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 102,
+       "pass": 0,
+       "fail": 102,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 302,
+       "pass": 0,
+       "fail": 302,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "second order-creating effect for the same order with a different key"
+     }
+    },
+    "Q-008": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-009": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-010": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-011": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 1,
+       "pass": 1,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 1,
+       "pass": 1,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 2,
+       "fail": 2,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1237,
+      "subject": "ORD-1237-0006",
+      "why": "carrier message with fulfilmentRef has no matching effect"
+     }
+    },
+    "Q-012": {
+     "status": "unclear",
+     "flags": [],
+     "worlds": {},
+     "reason": "not observable in a run",
+     "firstFail": null
+    },
+    "Q-013": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-014": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 50,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 86,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 231,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-015": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-016": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 51,
+       "pass": 51,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 82,
+       "pass": 82,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 203,
+       "pass": 203,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-017": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 0,
+       "fail": 0,
+       "censored": 50
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 0,
+       "fail": 0,
+       "censored": 86
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 0,
+       "fail": 0,
+       "censored": 231
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-018": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 6,
+       "pass": 1,
+       "fail": 5,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 31,
+       "pass": 5,
+       "fail": 26,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0014",
+      "why": "duplicate order.placed produced 3 effect(s)/refused candidate(s)"
+     }
+    },
+    "Q-019": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 50,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 80,
+       "fail": 6,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 200,
+       "fail": 31,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0014",
+      "why": "no fraud.check effect followed the new order"
+     }
+    },
+    "Q-020": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-021": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 4,
+       "pass": 0,
+       "fail": 4,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 2,
+       "pass": 0,
+       "fail": 2,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0040",
+      "why": "no fraud cancel within 120 min of placedAt"
+     }
+    },
+    "Q-022": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-023": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 9,
+       "pass": 9,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 10,
+       "pass": 10,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-024": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 9,
+       "pass": 0,
+       "fail": 9,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 10,
+       "pass": 0,
+       "fail": 10,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0015",
+      "why": "no review deadline declared for first review task"
+     }
+    },
+    "Q-025": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 0,
+       "fail": 3,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 5,
+       "pass": 0,
+       "fail": 5,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0015",
+      "why": "approve before deadline but no clear effect at answer time"
+     }
+    },
+    "Q-026": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-027": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 0,
+       "fail": 3,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 0,
+       "fail": 4,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0060",
+      "why": "no fraud-review-timeout cancel by deadline+120min"
+     }
+    },
+    "Q-028": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 3,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 2,
+       "pass": 2,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-029": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-030": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-031": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 14,
+       "fail": 36,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 17,
+       "fail": 69,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 32,
+       "fail": 199,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0004",
+      "why": "no amend/cancel at or before deadline"
+     }
+    },
+    "Q-032": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-033": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-034": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-035": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 0,
+       "fail": 12,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 0,
+       "fail": 18,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 0,
+       "fail": 30,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0002",
+      "why": "no customer cancel of the order within 60 min"
+     }
+    },
+    "Q-036": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-037": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-038": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-039": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-040": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 349,
+       "pass": 344,
+       "fail": 5,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 629,
+       "pass": 618,
+       "fail": 11,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1676,
+       "pass": 1659,
+       "fail": 17,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0002",
+      "why": "order status/reservation done with no order record"
+     }
+    },
+    "Q-041": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 58,
+       "pass": 58,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 114,
+       "pass": 114,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 319,
+       "pass": 308,
+       "fail": 11,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1237,
+      "subject": "ORD-1237-0047",
+      "why": "charge emitted before reserve committed"
+     }
+    },
+    "Q-042": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-043": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 0,
+       "fail": 0,
+       "censored": 4
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-044": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 39,
+       "pass": 39,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 60,
+       "pass": 60,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 167,
+       "pass": 167,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-045": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 56,
+       "pass": 56,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 103,
+       "pass": 103,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 303,
+       "pass": 303,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-046": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-047": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-048": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-049": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 7,
+       "pass": 7,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 8,
+       "pass": 8,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 16,
+       "pass": 16,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-050": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-051": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-052": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-053": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-054": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-055": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 8,
+       "pass": 8,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 50,
+       "pass": 50,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-056": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 382,
+       "pass": 382,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 689,
+       "pass": 689,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1782,
+       "pass": 1782,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-057": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 15,
+       "pass": 0,
+       "fail": 0,
+       "censored": 15
+      },
+      "1236": {
+       "triggered": 22,
+       "pass": 0,
+       "fail": 0,
+       "censored": 22
+      },
+      "1237": {
+       "triggered": 56,
+       "pass": 0,
+       "fail": 0,
+       "censored": 56
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-058": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 2,
+       "pass": 2,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 11,
+       "pass": 11,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 22,
+       "pass": 22,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-059": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 2,
+       "pass": 0,
+       "fail": 2,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 11,
+       "pass": 0,
+       "fail": 11,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 22,
+       "pass": 0,
+       "fail": 22,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0014",
+      "why": "missing compensation, failed status or fulfilment-failed notice within 120 min"
+     }
+    },
+    "Q-060": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 2,
+       "pass": 2,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 11,
+       "pass": 11,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 22,
+       "pass": 22,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-061": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-062": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 0,
+       "fail": 0,
+       "censored": 12
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 0,
+       "fail": 0,
+       "censored": 18
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 0,
+       "fail": 0,
+       "censored": 30
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-063": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-064": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 11,
+       "fail": 1,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 11,
+       "fail": 7,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 17,
+       "fail": 13,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0010",
+      "why": "not done by deadline: order cancelled, order-cancelled sent"
+     }
+    },
+    "Q-065": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-066": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 12,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 30,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-067": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-068": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-069": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-070": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-071": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-072": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 291,
+       "pass": 139,
+       "fail": 152,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 515,
+       "pass": 227,
+       "fail": 288,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1353,
+       "pass": 575,
+       "fail": 778,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "status processing set again on ORD-1235-0001 (first by em-0000004)"
+     }
+    },
+    "Q-073": {
+     "status": "pass",
+     "flags": [
+      "thin"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 1,
+       "pass": 1,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-074": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 33,
+       "pass": 0,
+       "fail": 0,
+       "censored": 33
+      },
+      "1236": {
+       "triggered": 69,
+       "pass": 0,
+       "fail": 0,
+       "censored": 69
+      },
+      "1237": {
+       "triggered": 127,
+       "pass": 0,
+       "fail": 0,
+       "censored": 127
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-075": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 33,
+       "pass": 33,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 69,
+       "pass": 69,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 127,
+       "pass": 127,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-076": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-077": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-078": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    }
+   }
+  },
+  "b1lh-e8-3": {
+   "build": {
+    "file": "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+    "sha256": "1056e57ed7bf9aaf71ccf8c6ed2824c1a37237c86a1e0af5c5093441d5e2fc86"
+   },
+   "health": [
+    {
+     "world": 1235,
+     "difficulty": 2,
+     "status": "complete",
+     "ticks": 604,
+     "effects": 675,
+     "refused": 0,
+     "firstRefusal": null,
+     "runMs": 2469,
+     "projectMs": 18,
+     "traceBytes": 500062
+    },
+    {
+     "world": 1236,
+     "difficulty": 3,
+     "status": "complete",
+     "ticks": 1101,
+     "effects": 1215,
+     "refused": 0,
+     "firstRefusal": null,
+     "runMs": 4268,
+     "projectMs": 20,
+     "traceBytes": 940382
+    },
+    {
+     "world": 1237,
+     "difficulty": 5,
+     "status": "complete",
+     "ticks": 2890,
+     "effects": 3153,
+     "refused": 0,
+     "firstRefusal": null,
+     "runMs": 8960,
+     "projectMs": 120,
+     "traceBytes": 2390723
+    }
+   ],
+   "counts": {
+    "untested": 43,
+    "pass": 16,
+    "fail": 18,
+    "unclear": 1
+   },
+   "suspects": [
+    "Q-005",
+    "Q-011",
+    "Q-018",
+    "Q-019",
+    "Q-021",
+    "Q-024",
+    "Q-025",
+    "Q-027",
+    "Q-031",
+    "Q-035",
+    "Q-040",
+    "Q-064",
+    "Q-072"
+   ],
+   "requirements": {
+    "Q-001": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-002": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-003": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-004": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 32,
+       "pass": 32,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 68,
+       "pass": 68,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-005": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 219,
+       "pass": 0,
+       "fail": 219,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 475,
+       "pass": 0,
+       "fail": 475,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1227,
+       "pass": 0,
+       "fail": 1227,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "no decision effect carries the order id as subject"
+     }
+    },
+    "Q-006": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 49,
+       "pass": 49,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-007": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 56,
+       "pass": 0,
+       "fail": 56,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 102,
+       "pass": 0,
+       "fail": 102,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 298,
+       "pass": 0,
+       "fail": 298,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "second order-creating effect for the same order with a different key"
+     }
+    },
+    "Q-008": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-009": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-010": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-011": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 1,
+       "pass": 1,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 1,
+       "pass": 1,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 2,
+       "fail": 2,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1237,
+      "subject": "ORD-1237-0006",
+      "why": "carrier message with fulfilmentRef has no matching effect"
+     }
+    },
+    "Q-012": {
+     "status": "unclear",
+     "flags": [],
+     "worlds": {},
+     "reason": "not observable in a run",
+     "firstFail": null
+    },
+    "Q-013": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 675,
+       "pass": 675,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 1152,
+       "pass": 1152,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 2971,
+       "pass": 2971,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-014": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 50,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 86,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 231,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-015": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-016": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 51,
+       "pass": 51,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 82,
+       "pass": 82,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 203,
+       "pass": 203,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-017": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 0,
+       "fail": 0,
+       "censored": 50
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 0,
+       "fail": 0,
+       "censored": 86
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 0,
+       "fail": 0,
+       "censored": 231
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-018": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 6,
+       "pass": 1,
+       "fail": 5,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 31,
+       "pass": 5,
+       "fail": 26,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0014",
+      "why": "duplicate order.placed produced 3 effect(s)/refused candidate(s)"
+     }
+    },
+    "Q-019": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 50,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 80,
+       "fail": 6,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 200,
+       "fail": 31,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0014",
+      "why": "no fraud.check effect followed the new order"
+     }
+    },
+    "Q-020": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-021": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 0,
+       "fail": 3,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1,
+       "pass": 0,
+       "fail": 1,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0040",
+      "why": "no fraud cancel within 120 min of placedAt"
+     }
+    },
+    "Q-022": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-023": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 9,
+       "pass": 9,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 10,
+       "pass": 10,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-024": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 9,
+       "pass": 0,
+       "fail": 9,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 10,
+       "pass": 0,
+       "fail": 10,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0015",
+      "why": "no review deadline declared for first review task"
+     }
+    },
+    "Q-025": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 0,
+       "fail": 3,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 5,
+       "pass": 0,
+       "fail": 5,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0015",
+      "why": "approve before deadline but no clear effect at answer time"
+     }
+    },
+    "Q-026": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-027": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 0,
+       "fail": 3,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 0,
+       "fail": 4,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0060",
+      "why": "no fraud-review-timeout cancel by deadline+120min"
+     }
+    },
+    "Q-028": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-029": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-030": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-031": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 14,
+       "fail": 36,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 17,
+       "fail": 69,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 32,
+       "fail": 199,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0004",
+      "why": "no amend/cancel at or before deadline"
+     }
+    },
+    "Q-032": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-033": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-034": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-035": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 0,
+       "fail": 12,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 0,
+       "fail": 18,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 0,
+       "fail": 30,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0002",
+      "why": "no customer cancel of the order within 60 min"
+     }
+    },
+    "Q-036": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 1,
+       "pass": 0,
+       "fail": 1,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 13,
+       "pass": 0,
+       "fail": 13,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 21,
+       "pass": 0,
+       "fail": 21,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0041",
+      "why": "missing within (D, D+60]: fulfilment cancel, order timedOut, order-timed-out send"
+     }
+    },
+    "Q-037": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-038": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-039": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-040": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 349,
+       "pass": 344,
+       "fail": 5,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 629,
+       "pass": 618,
+       "fail": 11,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1668,
+       "pass": 1651,
+       "fail": 17,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0002",
+      "why": "order status/reservation done with no order record"
+     }
+    },
+    "Q-041": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 58,
+       "pass": 58,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 114,
+       "pass": 114,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 315,
+       "pass": 308,
+       "fail": 7,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1237,
+      "subject": "ORD-1237-0047",
+      "why": "charge emitted before reserve committed"
+     }
+    },
+    "Q-042": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-043": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 0,
+       "fail": 4,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1237,
+      "subject": "ORD-1237-0062",
+      "why": "failed items not resubmitted (with original keys) in window"
+     }
+    },
+    "Q-044": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 39,
+       "pass": 39,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 60,
+       "pass": 60,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 167,
+       "pass": 167,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-045": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 56,
+       "pass": 56,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 103,
+       "pass": 103,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 299,
+       "pass": 299,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-046": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-047": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-048": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-049": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 7,
+       "pass": 7,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 8,
+       "pass": 8,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 16,
+       "pass": 16,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-050": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-051": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-052": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-053": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-054": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-055": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 8,
+       "pass": 8,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 50,
+       "pass": 50,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-056": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 382,
+       "pass": 382,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 689,
+       "pass": 689,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1778,
+       "pass": 1778,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-057": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 15,
+       "pass": 0,
+       "fail": 0,
+       "censored": 15
+      },
+      "1236": {
+       "triggered": 22,
+       "pass": 0,
+       "fail": 0,
+       "censored": 22
+      },
+      "1237": {
+       "triggered": 56,
+       "pass": 0,
+       "fail": 0,
+       "censored": 56
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-058": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 2,
+       "pass": 2,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 11,
+       "pass": 11,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 22,
+       "pass": 22,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-059": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 2,
+       "pass": 0,
+       "fail": 2,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 11,
+       "pass": 0,
+       "fail": 11,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 22,
+       "pass": 0,
+       "fail": 22,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0014",
+      "why": "missing compensation, failed status or fulfilment-failed notice within 120 min"
+     }
+    },
+    "Q-060": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 2,
+       "pass": 2,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 11,
+       "pass": 11,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 22,
+       "pass": 22,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-061": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-062": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 0,
+       "fail": 0,
+       "censored": 12
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 0,
+       "fail": 0,
+       "censored": 18
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 0,
+       "fail": 0,
+       "censored": 30
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-063": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-064": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 11,
+       "fail": 1,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 11,
+       "fail": 7,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 17,
+       "fail": 13,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0010",
+      "why": "not done by deadline: order cancelled, order-cancelled sent"
+     }
+    },
+    "Q-065": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-066": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 12,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 30,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-067": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-068": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-069": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-070": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-071": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-072": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 291,
+       "pass": 139,
+       "fail": 152,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 515,
+       "pass": 227,
+       "fail": 288,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1349,
+       "pass": 579,
+       "fail": 770,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "status processing set again on ORD-1235-0001 (first by em-0000004)"
+     }
+    },
+    "Q-073": {
+     "status": "pass",
+     "flags": [
+      "thin"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 1,
+       "pass": 1,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-074": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 33,
+       "pass": 0,
+       "fail": 0,
+       "censored": 33
+      },
+      "1236": {
+       "triggered": 69,
+       "pass": 0,
+       "fail": 0,
+       "censored": 69
+      },
+      "1237": {
+       "triggered": 131,
+       "pass": 0,
+       "fail": 0,
+       "censored": 131
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-075": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 33,
+       "pass": 33,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 69,
+       "pass": 69,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 131,
+       "pass": 131,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-076": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-077": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-078": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    }
+   }
+  },
+  "b1o-e8-1": {
+   "build": {
+    "file": "research/enterprise-20261014/runs/b1o-e8-1/solver.mjs",
+    "sha256": "ee4ce62df68fc2a3cfb678a4497fc5526b6bf3a8fa9607c8bfb2b951102c2790"
+   },
+   "health": [
+    {
+     "world": 1235,
+     "difficulty": 2,
+     "status": "complete",
+     "ticks": 226,
+     "effects": 250,
+     "refused": 39,
+     "firstRefusal": "effects[3].key: a batch op keys its items, not the batch",
+     "runMs": 651,
+     "projectMs": 14,
+     "traceBytes": 271930
+    },
+    {
+     "world": 1236,
+     "difficulty": 3,
+     "status": "complete",
+     "ticks": 406,
+     "effects": 447,
+     "refused": 63,
+     "firstRefusal": "effects[3].key: a batch op keys its items, not the batch",
+     "runMs": 1070,
+     "projectMs": 20,
+     "traceBytes": 502862
+    },
+    {
+     "world": 1237,
+     "difficulty": 5,
+     "status": "complete",
+     "ticks": 911,
+     "effects": 934,
+     "refused": 183,
+     "firstRefusal": "effects[2].key: a batch op keys its items, not the batch",
+     "runMs": 1891,
+     "projectMs": 31,
+     "traceBytes": 1133426
+    }
+   ],
+   "counts": {
+    "untested": 53,
+    "fail": 15,
+    "pass": 9,
+    "unclear": 1
+   },
+   "suspects": [
+    "Q-005",
+    "Q-011",
+    "Q-018",
+    "Q-019",
+    "Q-021",
+    "Q-024",
+    "Q-025",
+    "Q-027",
+    "Q-031",
+    "Q-035",
+    "Q-040",
+    "Q-064",
+    "Q-072"
+   ],
+   "requirements": {
+    "Q-001": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-002": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-003": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 18,
+       "pass": 0,
+       "fail": 18,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 41,
+       "pass": 0,
+       "fail": 41,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 66,
+       "pass": 0,
+       "fail": 66,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0002",
+      "why": "applied before predecessor ORD-1235-0002:st:ORD-1235-0002-F2:cancelled committed"
+     }
+    },
+    "Q-004": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 33,
+       "pass": 33,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 72,
+       "pass": 72,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-005": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 74,
+       "pass": 0,
+       "fail": 74,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 147,
+       "pass": 0,
+       "fail": 147,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 332,
+       "pass": 0,
+       "fail": 332,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "no decision effect carries the order id as subject"
+     }
+    },
+    "Q-006": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 49,
+       "pass": 49,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-007": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-008": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-009": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-010": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-011": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 1,
+       "pass": 1,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 1,
+       "pass": 1,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 2,
+       "fail": 2,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1237,
+      "subject": "ORD-1237-0006",
+      "why": "carrier message with fulfilmentRef has no matching effect"
+     }
+    },
+    "Q-012": {
+     "status": "unclear",
+     "flags": [],
+     "worlds": {},
+     "reason": "not observable in a run",
+     "firstFail": null
+    },
+    "Q-013": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 154,
+       "pass": 154,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 324,
+       "pass": 324,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 523,
+       "pass": 523,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-014": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 50,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 86,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 231,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-015": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-016": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 51,
+       "pass": 51,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 82,
+       "pass": 82,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 203,
+       "pass": 203,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-017": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 0,
+       "fail": 0,
+       "censored": 50
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 0,
+       "fail": 0,
+       "censored": 86
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 0,
+       "fail": 0,
+       "censored": 231
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-018": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 6,
+       "pass": 2,
+       "fail": 4,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 31,
+       "pass": 10,
+       "fail": 21,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0020",
+      "why": "duplicate order.placed produced 4 effect(s)/refused candidate(s)"
+     }
+    },
+    "Q-019": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 50,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 80,
+       "fail": 6,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 200,
+       "fail": 31,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0014",
+      "why": "no fraud.check effect followed the new order"
+     }
+    },
+    "Q-020": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-021": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 0,
+       "fail": 3,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 1,
+       "pass": 0,
+       "fail": 1,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0040",
+      "why": "no fraud cancel within 120 min of placedAt"
+     }
+    },
+    "Q-022": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-023": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 9,
+       "pass": 9,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 10,
+       "pass": 10,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-024": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 9,
+       "pass": 0,
+       "fail": 9,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 10,
+       "pass": 0,
+       "fail": 10,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0015",
+      "why": "no review deadline declared for first review task"
+     }
+    },
+    "Q-025": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 0,
+       "fail": 3,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 5,
+       "pass": 0,
+       "fail": 5,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0015",
+      "why": "approve before deadline but no clear effect at answer time"
+     }
+    },
+    "Q-026": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-027": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 3,
+       "pass": 0,
+       "fail": 3,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 4,
+       "pass": 0,
+       "fail": 4,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1236,
+      "subject": "ORD-1236-0060",
+      "why": "no fraud-review-timeout cancel by deadline+120min"
+     }
+    },
+    "Q-028": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-029": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-030": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-031": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 50,
+       "pass": 14,
+       "fail": 36,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 86,
+       "pass": 17,
+       "fail": 69,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 231,
+       "pass": 32,
+       "fail": 199,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0004",
+      "why": "no amend/cancel at or before deadline"
+     }
+    },
+    "Q-032": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-033": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-034": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-035": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 0,
+       "fail": 12,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 0,
+       "fail": 18,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 0,
+       "fail": 30,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0002",
+      "why": "no customer cancel of the order within 60 min"
+     }
+    },
+    "Q-036": {
+     "status": "fail",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 52,
+       "pass": 0,
+       "fail": 52,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 94,
+       "pass": 0,
+       "fail": 94,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 221,
+       "pass": 0,
+       "fail": 221,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "missing within (D, D+60]: fulfilment cancel, order timedOut, order-timed-out send"
+     }
+    },
+    "Q-037": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-038": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-039": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-040": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 66,
+       "pass": 61,
+       "fail": 5,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 140,
+       "pass": 133,
+       "fail": 7,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 226,
+       "pass": 213,
+       "fail": 13,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0002",
+      "why": "order status/reservation done with no order record"
+     }
+    },
+    "Q-041": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-042": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-043": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-044": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-045": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-046": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-047": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-048": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-049": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-050": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-051": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-052": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-053": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-054": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-055": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-056": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 184,
+       "pass": 184,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 307,
+       "pass": 307,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 708,
+       "pass": 708,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-057": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-058": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-059": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-060": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-061": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-062": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 0,
+       "fail": 0,
+       "censored": 12
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 0,
+       "fail": 0,
+       "censored": 18
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 0,
+       "fail": 0,
+       "censored": 30
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-063": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-064": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 11,
+       "fail": 1,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 17,
+       "fail": 1,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 24,
+       "fail": 6,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0017",
+      "why": "not done by deadline: order cancelled, order-cancelled sent"
+     }
+    },
+    "Q-065": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-066": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 12,
+       "pass": 12,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 18,
+       "pass": 18,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 30,
+       "pass": 30,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-067": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-068": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-069": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-070": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-071": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-072": {
+     "status": "fail",
+     "flags": [
+      "suspect"
+     ],
+     "worlds": {
+      "1235": {
+       "triggered": 165,
+       "pass": 74,
+       "fail": 91,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 327,
+       "pass": 132,
+       "fail": 195,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 763,
+       "pass": 287,
+       "fail": 476,
+       "censored": 0
+      }
+     },
+     "firstFail": {
+      "world": 1235,
+      "subject": "ORD-1235-0001",
+      "why": "status processing set again on ORD-1235-0001 (first by rf-00001)"
+     }
+    },
+    "Q-073": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-074": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 31,
+       "pass": 0,
+       "fail": 0,
+       "censored": 31
+      },
+      "1236": {
+       "triggered": 61,
+       "pass": 0,
+       "fail": 0,
+       "censored": 61
+      },
+      "1237": {
+       "triggered": 99,
+       "pass": 0,
+       "fail": 0,
+       "censored": 99
+      }
+     },
+     "reason": "every instance censored",
+     "firstFail": null
+    },
+    "Q-075": {
+     "status": "pass",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 31,
+       "pass": 31,
+       "fail": 0,
+       "censored": 0
+      },
+      "1236": {
+       "triggered": 61,
+       "pass": 61,
+       "fail": 0,
+       "censored": 0
+      },
+      "1237": {
+       "triggered": 99,
+       "pass": 99,
+       "fail": 0,
+       "censored": 0
+      }
+     },
+     "firstFail": null
+    },
+    "Q-076": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-077": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    },
+    "Q-078": {
+     "status": "untested",
+     "flags": [],
+     "worlds": {
+      "1235": {
+       "triggered": 0
+      },
+      "1236": {
+       "triggered": 0
+      },
+      "1237": {
+       "triggered": 0
+      }
+     },
+     "reason": "never triggered",
+     "firstFail": null
+    }
+   }
+  }
+ },
+ "defects": {
+  "line162": {
+   "requirement": "Q-043",
+   "expected": {
+    "b1lh-e8-1": "pass",
+    "b1lh-e8-3": "fail",
+    "b1o-e8-1": "untested"
+   },
+   "got": {
+    "b1lh-e8-1": "untested",
+    "b1lh-e8-3": "fail",
+    "b1o-e8-1": "untested"
+   },
+   "caught": true,
+   "oracle": "the 4 failing lineage-3 instances are the 4 cases the oracle fails on 1237 (193/197)"
+  },
+  "batchKeys": {
+   "requirements": [
+    "Q-001",
+    "Q-002"
+   ],
+   "extractionMissed": "U05 (line 47)",
+   "expected": {
+    "b1o-e8-1": "fail"
+   },
+   "got": {
+    "b1lh-e8-1": [
+     "untested",
+     "pass"
+    ],
+    "b1lh-e8-3": [
+     "untested",
+     "untested"
+    ],
+    "b1o-e8-1": [
+     "untested",
+     "untested"
+    ]
+   },
+   "caught": false,
+   "ablation": {
+    "G-001 (line 47, gold entry)": {
+     "b1lh-e8-1": "pass",
+     "b1lh-e8-3": "pass",
+     "b1o-e8-1": "untested"
+    },
+    "why": "the Haiku-written property reads t.effects only; every B1-O reserve was refused and sits in t.refused"
+   },
+   "visibleIn": "run health only: 39/63/183 refused tick outputs, first reason \"a batch op keys its items, not the batch\""
+  },
+  "reserveWindow": {
+   "requirement": "Q-042",
+   "expected": {
+    "b1o-e8-1": "fail"
+   },
+   "got": {
+    "b1lh-e8-1": "untested",
+    "b1lh-e8-3": "untested",
+    "b1o-e8-1": "untested"
+   },
+   "caught": false,
+   "why": "anchored on an invented inbound type `ready`; never triggers on any build"
+  },
+  "ablationLine162": {
+   "requirement": "G-002",
+   "got": {
+    "b1lh-e8-1": "untested",
+    "b1lh-e8-3": "fail",
+    "b1o-e8-1": "untested"
+   }
+  },
+  "verdictB": "fail: 1 of 3 defect cells caught; no lineage-1 cell is fail"
+ },
+ "falseAlarms": {
+  "lineage1": {
+   "count": 16,
+   "target": "<= 1",
+   "oracle": {
+    "1235": {
+     "completed": 52,
+     "passed": 52,
+     "critical": 0
+    },
+    "1236": {
+     "completed": 82,
+     "passed": 82,
+     "critical": 0
+    },
+    "1237": {
+     "completed": 197,
+     "passed": 197,
+     "critical": 0
+    }
+   },
+   "requirements": {
+    "Q-005": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "looks for an invented `decisions` effect; the declared subject is in t.instances[].subject",
+     "suspect": true,
+     "failingInstances": 1976,
+     "noOracleCase": 7,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 1859,
+     "onCensoredCase": 171
+    },
+    "Q-007": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "/create/ also matches carrier.create, so every shipment counts as a second creation of the order",
+     "suspect": false,
+     "failingInstances": 460,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 425,
+     "onCensoredCase": 49
+    },
+    "Q-011": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "reads \"must be matched\" as \"an effect must follow every ref-less carrier message\"; a repeated delivered report for a completed fulfilment correctly changes nothing (§3.3)",
+     "suspect": true,
+     "failingInstances": 2,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 2,
+     "onCensoredCase": 0
+    },
+    "Q-018": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "attributes the original order's later effects (same subject, after the duplicate arrived) to the duplicate",
+     "suspect": true,
+     "failingInstances": 31,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 31,
+     "onCensoredCase": 0
+    },
+    "Q-019": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "counts a duplicate order.placed as a \"new order\"",
+     "suspect": true,
+     "failingInstances": 37,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 37,
+     "onCensoredCase": 0
+    },
+    "Q-021": {
+     "verdict": "tracker wrong",
+     "cause": "property bug + spec gap",
+     "why": "anchors R2.1's reject on a review answer (R2.2's trigger) and wants an op named *cancel* whose args name \"fraud\"; no API op carries a reason (orders.setStatus takes orderId, fulfilmentId, status)",
+     "suspect": true,
+     "failingInstances": 6,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 6,
+     "onCensoredCase": 0
+    },
+    "Q-024": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "demands a workflow timer whose kind matches /review/, an implementation choice SPEC-E never states (lineage 1 names its timers `timer`)",
+     "suspect": true,
+     "failingInstances": 19,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 16,
+     "onCensoredCase": 3
+    },
+    "Q-025": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "treats \"cleared\" (a state) as an effect whose op matches /clear/",
+     "suspect": true,
+     "failingInstances": 8,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 5,
+     "onCensoredCase": 3
+    },
+    "Q-027": {
+     "verdict": "tracker wrong",
+     "cause": "property bug + spec gap",
+     "why": "wants \"fraud-review-timeout\" inside a cancel op's args; the reason has no API field",
+     "suspect": true,
+     "failingInstances": 7,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 7,
+     "onCensoredCase": 0
+    },
+    "Q-031": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "turns \"the first amend or cancel at or before D counts\" into \"every order must get an amend or cancel by D\"",
+     "suspect": true,
+     "failingInstances": 304,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 289,
+     "onCensoredCase": 21
+    },
+    "Q-035": {
+     "verdict": "tracker wrong",
+     "cause": "property bug + spec gap",
+     "why": "wants an op named *cancel* with args.reason = customer; cancelling is setStatus + order-cancelled, with no reason field",
+     "suspect": true,
+     "failingInstances": 60,
+     "noOracleCase": 2,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 58,
+     "onCensoredCase": 0
+    },
+    "Q-040": {
+     "verdict": "tracker wrong",
+     "cause": "property bug (missing context)",
+     "why": "ignores go-live: migrated orders were recorded before go-live (migration payload), so their status changes need no orders.create",
+     "suspect": true,
+     "failingInstances": 33,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 33,
+     "onCensoredCase": 0
+    },
+    "Q-041": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "compares a fulfilment's charge with the order's first reserve, not the reserve \"of the same fulfilment\"",
+     "suspect": false,
+     "failingInstances": 11,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 11,
+     "onCensoredCase": 0
+    },
+    "Q-059": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "looks for an op named *compens*; compensation is carrier.cancel / billing.refund / inventory.release",
+     "suspect": false,
+     "failingInstances": 35,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 35,
+     "onCensoredCase": 0
+    },
+    "Q-064": {
+     "verdict": "tracker wrong",
+     "cause": "property bug (missing context)",
+     "why": "ignores whether the cancel counts (a cancel after collection is refused, R6.2/R6.3); reads an invented payload.counted",
+     "suspect": true,
+     "failingInstances": 21,
+     "noOracleCase": 2,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 19,
+     "onCensoredCase": 0
+    },
+    "Q-072": {
+     "verdict": "tracker wrong",
+     "cause": "property bug",
+     "why": "keys a fulfilment's status by args.orderId (always present), so setting F1 and F2 to processing counts as setting the order twice",
+     "suspect": true,
+     "failingInstances": 1218,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 1164,
+     "onCensoredCase": 89
+    }
+   }
+  },
+  "lineage3Adjudication": {
+   "oracleOnPractice": {
+    "1235": {
+     "completed": 52,
+     "passed": 52,
+     "critical": 0
+    },
+    "1236": {
+     "completed": 82,
+     "passed": 82,
+     "critical": 0
+    },
+    "1237": {
+     "completed": 197,
+     "passed": 193,
+     "critical": 0
+    }
+   },
+   "alarms": {
+    "Q-005": {
+     "failingInstances": 1921,
+     "noOracleCase": 7,
+     "onOracleFailingCase": 23,
+     "onOraclePassingCase": 1781,
+     "onCensoredCase": 171
+    },
+    "Q-007": {
+     "failingInstances": 456,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 6,
+     "onOraclePassingCase": 415,
+     "onCensoredCase": 49
+    },
+    "Q-031": {
+     "failingInstances": 304,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 4,
+     "onOraclePassingCase": 285,
+     "onCensoredCase": 21
+    },
+    "Q-035": {
+     "failingInstances": 60,
+     "noOracleCase": 2,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 58,
+     "onCensoredCase": 0
+    },
+    "Q-036": {
+     "failingInstances": 35,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 32,
+     "onCensoredCase": 3
+    },
+    "Q-040": {
+     "failingInstances": 33,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 33,
+     "onCensoredCase": 0
+    },
+    "Q-059": {
+     "failingInstances": 35,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 35,
+     "onCensoredCase": 0
+    },
+    "Q-064": {
+     "failingInstances": 21,
+     "noOracleCase": 2,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 19,
+     "onCensoredCase": 0
+    },
+    "Q-072": {
+     "failingInstances": 1210,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 18,
+     "onOraclePassingCase": 1138,
+     "onCensoredCase": 89
+    },
+    "Q-018": {
+     "failingInstances": 31,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 31,
+     "onCensoredCase": 0
+    },
+    "Q-019": {
+     "failingInstances": 37,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 37,
+     "onCensoredCase": 0
+    },
+    "Q-021": {
+     "failingInstances": 4,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 4,
+     "onCensoredCase": 0
+    },
+    "Q-024": {
+     "failingInstances": 19,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 16,
+     "onCensoredCase": 3
+    },
+    "Q-025": {
+     "failingInstances": 8,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 5,
+     "onCensoredCase": 3
+    },
+    "Q-027": {
+     "failingInstances": 7,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 7,
+     "onCensoredCase": 0
+    },
+    "Q-011": {
+     "failingInstances": 2,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 2,
+     "onCensoredCase": 0
+    },
+    "Q-041": {
+     "failingInstances": 7,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 6,
+     "onOraclePassingCase": 1,
+     "onCensoredCase": 0
+    },
+    "Q-043": {
+     "failingInstances": 4,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 4,
+     "onOraclePassingCase": 0,
+     "onCensoredCase": 0
+    }
+   }
+  },
+  "b1oAdjudication": {
+   "oracleOnPractice": {
+    "1235": {
+     "completed": 52,
+     "passed": 15,
+     "critical": 0
+    },
+    "1236": {
+     "completed": 82,
+     "passed": 27,
+     "critical": 0
+    },
+    "1237": {
+     "completed": 197,
+     "passed": 49,
+     "critical": 0
+    }
+   },
+   "alarms": {
+    "Q-003": {
+     "failingInstances": 125,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 48,
+     "onOraclePassingCase": 73,
+     "onCensoredCase": 4
+    },
+    "Q-005": {
+     "failingInstances": 553,
+     "noOracleCase": 7,
+     "onOracleFailingCase": 337,
+     "onOraclePassingCase": 178,
+     "onCensoredCase": 31
+    },
+    "Q-031": {
+     "failingInstances": 304,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 235,
+     "onOraclePassingCase": 48,
+     "onCensoredCase": 21
+    },
+    "Q-035": {
+     "failingInstances": 60,
+     "noOracleCase": 2,
+     "onOracleFailingCase": 30,
+     "onOraclePassingCase": 28,
+     "onCensoredCase": 0
+    },
+    "Q-036": {
+     "failingInstances": 367,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 243,
+     "onOraclePassingCase": 99,
+     "onCensoredCase": 25
+    },
+    "Q-040": {
+     "failingInstances": 25,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 6,
+     "onOraclePassingCase": 19,
+     "onCensoredCase": 0
+    },
+    "Q-064": {
+     "failingInstances": 8,
+     "noOracleCase": 2,
+     "onOracleFailingCase": 2,
+     "onOraclePassingCase": 4,
+     "onCensoredCase": 0
+    },
+    "Q-072": {
+     "failingInstances": 762,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 571,
+     "onOraclePassingCase": 132,
+     "onCensoredCase": 59
+    },
+    "Q-018": {
+     "failingInstances": 25,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 19,
+     "onOraclePassingCase": 6,
+     "onCensoredCase": 0
+    },
+    "Q-019": {
+     "failingInstances": 37,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 27,
+     "onOraclePassingCase": 10,
+     "onCensoredCase": 0
+    },
+    "Q-021": {
+     "failingInstances": 4,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 4,
+     "onCensoredCase": 0
+    },
+    "Q-024": {
+     "failingInstances": 19,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 5,
+     "onOraclePassingCase": 11,
+     "onCensoredCase": 3
+    },
+    "Q-025": {
+     "failingInstances": 8,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 5,
+     "onOraclePassingCase": 0,
+     "onCensoredCase": 3
+    },
+    "Q-027": {
+     "failingInstances": 7,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 7,
+     "onCensoredCase": 0
+    },
+    "Q-011": {
+     "failingInstances": 2,
+     "noOracleCase": 0,
+     "onOracleFailingCase": 0,
+     "onOraclePassingCase": 2,
+     "onCensoredCase": 0
+    }
+   }
+  },
+  "referenceRuns": {
+   "count": 21,
+   "target": 0,
+   "ids": [
+    "Q-003",
+    "Q-005",
+    "Q-007",
+    "Q-011",
+    "Q-014",
+    "Q-018",
+    "Q-019",
+    "Q-021",
+    "Q-024",
+    "Q-025",
+    "Q-027",
+    "Q-031",
+    "Q-035",
+    "Q-040",
+    "Q-041",
+    "Q-043",
+    "Q-044",
+    "Q-045",
+    "Q-059",
+    "Q-064",
+    "Q-072"
+   ],
+   "referenceOnly": {
+    "Q-003": {
+     "cause": "extraction precision + property bug",
+     "why": "the quote states platform behaviour (`after`), not a workflow obligation; the property compares an after-chained effect's emission time with its predecessor's result time"
+    },
+    "Q-014": {
+     "cause": "G4 validity limit",
+     "why": "the reference policy is oracle-informed and never emits the inventory.allocate read that R1.1 asks for; lineage 1 passes this requirement on 367/367 orders"
+    },
+    "Q-043": {
+     "cause": "property bug",
+     "why": "requires the resubmission strictly after the partial result (`>`); the reference resubmits in the same instant. Lineage 1 does too, and is `untested` only because it never closes the instance the window is tied to"
+    },
+    "Q-044": {
+     "cause": "G4 validity limit + property bug",
+     "why": "the reference charges at the commit instant, 1 s before the reserve result is delivered (it acts on commit times a real workflow cannot see); the property also groups reserves by order, not fulfilment"
+    },
+    "Q-045": {
+     "cause": "G4 validity limit",
+     "why": "as Q-044, for carrier.create after the charge"
+    }
+   }
+  },
+  "g3": {
+   "suspects": [
+    "Q-005",
+    "Q-011",
+    "Q-018",
+    "Q-019",
+    "Q-021",
+    "Q-024",
+    "Q-025",
+    "Q-027",
+    "Q-031",
+    "Q-035",
+    "Q-040",
+    "Q-064",
+    "Q-072"
+   ],
+   "explained": "all 13 are lineage-1 false alarms (property bugs); G3 flags 13 of the 16"
+  }
+ },
+ "teeth": {
+  "mutation": {
+   "pairs": 19,
+   "covered": 17,
+   "hits": 3,
+   "score": 0.15789473684210525
+  },
+  "bar": 0.8,
+  "hits": [
+   "no-compensation -> R5.2 by Q-058",
+   "last-signal-wins -> R7.2 by Q-073",
+   "charge-twice -> U02 by Q-001"
+  ],
+  "uncovered": [
+   "no-keys -> U05",
+   "timer-first -> S1"
+  ]
+ },
+ "trackerFixes": [
+  "extract.mjs: a low-coverage extraction (fewer entries kept than normative sentences left uncovered) is flagged in ledger.extractor.lowCoverage and the CLI warns; the CLI turn count is recorded (ledger.extractor.turns). Found when Haiku sample 2 returned 1 entry after 4 CLI turns.",
+  "report.mjs: when the platform refused tick outputs, report.md warns that `untested` rows are not evidence (B1-O: every reserve refused, so reserve requirements read untested, not fail).",
+  "run.mjs: the G3 line was logged once per build instead of once.",
+  "not made in this run: an uncommitted change already in the tree at start (run.mjs writeChecks: a writer error leaves the entry pending instead of an `unclear` check; README/checks.mjs wording) was kept as found."
+ ]
+}

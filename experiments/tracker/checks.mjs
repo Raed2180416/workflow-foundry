@@ -3,7 +3,7 @@
 // process; statuses follow the §3 rules.
 //
 // Properties are model-written, so untrusted. They run only in the executor sandbox (src/executors/claude-code.mjs:
-// user, mount and pid namespaces, no network namespace, every host home and work root hidden; the same pattern as
+// user, mount and pid namespaces, an empty network namespace (no network), every host home and work root hidden; as in
 // beds/ebed/host/sandbox-arm.mjs), with only the trace JSON and the property sources in the directory. Inside, each
 // property runs in a fresh vm context: no require/import/process, no eval or new Function, no Date.now / Math.random,
 // a deep-frozen trace, and a synchronous time limit per property per trace (default 5 s). A throw, a timeout or an
