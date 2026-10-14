@@ -1,0 +1,45 @@
+
+jit-dev-kinetics-1: 12/24 paired tasks; modes agent-haiku, agent-sonnet, jit-HH, jit-OH, jit-SH
+  note: agent-haiku: 12 task(s) outside the paired set dropped from per-task labels
+  note: agent-sonnet: 12 task(s) outside the paired set dropped from per-task labels
+  note: jit-OH: 7 task(s) outside the paired set dropped from per-task labels
+  note: jit-SH: 1 task(s) outside the paired set dropped from per-task labels
+  agent-haiku  p=0.75 per-task $0.060 fixed $0.00
+  agent-sonnet p=0.75 per-task $0.271 fixed $0.00
+  jit-HH       p=0.67 per-task $0.207 fixed $9.63
+  jit-OH       p=0.92 per-task $0.365 fixed $13.45
+  jit-SH       p=0.58 per-task $0.295 fixed $17.10
+  H=12    V=0.05:agent-haiku  V=0.1:agent-haiku  V=0.25:agent-haiku  V=0.5:agent-haiku  V=1:agent-haiku  V=2:agent-haiku  V=5:agent-haiku?  V=10:jit-OH?
+  H=100   V=0.05:agent-haiku  V=0.1:agent-haiku  V=0.25:agent-haiku  V=0.5:agent-haiku  V=1:agent-haiku  V=2:agent-haiku?  V=5:jit-OH?  V=10:jit-OH
+  H=1000  V=0.05:agent-haiku  V=0.1:agent-haiku  V=0.25:agent-haiku  V=0.5:agent-haiku  V=1:agent-haiku  V=2:jit-OH?  V=5:jit-OH  V=10:jit-OH
+
+jit-dev-records-1: 24/24 paired tasks; modes agent-haiku, agent-opus, agent-sonnet, jit-HH, jit-OH, jit-SH, static-b1h
+  note: jit-HH: 1 row(s) with costUnknown (booked as recorded)
+  note: static-b1h: +$1.372 build (research/construction-20261006/REPORT-dev.md (C0 dev, records B1-Haiku build; constructions.jsonl $1.372))
+  agent-haiku  p=0.63 per-task $0.106 fixed $0.00
+  agent-opus   p=1.00 per-task $0.592 fixed $0.00
+  agent-sonnet p=0.54 per-task $0.305 fixed $0.00
+  jit-HH       p=0.58 per-task $0.159 fixed $4.34
+  jit-OH       p=0.75 per-task $0.240 fixed $2.06
+  jit-SH       p=0.92 per-task $0.181 fixed $4.83
+  static-b1h   p=0.67 per-task $0.050 fixed $1.37
+  H=24    V=0.05:static-b1h?  V=0.1:static-b1h?  V=0.25:static-b1h?  V=0.5:static-b1h?  V=1:static-b1h?  V=2:jit-SH?  V=5:agent-opus?  V=10:agent-opus
+  H=100   V=0.05:static-b1h  V=0.1:static-b1h  V=0.25:static-b1h  V=0.5:static-b1h?  V=1:jit-SH?  V=2:jit-SH  V=5:agent-opus?  V=10:agent-opus
+  H=1000  V=0.05:static-b1h  V=0.1:static-b1h  V=0.25:static-b1h  V=0.5:static-b1h?  V=1:jit-SH?  V=2:jit-SH  V=5:agent-opus?  V=10:agent-opus?
+
+jit-r0-kinetics: 14/24 paired tasks; modes agent-haiku, jit-OH
+  note: agent-haiku: 10 task(s) outside the paired set dropped from per-task labels
+  note: jit-OH: 1 row(s) with costUnknown (booked as recorded)
+  agent-haiku  p=0.50 per-task $0.061 fixed $0.00
+  jit-OH       p=0.93 per-task $0.587 fixed $24.96
+  H=14    V=0.05:agent-haiku  V=0.1:agent-haiku  V=0.25:agent-haiku  V=0.5:agent-haiku  V=1:agent-haiku  V=2:agent-haiku  V=5:agent-haiku?  V=10:jit-OH
+  H=100   V=0.05:agent-haiku  V=0.1:agent-haiku  V=0.25:agent-haiku  V=0.5:agent-haiku  V=1:agent-haiku  V=2:jit-OH?  V=5:jit-OH  V=10:jit-OH
+  H=1000  V=0.05:agent-haiku  V=0.1:agent-haiku  V=0.25:agent-haiku  V=0.5:agent-haiku  V=1:agent-haiku?  V=2:jit-OH  V=5:jit-OH  V=10:jit-OH
+
+jit-r0-records: 12/24 paired tasks; modes agent-haiku, jit-HH
+  note: agent-haiku: 12 task(s) outside the paired set dropped from per-task labels
+  agent-haiku  p=0.42 per-task $0.058 fixed $0.00
+  jit-HH       p=0.75 per-task $0.100 fixed $5.41
+  H=12    V=0.05:agent-haiku  V=0.1:agent-haiku  V=0.25:agent-haiku  V=0.5:agent-haiku  V=1:agent-haiku  V=2:jit-HH?  V=5:jit-HH  V=10:jit-HH
+  H=100   V=0.05:agent-haiku  V=0.1:agent-haiku  V=0.25:agent-haiku?  V=0.5:jit-HH?  V=1:jit-HH  V=2:jit-HH  V=5:jit-HH  V=10:jit-HH
+  H=1000  V=0.05:agent-haiku  V=0.1:agent-haiku?  V=0.25:jit-HH?  V=0.5:jit-HH  V=1:jit-HH  V=2:jit-HH  V=5:jit-HH  V=10:jit-HH

@@ -1,0 +1,1725 @@
+[
+ {
+  "family": "jit-dev-kinetics-1",
+  "tasks": 24,
+  "paired": 12,
+  "modes": [
+   "agent-haiku",
+   "agent-sonnet",
+   "jit-HH",
+   "jit-OH",
+   "jit-SH"
+  ],
+  "dropped": [],
+  "notes": [
+   "agent-haiku: 12 task(s) outside the paired set dropped from per-task labels",
+   "agent-sonnet: 12 task(s) outside the paired set dropped from per-task labels",
+   "jit-OH: 7 task(s) outside the paired set dropped from per-task labels",
+   "jit-SH: 1 task(s) outside the paired set dropped from per-task labels"
+  ],
+  "cells": {
+   "agent-haiku": {
+    "p": 0.75,
+    "perTaskUsd": 0.06044141666666667,
+    "fixedUsd": 0
+   },
+   "agent-sonnet": {
+    "p": 0.75,
+    "perTaskUsd": 0.2710723333333333,
+    "fixedUsd": 0
+   },
+   "jit-HH": {
+    "p": 0.6666666666666666,
+    "perTaskUsd": 0.20728133333333332,
+    "fixedUsd": 9.626005
+   },
+   "jit-OH": {
+    "p": 0.9166666666666666,
+    "perTaskUsd": 0.3650980000000001,
+    "fixedUsd": 13.447255
+   },
+   "jit-SH": {
+    "p": 0.5833333333333334,
+    "perTaskUsd": 0.29463325,
+    "fixedUsd": 17.100656
+   }
+  },
+  "grid": [
+   {
+    "H": 12,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -0.275,
+     "agent-sonnet": -2.803,
+     "jit-HH": -11.713,
+     "jit-OH": -17.278,
+     "jit-SH": -20.286
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 0.175,
+     "agent-sonnet": -2.353,
+     "jit-HH": -11.313,
+     "jit-OH": -16.728,
+     "jit-SH": -19.936
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 0.25,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 1.525,
+     "agent-sonnet": -1.003,
+     "jit-HH": -10.113,
+     "jit-OH": -15.078,
+     "jit-SH": -18.886
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 0.5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 3.775,
+     "agent-sonnet": 1.247,
+     "jit-HH": -8.113,
+     "jit-OH": -12.328,
+     "jit-SH": -17.136
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 8.275,
+     "agent-sonnet": 5.747,
+     "jit-HH": -4.113,
+     "jit-OH": -6.828,
+     "jit-SH": -13.636
+    },
+    "confident": true,
+    "share": 0.959,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 2,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 17.275,
+     "agent-sonnet": 14.747,
+     "jit-OH": 4.172,
+     "jit-HH": 3.887,
+     "jit-SH": -6.636
+    },
+    "confident": true,
+    "share": 0.86,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 44.275,
+     "agent-sonnet": 41.747,
+     "jit-OH": 37.172,
+     "jit-HH": 27.887,
+     "jit-SH": 14.364
+    },
+    "confident": false,
+    "share": 0.59,
+    "acceptable": [
+     "agent-haiku",
+     "agent-sonnet"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 10,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 92.172,
+     "agent-haiku": 89.275,
+     "agent-sonnet": 86.747,
+     "jit-HH": 67.887,
+     "jit-SH": 49.364
+    },
+    "confident": false,
+    "share": 0.474,
+    "acceptable": [
+     "agent-haiku",
+     "agent-sonnet",
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -2.294,
+     "agent-sonnet": -23.357,
+     "jit-HH": -27.021,
+     "jit-SH": -43.647,
+     "jit-OH": -45.374
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 1.456,
+     "agent-sonnet": -19.607,
+     "jit-HH": -23.687,
+     "jit-SH": -40.731,
+     "jit-OH": -40.79
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.25,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 12.706,
+     "agent-sonnet": -8.357,
+     "jit-HH": -13.687,
+     "jit-OH": -27.04,
+     "jit-SH": -31.981
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 31.456,
+     "agent-sonnet": 10.393,
+     "jit-HH": 2.979,
+     "jit-OH": -4.124,
+     "jit-SH": -17.397
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 68.956,
+     "agent-sonnet": 47.893,
+     "jit-OH": 41.71,
+     "jit-HH": 36.313,
+     "jit-SH": 11.769
+    },
+    "confident": true,
+    "share": 0.956,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 2,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 143.956,
+     "jit-OH": 133.376,
+     "agent-sonnet": 122.893,
+     "jit-HH": 102.979,
+     "jit-SH": 70.103
+    },
+    "confident": false,
+    "share": 0.642,
+    "acceptable": [
+     "agent-haiku",
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 5,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 408.376,
+     "agent-haiku": 368.956,
+     "agent-sonnet": 347.893,
+     "jit-HH": 302.979,
+     "jit-SH": 245.103
+    },
+    "confident": false,
+    "share": 0.752,
+    "acceptable": [
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 10,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 866.71,
+     "agent-haiku": 743.956,
+     "agent-sonnet": 722.893,
+     "jit-HH": 636.313,
+     "jit-SH": 536.769
+    },
+    "confident": true,
+    "share": 0.827,
+    "acceptable": [
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -22.941,
+     "jit-HH": -183.574,
+     "agent-sonnet": -233.572,
+     "jit-SH": -282.567,
+     "jit-OH": -332.712
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 14.559,
+     "jit-HH": -150.241,
+     "agent-sonnet": -196.072,
+     "jit-SH": -253.401,
+     "jit-OH": -286.879
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.25,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 127.059,
+     "jit-HH": -50.241,
+     "agent-sonnet": -83.572,
+     "jit-OH": -149.379,
+     "jit-SH": -165.901
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 314.559,
+     "jit-HH": 116.426,
+     "agent-sonnet": 103.928,
+     "jit-OH": 79.788,
+     "jit-SH": -20.067
+    },
+    "confident": true,
+    "share": 0.995,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 689.559,
+     "jit-OH": 538.121,
+     "agent-sonnet": 478.928,
+     "jit-HH": 449.759,
+     "jit-SH": 271.599
+    },
+    "confident": true,
+    "share": 0.88,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 2,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 1454.788,
+     "agent-haiku": 1439.559,
+     "agent-sonnet": 1228.928,
+     "jit-HH": 1116.426,
+     "jit-SH": 854.933
+    },
+    "confident": false,
+    "share": 0.469,
+    "acceptable": [
+     "agent-haiku",
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 5,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 4204.788,
+     "agent-haiku": 3689.559,
+     "agent-sonnet": 3478.928,
+     "jit-HH": 3116.426,
+     "jit-SH": 2604.933
+    },
+    "confident": true,
+    "share": 0.823,
+    "acceptable": [
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 10,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 8788.121,
+     "agent-haiku": 7439.559,
+     "agent-sonnet": 7228.928,
+     "jit-HH": 6449.759,
+     "jit-SH": 5521.599
+    },
+    "confident": true,
+    "share": 0.827,
+    "acceptable": [
+     "jit-OH"
+    ]
+   }
+  ]
+ },
+ {
+  "family": "jit-dev-records-1",
+  "tasks": 24,
+  "paired": 24,
+  "modes": [
+   "agent-haiku",
+   "agent-opus",
+   "agent-sonnet",
+   "jit-HH",
+   "jit-OH",
+   "jit-SH",
+   "static-b1h"
+  ],
+  "dropped": [],
+  "notes": [
+   "jit-HH: 1 row(s) with costUnknown (booked as recorded)",
+   "static-b1h: +$1.372 build (research/construction-20261006/REPORT-dev.md (C0 dev, records B1-Haiku build; constructions.jsonl $1.372))"
+  ],
+  "cells": {
+   "agent-haiku": {
+    "p": 0.625,
+    "perTaskUsd": 0.10594287500000003,
+    "fixedUsd": 0
+   },
+   "agent-opus": {
+    "p": 1,
+    "perTaskUsd": 0.5923195,
+    "fixedUsd": 0
+   },
+   "agent-sonnet": {
+    "p": 0.5416666666666666,
+    "perTaskUsd": 0.30518220833333337,
+    "fixedUsd": 0
+   },
+   "jit-HH": {
+    "p": 0.5833333333333334,
+    "perTaskUsd": 0.15895979166666666,
+    "fixedUsd": 4.3436509999999995
+   },
+   "jit-OH": {
+    "p": 0.75,
+    "perTaskUsd": 0.24043525000000002,
+    "fixedUsd": 2.064776
+   },
+   "jit-SH": {
+    "p": 0.9166666666666666,
+    "perTaskUsd": 0.1805274166666667,
+    "fixedUsd": 4.827299
+   },
+   "static-b1h": {
+    "p": 0.6666666666666666,
+    "perTaskUsd": 0.05036754166666666,
+    "fixedUsd": 1.372
+   }
+  },
+  "grid": [
+   {
+    "H": 24,
+    "V": 0.05,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": -1.781,
+     "agent-haiku": -1.793,
+     "agent-sonnet": -6.674,
+     "jit-OH": -6.935,
+     "jit-HH": -7.459,
+     "jit-SH": -8.06,
+     "agent-opus": -13.016
+    },
+    "confident": false,
+    "share": 0.535,
+    "acceptable": [
+     "agent-haiku",
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 24,
+    "V": 0.1,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": -0.981,
+     "agent-haiku": -1.043,
+     "agent-sonnet": -6.024,
+     "jit-OH": -6.035,
+     "jit-HH": -6.759,
+     "jit-SH": -6.96,
+     "agent-opus": -11.816
+    },
+    "confident": false,
+    "share": 0.528,
+    "acceptable": [
+     "agent-haiku",
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 24,
+    "V": 0.25,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 1.419,
+     "agent-haiku": 1.207,
+     "jit-OH": -3.335,
+     "jit-SH": -3.66,
+     "agent-sonnet": -4.074,
+     "jit-HH": -4.659,
+     "agent-opus": -8.216
+    },
+    "confident": false,
+    "share": 0.599,
+    "acceptable": [
+     "agent-haiku",
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 24,
+    "V": 0.5,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 5.419,
+     "agent-haiku": 4.957,
+     "jit-SH": 1.84,
+     "jit-OH": 1.165,
+     "agent-sonnet": -0.824,
+     "jit-HH": -1.159,
+     "agent-opus": -2.216
+    },
+    "confident": false,
+    "share": 0.616,
+    "acceptable": [
+     "agent-haiku",
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 24,
+    "V": 1,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 13.419,
+     "jit-SH": 12.84,
+     "agent-haiku": 12.457,
+     "jit-OH": 10.165,
+     "agent-opus": 9.784,
+     "jit-HH": 5.841,
+     "agent-sonnet": 5.676
+    },
+    "confident": false,
+    "share": 0.453,
+    "acceptable": [
+     "agent-haiku",
+     "jit-SH",
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 24,
+    "V": 2,
+    "best": "jit-SH",
+    "utility": {
+     "jit-SH": 34.84,
+     "agent-opus": 33.784,
+     "static-b1h": 29.419,
+     "jit-OH": 28.165,
+     "agent-haiku": 27.457,
+     "jit-HH": 19.841,
+     "agent-sonnet": 18.676
+    },
+    "confident": false,
+    "share": 0.602,
+    "acceptable": [
+     "jit-SH"
+    ]
+   },
+   {
+    "H": 24,
+    "V": 5,
+    "best": "agent-opus",
+    "utility": {
+     "agent-opus": 105.784,
+     "jit-SH": 100.84,
+     "jit-OH": 82.165,
+     "static-b1h": 77.419,
+     "agent-haiku": 72.457,
+     "jit-HH": 61.841,
+     "agent-sonnet": 57.676
+    },
+    "confident": false,
+    "share": 0.761,
+    "acceptable": [
+     "agent-opus",
+     "jit-SH"
+    ]
+   },
+   {
+    "H": 24,
+    "V": 10,
+    "best": "agent-opus",
+    "utility": {
+     "agent-opus": 225.784,
+     "jit-SH": 210.84,
+     "jit-OH": 172.165,
+     "static-b1h": 157.419,
+     "agent-haiku": 147.457,
+     "jit-HH": 131.841,
+     "agent-sonnet": 122.676
+    },
+    "confident": true,
+    "share": 0.883,
+    "acceptable": [
+     "agent-opus"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.05,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": -3.075,
+     "agent-haiku": -7.469,
+     "jit-HH": -17.323,
+     "jit-SH": -18.297,
+     "jit-OH": -22.358,
+     "agent-sonnet": -27.81,
+     "agent-opus": -54.232
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.1,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 0.258,
+     "agent-haiku": -4.344,
+     "jit-SH": -13.713,
+     "jit-HH": -14.406,
+     "jit-OH": -18.608,
+     "agent-sonnet": -25.102,
+     "agent-opus": -49.232
+    },
+    "confident": true,
+    "share": 0.998,
+    "acceptable": [
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.25,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 10.258,
+     "agent-haiku": 5.031,
+     "jit-SH": 0.037,
+     "jit-HH": -5.656,
+     "jit-OH": -7.358,
+     "agent-sonnet": -16.977,
+     "agent-opus": -34.232
+    },
+    "confident": true,
+    "share": 0.932,
+    "acceptable": [
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.5,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 26.925,
+     "jit-SH": 22.953,
+     "agent-haiku": 20.656,
+     "jit-OH": 11.392,
+     "jit-HH": 8.927,
+     "agent-sonnet": -3.435,
+     "agent-opus": -9.232
+    },
+    "confident": false,
+    "share": 0.631,
+    "acceptable": [
+     "jit-SH",
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 1,
+    "best": "jit-SH",
+    "utility": {
+     "jit-SH": 68.787,
+     "static-b1h": 60.258,
+     "agent-haiku": 51.906,
+     "jit-OH": 48.892,
+     "agent-opus": 40.768,
+     "jit-HH": 38.094,
+     "agent-sonnet": 23.648
+    },
+    "confident": false,
+    "share": 0.698,
+    "acceptable": [
+     "jit-SH",
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 2,
+    "best": "jit-SH",
+    "utility": {
+     "jit-SH": 160.453,
+     "agent-opus": 140.768,
+     "static-b1h": 126.925,
+     "jit-OH": 123.892,
+     "agent-haiku": 114.406,
+     "jit-HH": 96.427,
+     "agent-sonnet": 77.815
+    },
+    "confident": true,
+    "share": 0.87,
+    "acceptable": [
+     "jit-SH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 5,
+    "best": "agent-opus",
+    "utility": {
+     "agent-opus": 440.768,
+     "jit-SH": 435.453,
+     "jit-OH": 348.892,
+     "static-b1h": 326.925,
+     "agent-haiku": 301.906,
+     "jit-HH": 271.427,
+     "agent-sonnet": 240.315
+    },
+    "confident": false,
+    "share": 0.558,
+    "acceptable": [
+     "agent-opus",
+     "jit-SH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 10,
+    "best": "agent-opus",
+    "utility": {
+     "agent-opus": 940.768,
+     "jit-SH": 893.787,
+     "jit-OH": 723.892,
+     "static-b1h": 660.258,
+     "agent-haiku": 614.406,
+     "jit-HH": 563.094,
+     "agent-sonnet": 511.148
+    },
+    "confident": true,
+    "share": 0.846,
+    "acceptable": [
+     "agent-opus"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.05,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": -18.406,
+     "agent-haiku": -74.693,
+     "jit-HH": -134.137,
+     "jit-SH": -139.521,
+     "jit-OH": -205,
+     "agent-sonnet": -278.099,
+     "agent-opus": -542.319
+    },
+    "confident": true,
+    "share": 0.988,
+    "acceptable": [
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.1,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 14.927,
+     "agent-haiku": -43.443,
+     "jit-SH": -93.688,
+     "jit-HH": -104.97,
+     "jit-OH": -167.5,
+     "agent-sonnet": -251.016,
+     "agent-opus": -492.32
+    },
+    "confident": true,
+    "share": 0.985,
+    "acceptable": [
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.25,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 114.927,
+     "agent-haiku": 50.307,
+     "jit-SH": 43.812,
+     "jit-HH": -17.47,
+     "jit-OH": -55,
+     "agent-sonnet": -169.766,
+     "agent-opus": -342.32
+    },
+    "confident": true,
+    "share": 0.871,
+    "acceptable": [
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.5,
+    "best": "static-b1h",
+    "utility": {
+     "static-b1h": 281.594,
+     "jit-SH": 272.979,
+     "agent-haiku": 206.557,
+     "jit-OH": 132.5,
+     "jit-HH": 128.363,
+     "agent-sonnet": -34.349,
+     "agent-opus": -92.32
+    },
+    "confident": false,
+    "share": 0.509,
+    "acceptable": [
+     "jit-SH",
+     "static-b1h"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 1,
+    "best": "jit-SH",
+    "utility": {
+     "jit-SH": 731.312,
+     "static-b1h": 614.927,
+     "agent-haiku": 519.057,
+     "jit-OH": 507.5,
+     "jit-HH": 420.03,
+     "agent-opus": 407.68,
+     "agent-sonnet": 236.484
+    },
+    "confident": false,
+    "share": 0.794,
+    "acceptable": [
+     "jit-SH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 2,
+    "best": "jit-SH",
+    "utility": {
+     "jit-SH": 1647.979,
+     "agent-opus": 1407.681,
+     "static-b1h": 1281.594,
+     "jit-OH": 1257.5,
+     "agent-haiku": 1144.057,
+     "jit-HH": 1003.363,
+     "agent-sonnet": 778.151
+    },
+    "confident": true,
+    "share": 0.909,
+    "acceptable": [
+     "jit-SH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 5,
+    "best": "agent-opus",
+    "utility": {
+     "agent-opus": 4407.68,
+     "jit-SH": 4397.979,
+     "jit-OH": 3507.5,
+     "static-b1h": 3281.594,
+     "agent-haiku": 3019.057,
+     "jit-HH": 2753.363,
+     "agent-sonnet": 2403.151
+    },
+    "confident": false,
+    "share": 0.518,
+    "acceptable": [
+     "agent-opus",
+     "jit-SH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 10,
+    "best": "agent-opus",
+    "utility": {
+     "agent-opus": 9407.681,
+     "jit-SH": 8981.312,
+     "jit-OH": 7257.5,
+     "static-b1h": 6614.927,
+     "agent-haiku": 6144.057,
+     "jit-HH": 5670.03,
+     "agent-sonnet": 5111.484
+    },
+    "confident": false,
+    "share": 0.787,
+    "acceptable": [
+     "agent-opus",
+     "jit-SH"
+    ]
+   }
+  ]
+ },
+ {
+  "family": "jit-r0-kinetics",
+  "tasks": 24,
+  "paired": 14,
+  "modes": [
+   "agent-haiku",
+   "jit-OH"
+  ],
+  "dropped": [],
+  "notes": [
+   "agent-haiku: 10 task(s) outside the paired set dropped from per-task labels",
+   "jit-OH: 1 row(s) with costUnknown (booked as recorded)"
+  ],
+  "cells": {
+   "agent-haiku": {
+    "p": 0.5,
+    "perTaskUsd": 0.06056871428571429,
+    "fixedUsd": 0
+   },
+   "jit-OH": {
+    "p": 0.9285714285714286,
+    "perTaskUsd": 0.586979,
+    "fixedUsd": 24.956941999999998
+   }
+  },
+  "grid": [
+   {
+    "H": 14,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -0.498,
+     "jit-OH": -32.525
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 14,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -0.148,
+     "jit-OH": -31.875
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 14,
+    "V": 0.25,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 0.902,
+     "jit-OH": -29.925
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 14,
+    "V": 0.5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 2.652,
+     "jit-OH": -26.675
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 14,
+    "V": 1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 6.152,
+     "jit-OH": -20.175
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 14,
+    "V": 2,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 13.152,
+     "jit-OH": -7.175
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 14,
+    "V": 5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 34.152,
+     "jit-OH": 31.825
+    },
+    "confident": false,
+    "share": 0.574,
+    "acceptable": [
+     "agent-haiku",
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 14,
+    "V": 10,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 96.825,
+     "agent-haiku": 69.152
+    },
+    "confident": true,
+    "share": 0.851,
+    "acceptable": [
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -3.557,
+     "jit-OH": -79.012
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -1.057,
+     "jit-OH": -74.369
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.25,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 6.443,
+     "jit-OH": -60.441
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 18.943,
+     "jit-OH": -37.226
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 43.943,
+     "jit-OH": 9.202
+    },
+    "confident": true,
+    "share": 0.98,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 2,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 102.059,
+     "agent-haiku": 93.943
+    },
+    "confident": false,
+    "share": 0.598,
+    "acceptable": [
+     "agent-haiku",
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 5,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 380.631,
+     "agent-haiku": 243.943
+    },
+    "confident": true,
+    "share": 0.944,
+    "acceptable": [
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 10,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 844.917,
+     "agent-haiku": 493.943
+    },
+    "confident": true,
+    "share": 0.979,
+    "acceptable": [
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -35.569,
+     "jit-OH": -565.507
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -10.569,
+     "jit-OH": -519.079
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.25,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 64.431,
+     "jit-OH": -379.793
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 189.431,
+     "jit-OH": -147.65
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 439.431,
+     "jit-OH": 316.635
+    },
+    "confident": false,
+    "share": 0.746,
+    "acceptable": [
+     "agent-haiku",
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 2,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 1245.207,
+     "agent-haiku": 939.431
+    },
+    "confident": true,
+    "share": 0.816,
+    "acceptable": [
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 5,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 4030.921,
+     "agent-haiku": 2439.431
+    },
+    "confident": true,
+    "share": 0.979,
+    "acceptable": [
+     "jit-OH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 10,
+    "best": "jit-OH",
+    "utility": {
+     "jit-OH": 8673.778,
+     "agent-haiku": 4939.431
+    },
+    "confident": true,
+    "share": 0.991,
+    "acceptable": [
+     "jit-OH"
+    ]
+   }
+  ]
+ },
+ {
+  "family": "jit-r0-records",
+  "tasks": 24,
+  "paired": 12,
+  "modes": [
+   "agent-haiku",
+   "jit-HH"
+  ],
+  "dropped": [],
+  "notes": [
+   "agent-haiku: 12 task(s) outside the paired set dropped from per-task labels"
+  ],
+  "cells": {
+   "agent-haiku": {
+    "p": 0.4166666666666667,
+    "perTaskUsd": 0.057530500000000005,
+    "fixedUsd": 0
+   },
+   "jit-HH": {
+    "p": 0.75,
+    "perTaskUsd": 0.10045733333333336,
+    "fixedUsd": 5.413259999999999
+   }
+  },
+  "grid": [
+   {
+    "H": 12,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -0.44,
+     "jit-HH": -6.169
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -0.19,
+     "jit-HH": -5.719
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 0.25,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 0.56,
+     "jit-HH": -4.369
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 0.5,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 1.81,
+     "jit-HH": -2.119
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 4.31,
+     "jit-HH": 2.381
+    },
+    "confident": true,
+    "share": 0.824,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 2,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 11.381,
+     "agent-haiku": 9.31
+    },
+    "confident": false,
+    "share": 0.674,
+    "acceptable": [
+     "agent-haiku",
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 5,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 38.381,
+     "agent-haiku": 24.31
+    },
+    "confident": true,
+    "share": 0.851,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 12,
+    "V": 10,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 83.381,
+     "agent-haiku": 49.31
+    },
+    "confident": true,
+    "share": 0.934,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -3.67,
+     "jit-HH": -11.709
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -1.586,
+     "jit-HH": -7.959
+    },
+    "confident": true,
+    "share": 1,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.25,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": 4.664,
+     "jit-HH": 3.291
+    },
+    "confident": false,
+    "share": 0.629,
+    "acceptable": [
+     "agent-haiku",
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 0.5,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 22.041,
+     "agent-haiku": 15.08
+    },
+    "confident": false,
+    "share": 0.757,
+    "acceptable": [
+     "agent-haiku",
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 1,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 59.541,
+     "agent-haiku": 35.914
+    },
+    "confident": true,
+    "share": 0.877,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 2,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 134.541,
+     "agent-haiku": 77.58
+    },
+    "confident": true,
+    "share": 0.934,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 5,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 359.541,
+     "agent-haiku": 202.58
+    },
+    "confident": true,
+    "share": 0.934,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 100,
+    "V": 10,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 734.541,
+     "agent-haiku": 410.914
+    },
+    "confident": true,
+    "share": 0.934,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.05,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -36.697,
+     "jit-HH": -68.371
+    },
+    "confident": true,
+    "share": 0.981,
+    "acceptable": [
+     "agent-haiku"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.1,
+    "best": "agent-haiku",
+    "utility": {
+     "agent-haiku": -15.864,
+     "jit-HH": -30.871
+    },
+    "confident": false,
+    "share": 0.765,
+    "acceptable": [
+     "agent-haiku",
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.25,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 81.629,
+     "agent-haiku": 46.636
+    },
+    "confident": false,
+    "share": 0.76,
+    "acceptable": [
+     "agent-haiku",
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 0.5,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 269.129,
+     "agent-haiku": 150.803
+    },
+    "confident": true,
+    "share": 0.892,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 1,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 644.129,
+     "agent-haiku": 359.136
+    },
+    "confident": true,
+    "share": 0.934,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 2,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 1394.129,
+     "agent-haiku": 775.803
+    },
+    "confident": true,
+    "share": 0.934,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 5,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 3644.129,
+     "agent-haiku": 2025.803
+    },
+    "confident": true,
+    "share": 0.934,
+    "acceptable": [
+     "jit-HH"
+    ]
+   },
+   {
+    "H": 1000,
+    "V": 10,
+    "best": "jit-HH",
+    "utility": {
+     "jit-HH": 7394.129,
+     "agent-haiku": 4109.136
+    },
+    "confident": true,
+    "share": 0.934,
+    "acceptable": [
+     "jit-HH"
+    ]
+   }
+  ]
+ }
+]
