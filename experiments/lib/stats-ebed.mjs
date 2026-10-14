@@ -165,9 +165,8 @@ export function reliabilityVerdict(worlds, { pooledBound = H_E2.pooled, worldBou
   });
   const n = per.reduce((s, w) => s + w.completed, 0), x = per.reduce((s, w) => s + w.passed, 0), critical = per.reduce((s, w) => s + w.critical, 0);
   const pooled = { completed: n, passed: x, lower: clopperPearson(x, n, 'lower', { level }).lower, ok: lowerBoundAtLeast(x, n, pooledBound, { level }), maxFailures: maxFailures(n, pooledBound, { level }) };
-  const clean = critical === 0 ? n : 0;
-  const crit = { violations: critical, upper: critical === 0 ? clopperPearson(0, n, 'upper', { level }).upper : null,
-    needed: minCleanCases(criticalRate, { level }), established: critical === 0 && n >= minCleanCases(criticalRate, { level }) && clean > 0 };
+  const needed = minCleanCases(criticalRate, { level });
+  const crit = { violations: critical, upper: critical === 0 ? clopperPearson(0, n, 'upper', { level }).upper : null, needed, established: critical === 0 && n >= needed };
   const holds = pooled.ok && per.every(w => w.ok) && critical === 0;
   const cens = censoring ? censoringReport(censoring) : null;
   return { holds, label: cens?.marked ? (holds ? 'holds (censored)' : 'fails (censored)') : (holds ? 'holds' : 'fails'), pooled, worlds: per, critical: crit, censoring: cens,

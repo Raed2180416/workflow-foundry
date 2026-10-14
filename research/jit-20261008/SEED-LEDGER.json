@@ -1,6 +1,6 @@
 {
  "schema": "seed-ledger/1",
- "updated": "2026-10-09",
+ "updated": "2026-10-14",
  "about": "Per-(bed, split) seed ledger (BLOCKER-SYNTHESIS S0-5). Checked by experiments/jit/seeds.mjs assertSeedsAllowed (stream.mjs config validation) and by experiments/kev-data/lib/registry.mjs (the Kev factory refuses every range here that another owner holds as reserved or fresh). A seed range applies to every difficulty. beds ['*'] means every bed. allow: the purposes that may use the range (null: any purpose); a purpose with fresh: true also refuses ranges whose status is used or burned. Edit this file when a run consumes a range (status fresh -> used), in the same commit as the run's config.",
  "rules": {
   "heldoutMinSeed": 8001,
@@ -44,6 +44,29 @@
    "split": "test",
    "fresh": false,
    "about": "Kev X5 end-to-end reuse gate (registry e2e-reserve)"
+  },
+  "ebed-rehearsal": {
+   "split": "dev",
+   "fresh": false,
+   "about": "E-bed pre-freeze single-use dev worlds per item: reference-author fixtures, triviality/necessity/gaming attacks, reference validation, dev rehearsals, specificity and Track C rehearsals (E-BED section 6). Kept out of jit-dev so no dev stream or suite tunes on them; fresh: false because a block is consumed in stages (the status records it)"
+  },
+  "ebed-heldout": {
+   "split": "test",
+   "fresh": true,
+   "heldout": true,
+   "about": "E-bed held-out worlds A-D per item: every arm entering a decision runs on them (E-BED sections 4, 6). The E-bed runner declares this purpose (seedPurpose), so the default jit-heldout purpose is refused here"
+  },
+  "ebed-sealed": {
+   "split": "test",
+   "fresh": true,
+   "heldout": true,
+   "about": "E-bed reserve worlds per item: sealed drift families (format, schema, no-notice edition) and the heal arm (E-BED sections 2.6, 2.10)"
+  },
+  "ebed-scale": {
+   "split": "test",
+   "fresh": true,
+   "heldout": true,
+   "about": "E-bed scale-tier worlds per core item (10^4-10^5 cases per world), compiled arms only (E-BED section 2.6)"
   }
  },
  "ranges": [
@@ -411,6 +434,1038 @@
    ],
    "use": "held-out W-bed R3' stream B (second lineage)",
    "source": "research/jit-20261008/design/W-BED-R3P-NOTES.md section 7"
+  },
+  {
+   "id": "ebed-dev",
+   "beds": [
+    "ebed-e1",
+    "ebed-e2",
+    "ebed-e3",
+    "ebed-e4",
+    "ebed-e5",
+    "ebed-e6",
+    "ebed-e7",
+    "ebed-e8",
+    "ebed-e9",
+    "ebed-e10",
+    "ebed-e11",
+    "ebed-e12",
+    "ebed-e13"
+   ],
+   "split": "dev",
+   "from": 1001,
+   "to": 1199,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "jit-dev"
+   ],
+   "use": "E-bed dev worlds, every item E1-E13: bed health, property, metamorphic and mutation suites, $0 controls, specificity and product-equals-oracle checks (20 worlds per difficulty), dev streams. Worlds are salted by item, so one seed is a different world in each item. Disjoint from every other bounded range",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-dev-fuzz",
+   "beds": [
+    "ebed-e1",
+    "ebed-e2",
+    "ebed-e3",
+    "ebed-e4",
+    "ebed-e5",
+    "ebed-e6",
+    "ebed-e7",
+    "ebed-e8",
+    "ebed-e9",
+    "ebed-e10",
+    "ebed-e11",
+    "ebed-e12",
+    "ebed-e13"
+   ],
+   "split": "dev",
+   "from": 1301,
+   "to": 1310,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "jit-dev"
+   ],
+   "use": "E-bed fuzz base seeds, every item: N-version differential fuzz and validator fuzz, each base expanded by the salt ebed-fuzz/<item>/<i> for i < 10^4 inside the generator (derived worlds are not ledger seeds)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e1-rehearsal",
+   "beds": [
+    "ebed-e1"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E1 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e1-heldout-ab",
+   "beds": [
+    "ebed-e1"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E1 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e1-heldout-cd",
+   "beds": [
+    "ebed-e1"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E1 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e1-sealed",
+   "beds": [
+    "ebed-e1"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E1 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e1-scale",
+   "beds": [
+    "ebed-e1"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E1 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e2-rehearsal",
+   "beds": [
+    "ebed-e2"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E2 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e2-heldout-ab",
+   "beds": [
+    "ebed-e2"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E2 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e2-heldout-cd",
+   "beds": [
+    "ebed-e2"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E2 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e2-sealed",
+   "beds": [
+    "ebed-e2"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E2 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e2-scale",
+   "beds": [
+    "ebed-e2"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E2 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e3-rehearsal",
+   "beds": [
+    "ebed-e3"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E3 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e3-heldout-ab",
+   "beds": [
+    "ebed-e3"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E3 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e3-heldout-cd",
+   "beds": [
+    "ebed-e3"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E3 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e3-sealed",
+   "beds": [
+    "ebed-e3"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E3 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e3-scale",
+   "beds": [
+    "ebed-e3"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E3 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e4-rehearsal",
+   "beds": [
+    "ebed-e4"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E4 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e4-heldout-ab",
+   "beds": [
+    "ebed-e4"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E4 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e4-heldout-cd",
+   "beds": [
+    "ebed-e4"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E4 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e4-sealed",
+   "beds": [
+    "ebed-e4"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E4 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e4-scale",
+   "beds": [
+    "ebed-e4"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E4 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e5-rehearsal",
+   "beds": [
+    "ebed-e5"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E5 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e5-heldout-ab",
+   "beds": [
+    "ebed-e5"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E5 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e5-heldout-cd",
+   "beds": [
+    "ebed-e5"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E5 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e5-sealed",
+   "beds": [
+    "ebed-e5"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E5 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e5-scale",
+   "beds": [
+    "ebed-e5"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E5 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e6-rehearsal",
+   "beds": [
+    "ebed-e6"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E6 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e6-heldout-ab",
+   "beds": [
+    "ebed-e6"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E6 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e6-heldout-cd",
+   "beds": [
+    "ebed-e6"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E6 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e6-sealed",
+   "beds": [
+    "ebed-e6"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E6 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e6-scale",
+   "beds": [
+    "ebed-e6"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E6 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e7-rehearsal",
+   "beds": [
+    "ebed-e7"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E7 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e7-heldout-ab",
+   "beds": [
+    "ebed-e7"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E7 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e7-heldout-cd",
+   "beds": [
+    "ebed-e7"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E7 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e7-sealed",
+   "beds": [
+    "ebed-e7"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E7 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e7-scale",
+   "beds": [
+    "ebed-e7"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E7 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e8-rehearsal",
+   "beds": [
+    "ebed-e8"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E8 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e8-heldout-ab",
+   "beds": [
+    "ebed-e8"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E8 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e8-heldout-cd",
+   "beds": [
+    "ebed-e8"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E8 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e8-sealed",
+   "beds": [
+    "ebed-e8"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E8 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e8-scale",
+   "beds": [
+    "ebed-e8"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E8 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e9-rehearsal",
+   "beds": [
+    "ebed-e9"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E9 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e9-heldout-ab",
+   "beds": [
+    "ebed-e9"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E9 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e9-heldout-cd",
+   "beds": [
+    "ebed-e9"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E9 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e9-sealed",
+   "beds": [
+    "ebed-e9"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E9 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e9-scale",
+   "beds": [
+    "ebed-e9"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9302,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-scale"
+   ],
+   "use": "E9 scale-tier worlds, compiled arms only",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e10-rehearsal",
+   "beds": [
+    "ebed-e10"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E10 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e10-heldout-ab",
+   "beds": [
+    "ebed-e10"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E10 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e10-heldout-cd",
+   "beds": [
+    "ebed-e10"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E10 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e10-sealed",
+   "beds": [
+    "ebed-e10"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E10 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e11-rehearsal",
+   "beds": [
+    "ebed-e11"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E11 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e11-heldout-ab",
+   "beds": [
+    "ebed-e11"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E11 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e11-heldout-cd",
+   "beds": [
+    "ebed-e11"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E11 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e11-sealed",
+   "beds": [
+    "ebed-e11"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E11 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e12-rehearsal",
+   "beds": [
+    "ebed-e12"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E12 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e12-heldout-ab",
+   "beds": [
+    "ebed-e12"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E12 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e12-heldout-cd",
+   "beds": [
+    "ebed-e12"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E12 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e12-sealed",
+   "beds": [
+    "ebed-e12"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E12 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e13-rehearsal",
+   "beds": [
+    "ebed-e13"
+   ],
+   "split": "dev",
+   "from": 1201,
+   "to": 1249,
+   "status": "fresh",
+   "owner": "ebed",
+   "allow": [
+    "ebed-rehearsal"
+   ],
+   "use": "E13 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e13-heldout-ab",
+   "beds": [
+    "ebed-e13"
+   ],
+   "split": "test",
+   "from": 9101,
+   "to": 9102,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E13 held-out worlds A and B (the K = 2 pilot pair)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e13-heldout-cd",
+   "beds": [
+    "ebed-e13"
+   ],
+   "split": "test",
+   "from": 9103,
+   "to": 9104,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-heldout"
+   ],
+   "use": "E13 held-out worlds C and D (K = 4)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "ebed-e13-sealed",
+   "beds": [
+    "ebed-e13"
+   ],
+   "split": "test",
+   "from": 9201,
+   "to": 9204,
+   "status": "reserved",
+   "owner": "ebed",
+   "allow": [
+    "ebed-sealed"
+   ],
+   "use": "E13 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
+   "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
   }
  ]
 }

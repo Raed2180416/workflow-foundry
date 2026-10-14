@@ -1,0 +1,64 @@
+{
+  "id": "P58", "layer": "L1", "version": 1,
+  "name": "decision table with hit policies (DMN, effective-dated editions)", "short": "decision-table", "family": "branch", "tier": "S", "constructs": [2, 4, 5, 10],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (ITEMS reads it)", "out": { "type": "object", "required": ["decisions", "noMatch"], "properties": {
+    "decisions": { "type": "array", "items": { "type": "object", "required": ["id", "edition", "rules", "result"], "properties": { "edition": { "type": "string" }, "rules": { "type": "array", "items": { "type": "string" } } } } },
+    "noMatch": { "type": "array" } } } },
+  "slots": [
+    { "name": "ITEMS", "type": "path", "required": true, "doc": "the cases to decide, each with an id" },
+    { "name": "INPUTS", "type": "map", "required": true, "values": ["fn"], "doc": "DMN input expressions {input: (item) -> number | string | boolean | null}" },
+    { "name": "OUTPUTS", "type": "list", "required": true, "min": 1, "max": 6, "bound": true, "doc": "output columns [{name, values?}]; values = allowed values, highest priority first",
+      "item": { "name": { "type": "name", "required": true }, "values": { "type": "enum" } } },
+    { "name": "HIT_POLICY", "type": "choice", "options": ["UNIQUE", "ANY", "PRIORITY", "FIRST", "RULE_ORDER", "OUTPUT_ORDER", "COLLECT"], "required": true, "default": "UNIQUE" },
+    { "name": "AGGREGATION", "type": "choice", "options": ["none", "SUM", "MIN", "MAX", "COUNT"], "required": true, "default": "none", "doc": "COLLECT with one output only" },
+    { "name": "DISTINCT", "type": "bool", "required": true, "default": false, "doc": "SUM / COUNT over distinct values (engines differ; say which)" },
+    { "name": "EDITIONS", "type": "schema", "required": true, "doc": "{editions: [{edition, effectiveFrom, effectiveTo?, rules: [{id, when: {input: FEEL unary test}, then: {output: literal}}]}]}; dates YYYY-MM-DD, effectiveTo exclusive" },
+    { "name": "AS_OF", "type": "fn", "required": true, "params": ["item"], "doc": "the business date that picks the edition (YYYY-MM-DD), never today" },
+    { "name": "ON_NO_MATCH", "type": "choice", "options": ["null", "deopt"], "required": true, "default": "null" },
+    { "name": "MAX_ITEMS", "type": "int", "range": [1, 5000], "bound": true, "required": true, "default": 1000 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Is the outcome for each case fixed by a table of rules over a few case attributes, such as a fee schedule, an eligibility grid or a routing matrix?" },
+    { "id": "J2", "type": "choice", "instructions": "When several rules match one case, what does the policy say?", "criteria": { "one": "rules never overlap", "first-or-priority": "the first or the highest-priority rule wins", "all": "every matching rule applies (list, sum, count, min or max)", "none": "no rule table" } }
+  ],
+  "checklist": [
+    { "text": "The hit policy is stated, not assumed; an overlap under UNIQUE or a conflict under ANY deopts.", "code": null, "enforcedBy": "guard hit-policy", "minedFrom": ["web:docs.camunda.io/docs/components/modeler/dmn/decision-table-hit-policy/"] },
+    { "text": "Rule tests are FEEL unary-test text in the supported subset; anything else is refused, never approximated.", "code": null, "enforcedBy": "invariant table-well-formed" },
+    { "text": "A type drift in an input (a number arriving as text, a renamed field) deopts instead of silently matching no rule.", "code": null, "enforcedBy": "guards input-type, input-present" },
+    { "text": "Rules come in effective-dated editions (G18); the case's own business date picks the edition, and every decision names it.", "code": null, "enforcedBy": "guard edition-in-force" },
+    { "text": "No match is a typed outcome (null, listed in noMatch), or a deopt for a table that must be complete; add a catch-all rule under FIRST or PRIORITY when policy has a default.", "code": "SILENT_DROP", "enforcedBy": "ON_NO_MATCH" },
+    { "text": "SUM and COUNT over distinct values differ by engine; DISTINCT says which. Money is integer minor units.", "code": null, "minedFrom": ["web:docs.camunda.io/docs/components/best-practices/modeling/choosing-the-dmn-hit-policy/", "repo:apache/incubator-kie-drools HitPolicy.java"] },
+    { "text": "One decision per item, in input order.", "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariant one-decision-per-item" }
+  ],
+  "rules": [ { "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariant one-decision-per-item" } ],
+  "minedFrom": ["kogito-examples:dmn-quarkus-example/Traffic Violation.dmn (decision Fine, UNIQUE)", "web:OMG DMN 1.1 §10.3.4.6 via github.com/EdgeVerve/feel/wiki/Hit-Policy"],
+  "companions": [{ "id": "P03", "why": "inputs read from text first" }, { "id": "P07", "why": "dispatch on the decided outcome" }],
+  "tags": ["branch", "finance", "decide", "editions"],
+  "example": { "slots": {
+    "ITEMS": "inputs.violations",
+    "INPUTS": {
+      "type": "(v) => v.type",
+      "overSpeed": "(v) => (v.type === 'speed' ? v.actualSpeed - v.speedLimit : null)"
+    },
+    "OUTPUTS": [ { "name": "amount" }, { "name": "points" } ],
+    "HIT_POLICY": "UNIQUE",
+    "AGGREGATION": "none",
+    "DISTINCT": false,
+    "EDITIONS": { "editions": [
+      { "edition": "fines-2020", "effectiveFrom": "2020-01-01", "effectiveTo": "2026-07-01", "rules": [
+        { "id": "r1", "when": { "type": "\"speed\"", "overSpeed": "[10..30)" }, "then": { "amount": 500, "points": 3 } },
+        { "id": "r2", "when": { "type": "\"speed\"", "overSpeed": ">= 30" }, "then": { "amount": 1000, "points": 7 } },
+        { "id": "r3", "when": { "type": "\"parking\"" }, "then": { "amount": 100, "points": 1 } },
+        { "id": "r4", "when": { "type": "\"driving under the influence\"" }, "then": { "amount": 1000, "points": 5 } } ] },
+      { "edition": "fines-2026-07", "effectiveFrom": "2026-07-01", "rules": [
+        { "id": "r1", "when": { "type": "\"speed\"", "overSpeed": "[10..30)" }, "then": { "amount": 600, "points": 3 } },
+        { "id": "r2", "when": { "type": "\"speed\"", "overSpeed": "[30..50)" }, "then": { "amount": 1200, "points": 7 } },
+        { "id": "r3", "when": { "type": "\"speed\"", "overSpeed": ">= 50" }, "then": { "amount": 2000, "points": 12 } },
+        { "id": "r4", "when": { "type": "\"parking\"" }, "then": { "amount": 100, "points": 1 } },
+        { "id": "r5", "when": { "type": "\"driving under the influence\"" }, "then": { "amount": 1500, "points": 6 } } ] } ] },
+    "AS_OF": "(v) => v.date",
+    "ON_NO_MATCH": "null",
+    "MAX_ITEMS": 100
+  } }
+}

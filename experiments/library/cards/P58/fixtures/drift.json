@@ -1,0 +1,8 @@
+{
+  "name": "drift",
+  "note": "The upstream export now sends the measured speed as text with a unit ('145 km/h'). The input expression yields NaN, which is no FEEL value: the solver deopts instead of letting every speed rule silently fail to match.",
+  "task": { "prompt": "Work out the fine and penalty points for each traffic violation under the schedule in force on the violation date.", "inputs": { "violations": [
+    { "id": "v7", "date": "2026-09-02", "type": "speed", "actualSpeed": "145 km/h", "speedLimit": 130 } ] } },
+  "answers": {},
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "input-type" } }
+}

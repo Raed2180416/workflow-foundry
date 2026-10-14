@@ -177,7 +177,7 @@ export function nNeeded({ reps = 10000, seed = 'm3-n', parents = [10, 20, 30, 40
 }
 
 // The decision procedure. It was fixed after the first grid run (2026-10-14) and before any L4 data exist; the exact
-// variant aE was added at the same point (research/jit-20261008/analysis/m3-reuse-rule/README.md says why):
+// variant aE was added at the same point (research/jit-20261008/DEV-NOTES.md D26 says why):
 //   binding  every L4-scale parent-clustered cell at rho ≤ RHO_REUSE_FLOOR (0.1, the programme's assumed ICC), equal and
 //            unequal parent sizes, meets the criterion (simulated), and the independent limit (n = 576, m = 1) meets it
 //            EXACTLY (`exactIndependent`, no Monte Carlo);

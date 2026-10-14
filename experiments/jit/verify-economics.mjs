@@ -33,8 +33,8 @@
 //            evidence is natural language, beds/kinetics/README.md); a flag deopts to the interpreter.
 //
 // Comparator proxy (proxyCompare). A row keeps no compiled answer, only its oracle details. records: two answers are taken
-// to agree iff their oracle details are identical (different details => different answers, certain; identical details =>
-// the same answer, assumed). kinetics (the R0-K comparator: relTol 0.05 on vmax/km, everything else exact): different
+// to agree iff their oracle details are identical with the mismatch list read as a set (different details => different
+// answers, certain; identical details => the same answer, assumed; two capped mismatch lists that differ => ambiguous). kinetics (the R0-K comparator: relTol 0.05 on vmax/km, everything else exact): different
 // excluded-sample sets (exact from missing/extra) => disagree; otherwise each vmax/km pair is classified from the two
 // unsigned relative errors to the generating truth over all sign and rounding corners: agree / disagree / ambiguous. The
 // proxy is validated against the real comparator on every pair of archived answers that share a seed (validateProxy).
@@ -375,9 +375,10 @@ export function armEconomics({ stream, arm, agents, scored = new Map(), floor = 
     return { tier: t.tier, i, f, p, delta, deltaSource, phi, phiSource, ...r, aoqlImperfect: aoql({ i, f, delta, phi }).aoql,
       usdPerTaskL1: steadyState({ base: base.L1, q, shadowUsd: t.shadowUsd, adjUsd: t.adjUsd, pD: t.counts.pD || 0, rate: r.afi, adjudicate: true }) };
   }));
-  return { experiment: stream.experiment, family: fam, slug: arm.slug, spec: arm.meta.spec, short: spec.short, interp: spec.interp, warmup, rows: rows.length, n, compiledOk: O.length, q,
+  return { experiment: stream.experiment, family: fam, slug: arm.slug, spec: arm.meta.spec, short: spec.short, interp: spec.interp, warmup, rows: rows.length, n, compiledOk: O.length,
+    compiledDelivered: O.filter(r => r.delivered === 'compiled').length, q,
     passW, passAll, costs: c, base, asRun, effRate, tiers: tiers.map(({ items, ...t }) => ({ ...t, items })), interpAgentProxy: proxies, agents: agentTargets, table, breakEven,
-    stream24: ['interp', 'haiku', 'haiku+hadj'].flatMap(t => [floor, 1].flatMap(r => [true, false].map(a => stream24(t, r, a)))).filter(Boolean), systemView, csp };
+    stream24: [...['interp', 'haiku', 'haiku+hadj'].flatMap(t => [true, false].map(a => stream24(t, floor, a))), stream24('interp', 1, true)].filter(Boolean), systemView, csp };
 }
 
 export function agentTable(stream) {
@@ -425,11 +426,11 @@ export function witnessRecall(stream, scored = new Map()) {
 }
 
 // ------------------------------------------------------------------------------------------------ the ATTACK's arithmetic
-// ATTACK-20261014 §1.3 P6 [M], reproduced from the stream for reconciliation: compiled $ per compiled-ok delivery, the mean
+// ATTACK-20261014 §1.3 P6 [M], reproduced from the stream for reconciliation: compiled $ per compiled delivery, the mean
 // as-run shadow, shadow plus adjudication per shadow, the realized steady state, break-even rates and 10% horizons, with
 // the rate applied per task (not per compiled-ok delivery) and deopt fallbacks excluded, as the ATTACK did.
 export function attackArithmetic(e, agentUsd) {
-  const okN = e.compiledOk, compiledPerOk = e.costs.compiledW / okN, shadow = e.asRun.shadowUsdMean, shAdj = shadow + e.costs.adjW / e.asRun.shadows;
+  const compiledPerOk = e.costs.compiledW / e.compiledDelivered, shadow = e.asRun.shadowUsdMean, shAdj = shadow + e.costs.adjW / e.asRun.shadows;
   const steady = (e.costs.compiledW + e.costs.shadowW + e.costs.adjW) / e.n;
   const horizon = v => e.costs.compileTotal / (agentUsd - (compiledPerOk + 0.1 * v));
   return { compiledPerOk, shadow, shadowPlusAdj: shAdj, steady, beShadow: (agentUsd - compiledPerOk) / shadow, beAdj: (agentUsd - compiledPerOk) / shAdj, horizonShadow: horizon(shadow), horizonAdj: horizon(shAdj) };
@@ -449,12 +450,15 @@ export function slider(e, { bound, N, floor = FLOOR, rates = RATES, level = 'L1'
   return { feasible: false, reason: ds.length && Math.min(...ds) >= bound ? `every tier's measured detectable-wrong rate (min ${Math.min(...ds).toFixed(3)}) is >= the bound` : `too few shadows at N = ${N}` };
 }
 
-// The section rule, per family: does any (tier, rate >= floor) beat the Haiku agent's $ per task at the steady state?
-export function decide(econ, { floor = FLOOR, level = 'L1' } = {}) {
-  const fams = [...new Set(econ.map(e => e.family))], out = [];
-  for (const family of fams) {
-    const arms = econ.filter(e => e.family === family), rowsOut = [];
-    for (const e of arms) {
+// The section rule, per family and cost level: does any (tier, rate >= floor) beat the Haiku agent's $ per task at the
+// steady state? Every rate above the floor costs more than the floor (steady state rises with r), so the floor decides; the
+// witness ceiling runs at 100%. H→H is PREREG-stream §2's negative control, so a family's verdict is given with and without it.
+export const NEGATIVE_CONTROL = 'H→H';
+export function decide(econ, { floor = FLOOR, levels = LEVELS } = {}) {
+  const out = [];
+  for (const family of [...new Set(econ.map(e => e.family))]) for (const level of levels) {
+    const rowsOut = [];
+    for (const e of econ.filter(x => x.family === family)) {
       const H = e.agents.find(a => a.short === 'H');
       if (!H) continue;
       const cands = [];
@@ -463,17 +467,21 @@ export function decide(econ, { floor = FLOOR, level = 'L1' } = {}) {
         cands.push({ tier: t.tier, realizable: t.realizable, ceiling: !!t.ceiling, adjudicate, rate,
           usd: steadyState({ base: e.base[level], q: e.q, shadowUsd: t.shadowUsd, adjUsd: t.adjUsd, pD: t.counts.pD || 0, rate, adjudicate }) });
       }
-      const pick = f => { const xs = cands.filter(f).sort((a, b) => a.usd - b.usd); return xs[0] ?? null; };
-      const engine = pick(x => x.realizable && x.adjudicate), anyModel = pick(x => !x.ceiling), ceiling = pick(x => x.ceiling);
-      const s24 = e.stream24.filter(s => s.rate === floor).sort((a, b) => a.perTask - b.perTask)[0] ?? null;
-      rowsOut.push({ experiment: e.experiment, arm: e.short, haikuUsdPerTask: H.usdPerTask, haikuUsdPerSuccess: H.usdPerSuccess,
-        engine: engine && { ...engine, beats: engine.usd < H.usdPerTask }, anyModel: anyModel && { ...anyModel, beats: anyModel.usd < H.usdPerTask },
-        ceiling: ceiling && { ...ceiling, beats: ceiling.usd < H.usdPerTask }, stream24: s24 && { ...s24, beatsPerTask: s24.perTask < H.usdPerTask, beatsPerSuccess: s24.perSuccess != null && s24.perSuccess < H.usdPerSuccess } });
+      const pick = f => cands.filter(f).sort((a, b) => a.usd - b.usd)[0] ?? null;
+      const mark = x => x && { ...x, beats: x.usd < H.usdPerTask };
+      const s24 = e.stream24.filter(s => s.rate === floor).sort((a, b) => a.perSuccess - b.perSuccess)[0] ?? null;
+      rowsOut.push({ experiment: e.experiment, arm: e.short, negativeControl: e.short === NEGATIVE_CONTROL, haikuUsdPerTask: H.usdPerTask, haikuUsdPerSuccess: H.usdPerSuccess,
+        base: e.base[level], engine: mark(pick(x => x.realizable && x.adjudicate)), engineNoAdj: mark(pick(x => x.realizable && !x.adjudicate)),
+        anyModel: mark(pick(x => !x.ceiling && x.adjudicate)), anyModelNoAdj: mark(pick(x => !x.ceiling)), ceiling: mark(pick(x => x.ceiling)),
+        stream24: s24 && { ...s24, beatsPerTask: s24.perTask < H.usdPerTask, beatsPerSuccess: s24.perSuccess != null && s24.perSuccess < H.usdPerSuccess } });
     }
-    const anyEngine = rowsOut.some(r => r.engine?.beats), anyModel = rowsOut.some(r => r.anyModel?.beats), any24 = rowsOut.some(r => r.stream24?.beatsPerSuccess);
-    out.push({ family, level, floor, arms: rowsOut, engineBeats: anyEngine, anyModelTierBeats: anyModel, stream24Beats: any24,
-      verdict: anyModel ? (anyEngine ? 'not withdrawn: an engine setting at the floor beats the Haiku agent in steady state' : 'not withdrawn only under a non-engine tier (Haiku-agent shadows): the engine as built (interpreter-tier shadows) does not beat the Haiku agent at the floor')
-        : 'WITHDRAWN: no (tier, rate >= floor) beats the Haiku agent $ per task in steady state' });
+    const claimed = rowsOut.filter(r => !r.negativeControl), some = (rs, k) => rs.some(r => r[k]?.beats);
+    const verdictOf = rs => (some(rs, 'engine') ? 'not withdrawn (the engine as built beats at the floor)'
+      : some(rs, 'anyModel') ? 'not withdrawn only with an engine change (Haiku-agent shadows); withdrawn for the engine as built'
+        : some(rs, 'engineNoAdj') || some(rs, 'anyModelNoAdj') ? 'withdrawn with adjudication; only shadows that never adjudicate (a floor kept for system-view counts only, an engine change) beat'
+          : 'WITHDRAWN: no (tier, rate >= floor) beats the Haiku agent');
+    out.push({ family, level, floor, arms: rowsOut, verdictClaimedArms: verdictOf(claimed), verdictAllArms: verdictOf(rowsOut),
+      stream24BeatsPerSuccess: rowsOut.some(r => r.stream24?.beatsPerSuccess), ceilingBeats: some(rowsOut, 'ceiling') });
   }
   return out;
 }
@@ -503,10 +511,11 @@ export function renderTables(res) {
   L.push('', '**Agents** ($ per task over all rows; $ per success):', '', '| stream | agent | tasks | pass | $/task | $/success |', '|---|---|---|---|---|---|');
   const seen = new Set();
   for (const e of res.econ) for (const a of e.agents) { const key = `${e.experiment}:${a.short}`; if (seen.has(key)) continue; seen.add(key); L.push(`| ${e.experiment} | ${a.short} agent | – | ${pct(a.passRate)} | ${$(a.usdPerTask)} | ${$(a.usdPerSuccess)} |`); }
-  L.push('', '## 2. Tiers: cost and disagreement per arm', '', '| stream | arm | tier | realizable | shadow $ | adjudication / action $ | P(disagree) | compiled wrong | detected wrong (δ) | false alarms (φ) | d (detectable-wrong per delivery) |', '|---|---|---|---|---|---|---|---|---|---|---|');
+  L.push('', '## 2. Tiers: cost and disagreement per arm', '', 'P(disagree), δ and φ are over the deliveries the tier compared (interp: the as-run shadows only). The planning d = (the arm\'s oracle wrong rate over all labelled compiled-ok deliveries) × δ, with δ from the tier, else the same-model agent-arm proxy, else assumed 1.', '',
+    '| stream | arm | tier | realizable | shadow $ | adjudication / action $ | P(disagree) | compiled wrong (compared) | detected wrong (δ) | false alarms (φ) | arm wrong rate | planning d (δ source) |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
   for (const e of res.econ) {
-    for (const t of e.tiers) L.push(`| ${e.experiment} | ${e.short} | ${t.tier} | ${t.realizable ? 'yes' : t.ceiling ? 'ceiling' : 'engine change'} | ${$(t.shadowUsd)} | ${$(t.adjUsd)} | ${k(t.counts)} = ${pct(t.counts?.pD)} | ${t.counts ? `${t.counts.wrong}/${t.counts.wrong + t.counts.right}${t.counts.wrongUnlabelled ? ` (+${t.counts.wrongUnlabelled} unlabelled)` : ''}` : '–'} | ${t.counts ? `${t.counts.detectedWrong} (${pct(t.counts.delta)})` : '–'} | ${t.counts ? `${t.counts.falseAlarm} (${pct(t.counts.phi)})` : '–'} | ${pct(t.counts?.d)} |`);
-    if (e.interpAgentProxy) { const c = e.interpAgentProxy.counts; L.push(`| ${e.experiment} | ${e.short} | interp, agent-arm proxy (sensitivity) | – | – | – | ${k(c)} = ${pct(c.pD)} | ${c.wrong}/${c.wrong + c.right} | ${c.detectedWrong} (${pct(c.delta)}) | ${c.falseAlarm} (${pct(c.phi)}) | ${pct(c.d)} |`); }
+    for (const t of e.tiers) L.push(`| ${e.experiment} | ${e.short} | ${t.tier} | ${t.realizable ? 'yes' : t.ceiling ? 'ceiling' : 'engine change'} | ${$(t.shadowUsd)} | ${$(t.adjUsd)} | ${k(t.counts)} = ${pct(t.counts?.pD)} | ${t.counts ? `${t.counts.wrong}/${t.counts.wrong + t.counts.right}${t.counts.wrongUnlabelled ? ` (+${t.counts.wrongUnlabelled} unlabelled)` : ''}` : '–'} | ${t.counts ? `${t.counts.detectedWrong} (${pct(t.counts.delta)})` : '–'} | ${t.counts ? `${t.counts.falseAlarm} (${pct(t.counts.phi)})` : '–'} | ${t.plan ? `${pct(t.plan.pWrong)} of ${t.plan.labelled}` : '–'} | ${t.plan ? `${pct(t.plan.d)} (${t.plan.deltaSource})` : '–'} |`);
+    if (e.interpAgentProxy) { const c = e.interpAgentProxy.counts; L.push(`| ${e.experiment} | ${e.short} | interp, agent-arm proxy (sensitivity) | – | – | – | ${k(c)} = ${pct(c.pD)} | ${c.wrong}/${c.wrong + c.right} | ${c.detectedWrong} (${pct(c.delta)}) | ${c.falseAlarm} (${pct(c.phi)}) | – | – |`); }
   }
   L.push('', '## 3. Steady-state $ per task by (tier, rate), level L1 (compiled + deopt fallbacks + verification)', '');
   for (const e of res.econ) {
@@ -529,9 +538,9 @@ export function renderTables(res) {
   for (const e of res.econ) { const H = e.agents.find(a => a.short === 'H'); for (const s of e.stream24) L.push(`| ${e.experiment} | ${e.short} | ${s.tier} | ${pct(s.rate)} | ${s.adjudicate ? 'yes' : 'no'} | ${$(s.total)} | ${$(s.perTask)} | ${$(s.perSuccess)} | ${$(H?.usdPerTask)}, ${$(H?.usdPerSuccess)} |`); }
   L.push('', '## 6. System view', '', '**Realized random floor** (logged `shadowDraw` < floor; only `jit-r0-records` logs propensities):', '', '| stream | arm | compiled ok | floor-sampled (idx) | system "wrong" (adjudicated) | Wilson hi | oracle wrong among them | detected (shadow disagreed) | Wilson hi | IPW (finite CI) |', '|---|---|---|---|---|---|---|---|---|---|');
   for (const e of res.econ.filter(x => x.systemView.realized)) { const r = e.systemView.realized; L.push(`| ${e.experiment} | ${e.short} | ${r.deliveries} | ${r.n} (${r.idx.join(', ')}) | ${r.systemWrong} | ${pct(r.wilsonHiSystem)} | ${r.oracleWrong} | ${r.detectedWrong} | ${pct(r.wilsonHiDetected)} | ${pct(r.ipw.rate)} [${pct(r.ipw.lo)}, ${pct(r.ipw.hi)}] |`); }
-  L.push('', '**Emulated floor** (draw = shadowDrawOf(shadowSeed or experiment, idx) < floor over compiled-ok deliveries; detected = compiled wrong and the tier disagrees):', '', '| stream | arm | tier | deliveries | sampled | detected wrong | Wilson hi | IPW point [finite CI] |', '|---|---|---|---|---|---|---|---|');
-  for (const e of res.econ) for (const s of e.systemView.emulated) L.push(`| ${e.experiment} | ${e.short} | ${s.tier} | ${s.deliveries} | ${s.n} | ${s.detectedWrong} | ${pct(s.wilsonHi)} | ${pct(s.ipw.rate)} [${pct(s.ipw.lo)}, ${pct(s.ipw.hi)}] |`);
-  L.push('', '**Projected bound** (expected shadows n = rate·q·N; Wilson upper at the measured d; and at 0 detected):', '', '| stream | arm | tier | d | N=24 @25% | N=100 @25% | N=1000 @25% | N=10000 @25% | N=1000 @100% | 0-detected bound N=24 @25% |', '|---|---|---|---|---|---|---|---|---|---|');
+  L.push('', '**Emulated floor** (draw = shadowDrawOf(shadowSeed or experiment, idx) < floor over compiled-ok deliveries whose tier verdict is known; detected = compiled wrong and the tier disagrees):', '', '| stream | arm | tier | deliveries | sampled (idx) | detected wrong | Wilson hi | IPW point [finite CI] |', '|---|---|---|---|---|---|---|---|');
+  for (const e of res.econ) for (const s of e.systemView.emulated) L.push(`| ${e.experiment} | ${e.short} | ${s.tier} | ${s.deliveries} | ${s.n} (${s.idx.join(', ')}) | ${s.detectedWrong} | ${pct(s.wilsonHi)} | ${pct(s.ipw.rate)} [${pct(s.ipw.lo)}, ${pct(s.ipw.hi)}] |`);
+  L.push('', '**Projected bound** (expected shadows n = rate·q·N; Wilson upper at the planning d; and at 0 detected):', '', '| stream | arm | tier | planning d | N=24 @25% | N=100 @25% | N=1000 @25% | N=10000 @25% | N=1000 @100% | 0-detected bound N=24 @25% |', '|---|---|---|---|---|---|---|---|---|---|');
   for (const e of res.econ) for (const t of [...new Set(e.systemView.projected.map(p => p.tier))]) {
     const g = (N, rate) => e.systemView.projected.find(p => p.tier === t && p.N === N && p.rate === rate);
     L.push(`| ${e.experiment} | ${e.short} | ${t} | ${pct(g(24, 0.25).d)} | ${pct(g(24, 0.25).hi)} (n ${g(24, 0.25).n.toFixed(1)}) | ${pct(g(100, 0.25).hi)} | ${pct(g(1000, 0.25).hi)} | ${pct(g(10000, 0.25).hi)} | ${pct(g(1000, 1).hi)} | ${pct(g(24, 0.25).hiAtZero)} |`);
@@ -543,18 +552,17 @@ export function renderTables(res) {
   }
   L.push('', '## 7. CSP-1 (Dodge) for long streams', '', '**AOQL, perfect inspector** (worst-case long-run share of wrong deliveries; p at the worst case):', '', `| i \\ f | ${CSP_GRID.f.join(' | ')} |`, `|---|${CSP_GRID.f.map(() => '---').join('|')}|`);
   for (const row of res.aoqlPerfect) L.push(`| ${row.i} | ${row.cells.map(c => `${pct(c.aoql)} (p ${pct(c.pAt)})`).join(' | ')} |`);
-  L.push('', '**At the measured inspector** (p = compiled wrong rate, δ = P(disagree | wrong), φ = P(disagree | right); AFI = average fraction inspected):', '', '| stream | arm | tier | (i, f) | p | δ | φ | AFI | AOQ | AOQL (imperfect) | $/task L1 at AFI |', '|---|---|---|---|---|---|---|---|---|---|---|');
-  for (const e of res.econ) for (const c of e.csp) L.push(`| ${e.experiment} | ${e.short} | ${c.tier} | (${c.i}, ${c.f}) | ${pct(c.p)} | ${c.deltaMeasured ? pct(c.delta) : '– (no wrong delivery; 100% assumed)'} | ${pct(c.phi)} | ${pct(c.afi)} | ${pct(c.aoq)} | ${c.aoqlImperfect == null ? 'unbounded (δ = 0)' : pct(c.aoqlImperfect)} | ${$(c.usdPerTaskL1)} |`);
+  L.push('', '**At the measured inspector** (p = the arm\'s compiled wrong rate, δ = P(disagree | wrong), φ = P(disagree | right), with their sources; a false alarm also sends CSP-1 back to 100%; AFI = average fraction inspected):', '', '| stream | arm | tier | (i, f) | p | δ | φ | AFI | AOQ | AOQL (this inspector) | $/task L1 at AFI |', '|---|---|---|---|---|---|---|---|---|---|---|');
+  for (const e of res.econ) for (const c of e.csp) L.push(`| ${e.experiment} | ${e.short} | ${c.tier} | (${c.i}, ${c.f}) | ${pct(c.p)} | ${pct(c.delta)}${c.deltaSource === 'tier' ? '' : ` (${c.deltaSource})`} | ${pct(c.phi)}${c.phiSource === 'tier' ? '' : ` (${c.phiSource})`} | ${pct(c.afi)} | ${pct(c.aoq)} | ${c.aoqlImperfect == null ? 'unbounded (δ = 0)' : pct(c.aoqlImperfect)} | ${$(c.usdPerTaskL1)} |`);
   L.push('', '## 8. Comparator proxy validation (real comparator vs proxy on archived answer pairs sharing a seed)', '', '| stream | answers | pairs | proxy agree: real agree / disagree | proxy disagree: real agree / disagree | proxy ambiguous: real agree / disagree | proxy unknown | contradictions |', '|---|---|---|---|---|---|---|---|');
   for (const v of res.validation) { const m = v.matrix; L.push(`| ${v.experiment} | ${v.answers} | ${v.pairs} | ${m.agree.agree} / ${m.agree.disagree} | ${m.disagree.agree} / ${m.disagree.disagree} | ${m.ambiguous.agree} / ${m.ambiguous.disagree} | ${m.unknown.agree + m.unknown.disagree} | ${v.contradictions.length} |`); }
   for (const w of res.witness) L.push('', `**Kinetics exclusion-set witness recall** (${w.experiment}, every wrong answer the stream holds): ${w.flagged}/${w.wrong} = ${pct(w.recall)} (Wilson ${pct(w.ci?.lo)}–${pct(w.ci?.hi)}); missed: ${w.missed.join(', ') || 'none'}.`);
-  L.push('', '## 9. Decision (ATTACK §3 M2 rule; level L1; rate = floor, witness at 100%)', '', '| family | stream | arm | Haiku agent $/task | engine (interp, adj.) @ floor | best model tier @ floor | witness ceiling | 24-task stream best $/success vs Haiku $/success |', '|---|---|---|---|---|---|---|---|');
-  for (const d of res.decision) for (const a of d.arms) {
-    const f = x => (x ? `${x.tier}${x.adjudicate ? '' : ' (no adj.)'}: ${$(x.usd)} ${x.beats ? '**beats**' : 'does not beat'}` : '–');
-    L.push(`| ${d.family} | ${a.experiment} | ${a.arm} | ${$(a.haikuUsdPerTask)} | ${f(a.engine)} | ${f(a.anyModel)} | ${f(a.ceiling)} | ${a.stream24 ? `${$(a.stream24.perSuccess)} vs ${$(a.haikuUsdPerSuccess)} (${a.stream24.beatsPerSuccess ? 'beats' : 'does not beat'})` : '–'} |`);
-  }
+  L.push('', '## 9. Decision (ATTACK §3 M2 rule: rate = floor; the witness ceiling at 100%)', '', '| level | family | stream | arm | Haiku agent $/task | base (no verification) | engine: interp + adj. | interp, no adj. | best model tier + adj. | best model tier, no adj. | witness ceiling | 24-task stream best $/success vs Haiku |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
+  const f = x => (x ? `${x.tier}: ${$(x.usd)} ${x.beats ? '**beats**' : 'no'}` : '–');
+  for (const d of res.decision) for (const a of d.arms)
+    L.push(`| ${d.level} | ${d.family} | ${a.experiment} | ${a.arm}${a.negativeControl ? ' (neg. control)' : ''} | ${$(a.haikuUsdPerTask)} | ${$(a.base)} | ${f(a.engine)} | ${f(a.engineNoAdj)} | ${f(a.anyModel)} | ${f(a.anyModelNoAdj)} | ${f(a.ceiling)} | ${a.stream24 ? `${$(a.stream24.perSuccess)} vs ${$(a.haikuUsdPerSuccess)} (${a.stream24.beatsPerSuccess ? 'beats' : 'no'})` : '–'} |`);
   L.push('');
-  for (const d of res.decision) L.push(`- **${d.family}**: ${d.verdict}. 24-task stream beats the Haiku agent per success: ${d.stream24Beats ? 'yes' : 'no'}.`);
+  for (const d of res.decision) L.push(`- **${d.family}, ${d.level}**: claimed arms (S→H, O→H): ${d.verdictClaimedArms}. With the negative control H→H: ${d.verdictAllArms}. Witness ceiling beats: ${d.ceilingBeats ? 'yes' : 'no'}. A 24-task stream beats the Haiku agent per success: ${d.stream24BeatsPerSuccess ? 'yes' : 'no'}.`);
   return L.join('\n') + '\n';
 }
 
@@ -568,5 +576,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   writeFileSync(path.join(out, 'verify-economics.json'), JSON.stringify(slim, replacer, 1) + '\n');
   writeFileSync(path.join(out, 'tables.generated.md'), renderTables(res));
   if (process.argv.includes('--json')) console.log(JSON.stringify(res.decision, replacer, 1));
-  else console.log(`wrote ${path.relative(REPO, out)}/verify-economics.json and tables.generated.md\n` + res.decision.map(d => `${d.family}: ${d.verdict}`).join('\n'));
+  else console.log(`wrote ${path.relative(REPO, out)}/verify-economics.json and tables.generated.md\n` + res.decision.map(d => `${d.family} ${d.level}: claimed arms: ${d.verdictClaimedArms} | all arms: ${d.verdictAllArms}`).join('\n'));
 }

@@ -1,0 +1,17 @@
+{
+  "name": "positive",
+  "note": "The Kogito Traffic Violation table (UNIQUE) in two editions. v5 is dated on the switch day: effectiveFrom is inclusive, so the 2026-07 edition and its closed lower bound [30..50) decide it.",
+  "task": { "prompt": "Work out the fine and penalty points for each traffic violation under the schedule in force on the violation date.", "inputs": { "violations": [
+    { "id": "v1", "date": "2026-06-15", "type": "speed", "actualSpeed": 145, "speedLimit": 120 },
+    { "id": "v2", "date": "2026-08-02", "type": "speed", "actualSpeed": 185, "speedLimit": 130 },
+    { "id": "v3", "date": "2026-09-10", "type": "parking", "actualSpeed": null, "speedLimit": null },
+    { "id": "v4", "date": "2026-03-01", "type": "driving under the influence", "actualSpeed": null, "speedLimit": null },
+    { "id": "v5", "date": "2026-07-01", "type": "speed", "actualSpeed": 160, "speedLimit": 130 } ] } },
+  "answers": {},
+  "expect": { "status": "ok", "output": { "decisions": [
+    { "id": "v1", "edition": "fines-2020", "rules": ["r1"], "result": { "amount": 500, "points": 3 } },
+    { "id": "v2", "edition": "fines-2026-07", "rules": ["r3"], "result": { "amount": 2000, "points": 12 } },
+    { "id": "v3", "edition": "fines-2026-07", "rules": ["r4"], "result": { "amount": 100, "points": 1 } },
+    { "id": "v4", "edition": "fines-2020", "rules": ["r4"], "result": { "amount": 1000, "points": 5 } },
+    { "id": "v5", "edition": "fines-2026-07", "rules": ["r2"], "result": { "amount": 1200, "points": 7 } } ], "noMatch": [] } }
+}

@@ -137,7 +137,10 @@ export const requestDigest = request => sha(canonical(request));
 // flow-v3: a call's idempotency key (calleeHash, inputDigest, parentSpanPath), as the host (call-host.mjs callKeyOf)
 // computes it. inputDigest is the full sha256 of the input's canonical JSON.
 export const inputDigestOf = input => sha(canonical(input));
-export const callKeyOf = ({ callee, inputDigest, parentPath, promptDigest }) => sha(canonical({ callee, inputDigest, parentPath, promptDigest }));
+// Review fix (§Review C7): a call inside a map/wide item that is being retried (onItemError 'retry(n)') carries the item's
+// attempt path (e.g. '1', '0.2' when nested), so its key differs and the host's memo does not serve the failed attempt's
+// answer again; on a first attempt it is absent and the key is slice 2a's.
+export const callKeyOf = ({ callee, inputDigest, parentPath, promptDigest, itemAttempt }) => sha(canonical({ callee, inputDigest, parentPath, promptDigest, itemAttempt }));
 // Slice 2a: a per-call prompt joins the key as its full sha256 (call-host.mjs promptDigestOf); without one the key is slice 1's.
 export const promptDigestOf = prompt => (typeof prompt === 'string' ? sha(prompt) : undefined);
 const ON_REFUSE = { deopt: 'deopt', interpret: 'interpret', skip: 'skip', value: 'skip' };
@@ -146,10 +149,16 @@ const ON_DEOPT = { propagate: 'propagate', interpret: 'interpret', 'interpret-ch
 // ---- slice 2b helpers (exported for tests; the host has its own copies in agent-node.mjs)
 export const AGENT_MAX_RETRIES = 2, DEFAULT_MAX_FANOUT = 32, HARD_MAX_FANOUT = 64, DEFAULT_PREFIX_HOLD_MS = 5000;
 // A verify / check result as {ok, reasons}: null, undefined, true or [] is ok; false, a string, a list of strings or
-// {ok: false, reasons} is the problem; a throw is a problem too.
+// {ok: false, reasons} is the problem; a throw is a problem too. Review fix (FLOW-V3-SLICE2 §Review C11): a verify must be
+// synchronous code; one that returns a Promise (an async function) is a construction error and throws here, instead of
+// failing every time as "verify returned object" (and paying for agent retries told only that).
 export function verdictOf(fn) {
   let r;
   try { r = fn(); } catch (e) { return { ok: false, reasons: [`verify threw: ${short(e)}`] }; }
+  if (r && typeof r.then === 'function') {
+    try { r.then(() => {}, () => {}); } catch {}
+    throw new TypeError('a verify, check or itemCheck must be synchronous code (it returned a Promise: do not make it async)');
+  }
   if (r === null || r === undefined || r === true) return { ok: true, reasons: [] };
   if (r === false) return { ok: false, reasons: ['verify failed'] };
   if (typeof r === 'string') return { ok: false, reasons: [r.slice(0, 500)] };
@@ -224,6 +233,12 @@ export function schemaErrors(schema, v, at = '$', out = []) {
 class ItemDeopt extends Error {
   constructor(kind, name, detail) { super(`deopt ${kind}: ${name}`); this.name = 'ItemDeopt'; this.deopt = { kind, name, detail }; }
 }
+// Review fix (§Review I6): the typed objects flow.call / flow.agent return under onRefuse / onDeopt / onFail 'skip' carry
+// this non-enumerable mark (JSON is unchanged), so flow.wide counts an item whose call or agent worker returned one as
+// failed, not done.
+export const SKIPPED = Symbol.for('flow-v3.skipped');
+const skipped = o => Object.defineProperty(o, SKIPPED, { value: true, enumerable: false });
+export const isSkipped = v => !!(v && typeof v === 'object' && v[SKIPPED]);
 const usd = x => Math.round(x * 1e6) / 1e6;
 const short = (v, n = 300) => String(v?.message ?? v).slice(0, n);
 // A detail object in deopt.json and the trace stays small; a long one keeps its head.
@@ -249,7 +264,7 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
   const phases = { n: 0, ordinals: new Map(), als: new AsyncLocalStorage() };   // flow-v3 phases: count, span ordinals, the current phase
   // Slice 2b: agent nodes and wide operators (count, span ordinals), and the item context of map (with a failure policy) and
   // wide (ALS: {wide, i, acc: spend accumulators, catchDeopt}). `used` stays false in every run that has neither.
-  const agents = { n: 0, ordinals: new Map() }, wides = { n: 0, ordinals: new Map() }, items = { used: false, als: new AsyncLocalStorage() };
+  const agents = { n: 0, ordinals: new Map() }, wides = { n: 0, ordinals: new Map(), open: new Set() }, items = { used: false, als: new AsyncLocalStorage() };
   let seen = 0;   // bytes of calls.jsonl already charged
   try { seen = readFileSync(CALLS).length; } catch {}
 
@@ -286,8 +301,11 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
 
   function deopt(kind, name, detail) {
     // Slice 2b: inside an item whose failure policy catches deopts, the item fails and the run goes on (never for budget).
+    // Review fix (§Review C8/I3): the deopt is also recorded on the item attempt's cell before the throw, so solver code that
+    // catches the ItemDeopt (try/catch, Promise.allSettled) cannot turn it into a done item: runItem fails the attempt anyway.
     const it = items.used ? items.als.getStore() : undefined;
     if (it?.catchDeopt && kind !== 'budget') {
+      if (it.cell && !it.cell.raised) it.cell.raised = { kind, name, detail };
       event({ kind: 'item-deopt', name, deopt: kind, detail: clip(detail) });
       throw new ItemDeopt(kind, name, detail);
     }
@@ -505,34 +523,29 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
       // The span id is fixed before the first await, so concurrent calls (inside map) get ordinals in call order.
       const ordinal = sub.ordinals.get(name) ?? 0; sub.ordinals.set(name, ordinal + 1);
       const span = `call:${name}#${ordinal}`, parent = scope?.span ?? ROOT_SPAN, parentPath = scope?.path ?? ROOT_SPAN, depth = (scope?.depth ?? 0) + 1;
-      const promptDigest = promptDigestOf(prompt);
-      const inputDigest = inputDigestOf(input), key = callKeyOf({ callee, inputDigest, parentPath, promptDigest }), t0 = Date.now();
+      const promptDigest = promptDigestOf(prompt), itemAttempt = itemAttemptOf();
+      const inputDigest = inputDigestOf(input), key = callKeyOf({ callee, inputDigest, parentPath, promptDigest, itemAttempt }), t0 = Date.now();
       sub.n++;
-      event({ kind: 'call-start', name, span, parent, callee, inputDigest, ...(promptDigest ? { promptDigest } : {}), budgetUsd: childUsd, depth, key,
+      event({ kind: 'call-start', name, span, parent, callee, inputDigest, ...(promptDigest ? { promptDigest } : {}), budgetUsd: childUsd, depth, key, ...(itemAttempt ? { itemAttempt } : {}),
         ...(onRefuse === 'interpret' || onDeopt === 'interpret' ? { localDeopt: { onRefuse, onDeopt } } : {}) });
       const end = (kind, extra) => event({ kind, name, span, parent, callee, ...extra, ms: Date.now() - t0 });
       const refuse = (refused, detail, extra = { spentUsd: 0, reservedUsd: 0 }) => {
         end('call-refused', { ok: false, refused, detail: clip(detail ?? null, 1000), ...extra });
-        if (onRefuse === 'skip') return { refused, detail: detail ?? null };
+        if (onRefuse === 'skip') return skipped({ refused, detail: detail ?? null });
         // 'deopt', or 'interpret' that the host could not honour (not an applicability refusal, no budget, no interpreter).
         deopt('call', name, { callee, refused, detail: detail ?? null });
       };
       // The SDK's own check (as judge checks the soft budget): a child reservation is strictly below what remains, where
-      // remaining already holds back the reservations of this run's calls in flight.
-      const remaining = budgetUsd - state.spentUsd - sub.reservedUsd;
-      if (!(childUsd < remaining)) {
-        if (sub.inFlight > 0 && childUsd < remaining + sub.reservedUsd) {
-          return refuse('BUDGET_TREE', { budgetUsd: childUsd, remainingUsd: usd(remaining), shortfallUsd: usd(childUsd - remaining), inFlight: sub.inFlight, reservedInFlightUsd: usd(sub.reservedUsd),
-            parentBudgetUsd: budgetUsd, parentSpentUsd: usd(state.spentUsd) }, { by: 'sdk', spentUsd: 0, reservedUsd: 0 });
-        }
-        return refuse('budget-exceeds-parent', { budgetUsd: childUsd, remainingUsd: usd(remaining) }, { by: 'sdk', spentUsd: 0, reservedUsd: 0 });
-      }
-      sub.reservedUsd += childUsd; sub.inFlight++;
+      // remaining already holds back the reservations of this run's calls in flight and the budgets of open wide operators;
+      // inside a wide item the reservation is carved from the operator's budget instead (budgetRefusalOf).
+      const no = budgetRefusalOf(childUsd);
+      if (no) return refuse(no[0], no[1], { by: 'sdk', spentUsd: 0, reservedUsd: 0 });
+      const release = reserveSub(childUsd);
       let r = null, error = null;
       try {
         r = await callModel({ model: CALL_MODEL, prompt: JSON.stringify({ v: CALL_PROTOCOL, op: 'call', callee, input, name, span, parent, budgetUsd: childUsd, timeoutMs, key,
-          ...(prompt !== undefined ? { prompt } : {}), ...(onRefuse !== 'deopt' ? { onRefuse } : {}), ...(onDeopt !== 'propagate' ? { onDeopt } : {}) }), schema: { type: 'object' } });
-      } catch (e) { error = short(e); } finally { sub.reservedUsd = Math.max(0, sub.reservedUsd - childUsd); sub.inFlight--; }
+          ...(prompt !== undefined ? { prompt } : {}), ...(onRefuse !== 'deopt' ? { onRefuse } : {}), ...(onDeopt !== 'propagate' ? { onDeopt } : {}), ...(itemAttempt ? { itemAttempt } : {}) }), schema: { type: 'object' } });
+      } catch (e) { error = short(e); } finally { release(); }
       const cost = usd(charge());
       if (error != null) {
         // The gateway refused the request for budget: this run's own budget is spent, as for a judge.
@@ -542,12 +555,15 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
         }
         const d = { kind: 'host-error', name, detail: error };
         end('call-deopt', { ok: false, status: 'host-error', deopt: { kind: d.kind, name }, detail: error, spentUsd: cost, reservedUsd: childUsd });
-        if (onDeopt === 'skip') return { deopt: d, status: 'host-error' };
+        if (onDeopt === 'skip') return skipped({ deopt: d, status: 'host-error' });
         deopt('call', name, { callee, status: 'host-error', child: d });
       }
       const common = { spentUsd: cost, reservedUsd: childUsd, ...(r?.calleeVersion != null ? { calleeVersion: r.calleeVersion } : {}),
         ...(r?.childTrace ? { childTrace: r.childTrace, childTraceSha256: r.childTraceSha256 ?? null } : {}), ...(r?.memo ? { memo: r.memo } : {}),
-        ...(r?.warning ? { profileWarning: clip(r.warning, 1000) } : {}) };
+        ...(r?.warning ? { profileWarning: clip(r.warning, 1000) } : {}), ...(r?.envFault ? { envFault: String(r.envFault) } : {}) };
+      // Review fix (§Review I7): a call the host ran outside its profile (novelMode 'warn') is a decision on weak evidence:
+      // it flags the run, so the stream's flag-triggered shadow can check it.
+      if (r?.warning) flag(`profile-warn:${name}`, { callee, score: r.warning.score ?? null, reasons: r.warning.reasons ?? [] });
       // A locally interpreted child (FLOW-V3 §1.5): the host's interpreter answered in place of the refused or deopted callee.
       const local = r?.interpreted && typeof r.interpreted === 'object' ? { localDeopt: true, interpreted: clip(r.interpreted, 600), ...(r.refused ? { refused: String(r.refused) } : {}),
         ...(r.status === 'interpreted' && r.deopt ? { replaced: { kind: r.deopt.kind, name: r.deopt.name ?? null } } : {}) } : null;
@@ -557,7 +573,7 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
         const d = { kind: 'verify', name, detail: { reasons: failedVerify.reasons } };
         if (r.status === 'interpreted') sub.interpreted++;
         end('call-deopt', { ok: false, status: 'verify-failed', deopt: { kind: 'verify', name }, verify: { ok: false, reasons: failedVerify.reasons }, outDigest: digest(r.output), ...(local ?? {}), ...common });
-        if (onDeopt === 'skip') return { deopt: d, status: 'verify-failed' };
+        if (onDeopt === 'skip') return skipped({ deopt: d, status: 'verify-failed' });
         deopt('call', name, { callee, status: 'verify-failed', child: d });
       }
       const vok = failedVerify ? { verify: { ok: true } } : {};
@@ -566,19 +582,44 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
       if (r?.status === 'refused') return refuse(String(r.refused), r.detail ?? null, common);
       const d = r?.deopt && typeof r.deopt === 'object' ? r.deopt : { kind: 'unknown', name: null, detail: 'the host answered without a status' };
       end(local ? 'interpret-child' : 'call-deopt', { ok: false, status: String(r?.status ?? 'unknown'), deopt: { kind: d.kind, name: d.name ?? null }, detail: clip(d.detail ?? null, 1000), ...(local ?? {}), ...common });
-      if (onDeopt === 'skip') return { deopt: d, status: r?.status ?? 'unknown' };
+      if (onDeopt === 'skip') return skipped({ deopt: d, status: r?.status ?? 'unknown' });
       deopt('call', name, { callee, status: r?.status ?? 'unknown', child: { kind: d.kind, name: d.name ?? null, detail: clip(d.detail ?? null, 1000) } });
   }
 
   // ---- slice 2b ---------------------------------------------------------------------------------------------------
+  // Review fix (§Review C4/T2): an open wide operator holds its budget against the run. Each wide has a control record
+  // {span, cap, acc (its spend, nested spend included), res (call and agent reservations in flight anywhere inside it),
+  // inner (wides opened directly inside it), parent}. What it holds beyond its own spend and reservations is
+  // hold = max(0, cap - spent - res); what an item may still reserve is free = cap - spent - res - Σ hold(inner).
+  const ctlOf = () => (items.used ? items.als.getStore()?.wideCtl ?? null : null);
+  const holdOf = w => Math.max(0, w.cap - w.acc.spent - w.res);
+  const freeOf = w => w.cap - w.acc.spent - w.res - [...w.inner].reduce((s, x) => s + holdOf(x), 0);
+  const heldByWides = () => [...wides.open].reduce((s, w) => s + holdOf(w), 0);
+  // Reserve `amount` for a call or agent attempt in flight: on the run and on every enclosing wide. Returns the release.
+  function reserveSub(amount) {
+    const chain = [];
+    for (let w = ctlOf(); w; w = w.parent) { w.res += amount; chain.push(w); }
+    sub.reservedUsd += amount; sub.inFlight++;
+    return () => { sub.reservedUsd = Math.max(0, sub.reservedUsd - amount); sub.inFlight--; for (const w of chain) w.res = Math.max(0, w.res - amount); };
+  }
+  // The attempt path of the enclosing map/wide items ('1', '0.2'), when any of them is a retry (§Review C7), else undefined.
+  const itemAttemptOf = () => { const p = items.used ? items.als.getStore()?.attempts : undefined; return p?.some(k => k > 0) ? p.join('.') : undefined; };
   // The SDK budget rule for a reservation of `amount` from this run (as flow.call checks it): null when it fits, else
-  // [refusal, detail]. Remaining already holds back the reservations of this run's calls and agent nodes in flight.
+  // [refusal, detail]. Remaining already holds back the reservations of this run's calls and agent nodes in flight and what
+  // open wide operators hold; inside a wide item the reservation comes out of that operator's free budget (at most its cap).
   function budgetRefusalOf(amount) {
-    const remaining = budgetUsd - state.spentUsd - sub.reservedUsd;
+    const w = ctlOf();
+    if (w) {
+      const free = freeOf(w);
+      if (amount <= free + 1e-9) return null;
+      return [amount <= w.cap - w.acc.spent + 1e-9 ? 'BUDGET_TREE' : 'budget-exceeds-parent', { budgetUsd: amount, wide: w.span, wideBudgetUsd: w.cap, wideSpentUsd: usd(w.acc.spent),
+        reservedInFlightUsd: usd(w.res), freeUsd: usd(free), shortfallUsd: usd(amount - free) }];
+    }
+    const held = heldByWides(), remaining = budgetUsd - state.spentUsd - sub.reservedUsd - held;
     if (amount < remaining) return null;
-    if (sub.inFlight > 0 && amount < remaining + sub.reservedUsd) {
+    if ((sub.inFlight > 0 || held > 0) && amount < remaining + sub.reservedUsd + held) {
       return ['BUDGET_TREE', { budgetUsd: amount, remainingUsd: usd(remaining), shortfallUsd: usd(amount - remaining), inFlight: sub.inFlight, reservedInFlightUsd: usd(sub.reservedUsd),
-        parentBudgetUsd: budgetUsd, parentSpentUsd: usd(state.spentUsd) }];
+        ...(held > 0 ? { heldByWidesUsd: usd(held) } : {}), parentBudgetUsd: budgetUsd, parentSpentUsd: usd(state.spentUsd) }];
     }
     return ['budget-exceeds-parent', { budgetUsd: amount, remainingUsd: usd(remaining) }];
   }
@@ -611,29 +652,30 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     agents.n++;
     const refuse = (refused, detail, extra = {}) => {
       event({ kind: 'agent-refused', name, span, parent, ok: false, refused, detail: clip(detail ?? null, 1000), spentUsd: 0, ...extra, ms: Date.now() - t0 });
-      if (onRefuse === 'skip') return { refused, detail: detail ?? null };
+      if (onRefuse === 'skip') return skipped({ refused, detail: detail ?? null });
       deopt('agent', name, { refused, detail: detail ?? null });
     };
+    const itemAttempt = itemAttemptOf();
     let resolved;
     try { resolved = resolveAgentFiles(taskFilesNow(), s.files); } catch (e) { return refuse('bad-files', { error: short(e) }, { by: 'sdk' }); }
     const fileNames = Object.keys(resolved.files).sort(), filesDigest = sha(canonical(resolved.files)), instructionsDigest = sha(s.instructions);
     const ctx = { name, files: Object.freeze({ ...resolved.files }), text: fileNames.map(k => resolved.files[k]).join('\n'), inputs: s.inputs };
     const no = budgetRefusalOf(childUsd);
     if (no) return refuse(no[0], no[1], { by: 'sdk' });
-    let spentNode = 0, reasons = ['no attempt ran'], retryReason, attempts = 0, lastStatus = null;
+    let spentNode = 0, reasons = ['no attempt ran'], retryReason, attempts = 0, lastStatus = null, retryRefused = null;
     for (let attempt = 0; attempt <= retries; attempt++) {
       const left = usd(childUsd - spentNode);
       if (attempt > 0 && !(left > 0)) break;
       attempts++;
       event({ kind: 'agent-start', name, span, parent, attempt, model: o.model ?? null, budgetUsd: left, tools: o.tools ?? null, files: fileNames.length, filesDigest, instructionsDigest,
-        ...(retryReason ? { retryReason } : {}) });
-      sub.reservedUsd += left; sub.inFlight++;
+        ...(retryReason ? { retryReason } : {}), ...(itemAttempt ? { itemAttempt } : {}) });
+      const release = reserveSub(left);
       let r = null, error = null;
       try {
         r = await callModel({ model: CALL_MODEL, prompt: JSON.stringify({ v: CALL_PROTOCOL, op: 'agent', name, span, parent, attempt, instructions: s.instructions, files: resolved.files,
           fileSources: resolved.sources, ...(s.inputs !== undefined ? { inputs: s.inputs } : {}), returns: s.returns, ...(o.model ? { model: o.model } : {}), ...(o.tools ? { tools: o.tools } : {}),
-          budgetUsd: left, timeoutMs, ...(o.stallMs ? { stallMs: o.stallMs } : {}), harvest: o.harvest ?? true, ...(retryReason ? { retryReason } : {}) }), schema: { type: 'object' } });
-      } catch (e) { error = short(e); } finally { sub.reservedUsd = Math.max(0, sub.reservedUsd - left); sub.inFlight--; }
+          budgetUsd: left, timeoutMs, ...(o.stallMs ? { stallMs: o.stallMs } : {}), harvest: o.harvest ?? true, ...(retryReason ? { retryReason } : {}), ...(itemAttempt ? { itemAttempt } : {}) }), schema: { type: 'object' } });
+      } catch (e) { error = short(e); } finally { release(); }
       const cost = usd(charge()); spentNode = usd(spentNode + cost);
       const end = extra => event({ kind: 'agent-end', name, span, parent, attempt, costUsd: cost, ...extra, ms: Date.now() - t0 });
       if (error != null) {
@@ -642,7 +684,15 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
         reasons = [`host error: ${error.slice(0, 300)}`]; lastStatus = 'host-error';
         break;
       }
-      if (r?.status === 'refused') return refuse(String(r.refused), attempt ? { ...(r.detail ?? {}), after: reasons } : r.detail ?? null, { attempt, spentUsd: cost });
+      // Review fix (§Review C5): only the first attempt's refusal is the node's refusal (onRefuse). A retry the host refuses
+      // (BUDGET_TOO_SMALL after attempt 0 spent most of the budget, BUDGET_TREE, per-run-limit) is a failed retry: the node
+      // goes to its onFail path with the reasons so far, so onFail 'skip' still returns {failed, reasons, attempts}.
+      if (r?.status === 'refused' && attempt > 0) {
+        event({ kind: 'agent-refused', name, span, parent, ok: false, attempt, refused: String(r.refused), detail: clip(r.detail ?? null, 1000), spentUsd: cost, retry: true, ms: Date.now() - t0 });
+        attempts--; retryRefused = String(r.refused); reasons = [...reasons, `retry refused: ${retryRefused}`];
+        break;
+      }
+      if (r?.status === 'refused') return refuse(String(r.refused), r.detail ?? null, { attempt, spentUsd: cost });
       const a = r?.agent ?? {};
       const info = { model: r?.model ?? o.model ?? null, turns: a.turns ?? null, transcriptSha256: a.transcriptSha256 ?? null, scripts: a.scripts ?? 0,
         nestedModelAttempts: a.nestedModelAttempts ?? 0, hiddenPathAttempts: a.hiddenPathAttempts ?? 0, ...(a.stalled ? { stalled: a.stalled, restarts: a.restarts ?? 0 } : {}),
@@ -660,8 +710,9 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
       // A retry carries the reason (W-BED-R5-NOTES item 11): a decoding mistake repeats unless the node is told what failed.
       retryReason = reasons.join('; ').slice(0, 1000);
     }
-    if (onFail === 'skip') return { failed: true, status: lastStatus, reasons, attempts, spentUsd: spentNode };
-    deopt('agent', name, { status: lastStatus, reasons, attempts, spentUsd: spentNode });
+    const rr = retryRefused ? { retryRefused } : {};
+    if (onFail === 'skip') return skipped({ failed: true, status: lastStatus, reasons, attempts, spentUsd: spentNode, ...rr });
+    deopt('agent', name, { status: lastStatus, reasons, attempts, spentUsd: spentNode, ...rr });
   }
 
   // Run one item of map (with a policy) or wide: retries, then 'crash' (rethrow, or the deopt it raised) or 'null'.
@@ -670,8 +721,16 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     let attempts = 0, last = null;
     for (let k = 0; k <= policy.retries; k++) {
       attempts++;
-      try { return { ok: true, value: await items.als.run(store, fn), attempts }; }
-      catch (error) { last = error; }
+      // Review fixes: each attempt runs in its own context with a cell that records a deopt raised inside it, even one the
+      // item's code caught (§Review C8/I3: the attempt then fails with that deopt), and with its attempt number on the item
+      // path, so the call and agent keys of a retry differ from the failed attempt's (§Review C7).
+      const s = { ...store, cell: { raised: null }, attempts: [...(store.attempts ?? []), k] };
+      const raised = () => new ItemDeopt(s.cell.raised.kind, s.cell.raised.name, s.cell.raised.detail);
+      try {
+        const value = await items.als.run(s, fn);
+        if (!s.cell.raised) return { ok: true, value, attempts };
+        last = raised();
+      } catch (error) { last = s.cell.raised ? raised() : error; }
     }
     return { ok: false, attempts, error: last, ...(last instanceof ItemDeopt ? { deopt: last.deopt } : {}) };
   }
@@ -683,8 +742,10 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
   const itemStore = (extra = {}) => {
     const outer = items.used ? items.als.getStore() : undefined;
     // A nested item keeps the enclosing wide item's tags and spend accumulators; a policy that does not catch deopts passes
-    // them on to an enclosing item that does.
-    return { wide: outer?.wide, wideItem: outer?.wideItem, ...extra, acc: [...(outer?.acc ?? []), ...(extra.acc ?? [])], catchDeopt: !!(extra.catchDeopt || outer?.catchDeopt) };
+    // them on to an enclosing item that does. A context that is not an item attempt itself (a wide's plan or reduce) keeps
+    // the enclosing attempt's deopt cell, its attempt path and its wide (runItem gives each attempt its own cell and path).
+    return { wide: outer?.wide, wideItem: outer?.wideItem, wideCtl: outer?.wideCtl ?? null, cell: outer?.cell ?? null, attempts: outer?.attempts ?? [], ...extra,
+      acc: [...(outer?.acc ?? []), ...(extra.acc ?? [])], catchDeopt: !!(extra.catchDeopt || outer?.catchDeopt) };
   };
 
   // flow.map with onItemError and/or reduce (slice 2b item 3b).

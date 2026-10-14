@@ -1,0 +1,8 @@
+{
+  "name": "no-match",
+  "note": "5 km/h over the limit: no rule of the 2026-07 edition matches (the table starts at 10), so the result is null and the id is listed in noMatch (DMN: null when no rule matches); ON_NO_MATCH is 'null'.",
+  "task": { "prompt": "Work out the fine and penalty points for each traffic violation under the schedule in force on the violation date.", "inputs": { "violations": [
+    { "id": "v6", "date": "2026-09-01", "type": "speed", "actualSpeed": 135, "speedLimit": 130 } ] } },
+  "answers": {},
+  "expect": { "status": "ok", "output": { "decisions": [ { "id": "v6", "edition": "fines-2026-07", "rules": [], "result": null } ], "noMatch": ["v6"] } }
+}

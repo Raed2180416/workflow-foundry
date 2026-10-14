@@ -252,7 +252,7 @@ export function betaInc(x, a, b) {
 export function exactBinomialBounds(x, n, { level = 0.95 } = {}) {
   if (!(n > 0)) return { lo: NaN, hi: NaN };
   const alpha = 1 - level;
-  const solve = (f, target) => { let lo = 0, hi = 1; for (let i = 0; i < 100; i++) { const mid = (lo + hi) / 2; if (f(mid) < target) lo = mid; else hi = mid; } return (lo + hi) / 2; };
+  const solve = (f, target) => { let lo = 0, hi = 1; for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (f(mid) < target) lo = mid; else hi = mid; } return (lo + hi) / 2; };
   // upper: the u with P(X ≤ x | u) = alpha, i.e. I_u(x + 1, n − x) = 1 − alpha; lower: I_l(x, n − x + 1) = alpha.
   const hi = x >= n ? 1 : solve(u => betaInc(u, x + 1, n - x), 1 - alpha);
   const lo = x <= 0 ? 0 : solve(l => betaInc(l, x, n - x + 1), alpha);
@@ -266,8 +266,13 @@ export function reuseBoundRule(clusters, { bound = 0.05, z = 1.645, level = 0.95
   const s = clusterDeff(clusters, { rho, estimateRho });
   if (!s.n) return { rule: 'bound', decision: 'no-decision', reason: 'no admitted decisions', method, ...s };
   if (method !== 'wilson' && method !== 'exact') throw new Error(`reuseBoundRule: unknown method ${method}`);
-  const w = method === 'exact' ? exactBinomialBounds(s.wrongEff, s.nEff, { level }) : wilson(s.wrongEff, s.nEff, z);
-  const decision = s.n >= minN && w.hi <= bound ? 'serve' : w.lo > bound ? 'kill' : 'no-decision';
+  const x = s.wrongEff, n = s.nEff;
+  const w = method === 'exact' ? exactBinomialBounds(x, n, { level }) : wilson(x, n, z);
+  // The exact decision is read off the beta tail at the bound itself (upper ≤ bound ⟺ I_bound(x + 1, n − x) ≥ level;
+  // lower > bound ⟺ I_bound(x, n − x + 1) < 1 − level), so it does not depend on the bisection's precision.
+  const under = method === 'exact' ? x < n && betaInc(bound, x + 1, n - x) >= level : w.hi <= bound;
+  const over = method === 'exact' ? x > 0 && betaInc(bound, x, n - x + 1) < 1 - level : w.lo > bound;
+  const decision = s.n >= minN && under ? 'serve' : over ? 'kill' : 'no-decision';
   return { rule: 'bound', decision, upper: w.hi, lower: w.lo, bound, method, ...(method === 'exact' ? { level } : { z }), minN, ...s };
 }
 
