@@ -5,8 +5,13 @@
 //   ex-ante     the 8 trusted structure features of the task (regenerated from the task key; the taskHash is checked against the archive)
 //   post-hoc    signals a user could see without the oracle: schema validity, agent turns and tool uses, the run's cost, latency, output
 //               tokens, workflow node calls and escalations, the workflow's own verdict. NEVER score, oracle details or the pass flag.
-//   estimator   ridge logistic regression, leave-one-TASK-out (all trials of a task are held out together), AUC of the pooled
-//               out-of-fold predictions; the interval is a seeded bootstrap over tasks of the AUC difference
+//   primary     two parameter-free scores with a direction fixed in advance (more input tokens, or a costlier run, means a lower chance of
+//               a pass): AUC of -logInputTokens (ex-ante) against AUC of -logCost (post-hoc); nothing is fitted, so there is no
+//               leave-one-out bias at these sample sizes
+//   secondary   ridge logistic regression (lambda 3) on the whole feature vector, leave-one-TASK-out (all trials of a task are held out
+//               together), AUC of the pooled out-of-fold predictions; the post-hoc vector is the arm kind's signals without wall time,
+//               which DESIGN §2 calls confounded by concurrency and stalls. Leave-one-out AUC is biased below 0.5 for weak signals.
+//               Intervals are seeded bootstraps over tasks of the AUC difference.
 //   scope       delivered answers only: a timeout or crash is itself a free post-hoc signal, so the question is whether the signals
 //               separate right from wrong among answers the user would actually receive (the silent misses that W x q charges)
 // Within one family the structure features are nearly constant across tasks, so ex-ante AUC is bounded by that; the router decides per
@@ -29,6 +34,11 @@ export function postHocSignals(r) {
     verdictFail: r.verdict == null ? null : r.verdict === 'pass' ? 0 : 1,
   };
 }
+/** The fitted post-hoc vector per arm kind: DESIGN's named signals (schema validity, turns, cost) and each kind's analogue of work done. */
+export const POSTHOC_BY_KIND = Object.freeze({
+  agent: ['schemaInvalid', 'logTurns', 'logTools', 'logCost'], direct: ['schemaInvalid', 'logCost', 'logTokensOut'],
+  workflow: ['schemaInvalid', 'logCost', 'logCalls', 'escalations', 'verdictFail'], script: ['schemaInvalid', 'logCost', 'logCalls'],
+});
 const KIND = mode => (/^direct/.test(mode) ? 'direct' : /^agent/.test(mode) ? 'agent' : /^(hand|wf)-/.test(mode) ? 'workflow' : /^script-/.test(mode) ? 'script' : null);
 
 /** Structure features of the tasks behind the rows: Map(taskKey -> {vector, hashOk}). Regenerates tasks (code only, no oracle). */
@@ -57,39 +67,41 @@ function oofPredictions(rows, featureOf, y, { lambda = 1 } = {}) {
   return pred;
 }
 
-/** AUCs of one (job, mode) group. `structure` is Map(taskKey -> {vector}). Returns null with a reason when the group cannot be scored. */
-export function evaluateGroup(rows, structure, { boot = 1000, seed = 20261014, minEach = 4 } = {}) {
+/** AUCs of one (job, mode) group. `structure` is Map(taskKey -> {vector}). Returns a `skipped` reason when the group cannot be scored. */
+export function evaluateGroup(rows, structure, { kind = 'agent', boot = 1000, seed = 20261014, minEach = 4, lambda = 3 } = {}) {
   const y = rows.map(r => (r.pass ? 1 : 0));
   const passes = y.reduce((a, b) => a + b, 0), fails = rows.length - passes;
   if (passes < minEach || fails < minEach) return { skipped: `needs >= ${minEach} passes and >= ${minEach} failures among delivered answers (has ${passes} / ${fails})`, rows: rows.length, passes, fails };
-  const sig = rows.map(postHocSignals);
-  const names = POSTHOC_NAMES.filter(n => sig.some(s => s[n] !== null) && new Set(sig.map(s => s[n])).size > 1);
-  const exFeat = r => structure.get(r.taskKey).vector;
-  const idx = new Map(rows.map((r, i) => [r, i]));
-  const postFeat = r => names.map(n => sig[idx.get(r)][n] ?? 0);
-  const both = r => [...exFeat(r), ...postFeat(r)];
-  const pEx = oofPredictions(rows, exFeat, y), pPost = names.length ? oofPredictions(rows, postFeat, y) : null, pBoth = names.length ? oofPredictions(rows, both, y) : null;
-  const single = {};
-  for (const n of names) single[n] = round(auc(oofPredictions(rows, r => [sig[idx.get(r)][n] ?? 0], y), y), 3);
-  const aEx = auc(pEx, y), aPost = pPost ? auc(pPost, y) : null, aBoth = pBoth ? auc(pBoth, y) : null;
-  // Bootstrap over tasks of AUC(post-hoc) - AUC(ex-ante), holding the out-of-fold predictions fixed.
-  let ci = null;
-  if (pPost) {
-    const tasks = [...new Set(rows.map(r => r.taskKey))], byTask = new Map(tasks.map(t => [t, rows.map((r, i) => (r.taskKey === t ? i : -1)).filter(i => i >= 0)]));
+  const sig = rows.map(postHocSignals), idx = new Map(rows.map((r, i) => [r, i]));
+  const varies = n => sig.some(x => x[n] !== null) && new Set(sig.map(x => x[n])).size > 1;
+  const names = (POSTHOC_BY_KIND[kind] ?? []).filter(varies);
+  const exFeat = r => structure.get(r.taskKey).vector, tokIdx = TRUSTED8.indexOf('logInputTokens');
+  const postFeat = r => names.map(n => sig[idx.get(r)][n] ?? 0), both = r => [...exFeat(r), ...postFeat(r)];
+  const tasks = [...new Set(rows.map(r => r.taskKey))], byTask = new Map(tasks.map(t => [t, rows.map((r, i) => (r.taskKey === t ? i : -1)).filter(i => i >= 0)]));
+  // Parameter-free scores (direction fixed in advance: a bigger value predicts a failure).
+  const dirScores = { logInputTokens: rows.map(r => -exFeat(r)[tokIdx]) };
+  for (const n of POSTHOC_NAMES) if (varies(n)) dirScores[n] = sig.map(x => -(x[n] ?? 0));
+  const directional = Object.fromEntries(Object.entries(dirScores).map(([n, v]) => [n, round(auc(v, y), 3)]));
+  const pEx = oofPredictions(rows, exFeat, y, { lambda }), pPost = names.length ? oofPredictions(rows, postFeat, y, { lambda }) : null, pBoth = names.length ? oofPredictions(rows, both, y, { lambda }) : null;
+  const boots = (a, b) => {
     const r = rng(seed), ds = [];
-    for (let b = 0; b < boot; b++) {
-      const ix = tasks.flatMap(() => byTask.get(tasks[Math.floor(r() * tasks.length)]));
-      const yy = ix.map(i => y[i]), a = auc(ix.map(i => pEx[i]), yy), p = auc(ix.map(i => pPost[i]), yy);
-      if (a !== null && p !== null) ds.push(p - a);
+    for (let k = 0; k < boot; k++) {
+      const ix = tasks.flatMap(() => byTask.get(tasks[Math.floor(r() * tasks.length)])), yy = ix.map(i => y[i]);
+      const u = auc(ix.map(i => a[i]), yy), v = auc(ix.map(i => b[i]), yy);
+      if (u !== null && v !== null) ds.push(v - u);
     }
-    if (ds.length >= boot / 2) ci = [round(quantile(ds, 0.025), 3), round(quantile(ds, 0.975), 3)];
-  }
-  const structureVariance = TRUSTED8.map((k, j) => { const v = rows.map(r => structure.get(r.taskKey).vector[j]); return new Set(v.map(x => round(x, 6))).size > 1; });
+    return ds.length >= boot / 2 ? [round(quantile(ds, 0.025), 3), round(quantile(ds, 0.975), 3)] : null;
+  };
+  const primaryEx = auc(dirScores.logInputTokens, y), primaryPost = dirScores.logCost ? auc(dirScores.logCost, y) : null;
+  const primaryCI = primaryPost === null ? null : boots(dirScores.logInputTokens, dirScores.logCost);
+  const aEx = auc(pEx, y), aPost = pPost ? auc(pPost, y) : null, aBoth = pBoth ? auc(pBoth, y) : null;
+  const fittedCI = pPost ? boots(pEx, pPost) : null;
+  const structureKeysThatVary = TRUSTED8.filter((_, j) => new Set(rows.map(r => round(structure.get(r.taskKey).vector[j], 6))).size > 1);
   return {
-    rows: rows.length, tasks: new Set(rows.map(r => r.taskKey)).size, passes, fails, postHocSignals: names, singleSignalAuc: single,
-    aucExAnte: round(aEx, 3), aucPostHoc: aPost === null ? null : round(aPost, 3), aucBoth: aBoth === null ? null : round(aBoth, 3),
-    deltaPostMinusExAnte: aPost === null ? null : round(aPost - aEx, 3), deltaCI: ci, deltaExcludesZero: ci ? ci[0] > 0 || ci[1] < 0 : null,
-    structureKeysThatVary: TRUSTED8.filter((_, j) => structureVariance[j]),
+    rows: rows.length, tasks: tasks.length, passes, fails, directional,
+    primary: { exAnte: round(primaryEx, 3), postHoc: primaryPost === null ? null : round(primaryPost, 3), delta: primaryPost === null ? null : round(primaryPost - primaryEx, 3), ci: primaryCI, excludesZero: primaryCI ? primaryCI[0] > 0 || primaryCI[1] < 0 : null },
+    fitted: { postHocSignals: names, exAnte: round(aEx, 3), postHoc: aPost === null ? null : round(aPost, 3), both: aBoth === null ? null : round(aBoth, 3), delta: aPost === null ? null : round(aPost - aEx, 3), ci: fittedCI, excludesZero: fittedCI ? fittedCI[0] > 0 || fittedCI[1] < 0 : null },
+    structureKeysThatVary,
   };
 }
 
@@ -117,19 +129,27 @@ export async function runD3(jobs, { structure = null, boot = 1000 } = {}) {
   const st = structure ?? await structureOf(groups.flatMap(g => g.delivered));
   const per = groups.map(g => ({
     job: g.job.id, mode: g.mode, kind: g.kind, family: g.job.family, source: g.job.sources, rowsAll: g.all.length, rowsDelivered: g.delivered.length,
-    ...evaluateGroup(g.delivered, st, { boot }), selfVerdict: selfVerdictRates(g.all),
+    ...evaluateGroup(g.delivered, st, { kind: g.kind, boot }), selfVerdict: selfVerdictRates(g.all),
   }));
-  const scored = per.filter(p => p.aucExAnte !== undefined && p.aucPostHoc !== null && p.aucPostHoc !== undefined);
-  const bySign = scored.filter(p => p.deltaCI && p.deltaCI[0] > 0).length, against = scored.filter(p => p.deltaCI && p.deltaCI[1] < 0).length;
+  const scored = per.filter(p => p.primary && p.primary.postHoc !== null);
+  const med = f => (scored.length ? round(quantile(scored.map(f), 0.5), 3) : null);
+  const fitted = scored.filter(p => p.fitted.postHoc !== null);
+  const medF = f => (fitted.length ? round(quantile(fitted.map(f), 0.5), 3) : null);
   return {
-    id: 'D3', grade: 'LEGACY/dev', question: 'Do deployable post-hoc signals predict the oracle better than structure features? (delivered answers, leave-one-task-out)',
-    postHocSignalsAllowed: POSTHOC_NAMES, exAnteFeatures: TRUSTED8, hashesChecked: [...st.values()].every(v => v.hashOk), taskCount: st.size,
+    id: 'D3', grade: 'LEGACY/dev', question: 'Do deployable post-hoc signals predict the oracle better than structure features? (delivered answers)',
+    postHocSignalsAllowed: POSTHOC_NAMES, postHocByKind: POSTHOC_BY_KIND, exAnteFeatures: TRUSTED8, hashesChecked: [...st.values()].every(v => v.hashOk), taskCount: st.size,
     groups: per,
     summary: {
-      groupsScored: scored.length, groupsSkipped: per.length - scored.length, medianAucExAnte: scored.length ? round(quantile(scored.map(p => p.aucExAnte), 0.5), 3) : null,
-      medianAucPostHoc: scored.length ? round(quantile(scored.map(p => p.aucPostHoc), 0.5), 3) : null, medianDelta: scored.length ? round(quantile(scored.map(p => p.deltaPostMinusExAnte), 0.5), 3) : null,
-      postHocBetterCIExcludesZero: bySign, exAnteBetterCIExcludesZero: against, meanAucExAnte: scored.length ? round(mean(scored.map(p => p.aucExAnte)), 3) : null,
-      meanAucPostHoc: scored.length ? round(mean(scored.map(p => p.aucPostHoc)), 3) : null,
+      groups: per.length, groupsScored: scored.length, groupsSkipped: per.length - scored.length,
+      primary: {
+        medianAucExAnte: med(p => p.primary.exAnte), medianAucPostHoc: med(p => p.primary.postHoc), medianDelta: med(p => p.primary.delta),
+        postHocBetter: scored.filter(p => p.primary.delta > 0).length, exAnteBetter: scored.filter(p => p.primary.delta < 0).length,
+        postHocBetterCIExcludesZero: scored.filter(p => p.primary.ci && p.primary.ci[0] > 0).length, exAnteBetterCIExcludesZero: scored.filter(p => p.primary.ci && p.primary.ci[1] < 0).length,
+      },
+      fitted: {
+        groups: fitted.length, medianAucExAnte: medF(p => p.fitted.exAnte), medianAucPostHoc: medF(p => p.fitted.postHoc), medianDelta: medF(p => p.fitted.delta),
+        postHocBetterCIExcludesZero: fitted.filter(p => p.fitted.ci && p.fitted.ci[0] > 0).length, exAnteBetterCIExcludesZero: fitted.filter(p => p.fitted.ci && p.fitted.ci[1] < 0).length,
+      },
     },
   };
 }
