@@ -654,3 +654,107 @@ and 7.9% at ρ 0.2).
    decision for the orchestrator.
 3. The reuse ICC is the unknown that sets the rule's validity. L4 should report ρ̂ with a cluster-bootstrap interval
    beside the decision.
+
+**D27. M2, priced verification: the PREREG H1 cost claim against the Haiku agent is withdrawn for kinetics, and for
+records with the engine as built. No arm, tier or rate beats the Haiku agent per success over a 24-task stream
+($0; ATTACK-20261014 §3 M2, PROOF-LEDGER K2).**
+
+*Development evidence only (dev 201–224, R0 records 225–236, K = 1). No model call was made. Code:
+`experiments/jit/verify-economics.mjs`, with tests in `experiments/jit/test/verify-economics.test.mjs` (12/12). Outputs:
+`analysis/verify-economics/out/{tables.generated.md,verify-economics.json}`. Inputs: the committed exports
+`runs/jit-dev-records-1`, `jit-dev-kinetics-1` and `jit-r0-records`. Archived shadow and adjudicator answers were
+re-scored with the bed oracles; 189 of 189 archived answers re-score to identical oracle details.*
+
+**1. Model.** Costs are per post-warmup task (idx ≥ 3), at three levels:
+- L0 is compiled runs only (the ATTACK's steady state).
+- L1 adds deopt fallbacks to the interpreter. This is the rule's steady state.
+- L2 adds the recompiles measured in the window.
+
+Verification is rate × (compiled-ok share) × (shadow $ + P(disagree) × adjudication $). Shadows are drawn only on
+compiled-ok deliveries. There are three tiers:
+- *interp*: the arm's interpreter, as `stream.mjs` runs it. Its costs and P(disagree) come from the as-run shadows.
+- *haiku*: the Haiku agent arm's own answer on the same seed. This tier needs an engine change.
+- *witness* (kinetics only): the excluded-sample set checked against the reference. It is a ceiling, because no run-time
+  code can derive that set.
+
+Agreement is read from the oracle details, because compiled answers are not archived. On the 346 archived answer pairs
+that share a seed, the proxy's "disagree" was always a real disagreement (163 of 163). Its "agree" is right 89 of 93
+times; the 4 misses make P(disagree) about 5% low on records, in the JIT's favour.
+
+**2. Results at the 25% floor, L1, $ per task, against the Haiku agent** (records $0.1027, kinetics $0.0876, R0
+$0.1039).
+
+The engine as built (interpreter shadows with adjudication):
+
+| arm | records dev | kinetics dev |
+|---|---|---|
+| S→H | $0.1805 | $0.2508 |
+| O→H | $0.2183 | $0.3181 |
+| H→H, the negative control | $0.0788 | $0.2442 |
+
+R0 H→H costs $0.0438.
+
+Break-even rates against the Haiku agent on records are 6.0% (S→H) and 7.0% (O→H) with adjudication, and 9.0% and 9.1%
+without. The ATTACK's "never at the floor" holds with deopt fallbacks included.
+
+With Haiku-agent shadows on records:
+- O→H with Haiku adjudication costs $0.0966 and beats.
+- S→H beats only without adjudication: $0.1008.
+
+Kinetics:
+- Compiled runs plus fallbacks already cost $0.195–0.250 before verification, so nothing beats.
+- That includes the $0 witness ceiling, at $0.24–0.28.
+
+At L2 no records setting beats either; the cheapest costs ≥ $0.1439. The ATTACK's P6 numbers reproduce from the rows:
+- S→H: $0.1284, 18.75% and 12.3%, horizons 186 and 458 (the ATTACK has 464);
+- O→H: $0.150, 15.5% and 12.2%, horizons 68 and 143 (the ATTACK has 145).
+
+**3. The 24-task stream (H1's unit).** Warmup, compiles and 21 tasks at L1 at the floor give a best cost per success of:
+- records: $0.29 (O→H with Haiku shadows and no adjudication) and $0.42–0.45 with the engine as built, against $0.164;
+- kinetics: ≥ $0.93, against $0.124.
+
+The records S→H compiles alone cost $4.83, against the Haiku agent's whole stream at $2.46.
+
+Restated against the Sonnet and Opus agents, the engine as built at the floor beats both on records:
+- per task: $0.18–0.22, against $0.29 and $0.56;
+- per success over 24 tasks: $0.42–0.45, against $0.54 and $0.56.
+
+It does not beat them per success on kinetics. Success parity with Opus fails: 22 and 18 of 24, against 24.
+
+**4. System view (the kill mode).**
+- R0's realized floor sampled 5 of 9 deliveries (idx 3, 5, 6, 8 and 11).
+  - Its one system "wrong" (s230) was a correct compiled answer, overruled.
+  - Its one truly wrong delivery (s231) shipped unresolved.
+  - The Wilson upper bound is 62%.
+- At 24 tasks and a 25% floor, the bound is 39–62% even with 0 detected. It reaches about 15% near 1,000 tasks.
+- It never falls below the measured detectable-wrong rate: 10.5% for S→H, 22–33% for O→H, 50% for dev H→H.
+- So a slider bound of B ≤ 10% is infeasible for every arm.
+
+**5. Other findings.**
+- R0 shadowed 9 of 9 compiled runs, because every run raised flags under `shadowOnFlags`. Its effective rate was 100%,
+  not 25%. At 100%, R0 H→H costs $0.1180 per task, above the Haiku agent.
+- On records the exact 'unordered' comparator drives adjudication, because most disagreements are false alarms on
+  correct answers: 6 of 7 in R0. Even a comparator with no false alarms leaves S→H with interpreter shadows at $0.153.
+- CSP-1 at the measured false-alarm rates on records (φ 42–100%) inspects about 100% of deliveries.
+- The kinetics exclusion set differs from the reference in 6 of 6 wrong compiled deliveries, but in only 24 of 28 wrong
+  answers overall. The misses are the Haiku agent on s216, the Sonnet agent on s220, and the s212 shadow and adjudicator
+  pair. So the witness is not complete for interpreter answers (K3, K4).
+
+**6. Deviations.**
+- The rate applies per compiled-ok delivery. The ATTACK applied it per task; its convention is reproduced separately.
+- The dev streams' random floor is emulated with `shadowDrawOf(experiment, idx)`. Only R0 logged draws.
+- The kinetics JIT arms are truncated at 12, 19 and 13 rows. Compiles in flight at the stop are excluded.
+- `sameAnswer` and `shadowDrawOf` are replicated, because `stream.mjs` is under concurrent edit. The test reproduces R0's
+  logged draws.
+
+**7. Not done.**
+- R0-K: not run.
+- Real-comparator replays of compiled answers: this needs `run-compiled.mjs`, which is under concurrent edit.
+- A reliability claim at a declared W: K11 is open.
+
+**Consequences.**
+1. Withdraw or restate PREREG H1's cost sentence before the freeze. Restate it against the Sonnet and Opus agents, or as
+   a long-stream steady-state claim that names its shadow tier and comparator.
+2. R0-K's flag-forced shadows make the floor's cost assumption moot.
+3. The next $0 lever to price is a records comparator at the oracle's own thresholds plus a Haiku-agent shadow tier. Both
+   are engine changes.
