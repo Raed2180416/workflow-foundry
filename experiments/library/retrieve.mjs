@@ -163,10 +163,21 @@ export function itemMetrics(ranked, gold, ks = [3, 5, 20]) {
 // A seeded PRNG (mulberry32) for the bootstrap.
 export function prng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 // Mean of a per-item metric with a cluster bootstrap 95% CI (clusters resampled with replacement; LIBRARY-TESTS §1).
-export function clusterMean(rows, metric, { cluster = r => r.cluster, B = 4000, seed = 20261014 } = {}) {
+// rows: [{cluster, m: {metric: number}}] (or pass `values` and `clusters` arrays). The metric is read once per row through
+// Object.entries into arrays, never by a computed key in the hot loop: on Node 24.21 a computed-key load `r.m[metric]` in
+// this loop returned another metric's value after the function had first run on rows of another shape (reproduced in this
+// session: recall@20 came back as precision@5 after one call with metric 'x'), so the loop works on plain arrays.
+export function columnOf(rows, metric) {
+  const out = new Array(rows.length);
+  rows.forEach((r, i) => { let v; for (const [k, x] of Object.entries(r.m)) if (k === metric) v = x; out[i] = v; });
+  return out;
+}
+export function clusterMean(rows, metric, { cluster = r => r.cluster, B = 4000, seed = 20261014, values = null, clusters = null } = {}) {
+  const xs = values ?? columnOf(rows, metric), cs = clusters ?? rows.map(cluster);
+  if (xs.some(v => typeof v !== 'number' || !Number.isFinite(v))) throw new Error(`clusterMean: metric ${metric} is missing or not a number on some row`);
   const groups = new Map();
-  for (const r of rows) { const k = cluster(r); const g = groups.get(k) ?? { s: 0, n: 0 }; g.s += r.m[metric]; g.n++; groups.set(k, g); }
-  const gs = [...groups.values()], n = rows.length, mean = rows.reduce((a, r) => a + r.m[metric], 0) / Math.max(1, n);
+  for (let i = 0; i < xs.length; i++) { const g = groups.get(cs[i]) ?? { s: 0, n: 0 }; g.s += xs[i]; g.n++; groups.set(cs[i], g); }
+  const gs = [...groups.values()], n = xs.length, mean = xs.reduce((a, v) => a + v, 0) / Math.max(1, n);
   const rand = prng(seed), means = [];
   for (let i = 0; i < B; i++) { let s = 0, c = 0; for (let j = 0; j < gs.length; j++) { const g = gs[Math.floor(rand() * gs.length)]; s += g.s; c += g.n; } means.push(c ? s / c : 0); }
   means.sort((a, b) => a - b);

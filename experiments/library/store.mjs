@@ -234,8 +234,17 @@ export function openLibrary(dir, { now = () => new Date(), env = null } = {}) {
     ledger.label(id, truth, { source });
   }
 
+  // Stub mode ($0 smoke, sweeps, tests): bind an in-process runner to a registered entry, so createCallHost({ mode: 'stub' })
+  // runs it as the entry's child (run.mjs solverStub runs a registered solve.mjs that way). The binding is not persisted.
+  function bindStub(hash, fn) {
+    if (!get(hash)) fail(`bindStub: unknown hash ${hash}`);
+    if (typeof fn !== 'function') fail('bindStub: a function is required');
+    stubs.set(hash, fn);
+    return get(hash);
+  }
+
   return {
-    dir, files: Object.fromEntries(Object.keys(FILES).map(k => [k, file(k)])),
+    dir, files: Object.fromEntries(Object.keys(FILES).map(k => [k, file(k)])), bindStub,
     registry: { dir, rows: registryRows, register, get, revoke, list: () => hashes().map(get) },
     register, get, list: () => hashes().map(get), transition, revoke, addEvidence, evidenceOf, requalify, retireUnused,
     revocations: () => revocationRows.slice(), recordJudgment, labelJudgment,

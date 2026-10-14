@@ -103,6 +103,19 @@ export async function runSolver({ source, task, answers = {}, library = null, bu
   }
 }
 
+// A registered solve.mjs as a stub-mode child (store.mjs bindStub): each call runs the solver as its own $0 child process
+// (runSolver) on the call's input, with the judge answers given, and returns the call host's stub result. onRun(record)
+// receives {input, result} for every run (the sweep's journal of a child's judge calls is the run's trace).
+export function solverStub(source, { answers = {}, taskTemplate = '', budgetUsd = 0.5, library = null, onRun = null, timeoutMs } = {}) {
+  return async input => {
+    const r = await runSolver({ source, task: { prompt: taskTemplate, inputs: input }, answers, library, budgetUsd, timeoutMs });
+    if (onRun) onRun({ input, result: r });
+    if (r.status === 'ok') return { output: r.output, costUsd: r.spentUsd };
+    if (r.status === 'deopt') return { status: 'deopt', deopt: r.deopt ? { kind: r.deopt.kind, name: r.deopt.name ?? null, detail: r.deopt.detail ?? null } : { kind: 'unknown', name: null, detail: null }, costUsd: r.spentUsd };
+    return { status: 'crash', error: { code: r.status, message: r.stderr.slice(-300) }, costUsd: r.spentUsd };
+  };
+}
+
 // Register a fixture's children, resolve "@child:<name>" refs, assemble the parts, run. parts: [{card, slots}].
 export async function runParts({ parts, task, answers = {}, children = [], budgetUsd = 1, outputSchema = null, timeoutMs, keep = false }) {
   const dir = mkdtempSync(path.join(tmpdir(), 'lib-fx-'));

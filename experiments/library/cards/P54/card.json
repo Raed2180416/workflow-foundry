@@ -1,6 +1,6 @@
 {
   "id": "P54", "layer": "L1", "version": 1,
-  "name": "compose: call a library item per part", "short": "compose-call", "family": "compose", "tier": "M", "constructs": [12, 6, 3],
+  "name": "compose: call a library item per part", "short": "compose-call", "family": "compose", "tier": "S", "constructs": [11, 6, 5, 7],
   "flow": { "version": 3, "autoFlag": false },
   "fragment": { "in": "any (PARTS reads it)", "out": null },
   "slots": [

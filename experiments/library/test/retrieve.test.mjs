@@ -82,6 +82,16 @@ test('T9: per-item metrics and the cluster bootstrap', () => {
   assert.equal(c.mean, 0.5); assert.ok(c.lo <= c.mean && c.mean <= c.hi); assert.equal(c.clusters, 4);
 });
 
+test('T9: clusterMean is exact after a first call on rows of another shape (the Node 24.21 computed-key anomaly, retrieve.mjs)', () => {
+  clusterMean(Array.from({ length: 40 }, (_, i) => ({ cluster: `p${i % 4}`, m: { x: i % 2 } })), 'x', { B: 300 });
+  const { tasks } = corpusTasks();
+  const r = scoreArms(tasks.slice(0, 600), { B: 300, keepItems: true });
+  for (const k of ['recall@3', 'recall@5', 'recall@20', 'precision@5']) {
+    const direct = r.perItem.A1.reduce((a, x) => a + x.m[k], 0) / r.perItem.A1.length;
+    assert.equal(r.arms.A1[k].mean, Math.round(direct * 1e4) / 1e4, k);
+  }
+});
+
 test('T9: corpus task sets: gold is census L1 needs only (no L0, no removed detector), the stripped variant drops structural words', () => {
   const { tasks, l0only, refused } = corpusTasks();
   assert.equal(refused, 49, 'census revision 1 refuses 49');
@@ -100,7 +110,7 @@ test('T9: the L2 code arms over the corpus and W-bed (numbers reported; no thres
   const r = await runL2({ B: 500 });
   for (const set of ['corpus', 'stripped', 'wbed']) for (const [arm, m] of Object.entries(r[set].arms)) {
     for (const k of ['recall@3', 'recall@5', 'recall@20', 'precision@5', 'mrr']) assert.ok(m[k].mean >= 0 && m[k].mean <= 1 && m[k].lo <= m[k].mean + 1e-9 && m[k].mean <= m[k].hi + 1e-9, `${set} ${arm} ${k}`);
-    assert.ok(m['recall@3'].mean <= m['recall@5'].mean + 1e-9 && m['recall@5'].mean <= m['recall@20'].mean + 1e-9);
+    assert.ok(m['recall@3'].mean <= m['recall@5'].mean + 1e-9 && m['recall@5'].mean <= m['recall@20'].mean + 1e-9, `${set} ${arm}: ${m['recall@3'].mean} ${m['recall@5'].mean} ${m['recall@20'].mean}`);
     if (arm === 'A2') assert.ok(m.meanListLength <= MAX_CANDIDATES);
   }
   assert.equal(r.costUsd, 0); assert.equal(r.modelCalls, 0); assert.equal(r.jevCalls, 0);
