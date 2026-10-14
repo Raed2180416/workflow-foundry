@@ -77,13 +77,26 @@ export function fragilityOfJob(job, { cells = GRID } = {}) {
   };
 }
 
+/** The fields behind the recorded mismatches of failing records answers (the oracle records at most 12 per answer). */
+export function recordsMismatchFields(jobs) {
+  const by = {}; let total = 0, answers = 0;
+  for (const job of jobs.filter(j => j.oracle === 'records')) for (const r of job.rows) {
+    const d = r.details;
+    if (r.pass || !d || d.reason || !Array.isArray(d.mismatches)) continue;
+    answers += 1;
+    for (const m of d.mismatches) { by[m.field] = (by[m.field] ?? 0) + 1; total += 1; }
+  }
+  const top = Object.entries(by).sort((a, b) => b[1] - a[1])[0] ?? [null, 0];
+  return { failingAnswers: answers, recordedMismatches: total, byField: by, topField: top[0], topFieldShare: total ? round(top[1] / total, 3) : null };
+}
+
 export function runD4(jobs) {
   const per = jobs.map(j => fragilityOfJob(j)).filter(Boolean);
   const reproduced = per.every(p => p.reproduction.mismatches === 0);
   return {
     id: 'D4', grade: 'LEGACY/dev', factors: FACTORS,
     question: 'Do labels flip when the oracle tolerance is halved or doubled? (archived records and kinetics rows)',
-    jobs: per,
+    jobs: per, recordsMismatches: recordsMismatchFields(jobs),
     summary: {
       jobs: per.length, fragileJobs: per.filter(p => p.grid.fragile).map(p => p.job), fragileAtHeadline: per.filter(p => p.headlineFlips.half || p.headlineFlips.double).map(p => p.job),
       rowsTotal: per.reduce((s, p) => s + p.rows, 0), lostAtHalf: per.reduce((s, p) => s + p.rowFlips.lostAtHalf, 0), gainedAtDouble: per.reduce((s, p) => s + p.rowFlips.gainedAtDouble, 0),

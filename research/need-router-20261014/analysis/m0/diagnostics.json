@@ -10,8 +10,8 @@
   "d0-knn.mjs": "5496befafc90fb94",
   "d1-shortcut.mjs": "fd377e498af87c99",
   "d2-cofailure.mjs": "694710c793e39674",
-  "d3-signals.mjs": "b089f1c1b8b4ef45",
-  "d4-fragility.mjs": "248be01193a209e9",
+  "d3-signals.mjs": "2655e677d84fade4",
+  "d4-fragility.mjs": "2227b37c27f692af",
   "d5-guard.mjs": "23d0b5af20d66c0f",
   "d6-cost.mjs": "2f13ea07086e6a2b",
   "rescue.mjs": "69a0f77b8e7596e0"
@@ -5889,6 +5889,18 @@
      3,
      4
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 18,
+      "passes": 12,
+      "meanLogInputTokens": 3.8546
+     },
+     "4": {
+      "rows": 18,
+      "passes": 17,
+      "meanLogInputTokens": 3.92
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -5930,6 +5942,18 @@
      3,
      4
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 18,
+      "passes": 14,
+      "meanLogInputTokens": 3.8546
+     },
+     "4": {
+      "rows": 14,
+      "passes": 11,
+      "meanLogInputTokens": 3.9193
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -5986,6 +6010,18 @@
      3,
      4
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 17,
+      "passes": 13,
+      "meanLogInputTokens": 3.855
+     },
+     "4": {
+      "rows": 4,
+      "passes": 4,
+      "meanLogInputTokens": 3.9163
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -6042,6 +6078,18 @@
      3,
      4
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 18,
+      "passes": 13,
+      "meanLogInputTokens": 3.8546
+     },
+     "4": {
+      "rows": 18,
+      "passes": 15,
+      "meanLogInputTokens": 3.92
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -6139,6 +6187,13 @@
     "difficulties": [
      3
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 8,
+      "passes": 4,
+      "meanLogInputTokens": 3.8564
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -6341,6 +6396,13 @@
     "difficulties": [
      3
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 8,
+      "passes": 4,
+      "meanLogInputTokens": 4.0925
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -6446,6 +6508,18 @@
      3,
      4
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 16,
+      "passes": 9,
+      "meanLogInputTokens": 3.8533
+     },
+     "4": {
+      "rows": 8,
+      "passes": 6,
+      "meanLogInputTokens": 3.9227
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -6515,6 +6589,18 @@
      3,
      4
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 16,
+      "passes": 5,
+      "meanLogInputTokens": 3.8533
+     },
+     "4": {
+      "rows": 8,
+      "passes": 8,
+      "meanLogInputTokens": 3.9227
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -6557,6 +6643,18 @@
      3,
      4
     ],
+    "byDifficulty": {
+     "3": {
+      "rows": 16,
+      "passes": 6,
+      "meanLogInputTokens": 3.8527
+     },
+     "4": {
+      "rows": 8,
+      "passes": 8,
+      "meanLogInputTokens": 3.9251
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens"
     ],
@@ -6602,6 +6700,18 @@
      4,
      5
     ],
+    "byDifficulty": {
+     "4": {
+      "rows": 16,
+      "passes": 10,
+      "meanLogInputTokens": 3.9749
+     },
+     "5": {
+      "rows": 8,
+      "passes": 7,
+      "meanLogInputTokens": 4.0844
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens",
      "itemLists",
@@ -6655,6 +6765,18 @@
      4,
      5
     ],
+    "byDifficulty": {
+     "4": {
+      "rows": 16,
+      "passes": 12,
+      "meanLogInputTokens": 3.9749
+     },
+     "5": {
+      "rows": 8,
+      "passes": 5,
+      "meanLogInputTokens": 4.0844
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens",
      "itemLists",
@@ -6705,6 +6827,18 @@
      4,
      5
     ],
+    "byDifficulty": {
+     "4": {
+      "rows": 16,
+      "passes": 8,
+      "meanLogInputTokens": 3.9742
+     },
+     "5": {
+      "rows": 8,
+      "passes": 7,
+      "meanLogInputTokens": 4.0827
+     }
+    },
     "structureKeysThatVary": [
      "logInputTokens",
      "itemLists",
@@ -7599,6 +7733,21 @@
     }
    }
   ],
+  "recordsMismatches": {
+   "failingAnswers": 105,
+   "recordedMismatches": 748,
+   "byField": {
+    "amount_usd": 344,
+    "phone_e164": 74,
+    "entity_id": 92,
+    "birth_date": 130,
+    "family_name": 24,
+    "country": 54,
+    "given_name": 30
+   },
+   "topField": "amount_usd",
+   "topFieldShare": 0.46
+  },
   "summary": {
    "jobs": 6,
    "fragileJobs": [

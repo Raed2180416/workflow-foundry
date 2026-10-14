@@ -81,6 +81,7 @@ export function evaluateGroup(rows, structure, { boot = 1000, seed = 20261014, m
   const exA = exP ? A(exP) : null, postA = postP ? A(postP) : null;
   return {
     rows: rows.length, tasks: tasks.length, passes, fails, difficulties: [...new Set(strata)].sort(),
+    byDifficulty: Object.fromEntries([...new Set(strata)].sort().map(d => [d, { rows: strata.filter(x => x === d).length, passes: rows.filter((r, i) => strata[i] === d && r.pass).length, meanLogInputTokens: round(rows.reduce((a, r, i) => a + (strata[i] === d ? structure.get(r.taskKey).vector[TRUSTED8.indexOf('logInputTokens')] : 0), 0) / strata.filter(x => x === d).length, 4) }])),
     structureKeysThatVary: Object.keys(exScores), exAnteAuc: auces(exScores), postHocAuc: auces(postScores),
     primary: { exAnte: exA === null ? null : round(exA, 3), postHoc: postA === null ? null : round(postA, 3), delta: exA === null || postA === null ? null : round(postA - exA, 3), ci, excludesZero: ci ? ci[0] > 0 || ci[1] < 0 : null },
   };

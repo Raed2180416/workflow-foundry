@@ -1,8 +1,11 @@
 // need-codefix-noverifier: determinism, the absence of any visible verifier, pure subtraction from codefix, verdict equality with
-// codefix, oracle health per difficulty, schema rejection, truth isolation and size. Dev seeds 601-640 only. $0: no model calls.
+// codefix, oracle health per difficulty, schema rejection, truth isolation and size, and the pinned inherited codefix defects in the
+// bug-report transcripts (red-herring sentence, float/dict printing). Dev seeds 601-640 only. $0: no model calls.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import * as bed from './index.mjs';
+import { classify, entryOf, fidelity, replBlocks } from './fidelity.mjs';
 import * as codefix from '../codefix/index.mjs';
 import { build } from '../codefix/build.mjs';
 import { canonical, estimateTokens, sha256 } from '../lib/canonical.mjs';
@@ -327,6 +330,99 @@ test('instanceFingerprint agrees with the task: same source digest iff same bugg
   }
   assert.deepEqual(bed.instanceFingerprint({ seed: 601, split: 'dev', difficulty: 1 }), fps[0].fp);
   assert.throws(() => bed.instanceFingerprint({ seed: 601, split: 'dev', difficulty: 7 }), /difficulty/);
+});
+
+// ---- Inherited codefix defects in the bug-report transcripts (found by adversarial review) --------------------------------
+// This bed is a pure subtraction from codefix, so it keeps codefix's bug report byte for byte and cannot fix these. The tests
+// below pin them: if codefix fixes (or changes) them, the numbers move, the tests fail on purpose, and the README Known limits
+// and these pins need a re-review together with the UPSTREAM version pin above.
+let fidelityCache;
+const fidelityResult = () => {
+  fidelityCache ??= fidelity(DIFFS.flatMap(d => seeds(601, 40).map(seed => entryOf(taskOf(d, seed)))), { examples: 100 });
+  return fidelityCache;
+};
+const PIN_HINT = 'pinned inherited codefix defect changed: if codefix was fixed, update README Known limits and this pin together; otherwise investigate';
+
+test('fidelity probe: classify and replBlocks do what the pins below assume (and flag a real misstatement)', () => {
+  const v = text => ({ kind: 'value', text });
+  assert.equal(classify(v('63'), { k: 'value', r: '63' }), 'ok');
+  assert.equal(classify(v('63'), { k: 'value', r: '63.0' }), 'float-int');
+  assert.equal(classify(v('[0, 2.5]'), { k: 'value', r: '[0.0, 2.5]' }), 'float-int');
+  assert.equal(classify(v('64'), { k: 'value', r: '63.0' }), 'other');
+  assert.equal(classify(v('10'), { k: 'value', r: '10.05' }), 'other', '10.05 is not an integral float');
+  assert.equal(classify(v("{'a': 1, 'b': 2}"), { k: 'value', r: "{'b': 2, 'a': 1}", dict: true }), 'dict-order');
+  assert.equal(classify(v("['a', 'b']"), { k: 'value', r: "['b', 'a']" }), 'other', 'a reordered list is a misstatement');
+  assert.equal(classify({ kind: 'none' }, { k: 'none' }), 'ok');
+  assert.equal(classify(v('None'), { k: 'none' }), 'other');
+  assert.equal(classify({ kind: 'raise', text: 'ValueError: bad time' }, { k: 'raise', n: 'ValueError', m: 'bad time' }), 'ok');
+  assert.equal(classify({ kind: 'raise', text: 'slotbook.SlotError: full' }, { k: 'raise', n: 'SlotError', m: 'full' }), 'ok');
+  assert.equal(classify({ kind: 'raise', text: 'KeyError: 1' }, { k: 'raise', n: 'ValueError', m: 'bad time' }), 'other');
+  assert.equal(classify({ kind: 'raise', name: 'ValueError' }, { k: 'raise', n: 'ValueError', m: 'x' }), 'ok');
+  const report = '# Issue\n\nbody\n\n```\n>>> from m import f\n>>> f(2)\n3\n>>> f(0)\nTraceback (most recent call last):\n  File "<stdin>", line 1, in <module>\nValueError: zero\n```\n\n'
+    + 'For `f(2)` I expected `4`, but I get `3`.\n\n---\n\n### Comment by X\n\nno code here\n';
+  const [block, ...more] = replBlocks(report);
+  assert.equal(more.length, 0);
+  assert.deepEqual(block.stmts.map(s => s.code), ['from m import f', 'f(2)', 'f(0)']);
+  assert.deepEqual(block.stmts.map(s => s.printed), [{ kind: 'none' }, { kind: 'value', text: '3' }, { kind: 'raise', text: 'ValueError: zero' }]);
+  assert.deepEqual(block.sentence, { expr: 'f(2)', expected: { kind: 'value', text: '4' }, got: { kind: 'value', text: '3' } });
+  // End to end: a doctored report that prints a wrong value is counted as `other`; the untouched one is not.
+  const task = taskOf(1, 601);
+  assert.match(task.inputs.bug_report, /\n63\n/);
+  const doctored = { ...task, inputs: { ...task.inputs, bug_report: task.inputs.bug_report.replace('\n63\n', '\n64\n') } };
+  assert.equal(fidelity([entryOf(task)]).statements.other, 0);
+  assert.equal(fidelity([entryOf(doctored)]).statements.other, 1);
+});
+
+test('inherited codefix defect, pinned: the red-herring sentence has expected and got swapped, so it contradicts its own transcript (d4/d5)', () => {
+  const f = fidelityResult();
+  // Real-bug sentences are right at every level: the "I get" value is what the transcript prints for that expression.
+  for (const d of DIFFS) assert.deepEqual(f.sentences.bug[d], { consistent: 40, contradict: 0 }, `real-bug sentences d${d}`);
+  // The red herring exists from d4 on, once per task; its sentence says "I expected <the documented value the transcript prints>,
+  // but I get <the value the complaint wants>". 72 of the 80 contradict their transcript (35 at d4, 37 at d5); the other 8 only
+  // pass because the expression (b.allow(0)) is printed several times with different results.
+  assert.deepEqual(Object.keys(f.sentences.herring), ['4', '5']);
+  assert.deepEqual(f.sentences.herring, { 4: { consistent: 5, contradict: 35 }, 5: { consistent: 3, contradict: 37 } }, PIN_HINT);
+  assert.equal(f.examples.coincidence.length, 8);
+  assert.ok(f.examples.coincidence.every(x => /b\.allow\(0\)/.test(x)), 'the 8 consistent herring sentences are repeated-expression coincidences');
+  // The reversed orientation: the herring sentence's "expected" value is what the transcript prints (the reference behaviour).
+  const he = f.values.herringExpected;
+  assert.equal(he.other, 0);
+  assert.equal(he.ok + he['dict-order'] + he['float-int'], 80);
+  // Consequence (a surface cue, codefix AUDIT F6 meant to remove it): "the 'I get' value is not among the transcript's outputs"
+  // flags 72 of 80 herring sentences and none of the 200 real-bug sentences, with no judgment needed.
+  const flaggedHerring = f.sentences.herring[4].contradict + f.sentences.herring[5].contradict;
+  const flaggedBug = DIFFS.reduce((n, d) => n + f.sentences.bug[d].contradict, 0);
+  assert.deepEqual([flaggedHerring, flaggedBug], [72, 0]);
+  // It is codefix's text, untouched by this bed.
+  for (const d of [4, 5]) for (const seed of seeds(601, 12)) assert.equal(taskOf(d, seed).inputs.bug_report, codefixTaskOf(d, seed).inputs.bug_report);
+});
+
+test('inherited codefix defect, pinned: transcripts and sentences print Python floats as ints and sort dict keys, and misstate nothing else', () => {
+  const f = fidelityResult();
+  assert.equal(f.blocks, 280);
+  assert.deepEqual(f.statements, { ok: 1370, 'float-int': 21, 'dict-order': 3, other: 0 }, PIN_HINT);
+  // The expectation sentences share the renderer, so they carry the same two deviations and nothing else.
+  assert.deepEqual(f.values.bugExpected, { ok: 188, 'float-int': 12, 'dict-order': 0, other: 0 }, PIN_HINT);
+  assert.deepEqual(f.values.bugGot, { ok: 187, 'float-int': 13, 'dict-order': 0, other: 0 }, PIN_HINT);
+  // The float lines come from two ratelimit functions that return true-division results, from d1 to d5.
+  const fnOf = x => x.match(/^d\d s\d+: (?:\w+\.)?(\w+)\(/)[1];
+  assert.deepEqual([...new Set(f.examples['float-int'].map(fnOf))].sort(), ['backoff_ms', 'tokens']);
+  assert.deepEqual([...new Set(f.examples['dict-order'].map(fnOf))], ['plan_change']);
+  // The example from the review: the module returns self._milli / 1000 (Python: 63.0 and 3.0), the report prints 63 and 3.
+  const t = taskOf(1, 601);
+  assert.match(t.inputs.source, /return self\._milli \/ 1000/);
+  assert.match(t.inputs.source, /\(may be fractional\)/);
+  assert.match(t.inputs.bug_report, />>> b\.tokens\(60000\)\n63\n/);
+  assert.match(t.inputs.bug_report, /For `b\.tokens\(60000\)` I expected `3`, but I get `63`\./);
+  assert.ok(f.examples['float-int'].some(x => x.startsWith('d1 s601: b.tokens(60000) printed "63", real "3.0" (reference) / "63.0" (buggy)')));
+});
+
+test('README records both inherited defects with the pinned numbers and the probe command', () => {
+  const readme = readFileSync(new URL('./README.md', import.meta.url), 'utf8');
+  for (const needle of ['72 of 80', 'herringExpectation', 'swapped', '63.0', 'dict keys', 'measure.mjs fidelity', 'fidelity.mjs',
+    'backoff_ms', 'tokens()', '21 ', '1370']) {
+    assert.ok(readme.includes(needle), `README Known limits must mention ${needle}`);
+  }
 });
 
 test('input size: tokens rise with difficulty, level 3 is in the 5K-15K band, the removal is a real cut', t => {

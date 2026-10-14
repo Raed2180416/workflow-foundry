@@ -10,6 +10,8 @@
 // beyond the reference module, which only a trusted host may read.
 import { spawnSync } from 'node:child_process';
 import { PYTHON } from '../codefix/sandbox.mjs';
+import { build } from '../codefix/build.mjs';
+import { referenceSolve } from './index.mjs';
 
 /** Expectation sentence as beds/codefix/report.mjs writes it (value forms: `v` or "it to raise X", "I get `v`" or "it raises X"). */
 export const SENTENCE = /For `([^`]+)` I expected (?:`([^`]*)`|it to raise (\w+)), but (?:I get `([^`]*)`|it raises (\w+))\./;
@@ -60,7 +62,7 @@ export function replBlocks(report) {
         expected: sm[2] !== undefined ? { kind: 'value', text: sm[2] } : { kind: 'raise', name: sm[3] },
         got: sm[4] !== undefined ? { kind: 'value', text: sm[4] } : { kind: 'raise', name: sm[5] },
       };
-      blocks.push({ stmts, sentence });
+      blocks.push({ stmts, sentence, section });
     }
   }
   return blocks;
@@ -91,59 +93,76 @@ function replay(items) {
   return JSON.parse(proc.stdout);
 }
 
+/**
+ * Trusted host code (it builds the hidden truth): the reference module of a task, and the possible texts of its red-herring
+ * complaint (empty before d4), which identify the herring comment of the bug report without reading prose cues.
+ */
+export function entryOf(task) {
+  const b = build({ seed: task.seed, split: task.split, difficulty: task.difficulty });
+  return {
+    task,
+    reference: referenceSolve(task).patched_source,
+    herringTexts: b.herring ? b.domain.sites[b.herring].herring.map(f => f(b.p)) : [],
+  };
+}
+
 const ORDER = ['ok', 'float-int', 'dict-order', 'other'];
 const zero = () => Object.fromEntries(ORDER.map(k => [k, 0]));
 const closer = (a, b) => (ORDER.indexOf(a) <= ORDER.indexOf(b) ? a : b);
-const keep = (list, x, n = 6) => { if (list.length < n) list.push(x); };
 
 /**
- * Replays the bug-report transcripts of `entries` = [{ task, reference }] (a task of this bed and its reference module source).
- * Returns:
- *   statements  how every transcript line compares with real Python (against whichever of buggy/reference module fits better)
- *   sentences   per difficulty: consistent / contradict (the "I get" value is, or is not, what the sentence's transcript prints
- *               for that expression), plus how those split over blocks showing the bug (buggy and reference differ on some
- *               statement) and blocks showing correct behaviour only (the red herring: buggy and reference agree there)
- *   values      the sentences' expected / got values against real Python (same classes as statements)
- *   examples    a few offending lines for each non-ok class
+ * Replays the bug-report transcripts of `entries` (from entryOf) in real Python. Returns:
+ *   statements  how every transcript line compares with real Python (against whichever of the buggy and the reference module
+ *               fits better): ok, float-int (63.0 printed as 63), dict-order (keys printed sorted), other (a misstatement)
+ *   sentences   { bug, herring }: for the sentences of real-bug comments and of the red-herring comment, per difficulty, how
+ *               many are consistent (the "I get" value is printed by the transcript for that expression) or contradict it
+ *   values      the real-bug sentences' expected value against the reference module and "I get" value against the buggy
+ *               module, and the red-herring sentences' expected value against the reference module (same classes as statements)
+ *   examples    a few offending lines per class
  */
-export function fidelity(entries) {
+export function fidelity(entries, { examples: nExamples = 6 } = {}) {
+  const keep = (list, x) => { if (list.length < nExamples) list.push(x); };
   const items = []; const meta = [];
-  for (const { task, reference } of entries) {
+  for (const { task, reference, herringTexts } of entries) {
     const mod = task.inputs.module_path.replace(/\.py$/, '');
     for (const block of replBlocks(task.inputs.bug_report)) {
       items.push({ mod, buggy: task.inputs.source, ref: reference, stmts: block.stmts.map(s => s.code) });
-      meta.push({ task, block });
+      meta.push({ task, block, herring: herringTexts.some(t => block.section.includes(t)) });
     }
   }
   const real = replay(items);
-  const statements = zero(); const values = { expected: zero(), got: zero() };
-  const sentences = {};
-  const split = { contradictInBugBlock: 0, contradictInCorrectBlock: 0, consistentInBugBlock: 0, consistentInCorrectBlock: 0 };
-  const examples = { 'float-int': [], 'dict-order': [], other: [], contradict: [] };
-  meta.forEach(({ task, block }, i) => {
+  const statements = zero();
+  const values = { bugExpected: zero(), bugGot: zero(), herringExpected: zero() };
+  const sentences = { bug: {}, herring: {} };
+  const examples = { 'float-int': [], 'dict-order': [], other: [], contradict: [], coincidence: [], sentenceOther: [] };
+  meta.forEach(({ task, block, herring }, i) => {
     const { buggy, ref } = real[i];
     const where = `d${task.difficulty} s${task.seed}`;
     block.stmts.forEach((s, k) => {
       const cls = closer(classify(s.printed, buggy[k]), classify(s.printed, ref[k]));
       statements[cls]++;
-      if (cls !== 'ok') keep(examples[cls], `${where}: ${s.code} printed ${JSON.stringify(s.printed.text ?? s.printed.kind)} real ${JSON.stringify(ref[k].r ?? ref[k].n ?? ref[k].k)} / ${JSON.stringify(buggy[k].r ?? buggy[k].n ?? buggy[k].k)}`);
+      if (cls !== 'ok') keep(examples[cls], `${where}: ${s.code} printed ${JSON.stringify(s.printed.text ?? s.printed.kind)}, real ${JSON.stringify(ref[k].r ?? ref[k].n ?? ref[k].k)} (reference) / ${JSON.stringify(buggy[k].r ?? buggy[k].n ?? buggy[k].k)} (buggy)`);
     });
-    // A block shows the bug when the buggy and the reference module differ on some of its statements.
-    const bugBlock = buggy.some((b, k) => JSON.stringify(b) !== JSON.stringify(ref[k]));
     const sent = block.sentence;
     if (!sent) return;
     const idx = block.stmts.map((s, k) => (s.code === sent.expr ? k : -1)).filter(k => k >= 0);
     // Consistent: the sentence's "I get" value is one of the values the transcript prints for that expression.
-    const key = v => (v.kind === 'raise' ? 'raise' : v.text);
     const shown = idx.map(k => (block.stmts[k].printed.kind === 'raise' ? 'raise' : block.stmts[k].printed.text));
-    const consistent = shown.includes(key(sent.got));
-    (sentences[task.difficulty] ??= { consistent: 0, contradict: 0 })[consistent ? 'consistent' : 'contradict']++;
-    split[`${consistent ? 'consistent' : 'contradict'}In${bugBlock ? 'Bug' : 'Correct'}Block`]++;
-    if (!consistent) keep(examples.contradict, `${where}: ${sent.expr}: expected ${JSON.stringify(sent.expected)} got ${JSON.stringify(sent.got)}, transcript prints ${JSON.stringify(shown)}`);
-    // The sentence's values against real Python: expected is the reference result; got is the buggy result (bug blocks only).
-    const bestOf = (printed, side) => idx.map(k => classify(printed, side[k])).reduce(closer, 'other');
-    values.expected[bestOf(sent.expected, ref)]++;
-    if (bugBlock) values.got[bestOf(sent.got, buggy)]++;
+    const consistent = shown.includes(sent.got.kind === 'raise' ? 'raise' : sent.got.text);
+    const row = (sentences[herring ? 'herring' : 'bug'][task.difficulty] ??= { consistent: 0, contradict: 0 });
+    row[consistent ? 'consistent' : 'contradict']++;
+    const detail = `${where}: ${sent.expr}: expected ${JSON.stringify(sent.expected)}, I get ${JSON.stringify(sent.got)}; the transcript prints ${JSON.stringify(shown)}`;
+    if (!consistent) keep(examples.contradict, detail);
+    else if (herring) keep(examples.coincidence, detail);
+    // A sentence says `None` where the REPL prints nothing.
+    const bestOf = (printed, side) => idx.map(k => classify(printed.kind === 'value' && printed.text === 'None' ? { kind: 'none' } : printed, side[k])).reduce(closer, 'other');
+    const grade = (bucket, printed, side, label) => {
+      const cls = bestOf(printed, side);
+      bucket[cls]++;
+      if (cls === 'other') keep(examples.sentenceOther, `${detail} [${label}; real ${JSON.stringify(idx.map(k => side[k]))}]`);
+    };
+    if (herring) grade(values.herringExpected, sent.expected, ref, 'herring expected');
+    else { grade(values.bugExpected, sent.expected, ref, 'bug expected'); grade(values.bugGot, sent.got, buggy, 'bug got'); }
   });
-  return { statements, sentences, split, values, examples, blocks: meta.length };
+  return { statements, sentences, values, examples, blocks: meta.length };
 }

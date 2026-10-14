@@ -21,9 +21,21 @@ export const family = {
     + '(seed, split, difficulty), with the written specification removed: no identity, conflict, phone or USD-conversion rules. The batch keeps '
     + 'its own source notes and a plain rate sheet (the per-task FX rates). Instead, k = 2 (d1) to 5 (d5) earlier batches of the same generator, '
     + 'each with its notes, rate sheet, export and correct master records, are given as solved examples. Routing anchor for the need router: '
-    + 'exploratory, build-from-examples versus clarify. Intended class (a HYPOTHESIS, unmeasured): no class is asserted. Two competing hypotheses '
-    + 'are to be tested against each other: H-induce (a cheap direct call or agent can induce the rules from the examples) and H-clarify (the '
-    + 'omitted rules and reference data are only partly visible in 2-5 examples, so a clarification of the rules is needed first).',
+    + 'exploratory, build-from-examples versus clarify. Intended class (a HYPOTHESIS under test, unmeasured, not a result): at d1-d2 one direct '
+    + 'call should suffice (H-induce: the rules can be induced from the 2-3 examples); at d3-d5 clarify-then-solve (H-clarify: the per-batch '
+    + 'conventions, the demotion of the re-stamped system and the reference data are only partly visible in 4-5 long examples, so the written '
+    + 'rules are needed first). The alternative, kept to be tested against it, is H-induce at every level.',
+};
+
+// The prior label for the need router's benchmark, one class per difficulty band. A HYPOTHESIS under test: no model has been run on
+// this bed, and nothing in the tests depends on it holding (they only check that it is stated and marked as a hypothesis).
+export const workingHypothesis = {
+  status: 'hypothesis, unmeasured',
+  bands: [
+    { difficulties: [1, 2], hypothesis: 'H-induce', class: 'one direct call should suffice' },
+    { difficulties: [3, 4, 5], hypothesis: 'H-clarify', class: 'clarify-then-solve' },
+  ],
+  alternative: { hypothesis: 'H-induce at every level', class: 'one direct call should suffice at d1-d5' },
 };
 
 // Difficulty is records': rows 30 -> 150, systems, per-task conventions from d3, dated FX at d5. The example count is the family's knob.

@@ -1,8 +1,11 @@
 // Prints the tables used in README.md ($0, no model calls):
 //   node beds/need-codefix-noverifier/measure.mjs [seeds=40] [split=dev] [firstSeed=601]   input size, this bed vs codefix
 //   node beds/need-codefix-noverifier/measure.mjs collisions                               duplicate-module probe (codefix AUDIT F2)
+//   node beds/need-codefix-noverifier/measure.mjs fidelity [seeds=40] [split=dev] [firstSeed=601]   REPL transcripts and expectation
+//                                                           sentences replayed in real Python (inherited codefix defects, README)
 // Tokens are estimateTokens(prompt) + estimateTokens(inputs) (utf8 bytes / 4, see beds/lib). `files` repeat the same text.
 import { generate, instanceFingerprint } from './index.mjs';
+import { entryOf, fidelity } from './fidelity.mjs';
 import { generate as generateCodefix } from '../codefix/index.mjs';
 import { estimateTokens } from '../lib/canonical.mjs';
 
@@ -41,5 +44,21 @@ function collisions() {
   }
 }
 
+function fidelityTable(n, split, first) {
+  const entries = [1, 2, 3, 4, 5].flatMap(d => range(first, n).map(seed => entryOf(generate({ seed, split, difficulty: d }))));
+  const f = fidelity(entries);
+  console.log(`seeds ${first}..${first + n - 1}, split ${split}, d1-d5: ${f.blocks} REPL blocks`);
+  console.log('transcript statements vs real Python:', JSON.stringify(f.statements));
+  console.log('| d | real-bug sentences (consistent / contradict) | red-herring sentences (consistent / contradict) |');
+  console.log('|---|---|---|');
+  for (const d of [1, 2, 3, 4, 5]) {
+    const cell = x => (x ? `${x.consistent} / ${x.contradict}` : 'none');
+    console.log(`| ${d} | ${cell(f.sentences.bug[d])} | ${cell(f.sentences.herring[d])} |`);
+  }
+  console.log('sentence values vs real Python:', JSON.stringify(f.values));
+  for (const [cls, list] of Object.entries(f.examples)) if (list.length) console.log(`${cls}:\n  ${list.join('\n  ')}`);
+}
+
 if (process.argv[2] === 'collisions') collisions();
+else if (process.argv[2] === 'fidelity') fidelityTable(Number(process.argv[3] || 40), process.argv[4] || 'dev', Number(process.argv[5] || 601));
 else sizes(Number(process.argv[2] || 40), process.argv[3] || 'dev', Number(process.argv[4] || 601));

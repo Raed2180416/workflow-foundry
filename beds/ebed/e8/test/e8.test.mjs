@@ -2,7 +2,8 @@
 //   node --test --test-concurrency=2 beds/ebed/e8/test/
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateWorld, referenceRuns, oracle, binding, referenceTransition, recordsOf, specE, family } from '../index.mjs';
+import { generateWorld, referenceRuns, oracle, oracleItem, binding, referenceTransition, recordsOf, specE, family } from '../index.mjs';
+import { gradeCase } from '../../oracle/grade.mjs';
 import { runControl, CONTROLS } from '../controls.mjs';
 import { createHost } from '../../host/host.mjs';
 import { replayRun } from '../../host/replay.mjs';
@@ -219,13 +220,47 @@ test('golden: the customer-action race: an action exactly at D counts, the timeo
   const v = (at, events) => ({ case: c2, at, seq: Infinity, world: W, truth: t2, rows: [{ seq: 1, at: p + MIN, system: 'orders', op: 'create', key: 'k', args: { orderId: t2.subject }, committed: true, case: c2, callAt: p + MIN, knows: new Set() }], tasks: [], taskEvents: [], events });
   const Et = referenceTransition(W, v(D + MIN, []));
   const to = Et.effects.required.find(e => e.lid === `ost:${t2.subject}:timedOut`);
-  assert.equal(to.window.earliest, D + 1000, 'timeout after D');
+  // S1: strictly after D. An effect exactly at D is outside the window (the grader's test: at < earliest is early); the
+  // window opens within the minute after D (the grader's time resolution is not pinned).
+  assert.ok(to.window.earliest > D && to.window.earliest <= D + MIN, `timeout earliest ${to.window.earliest - D} ms after D`);
+  assert.ok(D < to.window.earliest, 'an effect exactly at D is outside the window');
   assert.equal(to.window.latest, D + 60 * MIN);
   const Ea = referenceTransition(W, v(D + MIN, [{ id: 'a', type: 'customer.action', at: D, seq: 5, payload: { orderRef: t2.subject, action: 'cancel' } }]));
   assert.ok(Ea.effects.required.some(e => e.lid === `ost:${t2.subject}:cancelled`), 'action at D counts');
   assert.ok(!Ea.effects.required.some(e => e.lid === `ost:${t2.subject}:timedOut`));
   const El = referenceTransition(W, v(D + 2 * MIN, [{ id: 'b', type: 'customer.action', at: D + MIN, seq: 5, payload: { orderRef: t2.subject, action: 'amend' } }]));
   assert.ok(El.effects.required.some(e => e.lid === `ost:${t2.subject}:timedOut`), 'an action after D is late');
+});
+
+test('grader: same-instant knowledge is per message (S10): a step by a call that was not given the cancel is in flight, not new', () => {
+  // One instant a: a carrier info report reaches the order's instance (the call that also reserves... and charges), and a
+  // customer cancel reaches another instance (merged later). The charge emitted by the first call was taken before the
+  // cancel (S10): it is in flight, so the grader matches it to the charge lid the cancel withdrew. The same charge from
+  // a call that had been given the cancel is new after it (R6.2): outside what is allowed.
+  const a = P + 10 * MIN;
+  const lidMatch = (E, l) => E.effects.required.find(e => e.lid === l).match;
+  const E0 = referenceTransition(W, view(P + MIN, [], []));
+  const r = (seq, at, system, op, args, given) => ({ seq, at, system, op, key: `${op}:${seq}`, args, committed: true, status: 'ok', error: null, case: CASE,
+    money: system === 'billing', callAt: at, knows: new Set([CASE]), given: new Set(given) });
+  const early = [r(2, P, 'orders', 'create', lidMatch(E0, `create:${O}`), ['g-placed']),
+    r(3, P + MIN, 'orders', 'setStatus', lidMatch(E0, `ost:${O}:processing`), []), r(4, P + MIN, 'orders', 'setStatus', lidMatch(E0, `fst:${F}:processing`), []),
+    ...FUL.items.map((i, k) => r(10 + k, a - MIN, 'inventory', 'reserve', lidMatch(E0, `rsv:${F}:${i.sku}`), []))];
+  const E1 = referenceTransition(W, view(a, early, []));
+  const d = (seq, at, id, type, source, payload) => ({ seq, at, event: { id, type, source, payload }, instance: 'i-1', round: 1, route: null, case: CASE, truth: true });
+  const infoCode = { PARCELLA: 'LABEL_CREATED', VELOX: 'LB', SWIFTLINE: 'manifested' }[loc.carrier];
+  const deliveries = [d(1, P, 'g-placed', 'order.placed', 'shop', { orderId: O }),
+    d(20, a, 'g-info', 'carrier.status', 'carrier', { carrier: loc.carrier, code: infoCode, fulfilmentRef: F, reportedAt: new Date(a).toISOString() }),
+    d(21, a, 'g-cancel', 'customer.action', 'customer-portal', { orderRef: O, action: 'cancel' })];
+  const grade = given => {
+    const ledger = [...early, r(22, a, 'billing', 'charge', lidMatch(E1, `chg:${F}`), given)];
+    const b = { deliveries, ledger, tasks: [], taskEvents: [], calls: [] };
+    const idx = { world: W, horizonMs: a + MIN, ledger, writes: [], bucket: c => (c === CASE ? b : { deliveries: [], ledger: [], tasks: [], taskEvents: [], calls: [] }) };
+    return gradeCase({ item: oracleItem, world: W, idx, c: CASE });
+  };
+  const inFlight = grade(['g-info']);
+  assert.equal(inFlight.firstDivergence, null, `a charge from a call not given the cancel: ${JSON.stringify(inFlight.firstDivergence)}`);
+  const reacted = grade(['g-cancel']);
+  assert.deepEqual([reacted.firstDivergence?.layer, reacted.firstDivergence?.code, reacted.firstDivergence?.system], [2, 'outside-allowed', 'billing']);
 });
 
 test('golden module: every exported golden passes the reference transition (the same set the mutation tool runs per mutant)', () => {

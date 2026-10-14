@@ -623,6 +623,89 @@ test('README states the anchor sentence, the hypothesis, the version, the pass r
   assert.ok(readme.includes('withheldSpec'));
 });
 
+// ---------------------------------------------------------------------------------------
+// Regressions for the adversarial review (two minor defects)
+test('regression (review: no intended class): one working-hypothesis class per difficulty band, stated as a hypothesis, the alternative kept', () => {
+  const h = bed.workingHypothesis;
+  assert.match(h.status, /hypothesis/);
+  assert.match(h.status, /unmeasured/);
+  const classOf = d => {
+    const bands = h.bands.filter(b => b.difficulties.includes(d));
+    assert.equal(bands.length, 1, `exactly one band holds d${d}`);
+    return bands[0].class;
+  };
+  assert.deepEqual(DIFFS.map(classOf), ['one direct call should suffice', 'one direct call should suffice', 'clarify-then-solve', 'clarify-then-solve', 'clarify-then-solve']);
+  assert.deepEqual(h.bands.map(b => b.hypothesis), ['H-induce', 'H-clarify']);
+  assert.match(h.alternative.hypothesis, /H-induce at every level/);
+
+  // family.description names the class per band, marks it a hypothesis under test and keeps the alternative
+  const desc = bed.family.description;
+  assert.match(desc, /HYPOTHESIS under test, unmeasured, not a result/);
+  assert.doesNotMatch(desc, /no class is asserted/i);
+  assert.match(desc, /at d1-d2 one direct call should suffice/);
+  assert.match(desc, /at d3-d5 clarify-then-solve/);
+  assert.match(desc, /alternative, kept to be tested against it, is H-induce at every level/);
+
+  // the README says the same, in its own section, and does not present it as a result
+  const readme = readFileSync(new URL('./README.md', import.meta.url), 'utf8');
+  assert.doesNotMatch(readme, /no class is asserted/i);
+  const section = readme.split(/^## /m).find(s => s.startsWith('Intended class'));
+  assert.ok(section, 'README has an "Intended class" section');
+  assert.match(section.split('\n')[0], /HYPOTHESIS, not a fact/);
+  assert.match(section, /hypothesis under test, not a result/);
+  assert.match(section, /no model has been run on this bed/);
+  assert.match(section, /Alternative, kept to be tested against the working hypothesis: H-induce at every level/);
+  assert.doesNotMatch(section, /\b(was measured|were measured|we measured|has been shown|is confirmed|we found)\b/i, 'no measured claim');
+  for (const b of h.bands) {
+    const first = b.difficulties[0], last = b.difficulties[b.difficulties.length - 1];
+    assert.ok(section.includes(`| d${first}-d${last} | **${b.class}**`), `README table row for d${first}-d${last}`);
+    assert.ok(section.includes(`| ${b.hypothesis} |`), `README names ${b.hypothesis} for its band`);
+  }
+});
+
+test('regression (review: prompt said "exactly", oracle ignores extra keys): the prompt promises no stricter shape than the oracle checks; extra keys neither pass nor rescue an answer', () => {
+  for (const d of DIFFS) {
+    const t = task(605, d);
+    assert.doesNotMatch(t.prompt, /\bexactly\b/i, `d${d}: no promise of an exact shape`);
+    assert.ok(t.prompt.includes('Return only JSON in the shape of the example outputs: {"records":[...]}.'), `d${d}`);
+  }
+  const decorate = out => ({
+    ...structuredClone(out), explanation: 'x', confidence: 0.9,
+    records: out.records.map(r => ({ ...r, confidence: 0.4, notes: 'guess' })),
+  });
+  for (const d of DIFFS) {
+    for (const seed of [605, 606, 607]) {
+      const t = task(seed, d);
+      const ref = bed.referenceSolve(t);
+      // extra keys at the root and in every record are ignored: same verdict, same score, same details as the clean answer, and as records'
+      const dressed = decorate(ref);
+      assert.deepEqual(bed.oracle(t, dressed), bed.oracle(t, ref), `reference with extra keys d${d} s${seed}`);
+      assert.equal(bed.oracle(t, dressed).pass, true);
+      assert.deepEqual(bed.oracle(t, dressed), rec.oracle(bed.pairedRecordsTask(t), dressed), 'records ignores them too');
+      // ... so an extra key can never rescue a wrong answer
+      for (const c of bed.badControls) {
+        if (!appliesAt(c, d)) continue;
+        const out = c.make(t);
+        const r = bed.oracle(t, decorate(out));
+        assert.equal(r.pass, false, `${c.name} d${d} s${seed} with extra keys`);
+        assert.deepEqual(r, bed.oracle(t, out), `${c.name}: extra keys change nothing`);
+      }
+    }
+  }
+  // extra keys do not turn an invalid answer into a valid one either
+  const t = task(605, 2);
+  const ref = bed.referenceSolve(t);
+  for (const bad of [{ explanation: 'x' }, { notes: [], other: ref }, { ...ref, records: ref.records.map((r, i) => (i ? r : { ...r, phone_e164: undefined, notes: 'x' })) }]) {
+    assert.equal(bed.oracle(t, bad).details.reason, 'schema-invalid');
+  }
+  // the README documents it
+  const readme = readFileSync(new URL('./README.md', import.meta.url), 'utf8');
+  assert.match(readme, /\*\*Extra keys are ignored\*\*/);
+  assert.ok(readme.includes('"in the shape of the example outputs", not "exactly"'));
+  assert.ok(!readme.includes('exactly the shape'), 'README quotes the current prompt');
+  assert.ok(readme.includes('Return only JSON in the shape of the example outputs: {"records":[...]}.'));
+});
+
 test('hygiene: no model call, network, credential, wall clock, Math.random or sealed access in the bed\'s modules', () => {
   const dir = new URL('./', import.meta.url);
   const files = readdirSync(dir).filter(f => f.endsWith('.mjs') && !f.endsWith('.test.mjs'));

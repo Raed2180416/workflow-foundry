@@ -304,7 +304,8 @@ G('steps-before-vs-after-a-processing-cancel', 'S9, S10, R4.1, R4.2, R6.2, §1',
 
 // R3.2, R6.1, R7.2, §4.8, §3.5: W4's go-live order already awaiting the customer, with nothing available, is amended: "If
 // none is available, cancel the order (R6.1)" within 60 min of the amend. Each status is set at most once (R7.2) and each
-// notification sent once (§4.8), so no lid is required twice.
+// notification sent once (§4.8), so no lid is required twice. (The grader merges lids by id, so the duplicate-lid check is
+// a unit check of the transition: under MUTANTS.md's one standard the k53 it fails is equivalent (grader).)
 {
   const [Cn, Tn] = pick(t => t.class === 'gl-awaiting' && allocOf(W4, t.subject).every(f => !f.available), 'go-live awaiting order with nothing available', W4);
   const Bn = builder(Cn, W4), bn = W4.backlog.find(x => x.case === Cn);
@@ -442,6 +443,28 @@ G('duplicate-placement-changes-no-items', 'R1.1, R1.4, §3.1', tr => {
     const wb = win(Eb, `ost:${O7}:processing`);
     return wb && wb.earliest === p7 + 30 * MIN && wb.latest === p7 + 90 * MIN ? true : `processing window ${JSON.stringify(wb)}`;
   });
+
+  // S12, S4, S10, S11, R6.2, R2.2, S9: a usable review answer and a customer cancel with the same time. The answer is
+  // delivered first (S4: human-task events before customer actions), so it decides first. After an `approve` the order is
+  // cleared and ready (R2.2, R4.1, S11): the cancel is a cancel during processing (R6.2) and counts within 60 min of it;
+  // `processing` not yet set is only permitted (S9), and `processing` set by the call that got the approve (it was not given
+  // the cancel, S10) was taken before the cancel and stays asked for. After a `reject` the order is cancelled for fraud
+  // within 120 min of the answer (R2.2); the cancel changes nothing.
+  G('review-answer-and-cancel-in-one-instant (S12)', 'S12, S4, S10, S11, R6.2, R2.2, S9', tr => {
+    const r1 = task7('r1', p7 + 5 * MIN, 900), x = p7 + 60 * MIN;
+    const ans = d => answer7('r1', x, 950, { decision: d });
+    const cancel = { ...act(B7, x, O7, 'cancel'), seq: 960 };          // delivered after the answer (seq 950), S4
+    const Ea = tr(W, view7(x + MIN, [cancel], [r1], [ans('approve')]));
+    const wa = win(Ea, `ost:${O7}:cancelled`);
+    if (!wa || wa.earliest !== x || wa.latest !== x + 60 * MIN || !has(Ea, `ntf:${O7}:order-cancelled`)) return `approve then cancel: order-cancel window ${JSON.stringify(wa)}, expected [x, x + 60 min] (R6.2)`;
+    if (has(Ea, `ost:${O7}:processing`) || !Ea.effects.permitted.some(p => p.op === 'setStatus' && p.match?.status === 'processing')) return 'approve then cancel: processing not set is not merely permitted (S9; the order was ready at the approve)';
+    const sts = [null, ...allocOf(W, O7).map(f => f.fulfilmentId)].map(fid => B7.row(x, 'orders', 'setStatus', { orderId: O7, fulfilmentId: fid, status: 'processing' }));
+    const Eb = tr(W, B7.view(x + 2 * MIN, T7, [B7.row(p7 + MIN, 'orders', 'create', { orderId: O7 }), ...sts], [B7.ev(p7, 'order.placed', { orderId: O7 }), cancel], { tasks: [r1], taskEvents: [ans('approve')] }));
+    if (!has(Eb, `ost:${O7}:processing`)) return 'processing set by the call that got the approve (not given the cancel) is no longer asked for (S10)';
+    const Er = tr(W, view7(x + MIN, [cancel], [r1], [ans('reject')]));
+    const wr = win(Er, `ost:${O7}:cancelled`);
+    return wr && wr.earliest === x && wr.latest === x + 120 * MIN ? true : `reject then cancel: order-cancel window ${JSON.stringify(wr)}, expected [x, x + 120 min] (R2.2)`;
+  });
 }
 
 // R3.2, S1, R6.3, S5, §4.8: an order that times out. Every timeout effect is due in (D, D + 60 min]; afterwards a cancel may
@@ -484,15 +507,31 @@ G('duplicate-placement-changes-no-items', 'R1.1, R1.4, §3.1', tr => {
     if (!has(E, `ost:${Oa}:cancelled`) || !has(E, `ntf:${Oa}:order-cancelled`)) return 'cancel at D after an amend did not stop the order';
     return sends([...E.effects.required, ...E.effects.permitted], 'cancel-refused') ? 'cancel-refused allowed for a cancel that counts' : true;
   });
+  // S11, S8, R3.2, R6.2, S9: an amend and a cancel with the same time, the amend delivered first (same source, by id): the
+  // amend counts (R3.2) and makes the order ready in that instant, and the order is processing from the instant it is ready
+  // (S11), so the cancel is a cancel during processing (S8) and counts: the order is cancelled within 60 min of it, and
+  // `processing` (not yet set) is only permitted (S9).
+  G('amend-and-cancel-in-one-instant (S11)', 'S11, S8, R3.2, R6.2, S9', tr => {
+    const a = pa + 80 * MIN;
+    const E = tr(W, Ba.view(a + MIN, Ta, [Ba.row(pa + MIN, 'orders', 'create', { orderId: Oa })], [act(Ba, a, Oa, 'amend'), act(Ba, a, Oa, 'cancel')]));
+    const w = win(E, `ost:${Oa}:cancelled`);
+    if (!w || w.earliest !== a || w.latest !== a + 60 * MIN || !has(E, `ntf:${Oa}:order-cancelled`)) return `a cancel delivered after the amend of its instant did not count: order-cancel window ${JSON.stringify(w)}`;
+    if (has(E, `ost:${Oa}:processing`)) return 'processing still required after a cancel in the ready instant';
+    return E.effects.permitted.some(p => p.op === 'setStatus' && p.match?.status === 'processing') ? true : 'processing not permitted (S9)';
+  });
 }
 
-// R2.1, R4.1, R6.2, S9, S5: a passed order is cleared and ready at p, so it is processing from p (R6.2) and a cancel at p
-// counts: nothing is reserved, charged or booked (S9 relieves `processing`). An amend for an order with no unavailable
-// fulfilment changes nothing (S5): the saga goes on.
-G('processing-cancels: a cancel at the ready instant counts, an amend never stops', 'R2.1, R4.1, R6.2, S9, S5', tr => {
-  const E1 = tr(W, B.view(P + 2 * MIN, T, [], [placed, act(B, P, O, 'cancel')]));
-  if (!has(E1, `ost:${O}:cancelled`) || !has(E1, `ntf:${O}:order-cancelled`) || !has(E1, `fst:${F}:cancelled`)) return 'cancel at p (the ready instant) did not cancel the order';
-  if (has(E1, `ost:${O}:processing`) || lids(E1).some(l => /^(rsv|chg|shp):/.test(l))) return 'processing or forward steps still required after the cancel';
+// S11, S4, §3.2, R4.1: a passed order is ready at p, but a `cancel` timed at p reaches the arm before the placement
+// (customer actions are delivered before placed orders in one instant, S4), so it names no order yet and changes nothing:
+// the order is processed as usual. (A cancel in the instant of the approve or amend that made an order ready, delivered
+// after it, does count: `amend-and-cancel-in-one-instant (S11)`, `review-answer-and-cancel-in-one-instant (S12)`.)
+// S5: an amend for an order with no unavailable fulfilment changes nothing: the saga goes on.
+G('processing-cancels: a cancel before its placement names no order, an amend never stops', 'S11, S4, §3.2, R4.1, S5', tr => {
+  const early = act(B, P, O, 'cancel'), placedAfter = B.ev(P, 'order.placed', { orderId: O });   // delivery order (S4)
+  const E1 = tr(W, B.view(P + 2 * MIN, T, [B.row(P + MIN, 'orders', 'create', { orderId: O })], [early, placedAfter]));
+  if (has(E1, `ost:${O}:cancelled`) || has(E1, `ntf:${O}:order-cancelled`) || sends([...E1.effects.required, ...E1.effects.permitted], 'cancel-refused')) return 'a cancel that reached the arm before its order was placed changed the order';
+  const w1 = span(E1, `ost:${O}:processing`, P, P + 60 * MIN);
+  if (w1 !== true) return `after a cancel before the placement: ${w1}`;
   const { rows, t } = history(1);
   const a = t + 5 * MIN;
   const E2 = tr(W, B.view(a + MIN, T, rows, [placed, act(B, a, O, 'amend')]));
@@ -625,24 +664,101 @@ G('cancel-refused-and-cancel-after-the-end', 'R6.3, R6.2, R4.5', tr => {
   return has(E3, `ost:${O}:completed`) && !has(E3, `ost:${O}:cancelled`) ? true : 'a cancel after the order completed changed its outcome';
 });
 
-// R5.1 with R6.2: a counted cancel, then the carrier reports collectionFailed at the collection run, before any shipment
-// cancel: compensation has no shipment cancel ("only if a shipment was booked and not reported collectionFailed"), and the
-// booked shipment stays in the records (R7.1: "shipments as the carrier and your cancellations left them"; the golden
-// checks the record exists, not its status). The cancel is strictly before the report: no same-instant tie (k177).
-G('cancel-then-collection-failure-no-shipment-cancel (R5.1)', 'R5.1, R6.2, R7.1', tr => {
+// R6.2, R4.3, R7.1: a counted cancel 10 min before the collection run: "cancel a shipment at once", before the point of no
+// return, so the shipment cancel is due in [cancel, collection - 1 min]. An arm that has not cancelled it by then has
+// missed that lid (the grader stops there, MUTANTS.md §1). If the carrier then reports collectionFailed, the expectation
+// (which the grader no longer reads) keeps the cancel (order cancelled, charge refunded) and the shipment's record is
+// `failed`, as the carrier left it (R7.1; oracle defect D1, fixed: it was `created`).
+G('cancel-before-a-collection-failure (R6.2, R7.1)', 'R6.2, R4.3, R5.1, R7.1', tr => {
   const { rows } = history(3);                 // booked at P + 4 min
   const R = runOf(P + 4 * MIN), a = R - 10 * MIN;
-  const E = tr(W, B.view(R + MIN, T, rows, [placed, act(B, a, O, 'cancel'), report(R, 'collectionFailed')]));
+  const cancel = act(B, a, O, 'cancel');
+  const w = win(tr(W, B.view(a + MIN, T, rows, [placed, cancel])), `csh:${F}`);
+  if (!w || w.earliest !== a || w.latest !== R - MIN) return `shipment cancel window ${JSON.stringify(w)}, expected [cancel, collection - 1 min] (R6.2, R4.3)`;
+  const E = tr(W, B.view(R + MIN, T, rows, [placed, cancel, report(R, 'collectionFailed')]));
   if (!has(E, `ost:${O}:cancelled`) || !has(E, `rf:${F}`)) return 'cancel did not count';
-  if (has(E, `csh:${F}`)) return 'shipment cancel required for a shipment reported collectionFailed';
-  if (!E.records || E.records.shipments[F] === undefined) return `no shipment record for ${F}: ${JSON.stringify(E.records?.shipments)}`;
+  if (E.records?.shipments?.[F] !== 'failed') return `shipment records ${JSON.stringify(E.records?.shipments)}: the carrier left ${F} failed (R7.1, D1)`;
+  return true;
+});
+
+// S13, S4, S7, R6.3, R4.5: a delivery report that ends the order's last open fulfilment and a cancel with the same time.
+// The report is delivered first (S4), so the order has already ended when the cancel reaches the arm (S13): the cancel
+// changes nothing and `cancel-refused` is allowed, not required (R6.3); the order completes (R4.5).
+G('delivery-and-cancel-in-one-instant (S13)', 'S13, S4, S7, R6.3, R4.5', tr => {
+  const h = history(3);
+  const R = runOf(P + 4 * MIN), Dl = R + 600 * MIN;
+  const E = tr(W, B.view(Dl + MIN, T, h.rows, [placed, report(R, 'collected'), report(Dl, 'delivered'), act(B, Dl, O, 'cancel')]));
+  if (has(E, `ntf:${O}:cancel-refused`)) return 'cancel-refused required for a cancel in the instant of the delivery that ended the order (S13: it had already ended)';
+  if (!sends(E.effects.permitted, 'cancel-refused', O)) return 'cancel-refused not permitted';
+  return has(E, `ost:${O}:completed`) && !has(E, `ost:${O}:cancelled`) ? true : 'the order did not complete';
+});
+
+// S13, S4, S10, R5.2, R6.2, R6.3, R4.5, R7.1: a fulfilment failure and a cancel with the same time.
+// (a) A charge attempt declined in the cancel's instant (emitted by a call that was not given the cancel, S10): its result
+//     reaches the arm a minute later, so the cancel came first: the fulfilment is compensated and cancelled (R6.2), not
+//     failed, and the order is cancelled.
+// (b) A collectionFailed report delivered before the cancel in its instant (S4): the failure came first (R5.2). With one
+//     fulfilment the order has ended (failed, R4.5): the cancel changes nothing, `cancel-refused` allowed; no shipment
+//     cancel (R5.1), and the shipment's record is `failed` (R7.1).
+// (c) The same with two fulfilments: the failed one fails (R5.2); the cancel counts for the other (R6.2): compensated and
+//     cancelled, and the order is cancelled.
+G('failure-and-cancel-in-one-instant (S13)', 'S13, S4, S10, R5.2, R6.2, R6.3, R4.5, R7.1', tr => {
+  const { rows, t } = history(1);              // reserved at P + 2 min; t = P + 5 min
+  const Ea = tr(W, B.view(t + 2 * MIN, T, [...rows, declined(t)], [placed, act(B, t, O, 'cancel')]));
+  if (!has(Ea, `fst:${F}:cancelled`) || has(Ea, `fst:${F}:failed`) || has(Ea, `ntf:${F}:fulfilment-failed`)) return '(a) a decline in the cancel\'s instant failed the fulfilment (S13: its result reaches the arm after the cancel)';
+  if (FUL.items.some(i => !has(Ea, `rel:${F}:${i.sku}`)) || has(Ea, `rf:${F}`) || !has(Ea, `ost:${O}:cancelled`)) return '(a) compensation or order cancel wrong after a decline in the cancel\'s instant';
+  const h3 = history(3);                       // booked at P + 4 min
+  const R = runOf(P + 4 * MIN);
+  const Eb = tr(W, B.view(R + MIN, T, h3.rows, [placed, report(R, 'collectionFailed'), act(B, R, O, 'cancel')]));
+  for (const l of [`fst:${F}:failed`, `ntf:${F}:fulfilment-failed`, `rf:${F}`, `ost:${O}:failed`]) if (!has(Eb, l)) return `(b) collectionFailed delivered before the cancel: ${l} not required (S13: the failure came first)`;
+  if (has(Eb, `csh:${F}`) || has(Eb, `ost:${O}:cancelled`) || has(Eb, `ntf:${O}:order-cancelled`) || has(Eb, `ntf:${O}:cancel-refused`)) return '(b) the cancel changed an order whose only fulfilment had already failed';
+  if (!sends(Eb.effects.permitted, 'cancel-refused', O)) return '(b) cancel-refused not permitted after the order ended';
+  if (Eb.records?.shipments?.[F] !== 'failed') return `(b) shipment record ${Eb.records?.shipments?.[F]} (R7.1: the carrier left it failed)`;
+  return twoFulfilments(tr);
+});
+
+/** S13 (c): two available fulfilments; F1 fails by a collectionFailed report delivered just before a cancel of its instant. */
+const [C2f, T2f] = pick(t => t.class === 'straight' && allocOf(W, t.subject).length === 2 && allocOf(W, t.subject).every(f => f.available), 'straight order with two available fulfilments');
+function twoFulfilments(tr) {
+  const B2 = builder(C2f), O2 = T2f.subject, p2 = Date.parse(T2f.placedAt), [F1, F2] = allocOf(W, O2);
+  const amt = f => f.items.reduce((s, i) => s + i.qty * price(W, i.sku), 0) + fee0(W, f.location);
+  const rows = [B2.row(p2 + MIN, 'orders', 'create', { orderId: O2 }),
+    ...[F1, F2].flatMap(f => f.items.map(i => B2.row(p2 + 2 * MIN, 'inventory', 'reserve', { orderId: O2, fulfilmentId: f.fulfilmentId, location: f.location, sku: i.sku, qty: i.qty }))),
+    ...[F1, F2].map(f => B2.row(p2 + 3 * MIN, 'billing', 'charge', { orderId: O2, fulfilmentId: f.fulfilmentId, customerId: T2f.customerId, amountMinor: amt(f), currency: 'EUR' })),
+    B2.row(p2 + 4 * MIN, 'carrier', 'create', { orderId: O2, fulfilmentId: F1.fulfilmentId, location: F1.location, ref: null })];
+  const l1 = W.master.locations.find(l => l.location === F1.location);
+  const [h, m] = l1.collectionTime.split(':').map(Number);
+  let R = Date.parse(W.t0) + (h * 60 + m - 1440) * MIN;
+  while (R < p2 + 4 * MIN + POL.collectionCutoffMinutes * MIN) R += 1440 * MIN;
+  const nc = B2.ev(R, 'carrier.status', { carrier: l1.carrier, code: CODES[l1.carrier].collectionFailed, fulfilmentRef: F1.fulfilmentId, reportedAt: new Date(R).toISOString() });
+  const E = tr(W, B2.view(R + MIN, T2f, rows, [B2.ev(p2, 'order.placed', { orderId: O2 }), nc, act(B2, R, O2, 'cancel')]));
+  const f1 = F1.fulfilmentId, f2 = F2.fulfilmentId;
+  for (const l of [`fst:${f1}:failed`, `ntf:${f1}:fulfilment-failed`, `rf:${f1}`, `fst:${f2}:cancelled`, `rf:${f2}`, `ost:${O2}:cancelled`, `ntf:${O2}:order-cancelled`]) if (!has(E, l)) return `(c) ${l} not required (S13: F1 failed before the cancel, which counts for F2)`;
+  if (has(E, `fst:${f1}:cancelled`) || has(E, `csh:${f1}`) || has(E, `fst:${f2}:failed`)) return '(c) F1 cancelled although its failure came before the cancel';
+  return true;
+}
+
+// S14, R5.2, R5.1: a step of a failing fulfilment that commits after the failure (one already in flight) is compensated
+// within 120 min of its commit, and the fulfilment's compensation, `failed` status and notice are due within 120 min of the
+// later of the failure and that commit. (Under R4.2 sequencing no step of a fulfilment is in flight when it fails, so no
+// trajectory the grader still grades reaches this input: MUTANTS.md counts no kill from it; it pins the reading.)
+G('step-committing-after-a-failure (S14)', 'S14, R5.2, R5.1', tr => {
+  if (FUL.items.length < 2) return 'fixture: the golden needs a multi-item fulfilment';
+  const [i0, i1, ...rest] = FUL.items;
+  const x = P + 5 * MIN, late = x + 30 * MIN;
+  const rows = [B.row(P + MIN, 'orders', 'create', { orderId: O }), ...[i0, ...rest].map(i => B.row(P + 2 * MIN, 'inventory', 'reserve', rsvArgs(i))), declined(x),
+    B.row(late, 'inventory', 'reserve', rsvArgs(i1), true, { callAt: P + 2 * MIN })];
+  const E = tr(W, B.view(late + MIN, T, rows, [placed]));
+  for (const l of [`rel:${F}:${i0.sku}`, `rel:${F}:${i1.sku}`, `fst:${F}:failed`, `ntf:${F}:fulfilment-failed`]) { const r = span(E, l, x, late + 120 * MIN); if (r !== true) return r; }
   return true;
 });
 
 // Layer 5 (records): recordsOf is the oracle's reading of the arm's records, passed as runGoldens' second argument.
 // §2 orders.create: "the order starts pending, each fulfilment pending or, when its location is null, unavailable";
 // §3.5: an order in flight at go-live arrives with "the records that exist for it" (untouched, they are its records, R7.1);
-// §1, §3.2: a message that belongs to no order (subject null) has no order, so no order records.
+// §1, §3.2: a message that belongs to no order (subject null) has no order, so no order records. (A unit check of
+// recordsOf: the grader compares records only for complete, divergence-free cases, whose final statuses overwrite these
+// values, and never for a case with no order; under MUTANTS.md's one standard the mutants it fails are equivalent (grader).)
 {
   const [Cm, Tm] = pick(t => t.subject && !t.class.startsWith('gl-') && allocOf(W, t.subject).some(f => f.location === null) && allocOf(W, t.subject).some(f => f.location !== null), 'order with an available and an unavailable fulfilment');
   const alm = allocOf(W, Tm.subject);

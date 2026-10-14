@@ -117,6 +117,27 @@ export const VARIANTS = {
 export const CONTROLS = Object.freeze([...Object.keys(standalone).map(id => ({ id, kind: id === 'declare-every-obligation' ? 'gaming' : 'bad' })),
   ...Object.entries(VARIANTS).map(([id, v]) => ({ id, kind: v.kind, minDifficulty: v.minDifficulty ?? 2 }))]);
 
+/**
+ * Every variant gives up an effect the systems refused (a 4xx: wrong stage, unknown record, key conflict) instead of
+ * re-issuing it at every later tick until the horizon, as a sane arm would; its dependants go with it. Retryable
+ * outcomes (F1 rate limits, F2 5xx) are still retried. Without this a control whose records diverged from the systems'
+ * state re-emits a refused effect every minute for weeks of simulated time.
+ */
+function givingUp(v) {
+  const refused = (idx, c, key) => idx.bucket(c).ledger.some(r => r.key === key && !r.committed && r.status === 'error' && !(Number(r.error?.code) >= 500));
+  return { ...v, post: (out, info) => {
+    const o = v.post ? v.post(out, info) : out;
+    if (!o.effects?.length || info.c === null || info.c === undefined) return o;
+    const dropped = new Set();
+    const effects = [];
+    for (const e of o.effects) {
+      if ((e.key && refused(info.idx, info.c, e.key)) || (e.after && dropped.has(e.after))) { if (e.key) dropped.add(e.key); continue; }
+      effects.push(e);
+    }
+    return effects.length === o.effects.length ? o : { ...o, effects };
+  } };
+}
+
 /** Run one control over a world; returns the journal content rows. */
 export async function runControl(id, world) {
   if (standalone[id]) {
@@ -126,7 +147,7 @@ export async function runControl(id, world) {
   }
   const v = VARIANTS[id];
   if (!v) throw new Error(`unknown control ${id}`);
-  const r = await runReference({ item: oracleItem, binding, world, timing: 'earliest', variant: v.variant(world), id: `control-${id}` });
+  const r = await runReference({ item: oracleItem, binding, world, timing: 'earliest', variant: givingUp(v.variant(world)), id: `control-${id}` });
   return r.rows;
 }
 
