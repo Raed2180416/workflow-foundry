@@ -1,6 +1,8 @@
 // JIT stream runner (SPEC §6). One recurring stream of tasks, several arms:
 //   agent:<model>                 interpret every task (independent; run under the concurrency cap)
 //   static:<solve.mjs>            a fixed compiled script; deopt/crash/timeout/invalid -> claude-haiku-5-5 interpreter
+//   static@v3:<solve.mjs>         the same on the flow-v3 SDK (PREREG-WBED-SLICE1 T2: the W-bed reference workflows);
+//                                 plain static: keeps run-compiled's default SDK (flow.mjs v1) and its arm hash
 //   jit:<interpreter>/<compiler>  warmup -> compile -> run compiled; deopt -> interpret + recompile; shadows,
 //                                 adjudication by majority, regressions, reject-if-worse, one Opus fallback per compile
 // Work layout (outside the repo): <workRoot>/<experiment>/<armSlug>/ holds compiled runs and compile/ builds;
@@ -23,7 +25,7 @@ import { createModelPort as createModelPortSync } from '../lib/models.mjs';
 import { promptVersionOf, flowFileOf } from './prompts.mjs';
 import { tolerantEqual, tolerance } from './compare.mjs';
 import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals, acceptanceIdsOf, readVerdicts, VERDICTS_FILE } from './acceptance.mjs';
-import { requestDigestOf, looseDigestOf } from './run-compiled.mjs';
+import { requestDigestOf, looseDigestOf, FLOW_V3 } from './run-compiled.mjs';
 import { Ledger } from '../lib/services.mjs';
 import { createRegistry, createCallHost, withCallModel, HARD_MAX_DEPTH, DEFAULT_MAX_DEPTH, DEFAULT_INTERPRET_FLOOR_USD, NOVEL_MODES, REGISTRY_FILE } from './call-host.mjs';
 import { learnProfile, checkOptionsOf, PARAMS_V2, TOLERANT_CHECK } from './profile.mjs';
@@ -339,21 +341,26 @@ export function normalizeConfig(raw, { ledger = null } = {}) {
 const slugify = s => s.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
 export function parseArm(spec, config, { policyIds = null } = {}) {
   const i = spec.indexOf(':');
-  const kind = spec.slice(0, i), rest = spec.slice(i + 1);
+  let kind = spec.slice(0, i);
+  const rest = spec.slice(i + 1);
+  // PREREG-WBED-SLICE1 §8.1 item 1 (T2): `static@v3:` names the SDK a static script runs on. It enters the arm definition
+  // (and so the hash and the slug) only when given, so every plain `static:` arm keeps its definition and hash.
+  const sdk = /^static@(v3)$/.exec(kind)?.[1] ?? null;
+  if (sdk) kind = 'static';
   let arm;
   if (kind === 'agent') arm = { kind, model: rest, models: [rest], slug: `agent-${slugify(rest)}` };
   else if (kind === 'static') {
     const scriptPath = path.resolve(REPO, rest);
     const p = path.parse(scriptPath);
     arm = { kind, scriptPath, fallback: config.staticFallback, models: uniq([...config.gatewayModels, config.staticFallback]).sort(),
-      slug: `static-${slugify(path.basename(p.dir))}-${slugify(p.name)}` };
+      slug: `static-${slugify(path.basename(p.dir))}-${slugify(p.name)}${sdk ? `-${sdk}` : ''}`, ...(sdk ? { sdk } : {}) };
   } else if (kind === 'jit') {
     const [interpreter, compiler] = rest.split('/');
     if (!interpreter || !compiler) throw new Error(`jit arm needs <interpreter>/<compiler>: ${spec}`);
     arm = { kind, interpreter, compiler, fallback: config.jit.compilerFallback,
       models: uniq([...config.gatewayModels, interpreter, compiler, ...(config.jit.compilerFallback ? [config.jit.compilerFallback] : [])]).sort(),
       slug: `jit-${slugify(interpreter)}--${slugify(compiler)}` };
-  } else throw new Error(`unknown arm kind in ${spec} (agent:, static:, jit:)`);
+  } else throw new Error(`unknown arm kind in ${spec} (agent:, static:, static@v3:, jit:)`);
   arm.spec = spec;
   // Model ids only from the owner policy file (SPEC §6.4); nothing falls back silently.
   const ids = policyIds ?? loadPolicy().policy.models.map(m => m.id);
@@ -361,7 +368,8 @@ export function parseArm(spec, config, { policyIds = null } = {}) {
   // The arm definition hash: a resume never mixes rows recorded under another definition (tasks are checked per row).
   const def = { spec, familyId: config.familyId, split: config.split, perTaskUsd: config.perTaskUsd, agentBudgetUsd: config.agentBudgetUsd, agentMinutes: config.agentMinutes,
     agentEffort: config.agentEffort, models: arm.models,
-    ...(kind === 'static' ? { scriptSha: existsSync(arm.scriptPath) ? sha(readFileSync(arm.scriptPath)) : null, compiledMinutes: config.compiledMinutes, fallback: arm.fallback } : {}),
+    ...(kind === 'static' ? { scriptSha: existsSync(arm.scriptPath) ? sha(readFileSync(arm.scriptPath)) : null, compiledMinutes: config.compiledMinutes, fallback: arm.fallback,
+      ...(arm.sdk ? { sdk: arm.sdk } : {}) } : {}),
     ...(kind === 'jit' ? { jit: config.jit, compile: config.compile, compiledMinutes: config.compiledMinutes, ...(config.library ? { library: config.library } : {}) } : {}) };
   arm.def = def; arm.hash = sha(canonical(def)).slice(0, 16);
   return arm;
@@ -842,6 +850,9 @@ class ArmRun {
     }, trace => ENV_FAULTS.has(trace?.error?.code));
   }
 
+  // T2 (PREREG-WBED-SLICE1 §8.1 item 1): a `static@v3:` arm runs its script on flow-v3. A plain static arm passes no
+  // flowPath, so run-compiled keeps its default (flow.mjs v1), as before. JitRun overrides this by prompt version.
+  get flowPath() { return this.arm.kind === 'static' && this.arm.sdk === 'v3' ? FLOW_V3 : null; }
   // Slice 2a: a library arm's compiled run goes through a call host (JitRun.callSetup); every other arm passes nothing new.
   callSetup() { return null; }
   // ATTACK M1: the variants a compiled run of task t carries (JitRun with jit.invariance only); null = none.
