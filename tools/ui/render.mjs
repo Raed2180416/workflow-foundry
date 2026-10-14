@@ -176,7 +176,9 @@ const titleText = question => t(Array.from(displayText(question).replace(/\s+/g,
  * list), errors (OpenUI-shaped errors from acceptSubmission), lang (default "en").
  */
 export function renderForm(spec, { action = '', token = null, values = null, errors = [], lang = 'en' } = {}) {
-  if (typeof action !== 'string' || /^[a-z][a-z0-9+.-]*:|^\/\/|\\|[\u0000-\u001F\u007F]/i.test(action)) throw new TypeError('action must be a relative URL (no scheme, no //, no backslash, no control characters)');
+  // Browsers strip leading and trailing spaces and C0 controls from a URL, so " //evil.example" would be
+  // protocol-relative: surrounding whitespace is refused too.
+  if (typeof action !== 'string' || /^[a-z][a-z0-9+.-]*:|^\/\/|\\|[\u0000-\u001F\u007F]|^\s|\s$/i.test(action)) throw new TypeError('action must be a relative URL (no scheme, no //, no backslash, no control characters, no surrounding whitespace)');
   const fieldsByName = new Map(spec.fields.map(f => [f.name, f]));
   const errorsByField = new Map();
   for (const e of errors) if (e.statementId && fieldsByName.has(e.statementId)) errorsByField.set(e.statementId, [...(errorsByField.get(e.statementId) ?? []), e]);

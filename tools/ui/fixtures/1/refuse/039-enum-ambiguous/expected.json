@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "source": "schema",
+      "code": "enum-ambiguous",
+      "path": "/enum"
+    }
+  ]
+}

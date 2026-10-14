@@ -164,7 +164,30 @@ export function mutate(r, schema, value) {
 
 // Strings planted in number fields (E-BED §2.7 "planted invalid entries"), with what two simple client rules say.
 export const PLANTED_NUMBER_TEXT = ['12abc', '0x10', '1,000', '1 000', 'EUR 12', '12.', '.5', '+5', 'Infinity', '-Infinity', 'NaN', '1e400', '12e', '--1', '1_000', '0b101', String.fromCodePoint(0x0661, 0x0662), '12' + String.fromCodePoint(0x00A0), String.fromCodePoint(0xFF11, 0xFF12), '1.2.3'];
-// OpenUI 1.0 `numeric` as specified (spec/language.md §5.4): a non-blank string whose parseFloat is not NaN.
+// The planted entries whose meaning is not in doubt, with that meaning (non-canonical spellings of a number). Every
+// other planted entry has no single intended number, so accepting it with any value is a wrong value.
+export const PLANTED_INTENDED = new Map([['12.', 12], ['.5', 0.5], ['+5', 5], [`12${String.fromCodePoint(0x00A0)}`, 12]]);
+// OpenUI 1.0 `numeric` as specified (spec/language.md §5.4): a non-blank string whose parseFloat is not NaN; the value
+// a client following it would store is parseFloat's.
 export const openuiNumeric = v => typeof v === 'number' ? !Number.isNaN(v) : typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number.parseFloat(v));
-// web/app.js readAnswer (lines 608-611 at this commit): non-blank and Number(v) finite.
+export const openuiValue = v => Number.parseFloat(v);
+// web/app.js readAnswer (lines 608-611 at this commit): non-blank and Number(v) finite; the value is Number(v).
 export const webAppNumber = v => v.trim() !== '' && Number.isFinite(Number(v));
+export const webAppValue = v => Number(v);
+
+/**
+ * How a number rule treats the planted entries: `accepts` (any value), `wrongValue` (accepted with a value other than
+ * the intended one, or accepted although no value is intended), and `rejectsIntended` (refuses an entry whose meaning
+ * is not in doubt: a usability cost, not a wrong value).
+ */
+export function plantedOutcomes(accepts, valueOf) {
+  const out = { entries: PLANTED_NUMBER_TEXT.length, accepts: 0, wrongValue: 0, rejectsIntended: 0, wrong: [] };
+  for (const text of PLANTED_NUMBER_TEXT) {
+    const intended = PLANTED_INTENDED.get(text);
+    if (!accepts(text)) { if (intended !== undefined) out.rejectsIntended++; continue; }
+    out.accepts++;
+    const value = valueOf(text);
+    if (intended === undefined || !Object.is(value, intended)) { out.wrongValue++; out.wrong.push(text); }
+  }
+  return out;
+}

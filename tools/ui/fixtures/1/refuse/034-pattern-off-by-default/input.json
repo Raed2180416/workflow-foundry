@@ -1,0 +1,8 @@
+{
+  "question": "Which invoice does this payment settle?",
+  "answerSchema": {
+    "type": "string",
+    "maxLength": 10,
+    "pattern": "^INV-[0-9]{6}$"
+  }
+}

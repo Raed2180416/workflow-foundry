@@ -6,5 +6,6 @@
     "maxLength": 10,
     "minLength": 10
   },
-  "formName": "inv"
+  "formName": "inv",
+  "allowPattern": true
 }

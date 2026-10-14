@@ -6,5 +6,6 @@
     "maxLength": 10,
     "minLength": 10,
     "description": "The invoice number on the remittance advice"
-  }
+  },
+  "allowPattern": true
 }

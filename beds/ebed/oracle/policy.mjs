@@ -8,6 +8,7 @@ import { JournalIndex, caseView } from './view.mjs';
 import { createHost } from '../host/host.mjs';
 
 const MIN = 60_000;
+export const LATE_SLACK = 10 * MIN;
 const iso = (m, off) => { const d = new Date(m + off * MIN); return `${d.toISOString().slice(0, 19)}${off >= 0 ? '+' : '-'}${String(Math.floor(Math.abs(off) / 60)).padStart(2, '0')}:${String(Math.abs(off) % 60).padStart(2, '0')}`; };
 const offsetOf = s => { const m = /([+-])(\d\d):(\d\d)$/.exec(s); return m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 0; };
 
@@ -53,7 +54,9 @@ export function referenceArm({ item, world, timing = 'earliest', journal, id = `
       const bucket = idx.bucket(c);
       const done = new Set(bucket.ledger.filter(r => r.committed && r.key).map(r => r.key));
       const tasksMade = bucket.tasks.map(t => t.task.id);
-      const due = w => (timing === 'earliest' ? w.earliest : w.latest);
+      // 'latest' acts LATE_SLACK before the window closes (never before it opens): a platform retry or a partial batch
+      // after an injected fault needs a few minutes inside the window, as for any arm acting late.
+      const due = w => (timing === 'earliest' ? w.earliest : Math.max(w.earliest, w.latest - LATE_SLACK));
       const todo = E.effects.required.filter(e => !done.has(e.lid));
       const ready = todo.filter(e => due(e.window) <= now && ctx.status(e.system, e.lid) !== 'pending');
       // Effects in expectation order; a dependant goes out when its predecessors have committed, or with `after` on the
@@ -84,6 +87,8 @@ export function referenceArm({ item, world, timing = 'earliest', journal, id = `
       }
       // Wake at the next window to act in; close when the case has ended and nothing is left.
       const future = [...todo.map(e => due(e.window)), ...E.humanTasks.required.filter(tk => !tasksMade.some(id => id.startsWith(`${tk.lid}#`))).map(tk => due(tk.window))].filter(m => m > now);
+      // A task just created opens windows the next expectation names (deadlines from its creation): re-plan a minute on.
+      if (out.humanTasks.length) future.push(now + MIN);
       if (future.length) out.obligations.upsert.push({ id: 'wake', kind: 'window', anchor: null, dueAt: iso(Math.min(...future), off), onDue: null });
       if (E.terminal && !todo.length && !out.effects.length && !out.humanTasks.length) out.close = true;
       if (subject === null) out.close = true;

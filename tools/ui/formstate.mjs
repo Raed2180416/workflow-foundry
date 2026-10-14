@@ -153,14 +153,14 @@ function assemble(spec, converted) {
 const lastSegment = path => path.slice(path.lastIndexOf('/') + 1).replaceAll('~1', '/').replaceAll('~0', '~');
 
 /** Merges adapter errors and validator errors: a field with an adapter error gets no validator error. Sorted by field order. */
-function finish(spec, adapterErrors, answer) {
+function finish(spec, adapterErrors, answer, { cap = true } = {}) {
   const blocked = new Set(adapterErrors.filter(e => e.statementId).map(e => e.statementId));
   const blockedPaths = spec.fields.filter(f => blocked.has(f.name)).map(f => f.path);
   const validatorErrors = validateAnswer(spec, answer).filter(e => !blockedPaths.some(p => e.path === p || (p !== '' && e.path.startsWith(`${p}/`)) || p === ''));
   const order = new Map(spec.fields.map((f, i) => [f.name, i]));
   const errors = [...adapterErrors, ...validatorErrors].map((e, i) => [e, i])
     .sort(([a, i], [b, j]) => (order.get(a.statementId) ?? -1) - (order.get(b.statementId) ?? -1) || i - j).map(([e]) => e);
-  return errors.length ? { ok: false, errors: capErrors(errors) } : { ok: true, answer, errors: [] };
+  return errors.length ? { ok: false, errors: cap ? capErrors(errors) : errors } : { ok: true, answer, errors: [] };
 }
 
 /** At most MAX_ERRORS errors: the first MAX_ERRORS - 1 and one `too-many-errors` that says how many were left out. */
@@ -174,7 +174,7 @@ export function capErrors(errors, source = 'adapter') {
  * OpenUI-shaped event or formState -> { ok, answer?, errors }.
  * Accepts `{ formName, formState: { [formName]: fields } }` or a bare `{ [formName]: fields }`.
  */
-export function answerFromFormState(spec, input) {
+export function answerFromFormState(spec, input, { cap = true } = {}) {
   const errors = [];
   let state = input;
   if (isPlainObject(input) && own(input, 'formState')) {
@@ -196,7 +196,7 @@ export function answerFromFormState(spec, input) {
     if (result.code) { errors.push(adapterError('adapter', result.code, field)); continue; }
     converted.set(name, result.value);
   }
-  return finish(spec, errors, assemble(spec, converted));
+  return finish(spec, errors, assemble(spec, converted), { cap });
 }
 
 // ---- The browser route: application/x-www-form-urlencoded -> formState -------------------------------------------
@@ -262,9 +262,9 @@ export function acceptSubmission(spec, body, { token = null } = {}) {
   const parsed = formStateFromSubmission(spec, body, { token });
   const envelope = parsed.errors.filter(e => e.code === 'stale-form' || e.code === 'bad-token');
   if (envelope.length) return { ok: false, envelope: true, errors: envelope, values: {} };
-  const adapted = answerFromFormState(spec, parsed.formState);
+  const adapted = answerFromFormState(spec, parsed.formState, { cap: false });
   const seen = new Set(parsed.errors.map(e => e.statementId).filter(Boolean));
-  const errors = capErrors([...parsed.errors, ...adapted.errors.filter(e => !seen.has(e.statementId) && e.code !== 'too-many-errors')], 'host');
+  const errors = capErrors([...parsed.errors, ...adapted.errors.filter(e => !seen.has(e.statementId))], 'host');
   return errors.length ? { ok: false, errors, values: parsed.values } : { ok: true, answer: adapted.answer, errors: [], values: parsed.values, formState: parsed.formState };
 }
 

@@ -1,0 +1,12 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "string",
+    "enum": [
+      "ok",
+      "no"
+    ],
+    "pattern": "^o"
+  },
+  "allowPattern": true
+}

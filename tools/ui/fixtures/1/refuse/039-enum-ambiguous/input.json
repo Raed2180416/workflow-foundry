@@ -1,0 +1,11 @@
+{
+  "question": "Release the hold?",
+  "answerSchema": {
+    "enum": [
+      "keep-hold",
+      "release",
+      "release\u00a0",
+      "release "
+    ]
+  }
+}

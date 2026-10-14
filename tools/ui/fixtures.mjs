@@ -8,10 +8,11 @@
 //   node tools/ui/fixtures.mjs --write-html    rewrite compile/*/expected.html from the current renderer (review the diff)
 //
 // Files per case:
-//   input.json          { question, answerSchema, formName?, bind?, token? }
+//   input.json          { question, answerSchema, formName?, bind?, token?, allowPattern? }
 //   expected.json       compile:  { fields: [[name, componentType, valueType, required, group]], warnings: [code] }
 //                       refuse:   { errors: [{ source, code, path }] }
-//   expected.html       compile only: the golden page (byte-exact)
+//   expected.html       compile only: the golden page (byte-exact, with the spec hash written as {{spec}}: the hash
+//                       binds the semantics code, compile.mjs SEMANTICS, so it changes with any edit of that code)
 //   interactions.json   submit only: { interactions: [step], expected: { results: [result] } } where a step is
 //                       { formState: <event or formState> } | { submit: [[name, value], ...] } | { submitRaw: "a=b" }
 //                       | { answer: <typed answer> }, and a result is { ok: true, answer } or { ok: false, errors }.
@@ -47,7 +48,9 @@ export function listCases(root = FIXTURES) {
   return cases;
 }
 
-const compileInput = input => ({ answerSchema: input.answerSchema, question: input.question, formName: input.formName, bind: input.bind });
+const compileInput = input => ({ answerSchema: input.answerSchema, question: input.question, formName: input.formName, bind: input.bind, allowPattern: input.allowPattern === true });
+// The golden page with the spec hash replaced by a placeholder (the page contract test checks the real hash is there).
+const goldenHtml = (spec, input) => renderForm(spec, { token: input.token ?? null }).replaceAll(spec.specHash, '{{spec}}');
 
 /** Errors as a multiset: every expected entry must match a distinct actual entry on the keys it lists, and no actual entry may be left over. */
 export function errorsMatch(expected, actual) {
@@ -93,7 +96,7 @@ export function checkCase(c) {
     if (!isDeepStrictEqual(warnings, c.expected.warnings ?? [])) problems.push(`warnings ${JSON.stringify(warnings)} != expected ${JSON.stringify(c.expected.warnings ?? [])}`);
   }
   if (c.html !== null) {
-    const html = renderForm(spec, { token: c.input.token ?? null });
+    const html = goldenHtml(spec, c.input);
     if (html !== c.html) problems.push('rendered HTML differs from expected.html (run with --write-html and review the diff)');
   }
   if (c.interactions) {
@@ -115,7 +118,7 @@ export function writeGoldenHtml(cases = listCases()) {
   for (const c of cases.filter(x => x.area === 'compile')) {
     const result = tryCompileForm(compileInput(c.input));
     if (!result.ok) continue;
-    writeFileSync(path.join(c.dir, 'expected.html'), renderForm(result.spec, { token: c.input.token ?? null }));
+    writeFileSync(path.join(c.dir, 'expected.html'), goldenHtml(result.spec, c.input));
     written++;
   }
   return written;

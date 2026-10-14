@@ -4,8 +4,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { digest } from '../src/data.mjs';
 import { checkCase, listCases } from '../tools/ui/fixtures.mjs';
-import { compileForm, tryCompileForm, renderForm, renderAccepted, FORM_CSP, FORM_CSS, FORM_STYLE_HASH, LIMITS, acceptSubmission, submissionFromAnswer } from '../tools/ui/index.mjs';
+import { compileForm, tryCompileForm, renderForm, renderAccepted, FORM_CSP, FORM_CSS, FORM_STYLE_HASH, LIMITS, SEMANTICS, SEMANTICS_FILES, acceptSubmission, submissionFromAnswer } from '../tools/ui/index.mjs';
 import { genSchema, rng } from '../tools/ui/generate.mjs';
 
 const cases = listCases();
@@ -27,7 +29,7 @@ test('refusal codes: every refuse case fires only its listed codes, and the set 
   const codes = new Set(cases.filter(c => c.area === 'refuse').flatMap(c => c.expected.errors.map(e => e.code)));
   for (const code of ['unsupported-keyword', 'unsupported-type', 'keyword-not-applicable', 'unsupported-nesting', 'unsupported-array-items', 'no-fields',
     'required-undeclared', 'enum-duplicate', 'enum-member-invalid', 'unsatisfiable', 'pattern-invalid', 'pattern-unsafe', 'pattern-needs-max-length',
-    'schema-limit', 'invalid-schema', 'invalid-question', 'invalid-bind', 'unsafe-key']) assert.ok(codes.has(code), `a refuse fixture covers ${code}`);
+    'schema-limit', 'invalid-schema', 'invalid-question', 'invalid-bind', 'unsafe-key', 'enum-ambiguous']) assert.ok(codes.has(code), `a refuse fixture covers ${code}`);
 });
 
 // ---- the static page contract -------------------------------------------------------------------------------------
@@ -63,6 +65,14 @@ function pageContract(html, spec) {
     const declared = new Set(spec.fields.map(f => f.name));
     if (names.size !== declared.size || [...names].some(n => !declared.has(n))) add(`rendered fields ${[...names]} != declared ${[...declared]}`);
     if (!html.includes(`name="_spec" value="${spec.specHash}"`)) add('the spec hash is not in the form');
+    // Option controls carry the spec's tokens, in option order (the urlencoded encoder assumes exactly these).
+    for (const f of spec.fields.filter(x => x.options)) {
+      const escaped = f.name.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rendered = f.componentType === 'Select'
+        ? [...(html.match(new RegExp(`<select[^>]*name="${escaped}"[^>]*>([\\s\\S]*?)</select>`))?.[1] ?? '').matchAll(/<option value="([^"]*)"/g)].map(m => m[1]).filter(v => v !== '')
+        : [...html.matchAll(new RegExp(`<input[^>]*name="${escaped}" value="([^"]*)"`, 'g'))].map(m => m[1]);
+      if (JSON.stringify(rendered) !== JSON.stringify(f.options.map(o => o.token))) add(`${f.name}: option values ${JSON.stringify(rendered)} != spec tokens`);
+    }
     if (!/<form method="post" action="[^"]*" novalidate/.test(html)) add('the form is not a novalidate POST form');
   }
   if ((html.match(/<h1\b/g) ?? []).length !== 1) add('the page needs exactly one h1');
@@ -96,9 +106,9 @@ test('compile is deterministic and idempotent on 300 generated schemas; every le
   let compiled = 0;
   for (let i = 0; i < 300; i++) {
     const schema = genSchema(r);
-    const a = tryCompileForm({ answerSchema: schema, question: `Generated ${i}?` });
+    const a = tryCompileForm({ answerSchema: schema, question: `Generated ${i}?`, allowPattern: true });
     assert.equal(a.ok, true, `generated schema ${i} is inside the subset: ${JSON.stringify(a.errors)}`);
-    const b = compileForm({ answerSchema: structuredClone(schema), question: `Generated ${i}?` });
+    const b = compileForm({ answerSchema: structuredClone(schema), question: `Generated ${i}?`, allowPattern: true });
     assert.equal(a.spec.specHash, b.specHash);
     assert.equal(renderForm(a.spec), renderForm(b));
     const leaves = [];
@@ -126,6 +136,18 @@ test('the spec hash binds the schema, the question, the form name and the task b
   assert.deepEqual(acceptSubmission(other, body).errors.map(e => e.code), ['stale-form']);
 });
 
+test('the spec hash binds the answer semantics: a digest of the code that decides what an answer is (review P2-13)', () => {
+  const spec = compileForm({ answerSchema: { type: 'boolean' }, question: 'Proceed?', formName: 'a', bind: { taskId: 't1' } });
+  // the digest is of these files as they are now, so an edit of any of them changes every spec hash
+  const files = SEMANTICS_FILES.map(file => [file, readFileSync(new URL(`../tools/ui/${file}`, import.meta.url), 'utf8')]);
+  assert.equal(SEMANTICS, `sha256:${digest(files)}`);
+  assert.deepEqual([...SEMANTICS_FILES].sort(), ['common.mjs', 'compile.mjs', 'formstate.mjs', 'pattern.mjs', 'validate.mjs']);
+  assert.equal(spec.semantics, SEMANTICS);
+  const { specHash, ...rest } = spec;
+  assert.equal(`sha256:${digest(rest)}`, specHash);
+  assert.notEqual(`sha256:${digest({ ...rest, semantics: 'sha256:other' })}`, specHash);
+});
+
 test('limits: oversized and over-deep schemas and questions are refused, not truncated', () => {
   const deep = {}; let at = deep; for (let i = 0; i < 20; i++) { at.type = 'object'; at.properties = { x: {} }; at = at.properties.x; }
   at.type = 'string';
@@ -137,11 +159,24 @@ test('limits: oversized and over-deep schemas and questions are refused, not tru
   assert.deepEqual(tryCompileForm({ answerSchema: { enum: Array.from({ length: LIMITS.options + 1 }, (_, i) => i) }, question: 'q' }).errors.map(e => e.code), ['schema-limit']);
   assert.throws(() => compileForm({ answerSchema: { type: 'null' }, question: 'q' }), e => e.code === 'UI_FORM_REFUSED' && e.errors[0].code === 'unsupported-type');
   assert.deepEqual(tryCompileForm({ answerSchema: { type: 'string', maxLength: 9, pattern: '^[0-9]{9}$' }, question: 'q', allowPattern: false }).errors.map(e => e.code), ['unsupported-keyword']);
+  // review P1-1: the default is the engine's profile (no pattern); a host must opt in
+  assert.deepEqual(tryCompileForm({ answerSchema: { type: 'string', maxLength: 9, pattern: '^[0-9]{9}$' }, question: 'q' }).errors.map(e => e.code), ['unsupported-keyword']);
+  assert.equal(tryCompileForm({ answerSchema: { type: 'string', maxLength: 9, pattern: '^[0-9]{9}$' }, question: 'q', allowPattern: true }).ok, true);
+});
+
+test('enum options a person cannot tell apart are refused (review P2-8)', () => {
+  const nbsp = String.fromCodePoint(0xA0), tag = String.fromCodePoint(0xE0049), fullwidth = String.fromCodePoint(0xFF52);
+  for (const members of [['release', `release${nbsp}`], ['release', 'release '], ['release', ' release'], ['a b', 'a  b'], ['release', `release${tag}`], ['release', `${fullwidth}elease`], ['x', `x${String.fromCodePoint(0x200B)}`]]) {
+    assert.deepEqual(tryCompileForm({ answerSchema: { enum: ['keep-hold', ...members] }, question: 'q' }).errors.map(e => e.code), ['enum-ambiguous'], JSON.stringify(members));
+  }
+  // distinct visible text, and mixed JSON types (labels are JSON text) stay allowed
+  for (const members of [['release', 'Release'], ['1', 1], ['null', null], ['', ' x'], ['a', 'b']]) assert.equal(tryCompileForm({ answerSchema: { enum: members }, question: 'q' }).ok, true, JSON.stringify(members));
 });
 
 test('render: the action must be a relative URL; the CSS has no remote reference', () => {
   const spec = compileForm({ answerSchema: { type: 'boolean' }, question: 'q' });
-  for (const action of ['https://evil.example/', '//evil.example/x', 'javascript:alert(1)', 'data:text/html,x', '\\\\evil', 'a\nb']) assert.throws(() => renderForm(spec, { action }), TypeError, action);
+  for (const action of ['https://evil.example/', '//evil.example/x', 'javascript:alert(1)', 'data:text/html,x', '\\\\evil', 'a\nb',
+    ' //evil.example/x', ' javascript:alert(1)', '/x ', '\u3000//evil.example/x']) assert.throws(() => renderForm(spec, { action }), TypeError, JSON.stringify(action));
   for (const action of ['', '/tasks/7/answer', '?step=2', 'answer']) assert.doesNotThrow(() => renderForm(spec, { action }));
   assert.doesNotMatch(FORM_CSS, /url\(|@import|https?:/);
 });

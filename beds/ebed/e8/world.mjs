@@ -57,6 +57,7 @@ const CLASSES = [
   ['f3-charge', 5, 3, true], ['f4-reserve', 5, 3, true], ['f6-carrier', 5, 2, true], ['f1-charge', 5, 2, true], ['f3-refund', 5, 2, true],
 ];
 const SIZES = { 1: 12, 2: 50, 3: 80, 4: 100, 5: 200 };
+const CANCEL_RACE = new Set(['cancel-processing', 'cancel-after-collection', 'cancel-at-collection']);
 const BACKLOG = { 1: 2, 2: 3, 3: 5, 4: 6, 5: 8 };
 
 /** Collection runs of a location (minutes from t0) from day -1 to day 17. */
@@ -141,7 +142,8 @@ export function generateWorld({ seed, split = 'dev', difficulty = 2, schedule = 
       out[f.fulfilmentId] = {
         scenario: i === failIdx ? 'collectionFailed' : 'normal',
         inTransitAfter: rr.int(120, 480), transit: cls === 'cancel-after-collection' ? rr.int(2160, 3600) : rr.int(1080, 3600),
-        dup: d >= 3 && rr.chance(0.15), ooo: d >= 3 && rr.chance(0.12), info: d >= 3 && rr.chance(0.2),
+        // No out-of-order reports where a customer cancel races the collection: the race is decided by reports (R6.2).
+        dup: d >= 3 && rr.chance(0.15), ooo: d >= 3 && !CANCEL_RACE.has(cls) && rr.chance(0.12), info: d >= 3 && rr.chance(0.2),
       };
     });
     return out;
@@ -175,7 +177,7 @@ export function generateWorld({ seed, split = 'dev', difficulty = 2, schedule = 
     };
     const avail = o.fulfilments.filter(f => f.available);
     const runsEarly = avail.map(f => firstRun(loc(f.location), p + 4 + 30));
-    const runsLate = avail.map(f => firstRun(loc(f.location), p + 360 + 30));
+    const runsLate = avail.map(f => firstRun(loc(f.location), p + 420 + 30));     // the latest timing books by ~p + 6 h plus result latencies
     if (backlogStage === null) arrivals.push(placedEv);
     switch (cls) {
       case 'amend': case 'cancel-wait': {

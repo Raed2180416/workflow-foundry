@@ -295,10 +295,12 @@ function orderExpectation(world, view, t) {
     }
     // R4.4: carrier messages (dispatched never after completed; completed after dispatched).
     const prePatched = s.items[0].pre;
-    if (s.collectedMsg && !prePatched) fst(F, 'dispatched', 'R4.4', s.collectedMsg.at, s.collectedMsg.at + 120 * MIN);
+    // `dispatched` is due from the first report that implies collection (a collection report, or a delivery report that
+    // arrived first); a late collection report never moves it (W2).
+    const firstCol = [s.collectedMsg?.at, s.deliveredMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0];
+    if (firstCol !== undefined && !prePatched) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 120 * MIN);
     if (s.collectedMsg) { rec.fulfilments[F] = 'dispatched'; rec.shipments[F] = 'collected'; }
     if (s.deliveredMsg) {
-      if (!named(`fst:${F}:dispatched`) && !prePatched) fst(F, 'dispatched', 'R4.4', s.deliveredMsg.at, s.deliveredMsg.at + 120 * MIN);
       fst(F, 'completed', 'R4.4', s.deliveredMsg.at, s.deliveredMsg.at + 120 * MIN, { after: prePatched ? [] : [`fst:${F}:dispatched`] });
       rec.fulfilments[F] = 'completed'; rec.shipments[F] = 'delivered';
       ends.push('completed'); lastEnd = Math.max(lastEnd, s.deliveredMsg.at);

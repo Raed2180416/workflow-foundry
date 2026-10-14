@@ -5,7 +5,8 @@
 //   node --test tests/ui-form-adapter.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
+import { createServer, request } from 'node:http';
+import net from 'node:net';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -14,12 +15,14 @@ import { Store } from '../src/store.mjs';
 import { Runtime } from '../src/runtime.mjs';
 import { createDefaultRegistry } from '../src/capabilities.mjs';
 import {
-  compileForm, validateAnswer, answerFromFormState, acceptSubmission, formStateFromAnswer, submissionFromAnswer, renderForm,
-  createFormHandler, parseNumberText, patternProblems, FORM_CSP_HEADER, displayText, canonicalAnswer,
+  compileForm, tryCompileForm, validateAnswer, answerFromFormState, acceptSubmission, formStateFromAnswer, submissionFromAnswer, renderForm,
+  createFormHandler, parseNumberText, patternProblems, patternTest, valueErrors, FORM_CSP_HEADER, displayText, canonicalAnswer, MAX_ERRORS,
+  PATTERN_BUDGET_MS,
 } from '../tools/ui/index.mjs';
-import { genSchema, genValid, mutate, rng, PLANTED_NUMBER_TEXT, openuiNumeric, webAppNumber } from '../tools/ui/generate.mjs';
+import { genSchema, genValid, mutate, rng, PLANTED_NUMBER_TEXT, openuiNumeric, openuiValue, plantedOutcomes, webAppNumber, webAppValue } from '../tools/ui/generate.mjs';
 
 const engineAccepts = (schema, value) => { try { validateData(schema, value, 'answer', { trustedSchema: true }); return true; } catch (error) { if (error.code === 'SCHEMA_MISMATCH' || error.code === 'UNSAFE_KEY' || error.code === 'DATA_LIMIT') return false; throw error; } };
+const gen = (schema, question, formName) => compileForm({ answerSchema: schema, question, formName, allowPattern: true });
 const KNOWN_GAPS = new Set(['undeclared-property', 'empty-optional-group', 'optional-empty-text', 'optional-empty-selection', 'selection-order-or-duplicates', 'line-break-in-single-line-input', 'carriage-return', 'lone-surrogate']);
 
 const HOLD = { type: 'object', additionalProperties: false, required: ['decision', 'amount', 'reason'], properties: {
@@ -27,14 +30,14 @@ const HOLD = { type: 'object', additionalProperties: false, required: ['decision
   reason: { type: 'string', minLength: 1, maxLength: 500 }, tags: { type: 'array', items: { enum: ['urgent', 'vip', 'fraud-check'] }, maxItems: 2 },
   notify: { type: 'boolean' }, reference: { type: 'string', pattern: '^INV-[0-9]{6}$', maxLength: 10 },
 } };
-const holdSpec = () => compileForm({ answerSchema: HOLD, question: 'Release the credit hold on SO-1042?', formName: 'hold' });
+const holdSpec = (bind = null) => compileForm({ answerSchema: HOLD, question: 'Release the credit hold on SO-1042?', formName: 'hold', bind, allowPattern: true });
 
 test('differential: the host validator accepts exactly what the engine validator accepts (2,000 generated schemas, 14,000 answers)', t => {
   const r = rng(424242);
   const tally = { schemas: 0, pairs: 0, valid: 0, invalid: 0, disagreements: [] };
   for (let i = 0; i < 2000; i++) {
     const schema = genSchema(r);
-    const spec = compileForm({ answerSchema: schema, question: `Generated ${i}?` });
+    const spec = gen(schema, `Generated ${i}?`);
     tally.schemas++;
     const answers = [];
     for (let k = 0; k < 3; k++) answers.push(genValid(r, schema));
@@ -52,13 +55,16 @@ test('differential: the host validator accepts exactly what the engine validator
   t.diagnostic(`differential ${JSON.stringify({ ...tally, disagreements: tally.disagreements.length })}`);
 });
 
-test('completability: every generated valid answer has a canonical equivalent that round-trips exactly through every route; the only misses are browser text the widget cannot hold', t => {
+// The `urlencoded` route is the encoder submissionFromAnswer feeding acceptSubmission: it is built from the same spec as
+// the parser and does not read the rendered page (review P2-9; tests/ui-form.test.mjs checks the page's field names and
+// option tokens against the spec, and tests/ui-form-browser.test.mjs drives one schema in Chromium).
+test('completability: every generated valid answer has a canonical equivalent that round-trips exactly through every route; the only misses are text a browser widget cannot hold', t => {
   const r = rng(77);
-  const counts = { answers: 0, exact: { typed: 0, text: 0, browser: 0 }, canonical: { typed: 0, text: 0, browser: 0 }, gaps: {} };
+  const counts = { answers: 0, exact: { typed: 0, text: 0, urlencoded: 0 }, canonical: { typed: 0, text: 0, urlencoded: 0 }, gaps: {} };
   const BROWSER_ONLY = new Set(['line-break-in-single-line-input', 'carriage-return', 'lone-surrogate']);
   for (let i = 0; i < 1000; i++) {
     const schema = genSchema(r);
-    const spec = compileForm({ answerSchema: schema, question: `Generated ${i}?`, formName: 'gen' });
+    const spec = gen(schema, `Generated ${i}?`, 'gen');
     for (let k = 0; k < 3; k++) {
       const answer = genValid(r, schema);
       assert.equal(validateAnswer(spec, answer).length, 0, 'the generator makes valid answers');
@@ -69,7 +75,7 @@ test('completability: every generated valid answer has a canonical equivalent th
       for (const [route, run] of [
         ['typed', a => { const { event, gaps } = formStateFromAnswer(spec, a); return { gaps, result: answerFromFormState(spec, event) }; }],
         ['text', a => { const { event, gaps } = formStateFromAnswer(spec, a, { mode: 'text' }); return { gaps, result: answerFromFormState(spec, event) }; }],
-        ['browser', a => { const { body, gaps } = submissionFromAnswer(spec, a); return { gaps, result: acceptSubmission(spec, body) }; }],
+        ['urlencoded', a => { const { body, gaps } = submissionFromAnswer(spec, a); return { gaps, result: acceptSubmission(spec, body) }; }],
       ]) {
         // as given: no gap means an exact round trip; every gap is a known kind
         const given = run(answer);
@@ -78,14 +84,14 @@ test('completability: every generated valid answer has a canonical equivalent th
         if (given.gaps.length === 0) { assert.deepEqual(given.result.answer, answer, `${route} ${i}`); counts.exact[route]++; }
         // canonical: only text a browser widget cannot hold may remain
         const canon = run(canonical);
-        assert.ok(canon.gaps.every(g => route === 'browser' && BROWSER_ONLY.has(g)), `${route} ${i}: canonical gaps ${canon.gaps}`);
+        assert.ok(canon.gaps.every(g => route === 'urlencoded' && BROWSER_ONLY.has(g)), `${route} ${i}: canonical gaps ${canon.gaps}`);
         if (canon.gaps.length === 0) { assert.deepEqual(canon.result.answer, canonical, `${route} canonical ${i}`); counts.canonical[route]++; }
       }
     }
   }
   assert.equal(counts.canonical.typed, counts.answers);
   assert.equal(counts.canonical.text, counts.answers);
-  assert.ok(counts.canonical.browser / counts.answers > 0.9, JSON.stringify(counts));
+  assert.ok(counts.canonical.urlencoded / counts.answers > 0.9, JSON.stringify(counts));
   t.diagnostic(`completability ${JSON.stringify(counts)}`);
 });
 
@@ -94,7 +100,7 @@ test('mutants through the routes: whatever the adapter accepts, the engine accep
   let accepted = 0, rejected = 0;
   for (let i = 0; i < 1000; i++) {
     const schema = genSchema(r);
-    const spec = compileForm({ answerSchema: schema, question: 'q', formName: 'm' });
+    const spec = gen(schema, 'q', 'm');
     for (let k = 0; k < 4; k++) {
       const bad = mutate(r, schema, genValid(r, schema));
       for (const result of [answerFromFormState(spec, formStateFromAnswer(spec, bad).event), answerFromFormState(spec, formStateFromAnswer(spec, bad, { mode: 'text' }).event)]) {
@@ -134,9 +140,14 @@ test('garbage formState and request bodies never throw, and anything accepted pa
   return accepted;
 });
 
-test('planted number text: the host rejects every entry; OpenUI numeric and the current web/app.js parser would accept some', t => {
+test('planted number text: the host rejects every entry (no wrong value); OpenUI numeric and the current web/app.js parser store wrong values for some', t => {
   const spec = holdSpec();
   const openui = PLANTED_NUMBER_TEXT.filter(openuiNumeric), webApp = PLANTED_NUMBER_TEXT.filter(webAppNumber);
+  // review P2-10: "accepted" and "accepted with a wrong value" are reported apart; four planted entries are only
+  // non-canonical spellings ("12.", ".5", "+5", "12" + NBSP), which the host refuses at a usability cost
+  const outcomes = { openui: plantedOutcomes(openuiNumeric, openuiValue), webApp: plantedOutcomes(webAppNumber, webAppValue) };
+  assert.deepEqual([outcomes.openui.accepts, outcomes.openui.wrongValue, outcomes.webApp.accepts, outcomes.webApp.wrongValue], [15, 11, 6, 2]);
+  assert.deepEqual(outcomes.webApp.wrong, ['0x10', '0b101']);
   for (const text of PLANTED_NUMBER_TEXT) {
     const result = answerFromFormState(spec, { formName: 'hold', formState: { hold: { 'answer/decision': { value: 'release' }, 'answer/amount': { value: text }, 'answer/reason': { value: 'r' } } } });
     assert.equal(result.ok, false, `${JSON.stringify(text)} must be rejected`);
@@ -144,17 +155,36 @@ test('planted number text: the host rejects every entry; OpenUI numeric and the 
   }
   assert.ok(openui.includes('12abc') && openui.length >= 8, `OpenUI numeric accepts ${JSON.stringify(openui)}`);
   assert.ok(webApp.includes('0x10') && webApp.includes('0b101'), `web/app.js Number() accepts ${JSON.stringify(webApp)}`);
-  t.diagnostic(`planted ${PLANTED_NUMBER_TEXT.length}: host rejects ${PLANTED_NUMBER_TEXT.length}; OpenUI numeric accepts ${openui.length} ${JSON.stringify(openui)}; web/app.js accepts ${webApp.length} ${JSON.stringify(webApp)}`);
+  t.diagnostic(`planted ${PLANTED_NUMBER_TEXT.length}: host accepts 0 (refuses 4 unambiguous spellings); OpenUI numeric accepts ${openui.length}, ${outcomes.openui.wrongValue} with a wrong value; web/app.js accepts ${webApp.length}, ${outcomes.webApp.wrongValue} with a wrong value ${JSON.stringify(outcomes.webApp.wrong)}`);
   // and good entries parse exactly
-  for (const [text, n] of [['0', 0], ['-12.5', -12.5], ['1e3', 1000], ['1E-2', 0.01], ['\t42 ', 42], ['007', null], ['-0.0', 0]]) {
+  for (const [text, n] of [['0', 0], ['-12.5', -12.5], ['1e3', 1000], ['1E-2', 0.01], ['\t42 ', 42], ['007', null], ['-0.0', 0], ['1250.50', 1250.5], ['0.1', 0.1],
+    ['12.5e1', 125], ['100000000000000000000', 1e20], ['9007199254740992', 2 ** 53], ['5e-324', 5e-324], ['1.7976931348623157e308', Number.MAX_VALUE]]) {
     const parsed = parseNumberText(text, 'number');
     if (n === null) assert.equal(parsed.code, 'not-a-number', text); else assert.equal(Object.is(parsed.value, n), true, `${text} -> ${parsed.value}`);
   }
 });
 
+test('number text that the stored number would not keep exactly is refused, not rounded (review P2-7)', () => {
+  for (const [text, type] of [['0.99999999999999999', 'integer'], ['1.0000000000000001', 'number'], ['1.00000000000000001', 'integer'], ['9007199254740993', 'integer'],
+    ['9007199254740993', 'number'], ['123456789012345678', 'number'], ['4e-324', 'number'], ['0.30000000000000000001', 'number']]) {
+    assert.equal(parseNumberText(text, type).code, 'number-precision', `${type} ${text}`);
+  }
+  // the probe: an integer field with maximum 1 and a number field with maximum 1 no longer take these as 1
+  const spec = compileForm({ answerSchema: { type: 'object', required: ['n', 'x'], properties: { n: { type: 'integer', minimum: 0, maximum: 1 }, x: { type: 'number', maximum: 1 } } }, question: 'q', formName: 'i' });
+  const r = acceptSubmission(spec, new URLSearchParams([['_spec', spec.specHash], ['answer/n', '0.99999999999999999'], ['answer/x', '1.0000000000000001']]).toString());
+  assert.equal(r.ok, false);
+  assert.deepEqual(r.errors.map(e => [e.code, e.statementId]), [['number-precision', 'answer/n'], ['number-precision', 'answer/x']]);
+});
+
 test('patterns: admitted patterns stay fast on worst-case inputs; catastrophic shapes are refused', () => {
-  for (const p of ['^(a+)+$', '^(a|aa)*$', '(.*a){12}', '^(\\w+\\s?)*$', '^([a-z0-9]+)*@x$', '\\d*\\d*x', '^(?<=a)b$', '^(a)\\1$']) assert.ok(patternProblems(p).length > 0, p);
-  const spec = compileForm({ answerSchema: { type: 'string', maxLength: 256, pattern: '^[a-z]*[a-z]*$' }, question: 'q', formName: 'p' });
+  for (const p of ['^(a+)+$', '^(a|aa)*$', '(.*a){12}', '^(\\w+\\s?)*$', '^([a-z0-9]+)*@x$', '\\d*\\d*x', '^(?<=a)b$', '^(a)\\1$',
+    // review P1-1: [^] and [] close the class at once; every quantifier counts, small ones and ? included
+    '^[^](a+)+[^]$', '^[](a+)+[]$', '^[^](a*)*$', `^${'a?'.repeat(28)}${'a'.repeat(28)}$`, `^${'a{0,16}'.repeat(10)}$`, '^[a-z]*[a-z]*[a-z]*$',
+    '^(?:a|b|c|d)?(?:a|b|c|d)?[a-z]*[a-z]*$', '^(?i:a)+$', '^(?<n>a+)+$']) assert.ok(patternProblems(p).length > 0, p);
+  for (const p of ['^INV-[0-9]{6}$', '^[A-Z]{2}-[0-9]{1,6}$', '^[a-z]+$', '^(?:yes|no)$', 'INV', '^[a-z]*[a-z]*$', '^[^]{0,5}$', '^(?<prefix>[A-Z]{3})-[0-9]+$', '^[^\\]]+$']) {
+    assert.deepEqual(patternProblems(p), [], p);
+  }
+  const spec = compileForm({ answerSchema: { type: 'string', maxLength: 256, pattern: '^[a-z]*[a-z]*$' }, question: 'q', formName: 'p', allowPattern: true });
   const evil = `${'a'.repeat(255)}!`;
   const t0 = performance.now();
   for (let i = 0; i < 20; i++) assert.equal(validateAnswer(spec, evil)[0].code, 'pattern-mismatch');
@@ -162,6 +192,32 @@ test('patterns: admitted patterns stay fast on worst-case inputs; catastrophic s
   // a string over maxLength never reaches the pattern
   assert.equal(validateAnswer(spec, `${'a'.repeat(100000)}!`)[0].code, 'too-long');
 });
+
+test('patterns: the matcher runs in a worker with a per-answer budget, so a pattern the bound misjudges costs at most the budget (review P1-1)', () => {
+  // patternTest is the backstop for any pattern, admitted or not
+  assert.equal(patternTest('^INV-[0-9]{6}$', 'INV-123456'), true);
+  assert.equal(patternTest('^INV-[0-9]{6}$', 'INV-12345X'), false);
+  let t0 = performance.now();
+  assert.equal(patternTest('^(a+)+$', `${'a'.repeat(40)}!`, 200), 'timeout');
+  assert.ok(performance.now() - t0 < 2000, `timed out after ${performance.now() - t0} ms`);
+  assert.equal(patternTest('^a$', 'a'), true, 'a fresh worker replaces the stopped one');
+  // through the validator: one budget per answer, however many pattern fields time out; the answer is rejected
+  const evil = { type: 'string', maxLength: 64, pattern: '^(a+)+$' };
+  const schema = { type: 'object', properties: Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`f${i}`, evil])) };
+  const answer = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`f${i}`, `${'a'.repeat(40)}!`]));
+  t0 = performance.now();
+  const errors = valueErrors(schema, answer);
+  const elapsed = performance.now() - t0;
+  assert.deepEqual(errors.map(e => e.code), Array(8).fill('pattern-timeout'));
+  assert.ok(elapsed < PATTERN_BUDGET_MS + 1500, `8 timed-out fields took ${elapsed} ms (budget ${PATTERN_BUDGET_MS} ms per answer)`);
+  // the reviewer's admitted bypasses are refused at compile time, and the enum route no longer runs a pattern
+  assert.deepEqual(tryCompile({ type: 'string', maxLength: 64, pattern: '^[^](a+)+[^]$' }), ['pattern-unsafe']);
+  assert.deepEqual(tryCompile({ type: 'string', maxLength: 256, pattern: `^${'a{0,16}'.repeat(10)}$` }), ['pattern-unsafe']);
+  t0 = performance.now();
+  assert.deepEqual(tryCompile({ type: 'string', enum: [`x${'a'.repeat(40)}!!`, 'ok'], pattern: '^[^](a+)+[^]$' }), ['keyword-not-applicable']);
+  assert.ok(performance.now() - t0 < 500);
+});
+const tryCompile = schema => { const r = tryCompileForm({ answerSchema: schema, question: 'q', allowPattern: true }); return r.ok ? [] : r.errors.map(e => e.code); };
 
 const HOSTILE = [
   '<img src=x onerror="window.__pwned=1">', '"><script>window.__pwned=2</script>', "'><svg onload=alert(1)>", '<a href="javascript:alert(1)">x</a>',

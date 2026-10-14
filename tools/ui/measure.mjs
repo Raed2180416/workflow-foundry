@@ -1,7 +1,11 @@
 // Prints the tier-0 capability numbers (development evidence, $0, deterministic for a seed):
-//   - completability: share of generated valid answers whose canonical form round-trips exactly, per route;
+//   - completability: share of generated valid answers whose canonical form round-trips exactly, per route. The
+//     `urlencoded` route is the encoder submissionFromAnswer feeding acceptSubmission; it is built from the same spec
+//     as the parser and never reads the rendered HTML (tests/ui-form.test.mjs checks the page's field names and option
+//     tokens against the spec; the browser test drives one schema in Chromium);
 //   - differential agreement of the host validator with the engine validator (src/validate.mjs, ajv 8);
-//   - planted number text accepted by the host vs two simple client rules (OpenUI numeric, web/app.js Number());
+//   - planted number text: accepted, accepted with a wrong value, and unambiguous entries refused, for the host and two
+//     simple client rules (OpenUI numeric, web/app.js Number());
 //   - per-field controls on the compile fixtures vs the current web/app.js answer control (one control per answer).
 //   node tools/ui/measure.mjs [--seed 20261014] [--schemas 1000]
 import { isDeepStrictEqual, parseArgs } from 'node:util';
@@ -9,17 +13,17 @@ import { validateData } from '../../src/validate.mjs';
 import { compileForm } from './compile.mjs';
 import { acceptSubmission, answerFromFormState, canonicalAnswer, formStateFromAnswer, submissionFromAnswer } from './formstate.mjs';
 import { listCases } from './fixtures.mjs';
-import { genSchema, genValid, mutate, openuiNumeric, PLANTED_NUMBER_TEXT, rng, webAppNumber } from './generate.mjs';
+import { genSchema, genValid, mutate, openuiNumeric, openuiValue, plantedOutcomes, rng, webAppNumber, webAppValue } from './generate.mjs';
 import { validateAnswer } from './validate.mjs';
 
 const engineAccepts = (schema, value) => { try { validateData(schema, value, 'answer', { trustedSchema: true }); return true; } catch { return false; } };
 
 export function measure({ seed = 20261014, schemas = 1000 } = {}) {
   const r = rng(seed);
-  const out = { seed, schemas, answers: 0, canonicalExact: { typed: 0, text: 0, browser: 0 }, pairs: 0, agree: 0, acceptedUnsound: 0 };
+  const out = { seed, schemas, answers: 0, canonicalExact: { typed: 0, text: 0, urlencoded: 0 }, pairs: 0, agree: 0, acceptedUnsound: 0 };
   for (let i = 0; i < schemas; i++) {
     const schema = genSchema(r);
-    const spec = compileForm({ answerSchema: schema, question: `Generated ${i}?`, formName: 'm' });
+    const spec = compileForm({ answerSchema: schema, question: `Generated ${i}?`, formName: 'm', allowPattern: true });
     for (let k = 0; k < 3; k++) {
       const answer = genValid(r, schema), canonical = canonicalAnswer(spec, answer);
       out.answers++;
@@ -28,7 +32,7 @@ export function measure({ seed = 20261014, schemas = 1000 } = {}) {
       const routes = {
         typed: () => { const { event, gaps } = formStateFromAnswer(spec, canonical); return { gaps, result: answerFromFormState(spec, event) }; },
         text: () => { const { event, gaps } = formStateFromAnswer(spec, canonical, { mode: 'text' }); return { gaps, result: answerFromFormState(spec, event) }; },
-        browser: () => { const { body, gaps } = submissionFromAnswer(spec, canonical); return { gaps, result: acceptSubmission(spec, body) }; },
+        urlencoded: () => { const { body, gaps } = submissionFromAnswer(spec, canonical); return { gaps, result: acceptSubmission(spec, body) }; },
       };
       for (const [route, run] of Object.entries(routes)) {
         const { gaps, result } = run();
@@ -42,11 +46,12 @@ export function measure({ seed = 20261014, schemas = 1000 } = {}) {
     }
   }
   out.completability = Object.fromEntries(Object.entries(out.canonicalExact).map(([k, v]) => [k, Math.round((v / out.answers) * 10000) / 10000]));
+  const numberSpec = compileForm({ answerSchema: { type: 'number' }, question: 'n', formName: 'n' });
+  const host = text => answerFromFormState(numberSpec, { n: { answer: { value: text } } });
   out.planted = {
-    entries: PLANTED_NUMBER_TEXT.length,
-    hostAccepts: PLANTED_NUMBER_TEXT.filter(text => answerFromFormState(compileForm({ answerSchema: { type: 'number' }, question: 'n', formName: 'n' }), { n: { answer: { value: text } } }).ok).length,
-    openuiNumericAccepts: PLANTED_NUMBER_TEXT.filter(openuiNumeric).length,
-    webAppNumberAccepts: PLANTED_NUMBER_TEXT.filter(webAppNumber).length,
+    host: plantedOutcomes(text => host(text).ok, text => host(text).answer),
+    openuiNumeric: plantedOutcomes(openuiNumeric, openuiValue),
+    webAppNumber: plantedOutcomes(webAppNumber, webAppValue),
   };
   // web/app.js draftControl: an enum, boolean, number or string answer gets one control; anything else is one JSON textarea.
   let leaves = 0, baselineLeafControls = 0;

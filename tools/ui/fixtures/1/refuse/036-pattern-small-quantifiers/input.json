@@ -1,0 +1,9 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "string",
+    "maxLength": 256,
+    "pattern": "^a{0,16}a{0,16}a{0,16}a{0,16}a{0,16}a{0,16}a{0,16}a{0,16}a{0,16}a{0,16}$"
+  },
+  "allowPattern": true
+}

@@ -4,5 +4,6 @@
     "type": "string",
     "maxLength": 50,
     "pattern": "[A-Z]+-[0-9]+"
-  }
+  },
+  "allowPattern": true
 }
