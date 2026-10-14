@@ -9,7 +9,7 @@
 // business meaning, deduplicate inbound events, compute deadlines or business time, enforce separation of duties beyond
 // routing a task as the arm declared it, compensate, or fill a default for a renamed field. It uses world truth only to
 // key the fault schedule and the actor policies (identical for every arm) and to label the journal for the analyst.
-import { canonical, hashOf, sha256 } from '../../lib/canonical.mjs';
+import { canonical, hashOf, hashSeq, sha256 } from '../../lib/canonical.mjs';
 import { Agenda, MINUTE, SECOND, toMs, fmt, offsetMinutes, isIsoTime, eventOrder } from './time.mjs';
 import { Journal, ReplayDivergence } from './journal.mjs';
 import { MockSystem, MockError, effectSchemas, sorSchemas, F3_ERROR } from './mocks.mjs';
@@ -20,7 +20,7 @@ import { validateCaseOutput, validateSweepOutput } from './output.mjs';
 import { schemaProblems, plainCopy } from './schema.mjs';
 import { Workspace } from './workspace.mjs';
 
-export const HOST_VERSION = '1.2.0';   // 1.2.0: guarded counterparty steps (H-29); 1.1.0: review fixes of 2026-10-14 (README §11)
+export const HOST_VERSION = '1.2.1';   // 1.2.1: streamed outputs/content digests (a runaway arm's journal overflowed one string); 1.2.0: guarded counterparty steps (H-29); 1.1.0: review fixes of 2026-10-14 (README §11)
 
 /** Thrown by an arm adapter when a real usage limit stops the stream: the clock freezes at the last committed wake-up. */
 export class QuotaStop extends Error {
@@ -1018,8 +1018,8 @@ class Host {
       journal: this.journal.head,
       ledger: hashOf(this.ledger.committed),
       sor: this.sorDigest(),
-      outputs: hashOf(this.journal.contentRows().filter(r => r.type === 'call').map(r => [r.callId, r.outcome, r.output ?? r.error])),
-      content: hashOf(this.journal.contentRows()),
+      outputs: hashSeq(this.journal.contentRows().filter(r => r.type === 'call').map(r => [r.callId, r.outcome, r.output ?? r.error])),
+      content: hashSeq(this.journal.contentRows()),
     };
   }
   stats() {

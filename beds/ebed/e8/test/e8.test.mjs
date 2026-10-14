@@ -8,6 +8,7 @@ import { createHost } from '../../host/host.mjs';
 import { replayRun } from '../../host/replay.mjs';
 import { hashOf } from '../../../lib/canonical.mjs';
 import { planSaga } from '../../lib/saga.mjs';
+import { runGoldens, goldens } from '../golden.mjs';
 
 const MIN = 60_000;
 
@@ -225,6 +226,11 @@ test('golden: the customer-action race: an action exactly at D counts, the timeo
   assert.ok(!Ea.effects.required.some(e => e.lid === `ost:${t2.subject}:timedOut`));
   const El = referenceTransition(W, v(D + 2 * MIN, [{ id: 'b', type: 'customer.action', at: D + MIN, seq: 5, payload: { orderRef: t2.subject, action: 'amend' } }]));
   assert.ok(El.effects.required.some(e => e.lid === `ost:${t2.subject}:timedOut`), 'an action after D is late');
+});
+
+test('golden module: every exported golden passes the reference transition (the same set the mutation tool runs per mutant)', () => {
+  assert.ok(goldens.length >= 20, `only ${goldens.length} goldens`);
+  for (const r of runGoldens(referenceTransition)) assert.ok(r.pass, `${r.name} (${r.source}): ${r.detail}`);
 });
 
 test('spec-E is the module\'s spec and names every rule the oracle cites', () => {

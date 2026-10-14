@@ -15,7 +15,7 @@
 // instant t does not apply to a row emitted in an earlier instant (an effect already in flight) or emitted at t by a
 // call that had not been given an event of the case at t (it could not have reacted).
 import { indexJournal, caseView, caseIds } from './view.mjs';
-import { canonical, hashOf } from '../../lib/canonical.mjs';
+import { canonical, hashOf, hashSeq } from '../../lib/canonical.mjs';
 
 const argsMatch = (match, args) => Object.keys(match ?? {}).every(k => args && Object.hasOwn(args, k) && canonical(args[k]) === canonical(match[k]));
 const cmp = (a, b) => a.at - b.at || a.seq - b.seq;
@@ -41,7 +41,7 @@ export function gradeStream({ item, world, rows, pools = null, arm = null }) {
     censored: censoredByEpoch(world, cases),
     critical, oracleErrors: cases.filter(v => v.oracleError).map(v => ({ case: v.case, error: v.oracleError })),
     intakeAccuracy: intake,
-    digests: { world: hashOf(world), journal: hashOf(rows) },
+    digests: { world: hashOf(world), journal: hashSeq(rows) },
   };
 }
 

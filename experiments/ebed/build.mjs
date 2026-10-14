@@ -63,7 +63,7 @@ export async function grade(item, solverSource, { seeds, difficulties, label }) 
     const arm = sandboxArm({ id: label, solverSource, timeoutMs: 20_000 });
     const host = createHost({ item: item.binding, world: w, arm, callTimeoutMs: 25_000 });
     let status;
-    try { status = (await host.run()).status; } finally { arm.close(); }
+    try { status = (await host.run()).status; } catch (e) { status = `host-error: ${String(e?.message ?? e).slice(0, 160)}`; } finally { arm.close(); }
     const v = item.oracle(w, host.journal.contentRows(), { pools, arm: label });
     const comp = v.cases.filter(c => c.pool === 'completed');
     const byClass = {};
