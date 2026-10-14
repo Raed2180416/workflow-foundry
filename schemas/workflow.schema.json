@@ -62,6 +62,12 @@
     "texts": {"type": "array", "maxItems": 200, "items": {"type": "string", "maxLength": 10000}},
     "nonemptyTexts": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"type": "string", "minLength": 1, "maxLength": 10000}},
     "label": {"type": "string", "maxLength": 512, "pattern": "^(?:trusted|untrusted:[A-Za-z0-9_.:-]+(?:\\+[A-Za-z0-9_.:-]+)*)$"},
+    "signalName": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_.:-]{0,127}$"},
+    "signalSubscription": {
+      "type": "object", "additionalProperties": false, "required": ["signal"],
+      "description": "One raced signal: its name, the correlation key computed from the instance when the wait starts (a template; absent: any key), and its payload schema (absent: no payload).",
+      "properties": {"signal": {"$ref": "#/definitions/signalName"}, "correlate": {}, "schema": {"type": "object"}}
+    },
     "modelChoice": {
       "type": "object", "additionalProperties": false, "minProperties": 1,
       "properties": {"class": {"type": "string", "minLength": 1, "maxLength": 16}, "id": {"type": "string", "minLength": 1, "maxLength": 128}, "maxClass": {"type": "string", "minLength": 1, "maxLength": 16},
@@ -138,7 +144,7 @@
         "when": {"$ref": "#/definitions/condition"},
         "tool": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_.-]{0,127}$"},
         "args": {},
-        "timeoutMs": {"type": "integer", "minimum": 1, "maximum": 3600000},
+        "timeoutMs": {"type": "integer", "minimum": 1, "maximum": 2592000000, "description": "At most 1 hour, except on a signal wait (at most 30 days)."},
         "retry": {
           "type": "object", "additionalProperties": false, "required": ["maxAttempts"],
           "properties": {
@@ -160,6 +166,13 @@
         "initial": {},
         "until": {"$ref": "#/definitions/condition"},
         "delayMs": {"type": "integer", "minimum": 0, "maximum": 3600000},
+        "at": {"description": "Absolute wake time: epoch milliseconds, an ISO 8601 date-time with an explicit offset, or a reference to one.",
+          "anyOf": [{"type": "integer", "minimum": 0, "maximum": 8640000000000000}, {"type": "string", "minLength": 1, "maxLength": 64}, {"type": "object", "required": ["$ref"]}]},
+        "signal": {"$ref": "#/definitions/signalName"},
+        "correlate": {},
+        "schema": {"type": "object"},
+        "race": {"type": "array", "minItems": 2, "maxItems": 8, "items": {"$ref": "#/definitions/signalSubscription"}},
+        "onTimeout": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$", "description": "fail (default), continue, or the id of the node in the same flow that runs instead of the wait's other dependents when it times out."},
         "role": {"enum": ["classify", "route", "extract", "judge", "generate", "synthesis", "code_edit", "plan", "verify"]},
         "instructions": {"type": "string", "minLength": 1, "maxLength": 50000},
         "context": {"$ref": "#/definitions/context"},
@@ -174,6 +187,7 @@
         "subject": {},
         "independence": {"enum": ["execution", "different-model", "same-model"]},
         "gate": {"type": "boolean"},
+        "label": {"$ref": "#/definitions/label", "description": "A signal wait: the integrity label of what its signals carry (default trusted: an authenticated delivery, like an answer)."},
         "slot": {"$ref": "#/definitions/id"},
         "op": {"enum": ["get", "put", "add", "incr", "delete"]},
         "key": {},
@@ -187,7 +201,8 @@
         {"if": {"properties": {"kind": {"const": "human"}}}, "then": {"required": ["question", "answerSchema"]}},
         {"if": {"properties": {"kind": {"const": "map"}}}, "then": {"required": ["items", "maxItems", "body"]}},
         {"if": {"properties": {"kind": {"const": "loop"}}}, "then": {"required": ["maxIterations", "body", "until", "initial"]}},
-        {"if": {"properties": {"kind": {"const": "wait"}}}, "then": {"required": ["delayMs"]}},
+        {"if": {"properties": {"kind": {"const": "wait"}}}, "then": {"anyOf": [{"required": ["delayMs"]}, {"required": ["at"]}, {"required": ["signal"]}, {"required": ["race"]}]}},
+        {"if": {"properties": {"kind": {"not": {"const": "wait"}}}}, "then": {"properties": {"timeoutMs": {"maximum": 3600000}}}},
         {"if": {"properties": {"kind": {"const": "agent"}}}, "then": {"required": ["instructions", "returns", "model"]}},
         {"if": {"properties": {"kind": {"const": "code"}}}, "then": {"required": ["lang", "source"]}},
         {"if": {"properties": {"kind": {"const": "verify"}}}, "then": {"required": ["method", "subject", "independence"]}},

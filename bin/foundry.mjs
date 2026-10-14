@@ -38,6 +38,7 @@ const definitions = {
   , strict: { type: 'boolean' }, 'fail-on': { type: 'string' }
   , 'check-anchors': { type: 'string' }, 'append-anchor': { type: 'string' }, 'expect-head': { type: 'string' }, 'require-bound': { type: 'boolean' }, journal: { type: 'string' }
   , reason: { type: 'string' }, grace: { type: 'string' }, force: { type: 'boolean' }, 'executing-only': { type: 'boolean' }
+  , name: { type: 'string' }, id: { type: 'string' }, key: { type: 'string' }, payload: { type: 'string' }
 };
 // Ctrl-C or SIGTERM while a command executes runs in this process. The command stops as a crash would (each run stays resumable with
 // `foundry resume RUN`; a non-idempotent effect that was in flight is recorded uncertain on resume), but it first aborts every execution
@@ -64,7 +65,8 @@ function checkModelArguments(command, args) {
     ...(args.journal !== undefined && !['verify-run', 'cancel', 'stop-all'].includes(command) ? ['journal'] : []),
     ...['reason', 'grace'].filter(name => args[name] !== undefined && !['cancel', 'stop-all'].includes(command)),
     ...(args.force !== undefined && command !== 'cancel' ? ['force'] : []), ...(args['executing-only'] !== undefined && command !== 'stop-all' ? ['executing-only'] : []),
-    ...(args['append-anchor'] !== undefined && !['verify-run', 'run', 'resume'].includes(command) ? ['append-anchor'] : [])];
+    ...(args['append-anchor'] !== undefined && !['verify-run', 'run', 'resume'].includes(command) ? ['append-anchor'] : []),
+    ...['name', 'id', 'key', 'payload'].filter(name => args[name] !== undefined && command !== 'signal')];
   if (misplaced.length) throw new FoundryError('CLI_ARGUMENT', `--${misplaced[0]} is not supported by ${command}. Use --help.`);
   if (args['max-cost'] !== undefined && !/^(0|[1-9][0-9]{0,6})(\.[0-9]{1,6})?$/.test(args['max-cost'])) throw new FoundryError('CLI_ARGUMENT', '--max-cost must be a non-negative decimal number of USD');
   if (args['fail-on'] !== undefined && !['error', 'warning'].includes(args['fail-on'])) throw new FoundryError('CLI_ARGUMENT', '--fail-on must be error or warning');
@@ -192,6 +194,9 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry calls --run RUN_ID --workspace PATH  (journaled model calls with cost)\n` +
 `  foundry answer RUN_ID --node root/NODE --answer JSON --workspace PATH\n` +
 `  foundry approve RUN_ID APPROVAL_ID --approved|--rejected --workspace PATH\n` +
+`  foundry signal [RUN_ID] --name SIGNAL --id SIGNAL_ID [--key JSON] [--payload JSON_OR_FILE] --workspace PATH\n` +
+`      (deliver a signal to a run, or without RUN_ID to the one run whose parked wait correlates on --key; the id is the idempotency key:\n` +
+`       a repeat is a no-op. A wait it resolves is resumed by the next tick or serve scan)\n` +
 `  foundry serve --workspace PATH [--port 4177] [--tick-interval SECONDS] [--agent opencode-free|opencode-v2-free --model OBSERVED_FREE_ID --auto-apply]\n` +
 `  foundry mcp --workspace PATH\n\n` +
 `Models construct candidates using skills/MCP. This CLI does not pretend a template\n` +
@@ -480,6 +485,11 @@ async function main() {
       print({ runId: args.run, calls: journal.forRun(args.run).map(callSummary), totals: journal.costForRun(args.run) }); return;
     }
     if (command === 'answer') { print(foundry.publicRun(foundry.runtime.answer(item, args.node, jsonValue(args.answer, null)))); return; }
+    if (command === 'signal') {
+      if (positionals.length > 2) throw new FoundryError('CLI_ARGUMENT', 'signal takes at most one RUN_ID. Use --help.');
+      const signal = { id: args.id, name: args.name, ...(args.key === undefined ? {} : { key: jsonValue(args.key, null) }), ...(args.payload === undefined ? {} : { payload: jsonValue(args.payload, null) }) };
+      print(item ? foundry.signal(item, signal, { actor: 'cli' }) : foundry.correlateSignal(signal, { actor: 'cli' })); return;
+    }
     if (command === 'approve') {
       if (!!args.approved === !!args.rejected) throw new FoundryError('APPROVAL_CHOICE', 'Choose exactly one of --approved or --rejected');
       print(foundry.publicRun(foundry.runtime.approve(item, second, !!args.approved, 'user'))); return;
