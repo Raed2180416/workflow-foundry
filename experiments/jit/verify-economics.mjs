@@ -104,10 +104,21 @@ export function numericProxy(ea, eb, relTol = KINETICS_TOL.relTol, half = 5e-5) 
 }
 
 const setKey = xs => canonical([...new Set(xs ?? [])].sort());
+// records oracle details (beds/records/score.mjs): the mismatch list follows the answer's record order and stops at 12, so
+// it is compared as a set; two capped lists that differ may hide equal answers (ambiguous).
+export const RECORDS_MISMATCH_CAP = 12;
+function recordsProxy(da, db) {
+  const norm = d => ({ ...d, mismatches: Array.isArray(d.mismatches) ? d.mismatches.map(m => canonical(m)).sort() : d.mismatches });
+  const a = norm(da), b = norm(db);
+  if (canonical(a) === canonical(b)) return 'agree';
+  const capped = d => Array.isArray(d.mismatches) && d.mismatches.length >= RECORDS_MISMATCH_CAP;
+  const rest = d => canonical({ ...d, mismatches: null });
+  return capped(a) && capped(b) && rest(a) === rest(b) ? 'ambiguous' : 'disagree';
+}
 // 'agree' | 'disagree' | 'ambiguous' | 'unknown' for two answers known only through their oracle details.
 export function proxyCompare(family, da, db, { relTol = KINETICS_TOL.relTol } = {}) {
   if (!da || !db) return 'unknown';
-  if (family !== 'kinetics') return canonical(da) === canonical(db) ? 'agree' : 'disagree';
+  if (family !== 'kinetics') return recordsProxy(da, db);
   const ca = da.perCondition, cb = db.perCondition;
   if (!Array.isArray(ca) || !Array.isArray(cb)) return Array.isArray(ca) === Array.isArray(cb) ? 'unknown' : 'disagree';
   if (setKey(da.excluded?.missing) !== setKey(db.excluded?.missing) || setKey(da.excluded?.extra) !== setKey(db.excluded?.extra)) return 'disagree';
@@ -213,13 +224,17 @@ export function csp1({ p, i, f, delta = 1, phi = 0 }) {
   const pf = p * delta + (1 - p) * phi, afi = csp1Afi(pf, i, f);
   return { pf, afi, aoq: p * (1 - afi * delta) };
 }
+// The worst case over p in (0, pMax]. With delta = 0 nothing is ever caught and AOQ = p rises to pMax: that is reported as
+// unbounded (the AOQL guarantee needs an inspector that detects).
 export function aoql({ i, f, delta = 1, phi = 0, pMax = 0.6 }) {
+  if (!(delta > 0)) return { aoql: null, pAt: null, unbounded: true };
   let best = { p: 0, aoq: 0 };
-  for (let p = 1e-4; p <= pMax; p += 1e-4) { const a = csp1({ p, i, f, delta, phi }).aoq; if (a > best.aoq) best = { p, aoq: a }; }
-  for (let step = 1e-5; step > 1e-9; step /= 10) for (let p = Math.max(1e-9, best.p - 10 * step); p <= best.p + 10 * step; p += step) {
-    const a = csp1({ p, i, f, delta, phi }).aoq; if (a > best.aoq) best = { p, aoq: a };
+  for (let s = 1; s <= Math.round(pMax / 1e-4); s++) { const p = s * 1e-4, a = csp1({ p, i, f, delta, phi }).aoq; if (a > best.aoq) best = { p, aoq: a }; }
+  for (let step = 1e-5; step > 1e-9; step /= 10) {
+    const lo = Math.max(step, best.p - 10 * step), hi = Math.min(pMax, best.p + 10 * step);
+    for (let s = 0; lo + s * step <= hi; s++) { const p = lo + s * step, a = csp1({ p, i, f, delta, phi }).aoq; if (a > best.aoq) best = { p, aoq: a }; }
   }
-  return { aoql: best.aoq, pAt: best.p };
+  return { aoql: best.aoq, pAt: best.p, unbounded: best.p >= pMax - 1e-9 };
 }
 export const CSP_GRID = Object.freeze({ i: [5, 10, 20, 40, 60, 100], f: [0.05, 0.1, 0.25, 0.5] });
 export const aoqlTable = ({ delta = 1, phi = 0 } = {}) => CSP_GRID.i.map(i => ({ i, cells: CSP_GRID.f.map(f => ({ f, ...aoql({ i, f, delta, phi }) })) }));
@@ -342,8 +357,9 @@ export function armEconomics({ stream, arm, agents, scored = new Map(), floor = 
   }
   // CSP-1 at the measured p, delta, phi for each tier.
   const csp = tiers.filter(t => t.counts && t.counts.pWrong != null && t.tier !== 'haiku+hadj' && t.tier !== 'witness').flatMap(t => [[20, 0.1], [60, 0.25], [10, 0.25]].map(([i, f]) => {
-    const k = t.counts, delta = k.delta ?? 1, phi = k.phi ?? 0, r = csp1({ p: k.pWrong, i, f, delta, phi });
-    return { tier: t.tier, i, f, p: k.pWrong, delta, phi, ...r, aoqlImperfect: aoql({ i, f, delta, phi }).aoql,
+    // delta is unmeasured when no compiled delivery was wrong: the perfect inspector is assumed and the row says so.
+    const k = t.counts, deltaMeasured = k.delta != null, delta = k.delta ?? 1, phi = k.phi ?? 0, r = csp1({ p: k.pWrong, i, f, delta, phi });
+    return { tier: t.tier, i, f, p: k.pWrong, delta, deltaMeasured, phi, ...r, aoqlImperfect: aoql({ i, f, delta, phi }).aoql,
       usdPerTaskL1: steadyState({ base: base.L1, q, shadowUsd: t.shadowUsd, adjUsd: t.adjUsd, pD: k.pD || 0, rate: r.afi, adjudicate: true }) };
   }));
   return { experiment: stream.experiment, family: fam, slug: arm.slug, spec: arm.meta.spec, short: spec.short, interp: spec.interp, warmup, rows: rows.length, n, compiledOk: O.length, q,
@@ -515,7 +531,7 @@ export function renderTables(res) {
   L.push('', '## 7. CSP-1 (Dodge) for long streams', '', '**AOQL, perfect inspector** (worst-case long-run share of wrong deliveries; p at the worst case):', '', `| i \\ f | ${CSP_GRID.f.join(' | ')} |`, `|---|${CSP_GRID.f.map(() => '---').join('|')}|`);
   for (const row of res.aoqlPerfect) L.push(`| ${row.i} | ${row.cells.map(c => `${pct(c.aoql)} (p ${pct(c.pAt)})`).join(' | ')} |`);
   L.push('', '**At the measured inspector** (p = compiled wrong rate, δ = P(disagree | wrong), φ = P(disagree | right); AFI = average fraction inspected):', '', '| stream | arm | tier | (i, f) | p | δ | φ | AFI | AOQ | AOQL (imperfect) | $/task L1 at AFI |', '|---|---|---|---|---|---|---|---|---|---|---|');
-  for (const e of res.econ) for (const c of e.csp) L.push(`| ${e.experiment} | ${e.short} | ${c.tier} | (${c.i}, ${c.f}) | ${pct(c.p)} | ${pct(c.delta)} | ${pct(c.phi)} | ${pct(c.afi)} | ${pct(c.aoq)} | ${pct(c.aoqlImperfect)} | ${$(c.usdPerTaskL1)} |`);
+  for (const e of res.econ) for (const c of e.csp) L.push(`| ${e.experiment} | ${e.short} | ${c.tier} | (${c.i}, ${c.f}) | ${pct(c.p)} | ${c.deltaMeasured ? pct(c.delta) : '– (no wrong delivery; 100% assumed)'} | ${pct(c.phi)} | ${pct(c.afi)} | ${pct(c.aoq)} | ${c.aoqlImperfect == null ? 'unbounded (δ = 0)' : pct(c.aoqlImperfect)} | ${$(c.usdPerTaskL1)} |`);
   L.push('', '## 8. Comparator proxy validation (real comparator vs proxy on archived answer pairs sharing a seed)', '', '| stream | answers | pairs | proxy agree: real agree / disagree | proxy disagree: real agree / disagree | proxy ambiguous: real agree / disagree | proxy unknown | contradictions |', '|---|---|---|---|---|---|---|---|');
   for (const v of res.validation) { const m = v.matrix; L.push(`| ${v.experiment} | ${v.answers} | ${v.pairs} | ${m.agree.agree} / ${m.agree.disagree} | ${m.disagree.agree} / ${m.disagree.disagree} | ${m.ambiguous.agree} / ${m.ambiguous.disagree} | ${m.unknown.agree + m.unknown.disagree} | ${v.contradictions.length} |`); }
   for (const w of res.witness) L.push('', `**Kinetics exclusion-set witness recall** (${w.experiment}, every wrong answer the stream holds): ${w.flagged}/${w.wrong} = ${pct(w.recall)} (Wilson ${pct(w.ci?.lo)}–${pct(w.ci?.hi)}); missed: ${w.missed.join(', ') || 'none'}.`);
