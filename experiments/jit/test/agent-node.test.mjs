@@ -13,12 +13,16 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { MODEL_TOOL } from '../../c0/construct.mjs';
 import { startServices, Ledger } from '../../lib/services.mjs';
-import { createRegistry, createCallHost, CALL_MODEL, FLOW_V3, REFUSALS } from '../call-host.mjs';
+import { createRegistry, createCallHost, CALL_MODEL, FLOW_V3, REFUSALS, withCallModel } from '../call-host.mjs';
+import { runCompiled } from '../run-compiled.mjs';
+import { sandboxAvailable } from '../../../src/executors/claude-code.mjs';
 import { agentNodeRunner, agentPrompt, codeExecutionOf, filesClusterOf, fileRoleOf, harvestedTracesOf, subCompileGroups, AGENT_REFUSALS, agentFilesProblem } from '../agent-node.mjs';
 import { caseFiles } from '../compile.mjs';
 import * as R5 from '../../../beds/wbed/r5/index.mjs';
 import { buildDump } from '../../../beds/wbed/r5/world.mjs';
 import { decodeStage, verifyPredicate } from '../../../beds/wbed/r5/decode.mjs';
+import { learnProfile, PARAMS_V3, STRUCTURE_CHECK } from '../profile.mjs';
+import { dumpTask, PROMPT as DECODER_PROMPT } from '../eval-dump-profiles.mjs';
 
 const HAIKU = 'claude-haiku-5-5';
 const tmp = (t, p = 'jit-agent-') => { const d = mkdtempSync(path.join(tmpdir(), p)); t.after(() => rmSync(d, { recursive: true, force: true })); return d; };
@@ -323,4 +327,89 @@ test('agentNodeRunner: one session with the node prompt, only the node files, th
   assert.deepEqual(r.answer, { n: 2 }); assert.equal(r.costUsd, 0.07); assert.equal(r.turns, 5); assert.match(r.transcriptSha256, /^[0-9a-f]{64}$/);
   assert.equal(r.hiddenPathAttempts, 1); assert.equal(r.nestedModelAttempts, 1);
   assert.deepEqual(r.scripts.map(s => s.path), ['parse.mjs'], 'the node\'s own script; files/ and inputs are never harvested');
+});
+
+// ---------------------------------------------------------------------------------------------- part 2b: decoder + agent fallback
+// W-BED-R5-NOTES items 12-13: a compiled decoder callee (here a stub) is called first, with the dump's file map, a PARAMS_V3
+// profile of its own format and STRUCTURE_CHECK; the same verify runs at the call site; a refusal (another format) or a
+// failed verify (a misreading decoder) falls back to the agent node.
+const FALLBACK_SOLVER = hash => `import { createFlow } from './tools/flow.mjs';
+import { verifyPredicate } from '${DECODE_URL}';
+const flow = createFlow({ budgetUsd: 1 });
+const task = flow.input();
+const [sub, pack] = Object.entries(task.inputs.subsidiaries).find(([, p]) => p.dump);
+const dir = pack.dump.replace(/^files\\//, '');
+const files = Object.fromEntries(Object.entries(task.files).filter(([k]) => k.startsWith(dir)).map(([k, v]) => [k.slice(dir.length), v]));
+const verify = o => verifyPredicate(o.rows, o.trailer) ?? (Object.values(files).join('\\n').includes(o.trailer_quote) ? null : 'trailer_quote is not in the dump');
+const r = await flow.call('${hash}', { files }, { name: 'decode-dump', budgetUsd: 0.2, onRefuse: 'skip', onDeopt: 'skip', verify });
+let out = r, by = 'decoder';
+if (r.refused || r.deopt) {
+  by = r.refused ? 'agent after refusal ' + r.refused : 'agent after ' + r.deopt.kind;
+  out = await flow.agent('decode-dump', { instructions: task.inputs.dump_spec, files: { 'dump/': pack.dump }, returns: ${JSON.stringify(DECODE_RETURNS)} },
+    { verify: (o, ctx) => verify(o), budgetUsd: 0.4 });
+}
+flow.done({ by, rows: out.rows.length });`;
+
+async function runFallback(t, { decoderSeeds, decoderMode, runner }) {
+  const task = R5.generate(R5_TASK);
+  const registry = createRegistry();
+  const profile = learnProfile(decoderSeeds.map(s => dumpTask(s, 'dev', 3).task), PARAMS_V3);
+  const decoder = registry.register({ contract: { output: DECODE_RETURNS, taskTemplate: DECODER_PROMPT }, profile, checkOptions: STRUCTURE_CHECK,
+    stub: async input => ({ output: decodeAs(decoderMode, Object.fromEntries(Object.entries(input.files).map(([k, v]) => [`dump/${k}`, v]))), costUsd: 0.01 }) });
+  const dir = tmp(t, 'jit-agentf-');
+  mkdirSync(path.join(dir, 'tools'));
+  const ledger = new Ledger({ capUsd: 1, label: 'root' });
+  const host = createCallHost({ registry, mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const svc = await startServices({ modelPort: host.port({ budgetUsd: 1, ledger }), ledger, allowedModels: [HAIKU] });
+  writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(FLOW_V3, path.join(dir, 'tools/flow.mjs'));
+  writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ url: svc.url, token: svc.token }));
+  writeFileSync(path.join(dir, 'task.json'), JSON.stringify({ prompt: task.prompt, inputs: task.inputs, files: task.files }));
+  writeFileSync(path.join(dir, 'solve.mjs'), FALLBACK_SOLVER(decoder.hash));
+  const child = spawn(process.execPath, ['solve.mjs', 'task.json'], { cwd: dir, env: { PATH: process.env.PATH, HOME: dir }, stdio: ['ignore', 'pipe', 'pipe'] });
+  let stdout = '', stderr = ''; child.stdout.on('data', d => { stdout += d; }); child.stderr.on('data', d => { stderr += d; });
+  const code = await new Promise(resolve => child.on('close', resolve));
+  await svc.close({ graceMs: 1000 });
+  return { code, stderr, output: JSON.parse(stdout.trim().split('\n').at(-1) ?? 'null'), trace: lines(path.join(dir, 'trace.jsonl')), host };
+}
+
+test('R5 decoder with the agent as fallback: a decoder of this dump\'s format serves it; another format\'s decoder is refused by its profile; a misreading decoder fails the call-site verify; both fall back to the agent', async t => {
+  assert.equal(R5.dumpOf(R5_TASK).format, 'code-page');
+  let agentRuns = 0;
+  const runner = async a => { agentRuns++; return { answer: decodeAs(null, a.files), costUsd: 0.1 }; };
+  const served = await runFallback(t, { decoderSeeds: [309, 345, 357, 366], decoderMode: null, runner });   // code-page dumps
+  assert.equal(served.code, 0, served.stderr); assert.equal(served.output.by, 'decoder'); assert.equal(agentRuns, 0);
+  assert.deepEqual(served.trace.find(e => e.kind === 'call-end').verify, { ok: true });
+  const other = await runFallback(t, { decoderSeeds: [301, 304, 313, 314], decoderMode: null, runner });   // keyed-stanzas dumps
+  assert.equal(other.code, 0, other.stderr); assert.equal(other.output.by, 'agent after refusal outside-profile'); assert.equal(agentRuns, 1);
+  const misread = await runFallback(t, { decoderSeeds: [309, 345, 357, 366], decoderMode: 'amount-units-misread', runner });
+  assert.equal(misread.code, 0, misread.stderr); assert.equal(misread.output.by, 'agent after verify'); assert.equal(agentRuns, 2);
+  const cd = misread.trace.find(e => e.kind === 'call-deopt');
+  assert.equal(cd.status, 'verify-failed'); assert.match(cd.verify.reasons[0], /^amount total/);
+  assert.equal(misread.output.rows, world().rows.length);
+});
+
+// ---------------------------------------------------------------------------------------------- part 4: in the B1 sandbox
+const skip = sandboxAvailable() ? false : 'no user namespaces';
+test('sandboxed: a compiled R5 parent (runCompiled, flow-v3, the gateway socket) runs an agent node on the dump; the node value comes back typed and verified', { skip }, async t => {
+  const task = R5.generate(R5_TASK), root = tmp(t), seen = [];
+  const runner = async a => { seen.push(a); return { answer: decodeAs(a.retryReason ? null : 'trailer-as-row', a.files), costUsd: 0.1, scripts: [{ path: 'd.mjs', text: '1' }] }; };
+  writeFileSync(path.join(root, 'solve.mjs'), `import { createFlow } from './tools/flow.mjs';
+const flow = createFlow({ budgetUsd: 1 }); const task = flow.input();
+const [sub, pack] = Object.entries(task.inputs.subsidiaries).find(([, p]) => p.dump);
+const out = await flow.agent('decode-dump', { instructions: task.inputs.dump_spec, files: { 'dump/': pack.dump }, returns: ${JSON.stringify(DECODE_RETURNS)} },
+  { verify: o => (o.rows.length === o.trailer.records ? null : 'record count ' + o.rows.length + ' != trailer ' + o.trailer.records), budgetUsd: 0.4 });
+flow.done({ sub_id: sub, rows: out.rows.length });`);
+  const ledger = new Ledger({ capUsd: 1, label: 'r5' });
+  const host = createCallHost({ registry: createRegistry(), modelPort: stubModelPort(), workRoot: path.join(root, 'calls-root'), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const r = await runCompiled({ solvePath: path.join(root, 'solve.mjs'), task: { prompt: task.prompt, inputs: task.inputs, files: task.files }, modelPort: host.port({ budgetUsd: 1, ledger }), perTaskUsd: 1,
+    timeoutMs: 60000, workdir: path.join(root, 'run'), outputSchema: { type: 'object' }, allowedModels: withCallModel([HAIKU]), flowPath: FLOW_V3, label: 'r5', ledger });
+  assert.equal(r.status, 'ok', JSON.stringify(r.error ?? r.deopt));
+  assert.deepEqual(r.output, { sub_id: world().sub.id, rows: world().rows.length });
+  assert.equal(seen.length, 2, 'the trailer read as a row fails the count; the retry is told so');
+  assert.match(seen[1].retryReason, /^record count \d+ != trailer \d+$/);
+  assert.deepEqual(r.trace.filter(e => e.kind === 'agent-end').map(e => [e.attempt, e.status]), [[0, 'verify-failed'], [1, 'ok']]);
+  assert.equal(r.costUsd, 0.2); assert.equal(ledger.reservedUsd, 0);
+  assert.equal(host.events.filter(e => e.harvestFile).length, 2, 'both attempts were harvested (only the verified one becomes a compile trace)');
+  const traces = harvestedTracesOf({ hostEvents: host.events, solverTraces: r.trace, workRoot: path.join(root, 'calls-root') });
+  assert.equal(traces.length, 1); assert.equal(traces[0].answer.rows.length, world().rows.length);
 });

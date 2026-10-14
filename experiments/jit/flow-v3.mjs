@@ -728,7 +728,8 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     if (typeof w.reduce !== 'function') throw new Error(`flow.wide(${name}): reduce (a code reducer (results, coverage) => value) is required`);
     if (w.verify !== undefined && typeof w.verify !== 'function') throw new Error(`flow.wide(${name}): verify must be a code predicate (a panel verifier is not built yet)`);
     for (const k of ['check', 'itemCheck']) if (w[k] !== undefined && typeof w[k] !== 'function') throw new Error(`flow.wide(${name}): ${k} must be a function`);
-    const quorum = w.quorum ?? 1, wideUsd = w.budgetUsd, concurrency = Math.min(w.concurrency ?? 8, maxFanout), floor = w.itemFloorUsd ?? 0;
+    // Agent workers run at most two at a time anyway (the host's limit); more in flight would only hold reservations.
+    const quorum = w.quorum ?? 1, wideUsd = w.budgetUsd, concurrency = Math.min(w.concurrency ?? 8, maxFanout, kind === 'agent' ? 2 : Infinity), floor = w.itemFloorUsd ?? 0;
     if (!(quorum > 0 && quorum <= 1)) throw new Error(`flow.wide(${name}): quorum must be in (0, 1]`);
     if (typeof wideUsd !== 'number' || !(wideUsd > 0)) throw new Error(`flow.wide(${name}): budgetUsd (the operator's total budget) must be a positive number`);
     if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error(`flow.wide(${name}): concurrency must be a positive integer`);
@@ -785,12 +786,15 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     };
     const gateOf = item => {
       if (!share) return null;
-      const j = wk.judge, at = f => (typeof f === 'function' ? f(item, -1) : f);
+      const j = wk.judge;
       const key = canonical({ model: j.tiers?.[0], system: typeof j.system === 'function' ? null : j.system ?? '', schema: j.schema, reasoning: j.reasoning ?? 'none' });
       if (typeof j.system === 'function') return null;   // a per-item system prompt has no shared prefix
       let g = groups.get(key);
-      if (!g) { let open; g = { first: true, released: new Promise(r => { open = r; }), open }; groups.set(key, g); prefix.groups++; return { leader: g }; }
-      return { follower: g };
+      if (!g) {
+        let resolve; g = { isOpen: false, released: new Promise(r => { resolve = r; }), open: () => { g.isOpen = true; resolve(); } };
+        groups.set(key, g); prefix.groups++; return { leader: g };
+      }
+      return g.isOpen ? null : { follower: g };
     };
     const worker = async () => {
       while (!failure && next < n) {
@@ -799,7 +803,11 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
         if (acc.spent >= wideUsd - 1e-12 || acc.spent + (inFlight + 1) * est > wideUsd + 1e-12) break;
         const i = next++, item = list[i], t1 = Date.now(), gate = gateOf(item), itemAcc = { spent: 0 };
         let held = 0;
-        if (gate?.follower) { const h0 = Date.now(); await Promise.race([gate.follower.released, new Promise(r => setTimeout(r, holdMs).unref?.())]); held = Date.now() - h0; prefix.held++; prefix.heldMs += held; }
+        if (gate?.follower) {
+          const h0 = Date.now();
+          let timer; await Promise.race([gate.follower.released, new Promise(r => { timer = setTimeout(r, holdMs); })]); clearTimeout(timer);
+          held = Math.max(1, Date.now() - h0); prefix.held++; prefix.heldMs += held;
+        }
         inFlight++;
         const r = await runItem(itemStore({ wide: span, wideItem: i, acc: [acc, itemAcc], catchDeopt: policy.retries > 0 || policy.then === 'null' }), async () => {
           try { return await runWorker(item, i); } finally { gate?.leader?.open(); }

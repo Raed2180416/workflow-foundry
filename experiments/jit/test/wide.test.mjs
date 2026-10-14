@@ -130,8 +130,9 @@ test('flow.wide prefix sharing (6b): siblings with one prompt prefix wait for th
   const first = port.log.ends[0].at;
   assert.equal(port.log.starts.filter(s => s.at < first).length, 1, 'only the leader runs before the first response');
   const end = ofKind(r.trace, 'wide-end')[0];
-  assert.equal(end.prefix.groups, 1); assert.equal(end.prefix.held, 47);
-  assert.ok(ofKind(r.trace, 'wide-item').filter(e => e.heldMs !== undefined).length >= 7);
+  assert.equal(end.prefix.groups, 1);
+  const held = ofKind(r.trace, 'wide-item').filter(e => e.heldMs !== undefined);
+  assert.equal(held.length, end.prefix.held); assert.ok(end.prefix.held >= 1 && end.prefix.held <= 7, `held ${end.prefix.held}: the followers that started before the first response`);
   // Usage on the ledger: a port that reports cache reads (the leader writes the prefix, the siblings read it).
   const ledger = new Ledger({ capUsd: 1, label: 'u' });
   ledger.charge({ costUsd: 0.01, usage: { inputTokens: 100, outputTokens: 10, cacheReadTokens: 0, cacheWriteTokens: 900 } });
@@ -219,4 +220,41 @@ flow.done({ threw, a, b, c });` });
 await flow.map([1, 2], x => { throw new Error('boom ' + x); }, { onItemError: 'retry(1)', concurrency: 1 });
 flow.done('never');` });
   assert.equal(crash.code, 1); assert.match(crash.stderr, /boom 1/);
+});
+
+test('flow.wide with call workers and agent workers (stub call host): typed results per item; agent workers run at most two at a time', async t => {
+  const { createRegistry, createCallHost } = await import('../call-host.mjs');
+  const registry = createRegistry();
+  const twice = registry.register({ contract: { output: { type: 'object', required: ['y'], properties: { y: { type: 'integer' } } } }, stub: async input => ({ output: { y: input.x * 2 }, costUsd: 0.01 }) });
+  let running = 0, peak = 0;
+  const runner = async a => { running++; peak = Math.max(peak, running); await new Promise(r => setTimeout(r, 15)); running--; return { answer: { n: a.files['a.txt'].length }, costUsd: 0.1 }; };
+  const host = createCallHost({ registry, mode: 'stub', modelPort: { policy: POLICY, providers: {}, async call() { throw new Error('no model'); } }, agent: { runner, models: [HAIKU], model: HAIKU } });
+  const ledger = new Ledger({ capUsd: 2, label: 'root' });
+  const dir = tmp(t, 'jit-widew-');
+  mkdirSync(path.join(dir, 'tools'));
+  const svc = await startServices({ modelPort: host.port({ budgetUsd: 2, ledger }), ledger, allowedModels: [HAIKU] });
+  writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(FLOW_V3, path.join(dir, 'tools/flow.mjs'));
+  writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ url: svc.url, token: svc.token }));
+  writeFileSync(path.join(dir, 'task.json'), JSON.stringify({ prompt: 'p', inputs: {} }));
+  writeFileSync(path.join(dir, 'solve.mjs'), `import { createFlow } from './tools/flow.mjs';
+const flow = createFlow({ budgetUsd: 2 });
+const calls = await flow.wide('double', { items: [1, 2, 3, 4, 5, 6], worker: { call: { hash: '${twice.hash}', budgetUsd: 0.05, input: x => ({ x }), name: x => 'S' + x } },
+  reduce: rs => rs.map(r => r.y), budgetUsd: 0.5 });
+const agents = await flow.wide('read', { items: ['a', 'bb', 'ccc'], concurrency: 8,
+  worker: { agent: { spec: x => ({ instructions: 'Count the characters.', files: { 'a.txt': { text: x } }, returns: { type: 'object', required: ['n'], properties: { n: { type: 'integer' } } } }),
+    opts: { verify: (v, ctx) => (v.n === ctx.files['a.txt'].length ? null : 'wrong count'), budgetUsd: 0.2 } } },
+  reduce: rs => rs.map(r => r.n), budgetUsd: 1 });
+flow.done({ calls, agents });`);
+  const child = spawn(process.execPath, ['solve.mjs', 'task.json'], { cwd: dir, env: { PATH: process.env.PATH, HOME: dir }, stdio: ['ignore', 'pipe', 'pipe'] });
+  let stdout = '', stderr = ''; child.stdout.on('data', d => { stdout += d; }); child.stderr.on('data', d => { stderr += d; });
+  const code = await new Promise(resolve => child.on('close', resolve));
+  await svc.close({ graceMs: 1000 });
+  assert.equal(code, 0, stderr);
+  assert.deepEqual(JSON.parse(stdout.trim().split('\n').at(-1)), { calls: [2, 4, 6, 8, 10, 12], agents: [1, 2, 3] });
+  assert.equal(peak, 2);
+  const trace = lines(path.join(dir, 'trace.jsonl'));
+  assert.deepEqual(ofKind(trace, 'wide-start').map(e => [e.name, e.worker, e.concurrency]), [['double', 'call', 8], ['read', 'agent', 2]]);
+  assert.ok(ofKind(trace, 'call-end').every(e => e.wide === 'wide:double#0' && Number.isInteger(e.item)));
+  assert.ok(ofKind(trace, 'agent-end').every(e => e.wide === 'wide:read#0' && e.ok));
+  assert.deepEqual(ofKind(trace, 'wide-end').map(e => e.spentUsd), [0.06, 0.3]);
 });

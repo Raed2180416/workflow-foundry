@@ -25,9 +25,9 @@ const MODELS = ['claude-haiku-5-5', 'claude-sonnet-5-5'];
 const skip = sandboxAvailable() ? false : 'no user namespaces';
 const OPTS = { traces: 3, regressions: 1, minutes: 30, gatewayUsd: 1.5, perTaskUsd: 1, models: MODELS };
 const FLOW_V3_FILE = new URL('../flow-v3.mjs', import.meta.url).pathname;
-// flow-v3.mjs as of the slice 2a commit (FLOW-V3-SLICE2 §4, SLICE1 §3 item 7): a prompt-version-5 arm's SDK bytes.
-// Update this pin, and the E2 freeze record, whenever flow-v3.mjs changes.
-const FLOW_V3_SHA256 = 'a67bcbb6c49660f178a685ad939d1e1024af6b2b5a8108862cde4b96009f81c8';
+// flow-v3.mjs as of the slice 2b commit (FLOW-V3-SLICE2 §13; slice 2a's was a67bcbb6…81c8): a prompt-version-5 arm's SDK
+// bytes. Update this pin, and the E2 freeze record, whenever flow-v3.mjs changes.
+const FLOW_V3_SHA256 = '161ac9355bd089b75fb6fcd5ff02ee03c26e6c552dc845b4fc88d4b791e535f6';
 
 test('prompt version 5: runs on flow-v3.mjs; without a library its text is version 4\'s byte for byte; with one it adds library/index.json, flow.call and method item 9 (inserted lines only)', () => {
   assert.deepEqual([...PROMPT_VERSIONS], [1, 2, 3, 4, 5]);
