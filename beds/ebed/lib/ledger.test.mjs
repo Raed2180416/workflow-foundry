@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  matchEffects, window, keyViolations, atMostOnce, exactlyOnce, sumMinor, identity, identityByGroup, netsToZero, doubleEntry, balance835,
+  matchEffects, allowedWindow, keyViolations, atMostOnce, exactlyOnce, sumMinor, identity, identityByGroup, netsToZero, doubleEntry, balance835,
 } from './ledger.mjs';
 import { parseInstant } from './time.mjs';
 import { codeOf } from './errors.mjs';
@@ -76,7 +76,7 @@ test('input validation', () => {
   assert.equal(codeOf(() => matchEffects({ expected: [PAY, PAY] })), 'LEDGER_INVALID');
   assert.equal(codeOf(() => matchEffects({ expected: [{ ...PAY, after: ['nope'] }] })), 'LEDGER_INVALID');
   assert.equal(codeOf(() => matchEffects({ expected: [{ ...PAY, window: undefined }] })), 'LEDGER_INVALID');
-  assert.equal(codeOf(() => window(Z('02T00:00:00'), Z('01T00:00:00'))), 'LEDGER_INVALID');
+  assert.equal(codeOf(() => allowedWindow(Z('02T00:00:00'), Z('01T00:00:00'))), 'LEDGER_INVALID');
   assert.equal(codeOf(() => grade([{ at: Z('05T00:00:00'), system: 'bank', op: 'pay', args: {} }])), 'LEDGER_INVALID'); // no committed flag
   assert.equal(codeOf(() => grade([{ ...pay('05T00:00:00'), at: '2026-12-05T00:00:00' }])), 'TIME_INVALID'); // no offset
 });

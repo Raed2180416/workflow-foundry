@@ -23,7 +23,7 @@
 //     in an interval that spans it;
 //   - addBusinessMs(t, x): the earliest instant u >= t with businessMs(t, u) = x (lands on an interval end, never on
 //     the next opening, when the budget runs out exactly at a close); x = 0 returns t.
-import { fail } from './errors.mjs';
+import { fail, freezeDeep } from './errors.mjs';
 import { DAY, toDay, dateOf, weekdayOf, parseClock, toMs, wallStart, localParts, zoneOf } from './time.mjs';
 
 const TAG = Symbol('ebed.calendar');
@@ -70,7 +70,10 @@ function hoursOf(bh) {
   return hours;
 }
 
-/** Normalise and validate a calendar (memoised per input object). Returns a frozen value accepted by every function. */
+/**
+ * Normalise and validate a calendar (memoised per input object, which is deep-frozen on first use). Returns a frozen
+ * value accepted by every function.
+ */
 export function calendar(input) {
   if (input && input[TAG]) return input;
   if (input && typeof input === 'object' && cache.has(input)) return cache.get(input);
@@ -93,7 +96,7 @@ export function calendar(input) {
     hours: Object.freeze(hours.map(x => (x ? Object.freeze(x.map(p => Object.freeze(p))) : x))),
     closures, hasHours: hours.some(x => x && x.length),
   });
-  cache.set(input, cal);
+  cache.set(freezeDeep(input), cal);
   return cal;
 }
 

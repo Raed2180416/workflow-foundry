@@ -476,3 +476,31 @@ test('835: random balanced remittances balance; any single amount off by one is 
     }
   }
 });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Determinism (E-BED §9.2): a battery of results from every module hashes identically in this process (with warm
+// memo caches) and in a fresh process.
+const BATTERY = `
+  const L = await import(${JSON.stringify(new URL('./index.mjs', import.meta.url).href)});
+  const F = await import(${JSON.stringify(new URL('./fixtures.mjs', import.meta.url).href)});
+  const { canonical, sha256 } = await import(${JSON.stringify(new URL('../../lib/canonical.mjs', import.meta.url).href)});
+  const cal = { tz: 'Europe/Berlin', businessHours: { days: [1, 2, 3, 4, 5], hours: [['08:00', '12:00'], ['13:00', '17:00']] }, holidays: [{ date: '2026-12-24', from: '12:00', to: '17:00' }, { date: '2026-12-25' }] };
+  const out = [
+    L.businessMs(cal, '2026-10-20T10:00:00+02:00', '2026-12-31T10:00:00+01:00'), L.addBusinessDays(cal, '2026-12-20', 7),
+    L.addBusinessMs(cal, '2026-12-23T15:00:00+01:00', 9 * 3600000),
+    L.clockAt({ target: { amount: 600, unit: 'business-minutes' }, calendar: cal, warnings: [{ id: 'w', percent: 80 }] },
+      [{ at: '2026-12-22T09:00:00+01:00', op: 'start' }, { at: '2026-12-22T11:00:00+01:00', op: 'pause' }, { at: '2026-12-28T08:30:00+01:00', op: 'resume' }], '2026-12-28T09:00:00+01:00'),
+    L.decide(F.ROUTING_RULES, { Age: 17, 'Risk category': 'HIGH', 'Debt review': true }), L.checkTable(F.PRE_BUREAU_RISK),
+    L.failurePoints(F.ORDER_SAGA), L.balance835(F.REMIT_835),
+  ];
+  console.log(sha256(canonical(out)));`;
+
+test('determinism: identical digests in-process (twice) and in a fresh process', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const here = async () => { const lines = []; const log = console.log; console.log = x => lines.push(x); try { await new Function(`return (async () => { ${BATTERY} })()`)(); } finally { console.log = log; } return lines[0]; };
+  const a = await here(), b = await here();
+  const c = execFileSync(process.execPath, ['--input-type=module', '-e', BATTERY], { encoding: 'utf8' }).trim();
+  assert.match(a, /^[0-9a-f]{64}$/);
+  assert.equal(a, b);
+  assert.equal(a, c);
+});

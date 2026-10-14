@@ -14,6 +14,15 @@ export class EbedLibError extends Error {
 
 export const fail = (code, message, detail) => { throw new EbedLibError(code, message, detail); };
 
+/**
+ * Deep-freeze a plain JSON-like value in place and return it. Calendars and decision tables are memoised by object
+ * identity, so they are frozen on first use: a later mutation throws (ESM is strict mode) instead of being ignored.
+ */
+export function freezeDeep(v, seen = new Set()) {
+  if (v && typeof v === 'object' && !seen.has(v)) { seen.add(v); Object.freeze(v); for (const k of Object.keys(v)) freezeDeep(v[k], seen); }
+  return v;
+}
+
 /** Run `fn`; return the EbedLibError code it throws, or null. Other errors propagate (they are bugs). */
 export function codeOf(fn) {
   try { fn(); return null; } catch (e) { if (e instanceof EbedLibError) return e.code; throw e; }

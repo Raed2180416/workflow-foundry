@@ -14,6 +14,7 @@ test('DMN 1.3 Figure 8-19: OUTPUT ORDER over a compound output returns rules 2, 
   const d = decide(ROUTING_RULES, AGE17);
   assert.deepEqual(d.hits, ['2', '4', '3', '1']);
   assert.deepEqual(d.matched, ['1', '2', '3', '4']);
+  assert.throws(() => { ROUTING_RULES.rules[0].when[0] = '< 0'; }, TypeError); // nested parts frozen too
   assert.deepEqual(d.result, [R('DECLINE', 'NONE', 'Applicant too young'), R('REFER', 'LEVEL 2', 'Applicant under debt review'),
     R('REFER', 'LEVEL 1', 'High risk application'), R('ACCEPT', 'NONE', 'Acceptable')]);
   assert.deepEqual(evaluate(ROUTING_RULES, { Age: 30, 'Risk category': 'LOW', 'Debt review': false }), [R('ACCEPT', 'NONE', 'Acceptable')]);
@@ -163,6 +164,7 @@ test('table validation: output values, arity, types, SUM exactness', () => {
   assert.equal(codeOf(() => compileTable({ ...base, hitPolicy: 'X' })), 'HIT_POLICY');
   assert.equal(codeOf(() => compileTable({ ...base, inputs: [{ name: 'x', type: 'money' }] })), 'DT_TYPE');
   assert.equal(codeOf(() => compileTable({ ...base, outputs: [{ name: 'x' }] })), 'DT_INVALID'); // duplicate column name
+  assert.equal(codeOf(() => compileTable({ ...base, rules: [{ id: 'r', when: ['1'], then: 'A' }, { id: 'r', when: ['2'], then: 'B' }] })), 'DT_INVALID');
   const sum = { id: 's', hitPolicy: 'C+', inputs: [{ name: 'x', type: 'integer' }], outputs: [{ name: 'y' }], rules: [{ when: ['-'], then: 0.1 }, { when: ['-'], then: 0.2 }] };
   assert.equal(codeOf(() => compileTable(sum)), 'DT_TYPE'); // R7: no float sums (0.1 + 0.2 != 0.3)
   const big = { ...sum, rules: [{ when: ['-'], then: Number.MAX_SAFE_INTEGER }, { when: ['-'], then: 1 }] };
@@ -172,6 +174,7 @@ test('table validation: output values, arity, types, SUM exactness', () => {
   assert.equal(evaluate(dates, { x: 1 }), '2026-02-28');
   assert.equal(evaluate({ ...dates, hitPolicy: 'C>' }, { x: 1 }), '2026-03-01');
   assert.equal(compileTable(base), compileTable(base)); // memoised per table object
+  assert.throws(() => { base.rules.push({ when: ['2'], then: 'B' }); }, TypeError); // frozen on first use: no stale cache
 });
 
 test('precedence levels: the first level with a hit decides (item+vendor > vendor > all)', () => {

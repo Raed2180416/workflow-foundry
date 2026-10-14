@@ -24,8 +24,8 @@ import { fail } from './errors.mjs';
 import { toMs } from './time.mjs';
 import { canonical } from '../../lib/canonical.mjs';
 
-/** A window { earliest, latest } in epoch ms from ISO or ms; earliest <= latest. */
-export function window(earliest, latest) {
+/** An allowed window { earliest, latest } in epoch ms from ISO or ms; earliest <= latest. */
+export function allowedWindow(earliest, latest) {
   const w = { earliest: toMs(earliest), latest: toMs(latest) };
   if (w.earliest > w.latest) fail('LEDGER_INVALID', `window earliest after latest`);
   return w;
@@ -39,7 +39,7 @@ function normaliseExpected(expected) {
     if (!e || typeof e.lid !== 'string' || !e.lid) fail('LEDGER_INVALID', `logical effect needs a lid: ${JSON.stringify(e)}`);
     if (byLid.has(e.lid)) fail('LEDGER_INVALID', `duplicate lid ${e.lid}`);
     if (typeof e.system !== 'string' || typeof e.op !== 'string') fail('LEDGER_INVALID', `${e.lid}: system and op are required`);
-    const w = e.window ? window(e.window.earliest, e.window.latest) : fail('LEDGER_INVALID', `${e.lid}: window is required`);
+    const w = e.window ? allowedWindow(e.window.earliest, e.window.latest) : fail('LEDGER_INVALID', `${e.lid}: window is required`);
     const n = {
       lid: e.lid, rule: e.rule ?? null, system: e.system, op: e.op, match: e.match ?? {}, window: w, after: e.after ?? [],
       openedAt: e.openedAt === undefined || e.openedAt === null ? -Infinity : toMs(e.openedAt),
@@ -60,7 +60,7 @@ function normaliseExpected(expected) {
 export function matchEffects({ expected = [], permitted = [], rows = [], end = Infinity }) {
   const { list } = normaliseExpected(expected);
   const endMs = end === Infinity ? Infinity : toMs(end);
-  const pats = permitted.map(p => ({ ...p, window: p.window ? window(p.window.earliest, p.window.latest) : null }));
+  const pats = permitted.map(p => ({ ...p, window: p.window ? allowedWindow(p.window.earliest, p.window.latest) : null }));
   const st = new Map(list.map(e => [e.lid, { status: 'open', satisfied: false, commitAt: null, commitIdx: -1, key: undefined, attempts: 0, lateCommitAt: null }]));
   const keyOwner = new Map();
   const divs = [];

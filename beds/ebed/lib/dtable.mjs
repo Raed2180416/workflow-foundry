@@ -39,7 +39,7 @@
 // Codes: HIT_POLICY, DT_SYNTAX, DT_TYPE, DT_DOMAIN, DT_OUTPUT_VALUE, DT_INVALID; checker codes TABLE_GAP,
 // TABLE_OVERLAP, TABLE_SHADOWED, TABLE_TOO_LARGE (BAR-SET §5 G17 names TABLE_GAP, TABLE_OVERLAP, HIT_POLICY and
 // EDITION_UNRESOLVED; the last lives in editions.mjs).
-import { fail } from './errors.mjs';
+import { fail, freezeDeep } from './errors.mjs';
 import { parseDate, dateOf } from './time.mjs';
 import { canonical } from '../../lib/canonical.mjs';
 
@@ -235,7 +235,10 @@ function checkOutputValue(out, v, where) {
 
 const compiled = new WeakMap();
 
-/** Validate and compile a table. Throws HIT_POLICY, DT_SYNTAX, DT_TYPE, DT_OUTPUT_VALUE or DT_INVALID. */
+/**
+ * Validate and compile a table (memoised per table object, which is deep-frozen on first successful compile). Throws
+ * HIT_POLICY, DT_SYNTAX, DT_TYPE, DT_OUTPUT_VALUE or DT_INVALID.
+ */
 export function compileTable(table) {
   if (table && typeof table === 'object' && compiled.has(table)) return compiled.get(table);
   if (!table || typeof table !== 'object') fail('DT_INVALID', 'table must be an object');
@@ -298,8 +301,9 @@ export function compileTable(table) {
       return t;
     });
     outCheck(then, where);
-    return Object.freeze({ index: ri, id: r.id ?? String(ri + 1), entries, out: Object.freeze([...then]) });
+    return Object.freeze({ index: ri, id: r.id === undefined || r.id === null ? String(ri + 1) : String(r.id), entries, out: Object.freeze([...then]) });
   });
+  if (new Set(rules.map(r => r.id)).size !== rules.length) fail('DT_INVALID', `${id}: duplicate rule ids`);
   let dflt = null, hasDefault = false;
   if (table.default !== undefined) {
     hasDefault = true;
@@ -316,7 +320,7 @@ export function compileTable(table) {
     rules.forEach(r => { if (!(dateOut ? typeof r.out[0] === 'string' : typeof r.out[0] === 'number')) fail('DT_TYPE', `${id}: rule ${r.id}: ${aggregation} needs ${dateOut ? 'date' : 'number'} outputs`); });
   }
   const c = Object.freeze({ id, policy, aggregation, inputs: Object.freeze(inputs), outputs: Object.freeze(outputs), rules: Object.freeze(rules), hasDefault, dflt });
-  compiled.set(table, c);
+  compiled.set(freezeDeep(table), c);
   return c;
 }
 
@@ -537,7 +541,7 @@ export function checkTable(table, { maxCells = 1e6, maxWitnesses = 20, dashMatch
       if (!everMatched.has(r.id)) issues.push({ code: 'TABLE_SHADOWED', severity: 'warning', detail: 'rule matches no input in the domain', rules: [r.id] });
       else if (!everHit.has(r.id)) issues.push({ code: 'TABLE_SHADOWED', severity: 'warning', detail: `rule never contributes to the result under ${c.policy}`, rules: [r.id] });
     }
-    if (gaps > maxWitnesses) issues.push({ code: 'TABLE_GAP', severity: 'warning', detail: `${gaps - maxWitnesses} more gap cells not listed` });
+    if (gaps > maxWitnesses) issues.push({ code: 'TABLE_GAP', severity: 'warning', detail: `${gaps - maxWitnesses} more gap regions not listed` });
   }
   const order = { error: 0, warning: 1 };
   return issues.sort((a, b) => order[a.severity] - order[b.severity] || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));

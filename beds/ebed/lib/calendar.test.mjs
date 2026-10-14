@@ -163,6 +163,7 @@ test('calendar: shapes, validation and time-zone binding', () => {
   assert.deepEqual(wallIntervals(split, '2026-11-23'), [[8 * HOUR, 12 * HOUR], [13 * HOUR, 17.5 * HOUR]]); // Monday
   assert.equal(isBusinessDay(split, '2026-11-25'), false); // Wednesday has no hours
   assert.equal(calendar(split), calendar(split)); // memoised
+  assert.throws(() => { split.businessHours.mon.push(['18:00', '19:00']); }, TypeError); // frozen on first use: no stale cache
   assert.deepEqual(wallIntervals({ tz: 'UTC', businessHours: { mon: [['09:00', '12:00'], ['12:00', '17:00']] } }, '2026-11-23'), [[9 * HOUR, 17 * HOUR]]);
   for (const [bad, code] of [
     [{ tz: 'UTC', businessHours: { mon: [['09:00', '12:00'], ['11:00', '17:00']] } }, 'CAL_INVALID'],
