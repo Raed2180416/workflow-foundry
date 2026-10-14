@@ -15,6 +15,7 @@ export const VERSION = '1.0.0';
 export const SUBTYPES = ['names', 'sentence', 'order', 'schedule'];
 export const subtypeOf = seed => SUBTYPES[((seed % 4) + 4) % 4];
 const MAX_ATTEMPTS = 40;
+export const MIN_ORDER_SOLUTIONS = 4;
 
 // ---- difficulty tables (all knobs in one place; documented in README) ----
 export const KNOBS = {
@@ -210,16 +211,16 @@ function buildOrder(S, d) {
     for (const k of kinds) { x -= WEIGHTS[k]; if (x < 0) { kind = k; break; } }
     add(sampleConstraint(r, kind, planted));
   }
-  // The task must have at least two distinct solutions (so the oracle is shown to accept more than one answer):
-  // drop the newest constraint until the search finds two within budget.
+  // The task must have several valid answers (so the oracle is shown to accept more than one): drop the newest
+  // constraint until the search finds MIN_ORDER_SOLUTIONS distinct orderings within budget.
   let spec; let found = null;
   for (let drop = 0; drop < 12; drop++) {
     spec = { subtype: 'order', items: [...items], constraints: constraints.slice(0, constraints.length - drop), setting: setting.noun };
-    const res = solveOrder(spec, { mode: 'index', limit: 2, maxNodes: 60000 });
-    if (res.solutions.length === 2) { found = res.solutions; break; }
+    const res = solveOrder(spec, { mode: 'index', limit: MIN_ORDER_SOLUTIONS, maxNodes: 60000 });
+    if (res.solutions.length >= MIN_ORDER_SOLUTIONS) { found = res.solutions; break; }
     if (constraints.length - drop <= 3) break;
   }
-  if (!found) throw new Error('order: no constraint set with two solutions');
+  if (!found) throw new Error('order: no constraint set with several solutions');
   const shown = r.shuffle(items);
   if (shown.join() === planted.join()) shown.reverse();
   const shownCons = r.shuffle(spec.constraints);
@@ -236,7 +237,7 @@ function buildOrder(S, d) {
     'Several sequences may satisfy every statement; any one that does is accepted. Answer with JSON only, of the form {"order": ["<item at position 1>", "<item at position 2>", ...]}, using the item names exactly as written.',
   ].join('\n');
   const inputs = { subtype: 'order', items: shown, constraints: shownCons.map(con => renderConstraint(con, n)) };
-  return { spec, prompt, inputs, truth: { planted, solutions: found.map(order => ({ order })) } };
+  return { spec, prompt, inputs, truth: { planted, solutions: found.slice(0, 2).map(order => ({ order })) } };
 }
 
 // ================================================================ (d) schedule

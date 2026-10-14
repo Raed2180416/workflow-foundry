@@ -57,7 +57,8 @@ export function solveNames(spec, r, style = 'syll', { forbidReserved = true } = 
     let found = null;
     for (let tries = 0; tries < 20000 && !found; tries++) {
       const length = style === 'cv' ? r.int(spec.minLen, spec.maxLen) : 0;
-      const cand = coin(r, { initial: targets[i], style, length, endSet: style === 'cv' ? spec.endSet : null, letter: wantLetter });
+      // natural candidates first; a required letter is spliced in only if chance has not supplied it after 400 tries
+      const cand = coin(r, { initial: targets[i], style, length, endSet: style === 'cv' ? spec.endSet : null, letter: tries >= 400 ? wantLetter : null });
       if (taken.has(cand) || !checkNames(single, [cand]).pass) continue;
       found = cand;
     }
