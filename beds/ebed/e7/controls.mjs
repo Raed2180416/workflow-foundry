@@ -170,7 +170,8 @@ export function plannedView(world, c) {
   return { case: c, at: ms(world.horizonEnd), seq: Infinity, world, truth: t, events, rows: [], tasks: [], taskEvents: [] };
 }
 
-const shape = E => canonical({ lids: E.effects.required.map(e => [e.lid, e.match, e.window]), tasks: E.humanTasks.required.map(t => [t.lid, t.mustExclude, t.window]), records: E.records });
+/** What an arm is asked to do (records follow from it; a go-live case's history before t0 is not the arm's to redo). */
+const shape = E => canonical({ lids: E.effects.required.map(e => [e.lid, e.match, e.window]), tasks: E.humanTasks.required.map(t => [t.lid, t.mustExclude, t.window]) });
 
 /** Which cases a necessity control is aimed at (null for bad and gaming controls). */
 export function targetCases(world, id) {

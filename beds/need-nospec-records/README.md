@@ -186,7 +186,7 @@ The last two are the near misses of the no-spec setting: a solver that treats th
 never infers the trunk-prefix rule. The trunk control puts the prefix back on *every* number of a country that has one, whether or not
 the source row wrote it, so it is a deterministic near miss, not a simulation of a solver.
 
-## Tests (`node --test beds/need-nospec-records/*.test.mjs`, 24 tests, about 3 minutes)
+## Tests (`node --test beds/need-nospec-records/*.test.mjs`, 26 tests, about 3 minutes)
 
 - Contract: family fields, portable output schema (records', a copy), control names, loadable through `experiments/lib/beds.mjs`; task
   shape; argument validation.
@@ -206,6 +206,10 @@ the source row wrote it, so it is a deterministic near miss, not a simulation of
   - the rate sheet is the spec's own rate lines and nothing else, and differs from every example's sheet;
   - **the missing information is exactly the rules:** records' independent text solver (`solve-text.mjs`, the rules as code) passes with this
     task's own notes, export and rate sheet, and with the withheld spec, for 10 seeds at every difficulty.
+- Regressions from the adversarial review: the intended class is stated per difficulty band, as a hypothesis under test, with the alternative
+  kept (family description, README section and the `workingHypothesis` export agree); the prompt promises no stricter shape than the oracle
+  checks ("in the shape of", not "exactly"), and extra keys at the root or in a record are ignored: same verdict and details for the reference
+  and for every control, so they can neither pass nor rescue an answer, and records' oracle agrees.
 - Leakage: no canonical record, cluster list, truth E.164 number or converted amount of the batch appears in its prompt, notes, rate sheet
   or export.
 - Difficulty sanity, untrusted-text counts, README figures (this README's token table is checked against the generator), hygiene (no model,

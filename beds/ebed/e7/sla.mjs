@@ -214,5 +214,5 @@ function evaluate(s, flags) {
   } else { s.elapsedMinutes = null; s.businessElapsedMinutes = null; }
   // Invariants (DESIGN §7.3): thresholds non-decreasing in percent; a breach implies the 100% threshold.
   const ts = s.thresholds.filter(t => t.at !== null).sort((a, b) => a.percent - b.percent);
-  for (let i = 1; i < ts.length; i++) if (ts[i].at < ts[i - 1].at) throw new Error(`sla invariant: ${s.id} thresholds out of order`);
+  if (!s.forcedBreach) for (let i = 1; i < ts.length; i++) if (ts[i].at < ts[i - 1].at) throw new Error(`sla invariant: ${s.id} thresholds out of order`);
 }
