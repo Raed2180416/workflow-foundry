@@ -546,6 +546,11 @@
   },
   "marker:LEDGR:Sammel": {
    "meaning": "DOES_NOT_COUNT"
+  },
+  "dob-order:VENDEX": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
   }
  },
  "wbed-r1:311:d3": {
@@ -566,6 +571,11 @@
    "order_after_switch": "MDY"
   },
   "dob-order:BRIGHTDESK": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:VENDEX": {
    "order": "MDY",
    "switch_date": "",
    "order_after_switch": "DMY"
@@ -613,6 +623,11 @@
    "order_after_switch": "DMY"
   },
   "dob-order:ATLAS": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:VENDEX": {
    "order": "DMY",
    "switch_date": "",
    "order_after_switch": "MDY"

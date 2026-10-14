@@ -67,6 +67,11 @@
   "place-country": {
    "Basel": "CH",
    "Modena": "IT"
+  },
+  "dob-order:VENDEX": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
   }
  },
  "wbed-r1:374:d4": {

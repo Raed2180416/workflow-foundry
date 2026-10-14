@@ -1,7 +1,7 @@
 {
  "generatedBy": "beds/wbed/references/validate.mjs",
  "referenceSha256": {
-  "r1": "66d12bf1295e152bcd699b01d4418d08cb9f43863d46500898282523b7bb0803",
+  "r1": "b267498f7aae0b6fa6e92765e0bc55a32afc0ad615acc27c4fca80ab33e4d73d",
   "r3": "61e6e6236d1cd613a803e15b30288973ca90fc2a1a518815952a52d0b303f020"
  },
  "flowV3Sha256": "15da5c24efd537afb30eb8754955583c735fb6f36e8c55ca3646c13aa848f06b",
@@ -39,23 +39,23 @@
      "timeout": 0,
      "pass": 0,
      "costUsd": {
-      "total": 0.032618,
+      "total": 0.030908,
       "max": 0.0046055,
-      "mean": 0.002718
+      "mean": 0.002576
      },
      "modelCalls": {
-      "total": 93,
+      "total": 91,
       "max": 10
      },
-     "sonnetCalls": 20,
+     "sonnetCalls": 19,
      "judgesFailed": 0,
      "maxPromptChars": 2719,
      "latencyMs": {
-      "median": 647,
-      "max": 760
+      "median": 420,
+      "max": 557
      },
      "flags": {
-      "dob-order-second-opinion": 3
+      "dob-order-second-opinion": 2
      },
      "labelMatch": 0,
      "deopts": {}
@@ -69,20 +69,20 @@
      "timeout": 0,
      "pass": 0,
      "costUsd": {
-      "total": 0.040941,
+      "total": 0.040866,
       "max": 0.0066257,
-      "mean": 0.003412
+      "mean": 0.003405
      },
      "modelCalls": {
-      "total": 98,
+      "total": 97,
       "max": 12
      },
      "sonnetCalls": 25,
      "judgesFailed": 0,
      "maxPromptChars": 2719,
      "latencyMs": {
-      "median": 732,
-      "max": 898
+      "median": 437,
+      "max": 516
      },
      "flags": {
       "dob-order-second-opinion": 8
@@ -108,15 +108,13 @@
       "max": 0
      },
      "sonnetCalls": 0,
-     "judgesFailed": 1,
+     "judgesFailed": 0,
      "maxPromptChars": 0,
      "latencyMs": {
-      "median": 602,
-      "max": 731
+      "median": 374,
+      "max": 479
      },
-     "flags": {
-      "dob-order-from-evidence": 1
-     },
+     "flags": {},
      "labelMatch": 12,
      "deopts": {}
     }
@@ -125,7 +123,8 @@
    "judgeIndependentPass": 0,
    "judgeIndependentFail": 0,
    "judgeDependent": 12,
-   "passUnderSomePolicy": 12,
+   "passUnderSomeStub": 0,
+   "passWithAuthorReadings": 12,
    "tasksDetail": [
     {
      "task": "r1:373:3",
@@ -170,7 +169,7 @@
       "B": false
      },
      "judgeDependent": true,
-     "judges": 7
+     "judges": 5
     },
     {
      "task": "r1:374:4",
@@ -334,8 +333,8 @@
      "judgesFailed": 109,
      "maxPromptChars": 1194,
      "latencyMs": {
-      "median": 669,
-      "max": 811
+      "median": 450,
+      "max": 526
      },
      "flags": {
       "reason-judge-failed": 12
@@ -367,8 +366,8 @@
      "judgesFailed": 0,
      "maxPromptChars": 1194,
      "latencyMs": {
-      "median": 587,
-      "max": 1028
+      "median": 410,
+      "max": 511
      },
      "flags": {},
      "labelMatch": 0,
@@ -398,8 +397,8 @@
      "judgesFailed": 0,
      "maxPromptChars": 0,
      "latencyMs": {
-      "median": 512,
-      "max": 647
+      "median": 407,
+      "max": 432
      },
      "flags": {},
      "labelMatch": 0,
@@ -413,7 +412,8 @@
    "judgeIndependentPass": 0,
    "judgeIndependentFail": 0,
    "judgeDependent": 12,
-   "passUnderSomePolicy": 0,
+   "passUnderSomeStub": 0,
+   "passWithAuthorReadings": 0,
    "tasksDetail": [
     {
      "task": "r3:373:3",
@@ -623,7 +623,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 760,
+   "latencyMs": 433,
    "events": 36,
    "maxPromptChars": 2639,
    "invariants": {
@@ -685,7 +685,7 @@
    "overridden": 4,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 647,
+   "latencyMs": 365,
    "events": 36,
    "maxPromptChars": 0,
    "invariants": {
@@ -750,7 +750,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 619,
+   "latencyMs": 451,
    "events": 39,
    "maxPromptChars": 2639,
    "invariants": {
@@ -814,7 +814,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 662,
+   "latencyMs": 417,
    "events": 50,
    "maxPromptChars": 1570,
    "invariants": {
@@ -877,7 +877,7 @@
    "overridden": 8,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 545,
+   "latencyMs": 479,
    "events": 48,
    "maxPromptChars": 0,
    "invariants": {
@@ -944,7 +944,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 855,
+   "latencyMs": 463,
    "events": 57,
    "maxPromptChars": 1570,
    "invariants": {
@@ -991,28 +991,25 @@
    "deopt": null,
    "error": null,
    "pass": false,
-   "score": 0.413333,
-   "outDigest": "cca06f453e012365",
-   "costUsd": 0.0031178000000000004,
-   "modelCalls": 7,
-   "sonnetCalls": 2,
-   "judges": 7,
+   "score": 0.433898,
+   "outDigest": "bc7f72ee69882d2c",
+   "costUsd": 0.0014084,
+   "modelCalls": 5,
+   "sonnetCalls": 1,
+   "judges": 5,
    "judgesFailed": 0,
    "judgeNames": [
     "dob-order",
-    "dob-order-second",
     "marker",
     "marker-tiebreak",
     "place-country"
    ],
    "escalations": 0,
    "overridden": 0,
-   "flags": [
-    "dob-order-second-opinion"
-   ],
-   "flagCount": 1,
-   "latencyMs": 525,
-   "events": 44,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 362,
+   "events": 38,
    "maxPromptChars": 1526,
    "invariants": {
     "rows-conserved": 1,
@@ -1063,21 +1060,19 @@
    "costUsd": 0,
    "modelCalls": 0,
    "sonnetCalls": 0,
-   "judges": 5,
-   "judgesFailed": 1,
+   "judges": 4,
+   "judgesFailed": 0,
    "judgeNames": [
     "dob-order",
     "marker",
     "place-country"
    ],
    "escalations": 0,
-   "overridden": 5,
-   "flags": [
-    "dob-order-from-evidence"
-   ],
-   "flagCount": 1,
-   "latencyMs": 554,
-   "events": 41,
+   "overridden": 4,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 342,
+   "events": 36,
    "maxPromptChars": 0,
    "invariants": {
     "rows-conserved": 1,
@@ -1108,7 +1103,6 @@
     "renderings-read": 1,
     "names-read": 1,
     "dobs-read": 1,
-    "dob-order-known": 1,
     "phone-table-read": 1,
     "invoice-date-shape": 105,
     "invoice-dates-read": 3
@@ -1126,10 +1120,10 @@
    "pass": false,
    "score": 0.669388,
    "outDigest": "9b466d50604e37d6",
-   "costUsd": 0.0017578,
-   "modelCalls": 6,
+   "costUsd": 0.0016818999999999998,
+   "modelCalls": 5,
    "sonnetCalls": 1,
-   "judges": 6,
+   "judges": 5,
    "judgesFailed": 0,
    "judgeNames": [
     "dob-order",
@@ -1141,8 +1135,8 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 732,
-   "events": 41,
+   "latencyMs": 433,
+   "events": 38,
    "maxPromptChars": 1526,
    "invariants": {
     "rows-conserved": 1,
@@ -1204,7 +1198,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 647,
+   "latencyMs": 397,
    "events": 51,
    "maxPromptChars": 1687,
    "invariants": {
@@ -1266,7 +1260,7 @@
    "overridden": 7,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 731,
+   "latencyMs": 360,
    "events": 45,
    "maxPromptChars": 0,
    "invariants": {
@@ -1332,7 +1326,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 640,
+   "latencyMs": 423,
    "events": 50,
    "maxPromptChars": 1687,
    "invariants": {
@@ -1399,7 +1393,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 629,
+   "latencyMs": 334,
    "events": 44,
    "maxPromptChars": 2719,
    "invariants": {
@@ -1462,7 +1456,7 @@
    "overridden": 5,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 516,
+   "latencyMs": 442,
    "events": 39,
    "maxPromptChars": 0,
    "invariants": {
@@ -1525,7 +1519,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 898,
+   "latencyMs": 394,
    "events": 39,
    "maxPromptChars": 2719,
    "invariants": {
@@ -1589,7 +1583,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 684,
+   "latencyMs": 407,
    "events": 52,
    "maxPromptChars": 1648,
    "invariants": {
@@ -1652,7 +1646,7 @@
    "overridden": 8,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 549,
+   "latencyMs": 354,
    "events": 48,
    "maxPromptChars": 0,
    "invariants": {
@@ -1719,7 +1713,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 628,
+   "latencyMs": 436,
    "events": 55,
    "maxPromptChars": 1648,
    "invariants": {
@@ -1782,7 +1776,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 572,
+   "latencyMs": 460,
    "events": 38,
    "maxPromptChars": 1567,
    "invariants": {
@@ -1844,7 +1838,7 @@
    "overridden": 4,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 529,
+   "latencyMs": 311,
    "events": 36,
    "maxPromptChars": 0,
    "invariants": {
@@ -1910,7 +1904,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 735,
+   "latencyMs": 504,
    "events": 41,
    "maxPromptChars": 1567,
    "invariants": {
@@ -1974,7 +1968,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 757,
+   "latencyMs": 557,
    "events": 49,
    "maxPromptChars": 1567,
    "invariants": {
@@ -2037,7 +2031,7 @@
    "overridden": 7,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 701,
+   "latencyMs": 469,
    "events": 45,
    "maxPromptChars": 0,
    "invariants": {
@@ -2101,7 +2095,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 744,
+   "latencyMs": 437,
    "events": 49,
    "maxPromptChars": 1567,
    "invariants": {
@@ -2167,7 +2161,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 517,
+   "latencyMs": 420,
    "events": 44,
    "maxPromptChars": 2313,
    "invariants": {
@@ -2229,7 +2223,7 @@
    "overridden": 5,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 602,
+   "latencyMs": 382,
    "events": 39,
    "maxPromptChars": 0,
    "invariants": {
@@ -2295,7 +2289,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 695,
+   "latencyMs": 385,
    "events": 44,
    "maxPromptChars": 2313,
    "invariants": {
@@ -2359,7 +2353,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 650,
+   "latencyMs": 445,
    "events": 52,
    "maxPromptChars": 1649,
    "invariants": {
@@ -2422,7 +2416,7 @@
    "overridden": 8,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 696,
+   "latencyMs": 439,
    "events": 48,
    "maxPromptChars": 0,
    "invariants": {
@@ -2489,7 +2483,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 1,
-   "latencyMs": 787,
+   "latencyMs": 419,
    "events": 55,
    "maxPromptChars": 1649,
    "invariants": {
@@ -2552,7 +2546,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 605,
+   "latencyMs": 400,
    "events": 41,
    "maxPromptChars": 1740,
    "invariants": {
@@ -2614,7 +2608,7 @@
    "overridden": 5,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 558,
+   "latencyMs": 325,
    "events": 39,
    "maxPromptChars": 0,
    "invariants": {
@@ -2677,7 +2671,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 729,
+   "latencyMs": 516,
    "events": 41,
    "maxPromptChars": 1740,
    "invariants": {
@@ -2740,7 +2734,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 600,
+   "latencyMs": 456,
    "events": 49,
    "maxPromptChars": 2594,
    "invariants": {
@@ -2802,7 +2796,7 @@
    "overridden": 7,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 604,
+   "latencyMs": 374,
    "events": 45,
    "maxPromptChars": 0,
    "invariants": {
@@ -2868,7 +2862,7 @@
     "dob-order-second-opinion"
    ],
    "flagCount": 2,
-   "latencyMs": 523,
+   "latencyMs": 475,
    "events": 55,
    "maxPromptChars": 2594,
    "invariants": {
@@ -2931,7 +2925,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 6,
-   "latencyMs": 811,
+   "latencyMs": 401,
    "events": 78,
    "maxPromptChars": 991,
    "invariants": {
@@ -2981,7 +2975,7 @@
    "overridden": 12,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 394,
+   "latencyMs": 289,
    "events": 66,
    "maxPromptChars": 0,
    "invariants": {
@@ -3019,7 +3013,7 @@
    "pass": false,
    "score": 0.375,
    "outDigest": "985d66f2efd71a75",
-   "costUsd": 0.0005992,
+   "costUsd": 0.0005991999999999999,
    "modelCalls": 12,
    "sonnetCalls": 0,
    "judges": 12,
@@ -3031,7 +3025,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 553,
+   "latencyMs": 456,
    "events": 66,
    "maxPromptChars": 991,
    "invariants": {
@@ -3069,7 +3063,7 @@
    "pass": false,
    "score": 0.56875,
    "outDigest": "ca950cfa7c1013ea",
-   "costUsd": 0.0080638,
+   "costUsd": 0.008063800000000001,
    "modelCalls": 27,
    "sonnetCalls": 7,
    "judges": 20,
@@ -3083,7 +3077,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 7,
-   "latencyMs": 642,
+   "latencyMs": 364,
    "events": 128,
    "maxPromptChars": 1109,
    "invariants": {
@@ -3133,7 +3127,7 @@
    "overridden": 20,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 507,
+   "latencyMs": 356,
    "events": 114,
    "maxPromptChars": 0,
    "invariants": {
@@ -3183,7 +3177,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 1028,
+   "latencyMs": 392,
    "events": 114,
    "maxPromptChars": 1109,
    "invariants": {
@@ -3235,7 +3229,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 6,
-   "latencyMs": 621,
+   "latencyMs": 367,
    "events": 80,
    "maxPromptChars": 1194,
    "invariants": {
@@ -3285,7 +3279,7 @@
    "overridden": 13,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 576,
+   "latencyMs": 315,
    "events": 68,
    "maxPromptChars": 0,
    "invariants": {
@@ -3323,7 +3317,7 @@
    "pass": false,
    "score": 0.375,
    "outDigest": "ad9afd516edf6490",
-   "costUsd": 0.0007267,
+   "costUsd": 0.0007266999999999999,
    "modelCalls": 13,
    "sonnetCalls": 0,
    "judges": 13,
@@ -3335,7 +3329,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 587,
+   "latencyMs": 397,
    "events": 68,
    "maxPromptChars": 1194,
    "invariants": {
@@ -3373,7 +3367,7 @@
    "pass": false,
    "score": 0.459375,
    "outDigest": "aefa6fc896a9208f",
-   "costUsd": 0.014146400000000002,
+   "costUsd": 0.0141464,
    "modelCalls": 41,
    "sonnetCalls": 13,
    "judges": 28,
@@ -3387,7 +3381,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 13,
-   "latencyMs": 746,
+   "latencyMs": 481,
    "events": 156,
    "maxPromptChars": 1083,
    "invariants": {
@@ -3437,7 +3431,7 @@
    "overridden": 28,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 430,
+   "latencyMs": 346,
    "events": 130,
    "maxPromptChars": 0,
    "invariants": {
@@ -3475,7 +3469,7 @@
    "pass": false,
    "score": 0.39375,
    "outDigest": "5c1f988402867226",
-   "costUsd": 0.0014224000000000003,
+   "costUsd": 0.0014224,
    "modelCalls": 28,
    "sonnetCalls": 0,
    "judges": 28,
@@ -3487,7 +3481,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 619,
+   "latencyMs": 410,
    "events": 130,
    "maxPromptChars": 1083,
    "invariants": {
@@ -3525,7 +3519,7 @@
    "pass": false,
    "score": 0.55,
    "outDigest": "3a896306db225277",
-   "costUsd": 0.003301299999999999,
+   "costUsd": 0.0033012999999999996,
    "modelCalls": 14,
    "sonnetCalls": 3,
    "judges": 11,
@@ -3539,7 +3533,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 3,
-   "latencyMs": 527,
+   "latencyMs": 377,
    "events": 70,
    "maxPromptChars": 1089,
    "invariants": {
@@ -3589,7 +3583,7 @@
    "overridden": 11,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 437,
+   "latencyMs": 280,
    "events": 64,
    "maxPromptChars": 0,
    "invariants": {
@@ -3627,7 +3621,7 @@
    "pass": false,
    "score": 0.48125,
    "outDigest": "72e4e0d8b5c79a4f",
-   "costUsd": 0.0005948,
+   "costUsd": 0.0005947999999999999,
    "modelCalls": 11,
    "sonnetCalls": 0,
    "judges": 11,
@@ -3639,7 +3633,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 512,
+   "latencyMs": 299,
    "events": 64,
    "maxPromptChars": 1089,
    "invariants": {
@@ -3677,7 +3671,7 @@
    "pass": false,
    "score": 0.55,
    "outDigest": "8222606f746032fe",
-   "costUsd": 0.0152324,
+   "costUsd": 0.015232399999999998,
    "modelCalls": 36,
    "sonnetCalls": 14,
    "judges": 22,
@@ -3691,7 +3685,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 14,
-   "latencyMs": 643,
+   "latencyMs": 450,
    "events": 146,
    "maxPromptChars": 1086,
    "invariants": {
@@ -3741,7 +3735,7 @@
    "overridden": 22,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 627,
+   "latencyMs": 429,
    "events": 118,
    "maxPromptChars": 0,
    "invariants": {
@@ -3791,7 +3785,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 741,
+   "latencyMs": 511,
    "events": 118,
    "maxPromptChars": 1086,
    "invariants": {
@@ -3843,7 +3837,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 5,
-   "latencyMs": 694,
+   "latencyMs": 526,
    "events": 76,
    "maxPromptChars": 1109,
    "invariants": {
@@ -3893,7 +3887,7 @@
    "overridden": 12,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 450,
+   "latencyMs": 408,
    "events": 66,
    "maxPromptChars": 0,
    "invariants": {
@@ -3931,7 +3925,7 @@
    "pass": false,
    "score": 0.4375,
    "outDigest": "e64c42efbc6199e2",
-   "costUsd": 0.0006149999999999999,
+   "costUsd": 0.0006150000000000001,
    "modelCalls": 12,
    "sonnetCalls": 0,
    "judges": 12,
@@ -3943,7 +3937,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 512,
+   "latencyMs": 352,
    "events": 66,
    "maxPromptChars": 1109,
    "invariants": {
@@ -3995,7 +3989,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 13,
-   "latencyMs": 669,
+   "latencyMs": 509,
    "events": 148,
    "maxPromptChars": 1113,
    "invariants": {
@@ -4045,7 +4039,7 @@
    "overridden": 24,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 647,
+   "latencyMs": 432,
    "events": 122,
    "maxPromptChars": 0,
    "invariants": {
@@ -4083,7 +4077,7 @@
    "pass": false,
    "score": 0.371875,
    "outDigest": "a133dea022a40830",
-   "costUsd": 0.0012303,
+   "costUsd": 0.0012302999999999997,
    "modelCalls": 24,
    "sonnetCalls": 0,
    "judges": 24,
@@ -4095,7 +4089,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 642,
+   "latencyMs": 482,
    "events": 122,
    "maxPromptChars": 1113,
    "invariants": {
@@ -4147,7 +4141,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 3,
-   "latencyMs": 699,
+   "latencyMs": 332,
    "events": 72,
    "maxPromptChars": 1051,
    "invariants": {
@@ -4197,7 +4191,7 @@
    "overridden": 12,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 510,
+   "latencyMs": 389,
    "events": 66,
    "maxPromptChars": 0,
    "invariants": {
@@ -4247,7 +4241,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 478,
+   "latencyMs": 359,
    "events": 66,
    "maxPromptChars": 1051,
    "invariants": {
@@ -4299,7 +4293,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 18,
-   "latencyMs": 534,
+   "latencyMs": 508,
    "events": 172,
    "maxPromptChars": 1108,
    "invariants": {
@@ -4349,7 +4343,7 @@
    "overridden": 31,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 535,
+   "latencyMs": 432,
    "events": 136,
    "maxPromptChars": 0,
    "invariants": {
@@ -4399,7 +4393,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 524,
+   "latencyMs": 504,
    "events": 136,
    "maxPromptChars": 1108,
    "invariants": {
@@ -4437,7 +4431,7 @@
    "pass": false,
    "score": 0.48125,
    "outDigest": "ca3e74d6eb36eb51",
-   "costUsd": 0.0074777,
+   "costUsd": 0.0074776999999999995,
    "modelCalls": 19,
    "sonnetCalls": 7,
    "judges": 12,
@@ -4451,7 +4445,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 7,
-   "latencyMs": 675,
+   "latencyMs": 345,
    "events": 80,
    "maxPromptChars": 1037,
    "invariants": {
@@ -4501,7 +4495,7 @@
    "overridden": 12,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 604,
+   "latencyMs": 407,
    "events": 66,
    "maxPromptChars": 0,
    "invariants": {
@@ -4551,7 +4545,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 617,
+   "latencyMs": 414,
    "events": 66,
    "maxPromptChars": 1037,
    "invariants": {
@@ -4603,7 +4597,7 @@
     "reason-judge-failed"
    ],
    "flagCount": 14,
-   "latencyMs": 604,
+   "latencyMs": 506,
    "events": 154,
    "maxPromptChars": 1102,
    "invariants": {
@@ -4653,7 +4647,7 @@
    "overridden": 26,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 512,
+   "latencyMs": 423,
    "events": 126,
    "maxPromptChars": 0,
    "invariants": {
@@ -4703,7 +4697,7 @@
    "overridden": 0,
    "flags": [],
    "flagCount": 0,
-   "latencyMs": 584,
+   "latencyMs": 375,
    "events": 126,
    "maxPromptChars": 1102,
    "invariants": {

@@ -1,8 +1,8 @@
 {
- "schema": "card-freeze/1",
+ "schema": "card-freeze/2",
  "frozenAt": "2026-10-14",
  "purpose": "E-BED §8.1 step 1: library cards P58 (decision table with hit policies), P59 (saga planner with reverse-order compensation and idempotent commands) and P60 (SLA / obligation clock with pause, resume and a business calendar), authored blind from outside sources and frozen before any spec-E is written or read.",
- "digest": "sha256 per file (raw bytes); card sha256 = sha256 of the lines \"<path> <file sha256>\\n\" over the card's files in sorted path order; skeletonSha256 equals cards.mjs loadCard().skeletonSha256. Checked by experiments/library/test/ebed-cards.test.mjs.",
+ "digest": "sha256 per file (raw bytes); card sha256 = sha256 of the lines \"<path> <file sha256>\\n\" over the card's files in sorted path order; skeletonSha256 equals cards.mjs loadCard().skeletonSha256. history[] keeps the digests of superseded versions, amendments[] says what changed and why. Checked by experiments/library/test/ebed-cards.test.mjs, which also requires each current and superseded card digest to appear in research/enterprise-20261014/CARDS-P58-P60-REVIEW.md (a copy outside cards/).",
  "blind": {
   "notRead": [
    "research/enterprise-20261014/ (E-BED.md, BAR-SET, CATALOGUE and the rest)",
@@ -12,6 +12,7 @@
   "incidental": "A grep for E-BED / G18 / P58 printed research/jit-20261008/PROOF-LEDGER.md lines 156-175 (claims L1-L12). They name P58 (decision table), P59 (compensation planner), P60 (obligation clock), the titles of E11 (Reg X), E12 (SEPA R-transactions) and E13 (payroll editions), and the phrase \"effective-dated edition switches, new formats, schema renames and no-notice editions\". No item specification, fixture or oracle was read. Nothing else under research/ about the bar set was opened.",
   "g18": "The bar set's own definition of G18 was not read. The convention below is this author's, from the sources listed (Drools date-effective / date-expires as the precedent, with the case's business date in place of the wall clock)."
  },
+ "blindAddendum": "Added with amendment A1 (not by the author): the adversarial review of v1 found the incidental exposure larger than blind.incidental states. The same PROOF-LEDGER lines 156-175 also show claim rows L2, L10 and L12 (which items are piloted first, which carry N-version oracles, item sizes); still no item specification. The review also notes that git cannot prove blindness: E-BED.md was committed before the card files first appear in autosave commits, so blindness rests on the author's statement. The full record is in research/enterprise-20261014/CARDS-P58-P60-REVIEW.md, which blind sessions do not read (it is under the notRead directory above).",
  "convention": {
   "G18": {
    "edition": "{edition: name, effectiveFrom: YYYY-MM-DD (inclusive), effectiveTo?: YYYY-MM-DD (exclusive), ...content}",
@@ -207,6 +208,37 @@
   },
   "P59": {
    "name": "saga planner (reverse-order compensation, idempotent commands)",
+   "version": 2,
+   "sha256": "5057a290d01bbfb1f98dab7adafbbab0c7f2b5169956250525737fee26643d21",
+   "skeletonSha256": "2d33cbcb32bdadd18f96f72aae7fff07cdaf24d6bee1f052e0aeeb0e4b3c9b28",
+   "files": {
+    "P59/card.json": "624b1d3c10de19554f42b297a7d6f87a4bd767beb1660081b11fcca40e4d328d",
+    "P59/fixtures/drift.json": "b2495c252fa63ca81940c8f329e0d3814a6d5ead2622aa32c0365a5aeeb81f0f",
+    "P59/fixtures/no-match.json": "9010705d8817306888c9b7d4aadaa9a80ea21a3579b518a14c4bcff9de057c75",
+    "P59/fixtures/positive.json": "2e04c40f48d0fee5efc4bf48f2ed5d3237c4a7a43412a6489381216656dfa3a5",
+    "P59/skeleton.mjs": "2d33cbcb32bdadd18f96f72aae7fff07cdaf24d6bee1f052e0aeeb0e4b3c9b28"
+   },
+   "amendment": "A1"
+  },
+  "P60": {
+   "name": "SLA / obligation clock (pause, resume, business calendar)",
+   "version": 2,
+   "sha256": "c63b747a1f6302f1c65696a1d36d82058cfe69a2243d7fd5edbaf8968bcc8280",
+   "skeletonSha256": "2a7903899b9c7ad1b11a28033e70247a071559aa998186c6ed336f6b9adab04a",
+   "files": {
+    "P60/card.json": "8f6db8b272b4c3d9cafa7d3fd935c34c83f2c427711cb44771de7ab50383a7b8",
+    "P60/fixtures/drift.json": "3f90d84b8264a06f11a00636418030df73c3288e69011464baddef22310c4758",
+    "P60/fixtures/no-match.json": "ea21b8ed6b088254c02466c7d043a3bfa94fcfaf9546658ffc24968f82ce7da6",
+    "P60/fixtures/positive.json": "1b34335f28f1557d77ca113b928e9a0ccf9d40e05f04854416e8059647381e0c",
+    "P60/skeleton.mjs": "2a7903899b9c7ad1b11a28033e70247a071559aa998186c6ed336f6b9adab04a"
+   },
+   "amendment": "A1"
+  }
+ },
+ "history": [
+  {
+   "card": "P59",
+   "name": "saga planner (reverse-order compensation, idempotent commands)",
    "version": 1,
    "sha256": "d6d17693db16b91a185cf438265e80c1537824269ea69fcac0420474ea975f1a",
    "skeletonSha256": "d108654570cc461413e95087b46eae6b7f2f542fb465fa3cba48c316db765132",
@@ -216,9 +248,13 @@
     "P59/fixtures/no-match.json": "9010705d8817306888c9b7d4aadaa9a80ea21a3579b518a14c4bcff9de057c75",
     "P59/fixtures/positive.json": "2e04c40f48d0fee5efc4bf48f2ed5d3237c4a7a43412a6489381216656dfa3a5",
     "P59/skeleton.mjs": "d108654570cc461413e95087b46eae6b7f2f542fb465fa3cba48c316db765132"
-   }
+   },
+   "frozenAt": "2026-10-14",
+   "commit": "26f4f7b0aa0b9630be0ea96a6ecb304e5c384098",
+   "supersededBy": 2
   },
-  "P60": {
+  {
+   "card": "P60",
    "name": "SLA / obligation clock (pause, resume, business calendar)",
    "version": 1,
    "sha256": "cd9b392339a9b0e4ce4eb24aa9b8f2a6526d530267b595bd3f9a2dc8de16e4d3",
@@ -229,7 +265,38 @@
     "P60/fixtures/no-match.json": "ea21b8ed6b088254c02466c7d043a3bfa94fcfaf9546658ffc24968f82ce7da6",
     "P60/fixtures/positive.json": "1b34335f28f1557d77ca113b928e9a0ccf9d40e05f04854416e8059647381e0c",
     "P60/skeleton.mjs": "0b7d1ce393fb59eb6109539ba215f53a5f3dfccf5f05e1e80e892cf19a1210d2"
-   }
+   },
+   "frozenAt": "2026-10-14",
+   "commit": "26f4f7b0aa0b9630be0ea96a6ecb304e5c384098",
+   "supersededBy": 2
   }
- }
+ ],
+ "amendments": [
+  {
+   "id": "A1",
+   "date": "2026-10-14",
+   "versions": {
+    "P59": [
+     1,
+     2
+    ],
+    "P60": [
+     1,
+     2
+    ]
+   },
+   "files": [
+    "P59/card.json",
+    "P59/skeleton.mjs",
+    "P60/card.json",
+    "P60/skeleton.mjs"
+   ],
+   "unchanged": "P58 (v1, every file) and every fixture of P59 and P60: byte-identical to v1, and their expected outputs hold under v2.",
+   "why": [
+    "P60: v1 set breached = elapsed > target in business minutes, while dueAt is the instant elapsed reaches the target. Business time does not advance outside the windows, so a target reached at the end of a window left breached false (and a stop counted as met) until the next window opened: start 15:00 local with 120 minutes on a 09-17 calendar, at 18:00 v1 reported not breached with dueAt in the past, and a stop at 08:59 the next morning was met. A wake-up at dueAt could never observe the breach, and no output gave the breach instant. v2: breached = the clock ran past dueAt (AS_OF, the stop or the pause strictly after it). Reaching the target exactly stays on time, as in v1. Checklist line and header comment updated.",
+    "P59: v1 checked idempotency keys for distinctness within one saga only, so a KEY that leaves out the saga id passed and gave two sagas the same key; a keyed participant would absorb the second saga's command as a replay of the first. v2: keys are distinct across every saga of the run, and a probe saga (the id plus a suffix) must get keys of its own, so such a KEY is refused also in a run of one saga (invariant keys-distinct, detail.why says which). Checklist line and KEY slot doc updated."
+   ],
+   "provenance": "Not blind. The amending session read the adversarial review of v1, which quotes the bar set and reports how the oracle-side libraries read the same cases, and it grepped E-BED.md for its freeze rules (8.1 step 1: frozen before any spec-E exists; none existed at amendment time). It read no item specification and no oracle source. Both changes are internal-consistency fixes argued from the cards' own contracts (P60: dueAt is the instant the envelope wakes at, and S17 breaches once the duration elapses; P59: its own checklist line on keys); nothing was added from the bar, and the coverage gaps the review lists were left alone on purpose. Disposition of every finding: research/enterprise-20261014/CARDS-P58-P60-REVIEW.md (blind sessions do not read it)."
+  }
+ ]
 }

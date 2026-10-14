@@ -39,7 +39,7 @@ export function stubPort(policyName, log) {
 
 // One run: the reference on one task under one stub policy. Returns the row the summary reads.
 export const AUTHOR_SEEDS = Object.freeze([373, 374, 375, 376, 377, 378]), VALIDATION_SEEDS = Object.freeze([301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312]);
-export async function runOne({ rung, seed, difficulty, policy, work, labels = false }) {
+export async function runOne({ rung, seed, difficulty, policy, work, labels = false, flip = null }) {
   const ref = REFERENCES[rung];
   const bed = await import(`../../${ref.bed}/index.mjs`);
   let author = {};
@@ -48,10 +48,10 @@ export async function runOne({ rung, seed, difficulty, policy, work, labels = fa
     const file = AUTHOR_SEEDS.includes(seed) ? 'author/fixture-answers.json' : VALIDATION_SEEDS.includes(seed) ? 'author/validation-answers.json' : null;
     if (!file) throw new Error('policy author is for the author fixtures (373-378) and the validation seeds (301-312) only');
     const table = JSON.parse(readFileSync(path.join(HERE, file), 'utf8'));
-    author = { flowOverride: path.join(HERE, 'author/author-override.mjs'), flowOverrideData: { answers: table[`${ref.bed}:${seed}:d${difficulty}`] ?? {} } };
+    author = { flowOverride: path.join(HERE, 'author/author-override.mjs'), flowOverrideData: { answers: table[`${ref.bed}:${seed}:d${difficulty}`] ?? {}, ...(flip ? { flip } : {}) } };
   }
   const task = bed.generate({ seed, split: 'dev', difficulty });
-  const workdir = path.join(work, `${rung}-${seed}-d${difficulty}-${policy}`);
+  const workdir = path.join(work, `${rung}-${seed}-d${difficulty}-${policy}${flip ? `-flip-${flip}` : ''}`);
   rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
   const log = [];
   const rc = await runCompiled({ solvePath: ref.file, task: { prompt: task.prompt, inputs: task.inputs, ...(task.files ? { files: task.files } : {}) }, modelPort: stubPort(policy === 'author' ? 'A' : policy, log),
@@ -61,7 +61,7 @@ export async function runOne({ rung, seed, difficulty, policy, work, labels = fa
   const judges = rc.trace.filter(e => e.kind === 'judge');
   const done = [...rc.trace].reverse().find(e => ['done', 'deopt', 'crash'].includes(e.kind));
   const row = {
-    rung, seed, difficulty, policy, status: rc.status, deopt: rc.deopt ? { kind: rc.deopt.kind, name: rc.deopt.name } : null, error: rc.error?.code ?? null,
+    rung, seed, difficulty, policy, ...(flip ? { flip } : {}), status: rc.status, deopt: rc.deopt ? { kind: rc.deopt.kind, name: rc.deopt.name } : null, error: rc.error?.code ?? null,
     pass, score, outDigest: rc.output == null ? null : sha(canonical(rc.output)).slice(0, 16),
     costUsd: rc.costUsd, modelCalls: log.length, sonnetCalls: log.filter(x => x.model === SONNET).length,
     judges: judges.length, judgesFailed: judges.filter(j => !j.ok).length, judgeNames: [...new Set(judges.map(j => j.name.replace(/:.*$/, '')))].sort(),
@@ -117,10 +117,11 @@ export function summarize(rows) {
       deopts: Object.fromEntries([...new Set(rs.filter(r => r.deopt).map(r => `${r.deopt.kind}:${r.deopt.name}`))].map(k => [k, rs.filter(r => r.deopt && `${r.deopt.kind}:${r.deopt.name}` === k).length])),
     }]; })),
     judgeIndependent: tasks.filter(t => !t.judgeDependent).length,
-    judgeIndependentPass: tasks.filter(t => !t.judgeDependent && Object.values(t.pass).every(Boolean)).length,
-    judgeIndependentFail: tasks.filter(t => !t.judgeDependent && Object.values(t.pass).every(x => !x)).length,
+    judgeIndependentPass: tasks.filter(t => !t.judgeDependent && t.pass.A && t.pass.B).length,
+    judgeIndependentFail: tasks.filter(t => !t.judgeDependent && !t.pass.A && !t.pass.B).length,
     judgeDependent: tasks.filter(t => t.judgeDependent).length,
-    passUnderSomePolicy: tasks.filter(t => Object.values(t.pass).some(Boolean)).length,
+    passUnderSomeStub: tasks.filter(t => t.pass.A || t.pass.B).length,
+    ...(policies.includes('author') ? { passWithAuthorReadings: tasks.filter(t => t.pass.author).length } : {}),
     tasksDetail: tasks,
   };
 }
@@ -131,7 +132,9 @@ async function main() {
   const seeds = parseRange(args.seeds ?? '301-312'), diffs = parseRange(args.difficulties ?? '3,4'), policies = String(args.policies ?? 'A,B').split(',');
   const work = args.work ?? mkdtempSync(path.join(os.tmpdir(), 'wbed-refs-'));
   const jobs = [];
-  for (const rung of rungs) for (const seed of seeds) for (const difficulty of diffs) for (const policy of policies) jobs.push({ rung, seed, difficulty, policy, work, labels: !!args.labels });
+  // --flip <class>: author policy with one judge class answered wrongly (sensitivity; see author-override.mjs).
+  const flip = typeof args.flip === 'string' ? args.flip : null;
+  for (const rung of rungs) for (const seed of seeds) for (const difficulty of diffs) for (const policy of policies) jobs.push({ rung, seed, difficulty, policy, work, labels: !!args.labels, flip });
   const rows = [], conc = Number(args.concurrency ?? 2);
   let next = 0;
   await Promise.all(Array.from({ length: conc }, async () => {

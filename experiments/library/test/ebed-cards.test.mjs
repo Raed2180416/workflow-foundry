@@ -5,8 +5,11 @@
 // kind and name. T3-style: each worked example as a one-node solver fires no checker code, and a mutant per code fires
 // exactly that code. Semantics: the hit policies, compensation order and clock rules, run in-process through the same
 // skeleton and slot rendering as the assembler (a fake flow whose guard and invariant throw), cross-checked against the
-// real runner on every positive fixture. Freeze: the card files still hash to cards/FROZEN-P58-P60.json, and the catalog
-// is what tools/build-catalog.mjs regenerates. $0; no model calls.
+// real runner on every positive fixture. Review of v1 (research/enterprise-20261014/CARDS-P58-P60-REVIEW.md): regression
+// tests for the P60 breach instant (R1) and P59 cross-saga keys (R2), boundary cases and a 52-mutant kill check (R3), and
+// the card-side readings for the step-3 differential (R4). Freeze: the card files hash to their current entries in
+// cards/FROZEN-P58-P60.json (P58 v1, P59 and P60 v2 after amendment A1, v1 kept in history), with a digest copy outside
+// cards/, and the catalog is what tools/build-catalog.mjs regenerates. $0; no model calls.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -14,6 +17,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { loadCard, loadL1, loadCatalog, expandedCard, CARDS_DIR } from '../cards.mjs';
 import { checkSlots, assemble, lintFn, HELPERS_SOURCE, fragmentOf, renderSlots, withDefaults } from '../assemble.mjs';
 import { runFixture } from '../run.mjs';
@@ -523,11 +527,11 @@ test('E-bed cards (review R3, E-BED §9.5): every semantic mutant dies on the fi
   t.diagnostic(JSON.stringify(report));
 });
 
-// R4 (cross-part; the differential itself belongs to beds/ebed/lib): the cards' side of the four readings on which the
-// review found the cards and the oracle-side libraries apart, pinned so the differential can name them as ledger rows.
+// R4 (cross-part; the differential itself belongs to the step-3 owner): four card readings the review asked to pin as
+// ledger rows before the step-3 differential runs. Pinned here so a change to any of them is a visible card change.
 test('E-bed cards (review R4): card-side ledger readings for the step-3 differential', async () => {
   const dash = await solveAll(P58, [{ slots: FEEL_TABLE, inputs: { apps: [{ id: 'i', date: '2026-06-01', v: 0, n: null }] } }]);
-  assert.ok(dash[0].output.decisions[0].rules.includes('dash'), 'reading 1: the dash matches a null input (Drools / Kogito reading)');
+  assert.ok(dash[0].output.decisions[0].rules.includes('dash'), 'reading 1: the dash matches a null input');
   const compound = { ...credit('OUTPUT_ORDER'), OUTPUTS: [{ name: 'decision', values: ['decline', 'refer', 'accept'] }, { name: 'tier', values: ['a', 'b'] }] };
   compound.EDITIONS = { editions: [{ ...compound.EDITIONS.editions[0], rules: compound.EDITIONS.editions[0].rules.map(r => ({ ...r, then: { ...r.then, tier: 'a' } })) }] };
   assert.equal(deoptOf(await one(compound, app('a', 700, 0.5))), 'invariant/table-well-formed', 'reading 2: OUTPUT_ORDER over compound outputs is refused, not ranked');
@@ -544,16 +548,50 @@ const FROZEN = JSON.parse(readFileSync(path.join(CARDS_DIR, 'FROZEN-P58-P60.json
 const sha = b => createHash('sha256').update(b).digest('hex');
 const filesOf = id => { const walk = d => readdirSync(path.join(CARDS_DIR, d), { withFileTypes: true }).flatMap(e => (e.isDirectory() ? walk(`${d}/${e.name}`) : [`${d}/${e.name}`])); return walk(id).sort(); };
 
-test('E-bed cards: every card file still hashes to cards/FROZEN-P58-P60.json (the cards are frozen before any spec-E)', () => {
-  assert.equal(FROZEN.schema, 'card-freeze/1');
+const digestOf = f => sha(Object.keys(f.files).sort().map(rel => `${rel} ${f.files[rel]}\n`).join(''));
+const REVIEW_DOC = new URL('../../../research/enterprise-20261014/CARDS-P58-P60-REVIEW.md', import.meta.url);
+
+test('E-bed cards: every card file hashes to its current entry in cards/FROZEN-P58-P60.json (the cards are frozen before any spec-E)', () => {
+  assert.equal(FROZEN.schema, 'card-freeze/2');
   assert.deepEqual(Object.keys(FROZEN.cards).sort(), EBED);
   for (const id of EBED) {
     const f = FROZEN.cards[id], files = filesOf(id);
     assert.deepEqual(Object.keys(f.files).sort(), files, `${id}: the frozen file list`);
     for (const rel of files) assert.equal(sha(readFileSync(path.join(CARDS_DIR, rel))), f.files[rel], `${rel} changed after the freeze`);
-    assert.equal(f.sha256, sha(files.map(rel => `${rel} ${f.files[rel]}\n`).join('')), `${id}: card digest`);
+    assert.equal(f.sha256, digestOf(f), `${id}: card digest`);
     assert.equal(f.skeletonSha256, card[id].skeletonSha256);
+    assert.equal(f.version, card[id].version, `${id}: the frozen version is the card's version`);
   }
+  assert.equal(FROZEN.cards.P58.sha256, '414717d390705ed1f19d7d2631fb47d372a16fdd9db80c8d59975f92b116c7f7', 'P58 is still the blind v1');
+});
+
+test('E-bed cards: amendment A1 (review R1, R2): superseded versions keep their digests, the amendment names exactly the changed files, and the digests have a copy outside cards/', t => {
+  assert.deepEqual(FROZEN.history.map(h => [h.card, h.version, h.supersededBy]), [['P59', 1, 2], ['P60', 1, 2]]);
+  const changed = [];
+  for (const h of FROZEN.history) {
+    assert.equal(digestOf(h), h.sha256, `${h.card} v${h.version}: digest`);
+    const now = FROZEN.cards[h.card];
+    assert.equal(now.version, h.supersededBy);
+    assert.deepEqual(Object.keys(now.files).sort(), Object.keys(h.files).sort(), `${h.card}: same file list`);
+    for (const rel of Object.keys(h.files)) if (h.files[rel] !== now.files[rel]) changed.push(rel);
+  }
+  const [a1] = FROZEN.amendments;
+  assert.equal(FROZEN.amendments.length, 1);
+  assert.deepEqual([a1.id, a1.versions], ['A1', { P59: [1, 2], P60: [1, 2] }]);
+  assert.deepEqual(changed.sort(), [...a1.files].sort(), 'fixtures are byte-identical to v1; only card.json and skeleton.mjs changed');
+  assert.match(a1.provenance, /^Not blind\./);
+  // A copy outside cards/ (review finding 14): editing the cards and FROZEN together cannot go unnoticed.
+  const doc = readFileSync(REVIEW_DOC, 'utf8');
+  for (const f of [...Object.values(FROZEN.cards), ...FROZEN.history]) assert.ok(doc.includes(f.sha256), `${f.name} v${f.version}: ${f.sha256} is copied in ${REVIEW_DOC.pathname}`);
+  // Where git history is present, the v1 files at the freeze commit hash to the recorded v1 digests.
+  const repo = fileURLToPath(new URL('../../../', import.meta.url));
+  let checked = 0;
+  for (const h of FROZEN.history) for (const [rel, want] of Object.entries(h.files)) {
+    let blob;
+    try { blob = execFileSync('git', ['-C', repo, 'show', `${h.commit}:experiments/library/cards/${rel}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { continue; }
+    assert.equal(sha(blob), want, `${rel} at ${h.commit.slice(0, 7)}`); checked++;
+  }
+  t.diagnostic(`v1 files checked against git: ${checked}`);
 });
 
 test('E-bed cards: the catalog is what tools/build-catalog.mjs regenerates, with P58-P60 as authored entries indexed like the rest', () => {

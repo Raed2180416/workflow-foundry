@@ -601,7 +601,7 @@ const dobConventions = await flow.phase('dob-conventions', async () => {
   const systemsNeeding = uniq(live.filter(r => r.dob.kind === 'numeric').map(r => r.system));
   for (const s of systemsNeeding) {
     const para = paraOf(CUSTOMER_NOTES, s);
-    const coded = codeOrder(para, /birth/i);
+    const coded = codeOrder(para, /birth|numeric dates?/i);
     if (coded) { conv[s] = { order: coded, switch: null, by: 'code' }; continue; }
     const ref = /same order as ([A-Z]{3,})/.exec(para)?.[1];
     const ask = { para, context: ref ? paraOf(CUSTOMER_NOTES, ref) : null,

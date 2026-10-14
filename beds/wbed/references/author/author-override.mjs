@@ -28,10 +28,22 @@ function reasonAnswer(request) {
   if (!line) return { error: `author override: no notes line names ${m[2]}` };
   return { value: { reason, quote: line } };
 }
+// Sensitivity (validate.mjs --flip <class>): the author answer of every judge in one class is replaced by its opposite
+// (DMY<->MDY and the switch dropped; VOID<->KEEP; COUNTS<->DOES_NOT_COUNT; a place -> UNKNOWN), to measure how many tasks
+// that judge class decides.
+const FLIP = {
+  'dob-order': a => ({ ...a, order: a.order === 'DMY' ? 'MDY' : 'DMY', switch_date: '' }),
+  'row-marker': a => (a.meaning === 'VOID' ? { ...a, meaning: 'KEEP' } : a.meaning === 'KEEP' ? { ...a, meaning: 'VOID' } : a),
+  'invoice-status': a => (a.meaning === 'COUNTS' ? { ...a, meaning: 'DOES_NOT_COUNT' } : a.meaning === 'DOES_NOT_COUNT' ? { ...a, meaning: 'COUNTS' } : a),
+  'place-country': a => Object.fromEntries(Object.keys(a).map(k => [k, 'UNKNOWN'])),
+};
+const classOf = (name, a) => (name.startsWith('dob-order') ? 'dob-order' : name === 'place-country' ? 'place-country'
+  : name.startsWith('marker') ? (['VOID', 'KEEP'].includes(a?.meaning) ? 'row-marker' : 'invoice-status') : null);
 export default function override(callSite, request) {
   if (/^reason:/.test(callSite.name)) return reasonAnswer(request);
   const name = callSite.name.replace(/^marker-tiebreak:/, 'marker:').replace(/^dob-order-second:/, 'dob-order:').replace(/^reason-second:/, 'reason:');
-  const answer = data.answers?.[name];
+  let answer = data.answers?.[name];
+  if (answer !== undefined && data.flip && classOf(name, answer) === data.flip) answer = FLIP[data.flip](answer);
   if (answer === undefined) return { error: `author table has no answer for ${callSite.name}` };
   const block = /<<<\n([\s\S]*?)\n>>>/.exec(String(request.prompt ?? ''))?.[1] ?? '';
   // place-country: the table maps each place (as the register writes it) to its country; the answer follows the lines.
