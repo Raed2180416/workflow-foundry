@@ -112,6 +112,9 @@ function iso(t) {
 }
 const amsDate = t => iso(t).slice(0, 10);
 const minOf = (...xs) => { const v = xs.filter(x => x !== null && x !== undefined); return v.length ? Math.min(...v) : null; };
+/** A due time inside both windows that a report opens: from its arrival `a` and from its own time `r` (<= a) when they
+ *  overlap ([a, r + 120 min]); `delay` minutes after the arrival, but at least 30 minutes before r + 120 min. */
+const dueIn = (r, a, delay) => Math.max(a, Math.min(a + delay * MIN, r + 90 * MIN));
 const byAtId = (a, b) => (ms(a.at) - ms(b.at)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
 /** §3.1: trim, drop a leading '#', upper-case. */
@@ -164,14 +167,10 @@ function makeEnv(ctx, cache) {
       const rows = json('master/customers.json') ?? [];
       return rows.find(r => r.customerId === customerId)?.email ?? null;
     },
+    /** §3.3: the order's edition table, exact (carrier, code); a code the table does not list is `info`. */
     meaning(ed, carrier, code) {
-      const tables = [ed, ...editionIds.filter(x => x !== ed)].map(id => json(`rulebook/${id}/carrier-codes.json`) ?? []);
-      for (const rows of tables) {
-        const hit = rows.find(r => r.carrier === carrier && r.code === code)
-          ?? rows.find(r => String(r.carrier).toUpperCase() === String(carrier).toUpperCase() && String(r.code).toUpperCase() === String(code).toUpperCase());
-        if (hit) return hit.meaning;
-      }
-      return 'info';
+      const rows = json(`rulebook/${ed}/carrier-codes.json`) ?? [];
+      return rows.find(r => r.carrier === carrier && r.code === code)?.meaning ?? 'info';
     },
     latency(sys) { return Number(json(`api/${sys}.schema.json`)?.latencyMinutes ?? 1); },
     /** canonical arg name -> current name for one op (F5), from the API file plus renames learned from 400s. */
@@ -299,7 +298,7 @@ function openInstance(ctx, oid, self) {
 
 function newCarry(oid, p, pl, ed) {
   return { r: 'o', oid, p, pl, ed, alloc: null, verdict: null, cl0: null, ready0: null, tasks: [], tev: [], acts: [], rep: {}, fails: {},
-    blk: {}, fl: {}, rb: [], rn: {}, bad: {}, pf: {}, wake: null };
+    fl: {}, rb: [], rn: {}, bad: {}, pf: {}, wake: null };
 }
 
 function fromMigration(ev, env, ctx, input) {
@@ -335,7 +334,7 @@ function readDb(ctx, oid) {
   };
 }
 
-function applyEvent(c, ev, env, db, migrating = false) {
+function applyEvent(c, ev, env, db) {
   const p = ev.payload ?? {};
   switch (ev.type) {
     case 'effect.result': return applyResult(c, ev, env);
@@ -344,13 +343,12 @@ function applyEvent(c, ev, env, db, migrating = false) {
       if (normId(p.orderRef) !== c.oid) return;
       if (p.action !== 'amend' && p.action !== 'cancel') return;
       if (c.acts.some(a => a.id === ev.id)) return;
-      // R6.2 / S4 / S6: has the carrier collected any of the order's shipments at or before this action? Decided now, from
-      // the system of record (a shipment already collected, in transit or delivered) and from reports whose reportedAt
-      // is at or before the action; frozen in the fact so a later report cannot flip the decision.
+      // R6.2 / S4 / S7: has any of the order's shipments been reported collected (a collected, inTransit or delivered
+      // report whose reportedAt is at or before the action) among the reports that have reached me now? Decided when the
+      // action is handled (the shipments are cancelled at once) and frozen, so a later report cannot flip it.
       const a = ms(ev.at);
       const reported = Object.values(c.rep).some(r => ['col', 'tr', 'del'].some(s => r[s] && r[s].r <= a));
-      const recorded = !migrating && db.shp.some(s => ['collected', 'inTransit', 'delivered'].includes(s.status));
-      c.acts.push({ id: ev.id, at: ev.at, a: p.action, col: reported || recorded });
+      c.acts.push({ id: ev.id, at: ev.at, a: p.action, col: reported });
       return;
     }
     case 'carrier.status': {
@@ -426,8 +424,9 @@ function applyResult(c, ev, env) {
   const parts = keyParts(key);
   const kind = parts[1];
   if (kind === 'chg' || kind === 'shp') { failStep(c, parts[2], at, kind === 'chg' ? 'charge' : 'ship'); return; }
-  if (kind === 'shc' && r.error?.reason === 'already-collected') { c.blk[parts[2]] = at; return; }
-  c.pf[key] = 1;                                           // permanent failure of a status, notification or compensation step
+  // A status, notification or compensation step that failed permanently (a shipment cancel refused as already-collected
+  // included) is never retried; a compensation chain continues with its next step.
+  c.pf[key] = 1;
 }
 const isRetryableErr = r => r.status === 'unknown' || r.status === 'rate-limited' || r.error?.retryable === true;
 function failStep(c, fid, at, step) {
@@ -468,15 +467,15 @@ function derive(c, db, now, pol) {
   const rep = fid => c.rep[fid] ?? {};
   const postCol = fid => minOf(rep(fid).col?.a, rep(fid).tr?.a, rep(fid).del?.a);
 
-  // per-fulfilment end of an available fulfilment, given an R6.2 cancel time (or null)
+  // per-fulfilment end of an available fulfilment, given an R6.2 cancel time (or null). `at` is when I learned of it
+  // (the message's arrival for a carrier report), `r` the event's own time (a report's reportedAt).
   const fulEnd = (fid, r62) => {
     const rp = rep(fid);
-    let failAt = c.fails[fid] ? c.fails[fid].at : null;
-    if (rp.cf && (postCol(fid) === null || postCol(fid) > rp.cf.a)) failAt = minOf(failAt, rp.cf.a);
     const cands = [];
-    if (failAt !== null) cands.push({ kind: 'failed', at: failAt, o: 0 });
-    if (rp.del) cands.push({ kind: 'completed', at: rp.del.a, o: 1 });
-    if (r62 !== null && r62 !== undefined && !c.blk[fid]) cands.push({ kind: 'cancelled', at: r62, o: 2 });
+    if (c.fails[fid]) cands.push({ kind: 'failed', at: c.fails[fid].at, r: c.fails[fid].at, o: 0 });
+    if (rp.cf && (postCol(fid) === null || postCol(fid) > rp.cf.a)) cands.push({ kind: 'failed', at: rp.cf.a, r: rp.cf.r, o: 0 });
+    if (rp.del) cands.push({ kind: 'completed', at: rp.del.a, r: rp.del.r, o: 1 });
+    if (r62 !== null && r62 !== undefined) cands.push({ kind: 'cancelled', at: r62, r: r62, o: 2 });
     cands.sort((a, b) => a.at - b.at || a.o - b.o);
     return cands[0] ?? null;
   };
@@ -495,9 +494,11 @@ function derive(c, db, now, pol) {
     if (ready === null || !avail.length) return null;
     const ends = avail.map(f => fulEnd(f, r62));
     if (ends.some(e => e === null)) return null;
-    const at = Math.max(...ends.map(e => e.at), ...(hasUnav && counted ? [counted.at] : []));
+    const extra = hasUnav && counted ? [counted.at] : [];
+    const at = Math.max(...ends.map(e => e.at), ...extra);
+    const r = Math.max(...ends.map(e => e.r), ...extra);
     const kind = ends.some(e => e.kind === 'completed') ? 'completed' : ends.some(e => e.kind === 'failed') ? 'failed' : 'cancelled';
-    return { at, kind };
+    return { at, r, kind };
   };
   const r3Done = c.ready0 !== null;
   for (const act of [...c.acts].sort(byAtId)) {
@@ -553,7 +554,7 @@ function orderTick(input, ctx, env, c, extraEvents = null) {
   // carrier reports before customer actions at the same instant (S4); results first so failures are known
   const order = { 'effect.result': 0, 'carrier.status': 1, 'customer.action': 2 };
   const sortEv = list => [...list].sort((a, b) => (ms(a.at) - ms(b.at)) || ((order[a.type] ?? 1) - (order[b.type] ?? 1)) || (a.id < b.id ? -1 : 1));
-  if (c.pre) { for (const e of sortEv(c.pre)) applyEvent(c, e, env, db, true); delete c.pre; }
+  if (c.pre) { for (const e of sortEv(c.pre)) applyEvent(c, e, env, db); delete c.pre; }
   for (const ev of sortEv(events)) applyEvent(c, ev, env, db);
   const pol = env.policy(c.ed);
   const d = derive(c, db, now, pol);
@@ -728,7 +729,7 @@ function planOrder(input, ctx, env, c, db, d, now, pol) {
     const rp = c.rep[fid] ?? {};
 
     if (end && end.kind === 'failed') {
-      const due = end.at + DELAY.failComp * MIN;
+      const due = dueIn(end.r, end.at, DELAY.failComp);
       if (compensate(fid, due, due, { noShipCancel: !!rp.cf }) === true) {
         setF(fid, 'failed', due);
         notify(fid, 'fulfilment-failed', due, `Fulfilment ${fid} of order ${oid} failed.`);
@@ -741,11 +742,11 @@ function planOrder(input, ctx, env, c, db, d, now, pol) {
       if (compensate(fid, end.at, dueRest, {}) === true) setF(fid, 'cancelled', dueRest);
       continue;
     }
-    // carrier reports (completed end included), timed from the messages
-    const dispFrom = minOf(rp.col?.a, rp.del?.a);
-    if (dispFrom !== null) {
-      const s1 = setF(fid, 'dispatched', dispFrom + DELAY.carrier * MIN);
-      if (s1 === 'done' && rp.del) setF(fid, 'completed', rp.del.a + DELAY.carrier * MIN);
+    // carrier reports (completed end included): the first collected or delivered report triggers dispatched
+    const trig = [rp.col, rp.del].filter(Boolean).sort((x, y) => x.a - y.a)[0];
+    if (trig) {
+      const s1 = setF(fid, 'dispatched', dueIn(trig.r, trig.a, DELAY.carrier));
+      if (s1 === 'done' && rp.del) setF(fid, 'completed', dueIn(rp.del.r, rp.del.a, DELAY.carrier));
       continue;
     }
     if (end || stopped || FRANK[r.status] < 1) continue;
@@ -788,18 +789,15 @@ function planOrder(input, ctx, env, c, db, d, now, pol) {
     for (const fid of d.unav) if (!fFinal(fid)) setF(fid, 'cancelled', d.r62 + DELAY.r62Rest * MIN);
     if (d.fuls.every(f => fFinal(f.fulfilmentId))) {
       const due = d.r62 + DELAY.r62Rest * MIN;
-      if (Object.values(d.ends).some(e => e && e.kind === 'completed') && Object.keys(c.blk).length) setO('completed', due);
-      else {
-        setO('cancelled', due);
-        notify(oid, 'order-cancelled', due, `Order ${oid} has been cancelled at the customer's request.`);
-      }
+      setO('cancelled', due);
+      notify(oid, 'order-cancelled', due, `Order ${oid} has been cancelled at the customer's request.`);
     } else work = true;
   }
   // ---- R6.3 refused cancel
   if (d.refusedAt !== null) notify(oid, 'cancel-refused', d.refusedAt + DELAY.refused * MIN, `Order ${oid} can no longer be cancelled: it has been collected by the carrier.`);
   // ---- R4.5 outcome
   if (!stopped && d.outcome) {
-    if (d.fuls.every(f => fFinal(f.fulfilmentId))) setO(d.outcome.kind, d.outcome.at + DELAY.outcome * MIN);
+    if (d.fuls.every(f => fFinal(f.fulfilmentId))) setO(d.outcome.kind, dueIn(d.outcome.r, d.outcome.at, DELAY.outcome));
     else work = true;
   }
   return finish();
@@ -816,11 +814,13 @@ function planOrder(input, ctx, env, c, db, d, now, pol) {
     const charge = db.chg.find(x => x.fulfilmentId === fid) ?? null;
     const ship = db.shp.filter(x => x.fulfilmentId === fid).sort((a, b) => (a.shipmentId < b.shipmentId ? -1 : 1)).at(-1) ?? null;
     if (busy('carrier', K.shp(fid))) { work = true; return false; }
-    if (ship && ship.status === 'created' && !noShipCancel && !c.blk[fid] && !c.pf[K.shc(fid)]) {
+    // A booked shipment not reported collectionFailed is cancelled once (a refusal, e.g. already-collected, is final).
+    const shipLive = ship && !['cancelled', 'failed'].includes(ship.status);
+    if (shipLive && !noShipCancel && !c.pf[K.shc(fid)] && safeStatus(ctx, 'carrier', K.shc(fid)) !== 'committed') {
       want('carrier', K.shc(fid), dueShip, () => mk('carrier', 'cancel', { orderId: oid, fulfilmentId: fid }, K.shc(fid)));
       return false;
     }
-    if (c.blk[fid]) return 'blocked';
+    if (busy('carrier', K.shc(fid))) { work = true; return false; }
     if (busy('billing', K.chg(fid))) { work = true; return false; }
     const refunded = db.rfd.some(x => x.fulfilmentId === fid) || (charge && charge.refundedMinor >= charge.amountMinor);
     if (charge && !refunded && !c.pf[K.rfd(fid)]) {

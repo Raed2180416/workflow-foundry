@@ -34,8 +34,8 @@
 //
 // AMBIGUITY READINGS (each a deliberate choice; cited sections are SPEC-E unless noted)
 // A1 R1.3: the edition is chosen once at intake from `rulebook/*/edition.json` (latest effectiveFrom <= local date of
-//    p) and kept in the carry for the whole order (fees, policy hours, carrier codes). If a carrier code is unknown in
-//    the order's edition, the other editions are consulted (newest effectiveFrom first); still unknown = `info`.
+//    p) and kept in the carry for the whole order (fees, policy hours, carrier codes). Carrier codes are matched
+//    exactly on (carrier, code) in that edition's table; a code it does not list is `info` (§3.3).
 // A2 R1.1/R4.1 "nothing before the order is recorded": every status, reservation and notification of an order created
 //    by this arm depends on `create:<order>` (pipelined with `after` when emitted together).
 // A3 R2.2 + coordinator amendment: the review deadline is first-task-creation + fraudReviewHours; every task (and
@@ -53,10 +53,10 @@
 //    within 60 min of it; the order is then ready when cleared (no R3.1, nothing is unavailable any more); if nothing
 //    is available it is cancelled with reason `nothing-available`.
 // A7 R6.1 "every fulfilment that is not completed, failed or cancelled" includes `unavailable` ones (set cancelled).
-// A8 R6.2/S4/S6: a shipment counts as "reported collected" by a carrier message meaning collected, inTransit or
-//    delivered whose time (min of event time and reportedAt) is <= the cancel time; same-instant collection is
-//    processed first (events sorted by time, carrier messages before customer actions). A refused cancel gets one
-//    `cancel-refused` per order (key per order and template).
+// A8 R6.2/S4/S6/S7: a cancel at time a is refused iff a carrier report meaning collected, inTransit or delivered
+//    that has reached the instance when it acts has reportedAt <= a (S7; the shipment record is not consulted).
+//    Same-instant reports are processed first (events sorted by time, carrier messages before customer actions). A
+//    refused cancel gets one `cancel-refused` per order (key per order and template).
 // A9 R6.2 stop: compensation of a fulfilment waits while any of its forward units is still pending (`status(key)`
 //    pending or result not yet seen), so a step that commits after the cancel is undone after its commit and undo
 //    stays in reverse order. If `carrier.cancel` answers 409 already-collected (collection raced the cancel), the
@@ -385,7 +385,7 @@ function handleAction(S, ctx, out, a, action, now) {
   }
   if (action === 'amend') return;                                       // S5
   if (S.cleared === null) return cancelOrder(S, ctx, out, a, 'customer');                     // R6.4
-  const collected = fids(S).some(id => S.f[id].col !== null && S.f[id].col <= a);             // R6.2, S4, S6
+  const collected = fids(S).some(id => S.f[id].col !== null && S.f[id].col <= a);             // R6.2, S4, S6, S7
   if (collected) {
     if (!S.refused) { S.refused = true; notify(S, ctx, S.oid, 'cancel-refused', `Order ${S.oid} can no longer be cancelled: a shipment has already been collected.`, null); }
     return;
@@ -393,16 +393,12 @@ function handleAction(S, ctx, out, a, action, now) {
   cancelOrder(S, ctx, out, a, 'customer');                              // R6.2 stop + compensate
 }
 
+// §3.3: the order's edition table only (R1.3); a code it does not list is `info`.
 function meaningOf(ctx, S, carrier, code) {
-  const nm = s => String(s ?? '').trim().toLowerCase();
-  const look = dir => {
-    const rows = jf(ctx, `rulebook/${dir}/carrier-codes.json`);
-    if (!Array.isArray(rows)) return null;
-    const r = rows.find(x => x.carrier === carrier && x.code === code) ?? rows.find(x => nm(x.carrier) === nm(carrier) && nm(x.code) === nm(code))
-      ?? (carrier ? null : rows.find(x => nm(x.code) === nm(code)));
-    return r?.meaning ?? null;
-  };
-  return look(S.ed) ?? editions(ctx).map(e => look(e.dir)).find(Boolean) ?? 'info';
+  const rows = jf(ctx, `rulebook/${S.ed}/carrier-codes.json`);
+  if (!Array.isArray(rows)) return 'info';
+  const r = rows.find(x => x.carrier === carrier && x.code === code);
+  return ['collected', 'inTransit', 'delivered', 'collectionFailed'].includes(r?.meaning) ? r.meaning : 'info';
 }
 
 function handleCarrier(S, ctx, ev) {
@@ -414,15 +410,14 @@ function handleCarrier(S, ctx, ev) {
   const carrier = pl.carrier ?? (jf(ctx, 'master/locations.json') ?? []).find(l => l.location === F.loc)?.carrier ?? null;
   const m = meaningOf(ctx, S, carrier, pl.code);
   const at = toMs(ev.at);
-  const rep = toMs(pl.reportedAt);
-  const t = rep !== null && rep < at ? rep : at;
+  const t = toMs(pl.reportedAt) ?? at;                                  // §3.3: the time of a report is its reportedAt
   if (m === 'collected' || m === 'inTransit' || m === 'delivered') F.col = F.col === null ? t : Math.min(F.col, t);
   if (m === 'delivered') F.del = F.del === null ? t : Math.min(F.del, t);
   if (S.u[K.cxl(fid)]?.s === 'ok') return;                             // a shipment we cancelled: nothing
   if (fEnded(F)) return;                                                // completed / failed / cancelled: nothing
   if (m === 'collected') pushStatus(S, fid, 'dispatched');
   else if (m === 'delivered') { pushStatus(S, fid, 'dispatched'); pushStatus(S, fid, 'completed'); checkOutcome(S); }
-  else if (m === 'collectionFailed' && F.col === null) { F.cf = at; failF(S, ctx, fid, at); }
+  else if (m === 'collectionFailed' && F.col === null) { F.cf = t; failF(S, ctx, fid, t); }
 }
 
 function handleTask(S, ctx, out, ev, now) {
@@ -458,6 +453,15 @@ function handleTimer(S, ctx, out, ev) {
 function handleResult(S, ctx, ev) {
   const pl = isObj(ev.payload) ? ev.payload : {};
   const rows = Array.isArray(pl.items) ? pl.items : [pl];
+  if (!Array.isArray(pl.items) && typeof pl.key !== 'string' && pl.system === 'inventory' && pl.op === 'reserve') {
+    // A batch rejected as a whole (400 before any item, or predecessor-failed) carries no key and no items: note it and
+    // reconcile every in-flight reservation item through status(key) once the tick's results are in (reconcileBatches).
+    const [s] = classify(pl);
+    S.batchErr = { s, e: pl.error ?? null };
+    const e = pl.error ?? {};
+    if (e.reason === 'field-renamed' && typeof e.field === 'string' && typeof e.renamedTo === 'string') (S.rn['inventory.reserve'] ??= {})[e.field] = e.renamedTo;
+    return;
+  }
   for (const r of rows) {
     if (typeof r.key !== 'string') continue;
     const key = r.key;
@@ -574,6 +578,26 @@ function commitOf(S, ctx, key) {
     return 'n';
   }
   return 'n';
+}
+
+function reconcileBatches(S, ctx) {
+  const be = S.batchErr;
+  if (!be) return;
+  delete S.batchErr;
+  for (const [key, u] of Object.entries(S.u)) {
+    if (!key.startsWith('rsv:') || u.s !== 'f') continue;
+    let r = 'not-found';
+    try { r = ctx.status('inventory', key); } catch { r = 'not-found'; }
+    if (r === 'committed') { u.s = 'ok'; continue; }
+    if (r === 'pending') continue;
+    if (be.s === 'r400') { u.n400 = (u.n400 ?? 0) + 1; u.s = u.n400 > 3 ? 'x' : 'r'; }
+    else if (be.s === 'x') u.s = 'x';
+    else u.s = 'r';
+    if (u.s === 'x') {
+      const fid = key.slice(4, key.lastIndexOf(':'));
+      if (S.f[fid] && !S.f[fid].comp) failF(S, ctx, fid, null);
+    }
+  }
 }
 
 function reconcileUnknown(S, ctx) {
@@ -784,6 +808,7 @@ function tick(input, ctx) {
       default: if (ev.type?.startsWith('humanTask.')) handleTask(S, ctx, out, ev, now);
     }
   }
+  reconcileBatches(S, ctx);
   intakeDecision(S, ctx, out, now);
   reconcileUnknown(S, ctx);
   const { specs, waitingComp } = planSpecs(S, ctx);
