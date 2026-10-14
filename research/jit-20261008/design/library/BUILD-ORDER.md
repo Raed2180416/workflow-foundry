@@ -115,10 +115,11 @@ it is listed, not scheduled. In the host-harness deployment, triggers (P36–P38
 ## Implementation status
 
 Steps 1–4 of §1 are built in `experiments/library/` (2026-10-09; commits 88473c7, f22f1a3, 7a11979, 297c3f6 on
-`claude/intelligent-hamilton-vg1f9a`), step 9 (the audits) was run (0d9d329, AUDIT-L1; both decisions FAIL), and on
-2026-10-14 the L1 revision and the L0 card fit were applied (below). All of it cost $0: no model or Jev calls, no
+`claude/intelligent-hamilton-vg1f9a`), step 9 (the audits) was run (0d9d329, AUDIT-L1; both decisions FAIL), on
+2026-10-14 the L1 revision and the L0 card fit were applied (below), and on 2026-10-14 steps 5, 6, 7, 8 and 10 were built
+(6fbfa54, 76fb7e3, d8f73ef, 2dd6ace, f39ac21; "Steps 5–8 and 10" below). All of it cost $0: no model or Jev calls, no
 network, and nothing under `src/`, `experiments/jit/` or `experiments/lib/` changed. Tests:
-`node --test --test-concurrency=2 experiments/library/test/*.test.mjs` runs 63 tests, all green.
+`node --test --test-concurrency=2 experiments/library/test/*.test.mjs` runs 90 tests, all green (about 25 s on 4 vCPU).
 
 | step | files | tests |
 |---|---|---|
@@ -126,7 +127,12 @@ network, and nothing under `src/`, `experiments/jit/` or `experiments/lib/` chan
 | 2 L0 and caps | `context.mjs`: the §5.2 cap table as code; `assemblePrompt` refuses with `CONTEXT_OVER_CLASS_BUDGET` (or `CONTEXT_PART_NOT_ALLOWED`) and never truncates; `l0Card()` | T2 partial 4 (the L0 card now fits; the full T2 is step 6) |
 | 3 cards | `cards/P01 P03 P07 P08 P09 P12 P13 P15 P16 P17 P20 P54/{card.json, skeleton.mjs, fixtures/{positive,no-match,drift}.json}`, `skeletons/helpers.mjs`, `assemble.mjs` (typed slot checks, `fn:pure` lint, `solve.mjs` assembly), `run.mjs` ($0 runner) | T4 17 (all 36 fixtures pass; every drift fixture deopts with its expected kind and name) |
 | 4 checker | `check.mjs` (`checkTree` / `checkSolver`) | T3 28: the clean reference tree and the 12 card examples fire nothing; 24 mutants cover all 18 codes and each fires exactly its own code |
+| 5 retrieval | `retrieve.mjs` (§4.3 steps 1–6: hard filters, `shape/1` feature rules, BM25, top companion by lift, profile pre-check beside L2/L4 candidates, cut to 20 by 2 × rules + BM25 rank-normalised + 0.5 × companion, order logged), `l2.mjs` + `tools/l2-harness.mjs` → `out/L2-code-arms.{json,md}` (arms A1, A2 and a popularity floor on the corpus, the stripped variant and the W-bed fixtures; platform-clustered bootstrap CIs); `index.mjs` `shape/1` reads tabular text as item lists | T9 8 (no threshold; numbers below; the L2 falsifier is met) |
+| 6 constructor | `construct.mjs` (S1–S11, `scriptedModel`), `fixtures/construct-scripts.mjs` (R0–R3 scripts), `run.mjs` `solverStub`, `store.mjs` `bindStub` | T2 full 8: 24 constructions on W-bed R0–R3 fixture tasks (seeds 373–378), every prompt within its cap; oversized prompts refused, never cut; S1, S5, S8, S9, S3, S11 paths |
+| 7 Jev ports | `jev.mjs` (request builders for applicability, pattern choice A/B, slot completeness, risk class, quarantined read, failure class; code baselines; decision rules; option audit; `portVersionOf`; `ledgerRows`; `fromJevAnswer` noul / score / choice) | T6 + request shape 5: no label, src or target in a question; no hash, name, evidence, verdict, rank or score in any state; every backticked path resolves; 17 choice questions pass the audit |
+| 8 sweep | `sweep.mjs` (§7.5 steps 1–7, `latentDefectSignal`, run log `runs.jsonl` / `child-journal.jsonl` / `sweeps.jsonl`, `runsFromCallLog` for a stream `calls.jsonl`), `run.mjs` journal replay override, `store.mjs` suspect-aware evidence | T5 4: suspect set = brute-force set (8 of 24) on a two-level `flow.call` tree; callers marked; 8 ledger rows relabelled; $0 |
 | 9 audits | `research/…/design/library/AUDIT-L1.md`, `out/L1-audit*`, `out/L6-audit.json`, `out/audit-scripts/` | L1-a FAIL (coverage 88.4%, Wilson 75.0–95.1%; rule precision 0.73); L6-a FAIL (6 of 21 recorded failures named) |
+| 10 quarantine | `quarantine.mjs` (regex baseline b1, `screenOutsideText`, `plantedSet`, `evaluateBaseline`), `tools/quarantine-baseline.mjs` → `out/T7-quarantine-baseline.json` | T7 2 (no pass rule): recall 0.39, false positives 0.07 |
 
 **L1 revision 1 (2026-10-14; PAUSE-20261009 §4 step 4, AUDIT-L1 §8).** The census tool
 (`design/library/tools/pattern-census.mjs`) now defaults to revision 1; `REVISION=0` reproduces the 2026-10-09 outputs
@@ -204,4 +210,92 @@ Caveat: the bound counts whitespace as free; the card fit did not rely on that (
 - P12 `BODY` is fn only.
 - P09 votes in code, because the SDK has no `flow.flagged`.
 - The registry implements the full §7.1 state set, a superset of the call host's shadow / kept / revoked.
-- Steps 5–8 and 10 are not started.
+- Steps 5–8 and 10: see the next section.
+
+### Steps 5–8 and 10 (2026-10-14, $0)
+
+**Step 5, retrieval (T9; LIBRARY-TESTS L2 code arms; `out/L2-code-arms.md`).** Gold is census revision 1's `needs` (a
+candidate generator, not a measurement): 1,277 scored corpus items (of the 1,510 not refused, 233 need only L0
+constructs and have no L1 gold). Recall@5 with platform-clustered 95% CIs: A1 BM25 0.194 (0.145–0.249), A2 code ranker
+0.172 (0.127–0.221), and the popularity floor 0.267 (0.178–0.368), which beats both. Recall@20 is 0.354 for A1, 0.370
+for A2 and 0.718 for the floor. With structural words stripped, A2 recall@5 drops to 0.110. On the 18 W-bed R1–R3
+fixture tasks (gold = the §4 table's patterns, since no reference workflow exists yet), A2 recall@5 is 0.361 (0.25–0.50)
+and recall@20 is 0.778. **The L2 falsifier is met: A2 recall@5 < 0.7 on W-bed tasks.** As built, the code ranker does
+not find the needed patterns at k = 5. It does better at 20 (the size of the S5 list), and on the corpus it is worse than
+ranking by popularity. Nothing was fitted to raise these numbers. What this means is a decision for the owner: show
+the constructor more of the index (all 54 L1 lines are about 1,620 tokens against S5's 600-token index allocation), or
+change the ranker and measure it again. A3 (bge-small) is not built because the repo has no local embedder.
+
+**Step 6, constructor loop (T2 full).** With the scripted model, R0 tasks route `none` after intake. R1–R3 tasks
+register L2 candidates: R1 runs one S8 repair (ENUM_NO_NONE), R2 one S1 rejection (a span that is not verbatim), and R3
+builds a decomposed child called 16 times. Highest prompt token counts (bound): S1 3,183, S5 1,605, S6 5,544, S8 419,
+against caps of 4,000, 4,000, 8,000 and 4,000. The scripted slot values are mechanical. They are not R1–R3 solutions,
+and no oracle was run on them. Registration stops at `candidate`: verify-before-store needs live probes, an independent
+verifier and a profile learned from accepted tasks, all paid steps.
+
+**Step 7, Jev ports (T6).** Request shapes only; no Jev call. Two designed texts failed the option audit (Jaccard over
+content words > 0.5, or no discriminating word) and were revised; `jev.mjs` `AUDIT_REVISIONS` keeps the originals:
+- JEV-PORTS §5 `internal-reversible` / `internal-irreversible` share 56% of their content words.
+- Card P01 J2 `one-pass` had no word its sibling lacks.
+
+**Step 8, sweep (T5).** A P16 dedupe component, called two levels down a `flow.call` tree, was journaled on 24 seeded
+dev fixtures. Its v1 has a latent BAND defect: pairs at similarity 0.3–0.6 are never judged. An independent check on one
+task, whose input is inside the profile, confirms the defect; v2 fixes it. The sweep marks the same 8 of 24 runs that a
+brute-force v2 re-run changes, with 12 judge answers from the journal and 8 re-asked at $0 through the stub. It marks
+each stub child span and root run, relabels 8 ledger rows and moves the evidence. Without a $0 stand-in for the changed
+judge sites, the sweep counts those runs as unresolved. It never passes them silently.
+
+**Step 10, quarantine (T7; `out/T7-quarantine-baseline.json`).** Baseline b1, the regex list written from JEV-PORTS
+§6's wording before the planted set existed and not tuned on it, scores:
+
+| measure | value | Wilson 95% CI |
+|---|---|---|
+| recall on the 100 planted items | 0.39 | 0.30–0.49 |
+| false-positive rate on the 100 clean items | 0.07 | 0.03–0.14 |
+| false-positive rate on the hard negatives | 0.21 | — |
+
+It catches all credential URLs (12/12) and most role changes (10/13). It misses every exfiltration, reuse-hijack and
+tool-coercion line (0/38). This is the bar the port and baselines b2 and b3 must beat (JEV-PORTS §6: recall ≥ 0.95 at
+≤ 5% false positives).
+
+**Deviations (steps 5–8, 10).**
+- **S4 always offers P01** (`construct.mjs` `ALWAYS`). The §4.3 ranker never surfaces P01 on R1. Slot paths are
+  accessors and cannot reshape inputs, so a plan cannot begin without the spine. The L2 A2 arm does not include this
+  rule.
+- **S5b inserts P54 by code.** One `call-<child>` role is added per child, after the role the child names; §5.1 makes
+  the join code's. The ranker does not retrieve P54 on R3.
+- **S5 J1 questions.** S5 shows the J1 questions of as many top-ranked candidates as fit 600 tokens: 12–14 of 16–20.
+  §5.1 says "each of ≤ 20" and §4.4 says "the top 8"; showing J1 for all 20 does not fit.
+- **S1 renders the task.** The request goes in verbatim, followed by a code-rendered input sample that counts its
+  left-out lines. A request that alone exceeds 3,000 tokens is refused, never cut.
+- **S3 `none` rule thresholds [I].** The rule routes `none` for size band S, no list over 3 items, one source and no
+  effects. Reuse is off by default (LIBRARY §9).
+- **S9 and S10.** S9 runs no live probes, so S10 registers L2 candidates, not `shadow` entries.
+- **`shape/1` extension.** Tabular text (≥ 5 lines, ≥ 60% of them in one delimited line family) counts as an item list,
+  with its header cells as keys. "JSON of the form" counts as verifiable.
+- **P54 card.json** said tier `M` and constructs [12, 6, 3]. It now says `S` and [11, 6, 5, 7], matching L1-PATTERNS
+  §7 and the skeleton. Under `M` the card was dropped by every tier filter. A2's corpus numbers moved slightly when this
+  was fixed (out/L2-code-arms regenerated).
+- **Companions come from the data.** §4.3's example says P45 → P46; revision 1's top companion of P45 by lift is P35.
+- **The noul / score answer converter** is `jev.mjs` `fromJevAnswer`, not a change to `src/judgment.mjs`, which is
+  under the E1 freeze.
+- **Stage-A J1 rewrites.** Only P07, P09, P12 and P13 have the §3 state-path rewrites. Other J1s are wrapped and marked
+  `rewritten: false`.
+- **Sweep versioning and re-asks.** A byte fix is a new hash, so "v+1" is the fixed hash, named in `defect.fixedBy`.
+  Live re-asks are refused (`liveUsdCap` 0; the design default is $1, then owner approval). In T5 a $0 stub table
+  stands in for them.
+- **The sweep reads the library run log** (`runs.jsonl`, `child-journal.jsonl`) or a stream `calls.jsonl`
+  (`runsFromCallLog`). No paid run with `flow.call` exists yet to read.
+- **Observed, not root-caused: a Node 24.21 computed-key anomaly.** After `clusterMean` had first run on rows of
+  another shape, the computed-key load `r.m[metric]` in its loop returned another metric's value: recall@20 came back as
+  precision@5. The function now reads metrics through arrays, and a regression test covers it. The step-5 numbers in
+  6fbfa54 were unaffected (checked by regeneration). Other analysis code that loads metrics by computed key in hot loops
+  may be worth checking.
+
+**Not built or not run, and why.**
+- **A3 embedding arm:** no local embedder; a model download would need its own pinning and acquisition record.
+- **Live S9 probes, shadow admission and any Jev call:** paid steps (P1, P2).
+- **The applicability thresholds τ:** no labelled rows exist yet.
+- **T10 / the L6-a re-run:** a hand audit (step 9). A mechanical check that the 15 new lines carry their failure ids
+  would confirm only that they were added.
+- **P2–P7:** paid steps.
