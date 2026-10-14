@@ -90,6 +90,9 @@ function buildDoc(kind, index, target, core, forb) {
 }
 
 const cache = new Map();
+const CACHE_MAX = 200;       // ~80 KB per entry: bounded at about 16 MB
+/** Drop the memo (tests use it to show that padding does not depend on cache state). */
+export const clearPaddingCache = () => cache.clear();
 /** The padding of one R0 core task: { files, docs: [{ path, kind, bytes, tokens, attempts, sibling }], note, siblings: [{ seed, difficulty, truth }] }
  *  (siblings carry host-side truths: controls and analysis only, never part of a task). */
 export function buildPadding(core) {
@@ -104,7 +107,7 @@ export function buildPadding(core) {
   const kinds = chooseKinds(plan, n - S, padBytes);
   const weights = kinds.map(() => 0.5 + plan.next() * 1.5);
   const order = plan.shuffle(Array.from({ length: n }, (_, i) => i));       // slot i < n - S: kinds[i]; else sibling i - (n - S)
-  const sibBytes = sum(siblings.map(s => bytes(s.text) + 1));
+  const sibBytes = S * 500;     // a fixed allowance (a sibling invoice is 350-750 bytes), not the real size: document sizes must not depend on the difficulty
   const fixedBytes = bytes(JSON.stringify(core.inputs)) + bytes(core.prompt) + bytes(PAD_NOTE(n)) + n;
 
   let scale = 1, result = null;
@@ -123,6 +126,6 @@ export function buildPadding(core) {
   const out = { files, docs: result.docs.map(({ text, ...rest }) => ({ ...rest, bytes: bytes(text), tokens: Math.ceil(bytes(text) / 4) })), note: PAD_NOTE(n),
     siblings: siblings.map(({ seed, difficulty, truth: t }) => ({ seed, difficulty, truth: t })) };
   cache.set(key, out);
-  if (cache.size > 64) cache.delete(cache.keys().next().value);
+  if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
   return out;
 }

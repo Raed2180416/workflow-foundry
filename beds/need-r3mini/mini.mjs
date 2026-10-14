@@ -11,7 +11,7 @@ import { CONTROL_DEFS, appliesAt } from '../wbed/r3/controls.mjs';
 import { scoreAudit } from '../wbed/r3/score.mjs';
 import { quoteLines } from '../wbed/lib/fx.mjs';
 import { refKey, longDay, GROUP_NAME } from '../wbed/lib/domain.mjs';
-import { REASONS } from '../wbed/r3/vocab.mjs';
+import { REASONS, ACCEPTED } from '../wbed/r3/vocab.mjs';
 import { estimateTokens, canonical } from '../lib/canonical.mjs';
 import { rng } from '../lib/rng.mjs';
 
@@ -173,8 +173,9 @@ function plausible(truth, near, valid) {
  * Choose the cut: which 2-3 suppliers of the rung world the task is about. Candidates are every 2- or 3-supplier subset
  * with 3-5 discrepancies in all; they are tried in order of distance of their ambiguity score from the level's band
  * (BANDS), ties in a seeded order with a seeded preference for 2 or 3 suppliers; the first that is well posed wins:
- * under the token cap, adjusted balances not all equal (so rotating them is a real error), and at least one of the
- * rung's plausible mistakes gives a different, schema-valid answer. Returns { ids, k, facts, score, band, near }.
+ * under the token cap, adjusted balances not all equal (so rotating them is a real error), at least two reason codes
+ * and at least one posted discrepancy (a note decides it), and at least one of the rung's plausible mistakes gives a
+ * different, schema-valid answer. Returns { ids, k, facts, score, band, near }.
  */
 export function chooseCut({ seed, split, difficulty, world, full, valid }) {
   const facts = supplierFacts(world, full);
@@ -197,6 +198,10 @@ export function chooseCut({ seed, split, difficulty, world, full, valid }) {
     if (tokensOf(rendered) > TOKEN_CAP) continue;
     const truth = restricted(world, c.ids, {}, full).reduce;
     if (new Set(truth.statements.map(s => s.adjusted_balance_minor)).size < 2) continue;
+    // a decision, not a default: at least two reason codes occur and at least one discrepancy is posted (PRICE, FX or
+    // MISSING_CREDIT, which only the notes can establish), so "everything UNEXPLAINED" and a counts-and-cut-off rule fail
+    const reasons = truth.statements.flatMap(s => s.discrepancies.map(d => d.reason));
+    if (new Set(reasons).size < 2 || !reasons.some(x => ACCEPTED.has(x))) continue;
     const near = plausible(truth, mistakeOutputs(world, c.ids), valid);
     if (!near.length) continue;
     return { ...c, facts: c.ids.map(id => byId.get(id)), band: [lo, hi], near, rendered, truth };

@@ -9,6 +9,7 @@ import * as bed from './index.mjs';
 import * as r0 from '../wbed/r0/index.mjs';
 import { canonical } from '../lib/canonical.mjs';
 import { portableSchemaViolations } from '../../src/schema-subset.mjs';
+import { clearPaddingCache } from './padding.mjs';
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => 601 + i);
 const DS = [2, 3, 4, 5];
@@ -201,7 +202,8 @@ test('oracles agree both ways: R0 reference passes need-r0pad, need-r0pad refere
 test('padding is deterministic: identical on repeat, after the caches are flushed, and in any generation order', () => {
   const keys = SEEDS.slice(0, 10).flatMap(seed => DS.map(d => [seed, d]));
   const first = new Map(keys.map(([seed, d]) => [`${seed}/${d}`, canonical(fresh(seed, d).files)]));
-  for (let i = 0; i < 90; i++) fresh(5000 + i, DS[i % 4]);                                  // push every cache past its bound (64 entries)
+  clearPaddingCache();
+  for (let i = 0; i < 90; i++) r0.generate({ seed: 5000 + i, split: 'dev', difficulty: DS[i % 4] });   // push R0's own memo (64 entries) past its bound
   for (const [seed, d] of [...keys].reverse()) assert.equal(canonical(fresh(seed, d).files), first.get(`${seed}/${d}`), `${seed}/${d}`);
   for (const [seed, d] of keys) assert.equal(canonical(fresh(seed, d).files), canonical(fresh(seed, d).files));
 });
@@ -378,7 +380,7 @@ test('documents: varied kinds, neutral names, shuffled positions, fictional addr
 test('length and structure are separate axes: the shape of the padding is constant across difficulty, only the R0 core grows', () => {
   const lines = d => SEEDS.map(s => (gen(s, d).inputs.document.match(/^ \d+ /gm) ?? []).length);
   for (let d = 2; d < 5; d++) assert.ok(mean(lines(d + 1)) > mean(lines(d)), `lines grow with difficulty: d${d} -> d${d + 1}`);
-  let sameLines = 0, totalLines = 0, identicalDocs = 0, totalDocs = 0;
+  let sameLines = 0, totalLines = 0, identicalDocs = 0, totalDocs = 0, redrawn = 0;
   const spread = [];
   for (const seed of SEEDS) {
     const tasks = DS.map(d => gen(seed, d)), infos = tasks.map(t => bed.describePadding(t));
@@ -390,7 +392,7 @@ test('length and structure are separate axes: the shape of the padding is consta
       for (let j = 1; j < DS.length; j++) {
         const other = tasks[j].files[x.path].split('\n');
         totalDocs++; if (other.join('\n') === base.join('\n')) identicalDocs++;
-        assert.equal(other.length, base.length, `${x.path}: same document shape at every difficulty`);
+        if (other.length !== base.length) { redrawn++; continue; }          // a number collision redrew this document at one difficulty
         base.forEach((line, n) => { totalLines++; if (line === other[n]) sameLines++; });
       }
     });
@@ -400,11 +402,12 @@ test('length and structure are separate axes: the shape of the padding is consta
   // the target's truth reaches the padding only through the rare filters: a colliding ISO date is moved to 2026 (one cell) and a
   // colliding number redraws one document, so documents agree line for line except for those cells
   assert.ok(sameLines / totalLines > 0.995, `documents should not depend on the difficulty: ${sameLines}/${totalLines} lines equal`);
+  assert.ok(redrawn / totalDocs < 0.02, `${redrawn}/${totalDocs} documents were redrawn`);
   assert.ok(identicalDocs / totalDocs > 0.55, `${identicalDocs}/${totalDocs} documents byte-identical across difficulties`);
-  assert.ok(Math.max(...spread) < 1.08, `same seed, different structure should be near-equal length: ${Math.max(...spread)}`);
+  assert.ok(Math.max(...spread) < 1.02, `same seed, different structure should be near-equal length: ${Math.max(...spread)}`);
   // across the whole 160-task grid, length is (almost) unrelated to difficulty while the R0 core's own length follows it
   const grid = SEEDS.flatMap(s => DS.map(d => ({ d, total: tokens(gen(s, d)), core: tokens(r0task(s, d)) })));
-  assert.ok(Math.abs(corr(grid.map(g => g.d), grid.map(g => g.total))) < 0.2, `corr(difficulty, total) = ${corr(grid.map(g => g.d), grid.map(g => g.total))}`);
+  assert.ok(Math.abs(corr(grid.map(g => g.d), grid.map(g => g.total))) < 0.1, `corr(difficulty, total) = ${corr(grid.map(g => g.d), grid.map(g => g.total))}`);
   assert.ok(corr(grid.map(g => g.d), grid.map(g => g.core)) > 0.5);
 });
 
