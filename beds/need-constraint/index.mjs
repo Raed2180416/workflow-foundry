@@ -20,8 +20,11 @@ export const family = {
 
 export const FIELD = { names: 'names', sentence: 'sentence', order: 'order', schedule: 'schedule' };
 
-// Portable schema subset (beds/CONTRACT.md): no pattern / oneOf / uniqueItems / $ref / format. Exactly one
-// property is filled, the one named in the prompt; the oracle rejects any other combination.
+// Portable schema subset (beds/CONTRACT.md; the allowlist is PORTABLE_KEYWORDS in src/schema-subset.mjs): no pattern /
+// oneOf / uniqueItems / $ref / format, and no minProperties / maxProperties either. "Exactly one of these four
+// properties, the one the prompt names" therefore cannot be written into this static schema; `{}` and a two-property
+// object are schema-valid here. The oracle fails them as a field mismatch (details.fieldMismatch), not as a schema
+// error, so details.schemaValid always agrees with this schema; outputSchemaFor(task) is the strict per-task schema.
 export const outputSchema = {
   type: 'object',
   additionalProperties: false,
@@ -44,18 +47,19 @@ export const PASS_RULE = 'every active rule category holds: names (count, letter
 // ---------------------------------------------------------------- output validation
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-/** Schema errors for `output`; with `subtype`, also requires exactly that subtype's field. */
-export function validateOutput(output, subtype = null) {
+// minLength / maxLength count code points, like Ajv (src/validate.mjs) does for the published schema.
+const codePoints = v => [...v].length;
+
+/** Violations of the PUBLISHED outputSchema only: `schemaViolations(o).length === 0` iff validateData(outputSchema, o) accepts o. */
+export function schemaViolations(output) {
   const errors = [];
   if (!isObj(output)) return ['output must be a JSON object'];
   const keys = Object.keys(output);
   for (const k of keys) if (!Object.hasOwn(outputSchema.properties, k)) errors.push(`unexpected field '${k}'`);
-  if (keys.length !== 1) errors.push(`exactly one field must be present (got ${keys.length})`);
-  if (subtype && keys.length === 1 && keys[0] !== FIELD[subtype]) errors.push(`this task needs the field '${FIELD[subtype]}'`);
   const str = (v, spec, label) => {
     if (typeof v !== 'string') { errors.push(`${label} must be a string`); return; }
-    if (spec.minLength !== undefined && v.length < spec.minLength) errors.push(`${label} is too short`);
-    if (spec.maxLength !== undefined && v.length > spec.maxLength) errors.push(`${label} is too long`);
+    if (spec.minLength !== undefined && codePoints(v) < spec.minLength) errors.push(`${label} is too short`);
+    if (spec.maxLength !== undefined && codePoints(v) > spec.maxLength) errors.push(`${label} is too long`);
   };
   for (const k of keys) {
     const spec = outputSchema.properties[k]; if (!spec) continue;
@@ -72,6 +76,35 @@ export function validateOutput(output, subtype = null) {
     }
   }
   return errors;
+}
+
+/**
+ * What the portable subset cannot say: exactly one property, and (with `subtype`) the one this task asks for.
+ * Empty for a non-object (that is a schema violation). A non-empty result is a field mismatch, not a schema error.
+ */
+export function fieldViolations(output, subtype = null) {
+  if (!isObj(output)) return [];
+  const errors = []; const keys = Object.keys(output);
+  if (keys.length !== 1) errors.push(`exactly one field must be present (got ${keys.length})`);
+  if (subtype && keys.length === 1 && keys[0] !== FIELD[subtype]) errors.push(`this task needs the field '${FIELD[subtype]}'`);
+  return errors;
+}
+
+/** Schema violations plus field violations; with `subtype`, also requires exactly that subtype's field. */
+export function validateOutput(output, subtype = null) {
+  return [...schemaViolations(output), ...fieldViolations(output, subtype)];
+}
+
+/**
+ * The strict schema for one task (a task, or a subtype name): the published property definition with that
+ * property required and nothing else allowed. Portable subset only. validateData(outputSchemaFor(task), o) accepts o
+ * iff the oracle reports details.schemaValid && !details.fieldMismatch for o. Depends on the seed alone.
+ */
+export function outputSchemaFor(taskOrSubtype) {
+  const subtype = typeof taskOrSubtype === 'string' ? taskOrSubtype : Number.isSafeInteger(taskOrSubtype?.seed) ? subtypeOf(taskOrSubtype.seed) : null;
+  if (!SUBTYPES.includes(subtype)) throw new TypeError('outputSchemaFor needs a task or one of the subtype names');
+  const field = FIELD[subtype];
+  return { type: 'object', additionalProperties: false, required: [field], properties: { [field]: clone(outputSchema.properties[field]) } };
 }
 
 // Copies a solver output as plain JSON-like data first: accessors, proxies, non-plain prototypes, holes and deep
@@ -124,7 +157,7 @@ const clone = v => JSON.parse(JSON.stringify(v));
 export function oracle(task, output) {
   // Never throws: whatever the task or output, it returns a verdict.
   try { return judge(task, output); } catch (error) {
-    return { pass: false, score: 0, details: { schemaValid: false, errors: [`oracle could not read the output: ${String(error?.message ?? error).slice(0, 200)}`] } };
+    return { pass: false, score: 0, details: { schemaValid: false, fieldMismatch: true, errors: [`oracle could not read the output: ${String(error?.message ?? error).slice(0, 200)}`] } };
   }
 }
 
@@ -133,13 +166,16 @@ function judge(task, rawOutput) {
   let spec;
   try { spec = rebuilt(task).spec; } catch (error) { return { pass: false, score: 0, details: { error: `cannot rebuild task: ${error.message}` } }; }
   let output;
-  try { output = plainCopy(rawOutput); } catch (error) { return { pass: false, score: 0, details: { schemaValid: false, errors: [error.message] } }; }
-  const errors = validateOutput(output, spec.subtype);
-  if (errors.length) return { pass: false, score: 0, details: { schemaValid: false, errors } };
+  try { output = plainCopy(rawOutput); } catch (error) { return { pass: false, score: 0, details: { schemaValid: false, fieldMismatch: true, errors: [error.message] } }; }
+  // details.schemaValid is validity under the PUBLISHED outputSchema, nothing more; the one-field rule is reported apart.
+  const schemaErrors = schemaViolations(output); const fieldErrors = fieldViolations(output, spec.subtype);
+  const fieldMismatch = !isObj(output) || fieldErrors.length > 0;
+  if (schemaErrors.length) return { pass: false, score: 0, details: { schemaValid: false, fieldMismatch, errors: [...schemaErrors, ...fieldErrors] } };
+  if (fieldMismatch) return { pass: false, score: 0, details: { schemaValid: true, fieldMismatch: true, subtype: spec.subtype, failed: ['field'], errors: fieldErrors } };
   const result = { names: () => checkNames(spec, output.names), sentence: () => checkSentence(spec, output.sentence), order: () => checkOrder(spec, output.order), schedule: () => checkSchedule(spec, output.schedule) }[spec.subtype]();
   return {
     pass: result.pass, score: result.pass ? 1 : Math.min(result.score, 0.99),
-    details: { schemaValid: true, subtype: spec.subtype, failed: result.checks.filter(c => !c.ok).map(c => c.id), checks: result.checks },
+    details: { schemaValid: true, fieldMismatch: false, subtype: spec.subtype, failed: result.checks.filter(c => !c.ok).map(c => c.id), checks: result.checks },
   };
 }
 
@@ -270,10 +306,17 @@ function truncated(task) {
   }
 }
 
+// The reference's content filed under a property of another subtype that the published schema still accepts (a string
+// array of at most 40 strings of at most 40 characters): details.schemaValid stays true and the verdict comes from the
+// one-field rule. The content is cut to fit, so this is never the reference answer.
 function wrongField(task) {
   const { spec } = rebuilt(task); const ref = referenceSolve(task);
-  const other = SUBTYPES[(SUBTYPES.indexOf(spec.subtype) + 1) % SUBTYPES.length];
-  return { [other]: ref[spec.subtype] };
+  const strings = {
+    names: () => ref.names, order: () => ref.order, sentence: () => ref.sentence.split(' '),
+    schedule: () => [...new Set(ref.schedule.map(row => row.person))],
+  }[spec.subtype]().slice(0, 40).map(v => v.slice(0, 40));
+  const target = ['order', 'names'].find(field => field !== FIELD[spec.subtype]);
+  return { [target]: strings };
 }
 
 export const badControls = [

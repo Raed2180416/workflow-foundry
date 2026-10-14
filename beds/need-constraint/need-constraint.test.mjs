@@ -4,7 +4,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { estimateTokens } from '../lib/canonical.mjs';
 import { rng } from '../lib/rng.mjs';
-import { family, outputSchema, generate, oracle, referenceSolve, altSolve, badControls, validateOutput, subtypeOf, SUBTYPES, FIELD } from './index.mjs';
+import { family, outputSchema, outputSchemaFor, generate, oracle, referenceSolve, altSolve, badControls, validateOutput, schemaViolations, fieldViolations, subtypeOf, SUBTYPES, FIELD } from './index.mjs';
+import { validateData } from '../../src/validate.mjs';
+import { portableSchemaViolations } from '../../src/schema-subset.mjs';
 import { build, KNOBS, MIN_ORDER_SOLUTIONS, VERSION, renderConstraint } from './gen.mjs';
 import { checkNames, checkSentence, checkOrder, checkSchedule, embeds, tokenize } from './check.mjs';
 import { solveOrder, solveSchedule } from './solve.mjs';
@@ -184,7 +186,7 @@ test('interface: family metadata, portable output schema, exports', () => {
   assert.ok(family.domain && family.description);
   assert.deepEqual(nonPortableKeys(outputSchema), []);
   assert.deepEqual(Object.keys(outputSchema.properties).sort(), [...SUBTYPES].sort());
-  for (const f of ['generate', 'oracle', 'referenceSolve', 'altSolve', 'validateOutput']) assert.equal(typeof { generate, oracle, referenceSolve, altSolve, validateOutput }[f], 'function');
+  for (const f of ['generate', 'oracle', 'referenceSolve', 'altSolve', 'validateOutput', 'outputSchemaFor', 'schemaViolations', 'fieldViolations']) assert.equal(typeof { generate, oracle, referenceSolve, altSolve, validateOutput, outputSchemaFor, schemaViolations, fieldViolations }[f], 'function');
   for (const name of ['empty', 'shuffled-or-corrupted', 'plausible-but-wrong']) assert.ok(badControls.some(c => c.name === name), name);
   assert.ok(badControls.length >= 3);
 });
@@ -235,6 +237,7 @@ test('referenceSolve passes the oracle for every dev seed 601-640 at every diffi
       const verdict = oracle(task, ref);
       assert.equal(verdict.pass, true, `seed ${seed} d${d} ${JSON.stringify(verdict.details.checks?.filter(c => !c.ok))}`);
       assert.equal(verdict.score, 1);
+      assert.equal(verdict.details.schemaValid, true); assert.equal(verdict.details.fieldMismatch, false);
       passes++;
     }
     assert.ok(passes >= 20 && passes === SEEDS.length);
@@ -276,6 +279,13 @@ test('bad controls: every control fails for every dev seed at every difficulty, 
           if (subtypeOf(seed) !== 'order') assert.ok(verdict.score >= 0.5, `near miss should be mostly right: seed ${seed} d${d} score ${verdict.score}`);
           else assert.equal(verdict.details.failed.includes('permutation'), false, 'an order near miss is still a permutation');
         }
+        if (control.name === 'wrong-field') {
+          // right content under another subtype's property: the published schema accepts it, the one-field rule fails it
+          const keys = Object.keys(out);
+          assert.equal(keys.length, 1); assert.notEqual(keys[0], FIELD[subtypeOf(seed)]);
+          assert.equal(verdict.details.schemaValid, true); assert.equal(verdict.details.fieldMismatch, true);
+          assert.deepEqual(verdict.details.failed, ['field']); assert.equal(verdict.score, 0);
+        } else assert.equal(verdict.details.fieldMismatch, false, `${control.name} has the right field`);
         failed++;
       }
       assert.ok(failed >= 20, `${control.name} d${d}`);
@@ -290,9 +300,10 @@ test('schema-invalid output is rejected', () => {
   assert.deepEqual(validateOutput(ok), []);
   for (const sub of SUBTYPES) {
     const seed = seedsOf(sub)[0]; const task = taskOf(seed, 3); const ref = referenceSolve(task); const field = FIELD[sub];
-    const other = SUBTYPES[(SUBTYPES.indexOf(sub) + 1) % 4];
+    // Outputs the published outputSchema rejects. `{}`, two-property objects and another subtype's property are
+    // schema-valid there (the portable subset cannot say "exactly one"): see the field-rule regression tests below.
     const bad = [
-      null, undefined, 42, 'text', true, [], [ref[field]], {}, { [field]: null }, { ...ref, extra: 1 }, { ...ref, [other]: ref[field] }, { [other]: ref[field] },
+      null, undefined, 42, 'text', true, [], [ref[field]], { [field]: null }, { ...ref, extra: 1 },
       { answer: ref[field] }, { [field]: 7 }, { [field]: { x: 1 } },
     ];
     if (sub === 'sentence') bad.push({ sentence: ['a sentence.'] }, { sentence: 'x'.repeat(601) });
@@ -317,6 +328,108 @@ test('schema-invalid output is rejected', () => {
   assert.equal(subtypeOf(604), 'names');
   const names = oracle(taskOf(604, 1), { names: ['a', 'b', 'c'] });
   assert.equal(names.details.schemaValid, true); assert.equal(names.pass, false);
+});
+
+// ================================================================== regression: published schema versus the oracle
+// Defect: outputSchema (four optional properties) accepted `{}`, two-property objects and another subtype's property
+// while the oracle reported details.schemaValid:false for them, so a schema-validity rate taken from the oracle differed
+// from what the published schema (and the shared validator src/validate.mjs) says. minProperties/maxProperties are NOT
+// in the repo's portable allowlist (src/schema-subset.mjs), so the fix is not to add them: schemaValid now means
+// "valid under outputSchema" and the one-field rule is reported apart (details.fieldMismatch), with a strict per-task
+// schema (outputSchemaFor) for arms that want structured output enforced.
+const sharedAccepts = (schema, out) => {
+  try { validateData(schema, out); return true; } catch (error) { if (error.code === 'SCHEMA_MISMATCH') return false; throw error; }
+};
+const SAMPLE = { names: ['Bramble', 'Corvexa', 'Linden'], sentence: 'Hello there.', order: ['alpha', 'beta'], schedule: [{ day: 'Mon', shift: 'am', person: 'Ann' }] };
+
+test('regression: the reviewer cases ({}, two fields, wrong field) are schema-valid, field mismatches, and still fail', () => {
+  assert.equal(subtypeOf(604), 'names');
+  const task = taskOf(604, 3);
+  assert.equal(sharedAccepts(outputSchema, {}), true, 'the published schema accepts {}');
+  for (const out of [{}, { names: SAMPLE.names, sentence: 'X.' }, { sentence: 'Hello there.' }, { names: SAMPLE.names, sentence: 'X.', order: SAMPLE.order, schedule: SAMPLE.schedule }]) {
+    assert.equal(sharedAccepts(outputSchema, out), true, JSON.stringify(out));
+    const verdict = oracle(task, out);
+    assert.equal(verdict.pass, false); assert.equal(verdict.score, 0);
+    assert.equal(verdict.details.schemaValid, true, `schemaValid matches the published schema: ${JSON.stringify(out)}`);
+    assert.equal(verdict.details.fieldMismatch, true);
+    assert.deepEqual(verdict.details.failed, ['field']);
+    assert.ok(verdict.details.errors.length >= 1);
+    assert.equal(sharedAccepts(outputSchemaFor(task), out), false, 'the strict per-task schema rejects it');
+  }
+  // the right field plus an extra valid property is still not the one answer the prompt asks for
+  const ref = referenceSolve(task);
+  const two = oracle(task, { ...ref, sentence: 'X.' });
+  assert.equal(two.pass, false); assert.equal(two.details.schemaValid, true); assert.equal(two.details.fieldMismatch, true);
+  // a real schema violation keeps schemaValid false (and still reports the field problem)
+  const wrongType = oracle(task, { names: 7 });
+  assert.equal(wrongType.details.schemaValid, false); assert.equal(wrongType.details.fieldMismatch, false);
+  const bothWrong = oracle(task, { sentence: 7 });
+  assert.equal(bothWrong.details.schemaValid, false); assert.equal(bothWrong.details.fieldMismatch, true);
+  for (const nonObject of [null, [], 'x', 3]) { const v = oracle(task, nonObject); assert.equal(v.details.schemaValid, false); assert.equal(v.details.fieldMismatch, true); }
+});
+
+test('regression: details.schemaValid equals the shared validator on outputSchema, and outputSchemaFor equals schemaValid && !fieldMismatch', t => {
+  const emoji = n => '\u{1F600}'.repeat(n); // one code point, two UTF-16 units: Ajv counts code points
+  let compared = 0; let fieldOnly = 0; let schemaBad = 0;
+  for (const sub of SUBTYPES) for (const d of DIFFS) {
+    const seed = seedsOf(sub)[d - 1]; const task = taskOf(seed, d); const ref = referenceSolve(task); const field = FIELD[sub];
+    const others = SUBTYPES.filter(x => x !== sub);
+    const battery = [
+      ref, altSolve(task), ...badControls.map(c => c.make(task)),
+      {}, { [field]: SAMPLE[field] }, { [field]: ref[field], extra: 1 }, { extra: 1 }, { answer: ref[field] }, null, [], 'text', 7, true,
+      { [field]: null }, { [field]: 7 }, { [field]: {} }, { [field]: [] }, { [field]: '' }, { [field]: [''] }, { [field]: [7] }, { [field]: [null] }, { [field]: [['x']] },
+      { names: ['x'.repeat(40)] }, { names: ['x'.repeat(41)] }, { names: new Array(40).fill('a') }, { names: new Array(41).fill('a') },
+      { names: [emoji(40)] }, { names: [emoji(41)] }, { order: [emoji(60)] }, { order: [emoji(61)] }, { sentence: emoji(600) }, { sentence: emoji(601) },
+      { sentence: 'x'.repeat(600) }, { sentence: 'x'.repeat(601) }, { sentence: '\ud800' }, { names: ['\udc00'] },
+      { schedule: [{ day: 'Mon', shift: 'am', person: emoji(40) }] }, { schedule: [{ day: 'Mon', shift: 'am', person: emoji(41) }] },
+      { schedule: [{ day: 'Mon', shift: 'am', person: '' }] }, { schedule: [{ day: 'Mon', shift: 'am' }] }, { schedule: [{ day: 'Mon', shift: 'am', person: 'A', x: 1 }] },
+      { schedule: new Array(200).fill(SAMPLE.schedule[0]) }, { schedule: new Array(201).fill(SAMPLE.schedule[0]) }, { schedule: [[]] }, { schedule: [null] },
+    ];
+    for (const o of others) battery.push({ [o]: SAMPLE[o] }, { [field]: ref[field], [o]: SAMPLE[o] }, { [others[0]]: SAMPLE[others[0]], [others[1]]: SAMPLE[others[1]] }, { [o]: ref[field] });
+    battery.push(Object.fromEntries(SUBTYPES.map(x => [x, SAMPLE[x]])));
+    // random objects: any of the four properties and one stranger, each with a value from a pool of valid and invalid shapes
+    const r = rng('schema-agreement', seed, d);
+    const pool = [ref[field], SAMPLE.names, SAMPLE.sentence, SAMPLE.order, SAMPLE.schedule, 'str', 7, null, [], [''], ['x'], [{ day: 'Mon', shift: 'am', person: 'Zed' }], [{ day: 'Mon' }], {}, '', 'x'.repeat(700), ['x'.repeat(61)], [emoji(40)], emoji(600)];
+    for (let k = 0; k < 40; k++) {
+      const keys = r.sample([...SUBTYPES, 'extra'], r.int(0, 3));
+      battery.push(Object.fromEntries(keys.map(key => [key, r.pick(pool)])));
+    }
+    battery.forEach((o, idx) => {
+      const verdict = oracle(task, o); const label = `${sub} d${d} #${idx} ${JSON.stringify(o)?.slice(0, 120)}`;
+      const published = sharedAccepts(outputSchema, o); const strict = sharedAccepts(outputSchemaFor(task), o);
+      assert.equal(verdict.details.schemaValid, published, `details.schemaValid vs shared validator on outputSchema: ${label}`);
+      assert.equal(verdict.details.schemaValid && !verdict.details.fieldMismatch, strict, `outputSchemaFor vs oracle: ${label}`);
+      assert.equal(schemaViolations(o).length === 0, published, `schemaViolations: ${label}`);
+      assert.equal(validateOutput(o, sub).length === 0, strict, `validateOutput: ${label}`);
+      assert.equal(validateOutput(o).length === 0, published && fieldViolations(o).length === 0, `validateOutput without subtype: ${label}`);
+      if (!strict) { assert.equal(verdict.pass, false, label); assert.equal(verdict.score, 0, label); }
+      if (published && !strict) { fieldOnly++; assert.deepEqual(verdict.details.failed, ['field'], label); }
+      if (!published) schemaBad++;
+      compared++;
+    });
+    assert.equal(sharedAccepts(outputSchemaFor(task), ref), true, `the strict schema accepts the reference: ${sub} d${d}`);
+  }
+  assert.ok(compared > 1000 && fieldOnly > 300 && schemaBad > 300, `${compared} outputs compared, ${fieldOnly} schema-valid field mismatches, ${schemaBad} schema-invalid`);
+  t.diagnostic(`schema agreement: ${compared} outputs, ${fieldOnly} schema-valid field mismatches, ${schemaBad} schema-invalid`);
+});
+
+test('regression: the schemas stay inside the repo portable subset (no minProperties / maxProperties), and outputSchemaFor is strict and by seed', () => {
+  assert.deepEqual(portableSchemaViolations(outputSchema), []);
+  assert.equal(/minProperties|maxProperties/.test(JSON.stringify(outputSchema)), false, 'not in the portable allowlist of src/schema-subset.mjs');
+  for (const sub of SUBTYPES) {
+    const strict = outputSchemaFor(sub);
+    assert.deepEqual(portableSchemaViolations(strict), []);
+    assert.deepEqual(nonPortableKeys(strict), []);
+    assert.deepEqual(strict.required, [FIELD[sub]]); assert.deepEqual(Object.keys(strict.properties), [FIELD[sub]]); assert.equal(strict.additionalProperties, false);
+    assert.deepEqual(strict.properties[FIELD[sub]], outputSchema.properties[FIELD[sub]], 'same property definition as the published schema');
+    assert.deepEqual(outputSchemaFor(taskOf(seedsOf(sub)[0], 2)), strict, 'a task and its subtype name give the same schema');
+  }
+  // keyed by seed only: tampered task text does not change it; the result is a fresh copy
+  const forged = clone(taskOf(604, 3)); forged.inputs.subtype = 'schedule'; forged.family = 'other';
+  assert.deepEqual(outputSchemaFor(forged), outputSchemaFor('names'));
+  const copy = outputSchemaFor('order'); copy.properties.order.maxItems = 1; copy.required.push('x');
+  assert.equal(outputSchemaFor('order').properties.order.maxItems, 40); assert.equal(outputSchema.properties.order.maxItems, 40); assert.deepEqual(outputSchemaFor('order').required, ['order']);
+  for (const bad of ['bogus', undefined, null, {}, { seed: 1.5 }, { seed: '601' }, 3]) assert.throws(() => outputSchemaFor(bad), TypeError);
 });
 
 test('oracle is total: odd tasks never throw, and tampered task text cannot change the verdict', () => {
