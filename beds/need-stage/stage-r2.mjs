@@ -21,14 +21,13 @@ export const schema = {
 };
 
 const textOf = d => `${d.subject}\n${d.body}`;
-const DECIDABLE_PLAIN = new Set(['invoice', 'credit_note', 'remittance', 'dispute', 'statement_request', 'unrelated']);
 // Ambiguity of one document, from the rung's own knobs: the obvious keyword misleads (decoy templates), the text is
 // hedged, the supplier writes in German, French or Spanish (rung d >= 4), the kind is an injection or the new
 // bank_change kind (rung d >= 4), or the document is genuinely undecidable (route review).
 function features(d) {
   const kwOk = keywordRoute(textOf(d)) === d.kind;
   const score = (kwOk ? 0 : 1) + (d.hedged ? 1 : 0) + (d.foreign ? 1 : 0) + (d.kind === 'injection' || d.kind === 'bank_change' ? 1 : 0) + (d.kind === 'review' ? 2 : 0);
-  return { d, kwOk, score: d.kind === 'review' ? Math.max(score, 3) : (score === 0 && !DECIDABLE_PLAIN.has(d.kind) ? 1 : score) };
+  return { d, kwOk, score: d.kind === 'review' ? Math.max(score, 3) : score };
 }
 const WANT = { 1: [0], 2: [1], 3: [2], 4: [2, 3], 5: [2, 3] };
 
