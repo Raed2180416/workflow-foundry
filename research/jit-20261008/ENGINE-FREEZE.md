@@ -542,3 +542,67 @@ it (`ENGINE_DRIFT`), as with any engine change. Each step lists the files it cha
   their findings on step 2 (`p1-hijack`, `p9-redelivery` and `p11-replay-gaps` re-run in this part before the change); after it,
   those three and `p2-orphan`, `p4-crash-start`, `p5-taint`, `p6-deadline` and `p7-verdicts` show the refusals or corrected outcomes
   above.
+
+### 7.5 G21 review fixes (part "ui-forms": `tools/ui`, no engine change), 2026-10-14
+
+- **`src/` files changed: none.** No kit allow-list path changed (`package.json`, `bin`, `src`, `schemas`, `policy`, `skills`, `web`,
+  `node_modules`); the engine identity is that of the step the sidecar runs on. The G21 record above is unchanged.
+- **Base.** `6ed7146` (`tools/ui` and `tests/ui-form*.test.mjs` there are `c52e5db`'s, the reviewed tree).
+- **How it landed.** The autosave snapshots `5e22645`, `93f2fc2`, `0262cd9` and `9860c5a` committed all of this part's code, tests,
+  fixtures and READMEs while they were being written (they also hold other agents' files); no other commit touched these paths in
+  the range, and the commit carrying this section adds only this record. `git diff 6ed7146 <that commit> -- tools/ui
+  tests/ui-form.test.mjs tests/ui-form-adapter.test.mjs tests/ui-form-browser.test.mjs` is this part exactly, and those paths at
+  that commit are the tree the suites below ran on. The 37 `tests/ui-form*` failures §7.4 saw in the shared tree were this part in progress (the compiler's default had
+  changed before the tests were updated).
+
+| file | change |
+|---|---|
+| `tools/ui/pattern.mjs` | admission: `[]` and `[^]` close at once (the `[^]` misparse hid `(a+)+`); every quantifier counts (`?` 2, `{0,16}` 17, `*` 257, …), alternations count their branches, and an unanchored pattern counts 257 start positions; the product is bounded by 257² (was: at most two "large" quantifiers); only `(…)`, `(?:…)`, `(?<name>…)` groups. Execution: `patternTest`, a worker thread called synchronously (`Atomics.wait`) with a deadline; a test past it is `'timeout'` and the worker is replaced |
+| `tools/ui/validate.mjs` | pattern tests go through `patternTest` with one budget per answer (500 ms); over it, `pattern-timeout` rejects the answer |
+| `tools/ui/compile.mjs` | `allowPattern` defaults to `false` (the engine's profile); `pattern` on an enum is `keyword-not-applicable` (compile ran it on members with no `maxLength` gate); `enum-ambiguous` for options whose labels are equal after NFKC, dropping invisible characters and collapsing whitespace; the spec gains `semantics`, the sha256 of `common`, `compile`, `formstate`, `pattern`, `validate` (`SEMANTICS`), so the spec hash binds the answer semantics |
+| `tools/ui/host.mjs` | rewritten: a task-bound spec is required; a random 256-bit token unless one of ≥ 32 URL-safe characters is given; every request needs the capability URL `handler.path` (`/?t=<token>`), GET included; loopback caller, Host `127.0.0.1`/`localhost`/`[::1]` with the port, `Sec-Fetch-Site` same-origin (or `none` for GET), `Origin` this origin or `null`, all before the body is read; envelope failures are 403 with nothing echoed; the whole handler is in try/catch (400; 500 after an internal error); `onAnswer` is awaited, `pending` gives 409, the answer counts only after it resolves, `throw null` is handled; `close()` → 410; 256 KB body limit, read to its end (up to 16×) so the 413 is delivered |
+| `tools/ui/formstate.mjs` | `parseNumberText` requires the text's decimal value to equal the shortest round-trip decimal of the stored double (`number-precision` for `"0.99999999999999999"`, `"1.0000000000000001"`, `"4e-324"`; this subsumes the old integer rule); errors capped at `MAX_ERRORS` = 20 with a `too-many-errors` entry; `acceptSubmission` returns `envelope: true` and no values on `stale-form` / `bad-token` |
+| `tools/ui/common.mjs` | `displayText` also marks `\p{Cf}` (tag characters included), U+034F, U+115F, U+1160, U+17B4, U+17B5, U+3164, U+FFA0, U+FDD0–FDEF and the noncharacters of every plane; astral characters are tested as code points |
+| `tools/ui/render.mjs` | `action` with surrounding whitespace is refused |
+| `tools/ui/generate.mjs`, `measure.mjs` | planted numbers reported as accepts / wrong value / unambiguous refused (`plantedOutcomes`); the "browser" route is named `urlencoded` (it is the encoder, not the page); generated schemas compile with `allowPattern: true` |
+| `tools/ui/fixtures.mjs`, `fixtures/1/` | `allowPattern` in `input.json` (8 pattern cases set it); golden pages write the spec hash as `{{spec}}` (regenerated; only the `_spec` line changed); refuse cases `034`–`039` (pattern off by default, the review's three bypasses, pattern on an enum, ambiguous options) |
+| `tools/ui/index.mjs`, `README.md`, `fixtures/1/README.md` | exports; the README's pattern, spec-hash, host and capability sections rewritten (the false "degree ≤ 2 is O(n²)" and "the spec hash is the compare-and-swap" claims are gone) |
+| `tests/ui-form.test.mjs` | 75 → 83: the 6 new fixtures, the pattern default, the semantics binding, ambiguous options, whitespace actions; the page contract also checks option `value` tokens against the spec |
+| `tests/ui-form-adapter.test.mjs` | 10 → 17: exact number text, the matcher budget (eight catastrophic fields in one answer), a property test (3,000 random patterns, none the bound admits exhausts the budget on five adversarial inputs), and the host tests for the capability URL, Host/Origin/Sec-Fetch-Site/loopback, no echo, a malformed request line, async and rejecting `onAnswer`, 413, the error cap and `close()`; the runtime test uses the token |
+| `tests/ui-form-browser.test.mjs` | the harness serves a task-bound spec at the capability URL; without it Chromium gets 403; the host checks that Chromium's own form posts arrive as `Sec-Fetch-Site: same-origin` (they carry `Origin: null`) |
+
+- **Breaking for callers (none outside `tools/ui` and its tests at this commit):** `compileForm` refuses `pattern` unless
+  `allowPattern: true`; `createFormHandler` needs a task-bound spec and serves only `handler.path`; tokens shorter than 32
+  characters are refused by the handler (not by `acceptSubmission`); spec hashes change with the semantics code.
+- **Review findings (5 P1, 8 P2).**
+  - **Fixed, with regression tests (5 P1, 5 P2):** P1-1 the pattern bound bypassed (`[^]`, uncounted small quantifiers, the enum
+    route, the default on); P1-2 anyone reaching the port could answer (no token by default, token served to any GET, no
+    Host/Origin/Sec-Fetch-Site/loopback check); P1-3 envelope failures re-rendered the live form with the attacker's values and the
+    real token; P1-4 a malformed request line crashed the process; P1-5 an async `onAnswer` rejection crashed the process after
+    "Answer recorded"; P2-7 number text silently losing digits; P2-10 the planted-number baseline (now OpenUI 15 accepted / 11 wrong
+    value, `web/app.js` 6 / 2, host 0 / 0 with 4 unambiguous spellings refused); P2-11 the 36 MB error page and the undelivered 413;
+    P2-12 whitespace-wrapped `action`; P2-13 the spec hash not binding the adapter and validator code.
+  - **Fixed in part (3 P2):** P2-6 the handler now requires a task-bound spec, has `close()`, and the README no longer calls the spec
+    hash a compare-and-swap; **deferred:** a durable once-only record for the E-bed route (`beds/ebed/` is another agent's; the
+    README's wiring steps now require one) and an `isOpen` hook (`close()` and an `onAnswer` that refuses, as `Runtime.answer` does,
+    cover a task that stopped waiting). P2-8 enum options that look alike are refused and more invisible characters are marked;
+    **deferred:** colliding field labels (two fields reading "Amount"; legitimate across groups, and the generated-schema tests would
+    need a label rule first); NBSP and variation selectors stay unmarked on purpose (French spacing, emoji). P2-9 the route is
+    relabelled `urlencoded` and the page contract checks option tokens; **deferred:** driving the 3,000 generated answers through the
+    rendered HTML or Playwright.
+  - **Rejected:** none.
+- **Capability numbers after the fixes** (`node tools/ui/measure.mjs`, seed 20261014): completability typed 3000/3000, text
+  3000/3000, urlencoded 2913/3000 (unchanged); differential 6,000/6,000 there and 14,000/14,000 in the test (unchanged); fixtures
+  74/74.
+- **Remaining unknowns.** The admission bound is an argument about a backtracking matcher, not a proof about V8's; the guarantee is
+  the budget. Under heavy load a slow worker could time out a valid pattern answer (fail closed; 500 ms against a measured ~35 µs
+  round trip). The token is in the URL, so it is as private as the link (no-referrer, no subresources; browser history keeps it).
+- **Suites (2026-10-14, $0, no model calls).** Main (`node --test --test-concurrency=2 tests/*.test.mjs`, this tree): 1159 tests, 1141
+  pass, **0 fail**, 18 skipped (the recorded lanes of §7.1). §7.4 measured 1144; the 15 added are this part's (`tests/ui-form*`: 88 →
+  103, i.e. 83 + 17 + 3; the browser file ran with Playwright 1.63.0 and `/opt/pw-browsers/chromium`). The reviewer's probes reproduced
+  every finding before the change (`p1-pattern`, `p1c-client`: a 30-character value held the event loop 5.4 s; `p2-authority`,
+  `p3-async`: exit 1 with `answered: true`; `p4-enum-pattern`: 1.6 s at compile; `p5-spoof`, `p7-action`, `p8-url`: exit 1;
+  `p9-prefill`, `p10-amp`: a 36 MB page). After it, `p1-pattern`, `p4-enum-pattern` (2 ms), `p5-spoof` and `p7-action` show the
+  refusals unchanged; the host probes need the new API (a task-bound spec, a long token), and adapted copies give 403 (rebinding GET,
+  cross-site POST, no `_token`), 409 with "not recorded" and `answered: false`, 400 then 200, a 6 KB page for the 4 MB body under a
+  raised limit and 413 under the default.
