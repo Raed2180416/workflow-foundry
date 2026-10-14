@@ -47,15 +47,17 @@ export function permute(list, r) {
   return [...list.slice(1), list[0]];   // a rotation: never the identity for distinct items
 }
 
-// Permute the lines inside every maximal run of consecutive lines for which isRow(line, i, lines) holds (runs of one line
-// stay). Returns { lines, runs: number of runs permuted, moved: number of lines whose position changed }.
-export function shuffleRuns(lines, isRow, r) {
+// Permute the lines inside every maximal run of consecutive lines that classOf(line, i, lines) puts in the same class (a
+// truthy key; null or false = not a row). Runs of one line stay. Returns { lines, runs: number of runs permuted, moved:
+// number of lines whose position changed }.
+export function shuffleRuns(lines, classOf, r) {
   const out = [...lines];
   let runs = 0, moved = 0;
   for (let i = 0; i < lines.length;) {
-    if (!isRow(lines[i], i, lines)) { i++; continue; }
+    const c = classOf(lines[i], i, lines);
+    if (!c) { i++; continue; }
     let j = i;
-    while (j + 1 < lines.length && isRow(lines[j + 1], j + 1, lines)) j++;
+    while (j + 1 < lines.length && classOf(lines[j + 1], j + 1, lines) === c) j++;
     if (j > i) {
       const block = lines.slice(i, j + 1), p = permute(block, r);
       p.forEach((x, k) => { out[i + k] = x; if (x !== block[k]) moved++; });

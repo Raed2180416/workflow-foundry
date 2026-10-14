@@ -262,18 +262,82 @@ export function exactBinomialBounds(x, n, { level = 0.95 } = {}) {
 // (a) One-sided 95% bound on the effective counts, read once on all admitted decisions. method 'wilson' (z 1.645, the
 // ATTACK's 0/60 → 0.043) or 'exact' (Clopper–Pearson at `level`, 0/60 → 0.0487; its miss never exceeds 1 − level under
 // independent decisions).
-export function reuseBoundRule(clusters, { bound = 0.05, z = 1.645, level = 0.95, method = 'wilson', minN = 60, rho = RHO_REUSE_FLOOR, estimateRho = true } = {}) {
+// bounds: false skips the reported exact interval (the exact decision does not use it; M3b simulation speed).
+export function reuseBoundRule(clusters, { bound = 0.05, z = 1.645, level = 0.95, method = 'wilson', minN = 60, rho = RHO_REUSE_FLOOR, estimateRho = true, bounds = true } = {}) {
   const s = clusterDeff(clusters, { rho, estimateRho });
   if (!s.n) return { rule: 'bound', decision: 'no-decision', reason: 'no admitted decisions', method, ...s };
   if (method !== 'wilson' && method !== 'exact') throw new Error(`reuseBoundRule: unknown method ${method}`);
   const x = s.wrongEff, n = s.nEff;
-  const w = method === 'exact' ? exactBinomialBounds(x, n, { level }) : wilson(x, n, z);
+  const w = method === 'exact' ? (bounds ? exactBinomialBounds(x, n, { level }) : { lo: null, hi: null }) : wilson(x, n, z);
   // The exact decision is read off the beta tail at the bound itself (upper ≤ bound ⟺ I_bound(x + 1, n − x) ≥ level;
   // lower > bound ⟺ I_bound(x, n − x + 1) < 1 − level), so it does not depend on the bisection's precision.
   const under = method === 'exact' ? x < n && betaInc(bound, x + 1, n - x) >= level : w.hi <= bound;
   const over = method === 'exact' ? x > 0 && betaInc(bound, x, n - x + 1) < 1 - level : w.lo > bound;
   const decision = s.n >= minN && under ? 'serve' : over ? 'kill' : 'no-decision';
   return { rule: 'bound', decision, upper: w.hi, lower: w.lo, bound, method, ...(method === 'exact' ? { level } : { z }), minN, ...s };
+}
+
+// ------------------------------------------------------------------------------------------------ crossed clustering (M3b)
+// research/jit-20261008/DEV-NOTES.md D30; PROOF-LEDGER K1; LIBRARY-TESTS L4 (amended 2026-10-14, M3b). L4 offers each
+// parent (task) several library entries and each entry to many parents, so admitted decisions cluster two ways, crossed:
+// by parent (one input, seen by every entry offered to it) and by entry (one artefact, seen by every parent it is offered
+// to; a near-miss variant the gate cannot tell apart is wrong on many parents at once). `reuseBoundRule` corrects for the
+// parent axis only. Under an additive crossed variance-components model on the probability scale (every decision has
+// variance p(1 − p); two decisions sharing a parent have covariance ρ_P·p(1 − p), sharing an entry ρ_E·p(1 − p), sharing
+// neither 0) the variance of the total is exactly N·p(1 − p)·Deff₂ with
+//   Deff₂ = 1 + (m*_P − 1)·ρ_P + (m*_E − 1)·ρ_E,   m*_P = Σ n_parent² / N,  m*_E = Σ n_entry² / N
+// (each (parent, entry) pair is offered at most once). ρ_P = max(rhoParent, ρ̂_P) and ρ_E = max(rhoEntry, ρ̂_E), each ρ̂
+// the one-way ANOVA ICC over that axis's clusters (`iccAnova`), each floor an assumption: RHO_REUSE_FLOOR 0.1 for parents
+// (M3) and RHO_ENTRY_FLOOR 0.1 for entries (never measured; the top of the plausible range in D30). combine 'max' takes
+// the larger one-way Deff instead (a candidate the D30 simulation rejected; kept for the record).
+export const RHO_ENTRY_FLOOR = 0.1;
+
+// Parent and entry clusters of one list of admitted decisions ({ parent, entry, wrong | label }).
+export function crossedOf(decisions, { rowKey = 'parent', colKey = 'entry' } = {}) {
+  return { rows: clustersOf(decisions, { key: rowKey }), cols: clustersOf(decisions, { key: colKey }) };
+}
+
+// Two-way Kish design effect for parent sizes, entry sizes and the two ICCs.
+export function kishDeff2(parentSizes, entrySizes, rhoParent, rhoEntry) {
+  const mStar = sizes => { let N = 0, N2 = 0; for (const m of sizes) { N += m; N2 += m * m; } return N ? N2 / N : 1; };
+  return 1 + (mStar(parentSizes) - 1) * rhoParent + (mStar(entrySizes) - 1) * rhoEntry;
+}
+
+export function clusterDeff2({ rows, cols }, { rhoParent = RHO_REUSE_FLOOR, rhoEntry = RHO_ENTRY_FLOOR, estimateRho = true, combine = 'sum' } = {}) {
+  const sp = clusterSums(), se = clusterSums();
+  for (const c of rows) sp.add(c);
+  for (const c of cols) se.add(c);
+  if (sp.N !== se.N || sp.X !== se.X) throw new Error('clusterDeff2: parent and entry clusters disagree on the decisions');
+  const mStarParent = sp.N ? sp.sumN2 / sp.N : 1, mStarEntry = se.N ? se.sumN2 / se.N : 1;
+  const rhoHatParent = estimateRho ? iccFromSums(sp) : null, rhoHatEntry = estimateRho ? iccFromSums(se) : null;
+  const rhoParentUsed = Math.max(rhoParent, rhoHatParent ?? 0), rhoEntryUsed = Math.max(rhoEntry, rhoHatEntry ?? 0);
+  const dP = (mStarParent - 1) * rhoParentUsed, dE = (mStarEntry - 1) * rhoEntryUsed;
+  if (combine !== 'sum' && combine !== 'max') throw new Error(`clusterDeff2: unknown combine ${combine}`);
+  const deff = 1 + (combine === 'sum' ? dP + dE : Math.max(dP, dE));
+  return { n: sp.N, wrong: sp.X, parents: sp.k, entries: se.k, mStarParent, mStarEntry, rhoHatParent, rhoHatEntry, rhoParentUsed,
+    rhoEntryUsed, combine, deff, nEff: sp.N / deff, wrongEff: sp.X / deff };
+}
+
+// The amended L4 rule (M3b): the one-sided exact bound of `reuseBoundRule` on the two-way effective counts x/Deff₂ of
+// n/Deff₂, read once over all admitted decisions. entryGuard (a candidate the D30 simulation rejected; off by default)
+// also kills when any one entry's own one-sided exact lower bound, at level 1 − (1 − guardLevel)/entries (Bonferroni), is
+// above `bound` on its raw counts. bounds: false skips the reported interval (the decision does not use it; for speed).
+export function reuseBoundRule2(crossed, { bound = 0.05, level = 0.95, minN = 60, rhoParent = RHO_REUSE_FLOOR, rhoEntry = RHO_ENTRY_FLOOR,
+  estimateRho = true, combine = 'sum', entryGuard = false, guardLevel = 0.95, bounds = true } = {}) {
+  const s = clusterDeff2(crossed, { rhoParent, rhoEntry, estimateRho, combine });
+  if (!s.n) return { rule: 'bound2', decision: 'no-decision', reason: 'no admitted decisions', ...s };
+  const x = s.wrongEff, n = s.nEff;
+  const under = x < n && betaInc(bound, x + 1, n - x) >= level;
+  const over = x > 0 && betaInc(bound, x, n - x + 1) < 1 - level;
+  let guard = null;
+  if (entryGuard) {
+    const a = (1 - guardLevel) / crossed.cols.length;
+    guard = crossed.cols.filter(c => c.wrong > 0 && betaInc(bound, c.wrong, c.n - c.wrong + 1) < a).length;
+  }
+  const decision = guard ? 'kill' : s.n >= minN && under ? 'serve' : over ? 'kill' : 'no-decision';
+  const w = bounds ? exactBinomialBounds(x, n, { level }) : { lo: null, hi: null };
+  return { rule: 'bound2', decision, ...(guard ? { reason: `entry guard: ${guard} entr${guard === 1 ? 'y' : 'ies'} confirmed above ${bound}` } : {}),
+    upper: w.hi, lower: w.lo, bound, method: 'exact', level, minN, ...(entryGuard ? { guardEntries: guard } : {}), ...s };
 }
 
 // (b) Wald SPRT design: per-decision log-likelihood-ratio steps and the two boundaries.
