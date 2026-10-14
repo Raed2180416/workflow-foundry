@@ -1,6 +1,7 @@
 // W-bed rung R6 "wide research table" (family wbed-r6): a planned swarm (W-BED §3.6). Interface per beds/CONTRACT.md v1
 // plus the W-specific exports `stages`, `structure`, `relations`, `composedOracle`, `referenceTrace`, `invariants`,
-// `necessityControls`, and the R6-specific `unitChecks` (the code half of the verify), `keywordScript`, `textIndex`,
+// `necessityControls`, and the R6-specific `unitChecks` (the code half of the verify), `keywordScript`, `whiteboxSolve`
+// (the white-box script: decidability witness, reported attack), `textIndex`,
 // `tokenAccounting` (equal-token accounting for wide vs best_of_n), `bestOfNRun`, `scopeOf`, `sizeOf`.
 // The hidden truth is recomputed from (seed, split, difficulty) by the bed's own exact solver over the world structure;
 // nothing in the output but its value is read.
@@ -11,13 +12,14 @@ import { CONTRACTS, RELATIONS, makeStages, composeOracle, reduceLocal } from './
 import { CONTROL_DEFS, NECESSITY_DEFS, appliesAt } from './controls.mjs';
 import { keywordScript } from './heuristic.mjs';
 import { unitChecks } from './verify.mjs';
+import { whiteboxSolve } from './whitebox.mjs';
 import { tokenAccounting as accountWorld, readingOrder, unseenPast, SEQUENTIAL_BUDGET_TOKENS, PANEL, BEST_OF_N_MIN, PER_FILE_OVERHEAD } from './budget.mjs';
 import { PROPS, MAX_FANOUT, tierOf } from './vocab.mjs';
 import { isResearch } from './world.mjs';
 import { requireNoFaults, hooks } from '../lib/faults.mjs';
 import { estimateTokens, rng } from '../lib/prng.mjs';
 
-export { outputSchema, CONTRACTS, LEVELS, reduceLocal, unitChecks, keywordScript, textIndex, SEQUENTIAL_BUDGET_TOKENS, PANEL, MAX_FANOUT, PER_FILE_OVERHEAD };
+export { outputSchema, CONTRACTS, LEVELS, reduceLocal, unitChecks, keywordScript, whiteboxSolve, textIndex, SEQUENTIAL_BUDGET_TOKENS, PANEL, MAX_FANOUT, PER_FILE_OVERHEAD };
 export const version = VERSION;
 
 export const family = {
@@ -40,8 +42,8 @@ export const family = {
 
 export const difficulty = {
   min: MIN_D, max: MAX_D, default: 3, levels: LEVELS,
-  drift: 'd -> d+1 adds documents (200/260/320/400) and compounds in scope (8/12/16/20, the fan-out width; plan '
-    + 'candidates 12/17/22/27 <= 32), requested properties (3/4/4/5), labs, unit variants and date styles; d3 adds lab X\'s '
+  drift: 'd -> d+1 adds documents (200/260/320/400) and compounds in scope (8/12/16/20 +-2 per task, the fan-out width; '
+    + 'plan candidates about 12/17/22/27, never above 32), requested properties (3/4/4/5), labs, unit variants and date styles; d3 adds lab X\'s '
     + 'abbreviation, compounds named by code only, reviews, expressions of concern, a second ranking policy and decoy '
     + '"received" dates; d4 adds lab X\'s former name (a consortium notice states the rename), a namesake organisation, a '
     + 'third ranking policy, thousands separators and out-of-corpus retractions sharing a title; d5 replaces part of the '

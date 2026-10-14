@@ -64,7 +64,8 @@ export function inScopeOf(world, vis, voids, e, opts = {}) {
     if (voids.has(d.key) && !opts.scopeVoidKept) continue;
     const tested = testsOf(d).has(e) || (opts.plansCounted && d.plans.includes(e)) || (opts.mentionsCounted && Boolean(d.styles[e]));
     if (!tested) continue;
-    const day = opts.byPubDate ? d.pubDay : d.testDay;
+    // a reader who counts a mention or a plan as a test dates it by publication when the document reports no test
+    const day = opts.byPubDate || d.testDay == null ? d.pubDay : d.testDay;
     if (day >= world.Y) return true;
   }
   return false;

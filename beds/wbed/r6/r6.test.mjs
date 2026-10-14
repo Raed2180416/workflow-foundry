@@ -11,6 +11,7 @@ import { textIndex, runPipeline } from './pipeline.mjs';
 import { PROPS, MAX_FANOUT, valueText, canonOf, printedNumber, PROP_IDS } from './vocab.mjs';
 import { parseDay } from './heuristic.mjs';
 import { readingOrder, unseenPast } from './budget.mjs';
+import { whiteboxSolve } from './whitebox.mjs';
 import { canonical, sha256, estimateTokens } from '../lib/prng.mjs';
 import { dayNum } from '../lib/domain.mjs';
 import { inlineRender, loadFamily } from '../../../experiments/lib/beds.mjs';
@@ -93,7 +94,8 @@ test('held-out seeds (test split, wbed-heldout-a/-b): reference passes, controls
 
 // ---------------------------------------------------------------------------------------------------------------------
 test('the world is what the stated rules decide: construction = resolver; roles = scope; candidates = in-scope + T1-T4 <= 32', () => {
-  const want = { 2: [8, 12], 3: [12, 17], 4: [16, 22], 5: [20, 27] };
+  const want = { 2: [8, 4], 3: [12, 5], 4: [16, 6], 5: [20, 7] }; // base in-scope and near-miss counts (+-2 and +-1 per task)
+  const counts = new Set();
   for (const d of DS) for (const seed of SEEDS.slice(0, 8)) {
     const w = buildWide(seed, 'dev', d), task = gen(seed, d), tr = bed.referenceTrace(task), ref = tr.reduce;
     for (const c of w.truthCells) {
@@ -105,12 +107,26 @@ test('the world is what the stated rules decide: construction = resolver; roles 
     const inRole = w.entities.filter(e => e.role === 'in').map(e => e.code).sort();
     assert.deepEqual(sc.inScope.map(x => x.code).sort(), inRole, `in-scope = role 'in' d${d} s${seed}`);
     assert.deepEqual(sc.candidates.map(x => x.role).filter(r => r !== 'in').sort(), w.entities.filter(e => ['T1', 'T2', 'T3', 'T4'].includes(e.role)).map(e => e.role).sort());
-    assert.deepEqual([sc.inScope.length, sc.candidates.length], want[d]);
+    const nNear = sc.candidates.length - sc.inScope.length;
+    assert.ok(Math.abs(sc.inScope.length - want[d][0]) <= 2 && nNear >= 4 && Math.abs(nNear - want[d][1]) <= 1, `${sc.inScope.length}/${nNear} d${d}`);
+    counts.add(`${d}:${sc.inScope.length}`);
     assert.ok(sc.candidates.length <= MAX_FANOUT);
+    for (const role of ['T2', 'T4']) assert.ok(w.docs.some(x => x.role === `near-${role}` && x.lab === w.X && x.pubDay >= w.Y && !x.claims.length), `a lab X document titled on a ${role} compound with no test d${d}`);
     for (const t of ['T1', 'T2', 'T3', 'T4']) assert.ok(w.entities.some(e => e.role === t), `${t} d${d}`);
     assert.equal(w.entities.some(e => e.role === 'T6'), d >= 4);
     for (const t of ['retracted', 'superseded', 'nonstd', 'quote', 'prediction', 'bound', 'recency', 'erratum', 'unit', ...(d >= 3 ? ['concern'] : []), ...(d >= 4 ? ['outOfCorpus'] : [])]) assert.ok(sc.traps[t] >= 1, `trap ${t} d${d} s${seed}`);
-    assert.equal(ref.table.length, want[d][0] * w.props.length);
+    assert.equal(ref.table.length, sc.inScope.length * w.props.length);
+  }
+  assert.ok(counts.size >= 8, 'the in-scope count varies per task');
+});
+
+test('no completeness shortcut: every plan candidate (in scope or not) and the namesake compound have a surviving claim for every requested property', () => {
+  for (const d of DS) for (const seed of SEEDS.slice(0, 8)) {
+    const w = buildWide(seed, 'dev', d);
+    const all = runPipeline(w, { mentionsCounted: true, plansCounted: true, byPubDate: true, scopeVoidKept: true, namesakeLab: true, traces: false }).reduce;
+    const sc = bed.scopeOf(gen(seed, d));
+    const rowsOf = code => all.table.filter(r => r.entity === code).length;
+    for (const c of [...sc.candidates.map(x => x.code), ...sc.namesake]) assert.equal(rowsOf(c), w.props.length, `${c} d${d} s${seed}`);
   }
 });
 
@@ -129,6 +145,13 @@ test('text conveys the structure: the code mention index equals the world\'s men
       assert.deepEqual(got, want, `${e.code} mentions d${d} s${seed}`);
     }
     assert.equal(idx.entities.length, w.entities.filter(e => w.docs.some(doc => doc.styles[e.id]) || e.registeredBy).length);
+  }
+});
+
+test('decidability witness: the white-box script (generator templates, task text only) reproduces the truth on every task', () => {
+  for (const d of DS) {
+    for (const seed of SEEDS) { const t = gen(seed, d); assert.ok(bed.oracle(t, whiteboxSolve(t)).pass, `d${d} s${seed}`); }
+    for (const seed of HELD) { const t = gen(seed, d, 'test'); assert.ok(bed.oracle(t, whiteboxSolve(t)).pass, `d${d} test s${seed}`); }
   }
 });
 
@@ -285,7 +308,7 @@ test('best_of_n at equal tokens with the same verifier: every candidate fails, n
       return bed.oracle(task, runPipeline(w, { unseen: unseenPast(w, readingOrder(w, Math.floor((i * w.docs.length) / b.N))), traces: false }).reduce).pass;
     }).length;
     assert.equal(passes, 0, `d${d} s${seed}: a best_of_n candidate passes`);
-    rows[d] ??= []; rows[d].push({ N: b.N, eq: acc.bestOfN.nAtEqualTokens, eqSrc: acc.bestOfN.nAtEqualTokensSourceOnly, ratio: acc.bestOfN.ratio, pick: b.pick });
+    rows[d] ??= []; rows[d].push({ N: b.N, eq: acc.bestOfN.nAtEqualTokens, lean: acc.bestOfN.nLean, ratio: acc.bestOfN.ratio, pick: b.pick });
   }
   t.diagnostic(`best_of_n (seeds 301-305): ${JSON.stringify(rows)}`);
 });
@@ -308,26 +331,28 @@ test('no-workflow grep agent: misses a compound tested only under lab X\'s abbre
   assert.ok(missed >= hidden && hidden > 0);
 });
 
-test('equal-token accounting: wide reads several times the inline task; the verify is the largest line; shared prefix', t => {
+test('equal-token accounting: wide reads several times the inline task under every design; most of it is a cacheable prefix', t => {
   const rows = {};
   for (const d of DS) {
     const xs = SEEDS.slice(0, 10).map(s => bed.tokenAccounting(gen(s, d)));
     const mean = f => Math.round(xs.reduce((a, x) => a + f(x), 0) / xs.length);
-    rows[d] = { inline: mean(x => x.inline), plan: mean(x => x.wide.plan), workers: mean(x => x.wide.workers), workerMean: mean(x => x.wide.workerMean), workerMax: Math.max(...xs.map(x => x.wide.workerMax)),
-      verify: mean(x => x.wide.verify), verifySourceOnly: mean(x => x.wide.verifySourceOnly), total: mean(x => x.wide.total), cacheableShare: Math.round(mean(x => x.wide.cacheableShare * 1000)) / 1000,
-      nEq: [Math.min(...xs.map(x => x.bestOfN.nAtEqualTokens)), Math.max(...xs.map(x => x.bestOfN.nAtEqualTokens))], nEqSrc: [Math.min(...xs.map(x => x.bestOfN.nAtEqualTokensSourceOnly)), Math.max(...xs.map(x => x.bestOfN.nAtEqualTokensSourceOnly))] };
+    const range = f => [Math.min(...xs.map(f)), Math.max(...xs.map(f))];
+    rows[d] = { inline: mean(x => x.inline), plan: mean(x => x.wide.plan), workers: mean(x => x.wide.workers), workersOneCall: mean(x => x.wide.workersOneCall), workerMax: Math.max(...xs.map(x => x.wide.workerMax)),
+      verify: mean(x => x.wide.verify), verifySourceOnly: mean(x => x.wide.verifySourceOnly), total: mean(x => x.wide.total), totalLean: mean(x => x.wide.totalLean), calls: xs[0].wide.calls,
+      cacheableShare: Math.round(mean(x => x.wide.cacheableShare * 1000)) / 1000, nEq: range(x => x.bestOfN.nAtEqualTokens), nOneCall: range(x => x.bestOfN.nOneCall), nLean: range(x => x.bestOfN.nLean) };
     for (const x of xs) {
-      assert.ok(x.wide.total > x.inline, 'wide reads more than one inline pass');
+      assert.ok(x.wide.totalLean > x.inline, 'even the leanest wide reads more than one inline pass');
       assert.ok(x.wide.workerMax < bed.SEQUENTIAL_BUDGET_TOKENS, 'every worker context fits the single-context budget');
       assert.ok(x.wide.plan < bed.SEQUENTIAL_BUDGET_TOKENS, 'the plan digest fits the single-context budget');
-      assert.ok(x.wide.verify > x.wide.workers && x.wide.verify > x.wide.plan, 'the evidence-reading verify is the largest line');
-      assert.ok(x.wide.cacheableShare > 0.4, 'most worker input is a shared prefix');
+      assert.ok(x.wide.workers > x.wide.workersOneCall && x.wide.verify > x.wide.verifySourceOnly);
+      assert.ok(x.wide.cacheableShare > 0.5, 'most worker input is a cacheable prefix');
+      assert.ok(x.bestOfN.nAtEqualTokens >= x.bestOfN.nOneCall && x.bestOfN.nOneCall >= x.bestOfN.nLean && x.bestOfN.nLean >= 1);
     }
   }
   t.diagnostic(`token accounting (means over dev 301-310): ${JSON.stringify(rows)}`);
 });
 
-test('keyword script (text only) fails every task; the code verifier accepts the reference and flags most controls', t => {
+test('keyword script (text only) fails every task; the code verifier accepts the reference and flags the structural controls', t => {
   const recall = {};
   for (const d of DS) for (const seed of SEEDS.slice(0, 6)) {
     const task = gen(seed, d);

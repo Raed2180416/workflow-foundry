@@ -7,7 +7,7 @@ import { estimateTokens } from '../lib/prng.mjs';
 import { PROPS, valueText, POLICIES, KINDS } from './vocab.mjs';
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-const article = label => (/^[aeiouAEIOU]/.test(label) || /^IC50|^log/.test(label) ? 'an' : 'a');
+const article = label => (/^[aeiouAEIOU]/.test(label) || /^IC50/.test(label) ? 'an' : 'a');
 const KIND_WORD = { journal: 'article', preprint: 'preprint', labnote: 'lab note', conference: 'abstract', techreport: 'report', review: 'review' };
 
 const INTRO = [
@@ -21,6 +21,11 @@ const TITLE = [
   e => `Characterisation of ${e} in early development`, e => `New measurements on ${e}`, e => `Thermal and solution properties of ${e}`,
   e => `A screening report on ${e}`, e => `Early profiling data for ${e}`,
 ];
+const NOTE_INTRO = {
+  review: e => `This note collects what other groups have reported on ${e} before our own work on it starts.`,
+  plan: e => `This note sets out the next phase of work on ${e}. No measurements are reported here.`,
+};
+const NOTE_TITLE = { review: [e => `Background notes on ${e}`, e => `What is known about ${e}`], plan: [e => `Work plan for ${e}`, e => `Next steps for ${e}`] };
 const REVIEW_TITLE = ['Compound profiling across the consortium: a review', 'What we know about the KTR1 inhibitor series', 'A review of solubility and stability data in the shared panel', 'Pharmacokinetic data across the consortium panel: a review'];
 const FILLER = [
   () => 'The instrument was calibrated against a certified reference material before each run.',
@@ -43,6 +48,14 @@ const FILLER = [
   () => 'We thank the consortium\'s compound management team for preparing the plates.',
   () => 'Where several runs were made, the reported value is their mean.',
   r => `Balances and pipettes were checked against reference weights every ${r.pick(['morning', 'week', 'shift'])}.`,
+];
+// filler for notes that report no measurement
+const NOTE_FILLER = [
+  () => 'All work followed the consortium\'s standard operating procedures.',
+  r => `Funding: consortium grant ${r.int(1000, 9999)}/${r.int(20, 26)}.`,
+  () => 'The authors declare no competing interests.',
+  () => 'The plan will be discussed at the next consortium meeting.',
+  () => 'Compound requests go through the consortium\'s compound management team.',
 ];
 const REASONS = [
   w => `The authors retract this ${w} because the samples were found to be contaminated.`,
@@ -91,7 +104,7 @@ export function renderWorld(world, r) {
         const v1 = world.byKey.get(doc.supersedes);
         doc.title = null; // set below once v1 has a title
         void v1;
-      } else doc.title = uniqueTitle(r.pick(TITLE)(doc.primary ? ref(doc.primary) : 'the panel compounds'));
+      } else doc.title = uniqueTitle(r.pick(doc.note ? NOTE_TITLE[doc.note] : TITLE)(doc.primary ? ref(doc.primary) : 'the panel compounds'));
     } else if (doc.kind === 'review') doc.title = uniqueTitle(r.pick(REVIEW_TITLE));
   }
   for (const doc of docs) if (doc.supersedes && doc.supersedeForm === 'v2') doc.title = uniqueTitle(`${world.byKey.get(doc.supersedes).title} (version 2)`);
@@ -207,7 +220,7 @@ function researchBody(world, doc, ref, r, fd, labName) {
       ? `This is version 2 of the preprint “${v1.title}” (posted ${fd(doc, v1.pubDay)}); it replaces version 1.`
       : `This article is the peer-reviewed version of the preprint “${v1.title}” (posted ${fd(doc, v1.pubDay)}).`);
   }
-  out.push(r.pick(INTRO)(doc.primary ? ref(doc.primary) : 'the panel compounds'));
+  out.push((doc.note ? NOTE_INTRO[doc.note] : r.pick(INTRO))(doc.primary ? ref(doc.primary) : 'the panel compounds'));
   if (doc.receivedDay != null && doc.testForm !== 'log') out.push(`The samples were received on ${fd(doc, doc.receivedDay)}.`);
   if (doc.testDay != null) {
     if (doc.testForm === 'on') out.push(`All measurements reported here were made on ${fd(doc, doc.testDay)}.`);
@@ -229,7 +242,7 @@ function researchBody(world, doc, ref, r, fd, labName) {
   for (const e of doc.plans) items.push(`${cap(ref(e))} will be tested in the next phase of the project.`);
   out.push(...r.shuffle(items));
   const nFill = r.int(...L.fill);
-  for (const f of r.sample(FILLER, nFill)) out.push(f(r));
+  for (const f of doc.note ? r.sample(NOTE_FILLER, 3) : r.sample(FILLER, nFill)) out.push(f(r));
   if (doc.testForm === 'log') {
     const lines = [...new Set(doc.claims.map(c => c.e))].map(e => `${ref(e)} | received ${fd(doc, doc.receivedDay ?? doc.testDay - 7)} | assayed ${fd(doc, doc.testDay)}`);
     out.push(`\n\nSample log:\n${lines.join('\n')}`);

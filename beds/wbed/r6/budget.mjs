@@ -40,7 +40,13 @@ export function unseenPast(world, order, budget = SEQUENTIAL_BUDGET_TOKENS) {
   return unseen;
 }
 
-/** Input-token accounting of one task: corpus, inline render, the reference wide's phases, and best_of_n's N. */
+/**
+ * Input-token accounting of one task: corpus, inline render, the reference wide's phases, and best_of_n's N.
+ * Two worker designs are counted. `chain` (the declared reference, structure.features.judges): per candidate one scope
+ * judge, then for an in-scope candidate one judge per requested property, each call reading the candidate's context
+ * (prompt + inputs + every notice + its mention documents). `oneCall`: one typed judgment per candidate returning the
+ * scope verdict and every cell. N at equal tokens is computed from the declared design.
+ */
 export function tokenAccounting(world, { candidates, inScope }) {
   const tok = world.render.tokens, fixed = world.render.fixedTokens;
   const corpus = world.docs.reduce((s, d) => s + tok.get(d.key), 0);
@@ -49,32 +55,33 @@ export function tokenAccounting(world, { candidates, inScope }) {
   const digest = world.docs.reduce((s, d) => s + estimateTokens(headerOf(world.render.texts.get(d.key))), 0);
   const plan = fixed + digest + world.docs.filter(d => d.kind === 'office').reduce((s, d) => s + tok.get(d.key), 0);
   const ent = new Map(world.entities.map(e => [e.code, e]));
-  const workerOf = code => {
-    const e = ent.get(code);
-    return fixed + notices + world.docs.filter(d => (isResearch(d) || d.kind === 'review') && d.styles[e.id]).reduce((s, d) => s + tok.get(d.key), 0);
-  };
+  const docsOf = code => { const e = ent.get(code); return world.docs.filter(d => (isResearch(d) || d.kind === 'review') && d.styles[e.id]).reduce((s, d) => s + tok.get(d.key), 0); };
+  const workerOf = code => fixed + notices + docsOf(code);
+  const inSet = new Set(inScope), k = world.props.length;
   const perWorker = candidates.map(workerOf);
-  const workers = perWorker.reduce((a, b) => a + b, 0);
-  const cells = inScope.length * world.props.length;
+  const oneCall = perWorker.reduce((a, b) => a + b, 0);
+  const chain = candidates.reduce((s, code, i) => s + perWorker[i] * (inSet.has(code) ? 1 + k : 1), 0);
+  const calls = { plan: 1, workers: candidates.length + inScope.length * k, verify: 0 };
+  // prompt caching (slice 2 item 6b): the shared prefix (prompt + inputs + notices) is written once, each candidate's
+  // documents once; every other read of them is a cache hit
+  const uncached = fixed + notices + candidates.reduce((s, code) => s + docsOf(code), 0);
+  const cells = inScope.length * k;
   const sample = Math.ceil(PANEL.sample * cells);
   const r = rng('wbed', 'r6', 'panel', world.spec.split, world.spec.seed, world.spec.difficulty);
   const sampled = Array.from({ length: sample }, () => r.pick(inScope));
-  // verify, two readings: each panel judge re-derives the sampled cell from the compound's evidence (what its worker read),
-  // or checks the cited source only (prompt + notices + the source document; cheaper, blind to a better-ranked claim)
+  calls.verify = PANEL.n * sample;
+  // verify, two readings: each panel judge re-derives the sampled cell from the compound's evidence (what its worker
+  // read), or checks the cited source only (prompt + notices + the source document; cheaper, blind to a better claim)
   const verify = PANEL.n * sampled.reduce((s, code) => s + workerOf(code), 0);
   const meanDoc = corpus / world.docs.length;
   const verifySourceOnly = Math.round(PANEL.n * sample * (fixed + notices + meanDoc));
-  const total = plan + workers + verify, totalSourceOnly = plan + workers + verifySourceOnly;
-  // the worker prompts share a prefix (prompt + inputs + every notice): with prompt caching (slice 2 item 6b) all but
-  // the first worker read it as cache hits
-  const prefix = fixed + notices;
-  const cacheableShare = candidates.length > 1 ? Math.round(((candidates.length - 1) * prefix / workers) * 1000) / 1000 : 0;
+  const total = plan + chain + verify, totalOneCall = plan + oneCall + verify, totalLean = plan + oneCall + verifySourceOnly;
   const nOf = t => Math.max(1, Math.floor(t / inline));
   return {
     corpus, inline, notices, digest,
-    wide: { plan, workers, workerMean: Math.round(workers / Math.max(1, candidates.length)), workerMax: Math.max(0, ...perWorker), prefix, cacheableShare,
-      verify, verifySourceOnly, total, totalSourceOnly, candidates: candidates.length, cells, sample },
-    bestOfN: { nAtEqualTokens: nOf(total), nAtEqualTokensSourceOnly: nOf(totalSourceOnly), ratio: Math.round((total / inline) * 100) / 100 },
+    wide: { plan, workers: chain, workersOneCall: oneCall, workerMean: Math.round(oneCall / Math.max(1, candidates.length)), workerMax: Math.max(0, ...perWorker),
+      cacheableShare: Math.round((1 - uncached / chain) * 1000) / 1000, verify, verifySourceOnly, total, totalOneCall, totalLean, calls, candidates: candidates.length, cells, sample },
+    bestOfN: { nAtEqualTokens: nOf(total), nOneCall: nOf(totalOneCall), nLean: nOf(totalLean), ratio: Math.round((total / inline) * 100) / 100 },
     over100k: { inline: inline > 100000, workerMax: Math.max(0, ...perWorker) > 100000 },
   };
 }

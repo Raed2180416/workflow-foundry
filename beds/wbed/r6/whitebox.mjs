@@ -57,18 +57,18 @@ export function whiteboxSolve(task) {
     if (m && m[2] === q.lab) xNames.add(m[1]);
   }
   // ---- references: a notice refers to a corpus document only if every detail matches
+  const VENUES = [...new Set(docs.map(d => (d.text.match(/^Venue: (.+)$/m) ?? [])[1]).filter(Boolean))].map(v => (v === 'internal' ? 'internal lab note' : v));
+  const DATE_RE = /(\d{4}-\d{2}-\d{2}|\d{2}\.\d{2}\.\d{4}|\d{1,2} [A-Z][a-z]+ \d{4}|[A-Z][a-z]+ \d{1,2}(?:st|nd|rd|th), \d{4})/;
   const matches = (doc, details) => {
     if (!doc) return false;
-    const parts = details.split(/, |; /);
-    for (const part of parts) {
-      let m;
-      if ((m = part.match(/^(.+) et al\.$/))) { if (m[1] !== doc.text.match(/^Authors: ([^,\n]+)/m)[1]) return false; }
-      else if ((m = part.match(/^document (D\d{3})$/))) { if (m[1] !== doc.id) return false; }
-      else if (/^\d{4}$/.test(part)) { if (new Date(parseDay(doc.published)).getUTCFullYear() !== Number(part)) return false; }
-      else if (!Number.isNaN(parseDay(part))) { if (parseDay(part) !== parseDay(doc.published)) return false; }
-      else if (part === 'internal lab note') { if (!/^Venue: internal$/m.test(doc.text)) return false; }
-      else if (!doc.text.includes(`\nVenue: ${part}\n`)) return false;
-    }
+    let m;
+    if ((m = details.match(/^(.+?) et al\./)) && m[1] !== doc.text.match(/^Authors: ([^,\n]+)/m)[1]) return false;
+    if ((m = details.match(/document (D\d{3})/)) && m[1] !== doc.id) return false;
+    const venue = VENUES.find(v => details.includes(v));
+    const own = /^Venue: internal$/m.test(doc.text) ? 'internal lab note' : (doc.text.match(/^Venue: (.+)$/m) ?? [])[1];
+    if (venue && venue !== own) return false;
+    if ((m = details.match(DATE_RE))) { if (parseDay(m[1]) !== parseDay(doc.published)) return false; }
+    else if ((m = details.match(/(?:^|, )(\d{4})$/)) && new Date(parseDay(doc.published)).getUTCFullYear() !== Number(m[1])) return false;
     return true;
   };
   const voids = new Set(), errata = [];

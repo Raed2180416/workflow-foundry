@@ -109,9 +109,11 @@ function attemptWorld(spec, attempt) {
     for (let k = 0; k < 200; k++) { const c = `${r.pick(CODE_PREFIX)}-${r.int(100, 9999)}`; if (!codes.has(c)) { codes.add(c); return c; } }
     return null;
   };
+  // the fan-out width varies per task (a compiled solver must not learn a fixed count)
+  const nIn = L.inScope + r.int(-2, 2), nNear = Math.max(4, L.near + r.int(-1, 1));
   const nearKinds = ['T1', 'T2', 'T3', 'T4'];
-  for (let k = 4; k < L.near; k++) nearKinds.push(r.pick(['T1', 'T2', 'T3', 'T4']));
-  const roles = [...Array(L.inScope).fill('in'), ...nearKinds, ...(L.namesake ? ['T6'] : [])];
+  for (let k = 4; k < nNear; k++) nearKinds.push(r.pick(['T1', 'T2', 'T3', 'T4']));
+  const roles = [...Array(nIn).fill('in'), ...nearKinds, ...(L.namesake ? ['T6'] : [])];
   while (roles.length < L.entities) roles.push('bg');
   const entities = roles.map((role, i) => ({ id: `E${String(i + 1).padStart(2, '0')}`, role, sub: role === 'in' ? 'plain' : null, name: newName(), code: newCode(), registeredBy: null, registeredOn: null }));
   if (entities.some(e => !e.name || !e.code)) return reject('names');
@@ -214,20 +216,23 @@ function attemptWorld(spec, attempt) {
   }
 
   // ---- near-miss candidates
-  const otherLabDocWithClaim = (e, opts = {}) => {
-    // a surviving other-lab document with a standard claim of a requested property (so a wrongly included compound
-    // produces rows)
-    const pubDay = fresh(LO, HI);
-    if (pubDay == null) return null;
-    const doc = addDoc({ kind: r.pick(researchKinds), pubDay, lab: r.pick(others).id, role: 'bg', primary: e.id, ...opts });
-    setTest(doc, 'any');
-    const p = r.pick(props);
-    claim(doc, e, p, drawCanon(p));
-    docNOf(doc);
-    return doc;
+  const otherLabDocsWithClaims = e => {
+    // surviving other-lab documents with a standard claim of EVERY requested property: a near-miss compound has complete
+    // data like an in-scope one, so "drop the compounds with missing properties" is not a shortcut to the scope, and a
+    // wrongly included compound produces a full set of rows
+    const parts = r.chance(0.5) ? [props] : [props.slice(0, Math.ceil(props.length / 2)), props.slice(Math.ceil(props.length / 2))];
+    for (const ps of parts) {
+      const pubDay = fresh(LO, HI);
+      if (pubDay == null) return false;
+      const doc = addDoc({ kind: r.pick(researchKinds), pubDay, lab: r.pick(others).id, role: 'bg', primary: e.id });
+      setTest(doc, 'any');
+      for (const p of ps) claim(doc, e, p, drawCanon(p));
+      docNOf(doc);
+    }
+    return true;
   };
   for (const e of entities.filter(x => ['T1', 'T2', 'T3', 'T4', 'T6'].includes(x.role))) {
-    if (!otherLabDocWithClaim(e)) return reject('days');
+    if (!otherLabDocsWithClaims(e)) return reject('days');
     if (e.role === 'T1') {
       const pubDay = fresh(Y + 20, HI);
       const doc = addDoc({ kind: r.pick(researchKinds), pubDay, lab: X.id, affil: L.alias >= 1 && r.chance(0.3) ? 'abbr' : 'full', role: 'near', primary: e.id });
@@ -236,10 +241,19 @@ function attemptWorld(spec, attempt) {
       const p = r.pick(props);
       claim(doc, e, p, drawCanon(p));
       docNOf(doc);
-    } else if (e.role === 'T2') {
-      const host = r.pick(xDocs);
+    } else if (e.role === 'T2' || e.role === 'T4') {
+      // quoted (T2) or planned (T4) in a lab X document after Y; the first of each kind, and others at random, in a
+      // document of its own that names it in the title (so "title compound of a lab X document" is not a shortcut)
+      const own = !docs.some(x => x.role === `near-${e.role}`) || r.chance(0.5);
+      let host;
+      if (own) {
+        const pubDay = fresh(Y + 20, HI);
+        if (pubDay == null) return reject('days');
+        host = addDoc({ kind: r.pick(['labnote', 'preprint']), pubDay, lab: X.id, affil: L.alias >= 1 && r.chance(0.3) ? 'abbr' : 'full', role: `near-${e.role}`, primary: e.id, note: e.role === 'T2' ? 'review' : 'plan' });
+      } else host = r.pick(xDocs);
       const p = r.pick(props);
-      host.quotes.push({ e: e.id, p, canon: drawCanon(p), unit: unitFor(p), lab: r.pick(others).id, n: r.int(2, 9) });
+      if (e.role === 'T2' || r.chance(0.5)) host.quotes.push({ e: e.id, p, canon: drawCanon(p), unit: unitFor(p), lab: r.pick(others).id, n: r.int(2, 9) });
+      if (e.role === 'T4') host.plans.push(e.id);
       mention(host, e);
     } else if (e.role === 'T3') {
       const pubDay = fresh(Y + 20, HI - 30);
@@ -251,10 +265,6 @@ function attemptWorld(spec, attempt) {
       const nt = addDoc({ kind: 'retraction', pubDay: fresh(pubDay + 10, HI), lab: null, target: doc.key, role: 'notice', notice: { reason: r.int(0, 3) } });
       if (nt.pubDay == null) return reject('days');
       nt.venue = doc.venue;
-    } else if (e.role === 'T4') {
-      const host = r.pick(xDocs);
-      host.plans.push(e.id);
-      mention(host, e);
     } else if (e.role === 'T6') {
       const pubDay = fresh(Y + 20, HI);
       const doc = addDoc({ kind: r.pick(researchKinds), pubDay, lab: NS.id, affil: 'full', role: 'namesake', primary: e.id });
@@ -341,8 +351,10 @@ function attemptWorld(spec, attempt) {
     return doc;
   };
   const fill = L.docs;
+  // room for what is added after the background loop: errata to void documents, concerns, consortium notices
+  const reserve = (d >= 4 ? 2 : 0) + L.concerns + Math.max(1, L.alias) + 1;
   let guard = 0;
-  while (docs.length < fill - 3 && guard++ < 2000) {
+  while (docs.length < fill - reserve && guard++ < 2000) {
     const doc = bgDoc();
     if (!doc) break;
     const roll = r.next();
