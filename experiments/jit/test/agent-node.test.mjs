@@ -32,7 +32,7 @@ const stubModelPort = () => ({ policy: STUB_POLICY, providers: {}, policyHash: '
 const RETURNS = { type: 'object', required: ['n'], properties: { n: { type: 'integer' } } };
 const req = (extra = {}) => ({ v: 1, op: 'agent', name: 'node', span: 'agent:node#0', attempt: 0, instructions: 'Count the lines.', files: { 'a.txt': 'x\ny\n' }, returns: RETURNS, budgetUsd: 0.3, ...extra });
 const hostWith = (agent, opts = {}) => {
-  const host = createCallHost({ registry: createRegistry(), mode: 'stub', modelPort: stubModelPort(), agent: agent === null ? null : { models: [HAIKU], model: HAIKU, ...agent }, ...opts });
+  const host = createCallHost({ registry: createRegistry(), mode: 'stub', modelPort: stubModelPort(), agent: agent === null ? null : { models: [HAIKU], model: HAIKU, textLabel: 'synthetic', ...agent }, ...opts });
   host.port({ budgetUsd: opts.budgetUsd ?? 1 });
   return host;
 };
@@ -66,7 +66,7 @@ test('host: the agent refusal table (each check in order), and every code is a l
   const registry = createRegistry();
   const inner = registry.register({ contract: { output: { type: 'object' } }, stub: async (input, ctx) => ({ output: await ctx.agent(req()) }) });
   const outer = registry.register({ contract: { output: { type: 'object' } }, stub: async (input, ctx) => ({ output: await ctx.call({ v: 1, op: 'call', callee: inner.hash, input: {}, name: 'inner', budgetUsd: 0.5 }) }) });
-  const deep = createCallHost({ registry, mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const deep = createCallHost({ registry, mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU, textLabel: 'synthetic' } });
   deep.port({ budgetUsd: 2 });
   const top = await deep.request({ v: 1, op: 'call', callee: outer.hash, input: {}, name: 'outer', budgetUsd: 1 });
   assert.equal(top.status, 'ok');
@@ -117,7 +117,7 @@ test('host: harvest of an ok node (scripts, task, answer) and the sub-compile in
   const runner = async ({ files }) => { runs++; return { answer: { n: Object.keys(files).length }, costUsd: 0.05, turns: 7, transcriptSha256: 'ab'.repeat(32),
     scripts: [{ path: 'decode.mjs', text: 'console.log(1)\n', bytes: 15, source: 'workdir' }] }; };
   const files = { 'dump/README.TXT': 'layout', 'dump/INV2024.DAT': 'rows' };
-  const host = createCallHost({ registry: createRegistry(), mode: 'sandbox', workRoot: dir, modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const host = createCallHost({ registry: createRegistry(), mode: 'sandbox', workRoot: dir, modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU, textLabel: 'synthetic' } });
   host.port({ budgetUsd: 1 });
   const r = await host.request(req({ files }));
   assert.equal(r.status, 'ok'); assert.equal(r.agent.harvested, 1); assert.equal(r.agent.turns, 7);
@@ -136,7 +136,7 @@ test('host: harvest of an ok node (scripts, task, answer) and the sub-compile in
   const cf = caseFiles(groups[0].traces);
   assert.ok(cf['traces/trace-0/agent-work.md'].includes('decode.mjs'), 'the harvested script reaches the builder as agent work');
   // Replay: a later host given this host's journal serves the node at $0 without running it; a retry (attempt 1) runs.
-  const replay = createCallHost({ registry: createRegistry(), mode: 'stub', modelPort: stubModelPort(), journal: host.journalRows(), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const replay = createCallHost({ registry: createRegistry(), mode: 'stub', modelPort: stubModelPort(), journal: host.journalRows(), agent: { runner, models: [HAIKU], model: HAIKU, textLabel: 'synthetic' } });
   replay.port({ budgetUsd: 1 });
   const again = await replay.request(req({ files }));
   assert.equal(again.memo, 'replay'); assert.equal(again.spentUsd, 0); assert.deepEqual(again.output, { n: 2 }); assert.equal(runs, 1);
@@ -206,7 +206,7 @@ async function runParent(t, { runner, opts = '' }) {
   const dir = tmp(t, 'jit-agentp-');
   mkdirSync(path.join(dir, 'tools'));
   const ledger = new Ledger({ capUsd: 1, label: 'root' });
-  const host = createCallHost({ registry: createRegistry(), mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const host = createCallHost({ registry: createRegistry(), mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU, textLabel: 'synthetic' } });
   const svc = await startServices({ modelPort: host.port({ budgetUsd: 1, ledger }), ledger, allowedModels: [HAIKU] });
   writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(FLOW_V3, path.join(dir, 'tools/flow.mjs'));
   writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ url: svc.url, token: svc.token }));
@@ -283,7 +283,7 @@ test('flow.agent refusals reach the caller (BUDGET_TOO_SMALL from the host; bad-
   const dir = tmp(t, 'jit-agentr-');
   mkdirSync(path.join(dir, 'tools'));
   const ledger = new Ledger({ capUsd: 1, label: 'root' });
-  const host = createCallHost({ registry: createRegistry(), mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const host = createCallHost({ registry: createRegistry(), mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU, textLabel: 'synthetic' } });
   const svc = await startServices({ modelPort: host.port({ budgetUsd: 1, ledger }), ledger, allowedModels: [HAIKU] });
   writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(FLOW_V3, path.join(dir, 'tools/flow.mjs'));
   writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ url: svc.url, token: svc.token }));
@@ -359,7 +359,7 @@ async function runFallback(t, { decoderSeeds, decoderMode, runner }) {
   const dir = tmp(t, 'jit-agentf-');
   mkdirSync(path.join(dir, 'tools'));
   const ledger = new Ledger({ capUsd: 1, label: 'root' });
-  const host = createCallHost({ registry, mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const host = createCallHost({ registry, mode: 'stub', modelPort: stubModelPort(), agent: { runner, models: [HAIKU], model: HAIKU, textLabel: 'synthetic' } });
   const svc = await startServices({ modelPort: host.port({ budgetUsd: 1, ledger }), ledger, allowedModels: [HAIKU] });
   writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(FLOW_V3, path.join(dir, 'tools/flow.mjs'));
   writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ url: svc.url, token: svc.token }));
@@ -400,7 +400,7 @@ const out = await flow.agent('decode-dump', { instructions: task.inputs.dump_spe
   { verify: o => (o.rows.length === o.trailer.records ? null : 'record count ' + o.rows.length + ' != trailer ' + o.trailer.records), budgetUsd: 0.4 });
 flow.done({ sub_id: sub, rows: out.rows.length });`);
   const ledger = new Ledger({ capUsd: 1, label: 'r5' });
-  const host = createCallHost({ registry: createRegistry(), modelPort: stubModelPort(), workRoot: path.join(root, 'calls-root'), agent: { runner, models: [HAIKU], model: HAIKU } });
+  const host = createCallHost({ registry: createRegistry(), modelPort: stubModelPort(), workRoot: path.join(root, 'calls-root'), agent: { runner, models: [HAIKU], model: HAIKU, textLabel: 'synthetic' } });
   const r = await runCompiled({ solvePath: path.join(root, 'solve.mjs'), task: { prompt: task.prompt, inputs: task.inputs, files: task.files }, modelPort: host.port({ budgetUsd: 1, ledger }), perTaskUsd: 1,
     timeoutMs: 60000, workdir: path.join(root, 'run'), outputSchema: { type: 'object' }, allowedModels: withCallModel([HAIKU]), flowPath: FLOW_V3, label: 'r5', ledger });
   assert.equal(r.status, 'ok', JSON.stringify(r.error ?? r.deopt));

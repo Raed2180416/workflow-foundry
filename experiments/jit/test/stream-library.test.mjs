@@ -102,7 +102,9 @@ test('library arm (fakes): ISO starts empty, an accepted adopted version is regi
   assert.equal(reg.get('sha256:stale'), null, 'the stale entry was wiped');
   assert.deepEqual(list.map(x => x.evidence.version), [1, 2], 'v1, and v2 after the call deopt (recompileOnDeopts 1)');
   const e = reg.get(list[0].hash);
-  assert.equal(e.flowVersion, 3); assert.equal(e.profile.params.observe.looseLines, true); assert.equal(e.profile.n, 1); assert.deepEqual(e.checkOptions, LIB_CHECK);
+  assert.equal(e.flowVersion, 3); assert.equal(e.profile.params.observe.looseLines, true); assert.deepEqual(e.checkOptions, LIB_CHECK);
+  // review fix T1 (FLOW-V3-SLICE2 §Review): v1, adopted at #1, is profiled on the inputs of tasks #0-#1 (was: its 1 compile trace)
+  assert.equal(e.profile.n, 2); assert.equal(e.evidence.profileTasks, 2); assert.equal(e.evidence.traces, 1);
   assert.equal(e.evidence.familyId, 'fake'); assert.equal(e.evidence.version, 1); assert.equal(e.contract.taskTemplate, 'Task 1: report v.');
   assert.ok(existsSync(e.solvePath) && e.solvePath.startsWith(path.join(p.dir, 'library', 'solvers')));
   assert.ok(readJsonl(p.events).some(x => x.kind === 'library-register' && x.hash === e.hash));

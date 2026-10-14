@@ -27,16 +27,16 @@ const hashOf = raw => { const c = normalizeConfig(raw); return parseArm(ARM, c, 
 test('config.library.agent and wide: validated; the budget rule adds the agent reservation; set, each defines a new arm; absent, the slice 2a arm hash', () => {
   const plain = normalizeConfig({ ...BASE, library: LIB }).library;
   assert.equal('agent' in plain, false); assert.equal('wide' in plain, false);
-  const lib = normalizeConfig({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3 }, wide: true } }).library;
+  const lib = normalizeConfig({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3, textLabel: 'synthetic' }, wide: true } }).library;
   assert.deepEqual(lib.agent, { budgetUsd: 0.3, model: null, stallMs: null, textLabel: 'synthetic' }); assert.equal(lib.wide, true);
   const h = hashOf({ ...BASE, library: LIB });
-  assert.notEqual(hashOf({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3 } } }), h); assert.notEqual(hashOf({ ...BASE, library: { ...LIB, wide: true } }), h);
+  assert.notEqual(hashOf({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3, textLabel: 'synthetic' } } }), h); assert.notEqual(hashOf({ ...BASE, library: { ...LIB, wide: true } }), h);
   assert.equal(hashOf({ ...BASE, library: { ...LIB, wide: false } }), h, 'wide: false is the default');
-  assert.throws(() => normalizeConfig({ ...BASE, perTaskUsd: 1, library: { ...LIB, agent: { budgetUsd: 0.4 } } }),
+  assert.throws(() => normalizeConfig({ ...BASE, perTaskUsd: 1, library: { ...LIB, agent: { budgetUsd: 0.4, textLabel: 'synthetic' } } }),
     /perTaskUsd 1 is below concurrency × childBudgetUsd \+ agent\.budgetUsd \+ parentMarginUsd = 2 × 0\.3 \+ 0\.4 \+ 0\.1 = 1\.1/);
-  assert.equal(normalizeConfig({ ...BASE, perTaskUsd: 1, library: { ...LIB, agent: { budgetUsd: 0.3 } } }).library.agent.budgetUsd, 0.3, 'exactly at the rule is allowed');
-  assert.throws(() => normalizeConfig({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.05 } } }), /budgetUsd must be a number >= 0\.1/);
-  assert.throws(() => normalizeConfig({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3, textLabel: 'corpus' } } }), /textLabel must be one of synthetic, third-party/);
+  assert.equal(normalizeConfig({ ...BASE, perTaskUsd: 1, library: { ...LIB, agent: { budgetUsd: 0.3, textLabel: 'synthetic' } } }).library.agent.budgetUsd, 0.3, 'exactly at the rule is allowed');
+  assert.throws(() => normalizeConfig({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.05, textLabel: 'synthetic' } } }), /budgetUsd must be a number >= 0\.1/);
+  assert.throws(() => normalizeConfig({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3, textLabel: 'corpus' } } }), /textLabel is required and must be one of synthetic, third-party/);
   assert.throws(() => normalizeConfig({ ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3, tools: ['Task'] } } }), /agent\.tools is not supported/);
   assert.throws(() => normalizeConfig({ ...BASE, library: { ...LIB, wide: 'yes' } }), /wide must be true or false/);
 });
@@ -72,7 +72,7 @@ test('library arm with agent nodes (fakes): the compiled run\'s agent request ru
         promptVersion: a.promptVersion, builderCostUsd: 1, gatewayCostUsd: 0, checkCostUsd: 0, compileCostUsd: 1, nestedModelAttempts: 0 }, workdir, solvePath };
     },
   };
-  const config = { ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3 }, wide: true } };
+  const config = { ...BASE, library: { ...LIB, agent: { budgetUsd: 0.3, textLabel: 'synthetic' }, wide: true } };
   const res = await runStream({ config, deps, runRoot, workRoot, log: () => {} });
   assert.deepEqual(res.arms[0].errors, []);
   const slug = parseArm(ARM, normalizeConfig(config), { policyIds: [...POLICY_MODELS] }).slug, p = armPaths(path.join(runRoot, 'lib-agent'), slug);

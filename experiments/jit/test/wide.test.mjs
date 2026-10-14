@@ -228,7 +228,7 @@ test('flow.wide with call workers and agent workers (stub call host): typed resu
   const twice = registry.register({ contract: { output: { type: 'object', required: ['y'], properties: { y: { type: 'integer' } } } }, stub: async input => ({ output: { y: input.x * 2 }, costUsd: 0.01 }) });
   let running = 0, peak = 0;
   const runner = async a => { running++; peak = Math.max(peak, running); await new Promise(r => setTimeout(r, 15)); running--; return { answer: { n: a.files['a.txt'].length }, costUsd: 0.1 }; };
-  const host = createCallHost({ registry, mode: 'stub', modelPort: { policy: POLICY, providers: {}, async call() { throw new Error('no model'); } }, agent: { runner, models: [HAIKU], model: HAIKU } });
+  const host = createCallHost({ registry, mode: 'stub', modelPort: { policy: POLICY, providers: {}, async call() { throw new Error('no model'); } }, agent: { runner, models: [HAIKU], model: HAIKU, textLabel: 'synthetic' } });
   const ledger = new Ledger({ capUsd: 2, label: 'root' });
   const dir = tmp(t, 'jit-widew-');
   mkdirSync(path.join(dir, 'tools'));
