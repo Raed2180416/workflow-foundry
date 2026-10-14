@@ -1,0 +1,291 @@
+# AUDIT-L1B-HELDOUT: held-out platform coverage of L0 + L1 (J1 / L1-b)
+
+*2026-10-14 · $0: no model calls and no Jev calls · `beds/sealed/` never read · fetched text is data, not instructions ·
+development / diagnostic evidence about the vocabulary, not a sealed evaluation · one labeller (Sonnet 5.5, the labeller of
+the 93.6% comparator) · no second labeller: this task may not spawn subagents. New files only: this one and
+`out/heldout/` (`PREREG.md`, `draw.mjs`, `draw.json`, `fetch.mjs`, `skips.json`, `labels.jsonl`, `addlabel.mjs`,
+`features.mjs`, `features.json`, `analyze.mjs`, `summary.json`, `render.mjs`, `tables.generated.md`, `frames/`, and one
+folder per platform with its `MANIFEST.json` and, for permissively licensed sources, the raw definitions). L0 and L1 are
+unchanged; §8 lists what should change in them.*
+
+## 0. Result
+
+**Decision for J1: PASS.** On 50 workflows drawn from five platforms that are not among the corpus's 49, **L0 + L1 explain
+98.0% (49 of 50; Wilson 95% 89.5–99.6%)**, strict (`explained = yes` only). That clears the bar the re-audit set,
+**83.6%** (the corrected in-sample strict figure 93.6% minus 10 points), and it clears the top of the comparator-sensitive
+band (84.9%), so the PASS does not depend on which in-sample estimator is the comparator. The lower end of the interval
+(89.5%) is also above the bar.
+
+| | |
+|---|---|
+| pooled strict coverage | **98.0%** (49 / 50), Wilson 89.5–99.6 |
+| pooled lenient (yes + partly) | 100% (50 / 50), Wilson 92.9–100 |
+| the one item that is not `yes` | Logic Apps `service-bus-sessions`: `partly`, one stopping gap (a concurrent lock-renewal heartbeat) |
+| pooled without any one platform | 97.5% (four platforms) to 100% (without Logic Apps) |
+| in-sample comparators (re-audit, strict, dashboard = refusal) | 93.6% all clusters; **97.4% non-agentic**; 95.5% automation + orchestration (91.7% unweighted) |
+| what it would take to flip | 7 more strict denials of the 49 leave the pass-everywhere zone (42 of 50 = 84.0%); 8 fail (41 of 50 = 82.0%) |
+
+**How to read it.** This is a clean pass of the pre-registered rule, and the honest reading is narrower than the number:
+1. **The five platforms are workflow-automation and orchestration platforms, the clusters where in-sample coverage was
+   already 95–100%.** The like-for-like in-sample figure is 97.4% (86.0–99.5), so J1 is 0.6 points above it, not 4.4 above
+   a figure that includes the agentic cluster (69.6% in-sample, 38.9–89.2). J1 shows the control-flow half of the
+   vocabulary transfers to platforms it was not mined from. It does not test the half where the in-sample coverage lost
+   ground.
+2. **The hard constructs are barely exercised.** Of 50 workflows, `judge` appears in 4, `agent`, `wide`, `plan` and `call`
+   in none, and none contains a model-defined agent or streaming-with-cancel, the two run-stopping gaps of
+   AUDIT-L1-REAUDIT §7. The brief's candidate list has no agent framework, so this was not avoidable by the draw.
+3. **11 of 50 are one- or two-step stubs** (five Windmill trigger-preprocessor templates, five one-action Logic Apps
+   polling templates, one two-state Step Functions machine). They are all `yes`. Without them: 38 of 39 (97.4%, 86.8–99.5).
+4. **"Explained" is not "needs no change".** 17 of the 49 `yes` workflows carry a gap that would need a construct, a field
+   or a binding the vocabulary lacks (§5): 33 of 50 (66.0%, 52.2–77.6) are explained with no vocabulary change at all.
+   The gap-recording rate differs from the in-sample labels (57.1% of `yes` rows carry a gap here, 36.4% there), so S3
+   is a descriptive figure, not a like-for-like one (§7).
+5. **One labeller.** The PASS survives a labeller who is stricter on about 6 of the 49 `yes` rows. The re-audit's two
+   labellers differed on 1 of 10 strict calls, which is the only available indication of that rate (§7).
+
+## 1. Method
+
+**Frozen before the draw** (`out/heldout/PREREG.md`, commit a8a3060, before any workflow was drawn or labelled): the
+admission rule, the frames, the draw, the skip reasons, the labelling rubric, the primary statistic and the decision bar.
+Deviations are in §6.
+
+**Platform admission (decision PAUSE §5.4, taken).** The brief's candidate list was walked in its own order, admitting a
+platform if it is not in the corpus, a public source returns at least 10 complete workflow definitions as text without login
+(authored as samples, templates or real use, not unit-test fixtures), a licence note can be recorded, and it is reachable
+through the egress proxy; stop at five.
+
+| # | platform | source and probe | outcome |
+|---|---|---|---|
+| 1 | Windmill | `hub.windmill.dev/flows` (default listing, JSON, 30 flows) and `/flows/<id>` | admitted |
+| 2 | Kestra | `kestra-io/blueprints` (the repository behind kestra.io/blueprints), 1,513 `flows/*.yaml` | admitted |
+| 3 | Pipedream | `pipedreamhq/pipedream`: 29,355 files, components not workflows; docs: export "as JSON, one project at a time", no public gallery | **not admitted** (no public definitions) |
+| 4 | Make | `make.com/en/templates`: "Use template" only; no blueprint download, JSON URL, API or repository; `make-com/blueprints` does not exist | **not admitted** (no public definitions) |
+| 5 | Power Automate | `pnp/powerautomate-samples` (MIT): 24 solution zips, each one flow `definition.json` | admitted |
+| 6 | AWS Step Functions | `aws-samples/step-functions-workflows-collection` (MIT-0): 171 `*.asl.json` | admitted |
+| 7 | Azure Logic Apps | `Azure/logicapps` `templates/` (MIT), 45 template files | admitted (fifth; the walk stops) |
+
+Not probed, not drawn: Camunda/BPMN, Huginn, Airbyte, Mage, Hatchet, Trigger.dev, Retool.
+
+**Pins.** Kestra `kestra-io/blueprints@4a19ce21…`; Power Automate `pnp/powerautomate-samples@dbff07a8…`; Step Functions
+`aws-samples/step-functions-workflows-collection@7842c46f…`; Logic Apps `Azure/logicapps@c16c1d57…` (full SHAs in
+`draw.json`); Windmill is the live hub API on 2026-10-14 and is not versioned. Sources were read with shallow, blobless,
+inert clones (tree listings only), `curl` of the public raw URLs at the pinned SHAs and the hub JSON API, plus WebSearch and
+WebFetch for the admission probes. Nothing was built, installed or run.
+
+**Draw** (`draw.mjs`, the L1-a and re-audit procedure): per platform the frame ids sorted byte-wise, Fisher-Yates on one
+shared `mulberry32(20261017)` stream, platforms in admission order, the first 10 are the sample and the next 12 the reserve.
+Frame sizes: Windmill 30, Kestra 1,513, Power Automate 24, Step Functions 170, Logic Apps 45. A drawn item is replaced from
+the reserve only for the reasons fixed in PREREG §3 (not a workflow, an exact or variant duplicate, not retrievable). One
+replacement was needed: **Windmill 73** (`modules: []`, no preprocessor, no code, only an input schema) was replaced by 59.
+Four other Windmill drawn items (61, 72, 65, 59) are trigger-preprocessor templates with an empty body and one code step;
+they were kept, because they have a trigger and a step.
+
+**Labelling** (PREREG §4, the AUDIT-L1 method, the shape of `labels-sonnet-60.jsonl` without census fields): each definition
+was read whole, then one row was written with the L0 rows, the L1 patterns, `explained`, a refusal field, the gaps (a
+quoted fragment, why, `class` stops or leaves, `kind` construct, pattern, field, binding, idiom or rewrite, `lacks` yes,
+partial or no) and a note. Rows are stamped (13:40:30–13:45:01Z) and the file was in git while it grew. Seven rows were
+revised afterwards, each with `revisedAt` and `revisionNote`: six recorded a clock read in the definition (§6), one corrected
+a `lacks` value; no revision changed an `explained` value.
+
+**Structural cross-check** (`features.mjs`, PREREG §5): mechanical counts from each definition (states, tasks, actions,
+modules, triggers, loops, waits, error routes, approvals, clock and randomness uses, cycles) checked against each row. First
+run: 5 labels omitted a clock read that the definition makes; after the revisions, 0 issues. It is a recall check on the
+labeller written after the labels, not a second labeller.
+
+**Estimators.** Primary: pooled strict share with Wilson 95% at n = 50 (equal weight per workflow and per platform).
+Reported beside it: per-platform Wilson, leave-one-platform-out, lenient, the extra-strict readings S3 and S4, the
+non-trivial subset (size ≥ 3 by the mechanical count) and the in-sample comparators recomputed from the re-audit's own
+labels with its estimator (post-stratified, Wilson at the Kish n).
+
+## 2. Platforms, sources and licences
+
+| platform | unit | frame | licence at the pin | raw files in the repository |
+|---|---|---|---|---|
+| Windmill | a hub flow (`/flows/<id>` JSON) | 30 | none stated on the hub (WebFetch found no licence or terms text) | no (`.gitignore`; `MANIFEST.json` only) |
+| Kestra | a blueprint `flows/<name>.yaml` | 1,513 | no LICENSE file in the tree; the README shows only the kestra-io/kestra badge | no (`.gitignore`; `MANIFEST.json` only) |
+| Power Automate | the flow `definition.json` inside a solution zip | 24 | MIT | yes |
+| Step Functions | `*.asl.json` | 170 | MIT-0 | yes |
+| Logic Apps | `templates/<name>.json` | 45 | MIT | yes |
+
+Source availability does not grant redistribution (AGENTS.md): the Windmill and Kestra definitions are kept in this
+working tree only; their URL, fetch time, sha256 and size are in each `MANIFEST.json`, and the labels quote at most 200
+characters per gap. Every file in the manifests was fetched on 2026-10-14; none is a duplicate (sha256 distinct).
+
+## 3. Tables
+
+The tables below are generated (`render.mjs` from `summary.json` and `labels.jsonl`); each number is the same number as in
+§0. T1 is the J1 result by platform; T3 the in-sample comparators; T4a and T4b the missing constructs and fields; A1 every
+label.
+
+{{TABLES}}
+
+## 4. Missing constructs and fields, with counts
+
+Only **one** gap stops a workflow being explained. All other gaps leave it explained and say what the vocabulary would need,
+or what a rewrite must add. Counts are workflows, of 50 (T4a).
+
+**Stops (1 workflow).**
+- **Concurrent heartbeat with cancellation** (Logic Apps `service-bus-sessions`): `Renew_session_lock_until_cancelled`
+  (Until `isDone`, wait 25 s, renew the session lock) runs beside `While_there_are_more_messages_for_the_session_in_the_queue`
+  and both end by `Set_isDone_=_true`. L0 has no concurrent background task, lease or heartbeat with cancellation, and
+  refuses a shared mutable flag. The rewrite moves lock renewal into the queue binding (an L3 lease capability) and keeps
+  the drain loop (P44, P12, P27). One workflow is not enough to justify an L0 construct; it is a candidate for the L3
+  binding contract.
+
+**Fields or small constructs the vocabulary would need (leave the item explained).**
+- **Clock and randomness in a pure step: 11 of 50** (Windmill 2, Kestra 3, Power Automate 2, Step Functions 3, Logic Apps 1).
+  `Date.now()`, `now() | dateAdd(...)`, `utcNow()`, `utcnow()`, `$$.Execution.StartTime`, `States.UUID()`, `rand(0, 5)`.
+  L0 `step` is pure code with no clock or random source, so a time window, a dated key or a fresh id must be an input from
+  the trigger or an effect. This is the same gap AUDIT-L1-REAUDIT §7 found on 3 of 60 corpus items; here it is the most
+  frequent gap by a wide margin, because these platforms compute windows and ids inside the definition.
+- **A literal cap on loops, polls and pagination: 5 of 50** (Windmill 1, Power Automate 1, Step Functions 2, Logic Apps 1).
+  Step Functions cycles with no counter (`Check Model Status` → `Wait 30 second` → `Check Model Status`; `NextToken`
+  pagination), Power Automate and Logic Apps `Until` loops bounded by a time limit only, an unbounded `while (pageToken)`.
+  The `UNBOUNDED` rule already forbids these, so each is a rewrite that adds a literal cap; it changes behaviour (a model
+  that never reaches HOSTED now ends) and the rule's wording should say what the cap's exhaustion does.
+- **Per-item failure policy on `map`: 3 of 50** (Windmill, three `skip_failures` loops). L0 `map` is fail-fast. This is
+  prior-art adoption 1c of the slice 2 brief; L1 P12 has no slot for it.
+- **An explicit failed end with a code and message: 2 of 50** (Power Automate `Terminate` with `runStatus: Failed`, Logic
+  Apps `Terminate` with `runError`). L0 `done` carries a typed output, `refuse:<reason>` a reason; a failed run status is
+  an envelope notion that the card does not name.
+- **Approval details: 3 of 50, one each.** A quorum rule with a per-approver response list (Power Automate
+  `BasicAwaitAll`); no timeout in the definition (Power Automate `StartAndWaitForAnApproval`: L0 refuses a wait with no
+  timeout, so the rewrite adds one); a callback-URL transport answered in another system (Windmill `getResumeUrls`).
+  P32 has `APPROVERS`, `TIMEOUT` and `ON_TIMEOUT` slots but no quorum or response-list slot.
+- **Delay until an absolute, caller-supplied timestamp: 1 of 50** (Logic Apps `Delay_until`). `wait.delay` is relative and
+  at most 1 h; a durable delay-until with a documented maximum is the rewrite.
+- **Image inputs to a model read: 1 of 50** (Windmill `Reimbursement`, a vision read of receipts). L0 `judge` reads text.
+- **Several independent entry points into one body: 1 of 50** (Kestra: a schedule and a webhook). Recorded by the earlier
+  audits as "several entry points".
+
+**Recorded, needs no vocabulary change (T4b).** Effects inside code steps (2, Kestra), a shared working directory or an
+external accumulator between tasks (2, Kestra), start-and-wait integrations such as `.sync` and polling plugins (3),
+untrusted input concatenated into SQL or a shell string (2, a defect the typed binding removes), a batch model read
+returning free text aligned by position (1, a defect against the one-decision-per-judge rule), a code router with an
+unsupported branch (1, P07 with its none option), parallel effects with no compensation (1, a defect), connector and
+integration-account detail (3), a typed resume answer (1), a broker-held offset (1), validation in code (1).
+
+**What no workflow needed.** No refusal class applied (group chat, full-history handoff, interactive dashboard state,
+model-chosen tool, self-modification). No credential was a literal in a way that needed a rewrite (Kestra uses
+`secret(...)`; Windmill's blank `apiKey` and `password` inputs are resource placeholders).
+
+## 5. Needs profile against the nearest in-corpus clusters
+
+T5 gives each platform's hand-labelled profile. The comparison is against L1 §2.4 (the census, a candidate generator) and
+against the re-audit's hand labels for the same labeller.
+
+- **Pattern mix.** The 50 workflows use 27 distinct L1 patterns. The top six are P08 guard before an effect (17), P38 event
+  rule (16), P01 linear pipeline (14), P27 error route (13), P12 for-each (12), P04 deliver (11) and P36 schedule (11), all
+  patterns with high corpus support (P38 364, P08 229, P27 215, P36 164 items by the census). The patterns that are used
+  far more here than the census suggests are **P39 poll → diff → notify (7 of 50 here, 26 corpus items)** and **P02 fetch →
+  transform → write (5 of 50 here, 0 corpus items)**. P02 had no census evidence because revision 1 removed its detector
+  at precision 0.23; five real data-movement workflows here (Stripe to CRM, audit logs to BigQuery, a configuration backup to
+  S3, a blockchain event to SQL, Dropbox to SharePoint) are P02 by hand. That supports keeping P02 and reading "no census
+  evidence" as a detector failure, not a statement about the pattern.
+- **Patterns per workflow.** Medians 2 (Windmill, Step Functions), 3 (Power Automate, Logic Apps) and 4 (Kestra); maxima 4
+  to 7; 4 of 50 need more than 5 patterns (Windmill `Reimbursement`, Kestra drift guard and unpinned-action audit, Power
+  Automate review and approval), a hierarchical share of 8%. In-sample hand labels have medians 4 (automation) and 6
+  (orchestration) with 3 of 12 and 6 of 12 above 5, so J1's workflows are smaller; the census's own per-platform medians
+  are 3 to 7 for automation platforms and 0 to 3 for orchestration platforms (L1 §2.4). The comparison is rough: hand
+  labels find about 40% more patterns than the census (recall 0.60), and J1's small items pull the median down.
+- **Nearest in-corpus cluster** (mean cosine of pattern-share vectors against census platform vectors, a weak measure):
+  Windmill automation (0.35), Kestra orchestration (0.29) with automation close behind (0.27), Power Automate orchestration
+  (0.29) and automation (0.28), Step Functions science (0.33, from P26 retry and P08 with P01) with automation behind
+  (0.26), Logic Apps consumer-creative (0.29; the single platform neighbour is IFTTT at 0.71, a polling trigger and one
+  action) with automation (0.27). All cosines are low; no J1 platform is close to any one corpus platform. That is the
+  expected shape for platforms that were not mined, and the patterns they use are still the catalog's.
+- **L0 rows used** (T7): `effect` 99, `done` 50, `step` 37, `input` 32, `if` 28, `map` 17, `route.error` 15, `trigger.event`
+  12, `trigger.schedule` 11, `guard` 9, `state` 8, `trigger.poll` 7, `trigger.webhook` 6, `for` 5, `retry` 5, `wait.delay` 5,
+  `approve` 4, `judge` 4, `stream` 2, `wait.signal` 2, `finally` 1. Not used: `call`, `agent`, `wide`, `plan`, `flag`, `invariant`,
+  `ask`, `compensate`, `admission`, `session`.
+
+## 6. Deviations from the pre-registration
+
+All are recorded, none changed the primary statistic.
+1. **Frame sizes corrected before the draw** (Kestra 1,545 yaml files in the tree vs 1,513 under `flows/`; Step Functions
+   171 vs 170 after the `_` rule). The corrected PREREG is the committed one (a8a3060).
+2. **One skip applied**: Windmill 73, before any label, under reason (a) (empty skeleton).
+3. **Seven revision rows** after `features.mjs` (six clock gaps, one `lacks` correction), none changing `explained`.
+4. **S3 as specified could not be computed on the in-sample labels** (their gaps carry no `kind` or `lacks`). The
+   comparison offered instead is the share of `yes` rows with any gap (36.4% in-sample, 57.1% here), which is a measure of
+   recording thoroughness as much as of the vocabulary.
+5. **Added after the draw, exploratory (not in PREREG)**: the like-for-like in-sample comparators (T3), the non-trivial
+   subset, S4, the gap tags (regex rules in `analyze.mjs`; every gap is tagged, 0 untagged, and `summary.json` lists each tag so a
+   reader can recode), and the needs-profile cosines. The primary statistic, the decision rule and the bar are as
+   registered.
+6. **Retrieval tools.** The task allowed WebSearch and WebFetch. Byte-exact files and the pinned SHAs needed `curl` of the
+   public raw URLs and the hub API, and blobless clones for tree listings (AGENTS.md allows shallow clones as inert
+   research material). WebFetch returns a model summary of a page, so it was used only for the admission probes.
+
+## 7. Limits
+
+- **One labeller.** The brief and the re-audit ask for a blind second labeller of another model size on at least 10 items.
+  This task cannot spawn one. The labeller is Sonnet 5.5, the labeller of the 93.6% comparator, so a labeller effect cancels
+  in the comparison but nothing here is a second reading, and nothing is a human reading. Both the vocabulary and the
+  labeller are Claude-family; correlated leniency cannot be excluded. The re-audit's two labellers agreed on 9 of 10 strict
+  calls; if a second labeller here were stricter on 10% of the 49 `yes` rows (about 5) the pooled figure would be 88%, still
+  a pass; it would take 7 to leave the pass-everywhere zone and 8 to fail. An indication, not an estimate.
+- **Not blind to the platform.** The labeller knew each platform's name and read L0 and L1 first; the census was not run
+  on these items and no corpus label was read for them. The stratum letter of L1-a does not exist here.
+- **Gap-recording thoroughness differs from the in-sample labels** (57.1% of `yes` rows carry a gap, 36.4% in-sample; J1
+  records every clock read after the consistency pass). S3 and S4 are descriptive.
+- **Samples are small.** Ten per platform; per-platform Wilson lower bounds are 59.6% (Logic Apps) and 72.2% (the rest).
+  Five clusters cannot support a design effect, so the pooled Wilson interval treats the 50 as exchangeable; the
+  leave-one-platform-out range (97.5–100%) is the only clustering guard.
+- **Frames are what the sources expose.** Windmill's hub frame includes seven trigger-preprocessor template stubs and is
+  not versioned; Kestra's blueprint directory contains many recently added, long, uniformly structured "gate" and "sentinel"
+  flows (authorship not checked); Logic Apps' `templates/` is the older Consumption gallery (the poll-trigger-plus-one-action
+  era); Power Automate's samples are one community repository; Step Functions' collection includes variants of one pattern
+  in several IaC flavours (the variant rule did not fire). None of that is a sample of "all workflows on the platform".
+- **Not tested:** agent-framework shapes (the two run-stopping gaps of the re-audit), BPMN (human tasks, boundary events,
+  event sub-processes), Airbyte-style connector pipelines, and executable coverage (L1-b executable is a separate paid test
+  on the oracle-bearing corpus subset).
+- **Structural, not executable.** "Explained" means each control structure maps onto L0 and L1; it does not mean a
+  constructor can build the workflow or that an L3 binding exists for each connector (Step Functions SDK integrations,
+  Graph API calls, SharePoint HTTP requests are all L3 work).
+- **The cross-check is weak.** `features.mjs` was written after the labels and by the labeller; it caught one omission class.
+
+## 8. Decision for J1, and what follows
+
+- **J1: PASS** (pooled strict 98.0%, Wilson 89.5–99.6, against the bar 83.6% and the pass-everywhere line 84.9%). There is
+  no evidence in this sample that L0 + L1 are fitted to the 49 corpus platforms in their control-flow part. The kill rule
+  in PAUSE §6 ("out-of-sample within 10 points of in-sample, else L0/L1 are revised before any paid library run") does not
+  fire.
+- **What the PASS does not unblock.** D1 stays **N** on L1-a (rule precision 0.713, AUDIT-L1-REAUDIT); the census stays a
+  candidate generator; the agentic half of the vocabulary is untested out of sample; the L3 bindings these platforms need
+  are unbuilt. A reasonable next out-of-sample test is an agent-framework draw (frameworks outside the corpus's 21) plus a
+  BPMN platform, because the first carries the in-sample losses and the second adds human-task shapes; the brief's list has
+  neither, so this needs a new platform list from the owner.
+- **Proposed changes to L0 and L1 (not applied; this file changes nothing existing).**
+  1. L0 card, `step`: add one sentence that a step has no clock and no random source, and that a window, a dated key or a
+     fresh id is an input supplied by the trigger or an `effect` (a `clock` and an `id` binding in L3). Affects 11 of 50 here.
+  2. L0 `map` and L1 P12: add `onItemError: fail | skip | flag` to `map` (prior-art adoption 1c, slice 2) and a P12 slot;
+     `flag` the skipped item so SILENT_DROP holds. Affects 3 of 50.
+  3. L1 `UNBOUNDED` (§9) wording: a state-machine or poll cycle with no counter, an `Until` bounded only by a time limit and
+     a pagination loop are rewritten with a literal cap and an explicit behaviour on exhaustion (P21, P22). Affects 5 of 50.
+  4. L0 `wait.delay` and P34: add `until` (an absolute caller-supplied time, durable, with a maximum) next to `delayMs`;
+     L0 `done`: name a failed end (`fail:<code,message>`) beside `refuse:<reason>`. Affects 1 and 2 of 50.
+  5. L1 P32: add `QUORUM` (any, all, k of n) and a per-approver response list to the output; say that a missing timeout is
+     rewritten with one. Affects 2 of 50 (plus 1 callback-URL transport, an L3 binding detail).
+  6. L0 `judge` (card note): image inputs are an L3 tool read (`effect`) whose text output is untrusted, until a typed
+     `inputs` field exists. Affects 1 of 50.
+  7. L3 binding contract (LIBRARY): a queue binding exposes a lease or session-lock renewal capability, so a heartbeat loop
+     is never workflow logic; do not add an L0 construct for one workflow.
+  8. L1 §2.5 / P02 / P39: P02 has 5 of 50 real hits and P39 7 of 50 here, against 0 and 26 corpus items by the census; keep
+     P02 and note that its "no census evidence" is a removed detector, not an absence of the pattern.
+  9. L1 §10: record J1 as run with the result above and the untested clusters named.
+- **PROOF-LEDGER (not edited here; the brief forbids touching existing files).** J1 row status, proposed text: "**PASS
+  (2026-10-14, design/library/AUDIT-L1B-HELDOUT.md)**: 98.0% (49 of 50, Wilson 89.5–99.6) strict on 5 held-out platforms
+  (Windmill, Kestra, Power Automate, Step Functions, Logic Apps, 10 each, seeded draw, pre-registered), one labeller, bar 83.6%.
+  Like-for-like in-sample 97.4%. Does not test agent-framework shapes; 11 of 50 are stubs; 66.0% explained with no vocabulary
+  change. Missing: clock and randomness in `step` (11), literal cap on loops (5), `map` item-failure policy (3)." D1 stays N.
+
+## 9. Files
+
+In `research/jit-20261008/design/library/out/heldout/`: `PREREG.md` (frozen rules and the admission walk), `frames/`
+(the five frames, their sha256 and the Windmill listing), `draw.mjs` → `draw.json`, `skips.json`, `fetch.mjs`, one folder per
+platform (`MANIFEST.json` with url, fetch time, sha256, size, licence note, peeks; raw definitions for Power Automate, Step
+Functions and Logic Apps only), `labels.jsonl` (57 rows: 50 labels and 7 revisions), `addlabel.mjs`, `features.mjs` →
+`features.json`, `analyze.mjs` → `summary.json`, `render.mjs` → `tables.generated.md`. To reproduce the numbers from the
+labels: `node …/heldout/analyze.mjs` (reads `labels.jsonl`, `features.json`, the manifests and, read-only, the re-audit's
+`labels-sonnet-60.jsonl`, `draw.json` and `out/pattern-census-items.jsonl`).

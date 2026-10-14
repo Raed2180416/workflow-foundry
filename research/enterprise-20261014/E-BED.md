@@ -770,9 +770,9 @@ needs an equal cut and T2 phrase assertions must be updated.
 | P2 | References (c) for E8 and E1 (Opus authoring + ≤ 1 revision; c\* at $0) | ≈ $30–80 ($15–40 per item) | frozen shas; authoring-cost row; K1′ |
 | P3 | Dev rehearsal on world 1232, E8 and E1, arms (a), B1-H | ≈ $40–80 | PREREG TBDs fixed (caps, ε, effort) |
 | P4 | **MVP pilot, tier S, Track P**: E8, E1 × arms agent-H (sampled cases), agent-H-ws (sampled), (c), (a), B1-H × K = 2 | ≈ $180–590 (below) | first bar numbers (directional) |
-| P5 | Add E7 to the pilot; raise pilot items to K = 4; B1-O and (c′) on one item at K = 2; one heal arm per pilot item; scale tier for compiled arms | ≈ $300–900 | power for H-E1; J4; F2; scale |
+| P5 | Add E7 to the pilot; raise pilot items to K = 4; B1-O and (c′) on one item at K = 2; one heal arm per pilot item; scale tier for compiled arms | ≈ $350–1,150 | power for H-E1; J4; F2; scale |
 | P6 | Track C pilot on E1 and E7 (agent-H-C, (a)-C, (c)-C), K = 2 | ≈ $80–250 | the "set it up cheaply" number |
-| P7 | Remaining six core items, arms as P4 at K = 4; (g) once hierarchical retrieval exists | ≈ $1.5k–4k | family-level decision |
+| P7 | Remaining six core items, arms as P4 at K = 4; (g) once hierarchical retrieval exists | ≈ $1.1k–3.8k | family-level decision |
 | P8 | Tier E item by item as engine steps land (§7): E9, E2 after 1–3; E1, E7 after 1–3 + 5–6; E8 after 1–5; E5, E6 after 1–4 + 7; E3, E4 after 1–6 | runs ≈ tier-S cost | tier-E numbers |
 
 **Per-world cost basis for P4** [I; scaled from W-BED §3, FRONTIER-GAPS records/kinetics and D22 [M]; per-instance
@@ -930,7 +930,7 @@ delay quantiles); reported per world.
 ## 11. Owner decisions this depends on
 
 1. **Budget**: the MVP pilot (≈ $250–750: P1–P4 on E8 and E1, K = 2) vs extending to E7 and K = 4 (P5), Track C (P6) and
-   the full programme (P7, ≈ $1.5k–4k more). Each crosses or can cross the $500 pause.
+   the remaining items (P7, ≈ $1.1k–3.8k more). Each crosses or can cross the $500 pause.
 2. **Agent-arm sampling and form** (§8.3): sample size, one or two pilot items, `claude -p` sessions vs direct calls.
 3. **(c′), B1-O and agent-O** go-ahead (Opus spend; J4).
 4. **K = 4 held-out worlds** for items entering the family test.
