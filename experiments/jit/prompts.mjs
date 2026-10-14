@@ -93,7 +93,7 @@ const method = opts => { const { models, perTaskUsd } = opts; return `How to com
    files, inputs, returns }, { verify, budgetUsd }). The node sees only the files and inputs you pass and must return a
    value of the returns schema. verify is your code over that value and ctx.files (counts, control totals, a quote that
    must occur in a file): the node's own claim is not a check. A failed verify reruns the node once with the reason, then
-   the task deopts. budgetUsd at least $0.10 and at most ${opts.agentBudgetUsd}, carved from yours. Do not use an agent
+   the task deopts. budgetUsd at least $0.10 and at most $${opts.agentBudgetUsd}, carved from yours. Do not use an agent
    node for anything code or one flow.judge can do. If a library solver decodes such data, call it first with
    onRefuse: 'skip', onDeopt: 'skip' and the same verify, and use the agent node only when it refuses or fails.` : ''}${withWide(opts) ? `
 11. For many independent items (dozens of statements or entities), flow.wide(name, { items, worker, reduce, budgetUsd,

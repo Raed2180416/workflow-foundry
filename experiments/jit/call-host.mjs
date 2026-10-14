@@ -527,7 +527,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
         outcome: result.status, ...(result.refused ? { refused: result.refused, refusedDetail: result.detail ?? null } : {}), ...(result.void ? { void: result.void } : {}),
         ...(result.error ? { error: result.error } : {}), ...(ok ? { outDigest: value.outDigest, ...outputRef } : {}), ...(result.harvestFile ? { harvestFile: result.harvestFile } : {}),
         ...agentInfo, spentUsd: usd(costUsd), reservedUsd, ...(costUnknown ? { costUnknown: true } : {}), memo: result.memo ?? null, ms: Date.now() - t0 });
-      log(`${kind} ${nodePath ?? '(bad request)'} ${result.status === 'refused' ? result.refused : result.status}${result.void ? `:${result.void}` : ''} ${usd(costUsd)}`);
+      log(`${kind} ${nodePath ?? '(bad request)'} ${result.status === 'refused' ? result.refused : result.status}${result.void ? `:${result.void}` : ''} $${usd(costUsd)}`);
       return { value, costUsd: usd(costUsd), costUnknown, ms: Date.now() - t0 };
     };
     const refuse = (refused, detail = null) => finish({ status: 'refused', refused, detail });
