@@ -30,7 +30,12 @@
 //   by fulfilmentRef -> orders.fulfilments -> orderId, duplicate placed orders by orderId); otherwise it handles the
 //   message itself (a recorded order: nothing to do; no order: nothing, subject null) and closes. Two same-instant
 //   placements of one order: the higher instance id yields (closes before any business effect) on its second tick.
-// - Order instances close when the order and all its fulfilments have ended and no unit is in flight.
+// - A reservation batch rejected as a whole (400 before any item, or `predecessor-failed` behind `create`) comes back
+//   with no key and no items; the engine then reconciles every in-flight reservation item through `status(key)` and
+//   re-plans (re-issue with the same item keys), so no item is left waiting for a result that names it.
+// - Order instances close when the order and all its fulfilments have ended and no unit is in flight, on an own timer
+//   at the next half-minute instant (inbound messages arrive on whole minutes, so a same-instant merge into this
+//   instance never meets a closed target, which would be an arm error).
 //
 // AMBIGUITY READINGS (each a deliberate choice; cited sections are SPEC-E unless noted)
 // A1 R1.3: the edition is chosen once at intake from `rulebook/*/edition.json` (latest effectiveFrom <= local date of
