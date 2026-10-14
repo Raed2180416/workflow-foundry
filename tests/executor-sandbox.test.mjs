@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   maskSteps, scrubEnv, nestedModelUses, sessionError, streamUsageOf, splitReady, runClaudeCode, sandboxAvailable,
-  executorEnv, binaryKeeps, sandboxScript, sandboxProbeArgs, dropUidArgs, UNSHARE_ARGS, DEFAULT_HIDDEN, DEFAULT_KEEP_RO, DEFAULT_DEVICES, EXECUTOR_ENV_ALLOWED, WORK_ROOT, KIT_ROOT, SANDBOX_READY,
+  executorEnv, binaryKeeps, sandboxScript, sandboxProbeArgs, dropUidArgs, UNPRIVILEGED_ID, UNSHARE_ARGS, DEFAULT_HIDDEN, DEFAULT_KEEP_RO, DEFAULT_DEVICES, EXECUTOR_ENV_ALLOWED, WORK_ROOT, KIT_ROOT, SANDBOX_READY,
 } from '../src/executors/claude-code.mjs';
 import { runSandboxed } from '../src/executors/sandboxed-command.mjs';
 
@@ -49,7 +49,8 @@ test('maskSteps keeps the workdir writable and the kit read-only inside hidden r
   assert.throws(() => maskSteps({ workdir: work, kitDir: path.join(work, 'kit') }), { code: 'EXECUTOR_PATH' }, 'kept paths may not nest');
   assert.throws(() => maskSteps({ workdir: '/proc/self' }), { code: 'EXECUTOR_PATH' });
   assert.ok(DEFAULT_HIDDEN.includes(KIT_ROOT) && DEFAULT_HIDDEN.includes('/root') && DEFAULT_HIDDEN.includes('/tmp') && DEFAULT_HIDDEN.includes('/home/user'));
-  assert.deepEqual(DEFAULT_KEEP_RO.slice(0, 2), ['/root/.ccr', '/home/claude/.claude/remote']);
+  assert.deepEqual(DEFAULT_KEEP_RO.slice(0, 2), ['/root/.ccr', '/home/claude/.claude/remote/.oauth_token']);
+  assert.ok(!DEFAULT_KEEP_RO.some(p => p === '/home/claude/.claude/remote' || /session_ingress/.test(p)), 'the parent session ingress token is never kept');
   // Any other host: the invoking user's home is hidden; only the claude and node binaries (and the links leading to
   // them) stay visible, never a whole tool directory and never ~/.claude (ISOLATION-PROBE-laptop §5.3).
   const home = os.homedir();
@@ -145,11 +146,15 @@ test('maskSteps replaces /dev with a fresh read-only tmpfs of basic nodes, then 
 
 test('the program runs one user namespace deeper as the host uid (CLI root check), and the availability probe has that shape', () => {
   const uid = process.getuid(), gid = process.getgid();
+  // On a root host (the cloud) the program runs as UNPRIVILEGED_ID: the host uid 0 would fail the CLI root check.
+  const [mu, mg] = uid === 0 ? [UNPRIVILEGED_ID, UNPRIVILEGED_ID] : [uid, gid];
   const last = sandboxScript(['true'], '/w', ['claude', '-p', 'x']).split('\n').at(-1);
-  assert.equal(last, `exec unshare --user --map-user=${uid} --map-group=${gid} 'claude' '-p' 'x'`);
+  assert.equal(last, `exec unshare --user --map-user=${mu} --map-group=${mg} 'claude' '-p' 'x'`);
   assert.match(last, /^exec unshare --user --map-user=\d+ --map-group=\d+ /);
   assert.equal(sandboxScript(['true'], '/w', ['c'], { uid: 1234, gid: 99 }).split('\n').at(-1), "exec unshare --user --map-user=1234 --map-group=99 'c'");
-  assert.deepEqual(sandboxProbeArgs(uid, gid), ['--user', '--map-root-user', '--mount', '--pid', '--fork', '--mount-proc', 'unshare', '--user', `--map-user=${uid}`, `--map-group=${gid}`, 'true']);
+  assert.deepEqual(sandboxProbeArgs(uid, gid), ['--user', '--map-root-user', '--mount', '--pid', '--fork', '--mount-proc', 'unshare', '--user', `--map-user=${mu}`, `--map-group=${mg}`, 'true']);
+  assert.deepEqual(dropUidArgs(0, 0), ['unshare', '--user', '--map-user=65534', '--map-group=65534'], 'a root host never maps uid 0 into the program namespace');
+  assert.deepEqual(dropUidArgs(1000, 1000), ['unshare', '--user', '--map-user=1000', '--map-group=1000'], 'a non-root host is unchanged');
   assert.deepEqual(UNSHARE_ARGS, ['--user', '--map-root-user', '--mount', '--pid', '--fork', '--kill-child', '--mount-proc'], 'the outer (mount-phase) namespace is unchanged');
   assert.throws(() => dropUidArgs('1000; rm -rf /', 0), { code: 'SANDBOX_UNAVAILABLE' });
 });
@@ -255,6 +260,7 @@ cat > /dev/null
   touch /dev/probe 2>/dev/null; echo "dev-w|$?"
   echo "localbin|$(ls -A "$HOME/.local/bin" 2>/dev/null | tr '\\n' ' ')"
   echo "uid|$(id -u)"
+  test -e /home/claude/.claude/remote/.session_ingress_token; echo "ingress|$?"
   mount -t tmpfs probe /tmp 2>/dev/null; echo "mount|$?"
   umount -l /var/log 2>/dev/null; echo "umount|$?"
   unshare --user --map-root-user mount -t tmpfs probe /tmp 2>/dev/null; echo "remap-mount|$?"
@@ -274,17 +280,20 @@ test('live executor: only allow-listed variable names, basic /dev nodes, no host
   const out = Object.fromEntries(readFileSync(path.join(workdir, 'probe.txt'), 'utf8').trim().split('\n').map(l => [l.slice(0, l.indexOf('|')), l.slice(l.indexOf('|') + 1).trim()]));
   const names = out.env.split(' ').filter(Boolean);
   assert.deepEqual(names.filter(n => CREDENTIAL_LIKE.test(n)), ['CLAUDE_CODE_OAUTH_TOKEN', 'FOUNDRY_MODEL_GATEWAY_TOKEN'], 'only the CLI auth and the explicit per-session gateway token');
-  // sh adds PWD and SHLVL itself.
-  for (const n of names) assert.ok(['PWD', 'SHLVL', 'TMPDIR', 'HOME', 'FOUNDRY_MODEL_GATEWAY_URL', 'FOUNDRY_MODEL_GATEWAY_TOKEN'].includes(n) || EXECUTOR_ENV_ALLOWED.includes(n) || /^LC_/.test(n), n);
+  // sh adds PWD and SHLVL itself; dash (Ubuntu 0.5.12) also exports OLDPWD after the script's own cd.
+  for (const n of names) assert.ok(['PWD', 'OLDPWD', 'SHLVL', 'TMPDIR', 'HOME', 'FOUNDRY_MODEL_GATEWAY_URL', 'FOUNDRY_MODEL_GATEWAY_TOKEN'].includes(n) || EXECUTOR_ENV_ALLOWED.includes(n) || /^LC_/.test(n), n);
   const devs = out.dev.split(' ');
   for (const n of ['null', 'zero', 'urandom', 'shm', 'fd']) assert.ok(devs.includes(n), n);
   assert.ok(!devs.some(n => /^(nvidia|dri|nvme|sd[a-z]|kvm|input|snd|mem|kmsg)/.test(n)), out.dev);
+  // The parent cloud session's ingress credential never reaches a session (only the CLI login file is kept).
+  assert.notEqual(out.ingress, '0', 'session ingress token visible in the sandbox');
   assert.equal(out.nvidia0, '1'); assert.equal(out.journal, '1'); assert.equal(out.varlog, '0');
   assert.equal(out['null-w'], '0'); assert.equal(out.urandom, '4'); assert.equal(out['shm-w'], '0'); assert.notEqual(out['dev-w'], '0', '/dev itself is read-only');
-  // A non-root home keeps at most the claude link in ~/.local/bin (the 402 owner tools stay hidden).
-  assert.ok(out.localbin.split(' ').filter(Boolean).every(n => n === 'claude'), out.localbin);
+  // The home keeps at most the claude and node links in ~/.local/bin (binaryKeeps; the 402 owner tools stay hidden). The
+  // cloud's node is /root/.local/bin/node (scripts/setup-node24.sh), the laptop's claude is ~/.local/bin/claude.
+  assert.ok(out.localbin.split(' ').filter(Boolean).every(n => n === 'claude' || n === 'node'), out.localbin);
   // The session runs as the host uid (not 0) and holds no power over the mount namespace, even after a further unshare.
-  assert.equal(out.uid, String(process.getuid()));
+  assert.equal(out.uid, String(process.getuid() === 0 ? UNPRIVILEGED_ID : process.getuid()));
   assert.notEqual(out.mount, '0'); assert.notEqual(out.umount, '0'); assert.notEqual(out['remap-mount'], '0');
   assert.equal(out['masks-w'], '0', 'the private home and /tmp masks stay writable');
 });
