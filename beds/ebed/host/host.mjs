@@ -64,15 +64,19 @@ export function bindItem(item) {
 }
 
 /** Structural checks on a world before any run (a malformed world is a bed bug, never an arm outcome). */
+// The clock's resolution is one second and every time the host formats is truncated to it, so a world time with a
+// fractional second would give two wake-ups one `now` and one call id (review finding 9): refused.
+const isWorldTime = s => isIsoTime(s) && toMs(s) % SECOND === 0;
+
 function checkWorld(world, systems) {
   for (const k of ['id', 't0', 'horizonEnd']) if (!world?.[k]) throw new HostError(`world.${k} missing`);
-  if (!isIsoTime(world.t0) || !isIsoTime(world.horizonEnd)) throw new HostError('world.t0 / horizonEnd must be ISO times with offset');
+  if (!isWorldTime(world.t0) || !isWorldTime(world.horizonEnd)) throw new HostError('world.t0 / horizonEnd must be ISO times with offset, whole seconds');
   if (toMs(world.horizonEnd) <= toMs(world.t0)) throw new HostError('world.horizonEnd must be after t0');
   const ids = new Set();
   for (const [i, ev] of (world.arrivals ?? []).entries()) {
     if (!ev?.id || ids.has(ev.id)) throw new HostError(`world.arrivals[${i}]: missing or duplicate id`);
     ids.add(ev.id);
-    if (!isIsoTime(ev.at)) throw new HostError(`world.arrivals[${i}].at: ISO time with offset`);
+    if (!isWorldTime(ev.at)) throw new HostError(`world.arrivals[${i}].at: ISO time with offset, whole seconds`);
     if (toMs(ev.at) < toMs(world.t0)) throw new HostError(`world.arrivals[${i}]: before t0 (pre-history belongs in the backlog export)`);
     if (!['inbound', 'world'].includes(ev.channel?.kind)) throw new HostError(`world.arrivals[${i}].channel: inbound or world (instances are arm-side)`);
     if (typeof ev.type !== 'string' || typeof ev.source !== 'string') throw new HostError(`world.arrivals[${i}]: type and source required`);
@@ -86,10 +90,15 @@ function checkWorld(world, systems) {
   for (const qual of Object.keys(world.sor ?? {})) tableOk(qual, 'world.sor');
   for (const [i, b] of (world.backlog ?? []).entries()) for (const qual of Object.keys(b.export?.records ?? {})) tableOk(qual, `world.backlog[${i}]`);
   for (const [i, w] of (world.writes ?? []).entries()) {
-    if (!w?.id || !isIsoTime(w.at)) throw new HostError(`world.writes[${i}]: id and at required`);
+    if (!w?.id || !isWorldTime(w.at)) throw new HostError(`world.writes[${i}]: id and at (whole seconds) required`);
+    if (toMs(w.at) < toMs(world.t0)) throw new HostError(`world.writes[${i}]: before t0 (pre-history belongs in world.sor or the backlog export)`);
     tableOk(`${w.system}.${w.table}`, `world.writes[${i}]`);
   }
-  for (const [sweep, times] of Object.entries(world.sweepTimes ?? {})) for (const t of times) if (!isIsoTime(t)) throw new HostError(`world.sweepTimes.${sweep}: bad time`);
+  for (const [sweep, times] of Object.entries(world.sweepTimes ?? {})) for (const t of times) if (!isWorldTime(t)) throw new HostError(`world.sweepTimes.${sweep}: bad time (ISO with offset, whole seconds)`);
+  for (const [i, f] of (world.faults ?? []).entries()) if (f?.at !== undefined && !isWorldTime(f.at)) throw new HostError(`world.faults[${i}].at: ISO time with offset, whole seconds`);
+  for (const [i, ed] of (world.rulebook?.editions ?? []).entries()) {
+    if (ed?.published !== null && ed?.published !== undefined && !isWorldTime(ed.published)) throw new HostError(`world.rulebook.editions[${i}].published: ISO time with offset, whole seconds, or null`);
+  }
   checkNoise(world.noise ?? {});
 }
 
@@ -146,17 +155,24 @@ class Host {
     for (const [c, info] of Object.entries(world.truth?.cases ?? {})) if (typeof info?.subject === 'string') this.objectCase.set(info.subject, c);
     for (const [obj, c] of Object.entries(world.truth?.objectCase ?? {})) this.objectCase.set(obj, c);
 
+    this.worldDigest = hashOf(world);
     const wsDir = workspaceDir ?? arm?.workspace?.dir ?? null;
-    this.workspace = wsDir ? new Workspace({ dir: wsDir, ...(workspaceMaxBytes ? { maxBytes: workspaceMaxBytes } : {}) }) : null;
     // One workspace has one writer at a time, or a snapshot could capture another call's writes.
-    if (this.workspace && this.concurrency > 1) throw new HostError('a persistent workspace needs concurrency 1');
+    if (wsDir && this.concurrency > 1) throw new HostError('a persistent workspace needs concurrency 1');
+    this.workspace = wsDir ? new Workspace({ dir: wsDir, ...(workspaceMaxBytes ? { maxBytes: workspaceMaxBytes } : {}) }) : null;
+    // The host empties the workspace before its first live call: claim it first, before anything is journaled, so a
+    // misdeclared directory (someone's files, another run's workspace) is refused untouched (review finding 6).
+    if (this.workspace && mode !== 'replay') {
+      try { this.workspace.claim({ arm: this.armId, world: this.worldDigest }); }
+      catch (e) { throw new HostError(e.message); }
+    }
     this.wsRestored = false;
 
     this.agenda = new Agenda();
     this.instances = new Map();
     this.sweeps = new Map();
     for (const s of this.item.family.sweeps ?? []) this.sweeps.set(s.id, { id: s.id, carry: null, tickIndex: 0, queue: [] });
-    for (const id of Object.keys(world.sweepTimes ?? {})) if (!this.sweeps.has(id)) this.sweeps.set(id, { id, carry: null, tickIndex: 0, queue: [] });
+    for (const id of Object.keys(world.sweepTimes ?? {}).sort()) if (!this.sweeps.has(id)) this.sweeps.set(id, { id, carry: null, tickIndex: 0, queue: [] });
     this.refIndex = new Map();
     this.replies = new WeakSet();     // counterparty events that quote an arm-placed ref (the only events routed by ref)
     this.hostEventCase = new Map();   // counterparty events (generated on-policy) -> the truth case of the effect that caused them
@@ -199,6 +215,9 @@ class Host {
       if (!this.agenda.peek() || this.agenda.peek().atMs > this.horizonMs) break;
       if (++this.counters.wakeups > this.maxWakeups) throw new HostError(`more than ${this.maxWakeups} wake-ups`);
       const entries = this.agenda.popInstant();
+      const instant = this.iso(entries[0].atMs);
+      if (this.lastInstant !== undefined && toMs(instant) <= toMs(this.lastInstant)) throw new HostError(`two wake-ups at one formatted instant ${instant}`);
+      this.lastInstant = instant;
       try {
         await this.#wakeup(entries);
       } catch (e) {
@@ -262,13 +281,15 @@ class Host {
   #start() {
     this.started = true;
     const w = this.world;
-    this.stage('run.start', { host: HOST_VERSION, item: this.item.id, world: { id: w.id, digest: hashOf(w) }, arm: this.armId,
+    this.stage('run.start', { host: HOST_VERSION, item: this.item.id, world: { id: w.id, digest: this.worldDigest }, arm: this.armId,
       profile: this.profile.id, spec: sha256(this.item.specText), systems: this.item.systems.map(s => s.id), faults: this.faults.count, t0: w.t0, horizonEnd: w.horizonEnd });
-    for (const [qual, rows] of Object.entries(w.sor ?? {})) for (const row of rows) this.#worldWrite(qual, row, 'initial');
-    (w.backlog ?? []).forEach((b, i) => { for (const [qual, rows] of Object.entries(b.export?.records ?? {})) for (const row of rows) this.#worldWrite(qual, row, `backlog:${i}`); });
+    // Object keys in sorted order: the world digest ignores key order, so the journal must too (review finding 17).
+    const sorted = o => Object.entries(o ?? {}).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    for (const [qual, rows] of sorted(w.sor)) for (const row of rows) this.#worldWrite(qual, row, 'initial');
+    (w.backlog ?? []).forEach((b, i) => { for (const [qual, rows] of sorted(b.export?.records)) for (const row of rows) this.#worldWrite(qual, row, `backlog:${i}`); });
     for (const ev of w.arrivals ?? []) this.agenda.push({ kind: 'event', atMs: toMs(ev.at), phase: 1, source: ev.source, id: ev.id, event: ev });
     for (const wr of w.writes ?? []) this.agenda.push({ kind: 'write', atMs: toMs(wr.at), phase: 0, source: 'world', id: wr.id, write: wr });
-    for (const [sweep, times] of Object.entries(w.sweepTimes ?? {})) for (const t of times) this.agenda.push({ kind: 'sweep', atMs: toMs(t), phase: 2, source: 'sweep', id: sweep, sweep });
+    for (const [sweep, times] of sorted(w.sweepTimes)) for (const t of times) this.agenda.push({ kind: 'sweep', atMs: toMs(t), phase: 2, source: 'sweep', id: sweep, sweep });
     (w.backlog ?? []).forEach((b, i) => {
       const inst = this.#newInstance({ kind: 'backlog', index: i }, this.t0Ms, false);
       const ev = { id: `mig-${pad(i + 1, 5)}`, type: 'migration', at: w.t0, source: 'host', channel: { kind: 'instance', instance: inst.id },
@@ -447,23 +468,27 @@ class Host {
       .map(i => ({ instance: i.id, subject: i.subject, openedAt: this.iso(i.openedMs), lastTickAt: i.lastTickMs === null ? null : this.iso(i.lastTickMs) }));
   }
 
-  #ctxFor(files) {
+  /** The read side of a call's ctx. `live()` is false once the call has settled: every method then throws (finding 8). */
+  #ctxFor(files, live) {
     const includeComputed = this.profile.product;
     const systems = this.systems;
     const pending = this.pendingKeys;
     let index = null;                                     // computed on first use; no output is applied during a round
     const host = this;
+    const check = name => { if (!live()) throw new HostError(`ctx.${name} after the call settled (a ctx lives only while its call runs)`); };
     return {
       files,
       // Read-only, as of the round start: open instances, matched only on the subject the arm itself declared.
-      instances(filter = {}) { index ??= host.index(undefined); return index.filter(r => filter?.subject === undefined || r.subject === filter.subject).map(r => ({ ...r })); },
+      instances(filter = {}) { check('instances'); index ??= host.index(undefined); return index.filter(r => filter?.subject === undefined || r.subject === filter.subject).map(r => ({ ...r })); },
       query(table, filter = {}) {
+        check('query');
         const [sys, t] = String(table).split('.');
         const s = systems.get(sys);
         if (!s) throw new MockError(404, 'no-such-table', { table });
         return s.query(t, plainCopy(filter) ?? {}, includeComputed);
       },
       status(system, key) {
+        check('status');
         const s = systems.get(system);
         if (!s) throw new MockError(404, 'no-such-system', { system });
         return s.keyStatus(String(key), pending);
@@ -483,7 +508,13 @@ class Host {
     if (this.mode === 'replay') throw new ReplayDivergence(-1, null, { type: 'call', callId, inputDigest });
     if (this.workspace && !this.wsRestored) { this.#restoreWorkspace(); }
     const costs = [], envFaults = [];
-    const ctx = { ...this.#ctxFor(files.files), workspace: this.workspace?.dir ?? null, recordCost: row => { const c = plainCopy(row); if (c !== undefined) costs.push(c); } };
+    // A ctx is revoked when its call settles (returns, throws or times out): late reads would see a later state and a
+    // late cost would change a row after it was journaled (review finding 8). Costs are copied out at that moment.
+    let live = true;
+    const ctx = { ...this.#ctxFor(files.files, () => live), workspace: this.workspace?.dir ?? null, recordCost: row => {
+      if (!live) throw new HostError('recordCost after the call settled: record costs before the call returns');
+      const c = plainCopy(row); if (c !== undefined) costs.push(c);
+    } };
     const fn = kind === 'case' ? this.arm.tick : this.arm.sweep;
     let outcome = 'ok', output, error = null;
     {
@@ -494,7 +525,7 @@ class Host {
           if (output === undefined) { outcome = 'error'; error = { code: 'not-json' }; }
           break;
         } catch (e) {
-          if (e?.quota) { e.discardedCalls = [...(e.discardedCalls ?? []), { callId, costs }]; throw e; }
+          if (e?.quota) { live = false; e.discardedCalls = [...(e.discardedCalls ?? []), { callId, costs: costs.slice() }]; throw e; }
           if (e?.env) {
             envFaults.push({ attempt, code: String(e.code ?? 'ENV_FAULT') });
             if (attempt < this.envRetries) { if (this.envRetryDelayMs) await new Promise(r => setTimeout(r, this.envRetryDelayMs)); continue; }
@@ -506,7 +537,13 @@ class Host {
         }
       }
     }
-    const rec = { type: 'call', callId, kind, target, round, at: input.now, inputDigest, outcome, ...(outcome === 'ok' ? { output } : { error }), costs, envFaults };
+    live = false;
+    const rec = { type: 'call', callId, kind, target, round, at: input.now, inputDigest, outcome, ...(outcome === 'ok' ? { output } : { error }), costs: costs.slice(), envFaults };
+    if (this.workspace && error?.code === 'timeout') {
+      // A timed-out call left the workspace in an unknown state: put back the last snapshot. (Code that keeps running
+      // in this process can still write to it; an out-of-process adapter must kill the arm on timeout.)
+      this.workspace.restore(this.lastWorkspace ? this.#manifest(this.lastWorkspace.digest) : {}, this.journal);
+    }
     if (this.workspace) {
       const snap = this.workspace.snapshot(this.journal);
       if (snap.oversize || snap.problems.length) {
@@ -603,7 +640,8 @@ class Host {
       this.stage('call', rec);
       w.sw.tickIndex++;
       if (rec.outcome !== 'ok') { this.stage('arm.error', { sweep: w.sw.id, code: rec.error.code, detail: rec.error.detail ?? null }); return; }
-      const { errors, output } = validateSweepOutput(rec.output, { schemas: this.item.schemas, instances: this.instances });
+      const { errors, output } = validateSweepOutput(rec.output, { schemas: this.item.schemas, instances: this.instances,
+        subjectArgsAt: name => { const [s, o] = name.split('.'); return this.systems.get(s)?.subjectArgsAt(o, this.nowMs) ?? []; } });
       if (errors.length) { this.stage('arm.error', { sweep: w.sw.id, code: 'invalid-output', detail: errors }); return; }
       this.#emit(output.effects ?? [], { kind: 'sweep', sweep: w.sw.id });
       for (const id of output.wake ?? []) if (!wakes.has(id)) wakes.set(id, w.sw.id);
@@ -821,7 +859,8 @@ class Host {
     }
     if (op.batch) return this.#attemptBatch(em, sys, op, via);
     const inst = em.origin.kind === 'case' ? this.instances.get(em.origin.instance) : null;
-    const c = this.caseOfArgs(op, eff.args) ?? this.bindingOf(inst);
+    const args = sys.canonicalArgs(eff.op, eff.args, this.nowMs);     // internal names, whatever F5 renamed (finding 10)
+    const c = this.caseOfArgs(op, args) ?? this.bindingOf(inst);
     const ordKey = `${c}\u0000${eff.system}\u0000${eff.op}`;
     const ordinal = (this.attempts.get(ordKey) ?? 0) + 1;
     this.attempts.set(ordKey, ordinal);
@@ -834,11 +873,11 @@ class Host {
     if (r.deduped && !injected) {
       this.stage('effect.deduped', { emission: em.id, system: eff.system, op: eff.op, key: eff.key, via, status: r.status });
     } else {
-      this.#ledgerRow(em, { key: eff.key ?? null, argsDigest: hashOf(eff.args), subjectCase: c, ordinal, committed: r.committed, status: r.status,
+      this.#ledgerRow(em, { key: eff.key ?? null, argsDigest: hashOf(args), subjectCase: c, ordinal, committed: r.committed, status: r.status,
         ...(r.error ? { error: { code: r.error.code, reason: r.error.reason } } : {}), faultTags: tags, ...(injected ? { injected: true } : {}), via,
         ...(op.money ? { money: true } : {}), ...(r.deduped ? { deduped: true } : {}) });
     }
-    if (r.committed) { this.#touch(em, sys, r.touched); this.#counterparty(em, sys, c, ordinal, r.result, eff.args); }
+    if (r.committed) { this.#touch(em, sys, r.touched); this.#counterparty(em, sys, c, ordinal, r.result, args); }
     if (injected) em.tags.push(...tags);
     const retry = this.profile.retry;
     if (retry && isRetryable(r) && mayRetry(retry, em.attempts)) {
@@ -921,8 +960,9 @@ class Host {
     const systems = this.systems;
     const writes = this.item.product.compute({
       now: this.iso(this.nowMs), config: this.productConfig,
-      rows: (sys, table) => systems.get(sys)?.query(table, {}, true) ?? [],
-      query: (qual, filter) => { const [s, t] = qual.split('.'); return systems.get(s).query(t, filter ?? {}, true); },
+      // Every row (no 1,000-row arm limit); a `query` without its own limit is unbounded too.
+      rows: (sys, table) => systems.get(sys)?.query(table, {}, true, { unbounded: true }) ?? [],
+      query: (qual, filter) => { const [s, t] = qual.split('.'); return systems.get(s).query(t, filter ?? {}, true, { unbounded: true }); },
     }) ?? [];
     for (const w of writes) {
       const sys = systems.get(w.system);

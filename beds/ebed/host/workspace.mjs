@@ -2,11 +2,17 @@
 // for arms that keep scripts or indices (agent-H-ws). Not graded; journaled as a content-addressed snapshot after every
 // call (manifest of path -> sha256, blobs in the journal's blob store), so a resumed stream restores it to the last
 // committed wake-up and a replay can check it. Symbolic links and special files are refused (they could reach outside).
+//
+// The host empties the directory before the first live call (and restores a snapshot on resume), so it first *claims*
+// it (review finding 6): a directory that is not empty and carries no host marker is refused untouched, and so is one
+// whose marker names another arm or world. The marker (`.ebed-host-workspace`) is host-owned: never snapshotted,
+// never removed by a restore.
 import { readdirSync, lstatSync, readFileSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { sha256, hashOf } from '../../lib/canonical.mjs';
 
 export const WORKSPACE_MAX_BYTES = 50 * 1024 * 1024;
+export const WORKSPACE_MARKER = '.ebed-host-workspace';
 
 export class Workspace {
   constructor({ dir, maxBytes = WORKSPACE_MAX_BYTES }) {
@@ -16,13 +22,37 @@ export class Workspace {
     mkdirSync(this.dir, { recursive: true });
   }
 
-  /** Walk the directory: { files: { relPath: sha256 }, bytes, problems }. */
+  /**
+   * Claim the directory for one (arm, world): refuse it if it holds anything without a marker of this host, or a marker
+   * of another arm or world; otherwise write the marker. Returns { fresh } (true when the directory was empty).
+   */
+  claim({ arm, world }) {
+    const want = { host: 'ebed-host', arm, world };
+    const markerPath = path.join(this.dir, WORKSPACE_MARKER);
+    const others = readdirSync(this.dir).filter(n => n !== WORKSPACE_MARKER);
+    let marker = null;
+    if (existsSync(markerPath)) {
+      const st = lstatSync(markerPath);
+      if (!st.isFile()) throw new Error(`workspace ${this.dir}: ${WORKSPACE_MARKER} is not a regular file`);
+      try { marker = JSON.parse(readFileSync(markerPath, 'utf8')); } catch { marker = null; }
+      if (!marker || marker.host !== want.host || marker.arm !== arm || marker.world !== world) {
+        throw new Error(`workspace ${this.dir} belongs to another run (${JSON.stringify(marker)?.slice(0, 200)}); refusing to empty it`);
+      }
+    } else if (others.length) {
+      throw new Error(`workspace ${this.dir} is not empty and was not created by the host (${others.slice(0, 5).join(', ')}); refusing to empty it`);
+    }
+    if (!marker) writeFileSync(markerPath, JSON.stringify(want) + '\n');
+    return { fresh: !others.length };
+  }
+
+  /** Walk the directory: { files: { relPath: sha256 }, bytes, problems }. The host marker is not part of it. */
   scan() {
     const files = {}, problems = [];
     let bytes = 0;
     const walk = rel => {
       const abs = path.join(this.dir, rel);
       for (const name of readdirSync(abs).sort()) {
+        if (!rel && name === WORKSPACE_MARKER) continue;
         const r = rel ? `${rel}/${name}` : name;
         const st = lstatSync(path.join(this.dir, r));
         if (st.isSymbolicLink()) { problems.push(`symlink ${r}`); continue; }
@@ -46,7 +76,7 @@ export class Workspace {
 
   /** Make the directory hold exactly `manifest` (blobs from `journal`). */
   restore(manifest, journal) {
-    for (const name of existsSync(this.dir) ? readdirSync(this.dir) : []) rmSync(path.join(this.dir, name), { recursive: true, force: true });
+    for (const name of existsSync(this.dir) ? readdirSync(this.dir) : []) if (name !== WORKSPACE_MARKER) rmSync(path.join(this.dir, name), { recursive: true, force: true });
     for (const [rel, digest] of Object.entries(manifest)) {
       const blob = journal.getBlob(digest);
       if (!blob) throw new Error(`workspace restore: blob ${digest} missing for ${rel}`);

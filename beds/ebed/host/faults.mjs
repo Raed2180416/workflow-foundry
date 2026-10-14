@@ -64,7 +64,7 @@ export function faultSchedule(world, systemsById, toMs) {
     const repeat = f.params?.repeat ?? 1;
     if (!Number.isInteger(repeat) || repeat < 1 || repeat > 1e6) throw new Error(`${where(i)}: bad repeat`);
     const perm = permanent.get(opKey(f.case, f.system, f.op));
-    if (perm && f.ordinal + repeat - 1 >= perm.from) throw new Error(`${where(i)}: scheduled on an attempt that an earlier-or-equal F6 already fails permanently`);
+    if (perm && f.ordinal + repeat - 1 >= perm.from) throw new Error(`${where(i)}: scheduled on an attempt that the F6 from ordinal ${perm.from} already fails permanently`);
     for (let k = 0; k < repeat; k++) {
       const key = keyOf(f.case, f.system, f.op, f.ordinal + k);
       if (index.has(key)) throw new Error(`${where(i)}: two faults on one attempt`);

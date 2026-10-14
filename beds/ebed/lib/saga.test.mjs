@@ -35,12 +35,12 @@ test('failure-point table of reserve -> charge -> ship -> notify (hand-derived)'
     if (action === 'query-status') { assert.deepEqual(plan.units.map(u => u.step), list, name); continue; }
     assert.deepEqual(steps(plan), list, name);
     assert.deepEqual(plan.skipped.map(s => s.step), skipped, name);
-    // Reverse order is a chain: each compensation runs after the previous one.
-    plan.compensations.forEach((c, i) => assert.equal(c.after, i ? plan.compensations[i - 1].key : null, name));
+    // Without items every step is its own group, so reverse order is a chain: each compensation runs after the previous one.
+    plan.compensations.forEach((c, i) => assert.deepEqual([c.group, c.after], [i, i ? [plan.compensations[i - 1].key] : []], name));
   }
   const shipError = fps.find(f => f.name === 'ship:error').plan;
   assert.deepEqual(shipError.failure, { step: 'ship', item: null });
-  assert.deepEqual(shipError.compensations[0], { step: 'charge', item: null, system: 'billing', op: 'refund', key: 'order-1:charge:undo', after: null, subject: { orderId: 'O-1' } });
+  assert.deepEqual(shipError.compensations[0], { step: 'charge', item: null, system: 'billing', op: 'refund', key: 'order-1:charge:undo', group: 0, after: [], subject: { orderId: 'O-1' } });
   assert.deepEqual(shipError.compensations[1].key, 'order-1:reserve:undo');
   assert.deepEqual(fps.find(f => f.name === 'charge:unknown/pending').plan.units, [{ step: 'charge', item: null, key: 'order-1:charge:do' }]);
 });
@@ -60,18 +60,59 @@ test('partial batches compensate exactly the committed items (F4)', () => {
   const p = planSaga(ORDER_SAGA, obs({ reserve: { items: { 'SKU-A': { outcome: 'ok' }, 'SKU-B': { outcome: 'error' }, 'SKU-C': { outcome: 'unknown', status: 'committed' } } } }));
   assert.equal(p.action, 'compensate');
   assert.deepEqual(p.failure, { step: 'reserve', item: 'SKU-B' });
-  assert.deepEqual(steps(p), ['reserve/SKU-C', 'reserve/SKU-A']); // reverse item order without seq
+  assert.deepEqual(steps(p), ['reserve/SKU-C', 'reserve/SKU-A']); // list order only: one batch is one unordered group
+  assert.deepEqual(p.compensations.map(c => [c.group, c.after]), [[0, []], [0, []]]);
   assert.deepEqual(p.compensations[0].subject, { orderId: 'O-1', sku: 'SKU-C' });
   assert.equal(p.compensations[0].key, 'order-1:reserve:SKU-C:undo');
   assert.deepEqual(stepStates(ORDER_SAGA, obs({ reserve: { items: { A: { outcome: 'ok' }, B: { outcome: 'not-started' } } } })),
     { reserve: 'partial', charge: 'open', ship: 'open', notify: 'open' });
 });
 
+test('review P1: a batch has no internal compensation order; steps keep reverse order (integer-like item ids)', () => {
+  // Items committed '10' then '2' (no seq): Object.keys lists '2' first, so the old chain forced an order that is not
+  // commit order and graded an arm that released 2 then 10 as `order`. Each order of the two releases must pass.
+  const window = { earliest: '2026-12-01T10:00:00Z', latest: '2026-12-01T12:00:00Z' };
+  const rel = (at, sku, key) => ({ at, system: 'inventory', op: 'release', key, args: { orderId: 'O-1', sku }, committed: true });
+  const refund = at => ({ at, system: 'billing', op: 'refund', key: 'r', args: { orderId: 'O-1' }, committed: true });
+  const grade = (plan, rows) => matchEffects({ expected: compensationEffects(ORDER_SAGA, plan, { window }), rows, end: '2026-12-02T00:00:00Z' }).divergences.map(d => d.code);
+  const batch = planSaga(ORDER_SAGA, obs({ reserve: { items: { '10': { outcome: 'ok' }, '2': { outcome: 'ok' } } }, charge: { outcome: 'error' } }));
+  assert.deepEqual(batch.compensations.map(c => [c.item, c.group, c.after]), [['10', 0, []], ['2', 0, []]]); // reversed key order, one group
+  assert.deepEqual(grade(batch, [rel('2026-12-01T10:05:00Z', '10', 'a'), rel('2026-12-01T10:06:00Z', '2', 'b')]), []);
+  assert.deepEqual(grade(batch, [rel('2026-12-01T10:05:00Z', '2', 'b'), rel('2026-12-01T10:06:00Z', '10', 'a')]), []);
+  // A later step still precedes the whole batch: refund first, then the releases in any order.
+  const two = planSaga(ORDER_SAGA, obs({ reserve: { items: { '10': { outcome: 'ok' }, '2': { outcome: 'ok' } } }, charge: { outcome: 'ok' }, ship: { outcome: 'error' } }));
+  assert.deepEqual(two.compensations.map(c => [steps({ compensations: [c] })[0], c.group, c.after]), [
+    ['charge', 0, []], ['reserve/10', 1, ['order-1:charge:undo']], ['reserve/2', 1, ['order-1:charge:undo']]]);
+  assert.deepEqual(grade(two, [refund('2026-12-01T10:04:00Z'), rel('2026-12-01T10:05:00Z', '2', 'b'), rel('2026-12-01T10:06:00Z', '10', 'a')]), []);
+  assert.deepEqual(grade(two, [rel('2026-12-01T10:04:00Z', '2', 'b'), refund('2026-12-01T10:05:00Z'), rel('2026-12-01T10:06:00Z', '10', 'a')]), ['order']);
+  // With seq, units of one step adjacent in reverse commit order form a group; interleaved steps split it.
+  const inter = planSaga(ORDER_SAGA, obs({ reserve: { items: { A: { outcome: 'ok', seq: 1 }, B: { outcome: 'ok', seq: 3 } } }, charge: { outcome: 'ok', seq: 2 }, ship: { outcome: 'error' } }));
+  assert.deepEqual(inter.compensations.map(c => [steps({ compensations: [c] })[0], c.group, c.after]), [
+    ['reserve/B', 0, []], ['charge', 1, ['order-1:reserve:B:undo']], ['reserve/A', 2, ['order-1:charge:undo']]]);
+});
+
+test('review P2: partially committed pivot and malformed key parts are refused with a clear code', () => {
+  const piv = { id: 'pv', steps: [
+    { id: 'a', do: { system: 's', op: 'a' }, undo: { system: 's', op: 'ua' } },
+    { id: 'p', kind: 'pivot', do: { system: 's', op: 'p' }, undo: null },
+    { id: 'r', kind: 'retriable', do: { system: 's', op: 'r' }, undo: null }] };
+  const partial = (y, abort) => () => planSaga(piv, obs({ a: { outcome: 'ok' }, p: { items: { x: { outcome: 'ok' }, y } } }), { abort });
+  assert.throws(partial({ outcome: 'error' }), /partially committed/);
+  assert.throws(partial({ outcome: 'not-started' }, { reason: 'cancel' }), /partially committed/);
+  assert.equal(codeOf(partial({ outcome: 'error' })), 'SAGA_INPUT');
+  assert.deepEqual(partial({ outcome: 'not-started' })(), { action: 'continue', step: 'p', units: [{ step: 'p', item: 'y', key: 'pv:p:y:do' }] });
+  assert.equal(codeOf(() => sagaKey('s', '\ud800', null, 'do')), 'SAGA_INVALID'); // lone surrogate: not a URIError
+});
+
 test('commit sequence numbers decide the order for parallel branches', () => {
   const p = planSaga(ORDER_SAGA, obs({ reserve: { items: { A: { outcome: 'ok', seq: 2 }, B: { outcome: 'ok', seq: 1 } } }, charge: { outcome: 'ok', seq: 3 }, ship: { outcome: 'error' } }));
   assert.deepEqual(steps(p), ['charge', 'reserve/A', 'reserve/B']);
+  assert.deepEqual(p.compensations.map(c => c.group), [0, 1, 1]); // the batch's items stay one unordered group
   const q = planSaga(ORDER_SAGA, obs({ reserve: { items: { A: { outcome: 'ok', seq: 1 }, B: { outcome: 'ok', seq: 2 } } }, charge: { outcome: 'ok', seq: 3 }, ship: { outcome: 'error' } }));
   assert.deepEqual(steps(q), ['charge', 'reserve/B', 'reserve/A']);
+  // Parallel steps with seq stay strictly ordered (reverse commit order of steps; README "deferred" on branch independence).
+  const r = planSaga(ORDER_SAGA, obs({ reserve: { outcome: 'ok', seq: 2 }, charge: { outcome: 'ok', seq: 1 }, ship: { outcome: 'error' } }));
+  assert.deepEqual(r.compensations.map(c => [c.step, c.after]), [['reserve', []], ['charge', ['order-1:reserve:undo']]]);
   assert.equal(codeOf(() => planSaga(ORDER_SAGA, obs({ reserve: { outcome: 'ok', seq: 1 }, charge: { outcome: 'ok' }, ship: { outcome: 'error' } }))), 'SAGA_INPUT');
   assert.equal(codeOf(() => planSaga(ORDER_SAGA, obs({ reserve: { outcome: 'ok', seq: 1 }, charge: { outcome: 'ok', seq: 1 }, ship: { outcome: 'error' } }))), 'SAGA_INPUT');
 });

@@ -15,14 +15,20 @@
 // State machine (anything else is CLOCK_ILLEGAL, or recorded as an anomaly and skipped with onIllegal: 'skip'):
 //   idle --start--> running;  running --pause--> paused --resume--> running;
 //   running|paused --stop--> stopped (terminal), --cancel--> cancelled (terminal),
-//   --reset--> running (elapsed and pause totals restart from zero at the reset instant).
+//   --reset--> running (a new generation: elapsed and pause totals restart from zero at the reset instant).
 // Readings: the due instant D is the earliest instant at which active time (running time, measured in the clock's
 // unit) reaches the target; while running, D is projected assuming no further pause; while paused, D is known only if
 // it was reached before the pause (else null, "unknown until resumed"). A stopped clock's outcome compares the stop
 // instant with D, so a ticket stopped at 18:00 against a D of 17:00 is breached even though no business time passed
 // after 17:00.
+// Monotone breach (review fix, 2026-10-14; BED-CONTRACT v1.1 §5.3 "monotone clocks"): stop, cancel and reset all
+// close a generation at their instant e, and a closed generation is breached iff e > D (inclusive; e >= D exclusive),
+// as for stop. `breached` and `breachedAt` cover every generation, so for a fixed history `breached` never turns
+// false as the query time grows: cancelling or resetting an SLA after its due instant does not erase the breach.
+// Warnings reached before a cancel stay reached; a reset keeps the closed generation's record in `generations`.
+// `outcome` describes the current generation only.
 import { fail } from './errors.mjs';
-import { toMs, MINUTE, HOUR, SECOND, localDate, dayBounds, fromLocal, addCalendarDays } from './time.mjs';
+import { toMs, MINUTE, HOUR, localDate, dayBounds, fromLocal, addCalendarDays } from './time.mjs';
 import { calendar, businessMs, addBusinessMs, addBusinessDays, rollDate } from './calendar.mjs';
 
 const UNITS = Object.freeze({ minutes: [MINUTE, false], hours: [HOUR, false], 'business-minutes': [MINUTE, true], 'business-hours': [HOUR, true] });
@@ -68,7 +74,7 @@ function replay(def, history, at, onIllegal) {
     last = t;
     return { index, op: h.op, t };
   });
-  const st = { state: 'idle', startedAt: null, endedAt: null, segStart: null, pauseStart: null, segments: [], pauses: [], resets: 0, anomalies: [] };
+  const st = { state: 'idle', startedAt: null, endedAt: null, segStart: null, pauseStart: null, segments: [], pauses: [], resets: 0, anomalies: [], generations: [] };
   for (const { index, op, t } of ops) {
     if (t > at) break;
     const next = NEXT[st.state][op];
@@ -83,7 +89,11 @@ function replay(def, history, at, onIllegal) {
       case 'stop': case 'cancel':
         if (st.state === 'running') st.segments.push([st.segStart, t]); else st.pauses.push([st.pauseStart, t]);
         st.segStart = null; st.pauseStart = null; st.endedAt = t; break;
-      case 'reset': st.segments = []; st.pauses = []; st.startedAt = t; st.segStart = t; st.pauseStart = null; st.resets += 1; break;
+      case 'reset':
+        // Close the current generation at t and keep it (its breach and warnings stay reached), then start afresh.
+        if (st.state === 'running') st.segments.push([st.segStart, t]); else st.pauses.push([st.pauseStart, t]);
+        st.generations.push({ startedAt: st.startedAt, endedAt: t, segments: st.segments, pauses: st.pauses });
+        st.segments = []; st.pauses = []; st.startedAt = t; st.segStart = t; st.pauseStart = null; st.resets += 1; break;
       default: break;
     }
     st.state = next;

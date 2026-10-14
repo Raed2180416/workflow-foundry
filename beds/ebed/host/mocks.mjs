@@ -113,7 +113,7 @@ export class MockSystem {
   apiSchema(atMs) {
     const ops = {};
     for (const [name, op] of Object.entries(this.def.ops)) {
-      ops[name] = { args: this.argsSchema(name, atMs), keyed: op.keyed, subjectArgs: [...op.subjectArgs], readOnly: op.readOnly,
+      ops[name] = { args: this.argsSchema(name, atMs), keyed: op.keyed, subjectArgs: this.subjectArgsAt(name, atMs), readOnly: op.readOnly,
         batch: op.batch, money: op.money, ...(op.reverses ? { reverses: op.reverses } : {}), description: op.description };
     }
     const tables = {};
@@ -140,6 +140,30 @@ export class MockSystem {
     const out = back(args);
     if (Array.isArray(out.items)) out.items = out.items.map(back);
     return out;
+  }
+
+  /**
+   * The op's arguments under its internal names (active F5 renames mapped back), without validation: what the host
+   * keys faults, ledger subjects, counterparties and refs on, so a rename never hides them (review finding 10).
+   */
+  canonicalArgs(op, args, atMs) {
+    const renames = this.activeRenames(op, atMs);
+    if (!renames.length || !isObj(args)) return args;
+    const back = x => {
+      if (!isObj(x)) return x;
+      const y = { ...x };
+      for (const r of renames) if (r.to in y && !(r.from in y)) { y[r.from] = y[r.to]; delete y[r.to]; }
+      return y;
+    };
+    const out = back(args);
+    if (Array.isArray(out.items)) out.items = out.items.map(back);
+    return out;
+  }
+
+  /** The op's subject arguments under the names valid at `atMs` (an F5 rename of a subject argument applied). */
+  subjectArgsAt(op, atMs) {
+    const renames = this.activeRenames(op, atMs);
+    return this.def.ops[op].subjectArgs.map(a => renames.find(r => r.from === a)?.to ?? a);
   }
 
   keyStatus(key, pending) {
@@ -285,11 +309,16 @@ export class MockSystem {
     return row ? this.visible(table, row, includeComputed) : null;
   }
 
-  /** sor.query(table, { where: { field: value | { gte, lte, in } }, limit <= 1000 }): sorted by primary key. */
-  query(table, { where = {}, limit = 1000 } = {}, includeComputed = false) {
+  /**
+   * sor.query(table, { where: { field: value | { gte, lte, in } }, limit <= 1000 }): sorted by primary key. `unbounded`
+   * (host-side readers only, e.g. the Track C product engine, which must see every row: review finding 5) lifts the
+   * limit when none is given.
+   */
+  query(table, { where = {}, limit } = {}, includeComputed = false, { unbounded = false } = {}) {
     const t = this.def.tables[table];
     if (!t || t.hidden) throw new MockError(404, 'no-such-table', { table });
-    if (!Number.isInteger(limit) || limit < 1 || limit > 1000) throw new MockError(400, 'bad-limit');
+    if (limit === undefined) limit = unbounded ? Infinity : 1000;
+    else if (!Number.isInteger(limit) || limit < 1 || limit > 1000) throw new MockError(400, 'bad-limit');
     if (!isObj(where)) throw new MockError(400, 'bad-where');
     const pass = row => Object.entries(where).every(([f, cond]) => {
       if (!includeComputed && t.computed.includes(f)) return false;

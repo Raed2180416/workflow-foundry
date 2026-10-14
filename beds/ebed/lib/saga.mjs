@@ -16,7 +16,12 @@
 //            commit is possible, F3) | 'not-started'
 //   status   for 'unknown': the result of status(key): 'committed' | 'not-found' | 'pending'
 //   seq      commit sequence number; when given for every committed unit, compensation follows reverse seq
-//            (parallel branches); when given for none, reverse (step, item) order; a mix is refused.
+//            (parallel branches); when given for none, reverse step order; a mix is refused.
+// Order (review fix, 2026-10-14): compensations form groups. Units of one step that are adjacent in reverse commit
+//   order are one group, and a group has no internal order (a batch's items, F4, committed in no known order: without
+//   seq, JavaScript's key order is not commit order). Every compensation is `after` all compensations of the previous
+//   group. Different steps are never grouped, so steps (parallel branches with seq included) stay in strict reverse
+//   commit order, the E8 rulebook's "reverse order of committed steps".
 // Abort: planSaga(saga, observed, { abort: { reason } }) plans an abort decided outside the steps (a customer cancel
 //   inside its window, a lost timer race, a timeout policy that gives up on a step).
 // Readings (MR11, E-BED Errata 17): the compensation set is the committed units as observed by status query, so a unit
@@ -29,7 +34,9 @@ import { fail } from './errors.mjs';
 
 const KINDS = new Set(['compensable', 'pivot', 'retriable']);
 const OUTCOMES = new Set(['ok', 'error', 'unknown', 'not-started']);
-const enc = s => encodeURIComponent(String(s));
+const enc = s => {
+  try { return encodeURIComponent(String(s)); } catch { return fail('SAGA_INVALID', `key part is not well-formed Unicode: ${JSON.stringify(s)}`); }
+};
 
 /**
  * Deterministic idempotency key of one logical effect: distinct (saga, step, item, phase) give distinct keys (every
@@ -97,9 +104,10 @@ const subjectOf = (step, item) => ({ ...(step.subject ?? {}), ...(item !== null 
  *   { action: 'continue', step, units: [{ step, item, key }] }          next forward step (re-issue with the same key)
  *   { action: 'retry-forward', failure, units: [...] }                   failure after a committed pivot
  *   { action: 'abort-refused', reason: 'pivot-committed' }
- *   { action: 'compensate', failure, abort, compensations: [{ step, item, system, op, key, after, subject }], skipped }
+ *   { action: 'compensate', failure, abort, compensations: [{ step, item, system, op, key, group, after, subject }], skipped }
  * `failure` is the first failed unit { step, item } (null for an abort with no failure). Keys are
- * sagaKey(saga, step, item, 'do' | 'undo').
+ * sagaKey(saga, step, item, 'do' | 'undo'). `group` numbers the compensation groups from 0; `after` lists the keys of
+ * every compensation in the previous group ([] in group 0). List order inside a group is not an order.
  */
 export function planSaga(sagaDef, observed, { abort = null } = {}) {
   const saga = defineSaga(sagaDef);
@@ -109,7 +117,11 @@ export function planSaga(sagaDef, observed, { abort = null } = {}) {
   if (undetermined.length) return { action: 'query-status', units: undetermined.map(ref) };
   const failed = units.find(u => u.state === 'failed');
   const pivotIndex = saga.steps.findIndex(s => s.kind === 'pivot');
-  const pivotCommitted = pivotIndex >= 0 && units.filter(u => u.stepIndex === pivotIndex).every(u => u.state === 'committed');
+  const pivotUnits = units.filter(u => u.stepIndex === pivotIndex);
+  const pivotCommitted = pivotIndex >= 0 && pivotUnits.every(u => u.state === 'committed');
+  if ((failed || abort) && pivotUnits.some(u => u.state === 'committed') && !pivotCommitted) {
+    fail('SAGA_INPUT', `pivot step ${saga.steps[pivotIndex].id} is partially committed (${pivotUnits.map(u => `${u.item}: ${u.state}`).join(', ')}): a pivot commits as one unit, so this failure or abort has no plan`);
+  }
   if (abort && pivotCommitted) return { action: 'abort-refused', reason: 'pivot-committed' };
   if (!failed && !abort) {
     if (units.every(u => u.state === 'committed')) return { action: 'complete' };
@@ -126,13 +138,14 @@ export function planSaga(sagaDef, observed, { abort = null } = {}) {
   if (withSeq.length && new Set(withSeq.map(u => u.seq)).size !== withSeq.length) fail('SAGA_INPUT', 'duplicate seq');
   const order = withSeq.length ? [...committed].sort((a, b) => b.seq - a.seq) : [...committed].reverse();
   const compensations = [], skipped = [];
-  let after = null;
+  let prevGroup = [], curGroup = [], curStep = null, group = -1;
   for (const u of order) {
     if (u.step.kind === 'pivot' || u.step.kind === 'retriable') fail('SAGA_INPUT', `step ${u.step.id} committed before an earlier failure: inconsistent observation`);
     if (!u.step.undo) { skipped.push({ step: u.step.id, item: u.item, reason: 'no-undo' }); continue; }
+    if (u.step !== curStep) { if (curGroup.length) prevGroup = curGroup; curGroup = []; curStep = u.step; group += 1; }
     const key = sagaKey(saga.id, u.step.id, u.item, 'undo');
-    compensations.push({ step: u.step.id, item: u.item, system: u.step.undo.system, op: u.step.undo.op, key, after, subject: subjectOf(u.step, u.item) });
-    after = key;
+    compensations.push({ step: u.step.id, item: u.item, system: u.step.undo.system, op: u.step.undo.op, key, group, after: [...prevGroup], subject: subjectOf(u.step, u.item) });
+    curGroup.push(key);
   }
   return { action: 'compensate', failure, abort, compensations, skipped };
 }
@@ -172,20 +185,17 @@ export function failurePoints(sagaDef) {
 
 /**
  * The compensation plan as logical effects for ledger.matchEffects (E-BED §2.8 layer 2): one lid per compensation,
- * `match` = the step's subject (plus the item argument), `after` = the previous compensation (the rulebook declares
- * compensation order), window = the caller's rule-cited window. Keys are arm-chosen, so the plan's keys are not
- * part of the match.
+ * `match` = the step's subject (plus the item argument), `after` = every compensation of the previous group (the
+ * rulebook declares compensation order between steps; a batch's items are unordered), window = the caller's
+ * rule-cited window. Keys are arm-chosen, so the plan's keys are not part of the match.
  */
 export function compensationEffects(sagaDef, plan, { window, rule = 'saga.compensate', money = {} }) {
   const saga = defineSaga(sagaDef);
   if (plan.action !== 'compensate') return [];
-  const lidOf = c => `undo:${sagaKey(saga.id, c.step, c.item, 'undo')}`;
-  let prev = null;
+  const lidOfKey = key => `undo:${key}`;
   return plan.compensations.map(c => {
-    const lid = lidOf(c);
-    const e = { lid, rule, system: c.system, op: c.op, match: c.subject, window, after: prev ? [prev] : [] };
+    const e = { lid: lidOfKey(sagaKey(saga.id, c.step, c.item, 'undo')), rule, system: c.system, op: c.op, match: c.subject, window, after: c.after.map(lidOfKey) };
     if (money[c.step]) e.money = true;
-    prev = lid;
     return e;
   });
 }

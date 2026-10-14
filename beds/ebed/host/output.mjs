@@ -16,7 +16,7 @@ const bytes = v => Buffer.byteLength(canonical(v));
 const CASE_KEYS = new Set(['decisions', 'effects', 'obligations', 'humanTasks', 'merge', 'close', 'carry']);
 const SWEEP_KEYS = new Set(['effects', 'wake', 'carry']);
 
-function checkEffects(effects, effectSchemas, errs, { sweep }) {
+function checkEffects(effects, effectSchemas, errs, { sweep, subjectArgsAt = null }) {
   if (!Array.isArray(effects)) { errs.push('effects: not an array'); return; }
   if (effects.length > LIMITS.effects) { errs.push(`effects: more than ${LIMITS.effects}`); return; }
   const keysSoFar = new Set();
@@ -36,8 +36,10 @@ function checkEffects(effects, effectSchemas, errs, { sweep }) {
     }
     if (op.batch && own(e, 'key')) errs.push(`${p}.key: a batch op keys its items, not the batch`);
     if (sweep) {
-      const subj = op.batch ? [] : op.subjectArgs;
-      if (!op.batch && !(subj.length && isObj(e.args) && subj.some(a => typeof e.args[a] === 'string'))) errs.push(`${p}: a sweep effect needs a subject argument (${op.subjectArgs.join(', ') || 'none declared'})`);
+      // Either name of an F5-renamed subject argument: the new one is correct, the old one must reach the mock and get
+      // its 400 `field-renamed` there (the F5 signal), not an arm error here (review finding 10).
+      const subj = op.batch ? [] : [...new Set([...op.subjectArgs, ...(subjectArgsAt?.(name) ?? [])])];
+      if (!op.batch && !(subj.length && isObj(e.args) && subj.some(a => typeof e.args[a] === 'string'))) errs.push(`${p}: a sweep effect needs a subject argument (${subj.join(', ') || 'none declared'})`);
     }
     if (own(e, 'key') && isId(e.key)) keysSoFar.add(e.key);
   });
@@ -122,7 +124,7 @@ export function validateSweepOutput(raw, ctx) {
   for (const k of Object.keys(out)) if (!SWEEP_KEYS.has(k)) errs.push(`output: unexpected ${k}`);
   if (!own(out, 'carry')) errs.push('carry: required (null for none)');
   else if (bytes(out.carry ?? null) > LIMITS.carryBytes) errs.push(`carry: larger than ${LIMITS.carryBytes} bytes`);
-  if (own(out, 'effects')) checkEffects(out.effects, ctx.schemas.effects, errs, { sweep: true });
+  if (own(out, 'effects')) checkEffects(out.effects, ctx.schemas.effects, errs, { sweep: true, subjectArgsAt: ctx.subjectArgsAt });
   if (own(out, 'wake')) {
     if (!Array.isArray(out.wake) || !out.wake.every(isId)) errs.push('wake: array of instance ids');
     else for (const id of out.wake) if (!ctx.instances.get(id) || ctx.instances.get(id).closed) errs.push(`wake: ${id} is not an open instance`);
