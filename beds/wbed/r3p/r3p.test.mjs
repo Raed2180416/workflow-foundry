@@ -1,5 +1,7 @@
 // Oracle health for W-bed R3' "planted-defect sweep" (beds/CONTRACT.md rules; W-BED §2.2, §2.4; PROOF-LEDGER J5). Loaded by
 // path; the registration shim beds/wbed-r3p/index.mjs makes it loadable as family 'wbed-r3p'. $0: no model calls.
+// Seeds: the tuning block dev 449-472 of SEED-LEDGER wbed-r3p-dev only (review 2026-10-14, finding 8: the rehearsal
+// streams 401-448 stay untouched by tuning; no held-out seed is generated here).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -8,9 +10,12 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as bed from './index.mjs';
-import { buildSweep, redrawStats } from './world.mjs';
+import { buildSweep, redrawStats, obsGen, LOUD_SHARE } from './world.mjs';
 import { FAMILIES } from './families.mjs';
-import { observe, argsOk } from './exec.mjs';
+import { observe, argsOk, makeContext, canonValue } from './exec.mjs';
+import { witnessHolds, passes } from './score.mjs';
+import { SPEC, randomValue, roundRational } from './spec.mjs';
+import { AREAS, LIB } from './vocab.mjs';
 import { parseFunctions, linterFindings } from './lint.mjs';
 import { CLASSES, TODOS, NOTES } from './vocab.mjs';
 import { canonical, sha256, estimateTokens, rng } from '../lib/prng.mjs';
@@ -18,7 +23,7 @@ import { inlineRender, loadFamily } from '../../../experiments/lib/beds.mjs';
 import { portableSchemaViolations } from '../../../src/schema-subset.mjs';
 import { plan, runStub, RUNGS } from '../attacks/triviality.mjs';
 
-const SEEDS = Array.from({ length: 20 }, (_, i) => 401 + i); // dev 401-420 (SEED-LEDGER wbed-r3p-dev, stream A block)
+const SEEDS = Array.from({ length: 20 }, (_, i) => 449 + i); // dev 449-468 (SEED-LEDGER wbed-r3p-dev, tuning block 449-472)
 const DS = [2, 3, 4, 5];
 const applies = (c, d) => d >= (c.minDifficulty ?? 0);
 const hashOf = t => sha256(canonical(t));
@@ -28,9 +33,9 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 test('exports the bed interface plus the W-specific and sweep-specific exports; loadFamily works', async () => {
   for (const k of ['family', 'outputSchema', 'generate', 'oracle', 'referenceSolve', 'badControls', 'necessityControls', 'version', 'difficulty', 'stages',
     'structure', 'relations', 'composedOracle', 'referenceTrace', 'manifestOf', 'trapsOf', 'checkWitness', 'costPerVerifiedFinding', 'aggregateSweeps',
-    'impactManifestOf', 'callLogFor', 'scoreImpact', 'scoreReplay', 'invariants', 'sizeOf', 'taskTokens']) assert.ok(k in bed, k);
+    'impactManifestOf', 'callLogFor', 'scoreImpact', 'scoreReplay', 'invariants', 'sizeOf', 'taskTokens', 'contractFuzz', 'STREAM_CORPUS']) assert.ok(k in bed, k);
   assert.equal(bed.family.id, 'wbed-r3p');
-  assert.equal(bed.version, '1.0.0');
+  assert.equal(bed.version, '1.1.0');
   assert.deepEqual(bed.stages.map(s => s.id), ['inventory', 'candidates', 'verify', 'reduce']);
   assert.equal(bed.structure.shape, 'fan-out-verify-fan-in');
   assert.ok(bed.structure.outline.some(l => /map\(files/.test(l)) && bed.structure.outline.some(l => /root cause \(code\)/.test(l)));
@@ -43,19 +48,19 @@ test('output schema and stage contracts are in the portable subset', () => {
 });
 
 test('generator is deterministic: same seed -> same task hash, also in a fresh process; split and seed change the task', () => {
-  for (const d of DS) for (const seed of [401, 450]) assert.equal(hashOf(task(seed, d)), hashOf(task(seed, d)));
+  for (const d of DS) for (const seed of [449, 470]) assert.equal(hashOf(task(seed, d)), hashOf(task(seed, d)));
   const here = fileURLToPath(new URL('./index.mjs', import.meta.url));
   const code = `const m = await import(${JSON.stringify(here)}); const { canonical, sha256 } = await import(${JSON.stringify(fileURLToPath(new URL('../lib/prng.mjs', import.meta.url)))});`
-    + `console.log(JSON.stringify([[401,3],[402,5],[403,2]].map(([s,d]) => sha256(canonical(m.generate({ seed: s, split: 'dev', difficulty: d }))))));`;
+    + `console.log(JSON.stringify([[449,3],[450,5],[451,2]].map(([s,d]) => sha256(canonical(m.generate({ seed: s, split: 'dev', difficulty: d }))))));`;
   const fresh = JSON.parse(execFileSync(process.execPath, ['--max-old-space-size=1024', '--input-type=module', '-e', code], { encoding: 'utf8' }));
-  assert.deepEqual(fresh, [[401, 3], [402, 5], [403, 2]].map(([s, d]) => hashOf(task(s, d))));
-  assert.notEqual(hashOf(task(401, 3)), hashOf(task(401, 3, 'test')));
-  assert.notEqual(hashOf(task(401, 3)), hashOf(task(402, 3)));
+  assert.deepEqual(fresh, [[449, 3], [450, 5], [451, 2]].map(([s, d]) => hashOf(task(s, d))));
+  assert.notEqual(hashOf(task(449, 3)), hashOf(task(449, 3, 'test')));
+  assert.notEqual(hashOf(task(449, 3)), hashOf(task(450, 3)));
 });
 
 for (const d of DS) {
   test(`d${d}: referenceSolve passes; every bad and every necessity control fails on ${SEEDS.length} seeds`, t => {
-    const controls = [...bed.badControls, ...bed.necessityControls].filter(c => applies(c, d));
+    const controls = [...bed.badControls, ...bed.necessityControls].filter(c => applies(c, d) && !c.slow); // contract-fuzz: own test below
     const worst = {};
     for (const seed of SEEDS) {
       const tk = task(seed, d);
@@ -98,6 +103,7 @@ test('the manifest is proved by execution: defects reproduce on the bed witness,
   const tally = { defects: 0, decoys: 0, affected: 0, unaffected: 0 };
   for (const d of DS) for (const seed of SEEDS.slice(0, 6)) {
     const w = buildSweep(seed, 'dev', d);
+    assert.ok(w.manifest.filter(m => m.loud).length <= Math.floor(LOUD_SHARE * w.L.defects), `d${d} s${seed}: at most ${LOUD_SHARE} of the defects are loud`);
     for (const f of w.fns) {
       if (f.role === 'defect') {
         tally.defects++;
@@ -123,9 +129,13 @@ test('the manifest is proved by execution: defects reproduce on the bed witness,
   t.diagnostic(`execution-checked over d2-d5 x seeds 401-406: ${JSON.stringify(tally)}`);
 });
 
-test('controls: CONTRACT minimums, the four required sweep controls, >= 12 per difficulty, relation and necessity controls', () => {
+test('controls: CONTRACT minimums, the four required sweep controls, >= 12 per difficulty, relation and necessity controls; pipeline controls are labelled by-construction', () => {
   const names = bed.badControls.map(c => c.name);
-  for (const n of ['empty', 'shuffled-or-corrupted', 'grep-for-TODO', 'linter-only', 'single-pass-no-verify', 'report-everything', 'class-confused']) assert.ok(names.includes(n), n);
+  for (const n of ['empty', 'shuffled-or-corrupted', 'grep-for-TODO', 'linter-only', 'single-pass-no-verify', 'report-everything', 'class-confused', 'contract-fuzz-script', 'contract-fuzz-stream']) assert.ok(names.includes(n), n);
+  // review 2026-10-14 finding 4: every control built from the bed's pipeline reads the manifest roles, so it is a
+  // conditional stand-in; only the text controls (files only) are measurements
+  for (const c of [...bed.badControls, ...bed.necessityControls]) assert.equal(c.byConstruction, ['stage', 'relation', 'necessity'].includes(c.kind) || c.name === 'shuffled-or-corrupted', c.name);
+  for (const c of bed.necessityControls) assert.match(c.why, /construction/, c.name);
   assert.equal(new Set(names).size, names.length);
   for (const d of DS) assert.ok(bed.badControls.filter(c => applies(c, d)).length >= 12, `d${d}`);
   assert.ok(bed.badControls.filter(c => c.kind === 'relation').length >= 2);
@@ -133,7 +143,7 @@ test('controls: CONTRACT minimums, the four required sweep controls, >= 12 per d
 });
 
 test('text controls read the rendered files only: the linter and the TODO grep run on a task\'s files without its world', () => {
-  const tk = task(407, 4);
+  const tk = task(455, 4);
   const lint = linterFindings(tk.files, tk.inputs.defect_classes.map(c => c.code));
   assert.deepEqual(lint, bed.badControls.find(c => c.name === 'linter-only').make(tk));
   assert.ok(lint.findings.length > 0);
@@ -219,7 +229,7 @@ test('hidden truth does not leak: no class code in the repository, no manifest f
 });
 
 test('oracle: schema-invalid and hostile outputs fail; matching is exact on (file, function, class); duplicates and callers cost precision', () => {
-  const tk = task(405, 3), ref = bed.referenceSolve(tk), m = bed.manifestOf(tk);
+  const tk = task(453, 3), ref = bed.referenceSolve(tk), m = bed.manifestOf(tk);
   for (const out of [null, {}, { findings: 'x' }, { findings: [{ file: 'a' }] }, { findings: [{ ...ref.findings[0], class: 'TYPO' }] }, new Proxy(ref, {})]) assert.equal(bed.oracle(tk, out).pass, false);
   const sh = structuredClone(ref); sh.findings.reverse(); for (const f of sh.findings) { f.file = `./${f.file.toUpperCase()}`; delete f.witness; delete f.line; }
   const s1 = bed.oracle(tk, sh); assert.ok(s1.pass, 'order, case of the path, a ./ prefix and missing optional fields do not matter'); assert.equal(s1.details.witness.given, 0);
@@ -234,7 +244,7 @@ test('oracle: schema-invalid and hostile outputs fail; matching is exact on (fil
   assert.equal(bed.oracle(tk, outOfScope).details.fpCauses.outOfScope, 1);
   // the pass thresholds. Recall: 20/24 passes, 19/24 fails (d5). Precision: one false positive on 10 defects passes (10/11),
   // two fail (10/12) (d3).
-  const big = task(405, 5), bref = bed.referenceSolve(big), D = bref.findings.length;
+  const big = task(453, 5), bref = bed.referenceSolve(big), D = bref.findings.length;
   const drop = n => ({ findings: bref.findings.slice(n) });
   assert.equal(bed.oracle(big, drop(Math.floor(D * 0.2))).pass, true);
   assert.equal(bed.oracle(big, drop(Math.floor(D * 0.2) + 1)).pass, false);
@@ -244,9 +254,9 @@ test('oracle: schema-invalid and hostile outputs fail; matching is exact on (fil
 });
 
 test('witnesses are run: valid ones count, outside-domain ones are not executed, non-reproducing ones do not count', () => {
-  const tk = task(406, 4), m = bed.manifestOf(tk), ref = bed.referenceSolve(tk);
+  const tk = task(454, 4), m = bed.manifestOf(tk), ref = bed.referenceSolve(tk);
   for (const x of m) assert.deepEqual(bed.checkWitness(tk, x.file, x.function, x.witness), { ok: true });
-  const w = buildSweep(406, 'dev', 4);
+  const w = buildSweep(454, 'dev', 4);
   const f = w.byName.get(m[0].function);
   const agree = f.probes.find(a => canonical(observe(w.planted, f.name, a)) === canonical(observe(w.correct, f.name, a)));
   if (agree) assert.deepEqual(bed.checkWitness(tk, m[0].file, m[0].function, agree), { ok: false, why: 'no-difference' });
@@ -270,7 +280,7 @@ test('composed oracle agrees with the end-to-end oracle on every trace; stage co
 
 test('stage hand-offs of the reference trace satisfy their contracts; stage oracles pass on the truth and fail on nothing', () => {
   for (const d of DS) {
-    const tk = task(411, d), tr = bed.referenceTrace(tk);
+    const tk = task(459, d), tr = bed.referenceTrace(tk);
     for (const s of ['inventory', 'candidates', 'verify', 'reduce']) assert.deepEqual(bed.CONTRACTS[s].check(tr[s]), [], `${s} d${d}`);
     assert.deepEqual(bed.CONTRACTS.input.check(tk.inputs), []);
     for (const s of bed.stages) { assert.ok(s.oracle(s.project(tk), tr[s.id]).pass, `${s.id} d${d}`); assert.equal(s.oracle(s.project(tk), {}).pass, false); }
@@ -279,13 +289,13 @@ test('stage hand-offs of the reference trace satisfy their contracts; stage orac
 
 test('the inventory a solver can parse from the files equals the generator\'s spans', () => {
   for (const d of DS) {
-    const tk = task(412, d), inv = bed.referenceTrace(tk).inventory;
+    const tk = task(460, d), inv = bed.referenceTrace(tk).inventory;
     for (const file of inv.files) assert.deepEqual(parseFunctions(tk.files[file.path]).map(f => ({ name: f.name, start_line: f.start, end_line: f.end })), file.functions, file.path);
   }
 });
 
 test('the repository is real code: every module imports, its own test suite passes, and witnesses reproduce in real Node', () => {
-  for (const [seed, d] of [[413, 3], [414, 5]]) {
+  for (const [seed, d] of [[461, 3], [462, 5]]) {
     const tk = task(seed, d), w = buildSweep(seed, 'dev', d);
     const dir = mkdtempSync(path.join(tmpdir(), 'wbed-r3p-repo-'));
     try {
@@ -305,8 +315,8 @@ test('the repository is real code: every module imports, its own test suite pass
 });
 
 test('cost per verified finding and stream aggregation (cost comes from the host, never from the output)', () => {
-  const rows = [401, 402, 403].map(seed => { const tk = task(seed, 3); return { result: bed.oracle(tk, bed.referenceSolve(tk)), costUsd: 0.5 }; });
-  const tk = task(404, 3);
+  const rows = [449, 450, 451].map(seed => { const tk = task(seed, 3); return { result: bed.oracle(tk, bed.referenceSolve(tk)), costUsd: 0.5 }; });
+  const tk = task(452, 3);
   rows.push({ result: bed.oracle(tk, bed.necessityControls.find(c => c.name === 'fan-out-no-verify').make(tk)), costUsd: 0.25 });
   rows.push({ result: bed.oracle(tk, { nope: 1 }), costUsd: 0.1, defects: 10 });
   const agg = bed.aggregateSweeps(rows);
@@ -320,7 +330,7 @@ test('cost per verified finding and stream aggregation (cost comes from the host
 
 test('retroactive sweep (F2): exact impact sets and an exact replay of a production call log', () => {
   for (const d of [3, 5]) {
-    const tk = task(415, d), imp = bed.impactManifestOf(tk);
+    const tk = task(463, d), imp = bed.impactManifestOf(tk);
     const helperDefects = imp.filter(x => x.affected.length || x.unaffected.length);
     assert.ok(helperDefects.length >= 1);
     const perfect = { impacts: imp.map(x => ({ file: x.file, function: x.function, affected: x.affected })) };
@@ -349,6 +359,7 @@ test('seed ledger: wbed-r3p has its own disjoint dev and held-out ranges; the te
   const dev = mine.find(r => r.id === 'wbed-r3p-dev');
   for (const s of [...SEEDS, ...RUNGS.r3p.seeds]) assert.ok(s >= dev.from && s <= dev.to);
   assert.deepEqual(RUNGS.r3p.seeds, Array.from({ length: 12 }, (_, i) => 479 + i));
+  for (const s of SEEDS) assert.ok(s >= 449 && s <= 472, 'tests use the tuning block only, never the rehearsal streams 401-448');
 });
 
 test('triviality driver plans R3\' dry on its own attack seeds and scores stubs through the oracle', async () => {
@@ -360,17 +371,29 @@ test('triviality driver plans R3\' dry on its own attack seeds and scores stubs 
   for (const x of await runStub(q, 'reference')) assert.equal(x.pass, x.n);
   for (const x of await runStub(q, 'fan-out-no-verify')) assert.equal(x.pass, 0);
   for (const x of await runStub(q, 'linter-only')) assert.equal(x.pass, 0);
+  // review finding 8: an explicit seed outside the rung's own ledger rows is refused (e.g. --rung all --seeds 379-390)
+  await assert.rejects(plan({ rungs: ['r3p'], seeds: [379, 380] }), /SEED_REFUSED/);
+  await assert.rejects(plan({ rungs: ['r3p'], seeds: [8601] }), /SEED_REFUSED/);
 });
 
-test('held-out split generates and passes the reference; fault overlay is a no-op by default and throws on request', () => {
-  for (const seed of [8601, 8701]) { const tk = task(seed, 4, 'test'); assert.ok(bed.oracle(tk, bed.referenceSolve(tk)).pass); }
-  assert.equal(hashOf(bed.generate({ seed: 401, split: 'dev', difficulty: 3, faults: [] })), hashOf(task(401, 3)));
-  assert.throws(() => bed.generate({ seed: 401, split: 'dev', difficulty: 3, faults: ['f3'] }), /not implemented/);
+test('the test split generates and passes the reference (on a tuning seed, never a held-out one); held-out wording appears only there; faults are a no-op by default', () => {
+  const tk = task(471, 4, 'test'); assert.ok(bed.oracle(tk, bed.referenceSolve(tk)).pass);
+  // the last main-sentence wording of every family is drawn on the test split only (families.mjs words())
+  let testOnly = 0;
+  for (const seed of [471, 472]) for (const split of ['dev', 'test']) for (const f of buildSweep(seed, split, 4).fns) {
+    if (!f.p.w) continue;
+    const F = FAMILIES[f.family], n = F.draw.toString().match(/words\(r, ctx, \[(\d+)/)?.[1];
+    if (!n || f.p.w[0] !== Number(n) - 1) continue;
+    assert.equal(split, 'test', `${f.family}: held-out wording drawn on dev`); testOnly++;
+  }
+  assert.ok(testOnly > 0, 'the test split uses held-out wording');
+  assert.equal(hashOf(bed.generate({ seed: 449, split: 'dev', difficulty: 3, faults: [] })), hashOf(task(449, 3)));
+  assert.throws(() => bed.generate({ seed: 449, split: 'dev', difficulty: 3, faults: ['f3'] }), /not implemented/);
 });
 
 test('runtime: generate under 2 s and oracle under 2 s at difficulty 5 (cold)', t => {
   const t0 = performance.now();
-  const tk = bed.generate({ seed: 489, split: 'dev', difficulty: 5 });
+  const tk = bed.generate({ seed: 470, split: 'dev', difficulty: 5 });
   const t1 = performance.now();
   bed.oracle(tk, bed.referenceSolve(tk));
   const t2 = performance.now();

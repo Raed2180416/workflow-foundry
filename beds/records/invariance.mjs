@@ -5,9 +5,12 @@
 //   shuffle-rows    identity (s.3), conflicts (s.4: ordered by update date) and every other rule are per row or per
 //                   group of rows; no rule reads the position of a line. The prompt's "ordered by row id" is rewritten.
 //   duplicate-row   a copy of one line under a fresh row id (unused, above the smallest row id of the copied row's person,
-//                   inserted at its place in row-id order): it links to exactly what the copied row links to and supplies
-//                   the same values at the same update date, so the person set and every field are unchanged; the
-//                   copied row's person gains the new row id in source_rows; a void row's copy is void.
+//                   inserted at its place in row-id order). Only a row the answer puts in a person of two or more rows, or
+//                   leaves out (void), is copied: such a row linked to another row by s.3(a) (it has a usable birth date)
+//                   or s.3(b) (it has a phone), so its copy links to it by the same rule, and it supplies the same values
+//                   at the same update date: the person set and every field are unchanged and the person gains the new
+//                   row id in source_rows; a void row's copy is void. (A single-row person's row may have neither a birth
+//                   date nor a phone, and then its copy is a second person: found by the text solver at d4 s218.)
 //   drop-singleton  remove the only row of a person the original answer lists with one source row: no rule links a
 //                   singleton's row to another row, so the answer loses exactly that person.
 // Known blind spot (M1 kill mode, ATTACK §3): a convention misread (a date order, a status meaning) or a threshold
@@ -53,14 +56,18 @@ export const invariance = Object.freeze([
   },
   {
     id: 'duplicate-row', kind: 'transform', needsOutput: true,
-    text: 'Copy one export line under a fresh row id (seeded). The person set and every field are unchanged; the copied row\'s person gains the new id in source_rows.',
+    text: 'Copy one export line (of a person with two or more rows, or a row the answer leaves out) under a fresh row id (seeded). The person set and every field are unchanged; the copied row\'s person gains the new id in source_rows.',
     make(task, { seed, output }) {
       const lines = exportLines(task), ids = lines.map(rowIdOf);
       if (!lines.length || ids.some(x => !Number.isInteger(x))) return { skip: 'export lines without a leading row id' };
-      const r = rngOf(seed, 'records', 'duplicate-row'), i = r.int(0, lines.length - 1), rowId = ids[i];
+      const recs = recordsOf(output) ?? [], personOf = new Map();
+      for (const x of recs) if (Array.isArray(x.source_rows)) for (const id of x.source_rows) if (!personOf.has(id)) personOf.set(id, x);
+      const candidates = ids.map((id, i) => i).filter(i => !personOf.has(ids[i]) || personOf.get(ids[i]).source_rows.length >= 2);
+      if (!candidates.length) return { skip: 'every row is a single-row person' };
+      const r = rngOf(seed, 'records', 'duplicate-row'), i = candidates[r.int(0, candidates.length - 1)], rowId = ids[i];
       // The new id must stay above the smallest row id of the copied row's person (so entity_id cannot change) and keep
       // the id width of the export; it is placed where row-id order puts it.
-      const rec = (recordsOf(output) ?? []).find(x => Array.isArray(x.source_rows) && x.source_rows.includes(rowId));
+      const rec = personOf.get(rowId);
       const floor = Math.max(rowId, Number.isInteger(rec?.entity_id) ? rec.entity_id : rowId);
       const width = String(Math.max(...ids)).length, top = 10 ** width - 1, used = new Set(ids);
       const free = [];
