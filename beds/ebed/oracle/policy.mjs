@@ -4,7 +4,7 @@
 // lid), and a wake-up at the next window it must act in. Its two runs through the real host define the completed and
 // censored pools (§6) and must themselves pass every case (a self-consistency check of the oracle, never evidence about
 // an arm). It reads the host's own journal (committed and staged rows) and world truth: it is not an arm under test.
-import { indexJournal, caseView } from './view.mjs';
+import { JournalIndex, caseView } from './view.mjs';
 import { createHost } from '../host/host.mjs';
 
 const MIN = 60_000;
@@ -26,11 +26,19 @@ function currentNames(world, system, op, args, atMs) {
  */
 export function referenceArm({ item, world, timing = 'earliest', journal, id = `reference-${timing}` }) {
   const off = offsetOf(world.t0);
+  const idx = new JournalIndex(world, { canonicalArgs: item.canonicalArgs });
+  let fed = 0;
   return {
     id,
     tick(input, ctx) {
+      // The committed journal is fed once, in order; the open wake-up's staged rows are added tentatively.
+      const { committed, staged } = journal();
+      for (; fed < committed.length; fed++) if (!['clock.freeze', 'run.resume'].includes(committed[fed].type)) idx.add(committed[fed]);
+      idx.begin();
+      try { idx.addAll(staged); return this.decide(input, ctx, idx); } finally { idx.rollback(); }
+    },
+    decide(input, ctx, idx) {
       const now = Date.parse(input.now);
-      const idx = indexJournal(world, journal(), { canonicalArgs: item.canonicalArgs });
       const inst = idx.instances.get(input.instance);
       const c = inst?.binding ?? null;
       if (c === null) return { decisions: { subject: null }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], close: true, carry: null };
@@ -42,9 +50,9 @@ export function referenceArm({ item, world, timing = 'earliest', journal, id = `
         const other = ctx.instances({ subject }).find(r => r.instance !== input.instance);
         if (other) return { ...out, merge: { into: other.instance } };
       }
-      const rows = idx.ledger.filter(r => r.case === c);
-      const done = new Set(rows.filter(r => r.committed && r.key).map(r => r.key));
-      const tasksMade = idx.tasks.filter(t => t.case === c).map(t => t.task.id);
+      const bucket = idx.bucket(c);
+      const done = new Set(bucket.ledger.filter(r => r.committed && r.key).map(r => r.key));
+      const tasksMade = bucket.tasks.map(t => t.task.id);
       const due = w => (timing === 'earliest' ? w.earliest : w.latest);
       const todo = E.effects.required.filter(e => !done.has(e.lid));
       const ready = todo.filter(e => due(e.window) <= now && ctx.status(e.system, e.lid) !== 'pending');
@@ -87,7 +95,7 @@ export function referenceArm({ item, world, timing = 'earliest', journal, id = `
 /** Run one reference run of `item` over `world` through the real host. Returns { journal rows, result }. */
 export async function runReference({ item, binding, world, timing = 'earliest', maxWakeups } = {}) {
   const holder = {};
-  const arm = referenceArm({ item, world, timing, journal: () => [...holder.host.journal.contentRows(), ...holder.host.journal.staged] });
+  const arm = referenceArm({ item, world, timing, journal: () => ({ committed: holder.host.journal.rows, staged: holder.host.journal.staged }) });
   holder.host = createHost({ item: binding, world, arm, ...(maxWakeups ? { maxWakeups } : {}) });
   const result = await holder.host.run();
   return { rows: holder.host.journal.contentRows(), result };

@@ -45,23 +45,29 @@ const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&
 export const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ESCAPES[c]);
 
 // Display text written by the workflow (question, titles, descriptions, enum labels) is shown as written, except
-// characters that can hide or reorder what a person reads: bidi controls, zero-width characters, other control
-// characters, lone surrogates and noncharacters become a visible marker ⟦U+XXXX⟧ (the run-view convention).
-// Tab and line feed stay; CRLF becomes LF. Values a person typed are echoed back unmarked (escaped only).
-const HIDDEN_RANGES = [[0x00, 0x08], [0x0B, 0x1F], [0x7F, 0x9F], [0xAD, 0xAD], [0x61C, 0x61C], [0x180E, 0x180E], [0x200B, 0x200F],
-  [0x2028, 0x202E], [0x2060, 0x206F], [0xFEFF, 0xFEFF], [0xFFF9, 0xFFFB], [0xFFFE, 0xFFFF]];
-const hiddenUnit = c => (c >= 0xD800 && c <= 0xDFFF) || HIDDEN_RANGES.some(([lo, hi]) => c >= lo && c <= hi);
-const marker = c => `\u27E6U+${c.toString(16).toUpperCase().padStart(4, '0')}\u27E7`;
+// characters that can hide or reorder what a person reads: bidi controls, zero-width and other format characters
+// (\p{Cf}, including the tag characters U+E0000-E007F), other control characters, blank fillers (U+034F, U+115F,
+// U+1160, U+17B4, U+17B5, U+3164, U+FFA0), lone surrogates and noncharacters become a visible marker ⟦U+XXXX⟧ (the
+// run-view convention). Tab and line feed stay; CRLF becomes LF. Variation selectors stay (emoji use them), and so
+// does the no-break space; enum labels that differ only in such characters are refused at compile time
+// (compile.mjs `enum-ambiguous`). Values a person typed are echoed back unmarked (escaped only).
+const HIDDEN_RANGES = [[0x00, 0x08], [0x0B, 0x1F], [0x7F, 0x9F], [0xAD, 0xAD], [0x34F, 0x34F], [0x61C, 0x61C], [0x115F, 0x1160],
+  [0x17B4, 0x17B5], [0x180E, 0x180E], [0x200B, 0x200F], [0x2028, 0x202E], [0x2060, 0x206F], [0x3164, 0x3164], [0xFEFF, 0xFEFF],
+  [0xFDD0, 0xFDEF], [0xFFA0, 0xFFA0], [0xFFF9, 0xFFFB], [0xE0000, 0xE007F]];
+const FORMAT = /^\p{Cf}$/u;
+const hidden = c => (c >= 0xD800 && c <= 0xDFFF) || (c & 0xFFFE) === 0xFFFE || HIDDEN_RANGES.some(([lo, hi]) => c >= lo && c <= hi)
+  || FORMAT.test(String.fromCodePoint(c));
+const marker = c => `⟦U+${c.toString(16).toUpperCase().padStart(4, '0')}⟧`;
 export function displayText(value) {
   const s = String(value).replace(/\r\n/g, '\n');
   let out = '';
   for (let i = 0; i < s.length; i++) {
-    const c = s.charCodeAt(i);
+    let c = s.charCodeAt(i), unit = s[i];
     if (c >= 0xD800 && c <= 0xDBFF && i + 1 < s.length) {
       const d = s.charCodeAt(i + 1);
-      if (d >= 0xDC00 && d <= 0xDFFF) { out += s[i] + s[i + 1]; i++; continue; } // a valid surrogate pair
+      if (d >= 0xDC00 && d <= 0xDFFF) { c = s.codePointAt(i); unit = s.slice(i, i + 2); i++; } // a valid surrogate pair
     }
-    out += hiddenUnit(c) ? marker(c) : s[i];
+    out += hidden(c) ? marker(c) : unit;
   }
   return out;
 }

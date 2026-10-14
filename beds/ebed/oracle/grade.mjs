@@ -59,16 +59,16 @@ function censoredByEpoch(world, cases) {
 
 export function gradeCase({ item, world, idx, c, pool = null }) {
   const truth = world.truth.cases[c];
-  const bound = new Set([...idx.instances.values()].filter(i => i.binding === c).map(i => i.id));
+  const b = idx.bucket(c);
   const points = [];
   const push = (at, seq, kind, ref) => points.push({ at, seq, kind, ref });
   const startMs = Date.parse(truth.start);
   push(startMs, -1, 'start', null);
-  for (const d of idx.deliveries) if (d.case === c && d.truth) push(d.at, d.seq, 'delivery', d);
-  for (const k of idx.calls) if (bound.has(k.instance)) push(k.at, k.seq, 'call', k);
-  for (const r of idx.ledger) if (r.case === c) push(r.at, r.seq, 'row', r);
-  for (const t of idx.tasks) if (t.case === c) push(t.at, t.seq, 'task', t);
-  for (const e of idx.taskEvents) if (e.case === c) push(e.at, e.seq, 'taskEvent', e);
+  for (const d of b.deliveries) push(d.at, d.seq, 'delivery', d);
+  for (const k of b.calls) push(k.at, k.seq, 'call', k);
+  for (const r of b.ledger) push(r.at, r.seq, 'row', r);
+  for (const t of b.tasks) push(t.at, t.seq, 'task', t);
+  for (const e of b.taskEvents) push(e.at, e.seq, 'taskEvent', e);
   push(idx.horizonMs, Infinity, 'end', null);
   points.sort(cmp);
   const queued = new Set(points.map(p => `${p.at}|${p.seq}|${p.kind}`));

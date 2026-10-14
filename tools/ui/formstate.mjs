@@ -9,7 +9,9 @@
 // "answer/release/amount"). Values by component:
 //   Input / TextArea (text)   string
 //   Input (number, integer)   a JSON number, or a string in strict decimal syntax (no "12abc", "0x10", "1,000",
-//                             "Infinity", "+1", ".5"); surrounding spaces and tabs are ignored
+//                             "Infinity", "+1", ".5") whose decimal value the stored number keeps exactly up to
+//                             the digits a double holds (no "0.99999999999999999" -> 1); surrounding spaces and tabs
+//                             are ignored
 //   RadioGroup / Select       a member of the enum (strict equality); for a boolean field true/false or "true"/"false"
 //   CheckBoxGroup             an array of enum members, or OpenUI's aggregate { <option token>: boolean }
 // Blank (null, "", [], an all-false aggregate, or the field absent) means "no answer" for that field, except that a
@@ -19,10 +21,29 @@ import { isPlainObject, own, put, uiError } from './common.mjs';
 import { fieldForPath, toUiError, validateAnswer } from './validate.mjs';
 
 const NUMBER = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/;
-const PLAIN_INTEGER = /^-?(?:0|[1-9][0-9]*)$/;
+// Number errors and limits shared by the routes (P2 of the G21 review: a capped error list keeps the re-rendered page
+// small whatever the request holds).
+export const MAX_ERRORS = 20;
 const BLANK = Symbol('blank');
 
-/** Parses a number typed into a text box. Returns { value } or { code }. */
+// The decimal value of number text, normalised: digits without leading or trailing zeros and a power of ten
+// ("1250.50" and "1.2505e3" -> "12505e-1", "-0.0" -> "0"). Exponents are BigInt, so no text is too long to compare.
+function decimalKey(text) {
+  const m = /^(-?)([0-9]+)(?:\.([0-9]+))?(?:[eE]([+-]?[0-9]+))?$/.exec(text);
+  if (!m) return null;
+  const digits = `${m[2]}${m[3] ?? ''}`.replace(/^0+/, '');
+  if (digits === '') return '0';
+  const trimmed = digits.replace(/0+$/, '');
+  const exponent = BigInt(m[4] ?? 0) - BigInt((m[3] ?? '').length) + BigInt(digits.length - trimmed.length);
+  return `${m[1]}${trimmed}e${exponent}`;
+}
+
+/**
+ * Parses a number typed into a text box. Returns { value } or { code }. The text must name the stored number exactly
+ * as JavaScript writes it back (the shortest decimal that round-trips), after normalising zeros and the exponent:
+ * "1250.50", "1e3" and "0.1" pass; "0.99999999999999999" (stored as 1), "9007199254740993" (stored as ...992) and
+ * "4e-324" (stored as 5e-324) are `number-precision`.
+ */
 export function parseNumberText(text, valueType) {
   const t = text.replace(/^[ \t]+|[ \t]+$/g, '');
   if (t === '') return { value: BLANK };
@@ -30,8 +51,9 @@ export function parseNumberText(text, valueType) {
   const n = Number(t);
   if (!Number.isFinite(n)) return { code: 'number-out-of-range' };
   if (n === 0 && /[1-9]/.test(t.split(/[eE]/)[0])) return { code: 'number-out-of-range' }; // underflow to zero
-  if (valueType === 'integer' && Number.isInteger(n) && !Number.isSafeInteger(n) && !(PLAIN_INTEGER.test(t) && BigInt(t) === BigInt(n))) return { code: 'number-precision' };
-  return { value: n === 0 ? 0 : n };
+  const value = n === 0 ? 0 : n;
+  if (decimalKey(t) !== decimalKey(String(value))) return { code: 'number-precision' };
+  return { value };
 }
 
 const ADAPTER_TEXT = {
@@ -42,10 +64,11 @@ const ADAPTER_TEXT = {
   'type-mismatch': ['The value has the wrong type for this field', 'Send the value type the field declares'],
   'not-a-number': ['Enter a number, like 1250.50', 'Use digits with an optional minus sign, decimal point and exponent; no letters, spaces inside, commas, currency signs or hexadecimal'],
   'number-out-of-range': ['The number is too large or too small to store exactly', 'Enter a smaller number'],
-  'number-precision': ['The whole number is too large to store exactly', `Enter a whole number between -${Number.MAX_SAFE_INTEGER} and ${Number.MAX_SAFE_INTEGER}`],
+  'number-precision': ['The number has more digits than can be stored exactly', 'Enter it with fewer significant digits (15 always work)'],
   'enum-mismatch': ['Choose one of the listed options', 'The value must be one of the options exactly'],
   'unknown-option': ['The selected option does not exist', 'Choose one of the listed options'],
   'duplicate-field': ['The field was sent more than once', 'Send each field once'],
+  'too-many-errors': ['There are more problems than are listed here', 'Fix the listed ones and submit again'],
 };
 const fieldLabel = field => field?.label ?? 'The answer';
 function adapterError(source, code, field, path) {
@@ -137,7 +160,14 @@ function finish(spec, adapterErrors, answer) {
   const order = new Map(spec.fields.map((f, i) => [f.name, i]));
   const errors = [...adapterErrors, ...validatorErrors].map((e, i) => [e, i])
     .sort(([a, i], [b, j]) => (order.get(a.statementId) ?? -1) - (order.get(b.statementId) ?? -1) || i - j).map(([e]) => e);
-  return errors.length ? { ok: false, errors } : { ok: true, answer, errors: [] };
+  return errors.length ? { ok: false, errors: capErrors(errors) } : { ok: true, answer, errors: [] };
+}
+
+/** At most MAX_ERRORS errors: the first MAX_ERRORS - 1 and one `too-many-errors` that says how many were left out. */
+export function capErrors(errors, source = 'adapter') {
+  if (errors.length <= MAX_ERRORS) return errors;
+  const kept = errors.slice(0, MAX_ERRORS - 1);
+  return [...kept, { ...adapterError(source, 'too-many-errors', null, ''), message: `${errors.length - kept.length} more problems are not listed` }];
 }
 
 /**
@@ -223,14 +253,18 @@ function safeEqual(a, b) {
   return diff === 0;
 }
 
-/** The whole host route: parse, adapt, re-validate. { ok, answer?, errors, values }. */
+/**
+ * The whole host route: parse, adapt, re-validate. { ok, answer?, errors, values, envelope? }. When the envelope fails
+ * (`stale-form`, `bad-token`) the result has `envelope: true` and no values: the request may not come from the person
+ * the form was given to, so nothing it sent may be echoed into a live form (a host answers 403, host.mjs).
+ */
 export function acceptSubmission(spec, body, { token = null } = {}) {
   const parsed = formStateFromSubmission(spec, body, { token });
   const envelope = parsed.errors.filter(e => e.code === 'stale-form' || e.code === 'bad-token');
-  if (envelope.length) return { ok: false, errors: envelope, values: parsed.values };
+  if (envelope.length) return { ok: false, envelope: true, errors: envelope, values: {} };
   const adapted = answerFromFormState(spec, parsed.formState);
   const seen = new Set(parsed.errors.map(e => e.statementId).filter(Boolean));
-  const errors = [...parsed.errors, ...adapted.errors.filter(e => !seen.has(e.statementId))];
+  const errors = capErrors([...parsed.errors, ...adapted.errors.filter(e => !seen.has(e.statementId) && e.code !== 'too-many-errors')], 'host');
   return errors.length ? { ok: false, errors, values: parsed.values } : { ok: true, answer: adapted.answer, errors: [], values: parsed.values, formState: parsed.formState };
 }
 

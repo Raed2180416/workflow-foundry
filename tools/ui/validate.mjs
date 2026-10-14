@@ -6,9 +6,12 @@
 // additionalProperties: false. tests/ui-form-adapter.test.mjs checks acceptance against src/validate.mjs on
 // thousands of generated schema/answer pairs.
 //
-// One deliberate difference in order, not in outcome: maxLength is checked before pattern, and a pattern never runs
-// on a string over maxLength (the answer is rejected either way).
+// Two deliberate differences. Order, not outcome: maxLength is checked before pattern, and a pattern never runs on a
+// string over maxLength or over PATTERN_MAX_INPUT code points (the answer is rejected either way). Time: pattern tests
+// run in a worker thread with one budget per answer (pattern.mjs patternTest); a test that does not finish in time
+// rejects the answer as `pattern-timeout`, where ajv would keep running (fail closed).
 import { checkData, codePoints, isPlainObject, own, pointer, uiError } from './common.mjs';
+import { PATTERN_BUDGET_MS, PATTERN_MAX_INPUT, patternTest } from './pattern.mjs';
 
 const typeOk = (type, v) => type === 'string' ? typeof v === 'string'
   : type === 'number' ? typeof v === 'number' && Number.isFinite(v)
@@ -20,13 +23,13 @@ const typeOk = (type, v) => type === 'string' ? typeof v === 'string'
 
 /** Raw errors [{ code, path, detail }] of `value` against `schema` (a subset schema). Stops at the first failing
  *  rule per value, as OpenUI does per field (spec/language.md §5.4); acceptance does not depend on that order. */
-export function valueErrors(schema, value, path = '') {
+export function valueErrors(schema, value, path = '', { budgetMs = PATTERN_BUDGET_MS } = {}) {
   const out = [];
-  walk(schema, value, path, out);
+  walk(schema, value, path, out, { deadline: performance.now() + budgetMs });
   return out;
 }
 
-function walk(schema, value, path, out) {
+function walk(schema, value, path, out, ctx) {
   const fail = (code, detail) => { out.push({ code, path, detail }); };
   if (own(schema, 'type') && !typeOk(schema.type, value)) {
     return fail(schema.type === 'integer' && typeof value === 'number' ? 'not-an-integer' : 'type-mismatch', { expected: schema.type });
@@ -37,7 +40,11 @@ function walk(schema, value, path, out) {
     const length = codePoints(value);
     if (own(schema, 'minLength') && length < schema.minLength) return fail('too-short', { minLength: schema.minLength, length });
     if (own(schema, 'maxLength') && length > schema.maxLength) return fail('too-long', { maxLength: schema.maxLength, length });
-    if (own(schema, 'pattern') && !new RegExp(schema.pattern, 'u').test(value)) return fail('pattern-mismatch', { pattern: schema.pattern });
+    if (own(schema, 'pattern')) {
+      const matched = length > PATTERN_MAX_INPUT ? 'timeout' : patternTest(schema.pattern, value, ctx.deadline - performance.now());
+      if (matched === 'timeout') return fail('pattern-timeout', { pattern: schema.pattern });
+      if (!matched) return fail('pattern-mismatch', { pattern: schema.pattern });
+    }
   }
   if (typeof value === 'number') {
     if (own(schema, 'minimum') && value < schema.minimum) return fail('below-minimum', { minimum: schema.minimum });
@@ -46,13 +53,13 @@ function walk(schema, value, path, out) {
   if (Array.isArray(value)) {
     if (own(schema, 'minItems') && value.length < schema.minItems) return fail('too-few-items', { minItems: schema.minItems });
     if (own(schema, 'maxItems') && value.length > schema.maxItems) return fail('too-many-items', { maxItems: schema.maxItems });
-    if (own(schema, 'items')) value.forEach((item, i) => walk(schema.items, item, pointer(path, i), out));
+    if (own(schema, 'items')) value.forEach((item, i) => walk(schema.items, item, pointer(path, i), out, ctx));
   }
   if (isPlainObject(value)) {
     const props = schema.properties ?? {};
     for (const name of schema.required ?? []) if (!own(value, name)) out.push({ code: 'missing-required', path: pointer(path, name), detail: {} });
     for (const name of Object.keys(value)) {
-      if (own(props, name)) walk(props[name], value[name], pointer(path, name), out);
+      if (own(props, name)) walk(props[name], value[name], pointer(path, name), out, ctx);
       else if (schema.additionalProperties === false) out.push({ code: 'unknown-property', path: pointer(path, name), detail: {} });
     }
   }
@@ -65,6 +72,7 @@ const MESSAGES = {
   'too-short': (l, d) => [`${l} must be at least ${d.minLength} character${d.minLength === 1 ? '' : 's'}`, `It has ${d.length}`],
   'too-long': (l, d) => [`${l} must be at most ${d.maxLength} character${d.maxLength === 1 ? '' : 's'}`, `It has ${d.length}; characters are counted as Unicode code points`],
   'pattern-mismatch': (l, d) => [`${l} is not in the required format`, `It must match ${d.pattern}`],
+  'pattern-timeout': (l, d) => [`${l} could not be checked against its format in time`, `Shorten the entry; it must match ${d.pattern}`],
   'below-minimum': (l, d) => [`${l} must be ${d.minimum} or more`, `Enter a value of at least ${d.minimum}`],
   'above-maximum': (l, d) => [`${l} must be ${d.maximum} or less`, `Enter a value of at most ${d.maximum}`],
   'too-few-items': (l, d) => [`Select at least ${d.minItems} for ${l}`, `Select ${d.minItems} or more options`],

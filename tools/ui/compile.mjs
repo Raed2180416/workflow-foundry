@@ -8,9 +8,16 @@
 //           | array whose items are an enum leaf (minItems, maxItems): a checkbox group
 //   object  properties (leaves or one level of nested objects), required, additionalProperties: boolean
 //   notes   title (label) and description (hint) on any node
-import { FormRefused, SPEC_KIND, codePoints, deepFreeze, digest, humanize, isPlainObject, own, pointer, uiError, checkData } from './common.mjs';
+import { readFileSync } from 'node:fs';
+import { FormRefused, SPEC_KIND, codePoints, deepFreeze, digest, displayText, humanize, isPlainObject, own, pointer, uiError, checkData } from './common.mjs';
 import { patternProblems, PATTERN_MAX_INPUT } from './pattern.mjs';
 import { valueErrors } from './validate.mjs';
+
+// The code that decides what an answer is (the subset, the adapter, the validator, the pattern matcher). Its digest is
+// in every spec, so the spec hash changes when that code does: a submission made under one version of the semantics
+// is stale under another (README "The form spec").
+export const SEMANTICS_FILES = Object.freeze(['common.mjs', 'compile.mjs', 'formstate.mjs', 'pattern.mjs', 'validate.mjs']);
+export const SEMANTICS = `sha256:${digest(SEMANTICS_FILES.map(file => [file, readFileSync(new URL(`./${file}`, import.meta.url), 'utf8')]))}`;
 
 export const LIMITS = Object.freeze({ fields: 60, options: 200, schemaBytes: 64 * 1024, questionCodePoints: 20000, noteCodePoints: 2000, inputMaxLength: 120 });
 const ALLOWED = new Set(['type', 'enum', 'const', 'properties', 'required', 'additionalProperties', 'items', 'minimum', 'maximum',
@@ -24,6 +31,9 @@ const FORM_NAME = /^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,127}$/;
 const BIND_KEYS = ['workflowHash', 'nodeKey', 'runId', 'taskId'];
 const RADIO_MAX = 6;
 
+// What a label looks like to a person: compatibility-normalised (NFKC folds width and the no-break space), characters
+// displayText marks (invisible ones) and other default-ignorable characters dropped, whitespace collapsed and trimmed.
+const sameLooking = text => displayText(String(text).normalize('NFKC')).replace(/\u27E6U\+[0-9A-F]{4,6}\u27E7|\p{Default_Ignorable_Code_Point}/gu, '').replace(/\s+/gu, ' ').trim();
 const isScalar = v => v === null || typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v));
 const sortKey = v => `${v === null ? 'null' : typeof v}:${String(v)}`;
 
@@ -35,7 +45,7 @@ export function compileForm(input) {
 }
 
 /** Compile without throwing: { ok: true, spec } or { ok: false, errors }. */
-export function tryCompileForm({ answerSchema, question, formName = 'task', bind = null, allowPattern = true } = {}) {
+export function tryCompileForm({ answerSchema, question, formName = 'task', bind = null, allowPattern = false } = {}) {
   const errors = [];
   const refuse = (code, path, message, hint) => errors.push(uiError('schema', code, { path, message, hint }));
   if (typeof question !== 'string' || question.trim() === '' || codePoints(question) > LIMITS.questionCodePoints)
@@ -66,6 +76,7 @@ export function tryCompileForm({ answerSchema, question, formName = 'task', bind
 
   const spec = {
     kind: SPEC_KIND,
+    semantics: SEMANTICS,
     formName,
     question,
     bind: binding,
@@ -163,24 +174,25 @@ function classifyEnum(schema, path, ctx) {
   for (const m of members) { const k = sortKey(m); if (seen.has(k)) { refuse('enum-duplicate', at, `enum lists ${JSON.stringify(m)} more than once`); return null; } seen.add(k); }
   const { type } = schema;
   if (type === 'object' || type === 'array') { refuse('unsupported-type', pointer(path, 'type'), 'an enum of objects or arrays is not in tier 0'); return null; }
-  const allowed = ['enum', 'const', 'type', 'title', 'description', ...(type ? APPLIES[type] : [])];
-  for (const key of Object.keys(schema)) if (!allowed.includes(key)) { refuse('keyword-not-applicable', pointer(path, key), `keyword "${key}" does not apply to ${type ? `type ${type}` : 'an enum without a type'}`); return null; }
-  if (own(schema, 'pattern')) {
-    if (!ctx.allowPattern) { refuse('unsupported-keyword', pointer(path, 'pattern'), 'pattern is not allowed in this profile'); return null; }
-    const problems = patternProblems(schema.pattern);
-    for (const p of problems) refuse(p.code, pointer(path, 'pattern'), p.message);
-    if (problems.length) return null;
-  }
+  // pattern does not apply to an enum: the options are fixed, and a pattern would only run on them (with no maxLength
+  // gate) at compile time.
+  const allowed = ['enum', 'const', 'type', 'title', 'description', ...(type ? APPLIES[type].filter(k => k !== 'pattern') : [])];
+  for (const key of Object.keys(schema)) if (!allowed.includes(key)) { refuse('keyword-not-applicable', pointer(path, key), `keyword "${key}" does not apply to ${type ? `type ${type}` : 'an enum without a type'}${key === 'pattern' ? ' (the options are fixed)' : ''}`); return null; }
   // Every member must itself be a valid answer: an option the host would reject could never be completed.
-  const { pattern, ...noPattern } = schema; // a member is checked against the pattern below without the maxLength gate
   for (const m of members) {
-    const bad = valueErrors(noPattern, m).length > 0 || (pattern !== undefined && typeof m === 'string' && !new RegExp(pattern, 'u').test(m));
-    if (bad) { refuse('enum-member-invalid', at, `enum member ${JSON.stringify(m)} does not satisfy the rest of its own schema, so choosing it could never be accepted`); return null; }
+    if (valueErrors(schema, m).length > 0) { refuse('enum-member-invalid', at, `enum member ${JSON.stringify(m)} does not satisfy the rest of its own schema, so choosing it could never be accepted`); return null; }
   }
   // When an enum mixes JSON types, every label is JSON text, so the string "1" and the number 1 read differently.
   const mixed = new Set(members.map(m => (m === null ? 'null' : typeof m))).size > 1;
   const label = value => mixed || typeof value !== 'string' ? JSON.stringify(value) : value === '' ? '(empty text)' : value;
   const options = members.map((value, index) => ({ token: String(index), value, label: label(value) }));
+  // Two options a person cannot tell apart ("release", "release\u00A0", "release ") make the choice ambiguous.
+  const seenLabels = new Map();
+  for (const o of options) {
+    const k = sameLooking(o.label);
+    if (seenLabels.has(k)) { refuse('enum-ambiguous', at, `enum members ${JSON.stringify(seenLabels.get(k))} and ${JSON.stringify(o.value)} would look the same to a person (they differ only in spacing, width or invisible characters)`, 'Make the options differ in visible text'); return null; }
+    seenLabels.set(k, o.value);
+  }
   return { kind: 'enum', schema, options };
 }
 

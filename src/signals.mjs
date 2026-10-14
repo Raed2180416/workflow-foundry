@@ -137,11 +137,11 @@ export function signalCheckpointDrift(run, events) {
   const seen = new Set();
   for (const [frameKey, frame] of frames) for (const [id, state] of Object.entries(frame?.nodes ?? {})) {
     const nodeKey = `${frameKey}/${id}`, decision = decisions.get(nodeKey), start = started.get(nodeKey);
-    // The rule's inputs: what the wait subscribed to, when its timer runs out, and its place in the claim order (startedSequence).
-    if (start || (state?.kind === 'wait' && (state.startedSequence !== undefined || Array.isArray(state.subscriptions)))) {
-      const signalWait = Array.isArray(state?.subscriptions) || Array.isArray(start?.subscriptions);
-      if (!start || (signalWait && (digest(state?.subscriptions ?? null) !== digest(start.subscriptions ?? null) || (state?.startedSequence ?? null) !== start.seq))
-        || (Object.hasOwn(start, 'wakeAt') && (state?.wakeAt ?? null) !== start.wakeAt)) drift.push(`inputs of wait ${nodeKey} (subscriptions, timer or start)`);
+    // A signal wait's inputs to the rule: what it subscribed to, when its timer runs out, and its place in the claim order (startedSequence).
+    // (A plain timer wait decides nothing a delivery depends on; its record is left to the timer checks.)
+    if (Array.isArray(start?.subscriptions) || Array.isArray(state?.subscriptions)) {
+      if (!start || digest(state?.subscriptions ?? null) !== digest(start.subscriptions ?? null) || (state?.startedSequence ?? null) !== start.seq
+        || (state?.wakeAt ?? null) !== (start.wakeAt ?? null)) drift.push(`inputs of wait ${nodeKey} (subscriptions, timer or start)`);
     }
     if (decision) seen.add(nodeKey);
     if (!state?.resolution && !decision) continue;

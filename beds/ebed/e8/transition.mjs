@@ -47,8 +47,9 @@ export function collectionAt(world, location, bookedMs, cutoffMinutes) {
 }
 
 const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier === carrier && c.code === code)?.meaning ?? null;
-const PERM_EXCLUDED = new Set([400, 404, 409, 422]);
-const permanent = row => !row.committed && row.error && row.error.retryable === false && !PERM_EXCLUDED.has(row.error.code);
+// Permanent failures of a step (R5.2): a declined card (402) or a permanent failure (F6). Ledger rows carry an error's
+// code and reason only, so permanence is read from the code; invalid requests (400, 404, 409, 422) are the arm's own.
+const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code === 'permanent');
 
 /**
  * referenceTransition(world, view) → { case, at, decisions, effects: { required, permitted }, humanTasks: { required,
