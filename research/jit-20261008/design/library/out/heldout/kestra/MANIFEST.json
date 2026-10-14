@@ -1,0 +1,91 @@
+{
+ "platform": "kestra",
+ "pinned": "kestra-io/blueprints@4a19ce21e2c94176ca1022d233aaf6303669f17f",
+ "licenceNote": "no LICENSE file in the tree at the pinned SHA; the README carries only the kestra-io/kestra licence badge (kestra-io/kestra is Apache-2.0). Raw file kept local, not committed (.gitignore).",
+ "selectionRule": "PREREG.md §3 and draw.json: seeded draw (mulberry32 20261017) over the sorted frame, first 10, replaced from the reserve only for the PREREG §3 skip reasons",
+ "frameSize": 1513,
+ "frameSha256": "2216a66eba2ea4a919d735760ce5412b6f0d36223c5835e3fd8b4d7bcb69b712",
+ "skipped": [],
+ "workflows": [
+  {
+   "id": "flows/kafka-schema-registry-compatibility-mode-drift-guard.yaml",
+   "file": "flows__kafka-schema-registry-compatibility-mode-drift-guard.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/kafka-schema-registry-compatibility-mode-drift-guard.yaml",
+   "fetchedAt": "2026-10-14T13:38:55.478Z",
+   "sha256": "d9418c4f99cc90c0aed11124d4051031472efaa73e0d37d42c3be92538952e4e",
+   "bytes": 35185
+  },
+  {
+   "id": "flows/stripe-to-crm-sync.yaml",
+   "file": "flows__stripe-to-crm-sync.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/stripe-to-crm-sync.yaml",
+   "fetchedAt": "2026-10-14T13:38:55.683Z",
+   "sha256": "92f82e667bfb1759a8e5ab29e02294a125688cde42fad4868ccb1b8187df1083",
+   "bytes": 10671
+  },
+  {
+   "id": "flows/postgres-connection-saturation-guard.yaml",
+   "file": "flows__postgres-connection-saturation-guard.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/postgres-connection-saturation-guard.yaml",
+   "fetchedAt": "2026-10-14T13:38:55.950Z",
+   "sha256": "fdc96d2ef5857a1485d98e388147ca9371f572dcc2ac4364389ee8b7bb008911",
+   "bytes": 9547
+  },
+  {
+   "id": "flows/mistral-agent-workflow-run.yaml",
+   "file": "flows__mistral-agent-workflow-run.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/mistral-agent-workflow-run.yaml",
+   "fetchedAt": "2026-10-14T13:38:56.124Z",
+   "sha256": "84886790398c0c629f82a4ff52478d6008fe0d069c7a92aa472dd282a27ff521",
+   "bytes": 6686
+  },
+  {
+   "id": "flows/codedeploy-failed-deployment-sentinel.yaml",
+   "file": "flows__codedeploy-failed-deployment-sentinel.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/codedeploy-failed-deployment-sentinel.yaml",
+   "fetchedAt": "2026-10-14T13:38:56.342Z",
+   "sha256": "17291dfe8a873537107411b631a2a6cd67e3479916ad818bfe36cca57bda77c6",
+   "bytes": 16129
+  },
+  {
+   "id": "flows/github-actions-unpinned-action-audit.yaml",
+   "file": "flows__github-actions-unpinned-action-audit.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/github-actions-unpinned-action-audit.yaml",
+   "fetchedAt": "2026-10-14T13:38:56.534Z",
+   "sha256": "315343b73d58e73b56016d620807a16dbfabdf838b79886c4c33b7af27c31254",
+   "bytes": 13237
+  },
+  {
+   "id": "flows/github-search.yaml",
+   "file": "flows__github-search.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/github-search.yaml",
+   "fetchedAt": "2026-10-14T13:38:56.746Z",
+   "sha256": "90a90575d18668e8678a64e72d307dec47a0b6e963dbff10bc56d7c11b6959db",
+   "bytes": 3971
+  },
+  {
+   "id": "flows/csv-duckdb-slack.yaml",
+   "file": "flows__csv-duckdb-slack.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/csv-duckdb-slack.yaml",
+   "fetchedAt": "2026-10-14T13:38:56.910Z",
+   "sha256": "db5e83ee8087634686744d89b82a2de867d275faa8450b98dfe44b2479ac0b73",
+   "bytes": 5310
+  },
+  {
+   "id": "flows/kestra-flow-failure-rate-gate.yaml",
+   "file": "flows__kestra-flow-failure-rate-gate.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/kestra-flow-failure-rate-gate.yaml",
+   "fetchedAt": "2026-10-14T13:38:57.171Z",
+   "sha256": "77ada5afc6c5ef15dcfaeec01312de4ee30e1e6b6cf4849e08285d342ebc889f",
+   "bytes": 14663
+  },
+  {
+   "id": "flows/auditlogs-to-bigquery.yaml",
+   "file": "flows__auditlogs-to-bigquery.yaml",
+   "url": "https://raw.githubusercontent.com/kestra-io/blueprints/4a19ce21e2c94176ca1022d233aaf6303669f17f/flows/auditlogs-to-bigquery.yaml",
+   "fetchedAt": "2026-10-14T13:38:57.356Z",
+   "sha256": "8b1cde2295e739d32f2dc96191ad19ce999f98c350eadad60c09292342b38c01",
+   "bytes": 7184
+  }
+ ]
+}

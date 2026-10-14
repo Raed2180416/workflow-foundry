@@ -1,0 +1,92 @@
+{
+ "platform": "logic-apps",
+ "pinned": "Azure/logicapps@c16c1d57be360c88bdf98571bc972eb1af29d1ca",
+ "licenceNote": "MIT (LICENSE, Copyright (c) Microsoft Corporation)",
+ "selectionRule": "PREREG.md §3 and draw.json: seeded draw (mulberry32 20261017) over the sorted frame, first 10, replaced from the reserve only for the PREREG §3 skip reasons",
+ "frameSize": 45,
+ "frameSha256": "1f008ca2231cb3aa2fec17922e7d6eceaf665e88dab02174c1829483ba392b02",
+ "skipped": [],
+ "workflows": [
+  {
+   "id": "templates/veter.json",
+   "file": "templates__veter.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/veter.json",
+   "fetchedAt": "2026-10-14T13:39:01.620Z",
+   "sha256": "0b59707c7c7195266719faf8252b18169adb68071a3dadf2c3cfc5791f6ac041",
+   "bytes": 4358
+  },
+  {
+   "id": "templates/Azure-Blob-Auto-Tier.json",
+   "file": "templates__Azure-Blob-Auto-Tier.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/Azure-Blob-Auto-Tier.json",
+   "fetchedAt": "2026-10-14T13:39:01.795Z",
+   "sha256": "6dd1ec968ccc895118d297ba9904d5d02e84621f58f550e30ec883a14f465c9c",
+   "bytes": 4478,
+   "peekedBeforeDraw": true
+  },
+  {
+   "id": "templates/twitter-to-smtp.json",
+   "file": "templates__twitter-to-smtp.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/twitter-to-smtp.json",
+   "fetchedAt": "2026-10-14T13:39:01.983Z",
+   "sha256": "ef18e53f7fc33e0f374c5868a3fd3ba4282264d71cfebe01bd6f83b66a6df79f",
+   "bytes": 3910
+  },
+  {
+   "id": "templates/blockchain-dataworkflow.json",
+   "file": "templates__blockchain-dataworkflow.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/blockchain-dataworkflow.json",
+   "fetchedAt": "2026-10-14T13:39:02.155Z",
+   "sha256": "c494e28f1d7062682a2849ef2ca30dd6d14228ca966b3f65b2caf9f70ace4718",
+   "bytes": 3264
+  },
+  {
+   "id": "templates/dropbox-to-sharepoint.json",
+   "file": "templates__dropbox-to-sharepoint.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/dropbox-to-sharepoint.json",
+   "fetchedAt": "2026-10-14T13:39:02.326Z",
+   "sha256": "4fdcd66af556ea5ddbfc911faa521771c424df523353363efb6c02b3d5b1a9c3",
+   "bytes": 3893
+  },
+  {
+   "id": "templates/scheduler-run-once-http.json",
+   "file": "templates__scheduler-run-once-http.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/scheduler-run-once-http.json",
+   "fetchedAt": "2026-10-14T13:39:02.493Z",
+   "sha256": "a97b8cdc211f3180578b368f61b39d25d93fc24db6c21b020a8c0e51caa501f4",
+   "bytes": 4215
+  },
+  {
+   "id": "templates/sap-receive-batch.json",
+   "file": "templates__sap-receive-batch.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/sap-receive-batch.json",
+   "fetchedAt": "2026-10-14T13:39:02.673Z",
+   "sha256": "aa88a5774cb8b3ae302b31a230aac3367c5e233f9c8b82081300609c06361249",
+   "bytes": 4059
+  },
+  {
+   "id": "templates/office-to-wunderlist.json",
+   "file": "templates__office-to-wunderlist.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/office-to-wunderlist.json",
+   "fetchedAt": "2026-10-14T13:39:02.867Z",
+   "sha256": "272c001ceecf6e2d1bf5389220f4ec422e0c041d0af8d5f0f653df6c7c45aad8",
+   "bytes": 3875
+  },
+  {
+   "id": "templates/service-bus-sessions.json",
+   "file": "templates__service-bus-sessions.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/service-bus-sessions.json",
+   "fetchedAt": "2026-10-14T13:39:03.035Z",
+   "sha256": "4f863aead1a69d5c6dacd941a9b9aeb406a7bd835dd0fe94a0acca9d1a4d09b1",
+   "bytes": 21558
+  },
+  {
+   "id": "templates/sharepoint-file-email.json",
+   "file": "templates__sharepoint-file-email.json",
+   "url": "https://raw.githubusercontent.com/Azure/logicapps/c16c1d57be360c88bdf98571bc972eb1af29d1ca/templates/sharepoint-file-email.json",
+   "fetchedAt": "2026-10-14T13:39:03.214Z",
+   "sha256": "880e97688b0c6769555360ca87e0fae9eb2ebcd4ddc43e09c916b660d6c62e57",
+   "bytes": 5326
+  }
+ ]
+}

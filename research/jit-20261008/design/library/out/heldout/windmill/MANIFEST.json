@@ -1,0 +1,96 @@
+{
+ "platform": "windmill",
+ "pinned": "hub.windmill.dev/flows listing fetched 2026-10-14T13:36Z (frames/windmill-hub-flows-listing.json)",
+ "licenceNote": "none stated: the hub (hub.windmill.dev) shows no licence or terms text (WebFetch 2026-10-14). Raw file kept local, not committed (.gitignore).",
+ "selectionRule": "PREREG.md §3 and draw.json: seeded draw (mulberry32 20261017) over the sorted frame, first 10, replaced from the reserve only for the PREREG §3 skip reasons",
+ "frameSize": 30,
+ "frameSha256": "0bd8188a2254e16b47bc16bf6ba0ade10282700df83455b98a6f476d07b1176d",
+ "skipped": [
+  {
+   "id": "73",
+   "reason": "PREREG §3 (a): an empty skeleton. The flow body is {\"modules\": []}, there is no preprocessor and no code; only an input schema for a Nextcloud event. Applied before any label was written."
+  }
+ ],
+ "workflows": [
+  {
+   "id": "75",
+   "file": "flow-75.json",
+   "url": "https://hub.windmill.dev/flows/75",
+   "fetchedAt": "2026-10-14T13:38:50.383Z",
+   "sha256": "4bb8c8e00de0410f2457d8ebcb1e22a39f29fb00c15a27315a7214d348ddef1b",
+   "bytes": 10476
+  },
+  {
+   "id": "61",
+   "file": "flow-61.json",
+   "url": "https://hub.windmill.dev/flows/61",
+   "fetchedAt": "2026-10-14T13:38:51.191Z",
+   "sha256": "b9eabfc928a36023ea60039b5f335a468c4cffdbbb7b65636b30f2a5e0cdb73f",
+   "bytes": 2723
+  },
+  {
+   "id": "72",
+   "file": "flow-72.json",
+   "url": "https://hub.windmill.dev/flows/72",
+   "fetchedAt": "2026-10-14T13:38:51.812Z",
+   "sha256": "154164f724e3fbdfb32257b9198e205d9a337f3bd8b9129fdc448af286ae0876",
+   "bytes": 2140
+  },
+  {
+   "id": "23",
+   "file": "flow-23.json",
+   "url": "https://hub.windmill.dev/flows/23",
+   "fetchedAt": "2026-10-14T13:38:52.229Z",
+   "sha256": "8292c1e27096ecf7050d263f5c507d110724804d0f229861fc9b77d155295ed3",
+   "bytes": 3309
+  },
+  {
+   "id": "83",
+   "file": "flow-83.json",
+   "url": "https://hub.windmill.dev/flows/83",
+   "fetchedAt": "2026-10-14T13:38:52.670Z",
+   "sha256": "9061941b781d3ad032a91380949498c107587d0960451b9a59c5ba80413f632a",
+   "bytes": 32881
+  },
+  {
+   "id": "65",
+   "file": "flow-65.json",
+   "url": "https://hub.windmill.dev/flows/65",
+   "fetchedAt": "2026-10-14T13:38:53.146Z",
+   "sha256": "5e5ffcabeebcdc4f7d93c87c4432eb384406568d22c64933b8ca65d82dcfdc11",
+   "bytes": 2087
+  },
+  {
+   "id": "30",
+   "file": "flow-30.json",
+   "url": "https://hub.windmill.dev/flows/30",
+   "fetchedAt": "2026-10-14T13:38:53.609Z",
+   "sha256": "6c5cd26aca20326acaf866797fb47192778f6083a4b41ccd61c4e5020fa7f0cf",
+   "bytes": 1868
+  },
+  {
+   "id": "35",
+   "file": "flow-35.json",
+   "url": "https://hub.windmill.dev/flows/35",
+   "fetchedAt": "2026-10-14T13:38:54.169Z",
+   "sha256": "cef35c09858bde9e5d08c9b87e96e2da5158d2c080d72aecd8c21eb5becd019c",
+   "bytes": 2784
+  },
+  {
+   "id": "82",
+   "file": "flow-82.json",
+   "url": "https://hub.windmill.dev/flows/82",
+   "fetchedAt": "2026-10-14T13:38:54.497Z",
+   "sha256": "449bc9d36f19d007caaa1bb6875d730adfaf43fb6fe3df1ef7b8a8762ba4f59f",
+   "bytes": 58727
+  },
+  {
+   "id": "59",
+   "file": "flow-59.json",
+   "url": "https://hub.windmill.dev/flows/59",
+   "fetchedAt": "2026-10-14T13:38:55.019Z",
+   "sha256": "aceb54041b11ba0b338654103246859763089d569042ac9295faa6229c14acab",
+   "bytes": 2315
+  }
+ ]
+}

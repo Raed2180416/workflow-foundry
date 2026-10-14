@@ -1,0 +1,91 @@
+{
+ "platform": "step-functions",
+ "pinned": "aws-samples/step-functions-workflows-collection@7842c46f966a344236c03e7c5cc28107552bd55d",
+ "licenceNote": "MIT-0 (LICENSE, Copyright Amazon.com, Inc. or its affiliates)",
+ "selectionRule": "PREREG.md §3 and draw.json: seeded draw (mulberry32 20261017) over the sorted frame, first 10, replaced from the reserve only for the PREREG §3 skip reasons",
+ "frameSize": 170,
+ "frameSha256": "0dfdcf51d36a32c888d8ad7cd651db5d18d6be578a7e183e4e440903f7974da3",
+ "skipped": [],
+ "workflows": [
+  {
+   "id": "inventory-management-sam/statemachine/reserve-stock-statemachine.asl.json",
+   "file": "inventory-management-sam__statemachine__reserve-stock-statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/inventory-management-sam/statemachine/reserve-stock-statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:38:59.821Z",
+   "sha256": "f178b15de9dda2c8510c7b19a8504c9b800e7ded79e24cc9343ccea627c4b5bc",
+   "bytes": 6267
+  },
+  {
+   "id": "s3-sfn-lambda-bedrock/statemachine/statemachine.asl.json",
+   "file": "s3-sfn-lambda-bedrock__statemachine__statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/s3-sfn-lambda-bedrock/statemachine/statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:38:59.986Z",
+   "sha256": "ee146fd3c0945e9c5900f63dc0e35b07cd399ec1de0f9e3202272849a8d00c45",
+   "bytes": 1226
+  },
+  {
+   "id": "batch-lambda-cdk/batch_lambda_cdk/statemachine/statemachine.asl.json",
+   "file": "batch-lambda-cdk__batch_lambda_cdk__statemachine__statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/batch-lambda-cdk/batch_lambda_cdk/statemachine/statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:39:00.156Z",
+   "sha256": "38c88bd06a2d605f16ca068ea7719595912d26bb9f775ef42eca852584fc0a87",
+   "bytes": 753
+  },
+  {
+   "id": "resource-configuration-backup-sam/statemachine/statemachine.asl.json",
+   "file": "resource-configuration-backup-sam__statemachine__statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/resource-configuration-backup-sam/statemachine/statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:39:00.332Z",
+   "sha256": "cfba416825b6417e7901ec6804504eb1a08dab11d13f9a80bb4ca43e4d0ab0f0",
+   "bytes": 7297
+  },
+  {
+   "id": "web-contact-form-processor-tf/statemachines/statemachine.asl.json",
+   "file": "web-contact-form-processor-tf__statemachines__statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/web-contact-form-processor-tf/statemachines/statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:39:00.550Z",
+   "sha256": "0980029502b356fc77a441c509ebd4c3f195aab3b389fdee4ea4862e5d4bd3c9",
+   "bytes": 2507
+  },
+  {
+   "id": "synchronous-job/statemachine/statemachine.asl.json",
+   "file": "synchronous-job__statemachine__statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/synchronous-job/statemachine/statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:39:00.703Z",
+   "sha256": "0a3724f208af182fae602b630e41e6aa9be8553a4fa80e6783437d06b91bc226",
+   "bytes": 1330
+  },
+  {
+   "id": "text-processing-sqs-express/statemachine/statemachine.asl.json",
+   "file": "text-processing-sqs-express__statemachine__statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/text-processing-sqs-express/statemachine/statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:39:00.904Z",
+   "sha256": "19fb113a1a5b33b241be4d2a827a5dc33c6d1d0b856bd630c7b09c7e42d64bdc",
+   "bytes": 1558
+  },
+  {
+   "id": "support-notifications-cdk/typescript/statemachine/statemachine.asl.json",
+   "file": "support-notifications-cdk__typescript__statemachine__statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/support-notifications-cdk/typescript/statemachine/statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:39:01.065Z",
+   "sha256": "6a98c3d186416fedb8f1377ec57c0b6004ab898f3bdca478e33e269c434d21c2",
+   "bytes": 1928
+  },
+  {
+   "id": "chain-of-responsibility-cdk/typscript/statemachine/atm_dispenser_chained.asl.json",
+   "file": "chain-of-responsibility-cdk__typscript__statemachine__atm_dispenser_chained.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/chain-of-responsibility-cdk/typscript/statemachine/atm_dispenser_chained.asl.json",
+   "fetchedAt": "2026-10-14T13:39:01.262Z",
+   "sha256": "8132376517561cc192a5d5e72854e930742cf32caab9a8fd2bd742123fc634c4",
+   "bytes": 1406
+  },
+  {
+   "id": "lookout-for-vision-inference-sam/statemachine/statemachine.asl.json",
+   "file": "lookout-for-vision-inference-sam__statemachine__statemachine.asl.json",
+   "url": "https://raw.githubusercontent.com/aws-samples/step-functions-workflows-collection/7842c46f966a344236c03e7c5cc28107552bd55d/lookout-for-vision-inference-sam/statemachine/statemachine.asl.json",
+   "fetchedAt": "2026-10-14T13:39:01.441Z",
+   "sha256": "12a96a9f6f3bfa55606145912e07f44e6d8b2732a5256816f0c9ecf40c899e8a",
+   "bytes": 2713
+  }
+ ]
+}

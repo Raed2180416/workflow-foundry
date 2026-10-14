@@ -1,0 +1,121 @@
+{
+ "platform": "power-automate",
+ "pinned": "pnp/powerautomate-samples@dbff07a8167d76e258564a0749bc508d58d85425",
+ "licenceNote": "MIT (LICENSE, Copyright (c) 2021 Microsoft 365 Community)",
+ "selectionRule": "PREREG.md §3 and draw.json: seeded draw (mulberry32 20261017) over the sorted frame, first 10, replaced from the reserve only for the PREREG §3 skip reasons",
+ "frameSize": 24,
+ "frameSha256": "513308a3852539059804ed2d46e92209c981112386968ea740c0c4c87e48c9cd",
+ "skipped": [],
+ "workflows": [
+  {
+   "id": "samples/o365groups-graph-create-group/solution/groups-graph-create-group.zip#Microsoft.Flow/flows/547270eb-3d73-4d5d-ae6a-95a00fdee507/definition.json",
+   "file": "o365groups-graph-create-group.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/o365groups-graph-create-group/solution/groups-graph-create-group.zip",
+   "fetchedAt": "2026-10-14T13:38:57.555Z",
+   "sha256": "3e6caa996394afe0b60ab19a6a3bb164c0260f4bf1422240641b685cc8918328",
+   "bytes": 7444,
+   "zipMember": "Microsoft.Flow/flows/547270eb-3d73-4d5d-ae6a-95a00fdee507/definition.json",
+   "zipSha256": "764008e13b5a8e1b31cd3d7135d565fcc529abe2dc391ababbc74fb6dc991fbd",
+   "zipBytes": 4689
+  },
+  {
+   "id": "samples/Try-Catch-Finally/solution/PatternTry-Catch-Finally.zip#Microsoft.Flow/flows/6420a0b5-c254-42f1-9808-3370c281ca9d/definition.json",
+   "file": "Try-Catch-Finally.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/Try-Catch-Finally/solution/PatternTry-Catch-Finally.zip",
+   "fetchedAt": "2026-10-14T13:38:57.745Z",
+   "sha256": "2e86b7ee86b8389dc5357564363646bb9c0d164546a63671dceba1be755fe835",
+   "bytes": 1410,
+   "zipMember": "Microsoft.Flow/flows/6420a0b5-c254-42f1-9808-3370c281ca9d/definition.json",
+   "zipSha256": "f26f6e3c15af1708f75a087ad4e8b3a32987b073d36ad613e923edd5dc9d90a4",
+   "zipBytes": 2086
+  },
+  {
+   "id": "samples/exception-handing-in-do-until-loop/solution/PatternExceptionHandingInDoUntilLoop.zip#Microsoft.Flow/flows/36b8bfc6-708f-433f-a986-e6fe922b95a2/definition.json",
+   "file": "exception-handing-in-do-until-loop.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/exception-handing-in-do-until-loop/solution/PatternExceptionHandingInDoUntilLoop.zip",
+   "fetchedAt": "2026-10-14T13:38:57.948Z",
+   "sha256": "ee39b0933f8ac2b2b3bd62ae4f7d7a4d26c1e70825883d7592669cf2c4dc35af",
+   "bytes": 2488,
+   "zipMember": "Microsoft.Flow/flows/36b8bfc6-708f-433f-a986-e6fe922b95a2/definition.json",
+   "zipSha256": "e74c392bdd22ef3de1b97572019714831726b512fb3c5c67b70f3b41e3aa419f",
+   "zipBytes": 2400
+  },
+  {
+   "id": "samples/sharepoint-group-creation-with-user-added/solution/Knowhere365SharePointGroupAutomation.zip#Workflows/Flow-CreateSharePointGroupandEnsureUsersasMembers-2578E499-0BE1-EC11-BB3C-000D3A233A82.json",
+   "file": "sharepoint-group-creation-with-user-added.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/sharepoint-group-creation-with-user-added/solution/Knowhere365SharePointGroupAutomation.zip",
+   "fetchedAt": "2026-10-14T13:38:58.244Z",
+   "sha256": "017d26b8d979f668dae21b2cdbd46c5533de96c24717558648d5722b2ce13634",
+   "bytes": 7562,
+   "zipMember": "Workflows/Flow-CreateSharePointGroupandEnsureUsersasMembers-2578E499-0BE1-EC11-BB3C-000D3A233A82.json",
+   "zipSha256": "ad291db1dc7372b904ea8a5792c38edfd5b870613c5f7f1ffa0f9a9e06b42ead",
+   "zipBytes": 4663
+  },
+  {
+   "id": "samples/site-design-homepage/solution/ApplyTemplate.zip#Microsoft.Flow/flows/0e83eecd-6ba8-411a-a0bc-2f80099564dc/definition.json",
+   "file": "site-design-homepage.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/site-design-homepage/solution/ApplyTemplate.zip",
+   "fetchedAt": "2026-10-14T13:38:58.462Z",
+   "sha256": "fdf959bef5f6868a3f8c363083ed7dcdb525d1b66f419a364aa21bf88520aacc",
+   "bytes": 5526,
+   "zipMember": "Microsoft.Flow/flows/0e83eecd-6ba8-411a-a0bc-2f80099564dc/definition.json",
+   "zipSha256": "4e46acf39a720dc4b516aa560c93ed6d34f206f87dc9a89f97c0255ce654b8e6",
+   "zipBytes": 3190
+  },
+  {
+   "id": "samples/new-employee-tip-of-the-day/solution/NewEmployeeTips.zip#Microsoft.Flow/flows/58fe7a02-48d0-40af-bf91-8e83685cb938/definition.json",
+   "file": "new-employee-tip-of-the-day.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/new-employee-tip-of-the-day/solution/NewEmployeeTips.zip",
+   "fetchedAt": "2026-10-14T13:38:58.662Z",
+   "sha256": "a8de6d6a628504e909e4a029b9342a8effbfe2ac3b19fa1556b0d08a37fece25",
+   "bytes": 5649,
+   "zipMember": "Microsoft.Flow/flows/58fe7a02-48d0-40af-bf91-8e83685cb938/definition.json",
+   "zipSha256": "52f3517c1c747f13a10af6156debd7fdd7034d23741620c43309c98a6cabe008",
+   "zipBytes": 3568
+  },
+  {
+   "id": "samples/sharepoint-set-item-level-permissions/solution/SharePoint-Set-Item-Level-Permissions.zip#Microsoft.Flow/flows/6c1f5a59-9746-46ba-bfcf-79bedbbd8208/definition.json",
+   "file": "sharepoint-set-item-level-permissions.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/sharepoint-set-item-level-permissions/solution/SharePoint-Set-Item-Level-Permissions.zip",
+   "fetchedAt": "2026-10-14T13:38:58.910Z",
+   "sha256": "cb07d7af3f3c45a10b87acb3adf5bd2ced036ed61608ddda2e894061641ea558",
+   "bytes": 7434,
+   "zipMember": "Microsoft.Flow/flows/6c1f5a59-9746-46ba-bfcf-79bedbbd8208/definition.json",
+   "zipSha256": "06a2659e2fdbd0796102a96a26fc02107a08f275dbabc4c8c3c95fb67b6ebe3a",
+   "zipBytes": 3920
+  },
+  {
+   "id": "samples/request-review-and-approval-for-a-selected-file/solution/RequestReviewandApprovalforaSelectedFile.zip#Microsoft.Flow/flows/ff241a62-834c-430c-b3f3-b9612e3125ab/definition.json",
+   "file": "request-review-and-approval-for-a-selected-file.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/request-review-and-approval-for-a-selected-file/solution/RequestReviewandApprovalforaSelectedFile.zip",
+   "fetchedAt": "2026-10-14T13:38:59.122Z",
+   "sha256": "052d756a9ab0223d0a84ae71ad4f60aa1022274d9a198a179e15cdb7b92a2612",
+   "bytes": 28790,
+   "zipMember": "Microsoft.Flow/flows/ff241a62-834c-430c-b3f3-b9612e3125ab/definition.json",
+   "zipSha256": "b1a634cb4ef9547e26fc171ed8fe7120fd1fdc1bfef93ac483f4fa9145700a47",
+   "zipBytes": 6686
+  },
+  {
+   "id": "samples/teams-invites-via-graph-api/solution/team-guest-management-via-graph-api_20210501141125.zip#Microsoft.Flow/flows/c7c9bd68-9656-4099-8d60-0c1cb9b47415/definition.json",
+   "file": "teams-invites-via-graph-api.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/teams-invites-via-graph-api/solution/team-guest-management-via-graph-api_20210501141125.zip",
+   "fetchedAt": "2026-10-14T13:38:59.389Z",
+   "sha256": "ba1641571beaa159349cbc53e210a6b352cfcd053a3f2bc4fc0b77224d250938",
+   "bytes": 8131,
+   "zipMember": "Microsoft.Flow/flows/c7c9bd68-9656-4099-8d60-0c1cb9b47415/definition.json",
+   "zipSha256": "a13a3e12b0b1d1772a09cddeff63882c7ba4be5ae0ad58e1c8f0aecdbf8b722e",
+   "zipBytes": 4331
+  },
+  {
+   "id": "samples/teams-adaptive-card-reminders-from-lists/solution/TeamsAdaptiveCardRemindersFromLists.zip#Microsoft.Flow/flows/d594d2cf-7c6f-4987-84e8-98a9f52c1d08/definition.json",
+   "file": "teams-adaptive-card-reminders-from-lists.definition.json",
+   "url": "https://raw.githubusercontent.com/pnp/powerautomate-samples/dbff07a8167d76e258564a0749bc508d58d85425/samples/teams-adaptive-card-reminders-from-lists/solution/TeamsAdaptiveCardRemindersFromLists.zip",
+   "fetchedAt": "2026-10-14T13:38:59.597Z",
+   "sha256": "e45606cde60cf2263cdb05c3f7c310b3a543544dec9ff5e354f5c81ee97c9ea3",
+   "bytes": 5899,
+   "zipMember": "Microsoft.Flow/flows/d594d2cf-7c6f-4987-84e8-98a9f52c1d08/definition.json",
+   "zipSha256": "cbbe450c21a454aad9d0b1c97fca3daee2d2cede91415a8a323de006bb1ad65e",
+   "zipBytes": 3980
+  }
+ ]
+}

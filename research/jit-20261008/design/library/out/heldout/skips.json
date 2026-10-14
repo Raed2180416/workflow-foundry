@@ -1,0 +1,3 @@
+[
+  {"platform": "windmill", "id": "73", "reason": "PREREG §3 (a): an empty skeleton. The flow body is {\"modules\": []}, there is no preprocessor and no code; only an input schema for a Nextcloud event. Applied before any label was written."}
+]
