@@ -16,7 +16,7 @@ const FUL = allocOf(W, O)[0];
 const F = FUL.fulfilmentId;
 const P = Date.parse(T.placedAt);
 const loc = W.master.locations.find(l => l.location === FUL.location);
-const CODES = { PARCELLA: { collected: 'COLLECTED', inTransit: 'IN_TRANSIT', delivered: 'DELIVERED', collectionFailed: 'NOT_COLLECTED' }, VELOX: { collected: 'PU', inTransit: 'IT', delivered: 'DL', collectionFailed: 'NC' }, SWIFTLINE: { collected: 'picked', inTransit: 'moving', delivered: 'handed-over', collectionFailed: 'not-collected' } };
+const CODES = { PARCELLA: { collected: 'COLLECTED', inTransit: 'IN_TRANSIT', delivered: 'DELIVERED', collectionFailed: 'NOT_COLLECTED', info: 'LABEL_CREATED' }, VELOX: { collected: 'PU', inTransit: 'IT', delivered: 'DL', collectionFailed: 'NC', info: 'LB' }, SWIFTLINE: { collected: 'picked', inTransit: 'moving', delivered: 'handed-over', collectionFailed: 'not-collected', info: 'manifested' } };
 const code = m => CODES[loc.carrier][m];
 const price = (w, sku) => w.master.catalog.find(c => c.sku === sku).unitPriceMinor;
 const fee0 = (w, location, ed = 0) => JSON.parse(w.rulebook.editions[ed].files['shipping-fees.json']).find(x => x.location === location).feeMinor;
@@ -25,7 +25,7 @@ const AMOUNT = FUL.items.reduce((s, i) => s + i.qty * price(W, i.sku), 0) + fee0
 function builder(c, w = W) {
   let seq = 0;
   return {
-    row: (at, system, op, args, committed = true, extra = {}) => ({ seq: ++seq, at, system, op, key: `${op}:${seq}`, args, committed, status: committed ? 'ok' : 'error', error: null, case: c, callAt: at, knows: new Set(), money: system === 'billing', ...extra }),
+    row: (at, system, op, args, committed = true, extra = {}) => ({ seq: ++seq, at, system, op, key: `${op}:${seq}`, args, committed, status: committed ? 'ok' : 'error', error: null, case: c, callAt: at, knows: new Set(), given: new Set(), money: system === 'billing', ...extra }),
     ev: (at, type, payload) => ({ id: `g-${++seq}`, type, at, seq, source: 'golden', payload }),
     view: (at, t, rows, events, extra = {}) => ({ case: c, at, seq: Infinity, world: w, truth: t, rows, tasks: [], taskEvents: [], events, ...extra }),
   };
@@ -69,6 +69,14 @@ function groupsOf(E) {
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const has = (E, l) => lids(E).includes(l);
 const win = (E, l) => E.effects.required.find(e => e.lid === l)?.window ?? null;
+/** The grader's window test (oracle/grade.mjs: a commit before `earliest` is early, after `latest` late). */
+const inWindow = (w, t) => t >= w.earliest && t <= w.latest;
+/**
+ * S1 "after the deadline": an effect exactly at the deadline is outside the window and the window opens within the
+ * minute after it (the grader's time resolution is not pinned: any earliest in (D, D + 1 min] is a correct encoding).
+ */
+const afterDeadline = (w, D, latest) => (w && w.earliest > D && w.earliest <= D + MIN && !inWindow(w, D) && inWindow(w, D + MIN) && w.latest === latest ? null
+  : `window ${JSON.stringify(w)}: expected (D, D + 1 min] .. ${latest} with an effect at D (${D}) outside it`);
 
 /** Each golden: { name, source (rule), check(transition, recordsOf) -> true | string (why it failed) }. */
 export const goldens = [];
@@ -146,8 +154,8 @@ const B2 = builder(C2);
 const p2 = Date.parse(T2c.placedAt), D2 = p2 + 4 * 60 * MIN, O2 = T2c.subject;
 const created2 = [B2.row(p2 + MIN, 'orders', 'create', { orderId: O2 })];
 G('timeout-strictly-after-deadline', 'R3.2, S1', tr => {
-  const w = win(tr(W, B2.view(D2 + MIN, T2c, created2, [])), `ost:${O2}:timedOut`);
-  return w && w.earliest === D2 + 1000 && w.latest === D2 + 60 * MIN ? true : `timeout window ${JSON.stringify(w)}`;
+  const why = afterDeadline(win(tr(W, B2.view(D2 + MIN, T2c, created2, [])), `ost:${O2}:timedOut`), D2, D2 + 60 * MIN);
+  return why ? `timeout ${why}` : true;
 });
 G('action-at-deadline-counts', 'R3.2, S1', tr => {
   const E = tr(W, B2.view(D2 + MIN, T2c, created2, [B2.ev(D2, 'customer.action', { orderRef: O2, action: 'cancel' })]));
@@ -227,8 +235,8 @@ if (rv) {
     return has(E, `ost:${T6.subject}:processing`) || has(E, `ost:${T6.subject}:customerActionRequired`) ? true : 'answer at the deadline did not count';
   });
   G('review-timeout-strictly-after-deadline', 'R2.2, S1', tr => {
-    const w = win(tr(W, B6.view(dl + MIN, T6, base, [], { tasks: [task], taskEvents: [] })), `ost:${T6.subject}:cancelled`);
-    return w && w.earliest === dl + 1000 ? true : `review-timeout window ${JSON.stringify(w)}`;
+    const why = afterDeadline(win(tr(W, B6.view(dl + MIN, T6, base, [], { tasks: [task], taskEvents: [] })), `ost:${T6.subject}:cancelled`), dl, dl + 120 * MIN);
+    return why ? `review-timeout ${why}` : true;
   });
   G('free-text-answer-is-unusable', 'R2.2', tr => {
     const E = tr(W, B6.view(dl + MIN, T6, base, [], { tasks: [task], taskEvents: [{ seq: 9, at: p6 + 60 * MIN, type: 'humanTask.answered', instance: 'i-1', payload: { taskId: 'r1', answer: { text: 'approve - fine' } } }] }));
@@ -238,7 +246,9 @@ if (rv) {
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Survivor goldens (oracle mutation run 2026-10-14; ledger/MUTANTS.md). Each pins behaviour the corpus never reaches, with
-// the SPEC-E sentence it rests on. None rests on a same-instant tie the spec leaves open (MUTANTS.md, spec-ambiguous).
+// the SPEC-E sentence it rests on. A same-instant tie is pinned only where a reading settles it (S4 delivery order, S10
+// knowledge, S11 ready instant, S12 answer and cancel, S13 endings at a cancel's instant); same-instant events are built
+// in the platform's delivery order (S4: by source, so `actor` < `carrier` < `customer-portal` < `shop`).
 const pick = (pred, what, w = W) => { const x = casesOf(w, pred)[0]; if (!x) throw new Error(`golden fixture: no ${what} case`); return x; };
 /** R1.3: the policy of the edition in force on the (Europe/Amsterdam) date of p. */
 const policyOf = (w, placedAt) => JSON.parse(w.rulebook.editions.filter(e => e.effectiveFrom <= placedAt.slice(0, 10))
@@ -259,25 +269,37 @@ const rsvArgs = i => ({ orderId: O, fulfilmentId: F, location: FUL.location, sku
 const sends = (list, template, about = null) => list.some(e => e.system === 'notify' && e.op === 'send' && e.match?.template === template && (about === null || e.match?.about === about));
 const asked = (E, system, op) => [...E.effects.required, ...E.effects.permitted].some(e => e.system === system && e.op === op);
 
-// S9, R4.1, R4.2, R6.2, §1: "before" a counted processing cancel. Statuses and reservations taken before the cancel stay
-// required (S9 relieves only a step the cancel made moot "before you took it"). A reservation taken by the call that was
-// given the cancel (one case-tick, §1: it reacted to the cancel) or at a later instant is something "new for the order
-// after the cancel" (R6.2): not required, only released.
-G('steps-before-vs-after-a-processing-cancel', 'S9, R4.1, R4.2, R6.2, §1', tr => {
+// S9, S10, R4.1, R4.2, R6.2, §1: "before" a counted processing cancel. Statuses and reservations taken before the cancel
+// stay required (S9 relieves only a step the cancel made moot "before you took it"). A step taken by the call that was
+// given the cancel (one case-tick, §1: it reacted to the cancel) or at a later instant is taken after it (S10): a
+// reservation then is something "new for the order after the cancel" (R6.2), not required, only released; a
+// `processing` status then is not required either, only permitted (S9). A step taken in the cancel's instant by a call
+// that was given another message about the order but not the cancel was taken before it (S10: knowledge is per message).
+G('steps-before-vs-after-a-processing-cancel', 'S9, S10, R4.1, R4.2, R6.2, §1', tr => {
   const a = P + 10 * MIN;
+  const info = report(a, 'info');                         // built first: in one instant carrier messages come first (S4)
   const cancel = act(B, a, O, 'cancel');
   const create = B.row(P + MIN, 'orders', 'create', { orderId: O });
   const rsv = (at, extra = {}) => FUL.items.map(i => B.row(at, 'inventory', 'reserve', rsvArgs(i), true, extra));
-  const sts = [B.row(P + 2 * MIN, 'orders', 'setStatus', { orderId: O, fulfilmentId: null, status: 'processing' }), B.row(P + 2 * MIN, 'orders', 'setStatus', { orderId: O, fulfilmentId: F, status: 'processing' })];
-  const E1 = tr(W, B.view(a + MIN, T, [create, ...sts, ...rsv(P + 3 * MIN)], [placed, cancel]));
+  const sts = (at, extra = {}) => [B.row(at, 'orders', 'setStatus', { orderId: O, fulfilmentId: null, status: 'processing' }, true, extra), B.row(at, 'orders', 'setStatus', { orderId: O, fulfilmentId: F, status: 'processing' }, true, extra)];
+  const E1 = tr(W, B.view(a + MIN, T, [create, ...sts(P + 2 * MIN), ...rsv(P + 3 * MIN)], [placed, cancel]));
   if (!has(E1, `ost:${O}:processing`) || !has(E1, `fst:${F}:processing`)) return 'processing set before the cancel is no longer required';
   if (FUL.items.some(i => !has(E1, `rsv:${F}:${i.sku}`))) return 'reservation taken before the cancel is no longer required';
-  const E2 = tr(W, B.view(a + 2 * MIN, T, [create, ...rsv(a + MIN, { callAt: a, knows: new Set([CASE]) })], [placed, cancel]));
+  const gotCancel = { callAt: a, knows: new Set([CASE]), given: new Set([cancel.id]) };
+  const E2 = tr(W, B.view(a + 2 * MIN, T, [create, ...rsv(a, gotCancel)], [placed, cancel]));
   if (FUL.items.some(i => has(E2, `rsv:${F}:${i.sku}`))) return 'reservation made by the call that was given the cancel is still required';
   const E3 = tr(W, B.view(a + 3 * MIN, T, [create, ...rsv(a + 2 * MIN, { callAt: a + MIN })], [placed, cancel]));
   if (FUL.items.some(i => has(E3, `rsv:${F}:${i.sku}`))) return 'reservation made a tick after the cancel is still required';
   if (FUL.items.some(i => !has(E2, `rel:${F}:${i.sku}`) || !has(E3, `rel:${F}:${i.sku}`))) return 'a reservation committed after the cancel is not released';
-  return [E1, E2, E3].every(E => has(E, `ost:${O}:cancelled`)) ? true : 'order not cancelled';
+  // E4: `processing` set by the call that was given the cancel (S9: allowed, not required; S10: taken after the cancel).
+  const E4 = tr(W, B.view(a + 2 * MIN, T, [create, ...sts(a, gotCancel)], [placed, cancel]));
+  if (has(E4, `ost:${O}:processing`) || has(E4, `fst:${F}:processing`)) return 'processing set by the call that was given the cancel is required (S10: it was taken after the cancel)';
+  if (!E4.effects.permitted.some(p => p.op === 'setStatus' && p.match?.status === 'processing')) return 'processing set with the cancel not permitted (S9)';
+  // E5: in the cancel's instant, a call given a carrier report about the order but not the cancel reserves: before the
+  // cancel (S10), so the reservation stays asked for (one already in flight) and is released.
+  const E5 = tr(W, B.view(a + 2 * MIN, T, [create, ...rsv(a, { callAt: a, knows: new Set([CASE]), given: new Set([info.id]) })], [placed, info, cancel]));
+  if (FUL.items.some(i => !has(E5, `rsv:${F}:${i.sku}`) || !has(E5, `rel:${F}:${i.sku}`))) return 'a reservation by a call that was not given the cancel (S10) is not kept and released';
+  return [E1, E2, E3, E4, E5].every(E => has(E, `ost:${O}:cancelled`)) ? true : 'order not cancelled';
 });
 
 // R3.2, R6.1, R7.2, §4.8, §3.5: W4's go-live order already awaiting the customer, with nothing available, is amended: "If
@@ -411,8 +433,8 @@ G('duplicate-placement-changes-no-items', 'R1.1, R1.4, §3.1', tr => {
     const dl = t1.at + RVH * 60 * MIN;
     const Ea = tr(W, view7(dl + 31 * MIN, [], [t1, t2], [answer7('r1', p7 + 60 * MIN, 905, { text: 'looks fine' }), answer7('r2', dl + 30 * MIN, 960, { decision: 'approve' })]));
     if (has(Ea, `ost:${O7}:processing`)) return 'an answer after the first task\'s deadline cleared the order';
-    const wa = win(Ea, `ost:${O7}:cancelled`);
-    if (!(wa && wa.earliest === dl + 1000 && wa.latest === dl + 120 * MIN)) return `review-timeout window ${JSON.stringify(wa)}`;
+    const wa = afterDeadline(win(Ea, `ost:${O7}:cancelled`), dl, dl + 120 * MIN);
+    if (wa) return `review-timeout ${wa}`;
     // (b) two review tasks (a duplicate placement opened a second instance, §3.1), both approved, at p+30 and p+90: the order
     // is cleared at the first approve (R2.2) and ready then (R4.1); the second answer cannot move `processing`.
     const Eb = tr(W, view7(p7 + 91 * MIN, [], [task7('r1', p7 + 5 * MIN, 900), task7('r1', p7 + 6 * MIN, 901, 'i-8')],
@@ -433,8 +455,8 @@ G('duplicate-placement-changes-no-items', 'R1.1, R1.4, §3.1', tr => {
   G('timed-out-order: window (D, D+60] and late actions', 'R3.2, S1, R6.3, S5, §4.8', tr => {
     const E0 = tr(W, Bt.view(Dt + MIN, Tt, [created], []));
     for (const l of [...allocOf(W, Ot).map(f => `fst:${f.fulfilmentId}:cancelled`), `ost:${Ot}:timedOut`, `ntf:${Ot}:order-timed-out`]) {
-      const w = win(E0, l);
-      if (!w || !(w.earliest > Dt && w.earliest <= Dt + 1000) || w.latest !== Dt + 60 * MIN) return `${l} window ${JSON.stringify(w)} (D ${Dt})`;
+      const why = afterDeadline(win(E0, l), Dt, Dt + 60 * MIN);
+      if (why) return `${l} ${why}`;
     }
     const at = Dt + 5 * MIN;
     const ended = [created, ...allocOf(W, Ot).map(f => Bt.row(at, 'orders', 'setStatus', { orderId: Ot, fulfilmentId: f.fulfilmentId, status: 'cancelled' })),
