@@ -1,0 +1,139 @@
+{
+ "schema": "need-router-archive/1",
+ "evidence": "LEGACY",
+ "grade": "development",
+ "note": "Rows predate the need-router protocol (research/need-router-20261014/DESIGN.md §2 validity gates). Never pooled with new labels. P1: 300 s per-call limit, timeouts booked at $0, 1-hour cache writes (policy 2026-10-08.1 later set FORCE_PROMPT_CACHING_5M=1); C0 dev: seeds 6001-6004 were inspected by the failure diagnoses and are no longer held out.",
+ "rescuedFrom": "experiments/runs/ (git-ignored, .gitignore:13)",
+ "rescuedAt": "2026-10-14",
+ "files": [
+  {
+   "path": "research/need-router-20261014/archive/p1/results.jsonl",
+   "sourcePath": "experiments/runs/p1/results.jsonl",
+   "what": "P1 records v3: 8 arms x 12 tasks x 3 trials (research/core-20261006/REPORT.md)",
+   "bytes": 342813,
+   "lines": 288,
+   "sha256": "1adcf7d0aefd3edf24923cae3878892ee5118624172945e54e1586b0b7853d0d"
+  },
+  {
+   "path": "research/need-router-20261014/archive/c0-dev/results.jsonl",
+   "sourcePath": "experiments/runs/c0-dev/results.jsonl",
+   "what": "C0 dev round: records and codefix, 6 arms x 4 tasks x 2 trials (research/construction-20261006/REPORT-dev.md)",
+   "bytes": 101993,
+   "lines": 96,
+   "sha256": "4c4a9dabe80d0617c442cdfa0b5e6beaf78bd1659676db61ff1fbd359b433ef0"
+  },
+  {
+   "path": "research/need-router-20261014/archive/c0-dev/probes.jsonl",
+   "sourcePath": "experiments/runs/c0-dev/probes.jsonl",
+   "what": "C0 dev round: construction probe runs (24 rows)",
+   "bytes": 24906,
+   "lines": 24,
+   "sha256": "c97b192c676354f7c443a7d11ff57c161b97c697f57f258e308003c7270fb102"
+  },
+  {
+   "path": "research/need-router-20261014/archive/c0-dev/constructions.jsonl",
+   "sourcePath": "experiments/runs/c0-dev/constructions.jsonl",
+   "what": "C0 dev round: the 8 construction records, with the CLI final usage per builder session",
+   "bytes": 34003,
+   "lines": 8,
+   "sha256": "61e4bffc7367e348c848b8d55a323a346733239356b77ce08218e6d39ec5a099"
+  }
+ ],
+ "notRescued": [
+  {
+   "path": "experiments/runs/p1/journal-hosted.sqlite",
+   "bytes": 16384,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/journal-hosted.sqlite-shm",
+   "bytes": 32768,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/journal-hosted.sqlite-wal",
+   "bytes": 0,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/journal-local.sqlite",
+   "bytes": 16384,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/journal-local.sqlite-shm",
+   "bytes": 32768,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/journal-local.sqlite-wal",
+   "bytes": 0,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/journal.sqlite",
+   "bytes": 22335488,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/journal.sqlite-shm",
+   "bytes": 32768,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/journal.sqlite-wal",
+   "bytes": 4177712,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/run.1.log",
+   "bytes": 4144,
+   "reason": "log (ignored by *.log): stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/p1/run.log",
+   "bytes": 15236,
+   "reason": "log (ignored by *.log): stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/c0-dev/construct-records-codefix.log",
+   "bytes": 909,
+   "reason": "log (ignored by *.log): stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/c0-dev/execute-records-codefix.1.log",
+   "bytes": 1405,
+   "reason": "log (ignored by *.log): stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/c0-dev/execute-records-codefix.2.log",
+   "bytes": 2523,
+   "reason": "log (ignored by *.log): stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/c0-dev/execute-records-codefix.3.log",
+   "bytes": 360,
+   "reason": "log (ignored by *.log): stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/c0-dev/execute-records-codefix.log",
+   "bytes": 2750,
+   "reason": "log (ignored by *.log): stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/c0-dev/journal.sqlite",
+   "bytes": 17739776,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/c0-dev/journal.sqlite-shm",
+   "bytes": 32768,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  },
+  {
+   "path": "experiments/runs/c0-dev/journal.sqlite-wal",
+   "bytes": 4169472,
+   "reason": "SQLite model journal (binary; raw prompts and outputs): not JSONL; stays git-ignored"
+  }
+ ]
+}

@@ -12,11 +12,13 @@ import { portableSchemaViolations } from '../../src/schema-subset.mjs';
 import { clearPaddingCache } from './padding.mjs';
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => 601 + i);
-const DS = [2, 3, 4, 5];
+const DS = [1, 2, 3, 4, 5];                  // every difficulty of the bed (beds/CONTRACT.md: 1..5); level 1 is an alias of R0's level 2
+const LV = [2, 3, 4, 5];                     // the levels wbed-r0 defines: the metamorphic pair is stated over these
+const lvl = d => (d === 1 ? 2 : d);          // the wbed-r0 level a need-r0pad difficulty pairs with
 const memo = new Map();
 const gen = (seed, d, split = 'dev') => { const k = `${split}/${d}/${seed}`; if (!memo.has(k)) memo.set(k, bed.generate({ seed, split, difficulty: d })); return memo.get(k); };   // read-only use
 const fresh = (seed, d, split = 'dev') => bed.generate({ seed, split, difficulty: d });
-const r0task = (seed, d, split = 'dev') => r0.generate({ seed, split, difficulty: d });
+const r0task = (seed, d, split = 'dev') => r0.generate({ seed, split, difficulty: lvl(d) });
 const bytes = s => Buffer.byteLength(s);
 const sum = xs => xs.reduce((a, b) => a + b, 0);
 const mean = xs => sum(xs) / xs.length;
@@ -46,7 +48,10 @@ test('contract: family, schema (portable subset), exports', () => {
   for (const n of ['empty', 'shuffled-or-corrupted']) assert.ok(names.includes(n), n);
   assert.ok(names.some(n => n.startsWith('plausible-but-wrong')));
   assert.ok(bed.badControls.every(c => typeof c.make === 'function'));
-  assert.deepEqual([bed.difficulty.min, bed.difficulty.max], [2, 5]);
+  assert.deepEqual([bed.difficulty.min, bed.difficulty.max], [1, 5]);       // the contract's range; 1 is an alias of R0's level 2
+  assert.deepEqual(bed.difficulty.alias, { 1: 2 });
+  for (let d = bed.difficulty.min; d <= bed.difficulty.max; d++) assert.ok(bed.difficulty.levels[d], `a level description for d${d}`);
+  assert.deepEqual(bed.difficulty.levels[1], r0.LEVELS[2]);
 });
 
 test('task shape: contract fields only, JSON-serialisable, id and budget', () => {
@@ -78,12 +83,16 @@ test('determinism: repeated generation is byte-identical, fresh objects, split /
   assert.equal(JSON.stringify(bed.oracle(fresh(615, 4), out)), JSON.stringify(bed.oracle(fresh(615, 4), out)));
 });
 
-test('argument validation: R0 range 2..5, integer seed, known split, no faults', () => {
-  for (const difficulty of [1, 0, 6, 2.5, '3', null]) assert.throws(() => bed.generate({ seed: 601, split: 'dev', difficulty }), /difficulty/);
+test('argument validation: difficulty 1..5, integer seed, known split, no faults', () => {
+  for (const difficulty of [0, 6, -1, 2.5, '3', null, NaN, Infinity]) assert.throws(() => bed.generate({ seed: 601, split: 'dev', difficulty }), /difficulty/);
   assert.throws(() => bed.generate({ seed: 1.5, split: 'dev', difficulty: 3 }), /seed/);
   assert.throws(() => bed.generate({ seed: 601, split: 'val', difficulty: 3 }), /split/);
   assert.throws(() => bed.generate({ seed: 601, split: 'dev', difficulty: 3, faults: ['f3'] }), /not implemented/);
-  assert.throws(() => bed.oracle({ seed: 1, split: 'dev', difficulty: 9 }, {}), /difficulty/);
+  for (const difficulty of [0, 6, 9, 2.5, '3']) {                                 // the oracle and the controls refuse a difficulty the bed does not define
+    assert.throws(() => bed.oracle({ seed: 1, split: 'dev', difficulty }, {}), /need-r0pad: difficulty/);
+    assert.throws(() => bed.referenceSolve({ seed: 1, split: 'dev', difficulty }), /need-r0pad: difficulty/);
+    assert.throws(() => bed.badControls[0].make({ seed: 1, split: 'dev', difficulty }), /need-r0pad: difficulty/);
+  }
   assert.equal(bed.generate({ seed: 601 }).difficulty, 3);             // defaults: dev, 3
 });
 
@@ -171,7 +180,7 @@ test('R0 core identical: prompt rules, inputs and budget equal wbed-r0 at the sa
     assert.deepEqual(Object.keys(task.inputs), ['document', 'notes']);
     assert.equal(canonical(task.budget), canonical(core.budget));
     assert.equal(canonical(bed.pairedR0Task(task)), canonical(core));
-    assert.deepEqual([task.seed, task.split, task.difficulty], [core.seed, core.split, core.difficulty]);
+    assert.deepEqual([task.seed, task.split, task.difficulty, core.difficulty], [core.seed, core.split, d, lvl(d)]);   // d1 pairs with R0's d2
     assert.notEqual(task.id, core.id);
   }
 });
@@ -179,7 +188,7 @@ test('R0 core identical: prompt rules, inputs and budget equal wbed-r0 at the sa
 test('the padding note says the files may be ignored only if irrelevant, and names no document as irrelevant', () => {
   for (const d of DS) for (const seed of SEEDS) {
     const task = gen(seed, d), n = Object.keys(task.files).length;
-    const note = task.prompt.split('\n').slice(r0.generate({ seed, split: 'dev', difficulty: d }).prompt.split('\n').length).join('\n');
+    const note = task.prompt.split('\n').slice(r0task(seed, d).prompt.split('\n').length).join('\n');
     assert.equal(note, bed.PAD_NOTE(n));
     assert.match(note, /may be ignored only if it is irrelevant to this invoice/);
     assert.match(note, new RegExp(`files/archive/ \\(${n} files\\)`));
@@ -203,7 +212,7 @@ test('padding is deterministic: identical on repeat, after the caches are flushe
   const keys = SEEDS.slice(0, 10).flatMap(seed => DS.map(d => [seed, d]));
   const first = new Map(keys.map(([seed, d]) => [`${seed}/${d}`, canonical(fresh(seed, d).files)]));
   clearPaddingCache();
-  for (let i = 0; i < 90; i++) r0.generate({ seed: 5000 + i, split: 'dev', difficulty: DS[i % 4] });   // push R0's own memo (64 entries) past its bound
+  for (let i = 0; i < 90; i++) r0.generate({ seed: 5000 + i, split: 'dev', difficulty: LV[i % 4] });   // push R0's own memo (64 entries) past its bound
   for (const [seed, d] of [...keys].reverse()) assert.equal(canonical(fresh(seed, d).files), first.get(`${seed}/${d}`), `${seed}/${d}`);
   for (const [seed, d] of keys) assert.equal(canonical(fresh(seed, d).files), canonical(fresh(seed, d).files));
 });
@@ -378,18 +387,18 @@ test('documents: varied kinds, neutral names, shuffled positions, fictional addr
 });
 
 test('length and structure are separate axes: the shape of the padding is constant across difficulty, only the R0 core grows', () => {
-  const lines = d => SEEDS.map(s => (gen(s, d).inputs.document.match(/^ \d+ /gm) ?? []).length);
+  const lines = d => SEEDS.map(s => (gen(s, d).inputs.document.match(/^ \d+ /gm) ?? []).length);   // over R0's levels 2..5 (level 1 repeats level 2)
   for (let d = 2; d < 5; d++) assert.ok(mean(lines(d + 1)) > mean(lines(d)), `lines grow with difficulty: d${d} -> d${d + 1}`);
   let sameLines = 0, totalLines = 0, identicalDocs = 0, totalDocs = 0, redrawn = 0;
   const spread = [];
   for (const seed of SEEDS) {
-    const tasks = DS.map(d => gen(seed, d)), infos = tasks.map(t => bed.describePadding(t));
+    const tasks = LV.map(d => gen(seed, d)), infos = tasks.map(t => bed.describePadding(t));
     const shape = i => canonical({ n: i.docs.length, kinds: i.docs.map(x => x.kind) });
     assert.equal(new Set(infos.map(shape)).size, 1, `seed ${seed}: shape changes with difficulty`);
     infos[0].docs.forEach(x => {
       if (x.sibling) return;
       const base = tasks[0].files[x.path].split('\n');
-      for (let j = 1; j < DS.length; j++) {
+      for (let j = 1; j < LV.length; j++) {
         const other = tasks[j].files[x.path].split('\n');
         totalDocs++; if (other.join('\n') === base.join('\n')) identicalDocs++;
         if (other.length !== base.length) { redrawn++; continue; }          // a number collision redrew this document at one difficulty
@@ -406,7 +415,7 @@ test('length and structure are separate axes: the shape of the padding is consta
   assert.ok(identicalDocs / totalDocs > 0.55, `${identicalDocs}/${totalDocs} documents byte-identical across difficulties`);
   assert.ok(Math.max(...spread) < 1.02, `same seed, different structure should be near-equal length: ${Math.max(...spread)}`);
   // across the whole 160-task grid, length is (almost) unrelated to difficulty while the R0 core's own length follows it
-  const grid = SEEDS.flatMap(s => DS.map(d => ({ d, total: tokens(gen(s, d)), core: tokens(r0task(s, d)) })));
+  const grid = SEEDS.flatMap(s => LV.map(d => ({ d, total: tokens(gen(s, d)), core: tokens(r0task(s, d)) })));
   assert.ok(Math.abs(corr(grid.map(g => g.d), grid.map(g => g.total))) < 0.1, `corr(difficulty, total) = ${corr(grid.map(g => g.d), grid.map(g => g.total))}`);
   assert.ok(corr(grid.map(g => g.d), grid.map(g => g.core)) > 0.5);
 });

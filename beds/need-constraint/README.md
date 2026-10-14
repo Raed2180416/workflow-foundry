@@ -34,8 +34,16 @@ The rules are in the prompt in prose (this is the part that needs reading carefu
 forbidden words, items and statements, the rota tables). Each datum appears once, so single-call arms that inline
 `prompt + inputs.json` do not pay twice.
 
-The output schema is one object with four optional properties (`names`, `sentence`, `order`, `schedule`); the
-oracle requires exactly the one the task asks for. The schema uses only the portable subset.
+The published `outputSchema` is one object with four optional properties (`names`, `sentence`, `order`, `schedule`)
+and uses only the portable subset (the allowlist in `src/schema-subset.mjs`). The oracle requires exactly the one the
+task asks for. "Exactly one of four" cannot be written in that subset (`oneOf`, `anyOf`, `minProperties` and
+`maxProperties` are all outside the allowlist), so the static schema accepts `{}`, a two-property object and another
+subtype's property. The bed does not hide that gap: `details.schemaValid` means "valid under `outputSchema`" (the same
+answer as the shared validator, `validateData` in `src/validate.mjs`, tested differentially), and the one-field rule
+is reported apart as `details.fieldMismatch` (verdict `pass:false`, `score:0`, `failed:['field']`).
+`outputSchemaFor(task)` returns the strict per-task schema (that one property required, nothing else allowed; also
+portable) for arms that want structured output enforced; `validateData(outputSchemaFor(task), o)` accepts `o` exactly
+when the oracle reports `schemaValid && !fieldMismatch`. The Task object itself is unchanged (contract shape).
 
 ## Difficulty knob
 
@@ -80,9 +88,14 @@ passes. It rebuilds the rule set from `(seed, split, difficulty)` and ignores ev
 so accessors, proxies, exotic prototypes and sparse arrays are schema-invalid; the oracle never throws.
 
 - `pass` is true when every active rule group holds; `score` is the fraction of active groups that hold (so it is
-  1 exactly when `pass`), 0 for schema-invalid output. `details.failed` names the failing groups.
-- Schema-invalid: not an object, an unexpected property, not exactly one property, the wrong property for the
-  subtype, wrong types, empty or oversized strings, oversized arrays, schedule rows with missing or extra fields.
+  1 exactly when `pass`), 0 for schema-invalid output and for a field mismatch. `details.failed` names the failing groups.
+- Schema-invalid (`details.schemaValid:false`, i.e. rejected by `outputSchema`): not an object, an unexpected
+  property, wrong types, empty or oversized strings (lengths count code points, as the shared validator does),
+  oversized arrays, schedule rows with missing or extra fields, and non-plain data.
+- Field mismatch (`details.schemaValid:true`, `details.fieldMismatch:true`, `failed:['field']`, `pass:false`,
+  `score:0`): the output is schema-valid but is not exactly the one property the task asks for: `{}`, two or more
+  properties, or another subtype's property. A schema-invalid output can also be a field mismatch at the same time
+  (`fieldMismatch` is reported either way; `errors` lists both kinds).
 - names: surrounding spaces ignored; letters only; every rule is case-insensitive; distinctness ignores case.
 - sentence: surrounding spaces ignored; form is capital first letter, letters, single spaces, optional commas
   after words, one final period; a word is a run of letters; required words must be whole words in order (if one
@@ -105,7 +118,7 @@ higher `variant` values re-run the solvers on other streams.
 | `shuffled-or-corrupted` | reference with one deliberate corruption: a name duplicated in another case; two required words swapped; the two items of the first statement swapped (every order task starts with a `before` and an `immediately before`); an unknown person in one rota row | guaranteed by construction |
 | `plausible-but-wrong` | the reference with the least damaging single edit: a name replaced by a forbidden-sequence or reserved variant; a filler word replaced by a forbidden word; an adjacent swap that breaks the fewest statement groups; one person swapped for another, preferring a swap that breaks one rule group | tests assert it is schema-valid and breaks 1 or 2 groups |
 | `truncated` | the reference minus its last element (a required word is cut off for sentences) | counts |
-| `wrong-field` | the reference under another subtype's property | schema |
+| `wrong-field` | the reference content filed under another subtype's string-array property (`order` or `names`; cut to at most 40 strings of 40 characters so the published schema still accepts it) | field mismatch: `schemaValid:true`, `fieldMismatch:true` |
 
 ## Task text
 
@@ -133,8 +146,8 @@ exactly one rule; the rota's availability never lists a slot the reference rota 
 
 ## Evidence
 
-`node --test beds/need-constraint/*.test.mjs` runs 23 tests in about 4 seconds (dev seeds 601-640 only). They
-show: interface and portable schema; determinism (byte-identical tasks, references and alternatives; the split
+`node --test beds/need-constraint/*.test.mjs` runs 26 tests in about 4 seconds (dev seeds 601-640 only). They
+show: interface and portable schema (also checked with the repo's `portableSchemaViolations`); determinism (byte-identical tasks, references and alternatives; the split
 changes the task but not its subtype); `referenceSolve` passes for all 40 seeds at every difficulty (10 per
 subtype); `altSolve` passes and differs for all of them (variants 1 and 2 too); all five controls fail for all
 40 seeds at every difficulty; schema-invalid and non-plain output is rejected; the oracle ignores forged task
@@ -142,6 +155,15 @@ text; no hidden truth in prompt, inputs or keys; `generate`, `oracle` and `refer
 200 MB at difficulty 5; difficulty and length monotonicity; hand-written checker cases for every rule of every
 subtype with both outcomes (including whole-word matching, repeated required words, case folding, rest rule,
 streaks, trainee supervision); every rule group can be made to fail by mutation.
+
+Three tests cover the schema-versus-oracle defect found in review (the published schema accepted `{}`, two-property
+objects and another subtype's property while `details.schemaValid` said false): the reviewer's cases are
+schema-valid field mismatches that still fail; 2,040 outputs (references, alternatives, controls, hand-picked edge
+cases including code-point lengths, and random objects) give the same accept/reject from `details.schemaValid` as the
+shared validator on `outputSchema` (653 schema-valid field mismatches, 1,167 schema-invalid), and from
+`schemaValid && !fieldMismatch` as the shared validator on `outputSchemaFor(task)`; both schemas stay in the portable
+subset (a guard against fixing this with `minProperties`/`maxProperties`, which the repo allowlist rejects).
+Mutating the code-point count or reporting field mismatches as schema errors makes them fail.
 
 Two tests carry most of the weight for "the oracle accepts ANY valid answer":
 
@@ -170,6 +192,7 @@ deterministically; up to 40 attempts, the most used was 7).
 
 ## Files
 
-- `index.mjs` interface (family, `outputSchema`, `generate`, `oracle`, `referenceSolve`, `altSolve`, `badControls`).
+- `index.mjs` interface (family, `outputSchema`, `generate`, `oracle`, `referenceSolve`, `altSolve`, `badControls`) plus
+  `outputSchemaFor`, `schemaViolations`, `fieldViolations`, `validateOutput`, `subtypeOf`.
 - `gen.mjs` task builder and difficulty tables; `check.mjs` the constraint checkers; `solve.mjs` the solvers;
   `lexicon.mjs` word material; `need-constraint.test.mjs` the tests.
