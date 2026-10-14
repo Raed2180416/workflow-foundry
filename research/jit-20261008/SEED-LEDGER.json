@@ -67,6 +67,22 @@
    "fresh": true,
    "heldout": true,
    "about": "E-bed scale-tier worlds per core item (10^4-10^5 cases per world), compiled arms only (E-BED section 2.6)"
+  },
+  "need-example": {
+   "split": "dev",
+   "fresh": false,
+   "about": "need router: worked examples the router may see before execution (features, probes, builder example inputs); never evaluation tasks"
+  },
+  "need-label": {
+   "split": "dev",
+   "fresh": false,
+   "about": "need router: paired label tasks (every mode on the same tasks) for TRAIN jobs and router development"
+  },
+  "need-heldout": {
+   "split": "test",
+   "fresh": true,
+   "heldout": true,
+   "about": "need router: held-out label tasks, used once after the router freeze"
   }
  },
  "ranges": [
@@ -1481,6 +1497,54 @@
    ],
    "use": "E13 reserve worlds: sealed drift families and the heal arm (one world per mined defect)",
    "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
+  },
+  {
+   "id": "need-example",
+   "beds": [
+    "*"
+   ],
+   "split": "dev",
+   "from": 601,
+   "to": 609,
+   "status": "reserved",
+   "owner": "need-router",
+   "allow": [
+    "need-example"
+   ],
+   "use": "need router worked examples (job inputs the router and builders may see)",
+   "source": "research/need-router-20261014/DESIGN.md section 4 and section 9 decision 8; DECISIONS-ADOPTED.md (2026-10-14)"
+  },
+  {
+   "id": "need-label",
+   "beds": [
+    "*"
+   ],
+   "split": "dev",
+   "from": 610,
+   "to": 650,
+   "status": "reserved",
+   "owner": "need-router",
+   "allow": [
+    "need-label"
+   ],
+   "use": "need router paired label tasks (TRAIN jobs, development)",
+   "source": "research/need-router-20261014/DESIGN.md section 4 and section 9 decision 8; DECISIONS-ADOPTED.md (2026-10-14)"
+  },
+  {
+   "id": "need-heldout",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 8801,
+   "to": 8848,
+   "status": "reserved",
+   "owner": "need-router",
+   "allow": [
+    "need-heldout"
+   ],
+   "use": "need router held-out label tasks (used once, after the freeze)",
+   "source": "research/need-router-20261014/DESIGN.md section 4 and section 9 decision 8; DECISIONS-ADOPTED.md (2026-10-14)"
   }
  ]
 }
