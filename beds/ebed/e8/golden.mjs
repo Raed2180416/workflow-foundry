@@ -539,14 +539,18 @@ G('processing-cancels: a cancel before its placement names no order, an amend ne
   return has(E2, `chg:${F}`) ? true : 'the saga did not continue after the amend';
 });
 
-// S7, R6.2, R6.3: an inTransit report proves collection (the collection report itself never arrived); a later cancel is
-// refused and changes nothing else.
-G('in-transit-report-proves-collection', 'S7, R6.2, R6.3', tr => {
+// S7, R6.2, R6.3, W2: a report other than `collected` proves collection. With held-up reports (W2) the delivery report
+// arrives first and the collection report later; a cancel between them is refused (cancel-refused within 60 min) and
+// changes nothing else, and so is a cancel after the late inTransit report, which also proves collection.
+G('delivery-report-proves-collection (S7)', 'S7, R6.2, R6.3, W2', tr => {
   const { rows } = history(3);                 // booked at P + 4 min
-  const it = runOf(P + 4 * MIN) + 180 * MIN, a = it + 20 * MIN;
-  const E = tr(W, B.view(a + MIN, T, rows, [placed, report(it, 'inTransit'), act(B, a, O, 'cancel')]));
-  if (!has(E, `ntf:${O}:cancel-refused`)) return 'no cancel-refused after an inTransit report';
-  return comp(E).length || has(E, `ost:${O}:cancelled`) ? 'order stopped after an inTransit report' : true;
+  const R = runOf(P + 4 * MIN), T1 = R + 180 * MIN, T2 = R + 1200 * MIN, a = T2 + 20 * MIN;
+  const delivered = report(T2, 'delivered');
+  const E = tr(W, B.view(a + MIN, T, rows, [placed, delivered, act(B, a, O, 'cancel')]));
+  const w = win(E, `ntf:${O}:cancel-refused`);
+  if (!w || w.earliest !== a || w.latest !== a + 60 * MIN) return `cancel after a delivery report that arrived first: cancel-refused window ${JSON.stringify(w)}`;
+  if (comp(E).length || has(E, `ost:${O}:cancelled`)) return 'order stopped after a delivery report';
+  return has(E, `fst:${F}:dispatched`) && has(E, `fst:${F}:completed`) ? true : 'delivery report did not dispatch and complete the fulfilment (R4.4)';
 });
 
 // R4.1, R4.2: while nothing stops the saga, every step taken is one R4.2 asks for (steps 1-3), and R4.1 sets each available
