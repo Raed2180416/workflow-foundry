@@ -9,7 +9,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { readJsonl, ARCHIVE_DIR, REPO, rel, abs, sourceOf, listDir } from './common.mjs';
-import { readStreams, harvest, modeOf, LEGACY_TAG } from '../harvest.mjs';
+import { readStreams, harvest, modeOf, LEGACY_TAG, FIXED_COMPONENTS } from '../harvest.mjs';
 
 export const JIT_RUNS_DIR = path.join(REPO, 'research/jit-20261008/runs');
 export const TIMEOUT_BOUND_USD = 1;   // DESIGN §1: a timed-out direct call is charged at the per-call bound, never $0
@@ -24,6 +24,8 @@ export const P1_MODES = Object.freeze({
 export const C0_MODES = Object.freeze({
   'B0-haiku': 'agent-H', 'B0-opus': 'agent-O', 'F-haiku': 'wf-H', 'F-opus': 'wf-O', 'B1-haiku': 'script-H', 'B1-opus': 'script-O',
 });
+/** The model that ran an archived agent session (the price table is keyed by it). */
+export const AGENT_MODEL = Object.freeze({ 'b0agent-haiku': 'claude-haiku-5-5', 'B0-haiku': 'claude-haiku-5-5', 'B0-opus': 'claude-opus-5-5' });
 export const JIT_MODES = Object.freeze({
   'agent-haiku': 'agent-H', 'agent-sonnet': 'agent-S', 'agent-opus': 'agent-O',
   'jit-HH': 'jit-HH', 'jit-OH': 'jit-OH', 'jit-SH': 'jit-SH', 'static-b1h': 'static-b1h',
@@ -73,7 +75,7 @@ export function normaliseRunRow(r, { modes, source }) {
   const imputed = (r.imputedUsd ?? 0) + (timeout ? Math.max(0, TIMEOUT_BOUND_USD - usdReported) : r.costUnknown ? Math.max(0, bound - usdReported) : 0);
   return {
     ...LEGACY_TAG, source,
-    experiment: r.experiment, arm: r.arm, mode, family: r.family, taskKey: r.taskKey, taskHash: r.taskHash, trial: r.trial ?? 0,
+    experiment: r.experiment, arm: r.arm, mode, model: AGENT_MODEL[r.arm] ?? null, family: r.family, taskKey: r.taskKey, taskHash: r.taskHash, trial: r.trial ?? 0,
     unit: `${r.taskKey}#t${r.trial ?? 0}`, seed: seedOf(r.taskKey), difficulty: diffOf(r.taskKey),
     pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null,
     delivered: code === null, schemaValid: details?.reason !== 'schema-invalid', error: code,
@@ -103,27 +105,32 @@ export function loadConstructions(opts = {}) {
   return { builds, source: sourceOf(file), rescued };
 }
 
-/** JIT streams as normalised rows, with the harvest's fixed costs and pairing report. Rows carry the raw-stream fields D3 needs. */
+/** JIT streams as normalised rows, with the harvest's fixed costs and pairing report. `rows` are the paired rows (what the label
+ *  tables use); `allRows` are every stream row, with the committed agent trace joined by traceId (turns, tools, stream usage, model). */
 export function loadJitJobs(root = JIT_RUNS_DIR) {
   if (!existsSync(root)) return { jobs: new Map(), sources: [] };
   const streams = readStreams(root);
   const h = harvest(streams);
-  const raw = new Map();
-  for (const s of streams) for (const r of s.rows) raw.set(`${s.family}\u0000${s.mode}\u0000${r.taskKey}`, { r, s });
+  const pairedKeys = new Set(h.rows.map(x => `${x.family}\u0000${x.mode}\u0000${x.task}`));
   const jobs = new Map();
-  for (const x of h.rows) {
-    const { r, s } = raw.get(`${x.family}\u0000${x.mode}\u0000${x.task}`);
-    const details = parseDetails(r.oracleDetails);
-    const row = {
-      ...LEGACY_TAG, source: s.source, experiment: x.family, arm: s.arm, mode: JIT_MODES[x.mode] ?? x.mode, family: String(r.taskKey).split(':')[0], taskKey: r.taskKey,
-      taskHash: r.taskHash, trial: 0, unit: r.taskKey, seed: r.seed ?? seedOf(r.taskKey), difficulty: r.difficulty ?? diffOf(r.taskKey),
-      pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null, delivered: errCode(r.error) === null, schemaValid: details?.reason !== 'schema-invalid',
-      error: errCode(r.error), usdReported: x.costUsd, usdImputed: 0, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? null,
-      turns: null, tools: null, calls: null, escalations: null, verdict: null, tokensOut: null, streamUsage: null, details,
-      traceId: r.traceId ?? null, deliveredBy: r.delivered ?? null,
-    };
-    (jobs.get(x.family) ?? jobs.set(x.family, { rows: [], builds: [], report: null, sources: new Set() }).get(x.family)).rows.push(row);
-    jobs.get(x.family).sources.add(s.source);
+  for (const s of streams) {
+    const job = jobs.get(s.family) ?? jobs.set(s.family, { rows: [], allRows: [], builds: [], report: null, sources: new Set() }).get(s.family);
+    job.sources.add(s.source);
+    for (const r of s.rows) {
+      const details = parseDetails(r.oracleDetails);
+      const fixedUsd = Object.entries(r.costBreakdown ?? {}).filter(([k]) => FIXED_COMPONENTS.has(k)).reduce((a, [, v]) => a + v, 0);
+      const trace = r.traceId ? loadJitTrace(root, s.family, path.basename(path.dirname(s.source)), r.traceId) : null;
+      const row = {
+        ...LEGACY_TAG, source: s.source, experiment: s.family, arm: path.basename(path.dirname(s.source)), mode: JIT_MODES[s.mode] ?? s.mode, model: trace?.model ?? null,
+        family: String(r.taskKey).split(':')[0], taskKey: r.taskKey, taskHash: r.taskHash, trial: 0, unit: r.taskKey, seed: r.seed ?? seedOf(r.taskKey), difficulty: r.difficulty ?? diffOf(r.taskKey),
+        pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null, delivered: errCode(r.error) === null, schemaValid: details?.reason !== 'schema-invalid',
+        error: errCode(r.error), usdReported: Math.max(0, r.costUsd - fixedUsd) + (r.orphanUsd ?? 0), usdImputed: 0, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? null,
+        turns: trace?.turns ?? null, tools: trace?.tools ?? null, calls: null, escalations: null, verdict: null, tokensOut: null, streamUsage: trace?.streamUsage ?? null, details,
+        traceId: r.traceId ?? null, deliveredBy: r.delivered ?? null, traceCostUsd: trace?.costUsd ?? null,
+      };
+      job.allRows.push(row);
+      if (pairedKeys.has(`${s.family}\u0000${s.mode}\u0000${r.taskKey}`)) job.rows.push(row);
+    }
   }
   for (const f of h.fixed) if (f.fixedUsd > 0) jobs.get(f.family).builds.push({ mode: JIT_MODES[f.mode] ?? f.mode, usd: f.fixedUsd, source: f.streamSource });
   for (const rep of h.report) jobs.get(rep.family).report = rep;
@@ -165,17 +172,17 @@ export function loadLegacyJobs({ archiveDir = ARCHIVE_DIR, jitRoot = JIT_RUNS_DI
   }
   const jit = loadJitJobs(jitRoot);
   for (const def of LEGACY_JOB_DEFS) {
-    let rows = [], builds = [], jobSources = [];
+    let rows = [], allRows = null, builds = [], jobSources = [];
     if (def.kind === 'p1') { rows = p1.rows; jobSources = p1.source ? [p1.source.path] : []; }
     else if (def.kind === 'c0') {
       rows = c0.rows.filter(r => r.experiment === def.experiment);
       builds = cons.builds.filter(b => b.family === def.family).map(b => ({ mode: b.mode, usd: b.usd, source: cons.source?.path }));
       jobSources = [c0.source?.path, cons.source?.path].filter(Boolean);
-    } else { const j = jit.jobs.get(def.id); if (j) { rows = j.rows; builds = j.builds; jobSources = j.sources; } }
+    } else { const j = jit.jobs.get(def.id); if (j) { rows = j.rows; allRows = j.allRows; builds = j.builds; jobSources = j.sources; } }
     if (!rows.length) continue;
     const paired = pairJob(rows);
     const kept = new Set(paired.report.modes);
-    jobs.push({ ...def, rows: paired.rows, builds: builds.filter(b => kept.has(b.mode)), pairing: paired.report, sources: jobSources });
+    jobs.push({ ...def, rows: paired.rows, allRows: allRows ?? rows, builds: builds.filter(b => kept.has(b.mode)), pairing: paired.report, sources: jobSources });
   }
   if (jit.sources.length) sources.push(...jit.sources.map(p => sourceOf(p, { rescued: true })));
   return { jobs, sources, notes };

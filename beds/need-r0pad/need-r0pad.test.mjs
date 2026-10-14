@@ -221,7 +221,7 @@ test('padding is deterministic: identical on repeat, after the caches are flushe
 // would give the answer away or change it, and looks for them in the padding.
 const STATUS_WORDS = (() => {
   const words = new Set();
-  for (let seed = 1; seed <= 120; seed++) for (const d of DS) for (const line of r0task(seed, d).inputs.notes.split('\n').filter(l => l.startsWith('Status "'))) for (const m of line.matchAll(/"([^"]+)"/g)) words.add(m[1].toLowerCase());
+  for (let seed = 1; seed <= 120; seed++) for (const d of LV) for (const line of r0task(seed, d).inputs.notes.split('\n').filter(l => l.startsWith('Status "'))) for (const m of line.matchAll(/"([^"]+)"/g)) words.add(m[1].toLowerCase());
   return [...words];
 })();
 const R0_ITEMS = (() => {
@@ -337,9 +337,11 @@ test('the reference answer is unchanged by padding: it equals wbed-r0\'s, and a 
     assert.equal(Number(task.inputs.document.match(/Customer row: (\d+)/)[1]), truth.customer_row);
     assert.equal(task.inputs.document.match(/Currency: (\w+)/)[1], truth.currency);
     for (const text of Object.values(task.files)) { assert.ok(!text.includes(`Invoice no.: ${truth.invoice_number}`)); assert.ok(!text.includes(`Customer row: ${truth.customer_row}`)); }
-    // the padded task and the bare task differ in id, family, prompt tail and files only
-    const strip = ({ id, family, prompt, files, ...rest }) => rest;
+    // the padded task and the bare task differ in id, family, prompt tail and files only (and, at level 1, in the difficulty field: 1 vs R0's 2)
+    const strip = ({ id, family, prompt, files, difficulty, ...rest }) => rest;
     assert.equal(canonical(strip(task)), canonical(strip(core)));
+    assert.equal(task.difficulty, d);
+    assert.equal(core.difficulty, lvl(d));
   }
 });
 
@@ -478,4 +480,101 @@ test('robustness: a wide seed sweep yields a valid padded task at every difficul
     assert.ok(tokens(task) >= 15000 && tokens(task) <= 25000, `${task.id}: ${tokens(task)}`);
     assert.equal(bed.oracle(task, bed.referenceSolve(task)).pass, true);
   }
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Regressions from the adversarial review (both minor).
+// 1. Difficulty 1. beds/CONTRACT.md asks for 1..5 and wbed-r0 defines 2..5: level 1 is an exact alias of R0's level 2, so a harness that
+//    sweeps 1..5 without reading difficulty.min no longer crashes and the d1 spot-check can be done.
+test('regression: difficulty 1 is an exact alias of level 2 (same prompt, inputs, files, budget, archive, truth); only id and difficulty differ', () => {
+  const strip = ({ id, difficulty, ...rest }) => rest;
+  const enabled = c => 2 >= (c.minDifficulty ?? 0);               // the controls R0 enables at its level 2
+  for (const split of ['dev', 'test']) for (const seed of SEEDS) {
+    const a = fresh(seed, 1, split), b = fresh(seed, 2, split), core = r0.generate({ seed, split, difficulty: 2 });
+    assert.equal(a.difficulty, 1);
+    assert.equal(a.id, `need-r0pad:${split}:d1:${seed}`);
+    assert.notEqual(a.id, b.id);
+    assert.equal(canonical(strip(a)), canonical(strip(b)));       // prompt, inputs, files, budget, seed, split, family
+    assert.ok(a.prompt.startsWith(`${core.prompt}\n`));
+    assert.equal(canonical(a.inputs), canonical(core.inputs));    // the inputs are wbed-r0 level 2's, byte for byte
+    assert.equal(canonical(bed.pairedR0Task(a)), canonical(core));
+    assert.equal(canonical(bed.describePadding(a)), canonical(bed.describePadding(b)));
+    const ref = bed.referenceSolve(a);
+    assert.deepEqual(ref, bed.referenceSolve(b));
+    assert.deepEqual(ref, r0.referenceSolve(core));
+    const outs = [ref, {}, null, { ...ref, void: !ref.void }, ...bed.badControls.filter(enabled).map(c => c.make(a))];
+    for (const out of outs) {
+      assert.equal(canonical(bed.oracle(a, out)), canonical(bed.oracle(b, out)));
+      assert.equal(canonical(bed.oracle(a, out)), canonical(r0.oracle(core, out)));
+    }
+    assert.equal(bed.oracle(a, ref).pass, true);
+    assert.equal(bed.oracle({ seed, split, difficulty: 1 }, ref).pass, true);        // the oracle needs only (seed, split, difficulty)
+    for (const c of bed.badControls.filter(enabled)) assert.equal(bed.oracle(a, c.make(a)).pass, false, `${c.name} on ${a.id}`);
+  }
+});
+
+test('regression: level 1 has R0 level 2 structure (2-3 lines, no discount, no credited line, no per-task status word) and the usual size', () => {
+  for (const seed of SEEDS) {
+    const task = gen(seed, 1), doc = task.inputs.document, notes = task.inputs.notes.split('\n');
+    const n = (doc.match(/^ \d+ /gm) ?? []).length;
+    assert.ok(n >= 2 && n <= 3, `${task.id}: ${n} lines`);
+    assert.ok(!/Discount:|credited, not billed/.test(doc), task.id);
+    assert.equal(notes.length, 5, `${task.id}: a per-task status word would add a note line`);
+    if (/printed from ATLAS/.test(doc)) assert.match(task.inputs.notes, /day\/month\/year \(DD\/MM\/YYYY\)/);   // R0's level 2 fixes the ATLAS date order
+    assert.ok(tokens(task) >= 15000 && tokens(task) <= 25000);
+    assert.ok(bed.describePadding(task).docs.length >= 10 && Object.keys(task.files).length <= 20);
+  }
+});
+
+test('regression: a harness sweeping difficulty.min..difficulty.max (and the default) never throws, and every level passes the contract health checks', () => {
+  assert.equal(bed.difficulty.min, 1);
+  assert.equal(bed.difficulty.max, 5);
+  assert.ok(bed.difficulty.default >= bed.difficulty.min && bed.difficulty.default <= bed.difficulty.max);
+  for (let d = bed.difficulty.min; d <= bed.difficulty.max; d++) {
+    for (const seed of SEEDS.slice(0, 20)) {
+      const task = bed.generate({ seed, split: 'dev', difficulty: d });
+      assert.equal(task.difficulty, d);
+      assert.equal(bed.oracle(task, bed.referenceSolve(task)).pass, true, task.id);
+      for (const c of bed.badControls.filter(x => d >= (x.minDifficulty ?? 0))) assert.equal(bed.oracle(task, c.make(task)).pass, false, `${c.name} on ${task.id}`);
+      assert.equal(bed.oracle(task, { ...bed.referenceSolve(task), net_minor: '1' }).details.reason, 'schema-invalid');
+    }
+  }
+  assert.equal(bed.generate({ seed: 601 }).difficulty, 3);
+  for (const bad of [0, 6]) assert.throws(() => bed.generate({ seed: 601, difficulty: bad }), /need-r0pad: difficulty must be an integer 1\.\.5/);
+});
+
+// 2. Extra keys. The prompt says "Return only JSON of the form {...}", but outputSchema (R0's, copied) has no additionalProperties:false and
+//    the oracle is R0's, so unrequested keys are ignored. That leniency is kept on purpose so that the verdicts of the two beds stay
+//    identical (the pair measures length, not strictness) and is stated in the README. Pinned here so a one-sided change fails loudly.
+test('regression: unrequested keys are ignored exactly as in wbed-r0 (verdict parity), never rescue a wrong or incomplete answer, and are documented', () => {
+  assert.ok(!('additionalProperties' in bed.outputSchema), 'a stricter schema here would break verdict parity with wbed-r0: change both beds together');
+  assert.deepEqual(bed.outputSchema, r0.outputSchema);
+  const extras = [{ notes: 'x' }, { reasoning: 'read the invoice', confidence: 0.9 }, { void_reason: null }, { meta: { a: [1, { b: 2 }] } }, { currency_name: 'euro' }, { notes: () => 1 }];
+  for (const d of DS) for (const seed of SEEDS.slice(0, 20)) {
+    const task = gen(seed, d), core = r0task(seed, d), ref = bed.referenceSolve(task);
+    const { net_minor, ...incomplete } = ref;
+    for (const extra of extras) {
+      const same = out => assert.equal(canonical(bed.oracle(task, out)), canonical(r0.oracle(core, out)), `${task.id}: ${JSON.stringify(out)}`);
+      const padded = { ...ref, ...extra }, wrong = { ...ref, gross_minor: ref.gross_minor + 1, ...extra }, partial = { ...incomplete, ...extra };
+      same(padded); same(wrong); same(partial);
+      const plain = typeof Object.values(extra)[0] !== 'function';            // a non-JSON value is rejected as in R0, which is not the point here
+      assert.equal(bed.oracle(task, padded).pass, plain, `${task.id}: ${JSON.stringify(extra)}`);
+      assert.equal(bed.oracle(task, wrong).pass, false);
+      assert.equal(bed.oracle(task, partial).pass, false);
+      assert.equal(bed.oracle(task, partial).details.reason, 'schema-invalid');
+    }
+    // every control with an extra key fails exactly as it does without one
+    for (const c of bed.badControls.filter(x => d >= (x.minDifficulty ?? 0))) assert.equal(bed.oracle(task, { ...c.make(task), notes: 'x' }).pass, false, `${c.name} on ${task.id}`);
+  }
+});
+
+test('regression: the README documents the difficulty-1 alias and the extra-key leniency', async () => {
+  const { readFileSync } = await import('node:fs');
+  const readme = readFileSync(new URL('./README.md', import.meta.url), 'utf8');
+  assert.match(readme, /level 1 is an exact alias of `?wbed-r0`?'s level 2/i);
+  assert.match(readme, /min: 1, max: 5/);
+  assert.match(readme, /extra keys are ignored/i);
+  assert.match(readme, /additionalProperties/);
+  assert.match(readme, /Routing anchor for the need router \(experiments\/need-router\), not a Tier-A bed/);
+  assert.match(readme, /HYPOTHESIS/);
 });

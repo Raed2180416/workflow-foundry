@@ -21,7 +21,8 @@ depends on the hypothesis.
 
 ## What one task is
 
-`generate({seed, split, difficulty})` returns the **same task as `wbed-r0` at the same `(seed, split, difficulty)`** and adds an archive:
+`generate({seed, split, difficulty})` returns the **same task as `wbed-r0` at the same `(seed, split, difficulty)`** and adds an archive
+(difficulty 1 pairs with `wbed-r0`'s level 2, see "Difficulty knob"):
 
 - `prompt`: R0's prompt unchanged, then one sentence:
   `Further documents from the same office archive are in files/archive/ (N files). A document may be ignored only if it is irrelevant to this
@@ -79,14 +80,20 @@ file recomputes everything from first principles):
 
 ## Difficulty knob
 
-`difficulty` is **R0's**, 2..5 (bed `difficulty` export: `{min: 2, max: 5}`); level 1 is not defined by `wbed-r0`, so `generate` throws for
-it instead of inventing a task that has no R0 partner. What a level changes is the R0 core only: lines (2-3, 3-4, 4-5, 5-6), the ATLAS date
+`difficulty` is **R0's**, 2..5, plus level 1 so that the bed covers the contract's 1..5 (bed `difficulty` export: `{min: 1, max: 5,
+alias: {1: 2}}`). **Level 1 is an exact alias of `wbed-r0`'s level 2**: `wbed-r0` defines no level 1, so rather than invent a task with
+no R0 partner (or make a harness that sweeps `1..5` without reading `difficulty.min` crash), `generate`, `oracle`, `referenceSolve` and
+the controls map level 1 to R0 level 2. A level-1 task has the same prompt, `inputs`, `files`, `budget` and padding as the level-2 task of
+the same `(seed, split)` and the same truth; only `id` (`need-r0pad:dev:d1:601`) and the `difficulty` field (1) record the alias.
+`pairedR0Task` of a level-1 task is the `wbed-r0` level-2 task. Levels 1 and 2 are therefore **one distinct difficulty**: an analysis that
+counts levels as independent points should use 2..5 (the range of the preregistered metamorphic pairs) or drop level 1. Any other
+difficulty (0, 6, 2.5, a string) throws. What a level changes is the R0 core only: lines (2-3, 3-4, 4-5, 5-6), the ATLAS date
 order drawn per task (d3+), a percentage discount line and a per-task status word whose meaning the notes state (d4+), and a credited line
 that is not billed (d5). **The padding does not change with difficulty**: for a given `(seed, split)` the number of documents, their kinds,
 their order and their sizes are the same at every level. The target's truth reaches the archive only through the forbidden-string filter, so
 documents differ across levels only in the cells it touches: comparing each of the 513 non-sibling documents at d2 with the same document
 at d3, d4 and d5 on the dev seeds (1,539 comparisons), 80% are byte-identical, 0.41% of 140,304 lines differ (a shifted ISO date), and none
-was redrawn (1 redrawn document in 2,536 over all levels).
+was redrawn (1 redrawn document in 2,536 over levels 2-5).
 
 ### Expected input size (tokens) per difficulty
 
@@ -98,6 +105,7 @@ the difficulty), and the generator rebuilds if a total would fall outside 15,200
 
 | Difficulty | R0 core, compact: median (min-max) | Padded, compact: median (min-max) | Padded, inline: median (min-max) | Padded / core, median (min-max) |
 |---|---|---|---|---|
+| 1 (alias of 2) | 344 (336-361) | 20,485 (16,401-23,636) | 20,651 (16,551-23,803) | 58.7 (45.9-69.4) |
 | 2 | 344 (336-361) | 20,485 (16,401-23,636) | 20,651 (16,551-23,803) | 58.7 (45.9-69.4) |
 | 3 | 370 (353-379) | 20,500 (16,427-23,660) | 20,666 (16,584-23,827) | 56.2 (43.3-65.9) |
 | 4 | 410 (393-423) | 20,542 (16,492-23,690) | 20,708 (16,653-23,857) | 49.9 (39.0-59.8) |
@@ -110,7 +118,7 @@ The general contract aims level 3 at 6-15K tokens; this family is deliberately a
 ## Length versus structure: the two breaker directions
 
 - **Same structure, different length:** `need-r0pad` vs `wbed-r0` at the same `(seed, split, difficulty)`. Task logic, inputs, prompt rules,
-  truth and oracle are identical (tested for 40 seeds x 4 levels x 2 splits); the input is 38 to 69 times larger.
+  truth and oracle are identical (tested for 40 seeds x 5 levels x 2 splits; level 1 against `wbed-r0` level 2); the input is 38 to 69 times larger.
 - **Same length, different structure:** `need-r0pad` at difficulty 2 vs 5 on the same seed. Over the 160 dev tasks the correlation of total
   tokens with difficulty is 0.01 (R0's own tokens: 0.94), and for one seed the total varies by at most 0.8% across the four levels, while
   the structure grows (lines, discount, credited line, status word).
@@ -125,6 +133,13 @@ over-estimate this family's structure; that is a property to expect in a router 
 - `oracle(task, output)` is R0's oracle called on the `(seed, split, difficulty)` of the task alone: it recomputes the truth, rejects
   schema-invalid output (`pass: false`, `details.reason: 'schema-invalid'`) and ignores the prompt, inputs and files it is handed. For every
   output tested (the reference, every control, malformed values) its verdict is identical to `wbed-r0`'s on the paired task.
+- **Extra keys are ignored.** The prompt says "Return only JSON of the form ...", but `outputSchema` is R0's, copied, and has no
+  `additionalProperties: false` (the portable subset would allow it), so an answer with all eight correct fields plus unrequested keys
+  (`notes`, `reasoning`, ...) passes, exactly as it does in `wbed-r0`; a wrong or incomplete answer is not rescued by extra keys, and a
+  value that is not plain data (a function) is still rejected as `schema-invalid`. This leniency is **deliberate and inherited**: the pair
+  measures length, not strictness, so the two oracles must give identical verdicts on every output. If the form is to be enforced, add
+  `additionalProperties: false` to `wbed-r0` and to this bed together (a test pins the schema equality and the verdict parity so a
+  one-sided change fails). A harness that wants strict form should check it itself.
 - `referenceSolve(task)` returns R0's exact truth (trusted host code, never shown to a solver).
 - `badControls` keep R0's names, so a pair of beds can be compared control by control: `empty`, `shuffled-or-corrupted`,
   `date-order-flipped`, `tax-ignored`, `quantity-ignored`, and from difficulty 4 `discount-ignored`, `status-word-misread`, from 5
@@ -147,6 +162,15 @@ costs or does not cost accuracy; anything about retrieval, since the target is n
 **Untrusted text:** this family contains **no adversarial or injection strings**. Archive text is generated from fixed frames; the tests
 reject reader-addressed instructions in it. The prompt note and the R0 prompt both say the documents are data, not instructions.
 
+## Changes after the adversarial review (both minor)
+
+1. **Difficulty 1 now exists** as an exact alias of `wbed-r0`'s level 2 (see "Difficulty knob"); before, `generate` and the oracle threw for it
+   and the bed exported `{min: 2, max: 5}`, which crashed any harness sweeping the contract's 1..5. Tests: the alias is byte-identical to
+   level 2 apart from `id` and `difficulty` (dev and test splits, 40 seeds), has level-2 structure, passes the reference / controls /
+   schema checks at 40 seeds like every other level, and a `difficulty.min..difficulty.max` sweep never throws.
+2. **Extra keys are ignored** (see "Oracle, reference and controls"): kept on purpose for verdict parity with `wbed-r0` and now stated, with a
+   test that pins the schema equality and the identical verdicts for extra-key outputs.
+
 ## Files
 
 | File | Role |
@@ -156,7 +180,7 @@ reject reader-addressed instructions in it. The prompt note and the R0 prompt bo
 | `pad-docs.mjs` | The 20 document-kind builders |
 | `lexicon.mjs` | Names, pools, sentence frames and slot filling |
 | `guard.mjs` | Forbidden strings of a task's truth, the denylist, date masking |
-| `need-r0pad.test.mjs` | node:test suite (30 tests) |
+| `need-r0pad.test.mjs` | node:test suite (36 tests; the last five are regressions from the adversarial review) |
 
-Run: `node --test beds/need-r0pad/*.test.mjs` (Node 24, built-ins only; about 22 seconds, dominated by 160-task sweeps). Cold `generate` is
+Run: `node --test beds/need-r0pad/*.test.mjs` (Node 24, built-ins only; about 25 seconds, dominated by 200-task sweeps). Cold `generate` is
 about 30 ms at worst and an oracle call under 1 ms at difficulty 5 (the tests assert both stay under 2 s).
