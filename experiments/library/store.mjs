@@ -68,12 +68,17 @@ export function openLibrary(dir, { now = () => new Date(), env = null } = {}) {
       reuse: { correct: 0, wrong: 0, missed: 0, refusedCorrectly: 0, refusedOther: 0, deopted: 0 }, suspect: { runs: 0, sweepIds: [] },
       consecutiveFailures: 0, uses: 0, successes: 0, stableShape: null, costPerRunUsd: null, p50Ms: null, admission: null, lastUsedAt: null };
     const costs = [], ms = [], shapes = [];
+    // A retroactive sweep (sweep.mjs, LIBRARY §7.5 step 5) appends a suspect row naming the runs whose output the fixed
+    // version changes: those runs leave oraclePass and shadowAgree, and a reuse that admitted the item for them counts
+    // as wrong. Nothing is deleted; the rows stay as written.
+    const suspectIds = new Set(rows.filter(r => r.kind === 'suspect').flatMap(r => r.runIds ?? []));
+    const isSuspect = r => r.runId != null && suspectIds.has(r.runId);
     for (const r of rows) {
       if (r.kind === 'run') {
         ev.runs++; ev.uses++;
         const ok = r.ok === true && r.oracle !== 'fail';
         if (ok) { ev.ok++; ev.successes++; ev.consecutiveFailures = 0; } else ev.consecutiveFailures++;
-        if (r.oracle === 'pass') ev.oraclePass++;
+        if (r.oracle === 'pass' && !isSuspect(r)) ev.oraclePass++;
         if (r.oracle === 'fail') ev.oracleFail++;
         if (r.silentMiss) ev.silentMisses++;
         if (r.deopt) ev.deopts[r.deopt] = (ev.deopts[r.deopt] ?? 0) + 1;
@@ -81,13 +86,14 @@ export function openLibrary(dir, { now = () => new Date(), env = null } = {}) {
         if (typeof r.ms === 'number') ms.push(r.ms);
         if (typeof r.shape === 'string') shapes.push(r.shape);
         ev.lastUsedAt = r.at;
-      } else if (r.kind === 'shadow') { ev.shadowed++; if (r.agree) ev.shadowAgree++; }
+      } else if (r.kind === 'shadow') { ev.shadowed++; if (r.agree && !isSuspect(r)) ev.shadowAgree++; }
       else if (r.kind === 'reuse') {
-        const k = { correct: 'correct', wrong: 'wrong', missed: 'missed', 'refused-correctly': 'refusedCorrectly', 'refused-other': 'refusedOther', deopted: 'deopted' }[r.class];
+        const cls = r.class === 'correct' && isSuspect(r) ? 'wrong' : r.class;
+        const k = { correct: 'correct', wrong: 'wrong', missed: 'missed', 'refused-correctly': 'refusedCorrectly', 'refused-other': 'refusedOther', deopted: 'deopted' }[cls];
         if (k) ev.reuse[k]++;
         ev.lastUsedAt = r.at;
       } else if (r.kind === 'admission') ev.admission = r.checks ?? null;
-      else if (r.kind === 'suspect') { ev.suspect.runs += r.runs ?? 0; if (r.sweepId) ev.suspect.sweepIds.push(r.sweepId); }
+      else if (r.kind === 'suspect') { ev.suspect.runs += r.runs ?? (r.runIds ?? []).length; if (r.sweepId) ev.suspect.sweepIds.push(r.sweepId); }
     }
     ev.silentMissesPer100 = ev.runs ? Math.round((ev.silentMisses / ev.runs) * 1e4) / 100 : 0;
     if (costs.length) ev.costPerRunUsd = Math.round((costs.reduce((a, b) => a + b, 0) / costs.length) * 1e6) / 1e6;

@@ -13,6 +13,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { MODEL_TOOL } from '../c0/construct.mjs';
 import { startServices, Ledger } from '../lib/services.mjs';
 import { createCallHost, FLOW_V3 } from '../jit/call-host.mjs';
@@ -36,6 +37,45 @@ export default (site, request) => {
   return 'error' in rules[i] ? { error: rules[i].error } : { value: rules[i].value };
 };
 `;
+// The sweep's replay override (sweep.mjs; LIBRARY §7.5 step 2): a judge request whose (model, system, prompt, schema) was
+// journaled in a past run is answered from that journal at $0, the k-th identical request with the k-th journaled answer;
+// any other request (a changed judge site) goes to the fallback table (the fixture format above: a $0 stub standing in
+// for the live re-ask) or, without one, fails (the judge deopts and the sweep counts the run as unresolved).
+// tools/flow-journal.json: {journal: {key: [value, ...]}, fallback: {judgeName: [rules]} | null}.
+export const JOURNAL_OVERRIDE_SOURCE = `// sweep replay override (experiments/library/run.mjs): journal first, then the fallback table; never live.
+import { readFileSync, appendFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const { journal, fallback } = JSON.parse(readFileSync(new URL('./flow-journal.json', import.meta.url), 'utf8'));
+const canon = v => (v === null || typeof v !== 'object' ? JSON.stringify(v) : Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}');
+const sha = s => createHash('sha256').update(s).digest('hex');
+const used = new Map();
+export default (site, request) => {
+  const text = typeof request.prompt === 'string' ? request.prompt : JSON.stringify(request.prompt);
+  const key = sha(canon({ model: request.model, system: sha(String(request.system ?? '')), prompt: sha(text), schema: request.schema ?? null }));
+  const k = used.get(key) ?? 0; used.set(key, k + 1);
+  const hit = journal[key]?.[k];
+  const log = source => appendFileSync(new URL('./overrides.jsonl', import.meta.url), JSON.stringify({ id: site.id, name: site.name, ordinal: site.ordinal, tier: site.tier, source }) + '\\n');
+  if (hit !== undefined) { log('journal'); return { value: hit }; }
+  const rules = fallback?.[site.name] ?? [];
+  const i = rules.findIndex(r => (r.when == null || text.includes(r.when)) && (r.ordinal == null || r.ordinal === site.ordinal) && (r.tier == null || r.tier === site.tier));
+  if (i >= 0) { log('fallback'); return 'error' in rules[i] ? { error: rules[i].error } : { value: rules[i].value }; }
+  log('miss');
+  return { error: 'sweep replay: judge request not in the journal and no fallback (a changed judge site needs a live re-ask)' };
+};
+`;
+// The journal key of a judge request or of a past trace's judge event (system and prompt by their sha256, as a trace
+// keeps a text over 64 KB only by its sha256 and head).
+const _sha = s => createHash('sha256').update(s).digest('hex');
+const _canon = v => (v === null || typeof v !== 'object' ? JSON.stringify(v) : Array.isArray(v) ? `[${v.map(_canon).join(',')}]` : `{${Object.keys(v).sort().map(k => `${JSON.stringify(k)}:${_canon(v[k])}`).join(',')}}`);
+export const journalKeyOf = ({ model, system = '', prompt, schema = null, systemSha256 = null, promptSha256 = null }) =>
+  _sha(_canon({ model, system: systemSha256 ?? _sha(String(system)), prompt: promptSha256 ?? _sha(typeof prompt === 'string' ? prompt : JSON.stringify(prompt)), schema }));
+// A journal {key: [values in order]} from flow-v3 trace judge events (ok ones, with their value).
+export function journalOfTrace(events = []) {
+  const j = {};
+  for (const e of events) if (e?.kind === 'judge' && e.ok === true && 'value' in e && e.tier) (j[journalKeyOf({ model: e.tier, system: e.system, prompt: e.prompt, schema: e.schema ?? null, systemSha256: e.systemSha256 ?? null, promptSha256: e.promptSha256 ?? null })] ??= []).push(e.value);
+  return j;
+}
+
 const lines = file => (existsSync(file) ? readFileSync(file, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
 
 // A stub child (fixture): {name, contract: {input?, output, taskTemplate?}, profileInputs?: [input...], revoked?: bool,
@@ -64,7 +104,8 @@ export function registerChildren(lib, children = []) {
 
 // Run solve.mjs source on a task. Returns {status: ok|deopt|crash|timeout|invalid, output, deopt, trace, flags, overrides,
 // events (call host), liveModelCalls, spentUsd, exitCode, stderr}.
-export async function runSolver({ source, task, answers = {}, library = null, budgetUsd = 1, timeoutMs = 30000, outputSchema = null, workdir = null, keep = false }) {
+// replay: {journal, fallback} switches the override to the sweep's journal replay (JOURNAL_OVERRIDE_SOURCE).
+export async function runSolver({ source, task, answers = {}, library = null, budgetUsd = 1, timeoutMs = 30000, outputSchema = null, workdir = null, keep = false, replay = null }) {
   const dir = workdir ?? mkdtempSync(path.join(tmpdir(), 'lib-run-'));
   let liveModelCalls = 0;
   const modelPort = { policy: STUB_POLICY, providers: {}, policyHash: 'stub', async call(r) { liveModelCalls++; throw new FoundryError('NO_LIVE_MODEL', `$0 runner: model ${r.modelId} requested; every judge must be answered by the override`); } };
@@ -74,11 +115,16 @@ export async function runSolver({ source, task, answers = {}, library = null, bu
   const svc = await startServices({ modelPort: host.port({ budgetUsd, ledger }), ledger });
   try {
     mkdirSync(path.join(dir, 'tools'), { recursive: true });
-    for (const stale of ['trace.jsonl', 'deopt.json', 'tools/overrides.jsonl', 'tools/calls.jsonl']) rmSync(path.join(dir, stale), { force: true });
+    for (const stale of ['trace.jsonl', 'deopt.json', 'tools/overrides.jsonl', 'tools/calls.jsonl', 'tools/flow-journal.json']) rmSync(path.join(dir, stale), { force: true });
     writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(FLOW_V3, path.join(dir, 'tools/flow.mjs'));
     writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ url: svc.url, token: svc.token }));
-    writeFileSync(path.join(dir, 'tools/flow-override.mjs'), OVERRIDE_SOURCE);
-    writeFileSync(path.join(dir, 'tools/flow-override.json'), JSON.stringify(answers));
+    if (replay) {
+      writeFileSync(path.join(dir, 'tools/flow-override.mjs'), JOURNAL_OVERRIDE_SOURCE);
+      writeFileSync(path.join(dir, 'tools/flow-journal.json'), JSON.stringify({ journal: replay.journal ?? {}, fallback: replay.fallback ?? null }));
+    } else {
+      writeFileSync(path.join(dir, 'tools/flow-override.mjs'), OVERRIDE_SOURCE);
+      writeFileSync(path.join(dir, 'tools/flow-override.json'), JSON.stringify(answers));
+    }
     writeFileSync(path.join(dir, 'task.json'), JSON.stringify({ prompt: task.prompt ?? '', inputs: task.inputs ?? {}, ...(task.files ? { files: task.files } : {}) }));
     writeFileSync(path.join(dir, 'solve.mjs'), source);
     const child = spawn(process.execPath, ['--max-old-space-size=256', 'solve.mjs', 'task.json'], { cwd: dir, env: { PATH: process.env.PATH, HOME: dir }, stdio: ['ignore', 'pipe', 'pipe'] });

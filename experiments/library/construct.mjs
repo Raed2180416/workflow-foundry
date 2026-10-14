@@ -358,12 +358,12 @@ export async function construct({ task, outputSchema = null, model, l1 = loadL1(
 }
 
 // An assembled solver into the library (solvers/<sha16>.mjs under the library directory), as an own construction.
-export function registerSolver(lib, { source, contract, patterns = [], name = null }) {
+export function registerSolver(lib, { source, contract, patterns = [], name = null, profile = null }) {
   const rel = `solvers/${sha(source).slice(0, 16)}.mjs`;
   mkdirSync(path.join(lib.dir, 'solvers'), { recursive: true });
   writeFileSync(path.join(lib.dir, rel), source);
   const families = patterns.map(id => loadCard(id)?.family).filter(Boolean);
-  return lib.register({ layer: 'L2', name, solvePath: rel, flowVersion: 3, contract, patterns: [...new Set(patterns)],
+  return lib.register({ layer: 'L2', name, solvePath: rel, flowVersion: 3, contract, patterns: [...new Set(patterns)], ...(profile ? { profile } : {}),
     tags: [...new Set([...families.filter(f => ['spine', 'branch', 'fan', 'loop', 'compose', 'failure', 'trigger', 'state', 'human', 'agentic'].includes(f)), ...patterns, 'effect:none'])],
     provenance: { source: 'own-trace', ref: 'library-first construction (construct.mjs)', licence: 'internal', redistributable: false, author: 'constructor' } });
 }
