@@ -580,7 +580,7 @@ function commitOf(S, ctx, key) {
   return 'n';
 }
 
-function reconcileBatches(S, ctx) {
+function reconcileBatches(S, ctx, now) {
   const be = S.batchErr;
   if (!be) return;
   delete S.batchErr;
@@ -595,7 +595,7 @@ function reconcileBatches(S, ctx) {
     else u.s = 'r';
     if (u.s === 'x') {
       const fid = key.slice(4, key.lastIndexOf(':'));
-      if (S.f[fid] && !S.f[fid].comp) failF(S, ctx, fid, null);
+      if (S.f[fid] && !S.f[fid].comp) failF(S, ctx, fid, now);
     }
   }
 }
@@ -808,7 +808,7 @@ function tick(input, ctx) {
       default: if (ev.type?.startsWith('humanTask.')) handleTask(S, ctx, out, ev, now);
     }
   }
-  reconcileBatches(S, ctx);
+  reconcileBatches(S, ctx, now);
   intakeDecision(S, ctx, out, now);
   reconcileUnknown(S, ctx);
   const { specs, waitingComp } = planSpecs(S, ctx);
