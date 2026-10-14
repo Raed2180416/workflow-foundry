@@ -314,9 +314,9 @@ export function generateWorld({ seed, split = 'dev', difficulty = 2, schedule = 
   const fees = second => JSON.stringify(locations.map(l => ({ location: l.location, feeMinor: second ? l.feeMinor2 : l.feeMinor })), null, 1);
   const codes = JSON.stringify(CARRIER_CODES.filter(c => d >= 3 || c.carrier !== 'SWIFTLINE').filter(c => d >= 3 || c.meaning !== 'info'), null, 1);
   const editions = [{ id: 'ed-2026-1', effectiveFrom: '2026-01-01', effectiveTo: d >= 4 ? EDITION_SWITCH : null, published: '2025-12-15T09:00:00+01:00',
-    files: { 'policy.json': policy(4), 'shipping-fees.json': fees(false), 'carrier-codes.json': codes } }];
+    files: { 'edition.json': JSON.stringify({ id: 'ed-2026-1', effectiveFrom: '2026-01-01' }, null, 1), 'policy.json': policy(4), 'shipping-fees.json': fees(false), 'carrier-codes.json': codes } }];
   if (d >= 4) editions.push({ id: 'ed-2026-2', effectiveFrom: EDITION_SWITCH, effectiveTo: null, published: '2026-03-05T09:00:00+01:00',
-    files: { 'policy.json': policy(2), 'shipping-fees.json': fees(true), 'carrier-codes.json': codes } });
+    files: { 'edition.json': JSON.stringify({ id: 'ed-2026-2', effectiveFrom: EDITION_SWITCH }, null, 1), 'policy.json': policy(2), 'shipping-fees.json': fees(true), 'carrier-codes.json': codes } });
   return {
     id: `ebed-e8-${split}-${seed}-d${d}-${mix}${injection ? '-inj' : ''}`, publicId: `w-e8-${seed}`, item: 'E8', seed, split, difficulty: d, schedule, mix, scale, track,
     generator: GENERATOR_VERSION,

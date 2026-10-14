@@ -6,6 +6,9 @@
 // an arm). It reads the host's own journal (committed and staged rows) and world truth: it is not an arm under test.
 import { JournalIndex, caseView } from './view.mjs';
 import { createHost } from '../host/host.mjs';
+import { canonical } from '../../lib/canonical.mjs';
+
+const argsMatch = (match, args) => Object.keys(match ?? {}).every(k => args && Object.hasOwn(args, k) && canonical(args[k]) === canonical(match[k]));
 
 const MIN = 60_000;
 export const LATE_SLACK = 10 * MIN;
@@ -57,7 +60,9 @@ export function referenceArm({ item, world, timing = 'earliest', journal, id = `
         if (other) return post({ ...out, close: true });
       }
       const bucket = idx.bucket(c);
-      const done = new Set(bucket.ledger.filter(r => r.committed && r.key).map(r => r.key));
+      // A lid is done when a committed row matches it (system, op, match), whatever key it carried (controls drop keys).
+      const committedRows = bucket.ledger.filter(r => r.committed);
+      const done = new Set(E.effects.required.filter(e => committedRows.some(r => r.system === e.system && r.op === e.op && argsMatch(e.match, r.args))).map(e => e.lid));
       for (const e of E.effects.required) if (variant.drop?.(e)) done.add(e.lid);
       const tasksMade = bucket.tasks.map(t => t.task.id);
       // 'latest' acts LATE_SLACK before the window closes (never before it opens): a platform retry or a partial batch

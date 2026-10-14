@@ -109,9 +109,10 @@ R1.2 **Amounts** (integer minor units, EUR): a fulfilment's `amountMinor` is Σ 
 when its location is not `null` (an unavailable fulfilment has no fee). `totalMinor` = Σ `amountMinor` over all the
 order's fulfilments.
 
-R1.3 **Editions.** Use the rulebook edition in force at `p` (`effectiveFrom ≤ date(p) < effectiveTo`, dates in
-`Europe/Amsterdam`), for the whole life of the order, even if a newer edition takes effect while it is open. Editions
-appear under `rulebook/` when they are published, before they take effect.
+R1.3 **Editions.** Each edition's directory `rulebook/<edition>/` holds `edition.json` (`{ id, effectiveFrom }`, a date
+in `Europe/Amsterdam`) and its tables. The edition in force at `p` is the published edition with the latest
+`effectiveFrom` on or before the date of `p`. Use it for the whole life of the order, even if a newer edition takes
+effect while the order is open. Editions appear under `rulebook/` when they are published, before they take effect.
 
 R1.4 A placed order whose id you already recorded is a duplicate: no effect.
 
