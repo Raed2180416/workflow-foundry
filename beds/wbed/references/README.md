@@ -269,6 +269,12 @@ variants path, which the references never use), and 432/432 rows matched.
 | 12. R3 uses `wide`, never run paid | P2 | **recorded** (Decisions; What remains paid: an R3 (c) smoke) |
 | 13. freeze record gaps; a missing "Re-validation" section | P2 | **fixed**: run-compiled, bed versions, harness and recorded runs pinned; `--revalidate`; this section |
 
+**Where the code landed.** The orchestrator's autosave snapshots committed the review edits while they were being made:
+`901c522` (`lib/fx.mjs`), `dea7b23` (the version bumps and bed tests), `bc06129` (`analyst/`, `validate.mjs`, the new
+validation runs) and `36afbbe` (FROZEN.json, this README, the tests, the notes and PROOF-LEDGER B3, B4 and B10). The
+`W-bed refs review fixes:` commit records the round. Tests at that commit: the W-bed suite with `beds/lib`, 223/223
+(references 10/10, three runs); the R3/R4-dependent JIT tests, 66/66; the library tests that read W-bed tasks, 35/35.
+
 **Also found.** The override hook does not check an answer against the judge's schema. In 10 of 180 R1 tasks at d4–d5 on
 dev 301–390, a row marker and an invoice status word share one judge name, for example `marker:ATLAS:QUERY` on fixture
 374 d4. The author table, which is keyed by name, then answers the invoice question with the row answer `KEEP`, outside
