@@ -78,7 +78,7 @@ decision-table evaluator, obligation clock, saga planner, ledger checks), writte
 | carry | the arm's per-instance JSON state, ≤ 64 KB (DESIGN-STREAMS §2.3 [M]) |
 | business record / product-computed field | the two parts of the system of record (SoR) (E-BED §2.2) |
 | trajectory | the arm's journal over one world: deliveries, outputs, applied effects, ledger |
-| reference run | the trajectory the oracle's own policy produces on the world (§5.6); arm-independent |
+| reference run | a trajectory the oracle's own policy produces on the world (§5.6), at earliest or at latest timing; arm-independent |
 | epoch | a fraction of the horizon in business time, `ep0` … `ep4` (E-BED's E0 … E4, renamed to avoid clashing with item ids), plus `gl` for go-live backlog cases |
 
 ---
@@ -104,7 +104,7 @@ export function generateWorld({ seed, split, difficulty, schedule = 'default', m
 export function twins(world) -> [{ id, world }];          // label-preserving variants (W5; DESIGN-STREAMS §4.3)
 export const actors;         // { answer(world, ctx) -> Answer | null, counterparty(world, ctx) -> Event[] } (§4.4)
 export function referenceTransition(world, view) -> Expectation;   // §5.2; the oracle core
-export function referencePolicy(world, view) -> TickOutput;        // §5.6; derived from referenceTransition
+export function referencePolicy(world, view, { timing }) -> TickOutput;   // §5.6; timing 'earliest' | 'latest'
 export function oracle(world, journal, { mode: 'cl' | 'tf' }) -> StreamVerdict;   // §5, §8
 export const goldens, controls, necessityControls, gamingControls, mutants;      // §11
 export const semantics;      // { file: 'ledger/SEMANTICS.md', in: n, out: n } (E-BED §2.11)
@@ -355,8 +355,11 @@ event carries `injected: true`. W1–W5 are world events, generated, not host be
   identify a business object; the oracle maps the object to its owning truth case. An effect whose subject arguments
   name no existing object (an invented or mistyped id) is attributed to the instance's binding. Grading is per truth
   case and never depends on how the arm split its instances **[D-2]**.
-- Decisions are graded per instance against its binding; when several instances are bound to one truth case, the
-  latest decision record per case-tick time is the graded one.
+- Decisions are graded per instance against its binding, on **graded ticks** only: a case-tick whose output only
+  closes or merges the instance (`close` or `merge`, with no effects, no human tasks and no obligation upserts) is not
+  graded on layer 1 **[D-18]**. So an instance started by a duplicate delivery (bound to the original's case) that the
+  arm recognises and closes, or merges into the original, need not restate the case's decision record. When several
+  instances bound to one truth case have graded ticks at the same instant, the last in round order is the graded one.
 
 ### 5.2 `referenceTransition(world, view) → Expectation`
 
@@ -406,8 +409,12 @@ never open its obligations.
    day 10" opens at the request, with a window starting on day 10); an open `lid` takes the window of the latest
    expectation that names it; an open unsatisfied `lid` that a later expectation no longer names is **withdrawn** (no
    failure: the rulebook no longer requires it, e.g. after a cancellation).
-2. **Decisions (layer 1).** At each case-tick of an instance bound to the case, the arm's `decisions` projected on
-   `E.decisions.graded` must be equal. Over-escalation (a
+2. **Decisions (layer 1).** At each graded case-tick (§5.1: every case-tick except one that only closes or merges
+   **[D-18]**) of an instance bound to the case, the arm's `decisions` projected on `E.decisions.graded` must be equal.
+   A close- or merge-only tick is graded through consequences only (the merged event's required effects, §3.2, and
+   the case's effects, tasks and records, layers 2–5). Known limit: an arm that merges every event of a truth case into another
+   case's instance leaves that case's decision record ungraded; its effects, tasks and records are still graded.
+   Over-escalation (a
    human task outside the allowed set for a decidable case) and under-escalation (no required task for an
    `undecidable` case) are layer-1 divergences (W-bed R2 rule).
 3. **Effects (layer 2).** Every ledger row attributed to the case (each attempt, committed or not) must match an open
@@ -449,7 +456,10 @@ StreamVerdict = { world, arm, mix, track, profile, cases: [CaseVerdict],
 
 - **Case pass** (completed pool): no divergence on layers 1–5 from go-live or start until the case is terminal on the
   arm's trajectory, and terminal by horizon end. A completed-pool case still open at horizon end with no divergence is
-  `armCensored` and **does not pass** **[D-4]**.
+  `armCensored` and **does not pass** **[D-4]**. Because the completed pool holds only cases that both the earliest-
+  and the latest-timing reference runs close by horizon end (§6), acting late inside the windows does not by itself
+  make a case `armCensored`; an `armCensored` case on a specificity solver is a false reject (§11.5) to be fixed in
+  the pool rule or the reference, never by widening a window.
 - **Segment pass** (censored pool): no divergence until horizon end; windows whose `latest` is after `horizonEnd` are
   not graded.
 - **Stream score**: passed / completed-pool cases, per mix, with the censored share beside it. Paired across arms by
@@ -464,12 +474,13 @@ everything, wait for a human on everything, declare every obligation, pay twice 
 
 ### 5.6 The reference run
 
-`referencePolicy(world, view)` emits, at each case-tick, the canonical output of the current expectation (required
-effects at their `earliest`, required tasks, the graded decisions) and the obligations needed to wake at every window
-start. Running it through the real host loop gives the **reference run**: it defines the completed/censored pools (§6),
-it is the source of the neutral export for TF (§8), and it must itself pass every case (a self-consistency check of the
-oracle, not evidence about any arm). The reference run is *not* arm (c): (c) is an Opus-built solver graded like
-every other arm (E-BED §2.12).
+`referencePolicy(world, view, { timing = 'earliest' })` emits, at each case-tick, the canonical output of the current
+expectation (required effects and tasks at their window's `earliest`, the graded decisions) and the obligations needed
+to wake at every window start. With `timing: 'latest'` it emits each required effect and task at its window's `latest`
+instead (and wakes there). Running each through the real host loop gives the two **reference runs**: together they
+define the completed/censored pools (§6); the earliest-timing run is the source of the neutral export for TF (§8); and
+each must itself pass every case (a self-consistency check of the oracle, not evidence about any arm). Neither
+reference run is arm (c): (c) is an Opus-built solver graded like every other arm (E-BED §2.12).
 
 ---
 
@@ -478,15 +489,21 @@ every other arm (E-BED §2.12).
 - **Horizon** per item as E-BED §2.1 (E1 130 business days, E5 200 calendar days, …), converted to an absolute
   `horizonEnd` by `generateWorld`. Epoch boundaries likewise; **a case belongs to the epoch that contains its start**
   (first truth event time; backlog cases are `gl`).
-- **Pools** come from the reference run: a case is *completed* if the reference run makes it terminal by `horizonEnd`,
-  *censored* otherwise. The pools are therefore identical for every arm of a world **[D-4]**. Each arm additionally
-  reports its `armCensored` count (completed-pool cases it left open without diverging; they count as not passed).
-- **Bed health (K1).** The reference run closes ≥ 80% of the cases started in every epoch except the last
+- **Pools** come from the two reference runs (§5.6): a case is *completed* if **both** the earliest-timing and the
+  latest-timing run make it terminal by `horizonEnd`, *censored* otherwise (`casePools` in `stats-ebed.mjs`). The pools
+  are therefore identical for every arm of a world **[D-4]**. With the earliest-timing run alone, a correct arm acting
+  later inside its windows (E1: paying on the due date rather than at the earliest allowed date) would leave cases
+  open at horizon end that the pool counts as completed, and fail them; a required effect whose window ends after
+  `horizonEnd` now puts its case in the censored pool instead. Each arm additionally reports its `armCensored` count
+  (completed-pool cases it left open without diverging; they count as not passed, §5.4).
+- **Bed health (K1).** The completed pool (both reference runs) holds ≥ 80% of the cases started in every epoch except the last
   (E-BED §9.2). E-BED §6 K1 says "any epoch"; the last epoch cannot meet it at a horizon of about p90 + the longest
   clock, so K1 is read as §9.2 states **[D-14]**.
 - **Censored label.** A verdict is labelled "censored" when the censored share exceeds 20% in an epoch whose cases it
   pools, the last epoch excepted for pooled verdicts; an epoch-level claim about the last epoch (e.g. revert behaviour)
-  carries the label when its own share exceeds 20%. `censoringReport` in `stats-ebed.mjs` computes both readings.
+  carries the label when its own share exceeds 20%. `censoringReport` in `stats-ebed.mjs` computes both readings: it
+  excepts the rows of epoch `ep4` by id (never by position), and `reliabilityVerdict` uses the pooled reading by
+  default. The censored share is that of the pools above (so it includes cases only the latest-timing run leaves open).
 
 ---
 
@@ -513,7 +530,7 @@ every other arm (E-BED §2.12).
 
 ## 8. Teacher-forced (TF) mode: diagnostic only
 
-- Inputs at each case-tick are the **neutral export of the reference run's trajectory** up to that tick (business
+- Inputs at each case-tick are the **neutral export of the earliest-timing reference run's trajectory** up to that tick (business
   records and raw events, DESIGN-STREAMS §2.4 [M]); the arm's carry is empty, or rebuilt by the arm's own declared
   migrator from that history. Product-computed fields are never included in Track P.
 - The output of each TF case-tick is graded against the expectation at that tick (layers 1–4 restricted to effects and
@@ -554,9 +571,16 @@ world in E1 and in E7.
   (`experiments/lib/ebed-seed-ledger.test.mjs` [M-c]).
 - **Why these purposes** **[D-11]**: the rehearsal block is kept out of `jit-dev` so no dev stream or suite tunes on
   fixture, attack or validation worlds before they are used; it is `fresh: false` because its sub-blocks are consumed
-  in stages (the status records it). The test blocks take E-bed purposes (`fresh: true`, `heldout: true`) so a stream
-  config that forgets `seedPurpose` (default `jit-heldout`, `stream.mjs:71` [M]) is refused on E-bed worlds; the E-bed
-  runner declares `seedPurpose: 'ebed-heldout' | 'ebed-sealed' | 'ebed-scale'`.
+  in stages. Its status is therefore a record only: marking the block `used` refuses nothing, so single use of the
+  attack worlds (1211–1222) and the validation world (1231) is not enforced by the ledger (deferred, §16 finding 10;
+  owner question 8). The test blocks take E-bed purposes (`fresh: true`, `heldout: true`) so a stream config that
+  forgets `seedPurpose` (default `jit-heldout`, `stream.mjs:71` [M]) is refused on E-bed worlds; the E-bed runner
+  declares `seedPurpose: 'ebed-heldout' | 'ebed-sealed' | 'ebed-scale'`.
+- **Confinement.** The ledger refuses a seed only when a range covering it forbids the purpose; a seed no E-bed range
+  covers (9105 or 8900 on `ebed-e1`, `ebed-sealed` at 9999, `ebed-heldout` on another bed) passes it and escapes the
+  per-item `used` record. The E-bed runner therefore checks seeds with `assertEbedSeeds`
+  (`experiments/lib/ebed-seeds.mjs`), which adds: an E-bed purpose is for the E-bed beds only, and on an E-bed bed
+  every seed lies in one of that bed's own blocks allowing the purpose (`ebed-seed-ledger.test.mjs` [M-c]).
 - **Why per-item test entries**: a run consumes worlds per item (P4 runs E8 and E1 first), and the ledger marks a
   consumed range `used` in the run's commit; per-item entries keep that record exact, and the A–B / C–D split lets
   K = 2 then K = 4 run without editing range ids. Dev blocks are never refused by status (`jit-dev` is `fresh: false`),
@@ -582,17 +606,19 @@ world in E1 and in E7.
 Replaces CONTRACT v1's per-task oracle-health list for this kind. All at $0 on dev worlds before any metered step, and
 again at freeze (E-BED §9).
 
-1. **Determinism**: `generateWorld`, actors, fault schedule, reference run and oracle verdicts byte-identical across
+1. **Determinism**: `generateWorld`, actors, fault schedule, reference runs and oracle verdicts byte-identical across
    two runs and two processes; tie-breaks by `(at, source, id)`; replay of a journal reproduces ledger, SoR and outputs
    byte for byte, else the run is void.
-2. **Reference self-consistency**: the reference run passes every case on ≥ 20 dev worlds per difficulty; totality holds
-   on every view reached by controls and mutants.
+2. **Reference self-consistency**: both reference runs (earliest and latest timing, §5.6) pass every case on ≥ 20 dev
+   worlds per difficulty; totality holds on every view reached by controls and mutants.
 3. **Goldens**: every public worked example as `{ source: file:line, input, expected }`, including discriminating
    goldens (E1: invoice 1 of the cumulative example); all pass on the oracle and on the cards.
 4. **N-version** (E4, E5, E6 and the P60 clock): two implementations by separate sessions, differential fuzz over 10⁴
    worlds per item from the fuzz bases, every disagreement resolved by quoting the rule.
 5. **Specificity**: ≥ 3 correct solvers written independently with different internal designs pass every completed
-   case on 20 dev worlds per difficulty; **one false reject fails K1**.
+   case on 20 dev worlds per difficulty; **one false reject fails K1**. At least one of them acts away from the
+   earliest moment of its windows (late or mid-window), so the pool rule of §6 is exercised; an `armCensored` case
+   counts as a false reject.
 6. **Controls**: bad controls fail ≥ 20 worlds per difficulty; necessity controls fail ≥ 50% of attack worlds' tail
    cases; echo, no-op and gaming controls fail every world.
 7. **Mutation score ≥ 0.95** on oracle mutants (operators of E-BED §9.5).
@@ -621,10 +647,12 @@ solver reports, D21 [M]). `oracle(world, journal)` reads only this journal and t
 ### 13.1 Units and functions
 
 The decision unit is the CL case segment on completed cases, paired across arms by `(world, case)`; TF case-ticks never
-decide (E-BED §6). Functions: `clopperPearson(x, n, side)`, `maxFailures`, `minCleanCases`, `reliabilityVerdict`
-(H-E2, H-E2c), `censoringReport`, `wilcoxonExact`, `wilcoxonCritical`, `familyTest` (test (i)), `familyDecision`
-((i)–(iii) with Holm across arms), `holm`, `nonInferiority` (H-E1, H-E7), `itemGap`, `itemGapSE`, `familyPower`.
-CLI: `node experiments/lib/stats-ebed.mjs power | thresholds`.
+decide (E-BED §6). Functions: `clopperPearson(x, n, side)`, `maxFailures`, `minCasesFor`, `minCleanCases`,
+`reliabilityVerdict` (H-E2, H-E2c), `reliabilityProbability` (its exact operating characteristic), `censoringReport`,
+`casePools` (§6), `wilcoxonExact`, `wilcoxonCritical`, `familyTest` (test (i)), `familyDecision` ((i)–(iii) with Holm
+across arms), `holm`, `nonInferiority` (H-E1, H-E7), `itemGap`, `itemGapSE`, `familyPower` (test (i) power),
+`decisionPower` (power of (i)∧(ii)∧(iii)). CLI: `node experiments/lib/stats-ebed.mjs power | decision | thresholds`.
+Seed confinement for the E-bed runner: `experiments/lib/ebed-seeds.mjs` (§10.1).
 
 ### 13.2 Decisions taken in the module
 
@@ -635,7 +663,8 @@ CLI: `node experiments/lib/stats-ebed.mjs power | thresholds`.
   `sqrt(1 + (m̄ − 1)·ρ)`, ρ = 0.1: with K = 2–4 worlds the cluster bootstrap cannot see between-world variance (the
   same reason as `pairedComparison` in `experiments/jit/stats.mjs:177` [M]), and ρ = 0.1 is what E-BED's power
   assumed. K < 2 worlds gives bounds but no decision. A bootstrap p-value, `(#{replicates ≤ −δ} + 1)/(B + 1)`
-  (the larger of the two), feeds Holm across items.
+  (the larger of the two), feeds Holm across items. Pairs are sorted by `(world, case)` before resampling, so the
+  result depends on the set of pairs only, never on the order the scorer lists them in.
 - **[D-9] Wilcoxon.** Exact one-sided test conditional on the observed absolute values (sign-flip distribution; the
   classic table null when there are no ties); ties by midranks; zero differences dropped (Wilcoxon's method; Pratt's
   available). Rejection on `p < α` everywhere (E-BED writes "p < 0.05"); exact p-values are dyadic and never equal
@@ -644,9 +673,21 @@ CLI: `node experiments/lib/stats-ebed.mjs power | thresholds`.
 - **[D-12] Test (ii) with fewer than 9 items.** E-BED requires H-E2 on "≥ 7 of the admitted core items", which no arm
   can meet with 6 admitted items although (i) is allowed down to n = 6. `familyDecision` keeps E-BED's fixed 7 by
   default and accepts `minReliable: n => Math.ceil(7 * n / 9)` (7 of 8, 6 of 7, 5 of 6); the owner picks one (§15).
-- **[D-13] Holm set.** E-BED §0 says "Holm across the two Haiku arms", §6 "across the arms tested ((a), (g), B1-H)".
-  `familyDecision` applies Holm across the arms that actually enter the test (an arm with fewer than 6 testable items
-  is not in the set); (g) is in it only once it runs.
+- **[D-13] Holm set (amended after review).** E-BED §0 says "Holm across the two Haiku arms", §6 "across the arms
+  tested ((a), (g), B1-H)". `familyDecision` applies Holm across **every arm passed to it**, which is the
+  pre-registered set of arms that ran ((g) only once it runs: a decision made before any outcome). An arm that cannot
+  be tested (fewer than 6 admitted or non-zero differences) enters with p = 1. The first version dropped such an arm
+  from the set, so one arm's multiplicity depended on another arm's data (an arm with four zero differences turned
+  3 · 25/512 into 2 · 25/512 for the others).
+- **[D-19] Fail closed on decision inputs.** An item leaves the family test only for K1, K1′ or K2 (E-BED §6);
+  `familyTest` throws on any other exclusion and on an admitted item without a finite gap (an arm with no pairs there:
+  budget stop K4, invalid worlds K5, a crash), instead of silently testing the arm without it (dropping E5 from the
+  9-item example turned p = 25/512 into 10/512). `familyDecision` takes item exclusions once for all arms
+  (`exclusions`), refuses arms that differ in items or admitted items, and requires integer `critical` /
+  `criticalRef` counts on every admitted item. Check (iii) compares violation identities when the scorer supplies them
+  (`criticalKeys`, e.g. `world|case|code`: an X violation (c) does not share fails (iii)); otherwise it applies E-BED's
+  item-level reading (X has a critical violation on an item where (c) has none), with `moreCritical` (X has more than
+  (c)) reported beside it. K1 items' counts are not checked (their oracle is invalid).
 
 ### 13.3 Reference values the tests pin (all derived independently in `stats-ebed.test.mjs`)
 
@@ -654,23 +695,70 @@ CLI: `node experiments/lib/stats-ebed.mjs power | thresholds`.
 |---|---|---|
 | Wilcoxon, 9 items: critical W⁻ and its p | 8; 25/512 = 0.0488 (W⁻ = 9: 33/512) | hand enumeration of subsets of {1..9} |
 | critical W⁻ for n = 5 … 13 | 0, 2, 3, 5, 8, 10, 13, 17, 21 | hand (n ≤ 9) and the published one-tailed 5% table |
-| H-E2 pooled, n = 300 / 100, bound 0.95 | at most 8 / 1 failures | exact rational arithmetic (BigInt) |
+| H-E2 pooled, n = 300 / 200 / 100, bound 0.95 | at most 8 / 4 / 1 failures | exact rational arithmetic (BigInt) |
 | H-E2 per world, n = 100, bound 0.90 | at most 4 failures | BigInt; hand derivation in the test |
+| smallest n per world (bound 0.90) for 0 / 1 / 4 failures; pooled (0.95) for 0 | 29 / 46 / 89; 59 | BigInt (0.9²⁹ = 0.0471 ≤ 0.05 < 0.9²⁸ = 0.0523) |
+| P(H-E2 holds), i.i.d. success p | m = 40: 0.99⁸⁰ = 0.448 (K = 2), 0.99¹⁶⁰ = 0.200 (K = 4); m = 100, p = 0.98: 0.629 (K = 2), 0.801 (K = 4) | closed form; binomial sum; brute force over per-world counts |
 | H-E2c, rate ≤ 0.1% | 2,995 clean cases | closed form ln 0.05 / ln 0.999 = 2994.2 |
 | item-gap SE (m = 40, ρ = 0.1, p = 0.8) | 0.1389 (K = 2), 0.0982 (K = 4) | by hand |
 | sign rule power at equality | 0.336 (K = 2), 0.585 (K = 4) | closed form 9q⁸(1 − q) + q⁹, q = Φ(0.10 / SE) |
 | null size at true gap −δ | Wilcoxon 25/512, sign 10/512 | exact, any SE |
-| Wilcoxon power at equality | **0.609 (K = 2), 0.856 (K = 4)** | simulation ± 0.002 (§13.4) |
+| **test (i)** Wilcoxon power at equality | **0.610 (K = 2), 0.856 (K = 4)** | 4 × 10⁵ draws, within 0.003 of two independent 10⁶-draw scripts (0.6103, 0.8561), a tolerance that excludes E-BED's 0.604 / 0.851; the seeded values pinned (§13.4) |
+| decision power, P(ii) at ρ = 0 | P(Bin(9, q) ≥ 7), q = P(H-E2 holds): 0.290 → 0.740 (m = 100, p = 0.98, K = 2 → 4) | simulation against the closed form, within Monte Carlo error |
 
 ### 13.4 Correction to E-BED's power figures [M-c]
 
-E-BED §6 gives Wilcoxon power 0.60 (K = 2) and 0.85 (K = 4), and the sign test 0.34 / 0.57. Re-running the same model
-(9 items, gap ~ N(0, SE²), SE as above, δ = 0.10) with the repo's mulberry32 generator gives **0.609 / 0.856**
-(Wilcoxon) and **0.336 / 0.585** (sign) at 200,000–400,000 draws (Monte Carlo SE ≈ 0.001). The sign figures match
-their closed form to Monte Carlo precision; E-BED's 0.572 at K = 4 does not, and E-BED's generator (a 31-bit LCG
-feeding Box-Muller, `scratchpad/efinal/pw.mjs`) also puts the sign test's null size at 0.017 instead of the exact
-10/512 = 0.0195. So the E-BED figures are 0.005–0.013 low. Nothing in the design changes: K = 4 stays recommended,
-and the Wilcoxon still beats the sign test by about 0.27 in power at both K.
+E-BED §6 gives Wilcoxon power 0.60 (K = 2) and 0.85 (K = 4), and the sign test 0.34 / 0.57. These are the power of
+**test (i) alone** (9 items, gap ~ N(0, SE²), SE as above, δ = 0.10). Re-running that model with the repo's mulberry32
+generator gives **0.609 / 0.856** (Wilcoxon) at 4 × 10⁵ draws, and two independent scripts (crypto uniforms, Marsaglia
+polar normals, 10⁶ draws each) give 0.6101 / 0.8561 and 0.6106 / 0.8561, so the value is **0.610 / 0.856**; the sign
+rule gives **0.336 / 0.585**, its closed form. E-BED's figures came from a scratch script, now preserved with its
+output in [`evidence/`](evidence/README.md) (`efinal-pw.mjs`, sha256 `fcdd83db…39ad`). Its generator,
+`s = (s * 1103515245 + 12345) % 2147483648` on doubles, is **not** the LCG it imitates: the product exceeds 2⁵³ on
+4,978,979 of the first 5 × 10⁶ steps, so it is rounded, and the sequence leaves the exact (BigInt) recurrence at the
+second step; consecutive outputs feed Box-Muller. Which defect causes the bias was not isolated. The bias shows where
+closed forms exist: the script's sign rate is 0.572 at K = 4 (closed form 0.585) and its sign null size 0.017 (exact
+10/512 = 0.0195). Its Wilcoxon figures, 0.604 / 0.851 before rounding, are 0.006 / 0.005 low. The Wilcoxon still beats
+the sign test by about 0.27 at both K. What this does **not** settle is K: §13.5.
+
+### 13.5 Power of the whole decision, and K [M-c]
+
+The bar decision for an arm is (i) ∧ (ii) ∧ (iii), and (ii) needs H-E2 on ≥ 7 items. H-E2's per-world bound needs at
+least 29 completed tail-mix cases in a world to pass at all, 46 to tolerate one failure and 89 to tolerate four; the
+pooled bound needs 59 cases for a clean pass. At E-BED's power model (m = 40 cases per world) both limits are zero
+failures, so P(H-E2 holds) = p^(40K) and adding worlds lowers it: a 0.99-reliable arm holds on one item with
+probability 0.448 at K = 2 and 0.200 at K = 4, and on ≥ 7 of 9 items with 0.047 and 0.000. `decisionPower` simulates
+the conjunction (world success rates Beta with intra-world correlation ρ, independent arms, which reproduces
+`itemGapSE` for the gap; `node experiments/lib/stats-ebed.mjs decision`, 2 × 10⁴ draws per cell). P(decision) for an
+arm equal to (c), both at success p, 9 items, H-E2 on ≥ 7, α = 0.05 (no Holm; pass α / arms for the Bonferroni bound):
+
+| completed tail-mix cases per world m | p | ρ = 0, K = 2 | ρ = 0, K = 4 | ρ = 0.1, K = 2 | ρ = 0.1, K = 4 |
+|---|---|---|---|---|---|
+| 40 | 0.97 | 0.000 | 0.000 | 0.022 | 0.000 |
+| 40 | 0.98 | 0.001 | 0.000 | 0.126 | 0.003 |
+| 40 | 0.99 | 0.047 | 0.000 | 0.544 | 0.129 |
+| 100 | 0.97 | 0.003 | 0.024 | 0.221 | 0.022 |
+| 100 | 0.98 | 0.292 | 0.743 | 0.530 | 0.152 |
+| 100 | 0.99 | 0.992 | 1.000 | 0.881 | 0.614 |
+| 200 | 0.97 | 0.192 | 0.885 | 0.405 | 0.092 |
+| 200 | 0.98 | 0.985 | 1.000 | 0.710 | 0.344 |
+| 200 | 0.99 | 1.000 | 1.000 | 0.944 | 0.786 |
+
+Reading it:
+- In every cell P(i) ≥ 0.979: near the bar the gap's SE is small (Var(d) = 2p(1 − p)), so test (i) is not the
+  binding part; (ii) is. The test (i) figures of §13.4 (at E-BED's pRef = 0.8) say nothing about the decision.
+- With no between-world dispersion (ρ = 0), K = 4 helps once m ≥ 100 (p = 0.98: 0.29 → 0.74) and hurts at m = 40.
+- With ρ = 0.1, K = 4 lowers the power at every m: each extra world is another chance of one world under the 0.90
+  bound. (ρ = 0.1 as a Beta intra-world correlation on a success rate near 0.98 spreads world rates over roughly
+  0.85–1; it is a bracket, not an estimate, and it even helps a zero-failure rule at m = 40.)
+
+**K, conditionally (replaces "K = 4 is recommended").** (1) Size held-out worlds so every item in the family test has
+≥ 100 completed tail-mix cases per world for every arm entering the decision, and never fewer than 46 (below that
+any single failure fails a world); a world below 29 cannot pass H-E2 at all. (2) Before P4, estimate the between-world
+dispersion of an arm's own success on dev worlds only (the rehearsal worlds 1232–1234 and dev streams on 1001–1199,
+never held-out worlds; §15 Q5), and re-run `decisionPower` with it. (3) Choose K = 4 when that table shows K = 4 at
+least as powerful as K = 2 at the planned m (ρ near 0 and m ≥ 100); otherwise the owner weighs K = 2 against the
+per-world bound itself (E-BED §11 decisions 4 and 8). K = 4 remains the recommendation for test (i) and for H-E1.
 
 ---
 
@@ -681,16 +769,17 @@ and the Wilcoxon still beats the sign test by about 0.27 in power at both K.
 | D-1 | events "routed per case" (§2.1) yet the host "never correlates" (§2.2) | routing by channel identity only; every uncorrelated inbound event starts an instance; the arm merges (§3.2) | the two sentences conflict; message-start + correlate is what engines do (G1), and it keeps correlation the arm's work |
 | D-2 | grading per case | per truth case, effects attributed by subject arguments; instance structure never graded (§5.1) | arms may split or merge instances; grading must stay behavioural |
 | D-3 | allowed windows (§2.8) | `lid` deterministic in (rule, business keys); the latest expectation's window binds; withdrawn `lid`s are not failures; every window cites a rule (§5.2–§5.3) | windows recomputed on-policy must refer to the same obligation across ticks |
-| D-4 | censored share "per epoch and arm" | pools from the arm-independent reference run; an arm's open completed-pool case does not pass (`armCensored`) (§6) | pairing by (world, case) needs one denominator; a stalling arm must not shrink its own |
+| D-4 | censored share "per epoch and arm" | pools from the two arm-independent reference runs (earliest and latest timing): completed only if both close the case by horizon end; an arm's open completed-pool case does not pass (`armCensored`) (§5.4, §5.6, §6) | pairing by (world, case) needs one denominator; a stalling arm must not shrink its own; a correct arm acting late inside its windows must not be failed (review finding 2) |
 | D-5 | "after an arm error the case is already failed" | kept; an impaired case-tick (persistent real env fault) is graded as an arm error and counted for K5 (§3.7) | one rule for every arm |
 | D-6 | wake-up ordering unstated | rounds: case-ticks, sweeps, merge/wake ticks; effect results ≥ 1 minute later (§3.6) | determinism and no same-instant cascades |
-| D-7–D-9, D-12, D-13 | §6 | §13.2 | see §13.2 |
-| D-10 | power 0.60 / 0.85, sign 0.34 / 0.57 | 0.61 / 0.86, sign 0.34 / 0.58 (§13.4) | biased generator in the original script |
+| D-7–D-9, D-12, D-13, D-19 | §6 | §13.2 | see §13.2 |
+| D-10 | power 0.60 / 0.85, sign 0.34 / 0.57; "K = 4 is recommended" | test (i) power 0.61 / 0.86, sign 0.34 / 0.58 (§13.4); the decision's power depends on the per-world n and dispersion, and K = 4 is recommended only conditionally (§13.5) | a biased generator in the original script; the figures covered test (i) only |
 | D-11 | seed ranges `owner: jit`, allow `jit-dev` for 1001–1199 | owner `ebed` (as `wbed`); E-bed purposes for rehearsal and test blocks; per-item test entries; held-out split A–B / C–D (§10.1) | per-item consumption; refuse default purposes on E-bed worlds |
 | D-14 | K1 "censored share > 20% in any epoch" | every epoch except the last, as §9.2 (§6) | the last epoch is mostly censored by construction |
 | D-15 | epochs named E0–E4 | `ep0`–`ep4` (+ `gl` for the backlog) | item ids are E1–E13 |
 | D-16 | actors keyed by "decision kind" | `kind` is a required human-task field from spec-E's vocabulary (§4.4) | the key must be typed, not read from question text |
 | D-17 | answerSchema rejection: "the consequence fails" | the host withholds the rejected value and tells the arm (`answerRejected`); graded through consequences (§4.4, §5.3) | keeps layer 4 behavioural; an arm may recover by asking again |
+| D-18 | decisions graded at every case-tick | a case-tick whose output only closes or merges (no effects, tasks or obligation upserts) is not graded on layer 1 (§5.1, §5.3) | an instance started by a duplicate delivery need not restate its case's decision record (a specificity false reject otherwise; review finding 13) |
 
 ---
 
@@ -699,11 +788,48 @@ and the Wilcoxon still beats the sign test by about 0.27 in power at both K.
 1. Adopt the routing model D-1 (inbound start + merge)? The alternative (the host routes by truth) is simpler but
    removes correlation (G1) from the tier-S measurement, contrary to E-BED §2.2.
 2. Test (ii) below 9 items (D-12): fixed 7, or `ceil(7n/9)`?
-3. `armCensored` counts as a failure (D-4). Alternative: report separately and drop from both arms' pairs (keeps
-   pairing, but an arm could then benefit from stalling).
+3. `armCensored` counts as a failure (D-4), now on pools from both reference timings, so acting late inside the
+   windows no longer produces it. Alternative: report it separately and drop the pair for both arms (an arm could then
+   benefit from leaving cases open).
 4. Sealed / reserve worlds (9201–9204) are one range per item; the heal arm uses one world per mined defect, so an item
    with more than 4 admitted defects needs more reserve seeds (proposal: 9205–9299, added when the miner's count is
    known).
-5. The non-inferiority level (one-sided 95%) and ρ = 0.1 are inherited, not measured; the first K = 2 pilot measures
-   ρ per item, and an amendment before P5 may replace it.
+5. The non-inferiority level (one-sided 95%) and ρ = 0.1 are inherited, not measured. ρ (and the between-world
+   dispersion of an arm's own success, §13.5) is estimated on dev worlds only (rehearsals 1232–1234, dev streams on
+   1001–1199) before P4, never on held-out worlds: the A–B pilot worlds are part of the K = 4 confirmatory set, so a
+   parameter set from them would be tuned on the data it then judges. If the owner prefers to set ρ from the pilot,
+   worlds A–B leave every decision that uses it.
 6. E10: keep its ledger blocks only if the owner admits E10 (E-BED §11.5).
+7. K and the per-world size (§13.5): confirm ≥ 100 completed tail-mix cases per world per item (never fewer than 46),
+   and choose K from `decisionPower` at the measured dispersion rather than from the test (i) figures.
+8. Rehearsal block (§10.1): split 1201–1249 into per-use sub-ranges with fresh purposes for attacks (1211–1222) and
+   reference validation (1231), so the ledger enforces their single use? (+52 ranges; until then single use is a
+   runner log, not a ledger refusal.)
+
+---
+
+## 16. Review record: adversarial review of step 0 (2026-10-14)
+
+An adversarial review of this part (contract, seed-ledger entries, `stats-ebed.mjs` and its tests) reported 3 P1 and
+10 P2 findings. Each was re-checked here at $0 (the reviewer's probes re-run, the numbers recomputed) before acting.
+All 13 were confirmed; none was rejected outright. Regression tests name their finding.
+
+| # | sev | finding (short) | verdict | action |
+|---|---|---|---|---|
+| 1 | P1 | the power figures cover test (i) only; at m = 40 per world the whole decision has almost no power, and K = 4 makes it worse | confirmed (P(H-E2) = 0.99⁸⁰ = 0.448 vs 0.99¹⁶⁰ = 0.200; ≥ 7 of 9: 0.047 vs 0.000) | **fixed**: `reliabilityProbability`, `minCasesFor`, `decisionPower` (+ CLI `decision`); §0, §13.3–§13.5 relabel test (i) power and make the K recommendation conditional on per-world n and dispersion; owner question 7. Tests: "H-E2 operating characteristic", "decisionPower" |
+| 2 | P1 | `armCensored` fails correct solvers that act later inside their windows | confirmed | **fixed**: pools from both an earliest- and a latest-timing reference run (§5.4, §5.6, §6, §11.2, §11.5; D-4); `casePools` implements the rule. Test: "casePools" |
+| 3 | P1 | `familyTest` drops an item with a missing gap (fails open) | confirmed (E5 dropped: p 25/512 → 10/512) | **fixed**: only K1, K1′, K2 exclude; anything else throws (D-19). Test: "familyTest fails closed" |
+| 4 | P2 | check (iii) skips rows with missing counts; compares counts only | confirmed | **fixed**: integer counts required on admitted items; identities compared when supplied (`criticalKeys`); `moreCritical` reported. The count rule stays the default because E-BED's (iii) is worded per item ("an item where X has a critical violation that (c) does not"). Test: "familyDecision (iii)" |
+| 5 | P2 | the pooled censoring label ignores the last-epoch exception; `exceptLast` depends on row order | confirmed | **fixed**: `reliabilityVerdict` uses the pooled reading by default; `censoringReport` excepts epoch `ep4` by id. Tests: "reliabilityVerdict", "censoringReport" |
+| 6 | P2 | the power test's tolerance (±0.0097) cannot tell 0.609 from the biased 0.604 | confirmed | **fixed**: 4 × 10⁵ draws, ±0.003 around two independent 10⁶-draw references, seeded values pinned. Test: "power of test (i)" |
+| 7 | P2 | the root cause of E-BED's error is misstated ("31-bit LCG"); the evidence path is session-local | confirmed (4,978,979 of 5 × 10⁶ products exceed 2⁵³; leaves the exact recurrence at the second step) | **fixed**: script and output preserved in `evidence/` with sha256; §13.4 rewritten |
+| 8 | P2 | `nonInferiority` depends on input order | confirmed (−0.1813 vs −0.1750) | **fixed**: pairs sorted by (world, case). Test: "nonInferiority" (reversed and permuted input) |
+| 9 | P2 | the Holm set changes with the data; arms with different admitted items are accepted | confirmed (3 · 25/512 became 2 · 25/512) | **fixed**: Holm over every arm passed, untestable arms at p = 1; one `exclusions` map; differing items refused (D-13 amended). Test: "familyDecision: Holm over every arm" |
+| 10 | P2 | the ledger does not confine E-bed seeds to their blocks; the rehearsal block's `used` status refuses nothing | confirmed | **partly fixed**: `assertEbedSeeds` (`experiments/lib/ebed-seeds.mjs`) refuses every escape the review listed; §10.1 no longer claims the status enforces single use. **Deferred**: splitting the rehearsal block into per-use sub-ranges (+52 ranges, new purposes) changes the D-11 layout the owner is reviewing, and no runner consumes rehearsal worlds yet; owner question 8. Test: "confinement" |
+| 11 | P2 | ρ would be re-set from pilot worlds that are also confirmatory | confirmed | **fixed** (contract): ρ and the dispersion are estimated on dev worlds only; if set from the pilot, A–B leave the decisions that use it (§13.5, owner question 5) |
+| 12 | P2 | §3.6 says both "apply each output as it returns" and "commits follow the round's order" | confirmed | **fixed** (contract): reads see the round-start state; outputs apply after the round in round order, as `beds/ebed/host/host.mjs` does |
+| 13 | P2 | decisions are graded on duplicate-started instances that only close | confirmed | **fixed** (contract): close- or merge-only ticks are not graded on layer 1 (D-18). The alternative (grade by the arm-declared subject) was not taken: a duplicate-started instance that declares the subject would still have to restate the record. Known limit stated in §5.3 |
+
+Not in this part and not changed: the stale Kev registry test (`experiments/kev-data/test/seed-ledger.test.mjs`
+expects exactly four held ranges; already failing before step 0, broken by the W-bed ranges); `experiments/jit/*`
+(`seeds.mjs` is read-only here, so confinement lives in a new module rather than in `seedRefusals`).

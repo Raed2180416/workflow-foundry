@@ -412,7 +412,7 @@ test('nonInferiority: degenerate, closed-form normal approximation, the Deff wid
   assert.throws(() => nonInferiority([{ world: 'A', case: 1, x: 0.5, y: 1 }]), /0\/1 or booleans/);
 });
 
-test('power: the SE by hand, the sign rule in closed form, the exact null size, and E-BED\'s 0.60 / 0.85', () => {
+test('power of test (i): the SE by hand, the sign rule in closed form, the exact null size', () => {
   // SE (m = 40, rho = 0.1, pRef = 0.8, discordance at a 10-point gap): pX = 0.85, pY = 0.75;
   // psi = 0.85·0.25 + 0.75·0.15 = 0.325; Var = 0.325 − 0.01 = 0.315; Deff = 1 + 39·0.1 = 4.9;
   // K = 2: sqrt(0.315 · 4.9 / 80) = sqrt(0.01929375) = 0.138902; K = 4: sqrt(0.009646875) = 0.098219.

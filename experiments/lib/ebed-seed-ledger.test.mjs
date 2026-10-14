@@ -1,6 +1,7 @@
 // The E-bed blocks of research/jit-20261008/SEED-LEDGER.json (E-BED §6; BED-CONTRACT-v1.1 §10): every item E1-E13 has
 // its dev, rehearsal, held-out and sealed blocks (scale for the core items E1-E9), numerically disjoint from every other
-// bounded range, and the ledger's refusal rules (experiments/jit/seeds.mjs) keep each block for its own purpose. $0.
+// bounded range, and the ledger's refusal rules (experiments/jit/seeds.mjs) keep each block for its own purpose; the
+// E-bed runner's confinement check (experiments/lib/ebed-seeds.mjs) keeps every E-bed seed inside its own block. $0.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadLedger, assertSeedsAllowed, seedRefusals } from '../jit/seeds.mjs';
