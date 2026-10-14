@@ -40,7 +40,7 @@ export const family = {
     + 'a planned swarm: a code plan over the header digest and the lab\'s alias notices, checked against a code mention '
     + 'index, one judge chain per candidate compound, a code reducer and a sampled verify. The plan is needed to fit the '
     + 'fan-out cap, not for correctness; the corpus is a closed template grammar a parser solves at d2-d4 (W-BED-R6-NOTES '
-    + '§13). The inline task is 48-104K tokens.',
+    + '§13). The inline task is 48-105K tokens.',
 };
 
 export const difficulty = {

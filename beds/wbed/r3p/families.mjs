@@ -53,6 +53,10 @@ export function words(r, ctx, sizes) {
   return sizes.map((n, i) => (i === 0 ? (ctx.split === 'test' && r.chance(0.5) ? n - 1 : r.int(0, n - 2)) : r.int(0, n - 1)));
 }
 
+/** Parameter-description wording: `pw` holds one free index per parameter; PD picks among the given phrasings. */
+const pws = r => [r.int(0, 5), r.int(0, 5), r.int(0, 5)];
+const PD = (p, i, ...opts) => opts[p.pw[i] % opts.length];
+
 export const FAMILIES = {};
 const fam = (id, def) => { FAMILIES[id] = { id, kind: 'fn', can: { defect: [], decoy: [] }, accept: {}, ...def }; };
 
@@ -152,7 +156,7 @@ fam('day-count', {
     const [a, b] = r.pick([['fromDay', 'toDay'], ['startDay', 'endDay'], ['firstDay', 'lastDay']]);
     const rule = r.pick(['both', 'start', 'between']);
     const names = { both: ['{n}Days', 'count{N}Days', 'days{N}Spans', '{n}DayCount'], start: ['{n}Nights', 'nights{N}', 'count{N}Nights'], between: ['{n}DaysBetween', 'daysInside{N}', 'gap{N}Days'] }[rule];
-    return { name: ctx.name(names), rule, a, b, M: r.pick([366, 1000, 3650]), w: words(r, ctx, [3, 2]), style: r.int(0, 1),
+    return { name: ctx.name(names), rule, a, b, M: r.pick([366, 1000, 3650]), w: words(r, ctx, [3, 2]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { OFF_BY_ONE: ['swap'] }, decoy: { OFF_BY_ONE: ['loop'] } }) };
   },
   smell: p => (p.variant === 'loop' ? 'OFF_BY_ONE' : null),
@@ -167,8 +171,8 @@ fam('day-count', {
       between: [`Number of days strictly between ${a} and ${b} (day numbers), neither counted: day 10 to day 12 is 1, day 10 to day 10 is 0.`,
         `Days lying strictly between ${a} and ${b} (day numbers, both excluded); 0 when there are none.`, `Count of the days after ${a} and before ${b} (day numbers); 0 when there are none.`],
     }[p.rule];
-    return { lines: [T[p.w[0]]], params: p.w[1] ? ['the first day number', `the last day number, not before ${a} and at most ${p.M} days after it`]
-      : ['first day number', `last day number, not before ${a} and at most ${p.M} days after it`], returns: 'number' };
+    return { lines: [T[p.w[0]]], params: [PD(p, 0, 'first day number', 'the first day (a day number)', 'the starting day number'),
+      `${PD(p, 1, 'last day number', 'the last day (a day number)', 'the closing day number')}, not before ${a} and at most ${p.M} days after it`], returns: 'number' };
   },
   domain: p => ({ params: [{ t: 'int', min: 0, max: 80000 }, { t: 'int', min: 0, max: 80000 }], where: a => a[1] >= a[0] && a[1] - a[0] <= p.M }),
   body(p, which) {
@@ -337,7 +341,7 @@ fam('retry-policy', {
   draw(r, ctx, role) {
     const [status, attempt, max] = r.pick([['status', 'attempt', 'maxAttempts'], ['code', 'tries', 'limit'], ['httpStatus', 'attemptNo', 'maxTries']]);
     return { name: ctx.name(['shouldRetry{N}', 'isRetryable{N}', 'retry{N}Allowed', 'canRetry{N}']), status, attempt, max, set: r.pick(['a', 'b', 'c']),
-      w: words(r, ctx, [3, 2]), style: r.int(0, 1), order: r.pick(ORD3),
+      w: words(r, ctx, [3, 2]), pw: pws(r), style: r.int(0, 1), order: r.pick(ORD3),
       variant: pickVariant(r, role, { defect: { LOGIC_ERROR: ['precedence', 'operand'], OFF_BY_ONE: ['bound'] }, decoy: { LOGIC_ERROR: ['floor'] } }) };
   },
   smell: p => (p.variant === 'floor' ? 'LOGIC_ERROR' : null),
@@ -347,7 +351,8 @@ fam('retry-policy', {
     const main = [`True when a failed call should be retried: only while ${attempt} (counted from 1) is below ${max}, and only for ${setT}.`,
       `Whether to try a failed call again: retryable are ${setT}, and only while ${attempt} (the 1-based attempt number) is less than ${max}.`,
       `Retry decision for a failed call: retry ${setT} while ${attempt} < ${max} (attempts counted from 1).`][p.w[0]];
-    return { lines: [main], params: ['the HTTP status of the failed call', 'this attempt\'s number', 'the most attempts allowed'], returns: 'boolean' };
+    return { lines: [main], params: [PD(p, 0, 'the HTTP status of the failed call', 'HTTP status code returned', 'the failed call\'s status'),
+      PD(p, 1, 'this attempt\'s number', 'the attempt that failed', 'number of the attempt just made'), PD(p, 2, 'the most attempts allowed', 'attempt limit', 'the maximum number of attempts')], returns: 'boolean' };
   },
   domain: () => ({ params: [{ t: 'int', min: 100, max: 599 }, { t: 'int', min: 1, max: 20 }, { t: 'int', min: 1, max: 20 }] }),
   body(p, which) {
@@ -383,7 +388,7 @@ fam('filter-status', {
     const mode = r.pick(['exclude', 'exclude', 'include']);
     const ws = r.sample(STATUS_WORDS, r.chance(0.35) ? 3 : 2);
     return { name: ctx.name(mode === 'exclude' ? ['open{N}s', 'live{N}s', 'active{N}s', 'billable{N}s', 'countable{N}s'] : ['held{N}s', 'flagged{N}s', 'stalled{N}s', 'parked{N}s']),
-      mode, ws, recs: r.pick(['records', 'items', 'lines']), amax: r.pick(AMAX), w: words(r, ctx, [3, 2]), style: r.int(0, 1),
+      mode, ws, recs: r.pick(['records', 'items', 'lines']), amax: r.pick(AMAX), w: words(r, ctx, [3, 2]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { LOGIC_ERROR: ['or', 'one'] }, decoy: { LOGIC_ERROR: ['not-or'] } }) };
   },
   smell: p => (p.variant === 'or' || p.variant === 'not-or' ? 'LOGIC_ERROR' : null),
@@ -392,7 +397,7 @@ fam('filter-status', {
     const ord = ['in their original order', 'order kept'][p.w[1]], nor = quoteList(p.ws, 'nor'), or = quoteList(p.ws, 'or');
     const T = p.mode === 'exclude' ? [`The ${p.recs} whose status is neither ${nor}, ${ord}.`, `Drops the ${p.recs} with status ${or}; the rest, ${ord}.`, `Every element of ${p.recs} except those in status ${or}, ${ord}.`]
       : [`The ${p.recs} whose status is ${or}, ${ord}.`, `Keeps only the ${p.recs} with status ${or}, ${ord}.`, `Just the ${p.recs} in status ${or}, ${ord}.`];
-    return { lines: [T[p.w[0]]], params: ['objects with id and status'], returns: 'Array' };
+    return { lines: [T[p.w[0]]], params: [PD(p, 0, 'objects with id and status', 'the records to filter', 'records, each with an id and a status')], returns: 'Array' };
   },
   domain: p => ({ params: [{ t: 'arr', of: { t: 'obj', props: { id: INT, status: { t: 'str', max: 20 } } }, max: p.amax }] }),
   body(p, which) {
@@ -419,7 +424,7 @@ fam('is-overdue', {
   can: { defect: ['LOGIC_ERROR', 'OFF_BY_ONE'], decoy: ['LOGIC_ERROR'] },
   draw(r, ctx, role) {
     const [due, today, paid] = r.pick([['dueDay', 'today', 'paidDay'], ['dueOn', 'asOf', 'paidOn']]);
-    return { name: ctx.name(['is{N}Overdue', '{n}IsOverdue', 'overdue{N}', 'is{N}Late']), due, today, paid, g: r.pick([0, 0, 3, 7, 14, 30]), w: words(r, ctx, [3]), style: r.int(0, 1),
+    return { name: ctx.name(['is{N}Overdue', '{n}IsOverdue', 'overdue{N}', 'is{N}Late']), due, today, paid, g: r.pick([0, 0, 3, 7, 14, 30]), D: r.pick([80000, 100000]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       order: r.pick([[0, 1, 2], [1, 0, 2]]), variant: pickVariant(r, role, { defect: { LOGIC_ERROR: ['or'], OFF_BY_ONE: ['ge'] }, decoy: { LOGIC_ERROR: ['not-le'] } }) };
   },
   smell: p => (p.variant === 'not-le' ? 'LOGIC_ERROR' : null),
@@ -431,9 +436,10 @@ fam('is-overdue', {
       : [`True when the item is unpaid (${paid} is null) and ${today} is more than ${g} days after ${due} (day numbers); within the ${g}-day grace period it is not overdue.`,
         `Whether an unpaid item (${paid} null) is late on ${today}: late once more than ${g} grace days have passed since ${due} (day numbers).`,
         `Overdue check (day numbers): ${paid} null and ${today} beyond ${due} plus ${g} days of grace.`];
-    return { lines: [T[p.w[0]]], params: ['due day number', 'the day to judge', 'day number it was paid, or null'], returns: 'boolean' };
+    return { lines: [T[p.w[0]]], params: [PD(p, 0, 'due day number', 'the due date (a day number)'), PD(p, 1, 'the day to judge', 'today, as a day number'),
+      PD(p, 2, 'day number it was paid, or null', 'payment day number (null while unpaid)')], returns: 'boolean' };
   },
-  domain: () => ({ params: [{ t: 'int', min: 0, max: 80000 }, { t: 'int', min: 0, max: 80000 }, { t: 'nullable', of: { t: 'int', min: 0, max: 80000 } }] }),
+  domain: p => ({ params: [{ t: 'int', min: 0, max: p.D }, { t: 'int', min: 0, max: p.D }, { t: 'nullable', of: { t: 'int', min: 0, max: p.D } }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { today, paid } = p, thr = p.g ? `${p.due} + ${p.g}` : p.due;
     if (vr === 'or') return `return ${paid} === null || ${today} > ${thr};`;
@@ -482,7 +488,7 @@ fam('average', {
   can: { defect: ['MISSING_GUARD'], decoy: ['MISSING_GUARD'] },
   draw(r, ctx, role) {
     return { name: ctx.name(['average{N}', 'mean{N}', '{n}Average', 'avg{N}']), v: r.pick(['values', 'amounts', 'xs']), empty: role.kind === 'decoy' ? 'zero' : r.pick(['zero', 'null']),
-      trunc: r.chance(0.3), amax: r.pick(AMAX), w: words(r, ctx, [3]), style: r.int(0, 1),
+      trunc: r.chance(0.3), amax: r.pick(AMAX), R: r.pick(RANGES), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { MISSING_GUARD: ['noguard', 'fallback'] }, decoy: { MISSING_GUARD: ['and'] } }) };
   },
   smell: p => (p.variant === 'noguard' || p.variant === 'and' ? 'MISSING_GUARD' : null),
@@ -490,9 +496,9 @@ fam('average', {
   doc: p => {
     const E = p.empty === 'zero' ? '0' : 'null', tr = p.trunc ? ', rounded toward zero' : '', { v } = p;
     return { lines: [[`Arithmetic mean of ${v}${tr}; ${E} for an empty array.`, `The average of ${v}${tr}, or ${E} when ${v} is empty.`, `Mean value of ${v}${tr}; ${E} if there are none.`][p.w[0]]],
-      params: ['integers'], returns: p.empty === 'null' ? 'number|null' : 'number' };
+      params: [PD(p, 0, 'integers', 'the values to average', 'whole numbers')], returns: p.empty === 'null' ? 'number|null' : 'number' };
   },
-  domain: p => ({ params: [{ t: 'arr', of: INT, max: p.amax }] }),
+  domain: p => ({ params: [{ t: 'arr', of: intR(p.R), max: p.amax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { v } = p;
     const E = (vr === 'fallback') === (p.empty === 'zero') ? 'null' : '0';
@@ -510,7 +516,7 @@ fam('ratio', {
   draw(r, ctx, role) {
     const [part, whole] = r.pick([['part', 'whole'], ['count', 'total'], ['paid', 'due']]);
     return { name: ctx.name(['{n}Share', 'share{N}', '{n}Ratio', 'ratio{N}']), part, whole, zero: r.pick(['null', 'null', 'zero']), pct: r.chance(0.35),
-      w: words(r, ctx, [3]), style: r.int(0, 1), order: r.pick(ORD2),
+      R: r.pick([1e5, 1e6, 1e7]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), order: r.pick(ORD2),
       variant: pickVariant(r, role, { defect: { MISSING_GUARD: ['noguard', 'fallback'] }, decoy: { MISSING_GUARD: ['truthy'] } }) };
   },
   smell: p => (p.variant === 'noguard' || p.variant === 'truthy' ? 'MISSING_GUARD' : null),
@@ -518,9 +524,10 @@ fam('ratio', {
   doc: p => {
     const E = p.zero === 'null' ? 'null' : '0', kind = p.pct ? 'a percentage' : 'a fraction', { part, whole } = p;
     return { lines: [[`${part} as ${kind} of ${whole}; ${E} when ${whole} is 0.`, `The share of ${whole} that ${part} is, as ${kind}; ${E} for a ${whole} of 0.`,
-      `${part} divided by ${whole}${p.pct ? ', times 100' : ''}; ${E} when ${whole} is 0.`][p.w[0]]], params: ['an integer', 'an integer'], returns: p.zero === 'null' ? 'number|null' : 'number' };
+      `${part} divided by ${whole}${p.pct ? ', times 100' : ''}; ${E} when ${whole} is 0.`][p.w[0]]],
+    params: [PD(p, 0, 'an integer', 'the part', 'the numerator'), PD(p, 1, 'an integer', 'the whole', 'the denominator')], returns: p.zero === 'null' ? 'number|null' : 'number' };
   },
-  domain: () => ({ params: [{ t: 'int', min: -1e7, max: 1e7 }, { t: 'int', min: -1e7, max: 1e7 }] }),
+  domain: p => ({ params: [intR(p.R), intR(p.R)] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { part, whole } = p;
     const e = p.pct ? `${part} * 100 / ${whole}` : `${part} / ${whole}`, E = (vr === 'fallback') === (p.zero === 'null') ? '0' : 'null';
@@ -535,26 +542,27 @@ fam('display-name', {
   can: { defect: ['MISSING_GUARD'], decoy: ['MISSING_GUARD'] },
   draw(r, ctx, role) {
     return { name: ctx.name(['{n}DisplayName', 'label{N}', '{n}Label', 'nameOf{N}']), c: r.pick(['contact', 'person', 'party']), fb: r.pick(['email', 'email', '(unnamed)', 'Unknown']),
-      w: words(r, ctx, [3]), style: r.int(0, 1),
+      nf: r.pick(['name', 'name', 'fullName', 'displayName']), ef: r.pick(['email', 'mail']), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { MISSING_GUARD: ['blank', 'null'] }, decoy: { MISSING_GUARD: ['nullish-or'] } }) };
   },
   smell: p => ({ null: 'MISSING_GUARD', 'nullish-or': 'MISSING_GUARD' }[p.variant] ?? null),
   sig: p => [p.c],
   doc: p => {
-    const c = p.c, FB = p.fb === 'email' ? `${c}.email` : `'${p.fb}'`;
-    return { lines: [[`The name of ${c} without surrounding whitespace; ${FB} when the name is null, empty or only whitespace.`, `${cap(c)}'s name, trimmed; ${FB} for a null, empty or whitespace-only name.`,
-      `Display label for ${c}: the trimmed name, or ${FB} if the name is null or blank (only whitespace).`][p.w[0]]], params: ['an object with name (string or null) and email'], returns: 'string' };
+    const { c, nf, ef } = p, FB = p.fb === 'email' ? `${c}.${ef}` : `'${p.fb}'`;
+    return { lines: [[`The ${nf} of ${c} without surrounding whitespace; ${FB} when ${c}.${nf} is null, empty or only whitespace.`, `${cap(c)}'s ${nf}, trimmed; ${FB} for a null, empty or whitespace-only ${nf}.`,
+      `Display label for ${c}: the trimmed ${nf}, or ${FB} if the ${nf} is null or blank (only whitespace).`][p.w[0]]],
+    params: [`${PD(p, 0, 'an object with', 'a contact record with', 'the party, with')} ${nf} (string or null) and ${ef}`], returns: 'string' };
   },
-  domain: () => ({ params: [{ t: 'obj', props: { name: { t: 'nullable', of: { t: 'str', max: 40 } }, email: { t: 'str', max: 60 } }, keys: ['name', 'email'] }] }),
+  domain: p => ({ params: [{ t: 'obj', props: { [p.nf]: { t: 'nullable', of: { t: 'str', max: 40 } }, [p.ef]: { t: 'str', max: 60 } }, keys: [p.nf, p.ef] }] }),
   body(p, which) {
-    const vr = which === 'planted' ? p.variant : null, c = p.c, FB = p.fb === 'email' ? `${c}.email` : `'${p.fb}'`;
-    if (vr === 'blank') return `return ${c}.name ? ${c}.name.trim() : ${FB};`;
-    if (vr === 'null') return `return ${c}.name.trim() || ${FB};`;
-    if (vr === 'nullish-or') return `return (${c}.name ?? '').trim() || ${FB};`;
-    return p.style ? J(`if (${c}.name === null || ${c}.name.trim() === '') return ${FB};`, `return ${c}.name.trim();`)
-      : J(`const name = ${c}.name === null ? '' : ${c}.name.trim();`, `return name === '' ? ${FB} : name;`);
+    const vr = which === 'planted' ? p.variant : null, { c, nf } = p, FB = p.fb === 'email' ? `${c}.${p.ef}` : `'${p.fb}'`, N = `${c}.${nf}`;
+    if (vr === 'blank') return `return ${N} ? ${N}.trim() : ${FB};`;
+    if (vr === 'null') return `return ${N}.trim() || ${FB};`;
+    if (vr === 'nullish-or') return `return (${N} ?? '').trim() || ${FB};`;
+    return p.style ? J(`if (${N} === null || ${N}.trim() === '') return ${FB};`, `return ${N}.trim();`)
+      : J(`const name = ${N} === null ? '' : ${N}.trim();`, `return name === '' ? ${FB} : name;`);
   },
-  probes() { return [[{ name: ' Ada Lovell ', email: 'a@x.example' }], [{ name: null, email: 'b@x.example' }], [{ name: '   ', email: 'c@x.example' }], [{ name: '', email: 'd@x.example' }], [{ name: 'Bo', email: 'e@x.example' }], [{ name: '\t', email: 'f@x.example' }]]; },
+  probes(p) { const mk = (n, e) => [{ [p.nf]: n, [p.ef]: e }]; return [mk(' Ada Lovell ', 'a@x.example'), mk(null, 'b@x.example'), mk('   ', 'c@x.example'), mk('', 'd@x.example'), mk('Bo', 'e@x.example'), mk('\t', 'f@x.example')]; },
 });
 
 fam('first-or', {
@@ -563,7 +571,7 @@ fam('first-or', {
     const [items, fb] = r.pick([['items', 'fallback'], ['values', 'otherwise'], ['choices', 'defaultValue']]);
     const last = r.chance(0.35);
     return { name: ctx.name(last ? ['last{N}Or', 'final{N}', 'tail{N}Or', 'latest{N}Or'] : ['first{N}Or', 'first{N}', 'head{N}Or', 'primary{N}']), items, fb, last,
-      amax: r.pick([10, 20, 30]), w: words(r, ctx, [3]), style: r.int(0, 1), order: r.pick(ORD2),
+      amax: r.pick([10, 20, 30]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), order: r.pick(ORD2),
       variant: pickVariant(r, role, { defect: { MISSING_GUARD: ['or'] }, decoy: { MISSING_GUARD: ['length-truthy'] } }) };
   },
   smell: p => (p.variant ? 'MISSING_GUARD' : null),
@@ -572,7 +580,8 @@ fam('first-or', {
     const pos = p.last ? 'last' : 'first', { items, fb } = p;
     return { lines: [[`The ${pos} element of ${items}, or ${fb} when ${items} is empty; a ${pos} element of 0, '' or false is returned as it is.`,
       `${cap(pos)} element of ${items}, falling back to ${fb} only when ${items} is empty (0, '' and false are real values).`,
-      `Returns the ${pos} element of ${items} (0, '' and false included); ${fb} only for an empty array.`][p.w[0]]], params: ['the candidates', 'returned for an empty array'], returns: '*' };
+      `Returns the ${pos} element of ${items} (0, '' and false included); ${fb} only for an empty array.`][p.w[0]]],
+    params: [PD(p, 0, 'the candidates', 'the values to choose from', 'candidate values'), PD(p, 1, 'returned for an empty array', 'the fallback value', 'what an empty array gives')], returns: '*' };
   },
   domain: p => ({ params: [{ t: 'arr', of: { t: 'scalar' }, max: p.amax }, { t: 'nullable', of: { t: 'scalar' } }] }),
   body(p, which) {
@@ -589,7 +598,7 @@ fam('safe-get', {
   draw(r, ctx, role) {
     const [obj, path] = r.pick([['obj', 'path'], ['record', 'keyPath'], ['doc', 'dotted']]);
     return { name: ctx.name(['read{N}Field', 'pick{N}Value', 'get{N}At', 'lookup{N}']), obj, path, sep: r.pick(['.', '.', '/']), miss: r.pick(['undefined', 'undefined', 'null']),
-      w: words(r, ctx, [3]), style: r.int(0, 1),
+      smax: r.pick([40, 60, 80]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { MISSING_GUARD: ['nocheck', 'undef-only'] } }) };
   },
   smell: p => (p.variant === 'nocheck' ? 'MISSING_GUARD' : null),
@@ -599,9 +608,9 @@ fam('safe-get', {
     return { lines: [[`The value at a path such as '${ex}' in ${obj} (keys joined by '${p.sep}'): each key is looked up as an own property (Object.hasOwn) of the current object or array; ${M} as soon as a key is missing or the current value is null or not an object. A null reached at the end of the path is returned as null.`,
       `Reads ${obj} along a '${p.sep}'-separated path like '${ex}', one own property (Object.hasOwn) per key; the result is ${M} once a key is absent or the value reached so far is null or not an object (a null at the end is returned as null).`,
       `Looks up the '${p.sep}'-joined key path (for example '${ex}') in ${obj}, own properties only (Object.hasOwn); ${M} when a step is missing, null or not an object; a null value at the end is returned as null.`][p.w[0]]],
-    params: ['any JSON value', `keys joined by '${p.sep}'`], returns: '*' };
+    params: [PD(p, 0, 'any JSON value', 'the document to read', 'a parsed JSON value'), `${PD(p, 1, 'keys', 'the path', 'property names')} joined by '${p.sep}'`], returns: '*' };
   },
-  domain: () => ({ params: [{ t: 'json', maxBytes: 1500 }, { t: 'str', max: 60 }] }),
+  domain: p => ({ params: [{ t: 'json', maxBytes: 1500 }, { t: 'str', max: p.smax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { obj, path } = p, split = `${path}.split('${p.sep}')`, M = p.miss;
     if (vr === 'nocheck') return p.style ? `return ${split}.reduce((cur, key) => cur[key], ${obj});` : J(`let cur = ${obj};`, `for (const key of ${split}) cur = cur[key];`, 'return cur;');
@@ -622,7 +631,7 @@ fam('safe-get', {
 fam('round-minor', {
   kind: 'helper', can: { defect: ['ROUNDING'], decoy: ['ROUNDING'] },
   draw(r, ctx, role) {
-    return { name: ctx.name(['roundMinor', 'roundUnits', 'houseRound']), rule: ctx.house.rounding, v: r.pick(['value', 'x']), w: words(r, ctx, [3, 2]), style: r.int(0, 1),
+    return { name: ctx.name(['roundMinor', 'roundUnits', 'houseRound']), rule: ctx.house.rounding, v: r.pick(['value', 'x']), w: words(r, ctx, [3, 3]), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { ROUNDING: ['math-round', 'other-rule'] }, decoy: { ROUNDING: ['decoy'] } }) };
   },
   smell: p => (p.variant === 'decoy' ? 'ROUNDING' : null),
@@ -630,7 +639,7 @@ fam('round-minor', {
   doc: p => ({ lines: [[`Rounds ${p.v} (at most four decimal places) to a whole number of minor units by the house rounding rule (docs/CONVENTIONS.md §2).`,
     `${cap(p.v)} rounded to whole minor units with the house rule for halves (docs/CONVENTIONS.md §2); ${p.v} has at most four decimals.`,
     `Whole minor units for ${p.v} (up to four decimals), rounded by the house rule (docs/CONVENTIONS.md §2).`][p.w[0]]],
-  params: [['the value to round', 'an amount in minor units, possibly fractional'][p.w[1]]], returns: 'number' }),
+  params: [['the value to round', 'an amount in minor units, possibly fractional', 'a fractional amount of minor units'][p.w[1]]], returns: 'number' }),
   domain: () => ({ params: [{ t: 'num', min: -1e9, max: 1e9, dp: 4 }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, x = p.v;
@@ -648,7 +657,7 @@ fam('line-amount', {
   kind: 'caller', helper: 'round-minor', can: { defect: ['ROUNDING', 'UNIT_MISMATCH'], decoy: [] },
   draw(r, ctx, role) {
     const [qty, unit, disc] = r.pick([['qty', 'unitMinor', 'discount'], ['quantity', 'unitPrice', 'discount'], ['units', 'priceMinor', 'rebate']]);
-    return { name: ctx.name(['{n}LineAmount', 'line{N}Total', 'net{N}Amount', '{n}NetLine']), qty, unit, disc, pct: r.chance(0.35), w: words(r, ctx, [3]), style: r.int(0, 1),
+    return { name: ctx.name(['{n}LineAmount', 'line{N}Total', 'net{N}Amount', '{n}NetLine']), qty, unit, disc, pct: r.chance(0.35), qmax: r.pick([100, 1000]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       order: r.pick([[0, 1, 2], [1, 0, 2]]), variant: pickVariant(r, role, { defect: { ROUNDING: ['per-unit'], UNIT_MISMATCH: ['unit'] } }) };
   },
   smell: () => null,
@@ -658,9 +667,10 @@ fam('line-amount', {
     return { lines: [[`Amount of one line in minor units: ${qty} x ${unit} less a discount of ${dT}, rounded once, at the end, with ${helper} (the house rule). ${qty} is negative on returns.`,
       `Line total in minor units for ${qty} items at ${unit} each, minus a discount of ${dT}; one rounding at the very end, by ${helper} (the house rule). Returns have a negative ${qty}.`,
       `Net amount of a line (minor units): ${qty} times ${unit}, discounted by ${dT}, then rounded a single time with ${helper} (the house rule); a negative ${qty} is a return.`][p.w[0]]],
-    params: ['quantity, negative on returns', 'unit price in minor units', p.pct ? 'discount in whole percent' : 'discount in basis points'], returns: 'number' };
+    params: [PD(p, 0, 'quantity, negative on returns', 'how many units (negative for a return)'), PD(p, 1, 'unit price in minor units', 'the price of one unit (minor units)', 'unit price'),
+      p.pct ? PD(p, 2, 'discount in whole percent', 'the discount, a whole percentage') : PD(p, 2, 'discount in basis points', 'the discount, in basis points')], returns: 'number' };
   },
-  domain: p => ({ params: [{ t: 'int', min: -100, max: 100 }, { t: 'int', min: 0, max: 1e6 }, p.pct ? { t: 'int', min: 0, max: 100 } : { t: 'int', min: 0, max: 10000 }] }),
+  domain: p => ({ params: [{ t: 'int', min: -p.qmax, max: p.qmax }, { t: 'int', min: 0, max: 1e6 }, p.pct ? { t: 'int', min: 0, max: 100 } : { t: 'int', min: 0, max: 10000 }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { qty, unit, disc, helper: H } = p, D = p.pct ? 100 : 10000, Dw = p.pct ? 10000 : 100;
     if (vr === 'per-unit') return J(`const net = ${H}(${unit} * (${D} - ${disc}) / ${D});`, `return ${qty} * net;`);
@@ -677,7 +687,7 @@ fam('sum-lines', {
   kind: 'caller', helper: 'round-minor', can: { defect: ['OFF_BY_ONE'], decoy: [] },
   draw(r, ctx, role) {
     return { name: ctx.name(['total{N}s', 'sum{N}Lines', '{n}sTotal', 'add{N}s']), arr: r.pick(['amounts', 'lines', 'parts']), abs: r.chance(0.3), amax: r.pick(AMAX),
-      w: words(r, ctx, [3]), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { OFF_BY_ONE: ['skip-first'] } }) };
+      R: r.pick([1e5, 1e6, 1e7]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { OFF_BY_ONE: ['skip-first'] } }) };
   },
   smell: p => (p.variant ? 'OFF_BY_ONE' : null),
   sig: p => [p.arr],
@@ -685,9 +695,10 @@ fam('sum-lines', {
     const { arr, helper } = p, what = p.abs ? `the absolute values of ${arr} (refunds count as positive)` : arr;
     return { lines: [[`Total of ${what} (amounts in minor units), passed through ${helper} so the result is always a whole number of minor units.`,
       `Adds up ${what} (minor units) and returns the sum through ${helper}, a whole number of minor units.`,
-      `Sum of ${what} in minor units, run through ${helper} to give whole minor units.`][p.w[0]]], params: ['integers in minor units'], returns: 'number' };
+      `Sum of ${what} in minor units, run through ${helper} to give whole minor units.`][p.w[0]]],
+    params: [PD(p, 0, 'integers in minor units', 'the amounts (minor units)', 'line amounts, whole minor units')], returns: 'number' };
   },
-  domain: p => ({ params: [{ t: 'arr', of: { t: 'int', min: -1e7, max: 1e7 }, max: p.amax }] }),
+  domain: p => ({ params: [{ t: 'arr', of: { t: 'int', min: -p.R, max: p.R }, max: p.amax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { arr, helper } = p, val = x => (p.abs ? `Math.abs(${x})` : x);
     if (vr === 'skip-first') return J('let total = 0;', `for (let i = 1; i < ${arr}.length; i++) total += ${val(`${arr}[i]`)};`, `return ${helper}(total);`);
@@ -701,7 +712,8 @@ fam('split-evenly', {
   accept: { 'le-extra': ['OFF_BY_ONE', 'ROUNDING'] }, // one part too many takes an extra unit, so the parts no longer add up
   draw(r, ctx, role) {
     const [t, n] = r.pick([['totalMinor', 'parts'], ['amount', 'n'], ['total', 'ways']]);
-    return { name: ctx.name(['split{N}', 'share{N}Evenly', 'spread{N}', 'allocate{N}']), t, n, later: r.chance(0.35), w: words(r, ctx, [3]), style: r.int(0, 1), order: r.pick(ORD2),
+    return { name: ctx.name(['split{N}', 'share{N}Evenly', 'spread{N}', 'allocate{N}']), t, n, later: r.chance(0.35), nmax: r.pick([12, 50, 100]), tmax: r.pick([1e6, 1e7]),
+      w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), order: r.pick(ORD2),
       variant: pickVariant(r, role, { defect: { ROUNDING: ['round-each'], OFF_BY_ONE: ['le-extra'] }, decoy: { ROUNDING: ['ceil-trick'] } }) };
   },
   smell: p => ({ 'round-each': 'ROUNDING', 'ceil-trick': 'ROUNDING' }[p.variant] ?? null),
@@ -711,9 +723,9 @@ fam('split-evenly', {
     return { lines: [[`Splits ${t} (minor units, not negative) into ${n} whole amounts that differ by at most one and add up to exactly ${t}; ${who} take the extra units.`,
       `Divides ${t} (minor units, 0 or more) into ${n} whole parts, as equal as possible (they differ by at most one) and summing to ${t}; ${who} get the leftover units.`,
       `${cap(n)} whole shares of ${t} (minor units, not negative): equal up to one unit, total exactly ${t}, the extra units on ${who}.`][p.w[0]]],
-    params: ['the amount to split', 'how many parts'], returns: 'number[]' };
+    params: [PD(p, 0, 'the amount to split', 'the total, in minor units'), PD(p, 1, 'how many parts', 'the number of parts')], returns: 'number[]' };
   },
-  domain: () => ({ params: [{ t: 'int', min: 0, max: 1e7 }, { t: 'int', min: 1, max: 50 }] }),
+  domain: p => ({ params: [{ t: 'int', min: 0, max: p.tmax }, { t: 'int', min: 1, max: p.nmax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { t, n } = p;
     if (vr === 'round-each') return J(`const each = Math.round(${t} / ${n});`, `return new Array(${n}).fill(each);`);
@@ -732,7 +744,7 @@ fam('percent-of', {
   draw(r, ctx, role) {
     const [a, pct] = r.pick([['amountMinor', 'pct'], ['amount', 'percent'], ['base', 'share']]);
     const rule = r.pick(['trunc', 'trunc', 'floor', 'away']);
-    return { name: ctx.name(['{n}Percent', 'percentOf{N}', '{n}Portion', 'part{N}']), a, pct, rule, bp: r.chance(0.3), w: words(r, ctx, [3]), style: r.int(0, 1), order: r.pick(ORD2),
+    return { name: ctx.name(['{n}Percent', 'percentOf{N}', '{n}Portion', 'part{N}']), a, pct, rule, bp: r.chance(0.3), R: r.pick([1e7, 1e8]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), order: r.pick(ORD2),
       variant: pickVariant(r, role, { defect: { ROUNDING: { trunc: ['floor', 'round'], floor: ['trunc', 'round'], away: ['round', 'trunc'] }[rule] }, decoy: { ROUNDING: ['decoy'] } }) };
   },
   smell: p => (p.variant === 'decoy' ? 'ROUNDING' : null),
@@ -740,9 +752,10 @@ fam('percent-of', {
   doc: p => {
     const { a, pct } = p, unitT = p.bp ? 'basis points' : 'percent', ruleT = PCT_RULES[p.rule];
     return { lines: [[`${pct} ${unitT} of ${a} (minor units, may be negative), ${ruleT}.`, `The share of ${a} (minor units, can be negative) given by ${pct} ${unitT}, ${ruleT}.`,
-      `${a} (minor units, sign allowed) times ${pct} ${unitT}, ${ruleT}.`][p.w[0]]], params: ['an amount in minor units', p.bp ? 'whole basis points' : 'a whole percentage'], returns: 'number' };
+      `${a} (minor units, sign allowed) times ${pct} ${unitT}, ${ruleT}.`][p.w[0]]], params: [PD(p, 0, 'an amount in minor units', 'the amount (minor units)', 'the base amount'),
+      p.bp ? PD(p, 1, 'whole basis points', 'the share in basis points') : PD(p, 1, 'a whole percentage', 'the share in percent')], returns: 'number' };
   },
-  domain: p => ({ params: [{ t: 'int', min: -1e7, max: 1e7 }, { t: 'int', min: 0, max: p.bp ? 10000 : 100 }] }),
+  domain: p => ({ params: [{ t: 'int', min: -p.R, max: p.R }, { t: 'int', min: 0, max: p.bp ? 10000 : 100 }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, e = `${p.a} * ${p.pct} / ${p.bp ? 10000 : 100}`;
     if (vr === 'floor') return `return Math.floor(${e});`;
@@ -763,7 +776,7 @@ fam('fee-rate', {
     const unit = role.kind === 'decoy' ? 'pct' : r.pick(['bp', 'pct']);
     const rule = r.pick(['half-up', 'half-up', 'up', 'down']);
     return { name: ctx.name(['{n}Fee', 'fee{N}', '{n}Charge', 'commission{N}']), unit, rule, a: r.pick(['amountMinor', 'amount']), rate: r.pick(['rate', 'feeRate']),
-      w: words(r, ctx, [3]), order: r.pick(ORD2),
+      w: words(r, ctx, [3]), pw: pws(r), order: r.pick(ORD2),
       variant: pickVariant(r, role, { defect: { UNIT_MISMATCH: [unit === 'bp' ? 'as-pct' : 'as-bp'], ROUNDING: [rule === 'half-up' ? 'floor' : 'nearest'] }, decoy: { UNIT_MISMATCH: ['pct-doc'] } }) };
   },
   smell: p => (p.variant === 'pct-doc' ? 'UNIT_MISMATCH' : null),
@@ -771,7 +784,8 @@ fam('fee-rate', {
   doc: p => {
     const { a, rate } = p, unitT = p.unit === 'bp' ? `${rate} basis points (1 bp = 0.01%)` : `${rate} percent (a whole number: 25 means 25%)`, ruleT = FEE_RULES[p.rule][0];
     return { lines: [[`Fee on ${a} (minor units, not negative) at ${unitT}, ${ruleT}.`, `The charge for ${a} (minor units, 0 or more) at a rate of ${unitT}, ${ruleT}.`,
-      `${cap(a)} (minor units, not negative) times ${unitT}, ${ruleT}.`][p.w[0]]], params: ['an amount in minor units', p.unit === 'bp' ? 'the rate in basis points' : 'the rate in whole percent'], returns: 'number' };
+      `${cap(a)} (minor units, not negative) times ${unitT}, ${ruleT}.`][p.w[0]]], params: [PD(p, 0, 'an amount in minor units', 'the amount charged on', 'the base amount (minor units)'),
+      p.unit === 'bp' ? PD(p, 1, 'the rate in basis points', 'the fee rate, in basis points') : PD(p, 1, 'the rate in whole percent', 'the fee rate, a whole percentage')], returns: 'number' };
   },
   domain: p => ({ params: [{ t: 'int', min: 0, max: 1e7 }, p.unit === 'bp' ? { t: 'int', min: 0, max: 10000 } : { t: 'int', min: 0, max: 100 }] }),
   body(p, which) {
@@ -797,16 +811,17 @@ fam('to-major', {
   accept: { 'always-100': ['UNIT_MISMATCH', 'LOGIC_ERROR'] }, // a minor/major unit factor, and also a case of the rule left out
   draw(r, ctx, role) {
     return { name: ctx.name(['{n}InMajorUnits', 'toMajor{N}', 'major{N}', '{n}Major']), m: r.pick(['minor', 'amountMinor']), cur: r.pick(['currency', 'code']), set: r.pick(['jpy', 'jpy', 'jpy-krw', 'kwd']),
-      w: words(r, ctx, [3]), style: r.int(0, 1), order: r.pick(ORD2), variant: pickVariant(r, role, { defect: { UNIT_MISMATCH: ['always-100'] } }) };
+      R: r.pick([1e9, 1e10, 1e12]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), order: r.pick(ORD2), variant: pickVariant(r, role, { defect: { UNIT_MISMATCH: ['always-100'] } }) };
   },
   smell: () => null,
   sig: p => [p.m, p.cur],
   doc: p => {
     const { m, cur } = p, rule = MAJOR_RULES[p.set].text;
     return { lines: [[`${m} (minor units of ${cur}) in major units: ${rule}.`, `Converts ${m}, an amount in minor units of ${cur}, to major units; ${rule}.`,
-      `Major-unit value of ${m} (given in minor units of ${cur}); ${rule}.`][p.w[0]]], params: ['an amount in minor units', 'ISO currency code'], returns: 'number' };
+      `Major-unit value of ${m} (given in minor units of ${cur}); ${rule}.`][p.w[0]]], params: [PD(p, 0, 'an amount in minor units', 'the amount, in minor units', 'minor units to convert'),
+      PD(p, 1, 'ISO currency code', 'the ISO 4217 code of the currency', 'currency code')], returns: 'number' };
   },
-  domain: p => ({ params: [{ t: 'int', min: -1e9, max: 1e9 }, { t: 'enum', values: MAJOR_RULES[p.set].cur }] }),
+  domain: p => ({ params: [{ t: 'int', min: -p.R, max: p.R }, { t: 'enum', values: MAJOR_RULES[p.set].cur }] }),
   body(p, which) {
     const { m, cur } = p;
     if (which === 'planted' && p.variant === 'always-100') return `return ${m} / 100;`;
@@ -822,7 +837,7 @@ fam('timeout-ms', {
   draw(r, ctx, role) {
     const min = r.chance(0.35);
     return { name: ctx.name(['{n}TimeoutMs', 'timeoutMsFor{N}', '{n}DeadlineMs', 'ms{N}Timeout']), min, s: min ? r.pick(['minutes', 'mins']) : r.pick(['seconds', 'secs']),
-      smax: min ? r.pick([60, 600]) : r.pick([600, 3600, 86400]), w: words(r, ctx, [3]), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { UNIT_MISMATCH: ['wrong-factor'] } }) };
+      smax: min ? r.pick([60, 600]) : r.pick([600, 3600, 86400]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { UNIT_MISMATCH: ['wrong-factor'] } }) };
   },
   smell: () => null,
   sig: p => [p.s],
@@ -830,7 +845,7 @@ fam('timeout-ms', {
     const u = p.min ? 'minutes' : 'seconds', { s } = p;
     return { lines: [[`Timeout in whole milliseconds for a timeout of ${s} ${u} (fractions allowed), rounded to the nearest millisecond.`,
       `${cap(s)} (${u}, may be fractional) converted to whole milliseconds, rounded to the nearest one.`,
-      `The number of milliseconds in ${s} ${u} (fractional ${u} allowed), rounded to a whole millisecond.`][p.w[0]]], params: [`${u}, at most ${p.min ? 2 : 3} decimals`], returns: 'number' };
+      `The number of milliseconds in ${s} ${u} (fractional ${u} allowed), rounded to a whole millisecond.`][p.w[0]]], params: [`${PD(p, 0, u, `the timeout in ${u}`, `a duration in ${u}`)}, at most ${p.min ? 2 : 3} decimals`], returns: 'number' };
   },
   domain: p => ({ params: [{ t: 'num', min: 0, max: p.smax, dp: p.min ? 2 : 3 }] }),
   body(p, which) {
@@ -910,28 +925,29 @@ fam('drop-status', {
   can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] },
   draw(r, ctx, role) {
     const ss = r.sample(STATUS_WORDS, r.chance(0.3) ? 2 : 1), S = cap(ss[0]);
-    return { name: ctx.name([`without${S}{N}s`, `remove${S}{N}s`, `drop${S}{N}s`]), ss, lines: r.pick(['lines', 'entries', 'items']), amax: r.pick(AMAX), w: words(r, ctx, [3]), style: r.int(0, 1),
+    return { name: ctx.name([`without${S}{N}s`, `remove${S}{N}s`, `drop${S}{N}s`]), ss, lines: r.pick(['lines', 'entries', 'items']), sf: r.pick(['status', 'status', 'state']), amax: r.pick(AMAX),
+      w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { INPUT_MUTATION: ['splice-arg'] }, decoy: { INPUT_MUTATION: ['splice-copy'] } }) };
   },
   smell: p => (p.variant ? 'INPUT_MUTATION' : null),
   sig: p => [p.lines],
   doc: p => {
-    const { lines } = p, or = quoteList(p.ss, 'or');
-    return { lines: [[`The ${lines} whose status is not ${or}, in order; ${lines} itself is not changed.`, `Returns the ${lines} other than those with status ${or}, order kept, as a new array (${lines} is left untouched).`,
-      `${cap(lines)} without the ones in status ${or}, in order; the argument is not changed.`][p.w[0]]], params: ['objects with id and status'], returns: 'Array' };
+    const { lines, sf } = p, or = quoteList(p.ss, 'or');
+    return { lines: [[`The ${lines} whose ${sf} is not ${or}, in order; ${lines} itself is not changed.`, `Returns the ${lines} other than those with ${sf} ${or}, order kept, as a new array (${lines} is left untouched).`,
+      `${cap(lines)} without the ones whose ${sf} is ${or}, in order; the argument is not changed.`][p.w[0]]], params: [PD(p, 0, `objects with id and ${sf}`, `the ${lines}, each with an id and a ${sf}`, `records with id and ${sf}`)], returns: 'Array' };
   },
-  domain: p => ({ params: [{ t: 'arr', of: { t: 'obj', props: { id: INT, status: { t: 'str', max: 20 } } }, max: p.amax }] }),
+  domain: p => ({ params: [{ t: 'arr', of: { t: 'obj', props: { id: INT, [p.sf]: { t: 'str', max: 20 } } }, max: p.amax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { lines } = p;
-    const hit = x => p.ss.map(s => `${x}.status === '${s}'`).join(' || '), miss = x => p.ss.map(s => `${x}.status !== '${s}'`).join(' && ');
+    const hit = x => p.ss.map(s => `${x}.${p.sf} === '${s}'`).join(' || '), miss = x => p.ss.map(s => `${x}.${p.sf} !== '${s}'`).join(' && ');
     const loop = arr => J(`for (let i = ${arr}.length - 1; i >= 0; i--) {`, `  if (${hit(`${arr}[i]`)}) ${arr}.splice(i, 1);`, '}');
     if (vr === 'splice-arg') return J(loop(lines), `return ${lines};`);
     if (vr === 'splice-copy') return J(`const out = ${lines}.slice();`, loop('out'), 'return out;');
     return p.style ? J('const out = [];', `for (const l of ${lines}) if (${miss('l')}) out.push(l);`, 'return out;') : `return ${lines}.filter(l => ${miss('l')});`;
   },
   probes(p, r) {
-    const ws = [...p.ss, 'open', 'paid'];
-    return range(5).map(k => [range(k + 1).map(i => ({ id: i + 1, status: r.pick(ws) }))]).concat([[[]], [p.ss.map((s, i) => ({ id: i + 1, status: s }))], [[{ id: 1, status: p.ss[0] }, { id: 2, status: p.ss[0] }]]]);
+    const ws = [...p.ss, 'open', 'paid'], sf = p.sf;
+    return range(5).map(k => [range(k + 1).map(i => ({ id: i + 1, [sf]: r.pick(ws) }))]).concat([[[]], [p.ss.map((s, i) => ({ id: i + 1, [sf]: s }))], [[{ id: 1, [sf]: p.ss[0] }, { id: 2, [sf]: p.ss[0] }]]]);
   },
 });
 
@@ -939,16 +955,17 @@ fam('append-total', {
   can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] },
   draw(r, ctx, role) {
     return { name: ctx.name(['{n}RowWithTotal', 'with{N}Total', 'append{N}Total', '{n}sAndTotal']), row: r.pick(['row', 'amounts', 'cells']), front: r.chance(0.3), amax: r.pick(AMAX),
-      w: words(r, ctx, [3]), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { INPUT_MUTATION: ['push-arg'] }, decoy: { INPUT_MUTATION: ['push-copy'] } }) };
+      R: r.pick([1e5, 1e6, 1e7]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { INPUT_MUTATION: ['push-arg'] }, decoy: { INPUT_MUTATION: ['push-copy'] } }) };
   },
   smell: p => (p.variant ? 'INPUT_MUTATION' : null),
   sig: p => [p.row],
   doc: p => {
     const { row } = p, where = p.front ? 'put in front as the first element' : 'appended as the last element';
     return { lines: [[`A copy of ${row} (amounts in minor units) with their total ${where}; ${row} itself is not changed.`, `Returns ${row} (minor units) plus their total, ${where}, as a new array; ${row} is not modified.`,
-      `New array: the values of ${row} (minor units) and their sum ${where}; the argument stays as it was.`][p.w[0]]], params: ['integers in minor units'], returns: 'number[]' };
+      `New array: the values of ${row} (minor units) and their sum ${where}; the argument stays as it was.`][p.w[0]]],
+    params: [PD(p, 0, 'integers in minor units', 'the amounts (minor units)', 'a row of amounts')], returns: 'number[]' };
   },
-  domain: p => ({ params: [{ t: 'arr', of: { t: 'int', min: -1e7, max: 1e7 }, max: p.amax }] }),
+  domain: p => ({ params: [{ t: 'arr', of: { t: 'int', min: -p.R, max: p.R }, max: p.amax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { row } = p, sum = `${row}.reduce((a, b) => a + b, 0)`, op = p.front ? 'unshift' : 'push';
     if (vr === 'push-arg') return J(`${row}.${op}(${sum});`, `return ${row};`);
@@ -964,13 +981,13 @@ const LEAP = y => `(${y} % 4 === 0 && ${y} % 100 !== 0) || ${y} % 400 === 0`;
 fam('days-in-month', {
   kind: 'helper', can: { defect: ['DATE_ARITH'], decoy: ['DATE_ARITH'] },
   draw(r, ctx, role) {
-    return { name: ctx.name(['daysInMonth', 'monthLength', 'daysOfMonth']), y: 'year', m: 'month', w: words(r, ctx, [3]), style: r.int(0, 1),
+    return { name: ctx.name(['daysInMonth', 'monthLength', 'daysOfMonth']), y: 'year', m: 'month', w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { DATE_ARITH: ['leap4', 'no400'] }, decoy: { DATE_ARITH: ['date-utc'] } }) };
   },
   smell: p => (p.variant === 'date-utc' ? 'DATE_ARITH' : null),
   sig: p => [p.y, p.m],
   doc: p => ({ lines: [[`Number of days in ${p.m} (1-12) of ${p.y} in the Gregorian calendar.`, `Length in days of month ${p.m} (1-12) of ${p.y}, Gregorian calendar.`,
-    `How many days ${p.m} (1-12) has in ${p.y} (Gregorian).`][p.w[0]]], params: ['a year from 1600 to 2400', 'a month number, 1-12'], returns: 'number' }),
+    `How many days ${p.m} (1-12) has in ${p.y} (Gregorian).`][p.w[0]]], params: [PD(p, 0, 'a year from 1600 to 2400', 'the year (1600-2400)'), PD(p, 1, 'a month number, 1-12', 'the month, 1 to 12')], returns: 'number' }),
   domain: () => ({ params: [{ t: 'int', min: 1600, max: 2400 }, { t: 'int', min: 1, max: 12 }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { y, m } = p;
@@ -988,7 +1005,7 @@ fam('add-months', {
   draw(r, ctx, role) {
     const [d, n] = r.pick([['isoDate', 'months'], ['date', 'n'], ['start', 'count']]);
     const roll = r.chance(0.35);
-    return { name: ctx.name(['shift{N}Date', '{n}DateAfterMonths', 'add{N}Months', 'next{N}Date']), d, n, roll, nmax: r.pick([24, 120, 600]), w: words(r, ctx, [3]), style: r.int(0, 1),
+    return { name: ctx.name(['shift{N}Date', '{n}DateAfterMonths', 'add{N}Months', 'next{N}Date']), d, n, roll, nmax: r.pick([24, 120, 600]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { DATE_ARITH: roll ? ['no-roll', 'clamp'] : ['no-clamp'] } }) };
   },
   smell: () => null,
@@ -998,7 +1015,8 @@ fam('add-months', {
     const rule = p.roll ? `A day past the end of the target month rolls over into the next month (31 January plus one month is 3 March in a common year; month lengths from ${helper}).`
       : `A day that does not exist in the target month becomes that month's last day (${helper}).`;
     return { lines: [[`The date ${n} calendar months after ${d} (YYYY-MM-DD; ${n} may be negative). ${rule}`, `Adds ${n} months (negative to go back) to the date ${d}, YYYY-MM-DD. ${rule}`,
-      `Shifts ${d} (YYYY-MM-DD) by ${n} calendar months, in either direction. ${rule}`][p.w[0]]], params: ['a date, YYYY-MM-DD', `months to add, -${p.nmax} to ${p.nmax}`], returns: 'string' };
+      `Shifts ${d} (YYYY-MM-DD) by ${n} calendar months, in either direction. ${rule}`][p.w[0]]], params: [PD(p, 0, 'a date, YYYY-MM-DD', 'the start date (YYYY-MM-DD)', 'the date to shift'),
+      `${PD(p, 1, 'months to add', 'number of months', 'months, negative to go back')}, -${p.nmax} to ${p.nmax}`], returns: 'string' };
   },
   domain: p => ({ params: [{ t: 'iso' }, { t: 'int', min: -p.nmax, max: p.nmax }] }),
   body(p, which) {
@@ -1020,14 +1038,14 @@ fam('month-end', {
   draw(r, ctx) {
     const which = r.pick(['same', 'same', 'previous', 'next']);
     const names = { same: ['{n}MonthEnd', 'endOf{N}Month', 'last{N}Day', '{n}PeriodEnd'], previous: ['previous{N}MonthEnd', 'prior{N}PeriodEnd', '{n}LastMonthEnd'], next: ['next{N}MonthEnd', 'following{N}PeriodEnd', '{n}NextMonthEnd'] }[which];
-    return { name: ctx.name(names), which, d: r.pick(['isoDate', 'date', 'day']), w: words(r, ctx, [3]), style: r.int(0, 1), variant: null };
+    return { name: ctx.name(names), which, d: r.pick(['isoDate', 'date', 'day']), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), variant: null };
   },
   smell: () => null,
   sig: p => [p.d],
   doc: p => {
     const { d, helper } = p, mo = { same: `the month of ${d}`, previous: `the month before the month of ${d}`, next: `the month after the month of ${d}` }[p.which];
     return { lines: [[`The last day of ${mo}, as YYYY-MM-DD (${helper}).`, `Last calendar day of ${mo}, written YYYY-MM-DD (month lengths from ${helper}).`,
-      `Date of the final day of ${mo}, YYYY-MM-DD (${helper}).`][p.w[0]]], params: ['a date, YYYY-MM-DD'], returns: 'string' };
+      `Date of the final day of ${mo}, YYYY-MM-DD (${helper}).`][p.w[0]]], params: [PD(p, 0, 'a date, YYYY-MM-DD', 'any date in the month', 'the reference date')], returns: 'string' };
   },
   domain: () => ({ params: [{ t: 'iso' }] }),
   body(p) {
@@ -1043,7 +1061,7 @@ fam('is-valid-date', {
   can: { defect: ['DATE_ARITH'], decoy: ['DATE_ARITH'] },
   draw(r, ctx, role) {
     return { name: ctx.name(['isValid{N}Date', 'is{N}DateValid', 'valid{N}Date', 'check{N}Date']), t: r.pick(['text', 'value', 'input']), dmy: r.chance(0.35),
-      yr: r.pick([[1600, 2400], [1600, 2400], [1900, 2100]]), w: words(r, ctx, [3]),
+      yr: r.pick([[1600, 2400], [1600, 2400], [1900, 2100], [1700, 2300]]), smax: r.pick([12, 20, 32]), w: words(r, ctx, [3]), pw: pws(r),
       variant: pickVariant(r, role, { defect: { DATE_ARITH: ['any-31', 'leap4'] }, decoy: { DATE_ARITH: ['date-utc'] } }) };
   },
   smell: p => (p.variant === 'date-utc' ? 'DATE_ARITH' : null),
@@ -1051,9 +1069,10 @@ fam('is-valid-date', {
   doc: p => {
     const f = p.dmy ? 'DD/MM/YYYY' : 'YYYY-MM-DD', [y0, y1] = p.yr, { t } = p;
     return { lines: [[`True when ${t} is a real Gregorian date written ${f} with a year from ${y0} to ${y1}.`, `Whether ${t} is a valid ${f} date in the Gregorian calendar, year ${y0} to ${y1}.`,
-      `Checks that ${t} names a day that exists in the Gregorian calendar, in the form ${f}, years ${y0}-${y1}.`][p.w[0]]], params: ['any string'], returns: 'boolean' };
+      `Checks that ${t} names a day that exists in the Gregorian calendar, in the form ${f}, years ${y0}-${y1}.`][p.w[0]]],
+    params: [PD(p, 0, 'any string', 'the text to check', 'a candidate date string')], returns: 'boolean' };
   },
-  domain: () => ({ params: [{ t: 'str', max: 20 }] }),
+  domain: p => ({ params: [{ t: 'str', max: p.smax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, [y0, y1] = p.yr;
     const head = p.dmy ? [`const m = /^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/.exec(${p.t});`, 'if (!m) return false;', 'const d = Number(m[1]), mo = Number(m[2]), y = Number(m[3]);']
@@ -1076,7 +1095,8 @@ fam('csv-field', {
   can: { defect: ['ESCAPING'], decoy: ['ESCAPING'] },
   draw(r, ctx, role) {
     const always = r.chance(0.3);
-    return { name: ctx.name(['csv{N}', 'quote{N}ForCsv', '{n}CsvCell', 'toCsv{N}']), v: r.pick(['value', 'text', 'cell']), semi: r.chance(0.3), always, w: words(r, ctx, [3]), style: r.int(0, 1),
+    return { name: ctx.name(['csv{N}', 'quote{N}ForCsv', '{n}CsvCell', 'toCsv{N}']), v: r.pick(['value', 'text', 'cell']), semi: r.chance(0.3), always, smax: r.pick([80, 120, 200]),
+      w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { ESCAPING: always ? ['first-only'] : ['first-only', 'no-newline'] }, decoy: { ESCAPING: ['split-join'] } }) };
   },
   smell: p => ({ 'first-only': 'ESCAPING', 'split-join': 'ESCAPING' }[p.variant] ?? null),
@@ -1088,9 +1108,9 @@ fam('csv-field', {
       : [`${v} as one CSV field (RFC 4180): wrapped in double quotes when it contains ${sep}, a double quote, a carriage return or a line feed, with every double quote inside doubled; returned unchanged otherwise.`,
         `CSV field for ${v} (RFC 4180): quoted only when it holds ${sep}, a double quote, CR or LF, and then every inner double quote is doubled; otherwise ${v} as it is.`,
         `${cap(v)} written as a CSV cell (RFC 4180): if it contains ${sep}, ", CR or LF it is wrapped in double quotes with each " doubled; else unchanged.`];
-    return { lines: [T[p.w[0]]], params: ['any string'], returns: 'string' };
+    return { lines: [T[p.w[0]]], params: [PD(p, 0, 'any string', 'the field text', 'the value to write')], returns: 'string' };
   },
-  domain: () => ({ params: [{ t: 'str', max: 80 }] }),
+  domain: p => ({ params: [{ t: 'str', max: p.smax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, x = p.v, d = p.semi ? ';' : ',';
     const inner = vr === 'first-only' ? `${x}.replace('"', '""')` : vr === 'split-join' ? `${x}.split('"').join('""')` : p.style ? `${x}.replaceAll('"', '""')` : `${x}.replace(/"/g, '""')`;
@@ -1106,7 +1126,7 @@ fam('html-text', {
   can: { defect: ['ESCAPING'], decoy: [] },
   draw(r, ctx, role) {
     return { name: ctx.name(['escape{N}Html', '{n}AsHtml', 'html{N}', 'safe{N}Html']), t: r.pick(['text', 's', 'raw']), apos: r.pick(['&#39;', '&#39;', '&#x27;', '&apos;']), quot: r.pick(['&quot;', '&quot;', '&#34;']),
-      w: words(r, ctx, [3]), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { ESCAPING: ['amp-last', 'no-apos'] } }) };
+      smax: r.pick([80, 120, 200]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { ESCAPING: ['amp-last', 'no-apos'] } }) };
   },
   smell: () => null,
   sig: p => [p.t],
@@ -1114,9 +1134,10 @@ fam('html-text', {
     const { t, quot: Q, apos: A } = p;
     return { lines: [[`${t} with &, <, >, " and ' replaced by &amp;, &lt;, &gt;, ${Q} and ${A}; each character is escaped exactly once.`,
       `HTML-escapes ${t}: & becomes &amp;, < &lt;, > &gt;, " ${Q} and ' ${A}, each exactly once.`,
-      `${cap(t)} made safe for HTML text: &amp; for &, &lt; for <, &gt; for >, ${Q} for " and ${A} for '; nothing is escaped twice.`][p.w[0]]], params: ['any string'], returns: 'string' };
+      `${cap(t)} made safe for HTML text: &amp; for &, &lt; for <, &gt; for >, ${Q} for " and ${A} for '; nothing is escaped twice.`][p.w[0]]],
+    params: [PD(p, 0, 'any string', 'the raw text', 'text to escape')], returns: 'string' };
   },
-  domain: () => ({ params: [{ t: 'str', max: 80 }] }),
+  domain: p => ({ params: [{ t: 'str', max: p.smax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null;
     const reps = { amp: ".replace(/&/g, '&amp;')", lt: ".replace(/</g, '&lt;')", gt: ".replace(/>/g, '&gt;')", quot: `.replace(/"/g, '${p.quot}')`, apos: `.replace(/'/g, '${p.apos}')` };
@@ -1134,7 +1155,7 @@ fam('like-pattern', {
   can: { defect: ['ESCAPING'], decoy: ['ESCAPING'] },
   draw(r, ctx, role) {
     return { name: ctx.name(['{n}LikePattern', 'like{N}', '{n}SearchPattern', 'contains{N}Pattern']), q: r.pick(['term', 'query', 'needle']), match: r.pick(['any', 'any', 'prefix', 'suffix']),
-      bang: r.chance(0.3), w: words(r, ctx, [3]), variant: pickVariant(r, role, { defect: { ESCAPING: ['no-escape-char'] }, decoy: { ESCAPING: ['chained'] } }) };
+      bang: r.chance(0.3), smax: r.pick([40, 60, 100]), w: words(r, ctx, [3]), pw: pws(r), variant: pickVariant(r, role, { defect: { ESCAPING: ['no-escape-char'] }, decoy: { ESCAPING: ['chained'] } }) };
   },
   smell: p => (p.variant === 'chained' ? 'ESCAPING' : null),
   sig: p => [p.q],
@@ -1143,9 +1164,9 @@ fam('like-pattern', {
     const shape = { any: `matches ${q} anywhere: '%' + ${q} + '%'`, prefix: `matches values that start with ${q}: ${q} + '%'`, suffix: `matches values that end with ${q}: '%' + ${q}` }[p.match];
     const esc = p.bang ? `every %, _ and ! in ${q} escaped by a ! (the pattern's escape character, ESCAPE '!')` : `every %, _ and backslash in ${q} escaped by a backslash (the pattern's escape character)`;
     return { lines: [[`A SQL LIKE pattern that ${shape}, with ${esc}.`, `LIKE pattern for ${q} that ${shape}; ${esc}.`, `Builds a SQL LIKE pattern from ${q} (escape character ${E}): it ${shape}, with ${esc}.`][p.w[0]]],
-      params: ['the search text'], returns: 'string' };
+      params: [PD(p, 0, 'the search text', 'what to look for', 'the text to match')], returns: 'string' };
   },
-  domain: () => ({ params: [{ t: 'str', max: 60 }] }),
+  domain: p => ({ params: [{ t: 'str', max: p.smax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { q } = p;
     const wrap = x => ({ any: `'%' + ${x} + '%'`, prefix: `${x} + '%'`, suffix: `'%' + ${x}` }[p.match]);
@@ -1167,7 +1188,7 @@ fam('parse-amount', {
   draw(r, ctx, role) {
     const mode = role.kind === 'decoy' ? 'null' : role.kind === 'defect' ? 'throw' : (r.chance(0.35) ? 'null' : 'throw');
     return { name: ctx.name(mode === 'null' ? ['tryParse{N}Amount', 'maybe{N}Amount', 'parse{N}AmountOrNull'] : ['parse{N}Amount', 'read{N}Amount', '{n}AmountFromText', 'to{N}Minor']),
-      mode, eu: r.chance(0.3), t: r.pick(['text', 'input', 'raw']), w: words(r, ctx, [3]),
+      mode, eu: r.chance(0.3), t: r.pick(['text', 'input', 'raw']), smax: r.pick([24, 40, 64]), w: words(r, ctx, [3]), pw: pws(r),
       variant: pickVariant(r, role, { defect: { SWALLOWED_ERROR: ['catch-zero', 'wrong-type', 'blank-zero'] }, decoy: { SWALLOWED_ERROR: ['catch-null'] } }) };
   },
   smell: p => ({ 'catch-zero': 'SWALLOWED_ERROR', 'catch-null': 'SWALLOWED_ERROR' }[p.variant] ?? null),
@@ -1178,9 +1199,9 @@ fam('parse-amount', {
     return { lines: [[`Parses an amount such as ${ex} into minor units: thousands separated by ${th}, no decimals or exactly two after ${dec}, surrounding whitespace ignored. ${fail} when ${t} is not such an amount.`,
       `Minor units for the amount text ${t} (examples: ${ex}): an optional minus, ${th} between thousands, either no decimals or two after ${dec}, whitespace around it ignored; ${failLc} for any other text.`,
       `Reads ${t}, an amount like ${ex}, as minor units (${th} group the thousands; no decimals or exactly two after ${dec}; outer whitespace ignored). ${fail} when ${t} is not such an amount.`][p.w[0]]],
-    params: ['the text to parse'], returns: p.mode === 'null' ? 'number|null' : 'number' };
+    params: [PD(p, 0, 'the text to parse', 'amount text', 'the amount as typed')], returns: p.mode === 'null' ? 'number|null' : 'number' };
   },
-  domain: () => ({ params: [{ t: 'str', max: 40 }] }),
+  domain: p => ({ params: [{ t: 'str', max: p.smax }] }),
   body(p, which) {
     const vr = which === 'planted' ? p.variant : null, { t } = p;
     const fail = p.mode === 'null' && vr !== 'catch-null' ? 'return null;' : `throw new ${vr === 'wrong-type' ? 'Error' : 'RangeError'}('not an amount: ' + ${t});`;

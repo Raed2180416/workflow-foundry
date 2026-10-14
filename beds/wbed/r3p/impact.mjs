@@ -4,15 +4,19 @@
 //   impactOf(world)        per manifest defect: the callers that inherit it (planted caller differs from the correct
 //                          caller on a valid input) and the callers that do not (they call the defective helper only on
 //                          inputs where it is right, e.g. whole numbers through a rounding helper)
-//   callLogOf(world)       a deterministic "production call log": for every defect and every caller of a defective
-//                          helper, recorded calls (valid arguments and the output the planted code returned), plus
-//                          calls of clean functions as distractors
+//   callLogOf(world, { defectId }) a deterministic "production call log" for ONE confirmed defect (default: the first
+//                          defective helper): recorded calls (valid arguments and the output the planted code returned)
+//                          of the defect, of every caller of it, and of as many clean distractor functions (never a
+//                          defect, never a caller of any defective helper) as there are hit functions, at least four.
+//                          One log per defect, so a sweep given the log learns nothing about the other defects (review
+//                          2026-10-14, finding 6: the v1 log listed every planted defect)
 //   scoreImpact(world, r)  r = { impacts: [{ file, function, affected: [{ file, function }] }] }: exact precision / recall
 //                          of the affected-caller sets, micro over the defects
 //   scoreReplay(world, r)  r = { wrong: [callId] }: exact precision / recall of the recorded outputs that were wrong
 //                          (planted output != correct output)
 import { taskRng } from '../lib/prng.mjs';
-import { observe, sameObs } from './exec.mjs';
+import { sameObs } from './exec.mjs';
+import { obsGen } from './world.mjs';
 import { normFile } from './score.mjs';
 
 const loc = (file, fn) => `${normFile(file)}#${String(fn).trim()}`;
@@ -27,17 +31,20 @@ export function impactOf(world) {
   });
 }
 
-export function callLogOf(world, perFn = 4) {
-  const r = taskRng('r3p', 'calllog', world.spec, world.attempt);
-  const hit = world.fns.filter(f => f.role === 'defect' || (f.kind === 'caller' && world.defectiveHelpers.includes(f.helperFamily)));
-  const clean = r.sample(world.fns.filter(f => f.role !== 'defect' && !hit.includes(f)), Math.max(4, Math.round(hit.length / 2)));
+export function callLogOf(world, { defectId = null, perFn = 4 } = {}) {
+  const m = defectId ? world.manifest.find(x => x.id === defectId) : (world.manifest.find(x => world.byName.get(x.function).kind === 'helper') ?? world.manifest[0]);
+  if (!m) throw new Error(`wbed-r3p: no defect ${defectId}`);
+  const r = taskRng('r3p', `calllog:${m.id}`, world.spec, world.attempt);
+  const target = world.byName.get(m.function);
+  const hit = [target, ...world.fns.filter(c => c.calls === target.name)];
+  const tainted = f => f.role === 'defect' || (f.kind === 'caller' && world.defectiveHelpers.includes(f.helperFamily));
+  const clean = r.sample(world.fns.filter(f => !tainted(f) && !hit.includes(f)), Math.max(4, hit.length));
   const calls = [];
   for (const f of [...hit, ...clean]) {
     const args = r.shuffle(f.probes).slice(0, perFn);
     for (const a of args) {
-      const got = observe(world.planted, f.name, a), want = observe(world.correct, f.name, a);
-      calls.push({ id: `c${String(calls.length + 1).padStart(4, '0')}`, file: f.path, function: f.name, args: a,
-        recorded: got.throws ? { throws: got.throws } : { returns: got.returns }, wrong: !sameObs(got, want) });
+      const got = obsGen(world.planted, f.name, a), want = obsGen(world.correct, f.name, a);
+      calls.push({ id: '', file: f.path, function: f.name, args: a, recorded: got.throws ? { throws: got.throws } : { returns: got.returns }, wrong: !sameObs(got, want) });
     }
   }
   return r.shuffle(calls).map((c, i) => ({ ...c, id: `c${String(i + 1).padStart(4, '0')}` }));

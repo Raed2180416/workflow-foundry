@@ -22,6 +22,7 @@ import path from 'node:path';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inlineRender } from '../../../experiments/lib/beds.mjs';
+import { loadLedger, seedRefusals } from '../../../experiments/jit/seeds.mjs';
 import { canonical, sha256, estimateTokens } from '../lib/prng.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -43,7 +44,7 @@ export const RUNGS = {
     necessity: 'none for correctness (review 2026-10-14, W-BED-R6-NOTES §13): the best workflow without the plan judge (a code plan, or the exact workers mapped over every indexed compound) solves every dev task, so the plan is needed for width (fan-out cap), not correctness, as R4\'s nesting. The size stand-ins (bed necessityControls sequential-single-context, best-of-n:equal-tokens) fail only under the 32K-token attention hypothesis that this one-call attack measures; a text-only parser of the dev-visible sentence forms solves d2-d4 (W-BED §2.4 items 2 and 4 answered by it, not by the keyword script). B6 is decided by the paid run' },
   // R3' planted-defect sweep (PROOF-LEDGER J5) has its own ledger rows (wbed-r3p-dev 401-490): attack seeds 479-490.
   r3p: { family: 'wbed-r3p', expect: 'fail', gate: ONE_CALL_GATE, seeds: Array.from({ length: 12 }, (_, i) => 479 + i),
-    necessity: 'the best workflow without each feature: one sequential context (size: the inline task is above the 24K budget at d4-d5), a per-file fan-out that reports without verifying (every decoy reported, precision about 1/2) and one without root-cause fan-in (inheriting callers reported) (bed necessityControls) must fail >= 50% of attack seeds; the no-verify and no-root-cause controls fail every task by construction' },
+    necessity: 'the bed\'s necessity controls (one sequential context above a 24K budget at d4-d5; a per-file fan-out that reports without verifying; one without root-cause fan-in) fail every task BY CONSTRUCTION: they read the manifest, so they are conditional stand-ins, not measurements (W-BED-R3P-NOTES §9, §17). Admission needs, besides this one-call gate, a measured Haiku per-file no-verify arm (paid; must fail >= 50% of attack seeds) and the $0 contract-fuzz script and stream controls failing (bed tests). The J4 stream on this bed starts at d4: at d3 (about 17K tokens inline) no size control bites' },
 };
 export const MODEL = 'claude-haiku-5-5';
 export const ATTACK_SEEDS = Array.from({ length: 12 }, (_, i) => 379 + i); // W-BED §8 wbed-attack (dev 379-390)
@@ -76,11 +77,23 @@ export function cliLine(shape, { systemFile, schemaFile, promptFile, maxBudgetUs
   return `env ${env} ${shape.binary} ${inv} --model ${MODEL} --system-prompt "$(cat ${shq(systemFile)})" --json-schema "$(cat ${shq(schemaFile)})" --effort ${shape.effortFlag} --max-budget-usd ${maxBudgetUsd} < ${shq(promptFile)}`;
 }
 
+/** Refuse attack seeds the seed ledger does not allow for a dev attack (purpose jit-dev); a rung with its own ledger
+ *  rows (RUNGS[rung].seeds) is planned only on seeds inside those rows (review 2026-10-14, finding 8: `--rung all
+ *  --seeds 379-390` planned r3p on seeds outside its rows). */
+export function refuseSeeds(rung, bedId, seeds, ledger = loadLedger()) {
+  const own = RUNGS[rung].seeds ? ledger.ranges.filter(x => x.split === 'dev' && x.beds.includes(bedId)) : null;
+  const bad = seeds.map(seed => ({ seed, why: [...seedRefusals(ledger, { bed: bedId, split: 'dev', seed, purpose: 'jit-dev' }),
+    ...(own && !own.some(x => seed >= x.from && (x.to === null || seed <= x.to)) ? [`outside ${bedId}'s own dev rows (${own.map(x => `${x.from}-${x.to}`).join(', ')})`] : [])] }))
+    .filter(x => x.why.length);
+  if (bad.length) throw new Error(`SEED_REFUSED for ${rung}: ${bad.slice(0, 4).map(x => `s${x.seed} (${x.why.join('; ')})`).join(', ')}${bad.length > 4 ? ', ...' : ''}`);
+}
+
 export async function plan({ rungs = ['r1'], difficulty = 3, seeds: seedsArg, efforts = EFFORTS } = {}) {
   const out = [];
   for (const rung of rungs) {
     const bed = await loadRung(rung);
     const seeds = seedsArg ?? RUNGS[rung].seeds ?? ATTACK_SEEDS; // a rung with its own ledger rows plans on its own attack seeds
+    refuseSeeds(rung, bed.family.id, seeds);
     const tasks = seeds.map(seed => {
       const task = bed.generate({ seed, split: 'dev', difficulty });
       const prompt = inlineRender(task);

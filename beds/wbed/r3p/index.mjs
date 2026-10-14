@@ -7,15 +7,16 @@ import { buildSweep, setVerifier, LEVELS, MIN_D, MAX_D, VERSION, redrawStats } f
 import { runPipeline } from './pipeline.mjs';
 import { outputSchema, scoreSweep, costPerVerifiedFinding, aggregateSweeps, witnessHolds, PASS } from './score.mjs';
 import { CONTRACTS, RELATIONS, makeStages, composeOracle, reduceLocal } from './stages.mjs';
-import { CONTROL_DEFS, NECESSITY_DEFS, SEQUENTIAL_BUDGET_TOKENS, appliesAt } from './controls.mjs';
+import { CONTROL_DEFS, NECESSITY_DEFS, SEQUENTIAL_BUDGET_TOKENS, STREAM_CORPUS, appliesAt } from './controls.mjs';
 import { linterFindings, todoFindings, everythingFindings, parseFunctions, LINT_RULES } from './lint.mjs';
+import { contractFuzz } from './attack.mjs';
 import { impactOf, callLogOf, scoreImpact as scoreImpactW, scoreReplay as scoreReplayW } from './impact.mjs';
 import { CLASSES, DEFINITIONS, CLASS_FROM, classesAt } from './vocab.mjs';
 import { requireNoFaults, hooks } from '../lib/faults.mjs';
 import { estimateTokens } from '../lib/prng.mjs';
 
-export { outputSchema, CONTRACTS, RELATIONS, reduceLocal, LEVELS, SEQUENTIAL_BUDGET_TOKENS, PASS, CLASSES, DEFINITIONS, CLASS_FROM, classesAt,
-  costPerVerifiedFinding, aggregateSweeps, parseFunctions, LINT_RULES, redrawStats };
+export { outputSchema, CONTRACTS, RELATIONS, reduceLocal, LEVELS, SEQUENTIAL_BUDGET_TOKENS, STREAM_CORPUS, PASS, CLASSES, DEFINITIONS, CLASS_FROM, classesAt,
+  costPerVerifiedFinding, aggregateSweeps, parseFunctions, LINT_RULES, redrawStats, contractFuzz };
 export const version = VERSION;
 
 export const family = {
@@ -86,21 +87,31 @@ export function skimmedBy(world, budget = SEQUENTIAL_BUDGET_TOKENS) {
   return skim;
 }
 const textControl = (def, world) => ({ todo: todoFindings, lint: linterFindings, everything: everythingFindings })[def.text](world.render.files, world.L.classes);
+/** The files of the `n` seeds before `spec.seed` (same split and difficulty): what a stream arm has seen at this task. */
+const corpusBefore = (spec, n) => Array.from({ length: n }, (_, i) => spec.seed - n + i).filter(s => s >= 0)
+  .map(s => buildSweep(s, spec.split, spec.difficulty).render.files);
+function scriptControl(def, world, opts = {}) {
+  const corpus = def.corpus ? (opts.corpus ?? corpusBefore(world.spec, def.corpus)) : [];
+  return contractFuzz({ files: world.render.files }, corpus, opts.fuzz ?? {});
+}
 function optsOf(def, world) {
   if (def.sequential) return { skim: skimmedBy(world) };
   if (def.opts?.half) return { ...def.opts, stopAfter: Math.floor(world.render.sourceFiles.length / 2) };
   return def.opts ?? {};
 }
-function outputOf(def, world, truthOut) {
+function outputOf(def, world, truthOut, opts) {
   if (def.make) return def.make();
   if (def.corrupt) return corrupt(truthOut);
   if (def.text) return textControl(def, world);
+  if (def.script) return scriptControl(def, world, opts);
   return runPipeline(world, optsOf(def, world)).reduce;
 }
 const asControl = def => {
-  const base = { name: def.name, kind: def.kind, why: def.why ?? null, ...(def.minDifficulty ? { minDifficulty: def.minDifficulty } : {}) };
-  const make = task => { const w = hostWorld(task); return outputOf(def, w, def.corrupt ? truthOf(task).reduce : null); };
-  if (def.make || def.corrupt || def.text) return { ...base, make };
+  const base = { name: def.name, kind: def.kind, why: def.why ?? null, byConstruction: Boolean(def.byConstruction), slow: Boolean(def.slow),
+    ...(def.minDifficulty ? { minDifficulty: def.minDifficulty } : {}) };
+  // make(task, { corpus?: [files], fuzz?: {...} }): the options reach the contract-fuzz controls only
+  const make = (task, opts = {}) => { const w = hostWorld(task); return outputOf(def, w, def.corrupt ? truthOf(task).reduce : null, opts); };
+  if (def.make || def.corrupt || def.text || def.script) return { ...base, make };
   return { ...base, opts: def.opts ?? null, make, trace: task => { const w = hostWorld(task); return runPipeline(w, optsOf(def, w)); } };
 };
 export const badControls = CONTROL_DEFS.map(asControl);
@@ -110,7 +121,7 @@ setVerifier(world => {
   const truth = runPipeline(world).reduce;
   if (!scoreSweep(world, truth).pass) return 'reference';
   for (const def of [...CONTROL_DEFS, ...NECESSITY_DEFS]) {
-    if (!appliesAt(def, world.spec.difficulty)) continue;
+    if (def.slow || !appliesAt(def, world.spec.difficulty)) continue; // the contract-fuzz controls are gated by tests (seconds per task)
     if (scoreSweep(world, outputOf(def, world, truth)).pass) return def.name;
   }
   return null;
@@ -137,7 +148,8 @@ export function checkWitness(task, file, fn, args) {
   return witnessHolds(w, f, args);
 }
 export const impactManifestOf = task => impactOf(hostWorld(task));
-export const callLogFor = task => callLogOf(hostWorld(task));
+/** The production call log for ONE confirmed defect (default: the first defective helper, the latent-defect story). */
+export const callLogFor = (task, defectId) => callLogOf(hostWorld(task), { defectId });
 export const scoreImpact = (task, report) => scoreImpactW(hostWorld(task), report);
 export const scoreReplay = (task, log, report) => scoreReplayW(hostWorld(task), log, report);
 
