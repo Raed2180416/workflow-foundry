@@ -19,31 +19,37 @@
 //   An effect is "done" when the record shows it (or its key is committed), "busy" while its key is in flight or
 //   pending, and emitted only when its chosen due time has come. Keys are deterministic per logical effect, so a re-issue
 //   after a 400 reuses the key.
-// - Timing: deliberately LATE inside each window (20-45 minutes after the window opens), one saga step per tick (each
+// - Timing: deliberately LATE inside each window (10-45 minutes after the window opens), one saga step per tick (each
 //   step waits for the previous step's record), never `after`. Exceptions: reads are issued at once (they are not
 //   effects), a review task is re-asked at once, a shipment is cancelled at once on a counted customer cancel (R6.2), and
 //   compensation steps after the first follow each other as soon as the previous one shows in the records.
 //   Delays: create p+20; review task p+30; fraud cancel +30; R3.1 cleared+25; amend/cancel/refused +20; R3 timeout
 //   D+30; R2 review timeout deadline+30; processing ready+25; reserve ready+45; charge last-reservation+30; ship
-//   charge+30; dispatched/completed message+30; failure compensation failure+20; order outcome last-end+40.
+//   charge+30; dispatched/completed report+30; failure compensation failure+20; R6.2 refund/release/statuses cancel+10;
+//   order outcome last-end+40. A carrier report opens two windows, from its arrival and from its reportedAt (§3.3 "the
+//   time of a report is its reportedAt"); its effects are due inside both where they overlap (at most reportedAt+90).
 // - Argument names come from api/<system>.schema.json on every tick (an F5 rename is followed before it bites); a 400
 //   `field-renamed` that still arrives (rename between emission and a platform retry) is learned and the effect is
 //   re-issued with the same key.
+// - An order instance closes once the order and every fulfilment are final and nothing is outstanding, and only on a
+//   tick that holds nothing but its own timer: `timer` sorts after every inbound source, so a message that merges into
+//   it at the same instant is validated before the close (otherwise a same-instant merge would be an arm error).
 //
-// READINGS where the spec could be read more than one way (section references are to SPEC-E)
-//  1. R1.3 edition: the published edition (rulebook/<id>/edition.json) with the latest effectiveFrom <= the
-//     Europe/Amsterdam date of p, chosen at the order's first tick and kept for the order's life. If no edition.json is
-//     visible (older worlds), the lexicographically latest edition visible at that tick is used.
+// READINGS where the spec could be read more than one way (section references are to SPEC-E as amended 2026-10-14)
+//  1. R1.3 edition: the published edition (rulebook/<id>/edition.json) with the latest effectiveFrom on or before the
+//     Europe/Amsterdam date of p, chosen at the order's first tick and kept for the order's life. Fallback when no
+//     edition.json is visible (the dev worlds before the bed fix): the lexicographically latest edition visible then.
 //  2. §3.1 / R1.1: p is the time of the order.placed event; the record's placedAt is that time, formatted with the
 //     Europe/Amsterdam offset. Duplicates (same normalised id, open instance or recorded order) close without effect.
 //  3. Business state is derived from event times, not from my own (late) effects. An order with no unavailable
 //     fulfilment is processing from p (pass) or from the approving answer, even before I set `processing`.
 //  4. "Stop the order" (R6.2): when a counted customer cancel arrives before I performed an obligation that only moves
 //     the order forward (R4.1 `processing`, R3.1 `customerActionRequired` + `action-required`), that obligation is
-//     dropped; only the cancellation effects follow. Likewise a customer action that counts before I performed R3.1
-//     makes R3.1 moot (the customer has already acted), so R3.1 is skipped.
-//  5. R6.2 "reported collected": a carrier report meaning collected, inTransit or delivered (each implies the carrier
-//     has the goods) at or before the cancel's time. A collectionFailed report after such a report is ignored.
+//     dropped and only the cancellation effects follow (the order goes pending -> cancelled). Likewise a customer
+//     action that counts before I performed R3.1 makes R3.1 moot (the customer has already acted), so R3.1 is skipped.
+//  5. R6.2 / S4 / S7: a cancel is refused when a collected, inTransit or delivered report with reportedAt at or before
+//     the cancel has reached me by the tick that handles the cancel (reports at that instant are taken first); the
+//     decision is frozen there. A collectionFailed report that arrives after such a report is ignored.
 //  6. R6.2 applies to a cancel after a counted amend once the order is processing (R3.2's "later actions change
 //     nothing" is read as concerning the R3 choice only). An amend for a processing order changes nothing (S5).
 //  7. R6.3: cancel-refused is sent once per order, for the first refused cancel; a cancel for an order whose instance
@@ -53,21 +59,23 @@
 //     action if it is at or before D; the order is then ready when it is cleared.
 //  9. R2.2: an answer counts if it carries decision approve|reject and its time is <= the deadline (first task's
 //     creation + fraudReviewHours); `late` is ignored (amended §3.4). My task dueAt is the deadline; an unusable,
-//     rejected or withdrawn answer before the deadline is re-asked at once with a new task id.
+//     rejected or withdrawn answer before the deadline is re-asked at once with a new task id (same deadline).
 // 10. Timeouts are taken strictly after their deadline (amended R2.2, R3.2, S1): R3 at D+30, R2 at deadline+30.
-// 11. R5.1/R5.2: compensation runs shipment cancel -> refund (the charge's full amount) -> releases, each only for a
-//     step the records show committed (S2), waiting while a key of that fulfilment is pending; then the status
-//     (failed/cancelled) and the notification. A compensation step that fails permanently is not retried and the chain
-//     continues. A shipment cancel refused as already-collected leaves that fulfilment to the carrier (not refunded,
-//     not cancelled); the order then ends when that fulfilment ends.
+// 11. R5.1 / R5.2 / R6.2: compensation runs shipment cancel -> refund (the charge's full amount) -> releases, each only
+//     for a step the records show committed (S2), waiting while a key of that fulfilment is pending or in flight; then
+//     the status (failed/cancelled) and the notification. A compensation step that fails permanently, including a
+//     shipment cancel refused as already-collected (possible when the collection report has not reached me, S7), is
+//     never retried and the chain continues with the next step.
 // 12. R5.2 failure time: the attempt's time = result time - the system's latency; a carrier collectionFailed: the
-//     message's time. Errors other than 400 that the platform delivers (402, retryable:false, other 4xx) fail the step.
-// 13. R4.4: dispatched is due 30 min after the first collected or delivered report; completed 30 min after the
-//     delivered report, after dispatched is recorded. inTransit/info change nothing.
-// 14. R4.5: the event that ended the last fulfilment is its delivered report, failure time, or cancel time; an
-//     unavailable fulfilment ends when it is cancelled by the amend.
-// 15. Edge combinations the spec leaves open: an order cleared after D with no counted action skips R3.1 and times out
-//     at once after clearing.
+//     report (both its arrival and its reportedAt bound the window). Errors other than 400 that the platform delivers
+//     (402, retryable:false, other 4xx) fail the step.
+// 13. R4.4: dispatched is due after the first collected or delivered report; completed after the delivered report,
+//     once dispatched is recorded. inTransit/info change nothing; a code the order's edition table does not list (exact
+//     carrier and code) is info (amended §3.3).
+// 14. R4.5: the event that ended the last fulfilment is its delivered report, failure, or cancel; an unavailable
+//     fulfilment ends when it is cancelled by the amend.
+// 15. Edge combinations the spec leaves open (absent from the dev worlds): an order cleared after D with no counted
+//     action skips R3.1 and times out at once after clearing.
 //
 // Interface: createSolver() -> { id, tick(input, ctx) } (BED-CONTRACT v1.1 §3.1, host README §2).
 
@@ -599,7 +607,6 @@ function planOrder(input, ctx, env, c, db, d, now, pol) {
   const orderRow = db.order;
   const fRow = fid => db.fuls.find(f => f.fulfilmentId === fid) ?? null;
   const fFinal = fid => { const r = fRow(fid); return !r || FRANK[r.status] === 3 || ['cancelled', 'failed', 'completed'].some(s => c.pf[K.st(oid, fid, s)]); };
-  const oRank = () => (orderRow ? ORANK[orderRow.status] ?? 0 : -1);
   const setF = (fid, status, due) => {
     const r = fRow(fid);
     if (!r) return 'wait';
