@@ -1,98 +1,789 @@
 {
- "about": "Author answers for the W-bed author fixtures (dev seeds 373-378, difficulties 3 and 4), read from each fixture's notes by the reference author. Keys: '<bed>:<seed>:d<difficulty>', then the judge name. Used only with author-override.mjs on these fixtures.",
+ "about": "Author answers for the W-bed author fixtures (dev seeds 373-378, difficulties 3 and 4), read from each fixture's notes by the reference author. Keys: '<bed>:<seed>:d<difficulty>', then the judge name. Used only with author-override.mjs on these fixtures. R3 entries ('reason' maps '<vendor>|<ref as the statement prints it>' to its reason) are copied from the fixtures' labelled outputs (referenceSolve), which the author fixture set includes; the override answers a reason judge with that reason and the notes line that names the document or the amount.",
  "wbed-r1:373:d3": {
-  "dob-order:BRIGHTDESK": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
-  "dob-order:ATLAS": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
-  "place-country": { "countries": ["NO"] }
+  "dob-order:BRIGHTDESK": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:ATLAS": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:VENDEX": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "place-country": {
+   "countries": [
+    "NO"
+   ]
+  }
  },
  "wbed-r1:373:d4": {
-  "marker:VERITAS:\"env\":\"replay\"": { "meaning": "VOID" },
-  "marker:KOBO:flag: PAUSED": { "meaning": "VOID" },
-  "marker:ATLAS:DORMANT": { "meaning": "KEEP" },
-  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
-  "dob-order:ATLAS": { "order": "DMY", "switch_date": "2023-01-29", "order_after_switch": "MDY" },
-  "place-country": { "countries": ["CH"] },
-  "marker:KOBO:確認中": { "meaning": "COUNTS" }
+  "marker:VERITAS:\"env\":\"replay\"": {
+   "meaning": "VOID"
+  },
+  "marker:KOBO:flag: PAUSED": {
+   "meaning": "VOID"
+  },
+  "marker:ATLAS:DORMANT": {
+   "meaning": "KEEP"
+  },
+  "dob-order:BRIGHTDESK": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:VENDEX": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:ATLAS": {
+   "order": "DMY",
+   "switch_date": "2023-01-29",
+   "order_after_switch": "MDY"
+  },
+  "place-country": {
+   "countries": [
+    "CH"
+   ]
+  },
+  "marker:KOBO:確認中": {
+   "meaning": "COUNTS"
+  }
  },
  "wbed-r1:374:d3": {
-  "marker:ATLAS:ARCHIVE": { "meaning": "KEEP" },
-  "marker:BRIGHTDESK:stage=review": { "meaning": "VOID" },
-  "dob-order:ATLAS": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
-  "place-country": { "countries": ["CH", "IT"] }
+  "marker:ATLAS:ARCHIVE": {
+   "meaning": "KEEP"
+  },
+  "marker:BRIGHTDESK:stage=review": {
+   "meaning": "VOID"
+  },
+  "dob-order:ATLAS": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "place-country": {
+   "countries": [
+    "CH",
+    "IT"
+   ]
+  }
  },
  "wbed-r1:374:d4": {
-  "marker:ATLAS:QUERY": { "meaning": "KEEP" },
-  "marker:BRIGHTDESK:stage=review": { "meaning": "KEEP" },
-  "marker:KOBO:flag: GUEST": { "meaning": "VOID" },
-  "dob-order:ATLAS": { "order": "MDY", "switch_date": "2022-10-03", "order_after_switch": "DMY" },
-  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" }
+  "marker:ATLAS:QUERY": {
+   "meaning": "KEEP"
+  },
+  "marker:BRIGHTDESK:stage=review": {
+   "meaning": "KEEP"
+  },
+  "marker:KOBO:flag: GUEST": {
+   "meaning": "VOID"
+  },
+  "dob-order:ATLAS": {
+   "order": "MDY",
+   "switch_date": "2022-10-03",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:VENDEX": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:BRIGHTDESK": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  }
  },
  "wbed-r1:375:d3": {
-  "marker:LEDGR:ruhend": { "meaning": "KEEP" },
-  "dob-order:ATLAS": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:BRIGHTDESK": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
-  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
-  "place-country": { "countries": ["BE"] }
+  "marker:LEDGR:ruhend": {
+   "meaning": "KEEP"
+  },
+  "dob-order:ATLAS": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:BRIGHTDESK": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:VENDEX": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "place-country": {
+   "countries": [
+    "BE"
+   ]
+  }
  },
  "wbed-r1:375:d4": {
-  "marker:BRIGHTDESK:stage=hold": { "meaning": "VOID" },
-  "marker:VERITAS:\"env\":\"replay\"": { "meaning": "KEEP" },
-  "marker:KOBO:flag: GUEST": { "meaning": "VOID" },
-  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:ATLAS": { "order": "DMY", "switch_date": "2020-11-09", "order_after_switch": "MDY" },
-  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "place-country": { "countries": ["DE", "DE"] },
-  "marker:VERITAS:held": { "meaning": "DOES_NOT_COUNT" }
+  "marker:BRIGHTDESK:stage=hold": {
+   "meaning": "VOID"
+  },
+  "marker:VERITAS:\"env\":\"replay\"": {
+   "meaning": "KEEP"
+  },
+  "marker:KOBO:flag: GUEST": {
+   "meaning": "VOID"
+  },
+  "dob-order:BRIGHTDESK": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:ATLAS": {
+   "order": "DMY",
+   "switch_date": "2020-11-09",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:VENDEX": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "place-country": {
+   "countries": [
+    "DE",
+    "DE"
+   ]
+  },
+  "marker:VERITAS:held": {
+   "meaning": "DOES_NOT_COUNT"
+  }
  },
  "wbed-r1:376:d3": {
-  "marker:ATLAS:DORMANT": { "meaning": "KEEP" },
-  "marker:KOBO:flag: GIFT": { "meaning": "VOID" },
-  "dob-order:ATLAS": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" }
+  "marker:ATLAS:DORMANT": {
+   "meaning": "KEEP"
+  },
+  "marker:KOBO:flag: GIFT": {
+   "meaning": "VOID"
+  },
+  "dob-order:ATLAS": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:VENDEX": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  }
  },
  "wbed-r1:376:d4": {
-  "marker:BRIGHTDESK:stage=legacy": { "meaning": "VOID" },
-  "marker:VERITAS:\"env\":\"replay\"": { "meaning": "KEEP" },
-  "marker:ATLAS:ARCHIVE": { "meaning": "VOID" },
-  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
-  "dob-order:ATLAS": { "order": "MDY", "switch_date": "2021-02-15", "order_after_switch": "DMY" },
-  "place-country": { "countries": ["AU"] },
-  "marker:ATLAS:QUERY": { "meaning": "DOES_NOT_COUNT" }
+  "marker:BRIGHTDESK:stage=legacy": {
+   "meaning": "VOID"
+  },
+  "marker:VERITAS:\"env\":\"replay\"": {
+   "meaning": "KEEP"
+  },
+  "marker:ATLAS:ARCHIVE": {
+   "meaning": "VOID"
+  },
+  "dob-order:VENDEX": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:ATLAS": {
+   "order": "MDY",
+   "switch_date": "2021-02-15",
+   "order_after_switch": "DMY"
+  },
+  "place-country": {
+   "countries": [
+    "AU"
+   ]
+  },
+  "marker:ATLAS:QUERY": {
+   "meaning": "DOES_NOT_COUNT"
+  }
  },
  "wbed-r1:377:d3": {
-  "marker:VERITAS:\"env\":\"backfill\"": { "meaning": "VOID" },
-  "marker:LEDGR:Altdaten": { "meaning": "KEEP" },
-  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:ATLAS": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
-  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" }
+  "marker:VERITAS:\"env\":\"backfill\"": {
+   "meaning": "VOID"
+  },
+  "marker:LEDGR:Altdaten": {
+   "meaning": "KEEP"
+  },
+  "dob-order:BRIGHTDESK": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:ATLAS": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:VENDEX": {
+   "order": "MDY",
+   "switch_date": "",
+   "order_after_switch": "DMY"
+  }
  },
  "wbed-r1:377:d4": {
-  "marker:KOBO:flag: GIFT": { "meaning": "VOID" },
-  "marker:LEDGR:archiviert": { "meaning": "VOID" },
-  "marker:VERITAS:\"env\":\"backfill\"": { "meaning": "KEEP" },
-  "dob-order:ATLAS": { "order": "MDY", "switch_date": "2020-07-17", "order_after_switch": "DMY" },
-  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "place-country": { "countries": ["JP", "MX"] },
-  "marker:ATLAS:QUERY": { "meaning": "DOES_NOT_COUNT" }
+  "marker:KOBO:flag: GIFT": {
+   "meaning": "VOID"
+  },
+  "marker:LEDGR:archiviert": {
+   "meaning": "VOID"
+  },
+  "marker:VERITAS:\"env\":\"backfill\"": {
+   "meaning": "KEEP"
+  },
+  "dob-order:ATLAS": {
+   "order": "MDY",
+   "switch_date": "2020-07-17",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:VENDEX": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:BRIGHTDESK": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "place-country": {
+   "countries": [
+    "JP",
+    "MX"
+   ]
+  },
+  "marker:ATLAS:QUERY": {
+   "meaning": "DOES_NOT_COUNT"
+  }
  },
  "wbed-r1:378:d3": {
-  "marker:ATLAS:DORMANT": { "meaning": "VOID" },
-  "marker:VERITAS:\"env\":\"replay\"": { "meaning": "KEEP" },
-  "dob-order:ATLAS": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" }
+  "marker:ATLAS:DORMANT": {
+   "meaning": "VOID"
+  },
+  "marker:VERITAS:\"env\":\"replay\"": {
+   "meaning": "KEEP"
+  },
+  "dob-order:ATLAS": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:VENDEX": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:BRIGHTDESK": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  }
  },
  "wbed-r1:378:d4": {
-  "marker:ATLAS:DORMANT": { "meaning": "VOID" },
-  "marker:LEDGR:ruhend": { "meaning": "KEEP" },
-  "marker:VERITAS:\"env\":\"batch\"": { "meaning": "KEEP" },
-  "dob-order:ATLAS": { "order": "MDY", "switch_date": "2020-09-05", "order_after_switch": "DMY" },
-  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
-  "marker:BRIGHTDESK:batch": { "meaning": "COUNTS" }
+  "marker:ATLAS:DORMANT": {
+   "meaning": "VOID"
+  },
+  "marker:LEDGR:ruhend": {
+   "meaning": "KEEP"
+  },
+  "marker:VERITAS:\"env\":\"batch\"": {
+   "meaning": "KEEP"
+  },
+  "dob-order:ATLAS": {
+   "order": "MDY",
+   "switch_date": "2020-09-05",
+   "order_after_switch": "DMY"
+  },
+  "dob-order:VENDEX": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "dob-order:BRIGHTDESK": {
+   "order": "DMY",
+   "switch_date": "",
+   "order_after_switch": "MDY"
+  },
+  "marker:BRIGHTDESK:batch": {
+   "meaning": "COUNTS"
+  }
+ },
+ "wbed-r3:373:d3": {
+  "reason": {
+   "V-301|CN-QP2563": "MISSING_CREDIT",
+   "V-301|QP-2931": "TIMING",
+   "V-302|PAY-51053": "UNEXPLAINED",
+   "V-302|CN-HF2258": "UNEXPLAINED",
+   "V-303|INV TP3954": "PRICE",
+   "V-304|PAY-32289": "FX",
+   "V-306|WP/15159": "DUPLICATE",
+   "V-306|PAY-69601": "UNEXPLAINED",
+   "V-307|CN-WC8481": "MISSING_CREDIT",
+   "V-307|PAY-87057": "TIMING",
+   "V-308|CN-FF2040": "MISSING_CREDIT",
+   "V-309|EF/33664": "UNEXPLAINED",
+   "V-310|RP/40314": "DUPLICATE",
+   "V-310|PAY-27316": "FX",
+   "V-311|GS-6514": "MISSING_CREDIT",
+   "V-312|INV BF2816": "TIMING",
+   "V-313|UL-9889": "PRICE",
+   "V-313|UL-4432": "UNEXPLAINED",
+   "V-313|UL-5071": "DUPLICATE",
+   "V-314|AO/67062": "UNEXPLAINED",
+   "V-314|AO/55581": "TIMING",
+   "V-316|HF-6977": "DUPLICATE"
+  }
+ },
+ "wbed-r3:373:d4": {
+  "reason": {
+   "V-301|PC/52093": "PRICE",
+   "V-301|PC/33286": "PRICE",
+   "V-302|PAY-38065": "UNEXPLAINED",
+   "V-303|OL-4627": "TIMING",
+   "V-304|CN-PF2827": "UNEXPLAINED",
+   "V-304|PAY-18250": "UNEXPLAINED",
+   "V-305|INV QL4382": "DUPLICATE",
+   "V-305|INV QL5131": "TIMING",
+   "V-306|PAY-73701": "UNEXPLAINED",
+   "V-306|OO/71868": "TIMING",
+   "V-307|PAY-55060": "FX",
+   "V-307|PAY-17091": "TIMING",
+   "V-308|INV EP4140": "PRICE",
+   "V-308|INV EP1106": "DUPLICATE",
+   "V-309|PAY-93292": "UNEXPLAINED",
+   "V-309|PAY-10291": "UNEXPLAINED",
+   "V-310|INV LO8963": "PRICE",
+   "V-310|INV LO1200": "DUPLICATE",
+   "V-311|PAY-35142": "UNEXPLAINED",
+   "V-311|WP-3895": "PRICE",
+   "V-313|PAY-75387": "UNEXPLAINED",
+   "V-313|MF/14446": "DUPLICATE",
+   "V-315|INV CF3185": "DUPLICATE",
+   "V-315|PAY-43892": "FX",
+   "V-316|PAY-75146": "UNEXPLAINED",
+   "V-316|PAY-86588": "TIMING",
+   "V-318|INV UF7410": "TIMING",
+   "V-319|PAY-42764": "UNEXPLAINED",
+   "V-319|LP-6277": "UNEXPLAINED",
+   "V-320|INV MC8145": "PRICE",
+   "V-320|CN-MC5869": "UNEXPLAINED",
+   "V-321|CN-JH9951": "MISSING_CREDIT",
+   "V-323|INV AO8055": "DUPLICATE",
+   "V-324|CN-TF3153": "MISSING_CREDIT",
+   "V-324|PAY-70325": "TIMING",
+   "V-325|PAY-73538": "FX",
+   "V-325|SO/72933": "PRICE",
+   "V-325|SO/49620": "UNEXPLAINED",
+   "V-326|CN-IO5944": "MISSING_CREDIT",
+   "V-326|IO-3557": "TIMING",
+   "V-327|PAY-69869": "UNEXPLAINED",
+   "V-327|PAY-78388": "TIMING",
+   "V-329|CN-KF5200": "UNEXPLAINED",
+   "V-329|KF-3820": "DUPLICATE",
+   "V-330|INV GP5222": "DUPLICATE",
+   "V-330|PAY-86583": "UNEXPLAINED",
+   "V-331|INV VF3500": "TIMING",
+   "V-332|CN-SF1149": "MISSING_CREDIT"
+  }
+ },
+ "wbed-r3:374:d3": {
+  "reason": {
+   "V-301|CN-IC4875": "MISSING_CREDIT",
+   "V-302|BP/95996": "UNEXPLAINED",
+   "V-304|GS-8544": "UNEXPLAINED",
+   "V-304|GS-5162": "MISSING_CREDIT",
+   "V-305|INV BH2348": "TIMING",
+   "V-306|PAY-82517": "UNEXPLAINED",
+   "V-306|PAY-78350": "TIMING",
+   "V-307|RF-4296": "UNEXPLAINED",
+   "V-308|PAY-64852": "FX",
+   "V-308|ZF-1647": "PRICE",
+   "V-308|ZF-3690": "UNEXPLAINED",
+   "V-309|AF-6060": "PRICE",
+   "V-310|KP/16659": "DUPLICATE",
+   "V-310|KP/14302": "DUPLICATE",
+   "V-311|PAY-29797": "UNEXPLAINED",
+   "V-311|PAY-44956": "FX",
+   "V-312|CN-TH7593": "MISSING_CREDIT",
+   "V-313|PAY-33839": "FX",
+   "V-314|PAY-10735": "UNEXPLAINED",
+   "V-314|INV SP9112": "DUPLICATE",
+   "V-316|CL/42930": "PRICE",
+   "V-316|CL/36479": "UNEXPLAINED"
+  }
+ },
+ "wbed-r3:374:d4": {
+  "reason": {
+   "V-301|LP/18083": "UNEXPLAINED",
+   "V-301|CN-LP8766": "UNEXPLAINED",
+   "V-302|CN-TP5227": "MISSING_CREDIT",
+   "V-302|CN-TP4186": "MISSING_CREDIT",
+   "V-304|CN-ZF3392": "MISSING_CREDIT",
+   "V-304|ZF-8868": "TIMING",
+   "V-305|INV EF5342": "PRICE",
+   "V-306|PAY-83920": "UNEXPLAINED",
+   "V-306|PAY-52882": "TIMING",
+   "V-307|NH/37451": "PRICE",
+   "V-307|NH/85349": "UNEXPLAINED",
+   "V-307|NH/69483": "TIMING",
+   "V-308|INV TP8130": "PRICE",
+   "V-308|PAY-56925": "UNEXPLAINED",
+   "V-309|GS-9673": "MISSING_CREDIT",
+   "V-309|PAY-19318": "UNEXPLAINED",
+   "V-310|CF-9118": "DUPLICATE",
+   "V-310|CN-CF5861": "UNEXPLAINED",
+   "V-311|PAY-27175": "UNEXPLAINED",
+   "V-311|CN-DF1730": "UNEXPLAINED",
+   "V-312|INV MF9314": "PRICE",
+   "V-314|INV FL6584": "DUPLICATE",
+   "V-314|GS-2146": "MISSING_CREDIT",
+   "V-315|PAY-16336": "UNEXPLAINED",
+   "V-316|NO/99388": "PRICE",
+   "V-316|CN-NO5795": "MISSING_CREDIT",
+   "V-317|PAY-52465": "UNEXPLAINED",
+   "V-317|CN-VP1349": "UNEXPLAINED",
+   "V-319|CN-WF2839": "UNEXPLAINED",
+   "V-319|PAY-71335": "TIMING",
+   "V-320|PAY-47142": "UNEXPLAINED",
+   "V-320|PAY-12303": "FX",
+   "V-321|AP/73729": "UNEXPLAINED",
+   "V-321|PAY-15575": "TIMING",
+   "V-323|CN-EO9055": "MISSING_CREDIT",
+   "V-324|SP/18428": "TIMING",
+   "V-326|CP-4293": "DUPLICATE",
+   "V-326|CP-6010": "PRICE",
+   "V-327|GO-6042": "UNEXPLAINED",
+   "V-327|GO-6208": "TIMING",
+   "V-328|PAY-81797": "UNEXPLAINED",
+   "V-329|PAY-26740": "UNEXPLAINED",
+   "V-330|PAY-50473": "FX",
+   "V-330|PAY-53879": "UNEXPLAINED",
+   "V-331|PAY-12624": "FX",
+   "V-331|PAY-92889": "UNEXPLAINED",
+   "V-332|WF-6441": "DUPLICATE",
+   "V-332|WF-2760": "DUPLICATE"
+  }
+ },
+ "wbed-r3:375:d3": {
+  "reason": {
+   "V-301|CH/76520": "PRICE",
+   "V-301|PAY-68401": "UNEXPLAINED",
+   "V-303|DF/63096": "UNEXPLAINED",
+   "V-303|DF/92499": "PRICE",
+   "V-303|DF/33878": "TIMING",
+   "V-304|HF-4247": "DUPLICATE",
+   "V-304|PAY-50151": "TIMING",
+   "V-305|PAY-38270": "UNEXPLAINED",
+   "V-306|PAY-75630": "FX",
+   "V-307|PAY-10557": "TIMING",
+   "V-308|PAY-69923": "TIMING",
+   "V-309|JF-2978": "UNEXPLAINED",
+   "V-310|CN-MO6543": "UNEXPLAINED",
+   "V-311|PAY-51229": "UNEXPLAINED",
+   "V-311|LF/21894": "DUPLICATE",
+   "V-313|PAY-27098": "FX",
+   "V-313|GS-9561": "MISSING_CREDIT",
+   "V-314|INV ZC5147": "DUPLICATE",
+   "V-314|CN-ZC7353": "MISSING_CREDIT",
+   "V-315|PAY-48816": "UNEXPLAINED",
+   "V-316|INV TC3208": "DUPLICATE",
+   "V-316|PAY-38036": "TIMING"
+  }
+ },
+ "wbed-r3:375:d4": {
+  "reason": {
+   "V-301|INV GP2134": "PRICE",
+   "V-301|GS-1346": "MISSING_CREDIT",
+   "V-302|PAY-11261": "UNEXPLAINED",
+   "V-303|CN-TP3434": "MISSING_CREDIT",
+   "V-304|PAY-42534": "FX",
+   "V-304|PAY-99557": "FX",
+   "V-305|DF-8942": "TIMING",
+   "V-306|GS-7158": "UNEXPLAINED",
+   "V-306|INV MP1075": "PRICE",
+   "V-307|PAY-10516": "FX",
+   "V-307|CN-KH9972": "MISSING_CREDIT",
+   "V-308|INV LF9227": "UNEXPLAINED",
+   "V-308|PAY-64007": "UNEXPLAINED",
+   "V-309|KO-7701": "PRICE",
+   "V-309|KO-8185": "TIMING",
+   "V-312|CN-SP9136": "MISSING_CREDIT",
+   "V-313|INV LH1563": "UNEXPLAINED",
+   "V-313|INV LH8445": "UNEXPLAINED",
+   "V-315|PAY-36666": "UNEXPLAINED",
+   "V-316|CN-TF3364": "MISSING_CREDIT",
+   "V-316|CN-TF6281": "MISSING_CREDIT",
+   "V-317|PAY-24573": "UNEXPLAINED",
+   "V-317|PAY-39627": "TIMING",
+   "V-318|CN-CF2267": "MISSING_CREDIT",
+   "V-318|PAY-35796": "FX",
+   "V-319|PAY-73896": "UNEXPLAINED",
+   "V-319|LC-5997": "TIMING",
+   "V-320|BF-2316": "UNEXPLAINED",
+   "V-320|PAY-90294": "TIMING",
+   "V-322|YL-5382": "UNEXPLAINED",
+   "V-322|YL-7006": "TIMING",
+   "V-323|PAY-51678": "TIMING",
+   "V-323|PAY-35550": "TIMING",
+   "V-324|PAY-15808": "UNEXPLAINED",
+   "V-325|INV BC1562": "PRICE",
+   "V-325|CN-BC6660": "UNEXPLAINED",
+   "V-326|PAY-12928": "UNEXPLAINED",
+   "V-327|INV CO3918": "DUPLICATE",
+   "V-327|PAY-78556": "UNEXPLAINED",
+   "V-328|OH/31395": "UNEXPLAINED",
+   "V-328|OH/94988": "UNEXPLAINED",
+   "V-329|PAY-82035": "FX",
+   "V-329|PAY-20215": "TIMING",
+   "V-331|QP-5372": "PRICE",
+   "V-331|QP-2615": "UNEXPLAINED",
+   "V-331|QP-8301": "DUPLICATE",
+   "V-332|PAY-22991": "TIMING",
+   "V-332|PAY-53157": "TIMING"
+  }
+ },
+ "wbed-r3:376:d3": {
+  "reason": {
+   "V-301|CN-KO8042": "UNEXPLAINED",
+   "V-302|PAY-32151": "UNEXPLAINED",
+   "V-303|PAY-17597": "UNEXPLAINED",
+   "V-303|KP-1809": "DUPLICATE",
+   "V-304|GS-6456": "MISSING_CREDIT",
+   "V-305|BC-6946": "DUPLICATE",
+   "V-305|GS-1459": "MISSING_CREDIT",
+   "V-306|PAY-15352": "UNEXPLAINED",
+   "V-306|GP-5677": "DUPLICATE",
+   "V-307|INV LO1724": "UNEXPLAINED",
+   "V-307|INV LO7976": "PRICE",
+   "V-307|PAY-49498": "TIMING",
+   "V-308|PAY-73873": "UNEXPLAINED",
+   "V-308|UC-5069": "TIMING",
+   "V-310|PAY-89757": "TIMING",
+   "V-311|PAY-98838": "FX",
+   "V-312|INV EP9609": "UNEXPLAINED",
+   "V-312|PAY-27939": "FX",
+   "V-313|INV SF7871": "PRICE",
+   "V-313|CN-SF5287": "MISSING_CREDIT",
+   "V-314|PF-7414": "DUPLICATE",
+   "V-315|INV LF7873": "UNEXPLAINED"
+  }
+ },
+ "wbed-r3:376:d4": {
+  "reason": {
+   "V-301|PAY-55180": "FX",
+   "V-301|HH/28668": "UNEXPLAINED",
+   "V-302|QH/61950": "PRICE",
+   "V-302|PAY-53804": "TIMING",
+   "V-303|CN-SC6472": "MISSING_CREDIT",
+   "V-304|PAY-60921": "TIMING",
+   "V-305|PAY-49642": "UNEXPLAINED",
+   "V-305|CN-VP8543": "MISSING_CREDIT",
+   "V-306|SC/34206": "UNEXPLAINED",
+   "V-306|SC/98661": "TIMING",
+   "V-307|HF-4868": "UNEXPLAINED",
+   "V-308|CN-DP5639": "MISSING_CREDIT",
+   "V-308|DP-5120": "UNEXPLAINED",
+   "V-308|DP-6306": "PRICE",
+   "V-310|PAY-38811": "UNEXPLAINED",
+   "V-310|YC/96869": "TIMING",
+   "V-311|PAY-89038": "UNEXPLAINED",
+   "V-311|UP-7059": "PRICE",
+   "V-312|TP-6937": "DUPLICATE",
+   "V-312|PAY-11910": "UNEXPLAINED",
+   "V-313|CP/20173": "UNEXPLAINED",
+   "V-314|RH/84520": "PRICE",
+   "V-314|CN-RH3314": "UNEXPLAINED",
+   "V-315|INV NO2415": "UNEXPLAINED",
+   "V-315|INV NO3300": "TIMING",
+   "V-316|OP-1058": "DUPLICATE",
+   "V-316|PAY-94180": "TIMING",
+   "V-317|PAY-66188": "FX",
+   "V-318|CN-EO9560": "MISSING_CREDIT",
+   "V-318|EO/84910": "TIMING",
+   "V-319|KC-6466": "PRICE",
+   "V-319|PAY-42085": "TIMING",
+   "V-323|IL/18915": "DUPLICATE",
+   "V-323|PAY-29706": "FX",
+   "V-324|INV CP8016": "UNEXPLAINED",
+   "V-324|CN-CP7730": "MISSING_CREDIT",
+   "V-325|CN-DP7487": "UNEXPLAINED",
+   "V-325|PAY-12708": "TIMING",
+   "V-326|INV NF6257": "PRICE",
+   "V-326|PAY-59718": "FX",
+   "V-328|CN-CP8741": "MISSING_CREDIT",
+   "V-329|QO/66188": "PRICE",
+   "V-329|QO/43280": "DUPLICATE",
+   "V-330|INV GO5297": "UNEXPLAINED",
+   "V-330|INV GO6917": "TIMING",
+   "V-331|PAY-59235": "UNEXPLAINED",
+   "V-332|INV JP8852": "DUPLICATE",
+   "V-332|PAY-47821": "UNEXPLAINED"
+  }
+ },
+ "wbed-r3:377:d3": {
+  "reason": {
+   "V-301|LF/63455": "DUPLICATE",
+   "V-301|PAY-54464": "TIMING",
+   "V-303|PAY-60125": "FX",
+   "V-303|PF/52803": "UNEXPLAINED",
+   "V-304|MF-3580": "TIMING",
+   "V-305|PAY-58046": "UNEXPLAINED",
+   "V-306|CN-VH6974": "UNEXPLAINED",
+   "V-306|PAY-65016": "UNEXPLAINED",
+   "V-307|CN-LO1176": "UNEXPLAINED",
+   "V-308|DO/95366": "DUPLICATE",
+   "V-308|DO/71159": "TIMING",
+   "V-309|RH/68587": "PRICE",
+   "V-309|RH/84565": "TIMING",
+   "V-310|ZC-4563": "TIMING",
+   "V-311|CN-DH6448": "MISSING_CREDIT",
+   "V-312|CN-BF8541": "MISSING_CREDIT",
+   "V-312|PAY-52716": "TIMING",
+   "V-313|GO/12620": "PRICE",
+   "V-313|GO/57257": "UNEXPLAINED",
+   "V-313|PAY-89515": "FX",
+   "V-314|CN-KL7948": "UNEXPLAINED",
+   "V-316|PAY-39189": "FX"
+  }
+ },
+ "wbed-r3:377:d4": {
+  "reason": {
+   "V-301|GC-9574": "DUPLICATE",
+   "V-301|CN-GC5338": "UNEXPLAINED",
+   "V-302|CN-AF1731": "UNEXPLAINED",
+   "V-302|PAY-84701": "TIMING",
+   "V-303|INV NH9130": "UNEXPLAINED",
+   "V-303|PAY-64633": "TIMING",
+   "V-304|PAY-74330": "FX",
+   "V-304|PAY-25435": "UNEXPLAINED",
+   "V-305|PAY-60797": "FX",
+   "V-305|MO-2415": "TIMING",
+   "V-307|INV TH1466": "TIMING",
+   "V-308|PAY-21209": "FX",
+   "V-309|INV LO2091": "UNEXPLAINED",
+   "V-309|INV LO8242": "DUPLICATE",
+   "V-311|CN-EP3221": "MISSING_CREDIT",
+   "V-312|INV QF4803": "DUPLICATE",
+   "V-312|PAY-62857": "FX",
+   "V-313|OC/82470": "UNEXPLAINED",
+   "V-313|PAY-18939": "TIMING",
+   "V-314|PAY-80582": "FX",
+   "V-314|BP-5592": "PRICE",
+   "V-316|PL-4501": "PRICE",
+   "V-316|CN-PL8755": "MISSING_CREDIT",
+   "V-317|INV HP9771": "PRICE",
+   "V-318|PAY-99785": "FX",
+   "V-318|PAY-42093": "UNEXPLAINED",
+   "V-320|YP/11601": "PRICE",
+   "V-320|YP/65432": "TIMING",
+   "V-321|PAY-52108": "UNEXPLAINED",
+   "V-322|SC/95577": "UNEXPLAINED",
+   "V-322|PAY-88405": "UNEXPLAINED",
+   "V-323|DF-1988": "UNEXPLAINED",
+   "V-323|PAY-89189": "UNEXPLAINED",
+   "V-323|DF-7238": "PRICE",
+   "V-324|PAY-91840": "FX",
+   "V-324|PAY-26557": "FX",
+   "V-326|RF/50797": "PRICE",
+   "V-327|CN-IP1600": "UNEXPLAINED",
+   "V-327|PAY-80467": "UNEXPLAINED",
+   "V-328|PAY-78589": "UNEXPLAINED",
+   "V-328|RF-8788": "PRICE",
+   "V-329|GS-6128": "MISSING_CREDIT",
+   "V-329|INV BP6401": "UNEXPLAINED",
+   "V-330|CN-KP2559": "UNEXPLAINED",
+   "V-330|PAY-85101": "UNEXPLAINED",
+   "V-331|CN-CO7825": "UNEXPLAINED",
+   "V-331|CO-7002": "DUPLICATE",
+   "V-332|PAY-19986": "TIMING"
+  }
+ },
+ "wbed-r3:378:d3": {
+  "reason": {
+   "V-301|INV TP2710": "DUPLICATE",
+   "V-303|PAY-24037": "UNEXPLAINED",
+   "V-304|HF-1365": "TIMING",
+   "V-305|CN-LF2872": "UNEXPLAINED",
+   "V-306|FP/49245": "DUPLICATE",
+   "V-306|GS-9602": "MISSING_CREDIT",
+   "V-307|SO/66730": "PRICE",
+   "V-308|PAY-33350": "FX",
+   "V-308|GS-7838": "MISSING_CREDIT",
+   "V-309|QP-6578": "UNEXPLAINED",
+   "V-310|CN-PF6413": "MISSING_CREDIT",
+   "V-310|PAY-16121": "TIMING",
+   "V-311|MH-7937": "PRICE",
+   "V-311|MH-8264": "UNEXPLAINED",
+   "V-311|MH-4835": "TIMING",
+   "V-312|PAY-27698": "UNEXPLAINED",
+   "V-312|CN-KC2112": "UNEXPLAINED",
+   "V-313|GP-7548": "DUPLICATE",
+   "V-313|CN-GP3674": "MISSING_CREDIT",
+   "V-314|CO/90589": "UNEXPLAINED",
+   "V-314|PAY-88078": "FX",
+   "V-316|PAY-91909": "UNEXPLAINED"
+  }
+ },
+ "wbed-r3:378:d4": {
+  "reason": {
+   "V-301|LC/85049": "DUPLICATE",
+   "V-302|PAY-26759": "FX",
+   "V-302|PAY-37380": "FX",
+   "V-303|JH/45111": "DUPLICATE",
+   "V-304|INV QC6102": "PRICE",
+   "V-304|GS-5254": "UNEXPLAINED",
+   "V-305|INV VH3715": "PRICE",
+   "V-305|INV VH6289": "PRICE",
+   "V-306|OL-2087": "PRICE",
+   "V-306|OL-5920": "TIMING",
+   "V-307|PAY-83951": "UNEXPLAINED",
+   "V-308|PAY-76043": "UNEXPLAINED",
+   "V-308|CN-YP7133": "UNEXPLAINED",
+   "V-310|RP-3384": "UNEXPLAINED",
+   "V-310|RP-1976": "DUPLICATE",
+   "V-311|PAY-10021": "UNEXPLAINED",
+   "V-311|INV HP5987": "UNEXPLAINED",
+   "V-313|PAY-24873": "FX",
+   "V-314|PAY-20973": "FX",
+   "V-314|TO/16096": "TIMING",
+   "V-315|CN-KP9513": "MISSING_CREDIT",
+   "V-315|KP/74318": "TIMING",
+   "V-316|PAY-36198": "UNEXPLAINED",
+   "V-316|QF/48740": "TIMING",
+   "V-317|PAY-57049": "UNEXPLAINED",
+   "V-317|INV LF5173": "DUPLICATE",
+   "V-319|PAY-44897": "TIMING",
+   "V-319|PAY-55463": "TIMING",
+   "V-320|CN-NL7370": "UNEXPLAINED",
+   "V-320|NL/83468": "TIMING",
+   "V-321|CN-KL2685": "MISSING_CREDIT",
+   "V-321|PAY-55591": "UNEXPLAINED",
+   "V-323|PAY-89276": "FX",
+   "V-325|INV UF9641": "PRICE",
+   "V-325|PAY-11921": "UNEXPLAINED",
+   "V-326|PAY-80208": "UNEXPLAINED",
+   "V-327|CN-EP8940": "MISSING_CREDIT",
+   "V-327|EP/82040": "UNEXPLAINED",
+   "V-328|DP-8115": "UNEXPLAINED",
+   "V-328|CN-DP6163": "MISSING_CREDIT",
+   "V-329|OH/75087": "UNEXPLAINED",
+   "V-329|OH/49849": "PRICE",
+   "V-329|PAY-71275": "TIMING",
+   "V-330|PAY-90674": "UNEXPLAINED",
+   "V-330|INV DO5114": "UNEXPLAINED",
+   "V-331|TH/76147": "UNEXPLAINED",
+   "V-332|CN-TP2448": "MISSING_CREDIT",
+   "V-332|PAY-53643": "FX"
+  }
  }
 }

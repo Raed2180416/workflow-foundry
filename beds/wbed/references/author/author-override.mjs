@@ -10,7 +10,25 @@ import { readFileSync } from 'node:fs';
 const data = JSON.parse(readFileSync(new URL('./flow-override.json', import.meta.url), 'utf8'));
 const WS = s => String(s ?? '').replace(/\s+/g, ' ').trim();
 const firstSentence = block => WS(block).split(/(?<=[.!?])\s+(?=[A-Z"“(　-鿿])/).find(s => s.length >= 8) ?? '';
+// R3 reason judges: the answer is the labelled reason of (vendor, document); the quote is the notes line that names the
+// document, else the one that names its amount.
+function reasonAnswer(request) {
+  const prompt = String(request.prompt ?? '');
+  const m = /^Supplier .+? \((V-\d+)\)\. The (?:invoice|payment|credit note|balance brought forward) (.+?) (?:is on both sides|of )/.exec(prompt);
+  if (!m) return { error: 'author override: cannot read the reason question' };
+  const reason = data.answers?.reason?.[`${m[1]}|${m[2]}`];
+  if (reason === undefined) return { error: `author table has no reason for ${m[1]} ${m[2]}` };
+  if (!['PRICE', 'FX', 'MISSING_CREDIT'].includes(reason)) return { value: { reason: 'UNEXPLAINED', quote: '' } };
+  const block = /<<<\n([\s\S]*?)\n>>>/.exec(prompt)?.[1] ?? '';
+  const key = s => s.toLowerCase().replace(/[\s\-/]/g, '');
+  const amount = /(?:statement shows|of) -?[A-Z]{3} ([\d,.]+)/.exec(prompt)?.[1];
+  const lines = block.split('\n').map(WS).filter(Boolean);
+  const line = lines.find(l => key(l).includes(key(m[2]))) ?? (amount ? lines.find(l => l.includes(amount)) : undefined);
+  if (!line) return { error: `author override: no notes line names ${m[2]}` };
+  return { value: { reason, quote: line } };
+}
 export default function override(callSite, request) {
+  if (/^reason:/.test(callSite.name)) return reasonAnswer(request);
   const name = callSite.name.replace(/^marker-tiebreak:/, 'marker:').replace(/^dob-order-second:/, 'dob-order:').replace(/^reason-second:/, 'reason:');
   const answer = data.answers?.[name];
   if (answer === undefined) return { error: `author table has no answer for ${callSite.name}` };

@@ -243,7 +243,11 @@ const fmtMinor = (n, ccy) => { const d = MINOR[ccy] ?? 2, a = Math.abs(n), s = d
 // Money amounts mentioned in a sentence, in minor units of ccy (for the "does not name another amount" check).
 const amountsIn = (text, ccy) => [...String(text).matchAll(/(?:[A-Z]{3}|[€£$¥])\s?(\d[\d,]*(?:\.\d+)?)|(\d[\d,]*(?:\.\d+)?)\s?(?:[A-Z]{3}\b|円)/g)]
   .map(m => minorOf(m[1] ?? m[2], ccy)).filter(x => x != null);
-const refsIn = text => [...String(text).matchAll(/\b(?:INV\s+)?[A-Z]{1,4}[-/ ]?\d{3,}\b|\bCN-[A-Z]{1,4}\d+\b|\bPAY-\d+\b|\bGS-\d+\b/g)].map(m => refKey(m[0]));
+const CCY_WORDS = '(?:USD|EUR|GBP|CHF|JPY|AUD|CAD|SEK|NOK|DKK|MXN)';
+const refsIn = text => [...String(text).matchAll(new RegExp(`\\b(?:INV\\s+)?(?!${CCY_WORDS}\\b)[A-Z]{1,4}[-/ ]?\\d{3,}\\b|\\bCN-[A-Z]{1,4}\\d+\\b`, 'g'))].map(m => refKey(m[0]));
+// A judge whose failure must not end the run (a safe answer exists): a one-item map whose item failure policy catches
+// the deopt; returns the value or null.
+const softJudge = (name, spec) => flow.map([0], async () => flow.judge(name, spec), { name: `soft:${name}`, onItemError: 'null', reduce: r => r[0] ?? null });
 
 async function auditSupplier(v) {
   const text = STATEMENTS[v.file];
@@ -262,7 +266,9 @@ async function auditSupplier(v) {
   });
   flow.guard('statement-rows-read', rows.every(r => r.kind && r.date != null && r.amount != null && r.balance != null), () => ({ vendor: v.id, bad: st.rows.filter((r, i) => !(rows[i].kind && rows[i].date != null && rows[i].amount != null)).slice(0, 3) }));
   // The printed running balance and the closing line check every amount and its sign.
-  const closing = minorOf(st.closingRaw, ccy, de);
+  // The closing line is printed in English number format whatever the table's locale; the other reading is a fallback.
+  const lastBal = rows[rows.length - 1].balance;
+  const closing = [minorOf(st.closingRaw, ccy, false), minorOf(st.closingRaw, ccy, true)].find(x => x === lastBal) ?? minorOf(st.closingRaw, ccy, false);
   let run = 0;
   const runningOk = rows.every((r, i) => { run = i === 0 && r.kind === 'OPENING' ? r.amount : run + r.amount; return run === r.balance; });
   flow.invariant('statement-running-balance', runningOk && closing === rows[rows.length - 1].balance, { vendor: v.id, closing, last: rows[rows.length - 1].balance });
@@ -313,7 +319,7 @@ async function auditSupplier(v) {
     const fact = d.s && d.l
       ? `The ${KIND_WORD[d.kind]} ${d.ref} is on both sides with different amounts: the statement shows ${fmtMinor(d.s.amount, ccy)} (dated ${d.s.date}), our ledger ${fmtMinor(d.l.amount, ccy)}; difference ${fmtMinor(d.amount, ccy)}.`
       : `The ${KIND_WORD[d.kind]} ${d.ref} of ${fmtMinor(d.s.amount, ccy)} dated ${d.s.date} is on the statement only, not in our ledger.`;
-    const value = await flow.judge(`reason:${d.candidate}`, { tiers: TIERS, system: SYSTEM_PROMPT, schema: REASON_SCHEMA(d.candidate),
+    const value = await softJudge(`reason:${d.candidate}`, { tiers: TIERS, system: SYSTEM_PROMPT, schema: REASON_SCHEMA(d.candidate),
       prompt: `Supplier ${v.name} (${v.id}). ${fact}\nRule: ${d.candidate}: ${spec.reasons[d.candidate]}\nRule: UNEXPLAINED: ${spec.reasons.UNEXPLAINED}\nQuestion: ${QUESTION[d.candidate]} Answer ${d.candidate} and quote that sentence exactly, or answer UNEXPLAINED with an empty quote.\nThe supplier's cover note and our AP clerk's notes on this supplier:\n${fence(notesText)}`,
       check: x => {
         if (x.reason === 'UNEXPLAINED') return null;
@@ -324,8 +330,8 @@ async function auditSupplier(v) {
         if (d.candidate === 'MISSING_CREDIT') { const am = amountsIn(q, ccy); if (am.length && !am.includes(Math.abs(d.s.amount))) return 'the quoted note names another amount'; }
         return null;
       } });
-    d.reason = value.reason;
-    d.quote = value.quote;
+    if (!value) flow.flag('reason-judge-failed', { vendor: v.id, ref: d.ref, candidate: d.candidate });
+    d.reason = value?.reason ?? 'UNEXPLAINED';
   }
   const discrepancies = found.map(d => ({ ref: d.ref, reason: d.reason, amount_minor: d.amount }));
   const posted = discrepancies.filter(d => ['PRICE', 'FX', 'MISSING_CREDIT'].includes(d.reason)).reduce((a, d) => a + d.amount_minor, 0);

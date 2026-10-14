@@ -44,9 +44,9 @@ export const HOUSE = {
 // Repository areas: directory under src/, file names, and the function families each file draws from.
 export const AREAS = [
   { dir: 'billing', files: ['invoices', 'credit-notes', 'line-items', 'discounts', 'fees', 'taxes', 'quotes', 'rebates'],
-    families: ['line-amount', 'sum-lines', 'split-evenly', 'percent-of', 'fee-rate', 'approval-rule', 'filter-status', 'max-by', 'sum-field', 'format-ref', 'append-total', 'drop-status', 'range-check', 'to-major', 'average'] },
+    families: ['line-amount', 'sum-lines', 'split-evenly', 'percent-of', 'fee-rate', 'approval-rule', 'filter-status', 'max-by', 'sum-field', 'format-ref', 'append-total', 'drop-status', 'range-check', 'to-major', 'average', 'month-end'] },
   { dir: 'payments', files: ['payments', 'remittance', 'refunds', 'payouts', 'allocations', 'dunning'],
-    families: ['is-overdue', 'retry-policy', 'split-evenly', 'parse-amount', 'percent-of', 'fee-rate', 'filter-status', 'last-n', 'chunk', 'unique-ids', 'line-amount', 'sum-lines', 'ratio', 'range-check'] },
+    families: ['is-overdue', 'retry-policy', 'split-evenly', 'parse-amount', 'percent-of', 'fee-rate', 'filter-status', 'last-n', 'chunk', 'unique-ids', 'line-amount', 'sum-lines', 'ratio', 'range-check', 'add-months', 'is-valid-date'] },
   { dir: 'calendar', files: ['schedules', 'terms', 'periods', 'holidays', 'billing-runs', 'cutoffs'],
     families: ['add-months', 'month-end', 'is-valid-date', 'day-count', 'is-overdue', 'compare-by-date', 'range-check', 'pairwise-deltas', 'chunk', 'clamp'] },
   { dir: 'export', files: ['csv', 'html', 'search', 'text', 'statements', 'labels'],
@@ -56,7 +56,7 @@ export const AREAS = [
   { dir: 'reporting', files: ['summaries', 'metrics', 'rankings', 'aging', 'dashboards', 'trends'],
     families: ['average', 'ratio', 'max-by', 'pairwise-deltas', 'sort-by', 'count-by', 'sum-field', 'percent-of', 'page-slice', 'last-n', 'append-total', 'month-end'] },
   { dir: 'customers', files: ['contacts', 'accounts', 'addresses', 'segments', 'consent', 'notes'],
-    families: ['display-name', 'first-or', 'safe-get', 'filter-status', 'drop-status', 'mask-account', 'initials', 'group-by', 'with-defaults', 'is-blank', 'sort-by', 'approval-rule'] },
+    families: ['display-name', 'first-or', 'safe-get', 'filter-status', 'drop-status', 'mask-account', 'initials', 'group-by', 'with-defaults', 'is-blank', 'sort-by', 'approval-rule', 'is-valid-date'] },
 ];
 /** The two helper modules; their helpers are called from other areas (root-cause attribution). */
 export const LIB = [
