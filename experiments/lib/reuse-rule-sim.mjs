@@ -4,6 +4,7 @@
 //   false kill = P(not served) at p ≤ 0.01 (a 'no-decision' also leaves reuse off, so it counts);
 //   miss       = P(served)     at p ≥ 0.05.
 // The M3 criterion: false kill ≤ 5% at p ≤ 0.01 and miss ≤ 5% at p ≥ 0.05, at L4's scale (about 580 decisions).
+// `decide` applies it mechanically (binding cells, then a declared tie-break; see there).
 //
 // Parent clustering model (explicit). Parent j has m_j admitted decisions. Its own wrong rate is p_j ~ Beta(a, b) with
 // mean p and ICC rho (a = p(1 − rho)/rho, b = (1 − p)(1 − rho)/rho; rho = 0 or p ∈ {0, 1} gives p_j = p), and its
@@ -69,10 +70,12 @@ export function reuseRuleV1(clusters, { bound = 0.05, minN = 60, earlyN = 20, ea
 const NAIVE = { rho: 0, estimateRho: false };
 export const RULES = {
   v1: { label: 'current: two-sided Wilson ≤ 0.05 at ≥ 60, early kill > 0.10 at ≥ 20, no Deff', run: c => reuseRuleV1(c) },
-  a: { label: '(a) one-sided Wilson ≤ 0.05, Deff ρ = max(0.1, ρ̂)', run: c => reuseBoundRule(c) },
+  a: { label: '(a) one-sided 95% Wilson bound ≤ 0.05 (the ATTACK form), Deff ρ = max(0.1, ρ̂)', run: c => reuseBoundRule(c) },
+  aE: { label: '(a) one-sided 95% exact (Clopper–Pearson) bound ≤ 0.05, Deff ρ = max(0.1, ρ̂)', run: c => reuseBoundRule(c, { method: 'exact' }) },
   b: { label: '(b) SPRT 0.01/0.05, α = β = 0.05, Deff ρ = max(0.1, ρ̂)', run: c => reuseSprt(c) },
   c: { label: '(c) plan n = 181, c = 4 in effective units, Deff ρ = max(0.1, ρ̂)', run: c => reuseSamplingPlan(c) },
-  a0: { label: '(a) without Deff', run: c => reuseBoundRule(c, NAIVE) },
+  a0: { label: '(a) Wilson without Deff', run: c => reuseBoundRule(c, NAIVE) },
+  aE0: { label: '(a) exact without Deff', run: c => reuseBoundRule(c, { ...NAIVE, method: 'exact' }) },
   b0: { label: '(b) without Deff', run: c => reuseSprt(c, NAIVE) },
   c0: { label: '(c) without Deff', run: c => reuseSamplingPlan(c, NAIVE) },
 };
@@ -113,6 +116,7 @@ export function exactIndependent(ruleKey, N, p) {
   const step = {
     v1: (n, x) => (n < N ? (reuseRuleV1(one(n, x)).reason === 'early-kill' ? 'kill' : null) : reuseRuleV1(one(n, x)).decision),
     a: (n, x) => (n < N ? null : reuseBoundRule(one(n, x), NAIVE).decision),
+    aE: (n, x) => (n < N ? null : reuseBoundRule(one(n, x), { ...NAIVE, method: 'exact' }).decision),
     b: (n, x) => reuseSprt(one(n, x), NAIVE).decision,
     c: (n, x) => (n < N && n < 181 ? null : reuseSamplingPlan(one(n, x), NAIVE).decision),
   }[ruleKey];
@@ -159,7 +163,7 @@ export function runGrid({ reps = 10000, seed = 'm3', scenarios = Object.keys(SCE
 }
 
 // How many parents of 6 the rules need: P(serve) at p ∈ {0, 0.01, 0.05} as the number of parents grows.
-export function nNeeded({ reps = 10000, seed = 'm3-n', parents = [10, 20, 30, 40, 50, 60, 70, 80, 96, 120], m = 6, rhos = [0, 0.1, 0.2], rules = ['a', 'b', 'c'] } = {}) {
+export function nNeeded({ reps = 10000, seed = 'm3-n', parents = [10, 20, 30, 40, 50, 60, 70, 80, 96, 120], m = 6, rhos = [0, 0.1, 0.2], rules = ['aE', 'a', 'b', 'c'] } = {}) {
   const rows = [];
   for (const rho of rhos) for (const J of parents) {
     const sizes = Array(J).fill(m), byRule = {};
@@ -172,9 +176,36 @@ export function nNeeded({ reps = 10000, seed = 'm3-n', parents = [10, 20, 30, 40
   return rows;
 }
 
+// The decision procedure. It was fixed after the first grid run (2026-10-14) and before any L4 data exist; the exact
+// variant aE was added at the same point (research/jit-20261008/analysis/m3-reuse-rule/README.md says why):
+//   binding  every L4-scale parent-clustered cell at rho ≤ RHO_REUSE_FLOOR (0.1, the programme's assumed ICC), equal and
+//            unequal parent sizes, meets the criterion (simulated), and the independent limit (n = 576, m = 1) meets it
+//            EXACTLY (`exactIndependent`, no Monte Carlo);
+//   tie-break among rules that pass the binding set: the most robustness cells met (L4 scale at rho 0.2, the by-entry
+//            sensitivity at every rho, the 180-decision scenario at every rho); then the lower worst false kill there.
+export const BINDING_SCENARIOS = ['L4-parent', 'L4-parent-unequal'];
+export const ROBUSTNESS = r => (BINDING_SCENARIOS.includes(r.scenario) && r.rho > RHO_REUSE_FLOOR) || r.scenario === 'L4-entry' || r.scenario === 'mid-parent';
+export function decide(grid, exact, { candidates = ['a', 'aE', 'b', 'c'], missMax = 0.05, killMax = 0.05 } = {}) {
+  const out = [];
+  for (const rule of candidates) {
+    const rows = grid.filter(r => r.rule === rule);
+    const binding = rows.filter(r => BINDING_SCENARIOS.includes(r.scenario) && r.rho <= RHO_REUSE_FLOOR);
+    const ex = Object.fromEntries(exact.filter(e => e.rule === rule).map(e => [e.p, e.exact]));
+    const exactPass = ex[0.01] && ex[0.05] ? 1 - ex[0.01].serve <= killMax && ex[0.05].serve <= missMax : null;
+    const failed = binding.filter(r => !r.pass).map(r => `${r.scenario} rho ${r.rho} (false kill ${(100 * r.falseKill).toFixed(1)}%, miss ${(100 * r.miss).toFixed(1)}%)`);
+    if (exactPass === false) failed.push(`independent n 576 exact (false kill ${(100 * (1 - ex[0.01].serve)).toFixed(2)}%, miss ${(100 * ex[0.05].serve).toFixed(2)}%)`);
+    const robust = rows.filter(ROBUSTNESS);
+    out.push({ rule, passesBinding: exactPass !== null && failed.length === 0, failedBinding: failed,
+      robustnessMet: robust.filter(r => r.pass).length, robustnessCells: robust.length,
+      worstRobustFalseKill: Math.max(...robust.map(r => r.falseKill)) });
+  }
+  const ok = out.filter(o => o.passesBinding).sort((x, y) => y.robustnessMet - x.robustnessMet || x.worstRobustFalseKill - y.worstRobustFalseKill);
+  return { candidates: out, chosen: ok[0]?.rule ?? null };
+}
+
 // ------------------------------------------------------------------------------------------------ CLI
 const pct = x => (100 * x).toFixed(1);
-export function renderMarkdown({ reps, seed, grid, need, exact }) {
+export function renderMarkdown({ reps, seed, grid, need, exact, decision }) {
   const L = [];
   L.push(`# M3 reuse acceptance rule: operating characteristics`, '');
   L.push(`*Generated by \`node experiments/lib/reuse-rule-sim.mjs --reps ${reps} --seed ${seed}\`. $0, no model call, seeded `
@@ -184,7 +215,11 @@ export function renderMarkdown({ reps, seed, grid, need, exact }) {
   for (const [k, v] of Object.entries(RULES)) L.push(`- \`${k}\`: ${v.label}`);
   L.push('', '## Exact check (independent decisions, n = 576), against the simulator', '');
   L.push('| rule | p | exact P(serve) | simulated P(serve) |', '|---|---|---|---|');
-  for (const e of exact) L.push(`| ${e.rule} | ${e.p} | ${pct(e.exact.serve)}% | ${pct(e.sim.serve)}% |`);
+  for (const e of exact) L.push(`| ${e.rule} | ${e.p} | ${(100 * e.exact.serve).toFixed(2)}% | ${pct(e.sim.serve)}% |`);
+  L.push('', '## Decision (`decide`)', '');
+  L.push('| rule | passes the binding cells | binding cells failed | robustness cells met | worst false kill in them |', '|---|---|---|---|---|');
+  for (const c of decision.candidates) L.push(`| ${c.rule} | ${c.passesBinding ? 'yes' : 'no'} | ${c.failedBinding.join('; ') || '–'} | ${c.robustnessMet} / ${c.robustnessCells} | ${pct(c.worstRobustFalseKill)}% |`);
+  L.push('', `Chosen: **${decision.chosen ?? 'none'}**.`);
   L.push('', '## Grid: P(serve) by true wrong-reuse rate p, and the criterion', '');
   L.push('| scenario | n | ρ | rule | p=0 | p=0.01 | p=0.03 | p=0.05 | false kill | miss | meets | mean decisions read at p=0.01 / 0.05 |');
   L.push('|---|---|---|---|---|---|---|---|---|---|---|---|');
@@ -202,13 +237,14 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
   const reps = Number(arg('reps', 20000)), seed = arg('seed', 'm3');
   const exact = [];
-  for (const rule of ['v1', 'a', 'b', 'c']) for (const p of [0.01, 0.05]) {
+  for (const rule of ['v1', 'a', 'aE', 'b', 'c']) for (const p of [0.01, 0.05]) {
     exact.push({ rule, p, exact: exactIndependent(rule, 576, p), sim: simulate({ p, rho: 0, sizes: SCENARIOS['L4-indep'].sizes, reps, seed, rules: [rule] })[rule] });
   }
   const grid = runGrid({ reps, seed });
   const need = nNeeded({ reps: Math.min(reps, 10000) });
+  const decision = decide(grid, exact);
   const out = { generatedBy: `node experiments/lib/reuse-rule-sim.mjs --reps ${reps} --seed ${seed}`, reps, seed, rhoFloor: RHO_REUSE_FLOOR,
-    planCheck: { n: 181, c: 4, falseKillAt001: 1 - binomCdf(4, 181, 0.01), missAt005: binomCdf(4, 181, 0.05) }, exact, grid, need };
+    planCheck: { n: 181, c: 4, falseKillAt001: 1 - binomCdf(4, 181, 0.01), missAt005: binomCdf(4, 181, 0.05) }, decision, exact, grid, need };
   const md = renderMarkdown(out);
   if (arg('json')) writeFileSync(arg('json'), JSON.stringify(out, null, 1) + '\n');
   if (arg('md')) writeFileSync(arg('md'), md);
