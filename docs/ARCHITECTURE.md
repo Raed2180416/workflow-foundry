@@ -289,9 +289,10 @@ in `src/runtime.mjs` apply it. `tests/wait-signal.test.mjs` covers each item bel
  "timeoutMs": 86400000, "onTimeout": "escalate"}
 ```
 
-- **Shapes.** A timer wait has `delayMs` (at most 1 hour, as before) or the absolute `at`: epoch milliseconds, an ISO 8601 date-time
-  with an explicit offset, or a reference to either, resolved when the wait starts (a local time without an offset is refused; every
-  field is range-checked). A signal wait has `signal` (one name, with optional `correlate` and payload `schema`) or `race` (2–8
+- **Shapes.** A timer wait has `delayMs` (at most 1 hour, as before) or the absolute `at`: epoch milliseconds (at least `1e11`, so
+  epoch seconds are refused rather than read as a date in January 1970), an ISO 8601 date-time with an explicit offset (fractions up
+  to nanoseconds, truncated to milliseconds), or a reference to either, resolved when the wait starts (a local time without an offset
+  is refused; every field is range-checked). A signal wait has `signal` (one name, with optional `correlate` and payload `schema`) or `race` (2–8
   signals, each with its own), and exactly one timer: `timeoutMs` (at most 30 days) or `at`. A signal wait without a timer is refused
   (`WAIT_UNBOUNDED`); other mixes are `WAIT_SHAPE`. One signal name has one payload schema per workflow (`SIGNAL_SCHEMA_CONFLICT`); no
   schema means the signal carries no payload. Output: a delay `{waitedMs}`, an absolute timer `{wakeAt}`, a signal
@@ -299,9 +300,15 @@ in `src/runtime.mjs` apply it. `tests/wait-signal.test.mjs` covers each item bel
 - **What starts with the wait.** Its wake time and, for each subscription, the correlation key computed from the instance
   (`correlate` is a template over the input, node outputs and map/loop locals) are fixed in its `node.started` event, its state and its
   timer row, in one commit, so a crash keeps them. A signal wait's or absolute timer's time after the run deadline is refused there
-  (`WAIT_DEADLINE`): the run would stop on `DEADLINE` before any timeout branch ran. The run deadline is the smaller of the workflow's
-  `budget.maxDurationMs` and the runtime policy's (default 1 hour), so a host that wants day-long waits raises both. A decided wait keeps
-  a due timer until it completes, so a process that dies in between leaves a run the next timer scan resumes.
+  (`WAIT_DEADLINE`, verdict `inconclusive` as for `DEADLINE`; a timer exactly at the deadline is refused too): the run would stop on
+  `DEADLINE` before any timeout branch ran. A literal `timeoutMs` at or above the workflow's `budget.maxDurationMs` is refused by the
+  validator (`WAIT_DEADLINE`). The run deadline is the smaller of the workflow's `budget.maxDurationMs` and the runtime policy's (default
+  1 hour), so a host that wants day-long waits raises both. The shipped surfaces (`foundry run`/`tick`/`signal`, `serve`, `mcp`) build
+  their runtime with the default policy and have no flag to raise it, so on them a wait (and the example above) is bounded by an hour;
+  longer waits need a host that constructs `Runtime` with a larger `maxDurationMs`. A decided wait keeps a due timer until it completes,
+  so a process that dies in between leaves a run the next timer scan resumes. A signal wait whose owner died after it started and
+  before it parked is not lost: a delivery it would take, to a run with no live owner, moves its timer to now (`resumes` in the result),
+  and the resumed wait takes the buffered signal.
 - **The rule.** A wait takes the first-delivered unconsumed signal that matches one of its subscriptions (same name; same key, unless
   the subscription has no `correlate`) and was received strictly before its timer; with none, it times out once the clock reaches the
   timer (a tie goes to the timer). A newly delivered signal goes to the parked, unresolved wait it matches that started first. Each
@@ -313,31 +320,45 @@ in `src/runtime.mjs` apply it. `tests/wait-signal.test.mjs` covers each item bel
   (`wait.resolved`, by `delivery`) and moves its timer to now, so the next `foundry tick` or `serve` scan (or the HTTP route itself)
   resumes the run. Otherwise the signal stays buffered: a wait that starts later takes it if it matches and arrived before that wait's
   timer (out-of-order delivery), and a late signal (after its wait resolved) is kept, unconsumed. A closed run, or one whose
-  cancellation was requested, takes none (`RUN_CLOSED`). At most 256 signals per run; payloads at most 64 KiB, keys 4 KiB.
-- **Correlation without a run id** (BAR-SET G1). `Runtime.correlateSignal`, `foundry signal` without RUN, `POST /api/signals`: the one
-  open run with a parked wait subscribed to that name and key takes it; none is `SIGNAL_UNMATCHED`, several runs `SIGNAL_AMBIGUOUS`.
-  Only waits that declare `correlate` are found, and only parked ones (a run that has not reached its wait cannot be found; deliver to
-  it by id and it buffers). Keys match exactly (canonical JSON); fuzzy or mistyped business keys are the solver's job.
+  cancellation was requested, takes none (`RUN_CLOSED`). At most 256 signals per run; payloads at most 64 KiB, keys 4 KiB. The CLI's
+  `--key` is JSON text only (`--payload` may name a JSON file). A wait still parked in a map item that fails under `failure: "collect"`
+  is settled with its item (`node.failed`, `MAP_ITEM_FAILED`, its timer cleared): it takes no signal meant for a live wait.
+- **Correlation without a run id** (BAR-SET G1). `Runtime.correlateSignal(signal, {workflowId})`, `foundry signal --workflow ID`
+  without RUN, `POST /api/signals` with `{workflowId, id, name, key, payload?}`: the one open run *of that workflow* with a wait
+  subscribed to that name and key whose timer has not run out takes it; none is `SIGNAL_UNMATCHED`, several runs `SIGNAL_AMBIGUOUS`
+  (runs are counted, not waits). The workflow scope is required (`SIGNAL_SCOPE`): signal names belong to no workflow, and any workflow
+  saved into the workspace (a model can save and run one over MCP) could otherwise wait on the same name and key and take or block the
+  signals meant for another. The scope is the workflow id, so a new version saved under the same id is in scope (saving is that
+  authority already). Only waits that declare `correlate` are found, parked ones or ones stranded by a dead owner (a run that has not
+  reached its wait cannot be found; deliver to it by id and it buffers). Keys match exactly (canonical JSON); fuzzy or mistyped
+  business keys are the solver's job.
 - **Idempotency.** The signal id is the idempotency key, unique in the workspace (table `signals`): the same id with the same run, name,
   key and payload is a no-op that returns the first delivery (`duplicate: true`); with anything else it is `SIGNAL_CONFLICT`, and nothing
-  is written.
+  is written. The table is a lookup no chain binds, so the delivery also checks the run's own inbox and chain: one id reaches a run
+  once even if the table loses it, and a chain holding two deliveries of one id is refused on resume and reported by verify-run.
 - **Timeouts.** `onTimeout`: `fail` (the default) fails the wait with `WAIT_TIMEOUT` (verdict `inconclusive`); `continue` completes it
   with outcome `timeout`; a node id names the timeout branch: that node (it must need the wait and join `all_success`) runs on a
   timeout and every other direct dependent joined `all_success` is skipped, and the reverse when a signal arrives.
-- **Labels.** Signals are trusted by default, as answers are: an authenticated delivery. A wait's `label` marks what its signals carry
-  as untrusted; its output then carries that label, joined with the labels of what its keys and `at` were computed from, and a wait
-  whose onTimeout names a branch is control for its direct dependents (validator and runtime alike).
+- **Labels.** Signals are trusted by default, as answers are: an authenticated delivery (an open question: the payload comes from an
+  outside system the token holder only relays; see ENGINE-FREEZE §7.4). A wait's `label` marks what its signals carry as untrusted; its
+  output then carries that label, joined with the labels of what its keys and `at` were computed from, and a wait whose onTimeout names
+  a branch is control for its direct dependents (validator and runtime alike). Any wait can fail over its `at` and keys when it starts
+  (`WAIT_AT`, `WAIT_DEADLINE`, `WAIT_KEY`), so in a collecting map their labels decide whether the rest of the item runs.
 - **Journal and replay.** Every input of the rule is journaled before it decides anything (the wait's subscriptions and timer, each
-  signal with its receipt time, each decision), so every outcome is a pure function of the chain. `replayWaits(events)` re-derives each
-  decision from the chain alone, and verify-run reports any difference (`WAIT_REPLAY_MISMATCH`: an error on the engine that recorded the
-  run, a warning on another). A wait completes from the chain, not from the record: its decision must be its `wait.resolved` event and
-  its payload is read from the `signal.delivered` event. Resume refuses a record whose inbox or wait decisions differ from the chain
-  (`CHECKPOINT_TAMPERED`; verify-run `SIGNAL_EDITED`).
+  signal with its receipt time, each decision naming its delivery event by sequence number), so each decision can be re-derived from
+  the chain. `replayWaits(events)` re-derives each decision from the chain alone, and verify-run reports the departures it checks
+  (`WAIT_REPLAY_MISMATCH` with a rule code: claim, pick, early timeout, missed signal, cancelled losers, output, undecided completion,
+  double consumption, redelivered id, unknown wait; an error on the engine that recorded the run, a warning on another). What it does
+  not re-derive: the clock (a timeout is checked to be at or after its timer, not re-raced), and record-only state outside the rule.
+  A wait completes from the chain, not from the record: its decision must be its `wait.resolved` event and its payload is read from the
+  `signal.delivered` event that decision names. Resume refuses a record whose inbox, wait decisions or wait inputs (subscriptions,
+  timer, start) differ from the chain (`CHECKPOINT_TAMPERED`; verify-run `SIGNAL_EDITED`). The test-only fault hook
+  (`extra.crashAfterWaitDecision`) acts only in a `Runtime` built with `faultHooks: true`.
 - **Not built.** Re-executing a recorded run with its signals into a new run (the clock is not journaled, so timeouts would race
   again; replay here is the re-derivation above), a workspace-level buffer for signals no run waits for yet, non-interrupting
   reminders on a waiting step (G3), pausable business-calendar clocks (G15/G16), `at` in business time zones, and a UI for open waits.
   A map whose item parks stops starting new items (as for any pause), so a correlated fan-out needs `concurrency` of at least its item
-  count.
+  count: at most 16 (the schema), and 4 on the shipped surfaces (default policy); a larger fan-out does not park every item at once.
 
 ## Interfaces
 

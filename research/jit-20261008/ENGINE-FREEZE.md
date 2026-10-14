@@ -457,7 +457,9 @@ it (`ENGINE_DRIFT`), as with any engine change. Each step lists the files it cha
   `tests/wait-signal.test.mjs` passes 16 of 16 in that tree. The branch's own working tree was not used: the signals part's
   uncommitted step-2 edits fail 5 of its wait-signal tests there at the time of writing, which is that part's work in progress. The
   reviewer's probes `p1`, `p2`, `p4b`, `p5`, `p10`, `p13`, `p14` and `p15` reproduced each finding before the change; after it they
-  show the refusals above.: human-task forms in `tools/ui` (no engine change), 2026-10-14
+  show the refusals above.
+
+### G21 tier 0: human-task forms in `tools/ui` (no engine change), 2026-10-14
 
 - **`src/` files changed: none.** No kit allow-list path changed (`package.json`, `bin`, `src`, `schemas`, `policy`, `skills`,
   `web`, `node_modules`). The engine identity is that of the step it runs on; this work adds nothing to it. The sidecar sits in
@@ -476,3 +478,67 @@ it (`ENGINE_DRIFT`), as with any engine change. Each step lists the files it cha
   and 2): 1129 tests, 1111 pass, **0 fail**, 18 skipped (the recorded lanes). The 88 added tests are 75 + 10 + 3 in the three
   files above; the browser file ran (Playwright 1.63.0, `/opt/pw-browsers/chromium`) and skips with a reason where either is
   missing. Details and capability numbers: [tools/ui/README.md](../../tools/ui/README.md).
+
+### 7.4 Step 2 review fixes (part "wait-signal"), 2026-10-14
+
+(The heading of the G21 record above had been overwritten by the end of §7.3's last paragraph; it is restored, nothing else changed.)
+
+- **Base.** Step 2, `8d1c559` (engine identity `73dc31d6…`, §7.2). The step-1 review part (§7.3) landed in the same files at the same
+  time.
+- **How it landed.** The autosave snapshots `deb07d5`, `c6a8d1b`, `7cd7397`, `051dfb0` and `5e22645` committed this part's code while
+  it was being written (they also hold the state part's hunks, beds and `tools/ui` files). This part is exactly, in `git diff 833eca0
+  5e22645`: every hunk of `src/signals.mjs`, `src/store.mjs`, `src/foundry.mjs`, `src/http.mjs`, `bin/foundry.mjs`, `src/verdict.mjs`,
+  `tests/wait-signal.test.mjs` and `tests/verdict.test.mjs`; in `src/runtime.mjs` every hunk but the state part's (§7.3 names them);
+  in `src/validate.mjs` the `checkWait` hunks and the wait line of the taint pass's failure label; and the commit carrying this section
+  (`docs/ARCHITECTURE.md`, this record).
+- **After this part:** branch head `5e22645`, `src` tree `6983d552c4962d1da13e1a4c0892182343b61c2f`: engine identity
+  `692ebb5284008eee2044c31fde199822a7d335ad182beb0a73c47fd5985896d5` (Node `v24.21.0`, ajv 8.20.0). That is steps 1 and 2 with both
+  review parts; it was not computed for this part alone. A run created by an earlier E3 engine is not resumed (`ENGINE_DRIFT`).
+
+| file | change |
+|---|---|
+| `src/signals.mjs` | `parseAt` refuses integers below `1e11` (epoch seconds) and takes fractions up to 9 digits (truncated to ms); `signalCheckpointDrift` also flags a signal id the chain delivers twice, a decision whose `deliverySeq` differs, and a signal wait whose subscriptions, `wakeAt` or `startedSequence` differ from its `node.started` event; `replayWaits` binds each decision to the delivery event it names (`deliverySeq`), adds `SIGNAL_REDELIVERED` and `WAIT_UNDECIDED`, and settles a wait that failed undecided (no later claim); header claim corrected |
+| `src/runtime.mjs` | `correlateSignal` requires `workflowId` (`SIGNAL_SCOPE`), refuses an id another workflow's run took (`SIGNAL_CONFLICT`), counts runs, skips overdue waits and live owners' unparked waits; `deliverSignal` takes `workflowId`, checks the id against the run's inbox and chain (duplicate or `SIGNAL_CONFLICT`), records `deliverySeq` in the decision, and moves the timer of a matching wait stranded by a dead owner to now (`resumes`); `decideWait` records `deliverySeq`; `finishWait` reads the delivery by that sequence number; `waitIntent` refuses a timer at the deadline (`>=`); `abandonWaits` settles a parked wait of a failed collect-map item (`MAP_ITEM_FAILED`, timer cleared, `node.failed`); Runtime option `faultHooks` gates `crashAfterWaitDecision` |
+| `src/store.mjs` | `openSignalWaits(workflowId, name, keyHash, now)`: one row per run and status, workflow scope, `wakeAt > now`, parked or running; `eventAt(runId, seq)` |
+| `src/validate.mjs` | literal signal-wait `timeoutMs` ≥ `budget.maxDurationMs` is `WAIT_DEADLINE`; numeric literal `at` is parsed (`WAIT_AT`); every wait's failure label joins the labels of its `at` and correlation keys |
+| `src/verdict.mjs` | `WAIT_DEADLINE` is `inconclusive` |
+| `src/foundry.mjs`, `src/http.mjs`, `bin/foundry.mjs` | the workflow scope on every correlated surface (`--workflow`, body `workflowId`); HTTP resumes a stranded wait too; the CLI's `--key` is JSON text only |
+| `tests/wait-signal.test.mjs` | 5 new tests (below); the 16 of §7.2 updated for the scope, the static deadline, the fault-hook option and the input drift |
+| `tests/verdict.test.mjs` | the pinned inconclusive list gains `WAIT_DEADLINE` |
+| `docs/ARCHITECTURE.md` | "Signal waits and absolute timers": scope, idempotency per run, stranded and abandoned waits, `at` bounds, deadline rules, shipped-surface bounds, what replay checks and what it does not |
+
+- **Review findings (2 P1, 12 P2).**
+  - **Fixed, with regression tests (2 P1, 9 P2):** P1-1 unscoped correlation (a model-saved workflow took or blocked another's signals;
+    also overdue waits counted as claimants and the 64-row limit on waits hid runs); P1-2 one id delivered twice to a run once the
+    workspace index lost it, the wait completing with the second payload and verify-run reporting ok; P2-3 a parked wait of a failed
+    collect item kept claiming; P2-4 the rule's inputs held in the record were unchecked (signal waits; plain delay waits keep their
+    earlier checks, which `tests/timers.test.mjs` and `tests/construction-intent.test.mjs` rely on); P2-5 a wait stranded between start
+    and park slept to its full timeout; P2-6 a wait's `at` and keys missing from the failure label; P2-9 the deadline tie; P2-11 an
+    undecided completion not flagged; P2-12 the wait fault hook read from an unbound record field (now needs `faultHooks: true`);
+    P2-13 epoch seconds and microseconds in `parseAt` (also §7.3's deferred P2-9); P2-14 the CLI reading `--key` from a file.
+  - **Fixed in part (P2-8):** the static `WAIT_DEADLINE` check and `WAIT_DEADLINE` → `inconclusive`; the docs now state the shipped
+    surfaces' 1-hour bound. **Rejected** within it, with reasons: `WAIT_AT` and `WAIT_KEY` stay `harness_fault`, as `MISSING_REFERENCE`
+    and `SCHEMA_MISMATCH` are (a computed value of the wrong form is a construction or data fault, not a bound); `WAIT_DEADLINE` stays
+    collectable in a `collect` map (a per-item `at` legitimately differs by item, and unlike `DEADLINE` the run's own deadline is not
+    spent). **Deferred**: CLI/`serve` flags to raise the policy's `maxDurationMs` and `maxConcurrency` (a host-authority change).
+  - **Deferred (2 P2):** P2-7 signals trusted by default (also §7.3's deferred P2-6: a payload can reach a trusted slot or an effect
+    without a `label`): changing the default changes the trust model shared with answers and the L0 card's validating example, so it is
+    the owner's decision; until then a construction rule should require `label` on signal waits. P2-10 a branch-only wait field read
+    without a guard validates (strict lint does not report `possibleMissing`): the runtime fails closed (`MISSING_REFERENCE`), and a
+    strict-lint change touches every workflow's lint and the library checker, so it goes with the L0 card and checker update.
+  - **Deferred parts of fixed findings:** headroom before the deadline for a timeout branch (P2-9; how long a branch needs is not
+    known statically); the same fault-hook gate for `crashBeforeCancelVerdict` (P2-12; pre-existing, not step 2).
+- **Remaining unknowns and limits.** The correlation scope is the workflow id, so a new version saved under the same id is in scope
+  (saving under an id is that authority already; `foundry_save` needs the exact head hash). The correlated lookup runs before the
+  delivery's transaction, so a run of the same workflow and key that parks in between is not seen for ambiguity. An id reused for
+  another run after the workspace index lost its row is not detectable from either run's chain. A stranded wait is resumed only when
+  the run has no live owner. Human and approval nodes in a failed collect item are still left open (pre-existing, not step 2).
+- **Suites (2026-10-14, $0, no model calls).** Main (`node --test --test-concurrency=2 tests/*.test.mjs`) in a clean export of
+  `051dfb0` with this part's final `src/signals.mjs` (its `src` tree is `5e22645`'s): 1144 tests, 1125 pass, **0 fail**, 19 skipped
+  (the 18 recorded lanes of §7.1, and the git-history test that needs a real checkout; it passed in the working tree). The review
+  measured 1129 at `c52e5db`; §7.3 added 10 and this part 5. The shared working tree at the same time gave 37 failures, all in
+  `tests/ui-form*.test.mjs`, from another agent's uncommitted `tools/ui` edits. `tests/wait-signal.test.mjs`: 21 of 21; on `8d1c559`
+  (step 2 as reviewed) the same file gives 12 pass, 9 fail (the 5 new tests and 4 updated ones). The reviewer's probes reproduced
+  their findings on step 2 (`p1-hijack`, `p9-redelivery` and `p11-replay-gaps` re-run in this part before the change); after it,
+  those three and `p2-orphan`, `p4-crash-start`, `p5-taint`, `p6-deadline` and `p7-verdicts` show the refusals or corrected outcomes
+  above.
