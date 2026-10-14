@@ -4,7 +4,10 @@
 // sandbox-arm.mjs) on dev worlds and graded by the item's oracle with the reference pools. Model ids come from
 // policy/models.json only. METERED: the build session spends model budget (its own cap); grading is $0.
 //   node experiments/ebed/build.mjs --model claude-haiku-5-5 --effort high --budget 3 --minutes 40 --label b1h-1 \
-//        [--grade-only <solver.mjs>] [--seeds 1232-1234] [--difficulties 2,3,5]
+//        [--grade-only <solver.mjs>] [--seeds 1232-1234] [--difficulties 2,3,5] [--loop none|smoke|graded]
+// --loop (default none = B1 as declared): the builder may run its solver on practice worlds 1235-1237 through a
+// host-side smoke service (smoke-service.mjs) and see arm errors and effect results (smoke) or also first divergences
+// on those practice worlds (graded). A different arm from B1; reported under its own label.
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +16,7 @@ import { MockSystem } from '../../beds/ebed/host/mocks.mjs';
 import { createHost } from '../../beds/ebed/host/host.mjs';
 import { sandboxArm } from '../../beds/ebed/host/sandbox-arm.mjs';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
+import { CLIENT, clientInstructions, serveMailbox, PRACTICE } from './smoke-service.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '..', '..');
@@ -30,7 +34,7 @@ export function contractText() {
 }
 
 /** The builder's workspace: spec, API schemas, contract, task. Nothing else. */
-export function buildFiles(item) {
+export function buildFiles(item, { loop = 'none' } = {}) {
   const t0 = Date.parse('2026-03-02T00:00:00+01:00');
   const files = { 'SPEC-E.md': item.specE.text, 'CONTRACT.md': contractText() };
   for (const def of item.systems) files[`api/${def.id}.schema.json`] = JSON.stringify(new MockSystem(def).apiSchema(t0), null, 1);
@@ -51,6 +55,10 @@ every output must be valid (decisions.subject is required on every tick: the nor
 run the real systems here; you may write and run your own tests with node. When you are done, \`solver.mjs\` must be the
 complete solver. Work carefully through every rule, race and reading in SPEC-E.md.
 `;
+  if (loop !== 'none') {
+    files['TASK.md'] = files['TASK.md'].replace('You cannot\nrun the real systems here; you may', 'You may').replace('You cannot run the real systems here; you may', 'You may') + clientInstructions(loop);
+    files['smoke.mjs'] = CLIENT;
+  }
   return files;
 }
 
@@ -94,12 +102,18 @@ async function main() {
     if (!POLICY.models.some(m => m.id === model)) throw new Error(`--model must be a policy model id (policy/models.json): ${model}`);
     const workdir = path.join('/var/tmp/foundry-work/ebed-build', label);
     if (existsSync(workdir)) throw new Error(`workdir exists: ${workdir}`);
-    const files = buildFiles(item);
+    const loop = arg('--loop', 'none');
+    if (!['none', 'smoke', 'graded'].includes(loop)) throw new Error(`--loop must be none, smoke or graded: ${loop}`);
+    if (loop !== 'none' && seeds.some(x => PRACTICE.seeds.includes(x))) throw new Error('grading seeds overlap the practice worlds');
+    const files = buildFiles(item, { loop });
     const prompt = `${files['TASK.md']}\nRead SPEC-E.md, CONTRACT.md and api/*.schema.json first.`;
     const budgetUsd = Number(arg('--budget', '3')), minutes = Number(arg('--minutes', '40'));
     const t = Date.now();
-    const r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort: arg('--effort', 'high') });
-    build = { model, effort: arg('--effort', 'high'), budgetUsd, minutes, wallMs: Date.now() - t, costUsd: r.costUsd ?? null, error: r.error ?? null, turns: r.turns ?? null };
+    const box = loop === 'none' ? null : serveMailbox({ item, workdir, mode: loop, journal: path.join(out, 'smoke.jsonl') });
+    let r;
+    try { r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort: arg('--effort', 'high') }); }
+    finally { if (box) build = { smokeRuns: await box.stop() }; }
+    build = { model, effort: arg('--effort', 'high'), budgetUsd, minutes, loop, ...(build ?? {}), wallMs: Date.now() - t, costUsd: r.costUsd ?? null, error: r.error ?? null, turns: r.turns ?? null };
     copyFileSync(path.join(workdir, '.executor-transcript.jsonl'), path.join(out, 'transcript.jsonl'));
     if (!existsSync(path.join(workdir, 'solver.mjs'))) { writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, build, solver: null }, null, 1)); throw new Error('no solver.mjs written'); }
     solverSource = readFileSync(path.join(workdir, 'solver.mjs'), 'utf8');

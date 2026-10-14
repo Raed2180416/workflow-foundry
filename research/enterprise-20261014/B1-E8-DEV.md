@@ -44,3 +44,30 @@ comparison under the same conditions.
 - A gap between B1-H and B1-O on the same build conditions is reported per class; it does not decide anything at K = 1.
 - No result here changes the spec, the oracle or the worlds; an oracle defect found while reading results is fixed
   and the affected grading re-run with the change recorded.
+
+## Addendum (2026-10-14, declared after the B1-H result and before any loop build runs)
+
+**B1-H result (one build, K = 1):** 0/155 completed d2 cases pass on 1232–1234 (no critical violation, no arm error).
+The solver never emits an effect: it reads the read-only operations (`inventory.allocate`, `fraud.check`) from a file it
+assumed exists (`sor/<instance>.json`, a name `TASK.md` itself mentions as "the instance's records") instead of emitting
+them as un-keyed effects whose results arrive as `effect.result`, then re-polls every 2 minutes forever (242k ticks on
+one world). At d3 that runaway journal overflowed the host's digest string; the host now streams digests (1.2.1) and a
+host error fails the world instead of the run. One interface misreading, not the business rules, zeroed the build.
+Per the reading declared above (< 50%), the next lever is scaffolding, not a fine-tune. Full grading of the 9 worlds is
+in `runs/b1h-e8-1/result.json`.
+
+**Loop arms (new arms, not B1; their own labels; same spec, contract, API, caps and grading worlds as B1):**
+
+| arm | builder | feedback while building | cap |
+|---|---|---|---|
+| B1L-H | `claude-haiku-5-5`, effort high | `node smoke.mjs`: the solver runs through the real host on practice worlds 1235–1237 (d2, d3, d5; SEED-LEDGER `ebed-e8-rehearsal`), out of process; the report gives run status, counts, arm errors and the effect results received. No grading. | $3, 40 min |
+| B1G-H | same | the same plus, on the practice worlds only, the completed-case pass count and the first divergence (rule, effect id, expected) of up to 6 failing cases | $3, 40 min |
+
+- The smoke service runs host-side (`experiments/ebed/smoke-service.mjs`); the builder's sandbox still holds no bed
+  code, world, generator or oracle. Every request is journaled (`runs/<label>/smoke.jsonl`).
+- Graded feedback is a practice oracle: it is the condition "the family ships a test suite", reported as such, never
+  pooled with B1.
+- `TASK.md` keeps its wording for comparability (the `sor/<instance>.json` sentence included); a clarified TASK is a
+  separate, later arm if the loop arms do not get past the read-only misreading.
+- Reading: the loop arms say whether feedback alone (B1L) or feedback plus a practice oracle (B1G) turns a Haiku build
+  into a working solver; K = 1 each, dev evidence only.
