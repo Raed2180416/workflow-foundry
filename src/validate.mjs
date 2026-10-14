@@ -247,6 +247,8 @@ function effectTaint(workflow, registry, add) {
       }
       data.set(id, label); control.set(id, nodeControl); outs.set(id, joinLabels([label, nodeControl.label]));
       if (['task', 'code', 'verify', 'agent', 'state'].includes(node.kind) || (isSignalWait(node) && timeoutMode(node) === 'fail')) failure = joinLabels([failure, label]);
+      // Any wait fails over what its timer and keys are computed from (WAIT_AT, WAIT_DEADLINE, WAIT_KEY when it starts), whatever its onTimeout.
+      else if (node.kind === 'wait') failure = joinLabels([failure, labelOf(node.at ?? null, own), ...correlateTemplates(node).map(t => labelOf(t, own))]);
       failing(joinLabels([failure, nodeControl.label]), () => node.kind === 'assert' && failure !== TRUSTED ? `assert ${node.id} reads ${untrustedRefs(node.checks, own)}` : `${node.id} can fail over ${joinLabels([failure, nodeControl.label])} data`);
     };
     for (const id of byId.keys()) visit(id);
@@ -262,9 +264,13 @@ function effectTaint(workflow, registry, add) {
 // Wait nodes (src/signals.mjs): a timer (delayMs or the absolute at) or a signal wait (signal or race, with one timer: timeoutMs or
 // at; an unbounded wait is refused, L0). `signalSchemas` collects the payload schemas each signal name is declared with: one name has
 // one payload type in a workflow, because a delivery is validated before any wait takes it.
-function checkWait(node, at, add, signalSchemas) {
+// A literal timeoutMs at or above the workflow's maxDurationMs can never be honoured: the wait starts after the run did, so its timer
+// falls at or after the run deadline and the runtime refuses it when it starts (WAIT_DEADLINE); it is refused here first.
+function checkWait(node, at, add, signalSchemas, budget) {
   const has = key => Object.hasOwn(node, key), shape = message => add('WAIT_SHAPE', message, at);
-  if (typeof node.at === 'string') try { parseAt(node.at); } catch (e) { add(e.code ?? 'WAIT_AT', e.message, `${at}.at`); }
+  if (typeof node.at === 'string' || typeof node.at === 'number') try { parseAt(node.at); } catch (e) { add(e.code ?? 'WAIT_AT', e.message, `${at}.at`); }
+  if (isSignalWait(node) && Number.isSafeInteger(node.timeoutMs) && Number.isSafeInteger(budget?.maxDurationMs) && node.timeoutMs >= budget.maxDurationMs)
+    add('WAIT_DEADLINE', `timeoutMs ${node.timeoutMs} is not below the workflow's budget.maxDurationMs ${budget.maxDurationMs}: the timer would fall after the run deadline; raise maxDurationMs (and the runtime policy's) or shorten the timer`, `${at}.timeoutMs`);
   if (!isSignalWait(node)) {
     if (has('delayMs') === has('at')) shape('A timer wait has exactly one of delayMs (relative) or at (absolute)');
     for (const key of ['timeoutMs', 'correlate', 'schema', 'onTimeout', 'label']) if (has(key)) shape(`${key} belongs to a signal wait (signal or race)`);
@@ -363,7 +369,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
       if (node.kind === 'human') {
         try { compileDataSchema(node.answerSchema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `${prefix}.${node.id}.answerSchema`); }
       }
-      if (node.kind === 'wait') checkWait(node, `${prefix}.${node.id}`, add, signalSchemas);
+      if (node.kind === 'wait') checkWait(node, `${prefix}.${node.id}`, add, signalSchemas, workflow.budget);
       const at = `${prefix}.${node.id}`;
       if (node.kind === 'verify') {
         for (const key of Object.keys(node)) if (Object.values(verifyFields).flat().includes(key) && !verifyFields[node.method].includes(key)) add('WRONG_NODE_FIELD', `${key} does not belong to a ${node.method} verifier`, at);

@@ -68,7 +68,11 @@ test('wait.signal: validation accepts the documented shapes and refuses unbounde
   const ok = base([payWait(), ship()], [{ op: 'exists', value: ref('nodes.ship.amount') }]);
   assert.deepEqual(codes(ok), []);
   assert.deepEqual(codes(base([payWait({ timeoutMs: undefined })], [{ op: 'exists', value: ref('nodes.pay') }])), ['WAIT_UNBOUNDED'], 'a wait with no timeout is refused');
-  assert.deepEqual(codes(base([payWait({ timeoutMs: 30 * 86400000 })], [{ op: 'exists', value: ref('nodes.pay') }])), [], 'a signal wait may wait 30 days');
+  const month = { budget: { maxSteps: 200, maxConcurrency: 4, maxDurationMs: 30 * 86400000 } };
+  assert.deepEqual(codes(base([payWait({ timeoutMs: 30 * 86400000 - 60000 })], [{ op: 'exists', value: ref('nodes.pay') }], month)), [], 'a signal wait may wait (almost) 30 days');
+  // A timer at or after the run deadline can never be honoured: refused statically, not only when the wait starts.
+  assert.deepEqual(codes(base([payWait({ timeoutMs: 30 * 86400000 })], [{ op: 'exists', value: ref('nodes.pay') }], month)), ['WAIT_DEADLINE']);
+  assert.deepEqual(codes(base([payWait({ timeoutMs: 900000 })], [{ op: 'exists', value: ref('nodes.pay') }])), ['WAIT_DEADLINE'], '15 minutes in a 10-minute budget');
   assert.ok(codes(base([payWait({ timeoutMs: 30 * 86400000 + 1 })], [{ op: 'exists', value: ref('nodes.pay') }])).includes('SCHEMA'));
   assert.ok(codes(base([echo('slow', [], {}, { timeoutMs: 3600001 })], [{ op: 'exists', value: ref('nodes.slow') }])).includes('SCHEMA'), 'other nodes keep the 1-hour timeout bound');
   const shapes = [
@@ -97,6 +101,12 @@ test('wait.signal: validation accepts the documented shapes and refuses unbounde
   assert.ok(codes(base([payWait({ correlate: ref('nodes.missing.x') })], [{ op: 'exists', value: ref('nodes.pay') }])).includes('UNDECLARED_DATA_DEPENDENCY'), 'correlate is a template checked like any other');
   assert.equal(parseAt('2026-10-14T10:00:00.5+05:30'), Date.UTC(2026, 9, 14, 4, 30, 0, 500));
   assert.throws(() => parseAt('2026-10-14 10:00Z'), { code: 'WAIT_AT' });
+  // Epoch SECONDS are refused (read as milliseconds they would be January 1970); Python's microseconds are accepted and truncated.
+  assert.throws(() => parseAt(1760400000), { code: 'WAIT_AT' });
+  assert.equal(parseAt(1760400000000), 1760400000000);
+  assert.equal(parseAt('2026-10-14T10:00:00.123456+00:00'), Date.UTC(2026, 9, 14, 10, 0, 0, 123));
+  assert.equal(parseAt('2026-10-14T10:00:00.123456789Z'), Date.UTC(2026, 9, 14, 10, 0, 0, 123));
+  assert.ok(codes(base([{ id: 'w', kind: 'wait', needs: [], description: 'epoch seconds', at: 1760400000 }], [{ op: 'exists', value: ref('nodes.w') }])).includes('WAIT_AT'));
 });
 
 test('wait.signal: taint — signals are trusted by default; a labelled wait that routes its timeout is control for its dependents', () => {
@@ -171,16 +181,18 @@ test('wait.signal: without a run id, a signal goes to the one run whose parked w
   const wf = base([payWait(), ship()], [{ op: 'gte', left: ref('nodes.ship.amount'), right: 0 }]);
   store.saveWorkflow(wf);
   const a = await runtime.execute(runtime.create(wf, { order: 'PO-A' }).id), b = await runtime.execute(runtime.create(wf, { order: 'PO-B' }).id);
-  const routed = runtime.correlateSignal(settled('c-1', 'PO-B', 5));
+  const scope = { workflowId: 'SignalProbe' };
+  assert.throws(() => runtime.correlateSignal(settled('c-0', 'PO-B', 5)), { code: 'SIGNAL_SCOPE' }, 'a correlated signal names its workflow');
+  const routed = runtime.correlateSignal(settled('c-1', 'PO-B', 5), scope);
   assert.deepEqual([routed.runId, routed.consumedBy, routed.correlated], [b.id, 'root/pay', true]);
   assert.equal(store.rows.header(a.id).signals, undefined, 'the other run got nothing');
-  const again = runtime.correlateSignal(settled('c-1', 'PO-B', 5));
+  const again = runtime.correlateSignal(settled('c-1', 'PO-B', 5), scope);
   assert.deepEqual([again.runId, again.duplicate], [b.id, true], 'a repeated correlated delivery is answered as the first was');
-  assert.throws(() => runtime.correlateSignal(settled('c-9', 'PO-Z', 5)), { code: 'SIGNAL_UNMATCHED' });
+  assert.throws(() => runtime.correlateSignal(settled('c-9', 'PO-Z', 5), scope), { code: 'SIGNAL_UNMATCHED' });
   assert.equal(store.signalRecord('c-9'), null, 'an unmatched correlated signal is not recorded anywhere');
-  assert.throws(() => runtime.correlateSignal({ id: 'c-8', name: 'payment.settled', payload: { amount: 1 } }), { code: 'SIGNAL_KEY_REQUIRED' });
+  assert.throws(() => runtime.correlateSignal({ id: 'c-8', name: 'payment.settled', payload: { amount: 1 } }, scope), { code: 'SIGNAL_KEY_REQUIRED' });
   const twin = await runtime.execute(runtime.create(wf, { order: 'PO-A' }).id);
-  assert.throws(() => runtime.correlateSignal(settled('c-2', 'PO-A', 5)), error => error.code === 'SIGNAL_AMBIGUOUS' && error.details.runIds.includes(twin.id) && error.details.runIds.includes(a.id));
+  assert.throws(() => runtime.correlateSignal(settled('c-2', 'PO-A', 5), scope), error => error.code === 'SIGNAL_AMBIGUOUS' && error.details.runIds.includes(twin.id) && error.details.runIds.includes(a.id));
   assert.deepEqual((await runtime.tick()).runs, [{ runId: b.id, status: 'succeeded' }]);
   clean(store, b.id);
 });
@@ -317,7 +329,7 @@ test('wait.signal: restart while waiting — a delivery and a tick in new proces
   const delivered = foundry(['signal', run.id, '--name', 'payment.settled', '--id', 'cli-1', '--key', '"PO-R"', '--payload', '{"amount":3}']);
   assert.deepEqual([delivered.consumedBy, delivered.duplicate], ['root/pay', false]);
   assert.equal(foundry(['signal', run.id, '--name', 'payment.settled', '--id', 'cli-1', '--key', '"PO-R"', '--payload', '{"amount":3}']).duplicate, true);
-  const correlated = foundry(['signal', '--name', 'payment.settled', '--id', 'cli-2', '--key', '"PO-S"', '--payload', '{"amount":4}']);
+  const correlated = foundry(['signal', '--workflow', 'SignalProbe', '--name', 'payment.settled', '--id', 'cli-2', '--key', '"PO-S"', '--payload', '{"amount":4}']);
   assert.deepEqual([correlated.runId, correlated.correlated], [other.id, true]);
   const ticked = foundry(['tick']);
   assert.deepEqual(ticked.runs.map(r => r.status), ['succeeded', 'succeeded']);
@@ -336,7 +348,7 @@ test('wait.signal: restart while waiting — a delivery and a tick in new proces
     import { Runtime } from ${JSON.stringify(new URL('../src/runtime.mjs', import.meta.url).href)};
     import { createDefaultRegistry } from ${JSON.stringify(new URL('../src/capabilities.mjs', import.meta.url).href)};
     const store = new Store(${JSON.stringify(root)});
-    await new Runtime(store, createDefaultRegistry()).execute(${JSON.stringify(killed.id)});`;
+    await new Runtime(store, createDefaultRegistry(), {}, { faultHooks: true }).execute(${JSON.stringify(killed.id)});`;
   const child = spawnSync(process.execPath, ['--input-type=module', '--eval', code], { encoding: 'utf8', timeout: 20000, env: { PATH: process.env.PATH ?? '' } });
   assert.equal(child.signal, 'SIGKILL', child.stderr);
   const third = open(t, root), dead = third.store.run(killed.id);
@@ -403,7 +415,7 @@ test('wait.signal: late signals — after the run closed (succeeded or cancelled
   assert.equal(runtime.closeCancelled(parked.id, { actor: 'test' }).status, 'cancelled');
   assert.deepEqual(store.timers(parked.id), []);
   assert.throws(() => runtime.deliverSignal(parked.id, settled('ly-1', 'PO-Y', 1)), { code: 'RUN_CLOSED' });
-  assert.throws(() => runtime.correlateSignal(settled('ly-2', 'PO-Y', 1)), { code: 'SIGNAL_UNMATCHED' }, 'a closed run\'s wait is not found by correlation');
+  assert.throws(() => runtime.correlateSignal(settled('ly-2', 'PO-Y', 1), { workflowId: 'SignalProbe' }), { code: 'SIGNAL_UNMATCHED' }, 'a closed run\'s wait is not found by correlation');
 });
 
 test('wait.signal: replay — every decision is re-derived from the chain; edits to the record or to the rule\'s inputs are caught', async t => {
@@ -420,15 +432,20 @@ test('wait.signal: replay — every decision is re-derived from the chain; edits
   const planted = await runtime.execute(runtime.create(wf, { order: 'PO-2' }).id);
   store.updateRun(planted.id, r => { r.nodes.pay = { ...r.nodes.pay, resolution: { outcome: 'signal', signalId: 'ghost', signal: 'payment.settled', receivedAt: Date.now(), by: 'delivery' } }; }, { type: 'test.edit' });
   await assert.rejects(runtime.execute(planted.id), { code: 'CHECKPOINT_TAMPERED' });
-  // The rule's input edited (the wait's timer moved earlier than the one journaled when it started): the run times out, and the replay
-  // from the chain shows that timeout came before the journaled timer.
+  // The rule's inputs edited (the wait's timer moved earlier than the one journaled when it started; a subscription re-keyed to another
+  // order): resume refuses the record before the wait decides anything, and verify-run reports it.
   const moved = await runtime.execute(runtime.create(wf, { order: 'PO-3' }).id), early = Date.now() - 1;
   store.updateRun(moved.id, r => { r.nodes.pay = { ...r.nodes.pay, wakeAt: early }; store.setTimer(r.id, 'root/pay', early); }, { type: 'test.clock-edited' });
   const ticked = await runtime.tick();
-  assert.deepEqual(ticked.runs.find(r => r.runId === moved.id), { runId: moved.id, status: 'succeeded' });
+  assert.equal(ticked.runs.find(r => r.runId === moved.id).error.code, 'CHECKPOINT_TAMPERED');
   assert.equal(ticked.runs.find(r => r.runId === edited.id).error.code, 'CHECKPOINT_TAMPERED', 'the edited run stays refused at every tick');
-  const report = verifyRun(store, moved.id);
-  assert.ok(report.findings.some(f => f.code === 'WAIT_REPLAY_MISMATCH' && f.rule === 'WAIT_TIMEOUT_EARLY' && f.severity === 'error'), JSON.stringify(report.findings));
+  assert.ok(verifyRun(store, moved.id).findings.some(f => f.code === 'SIGNAL_EDITED' && /inputs of wait root\/pay/.test(f.message)));
+  const rekeyed = await runtime.execute(runtime.create(wf, { order: 'PO-4' }).id);
+  store.updateRun(rekeyed.id, r => { r.nodes.pay = { ...r.nodes.pay, subscriptions: [{ signal: 'payment.settled', key: 'PO-5', keyHash: digest('PO-5') }] }; }, { type: 'test.edit' });
+  runtime.deliverSignal(rekeyed.id, settled('rk-1', 'PO-5', 500));
+  await assert.rejects(runtime.execute(rekeyed.id), { code: 'CHECKPOINT_TAMPERED' }, 'the wait never completes with the signal its edit let it take');
+  assert.equal(store.run(rekeyed.id).nodes.after, undefined);
+  assert.ok(verifyRun(store, rekeyed.id).findings.some(f => f.code === 'SIGNAL_EDITED'));
 
   // The rule itself, on synthetic chains: each kind of departure from it is named.
   const start = { seq: 1, type: 'node.started', nodeKey: 'root/w', wakeAt: 1000, subscriptions: [{ signal: 'a', keyHash: null }, { signal: 'b', keyHash: null }] };
@@ -469,10 +486,11 @@ test('wait.signal: HTTP — a token-authenticated delivery resumes the run; corr
   assert.deepEqual([sent.status, sent.body.consumedBy], [202, 'root/pay']);
   await until(() => foundry.store.run(run.id).status === 'succeeded');
   assert.equal(foundry.store.run(run.id).outputs.ship.amount, 12);
-  const routed = await post('/api/signals', settled('h-2', 'PO-I', 13));
+  assert.equal((await post('/api/signals', settled('h-2', 'PO-I', 13))).body.error.code, 'SIGNAL_SCOPE', 'a correlated signal names its workflow');
+  const routed = await post('/api/signals', { workflowId: 'HttpSignal', ...settled('h-2', 'PO-I', 13) });
   assert.deepEqual([routed.status, routed.body.runId, routed.body.correlated], [202, other.id, true]);
   await until(() => foundry.store.run(other.id).status === 'succeeded');
-  assert.deepEqual([(await post('/api/signals', settled('h-3', 'PO-Z', 1))).status, (await post(`/api/runs/${run.id}/signals`, settled('h-1', 'PO-H', 99))).status], [409, 409]);
+  assert.deepEqual([(await post('/api/signals', { workflowId: 'HttpSignal', ...settled('h-3', 'PO-Z', 1) })).status, (await post(`/api/runs/${run.id}/signals`, settled('h-1', 'PO-H', 99))).status], [409, 409]);
   clean(foundry.store, run.id); clean(foundry.store, other.id);
 });
 
