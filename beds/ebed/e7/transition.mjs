@@ -330,8 +330,8 @@ function simulate(world, view, t) {
 
   // ---- deadlines (S1, S10): taken strictly after, dated at the deadline, once passed on this trajectory ---------------
   const deadlines = () => [
-    pend.caller && { at: pend.caller.D, kind: 'caller' },
-    pend.resolved && { at: pend.resolved.D2, kind: 'resolved' },
+    pend.caller && inc.state === 'onHold' && inc.holdReason === 'awaitingCaller' && { at: pend.caller.D, kind: 'caller' },
+    pend.resolved && inc.state === 'resolved' && { at: pend.resolved.D2, kind: 'resolved' },
     appr.first && !appr.answer && appr.moot === null && appr.declared === null && { at: appr.dl, kind: 'approval' },
   ].filter(Boolean).sort((a, b) => a.at - b.at);
   function fire(d) {

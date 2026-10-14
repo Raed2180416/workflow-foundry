@@ -244,7 +244,7 @@ and expectation sentences in real Python, for the two inherited defects above; l
 `need-codefix-noverifier.test.mjs`. Imports from `../codefix/` and `../lib/` are read-only; nothing outside this directory was
 changed.
 
-Run: `node --test beds/need-codefix-noverifier/*.test.mjs` (23 tests, about 3.3 min, dominated by the Python sandbox oracle). It checks:
+Run: `node --test beds/need-codefix-noverifier/*.test.mjs` (23 tests, about 3.5 min, dominated by the Python sandbox oracle). It checks:
 
 - family metadata and role, portable output schema equal to codefix's, the codefix version pin;
 - `generate` byte-identical on repeat, the split acting as salt, argument validation, contract task shape;
