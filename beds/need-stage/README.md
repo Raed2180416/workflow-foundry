@@ -25,6 +25,39 @@ Nothing here has been measured on a model. The router's paired labels (direct ca
 construct-before vs. JIT vs. reuse) are what would confirm or refute the hypothesis, per kind and per difficulty. Nobody
 should assume one call suffices at difficulty 5, or for a cheap model, before those labels exist.
 
+### Mixed family vs. per-kind families (read before featurising or labelling)
+
+`need-stage` **mixes four kinds whose class hypotheses differ**, dealt by seed. The router harness featurises and labels
+per family id and calls `generate({seed, split, difficulty})` without `stage` (`experiments/lib/beds.mjs` `makeTasks`;
+`experiments/need-router/features.mjs` `familyFeatures` takes dev seeds 601-603 at d3 by default). For `need-stage`
+those three seeds are `r3-classify`, `r2-route` and `r6-worker`: the default feature vector is a median over three kinds
+and **never samples `r1-normalise`, so it does not represent the family**. Router features and labels for `need-stage`
+are only meaningful when split post hoc by kind (`stageOf(seed, split)`, or `task.knobs.stage` / the label row's
+`kind` for tasks made with the `stage` override, as the preregistered `wbed-stage` job does with `stageKinds`). A
+per-job label over the job's 12 tasks blends 3 tasks of each kind.
+
+So each kind is also published as its own **homogeneous family**, loadable by the existing harness without any change
+to it:
+
+| Family id | Module | Kind | Class hypothesis |
+|---|---|---|---|
+| `need-stage/r1-normalise` | `beds/need-stage/r1-normalise/index.mjs` | `r1-normalise` | one call; long output at d5, so maybe a plain agent loop |
+| `need-stage/r2-route` | `beds/need-stage/r2-route/index.mjs` | `r2-route` | one direct call |
+| `need-stage/r3-classify` | `beds/need-stage/r3-classify/index.mjs` | `r3-classify` | one direct call |
+| `need-stage/r6-worker` | `beds/need-stage/r6-worker/index.mjs` | `r6-worker` | one call or at most a plain agent over the slice |
+
+`loadFamily('need-stage/<kind>')` resolves `beds/need-stage/<kind>/index.mjs` (the id is a path under `beds/`). Each
+module re-exports `kindFamily(kind)` from `index.mjs`: the contract interface (`family` with `parent: 'need-stage'` and
+`stage`, `outputSchema` = the kind's strict schema, `generate`, `oracle`, `referenceSolve`, `badControls`) plus
+`deployableCheck`, `outputSchemaOf`, `describeTask` and `surfaceBaseline`. A per-kind task is the need-stage task with
+`stage` fixed (same prompt, inputs, files, budget and truth), with id `need-stage/<kind>/<split>/d<n>/<seed>`, `family`
+set to the per-kind id and `knobs: {stage}`; its oracle fixes the kind and ignores `task.knobs`; its `generate` refuses
+another `stage`. `family.kindFamilies` on `need-stage` lists the four ids. Use these ids for router features and labels.
+Two practical notes for whoever wires them into a run: the ids contain a slash (task keys become
+`need-stage/<kind>:dev:d3:s601`, so work directories nest one level deeper), and seed-ledger ranges are keyed by bed
+name, so a job on a per-kind id should set `ledgerBed: 'need-stage'` to share need-stage's seed accounting (the same
+seed gives the same case under both ids). Neither the harness nor the ledger nor the preregistration is changed here.
+
 The contract's "a 20-line script must not solve it" rule is waived where a stage is direct-call solvable. The R2 keyword
 router and an R3 counts-and-cut-off rule (`surfaceBaseline`) solve every difficulty-1 item of their kind by construction
 (see "Difficulty"); that is expected for an anchor and is not evidence about model behaviour.
@@ -85,14 +118,15 @@ whose score matches the level, else the nearest score:
 | `r1-normalise` | +1 each: numeric day/month dates (BRIGHTDESK, ATLAS, TALLY), ATLAS order drawn per task (rung d3+), ATLAS print-server switch (d4+), a per-task status word with stated meaning (d4+), the new TALLY system (d4+) | 1: 0, 2: 1, 3: 2, 4: 3, 5: 4-5 |
 | `r2-route` | +1 keyword misleads (decoy template), +1 hedged, +1 foreign language (d4+), +1 injection or bank_change; review (undecidable) = 3 | 1: 0, 2: 1, 3: 2, 4-5: 2-3 |
 | `r3-classify` | 0 TIMING/DUPLICATE (counts and cut-off), 1 one-sided before the cut-off (credit with or without an agreeing note, unmatched invoice/payment), 2 invoice difference with or without a price note, one-sided just before the cut-off, 3 payment difference with or without a conversion note (d3+), 4 the memo-means-price supplier | 1: 0, 2: 1, 3: 2, 4: 3, 5: 3-4 |
-| `r6-worker` | in scope: its cells' planted traps (+1 abbreviation or code-only naming, +2 former lab name); near misses: 1 only quoted or planned, 2 tested before the date or only in a retracted document | 1: 0 (in scope), 2: 1, 3: 2, 4: 3, 5: 4-6 (in scope) |
+| `r6-worker` | in scope: its cells' planted traps (+1 abbreviation or code-only naming, +2 former lab name); near misses: 1 only quoted or planned, 2 tested before the date or only in a retracted document | 1: 0 (in scope), 2: 1, 3: 2, 4: scope side drawn first (seeded, half out of scope), then 3 in scope or 2 out of scope (T1/T3), 5: 4-6 (in scope by design) |
 
 Every item must also have at least one planted near miss (below); items without one are skipped. Measured on dev seeds
 601-640 (labels per kind and level, about 10 tasks each): R1 lists are VERITAS/LEDGR at d1, BRIGHTDESK/ATLAS at d2,
 ATLAS (and TALLY) from d3; R2 routes are decidable plain documents at d1, decoys and injections at d2-d3, review,
 foreign and injection documents at d4-d5; R3 reasons are TIMING/DUPLICATE at d1, MISSING_CREDIT/UNEXPLAINED at d2,
-PRICE/UNEXPLAINED at d3, FX/UNEXPLAINED (and PRICE) at d4-d5; R6 candidates are in scope at d1, d4 and d5 and half out
-of scope at d2-d3. The R2 keyword router solves 10/10 dev items at d1, 3/10 at d2 and 0/10 at d3-d5; the R3
+PRICE/UNEXPLAINED at d3, FX/UNEXPLAINED (and PRICE) at d4-d5; R6 candidates are in scope at d1 and d5 (by design) and
+about half out of scope at d2-d4 (with the `stage` override, 40 seeds per split: d2 23/18 in scope dev/test, d3 20/18,
+d4 24/23; the level-4 out-of-scope items are T1 and T3 near misses). The R2 keyword router solves 10/10 dev items at d1, 3/10 at d2 and 0/10 at d3-d5; the R3
 counts-and-cut-off rule solves 10/10 at d1 and 5-6/10 at d2-d5 (UNEXPLAINED is its default).
 
 ### Expected input size (tokens) per difficulty
@@ -105,7 +139,7 @@ formula; not a tokenizer). Median (min-max) on dev seeds 601-640, 40 tasks per l
 | 1 | 1291 (1011-6777) | 1349 (1011-2070) | 1242 (1209-1270) | 1263 (1151-1461) | 6084 (5072-6777) | R1 10-43 invoices, R6 18-31 files |
 | 2 | 1251 (837-6598) | 1120 (837-1303) | 1244 (1232-1267) | 1232 (1135-1497) | 6000 (3835-6598) | R1 13-34 invoices, R6 14-29 files |
 | 3 | 1462 (1086-8426) | 1506 (1086-1672) | 1341 (1321-1358) | 1435 (1314-1587) | 6366 (4856-8426) | R1 22-54 invoices, R6 20-42 files |
-| 4 | 1706 (968-10266) | 1623 (968-1999) | 1469 (1459-1505) | 1756 (1563-2332) | 8467 (7425-10266) | R1 14-68 invoices, R6 33-49 files |
+| 4 | 1706 (968-9656) | 1623 (968-1999) | 1469 (1459-1505) | 1756 (1563-2332) | 7512 (5597-9656) | R1 14-68 invoices, R6 23-47 files |
 | 5 | 2146 (1561-10844) | 2203 (1990-2674) | 1578 (1561-1597) | 2047 (1856-2458) | 10314 (9077-10844) | R1 67-106 invoices, R6 37-49 files |
 
 Level 3 is far below the contract's 6-15K-token target except for `r6-worker`; that target does not apply to an anchor
@@ -117,7 +151,14 @@ requested property, R2 and R3 under 20. The test pins these ranges with slack.
 The oracle recomputes the case from `(seed, split, difficulty, knobs.stage)` (never from the task's text), validates the
 output against the task kind's schema (`stageSchemas[kind]`, closed at the top level; `outputSchema` is the family-level
 union envelope; `outputSchemaOf(task)` returns the strict one) and rejects anything that is not plain JSON data
-(functions, proxies). Pass rules:
+(functions, proxies).
+
+**Harnesses must not use the envelope as a schema gate.** It has no `required` (it is the union of four shapes), so `{}`
+and another kind's shape are valid against it. For a schema-valid / deployable signal use `deployableCheck(task, out)`
+(exported; `experiments/need-router/label-run.mjs` calls it when a bed exports it: true when the output satisfies the
+task kind's own schema, no truth read), or `outputSchemaOf(task)`, or a per-kind family, whose `outputSchema` is the
+strict schema. Deployable means schema-valid, not right: the planted near misses are deployable and fail the oracle.
+Pass rules:
 
 - `r1-normalise`: exactly one record per invoice of the list (invoice numbers compared by the rung's reference rule:
   case, spaces, hyphens and slashes ignored), every field exact (`row`, ISO `date`, integer `usd_cents`, boolean `live`),
@@ -171,9 +212,28 @@ the spec's code list; R2's document is the rung's text; R6's files are the rung'
 stage truth against the full rung's `referenceTrace` (about 50 tasks per kind) together with byte identity of the surface
 text; that difficulty raises the item's ambiguity score and lowers the surface baselines; and the token ranges above.
 
+Regression tests for the adversarial review of 2026-10-14 (one per fixed defect, see "Review fixes"):
+
+- **major 1**: the four per-kind ids load through `experiments/lib/beds.mjs` `loadFamily`, `makeTasks` at the harness's
+  default seeds gives only that kind at every level, the tasks equal the need-stage `stage`-override tasks (prompt,
+  inputs, files, budget, truth), generation is byte-identical on repeat, a forged `knobs.stage` does not move a per-kind
+  oracle, and need-stage's own default example seeds 601-603 are r3/r2/r6 (the caveat above); every per-kind family
+  passes the contract checks (reference passes, every bad control fails, dev seeds 601-620 at every level); and
+  `features.mjs` `familyFeatures` of a per-kind id is the median over that kind's tasks with the strict schema's leaves.
+- **minor 2**: on the reviewer's case (seed 604, d3, `r1-normalise`) the envelope accepts `{}`, `{"reason":"TIMING"}`,
+  `{"doc":1,"kind":"invoice"}` and `{"in_scope":false,"cells":[],"void_doc_ids":[]}` under `src/validate.mjs`
+  `compileDataSchema`, and `deployableCheck` rejects all four; for every kind it accepts the reference and the near misses
+  and rejects `{}`, `null`, extra keys and every other kind's shape; the per-kind `outputSchema` rejects `{}` in the
+  harness compiler.
+- **minor 3**: `r6-worker` at level 4 is out of scope on 12-28 of 40 seeds in each split (measured 16 dev, 17 test),
+  out-of-scope items are T-roles with no cells, the constant `in_scope:true` answer fails them; level 5 stays in scope.
+
 ## Files
 
-- `index.mjs`: contract interface, kind dealing, case cache, controls, `describeTask`, `surfaceBaseline`.
+- `index.mjs`: contract interface, kind dealing, case cache, controls, `deployableCheck`, `describeTask`,
+  `surfaceBaseline`, and `kindFamily(kind)` (the per-kind families).
+- `r1-normalise/index.mjs`, `r2-route/index.mjs`, `r3-classify/index.mjs`, `r6-worker/index.mjs`: the per-kind families
+  `need-stage/<kind>` (each re-exports `kindFamily(kind)`).
 - `stage-r1.mjs`, `stage-r2.mjs`, `stage-r3.mjs`, `stage-r6.mjs`: one module per kind (item choice, rules text,
   truth, near misses, comparison).
 - `common.mjs`: schema check (the W-bed / records validator, imported unchanged), seeded item choice, near-miss bookkeeping.
@@ -188,7 +248,34 @@ text; that difficulty raises the item's ambiguity score and lowers the surface b
 - For `r2-route` the cross-check shares a code path with the rung (both read the world's document kind); for
   `r3-classify` both call the rung's `reasonOf`. The checks show the item, its rules text and its truth are the rung's,
   not that the rung's truth is right (that is the rung's own oracle health).
-- On dev seeds 601-640 the `r6-worker` items at levels 4 and 5 are all in scope, and `r1-normalise` items from level 3
-  are mostly ATLAS lists; R3 has UNEXPLAINED as a frequent label at every level from 2 (the rung's own default).
+- `r6-worker` items at level 5 are in scope by design (the level's difficulty is the 4-6 traps planted on the cells),
+  so a constant `in_scope:true` gets the level-5 scope verdict right; it does not pass, because the cells and the void
+  set must also be exact. Levels 2-4 are about half out of scope. `r1-normalise` items from level 3 are mostly ATLAS
+  lists; R3 has UNEXPLAINED as a frequent label at every level from 2 (the rung's own default).
+- The per-kind ids have no README of their own and no seed-ledger or preregistration entry; this README covers them.
+
+## Review fixes (2026-10-14)
+
+An adversarial review found one major and two minor defects; all three are fixed, each with a regression test above.
+`family.version` stays `1.0.0` as the bed brief requires, but **`r6-worker` tasks at difficulty 4 changed** (all of
+them: the scope draw shifts the item stream), so their task hashes differ from earlier generations. No other kind or
+level changed. Among the preregistered `wbed-stage` example tasks (dev 601-609, band d3-d5, `stageKinds`) only seed 608
+(d4, `r6-worker`) changed: it was an in-scope candidate of about 7.6K tokens and is now an out-of-scope one of about
+5.9K, so that job's largest example is now about 7.2K tokens (seed 604) instead of the recorded 7,575 (the agent-O
+budget tier, which switches at 30K, is unchanged).
+
+1. **Major, blended features and labels.** The kinds are mixed in one family id, so a per-family feature vector and
+   label blend kinds whose hypotheses differ, and the harness's default example seeds never sample `r1-normalise`.
+   Fix: the homogeneous per-kind families `need-stage/<kind>` (loadable by the existing `loadFamily`, no change outside
+   this directory), `family.kindFamilies`, and the section "Mixed family vs. per-kind families" saying that
+   need-stage's own features and labels are only meaningful split by kind and that its default `familyFeatures` does
+   not represent it.
+2. **Minor, envelope schema as the deployable gate.** `outputSchema` is a union envelope without `required`, so the
+   label harness counted `{}` and other kinds' shapes as schema-valid and deployable. Fix: `deployableCheck(task, out)`
+   (the kind's own schema), exported by need-stage and by every per-kind family; the per-kind families' `outputSchema`
+   is the strict schema; the Oracle section says harnesses must not gate on the envelope.
+3. **Minor, R6 level 4 always in scope.** `ROLES[4]` listed T1-T4, but they score 1-2 against `WANT[4] = [3]`, so the
+   pick never reached them. Fix: level 4 draws its scope side first (seeded, half out of scope), then picks by score
+   within the side (in scope 3, out of scope 2, T1/T3); the dead level-4 entries are gone from `ROLES` and `WANT`.
 - Importing this bed imports the four W-bed rungs, which install their world verifiers on import (as their own index
   modules always do); nothing in those beds is modified.
