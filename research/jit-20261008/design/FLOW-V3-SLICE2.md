@@ -830,3 +830,32 @@ Nothing else was rejected: every other finding was confirmed as stated.
    - `stream-library.test.mjs`: v1's profile is learned on 2 task inputs instead of 1 compile trace, and the new evidence
      fields are asserted.
    - `slice2-wiring.test.mjs`: the flow-v3 pin.
+
+### 17.6 E2 freeze record after the review fixes (supersedes §13)
+
+| item | value |
+|---|---|
+| commit holding the review code | the autosave snapshots of §17 (the last one is `10df205`); this record is in the `flow-v3 slice 2 review fixes:` commit |
+| `experiments/jit` tree | `1a9882dabd41a37c284f2e3ae4608c77edd50786` (at `10df205`; it also holds another agent's `verify-economics.mjs` and its test, which are not slice 2) |
+| `experiments/lib` tree | `8abfdab1e2d1b0a5188b0d511c636fa18fd68935` (at `10df205`; slice 2 and the review changed no file here after 2b; other agents' `stats-ebed`, `reuse-rule` and `stats` commits moved the id) |
+| `flow-v3.mjs` sha256 | `15da5c24efd537afb30eb8754955583c735fb6f36e8c55ca3646c13aa848f06b` (pinned in `slice2-wiring.test.mjs`; 2b's was `161ac935…35f6`) |
+| `flow-v2.mjs` sha256 | `5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223` (unchanged) |
+| kit hash | `852ebdf05588de97` (unchanged: no kit path changed) |
+| arm hashes | dev-records-1, dev-kinetics-1 (`V1_HASHES`), r0-kinetics, and now r0-records (`slice2-review` T5): unchanged |
+
+Files changed in the review round: `experiments/jit/flow-v3.mjs`, `call-host.mjs`, `agent-node.mjs`, `run-compiled.mjs`,
+`stream.mjs`, `compile.mjs` and `prompts.mjs`. Tests: `experiments/jit/test/slice2-review.test.mjs` (new), plus the edits
+listed in §17.5 item 8. And this document. Other agents commit to `experiments/` concurrently, so the round's freeze record
+should be stamped from the commit it runs on.
+
+### 17.7 Tests after the review
+
+| suite | result |
+|---|---|
+| `node --test --test-concurrency=2 experiments/jit/test/*.test.mjs` | **332 tests: 331 pass, 1 todo, 0 fail** |
+| `node --test --test-concurrency=2 tests/*.test.mjs` (the main suite) | **1004 tests: 986 pass, 18 skipped, 0 fail** |
+
+How the JIT count grew from 2b's 300: `slice2-review` adds 20, and another agent's `verify-economics.test.mjs` adds 12.
+
+`slice2-review` passed three repeated runs of T4. T4's first version flaked once in the full suite: at concurrency 8 the
+gateway admitted every call before any had been charged. It now runs one item at a time.
