@@ -55,11 +55,11 @@ const CLASSES = [
   ['fraud-reject', 2, 4, true], ['decline', 2, 4, true], ['collection-failed', 2, 4, true], ['cancel-processing', 2, 4, true],
   ['cancel-after-collection', 2, 3, true],
   ['action-at-deadline', 3, 2, true], ['action-late', 3, 2, true], ['review-approve', 3, 3, true], ['review-reject', 3, 2, true],
-  ['review-timeout', 3, 1, true], ['cancel-at-collection', 3, 1, true],
+  ['review-timeout', 3, 1, true], ['cancel-at-collection', 3, 1, true], ['amend-then-cancel', 3, 1, true],
   ['f3-charge', 5, 3, true], ['f4-reserve', 5, 3, true], ['f6-carrier', 5, 2, true], ['f1-charge', 5, 2, true], ['f3-refund', 5, 2, true],
 ];
 const SIZES = { 1: 12, 2: 50, 3: 80, 4: 100, 5: 200 };
-const CANCEL_RACE = new Set(['cancel-processing', 'cancel-after-collection', 'cancel-at-collection']);
+const CANCEL_RACE = new Set(['cancel-processing', 'cancel-after-collection', 'cancel-at-collection', 'amend-then-cancel']);
 const BACKLOG = { 1: 2, 2: 3, 3: 5, 4: 6, 5: 8 };
 
 /** Collection runs of a location (minutes from t0) from day -1 to day 17. */
@@ -115,7 +115,7 @@ export function generateWorld({ seed, split = 'dev', difficulty = 2, schedule = 
     const skus = rr.sample(catalog.map(c => c.sku), nItems);
     const items = skus.map(sku => ({ sku, qty: rr.int(1, 3) }));
     const usable = locations.filter(l => l !== NEW_LOCATION || p >= epochStarts[1]);
-    const needsUnavailable = ['amend', 'cancel-wait', 'timeout', 'action-at-deadline', 'action-late'].includes(cls) || (cls === 'gl-awaiting');
+    const needsUnavailable = ['amend', 'cancel-wait', 'timeout', 'action-at-deadline', 'action-late', 'amend-then-cancel'].includes(cls) || (cls === 'gl-awaiting');
     let unavailableSkus = [];
     if (needsUnavailable) {
       const k = items.length === 1 ? 1 : rr.int(1, items.length - (rr.chance(0.85) ? 1 : 0));
@@ -187,6 +187,18 @@ export function generateWorld({ seed, split = 'dev', difficulty = 2, schedule = 
         action(cls === 'amend' ? 'amend' : 'cancel', a); break;
       }
       case 'action-at-deadline': action(rr.chance(0.6) ? 'amend' : 'cancel', D); break;
+      case 'amend-then-cancel': {
+        // S8: an amend makes the order ready at a; a later cancel before any collection is a processing cancel (R6.2).
+        const a = rr.int(p + 75, D - 15);
+        const availNow = o.fulfilments.filter(f => f.available);
+        if (!availNow.length) { action('amend', a); break; }
+        const early = Math.min(...availNow.map(f => firstRun(loc(f.location), a + 4 + 30)));
+        const opts = [];
+        for (let m = a + 5; m <= Math.min(early - 71, a + 600); m++) if (!blocked(locations, m)) opts.push(m);
+        action('amend', a);
+        if (opts.length) action('cancel', rr.pick(opts));
+        break;
+      }
       case 'action-late': action(rr.chance(0.5) ? 'amend' : 'cancel', D + rr.int(5, 50)); break;
       case 'cancel-processing': {
         const hi = Math.min(Math.min(...runsEarly) - 71, p + 600);
