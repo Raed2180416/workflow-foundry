@@ -33,8 +33,9 @@ window of 40 seeds contains each subtype 9 to 11 times; the subtype of a seed do
 | `calendar` | `calendar` (months with lengths, weekday names) and a `festivals` table | the date N days after D; the weekday N days after D; the Nth business day after D (rest days, leap rule, festival days); a business-day count between two dates | `<month> <day>, year <year>`, a weekday name, or an integer |
 | `convert` | `relations` ("1 from = factor to", usable both ways) and `inventory` (item, kind, status, qty, unit) | one item's quantity, or the total of filtered items, in a stated unit, rounded half up to 0, 1 or 2 decimals | number |
 
-All truths are computed with integers and BigInt fractions (no floating point). Conversion truths that fall within 0.02 of a
-rounding tie are never generated.
+All truths are computed with integers and BigInt fractions (no floating point). Conversion truths that fall within 0.01 of a
+last-place unit of a rounding tie (that is, `|frac(truth x 10^dp) - 1/2| < 0.01`, where `dp` is the number of decimals asked
+for) are never generated.
 
 ## Difficulty knob
 
@@ -77,7 +78,8 @@ defaulting to the difficulty). A non-default task carries `task.knobs = {size, s
 cannot separate by length alone (the standard harness does not pass these arguments; a caller must):
 
 - **same structure, different length:** for example `{size: 1, steps: 3}` vs `{size: 5, steps: 3}` (same question
-  template, 2.5x to 3.5x the tokens);
+  template, 2.4x to 3.5x the tokens: calendar about 2.5x, the other three subtypes 3.1x to 3.5x; measured at steps 3 on dev
+  seeds 601-640);
 - **same length, different structure:** for example `{size: 3, steps: 1}` vs `{size: 3, steps: 5}` (token ratio 1.01 to
   1.16 by subtype, with a deeper question).
 
@@ -91,7 +93,8 @@ partial proxy for steps; that is a property of any templated question, not remov
 
 Output schema: `{"answer": <string or number>}`, `additionalProperties: false`, `answer` at most 80 characters; the
 portable subset only. Anything else is schema-invalid (`pass: false`, `details.schemaErrors`), including a correct
-answer wrapped with extra properties.
+answer wrapped with extra properties (also properties named like `Object.prototype` members, such as `constructor`,
+`toString` or a parsed `__proto__` key: only own properties count as declared).
 
 The comparison is by truth kind and is stated in each prompt (a bare number, text as written in the data, or a date):
 
@@ -105,7 +108,9 @@ The comparison is by truth kind and is stated in each prompt (a bare number, tex
 - **text** (names, weekdays): trim, lowercase, collapse whitespace, strip wrapping quotes and one final full stop, then
   exact equality. No alias handling, no fuzzy matching.
 - **date** (`<month> <day>, year <year>`): month name case-insensitive, the comma and the word `year` optional, leading
-  zeros in the day ignored (`Aldemere 5, year 301` = `aldemere 05 301`). `5 Aldemere 301` is rejected.
+  zeros in the day ignored, wrapping quotes stripped as for text, and an ordinal suffix on the day (`st`, `nd`, `rd`, `th`)
+  ignored (`Aldemere 5, year 301` = `aldemere 05 301` = `"Aldemere 5th, year 301"`). A different word order such as
+  `5 Aldemere 301`, an ISO-style `301-1-5`, a missing month, day or year, and units are rejected.
 
 Details returned by the oracle do not contain the truth: `{subtype, kind, size, steps, reason, normalized}` where
 `normalized` is the submitted value after normalisation. Score is 0 or 1.

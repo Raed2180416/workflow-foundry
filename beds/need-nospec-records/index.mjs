@@ -75,7 +75,7 @@ export function referenceSolve(task) {
 
 // ---------------------------------------------------------------------------------------
 // Bad controls. records' own (same names and minDifficulty, so the two beds compare control by control), plus three near
-// misses that only a no-spec task has: parroting an example, reusing an example's rates, keeping the phone trunk zero.
+// misses that only a no-spec task has: parroting an example, reusing an example's rates, keeping the national trunk prefix of phones.
 const WHY = {
   'empty': 'no records at all',
   'shuffled-or-corrupted': 'right clusters, but birth date, phone, amount and country rotated across records',
@@ -93,10 +93,13 @@ const WHY = {
   'perspective-ignored': 'every printed balance read as owed to us',
 };
 const lastExample = task => { const refs = refsOf(task.seed, task.split, task.difficulty); return refs[refs.length - 1]; };
-const trunkOf = new Map([...new Set(Object.values(P.COUNTRIES).map(c => c.cc))].map(cc => [cc, Object.values(P.COUNTRIES).find(c => c.cc === cc).trunk]));
-const keepTrunkZero = phone => {
+// Calling code -> national trunk prefix to put back in front of the national number: "0" for most countries, "1" for North
+// America (+1); none for Spain, Mexico, Denmark, Norway and Italy (whose leading 0 is part of the number and already in the truth).
+const trunkOf = new Map([...new Set(Object.values(P.COUNTRIES).map(c => c.cc))]
+  .map(cc => [cc, ({ 0: '0', nanp: '1' })[Object.values(P.COUNTRIES).find(c => c.cc === cc).trunk] ?? '']));
+const keepTrunkPrefix = phone => {
   if (phone === null) return null;
-  for (const [cc, trunk] of trunkOf) if (phone.startsWith(`+${cc}`) && trunk === '0') return `+${cc}0${phone.slice(cc.length + 1)}`;
+  for (const [cc, trunk] of trunkOf) if (phone.startsWith(`+${cc}`)) return `+${cc}${trunk}${phone.slice(cc.length + 1)}`;
   return phone;
 };
 
@@ -112,11 +115,11 @@ export const badControls = [
       const r = refsOf(task.seed, task.split, task.difficulty)[0];
       return ruleSolve(w.rows.map(x => x.s), worldFor(r.seed, r.split, r.difficulty).fx);
     } },
-  { name: 'plausible-but-wrong:trunk-zero-kept', minDifficulty: 1,
-    why: 'everything right except that the national trunk "0" stays in front of the national number after the country code',
+  { name: 'plausible-but-wrong:trunk-prefix-kept', minDifficulty: 1,
+    why: 'everything right except that the national trunk prefix (0, or 1 in North America) stays in front of the national number after the country code',
     make: task => {
       const truth = structuredClone(worldFor(task.seed, task.split, task.difficulty).truth);
-      for (const r of truth.records) r.phone_e164 = keepTrunkZero(r.phone_e164);
+      for (const r of truth.records) r.phone_e164 = keepTrunkPrefix(r.phone_e164);
       return truth;
     } },
 ];

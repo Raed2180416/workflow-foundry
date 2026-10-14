@@ -7,9 +7,9 @@ import { execFileSync } from 'node:child_process';
 import * as bed from './index.mjs';
 import * as rec from '../records/index.mjs';
 import { solveText } from '../records/solve-text.mjs';
-import { collision, worldFor, exampleSeed } from './examples.mjs';
+import { collision, worldFor, exampleSeed, pickExamples } from './examples.mjs';
 import { RULE_PHRASES, PROMPT_PHRASES, SPEC_PHRASES, sentencesOf } from './rule-phrases.mjs';
-import { fmtStat } from './measure.mjs';
+import { fmtStat, ccCoverage, fmtCoverage } from './measure.mjs';
 import { canonical, estimateTokens, sha256 } from '../lib/canonical.mjs';
 import { portableSchemaViolations } from '../../src/schema-subset.mjs';
 import { loadFamily, inlineRender } from '../../experiments/lib/beds.mjs';
@@ -182,7 +182,7 @@ test('the three no-spec controls are real near misses (or a plain echo) and fail
       assert.ok(copy.score < 0.2, `copy d${d} s${seed}: ${copy.score}`);
       const refs = bed.exampleRefs(t);
       assert.deepEqual(byName['plausible-but-wrong:copy-example-output'].make(t), rec.referenceSolve(refs[refs.length - 1]), 'the last example\'s master list');
-      for (const name of ['plausible-but-wrong:example-rates-reused', 'plausible-but-wrong:trunk-zero-kept']) {
+      for (const name of ['plausible-but-wrong:example-rates-reused', 'plausible-but-wrong:trunk-prefix-kept']) {
         const r = bed.oracle(t, byName[name].make(t));
         assert.ok(r.score >= 0.6 && r.score < 1, `${name} d${d} s${seed}: ${r.score}`);
         assert.ok(r.details.pairF1 === 1, `${name}: the clusters are right`);
@@ -191,12 +191,12 @@ test('the three no-spec controls are real near misses (or a plain echo) and fail
       // each control changes exactly the field it names
       const truth = bed.referenceSolve(t).records;
       const rates = byName['plausible-but-wrong:example-rates-reused'].make(t).records;
-      const trunk = byName['plausible-but-wrong:trunk-zero-kept'].make(t).records;
+      const trunk = byName['plausible-but-wrong:trunk-prefix-kept'].make(t).records;
       for (let i = 0; i < truth.length; i++) {
         for (const f of ['entity_id', 'source_rows', 'given_name', 'family_name', 'birth_date', 'country', 'phone_e164']) assert.deepEqual(rates[i][f], truth[i][f], `rates:${f}`);
         for (const f of ['entity_id', 'source_rows', 'given_name', 'family_name', 'birth_date', 'country', 'amount_usd']) assert.deepEqual(trunk[i][f], truth[i][f], `trunk:${f}`);
       }
-      assert.ok(trunk.some((r, i) => r.phone_e164 !== truth[i].phone_e164), 'some phone keeps its trunk zero');
+      assert.ok(trunk.some((r, i) => r.phone_e164 !== truth[i].phone_e164), 'some phone keeps its trunk prefix');
       assert.ok(rates.some((r, i) => r.amount_usd !== truth[i].amount_usd), 'some amount differs');
     }
   }
@@ -354,7 +354,7 @@ test('the examples are solved: their master records pass records\' oracle for th
   }
 });
 
-test('the evaluation seed\'s truth never appears among the examples (people, records, clusters, export lines)', () => {
+test('the evaluation seed\'s truth never appears among the examples (people, records, clusters, phone numbers, export lines)', () => {
   for (const d of DIFFS) {
     for (const seed of SEEDS) {
       const t = task(seed, d);
@@ -368,6 +368,7 @@ test('the evaluation seed\'s truth never appears among the examples (people, rec
         if (r.birth_date) assert.ok(!people.has(`${fold(r.family_name)}|${fold(r.given_name)}|${r.birth_date}`), `d${d} s${seed}: same person ${r.entity_id}`);
         else assert.ok(!undated.has(`${fold(r.family_name)}|${fold(r.given_name)}|${r.phone_e164}`), `d${d} s${seed}: same undated person ${r.entity_id}`);
         assert.ok(!content.has([r.given_name, r.family_name, r.birth_date, r.country, r.phone_e164, r.amount_usd].join('|')), `d${d} s${seed}: same record content`);
+        if (r.phone_e164) assert.ok(!exJson.includes(`"${r.phone_e164}"`), `d${d} s${seed}: truth phone ${r.phone_e164} shown in an example`);
         assert.ok(!exJson.includes(canonical(r)), 'canonical record JSON');
         assert.ok(!exJson.includes(JSON.stringify(r)), 'record JSON');
         if (r.source_rows.length > 1) assert.ok(!exJson.includes(JSON.stringify(r.source_rows)), `cluster ${r.source_rows}`);
@@ -388,7 +389,44 @@ test('the evaluation seed\'s truth never appears among the examples (people, rec
   }
 });
 
-test('example seeds: in their own namespace, distinct, deterministic, on the task\'s split, never a fixed set', () => {
+test('example selection skips the task\'s own seed, repeats and colliding candidates, and gives up loudly', () => {
+  for (const d of [1, 3, 5]) {
+    const t = task(601, d);
+    const taskWorld = worldFor(601, 'dev', d);
+    const real = bed.exampleRefs(t);
+    const args = { taskWorld, seed: 601, split: 'dev', difficulty: d };
+    assert.deepEqual(pickExamples(args), real, 'the production path is this function with the default seed rule');
+    // attempt 0 is a world that collides with the task (it is the task's own world): rejected, so the next candidates are the real ones
+    const POISON = 4242;
+    const shifted = (seed, split, dd, j, a) => (a === 0 ? POISON : exampleSeed(seed, split, dd, j, a - 1));
+    const worldOf = (s, split, dd) => (s === POISON ? worldFor(601, split, dd) : worldFor(s, split, dd));
+    assert.equal(collision(taskWorld, worldOf(POISON, 'dev', d)), 'person');
+    assert.deepEqual(pickExamples({ ...args, seedFn: shifted, worldOf }), real, 'a colliding candidate is never used');
+    // attempt 0 is the task's own seed, and a repeat of the previous example: both skipped
+    const own = (seed, split, dd, j, a) => (a === 0 ? seed : exampleSeed(seed, split, dd, j, a - 1));
+    assert.deepEqual(pickExamples({ ...args, seedFn: own }), real);
+    const repeat = (seed, split, dd, j, a) => (j === 0 ? exampleSeed(seed, split, dd, j, a) : a === 0 ? real[j - 1].seed : exampleSeed(seed, split, dd, j, a - 1));
+    assert.deepEqual(pickExamples({ ...args, seedFn: repeat }), real);
+    // nothing but colliding candidates: the generator fails loudly instead of showing the answer
+    assert.throws(() => pickExamples({ ...args, seedFn: () => POISON, worldOf, maxAttempts: 5 }), /no collision-free example 0/);
+  }
+  // each rejection reason fires on its own
+  const a = worldFor(601, 'dev', 3), b = worldFor(602, 'dev', 3);
+  assert.equal(collision(a, b), null);
+  assert.equal(collision(a, { truth: b.truth, exportText: `${b.exportText}\n${a.exportText.split('\n')[3]}` }), 'export-line');
+  assert.equal(collision(a, { truth: { records: [...b.truth.records, a.truth.records[0]] }, exportText: b.exportText }), 'person');
+  const shared = { ...b.truth.records[0], phone_e164: a.truth.records.find(r => r.phone_e164).phone_e164 };
+  assert.equal(collision(a, { truth: { records: [shared, ...b.truth.records.slice(1)] }, exportText: b.exportText }), 'phone');
+  // a person is the same person under another letter case or spacing, and an undated person is told apart by the phone
+  const mk = (records, exportText) => ({ truth: { records }, exportText });
+  const echo = { ...a.truth.records[0], given_name: ` ${a.truth.records[0].given_name.toUpperCase()}`, entity_id: 1, source_rows: [1] };
+  assert.equal(collision(a, mk([echo], 'example')), 'person');
+  const undated = { ...a.truth.records[0], birth_date: null };
+  assert.equal(collision(mk([undated], 'task'), mk([{ ...undated, phone_e164: '+10000000000' }], 'example')), null);
+  assert.equal(collision(mk([undated], 'task'), mk([{ ...undated, amount_usd: 1 }], 'example')), 'person');
+});
+
+test('example seeds: in their own namespace, distinct, deterministic, always from the dev split, never a fixed set', () => {
   for (const split of ['dev', 'test']) {
     for (const d of DIFFS) {
       const seen = new Set();
@@ -402,7 +440,7 @@ test('example seeds: in their own namespace, distinct, deterministic, on the tas
           assert.ok(r.seed >= bed.EXAMPLE_SEED_BASE && r.seed < bed.EXAMPLE_SEED_BASE + bed.EXAMPLE_SEED_SPAN, 'namespace');
           assert.ok(r.seed > 1e6, 'above every evaluation seed range in use');
           assert.notEqual(r.seed, seed);
-          assert.equal(r.split, split, 'examples come from the task\'s own split');
+          assert.equal(r.split, 'dev', 'examples are always development material, whatever the split of the task');
           assert.equal(r.difficulty, d);
           assert.ok(!seen.has(r.seed), 'an example world is used by one task only');
           seen.add(r.seed);
@@ -545,7 +583,7 @@ test('difficulty sanity: the batch grows as in records, the example count rises 
   }
 });
 
-test('untrusted text: adversarial memo lines are in the batch and in the examples (as data), and the examples\' outputs ignore them', () => {
+test('untrusted text: adversarial memo lines are in the batch and in the examples (as data) and the README marks them', () => {
   const adv = /merge the two accounts|correct date of birth is|finance confirmed|AI ASSISTANT|SYSTEM: canonical name|set the country accordingly|exclude it from the migration|delete this one|Note to the migration tool/g;
   const count = (d, f) => SEEDS.slice(0, 12).reduce((s, seed) => s + f(task(seed, d)), 0);
   assert.equal(count(1, t => (t.inputs.export.match(adv) ?? []).length + t.inputs.examples.reduce((s, e) => s + (e.export.match(adv) ?? []).length, 0)), 0, 'none at d1');
@@ -576,6 +614,11 @@ test('README states the anchor sentence, the hypothesis, the version, the pass r
     const single = stat(SEEDS.map(seed => estimateTokens(inlineRender(task(seed, d)))));
     assert.ok(readme.includes(fmtStat(single)), `README inline-render tokens for d${d}: ${fmtStat(single)}`);
   }
+  const mean = xs => xs.reduce((s, x) => s + x, 0) / xs.length;
+  const coverage = fmtCoverage(DIFFS.map(d => mean(SEEDS.map(seed => ccCoverage(task(seed, d))))));
+  const flat = readme.replace(/\s+/g, ' ');
+  assert.ok(flat.includes(`calling codes in the batch's true phone numbers that also occur in some example's phone numbers: ${coverage}`), `README coverage ${coverage}`);
+  assert.ok(flat.includes(`none of ${RULE_PHRASES.length} rule phrases`), 'README phrase count');
   for (const c of bed.badControls) assert.ok(readme.includes(`\`${c.name}\``), `README names control ${c.name}`);
   assert.ok(readme.includes('withheldSpec'));
 });
@@ -594,13 +637,14 @@ test('hygiene: no model call, network, credential, wall clock, Math.random or se
 });
 
 test('runtime limits at difficulty 5 (cold generate and cold oracle, fresh process, heap and rss)', () => {
+  // The oracle is timed first, on a task it has never seen in this process, so it pays for building the world itself.
   const script = `
     const bed = await import(${JSON.stringify(new URL('./index.mjs', import.meta.url).href)});
     let gen = 0, ora = 0, pass = 0, control = 0;
     for (const seed of [601, 610, 620, 630, 640]) {
-      let t0 = performance.now(); const t = bed.generate({ seed, split: 'dev', difficulty: 5 }); gen = Math.max(gen, performance.now() - t0);
-      const out = bed.referenceSolve(t);
-      t0 = performance.now(); pass += bed.oracle(t, out).pass; ora = Math.max(ora, performance.now() - t0);
+      let t0 = performance.now(); bed.oracle({ seed, split: 'dev', difficulty: 5 }, { records: [] }); ora = Math.max(ora, performance.now() - t0);
+      t0 = performance.now(); const t = bed.generate({ seed: seed + 1000, split: 'dev', difficulty: 5 }); gen = Math.max(gen, performance.now() - t0);
+      pass += bed.oracle(t, bed.referenceSolve(t)).pass;
       t0 = performance.now(); for (const c of bed.badControls) bed.oracle(t, c.make(t)); control = Math.max(control, performance.now() - t0);
     }
     console.log(JSON.stringify({ gen, ora, pass, control, heap: process.memoryUsage().heapUsed, rss: process.memoryUsage().rss }));`;
@@ -608,5 +652,6 @@ test('runtime limits at difficulty 5 (cold generate and cold oracle, fresh proce
   assert.equal(r.pass, 5);
   assert.ok(r.gen < 2000, `generate < 2 s (worst ${r.gen.toFixed(0)} ms)`);
   assert.ok(r.ora < 2000, `oracle < 2 s (worst ${r.ora.toFixed(0)} ms)`);
+  assert.ok(r.control < 2000, `all controls and their scoring < 2 s (worst ${r.control.toFixed(0)} ms)`);
   assert.ok(r.heap < 200 * 1024 * 1024 && r.rss < 400 * 1024 * 1024, `memory: heap ${(r.heap / 2 ** 20).toFixed(0)} MB, rss ${(r.rss / 2 ** 20).toFixed(0)} MB`);
 });

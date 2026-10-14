@@ -103,7 +103,7 @@ export function fracOfDecimal(text) {
 /** round-half-up(f * 10^dp) for f >= 0, as a BigInt. */
 export function roundHalfUpScaled(f, dp) { return (2n * f.n * 10n ** BigInt(dp) + f.d) / (2n * f.d); }
 export function floorScaled(f, dp) { return (f.n * 10n ** BigInt(dp)) / f.d; }
-/** True when f * 10^dp is within 0.02 of a rounding tie (such truths are rejected: float solvers could land on either side). */
+/** True when f * 10^dp is within 0.01 of a last-place unit of a rounding tie, i.e. |frac(f * 10^dp) - 1/2| < 0.01 (such truths are rejected: float solvers could land on either side). */
 export function nearTie(f, dp) {
   const rem = (f.n * 10n ** BigInt(dp)) % f.d;
   return abs(2n * rem - f.d) * 50n < f.d;
@@ -144,10 +144,14 @@ export function normText(value) {
     .replace(/^["'`]+|["'`]+$/g, '').replace(/\.$/, '').trim();
 }
 
-/** "Aldemere 5, year 301" (also "Aldemere 5 301", "aldemere 5, 301") -> { month, day, year } or null. */
+/**
+ * "Aldemere 5, year 301" (also "Aldemere 5 301", "aldemere 5, 301", "Aldemere 5th, year 301", '"Aldemere 5, year 301"')
+ * -> { month, day, year } or null. Wrapping quotes are stripped exactly as normText does for text answers, and an ordinal
+ * suffix (st/nd/rd/th) after the day is ignored.
+ */
 export function parseDateAnswer(text) {
-  const s = String(text).normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ');
-  const m = /^([a-z][a-z'-]*)\s+(\d{1,3})\s*,?\s*(?:year\s+|yr\.?\s*)?(\d{1,5})\.?$/.exec(s);
+  const s = String(text).normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ').replace(/^["'`]+|["'`]+$/g, '').trim();
+  const m = /^([a-z][a-z'-]*)\s+(\d{1,3})(?:st|nd|rd|th)?\s*,?\s*(?:year\s+|yr\.?\s*)?(\d{1,5})\.?$/.exec(s);
   return m ? { month: m[1], day: Number(m[2]), year: Number(m[3]) } : null;
 }
 
@@ -157,7 +161,8 @@ export function parseDateAnswer(text) {
  *  round the submitted number is rounded half-up to `dp` decimals and must then equal the truth; so any value in
  *        [truth - 0.5*10^-dp, truth + 0.5*10^-dp) matches and nothing a full last-place unit away does.
  *  text  trim + lowercase + whitespace collapse + wrapping quotes and a final full stop removed, then exact.
- *  date  "<month> <day>, year <year>" with the comma and the word "year" optional; month name case-insensitive.
+ *  date  "<month> <day>, year <year>" with the comma and the word "year" optional; month name case-insensitive; wrapping
+ *        quotes and an ordinal suffix on the day ("10th") are ignored.
  * Returns { ok, reason, normalized } (reason: 'match' | 'empty' | 'not-a-number' | 'negative' | 'fractional' | 'rounds-differently' | 'mismatch' | 'not-a-date').
  */
 export function compareAnswer(given, truth) {
@@ -225,7 +230,8 @@ export function schemaErrors(schema, value, path = '$', out = []) {
   if (typeOf(value) === 'object') {
     for (const k of schema.required ?? []) if (!Object.hasOwn(value, k)) out.push(`${path}: missing ${k}`);
     for (const [k, v] of Object.entries(value)) {
-      if (schema.properties?.[k]) schemaErrors(schema.properties[k], v, `${path}.${k}`, out);
+      // own properties only: `schema.properties?.[k]` would resolve inherited Object.prototype members (constructor, toString, __proto__ ...) and let such extra keys through
+      if (schema.properties && Object.hasOwn(schema.properties, k)) schemaErrors(schema.properties[k], v, `${path}.${k}`, out);
       else if (schema.additionalProperties === false) out.push(`${path}: unexpected property ${k}`);
     }
   }

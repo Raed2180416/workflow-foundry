@@ -33,7 +33,6 @@ export const SPEC_PHRASES = [
   'first row in this order that supplies a usable value wins',
   'Accent restoration',
   'ASCII renderings',
-  'Phone normalisation',
   'trunk prefix',
   'Calling codes and trunk prefixes',
   'Italian numbers keep their leading 0',
@@ -45,7 +44,7 @@ export const SPEC_PHRASES = [
   'Appendix A',
   'nicknames and the formal given name',
   'E.164 form',
-  'is null',
+  'that field is null',
 ];
 
 export const RULE_PHRASES = [...PROMPT_PHRASES, ...SPEC_PHRASES];

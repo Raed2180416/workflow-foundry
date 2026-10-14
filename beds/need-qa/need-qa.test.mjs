@@ -4,8 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as bed from './index.mjs';
 import { solveFromView } from './view-solver.mjs';
-import { compareAnswer, numberTokens, normText } from './core.mjs';
+import { compareAnswer, numberTokens, normText, schemaErrors, nearTie, frac, parseDateAnswer } from './core.mjs';
 import { canonical } from '../lib/canonical.mjs';
+import { readFileSync } from 'node:fs';
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => 601 + i);
 const DIFFICULTIES = [1, 2, 3, 4, 5];
@@ -354,5 +355,125 @@ test('generator robustness: every seed in a wide sweep yields a well-posed task 
   for (let size = 1; size <= 5; size++) for (let steps = 1; steps <= 5; steps++) for (let seed = 1; seed <= 60; seed++) {
     const task = bed.generate({ seed, split: 'dev', difficulty: 3, size, steps });
     assert.ok(bed.describeTask(task).attempts < 400);
+  }
+});
+
+// ---- regression tests for the defects found by the adversarial review (each fails on the pre-fix code) ----
+
+test('regression: extra properties named like Object.prototype members are schema-invalid (additionalProperties:false uses own keys only)', () => {
+  const protoNames = ['constructor', 'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', '__proto__', '__defineGetter__', '__lookupGetter__'];
+  // the validator itself
+  const schema = { type: 'object', additionalProperties: false, required: ['answer'], properties: { answer: { type: ['string', 'number'] } } };
+  assert.deepEqual(schemaErrors(schema, { answer: 1 }), []);
+  for (const name of protoNames) {
+    const value = JSON.parse(`{"answer":1,${JSON.stringify(name)}:1}`);          // JSON.parse makes __proto__ an own enumerable property
+    assert.ok(Object.hasOwn(value, name), name);
+    assert.deepEqual(schemaErrors(schema, value), [`$: unexpected property ${name}`], name);
+  }
+  // a prototype-named key must not be mistaken for a declared property either
+  assert.ok(schemaErrors({ type: 'object', properties: {}, additionalProperties: false }, { toString: 'x' }).length > 0);
+  assert.deepEqual(schemaErrors({ type: 'object', properties: { toString: { type: 'string' } }, additionalProperties: false }, { toString: 'x' }), []);   // a declared own property still validates
+  // through the oracle, with the correct answer present
+  for (const d of DIFFICULTIES) for (const seed of SEEDS.slice(0, 8)) {
+    const task = gen(seed, d), good = bed.referenceSolve(task);
+    assert.equal(bed.oracle(task, good).pass, true);
+    for (const name of protoNames) {
+      for (const output of [{ ...good, [name]: 'x' }, JSON.parse(`{"answer":${JSON.stringify(good.answer)},${JSON.stringify(name)}:1}`)]) {
+        const result = bed.oracle(task, output);
+        assert.equal(result.pass, false, `${task.id} + ${name}`);
+        assert.equal(result.score, 0);
+        assert.deepEqual(result.details.schemaErrors, [`$: unexpected property ${name}`], `${task.id} + ${name}`);
+      }
+    }
+  }
+});
+
+test('regression: calendar rule text avoids the "every other day" idiom (alternate days) and says "all other days are business days"', () => {
+  let checked = 0;
+  for (const seed of SEEDS) for (const steps of [1, 2, 3, 4, 5]) {
+    const task = gen(seed, 3, { size: 3, steps });
+    if (bed.describeTask(task).subtype !== 'calendar') continue;
+    const intro = task.prompt.split('\n')[0];
+    assert.ok(!/every other/i.test(task.prompt), `${task.id}: ambiguous "every other"`);
+    assert.equal(/are rest days; all other days are business days/.test(intro), steps >= 4, `${task.id}: business-day rule wording`);
+    assert.equal(/ except festival days\./.test(intro), steps >= 5, `${task.id}: festival exception wording`);
+    if (steps >= 4) assert.match(intro, /(\S+) and (\S+) are rest days; all other days are business days( except festival days)?\./);
+    checked++;
+  }
+  assert.ok(checked >= 40, `only ${checked} calendar tasks checked`);
+  for (const d of DIFFICULTIES) for (const seed of SEEDS) assert.ok(!/every other/i.test(gen(seed, d).prompt));   // no subtype uses the idiom
+});
+
+test('regression: date answers accept wrapping quotes and an ordinal suffix on the day, like text answers', () => {
+  const date = { kind: 'date', value: 'Marulis 10, year 438' };
+  for (const ok of ['"Marulis 10, year 438"', "'Marulis 10, year 438'", '`Marulis 10, year 438`', 'Marulis 10th, year 438', 'marulis 10TH 438', '"Marulis 10th, year 438."', 'Marulis 010th, year 438', ' "  Marulis 10 , year 438 " ']) assert.equal(compareAnswer(ok, date).ok, true, ok);
+  const one = { kind: 'date', value: 'Marulis 1, year 438' };
+  for (const ok of ['Marulis 1st, year 438', 'Marulis 1, year 438']) assert.equal(compareAnswer(ok, one).ok, true, ok);
+  // still rejected: a different date, a different order, an ordinal on the wrong day or year, a suffix that is not an ordinal, and a missing part
+  for (const bad of ['"Marulis 11, year 438"', 'Marulis 11th, year 438', 'Marulis 10th, year 439', 'Marulis 10th, year 43', '"10 Marulis 438"', 'Marulis 10xx, year 438', 'Marulis 10th', '"Marulis, year 438"', '"Marulis 10th"', 'Marulis 10th, year', '""', "''", 'Marulis 10st-year 438']) assert.equal(compareAnswer(bad, date).ok, false, bad);
+  assert.deepEqual(parseDateAnswer('"Marulis 10th, year 438"'), { month: 'marulis', day: 10, year: 438 });
+  assert.equal(parseDateAnswer('"'), null);
+  // the same through the oracle for every generated date task (and every spelling of the reference answer)
+  let checked = 0;
+  for (const d of DIFFICULTIES) for (const seed of SEEDS) {
+    const task = gen(seed, d);
+    if (bed.describeTask(task).kind !== 'date') continue;
+    const ref = bed.referenceSolve(task).answer;
+    const withOrdinal = ref.replace(/ (\d+),/, (_, n) => ` ${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th')},`);
+    assert.notEqual(withOrdinal, ref);
+    for (const answer of [`"${ref}"`, `'${ref}'`, withOrdinal, `"${withOrdinal}"`, withOrdinal.toUpperCase()]) {
+      const result = bed.oracle(task, { answer });
+      assert.equal(result.pass, true, `${task.id}: ${answer} ${JSON.stringify(result.details)}`);
+    }
+    // a quoted or ordinal-suffixed near miss is still wrong
+    const wrong = bed.badControls.find(c => c.name === 'plausible-but-wrong:off-by-one').make(task).answer;
+    assert.equal(bed.oracle(task, { answer: `"${wrong}"` }).pass, false);
+    checked++;
+  }
+  assert.ok(checked >= 30, `only ${checked} date tasks checked`);
+});
+
+test('regression: README numeric claims match the code (rounding-tie guard, size ratio, token table)', () => {
+  // nearTie rejects |frac(f * 10^dp) - 1/2| < 0.01 (0.01 of a last-place unit), not 0.02
+  assert.equal(nearTie(frac(1n, 2n), 0), true);                 // exactly x.5
+  assert.equal(nearTie(frac(509n, 1000n), 0), true);            // .509 is 0.009 from the tie
+  assert.equal(nearTie(frac(491n, 1000n), 0), true);
+  assert.equal(nearTie(frac(51n, 100n), 0), false);             // .51 is exactly 0.01 away: allowed
+  assert.equal(nearTie(frac(49n, 100n), 0), false);
+  assert.equal(nearTie(frac(515n, 1000n), 0), false);           // 0.015 away: would have been rejected under a 0.02 rule
+  assert.equal(nearTie(frac(485n, 1000n), 0), false);
+  assert.equal(nearTie(frac(12345n, 1000n), 2), true);          // 12.345 -> 1234.5 at two decimals
+  assert.equal(nearTie(frac(1234505n, 100000n), 2), true);      // 1234.505
+  assert.equal(nearTie(frac(1234515n, 100000n), 2), false);
+  assert.equal(nearTie(frac(12n), 2), false);                   // an exact value is no tie
+  const readme = readFileSync(new URL('./README.md', import.meta.url), 'utf8');
+  assert.ok(!/within 0\.02 of a/.test(readme));
+  assert.match(readme, /within 0\.01 of\s+a\s+last-place unit of a rounding tie/);
+  assert.match(readme, /2\.4x to 3\.5x the tokens/);
+
+  // size ratio: same structure (steps 3), size 1 -> size 5
+  const ratios = Object.fromEntries(SUBTYPES.map(s => [s, []]));
+  for (const seed of SEEDS) {
+    const a = tokensCompact(gen(seed, 3, { size: 1, steps: 3 })), b = tokensCompact(gen(seed, 3, { size: 5, steps: 3 }));
+    ratios[bed.subtypeOf(seed, 'dev')].push(b / a);
+  }
+  const mean = xs => xs.reduce((x, y) => x + y, 0) / xs.length;
+  for (const sub of SUBTYPES) for (const r of ratios[sub]) assert.ok(r >= 2.35 && r < 3.55, `${sub} size ratio ${r.toFixed(2)} is outside the README range 2.4x-3.5x`);
+  assert.ok(mean(ratios.calendar) > 2.4 && mean(ratios.calendar) < 2.6, `calendar ratio ${mean(ratios.calendar).toFixed(2)} (README: about 2.5x)`);
+  for (const sub of ['ledger', 'lookup', 'convert']) for (const r of ratios[sub]) assert.ok(r >= 3.1, `${sub} size ratio ${r.toFixed(2)} (README: 3.1x to 3.5x)`);
+
+  // the README token table is regenerated from the code: every cell must match
+  const rows = [...readme.matchAll(/^\| ([1-5]) \| (\d+) \((\d+)-(\d+)\) \| (\d+) \((\d+)\) \| (.*) \|$/gm)];
+  assert.equal(rows.length, 5, 'README token table not found');
+  for (const m of rows) {
+    const d = Number(m[1]);
+    const tasks = SEEDS.map(seed => gen(seed, d));
+    const compact = tasks.map(tokensCompact), pretty = tasks.map(tokensPretty);
+    assert.equal(`${Math.round(median(compact))} (${Math.min(...compact)}-${Math.max(...compact)})`, `${m[2]} (${m[3]}-${m[4]})`, `README compact tokens at d${d}`);
+    assert.equal(`${Math.round(median(pretty))} (${Math.max(...pretty)})`, `${m[5]} (${m[6]})`, `README pretty tokens at d${d}`);
+    for (const sub of SUBTYPES) {
+      const own = tasks.filter(t => bed.subtypeOf(t.seed, 'dev') === sub).map(tokensCompact);
+      assert.ok(m[7].includes(`${sub} ${Math.min(...own)}-${Math.max(...own)}`), `README ${sub} range at d${d}: expected ${Math.min(...own)}-${Math.max(...own)} in "${m[7]}"`);
+    }
   }
 });

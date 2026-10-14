@@ -67,7 +67,7 @@ export function buildCalendar(r, { size, steps }) {
   const dateTruth = off => ({ kind: 'date', value: fmt(cal.dateOf(off)) });
 
   const ruleLines = [];
-  if (steps >= 4) ruleLines.push(`${weekdays[Math.min(...rest)]} and ${weekdays[Math.max(...rest)]} are rest days; every other day is a business day${steps >= 5 ? ' except festival days' : ''}.`);
+  if (steps >= 4) ruleLines.push(`${weekdays[Math.min(...rest)]} and ${weekdays[Math.max(...rest)]} are rest days; all other days are business days${steps >= 5 ? ' except festival days' : ''}.`);
   if (steps >= 5) ruleLines.push('A festival day listed in "festivals" is never a business day, whatever its weekday.');
   else ruleLines.push('The "festivals" table is background information and does not affect this question.');
   if (leap) ruleLines.push(`Every year divisible by 4 has one extra day at the end of its last month, ${months[months.length - 1].month}.`);
