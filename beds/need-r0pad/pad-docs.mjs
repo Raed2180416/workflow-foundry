@@ -4,7 +4,7 @@
 // All content is generated, fictional and answer-neutral (lexicon.mjs; guard.mjs lists what must never appear).
 import {
   fill, FRAMES, QA, POLICY_SECTIONS, POLICY_CLAUSES, NEWS_SECTIONS, MONTHS, WEEKDAYS, ITEMS, BINS, cap as capitalise,
-  person, supplierName, address, emailOf, phone, isoDate, longDate, clock, subject, course, expenseCategory, toolName, asset, room, canteenDish,
+  person, supplierName, address, emailOf, phone, isoDate, longDate, isoOf, longOf, weekdayOf, nextWorkday, clock, subject, course, expenseCategory, toolName, asset, room, canteenDish,
 } from './lexicon.mjs';
 
 const bytes = s => Buffer.byteLength(s);
@@ -49,7 +49,7 @@ const SUMMARIES = ['Badge reader at the {gate} gate does not beep', 'Cannot prin
 const FIXES = ['Cable reseated', 'Firmware updated', 'Unit swapped', 'Account unlocked', 'Router channel changed', 'Driver reinstalled', 'Advised user to restart', 'Part ordered'];
 const OBS = ['Pallet left in front of dock door {small}', 'Wet floor near the {gate} gate, no sign', 'Reversing alarm on a truck is very quiet', 'Box stack leaning in aisle {aisle}',
   'Cable across the walkway on the {floor}', 'Fire door propped on the {floor}', 'Mirror at aisle {aisle} is cracked', 'Eyewash station blocked by cartons'];
-const FOLLOW = ['Moved at once', 'Sign placed', '{team} informed', 'Logged for the next walk-round', 'Fixed the same day', 'Parts requested'];
+const FOLLOW = ['Moved at once', 'Sign placed', '{team} informed', 'Logged for the next site walk', 'Fixed the same day', 'Parts requested'];
 const EXP_NOTES = ['to the {site2} depot', 'site visit', 'team lunch', 'courier to supplier', 'visitor parking', 'label stock', 'training venue', 'overnight stay'];
 const TASKS_TS = ['Racking labels, aisle {aisle}', 'Cycle count, store {n}', 'Packing bench support', 'Dock marshalling', 'Floor markings, lane {aisle}', 'Returns sorting'];
 const SUPPLIES = ['pallets', 'packaging', 'cleaning', 'safety wear', 'stationery', 'catering', 'tools', 'signage', 'electrical', 'uniforms'];
@@ -67,28 +67,29 @@ export const KINDS = [
     const next = deck(r, FRAMES.ops);
     return assemble({
       head: [banner('INTERNAL MEMO'), `Ref: MEMO-25-${String(r.int(1, 999)).padStart(3, '0')}`, `To: All staff, ${c.site}`, `From: ${pickPerson(r, c)}, ${c.teams[0]}`,
-        `Date: ${isoDate(r)}`, `Subject: ${subject(r)}`, ''].join('\n'),
+        `Date: ${isoDate(r)}`, `Subject: ${subject(r)}`].join('\n'),
       unit: () => Array.from({ length: r.int(2, 3) }, () => fill(r, c, next())).join(' '),
       joiner: '\n\n', target, tail: `\n\n${fill(r, c, r.pick(FRAMES.closing))}\n\n${pickPerson(r, c)}\n${c.teams[0]}`,
     });
   } },
   { id: 'minutes', cap: 14000, build(r, c, target) {
     const titles = deck(r, AGENDA), disc = deck(r, FRAMES.ops), dec = deck(r, FRAMES.ops);
-    const t1 = r.pick(['09:00', '09:30', '10:00', '14:00']);
+    const t1 = r.pick(['09:00', '09:30', '10:00', '14:00']), m = nextWorkday(r.int(0, 330));
     return assemble({
-      head: [banner(`${c.teams[0].toUpperCase()} WEEKLY MEETING MINUTES`), `Date: ${isoDate(r)}   Time: ${t1}-${p2(Number(t1.slice(0, 2)) + 1)}${t1.slice(2)}   Place: Room ${room(r)}`,
-        `Present: ${c.people.slice(0, 5).join(', ')}`, `Apologies: ${c.people[c.people.length - 1]}`, `Chair: ${c.people[0]}   Minutes: ${c.people[1]}`, ''].join('\n'),
-      unit: i => `${i + 1}. ${titles()}\n   Discussion: ${fill(r, c, disc())} ${fill(r, c, disc())}\n   Decision: ${fill(r, c, dec())}\n   Action: ${pickPerson(r, c)} to ${fill(r, c, '{task}')} by ${isoDate(r)}.`,
-      joiner: '\n\n', target, tail: `\n\nNext meeting: ${isoDate(r)}, same room.`,
+      head: [banner(`${c.teams[0].toUpperCase()} WEEKLY MEETING MINUTES`), `Date: ${isoOf(m)}   Time: ${t1}-${p2(Number(t1.slice(0, 2)) + 1)}${t1.slice(2)}   Place: Room ${room(r)}`,
+        `Present: ${c.people.slice(0, 5).join(', ')}`, `Apologies: ${c.people[c.people.length - 1]}`, `Chair: ${c.people[0]}   Minutes: ${c.people[1]}`].join('\n'),
+      unit: i => `${i + 1}. ${titles()}\n   Discussion: ${fill(r, c, disc())} ${fill(r, c, disc())}\n   Decision: ${fill(r, c, dec())}\n   Action: ${pickPerson(r, c)} to ${fill(r, c, '{task}')} by ${isoOf(m + r.int(3, 28))}.`,
+      joiner: '\n\n', target, tail: `\n\nNext meeting: ${isoOf(m + 7)}, same room.`,
     });
   } },
   { id: 'email-thread', cap: 14000, build(r, c, target) {
-    const subj = subject(r), next = deck(r, FRAMES.email);
+    const subj = subject(r), next = deck(r, FRAMES.email); let when = nextWorkday(r.int(0, 330));
     return assemble({
       head: banner(`MAILBOX EXPORT (${c.teams[0]} shared mailbox)`) + '\n',
       unit: i => {
         const from = pickPerson(r, c); let to; do { to = pickPerson(r, c); } while (to === from && c.people.length > 1);
-        return [`From: ${from} <${emailOf(from)}>`, `To: ${to} <${emailOf(to)}>`, `Sent: ${r.pick(WEEKDAYS)}, ${longDate(r)} ${clock(r)}`, `Subject: ${i ? 'RE: ' : ''}${subj}`, '',
+        when = nextWorkday(when + r.int(0, 2));
+        return [`From: ${from} <${emailOf(from)}>`, `To: ${to} <${emailOf(to)}>`, `Sent: ${weekdayOf(when)}, ${longOf(when)} ${clock(r)}`, `Subject: ${i ? 'RE: ' : ''}${subj}`, '',
           `${r.pick(GREETS)} ${to.split(' ')[0]},`, [fill(r, c, next()), fill(r, c, next())].join(' '), '', `${r.pick(SIGNOFF)},`, from.split(' ')[0], ''].join('\n');
       },
       joiner: '\n----\n', target,
@@ -102,12 +103,12 @@ export const KINDS = [
       joiner: '\n\n', target, maxUnits: 40,
     });
   } },
-  { id: 'policy', cap: 6000, build(r, c, target) {
+  { id: 'policy', cap: 5600, build(r, c, target) {
     const next = deck(r, POLICY_CLAUSES);
     return assemble({
       head: [banner('SITE POLICY EXTRACT'), `Policy owner: ${c.teams[0]}   Version: 3.${r.int(0, 9)}   Effective: ${isoDate(r)}`, ''].join('\n'),
       unit: i => { const s = i % POLICY_SECTIONS.length + 1; return [`${s}. ${POLICY_SECTIONS[s - 1]}`, ...[1, 2, 3].map(k => `${s}.${k} ${fill(r, c, next())}`)].join('\n'); },
-      joiner: '\n\n', target, maxUnits: 12,
+      joiner: '\n\n', target, maxUnits: 16,
     });
   } },
   { id: 'newsletter', cap: 10000, build(r, c, target) {
@@ -118,7 +119,7 @@ export const KINDS = [
       'Canteen corner': () => `Menu for the week starting ${isoDate(r)}: Monday ${canteenDish(r)}; Tuesday ${canteenDish(r)}; Wednesday ${canteenDish(r)}; Thursday ${canteenDish(r)}; Friday ${canteenDish(r)}.`,
       'Safety spot': () => fill(r, c, r.pick(FRAMES.ops)),
       'Lost and found': () => `Found near the ${r.pick(['north', 'south', 'main', 'service'])} gate: ${r.pick(LOST)}. Ask ${pickPerson(r, c)} to claim it.`,
-      'Dates for the diary': () => `${longDate(r)}: ${r.pick(['site open afternoon for families', 'first-aid refresher', 'quarterly count', 'fire drill', 'charity quiz night', 'racking inspection'])}.`,
+      'Dates for the diary': () => `${longDate(r)}: ${r.pick(['family visit afternoon', 'first-aid refresher', 'quarterly count', 'fire drill', 'charity quiz night', 'racking inspection'])}.`,
     };
     const pick = deck(r, NEWS_SECTIONS);
     return assemble({
@@ -136,7 +137,7 @@ export const KINDS = [
       tail: `\n\nFollow-ups\n1. ${pickPerson(r, c)} to ${fill(r, c, '{task}')}.\n2. ${pickPerson(r, c)} to ${fill(r, c, '{task}')}.\n3. ${c.teams[0]} to review the spare ${asset(r)} stock ${fill(r, c, '{period}')}.`,
     });
   } },
-  { id: 'release-notes', cap: 8000, build(r, c, target) {
+  { id: 'release-notes', cap: 7000, build(r, c, target) {
     const tool = toolName(r), next = deck(r, CHANGES); let minor = r.int(14, 30), patch = r.int(0, 3);
     return assemble({
       head: banner(`${tool.toUpperCase()} RELEASE NOTES`) + '\n',
@@ -144,11 +145,11 @@ export const KINDS = [
       joiner: '\n\n', target, maxUnits: 40,
     });
   } },
-  { id: 'onboarding', cap: 3000, build(r, c, target) {
+  { id: 'onboarding', cap: 2200, build(r, c, target) {
     const next = deck(r, STEPS);
     return assemble({
       head: [banner(`NEW STARTER CHECKLIST (${c.teams[0]})`), `Starter: ${person(r)}   Start date: ${isoDate(r)}   Buddy: ${pickPerson(r, c)}`, ''].join('\n'),
-      unit: i => `[ ] Day ${Math.floor(i / 2) + 1}: ${fill(r, c, next())}  (owner: ${r.pick(c.teams)})`, joiner: '\n', target, maxUnits: 14,
+      unit: i => `[ ] Day ${Math.floor(i / 2) + 1}: ${fill(r, c, next())}  (owner: ${r.pick(c.teams)})`, joiner: '\n', target, maxUnits: 22,
     });
   } },
   { id: 'training-record', cap: 14000, build(r, c, target) {

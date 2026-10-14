@@ -59,6 +59,12 @@ export const phone = r => `555-01${p2(r.int(0, 99))}`;
 export const isoDate = r => `2025-${p2(r.int(1, 12))}-${p2(r.int(1, 28))}`;
 export const longDate = r => `${r.int(1, 28)} ${r.pick(MONTHS)} 2025`;
 export const clock = r => `${p2(r.int(6, 17))}:${r.pick(['00', '15', '30', '45'])}`;
+// Day arithmetic from 2025-01-01 in UTC (pure; no clock): documents keep their own dates in a sensible order.
+const BASE = Date.UTC(2025, 0, 1), DAY = 86400000, DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const isoOf = off => new Date(BASE + off * DAY).toISOString().slice(0, 10);
+export const longOf = off => { const d = new Date(BASE + off * DAY); return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+export const weekdayOf = off => DAY_NAMES[new Date(BASE + off * DAY).getUTCDay()];
+export const nextWorkday = off => { while ([0, 6].includes(new Date(BASE + off * DAY).getUTCDay())) off++; return off; };
 export const subject = r => r.pick(SUBJECTS);
 export const canteenDish = r => r.pick(CANTEEN);
 export const course = r => r.pick(COURSES);
@@ -72,7 +78,7 @@ export const room = r => `${r.pick(['A', 'B', 'C'])}${r.int(1, 9)}`;
 export function makeCtx(r) {
   const people = [];
   for (let i = 0, n = r.int(5, 8); i < n; i++) { const p = person(r); if (!people.includes(p)) people.push(p); }
-  return { people, site: siteName(r), site2: siteName(r), teams: r.sample(TEAMS, 4), last: null };
+  return { people, site: siteName(r), site2: siteName(r), teams: r.sample(TEAMS, 4), last: null, lastTeam: null };
 }
 
 const TASKS = ['confirm the new bay numbers with the courier', 'update the shared floor plan', 'order spare label rolls', 'book the safety inspection',
@@ -91,7 +97,8 @@ const FLOORS = ['ground floor', 'first floor', 'second floor', 'mezzanine'];
 const SLOT = {
   person: (r, c) => (c.last = r.pick(c.people)),
   other: (r, c) => { let p; do { p = r.pick(c.people); } while (p === c.last && c.people.length > 1); return p; },
-  team: (r, c) => r.pick(c.teams), team2: (r, c) => r.pick(c.teams),
+  team: (r, c) => (c.lastTeam = r.pick(c.teams)),
+  team2: (r, c) => { let t; do { t = r.pick(c.teams); } while (t === c.lastTeam && c.teams.length > 1); return t; },
   site: (r, c) => c.site, site2: (r, c) => c.site2,
   asset: r => asset(r), action: r => r.pick(ACTIONS), task: r => r.pick(TASKS), reason: r => r.pick(REASONS), period: r => r.pick(PERIODS),
   weekday: r => r.pick(WEEKDAYS), date: r => longDate(r), iso: r => isoDate(r), time: r => clock(r), time2: r => clock(r),
@@ -129,6 +136,20 @@ export const FRAMES = {
     'The planning office will be quiet between {time} and {time2} so that {team} can finish the quarterly count.',
     'Cycle-to-work parking has been extended by {n} places next to the {gate} gate, with a covered rack on order.',
     'A short trial of the {tool} screen at the {gate} gate starts on {date}; {person} will gather comments from drivers.',
+    'The goods lift on the {floor} is limited to pallets under one tonne until {team} has finished the annual check.',
+    'Drivers are asked to reverse into dock door {small} rather than {n}, because the leveller there is the quieter of the two.',
+    '{person} has repainted the walkway lines in lane {aisle}; please keep trolleys on the left-hand side.',
+    'The coffee machine on the {floor} is being replaced {period}, and the old one will go to {site2}.',
+    'Night-shift staff can now collect hot drinks from the machine by the {gate} gate until {time2}.',
+    '{team} measured the noise at the packing benches and found nothing that needs action, though ear defenders remain available.',
+    'The yard speed limit stays at {mins} kilometres an hour; {person} will place two extra signs by the {gate} gate.',
+    'Lockers on the {floor} are being renumbered, so please empty yours before {date}.',
+    'The label stock cupboard has been moved next to dock door {small}; {person} keeps the spare keys.',
+    '{team} and {team2} will share one planning screen at {site} until the second one arrives.',
+    'Two new fire marshals, {person} and {other}, have completed their course and will join the next walk-through.',
+    'We are trialling a quieter reversing alarm on one truck from {date}; tell {person} what you think.',
+    'The visitor car park at {site2} is closed on {weekday} for line painting, so please use the yard instead.',
+    'Spare handsets are kept in the cabinet on the {floor}; sign one out with {person} and return it before the end of the shift.',
   ],
   closing: [
     'Questions to {person} in {team}.', 'Thank you for your patience while this is done.', 'Please pass this on to anyone on leave this week.',
@@ -140,11 +161,19 @@ export const FRAMES = {
     'Just to confirm, the handsets go back to {team} on {weekday} and the spares stay with us until the end of the month.',
     'I walked past aisle {aisle} this morning and the markings look fine, so we can skip the repaint for now.',
     'The visitor from {supplier} arrives at {time}. Please make sure reception has the badge ready.',
-    'I will bring the sample cartons to the meeting; if the lid still pops open we should ask for a thicker board.',
+    'I will bring the sample cartons to the meeting; if the lid still springs up we should ask for a thicker board.',
     'Happy with the plan. Let us review it again {period} and see whether the extra bench is still needed.',
     'Sorry for the late reply: I was at {site2} all day. The short answer is yes, the lift can be booked for {date}.',
     'Attached is the rota for next week. Nothing has changed except that {person} swaps with {other} on {weekday}.',
     'The engineer called to say the {asset} part is delayed by {small} days. I will chase again on {weekday}.',
+    'I have asked {team} to put the new rota on the noticeboard by the {gate} gate and to e-mail a copy to everyone.',
+    'Could you check whether the spare keys for the {floor} store are still with {person}? Nobody seems to have them.',
+    'Good news: the quote from {supplier} came in under what we expected, so I will go ahead and book the work for {date}.',
+    'For what it is worth, the drivers prefer the old collection time, but they can live with {time} if we keep it fixed.',
+    'I forgot to say that the {asset} will be out of action on {weekday} morning. Please plan around it.',
+    'Thanks for flagging that. I have added it to the list for the walk-through on {weekday} and will report back.',
+    'The new signs arrived this morning. I will fit them at the {gate} gate after lunch, unless you would rather do it.',
+    'Reminder that the lease inspection is on {date}; the yard should be clear of loose pallets by {time}.',
   ],
 };
 
@@ -152,7 +181,7 @@ export const QA = [
   ['How do I book a visitor badge?', 'Ask reception at least a day ahead. Visitors sign in at the {gate} gate and hand the badge back on leaving.'],
   ['Where can I charge a handheld scanner?', 'Use any free charging bay on the {floor}. Leave the cradle tidy and report a broken cradle to {team}.'],
   ['Who looks after the shared meeting rooms?', '{team} manages the calendar. Rooms release automatically if nobody checks in within {mins} minutes.'],
-  ['What should I do if the {asset} stops working?', 'Switch it off, put a note on it and tell {person}. Do not try to open the casing.'],
+  ['What should I do if the {asset} stops working?', 'Switch it off, put a note on it and tell {person}. Do not try to take the casing apart.'],
   ['Can I park at {site2}?', 'Only with a day pass from {team}. Regular parking is at {site}.'],
   ['When is the next fire drill?', 'Drills are announced on the noticeboard a week ahead. The fire marshals walk each floor before the all-clear.'],
   ['How do I request a new locker?', 'Send a short note to {team} with your name and shift. Lockers are allocated on {weekday}s.'],
@@ -162,6 +191,15 @@ export const QA = [
   ['How are lost items handled?', 'Lost property is kept in the store on the {floor} for {n} days, then passed to a local charity.'],
   ['Can I borrow a pallet truck?', 'Yes, once you hold the current licence. Sign it out with {person} and return it to the same bay.'],
   ['Where do I find the canteen menu?', 'It is pinned at the {gate} gate and emailed on Mondays. Today\'s special is {dish}.'],
+  ['Can I leave a bicycle on site overnight?', 'Yes, in the covered rack by the {gate} gate. Please lock it and remove lights and bags.'],
+  ['Who decides when a lane is closed?', 'The shift lead on duty, usually {person}. Closed lanes are marked with cones and listed on the board.'],
+  ['What happens if I find a damaged pallet?', 'Tag it, move it to the cage and tell {team}. Damaged pallets are never put back into the racking.'],
+  ['How do I get a hi-vis vest?', 'Vests are issued at induction. A replacement costs nothing if the old one is handed in to {team}.'],
+  ['Is there a quiet room?', 'Room {room} is kept free for breaks and calls; book it through the shared calendar for longer than {mins} minutes.'],
+  ['How do I change my shift?', 'Agree the swap with a colleague, then tell {person} before {time}. The rota is updated the same day.'],
+  ['Who has the forklift key cabinet code?', 'Licensed drivers receive it at induction. If you forget it, ask {team}; do not borrow keys from a colleague.'],
+  ['Where is the nearest first-aid station?', 'There is one on every floor, next to the stairs, and a larger kit at the {gate} gate.'],
+  ['How do I report a broken light in the yard?', 'Tell {team} or add a line to the observation log. Yard lights are checked every {weekday}.'],
   ['How do I get a replacement badge?', 'Reception issues one the same day. A fee is not charged for the first replacement.'],
   ['What if the courier does not arrive?', 'Wait until {time2}, then ring the carrier\'s depot and tell {team} so the parcels can be rebooked.'],
 ];
@@ -178,6 +216,12 @@ export const POLICY_CLAUSES = [
   'Shared lockers are emptied at the end of each {period} and unclaimed items are taken to the store.',
   'Forklift keys are kept in the key cabinet and signed out by name. Spare keys remain with {person}.',
   'Eating is not permitted in the packing area; use the break room on the {floor}.',
+  'Cones are placed at both ends of a closed lane and removed by whoever placed them.',
+  'Hot work of any kind needs a permit from {team} signed on the day it is carried out.',
+  'Contractors attend a short induction with {person} before their first shift and wear a coloured badge.',
+  'Ladders are inspected every {period} by {team}; a ladder without a tag is not used.',
+  'Vehicles park nose-out in the yard so that they can leave quickly in an emergency.',
+  'Radio channels are kept for work; personal calls move to the break room.',
 ];
 
 export const NEWS_SECTIONS = ['New faces', 'Anniversaries', 'Out and about', 'Canteen corner', 'Safety spot', 'Lost and found', 'Dates for the diary'];
