@@ -37,6 +37,8 @@
     "acceptance": {"$ref": "#/definitions/checks"},
     "labels": {"type": "object", "maxProperties": 256, "propertyNames": {"maxLength": 512, "pattern": "^input(\\.[A-Za-z0-9_-]+)*$"}, "additionalProperties": {"$ref": "#/definitions/label"}},
     "discovery": {"type": "boolean"},
+    "state": {"type": "object", "maxProperties": 32, "propertyNames": {"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"}, "additionalProperties": {"$ref": "#/definitions/stateSlot"},
+      "description": "Cross-run keyed state shared by every run (and version) of this workflow id, one slot per name (src/state.mjs). Read and written only by state nodes; only the slot's declared writer writes it."},
     "defaultClass": {"type": "string", "minLength": 1, "maxLength": 16, "description": "The model class most nodes are expected to start on. A model node that starts above it needs model.justification (strict lint CLASS_ABOVE_DEFAULT_UNJUSTIFIED). Absent: the cheapest class any model node starts on."},
     "oracle": {
       "type": "object", "additionalProperties": false, "required": ["mode", "reason"],
@@ -97,6 +99,29 @@
     },
     "checks": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"$ref": "#/definitions/condition"}},
     "nodes": {"type": "array", "minItems": 1, "maxItems": 500, "items": {"$ref": "#/definitions/node"}},
+    "stateSlot": {
+      "type": "object", "additionalProperties": false, "required": ["type", "writer", "maxItems"],
+      "properties": {
+        "type": {"enum": ["set", "counter", "cursor", "record"]},
+        "writer": {"oneOf": [{"$ref": "#/definitions/id"}, {"type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": {"$ref": "#/definitions/id"}}],
+          "description": "The state node (or the few nodes, such as an upsert and an expiry) that may write this slot; no other node writes it."},
+        "maxItems": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "maxValueBytes": {"type": "integer", "minimum": 1, "maximum": 262144},
+        "maxBytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "ttlMs": {"type": "integer", "minimum": 1, "maximum": 315360000000},
+        "ttlDays": {"type": "integer", "minimum": 1, "maximum": 3650},
+        "schema": {"type": "object", "description": "JSON schema of a record or cursor value."},
+        "monotonic": {"type": "boolean", "description": "A cursor that never moves back (numbers or strings)."},
+        "label": {"$ref": "#/definitions/label", "description": "The integrity label every read carries; no write may carry more taint."},
+        "description": {"type": "string", "maxLength": 2000}
+      },
+      "not": {"required": ["ttlMs", "ttlDays"]},
+      "allOf": [
+        {"if": {"properties": {"type": {"enum": ["record", "cursor"]}}}, "then": {"required": ["schema"]}},
+        {"if": {"properties": {"type": {"enum": ["set", "counter"]}}}, "then": {"not": {"required": ["schema"]}}},
+        {"if": {"properties": {"type": {"enum": ["set", "counter", "record"]}}}, "then": {"not": {"required": ["monotonic"]}}}
+      ]
+    },
     "flow": {
       "type": "object", "additionalProperties": false, "required": ["nodes", "acceptance"],
       "properties": {"nodes": {"$ref": "#/definitions/nodes"}, "acceptance": {"$ref": "#/definitions/checks"}}
@@ -106,7 +131,7 @@
       "required": ["id", "kind", "needs", "description"],
       "properties": {
         "id": {"$ref": "#/definitions/id"},
-        "kind": {"enum": ["task", "assert", "human", "map", "loop", "wait", "agent", "code", "verify"]},
+        "kind": {"enum": ["task", "assert", "human", "map", "loop", "wait", "agent", "code", "verify", "state"]},
         "needs": {"type": "array", "uniqueItems": true, "maxItems": 500, "items": {"$ref": "#/definitions/id"}},
         "join": {"enum": ["all_success", "all_resolved"]},
         "description": {"type": "string", "minLength": 1, "maxLength": 10000},
@@ -148,7 +173,13 @@
         "method": {"enum": ["code", "agent", "capability"]},
         "subject": {},
         "independence": {"enum": ["execution", "different-model", "same-model"]},
-        "gate": {"type": "boolean"}
+        "gate": {"type": "boolean"},
+        "slot": {"$ref": "#/definitions/id"},
+        "op": {"enum": ["get", "put", "add", "incr", "delete"]},
+        "key": {},
+        "value": {},
+        "by": {},
+        "ifVersion": {}
       },
       "allOf": [
         {"if": {"properties": {"kind": {"const": "task"}}}, "then": {"required": ["tool", "args", "timeoutMs", "retry"]}},
@@ -160,6 +191,7 @@
         {"if": {"properties": {"kind": {"const": "agent"}}}, "then": {"required": ["instructions", "returns", "model"]}},
         {"if": {"properties": {"kind": {"const": "code"}}}, "then": {"required": ["lang", "source"]}},
         {"if": {"properties": {"kind": {"const": "verify"}}}, "then": {"required": ["method", "subject", "independence"]}},
+        {"if": {"properties": {"kind": {"const": "state"}}}, "then": {"required": ["slot", "op", "key"]}},
         {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "code"}}}, "then": {"required": ["lang", "source"]}},
         {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "agent"}}}, "then": {"required": ["instructions", "model"]}},
         {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "capability"}}}, "then": {"required": ["tool", "args"]}}

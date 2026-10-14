@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { canonical, clone, digest, FoundryError, checkData } from './data.mjs';
 import { AUDIT, journalSeal, sha256, verdictInputsHash } from './audit.mjs';
 import { installRunTables, MATERIALIZE, RunRows, rowText, STATE_LIMITS } from './run-rows.mjs';
+import { installStateTables, StateStore } from './state.mjs';
 
 const processStart = pid => { try { return readFileSync(`/proc/${pid}/stat`, 'utf8').split(') ')[1].split(' ')[19]; } catch { return null; } };
 function liveJobOwner(job) {
@@ -56,6 +57,8 @@ export class Store {
     // Run state is per-node rows (src/run-rows.mjs). `limits` are the state bounds; an instance may lower them (tests do).
     installRunTables(this.db);
     this.limits = { ...STATE_LIMITS }; this.rows = new RunRows(this);
+    // Cross-run keyed state of the workflows in this workspace and its operation journal (src/state.mjs).
+    installStateTables(this.db); this.state = new StateStore(this);
   }
   close() { this.db.close(); }
   transaction(fn) {

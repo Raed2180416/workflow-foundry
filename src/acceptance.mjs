@@ -237,7 +237,7 @@ function analyse(workflow) {
         // In a discovery workflow a non-gating verify is the confirmer: its pass creates a finding and its failure is "not reproduced".
         if (node.kind === 'verify' && node.gate === false && workflow.discovery !== true && !verifyConsumed(gated, node.id)) nonGatingVerifies.push({ id: node.id, path: `${path}.${node.id}` });
         // onError:"continue" turns a failure into an {ok:false,error} output (state handled_error) that the flow may then accept.
-        if (node.onError === 'continue' && ['task', 'agent'].includes(node.kind) && !continuationGated(gated, node.id)) ungatedContinuations.push({ id: node.id, path: `${path}.${node.id}` });
+        if (node.onError === 'continue' && ['task', 'agent', 'state'].includes(node.kind) && !continuationGated(gated, node.id)) ungatedContinuations.push({ id: node.id, path: `${path}.${node.id}` });
       }
     }
   }

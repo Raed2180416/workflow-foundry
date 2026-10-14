@@ -307,3 +307,49 @@ token, no proxy variables).**
   points to about $26–30 for 24 tasks, so the cap probably stops the O/H arm before 24/24.
 - **Raising the caps.** Both caps are outside the arm hash. A config copy kept outside the repo can raise them; record its
   path and sha256 if one is used.
+
+## 7. E3 engine column, in progress (main branch, not a kit)
+
+E3 is the engine column of the enterprise bar ([E-BED §7](../enterprise-20261014/E-BED.md), [BAR-SET §5](../enterprise-20261014/BAR-SET.md)
+order: 1 `state`, 2 one durable wait, 3 human-task completion, 4 `compensate`, ...). It changes `src/` on
+`claude/intelligent-hamilton-vg1f9a`. Paid runs keep running on frozen kit worktrees (E1c, branch `kit-e1c-20261014`, kit
+`852ebdf05588de97`, §6), which no E3 commit touches. E3 is not stamped: any comparative round on it needs its own stamp (§5
+checklist), and every E3 step changes the engine identity, so a run created before a step cannot be resumed by the engine after
+it (`ENGINE_DRIFT`), as with any engine change. Each step lists the files it changed; §1–§6 (E1, E1c) are unchanged.
+
+### 7.1 Step 1: cross-run state (L0 row 27), 2026-10-14
+
+- **Base.** `src` tree `dc710129c998136cb449e1440a429a640f4bd53b` (E1c's, §6) at `d58f8cd`; engine identity (`src/engine.mjs`
+  `engineHash`) `9aade2e2d7ffd7817bfc392cc1ae516ce32f5a915f146551402e0387b9abd4c4`.
+- **After step 1 alone** (its hunks applied to a clean worktree of `d58f8cd`): `engineHash`
+  `c0d1d4870a9610974beca7cebe49596deb9e3a15f74f1432aebd553fb5e381aa`. Kit hash not computed (not a kit).
+- **Shared working tree.** Step 2 (signal waits, `src/signals.mjs`) was being built in the same working tree at the same time and
+  touches the same files (`runtime.mjs`, `validate.mjs`, `store.mjs`, `dataflow.mjs`, `engine.mjs`, the schema). The step-1 commit
+  holds step-1 hunks only: they were applied to a clean worktree, the suite ran there, and those file contents were committed. Step 2
+  records its own files.
+- **Design.** [ARCHITECTURE.md, "Cross-run state"](../../docs/ARCHITECTURE.md). Engine-side only: the L0 card, the library checker
+  and `skills/` are not changed (the card's row 27 shape, `{"type":"set","maxItems":100000,"ttlDays":30,"writer":"dedupe"}`, now
+  validates as written).
+
+| file | change |
+|---|---|
+| `src/state.mjs` | new: slot declarations and defaults, the operations (`StateStore.apply`: versions, compare-and-swap, bounds, TTL, monotonic cursor, declaration drift), the `state_ops` journal and `stateOpHash` |
+| `src/runtime.mjs` | `state` node dispatch; `Invocation.stateNode` (operation, journal row, node outcome and `state.op` event in one run update; replay from the journal); `stateReplaySource`; Runtime option `now`; `replay-or-live` refused for state workflows; `STATE_DRIFT`, `STATE_CORRUPT` never handled |
+| `src/validate.mjs` | `state` node fields; slot, operation, writer and argument checks (`STATE_SLOT_UNKNOWN`, `STATE_OP`, `STATE_WRITER`, `STATE_CAS_REQUIRED`, `STATE_VALUE_REQUIRED`, `STATE_KEY`, `STATE_SCHEMA`); the label rule `UNTRUSTED_STATE_WRITE` in the taint pass; `stateNodes`, `stateArgs` |
+| `src/dataflow.mjs` | output schemas of the state operations; references in `key`, `value`, `by`, `ifVersion` |
+| `src/store.mjs` | creates `state_slots`, `state_entries`, `state_ops`; `store.state` |
+| `src/verify-run.mjs` | §2c: state operation bindings (`STATE_OP_MISSING`, `STATE_OP_FOREIGN`, `STATE_OP_EDITED`, `STATE_OP_UNBOUND`, `STATE_REPLAY_UNVERIFIED`), `checks.stateOps` |
+| `src/acceptance.mjs` | `onError: "continue"` on a state node is an ungated continuation, as on task and agent nodes |
+| `src/verdict.mjs` | `STATE_VERSION_CONFLICT` and `STATE_FULL` are `inconclusive` |
+| `src/engine.mjs` | `state.mjs` joins the engine identity |
+| `schemas/workflow.schema.json` | top-level `state`, `definitions.stateSlot`, node kind `state` and its fields |
+| `tests/state-node.test.mjs` | new (committed early by the autosave `b0717f4`) |
+| `tests/verdict.test.mjs` | the pinned inconclusive-code list (committed by the autosave `d58f8cd`) |
+| `docs/ARCHITECTURE.md` | section "Cross-run state" |
+
+- **Behaviour of existing workflows.** A workflow without `state` validates and runs as before: the schema only gains optional
+  fields and a node kind, the verdict list gains two codes that only state nodes raise, and the continuation rule gains a node kind.
+  The suite below is the evidence.
+- **Suites (2026-10-14, $0, no model calls).** Main (`node --test --test-concurrency=2 tests/*.test.mjs`, in the clean worktree with
+  step 1 alone): 1025 tests, 1007 pass, **0 fail**, 18 skipped (the recorded opt-in and missing-binary lanes). Before step 1 (the clean
+  tree at `7915fb1`, this session's start): 1004 tests, 986 pass, 0 fail, 18 skipped. `tests/state-node.test.mjs`: 21 of 21 (15 tests, 6 subtests).

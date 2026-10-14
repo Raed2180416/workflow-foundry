@@ -8,6 +8,7 @@ import { AUDIT, anchorOfEvents, bindRow, identityChanges, journalRow, journalRow
 import { REPLAYABLE_ERRORS } from './journal.mjs';
 import { verdictOf } from './verdict.mjs';
 import { engineHash } from './engine.mjs';
+import { stateOpHash } from './state.mjs';
 
 const CALL_EVENTS = new Set(['model.called', 'node.recovered_from_journal', 'model.cancelled']);
 const TERMINAL = new Set(['succeeded', 'failed', 'cancelled', 'uncertain']);
@@ -43,7 +44,7 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
   // for it (a pristine copy would hide an edited workspace journal).
   const external = events[0]?.journal === 'external';
   const journalDb = external ? given : store.db;
-  const checks = { chain: error ? 'broken' : 'ok', events: events.length, journal: null, decisions: null, transcripts: null, seals: null, state: null };
+  const checks = { chain: error ? 'broken' : 'ok', events: events.length, journal: null, decisions: null, transcripts: null, seals: null, state: null, stateOps: null };
   const result = () => {
     const ok = !findings.some(f => f.severity === 'error');
     return { schema: 'foundry-verify/1', runId, ok, clean: ok && !findings.some(f => f.severity === 'warn'), status: run.status, bound, audit: events[0]?.audit ?? null,
@@ -121,6 +122,23 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     add(unchecked, 'REPLAY_UNVERIFIED', `Event ${event.seq} (${event.nodeKey}) served a replayed response from journal row ${event.replayedFrom ?? '?'} that nothing verified${reason ? `: ${reason}` : ' (no replay provenance was recorded)'}`,
       { seq: event.seq, journalId: event.journalId ?? null, replayedFrom: event.replayedFrom ?? null });
   }
+
+  // 2c. Cross-run state operations (src/state.mjs): each `state.op` event binds its state_ops row, written in the same commit. So every row of
+  // the run is bound by an event, and a row no event binds was written by something other than the runtime. A replayed operation records
+  // whether its recording was checked against the recording run's chain (replaySource).
+  const stateEvents = events.filter(e => e.type === 'state.op'), stateBound = new Set();
+  for (const event of stateEvents) {
+    const where = { seq: event.seq, opId: event.opId ?? null, nodeKey: event.nodeKey };
+    const raw = Number.isSafeInteger(event.opId) && store.state ? store.state.rawOp(event.opId) : null;
+    if (!raw) { add('error', 'STATE_OP_MISSING', `State operation ${event.opId} (event ${event.seq}, ${event.nodeKey}) is gone from the state journal`, where); continue; }
+    stateBound.add(raw.id);
+    if (raw.run_id !== runId) { add('error', 'STATE_OP_FOREIGN', `State operation ${event.opId} (event ${event.seq}) now belongs to run ${raw.run_id}`, where); continue; }
+    if (stateOpHash(raw) !== event.opHash) add('error', 'STATE_OP_EDITED', `State operation ${event.opId} (event ${event.seq}, ${event.nodeKey}) was edited after the chain bound it`, where);
+    if (event.replayed === true && event.replaySource?.check !== 'bound') add(unchecked, 'STATE_REPLAY_UNVERIFIED', `Event ${event.seq} (${event.nodeKey}) served a recorded state operation ${event.replayedFrom ?? '?'} that nothing verified${event.replaySource?.reason ? `: ${event.replaySource.reason}` : ''}`, where);
+  }
+  const stateRows = store.state ? store.state.opsForRun(runId) : [];
+  for (const row of stateRows) if (!stateBound.has(row.id)) add('error', 'STATE_OP_UNBOUND', `State operation ${row.id} (${row.nodeKey}, ${row.op} on slot ${row.slot}) is journaled for this run but no chain event binds it`, { opId: row.id, nodeKey: row.nodeKey });
+  checks.stateOps = { bound: stateBound.size, rows: stateRows.length };
 
   // 3. Seals: the journal root and the verdict inputs committed when the run reached a terminal state.
   const seals = events.filter(e => e.type === 'run.verdict');

@@ -11,8 +11,10 @@ export const AUTHORITY = Object.freeze({ pass: 'supported', finding: 'supported'
 export const UNVERIFIED_CODES = Object.freeze(['VERIFY_FAILED_NONBLOCKING', 'ERROR_COLLECTED', 'ERROR_CONTINUED', 'ACCEPTANCE_EXISTENCE_ONLY', 'NO_ORACLE_DECLARED',
   'GATE_NOT_RUN', 'ACCEPTANCE_UNASSESSED']);
 export const AUTHORITY_FLAGS = Object.freeze({ grantsActionAuthority: false, establishesCompletion: false });
+// A cross-run state write that lost a compare-and-swap to another writer, or found its slot full, stopped the run without a decision: contention
+// and a declared bound, not a defect of the harness (src/state.mjs).
 export const INCONCLUSIVE_CODES = Object.freeze(['VERIFY_FAILED', 'ACCEPTANCE_FAILED', 'ASSERTION_FAILED', 'NODE_CHECK_FAILED',
-  'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'DEADLINE']);
+  'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'DEADLINE', 'STATE_VERSION_CONFLICT', 'STATE_FULL']);
 export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'SANDBOX_UNAVAILABLE',
   'NETWORK', 'MODEL_TRANSPORT', 'ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT',
   'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT']);

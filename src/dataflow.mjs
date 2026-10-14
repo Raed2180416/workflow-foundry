@@ -2,6 +2,7 @@
 // under declared contracts. Unknown schemas remain unknown; this is not an
 // outcome oracle or a proof that a producer's data is current/true.
 import { refParts, condition } from './data.mjs';
+import { stateOutputSchema } from './state.mjs';
 
 // Agent checks read the parsed model output as output.* (DESIGN §1.1). data.mjs has no `output`
 // root (its bytes are pinned by the outcome evaluators), so checks are evaluated over a rewritten
@@ -170,6 +171,13 @@ export function analyzeDataflow(workflow, registry) {
     if (node.kind === 'agent') return node.onError === 'continue' ? union([node.returns, failure]) : node.returns;
     if (node.kind === 'code') return node.returns ?? unknown();
     if (node.kind === 'verify') return verifyOutput;
+    if (node.kind === 'state') {
+      // A record or cursor value schema keeps its own root (its local $refs resolve in it, as a capability schema's do).
+      const slot = workflow.state?.[node.slot];
+      if (slot?.schema && typeof slot.schema === 'object') schemaRoots.set(slot.schema, slot.schema);
+      const schema = stateOutputSchema(slot, node.op);
+      return node.onError === 'continue' ? union([schema, failure]) : schema;
+    }
     return unknown();
   };
   const outputs = flow => {
@@ -209,7 +217,7 @@ export function analyzeDataflow(workflow, registry) {
     const phases = phaseLocals?.map(local => ({ ...context, ...local }));
     for (let index = 0; index < flow.nodes.length; index++) {
       const node = flow.nodes[index], nodePath = `${location}/nodes/${index}`;
-      for (const key of ['when', 'args', 'checks', 'items', 'input', 'initial', 'subject']) {
+      for (const key of ['when', 'args', 'checks', 'items', 'input', 'initial', 'subject', 'key', 'value', 'by', 'ifVersion']) {
         if (!Object.hasOwn(node, key)) continue;
         // Agent checks also see the parsed model output (DESIGN §1.1).
         const own = node.kind === 'agent' && key === 'checks';

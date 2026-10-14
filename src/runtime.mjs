@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkData, clone, condition, digest, errorData, FoundryError, references, resolve } from './data.mjs';
-import { approvalGated, bindOutput, controlPolicyMessage, labelPolicyMessage, modelNodes, OUTPUT_KEY, requireWorkflow, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
+import { approvalGated, bindOutput, controlPolicyMessage, labelPolicyMessage, modelNodes, OUTPUT_KEY, requireWorkflow, stateArgs, stateLabelMessage, stateNodes, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
 import { engineHash } from './engine.mjs';
 import { compileContext, contextInputs, inheritedLabel, joinLabels } from './context.mjs';
 import { verdictOf } from './verdict.mjs';
@@ -14,6 +14,7 @@ import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from
 import { MODES } from './models/port.mjs';
 import { AUDIT, identityChanges, journalSeal } from './audit.mjs';
 import { MATERIALIZE, STATE_BYTES, STATE_ITEMS } from './run-rows.mjs';
+import { isStateWrite, stateOpHash, stateReplayKey, stateRequest } from './state.mjs';
 
 const finished = new Set(['succeeded', 'failed', 'cancelled']);
 // Is the ModelPort's journal the store's database? The same handle, or another handle on the same database file (an in-memory database
@@ -88,7 +89,7 @@ const retryable = new Set(['MODEL_SCHEMA', 'MODEL_TRUNCATED']);
 // a policy violation or a harness integrity failure.
 const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
   'DEADLINE', 'STATE_BUDGET', 'STATE_CONFLICT', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
-  'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT', 'JOURNAL_TAMPERED', 'APPROVAL_TAMPERED']);
+  'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT', 'JOURNAL_TAMPERED', 'APPROVAL_TAMPERED', 'STATE_DRIFT', 'STATE_CORRUPT']);
 const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
 // A call cut short because the run deadline, not its own timeout, set its limit is the deadline's outcome.
 const deadlineStop = (what, details) => new FoundryError('DEADLINE', `Run deadline exhausted while ${what} was running`, details);
@@ -176,7 +177,8 @@ export class Runtime {
   // codeRunner: the sandbox (tests may inject a double). None of these enter the stored run policy.
   // cancelPollMs: how often a running execution looks for a cancel request another process recorded (`foundry cancel`, stop-all).
   // cancelGraceMs: how long a cancelled run waits for a capability that ignores its abort signal before it abandons the call (Invocation.abandonOnCancel).
-  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000 } = {}) {
+  // now: the clock of cross-run state (src/state.mjs: TTL expiry and the time journaled with each operation); tests pass a simulated one.
+  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now } = {}) {
     this.store = store; this.registry = registry; this.policy = { ...policyDefaults(registry), ...clone(policy) };
     for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
     if (!Array.isArray(this.policy.allowedCapabilities) || this.policy.allowedCapabilities.some(x => !registry.get(x))) throw new FoundryError('POLICY', 'Allowed capabilities must be registered');
@@ -189,7 +191,8 @@ export class Runtime {
     if (typeof codeRunner !== 'function') throw new FoundryError('POLICY', 'codeRunner must be a function');
     if (!Number.isSafeInteger(cancelPollMs) || cancelPollMs < 1 || cancelPollMs > 60000) throw new FoundryError('POLICY', 'cancelPollMs must be an integer of 1 to 60000');
     if (!Number.isSafeInteger(cancelGraceMs) || cancelGraceMs < 1 || cancelGraceMs > 600000) throw new FoundryError('POLICY', 'cancelGraceMs must be an integer of 1 to 600000');
-    this.models = models; this.codeRunner = codeRunner; this.cancelPollMs = cancelPollMs; this.cancelGraceMs = cancelGraceMs;
+    if (typeof now !== 'function') throw new FoundryError('POLICY', 'now must be a function returning milliseconds');
+    this.models = models; this.codeRunner = codeRunner; this.cancelPollMs = cancelPollMs; this.cancelGraceMs = cancelGraceMs; this.now = now;
   }
   create(workflow, input = {}, options = {}) {
     const { modelMode = 'live', sampleSalt = null, assignment = null, identity = null, ...rest } = options;
@@ -197,6 +200,8 @@ export class Runtime {
     if (workflow.inputSchema) validateData(workflow.inputSchema, input, 'workflow input'); else checkData(input);
     this.store.workflow(hash); // The exact immutable version must already be saved.
     if (!MODES.includes(modelMode)) throw new FoundryError('RUN_OPTIONS', `modelMode must be one of ${MODES.join('|')}`);
+    // A state operation is either live or the recorded one; mixing them would let a run believe it wrote what it never wrote.
+    if (modelMode === 'replay-or-live' && stateNodes(workflow).length) throw new FoundryError('RUN_OPTIONS', 'A workflow with cross-run state runs live or as a replay (modelMode "replay"), never "replay-or-live": a recorded write that is served is not applied to the live state');
     if (sampleSalt !== null && (typeof sampleSalt !== 'string' || !sampleSalt || sampleSalt.length > 256)) throw new FoundryError('RUN_OPTIONS', 'sampleSalt must be a string of 1-256 characters');
     if (identity !== null && (!identity || typeof identity !== 'object' || Array.isArray(identity) || Object.keys(identity).some(k => !['arc', 'amp'].includes(k)))) throw new FoundryError('RUN_OPTIONS', 'identity may carry only arc and amp parts; the foundry part is runtime-owned');
     const assigned = this.assignment(workflow, assignment), id = randomUUID(), registryHash = this.registry.hash();
@@ -368,7 +373,7 @@ class Invocation {
     this.store = runtime.store; this.registry = runtime.registry; this.runId = runId; this.runtime = runtime; this.rows = runtime.store.rows;
     this.abort = new AbortController(); this.token = randomUUID(); this.outerSignal = signal;
     this.flowDefinitions = new Map(); this.frameLabels = new Map(); this.frameControl = new Map(); this.nodeControl = new Map();
-    this.userCancelled = false; this.replaySources = new Map();
+    this.userCancelled = false; this.replaySources = new Map(); this.stateSources = new Map();
     // The durable cancel request that stopped this execution (Runtime.requestCancel), once seen, and the timer that looks for it.
     this.cancelRequest = null; this.cancelTimer = null;
     // Where the process groups this execution starts (sandboxes, model CLIs) are recorded while they run (src/children.mjs).
@@ -721,6 +726,7 @@ class Invocation {
     if (node.kind === 'agent') return this.agent(node, frameKey, ctx, state, resumed);
     if (node.kind === 'code') return this.code(node, frameKey, ctx);
     if (node.kind === 'verify') return this.verify(node, frameKey, ctx, state, resumed);
+    if (node.kind === 'state') return this.stateNode(node, frameKey, ctx, state);
     if (node.kind === 'assert') {
       if (!node.checks.every(c => condition(c, ctx))) throw new FoundryError('ASSERTION_FAILED', `Assertion ${node.id} failed`);
       this.complete(frameKey, node, { passed: true }); return;
@@ -1114,6 +1120,81 @@ class Invocation {
       catch (error) { throw new FoundryError('CODE_OUTPUT', `${node.id} returned a value outside its declared schema`, error.details); }
     }
     this.complete(frameKey, node, value, 'completed', { state: labelState(labelOf(node.args, this.labelScope(frameKey, node.args))) });
+  }
+  // Cross-run state (L0 row 27, src/state.mjs). The operation, its journal row, the node's outcome and the chain events commit in one update:
+  // a crash loses all of it or none, and a node left `running` re-executes an operation that never committed. A refusal (a stale ifVersion, a
+  // full slot, a value outside the schema ...) is an outcome too: journaled, and handled by onError "continue". A replay run (modelMode
+  // "replay") serves the operation its recording journaled under the same replay key (salt, node key, request) and writes no state.
+  async stateNode(node, frameKey, ctx, state) {
+    const nodeKey = `${frameKey}/${node.id}`;
+    // A refusal that committed before the process died stands; the operation is not executed again.
+    if (state?.status === 'failed' && state.stateOp) throw new FoundryError(state.error?.code ?? 'STATE_REFUSED', state.error?.message ?? `${node.id}: the state operation was refused`);
+    const decl = this.workflow.state?.[node.slot];
+    if (!decl) throw new FoundryError('STATE_SLOT_UNKNOWN', `State slot ${node.slot} is not declared`);
+    const templates = stateArgs(node), args = resolve(templates, ctx);
+    // The validator's label rule, again on the labels this run actually has: a write may not carry more taint than the slot's label.
+    const argsLabel = labelOf(templates, this.labelScope(frameKey, templates)), control = this.nodeControl.get(nodeKey) ?? 'trusted';
+    const slotLabel = decl.label ?? 'trusted', flowing = joinLabels([argsLabel, control]);
+    if (isStateWrite(node.op) && joinLabels([slotLabel, flowing]) !== slotLabel) throw new FoundryError('LABEL_POLICY', stateLabelMessage(node.slot, slotLabel, flowing), { rule: 'UNTRUSTED_STATE_WRITE', label: flowing });
+    const run = this.head(), mode = run.modelMode ?? 'live', salt = run.sampleSalt ?? this.runId, handled = node.onError === 'continue';
+    const request = stateRequest(this.workflow.id, node.slot, node.op, args), replayKey = stateReplayKey({ salt, nodeKey, request });
+    const check = (schema, value) => validateData(schema, value, `state ${node.slot} value`);
+    let labels = labelState(joinLabels([slotLabel, argsLabel]));
+    if (control !== 'trusted') labels = { ...labels, ...controlState(control), outputLabel: joinLabels([labels.outputLabel ?? 'trusted', control]) };
+    const dispatch = this.dispatchMark.get(nodeKey);
+    let outcome = null, op = null, output;
+    this.update(r => {
+      this.preflight(r);
+      if (mode === 'replay') {
+        const recorded = this.store.state.lookup(replayKey);
+        if (!recorded) throw new FoundryError('REPLAY_MISS', `No recorded state operation for ${nodeKey} (${node.op} on slot ${node.slot}) under this run's salt`, { nodeKey, slot: node.slot, op: node.op });
+        const replaySource = this.stateReplaySource(recorded);
+        outcome = recorded.result;
+        op = { id: this.store.state.record({ replayKey, runId: this.runId, nodeKey, request, result: outcome, at: recorded.at, replayedFrom: recorded.id }), at: recorded.at, replayedFrom: recorded.id, replaySource };
+      } else {
+        const at = this.runtime.now();
+        outcome = this.store.state.apply(decl, request, { now: at, runId: this.runId, nodeKey, check });
+        op = { id: this.store.state.record({ replayKey, runId: this.runId, nodeKey, request, result: outcome, at }), at };
+      }
+      op.hash = this.store.state.opHash(op.id);
+      // Fault injection is explicit, only available to trusted test callers: the process dies inside the transaction, after the state was
+      // written and journaled, before any of it committed.
+      if (r.extra?.crashInStateOp === nodeKey) process.kill(process.pid, 'SIGKILL');
+      const f = frameOf(r, frameKey), base = { ...f.nodes[node.id], stateOp: { id: op.id, hash: op.hash, ...(op.replayedFrom ? { replayedFrom: op.replayedFrom } : {}) } };
+      if (outcome.ok || handled) {
+        output = outcome.ok ? outcome.output : { ok: false, error: { code: outcome.error.code, message: outcome.error.message } };
+        checkData(output, { maxBytes: 512 * 1024 });
+        f.nodes[node.id] = { ...base, ...labels, status: outcome.ok ? 'completed' : 'handled_error', completedAt: Date.now(), completedSequence: (r.eventHead?.seq ?? 0) + 1, outputHash: digest(output) };
+        f.outputs[node.id] = clone(output);
+      } else f.nodes[node.id] = { ...base, status: 'failed', error: { code: outcome.error.code, message: outcome.error.message } };
+    }, () => {
+      const stateEvent = { type: 'state.op', nodeKey, slot: node.slot, op: node.op, opId: op.id, opHash: op.hash, ok: outcome.ok, ...(outcome.ok ? {} : { errorCode: outcome.error.code }), at: op.at,
+        replayed: !!op.replayedFrom, ...(op.replayedFrom ? { replayedFrom: op.replayedFrom, replaySource: op.replaySource } : {}) };
+      const events = output === undefined ? [stateEvent] : [{ type: outcome.ok ? 'node.completed' : 'node.handled_error', nodeKey, outputHash: digest(output), output, ...labels }, stateEvent];
+      if (dispatch !== undefined) events[0] = { ...events[0], dispatch };
+      return events;
+    });
+    if (dispatch !== undefined) this.dispatchMark.delete(nodeKey);
+    // Fault injection is explicit, only available to trusted test callers: the process dies right after the operation committed.
+    if (this.head().extra?.crashAfterStateOp === nodeKey) process.kill(process.pid, 'SIGKILL');
+    if (!outcome.ok && !handled) throw new FoundryError(outcome.error.code, `${node.id}: ${outcome.error.message}`, outcome.error.details);
+  }
+  // A replayed state operation must be the one its recording run's chain bound (state.op {opId, opHash}), or replay would launder an edited or
+  // planted row into this run. A live operation's row and its event commit together, so a recorded row its run's chain does not bind was not
+  // written by that run. A row whose run is not in this store is served as recorded, and the event says so (verify-run flags it).
+  stateReplaySource(recorded) {
+    const raw = this.store.state.rawOp(recorded.id), tampered = reason => new FoundryError('JOURNAL_TAMPERED', `Replay refused: state operation ${recorded.id} ${reason}`, { opId: recorded.id, runId: recorded.runId });
+    let bound = this.stateSources.get(recorded.runId)?.get(recorded.id);
+    if (bound === undefined) {
+      try { this.store.rows.header(recorded.runId); }
+      catch (error) { if (error.code === 'NOT_FOUND') return { opId: recorded.id, runId: recorded.runId, check: 'unverified', reason: `run ${recorded.runId} that recorded it is not in this store` }; throw error; }
+      const bindings = new Map(this.store.events(recorded.runId).filter(e => e.type === 'state.op' && e.replayed !== true).map(e => [e.opId, e.opHash]));
+      this.stateSources.set(recorded.runId, bindings);
+      bound = bindings.get(recorded.id);
+    }
+    if (bound === undefined) throw tampered(`was never bound by the chain of run ${recorded.runId} that it names`);
+    if (bound !== stateOpHash(raw)) throw tampered(`was edited after run ${recorded.runId} bound it`);
+    return { opId: recorded.id, runId: recorded.runId, check: 'bound' };
   }
   verdictShape(value, code) {
     const valid = value && typeof value === 'object' && !Array.isArray(value) && typeof value.pass === 'boolean' && Object.keys(value).every(k => ['pass', 'score', 'reasons'].includes(k))

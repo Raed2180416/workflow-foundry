@@ -217,6 +217,52 @@ reads statuses, labels and outputs by key and never re-reads the whole record.
   each run is recounted by its next write. Code that reads `runs.body` directly sees only the
   header: use `store.run()`, `store.rows.*` or `tools/run-view/store-adapter.mjs`.
 
+## Cross-run state (E3 step 1, L0 row 27)
+
+`src/state.mjs`, run by `Invocation.stateNode` in `src/runtime.mjs`. A workflow declares named slots under `state`; `state` nodes read
+and write them. Everything below is enforced by the validator and again at run time; `tests/state-node.test.mjs` covers each rule.
+
+```json
+"state": {"seen": {"type": "set", "maxItems": 100000, "ttlDays": 30, "writer": "dedupe"}},
+"nodes": [{"id": "dedupe", "kind": "state", "needs": [], "description": "Mark the event id as seen", "slot": "seen", "op": "add", "key": {"$ref": "input.id"}}]
+```
+
+- **Types and operations.** `set` (get, add, delete), `counter` (get, incr, put, delete; safe integers, an absent key reads 0),
+  `cursor` (get, put, delete; `monotonic: true` refuses a move back) and `record` (get, put, delete). Record and cursor values are
+  checked against the slot's `schema`. Keys are non-empty strings of at most 512 bytes; a number is not coerced. Outputs:
+  get `{found, version, value?, expiresAt?}`, add `{added, version}`, incr `{value, version, previousVersion}`, put
+  `{version, previousVersion, changed}`, delete `{deleted, previousVersion}`; the dataflow analysis knows these shapes.
+- **Scope.** A slot belongs to the workflow id: every version of that workflow shares it, and no other workflow can name it. A slot
+  remembers the hash of what its entries mean (type, schema, label, monotonic); a run whose declaration differs is refused
+  (`STATE_DRIFT`) while the slot holds live entries, and an empty slot adopts the new declaration. Migration is not built.
+- **One writer.** Only the node the slot names as `writer` (or each of a list of at most 8, such as an upsert and an expiry) writes
+  it, from one place in the workflow. At run time every key has a version, the slot revision of its last write (0 when absent,
+  deleted or expired; a re-created key never reuses a version). Every operation runs in one IMMEDIATE transaction, so writers in
+  one run (a map body) and in other processes serialize. `ifVersion` makes a write a compare-and-swap; a stale one is the typed
+  refusal `STATE_VERSION_CONFLICT` and writes nothing. A `put` must name it (`0`: the key must be absent); `add`, `incr` and
+  `delete` are atomic read-modify-writes and may.
+- **Bounds and refusals.** `maxItems` (required), `maxValueBytes` (default 64 KiB, at most 256 KiB) and `maxBytes` (at most 64 MiB) per
+  slot. Refusals are outcomes, not crashes: `STATE_VERSION_CONFLICT`, `STATE_FULL`, `STATE_VALUE_LIMIT`, `STATE_SCHEMA`, `STATE_KEY`,
+  `STATE_CURSOR_REGRESSION`. Each is journaled, replayed, and handled by `onError: "continue"` (output `{ok: false, error}`). A run
+  that fails on a lost compare-and-swap or a full slot is `inconclusive`; on the others, `harness_fault`. `STATE_DRIFT` and
+  `STATE_CORRUPT` (a stored value that no longer satisfies its schema: the table was edited) are integrity faults that no
+  continuation hides.
+- **TTL.** `ttlMs` or `ttlDays`: each write sets `expiresAt = now + ttl`; at `expiresAt` the entry reads as absent. `add` of a live
+  member does not refresh it. Expired entries are purged by later writes (all of them when a bound would otherwise refuse).
+  `now` is the Runtime's `now` option (default `Date.now`), so expiry is testable under a simulated clock.
+- **Labels.** A slot has an integrity `label` (default `trusted`). A read carries it, joined with its key's label. A write whose
+  arguments or control (its `when`, its predecessors, an enclosing map) carry a label the slot's does not cover is
+  `LABEL_POLICY` / `UNTRUSTED_STATE_WRITE`: untrusted data cannot be stored and read back as trusted by a later run.
+- **Journal, crash and replay.** The operation, its `state_ops` row, the node's outcome and the chain events (`node.completed` and
+  `state.op {opId, opHash}`) commit in one run update: a crash loses all of it or none, and a node left `running` re-executes an
+  operation that never committed (a committed refusal stands). A replay run (`modelMode: "replay"`, the recording's `sampleSalt`)
+  serves each operation recorded under the same replay key (salt, node key, request) and writes no state: a missing recording is
+  `REPLAY_MISS`, a recording its run's chain does not bind (edited or planted) is `JOURNAL_TAMPERED`. `replay-or-live` is refused for
+  workflows with state, because a recorded write that is served is not applied. `verify-run` re-hashes every bound row
+  (`STATE_OP_EDITED`, `STATE_OP_MISSING`, `STATE_OP_FOREIGN`) and reports rows no event binds (`STATE_OP_UNBOUND`).
+- **Not built.** A sweep or listing of keys, migration of a drifted slot, sharing a slot between workflows, state in the envelope
+  of a compiled solver, and a UI view of slots (`store.state.slots()` / `entries()` are the read API).
+
 ## Interfaces
 
 - CLI: validate, prompt, import, run/resume, inspect, request/propose/apply,

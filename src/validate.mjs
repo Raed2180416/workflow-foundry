@@ -6,6 +6,7 @@ import { portableSchemaViolations, quarantinedSchemaViolations } from './schema-
 import { inheritedLabel, joinLabels } from './context.mjs';
 import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
 import { lintWorkflow } from './lint.mjs';
+import { isStateWrite, STATE_ARGS, STATE_LIMITS, STATE_OPS } from './state.mjs';
 
 export { bindOutput, OUTPUT_KEY };
 
@@ -75,6 +76,16 @@ export function modelNodes(flow, found = []) {
   for (const node of flow.nodes ?? []) { if (usesModel(node)) found.push(node); if (node.body) modelNodes(node.body, found); }
   return found;
 }
+// State nodes (src/state.mjs): read or write the workflow's cross-run state.
+export function stateNodes(flow, found = []) {
+  for (const node of flow.nodes ?? []) { if (node.kind === 'state') found.push(node); if (node.body) stateNodes(node.body, found); }
+  return found;
+}
+// The argument templates of a state node (key, value, by, ifVersion), as written.
+export const stateArgs = node => Object.fromEntries(STATE_ARGS.filter(name => Object.hasOwn(node, name)).map(name => [name, node[name]]));
+// Which arguments each state operation takes.
+const STATE_OP_ARGS = Object.freeze({ get: ['key'], put: ['key', 'value', 'ifVersion'], add: ['key', 'ifVersion'], incr: ['key', 'by', 'ifVersion'], delete: ['key', 'ifVersion'] });
+export const stateLabelMessage = (slot, slotLabel, label, via = []) => `State slot ${slot} is labelled ${slotLabel}, but this write carries ${label} data${via.length ? ` (${via.join('; ')})` : ''}. Label the slot with that source (its reads then carry it) or route the decision through a human node or a quarantined judgment`;
 export const VERIFY_RETURNS = Object.freeze({ type: 'object', additionalProperties: false, required: ['pass', 'score', 'reasons'], properties: {
   pass: { type: 'boolean' }, score: { type: 'number', minimum: 0, maximum: 1 },
   reasons: { type: 'array', maxItems: 8, items: { type: 'string', maxLength: 1000 } } } });
@@ -94,7 +105,8 @@ const fields = {
   loop: ['maxIterations', 'body', 'until', 'initial', 'input'],
   agent: ['role', 'instructions', 'context', 'returns', 'model', 'decoding', 'checks', 'escalation', 'quarantined', 'timeoutMs', 'onError'],
   code: ['lang', 'source', 'args', 'returns', 'timeoutMs'],
-  verify: ['method', 'subject', 'independence', 'gate', 'timeoutMs', 'role', ...new Set(Object.values(verifyFields).flat())]
+  verify: ['method', 'subject', 'independence', 'gate', 'timeoutMs', 'role', ...new Set(Object.values(verifyFields).flat())],
+  state: ['slot', 'op', ...STATE_ARGS, 'onError']
 };
 
 // Static integrity labels (DESIGN §4): a conservative over-approximation of the runtime join.
@@ -168,6 +180,16 @@ function effectTaint(workflow, registry, add) {
       else if (node.kind === 'assert') failure = labelOf(node.checks, own);
       else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), inputs()]);
       else if (node.kind === 'task' || node.kind === 'code') label = labelOf(node.args ?? null, own);
+      else if (node.kind === 'state') {
+        // A read carries the slot's label (what earlier runs wrote) and its key's; a write may not carry more taint than the slot's label, in
+        // its data or in what decided that it runs, or a later run would read untrusted data as trusted.
+        const slotLabel = workflow.state?.[node.slot]?.label ?? TRUSTED, argsLabel = labelOf(stateArgs(node), own);
+        label = joinLabels([slotLabel, argsLabel]);
+        const flowing = joinLabels([argsLabel, nodeControl.label]);
+        if (isStateWrite(node.op) && joinLabels([slotLabel, flowing]) !== slotLabel) findings.push(
+          { code: 'LABEL_POLICY', message: stateLabelMessage(node.slot, slotLabel, flowing, nodeControl.via), location: `${prefix}.${node.id}`, extra: { rule: 'UNTRUSTED_STATE_WRITE', label: flowing } },
+          { code: 'UNTRUSTED_STATE_WRITE', message: stateLabelMessage(node.slot, slotLabel, flowing, nodeControl.via), location: `${prefix}.${node.id}` });
+      }
       else if (node.body) {
         const input = Object.hasOwn(node, 'input') ? entry('input', labelOf(node.input, own)) : only(own, 'input');
         const bodyPrefix = `${prefix}.${node.id}.body`;
@@ -218,7 +240,7 @@ function effectTaint(workflow, registry, add) {
         }
       }
       data.set(id, label); control.set(id, nodeControl); outs.set(id, joinLabels([label, nodeControl.label]));
-      if (['task', 'code', 'verify', 'agent'].includes(node.kind)) failure = joinLabels([failure, label]);
+      if (['task', 'code', 'verify', 'agent', 'state'].includes(node.kind)) failure = joinLabels([failure, label]);
       failing(joinLabels([failure, nodeControl.label]), () => node.kind === 'assert' && failure !== TRUSTED ? `assert ${node.id} reads ${untrustedRefs(node.checks, own)}` : `${node.id} can fail over ${joinLabels([failure, nodeControl.label])} data`);
     };
     for (const id of byId.keys()) visit(id);
@@ -249,6 +271,31 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
     if (classIndex(policy, top) < classIndex(policy, base)) throw new FoundryError('MODEL_CLASS_ORDER', `maxClass ${top} is below the starting class ${base}`);
     if (!entry && !modelsForClass(policy, base).length) throw new FoundryError('MODEL_CLASS_EMPTY', `The model policy lists no model for class ${base}`);
     return { entry, first: entry ?? modelsForClass(policy, base)[0], range: policy.classOrder.slice(classIndex(policy, base), classIndex(policy, top) + 1) };
+  };
+  // State nodes (src/state.mjs). Writers are collected per slot: only the nodes its declaration names write a slot, each from one place.
+  const stateWriters = new Map(), writersOf = slot => [slot.writer].flat();
+  const literal = template => { try { return references(template).length === 0; } catch { return false; } };
+  const checkStateNode = (node, at) => {
+    const slot = workflow.state?.[node.slot];
+    if (!slot) add('STATE_SLOT_UNKNOWN', `State slot ${node.slot} is not declared in the workflow's state`, at);
+    else if (!STATE_OPS[slot.type].includes(node.op)) add('STATE_OP', `${node.op} is not an operation of a ${slot.type} slot (${STATE_OPS[slot.type].join(', ')})`, at);
+    if (isStateWrite(node.op)) {
+      stateWriters.set(node.slot, [...(stateWriters.get(node.slot) ?? []), { id: node.id, at }]);
+      if (slot && !writersOf(slot).includes(node.id)) add('STATE_WRITER', `${node.id} writes slot ${node.slot}, whose declared writer${writersOf(slot).length === 1 ? ' is' : 's are'} ${writersOf(slot).join(', ')}`, at);
+    }
+    for (const name of STATE_ARGS) if (Object.hasOwn(node, name) && !STATE_OP_ARGS[node.op].includes(name)) add('WRONG_NODE_FIELD', `${name} does not belong to a state ${node.op}`, at);
+    if (node.op === 'put' && !Object.hasOwn(node, 'value')) add('STATE_VALUE_REQUIRED', 'A state put needs a value', at);
+    // An overwrite names the version it read, so two writers of one key cannot both succeed (0: the key must be absent).
+    if (node.op === 'put' && !Object.hasOwn(node, 'ifVersion')) add('STATE_CAS_REQUIRED', 'A state put overwrites its key, so it names the version it read (ifVersion; 0 when the key must be absent)', at);
+    // Literal arguments are checked now; computed ones when the node runs (a refusal then).
+    if (literal(node.key) && (typeof node.key !== 'string' || !node.key || Buffer.byteLength(node.key) > STATE_LIMITS.keyBytes)) add('STATE_KEY', `A state key is a non-empty string of at most ${STATE_LIMITS.keyBytes} bytes`, `${at}.key`);
+    if (Object.hasOwn(node, 'by') && literal(node.by) && !Number.isSafeInteger(node.by)) add('STATE_SCHEMA', 'A counter increment is a safe integer', `${at}.by`);
+    if (Object.hasOwn(node, 'ifVersion') && literal(node.ifVersion) && !(Number.isSafeInteger(node.ifVersion) && node.ifVersion >= 0)) add('STATE_SCHEMA', 'ifVersion is a non-negative integer', `${at}.ifVersion`);
+    if (slot && node.op === 'put' && Object.hasOwn(node, 'value') && literal(node.value)) {
+      if (slot.type === 'counter') { if (!Number.isSafeInteger(node.value)) add('STATE_SCHEMA', 'A counter holds a safe integer', `${at}.value`); }
+      else if (slot.schema) try { validateData(slot.schema, node.value, `state ${node.slot} value`); } catch (e) { add(e.code === 'SCHEMA_MISMATCH' ? 'STATE_SCHEMA' : (e.code ?? 'STATE_SCHEMA'), e.message, `${at}.value`); }
+    }
+    if (node.onError === 'continue') warnings.push({ code: 'ERROR_CONTINUATION', path: at, message: 'Independent acceptance must detect failures hidden by continuation' });
   };
   if (/^[0-9a-f]{64}$/.test(workflow.id)) add('AMBIGUOUS_WORKFLOW_ID', 'Workflow ids cannot use the immutable SHA-256 address namespace', '/id');
   if (policy && workflow.defaultClass !== undefined) try { classIndex(policy, workflow.defaultClass); } catch (e) { add(e.code ?? 'MODEL_POLICY', e.message, '/defaultClass'); }
@@ -300,6 +347,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
         if (policy) try { candidates(node); } catch (e) { add(e.code ?? 'MODEL_POLICY', e.message, `${at}.model`); }
       }
       if (node.kind === 'code' && node.returns) try { compileDataSchema(node.returns); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `${at}.returns`); }
+      if (node.kind === 'state') checkStateNode(node, at);
       if (node.kind === 'map') {
         if ((node.concurrency ?? 1) > workflow.budget.maxConcurrency) warnings.push({ code: 'MAP_CONCURRENCY_CAPPED', path: at, message: `concurrency ${node.concurrency} exceeds budget.maxConcurrency ${workflow.budget.maxConcurrency}; at most ${workflow.budget.maxConcurrency} items run at once` });
         if (node.failure === 'collect') warnings.push({ code: 'ERROR_COLLECTION', path: at, message: 'Collected item failures become $error entries; acceptance must inspect the failed count' });
@@ -359,6 +407,15 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
     if (flow.acceptance.every(c => references(c).length === 0)) add('VACUOUS_ACCEPTANCE', 'Acceptance must inspect runtime evidence, not constants', prefix);
   };
   try { walk(workflow, 'workflow'); } catch (e) { add('VALIDATION_ERROR', e.message, 'workflow'); }
+  for (const [name, slot] of Object.entries(workflow.state ?? {})) {
+    if (slot.schema) try { compileDataSchema(slot.schema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `state.${name}.schema`); }
+    const writers = stateWriters.get(name) ?? [];
+    for (const id of writersOf(slot)) {
+      const places = writers.filter(w => w.id === id).map(w => w.at);
+      if (!places.length) add('STATE_WRITER', `Slot ${name} names ${id} as a writer, but no state node ${id} writes it`, `state.${name}`);
+      else if (places.length > 1) add('STATE_WRITER', `Writer ${id} of slot ${name} is one node, but ${places.length} nodes of that id write it (${places.join(', ')})`, `state.${name}`);
+    }
+  }
   if (workflow.inputSchema) try { compileDataSchema(workflow.inputSchema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, 'inputSchema'); }
   if (!errors.length) {
     const dataflow = analyzeDataflow(workflow, registry);
