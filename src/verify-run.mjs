@@ -125,9 +125,21 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
   }
 
   // 2c. Cross-run state operations (src/state.mjs): each `state.op` event binds its state_ops row, written in the same commit. So every row of
-  // the run is bound by an event, and a row no event binds was written by something other than the runtime. A replayed operation records
-  // whether its recording was checked against the recording run's chain (replaySource).
-  const stateEvents = events.filter(e => e.type === 'state.op'), stateBound = new Set();
+  // the run is bound by an event, and a row no event binds was written by something other than the runtime. A replayed operation is checked
+  // again here, not taken from what its event says about itself (replaySource): the recording row must still be the one the recording run's
+  // chain bound, and this run's row must hold that row's replay key and result. The state journal is never external, so anything that cannot
+  // be checked is an error.
+  const stateEvents = events.filter(e => e.type === 'state.op'), stateBound = new Set(), recordings = new Map();
+  // The state.op bindings (opId -> opHash) of a recording run's own (not replayed) operations, from its chain; null when the chain is unusable.
+  const recordingBindings = id => {
+    if (!recordings.has(id)) {
+      let bindings = null;
+      try { const chain = store.chain(id); if (!chain.error) bindings = new Map(chain.events.filter(e => e.type === 'state.op' && e.replayed !== true).map(e => [e.opId, e.opHash])); }
+      catch (cause) { if (cause.code !== 'NOT_FOUND') throw cause; }
+      recordings.set(id, bindings);
+    }
+    return recordings.get(id);
+  };
   for (const event of stateEvents) {
     const where = { seq: event.seq, opId: event.opId ?? null, nodeKey: event.nodeKey };
     const raw = Number.isSafeInteger(event.opId) && store.state ? store.state.rawOp(event.opId) : null;
@@ -135,7 +147,16 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     stateBound.add(raw.id);
     if (raw.run_id !== runId) { add('error', 'STATE_OP_FOREIGN', `State operation ${event.opId} (event ${event.seq}) now belongs to run ${raw.run_id}`, where); continue; }
     if (stateOpHash(raw) !== event.opHash) add('error', 'STATE_OP_EDITED', `State operation ${event.opId} (event ${event.seq}, ${event.nodeKey}) was edited after the chain bound it`, where);
-    if (event.replayed === true && event.replaySource?.check !== 'bound') add(unchecked, 'STATE_REPLAY_UNVERIFIED', `Event ${event.seq} (${event.nodeKey}) served a recorded state operation ${event.replayedFrom ?? '?'} that nothing verified${event.replaySource?.reason ? `: ${event.replaySource.reason}` : ''}`, where);
+    if (event.replayed !== true) continue;
+    const unverified = reason => add('error', 'STATE_REPLAY_UNVERIFIED', `Event ${event.seq} (${event.nodeKey}) served recorded state operation ${raw.replayed_from ?? event.replayedFrom ?? '?'}, which does not verify: ${reason}`, where);
+    if (event.replaySource?.check !== 'bound') { unverified(`the runtime did not verify it${event.replaySource?.reason ? ` (${event.replaySource.reason})` : ''}`); continue; }
+    const source = Number.isSafeInteger(raw.replayed_from) && raw.replayed_from === event.replayedFrom ? store.state.rawOp(raw.replayed_from) : null;
+    if (!source) { unverified('the recording row is gone, or this run\'s row and event name different recordings'); continue; }
+    const bindings = source.replayed_from === null ? recordingBindings(source.run_id) : null;
+    if (!bindings) { unverified(`its recording run ${source.run_id} is not in this store, its chain is broken, or the row is itself a replay`); continue; }
+    if (!bindings.has(source.id)) { unverified(`the chain of run ${source.run_id} does not bind it`); continue; }
+    if (bindings.get(source.id) !== stateOpHash(source)) { unverified(`it was edited after run ${source.run_id} bound it`); continue; }
+    if (source.replay_key !== raw.replay_key || source.result !== raw.result) unverified('this run\'s row holds another replay key or result than the recording');
   }
   const stateRows = store.state ? store.state.opsForRun(runId) : [];
   for (const row of stateRows) if (!stateBound.has(row.id)) add('error', 'STATE_OP_UNBOUND', `State operation ${row.id} (${row.nodeKey}, ${row.op} on slot ${row.slot}) is journaled for this run but no chain event binds it`, { opId: row.id, nodeKey: row.nodeKey });

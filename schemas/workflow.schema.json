@@ -117,7 +117,8 @@
         "ttlMs": {"type": "integer", "minimum": 1, "maximum": 315360000000},
         "ttlDays": {"type": "integer", "minimum": 1, "maximum": 3650},
         "schema": {"type": "object", "description": "JSON schema of a record or cursor value."},
-        "monotonic": {"type": "boolean", "description": "A cursor that never moves back (numbers or strings)."},
+        "monotonic": {"type": "boolean", "description": "A cursor that never moves back in its order; it has no delete and no TTL."},
+        "order": {"enum": ["number", "instant"], "description": "What a monotonic cursor compares: finite numbers (the default) or ISO 8601 date-times with an explicit offset, as instants."},
         "label": {"$ref": "#/definitions/label", "description": "The integrity label every read carries; no write may carry more taint."},
         "description": {"type": "string", "maxLength": 2000}
       },

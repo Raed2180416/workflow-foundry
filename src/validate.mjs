@@ -7,7 +7,7 @@ import { inheritedLabel, joinLabels } from './context.mjs';
 import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
 import { lintWorkflow } from './lint.mjs';
 import { correlateTemplates, isSignalWait, parseAt, routeOf, subscriptionsOf, timeoutMode } from './signals.mjs';
-import { isStateWrite, STATE_ARGS, STATE_LIMITS, STATE_OPS } from './state.mjs';
+import { CURSOR_ORDERS, instantNanos, isStateWrite, slotOf, STATE_ARGS, STATE_LIMITS, STATE_OPS } from './state.mjs';
 
 export { bindOutput, OUTPUT_KEY };
 
@@ -189,7 +189,7 @@ function effectTaint(workflow, registry, add) {
       else if (node.kind === 'state') {
         // A read carries the slot's label (what earlier runs wrote) and its key's; a write may not carry more taint than the slot's label, in
         // its data or in what decided that it runs, or a later run would read untrusted data as trusted.
-        const slotLabel = workflow.state?.[node.slot]?.label ?? TRUSTED, argsLabel = labelOf(stateArgs(node), own);
+        const slotLabel = slotOf(workflow, node.slot)?.label ?? TRUSTED, argsLabel = labelOf(stateArgs(node), own);
         label = joinLabels([slotLabel, argsLabel]);
         const flowing = joinLabels([argsLabel, nodeControl.label]);
         if (isStateWrite(node.op) && joinLabels([slotLabel, flowing]) !== slotLabel) findings.push(
@@ -317,9 +317,10 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
   const stateWriters = new Map(), writersOf = slot => [slot.writer].flat();
   const literal = template => { try { return references(template).length === 0; } catch { return false; } };
   const checkStateNode = (node, at) => {
-    const slot = workflow.state?.[node.slot];
+    const slot = slotOf(workflow, node.slot);
     if (!slot) add('STATE_SLOT_UNKNOWN', `State slot ${node.slot} is not declared in the workflow's state`, at);
-    else if (!STATE_OPS[slot.type].includes(node.op)) add('STATE_OP', `${node.op} is not an operation of a ${slot.type} slot (${STATE_OPS[slot.type].join(', ')})`, at);
+    else if (!STATE_OPS[slot.type]?.includes(node.op)) add('STATE_OP', `${node.op} is not an operation of a ${slot.type} slot (${STATE_OPS[slot.type]?.join(', ')})`, at);
+    else if (slot.monotonic === true && node.op === 'delete') add('STATE_OP', `Slot ${node.slot} is a monotonic cursor: a delete would let it move back, so it has none`, at);
     if (isStateWrite(node.op)) {
       stateWriters.set(node.slot, [...(stateWriters.get(node.slot) ?? []), { id: node.id, at }]);
       if (slot && !writersOf(slot).includes(node.id)) add('STATE_WRITER', `${node.id} writes slot ${node.slot}, whose declared writer${writersOf(slot).length === 1 ? ' is' : 's are'} ${writersOf(slot).join(', ')}`, at);
@@ -329,12 +330,14 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
     // An overwrite names the version it read, so two writers of one key cannot both succeed (0: the key must be absent).
     if (node.op === 'put' && !Object.hasOwn(node, 'ifVersion')) add('STATE_CAS_REQUIRED', 'A state put overwrites its key, so it names the version it read (ifVersion; 0 when the key must be absent)', at);
     // Literal arguments are checked now; computed ones when the node runs (a refusal then).
-    if (literal(node.key) && (typeof node.key !== 'string' || !node.key || Buffer.byteLength(node.key) > STATE_LIMITS.keyBytes)) add('STATE_KEY', `A state key is a non-empty string of at most ${STATE_LIMITS.keyBytes} bytes`, `${at}.key`);
+    if (literal(node.key) && (typeof node.key !== 'string' || !node.key || !node.key.isWellFormed() || Buffer.byteLength(node.key) > STATE_LIMITS.keyBytes)) add('STATE_KEY', `A state key is a non-empty, well-formed string of at most ${STATE_LIMITS.keyBytes} bytes`, `${at}.key`);
     if (Object.hasOwn(node, 'by') && literal(node.by) && !Number.isSafeInteger(node.by)) add('STATE_SCHEMA', 'A counter increment is a safe integer', `${at}.by`);
     if (Object.hasOwn(node, 'ifVersion') && literal(node.ifVersion) && !(Number.isSafeInteger(node.ifVersion) && node.ifVersion >= 0)) add('STATE_SCHEMA', 'ifVersion is a non-negative integer', `${at}.ifVersion`);
     if (slot && node.op === 'put' && Object.hasOwn(node, 'value') && literal(node.value)) {
       if (slot.type === 'counter') { if (!Number.isSafeInteger(node.value)) add('STATE_SCHEMA', 'A counter holds a safe integer', `${at}.value`); }
       else if (slot.schema) try { validateData(slot.schema, node.value, `state ${node.slot} value`); } catch (e) { add(e.code === 'SCHEMA_MISMATCH' ? 'STATE_SCHEMA' : (e.code ?? 'STATE_SCHEMA'), e.message, `${at}.value`); }
+      if (slot.monotonic === true && ((slot.order ?? 'number') === 'instant' ? instantNanos(node.value) === null : !(typeof node.value === 'number' && Number.isFinite(node.value))))
+        add('STATE_SCHEMA', `A monotonic cursor in order ${slot.order ?? 'number'} holds ${(slot.order ?? 'number') === 'instant' ? 'ISO 8601 date-times with an explicit offset' : 'numbers'}`, `${at}.value`);
     }
     if (node.onError === 'continue') warnings.push({ code: 'ERROR_CONTINUATION', path: at, message: 'Independent acceptance must detect failures hidden by continuation' });
   };
@@ -455,6 +458,15 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
   for (const [name, schemas] of signalSchemas) if (schemas.size > 1) add('SIGNAL_SCHEMA_CONFLICT', `Signal ${name} is declared with ${schemas.size} different payload schemas (${[...new Set(schemas.values())].join(', ')}); one signal name has one payload schema`, 'workflow');
   for (const [name, slot] of Object.entries(workflow.state ?? {})) {
     if (slot.schema) try { compileDataSchema(slot.schema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `state.${name}.schema`); }
+    // A monotonic cursor compares in one declared order and is never reset: no TTL (an expired cursor would restart anywhere), no delete.
+    if (slot.order !== undefined && slot.monotonic !== true) add('STATE_MONOTONIC', `Slot ${name} declares an order but is not a monotonic cursor`, `state.${name}`);
+    if (slot.monotonic === true) {
+      const order = slot.order ?? 'number', types = [slot.schema?.type ?? []].flat();
+      if (!CURSOR_ORDERS.includes(order)) add('STATE_MONOTONIC', `Slot ${name}: a cursor order is one of ${CURSOR_ORDERS.join(', ')}`, `state.${name}.order`);
+      if (slot.ttlMs !== undefined || slot.ttlDays !== undefined) add('STATE_MONOTONIC', `Slot ${name} is a monotonic cursor: it never expires (a TTL would let it restart behind its position)`, `state.${name}`);
+      const allowed = order === 'instant' ? ['string'] : ['number', 'integer'];
+      if (!types.length || types.some(type => !allowed.includes(type))) add('STATE_MONOTONIC', `Slot ${name} is a monotonic cursor in order ${order}: its schema type is ${order === 'instant' ? '"string" (ISO 8601 date-times with an explicit offset)' : '"number" or "integer"'}`, `state.${name}.schema`);
+    }
     const writers = stateWriters.get(name) ?? [];
     for (const id of writersOf(slot)) {
       const places = writers.filter(w => w.id === id).map(w => w.at);

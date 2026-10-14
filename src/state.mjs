@@ -13,16 +13,22 @@
 //   - Bounded. maxItems live keys (required), maxValueBytes per value and maxBytes per slot; a write that would pass a bound is
 //     refused (STATE_FULL, STATE_VALUE_LIMIT) after expired entries are purged.
 //   - Typed. Record and cursor values are checked against the slot's JSON schema (STATE_SCHEMA); counters are safe integers;
-//     keys are non-empty strings of at most 512 bytes (STATE_KEY). A monotonic cursor refuses to move back
-//     (STATE_CURSOR_REGRESSION). A value read back that no longer satisfies its schema is STATE_CORRUPT (the table was edited).
+//     keys are non-empty, well-formed (no lone surrogate) strings of at most 512 bytes (STATE_KEY). A monotonic cursor refuses to
+//     move back (STATE_CURSOR_REGRESSION) in its declared `order`: "number" (the default; finite numbers) or "instant" (ISO 8601
+//     date-times with an explicit offset, compared as instants). It is never deleted and never expires, so it cannot be reset.
+//     A value read back that no longer satisfies its schema is STATE_CORRUPT (the table was edited).
 //   - TTL. With ttlMs (or ttlDays) every write sets expiresAt = now + ttl; an entry at or past it reads as absent (version 0).
 //     `now` is the runtime's clock (Runtime option `now`), so expiry can be tested under simulated time.
 //   - Journaled. Every operation, read or write, accepted or refused, is a row of state_ops written in the same transaction as
 //     the state change and the node's outcome, and the row's hash is bound into the run's chain (`state.op`). A crash therefore
 //     either loses the whole operation or keeps all of it. A replay run (modelMode "replay") serves each operation from the
-//     recorded row with the same replay key (salt, node key, request) and writes no state; a missing row is REPLAY_MISS.
-//   - Drift. A slot records the hash of its declaration's semantics (type, schema, label, monotonic). A run whose declaration
-//     differs is refused (STATE_DRIFT) while the slot holds live entries; an empty slot adopts the new declaration.
+//     recorded row with the same replay key (salt, node key, request, which names the slot's declaration hash) and writes no
+//     state; a missing row is REPLAY_MISS. An argument beyond its bound (a value over maxValueBytes) is journaled by its sha256
+//     and size, and the journal bytes of a run count against its state budget (runtime.mjs).
+//   - Drift. A slot records the hash of what its entries mean: the declaration's semantics (type, schema, label, monotonic,
+//     order) and its writers (the writer ids and each writer node's definition, description aside), so the one-writer rule holds
+//     across the versions of a workflow that share the slot. A run whose declaration differs is refused (STATE_DRIFT) while the
+//     slot holds live entries; an empty slot adopts the new declaration.
 //
 // The integrity label of the slot (`label`, default trusted) is what a read of it carries; a write whose data or control is
 // labelled beyond it is refused (validate.mjs statically, the runtime again), so cross-run state cannot launder taint.
@@ -51,14 +57,39 @@ export const STATE_LIMITS = Object.freeze({
 });
 const DAY_MS = 86400000;
 
-/** The slot declaration with its defaults: {type, writer, maxItems, maxValueBytes, maxBytes, ttlMs, schema, monotonic, label}. */
+/** The orders a monotonic cursor compares in ("number" is the default). */
+export const CURSOR_ORDERS = Object.freeze(['number', 'instant']);
+/** A slot declaration by name: own properties only, so a node naming `toString` finds no slot. */
+export const slotOf = (workflow, name) => typeof name === 'string' && workflow?.state && Object.hasOwn(workflow.state, name) ? workflow.state[name] : undefined;
+/** The slot declaration with its defaults: {type, writer, maxItems, maxValueBytes, maxBytes, ttlMs, schema, monotonic, order, label}. */
 export function slotDeclaration(decl) {
-  const ttlMs = decl.ttlMs ?? (decl.ttlDays !== undefined ? decl.ttlDays * DAY_MS : null);
+  const ttlMs = decl.ttlMs ?? (decl.ttlDays !== undefined ? decl.ttlDays * DAY_MS : null), monotonic = decl.monotonic === true;
   return { type: decl.type, writer: decl.writer, maxItems: decl.maxItems, maxValueBytes: decl.maxValueBytes ?? STATE_LIMITS.defaultValueBytes,
-    maxBytes: decl.maxBytes ?? STATE_LIMITS.slotBytes, ttlMs, schema: decl.schema ?? null, monotonic: decl.monotonic === true, label: decl.label ?? 'trusted' };
+    maxBytes: decl.maxBytes ?? STATE_LIMITS.slotBytes, ttlMs, schema: decl.schema ?? null, monotonic, order: monotonic ? decl.order ?? 'number' : null, label: decl.label ?? 'trusted' };
 }
-/** What a stored entry means: changing any of these changes how existing entries must be read. Bounds and TTL may change. */
-export const declarationHash = decl => digest({ v: 1, type: decl.type, schema: decl.schema ?? null, monotonic: decl.monotonic === true, label: decl.label ?? 'trusted' });
+/**
+ * The writer nodes of a slot as the workflow defines them (every state node that writes it, at any depth), without their descriptions,
+ * ordered by id. They are part of what the slot's entries mean: a version of the workflow whose writers differ is another writer.
+ */
+export function slotWriters(workflow, name) {
+  const found = [];
+  const walk = flow => {
+    for (const node of flow?.nodes ?? []) {
+      if (node.kind === 'state' && node.slot === name && isStateWrite(node.op)) { const { description, ...definition } = node; found.push(definition); }
+      if (node.body) walk(node.body);
+    }
+  };
+  walk(workflow);
+  return found.sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+}
+/**
+ * What a stored entry means: changing any of these changes how existing entries must be read, or who may have written them. Bounds and
+ * TTL may change. `writers` are the slot's writer nodes (slotWriters).
+ */
+export const declarationHash = (decl, writers = []) => digest({ v: 2, type: decl.type, schema: decl.schema ?? null, monotonic: decl.monotonic === true,
+  order: decl.monotonic === true ? decl.order ?? 'number' : null, label: decl.label ?? 'trusted', writer: [decl.writer ?? []].flat().sort(), writers: writers.map(node => digest(node)) });
+/** The declaration hash of a slot of a workflow: its declaration and its writers. */
+export const slotIdentity = (workflow, name) => declarationHash(slotOf(workflow, name), slotWriters(workflow, name));
 
 /** The JSON schema of a state node's output (dataflow.mjs), for one slot type and operation. */
 export function stateOutputSchema(decl, op) {
@@ -76,13 +107,31 @@ export function stateOutputSchema(decl, op) {
   return {};
 }
 
-/** The request an operation is journaled and replayed under: the workflow, slot, operation and its resolved arguments. */
-export function stateRequest(workflowId, slot, op, args) {
-  const request = { workflowId, slot, op };
+/**
+ * The request an operation is replayed under: the workflow, slot, the slot's declaration hash (slotIdentity: a replay of a version whose
+ * declaration or writers differ misses instead of being served entries that version could not read), the operation and its resolved arguments.
+ */
+export function stateRequest(workflowId, slot, op, args, declHash) {
+  if (typeof declHash !== 'string' || !/^[0-9a-f]{64}$/.test(declHash)) throw new FoundryError('STATE_OP', 'A state request names its slot declaration hash');
+  const request = { workflowId, slot, declHash, op };
   for (const name of STATE_ARGS) if (args[name] !== undefined) request[name] = args[name];
   return checkData(request, { maxBytes: 4 * 1024 * 1024 });
 }
 export const stateReplayKey = ({ salt, nodeKey, request }) => digest({ v: 1, salt, nodeKey, request });
+// The journal keeps an argument whole up to its bound: a value up to the slot's maxValueBytes (the size a stored value may have), any other
+// argument up to 4 KiB (a valid key is at most 512 bytes, about 3 KiB as escaped JSON). Beyond it, the argument is journaled by its sha256
+// and size: such an argument is always refused, and the replay key still binds it whole.
+const ARG_JOURNAL_BYTES = 4096;
+/** The form of a request that state_ops stores (see above). `rawDecl` is the slot declaration. */
+export function journalRequest(request, rawDecl) {
+  const decl = slotDeclaration(rawDecl), out = { ...request };
+  for (const name of STATE_ARGS) {
+    if (out[name] === undefined) continue;
+    const text = canonical(out[name]), bytes = bytesOf(text);
+    if (bytes > (name === 'value' ? decl.maxValueBytes : ARG_JOURNAL_BYTES)) out[name] = { $elided: { sha256: sha256(text), bytes } };
+  }
+  return out;
+}
 
 // The columns of a state_ops row that its hash binds (the request and result texts by their own hashes).
 const OP_COLUMNS = Object.freeze(['id', 'replay_key', 'run_id', 'node_key', 'workflow_id', 'slot', 'op', 'ok', 'error_code', 'at', 'replayed_from', 'created_at']);
@@ -104,6 +153,24 @@ export function installStateTables(db) {
     CREATE INDEX IF NOT EXISTS state_ops_run ON state_ops(run_id, id);`);
 }
 
+// An ISO 8601 date-time with an explicit offset (Z or ±hh:mm), seconds and up to 9 fraction digits optional; every field is range-checked.
+const INSTANT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|([+-])(\d{2}):(\d{2}))$/;
+/** The instant an ISO 8601 date-time with an explicit offset names, in nanoseconds since the epoch (a BigInt), or null. */
+export function instantNanos(text) {
+  const m = typeof text === 'string' && text.length <= 64 ? INSTANT.exec(text) : null;
+  if (!m) return null;
+  const [year, month, day, hour, minute, second] = m.slice(1, 7).map(v => v === undefined ? 0 : Number(v));
+  const utc = new Date(0);
+  utc.setUTCFullYear(year, month, 0); // the last day of `month` (setUTCFullYear has no two-digit-year mapping)
+  const days = utc.getUTCDate();
+  if (year < 1 || month < 1 || month > 12 || day < 1 || day > days || hour > 23 || minute > 59 || second > 59 || (m[8] !== 'Z' && (Number(m[10]) > 23 || Number(m[11]) > 59))) return null;
+  const offset = m[8] === 'Z' ? 0 : (m[9] === '-' ? -1 : 1) * (Number(m[10]) * 60 + Number(m[11]));
+  utc.setUTCFullYear(year, month - 1, day);
+  utc.setUTCHours(hour, minute, second, 0);
+  return BigInt(utc.getTime() - offset * 60000) * 1000000n + BigInt((m[7] ?? '').padEnd(9, '0'));
+}
+// Where a monotonic cursor value sits in its order (comparable with <), or null when it is not a value of that order.
+const cursorPosition = (order, value) => order === 'instant' ? instantNanos(value) : typeof value === 'number' && Number.isFinite(value) ? value : null;
 const refusal = (code, message, details = {}) => ({ ok: false, error: { code, message, details } });
 const bytesOf = text => text == null ? 0 : Buffer.byteLength(text);
 const live = (entry, now) => !!entry && (entry.expires_at === null || entry.expires_at > now);
@@ -129,11 +196,16 @@ export class StateStore {
   apply(rawDecl, request, { now, runId, nodeKey, check }) {
     this.#requireTransaction();
     if (!Number.isSafeInteger(now) || now < 0) throw new FoundryError('STATE_CLOCK', 'The state clock must return a non-negative integer of milliseconds');
-    const decl = slotDeclaration(rawDecl), { workflowId: wf, slot: name, op, key } = request;
+    const decl = slotDeclaration(rawDecl), { workflowId: wf, slot: name, op, key, declHash } = request;
     if (!STATE_OPS[decl.type]?.includes(op)) throw new FoundryError('STATE_OP', `${op} is not an operation of a ${decl.type} slot`);
-    const slot = this.#slot(wf, name, decl, now);
-    if (typeof key !== 'string' || !key.length || bytesOf(key) > STATE_LIMITS.keyBytes)
-      return refusal('STATE_KEY', `A state key is a non-empty string of at most ${STATE_LIMITS.keyBytes} bytes`, { slot: name, type: typeof key });
+    // A monotonic cursor is never reset: no delete, no expiry (validate.mjs refuses both statically).
+    if (decl.monotonic && (op === 'delete' || decl.ttlMs !== null)) throw new FoundryError('STATE_OP', `Slot ${name} is a monotonic cursor: it is never deleted and never expires`);
+    if (decl.monotonic && !CURSOR_ORDERS.includes(decl.order)) throw new FoundryError('STATE_OP', `Slot ${name} declares an unknown cursor order`);
+    if (typeof declHash !== 'string') throw new FoundryError('STATE_OP', 'A state request names its slot declaration hash');
+    this.#slot(wf, name, declHash, now);
+    // Lone surrogates are refused: SQLite stores them as U+FFFD, so distinct keys would share one entry.
+    if (typeof key !== 'string' || !key.length || !key.isWellFormed() || bytesOf(key) > STATE_LIMITS.keyBytes)
+      return refusal('STATE_KEY', `A state key is a non-empty, well-formed string of at most ${STATE_LIMITS.keyBytes} bytes`, { slot: name, type: typeof key });
     const raw = this.stmt('SELECT * FROM state_entries WHERE workflow_id=? AND slot=? AND key=?').get(wf, name, key);
     const present = live(raw, now), current = present ? raw.version : 0;
     const stored = () => {
@@ -177,10 +249,14 @@ export class StateStore {
       if (value === undefined) return refusal('STATE_SCHEMA', 'put needs a value', { slot: name });
       const fault = this.#valueFault(decl, value, check);
       if (fault) return refusal('STATE_SCHEMA', `The value does not satisfy the ${decl.type === 'counter' ? 'counter type' : `schema of slot ${name}`}`, { slot: name, reason: fault });
-      if (decl.type === 'cursor' && decl.monotonic && present) {
-        const before = stored();
-        if (typeof before !== typeof value || !['number', 'string'].includes(typeof value)) return refusal('STATE_SCHEMA', 'A monotonic cursor holds numbers or strings, of one type', { slot: name });
-        if (value < before) return refusal('STATE_CURSOR_REGRESSION', `A monotonic cursor of slot ${name} cannot move back`, { slot: name, version: current });
+      if (decl.type === 'cursor' && decl.monotonic) {
+        const position = cursorPosition(decl.order, value);
+        if (position === null) return refusal('STATE_SCHEMA', `A monotonic cursor of slot ${name} holds ${decl.order === 'instant' ? 'ISO 8601 date-times with an explicit offset' : 'finite numbers'}`, { slot: name, order: decl.order });
+        if (present) {
+          const before = cursorPosition(decl.order, stored());
+          if (before === null) throw new FoundryError('STATE_CORRUPT', `A stored position of monotonic cursor ${name} is not in its order: the state table was edited`, { slot: name });
+          if (position < before) return refusal('STATE_CURSOR_REGRESSION', `A monotonic cursor of slot ${name} cannot move back`, { slot: name, version: current });
+        }
       }
     }
     const text = op === 'add' ? null : canonical(value);
@@ -214,9 +290,8 @@ export class StateStore {
     try { checkData(value); check(decl.schema, value); return null; }
     catch (error) { return String(error.code ?? error.message ?? 'invalid').slice(0, 200); }
   }
-  // The slot row, created on first use; a changed declaration is adopted only while the slot holds no live entry.
-  #slot(wf, name, decl, now) {
-    const declHash = declarationHash(decl);
+  // The slot row, created on first use; a changed declaration (slotIdentity) is adopted only while the slot holds no live entry.
+  #slot(wf, name, declHash, now) {
     let slot = this.stmt('SELECT * FROM state_slots WHERE workflow_id=? AND slot=?').get(wf, name);
     if (!slot) {
       this.stmt('INSERT INTO state_slots(workflow_id, slot, decl_hash, revision, items, bytes, updated_at) VALUES(?,?,?,0,0,0,?)').run(wf, name, declHash, now);
@@ -225,7 +300,7 @@ export class StateStore {
     if (slot.decl_hash !== declHash) {
       this.#purge(wf, name, now, Infinity);
       slot = this.stmt('SELECT * FROM state_slots WHERE workflow_id=? AND slot=?').get(wf, name);
-      if (slot.items > 0) throw new FoundryError('STATE_DRIFT', `Slot ${name} of workflow ${wf} holds ${slot.items} entries written under another declaration (type, schema, label or monotonic changed); migrate or empty it before this declaration can use it`, { slot: name, items: slot.items });
+      if (slot.items > 0) throw new FoundryError('STATE_DRIFT', `Slot ${name} of workflow ${wf} holds ${slot.items} entries written under another declaration (its type, schema, label, monotonic order or writers changed); migrate or empty it before this declaration can use it`, { slot: name, items: slot.items });
       this.stmt('UPDATE state_slots SET decl_hash=?, updated_at=? WHERE workflow_id=? AND slot=?').run(declHash, now, wf, name);
     }
     return slot;
@@ -249,13 +324,17 @@ export class StateStore {
   }
 
   // ---- the operation journal --------------------------------------------------------------------------------------------------------
-  /** Journal one operation (inside the caller's transaction). Returns the row id. */
+  /**
+   * Journal one operation (inside the caller's transaction). `request` is the journal form (journalRequest). Returns {id, bytes}: the row id
+   * and the bytes of its request and result texts (what the run's state budget counts).
+   */
   record({ replayKey, runId, nodeKey, request, result, at, replayedFrom = null }) {
     this.#requireTransaction();
+    const requestText = canonical(request), resultText = canonical(result);
     const { lastInsertRowid } = this.stmt(`INSERT INTO state_ops(replay_key, run_id, node_key, workflow_id, slot, op, request, result, ok, error_code, at, replayed_from, created_at)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(replayKey, runId, nodeKey, request.workflowId, request.slot, request.op, canonical(request), canonical(result),
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(replayKey, runId, nodeKey, request.workflowId, request.slot, request.op, requestText, resultText,
       result.ok ? 1 : 0, result.ok ? null : result.error.code, at, replayedFrom, Date.now());
-    return Number(lastInsertRowid);
+    return { id: Number(lastInsertRowid), bytes: bytesOf(requestText) + bytesOf(resultText) };
   }
   /** The latest recorded (not itself replayed) operation under a replay key, or null. */
   lookup(replayKey) { return opRow(this.stmt('SELECT * FROM state_ops WHERE replay_key=? AND replayed_from IS NULL ORDER BY id DESC LIMIT 1').get(replayKey)); }

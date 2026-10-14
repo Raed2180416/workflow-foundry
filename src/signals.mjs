@@ -45,19 +45,24 @@ export function declaredSignals(workflow) {
   return declared;
 }
 
-const ISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|([+-])(\d{2}):(\d{2}))$/;
+// Fractions of a second: up to nanoseconds (Python isoformat writes microseconds), truncated to milliseconds.
+const ISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|([+-])(\d{2}):(\d{2}))$/;
 const MAX_TIME = 8.64e15;
+// An integer below 1e11 (1973-03-03 as epoch milliseconds) is refused: epoch SECONDS of any time from 1973 to the year 5138 fall there,
+// and read as milliseconds they would be a date in January 1970, so the wait would fire or time out at once.
+export const MIN_EPOCH_MS = 1e11;
 /**
- * An absolute wake time (`at`) as epoch milliseconds: an integer of epoch milliseconds, or an ISO 8601 date-time with an explicit offset
- * (`Z` or ±hh:mm). A local time without an offset is ambiguous and refused, and every field is range-checked (Date.parse accepts 30 February).
+ * An absolute wake time (`at`) as epoch milliseconds: an integer of epoch milliseconds (at least MIN_EPOCH_MS), or an ISO 8601 date-time
+ * with an explicit offset (`Z` or ±hh:mm). A local time without an offset is ambiguous and refused, and every field is range-checked
+ * (Date.parse accepts 30 February).
  */
 export function parseAt(value) {
-  if (Number.isSafeInteger(value) && value >= 0 && value <= MAX_TIME) return value;
-  const bad = () => new FoundryError('WAIT_AT', `at must be epoch milliseconds or an ISO 8601 date-time with an explicit offset (Z or +hh:mm), not ${JSON.stringify(value)?.slice(0, 80)}`);
+  const bad = () => new FoundryError('WAIT_AT', `at must be epoch milliseconds (not seconds) or an ISO 8601 date-time with an explicit offset (Z or +hh:mm), not ${JSON.stringify(value)?.slice(0, 80)}`);
+  if (Number.isSafeInteger(value)) { if (value >= MIN_EPOCH_MS && value <= MAX_TIME) return value; throw bad(); }
   if (typeof value !== 'string' || value.length > 64) throw bad();
   const m = ISO.exec(value);
   if (!m) throw bad();
-  const [year, month, day, hour, minute, second] = m.slice(1, 7).map(v => v === undefined ? 0 : Number(v)), ms = m[7] ? Number(m[7].padEnd(3, '0')) : 0;
+  const [year, month, day, hour, minute, second] = m.slice(1, 7).map(v => v === undefined ? 0 : Number(v)), ms = m[7] ? Number(m[7].slice(0, 3).padEnd(3, '0')) : 0;
   const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const offset = m[8] === 'Z' ? 0 : (m[9] === '-' ? -1 : 1) * (Number(m[10]) * 60 + Number(m[11]));
   // Years before 1970 are refused (epoch milliseconds are not negative), which also keeps Date.UTC off its two-digit-year mapping.
@@ -102,18 +107,23 @@ export function normalizeSignal(signal) {
 
 /**
  * Where a run record's signal state differs from its verified chain: the inbox (run header `signals`) against the signal.delivered and
- * wait.resolved events, and the decision each signal wait holds (node state `resolution`) against its wait.resolved event. The record is a
- * checkpoint any writer to the workspace can edit; an edit there (a consumed signal marked unconsumed, a planted entry or decision) would
- * let a wait take a signal twice, or one nobody delivered. Returns a list of what differs (empty: none). `run` is the whole record.
+ * wait.resolved events, the decision each signal wait holds (node state `resolution`) against its wait.resolved event, and the inputs
+ * the rule decides from (each signal wait's subscriptions, timer and start sequence) against its node.started event. The record is a
+ * checkpoint any writer to the workspace can edit; an edit there (a consumed signal marked unconsumed, a planted entry or decision, a
+ * subscription re-keyed to another order) would let a wait take a signal twice, one nobody delivered, or one meant for another wait. A
+ * signal id the chain delivers twice is drift too: the inbox refuses a second delivery of an id, so only an edit of the record (or of the
+ * workspace's id index) lets one through. Returns a list of what differs (empty: none). `run` is the whole record.
  */
 export function signalCheckpointDrift(run, events) {
-  const inbox = new Map(), decisions = new Map(), drift = [];
+  const inbox = new Map(), decisions = new Map(), started = new Map(), drift = [];
   for (const e of events) {
-    if (e.type === 'signal.delivered') inbox.set(e.signalId, { name: e.name, keyHash: e.keyHash, payloadHash: e.payloadHash, receivedAt: e.receivedAt, seq: e.seq, consumedBy: e.consumedBy ?? null });
-    else if (e.type === 'wait.resolved') {
+    if (e.type === 'signal.delivered') {
+      if (inbox.has(e.signalId)) { drift.push(`signal ${e.signalId} (delivered twice, events ${inbox.get(e.signalId).seq} and ${e.seq})`); continue; }
+      inbox.set(e.signalId, { name: e.name, keyHash: e.keyHash, payloadHash: e.payloadHash, receivedAt: e.receivedAt, seq: e.seq, consumedBy: e.consumedBy ?? null });
+    } else if (e.type === 'wait.resolved') {
       decisions.set(e.nodeKey, e);
       if (e.outcome === 'signal' && inbox.has(e.signalId)) inbox.get(e.signalId).consumedBy = e.nodeKey;
-    }
+    } else if (e.type === 'node.started' && e.kind === 'wait') started.set(e.nodeKey, e);
   }
   const held = run.signals && typeof run.signals === 'object' ? run.signals : {};
   for (const [id, entry] of Object.entries(held)) {

@@ -20,7 +20,7 @@ import { validateCaseOutput, validateSweepOutput } from './output.mjs';
 import { schemaProblems, plainCopy } from './schema.mjs';
 import { Workspace } from './workspace.mjs';
 
-export const HOST_VERSION = '1.1.0';   // 1.1.0: review fixes of 2026-10-14 (README §11); 1.0.0 journals do not replay on it
+export const HOST_VERSION = '1.2.0';   // 1.2.0: guarded counterparty steps (H-29); 1.1.0: review fixes of 2026-10-14 (README §11)
 
 /** Thrown by an arm adapter when a real usage limit stops the stream: the clock freezes at the last committed wake-up. */
 export class QuotaStop extends Error {
@@ -336,15 +336,22 @@ class Host {
     const t = entries[0].atMs;
     this.nowMs = t;
     this.stage('wakeup', { at: this.iso(t), entries: entries.length });
-    // Phase 0: host-internal work at this instant (world writes, platform retries, form rejections).
+    // Phase 0: host-internal work at this instant (world writes, guarded counterparty steps, platform retries, form
+    // rejections).
+    const stepEvents = [];
     for (const e of entries.filter(x => x.phase === 0)) {
       if (this.#stale(e)) continue;      // an abandoned retry or a form entry of a closed or superseded task
       if (e.kind === 'write') this.#worldWrite(`${e.write.system}.${e.write.table}`, e.write.row, `write:${e.write.id}`);
+      else if (e.kind === 'cpstep') {
+        if (!this.#guardHolds(e.step.guard)) { this.stage('counterparty.suppressed', { step: e.step.id, event: e.event?.id ?? null, case: e.case }); continue; }
+        if (e.step.write) this.#worldWrite(`${e.step.write.system}.${e.step.write.table}`, e.step.write.row, `step:${e.step.id}`);
+        if (e.event) stepEvents.push(e.event);
+      }
       else if (e.kind === 'retry') this.#attempt(e.emission, 'platform-retry');
       else if (e.kind === 'form') this.stage('form.rejected', { instance: e.instance, ...e.payload });
     }
     // Phase 1: deliveries, materialised then ordered by (at, source, id).
-    const deliveries = [];
+    const deliveries = [...stepEvents];
     for (const e of entries.filter(x => x.phase === 1)) {
       if (e.kind === 'event') deliveries.push(e.event);
       else if (e.kind === 'obligation') {
@@ -844,6 +851,32 @@ class Host {
       this.stage('counterparty.write', { write: wr, case: c, cause: em.id });
       this.agenda.push({ kind: 'write', atMs, phase: 0, source: 'world', id: wr.id, write: wr });
     }
+    // Guarded steps (H-29): a counterparty acts at its own time on the state it finds then, e.g. a carrier collects a
+    // shipment only if it was not cancelled meanwhile. At the step's instant (phase 0) the guard is read against the
+    // system of record; if it holds, the step's write is applied and its event delivered at that instant, otherwise
+    // nothing happens (`counterparty.suppressed`). World-side behaviour, identical for every arm in the same state.
+    for (const s of reaction.steps ?? []) {
+      const atMs = s.at !== undefined ? Math.max(toMs(s.at), this.nowMs + MINUTE) : this.nowMs + Math.max(1, Math.floor(s.delayMinutes ?? 1)) * MINUTE;
+      if (atMs % SECOND !== 0) throw new HostError('counterparty step times must be whole seconds');
+      let ev = null;
+      if (s.event) {
+        const r = s.event;
+        const payload = { ...(r.payload ?? {}) };
+        if (r.quoteRef && typeof args?.ref === 'string') payload.ref = args.ref;
+        ev = { id: this.hid(), type: String(r.type), at: this.iso(atMs), source: String(r.source ?? sys.id), channel: { kind: 'inbound' }, payload, ...(typeof r.doc === 'string' ? { doc: r.doc } : {}) };
+        if (r.quoteRef && typeof args?.ref === 'string') this.replies.add(ev);
+        if (c !== null) this.hostEventCase.set(ev.id, c);
+      }
+      const step = { id: this.hid(), at: this.iso(atMs), guard: s.guard ?? null, write: s.write ? { system: s.write.system, table: s.write.table, row: s.write.row } : null };
+      this.stage('counterparty.step', { step, event: ev, case: c, cause: em.id });
+      this.agenda.push({ kind: 'cpstep', atMs, phase: 0, source: 'world', id: step.id, step, event: ev, case: c });
+    }
+  }
+
+  #guardHolds(g) {
+    if (!g) return true;
+    const row = this.systems.get(g.system)?.db[g.table]?.get(g.pk);
+    return !!row && Array.isArray(g.in) && g.in.some(v => canonical(v) === canonical(row[g.field] ?? null));
   }
 
   #attempt(em, via) {
