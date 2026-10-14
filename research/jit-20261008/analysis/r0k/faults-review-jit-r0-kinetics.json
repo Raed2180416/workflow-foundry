@@ -1,0 +1,174 @@
+{
+ "experiment": "jit-r0-kinetics",
+ "arms": {
+  "agent-claude-haiku-5-5": {
+   "faultsJsonlInMirror": false,
+   "faultRows": 0,
+   "rows": 24,
+   "rowsWithError": 0,
+   "rowsCostUnknown": [],
+   "eventsWithError": 0,
+   "costUnknownBookings": [],
+   "interpretSessions": {
+    "interpreter/claude-haiku-5-5/error=none/attempt=0": 24
+   },
+   "compileAttempts": [],
+   "rechecks": [],
+   "unresolved": [],
+   "hiddenPathAttempts": {
+    "interpretShadowAdjudicator": 65,
+    "sessionsWithAny": 12,
+    "sessions": 24,
+    "compileBuilder": 0,
+    "attemptsWithAny": 0,
+    "attempts": 0
+   },
+   "nestedModelAttempts": 0
+  },
+  "jit-claude-opus-5-5--claude-haiku-5-5": {
+   "faultsJsonlInMirror": false,
+   "faultRows": 0,
+   "rows": 14,
+   "rowsWithError": 0,
+   "rowsCostUnknown": [
+    3
+   ],
+   "eventsWithError": 0,
+   "costUnknownBookings": [
+    {
+     "idx": 3,
+     "component": "compileBuilder",
+     "imputedUsd": 3,
+     "at": "2026-10-14T14:08:53.622Z"
+    }
+   ],
+   "interpretSessions": {
+    "interpreter/claude-opus-5-5/error=none/attempt=0": 9,
+    "shadow/claude-opus-5-5/error=none/attempt=0": 5,
+    "adjudicator/claude-opus-5-5/error=none/attempt=0": 3
+   },
+   "compileAttempts": [
+    {
+     "version": 1,
+     "builder": "claude-haiku-5-5",
+     "builderError": "EXECUTOR_TIMEOUT",
+     "checkError": null,
+     "costUsd": 4.665,
+     "accepted": false
+    },
+    {
+     "version": 1,
+     "builder": "claude-opus-5-5",
+     "builderError": null,
+     "checkError": null,
+     "costUsd": 3.6,
+     "accepted": true
+    },
+    {
+     "version": 2,
+     "builder": "claude-haiku-5-5",
+     "builderError": null,
+     "checkError": null,
+     "costUsd": 1.175,
+     "accepted": true
+    },
+    {
+     "version": 3,
+     "builder": "claude-haiku-5-5",
+     "builderError": null,
+     "checkError": null,
+     "costUsd": 2.179,
+     "accepted": true
+    },
+    {
+     "version": 4,
+     "builder": "claude-haiku-5-5",
+     "builderError": null,
+     "checkError": null,
+     "costUsd": 2.982,
+     "accepted": true
+    },
+    {
+     "version": 5,
+     "builder": "claude-haiku-5-5",
+     "builderError": null,
+     "checkError": null,
+     "costUsd": 2.867,
+     "accepted": true
+    },
+    {
+     "version": 6,
+     "builder": "claude-haiku-5-5",
+     "builderError": null,
+     "checkError": null,
+     "costUsd": 2.265,
+     "accepted": false
+    },
+    {
+     "version": 6,
+     "builder": "claude-opus-5-5",
+     "builderError": null,
+     "checkError": null,
+     "costUsd": 5.223,
+     "accepted": true
+    }
+   ],
+   "rechecks": [
+    {
+     "idx": 13,
+     "version": 6,
+     "reason": "budget deopts in the host check",
+     "budgetDeopts": 1
+    }
+   ],
+   "unresolved": [
+    {
+     "idx": 6,
+     "version": 2
+    }
+   ],
+   "hiddenPathAttempts": {
+    "interpretShadowAdjudicator": 22,
+    "sessionsWithAny": 11,
+    "sessions": 17,
+    "compileBuilder": 14,
+    "attemptsWithAny": 3,
+    "attempts": 8
+   },
+   "nestedModelAttempts": 0
+  }
+ },
+ "armStop": {
+  "logSummary": [
+   {
+    "spec": "jit:claude-opus-5-5/claude-haiku-5-5",
+    "done": 14,
+    "faults": 0,
+    "errors": [
+     "arm spend stop: jit:claude-opus-5-5/claude-haiku-5-5 $33.17 > $32"
+    ]
+   },
+   {
+    "spec": "agent:claude-haiku-5-5",
+    "done": 24,
+    "faults": 0,
+    "errors": []
+   }
+  ],
+  "capUsd": 32,
+  "capSource": "configs/r0-kinetics-cloud.json (ENGINE-FREEZE section 6): O/H 32, agent 5, spendStopUsd 40",
+  "recordedSpendUsd": 33.175,
+  "imputedInsideIt": 3,
+  "measuredSpendUsd": 30.175,
+  "stopFiredOnRecordedSpend": true,
+  "stopWouldHaveFiredOnMeasuredSpendOnly": false,
+  "lastTaskStarted": {
+   "idx": 13,
+   "startedAtCumUsd": 25.042,
+   "taskUsd": 8.133
+  },
+  "overshootUsd": 1.175,
+  "tasksNotRun": 10,
+  "where": "stream-log-jit-r0-kinetics.txt (the stop is not written to events.jsonl or faults.jsonl); the check runs when a task starts (stream.mjs begin())"
+ }
+}

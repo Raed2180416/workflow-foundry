@@ -1228,3 +1228,191 @@ from "falsified".
 3. To decide a gate, L4 needs about 96 near-miss and solver entries offered about equally often, plus about 576
    admitted decisions, or 432 from 144 parents at half admission. M8's suite supplies the entries. The near-miss suite
    therefore becomes a prerequisite of L4's decision, not only of K14.
+
+**D32. R0-K kinetics rehearsal (cloud, E1c): the Haiku agent finished 24/24 (15 pass, $2.09); the Opus/Haiku JIT arm
+stopped at its $32 arm cap after 14/24 (13 pass, $33.17 recorded, $3.00 of it an imputed bound). On the 14 shared tasks the
+JIT arm passed 13 against 7, at 39 times the spend. relTol 0.05 is not confirmed for compiled-against-interpreter pairs:
+2 of 4 correct–correct pairs disagree at 0.05, and the two false regressions cost $6.65 downstream. H1-K is not admitted
+by its written condition (14 paired tasks, 20 required).**
+
+*Development evidence only: kinetics dev seeds 225–248 (d4 225–240, d5 241–248), K = 1, one lineage per arm, nothing
+held-out. The analysis below is $0: no model call, and `beds/sealed/` was not read (the bed loader reaches it only for ids
+starting with `sealed-`; only `kinetics` was loaded, as the dev-seed scorer). Run `jit-r0-kinetics`, launched
+2026-10-14 13:26:39Z from the frozen worktree `/var/tmp/foundry-work/kit-e1` (E1c: `ba0eb22`, kit `852ebdf05588de97`,
+claude CLI 2.1.299, policy `cfe79728…`), arm hashes `1fde4626b169c84c` (O/H) and `2e292709027b2786` (agent), both as
+stamped. Mirror: `research/jit-20261008/runs/jit-r0-kinetics/` (MANIFEST sha256 `556fc6a67ef86f66…bcf481`; 73 of 73 file
+hashes re-verified after the copy to the main tree; the kit-side and main-tree mirrors are byte-identical and
+`resume-streams.mjs --export-only` run from the kit worktree reported 0 changed). Analysis: `analysis/r0k/`
+(`report-*`, `durability-*`, `r0k-tables.*`, `arm-tables-*`, `shadow-replay-*`, `faults-review-*`, `secret-scan-*`, the
+stream log, the launch record and the capped config copy). Provenance: the scripts and first outputs came from a pass that a
+usage limit interrupted (autosave commits `c2e0bec`, `55e9240`, `9861651`). A second pass re-ran them on copies and diffed:
+`report.md`/`report.json`, `durability`, `r0k-tables.json` and `arm-tables` reproduce exactly (only the generation time and
+a scratch path differ); the headline figures were recomputed from `results.jsonl` and `events.jsonl` by a separate script;
+and the five shadow-pair distances were recomputed with `compare.mjs` `tolerantEqual` from the archived answers.*
+
+**1. What ran, and the deviations.**
+- **Arms.** `jit:claude-opus-5-5/claude-haiku-5-5` (O/H, interpreter Opus 5.5, compiler Haiku 5.5, Opus fallback) and
+  `agent:claude-haiku-5-5`; no static arm exists for kinetics. The agent arm ran at concurrency 2; the JIT arm runs its
+  tasks in sequence. Config `r0-kinetics.json`: prompt v4, `jit.compare tolerant` (relTol 0.05, absTol 1e-9, tolerantKeys
+  vmax and km, the exclusion set exact), strict acceptance (minPartial 0.9), warmup 3, `shadowFloor` 0.25 with
+  `shadowOnFlags`, `recompileOnDeopts` 2, `maxFallbacks` 2, `agentBudgetUsd` 2.
+- **Deviations from the laptop R0 and from the runbook.**
+  1. *Host:* the cloud container (4 vCPU, 15 GB, direct egress), not the owner's laptop (16 CPU).
+  2. *Kit:* E1c (ENGINE-FREEZE §6), not E1. One `src/` commit (`756d6de`); the arm hashes, the policy hash and the JIT tree
+     are unchanged, so rows are comparable to E1 on argv but carry kit `852ebdf0` and CLI 2.1.299 (laptop: 2.1.295).
+  3. *uid and auth route:* every process is uid 0 in the container, so the sandboxed session runs as uid 65534 mapped onto
+     host uid 0, with only the CLI's managed login file kept (not the whole `remote` directory); the laptop session runs as
+     its own uid with `CLAUDE_CODE_OAUTH_TOKEN` from the environment.
+  4. *Capped config copy:* `/var/tmp/foundry-work/configs/r0-kinetics-cloud.json` (copy kept in `analysis/r0k/`, sha256
+     `31eae4d1f787ab0e7245d35ef83b9b0a09a8790818c54f1c7b935d88f3dd6000`), identical to `configs/r0-kinetics.json` except
+     the O/H arm cap 25 → 32 and `spendStopUsd` 30 → 40 (ATTACK-20261014 §4 day 0). Caps are outside the arm hash.
+  5. *Ledger flip order:* the runbook G3 would flip records first. Records stays `fresh` because its laptop JIT arm (H/H)
+     is unfinished (D24), so the split is the reverse: `jit-r0-fresh` keeps records, and the new `jit-r0-kinetics-used`
+     holds kinetics 225–248 as `used` (allow `jit-r0`). **Consequence:** `configs/r0-kinetics.json` no longer validates
+     against the real ledger (`jit-r0` needs fresh seeds), so a resume of the stopped O/H arm is refused until that range
+     is set back to `fresh` by hand. The test pins in `stream.test.mjs` (S0-5 and the R0 config test) assert this, and
+     check the rest of the config against the ledger as it stood before the flip.
+- **Not run:** O/H tasks idx 14–23 (s239–s248: 2 d4 and all 8 d5). The O/H arm never reached the d5 drift segment.
+
+**2. Per-arm tables** ($ is measured list price, as in D25; the JIT arm's total includes the $3.00 imputed bound of one
+unknown-cost session, §5).
+
+| arm | done | pass (d4, d5) | total $ | $/success | $/task | delivered by (oracle pass) | env faults | wall time |
+|---|---|---|---|---|---|---|---|---|
+| Haiku agent | 24/24 | 15/24 (8/16, 7/8) | 2.086 | 0.139 | 0.087 | interpreter 24 (15) | 0 | 58.5 min (concurrency 2; tasks median 4.6, p95 6.6 min; 113 min of session time) |
+| JIT O→H | **14/24** | 13/14 (13/14, –) | 33.175 (30.175 measured + 3.000 imputed) | 2.552 | 2.370 | interpreter 9 (9), compiled 3 (2), adjudicated 2 (2) | 0 | 143.6 min (sequential; 112 of them in compile attempts) |
+
+The agent's 9 misses score 0.786–0.977 (schema-valid near-misses, none below 0.78); its per-task cost is $0.0595 mean at d4
+and $0.1417 at d5 (2.4×). The agent arm cost $0.0869 per task, M2's dev figure being $0.0876.
+
+JIT arm internals:
+
+| item | value |
+|---|---|
+| cost by component | Opus interpreter $3.828; compile builder $7.799 (includes the $3.00), compile gateway $10.303, compile check $6.856; compiled runs $1.027; shadows $2.166; adjudicators $1.196 |
+| compile | 8 attempts → 6 versions (v1–v6): 6 Haiku attempts ($16.133; accepted 4: v2, v3, v4, v5) and 2 Opus fallbacks ($8.823; accepted 2: v1, v6), i.e. both of `maxFallbacks` 2; 5 recompiles (deopts v2, v3, v6; regression v4, v5); one host-check recheck (idx 13, a budget deopt); compile **$24.957 = 75.2%** of the arm |
+| compiled attempts | 11: ok 5 ($0.147–0.167 each), deopt 6 (guard 5, judge 1) = 54.5%; every deopt fell back to the Opus interpreter (6 sessions, $2.619, $0.437 each) |
+| shadows | 5 = every compiled-ok run (effective rate **100%**); 3 disagreed (idx 6, 8, 9), 2 agreed only within tolerance (idx 10, 13); flags 22 over the 5 runs (all 5 flagged); adjudications 3 (interpreter 2, none 1), regressions 2, unresolved 1 |
+| per-session cost | Opus interpreter $0.425 mean (0.391–0.474), shadow $0.433, adjudicator $0.399, against the Haiku agent's $0.087 per task |
+| durability | never (6 versions over 14 rows: 2, 3, 1, 1, 3, 1 rows each); silent-miss 33% (1 of 3 compiled deliveries); deopt rate 55% (guard 45%) |
+| post-warmup (idx 3–13, 11 tasks) | $0.637 per task excluding compile (compiled runs $0.093, interpreter fallbacks $0.238, verification $0.306), against the agent's $0.087. M2 predicted, for kinetics: the agent at $0.0876, deopts on 40–60% of post-warmup tasks, and compiled runs plus fallbacks at $0.195–0.250 per task before verification. R0-K: 54.5%, and $0.331 (higher, because the fallback is an Opus session) |
+
+The JIT arm, task by task (compile attempts run at the start of the task that triggers them):
+
+| idx | seed | delivered | score | $ | min | version / compiled run | what happened |
+|---|---|---|---|---|---|---|---|
+| 0–2 | 225–227 | interpreter | 1 | 0.39–0.41 | 1.2–1.3 | – | warmup, 3 traces |
+| 3 | 228 | interpreter | 1 | 8.925 | 53.2 | v1 deopt (judge) | Haiku builder hit the 30-minute limit (`EXECUTOR_TIMEOUT`, 35.4 min, booked $3.00); its partial solve checked not accepted (0/3 exact, partial 0.87); Opus fallback built v1 (accepted, 3/3) |
+| 4 | 229 | interpreter | 1 | 0.474 | 1.4 | v1 deopt (guard) | |
+| 5 | 230 | interpreter | 1 | 1.600 | 8.6 | v2 deopt (guard) | recompile after 2 deopts (Haiku, accepted) |
+| 6 | 231 | **compiled** | **0.8929** | 0.952 | 3.0 | v2 ok | shadow disagrees; adjudicator matches neither; **unresolved, wrong compiled answer shipped** |
+| 7 | 232 | interpreter | 1 | 0.396 | 1.5 | v2 deopt (guard) | |
+| 8 | 233 | adjudicated | 1 | 3.126 | 12.6 | v3 ok | recompile (deopts); shadow disagrees; adjudicator sides with the shadow; regression |
+| 9 | 234 | adjudicated | 1 | 3.976 | 14.3 | v4 ok | recompile (regression); same again; regression |
+| 10 | 235 | compiled | 1 | 3.480 | 14.3 | v5 ok | recompile (regression); shadow agrees within tolerance |
+| 11, 12 | 236, 237 | interpreter | 1 | 0.46, 0.44 | 1.4, 1.3 | v5 deopt (guard) ×2 | |
+| 13 | 238 | compiled | 1 | 8.133 | 28.0 | v6 ok | recompile (deopts): Haiku attempt not accepted (8/11 exact), Opus fallback accepted (11/11); shadow agrees within tolerance |
+
+**3. The five shadow pairs (the compiled answer rebuilt offline).** As in D25 §3: the archived `solve.mjs` of the version in
+force, replayed through `run-compiled.mjs` with a strict memo port over only that run's journal rows (no live port; 8 of 8
+requests served and 0 misses in all five; the replayed answer's oracle score equals the archived row's in all five). The
+shadow and adjudicator answers are the archived traces. Distances are the largest relative difference over vmax and km;
+"excl." is whether the exclusion lists are equal. The oracle (experimenter's view, dev seeds) scores compiled / shadow /
+adjudicator.
+
+| idx | v | reason (draw) | oracle c / s / a | compiled–shadow | excl. | shadow–adjudicator | as run | at relTol 0.05 | at 0.10 (diagnostic) |
+|---|---|---|---|---|---|---|---|---|---|
+| 6 | v2 | flag (0.750) | fail 0.893 / fail 0.975 / pass | 0.1184 | differ (MW-0451) | 0.0087 (excl. differ) | unresolved; compiled shipped | same | same |
+| 8 | v3 | flag (0.666) | pass / pass / pass | **0.0850** | equal | 0.00017 | adjudicated; regression | disagree | agree |
+| 9 | v4 | flag (0.301) | pass / pass / pass | **0.0742** | equal | 0 | adjudicated; regression | disagree | agree |
+| 10 | v5 | floor+flag (0.094) | pass / pass / – | 2.2e-5 | equal | – | agree, no adjudicator | agree | agree |
+| 13 | v6 | flag (0.272) | pass / pass / – | 3.4e-5 | equal | – | agree, no adjudicator | agree | agree |
+
+The shadow–adjudicator pairs (both Opus interpreters) agree to 0.017% and 0% on the two correct pairs. The disagreement in
+idx 8 and 9 is between a Haiku-built compiled solver and the Opus interpreter, both inside the oracle's ±10% box, 7–9% apart
+at km. Idx 6 is the one silent wrong compiled delivery: the compiled answer is 11.8% from the adjudicator's correct answer
+on the same exclusion list, and the shadow was itself wrong (a different exclusion list), so the adjudicator's passing answer
+agreed with neither and the engine's rule shipped the compiled one.
+
+**4. Paired read on the 14 shared tasks (descriptive; K = 1; dev seeds; the JIT interpreter is Opus 5.5, the agent Haiku 5.5).**
+
+| | agent pass | agent fail |
+|---|---|---|
+| **JIT pass** | 6 | 7 (idx 1, 2, 3, 5, 9, 10, 13) |
+| **JIT fail** | 1 (idx 6) | 0 |
+
+- Gap +6 tasks (+42.9 points); exact two-sided McNemar 7 against 1, p = 0.070; clustered 95% CI −11.3 to +86.2 points
+  (Deff 2.3); the report's verdict is "directional, no decision (one stream)". Cost on the 14 tasks: JIT $33.175 against
+  $0.848 (39×); $/success $2.552 against $0.121 (21×); the cumulative gap never closes (no break-even).
+- The gap is mostly model strength, not mechanism. The 11 tasks delivered by an Opus session (9 interpreter, 2 adjudicated,
+  where the shadow's answer replaced the compiled one) passed 11 of 11, where the Haiku agent passed 6 of 11 on the same
+  tasks. The 3 compiled deliveries passed 2 of 3, the agent 1 of 3. The only task the agent won is the compiled silent miss
+  (idx 6).
+- On the whole stream the agent passed 15/24; on its first 14 tasks 7/14 ($0.848), on its last 10 8/10 ($1.238).
+
+**5. The cap stop (the arm-stop record).** The stop is written only to the process log (`stream-log-jit-r0-kinetics.txt`),
+not to `events.jsonl` or `faults.jsonl`: `arm spend stop: jit:claude-opus-5-5/claude-haiku-5-5 $33.17 > $32`, checked when
+idx 14 was about to start. The last task started at a cumulative $25.04 and cost $8.13 (idx 13: a Haiku and an Opus compile),
+ending at $33.175, $1.175 over the cap (caps are soft, checked at task start). **$3.00 of the recorded spend is the imputed
+bound of the idx 3 Haiku builder timeout (`costUnknown`), and the stop sums recorded spend: on measured spend alone ($30.175)
+the arm would have started idx 14.** The combined `spendStopUsd` $40 was not reached ($35.26). Ten tasks are unrun. Projection
+for 24 tasks (labelled as such): $39.5 if the next ten tasks cost the post-warmup rate excluding compile ($0.637), $56.9
+linear, $65.9 at the last six tasks' rate ($3.27); about 246–263 minutes.
+
+**6. Faults, isolation and secret scan** (`analysis/r0k/faults-review-*.json`, `secret-scan-*.json`, both reproducible by
+the scripts beside them).
+- **Faults.** No `faults.jsonl` in either arm; 0 fault rows, 0 transient retries, 0 `MODEL_RATE_LIMIT`, 0
+  `EXECUTOR_PROTOCOL`; 0 impaired tasks of 24 in both arms (0.0%, both valid under the 25% rule). All 24 agent sessions and
+  all 17 Opus interpreter, shadow and adjudicator sessions finished with no error at attempt 0 and a reported cost. The one
+  anomaly is the idx 3 builder `EXECUTOR_TIMEOUT` (a session that hit the config's 30-minute limit): it is not in the
+  engine's `ENV_FAULTS` set, so it wrote no fault row, was booked at its $3.00 bound, and its partial solve went on to the
+  check (as D25's H→H adjudicator timeout did). 49 sandboxed sessions in all (24 agent, 17 JIT interpretation, 8 builder).
+- **Isolation counters.** Nested model attempts 0. Hidden-path attempts (a tool use naming a path outside the workdir,
+  counted per use, not reviewed call by call; BLOCKER-SYNTHESIS C7 stands, as in D25): agent 65 in 12 of 24 sessions; JIT 22
+  in 11 of 17 interpretation sessions and 14 in 3 of 8 builder attempts (36 in all; `report.mjs` shows 22 because it omits the
+  builders). The 45 distinct `outsidePaths` entries are the model's own scratch paths under `/var/tmp` (none of the nine
+  checked exists on the host afterwards), the CLI's tool-result spill files under `/root/.claude/projects/…` (the host has no
+  such directories), `/opt/node24/bin` (kept read-only), and host-side run paths that compile builders named: the traces
+  directory (v5 and v6 Haiku) and one regression case's `expected.json` (v5); whether each was readable inside the sandbox
+  was not reviewed. **None is under `/home/claude` or `/root/.ccr`**, in any `compile.json` or trace.
+- **Secret scan** (the runbook's extended pattern, file names only; positive control found): the run directory (147
+  files), the work directory (2,494), the kit-side mirror (74), the main-tree mirror (74), `analysis/r0k`, the stream log
+  and the launch record: **no file matches**, so no legitimate source reference needed explaining. No symlinks in any
+  scanned tree. The mirror had already been committed by an autosave before the scan; it is clean.
+
+**7. The PREREG-stream TBDs this resolves (R0-RUNBOOK §4), with values.**
+
+| TBD | R0-K value |
+|---|---|
+| Per-arm budget and `spendStopUsd` for 24 tasks (actual × 1.5) | *Haiku agent:* $2.086 actual → **$3.13** (the dev figure $2.10 agrees; the $5 cap was never near). *O/H:* the 24-task actual is not measured (stopped at 14/24); recorded $33.175, measured $30.175, compile $24.957 (75%). Projected 24-task total $39.5 / $56.9 / $65.9 (§5), × 1.5 = **$59 / $85 / $99**. PREREG §7's "about $27.8 per stream" is already exceeded at 14 tasks, and "kinetics, K = 2, about $60 more" becomes $79–132 for two O/H streams plus about $4 for two agent streams. `spendStopUsd` $40 and the O/H cap $32 are both below any 24-task O/H stream |
+| Shadow floor ε 0.25 affordable | The shadow rate was set by flags, not by ε: 5 of 5 compiled-ok runs shadowed (**100%**); the floor draw alone fell below 0.25 once (idx 10; 1 of 5 = 20%). Verification (shadows + adjudicators) cost **$3.362 = 10.1%** of the arm and 40.9% of its non-compile spend; $0.433 per shadow, 2.8× a compiled-ok run ($0.157 mean) and 5× the Haiku agent's whole task ($0.087); shadow plus adjudication is $0.672 per compiled-ok task, 4.3× the compiled run. Affordable against the cap, not against the agent (M2's kinetics reading stands) |
+| Kinetics relTol | **0.05 not confirmed for compiled-against-interpreter pairs.** Stage B (agent against agent) stands: 0 of 15 correct–correct pairs disagree at 0.05. R0-K compiled–interpreter pairs: 4 correct–correct, **2 disagree at 0.05** (0.0850 and 0.0742, equal exclusion lists, both agree at 0.10), 2 agree (2e-5, 3e-5). The 2 false regressions cost $0.801 (adjudicators) + $5.849 (the two regression recompiles, v4 and v5) = **$6.65 (20% of the arm)**, attributed mechanically (each adjudicated regression triggered the next recompile). The one same-list wrong compiled answer (idx 6) is 0.1184 from the correct one (Stage A's closest control: 0.134). Window implied by these five pairs: **[0.0851, 0.1184)**, above the engine's 0.05 bound (`allowLooseTolerance`; a new arm hash) and inside the oracle's ±10% grading box; n = 4 and 1, K = 1. `compare.mjs` itself warns that a looser tolerance lets a near-miss agree. This is evidence for the freeze decision (FG §4.1 O1), not a change to the config |
+| Env-fault rate on this host | **0 of 24 impaired in each arm (0.0%)**; no fault rows; the 10% investigate line was not approached. Dev streams' 81 `MODEL_RATE_LIMIT` rows did not recur. The 7-day meter read 0.06 at 12:52Z (pre-launch) and 0.24 at 16:21Z, shared with other agents in the container and not attributable to this run |
+| Interpret retry policy; `EXECUTOR_PROTOCOL` imputation | 0 retries and 0 `EXECUTOR_PROTOCOL` in 49 sessions (E1c's G4 and the uid fix hold). The only `costUnknown` is the builder `EXECUTOR_TIMEOUT`: imputed at the $3.00 bound against $0.04–0.37 for the five other Haiku builder sessions, so it overstates by up to about $2.6–3 and tipped the arm cap (§5). Whether a timed-out builder is retried, and whether arm caps count imputed money, are freeze decisions |
+| Wall time per arm | Agent **58.5 min** for 24 tasks at concurrency 2. O/H 143.6 min for 14 tasks, **projected 246–263 min (4.1–4.4 h) for 24**; compile attempts take 7–15 min each (Haiku 5.4–8.9 builder minutes, Opus 11–12, the timeout 35). A stream is bounded by its O/H arm |
+
+Also answered for PREREG §0.6 item 3: *realized effective shadow rate* 100% (above); *H1-K admission:* by the written condition
+it is **not admitted** (1: both arms valid, holds; 2: at least 20 paired tasks, fails with 14; 3: gap ≥ +39 points, holds
+numerically at +42.9 on 14 pairs), a reading of the rule, not the freeze decision; *kinetics caps:* above; *acceptance
+predictiveness (BLOCKER rows 10–11):* not estimable here, because every adopted version was accepted (the two non-accepted
+Haiku attempts, v1 and v6, were replaced in the same compile event by accepted Opus versions), so there is no
+non-accepted contrast; Haiku-built attempts were accepted 4 of 6 and Opus fallbacks 2 of 2 on the same traces, a conditional
+comparison of n = 2. PREREG-stream.md was not edited: its §0.6 item 3 (the R0-K reading) and item 5 (per-bed split not done)
+are answered by this entry and the ledger; item 4 (the records S→H primary arm has never run on the frozen config) is not
+touched by R0-K.
+
+**Reading.** (1) *Capability, K = 1:* the O/H arm is ahead on success (13/14 against 7/14 on the shared tasks), but it comes
+from the Opus interpreter, not from the compiled path, which delivered 3 of 14 tasks (2 pass, one silent miss); 2 more were
+Opus answers after an adjudication and 9 were interpreter answers. (2) *Cost:* kinetics JIT is a cost negative again, now on
+the frozen config: compile spend alone ($24.96) is about 12 times the agent's whole 24-task stream ($2.09), and the arm's
+$/success is 18× the agent's; M2's withdrawal of the H1 cost claim for kinetics is
+corroborated, and H1-K can only be a reliability claim. (3) *The comparator:* at 0.05 the tolerant comparator mislabels
+correct compiled answers as regressions and pays a recompile for each, which feeds the next compile a shadow-fitted label;
+a tolerance wide enough to stop that sits above the engine bound and close to the near-miss controls. (4) *Unresolved
+adjudication ships the compiled answer;* in the one case here the adjudicator's own answer passed the oracle and would
+have corrected it (n = 1; the rule's pick between the compiled answer and the adjudicator's is untested). (5) *Imputation
+matters:* one timed-out builder, booked at its bound, ended the arm at 14/24 where measured spend would not have. (6) *Not
+shown:* anything about d5 drift for the JIT arm (0 of 8 tasks), K = 2, held-out seeds, or a single O/H lineage's variance.
+Suites: `stream.test.mjs` 34/34 (the S0-5 ledger test and the R0 config test carry the new pins); the JIT suite 353 tests,
+352 pass, 0 fail, 1 todo; the Kev ledger test `experiments/kev-data/test/seed-ledger.test.mjs` fails on a stale hard-coded list of
+four held ranges (the ledger already held 75 reserved or fresh ranges before this split; not touched here).

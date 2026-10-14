@@ -1,0 +1,68 @@
+{
+ "experiment": "jit-r0-kinetics",
+ "_note": "BLOCKER-SYNTHESIS row 9 (R0-K): kinetics dev run under the HANDOFF section 3 config, O/H first, on fresh kinetics dev seeds 225-248. No static kinetics solver exists, so there is no static arm. jit.relTol 0.05 set 2026-10-09 21:10 IST from Stage B (analysis/kinetics-gauge/out/stage-b/STAGE-B.md): 0 of 13 correct-correct pairs disagree at 0.05, all 13 wrong answers differ in the exclusion set (compared exactly), closest same-set control 0.134; the Stage A candidate stands (dev calibration, FG section 4.1 O1 applies to the PREREG freeze).",
+ "_capsNote": "Cloud copy of experiments/jit/configs/r0-kinetics.json (kit E1c, ENGINE-FREEZE section 6), identical except the spend caps: spendStopUsd 30 -> 40 and the O/H arm cap 25 -> 32 (ATTACK-20261014 section 4 day 0; the dev-kinetics-1 O/H arm cost $20.73 for 19 rows, so 25 would stop it before 24/24). Caps are not part of the arm hash. Owner: stay within the owner's budget bounds, 2026-10-14.",
+ "familyId": "kinetics",
+ "split": "dev",
+ "seedPurpose": "jit-r0",
+ "segments": [
+  {
+   "difficulty": 4,
+   "seeds": [225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240]
+  },
+  {
+   "difficulty": 5,
+   "seeds": [241, 242, 243, 244, 245, 246, 247, 248]
+  }
+ ],
+ "arms": [
+  "jit:claude-opus-5-5/claude-haiku-5-5",
+  "agent:claude-haiku-5-5"
+ ],
+ "jit": {
+  "warmup": 3,
+  "shadowFloor": 0.25,
+  "shadowOnFlags": true,
+  "recompileOnDeopts": 2,
+  "maxTraces": 8,
+  "compilerFallback": "claude-opus-5-5",
+  "maxFallbacks": 2,
+  "compare": "tolerant",
+  "relTol": 0.05,
+  "absTol": 1e-09,
+  "tolerantKeys": ["vmax", "km"],
+  "preserveRefusals": true
+ },
+ "compile": {
+  "builderEffort": "high",
+  "builderBudgetUsd": 3,
+  "gatewayUsd": 1.5,
+  "checkUsd": 1.5,
+  "minutes": 30,
+  "fallback": {
+   "builderEffort": "high",
+   "builderBudgetUsd": 8,
+   "gatewayUsd": 1.5,
+   "checkUsd": 1.5,
+   "minutes": 45
+  },
+  "acceptance": "strict",
+  "minPartial": 0.9,
+  "promptVersion": 4,
+  "acceptanceIds": "exact"
+ },
+ "perTaskUsd": 1,
+ "agentBudgetUsd": 2,
+ "agentMinutes": 15,
+ "compiledMinutes": 20,
+ "staticFallback": "claude-haiku-5-5",
+ "concurrency": 2,
+ "spendStopUsd": 40,
+ "armSpendStopUsd": {
+  "jit:claude-opus-5-5/claude-haiku-5-5": 32,
+  "agent:claude-haiku-5-5": 5
+ },
+ "persist": {
+  "commitDir": true
+ }
+}
