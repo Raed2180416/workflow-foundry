@@ -1,0 +1,259 @@
+{
+ "arm": "jit-compile",
+ "kind": "compile",
+ "familyId": "kinetics",
+ "label": "v1-opus55",
+ "version": 1,
+ "parentSha": null,
+ "changed": true,
+ "traceIds": [
+  "i002-interpreter-84138f",
+  "i001-interpreter-f0f2d2",
+  "i000-interpreter-b90b25"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v1-opus55:3d3f5e24-4031-4ea8-8a85-c1912ff4dc74",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "31f993d74b8a5610c23fda55f74b9f96c96ba92ed28a9c139341bb8ae0e1a9ff",
+ "artifact": "solve.mjs",
+ "artifactSha256": "839202f7c449a1ba4a01cd76f3f230b7d83b6a41e56a43a21b0c9ce1cfc3942a",
+ "builderCostUsd": 3.278016400000001,
+ "builderCostReportedUsd": 3.278016400000001,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 3.278016400000001,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 74,
+  "cache_creation_input_tokens": 164387,
+  "cache_read_input_tokens": 4300122,
+  "output_tokens": 55130,
+  "output_tokens_details": {
+   "thinking_tokens": 23791
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 164387,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 917,
+    "cache_read_input_tokens": 168679,
+    "cache_creation_input_tokens": 1205,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1205
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 74,
+  "outputTokens": 1094,
+  "cacheReadTokens": 4300122,
+  "cacheWriteTokens": 164387
+ },
+ "builderSessionId": "cf7b4ee4-6ae5-458b-9fc9-66029eb17e69",
+ "gatewayCostUsd": 0.6107234149999999,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 24,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.19183111,
+ "constructionCostUsd": 3.888739815000001,
+ "compileCostUsd": 4.080570925000001,
+ "startedAt": "2026-10-09T03:11:54.383Z",
+ "durationMs": 1121676,
+ "builderMs": 1052498,
+ "minutes": 45,
+ "turns": 39,
+ "toolUses": 38,
+ "builderError": null,
+ "builderCheckRuns": 3,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.533,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 42184,
+    "costUsd": 0.010782,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.19386459462745292",
+      "want": "0.19386454869902092"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "179.23670046748185",
+      "want": "179.2358996204123"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.3066334959878175",
+      "want": "0.30663503998651914"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "24.81067442890567",
+      "want": "24.811327426095044"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.4588047690486552",
+      "want": "0.458803608483078"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.19386459462745292 want 0.19386454869902092; $.conditions[0].km: got 179.23670046748185 want 179.2358996204123; +12 more",
+    "ref": "i002-interpreter-84138f"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 68491,
+    "costUsd": 0.168852,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.7264179387868476",
+      "want": "0.7264179395637186"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "54.20704037893138",
+      "want": "54.2070406246722"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.6597674940180951",
+      "want": "0.6597674953415154"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "95.89021819149568",
+      "want": "95.89021889444027"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.9549402547630423",
+      "want": "0.9549402546007795"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.7264179387868476 want 0.7264179395637186; $.conditions[0].km: got 54.20704037893138 want 54.2070406246722; +12 more",
+    "ref": "i001-interpreter-f0f2d2"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 48329,
+    "costUsd": 0.012197,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "2.9607053254797964",
+      "want": "2.960705323788387"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "26.31099181224519",
+      "want": "26.310991752168256"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "5.790976436255433",
+      "want": "5.790976434283813"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "11.825038654659615",
+      "want": "11.825038633346484"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "2.5733325188940417",
+      "want": "2.573332521688745"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 2.9607053254797964 want 2.960705323788387; $.conditions[0].km: got 26.31099181224519 want 26.310991752168256; +12 more",
+    "ref": "i000-interpreter-b90b25"
+   }
+  ],
+  "cases": 3,
+  "labeled": 3,
+  "exactRate": 0,
+  "diffs": 3,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [
+   "trace-0",
+   "trace-1",
+   "trace-2"
+  ],
+  "accepted": false,
+  "costUsd": 0.19183111,
+  "calls": 7,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 69123,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n**Code:** solve.mjs parses every sheet format seen in the traces:\n- reader-export tables (comments, re-reads, the mAU/min conversion)\n- markdown tables\n- bench-log prose\n- CSV blocks\n- summary sheets\n- raw instrument exports\n\nIt also parses labels and units. The rate used for a well is the re-read, else the raw export, else the transcription. Code applies SAT/OVR flags and a >1.0 °C temperature check (K converted). It then applies the judge's swaps, relabels, unit fixes, exclusions and dilutions. Bubble clock times are compared against the read window, and dilution rescaling multiplies by dilution/500. The fit is unweighted least squares. Inhibitor conditions keep the Vmax of the matching uninhibited condition and fit only Km.\n\n**Judges:** `prose-events-a` and `-b` are two independent reads on tiers haiku→opus. Each returns exclusions, relabels, swaps, unit fixes and dilutions, with src ids and verbatim quotes. Checks: quotes must appear verbatim, ids must exist, clocks must be HH:MM, units must parse, every condition needs a dilution, and a non-standard dilution must appear in its quote. If the two reads imply different decisions, `prose-events-arbiter` (opus→sonnet) decides.\n\n**Guards:**\n- row count matches the memo's \"N plate rows\"\n- every row has the planned number of levels\n- every label maps to one condition\n- well ids are unique\n- raw-export ids appear on a sheet\n- units are known\n- the SOP is present\n- each inhibitor condition has a reference\n\n**Invariants:** kept + excluded = all wells; at least 5 points per fit; Km is not at the edge of the grid; replicate rows agree in scale (0.6–1.6).\n\n**check-traces:** 3/3 with no crash, deopt or timeout, at about $0.01 per task. `excluded_samples` equals the agent's set on every trace. vmax/km differ only by fitting round-off (≤1e-5 relative). There are no substantive disagreements.\n",
+ "hiddenPathAttempts": 5,
+ "outsidePaths": [
+  "/root/.claude/projects/-var-tmp-foundry-work-jit-jit-dev-kinetics-1-jit-claude-opus-5-5--claude-haiku-5-5-compile-v1-opus55/cf7b4ee4-6ae5-458b-9fc9-66029eb17e69/tool-results/ba7xoixlf.txt",
+  "/root/.claude/projects/-var-tmp-foundry-work-jit-jit-dev-kinetics-1-jit-claude-opus-5-5--claude-haiku-5-5-compile-v1-opus55/cf7b4ee4-6ae5-458b-9fc9-66029eb17e69/tool-results/bdat2fotf.txt",
+  "/root/.claude/projects/-var-tmp-foundry-work-jit-jit-dev-kinetics-1-jit-claude-opus-5-5--claude-haiku-5-5-compile-v1-opus55/cf7b4ee4-6ae5-458b-9fc9-66029eb17e69/tool-results/brfswuy0l.txt",
+  "/run/t1"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i002-interpreter-84138f",
+   "i001-interpreter-f0f2d2",
+   "i000-interpreter-b90b25"
+  ],
+  "regressionIds": [],
+  "previousSha": null
+ }
+}

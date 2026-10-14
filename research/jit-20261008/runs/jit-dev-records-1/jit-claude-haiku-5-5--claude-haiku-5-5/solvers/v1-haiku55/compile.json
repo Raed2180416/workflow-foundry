@@ -1,0 +1,199 @@
+{
+ "arm": "jit-compile",
+ "kind": "compile",
+ "familyId": "records",
+ "label": "v1-haiku55",
+ "version": 1,
+ "parentSha": null,
+ "changed": true,
+ "traceIds": [
+  "i002-interpreter-39e2c6",
+  "i001-interpreter-513f07",
+  "i000-interpreter-a52bb5"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v1-haiku55:6d2be21c-da7a-43b3-afaf-a887e13399d3",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "6347f1288fd6102b31f968eb5890df11857de4c9e4b6bcac6516587321703d3a",
+ "artifact": "solve.mjs",
+ "artifactSha256": "4ce4943f8b95f7344eb3702c28bec9bc5d65385f8a82ce639be079bb0947a36e",
+ "builderCostUsd": 0.5878971799999999,
+ "builderCostReportedUsd": 0.5878971799999999,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.5878971799999999,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 74,
+  "cache_creation_input_tokens": 213904,
+  "cache_read_input_tokens": 5825022,
+  "output_tokens": 144988,
+  "output_tokens_details": {
+   "thinking_tokens": 103029
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 213904,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 859,
+    "cache_read_input_tokens": 220058,
+    "cache_creation_input_tokens": 248,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 248
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 74,
+  "outputTokens": 318,
+  "cacheReadTokens": 5825022,
+  "cacheWriteTokens": 213904
+ },
+ "builderSessionId": "cb12f8d5-db76-465c-a0bf-0702b8abbfc5",
+ "gatewayCostUsd": 0.132932305,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 36,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.011357230000000001,
+ "constructionCostUsd": 0.7208294849999999,
+ "compileCostUsd": 0.7321867149999999,
+ "startedAt": "2026-10-09T02:56:41.244Z",
+ "durationMs": 832430,
+ "builderMs": 811943,
+ "minutes": 30,
+ "turns": 53,
+ "toolUses": 52,
+ "builderError": null,
+ "builderCheckRuns": 5,
+ "checkTraces": {
+  "exact": 1,
+  "partial": 0.986,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 20372,
+    "costUsd": 0.005054,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i002-interpreter-39e2c6"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 12365,
+    "costUsd": 0.003208,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.958,
+    "diffs": [
+     {
+      "path": "$.records[2].amount_usd",
+      "got": "272.96",
+      "want": "-272.96"
+     },
+     {
+      "path": "$.records[3].amount_usd",
+      "got": "827.12",
+      "want": "-827.12"
+     },
+     {
+      "path": "$.records[4].amount_usd",
+      "got": "291.38",
+      "want": "-291.38"
+     },
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-40.04",
+      "want": "40.04"
+     },
+     {
+      "path": "$.records[11].amount_usd",
+      "got": "143.44",
+      "want": "-143.44"
+     }
+    ],
+    "note": "$.records[2].amount_usd: got 272.96 want -272.96; $.records[3].amount_usd: got 827.12 want -827.12; +14 more",
+    "ref": "i001-interpreter-513f07"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 12281,
+    "costUsd": 0.003095,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i000-interpreter-a52bb5"
+   }
+  ],
+  "cases": 3,
+  "labeled": 3,
+  "exactRate": 0.333,
+  "diffs": 2,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.011357230000000001,
+  "calls": 6,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 20474,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n**Procedure in code.** Each line format is parsed by position or key (BRIGHTDESK, LEDGR, ATLAS, KOBO, VERITAS JSON). Spec tables (calling codes, trunk prefixes, rates, nicknames) are read at run time. Dates follow each system's convention. Phones become E.164. Amounts are exact BigInt rationals, rounded once. Identity is union-find over rule 3. Rows are ordered by update date, VERITAS last. Output is sorted by entity_id.\n\n**Judges**\n- `source-rules` (haiku, sonnet, opus): reads the notes into per-task rule values and void markers. Every quote must occur verbatim in the notes.\n- `vendex-entries` (same tiers): verbatim substrings for name, dates, phone, amount and country text. Checked for substring presence and spec-table codes.\n- `country-names`: only for country strings that aliases and fuzzy matching cannot resolve.\n\n**Guards.** Input shape, known line formats, LEDGR field count, spec tables, unique row ids, unparseable dates/phones/amounts, currency without a rate.\n\n**Invariants.** Each live row in exactly one person; one birth date per person; entity_id is the smallest source row; amounts have two decimals; phones are E.164.\n\n**check-traces (full run).** No crash, deopt or timeout; no regression cases.\n- trace-2: exact.\n- trace-0: all 43 records match the agent answer field by field. The checker reports `diff` only because record order differs; the spec defines no order, so the solver sorts by entity_id.\n- trace-1: 16 records differ on amount_usd, all by sign. The notes say \"Saldo changes sign in the master\" (LEDGR flip), which the agent did not apply; the solver follows the text. Affected entity_ids: 1252, 1285, 1360, 1906, 2292, 2440, 2721, 3467, 4417, 4799, 5499, 7109, 7239, 7257, 7649, 8083.\n\n**Untested.** The \"unstated\" fallbacks are not exercised by any trace.\n",
+ "hiddenPathAttempts": 1,
+ "outsidePaths": [
+  "/var/tmp/foundry-work/jit/scratch-cb12"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i002-interpreter-39e2c6",
+   "i001-interpreter-513f07",
+   "i000-interpreter-a52bb5"
+  ],
+  "regressionIds": [],
+  "previousSha": null
+ }
+}

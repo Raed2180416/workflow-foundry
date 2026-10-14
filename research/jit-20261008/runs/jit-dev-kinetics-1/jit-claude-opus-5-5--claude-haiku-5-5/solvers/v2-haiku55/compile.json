@@ -1,0 +1,334 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "kinetics",
+ "label": "v2-haiku55",
+ "version": 2,
+ "parentSha": "839202f7c449a1ba4a01cd76f3f230b7d83b6a41e56a43a21b0c9ce1cfc3942a",
+ "changed": true,
+ "traceIds": [
+  "i008-interpreter-7d87fe",
+  "i007-interpreter-0ff54f",
+  "i002-interpreter-84138f",
+  "i001-interpreter-f0f2d2",
+  "i000-interpreter-b90b25"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-haiku55:996e5449-297c-4430-bfb9-00b605e31c91",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "683f0e339c9fd761925a2b743ad919fda7fc6257e12710f59dee54d79a09cd0e",
+ "artifact": "solve.mjs",
+ "artifactSha256": "6127e737d82a0be64e442e79332a5f595a4a5a4b3854ca721f81398d73a2915c",
+ "builderCostUsd": 0.27505544,
+ "builderCostReportedUsd": 0.27505544,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.27505544,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 74,
+  "cache_creation_input_tokens": 135818,
+  "cache_read_input_tokens": 3435528,
+  "output_tokens": 50288,
+  "output_tokens_details": {
+   "thinking_tokens": 31401
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 135818,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1024,
+    "cache_read_input_tokens": 141957,
+    "cache_creation_input_tokens": 263,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 263
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 74,
+  "outputTokens": 317,
+  "cacheReadTokens": 3435528,
+  "cacheWriteTokens": 135818
+ },
+ "builderSessionId": "09cdb0a7-96cc-4975-bb5a-cf6ac8225b79",
+ "gatewayCostUsd": 1.2482969699999997,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 53,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.053374599999999994,
+ "constructionCostUsd": 1.5233524099999998,
+ "compileCostUsd": 1.5767270099999997,
+ "startedAt": "2026-10-09T03:41:16.491Z",
+ "durationMs": 832831,
+ "builderMs": 742731,
+ "minutes": 30,
+ "turns": 42,
+ "toolUses": 41,
+ "builderError": null,
+ "builderCheckRuns": 8,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.532,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 37181,
+    "costUsd": 0.00971,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.4836149380462251",
+      "want": "0.48361493846194126"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "12.541152873015406",
+      "want": "12.541152916809505"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.30753374546929624",
+      "want": "0.3075337464719278"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "15.146881804619174",
+      "want": "15.146881972308211"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.30753374546929624",
+      "want": "0.3075337464719278"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.4836149380462251 want 0.48361493846194126; $.conditions[0].km: got 12.541152873015406 want 12.541152916809505; +12 more",
+    "ref": "i008-interpreter-7d87fe"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 39454,
+    "costUsd": 0.010393,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.641,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "6.743472241454071",
+      "want": "6.7435"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "13.272190096178573",
+      "want": "13.272"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "3.854805817118088",
+      "want": "3.8548"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "25.037024692631178",
+      "want": "25.037"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "3.0312170993993455",
+      "want": "3.0312"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 6.743472241454071 want 6.7435; $.conditions[0].km: got 13.272190096178573 want 13.272; +12 more",
+    "ref": "i007-interpreter-0ff54f"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 36718,
+    "costUsd": 0.009064,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.19386459462745292",
+      "want": "0.19386454869902092"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "179.23670046748185",
+      "want": "179.2358996204123"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.3066334959878175",
+      "want": "0.30663503998651914"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "24.81067442890567",
+      "want": "24.811327426095044"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.4588047690486552",
+      "want": "0.458803608483078"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.19386459462745292 want 0.19386454869902092; $.conditions[0].km: got 179.23670046748185 want 179.2358996204123; +12 more",
+    "ref": "i002-interpreter-84138f"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 53147,
+    "costUsd": 0.01265,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.421,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.7327791698112394",
+      "want": "0.7264179395637186"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "55.737808365759165",
+      "want": "54.2070406246722"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.6597674940180951",
+      "want": "0.6597674953415154"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "95.89021819149568",
+      "want": "95.89021889444027"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.9549402547630423",
+      "want": "0.9549402546007795"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.7327791698112394 want 0.7264179395637186; $.conditions[0].km: got 55.737808365759165 want 54.2070406246722; +18 more",
+    "ref": "i001-interpreter-f0f2d2"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 48847,
+    "costUsd": 0.011557,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "2.9607053254797964",
+      "want": "2.960705323788387"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "26.31099181224519",
+      "want": "26.310991752168256"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "5.790976436255433",
+      "want": "5.790976434283813"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "11.825038654659615",
+      "want": "11.825038633346484"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "2.5733325188940417",
+      "want": "2.573332521688745"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 2.9607053254797964 want 2.960705323788387; $.conditions[0].km: got 26.31099181224519 want 26.310991752168256; +12 more",
+    "ref": "i000-interpreter-b90b25"
+   }
+  ],
+  "cases": 5,
+  "labeled": 5,
+  "exactRate": 0,
+  "diffs": 5,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [
+   "trace-2"
+  ],
+  "accepted": false,
+  "costUsd": 0.053374599999999994,
+  "calls": 10,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 90080,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\n- Parsers for each sheet format: reader tables, markdown tables, bench logs, CSV (units in headers), summary sheets, raw export, master-mix log.\n- Units, labels, flags, re-reads, dilution rescaling, swaps, unit fixes.\n- Fit: unweighted least squares for Vmax·S/(Km+S), profiled over Km; inhibitor conditions reuse the matching Vmax.\n\n## Judges\n- `prose-events-a` / `-b`: two reads of notes, addenda, chat and master-mix log. Tiers: haiku, then opus.\n- `prose-events-arbiter`: only when the reads disagree. Tiers: opus, then sonnet.\n- Checks: quotes in the sources (case-folded); src ids exist; bubble clocks HH:MM; dilution as 1:N or \"twice/half as much\".\n\n## Guards and invariants\n- Guards: raw-export-unit, sop-sections, summary-entry-parsed, summary-rep-known, all-rows-found, rows-have-planned-levels, row-labels-map, unique-wells, raw-ids-on-sheets, abs-conversion, all-values-numeric, inhibitor-has-reference.\n- Invariants: wells-conserved, enough-points, fit-interior, replicate-rows-agree.\n\n## Changes this round\n- CSV unit headers (trace-0), which had deopted `all-values-numeric`.\n- \"Twice as much\" dilution wording (trace-1), which had deopted the judge.\n- Block temperature for \"this read\" applies to all wells of that bench read (trace-1).\n- Judge prompt: \"as for this well:\" row notes and end-of-read bubbles (trace-4).\n\n## check-traces (final)\n- 5/5 ran: no crash, deopt or timeout.\n- Regressions 0/0: no `regressions/` directory exists here, so that gate is untested.\n- Excluded sets match agent answers for trace-0, 1, 2, 4.\n- Exact JSON: 0/5. Trace-0, 2, 4 differ by ≤1e-5 relative; trace-1 by ≤3e-5 (agent answer is rounded).\n\n## Disagreement: trace-3 excluded_samples\n- We also exclude DR-0571–0576, 0578, 0579; the agent excluded only DR-0577.\n- Decisive sentence: \"Block read 23.7 °C during this read.\" SOP 2.4 excludes wells whose logged block temperature is more than 1.0 °C from setpoint (25 °C). Read literally, it covers all nine wells of the read.\n- Per-well reading instead: C1 moves about +0.9% Vmax, +2.8% Km (inside tolerance).\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i008-interpreter-7d87fe",
+   "i007-interpreter-0ff54f",
+   "i002-interpreter-84138f",
+   "i001-interpreter-f0f2d2",
+   "i000-interpreter-b90b25"
+  ],
+  "regressionIds": [],
+  "previousSha": "839202f7c449a1ba4a01cd76f3f230b7d83b6a41e56a43a21b0c9ce1cfc3942a"
+ }
+}

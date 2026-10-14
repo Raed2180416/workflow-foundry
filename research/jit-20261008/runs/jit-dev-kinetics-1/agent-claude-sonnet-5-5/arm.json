@@ -1,0 +1,19 @@
+{
+ "experiment": "jit-dev-kinetics-1",
+ "spec": "agent:claude-sonnet-5-5",
+ "slug": "agent-claude-sonnet-5-5",
+ "kind": "agent",
+ "hash": "17b451b20087e9a1",
+ "def": {
+  "spec": "agent:claude-sonnet-5-5",
+  "familyId": "kinetics",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "agentMinutes": 15,
+  "agentEffort": null,
+  "models": [
+   "claude-sonnet-5-5"
+  ]
+ }
+}

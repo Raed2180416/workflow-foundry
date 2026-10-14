@@ -1,0 +1,279 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v2-haiku55",
+ "version": 2,
+ "parentSha": "3d8d9cc29cd915a1d6abeca009f3eb51e644e6d9c8684d9279e4bbdd2e2054e8",
+ "changed": true,
+ "traceIds": [
+  "i017-interpreter-455cab",
+  "i016-interpreter-a219b9",
+  "i010-shadow-6f1a06",
+  "i006-shadow-f41c70",
+  "i002-interpreter-03cfce",
+  "i001-interpreter-b2fc5a",
+  "i000-interpreter-b39702"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-haiku55:b19dc66b-8af2-4a3f-ad54-ef8829cf47f9",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "152d04c2c55cea0893007bd692af4c376844ca04ccd35ce8ba2459eff6dde469",
+ "artifact": "solve.mjs",
+ "artifactSha256": "b660ab525430dd2182f848a0f0da0d87055f0a7266f4e9e155ea3ea9f5fab682",
+ "builderCostUsd": 0.3149534100000001,
+ "builderCostReportedUsd": 0.3149534100000001,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.3149534100000001,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 60,
+  "cache_creation_input_tokens": 147097,
+  "cache_read_input_tokens": 2999697,
+  "output_tokens": 62192,
+  "output_tokens_details": {
+   "thinking_tokens": 45078
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 147097,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 741,
+    "cache_read_input_tokens": 153240,
+    "cache_creation_input_tokens": 259,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 259
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 60,
+  "outputTokens": 195,
+  "cacheReadTokens": 2999697,
+  "cacheWriteTokens": 147097
+ },
+ "builderSessionId": "3205b254-0825-4e89-af2d-2572c119cd85",
+ "gatewayCostUsd": 0.7429281200000002,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 126,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.178928115,
+ "constructionCostUsd": 1.0578815300000004,
+ "compileCostUsd": 1.2368096450000003,
+ "startedAt": "2026-10-09T03:20:03.212Z",
+ "durationMs": 508907,
+ "builderMs": 448099,
+ "minutes": 30,
+ "turns": 38,
+ "toolUses": 37,
+ "builderError": null,
+ "builderCheckRuns": 5,
+ "checkTraces": {
+  "exact": 1,
+  "partial": 0.995,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 27662,
+    "costUsd": 0.027996,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.976,
+    "diffs": [
+     {
+      "path": "$.records[35].source_rows[2]",
+      "got": "<missing>",
+      "want": "7149"
+     },
+     {
+      "path": "$.records[35].given_name",
+      "got": "\"Jules\"",
+      "want": "\"Julie\""
+     },
+     {
+      "path": "$.records[35].country",
+      "got": "\"BE\"",
+      "want": "\"IE\""
+     },
+     {
+      "path": "$.records[35].amount_usd",
+      "got": "12985.55",
+      "want": "54.1"
+     },
+     {
+      "path": "$.records[got 47]",
+      "got": "{\"amount_usd\":54.1,\"birth_date\":\"2001-04-01\",\"country\":\"IE\",\"entity_id\":7149,\"family_name\":\"Menard\",\"given_name\":\"Julie…",
+      "want": "<not expected>"
+     }
+    ],
+    "note": "$.records[35].source_rows[2]: got <missing> want 7149; $.records[35].given_name: got \"Jules\" want \"Julie\"; +3 more",
+    "ref": "i017-interpreter-455cab"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 26454,
+    "costUsd": 0.02593,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i016-interpreter-a219b9"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 23654,
+    "costUsd": 0.033356,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i010-shadow-6f1a06"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 16413,
+    "costUsd": 0.022543,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i006-shadow-f41c70"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 22073,
+    "costUsd": 0.022044,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.997,
+    "diffs": [
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-504",
+      "want": "44265.51"
+     }
+    ],
+    "note": "$.records[8].amount_usd: got -504 want 44265.51",
+    "ref": "i002-interpreter-03cfce"
+   },
+   {
+    "id": "trace-5",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 19470,
+    "costUsd": 0.023205,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i001-interpreter-b2fc5a"
+   },
+   {
+    "id": "trace-6",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 20238,
+    "costUsd": 0.023853,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.994,
+    "diffs": [
+     {
+      "path": "$.records[2].birth_date",
+      "got": "\"1969-09-11\"",
+      "want": "\"1969-11-09\""
+     },
+     {
+      "path": "$.records[28].birth_date",
+      "got": "\"1956-02-10\"",
+      "want": "\"1956-10-02\""
+     }
+    ],
+    "note": "$.records[2].birth_date: got \"1969-09-11\" want \"1969-11-09\"; $.records[28].birth_date: got \"1956-02-10\" want \"1956-10-02\"",
+    "ref": "i000-interpreter-b39702"
+   }
+  ],
+  "cases": 7,
+  "labeled": 7,
+  "exactRate": 0.143,
+  "diffs": 6,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [
+   "trace-3",
+   "trace-5"
+  ],
+  "accepted": false,
+  "costUsd": 0.178928115,
+  "calls": 42,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 60775,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES: master-list migration solver\n\n**Procedure in code:** line parsing per system; birth dates in each system's order (ATLAS swaps day and month from the notes' date); money parsing and exact BigInt FX conversion; E.164 from the spec table; identity by union-find (one OSA edit after folding, then DOB or phone); conflict order (unreliable systems last, then recency); output sorted by entity_id.\n\n**Judges:**\n- `rules` (opus): date order, sign flips, void markers, unreliable systems, ATLAS swap date. Code checks quotes against the notes.\n- `countries` (haiku, then opus): name to ISO.\n- `vendex-N` (haiku, then opus; batches of 4): verbatim fields, checked by code.\n\n**Guards:** inputs-present, known-line-formats, spec-tables-parsed, balances-parsed, names-parsed, rates-known. **Invariants:** row-ids-unique, rows-conserved, rows-in-one-record, one-dob-per-person, entity-ids-unique.\n\n**Changes this round:** ATLAS swap for rows changed on or after a notes date (fixed trace-0 and trace-1 deopts); family particles (\"DE VRIES\" to \"de Vries\"); uppercase Ō and Ū folding.\n\n**check-traces (full run):** 0 crash, 0 deopt, 0 timeout; no regression cases exist. trace-1 exact; the rest as below.\n\n**Disagreements with agent answers**\n- **trace-0, 4193 / 7149 (source_rows, given_name, country, amount_usd):** spec §3.1 \"at most one typing error in total\". \"Julie\" and \"Jules\" differ by two letters, so 7149 stays separate. The agent merged it.\n- **trace-4, 1457 (amount_usd):** spec §4 \"Balance: from the most recent row with a usable balance\". KOBO/1457 (2025/08/13) is newer than KOBO/9683; its balance is negative, so −504.00. The agent used 9683.\n- **trace-6, 6483 and 6748 (birth_date):** the notes say \"An ATLAS row 'born 10/02/1952' belongs to someone born in October\", so ATLAS is month-first. The agent read day-first.\n- **trace-2, 3, 5:** same content once sorted by entity_id; only record order differs (trace-2 also source_rows). The spec fixes no order.\n",
+ "hiddenPathAttempts": 2,
+ "outsidePaths": [
+  "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/solve.mjs"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i017-interpreter-455cab",
+   "i016-interpreter-a219b9",
+   "i010-shadow-6f1a06",
+   "i006-shadow-f41c70",
+   "i002-interpreter-03cfce",
+   "i001-interpreter-b2fc5a",
+   "i000-interpreter-b39702"
+  ],
+  "regressionIds": [],
+  "previousSha": "3d8d9cc29cd915a1d6abeca009f3eb51e644e6d9c8684d9279e4bbdd2e2054e8"
+ }
+}

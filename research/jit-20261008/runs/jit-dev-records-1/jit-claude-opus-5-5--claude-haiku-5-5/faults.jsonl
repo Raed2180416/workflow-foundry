@@ -1,0 +1,1 @@
+{"experiment":"jit-dev-records-1","arm":"jit:claude-opus-5-5/claude-haiku-5-5","idx":3,"taskKey":"records:dev:d3:s204","component":"compile","error":null,"metaErrors":null,"builderError":{"code":"MODEL_RATE_LIMIT","exitCode":1,"stderr":""},"at":"2026-10-08T23:51:53.432Z"}

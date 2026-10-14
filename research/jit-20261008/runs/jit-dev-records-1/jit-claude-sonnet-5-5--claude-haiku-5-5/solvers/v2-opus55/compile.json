@@ -1,0 +1,277 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v2-opus55",
+ "version": 2,
+ "parentSha": "3d8d9cc29cd915a1d6abeca009f3eb51e644e6d9c8684d9279e4bbdd2e2054e8",
+ "changed": true,
+ "traceIds": [
+  "i017-interpreter-455cab",
+  "i016-interpreter-a219b9",
+  "i010-shadow-6f1a06",
+  "i006-shadow-f41c70",
+  "i002-interpreter-03cfce",
+  "i001-interpreter-b2fc5a",
+  "i000-interpreter-b39702"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-opus55:36e30ee2-ee28-41de-ad4f-cc1b137132b3",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "eeec5b85da72f7e18049243f6a9b3f6cfbe9b578fc0be6fb420130845f294575",
+ "artifact": "solve.mjs",
+ "artifactSha256": "bcef1fb8f374330366431318ec5efa9045fb1eb559744fb58536907fc9ff15f2",
+ "builderCostUsd": 1.2732354,
+ "builderCostReportedUsd": 1.2732354,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 1.2732354,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 58,
+  "cache_creation_input_tokens": 73901,
+  "cache_read_input_tokens": 1526877,
+  "output_tokens": 18821,
+  "output_tokens_details": {
+   "thinking_tokens": 6667
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 73901,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 910,
+    "cache_read_input_tokens": 78065,
+    "cache_creation_input_tokens": 1333,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1333
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 58,
+  "outputTokens": 245,
+  "cacheReadTokens": 1526877,
+  "cacheWriteTokens": 73901
+ },
+ "builderSessionId": "d6c92840-4754-4fec-8214-298a71dbd5a9",
+ "gatewayCostUsd": 1.0446734850000001,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 164,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.16472136500000006,
+ "constructionCostUsd": 2.317908885,
+ "compileCostUsd": 2.48263025,
+ "startedAt": "2026-10-09T03:28:32.127Z",
+ "durationMs": 649988,
+ "builderMs": 573647,
+ "minutes": 45,
+ "turns": 30,
+ "toolUses": 29,
+ "builderError": null,
+ "builderCheckRuns": 9,
+ "checkTraces": {
+  "exact": 1,
+  "partial": 0.995,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 27939,
+    "costUsd": 0.028086,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.976,
+    "diffs": [
+     {
+      "path": "$.records[35].source_rows[2]",
+      "got": "<missing>",
+      "want": "7149"
+     },
+     {
+      "path": "$.records[35].given_name",
+      "got": "\"Jules\"",
+      "want": "\"Julie\""
+     },
+     {
+      "path": "$.records[35].country",
+      "got": "\"BE\"",
+      "want": "\"IE\""
+     },
+     {
+      "path": "$.records[35].amount_usd",
+      "got": "12985.55",
+      "want": "54.1"
+     },
+     {
+      "path": "$.records[got 47]",
+      "got": "{\"amount_usd\":54.1,\"birth_date\":\"2001-04-01\",\"country\":\"IE\",\"entity_id\":7149,\"family_name\":\"Menard\",\"given_name\":\"Julie…",
+      "want": "<not expected>"
+     }
+    ],
+    "note": "$.records[35].source_rows[2]: got <missing> want 7149; $.records[35].given_name: got \"Jules\" want \"Julie\"; +3 more",
+    "ref": "i017-interpreter-455cab"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 23087,
+    "costUsd": 0.022203,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i016-interpreter-a219b9"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 24417,
+    "costUsd": 0.023723,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i010-shadow-6f1a06"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 24035,
+    "costUsd": 0.023197,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i006-shadow-f41c70"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 22981,
+    "costUsd": 0.02209,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.997,
+    "diffs": [
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-504",
+      "want": "44265.51"
+     }
+    ],
+    "note": "$.records[8].amount_usd: got -504 want 44265.51",
+    "ref": "i002-interpreter-03cfce"
+   },
+   {
+    "id": "trace-5",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 19814,
+    "costUsd": 0.022411,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i001-interpreter-b2fc5a"
+   },
+   {
+    "id": "trace-6",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 28565,
+    "costUsd": 0.023012,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.994,
+    "diffs": [
+     {
+      "path": "$.records[2].birth_date",
+      "got": "\"1969-09-11\"",
+      "want": "\"1969-11-09\""
+     },
+     {
+      "path": "$.records[28].birth_date",
+      "got": "\"1956-02-10\"",
+      "want": "\"1956-10-02\""
+     }
+    ],
+    "note": "$.records[2].birth_date: got \"1969-09-11\" want \"1969-11-09\"; $.records[28].birth_date: got \"1956-02-10\" want \"1956-10-02\"",
+    "ref": "i000-interpreter-b39702"
+   }
+  ],
+  "cases": 7,
+  "labeled": 7,
+  "exactRate": 0.143,
+  "diffs": 6,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [
+   "trace-3",
+   "trace-5"
+  ],
+  "accepted": false,
+  "costUsd": 0.16472136500000006,
+  "calls": 42,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 76280,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n**Procedure in code:** line parsing for the 6 systems, spec tables (countries/calling codes/trunk, rates, nicknames), dates (numeric DMY/MDY, month names, Shōwa/Heisei), money (German/English formats, ▲/CR/parentheses), sign flips, exact BigInt USD conversion with half-away rounding, E.164, name splitting (a \"Given FAMILY\" family name is now the whole trailing capitalised run, e.g. \"DE VRIES\" becomes \"de Vries\"), name matching (OSA ≤ 1, nickname, ASCII renderings incl. uppercase Ō/Ū), union-find identity, recency ordering, accent restoration.\n\n**Judges:** `rules` (opus only): date orders, **new `date_order_switches`** (cutoff day from which a system's numeric birth dates swap order; checked: quote in notes, from_date is a day named in the quote), sign flips, void markers (quoted), unreliable update systems. `countries` (haiku→opus) for unknown country text. `vendex-i` (haiku→opus, batches of 4): verbatim quotes, re-checked in code; **new check:** a null dob_text is rejected when the entry has \"born/birth/DOB/b.\" followed by a date.\n\n**Guards:** inputs present, spec tables parsed, known line formats, rates known, balances/names parsed, **new** `date-switch-supported` (no VENDEX switch, at most one per system). **Invariants:** unique row ids, rows conserved, every row in one record, one birth date per person, unique entity ids.\n\n**check-traces:** 7 cases, 0 deopt, 0 crash, 0 timeout. trace-1 exact. trace-2/3/5 differ only in record order. Remaining disagreements, where our output follows the task text:\n- trace-0 records[35] (Jules vs Julie Ménard, row 7149): spec 3.1 allows \"at most one typing error in total\"; Julie→Jules is 2 edits, so they are separate people.\n- trace-4 records[8].amount_usd: spec 4: \"Balance: from the most recent row with a usable balance\". Row 1457 (upd 2025/08/13, ▲79,319円 → -504.00) beats row 9683 (2023/10/11).\n- trace-6 records[2] and [28].birth_date: notes: \"An ATLAS row 'born 10/02/1952' belongs to someone born in October\", which means month first, so 09/11/1969 is 1969-09-11 and 02/10/1956 is 1956-02-10.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i017-interpreter-455cab",
+   "i016-interpreter-a219b9",
+   "i010-shadow-6f1a06",
+   "i006-shadow-f41c70",
+   "i002-interpreter-03cfce",
+   "i001-interpreter-b2fc5a",
+   "i000-interpreter-b39702"
+  ],
+  "regressionIds": [],
+  "previousSha": "3d8d9cc29cd915a1d6abeca009f3eb51e644e6d9c8684d9279e4bbdd2e2054e8"
+ }
+}

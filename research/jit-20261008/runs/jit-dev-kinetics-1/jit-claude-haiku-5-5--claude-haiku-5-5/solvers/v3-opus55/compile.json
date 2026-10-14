@@ -1,0 +1,383 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "kinetics",
+ "label": "v3-opus55",
+ "version": 3,
+ "parentSha": "037a6f743256660b8aff779e2f2a400add930db1b6c43e64cafca88d09634e2b",
+ "changed": true,
+ "traceIds": [
+  "i011-interpreter-d5a821",
+  "i010-interpreter-5e6085",
+  "i007-interpreter-57c757",
+  "i003-interpreter-d4ca0b",
+  "i002-interpreter-f7881b",
+  "i001-interpreter-d6c15f",
+  "i000-interpreter-c039a0"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v3-opus55:ab2639f0-88ad-41f6-870f-3d6ea97e4281",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "eeec5b85da72f7e18049243f6a9b3f6cfbe9b578fc0be6fb420130845f294575",
+ "artifact": "solve.mjs",
+ "artifactSha256": "287c0818c47acdd22798f9171e0d5234c933fd32b4fd76146751fa7d7043221e",
+ "builderCostUsd": 1.2773292,
+ "builderCostReportedUsd": 1.2773292,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 1.2773292,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 58,
+  "cache_creation_input_tokens": 71913,
+  "cache_read_input_tokens": 1295266,
+  "output_tokens": 22137,
+  "output_tokens_details": {
+   "thinking_tokens": 9443
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 71913,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 918,
+    "cache_read_input_tokens": 76990,
+    "cache_creation_input_tokens": 420,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 420
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 58,
+  "outputTokens": 950,
+  "cacheReadTokens": 1295266,
+  "cacheWriteTokens": 71913
+ },
+ "builderSessionId": "600526ba-6cd1-4f4c-9879-d4473ce1242d",
+ "gatewayCostUsd": 1.5105491949999992,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0.010549194999999179,
+ "gatewayCalls": 86,
+ "gatewayErrors": {},
+ "gatewayRefusals": {
+  "GATEWAY_BUDGET": 33
+ },
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 1.501598815,
+ "constructionCostUsd": 2.787878394999999,
+ "compileCostUsd": 4.289477209999999,
+ "startedAt": "2026-10-09T04:34:35.322Z",
+ "durationMs": 680966,
+ "builderMs": 423992,
+ "minutes": 45,
+ "turns": 31,
+ "toolUses": 30,
+ "builderError": null,
+ "builderCheckRuns": 4,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.169,
+  "deopts": 5,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 84806,
+    "costUsd": 0.078872,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.548,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.1422821202051262",
+      "want": "0.142282"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "448.0661885630363",
+      "want": "448.066"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.08972753093779455",
+      "want": "0.089728"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "549.3334759715892",
+      "want": "549.333"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.1422821202051262",
+      "want": "0.142282"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.1422821202051262 want 0.142282; $.conditions[0].km: got 448.0661885630363 want 448.066; +12 more",
+    "ref": "i011-interpreter-d5a821"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 75,
+    "ms": 58308,
+    "costUsd": 0.068177,
+    "status": "deopt",
+    "deopt": {
+     "kind": "judge",
+     "name": "extract:D9"
+    },
+    "note": "judge:extract:D9 {\"tiersTried\":[{\"costUsd\":0.0464,\"model\":\"claude-sonnet-5-5\",\"ok\":false,\"problem\":\"quote not in stu…",
+    "ref": "i010-interpreter-5e6085"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 75,
+    "ms": 94012,
+    "costUsd": 0.155706,
+    "status": "deopt",
+    "deopt": {
+     "kind": "guard",
+     "name": "dilution-per-condition"
+    },
+    "note": "guard:dilution-per-condition {\"have\":[[\"C2\",500],[\"C4\",500],[\"C5\",500],[\"C3\",500],[\"C6\",500],[\"C1\",500],[\"C7\",null]]}",
+    "ref": "i007-interpreter-57c757"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 75,
+    "ms": 65677,
+    "costUsd": 0.064918,
+    "status": "deopt",
+    "deopt": {
+     "kind": "judge",
+     "name": "extract:D11"
+    },
+    "note": "judge:extract:D11 {\"tiersTried\":[{\"costUsd\":0.037684,\"model\":\"claude-sonnet-5-5\",\"ok\":false,\"problem\":\"quote not in s…",
+    "ref": "i003-interpreter-d4ca0b"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 75,
+    "ms": 56483,
+    "costUsd": 0.114689,
+    "status": "deopt",
+    "deopt": {
+     "kind": "judge",
+     "name": "extract:D8"
+    },
+    "note": "judge:extract:D8 {\"tiersTried\":[{\"costUsd\":0.038811,\"model\":\"claude-sonnet-5-5\",\"ok\":false,\"problem\":\"quote not in s…",
+    "ref": "i002-interpreter-f7881b"
+   },
+   {
+    "id": "trace-5",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 81338,
+    "costUsd": 0.265738,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.632,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.7327791693679726",
+      "want": "0.73278"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "55.73780822451895",
+      "want": "55.738"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.6597674957134642",
+      "want": "0.65977"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "95.89021909200355",
+      "want": "95.89"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.9549402552149479",
+      "want": "0.95494"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.7327791693679726 want 0.73278; $.conditions[0].km: got 55.73780822451895 want 55.738; +12 more",
+    "ref": "i001-interpreter-d6c15f"
+   },
+   {
+    "id": "trace-6",
+    "kind": "trace",
+    "exitCode": 75,
+    "ms": 101273,
+    "costUsd": 0.324589,
+    "status": "deopt",
+    "deopt": {
+     "kind": "judge",
+     "name": "extract:D11"
+    },
+    "note": "judge:extract:D11 {\"tiersTried\":[{\"costUsd\":0.005623,\"model\":\"claude-haiku-5-5\",\"ok\":false,\"problem\":\"quote not in st…",
+    "ref": "i000-interpreter-c039a0"
+   }
+  ],
+  "cases": 7,
+  "labeled": 7,
+  "exactRate": 0,
+  "diffs": 2,
+  "deoptKinds": {
+   "judge": 4,
+   "guard": 1
+  },
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": false,
+  "unexplained": [
+   "trace-5"
+  ],
+  "accepted": false,
+  "costUsd": 1.2201237699999998,
+  "calls": 75,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 225530,
+  "error": null,
+  "recheck": {
+   "capUsd": 3,
+   "firstCheck": {
+    "exact": 0,
+    "exactRate": 0,
+    "partial": 0.323,
+    "deopts": 3,
+    "crashes": 0,
+    "timeouts": 0,
+    "deoptKinds": {
+     "guard": 1,
+     "judge": 1,
+     "budget": 1
+    },
+    "cases": 7,
+    "labeled": 7,
+    "diffs": 4,
+    "regressions": 0,
+    "regressionsPassed": 0,
+    "clean": false,
+    "unexplained": [
+     "trace-4",
+     "trace-5"
+    ],
+    "accepted": false,
+    "error": null,
+    "recheck": null,
+    "perCase": [
+     {
+      "id": "trace-0",
+      "ref": "i011-interpreter-d5a821",
+      "kind": "trace",
+      "status": "diff",
+      "exact": false,
+      "partial": 0.548
+     },
+     {
+      "id": "trace-1",
+      "ref": "i010-interpreter-5e6085",
+      "kind": "trace",
+      "status": "diff",
+      "exact": false,
+      "partial": 0.548
+     },
+     {
+      "id": "trace-2",
+      "ref": "i007-interpreter-57c757",
+      "kind": "trace",
+      "status": "deopt",
+      "exact": false,
+      "partial": null
+     },
+     {
+      "id": "trace-3",
+      "ref": "i003-interpreter-d4ca0b",
+      "kind": "trace",
+      "status": "deopt",
+      "exact": false,
+      "partial": null
+     },
+     {
+      "id": "trace-4",
+      "ref": "i002-interpreter-f7881b",
+      "kind": "trace",
+      "status": "diff",
+      "exact": false,
+      "partial": 0.533
+     },
+     {
+      "id": "trace-5",
+      "ref": "i001-interpreter-d6c15f",
+      "kind": "trace",
+      "status": "diff",
+      "exact": false,
+      "partial": 0.632
+     },
+     {
+      "id": "trace-6",
+      "ref": "i000-interpreter-c039a0",
+      "kind": "trace",
+      "status": "deopt",
+      "exact": false,
+      "partial": null
+     }
+    ]
+   }
+  }
+ },
+ "notes": "# BUILD-NOTES (recompile)\n\n**Procedure in code:** read the tolerance, standard dilution and rules from the SOP text. Then, in code: parse numbers and units, convert S to µM and v to µM/s (mAU/min uses the document's factor), apply relabels and inhibitor-not-added, choose the reading used for each well (re-read over first reading, raw-export rate over transcription), apply substrate swaps and the latest dilution per condition, run SOP §2 exclusions, then fit. Inhibitor-free conditions get a free Michaelis–Menten fit (profile least squares); each inhibitor condition fixes Vmax to its base condition and fits Km only.\n\n**Judge:** `extract:<doc>`, one call per non-SOP, non-memo document. Tiers: haiku → sonnet, except chats, which use sonnet only. The check requires every record id and S/v/T value to be literal in the study, and every event quote and id to be in the study.\n\n**Changes in this recompile:**\n- trace-1 (D12) and trace-3 (D2) deopted because the model put a context document's number into a record (raw-export rates ×60; a block temperature from D12). Such values now pass the check if they appear anywhere in the study, then code sets them to null when they are not in the target document. The other source's own record supplies the value.\n- New event kind `retract`, for when an author says their remark named the wrong well. For the cleared wells, code drops flag, bubble, pipetting and temperature note events; reader flags on records stay.\n\n**Guards/invariants (unchanged):** register shape, sample pattern, SOP present, SOP rules parsed, one base per inhibitor condition, a dilution per condition, ≥2 points per condition, positive fits, kept + excluded = wells.\n\n**Check-traces:** the baseline run used up the $1.50 build budget, and traces 4–6 stopped with budget deopts there. All later testing was offline replay of recorded judge outputs (hand-built for trace-1 D12 and trace-3 D2):\n- trace-1: matches.\n- trace-2: matches within 2.4%.\n- trace-0: within 6%, and its exclusions match once D11 carries the retract event.\n\nThe final live run could not complete for lack of budget: 7 budget deopts, 0 crashes, 0 timeouts.\n\n**Disagreement:** trace-0, `excluded_samples`, OB-0938. The old solver excluded it; the agent kept it. The agent is right: SOP §4 says \"A correction that its author later withdraws is not applied\", and Bram de Vries wrote \"it describes OB-0937. Nothing was wrong with OB-0938.\"\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i011-interpreter-d5a821",
+   "i010-interpreter-5e6085",
+   "i007-interpreter-57c757",
+   "i003-interpreter-d4ca0b",
+   "i002-interpreter-f7881b",
+   "i001-interpreter-d6c15f",
+   "i000-interpreter-c039a0"
+  ],
+  "regressionIds": [],
+  "previousSha": "037a6f743256660b8aff779e2f2a400add930db1b6c43e64cafca88d09634e2b"
+ }
+}

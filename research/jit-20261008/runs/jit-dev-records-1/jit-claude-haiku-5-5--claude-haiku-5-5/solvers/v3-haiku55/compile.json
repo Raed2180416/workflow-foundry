@@ -1,0 +1,329 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v3-haiku55",
+ "version": 3,
+ "parentSha": "6d4d54a05da9cd66af97be312e6f24560ff7f66ef672ac9e6e791d4d0b5544cd",
+ "changed": true,
+ "traceIds": [
+  "i016-interpreter-b2615b",
+  "i011-interpreter-781e32",
+  "i010-interpreter-c9b27b",
+  "i004-interpreter-ff9906",
+  "i002-interpreter-39e2c6",
+  "i001-interpreter-513f07",
+  "i000-interpreter-a52bb5"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v3-haiku55:7b927203-9eaa-4b44-8750-ec552f9d8593",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "152d04c2c55cea0893007bd692af4c376844ca04ccd35ce8ba2459eff6dde469",
+ "artifact": "solve.mjs",
+ "artifactSha256": "f8df74f1ba72eac923914cb8f88e816ad8bde6c1905c75ee58a328fee1bc6d8c",
+ "builderCostUsd": 0.43632547,
+ "builderCostReportedUsd": 0.43632547,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.43632547,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 92,
+  "cache_creation_input_tokens": 169954,
+  "cache_read_input_tokens": 4843465,
+  "output_tokens": 80493,
+  "output_tokens_details": {
+   "thinking_tokens": 52081
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 169954,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 944,
+    "cache_read_input_tokens": 175932,
+    "cache_creation_input_tokens": 424,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 424
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 92,
+  "outputTokens": 349,
+  "cacheReadTokens": 4843465,
+  "cacheWriteTokens": 169954
+ },
+ "builderSessionId": "101d1a18-9b42-4000-a85b-f562b4a73ca1",
+ "gatewayCostUsd": 0.55795095,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 114,
+ "gatewayErrors": {
+  "MODEL_SCHEMA": 2
+ },
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.15547083,
+ "constructionCostUsd": 0.9942764199999999,
+ "compileCostUsd": 1.1497472499999999,
+ "startedAt": "2026-10-09T03:52:07.367Z",
+ "durationMs": 606301,
+ "builderMs": 562816,
+ "minutes": 30,
+ "turns": 54,
+ "toolUses": 53,
+ "builderError": null,
+ "builderCheckRuns": 6,
+ "checkTraces": {
+  "exact": 2,
+  "partial": 0.956,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 16030,
+    "costUsd": 0.007131,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.998,
+    "diffs": [
+     {
+      "path": "$.records[10].amount_usd",
+      "got": "16387.31",
+      "want": "-16387.31"
+     }
+    ],
+    "note": "$.records[10].amount_usd: got 16387.31 want -16387.31",
+    "ref": "i016-interpreter-b2615b"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 11839,
+    "costUsd": 0.005572,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.768,
+    "diffs": [
+     {
+      "path": "$.records[3].entity_id",
+      "got": "3651",
+      "want": "1751"
+     },
+     {
+      "path": "$.records[3].source_rows[0]",
+      "got": "<missing>",
+      "want": "1751"
+     },
+     {
+      "path": "$.records[3].source_rows[2]",
+      "got": "<missing>",
+      "want": "7224"
+     },
+     {
+      "path": "$.records[3].source_rows[got 0]",
+      "got": "3651",
+      "want": "<not expected>"
+     },
+     {
+      "path": "$.records[3].family_name",
+      "got": "\"Bemedetti\"",
+      "want": "\"Benedetti\""
+     }
+    ],
+    "note": "$.records[3].entity_id: got 3651 want 1751; $.records[3].source_rows[0]: got <missing> want 1751; +18 more",
+    "ref": "i011-interpreter-781e32"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 17534,
+    "costUsd": 0.006799,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i010-interpreter-c9b27b"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 12765,
+    "costUsd": 0.00625,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.968,
+    "diffs": [
+     {
+      "path": "$.records[4].amount_usd",
+      "got": "5222.17",
+      "want": "-5222.17"
+     },
+     {
+      "path": "$.records[10].amount_usd",
+      "got": "552.22",
+      "want": "-552.22"
+     },
+     {
+      "path": "$.records[13].amount_usd",
+      "got": "3222.19",
+      "want": "-3222.19"
+     },
+     {
+      "path": "$.records[18].amount_usd",
+      "got": "32.14",
+      "want": "-32.14"
+     },
+     {
+      "path": "$.records[19].amount_usd",
+      "got": "467.93",
+      "want": "-467.93"
+     }
+    ],
+    "note": "$.records[4].amount_usd: got 5222.17 want -5222.17; $.records[10].amount_usd: got 552.22 want -552.22; +8 more",
+    "ref": "i004-interpreter-ff9906"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 23768,
+    "costUsd": 0.048686,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i002-interpreter-39e2c6"
+   },
+   {
+    "id": "trace-5",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 13279,
+    "costUsd": 0.006741,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.958,
+    "diffs": [
+     {
+      "path": "$.records[2].amount_usd",
+      "got": "272.96",
+      "want": "-272.96"
+     },
+     {
+      "path": "$.records[3].amount_usd",
+      "got": "827.12",
+      "want": "-827.12"
+     },
+     {
+      "path": "$.records[4].amount_usd",
+      "got": "291.38",
+      "want": "-291.38"
+     },
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-40.04",
+      "want": "40.04"
+     },
+     {
+      "path": "$.records[11].amount_usd",
+      "got": "143.44",
+      "want": "-143.44"
+     }
+    ],
+    "note": "$.records[2].amount_usd: got 272.96 want -272.96; $.records[3].amount_usd: got 827.12 want -827.12; +14 more",
+    "ref": "i001-interpreter-513f07"
+   },
+   {
+    "id": "trace-6",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 18696,
+    "costUsd": 0.074291,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i000-interpreter-a52bb5"
+   }
+  ],
+  "cases": 7,
+  "labeled": 7,
+  "exactRate": 0.286,
+  "diffs": 5,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.15547083,
+  "calls": 37,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 43473,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\nPer-system parsing, names and nicknames, accents, E.164 phones, dates (incl. Japanese eras), amounts (German format, CR, trailing minus, spelled-out words), identity links (union-find), conflict order, exact USD conversion (BigInt rationals, rounded once).\n\n## Judges\n- `source-rules`: haiku, then sonnet, then opus; 3 samples, majority. Reads the per-system rules, the ATLAS/VENDEX cutoff day, and void markers. Each value needs a quote from the notes.\n- `vendex-entries`: haiku, sonnet, opus. Extracts substrings that must occur in the entry.\n- `country-names`: same tiers. Only names code cannot resolve.\n\n## Guards and invariants\nGuards: input shape, spec tables, every line parses, unique ids, values parse, known countries and rates. Invariants: rows conserved, one birth date per person, entity = min row, two-decimal amounts, E.164 phones.\n\n## Changes this compile\n1. ATLAS and VENDEX: `MDY_from_cutoff` with a judged day, replacing the hard-coded 2015.\n2. Linking: birth-to-birth links first; a link through a row with no birth date is refused if it would join two birth dates.\n3. Rules prompt: master sign stated; negations read literally.\n\n## Check result\n0 deopts, 0 crashes, 0 timeouts. Exact: trace-2, trace-6. No `regressions/` directory, so no regression cases. Run cost $0.19.\n\n## Disagreements (decided by the task text)\n- **trace-0**, records[10] `amount_usd`: \"'CR' after an amount marks a negative 'owed' figure\", flipped, so positive. The agent's own other CR rows are positive.\n- **trace-1**, records[3] and ATLAS dates: \"an ATLAS birth date written 11/05/1996 is 5 November 1996\" means day-first. Row 1751 (no birth date) links to two birth dates; the first link in row order wins (my choice). With ATLAS forced month-first, my output matches the agent's 39 records.\n- **trace-3**, 9 amounts (LEDGR, KOBO): \"Saldo changes sign in the master\"; \"KOBO balances change sign\". The agent did not flip.\n- **trace-4**: content identical; only record order differs. I sort by entity_id.\n- **trace-5**, 17 amounts (LEDGR): \"Saldo changes sign in the master\". The agent did not flip.\n",
+ "hiddenPathAttempts": 17,
+ "outsidePaths": [
+  "/var/tmp/foundry-work/scratch-baseline.txt",
+  "/var/tmp/foundry-work/scratch",
+  "/var/tmp/foundry-work/scratch/rows.mjs",
+  "/var/tmp/foundry-work/scratch/run-",
+  "/var/tmp/foundry-work/scratch/replay-flow.mjs",
+  "/var/tmp/foundry-work/scratch/cache-",
+  "/var/tmp/foundry-work/scratch/debug-solve.mjs",
+  "/var/tmp/foundry-work/scratch/cache-trace-1-atlasmdy.json",
+  "/var/tmp/foundry-work/scratch/check2.txt",
+  "/var/tmp/foundry-work/scratch/debug-amt.mjs",
+  "/var/tmp/foundry-work/scratch/check3.txt",
+  "/var/tmp/foundry-work/scratch/check4.txt"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i016-interpreter-b2615b",
+   "i011-interpreter-781e32",
+   "i010-interpreter-c9b27b",
+   "i004-interpreter-ff9906",
+   "i002-interpreter-39e2c6",
+   "i001-interpreter-513f07",
+   "i000-interpreter-a52bb5"
+  ],
+  "regressionIds": [],
+  "previousSha": "6d4d54a05da9cd66af97be312e6f24560ff7f66ef672ac9e6e791d4d0b5544cd"
+ }
+}

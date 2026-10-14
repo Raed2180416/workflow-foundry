@@ -1,0 +1,282 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v3-haiku55",
+ "version": 3,
+ "parentSha": "7ef865553c6d6f324415c2a695ff98d3f5be23b0809f8b1c244d1cc7b14704b1",
+ "changed": true,
+ "traceIds": [
+  "i016-shadow-8b3896",
+  "i012-shadow-7eeda7",
+  "i008-shadow-30bb40",
+  "i005-interpreter-eac907",
+  "i004-interpreter-1dec0a",
+  "i002-interpreter-451b29",
+  "i001-interpreter-236590",
+  "i000-interpreter-74a5f3"
+ ],
+ "regressionIds": [
+  "reg-016-641434"
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v3-haiku55:a0d1083c-3cb4-47b7-9d35-76051839d8aa",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "9df648b383dff43cbcc62662d09d0b519e05c092a10a5f2c5f4fcd110829bf07",
+ "artifact": "solve.mjs",
+ "artifactSha256": "826d7d80408ef54413081b3638f4badbb3ff1642f55d1c064d28210bf1347c8b",
+ "builderCostUsd": 0.04823386,
+ "builderCostReportedUsd": 0.04823386,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.04823386,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 46,
+  "cache_creation_input_tokens": 84463,
+  "cache_read_input_tokens": 1470316,
+  "output_tokens": 33267,
+  "output_tokens_details": {
+   "thinking_tokens": 20436
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 84463,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 526,
+    "cache_read_input_tokens": 90643,
+    "cache_creation_input_tokens": 222,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 222
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 46,
+  "outputTokens": 217,
+  "cacheReadTokens": 1470316,
+  "cacheWriteTokens": 84463
+ },
+ "builderSessionId": "8a3e2624-7c5c-4523-8124-472d6128d739",
+ "gatewayCostUsd": 0.27050200999999985,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 360,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.0635535,
+ "constructionCostUsd": 0.31873586999999987,
+ "compileCostUsd": 0.38228936999999985,
+ "startedAt": "2026-10-09T03:38:13.542Z",
+ "durationMs": 594761,
+ "builderMs": 469720,
+ "minutes": 30,
+ "turns": 26,
+ "toolUses": 25,
+ "builderError": null,
+ "builderCheckRuns": 5,
+ "checkTraces": {
+  "exact": 8,
+  "partial": 0.983,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "case-0",
+    "kind": "regression",
+    "exitCode": 0,
+    "ms": 35325,
+    "costUsd": 0.006864,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "reg-016-641434"
+   },
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 37875,
+    "costUsd": 0.007229,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i016-shadow-8b3896"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 36083,
+    "costUsd": 0.006627,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i012-shadow-7eeda7"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 34011,
+    "costUsd": 0.006796,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i008-shadow-30bb40"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 46649,
+    "costUsd": 0.007388,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i005-interpreter-eac907"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 42683,
+    "costUsd": 0.007203,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.846,
+    "diffs": [
+     {
+      "path": "$.records[1].source_rows[got 1]",
+      "got": "3937",
+      "want": "<not expected>"
+     },
+     {
+      "path": "$.records[3].source_rows[1]",
+      "got": "<missing>",
+      "want": "2885"
+     },
+     {
+      "path": "$.records[3].phone_e164",
+      "got": "\"+31207033529\"",
+      "want": "\"+49694856619\""
+     },
+     {
+      "path": "$.records[3].amount_usd",
+      "got": "-2549.17",
+      "want": "156.56"
+     },
+     {
+      "path": "$.records[4].entity_id",
+      "got": "7972",
+      "want": "1331"
+     }
+    ],
+    "note": "$.records[1].source_rows[got 1]: got 3937 want <not expected>; $.records[3].source_rows[1]: got <missing> want 2885; +18 more",
+    "ref": "i004-interpreter-1dec0a"
+   },
+   {
+    "id": "trace-5",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 33845,
+    "costUsd": 0.00712,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i002-interpreter-451b29"
+   },
+   {
+    "id": "trace-6",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 44250,
+    "costUsd": 0.007712,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i001-interpreter-236590"
+   },
+   {
+    "id": "trace-7",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 32841,
+    "costUsd": 0.006614,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i000-interpreter-74a5f3"
+   }
+  ],
+  "cases": 9,
+  "labeled": 9,
+  "exactRate": 0.889,
+  "diffs": 1,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 1,
+  "regressionsPassed": 1,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.0635535,
+  "calls": 144,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 125024,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\nLine parsing per system, void filtering, dates, money (exact decimal, rounded once), phones (E.164), names, identity (union-find on name match plus same birth day, or same phone when one row is undated), records in the spec's most-recent-row order.\n\n## Judges (quotes checked against the notes)\n- `rulebook`: balance sign, restamped dates. haiku, then opus. 1 sample.\n- `date-order`: BRIGHTDESK and VENDEX numeric date order. haiku, then opus. 5 samples.\n- `atlas-dates` (new): ATLAS order before a change-over day, the day, the order after. haiku, then opus. 3 samples. Checked: quote shows the change-over year; orders differ.\n- `void-values`: void status values. haiku, then opus. 5 samples.\n- `vendex-entries`: free-text fields; each value must occur in its entry. haiku, then opus.\n- `country-names`: spellings missing from the static table. haiku, then opus.\n\n## Guards and invariants\nGuards: line formats, spec tables, parseable lines, unique ids, rows parse, some rows kept. Invariants: rows conserved, entity id is the smallest source row, well-formed fields.\n\n## This recompile\nATLAS had one global date order. The notes say it switched to month-first for rows last changed on or after 6 June 2023. Birth dates are now read per row. This fixes regression case-0 and trace-0 (same task, same expected answer).\n\n## check-traces (full run)\n8 of 9 exact; regression case-0 passes. No deopts, crashes or timeouts. Cost $0.078.\n\n## Disagreement with an agent answer\n- **trace-4, `$.records[21].family_name`**: we give \"De Vries\", the agent \"de Vries\". The most recent row is BRIGHTDESK 5456 \"Nora DE VRIES\" (all caps); no row is mixed case. The spec says \"letter case is not graded\" (section 4). A lowercase-particle rule would break trace-5, which expects \"Van Dijk\" from all caps, so none was added.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i016-shadow-8b3896",
+   "i012-shadow-7eeda7",
+   "i008-shadow-30bb40",
+   "i005-interpreter-eac907",
+   "i004-interpreter-1dec0a",
+   "i002-interpreter-451b29",
+   "i001-interpreter-236590",
+   "i000-interpreter-74a5f3"
+  ],
+  "regressionIds": [
+   "reg-016-641434"
+  ],
+  "previousSha": "7ef865553c6d6f324415c2a695ff98d3f5be23b0809f8b1c244d1cc7b14704b1"
+ }
+}

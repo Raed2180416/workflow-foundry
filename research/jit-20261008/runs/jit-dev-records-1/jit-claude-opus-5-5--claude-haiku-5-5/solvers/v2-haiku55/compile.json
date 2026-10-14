@@ -1,0 +1,206 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v2-haiku55",
+ "version": 2,
+ "parentSha": "a386afb41ecff59ad09a8201385be916df7868e174c4a0cdb7d714da93a74e1b",
+ "changed": true,
+ "traceIds": [
+  "i005-interpreter-eac907",
+  "i004-interpreter-1dec0a",
+  "i002-interpreter-451b29",
+  "i001-interpreter-236590",
+  "i000-interpreter-74a5f3"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-haiku55:1fe01a7b-7a1d-4b30-8a2f-ae2b7c389bcb",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "683f0e339c9fd761925a2b743ad919fda7fc6257e12710f59dee54d79a09cd0e",
+ "artifact": "solve.mjs",
+ "artifactSha256": "7ef865553c6d6f324415c2a695ff98d3f5be23b0809f8b1c244d1cc7b14704b1",
+ "builderCostUsd": 0.40945770000000004,
+ "builderCostReportedUsd": 0.40945770000000004,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.40945770000000004,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 94,
+  "cache_creation_input_tokens": 154034,
+  "cache_read_input_tokens": 4822570,
+  "output_tokens": 74730,
+  "output_tokens_details": {
+   "thinking_tokens": 49659
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 154034,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1096,
+    "cache_read_input_tokens": 158350,
+    "cache_creation_input_tokens": 2086,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2086
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 94,
+  "outputTokens": 357,
+  "cacheReadTokens": 4822570,
+  "cacheWriteTokens": 154034
+ },
+ "builderSessionId": "9f66c409-844d-44d3-8a0f-656598cb4b39",
+ "gatewayCostUsd": 0.44363083999999975,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 311,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.032493905000000003,
+ "constructionCostUsd": 0.8530885399999998,
+ "compileCostUsd": 0.8855824449999998,
+ "startedAt": "2026-10-09T03:09:54.092Z",
+ "durationMs": 881072,
+ "builderMs": 819816,
+ "minutes": 30,
+ "turns": 57,
+ "toolUses": 56,
+ "builderError": null,
+ "builderCheckRuns": 12,
+ "checkTraces": {
+  "exact": 4,
+  "partial": 0.999,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 32892,
+    "costUsd": 0.006546,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i005-interpreter-eac907"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 32063,
+    "costUsd": 0.00701,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.997,
+    "diffs": [
+     {
+      "path": "$.records[21].family_name",
+      "got": "\"De Vries\"",
+      "want": "\"de Vries\""
+     }
+    ],
+    "note": "$.records[21].family_name: got \"De Vries\" want \"de Vries\"",
+    "ref": "i004-interpreter-1dec0a"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 25649,
+    "costUsd": 0.006303,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i002-interpreter-451b29"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 31669,
+    "costUsd": 0.006603,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i001-interpreter-236590"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 29061,
+    "costUsd": 0.006033,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i000-interpreter-74a5f3"
+   }
+  ],
+  "cases": 5,
+  "labeled": 5,
+  "exactRate": 0.8,
+  "diffs": 1,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.032493905000000003,
+  "calls": 65,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 61246,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\nLine parsing for six systems; per-system date parsing; exact decimal money rounded half away from zero; E.164 phones from the spec tables; name splitting; identity linking (birth-date rule, phone rule, one-typo names); void filtering; most-recent-first conflicts with the restamp rule; USD conversion.\n\n## Judges\n- `rulebook` (haiku, then opus): balance_sign, update_dates_real, quote. One sample. Check: quotes occur in the notes.\n- `date-order` (haiku, then opus; 5 samples, majority): numeric date order for BRIGHTDESK, ATLAS, VENDEX. Check: \"none\" is rejected where the export has numeric dates.\n- `void-values` (haiku, then opus; 5 samples): void status values. Check: each value occurs in the notes.\n- `vendex-entries` (haiku, then opus): free-text fields. Check: raw values are substrings of the entry; dates parse; amount and currency agree.\n- `country-names` (haiku, then opus): only for spellings not in code tables.\n\n## Changes this round\n- Vendex entries with no balance give a null amount and currency (the schema forced a string; traces 0 and 1 deopted).\n- An all-caps run at the end of an auto-style name is the family name (\"Nora DE VRIES\").\n- Date order and void values moved from the single rulebook read into sampled judges (one read had dropped VERITAS `replay`).\n\n## Guards and invariants\nAll existing ones kept; none added beyond the judge checks.\n\n## Check result\n`node tools/check-traces.mjs`: 4/5 exact; 0 deopt, 0 crash, 0 timeout. No `regressions/` directory exists, so regressions are 0/0 and were not run. Build spend $0.44 of $1.5.\n\n## Disagreement with agent answers\n- trace-1, `$.records[21].family_name`: \"De Vries\" (solver) vs \"de Vries\" (agent). Spec §4: \"letter case is not graded\".\n\n## Risks\n- trace-0's notes state no VENDEX numeric convention; its DMY vote is a default that matches the agent.\n- rulebook balance_sign and update_dates_real are single-sample.\n",
+ "hiddenPathAttempts": 1,
+ "outsidePaths": [
+  "/opt/node24/bin"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i005-interpreter-eac907",
+   "i004-interpreter-1dec0a",
+   "i002-interpreter-451b29",
+   "i001-interpreter-236590",
+   "i000-interpreter-74a5f3"
+  ],
+  "regressionIds": [],
+  "previousSha": "a386afb41ecff59ad09a8201385be916df7868e174c4a0cdb7d714da93a74e1b"
+ }
+}

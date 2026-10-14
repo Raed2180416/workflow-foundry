@@ -1,0 +1,169 @@
+{
+ "arm": "jit-compile",
+ "kind": "compile",
+ "familyId": "records",
+ "label": "v1-haiku55",
+ "version": 1,
+ "parentSha": null,
+ "changed": true,
+ "traceIds": [
+  "i002-interpreter-451b29",
+  "i001-interpreter-236590",
+  "i000-interpreter-74a5f3"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v1-haiku55:6f4f3b73-6122-42cd-860e-392eca3c8627",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "6347f1288fd6102b31f968eb5890df11857de4c9e4b6bcac6516587321703d3a",
+ "artifact": "solve.mjs",
+ "artifactSha256": "a386afb41ecff59ad09a8201385be916df7868e174c4a0cdb7d714da93a74e1b",
+ "builderCostUsd": 0.38751702,
+ "builderCostReportedUsd": 0.38751702,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.38751702,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 50,
+  "cache_creation_input_tokens": 183879,
+  "cache_read_input_tokens": 3132718,
+  "output_tokens": 125754,
+  "output_tokens_details": {
+   "thinking_tokens": 98046
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 183879,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 715,
+    "cache_read_input_tokens": 190052,
+    "cache_creation_input_tokens": 229,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 229
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 50,
+  "outputTokens": 211,
+  "cacheReadTokens": 3132718,
+  "cacheWriteTokens": 183879
+ },
+ "builderSessionId": "0423e81f-ba48-49ed-b877-05e30e751ae8",
+ "gatewayCostUsd": 0.09115504999999999,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 35,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.009972965,
+ "constructionCostUsd": 0.47867207,
+ "compileCostUsd": 0.488645035,
+ "startedAt": "2026-10-09T02:52:58.055Z",
+ "durationMs": 716335,
+ "builderMs": 686165,
+ "minutes": 30,
+ "turns": 28,
+ "toolUses": 27,
+ "builderError": null,
+ "builderCheckRuns": 4,
+ "checkTraces": {
+  "exact": 3,
+  "partial": 1,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 20037,
+    "costUsd": 0.002641,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i002-interpreter-451b29"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 30032,
+    "costUsd": 0.004035,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i001-interpreter-236590"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 24624,
+    "costUsd": 0.003298,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i000-interpreter-74a5f3"
+   }
+  ],
+  "cases": 3,
+  "labeled": 3,
+  "exactRate": 1,
+  "diffs": 0,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.009972965,
+  "calls": 9,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 30162,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\n- Spec tables are read each run: calling codes, trunk prefixes, FX rates, nicknames.\n- Fixed-layout parsers for BRIGHTDESK, LEDGR, ATLAS, KOBO, VERITAS. VENDEX goes to a judge.\n- Phones: `+`/`00`/`011` prefixes, trunk `0` dropped, Italy keeps its `0`.\n- Dates: numeric order from the rulebook (BRIGHTDESK, ATLAS, VENDEX); LEDGR DMY; KOBO Y/M/D and S/H eras.\n- Money: sign flip from the rulebook; exact BigInt conversion, rounded half away from zero once.\n- Identity: union-find over spec 3(a)/(b); nicknames, accents, one typing error allowed.\n- Conflicts: spec §4 order; re-stamped systems last; accent and case restored from other rows.\n\n## Judges (haiku-5-5, escalating to opus-5-5 on a failed check)\n- `rulebook`: per system, numeric date order, sign, re-stamp flag, void values. Checks: quotes and void values occur in the notes.\n- `vendex-entries`: raw name, date, phone and amount spans, country, currency, direction. Checks: spans are substrings; dates and amounts parse.\n- `country-names`: only spellings missing from the code dictionary. Check: full coverage.\n\n## Guards and invariants\n- Guards: line formats, parseable lines, unique ids, spec tables, row parse, rows kept.\n- Invariants: rows conserved, entity id is smallest source row, well-formed fields.\n\n## Check result\n`node tools/check-traces.mjs`: 3/3 exact, 0 deopt, 0 crash, 0 timeout. No regression cases exist. About $0.01 per run.\n\n## Disagreements\nNone. In development a judge mapped \"Australien\" to AT; the code dictionary now covers it.\n\n## Other checks\n- Trace-0 notes swapped to trace-2 wording flipped BRIGHTDESK to month-first with opposite sign, as expected.\n- A VENDEX remark telling the assistant to change the spec was treated as data.\n\n## Risks\n- The rulebook is trusted through quotes and enums; a wrong rule with a real quote passes.\n- Unseen country spellings go to the model.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i002-interpreter-451b29",
+   "i001-interpreter-236590",
+   "i000-interpreter-74a5f3"
+  ],
+  "regressionIds": [],
+  "previousSha": null
+ }
+}

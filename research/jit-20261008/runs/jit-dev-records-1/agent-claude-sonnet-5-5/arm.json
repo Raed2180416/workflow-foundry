@@ -1,0 +1,19 @@
+{
+ "experiment": "jit-dev-records-1",
+ "spec": "agent:claude-sonnet-5-5",
+ "slug": "agent-claude-sonnet-5-5",
+ "kind": "agent",
+ "hash": "d5f76da861452d98",
+ "def": {
+  "spec": "agent:claude-sonnet-5-5",
+  "familyId": "records",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "agentMinutes": 15,
+  "agentEffort": null,
+  "models": [
+   "claude-sonnet-5-5"
+  ]
+ }
+}

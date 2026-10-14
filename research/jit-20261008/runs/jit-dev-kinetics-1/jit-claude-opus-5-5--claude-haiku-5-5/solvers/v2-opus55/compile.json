@@ -1,0 +1,332 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "kinetics",
+ "label": "v2-opus55",
+ "version": 2,
+ "parentSha": "839202f7c449a1ba4a01cd76f3f230b7d83b6a41e56a43a21b0c9ce1cfc3942a",
+ "changed": true,
+ "traceIds": [
+  "i008-interpreter-7d87fe",
+  "i007-interpreter-0ff54f",
+  "i002-interpreter-84138f",
+  "i001-interpreter-f0f2d2",
+  "i000-interpreter-b90b25"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-opus55:84c14cd7-b461-4737-b554-80a2e72cbbd0",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "5f4aa1f3dcbfcc3d65da20808b6f5f13d2f7e317d464e2935a3266df60c5c0a0",
+ "artifact": "solve.mjs",
+ "artifactSha256": "01c3e144f5a6e2bc0e17b36062ec117b8c49c7d80fd27b8a8242a0f8f356a9a8",
+ "builderCostUsd": 0.8126576000000001,
+ "builderCostReportedUsd": 0.8126576000000001,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.8126576000000001,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 36,
+  "cache_creation_input_tokens": 57517,
+  "cache_read_input_tokens": 727388,
+  "output_tokens": 10345,
+  "output_tokens_details": {
+   "thinking_tokens": 2871
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 57517,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 848,
+    "cache_read_input_tokens": 63925,
+    "cache_creation_input_tokens": 1538,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1538
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 36,
+  "outputTokens": 199,
+  "cacheReadTokens": 727388,
+  "cacheWriteTokens": 57517
+ },
+ "builderSessionId": "ff49fa6e-ccd2-4f58-8dff-8ee8f83712aa",
+ "gatewayCostUsd": 0.87528302,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 30,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.23262845499999996,
+ "constructionCostUsd": 1.68794062,
+ "compileCostUsd": 1.920569075,
+ "startedAt": "2026-10-09T03:55:09.336Z",
+ "durationMs": 508554,
+ "builderMs": 386238,
+ "minutes": 45,
+ "turns": 19,
+ "toolUses": 18,
+ "builderError": null,
+ "builderCheckRuns": 4,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.514,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 40898,
+    "costUsd": 0.011473,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.4836149380462251",
+      "want": "0.48361493846194126"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "12.541152873015406",
+      "want": "12.541152916809505"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.30753374546929624",
+      "want": "0.3075337464719278"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "15.146881804619174",
+      "want": "15.146881972308211"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.30753374546929624",
+      "want": "0.3075337464719278"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.4836149380462251 want 0.48361493846194126; $.conditions[0].km: got 12.541152873015406 want 12.541152916809505; +12 more",
+    "ref": "i008-interpreter-7d87fe"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 42596,
+    "costUsd": 0.010295,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.436,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "6.743472241454071",
+      "want": "6.7435"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "13.272190096178573",
+      "want": "13.272"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "3.854805817118088",
+      "want": "3.8548"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "25.037024692631178",
+      "want": "25.037"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "3.0312170993993455",
+      "want": "3.0312"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 6.743472241454071 want 6.7435; $.conditions[0].km: got 13.272190096178573 want 13.272; +18 more",
+    "ref": "i007-interpreter-0ff54f"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 40815,
+    "costUsd": 0.009693,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.19386459462745292",
+      "want": "0.19386454869902092"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "179.23670046748185",
+      "want": "179.2358996204123"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.3066334959878175",
+      "want": "0.30663503998651914"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "24.81067442890567",
+      "want": "24.811327426095044"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.4588047690486552",
+      "want": "0.458803608483078"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.19386459462745292 want 0.19386454869902092; $.conditions[0].km: got 179.23670046748185 want 179.2358996204123; +12 more",
+    "ref": "i002-interpreter-84138f"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 81087,
+    "costUsd": 0.18853,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.7264179387868476",
+      "want": "0.7264179395637186"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "54.20704037893138",
+      "want": "54.2070406246722"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.6597674940180951",
+      "want": "0.6597674953415154"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "95.89021819149568",
+      "want": "95.89021889444027"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.9549402547630423",
+      "want": "0.9549402546007795"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.7264179387868476 want 0.7264179395637186; $.conditions[0].km: got 54.20704037893138 want 54.2070406246722; +12 more",
+    "ref": "i001-interpreter-f0f2d2"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 52094,
+    "costUsd": 0.012637,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "2.9607053254797964",
+      "want": "2.960705323788387"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "26.31099181224519",
+      "want": "26.310991752168256"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "5.790976436255433",
+      "want": "5.790976434283813"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "11.825038654659615",
+      "want": "11.825038633346484"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "2.5733325188940417",
+      "want": "2.573332521688745"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 2.9607053254797964 want 2.960705323788387; $.conditions[0].km: got 26.31099181224519 want 26.310991752168256; +12 more",
+    "ref": "i000-interpreter-b90b25"
+   }
+  ],
+  "cases": 5,
+  "labeled": 5,
+  "exactRate": 0,
+  "diffs": 5,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.23262845499999996,
+  "calls": 11,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 122298,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n**Procedure in code.** Parses every sheet format: reader exports (with re-reads and comments), markdown tables, bench-log paragraphs, CSV, summary sheets, the raw instrument export and the master-mix log. Code also handles units (unit headers, prose statements, references to another sheet, mAU conversion), maps labels to conditions, and applies re-read > raw export > transcription. It applies flag and temperature columns, the judged events (exclusions, relabels, swaps, unit fixes, dilutions), and rescales by dilution. It fits Michaelis-Menten (log grid plus golden-section search). Inhibitor conditions are fitted with Vmax fixed to the matching inhibitor-free condition.\n\n**Recompile changes.**\n- CSV columns can carry units in their names (`S_nM`, `rate_uM_per_s`, trace-0). The parser now reads them and is guarded by `csv-columns` and `csv-column-units`.\n- The dilution check now also accepts a quote that states a multiple of the SOP dilution (\"diluted twice as much as the SOP says\", trace-1), as well as an explicit `1:N`.\n\n**Judges.** `prose-events-a` and `prose-events-b` run in parallel on tiers haiku → opus. They return exclusions, relabels, swaps, unit_fixes and dilutions. Each item needs a verbatim quote and known well, sheet and condition ids, and dilutions must be consistent with their quote. If the decisions the two reads imply differ, `prose-events-arbiter` (opus → sonnet) decides.\n\n**Guards.** `raw-export-unit`, `summary-entry-parsed`, `summary-rep-known`, `csv-columns`, `csv-column-units`, `all-rows-found`, `rows-have-planned-levels`, `row-labels-map`, `unique-wells`, `raw-ids-on-sheets`, `sop-sections`, `abs-conversion`, `all-values-numeric`, `inhibitor-has-reference`.\n\n**Invariants.** `wells-conserved`, `enough-points`, `fit-interior`, `replicate-rows-agree`.\n\n**check-traces.** 5/5 clean: 0 deopt, 0 crash, 0 timeout, no regression cases. About $0.27 per full run.\n- trace-0, trace-2, trace-3, trace-4: exclusions are identical to the agent answers. vmax and km differ only by float noise (<0.01% relative), well inside the 10% grading tolerance.\n\n**Disagreement.**\n- **trace-1, `excluded_samples` (and C7).** The agent excluded the whole row HV-0365…HV-0373; the solver excludes only HV-0373.\n  - The source is the bench-log sentence \"Block read 26.8 °C during this read (my practice run of this row had no such problem).\" It follows HV-0373's entry, the way a per-well note does.\n  - SOP 2.4 excludes a well when \"the block temperature logged for the well differs from the condition setpoint by more than 1.0 °C\".\n  - The same template is a per-well note in trace-3 (mid-row, after DR-0577; the agent excluded only that well) and in trace-4 (a table note).\n  - C7 then differs from the agent's value by 2.4% (vmax) and 6.8% (km).\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i008-interpreter-7d87fe",
+   "i007-interpreter-0ff54f",
+   "i002-interpreter-84138f",
+   "i001-interpreter-f0f2d2",
+   "i000-interpreter-b90b25"
+  ],
+  "regressionIds": [],
+  "previousSha": "839202f7c449a1ba4a01cd76f3f230b7d83b6a41e56a43a21b0c9ce1cfc3942a"
+ }
+}

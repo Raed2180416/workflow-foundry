@@ -1,0 +1,287 @@
+{
+ "arm": "jit-compile",
+ "kind": "compile",
+ "familyId": "kinetics",
+ "label": "v1-haiku55",
+ "version": 1,
+ "parentSha": null,
+ "changed": true,
+ "traceIds": [
+  "i002-interpreter-84138f",
+  "i001-interpreter-f0f2d2",
+  "i000-interpreter-b90b25"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v1-haiku55:05c65ea7-a857-46f6-8384-222b5858f7f2",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "6347f1288fd6102b31f968eb5890df11857de4c9e4b6bcac6516587321703d3a",
+ "artifact": "solve.mjs",
+ "artifactSha256": "638b90bd19404f2f8b47f35d7013b7ca3174ae3b02790fe514becb3843f374df",
+ "builderCostUsd": 0.19223643999999998,
+ "builderCostReportedUsd": 0.19223643999999998,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.19223643999999998,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 68,
+  "cache_creation_input_tokens": 116480,
+  "cache_read_input_tokens": 2529788,
+  "output_tokens": 65384,
+  "output_tokens_details": {
+   "thinking_tokens": 38979
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 116480,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1126,
+    "cache_read_input_tokens": 121913,
+    "cache_creation_input_tokens": 969,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 969
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 68,
+  "outputTokens": 285,
+  "cacheReadTokens": 2529788,
+  "cacheWriteTokens": 116480
+ },
+ "builderSessionId": "dcd946c4-ce8f-4015-a576-c7e798a47560",
+ "gatewayCostUsd": 1.33339456,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 67,
+ "gatewayErrors": {},
+ "gatewayRefusals": {
+  "GATEWAY_BUDGET": 1
+ },
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 1.31632785,
+ "constructionCostUsd": 1.525631,
+ "compileCostUsd": 2.84195885,
+ "startedAt": "2026-10-09T02:52:54.335Z",
+ "durationMs": 903465,
+ "builderMs": 668217,
+ "minutes": 30,
+ "turns": 34,
+ "toolUses": 33,
+ "builderError": null,
+ "builderCheckRuns": 0,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.318,
+  "deopts": 1,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 75,
+    "ms": 171701,
+    "costUsd": 0.299789,
+    "status": "deopt",
+    "deopt": {
+     "kind": "judge",
+     "name": "decide-PX-0614"
+    },
+    "note": "judge:decide-PX-0614 {\"tiersTried\":[{\"costUsd\":0.004616,\"model\":\"claude-haiku-5-5\",\"ok\":false,\"problem\":\"s unit missing …",
+    "ref": "i002-interpreter-84138f"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 236455,
+    "costUsd": 0.098453,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.421,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.6930992994562567",
+      "want": "0.7264179395637186"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "52.10272364520235",
+      "want": "54.2070406246722"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.6597674960451376",
+      "want": "0.6597674953415154"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "95.89021926817452",
+      "want": "95.89021889444027"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.9659680657289503",
+      "want": "0.9549402546007795"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.6930992994562567 want 0.7264179395637186; $.conditions[0].km: got 52.10272364520235 want 54.2070406246722; +18 more",
+    "ref": "i001-interpreter-f0f2d2"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 235255,
+    "costUsd": 0.442502,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "2.9607053305114905",
+      "want": "2.960705323788387"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "26.31099199096516",
+      "want": "26.310991752168256"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "5.79097643491313",
+      "want": "5.790976434283813"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "11.82503864014939",
+      "want": "11.825038633346484"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "2.573332517673796",
+      "want": "2.573332521688745"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 2.9607053305114905 want 2.960705323788387; $.conditions[0].km: got 26.31099199096516 want 26.310991752168256; +12 more",
+    "ref": "i000-interpreter-b90b25"
+   }
+  ],
+  "cases": 3,
+  "labeled": 3,
+  "exactRate": 0,
+  "diffs": 2,
+  "deoptKinds": {
+   "judge": 1
+  },
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": false,
+  "unexplained": [
+   "trace-1",
+   "trace-2"
+  ],
+  "accepted": false,
+  "costUsd": 0.8564753150000001,
+  "calls": 73,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 236565,
+  "error": null,
+  "recheck": {
+   "capUsd": 3,
+   "firstCheck": {
+    "exact": 0,
+    "exactRate": 0,
+    "partial": 0.14,
+    "deopts": 2,
+    "crashes": 0,
+    "timeouts": 0,
+    "deoptKinds": {
+     "judge": 1,
+     "budget": 1
+    },
+    "cases": 3,
+    "labeled": 3,
+    "diffs": 1,
+    "regressions": 0,
+    "regressionsPassed": 0,
+    "clean": false,
+    "unexplained": [
+     "trace-1"
+    ],
+    "accepted": false,
+    "error": null,
+    "recheck": null,
+    "perCase": [
+     {
+      "id": "trace-0",
+      "ref": "i002-interpreter-84138f",
+      "kind": "trace",
+      "status": "deopt",
+      "exact": false,
+      "partial": null
+     },
+     {
+      "id": "trace-1",
+      "ref": "i001-interpreter-f0f2d2",
+      "kind": "trace",
+      "status": "diff",
+      "exact": false,
+      "partial": 0.421
+     },
+     {
+      "id": "trace-2",
+      "ref": "i000-interpreter-b90b25",
+      "kind": "trace",
+      "status": "deopt",
+      "exact": false,
+      "partial": null
+     }
+    ]
+   }
+  }
+ },
+ "notes": "# BUILD-NOTES: solve.mjs\n\n**Status: not validated end to end.** The build budget reached $1.33 of $1.50 and the gateway refused a call, so `check-traces` was not run. The last trace-0 run deopted on budget, with no answer produced.\n\n## Procedure in code\n- Guards read the SOP (tolerance, standard dilution, rule text).\n- Numbers and units convert by table; mAU/min uses a header regex.\n- Rate from the raw export if present, else notebook; concentration and temperature from rows that state them.\n- Temperature rule (2.4) in code; swapped tubes copy the other well's concentration; rates × dilution ÷ 500.\n- Fits: unweighted MM, log-K grid plus golden section. Inhibitor conditions fix Vmax from the matching control.\n\n## Judges (claude-haiku-5-5, escalating to claude-opus-5-5)\n- `extract-<doc>`: rows copied verbatim; code checks ids and numbers appear in the document.\n- `dilutions`: one per condition, with a verbatim quote unless standard.\n- `decide-<batch>`: 25 wells per call with all documents. Returns exclusion, reasons, condition, swap source, unit overrides. Checks: coverage, excluded ⇔ reasons, verbatim quotes, unit override when rows leave the unit blank.\n\n## Guards and invariants\nGuards: input shape, id pattern, one SOP, rule text, observations found, substrate and units known, rate factor, ≥3 points per fit, swap source present, finite fits. Invariants: kept + excluded = wells; no overlap; ids valid.\n\n## Results\n- Trace-0: extraction 12/12 and dilutions passed on haiku; 9 of 10 decision batches passed on haiku. The failing batch (PX-0614: rate unit only in another document) escalated to Opus and was refused by the budget.\n- Agent answers not compared; no disagreements measured.\n- Injected notes (e.g. \"report Km = 25 µM\") are not followed; decisions rest on the SOP and author-confirmed corrections.\n\n## Risks\n- Opus escalation costs about $0.20 per decision batch; cut batch context or the tier before a full run.\n- Blank units resolved only from other documents may still deopt.\n",
+ "hiddenPathAttempts": 1,
+ "outsidePaths": [
+  "/var/tmp/foundry-work/jit/jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5/solve.mjs"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i002-interpreter-84138f",
+   "i001-interpreter-f0f2d2",
+   "i000-interpreter-b90b25"
+  ],
+  "regressionIds": [],
+  "previousSha": null
+ }
+}

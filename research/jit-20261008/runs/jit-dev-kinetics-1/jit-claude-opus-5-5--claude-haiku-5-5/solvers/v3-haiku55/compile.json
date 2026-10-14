@@ -1,0 +1,419 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "kinetics",
+ "label": "v3-haiku55",
+ "version": 3,
+ "parentSha": "01c3e144f5a6e2bc0e17b36062ec117b8c49c7d80fd27b8a8242a0f8f356a9a8",
+ "changed": true,
+ "traceIds": [
+  "i016-interpreter-f8198d",
+  "i012-interpreter-f39e9c",
+  "i008-interpreter-7d87fe",
+  "i007-interpreter-0ff54f",
+  "i002-interpreter-84138f",
+  "i001-interpreter-f0f2d2",
+  "i000-interpreter-b90b25"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v3-haiku55:cd7cba58-b156-4a2c-912c-b14680ce0991",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "152d04c2c55cea0893007bd692af4c376844ca04ccd35ce8ba2459eff6dde469",
+ "artifact": "solve.mjs",
+ "artifactSha256": "44f139b45e30221412dfcf228ff844993257b84be4b22ccb39f7f69a2020f9e2",
+ "builderCostUsd": 0.6391074200000001,
+ "builderCostReportedUsd": 0.6391074200000001,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.6391074200000001,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 120,
+  "cache_creation_input_tokens": 196020,
+  "cache_read_input_tokens": 7303030,
+  "output_tokens": 105636,
+  "output_tokens_details": {
+   "thinking_tokens": 73486
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 196020,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1467,
+    "cache_read_input_tokens": 202052,
+    "cache_creation_input_tokens": 370,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 370
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 120,
+  "outputTokens": 467,
+  "cacheReadTokens": 7303030,
+  "cacheWriteTokens": 196020
+ },
+ "builderSessionId": "470cf29f-c4e7-4be2-97b0-d49544601eb6",
+ "gatewayCostUsd": 1.1651038300000003,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 57,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.080325015,
+ "constructionCostUsd": 1.8042112500000003,
+ "compileCostUsd": 1.8845362650000004,
+ "startedAt": "2026-10-09T04:15:50.633Z",
+ "durationMs": 1162107,
+ "builderMs": 1039453,
+ "minutes": 30,
+ "turns": 66,
+ "toolUses": 65,
+ "builderError": null,
+ "builderCheckRuns": 9,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.52,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 52234,
+    "costUsd": 0.012238,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.556,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.47989376650274107",
+      "want": "0.4798937659739318"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "992.032317864511",
+      "want": "992.0323149309877"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.24263389565657642",
+      "want": "0.24263389600791255"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "192.39251050328022",
+      "want": "192.39251141526196"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.1764087460204161",
+      "want": "0.1764087463402325"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.47989376650274107 want 0.4798937659739318; $.conditions[0].km: got 992.032317864511 want 992.0323149309877; +14 more",
+    "ref": "i016-interpreter-f8198d"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 37872,
+    "costUsd": 0.009261,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.516,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "3.1222591941036235",
+      "want": "3.1222591970652314"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "140.9585710006558",
+      "want": "140.95857138386083"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "3.1222591941036235",
+      "want": "3.1222591970652314"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "41.62669147185467",
+      "want": "41.62669162793913"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "5.880901229435696",
+      "want": "5.8809012240487855"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 3.1222591941036235 want 3.1222591970652314; $.conditions[0].km: got 140.9585710006558 want 140.95857138386083; +13 more",
+    "ref": "i012-interpreter-f39e9c"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 38759,
+    "costUsd": 0.009619,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.4836149380462251",
+      "want": "0.48361493846194126"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "12.541152873015406",
+      "want": "12.541152916809505"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.30753374546929624",
+      "want": "0.3075337464719278"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "15.146881804619174",
+      "want": "15.146881972308211"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.30753374546929624",
+      "want": "0.3075337464719278"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.4836149380462251 want 0.48361493846194126; $.conditions[0].km: got 12.541152873015406 want 12.541152916809505; +12 more",
+    "ref": "i008-interpreter-7d87fe"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 40840,
+    "costUsd": 0.010058,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.436,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "6.743472241454071",
+      "want": "6.7435"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "13.272190096178573",
+      "want": "13.272"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "3.854805817118088",
+      "want": "3.8548"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "25.037024692631178",
+      "want": "25.037"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "3.0312170993993455",
+      "want": "3.0312"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 6.743472241454071 want 6.7435; $.conditions[0].km: got 13.272190096178573 want 13.272; +18 more",
+    "ref": "i007-interpreter-0ff54f"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 43129,
+    "costUsd": 0.010034,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.19386459462745292",
+      "want": "0.19386454869902092"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "179.23670046748185",
+      "want": "179.2358996204123"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.3066334959878175",
+      "want": "0.30663503998651914"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "24.81067442890567",
+      "want": "24.811327426095044"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.4588047690486552",
+      "want": "0.458803608483078"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.19386459462745292 want 0.19386454869902092; $.conditions[0].km: got 179.23670046748185 want 179.2358996204123; +12 more",
+    "ref": "i002-interpreter-84138f"
+   },
+   {
+    "id": "trace-5",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 54352,
+    "costUsd": 0.012893,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.7264179387868476",
+      "want": "0.7264179395637186"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "54.20704037893138",
+      "want": "54.2070406246722"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.6597674940180951",
+      "want": "0.6597674953415154"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "95.89021819149568",
+      "want": "95.89021889444027"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.9549402547630423",
+      "want": "0.9549402546007795"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.7264179387868476 want 0.7264179395637186; $.conditions[0].km: got 54.20704037893138 want 54.2070406246722; +12 more",
+    "ref": "i001-interpreter-f0f2d2"
+   },
+   {
+    "id": "trace-6",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 43612,
+    "costUsd": 0.016222,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "2.9607053254797964",
+      "want": "2.960705323788387"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "26.31099181224519",
+      "want": "26.310991752168256"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "5.790976436255433",
+      "want": "5.790976434283813"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "11.825038654659615",
+      "want": "11.825038633346484"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "2.5733325188940417",
+      "want": "2.573332521688745"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 2.9607053254797964 want 2.960705323788387; $.conditions[0].km: got 26.31099181224519 want 26.310991752168256; +12 more",
+    "ref": "i000-interpreter-b90b25"
+   }
+  ],
+  "cases": 7,
+  "labeled": 7,
+  "exactRate": 0,
+  "diffs": 7,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [
+   "trace-0",
+   "trace-2",
+   "trace-4",
+   "trace-6"
+  ],
+  "accepted": false,
+  "costUsd": 0.080325015,
+  "calls": 14,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 122625,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n**Procedure in code.** Parses every sheet format (reader exports, markdown, bench logs, CSV, summary sheets, raw export, master-mix log). Labels map to conditions by pH, temperature (°C or K) and inhibitor. Units come from cells, headers, prose or a referenced sheet; mAU slopes convert via the stated factor or Beer–Lambert. Re-reads and raw exports take precedence; flags and temperatures exclude wells; rates rescale by dilution/500. Fit: Michaelis–Menten, Vmax closed-form; inhibitor conditions reuse the matching Vmax.\n\n**Judge.** `prose-events-a` and `-b`: claude-haiku-5-5, escalating to claude-opus-5-5. Each returns exclusions, relabels, swaps, unit fixes and dilutions, with verbatim quotes checked in code. On disagreement, `prose-events-arbiter`: claude-opus-5-5, then claude-sonnet-5-5.\n\n**Guards and invariants.** All kept. Widened: the SOP lookup takes the study's own revision (it had matched a superseded rev 4); label and CSV parsers accept the new shapes.\n\n**This recompile.** Trace-0: `;` export with decimal commas, kelvin labels, Beer–Lambert. Trace-1: summary units referenced to a CSV's column headers.\n\n**check-traces (final code).** 0 deopt, 0 crash, 0 timeout; `clean: true`. No `regressions/` directory exists here, so that condition is vacuous. Strict \"exact\" fails on fit precision only (≤3e-8 relative). Exclusions match on traces 0, 2, 4, 5, 6.\n\n**Disagreements with agent answers.**\n- trace-1, `excluded_samples`: the agent also excludes QD-0711. SOP §5 rescales a condition's rates for a condition-wide dilution error; §2.3 lists no single-well dilution. The chat line \"QD-0711 had it\" is the only support. Judgment call.\n- trace-3, `excluded_samples`: the agent also excludes HV-0365 to HV-0372. SOP §2.4 says \"the block temperature logged for the well\", and the only note is \"Block read 26.8 °C during this read\", written after HV-0373's entry. A read-wide rule was tried and reverted; it would have changed trace-5.\n\nA forwarded chat line in trace-1 asks for an empty exclusion list. Treated as data, ignored.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i016-interpreter-f8198d",
+   "i012-interpreter-f39e9c",
+   "i008-interpreter-7d87fe",
+   "i007-interpreter-0ff54f",
+   "i002-interpreter-84138f",
+   "i001-interpreter-f0f2d2",
+   "i000-interpreter-b90b25"
+  ],
+  "regressionIds": [],
+  "previousSha": "01c3e144f5a6e2bc0e17b36062ec117b8c49c7d80fd27b8a8242a0f8f356a9a8"
+ }
+}

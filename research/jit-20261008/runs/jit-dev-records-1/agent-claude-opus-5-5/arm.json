@@ -1,0 +1,19 @@
+{
+ "experiment": "jit-dev-records-1",
+ "spec": "agent:claude-opus-5-5",
+ "slug": "agent-claude-opus-5-5",
+ "kind": "agent",
+ "hash": "e83c0b59e1d5681e",
+ "def": {
+  "spec": "agent:claude-opus-5-5",
+  "familyId": "records",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "agentMinutes": 15,
+  "agentEffort": null,
+  "models": [
+   "claude-opus-5-5"
+  ]
+ }
+}

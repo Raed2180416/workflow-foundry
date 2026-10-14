@@ -1,0 +1,45 @@
+{
+ "experiment": "jit-dev-kinetics-1",
+ "spec": "jit:claude-opus-5-5/claude-haiku-5-5",
+ "slug": "jit-claude-opus-5-5--claude-haiku-5-5",
+ "kind": "jit",
+ "hash": "930045b2ad53db51",
+ "def": {
+  "spec": "jit:claude-opus-5-5/claude-haiku-5-5",
+  "familyId": "kinetics",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "agentMinutes": 15,
+  "agentEffort": null,
+  "models": [
+   "claude-haiku-5-5",
+   "claude-opus-5-5",
+   "claude-sonnet-5-5"
+  ],
+  "jit": {
+   "warmup": 3,
+   "shadowEvery": 4,
+   "recompileOnDeopts": 2,
+   "maxTraces": 8,
+   "compilerFallback": "claude-opus-5-5",
+   "maxFallbacks": 2,
+   "compare": "unordered"
+  },
+  "compile": {
+   "builderEffort": "high",
+   "builderBudgetUsd": 3,
+   "gatewayUsd": 1.5,
+   "checkUsd": 1.5,
+   "minutes": 30,
+   "fallback": {
+    "builderEffort": "high",
+    "builderBudgetUsd": 8,
+    "gatewayUsd": 1.5,
+    "checkUsd": 1.5,
+    "minutes": 45
+   }
+  },
+  "compiledMinutes": 20
+ }
+}

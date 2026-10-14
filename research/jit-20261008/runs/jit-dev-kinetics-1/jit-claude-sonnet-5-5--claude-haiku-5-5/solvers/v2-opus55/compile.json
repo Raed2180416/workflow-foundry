@@ -1,0 +1,337 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "kinetics",
+ "label": "v2-opus55",
+ "version": 2,
+ "parentSha": "e9eb7bd810b67babd405146d842f20df12514c243a7dd2962a573d3b702e08f2",
+ "changed": true,
+ "traceIds": [
+  "i005-interpreter-ce9473",
+  "i004-interpreter-43418f",
+  "i002-interpreter-070464",
+  "i001-interpreter-6084e0",
+  "i000-interpreter-576e9c"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-opus55:6b01f41d-0488-4272-8fc5-d7ea483e2538",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "5f4aa1f3dcbfcc3d65da20808b6f5f13d2f7e317d464e2935a3266df60c5c0a0",
+ "artifact": "solve.mjs",
+ "artifactSha256": "c2349e7e3d0fd76b8b9bdce820af162afa89b63ae769b9ccc5319f9b1f944227",
+ "builderCostUsd": 2.8431302000000005,
+ "builderCostReportedUsd": 2.8431302000000005,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 2.8431302000000005,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 122,
+  "cache_creation_input_tokens": 125222,
+  "cache_read_input_tokens": 5229031,
+  "output_tokens": 39753,
+  "output_tokens_details": {
+   "thinking_tokens": 15393
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 125222,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1112,
+    "cache_read_input_tokens": 132937,
+    "cache_creation_input_tokens": 231,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 231
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 122,
+  "outputTokens": 558,
+  "cacheReadTokens": 5229031,
+  "cacheWriteTokens": 125222
+ },
+ "builderSessionId": "8f2d4ca1-8477-4e04-a3fa-b2cffd1fd7ad",
+ "gatewayCostUsd": 1.4874490749999996,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 340,
+ "gatewayErrors": {},
+ "gatewayRefusals": {
+  "GATEWAY_BUDGET": 7
+ },
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.06910912500000001,
+ "constructionCostUsd": 4.330579275,
+ "compileCostUsd": 4.3996884,
+ "startedAt": "2026-10-09T04:02:34.044Z",
+ "durationMs": 1087397,
+ "builderMs": 1023747,
+ "minutes": 45,
+ "turns": 65,
+ "toolUses": 64,
+ "builderError": null,
+ "builderCheckRuns": 6,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.547,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 33763,
+    "costUsd": 0.015122,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.4709305386374794",
+      "want": "0.4709318709748256"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "281.739078355595",
+      "want": "281.74100330501653"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "1.3061682018489873",
+      "want": "1.3061704876038767"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "182.96720005075719",
+      "want": "182.96790954954773"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.4709305386374794",
+      "want": "0.4709318709748256"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.4709305386374794 want 0.4709318709748256; $.conditions[0].km: got 281.739078355595 want 281.74100330501653; +12 more",
+    "ref": "i005-interpreter-ce9473"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 33715,
+    "costUsd": 0.016192,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "1.3800722439586468",
+      "want": "1.3800673895826854"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "62.67677933217949",
+      "want": "62.67588788091642"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "1.8544738943789645",
+      "want": "1.854469498965955"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "456.3211738574638",
+      "want": "456.3150637376404"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.6319177338986556",
+      "want": "0.6319185096307799"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 1.3800722439586468 want 1.3800673895826854; $.conditions[0].km: got 62.67677933217949 want 62.67588788091642; +12 more",
+    "ref": "i004-interpreter-43418f"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 30270,
+    "costUsd": 0.013184,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.1938645947250612",
+      "want": "0.1938647206569375"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "179.23669994200174",
+      "want": "179.23687921503068"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.3066334959826673",
+      "want": "0.3066340687571356"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "24.81067442672755",
+      "want": "24.810916666666667"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.4588047694048202",
+      "want": "0.45880622216781264"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.1938645947250612 want 0.1938647206569375; $.conditions[0].km: got 179.23669994200174 want 179.23687921503068; +12 more",
+    "ref": "i002-interpreter-070464"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 27241,
+    "costUsd": 0.011728,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.605,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.7327791687384092",
+      "want": "0.7327914218264485"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "55.73780802391833",
+      "want": "55.7417123618727"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.6597674955678153",
+      "want": "0.6597589683314007"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "95.89021901464113",
+      "want": "95.88568976149602"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.954940253250681",
+      "want": "0.9548775118152086"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.7327791687384092 want 0.7327914218264485; $.conditions[0].km: got 55.73780802391833 want 55.7417123618727; +13 more",
+    "ref": "i001-interpreter-6084e0"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 29761,
+    "costUsd": 0.012883,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "2.960705324308472",
+      "want": "2.960699861793083"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "26.310991770641117",
+      "want": "26.31079774879033"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "5.790976433381933",
+      "want": "5.790994267528354"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "11.825038623597191",
+      "want": "11.825231410975327"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "2.573332523315357",
+      "want": "2.5733360047959146"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 2.960705324308472 want 2.960699861793083; $.conditions[0].km: got 26.310991770641117 want 26.31079774879033; +12 more",
+    "ref": "i000-interpreter-576e9c"
+   }
+  ],
+  "cases": 5,
+  "labeled": 5,
+  "exactRate": 0,
+  "diffs": 5,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [
+   "trace-3",
+   "trace-4"
+  ],
+  "accepted": false,
+  "costUsd": 0.06910912500000001,
+  "calls": 38,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 63638,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n**Procedure in code.** Parses six sheet formats (reader export, markdown, bench log, CSV, summary, raw export). Units (incl. `mmol/L`, `×10^n`) and labels are normalised. Re-reads in note cells or summary arrows replace the first reading. A bench-log \"Block read X °C during this read\" applies to the whole row. The raw export overrides transcriptions. Then it applies withdraw/redirect, swaps, relabels (an id range in the note or the chat message it confirms is expanded) and dilution rescaling. It applies SOP §2 exclusions and fits Michaelis–Menten by grid plus ternary search, with Vmax fixed for inhibitor conditions.\n\n**Judge.** `note-events` turns batches of 8 free-text notes into typed events. Tiers: claude-haiku-5-5 → claude-opus-5-5 → claude-sonnet-5-5. `checkBatch` escalates when ids are not echoed or a well reference does not resolve. `RECHECK` (two readings plus an arbiter) is off: it cost up to $0.25 per task and used up the build budget.\n\n**Guards.** wells-parsed, values-numeric, ids-unique, raw-ids-known (kept; its deopts were parse gaps), labels-mapped, one-sop, inhibitor-base-exists, new bench-data-parsed, new reread-unit. **Invariants:** wells-conserved, enough-points, params-finite, excluded-are-study.\n\n**check-traces (final live run).** 0 deopt, 0 crash, 0 timeout, $0.067. The later chat-range fix (build budget used up) was verified by replaying recorded judgments on all 5 cases.\n\n**Disagreements**\n- All cases: vmax and km differ from the agent by ≤0.6%. \"every vmax and km must be within 10% (relative)\".\n- trace-1 `excluded_samples` PX-0627 and trace-2 PX-0691 were missed by the haiku judge in the last run. The agent is right: \"Facts about a well that the author reports later (a flag, a bubble…) are treated as if they had been written on the sheet.\" Judge variance; `RECHECK` reduces it.\n- trace-0 C2/C4 (last live run): the relabel of PX-0502…PX-0510 covered only one well. Fixed afterwards (the range is in the earlier message); replay matches the agent.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i005-interpreter-ce9473",
+   "i004-interpreter-43418f",
+   "i002-interpreter-070464",
+   "i001-interpreter-6084e0",
+   "i000-interpreter-576e9c"
+  ],
+  "regressionIds": [],
+  "previousSha": "e9eb7bd810b67babd405146d842f20df12514c243a7dd2962a573d3b702e08f2"
+ }
+}

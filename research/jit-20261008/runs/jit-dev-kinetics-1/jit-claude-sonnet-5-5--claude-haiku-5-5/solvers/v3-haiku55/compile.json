@@ -1,0 +1,424 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "kinetics",
+ "label": "v3-haiku55",
+ "version": 3,
+ "parentSha": "c2349e7e3d0fd76b8b9bdce820af162afa89b63ae769b9ccc5319f9b1f944227",
+ "changed": true,
+ "traceIds": [
+  "i008-interpreter-8b19e1",
+  "i007-interpreter-12a54f",
+  "i005-interpreter-ce9473",
+  "i004-interpreter-43418f",
+  "i002-interpreter-070464",
+  "i001-interpreter-6084e0",
+  "i000-interpreter-576e9c"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v3-haiku55:94f31749-242b-4193-90ef-1a88a2a8c9e6",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "152d04c2c55cea0893007bd692af4c376844ca04ccd35ce8ba2459eff6dde469",
+ "artifact": "solve.mjs",
+ "artifactSha256": "38eb6e5b808bcd9f22c487f0d49877b017f69513567203a3d751733dd062879f",
+ "builderCostUsd": 0.90198747,
+ "builderCostReportedUsd": 0.90198747,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.90198747,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 206,
+  "cache_creation_input_tokens": 203027,
+  "cache_read_input_tokens": 12681893,
+  "output_tokens": 100645,
+  "output_tokens_details": {
+   "thinking_tokens": 49456
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 203027,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1166,
+    "cache_read_input_tokens": 208452,
+    "cache_creation_input_tokens": 977,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 977
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 206,
+  "outputTokens": 1034,
+  "cacheReadTokens": 12681893,
+  "cacheWriteTokens": 203027
+ },
+ "builderSessionId": "a202d7da-f6c4-4554-9828-364eeadfbc7c",
+ "gatewayCostUsd": 1.4060375550000002,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 154,
+ "gatewayErrors": {},
+ "gatewayRefusals": {
+  "GATEWAY_BUDGET": 5
+ },
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.84935911,
+ "constructionCostUsd": 2.308025025,
+ "compileCostUsd": 3.157384135,
+ "startedAt": "2026-10-09T04:23:54.848Z",
+ "durationMs": 841128,
+ "builderMs": 758584,
+ "minutes": 30,
+ "turns": 112,
+ "toolUses": 111,
+ "builderError": null,
+ "builderCheckRuns": 6,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.559,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 24437,
+    "costUsd": 0.092323,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.4836149380762592",
+      "want": "0.48361563380763195"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "12.541152876179392",
+      "want": "12.54122616890605"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.30753374620330826",
+      "want": "0.30753307055113505"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "15.14688192738188",
+      "want": "15.146768925459657"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.30753374620330826",
+      "want": "0.30753307055113505"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.4836149380762592 want 0.48361563380763195; $.conditions[0].km: got 12.541152876179392 want 12.54122616890605; +12 more",
+    "ref": "i008-interpreter-8b19e1"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 31031,
+    "costUsd": 0.119511,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.641,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "6.743472243445106",
+      "want": "6.743500512517542"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "13.272190112287067",
+      "want": "13.272418824352563"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "3.8548058171478807",
+      "want": "3.854800690463031"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "25.037024693286348",
+      "want": "25.036911954524395"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "3.0312171020014893",
+      "want": "3.031221225041612"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 6.743472243445106 want 6.743500512517542; $.conditions[0].km: got 13.272190112287067 want 13.272418824352563; +12 more",
+    "ref": "i007-interpreter-12a54f"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 25868,
+    "costUsd": 0.108112,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.4709305386374794",
+      "want": "0.4709318709748256"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "281.739078355595",
+      "want": "281.74100330501653"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "1.3061682018489873",
+      "want": "1.3061704876038767"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "182.96720005075719",
+      "want": "182.96790954954773"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.4709305386374794",
+      "want": "0.4709318709748256"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.4709305386374794 want 0.4709318709748256; $.conditions[0].km: got 281.739078355595 want 281.74100330501653; +12 more",
+    "ref": "i005-interpreter-ce9473"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 27779,
+    "costUsd": 0.093583,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "1.3800722439586468",
+      "want": "1.3800673895826854"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "62.67677933217949",
+      "want": "62.67588788091642"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "1.8544738943789645",
+      "want": "1.854469498965955"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "456.3211738574638",
+      "want": "456.3150637376404"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.6319177338986556",
+      "want": "0.6319185096307799"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 1.3800722439586468 want 1.3800673895826854; $.conditions[0].km: got 62.67677933217949 want 62.67588788091642; +12 more",
+    "ref": "i004-interpreter-43418f"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 22677,
+    "costUsd": 0.085758,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.1938645947250612",
+      "want": "0.1938647206569375"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "179.23669994200174",
+      "want": "179.23687921503068"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.3066334959826673",
+      "want": "0.3066340687571356"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "24.81067442672755",
+      "want": "24.810916666666667"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.4588047694048202",
+      "want": "0.45880622216781264"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.1938645947250612 want 0.1938647206569375; $.conditions[0].km: got 179.23669994200174 want 179.23687921503068; +12 more",
+    "ref": "i002-interpreter-070464"
+   },
+   {
+    "id": "trace-5",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 27864,
+    "costUsd": 0.15514,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.605,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "0.7327791687384092",
+      "want": "0.7327914218264485"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "55.73780802391833",
+      "want": "55.7417123618727"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "0.6597674955678153",
+      "want": "0.6597589683314007"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "95.89021901464113",
+      "want": "95.88568976149602"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "0.954940253250681",
+      "want": "0.9548775118152086"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 0.7327791687384092 want 0.7327914218264485; $.conditions[0].km: got 55.73780802391833 want 55.7417123618727; +13 more",
+    "ref": "i001-interpreter-6084e0"
+   },
+   {
+    "id": "trace-6",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 33868,
+    "costUsd": 0.194933,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.533,
+    "diffs": [
+     {
+      "path": "$.conditions[0].vmax",
+      "got": "2.960705324308472",
+      "want": "2.960699861793083"
+     },
+     {
+      "path": "$.conditions[0].km",
+      "got": "26.310991770641117",
+      "want": "26.31079774879033"
+     },
+     {
+      "path": "$.conditions[1].vmax",
+      "got": "5.790976433381933",
+      "want": "5.790994267528354"
+     },
+     {
+      "path": "$.conditions[1].km",
+      "got": "11.825038623597191",
+      "want": "11.825231410975327"
+     },
+     {
+      "path": "$.conditions[2].vmax",
+      "got": "2.573332523315357",
+      "want": "2.5733360047959146"
+     }
+    ],
+    "note": "$.conditions[0].vmax: got 2.960705324308472 want 2.960699861793083; $.conditions[0].km: got 26.310991770641117 want 26.31079774879033; +12 more",
+    "ref": "i000-interpreter-576e9c"
+   }
+  ],
+  "cases": 7,
+  "labeled": 7,
+  "exactRate": 0,
+  "diffs": 7,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [
+   "trace-0",
+   "trace-2",
+   "trace-3",
+   "trace-4",
+   "trace-6"
+  ],
+  "accepted": false,
+  "costUsd": 0.84935911,
+  "calls": 53,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 82530,
+  "error": null
+ },
+ "notes": "# Build notes: enzyme-kinetics solver\n\n**Status: not done.** The build budget ran out ($1.406 of $1.5 spent). Traces 5 and 6 deopted on `budget`, not on a guard.\n\n## Procedure in code\nSix sheet formats parsed; units resolved (references and CSV headers); label to condition; reference resolution; exclusions (SAT/OVR, bubble during read, pipetting, block temperature); dilution rescale; Michaelis-Menten fit, shared Vmax for inhibitor conditions.\n\n## Judge\n- `note-events`: batches of 8 notes, checked by `checkBatch` (ids echo, refs resolve, units parse).\n- Sheet notes: haiku, then opus, then sonnet.\n- Chat and master-mix notes: sonnet, then opus. Haiku missed a chat confirmation (trace-5 N22) and a 1:1000 dilution (trace-1 N10).\n\n## Guards and invariants\nGuards: `values-numeric`, `ids-unique`, `wells-parsed`, `labels-mapped`, `raw-ids-known`, `one-sop`, `reread-unit`, `bench-data-parsed`, `inhibitor-base-exists`. Invariants: `wells-conserved`, `enough-points`, `params-finite`, `excluded-are-study`.\n\n## Fixes this round\n1. Bench-log units by reference were not followed (traces 0, 1 deopt on `values-numeric`).\n2. CSV headers name units (`S_nM`, `rate_uM_per_s`).\n3. Block-temperature sentence with a trailing parenthetical was missed (trace-1).\n4. Re-reads written as `1.769×10^2` lost the exponent (trace-1).\n5. Chat and master-mix notes use the stronger tiers.\n\n## check-traces (last full run)\n- No `regressions/` directory, so none to pass.\n- Crashes 0, timeouts 0, deopts 2 (traces 5, 6: gateway budget).\n- Traces 0, 1, 3 match agent answers (max error 0.003%); trace 4 within 0.36%.\n- Trace 2: agent excluded PX-0301, we do not. Decided by D8 chat: \"The bubble note on PX-0302 ... belongs to the well one column to the left of it.\" Haiku misread sheet note N52 as a redirect.\n- Traces 5 and 6 unverified with final code.\n- Free dry runs (no-events stub): all 7 complete.\n\n## To finish\nRestore budget, rerun `node tools/check-traces.mjs`, check traces 5 and 6, and fix N52 with a stronger tier.\n",
+ "hiddenPathAttempts": 10,
+ "outsidePaths": [
+  "/opt/node24/bin"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i008-interpreter-8b19e1",
+   "i007-interpreter-12a54f",
+   "i005-interpreter-ce9473",
+   "i004-interpreter-43418f",
+   "i002-interpreter-070464",
+   "i001-interpreter-6084e0",
+   "i000-interpreter-576e9c"
+  ],
+  "regressionIds": [],
+  "previousSha": "c2349e7e3d0fd76b8b9bdce820af162afa89b63ae769b9ccc5319f9b1f944227"
+ }
+}

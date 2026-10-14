@@ -1,0 +1,257 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v2-haiku55",
+ "version": 2,
+ "parentSha": "4ce4943f8b95f7344eb3702c28bec9bc5d65385f8a82ce639be079bb0947a36e",
+ "changed": true,
+ "traceIds": [
+  "i010-interpreter-c9b27b",
+  "i004-interpreter-ff9906",
+  "i002-interpreter-39e2c6",
+  "i001-interpreter-513f07",
+  "i000-interpreter-a52bb5"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-haiku55:3d6e7dd8-4e9f-4fad-be8f-9cd52fbb13cc",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "683f0e339c9fd761925a2b743ad919fda7fc6257e12710f59dee54d79a09cd0e",
+ "artifact": "solve.mjs",
+ "artifactSha256": "6d4d54a05da9cd66af97be312e6f24560ff7f66ef672ac9e6e791d4d0b5544cd",
+ "builderCostUsd": 0.09866591000000001,
+ "builderCostReportedUsd": 0.09866591000000001,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.09866591000000001,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 48,
+  "cache_creation_input_tokens": 99166,
+  "cache_read_input_tokens": 1713025,
+  "output_tokens": 36335,
+  "output_tokens_details": {
+   "thinking_tokens": 21405
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 99166,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 691,
+    "cache_read_input_tokens": 105345,
+    "cache_creation_input_tokens": 223,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 223
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 48,
+  "outputTokens": 174,
+  "cacheReadTokens": 1713025,
+  "cacheWriteTokens": 99166
+ },
+ "builderSessionId": "8dc909ee-029f-45a8-8abc-d1fe866c89fb",
+ "gatewayCostUsd": 0.12722616,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 35,
+ "gatewayErrors": {
+  "MODEL_SCHEMA": 1
+ },
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.046468955,
+ "constructionCostUsd": 0.22589207,
+ "compileCostUsd": 0.272361025,
+ "startedAt": "2026-10-09T03:28:52.010Z",
+ "durationMs": 313990,
+ "builderMs": 256007,
+ "minutes": 30,
+ "turns": 32,
+ "toolUses": 31,
+ "builderError": null,
+ "builderCheckRuns": 4,
+ "checkTraces": {
+  "exact": 2,
+  "partial": 0.985,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 19287,
+    "costUsd": 0.003728,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i010-interpreter-c9b27b"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 16549,
+    "costUsd": 0.003343,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.968,
+    "diffs": [
+     {
+      "path": "$.records[4].amount_usd",
+      "got": "5222.17",
+      "want": "-5222.17"
+     },
+     {
+      "path": "$.records[10].amount_usd",
+      "got": "552.22",
+      "want": "-552.22"
+     },
+     {
+      "path": "$.records[13].amount_usd",
+      "got": "3222.19",
+      "want": "-3222.19"
+     },
+     {
+      "path": "$.records[18].amount_usd",
+      "got": "32.14",
+      "want": "-32.14"
+     },
+     {
+      "path": "$.records[19].amount_usd",
+      "got": "467.93",
+      "want": "-467.93"
+     }
+    ],
+    "note": "$.records[4].amount_usd: got 5222.17 want -5222.17; $.records[10].amount_usd: got 552.22 want -552.22; +8 more",
+    "ref": "i004-interpreter-ff9906"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 11683,
+    "costUsd": 0.002396,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i002-interpreter-39e2c6"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 12916,
+    "costUsd": 0.003521,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.958,
+    "diffs": [
+     {
+      "path": "$.records[2].amount_usd",
+      "got": "272.96",
+      "want": "-272.96"
+     },
+     {
+      "path": "$.records[3].amount_usd",
+      "got": "827.12",
+      "want": "-827.12"
+     },
+     {
+      "path": "$.records[4].amount_usd",
+      "got": "291.38",
+      "want": "-291.38"
+     },
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-40.04",
+      "want": "40.04"
+     },
+     {
+      "path": "$.records[11].amount_usd",
+      "got": "143.44",
+      "want": "-143.44"
+     }
+    ],
+    "note": "$.records[2].amount_usd: got 272.96 want -272.96; $.records[3].amount_usd: got 827.12 want -827.12; +14 more",
+    "ref": "i001-interpreter-513f07"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 40443,
+    "costUsd": 0.033481,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": [],
+    "ref": "i000-interpreter-a52bb5"
+   }
+  ],
+  "cases": 5,
+  "labeled": 5,
+  "exactRate": 0.4,
+  "diffs": 3,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.046468955,
+  "calls": 12,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 57963,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\nLine parsing for the six formats, placeholders, dates (DMY/MDY, Japanese eras), money (German format, minus/CR/parentheses, spelled-out amounts), E.164 phones, country aliases with fuzzy match, nickname and accent handling, identity (union-find over the spec's two match rules), conflict order, exact rational USD conversion rounded once.\n\n## Judges (haiku, then sonnet, then opus)\n- `source-rules`: per-system reading rules (date order, balance sign, update-date reliability, VENDEX era) with quotes, plus void markers. Quotes must occur in the notes; a `no` reliability rule needs none.\n- `vendex-entries`: free-text extraction; substrings must occur in the entry.\n- `country-names`: only names the alias table cannot resolve.\n\n## Guards and invariants\nGuards: inputs-shape, spec-tables, lines-known, row-ids-unique, values-parse, countries-known, rate-known. Invariants: rows-conserved, one-birth-per-person, entity-is-min-row, amounts-two-decimals, phones-e164.\n\n## Changes this round\n- Update-date reliability is one rule per system (was VERITAS only). Trace-1's notes re-stamp LEDGR's dates. This removed the trace-1 deopt.\n- \"pounds sterling\" reads as GBP. This removed the trace-0 `values-parse` deopt.\n\n## check-traces (full run)\nClean: no crash, deopt or timeout. There is no `regressions/` directory, so the regression gate is vacuous. Exact: trace-0, trace-4. Diffs: trace-1, trace-2, trace-3.\n\n## Disagreements with agent answers\n- **trace-3 and trace-1, amount_usd sign (LEDGR, KOBO rows).** trace-3: \"Saldo changes sign in the master.\" trace-1: \"Saldo changes sign in the master\" and \"KOBO balances change sign in the master.\" The solver flips these (trace-3 entity 1252: \"231,66- CHF\" → +272.96); the agent did not. All 16 trace-3 and 9 trace-1 diffs are this kind.\n- **trace-1, family_name case (entity 3937).** The solver gives \"De Vries\"; the agent gives \"de Vries\". The spec says \"letter case is not graded\".\n- **trace-2, record order only.** The agent answer is not sorted by entity_id. Every field matches. The spec sets no order; the solver emits ascending entity_id.\n",
+ "hiddenPathAttempts": 1,
+ "outsidePaths": [
+  "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5/compile/",
+  "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5/"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i010-interpreter-c9b27b",
+   "i004-interpreter-ff9906",
+   "i002-interpreter-39e2c6",
+   "i001-interpreter-513f07",
+   "i000-interpreter-a52bb5"
+  ],
+  "regressionIds": [],
+  "previousSha": "4ce4943f8b95f7344eb3702c28bec9bc5d65385f8a82ce639be079bb0947a36e"
+ }
+}

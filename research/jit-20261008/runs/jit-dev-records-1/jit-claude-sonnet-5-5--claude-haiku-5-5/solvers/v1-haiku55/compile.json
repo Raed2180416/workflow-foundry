@@ -1,0 +1,189 @@
+{
+ "arm": "jit-compile",
+ "kind": "compile",
+ "familyId": "records",
+ "label": "v1-haiku55",
+ "version": 1,
+ "parentSha": null,
+ "changed": true,
+ "traceIds": [
+  "i002-interpreter-03cfce",
+  "i001-interpreter-b2fc5a",
+  "i000-interpreter-b39702"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "3966f3ad47cbf0f95920368ac67b62e7d2718102a4979643032350094c170ff9",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v1-haiku55:abf28003-1d00-41c8-8ab2-f36cd4f046f7",
+ "flowSha256": "3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b",
+ "checkToolSha256": "05fbc7cb5d9d8d5e46660fbefe0a9bbef2cac4eac8e084bf97ca034776497daa",
+ "promptSha256": "6347f1288fd6102b31f968eb5890df11857de4c9e4b6bcac6516587321703d3a",
+ "artifact": "solve.mjs",
+ "artifactSha256": "3d8d9cc29cd915a1d6abeca009f3eb51e644e6d9c8684d9279e4bbdd2e2054e8",
+ "builderCostUsd": 0.48594917,
+ "builderCostReportedUsd": 0.48594917,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.48594917,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 72,
+  "cache_creation_input_tokens": 192721,
+  "cache_read_input_tokens": 4465207,
+  "output_tokens": 122923,
+  "output_tokens_details": {
+   "thinking_tokens": 90227
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 192721,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 840,
+    "cache_read_input_tokens": 197989,
+    "cache_creation_input_tokens": 1134,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1134
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 72,
+  "outputTokens": 308,
+  "cacheReadTokens": 4465207,
+  "cacheWriteTokens": 192721
+ },
+ "builderSessionId": "f6b3b0f6-40d9-4c4a-a375-eab4b427b323",
+ "gatewayCostUsd": 0.37507133000000004,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 68,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.07402871500000001,
+ "constructionCostUsd": 0.8610205,
+ "compileCostUsd": 0.9350492149999999,
+ "startedAt": "2026-10-09T02:52:58.358Z",
+ "durationMs": 720684,
+ "builderMs": 692345,
+ "minutes": 30,
+ "turns": 43,
+ "toolUses": 42,
+ "builderError": null,
+ "builderCheckRuns": 4,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.997,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 18409,
+    "costUsd": 0.020674,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.997,
+    "diffs": [
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-504",
+      "want": "44265.51"
+     }
+    ],
+    "note": "$.records[8].amount_usd: got -504 want 44265.51",
+    "ref": "i002-interpreter-03cfce"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 20252,
+    "costUsd": 0.031271,
+    "status": "diff",
+    "exact": false,
+    "partial": 1,
+    "diffs": [],
+    "note": "",
+    "ref": "i001-interpreter-b2fc5a"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 28230,
+    "costUsd": 0.022083,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.994,
+    "diffs": [
+     {
+      "path": "$.records[2].birth_date",
+      "got": "\"1969-09-11\"",
+      "want": "\"1969-11-09\""
+     },
+     {
+      "path": "$.records[28].birth_date",
+      "got": "\"1956-02-10\"",
+      "want": "\"1956-10-02\""
+     }
+    ],
+    "note": "$.records[2].birth_date: got \"1969-09-11\" want \"1969-11-09\"; $.records[28].birth_date: got \"1956-02-10\" want \"1956-10-02\"",
+    "ref": "i000-interpreter-b39702"
+   }
+  ],
+  "cases": 3,
+  "labeled": 3,
+  "exactRate": 0,
+  "diffs": 3,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.07402871500000001,
+  "calls": 16,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 28331,
+  "error": null
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\n- Spec tables (calling codes, trunk prefixes, rates, nickname appendix) are parsed from each task's spec.\n- Lines are parsed per system layout. Voids come from markers the rules judge found in the notes.\n- Dates, E.164 phones (spec §6) and balances are computed in code. Balances get the per-system sign flip, then exact rational USD conversion, rounded once.\n- Names: titles and initials dropped, nicknames replaced, accents restored from other rows.\n- Identity: union-find under spec §3 (accent renderings, at most one typing error, equal dates or a shared phone).\n- Records: newest row first, unreliable-date systems last. Country, phone and balance come from the first row that has them.\n\n## Judges\n- `rules`: claude-opus-5-5 only, one call. Haiku misread a worked example, so I skipped the cheapest-first tier here. Outputs date order, sign flips, void markers and unreliable-date systems. Check: markers and quotes occur in the notes.\n- `countries`: one batch, haiku then opus. Check: each text mapped once, codes well-formed.\n- `vendex-N`: batches of 4, haiku then opus. Check: quotes verbatim in the entry; code re-parses dates and amounts.\n\n## Guards and invariants\n- Guards: inputs present, spec parsed, line formats, balances and names parsed, rates known.\n- Invariants: row ids unique, rows conserved, each row in one record, one birth date per person, entity ids unique.\n\n## check-traces\n- 0 crashes, 0 deopts, 0 timeouts, 0 regressions. Mean field partial 99.7%. Exact 0/3 (trace-1 differs only in record order).\n\n## Disagreements\n- trace-0, entity 1457, `amount_usd`: ours -504.00, agent 44265.51. Spec §4: \"the most recent row with a usable balance\". KOBO 1457 (2025/08/13) is newer than 9683 (2023/10/11), and its \"▲\" balance is negative. The agent used the older row.\n- trace-2, Kristoffer Kjær (ATLAS 6483) and Ute Becker (ATLAS 6748), `birth_date`: ours MDY, agent DMY. The ATLAS notes say \"born 10/02/1952 belongs to someone born in October\", so the agent is right. Opus still returned MDY. Known miss, not fixed.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i002-interpreter-03cfce",
+   "i001-interpreter-b2fc5a",
+   "i000-interpreter-b39702"
+  ],
+  "regressionIds": [],
+  "previousSha": null
+ }
+}

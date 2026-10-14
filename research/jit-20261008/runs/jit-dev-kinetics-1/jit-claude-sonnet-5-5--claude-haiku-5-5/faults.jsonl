@@ -1,0 +1,2 @@
+{"experiment":"jit-dev-kinetics-1","arm":"jit:claude-sonnet-5-5/claude-haiku-5-5","idx":3,"taskKey":"kinetics:dev:d4:s204","component":"compile","error":null,"metaErrors":null,"builderError":{"code":"MODEL_RATE_LIMIT","exitCode":1,"stderr":""},"at":"2026-10-08T23:48:38.025Z"}
+{"experiment":"jit-dev-kinetics-1","arm":"jit:claude-sonnet-5-5/claude-haiku-5-5","idx":13,"taskKey":"kinetics:dev:d4:s214","component":"compile","error":null,"metaErrors":null,"builderError":{"code":"MODEL_RATE_LIMIT","exitCode":1,"stderr":""},"at":"2026-10-09T04:50:19.650Z"}

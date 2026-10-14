@@ -1,0 +1,24 @@
+{
+ "experiment": "jit-dev-records-1",
+ "spec": "static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs",
+ "slug": "static-B1-haiku-records-k1-solve",
+ "kind": "static",
+ "hash": "ca4f763d5d03568e",
+ "def": {
+  "spec": "static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs",
+  "familyId": "records",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "agentMinutes": 15,
+  "agentEffort": null,
+  "models": [
+   "claude-haiku-5-5",
+   "claude-opus-5-5",
+   "claude-sonnet-5-5"
+  ],
+  "scriptSha": "09e56f5422640de69e128a86a86c3f795bf345005b392aa69d8dd92b4e90753e",
+  "compiledMinutes": 20,
+  "fallback": "claude-haiku-5-5"
+ }
+}
