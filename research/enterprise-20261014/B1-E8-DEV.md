@@ -119,3 +119,16 @@ first smoke report of a build loop shows it (`arm errors: invalid-output effects
 
 The feedback loop, not the builder's tier, decides construct-before on this family: a 20× cheaper builder with a loop beats the frontier
 builder without one. Lineages 2 and 3 of B1L-H measure whether that holds beyond one build.
+
+## Result: B1L-H lineages 2 and 3 (K = 3 in all, same conditions, dev evidence)
+
+| lineage | build | smoke runs | completed cases pass | the gap |
+|---|---|---|---|---|
+| 1 | $0.39, 71 turns, 18.8 min | 10 | **1,022/1,022 (100%)** | none |
+| 2 | $0.62, 37 turns, 24.3 min | 4 | **974/1,022 (95.3%)**, tail 603/651 | go-live backlog (`gl-intake` 18, `gl-awaiting` 18, `gl-dispatched` 12; all L3 missed): the `migration` event's orders are never picked up |
+| 3 | $0.53, 59 turns, 20.2 min | 8 | **1,015/1,022 (99.3%)**, tail 644/651 | F4 partial reserve: releases instead of resubmitting the failed items (SPEC-E line 162) |
+
+Mean 98.2% (range 95.3–100%) at $0.39–0.62 per build, no critical violation and no arm error in any lineage. Each imperfect lineage
+misses one whole requirement (one rule family, every case of it), not scattered cases: smoke feedback shows *what happened* but not
+*which stated requirement went unhandled*. That is the gap a per-requirement tracker (experiments/tracker/, in progress) is built to
+close: lineage 2 would show "go-live backlog: untested/fail", lineage 3 "partial batch: fail".
