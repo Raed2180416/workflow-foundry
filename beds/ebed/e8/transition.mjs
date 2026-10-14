@@ -199,7 +199,9 @@ function orderExpectation(world, view, t) {
 
   // Customer cancels while processing (R6.2, R6.3): the first that counts aborts.
   const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' && a.at >= tr);
-  const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)));
+  // S7: a report proves collection at its reportedAt; only reports that have reached the arm count (they arrive no earlier).
+  const reportedMs = m => (m.payload?.reportedAt ? Date.parse(m.payload.reportedAt) : m.at);
+  const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);
 
   // Per-fulfilment saga state (units as the arm committed them).
   const saga = avail.map(f => {

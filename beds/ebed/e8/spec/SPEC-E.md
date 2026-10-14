@@ -75,7 +75,8 @@ of an action is the time of its event.
 
 Payload `{ ref?, carrier, code, shipmentId, fulfilmentRef, reportedAt }`. `fulfilmentRef` is the fulfilment id you
 gave the carrier. `code` is the carrier's own code; translate it with `rulebook/<edition>/carrier-codes.json` into one
-meaning: `collected`, `inTransit`, `delivered`, `collectionFailed` or `info` (no action). Carriers repeat messages and
+meaning: `collected`, `inTransit`, `delivered`, `collectionFailed` or `info` (no action); a code the table does not list
+is treated as `info`. The time of a report is its `reportedAt`. Carriers repeat messages and
 deliver them out of order (a delivery report can reach you before the collection report). Messages about a shipment
 you cancelled, or about a fulfilment that is already completed or failed, change nothing.
 
@@ -257,6 +258,8 @@ Send each required notification exactly once.
   waiting, changes nothing.
 - S6 Collection of one fulfilment ends the customer's right to cancel the whole order (R6.2), including fulfilments not
   yet collected.
+- S7 Whether a shipment "has been reported collected" before a cancel is judged by the report's `reportedAt` (a
+  `collected`, `inTransit` or `delivered` report all prove collection), as far as reports have reached you when you act.
 
 ## 6. Reference: the shop as originally written (for orientation only)
 

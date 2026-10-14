@@ -37,6 +37,7 @@ export const NEW_LOCATION = Object.freeze({ location: 'WH-UTR', carrier: 'SWIFTL
 export const CARRIER_CODES = Object.freeze([
   { carrier: 'PARCELLA', code: 'COLLECTED', meaning: 'collected' }, { carrier: 'PARCELLA', code: 'IN_TRANSIT', meaning: 'inTransit' },
   { carrier: 'PARCELLA', code: 'DELIVERED', meaning: 'delivered' }, { carrier: 'PARCELLA', code: 'NOT_COLLECTED', meaning: 'collectionFailed' },
+  { carrier: 'PARCELLA', code: 'LABEL_CREATED', meaning: 'info' },
   { carrier: 'VELOX', code: 'PU', meaning: 'collected' }, { carrier: 'VELOX', code: 'IT', meaning: 'inTransit' },
   { carrier: 'VELOX', code: 'DL', meaning: 'delivered' }, { carrier: 'VELOX', code: 'NC', meaning: 'collectionFailed' },
   { carrier: 'VELOX', code: 'LB', meaning: 'info' },
