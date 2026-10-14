@@ -2,12 +2,15 @@
 // preregistered hypotheses table (PREREG-NEED-V1 §1.1 = prereg/stages.json jobs[].hypothesis)? If one token threshold sorts the
 // table into workflow and no-workflow, the table is a size table in disguise and the router's structure features cannot be
 // told apart from a size rule on it; the jobs a threshold gets wrong are exactly the shortcut breakers that must carry the test.
-//   Table 1  every TRAIN and HELD-OUT job with a measured max example token count (stages.json maxExampleTokens, ceil(bytes/4)):
-//            best single threshold on log10(1 + tokens) for the N = 1 and N = 10 class hypotheses (balanced accuracy, ties to the
-//            larger threshold as the preregistration says), the same fitted leave-one-cluster-out, and the fixed size rule of
-//            DESIGN §6 (< 2K direct-H, 2-30K agent-H, > 30K construct-H) as class and as mode.
-//   Table 2  the jobs that also have a feature row (census d3/d5 or the anchor beds computed now): token-only, fan-out-only
-//            (maxListLength) and the preregistered OR rule H0 = tokens >= theta_tok OR maxListLength >= theta_fan, each best-fit.
+//   Two token measures, same method. `router`: logInputTokens as features.mjs computes it (median over example seeds 601-603, mean over
+//            the census difficulties inside the job band; the anchor beds computed now), the input the router actually reads.
+//            `maxExample`: the largest example input over the nine example seeds (stages.json maxExampleTokens, ceil(bytes/4)), the
+//            measure agent-O budgets use. For each: the best single threshold on log10(1 + tokens) for the N = 1 and N = 10 class
+//            hypotheses (balanced accuracy, ties to the larger threshold as the preregistration says), the same fitted
+//            leave-one-cluster-out, fitted on TRAIN and applied to the held-out jobs, and the fixed size rule of DESIGN §6
+//            (< 2K direct-H, 2-30K agent-H, > 30K construct-H) as class and as mode.
+//   Fan-out  on the `router` rows: fan-out only (maxListLength) and the preregistered OR rule H0 = tokens >= theta_tok OR
+//            maxListLength >= theta_fan, each best-fit and leave-one-cluster-out.
 // The hypotheses are expectations written before any label, not labels: "reproduces" means agrees with the author's expectations.
 // Evidence grade: dev (no archived rows; the table is itself unmeasured).
 import { loadStages, loadCensus } from './census.mjs';
@@ -108,62 +111,54 @@ export function featureIndex(census, anchors = {}) {
   return idx;
 }
 
+/** One token measure's tables for one hypothesis column (best threshold, LOCO, TRAIN-fit on held-out, the fixed size rule). */
+function tokenTable(pts, getX, tokensOf, N) {
+  const truth = p => p[N].class;
+  const fit = bestThreshold(pts, getX, truth);
+  const train = pts.filter(p => p.split === 'train'), held = pts.filter(p => p.split === 'heldout');
+  const trainFit = bestThreshold(train, getX, truth);
+  const sizeClass = confusion(pts, p => tokensOf(p) > SIZE_RULE.constructAbove, truth);
+  return {
+    jobs: pts.length, workflowJobs: pts.filter(p => truth(p) === WF).length, tokenThreshold: slim(fit), loco: slimC(locoThreshold(pts, getX, truth)),
+    trainToHeldout: { trainTheta: num(trainFit.theta), trainThetaTokens: num(trainFit.thetaTokens), trainBalancedAccuracy: round(trainFit.ba, 3), heldOutJobs: held.length, ...slimC(confusion(held, p => getX(p) >= trainFit.theta, truth)) },
+    fixedSizeRule: { ...slimC(sizeClass), modeAgreement: pts.filter(p => sizeMode(tokensOf(p)) === p[N].mode).length, modes: pts.length },
+    tokenOrder: [...pts].sort((a, b) => getX(a) - getX(b)).map(p => `${p.id} (${Math.round(tokensOf(p))})${truth(p) === WF ? ' W' : ''}`),
+  };
+}
+
 export function runD1({ stagesInfo = loadStages(), census = loadCensus(), anchors = {} } = {}) {
   const jobs = hypothesisJobs(stagesInfo.stages);
-  const tables = {};
-  const rules = {};
-  for (const N of ['n1', 'n10']) {
-    const truth = p => p[N].class;
-    const nWf = jobs.filter(p => truth(p) === WF).length;
-    const fit = bestThreshold(jobs, p => p.x, truth);
-    const sizeClass = confusion(jobs, p => p.tokens > SIZE_RULE.constructAbove, truth);
-    const modeAgree = jobs.filter(p => sizeMode(p.tokens) === p[N].mode).length;
-    const train = jobs.filter(p => p.split === 'train'), held = jobs.filter(p => p.split === 'heldout');
-    const trainFit = bestThreshold(train, p => p.x, truth);
-    const heldOut = confusion(held, p => p.x >= trainFit.theta, truth);
-    tables[N] = {
-      jobs: jobs.length, workflowJobs: nWf, noWorkflowJobs: jobs.length - nWf,
-      tokenThreshold: slim(fit), loco: slimC(locoThreshold(jobs, p => p.x, truth)),
-      trainToHeldout: { trainTheta: num(trainFit.theta), trainThetaTokens: num(trainFit.thetaTokens), trainBalancedAccuracy: round(trainFit.ba, 3), heldOutJobs: held.length, ...slimC(heldOut) },
-      tokenOrder: [...jobs].sort((a, b) => a.tokens - b.tokens).map(p => `${p.id} (${p.tokens})${p[N].class === WF ? ' W' : ''}`),
-      fixedSizeRule: { ...slimC(sizeClass), modeAgreement: modeAgree, modes: jobs.length },
-      majorityBalancedAccuracy: 0.5,
-      perJob: jobs.map(p => ({ id: p.id, tokens: p.tokens, hypothesis: p[N].class, mode: p[N].mode, byThreshold: p.x >= fit.theta ? WF : 'no-workflow', bySizeRule: sizeMode(p.tokens) })),
-    };
-  }
-  // Table 2: jobs with a census-style feature row.
   const idx = featureIndex(census, anchors);
   const bedOf = f => ANCHOR_BEDS[f] ?? f;
   const rows = [];
   for (const j of jobs) { const row = jobFeatureRow(j, idx, bedOf); if (row) rows.push({ ...j, ...row, computedFromBed: !!ANCHOR_BEDS[j.family] }); }
   const missing = jobs.filter(j => !rows.some(r => r.id === j.id)).map(j => j.id);
+  const router = {}, maxExample = {}, fan = {};
   for (const N of ['n1', 'n10']) {
     const truth = p => p[N].class;
-    rules[N] = {
-      jobs: rows.length, workflowJobs: rows.filter(p => truth(p) === WF).length,
-      tokenOnly: slim(bestThreshold(rows, p => p.logInputTokens, truth)),
-      fanOutOnly: slim(bestThreshold(rows, p => p.maxListLength, truth)),
-      orRule: (() => {
-        const r = bestOrRule(rows, p => p.logInputTokens, p => p.maxListLength, truth);
-        const loco = locoOrRule(rows, p => p.logInputTokens, p => p.maxListLength, truth);
-        return { thetaTok: num(r.thetaA), thetaTokTokens: num(Math.round(10 ** r.thetaA - 1)), thetaFan: num(r.thetaB), thetaFanItems: num(Math.round(10 ** r.thetaB - 1)),
-          balancedAccuracy: round(r.ba, 3), accuracy: round(r.accuracy, 3), tp: r.tp, fp: r.fp, tn: r.tn, fn: r.fn, wrong: r.wrong, perfect: r.perfect, loco: slimC(loco) };
-      })(),
+    router[N] = tokenTable(rows, p => p.logInputTokens, p => 10 ** p.logInputTokens - 1, N);
+    maxExample[N] = tokenTable(jobs, p => p.x, p => p.tokens, N);
+    const orFit = bestOrRule(rows, p => p.logInputTokens, p => p.maxListLength, truth), orLoco = locoOrRule(rows, p => p.logInputTokens, p => p.maxListLength, truth);
+    fan[N] = {
+      jobs: rows.length, workflowJobs: rows.filter(p => truth(p) === WF).length, fanOutOnly: slim(bestThreshold(rows, p => p.maxListLength, truth)),
+      orRule: { thetaTok: num(orFit.thetaA), thetaTokTokens: num(Math.round(10 ** orFit.thetaA - 1)), thetaFan: num(orFit.thetaB), thetaFanItems: num(Math.round(10 ** orFit.thetaB - 1)),
+        balancedAccuracy: round(orFit.ba, 3), accuracy: round(orFit.accuracy, 3), tp: orFit.tp, fp: orFit.fp, tn: orFit.tn, fn: orFit.fn, wrong: orFit.wrong, perfect: orFit.perfect, loco: slimC(orLoco) },
     };
   }
-  const perfect1 = tables.n1.tokenThreshold.perfect, perfect10 = tables.n10.tokenThreshold.perfect;
+  const R1 = router.n1.tokenThreshold, R10 = router.n10.tokenThreshold, M1 = maxExample.n1.tokenThreshold, M10 = maxExample.n10.tokenThreshold;
   return {
     id: 'D1', grade: 'dev', question: 'Does logInputTokens alone reproduce the hypotheses table?',
     sources: [stagesInfo.source, census.source],
-    note: 'The hypotheses are expectations written before any label (PREREG-NEED-V1 §1.1), not labels. Jobs: TRAIN and HELD-OUT with a measured max example token count; forced, pending, conditional and unmeasured jobs are left out.',
+    note: 'The hypotheses are expectations written before any label (PREREG-NEED-V1 §1.1), not labels. Jobs: TRAIN and HELD-OUT with a measured max example token count; forced, pending, conditional and unmeasured jobs are left out. '
+      + 'Two token measures: `router` is logInputTokens as features.mjs computes it (median over example seeds 601-603, mean over the census difficulties inside the job band), the input the router reads; `maxExample` is the largest example input over the nine example seeds (stages.json), the measure agent-O budgets use.',
     jobs: jobs.map(j => ({ id: j.id, cluster: j.cluster, split: j.split, tokens: j.tokens, n1: j.n1, n10: j.n10 })),
-    tokenOnly: tables, featureRows: rows.map(r => ({ id: r.id, family: r.family, difficulties: r.difficulties, proxy: r.proxy, computedFromBed: r.computedFromBed, logInputTokens: round(r.logInputTokens, 4), maxListLength: round(r.maxListLength, 4) })),
-    withFanOut: rules, jobsWithoutFeatureRow: missing,
+    featureRows: rows.map(r => ({ id: r.id, family: r.family, difficulties: r.difficulties, proxy: r.proxy, computedFromBed: r.computedFromBed, logInputTokens: round(r.logInputTokens, 4), tokens: Math.round(10 ** r.logInputTokens - 1), maxListLength: round(r.maxListLength, 4) })),
+    router, maxExample, withFanOut: fan, jobsWithoutFeatureRow: missing,
     summary: {
-      jobs: jobs.length, reproducedN1: perfect1, reproducedN10: perfect10,
-      balancedAccuracyN1: tables.n1.tokenThreshold.balancedAccuracy, balancedAccuracyN10: tables.n10.tokenThreshold.balancedAccuracy,
-      errorsN1: tables.n1.tokenThreshold.wrong, errorsN10: tables.n10.tokenThreshold.wrong,
-      orRuleReproducedN1: rules.n1.orRule.perfect, orRuleReproducedN10: rules.n10.orRule.perfect, orRuleErrorsN1: rules.n1.orRule.wrong, orRuleErrorsN10: rules.n10.orRule.wrong,
+      jobs: jobs.length, jobsWithFeatureRow: rows.length,
+      router: { reproducedN1: R1.perfect, reproducedN10: R10.perfect, balancedAccuracyN1: R1.balancedAccuracy, balancedAccuracyN10: R10.balancedAccuracy, errorsN1: R1.wrong, errorsN10: R10.wrong },
+      maxExample: { reproducedN1: M1.perfect, reproducedN10: M10.perfect, balancedAccuracyN1: M1.balancedAccuracy, balancedAccuracyN10: M10.balancedAccuracy, errorsN1: M1.wrong, errorsN10: M10.wrong },
+      orRuleReproducedN1: fan.n1.orRule.perfect, orRuleReproducedN10: fan.n10.orRule.perfect, orRuleErrorsN1: fan.n1.orRule.wrong, orRuleErrorsN10: fan.n10.orRule.wrong,
     },
   };
 }

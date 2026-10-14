@@ -1,6 +1,6 @@
 # Archive: rescued JSONL of P1 and C0 dev (LEGACY, development evidence)
 
-Rows predate the need-router protocol (research/need-router-20261014/DESIGN.md §2 validity gates). Never pooled with new labels. P1: 300 s per-call limit, timeouts booked at $0, 1-hour cache writes (policy 2026-10-08.1 later set FORCE_PROMPT_CACHING_5M=1); C0 dev: seeds 6001-6004 were inspected by the failure diagnoses and are no longer held out.
+Rows predate the need-router protocol (research/need-router-20261014/DESIGN.md §2 validity gates). Never pooled with new labels. P1: 300 s per-call limit, timeouts booked at $0. P1 and C0 dev: 1-hour cache writes (policy 2026-10-08.1 later set FORCE_PROMPT_CACHING_5M=1, so their dollars are not comparable with later runs). C0 dev: seeds 6001-6004 were inspected by the failure diagnoses and are no longer held out.
 
 Rescued 2026-10-14 from `experiments/runs/ (git-ignored, .gitignore:13)` by `experiments/need-router/diagnostics/rescue.mjs` (M0 item 5, DESIGN §7).
 Files are byte copies; `MANIFEST.json` holds the sha256 of each and what was left behind. The diagnostics D0-D6

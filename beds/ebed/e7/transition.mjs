@@ -116,7 +116,7 @@ export function referenceTransition(world, view) {
     return { case: view.case, at: view.at, decisions: { graded: { subject: null, priority: null } }, effects: { required: [], permitted },
       humanTasks: { required: [], permitted: [] }, terminal: true, end: { status: 'invalid', at: ms(t.start) }, records: null };
   }
-  return incidentExpectation(world, view, t, view.flags ?? {});
+  return incidentExpectation(world, view, t, world.controlFlags ?? {});
 }
 
 /**

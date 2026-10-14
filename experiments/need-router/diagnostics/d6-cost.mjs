@@ -10,14 +10,20 @@
 //   Check 3  direct-call rows: recorded tokens carry no cache fields.
 //   Check 4  what the meter does to the labels: agent rows re-priced under each meter, labels recomputed over the whole grid.
 // Price variants: p5 = the pinned table, 5-minute cache writes, the session aggregate at one tier (what label-run.priceSession does for
-// a session with streamUsage only); p1h = the same with cache writes at the 1-hour rate (2 x input). Every archived run predates
-// policy 2026-10-08.1 (FORCE_PROMPT_CACHING_5M=1); Check 1 shows which rate the CLI billed. Evidence grade: LEGACY/dev.
+// a session with streamUsage only); p1h = the same with cache writes at the 1-hour rate (2 x input). Policy 2026-10-08.1 set
+// FORCE_PROMPT_CACHING_5M=1 (commit 5f145ba, 2026-10-08 20:55 UTC): P1 and the C0 dev round ran before it, the JIT streams (from
+// 2026-10-08 23:36 UTC) after it. Check 1 shows which rate the CLI billed before the flag; `pEra` assumes the policy's own account of the
+// flag for each session's era (pre-flag 1h, post-flag 5m), which the archive cannot confirm for the post-flag sessions.
+// Evidence grade: LEGACY/dev.
 import { readJson, quantile, median, mean, sum, round, sourceOf } from './common.mjs';
 import { STAGES_FILE } from './census.mjs';
 import { needTable, needLabels, GRID, HEADLINE } from '../metrics.mjs';
 import { toMatrix, LEGACY_REGISTRY } from './legacy.mjs';
 
 export const priceTable = (file = STAGES_FILE) => readJson(file).priceTable;
+/** git log -S FORCE_PROMPT_CACHING_5M policy/models.json: the commit that introduced the 5-minute cache flag. */
+export const CACHE_FLAG = Object.freeze({ commit: '5f145ba', at: '2026-10-08T20:55:17Z', source: 'policy/models.json notes (2026-10-08), git log -S' });
+export const eraOf = at => (at && at < CACHE_FLAG.at ? 'pre-flag' : at ? 'post-flag' : 'unknown');
 const tierOf = (m, promptTokens, low) => (low ? m.tiers[0] : (m.tiers.find(t => t.maxPromptTokens == null || promptTokens <= t.maxPromptTokens) ?? m.tiers.at(-1)));
 
 /**
@@ -65,7 +71,7 @@ export function agentSessions(jobs) {
     const key = `${job.id}|${r.arm}|${r.taskKey}|${r.trial}|${r.traceId ?? ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ job: job.id, mode: r.mode, arm: r.arm, model: r.model, unit: r.unit, reported, streamUsage: r.streamUsage, turns: r.turns, source: r.source });
+    out.push({ job: job.id, mode: r.mode, arm: r.arm, model: r.model, unit: r.unit, reported, streamUsage: r.streamUsage, turns: r.turns, source: r.source, at: r.at ?? null, era: eraOf(r.at) });
   }
   return out;
 }
@@ -75,20 +81,22 @@ export function repriceSession(s, table) {
   const t = asTokens(s.streamUsage), w = s.streamUsage.cacheWriteTokens ?? 0;
   const p5 = priceTokens(table, s.model, { ...t, cacheWrite5m: w }), p1h = priceTokens(table, s.model, { ...t, cacheWrite1h: w });
   if (!p5) return null;
-  const nonOutput = priceTokens(table, s.model, { ...t, output: 0, cacheWrite1h: w });
-  const impliedOutputTokens = Math.max(0, (s.reported - nonOutput.usd) / (p1h.outPerMTok / 1e6));
-  return { ...s, p5: p5.usd, p1h: p1h.usd, tier: p1h.tier.maxPromptTokens == null ? 'upper' : 'lower', recordedOutputTokens: t.output, impliedOutputTokens };
+  const era = s.era ?? eraOf(s.at);
+  const pEra = era === 'pre-flag' ? p1h : p5;
+  const implied = base => Math.max(0, (s.reported - priceTokens(table, s.model, { ...t, output: 0, ...base }).usd) / (p1h.outPerMTok / 1e6));
+  return { ...s, era, p5: p5.usd, p1h: p1h.usd, pEra: pEra.usd, tier: p1h.tier.maxPromptTokens == null ? 'upper' : 'lower', recordedOutputTokens: t.output,
+    impliedOutputTokens: implied({ cacheWrite1h: w }), impliedOutputTokensEra: implied(era === 'pre-flag' ? { cacheWrite1h: w } : { cacheWrite5m: w }) };
 }
 
 export function summarise(sessions, keyOf) {
   const by = new Map();
   for (const s of sessions) (by.get(keyOf(s)) ?? by.set(keyOf(s), []).get(keyOf(s))).push(s);
   return [...by].map(([key, v]) => {
-    const rep = sum(v.map(x => x.reported)), p5 = sum(v.map(x => x.p5)), p1h = sum(v.map(x => x.p1h));
+    const rep = sum(v.map(x => x.reported)), p5 = sum(v.map(x => x.p5)), p1h = sum(v.map(x => x.p1h)), pe = sum(v.map(x => x.pEra));
     return {
-      key, sessions: v.length, reportedUsd: round(rep, 3), p5Usd: round(p5, 3), p1hUsd: round(p1h, 3), ratioReportedOverP5: round(rep / p5, 3), ratioReportedOverP1h: round(rep / p1h, 3),
+      key, sessions: v.length, reportedUsd: round(rep, 3), p5Usd: round(p5, 3), p1hUsd: round(p1h, 3), pEraUsd: round(pe, 3), ratioReportedOverP5: round(rep / p5, 3), ratioReportedOverP1h: round(rep / p1h, 3), ratioReportedOverEra: round(rep / pe, 3),
       medianSessionRatioOverP1h: round(median(v.map(x => x.reported / x.p1h)), 3), meanRecordedOutputTokens: Math.round(mean(v.map(x => x.recordedOutputTokens))),
-      medianImpliedOutputTokens: Math.round(median(v.map(x => x.impliedOutputTokens))), upperTierShare: round(v.filter(x => x.tier === 'upper').length / v.length, 3),
+      medianImpliedOutputTokens: Math.round(median(v.map(x => x.impliedOutputTokens))), medianImpliedOutputTokensEra: Math.round(median(v.map(x => x.impliedOutputTokensEra))), upperTierShare: round(v.filter(x => x.tier === 'upper').length / v.length, 3),
     };
   }).sort((a, b) => (a.key < b.key ? -1 : 1));
 }
@@ -142,13 +150,15 @@ export function runD6(jobs, { constructions = [], table = priceTable(), tableSou
   const sessions = agentSessions(jobs).map(s => repriceSession(s, table)).filter(Boolean);
   const builder = builderCheck(constructions, table);
   const byModel = summarise(sessions, s => s.model);
+  const byModelEra = summarise(sessions, s => `${s.model} | ${s.era}`);
   const groups = summarise(sessions, s => `${s.job} | ${s.mode} | ${s.model}`);
   const impact = meterImpact(jobs, table);
   return {
     id: 'D6', grade: 'LEGACY/dev', question: 'CLI-reported cost against token re-priced cost on archived agent rows', priceTable: table.id, sources: [tableSource],
-    builderSessions: builder, agentSessions: { count: sessions.length, byModel, groups }, directCalls: directCallCheck(jobs, table), meterImpact: impact,
+    builderSessions: builder, agentSessions: { count: sessions.length, byModel, byModelEra, groups }, cacheFlag: CACHE_FLAG, directCalls: directCallCheck(jobs, table), meterImpact: impact,
     summary: {
       sessions: sessions.length, byModel: Object.fromEntries(byModel.map(m => [m.key, { sessions: m.sessions, ratioReportedOverP5: m.ratioReportedOverP5, ratioReportedOverP1h: m.ratioReportedOverP1h, medianImpliedOutputTokens: m.medianImpliedOutputTokens, meanRecordedOutputTokens: m.meanRecordedOutputTokens }])),
+      byModelEra: Object.fromEntries(byModelEra.map(m => [m.key, { sessions: m.sessions, ratioReportedOverP5: m.ratioReportedOverP5, ratioReportedOverEra: m.ratioReportedOverEra, medianImpliedOutputTokensEra: m.medianImpliedOutputTokensEra }])),
       builder: { sessions: builder.total, exactAtBilledRate: builder.exact, inBilledRateBracket: builder.inBracket },
       builderRatioOverP5: Object.fromEntries(Object.entries(builder.byModel).map(([m, a]) => [m, a.ratioReportedOverP5])), builderRatioOverBilledRate: Object.fromEntries(Object.entries(builder.byModel).map(([m, a]) => [m, a.ratioReportedOverBilledRate])),
       meterChangesLabels: impact.some(i => i.p5.labelFlips > 0 || i.p1h.labelFlips > 0), jobsAffected: impact.filter(i => i.p5.topChanges > 0 || i.p1h.topChanges > 0).map(i => i.job),

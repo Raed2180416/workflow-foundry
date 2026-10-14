@@ -72,8 +72,9 @@ export function reachAt(cal, segments, needMs) {
  *   ctx      { world, defsAt(ms) -> definitions in force, scheduleOf: { service(id), group(id) } -> calendar id }
  *   incident { openedAt (ms), callerTz | null, ciTz | null }
  *   snaps    [{ at (ms), fields }] ascending, one per change instant, fields after every change of the instant
- *   flags    analyst-only control switches (controls.mjs; never present in a generated world):
+ *   flags    analyst-only control switches (controls.mjs `world.controlFlags`; never present in a generated world):
  *            breachAtPlannedPause  an SLA paused across its planned breach is breached (and escalated) at that instant
+ *            editionAtStart        a retroactive SLA takes the definition of the edition in force at its startAt (not S6)
  * Each SLA: { id, definition, generation, def, attachAt, startAt, schedule, timezone, cal, ops: [{ op, at, x }],
  *   stage, end, segments, targetMs, D, breached, thresholds: [{ percent, notify, at }], elapsedMinutes,
  *   businessElapsedMinutes, planned: { start, resumes: Map(at -> ms | null) } }. `x` of an op is the change instant
@@ -83,7 +84,9 @@ export function slaTimeline(ctx, incident, snaps, { flags = {} } = {}) {
   const slas = [];
   let prev = null;
   const active = id => slas.find(s => s.definition === id && (s.stage === 'inProgress' || s.stage === 'paused'));
-  const attach = (def, x, F) => {
+  const attach = (def0, x, F) => {
+    // S6: the edition at the attach instant, whatever startAt is (the control `edition-at-start` reads it at startAt).
+    const def = flags.editionAtStart && def0.start.from === 'openedAt' ? (ctx.defsAt(incident.openedAt).find(d => d.id === def0.id) ?? def0) : def0;
     const generation = 1 + slas.filter(s => s.definition === def.id).length;
     const retro = def.start.from === 'openedAt';
     const startAt = retro ? incident.openedAt : x;

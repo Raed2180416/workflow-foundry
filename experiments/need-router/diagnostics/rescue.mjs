@@ -3,7 +3,7 @@
 // The raw run directories under experiments/runs/ stay ignored (.gitignore:13); only text JSONL is copied. SQLite
 // journals (17-22 MB, raw prompts and outputs), logs and shm/wal files are listed in the manifest as not rescued.
 // Archived rows are LEGACY development evidence: they predate this program's protocol (P1: 300 s per-call limit, timeouts
-// booked at $0, 1-hour cache writes; C0 dev: inspected seeds) and are never pooled with new labels.
+// booked at $0; P1 and C0 dev: 1-hour cache writes; C0 dev: inspected seeds) and are never pooled with new labels.
 //   node experiments/need-router/diagnostics/rescue.mjs [--dry]
 // Idempotent: a destination file that already holds the same bytes is left alone; one that differs is never overwritten.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, readdirSync } from 'node:fs';
@@ -72,7 +72,7 @@ export function rescue({ repo = REPO, destDir = ARCHIVE_DIR, files = RESCUE_FILE
     schema: 'need-router-archive/1',
     evidence: 'LEGACY', grade: 'development',
     note: 'Rows predate the need-router protocol (research/need-router-20261014/DESIGN.md §2 validity gates). Never pooled with new labels. '
-      + 'P1: 300 s per-call limit, timeouts booked at $0, 1-hour cache writes (policy 2026-10-08.1 later set FORCE_PROMPT_CACHING_5M=1); '
+      + 'P1: 300 s per-call limit, timeouts booked at $0. P1 and C0 dev: 1-hour cache writes (policy 2026-10-08.1 later set FORCE_PROMPT_CACHING_5M=1, so their dollars are not comparable with later runs). '
       + 'C0 dev: seeds 6001-6004 were inspected by the failure diagnoses and are no longer held out.',
     rescuedFrom: 'experiments/runs/ (git-ignored, .gitignore:13)',
     rescuedAt: now.toISOString().slice(0, 10),

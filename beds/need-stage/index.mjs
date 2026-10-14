@@ -96,13 +96,20 @@ export function generate({ seed, split = 'dev', difficulty = 3, stage } = {}) {
   return task;
 }
 
+/** A task's kind from (seed, split, difficulty, knobs.stage) alone: no case is built. */
+function kindOfTask(task) {
+  const stage = task.knobs?.stage;
+  checkArgs({ seed: task.seed, split: task.split, difficulty: task.difficulty, stage });
+  return stage ?? stageOf(task.seed, task.split);
+}
+
 /** The output schema of a task's own kind (for harnesses that want the strict per-task schema). */
-export const outputSchemaOf = task => stageSchemas[caseOf(task).kind];
+export const outputSchemaOf = task => stageSchemas[kindOfTask(task)];
 
 /** Deployable signal for harnesses (experiments/need-router/label-run.mjs calls it when a bed exports it): true when the
  *  output satisfies the task kind's own schema. The family-level `outputSchema` is a union envelope without `required`,
- *  so `{}` or another kind's shape passes it; use this (or outputSchemaOf) instead. No truth is read. */
-export function deployableCheck(task, output) { return schemaErrors(stageSchemas[caseOf(task).kind], output).length === 0; }
+ *  so `{}` or another kind's shape passes it; use this (or outputSchemaOf) instead. No case or truth is built or read. */
+export function deployableCheck(task, output) { return schemaErrors(stageSchemas[kindOfTask(task)], output).length === 0; }
 
 // The oracle recomputes everything from (seed, split, difficulty, knobs.stage); the prompt, inputs and files of the task
 // object are never trusted, nor anything in the output beyond its value.

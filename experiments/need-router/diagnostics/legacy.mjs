@@ -79,7 +79,7 @@ export function normaliseRunRow(r, { modes, source }) {
     unit: `${r.taskKey}#t${r.trial ?? 0}`, seed: seedOf(r.taskKey), difficulty: diffOf(r.taskKey),
     pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null,
     delivered: code === null, schemaValid: details?.reason !== 'schema-invalid', error: code,
-    usdReported, usdImputed: imputed, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? null,
+    usdReported, usdImputed: imputed, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? null, at: r.at ?? null,
     turns: r.meta?.turns ?? null, tools: r.meta?.tools ?? null, calls: r.meta?.calls ?? null, escalations: r.meta?.escalations ?? null,
     verdict: r.meta?.verdict ?? null, tokensOut: r.meta?.tokensOut ?? null, streamUsage: r.meta?.streamUsage ?? null,
     details,
@@ -124,7 +124,7 @@ export function loadJitJobs(root = JIT_RUNS_DIR) {
         ...LEGACY_TAG, source: s.source, experiment: s.family, arm: path.basename(path.dirname(s.source)), mode: JIT_MODES[s.mode] ?? s.mode, model: trace?.model ?? null,
         family: String(r.taskKey).split(':')[0], taskKey: r.taskKey, taskHash: r.taskHash, trial: 0, unit: r.taskKey, seed: r.seed ?? seedOf(r.taskKey), difficulty: r.difficulty ?? diffOf(r.taskKey),
         pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null, delivered: errCode(r.error) === null, schemaValid: details?.reason !== 'schema-invalid',
-        error: errCode(r.error), usdReported: Math.max(0, r.costUsd - fixedUsd) + (r.orphanUsd ?? 0), usdImputed: 0, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? null,
+        error: errCode(r.error), usdReported: Math.max(0, r.costUsd - fixedUsd) + (r.orphanUsd ?? 0), usdImputed: 0, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? null, at: r.at ?? null,
         turns: trace?.turns ?? null, tools: trace?.tools ?? null, calls: null, escalations: null, verdict: null, tokensOut: null, streamUsage: trace?.streamUsage ?? null, details,
         traceId: r.traceId ?? null, deliveredBy: r.delivered ?? null, traceCostUsd: trace?.costUsd ?? null,
       };
