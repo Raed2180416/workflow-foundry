@@ -174,7 +174,18 @@ reports, not for the word.
   instance space of the six templates is small at d1 and d2, so different seeds, and dev and test seeds, produce the **same buggy
   module** (and the same answer). Measured on codefix 1.1.0 through `instanceFingerprint` (`node beds/need-codefix-noverifier/measure.mjs collisions`):
 
-COLLISIONS_TABLE
+  | d | dev 1-200 vs test 5000-5099: same buggy module | same reference | duplicates inside dev 1-200 (buggy) | inside dev 601-640 (buggy / reference) | dev 601-640 vs test 601-640 (buggy) |
+  |---|---|---|---|---|---|
+  | 1 | 25 / 100 | 57 / 100 | 23 | 1 / 6 | 2 |
+  | 2 | 0 / 100 | 7 / 100 | 2 | 0 / 1 | 0 |
+  | 3 | 0 / 100 | 3 / 100 | 1 | 0 / 0 | 0 |
+  | 4 | 0 / 100 | 0 / 100 | 0 | 0 / 0 | 0 |
+  | 5 | 0 / 100 | 0 / 100 | 0 | 0 / 0 | 0 |
+
+  So the identical-module collisions are a d1 problem (a quarter of the test tasks repeat a dev module), and at d2/d3 the same
+  correct answer recurs (7 and 3 per 100) even where the buggy modules differ. They are absent at d4/d5 in these ranges. For
+  comparison, codefix AUDIT F2 measured 16/3/1 identical buggy modules at d1/d2/d3 on v1.0.0 (the version salt changed the instances
+  in 1.1.0); here 1.1.0 gives 25/0/0 across splits, with duplicates inside the dev range still present at d1 (23) and d2/d3 (2, 1).
 
   Because this bed is a function of the codefix instance, every duplicate carries over, and a duplicated module is a duplicated
   label opportunity: paired labels for a test task can be copied from a dev task that has the same module. Deduplicate test tasks

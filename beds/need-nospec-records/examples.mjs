@@ -6,7 +6,7 @@ import { buildWorld } from '../records/world.mjs';
 
 /** Number of solved examples per difficulty: 2 at d1 rising to 5 at d5. */
 export const EXAMPLE_COUNT = Object.freeze({ 1: 2, 2: 3, 3: 4, 4: 4, 5: 5 });
-/** Example seeds live in [BASE, BASE + SPAN): far above every dev / test / sealed seed range in use (all below 1e6). */
+/** Example seeds live in [BASE, BASE + SPAN): far above every seed range in use (all below 1e6). */
 export const EXAMPLE_SEED_BASE = 100_000_000;
 export const EXAMPLE_SEED_SPAN = 900_000_000;
 const MAX_ATTEMPTS = 60;

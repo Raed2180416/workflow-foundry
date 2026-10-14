@@ -291,6 +291,7 @@ export async function main(argv = process.argv.slice(2), { log = s => console.lo
     const w = await writeChecks({ ledger: first, port, writer, escalate, reasoning: opts.reasoning ?? 'low', log });
     writeLedger(path.join(out, 'ledger.json'), first);
     log(`written ${w.written}, pending ${w.pending}${w.stopped ? ` (stopped: ${w.stopped.message})` : ''}; spent $${port.spentUsd.toFixed(4)} of $${budget}`);
+    if (w.stopped) return { out, spentUsd: port.spentUsd, stopped: true };
     if (!opts.build?.length) return { out, spentUsd: port.spentUsd };
     const builds = opts.build.map(f => ({ file: f, label: labelOf(f) }));
     await checkBuilds({ ledger: first, builds, item, practice, out, log, keepTraces: !!opts['keep-traces'] });
@@ -320,7 +321,7 @@ export async function main(argv = process.argv.slice(2), { log = s => console.lo
     const w = await writeChecks({ ledger, port, writer, escalate, reasoning: opts.reasoning ?? 'low', log });
     writeLedger(opts.ledger, ledger);
     log(`written ${w.written}, pending ${w.pending}${w.stopped ? ` (stopped: ${w.stopped.message})` : ''}; spent $${port.spentUsd.toFixed(4)} of $${budget}`);
-    return { out, spentUsd: port.spentUsd };
+    return { out, spentUsd: port.spentUsd, ...(w.stopped ? { stopped: true } : {}) };
   }
   if (cmd === 'check') {
     if (!opts.build?.length) throw new Error('--build <solver.mjs> is required (repeatable)');
@@ -341,5 +342,5 @@ export async function main(argv = process.argv.slice(2), { log = s => console.lo
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().then(() => process.exit(0), e => { console.error(e?.stack ?? String(e)); process.exit(1); });
+  main().then(r => process.exit(r?.stopped ? 4 : 0), e => { console.error(e?.code === 'TRACKER_BUDGET' ? e.message : e?.stack ?? String(e)); process.exit(e?.code === 'TRACKER_BUDGET' ? 4 : 1); });
 }

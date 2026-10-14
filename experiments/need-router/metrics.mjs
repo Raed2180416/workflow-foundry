@@ -631,20 +631,23 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
     }
     const byCell = new Map();
     cells.forEach((c, i) => {
-      const entries = ms.map(m => ({ mode: m, u: needUtility(st.get(m), c), usd: perTaskUsd(st.get(m), c) }));
-      const top = bestOf(entries);
-      const acceptable = rankModes(entries.filter(e => e.u >= top.u - delta - 1e-12));
-      const classes = new Set(acceptable.map(m => classOf(m, reg))), kinds = new Set(acceptable.map(m => modeInfo(m, reg).kind));
-      const label = classes.size === 1 ? [...classes][0] : 'either';
       const pBest = reps > 0 ? { workflow: counts[i].workflow / reps, 'no-workflow': counts[i]['no-workflow'] / reps } : null;
-      byCell.set(c.key, {
-        cell: c, u: new Map(entries.map(e => [e.mode, e.u])), usd: new Map(entries.map(e => [e.mode, e.usd])), top: top.mode, acceptable, label,
-        kind: kinds.size === 1 ? [...kinds][0] : 'mixed', pBest, confident: !over.length && label !== 'either' && pBest !== null && pBest[label] >= confident,
-        unlabelled: over.length ? `imputed dollars over ${imputedLimit} in ${over.join(', ')}` : null,
-        vbs: top.u, vbsMode: top.mode, vbsStar: vx.get(c.key).vbsStar, folds: vx.get(c.key).folds,
-      });
+      const e = pointEntry(ms, st, c, over);
+      byCell.set(c.key, { ...e, pBest, confident: !over.length && e.label !== 'either' && pBest !== null && pBest[e.label] >= confident,
+        vbsStar: vx.get(c.key).vbsStar, folds: vx.get(c.key).folds });
     });
-    per.set(job, { modes: ms, stats: st, cells: byCell });
+    per.set(job, { modes: ms, stats: st, over, cells: byCell, offGrid: new Map() });
+  }
+  // A cell's point entry: utilities, acceptable set, NEED label, VBS. Off the label grid it carries no confidence and no VBS*.
+  function pointEntry(ms, st, c, over) {
+    const entries = ms.map(m => ({ mode: m, u: needUtility(st.get(m), c), usd: perTaskUsd(st.get(m), c) }));
+    const top = bestOf(entries);
+    const acceptable = rankModes(entries.filter(e => e.u >= top.u - delta - 1e-12));
+    const classes = new Set(acceptable.map(m => classOf(m, reg))), kinds = new Set(acceptable.map(m => modeInfo(m, reg).kind));
+    const label = classes.size === 1 ? [...classes][0] : 'either';
+    return { cell: c, u: new Map(entries.map(e => [e.mode, e.u])), usd: new Map(entries.map(e => [e.mode, e.usd])), top: top.mode, acceptable, label,
+      kind: kinds.size === 1 ? [...kinds][0] : 'mixed', pBest: null, confident: false, vbs: top.u, vbsMode: top.mode, vbsStar: null, folds: null,
+      unlabelled: over.length ? `imputed dollars over ${imputedLimit} in ${over.join(', ')}` : null };
   }
   const pointOf = (job, cell, mode, k, f) => {
     const p = per.get(job); if (!p) throw new Error(`no labels for job ${job}`);
@@ -654,8 +657,10 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
   };
   const at = (job, cell) => {
     const p = per.get(job); if (!p) throw new Error(`no labels for job ${job}`);
-    const e = p.cells.get(cellKey(cell)); if (!e) throw new Error(`no labels for ${job} at ${cellKey(cell)}`);
-    return e;
+    const k = cellKey(cell), e = p.cells.get(k);
+    if (e) return e;
+    if (!p.offGrid.has(k)) p.offGrid.set(k, { ...pointEntry(p.modes, p.stats, cell.key ? cell : makeCell(cell.V, cell.N, cell.wOverV ?? 1), p.over), offGrid: true });
+    return p.offGrid.get(k);
   };
   return {
     table, cells, delta, jobs: table.jobs, at,
