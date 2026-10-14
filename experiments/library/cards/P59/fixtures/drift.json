@@ -1,0 +1,10 @@
+{
+  "name": "drift",
+  "note": "A new definition version (order-v3, say with a fraud check before capture) reached this solver, which is pinned to order-v2: planning it with the old step list could skip or misorder a compensation, so it deopts.",
+  "task": { "prompt": "For each order saga, say which commands the orchestrator must issue next.", "inputs": { "orders": [
+    { "id": "o-3001", "definition": "order-v3", "log": [
+      { "step": "reserve-stock", "event": "start" }, { "step": "reserve-stock", "event": "ok" },
+      { "step": "fraud-check", "event": "start" } ] } ] } },
+  "answers": {},
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "definition-pinned" } }
+}

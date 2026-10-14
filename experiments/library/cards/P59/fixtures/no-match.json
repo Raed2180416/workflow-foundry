@@ -1,0 +1,22 @@
+{
+  "name": "no-match",
+  "note": "Nothing to issue: o-2001 completed every step, o-2002 is fully compensated, o-2003 waits for its first step to report.",
+  "task": { "prompt": "For each order saga, say which commands the orchestrator must issue next.", "inputs": { "orders": [
+    { "id": "o-2001", "definition": "order-v2", "log": [
+      { "step": "reserve-stock", "event": "start" }, { "step": "reserve-stock", "event": "ok" },
+      { "step": "authorize-card", "event": "start" }, { "step": "authorize-card", "event": "ok" },
+      { "step": "book-courier", "event": "start" }, { "step": "book-courier", "event": "ok" },
+      { "step": "capture-payment", "event": "start" }, { "step": "capture-payment", "event": "ok" },
+      { "step": "send-confirmation", "event": "start" }, { "step": "send-confirmation", "event": "ok" },
+      { "step": "award-points", "event": "start" }, { "step": "award-points", "event": "ok" } ] },
+    { "id": "o-2002", "definition": "order-v2", "log": [
+      { "step": "reserve-stock", "event": "start" }, { "step": "reserve-stock", "event": "ok" },
+      { "step": "authorize-card", "event": "start" }, { "step": "authorize-card", "event": "error", "error": "declined" },
+      { "step": "reserve-stock", "event": "undo" }, { "step": "reserve-stock", "event": "undo-ok" } ] },
+    { "id": "o-2003", "definition": "order-v2", "log": [ { "step": "reserve-stock", "event": "start" } ] } ] } },
+  "answers": {},
+  "expect": { "status": "ok", "output": { "plans": [
+    { "id": "o-2001", "status": "completed", "next": [], "undoOrder": [], "waitingFor": [], "stuck": null },
+    { "id": "o-2002", "status": "compensated", "next": [], "undoOrder": ["reserve-stock"], "waitingFor": [], "stuck": null },
+    { "id": "o-2003", "status": "running", "next": [], "undoOrder": [], "waitingFor": ["reserve-stock"], "stuck": null } ] } }
+}

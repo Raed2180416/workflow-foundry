@@ -1,0 +1,37 @@
+{
+  "name": "positive",
+  "note": "o-1001: the courier booking timed out (outcome uncertain), so it is undone first, then the card authorization, then the stock reservation, one at a time. o-1002: past the pivot a failed confirmation is retried with the same key. o-1003: the card was declined (no effect), so only the reservation is undone; its first undo failed and is retried. o-1004: a new order starts. o-1005: the pivot timed out, so it is retried with the same key instead of compensating.",
+  "task": { "prompt": "For each order saga, say which commands the orchestrator must issue next.", "inputs": { "orders": [
+    { "id": "o-1001", "definition": "order-v2", "log": [
+      { "step": "reserve-stock", "event": "start" }, { "step": "reserve-stock", "event": "ok" },
+      { "step": "authorize-card", "event": "start" }, { "step": "authorize-card", "event": "ok" },
+      { "step": "book-courier", "event": "start" }, { "step": "book-courier", "event": "error", "error": "timeout" } ] },
+    { "id": "o-1002", "definition": "order-v2", "log": [
+      { "step": "reserve-stock", "event": "start" }, { "step": "reserve-stock", "event": "ok" },
+      { "step": "authorize-card", "event": "start" }, { "step": "authorize-card", "event": "ok" },
+      { "step": "book-courier", "event": "start" }, { "step": "book-courier", "event": "ok" },
+      { "step": "capture-payment", "event": "start" }, { "step": "capture-payment", "event": "ok" },
+      { "step": "send-confirmation", "event": "start" }, { "step": "send-confirmation", "event": "error", "error": "timeout" } ] },
+    { "id": "o-1003", "definition": "order-v2", "log": [
+      { "step": "reserve-stock", "event": "start" }, { "step": "reserve-stock", "event": "ok" },
+      { "step": "authorize-card", "event": "start" }, { "step": "authorize-card", "event": "error", "error": "declined" },
+      { "step": "reserve-stock", "event": "undo" }, { "step": "reserve-stock", "event": "undo-error" } ] },
+    { "id": "o-1004", "definition": "order-v2", "log": [] },
+    { "id": "o-1005", "definition": "order-v2", "log": [
+      { "step": "reserve-stock", "event": "start" }, { "step": "reserve-stock", "event": "ok" },
+      { "step": "authorize-card", "event": "start" }, { "step": "authorize-card", "event": "ok" },
+      { "step": "book-courier", "event": "start" }, { "step": "book-courier", "event": "ok" },
+      { "step": "capture-payment", "event": "start" }, { "step": "capture-payment", "event": "error", "error": "timeout" } ] } ] } },
+  "answers": {},
+  "expect": { "status": "ok", "output": { "plans": [
+    { "id": "o-1001", "status": "compensating", "next": [ { "action": "undo", "step": "book-courier", "call": "cancel-courier", "key": "o-1001:book-courier:undo", "attempt": 1 } ],
+      "undoOrder": ["book-courier", "authorize-card", "reserve-stock"], "waitingFor": [], "stuck": null },
+    { "id": "o-1002", "status": "running", "next": [ { "action": "do", "step": "send-confirmation", "call": "send-confirmation", "key": "o-1002:send-confirmation:do", "attempt": 2 } ],
+      "undoOrder": [], "waitingFor": [], "stuck": null },
+    { "id": "o-1003", "status": "compensating", "next": [ { "action": "undo", "step": "reserve-stock", "call": "release-stock", "key": "o-1003:reserve-stock:undo", "attempt": 2 } ],
+      "undoOrder": ["reserve-stock"], "waitingFor": [], "stuck": null },
+    { "id": "o-1004", "status": "running", "next": [ { "action": "do", "step": "reserve-stock", "call": "reserve-stock", "key": "o-1004:reserve-stock:do", "attempt": 1 } ],
+      "undoOrder": [], "waitingFor": [], "stuck": null },
+    { "id": "o-1005", "status": "running", "next": [ { "action": "do", "step": "capture-payment", "call": "capture-payment", "key": "o-1005:capture-payment:do", "attempt": 2 } ],
+      "undoOrder": [], "waitingFor": [], "stuck": null } ] } }
+}

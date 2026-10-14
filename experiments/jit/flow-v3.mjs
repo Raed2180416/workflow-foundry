@@ -803,6 +803,12 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     // The operator's budget is checked against what the run has left (the SDK rule); items then spend inside it.
     const no = budgetRefusalOf(wideUsd);
     if (no) { event({ kind: 'wide-start', name, span, parent, budgetUsd: wideUsd, worker: kind }); return fail(no[0], no[1]); }
+    // Review fix (§Review C4/T2): from here until it ends the operator holds its budget against the run (or the enclosing
+    // wide), so a concurrent call, agent node or second wide cannot book the same money; its own items carve from it.
+    const outerCtl = ctlOf(), ctl = { span, cap: wideUsd, acc, res: 0, inner: new Set(), parent: outerCtl }, openSet = outerCtl ? outerCtl.inner : wides.open;
+    openSet.add(ctl);
+    try { return await wideBody(); } finally { openSet.delete(ctl); }
+    async function wideBody() {
     event({ kind: 'wide-start', name, span, parent, budgetUsd: wideUsd, worker: kind, maxFanout, concurrency, quorum, onItemError: w.onItemError ?? 'crash', planned: w.plan !== undefined });
     // 1. The work list: given, or planned by one judge with one replan on issues (check, fanout, item schema).
     const issuesOf = list => {
@@ -818,9 +824,9 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
       const ask = async extra => { const p = typeof w.plan.prompt === 'string' ? w.plan.prompt : JSON.stringify(w.plan.prompt);
         const v = await flow.judge(`${name}:plan`, { ...w.plan, prompt: extra ? `${p}\n\nThe previous list had these problems; fix them:\n- ${extra.join('\n- ')}` : p });
         return Array.isArray(v) ? v : v?.items; };
-      list = await items.als.run(itemStore({ acc: [acc] }), () => ask(null));
+      list = await items.als.run(itemStore({ acc: [acc], wideCtl: ctl }), () => ask(null));
       issues = issuesOf(list);
-      if (issues.length) { replanned = true; list = await items.als.run(itemStore({ acc: [acc] }), () => ask(issues)); issues = issuesOf(list); }
+      if (issues.length) { replanned = true; list = await items.als.run(itemStore({ acc: [acc], wideCtl: ctl }), () => ask(issues)); issues = issuesOf(list); }
     } else { list = [...w.items]; issues = issuesOf(list); }
     const n = Array.isArray(list) ? list.length : 0;
     event({ kind: 'wide-plan', name, span, n, digest: digest(list), issues: issues.slice(0, 8), replanned, planned: w.plan !== undefined, spentUsd: usd(acc.spent) });
@@ -845,36 +851,63 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
       const ag = wk.agent;
       return agentNode(ag.name ? ag.name(item, i) : `${name}-${i}`, ag.spec(item, i), ag.opts ? (typeof ag.opts === 'function' ? ag.opts(item, i) : ag.opts) : {});
     };
-    const gateOf = item => {
-      if (!share) return null;
-      const j = wk.judge;
-      const key = canonical({ model: j.tiers?.[0], system: typeof j.system === 'function' ? null : j.system ?? '', schema: j.schema, reasoning: j.reasoning ?? 'none' });
-      if (typeof j.system === 'function') return null;   // a per-item system prompt has no shared prefix
-      let g = groups.get(key);
+    // A per-item system prompt has no shared prefix; otherwise every item of a judge worker has the same prefix key.
+    const pkey = share && typeof wk.judge.system !== 'function' ? canonical({ model: wk.judge.tiers?.[0], system: wk.judge.system ?? '', schema: wk.judge.schema, reasoning: wk.judge.reasoning ?? 'none' }) : null;
+    const gateOf = () => {
+      if (pkey == null) return null;
+      let g = groups.get(pkey);
       if (!g) {
         let resolve; g = { isOpen: false, released: new Promise(r => { resolve = r; }), open: () => { g.isOpen = true; resolve(); } };
-        groups.set(key, g); prefix.groups++; return { leader: g };
+        groups.set(pkey, g); prefix.groups++; return { leader: g };
       }
       return g.isOpen ? null : { follower: g };
     };
+    // Budget (review fix §Review C4/T2). Call and agent workers are bounded by their reservations: an item starts only
+    // while its reservation fits what the operator has free (budget − spend − reservations in flight − inner wides), and
+    // flow.call / flow.agent carve it from the operator. Judge and code workers have no reservation: the first item runs
+    // alone (until one item has finished, what an item costs is unknown; itemFloorUsd > 0 gives the estimate up front),
+    // then an item starts while (in flight + 1) × the mean item cost fits. A worker that cannot start an item waits for an
+    // item in flight to finish and checks again; with nothing in flight the rest are skipped.
+    const resOf = (item, i) => {
+      if (kind === 'call') return wk.call.budgetUsd;
+      if (kind === 'agent') { const o = wk.agent.opts; return (typeof o === 'function' ? o(item, i) : o)?.budgetUsd; }
+      return null;
+    };
+    const unknownCost = () => (kind === 'judge' || kind === 'code') && !(floor > 0) && doneN === 0;
+    const startable = i => {
+      const free = freeOf(ctl);
+      if (free <= 1e-12) return false;
+      const res = resOf(list[i], i);
+      if (typeof res === 'number') return res <= free + 1e-9;
+      if (unknownCost()) return inFlight === 0;
+      return (inFlight + 1) * Math.max(floor, doneN ? doneCost / doneN : 0) <= free + 1e-12;
+    };
+    let wake = null, wakeUp = () => {};
+    const progressed = () => (wake ??= new Promise(r => { wakeUp = () => { wake = null; wakeUp = () => {}; r(); }; }));
+    const skipReasonOf = v => (v.refused ? `refused ${v.refused}` : v.deopt ? `deopt ${v.deopt.kind ?? v.status}: ${v.deopt.name ?? ''}`.trim() : v.failed ? `failed ${v.status ?? ''}`.trim() : 'skipped');
     const worker = async () => {
-      while (!failure && next < n) {
-        // Budget: an item starts only while the operator's spend plus an estimate for the items in flight and this one fits.
-        const est = Math.max(floor, doneN ? doneCost / doneN : 0);
-        if (acc.spent >= wideUsd - 1e-12 || acc.spent + (inFlight + 1) * est > wideUsd + 1e-12) break;
-        const i = next++, item = list[i], t1 = Date.now(), gate = gateOf(item), itemAcc = { spent: 0 };
+      for (;;) {
+        if (failure || next >= n) return;
+        // A sibling of a judge group whose leader has not answered yet takes its item and waits at the gate (6b).
+        const follower = pkey != null && groups.has(pkey) && !groups.get(pkey).isOpen;
+        if (!follower && !startable(next)) { if (inFlight === 0) return; await progressed(); continue; }
+        const i = next++, item = list[i], t1 = Date.now(), gate = gateOf(), itemAcc = { spent: 0 };
         let held = 0;
         if (gate?.follower) {
           const h0 = Date.now();
           let timer; await Promise.race([gate.follower.released, new Promise(r => { timer = setTimeout(r, holdMs); })]); clearTimeout(timer);
-          held = Math.max(1, Date.now() - h0); prefix.held++; prefix.heldMs += held;
+          held = Math.max(1, Date.now() - h0);
+          // Released: the item starts only once it fits (with the leader's cost known); otherwise it stays skipped.
+          while (!failure && !startable(i)) { if (inFlight === 0) break; await progressed(); }
+          if (failure || !startable(i)) return;
+          prefix.held++; prefix.heldMs += held;
         }
         inFlight++;
-        const r = await runItem(itemStore({ wide: span, wideItem: i, acc: [acc, itemAcc], catchDeopt: policy.retries > 0 || policy.then === 'null' }), async () => {
-          try { return await runWorker(item, i); } finally { gate?.leader?.open(); }
-        }, policy);
+        const r = await runItem(itemStore({ wide: span, wideItem: i, wideCtl: ctl, acc: [acc, itemAcc], catchDeopt: policy.retries > 0 || policy.then === 'null' }), () => runWorker(item, i), policy);
         inFlight--;
         let ok = r.ok, reason = null;
+        // Review fix (§Review I6): a call or agent worker that returned its 'skip' object (refused, deopted, failed) failed.
+        if (ok && (kind === 'call' || kind === 'agent') && isSkipped(r.value)) { ok = false; reason = skipReasonOf(r.value); }
         if (ok && w.itemCheck) { const v = verdictOf(() => w.itemCheck(r.value, item, i)); if (!v.ok) { ok = false; reason = `item check: ${v.reasons.join('; ')}`; } }
         tries[i] = r.attempts; doneCost += itemAcc.spent; doneN++;
         if (ok) { out[i] = r.value; status[i] = 'done'; }
@@ -882,6 +915,9 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
         event({ kind: 'wide-item', name, span, i, status: status[i], attempts: r.attempts, costUsd: usd(itemAcc.spent), ms: Date.now() - t1, ...(held ? { heldMs: held } : {}),
           ...(ok ? { outDigest: digest(r.value) } : { reason: String(reason).slice(0, 300) }) });
         if (!ok && policy.then === 'crash') failure ??= r.ok ? { ok: false, error: new Error(`flow.wide(${name}) item ${i}: ${reason}`) } : r;
+        // The leader's group opens once its item is booked, so the held siblings check the budget with its cost known.
+        gate?.leader?.open();
+        wakeUp();
       }
     };
     await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, n)) }, worker));
@@ -890,7 +926,7 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     // 3. Typed coverage, quorum, the code reducer, the verify.
     const coverage = coverageOf(status, tries, why);
     if (n && coverage.done / n < quorum) return fail('quorum', { done: coverage.done, failed: coverage.failed, skipped: coverage.skipped, n, quorum });
-    const value = await items.als.run(itemStore({ acc: [acc] }), () => w.reduce(out, coverage));
+    const value = await items.als.run(itemStore({ acc: [acc], wideCtl: ctl }), () => w.reduce(out, coverage));
     event({ kind: 'wide-reduce', name, span, done: coverage.done, failed: coverage.failed, skipped: coverage.skipped, retried: coverage.retried, outDigest: digest(value) });
     if (w.verify) {
       const v = verdictOf(() => w.verify(value, { coverage, items: list }));

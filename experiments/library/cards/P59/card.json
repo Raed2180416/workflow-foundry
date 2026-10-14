@@ -1,0 +1,57 @@
+{
+  "id": "P59", "layer": "L1", "version": 1,
+  "name": "saga planner (reverse-order compensation, idempotent commands)", "short": "saga-planner", "family": "failure", "tier": "S", "constructs": [2, 4, 5, 10, 15, 20, 23],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (SAGAS reads it)", "out": { "type": "object", "required": ["plans"], "properties": { "plans": { "type": "array", "items": { "type": "object",
+    "required": ["id", "status", "next", "undoOrder", "waitingFor", "stuck"], "properties": {
+      "status": { "enum": ["running", "compensating", "completed", "compensated", "stuck"] },
+      "next": { "type": "array", "items": { "type": "object", "required": ["action", "step", "call", "key", "attempt"], "properties": { "action": { "enum": ["do", "undo"] }, "key": { "type": "string" }, "attempt": { "type": "integer" } } } },
+      "undoOrder": { "type": "array", "items": { "type": "string" } }, "waitingFor": { "type": "array", "items": { "type": "string" } } } } } } } },
+  "slots": [
+    { "name": "SAGAS", "type": "path", "required": true, "doc": "saga instances [{id, definition, log}]" },
+    { "name": "VERSION", "type": "name", "required": true, "doc": "the definition version this solver is pinned to; another version deopts" },
+    { "name": "STEPS", "type": "list", "required": true, "min": 1, "max": 12, "bound": true, "doc": "in order: compensable steps, at most one pivot, then retryable steps",
+      "item": { "name": { "type": "name", "required": true }, "kind": { "type": "choice", "options": ["compensable", "pivot", "retryable"], "required": true }, "undo": { "type": "name", "requiredWhen": { "kind": "compensable" } } } },
+    { "name": "ENTRY", "type": "fn", "required": true, "params": ["entry"], "doc": "log entry -> {step, phase: started|completed|failed|undo-started|undone|undo-failed, noEffect?}" },
+    { "name": "KEY", "type": "fn", "required": true, "params": ["sagaId", "step", "action"], "doc": "idempotency key, the same on every retry" },
+    { "name": "COMPENSATE_FAILED", "type": "choice", "options": ["if-uncertain", "always", "never"], "required": true, "default": "if-uncertain", "doc": "undo the failed step itself too" },
+    { "name": "PARALLEL_UNDO", "type": "bool", "required": true, "default": false },
+    { "name": "MAX_ATTEMPTS", "type": "int", "range": [1, 10], "bound": true, "required": true, "default": 3 },
+    { "name": "MAX_SAGAS", "type": "int", "range": [1, 5000], "bound": true, "required": true, "default": 1000 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Does the task run several steps with effects in other systems where, if a later step fails, the earlier completed steps must be undone by compensating actions?" },
+    { "id": "J2", "type": "choice", "instructions": "Is there a step after which the work can no longer be undone?", "criteria": { "pivot": "yes, one point of no return", "all-undoable": "every step can be undone", "none-undoable": "nothing can be undone", "none": "no multi-step effects" } }
+  ],
+  "checklist": [
+    { "text": "Compensation runs in reverse order of completion, and only for completed compensable steps plus a failed step whose outcome is uncertain.", "code": null, "enforcedBy": "invariants undo-reverse-order, undo-covers-completed", "minedFrom": ["repo:temporalio/sdk-java Saga.java", "web:docs.camunda.org/manual/latest/reference/bpmn20/events/cancel-and-compensation-events/"] },
+    { "text": "Every command carries an idempotency key that is the same on each retry; activities and compensations must be idempotent.", "code": null, "enforcedBy": "invariant keys-distinct", "minedFrom": ["web:temporal.io/blog/saga-pattern-made-easy", "web:community.temporal.io/t/19226"] },
+    { "text": "Steps are ordered compensable, pivot, retryable; past the pivot nothing is undone, failures are retried.", "code": null, "enforcedBy": "invariant steps-well-formed", "minedFrom": ["web:learn.microsoft.com/azure/architecture/patterns/saga"] },
+    { "text": "Retries are bounded; exhausted retries end in status stuck for a person, never in silence.", "code": "UNBOUNDED", "enforcedBy": "MAX_ATTEMPTS int[1,10]" },
+    { "text": "The solver plans; the envelope executes the commands (effect, retry, compensate), so no effect runs in the solver.", "code": "EFFECT_IN_SOLVER" },
+    { "text": "A saga finishes on the definition version it started with; another version deopts.", "code": null, "enforcedBy": "guard definition-pinned" },
+    { "text": "A log that contradicts the definition (unknown step, out-of-order start, undo out of order) deopts.", "code": null, "enforcedBy": "guards known-entry, log-consistent" }
+  ],
+  "rules": [ { "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariant undo-covers-completed" } ],
+  "minedFrom": ["repo:temporalio/sdk-java temporal-sdk/src/main/java/io/temporal/workflow/Saga.java", "web:learn.microsoft.com/azure/architecture/patterns/saga"],
+  "companions": [{ "id": "P30", "why": "the envelope side: effect plus compensate per step" }, { "id": "P26", "why": "retry policy inside one activity" }],
+  "tags": ["failure", "finance", "saga", "compensation"],
+  "example": { "slots": {
+    "SAGAS": "inputs.orders",
+    "VERSION": "order-v2",
+    "STEPS": [
+      { "name": "reserve-stock", "kind": "compensable", "undo": "release-stock" },
+      { "name": "authorize-card", "kind": "compensable", "undo": "void-authorization" },
+      { "name": "book-courier", "kind": "compensable", "undo": "cancel-courier" },
+      { "name": "capture-payment", "kind": "pivot" },
+      { "name": "send-confirmation", "kind": "retryable" },
+      { "name": "award-points", "kind": "retryable" }
+    ],
+    "ENTRY": "(e) => ({ step: e.step, phase: ({ start: 'started', ok: 'completed', error: 'failed', undo: 'undo-started', 'undo-ok': 'undone', 'undo-error': 'undo-failed' })[e.event], noEffect: e.error === 'declined' })",
+    "KEY": "(sagaId, step, action) => sagaId + ':' + step + ':' + action",
+    "COMPENSATE_FAILED": "if-uncertain",
+    "PARALLEL_UNDO": false,
+    "MAX_ATTEMPTS": 3,
+    "MAX_SAGAS": 100
+  } }
+}

@@ -34,8 +34,9 @@
 //
 // Comparator proxy (proxyCompare). A row keeps no compiled answer, only its oracle details. records: two answers are taken
 // to agree iff their oracle details are identical with the mismatch list read as a set (different details => different
-// answers, certain; identical details => the same answer, assumed; two capped mismatch lists that differ => ambiguous). kinetics (the R0-K comparator: relTol 0.05 on vmax/km, everything else exact): different
-// excluded-sample sets (exact from missing/extra) => disagree; otherwise each vmax/km pair is classified from the two
+// answers, certain; identical details => the same answer, assumed; two capped mismatch lists that differ => ambiguous).
+// kinetics (the R0-K comparator: relTol 0.05 on vmax/km, everything else exact): different excluded-sample sets (exact
+// from missing/extra) => disagree; otherwise each vmax/km pair is classified from the two
 // unsigned relative errors to the generating truth over all sign and rounding corners: agree / disagree / ambiguous. The
 // proxy is validated against the real comparator on every pair of archived answers that share a seed (validateProxy).
 //
@@ -445,7 +446,8 @@ export function slider(e, { bound, N, floor = FLOOR, rates = RATES, level = 'L1'
     if (b.hi <= bound) opts.push({ tier: t.tier, rate, bound: b.hi, usd: steadyState({ base: e.base[level], q: e.q, shadowUsd: t.shadowUsd, adjUsd: t.adjUsd, pD: t.counts.pD || 0, rate, adjudicate: true }) });
   }
   opts.sort((a, b) => a.usd - b.usd);
-  if (opts.length) return { feasible: true, ...opts[0] };
+  // The bound covers only what the tier can detect: (1 − delta) of the wrong deliveries is invisible to it (common mode).
+  if (opts.length) return { feasible: true, ...opts[0], delta: e.tiers.find(t => t.tier === opts[0].tier).plan.delta };
   const ds = e.tiers.filter(x => x.plan && x.tier !== 'witness').map(x => x.plan.d);
   return { feasible: false, reason: ds.length && Math.min(...ds) >= bound ? `every tier's measured detectable-wrong rate (min ${Math.min(...ds).toFixed(3)}) is >= the bound` : `too few shadows at N = ${N}` };
 }
@@ -486,6 +488,19 @@ export function decide(econ, { floor = FLOOR, levels = LEVELS } = {}) {
   return out;
 }
 
+// The restatement the rule names: the engine as built (interp tier, adjudication, at the floor) against every agent arm,
+// in steady state (L1, $ per task) and over the 24-task stream ($ per success), with the success counts beside it.
+export function restatement(econ, { floor = FLOOR } = {}) {
+  return econ.flatMap(e => {
+    const t = e.tiers.find(x => x.tier === 'interp'), s24 = e.stream24.find(s => s.tier === 'interp' && s.rate === floor && s.adjudicate);
+    if (!t?.counts || !s24) return [];
+    const steady = steadyState({ base: e.base.L1, q: e.q, shadowUsd: t.shadowUsd, adjUsd: t.adjUsd, pD: t.counts.pD || 0, rate: floor, adjudicate: true });
+    return e.agents.map(a => ({ experiment: e.experiment, arm: e.short, agent: a.short, steadyUsd: steady, agentUsdPerTask: a.usdPerTask, steadyBeats: steady < a.usdPerTask,
+      stream24PerSuccess: s24.perSuccess, agentUsdPerSuccess: a.usdPerSuccess, stream24Beats: s24.perSuccess < a.usdPerSuccess,
+      jitPass: e.passAll, agentPass: a.passRate, rows: e.rows }));
+  });
+}
+
 // ------------------------------------------------------------------------------------------------ driver and rendering
 export async function analyze({ runsDir = DEFAULT_RUNS, streams = STREAMS, floor = FLOOR } = {}) {
   const econ = [], validation = [], witness = [];
@@ -495,7 +510,7 @@ export async function analyze({ runsDir = DEFAULT_RUNS, streams = STREAMS, floor
     validation.push({ experiment: s.experiment, family: s.family, ...validateProxy(stream, scored) });
     if (s.family === 'kinetics') witness.push({ experiment: s.experiment, ...witnessRecall(stream, scored) });
   }
-  return { generatedFrom: streams.map(s => s.experiment), floor, econ, validation, witness, aoqlPerfect: aoqlTable(), decision: decide(econ, { floor }) };
+  return { generatedFrom: streams.map(s => s.experiment), floor, econ, validation, witness, aoqlPerfect: aoqlTable(), decision: decide(econ, { floor }), restatement: restatement(econ, { floor }) };
 }
 
 const $ = x => (x == null || !Number.isFinite(x) ? '–' : `$${x.toFixed(4)}`);
@@ -547,7 +562,7 @@ export function renderTables(res) {
   }
   L.push('', '**Slider** (cheapest tier and rate ≥ floor whose projected detectable-wrong bound ≤ B; L1, with adjudication):', '', '| stream | arm | B | N=24 | N=1000 | N=10000 |', '|---|---|---|---|---|---|');
   for (const e of res.econ) for (const B of [0.05, 0.1, 0.2, 0.4]) {
-    const c = N => { const s = slider(e, { bound: B, N, floor: res.floor }); return s.feasible ? `${s.tier} @ ${pct(s.rate)}: ${$(s.usd)} (bound ${pct(s.bound)})` : `infeasible: ${s.reason}`; };
+    const c = N => { const s = slider(e, { bound: B, N, floor: res.floor }); return s.feasible ? `${s.tier} @ ${pct(s.rate)}: ${$(s.usd)} (bound ${pct(s.bound)}; δ ${pct(s.delta)})` : `infeasible: ${s.reason}`; };
     L.push(`| ${e.experiment} | ${e.short} | ${pct(B)} | ${c(24)} | ${c(1000)} | ${c(10000)} |`);
   }
   L.push('', '## 7. CSP-1 (Dodge) for long streams', '', '**AOQL, perfect inspector** (worst-case long-run share of wrong deliveries; p at the worst case):', '', `| i \\ f | ${CSP_GRID.f.join(' | ')} |`, `|---|${CSP_GRID.f.map(() => '---').join('|')}|`);
@@ -563,6 +578,8 @@ export function renderTables(res) {
     L.push(`| ${d.level} | ${d.family} | ${a.experiment} | ${a.arm}${a.negativeControl ? ' (neg. control)' : ''} | ${$(a.haikuUsdPerTask)} | ${$(a.base)} | ${f(a.engine)} | ${f(a.engineNoAdj)} | ${f(a.anyModel)} | ${f(a.anyModelNoAdj)} | ${f(a.ceiling)} | ${a.stream24 ? `${$(a.stream24.perSuccess)} vs ${$(a.haikuUsdPerSuccess)} (${a.stream24.beatsPerSuccess ? 'beats' : 'no'})` : '–'} |`);
   L.push('');
   for (const d of res.decision) L.push(`- **${d.family}, ${d.level}**: claimed arms (S→H, O→H): ${d.verdictClaimedArms}. With the negative control H→H: ${d.verdictAllArms}. Witness ceiling beats: ${d.ceilingBeats ? 'yes' : 'no'}. A 24-task stream beats the Haiku agent per success: ${d.stream24BeatsPerSuccess ? 'yes' : 'no'}.`);
+  L.push('', '## 10. Restatement: the engine as built (interp tier, adjudication, floor) against every agent', '', '| stream | arm | agent | steady L1 $/task vs agent $/task | 24-task stream $/success vs agent $/success | pass: JIT (rows) vs agent |', '|---|---|---|---|---|---|');
+  for (const x of res.restatement) L.push(`| ${x.experiment} | ${x.arm} | ${x.agent} | ${$(x.steadyUsd)} vs ${$(x.agentUsdPerTask)} ${x.steadyBeats ? '**beats**' : 'no'} | ${$(x.stream24PerSuccess)} vs ${$(x.agentUsdPerSuccess)} ${x.stream24Beats ? '**beats**' : 'no'} | ${pct(x.jitPass)} (${x.rows}) vs ${pct(x.agentPass)} |`);
   return L.join('\n') + '\n';
 }
 

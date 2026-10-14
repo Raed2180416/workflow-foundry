@@ -350,27 +350,27 @@ P(disagree), δ and φ are over the deliveries the tier compared (interp: the as
 | jit-dev-records-1 | O→H | 5.0% | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound |
 | jit-dev-records-1 | O→H | 10.0% | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound |
 | jit-dev-records-1 | O→H | 20.0% | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.222) is >= the bound |
-| jit-dev-records-1 | O→H | 40.0% | infeasible: too few shadows at N = 24 | haiku+hadj @ 25.0%: $0.0966 (bound 28.1%) | haiku+hadj @ 25.0%: $0.0966 (bound 24.0%) |
+| jit-dev-records-1 | O→H | 40.0% | infeasible: too few shadows at N = 24 | haiku+hadj @ 25.0%: $0.0966 (bound 28.1%; δ 66.7%) | haiku+hadj @ 25.0%: $0.0966 (bound 24.0%; δ 66.7%) |
 | jit-dev-records-1 | S→H | 5.0% | infeasible: every tier's measured detectable-wrong rate (min 0.105) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.105) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.105) is >= the bound |
 | jit-dev-records-1 | S→H | 10.0% | infeasible: every tier's measured detectable-wrong rate (min 0.105) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.105) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.105) is >= the bound |
-| jit-dev-records-1 | S→H | 20.0% | infeasible: too few shadows at N = 24 | haiku+hadj @ 25.0%: $0.1149 (bound 15.2%) | haiku+hadj @ 25.0%: $0.1149 (bound 11.9%) |
-| jit-dev-records-1 | S→H | 40.0% | haiku+hadj @ 50.0%: $0.1515 (bound 39.6%) | haiku+hadj @ 25.0%: $0.1149 (bound 15.2%) | haiku+hadj @ 25.0%: $0.1149 (bound 11.9%) |
+| jit-dev-records-1 | S→H | 20.0% | infeasible: too few shadows at N = 24 | haiku+hadj @ 25.0%: $0.1149 (bound 15.2%; δ 100.0%) | haiku+hadj @ 25.0%: $0.1149 (bound 11.9%; δ 100.0%) |
+| jit-dev-records-1 | S→H | 40.0% | haiku+hadj @ 50.0%: $0.1515 (bound 39.6%; δ 100.0%) | haiku+hadj @ 25.0%: $0.1149 (bound 15.2%; δ 100.0%) | haiku+hadj @ 25.0%: $0.1149 (bound 11.9%; δ 100.0%) |
 | jit-dev-kinetics-1 | H→H | 5.0% | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound |
 | jit-dev-kinetics-1 | H→H | 10.0% | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound |
 | jit-dev-kinetics-1 | H→H | 20.0% | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound |
 | jit-dev-kinetics-1 | H→H | 40.0% | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.400) is >= the bound |
 | jit-dev-kinetics-1 | O→H | 5.0% | infeasible: every tier's measured detectable-wrong rate (min 0.100) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.100) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.100) is >= the bound |
 | jit-dev-kinetics-1 | O→H | 10.0% | infeasible: every tier's measured detectable-wrong rate (min 0.100) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.100) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.100) is >= the bound |
-| jit-dev-kinetics-1 | O→H | 20.0% | infeasible: too few shadows at N = 24 | haiku+hadj @ 25.0%: $0.2616 (bound 15.7%) | haiku+hadj @ 25.0%: $0.2616 (bound 11.6%) |
-| jit-dev-kinetics-1 | O→H | 40.0% | haiku+hadj @ 75.0%: $0.2852 (bound 38.4%) | haiku+hadj @ 25.0%: $0.2616 (bound 15.7%) | haiku+hadj @ 25.0%: $0.2616 (bound 11.6%) |
+| jit-dev-kinetics-1 | O→H | 20.0% | infeasible: too few shadows at N = 24 | haiku+hadj @ 25.0%: $0.2616 (bound 15.7%; δ 100.0%) | haiku+hadj @ 25.0%: $0.2616 (bound 11.6%; δ 100.0%) |
+| jit-dev-kinetics-1 | O→H | 40.0% | haiku+hadj @ 75.0%: $0.2852 (bound 38.4%; δ 100.0%) | haiku+hadj @ 25.0%: $0.2616 (bound 15.7%; δ 100.0%) | haiku+hadj @ 25.0%: $0.2616 (bound 11.6%; δ 100.0%) |
 | jit-dev-kinetics-1 | S→H | 5.0% | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound |
 | jit-dev-kinetics-1 | S→H | 10.0% | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound |
 | jit-dev-kinetics-1 | S→H | 20.0% | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound |
 | jit-dev-kinetics-1 | S→H | 40.0% | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.750) is >= the bound |
 | jit-r0-records | H→H | 5.0% | infeasible: every tier's measured detectable-wrong rate (min 0.111) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.111) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.111) is >= the bound |
 | jit-r0-records | H→H | 10.0% | infeasible: every tier's measured detectable-wrong rate (min 0.111) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.111) is >= the bound | infeasible: every tier's measured detectable-wrong rate (min 0.111) is >= the bound |
-| jit-r0-records | H→H | 20.0% | infeasible: too few shadows at N = 24 | interp @ 25.0%: $0.0438 (bound 15.6%) | interp @ 25.0%: $0.0438 (bound 12.4%) |
-| jit-r0-records | H→H | 40.0% | interp @ 50.0%: $0.0686 (bound 38.7%) | interp @ 25.0%: $0.0438 (bound 15.6%) | interp @ 25.0%: $0.0438 (bound 12.4%) |
+| jit-r0-records | H→H | 20.0% | infeasible: too few shadows at N = 24 | interp @ 25.0%: $0.0438 (bound 15.6%; δ 100.0%) | interp @ 25.0%: $0.0438 (bound 12.4%; δ 100.0%) |
+| jit-r0-records | H→H | 40.0% | interp @ 50.0%: $0.0686 (bound 38.7%; δ 100.0%) | interp @ 25.0%: $0.0438 (bound 15.6%; δ 100.0%) | interp @ 25.0%: $0.0438 (bound 12.4%; δ 100.0%) |
 
 ## 7. CSP-1 (Dodge) for long streams
 
@@ -474,3 +474,24 @@ P(disagree), δ and φ are over the deliveries the tier compared (interp: the as
 - **kinetics, L0**: claimed arms (S→H, O→H): not withdrawn only with an engine change (Haiku-agent shadows); withdrawn for the engine as built. With the negative control H→H: not withdrawn only with an engine change (Haiku-agent shadows); withdrawn for the engine as built. Witness ceiling beats: no. A 24-task stream beats the Haiku agent per success: no.
 - **kinetics, L1**: claimed arms (S→H, O→H): WITHDRAWN: no (tier, rate >= floor) beats the Haiku agent. With the negative control H→H: WITHDRAWN: no (tier, rate >= floor) beats the Haiku agent. Witness ceiling beats: no. A 24-task stream beats the Haiku agent per success: no.
 - **kinetics, L2**: claimed arms (S→H, O→H): WITHDRAWN: no (tier, rate >= floor) beats the Haiku agent. With the negative control H→H: WITHDRAWN: no (tier, rate >= floor) beats the Haiku agent. Witness ceiling beats: no. A 24-task stream beats the Haiku agent per success: no.
+
+## 10. Restatement: the engine as built (interp tier, adjudication, floor) against every agent
+
+| stream | arm | agent | steady L1 $/task vs agent $/task | 24-task stream $/success vs agent $/success | pass: JIT (rows) vs agent |
+|---|---|---|---|---|---|
+| jit-dev-records-1 | H→H | H | $0.0788 vs $0.1027 **beats** | $0.4440 vs $0.1643 no | 58.3% (24) vs 62.5% |
+| jit-dev-records-1 | H→H | O | $0.0788 vs $0.5643 **beats** | $0.4440 vs $0.5643 **beats** | 58.3% (24) vs 100.0% |
+| jit-dev-records-1 | H→H | S | $0.0788 vs $0.2939 **beats** | $0.4440 vs $0.5425 **beats** | 58.3% (24) vs 54.2% |
+| jit-dev-records-1 | O→H | H | $0.2183 vs $0.1027 no | $0.4478 vs $0.1643 no | 75.0% (24) vs 62.5% |
+| jit-dev-records-1 | O→H | O | $0.2183 vs $0.5643 **beats** | $0.4478 vs $0.5643 **beats** | 75.0% (24) vs 100.0% |
+| jit-dev-records-1 | O→H | S | $0.2183 vs $0.2939 **beats** | $0.4478 vs $0.5425 **beats** | 75.0% (24) vs 54.2% |
+| jit-dev-records-1 | S→H | H | $0.1805 vs $0.1027 no | $0.4239 vs $0.1643 no | 91.7% (24) vs 62.5% |
+| jit-dev-records-1 | S→H | O | $0.1805 vs $0.5643 **beats** | $0.4239 vs $0.5643 **beats** | 91.7% (24) vs 100.0% |
+| jit-dev-records-1 | S→H | S | $0.1805 vs $0.2939 **beats** | $0.4239 vs $0.5425 **beats** | 91.7% (24) vs 54.2% |
+| jit-dev-kinetics-1 | H→H | H | $0.2442 vs $0.0876 no | $0.9400 vs $0.1237 no | 66.7% (12) vs 70.8% |
+| jit-dev-kinetics-1 | H→H | S | $0.2442 vs $0.3084 **beats** | $0.9400 vs $0.4354 no | 66.7% (12) vs 70.8% |
+| jit-dev-kinetics-1 | O→H | H | $0.3181 vs $0.0876 no | $1.0066 vs $0.1237 no | 89.5% (19) vs 70.8% |
+| jit-dev-kinetics-1 | O→H | S | $0.3181 vs $0.3084 no | $1.0066 vs $0.4354 no | 89.5% (19) vs 70.8% |
+| jit-dev-kinetics-1 | S→H | H | $0.2508 vs $0.0876 no | $1.7958 vs $0.1237 no | 53.8% (13) vs 70.8% |
+| jit-dev-kinetics-1 | S→H | S | $0.2508 vs $0.3084 **beats** | $1.7958 vs $0.4354 no | 53.8% (13) vs 70.8% |
+| jit-r0-records | H→H | H | $0.0438 vs $0.1039 **beats** | $0.3598 vs $0.1782 no | 75.0% (12) vs 58.3% |
