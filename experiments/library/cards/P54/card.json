@@ -31,6 +31,9 @@
   ],
   "minedFrom": ["n8n:execute-workflow", "langgraph:subgraphs", "dify:workflow-as-tool"],
   "companions": [{ "id": "P15", "why": "a quorum over the parts that came back" }],
+  "order": [
+    { "before": ["P15"], "source": "companions: P15 'a quorum over the parts that came back' (ATTACK-20261014 M4, added 2026-10-14)" }
+  ],
   "tags": ["compose", "finance"],
   "example": { "slots": {
     "PARTS": "(task, x) => x.entities.map(e => ({ key: e.code, input: { entity: e.code, lines: e.lines } }))",

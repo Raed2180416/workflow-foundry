@@ -74,6 +74,14 @@
 // (event item-deopt) instead of the run, except a gateway budget deopt. A retried item runs its code again: anything it calls
 // must be safe to call twice (at-least-once; solvers have no effects, callees are effects: 'none').
 //
+// Review fixes (FLOW-V3-SLICE2.md §17): an open wide holds its budget against the run, and its call and agent items carve
+// their reservations from it (an item starts only while its reservation fits; judge and code items run one item before the
+// mean-cost estimate); a deopt inside an item fails the item even when the item's code catches it; a retried item's calls
+// and agent nodes carry its attempt path (itemAttempt), so the host's memo does not serve the failed attempt again; a host
+// refusal of an agent retry goes to onFail; the 'skip' objects carry a non-enumerable mark (isSkipped) and wide counts a
+// call or agent item that returned one as failed; a call the host ran outside its profile (novelMode 'warn') flags the run;
+// a verify, check or itemCheck must be synchronous (a returned Promise throws).
+//
 // The flow-v2 header follows; everything in it holds for flow-v3.
 //
 //   import { createFlow } from './tools/flow.mjs';

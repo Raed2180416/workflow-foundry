@@ -31,6 +31,9 @@
   ],
   "minedFrom": ["mastra:…support-supervisor (weak)"],
   "companions": [{ "id": "P16", "why": "duplicates on one side" }],
+  "order": [
+    { "after": ["P16"], "source": "checklist (L1-PATTERNS §4 P17): 'A duplicate on one side goes to P16 first'; skeleton guard unique-ids (ATTACK-20261014 M4, added 2026-10-14)" }
+  ],
   "tags": ["fan", "finance"],
   "example": { "slots": {
     "LEFT": "inputs.ledger",

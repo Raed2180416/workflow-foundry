@@ -28,6 +28,9 @@
   ],
   "minedFrom": ["google-adk:…on-brand-genmedia", "dspy:…multihop-pot", "dagster:snowflake_cortex"],
   "companions": [],
+  "order": [
+    { "before": ["P12", "P15"], "source": "ATTACK-20261014 M4 'dedupe before aggregate'; aggregate read as P12 (map -> code reduce) and P15 (fan-in aggregate) [I] (added 2026-10-14)" }
+  ],
   "tags": ["fan", "records"],
   "example": { "slots": {
     "ROWS": "inputs.customers",
