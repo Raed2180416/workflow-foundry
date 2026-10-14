@@ -301,6 +301,8 @@ test('P60: pause / resume no-ops, stop while paused, start after stop, timestamp
   assert.deepEqual([k.state, k.elapsedMinutes, k.met, k.warnings], ['stopped', 60, true, [{ fraction: 0.5, reached: true, at: '2026-10-14T09:00:00.000Z' }]]);
   assert.equal(await clk([...evs, tick('2026-10-14T12:00:00+01:00', 'created')], '2026-10-14T15:00:00+01:00'), 'guard/single-cycle');
   assert.equal(await clk([tick('2026-10-14 09:00', 'created')], '2026-10-14T15:00:00+01:00'), 'guard/event-time');
+  assert.equal(await clk([tick('2026-02-30T09:00:00Z', 'created')], '2026-10-14T15:00:00+01:00'), 'guard/event-time', 'V8 would roll Feb 30 over to Mar 2');
+  assert.equal(await clk([tick('2026-10-13T24:00:00Z', 'created')], '2026-10-14T15:00:00+01:00'), 'guard/event-time');
   assert.equal(await clk([tick('2026-10-14T16:00:00+01:00', 'created')], '2026-10-14T15:00:00+01:00'), 'guard/not-after-as-of');
   assert.equal(await clk([tick('2026-10-14T09:00:00+01:00', 'created')], '2026-10-14T15:00:00+01:00', {}, 'P0'), 'guard/target-known');
   assert.equal(await clk([], '2026-10-14 15:00'), 'guard/as-of-time');

@@ -18,7 +18,7 @@ export default async function P58(flow, task, x, S) {
   flow.guard('bounded', Array.isArray(items) && items.length <= S.MAX_ITEMS, { n: Array.isArray(items) ? items.length : null, max: S.MAX_ITEMS });
   flow.guard('unique-ids', items.every(it => it != null && it.id != null) && new Set(items.map(it => String(it.id))).size === items.length, { n: items.length });
   const DATE = /^\d{4}-\d{2}-\d{2}$/;
-  const validDate = d => typeof d === 'string' && DATE.test(d) && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d;
+  const validDate = d => typeof d === 'string' && DATE.test(d) && Number.isFinite(Date.parse(d + 'T00:00:00Z')) && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d;
   const inputs = Object.keys(S.INPUTS), outs = S.OUTPUTS, names = outs.map(o => o.name);
   const scalar = v => v === null || typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v));
 

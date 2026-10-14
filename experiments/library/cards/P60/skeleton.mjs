@@ -21,10 +21,10 @@ export default async function P60(flow, task, x, S) {
   const cases = S.CASES(task, x), asOfText = S.AS_OF(task, x);
   flow.guard('bounded', Array.isArray(cases) && cases.length <= S.MAX_CASES, { n: Array.isArray(cases) ? cases.length : null, max: S.MAX_CASES });
   flow.guard('unique-ids', cases.every(c => c != null && c.id != null) && new Set(cases.map(c => String(c.id))).size === cases.length, { n: cases.length });
-  const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
+  const INSTANT = /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d{1,3})?)?(Z|[+-]([01]\d|2[0-3]):[0-5]\d)$/;
   const DATE = /^\d{4}-\d{2}-\d{2}$/, HHMM = /^([01]\d|2[0-3]):[0-5]\d$|^24:00$/;
-  const validDate = d => typeof d === 'string' && DATE.test(d) && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d;
-  const instant = s => (typeof s === 'string' && INSTANT.test(s) && Number.isFinite(Date.parse(s)) ? Date.parse(s) : null);
+  const validDate = d => typeof d === 'string' && DATE.test(d) && Number.isFinite(Date.parse(d + 'T00:00:00Z')) && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d;
+  const instant = s => (typeof s === 'string' && INSTANT.test(s) && validDate(s.slice(0, 10)) ? Date.parse(s) : null);   // V8 would roll 02-30 over
   const asOf = instant(asOfText);
   flow.guard('as-of-time', asOf !== null, { asOf: asOfText ?? null });
   const MIN = 60000, DAY = 86400000, DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];

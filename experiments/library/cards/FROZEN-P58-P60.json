@@ -1,0 +1,235 @@
+{
+ "schema": "card-freeze/1",
+ "frozenAt": "2026-10-14",
+ "purpose": "E-BED §8.1 step 1: library cards P58 (decision table with hit policies), P59 (saga planner with reverse-order compensation and idempotent commands) and P60 (SLA / obligation clock with pause, resume and a business calendar), authored blind from outside sources and frozen before any spec-E is written or read.",
+ "digest": "sha256 per file (raw bytes); card sha256 = sha256 of the lines \"<path> <file sha256>\\n\" over the card's files in sorted path order; skeletonSha256 equals cards.mjs loadCard().skeletonSha256. Checked by experiments/library/test/ebed-cards.test.mjs.",
+ "blind": {
+  "notRead": [
+   "research/enterprise-20261014/ (E-BED.md, BAR-SET, CATALOGUE and the rest)",
+   "beds/ebed/",
+   "beds/sealed/"
+  ],
+  "incidental": "A grep for E-BED / G18 / P58 printed research/jit-20261008/PROOF-LEDGER.md lines 156-175 (claims L1-L12). They name P58 (decision table), P59 (compensation planner), P60 (obligation clock), the titles of E11 (Reg X), E12 (SEPA R-transactions) and E13 (payroll editions), and the phrase \"effective-dated edition switches, new formats, schema renames and no-notice editions\". No item specification, fixture or oracle was read. Nothing else under research/ about the bar set was opened.",
+  "g18": "The bar set's own definition of G18 was not read. The convention below is this author's, from the sources listed (Drools date-effective / date-expires as the precedent, with the case's business date in place of the wall clock)."
+ },
+ "convention": {
+  "G18": {
+   "edition": "{edition: name, effectiveFrom: YYYY-MM-DD (inclusive), effectiveTo?: YYYY-MM-DD (exclusive), ...content}",
+   "rules": [
+    "Editions are listed in increasing effectiveFrom and do not overlap; gaps are allowed; only the last edition may be open-ended. A malformed list is an invariant failure (the construction is wrong).",
+    "The edition is chosen by a business date taken from the case, never by the wall clock, so a replay decides the same way.",
+    "A case date that no edition covers deopts (guard ...-edition-in-force).",
+    "Every output names the edition(s) it applied."
+   ],
+   "perCard": {
+    "P58": "AS_OF(item) picks the rule edition.",
+    "P59": "Not effective-dated: a saga instance is pinned to the definition VERSION it started on (Temporal-style versioning); an instance on another version deopts (guard definition-pinned).",
+    "P60": "The policy edition (targets, warnings) in force on the clock's start date, local to the calendar, fixes the obligation's terms; the calendar edition (hours, holidays) is chosen per local day, so a clock running across a switch uses each day's hours."
+   }
+  }
+ },
+ "runtime": {
+  "node": "v24.21.0",
+  "tz": "2026c",
+  "icu": "78.3",
+  "note": "P60 converts local business hours with Intl (the runtime tz database); its fixtures were hand-computed for Europe/London in October 2026 and checked on this runtime."
+ },
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://docs.camunda.io/docs/components/modeler/dmn/decision-table-hit-policy/",
+   "title": "Camunda 8 docs: hit policy",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P58 UNIQUE, ANY, FIRST, RULE ORDER, COLLECT and SUM / MIN / MAX / COUNT; SUM over all outputs, COUNT of satisfied rules; Camunda 8.10 lists no PRIORITY or OUTPUT ORDER"
+  },
+  {
+   "id": "S2",
+   "url": "https://docs.camunda.io/docs/components/best-practices/modeling/choosing-the-dmn-hit-policy/",
+   "title": "Camunda best practice: choosing the DMN hit policy",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P58 PRIORITY and OUTPUT ORDER definitions; C+ and C# described over distinct outputs (contradicts S1 and S4: hence the DISTINCT slot); FIRST-table caution"
+  },
+  {
+   "id": "S3",
+   "url": "https://docs.drools.org/latest/drools-docs/drools/DMN/index.html",
+   "title": "Drools DMN docs, \"Hit policies in DMN decision tables\"",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P58 hit-policy definitions; PRIORITY by the order of the output values list"
+  },
+  {
+   "id": "S4",
+   "url": "https://raw.githubusercontent.com/apache/incubator-kie-drools/main/kie-dmn/kie-dmn-feel/src/main/java/org/kie/dmn/feel/runtime/decisiontables/HitPolicy.java",
+   "title": "Apache KIE Drools HitPolicy.java (main, unpinned)",
+   "accessed": "2026-10-14",
+   "kind": "observed code (Apache-2.0)",
+   "revision": "main as fetched; no commit SHA was available to this session",
+   "usedFor": "P58: null on no match and on a UNIQUE / ANY violation; C+ sums all values; C# counts distinct values; PRIORITY / OUTPUT ORDER compare output by output over the outputs with a values list, ties keep rule order"
+  },
+  {
+   "id": "S5",
+   "url": "https://github.com/EdgeVerve/feel/wiki/Hit-Policy",
+   "title": "EdgeVerve feel wiki: Hit Policy (quotes DMN 1.1 §10.3.4.6)",
+   "accessed": "2026-10-14",
+   "kind": "documentation (spec quotation, secondary)",
+   "usedFor": "P58: compound outputs support no aggregation and only Unique, Any, Priority, First, Collect without operator and Rule order"
+  },
+  {
+   "id": "S6",
+   "url": "https://raw.githubusercontent.com/apache/incubator-kie-kogito-examples/main/kogito-quarkus-examples/dmn-quarkus-example/src/main/resources/Traffic%20Violation.dmn",
+   "title": "Kogito example: Traffic Violation.dmn, decision Fine (UNIQUE)",
+   "accessed": "2026-10-14",
+   "kind": "observed example model (repository Apache-2.0; the file carries no header)",
+   "revision": "main as fetched; no commit SHA",
+   "usedFor": "P58 worked example and fixtures: the four rules and values of the fines-2020 edition; the fines-2026-07 edition is invented"
+  },
+  {
+   "id": "S7",
+   "url": "https://docs.camunda.io/docs/components/modeler/feel/language-guide/feel-unary-tests/",
+   "title": "Camunda 8 FEEL: unary tests",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P58 unary-test subset: comparison, open / closed intervals, comma disjunction, not(...), the dash, literals, date(...)"
+  },
+  {
+   "id": "S8",
+   "url": "https://temporal.io/blog/saga-pattern-made-easy",
+   "title": "Temporal blog: Saga pattern made easy (E. Fortuna, 2023-05-24)",
+   "accessed": "2026-10-14",
+   "kind": "documentation / blog",
+   "usedFor": "P59 last-in-first-out compensation; activities must be idempotent because they are retried; optional parallel compensation"
+  },
+  {
+   "id": "S9",
+   "url": "https://raw.githubusercontent.com/temporalio/sdk-java/master/temporal-sdk/src/main/java/io/temporal/workflow/Saga.java",
+   "title": "Temporal Java SDK Saga.java (master, unpinned)",
+   "accessed": "2026-10-14",
+   "kind": "observed code",
+   "revision": "master as fetched; no commit SHA",
+   "usedFor": "P59 sequential compensation in reverse order of registration; parallelCompensation (default false); continueWithError"
+  },
+  {
+   "id": "S10",
+   "url": "https://community.temporal.io/t/why-do-we-add-compensation-action-before-action-we-want-to-compensate/19226",
+   "title": "Temporal community: why add the compensation before the action",
+   "accessed": "2026-10-14",
+   "kind": "community answer (Temporal staff)",
+   "usedFor": "P59 COMPENSATE_FAILED if-uncertain: a timed-out action may have succeeded, so its compensation is registered first and skipped by the participant when nothing happened; an operation id shared by action and undo"
+  },
+  {
+   "id": "S11",
+   "url": "https://docs.camunda.org/manual/latest/reference/bpmn20/events/cancel-and-compensation-events/",
+   "title": "Camunda 7 docs: cancel and compensation events",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P59 only successfully completed activities are compensated, in reverse order of execution; Camunda 7 starts concurrent compensations in reverse order (PARALLEL_UNDO)"
+  },
+  {
+   "id": "S12",
+   "url": "https://docs.camunda.io/docs/components/modeler/bpmn/compensation-handler/",
+   "title": "Camunda 8 docs: compensation handler",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P59 compensation handlers run for completed activities"
+  },
+  {
+   "id": "S13",
+   "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/saga",
+   "title": "Azure Architecture Center: Saga design pattern (ms.date 2025-02-25)",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P59 compensable, pivot and retryable transactions; retryable steps are idempotent; compensations can fail"
+  },
+  {
+   "id": "S14",
+   "url": "https://microservices.io/patterns/data/saga.html",
+   "title": "C. Richardson: Pattern: Saga",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P59 a saga is a sequence of local transactions undone by compensating transactions"
+  },
+  {
+   "id": "S15",
+   "url": "https://support.atlassian.com/jira-service-management-cloud/docs/set-up-sla-conditions/",
+   "title": "Jira Service Management Cloud: set up SLA conditions",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P60 start, pause (optional, e.g. waiting for the customer) and finish conditions; any finish condition stops measurement"
+  },
+  {
+   "id": "S16",
+   "url": "https://www.servicenow.com/docs/bundle/zurich-it-service-management/page/product/service-level-management/concept/c_SLAConditions.html",
+   "title": "ServiceNow Zurich: SLA conditions",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P60 start, cancel, pause, resume, stop and reset conditions; a reset completes the SLA and attaches a new one (here: guard single-cycle)"
+  },
+  {
+   "id": "S17",
+   "url": "https://www.servicenow.com/docs/r/UMl~97STJe3fa_KTmzD1Gg/C3FGocriIJZdpYapo3gunw",
+   "title": "ServiceNow Australia: create an SLA definition",
+   "accessed": "2026-10-14",
+   "kind": "documentation",
+   "usedFor": "P60 duration counted on a schedule, schedule and time-zone sources, breach once the duration elapses, stop completes regardless of breach"
+  },
+  {
+   "id": "S18",
+   "url": "https://www.servicenow.com/community/developer-forum/how-to-create-custom-notification-for-when-sla-reaches-75/m-p/2439313",
+   "title": "ServiceNow community: notifications at 50% / 75%",
+   "accessed": "2026-10-14",
+   "kind": "community post (seen as a search summary, not fetched)",
+   "usedFor": "P60 warnings as fractions of the target (weak: behaviour claim from community posts)"
+  },
+  {
+   "id": "S19",
+   "url": "https://docs.redhat.com/en/documentation/red_hat_decision_manager/6.4/html/development_guide/chap_working_with_rules",
+   "title": "Red Hat Decision Manager 6.4: rule attributes date-effective / date-expires",
+   "accessed": "2026-10-14",
+   "kind": "documentation (seen as a search summary, not fetched)",
+   "usedFor": "G18 precedent: rules active between an effective and an expiry date (Drools compares with the current time; this convention uses the case date instead)"
+  }
+ ],
+ "cards": {
+  "P58": {
+   "name": "decision table with hit policies (DMN, effective-dated editions)",
+   "version": 1,
+   "sha256": "414717d390705ed1f19d7d2631fb47d372a16fdd9db80c8d59975f92b116c7f7",
+   "skeletonSha256": "1b975d033a5b72d19f39eadb7953f205718dad23b3fb89db76a898186da94e44",
+   "files": {
+    "P58/card.json": "5f53c4b0fa3a99eae20ab1f24fbdbcdf165b8ccbd14de5a51a3802ec72a644ad",
+    "P58/fixtures/drift.json": "4f079f8d27decf1dd598e6a58c4d4dcc60c42d594eeee6b1a42f810ebf6d0872",
+    "P58/fixtures/no-match.json": "92019482912c172f82db2a1b5e33ab686595082adb463ef7e7870c9c5df17070",
+    "P58/fixtures/positive.json": "5518356fbefc1b1ecb98feeeaa54cab32a3899c5c6df1ea6408d61ff08c4c53f",
+    "P58/skeleton.mjs": "1b975d033a5b72d19f39eadb7953f205718dad23b3fb89db76a898186da94e44"
+   }
+  },
+  "P59": {
+   "name": "saga planner (reverse-order compensation, idempotent commands)",
+   "version": 1,
+   "sha256": "d6d17693db16b91a185cf438265e80c1537824269ea69fcac0420474ea975f1a",
+   "skeletonSha256": "d108654570cc461413e95087b46eae6b7f2f542fb465fa3cba48c316db765132",
+   "files": {
+    "P59/card.json": "867bfb67d07cc86a3814f08608ca61cf6cce7106ffb74bde228003c8c72fba1c",
+    "P59/fixtures/drift.json": "b2495c252fa63ca81940c8f329e0d3814a6d5ead2622aa32c0365a5aeeb81f0f",
+    "P59/fixtures/no-match.json": "9010705d8817306888c9b7d4aadaa9a80ea21a3579b518a14c4bcff9de057c75",
+    "P59/fixtures/positive.json": "2e04c40f48d0fee5efc4bf48f2ed5d3237c4a7a43412a6489381216656dfa3a5",
+    "P59/skeleton.mjs": "d108654570cc461413e95087b46eae6b7f2f542fb465fa3cba48c316db765132"
+   }
+  },
+  "P60": {
+   "name": "SLA / obligation clock (pause, resume, business calendar, effective-dated editions)",
+   "version": 1,
+   "sha256": "806cd8a6065f5fe0c85e193ac3dd1a8277b69d9a396672f48d18aa05f49633c3",
+   "skeletonSha256": "0b7d1ce393fb59eb6109539ba215f53a5f3dfccf5f05e1e80e892cf19a1210d2",
+   "files": {
+    "P60/card.json": "e62394f4fabfa9fc8cc1da367f782880e2a762d100ec8786dd336ee6c39fa6e1",
+    "P60/fixtures/drift.json": "3f90d84b8264a06f11a00636418030df73c3288e69011464baddef22310c4758",
+    "P60/fixtures/no-match.json": "ea21b8ed6b088254c02466c7d043a3bfa94fcfaf9546658ffc24968f82ce7da6",
+    "P60/fixtures/positive.json": "1b34335f28f1557d77ca113b928e9a0ccf9d40e05f04854416e8059647381e0c",
+    "P60/skeleton.mjs": "0b7d1ce393fb59eb6109539ba215f53a5f3dfccf5f05e1e80e892cf19a1210d2"
+   }
+  }
+ }
+}

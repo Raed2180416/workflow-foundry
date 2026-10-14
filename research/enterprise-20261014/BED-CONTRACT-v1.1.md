@@ -104,9 +104,9 @@ export const semantics;      // { file: 'ledger/SEMANTICS.md', in: n, out: n } (
 - **Purity.** `generateWorld`, `twins`, `actors.*`, `referenceTransition`, `referencePolicy` and `oracle` are pure
   functions of their arguments; randomness only from `beds/lib/rng.mjs` with the salts of §10.2; no wall clock.
 - **Who imports what.** The host imports `generateWorld`, `actors`, `schemas` and `specE` (the fault schedule is part of
-  the world). Only the analyst-side scorer imports `referenceTransition`, `referencePolicy` and `oracle`. Arms import nothing (they get
-  files, §3.1). The oracle runs **offline over the journal** after (or during, for monitoring) the run; the host never
-  calls it, so world dynamics cannot depend on the oracle.
+  the world). Only the analyst-side scorer imports `referenceTransition`, `referencePolicy` and `oracle`. Arms import
+  nothing (they get files, §3.1). The oracle runs **offline over the journal** after (or during, for monitoring) the
+  run; the host never calls it, so world dynamics cannot depend on the oracle.
 - **Difficulty and schedule.** `difficulty` sets the highest feature level present (E-BED §2.6 d1–d5); `schedule`
   places the drift events in the epochs (default: E-BED §2.1 — ep1 parties, ep2 rules and formats, ep3 schema, volume
   and faults, ep4 revert). `mix` is `natural` or `tail` (tail classes ≥ 50%). `scale` is `base` or `scale` (§11).
@@ -621,8 +621,8 @@ CLI: `node experiments/lib/stats-ebed.mjs power | thresholds`.
   the smaller of a two-stage world-clustered percentile bootstrap and the i.i.d. case bootstrap widened by
   `sqrt(1 + (m̄ − 1)·ρ)`, ρ = 0.1: with K = 2–4 worlds the cluster bootstrap cannot see between-world variance (the
   same reason as `pairedComparison` in `experiments/jit/stats.mjs:177` [M]), and ρ = 0.1 is what E-BED's power
-  assumed. K < 2 worlds gives bounds but no decision. A bootstrap p-value (`(count ≤ −δ + 1)/(B + 1)`, the larger of
-  the two) feeds Holm across items.
+  assumed. K < 2 worlds gives bounds but no decision. A bootstrap p-value, `(#{replicates ≤ −δ} + 1)/(B + 1)`
+  (the larger of the two), feeds Holm across items.
 - **[D-9] Wilcoxon.** Exact one-sided test conditional on the observed absolute values (sign-flip distribution; the
   classic table null when there are no ties); ties by midranks; zero differences dropped (Wilcoxon's method; Pratt's
   available). Rejection on `p < α` everywhere (E-BED writes "p < 0.05"); exact p-values are dyadic and never equal
@@ -653,11 +653,11 @@ CLI: `node experiments/lib/stats-ebed.mjs power | thresholds`.
 
 E-BED §6 gives Wilcoxon power 0.60 (K = 2) and 0.85 (K = 4), and the sign test 0.34 / 0.57. Re-running the same model
 (9 items, gap ~ N(0, SE²), SE as above, δ = 0.10) with the repo's mulberry32 generator gives **0.609 / 0.856**
-(Wilcoxon) and **0.336 / 0.585** (sign) at 200,000–400,000 draws (Monte Carlo SE ≈ 0.001). The sign figures match their
-closed form exactly; E-BED's 0.572 at K = 4 does not, and E-BED's generator (a 31-bit LCG feeding Box-Muller,
-`scratchpad/efinal/pw.mjs`) also puts the sign test's null size at 0.017 instead of the exact 10/512 = 0.0195. So the
-E-BED figures are 0.005–0.013 low. Nothing in the design changes: K = 4 stays recommended, and the Wilcoxon still
-beats the sign test by about 0.27 in power at both K.
+(Wilcoxon) and **0.336 / 0.585** (sign) at 200,000–400,000 draws (Monte Carlo SE ≈ 0.001). The sign figures match
+their closed form to Monte Carlo precision; E-BED's 0.572 at K = 4 does not, and E-BED's generator (a 31-bit LCG
+feeding Box-Muller, `scratchpad/efinal/pw.mjs`) also puts the sign test's null size at 0.017 instead of the exact
+10/512 = 0.0195. So the E-BED figures are 0.005–0.013 low. Nothing in the design changes: K = 4 stays recommended,
+and the Wilcoxon still beats the sign test by about 0.27 in power at both K.
 
 ---
 
@@ -671,7 +671,7 @@ beats the sign test by about 0.27 in power at both K.
 | D-4 | censored share "per epoch and arm" | pools from the arm-independent reference run; an arm's open completed-pool case does not pass (`armCensored`) (§6) | pairing by (world, case) needs one denominator; a stalling arm must not shrink its own |
 | D-5 | "after an arm error the case is already failed" | kept; an impaired case-tick (persistent real env fault) is graded as an arm error and counted for K5 (§3.7) | one rule for every arm |
 | D-6 | wake-up ordering unstated | rounds: case-ticks, sweeps, merge/wake ticks; effect results ≥ 1 minute later (§3.6) | determinism and no same-instant cascades |
-| D-7–D-9, D-12, D-13 | §6 | §13.2 | |
+| D-7–D-9, D-12, D-13 | §6 | §13.2 | see §13.2 |
 | D-10 | power 0.60 / 0.85, sign 0.34 / 0.57 | 0.61 / 0.86, sign 0.34 / 0.58 (§13.4) | biased generator in the original script |
 | D-11 | seed ranges `owner: jit`, allow `jit-dev` for 1001–1199 | owner `ebed` (as `wbed`); E-bed purposes for rehearsal and test blocks; per-item test entries; held-out split A–B / C–D (§10.1) | per-item consumption; refuse default purposes on E-bed worlds |
 | D-14 | K1 "censored share > 20% in any epoch" | every epoch except the last, as §9.2 (§6) | the last epoch is mostly censored by construction |
