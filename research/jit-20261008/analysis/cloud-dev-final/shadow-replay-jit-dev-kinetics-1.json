@@ -1,0 +1,871 @@
+{
+ "experiment": "jit-dev-kinetics-1",
+ "family": "kinetics",
+ "runs": "experiments/runs/jit (container layout); the committed mirror research/jit-20261008/runs gives identical answers and decisions",
+ "tolerantKeys": [
+  "vmax",
+  "km"
+ ],
+ "cases": [
+  {
+   "case": "H/H s209",
+   "idx": 8,
+   "taskKey": "kinetics:dev:d4:s209",
+   "version": 1,
+   "solver": "v1-haiku55",
+   "archived": {
+    "delivered": "compiled",
+    "pass": false,
+    "score": 0.9722,
+    "shadowUsd": 0.046741,
+    "adjudicatorUsd": 0.04949
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 10,
+    "requests": 10,
+    "hits": 10,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": false,
+     "score": 0.9722
+    },
+    "shadow": {
+     "pass": true,
+     "score": 1
+    },
+    "adjudicator": {
+     "pass": true,
+     "score": 1
+    }
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 0.01233,
+     "at": "C3.km",
+     "exclusionDiff": [
+      "HV-0314"
+     ]
+    },
+    "compiled-adjudicator": {
+     "maxRel": 0.01233,
+     "at": "C3.km",
+     "exclusionDiff": [
+      "HV-0314"
+     ]
+    },
+    "shadow-adjudicator": {
+     "maxRel": 5.189e-05,
+     "at": "C4.km",
+     "exclusionDiff": []
+    }
+   },
+   "decision": {
+    "unordered (as run)": "none (unresolved, compiled delivered)",
+    "tolerant rel 0.01": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.02": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.05": "interpreter wins (deliver shadow, regression)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.4836149381859066,
+       "km": 12.541152887730314
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.3061431970496223,
+       "km": 15.043825766989956
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.3061431970496223,
+       "km": 80.82216615902249
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.6647766526322594,
+       "km": 7.70841214105193
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.7678505528406666,
+       "km": 11.979055793467234
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.7678505528406666,
+       "km": 50.2800867811586
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.950181389379917,
+       "km": 9.09339912807603
+      }
+     ],
+     "excluded_samples": [
+      "HV-0185",
+      "HV-0269",
+      "HV-0283",
+      "HV-0298",
+      "HV-0380",
+      "HV-0410",
+      "HV-0539",
+      "HV-0562"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.483615,
+       "km": 12.5412
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.307534,
+       "km": 15.1469
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.307534,
+       "km": 81.8313
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.664777,
+       "km": 7.7084
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.767851,
+       "km": 11.9791
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.767851,
+       "km": 50.2801
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.950181,
+       "km": 9.0934
+      }
+     ],
+     "excluded_samples": [
+      "HV-0185",
+      "HV-0269",
+      "HV-0283",
+      "HV-0298",
+      "HV-0314",
+      "HV-0380",
+      "HV-0410",
+      "HV-0539",
+      "HV-0562"
+     ]
+    },
+    "adjudicator": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.48361,
+       "km": 12.541
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.30753,
+       "km": 15.147
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.30753,
+       "km": 81.831
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.66478,
+       "km": 7.708
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.76785,
+       "km": 11.979
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.76785,
+       "km": 50.28
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.95018,
+       "km": 9.093
+      }
+     ],
+     "excluded_samples": [
+      "HV-0185",
+      "HV-0269",
+      "HV-0283",
+      "HV-0298",
+      "HV-0314",
+      "HV-0380",
+      "HV-0410",
+      "HV-0539",
+      "HV-0562"
+     ]
+    }
+   }
+  },
+  {
+   "case": "O/H s207",
+   "idx": 6,
+   "taskKey": "kinetics:dev:d4:s207",
+   "version": 1,
+   "solver": "v1-opus55",
+   "archived": {
+    "delivered": "compiled",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.457081,
+    "adjudicatorUsd": 0.437157
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 3,
+    "requests": 3,
+    "hits": 3,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": true,
+     "score": 1
+    },
+    "shadow": {
+     "pass": true,
+     "score": 1
+    },
+    "adjudicator": {
+     "pass": true,
+     "score": 1
+    }
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 7.081e-06,
+     "at": "C2.km",
+     "exclusionDiff": []
+    },
+    "compiled-adjudicator": {
+     "maxRel": 0.006492,
+     "at": "C2.km",
+     "exclusionDiff": []
+    },
+    "shadow-adjudicator": {
+     "maxRel": 0.006485,
+     "at": "C2.km",
+     "exclusionDiff": []
+    }
+   },
+   "decision": {
+    "unordered (as run)": "none (unresolved, compiled delivered)",
+    "tolerant rel 0.01": "agree (no adjudicator call)",
+    "tolerant rel 0.02": "agree (no adjudicator call)",
+    "tolerant rel 0.05": "agree (no adjudicator call)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 3.8078521691978686,
+       "km": 168.13097139875185
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 3.9135378734755646,
+       "km": 43.945311158621195
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 2.7493815633810095,
+       "km": 122.77508547882658
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 5.769151676360688,
+       "km": 161.10743667813944
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 5.769151676360688,
+       "km": 766.2476708179327
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 2.3871312731262444,
+       "km": 186.86933066149754
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 2.7493815633810095,
+       "km": 411.94195995218604
+      }
+     ],
+     "excluded_samples": [
+      "PX-0355",
+      "PX-0365",
+      "PX-0422",
+      "PX-0451",
+      "PX-0468",
+      "PX-0534",
+      "PX-0577",
+      "PX-0589",
+      "PX-0599",
+      "PX-0609"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 3.80785,
+       "km": 168.131
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 3.91354,
+       "km": 43.945
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 2.74938,
+       "km": 122.775
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 5.76915,
+       "km": 161.107
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 5.76915,
+       "km": 766.248
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 2.38713,
+       "km": 186.869
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 2.74938,
+       "km": 411.942
+      }
+     ],
+     "excluded_samples": [
+      "PX-0355",
+      "PX-0365",
+      "PX-0422",
+      "PX-0451",
+      "PX-0468",
+      "PX-0534",
+      "PX-0577",
+      "PX-0589",
+      "PX-0599",
+      "PX-0609"
+     ]
+    },
+    "adjudicator": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 3.8079,
+       "km": 168.13
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 3.898,
+       "km": 43.66
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 2.7494,
+       "km": 122.77
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 5.7692,
+       "km": 161.11
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 5.7692,
+       "km": 766.26
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 2.3872,
+       "km": 186.87
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 2.7494,
+       "km": 411.93
+      }
+     ],
+     "excluded_samples": [
+      "PX-0355",
+      "PX-0468",
+      "PX-0599",
+      "PX-0451",
+      "PX-0422",
+      "PX-0577",
+      "PX-0589",
+      "PX-0534",
+      "PX-0365",
+      "PX-0609"
+     ]
+    }
+   }
+  },
+  {
+   "case": "O/H s214",
+   "idx": 13,
+   "taskKey": "kinetics:dev:d4:s214",
+   "version": 2,
+   "solver": "v2-opus55",
+   "archived": {
+    "delivered": "compiled",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.416466,
+    "adjudicatorUsd": 0.483449
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 3,
+    "requests": 3,
+    "hits": 3,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": true,
+     "score": 1
+    },
+    "shadow": {
+     "pass": true,
+     "score": 1
+    },
+    "adjudicator": {
+     "pass": true,
+     "score": 1
+    }
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 2.096e-08,
+     "at": "C4.km",
+     "exclusionDiff": []
+    },
+    "compiled-adjudicator": {
+     "maxRel": 0.0003226,
+     "at": "C7.km",
+     "exclusionDiff": []
+    },
+    "shadow-adjudicator": {
+     "maxRel": 0.0003226,
+     "at": "C7.km",
+     "exclusionDiff": []
+    }
+   },
+   "decision": {
+    "unordered (as run)": "none (unresolved, compiled delivered)",
+    "tolerant rel 0.01": "agree (no adjudicator call)",
+    "tolerant rel 0.02": "agree (no adjudicator call)",
+    "tolerant rel 0.05": "agree (no adjudicator call)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 1.1585825601657784,
+       "km": 648.2717727259112
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.34515826221635754,
+       "km": 496.9901591918232
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.8720493389394368,
+       "km": 211.3833860964191
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.34515826221635754,
+       "km": 93.27116101250374
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.6277752899551702,
+       "km": 165.5096952272924
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 1.1585825601657784,
+       "km": 134.39825206068315
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.3428320051806103,
+       "km": 193.08125281920155
+      }
+     ],
+     "excluded_samples": [
+      "OD-0428",
+      "OD-0452",
+      "OD-0493",
+      "OD-0511",
+      "OD-0526",
+      "OD-0528",
+      "OD-0555",
+      "OD-0600",
+      "OD-0667"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 1.1585825612490244,
+       "km": 648.2717736412067
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.34515826372548997,
+       "km": 496.99016375135506
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.8720493380619234,
+       "km": 211.38338534097795
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.34515826372548997,
+       "km": 93.27116296768024
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.6277752894455447,
+       "km": 165.50969472766715
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 1.1585825612490244,
+       "km": 134.3982525506738
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.34283200481939924,
+       "km": 193.0812520926825
+      }
+     ],
+     "excluded_samples": [
+      "OD-0526",
+      "OD-0528",
+      "OD-0428",
+      "OD-0452",
+      "OD-0667",
+      "OD-0600",
+      "OD-0493",
+      "OD-0555",
+      "OD-0511"
+     ]
+    },
+    "adjudicator": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 1.158586920935028,
+       "km": 648.3357951220576
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.345150408518239,
+       "km": 496.9354737803069
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.8721223671565347,
+       "km": 211.44625616525892
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.345150408518239,
+       "km": 93.26098541742991
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.6277272978471338,
+       "km": 165.46265930505507
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 1.158586920935028,
+       "km": 134.4002263082163
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.3428010261616809,
+       "km": 193.01897276345755
+      }
+     ],
+     "excluded_samples": [
+      "OD-0428",
+      "OD-0452",
+      "OD-0493",
+      "OD-0511",
+      "OD-0526",
+      "OD-0528",
+      "OD-0555",
+      "OD-0600",
+      "OD-0667"
+     ]
+    }
+   }
+  },
+  {
+   "case": "S/H s212",
+   "idx": 11,
+   "taskKey": "kinetics:dev:d4:s212",
+   "version": 3,
+   "solver": "v3-haiku55",
+   "archived": {
+    "delivered": "compiled",
+    "pass": false,
+    "score": 0.975,
+    "shadowUsd": 0.259182,
+    "adjudicatorUsd": 0.298133
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 8,
+    "requests": 8,
+    "hits": 8,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": false,
+     "score": 0.975
+    },
+    "shadow": {
+     "pass": false,
+     "score": 0.8929
+    },
+    "adjudicator": {
+     "pass": false,
+     "score": 0.8929
+    }
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 0.3023,
+     "at": "C7.km",
+     "exclusionDiff": [
+      "OB-0702"
+     ]
+    },
+    "compiled-adjudicator": {
+     "maxRel": 0.3023,
+     "at": "C7.km",
+     "exclusionDiff": [
+      "OB-0702"
+     ]
+    },
+    "shadow-adjudicator": {
+     "maxRel": 2.643e-05,
+     "at": "C1.km",
+     "exclusionDiff": []
+    }
+   },
+   "decision": {
+    "unordered (as run)": "none (unresolved, compiled delivered)",
+    "tolerant rel 0.01": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.02": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.05": "interpreter wins (deliver shadow, regression)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.14228212009963223,
+       "km": 448.0661873707452
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.08972753098833743,
+       "km": 549.333476950474
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.14228212009963223,
+       "km": 1947.2231365930334
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.053563891639865455,
+       "km": 476.27784041812015
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.14318009477540428,
+       "km": 233.87465244990824
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.14318009477540428,
+       "km": 1020.3172188280257
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.13355636796069068,
+       "km": 305.6398330619742
+      }
+     ],
+     "excluded_samples": [
+      "OB-0592",
+      "OB-0785",
+      "OB-0889",
+      "OB-0917",
+      "OB-0883",
+      "OB-0937",
+      "OB-0576",
+      "OB-0765",
+      "OB-0747"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.14228178678035208,
+       "km": 448.06242020806735
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.08972729936934125,
+       "km": 549.328991096637
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.14228178678035208,
+       "km": 1956.4644815482718
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.05356374705389042,
+       "km": 476.27310757702526
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.14317990145533752,
+       "km": 233.87312624375414
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.14317990145533752,
+       "km": 1020.3135143783812
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.11869817420266932,
+       "km": 213.24993416644722
+      }
+     ],
+     "excluded_samples": [
+      "OB-0592",
+      "OB-0785",
+      "OB-0889",
+      "OB-0747",
+      "OB-0702",
+      "OB-0765",
+      "OB-0576",
+      "OB-0883",
+      "OB-0917",
+      "OB-0937"
+     ]
+    },
+    "adjudicator": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.14228283470830808,
+       "km": 448.07426389945596
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.08972680826069598,
+       "km": 549.3194796570577
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.14228283470830808,
+       "km": 1956.478140758256
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.05356354402708257,
+       "km": 476.2664617863069
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.14317953849898885,
+       "km": 233.87026082403506
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.14317953849898885,
+       "km": 1020.293218330505
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.11869877190395811,
+       "km": 213.2553817946201
+      }
+     ],
+     "excluded_samples": [
+      "OB-0576",
+      "OB-0592",
+      "OB-0702",
+      "OB-0747",
+      "OB-0765",
+      "OB-0785",
+      "OB-0883",
+      "OB-0889",
+      "OB-0917",
+      "OB-0937"
+     ]
+    }
+   }
+  }
+ ]
+}

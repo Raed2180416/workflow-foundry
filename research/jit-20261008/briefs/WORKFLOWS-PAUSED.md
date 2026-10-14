@@ -98,3 +98,9 @@ results**, in `research/jit-20261008/handoff/workflows/wf_<id>.md`. The remainin
   running). Their run data and model-call journals (`experiments/runs/jit/**`) were **never pushed** (see RESUME.md
   "Lost").
   `resume-streams.mjs` resumes from that run data, so these streams have to be re-run, not resumed.
+  - **Update 2026-10-14 (cloud session): the data was not lost.** The cloud container survived and still held both streams
+    (`experiments/runs/jit/`, with the model-call journals, solver versions and traces). What is in git and what is still only in the
+    container is listed in `research/jit-20261008/RESCUE.md`; the committed mirror is
+    `research/jit-20261008/runs/jit-dev-{records,kinetics}-1/`, and the final state of both streams, with the numbers that
+    supersede the mid-run ones, is DEV-NOTES D25 (`analysis/cloud-dev-final/`). The three kinetics JIT arms stopped on a
+    `MODEL_RATE_LIMIT` fault at 04:49–04:50Z and did not finish.

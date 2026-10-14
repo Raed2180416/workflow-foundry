@@ -400,3 +400,164 @@ fitted on 1,243 real Haiku calls; **the L0 card measures 3,643 tokens against it
 composition with evidence-gated reuse), arm (c′) proposed as the construction baseline (PROOF-LEDGER J4), bed R3′ (J5),
 four engine mechanisms adopted into slice 2. Commit trailers of four agent commits were rewritten to the Fable 5.1 line
 before the push (trees unchanged). At the pause nothing runs: no stream, no cron, no Monitor, no agents.
+
+## 2026-10-14
+
+**D25. Cloud dev streams, final state at the 2026-10-09 usage stop (data rescued 2026-10-14).**
+
+*Development evidence only: dev seeds 201–224, K = 1, `jit.compare: 'unordered'`, prompt v1. The data that D13, D14 and D20 call lost was not
+lost. The cloud container survived and still held `experiments/runs/jit/jit-dev-records-1/` and `jit-dev-kinetics-1/`: arm.json,
+results/events/faults.jsonl, traces, every solver version with its compile.json, and one `journal.sqlite` of model calls per JIT and
+static arm (7 journals, 5,792 calls, `integrity_check` ok). What is in git and what is still only in the container is listed in `research/jit-20261008/RESCUE.md`; the committed mirror is `research/jit-20261008/runs/jit-dev-{records,kinetics}-1/` (e623c5f). Everything below is $0 and made no
+model call: `report.mjs`, `durability.mjs` and `eval-profiles.mjs` on a copy of the run files (`report.mjs` writes into the run dir, which would
+have overwritten the 2026-10-09 interim reports), and one strict-memo replay (§3). Outputs and scripts are in
+`analysis/cloud-dev-final/`. This entry supersedes the D13 header ("cannot be re-verified"), D14 ("raw data lost", "no final numbers
+exist", the container "destroyed"), D20 row 7 ("archived JIT version pairs are lost") and WORKFLOWS-PAUSED §3 ("re-run, not resumed"); it
+edits none of them. The journals were touched at 12:02Z on 2026-10-14 by another process in this container (their `-wal`/`-shm` files
+were merged away, mtimes are new); copies were read, and the data is unchanged.*
+
+**1. Final per-arm tables at the stop.** 24 planned tasks per stream (records d3 = seeds 201–216, d4 = 217–224; kinetics d4 = 201–216, d5 =
+217–224). $ is measured list price. "Compile" = builder + gateway test runs + host check, including attempts in flight at the stop.
+$/success = total $ over passes. "Burst" = the 23:47–23:52Z 2026-10-08 `MODEL_RATE_LIMIT` burst (78 fault rows over the 12 arms, cleared by the
+~02:52Z resume; it left no task impaired).
+
+Records: all seven arms finished.
+
+| arm | done | pass (d3, d4) | total $ | $/success | compile $ (share) | deopts | shadows (disagreed) | adjudications | env faults | versions |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Opus agent | 24/24 | 24/24 (16/16, 8/8) | 13.54 | 0.564 | – | – | – | – | 12 burst | – |
+| JIT S→H | 24/24 | 22/24 (14/16, 8/8) | 8.99 | 0.409 | 4.83 (54%) | invariant 2 | 4 (2) | compiled 2, unresolved 0 | 1 burst | v1, v2 |
+| JIT O→H | 24/24 | 18/24 (12/16, 6/8) | 7.53 | 0.418 | 2.07 (27%) | judge 2 | 4 (1) | interpreter 1, unresolved 0 | 1 burst | v1–v3 |
+| static C0 | 24/24 | 16/24 (14/16, 2/8) | 1.21 | 0.076 | – | – | – | – | 0 | static |
+| Haiku agent | 24/24 | 15/24 (9/16, 6/8) | 2.46 | 0.164 | – | – | – | – | 19 burst | – |
+| JIT H→H | 24/24 | 14/24 (8/16, 6/8) | 8.12 (incl. 2.00 imputed) | 0.580 (0.437 without the imputed) | 4.34 (53%; 71% without the imputed) | judge 1, guard 1, invariant 2 | 4 (4) | interpreter 1, unresolved 3 | 1 burst | v1–v4 |
+| Sonnet agent | 24/24 | 13/24 (5/16, 8/8) | 7.05 | 0.543 | – | – | – | – | 9 burst | – |
+
+The H→H $2.00 is the adjudicator of s223 (idx 22), which hit `EXECUTOR_TIMEOUT` with `costUnknown` and is booked at its $2 bound
+(`EXECUTOR_TIMEOUT` is not an ENV_FAULTS code, so no fault row); measured spend is $6.12. Compiled deliveries that passed: S→H 17/19, O→H
+12/18, H→H 8/16 (v1 1/6, v2 3/4, v3 0/1, v4 4/5), static 16/24.
+
+Kinetics: only the two agent arms finished (there is no Opus agent arm in this config).
+
+| arm | done | pass (d4, d5) | total $ (rows + in flight) | $/success | compile $ (share) | deopts | shadows (disagreed) | adjudications | env faults | versions |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Haiku agent | 24/24 | 17/24 (10/16, 7/8) | 2.10 | 0.124 | – | – | – | – | 20 burst | – |
+| Sonnet agent | 24/24 | 17/24 (12/16, 5/8) | 7.40 | 0.435 | – | – | – | – | 12 burst | – |
+| JIT H→H | **12/24** | 8/12 (8/12, –) | 20.66 (12.09 + 8.57) | 2.582 | 18.20 (88%) | judge 3, guard 1 | 1 (1) | unresolved 1 | 1 burst + 1 stop | v1 |
+| JIT O→H | **19/24** | 17/19 (14/16, 3/3) | 21.99 (20.73 + 1.26) | 1.293 | 14.71 (67%) | guard 5, judge 1 | 2 (2) | unresolved 2 | 1 burst + 1 stop | v1–v3 |
+| JIT S→H | **13/24** | 7/13 (7/13, –) | 21.49 (20.45 + 1.04) | 3.070 | 18.14 (84%) | guard 6 | 1 (1) | unresolved 1 | 1 burst + 1 stop | v1–v3 |
+
+Pass rates are over the tasks done; unrun tasks are not failures. On the tasks each JIT arm completed, the Haiku agent passed 9/12, 13/19 and
+10/13 and the Sonnet agent 9/12, 15/19 and 10/13, against H→H 8/12, O→H 17/19 and S→H 7/13. Paired, one stream, directional only: O→H is +4 of
+19 against the Haiku agent (McNemar 4/0, p = 0.125) and +2 against the Sonnet agent (3/1, p = 0.63). No JIT arm reaches break-even against
+either agent in kinetics. Integrity flags: nested model attempts 0 everywhere; hidden-path attempts are nonzero in 10 of 12 arms, mostly in interpreter
+sessions (kinetics S→H 55, records S→H 14, records Opus agent 9, kinetics O→H 9); not reviewed here (BLOCKER-SYNTHESIS C7 stands).
+
+**2. What changed against the interim tables.**
+- **Records: nothing, for the six arms D10 and D12 report.** Their rows reproduce to the cent (S→H 22/24, $8.99, $0.409, compiles $4.83 =
+  builder 2.25 + gateway 2.16 + check 0.42, shadows and adjudication $1.81, compiled $0.89, compiled 19 of which 17 pass, 4 shadows, 2
+  disagreements, 2 adjudications to compiled; O→H 18/24, $7.53, $0.418, interpreter 2.31, compiles 2.07, shadows 2.20, adjudicator 0.64,
+  compiled 0.31; the agent and static rows). **New: H→H**, which D10 and D12 omitted because it was still running (03:47Z interim report:
+  8/16, $1.69). It finished at 04:45Z at 14/24, $8.12 against $2.46 for the Haiku agent, one pass fewer (discordant pairs 5/6, p = 1.0),
+  after six passes in the last eight tasks (v4, built by a regression-driven recompile at idx 19, passed 4 of its 5 compiled deliveries).
+- **Kinetics:** the D14 04:22Z snapshot reproduces exactly from the archived rows (agents 17/24 at $2.10 and $7.40; H→H 12 tasks 8/12; O→H 17
+  tasks 15/17, $17.82; S→H 8 tasks 4/8, $15.59). Up to the stop: H→H gained no row (its idx 12 never finished; $8.57 of v3 compile attempts
+  were in flight); O→H +2 rows (s218 and s219, both d5, passed by the interpreter after guard deopts), 17/19, $21.99; S→H +5 rows, 7/13,
+  $21.49. Compile $ at 04:22 → final: 9.63 → 18.20, 11.56 → 14.71, 13.94 → 18.14, i.e. 7.0–8.7× the Haiku agent's whole stream (D14
+  said 4.6–6.6×). Compiled deliveries (wrong): H→H 5 (2) and O→H 10 (1) unchanged, S→H 2 (2) → 4 (3). Shadow disagreements 3 → 4 (the new one is
+  S→H s212, §3). Guard deopts: O→H 3 → 5, S→H 4 → 6. D14's headline stands: kinetics JIT is a dev-level cost negative (O→H $1.29 per
+  success, 10.4× the Haiku agent's $0.124 and 3.0× the Sonnet agent's $0.435).
+- **D13 spot-checks against the archive, all equal:** S→H/O→H split 5 / 1 (S-only s204, s208, s212, s218, s223; O-only s205); the Sonnet agent pass
+  string `0100100010101000|11111111`; s205 36 vs 34 entities (recall 0.970, fieldAccuracy 0.979, pairF1 0.985) and s214 40 vs 36 (recall
+  0.873); records H→H interpreter deliveries wrong at s202 (0.973) and s205 (0.981), and the first 11 compiled deliveries 4 passes with failing
+  scores 0.979, 0.985, 0.967, 0.773, 0.979, 0.711, 0.704 (the arm now has 16 compiled, 8 pass); records O→H v3 silent misses at idx 17 and 22;
+  kinetics O→H v2 Haiku compile $1.58 and idx 9 total $3.51; 88 rows and $18.96 by 23:47:23Z; the 187-minute stall to 02:54:24Z; the
+  `eval-profiles.mjs` frozen profile reproduces HANDOFF §4 (kinetics 2/13 d4 false alarms, 8/8 d5 flagged; records 0/13 d3, 8/8 d4). D13 N1
+  and N4 and dossier 7 have grown (§3). The totals are now 260 rows, 81 fault rows (all `MODEL_RATE_LIMIT`).
+
+**3. Kinetics JIT findings.**
+- **Compiles (events.jsonl, all 15 attempts; `report.mjs` misses the two H→H attempts of its unfinished idx 12).** Every attempt scored exact 0/N
+  against its traces (D7); the best mean partial is 0.559 (S→H v3, Haiku; D13 dossier 7 said 0.547 over 11 attempts). *Haiku as builder:* 9
+  attempts, 1 accepted (H→H v1, exact 0/3, partial 0.546), 4 not clean (host-check deopts, judge in all four, guard in one), 4 clean but not
+  accepted (1, 4, 2 and 5 unexplained disagreements); $23.79. The Opus fallback fired after 6 of the 9 (every arm used its `maxFallbacks` =
+  2): 6 attempts, 2 accepted, 2 clean but not accepted, 2 not clean (H→H v2 and v3, both rejected, so $9.23 of Opus compiles bought no new
+  version); $24.22, $1.92–5.51 each. Adoption refuses only a not-clean attempt or one with fewer exact matches (D13 dossier 4), so of the 7
+  versions adopted 3 were accepted and 4 were not (O→H v1 and v3, S→H v2 and v3). Compiled deliveries by adoption status: accepted 8/12
+  passes, not accepted 5/7 (D13 N4 had 8/12 and 4/5): still no visible signal, n = 19. Records, same tool: Haiku 9 attempts, 8 accepted, 9 clean,
+  $8.27; one Opus fallback ($2.48, not accepted, adopted). The "Haiku" H→H arm spent $9.23 on Opus compiles.
+- **Cost.** Completed compile attempts cost $48.01 of the $64.13 the three JIT arms spent (75%); the compile ledger is $51.04 (80%), the rest being
+  $0.73 on compiles a burst fault threw away (records: $0.48) and $2.30 on compiles in flight at the stop. Compiled runs cost $0.011–0.426 each
+  (H→H 0.134–0.426, O→H 0.011–0.329, S→H 0.016–0.167). Compiled deliveries passed: H→H 3/5, O→H 9/10, S→H 1/4. Deopt rates over compiled
+  attempts: H→H 44% (guard 11%), O→H 38% (31%), S→H 60% (all guard).
+- **The D7 exact-compare shadows, rebuilt offline.** The dev streams ran before the tolerant comparator. Their 4 kinetics shadows all
+  disagreed under exact comparison and all 4 adjudications were unresolved. A row keeps neither the compiled answer nor the comparison, so the
+  archived `solve.mjs` of the version in force was replayed on each task through `run-compiled.mjs` with a strict memo port over only that
+  run's journal rows (no live port: a miss throws `REPLAY_MISS`; 24 of 24 requests served, 0 misses, $0). Fidelity check: the replayed
+  answer's oracle score equals the archived row's in all four (0.9722, 1, 1, 0.975). The shadow and adjudicator answers are in `traces/`.
+  The decision is the stream's own rule (shadow agrees → done; else adjudicator ≈ compiled → compiled; else adjudicator ≈ shadow → deliver the
+  shadow and record a regression; else unresolved) with `sameAnswer` in `tolerant` mode at relTol 0.05, absTol 1e-9, tolerantKeys vmax and km, the
+  exclusion list exact (the R0-K config).
+
+  | pair | compiled | shadow / adjudicator | max rel. diff compiled–shadow | exclusion lists | as run | relTol 0.05 | effect |
+  |---|---|---|---|---|---|---|---|
+  | O→H s207 (v1) | pass | pass / pass | 7e-6 | equal | unresolved | agree, no adjudicator | −$0.437; same answer |
+  | O→H s214 (v2) | pass | pass / pass | 2e-8 | equal | unresolved | agree, no adjudicator | −$0.483; same answer |
+  | H→H s209 (v1) | **fail 0.9722** | pass / pass | 0.012 | differ (HV-0314) | unresolved, wrong answer delivered | adjudicator sides with shadow: deliver shadow, regression | fail → pass; recompile pending (not simulated) |
+  | S→H s212 (v3) | **fail 0.975** | fail 0.893 / fail 0.893 | 0.30 | differ (OB-0702) | unresolved, wrong answer delivered | adjudicator sides with shadow: deliver shadow, regression | fail → fail (0.975 → 0.893); the regression case would carry a wrong expected answer |
+
+  (i) relTol 0.05 resolves 4 of 4 and decides exactly as 0.01 and 0.02 do on all four. The seven correct–correct pairs (both O→H triples and
+  the H→H shadow–adjudicator pair) are all within 0.65%, so the Stage B result (D23: 0 of 15 correct–correct pairs disagree at 0.05, agent against agent) holds on seven more pairs of a
+  different kind (compiled against interpreter), none disagreeing.
+  (ii) The exact exclusion list is load-bearing: the wrong H→H s209 answer is 1.2% from the right one on the fitted numbers, inside every
+  relTol ≥ 0.0124, and differs only in one excluded sample, so a numeric-only comparator at 0.05 would have called it agreement; both wrong
+  answers differ in the exclusion set, as 13 of 13 did in Stage B. (iii) No tolerance fixes a wrong interpreter pair: in S→H s212 the Sonnet
+  shadow and adjudicator agree to 3e-5 on the same wrong answer (common mode, D8), so the "adjudicated" delivery replaces a 0.975 miss by a
+  0.893 miss and files it as the label for the next compile (D4, D19). (iv) The two correct compiled answers would have saved the O→H arm's
+  whole adjudicator spend, $0.92 (4% of its stream). *Not computed:* the compile-time `check-traces` comparison. All 15 compile attempts scored
+  exact 0/N and acceptance rested on "clean + named", so the Haiku acceptance rate (1 of 9) is confounded by D7; what a tolerant host check
+  would have accepted needs the check outputs, which are not archived. R0-K (tolerant, strict acceptance, prompt v4) is where that gets
+  measured.
+
+**4. Durability** (`durability.mjs`, W = 6, ≥ 0.8; oracle view = delivered by compiled code and passing; system view also needs an answered
+shadow in the window; the kinetics JIT arms cover only the rows done; agent arms have no compiled path).
+
+| arm | versions (rows each) | deopt (guard) | silent miss | shadow disagree | durable, oracle: from / confirmed ($ cum.) / holds | durable, system |
+|---|---|---|---|---|---|---|
+| records S→H | 2 (15, 6) | 10% (0%) | 11% (2/19) | 50% (2/4) | 3 / 8 ($2.29) / yes, 1 relapse | 3 / 8 / does not hold |
+| records O→H | 3 (3, 11, 7) | 10% (0%) | 33% (6/18) | 25% (1/4) | 18 / 23 ($7.53) / yes | 6 / 11 ($4.64) / yes, 1 relapse |
+| records H→H | 4 (8, 6, 2, 5) | 19% (5%) | 50% (8/16) | 100% (4/4) | never | never |
+| records static | 1 (24) | 0% | 33% (8/24) | – | 0 / 5 / no, 1 relapse | never (no shadows) |
+| kinetics H→H (12 rows) | 1 (9) | 44% (11%) | 40% (2/5) | 100% (1/1) | never | never |
+| kinetics O→H (19) | 3 (6, 8, 2) | 38% (31%) | 10% (1/10) | 100% (2/2) | 9 / 14 ($17.23) / no | never |
+| kinetics S→H (13) | 3 (3, 3, 4) | 60% (60%) | 75% (3/4) | 100% (1/1) | never | never |
+
+Reading: only the two best records JIT arms settle, and O→H's claim becomes knowable at idx 23, i.e. after the whole stream's cost; S→H
+is confirmed by idx 8 at 25% of its cost but relapses. In kinetics only O→H had one oracle-durable stretch (idx 9–14, v2), which ended with a
+silent miss at idx 15 (s216, 0.975) and the d5 drift (guard deopts on all three d5 tasks, none with a compiled answer). The system view never held there, so "never
+durable" is a statement about 12–19 rows, not about the stream.
+
+**5. Incomplete arms, and why.** All seven records arms and both kinetics agent arms are complete. The three kinetics JIT arms are not:
+
+| arm | done | next task | fault (after the in-place retry) | what was running | unrun |
+|---|---|---|---|---|---|
+| H→H | 12 | idx 12 (s213, d4) | 04:49:58Z `MODEL_RATE_LIMIT` (8 rate-limited model calls inside the compiled run, retried once) | the v3 compile had just ended (rejected, 04:49:41Z); the first compiled run of the task failed | 12 (s213–s224: 4 d4, 8 d5) |
+| O→H | 19 | idx 19 (s220, d5) | 04:50:24Z `MODEL_RATE_LIMIT`, compile builder | a recompile after the d5 guard deopts ($1.26 in flight) | 5 (s220–s224, all d5) |
+| S→H | 13 | idx 13 (s214, d4) | 04:50:19Z `MODEL_RATE_LIMIT`, compile builder | a compile ($1.04 in flight) | 11 (s214–s224: 3 d4, 8 d5) |
+
+The three independent processes failed within 26 s (04:49:58–04:50:24Z) and wrote nothing after. The fault rows say only `MODEL_RATE_LIMIT`
+with empty stderr; the timing matches the account's usage stop (~04:52Z, WORKFLOWS-PAUSED) and the Stage B usage-limit signature (D23), so it
+is read as the usage limit, which is an inference and not a recorded cause. By the stream's rule these are **faults, not failures**: no
+outcome row was written ("stream stops at #N (resume continues it here)"), and the arm logs show each process exited on its own, so D14's
+"container destroyed while running" is not what happened. Under the PREREG env-fault rule (more than 25% impaired = invalid) H→H (12/24) and
+S→H (11/24 = 45.8%) would be invalid and O→H (5/24 = 20.8%) valid; that rule belongs to held-out runs, here it only measures what is
+missing. H→H and S→H never reached the d5 drift segment; O→H saw 3 of 8 d5 tasks. In principle `resume-streams.mjs` continues all three
+(state is in the last row's `stateAfter`), but the engine has moved since (E1 stamp: kit hash, `experiments/jit` tree, `compare` and prompt
+version), so a resume would mix two engines; R0-K supersedes it as the kinetics measurement, and no decision to resume is made here. The
+profile replay (`eval-profiles-*.md`) is saved and was not analysed further here.
+
+**Consequences.** (1) The tolerant comparator behaves as D7 and D23 predicted on the 4 pairs, but its safety rests on the exact exclusion
+list, and no relTol repairs a common-mode wrong interpreter pair: the interpreter's strength bounds shadow value (D2), and a regression
+label taken from a shadow pair needs an independent check before it feeds a compile. (2) Records H→H completes D2's picture: a Haiku
+compiler fed Haiku traces ends at parity with its own agent at 3.3× the dollars, with 50% silent misses. (3) The journals (5,792 calls)
+and the 25 archived solver versions with compile.json make the $0 replays D20 and the tier-down work assumed lost possible again; the
+shadow rebuild above is the first use.
