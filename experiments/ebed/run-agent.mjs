@@ -3,7 +3,7 @@
 // A total cap stops the stream with a host QuotaStop (the clock freezes; cases still open are censored, not failed).
 //   node experiments/ebed/run-agent.mjs --model claude-haiku-5-5 --label agenth-e8-1 --seeds 1232 --difficulties 2 \
 //        --size 16 --tick-budget 0.5 --tick-minutes 8 --cap 15 --concurrency 4 [--effort low] [--workspace]
-import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
@@ -64,12 +64,16 @@ async function main() {
   const useWs = process.argv.includes('--workspace');
   const spent = { usd: 0 };
   const rows = [];
+  // Live logs stay outside the repository while the run is in flight; they are copied in when it ends.
+  const liveDir = path.join('/var/tmp/foundry-work/ebed-arms', label);
+  mkdirSync(liveDir, { recursive: true });
+  const liveTicks = path.join(liveDir, 'ticks.jsonl');
   for (const d of difficulties) for (const seed of seeds) {
     const w = e8.generateWorld({ seed, difficulty: d, mix: 'tail', ...(size ? { size } : {}) });
     const { pools } = await e8.referenceRuns(w);
     const workRoot = path.join('/var/tmp/foundry-work/ebed-arms', label, `w${seed}-d${d}`);
     const arm = capped(agentArm({ id: label, model, workRoot, contract: contractText(), effort: arg('--effort', null), budgetUsdPerTick: tickBudget,
-      minutesPerTick: tickMinutes, journal: path.join(out, 'ticks.jsonl') }), cap, spent);
+      minutesPerTick: tickMinutes, journal: liveTicks }), cap, spent);
     const host = createHost({ item: e8.binding, world: w, arm, concurrency: useWs ? 1 : concurrency, callTimeoutMs: (tickMinutes + 1) * 60_000,
       ...(useWs ? { workspaceDir: path.join(workRoot, 'ws') } : {}) });
     const t = Date.now();
@@ -78,11 +82,12 @@ async function main() {
     const s = summarize(w, host.journal.contentRows(), pools, label);
     rows.push({ seed, d, size: size ?? null, status, wallMs: Date.now() - t, ...s });
     console.log(`  d${d} seed ${seed}${size ? ` size ${size}` : ''}: ${status}; ${s.passed}/${s.completed} completed pass (${s.armCensored} open at freeze), critical ${s.critical}, arm errors ${s.armErrors}, ${s.ticks} ticks, $${s.costUsd.toFixed(2)}`);
-    writeFileSync(path.join(out, 'result.partial.json'), JSON.stringify({ label, model, rows }, null, 1));
+    writeFileSync(path.join(liveDir, 'result.partial.json'), JSON.stringify({ label, model, rows }, null, 1));
     if (spent.usd >= cap) break;
   }
   writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, item: e8.family.id, spec: e8.specE.sha256, model, effort: arg('--effort', null), workspace: useWs,
     tickBudgetUsd: tickBudget, tickMinutes, capUsd: cap, spentUsd: spent.usd, seeds, difficulties, size: size ?? null, rows }, null, 1));
+  if (existsSync(liveTicks)) copyFileSync(liveTicks, path.join(out, 'ticks.jsonl'));
   console.log(`spent $${spent.usd.toFixed(2)} of $${cap}`);
 }
 
