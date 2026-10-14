@@ -193,7 +193,11 @@ hashes, the policy hash and the JIT engine tree do not move. It is a detached co
 - `git diff --name-only e608a98 ba0eb22` lists exactly two files: `src/executors/claude-code.mjs` and
   `tests/executor-sandbox.test.mjs`. `git status --porcelain` in the worktree is empty; only the ignored `node_modules`
   is present.
-- `ba0eb22` is not pushed. The worktree's HEAD keeps it from garbage collection.
+- `ba0eb22` was pushed to branch `kit-e1c-20261014` at 13:27Z on the owner's approval (before that the worktree's HEAD
+  alone kept it from garbage collection). R0-K was launched from it at 13:26:39Z through
+  `/var/tmp/foundry-work/bin/launch-stream.sh` with the config copy `/var/tmp/foundry-work/configs/r0-kinetics-cloud.json`
+  (sha256 `31eae4d1f787ab0e…`): identical to `configs/r0-kinetics.json` except the spend caps, O/H 25 → 32 and
+  `spendStopUsd` 30 → 40 (ATTACK-20261014 §4 day 0); both arm hashes unchanged (`1fde4626b169c84c`, `2e292709027b2786`).
 - Both inputs, `e608a98` and `756d6de`, are on `origin/claude/intelligent-hamilton-vg1f9a`. No kit or JIT path differs
   between `e608a98` and `756d6de^` (`924453a`).
 - Applying `756d6de`'s diff to `e608a98` in a scratch index gives the same root tree `043b3b4f…`. A re-made cherry-pick

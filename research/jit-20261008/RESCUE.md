@@ -16,11 +16,14 @@ workflow locally: take its script from `workflows-raw/scripts/`, and for every a
 `workflows-raw/journals/<id>.jsonl`, replace the `agent(...)` call with that recorded value (or pass the values in as the
 workflow's `args`); only the missing agents then run.
 
-## Only in the container (push pending the owner)
+## Pushed on the owner's approval: orphan branch `foundry-rescue-20261014` (26dda19)
 
-Packed, split and checksummed at `/var/tmp/foundry-rescue/parts/` (SHA256SUMS beside it). A push of these to an orphan
-branch `foundry-rescue-20261014` was refused by the session's safety classifier (sensitive-source provenance) and was not
-retried; it waits for the owner's decision.
+Packed, split and checksummed (`parts/SHA256SUMS`); the first push attempt was refused by the session's safety
+classifier and was pushed at 13:28Z on 2026-10-14 after the owner approved it in the session. The branch shares no
+history with the PR branch, so cloning the PR branch does not download it. Restore:
+`git fetch origin foundry-rescue-20261014 && git worktree add ../rescue origin/foundry-rescue-20261014`, then
+`sha256sum -c parts/SHA256SUMS` inside `parts/`, then `cat parts/<name>.tar.xz.part-* | xz -dc | tar -xf - -C <dest>`.
+The cloud paid-run kit E1c (ENGINE-FREEZE §6, detached commit ba0eb22) is on branch `kit-e1c-20261014`.
 
 | archive | content | why it matters |
 |---|---|---|
