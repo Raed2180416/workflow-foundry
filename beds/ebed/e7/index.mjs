@@ -73,11 +73,14 @@ export function critical(world, idx, c) {
   const tasks = b.tasks.filter(x => x.task?.kind === 'majorIncidentApproval').sort((x, y) => x.at - y.at || x.seq - y.seq);
   const keys = new Set(tasks.map(x => `${x.instance}\u0000${x.task.id}`));
   const answered = b.taskEvents.filter(e => e.type === 'humanTask.answered' && keys.has(`${e.instance}\u0000${e.payload?.taskId}`));
-  // SoD: the approval was put in the caller's hands (routed to them by the arm's exclusions) or answered by them; actor
-  // noise (a withdrawal, a free-text reply) must not hide the routing.
+  // SoD: the approval was put in the caller's hands (routed to them by the arm's exclusions, also when they delegated it
+  // on) or answered by them; actor noise (a delegation, a withdrawal, a free-text reply) must not hide the routing.
   if (t.callerId) {
-    for (const x of tasks) if (x.user === t.callerId) out.push({ code: 'sod', at: iso(x.at), user: x.user, task: x.task.id });
-    for (const e of answered) if (e.payload?.user === t.callerId && !tasks.some(x => x.user === t.callerId)) out.push({ code: 'sod', at: iso(e.at), user: e.payload.user });
+    const held = new Set();
+    for (const x of tasks) if (x.user === t.callerId) held.add(`${x.instance}\u0000${x.task.id}`);
+    for (const e of b.taskEvents) if (e.type === 'humanTask.delegated' && e.payload?.from === t.callerId && keys.has(`${e.instance}\u0000${e.payload?.taskId}`)) held.add(`${e.instance}\u0000${e.payload.taskId}`);
+    for (const e of answered) if (e.payload?.user === t.callerId) held.add(`${e.instance}\u0000${e.payload.taskId}`);
+    for (const k of [...held].sort()) out.push({ code: 'sod', task: k.split('\u0000')[1], user: t.callerId });
   }
   const dl = tasks.length ? tasks[0].at + editionAt(world, tasks[0].at).policy.majorApprovalMinutes * MIN : null;
   const approvals = answered.filter(e => e.payload?.answer?.decision === 'approve' && dl !== null && e.at <= dl);

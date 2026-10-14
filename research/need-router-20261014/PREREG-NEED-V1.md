@@ -130,7 +130,7 @@ row at admission, before its labels are viewed, committed with the admission rec
 | `synth-lo` | HELD-OUT | no-workflow / direct-H | no-workflow / direct-H | |
 | `synth-hi` | HELD-OUT | no-workflow / direct-H | no-workflow / direct-H | workflow expected only at N = 100 |
 | `ownerci` | HELD-OUT | no-workflow / agent-H | no-workflow / agent-H | wrong-reuse trap |
-| `r3p` | HELD-OUT (near) | workflow / construct-H | workflow / construct-H | workflow at d4–5 |
+| `r3p` | HELD-OUT (near, dev-observed) | workflow / construct-H | workflow / construct-H | workflow at d4–5; revised for N = 1 after M1 (below) |
 | `need-constraint` | HELD-OUT | no-workflow / direct-H | no-workflow / direct-H | |
 | `far-1`, `far-2` | HELD-OUT | pending | pending | written after Freeze; row at admission |
 | `gameqa` | HELD-OUT (conditional) | no-workflow / agent-H | workflow / construct-H | agent at low d, workflow at high d; direct-H masked |
@@ -139,10 +139,28 @@ row at admission, before its labels are viewed, committed with the admission rec
 | `owner-dev`, `owner-sealed` | OWNER / SEALED | pending | pending | one row per owner task, before its labels |
 | `sealed-1` … `sealed-4` | SEALED | pending | pending | written by the NL3 session before its labels |
 
+**Revisions informed by M1** (logged; `stages.json jobs[].hypothesis.revisions`). The rows above are the record written
+before M1 was read, and they stay. One revision:
+
+| Job | Informed by | N = 1: class / mode (revised) | Note |
+|---|---|---|---|
+| `r3p` | M1 tag `m1`: one call passed 12/12 and 11/12 at d3 (dev attack seeds 479–490) | either / direct-H | One call solves the d3 third of the band. d4–5 was untested at this revision. The band is unchanged (§3.2). |
+
+The rows of `wbed-r0`, `wbed-r1-hi`, `wbed-r2-hi`, `wbed-r3-hi` (whose band excludes d3) and `wbed-r6` agree with M1 and
+are unchanged. M1-d5's results may add revisions before Freeze, logged the same way. They cannot change a band.
+
 Implied H0 expectations (for the record, not a test): the workflow class is expected only where inputs are large
 (`wbed-r3-hi` up to 65K tokens, `r3p` up to 64K, `wbed-r6` up to 75K) or fan-out is wide (`wbed-r1-hi`), and **not** on
 `r0-pad` (23K tokens of padding), `r3-mini` or `wbed-stage`. `incident` (up to 107K tokens at d4) is the planned
 counterexample to a pure size rule: expected no-workflow despite its size.
+
+The set-1 medians (§0.1) make two consequences explicit:
+- **H0 is expected not to be fitted.** The only TRAIN job hypothesised to need a workflow at N = 1 is `wbed-r3-hi`, in
+  cluster W, which is below §6's fitting minimum (2 confident positives in 2 clusters).
+- **No fitted rule could call `r3p` intrinsic.** Even with a fit, its tokens (4.63) sit below a hypothesised TRAIN
+  negative (`wbed-r6`, 4.78), and its fan-out (1.52) is far below `wbed-r3-hi`'s (2.98).
+
+Under these hypotheses C7a is therefore expected to read INCONCLUSIVE (§8).
 
 ## 2. Unit and populations
 
@@ -164,7 +182,8 @@ Families that share a world, generator or library (by import graph) form one clu
 cluster **W** = {records, wbed-r0, need-r0pad, wbed-r1, wbed-r2, wbed-r3, need-r3mini, need-stage, wbed-r6}, in TRAIN (r2
 imports `beds/records/pools.mjs`; r3 imports `r1/world.mjs`; r6 imports `wbed/lib/domain.mjs` and `parties.mjs`; the three
 anchors wrap R0, R3 and the rungs). r3p imports only `wbed/lib/{contracts,faults,prng}.mjs`: its own cluster, held out,
-flagged **near**. Cut from v1: r4, r5, gridquest, the `ask` mode. [D]
+flagged **near** [D]. It is also flagged **dev-observed** [M]: M1 ran one Haiku call on it at d3 (12/12 and 11/12), M1-d5
+is running it at d5, and Jev-need read its 12 M1 tasks (§0.1). Cut from v1: r4, r5, gridquest, the `ask` mode. [D]
 
 | Split | Cluster | Jobs |
 |---|---|---|
