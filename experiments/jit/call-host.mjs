@@ -520,7 +520,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       const value = { status: result.status, ...(ok ? { output: result.output, outDigest: outDigestOf(result.output) } : {}),
         ...(result.refused ? { refused: result.refused, detail: result.detail ?? null } : {}), ...(result.void ? { void: result.void } : {}), ...(result.error ? { error: result.error } : {}),
         key, span, path: nodePath, depth, model, tools, attempt, agent: agentInfo, ...(result.memo ? { memo: result.memo } : {}), spentUsd: usd(costUsd), reservedUsd };
-      const outputRef = !ok ? {} : workRoot ? { outputFile: save('outputs', `${outDigestOf(result.output)}.json`, result.output) } : { output: result.output };
+      // The node's value stays on its event (W-BED-R5-NOTES item 17: the decode hand-off a bed scores, under the node's name).
+      const outputRef = !ok ? {} : { output: result.output, ...(workRoot ? { outputFile: save('outputs', `${outDigestOf(result.output)}.json`, result.output) } : {}) };
       events.push({ at: new Date().toISOString(), kind, op: 'agent', arm, taskKey, key, name, span, parent: scope.span, path: nodePath, depth, model, tools, budgetUsd: amount, attempt,
         ...(retryReason ? { retryReason } : {}), filesDigest, instructionsDigest, returnsDigest, files: Object.keys(files).length, fileBytes, cluster: filesClusterOf(files),
         outcome: result.status, ...(result.refused ? { refused: result.refused, refusedDetail: result.detail ?? null } : {}), ...(result.void ? { void: result.void } : {}),

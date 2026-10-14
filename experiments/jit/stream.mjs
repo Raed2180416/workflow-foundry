@@ -27,6 +27,7 @@ import { requestDigestOf, looseDigestOf } from './run-compiled.mjs';
 import { Ledger } from '../lib/services.mjs';
 import { createRegistry, createCallHost, withCallModel, HARD_MAX_DEPTH, DEFAULT_MAX_DEPTH, DEFAULT_INTERPRET_FLOOR_USD, NOVEL_MODES, REGISTRY_FILE } from './call-host.mjs';
 import { learnProfile, checkOptionsOf, PARAMS_V2, TOLERANT_CHECK } from './profile.mjs';
+import { DEFAULT_AGENT_FLOOR_USD, TEXT_LABELS } from './agent-node.mjs';
 import { assertSeedsAllowed, defaultPurpose, loadLedger } from './seeds.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url))), HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -107,6 +108,14 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //     completed answers (item 1b; the compiled event says resumed: n). The budget rule is
 //     validated: perTaskUsd >= concurrency × childBudgetUsd + parentMarginUsd (parentMarginUsd > 0), so the reservations of
 //     `concurrency` children in flight stay strictly below the parent's budget. Set, it defines a new JIT arm.
+//     Slice 2b (each absent unless set, so a slice 2a library config keeps its hash): library.agent = {budgetUsd, model?,
+//     stallMs?, textLabel? ('synthetic', the default, or 'third-party', which refuses every agent node: D10)} gives every
+//     compiled run (and the builder's runs and host check) agent nodes: the arm's interpreter model (or model) runs each node
+//     in an arm- and role-neutral session directory (role 'agent'), its trace is kept in traces/ (role 'agent-node') with an
+//     'agent-node' event, its cost reaches the row through the run that asked (as interpret-child), and harvested scripts are
+//     copied to <armDir>/harvest/ (exported). The budget rule becomes perTaskUsd >= concurrency × childBudgetUsd +
+//     agent.budgetUsd + parentMarginUsd (W-BED-R5-NOTES item 15), and the builder is told about flow.agent (prompts.mjs).
+//     library.wide = true tells the builder about flow.wide (FLOW-V3 §2.3: only arms preregistered to use it).
 //   jit.shadowFloor (number in [0, 1]; default unset: the shadowEvery schedule): on every compiled ok, a seeded draw
 //     u = shadowDrawOf(jit.shadowSeed, idx) shadows the row iff u < shadowFloor; it replaces the periodic schedule, so
 //     jit.shadowEvery with it is refused. Flag-triggered shadows (shadowOnFlags) still fire. jit.shadowSeed (default
@@ -174,7 +183,7 @@ export function libraryOf(raw, { perTaskUsd = 1, promptVersion = 1 } = {}) {
   const L = raw?.library;
   if (L == null) return null;
   if (typeof L !== 'object' || Array.isArray(L)) throw new Error('config.library must be an object');
-  const KEYS = ['mode', 'from', 'childBudgetUsd', 'concurrency', 'parentMarginUsd', 'maxDepth', 'check', 'novelMode', 'interpretFloorUsd', 'register'];
+  const KEYS = ['mode', 'from', 'childBudgetUsd', 'concurrency', 'parentMarginUsd', 'maxDepth', 'check', 'novelMode', 'interpretFloorUsd', 'register', 'agent', 'wide'];
   for (const k of Object.keys(L)) if (!KEYS.includes(k)) throw new Error(`config.library.${k} is not supported (${KEYS.join(', ')})`);
   if (!LIBRARY_MODES.includes(L.mode)) throw new Error(`config.library.mode must be one of ${LIBRARY_MODES.join(', ')}`);
   if (L.from != null && (typeof L.from !== 'string' || !L.from.trim() || L.mode !== 'cur')) throw new Error("config.library.from must be a path template, and only with mode 'cur'");
@@ -182,8 +191,12 @@ export function libraryOf(raw, { perTaskUsd = 1, promptVersion = 1 } = {}) {
   const pos = (k, v) => { if (typeof v !== 'number' || !Number.isFinite(v) || !(v > 0)) throw new Error(`config.library.${k} must be a positive number of dollars`); return v; };
   const childBudgetUsd = pos('childBudgetUsd', L.childBudgetUsd), parentMarginUsd = pos('parentMarginUsd', L.parentMarginUsd);
   if (!Number.isInteger(L.concurrency) || L.concurrency < 1) throw new Error('config.library.concurrency must be an integer >= 1 (the most child calls in flight at once)');
-  const need = L.concurrency * childBudgetUsd + parentMarginUsd;
-  if (perTaskUsd + 1e-9 < need) throw new Error(`config.library: perTaskUsd ${perTaskUsd} is below concurrency × childBudgetUsd + parentMarginUsd = ${L.concurrency} × ${childBudgetUsd} + ${parentMarginUsd} = ${round(need)} (the stream budget rule, FLOW-V3-SLICE2 §3)`);
+  const agent = agentOptsOf(L.agent);
+  if (L.wide != null && typeof L.wide !== 'boolean') throw new Error('config.library.wide must be true or false');
+  const need = L.concurrency * childBudgetUsd + (agent?.budgetUsd ?? 0) + parentMarginUsd;
+  if (perTaskUsd + 1e-9 < need) throw new Error(agent
+    ? `config.library: perTaskUsd ${perTaskUsd} is below concurrency × childBudgetUsd + agent.budgetUsd + parentMarginUsd = ${L.concurrency} × ${childBudgetUsd} + ${agent.budgetUsd} + ${parentMarginUsd} = ${round(need)} (the stream budget rule, FLOW-V3-SLICE2 §3 and §9)`
+    : `config.library: perTaskUsd ${perTaskUsd} is below concurrency × childBudgetUsd + parentMarginUsd = ${L.concurrency} × ${childBudgetUsd} + ${parentMarginUsd} = ${round(need)} (the stream budget rule, FLOW-V3-SLICE2 §3)`);
   const maxDepth = L.maxDepth ?? DEFAULT_MAX_DEPTH;
   if (!Number.isInteger(maxDepth) || maxDepth < 1 || maxDepth > HARD_MAX_DEPTH) throw new Error(`config.library.maxDepth must be an integer in 1..${HARD_MAX_DEPTH}`);
   const novelMode = L.novelMode ?? 'refuse';
@@ -192,7 +205,19 @@ export function libraryOf(raw, { perTaskUsd = 1, promptVersion = 1 } = {}) {
   if (typeof interpretFloorUsd !== 'number' || !(interpretFloorUsd >= 0)) throw new Error('config.library.interpretFloorUsd must be a number >= 0');
   if (L.register != null && typeof L.register !== 'boolean') throw new Error('config.library.register must be true or false');
   return { mode: L.mode, ...(L.from ? { from: L.from } : {}), childBudgetUsd, concurrency: L.concurrency, parentMarginUsd, maxDepth, check: checkOptionsOf(L.check ?? TOLERANT_CHECK), novelMode,
-    interpretFloorUsd, register: L.register ?? true };
+    interpretFloorUsd, register: L.register ?? true, ...(agent ? { agent } : {}), ...(L.wide ? { wide: true } : {}) };
+}
+// Slice 2b: config.library.agent, normalized (null when absent).
+export function agentOptsOf(A) {
+  if (A == null) return null;
+  if (typeof A !== 'object' || Array.isArray(A)) throw new Error('config.library.agent must be an object {budgetUsd, model?, stallMs?, textLabel?}');
+  for (const k of Object.keys(A)) if (!['budgetUsd', 'model', 'stallMs', 'textLabel'].includes(k)) throw new Error(`config.library.agent.${k} is not supported (budgetUsd, model, stallMs, textLabel)`);
+  if (typeof A.budgetUsd !== 'number' || !(A.budgetUsd >= DEFAULT_AGENT_FLOOR_USD)) throw new Error(`config.library.agent.budgetUsd must be a number >= ${DEFAULT_AGENT_FLOOR_USD} (the agent floor)`);
+  if (A.model != null && (typeof A.model !== 'string' || !A.model)) throw new Error('config.library.agent.model must be a model id');
+  if (A.stallMs != null && !(Number.isInteger(A.stallMs) && A.stallMs > 0)) throw new Error('config.library.agent.stallMs must be a positive integer');
+  const textLabel = A.textLabel ?? 'synthetic';
+  if (!TEXT_LABELS.includes(textLabel)) throw new Error(`config.library.agent.textLabel must be one of ${TEXT_LABELS.join(', ')}`);
+  return { budgetUsd: A.budgetUsd, model: A.model ?? null, stallMs: A.stallMs ?? null, textLabel };
 }
 
 export function normalizeConfig(raw, { ledger = null } = {}) {
@@ -506,6 +531,7 @@ function exportArm(armDir, outDir, slug, { maxBodyBytes, changed }) {
     if (existsSync(src) && writeIfChanged(path.join(outDir, f), readFileSync(src))) changed.push(`${slug}/${f}`);
   }
   copyTree(path.join(armDir, 'library'), path.join(outDir, 'library'), changed, `${slug}/library`);
+  copyTree(path.join(armDir, 'harvest'), path.join(outDir, 'harvest'), changed, `${slug}/harvest`);   // slice 2b (agent arms only)
 }
 
 function lockExport(dir, waitMs = 60000) {
@@ -614,6 +640,8 @@ async function liveDeps() {
     recheck: async ({ workdir, solvePath, traces, regressions, modelPort, models, capUsd, label, promptVersion, compare, library, interpreter, callHost }) => (await import('./compile.mjs')).hostCheck({
       dir: path.join(workdir, '.host-check-recheck'), solveSource: readFileSync(solvePath, 'utf8'), traces, regressions, modelPort, models, capUsd, label, promptVersion, compare,
       ...(library ? { library, interpreter, callHost } : {}) }),
+    // Slice 2b: one agent-node attempt (agent-node.mjs agentNodeRunner; a.binary is the CLI).
+    agentNode: async a => (await import('./agent-node.mjs')).agentNodeRunner({ ...(a.binary ? { binary: a.binary } : {}) })(a),
     createModelPort: a => createModelPortSync(a),
     score: beds.score, makeTasks: beds.makeTasks, loadFamily: beds.loadFamily,
   };
@@ -853,6 +881,29 @@ class JitRun extends ArmRun {
     return this._registry;
   }
   get callHostOpts() { const L = this.library; return { maxDepth: L.maxDepth, profileCheck: L.check, novelMode: L.novelMode, interpretFloorUsd: L.interpretFloorUsd }; }
+  // Slice 2b: the call host options of one task (with agent nodes when config.library.agent is set).
+  callHostOptsFor(tr, t) { const a = this.agentHostOpts(tr, t); return { ...this.callHostOpts, ...(a ? { agent: a } : {}) }; }
+  // Agent nodes (FLOW-V3 §2.2): the arm's interpreter model (or library.agent.model) in an arm- and role-neutral session
+  // directory, as the interpreter's own sessions; the node trace is kept (role 'agent-node'); its cost reaches the row through
+  // the run that asked (the gateway charges the request's costUsd), so it is not spent here.
+  agentHostOpts(tr, t) {
+    const A = this.library?.agent;
+    if (!A) return null;
+    const model = A.model ?? this.arm.interpreter;
+    const runner = async a => {
+      const rand = randomUUID().slice(0, 8), traceId = `i${String(t.idx).padStart(3, '0')}-agent-${rand.slice(0, 6)}`;
+      const workdir = path.join(this.sessions, sessionIdOf(this.arm.hash, t.idx, 'agent', rand)), workdirRel = path.relative(this.workRoot, workdir);
+      rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
+      const r = await this.deps.agentNode({ ...a, workdir, ...(this.binary ? { binary: this.binary } : {}) });
+      const { prompt: _p, ...kept } = r ?? {};
+      writeFileSync(path.join(this.p.traces, `${traceId}.json`), JSON.stringify({ traceId, role: 'agent-node', name: a.name, span: a.span, path: a.path, attempt: a.attempt, model: a.model,
+        retryReason: a.retryReason ?? null, workdirRel, files: Object.keys(a.files ?? {}).length, ...kept }));
+      tr.ev('agent-node', { name: a.name, span: a.span, attempt: a.attempt, model: a.model, traceId, workdir: workdirRel, answer: r?.answer != null, error: r?.error?.code ?? null,
+        costUsd: r?.costUsd ?? 0, nestedModelAttempts: r?.nestedModelAttempts ?? 0, hiddenPathAttempts: r?.hiddenPathAttempts ?? 0, scripts: r?.scripts?.length ?? 0 });
+      return { ...r, traceId };
+    };
+    return { runner, models: [...new Set([model, ...(this.arm.models ?? [])])], model, ...(A.stallMs ? { stallMs: A.stallMs } : {}), textLabel: A.textLabel };
+  }
   // FLOW-V3 §1.5: the arm's interpreter answers a refused or deopted child alone (onRefuse/onDeopt 'interpret'), in an arm-
   // and role-neutral session directory; the trace is kept (role 'child', not in this arm's own compile pool). Its cost reaches
   // the row through the run that made the call (the gateway charges the call's costUsd), so it is not spent here.
@@ -877,13 +928,19 @@ class JitRun extends ArmRun {
     if (!this.library) return null;
     const registry = this.registryOf(), ledger = new Ledger({ capUsd: this.config.perTaskUsd, label });
     const host = createCallHost({ registry, modelPort: this.port, workRoot: path.join(workdir, 'calls-root'), allowedModels: this.arm.models, arm: this.arm.slug, taskKey: t.taskKey,
-      ...this.callHostOpts, interpreter: this.childInterpreter(tr, t) });
+      ...this.callHostOptsFor(tr, t), interpreter: this.childInterpreter(tr, t) });
     const port = host.port({ budgetUsd: this.config.perTaskUsd, ledger, selfHash: state?.version?.libraryHash ?? null });
     return { port, ledger, allowed: withCallModel(this.arm.models), host,
       done: ({ version, attempt }) => {
         const tag = { experiment: this.config.experiment, armSpec: this.arm.spec, idx: t.idx, version, attempt };
         for (const e of host.events) appendFileSync(path.join(this.p.dir, 'calls.jsonl'), JSON.stringify({ ...tag, childId: e.name ?? null, ...e }) + '\n');
         for (const j of host.journalRows()) appendFileSync(path.join(this.p.dir, 'calls-journal.jsonl'), JSON.stringify({ ...tag, ...j }) + '\n');
+        // Slice 2b: agent-node harvests (scripts, task, answer) are kept in the arm for a later sub-compile.
+        for (const e of host.events) {
+          if (!e.harvestFile) continue;
+          const src = path.join(workdir, 'calls-root', e.harvestFile), dst = path.join(this.p.dir, 'harvest', path.basename(e.harvestFile));
+          if (existsSync(src) && !existsSync(dst)) { mkdirSync(path.dirname(dst), { recursive: true }); copyFileSync(src, dst); }
+        }
         return host.totals();
       } };
   }
@@ -925,7 +982,8 @@ class JitRun extends ArmRun {
         builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, checkUsd: settings.checkUsd ?? settings.gatewayUsd,
         minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}),
         ...this.compileOpts, ...(inputs.refusals?.length ? { refusals: inputs.refusals } : {}), modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n,
-        ...(this.library ? { library: this.registryOf(), interpreter: this.childInterpreter(tr, t), callHost: this.callHostOpts } : {}) });
+        ...(this.library ? { library: this.registryOf(), interpreter: this.childInterpreter(tr, t), callHost: this.callHostOptsFor(tr, t) } : {}),
+        ...(this.library?.agent ? { agentBudgetUsd: this.library.agent.budgetUsd } : {}), ...(this.library?.wide ? { wide: true } : {}) });
       const rec = r.record ?? {};
       // Every dollar of the compile: the builder session, its gateway calls, and the host acceptance check.
       tr.spend('compileBuilder', rec.builderCostUsd ?? 0, rec.builderCostUnknown);
@@ -942,7 +1000,7 @@ class JitRun extends ArmRun {
       tr.ev('recheck', { version: n, builderModel, reason: 'budget deopts in the host check', budgetDeopts: rec.checkTraces.deoptKinds.budget, capUsd });
       const rc = await this.deps.recheck({ workdir: res.workdir, solvePath: res.solvePath, traces: inputs.traces, regressions: inputs.regressions, modelPort: this.port, models: this.arm.models,
         capUsd, label: `v${n}-${tag}-recheck`, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}),
-        ...(this.compareOf ? { compare: this.compareOf } : {}), ...(this.library ? { library: this.registryOf(), interpreter: this.childInterpreter(tr, t), callHost: this.callHostOpts } : {}) });
+        ...(this.compareOf ? { compare: this.compareOf } : {}), ...(this.library ? { library: this.registryOf(), interpreter: this.childInterpreter(tr, t), callHost: this.callHostOptsFor(tr, t) } : {}) });
       recheckUsd = rc.costUsd ?? 0;
       tr.spend('compileCheck', recheckUsd, (rc.unknownCalls ?? 0) > 0);
       const C = this.config.compile;
