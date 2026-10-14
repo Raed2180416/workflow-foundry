@@ -264,7 +264,8 @@ tool-coercion line (0/38). This is the bar the port and baselines b2 and b3 must
   rule.
 - **S5b inserts P54 by code.** One `call-<child>` role is added per child, after the role the child names; §5.1 makes
   the join code's. The ranker does not retrieve P54 on R3.
-- **S5 J1 questions.** S5 shows the J1 questions of as many top-ranked candidates as fit 600 tokens: 12–14 of 16–20.
+- **S5 J1 questions.** S5 shows the J1 questions of as many top-ranked candidates as fit 600 tokens: 14 of the 18–20
+  shown on the W-bed fixtures.
   §5.1 says "each of ≤ 20" and §4.4 says "the top 8"; showing J1 for all 20 does not fit.
 - **S1 renders the task.** The request goes in verbatim, followed by a code-rendered input sample that counts its
   left-out lines. A request that alone exceeds 3,000 tokens is refused, never cut.
