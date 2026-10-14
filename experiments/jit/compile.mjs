@@ -18,6 +18,7 @@ import { builderPrompt, promptVersionOf, flowFileOf, verdictsPromptVersionOf } f
 import { tolerance } from './compare.mjs';
 import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals, acceptanceIdsOf, readVerdicts } from './acceptance.mjs';
 import { createCallHost, withCallModel } from './call-host.mjs';
+import { codeExecutionOf } from './agent-node.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // The SDK the builder reads and the host check runs follows the prompt version (prompts.mjs flowFileOf): FLOW_TOOL is
@@ -35,9 +36,14 @@ export const LIBRARY_INDEX = 'library/index.json';
 export const libraryIndexOf = registry => (registry ? registry.list() : null);
 // A call host for one gateway session (the builder's, or one host check): one root scope with the session's cap as its
 // budget, child workdirs under workRoot. interpreter (optional): onRefuse 'interpret' answers, as in execution.
-function sessionPort({ library, modelPort, models, workRoot, capUsd, ledger = null, interpreter = null, callHost = {} }) {
+// Review fix (FLOW-V3-SLICE2 §Review C6): such a host serves several solver runs (each check case; the builder's many runs),
+// so its agent-node limit is per run: agent.sessionRuns = the number of runs it serves (the case count for a host check;
+// MAX_SESSION_RUNS for the builder, whose gateway cap bounds its runs).
+export const BUILDER_SESSION_RUNS = 1000;
+export function sessionPort({ library, modelPort, models, workRoot, capUsd, ledger = null, interpreter = null, callHost = {}, sessionRuns = 1 }) {
   if (!library) return { port: modelPort, allowed: models, host: null };
-  const host = createCallHost({ registry: library, modelPort, workRoot, allowedModels: models, mode: 'sandbox', ...(interpreter ? { interpreter } : {}), ...callHost });
+  const agent = callHost?.agent ? { agent: { ...callHost.agent, sessionRuns } } : {};
+  const host = createCallHost({ registry: library, modelPort, workRoot, allowedModels: models, mode: 'sandbox', ...(interpreter ? { interpreter } : {}), ...callHost, ...agent });
   return { port: host.port({ budgetUsd: capUsd, ...(ledger ? { ledger } : {}) }), allowed: withCallModel(models), host };
 }
 export const CHECK_TOOL = readFileSync(path.join(here, 'check-traces.mjs'), 'utf8');
@@ -161,7 +167,7 @@ export async function hostCheck({ dir, solveSource, traces, regressions = [], mo
   rmSync(dir, { recursive: true, force: true }); mkdirSync(path.join(dir, 'tools'), { recursive: true });
   const ledger = new Ledger({ capUsd, label: `${label}:check` });
   // With a library: one call host for the whole check (one root scope, the check cap as its budget, children under .calls/).
-  const gw = sessionPort({ library, modelPort, models, workRoot: path.join(dir, '.calls'), capUsd, ledger, interpreter, callHost });
+  const gw = sessionPort({ library, modelPort, models, workRoot: path.join(dir, '.calls'), capUsd, ledger, interpreter, callHost, sessionRuns: Math.max(1, traces.length + regressions.length) });
   const svc = await startServices({ modelPort: gw.port, ledger, scoreLimit: 0, runId: `jit-check:${label}:${randomUUID()}`, allowedModels: gw.allowed, socketDir: path.join(dir, 'tools') });
   let r = null, error = null;
   try {
@@ -220,7 +226,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
   // Slice 2a (opt-in): a library needs prompt version 5 (flow-v3; the builder is told about flow.call only there).
   if (library && promptVersion < 5) throw new Error('compile: a library needs promptVersion 5 (flow-v3 and the flow.call prompt)');
   const libraryIndex = libraryIndexOf(library);
-  const gw = sessionPort({ library, modelPort, models, workRoot: path.join(workdir, '.calls'), capUsd: gatewayUsd, ledger, interpreter, callHost });
+  const gw = sessionPort({ library, modelPort, models, workRoot: path.join(workdir, '.calls'), capUsd: gatewayUsd, ledger, interpreter, callHost, sessionRuns: BUILDER_SESSION_RUNS });
   // No familyId and no probes: the gateway has no score route and no env route in this session.
   const svc = await startServices({ modelPort: gw.port, ledger, scoreLimit: 0, runId: `compile:${label}:${randomUUID()}`, allowedModels: gw.allowed });
   const files = compileFiles({ outputSchema: outputSchema ?? fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion, compare: cmp, libraryIndex });
@@ -243,7 +249,13 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const builderMs = Date.now() - started;
   const solvePath = path.join(workdir, 'solve.mjs'), solveSource = existsSync(solvePath) ? readFileSync(solvePath, 'utf8') : null;
   const notes = existsSync(path.join(workdir, 'BUILD-NOTES.md')) ? readFileSync(path.join(workdir, 'BUILD-NOTES.md'), 'utf8') : null;
-  const check = solveSource
+  // Review fix (FLOW-V3-SLICE2 §Review I1): a version-5 solver is scanned for running code it is handed (child processes,
+  // eval, vm, a dynamic or relative import that leaves tools/: a decoder.mjs shipped inside a dump). A solver with findings is
+  // not checked and not accepted (the stream voids it); the registry already refuses calls to such a callee.
+  const codeExecution = solveSource != null && promptVersion >= 5 ? codeExecutionOf(solveSource) : [];
+  const check = codeExecution.length
+    ? { summary: null, error: { code: 'EXECUTES_CODE', findings: codeExecution.slice(0, 5) }, costUsd: 0, calls: 0, unknownCalls: 0, refusals: {}, durationMs: null }
+    : solveSource
     ? await hostCheck({ dir: path.join(workdir, '.host-check'), solveSource, traces, regressions, modelPort, models, capUsd: checkUsd, label, timeoutMs: checkMinutes * 60 * 1000, caseSeconds: checkCaseSeconds, promptVersion, compare: cmp,
       ...(library ? { library, interpreter, callHost } : {}) })
     : { summary: null, error: { code: 'NO_ARTIFACT' }, costUsd: 0, calls: 0, unknownCalls: 0, refusals: {}, durationMs: null };
@@ -280,6 +292,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
     promptSha256: sha(prompt), artifact: solveSource == null ? null : 'solve.mjs', artifactSha256,
     ...(library ? { library: { entries: libraryIndex.length, indexSha256: sha(JSON.stringify(libraryIndex, null, 1)), builderCalls: gw.host.totals(), checkCalls: check.callHost ?? null } } : {}),
     ...(agentBudgetUsd ? { agentBudgetUsd } : {}), ...(wide ? { wide: true } : {}), ...(outputSchema ? { outputSchemaSha256: sha(JSON.stringify(outputSchema)) } : {}),
+    ...(codeExecution.length ? { codeExecution } : {}),
     builderCostUsd, builderCostReportedUsd: r.costUsd ?? null, builderCostUnknown: !!r.costUnknown, builderCostUpperUsd: r.costUpperUsd ?? null, builderBudgetUsd,
     builderUsage: r.usage ?? null, builderStreamUsage: r.streamUsage ?? null, builderSessionId: r.sessionId ?? null,
     gatewayCostUsd: ledger.spentUsd, gatewayCapUsd: ledger.capUsd, gatewayOvershootUsd: Math.max(0, ledger.spentUsd - ledger.capUsd), gatewayCalls: ledger.calls, gatewayErrors: ledger.errors,

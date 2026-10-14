@@ -108,8 +108,13 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //     completed answers (item 1b; the compiled event says resumed: n). The budget rule is
 //     validated: perTaskUsd >= concurrency × childBudgetUsd + parentMarginUsd (parentMarginUsd > 0), so the reservations of
 //     `concurrency` children in flight stay strictly below the parent's budget. Set, it defines a new JIT arm.
+//     Review fixes (FLOW-V3-SLICE2 §Review): the profile of a registered version is learned on every task input the arm was
+//     given up to its adoption (not only its compile traces), and when the arm finishes its stream the adopted version is
+//     registered again (a new entry version, same hash) with the profile of every task of the stream, which is what the next
+//     rung's CUR seed copies (T1: the R4 measurement's protocol). A compile whose solve.mjs runs code it is handed
+//     (agent-node.mjs codeExecutionOf, prompt version >= 5) is void like a nested-model compile (I1).
 //     Slice 2b (each absent unless set, so a slice 2a library config keeps its hash): library.agent = {budgetUsd, model?,
-//     stallMs?, textLabel? ('synthetic', the default, or 'third-party', which refuses every agent node: D10)} gives every
+//     stallMs?, textLabel ('synthetic' or 'third-party', which refuses every agent node: D10; required since the review)} gives every
 //     compiled run (and the builder's runs and host check) agent nodes: the arm's interpreter model (or model) runs each node
 //     in an arm- and role-neutral session directory (role 'agent'), its trace is kept in traces/ (role 'agent-node') with an
 //     'agent-node' event, its cost reaches the row through the run that asked (as interpret-child), and harvested scripts are
@@ -953,18 +958,40 @@ class JitRun extends ArmRun {
       } };
   }
   // On adoption of an accepted version: register it (FLOW-V3 §1.2): the solver bytes (copied into the library), the contract,
-  // a PARAMS_V2 profile of its compile traces, the configured check options and novelMode, and its evidence.
+  // a PARAMS_V2 profile, the configured check options and novelMode, and its evidence. Review fix (FLOW-V3-SLICE2 §Review
+  // T1): the profile is learned on every task input the stream gave the arm up to this adoption (its compile traces are at
+  // most maxTraces of them: 3 at the first compile with warmup 3, which false-refused 24/24 in-profile R4 packs at d4), and
+  // relearnLibrary() widens it to the whole stream when the arm finishes.
+  profileTasksUpTo(idx) {
+    return (this.streamTasks ?? []).filter(x => x.idx <= idx && x.task).map(x => ({ prompt: x.task.prompt, inputs: x.task.inputs, ...(x.task.files ? { files: x.task.files } : {}) }));
+  }
   registerVersion(tr, t, state, traces, best) {
     const L = this.library, registry = this.registryOf();
     const src = readFileSync(path.join(best.dir, 'solve.mjs')), rel = `solvers/${best.solveSha.slice(0, 16)}.mjs`;
     if (!existsSync(path.join(this.libraryDir, rel))) { mkdirSync(path.join(this.libraryDir, 'solvers'), { recursive: true }); writeFileSync(path.join(this.libraryDir, rel), src); }
-    const tasks = traces.map(x => x.task).filter(Boolean);
+    const tasks = traces.map(x => x.task).filter(Boolean), seen = this.profileTasksUpTo(t.idx), profTasks = seen.length ? seen : tasks;
     const entry = registry.register({ solvePath: rel, flowVersion: 3, contract: { input: null, output: this.outputSchema ?? { type: 'object' }, taskTemplate: tasks[0]?.prompt ?? '' },
-      profile: tasks.length ? learnProfile(tasks, PARAMS_V2) : null, ...(Object.keys(L.check).length ? { checkOptions: L.check } : {}), ...(L.novelMode !== 'refuse' ? { novelMode: L.novelMode } : {}),
+      profile: profTasks.length ? learnProfile(profTasks, PARAMS_V2) : null, ...(Object.keys(L.check).length ? { checkOptions: L.check } : {}), ...(L.novelMode !== 'refuse' ? { novelMode: L.novelMode } : {}),
       evidence: { familyId: this.config.familyId, experiment: this.config.experiment, arm: this.arm.slug, version: state.version.n, adoptedAt: t.idx, traces: tasks.length,
-        exactRate: exactOf(best.checkTraces), accepted: true }, effects: 'none' });
+        profileTasks: profTasks.length, exactRate: exactOf(best.checkTraces), accepted: true }, effects: 'none' });
     state.version.libraryHash = entry.hash;
     tr.ev('library-register', { version: state.version.n, hash: entry.hash, entryVersion: entry.version, profileTasks: entry.profile?.n ?? 0 });
+    return entry;
+  }
+  // Review fix (T1): when the arm has finished its stream, its adopted version is registered again (same bytes and contract,
+  // so the same hash; a new entry version) with the profile of every task the stream gave it: what the next rung's CUR seed
+  // copies, and the protocol of the R4 measurement (W-BED-R4-NOTES §6: the R1 profile is learned on the R1 stream).
+  // Idempotent: on a resumed, finished arm nothing is written when the entry already has that profile.
+  relearnLibrary(state) {
+    if (!this.library?.register || !state?.version?.libraryHash || !this.streamTasks?.length) return null;
+    const registry = this.registryOf(), e = registry.get(state.version.libraryHash);
+    if (!e || e.revoked || !e.solvePath) return null;
+    const tasks = this.profileTasksUpTo(Infinity), profile = learnProfile(tasks, PARAMS_V2);
+    if (e.profile && canonical(e.profile) === canonical(JSON.parse(JSON.stringify(profile)))) return null;
+    const entry = registry.register({ solvePath: path.relative(this.libraryDir, e.solvePath), flowVersion: e.flowVersion, contract: e.contract, profile,
+      ...(e.checkOptions ? { checkOptions: e.checkOptions } : {}), ...(e.novelMode ? { novelMode: e.novelMode } : {}),
+      evidence: { ...e.evidence, profileTasks: tasks.length, profileFrom: 'stream' }, effects: e.effects ?? 'none' });
+    this.event(null, 'library-relearn', { version: state.version.n, hash: entry.hash, entryVersion: entry.version, profileTasks: tasks.length });
     return entry;
   }
 
@@ -1023,7 +1050,7 @@ class JitRun extends ArmRun {
     if (res.workdir && existsSync(path.join(res.workdir, VERDICTS_FILE))) copyFileSync(path.join(res.workdir, VERDICTS_FILE), path.join(vdir, VERDICTS_FILE));   // S0-6 'structured'
     writeFileSync(path.join(vdir, 'compile.json'), JSON.stringify({ ...rec, inputs: { traceIds: inputs.traces.map(x => x.traceId), regressionIds: inputs.regressions.map(x => x.regressionId), previousSha: inputs.previous ? sha(inputs.previous) : null } }, null, 1));
     const result = { version: n, builderModel, hasSolve, solveSha: hasSolve ? sha(readFileSync(path.join(vdir, 'solve.mjs'))) : null, checkTraces: compactCheck(rec.checkTraces),
-      nestedModelAttempts: rec.nestedModelAttempts ?? 0, hiddenPathAttempts: rec.hiddenPathAttempts ?? 0,
+      nestedModelAttempts: rec.nestedModelAttempts ?? 0, hiddenPathAttempts: rec.hiddenPathAttempts ?? 0, ...(rec.codeExecution?.length ? { codeExecution: rec.codeExecution.length } : {}),
       costUsd: (rec.compileCostUsd ?? (rec.builderCostUsd ?? 0) + (rec.gatewayCostUsd ?? 0) + (rec.checkCostUsd ?? 0)) + recheckUsd,
       builderError: rec.builderError?.code ?? null, checkError: rec.checkTraces?.error?.code ?? null, builderAccepted: rec.checkTraces?.accepted ?? null,
       ...(this.config.compile.promptVersion ? { promptVersion: rec.promptVersion ?? this.config.compile.promptVersion } : {}) };
@@ -1048,7 +1075,10 @@ class JitRun extends ArmRun {
     const inputs = { traces, regressions, previous, ...(refusals.length ? { refusals } : {}),
       hash: sha(canonical({ t: traces.map(x => x.traceId), r: state.regressions, p: previous ? sha(previous) : null, ...(refusals.length ? { f: refusals } : {}) })).slice(0, 12) };
     const reason = state.pendingCompile;
-    const ok = a => a.hasSolve && a.nestedModelAttempts === 0 && accepted(a.checkTraces);
+    // Review fix (FLOW-V3-SLICE2 §Review I1): a solve.mjs that runs code it is handed (codeExecution findings) is void like a
+    // compile whose builder called a model itself: never adopted, whatever the acceptance rule.
+    const voided = a => a.nestedModelAttempts > 0 || (a.codeExecution ?? 0) > 0;
+    const ok = a => a.hasSolve && !voided(a) && accepted(a.checkTraces);
     const attempts = [await this.compileAttempt(tr, t, state, n, this.arm.compiler, this.config.compile, inputs)];
     const fb = this.arm.fallback;
     if (!ok(attempts[0]) && fb && fb !== this.arm.compiler && (this.config.jit.maxFallbacks == null || state.fallbacksUsed < this.config.jit.maxFallbacks)) {
@@ -1057,9 +1087,9 @@ class JitRun extends ArmRun {
       attempts.push(await this.compileAttempt(tr, t, state, n, fb, this.config.compile.fallback, inputs));
     }
     state.versionsCount = n; state.deoptsSinceCompile = 0; state.pendingCompile = null;
-    for (const a of attempts) if (a.nestedModelAttempts > 0) tr.ev('void', { version: n, builderModel: a.builderModel, nestedModelAttempts: a.nestedModelAttempts });
+    for (const a of attempts) if (voided(a)) tr.ev('void', { version: n, builderModel: a.builderModel, nestedModelAttempts: a.nestedModelAttempts, ...(a.codeExecution ? { codeExecution: a.codeExecution } : {}) });
     // The best usable attempt: accepted first, then clean, then exact rate, then partial (the later attempt on a tie).
-    const usable = attempts.filter(a => a.hasSolve && a.nestedModelAttempts === 0);
+    const usable = attempts.filter(a => a.hasSolve && !voided(a));
     const rank = a => [ok(a) ? 1 : 0, a.checkTraces?.clean ? 1 : 0, exactOf(a.checkTraces), Number(a.checkTraces?.partial ?? 0)];
     const best = usable.reverse().sort((a, b) => { const x = rank(a), y = rank(b); return y[0] - x[0] || y[1] - x[1] || y[2] - x[2] || y[3] - x[3]; })[0];
     if (!best) { tr.ev('compile-failed', { version: n, reason, attempts: attempts.map(a => a.builderModel) }); return; }
@@ -1254,6 +1284,7 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
     let state = freshState();
     // Slice 2a: the library registry is set up before the first task (ISO wipes it only when the arm starts fresh).
     try { run.registryOf(); } catch (error) { note(run, error); return; }
+    run.streamTasks = tasks;
     for (const t of tasks) {
       const prior = run.rows.get(t.idx);
       if (prior) { state = structuredClone(prior.stateAfter ?? state); continue; }
@@ -1265,6 +1296,8 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
         return;
       }
     }
+    // Review fix (T1): the finished arm's adopted version gets the profile of the whole stream (library arms only).
+    try { run.relearnLibrary(state); } catch (error) { note(run, error); }
   });
   await Promise.all([flatDone, ...streams]);
   // S0-1: a last export of every arm (faults and harness errors leave no row), and its failures as arm errors.
