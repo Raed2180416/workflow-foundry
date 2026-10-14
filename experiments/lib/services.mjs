@@ -1,7 +1,7 @@
 // Host-side services for construction and execution arms (research/construction-20261006/DESIGN.md §2).
 // - POST /score   {probe, output}        -> {pass, score}   (probe tasks only, call-limited; oracle stays on the host)
 // - POST /model   {model, system, prompt, schema?, decoding?} -> {ok, value, text, error, costUsd}  (policy-enforced, journaled, budgeted)
-//   model 'flow:call' (flow-v3 call requests, experiments/jit/call-host.mjs; FLOW-V3-SLICE2 §4): not subject to
+//   model 'flow:call' (flow-v3 call requests, experiments/jit/call-host.mjs; FLOW-V3-SLICE2 §3): not subject to
 //   allowedModels; the child's reservation (prompt JSON budgetUsd) is held on this session's Ledger while the call runs
 //   when it fits strictly below what remains, and the port is told so (gatewayHoldUsd); one that does not fit is passed
 //   on unheld, and the call host refuses it with a typed BUDGET_TREE / budget-exceeds-parent refusal. 402 only when the

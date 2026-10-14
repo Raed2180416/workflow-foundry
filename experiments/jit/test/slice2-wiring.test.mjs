@@ -27,7 +27,7 @@ const OPTS = { traces: 3, regressions: 1, minutes: 30, gatewayUsd: 1.5, perTaskU
 const FLOW_V3_FILE = new URL('../flow-v3.mjs', import.meta.url).pathname;
 // flow-v3.mjs as of the slice 2a commit (FLOW-V3-SLICE2 §4, SLICE1 §3 item 7): a prompt-version-5 arm's SDK bytes.
 // Update this pin, and the E2 freeze record, whenever flow-v3.mjs changes.
-const FLOW_V3_SHA256 = sha(readFileSync(FLOW_V3_FILE));
+const FLOW_V3_SHA256 = 'a67bcbb6c49660f178a685ad939d1e1024af6b2b5a8108862cde4b96009f81c8';
 
 test('prompt version 5: runs on flow-v3.mjs; without a library its text is version 4\'s byte for byte; with one it adds library/index.json, flow.call and method item 9 (inserted lines only)', () => {
   assert.deepEqual([...PROMPT_VERSIONS], [1, 2, 3, 4, 5]);
@@ -47,6 +47,7 @@ test('prompt version 5: runs on flow-v3.mjs; without a library its text is versi
 });
 
 test('compile.mjs: FLOW_TOOL_V3 for version 5; library/index.json only with a library index; a library needs version 5; the flow-v3 pin', async () => {
+  assert.equal(sha(readFileSync(FLOW_V3_FILE)), FLOW_V3_SHA256, 'flow-v3.mjs is pinned (E2 freeze candidate, FLOW-V3-SLICE2 §8)');
   assert.equal(flowToolOf(5), FLOW_TOOL_V3); assert.equal(flowToolOf(4), FLOW_TOOL_V2); assert.equal(sha(FLOW_TOOL_V3), FLOW_V3_SHA256);
   assert.ok(FLOW_TOOL_V3.includes('async phase(name, fn)') && FLOW_TOOL_V3.includes("'interpret'"));
   const args = { outputSchema: { type: 'object' }, traces: [{ traceId: 't', task: { prompt: 'p', inputs: {} }, answer: {} }], gateway: { url: 'u', token: 'x' }, promptVersion: 5 };

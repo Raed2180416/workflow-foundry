@@ -102,7 +102,9 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //     (maxDepth default 3; the arm's interpreter answers onRefuse/onDeopt 'interpret' at interpretFloorUsd, default $0.10),
 //     a gateway Ledger it holds child reservations on, and withCallModel(models); host events go to <armDir>/calls.jsonl
 //     (childId = the call's name), its journal to calls-journal.jsonl, and the row gains calls (host totals). The builder
-//     sees library/index.json and its runs and host check call through a host too (compile.mjs). The budget rule is
+//     sees library/index.json and its runs and host check call through a host too (compile.mjs). Each compiled run records
+//     its answers (run-compiled.mjs resume), and the retry after an environment fault resumes from the first attempt's
+//     completed answers (item 1b; the compiled event says resumed: n). The budget rule is
 //     validated: perTaskUsd >= concurrency × childBudgetUsd + parentMarginUsd (parentMarginUsd > 0), so the reservations of
 //     `concurrency` children in flight stay strictly below the parent's budget. Set, it defines a new JIT arm.
 //   jit.shadowFloor (number in [0, 1]; default unset: the shadowEvery schedule): on every compiled ok, a seeded draw
@@ -778,6 +780,9 @@ class ArmRun {
   callSetup() { return null; }
 
   async compiled(tr, t, solvePath, version, state = null) {
+    // Library arms (slice 2a item 1b): every compiled run records its model and call answers (run-compiled.mjs
+    // createResumePort), and the retry after an environment fault resumes from the first attempt's completed answers.
+    let prior = null;
     return this.retrying(tr, 'compiled', async attempt => {
       const workdir = path.join(this.work, `i${String(t.idx).padStart(3, '0')}-compiled-${randomUUID().slice(0, 6)}`);
       rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
@@ -785,12 +790,12 @@ class ArmRun {
       const lib = this.callSetup({ tr, t, workdir, label, state });
       const rc = await this.deps.runCompiled({ solvePath, task: t.task, modelPort: lib?.port ?? this.port, perTaskUsd: this.config.perTaskUsd, timeoutMs: this.config.compiledMinutes * 60 * 1000,
         workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: lib?.allowed ?? this.arm.models, label,
-        ...(this.flowPath ? { flowPath: this.flowPath } : {}), ...(lib ? { ledger: lib.ledger } : {}) });
-      if (lib) rc.calls = lib.done({ version, attempt });
+        ...(this.flowPath ? { flowPath: this.flowPath } : {}), ...(lib ? { ledger: lib.ledger, resume: attempt > 0 && prior ? prior : true } : {}) });
+      if (lib) { rc.calls = lib.done({ version, attempt }); prior = rc.meta?.resume?.rows ?? null; }
       tr.spend('compiled', rc.costUsd ?? 0, rc.costUnknown);
       tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null,
         ...(rc.flags?.count ? { flags: rc.flags.count } : {}), ...(rc.meta?.memo ? { memo: { requests: rc.meta.memo.requests, hits: rc.meta.memo.hits, reused: rc.meta.memo.reused, live: rc.meta.memo.live } } : {}),
-        ...(rc.calls ? { calls: rc.calls } : {}) });
+        ...(rc.calls ? { calls: rc.calls } : {}), ...(rc.meta?.resume?.stats?.served ? { resumed: rc.meta.resume.stats.served } : {}) });
       return rc;
     }, rc => rc?.status !== 'ok' && metEnvFault(rc));
   }

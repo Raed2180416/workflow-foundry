@@ -322,7 +322,7 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
       const inputDigest = inputDigestOf(input), key = callKeyOf({ callee, inputDigest, parentPath, promptDigest }), t0 = Date.now();
       sub.n++;
       event({ kind: 'call-start', name, span, parent, callee, inputDigest, ...(promptDigest ? { promptDigest } : {}), budgetUsd: childUsd, depth, key,
-        ...(opts.onRefuse === 'interpret' || onDeopt === 'interpret' ? { localDeopt: { onRefuse, onDeopt } } : {}) });
+        ...(onRefuse === 'interpret' || onDeopt === 'interpret' ? { localDeopt: { onRefuse, onDeopt } } : {}) });
       const end = (kind, extra) => event({ kind, name, span, parent, callee, ...extra, ms: Date.now() - t0 });
       const refuse = (refused, detail, extra = { spentUsd: 0, reservedUsd: 0 }) => {
         end('call-refused', { ok: false, refused, detail: clip(detail ?? null, 1000), ...extra });
@@ -376,7 +376,9 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     // flow-v3 slice 2a: a named run stage (Managed Agents workflow_run.phase_started/ended). Runs fn and returns its result;
     // phase-start / phase-end carry span 'phase:<name>#<n>' (ordinal per name, fixed before the first await) and parent (the
     // enclosing phase, else the call scope, else 'root'); every event emitted inside fn (also across awaits and inside map)
-    // carries phase: <span>. A throw inside fn ends the phase with ok: false and is rethrown; a deopt ends the run as usual.
+    // carries phase: <span>. A throw inside fn ends the phase with ok: false and is rethrown; a deopt ends the run as usual
+    // (no phase-end). phase-end's spentUsd and calls are the run's spend and calls while the phase was open, so phases
+    // running concurrently (inside map) each count the others' spend too.
     async phase(name, fn) {
       if (typeof name !== 'string' || !name) throw new Error('flow.phase: a name is required');
       if (typeof fn !== 'function') throw new Error(`flow.phase(${name}): fn must be a function`);

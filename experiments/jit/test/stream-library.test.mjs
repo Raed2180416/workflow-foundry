@@ -139,6 +139,25 @@ test('library mode cur: a fresh arm is seeded from `from` (the previous rung\'s 
   assert.match(bad.arms[0].errors.join('\n'), /has no registry\.jsonl/);
 });
 
+test('library arm: a compiled run records its answers (resume: true) and the retry after an environment fault resumes from the first attempt\'s rows', async t => {
+  const root = tmp(t), runRoot = path.join(root, 'runs');
+  const { deps } = fakeDeps();
+  const seen = [];
+  deps.runCompiled = async a => {
+    const attempt = seen.filter(x => x.idx === a.task.seed - 1).length;
+    seen.push({ idx: a.task.seed - 1, resume: a.resume });
+    if (a.task.seed === 2 && attempt === 0) return { status: 'crash', output: null, trace: [], costUsd: 0.02, costUnknown: false, error: { code: 'MODEL_RATE_LIMIT' }, meta: { errors: {}, resume: { rows: [{ seq: 0, digest: 'd', occurrence: 0, ok: true, value: { factor: 1 } }], stats: { served: 0 } } } };
+    return { status: 'ok', output: { v: a.task.seed }, trace: [], costUsd: 0.01, costUnknown: false, error: null, meta: { errors: {}, resume: { rows: [], stats: { served: a.resume === true ? 0 : 1 } } } };
+  };
+  const res = await runStream({ config: { ...BASE, experiment: 'lib-resume', arms: [ARM], segments: [{ difficulty: 3, seeds: '1..2' }], library: LIB }, deps, runRoot, workRoot: path.join(root, 'work'), log: () => {} });
+  assert.deepEqual(res.arms[0].errors, []);
+  const retry = seen.filter(x => x.idx === 1);
+  assert.equal(retry.length, 2); assert.equal(retry[0].resume, true, 'the first attempt records');
+  assert.deepEqual(retry[1].resume, [{ seq: 0, digest: 'd', occurrence: 0, ok: true, value: { factor: 1 } }], 'the retry resumes from its rows');
+  const row = readJsonl(path.join(runRoot, 'lib-resume', parseArm(ARM, normalizeConfig(BASE), { policyIds: [...POLICY_MODELS] }).slug, 'results.jsonl')).find(r => r.idx === 1);
+  assert.deepEqual(row.events.filter(e => e.kind === 'compiled').map(e => [e.attempt, e.resumed ?? 0]), [[0, 0], [1, 1]]);
+});
+
 // ---- the dry run over wbed-r4 (sandboxed compiled runs, stub gateway) ----
 const skip = sandboxAvailable() ? false : 'no user namespaces';
 const R1_OUT = { type: 'object', required: ['customers', 'totals'], properties: { customers: { type: 'array' }, totals: { type: 'object' } } };
