@@ -152,6 +152,8 @@ export async function runPartB({ root = REPO, seed = 601, difficulty = 3 } = {})
     if (!b.declared || b.error) continue;
     b.perClass = Object.fromEntries(b.declared.map(c => [c, { typed: (b.typed?.[c]?.evidence ?? []).length > 0, cueOnPromptOrSpec: !!(b.cuesPrompt ?? b.cues)[c], cueOnFullText: !!b[key][c] }]));
     const n = b.declared.length;
+    // Typed evidence the preregistered candidate list does not name (a candidate list that is too short is itself a finding).
+    b.typedNotDeclared = Object.entries(b.typed ?? {}).filter(([c, v]) => v.evidence.length && !b.declared.includes(c)).map(([c, v]) => ({ class: c, evidence: v.evidence.slice(0, 3) }));
     b.recall = { typed: round(Object.values(b.perClass).filter(x => x.typed).length / n, 3), cuePromptOrSpec: round(Object.values(b.perClass).filter(x => x.cueOnPromptOrSpec).length / n, 3), cueFullText: round(Object.values(b.perClass).filter(x => x.cueOnFullText).length / n, 3), declared: n };
   }
   return out;
