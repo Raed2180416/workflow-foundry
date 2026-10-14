@@ -211,7 +211,7 @@ fam('pairwise-deltas', {
     const loop = cond => J('const out = [];', `for (let i = 0; ${cond}; i++) out.push(${at('i')});`, 'return out;');
     if (p.style === 1) {
       if (vr === 'past-end') return `return ${v}.map((x, i) => ${at('i')});`;
-      if (vr === 'minus-k') return `return ${v}.slice(0, ${v}.length - ${k}).map((x, i) => ${p.fwd ? `${v}[i + ${k}] - x` : `x - ${v}[i + ${k}]`});`;
+      if (vr === 'minus-k') return `return ${v}.slice(0, Math.max(0, ${v}.length - ${k})).map((x, i) => ${p.fwd ? `${v}[i + ${k}] - x` : `x - ${v}[i + ${k}]`});`;
       return `return ${v}.slice(${k}${vr === 'skip-last' ? ', -1' : ''}).map((x, i) => ${p.fwd ? `x - ${v}[i]` : `${v}[i] - x`});`;
     }
     if (vr === 'past-end') return loop(`i < ${v}.length`);
@@ -219,7 +219,7 @@ fam('pairwise-deltas', {
     if (vr === 'minus-k') return loop(`i < ${v}.length - ${k}`);
     return J('const out = [];', `for (let i = ${k}; i < ${v}.length; i++) out.push(${p.fwd ? `${v}[i] - ${v}[i - ${k}]` : `${v}[i - ${k}] - ${v}[i]`});`, 'return out;');
   },
-  probes(p, r) { return [0, 1, p.k, p.k + 1, p.k + 2, p.k + 5].filter(n => n <= p.amax).map(n => [ints(r, n)]); },
+  probes(p, r) { return [...new Set([0, 1, 2, p.k - 1, p.k, p.k + 1, p.k + 2, p.k + 5])].filter(n => n >= 0 && n <= p.amax).map(n => [ints(r, n)]); },
 });
 
 fam('last-n', {
