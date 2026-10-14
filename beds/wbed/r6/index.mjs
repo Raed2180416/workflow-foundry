@@ -1,25 +1,26 @@
 // W-bed rung R6 "wide research table" (family wbed-r6): a planned swarm (W-BED §3.6). Interface per beds/CONTRACT.md v1
 // plus the W-specific exports `stages`, `structure`, `relations`, `composedOracle`, `referenceTrace`, `invariants`,
-// `necessityControls`, and the R6-specific `unitChecks` (the code half of the verify), `keywordScript`, `whiteboxSolve`
-// (the white-box script: decidability witness, reported attack), `textIndex`,
-// `tokenAccounting` (equal-token accounting for wide vs best_of_n), `bestOfNRun`, `scopeOf`, `sizeOf`.
+// `necessityControls`, and the R6-specific `unitChecks` (the code half of the verify), `codePlan` / `coverageIssues`
+// (the plan's code check), `keywordScript`, `whiteboxSolve` (the white-box parser: decidability witness, reported
+// triviality attack), `textIndex`, `tokenAccounting` (equal-token and equal-dollar accounting for wide vs best_of_n),
+// `bestOfNRun`, the reported ablations `planAblation` and `grepAgentRun`, `scopeOf`, `sizeOf`.
 // The hidden truth is recomputed from (seed, split, difficulty) by the bed's own exact solver over the world structure;
 // nothing in the output but its value is read.
 import { buildWide, setVerifier, LEVELS, MIN_D, MAX_D, VERSION } from './world.mjs';
-import { runPipeline, textIndex, entityByString } from './pipeline.mjs';
+import { runPipeline, textIndex, entityByString, voidKeys, worker, reduce } from './pipeline.mjs';
 import { outputSchema, scoreTable } from './score.mjs';
 import { CONTRACTS, RELATIONS, makeStages, composeOracle, reduceLocal } from './stages.mjs';
 import { CONTROL_DEFS, NECESSITY_DEFS, appliesAt } from './controls.mjs';
 import { keywordScript } from './heuristic.mjs';
-import { unitChecks } from './verify.mjs';
+import { unitChecks, codePlan, coverageIssues } from './verify.mjs';
 import { whiteboxSolve } from './whitebox.mjs';
-import { tokenAccounting as accountWorld, readingOrder, unseenPast, SEQUENTIAL_BUDGET_TOKENS, PANEL, BEST_OF_N_MIN, PER_FILE_OVERHEAD } from './budget.mjs';
+import { tokenAccounting as accountWorld, readingOrder, unseenPast, agentReadSet, SEQUENTIAL_BUDGET_TOKENS, PANEL, BEST_OF_N_MIN, PER_FILE_OVERHEAD } from './budget.mjs';
 import { PROPS, MAX_FANOUT, tierOf } from './vocab.mjs';
 import { isResearch } from './world.mjs';
 import { requireNoFaults, hooks } from '../lib/faults.mjs';
 import { estimateTokens, rng } from '../lib/prng.mjs';
 
-export { outputSchema, CONTRACTS, LEVELS, reduceLocal, unitChecks, keywordScript, whiteboxSolve, textIndex, SEQUENTIAL_BUDGET_TOKENS, PANEL, MAX_FANOUT, PER_FILE_OVERHEAD };
+export { outputSchema, CONTRACTS, LEVELS, reduceLocal, unitChecks, codePlan, coverageIssues, keywordScript, whiteboxSolve, textIndex, SEQUENTIAL_BUDGET_TOKENS, PANEL, MAX_FANOUT, PER_FILE_OVERHEAD };
 export const version = VERSION;
 
 export const family = {
@@ -36,8 +37,10 @@ export const family = {
     + 'planned tests are not tests; a retracted document\'s test does not count), and for each, the accepted value of 3-5 '
     + 'requested properties under a synth-style resolution policy (void documents, errata, standard conditions, quotes, '
     + 'predictions, bounds, units, a ranking policy), plus the void documents that mention them. The best-known solution is '
-    + 'a planned swarm: a plan over a header digest, a code mention index that checks the plan, one judge chain per '
-    + 'candidate compound, a code reducer and a sampled verify. The inline task is 55-125K tokens.',
+    + 'a planned swarm: a code plan over the header digest and the lab\'s alias notices, checked against a code mention '
+    + 'index, one judge chain per candidate compound, a code reducer and a sampled verify. The plan is needed to fit the '
+    + 'fan-out cap, not for correctness; the corpus is a closed template grammar a parser solves at d2-d4 (W-BED-R6-NOTES '
+    + '§13). The inline task is 48-104K tokens.',
 };
 
 export const difficulty = {
@@ -107,22 +110,6 @@ const corrupt = out => {
 const inScopeCodes = world => truthTraceOf(world).worker.items.filter(x => x.in_scope).map(x => entityByString(world, x.entity).code);
 const accountingOf = world => accountWorld(world, { candidates: truthTraceOf(world).plan.candidates, inScope: inScopeCodes(world) });
 
-/** Documents the no-workflow grep agent never reads (see controls.mjs). */
-function grepUnseen(world) {
-  const found = world.docs.filter(d => isResearch(d) && d.lab === world.X && d.affil === 'full' && d.pubDay >= world.Y);
-  const grep = new Map(); // entity id -> 'name' | 'code' (the string the agent saw first)
-  for (const d of found) for (const [e, st] of Object.entries(d.styles)) if (!grep.has(e)) grep.set(e, st === 'code' ? 'code' : 'name');
-  const foundKeys = new Set(found.map(d => d.key));
-  const unseen = new Set();
-  for (const d of world.docs) {
-    if (!isResearch(d) && d.kind !== 'review') continue; // notices and consortium notices: all read
-    if (foundKeys.has(d.key)) continue;
-    const hit = Object.entries(d.styles).some(([e, st]) => grep.has(e) && (st === 'both' || st === grep.get(e)));
-    if (!hit) unseen.add(d.key);
-  }
-  return unseen;
-}
-
 /** best_of_n at equal tokens with the same verifier: { N, candidates: [{ offset, unseen, score, unitIssues }], pick, trace }. */
 function bestOfNOf(world) {
   const acc = accountingOf(world);
@@ -152,7 +139,6 @@ function bestOfNOf(world) {
 
 const optsFor = (def, world) => {
   if (def.attention === 'sequential') return { unseen: unseenPast(world, readingOrder(world, 0)) };
-  if (def.attention === 'grep') return { unseen: grepUnseen(world) };
   return def.opts;
 };
 function controlOutput(def, world) {

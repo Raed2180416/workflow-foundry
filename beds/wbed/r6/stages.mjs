@@ -19,7 +19,7 @@
 import { contract, int, str, arr, obj, bool } from '../lib/contracts.mjs';
 import { canonical } from '../lib/prng.mjs';
 import { PROPS, PROP_IDS, MAX_FANOUT } from './vocab.mjs';
-import { outputSchema } from './score.mjs';
+import { outputSchema, resolveWith } from './score.mjs';
 
 const num = { type: 'number' };
 const cell = obj({ property: str(40), value: num, source_doc_id: str(20) });
@@ -35,7 +35,7 @@ void int;
 const resolverOf = entities => {
   const m = new Map();
   for (const e of entities) { m.set(e.code.toUpperCase(), e.code); if (e.name) m.set(e.name.toLowerCase(), e.code); }
-  return s => { const t = String(s ?? '').trim(); return m.get(t.toUpperCase()) ?? m.get(t.toLowerCase()) ?? null; };
+  return s => resolveWith(m, s);
 };
 const cellKey = c => `${c.property}|${Math.round(c.value * 10 ** (PROPS[c.property]?.dec ?? 0))}|${String(c.source_doc_id).trim().toUpperCase()}`;
 const fail = (errors) => ({ pass: false, details: { reason: 'contract', errors: errors.slice(0, 8) } });

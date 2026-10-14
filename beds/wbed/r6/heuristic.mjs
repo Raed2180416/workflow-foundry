@@ -5,22 +5,18 @@
 // document is a journal one, then the most recent; void documents are those whose title a retraction notice or a
 // version-2 sentence quotes. It ignores test dates, abbreviations and former names, quotes, predictions, conditions,
 // bounds, errata and the ranking policy. It is a bad control: it must fail on every task (index.mjs verifier).
+//
+// It is a weak keyword rule, NOT the answer to W-BED §2.4 items 2 and 4 (review 2026-10-14, finding 1). The corpus is a
+// closed template grammar: a parser of the sentence forms visible in dev text (whitebox.mjs with
+// `{ phrasing: 'dev-visible' }`, about 60 dense lines) solves every dev task and every held-out task at d2-d4; only the
+// d5 split-specific test-date phrasing is unseen. See W-BED-R6-NOTES §3 and §13.
 import { textIndex } from './pipeline.mjs';
-import { parseCorpus } from './verify.mjs';
-import { MONTHS } from '../lib/domain.mjs';
+import { parseCorpus, parseDay } from './verify.mjs';
 
+export { parseDay };
 const KEY = { melting_point: /melt/i, solubility: /solubil|dissolved/i, half_life: /half-life/i, ic50: /IC50/, logp: /log [PD]\b/, density: /density/i, pka: /pKa/ };
 const UNIT = { '°C': 1, K: x => x - 273.15, '°F': x => (x - 32) / 1.8, 'mg/mL': 1, 'µg/mL': 0.001, 'g/L': 1, 'mg/100 mL': 0.01, h: 1, min: 1 / 60, nM: 1, 'µM': 1000, pM: 0.001, 'g/cm³': 1, 'kg/m³': 0.001, 'g/mL': 1 };
 const NUM = /(-?\d[\d,]*(?:\.\d+)?)\s*(mg\/100 mL|mg\/mL|µg\/mL|g\/L|g\/cm³|kg\/m³|g\/mL|°C|°F|K|min|h|nM|µM|pM)?(?![\w/])/;
-export function parseDay(s) {
-  const t = String(s ?? '').trim();
-  let m;
-  if ((m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
-  if ((m = t.match(/^(\d{2})\.(\d{2})\.(\d{4})$/))) return Date.UTC(+m[3], +m[2] - 1, +m[1]);
-  if ((m = t.match(/^(\d{1,2}) (\w+) (\d{4})$/))) return Date.UTC(+m[3], MONTHS.indexOf(m[2]), +m[1]);
-  if ((m = t.match(/^(\w+) (\d{1,2})\w*, (\d{4})$/))) return Date.UTC(+m[3], MONTHS.indexOf(m[1]), +m[2]);
-  return NaN;
-}
 
 export function keywordScript(task) {
   const q = task.inputs.question, cut = parseDay(q.tested_on_or_after);

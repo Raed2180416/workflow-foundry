@@ -7,7 +7,9 @@
 // canonical unit gives the true value exactly in decimal arithmetic. The oracle compares round(value * 10^dec) with
 // canon, which is exact for any solver that converts correctly in floating point.
 
-export const VERSION = '1.0.0';
+// 1.1.0 (review 2026-10-14): later versions mention every compound the replaced version mentions; out-of-corpus decoy
+// retractions on background documents at d >= 4; the d5 prompt names both held-out-tier kinds on both splits.
+export const VERSION = '1.1.0';
 export const MIN_D = 2, MAX_D = 5;
 
 // unit: { id, label, dec (decimals printed), toPrinted(canon) -> integer in units of 10^-dec of this unit }

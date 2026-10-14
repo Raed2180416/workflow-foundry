@@ -1,15 +1,19 @@
-// White-box script for R6 (W-BED §2.4 item 4: reported, not gating). Written WITH the generator's templates (vocab.mjs,
-// render.mjs): it parses every sentence form the renderer can produce and applies the prompt's rules, reading only the
-// task (prompt, inputs, files). Two uses:
+// White-box script for R6 (W-BED §2.4 items 2 and 4: reported, not gating). Written WITH the generator's templates
+// (vocab.mjs, render.mjs): it parses every sentence form the renderer can produce and applies the prompt's rules, reading
+// only the task (prompt, inputs, files). Two uses:
 //   1. decidability witness: it must reproduce the oracle's truth on every task, which shows the text conveys the truth
 //      (no hidden fact, no ambiguity the rules leave open) - tested on dev and held-out seeds at every difficulty;
-//   2. the white-box attack: a code-writing arm that had the generator source would solve R6 outright. As for synth
-//      (catalog-aware script 89-99%), R6 then measures cost and orchestration, not judgment, for such an arm; the B6
-//      comparison is between two model arms (wide vs best_of_n) and is unaffected.
+//   2. the triviality attack (review 2026-10-14, finding 1). The generator source is NOT needed: the corpus is a closed
+//      template grammar (two standard, two non-standard and one bound sentence per property, five test-date forms), and
+//      every form at d2-d4 appears in dev text on both splits. With `{ phrasing: 'dev-visible' }` the script knows only
+//      the forms dev text shows (it drops the d5 split-test form "k days after the site visit of DATE") and still solves
+//      every held-out task at d2-d4 (tested); only d5 on the test split defeats it. So for a code-writing arm (JIT,
+//      B1) R6 at the stream difficulties (d3 -> d4) is a parser-writing task, and R6 measures cost and orchestration,
+//      not judgment, for it. The B6 comparison is valid only between two model-executed arms: a `wide` whose workers
+//      are judge calls against best_of_n agent solves (index.mjs `structure.b6`); a pure-code solver is reported apart.
 import { PROPS, PROP_IDS, POLICIES, rankKey, cmpKeys } from './vocab.mjs';
 import { textIndex } from './pipeline.mjs';
-import { parseCorpus, RESEARCH_LABELS } from './verify.mjs';
-import { parseDay } from './heuristic.mjs';
+import { parseCorpus, parseDay, RESEARCH_LABELS } from './verify.mjs';
 
 const TIER = { 'Journal article': 0, Letter: 0, 'Full paper': 0, Preprint: 1, 'Conference abstract': 1, 'Lab note': 2, 'Technical memo': 2, 'Technical report': 2 };
 const ENT = '([A-Za-z][a-z]+(?: \\([A-Z]{2,3}-\\d{3,4}\\))?|[A-Z]{2,3}-\\d{3,4})';
@@ -43,7 +47,9 @@ const toCanon = (p, num, unitLabel) => {
   }
 };
 
-export function whiteboxSolve(task) {
+/** `phrasing`: 'all' (every renderer form) or 'dev-visible' (only the forms dev-split text shows at any difficulty). */
+export function whiteboxSolve(task, { phrasing = 'all' } = {}) {
+  const devVisible = phrasing === 'dev-visible';
   const q = task.inputs.question, Y = parseDay(q.tested_on_or_after);
   const policy = Object.values(POLICIES).find(x => task.prompt.includes(x.text)).id;
   const docs = parseCorpus(task.files), byTitle = new Map(docs.map(d => [d.title, d]));
@@ -94,7 +100,7 @@ export function whiteboxSolve(task) {
     if ((m = d.body.match(/made on ([^.]+?|\d{2}\.\d{2}\.\d{4})\.(?: |$)/))) test = parseDay(m[1]);
     else if ((m = d.body.match(/assayed between (.+?) and (.+?)\.(?: |$)/))) test = parseDay(m[1]);
     else if ((m = d.body.match(/week beginning (.+?)\.(?: |$)/))) test = parseDay(m[1]);
-    else if ((m = d.body.match(/run (\d+) days after the site visit of (.+?)\.(?: |$)/))) test = parseDay(m[2]) + Number(m[1]) * 86400000;
+    else if (!devVisible && (m = d.body.match(/run (\d+) days after the site visit of (.+?)\.(?: |$)/))) test = parseDay(m[2]) + Number(m[1]) * 86400000;
     else if ((m = d.body.match(/\| assayed (.+)$/m))) test = parseDay(m[1]);
     return { ...d, claims, test, tier: TIER[d.type] };
   });

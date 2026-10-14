@@ -2,13 +2,29 @@
 // reference's verify (W-BED §3.6: "panel of 3 on a 20% sample plus code unit checks"). No oracle, no world: any arm may
 // run it, and best_of_n uses the same checks to select (the B6 comparison needs one verifier for both arms).
 // Reported, not gating: its recall against the bed's controls is measured in the tests and in W-BED-R6-NOTES §6.
+//
+// Also the plan's code check (`codePlan`, `coverageIssues`): the reference's `check` made concrete. The review
+// (2026-10-14, finding 2) showed it is a complete plan by itself: the lab's names come from two one-sentence consortium
+// notices and the candidates from the header fields and the mention index, so a plan judge is optional.
 import { validate } from '../lib/contracts.mjs';
-import { outputSchema } from './score.mjs';
+import { MONTHS } from '../lib/domain.mjs';
+import { outputSchema, resolveWith } from './score.mjs';
 import { PROPS } from './vocab.mjs';
 import { textIndex } from './pipeline.mjs';
 
 export const RESEARCH_LABELS = new Set(['Journal article', 'Letter', 'Full paper', 'Preprint', 'Lab note', 'Technical memo', 'Conference abstract', 'Technical report']);
 const field = (text, name) => (text.match(new RegExp(`^${name}: (.*)$`, 'm')) ?? [])[1] ?? null;
+
+/** Day (ms since epoch, UTC) of a date in any of the corpus's printed styles; NaN otherwise. */
+export function parseDay(s) {
+  const t = String(s ?? '').trim();
+  let m;
+  if ((m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  if ((m = t.match(/^(\d{2})\.(\d{2})\.(\d{4})$/))) return Date.UTC(+m[3], +m[2] - 1, +m[1]);
+  if ((m = t.match(/^(\d{1,2}) (\w+) (\d{4})$/))) return Date.UTC(+m[3], MONTHS.indexOf(m[2]), +m[1]);
+  if ((m = t.match(/^(\w+) (\d{1,2})\w*, (\d{4})$/))) return Date.UTC(+m[3], MONTHS.indexOf(m[1]), +m[2]);
+  return NaN;
+}
 
 /** Parsed corpus: [{ id, type, title, affiliation, published, body, text }]. */
 export function parseCorpus(files) {
@@ -42,6 +58,45 @@ function prepared(task) {
   return p;
 }
 const firstAuthor = d => (d.text.match(/^Authors: ([^,\n]+)/m) ?? [])[1] ?? null;
+
+/** Every name of lab `lab` the corpus states: the full name, its abbreviation (membership notice), a former name (rename notice). */
+export function labNamesOf(docs, lab) {
+  const names = new Set([lab]);
+  for (const d of docs) {
+    const mem = d.body.match(/abbreviations used in documents: (.+)\.\s*$/);
+    if (mem) for (const part of mem[1].split('; ')) { const m = part.match(/^(.+) \(([A-Z]{2,5})\)$/); if (m && m[1] === lab) names.add(m[2]); }
+    const ren = d.body.match(/^The (.+) was renamed the (.+) on .+?\. Lab notes/);
+    if (ren && ren[2] === lab) names.add(ren[1]);
+  }
+  return names;
+}
+
+/**
+ * The plan as code, from the task text only: every compound (index code) mentioned in a research document whose
+ * Affiliation is one of the lab's names and that was published on or after the date. Recall-complete by construction
+ * (a test on or after the date is published on or after it); the workers restore precision. Sorted codes.
+ */
+export function codePlan(task) {
+  const p = prepared(task);
+  const q = task.inputs.question, cut = parseDay(q.tested_on_or_after);
+  const names = labNamesOf(p.docs, q.lab);
+  const ids = new Set(p.docs.filter(d => RESEARCH_LABELS.has(d.type) && names.has(d.affiliation) && parseDay(d.published) >= cut).map(d => d.id));
+  return p.idx.entities.filter(e => e.docs.some(id => ids.has(id))).map(e => e.code).sort();
+}
+
+/**
+ * The plan's code check (W-BED §3.6 "check: code mention index (gaps, duplicates)"): candidate strings that name no
+ * indexed compound, compounds listed twice (e.g. by name and by code), and gaps (codePlan compounds not listed).
+ */
+export function coverageIssues(task, candidates) {
+  const p = prepared(task);
+  const codes = candidates.map(s => resolveWith(p.byString, s)?.code ?? null);
+  const unknown = candidates.filter((_, i) => !codes[i]).map(String);
+  const seen = new Set(), duplicates = [];
+  for (const c of codes) if (c) { if (seen.has(c)) duplicates.push(c); seen.add(c); }
+  const gaps = codePlan(task).filter(c => !seen.has(c));
+  return { ok: !unknown.length && !duplicates.length && !gaps.length, unknown, duplicates, gaps };
+}
 const voidByTitle = (p, d) => p.replacedTitles.has(d.title) || (p.retracted.get(d.title) ?? []).some(a => a === null || a === firstAuthor(d));
 
 /** { ok, issues: [{ check, at }] }. Checks: schema; a non-empty table; requested property; entity known; one row per (entity, property);
@@ -60,7 +115,7 @@ export function unitChecks(task, output) {
   output.table.forEach((row, i) => {
     const at = `table[${i}]`;
     if (!req.has(row.property)) issues.push({ check: 'property-not-requested', at });
-    const e = p.byString.get(String(row.entity).trim().toUpperCase()) ?? p.byString.get(String(row.entity).trim().toLowerCase());
+    const e = resolveWith(p.byString, row.entity);
     if (!e) { issues.push({ check: 'entity-unknown', at }); return; }
     const key = `${e.code}|${row.property}`;
     if (seen.has(key)) issues.push({ check: 'duplicate-row', at });

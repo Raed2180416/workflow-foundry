@@ -6,9 +6,18 @@
 // kind 'relation': every stage oracle and the reduce stage's local checks pass on the control's own trace; only a
 //                  cross-item relation (Y1-Y5) and the end-to-end oracle catch it.
 // kind 'heuristic': the keyword script (heuristic.mjs), reading the task text only.
-// NECESSITY_DEFS (W-BED §2.4 item 3 and the B6 comparison): the best workflow WITHOUT the plan (a fixed entity list taken
-// from the inputs); one sequential context that runs out of budget; best_of_n at equal tokens with the same verifier;
-// and an agent with no workflow that retrieves by keyword (grep) and reads what it found.
+// NECESSITY_DEFS (the B6 comparison's size stand-ins): one sequential context that runs out of budget, and best_of_n at
+// equal tokens with the same verifier. Both fail only through the 32K-token attention hypothesis (budget.mjs); they are
+// not evidence that separates `wide` from a single context or from an agent (review 2026-10-14, finding 4).
+//
+// Review 2026-10-14 (W-BED-R6-NOTES §13). Two former necessity controls are gone from the necessity list:
+//   - 'necessity:no-plan-fixed-list' failed by construction (the generator keeps >= 2 in-scope compounds out of the lab's
+//     register entries), so it showed nothing about the plan. It stays as the bad control 'plan-register-list' (a
+//     plausible mistake). The plan is not necessary for correctness: a map over every indexed compound and a code plan
+//     both solve every dev task (index.mjs `planAblation`, verify.mjs `codePlan`; reported, finding 2).
+//   - 'no-workflow:grep-agent' grepped only the lab's full name although it read the notices that give the other names.
+//     An agent that greps every name and both strings of each compound solves every task when it reads everything it
+//     retrieves (index.mjs `grepAgentRun`; reported, finding 4). The weak version duplicated 'scope-alias-missed'.
 export const CONTROL_DEFS = [
   { name: 'empty', kind: 'stage' },
   { name: 'shuffled-or-corrupted', kind: 'stage', why: 'right compounds and properties; values scaled and sources rotated by one row' },
@@ -27,6 +36,8 @@ export const CONTROL_DEFS = [
     why: 'an organisation sharing lab X\'s stem counts as lab X (T6)' },
   { name: 'scope-code-and-name-twice', kind: 'stage', stage: 'plan', minDifficulty: 3, opts: { codeAndNameTwice: true },
     why: 'a compound named by code in one lab X document and by name in another is listed twice, so its rows appear twice' },
+  { name: 'plan-register-list', kind: 'stage', stage: 'plan', opts: { fixedList: true },
+    why: 'the register\'s compounds registered by lab X taken as the entity list, with exact workers that confirm scope; compounds lab X tested but did not register are missed (by construction >= 2 per task)' },
   // worker / resolution (synth's policy)
   { name: 'retracted-claims-used', kind: 'stage', stage: 'worker', opts: { retractedKept: true }, why: 'retraction notices ignored (claims used, document not excluded)' },
   { name: 'superseded-kept', kind: 'stage', stage: 'worker', opts: { supersededKept: true }, why: 'version 1 kept next to version 2 (and a preprint next to its journal version)' },
@@ -54,14 +65,10 @@ export const CONTROL_DEFS = [
 ];
 
 export const NECESSITY_DEFS = [
-  { name: 'necessity:no-plan-fixed-list', kind: 'necessity', opts: { fixedList: true },
-    why: 'W-BED §2.4 item 3, R6 without a plan: the reference workflow over a fixed entity list taken from the inputs (the register\'s compounds registered by lab X), with exact workers that confirm scope; compounds lab X tested but did not register are missed' },
   { name: 'sequential-single-context', kind: 'necessity', attention: 'sequential',
-    why: 'one context reads the corpus in id order; past the token budget it reads nothing more (stand-in for the size failure of a one-call or one-agent solve; sizes in the notes)' },
+    why: 'one context reads the corpus in id order; past the 32K-token budget it reads nothing more (stand-in, under the attention hypothesis, for the size failure of a one-call or one-agent solve; sizes in the notes)' },
   { name: 'best-of-n:equal-tokens', kind: 'necessity', attention: 'best-of-n',
-    why: 'N = max(3, N at equal tokens) single-context solves, each starting at a different place in the corpus, the same verifier selecting (code unit checks plus a perfect panel on a 20% sample of rows)' },
-  { name: 'no-workflow:grep-agent', kind: 'necessity', attention: 'grep', minDifficulty: 3,
-    why: 'an agent with tools and no workflow: greps the Affiliation lines for lab X\'s full name, reads those documents, greps each compound it found by the string it saw, reads those documents and every notice, and answers exactly from what it read' },
+    why: 'N = max(3, N at equal tokens, one inline call per candidate) single-context solves, each starting at a different place in the corpus, the same verifier selecting (code unit checks plus a perfect panel on a 20% sample of rows); fails only under the 32K-token attention hypothesis' },
 ];
 
 export const appliesAt = (def, difficulty) => difficulty >= (def.minDifficulty ?? 0);

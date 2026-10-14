@@ -32,6 +32,9 @@ export function setVerifier(fn) { verifier = fn; }
 
 const worldCache = new Map();
 export function buildWide(seed, split = 'dev', difficulty = 3) {
+  // The re-draw depends on the decisiveness check, so a world built without it could differ from the bed's world for the
+  // same seed (review 2026-10-14, finding 9). index.mjs installs it on import; refuse to build without it.
+  if (!verifier) throw new Error('wbed-r6: buildWide needs the decisiveness verifier; import beds/wbed/r6/index.mjs first');
   const key = JSON.stringify([seed, split, difficulty]);
   if (worldCache.has(key)) return worldCache.get(key);
   if (!LEVELS[difficulty]) throw new Error(`wbed-r6: difficulty must be ${MIN_D}..${MAX_D}, got ${difficulty}`);
@@ -352,7 +355,7 @@ function attemptWorld(spec, attempt) {
   };
   const fill = L.docs;
   // room for what is added after the background loop: errata to void documents, concerns, consortium notices
-  const reserve = (d >= 4 ? 2 : 0) + L.concerns + Math.max(1, L.alias) + 1;
+  const reserve = (d >= 4 ? 2 : 0) + L.concerns + L.outOfCorpus + Math.max(1, L.alias) + 1;
   let guard = 0;
   while (docs.length < fill - reserve && guard++ < 2000) {
     const doc = bgDoc();
@@ -373,6 +376,10 @@ function attemptWorld(spec, attempt) {
       const e = entities.find(x => x.id === doc.primary);
       const p = r.pick(nonReq);
       claim(v2, e, p, drawCanon(p), { cond: 'nonstd' });
+      // version 2 repeats what version 1 quotes, so it mentions every compound version 1 mentions: the evidence that
+      // version 1 is void travels with each compound, and a worker that reads only its compound's documents and the
+      // notices sees it (review 2026-10-14, finding 3). No draw: the world's random stream is unchanged.
+      for (const q of doc.quotes) { v2.quotes.push({ ...q }); mention(v2, entities.find(x => x.id === q.e), doc.styles[q.e]); }
     }
   }
   // d4+: errata to void documents (they change nothing)
@@ -390,6 +397,17 @@ function attemptWorld(spec, attempt) {
   for (let k = 0; k < L.concerns; k++) {
     const t = r.pick(docs.filter(x => KINDS[x.kind].research && x.claims.length && x.pubDay < HI - 20 && x.role !== 'near-void'));
     if (t && !notice('concern', t.key, { notice: {} })) return reject('days');
+  }
+  // d4+: retractions of out-of-corpus articles that share the title of a surviving background or losing research document
+  // (they void nothing). Without them every out-of-corpus retraction names a cell winner, a construction prior a solver
+  // could learn (review 2026-10-14, finding 7).
+  const isVoidTarget = key => docs.some(n => (n.kind === 'retraction' && (n.target === key || n.notice?.titleOf === key)) || n.supersedes === key);
+  for (let k = 0; k < L.outOfCorpus; k++) {
+    const t = r.pick(docs.filter(x => KINDS[x.kind].research && (x.role === 'bg' || x.role === 'loser') && x.pubDay < HI - 20 && !isVoidTarget(x.key)));
+    if (!t) continue;
+    const pubDay = fresh(t.pubDay + 7, HI);
+    if (pubDay == null) return reject('days');
+    addDoc({ kind: 'retraction', pubDay, lab: null, target: null, role: 'notice', venue: t.venue, notice: { reason: r.int(0, 3), titleOf: t.key, outOfCorpus: true } });
   }
   // consortium notices: membership list (d >= 3), the rename (d >= 4), a meeting notice (d2 filler)
   const office = (body, day) => addDoc({ kind: 'office', pubDay: fresh(day, day + 30), lab: null, role: 'office', venue: 'Consortium office', office: body, authors: ['Consortium office'] });
@@ -421,6 +439,11 @@ function attemptWorld(spec, attempt) {
   }
   // the code-only compound keeps its code-only establishing documents
   for (const e of inScope.filter(x => x.sub === 'codeonly')) for (const doc of docs.filter(x => x.role === 'establish' && x.primary === e.id)) doc.styles[e.id] = 'code';
+  // separability (W-BED §3.6): every later version mentions every compound the version it replaces mentions
+  for (const v2 of docs.filter(x => x.supersedes)) {
+    const v1 = docs.find(x => x.key === v2.supersedes);
+    if (Object.keys(v1.styles).some(id => !v2.styles[id])) return reject('later-version-mentions');
+  }
 
   // ---- ids in random order
   r.shuffle(docs).forEach((doc, i) => { doc.id = `D${String(i + 1).padStart(3, '0')}`; });

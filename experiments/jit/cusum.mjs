@@ -534,6 +534,26 @@ export function replayFrozen(nvUnits, model, h, v) {
   });
 }
 
+// ------------------------------------------------------------------------------------------------ input-drift diagnostic
+// Post hoc and in-sample (profile.mjs PARAMS were set on these same dev streams): the frozen profile used directly as a
+// detector, not as a risk input. A task is novel when its frozen score > 1 (checkProfile's verdict); the rule alarms at k
+// consecutive novel tasks from idx >= warmup and restarts after an alarm. It sees inputs only, so it fires on drift whether
+// or not the drift hurts a given workflow. Reported beside the decision, never used for it.
+export function inputDetector(units, { ks = [1, 2], warmup = DESIGN.warmup } = {}) {
+  const out = [];
+  for (const ex of [...new Set(units.map(u => u.experiment))]) {
+    const us = units.filter(u => u.experiment === ex), arm = us[0].arm, rows = us.filter(u => u.arm === arm && u.idx >= warmup).sort((a, b) => a.idx - b.idx);
+    const D = rows[0]?.driftIdx ?? null, lastIdx = rows.at(-1)?.idx ?? null, novel = rows.filter(u => (u.novFrozen ?? 0) > 1).map(u => u.idx);
+    for (const k of ks) {
+      const alarms = [];
+      let run = 0;
+      for (const u of rows) { run = (u.novFrozen ?? 0) > 1 ? run + 1 : 0; if (run >= k) { alarms.push(u.idx); run = 0; } }
+      out.push({ experiment: ex, k, novel, alarms, ...summarizeAlarms(alarms, { driftIdx: D, firstIdx: rows[0]?.idx ?? null, lastIdx }) });
+    }
+  }
+  return out;
+}
+
 // ------------------------------------------------------------------------------------------------ the analysis
 export const VARIANTS = Object.freeze([
   { name: 'primary', view: 'system', sweep: true },
@@ -591,7 +611,7 @@ export async function analyze({ runsDir = DEFAULT_RUNS, nversionFile = DEFAULT_N
       systemFitRows: rowsBy(u => isFitRow(u, 'system')), oracleFitRows: rowsBy(u => isFitRow(u, 'oracle')),
       drift: exps.map(e => ({ experiment: e.experiment, driftIdx: e.driftIdx, from: `d${e.baseDifficulty}`, to: `d${e.driftDifficulty}` })), tasks: count, taskProblems: problems,
       nearBand: 'not journaled (no P16 decisions in these streams); the input is absent' },
-    asRunCheck, units, results, frozen,
+    asRunCheck, units, results, frozen, inputDetector: inputDetector(units),
   };
 }
 
@@ -634,6 +654,10 @@ export function renderTables(res) {
     L.push('', `## Frozen versions (N-version probe), ${f.name} model, h ${f.h.toFixed(3)} (${f.note})`, '', '| solver | monitored | deopts | wrong compiled | events | CUSUM alarms | CUSUM false | CUSUM delay | max S | count alarms | count false | count delay |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
     for (const s of f.streams) L.push(`| ${s.solver} | ${s.monitored} | ${s.deopts} | ${s.wrong} | ${s.events} | ${fmtAlarms(s.cusum.alarms)} | ${s.cusum.falseAlarms} | ${fmtDelay(s.cusum)} | ${s.cusum.maxS} | ${fmtAlarms(s.count.alarms)} | ${s.count.falseAlarms} | ${fmtDelay(s.count)} |`);
   }
+  if (res.inputDetector) {
+    L.push('', '## Input-drift diagnostic: the frozen profile as a detector (post hoc, in-sample; not part of the decision)', '', '| stream | k novel in a row | novel tasks (idx >= 3) | alarms | false | delay |', '|---|---|---|---|---|---|');
+    for (const x of res.inputDetector) L.push(`| ${x.experiment} | ${x.k} | ${fmtAlarms(x.novel)} | ${fmtAlarms(x.alarms)} | ${x.falseAlarms} | ${fmtDelay(x)} |`);
+  }
   L.push('', '## Decision detail (primary, oracle and the matched-ARL0 diagnostics)', '');
   for (const r of res.results.filter(x => ['primary', 'oracle'].includes(x.name) || x.variant.arl0 === 'matchCount')) L.push(`- **${r.name}**: CUSUM ${r.decision.cusum.adopt ? 'meets' : 'fails'} the rule (detection ${r.decision.cusum.detection.met}/${r.decision.cusum.detection.streamsReachingDrift}${r.decision.cusum.detection.failing.length ? `; failing ${r.decision.cusum.detection.failing.join(', ')}` : ''}; false alarms ≤ 1 in ${r.decision.cusum.falseAlarms.met}/${r.decision.cusum.falseAlarms.streams}${r.decision.cusum.falseAlarms.failing.length ? `; failing ${r.decision.cusum.falseAlarms.failing.join(', ')}` : ''}).${r.decision.count ? ` Count rule (deopts; the same in both views): detection ${r.decision.count.detection.met}/${r.decision.count.detection.streamsReachingDrift}${r.decision.count.detection.failing.length ? ` (failing ${r.decision.count.detection.failing.join(', ')})` : ''}; false alarms ≤ 1 in ${r.decision.count.falseAlarms.met}/${r.decision.count.falseAlarms.streams}${r.decision.count.falseAlarms.failing.length ? ` (failing ${r.decision.count.falseAlarms.failing.join(', ')})` : ''}.` : ''}`);
   return L.join('\n') + '\n';
@@ -645,7 +669,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const res = await analyze({ runsDir: path.resolve(arg('runs', DEFAULT_RUNS)), nversionFile: path.resolve(arg('nversion', DEFAULT_NVERSION)), sim });
   const out = path.resolve(arg('out', DEFAULT_OUT));
   mkdirSync(out, { recursive: true });
-  const slim = { ...res, units: res.units.map(({ asRun, ...u }) => u) };
+  // Chart paths are kept for the primary and oracle variants only (the others repeat them); units drop the as-run state.
+  const keepPath = r => ['primary', 'oracle'].includes(r.name);
+  const slimStream = (r, st) => (keepPath(r) ? st : { ...st, cusum: { ...st.cusum, path: undefined } });
+  const slim = { ...res, units: res.units.map(({ asRun, ...u }) => u),
+    results: res.results.map(r => ({ ...r, streams: undefined, parts: r.parts.map(pt => ({ ...pt, streams: pt.streams.map(st => slimStream(r, st)) })) })) };
   writeFileSync(path.join(out, 'cusum.json'), JSON.stringify(slim, null, 1) + '\n');
   writeFileSync(path.join(out, 'tables.generated.md'), renderTables(res));
   const p = res.results.find(r => r.name === 'primary');

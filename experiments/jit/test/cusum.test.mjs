@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   raWeight, runCusum, countRule, logisticFit, predict, sigmoid, auc, mulberry32, makeProcess, simulateRecords, arlAt, calibrateH, calibrateFromSim,
-  countRuleArl, featuresOf, eventOf, isMonitored, isFitRow, summarizeAlarms, decide, analyze, DESIGN, VARIANTS,
+  countRuleArl, featuresOf, eventOf, isMonitored, isFitRow, summarizeAlarms, decide, analyze, inputDetector, DESIGN, VARIANTS,
 } from '../cusum.mjs';
 
 const close = (a, b, eps, msg) => assert.ok(Math.abs(a - b) <= eps, `${msg ?? ''}: ${a} vs ${b}`);
@@ -139,6 +139,16 @@ test('summarizeAlarms and decide apply the section rule (<= 4 after the drift in
   assert.equal(decide([mk(summarizeAlarms([20], { driftIdx: 16, firstIdx: 3, lastIdx: 23 }))], 'cusum').adopt, true, 'delay 4');
 });
 
+test('inputDetector: k novel tasks in a row from idx >= warmup, restarting after an alarm', () => {
+  const scores = [3, 3, 3, 2, 0.5, 0.5, 1.4, 0.5, 2, 2, 2];   // idx 0-10, drift at 8
+  const units = scores.map((s, idx) => ({ experiment: 'x', arm: 'a', idx, novFrozen: s, driftIdx: 8 }));
+  const [k1, k2] = inputDetector(units, { ks: [1, 2] });
+  assert.deepEqual(k1.novel, [3, 6, 8, 9, 10]);
+  assert.deepEqual([k1.falseAlarms, k1.delay], [2, 0]);
+  assert.deepEqual(k2.alarms, [9]);
+  assert.deepEqual([k2.falseAlarms, k2.delay], [0, 1]);
+});
+
 test('committed streams: 260 rows, drift at idx 16, the count rule replays to stateAfter, and the section verdict', async () => {
   const res = await analyze({ sim: { reps: 400, seed: 9, stepsPerTarget: 10 }, variants: VARIANTS.filter(v => ['primary', 'oracle'].includes(v.name)) });
   assert.equal(res.data.rows, 260);
@@ -165,5 +175,8 @@ test('committed streams: 260 rows, drift at idx 16, the count rule replays to st
   const o = res.results.find(r => r.name === 'oracle');
   assert.equal(o.decision.cusum.detection.streamsReachingDrift, 5, 'the static arm reaches the drift in the oracle view');
   assert.equal(res.frozen.length, 2);
+  // Post hoc input diagnostic: two novel tasks in a row alarm one task after the drift in both families, with no false alarm.
+  assert.deepEqual(res.inputDetector.filter(x => x.k === 2).map(x => [x.falseAlarms, x.delay]), [[0, 1], [0, 1]]);
+  assert.deepEqual(res.inputDetector.filter(x => x.k === 1).map(x => x.falseAlarms), [0, 2]);
   assert.deepEqual(res.frozen[0].streams.map(s => s.solver).sort(), ['haikuV1', 'opusV1', 'opusV2', 'sonnetV1']);
 });

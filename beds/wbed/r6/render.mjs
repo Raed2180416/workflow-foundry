@@ -176,11 +176,13 @@ export function renderWorld(world, r) {
   const files = {};
   const tokens = new Map();
   for (const doc of docs) { const t = texts.get(doc.key); files[`corpus/${doc.id}.txt`] = t; tokens.set(doc.key, estimateTokens(t)); }
-  const kindsPresent = new Set(docs.map(d => d.kind));
   const yText = isoDay(world.Y);
   const propsLine = world.props.map(p => { const P = PROPS[p]; return `- ${p} (${P.label}): standard condition ${P.std}; report ${P.canonUnit ? `in ${P.canonUnit}` : 'the plain number'} to ${P.dec} decimal${P.dec === 1 ? '' : 's'}.`; });
-  const research = ['journal publications', 'preprints', 'lab notes', ...(kindsPresent.has('conference') ? ['conference abstracts'] : []), ...(kindsPresent.has('techreport') ? ['technical reports'] : [])];
-  const novelTier = [...(kindsPresent.has('conference') ? ['Conference abstracts rank with preprints.'] : []), ...(kindsPresent.has('techreport') ? ['Technical reports rank with lab notes.'] : [])].join(' ');
+  // At d5 the prompt names both held-out-tier kinds on both splits, so the rules do not reveal the split (review
+  // 2026-10-14, finding 7). The corpus itself still shows the tier by the kinds it contains.
+  const novel = world.tier !== 'dev';
+  const research = ['journal publications', 'preprints', 'lab notes', ...(novel ? ['conference abstracts', 'technical reports'] : [])];
+  const novelTier = novel ? 'Conference abstracts rank with preprints. Technical reports rank with lab notes.' : '';
   const prompt = [
     `You are given a research consortium's document corpus: ${docs.length} documents under files/corpus/, one text file per document, named by its id. inputs.register is the consortium's compound register as of ${isoDay(world.snapshot)}.`,
     '',

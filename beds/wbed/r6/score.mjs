@@ -1,8 +1,8 @@
 // Output schema and end-to-end scorer for W-bed R6 (W-BED §3.6: synth's exact accepted-table oracle on the
 // discovered entity set; missing or extra rows fail).
 //
-// Pass rule. Exactly one row per (in-scope compound, requested property), the compound named by its code or its name
-// (case and surrounding spaces ignored); value exact at the property's stated precision (round(value * 10^dec) equals
+// Pass rule. Exactly one row per (in-scope compound, requested property), the compound named by its code, its name or
+// "name (CODE)" (case and surrounding spaces ignored); value exact at the property's stated precision (round(value * 10^dec) equals
 // the true integer); source_doc_id equal to the winning document's id. No row for any other compound or property, no
 // duplicate row. excluded_doc_ids equal, as a set, to the void research documents that mention an in-scope compound.
 // Details carry counts only (synth 3.0.0 rule): the true values, sources and compound list are never in `details`.
@@ -21,6 +21,22 @@ export const outputSchema = {
   },
 };
 
+const PAIR_RE = /^(.+?)\s*\(\s*([A-Za-z]{2,3}-\d{3,4})\s*\)$/;
+/**
+ * Resolve an entity string through `lookup` (upper-cased code or lower-cased name -> value): the code, the name, or
+ * "name (CODE)" when both halves name the same compound (the form the corpus itself uses; review 2026-10-14, finding 8).
+ * A pair whose halves name different compounds resolves to nothing.
+ */
+export function resolveWith(lookup, s) {
+  const t = String(s ?? '').trim();
+  const direct = lookup.get(t.toUpperCase()) ?? lookup.get(t.toLowerCase());
+  if (direct !== undefined) return direct;
+  const m = t.match(PAIR_RE);
+  if (!m) return null;
+  const a = lookup.get(m[2].toUpperCase()), b = lookup.get(m[1].trim().toLowerCase());
+  return a !== undefined && a === b ? a : null;
+}
+
 function snapshot(output) {
   try {
     if (output && typeof output === 'object' && ((Array.isArray(output.table) && output.table.length > LIMITS.rows) || (Array.isArray(output.excluded_doc_ids) && output.excluded_doc_ids.length > LIMITS.excluded))) return { oversized: true };
@@ -38,7 +54,7 @@ export function scoreTable(truth, raw) {
   if (errors.length) return { pass: false, score: 0, details: { reason: 'schema-invalid', errors: errors.slice(0, 8) } };
   const byString = new Map();
   for (const e of truth.entities) { byString.set(e.code.toUpperCase(), e.code); byString.set(e.name.toLowerCase(), e.code); }
-  const resolve = s => { const t = String(s).trim(); return byString.get(t.toUpperCase()) ?? byString.get(t.toLowerCase()) ?? null; };
+  const resolve = s => resolveWith(byString, s);
   const seen = new Set();
   let correct = 0, extraRows = 0, dupRows = 0, valueWrong = 0, sourceWrong = 0, unknownEntity = 0;
   const extraEntities = new Set();
