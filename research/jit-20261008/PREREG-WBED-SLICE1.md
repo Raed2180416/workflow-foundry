@@ -5,7 +5,7 @@ call of any kind (no `claude` CLI, no Jev, no paid stream), `beds/sealed/` not r
 ATTACK-20261014 §0, §3 (M1, M2, M10), §4, §5; PROOF-LEDGER §B and §K; design/W-BED.md (all); design/FLOW-V3.md;
 design/FLOW-V3-SLICE2.md (§1–§17); PAUSE-20261009 §4–§6; SEED-LEDGER.json; ENGINE-FREEZE §5–§6; PREREG-stream §0;
 analysis/verify-economics/REPORT.md (at `722c4f0`); DEV-NOTES D22, D25, D27, D30. Paths are relative to the repository root.
-Every number tagged **[M]** was computed for this draft at $0 by the scratch scripts listed in Appendix B (not committed).
+Every number tagged **[M]** was computed at $0 by the scripts listed in Appendix B (some committed with the revision below).
 Tags: **[M]** measured here; **[code]** read in code; **[doc]** a claim made by a repo document; **[I]** inference; **[U]**
 unverified.*
 
@@ -79,8 +79,8 @@ makes no comparative claim.*
 
 ## 1. Scope
 
-**In the slice:** R1 (and R3 under the gate), arms (a), (e), (c), (d), K = 2, the B11 attack as a paid pre-step, the
-reference freeze, and the (e) builds.
+**In the slice:** R1 (and R3 under the gate), arms (a), (e), (c), (d), K = 2, the B11 attack as a paid pre-step, a
+report-only live-judge measurement of the frozen references, and the (e) builds.
 
 **Not in the slice, and why:**
 - **R2** is skipped (ATTACK §4.2 days 6–7 name R1 and R3). **R4** waits for R3: its subsidiaries call the R1 and R3
@@ -160,8 +160,8 @@ held-out seeds.
    1.0.0 worlds at held-out seeds 8201, 8202, 8203 and 8301 to check quote precision. It read only `w.quotes` (the FX quote
    table), saved nothing, and no arm, builder or reference author saw anything. The quotes it read are the 1.0.0 ones, which
    1.1.0 changed. The seeds stay in the plan: no task text, label or outcome was read, and dropping them would move the
-   stream's seed blocks for no gain. Any later generation of a W-bed task at a held-out seed before F2 voids that seed and
-   is recorded.
+   stream's seed blocks for no gain. Any later generation of a W-bed task at a held-out seed before F2 is recorded at F2,
+   and a seed whose task text, labels or outcome anyone read is replaced from block C by an amendment.
 4. The reference-author tables contain the string `QP-8301` (`beds/wbed/references/author/fixture-answers.json:541`). It is
    a document id in a dev fixture, not a seed.
 
@@ -177,7 +177,8 @@ attack, no model call). All of that is development use of dev seeds, and none of
   (B), as in Appendix A. This holds if P0 admits d3 and d4 (§4.1). Otherwise the §4.1 shape rule applies.
 - **R3:** shape d3/d4 or d4/d5, chosen by the §4.1 shape rule from P0's R3 attack before any R1 outcome is read.
 - **Second half:** idx 12–23 (12 tasks: 4 at the first difficulty, 8 at the drift difficulty).
-- **Steady-state window:** idx 3–23 (21 tasks; warmup 3) for every arm, so that pairs match.
+- **Steady-state window:** idx 3–23 (21 tasks; warmup 3) for every arm, so that pairs match; a pair's tasks are the rows
+  both arms have (§7.1 V).
 
 ### 2.4 Ledger edits at launch (TBD T9)
 
@@ -306,8 +307,8 @@ Appendix A shows the full config. Each decision below gives its reason.
 (379–390) × effort `none` and `medium` × one `claude-haiku-5-5` call with the task inline (B0-call system prompt), through
 the in-repo route: `b0Call` arms in `runExperiment` with a journaled `createModelPort` and `envFaultRule: true` (driver
 output) [code]. The driver records each bed's `family.version`; **an R3 attack row on `wbed-r3` 1.0.0 is void**, because
-that oracle fails every answer on totals (§2.1). The R3 sizes below were taken on 1.0.0; 1.1.0 changes only the printed
-quote digits, so they stand.
+that oracle fails every answer on totals (§2.1). The R3 sizes were first taken on 1.0.0; the dry run on 1.1.0 gives the
+same means (12,810 / 39,165 / 63,163 tokens at d3 / d4 / d5) [M], so the costs below stand.
 
 | rung | difficulties | calls | token-priced cost | with the claude-cli overhead | cap |
 |---|---|---|---|---|---|
@@ -528,7 +529,7 @@ decisions on 6–21% of trials at σ_L = 0.5 and 25–35% at σ_L = 1.0, against
 reproduced here). The same null through the committed rule (`node …/crw.mjs oc`, 1,000 trials per cell, 300 bootstrap
 draws, σ_task 0.5 / 0.75) [M]:
 
-| lineage-built arms | true σ_L | task-only decisions (read as process claims, all false) | of those, wrong about the realized builds | process verdict (floor 0.5) decides |
+| lineage-built arms | true σ_L | task-only CI decides (all false, read as process claims) | task-only CI decides with the wrong sign for the realized builds | process verdict (floor 0.5) decides (all false) |
 |---|---|---|---|---|
 | 1 | 0 | 0.0% / 0.2% | 0.0% / 0.2% | 0.0% / 0.0% |
 | 1 | 0.25 | 3.6% / 1.1% | 0.0% / 0.0% | 0.0% / 0.0% |
@@ -537,12 +538,11 @@ draws, σ_task 0.5 / 0.75) [M]:
 | 2 | 0.5 | 23.1% / 13.6% | 0.0% / 0.0% | 0.6% / 0.3% |
 | 2 | 1.0 | 36.8% / 28.4% | 0.0% / 0.0% | 11.2% / 11.3% |
 
-So the task-only CI is right about the builds (wrong sign ≤ 0.2%), and the process verdict holds its level up to the
-declared floor and is anti-conservative beyond it. That residual is declared, not fixed: K = 2 cannot test it.
+Rates are shares of all trials. So the task-only CI is right about the builds (wrong sign ≤ 0.2%), and the process
+verdict holds its level up to the declared floor and is anti-conservative beyond it. That residual is declared, not fixed: K = 2 cannot test it.
 
 **Why σ_L = 0.5** [M, from committed rows; `node …/crw.mjs anchors`, pinned by `crw.test.mjs`]. The steady-state log
-cost ratio of a JIT arm
-against the Haiku agent, for the same arm on the same family in two runs: records H/H 0.43 (dev 201–224) and 0.65 (R0,
+cost ratio of a JIT arm against the Haiku agent, for the same arm on the same family in two runs: records H/H 0.43 (dev 201–224) and 0.65 (R0,
 225–236), a difference of 0.23; kinetics O/H 1.52 (dev) and 2.31 (R0-K), a difference of 0.79. Across three compilers on
 the same records seeds the log ratios span 0.39–0.55, and on kinetics 1.49–1.53. Each difference also holds task noise and
 config changes, so it overstates σ_L, and a difference of d between two lineages corresponds to σ_L ≈ d/√2: about 0.16
@@ -712,7 +712,8 @@ at some difficulty of every allowed shape. The rung is dropped before any arm ru
 - **Rule** (PAUSE §6). H/H's second-half success (idx 12–23) is more than 10 points below the reference's in **both**
   lineages, which means at least 2 of 12 tasks in each.
 - **Pooled reading.** W-BED §3.1's "over both streams" reading (at least 3 of 24 pooled) is reported beside it.
-- **Measured behaviour** [M], from independent binomials (an upper bound on false kills under positive pairing):
+- **Measured behaviour** [M], from independent binomials (an upper bound on false kills under positive pairing;
+  `crw.mjs kill`, pinned by `crw.test.mjs`):
 
   | true gap | per-lineage rule fires (pRef 0.6 / 0.8 / 0.9) | pooled reading fires |
   |---|---|---|
@@ -941,6 +942,38 @@ Everything below is the orchestrator's to run with the owner's token. Nothing he
 7. **Conditional on §9.2:** R3 builds, smoke and streams: cap $121 (d3/d4) or $149 (d4/d5). This covers B3.
 
 Later, outside the slice: R4 (H3), R2, (b), (e′), (c′), and K = 4 on held-out blocks C and D.
+
+## 15. Review round (2026-10-14): findings, checks and outcomes
+
+The review read M1 (`ab256d5`), the arm (c) references (`f237e0f`) and this draft (`d5d9902`) at $0 and reported 2 P0, 4
+P1 and 10 P2. Each finding was checked here before acting on it: by re-running the reviewer's script where there was one,
+by reading the cited code, or by a test that fails on the pre-fix tree. Findings in other owners' files were left to them
+and are reported with their status at `928e27fa`. Nothing was rejected outright. Where a finding offered several fixes,
+the one taken and the reasons for the others are given.
+
+| # | rating | finding | check here | outcome |
+|---|---|---|---|---|
+| 1 | P0 | The R3 oracle cannot be passed from the task (rates stored at 6 decimals, printed at 4), the draft never gates on it, and the R3 attack can never drop R3 | FROZEN.json `bedFinding`; bed tests at `928e27fa`; the frozen reference with world readings on 379–390 d3–d5 passes R3 36/36 on 1.1.0 | **Fixed.** Bed: `wbed-r3` 1.1.0 by its owner (`8fcf344`, with regression tests). Here: §2.1 names 1.1.0; an attack row on 1.0.0 is void (§4.1); F1 checklist items 1–2 (§2.6); R3 gate item 5 (§9.2). The reviewer's interim "do not run the R3 attack" is moot on 1.1.0 |
+| 2 | P0 | A `static:` arm runs flow.mjs v1, so arm (c) silently becomes a Haiku agent | `stream.mjs` read; the reviewer and the first draft's probe agree | **Fixed in code** (T2): `static@v3:`; `experiments/jit/test/static-flow.test.mjs`, 4 tests, all failing on the pre-fix tree; the JIT suite 359 tests, 358 pass, 1 todo, pins green (§8.1 item 1) |
+| 3 | P1 | M1's "upper bound 0%" counted a partly measured relation as "not caught"; PROOF-LEDGER K4's "N on (i)" is unsupported | `eval-invariance.mjs` `rowFlags` at `928e27fa`: a relation is pending when any variant is unmeasured | **Owned by M1** and fixed there (K4 now "open on (i) and (ii)"). Here: §3.2 item 10 no longer cites the withdrawn N |
+| 4 | P1 | CR-W is anti-conservative at K = 2: unseen lineage variance gives 6–21% (σ_L 0.5) and 25–35% (σ_L 1.0) false decisions against 1.67% | the reviewer's `crw-sim.mjs` re-run: 21.0 / 6.0% and 34.5 / 25.5%; the committed rule's own null table in §7.1 | **Fixed** (§7.1): two verdicts (conditional on the realized builds; process with a declared floor σ_L = 0.5 per lineage-built arm, anchored on committed runs), restated power (conditional ≥ 1.87; process ≥ 3.69 or ≥ 5.67). In code with tests: `analysis/wbed-s1/crw.mjs`, `crw.test.mjs`. The third option, "decide only at K ≥ 4", was not taken: K = 4 is a later owner decision, and a labelled conditional verdict is worth having |
+| 5 | P1 | P1's "validation" with a revision is not one: the revision is spent, 301–312 were seen, R1's reader passed through an intermediate state, and the draft called FROZEN.json missing | FROZEN.json `protocol` and `authorship`; `git show` of the reference's history (three reader states) | **Fixed** (§4.2): P1 is a report-only live-judge measurement on unseen dev 313–324 with no revision; the $0 out-of-sample check the reviewer asked for exists (the references' owner, policy `world`: R1 34/36, R3 36/36); the revision window and the authoring route are recorded. **Deferred to the references' owner:** the intermediate state `b1135cd` in FROZEN.json (T4) |
+| 6 | P1 | Nothing in F1 checks the bed, the unvalidated path or T7 | — | **Fixed** (§2.6): the F1 checklist, with the oracle-health check measured (R1 36/36, R3 36/36 on 379–390) and T7 now blocking F1 |
+| 7 | P2 | M1 distribution labels: kinetics `shuffle-documents` and records/R1 `duplicate-row` mislabelled `in` | PROOF-LEDGER K4 "Review fixes" (2) | **Owned by M1**, fixed there (labels audited by `beds/lib/metamorphic.test.mjs`). M1 is off in this slice |
+| 8 | P2 | M1 relation checks stricter than the oracles; the synthetic panel counts a crash as a flag | `beds/records/invariance.mjs:42` (`compareRecords`) still compares the fields exactly at `928e27fa` | **Owned by M1**, open there at `928e27fa`. M1 is off in this slice, so nothing here depends on it |
+| 9 | P2 | Any spend stop voids all three cost decisions; (d)'s $6 and (a)'s $20 are tight | `stream.mjs` `begin` (an arm stops starting tasks above its cap) and `worstCase` | **Fixed:** V on the intersection with ≥ 75% per stream (§7.1, tested); (d) $10, (a) $24 as a declared compile allowance (§10). The "bound (a) by compile count" option needs an engine knob that changes (a)'s semantics: left to the owner (T22) |
+| 10 | P2 | A cap raise between streams A and B cannot be shown to be outcome-blind | — | **Fixed:** no raises once P5 starts (§9.4) |
+| 11 | P2 | `wbed-r1` embeds the records world at the same seed; the ledger rows do not list `records` | `beds/wbed/r1/world.mjs:51` → `beds/wbed/lib/domain.mjs:10,14` → `beds/records/world.mjs` `buildWorld`; records test ≥ 7200 is in `test-clean` | **Recorded** (§2.2, §11 item 8). **Deferred to T9:** `records` is listed in the R1 `used` rows at the launch commit, where the ledger's own rule puts ledger edits |
+| 12 | P2 | (a) as `library: iso` sends every compiled run through paths never run paid, for R4's benefit only | FLOW-V3-SLICE2 §17 T1 (the stream profile is `learnProfile` on the stream's inputs); the drafts validate without `library` | **Fixed:** (a) runs without `library` (§3.2 item 6); R4's seed is registered later at $0 (T18). The alternative "widen P4" was not taken: it costs more and still covers one stream's paths |
+| 13 | P2 | (e)'s basis is not comparable: with `scoreChecks: 0` the prompt says "at most 0 score checks" and `tools/score.mjs` ships | `experiments/c0/prompts.mjs:12`, `construct.mjs:103`, `:108` | **Recorded** (§3.2 item 7, §4.3, §11 item 14): (e) is "B1 with scoring disabled", a new variant; its score log is a build-record item. **Deferred:** a prompt without the score lines is a kit change (T23) |
+| 14 | P2 | The reference is template-aware (hard-coded note sentences, the namesake design) and its header contradicts its code | `r1-reference.mjs:12–13`, `:443–452`, `:614–617`; `beds/records/render.mjs:385–406`, `:550–567` | **Recorded** (§11 items 2–3, deviation 12). The header is in the frozen bytes and is not edited; the refs README describes the code |
+| 15 | P2 | PROOF-LEDGER K7 still says construction cost is "decided at K = 2" | — | **Fixed** in PROOF-LEDGER K7 (this commit) |
+| 16 | P2 | The new defaults might move existing arm hashes | the pins (`V1_HASHES`, `slice2-review` T5) green after T2 | **No change needed**, as the reviewer found |
+| — | disclosure | The reviewer's probe built R3 worlds at held-out 8201–8203 and 8301 (quotes only) | — | **Recorded** for F1 (§2.2 check 3); the seeds stay |
+
+**Counts.** Fixed here: 2, 4, 5 (in part), 6, 9 (in part), 10, 12, 15, and 1 (this document's part). Fixed by their owners:
+1 (the bed), 3, 7. Recorded: 11, 13, 14. Deferred, with reasons: 5's FROZEN.json item (T4), 9's compile-count knob
+(T22), 11's ledger edit (T9), 13's kit change (T23). Open with M1's owner: 8. No change needed: 16.
 
 ## Appendix A. Draft configuration (R1, lineage A), validated at $0
 
