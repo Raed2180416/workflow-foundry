@@ -17,18 +17,28 @@
 //   status   for 'unknown': the result of status(key): 'committed' | 'not-found' | 'pending'
 //   seq      commit sequence number; when given for every committed unit, compensation follows reverse seq
 //            (parallel branches); when given for none, reverse (step, item) order; a mix is refused.
+// Abort: planSaga(saga, observed, { abort: { reason } }) plans an abort decided outside the steps (a customer cancel
+//   inside its window, a lost timer race, a timeout policy that gives up on a step).
 // Readings (MR11, E-BED Errata 17): the compensation set is the committed units as observed by status query, so a unit
 // whose outcome was unknown and whose query shows 'committed' is compensated; an unknown with no answer (or 'pending')
 // blocks the plan (action 'query-status'), never guessed. 'not-found' after 'unknown' means not applied: the step may
-// be re-issued with the same key (action 'continue'). A failure at or after a committed pivot is retried forward.
+// be re-issued with the same key (action 'continue'). A failure after a committed pivot is retried forward; an abort
+// after a committed pivot is refused (action 'abort-refused'). Every committed unit is compensated, wherever it sits
+// (parallel branches included), except units of steps with no undo, which are listed in `skipped`.
 import { fail } from './errors.mjs';
 
 const KINDS = new Set(['compensable', 'pivot', 'retriable']);
 const OUTCOMES = new Set(['ok', 'error', 'unknown', 'not-started']);
 const enc = s => encodeURIComponent(String(s));
 
-/** Deterministic idempotency key of one logical effect: distinct (saga, step, item, phase) give distinct keys. */
-export const sagaKey = (sagaId, stepId, itemId, phase) => `${enc(sagaId)}:${enc(stepId)}${itemId === null || itemId === undefined ? '' : `:${enc(itemId)}`}:${phase}`;
+/**
+ * Deterministic idempotency key of one logical effect: distinct (saga, step, item, phase) give distinct keys (every
+ * part is percent-encoded, so ':' only separates; phase is 'do' or 'undo').
+ */
+export function sagaKey(sagaId, stepId, itemId, phase) {
+  if (phase !== 'do' && phase !== 'undo') fail('SAGA_INVALID', `key phase must be do or undo, not ${JSON.stringify(phase)}`);
+  return `${enc(sagaId)}:${enc(stepId)}${itemId === null || itemId === undefined ? '' : `:${enc(itemId)}`}:${phase}`;
+}
 
 /** Validate a saga definition. */
 export function defineSaga(saga) {
@@ -85,11 +95,13 @@ const subjectOf = (step, item) => ({ ...(step.subject ?? {}), ...(item !== null 
  *   { action: 'query-status', units: [{ step, item, key }] }
  *   { action: 'complete' }
  *   { action: 'continue', step, units: [{ step, item, key }] }          next forward step (re-issue with the same key)
- *   { action: 'retry-forward', failure, units: [...] }                   failure at or after a committed pivot
- *   { action: 'compensate', failure, compensations: [{ step, item, system, op, key, after, subject }], skipped }
- * `failure` is the first failed unit { step, item }. Keys are sagaKey(saga, step, item, 'do' | 'undo').
+ *   { action: 'retry-forward', failure, units: [...] }                   failure after a committed pivot
+ *   { action: 'abort-refused', reason: 'pivot-committed' }
+ *   { action: 'compensate', failure, abort, compensations: [{ step, item, system, op, key, after, subject }], skipped }
+ * `failure` is the first failed unit { step, item } (null for an abort with no failure). Keys are
+ * sagaKey(saga, step, item, 'do' | 'undo').
  */
-export function planSaga(sagaDef, observed) {
+export function planSaga(sagaDef, observed, { abort = null } = {}) {
   const saga = defineSaga(sagaDef);
   const units = unitsOf(saga, observed);
   const ref = u => ({ step: u.step.id, item: u.item, key: sagaKey(saga.id, u.step.id, u.item, 'do') });
@@ -98,13 +110,14 @@ export function planSaga(sagaDef, observed) {
   const failed = units.find(u => u.state === 'failed');
   const pivotIndex = saga.steps.findIndex(s => s.kind === 'pivot');
   const pivotCommitted = pivotIndex >= 0 && units.filter(u => u.stepIndex === pivotIndex).every(u => u.state === 'committed');
-  if (!failed) {
+  if (abort && pivotCommitted) return { action: 'abort-refused', reason: 'pivot-committed' };
+  if (!failed && !abort) {
     if (units.every(u => u.state === 'committed')) return { action: 'complete' };
     const next = units.find(u => u.state !== 'committed');
     return { action: 'continue', step: next.step.id, units: units.filter(u => u.stepIndex === next.stepIndex && u.state !== 'committed').map(ref) };
   }
-  const failure = { step: failed.step.id, item: failed.item };
-  if (pivotCommitted && failed.stepIndex > pivotIndex) {
+  const failure = failed ? { step: failed.step.id, item: failed.item } : null;
+  if (failed && pivotCommitted && failed.stepIndex > pivotIndex) {
     return { action: 'retry-forward', failure, units: units.filter(u => u.stepIndex >= failed.stepIndex && u.state !== 'committed').map(ref) };
   }
   const committed = units.filter(u => u.state === 'committed');
@@ -121,7 +134,7 @@ export function planSaga(sagaDef, observed) {
     compensations.push({ step: u.step.id, item: u.item, system: u.step.undo.system, op: u.step.undo.op, key, after, subject: subjectOf(u.step, u.item) });
     after = key;
   }
-  return { action: 'compensate', failure, compensations, skipped };
+  return { action: 'compensate', failure, abort, compensations, skipped };
 }
 
 /** Per-step summary of an observation: { [stepId]: 'committed' | 'partial' | 'failed' | 'open' } (diagnostic). */
@@ -132,19 +145,26 @@ export function stepStates(sagaDef, observed) {
 }
 
 /**
- * Enumerate single-failure scenarios of a saga (no items): for each step k and each way it can end — 'error',
- * 'unknown/committed', 'unknown/not-found' — steps before k committed in order, steps after k not started. Returns
- * [{ name, observed, plan }]; the goldens and property tests use it as the partial-failure-point table.
+ * Enumerate the single failure points of a saga (no items): for each step k, steps before k committed in order and
+ * steps after k not started, with step k ending in one of five ways — 'error'; 'unknown/committed+abort' and
+ * 'unknown/not-found+abort' (the step timed out, the saga is aborted, the status query decides whether k itself is
+ * compensated: MR11); 'unknown/pending' (the plan must wait for the query); 'ok+abort' (aborted right after k).
+ * Returns [{ name, observed, abort, plan }]: the partial-failure-point table the tests check by hand.
  */
 export function failurePoints(sagaDef) {
   const saga = defineSaga(sagaDef);
   const out = [];
+  const variants = [
+    ['error', { outcome: 'error' }, null], ['unknown/committed+abort', { outcome: 'unknown', status: 'committed' }, { reason: 'timeout' }],
+    ['unknown/not-found+abort', { outcome: 'unknown', status: 'not-found' }, { reason: 'timeout' }],
+    ['unknown/pending', { outcome: 'unknown', status: 'pending' }, null], ['ok+abort', { outcome: 'ok' }, { reason: 'cancel' }],
+  ];
   saga.steps.forEach((s, k) => {
-    for (const [variant, unit] of [['error', { outcome: 'error' }], ['unknown/committed', { outcome: 'unknown', status: 'committed' }], ['unknown/not-found', { outcome: 'unknown', status: 'not-found' }]]) {
+    for (const [variant, unit, abort] of variants) {
       const steps = {};
       saga.steps.forEach((t, i) => { steps[t.id] = i < k ? { outcome: 'ok' } : i === k ? { ...unit } : { outcome: 'not-started' }; });
       const observed = { steps };
-      out.push({ name: `${s.id}:${variant}`, observed, plan: planSaga(saga, observed) });
+      out.push({ name: `${s.id}:${variant}`, observed, abort, plan: planSaga(saga, observed, { abort }) });
     }
   });
   return out;

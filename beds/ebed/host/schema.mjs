@@ -16,6 +16,8 @@ const TYPES = new Set(['object', 'array', 'string', 'number', 'integer', 'boolea
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const MAX_ERRORS = 32;
+const FORBIDDEN_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
+const scalar = v => v === null || ['string', 'number', 'boolean'].includes(typeof v);
 
 /** Structural problems of a schema under the portable subset ([] when portable). `root: 'object'` also requires the
  *  root to be an object schema, as the engine's human-node answerSchema does. */
@@ -30,18 +32,21 @@ export function schemaProblems(schema, { root = null, maxNodes = 1000, maxDepth 
     for (const k of Object.keys(node)) if (!ALLOWED.has(k)) problems.push(`${path}: keyword ${k} is outside the portable subset`);
     if (own(node, 'type')) {
       const ts = [].concat(node.type);
-      if (!ts.length || ts.some(t => !TYPES.has(t))) problems.push(`${path}: bad type`);
+      if (!ts.length || ts.some(t => !TYPES.has(t)) || new Set(ts).size !== ts.length) problems.push(`${path}: bad type`);
     }
     if (own(node, 'properties')) {
       if (!isObj(node.properties)) problems.push(`${path}.properties: must be an object`);
-      else for (const [k, sub] of Object.entries(node.properties)) walk(sub, `${path}.properties.${k}`, depth + 1);
+      else for (const [k, sub] of Object.entries(node.properties)) {
+        if (FORBIDDEN_KEYS.has(k)) problems.push(`${path}.properties: forbidden key ${k}`);
+        walk(sub, `${path}.properties.${k}`, depth + 1);
+      }
     }
-    if (own(node, 'required') && !(Array.isArray(node.required) && node.required.every(x => typeof x === 'string'))) problems.push(`${path}.required: must be a string array`);
+    if (own(node, 'required') && !(Array.isArray(node.required) && node.required.every(x => typeof x === 'string') && new Set(node.required).size === node.required.length)) problems.push(`${path}.required: must be unique strings`);
     if (own(node, 'additionalProperties') && typeof node.additionalProperties !== 'boolean') walk(node.additionalProperties, `${path}.additionalProperties`, depth + 1);
     if (own(node, 'items')) walk(node.items, `${path}.items`, depth + 1);
-    if (own(node, 'enum') && !(Array.isArray(node.enum) && node.enum.length)) problems.push(`${path}.enum: must be a non-empty array`);
+    if (own(node, 'enum') && !(Array.isArray(node.enum) && node.enum.length && node.enum.every(scalar))) problems.push(`${path}.enum: must be a non-empty array of scalars`);
     for (const k of ['minimum', 'maximum']) if (own(node, k) && !Number.isFinite(node[k])) problems.push(`${path}.${k}: must be a number`);
-    for (const k of ['minItems', 'maxItems', 'minLength', 'maxLength']) if (own(node, k) && !(Number.isInteger(node[k]) && node[k] >= 0)) problems.push(`${path}.${k}: must be a non-negative integer`);
+    for (const k of ['minItems', 'maxItems', 'minLength', 'maxLength']) if (own(node, k) && !(Number.isSafeInteger(node[k]) && node[k] >= 0)) problems.push(`${path}.${k}: must be a non-negative integer`);
     if (own(node, 'description') && typeof node.description !== 'string') problems.push(`${path}.description: must be a string`);
   };
   walk(schema, '#', 0);
@@ -129,7 +134,8 @@ function sameShape(a, b, depth = 0) {
   if (a === null || typeof a !== 'object') return a === b;
   if (Array.isArray(a)) return Array.isArray(b) && a.length === b.length && a.every((x, i) => sameShape(x, b[i], depth + 1));
   if (Object.getPrototypeOf(a) !== Object.prototype && Object.getPrototypeOf(a) !== null) return false;
-  const ka = Object.keys(a);
+  // An object property whose value is undefined is dropped, as JSON does; everything else must survive unchanged.
+  const ka = Object.keys(a).filter(k => a[k] !== undefined);
   return isObj(b) && ka.length === Object.keys(b).length && ka.every(k => own(b, k) && sameShape(a[k], b[k], depth + 1));
 }
 

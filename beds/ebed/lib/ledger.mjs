@@ -219,7 +219,7 @@ export function doubleEntry(entries) {
       if (l.side === 'debit') c.d += a; else c.c += a;
       per.set(l.currency, c);
     }
-    for (const [currency, { d, c }] of [...per].sort()) if (d !== c) bad.push({ code: 'unbalanced', entry: e.id, currency, debit: out(d), credit: out(c), diff: out(d - c) });
+    for (const [currency, { d, c }] of [...per].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) if (d !== c) bad.push({ code: 'unbalanced', entry: e.id, currency, debit: out(d), credit: out(c), diff: out(d - c) });
   }
   return bad;
 }

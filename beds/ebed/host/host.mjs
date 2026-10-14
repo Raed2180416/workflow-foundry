@@ -102,7 +102,7 @@ export function createHost(options) { return new Host(options); }
 
 class Host {
   constructor({ item, world, arm, profile, journalFile = null, blobDir = null, recorded = null, mode = 'live', concurrency = 1,
-    callTimeoutMs = null, envRetries = 2, maxWakeups = 1_000_000, productConfig = null, workspaceDir = null }) {
+    callTimeoutMs = null, envRetries = 2, maxWakeups = 1_000_000, productConfig = null, workspaceDir = null, workspaceMaxBytes = undefined }) {
     this.item = bindItem(item);
     this.world = world;
     this.arm = arm ?? null;
@@ -139,7 +139,7 @@ class Host {
     for (const [obj, c] of Object.entries(world.truth?.objectCase ?? {})) this.objectCase.set(obj, c);
 
     const wsDir = workspaceDir ?? arm?.workspace?.dir ?? null;
-    this.workspace = wsDir ? new Workspace({ dir: wsDir }) : null;
+    this.workspace = wsDir ? new Workspace({ dir: wsDir, ...(workspaceMaxBytes ? { maxBytes: workspaceMaxBytes } : {}) }) : null;
     this.wsRestored = false;
 
     this.agenda = new Agenda();
@@ -401,12 +401,21 @@ class Host {
     return { files, digest: hashOf(digests) };
   }
 
+  /** The open-instance index (the sweep input's `index`): instance, the arm's own declared subject, times. */
+  index(subject) {
+    return [...this.instances.values()].filter(i => !i.closed && (subject === undefined || i.subject === subject))
+      .map(i => ({ instance: i.id, subject: i.subject, openedAt: this.iso(i.openedMs), lastTickAt: i.lastTickMs === null ? null : this.iso(i.lastTickMs) }));
+  }
+
   #ctxFor(files) {
     const includeComputed = this.profile.product;
     const systems = this.systems;
     const pending = this.pendingKeys;
+    const index = this.index(undefined);
     return {
       files,
+      // Read-only, as of the round start: open instances, matched only on the subject the arm itself declared.
+      instances(filter = {}) { return index.filter(r => filter?.subject === undefined || r.subject === filter.subject).map(r => ({ ...r })); },
       query(table, filter = {}) {
         const [sys, t] = String(table).split('.');
         const s = systems.get(sys);
@@ -534,7 +543,7 @@ class Host {
     const work = due.map(id => {
       const sw = this.sweeps.get(id);
       const evs = sw.queue.splice(0);
-      const index = [...this.instances.values()].filter(i => !i.closed).map(i => ({ instance: i.id, subject: i.subject, openedAt: this.iso(i.openedMs), lastTickAt: i.lastTickMs === null ? null : this.iso(i.lastTickMs) }));
+      const index = this.index(undefined);
       const input = { kind: 'sweep', item: this.item.id, world: this.world.publicId ?? this.world.id, sweep: id, now: this.iso(this.nowMs), index, events: evs.map(ev => this.armEvent(ev, null)), carry: sw.carry };
       const files = this.#filesFor(null, evs);
       return { sw, evs, run: () => this.#invoke('sweep', id, 2, input, files) };
