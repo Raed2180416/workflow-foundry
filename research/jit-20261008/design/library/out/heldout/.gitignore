@@ -1,0 +1,5 @@
+# Raw definitions from sources with no stated licence (Windmill hub, kestra-io/blueprints) stay local; MANIFEST.json (url, sha256) is committed.
+windmill/*
+!windmill/MANIFEST.json
+kestra/*
+!kestra/MANIFEST.json
