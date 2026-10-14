@@ -904,3 +904,160 @@ was fixed before any chart statistic was computed, but after the per-row outcome
    spurious deopts (D3) is the lever. The count rule shares the problem.
 3. If drift detection is revisited, test the input-side detector (§4) on a held-out family with a drift segment,
    frozen before the run.
+
+**D30. PREREG-stream: the H1 cost claim against the Haiku agent is withdrawn before any freeze, and the primaries are
+restated. The strategic consequence: on flat families a compiled workflow has no cost advantage over a cheap agent once
+verification is priced. The thesis's cost value has to come from complex tasks, cheap code witnesses or long streams.
+This is stated below as a falsifiable claim, C-COST ($0; ATTACK-20261014 §3 M2; PREREG-stream §0).**
+
+*Development evidence only: dev seeds 201–224 and R0 records 225–236, K = 1. No model or Jev call was made, and
+`beds/sealed/` was not read. R0-K was running, and only its row counts were looked at (Haiku agent 24, O/H 10 at
+15:11Z), so no R0-K outcome informed anything here. Inputs: D25–D29, the M2 report with its adversarial verification,
+ENGINE-FREEZE §6, and the M3 and M4 verification verdicts.*
+
+*New numbers [M] come from scratch scripts that are not committed. They ran over the committed exports
+`runs/jit-dev-records-1`, `jit-dev-kinetics-1` and `jit-r0-records`, using `experiments/jit/stats.mjs` (`pairedPower`,
+`mcnemarExact`):*
+- *paired discordance and K = 2 power at the dev gaps;*
+- *task-bootstrap cost-ratio CIs (20,000 draws), scaled to K = 2 by 1/√2 and widened by √Deff;*
+- *payback horizons from M2's tables;*
+- *the static arm with a priced verifier, with agreement read from an oracle-details proxy.*
+
+*Edited: `PREREG-stream.md` (new §0; §1–§8 brought in line). Nothing is frozen.*
+
+**1. PREREG-stream, as restated.**
+- **Withdrawn.** H1's "at least as many successes … at a lower total cost per success" against the Haiku agent, for
+  records and kinetics. §0.1 gives the M2 numbers and the five mechanisms.
+- **Primaries,** tested in fixed sequence at α = 0.05:
+  - **H1-C**: records steady-state $ per task (idx 3–23, compile spend excluded), S→H against the Opus agent. It is
+    decided by a new cost rule, CR, that still needs code.
+  - **H1-R**: records verified successes, S→H against the Haiku agent, with declared power 41%.
+  - **H1-K**: kinetics O→H against the Haiku agent. It enters only if R0-K shows a paired gap of at least +39 points
+    with both arms valid. That condition was written before R0-K was read.
+- **Moved out.** The engine-change arm (Haiku-agent shadows plus the oracle-threshold records comparator) goes to its own
+  pre-registration.
+- **Resolved TBDs and open items:** §0.5 and §0.6. Two deviations are recorded:
+  - R0 ran on E1, not E1c;
+  - the relTol fallback was never written down before Stage B was read.
+
+**2. New numbers [M].**
+- **Success power at K = 2 is lower than the PREREG table suggests.**
+  - `pairedComparison` widens the C-check CI with ρ = 0.1 (`RHO_PREREG`) whatever the true ρ is. The table's ρ = 0 rows
+    therefore describe a rule that is never run.
+  - At the dev gaps, the rule's working power is:
+
+    | comparison | dev gap | power at K = 2 (ρ = 0.1) |
+    |---|---|---|
+    | S→H vs Haiku agent | +29.2 | 41% |
+    | S→H vs Sonnet agent | +37.5 | 64% |
+    | kinetics O→H vs Haiku agent | +21.1 | 20% |
+    | S→H vs Opus agent | −8.3 | 10% |
+    | O→H vs Haiku agent | +12.5 | 5% |
+
+  - 80% power would need ρ ≤ 0.02 for S→H against the Haiku agent, and ρ ≤ 0.06 for S→H against the Sonnet agent.
+  - K = 4 lifts these two to 52% and 76%.
+- **24-task cost per verified success is not decidable at K = 2, even against the frontier agents.**
+  - The dev ratios are 0.75 (S→H against the Sonnet agent) and 0.72 (against the Opus agent).
+  - Their projected CIs are 0.19–1.92 and 0.22–1.69 at ρ 0.1, and still 0.35–1.26 and 0.37–1.16 at ρ 0.
+  - Compile spend arrives as one to three lumps per lineage ($1.1 and $3.8 for records S→H).
+  - So the "only cost ratios have power" reading (ATTACK §1.4, W-BED O7, ROADMAP §4.3) holds for per-task costs, not for
+    a JIT stream's whole-stream cost per success.
+- **The steady-state (marginal) ratio is decidable against the Opus agent.**
+  - S→H: 0.28, CI 0.12–0.52. O→H: 0.33, CI 0.07–0.70.
+  - It holds while the effective shadow rate stays at or below about 39%. At 100% the ratio is about 0.86.
+  - Against the Sonnet agent it is borderline: 0.55, CI 0.23–0.99.
+- **Payback horizon against the Haiku agent** (records, L1, no further recompiles, dev success rates):
+  - engine as built: never, per task or per verified success;
+  - Haiku-tier shadows (an engine change): 168–2,754 tasks per task, or 95–154 tasks per verified success.
+  - The per-success horizon is finite only because S→H and O→H pass more often than the agent. Their cost value against
+    a cheap agent is borrowed from their reliability gap.
+  - At L2, with the measured recompiles included, nothing beats (M2: the cheapest setting is $0.1439).
+- **The static arm, the strongest counterexample candidate.**
+  - The C0 B1-haiku solver costs $0.0504 per task with no deopt in 24 dev records tasks, and passes 16 of 24.
+  - With a 25% Haiku-agent shadow and Haiku adjudication it would cost $0.0942 per task: 8% below the agent. P(disagree)
+    is 0.71 on the oracle-details proxy.
+  - Without adjudication it would cost $0.0760.
+  - Over 24 tasks, adding its $2.21 build, it costs $0.279 per success against $0.164.
+  - Its steady-state horizon is about 260 tasks.
+  - Its build had oracle-scored probes that the JIT never gets, and it fails silently on drift (d4: 2 of 8).
+  - So even the cheapest compiled path stays inside the claim below over 24 tasks, and is within noise in steady state.
+
+**3. The strategic claim, C-COST (falsifiable).**
+
+**Claim.** On a flat family, no compiled workflow beats the Haiku agent's cost per verified success over a 24-task stream
+once verification is priced at a realizable tier and at a rate at or above the 25% random floor. If the thesis has a
+cost value against a cheap agent, it comes from one or more of three routes, not from compiling flat tasks:
+- **(R1) Complex tasks**, where the cheap agent's cost per verified success is several times a compiled run's: W-bed
+  R3–R6 and the E-bed.
+- **(R2) Cheap code witnesses** that replace paid shadows: M1.
+- **(R3) Long streams of one shape** that amortise construction.
+
+**Definitions.**
+- **Flat family.** One context holds the task, and the Haiku agent passes at least 60% at no more than $0.15 per task.
+  Records: 62.5% at $0.103. Kinetics: 70.8% at $0.088.
+- **Realizable verifier.** One a deployed stream can run without the oracle:
+  - a model-tier shadow (the interpreter or a Haiku agent);
+  - a witness that run-time code computes.
+
+  The kinetics reference-set witness is not realizable (M2 §2.2).
+- **Priced.** M2's L1 steady state, plus warmup and every compile over the stream.
+
+**Mechanism.** In steady state, the compiled path beats the agent only if
+
+c_run + d·c_fallback + r·q·(c_shadow + P(disagree)·c_adj) < c_agent.
+
+- **The shadow costs at least an agent run.** A model-tier shadow costs at least c_agent (a Haiku-agent shadow) and
+  3–5 × c_agent if it is the interpreter (Sonnet or Opus). At r ≥ 0.25 and q ≈ 0.9, verification alone takes at least
+  about 0.22 × c_agent before any adjudication.
+- **On records almost nothing is left:**
+  - c_agent minus the L1 base is $0.024 (S→H) or $0.045 (O→H);
+  - a Haiku shadow at the floor leaves $0.002 (S→H) or $0.019 (O→H);
+  - adjudication takes most of the rest, leaving O→H $0.006.
+- **On kinetics** the L1 base, at $0.195–0.250, already exceeds c_agent at $0.088. Deopt fallbacks on 38–60% of tasks
+  dominate.
+- **Construction adds an up-front cost** of $3.5–5.5 on records, which needs the horizons in §2.
+
+**Tests and falsifiers.**
+
+| part | prediction | test | falsified if |
+|---|---|---|---|
+| **flat-family negative** | no flat-family stream shows a JIT arm with a realizable verifier at ≥ 25% beating the Haiku agent per verified success over 24 tasks | every records or kinetics JIT stream, dev or held-out, priced with `verify-economics.mjs` at its realized shadow rate | in both streams of a K = 2 run, such an arm's priced 24-task cost per verified success is below the Haiku agent's. This is a point-estimate counterexample, because the ratio itself is not decidable at K = 2 |
+| **R1, complex tasks** | at R3, the JIT H/H arm's cumulative cost per verified success at task 24, with the floor and flag shadows priced at the realized rate, is at or below the Haiku agent's in both lineages (W-BED H2(r); expected costs W-BED §3.3 [I]: Haiku agent $0.25–0.50 with falling success, compiled $0.08–0.25) | **$0 pre-check:** once R3 dev rows exist, compute the inequality above with R3's measured c_agent, c_run, d, q and c_shadow. If it fails, R1 is falsified at R3 before any comparative run. **Paid test:** the W-bed round. **Before relying on K = 2:** check the cost-ratio CI on R3 dev rows, as §2 above; if it is undecidable, use rule CR on the steady state plus the horizon | H/H's cost per verified success exceeds the Haiku agent's in both lineages at R3 and at R4 (and at R5–R6 once they run); for the E-bed, PROOF-LEDGER L5 fails on its pilot items |
+| **R2, code witnesses** | M1's metamorphic variants meet their adoption bar (≥ 50% of wrong compiled outputs flagged at ≤ 10% false alarms, archived and fresh), and with them replacing paid shadows, records' priced steady state is at or below the Haiku agent's | price the variants first: they re-run the compiled solver, judges included. At records S→H's $0.038–0.053 per compiled run, three variants on every task cost more than the margin left; at O→H's $0.004–0.012 they fit. So the route needs judge-free variants, a sampled rate or a cheap solver. Add a witness tier to `verify-economics.mjs` before M1's paid part | M1 is killed (< 25%), or M1 is adopted but its priced steady state is still at or above c_agent. Kinetics already fails this route at L1, even at the $0 reference-aware ceiling ($0.24–0.28), unless spurious deopts (D3) fall |
+| **R3, long streams** | some realizable setting has a finite payback horizon N* per verified success, at or below the monthly recurrence of at least 3 shapes in the owner's work | the engine-change arm's own pre-registration (PREREG-stream §0.4), run for at least its N*; M11, the recurrence census (value-profile signature) | the long stream ends with cumulative cost per verified success above the Haiku agent's at N*; or M11 finds fewer than 3 shapes recurring N* times a month; or drift recompiles recur often enough that L2 never beats (today on records the cheapest L2 setting costs $0.1439, against $0.1027) |
+
+Today's horizons: the engine as built has none, and Haiku-tier shadows give about 95–155 tasks per verified success.
+
+**Joint falsifier.** The thesis's cost value against a cheap agent is falsified, within the tested envelope, if all three
+hold:
+- R1 fails at R3 and R4;
+- R2 is killed or priced out;
+- R3's N* is infinite or above the recurrence M11 finds.
+
+The thesis would then rest on reliability (claims like H1-R) and on structure (W-bed success and necessity). Cost claims
+would be made only against frontier agents (claims like H1-C).
+
+**Consistent with the rest of wave 1:**
+- **M3 (D26):** deciding a good reuse gate needs about 300–360 admitted decisions. Its verification adds that clustering
+  by library entry raises the chosen rule's miss to about 11%. Reuse value is also a long-stream claim.
+- **M4 (D28):** typed enumeration does not shrink the composition space (more than 100 candidates on every task), so it
+  is no construction-cost lever now.
+- **M9 (D29):** the in-control deopt and disagreement rate of 25–60% defeats outcome monitoring. Spurious deopts (D3)
+  are also the kinetics cost driver, so lowering them is the one lever that helps both cost and monitoring.
+
+**Consequences.**
+1. `PREREG-stream.md` is restated and not frozen. Before the freeze:
+   - write rule CR (`decideCost`) and its test in `stats.mjs`;
+   - read R0-K: rows 10–11, the effective shadow rate, and the H1-K condition;
+   - decide on the R0 records S/H rehearsal before the records 225–248 ledger flip. It is the only pre-freeze measurement
+     of S→H's effective shadow rate, which H1-C's power depends on;
+   - get the owner's confirmation.
+2. **For W-bed and ROADMAP §4.3:** before the ladder relies on "decide cost ratios at K = 2", check each rung's cost-ratio
+   CI on its dev rows. JIT stream cost is lumpy at the lineage level. Prefer a steady-state ratio plus a horizon.
+3. **PROOF-LEDGER A2, A8, A11 and K2** should cite this entry. Not edited here; suggested:
+   - A2 and A11 restated to H1-C and H1-R;
+   - A8 to "TBDs: see PREREG-stream §0.5–§0.6".
+4. **Next $0 work:**
+   - a witness tier in `verify-economics.mjs`, priced with M1's variant re-runs, before M1's paid part;
+   - the R3 inequality check as soon as R3 dev rows exist;
+   - drafting the engine-change arm's pre-registration.
