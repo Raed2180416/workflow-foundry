@@ -400,7 +400,64 @@ it (`ENGINE_DRIFT`), as with any engine change. Each step lists the files it cha
   no workspace-level buffer for signals that no run waits for yet, G3 reminders and G15/G16 calendar clocks not built, signal-wait
   routing in the L0 card and the library checker not updated (the card is at its token budget).
 
-### G21 tier 0: human-task forms in `tools/ui` (no engine change), 2026-10-14
+### 7.3 Step 1 review fixes (part "state"), 2026-10-14
+
+- **Base.** `833eca0` (`src` tree `c1958fa174ad39e5a1e3c422669a2b0f6c2185a1`; no `src`/`schemas` change since step 2): engine identity
+  `73dc31d6f36f77b0dd3f26388d12c22ec32bdbd7b8094fc7e94db35a589e6b96` (§7.2).
+- **How it landed.** The autosave snapshots `deb07d5` and `c6a8d1b` committed this part's code while it was being written, together
+  with the signals part's in-progress hunks (`src/signals.mjs`, `src/store.mjs`, `src/foundry.mjs`, `src/http.mjs`, `bin/foundry.mjs`,
+  and the signal hunks of `src/runtime.mjs`). This part is exactly: `git diff 833eca0 c6a8d1b` of `src/state.mjs`, `src/validate.mjs`,
+  `src/verify-run.mjs`, `src/dataflow.mjs`, `schemas/workflow.schema.json` and `tests/state-node.test.mjs`; in `src/runtime.mjs` the
+  hunks at the `state.mjs` import line, the `unhandled` set, the `Invocation` constructor (`slotIdentities`), `checkBudget`,
+  `stateNode` and `stateReplaySource` (every other `runtime.mjs` hunk of that range is the signals part's); and the commit carrying this
+  section (`docs/ARCHITECTURE.md`, this record).
+- **After this part alone** (its hunks applied to a clean worktree of `833eca0`, the tree the suites below ran on): engine identity
+  `0ec96b0a01d309b3ce780929647efb2c30a89f03b02e13c4301c38dbf837df90` (Node `v24.21.0`). The branch head also carries the signals part's
+  in-progress hunks, so its identity differs. Runs created before this part are not resumed (`ENGINE_DRIFT`).
+
+| file | change |
+|---|---|
+| `src/state.mjs` | `slotOf` (own properties only); `slotWriters` and `slotIdentity`: the declaration hash (v2) binds the writer ids and each writer node's definition (description aside) and the cursor `order`; `stateRequest` names the declaration hash (so it is in the replay key); `journalRequest` journals an argument beyond its bound by `{$elided: {sha256, bytes}}`; `record` returns `{id, bytes}`; keys must be well-formed (`STATE_KEY`); monotonic cursors compare in `order` `number` or `instant` (`instantNanos`), refuse delete and TTL (`STATE_OP`), and a stored position outside the order is `STATE_CORRUPT` |
+| `src/runtime.mjs` | `stateNode` passes the slot identity, journals the journal form and adds each row's bytes to the run's `stateJournalBytes`; `checkBudget` counts them; `stateReplaySource` refuses a recording whose run is not in the store (`JOURNAL_TAMPERED`, was served as "unverified"); `STATE_CLOCK`, `STATE_OP`, `STATE_TRANSACTION`, `STATE_SLOT_UNKNOWN` join the set no `onError` or collecting map hides |
+| `src/validate.mjs` | `slotOf` lookups; literal keys must be well-formed; `STATE_OP` for a delete on a monotonic cursor; `STATE_MONOTONIC` (order without monotonic, unknown order, TTL on a monotonic cursor, schema type outside the order); literal monotonic values checked against the order |
+| `src/verify-run.mjs` | §2c: a replayed operation is re-checked against its recording run's chain (row present, bound, unedited, same replay key and result); `STATE_REPLAY_UNVERIFIED` is an error (was a warning taken from the replay event's own claim) |
+| `src/dataflow.mjs` | `slotOf` lookup |
+| `schemas/workflow.schema.json` | `stateSlot.order` (`number`, `instant`), refused on set, counter and record |
+| `tests/state-node.test.mjs` | 8 tests and 2 subtests (below) |
+| `docs/ARCHITECTURE.md` | "Cross-run state": keys, cursor order, scope and writers, replay, journal bounds, unhidden faults, not built |
+
+- **Review findings (9) and the builder's open issues.**
+  - **Fixed (7 of 9, with regression tests):** P1-1 planted recording served (a ghost run id, or one that hides the genuine row; and
+    verify-run trusting the replay event); P1-2 another version rewriting state an older version trusts (the reviewer's minimal fix,
+    writers in the declaration hash; the MCP probe `p13` now gets `STATE_DRIFT` for v2 and v1 still finds `INV-1`); P1-3 lone-surrogate
+    keys collapsing onto U+FFFD; P1-4 journal outside the run budget (elision and budget counting); P1-5 cursor compared by code unit
+    and resettable; P2-7 replay hiding a declaration change (now `REPLAY_MISS`); P2-8 `toString` slot names crashing the validator.
+    Also fixed from the builder's open list: `STATE_CLOCK` swallowed by a collecting map.
+  - **Deferred to the signals part (2 of 9; step-2 code, which that part owns and was editing):** P2-6 signal waits default to a
+    trusted label (`node.label ?? TRUSTED` in `src/validate.mjs`'s taint pass, and the runtime's `waitLabel`), so a signal payload can
+    be written to a trusted slot.
+    The state side applies the rule to the labels it is given; the fix is the wait's default label. P2-9 `at` in Unix seconds read as
+    epoch milliseconds (`parseAt`).
+  - **Deferred parts of fixed findings (P2):** a workspace-level cap or retention for `state_ops` (rows are bound into run chains, so
+    deleting them breaks `verify-run` and replay; the model journal has no retention either); per-entry writer provenance with
+    opt-in sharing across versions (the stronger fix of P1-2); a `lexical` cursor order for fixed-width ids.
+  - **Rejected:** none.
+- **What the writer binding does not cover.** The hash binds the writer nodes, not the nodes upstream of them: a version that keeps a
+  writer node byte for byte but changes what feeds its `$ref`s (or the condition of a predecessor) still shares the slot. A change of
+  a writer, including its `when`, `needs` or key, is drift, and a drifted slot is usable only once it is empty (migration not built).
+- **Behaviour of existing workflows and stores.** Workflows without `state` are unaffected. A slot written by the step-1/2 engine has a
+  v1 declaration hash, so it drifts (`STATE_DRIFT`) while it holds entries; recordings made by that engine have no declaration hash in
+  their request, so a replay of them misses (`REPLAY_MISS`). A monotonic cursor holding strings, or one with a delete writer or a TTL,
+  no longer validates (declare `order: "instant"`, or drop `monotonic`). E3 is not stamped and no paid run uses it (§7).
+- **Suites (2026-10-14, $0, no model calls).** Main (`node --test --test-concurrency=2 tests/*.test.mjs`, in the clean worktree of
+  `833eca0` with this part's hunks alone): 1139 tests, 1121 pass, **0 fail**, 18 skipped (the recorded lanes of §7.1); the review ran
+  1129 / 1111 at `c52e5db`, and the 10 added are this part's. `tests/state-node.test.mjs`: 31 of 31 (the 21 of §7.1 unchanged, plus
+  planted recordings and verify-run's re-check, writers across versions, lone-surrogate keys, journal elision and budget, cursor
+  orders and resets, the declaration in the replay key, `Object.prototype` slot names, `STATE_CLOCK` under a collecting map).
+  `tests/wait-signal.test.mjs` passes 16 of 16 in that tree. The branch's own working tree was not used: the signals part's
+  uncommitted step-2 edits fail 5 of its wait-signal tests there at the time of writing, which is that part's work in progress. The
+  reviewer's probes `p1`, `p2`, `p4b`, `p5`, `p10`, `p13`, `p14` and `p15` reproduced each finding before the change; after it they
+  show the refusals above.: human-task forms in `tools/ui` (no engine change), 2026-10-14
 
 - **`src/` files changed: none.** No kit allow-list path changed (`package.json`, `bin`, `src`, `schemas`, `policy`, `skills`,
   `web`, `node_modules`). The engine identity is that of the step it runs on; this work adds nothing to it. The sidecar sits in

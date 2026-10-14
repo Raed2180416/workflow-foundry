@@ -228,13 +228,20 @@ and write them. Everything below is enforced by the validator and again at run t
 ```
 
 - **Types and operations.** `set` (get, add, delete), `counter` (get, incr, put, delete; safe integers, an absent key reads 0),
-  `cursor` (get, put, delete; `monotonic: true` refuses a move back) and `record` (get, put, delete). Record and cursor values are
-  checked against the slot's `schema`. Keys are non-empty strings of at most 512 bytes; a number is not coerced. Outputs:
+  `cursor` (get, put, delete) and `record` (get, put, delete). Record and cursor values are checked against the slot's `schema`. A
+  `monotonic: true` cursor refuses a move back (`STATE_CURSOR_REGRESSION`) in its `order`: `"number"` (the default; finite numbers,
+  schema type number or integer) or `"instant"` (ISO 8601 date-times with an explicit offset, compared as instants to the nanosecond,
+  schema type string). It has no `delete` and no TTL, so it cannot be reset. Keys are non-empty, well-formed strings (a lone
+  surrogate is refused: SQLite would store it as U+FFFD and two keys would share an entry) of at most 512 bytes; a number is not
+  coerced. Outputs:
   get `{found, version, value?, expiresAt?}`, add `{added, version}`, incr `{value, version, previousVersion}`, put
   `{version, previousVersion, changed}`, delete `{deleted, previousVersion}`; the dataflow analysis knows these shapes.
 - **Scope.** A slot belongs to the workflow id: every version of that workflow shares it, and no other workflow can name it. A slot
-  remembers the hash of what its entries mean (type, schema, label, monotonic); a run whose declaration differs is refused
-  (`STATE_DRIFT`) while the slot holds live entries, and an empty slot adopts the new declaration. Migration is not built.
+  remembers the hash of what its entries mean and who wrote them: type, schema, label, monotonic order, and its writers (the
+  declared ids and each writer node's definition, description aside). A run whose declaration differs is refused (`STATE_DRIFT`)
+  while the slot holds live entries, and an empty slot adopts the new declaration. So a later version that keeps the writers
+  shares the slot, and one that adds, removes or changes a writer cannot rewrite what earlier versions wrote and trust. Migration is
+  not built.
 - **One writer.** Only the node the slot names as `writer` (or each of a list of at most 8, such as an upsert and an expiry) writes
   it, from one place in the workflow. At run time every key has a version, the slot revision of its last write (0 when absent,
   deleted or expired; a re-created key never reuses a version). Every operation runs in one IMMEDIATE transaction, so writers in
@@ -246,7 +253,8 @@ and write them. Everything below is enforced by the validator and again at run t
   `STATE_CURSOR_REGRESSION`. Each is journaled, replayed, and handled by `onError: "continue"` (output `{ok: false, error}`). A run
   that fails on a lost compare-and-swap or a full slot is `inconclusive`; on the others, `harness_fault`. `STATE_DRIFT` and
   `STATE_CORRUPT` (a stored value that no longer satisfies its schema: the table was edited) are integrity faults that no
-  continuation hides.
+  continuation hides; neither `onError` nor a collecting map hides the harness faults `STATE_CLOCK` (the `now` option returned a
+  bad time), `STATE_OP` or `STATE_TRANSACTION` either.
 - **TTL.** `ttlMs` or `ttlDays`: each write sets `expiresAt = now + ttl`; at `expiresAt` the entry reads as absent. `add` of a live
   member does not refresh it. Expired entries are purged by later writes (all of them when a bound would otherwise refuse).
   `now` is the Runtime's `now` option (default `Date.now`), so expiry is testable under a simulated clock.
@@ -256,12 +264,19 @@ and write them. Everything below is enforced by the validator and again at run t
 - **Journal, crash and replay.** The operation, its `state_ops` row, the node's outcome and the chain events (`node.completed` and
   `state.op {opId, opHash}`) commit in one run update: a crash loses all of it or none, and a node left `running` re-executes an
   operation that never committed (a committed refusal stands). A replay run (`modelMode: "replay"`, the recording's `sampleSalt`)
-  serves each operation recorded under the same replay key (salt, node key, request) and writes no state: a missing recording is
-  `REPLAY_MISS`, a recording its run's chain does not bind (edited or planted) is `JOURNAL_TAMPERED`. `replay-or-live` is refused for
-  workflows with state, because a recorded write that is served is not applied. `verify-run` re-hashes every bound row
-  (`STATE_OP_EDITED`, `STATE_OP_MISSING`, `STATE_OP_FOREIGN`) and reports rows no event binds (`STATE_OP_UNBOUND`).
+  serves each operation recorded under the same replay key (salt, node key, request; the request names the slot's declaration
+  hash, so a version whose declaration or writers differ misses) and writes no state: a missing recording is `REPLAY_MISS`, a
+  recording its run's chain does not bind (edited or planted, including a row naming a run that is not in the store) is
+  `JOURNAL_TAMPERED`. `replay-or-live` is refused for workflows with state, because a recorded write that is served is not applied.
+  `verify-run` re-hashes every bound row (`STATE_OP_EDITED`, `STATE_OP_MISSING`, `STATE_OP_FOREIGN`), reports rows no event binds
+  (`STATE_OP_UNBOUND`), and re-checks each replayed operation's recording against its recording run's chain
+  (`STATE_REPLAY_UNVERIFIED`, an error).
+- **Journal bounds.** The journal keeps an argument whole up to its bound (a value up to `maxValueBytes`, other arguments up to 4
+  KiB); a larger one is always refused and is journaled as `{$elided: {sha256, bytes}}`. The bytes a run journals are counted on
+  the run (`stateJournalBytes`) and against its state budget (`STATE_BUDGET`). There is no workspace-level cap or retention.
 - **Not built.** A sweep or listing of keys, migration of a drifted slot, sharing a slot between workflows, state in the envelope
-  of a compiled solver, and a UI view of slots (`store.state.slots()` / `entries()` are the read API).
+  of a compiled solver, a workspace-level journal cap or retention, a lexical cursor order, and a UI view of slots
+  (`store.state.slots()` / `entries()` are the read API).
 
 ## Signal waits and absolute timers (E3 step 2, L0 rows 18 and 19)
 
