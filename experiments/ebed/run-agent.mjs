@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
 import { createHost, QuotaStop } from '../../beds/ebed/host/host.mjs';
+import { resumeRun } from '../../beds/ebed/host/replay.mjs';
 import { agentArm } from './agent-arm.mjs';
 import { contractText } from './build.mjs';
 
@@ -68,17 +69,27 @@ async function main() {
   const liveDir = path.join('/var/tmp/foundry-work/ebed-arms', label);
   mkdirSync(liveDir, { recursive: true });
   const liveTicks = path.join(liveDir, 'ticks.jsonl');
+  // A resumed run counts what its earlier invocations already spent against the cap.
+  if (existsSync(liveTicks)) spent.usd = readFileSync(liveTicks, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l))
+    .reduce((a, x) => a + (x.costUnknown ? (x.costUpperUsd ?? 0) : (x.costUsd ?? 0)), 0);
   for (const d of difficulties) for (const seed of seeds) {
     const w = e8.generateWorld({ seed, difficulty: d, mix: 'tail', ...(size ? { size } : {}) });
     const { pools } = await e8.referenceRuns(w);
     const workRoot = path.join('/var/tmp/foundry-work/ebed-arms', label, `w${seed}-d${d}`);
     const arm = capped(agentArm({ id: label, model, workRoot, contract: contractText(), effort: arg('--effort', null), budgetUsdPerTick: tickBudget,
       minutesPerTick: tickMinutes, journal: liveTicks }), cap, spent);
-    const host = createHost({ item: e8.binding, world: w, arm, concurrency: useWs ? 1 : concurrency, callTimeoutMs: (tickMinutes + 1) * 60_000,
-      ...(useWs ? { workspaceDir: path.join(workRoot, 'ws') } : {}) });
+    // The host journal lives on disk so a stopped run (background time limit, crash, quota) resumes from its last commit:
+    // the committed prefix is replayed at $0 (resumeRun) and live calls pick up at the interrupted wake-up.
+    const journalFile = path.join(liveDir, `journal-w${seed}-d${d}.jsonl`), blobDir = path.join(liveDir, `blobs-w${seed}-d${d}`);
+    const hostOpts = { item: e8.binding, world: w, arm, concurrency: useWs ? 1 : concurrency, callTimeoutMs: (tickMinutes + 1) * 60_000,
+      journalFile, blobDir, ...(useWs ? { workspaceDir: path.join(workRoot, 'ws') } : {}) };
     const t = Date.now();
-    let status;
-    try { status = (await host.run()).status; } catch (e) { status = `host-error: ${String(e?.message ?? e).slice(0, 200)}`; }
+    let status, host;
+    try {
+      if (existsSync(journalFile)) { console.log(`  resuming from ${journalFile}`); const r = await resumeRun(hostOpts); status = r.status; host = r.host; }
+      else { host = createHost(hostOpts); status = (await host.run()).status; }
+    } catch (e) { status = `host-error: ${String(e?.message ?? e).slice(0, 200)}`; }
+    if (!host) { rows.push({ seed, d, size: size ?? null, status, wallMs: Date.now() - t }); console.log(`  d${d} seed ${seed}: ${status}`); continue; }
     const s = summarize(w, host.journal.contentRows(), pools, label);
     rows.push({ seed, d, size: size ?? null, status, wallMs: Date.now() - t, ...s });
     console.log(`  d${d} seed ${seed}${size ? ` size ${size}` : ''}: ${status}; ${s.passed}/${s.completed} completed pass (${s.armCensored} open at freeze), critical ${s.critical}, arm errors ${s.armErrors}, ${s.ticks} ticks, $${s.costUsd.toFixed(2)}`);
