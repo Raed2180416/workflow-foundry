@@ -52,8 +52,15 @@ function features(w, code) {
   else score = e.role === 'T2' || e.role === 'T4' ? 1 : 2;
   return { code, role: e.role, sub: e.sub, traps, score };
 }
-const ROLES = { 1: ['in'], 2: ['in', 'T2', 'T4'], 3: ['in', 'T1', 'T3'], 4: ['in', 'T1', 'T2', 'T3', 'T4'], 5: ['in'] };
-const WANT = { 1: [0], 2: [1], 3: [2], 4: [3], 5: [4, 5, 6] };
+// Levels 1-3 and 5 pick by score over ROLES[level]. Level 4 first draws its scope side (seeded, OUT_SHARE_D4 out of
+// scope), then picks by score within that side (SIDES_D4): an in-scope item at score 3, or an out-of-scope near miss at
+// score 2 (T1 tested before the date, T3 tested only in a retracted document), else the nearest score of that side. A
+// pool over all roles with WANT 3 would never reach the T-roles (they score 1-2), so a constant in_scope:true prior would
+// get every level-4 scope verdict right. Level 5 is in scope by design (the most planted traps on its cells).
+const ROLES = { 1: ['in'], 2: ['in', 'T2', 'T4'], 3: ['in', 'T1', 'T3'], 5: ['in'] };
+const WANT = { 1: [0], 2: [1], 3: [2], 5: [4, 5, 6] };
+export const OUT_SHARE_D4 = 0.5;
+const SIDES_D4 = { in: { roles: ['in'], want: [3] }, out: { roles: ['T1', 'T2', 'T3', 'T4'], want: [2] } };
 
 const ROLE_MISTAKE = { T1: 'scope-by-publication-date', T2: 'scope-mentions-counted', T3: 'scope-void-kept', T4: 'scope-plans-counted' };
 const TRAP_MISTAKE = { retracted: 'retracted-claims-used', superseded: 'superseded-kept', nonstd: 'nonstandard-counted', quote: 'quotes-counted',
@@ -81,12 +88,22 @@ function nearMisses(w, f) {
 export function build({ seed, split, rungDifficulty, difficulty, r }) {
   const w = buildWide(seed, split, rungDifficulty);
   const candidates = rungPlan(w, w.docs).candidates;
-  const items = candidates.map(code => features(w, code)).filter(f => ROLES[difficulty].includes(f.role));
-  const picked = pickByScore(r, items, WANT[difficulty], f => {
+  const all = candidates.map(code => features(w, code));
+  const accept = f => {
     const truth = truthOf(w, f.code);
     const near = distinctMisses(truth, nearMisses(w, f), (t, o) => same(t, o, w.props));
     return near.length ? { f, truth, near } : null;
-  });
+  };
+  let picked;
+  if (difficulty === 4) {
+    // scope side first (seeded), then the item by score within it; the other side only if this one has no usable item
+    const first = r.chance(OUT_SHARE_D4) ? 'out' : 'in';
+    for (const side of [first, first === 'out' ? 'in' : 'out']) {
+      const { roles, want } = SIDES_D4[side];
+      picked = pickByScore(r, all.filter(f => roles.includes(f.role)), want, accept);
+      if (picked) break;
+    }
+  } else picked = pickByScore(r, all.filter(f => ROLES[difficulty].includes(f.role)), WANT[difficulty], accept);
   if (!picked) throw new Error(`need-stage r6: no candidate with a near miss (seed ${seed} ${split} d${difficulty})`);
   const { f, truth, near } = picked;
   const s = sliceOf(w, f.code);

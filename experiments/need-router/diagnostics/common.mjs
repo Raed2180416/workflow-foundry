@@ -44,14 +44,21 @@ export function quantile(xs, q) {
 export const median = xs => quantile(xs, 0.5);
 export const round = (x, d = 4) => (Number.isFinite(x) ? Math.round(x * 10 ** d) / 10 ** d : x);
 
-/** Area under the ROC curve (Mann-Whitney, ties count 1/2). null when only one class is present. */
-export function auc(scores, labels) {
-  const pos = [], neg = [];
-  scores.forEach((s, i) => (labels[i] ? pos : neg).push(s));
-  if (!pos.length || !neg.length) return null;
-  let wins = 0;
-  for (const p of pos) for (const n of neg) wins += p > n ? 1 : p === n ? 0.5 : 0;
-  return wins / (pos.length * neg.length);
+/**
+ * Area under the ROC curve (Mann-Whitney, ties count 1/2). With `strata` only pairs from the same stratum are compared, which
+ * removes a confound between the strata (for example difficulty bands that differ in both input size and pass rate).
+ * null when no comparable (positive, negative) pair exists.
+ */
+export function auc(scores, labels, strata = null) {
+  let wins = 0, pairs = 0;
+  for (let i = 0; i < scores.length; i++) {
+    if (!labels[i]) continue;
+    for (let j = 0; j < scores.length; j++) {
+      if (labels[j] || (strata && strata[i] !== strata[j])) continue;
+      pairs += 1; wins += scores[i] > scores[j] ? 1 : scores[i] === scores[j] ? 0.5 : 0;
+    }
+  }
+  return pairs ? wins / pairs : null;
 }
 
 /** All k-subsets of 0..n-1 (lexicographic). */
@@ -74,49 +81,6 @@ export function fisherUpper(a, b, c, d) {
     p += Math.exp(logChoose(m1, x) + logChoose(N - m1, n1 - x) - logChoose(N, n1));
   }
   return Math.min(1, p);
-}
-
-// ------------------------------------------------------------------------------------------ ridge logistic regression
-const sigmoid = z => 1 / (1 + Math.exp(-z));
-function solve(A, b) {   // Gaussian elimination with partial pivoting (small systems)
-  const n = b.length, M = A.map((r, i) => [...r, b[i]]);
-  for (let c = 0; c < n; c++) {
-    let p = c;
-    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
-    [M[c], M[p]] = [M[p], M[c]];
-    if (Math.abs(M[c][c]) < 1e-12) M[c][c] = 1e-12;
-    for (let r = c + 1; r < n; r++) { const f = M[r][c] / M[c][c]; for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k]; }
-  }
-  const x = new Array(n).fill(0);
-  for (let i = n - 1; i >= 0; i--) { let s = M[i][n]; for (let k = i + 1; k < n; k++) s -= M[i][k] * x[k]; x[i] = s / M[i][i]; }
-  return x;
-}
-/**
- * Ridge-penalised logistic regression by Newton steps (intercept unpenalised). Features are standardised with the
- * training mean and sd; a constant feature gets weight 0. Returns { predict(x) -> P(y = 1) }. With one class in the
- * training data it predicts that class's base rate (smoothed), so a held-out fold never fails.
- */
-export function fitLogistic(X, y, { lambda = 1, iters = 60 } = {}) {
-  const n = X.length, p = n ? X[0].length : 0;
-  const base = (sum(y) + 0.5) / (n + 1);
-  if (!n || !p || sum(y) === 0 || sum(y) === n) return { predict: () => base, constant: true };
-  const mu = Array.from({ length: p }, (_, j) => mean(X.map(r => r[j])));
-  const sd = Array.from({ length: p }, (_, j) => { const v = Math.sqrt(mean(X.map(r => (r[j] - mu[j]) ** 2))); return v > 1e-12 ? v : 0; });
-  const Z = X.map(r => [1, ...r.map((v, j) => (sd[j] ? (v - mu[j]) / sd[j] : 0))]);
-  let w = new Array(p + 1).fill(0);
-  for (let it = 0; it < iters; it++) {
-    const pr = Z.map(r => sigmoid(r.reduce((s, v, j) => s + v * w[j], 0)));
-    const g = new Array(p + 1).fill(0), H = Array.from({ length: p + 1 }, () => new Array(p + 1).fill(0));
-    Z.forEach((r, i) => {
-      const e = pr[i] - y[i], s = Math.max(pr[i] * (1 - pr[i]), 1e-9);
-      for (let a = 0; a <= p; a++) { g[a] += e * r[a]; for (let b = 0; b <= p; b++) H[a][b] += s * r[a] * r[b]; }
-    });
-    for (let a = 1; a <= p; a++) { g[a] += lambda * w[a]; H[a][a] += lambda; }
-    const step = solve(H, g);
-    w = w.map((v, j) => v - step[j]);
-    if (Math.max(...step.map(Math.abs)) < 1e-9) break;
-  }
-  return { constant: false, weights: w, predict: x => sigmoid(w[0] + x.reduce((s, v, j) => s + (sd[j] ? ((v - mu[j]) / sd[j]) * w[j + 1] : 0), 0)) };
 }
 
 export const fmt = {
