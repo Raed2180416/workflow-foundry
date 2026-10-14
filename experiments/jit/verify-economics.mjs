@@ -308,7 +308,18 @@ export function armEconomics({ stream, arm, agents, scored = new Map(), floor = 
     const witnessItems = O.map(r => { const dc = compiledDetails(r), f = witnessFlags(dc); return { idx: r.idx, seed: r.seed, wrong: wrongOf(r), verdict: f == null ? 'unknown' : f ? 'disagree' : 'agree' }; });
     addTier('witness', witnessItems, { label: 'exclusion-set witness (ceiling; flag deopts to the interpreter)', realizable: false, ceiling: true, shadowUsd: 0, adjUsd: actI, source: 'compiled oracle details' });
   }
-  const proxies = interpProxyItems ? { tier: 'interp-agent-proxy', label: `${MODEL_SHORT[spec.interp]} agent arm on the same seeds (sensitivity)`, counts: tally(interpProxyItems) } : null;
+  const proxies = interpProxyItems ? { tier: 'interp-agent-proxy', label: `${MODEL_SHORT[spec.interp]} agent arm on the same seeds (sensitivity)`, counts: tally(interpProxyItems), items: interpProxyItems } : null;
+  // Planning values per tier. pWrong is the arm's oracle wrong rate over every labelled compiled-ok delivery (not only the
+  // shadowed ones); delta and phi come from the tier's own comparisons when they include a wrong (right) delivery, else
+  // from the same-model agent-arm proxy (interp tier), else delta = 1 / phi = 0 (assumed, and marked so).
+  const labelled = O.map(wrongOf).filter(w => w != null), pWrongArm = labelled.length ? labelled.filter(Boolean).length / labelled.length : null;
+  for (const t of tiers) {
+    const k = t.counts, pk = t.tier === 'interp' ? proxies?.counts : null;
+    const delta = k?.delta ?? pk?.delta ?? null, phi = k?.phi ?? pk?.phi ?? null;
+    t.plan = { pWrong: pWrongArm, labelled: labelled.length, delta: delta ?? 1, deltaSource: k?.delta != null ? 'tier' : pk?.delta != null ? 'agent-arm proxy' : 'assumed 1',
+      phi: phi ?? 0, phiSource: k?.phi != null ? 'tier' : pk?.phi != null ? 'agent-arm proxy' : 'assumed 0' };
+    t.plan.d = (pWrongArm ?? 0) * t.plan.delta;
+  }
   // Agents and targets.
   const agentTargets = [...agents.entries()].map(([model, ag]) => ({ model, short: MODEL_SHORT[model], usdPerTask: ag.usdPerTask, usdPerSuccess: ag.usdPerSuccess, passRate: ag.passRate,
     pairedUsdPerTask: mean(W.map(r => ag.bySeed.get(r.seed)?.costUsd).filter(x => x != null)) }));
@@ -347,20 +358,22 @@ export function armEconomics({ stream, arm, agents, scored = new Map(), floor = 
     systemView.realized = { kind: 'logged floor draws', deliveries: O.length, n: floorRows.length, idx: floorRows.map(r => r.idx), systemWrong: wrongSys, wilsonHiSystem: wilsonHi(wrongSys, floorRows.length),
       oracleWrong: floorRows.filter(r => wrongOf(r) === true).length, detectedWrong: detected, unresolvedOrMissedWrong: missed, wilsonHiDetected: wilsonHi(detected, floorRows.length), ipw: ipwMissEstimate(items) };
   }
-  for (const t of tiers.filter(x => x.counts && x.tier !== 'haiku+hadj')) {
+  // Emulated floor: tiers whose verdict is known on every compiled-ok delivery (the Haiku agent arm; the same-model agent
+  // arm as the interpreter's proxy). The as-run interp shadows are a periodic, not a random, sample and are not re-drawn.
+  const emulate = [...tiers.filter(t => t.tier === 'haiku'), ...(proxies ? [proxies] : [])];
+  for (const t of emulate) {
     const draws = t.items.filter(i => i.verdict !== 'unknown').map(i => ({ ...i, u: shadowDrawOf(seed, i.idx) }));
     const sampled = draws.filter(i => i.u < floor), det = sampled.filter(i => i.wrong === true && i.verdict === 'disagree').length;
-    if (t.tier !== 'witness') systemView.emulated.push({ tier: t.tier, deliveries: draws.length, n: sampled.length, detectedWrong: det, wilsonHi: wilsonHi(det, sampled.length),
+    systemView.emulated.push({ tier: t.tier, deliveries: draws.length, n: sampled.length, idx: sampled.map(i => i.idx), detectedWrong: det, wilsonHi: wilsonHi(det, sampled.length),
       ipw: ipwMissEstimate(draws.map(i => ({ verified: i.u < floor, propensity: floor, wrong: i.wrong === true && i.verdict === 'disagree' }))) });
-    for (const N of [24, 100, 1000, 10000]) for (const rate of [0.1, 0.25, 0.5, 1])
-      systemView.projected.push({ tier: t.tier, N, rate, d: t.counts.d, ...projectedBound({ d: t.counts.d || 0, q, rate, N }) });
   }
-  // CSP-1 at the measured p, delta, phi for each tier.
-  const csp = tiers.filter(t => t.counts && t.counts.pWrong != null && t.tier !== 'haiku+hadj' && t.tier !== 'witness').flatMap(t => [[20, 0.1], [60, 0.25], [10, 0.25]].map(([i, f]) => {
-    // delta is unmeasured when no compiled delivery was wrong: the perfect inspector is assumed and the row says so.
-    const k = t.counts, deltaMeasured = k.delta != null, delta = k.delta ?? 1, phi = k.phi ?? 0, r = csp1({ p: k.pWrong, i, f, delta, phi });
-    return { tier: t.tier, i, f, p: k.pWrong, delta, deltaMeasured, phi, ...r, aoqlImperfect: aoql({ i, f, delta, phi }).aoql,
-      usdPerTaskL1: steadyState({ base: base.L1, q, shadowUsd: t.shadowUsd, adjUsd: t.adjUsd, pD: k.pD || 0, rate: r.afi, adjudicate: true }) };
+  for (const t of tiers.filter(x => x.plan && x.tier !== 'haiku+hadj')) for (const N of [24, 100, 1000, 10000]) for (const rate of [0.1, 0.25, 0.5, 1])
+    systemView.projected.push({ tier: t.tier, N, rate, d: t.plan.d, ...projectedBound({ d: t.plan.d, q, rate, N }) });
+  // CSP-1 at the arm's measured p and the tier's planning delta, phi (marked when assumed).
+  const csp = tiers.filter(t => t.plan?.pWrong != null && t.counts && t.tier !== 'haiku+hadj' && t.tier !== 'witness').flatMap(t => [[20, 0.1], [60, 0.25], [10, 0.25]].map(([i, f]) => {
+    const { pWrong: p, delta, phi, deltaSource, phiSource } = t.plan, r = csp1({ p, i, f, delta, phi });
+    return { tier: t.tier, i, f, p, delta, deltaSource, phi, phiSource, ...r, aoqlImperfect: aoql({ i, f, delta, phi }).aoql,
+      usdPerTaskL1: steadyState({ base: base.L1, q, shadowUsd: t.shadowUsd, adjUsd: t.adjUsd, pD: t.counts.pD || 0, rate: r.afi, adjudicate: true }) };
   }));
   return { experiment: stream.experiment, family: fam, slug: arm.slug, spec: arm.meta.spec, short: spec.short, interp: spec.interp, warmup, rows: rows.length, n, compiledOk: O.length, q,
     passW, passAll, costs: c, base, asRun, effRate, tiers: tiers.map(({ items, ...t }) => ({ ...t, items })), interpAgentProxy: proxies, agents: agentTargets, table, breakEven,
@@ -426,13 +439,13 @@ export function attackArithmetic(e, agentUsd) {
 // The cheapest (tier, rate >= floor) whose projected detectable-wrong bound at N is <= bound. Engine semantics: adjudicate.
 export function slider(e, { bound, N, floor = FLOOR, rates = RATES, level = 'L1', realizableOnly = false }) {
   const opts = [];
-  for (const t of e.tiers.filter(x => x.counts && x.shadowUsd != null && x.tier !== 'witness' && (!realizableOnly || x.realizable))) for (const rate of rates.filter(r => r >= floor)) {
-    const b = projectedBound({ d: t.counts.d || 0, q: e.q, rate, N });
+  for (const t of e.tiers.filter(x => x.counts && x.plan && x.shadowUsd != null && x.tier !== 'witness' && (!realizableOnly || x.realizable))) for (const rate of rates.filter(r => r >= floor)) {
+    const b = projectedBound({ d: t.plan.d, q: e.q, rate, N });
     if (b.hi <= bound) opts.push({ tier: t.tier, rate, bound: b.hi, usd: steadyState({ base: e.base[level], q: e.q, shadowUsd: t.shadowUsd, adjUsd: t.adjUsd, pD: t.counts.pD || 0, rate, adjudicate: true }) });
   }
   opts.sort((a, b) => a.usd - b.usd);
   if (opts.length) return { feasible: true, ...opts[0] };
-  const ds = e.tiers.filter(x => x.counts && x.tier !== 'witness').map(x => x.counts.d || 0);
+  const ds = e.tiers.filter(x => x.plan && x.tier !== 'witness').map(x => x.plan.d);
   return { feasible: false, reason: ds.length && Math.min(...ds) >= bound ? `every tier's measured detectable-wrong rate (min ${Math.min(...ds).toFixed(3)}) is >= the bound` : `too few shadows at N = ${N}` };
 }
 
