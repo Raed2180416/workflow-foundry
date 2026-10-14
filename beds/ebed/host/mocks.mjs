@@ -177,6 +177,12 @@ export class MockSystem {
    * `fault`: an injected behaviour decided by the host ('F1'|'F2'|'F3'|'F6' or null).
    */
   apply(op, rawArgs, key, atMs, { fault = null, ctx = {} } = {}) {
+    const r = this.#apply(op, rawArgs, key, atMs, { fault, ctx });
+    // F3: the request reached the system (and committed if it could) but the caller learns nothing about the outcome.
+    return fault === 'F3' ? { ...r, status: 'unknown', result: undefined, error: { code: 'timeout', reason: 'timeout-after-commit' } } : r;
+  }
+
+  #apply(op, rawArgs, key, atMs, { fault = null, ctx = {} } = {}) {
     const def = this.def.ops[op];
     if (!def) return { applied: false, committed: false, status: 'error', error: { code: 404, reason: 'unknown-op' }, touched: [] };
     const touched = [];
@@ -203,8 +209,6 @@ export class MockSystem {
     flush();
     result = plainCopy(result ?? {}) ?? {};
     if (def.keyed && key != null) this.keys.set(key, { op, argsDigest, status: 'ok', result, atMs });
-    // F3: committed, but the caller learns nothing about the outcome.
-    if (fault === 'F3') return { applied: true, committed: true, status: 'unknown', touched, error: { code: 'timeout', reason: 'timeout-after-commit' } };
     return { applied: true, committed: true, status: 'ok', result, touched };
   }
 

@@ -201,6 +201,36 @@ export function bestOfNRun(task) {
   return { N: b.N, nAtEqualTokens: b.nAtEqualTokens, pick: b.pick, candidates: b.candidates.map(({ trace, ...c }) => c), output: structuredClone(b.trace.reduce) };
 }
 
+/**
+ * Reported ablation, analyst side (review 2026-10-14, finding 2): R6 WITHOUT a plan. The bed's exact workers mapped over
+ * every compound of the code mention index, no plan and no judge. It solves every dev task (tested), so the plan is not
+ * necessary for correctness (W-BED §2.4 item 3 fails for R6, as R4 has no necessity attack). What the map costs is
+ * width: the whole index (30-60 compounds), above MAX_FANOUT at d >= 3, against 10-29 plan candidates.
+ */
+export function planAblation(task) {
+  const w = hostWorld(task), tr = truthTraceOf(w);
+  const codes = tr.index.entities.map(x => x.code);
+  const vis = w.docs, voids = voidKeys(w, vis);
+  const wk = worker(w, vis, voids, codes);
+  return { workers: codes.length, overFanout: codes.length > MAX_FANOUT, planCandidates: tr.plan.candidates.length, output: reduce(w, vis, voids, wk.items) };
+}
+
+/**
+ * Reported ablation, analyst side (review 2026-10-14, finding 4): an agent with tools and no workflow
+ * (budget.mjs `agentReadSet`: every notice, the lab's documents under all its names, every document naming a compound
+ * found there by name or code, later versions by title), answering exactly from what it read. It solves every task when
+ * nothing it read is lost (tested). It reads more than the 32K-token attention budget, so under the bed's attention
+ * hypothesis it fails like the single-context controls, and without that hypothesis it passes: at $0 nothing separates
+ * `wide` from it. The paid run decides.
+ */
+export function grepAgentRun(task) {
+  const w = hostWorld(task);
+  const seen = agentReadSet(w);
+  const unseen = new Set(w.docs.filter(d => !seen.has(d.key)).map(d => d.key));
+  const read = w.render.fixedTokens + [...seen].reduce((s, k) => s + w.render.tokens.get(k) + PER_FILE_OVERHEAD, 0);
+  return { read, docsRead: seen.size, docs: w.docs.length, overBudget: read > SEQUENTIAL_BUDGET_TOKENS, output: runPipeline(w, { unseen, traces: false }).reduce };
+}
+
 // Mined invariants (W-BED §2.2 item 3): analyst-side "free verifier" candidates. No system component sees them.
 export const invariants = [
   { id: 'A1-complete-rows', scope: 'reduce', text: 'every compound in the table has exactly one row per requested property' },
@@ -215,22 +245,34 @@ export const structure = {
   stages: ['index', 'plan', 'worker', 'reduce'],
   features: { maxCallDepth: 1, callSites: 0, mapSites: 0, maxFanOut: MAX_FANOUT, agentNodes: 0, wideNodes: 1, judgedBranchPoints: 1,
     judges: [
-      'plan: candidate compounds (typed list of codes, each with a quoted Affiliation line and Published date; check: every quote occurs; the code index checks gaps and duplicates)',
       'worker scope: in scope? (enum + the quoted test-date sentence and Affiliation line; check: both quotes occur in the cited document)',
       'worker cell, per requested property: the winning claim (value, unit, n, source id, quoted sentence; check: the quote occurs in the source and names the compound)',
       'verify panel: 3 judges (independence: same-model, correlated) on a 20% sample of cells',
+      'plan (optional): a judge over the header digest and the consortium notices; the code plan (codePlan) is complete on every dev task, so a judge adds nothing the check does not (review 2026-10-14, finding 2)',
     ],
-    wide: { plan: 'judge over the header digest (Type, Venue, Published, Affiliation, Title of every document) + consortium notices + the question',
-      check: 'code: index entities (textIndex) -> no unknown or duplicate candidate; gaps = compounds mentioned in a document whose Affiliation the plan accepted, published on/after the date, but not listed', maxFanout: MAX_FANOUT,
-      worker: 'judge chain per candidate over its mention documents + every notice (shared prefix: rules + notices)', reduce: 'code (in-scope items only; excluded = union of their void documents)',
-      verify: `panel of ${PANEL.n} on a ${PANEL.sample * 100}% sample of cells + unitChecks (code)` } },
+    wide: { plan: 'code (codePlan): the lab\'s names from the membership and rename notices, then every compound mentioned in a research document whose Affiliation is one of them, published on/after the date (header fields + the mention index); <= 29 candidates',
+      check: 'code (coverageIssues): no unknown or duplicate candidate; gaps = codePlan compounds not listed', maxFanout: MAX_FANOUT,
+      worker: 'judge chain per candidate over its slice (budget.mjs workerSlice: every notice + every research document and review that mentions it; shared prefix: rules + notices)', reduce: 'code (in-scope items only; excluded = union of their void documents)',
+      verify: `panel of ${PANEL.n} on a ${PANEL.sample * 100}% sample of cells + unitChecks (code)` },
+    // Why the plan stage exists: without it the map is the whole index (30-60 compounds), above maxFanout at d >= 3
+    // (planAblation). It is needed for width, not for correctness, and it is code.
+    planNecessary: 'width (fan-out cap), not correctness' },
+  // The B6 comparison (PROOF-LEDGER B6; review 2026-10-14, findings 1, 4, 5, 6). Binding on the W-bed PREREG.
+  b6: {
+    wideArm: 'model-executed: the solver trace has one `wide` node whose workers make judge calls (reference or JIT-built). A solver whose workers are pure code (a parser: the corpus is a closed template grammar, whitebox.mjs dev-visible solves d2-d4) is reported separately and does not count as the B6 `wide` arm',
+    bestOfNArm: 'N independent Haiku agent solves (W-BED §3.6), the same verify selecting; N from the measured ledgers of both arms with nAtEqual, never from the bed\'s one-inline-call estimate (tokenAccounting.bestOfN is an ex-ante range)',
+    budget: 'equal tokens = input + output + thinking (cache reads counted as input tokens unless the PREREG says otherwise) AND equal dollars at list price with the 100K-token prompt step; report both',
+    fixBeforeN: ['worker design (chain or one call)', 'panel reading (evidence or source only)', 'effort (thinking tokens scale with the number of calls)', 'difficulty (d3/d4 streams, or d5 above the price step)', 'token unit (agent ledger)'],
+    selectorAsymmetry: 'wide\'s plan check (coverageIssues) sees a missing compound; best_of_n\'s selector (panel on sampled rows + unitChecks) cannot, unless each candidate also returns the compounds it considered with a verdict, so the same check can run on it. State the asymmetry in the claim or give the selector that check',
+    sizeEvidence: 'none at $0: the single-context controls fail only under the 32K-token attention hypothesis; the paid one-call attack and the B6 run measure it',
+  },
   outline: [
     'step index (code): textIndex(files, register) -> per code: name, mention documents; header digest; notices',
     'flow.wide("wide-table", {',
-    '  plan: judge(question + header digest + consortium notices) -> candidates [{code, affiliation_quote, published}] (recall: every compound mentioned in a research document of the lab, under any of its names, published on/after the date),',
-    '  check: (cands, ctx) => coverageIssues(cands, ctx.index) (unknown codes, two strings for one compound, gaps), one replan with the issues,',
+    '  plan: codePlan(task) (code: the lab\'s names from the two consortium notices; every compound mentioned in a research document of the lab, under any of its names, published on/after the date; a plan judge is optional),',
+    '  check: (cands, ctx) => coverageIssues(task, cands) (unknown codes, two strings for one compound, gaps), one replan with the issues,',
     `  maxFanout: ${MAX_FANOUT},`,
-    '  worker: per candidate, over its mention documents + every notice:',
+    '  worker: per candidate, over its slice (every notice + its mention documents):',
     '    judge in_scope (an own test by the lab dated on/after the date, in a document that is not void) -> if not, return { in_scope: false }',
     '    judge per requested property: the winning claim (void status, errata, condition, quotes, predictions, bounds, unit, ranking policy)',
     '    step void documents among its mention documents',

@@ -10,12 +10,14 @@ import { buildWide } from './world.mjs';
 import { textIndex, runPipeline } from './pipeline.mjs';
 import { PROPS, MAX_FANOUT, valueText, canonOf, printedNumber, PROP_IDS } from './vocab.mjs';
 import { parseDay } from './heuristic.mjs';
-import { readingOrder, unseenPast } from './budget.mjs';
+import { readingOrder, unseenPast, workerSlice, agentTokens, callUsd, THINKING_CAP, HAIKU_PRICE, SEQUENTIAL_BUDGET_TOKENS } from './budget.mjs';
+import { voidKeys, worker, reduce } from './pipeline.mjs';
 import { whiteboxSolve } from './whitebox.mjs';
 import { canonical, sha256, estimateTokens } from '../lib/prng.mjs';
 import { dayNum } from '../lib/domain.mjs';
 import { inlineRender, loadFamily } from '../../../experiments/lib/beds.mjs';
 import { portableSchemaViolations } from '../../../src/schema-subset.mjs';
+import { THINKING } from '../../../src/models/port.mjs';
 import { plan, runStub } from '../attacks/triviality.mjs';
 
 const SEEDS = Array.from({ length: 20 }, (_, i) => 301 + i); // dev 301-320 (wbed-dev)
@@ -28,16 +30,22 @@ const allControls = [...bed.badControls, ...bed.necessityControls];
 
 test('exports the bed interface plus the W-specific and R6-specific exports; the shim registers wbed-r6', async () => {
   for (const k of ['family', 'outputSchema', 'generate', 'oracle', 'referenceSolve', 'badControls', 'necessityControls', 'version', 'difficulty', 'stages',
-    'structure', 'relations', 'composedOracle', 'referenceTrace', 'invariants', 'unitChecks', 'keywordScript', 'textIndex', 'tokenAccounting', 'bestOfNRun', 'scopeOf', 'sizeOf']) assert.ok(k in bed, k);
+    'structure', 'relations', 'composedOracle', 'referenceTrace', 'invariants', 'unitChecks', 'codePlan', 'coverageIssues', 'keywordScript', 'textIndex', 'tokenAccounting', 'bestOfNRun',
+    'planAblation', 'grepAgentRun', 'scopeOf', 'sizeOf']) assert.ok(k in bed, k);
   assert.equal(bed.family.id, 'wbed-r6');
-  assert.equal(bed.version, '1.0.0');
+  assert.equal(bed.version, '1.1.0');
   assert.equal(bed.family.kind, 'oneshot');
   assert.deepEqual(bed.stages.map(s => s.id), ['index', 'plan', 'worker', 'reduce']);
   for (const s of bed.stages) for (const k of ['inputSchema', 'outputSchema', 'oracle', 'project']) assert.ok(s[k], `${s.id}.${k}`);
   assert.equal(bed.structure.shape, 'planned-swarm');
   assert.equal(bed.structure.features.wideNodes, 1);
   const o = bed.structure.outline.join('\n');
-  for (const re of [/flow\.wide\("wide-table"/, /plan: judge/, /check: .*coverageIssues/, /maxFanout: 32/, /judge in_scope/, /reduce: /, /verify: \{ panel: \{ n: 3 \}, sample: 0.2, code: unitChecks \}/]) assert.match(o, re);
+  for (const re of [/flow\.wide\("wide-table"/, /plan: codePlan/, /check: .*coverageIssues/, /maxFanout: 32/, /judge in_scope/, /reduce: /, /verify: \{ panel: \{ n: 3 \}, sample: 0.2, code: unitChecks \}/]) assert.match(o, re);
+  // the B6 protocol the PREREG must adopt (review 2026-10-14, findings 1, 4, 5, 6)
+  for (const k of ['wideArm', 'bestOfNArm', 'budget', 'fixBeforeN', 'selectorAsymmetry', 'sizeEvidence']) assert.ok(bed.structure.b6[k], `structure.b6.${k}`);
+  assert.match(bed.structure.b6.wideArm, /model-executed/);
+  assert.match(bed.structure.b6.bestOfNArm, /agent solves/);
+  assert.match(bed.structure.b6.budget, /thinking/);
   assert.equal((await loadFamily('wbed-r6')).family.id, 'wbed-r6');
   assert.ok(readFileSync(new URL('../../wbed-r6/index.mjs', import.meta.url), 'utf8').includes("'../wbed/r6/index.mjs'"));
 });
@@ -60,6 +68,13 @@ test('generator is deterministic: same seed -> same task hash, also in a fresh p
   assert.deepEqual(fresh, [[301, 3], [302, 5], [303, 2]].map(([s, d]) => hashOf(gen(s, d))));
   assert.notEqual(hashOf(gen(301, 3)), hashOf(gen(301, 3, 'test')));
   assert.notEqual(hashOf(gen(301, 3)), hashOf(gen(302, 3)));
+});
+
+test('review finding 9: the world cannot be built without the decisiveness verifier (fresh process, world.mjs alone)', () => {
+  const world = fileURLToPath(new URL('./world.mjs', import.meta.url));
+  const code = `const m = await import(${JSON.stringify(world)}); try { m.buildWide(301, 'dev', 3); console.log('built'); } catch (e) { console.log(String(e.message)); }`;
+  const out = execFileSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8' }).trim();
+  assert.match(out, /needs the decisiveness verifier/);
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -120,6 +135,29 @@ test('the world is what the stated rules decide: construction = resolver; roles 
   assert.ok(counts.size >= 8, 'the in-scope count varies per task');
 });
 
+test('review finding 3: separable under the declared worker slice (budget.mjs workerSlice, the slice the accounting prices): the exact worker on it reproduces the truth on every task', () => {
+  let v2s = 0;
+  const run = (seed, d, split) => {
+    const task = gen(seed, d, split), w = buildWide(seed, split, d);
+    for (const v2 of w.docs.filter(x => x.supersedes)) {
+      const v1 = w.byKey.get(v2.supersedes);
+      for (const id of Object.keys(v1.styles)) assert.ok(v2.styles[id], `${v2.id} omits a compound of ${v1.id} d${d} ${split} s${seed}`);
+      v2s++;
+    }
+    const items = [];
+    for (const code of bed.referenceTrace(task).plan.candidates) {
+      const keys = new Set(workerSlice(w, code));
+      const vis = w.docs.filter(x => keys.has(x.key));
+      const unseen = new Set(w.docs.filter(x => !keys.has(x.key)).map(x => x.key));
+      items.push(...worker(w, vis, voidKeys(w, vis, { unseen }), [code]).items);
+    }
+    const o = bed.oracle(task, reduce(w, w.docs, new Set(), items));
+    assert.ok(o.pass, `declared slice fails d${d} ${split} s${seed}: ${JSON.stringify(o.details)}`);
+  };
+  for (const d of DS) { for (const seed of SEEDS) run(seed, d, 'dev'); for (const seed of HELD) run(seed, d, 'test'); }
+  assert.ok(v2s > 0);
+});
+
 test('no completeness shortcut: every plan candidate (in scope or not) and the namesake compound have a surviving claim for every requested property', () => {
   for (const d of DS) for (const seed of SEEDS.slice(0, 8)) {
     const w = buildWide(seed, 'dev', d);
@@ -153,6 +191,17 @@ test('decidability witness: the white-box script (generator templates, task text
     for (const seed of SEEDS) { const t = gen(seed, d); assert.ok(bed.oracle(t, whiteboxSolve(t)).pass, `d${d} s${seed}`); }
     for (const seed of HELD) { const t = gen(seed, d, 'test'); assert.ok(bed.oracle(t, whiteboxSolve(t)).pass, `d${d} test s${seed}`); }
   }
+});
+
+test('review finding 1 (triviality, W-BED §2.4 items 2 and 4): a text-only parser of the dev-visible sentence forms solves dev and held-out at d2-d4; only the d5 test-split phrasing defeats it', t => {
+  const dv = task => bed.oracle(task, whiteboxSolve(task, { phrasing: 'dev-visible' })).pass;
+  for (const d of DS) for (const seed of SEEDS.slice(0, 5)) assert.ok(dv(gen(seed, d)), `dev d${d} s${seed}`);
+  for (const d of [2, 3, 4]) for (const seed of HELD) assert.ok(dv(gen(seed, d, 'test')), `held-out d${d} s${seed}: a dev-visible parser solves the stream difficulties`);
+  const d5 = HELD.filter(seed => dv(gen(seed, 5, 'test'))).length;
+  assert.equal(d5, 0, 'the d5 test-split test-date phrasing is the only form dev text never shows');
+  // the keyword script is a strawman next to it, not the triviality answer
+  for (const d of DS) assert.equal(bed.oracle(gen(301, d), bed.keywordScript(gen(301, d))).pass, false);
+  t.diagnostic(`dev-visible parser: dev 5/5 per difficulty, held-out d2-d4 12/12, held-out d5 (test split) ${d5}/${HELD.length}`);
 });
 
 test('exact units: every printed unit converts back to the canonical integer exactly; the oracle compares at the stated precision', () => {
@@ -191,7 +240,8 @@ test('controls: CONTRACT minimums, the four required comparison controls, severa
   const names = bed.badControls.map(c => c.name);
   for (const n of ['empty', 'shuffled-or-corrupted', 'heuristic:keyword-script']) assert.ok(names.includes(n), n);
   assert.equal(new Set(names).size, names.length);
-  assert.deepEqual(bed.necessityControls.map(c => c.name), ['necessity:no-plan-fixed-list', 'sequential-single-context', 'best-of-n:equal-tokens', 'no-workflow:grep-agent']);
+  assert.deepEqual(bed.necessityControls.map(c => c.name), ['sequential-single-context', 'best-of-n:equal-tokens']);
+  assert.ok(names.includes('plan-register-list'), 'the register list stays as a bad control (a plausible mistake), not a necessity control');
   for (const d of DS) assert.ok(bed.badControls.filter(c => applies(c, d)).length >= 20, `d${d}`);
   assert.ok(bed.badControls.filter(c => c.kind === 'relation').length >= 4);
 });
@@ -249,6 +299,15 @@ test('oracle: schema-invalid and hostile outputs fail; order-insensitive; compou
   assert.ok(bed.oracle(t, sh).pass, 'names instead of codes, any case and order');
   const dup = structuredClone(ref); dup.table.push({ ...dup.table[0], entity: w.entities.find(e => e.code === dup.table[0].entity).name });
   assert.equal(bed.oracle(t, dup).pass, false, 'one cell under code and under name is a duplicate');
+  // review finding 8: "name (CODE)", the corpus's own form, names the compound when both halves agree
+  const pair = structuredClone(ref);
+  for (const r of pair.table) { const e = w.entities.find(x => x.code === r.entity); r.entity = `${e.name} (${e.code})`; }
+  assert.ok(bed.oracle(t, pair).pass, '"name (CODE)" is accepted');
+  assert.deepEqual(bed.unitChecks(t, pair).issues, [], 'and the code verifier reads it too');
+  const mixed = structuredClone(ref);
+  const other = w.entities.find(x => x.code !== mixed.table[0].entity);
+  mixed.table[0].entity = `${other.name} (${mixed.table[0].entity})`;
+  assert.equal(bed.oracle(t, mixed).pass, false, 'a pair whose halves name different compounds names nothing');
   const extra = structuredClone(ref);
   const outCode = sc.candidates.find(c => c.role !== 'in').code;
   extra.table.push({ entity: outCode, property: w.props[0], value: 1, source_doc_id: 'D001' });
@@ -275,11 +334,40 @@ test('hidden truth does not leak: the compound list, the void set and the roles 
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
-test('necessity: without a plan (fixed list from the register) at least two in-scope compounds are missed, on every task', () => {
+test('review finding 2: the plan is not necessary for correctness; it is needed for width, and it is code', t => {
+  const widths = {};
+  const plan = bed.stages.find(s => s.id === 'plan');
   for (const d of DS) for (const seed of SEEDS) {
-    const t = gen(seed, d), sc = bed.scopeOf(t);
-    const fixed = new Set(t.inputs.register.entries.filter(x => x.registered_by === t.inputs.question.lab).map(x => x.code));
-    assert.ok(sc.inScope.filter(x => !fixed.has(x.code)).length >= 2, `d${d} s${seed}`);
+    const task = gen(seed, d), tr = bed.referenceTrace(task);
+    // R6 without a plan: the exact workers over every indexed compound solve the task
+    const ab = bed.planAblation(task);
+    assert.ok(bed.oracle(task, ab.output).pass, `map over the index d${d} s${seed}`);
+    (widths[d] ??= []).push(ab.workers);
+    if (d >= 3) assert.ok(ab.overFanout, `d${d}: the plan-less map is wider than MAX_FANOUT`);
+    // the plan as code (lab names from the two notices, header fields, mention index) is the reference plan exactly
+    const cp = bed.codePlan(task);
+    assert.deepEqual(cp, [...tr.plan.candidates].sort(), `codePlan d${d} s${seed}`);
+    assert.ok(cp.length <= MAX_FANOUT);
+    assert.ok(plan.oracle(plan.project(task), { candidates: cp }).pass);
+    // the register list misses >= 2 in-scope compounds by construction (why it is a bad control, not a necessity control)
+    const fixed = new Set(task.inputs.register.entries.filter(x => x.registered_by === task.inputs.question.lab).map(x => x.code));
+    assert.ok(bed.scopeOf(task).inScope.filter(x => !fixed.has(x.code)).length >= 2, `d${d} s${seed}`);
+  }
+  for (const seed of HELD) for (const d of DS) { const task = gen(seed, d, 'test'); assert.deepEqual(bed.codePlan(task), [...bed.referenceTrace(task).plan.candidates].sort()); }
+  t.diagnostic(`plan-less map width (workers) per difficulty: ${JSON.stringify(Object.fromEntries(Object.entries(widths).map(([d, xs]) => [d, [Math.min(...xs), Math.max(...xs)]])))}`);
+});
+
+test('the plan\'s code check (coverageIssues) accepts the reference plan and names each plan mistake', () => {
+  for (const d of [3, 4, 5]) for (const seed of SEEDS.slice(0, 4)) {
+    const task = gen(seed, d), cands = bed.referenceTrace(task).plan.candidates;
+    assert.ok(bed.coverageIssues(task, cands).ok);
+    const ctl = name => bed.badControls.find(c => c.name === name).trace(task).plan.candidates;
+    assert.ok(bed.coverageIssues(task, ctl('scope-alias-missed')).gaps.length > 0, `alias-missed has gaps d${d} s${seed}`);
+    assert.ok(bed.coverageIssues(task, ctl('scope-code-and-name-twice')).duplicates.length > 0, `code-and-name-twice d${d} s${seed}`);
+    assert.ok(bed.coverageIssues(task, ctl('plan-register-list')).gaps.length > 0, `register list d${d} s${seed}`);
+    assert.deepEqual(bed.coverageIssues(task, [...cands, 'zz-not-a-compound']).unknown, ['zz-not-a-compound']);
+    const e = buildWide(seed, 'dev', d).entities.find(x => x.code === cands[0]);
+    assert.ok(bed.coverageIssues(task, [...cands.slice(1), `${e.name} (${e.code})`]).ok, '"name (CODE)" resolves');
   }
 });
 
@@ -313,22 +401,17 @@ test('best_of_n at equal tokens with the same verifier: every candidate fails, n
   t.diagnostic(`best_of_n (seeds 301-305): ${JSON.stringify(rows)}`);
 });
 
-test('no-workflow grep agent: misses a compound tested only under lab X\'s abbreviation or former name unless a full-name document names it', t => {
-  let alias = 0, missed = 0, hidden = 0;
-  for (const d of [3, 4, 5]) for (const seed of SEEDS.slice(0, 8)) {
-    const task = gen(seed, d), sc = bed.scopeOf(task), w = buildWide(seed, 'dev', d);
-    const out = bed.necessityControls.find(c => c.name === 'no-workflow:grep-agent').make(task);
-    const got = new Set(out.table.map(r => r.entity));
-    const fullNamed = new Set(w.docs.filter(x => x.lab === w.X && x.affil === 'full' && x.pubDay >= w.Y && x.claims.length + x.quotes.length + x.plans.length > 0).flatMap(x => Object.keys(x.styles)));
-    for (const x of sc.inScope.filter(e => e.sub === 'abbr' || e.sub === 'former')) {
-      const e = w.entities.find(z => z.code === x.code);
-      alias++;
-      if (!got.has(x.code)) missed++;
-      if (!fullNamed.has(e.id)) { hidden++; assert.ok(!got.has(x.code), `${x.code} (${x.sub}) d${d} s${seed}`); }
-    }
+test('review finding 4: an agent with tools and no workflow (every lab name, both strings, later versions) solves every task when it loses nothing; only the 32K attention hypothesis separates it from wide', t => {
+  const reads = {};
+  for (const d of DS) for (const seed of SEEDS) {
+    const task = gen(seed, d), g = bed.grepAgentRun(task);
+    assert.ok(bed.oracle(task, g.output).pass, `grep agent d${d} s${seed}`);
+    assert.ok(g.read < bed.tokenAccounting(task).inline, 'it reads less than the inline task');
+    (reads[d] ??= []).push(g.read);
+    if (d >= 3) assert.ok(g.overBudget && g.read > SEQUENTIAL_BUDGET_TOKENS, `d${d} s${seed}: above the attention budget`);
   }
-  t.diagnostic(`alias-only compounds: ${alias}; not named in any full-name lab X document: ${hidden}; missed by the grep agent: ${missed}`);
-  assert.ok(missed >= hidden && hidden > 0);
+  for (const seed of HELD) for (const d of DS) { const task = gen(seed, d, 'test'); assert.ok(bed.oracle(task, bed.grepAgentRun(task).output).pass, `held-out d${d} s${seed}`); }
+  t.diagnostic(`grep agent read (tokens) per difficulty, min-max: ${JSON.stringify(Object.fromEntries(Object.entries(reads).map(([d, xs]) => [d, [Math.min(...xs), Math.max(...xs)]])))}`);
 });
 
 test('equal-token accounting: wide reads several times the inline task under every design; most of it is a cacheable prefix', t => {
@@ -350,6 +433,43 @@ test('equal-token accounting: wide reads several times the inline task under eve
     }
   }
   t.diagnostic(`token accounting (means over dev 301-310): ${JSON.stringify(rows)}`);
+});
+
+test('review finding 5: the B6 accounting counts output and thinking tokens, prices the 100K-token step, and gives N per unit', t => {
+  assert.deepEqual({ ...THINKING_CAP }, { ...THINKING }, 'thinking caps are the engine\'s (src/models/port.mjs)');
+  const pol = JSON.parse(readFileSync(new URL('../../../policy/models.json', import.meta.url), 'utf8'));
+  const price = pol.models.find(m => m.id === 'claude-haiku-5-5').price;
+  assert.equal(price.inputPerMTok, HAIKU_PRICE.inputPerMTok);
+  assert.equal(price.outputPerMTok, HAIKU_PRICE.outputPerMTok);
+  assert.match(price.source, /up to 100K tokens, \$0\.50\/\$2\.50 beyond/, 'the long-prompt step the bed prices');
+  assert.ok(Math.abs(callUsd(100000, 1000) - (0.01 + 0.0005)) < 1e-12 && Math.abs(callUsd(100001, 1000) - (100001 * 0.5 + 1000 * 2.5) / 1e6) < 1e-12);
+  const a = agentTokens({ fixed: 3000, read: 40000, batch: 16000, cells: 10 });
+  assert.deepEqual([a.calls, a.input], [4, 4 * 3000 + 16000 + 32000 + 40000], 'the agent re-sends its context every turn');
+  const rows = {};
+  for (const d of DS) for (const seed of SEEDS.slice(0, 5)) {
+    const acc = bed.tokenAccounting(gen(seed, d)), W = acc.wide.byEffort, B = acc.bestOfN.byEffort;
+    for (const e of ['none', 'medium']) {
+      const w = W[e].declared;
+      assert.equal(w.calls, 1 + acc.wide.calls.workers + acc.wide.calls.verify);
+      assert.equal(w.input, acc.wide.total);
+      assert.ok(w.output >= 60 * w.calls, 'every call writes output');
+      assert.equal(w.thinking, w.calls * THINKING_CAP[e], 'thinking scales with the number of calls');
+      assert.equal(B[e].candidate.thinking, THINKING_CAP[e]);
+      assert.equal(B[e].declared.nTokens, Math.max(1, Math.floor(w.tokens / B[e].candidate.tokens)));
+      assert.equal(B[e].declared.nUsd, Math.max(1, Math.floor(w.usd / B[e].candidate.usd)));
+      for (const batch of [8000, 16000, 32000]) assert.ok(B[e].agent[batch].input > acc.bestOfN.agentRead);
+      assert.ok(B[e].agent[8000].tokens > B[e].agent[32000].tokens, 'smaller tool batches: more turns, more re-read tokens');
+      assert.ok(B[e].agent[8000].nTokens <= B[e].declared.nTokens, 'in agent units N is smaller than in one-call units');
+    }
+    assert.equal(acc.bestOfN.nAtEqualTokens, B.none.declared.nTokens);
+    if (d === 5) {
+      assert.ok(acc.over100k.inline && B.none.candidate.usd > B.none.candidate.input * HAIKU_PRICE.longInputPerMTok / 1e6 - 1e-9, 'd5 inline reads pay the long-prompt rate');
+      assert.ok(B.none.declared.nUsd < B.none.declared.nTokens, 'at d5 equal dollars buys fewer best_of_n candidates than equal tokens');
+    }
+    (rows[d] ??= []).push({ none: [B.none.declared.nTokens, B.none.declared.nUsd, B.none.agent[16000].nTokens], medium: [B.medium.declared.nTokens, B.medium.declared.nUsd, B.medium.agent[16000].nTokens],
+      wideUsd: [W.none.declared.usd, W.medium.declared.usd], candUsd: [B.none.candidate.usd, B.medium.candidate.usd] });
+  }
+  t.diagnostic(`N [one-call tokens, one-call dollars, agent tokens at 16K batches] and dollars (seeds 301-305): ${JSON.stringify(rows)}`);
 });
 
 test('keyword script (text only) fails every task; the code verifier accepts the reference and flags the structural controls', t => {
@@ -388,12 +508,35 @@ test('drift knob changes the task distribution measurably; the d5 tier is split-
   for (let d = 2; d < 5; d++) assert.ok(Math.min(...by[d + 1].map(x => x.docs)) > Math.max(...by[d].map(x => x.docs)), `docs grow d${d + 1}`);
 });
 
+test('review finding 7: the rules do not reveal the split (d5 names both held-out-tier kinds on both splits); out-of-corpus retractions are not a winner prior', () => {
+  const rule6 = p => p.split('\n').find(l => l.startsWith('6. '));
+  for (const d of DS) for (const seed of [...SEEDS.slice(0, 3), ...HELD]) {
+    const dev = gen(seed, d).prompt, test = gen(seed, d, 'test').prompt;
+    for (const p of [dev, test]) {
+      assert.equal(p.includes('conference abstracts, technical reports'), d === 5);
+      assert.equal(p.includes('Conference abstracts rank with preprints. Technical reports rank with lab notes.'), d === 5);
+    }
+    assert.equal(rule6(dev), rule6(test), `rule 6 identical across splits d${d}`);
+  }
+  let onWinner = 0, offWinner = 0;
+  for (const d of [4, 5]) for (const seed of SEEDS) {
+    const w = buildWide(seed, 'dev', d);
+    const winners = new Set(w.truthCells.map(c => c.winner));
+    for (const n of w.docs.filter(x => x.notice?.outOfCorpus)) {
+      if (winners.has(n.notice.titleOf)) onWinner++; else offWinner++;
+      assert.equal(n.target, null);
+    }
+  }
+  assert.ok(onWinner >= 40 && offWinner >= 40, `out-of-corpus retractions on winners ${onWinner}, elsewhere ${offWinner}`);
+});
+
 test('triviality driver plans R6 dry (no model call) and scores stubs through the oracle', async () => {
   const p = await plan({ rungs: ['r6'], seeds: [379, 380] });
   assert.equal(p[0].calls, 4);
   assert.match(p[0].necessity, /plan/);
   for (const x of await runStub(p, 'reference')) assert.equal(x.pass, x.n);
-  for (const name of ['best-of-n:equal-tokens', 'sequential-single-context', 'necessity:no-plan-fixed-list', 'heuristic:keyword-script']) for (const x of await runStub(p, name)) assert.equal(x.pass, 0, name);
+  for (const name of ['best-of-n:equal-tokens', 'sequential-single-context', 'plan-register-list', 'heuristic:keyword-script']) for (const x of await runStub(p, name)) assert.equal(x.pass, 0, name);
+  assert.match(p[0].necessity, /none for correctness/);
 });
 
 test('fault overlay: default generation is fault-free and requesting a fault throws in v1', () => {
@@ -403,7 +546,8 @@ test('fault overlay: default generation is fault-free and requesting a fault thr
 
 test('runtime: generate and oracle under 3 s at difficulty 5 (cold)', () => {
   const t0 = performance.now();
-  const t = bed.generate({ seed: 389, split: 'test', difficulty: 5 });
+  // dev 321 (wbed-dev, not generated elsewhere in this file); review finding 9: no unassigned test-split seed
+  const t = bed.generate({ seed: 321, split: 'dev', difficulty: 5 });
   const t1 = performance.now();
   bed.oracle(t, bed.referenceSolve(t));
   assert.ok(t1 - t0 < 3000, `generate ${t1 - t0} ms`);
