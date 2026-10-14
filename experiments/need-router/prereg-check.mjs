@@ -157,6 +157,19 @@ export function expandRuns(stages) {
 
 const sum = xs => xs.reduce((a, b) => a + b, 0);
 const round2 = x => Math.round(x * 100) / 100;
+/** Whether the text names id as a whole token: "NL2" inside "NL2b" or "M1" inside "M1e" does not count. */
+export function namesToken(text, id) {
+  const esc = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^A-Za-z0-9_-])${esc}($|[^A-Za-z0-9_-])`, 'm').test(text);
+}
+/** The text of a Markdown section from its heading to the next heading of the same or a higher level (null if absent). */
+export function sectionOf(text, heading) {
+  const m = heading.exec(text);
+  if (!m) return null;
+  const level = (/^#+/.exec(m[0]) ?? ['##'])[0].length, rest = text.slice(m.index + m[0].length);
+  const next = new RegExp(`^#{1,${level}} `, 'm').exec(rest);
+  return m[0] + (next ? rest.slice(0, next.index) : rest);
+}
 
 /** All structural, ledger, policy, spend and text checks. Returns {errors, warnings, summary}; never throws on content. */
 export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse(readFileSync(POLICY_FILE, 'utf8')), preregText = null, repo = REPO } = {}) {
@@ -276,22 +289,73 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
         if (!arms[a] && !SPECIAL_ARMS.has(a)) err(`${where}: unknown arm ${a}`);
         else if (job && arms[a] && arms[a].class !== 'baseline' && !(job.modes ?? []).includes(a) && !(job.ceiling ?? []).includes(a)) err(`${where}: arm ${a} is not a mode or ceiling arm of job ${job.id}`);
       }
-      if (job && (run.seedRoles ?? []).some(r => EVAL_ROLES.has(r))) {
-        const heldout = HELDOUT_SPLITS.has(job.split);
-        for (const r of run.seedRoles) {
-          if (!EVAL_ROLES.has(r)) continue;
-          if (heldout && r === 'trainEval') err(`${where}: held-out job ${job.id} on TRAIN evaluation seeds`);
-          if (job.split === 'train' && r !== 'trainEval') err(`${where}: TRAIN job ${job.id} on ${r} seeds`);
-          if (heldout && freezeAt != null && order.get(st.id) <= freezeAt && r === 'heldoutEval') err(`${where}: held-out evaluation of ${job.id} before Freeze`);
-        }
+      // Seed and freeze rules, for every role (not only the evaluation roles) and every split.
+      const before = freezeAt != null && order.get(st.id) <= freezeAt;
+      if (run.seeds && run.split === 'test' && before) err(`${where}: test-split seeds before Freeze`);
+      for (const r of run.seedRoles ?? []) {
+        if (!ROLES[r]) continue; // reported by expandRuns
+        const test = TEST_ROLES.has(r);
+        if (test && before) err(`${where}: ${r} seeds (test split) before Freeze${job ? ` for ${job.id}` : ''}`);
+        if (job?.split === 'train' && test) err(`${where}: TRAIN job ${job.id} on ${r} seeds`);
+        if (job && HELDOUT_SPLITS.has(job.split) && DEV_EVAL_ROLES.has(r)) err(`${where}: held-out job ${job.id} on TRAIN evaluation seeds (${r})`);
+        if (job && r === 'e2e' && !E2E_SPLITS.has(job.split)) err(`${where}: the E2E lane runs held-out non-forced jobs only (${job.id} is ${job.split})`);
       }
     }
+    // M1 (and any stage with tagged runs): one approved cap, shared by tag.
+    const tags = [...new Set((st.runs ?? []).map(r => r.tag).filter(Boolean))];
+    if (tags.length || st.capShares) {
+      const shares = st.capShares ?? {};
+      for (const t of tags) if (!(Number.isFinite(shares[t]) && shares[t] > 0)) err(`stage ${st.id}: run tag ${t} has no cap share (capShares)`);
+      for (const t of Object.keys(shares)) if (!tags.includes(t)) err(`stage ${st.id}: cap share ${t} names no run tag`);
+      const tot = round2(sum(Object.values(shares)));
+      if (tot > st.capUsd + 1e-9) err(`stage ${st.id}: cap shares $${tot} exceed the stage cap $${st.capUsd}`);
+    }
+    if (st.recurring && !(Number.isInteger(st.recurring.maxRuns) && st.recurring.maxRuns >= 1 && round2(st.recurring.maxRuns * st.capUsd) === st.recurring.cumulativeCapUsd)) err(`stage ${st.id}: recurring needs an integer maxRuns >= 1 and cumulativeCapUsd = maxRuns x capUsd`);
+    if (!st.inTotals && !st.recurring && st.capUsd > 0) err(`stage ${st.id} is outside the totals with no recurring run limit and cumulative cap: its spend would escape the soft-cap check`);
   }
-  const counted = (stages.stages ?? []).filter(s => s.inTotals);
+
+  // Decisions envelopes (L6): held-out probe and judge rows run in an envelope stage that commits every held-out decision
+  // card; a matrix stage (heldoutEval or e2e rows of held-out or forced jobs) names the envelopes it needs, which precede it.
+  const stageList = stages.stages ?? [];
+  const envelopes = new Map(stageList.filter(s => s.commitsEnvelope).map(s => [s.id, s]));
+  const jobsOfRun = run => (run.job ? [run.job] : run.eligible ?? []);
+  const isHeldoutJob = id => { const j = (stages.jobs ?? []).find(x => x.id === id); return j && HELDOUT_SPLITS.has(j.split) && j.split !== 'sealed'; };
+  for (const st of stageList) {
+    if (st.commitsEnvelope) {
+      if (!Array.isArray(st.decides) || !st.decides.length) err(`stage ${st.id}: an envelope stage lists the jobs whose decisions it commits (decides)`);
+      if (freezeAt != null && order.get(st.id) <= freezeAt) err(`stage ${st.id}: held-out decisions are committed after Freeze`);
+      for (const [ri, run] of (st.runs ?? []).entries()) if ((run.seedRoles ?? []).some(r => r !== 'probe')) err(`${st.id}.runs[${ri}]: an envelope stage runs probe-task rows only (no evaluation seeds)`);
+      continue;
+    }
+    const matrixJobs = new Set(), probeJobs = new Set();
+    for (const run of st.runs ?? []) {
+      const roles = run.seedRoles ?? [];
+      for (const id of jobsOfRun(run)) {
+        if (!isHeldoutJob(id)) continue;
+        if (roles.some(r => ENVELOPE_ROLES.has(r))) matrixJobs.add(id);
+        if (roles.includes('probe')) probeJobs.add(id);
+      }
+    }
+    for (const id of probeJobs) err(`stage ${st.id}: probe or judge rows of held-out job ${id} outside an envelope stage (they must be committed before any matrix row)`);
+    if (!matrixJobs.size) continue;
+    const req = st.requiresEnvelope ?? [], covered = new Set();
+    for (const r of req) {
+      const e = envelopes.get(r);
+      if (!e) { err(`stage ${st.id}: requiresEnvelope ${r} is not an envelope stage`); continue; }
+      if (order.get(r) >= order.get(st.id)) err(`stage ${st.id}: its envelope ${r} must come before it`);
+      for (const id of e.decides ?? []) covered.add(id);
+    }
+    for (const id of matrixJobs) if (!covered.has(id)) err(`stage ${st.id}: held-out job ${id} joins the matrix with no committed decisions envelope (requiresEnvelope)`);
+  }
+
+  const counted = stageList.filter(s => s.inTotals);
   const core = counted.filter(s => s.core);
+  const recurringCap = round2(sum(stageList.filter(s => s.recurring).map(s => s.recurring.cumulativeCapUsd ?? 0)));
   const tot = { estUsd: round2(sum(counted.map(s => s.estUsd))), capUsd: round2(sum(counted.map(s => s.capUsd))), coreEstUsd: round2(sum(core.map(s => s.estUsd))), coreCapUsd: round2(sum(core.map(s => s.capUsd))) };
+  tot.recurringCapUsd = recurringCap;
+  tot.softCapCheckUsd = round2(tot.capUsd + recurringCap);
   for (const k of Object.keys(tot)) if (stages.totals?.[k] !== tot[k]) err(`totals.${k} ${stages.totals?.[k]} != the stage sum ${tot[k]}`);
-  if (!(tot.capUsd <= softCap)) err(`sum of stage caps $${tot.capUsd} is over the $${softCap} session soft cap`);
+  if (!(tot.softCapCheckUsd <= softCap)) err(`sum of stage caps $${tot.capUsd} plus recurring caps $${recurringCap} is over the $${softCap} session soft cap`);
 
   let seedChecks = 0;
   for (const x of expandRuns(stages)) {
@@ -305,37 +369,49 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
     }
   }
 
-  // The preregistration text names every job, stage and arm hash, and carries the same status.
+  // The preregistration text names every job, stage (as a whole token) and arm hash, and carries the same status.
   if (preregText != null) {
     const want = stages.status === 'frozen' ? /Status:\s*\*\*FROZEN/ : /Status:\s*\*\*DRAFT/;
-    if (!want.test(preregText)) err(`PREREG text status does not say ${stages.status.toUpperCase()}`);
+    if (!want.test(preregText)) err(`PREREG text status does not say ${String(stages.status).toUpperCase()}`);
     for (const j of stages.jobs ?? []) if (!preregText.includes(`\`${j.id}\``)) err(`PREREG text does not name job \`${j.id}\``);
-    for (const s of stages.stages ?? []) if (!preregText.includes(s.id)) err(`PREREG text does not name stage ${s.id}`);
+    for (const s of stageList) if (!namesToken(preregText, s.id)) err(`PREREG text does not name stage ${s.id} (as a whole token)`);
     for (const [id, a] of Object.entries(arms)) if (!preregText.includes(a.settingsSha)) err(`PREREG text does not carry arm ${id}'s settings hash ${a.settingsSha}`);
+    if ((stages.jobs ?? []).some(j => j.devObserved) && !/dev-observed/.test(preregText)) err('PREREG text does not flag the dev-observed job(s)');
+    // Freezing requires the null-simulation numbers (§11) and the launch stamp (§4.4): no placeholder may survive it.
+    if (stages.status === 'frozen') {
+      for (const [name, head] of [['§4.4', /^### 4\.4\b/m], ['§11', /^## 11\./m]]) {
+        const sec = sectionOf(preregText, head);
+        if (sec == null) { err(`PREREG text has no ${name} section`); continue; }
+        if (/TBD-M0/.test(sec)) err(`frozen, but PREREG ${name} still carries TBD-M0`);
+        const m = sec.match(/TBD at [^|\n]*?launch/);
+        if (m) err(`frozen, but PREREG ${name} still carries "${m[0]}"`);
+      }
+    }
   }
   const summary = { status: stages.status, jobs: jobIds.size, arms: Object.keys(arms).length, stages: stageIds.size, seedChecks, totals: tot,
     clusters: Object.fromEntries(SPLITS.map(s => [s, Object.entries(clusters).filter(([, c]) => c.split === s).map(([k]) => k)])) };
   return { errors, warnings, summary };
 }
 
-/** $0 L4 pre-check: generate every planned example and evaluation task of each existing, non-sealed bed and look for
- *  taskHash collisions (example vs evaluation within a family; repeated evaluation tasks within a job). */
-export async function hashCollisions(stages, { jobs = null } = {}) {
+/** Hash the planned tasks of some jobs in this process (examples and the probe task on one side, evaluation tasks on the
+ *  other), checking every seed against the ledger before generating it. Returns counts and task ids, no content. */
+async function hashJobs(stages, jobIds, { ledger = loadLedger() } = {}) {
   const { loadFamily } = await import(pathToFileURL(path.join(REPO, 'experiments/lib/beds.mjs')).href);
   const { canonical, sha256: hash } = await import(pathToFileURL(path.join(REPO, 'beds/lib/canonical.mjs')).href);
-  const byFamily = new Map(), out = { tasks: 0, exampleEval: [], evalRepeats: [] };
-  for (const j of stages.jobs) {
-    if (jobs && !jobs.includes(j.id)) continue;
-    if (j.bedStatus !== 'exists' || !j.band || !j.family || j.family.startsWith('sealed')) continue;
+  const byFamily = new Map(), out = { tasks: 0, exampleEval: [], evalRepeats: [], refused: [] };
+  for (const id of jobIds) {
+    const j = stages.jobs.find(x => x.id === id);
     const fam = await loadFamily(j.family);
-    const roles = ['examples', j.split === 'train' ? 'trainEval' : 'heldoutEval', ...(HELDOUT_SPLITS.has(j.split) && j.split !== 'sealed' ? ['e2e'] : [])];
+    const roles = ['examples', 'probe', j.split === 'train' ? 'trainEval' : 'heldoutEval', ...(E2E_SPLITS.has(j.split) ? ['e2e'] : [])];
     const rec = byFamily.get(j.family) ?? { example: new Map(), eval: new Map() };
     for (const role of roles) for (const t of planTasks(stages, j.id, role)) {
+      const why = seedRefusals(ledger, { bed: j.ledgerBed ?? j.family, split: t.split, seed: t.seed, purpose: stages.seeds.purposes[ROLES[role].purposeKey] });
+      if (why.length) { out.refused.push(`${j.id}:${role}:s${t.seed}: ${why.join('; ')}`); continue; }
       const args = { seed: t.seed, split: t.split, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}) };
       const h = hash(canonical(fam.generate(args)));
       out.tasks += 1;
       const key = `${j.id}:${role}:s${t.seed}:d${t.difficulty}`;
-      if (role === 'examples') rec.example.set(h, key);
+      if (role === 'examples' || role === 'probe') rec.example.set(h, key);
       else { if (rec.eval.has(h) && rec.eval.get(h).startsWith(`${j.id}:`)) out.evalRepeats.push([rec.eval.get(h), key]); rec.eval.set(h, key); }
     }
     byFamily.set(j.family, rec);
@@ -344,39 +420,143 @@ export async function hashCollisions(stages, { jobs = null } = {}) {
   return out;
 }
 
-/** The engine-stamp record of the working tree (ROADMAP §6 rule 13): read-only git and file hashes. */
-export function stamp(stages, { repo = REPO } = {}) {
+/** $0 L4 pre-check: generate every planned example, probe and evaluation task of each existing, non-sealed bed and look
+ *  for taskHash collisions (example or probe vs evaluation within a family; repeated evaluation tasks within a job).
+ *  Every seed is checked against the ledger first (refusals are reported, never generated). TRAIN families are hashed
+ *  in this process; held-out, conditional and forced families only inside a child process whose output is the counts
+ *  and task ids (job:role:seed:difficulty), never task content or hashes (`child: false` hashes them here, for tests of
+ *  the child itself). Families never span splits (checked), so the two halves cannot collide with each other. */
+export async function hashCollisions(stages, { jobs = null, child = true, ledger = null } = {}) {
+  const eligible = stages.jobs.filter(j => (!jobs || jobs.includes(j.id)) && j.bedStatus === 'exists' && j.band && j.family && !j.family.startsWith('sealed'));
+  const dev = eligible.filter(j => j.split === 'train').map(j => j.id), held = eligible.filter(j => j.split !== 'train').map(j => j.id);
+  const L = ledger ?? loadLedger();
+  const a = await hashJobs(stages, dev, { ledger: L });
+  let b = { tasks: 0, exampleEval: [], evalRepeats: [], refused: [] };
+  if (held.length) {
+    if (!child) b = await hashJobs(stages, held, { ledger: L });
+    else {
+      const txt = execFileSync(process.execPath, [THIS_FILE, '--hash-child'], { cwd: REPO, input: JSON.stringify({ stages, jobs: held }), encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], maxBuffer: 1 << 24 });
+      b = JSON.parse(txt.trim().split('\n').pop());
+    }
+  }
+  return { tasks: a.tasks + b.tasks, exampleEval: [...a.exampleEval, ...b.exampleEval], evalRepeats: [...a.evalRepeats, ...b.evalRepeats], refused: [...a.refused, ...b.refused],
+    heldoutJobs: held.length, heldoutInChild: child && held.length > 0 };
+}
+
+// ------------------------------------------------------------------------------------------------------ engine stamps
+const STAMP_DEFAULT = {
+  labelEngine: { files: ['experiments/need-router/label-run.mjs', 'experiments/need-router/prereg-check.mjs', 'experiments/need-router/metrics.mjs', 'policy/models.json'],
+    trees: ['experiments/lib', 'experiments/c0', 'src', 'beds/lib'], stagesFields: ['arms', 'priceTable', 'seeds', 'grid'] },
+  analysis: { files: ['experiments/need-router/features.mjs', 'experiments/need-router/router.mjs', 'experiments/need-router/voi.mjs', 'experiments/need-router/metrics.mjs', 'experiments/need-router/evaluate.mjs'] },
+};
+
+/** The bed directories a set of families loads, following static relative imports (`from '...'`, `import('...')`) inside
+ *  beds/ transitively: beds/wbed-r2 reaches beds/wbed and beds/records. beds/sealed is never read. */
+export function bedClosure(families, { repo = REPO } = {}) {
+  const root = path.join(repo, 'beds'), seen = new Set(), dirs = new Set();
+  const queue = families.map(f => path.join(root, f, 'index.mjs')).filter(p => existsSync(p));
+  while (queue.length) {
+    const file = queue.pop();
+    if (seen.has(file)) continue;
+    seen.add(file);
+    const rel = path.relative(root, file), top = rel.split(path.sep)[0];
+    if (rel.startsWith('..') || top === 'sealed') continue;
+    dirs.add(top);
+    const src = readFileSync(file, 'utf8');
+    for (const m of src.matchAll(/(?:\bfrom\s*|\bimport\s*\(\s*|^\s*import\s+)['"](\.{1,2}\/[^'"]+)['"]/gm)) {
+      const target = path.resolve(path.dirname(file), m[1]);
+      if (target.startsWith(root + path.sep) && existsSync(target) && /\.m?js$/.test(target)) queue.push(target);
+    }
+  }
+  return [...dirs].sort();
+}
+
+/** The jobs a stage runs (named, eligible), or every job with an existing bed when no stage is given. */
+const stageJobs = (stages, stageId) => {
+  if (!stageId) return stages.jobs.filter(j => j.bedStatus === 'exists');
+  const st = stages.stages.find(s => s.id === stageId);
+  if (!st) throw new Error(`stamp: unknown stage ${stageId}`);
+  const ids = new Set((st.runs ?? []).flatMap(r => (r.job ? [r.job] : r.eligible ?? [])));
+  return stages.jobs.filter(j => ids.has(j.id));
+};
+
+/** The engine-stamp records of the working tree (ROADMAP §6 rule 13; PREREG §4.4), read-only:
+ *  - labelEngine: what makes a label (runner, task plan, arms, construct, model layer, engine, policy, the preregistered
+ *    arms, prices, seeds and grid, and the bed-import closure of the stage's jobs); re-taken at every paid stage;
+ *  - analysis: the router and evaluation code, free to change until the Freeze addendum pins it;
+ *  - documents: the PREREG text and stages.json, informational (their edits are §13 records, not engine changes). */
+export function stamp(stages, { repo = REPO, stage = null } = {}) {
   const git = args => { try { return execFileSync('git', args, { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; } };
   const fileSha = rel => (existsSync(path.join(repo, rel)) ? sha256(readFileSync(path.join(repo, rel))) : null);
-  // beds/wbed-rN and beds/ebed-e8 are registration shims: the rung code lives in beds/wbed and beds/ebed, so those trees are stamped too.
-  const trees = ['experiments/need-router', 'experiments/lib', 'experiments/c0', 'experiments/jit', 'src', 'beds/lib', 'beds/wbed', 'beds/ebed', 'beds/wbed/references'];
-  const families = [...new Set(stages.jobs.filter(j => j.bedStatus === 'exists' && j.family && !j.family.startsWith('sealed')).map(j => j.family))].sort();
-  return {
-    commit: git(['rev-parse', 'HEAD']), rootTree: git(['rev-parse', 'HEAD^{tree}']),
-    dirty: (git(['status', '--porcelain', '--', ...trees, 'beds', 'policy', 'research/need-router-20261014']) ?? '').split('\n').filter(Boolean).length,
-    trees: Object.fromEntries(trees.map(t => [t, git(['rev-parse', `HEAD:${t}`])])),
-    beds: Object.fromEntries(families.map(f => [f, git(['rev-parse', `HEAD:beds/${f}`])])),
-    files: Object.fromEntries(['policy/models.json', 'research/need-router-20261014/prereg/stages.json', 'research/need-router-20261014/PREREG-NEED-V1.md',
-      'beds/wbed/references/r1-reference.mjs', 'beds/wbed/references/r3-reference.mjs'].map(f => [f, fileSha(f)])),
+  const cfg = { labelEngine: { ...STAMP_DEFAULT.labelEngine, ...(stages.engineStamp?.labelEngine ?? {}) }, analysis: { ...STAMP_DEFAULT.analysis, ...(stages.engineStamp?.analysis ?? {}) } };
+  const families = [...new Set(stageJobs(stages, stage).filter(j => j.bedStatus === 'exists' && j.family && !j.family.startsWith('sealed')).map(j => j.family))]
+    .concat((stage ? stages.stages.find(s => s.id === stage).runs ?? [] : []).filter(r => r.bed).map(r => r.bed));
+  const bedDirs = bedClosure([...new Set(families)].sort(), { repo });
+  const ledgerFile = path.join(repo, stages.ledger ?? 'research/jit-20261008/SEED-LEDGER.json');
+  const ledger = existsSync(ledgerFile) ? JSON.parse(readFileSync(ledgerFile, 'utf8')) : null;
+  const needLedger = ledger ? { purposes: Object.fromEntries(Object.entries(ledger.purposes ?? {}).filter(([k]) => k.startsWith('need-'))), ranges: (ledger.ranges ?? []).filter(r => String(r.owner) === 'need-router' || String(r.id).startsWith('need-')) } : null;
+  const labelEngine = {
+    stage, commit: git(['rev-parse', 'HEAD']),
+    dirty: (git(['status', '--porcelain', '--', ...cfg.labelEngine.files, ...cfg.labelEngine.trees, ...bedDirs.map(d => `beds/${d}`)]) ?? '').split('\n').filter(Boolean).length,
+    files: Object.fromEntries(cfg.labelEngine.files.map(f => [f, fileSha(f)])),
+    trees: Object.fromEntries(cfg.labelEngine.trees.map(t => [t, git(['rev-parse', `HEAD:${t}`])])),
+    beds: Object.fromEntries(bedDirs.map(d => [d, git(['rev-parse', `HEAD:beds/${d}`])])),
+    prereg: Object.fromEntries(cfg.labelEngine.stagesFields.map(k => [k, stages[k] === undefined ? null : sha256(canonicalJson(stages[k])).slice(0, 16)])),
+    ledgerNeed: needLedger ? sha256(canonicalJson(needLedger)).slice(0, 16) : null,
     node: process.version,
-    note: 'claude CLI version and the static@v3 arm parser state are recorded by the coordinator at launch (this script starts no binary)',
+  };
+  return {
+    labelEngine,
+    analysis: { files: Object.fromEntries(cfg.analysis.files.map(f => [f, fileSha(f)])) },
+    documents: Object.fromEntries(['research/need-router-20261014/prereg/stages.json', 'research/need-router-20261014/PREREG-NEED-V1.md', 'beds/wbed/references/r1-reference.mjs', 'beds/wbed/references/r3-reference.mjs'].map(f => [f, fileSha(f)])),
+    note: 'the claude CLI version and the static@v3 arm parser state are recorded by the coordinator at launch (this script starts no binary)',
   };
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+/**
+ * Compare the label-engine stamps of two paid stages (PREREG §4.4). Allowed: a bed directory absent from `prev` that
+ * belongs to a job whose first paid rows are in `next`'s stage (`newBeds`, e.g. the codefix-notests generator before
+ * NL1); a bed directory present only in `prev`. Everything else that differs (a file, a tree, a bed used by both, the
+ * preregistered arms, prices, seeds or grid, the need ledger, Node, the CLI) is a deviation, recorded in §13 before the
+ * later stage starts.
+ */
+export function stampDiff(prev, next, { newBeds = [] } = {}) {
+  const deviations = [], allowed = [];
+  const cmp = (k, a, b) => { if (JSON.stringify(a ?? null) !== JSON.stringify(b ?? null)) deviations.push({ key: k, prev: a ?? null, next: b ?? null }); };
+  for (const g of ['files', 'trees', 'prereg']) for (const k of new Set([...Object.keys(prev[g] ?? {}), ...Object.keys(next[g] ?? {})])) cmp(`${g}.${k}`, prev[g]?.[k], next[g]?.[k]);
+  for (const k of ['ledgerNeed', 'node', 'cli']) cmp(k, prev[k], next[k]);
+  for (const d of new Set([...Object.keys(prev.beds ?? {}), ...Object.keys(next.beds ?? {})])) {
+    const a = prev.beds?.[d], b = next.beds?.[d];
+    if (a !== undefined && b !== undefined) cmp(`beds.${d}`, a, b);
+    else if (b !== undefined) (newBeds.includes(d) ? allowed : deviations).push({ key: `beds.${d}`, prev: null, next: b, ...(newBeds.includes(d) ? { why: 'new bed for a job first run in this stage' } : {}) });
+  }
+  return { deviations, allowed, ok: !deviations.length };
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === THIS_FILE) {
+  if (process.argv.includes('--hash-child')) {
+    // The sealed half of --hashes: reads {stages, jobs} on stdin, prints one line of counts and task ids, nothing else.
+    const { stages, jobs } = JSON.parse(readFileSync(0, 'utf8'));
+    const r = await hashJobs(stages, jobs);
+    process.stdout.write(`${JSON.stringify({ tasks: r.tasks, exampleEval: r.exampleEval, evalRepeats: r.evalRepeats, refused: r.refused })}\n`);
+    process.exit(0);
+  }
   const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
   const stagesFile = path.resolve(arg('--stages', STAGES_FILE));
   const preregFile = path.resolve(arg('--prereg', PREREG_FILE));
   const stages = JSON.parse(readFileSync(stagesFile, 'utf8'));
   const res = checkStages(stages, { preregText: existsSync(preregFile) ? readFileSync(preregFile, 'utf8') : null });
-  if (process.argv.includes('--hashes')) res.hashes = await hashCollisions(stages);
-  if (process.argv.includes('--stamp')) res.stamp = stamp(stages);
+  if (process.argv.includes('--hashes')) {
+    res.hashes = await hashCollisions(stages);
+    for (const x of res.hashes.refused) res.errors.push(`--hashes: SEED_REFUSED ${x}`);
+  }
+  if (process.argv.includes('--stamp')) res.stamp = stamp(stages, { stage: arg('--stage', null) });
   if (process.argv.includes('--json')) console.log(JSON.stringify(res, null, 1));
   else {
     for (const e of res.errors) console.log(`ERROR ${e}`);
     for (const w of res.warnings) console.log(`warn  ${w}`);
     console.log(JSON.stringify(res.summary));
-    if (res.hashes) console.log(`hashes: ${res.hashes.tasks} tasks; example/eval collisions ${res.hashes.exampleEval.length}; repeated eval tasks ${res.hashes.evalRepeats.length}`, JSON.stringify({ exampleEval: res.hashes.exampleEval.slice(0, 10), evalRepeats: res.hashes.evalRepeats.slice(0, 10) }));
+    if (res.hashes) console.log(`hashes: ${res.hashes.tasks} tasks (held-out families hashed in a child process: ${res.hashes.heldoutJobs} jobs); example/eval collisions ${res.hashes.exampleEval.length}; repeated eval tasks ${res.hashes.evalRepeats.length}; refused ${res.hashes.refused.length}`, JSON.stringify({ exampleEval: res.hashes.exampleEval.slice(0, 10), evalRepeats: res.hashes.evalRepeats.slice(0, 10) }));
     if (res.stamp) console.log(JSON.stringify(res.stamp, null, 1));
     console.log(res.errors.length ? `FAIL: ${res.errors.length} error(s)` : 'OK');
   }

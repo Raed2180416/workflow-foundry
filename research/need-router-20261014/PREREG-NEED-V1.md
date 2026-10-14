@@ -6,10 +6,19 @@ files decide it. The orchestrator freezes this file: it changes the status line 
 `prereg/stages.json`, fills the engine stamp (§4.4) and commits both before any NL0 label is paid for. A dated addendum
 fixing the router artefact (§6) is committed at Freeze, before any held-out label exists. Nothing here is evidence.
 
+**Revised 2026-10-14, still DRAFT,** after an adversarial review of the first draft (committed 21:55 in 6244e91). The
+revision records M1, which had already run, and M1-d5, which is running (§0.1, §12, §13). It also fixes the reading rules
+the review found broken: C7a's interval and its power precondition (§7, §8), the sign-flip floor (§7, §11), G1's bound
+(§8), θ fitting (§6), stamps (§4.4), the cap meter (§12), the decisions envelope (§12) and the checker (§15). Every
+change was made before any need-router label exists.
+
 Machine-readable half: [prereg/stages.json](prereg/stages.json) (jobs, clusters, arms with settings hashes, seeds, price
-table, grid, RNG seeds, stages with caps). Checked by `node experiments/need-router/prereg-check.mjs` (§15). Where this
-text and `stages.json` differ, the run is blocked until they agree; the checker enforces the parts it can (status, every
-job id, stage id and arm hash named here, ledger refusals, caps, policy prices).
+table, grid, RNG seeds, stages with caps, the reading rules under `analysis`, the cap meter, the engine-stamp lists).
+Checked by `node experiments/need-router/prereg-check.mjs` (§15). Where this text and `stages.json` differ, the run is
+blocked until they agree. The checker enforces the parts it can: status; every job id, stage id (as a whole token) and
+arm hash named here; ledger refusals; seed and freeze rules; envelopes; caps; policy prices; placeholders at freeze. The
+reading rules of §5–§8 and §11–§12 are also code: `experiments/need-router/prereg-rules.mjs`, with tests.
+`evaluate.mjs` must read them from there (§14).
 
 Tags: [D] from DESIGN.md, [A] an adopted owner decision (DECISIONS-ADOPTED.md), [M] measured or read in a repository file
 today, [P] a choice made in this preregistration because DESIGN leaves it open (listed in §14 for review before freeze).
@@ -29,6 +38,52 @@ today, no model). No held-out task was shown to a model, no oracle was run on an
 beds/sealed/ was not read. Held-out evaluation tasks were generated only to hash them for the L4 pre-check (§3.3); their
 contents were not inspected. The hypotheses therefore encode prior dev evidence; they are a record of expectations, not a
 test of them.
+
+That paragraph describes the first draft (21:55). It was stale when written: M1 had started at 21:31, 24 minutes before
+that commit, and the draft still listed M1 as a future stage.
+
+### 0.1 Development results observed after the first draft (recorded before freeze)
+
+All of the following is **development evidence** (dev attack seeds, K = 1, one mode). None of it is a need-router label:
+no five-mode paired row exists. This revision's author read the M1 report, tallied its 192 rows ($0), read the Jev-need
+report, and recomputed the reviewer's set-1 feature medians at $0. The author did **not** read any M1-d5 row.
+
+- **M1** (tag `m1`; DESIGN §7; decision 14). Ran from 21:31:36 to 22:59:47 (first and last row), committed in f1552d4.
+  Command: `node experiments/need-router/m1-run.mjs --cap 15`; `m1-run.mjs` sha256 `478744664b95accf016fe7ea628ee856b3ab7bdb559081a0b7ac261d4c8a58e7` (commit
+  e5defed). One Haiku call per task: 8 rungs × 12 dev attack seeds × 2 efforts = 192 calls at d3.
+  - Results (pass per effort, none and medium). R0 12/12 and 12/12, so K2 passes. R1 0/12 and 0/12 (18 of the 24 calls
+    timed out). R2 4/12 and 3/12. R3 8/12 and 9/12. R3′ (`r3p`) 12/12 and 11/12. R4 and R5 0/12. R6 2/12 and 6/12.
+  - Gates. The W-bed one-call admission gate (W-BED §2.4 item 1, ≤ 2/12) failed at d3 for R2, R3, R3′ and R6.
+  - Spend. Reported: $2.9957. The runner booked 26 `MODEL_TIMEOUT` calls at $0. On the §12 meter, which charges a row
+    with no observed cost at its $1 bound, M1 is **$28.9957** against its $5 share and M1's $15 cap. The provider's
+    actual billing for those 26 timed-out calls is unknown.
+  - Stamp. No launch stamp was taken; S-M1 was still "TBD at M1 launch". A record reconstructed after the fact from
+    e5defed, the runner's commit at 21:32:46, is in `stages.json` (M1 `observed.m1.engine`). Whether the working tree
+    differed at launch is unknown.
+- **M1-d5** (tag `m1-d5`; not in the first draft, so an unregistered run, deviation D2). Started at 23:00 and in flight
+  at this revision. Command: `node experiments/need-router/m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10`;
+  `m1-run.mjs` sha256 `7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692` (commit 56c0a82). Plan: 4 rungs × 12 seeds × 2 efforts = 96 calls at d5,
+  on the same dev attack seeds. It keeps its own spend counter (reported dollars, no reservation) and its own --cap 10.
+  Its results are added to this section when it ends, before Freeze. The band rule below was fixed before they are read.
+- **Jev-need** (commit 8ef7fa2). Hosted Jev read the 96 M1 tasks, including the 12 `r3p` tasks, and predicted whether
+  one call suffices. Task-level AUROC 0.53, against 0.71 for a one-line size rule. It cost a fraction of a cent.
+  Development evidence for decision 12 only.
+- **The --hashes pre-check of the first draft** generated the held-out evaluation tasks (8801–8812) and E2E tasks
+  (8825–8836) of six held-out jobs in-process, without a ledger check per task, to hash them. Their contents were not
+  inspected. The pre-check now checks every seed against the ledger and hashes held-out families only in a child process
+  that prints counts and task ids (§3.3, deviation D4).
+- **Set-1 feature medians** (the reviewer's, recomputed here at $0 with `features.mjs taskFeatures` at the preregistered
+  per-seed difficulties; log10). `wbed-r3-hi`: tokens 4.60, fan-out 2.98. `wbed-r6`: 4.78, 1.51. `wbed-r1-hi`: 4.26,
+  2.27. `incident`: 4.48, 0.00. `r3p`: 4.63, 1.52. These are router inputs, not labels.
+
+**What M1 changes in this file** (each change is logged as informed by M1):
+- `r3p` is flagged **dev-observed** as well as near (§3.1). Its N = 1 hypothesis gets a logged revision; the original row
+  stays the record (§1.1). The r3p-dropped reading becomes mandatory for any C7a or C7b claim (§8).
+- The bands of `wbed-r2-hi`, `wbed-r6` and `r3p` were checked against the W-BED §2.4 gate. They are **kept**, for the
+  reasons in §3.2.
+- Every other hypothesis row whose family ran in M1 (`wbed-r0`, `wbed-r1-hi`, `wbed-r2-hi`, `wbed-r3-hi`, `wbed-r6`) was
+  checked against M1 and is unchanged.
+- M1's spend under the §12 meter, the missing stamp and the M1-d5 run are deviations D1–D3 (§13).
 
 ## 1. Claims and hypotheses
 
