@@ -74,10 +74,9 @@ function attemptSweep(spec, attempt) {
     const fams = [];
     if (f.lib) fams.push(f.lib.helper);
     while (fams.length < n) {
-      const id = r.pick(f.pool);
-      if (fams.includes(id)) continue;
-      if (FAMILIES[id].kind === 'caller' && slots.filter(s => s.family === id).length + fams.filter(x => x === id).length >= callerCap) continue;
-      fams.push(id);
+      const eligible = f.pool.filter(id => !fams.includes(id) && !(FAMILIES[id].kind === 'caller' && slots.filter(s => s.family === id).length >= callerCap));
+      if (!eligible.length) break;
+      fams.push(r.pick(eligible));
     }
     fams.forEach((id, i) => slots.push({ file: f, idx: i, family: id, role: { kind: 'clean' } }));
   }

@@ -101,7 +101,7 @@ export function renderRepo(world) {
   const sourceFiles = files.map(f => f.path);
   out['package.json'] = `${JSON.stringify({ name: `@${pkg.org}/${pkg.name}`, version: pkg.version, private: true, type: 'module',
     description: 'Shared back-office helpers: billing, payments, calendar, exports, reporting.', main: 'src/index.js',
-    scripts: { test: 'node --test test/' }, engines: { node: '>=20' } }, null, 2)}\n`;
+    scripts: { test: 'node --test' }, engines: { node: '>=20' } }, null, 2)}\n`;
   out['README.md'] = [`# @${pkg.org}/${pkg.name}`, '', 'Shared helpers of the back office: billing, payments, calendar, exports, platform, reporting and customer records.',
     'Every exported function documents its contract in a JSDoc comment; house rules that several modules share are in',
     '[docs/CONVENTIONS.md](docs/CONVENTIONS.md).', '', '## Layout', '', ...sourceFiles.map(p => `- \`${p}\``), '', '## Tests', '',

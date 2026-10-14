@@ -41,6 +41,9 @@ export const RUNGS = {
     necessity: 'the best workflow without the agent node: the R4 reference plus code parsers for the dev formats only (fixed-width, code-page, jsonl-versions, monthly-csv; bed necessityControls necessity:dev-parsers-only) must fail >= 50% of attack seeds; by construction it fails every task whose seed mod 3 != 0 at d2-d4 and every d5 task (attack seeds 379-390 at d3: 8/12)' },
   r6: { family: 'wbed-r6', expect: 'fail', gate: ONE_CALL_GATE,
     necessity: 'the best workflow without the plan: the reference workers over a fixed entity list taken from the inputs (the register\'s compounds registered by the lab; bed necessityControls necessity:no-plan-fixed-list) must fail >= 50% of attack seeds; by construction it misses >= 2 in-scope compounds on every task. The B6 comparison controls (best-of-n:equal-tokens, sequential-single-context, no-workflow:grep-agent at d >= 3) are size and retrieval stand-ins, not the paid best_of_n arm' },
+  // R3' planted-defect sweep (PROOF-LEDGER J5) has its own ledger rows (wbed-r3p-dev 401-490): attack seeds 479-490.
+  r3p: { family: 'wbed-r3p', expect: 'fail', gate: ONE_CALL_GATE, seeds: Array.from({ length: 12 }, (_, i) => 479 + i),
+    necessity: 'the best workflow without each feature: one sequential context (size: the inline task is above the 24K budget at d4-d5), a per-file fan-out that reports without verifying (every decoy reported, precision about 1/2) and one without root-cause fan-in (inheriting callers reported) (bed necessityControls) must fail >= 50% of attack seeds; the no-verify and no-root-cause controls fail every task by construction' },
 };
 export const MODEL = 'claude-haiku-5-5';
 export const ATTACK_SEEDS = Array.from({ length: 12 }, (_, i) => 379 + i); // W-BED §8 wbed-attack (dev 379-390)
@@ -73,10 +76,11 @@ export function cliLine(shape, { systemFile, schemaFile, promptFile, maxBudgetUs
   return `env ${env} ${shape.binary} ${inv} --model ${MODEL} --system-prompt "$(cat ${shq(systemFile)})" --json-schema "$(cat ${shq(schemaFile)})" --effort ${shape.effortFlag} --max-budget-usd ${maxBudgetUsd} < ${shq(promptFile)}`;
 }
 
-export async function plan({ rungs = ['r1'], difficulty = 3, seeds = ATTACK_SEEDS, efforts = EFFORTS } = {}) {
+export async function plan({ rungs = ['r1'], difficulty = 3, seeds: seedsArg, efforts = EFFORTS } = {}) {
   const out = [];
   for (const rung of rungs) {
     const bed = await loadRung(rung);
+    const seeds = seedsArg ?? RUNGS[rung].seeds ?? ATTACK_SEEDS; // a rung with its own ledger rows plans on its own attack seeds
     const tasks = seeds.map(seed => {
       const task = bed.generate({ seed, split: 'dev', difficulty });
       const prompt = inlineRender(task);
@@ -184,7 +188,7 @@ async function main(argv) {
   const rungs = rungArg === 'all' ? Object.keys(RUNGS) : rungArg.split(',');
   const difficulty = Number(arg('--difficulty', '3'));
   const seedArg = arg('--seeds', null);
-  const seeds = seedArg ? (seedArg.includes('-') ? (([a, b]) => Array.from({ length: b - a + 1 }, (_, i) => a + i))(seedArg.split('-').map(Number)) : seedArg.split(',').map(Number)) : ATTACK_SEEDS;
+  const seeds = seedArg ? (seedArg.includes('-') ? (([a, b]) => Array.from({ length: b - a + 1 }, (_, i) => a + i))(seedArg.split('-').map(Number)) : seedArg.split(',').map(Number)) : undefined;
   const efforts = arg('--efforts', EFFORTS.join(',')).split(',');
   const p = await plan({ rungs, difficulty, seeds, efforts });
   const stubI = argv.indexOf('--stub');

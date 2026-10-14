@@ -363,6 +363,54 @@
    ],
    "use": "held-out W-bed stream D, per rung",
    "source": "research/jit-20261008/design/W-BED.md section 8"
+  },
+  {
+   "id": "wbed-r3p-dev",
+   "beds": [
+    "wbed-r3p"
+   ],
+   "split": "dev",
+   "from": 401,
+   "to": 490,
+   "status": "fresh",
+   "owner": "wbed",
+   "allow": [
+    "jit-dev"
+   ],
+   "use": "W-bed R3' planted-defect sweep (PROOF-LEDGER J5), the wbed-dev layout shifted by 100: dev stream A 401-424, dev stream B 425-448, out-of-sample 449-472, reference fixtures 473-478, triviality/necessity attacks 479-490. Disjoint from every other bounded range (outside the Kev probe-pilot 1-400)",
+   "source": "research/jit-20261008/design/W-BED-R3P-NOTES.md section 7"
+  },
+  {
+   "id": "wbed-r3p-heldout-a",
+   "beds": [
+    "wbed-r3p"
+   ],
+   "split": "test",
+   "from": 8601,
+   "to": 8624,
+   "status": "reserved",
+   "owner": "wbed",
+   "allow": [
+    "jit-heldout"
+   ],
+   "use": "held-out W-bed R3' stream A (arm c-prime vs arm g, PROOF-LEDGER J4)",
+   "source": "research/jit-20261008/design/W-BED-R3P-NOTES.md section 7"
+  },
+  {
+   "id": "wbed-r3p-heldout-b",
+   "beds": [
+    "wbed-r3p"
+   ],
+   "split": "test",
+   "from": 8701,
+   "to": 8724,
+   "status": "reserved",
+   "owner": "wbed",
+   "allow": [
+    "jit-heldout"
+   ],
+   "use": "held-out W-bed R3' stream B (second lineage)",
+   "source": "research/jit-20261008/design/W-BED-R3P-NOTES.md section 7"
   }
  ]
 }
