@@ -7,6 +7,7 @@
 // collection and before the earliest possible delivery). The planted ties (action exactly at the deadline, cancel at
 // the earliest collection) are the exceptions, by design.
 import { rng } from '../../lib/rng.mjs';
+import { sha256 } from '../../lib/canonical.mjs';
 
 export const GENERATOR_VERSION = '1.0.0';
 export const T0 = '2026-03-02T00:00:00+01:00';
@@ -318,7 +319,7 @@ export function generateWorld({ seed, split = 'dev', difficulty = 2, schedule = 
   if (d >= 4) editions.push({ id: 'ed-2026-2', effectiveFrom: EDITION_SWITCH, effectiveTo: null, published: '2026-03-05T09:00:00+01:00',
     files: { 'edition.json': JSON.stringify({ id: 'ed-2026-2', effectiveFrom: EDITION_SWITCH }, null, 1), 'policy.json': policy(2), 'shipping-fees.json': fees(true), 'carrier-codes.json': codes } });
   return {
-    id: `ebed-e8-${split}-${seed}-d${d}-${mix}${injection ? '-inj' : ''}`, publicId: `w-e8-${seed}`, item: 'E8', seed, split, difficulty: d, schedule, mix, scale, track,
+    id: `ebed-e8-${split}-${seed}-d${d}-${mix}${injection ? '-inj' : ''}`, publicId: `w-e8-${sha256(`ebed/e8/public/${split}/${seed}/${d}/${mix}/${injection}`).slice(0, 12)}`,   // opaque: an arm must not learn the seed item: 'E8', seed, split, difficulty: d, schedule, mix, scale, track,
     generator: GENERATOR_VERSION,
     t0: T0, horizonEnd: iso(HORIZON_DAYS * DAY), epochBounds: epochStarts.map(iso),
     calendars: { 'cal-warehouse': { tz: 'Europe/Amsterdam', businessHours: { from: '00:00', to: '24:00', days: [1, 2, 3, 4, 5, 6, 7] }, holidays: [] } },
