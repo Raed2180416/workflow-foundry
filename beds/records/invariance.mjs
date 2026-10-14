@@ -4,6 +4,7 @@
 // Why each relation holds for a correct answer (spec sections of inputs.spec):
 //   shuffle-rows    identity (s.3), conflicts (s.4: ordered by update date) and every other rule are per row or per
 //                   group of rows; no rule reads the position of a line. The prompt's "ordered by row id" is rewritten.
+//                   distribution 'out': the generator always sorts the export by row id.
 //   duplicate-row   a copy of one line under a fresh row id (unused, above the smallest row id of the copied row's person,
 //                   inserted at its place in row-id order). Only a row the answer puts in a person of two or more rows, or
 //                   leaves out (void), is copied: such a row linked to another row by s.3(a) (it has a usable birth date)
@@ -45,7 +46,7 @@ export function compareRecords(expected, got) {
 
 export const invariance = Object.freeze([
   {
-    id: 'shuffle-rows', kind: 'invariant',
+    id: 'shuffle-rows', kind: 'invariant', distribution: 'out',
     text: 'Permute the export lines (seeded). No rule reads a line\'s position, so the master list is unchanged.',
     make(task, { seed }) {
       const lines = exportLines(task);
@@ -55,7 +56,7 @@ export const invariance = Object.freeze([
     check: (orig, variant) => compareRecords(orig, variant),
   },
   {
-    id: 'duplicate-row', kind: 'transform', needsOutput: true,
+    id: 'duplicate-row', kind: 'transform', distribution: 'in', needsOutput: true,
     text: 'Copy one export line (of a person with two or more rows, or a row the answer leaves out) under a fresh row id (seeded). The person set and every field are unchanged; the copied row\'s person gains the new id in source_rows.',
     make(task, { seed, output }) {
       const lines = exportLines(task), ids = lines.map(rowIdOf);
@@ -88,7 +89,7 @@ export const invariance = Object.freeze([
     },
   },
   {
-    id: 'drop-singleton', kind: 'transform', needsOutput: true,
+    id: 'drop-singleton', kind: 'transform', distribution: 'in', needsOutput: true,
     text: 'Remove the only row of one person that the original answer lists with a single source row (seeded). The answer loses exactly that person.',
     make(task, { seed, output }) {
       const lines = exportLines(task), ids = new Set(lines.map(rowIdOf));

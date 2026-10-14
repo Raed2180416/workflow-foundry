@@ -2,13 +2,20 @@
 // Host code beside the oracle: no system component sees it. A relation reads the task's prompt and inputs only (never the
 // hidden world). Contract: beds/lib/metamorphic.mjs. Why each relation holds for a correct answer:
 //   shuffle-samples    every table row names its sample, plate, well, condition and values (and a grouped sheet's rows sit
-//                      under their condition line, ordered by [S]); exclusion (SOP §2), re-reads (§3), corrections (§4) and
-//                      the fit (§5) are per well or per condition, and an ordinal well reference ("the fifth study well from
-//                      the left in plate 9 row A") counts plate columns, which the rows print. So permuting the rows inside
+//                      under their condition line); exclusion (SOP §2), re-reads (§3), corrections (§4) and the fit (§5) are
+//                      per well or per condition, and an ordinal well reference ("the first study well (counting from the
+//                      left) of plate 5, row A") counts plate columns, which the rows print. So permuting the rows inside
 //                      each table leaves the answer unchanged. Prose sentences, chat lines and comments are not moved.
+//                      distribution 'out': the generator always lists a plate row's wells left to right, so this variant
+//                      also flags a solver that reads an ordinal reference as a table position (the white-box parser
+//                      attacks/whitebox-v4.mjs does: 46 of its 87 correct d3 answers are flagged, all for that reason).
+//   shuffle-series     whole plate rows move, each keeping its left-to-right order (details at seriesKeyOf below), so the
+//                      generator's listing regularity is kept; distribution 'in'.
 //   shuffle-documents  documents carry their own ids, authors and dates; the SOP in force is named by revision and status,
-//                      and "the raw export value is the one used" names a document kind. The listing order means nothing.
-// (shuffle-documents is not in ATTACK M1's list; it is added as the order probe for "which source wins" logic.)
+//                      and "the raw export value is the one used" names a document kind. The generator's document order
+//                      is random (a chat may precede a notebook), so this stays in distribution. It is not in ATTACK M1's
+//                      list; it is added as the order probe for "which source wins" logic (the white-box parser applies a
+//                      tube-swap correction only to wells it has already read: d3 s218).
 // Comparison: the exclusion set exactly, every condition's vmax and km within opts.relTol (default 1e-6: a correct solver
 // that fits the same points in another order differs only by rounding; the grading tolerance is 10%).
 import { rngOf, permute, shuffleRuns, variantTask, compareKeyed, numClose, shapeViolation, capped, witnessDescriptor } from '../lib/metamorphic.mjs';
@@ -28,6 +35,68 @@ export function rowClassOf(line) {
 const documentsOf = task => (Array.isArray(task.inputs?.documents) ? task.inputs.documents : []);
 const DEFAULT_REL_TOL = 1e-6;
 
+// shuffle-series: the generator always lists a plate row's wells left to right, and every exported text keeps that order.
+// Solvers may lean on it (an ordinal well reference read as a table position), so the in-distribution relation moves whole
+// plate rows (series) and keeps each one's internal order:
+//   - CSV / semicolon exports and the instrument raw export (one table, several series): the rows of each (plate, row
+//     letter) group, a series' blank well included, are permuted as groups;
+//   - markdown sections ("### Plate ..."), reader sections ("Plate N | Assay: ...") and grouped-sheet sections
+//     ("Condition: ...") are permuted as sections. A section runs to the next header; the last one ends at its last table
+//     row (markdown, grouped) or at the blank line after its operator comments and re-reads (reader, whose comments name
+//     wells by position), so the document's closing filler and addenda stay at the end.
+const seriesKeyOf = (line, cls) => {
+  if (cls === 'delim') { const f = line.split(/[,;]/); return f.length > 2 && /^[A-P]\d{1,2}$/.test(f[2]) ? `${f[1]}:${f[2][0]}` : null; }
+  if (cls === 'raw') { const m = line.match(/^(\d{1,2})\s+([A-P])\d{1,2}\s/); return m ? `${m[1]}:${m[2]}` : null; }
+  return null;
+};
+function permuteSeriesInTables(lines, r) {
+  const out = [...lines];
+  let groups = 0;
+  for (let i = 0; i < lines.length;) {
+    const c = rowClassOf(lines[i]);
+    if (c !== 'delim' && c !== 'raw') { i++; continue; }
+    let j = i;
+    while (j + 1 < lines.length && rowClassOf(lines[j + 1]) === c) j++;
+    const keys = [], byKey = new Map();
+    let keyed = true;
+    for (let k = i; k <= j; k++) {
+      const key = seriesKeyOf(lines[k], c);
+      if (key == null) { keyed = false; break; }
+      if (!byKey.has(key)) { byKey.set(key, []); keys.push(key); }
+      byKey.get(key).push(lines[k]);
+    }
+    if (keyed && keys.length > 1) {
+      const order = permute(keys, r);
+      let k = i;
+      for (const key of order) for (const l of byKey.get(key)) out[k++] = l;
+      groups += keys.length;
+    }
+    i = j + 1;
+  }
+  return { lines: out, groups };
+}
+const SECTIONS = [
+  { header: /^### Plate /, row: 'pipe', endLast: 'rows' },
+  { header: /^Plate \d+ \| Assay: /, row: 'reader', endLast: 'blank' },
+  { header: /^Condition: /, row: 'grouped', endLast: 'rows' },
+];
+function permuteSections(lines, r) {
+  for (const S of SECTIONS) {
+    const heads = lines.map((l, i) => (S.header.test(l) ? i : -1)).filter(i => i >= 0);
+    if (heads.length < 2) continue;
+    const last = heads.at(-1);
+    let end = last;
+    for (let k = last + 1; k < lines.length; k++) {
+      if (S.endLast === 'rows' && rowClassOf(lines[k]) === S.row) end = k;
+      if (S.endLast === 'blank') { if (lines[k].trim() === '') break; end = k; }
+    }
+    const blocks = heads.map((h, n) => lines.slice(h, n + 1 < heads.length ? heads[n + 1] : end + 1));
+    const order = permute(blocks.map((_, n) => n), r);
+    return { lines: [...lines.slice(0, heads[0]), ...order.flatMap(n => blocks[n]), ...lines.slice(end + 1)], sections: heads.length };
+  }
+  return { lines, sections: 0 };
+}
+
 export function compareKinetics(expected, got, { relTol = DEFAULT_REL_TOL, absTol = 1e-12 } = {}) {
   const ok = o => o && typeof o === 'object' && Array.isArray(o.conditions) && Array.isArray(o.excluded_samples);
   if (!ok(expected)) return shapeViolation('original', 'no conditions / excluded_samples');
@@ -43,7 +112,7 @@ export function compareKinetics(expected, got, { relTol = DEFAULT_REL_TOL, absTo
 
 export const invariance = Object.freeze([
   {
-    id: 'shuffle-samples', kind: 'invariant',
+    id: 'shuffle-samples', kind: 'invariant', distribution: 'out',
     text: 'Permute the sample rows inside every table of every document (seeded). Each row carries its own sample, well and values, so the answer is unchanged.',
     make(task, { seed }) {
       const r = rngOf(seed, 'kinetics', 'shuffle-samples');
@@ -60,7 +129,26 @@ export const invariance = Object.freeze([
     check: (orig, variant, info, opts = {}) => compareKinetics(orig, variant, opts),
   },
   {
-    id: 'shuffle-documents', kind: 'invariant',
+    id: 'shuffle-series', kind: 'invariant', distribution: 'in',
+    text: 'Permute whole plate rows (series) inside every table and document, keeping each plate row\'s wells in their left-to-right order (seeded). Every series carries its own plate, row, condition and replicate, so the answer is unchanged.',
+    make(task, { seed }) {
+      const r = rngOf(seed, 'kinetics', 'shuffle-series');
+      let groups = 0, sections = 0, changed = 0;
+      const documents = documentsOf(task).map(d => {
+        if (typeof d?.text !== 'string') return d;
+        const a = permuteSeriesInTables(d.text.split('\n'), r), b = permuteSections(a.lines, r);
+        groups += a.groups; sections += b.sections;
+        const text = b.lines.join('\n');
+        if (text !== d.text) changed++;
+        return text === d.text ? d : { ...d, text };
+      });
+      if (!changed) return { skip: 'no document with two or more series' };
+      return { task: variantTask(task, { inputs: { ...task.inputs, documents } }), info: { groups, sections, documents: changed } };
+    },
+    check: (orig, variant, info, opts = {}) => compareKinetics(orig, variant, opts),
+  },
+  {
+    id: 'shuffle-documents', kind: 'invariant', distribution: 'in',
     text: 'Permute the order of inputs.documents (seeded). Documents carry their own ids, authors and dates, so the answer is unchanged.',
     make(task, { seed }) {
       const docs = documentsOf(task);

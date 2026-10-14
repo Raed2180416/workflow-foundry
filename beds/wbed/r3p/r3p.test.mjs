@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as bed from './index.mjs';
 import { buildSweep, redrawStats, obsGen, LOUD_SHARE } from './world.mjs';
-import { FAMILIES } from './families.mjs';
+import { FAMILIES, words as wordsOf } from './families.mjs';
 import { observe, argsOk, makeContext, canonValue } from './exec.mjs';
 import { witnessHolds, passes } from './score.mjs';
 import { SPEC, randomValue, roundRational } from './spec.mjs';
@@ -393,7 +393,7 @@ test('the test split generates and passes the reference (on a tuning seed, never
 
 test('runtime: generate under 2 s and oracle under 2 s at difficulty 5 (cold)', t => {
   const t0 = performance.now();
-  const tk = bed.generate({ seed: 470, split: 'dev', difficulty: 5 });
+  const tk = bed.generate({ seed: 472, split: 'dev', difficulty: 5 });
   const t1 = performance.now();
   bed.oracle(tk, bed.referenceSolve(tk));
   const t2 = performance.now();
@@ -402,3 +402,192 @@ test('runtime: generate under 2 s and oracle under 2 s at difficulty 5 (cold)', 
   t.diagnostic(`d5 cold: generate ${Math.round(t1 - t0)} ms, oracle ${Math.round(t2 - t1)} ms; generator re-draws so far ${JSON.stringify(redrawStats)}`);
 });
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Regression tests for the adversarial review of 2026-10-14 (W-BED-R3P-NOTES §17).
+
+const unperm = (f, args) => { const perm = f.p.order; if (!perm) return args; const out = []; perm.forEach((i, j) => { out[i] = args[j]; }); return out; };
+const specObs = (fn, args) => {
+  const a = JSON.parse(JSON.stringify(args));
+  try { return { returns: canonValue(fn(...a)), throws: null, argsAfter: canonValue(a) }; } catch (e) { return { returns: null, throws: e.name, argsAfter: canonValue(a) }; }
+};
+const sameAsSpec = (o, w) => o.returns === w.returns && o.throws === w.throws && o.argsAfter === w.argsAfter;
+
+test('finding 2 (P1): every correct body and every decoy meets an independent spec of its contract on random in-domain inputs', t => {
+  // family level: every family x role x knob draw, both house rules, both splits; the spec (spec.mjs) is written from the
+  // contract text in exact integer arithmetic, not from the bodies
+  let runs = 0, draws = 0;
+  for (const F of Object.values(FAMILIES)) {
+    const roles = [{ kind: 'clean' }, ...F.can.decoy.map(cls => ({ kind: 'decoy', cls }))];
+    for (const role of roles) for (let k = 0; k < 16; k++) {
+      const house = { rounding: k % 2 ? 'HALF_AWAY' : 'HALF_EVEN', band: k % 3 ? 'incl' : 'excl', pageBase: k % 4 < 2 ? 1 : 0 };
+      const r = rng('wbed-r3p-spec', F.id, role.kind, k);
+      let i = 0;
+      const p = F.draw(r, { house, name: ts => `${ts[0].replace('{N}', 'Item').replace('{n}', 'item')}${i++}`, split: k % 3 ? 'dev' : 'test' }, role);
+      const helper = [];
+      if (F.kind === 'caller') {
+        p.helper = 'helperFn';
+        const H = FAMILIES[F.helper], hp = H.draw(rng('wbed-r3p-spec-helper'), { house, name: () => 'helperFn' }, { kind: 'clean' });
+        helper.push(`function helperFn(${H.sig(hp).join(', ')}) {\n${H.body(hp, 'correct')}\n}`);
+      }
+      const fn = { domain: F.domain(p) }, spec = SPEC[F.id](p, house);
+      const ctxs = ['correct', ...(role.kind === 'decoy' ? ['planted'] : [])].map(w => [w, makeContext([...helper, `function f(${F.sig(p).join(', ')}) {\n${F.body(p, w)}\n}`])]);
+      const hints = (JSON.stringify(F.doc(p)).match(/'[^']{1,20}'/g) ?? []).map(x => x.slice(1, -1));
+      const inputs = [...F.probes(p, r)];
+      for (let n = 0, tries = 0; n < 25 && tries < 750; tries++) { const a = fn.domain.params.map(s => randomValue(s, r, hints)); if (argsOk(fn, a)) { inputs.push(a); n++; } }
+      for (const a of inputs) for (const [w, ctx] of ctxs) {
+        runs++;
+        assert.ok(sameAsSpec(observe(ctx, 'f', a), specObs(spec, a)), `${F.id} ${role.kind} (${w}) breaks its contract on ${JSON.stringify(a).slice(0, 200)}; p=${JSON.stringify(p).slice(0, 200)}`);
+      }
+      draws++;
+    }
+  }
+  // world level: every clean function and decoy of real tasks (permuted parameters, real helpers, the task's house rules)
+  for (const [seed, d] of [[464, 3], [465, 5]]) {
+    const w = buildSweep(seed, 'dev', d), r = rng('wbed-r3p-spec-world', seed, d);
+    for (const f of w.fns) {
+      if (f.role === 'defect' || f.affected) continue;
+      const spec = SPEC[f.family](f.p, w.house), hints = (JSON.stringify(f.contract).match(/'[^']{1,20}'/g) ?? []).map(x => x.slice(1, -1));
+      const inputs = [...f.probes];
+      for (let n = 0, tries = 0; n < 12 && tries < 400; tries++) { const a = f.domain.params.map(s => randomValue(s, r, hints)); if (argsOk(f, a)) { inputs.push(a); n++; } }
+      for (const a of inputs) { runs++; assert.ok(sameAsSpec(observe(w.planted, f.name, a), specObs(spec, unperm(f, a))), `${f.name} (${f.family}, ${f.role}) on ${JSON.stringify(a).slice(0, 200)}`); }
+    }
+  }
+  t.diagnostic(`contract specs: ${draws} family draws, ${runs} executions, 0 deviations`);
+});
+
+test('finding 2 (P1): the reviewer\'s two contract-faithful reports are right now: fee-rate in percent rounds halves up, safe-get reads own properties', () => {
+  const house = { rounding: 'HALF_AWAY', band: 'incl', pageBase: 1 };
+  const draw = (id, want) => { for (let k = 0; k < 400; k++) { const p = FAMILIES[id].draw(rng('wbed-r3p-f2', id, k), { house, name: ts => ts[0] }, { kind: 'clean' }); if (want(p)) return p; } throw new Error(id); };
+  const fee = draw('fee-rate', p => p.unit === 'pct' && p.rule === 'half-up');
+  const feeCtx = makeContext([`function f(${FAMILIES['fee-rate'].sig(fee).join(', ')}) {\n${FAMILIES['fee-rate'].body(fee, 'correct')}\n}`]);
+  assert.deepEqual(FAMILIES['fee-rate'].domain(fee).params[1], { t: 'int', min: 0, max: 100 }, 'a percent rate is a whole number: the fee is an exact rational');
+  for (const [a, rate, want] of [[5500, 7, 385], [50, 25, 13], [150, 1, 2], [250, 1, 3], [12345, 50, 6173]]) assert.equal(observe(feeCtx, 'f', [a, rate]).returns, String(want), `${a} at ${rate}%`);
+  const sg = draw('safe-get', p => p.miss === 'undefined' && p.sep === '.');
+  const sgCtx = makeContext([`function f(${FAMILIES['safe-get'].sig(sg).join(', ')}) {\n${FAMILIES['safe-get'].body(sg, 'correct')}\n}`]);
+  assert.deepEqual(observe(sgCtx, 'f', [{}, 'constructor']).returns, '{"$undefined":true}', 'a prototype member is not an own property');
+  assert.equal(observe(sgCtx, 'f', [{ n: null }, 'n']).returns, 'null', 'the contract now says a final null is returned as null');
+  assert.match(FAMILIES['safe-get'].doc(sg).lines[0], /Object\.hasOwn/);
+  assert.equal(roundRational(77, 2, 'half-up'), 39); assert.equal(roundRational(-5, 2, 'even'), -2); assert.equal(roundRational(-7, 2, 'floor'), -4);
+});
+
+test('finding 3 (P1): a defect whose class two definitions fit is verified under either; both at once is one hit and one duplicate', () => {
+  let checked = 0;
+  for (const seed of SEEDS) for (const d of [4, 5]) {
+    const tk = task(seed, d), m = bed.manifestOf(tk).find(x => x.accepted.length > 1);
+    if (!m) continue;
+    const ref = bed.referenceSolve(tk), alt = m.accepted.find(c => c !== m.class && bed.classesAt(d).includes(c));
+    if (!alt) continue;
+    const swapped = { findings: ref.findings.map(f => (f.function === m.function ? { ...f, class: alt } : f)) };
+    const s = bed.oracle(tk, swapped).details;
+    assert.equal(s.verified, s.defects, `${m.family}/${m.variant} as ${alt} is verified`); assert.equal(s.verifiedViaAcceptedClass, 1); assert.equal(s.falsePositives, 0);
+    const both = bed.oracle(tk, { findings: [...ref.findings, { file: m.file, function: m.function, class: alt }] }).details;
+    assert.equal(both.verified, both.defects); assert.equal(both.fpCauses.duplicate, 1);
+    checked++;
+    if (checked >= 3) break;
+  }
+  assert.ok(checked >= 1, 'some task in the tuning block plants an ambiguous variant');
+  // the class definitions no longer overlap where the review found them overlapping
+  assert.match(bed.DEFINITIONS.LOGIC_ERROR, /an empty, null or zero input is MISSING_GUARD/);
+  assert.match(bed.DEFINITIONS.ROUNDING, /rounding at the wrong step/);
+  assert.deepEqual(FAMILIES['split-evenly'].accept['le-extra'], ['OFF_BY_ONE', 'ROUNDING']);
+  assert.deepEqual(FAMILIES['to-major'].accept['always-100'], ['UNIT_MISMATCH', 'LOGIC_ERROR']);
+});
+
+test('finding 3 (P1): one false positive is always tolerated (a 6-defect task no longer fails on one extra finding); two are not', () => {
+  assert.equal(passes(6, 1, 6), true); assert.equal(passes(6, 2, 6), false); assert.equal(passes(5, 1, 6), true); assert.equal(passes(4, 0, 6), false);
+  assert.equal(passes(10, 1, 10), true); assert.equal(passes(10, 2, 10), false); assert.equal(passes(18, 2, 20), true); assert.equal(passes(18, 3, 20), false);
+  const tk = task(449, 2), ref = bed.referenceSolve(tk), traps = bed.trapsOf(tk);
+  const decoy = traps.decoys.map(x => ({ file: x.file, function: x.function, class: x.looksLike }));
+  assert.equal(bed.oracle(tk, { findings: [...ref.findings, decoy[0]] }).pass, true);
+  assert.equal(bed.oracle(tk, { findings: [...ref.findings, decoy[0], decoy[1]] }).pass, false);
+  // the root-cause trap stays decisive under the tolerance: at least two inheriting callers at d2
+  for (const seed of SEEDS.slice(0, 6)) assert.ok(bed.trapsOf(task(seed, 2)).inheritingCallers.length >= 2);
+});
+
+test('finding 1 (P0): the contract-fuzz script fails on single tasks and with a corpus of earlier tasks; no contract template repeats within a task', t => {
+  const fuzz = bed.badControls.find(c => c.name === 'contract-fuzz-script'), stream = bed.badControls.find(c => c.name === 'contract-fuzz-stream');
+  assert.ok(fuzz.slow && stream.slow && !fuzz.byConstruction);
+  const rows = [];
+  for (const [d, seeds] of [[3, [449, 450, 451, 452]], [4, [453]]]) for (const seed of seeds) {
+    const tk = task(seed, d), s = bed.oracle(tk, fuzz.make(tk));
+    rows.push({ mode: 'single', d, seed, pass: s.pass, recall: s.details.recall, precision: s.details.precision });
+  }
+  const corpus = [457, 458, 459, 460, 461, 462, 463, 464].map(s => task(s, 3).files); // eight earlier tasks, unlabelled
+  for (const seed of [465, 466]) {
+    const tk = task(seed, 3), out = stream.make(tk, { corpus }), s = bed.oracle(tk, out);
+    rows.push({ mode: 'corpus', d: 3, seed, pass: s.pass, recall: s.details.recall, precision: s.details.precision });
+  }
+  for (const x of rows) { assert.equal(x.pass, false, JSON.stringify(x)); assert.ok(x.recall < 0.6, JSON.stringify(x)); }
+  t.diagnostic(`contract-fuzz rows: ${JSON.stringify(rows)}`);
+  for (const d of DS) for (const seed of SEEDS.slice(0, 3)) {
+    const keys = buildSweep(seed, 'dev', d).fns.map(f => f.template).filter(Boolean);
+    assert.equal(new Set(keys).size, keys.length, `d${d} s${seed}: a contract template repeats within the repository`);
+  }
+});
+
+test('finding 1 (P0): the same contract text rarely recurs across a stream of 24 tasks (the vote has almost nobody to vote with)', t => {
+  const seen = new Map();
+  for (let seed = 449; seed <= 472; seed++) for (const f of buildSweep(seed, 'dev', 3).fns) if (f.template) seen.set(f.template, (seen.get(f.template) ?? 0) + 1);
+  let defects = 0, voted = 0;
+  for (let seed = 449; seed <= 472; seed++) for (const f of buildSweep(seed, 'dev', 3).fns) if (f.role === 'defect') { defects++; if (seen.get(f.template) >= 3) voted++; }
+  assert.ok(voted / defects < 0.1, `${voted}/${defects} defects share their exact contract with >= 2 other functions of the 24 tasks`);
+  t.diagnostic(`d3, 24 tasks: ${voted}/${defects} defects have >= 2 same-template peers; ${seen.size} distinct templates`);
+});
+
+test('finding 1 (P0): loud defects (crash, NaN, changed argument, wrong error type, the shared helpers) are capped; silent variants exist for MISSING_GUARD and SWALLOWED_ERROR', () => {
+  for (const d of DS) for (const seed of SEEDS.slice(0, 8)) {
+    const w = buildSweep(seed, 'dev', d), loud = w.manifest.filter(m => m.loud).length;
+    assert.ok(loud <= Math.floor(LOUD_SHARE * w.L.defects), `d${d} s${seed}: ${loud} loud of ${w.L.defects}`);
+    assert.equal(w.manifest.filter(m => m.class === 'INPUT_MUTATION').length, w.L.classes.includes('INPUT_MUTATION') ? (d === 3 ? 1 : 2) : 0, 'INPUT_MUTATION keeps its quota minimum only');
+  }
+  for (const id of ['average', 'ratio', 'display-name', 'safe-get', 'max-by', 'parse-amount', 'read-settings']) {
+    const F = FAMILIES[id], quiet = new Set();
+    for (let k = 0; k < 200; k++) { const p = F.draw(rng('wbed-r3p-quiet', id, k), { house: { rounding: 'HALF_AWAY', band: 'incl', pageBase: 1 }, name: ts => ts[0] }, { kind: 'defect', cls: F.can.defect[0] }); if (!F.loud.includes(p.variant)) quiet.add(p.variant); }
+    assert.ok(quiet.size >= 1, `${id} has a silent defect variant`);
+  }
+});
+
+test('finding 5 (P2, fixed part): a converted slot stays inside its file\'s area pool; test inputs come from a shuffled probe list', () => {
+  for (const d of DS) for (const seed of SEEDS.slice(0, 5)) {
+    const w = buildSweep(seed, 'dev', d);
+    for (const f of w.fns) {
+      const lib = LIB.find(l => l.path === f.path), area = AREAS.find(a => f.path.startsWith(`src/${a.dir}/`));
+      const pool = lib ? [lib.helper, ...lib.families] : area.families;
+      assert.ok(pool.includes(f.family), `d${d} s${seed}: ${f.family} in ${f.path} is outside the file's pool`);
+    }
+  }
+});
+
+test('finding 6 (P2): the F2 call log covers one confirmed defect, its callers and clean distractors only', () => {
+  const tk = task(467, 5), w = buildSweep(467, 'dev', 5);
+  for (const m of bed.manifestOf(tk).slice(0, 4)) {
+    const log = bed.callLogFor(tk, m.id), fns = new Set(log.map(c => c.function));
+    const hit = new Set([m.function, ...w.fns.filter(f => f.calls === m.function).map(f => f.name)]);
+    for (const name of fns) {
+      const f = w.byName.get(name);
+      if (hit.has(name)) continue;
+      assert.ok(f.role !== 'defect' && !f.affected, `${name} (${f.role}) leaks into the log of ${m.id}`);
+      assert.ok(log.filter(c => c.function === name).every(c => !c.wrong));
+    }
+    assert.ok(log.some(c => c.function === m.function && c.wrong), 'the confirmed defect has a wrong recorded output');
+    assert.ok([...fns].filter(n => !hit.has(n)).length >= Math.min(4, hit.size), 'distractors matched in number');
+  }
+});
+
+test('finding 7 (P2): a timeout is never an observation: generation throws, the witness check reports it apart', () => {
+  const ctx = makeContext(['function spin() { for (;;) {} }', 'function one() { return 1; }']);
+  assert.equal(observe(ctx, 'spin', [], 20).throws, 'Timeout');
+  assert.throws(() => obsGen(ctx, 'spin', []), /timed out .* during generation/);
+  const fake = { planted: ctx, correct: makeContext(['function spin() { return 1; }']) };
+  assert.deepEqual(witnessHolds(fake, { name: 'spin', domain: { params: [] } }, []), { ok: false, why: 'timeout' });
+});
+
+test('wording: the main sentence\'s last option is drawn only on the test split', () => {
+  const ctxDev = { split: 'dev' }, ctxTest = { split: 'test' }, seenDev = new Set(), seenTest = new Set();
+  for (let k = 0; k < 400; k++) {
+    const r1 = rng('wbed-r3p-words', k), r2 = rng('wbed-r3p-words', k);
+    seenDev.add(wordsOf(r1, ctxDev, [3])[0]); seenTest.add(wordsOf(r2, ctxTest, [3])[0]);
+  }
+  assert.deepEqual([...seenDev].sort(), [0, 1]); assert.ok(seenTest.has(2));
+});

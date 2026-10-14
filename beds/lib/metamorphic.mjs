@@ -4,13 +4,16 @@
 // solver gave on the original task; it never reads the hidden world, so it can run beside a deployed solver (no oracle).
 //
 // The relation contract (experiments/jit/invariance.mjs runs it):
-//   { id, kind: 'invariant' | 'transform', text, needsOutput?: boolean,
+//   { id, kind: 'invariant' | 'transform', distribution: 'in' | 'out', text, needsOutput?: boolean,
 //     make(task, { seed, output }) -> { task: variantTask, info } | { skip: reason },
 //     check(originalOutput, variantOutput, info, opts) -> violations: [{ level, ... }]   (empty = the relation holds) }
 // 'invariant': the variant's correct output is the original's (compared in the bed's own normal form); 'transform': it is a
 // stated function of the original's (e.g. the original minus one entity). Every relation must hold for a correct solver.
 // A variant keeps every task field but prompt and inputs; a prompt sentence that states a property the variant changes
-// (a row count, an order) is rewritten to stay true.
+// (a row count, an order) is rewritten to stay true. distribution 'out' marks a variant that leaves a regularity every
+// generated task has but no task states as a rule (a listing order): it also flags a solver that leans on that regularity
+// while its answer is right (equivalence modulo inputs keeps variants inside the profiled inputs; an 'out' relation does
+// not). 'in' variants keep every such regularity the bed author knows of.
 import { rng } from './rng.mjs';
 import { canonical } from './canonical.mjs';
 
