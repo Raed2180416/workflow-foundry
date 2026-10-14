@@ -48,15 +48,19 @@ export function binaryKeeps(names = ['claude', 'node'], pathEnv = process.env.PA
   return [...new Set(out)];
 }
 // Kept visible, read-only, inside a hidden path. Cloud: /root/.ccr holds the proxy CA bundle (NODE_EXTRA_CA_CERTS);
-// /home/claude/.claude/remote holds the CLI's managed login (live-tested 2026-10-07: hiding it fails auth); the rest of
-// that account directory (.ssh, .npm, .gitconfig, other .claude state) is hidden.
+// /home/claude/.claude/remote/.oauth_token is the CLI's managed login (live-tested 2026-10-07: hiding it fails auth); the rest of
+// that account directory (.ssh, .npm, .gitconfig, other .claude state, and remote/.session_ingress_token) is hidden.
 // Binaries: only `claude` and `node` and the paths their symlinks resolve through (on the laptop the link
 // ~/.local/bin/claude and its target ~/.local/share/claude/versions/<v>), never whole tool directories: the earlier
 // ~/.local/bin keep exposed 402 owner tools and scripts (ISOLATION-PROBE-laptop §5.3). Entries outside every hidden
 // root are already visible read-only and are skipped by maskSteps. Not ~/.claude: there the login sits beside every
 // session transcript, so a builder authenticates with CLAUDE_CODE_OAUTH_TOKEN from the environment instead
 // (owner-provisioned; see EXECUTOR_ENV_ALLOWED).
-export const DEFAULT_KEEP_RO = Object.freeze(['/root/.ccr', '/home/claude/.claude/remote', ...binaryKeeps()]);
+// Cloud, 2026-10-14: only the login file itself is kept. The directory also holds .session_ingress_token, the parent
+// cloud session's own ingress credential, which no builder session needs; keeping the directory exposed it read-only to
+// every interpreter, shadow, adjudicator and builder (cloud-ops verify, wf_30a7255d-88f). maskSteps keeps single files.
+export const CLOUD_LOGIN_FILE = '/home/claude/.claude/remote/.oauth_token';
+export const DEFAULT_KEEP_RO = Object.freeze(['/root/.ccr', CLOUD_LOGIN_FILE, ...binaryKeeps()]);
 // Device nodes an executor keeps (bound from the host /dev into a fresh tmpfs /dev). Everything else is absent: GPUs
 // (/dev/nvidia*, /dev/dri: a builder could start GPU work beside a running job), disks, input, sound, kvm, the host's
 // devpts (other terminals) and its /dev/shm. A private /dev/shm and a fresh devpts instance (own ptys) are added.
@@ -146,9 +150,15 @@ export function nestedModelUses(toolUses = []) {
 // --permission-mode bypassPermissions when getuid() is 0 (as under --map-root-user), and the nested namespace drops both
 // that uid and every capability over the mount namespace (no mount, umount or remount of a mask, even after a further
 // unshare). Only the setup steps run as the namespace root.
+// A root host (the cloud container runs every process as uid 0) has no unprivileged host uid to map: there the program
+// runs as UNPRIVILEGED_ID, mapped onto the same host uid 0. Host file access is unchanged (the CLI's managed login under
+// /home/claude/.claude/remote stays readable), but getuid() is not 0 and execve as a non-root uid clears every capability
+// (live-tested 2026-10-14: uid 65534, CapEff 0, mount/umount fail, CLI root check passes, auth loggedIn).
+export const UNPRIVILEGED_ID = 65534;
 export const dropUidArgs = (uid = process.getuid(), gid = process.getgid()) => {
   if (!Number.isSafeInteger(uid) || uid < 0 || !Number.isSafeInteger(gid) || gid < 0) throw new FoundryError('SANDBOX_UNAVAILABLE', 'The sandbox needs a numeric host uid and gid');
-  return ['unshare', '--user', `--map-user=${uid}`, `--map-group=${gid}`];
+  const root = uid === 0;
+  return ['unshare', '--user', `--map-user=${root ? UNPRIVILEGED_ID : uid}`, `--map-group=${root ? UNPRIVILEGED_ID : gid}`];
 };
 // The availability probe has the full sandbox shape: the outer root namespace with mount and pid namespaces, then the
 // nested uid drop.
