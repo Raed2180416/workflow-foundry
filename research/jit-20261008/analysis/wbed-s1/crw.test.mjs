@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { steadyUsd, pairsOf, crw, decideRuns, simulate, planning, killRuleTable, CR_LEVEL, SIGMA_LINEAGE, PLANNED_STEADY } from './crw.mjs';
+import { steadyUsd, pairsOf, crw, decideRuns, simulate, planning, killRuleTable, lineageAnchors, CR_LEVEL, SIGMA_LINEAGE, PLANNED_STEADY } from './crw.mjs';
 import { runStream, POLICY_MODELS } from '../../../../experiments/jit/stream.mjs';
 
 const near = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b} ± ${tol}`);
@@ -105,4 +105,16 @@ test('decideRuns reads two stream run directories (stream.mjs layout): pairs, ve
   const cut = await decideRuns(stat, agent, dirs, { lineageArms: 1 });
   assert.deepEqual(cut.validity.find(v => v.arm === stat && v.stream === 'A'), { arm: stat, stream: 'A', planned: 24, impaired: 0, missingOther: 7, status: 'invalid: truncated' });
   assert.equal(cut.verdict.conditional, 'invalid'); assert.equal(cut.pooled.n, 35);
+});
+
+test('σ_L anchors (PREREG §7.1): the same arm on the same family in two committed runs', () => {
+  const a = Object.fromEntries(lineageAnchors().map(r => [`${r.run}/${r.arm}`, r.logRatio]));
+  near(a['jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5'], 0.426, 0.002, 'records H/H dev');
+  near(a['jit-r0-records/jit-claude-haiku-5-5--claude-haiku-5-5'], 0.654, 0.002, 'records H/H R0');
+  near(a['jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5'], 1.521, 0.002, 'kinetics O/H dev');
+  near(a['jit-r0-kinetics/jit-claude-opus-5-5--claude-haiku-5-5'], 2.314, 0.002, 'kinetics O/H R0-K');
+  // σ_L ≈ |difference| / √2 per family: about 0.16 and 0.56; the declared floor 0.5 sits between them.
+  const sig = (x, y) => Math.abs(x - y) / Math.SQRT2;
+  assert.ok(sig(a['jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5'], a['jit-r0-records/jit-claude-haiku-5-5--claude-haiku-5-5']) < SIGMA_LINEAGE);
+  assert.ok(sig(a['jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5'], a['jit-r0-kinetics/jit-claude-opus-5-5--claude-haiku-5-5']) > SIGMA_LINEAGE);
 });

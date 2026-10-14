@@ -341,24 +341,46 @@ quote digits, so they stand.
 
 The attack's outcomes are dev evidence. They gate admission and fix the shape, and they enter no claim.
 
-### 4.2 P1: reference validation and freeze (arm c; W-BED §2.3)
+### 4.2 P1: a report-only measurement of the frozen references (arm c; W-BED §2.3; review finding 5)
 
-- The references exist as working files: `beds/wbed/references/r1-reference.mjs` (uses `flow.phase` 7×, `flow.flag`,
-  27 guards, 7 invariants, 1 judge site) and `r3-reference.mjs` (uses `flow.wide` 1×, 2 judge sites) [code]. Both are
-  validated at $0 on stub gateways by `validate.mjs`. These files are another agent's area and are being edited (`git
-  status` at `93b27ec`: M on `r1-reference.mjs`, `validate.mjs` and the author tables). Their FROZEN.json and README do not
-  exist yet. Who wrote them and through what route (an in-session agent, not the `claude -p` Opus session of W-BED §2.3) is
-  **[U]** until the README records it (T4).
-- **Paid validation:** each reference runs on dev 301–312 at the stream's two difficulties (24 runs) with live judges
-  (Haiku, then Sonnet on a failed check). Scoring is by the oracle, analyst-side. Cap $2 per rung.
-- **Rule (W-BED §2.3):**
-  - At ≥ 10/12 at each difficulty, the reference is frozen as is.
-  - Below that, the author gets the failing seeds' inputs and expected outputs once, revises once, and the result is
-    frozen by sha256 whatever its score.
-  - Revisions, their cost and the validation scores are recorded. The reference is never tuned again, and nothing
-    from P5 reaches its author.
-- **Authoring cost** (the human-curation proxy): the authoring session's list-price dollars, tokens and wall-clock if
-  journaled, else "unmeasured" stated explicitly (T4). It is reported beside (c), never added to per-task cost.
+The first draft planned a paid validation on dev 301–312 with one revision below 10/12. That plan conflicts with the
+freeze and is withdrawn:
+- **The one revision is spent.** The stub validation on 301–312 met W-BED §2.3's "< 10/12" trigger (stub judges answer
+  wrongly by construction), and each rung got its one revision (FROZEN.json `protocol`; refs README "Protocol followed"
+  items 2–4).
+- **301–312 are development seeds.** The author saw their inputs, every judge question (to write author readings), and,
+  analyst-side, pass/fail and per-part comparisons with `referenceSolve` (FROZEN.json `authorship.seen`). R1's three
+  revision fixes came from 311 d3, 308 d4, 301 d4 and 303 d3.
+- **"One revision" is a window, not a single edit.** The autosave history shows R1's birth-date reader in three states:
+  v1 (`history/r1-reference.v1.mjs`, sha256 `9e3f36b3…`) `/birth|dates?\b/i`; autosave `b1135cd` (15:51 UTC) `/birth/i`;
+  the frozen file (`f030fbc`, 15:56; sha256 `b267498f…`) `/birth|numeric dates?/i` [M, `git show`]. Whether the
+  intermediate state was run against 301–312 is not recorded, and v1's raw validation output was not committed. So the
+  revision count is "one revision window with at least one intermediate state", and the in-sample numbers are in-sample
+  in the strongest sense. FROZEN.json does not list the intermediate state; that record is the references' owner's (T4).
+- **The authoring route is now recorded** (FROZEN.json `authorship`): Claude Opus 5.5 as a subagent of this
+  workflow-orchestrated session, not a `claude -p` builder session, with no model call during authoring or validation;
+  about 1 hour; about 690K session tokens for both rungs, an estimated $3–6 at list price, and a lower bound only. The
+  author also saw the beds' exported `difficulty` descriptors, which list the generator's trap catalogue and rates (refs
+  README "Protocol" item 5; §11 item 2).
+
+**What is measured, at $0, so far.** In sample (fixtures 373–378 and 301–312, d3–d4, author readings): R1 36/36 and R3
+36/36 on wbed-r3 1.1.0. Out of sample (313–324, d3–d5, judges answered from the generator world): R1 34/36, with a deopt
+on 320 d4 and a silent wrong answer on 322 d4 (both a typo'd name particle outside the reference's fixed list); R3 36/36.
+On the attack seeds 379–390, d3–d5, with world readings: R1 36/36, R3 36/36 (§2.6 item 2). These measure the frozen code
+with correct readings. They do not measure live judges.
+
+**P1, the paid part: report-only.**
+- **What runs.** Each frozen reference, as arm (c) alone in a dev stream config on E2 (`static@v3:`, so P1 also exercises
+  T2), on dev 313–324 at the stream's two difficulties (24 tasks per rung), with live judges: Haiku first, Sonnet on a
+  failed check. Scoring is by the oracle, analyst-side. Cap $2 per rung.
+- **Rule.** No revision, whatever the score. Nothing from P1 or P5 reaches the author. P1 reports: the live pass rate per
+  difficulty, the deopt and fallback share, the judge calls and dollars per task, and the Sonnet share. Its numbers are on
+  record before F2.
+- **What it changes.** Nothing in this pre-registration. A low live pass rate makes KR-1 (§9.1) lenient, not invalid:
+  "H/H more than 10 points below the reference" is harder to reach against a weak reference. That is reported beside KR-1
+  and S1.
+- **Authoring cost** (the human-curation proxy) is the FROZEN.json estimate above, labelled a lower bound. It is reported
+  beside (c) and never added to per-task cost.
 
 ### 4.3 P2: the (e) builds
 
@@ -372,7 +394,14 @@ The attack's outcomes are dev evidence. They gate admission and fix the shape, a
   - A build with no `solve.mjs` is recorded as a construction failure. Its arm then runs as "no artifact": every task
     goes to the Haiku interpreter, and it is reported so.
   - The artifact is frozen by sha256 before F2.
+  - **The score tool** (review finding 13). The kit still ships `tools/score.mjs` and the prompt says "at most 0 score
+    checks". The build record's `scoreLog` must be empty or hold only refusals; any refused attempt is counted and
+    reported. A score that reached the builder would void the build (it would be a label). The kit is not edited, so its
+    E1c hash (`6bc6b06eccf45cae`) stands; a prompt without the score lines would be a kit change and is the owner's call
+    (T23).
 - **Never shown to the builder:** oracle output, labels, interpreter answers or any held-out input.
+- **Its basis.** (e) is "B1 with scoring disabled", which C0 never ran; C0's 16/16 at $2.21 had 12 oracle-scored checks.
+  Nothing in this slice reads C0's number as (e)'s expectation.
 
 ### 4.4 P4: dev smoke on E2 (engine validity, not evidence)
 
@@ -382,13 +411,16 @@ The attack's outcomes are dev evidence. They gate admission and fix the shape, a
 - **Pass condition, all required:**
   - every arm writes 4 rows and no harness error;
   - (c) delivers `compiled` (not `fallback`) on at least 3 of 4, and its compiled trace shows flow-v3 events, which
-    tests T2;
+    tests T2 live;
   - (e) runs its build artifact (`scriptSha` matches P2);
   - (a)'s first prompt-v5 compile completes, accepted or not, and its compiled run executes on flow-v3;
   - no row has `costUnknown` except one booked at its bound and explained;
   - no unexplained environment fault.
 - **On failure.** Any engine fix re-stamps E2 (§8) and re-runs P4. Smoke rows are dev, never pooled and never read for
   outcomes.
+- **What P4 does not cover.** (a) reaches one compiled task, so a deopt, a flagged shadow, an adjudication and a
+  recompile on E2 are covered only by the stub stream tests. That is one reason (a) runs without `library` (§3.2 item
+  6): the call host and the resume port would add paths that neither P4 nor any paid run has reached.
 
 ## 5. Shadow floor and verification (ATTACK M2)
 
@@ -423,7 +455,7 @@ The attack's outcomes are dev evidence. They gate admission and fix the shape, a
   fallback, adjudicated). Also reported: the compiled-only pass rate where rows carry `compiledPass`, and the share of
   static-arm tasks delivered by fallback.
 - **Steady-state $ per task (SS):**
-  - computed over idx 3–23;
+  - computed over idx 3–23, on the tasks both arms of a pair have (§7.1 V);
   - for (a): row `costUsd` minus compile spend (every `costBreakdown` key that starts with `compile`, except `compiled`;
     PREREG-stream §0.3). It therefore holds compiled runs, deopt fallbacks, shadows and adjudication at the realized rate:
     M2's L1 plus realized verification;
@@ -462,33 +494,85 @@ The attack's outcomes are dev evidence. They gate admission and fix the shape, a
 | CR2(r) | (a) H/H vs (c) reference | does the Haiku-built workflow run as cheaply as the hand-curated one? |
 | CR3(r) | (e) built once vs (a) H/H | M10: is building once from the spec cheaper to run than JIT from traces? |
 
-**Rule CR-W** (two-sided; `DECISION_RULE`'s structure applied to cost; PREREG-stream rule CR made two-sided):
-- **V:** neither arm is invalid by the env-fault rule or the truncation rule (§9.4), and the paired task sets on idx
-  3–23 match in both streams.
+**Rule CR-W** (two-sided; `DECISION_RULE`'s structure applied to cost; PREREG-stream rule CR made two-sided). It is in
+code: `research/jit-20261008/analysis/wbed-s1/crw.mjs` (`crw`, and `decideRuns` over the stream run directories), with
+tests in `crw.test.mjs`; its sha256 is frozen at F2 (T3).
+- **V (validity):** neither arm is invalid in either stream by the env-fault rule (`stats.mjs` `envFaultCheck`) or the
+  truncation rule (§9.4: rows missing without a fault line on more than 25% of planned tasks). The pairs of a stream are
+  the **intersection** of the idx 3–23 rows both arms have, and every stream must keep at least 16 of its 21 planned
+  steady-state tasks (75%). The first draft required identical task sets, so any spend stop voided all three ratios even
+  below the truncation limit (review finding 9).
 - **K:** K = 2 streams (lineages).
-- **F (direction):** each stream's ratio (Σ SS of X over Σ SS of Y on its 21 tasks) is on the same side of 1 as the
-  pooled ratio.
-- **C (CI):** the 98.33% CI of the pooled log ratio excludes 0. The CI is the wider of two:
+- **F (direction):** each stream's ratio (Σ SS of X over Σ SS of Y on its pairs) is on the same side of 1 as the pooled
+  ratio.
+- **C (conditional CI):** the 98.33% CI of the pooled log ratio excludes 0. The CI is the wider of two:
   - a two-stage cluster bootstrap (streams, then tasks within each stream);
-  - the paired-task bootstrap widened by √Deff, with Deff = 1 + (m − 1)ρ, ρ = 0.1 (`RHO_PREREG`), m = 21, so Deff = 3.0.
+  - the paired-task bootstrap (stratified by stream) widened by √Deff, with Deff = 1 + (m − 1)ρ, ρ = 0.1 (`RHO_PREREG`),
+    m = the mean pairs per stream (21 when complete), so Deff = 3.0. This applies when a lineage-built arm is in the pair.
+- **P (process CI):** C's CI with a declared lineage floor added in quadrature to each half-width:
+  half-width_P = √(half-width_C² + (z · σ_P)²), σ_P = σ_L · √(n_L / K), σ_L = **0.5**, where n_L is the number of
+  lineage-built arms in the pair: 1 for CR1 ((a) vs (d)) and CR2 ((a) vs (c), whose script is the same in both streams),
+  2 for CR3 ((e) and (a) are both built per lineage).
+- **Verdicts.** For each of C and P: "X cheaper than Y" (V, K, F hold and the CI lies below 0), "X dearer than Y" (above
+  0), otherwise "directional, no decision"; or "invalid" when V fails on validity.
+  - A **conditional** verdict is a statement about the solver versions and builds the two lineages produced: "on these
+    builds, X ran cheaper than Y".
+  - A **process** verdict is the only one that may be read as a claim about building with Haiku.
+  - Every report prints both, with the realized ratio per stream.
 
-  With 2 clusters the cluster bootstrap cannot see between-lineage variance, so the widened one binds, as in `stats.mjs`.
-- **Clustering.** Pairs that involve (a), (e) or (c) are clustered by lineage. For (c) and (e) this needs the static arms
-  passed as `kind: 'jit'` (lineage-clustered), because `stats.mjs` `pairRows` clusters non-JIT arms by task
-  (`experiments/jit/stats.mjs:143`) [code] (T3).
-- **Verdicts:** "X cheaper than Y" (V, K, F hold and the CI is entirely below 0); "X dearer than Y" (the CI is entirely
-  above 0); otherwise "directional, no decision"; or "invalid".
-- **Code.** Rule CR is not in code yet: `stats.mjs` has no cost decision (T3, shared with PREREG-stream §0.6 item 2).
+**Why two verdicts** (review finding 4, P1, confirmed). At K = 2 the between-lineage variance of a lineage-built arm's cost
+cannot be estimated: each lineage is one compiled solver lineage or one (e) build, and W-BED O4 records compiled cost
+varying 20–40× within one compiler. A task-only CI is therefore valid for the realized builds but not for the process
+that made them. The reviewer's null simulation, with a lineage effect on the JIT arm that K = 2 cannot see, gave false
+decisions on 6–21% of trials at σ_L = 0.5 and 25–35% at σ_L = 1.0, against a nominal 1.67% per ratio (`crw-sim.mjs`,
+reproduced here). The same null through the committed rule (`node …/crw.mjs oc`, 1,000 trials per cell, 300 bootstrap
+draws, σ_task 0.5 / 0.75) [M]:
 
-**Planning power** [M, approximate; method of PREREG-stream §0.2]:
+| lineage-built arms | true σ_L | task-only decisions (read as process claims, all false) | of those, wrong about the realized builds | process verdict (floor 0.5) decides |
+|---|---|---|---|---|
+| 1 | 0 | 0.0% / 0.2% | 0.0% / 0.2% | 0.0% / 0.0% |
+| 1 | 0.25 | 3.6% / 1.1% | 0.0% / 0.0% | 0.0% / 0.0% |
+| 1 | 0.5 | 18.0% / 8.1% | 0.0% / 0.0% | 0.5% / 0.9% |
+| 1 | 1.0 | 33.1% / 21.6% | 0.0% / 0.0% | 11.7% / 7.8% |
+| 2 | 0.5 | 23.1% / 13.6% | 0.0% / 0.0% | 0.6% / 0.3% |
+| 2 | 1.0 | 36.8% / 28.4% | 0.0% / 0.0% | 11.2% / 11.3% |
+
+So the task-only CI is right about the builds (wrong sign ≤ 0.2%), and the process verdict holds its level up to the
+declared floor and is anti-conservative beyond it. That residual is declared, not fixed: K = 2 cannot test it.
+
+**Why σ_L = 0.5** [M, from committed rows; `node …/crw.mjs anchors`, pinned by `crw.test.mjs`]. The steady-state log
+cost ratio of a JIT arm
+against the Haiku agent, for the same arm on the same family in two runs: records H/H 0.43 (dev 201–224) and 0.65 (R0,
+225–236), a difference of 0.23; kinetics O/H 1.52 (dev) and 2.31 (R0-K), a difference of 0.79. Across three compilers on
+the same records seeds the log ratios span 0.39–0.55, and on kinetics 1.49–1.53. Each difference also holds task noise and
+config changes, so it overstates σ_L, and a difference of d between two lineages corresponds to σ_L ≈ d/√2: about 0.16
+(records) and 0.56 (kinetics). 0.5 covers both. A larger σ_L cannot be ruled out at K = 2 (T15).
+
+**Not taken.** "Reserve CR decisions for K ≥ 4" (the reviewer's third option): K = 4 is a later owner decision (held-out
+blocks C and D stay reserved, §2.2), and the conditional verdict is worth having at K = 2 as long as it is labelled.
+
+**Clustering.** Pairs that involve (a), (e) or (c) are clustered by lineage (stream). `crw.mjs` clusters by stream for
+every pair, and `decideRuns` takes n_L from the declaration above (`--lineage-arms`), because a `static:` spec cannot say
+whether its script was built per lineage. `stats.mjs` `pairRows` would cluster static arms by task
+(`experiments/jit/stats.mjs:143`) [code]; it is not used for cost.
+
+**Planning power** [M, approximate; method of PREREG-stream §0.2; `node research/jit-20261008/analysis/wbed-s1/crw.mjs
+plan`, pinned by `crw.test.mjs`]:
 - **Data.** R0 records (dev 225–236, K = 1, records not R1), H/H against the Haiku agent on idx 3–11 (9 paired tasks):
   SS $0.118 vs $0.0614 per task, ratio 1.92.
-- **Projection.** The task-bootstrap SD of the log ratio, 0.246, is scaled to K = 2 × 21 tasks and widened by √3.0. That
-  gives an SE of 0.197.
-- **CIs at the R0 ratio:** 98.33% CI 1.20–3.08; 95% CI 1.31–2.83.
-- **Power.** At 80% power with Bonferroni, CR-W decides ratios ≤ 0.53 or ≥ 1.89.
-- **Reading.** If R1 behaves like records, CR1 is likely decided "dearer" [I]. CR2 and CR3 compare an unshadowed static
-  arm with a shadowed JIT arm, so large ratios and decisions are likely [I]. No ratio from W-bed data exists yet.
+- **Projection.** The task-bootstrap SD of the log ratio, 0.242, is scaled to K = 2 × 21 tasks and widened by √3.0. That
+  gives a conditional SE of 0.194. The first draft's 0.246 and 0.197 came from a different bootstrap generator.
+- **CIs at the R0 ratio:** conditional 98.33% CI 1.21–3.06 (95% CI 1.31–2.81); process (n_L = 1) 98.33% CI 0.73–5.05.
+- **Power** at 80% with Bonferroni:
+  - conditional: decides ratios ≤ 0.53 or ≥ 1.87;
+  - process, CR1 and CR2: ≤ 0.27 or ≥ 3.69 (SE 0.403);
+  - process, CR3: ≤ 0.18 or ≥ 5.67 (SE 0.536).
+
+  The first draft's "decides ≥ 1.89" was the conditional figure, stated as if it were a process claim.
+- **Reading.** If R1 behaves like records (ratio about 1.9), CR1 is likely decided "dearer" for the realized builds and
+  left undecided at the process level [I]. CR2 and CR3 compare an unshadowed static arm with a shadowed JIT arm, so large
+  ratios are likely, and a process decision needs one beyond about 3.7× (CR2) or 5.7× (CR3) [I]. No ratio from W-bed data
+  exists yet.
 
 ### 7.2 Construction cost: a dominance reading, not a test
 
@@ -502,7 +586,8 @@ decidable" does not hold (deviation §12 item 7).
 - otherwise "mixed".
 
 It is labelled "dominance, not a test" wherever it is reported. Three things are reported beside it: both lineages'
-lumps, the (e) build success, and the 24-task CPS (which includes construction).
+lumps, the (e) build success, and the 24-task CPS (which includes construction). Like a conditional CR verdict, it
+describes the two builds and two compile histories this slice produced, not construction by Haiku in general (§7.1).
 
 ### 7.3 Success: directional, with declared power
 
@@ -542,24 +627,31 @@ at F2.
 
 ### 8.1 Engine items that must land before the stamp
 
-1. **Static arms on flow-v3 (T2, a blocker for (c)).**
+1. **Static arms on flow-v3 (T2): landed in this revision.**
    - **Measured** [M]: the R1 reference under `DEFAULT_FLOW` (`flow.mjs`, the SDK a `static:` arm gets) ends `crash`,
      `SCRIPT_ERROR`, `TypeError: flow.phase is not a function`, $0. Under `FLOW_V3` it ends `ok` (stub gateway policy A,
      dev seed 325 at d3, $0.0031 stub cost).
    - **Coverage gap.** Of the three primitives the references use beyond v1, `flow.mjs` v1 defines none (`flag`, `phase`,
      `wide`) and flow-v2 defines `flag` only [code]. So R3's reference (`flow.wide`) fails the same way.
-   - **Fix.** A static-arm SDK option hashed into the static arm's definition, for example `staticFlowVersion: 3` or a
-     `static@3:` spec. It needs a test that a static arm runs the R1 reference `ok` and the R3 reference's `wide` on a
-     stub gateway, and that an arm without the option keeps today's hash (`V1_HASHES`, the R0 static arm `ca4f763d…`).
-2. **Rule CR in code (T3).** This is `decideCost`, with:
-   - the SS definition of §6;
-   - a CI `level` parameter (98.33%);
-   - the two-stage cluster bootstrap and the √Deff widening;
-   - two-sided verdicts;
-   - lineage clustering for static arms;
-   - a test.
-
-   After it lands, `stats.mjs` is re-hashed. It is shared with PREREG-stream §0.6 item 2.
+   - **Fix** (`experiments/jit/stream.mjs`). A `static@v3:<solve.mjs>` spec parses to a static arm with `sdk: 'v3'`, and
+     `ArmRun.flowPath` passes flow-v3 to `runCompiled` for it. `sdk` enters the arm definition (so the hash) and the slug
+     (`…-v3`) only when given. A plain `static:` arm passes no `flowPath`, exactly as before, so its definition and hash
+     are unchanged. Any other `static@…` form is refused as an unknown arm kind.
+   - **Tests** (`experiments/jit/test/static-flow.test.mjs`, 4 tests; all 4 fail on the pre-fix tree with "unknown arm
+     kind" and pass after):
+     - the R0/dev static arm keeps `ca4f763d5d03568e`, and `static@v3:` differs only by `spec` and `sdk`;
+     - through `runStream` with fakes, the v3 arm passes `flowPath` = flow-v3 and the plain arm passes none;
+     - end to end, sandboxed, with the real `runCompiled`, the real bed tasks and oracle and the references' stub
+       gateway (author fixture 373, d3): the R1 and the R3 references each `crash` as a plain static arm (and fall back)
+       and run `ok`, delivered `compiled`, as `static@v3:`.
+   - The existing pins stay green: the JIT suite is 359 tests, 358 pass and 1 todo (`V1_HASHES`, `slice2-review` T5).
+2. **Rule CR in code (T3): landed, outside `stats.mjs`.** `research/jit-20261008/analysis/wbed-s1/crw.mjs` implements
+   §7.1: the SS definition of §6, the intersection and 75% rule of V, a CI `level` (98.33%), the two-stage cluster
+   bootstrap and the √Deff widening, the lineage floor, two-sided conditional and process verdicts, and `decideRuns` over
+   the stream run directories (env-fault and truncation rules). `crw.test.mjs` has 8 tests. It imports `stats.mjs`
+   (`envFaultCheck`, `designEffect`, `normQuantile`, `RHO_PREREG`) without changing it, so PREREG-stream's hash of
+   `stats.mjs` is untouched. Its sha256 is frozen at F2. A port into `stats.mjs` as `decideCost` is optional and shared
+   with PREREG-stream §0.6 item 2.
 3. **(a) without a fallback compiler.** `compilerFallback: null` normalizes (Appendix A), and the compile path skips the
    fallback when `fb` is null (`stream.mjs:1124`) [code]. A stub stream test must confirm that no fallback compile is
    attempted (T11).
@@ -569,7 +661,7 @@ at F2.
 | item | candidate value at `93b27ec` (re-taken at the stamp) | source |
 |---|---|---|
 | commit, root tree; pushed or tagged (an unpushed kit commit is a single copy, ATTACK §0) | TBD | `git rev-parse` |
-| `experiments/jit` tree | `249226da1da504c5e84f65a76bbce420f86915f5` (moves with T2, T3) | — |
+| `experiments/jit` tree | `249226da1da504c5e84f65a76bbce420f86915f5` at `93b27ec`; moved since by the M1 review and by T2 (`stream.mjs`, `test/static-flow.test.mjs`) | — |
 | `experiments/lib` tree | `eb61500a8df53f9a1b3d95cccbc93873c0adb4c2` | — |
 | `experiments/c0` tree (the (e) builder: `construct.mjs`, `prompts.mjs`) | `1ef9bbc5fcecdc3198959c712658420ad718953f` | — |
 | `flow-v3.mjs` sha256 (pinned in `slice2-wiring.test.mjs`) | `15da5c24efd537afb30eb8754955583c735fb6f36e8c55ca3646c13aa848f06b` (= FLOW-V3-SLICE2 §17.6) | `sha256sum` |
@@ -580,15 +672,16 @@ at F2.
 | bed hashes and trees | §2.1 | — |
 | reference shas (FROZEN.json), revision count, validation scores | T4 | P1 |
 | (e) artifact shas and build records | T5 | P2 |
-| analysis scripts: `stats.mjs` (after T3), `report.mjs` `ff586a40…`, `durability.mjs` `527ee6e1…`, triviality driver `726c187e…` | re-hash | `sha256sum` |
+| analysis scripts: `research/jit-20261008/analysis/wbed-s1/crw.mjs` (rule CR-W, T3), `stats.mjs` (imported by it), `report.mjs` `ff586a40…`, `durability.mjs` `527ee6e1…`, triviality driver `726c187e…` | re-hash | `sha256sum` |
 | arm hashes of the 8 (or 16) test-split arms; every static arm's `scriptSha` non-null and equal to the frozen file | T8 | `parseArm(spec, normalizeConfig(cfg))` |
 | unchanged pins: `V1_HASHES` (dev-records-1, dev-kinetics-1), R0 records and R0-K arm hashes (`slice2-review` T5) | green | test suite |
 
 ### 8.3 Gates at the stamp (as E1c's, ENGINE-FREEZE §6)
 
 - **G1 engine:** the table above; frozen paths clean.
-- **G2 suites:** `node --test --test-concurrency=2 experiments/jit/test/*.test.mjs` (332 tests at FLOW-V3-SLICE2 §17.7,
-  plus T2's and T3's tests), the main suite, `experiments/lib`, and the `beds/wbed` R1/R3 tests.
+- **G2 suites:** `node --test --test-concurrency=2 experiments/jit/test/*.test.mjs` (332 tests at FLOW-V3-SLICE2 §17.7;
+  359 at this revision, T2's 4 in `static-flow.test.mjs` among them), `crw.test.mjs` (8), the main suite,
+  `experiments/lib`, the `beds/wbed` R1/R3 tests and `beds/wbed/references`.
 - **G3 seeds and configs:** `stream.mjs --dry` on each slice config. This includes `assertSeedsAllowed`, and no run
   directory may exist yet.
 - **G4 live smoke:** one sandboxed Haiku `interpret`, cap $0.45, `costUnknown` false, scans clean.
@@ -602,11 +695,11 @@ at F2.
 - **Skip objects fail items** (item 2). **Checks are synchronous** (item 3).
 - **The compile scan** (item 4). A v5 `solve.mjs` that imports or executes shipped code is void and never adopted. The
   R1/R3 inputs ship no code.
-- **The registry** (item 6) gains the whole stream's profile row at arm end.
-- **Host totals** (item 7) carry `envFaults` when one happened.
-- **Not exercised here:** D10's `textLabel` (no agent nodes; `library.agent` is unset); C9 stall restarts (`stallMs` off,
-  §17.3); I2's bed side (R5 only); env faults inside a library child during the compile host check (§17.3: the library
-  is empty at R1/R3).
+- **The R3 reference's `wide` has never met live judges** (refs README "What remains paid"). P1 is its first live run,
+  on E2, before any R3 stream; its wall-clock and the first-item-alone latency are reported there.
+- **Not exercised here:** the registry and the call host (item 6, item 7: no arm has `library`, §3.2 item 6); D10's
+  `textLabel` (no agent nodes); C9 stall restarts (`stallMs` off, §17.3); I2's bed side (R5 only); env faults inside a
+  library child during the compile host check (§17.3).
 
 ## 9. Kill rules, stop rules and validity
 
@@ -645,14 +738,18 @@ Then "(e) + recompile is the next arm" is recorded as a design consequence, not 
 
 ### 9.2 The R3 gate (ATTACK §4.2 days 6–7)
 
-R3 runs only if all four hold:
+R3 runs only if all five hold:
 1. R1 adopted an accepted H/H version in **both** lineages (stricter than W-BED §8; with exactly one, R3 waits and the
    split is reported);
-2. P0 admitted an R3 shape;
+2. P0 admitted an R3 shape, on `wbed-r3` 1.1.0;
 3. week-to-date list spend plus R3's caps (§10) is ≤ the $150 weekly envelope (ATTACK §5 decision 6);
-4. the quota gates of §9.6 hold.
+4. the quota gates of §9.6 hold;
+5. the R3 oracle is still reproducible at the R3 launch commit (review finding 1): `wbed-r3` is the version F1 froze, its
+   regression tests of §2.6 item 1 pass, and if any `beds/wbed/lib` or `beds/wbed/r3` path moved since F1, the §2.6
+   item 2 oracle-health check is re-run on 379–390 and on the stream's two difficulties.
 
-If 3 or 4 fails, R3 waits for the next window under this unchanged pre-registration.
+If 3 or 4 fails, R3 waits for the next window under this unchanged pre-registration. If 5 fails, R3 does not run until
+the bed owner fixes the bed and this document is amended.
 
 ### 9.3 Environment-fault invalidation (PREREG-stream §6; `stats.mjs` `ENV_FAULT_LIMIT`)
 
@@ -667,11 +764,15 @@ If 3 or 4 fails, R3 waits for the next window under this unchanged pre-registrat
 
 ### 9.4 Truncation and spend stops
 
-- **Spend stops** (§10) are hard: `armSpendStopUsd` per arm and `spendStopUsd` per stream.
+- **Spend stops** (§10) are hard: `armSpendStopUsd` per arm and `spendStopUsd` per stream. An arm stops *starting* tasks
+  once its recorded spend exceeds its cap (`stream.mjs` `begin`), so the task in flight, a compile included, can overshoot
+  by up to one compile ($6 at the caps, $9 with a recheck).
 - **Truncation rule.** An arm truncated by its cap on more than 25% of planned tasks is "invalid: truncated" (ATTACK §5
-  decision 11).
-- **No raises.** A cap is never raised after a stream has started. A raise between streams A and B is an amendment, made
-  without reading any outcome.
+  decision 11; `crw.mjs` `decideRuns`: rows missing without a fault line). Below that, the cost ratios are decided on the
+  paired tasks that remain (§7.1 V), and the truncation is reported beside them.
+- **No raises, ever, once P5 starts** (review finding 10). The first draft allowed a raise between streams A and B "made
+  without reading any outcome"; once stream A has run, nobody can show that, so the caps of §10 are fixed at F2 for both
+  streams. A cap that turns out wrong is a finding, reported with the truncation.
 
 ### 9.5 Isolation and security halts
 
@@ -696,108 +797,148 @@ R2R3-NOTES §7; D22]:
 
 | arm | basis | R1 expected | R1 cap | R3 (d3/d4) cap | R3 (d4/d5) cap |
 |---|---|---|---|---|---|
-| (d) Haiku agent | R0 records: $0.104 per task, max $0.244 [M]; R1 is about 2× the inline tokens; R1-NOTES §5 gives $0.12–0.18 [I]; R3: $0.25–0.50 at d3–d4 [I] | $2.9–4.3 | **$6** | $12 | $24 |
-| (c) reference | stub-gateway token estimate about $0.003 per task (validation files, uncommitted) [doc]; a tiny judge call costs $0.00011 (D22); plus Haiku fallbacks at about $0.15 each | $0.1–1 | **$3** | $3 | $4 |
+| (d) Haiku agent | R0 records: $0.104 per task, max $0.244 [M]; R1 is about 2× the inline tokens; R1-NOTES §5 gives $0.12–0.18 [I]; R3: $0.25–0.50 at d3–d4 [I] | $2.9–4.3 | **$10** | $18 | $24 |
+| (c) reference | stub-gateway token estimate $0.0028–0.0035 per R1 task and $0.001–0.014 per R3 task, plus about $0.0001 per judge call for the `claude-cli` overhead (refs README "Stub gateway"; D22); plus Haiku fallbacks at about $0.15 each (the out-of-sample deopt share was 1/36 on R1) | $0.1–1 | **$3** | $3 | $4 |
 | (e) runs | static C0 on records: $1.21 for 24 tasks (D25); plus fallbacks | $0.5–3 | **$5** | $6 | $8 |
-| (a) H/H | R0 records, 12 tasks: $6.62, of which compile $5.41 in 2 compiles ($3.83, $1.59), steady state $0.118 per task [M]; dev H→H, 24 tasks: $6.12 measured + $2.00 imputed, 4 versions (D25); W-BED §9: $6–20 | $8–18 | **$20** | $25 | $30 |
-| `spendStopUsd` (per stream) | sum of the arm caps | — | **$34** | $46 | $66 |
-| (e) build (per lineage, P2) | $3 builder + $1.5 gateway; C0 B1-haiku $2.21 | $2–4.5 | **$4.5** | $4.5 | $4.5 |
+| (a) H/H | R0 records, 12 tasks: $6.62, of which compile $5.41 in 2 compiles ($3.83, $1.59), steady state $0.118 per task [M]; dev H→H, 24 tasks: $6.12 measured + $2.00 imputed, 4 versions (D25); W-BED §9: $6–20 | $8–18 | **$24** | $25 | $30 |
+| `spendStopUsd` (per stream) | sum of the arm caps | — | **$42** | $52 | $66 |
+| (e) build (per lineage, P2) | $3 builder + $1.5 gateway; C0 B1-haiku $2.21 (with scoring, §4.3) | $2–4.5 | **$4.5** | $4.5 | $4.5 |
+
+**How the caps were set** (review finding 9). A cap stop truncates an arm, and the first draft's V clause then voided all
+three cost ratios. V now decides on the paired tasks that remain while each stream keeps ≥ 75% (§7.1), and the caps sit
+where a stop means something:
+- **(d)** at about 2.3× the R1 upper expectation (the first draft's $6 was 1.4×, and R0's most expensive agent task was
+  2.3× its mean). A (d) stop would be an accident, not a finding. R3's (d) cap is 1.5× the [I] upper expectation at
+  d3/d4 (24 × $0.50 = $12); at d4/d5 it is what the $150 envelope allows ($24), against an expectation nobody has
+  measured.
+- **(a)** at a declared compile allowance: warmup about $1.5, four compiles at about $4.5 (R0's were $3.83 and $1.59;
+  the per-compile cap is $6, $9 with a recheck), and 21 steady-state tasks at about $0.25 with flags shadowing every run.
+  An (a) stop therefore means more than about four compiles, which is itself a construction-cost finding (KR-2, KR-3).
+  The engine has no compile-count bound (`stream.mjs` recompiles every `recompileOnDeopts` deopts until the cap); a
+  `jit.maxCompiles` knob would change (a)'s semantics against W-BED §4 and is the owner's call (T22).
 
 **Totals:**
 
 | item | expected | hard cap |
 |---|---|---|
 | P0 attacks (R0, R1, R3; §4.1) | $4.5–5 | $9 |
-| P1 reference validations (R1, R3) | $0.5–2 | $4 |
+| P1 reference measurements, report-only (R1, R3; §4.2) | $0.5–2 | $4 |
 | P2 (e) builds, R1 × 2 | $4–9 | $9 |
 | P3 G4 smoke | $0.04 | $0.45 |
 | P4 dev smoke, R1 | $5–8 | $8 |
-| P5 R1 streams, K = 2 (sum of the per-stream expectations above, × 2) | $23–53 | $68 |
-| **R1 path** | **≈ $37–77** | **$98.5** |
-| R3 (P2 builds + P4 smoke + streams), d3/d4 | ≈ $35–70 [I] | $9 + $8 + $92 = $109 |
+| P5 R1 streams, K = 2 (sum of the per-stream expectations above, × 2) | $23–53 | $84 |
+| **R1 path** | **≈ $37–77** | **$114.5** |
+| R3 (P2 builds + P4 smoke + streams), d3/d4 | ≈ $35–70 [I] | $9 + $8 + $104 = $121 |
 | R3, d4/d5 | ≈ $50–100 [I] | $9 + $8 + $132 = $149 |
 
-This sits in ATTACK §4.2's range for days 4 and 6–7 ($15–35 plus $25–60). R3 at d4/d5 cannot share a week with R0-K and
-R1 under the $150 envelope. That is the gate in §9.2 item 3.
+The expectations sit in ATTACK §4.2's range for days 4 and 6–7 ($15–35 plus $25–60); the caps are stop-losses above
+them. R3 cannot share a week with R0-K and R1 under the $150 envelope at either shape. That is the gate in §9.2 item 3.
 
 ## 11. Threats to validity
 
 1. **Authorship correlation** (W-BED O10). Claude wrote the beds, oracles, references, prompts and thresholds, and
    Claude models fill every role. A shared misreading can sit in generator, oracle and reference at once.
-2. **Arm (c) is ceiling-like.** Its author saw labelled fixtures (373–378) and one round of validation feedback. The JIT
+2. **Arm (c) is ceiling-like, and more so than W-BED §2.3 allows.** Its author saw labelled fixtures (373–378), one
+   revision window on 301–312 with per-part comparisons against `referenceSolve` (§4.2), and the beds' exported
+   `difficulty` descriptors, which list the generator's trap catalogue and rates (refs README "Protocol" item 5). The JIT
    and (e) see no labels (W-BED §2.3).
-3. **The static arms are unverified.** (c) and (e) carry no shadows, so their cost advantage is partly the absence of
+3. **The reference is template-aware, and its independence from the generator is unverified** (review finding 14).
+   `r1-reference.mjs:443–452` hard-codes the system notes' fixed sentences as regular expressions: the records system-note
+   templates (`beds/records/render.mjs:550–567`) and one `FLAG_NOTE` template (`:385–406`, "Nobody ever bought anything
+   through a row marked …, so it is void"). The author could read them in the fixtures, but matching them verbatim works
+   only because the generator never rewords them. Its comment at `:614–617` states the generator's namesake design ("the
+   export plants namesakes whose dates agree only under the wrong reading"), which the records README describes and which
+   is not on the
+   author's "seen" list. A reference that knows the templates is a stronger ceiling than "a spec and a few labelled
+   examples". The file's header (`:12–13`, "unanimous evidence … overrides a contradicting answer") contradicts its code
+   (`:614–617`: evidence never overrides the notes; a contradiction gets one Sonnet second opinion). The header is inside
+   the frozen bytes, so it is recorded here, not edited; the refs README describes the code.
+4. **Arm (c)'s ceiling, measured at $0.** With correct judge readings, the frozen R1 reference deopts or answers wrongly
+   on 2 of 36 unseen tasks (313–324; Wilson 95% 1.5–18%), one of them silently (refs README). With live judges it can only
+   be lower. P1 measures it (§4.2).
+5. **The static arms are unverified.** (c) and (e) carry no shadows, so their cost advantage is partly the absence of
    verification. §5 item 4 and §7.4 report L1 so that this is visible.
-4. **Fallbacks blur the static arms.** A crash in (c) or (e) delivers a Haiku agent answer. The fallback share is
+6. **Fallbacks blur the static arms.** A crash in (c) or (e) delivers a Haiku agent answer. The fallback share is
    reported, and a high share means the arm measured the agent.
-5. **K = 2 and ρ unmeasured.** ρ = 0.1 is assumed (T15). With two clusters, between-lineage variance in compile spend is
-   unobservable, and that is why construction cost is not tested (§7.2).
-6. **The same seeds across rungs.** R1 and R3 share held-out seed numbers, but they generate different worlds. R3
-   reuses R1's billing dialects (R2R3-NOTES §8 item 10).
-7. **Profile tuning on R1 dev seeds** (301–324) affects R4's reuse fence, not R1 itself. It is irrelevant here.
-8. **Quota attribution.** The meter is shared, so arms are priced in list dollars, not in meter ticks (W-BED O5).
-9. **Platform drift.** The claude CLI version (2.1.299) and the cloud host are recorded. Laptop rows are not mixed in.
-10. **Selection.** R3's existence depends on R1's accepted-solver gate. R3's rules, shape and admission are fixed blind
+7. **K = 2, ρ and σ_L unmeasured.** ρ = 0.1 and σ_L = 0.5 are assumed (T15). With two clusters, between-lineage variance
+   is unobservable: construction cost is not tested (§7.2), and a cost ratio is read as a claim about Haiku construction
+   only through the process verdict, whose level holds up to σ_L = 0.5 and not beyond (§7.1).
+8. **The same seeds across rungs and families.** R1 and R3 share held-out seed numbers, but they generate different
+   worlds. R3 reuses R1's billing dialects (R2R3-NOTES §8 item 10). R1 embeds the records world at the same seed (§2.2).
+9. **Profile tuning on R1 dev seeds** (301–324) affects R4's reuse fence, not R1 itself. It is irrelevant here.
+10. **Quota attribution.** The meter is shared, so arms are priced in list dollars, not in meter ticks (W-BED O5).
+11. **Platform drift.** The claude CLI version (2.1.299) and the cloud host are recorded. Laptop rows are not mixed in.
+12. **Selection.** R3's existence depends on R1's accepted-solver gate. R3's rules, shape and admission are fixed blind
     to R1's outcomes (§2.5), so the gate selects on a design property, not on R3 data.
-11. **The planning projection is from records**, not R1, and from 9 tasks of one lineage.
+13. **The planning projection is from records**, not R1, and from 9 tasks of one lineage.
+14. **(e) is a new variant** (§4.3): C0 never ran B1 without scoring, and its builder is told about a score tool that
+    refuses every call.
 
 ## 12. Deviations from W-BED, ATTACK and M10
 
 1. Slice = R1 (+R3), not R1–R4. There is no CUR/ISO pair, so H3 is not tested (ATTACK §4).
 2. No R0 interleave in the streams: not built (§1).
-3. (e) is built with the C0 B1 script kit, not on flow-v3 (W-BED §4 (e)), and its builder may run unlabelled examples
-   (§3.2 item 7).
+3. (e) is built with the C0 B1 script kit, not on flow-v3 (W-BED §4 (e)), its builder may run unlabelled examples
+   (§3.2 item 7), and the kit's score lines stay in its prompt with scoring disabled (§4.3).
 4. (e) has no input-profile fence. M10's "runs under the profile" is not built for static arms; (e) has `static:`
    semantics only.
 5. (c) and (e) are not shadowed (static arms).
-6. Bonferroni over three decided cost ratios. W-BED §8 decided success; ATTACK decides only cost.
+6. Bonferroni over three decided cost ratios, each with a conditional and a process verdict (§7.1). W-BED §8 decided
+   success; ATTACK decides only cost.
 7. Construction cost is read by dominance, not tested (§7.2). This corrects M10 and PROOF-LEDGER K7.
 8. W-BED §3.1's falsifier is applied in PAUSE §6's per-lineage form, with the pooled form reported (§9.1).
-9. (a) runs as a library arm in mode `iso` at both R1 and R3. W-BED §5's CUR chain through R2 and R3 is not run (§3.2
-   item 6).
+9. (a) runs without `library` at both R1 and R3, so it is ISO by construction. W-BED §5's CUR chain through R2 and R3
+   is not run, and R4's CUR seed is registered later at $0 (§3.2 item 6; T18).
 10. `gatewayModels` are {Haiku, Sonnet} for every arm. W-BED §4 (a) says "Haiku judges"; this draft matches the
     reference's escalation tier instead (§3.2 item 2).
 11. The first W-bed streams run on held-out seeds, after a dev smoke on E2 (§2.2, §4.4).
-12. The reference was likely authored in-session rather than in one `claude -p` Opus session ([U], T4).
+12. The references were authored in-session by an Opus 5.5 subagent, not in one `claude -p` Opus session, with no model
+    call; the author also saw the beds' `difficulty` descriptors (FROZEN.json `authorship`; §4.2, §11 items 2–3).
 13. P0 attacks three difficulties per rung, not one, and adds an R0 positive control (§4.1).
+14. The references get no paid validation with a revision (W-BED §2.3): their one revision was spent on the stub
+    validation, so P1 is a report-only measurement on unseen dev seeds (§4.2).
+15. The rule's V clause decides on the intersection of paired tasks, not on identical task sets (§7.1).
 
 ## 13. TBDs and what resolves each
 
 | id | TBD | resolved by | blocks |
 |---|---|---|---|
-| T1 | E2 record values (§8.2) | stamping from the launch commit in a frozen worktree after T2, T3 and T11, with G1–G6 | F2 |
-| T2 | static arms on flow-v3 | the engine change and tests of §8.1 item 1 | F2; (c) at all |
-| T3 | rule CR-W in code (`decideCost`: level, two-sided, lineage clustering of static arms) | code and test in `experiments/jit/stats.mjs`; re-hash (shared with PREREG-stream §0.6 item 2) | F2 |
-| T4 | reference freeze: FROZEN.json shas, authoring route and cost, paid validation scores, revision count | P1, and the references' owner committing README and FROZEN.json | F2 |
-| T5 | (e) artifacts and build records (2 per rung) | P2 | F2 |
-| T6 | attack outcomes: admission and shapes for R1 and R3; the R0 control | P0 | P1, P2 |
-| T7 | W-BED §2.4 item 2: a ≤ 20-line deterministic script fails R1 and R3 | $0: write and score one on 379–390 (a session that did not write the bed) | F1 admission |
-| T8 | final configs and test-split arm hashes (static defs change with T2, `scriptSha` with T5) | `parseArm(spec, normalizeConfig(cfg))` at F2 | F2 |
-| T9 | per-bed ledger rows for `wbed-heldout-a` and `-b` | the launch commit of each rung (§2.4) | P5, P7 |
+| T1 | E2 record values (§8.2) | stamping from the launch commit in a frozen worktree after T11, with G1–G6 | F2 |
+| T2 | static arms on flow-v3 | **resolved in this revision**: `static@v3:` (§8.1 item 1), 4 tests; P1 and P4 test it live | — |
+| T3 | rule CR-W in code | **resolved in part**: `analysis/wbed-s1/crw.mjs` (`crw`, `decideRuns`), 8 tests; its sha256 at F2. A port into `stats.mjs` (`decideCost`) is optional and shared with PREREG-stream §0.6 item 2 | F2 (the sha) |
+| T4 | reference freeze record | **resolved in part**: FROZEN.json and the README exist (shas, authorship, protocol, $0 measurements in and out of sample). Open: the intermediate revision state (`b1135cd`) in FROZEN.json, which is the references' owner's (§4.2); P1's live-judge numbers | F2 |
+| T5 | (e) artifacts and build records (2 per rung), the score tool's log included (§4.3) | P2 | F2 |
+| T6 | attack outcomes: admission and shapes for R1 and R3; the R0 control | P0 | P2 |
+| T7 | W-BED §2.4 item 2: a ≤ 20-line deterministic script fails R1 and R3 | $0: write and score one on 379–390 (a session that did not write the bed) | **F1** (§2.6 item 3) |
+| T8 | final configs and test-split arm hashes (`scriptSha` with T5; the drafts of Appendix A already use `static@v3:` and no `library`) | `parseArm(spec, normalizeConfig(cfg))` at F2 | F2 |
+| T9 | per-bed ledger rows for `wbed-heldout-a` and `-b`, with `records` listed in the R1 rows (§2.2, §2.4) | the launch commit of each rung | P5, P7 |
 | T10 | R3 shape (d3/d4 or d4/d5) | P0's shape rule (§4.1) | P7 |
-| T11 | `compilerFallback: null` exercised end to end | a stub stream test; G3 | F2 |
+| T11 | `compilerFallback: null` exercised end to end | an explicit stub stream assertion that no `fallback-compile` event occurs. Today it is checked only implicitly: `refusals.test.mjs` sets `null` and counts 2 compiles where a fallback compile would make 3; G3 | F2 |
 | T12 | whether R3 runs | §9.2 at P6 | P7 |
 | T13 | W, the cost of a wrong delivery (K11) | the owner; reported only if declared | — |
 | T14 | latency budget (K17) | the owner; p50 and p95 reported regardless | — |
-| T15 | ρ | assumed 0.1; the slice reports the observed between-lineage spread and does not amend ρ | — |
+| T15 | ρ and σ_L | assumed 0.1 and 0.5 (§7.1); the slice reports the observed between-lineage spread and does not amend either | — |
 | T16 | owner confirmation of §3.2 and of this draft (the delegation's scope is [U], ATTACK §5) | the owner | F2 |
 | T17 | quota readings at each paid start | G5 at each start | each P step |
-| T18 | R4's CUR seed: the union of the R1 and R3 registries per lineage | a $0 tool or `library.from` as a list; R4's own pre-registration | R4 (not this slice) |
+| T18 | R4's CUR seed: register each lineage's adopted R1 and R3 versions with the whole stream's input profile | a $0 tool over the committed run directories (`learnProfile` on the stream's task inputs, as `relearnLibrary` does), or `library.from` as a list; R4's own pre-registration | R4 (not this slice) |
 | T19 | structural-fidelity extractor (W-BED §6.3, build step 3) | reported only if it exists at F2 | — |
-| T20 | the `wbed-r0` hash for the positive control | F1 | P0 |
+| T20 | the `wbed-r0` hash for the positive control | F1 (candidate in §2.1) | P0 |
 | T21 | M2 is under concurrent edit | re-cite REPORT.md at F2 (now `722c4f0`); §5 changes only by amendment | F2 |
+| T22 | a compile-count bound for (a) (`jit.maxCompiles`) | the owner: it would change (a)'s semantics against W-BED §4; without it the $24 cap is the bound (§10) | — |
+| T23 | a B1 prompt without the score lines for (e) | the owner: a kit change (the E1c B1 kit hash moves); without it (e) is "B1 with scoring disabled" (§4.3) | — |
 
 ## 14. What remains paid
 
 Everything below is the orchestrator's to run with the owner's token. Nothing here was run.
 
 1. **P0 attacks:** about $4.5–5 (cap $9). This is PROOF-LEDGER B11's paid half.
-2. **P1 reference validations:** about $0.5–2 (cap $4). This is B10's freeze.
+2. **P1 reference measurements:** about $0.5–2 (cap $4), report-only, on dev 313–324 (§4.2). This is B10's live-judge
+   number; the freeze itself is done.
 3. **P2 (e) builds** for R1: about $4–9 (cap $9). This is K7.
 4. **P3 G4 live smoke on E2:** about $0.04.
 5. **P4 dev smoke** for R1: cap $8.
-6. **P5 R1 streams** at K = 2: about $23–53 (cap $68). This covers B1 and K7.
-7. **Conditional on §9.2:** R3 builds, smoke and streams: cap $109 (d3/d4) or $149 (d4/d5). This covers B3.
+6. **P5 R1 streams** at K = 2: about $23–53 (cap $84). This covers B1 and K7.
+7. **Conditional on §9.2:** R3 builds, smoke and streams: cap $121 (d3/d4) or $149 (d4/d5). This covers B3.
 
 Later, outside the slice: R4 (H3), R2, (b), (e′), (c′), and K = 4 on held-out blocks C and D.
 
@@ -810,7 +951,7 @@ Seed lists are abbreviated with "…"; the config holds every seed.
   "experiment": "wbed-s1-r1-a",
   "familyId": "wbed-r1", "split": "test", "seedPurpose": "jit-heldout",
   "segments": [ { "difficulty": 3, "seeds": [8201, "…", 8216] }, { "difficulty": 4, "seeds": [8217, "…", 8224] } ],
-  "arms": [ "agent:claude-haiku-5-5", "static:beds/wbed/references/r1-reference.mjs",
+  "arms": [ "agent:claude-haiku-5-5", "static@v3:beds/wbed/references/r1-reference.mjs",
             "static:<P2 build artifact, lineage A>", "jit:claude-haiku-5-5/claude-haiku-5-5" ],
   "gatewayModels": [ "claude-haiku-5-5", "claude-sonnet-5-5" ],
   "jit": { "warmup": 3, "shadowFloor": 0.25, "shadowOnFlags": true, "recompileOnDeopts": 2, "maxTraces": 8,
@@ -818,50 +959,66 @@ Seed lists are abbreviated with "…"; the config holds every seed.
   "compile": { "builderEffort": "high", "builderBudgetUsd": 3, "gatewayUsd": 1.5, "checkUsd": 1.5, "minutes": 30,
                "compare": "tolerant", "relTol": 0, "absTol": 0, "acceptance": "strict", "minPartial": 0.9,
                "promptVersion": 5, "acceptanceIds": "exact" },
-  "library": { "mode": "iso", "childBudgetUsd": 0.3, "concurrency": 2, "parentMarginUsd": 0.1 },
   "perTaskUsd": 1, "agentBudgetUsd": 2, "agentMinutes": 15, "compiledMinutes": 20,
   "staticFallback": "claude-haiku-5-5", "concurrency": 2,
-  "spendStopUsd": 34,
-  "armSpendStopUsd": { "jit:claude-haiku-5-5/claude-haiku-5-5": 20, "agent:claude-haiku-5-5": 6,
-                       "static:beds/wbed/references/r1-reference.mjs": 3, "static:<P2 artifact A>": 5 },
+  "spendStopUsd": 42,
+  "armSpendStopUsd": { "jit:claude-haiku-5-5/claude-haiku-5-5": 24, "agent:claude-haiku-5-5": 10,
+                       "static@v3:beds/wbed/references/r1-reference.mjs": 3, "static:<P2 artifact A>": 5 },
   "persist": { "commitDir": true }
 }
 ```
 
-- **Variants.** Lineage B uses 8301–8324 and build B. R3 uses `familyId: wbed-r3`, `r3-reference.mjs` and the shape and
-  caps of §10. The static-arm SDK option of T2 is added when it exists.
-- **Validation.** `normalizeConfig` accepted all four drafts (R1/R3 × A/B) without the spend fields: the seed ledger
-  checks, the library budget rule (2 × 0.3 + 0.1 = 0.7 ≤ 1), and `compilerFallback: null`. Draft arm hashes from
-  `parseArm` [M]:
+- **Variants.** Lineage B uses 8301–8324 and build B. R3 uses `familyId: wbed-r3`, `static@v3:…/r3-reference.mjs` and
+  the shape and caps of §10.
+- **Validation.** `normalizeConfig` accepted all four drafts (R1/R3 × A/B) with the spend fields: the seed ledger checks,
+  `compilerFallback: null`, prompt version 5 without `library`, and `armSpendStopUsd` keyed by the `static@v3:` spec.
+  Draft arm hashes from `parseArm` at this revision [M]:
 
-| config | (d) agent | (c) reference | (e) static (`scriptSha` null: no artifact yet) | (a) JIT H/H |
+| config | (d) agent | (c) reference, `static@v3:` | (e) static (`scriptSha` null: no artifact yet) | (a) JIT H/H, no `library` |
 |---|---|---|---|---|
-| wbed-s1-r1-a | `0cdf176fd8c32a2b` | `5e27f34271dbe4d5` | `73088e2313b419aa` | `6b6a722a057e2d32` |
-| wbed-s1-r1-b | `0cdf176fd8c32a2b` | `5e27f34271dbe4d5` | `c4f8038cbff01cee` | `508c66bc3a8dd1e6` |
-| wbed-s1-r3-a | `9610dfd5119584c3` | `9fc917ebf57c65ec` | `53014e3ac5542eb5` | `5d05166d73040d4b` |
-| wbed-s1-r3-b | `9610dfd5119584c3` | `9fc917ebf57c65ec` | `8e899d47a1d97f47` | `aac4531a610ca468` |
+| wbed-s1-r1-a | `0cdf176fd8c32a2b` | `5f0afedce5ba6602` | `73088e2313b419aa` | `89c1c741913b6ad9` |
+| wbed-s1-r1-b | `0cdf176fd8c32a2b` | `5f0afedce5ba6602` | `c4f8038cbff01cee` | `3a2a29e14e5232ae` |
+| wbed-s1-r3-a | `9610dfd5119584c3` | `621adc5e2e8bb308` | `53014e3ac5542eb5` | `8f09e3914328f7dd` |
+| wbed-s1-r3-b | `9610dfd5119584c3` | `621adc5e2e8bb308` | `8e899d47a1d97f47` | `01580249e92c2a63` |
 
 The agent and reference hashes are equal across lineages. The JIT hashes differ only by `jit.shadowSeed` (= the
-experiment name). Every hash is a draft: T2 changes the static definitions, and T5 sets `scriptSha`.
+experiment name). The first draft's (c) and (a) hashes (`5e27f342…`, `9fc917eb…`; `6b6a722a…`, `508c66bc…`, `5d05166d…`,
+`aac4531a…`) belonged to the plain `static:` reference and the `library: iso` JIT arm, both withdrawn. Every hash is a
+draft: T5 sets `scriptSha`.
 
 ## Appendix B. $0 computations behind this draft
 
-Scripts live in the session scratchpad (`…/scratchpad/prereg/`) and are not committed. None calls a model.
+None calls a model.
+
+**Committed** (this revision):
 
 | what | script | result |
 |---|---|---|
-| seed check and prior-use scan (§2.2) | `seeds-check.mjs` | 0 refusals on every planned range for wbed-r1 and wbed-r3; no prior W-bed run artifact |
-| static-arm SDK probe (§8.1) | `static-flow-probe.mjs` | `DEFAULT_FLOW`: crash, `TypeError: flow.phase is not a function`; `FLOW_V3`: ok |
-| kill-rule behaviour (§9.1) | `planning.mjs`, `pooled-kill.mjs` | the table in §9.1 |
-| R0 planning projection (§7.1) | `planning.mjs` | SS $0.118 vs $0.0614 (9 tasks), ratio 1.92; SE(log) at K = 2 0.197; 98.33% CI 1.20–3.08; MDE ≤ 0.53 or ≥ 1.89 |
-| draft configs and arm hashes (Appendix A) | `draft-configs.mjs` | the table above |
+| rule CR-W, both verdicts, V on the intersection, `decideRuns` (§7.1, §9.4) | `analysis/wbed-s1/crw.mjs`; `crw.test.mjs` (8 tests) | the rule as written |
+| R0 planning projection (§7.1) | `crw.mjs plan` | SS $0.118 vs $0.0614 (9 tasks), ratio 1.92; conditional SE(log) at K = 2 0.194, 98.33% CI 1.21–3.06, decidable ≤ 0.53 or ≥ 1.87; process ≤ 0.27 or ≥ 3.69 (CR1, CR2), ≤ 0.18 or ≥ 5.67 (CR3) |
+| operating characteristics under the null (§7.1) | `crw.mjs oc` | the table in §7.1 |
+| the σ_L anchors (§7.1) | `crw.mjs anchors` | records H/H 0.43 and 0.65; kinetics O/H 1.52 and 2.31 |
+| kill-rule behaviour (§9.1) | `crw.mjs kill` | the table in §9.1 (unchanged) |
+| static arms on flow-v3 (§8.1) | `experiments/jit/test/static-flow.test.mjs` (4 tests) | plain `static:` R1 and R3 references crash; `static@v3:` runs them `ok` |
+
+**Run, not committed** (session scratchpad):
+
+| what | script or command | result |
+|---|---|---|
+| seed check and prior-use scan (§2.2, §2.6 item 5) | `prereg/seeds-check.mjs` (first draft), `prereg2/seeds-313.mjs` (this revision) | 0 refusals on every planned range for wbed-r1 and wbed-r3; no prior W-bed run artifact |
+| static-arm SDK probe (§8.1) | `prereg/static-flow-probe.mjs` | `DEFAULT_FLOW`: crash, `TypeError: flow.phase is not a function`; `FLOW_V3`: ok |
+| oracle health on the attack seeds (§2.6 item 2) | `node beds/wbed/references/validate.mjs --rung r1,r3 --seeds 379-390 --difficulties 3,4,5 --policies world --labels` | R1 36/36, R3 36/36 (statements and totals 36/36) |
+| the review's CR-W null simulation (§7.1) | the reviewer's `review/crw-sim.mjs`, re-run | 0–0% at σ_L 0; 3.3/0.5% at 0.25; 21.0/6.0% at 0.5; 34.5/25.5% at 1.0 (σ_task 0.5 / 0.75) |
+| draft configs and arm hashes (Appendix A) | `prereg2/draft-configs2.mjs` | the table above |
+| the R1 revision window (§4.2) | `git show <commit>:beds/wbed/references/r1-reference.mjs` over its history | three birth-date reader states |
+| T2 against the pre-fix tree (§8.1) | `static-flow.test.mjs` on a `git archive` of `928e27fa` | 4 of 4 fail ("unknown arm kind") |
 | attack plans and sizes (§2.1, §4.1) | `node beds/wbed/attacks/triviality.mjs --rung r1\|r3 --difficulty 3\|4\|5` (dry run) | as cited |
 | power table (§7.3) | `node experiments/jit/stats.mjs power` | as cited |
-| tests at `93b27ec` | `node --test --test-concurrency=2` on `slice2-wiring`, `slice2-review`, `stream-library` and `beds/wbed/attacks/triviality.test.mjs` | 34 of 34 pass |
 
 ## Changelog
 
 - 2026-10-14: first draft (this file). Not frozen.
+- 2026-10-14, later the same day: revised after the adversarial review (§15). Not frozen.
 
 ## Amendments
 

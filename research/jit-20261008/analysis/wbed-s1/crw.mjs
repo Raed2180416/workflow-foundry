@@ -3,6 +3,7 @@
 //
 //   node research/jit-20261008/analysis/wbed-s1/crw.mjs plan [--json]    planning projection from R0 records (§7.1)
 //   node research/jit-20261008/analysis/wbed-s1/crw.mjs oc [--json]      false-decision rates under the null (§7.1)
+//   node research/jit-20261008/analysis/wbed-s1/crw.mjs anchors [--json] the committed runs behind σ_L = 0.5 (§7.1)
 //   node research/jit-20261008/analysis/wbed-s1/crw.mjs kill [--json]    rung kill rule KR-1, per-lineage and pooled (§9.1)
 //   node research/jit-20261008/analysis/wbed-s1/crw.mjs decide <armX> <armY> <runDirA> <runDirB> [--lineage-arms n] [--json]
 //                                                                        the rule over the slice's stream run directories
@@ -181,6 +182,21 @@ export function planning({ pairs = r0Pairs(), iterations = 20000, seed = 'crw-pl
     process: { sigmaLineage, oneLineageArm: { se: seP(1), ci9833: ci(zB, seP(1)), mde80: mde(seP(1)) }, twoLineageArms: { se: seP(2), ci9833: ci(zB, seP(2)), mde80: mde(seP(2)) } } };
 }
 
+// The anchors behind σ_L = 0.5 (§7.1): the steady-state log cost ratio of a JIT arm against the Haiku agent, for the same
+// arm on the same family in two committed runs (and for three compilers on the same seeds). Each difference also holds
+// task noise and config changes, so it overstates the lineage effect.
+export const ANCHOR_RUNS = Object.freeze([
+  ['jit-dev-records-1', 'jit-claude-haiku-5-5--claude-haiku-5-5'], ['jit-r0-records', 'jit-claude-haiku-5-5--claude-haiku-5-5'],
+  ['jit-dev-records-1', 'jit-claude-sonnet-5-5--claude-haiku-5-5'], ['jit-dev-records-1', 'jit-claude-opus-5-5--claude-haiku-5-5'],
+  ['jit-dev-kinetics-1', 'jit-claude-haiku-5-5--claude-haiku-5-5'], ['jit-dev-kinetics-1', 'jit-claude-sonnet-5-5--claude-haiku-5-5'],
+  ['jit-dev-kinetics-1', 'jit-claude-opus-5-5--claude-haiku-5-5'], ['jit-r0-kinetics', 'jit-claude-opus-5-5--claude-haiku-5-5']]);
+export function lineageAnchors() {
+  return ANCHOR_RUNS.map(([run, slug]) => {
+    const ps = pairsOf(readJsonl(path.join(RUNS, run, slug, 'results.jsonl')), readJsonl(path.join(RUNS, run, 'agent-claude-haiku-5-5', 'results.jsonl')), { stream: run, to: Infinity });
+    return { run, arm: slug, pairs: ps.length, logRatio: ps.length ? logRatio(ps) : null };
+  });
+}
+
 // ------------------------------------------------------------------------------------------------ rung kill rule KR-1
 // PAUSE §6 per-lineage form: H/H's second-half success (12 tasks) is more than 10 points below the reference's (≥ 2 of 12)
 // in both lineages; W-BED §3.1's pooled reading: ≥ 3 of 24 pooled. Independent binomials (an upper bound on the false kill
@@ -213,6 +229,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (json) console.log(JSON.stringify(t, null, 1));
     else { console.log('| lineage-built arms | σ_L (true) | σ_task | conditional decided | conditional wrong sign | process decided (floor 0.5) |\n|---|---|---|---|---|---|');
       for (const r of t) console.log(`| ${r.lineageArms} | ${r.sigmaLineage} | ${r.sigmaTask} | ${pc(r.conditionalDecided)} | ${pc(r.conditionalWrongSign)} | ${pc(r.processDecided)} |`); }
+  } else if (cmd === 'anchors') {
+    const t = lineageAnchors();
+    if (json) console.log(JSON.stringify(t, null, 1));
+    else for (const r of t) console.log(`${r.run} ${r.arm}: ${r.pairs} pairs, log ratio vs the Haiku agent ${r.logRatio?.toFixed(3)}`);
   } else if (cmd === 'kill') {
     const t = killRuleTable();
     if (json) console.log(JSON.stringify(t, null, 1));
