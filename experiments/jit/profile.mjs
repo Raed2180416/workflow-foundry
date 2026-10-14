@@ -75,6 +75,14 @@
 // vocabMinUnseen n (default 1) requires n unseen words before vocabulary novelty counts. TOLERANT_CHECK is the measured
 // preset (SIZE_FEATURES ignored, tolerant lines, vocabMinUnseen 2): R4 in-profile packs and planted packs in
 // FLOW-V3-SLICE2.md §2.
+//
+// Slice 2b (FLOW-V3-SLICE2.md §12; opt-in): learnProfile(tasks, PARAMS_V3) adds params.observe.files, which observes a file map
+// (the task's top-level files, and with this option any object of strings at a path ending in 'files', such as the input of
+// a callee that decodes a dump: inputs.files) by file role as well as pooled: each file's text is also walked at
+// `<path>⟨<role>⟩`, where the role is the file name with digit runs masked (README.TXT, ar_9-9.csv, col9.txt), its first
+// line at `<path>⟨<role>⟩⟨first⟩`, and the set of roles is a document-frequency map ('file-roles'). So a format whose
+// files differ (a manifest, a code table, a copybook) is a new or missing path or a new role, and a format whose record
+// lines differ is a line-format change at its own role path instead of a small share of a pooled one.
 
 export const PROFILE_SCHEMA = 'jit-profile/1';
 export const PARAMS = Object.freeze({
@@ -92,6 +100,11 @@ export const PARAMS = Object.freeze({
 // Slice 2 observation options (see the header). Absent from PARAMS, so a default profile keeps its bytes.
 export const OBSERVE_V2 = Object.freeze({ jsonLines: true, looseLines: true });
 export const PARAMS_V2 = Object.freeze({ ...PARAMS, observe: OBSERVE_V2 });
+export const OBSERVE_V3 = Object.freeze({ ...OBSERVE_V2, files: true });
+export const PARAMS_V3 = Object.freeze({ ...PARAMS, observe: OBSERVE_V3 });
+// The role of a file in a file map (observe.files): its name with digit runs masked; ⟨ ⟩ never occur in a role.
+export const fileRoleKey = name => String(name).split('/').pop().replace(/\d+/g, '9').replace(/[⟨⟩]/g, '').slice(0, 48) || '_';
+const FILES_PATH = /(?:^|\.)files$/;
 export const JL = '⟨jl⟩';   // the path segment of JSON-lines records: inputs.invoices.VERITAS⟨jl⟩.issued
 
 // ------------------------------------------------------------------------------------------------ small helpers
@@ -268,7 +281,7 @@ export function promptSentences(prompt, inputValues = []) {
 // The observation options (params.observe) also select a cache slot: a task observed for a v1 profile and for a v2 one is
 // observed twice.
 const OBS = new WeakMap();
-const observeKey = ob => (ob ? `jl${ob.jsonLines ? 1 : 0}ll${ob.looseLines ? 1 : 0}` : 'v1');
+const observeKey = ob => (ob ? `jl${ob.jsonLines ? 1 : 0}ll${ob.looseLines ? 1 : 0}${ob.files ? 'f1' : ''}` : 'v1');
 function observeCached(task, ob = null) {
   if (!task || typeof task !== 'object') return observe(task, ob);
   let slots = OBS.get(task);
@@ -283,7 +296,7 @@ function observe(task, ob = null) {
   const t = taskView(task);
   const paths = new Map(), shortValues = new Set();
   const at = p => {
-    if (!paths.has(p)) paths.set(p, { types: new Set(), nums: [], ints: true, alens: [], slens: [], lineCounts: [], classes: new Set(), sigs: new Set(), values: new Map(), lineSigs: new Set(), lineFams: new Set(), vocab: new Set(), keys: new Set(),
+    if (!paths.has(p)) paths.set(p, { types: new Set(), nums: [], ints: true, alens: [], slens: [], lineCounts: [], classes: new Set(), sigs: new Set(), values: new Map(), lineSigs: new Set(), lineFams: new Set(), vocab: new Set(), keys: new Set(), roles: new Set(),
       ...(ob?.looseLines ? { looseSigs: new Map(), looseFams: new Map(), recordShort: 0, plainShort: 0 } : {}) });
     return paths.get(p);
   };
@@ -314,10 +327,21 @@ function observe(task, ob = null) {
     } else if (ty === 'array') { o.alens.push(v.length); for (const x of v) walk(x, `${p}[]`, depth + 1, inJl); }
     else if (ty === 'object') {
       const keys = Object.keys(v);
-      if (p === 'files' || keys.length > PARAMS.mapKeys) {
+      const fileMap = !!ob?.files && FILES_PATH.test(p) && keys.every(k => typeof v[k] === 'string');
+      if (p === 'files' || keys.length > PARAMS.mapKeys || fileMap) {
         o.types.delete('object'); o.types.add('map');
         o.alens.push(keys.length);
         for (const k of keys) { o.keys.add(shapeOf(k).slice(0, 32)); walk(v[k], `${p}{}`, depth + 1, inJl); }
+        // observe.files: each file again at its role path, its first line on its own, and the set of roles.
+        if (fileMap) {
+          for (const k of keys) {
+            const role = fileRoleKey(k), rp = `${p}⟨${role}⟩`;
+            o.roles.add(role);
+            walk(v[k], rp, depth + 1, inJl);
+            const first = linesOf(v[k])[0];
+            if (first !== undefined) walk(first.slice(0, PARAMS.shortMax), `${rp}⟨first⟩`, depth + 2, true);
+          }
+        }
       } else for (const k of keys) walk(v[k], p ? `${p}.${k}` : k, depth + 1, inJl);
     }
   };
@@ -369,7 +393,7 @@ export function widenProfile(profile, task) {
     if (o.alens.length) s.alen = mergeRange(s.alen, range(o.alens));
     if (o.slens.length) s.slen = mergeRange(s.slen, range(o.slens));
     if (o.lineCounts.length) s.lines = mergeRange(s.lines, range(o.lineCounts));
-    for (const [k, set] of [['classes', o.classes], ['sigs', o.sigs], ['lineSigs', o.lineSigs], ['lineFams', o.lineFams], ['vocab', o.vocab], ['keys', o.keys]]) {
+    for (const [k, set] of [['classes', o.classes], ['sigs', o.sigs], ['lineSigs', o.lineSigs], ['lineFams', o.lineFams], ['vocab', o.vocab], ['keys', o.keys], ['roles', o.roles]]) {
       if (!set.size) continue;
       s[k] ??= emptyDf(); addDf(s[k], set);
     }
@@ -407,6 +431,8 @@ const isLexical = s => !!s.classes && Object.keys(s.classes.df).every(c => LEXIC
 const parentOf = path => { const m = /^(.*?)(\[\]|\{\}|\.[^.[\]{}]+)$/.exec(path); return m ? m[1] : null; };
 // observe.jsonLines paths: '<path>⟨jl⟩' is a child of <path>, and a key segment never swallows the ⟨jl⟩ mark.
 const parentOfJl = path => { const m = /^(.*?)(\[\]|\{\}|⟨jl⟩|\.[^.[\]{}⟨⟩]+)$/u.exec(path); return m ? m[1] : null; };
+// observe.files paths: '<path>⟨<role>⟩' and '<path>⟨<role>⟩⟨first⟩' are children of what precedes them.
+const parentOfFiles = path => { const m = /^(.*?)(\[\]|\{\}|⟨[^⟩]*⟩|\.[^.[\]{}⟨⟩]+)$/u.exec(path); return m ? m[1] : null; };
 
 // Size features (how much input, not what kind): an ablation can ignore them (checkProfile opts.ignore) to see what the
 // content features alone detect. 'enum-ordinal' is an unseen member of a numbered id series (one more document, one more
@@ -419,6 +445,12 @@ export const ordinalOf = v => { const m = /^(\D*?)(\d+)(\D*)$/.exec(String(v)); 
 // The measured tolerant preset (FLOW-V3-SLICE2.md §2): size features ignored, tolerant line formats, two unseen words
 // before vocabulary novelty counts. Needs a profile learned with PARAMS_V2 (observe.looseLines).
 export const TOLERANT_CHECK = Object.freeze({ ignore: SIZE_FEATURES, lineFormat: 'tolerant', vocabMinUnseen: 2 });
+// Slice 2b: content features (what the text says and how its lines and values look) as against structure (which paths,
+// types and file roles occur). STRUCTURE_CHECK ignores content and size: over a PARAMS_V3 profile it tells file formats
+// apart by their files alone (FLOW-V3-SLICE2.md §12: R5 dump decoders). It passes content drift inside a format, so it is
+// for callees whose output the caller checks (flow.call(..., { verify })), never a fence on its own.
+export const CONTENT_FEATURES = Object.freeze(['line-format', 'line-family', 'vocabulary', 'pattern-class', 'shape', 'number-range', 'non-integer', 'enum', 'prompt']);
+export const STRUCTURE_CHECK = Object.freeze({ ignore: [...SIZE_FEATURES, ...CONTENT_FEATURES] });
 export const LINE_FORMATS = Object.freeze(['exact', 'tolerant']);
 // Check options as a registry entry or a host may carry them: validated, defaults dropped (so {} is the v1 check).
 export function checkOptionsOf(opts) {
@@ -447,7 +479,7 @@ export function checkProfile(profile, task, opts = {}) {
   const P = { ...PARAMS, ...profile.params }, ex = P.caps?.examples ?? 4, ob = profile.params?.observe ?? null;
   const tolerant = opts.lineFormat === 'tolerant', minWords = opts.vocabMinUnseen ?? 1;
   if (tolerant && !ob?.looseLines) throw new Error("checkProfile: lineFormat 'tolerant' needs a profile learned with observe.looseLines (PARAMS_V2)");
-  const parentOf_ = ob?.jsonLines ? parentOfJl : parentOf;
+  const parentOf_ = ob?.files ? parentOfFiles : ob?.jsonLines ? parentOfJl : parentOf;
   const obs = observeCached(task, ob), checks = [];
   if (!profile.n) return { novel: true, score: 2, reasons: [{ feature: 'empty-profile', path: null, ratio: 2 }], near: [], n: 0 };
   const setCheck = (feature, path, m, items) => {
@@ -499,6 +531,7 @@ export function checkProfile(profile, task, opts = {}) {
     setCheck('vocabulary', path, s.vocab, o.vocab);
     if (minWords > 1) { const v = checks.at(-1); if (v?.feature === 'vocabulary' && v.path === path && v.unseen < minWords && v.ratio > 1) { v.ratio = 1; v.belowMinUnseen = minWords; } }
     setCheck('map-keys', path, s.keys, o.keys);
+    setCheck('file-roles', path, s.roles, o.roles);
     const en = enumOf(s, P);
     if (en && o.values.size) {
       // An unseen value that only continues a numbered series the enum already holds (D12 seen, D13 now; C7 seen, C8

@@ -188,8 +188,13 @@ export async function hostCheck({ dir, solveSource, traces, regressions = [], mo
 export async function compile({ familyId, traces, previous = null, regressions = [], builderModel = 'claude-haiku-5-5', builderEffort = 'high', builderBudgetUsd = 3,
   gatewayUsd = 1.5, minutes = 30, perTaskUsd = 1, modelPort, workRoot, label, models, version = 1, checkUsd = gatewayUsd, checkMinutes = 30, checkCaseSeconds = 600,
   promptVersion = 1, compare = 'canonical', relTol, absTol, tolerantKeys, allowLooseTolerance, acceptance = 'named', minPartial, refusals = [], runner = runClaudeCode, acceptanceIds = 'exact', allowSharedExplanation = false,
-  library = null, interpreter = null, callHost = {} }) {
+  library = null, interpreter = null, callHost = {}, agentBudgetUsd = null, wide = false, outputSchema = null }) {
   if (!Array.isArray(traces) || !traces.length) throw new Error('compile: at least one trace is required');
+  // Slice 2b (opt-in): agent nodes and wide in the builder's prompt (version 5 with a library); outputSchema overrides the
+  // family's (a sub-compile of an agent node, whose answers are the node's returns).
+  if ((agentBudgetUsd != null || wide) && !library) throw new Error('compile: agentBudgetUsd and wide need a library (flow-v3 with a call host)');
+  if (agentBudgetUsd != null && !(typeof agentBudgetUsd === 'number' && agentBudgetUsd > 0)) throw new Error('compile: agentBudgetUsd must be a positive number');
+  if (outputSchema != null && (typeof outputSchema !== 'object' || Array.isArray(outputSchema))) throw new Error('compile: outputSchema must be a schema object');
   // JIT v2.2 (opt-in): check-traces case ids (trace-<i>) whose input the current solver refused; see acceptance.mjs applyRefusals.
   if (!Array.isArray(refusals) || refusals.some(id => !/^trace-\d+$/.test(id) || Number(id.slice(6)) >= traces.length)) throw new Error('compile: refusals must be trace-<i> ids of the given traces');
   promptVersion = promptVersionOf({ promptVersion });   // an unknown prompt version fails here, before anything is started
@@ -218,10 +223,10 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const gw = sessionPort({ library, modelPort, models, workRoot: path.join(workdir, '.calls'), capUsd: gatewayUsd, ledger, interpreter, callHost });
   // No familyId and no probes: the gateway has no score route and no env route in this session.
   const svc = await startServices({ modelPort: gw.port, ledger, scoreLimit: 0, runId: `compile:${label}:${randomUUID()}`, allowedModels: gw.allowed });
-  const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion, compare: cmp, libraryIndex });
+  const files = compileFiles({ outputSchema: outputSchema ?? fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion, compare: cmp, libraryIndex });
   const kind = previous ? 'recompile' : 'compile';
   const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models, promptVersion, ...(refusals.length ? { refusals } : {}),
-    ...(libraryIndex?.length ? { library: libraryIndex.length } : {}),
+    ...(libraryIndex?.length ? { library: libraryIndex.length } : {}), ...(agentBudgetUsd ? { agentBudgetUsd } : {}), ...(wide ? { wide: true } : {}),
     ...(cmp ? { compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol, ...(cmp.tolerantKeys ? { tolerantKeys: cmp.tolerantKeys } : {}) } : {}), ...(acceptance === 'strict' ? { acceptance, minPartial } : {}),
     ...(acceptanceIds === 'structured' ? { acceptanceIds } : {}) });
   const started = Date.now();
@@ -274,6 +279,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
     ...(verdictsPromptVersionOf({ acceptanceIds }) ? { verdictsPromptVersion: verdictsPromptVersionOf({ acceptanceIds }) } : {}),
     promptSha256: sha(prompt), artifact: solveSource == null ? null : 'solve.mjs', artifactSha256,
     ...(library ? { library: { entries: libraryIndex.length, indexSha256: sha(JSON.stringify(libraryIndex, null, 1)), builderCalls: gw.host.totals(), checkCalls: check.callHost ?? null } } : {}),
+    ...(agentBudgetUsd ? { agentBudgetUsd } : {}), ...(wide ? { wide: true } : {}), ...(outputSchema ? { outputSchemaSha256: sha(JSON.stringify(outputSchema)) } : {}),
     builderCostUsd, builderCostReportedUsd: r.costUsd ?? null, builderCostUnknown: !!r.costUnknown, builderCostUpperUsd: r.costUpperUsd ?? null, builderBudgetUsd,
     builderUsage: r.usage ?? null, builderStreamUsage: r.streamUsage ?? null, builderSessionId: r.sessionId ?? null,
     gatewayCostUsd: ledger.spentUsd, gatewayCapUsd: ledger.capUsd, gatewayOvershootUsd: Math.max(0, ledger.spentUsd - ledger.capUsd), gatewayCalls: ledger.calls, gatewayErrors: ledger.errors,

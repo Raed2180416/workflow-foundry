@@ -253,7 +253,9 @@ export async function runCompiled({ solvePath, task, modelPort, perTaskUsd = 1, 
       solveSha256: createHash('sha256').update(source).digest('hex'), flow: !!(flowPath && existsSync(flowPath)),
       ...(flowOverride ? { flowOverride: true } : {}), ...(memoBefore ? { memo: memoDelta(memoBefore, modelPort.memo.stats()) } : {}),
       ...(typeof totals?.childCalls === 'number' ? { childCalls: totals.childCalls } : {}), ...(flowScope ? { flowScope } : {}),
-      ...(resume ? { resume: { rows: port.rows(), stats: port.stats() } } : {}) },
+      ...(resume ? { resume: { rows: port.rows(), stats: port.stats() } } : {}),
+      // Slice 2b (6b): token usage and the prompt-cache read share, when the port reported usage (absent otherwise).
+      ...(ledger.usage ? { usage: { ...ledger.usage, cacheReadShare: ledger.cacheReadShare() } } : {}) },
   };
 }
 // This run's share of a (possibly shared) memo port's counters.

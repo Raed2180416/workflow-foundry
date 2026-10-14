@@ -35,6 +35,12 @@ export class Ledger {
     this.reservedUsd = 0; this.inFlight = 0; this.refusals = {}; this.waiters = [];
   }
   remaining() { return this.capUsd - this.spentUsd - this.reservedUsd; }
+  // The share of prompt tokens read from the prompt cache (cache reads / all prompt tokens), or null before any usage.
+  cacheReadShare() {
+    const u = this.usage; if (!u) return null;
+    const prompt = u.inputTokens + u.cacheReadTokens + u.cacheWriteTokens;
+    return prompt ? Math.round((u.cacheReadTokens / prompt) * 1e4) / 1e4 : null;
+  }
   refuse(code) { this.refusals[code] = (this.refusals[code] ?? 0) + 1; }
   hold(usd) { this.reservedUsd += usd; this.inFlight++; }
   release(usd) { this.inFlight--; this.reservedUsd = this.inFlight > 0 ? Math.max(0, this.reservedUsd - usd) : 0; this.wake(); }
@@ -43,6 +49,13 @@ export class Ledger {
   async idle() { while (this.inFlight > 0) await this.changed(); }
   charge(r) {
     this.spentUsd += r.costUsd ?? 0; this.imputedUsd += r.imputedUsd ?? 0; this.calls++; if (r.error) this.errors[r.error.code] = (this.errors[r.error.code] ?? 0) + 1;
+    // Slice 2b (6b): token usage when the port reports it (ModelPort results carry usage; stub ports do not), so a run's
+    // prompt-cache read share is on its ledger. Absent until a call reports usage.
+    if (r.usage && typeof r.usage === 'object') {
+      const u = (this.usage ??= { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 0 });
+      for (const k of ['inputTokens', 'outputTokens', 'cacheReadTokens', 'cacheWriteTokens']) u[k] += Number.isFinite(r.usage[k]) ? r.usage[k] : 0;
+      u.calls++;
+    }
     if (r.costUnknown === true) { this.unknownCalls++; this.unknownUpperUsd = this.unknownUpperUsd === null || typeof r.costUpperUsd !== 'number' ? null : this.unknownUpperUsd + r.costUpperUsd; }
   }
 }

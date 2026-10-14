@@ -41,11 +41,31 @@
 //   A call that would fit without its siblings in flight is refused BUDGET_TREE with the shortfall; one that would not fit
 //   even alone is refused budget-exceeds-parent, as in slice 1. When the gateway (services.mjs) holds this call's own
 //   reservation on the caller's Ledger (request.gatewayHoldUsd), the host does not hold it again.
+//
+// Slice 2b (design/FLOW-V3-SLICE2.md §9): agent nodes. A request {v: 1, op: 'agent', name, span, attempt, instructions, files
+// ({path: text}, resolved by the SDK from the task), inputs?, returns, model?, tools?, budgetUsd, timeoutMs, stallMs?,
+// harvest, retryReason?} is answered by createCallHost({ agent: { runner, ... } }): checks in order (bad-request, no-returns,
+// no-agent-runner, depth: only scopes at depth <= agent.maxDepth (default 1) own nodes, model-not-in-policy, tool-not-allowed,
+// bad-files, third-party-text: agent.textLabel is the stream's declaration of the run's text (D10: only 'synthetic' reaches
+// a node), the memo (key over name, parent path, files, instructions, returns, inputs, attempt and retry reason; journal rows
+// replay at $0), per-run-limit (agent.maxPerRun, 16), the budget (BUDGET_TOO_SMALL below agent.floorUsd $0.10, then the
+// budget tree as for calls), then at most agent.maxConcurrent (2) nodes run at once (later ones wait, holding their
+// reservation). The runner (agent-node.mjs agentNodeRunner, or a stub) runs the node; a stallMs watchdog aborts a node whose
+// workdir shows no activity for stallMs and restarts it (agent.stallRestarts, default 1) inside the same reservation. The
+// result is void when the transcript shows a nested model use or a hidden-path attempt, failed when there is no answer, it
+// stalled out, or the answer fails returns; else ok. Harvest: the scripts an ok node wrote, with its task and answer, are
+// saved under <workRoot>/agents/ (harvestFile on the event) for a later sub-compile (agent-node.mjs subCompileGroups). The
+// verify is the SDK's (the parent's code). Events: agent-end (outcome ok | void | failed) or agent-refused.
+// Registry entries record a static scan of the solver for code execution (agent-node.mjs codeExecutionOf); a call to an
+// entry with findings is refused 'executes-code': a compiled callee never runs code it was handed.
 import path from 'node:path';
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { runCompiled, canonicalJson, FLOW_V2 } from './run-compiled.mjs';
 import { validateOutput } from './interpret.mjs';
+import { AGENT_TOOLS, DEFAULT_AGENT_TOOLS, MAX_AGENT_TOOLS, DEFAULT_AGENT_FLOOR_USD, DEFAULT_AGENT_CONCURRENCY, DEFAULT_AGENTS_PER_RUN, DEFAULT_MAX_AGENT_DEPTH,
+  DEFAULT_STALL_RESTARTS, MAX_STALL_RESTARTS, TEXT_LABELS, agentFilesProblem, codeExecutionOf, filesClusterOf } from './agent-node.mjs';
+import { compileDataSchema, validateData } from '../../src/validate.mjs';
 import { checkProfile, checkOptionsOf, profileSupports, PROFILE_SCHEMA } from './profile.mjs';
 import { reserveFor } from '../lib/services.mjs';
 import { FoundryError } from '../../src/data.mjs';
@@ -57,10 +77,12 @@ export const DEFAULT_MAX_DEPTH = 3, HARD_MAX_DEPTH = 8, MAX_TREE_CHILDREN = 1000
 export const DEFAULT_INTERPRET_FLOOR_USD = 0.1;
 export const REGISTRY_FILE = 'registry.jsonl';
 export const REFUSALS = Object.freeze(['bad-request', 'unknown-hash', 'revoked', 'recursion', 'depth', 'tree-size', 'effects', 'input-schema',
-  'outside-profile', 'BUDGET_TOO_SMALL', 'budget-exceeds-parent', 'BUDGET_TREE']);
+  'outside-profile', 'BUDGET_TOO_SMALL', 'budget-exceeds-parent', 'BUDGET_TREE', 'executes-code']);
 // Refusals the interpreter may answer (onRefuse 'interpret'): the callee is known and typed, it is only not applicable.
 export const INTERPRETABLE_REFUSALS = Object.freeze(['outside-profile', 'revoked']);
 export const NOVEL_MODES = Object.freeze(['refuse', 'warn']);
+// The host event kinds of a call request (slice 2b adds agent-end / agent-refused, op 'agent', counted apart).
+export const CALL_EVENT_KINDS = Object.freeze(['call-end', 'call-refused', 'call-deopt', 'interpret-child']);
 export const ON_REFUSE = Object.freeze(['deopt', 'interpret', 'skip', 'value']), ON_DEOPT = Object.freeze(['propagate', 'interpret', 'interpret-child', 'skip', 'value']);
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
@@ -112,10 +134,12 @@ export function createRegistry({ dir = null } = {}) {
       if (e.novelMode != null && !NOVEL_MODES.includes(e.novelMode)) throw new Error(`registry.register: novelMode must be one of ${NOVEL_MODES.join(', ')}`);
       const source = typeof e.stub === 'function' ? `stub:${e.stub}` : readFileSync(resolveSolve(e.solvePath));
       const hash = libraryHashOf(source, contract);
+      // Slice 2b: how the solver could run code it is handed (none for a stub); the host refuses calls to an entry with findings.
+      const codeExec = typeof e.stub === 'function' ? [] : codeExecutionOf(source.toString('utf8'));
       if (e.hash && e.hash !== hash) throw new Error(`registry.register: hash ${e.hash} does not match the solver bytes and contract (${hash})`);
       const entry = { hash, solvePath: e.solvePath ?? null, flowVersion, contract: { input: contract.input ?? null, output: contract.output, taskTemplate: contract.taskTemplate ?? '' },
         profile: e.profile ?? null, evidence: e.evidence ?? {}, effects: e.effects ?? 'none', ...(e.minBudgetUsd != null ? { minBudgetUsd: e.minBudgetUsd } : {}),
-        ...(Object.keys(checkOptions).length ? { checkOptions } : {}), ...(e.novelMode ? { novelMode: e.novelMode } : {}),
+        ...(Object.keys(checkOptions).length ? { checkOptions } : {}), ...(e.novelMode ? { novelMode: e.novelMode } : {}), ...(codeExec.length ? { codeExec } : {}),
         registeredAt: e.registeredAt ?? new Date().toISOString() };
       if (typeof e.stub === 'function') stubs.set(hash, e.stub);
       append({ op: 'register', entry });
@@ -127,7 +151,7 @@ export function createRegistry({ dir = null } = {}) {
     list() {
       const hashes = [...new Set(rows.filter(r => r.op === 'register').map(r => r.entry.hash))];
       return hashes.map(get).map(e => ({ hash: e.hash, version: e.version, flowVersion: e.flowVersion, contract: e.contract, profileTasks: e.profile?.n ?? 0,
-        evidence: e.evidence, effects: e.effects, revoked: e.revoked, ...(e.minBudgetUsd != null ? { minBudgetUsd: e.minBudgetUsd } : {}) }));
+        evidence: e.evidence, effects: e.effects, revoked: e.revoked, ...(e.minBudgetUsd != null ? { minBudgetUsd: e.minBudgetUsd } : {}), ...(e.codeExec?.length ? { executesCode: true } : {}) }));
     },
   };
 }
@@ -146,13 +170,50 @@ export function classifyReuse(event, { oraclePass = null, calleeWouldPass = null
   return 'unknown';
 }
 
+// ---- agent nodes (slice 2b): the host's agent configuration, validated (null: agent requests are refused no-agent-runner)
+export function agentConfigOf(agent, { allowedModels = null, modelPort = null } = {}) {
+  if (agent == null) return null;
+  if (typeof agent !== 'object') throw new Error('createCallHost: agent must be an object { runner, ... }');
+  const a = agent;
+  if (a.runner != null && typeof a.runner !== 'function') throw new Error('createCallHost: agent.runner must be a function (agent-node.mjs agentNodeRunner or a stub)');
+  const models = a.models ?? allowedModels ?? modelPort?.policy?.models?.map(m => m.id) ?? null;
+  if (models != null && (!Array.isArray(models) || models.some(m => typeof m !== 'string'))) throw new Error('createCallHost: agent.models must be a list of model ids');
+  const tools = a.tools ?? [...AGENT_TOOLS], defaultTools = a.defaultTools ?? [...DEFAULT_AGENT_TOOLS];
+  if (!Array.isArray(tools) || tools.some(t => !AGENT_TOOLS.includes(t))) throw new Error(`createCallHost: agent.tools must be a subset of ${AGENT_TOOLS.join(', ')}`);
+  if (!Array.isArray(defaultTools) || defaultTools.some(t => !tools.includes(t)) || defaultTools.length > MAX_AGENT_TOOLS) throw new Error('createCallHost: agent.defaultTools must be at most 5 of agent.tools');
+  const int = (k, v, lo, hi) => { if (!Number.isInteger(v) || v < lo || v > hi) throw new Error(`createCallHost: agent.${k} must be an integer in ${lo}..${hi}`); return v; };
+  const cfg = {
+    runner: a.runner ?? null, models, model: a.model ?? null, tools, defaultTools,
+    maxConcurrent: int('maxConcurrent', a.maxConcurrent ?? DEFAULT_AGENT_CONCURRENCY, 1, DEFAULT_AGENT_CONCURRENCY),
+    maxPerRun: int('maxPerRun', a.maxPerRun ?? DEFAULT_AGENTS_PER_RUN, 1, DEFAULT_AGENTS_PER_RUN),
+    maxDepth: int('maxDepth', a.maxDepth ?? DEFAULT_MAX_AGENT_DEPTH, 0, HARD_MAX_DEPTH),
+    stallRestarts: int('stallRestarts', a.stallRestarts ?? DEFAULT_STALL_RESTARTS, 0, MAX_STALL_RESTARTS),
+    floorUsd: a.floorUsd ?? DEFAULT_AGENT_FLOOR_USD, stallMs: a.stallMs ?? null, textLabel: a.textLabel ?? 'synthetic',
+    maxTimeoutMs: a.maxTimeoutMs ?? 30 * 60 * 1000,
+  };
+  if (cfg.model != null && typeof cfg.model !== 'string') throw new Error('createCallHost: agent.model must be a model id');
+  if (!(typeof cfg.floorUsd === 'number' && cfg.floorUsd >= 0)) throw new Error('createCallHost: agent.floorUsd must be a number >= 0');
+  if (cfg.stallMs != null && !(Number.isInteger(cfg.stallMs) && cfg.stallMs > 0)) throw new Error('createCallHost: agent.stallMs must be a positive integer');
+  if (!TEXT_LABELS.includes(cfg.textLabel)) throw new Error(`createCallHost: agent.textLabel must be one of ${TEXT_LABELS.join(', ')}`);
+  return cfg;
+}
+// A returns schema from a solver is not host-owned: compiled as untrusted (no regular expressions, no formats).
+function returnsProblem(schema) {
+  try { compileDataSchema(schema); return null; } catch (e) { return short(e, 300); }
+}
+function returnsErrors(schema, value) {
+  try { validateData(schema, value, 'answer'); return null; }
+  catch (e) { return (e.details ?? [{ message: String(e.message ?? e) }]).slice(0, 5).map(x => `${x.instancePath ?? ''} ${x.message ?? ''}`.trim()); }
+}
+const AGENT_SPAN_RE = /^agent:[^/]{1,200}#\d+$/;
+
 const safe = s => String(s).replace(/[^A-Za-z0-9._-]+/g, '_').slice(0, 80);
 const dirOf = spanPath => spanPath.split('/').map(safe).join('__').slice(0, 200);
 const SPAN_RE = /^call:[^/]{1,200}#\d+$/;
 
 export function createCallHost({ registry, modelPort = null, ledger = null, maxDepth = DEFAULT_MAX_DEPTH, workRoot = null, mode = 'sandbox', allowedModels = null,
   maxChildren = MAX_TREE_CHILDREN, budgetFloorUsd = DEFAULT_BUDGET_FLOOR_USD, maxTimeoutMs = 20 * 60 * 1000, journal = [], arm = null, taskKey = null, log = () => {},
-  profileCheck = {}, novelMode = 'refuse', interpreter = null, interpretFloorUsd = DEFAULT_INTERPRET_FLOOR_USD } = {}) {
+  profileCheck = {}, novelMode = 'refuse', interpreter = null, interpretFloorUsd = DEFAULT_INTERPRET_FLOOR_USD, agent = null } = {}) {
   if (!registry || typeof registry.get !== 'function') throw new Error('createCallHost: a registry (createRegistry) is required');
   if (!Number.isInteger(maxDepth) || maxDepth < 1 || maxDepth > HARD_MAX_DEPTH) throw new Error(`createCallHost: maxDepth must be an integer in 1..${HARD_MAX_DEPTH}`);
   if (!['sandbox', 'stub'].includes(mode)) throw new Error("createCallHost: mode must be 'sandbox' or 'stub'");
@@ -162,8 +223,10 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   if (interpreter != null && typeof interpreter !== 'function') throw new Error('createCallHost: interpreter must be a function ({task, outputSchema, budgetUsd, timeoutMs, workdir, ...}) => {answer, costUsd}');
   if (!(typeof interpretFloorUsd === 'number' && interpretFloorUsd >= 0)) throw new Error('createCallHost: interpretFloorUsd must be a number >= 0');
   const events = [], journalOut = [], spans = new Map(), memo = new Map();
-  for (const row of journal ?? []) if (row?.key && row.result?.status === 'ok') memo.set(row.key, { result: row.result, replayed: true });
+  for (const row of journal ?? []) if (row?.key && row.result?.status === 'ok') memo.set(row.key, { result: row.result, replayed: true });   // call and agent rows (keys differ)
   const tree = { children: 0 };
+  const agentCfg = agentConfigOf(agent, { allowedModels, modelPort });
+  const agentState = { admitted: 0, running: 0, queue: [], harvests: [], ordinals: new Map() };
 
   const newScope = ({ span, parent, path: p, depth, budgetUsd, ancestors, ledger: l = null }) => {
     const s = { span, parent, path: p, depth, budgetUsd, spentUsd: 0, reservedUsd: 0, inFlight: 0, modelReservedUsd: 0, ancestors, ledger: l, ordinals: new Map(), usedSpans: new Set(), calls: 0 };
@@ -176,6 +239,27 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   const remainingOf = (s, gatewayHoldUsd = 0) => {
     const own = s.budgetUsd - s.spentUsd - s.reservedUsd - s.modelReservedUsd;
     return s.ledger && typeof s.ledger.remaining === 'function' ? Math.min(own, s.ledger.remaining() + gatewayHoldUsd) : own;
+  };
+  // The budget rule for a reservation of `amount` from scope: null when it fits, else [refusal, detail] (FLOW-V3 §1.3; slice 2a).
+  const budgetRefusalFor = (scope, amount, floor, gatewayHoldUsd = 0) => {
+    if (amount < floor) return ['BUDGET_TOO_SMALL', { budgetUsd: amount, floorUsd: floor }];
+    const remaining = remainingOf(scope, gatewayHoldUsd);
+    if (amount < remaining) return null;
+    // It would fit if the siblings in flight were done: the budget tree, not this call, is short.
+    if (scope.inFlight > 0 && amount < remaining + scope.reservedUsd) {
+      return ['BUDGET_TREE', { budgetUsd: amount, remainingUsd: usd(remaining), shortfallUsd: usd(amount - remaining), inFlight: scope.inFlight, reservedInFlightUsd: usd(scope.reservedUsd),
+        parentBudgetUsd: scope.budgetUsd, parentSpentUsd: usd(scope.spentUsd), rule: 'Σ reservations in flight + this reservation < parent budget − spent' }];
+    }
+    return ['budget-exceeds-parent', { budgetUsd: amount, remainingUsd: usd(remaining) }];
+  };
+  // Reserve `amount` on scope for the duration of fn (a child, an interpreter or an agent node), then release it; spend is
+  // booked by the caller. When the gateway already holds it on the scope's Ledger (gatewayHoldUsd), it is not held again.
+  const reserveOn = async (scope, amount, gatewayHoldUsd, fn) => {
+    scope.reservedUsd += amount; scope.inFlight++;
+    const held = !gatewayHoldUsd && scope.ledger && typeof scope.ledger.hold === 'function';
+    if (held) scope.ledger.hold(amount);
+    try { return await fn(); }
+    finally { scope.reservedUsd = Math.max(0, scope.reservedUsd - amount); scope.inFlight--; if (held) scope.ledger.release(amount); }
   };
   const save = (dir, rel, value) => {
     if (!workRoot) return null;
@@ -194,7 +278,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
           let request = null; try { request = JSON.parse(req.prompt); } catch {}
           // services.mjs passes the reservation it holds for this call on the gateway Ledger (slice 2a); a plain port, none.
           const gatewayHoldUsd = typeof req.gatewayHoldUsd === 'number' && req.gatewayHoldUsd > 0 ? req.gatewayHoldUsd : 0;
-          const r = await handle(request, scope, { gatewayHoldUsd });
+          const r = request?.op === 'agent' ? await handleAgent(request, scope, { gatewayHoldUsd }) : await handle(request, scope, { gatewayHoldUsd });
           return { ok: true, value: r.value, costUsd: r.costUsd, imputedUsd: 0, latencyMs: r.ms, modelId: CALL_MODEL,
             // The child's unknown spend is already in costUsd at its bound: flag it, add nothing more.
             ...(r.costUnknown ? { costUnknown: true, costUpperUsd: 0 } : {}) };
@@ -220,7 +304,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     if (mode === 'stub') {
       if (typeof entry.stub !== 'function') return { status: 'crash', error: { code: 'NO_STUB', message: 'stub mode: the entry has no stub function' }, costUsd: 0 };
       const childPort = wrapPort(child);
-      const ctx = { span: child.span, path: child.path, depth: child.depth, budgetUsd: child.budgetUsd, prompt: task.prompt, call: request => handle(request, child).then(r => r.value), model: req => childPort.call(req) };
+      const ctx = { span: child.span, path: child.path, depth: child.depth, budgetUsd: child.budgetUsd, prompt: task.prompt, call: request => handle(request, child).then(r => r.value),
+        agent: request => handleAgent(request, child).then(r => r.value), model: req => childPort.call(req) };
       const r = (await entry.stub(task.inputs, ctx)) ?? {};
       const status = r.status ?? 'ok';
       let out = { status, output: r.output ?? null, deopt: r.deopt ?? null, error: r.error ?? null, costUsd: usd((r.costUsd ?? 0) + child.spentUsd), costUnknown: false };
@@ -306,25 +391,9 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     };
     const refuse = (refused, detail = null) => finish({ status: 'refused', refused, detail });
     // The budget rule for a reservation of `amount` from this scope: null when it fits, else the refusal [code, detail].
-    const budgetRefusal = (amount, floor) => {
-      if (amount < floor) return ['BUDGET_TOO_SMALL', { budgetUsd: amount, floorUsd: floor }];
-      const remaining = remainingOf(scope, gatewayHoldUsd);
-      if (amount < remaining) return null;
-      // It would fit if the siblings in flight were done: the budget tree, not this call, is short.
-      if (scope.inFlight > 0 && amount < remaining + scope.reservedUsd) {
-        return ['BUDGET_TREE', { budgetUsd: amount, remainingUsd: usd(remaining), shortfallUsd: usd(amount - remaining), inFlight: scope.inFlight, reservedInFlightUsd: usd(scope.reservedUsd),
-          parentBudgetUsd: scope.budgetUsd, parentSpentUsd: usd(scope.spentUsd), rule: 'Σ reservations in flight + this reservation < parent budget − spent' }];
-      }
-      return ['budget-exceeds-parent', { budgetUsd: amount, remainingUsd: usd(remaining) }];
-    };
+    const budgetRefusal = (amount, floor) => budgetRefusalFor(scope, amount, floor, gatewayHoldUsd);
     // Reserve `amount` for the duration of fn (the child or the interpreter), then release it; spend is booked by the caller.
-    const reserved = async (amount, fn) => {
-      scope.reservedUsd += amount; scope.inFlight++;
-      const held = !gatewayHoldUsd && scope.ledger && typeof scope.ledger.hold === 'function';
-      if (held) scope.ledger.hold(amount);
-      try { return await fn(); }
-      finally { scope.reservedUsd = Math.max(0, scope.reservedUsd - amount); scope.inFlight--; if (held) scope.ledger.release(amount); }
-    };
+    const reserved = (amount, fn) => reserveOn(scope, amount, gatewayHoldUsd, fn);
     const timeoutMs = Math.min(maxTimeoutMs, Number.isInteger(req.timeoutMs) && req.timeoutMs > 0 ? req.timeoutMs : 120000);
     // onRefuse 'interpret': an applicability refusal is answered by the interpreter under the call's budget, else refused.
     const refuseOrInterpret = async (refused, detail, task) => {
@@ -353,6 +422,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       if (depth > maxDepth) return refuse('depth', { depth, maxDepth });
       if (tree.children >= maxChildren) return refuse('tree-size', { maxChildren });
       if ((entry.effects ?? 'none') !== 'none') return refuse('effects', { effects: entry.effects });
+      if (entry.codeExec?.length) return refuse('executes-code', { findings: entry.codeExec.slice(0, 5) });
       const inCheck = validateOutput(entry.contract.input, req.input);
       if (!inCheck.valid) return refuse('input-schema', { errors: inCheck.errors });
       if (entry.revoked) return refuseOrInterpret('revoked', { reason: entry.revokedReason ?? null }, task);
@@ -417,6 +487,135 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     }
   }
 
+  // ---- slice 2b: one agent-node request from `scope` (see the header). Returns {value, costUsd, costUnknown, ms}; never throws.
+  const acquireSlot = async () => { while (agentState.running >= agentCfg.maxConcurrent) await new Promise(r => agentState.queue.push(r)); agentState.running++; };
+  const releaseSlot = () => { agentState.running--; agentState.queue.shift()?.(); };
+  async function handleAgent(request, scope, { gatewayHoldUsd = 0 } = {}) {
+    const t0 = Date.now(), req = request && typeof request === 'object' ? request : {};
+    const name = typeof req.name === 'string' && req.name ? req.name.slice(0, 200) : null;
+    const amount = typeof req.budgetUsd === 'number' && Number.isFinite(req.budgetUsd) ? req.budgetUsd : null;
+    const attempt = Number.isInteger(req.attempt) && req.attempt >= 0 ? req.attempt : 0;
+    const files = req.files && typeof req.files === 'object' && !Array.isArray(req.files) ? req.files : {};
+    const retryReason = typeof req.retryReason === 'string' && req.retryReason ? req.retryReason.slice(0, 1000) : null;
+    // The SDK's span id when well formed (a retry keeps its node's span); otherwise the host numbers the node.
+    let span = null;
+    if (name) {
+      span = typeof req.span === 'string' && AGENT_SPAN_RE.test(req.span) && req.span.startsWith(`agent:${name}#`) ? req.span : null;
+      if (!span) { const k = agentState.ordinals.get(`${scope.path}\0${name}`) ?? 0; agentState.ordinals.set(`${scope.path}\0${name}`, k + 1); span = `agent:${name}#${k}`; }
+    }
+    const nodePath = span ? `${scope.path}/${span}` : null, depth = scope.depth + 1;
+    const filesDigest = sha256(canonicalJson(files)), instructionsDigest = typeof req.instructions === 'string' ? sha256(req.instructions) : null;
+    const returnsDigest = sha256(canonicalJson(req.returns ?? null)), inputsDigest = req.inputs === undefined ? null : sha256(canonicalJson(req.inputs));
+    const key = name ? sha256(canonicalJson({ op: 'agent', name, parentPath: scope.path, filesDigest, instructionsDigest, returnsDigest, inputsDigest, attempt, retryReason })) : null;
+    let model = null, tools = null;
+    const fileBytes = Object.values(files).reduce((s, t) => s + (typeof t === 'string' ? Buffer.byteLength(t) : 0), 0);
+
+    const finish = (result, { costUsd = 0, costUnknown = false } = {}) => {
+      const kind = result.status === 'refused' ? 'agent-refused' : 'agent-end';
+      const reservedUsd = result.status === 'refused' || result.memo ? 0 : amount;
+      const ok = result.status === 'ok', run = result.run ?? {};
+      const agentInfo = { turns: run.turns ?? null, transcriptSha256: run.transcriptSha256 ?? null, scripts: run.scripts?.length ?? run.scriptCount ?? 0, harvested: result.harvested ?? 0,
+        nestedModelAttempts: run.nestedModelAttempts ?? 0, hiddenPathAttempts: run.hiddenPathAttempts ?? 0, traceId: run.traceId ?? null,
+        ...(result.stalls ? { stalled: result.stalls, restarts: result.restarts ?? 0 } : {}) };
+      const value = { status: result.status, ...(ok ? { output: result.output, outDigest: outDigestOf(result.output) } : {}),
+        ...(result.refused ? { refused: result.refused, detail: result.detail ?? null } : {}), ...(result.void ? { void: result.void } : {}), ...(result.error ? { error: result.error } : {}),
+        key, span, path: nodePath, depth, model, tools, attempt, agent: agentInfo, ...(result.memo ? { memo: result.memo } : {}), spentUsd: usd(costUsd), reservedUsd };
+      const outputRef = !ok ? {} : workRoot ? { outputFile: save('outputs', `${outDigestOf(result.output)}.json`, result.output) } : { output: result.output };
+      events.push({ at: new Date().toISOString(), kind, op: 'agent', arm, taskKey, key, name, span, parent: scope.span, path: nodePath, depth, model, tools, budgetUsd: amount, attempt,
+        ...(retryReason ? { retryReason } : {}), filesDigest, instructionsDigest, returnsDigest, files: Object.keys(files).length, fileBytes, cluster: filesClusterOf(files),
+        outcome: result.status, ...(result.refused ? { refused: result.refused, refusedDetail: result.detail ?? null } : {}), ...(result.void ? { void: result.void } : {}),
+        ...(result.error ? { error: result.error } : {}), ...(ok ? { outDigest: value.outDigest, ...outputRef } : {}), ...(result.harvestFile ? { harvestFile: result.harvestFile } : {}),
+        ...agentInfo, spentUsd: usd(costUsd), reservedUsd, ...(costUnknown ? { costUnknown: true } : {}), memo: result.memo ?? null, ms: Date.now() - t0 });
+      log(`${kind} ${nodePath ?? '(bad request)'} ${result.status === 'refused' ? result.refused : result.status}${result.void ? `:${result.void}` : ''} ${usd(costUsd)}`);
+      return { value, costUsd: usd(costUsd), costUnknown, ms: Date.now() - t0 };
+    };
+    const refuse = (refused, detail = null) => finish({ status: 'refused', refused, detail });
+
+    try {
+      if (req.v !== CALL_PROTOCOL || req.op !== 'agent' || !name || typeof req.instructions !== 'string' || !req.instructions.trim() || !(amount > 0)) {
+        return refuse('bad-request', { expected: `{v: ${CALL_PROTOCOL}, op: 'agent', name, instructions, files?, inputs?, returns, budgetUsd > 0, attempt?}` });
+      }
+      if (!req.returns || typeof req.returns !== 'object' || Array.isArray(req.returns)) return refuse('no-returns');
+      const rp = returnsProblem(req.returns);
+      if (rp) return refuse('no-returns', { problem: rp });
+      if (!agentCfg?.runner) return refuse('no-agent-runner');
+      if (scope.depth > agentCfg.maxDepth) return refuse('depth', { depth: scope.depth, maxAgentDepth: agentCfg.maxDepth });
+      model = typeof req.model === 'string' && req.model ? req.model : agentCfg.model;
+      if (!model || (agentCfg.models && !agentCfg.models.includes(model))) return refuse('model-not-in-policy', { model, allowed: agentCfg.models });
+      tools = Array.isArray(req.tools) ? req.tools : agentCfg.defaultTools;
+      if (!tools.length || tools.length > MAX_AGENT_TOOLS || tools.some(t => !agentCfg.tools.includes(t))) return refuse('tool-not-allowed', { tools: tools.slice(0, 10), allowed: agentCfg.tools, max: MAX_AGENT_TOOLS });
+      const fp = agentFilesProblem(files);
+      if (fp) return refuse('bad-files', { problem: fp });
+      if (req.inputs !== undefined && JSON.stringify(req.inputs) === undefined) return refuse('bad-request', { problem: 'inputs must be JSON' });
+      // D10: an agent node gets text only from a run whose text the stream declared synthetic.
+      if (agentCfg.textLabel !== 'synthetic') return refuse('third-party-text', { label: agentCfg.textLabel });
+      const hit = memo.get(key);
+      if (hit) return finish({ ...hit.result, memo: hit.replayed ? 'replay' : 'repeat' });
+      if (agentState.admitted >= agentCfg.maxPerRun) return refuse('per-run-limit', { maxPerRun: agentCfg.maxPerRun });
+      const no = budgetRefusalFor(scope, amount, agentCfg.floorUsd, gatewayHoldUsd);
+      if (no) return refuse(no[0], no[1]);
+      agentState.admitted++;
+      const timeoutMs = Math.min(agentCfg.maxTimeoutMs, Number.isInteger(req.timeoutMs) && req.timeoutMs > 0 ? req.timeoutMs : 10 * 60 * 1000);
+      const stallMs = Number.isInteger(req.stallMs) && req.stallMs > 0 ? req.stallMs : agentCfg.stallMs;
+      const workdir = workRoot ? path.join(workRoot, 'agents', `${dirOf(nodePath)}-a${attempt}`) : null;
+      let run = null, spent = 0, restarts = 0, stalls = 0, costUnknown = false;
+      await reserveOn(scope, amount, gatewayHoldUsd, async () => {
+        await acquireSlot();
+        try {
+          for (;;) {
+            // The stall watchdog: no workdir activity (the runner's progress calls) for stallMs aborts the session.
+            const ac = new AbortController();
+            let last = Date.now(), stalled = false, timer = null;
+            if (stallMs) { timer = setInterval(() => { if (Date.now() - last > stallMs) { stalled = true; ac.abort(); } }, Math.max(5, Math.min(1000, Math.floor(stallMs / 4)))); timer.unref?.(); }
+            let r;
+            try {
+              r = (await agentCfg.runner({ instructions: req.instructions, files, inputs: req.inputs, returns: req.returns, model, tools, budgetUsd: usd(amount - spent), timeoutMs,
+                workdir: workdir ? (restarts ? `${workdir}-r${restarts}` : workdir) : null, signal: ac.signal, progress: () => { last = Date.now(); }, retryReason, name, span, attempt,
+                path: nodePath, arm, taskKey })) ?? {};
+            } catch (error) { r = { answer: null, costUsd: 0, error: { code: error.code ?? 'AGENT_RUNNER', message: short(error, 400) } }; }
+            finally { if (timer) clearInterval(timer); }
+            const unknown = !!r.costUnknown;
+            spent = usd(spent + (unknown ? Math.max(r.costUsd ?? 0, amount - spent) : (r.costUsd ?? 0)));
+            costUnknown ||= unknown;
+            run = { ...r, stalled };
+            if (!stalled) break;
+            stalls++;
+            if (restarts >= agentCfg.stallRestarts || usd(amount - spent) < agentCfg.floorUsd) break;
+            restarts++;
+          }
+        } finally { releaseSlot(); }
+      });
+      scope.spentUsd += spent;
+      // Void, failed or ok (the verify is the caller's).
+      let result;
+      if ((run.nestedModelAttempts ?? 0) > 0) result = { status: 'void', void: 'nested-model' };
+      else if ((run.hiddenPathAttempts ?? 0) > 0) result = { status: 'void', void: 'hidden-path' };
+      else if (run.stalled) result = { status: 'failed', error: { code: 'STALLED', stallMs, restarts } };
+      else if (run.answer == null) result = { status: 'failed', error: run.error ?? { code: 'NO_ANSWER' } };
+      else {
+        const errs = returnsErrors(req.returns, run.answer);
+        result = errs ? { status: 'failed', error: { code: 'RETURNS_SCHEMA', errors: errs } } : { status: 'ok', output: run.answer };
+      }
+      result = { ...result, run, restarts, stalls };
+      // Harvest (FLOW-V3 §2.2): an ok node's scripts, task and answer, for a sub-compile once its verify passed.
+      if (result.status === 'ok' && req.harvest !== false && Array.isArray(run.scripts) && run.scripts.length) {
+        const record = { name, span, attempt, key, model, cluster: filesClusterOf(files), instructions: req.instructions, files, ...(req.inputs !== undefined ? { inputs: req.inputs } : {}),
+          returns: req.returns, answer: run.answer, scripts: run.scripts.map(x => ({ path: x.path, bytes: x.bytes ?? Buffer.byteLength(x.text ?? ''), source: x.source ?? null, sha256: sha256(x.text ?? ''), text: x.text ?? '' })) };
+        agentState.harvests.push({ key, name, cluster: record.cluster, scripts: record.scripts.length, record: workRoot ? null : record });
+        result.harvested = record.scripts.length;
+        if (workRoot) result.harvestFile = save('harvest', `${key}.json`, record);
+      }
+      if (result.status === 'ok') {
+        const stored = { status: 'ok', output: run.answer, run: { turns: run.turns ?? null, transcriptSha256: run.transcriptSha256 ?? null, scriptCount: run.scripts?.length ?? 0 } };
+        memo.set(key, { result: stored, replayed: false });
+        journalOut.push({ op: 'agent', key, name, parentPath: scope.path, attempt, filesDigest, instructionsDigest, result: stored });
+      }
+      return finish(result, { costUsd: spent, costUnknown });
+    } catch (error) {
+      return finish({ status: 'failed', error: { code: 'HOST_ERROR', message: short(error, 400) } });
+    }
+  }
+
   return {
     events, maxDepth, mode,
     // The root scope's model port: pass it to runCompiled as modelPort. budgetUsd is the root's budget (the run's
@@ -435,8 +634,10 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     async request(request) {
       const root = spans.get(ROOT_SPAN);
       if (!root) throw new Error('callHost.request: create the root scope with port() first');
-      return (await handle(request, root)).value;
+      return (request?.op === 'agent' ? await handleAgent(request, root) : await handle(request, root)).value;
     },
+    // Slice 2b: the agent nodes' harvest records ({key, name, cluster, scripts, record?: inline without a workRoot}).
+    harvests: () => agentState.harvests.slice(),
     // The span tree with cost per span (FLOW-V3 §1.3: every scope's spend and reservation).
     spans: () => [...spans.values()].map(s => ({ path: s.path, span: s.span, parent: s.parent, depth: s.depth, budgetUsd: s.budgetUsd, spentUsd: usd(s.spentUsd), reservedUsd: usd(s.reservedUsd), calls: s.calls })),
     // Rows a later host takes as `journal` to serve the same calls at $0 (replay by key).
@@ -444,8 +645,16 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     // Totals for a stream row: call requests, their spend, and how they ended.
     totals() {
       const by = k => events.filter(e => e.kind === k).length;
-      return { childCalls: events.filter(e => e.kind !== 'profile-warn').length, callSpentUsd: usd(events.filter(e => e.kind !== 'profile-warn' && e.depth === 1).reduce((s, e) => s + (e.spentUsd ?? 0), 0)),
+      // Call requests only (agent nodes are counted under agents, and only when a run had one: a slice 2a row is unchanged).
+      const calls = events.filter(e => CALL_EVENT_KINDS.includes(e.kind)), nodes = events.filter(e => e.op === 'agent');
+      const out = { childCalls: calls.length, callSpentUsd: usd(calls.filter(e => e.depth === 1).reduce((s, e) => s + (e.spentUsd ?? 0), 0)),
         ends: by('call-end'), refused: by('call-refused'), deopts: by('call-deopt'), interpreted: events.filter(e => e.kind === 'interpret-child' && e.interpreted?.ok).length, warnings: by('profile-warn') };
+      if (nodes.length) {
+        const of = o => nodes.filter(e => e.outcome === o).length;
+        out.agents = { nodes: nodes.length, ok: of('ok'), void: of('void'), failed: of('failed'), refused: of('refused'), spentUsd: usd(nodes.reduce((s, e) => s + (e.spentUsd ?? 0), 0)),
+          harvested: agentState.harvests.length, stalls: nodes.reduce((s, e) => s + (e.stalled ?? 0), 0) };
+      }
+      return out;
     },
     writeEvents(file) { mkdirSync(path.dirname(file), { recursive: true }); for (const e of events) appendFileSync(file, JSON.stringify(e) + '\n'); return events.length; },
   };

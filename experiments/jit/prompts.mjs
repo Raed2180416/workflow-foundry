@@ -20,6 +20,9 @@
 // number of entries in the builder's library/index.json) is positive it adds inserted lines only: the input list names
 // library/index.json, the SDK sketch shows flow.call, and method item 9 says when and how to call a library solver. With
 // no library the version 5 text is the version 4 text byte for byte.
+// Slice 2b (opt-in, version 5 with a library only; inserted lines only, so every earlier text keeps its bytes):
+// opts.agentBudgetUsd > 0 adds flow.agent (method item 10 and an SDK line), opts.wide === true adds flow.wide (item 11 and an
+// SDK line). FLOW-V3 §2.3: wide is named only to arms preregistered to use it.
 import { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION } from './prompts-verdicts.mjs';
 export { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION };
 export const verdictsPromptVersionOf = opts => (opts?.acceptanceIds === 'structured' ? VERDICTS_PROMPT_VERSION : null);
@@ -29,6 +32,8 @@ export const PROMPT_VERSIONS = Object.freeze([1, 2, 3, 4, 5]);
 export const FLOW_FILES = Object.freeze({ 1: 'flow.mjs', 2: 'flow-v2.mjs', 3: 'flow-v2.mjs', 4: 'flow-v2.mjs', 5: 'flow-v3.mjs' });
 // Prompt version 5 with a non-empty library: the flow.call parts are in the text.
 const withLibrary = opts => promptVersionOf(opts) >= 5 && Number(opts?.library) > 0;
+const withAgents = opts => withLibrary(opts) && Number(opts?.agentBudgetUsd) > 0;
+const withWide = opts => withLibrary(opts) && opts?.wide === true;
 export function promptVersionOf(opts) {
   const v = opts?.promptVersion ?? 1;
   if (!PROMPT_VERSIONS.includes(v)) throw new Error(`builder prompt: promptVersion must be one of ${PROMPT_VERSIONS.join(', ')}, got ${JSON.stringify(v)}`);
@@ -82,7 +87,19 @@ const method = opts => { const { models, perTaskUsd } = opts; return `How to com
    together: K calls at once need K times budgetUsd below your own budget. If a call may be refused for your inputs (a
    format the profile does not cover), pass onRefuse: 'interpret' (the host's agent then solves that part alone within
    its budgetUsd, which must be at least $0.10) or onRefuse: 'skip' and handle the part yourself. Do not call a library
-   solver for work your own code does in a few lines.` : ''}`; };
+   solver for work your own code does in a few lines.` : ''}${withAgents(opts) ? `
+10. When part of a task is data no code you write from the traces can read reliably (a legacy dump whose layout only its
+   own files describe, differently from task to task), give that part to an agent node: flow.agent(name, { instructions,
+   files, inputs, returns }, { verify, budgetUsd }). The node sees only the files and inputs you pass and must return a
+   value of the returns schema. verify is your code over that value and ctx.files (counts, control totals, a quote that
+   must occur in a file): the node's own claim is not a check. A failed verify reruns the node once with the reason, then
+   the task deopts. budgetUsd at least $0.10 and at most ${opts.agentBudgetUsd}, carved from yours. Do not use an agent
+   node for anything code or one flow.judge can do. If a library solver decodes such data, call it first with
+   onRefuse: 'skip', onDeopt: 'skip' and the same verify, and use the agent node only when it refuses or fails.` : ''}${withWide(opts) ? `
+11. For many independent items (dozens of statements or entities), flow.wide(name, { items, worker, reduce, budgetUsd,
+   concurrency }) runs one worker per item (a flow.judge spec with prompt: item => ..., or a function) under one total
+   budget and hands your code reducer the results and typed coverage {n, done, failed, skipped}. Keep onItemError at its
+   default unless the reducer reports what is missing.` : ''}`; };
 
 const sdk = opts => { const { models, perTaskUsd } = opts, v2 = promptVersionOf(opts) >= 2; return `Write ./solve.mjs: one Node 24 ESM file, no npm packages, run as  node solve.mjs task.json . At run time it gets only
 tools/model.mjs and tools/flow.mjs beside it, no network except model calls through flow.judge,
@@ -103,7 +120,11 @@ PATH=/opt/node24/bin:/usr/local/bin:/usr/bin:/bin and HOME = the task directory.
                                           // typed output; the host checks the input against the solver's contract and
                                           // profile, and refuses what it was not proven on
   const r = await flow.call(hash, subInput, { name, budgetUsd, onRefuse: 'skip', onDeopt: 'skip' });
-  if (r.refused || r.deopt) { /* your own code or flow.judge for this part */ }` : ''}
+  if (r.refused || r.deopt) { /* your own code or flow.judge for this part */ }` : ''}${withAgents(opts) ? `
+  const rows = await flow.agent('decode', { instructions, files: { 'dump/': 'dump/S2/' }, returns: ROWS_SCHEMA },
+    { verify: (v, ctx) => (v.rows.length === v.trailer.records ? null : 'count differs from the trailer'), budgetUsd: 0.3 });` : ''}${withWide(opts) ? `
+  const table = await flow.wide('items', { items, worker: { judge: { tiers, system, schema, prompt: it => render(it) } },
+    reduce: (results, coverage) => assemble(results, coverage), budgetUsd: 0.5, concurrency: 8 });` : ''}
   flow.done(answer);                                                 // exactly once, at the end
 Schemas use only type, properties, required, additionalProperties, items, enum, const, minimum, maximum, minItems,
 maxItems, minLength, maxLength.`; };
