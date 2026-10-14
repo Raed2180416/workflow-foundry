@@ -214,13 +214,61 @@ function deffFromSums(s, { rho = RHO_REUSE_FLOOR, estimateRho = true } = {}) {
 // Deff, effective n and effective wrong count of a cluster list under the M3 policy ρ = max(rho, ρ̂).
 export function clusterDeff(clusters, opts = {}) { const s = clusterSums(); for (const c of clusters) s.add(c); return deffFromSums(s, opts); }
 
-// (a) One-sided Wilson bound on the effective counts, read once on all admitted decisions.
-export function reuseBoundRule(clusters, { bound = 0.05, z = 1.645, minN = 60, rho = RHO_REUSE_FLOOR, estimateRho = true } = {}) {
+// Regularized incomplete beta I_x(a, b) (continued fraction, modified Lentz; Numerical Recipes §6.4) and the exact
+// (Clopper–Pearson) one-sided bounds it gives for x successes of n, which also accept the non-integer effective counts
+// x/Deff of n/Deff (the beta form of the bound). level 0.95: P(upper < p) ≤ 0.05 under independent decisions, exactly.
+function logGamma(z) {
+  const g = [676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905,
+    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - logGamma(1 - z);
+  z -= 1;
+  let x = 0.99999999999980993;
+  for (let i = 0; i < 8; i++) x += g[i] / (z + i + 1);
+  const t = z + 7.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+}
+function betaCf(x, a, b) {
+  const tiny = 1e-300;
+  let c = 1, d = 1 - ((a + b) * x) / (a + 1);
+  d = 1 / (Math.abs(d) < tiny ? tiny : d);
+  let h = d;
+  for (let m = 1; m <= 500; m++) {
+    const m2 = 2 * m;
+    let aa = (m * (b - m) * x) / ((a + m2 - 1) * (a + m2));
+    d = 1 + aa * d; d = 1 / (Math.abs(d) < tiny ? tiny : d); c = 1 + aa / c; if (Math.abs(c) < tiny) c = tiny; h *= d * c;
+    aa = (-(a + m) * (a + b + m) * x) / ((a + m2) * (a + m2 + 1));
+    d = 1 + aa * d; d = 1 / (Math.abs(d) < tiny ? tiny : d); c = 1 + aa / c; if (Math.abs(c) < tiny) c = tiny;
+    const del = d * c; h *= del;
+    if (Math.abs(del - 1) < 1e-14) break;
+  }
+  return h;
+}
+export function betaInc(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const front = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2) ? (front * betaCf(x, a, b)) / a : 1 - (front * betaCf(1 - x, b, a)) / b;
+}
+export function exactBinomialBounds(x, n, { level = 0.95 } = {}) {
+  if (!(n > 0)) return { lo: NaN, hi: NaN };
+  const alpha = 1 - level;
+  const solve = (f, target) => { let lo = 0, hi = 1; for (let i = 0; i < 100; i++) { const mid = (lo + hi) / 2; if (f(mid) < target) lo = mid; else hi = mid; } return (lo + hi) / 2; };
+  // upper: the u with P(X ≤ x | u) = alpha, i.e. I_u(x + 1, n − x) = 1 − alpha; lower: I_l(x, n − x + 1) = alpha.
+  const hi = x >= n ? 1 : solve(u => betaInc(u, x + 1, n - x), 1 - alpha);
+  const lo = x <= 0 ? 0 : solve(l => betaInc(l, x, n - x + 1), alpha);
+  return { lo, hi };
+}
+
+// (a) One-sided 95% bound on the effective counts, read once on all admitted decisions. method 'wilson' (z 1.645, the
+// ATTACK's 0/60 → 0.043) or 'exact' (Clopper–Pearson at `level`, 0/60 → 0.0487; its miss never exceeds 1 − level under
+// independent decisions).
+export function reuseBoundRule(clusters, { bound = 0.05, z = 1.645, level = 0.95, method = 'wilson', minN = 60, rho = RHO_REUSE_FLOOR, estimateRho = true } = {}) {
   const s = clusterDeff(clusters, { rho, estimateRho });
-  if (!s.n) return { rule: 'bound', decision: 'no-decision', reason: 'no admitted decisions', ...s };
-  const w = wilson(s.wrongEff, s.nEff, z);
+  if (!s.n) return { rule: 'bound', decision: 'no-decision', reason: 'no admitted decisions', method, ...s };
+  if (method !== 'wilson' && method !== 'exact') throw new Error(`reuseBoundRule: unknown method ${method}`);
+  const w = method === 'exact' ? exactBinomialBounds(s.wrongEff, s.nEff, { level }) : wilson(s.wrongEff, s.nEff, z);
   const decision = s.n >= minN && w.hi <= bound ? 'serve' : w.lo > bound ? 'kill' : 'no-decision';
-  return { rule: 'bound', decision, upper: w.hi, lower: w.lo, bound, z, minN, ...s };
+  return { rule: 'bound', decision, upper: w.hi, lower: w.lo, bound, method, ...(method === 'exact' ? { level } : { z }), minN, ...s };
 }
 
 // (b) Wald SPRT design: per-decision log-likelihood-ratio steps and the two boundaries.
