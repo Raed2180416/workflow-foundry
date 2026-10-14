@@ -20,7 +20,7 @@ import { validateCaseOutput, validateSweepOutput } from './output.mjs';
 import { schemaProblems, plainCopy } from './schema.mjs';
 import { Workspace } from './workspace.mjs';
 
-export const HOST_VERSION = '1.0.0';
+export const HOST_VERSION = '1.1.0';   // 1.1.0: review fixes of 2026-10-14 (README §11); 1.0.0 journals do not replay on it
 
 /** Thrown by an arm adapter when a real usage limit stops the stream: the clock freezes at the last committed wake-up. */
 export class QuotaStop extends Error {
@@ -63,11 +63,11 @@ export function bindItem(item) {
   });
 }
 
-/** Structural checks on a world before any run (a malformed world is a bed bug, never an arm outcome). */
 // The clock's resolution is one second and every time the host formats is truncated to it, so a world time with a
 // fractional second would give two wake-ups one `now` and one call id (review finding 9): refused.
 const isWorldTime = s => isIsoTime(s) && toMs(s) % SECOND === 0;
 
+/** Structural checks on a world before any run (a malformed world is a bed bug, never an arm outcome). */
 function checkWorld(world, systems) {
   for (const k of ['id', 't0', 'horizonEnd']) if (!world?.[k]) throw new HostError(`world.${k} missing`);
   if (!isWorldTime(world.t0) || !isWorldTime(world.horizonEnd)) throw new HostError('world.t0 / horizonEnd must be ISO times with offset, whole seconds');

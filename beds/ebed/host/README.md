@@ -203,7 +203,7 @@ strips them.
 | `test/review.test.mjs` (review 2026-10-14) | 13 | one regression per fixed finding (§11): F3 result identical committed or not; `after` on an unknown predecessor; no ref routing of world arrivals; F6 permanent and schedule shadowing; product engine sees every row; workspace claim; ctx revocation; whole-second world times; F5 rename of subject args and `ref`; abandonment on close; stale form rejections; world key order; counted pending keys. Each fails on the host before the fix (checked against `b1e98fc`) |
 
 **Bounds (toy, reported):** 1,000 cases (50 backlog), 40 days: 5,551 case-ticks, 45 sweep ticks, 5,892 wake-ups in about
-3.6–4.7 s, 46,822 journal rows (about 47 per case); test-process heap about 160–190 MB, peak RSS about 400–450 MB for the
+3.6–4.7 s, 46,822 journal rows (about 47 per case); test-process heap about 160–240 MB, peak RSS about 400–460 MB for the
 whole suite file.
 Item-level bounds (render ≤ 20K tokens at d5; generate + oracle < 2 s per 10³ cases) wait for the items.
 
@@ -278,7 +278,9 @@ skipped); the withdraw and none noise classes did not record the applied class; 
 A read-only adversarial review (probes outside the repo) re-ran the suites (44/44) and reported 18 findings. Each was
 re-checked here by re-running its probe against the host as committed in `b1e98fc`; all 18 reproduced. Every P0/P1 and
 nine P2 are fixed, each with a regression test in `test/review.test.mjs` (every one of them fails on `b1e98fc`); the
-others are deferred with reasons. Nothing was rejected outright; two proposed fixes were narrowed (finding 6, 18).
+others are deferred with reasons. Nothing was rejected outright; two proposed fixes were narrowed (finding 6, 18). The
+fixes change journal content (new `effect.abandoned` rows, sorted world writes, `after` outcomes), so `HOST_VERSION` is
+now 1.1.0 and a 1.0.0 journal does not replay on this host.
 
 | # | sev | finding | outcome |
 |---|---|---|---|
