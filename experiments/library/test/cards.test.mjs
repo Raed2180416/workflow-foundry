@@ -16,8 +16,10 @@ const dummyRefs = v => resolveRefs(v, new Proxy({}, { get: () => DUMMY, has: () 
 
 test('T4: the 12 first-slice cards exist, each with a skeleton and the three fixture kinds', () => {
   const l1 = loadL1();
-  assert.equal(l1.length, 54);
-  assert.deepEqual(l1.filter(e => e.executable).map(e => e.id).sort(), FIRST_SLICE);
+  // 54 census entries plus the three cards authored blind for the E-bed (P58-P60; ebed-cards.test.mjs covers them).
+  assert.equal(l1.length, 57);
+  assert.equal(l1.filter(e => e.origin !== 'authored').length, 54);
+  assert.deepEqual(l1.filter(e => e.executable && e.origin !== 'authored').map(e => e.id).sort(), FIRST_SLICE);
   let n = 0;
   for (const c of cards) {
     assert.ok(c, 'card loads');

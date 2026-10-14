@@ -153,6 +153,13 @@ export function createMemoPort({ journal, live = null, strict = live == null, po
 // flow:call answers are recorded and served like model answers (memo: 'resume'). Solvers are deterministic given their
 // answers (no Date or Math.random in solvers; PRNG only), so a resumed prefix replays the same control flow.
 // rows(): this run's rows, the `prior` of the next resume. stats(): {requests, served, live, diverged, divergedAt}.
+// Review fix (FLOW-V3-SLICE2 §Review C2/T3): a flow:call answer is a port-level ok whatever happened to the child, so for
+// flow:call a row is completed only when the child's answer is: status 'ok' or 'interpreted' (an agent node: 'ok'). A child
+// that deopted, crashed (an environment fault included), was refused or failed reruns on resume, and so does everything
+// after it. A served flow:call answer is reported to the live port (live.resumed(req, value): the call host logs it), so the
+// retried attempt's call log covers the whole run.
+export const CALL_DONE_STATUSES = Object.freeze(['ok', 'interpreted']);
+const completedOf = (modelId, ok, value) => !!ok && (modelId !== 'flow:call' || CALL_DONE_STATUSES.includes(value?.status));
 export function createResumePort({ prior = [], live, invalidate = true } = {}) {
   if (!live || typeof live.call !== 'function') throw new Error('createResumePort: a live port is required');
   const byKey = new Map();
@@ -167,10 +174,12 @@ export function createResumePort({ prior = [], live, invalidate = true } = {}) {
       const seq = requests++, digest = requestDigestOf(req), occurrence = seen.get(digest) ?? 0;
       seen.set(digest, occurrence + 1);
       const hit = diverged ? null : byKey.get(`${digest}#${occurrence}`) ?? null;
-      if (hit?.ok) {
+      if (hit && completedOf(req.modelId, hit.ok, hit.value)) {
         served++;
-        const value = req.modelId === 'flow:call' && hit.value && typeof hit.value === 'object' ? { ...hit.value, memo: 'resume', spentUsd: 0 } : hit.value;
+        const call = req.modelId === 'flow:call' && hit.value && typeof hit.value === 'object';
+        const value = call ? { ...hit.value, memo: 'resume', spentUsd: 0 } : hit.value;
         rows.push({ seq, digest, occurrence, modelId: req.modelId ?? null, ok: true, value: hit.value, costUsd: hit.costUsd ?? 0, resumed: true });
+        if (call && typeof live.resumed === 'function') { try { live.resumed(req, value); } catch {} }
         return { ok: true, value, costUsd: 0, imputedUsd: 0, latencyMs: 0, modelId: req.modelId, replayed: true, resumed: true };
       }
       if (!diverged && invalidate) { diverged = true; divergedAt = { seq, digest: digest.slice(0, 16), modelId: req.modelId ?? null, reason: hit ? 'failed-before' : 'new-request' }; }
@@ -178,7 +187,8 @@ export function createResumePort({ prior = [], live, invalidate = true } = {}) {
       let r;
       try { r = await live.call(req); }
       catch (error) { rows.push({ seq, digest, occurrence, modelId: req.modelId ?? null, ok: false, error: { code: error.code ?? 'MODEL_REQUEST' } }); throw error; }
-      rows.push({ seq, digest, occurrence, modelId: req.modelId ?? null, ok: !!r?.ok, ...(r?.ok ? { value: r.value } : { error: r?.error ?? null }), costUsd: r?.costUsd ?? 0 });
+      const done = completedOf(req.modelId, r?.ok, r?.value);
+      rows.push({ seq, digest, occurrence, modelId: req.modelId ?? null, ok: done, ...(r?.ok ? { value: r.value } : { error: r?.error ?? null }), ...(r?.ok && !done ? { portOk: true } : {}), costUsd: r?.costUsd ?? 0 });
       return r;
     },
   };

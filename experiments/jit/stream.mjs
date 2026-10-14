@@ -215,8 +215,10 @@ export function agentOptsOf(A) {
   if (typeof A.budgetUsd !== 'number' || !(A.budgetUsd >= DEFAULT_AGENT_FLOOR_USD)) throw new Error(`config.library.agent.budgetUsd must be a number >= ${DEFAULT_AGENT_FLOOR_USD} (the agent floor)`);
   if (A.model != null && (typeof A.model !== 'string' || !A.model)) throw new Error('config.library.agent.model must be a model id');
   if (A.stallMs != null && !(Number.isInteger(A.stallMs) && A.stallMs > 0)) throw new Error('config.library.agent.stallMs must be a positive integer');
-  const textLabel = A.textLabel ?? 'synthetic';
-  if (!TEXT_LABELS.includes(textLabel)) throw new Error(`config.library.agent.textLabel must be one of ${TEXT_LABELS.join(', ')}`);
+  // Review fix (FLOW-V3-SLICE2 §Review I4): D10 is a declaration the config must make; there is no default, so a config on
+  // corpus or enterprise text that forgets it cannot hand third-party text to an agent node.
+  const textLabel = A.textLabel;
+  if (!TEXT_LABELS.includes(textLabel)) throw new Error(`config.library.agent.textLabel is required and must be one of ${TEXT_LABELS.join(', ')} (D10: what text the run's tasks carry)`);
   return { budgetUsd: A.budgetUsd, model: A.model ?? null, stallMs: A.stallMs ?? null, textLabel };
 }
 
@@ -618,8 +620,14 @@ export function hostTracker() {
   };
 }
 
-// The fault class of a component result: its own error, a builder session's error, or a model call it made.
-const faultCode = r => r?.error?.code ?? r?.record?.builderError?.code ?? (Object.keys(r?.meta?.errors ?? {}).join(',') || null);
+// The fault class of a component result: its own error, a builder session's error, a model call it made, or (library
+// arms) an environment fault the call host met inside a child, the local interpreter or an agent node.
+const faultCode = r => r?.error?.code ?? r?.record?.builderError?.code ?? (Object.keys(r?.meta?.errors ?? {}).join(',') || null) ?? (r?.calls?.envFaultCodes?.join(',') || null);
+// Review fix (FLOW-V3-SLICE2 §Review C1/I5): a compiled run that did not end ok is an environment fault when it met one
+// itself (its error or a gateway model call) or when its call host met one anywhere in the call tree (rc.calls.envFaults).
+// A library arm then retries the run as a v2 arm retries a run whose judge met a rate limit, instead of recording a
+// capability deopt (kind call) with a paid interpreter fallback.
+export const compiledFaultOf = rc => rc?.status !== 'ok' && (metEnvFault(rc) || (rc?.calls?.envFaults ?? 0) > 0);
 class EnvFault extends Error {
   constructor(component, result) {
     super(`${component}: environment fault ${faultCode(result)} (after one retry)`);
@@ -825,7 +833,7 @@ class ArmRun {
         ...(rc.flags?.count ? { flags: rc.flags.count } : {}), ...(rc.meta?.memo ? { memo: { requests: rc.meta.memo.requests, hits: rc.meta.memo.hits, reused: rc.meta.memo.reused, live: rc.meta.memo.live } } : {}),
         ...(rc.calls ? { calls: rc.calls } : {}), ...(rc.meta?.resume?.stats?.served ? { resumed: rc.meta.resume.stats.served } : {}) });
       return rc;
-    }, rc => rc?.status !== 'ok' && metEnvFault(rc));
+    }, compiledFaultOf);
   }
 
   async runTask(t) {

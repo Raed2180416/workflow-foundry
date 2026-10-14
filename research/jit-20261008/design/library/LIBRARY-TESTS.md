@@ -143,7 +143,8 @@ fraction of construction cost, and the library (not just L0) is what makes it wo
 
 ### L4 wrong reuse in and out of domain, with the kill threshold
 
-**Claim.** The applicability gate keeps wrong reuse ≤ 0.05 (Wilson upper bound) without refusing most correct reuse
+**Claim.** The applicability gate keeps wrong reuse ≤ 0.05 (one-sided 95% exact upper bound on parent-clustered counts,
+as in the Decision below; *amended 2026-10-14, M3: was "Wilson upper bound"*) without refusing most correct reuse
 (LIBRARY §9; JEV-PORTS §2).
 
 - **Library under test.** The accepted solvers from L3 (or the W-BED first run) for R1, R2, R3, plus 3 deliberately
@@ -158,12 +159,34 @@ fraction of construction cost, and the library (not just L0) is what makes it wo
 - **Arms.** b0 no gate; b1 `checkProfile`; b2 similarity threshold; b3 Haiku typed call (same questions); J Jev
   applicability; J+b1 stacked (JEV-PORTS §9). Thresholds fitted on streams A, evaluated on B.
 - **Metric.** Wrong-reuse rate (headline), missed-reuse rate, and the selective-risk curve per arm.
-- **Decision.** A gate configuration may serve production reuse iff its wrong-reuse 95% Wilson upper bound ≤ 0.05 at
-  ≥ 60 admitted decisions and its missed-reuse rate is within 5 points of the best arm's. **Kill threshold** in live use
-  as LIBRARY §9. Jev gates applicability only if J or J+b1 beats b1 on wrong reuse at matched missed reuse
-  (cluster bootstrap by task, CI excluding 0).
+- **Decision** (*amended 2026-10-14 by ATTACK-20261014 §3 M3 / PROOF-LEDGER K1, after a $0 simulation, DEV-NOTES D26;
+  the replaced text is quoted at the end of this bullet*). A gate configuration may serve production reuse iff
+  (i) **its wrong-reuse one-sided 95% exact (Clopper–Pearson) upper bound is ≤ 0.05 on parent-clustered effective
+  counts**: admitted decisions (`classifyReuse` `correct` or `wrong`) are clustered by parent, the offered task; Deff =
+  1 + (m* − 1)·ρ with m* = Σm²/Σm over each parent's admitted decisions and ρ = max(0.1, ANOVA ρ̂); the bound is taken
+  on x/Deff wrong of n/Deff, once, over all admitted stream-B decisions, with ≥ 60 admitted
+  (`experiments/lib/stats.mjs`: `reuseBoundRule(clustersOf(decisions), { method: 'exact' })` returns `serve`); and
+  (ii) its missed-reuse rate is within 5 points of the best arm's. `kill` (one-sided lower bound > 0.05) and
+  `no-decision` both leave reuse off; a `no-decision` is reported as the bound, ρ̂ and Deff with "no decision" (the M3
+  kill mode). L4 has no early kill: the "≥ 20 decisions, point estimate > 0.10" kill is dropped here, since every offer
+  is scored offline anyway. Simulated operating characteristics (`experiments/lib/reuse-rule-sim.mjs`,
+  `analysis/m3-reuse-rule/oc.md`; beta-binomial parents, 20,000 draws per cell; simulation, not evidence about any
+  gate): at 96 parents × 6 = 576 admitted decisions a perfect gate is always served, the false kill at p = 0.01 is
+  ≤ 0.8% and the miss at p = 0.05 ≤ 3.2% for parent ICC ≤ 0.1, equal or unequal parent sizes and the independent limit
+  included (≤ 4.5% and ≤ 4.8% at ICC 0.2, inside Monte Carlo error of 5%; not met at ICC 0.3 in an exploratory run).
+  The 576 are the offers; a gate that refuses admits fewer. In parents of 6, false kill ≤ 5% at p = 0.01 needs about 300
+  admitted decisions at ICC 0 and 360 at ICC 0.1 under this rule (the Wilson form needs 240 at ICC 0; the SPRT and the
+  fixed plan need as many or more); below that, expect `no-decision` for a good gate. A perfect gate alone is served
+  from 59 effective admitted decisions (0/59 → 0.0495). **Kill threshold** in live use as LIBRARY §9, which this edit
+  does not amend (`LIBRARY.md:474` still states the two-sided Wilson bound at ≥ 60 and the early kill; live use is
+  sequential and needs its own rule). Jev gates applicability only if J or J+b1 beats b1 on wrong reuse at matched
+  missed reuse (cluster bootstrap by task, CI excluding 0). *Replaced text:* "A gate
+  configuration may serve production reuse iff its wrong-reuse 95% Wilson upper bound ≤ 0.05 at ≥ 60 admitted decisions
+  and its missed-reuse rate is within 5 points of the best arm's." Under it 0/60 gives 0.0602, so a perfect gate could
+  not pass at the minimum the rule named.
 - **Cost.** Offline candidate runs ≈ 580 × $0.01–0.04 ≈ $6–23 (memoised across arms) [I]; b3 ≈ $0.3; Jev ≈ 580 requests.
-- **Falsifier.** Every arm's upper bound > 0.05 → reuse stays off; the library ships as patterns-only (template mode).
+- **Falsifier.** No arm is served by the Decision rule (every arm's bound > 0.05, or no decision) → reuse stays off; the
+  library ships as patterns-only (template mode). *(Amended 2026-10-14, M3: was "every arm's upper bound > 0.05".)*
 - **Prior.** Out-of-domain offers mostly fail the contract schema or the profile at $0; the hard cases are in-domain d4
   drift, where meaning changes without shape (the D1 class; the profile caught 0 of those) [M]. That is where Jev could
   add value, and where its non-independence from the Claude that built the solver hurts [I].

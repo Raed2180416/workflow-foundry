@@ -1,5 +1,5 @@
 // T1 (LIBRARY-TESTS §2): index lines are code-generated and <= 30 tokens; untrusted text only behind the marker.
-// One index row per item of every layer, all 54 L1 catalog entries included. $0.
+// One index row per item of every layer, all 57 L1 catalog entries included (54 census + P58-P60 authored). $0.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
@@ -26,12 +26,12 @@ function fixtureLibrary(t) {
   return { lib, own, skill, inst };
 }
 
-test('T1: the index has one row per item of every layer (54 L1 + L2 + L3 + L4); every line is <= 30 tokens and code-generated', async t => {
+test('T1: the index has one row per item of every layer (57 L1 + L2 + L3 + L4); every line is <= 30 tokens and code-generated', async t => {
   const { lib, own, skill, inst } = fixtureLibrary(t);
   const l1 = loadL1();
-  assert.equal(loadCatalog().length, 54, 'the catalog has all 54 L1 entries');
+  assert.equal(loadCatalog().length, 57, 'the catalog has all 57 L1 entries (54 census + 3 authored)');
   const rows = buildIndex({ l1, library: lib, bindings: BINDINGS });
-  assert.equal(rows.filter(r => r.layer === 'L1').length, 54);
+  assert.equal(rows.filter(r => r.layer === 'L1').length, 57);
   assert.deepEqual(rows.filter(r => r.layer !== 'L1').map(r => r.id).sort(), [own.hash, skill.hash, inst.hash, 'B:sheets.append', 'B:mail.send'].sort());
   assert.equal(new Set(rows.map(r => r.id)).size, rows.length, 'ids are unique');
   for (const r of rows) {

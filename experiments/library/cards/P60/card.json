@@ -1,0 +1,70 @@
+{
+  "id": "P60", "layer": "L1", "version": 1,
+  "name": "SLA / obligation clock (pause, resume, business calendar, effective-dated editions)", "short": "obligation-clock", "family": "async", "tier": "S", "constructs": [2, 4, 5, 10, 18, 19],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (CASES reads it)", "out": { "type": "object", "required": ["clocks"], "properties": { "clocks": { "type": "array", "items": { "type": "object",
+    "required": ["id", "state", "policyEdition", "calendarEditions", "targetMinutes", "elapsedMinutes", "remainingMinutes", "met", "breached", "dueAt", "warnings"], "properties": {
+      "state": { "enum": ["not-started", "running", "paused", "stopped"] }, "elapsedMinutes": { "type": "number" }, "met": { "type": "boolean" }, "breached": { "type": "boolean" },
+      "dueAt": { "type": ["string", "null"] }, "warnings": { "type": "array", "items": { "type": "object", "required": ["fraction", "reached", "at"] } } } } } } } },
+  "slots": [
+    { "name": "CASES", "type": "path", "required": true, "doc": "the obligations, each with an id" },
+    { "name": "AS_OF", "type": "path", "required": true, "doc": "evaluation instant, ISO with Z or offset; never the wall clock" },
+    { "name": "EVENTS", "type": "fn", "required": true, "params": ["case"], "doc": "case -> its events" },
+    { "name": "AT", "type": "fn", "required": true, "params": ["event"], "doc": "event -> ISO instant with Z or offset" },
+    { "name": "KIND", "type": "fn", "required": true, "params": ["event"], "doc": "event -> event name" },
+    { "name": "START_ON", "type": "enum", "required": true },
+    { "name": "STOP_ON", "type": "enum", "required": true },
+    { "name": "PAUSE_ON", "type": "enum", "required": false },
+    { "name": "RESUME_ON", "type": "enum", "required": false },
+    { "name": "IGNORE_ON", "type": "enum", "required": false, "doc": "known events that leave the clock alone; any other name deopts" },
+    { "name": "TARGET_KEY", "type": "fn", "required": true, "params": ["case"], "doc": "case -> key of the policy targets (e.g. priority)" },
+    { "name": "POLICY", "type": "schema", "required": true, "doc": "{editions: [{edition, effectiveFrom, effectiveTo?, targets: {key: business minutes}, warnings: [fractions]}]}" },
+    { "name": "CALENDAR", "type": "schema", "required": true, "doc": "{timezone: IANA, editions: [{edition, effectiveFrom, effectiveTo?, week: {mon: [[HH:MM, HH:MM]]}, holidays: [YYYY-MM-DD]}]}" },
+    { "name": "HORIZON_DAYS", "type": "int", "range": [1, 1000], "bound": true, "required": true, "default": 400 },
+    { "name": "MAX_CASES", "type": "int", "range": [1, 5000], "bound": true, "required": true, "default": 1000 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Must each case be answered or resolved within a time limit that counts only business hours and stops while the case waits on someone outside the team?" },
+    { "id": "J2", "type": "choice", "instructions": "What does the clock count?", "criteria": { "business-time": "business hours on a calendar", "calendar-time": "every hour, 24x7", "business-days": "whole business days", "none": "no time limit" } }
+  ],
+  "checklist": [
+    { "text": "Start, pause, resume and stop are named event sets; an event in none of them deopts instead of being guessed.", "code": null, "enforcedBy": "guard known-event", "minedFrom": ["web:servicenow.com/docs zurich SLA conditions", "web:support.atlassian.com/jira-service-management-cloud/docs/set-up-sla-conditions/"] },
+    { "text": "Time counts only inside the calendar's business windows, outside holidays, in the calendar's own time zone (DST by the runtime tz database).", "code": null, "enforcedBy": "invariant business-within-wall" },
+    { "text": "Breach is elapsed > target; warnings are fractions of the target; reaching the target exactly is on time.", "code": null },
+    { "text": "Targets and calendars come in effective-dated editions (G18): the policy edition in force on the start date, the calendar edition per day; outputs name both.", "code": null, "enforcedBy": "guards policy-edition-in-force, calendar-edition-in-force" },
+    { "text": "The evaluation instant is an input; the solver never reads the wall clock, and events after it deopt.", "code": null, "enforcedBy": "guard not-after-as-of" },
+    { "text": "A reopen or reset (start after stop) is a new obligation, not this clock.", "code": null, "enforcedBy": "guard single-cycle" },
+    { "text": "Timestamps carry Z or an offset; a local time without one deopts.", "code": null, "enforcedBy": "guard event-time" },
+    { "text": "Day-count deadlines (end of the Nth business day) are not this card's rounding; state them as business minutes or decide them with P58.", "code": null },
+    { "text": "The scan is bounded by HORIZON_DAYS; one clock per case.", "code": "UNBOUNDED", "enforcedBy": "guard within-horizon; invariant one-clock-per-case" }
+  ],
+  "rules": [ { "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariants business-within-wall, one-clock-per-case" } ],
+  "minedFrom": ["web:servicenow.com/docs (SLA conditions; Create an SLA definition)", "web:support.atlassian.com/jira-service-management-cloud/docs/set-up-sla-conditions/"],
+  "companions": [{ "id": "P34", "why": "the envelope's timer at dueAt" }, { "id": "P58", "why": "targets by a decision table" }],
+  "tags": ["async", "finance", "sla", "editions"],
+  "example": { "slots": {
+    "CASES": "inputs.tickets",
+    "AS_OF": "inputs.asOf",
+    "EVENTS": "(c) => c.events",
+    "AT": "(e) => e.at",
+    "KIND": "(e) => (e.type === 'status' ? 'status:' + e.to : e.type)",
+    "START_ON": ["created"],
+    "STOP_ON": ["status:resolved"],
+    "PAUSE_ON": ["status:waiting-customer"],
+    "RESUME_ON": ["status:in-progress"],
+    "IGNORE_ON": ["comment", "status:open"],
+    "TARGET_KEY": "(c) => c.priority",
+    "POLICY": { "editions": [
+      { "edition": "sla-2026a", "effectiveFrom": "2026-01-01", "effectiveTo": "2026-10-13", "targets": { "P1": 240, "P2": 480, "P3": 1440 }, "warnings": [0.5, 0.75] },
+      { "edition": "sla-2026b", "effectiveFrom": "2026-10-13", "targets": { "P1": 180, "P2": 480, "P3": 1200 }, "warnings": [0.75] } ] },
+    "CALENDAR": { "timezone": "Europe/London", "editions": [
+      { "edition": "cal-2026a", "effectiveFrom": "2026-01-01", "effectiveTo": "2026-10-13",
+        "week": { "mon": [["09:00", "17:00"]], "tue": [["09:00", "17:00"]], "wed": [["09:00", "17:00"]], "thu": [["09:00", "17:00"]], "fri": [["09:00", "17:00"]] },
+        "holidays": ["2026-01-01", "2026-04-03", "2026-04-06", "2026-05-04", "2026-05-25", "2026-08-31", "2026-10-12"] },
+      { "edition": "cal-2026b", "effectiveFrom": "2026-10-13",
+        "week": { "mon": [["08:00", "18:00"]], "tue": [["08:00", "18:00"]], "wed": [["08:00", "18:00"]], "thu": [["08:00", "18:00"]], "fri": [["08:00", "18:00"]] },
+        "holidays": ["2026-12-25", "2026-12-28"] } ] },
+    "HORIZON_DAYS": 60,
+    "MAX_CASES": 100
+  } }
+}

@@ -2454,6 +2454,116 @@
      "instructions": "Does the caller pass the list of actions to perform as input?"
     }
    ]
+  },
+  {
+   "id": "P58",
+   "layer": "L1",
+   "name": "decision table with hit policies (DMN, effective-dated editions)",
+   "short": "decision-table-with-hit-policies",
+   "gist": "DMN, effective-dated editions",
+   "family": "branch",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": null,
+   "constructs": [
+    2,
+    4,
+    5,
+    10
+   ],
+   "support": {
+    "items": 0,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "U"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the outcome for each case fixed by a table of rules over a few case attributes, such as a fee schedule, an eligibility grid or a routing matrix?"
+    }
+   ],
+   "origin": "authored"
+  },
+  {
+   "id": "P59",
+   "layer": "L1",
+   "name": "saga planner (reverse-order compensation, idempotent commands)",
+   "short": "saga-planner",
+   "gist": "reverse-order compensation, idempotent commands",
+   "family": "failure",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": null,
+   "constructs": [
+    2,
+    4,
+    5,
+    10,
+    15,
+    20,
+    23
+   ],
+   "support": {
+    "items": 0,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "U"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does the task run several steps with effects in other systems where, if a later step fails, the earlier completed steps must be undone by compensating actions?"
+    }
+   ],
+   "origin": "authored"
+  },
+  {
+   "id": "P60",
+   "layer": "L1",
+   "name": "SLA / obligation clock (pause, resume, business calendar, effective-dated editions)",
+   "short": "sla-obligation-clock",
+   "gist": "pause, resume, business calendar, effective-dated editions",
+   "family": "async",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": null,
+   "constructs": [
+    2,
+    4,
+    5,
+    10,
+    18,
+    19
+   ],
+   "support": {
+    "items": 0,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "U"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must each case be answered or resolved within a time limit that counts only business hours and stops while the case waits on someone outside the team?"
+    }
+   ],
+   "origin": "authored"
   }
  ]
 }

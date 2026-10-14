@@ -1,0 +1,12 @@
+{
+  "name": "no-match",
+  "note": "No start event: the clock never started, so there is no policy edition, target or due instant (typed nulls), and nothing to wake for.",
+  "task": { "prompt": "Report each ticket's SLA clock as of the given time.", "inputs": { "asOf": "2026-10-14T15:00:00+01:00", "tickets": [
+    { "id": "k5", "priority": "P2", "events": [
+      { "at": "2026-10-14T09:00:00+01:00", "type": "status", "to": "open" },
+      { "at": "2026-10-14T09:05:00+01:00", "type": "comment" } ] } ] } },
+  "answers": {},
+  "expect": { "status": "ok", "output": { "clocks": [
+    { "id": "k5", "state": "not-started", "policyEdition": null, "calendarEditions": [], "targetMinutes": null, "elapsedMinutes": 0, "remainingMinutes": null,
+      "met": false, "breached": false, "dueAt": null, "warnings": [] } ] } }
+}

@@ -58,6 +58,20 @@
 // verify is the SDK's (the parent's code). Events: agent-end (outcome ok | void | failed) or agent-refused.
 // Registry entries record a static scan of the solver for code execution (agent-node.mjs codeExecutionOf); a call to an
 // entry with findings is refused 'executes-code': a compiled callee never runs code it was handed.
+//
+// Review fixes (design/FLOW-V3-SLICE2.md §Review):
+// - Environment faults (C1/I5): a child's own error or any model call it made, the local interpreter's error and an agent
+//   runner's error with a code in runner.mjs ENV_FAULTS is recorded on the event (envFault) and counted in
+//   totals().envFaults / envFaultCodes (absent when none), so the stream retries the run as it retries a v2 run that met a
+//   fault; a child that failed with an environment fault is never handed to the interpreter (onDeopt 'interpret').
+// - Agent keys (C3) include the model and the tool list (and a map/wide item's retry path, C7): escalating a node to a
+//   stronger model is a new key, not the weaker model's memo.
+// - The per-run limit (C6) counts nodes (a retry of an admitted node is not a new node); agent.sessionRuns (default 1) scales
+//   it for a host that serves several solver runs (compile.mjs: the builder's session and the host check).
+// - agent.textLabel defaults to 'third-party' (I4: D10 fails closed; the stream always declares it).
+// - port.resumed(req, value) (C2/T3): run-compiled's resume port reports the answers it served from the first attempt, so
+//   this host logs them (memo 'resume', $0) and calls.jsonl covers the whole run.
+// - Harvest (I8) drops a script that is byte-identical to a file the node was given (a shipped decoder copied out).
 import path from 'node:path';
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -68,6 +82,7 @@ import { AGENT_TOOLS, DEFAULT_AGENT_TOOLS, MAX_AGENT_TOOLS, DEFAULT_AGENT_FLOOR_
 import { compileDataSchema, validateData } from '../../src/validate.mjs';
 import { checkProfile, checkOptionsOf, profileSupports, PROFILE_SCHEMA } from './profile.mjs';
 import { reserveFor } from '../lib/services.mjs';
+import { ENV_FAULTS } from '../lib/runner.mjs';
 import { FoundryError } from '../../src/data.mjs';
 
 export const FLOW_V3 = path.resolve(new URL('./flow-v3.mjs', import.meta.url).pathname);
@@ -75,6 +90,7 @@ export const CALL_MODEL = 'flow:call', ROOT_SPAN = 'root', CALL_PROTOCOL = 1;   
 export const DEFAULT_MAX_DEPTH = 3, HARD_MAX_DEPTH = 8, MAX_TREE_CHILDREN = 1000, DEFAULT_BUDGET_FLOOR_USD = 0.001;
 // FLOW-V3 §1.3 agentFloorUsd: about the Haiku agent's whole-task cost on records ($0.103); an interpreted child below it is refused.
 export const DEFAULT_INTERPRET_FLOOR_USD = 0.1;
+export const MAX_SESSION_RUNS = 1000;
 export const REGISTRY_FILE = 'registry.jsonl';
 export const REFUSALS = Object.freeze(['bad-request', 'unknown-hash', 'revoked', 'recursion', 'depth', 'tree-size', 'effects', 'input-schema',
   'outside-profile', 'BUDGET_TOO_SMALL', 'budget-exceeds-parent', 'BUDGET_TREE', 'executes-code']);
@@ -91,8 +107,15 @@ const short = (v, n = 300) => String(v?.message ?? v).slice(0, n);
 // The same digests flow-v3.mjs computes (canonical JSON is run-compiled's canonicalJson, which equals flow-v2's canonical).
 export const inputDigestOf = input => sha256(canonicalJson(input));
 export const outDigestOf = v => (v === undefined ? null : sha256(canonicalJson(v)).slice(0, 16));
-// promptDigest (slice 2, a per-call prompt only) joins the key; without one the key is slice 1's.
-export const callKeyOf = ({ callee, inputDigest, parentPath, promptDigest }) => sha256(canonicalJson({ callee, inputDigest, parentPath, promptDigest }));
+// promptDigest (slice 2, a per-call prompt only) joins the key; without one the key is slice 1's. itemAttempt (review fix
+// C7: the attempt path of a retried map/wide item, as flow-v3 sends it) joins it only on a retry.
+export const callKeyOf = ({ callee, inputDigest, parentPath, promptDigest, itemAttempt }) => sha256(canonicalJson({ callee, inputDigest, parentPath, promptDigest, itemAttempt }));
+// The environment-fault code of a run, interpreter or runner result ({error: {code}} or {meta: {errors: {code: n}}}), or null.
+export const envFaultOf = r => {
+  if (!r || typeof r !== 'object') return null;
+  if (ENV_FAULTS.has(r.error?.code)) return r.error.code;
+  return Object.keys(r.meta?.errors ?? {}).find(c => ENV_FAULTS.has(c)) ?? null;
+};
 export const promptDigestOf = prompt => (typeof prompt === 'string' ? sha256(prompt) : undefined);
 // A library hash: sha256 over the solver's bytes, a NUL, and the contract's canonical JSON (FLOW-V3 §1.2).
 export const libraryHashOf = (solveSource, contract) =>
@@ -161,6 +184,8 @@ export function createRegistry({ dir = null } = {}) {
 // input (from the event's input / inputFile) and scored (for an outside-profile refusal). Missed reuse that never reached
 // the host (a solver re-deriving what the library holds) is not visible here: it is read from the solver's span tree.
 export function classifyReuse(event, { oraclePass = null, calleeWouldPass = null } = {}) {
+  // Review fix (I7): a call the host ran outside its profile under novelMode 'warn' is detected drift, not plain reuse.
+  if (event?.kind === 'call-end' && event.warned) return oraclePass == null ? 'warned' : oraclePass ? 'warned-correct' : 'warned-wrong';
   if (event?.kind === 'call-end') return oraclePass == null ? 'used' : oraclePass ? 'correct' : 'wrong';
   // A locally interpreted child (slice 2) is classified by the reuse decision it replaced: the refusal or the deopt.
   if (event?.kind === 'interpret-child') return classifyReuse({ ...event, kind: event.refused ? 'call-refused' : 'call-deopt' }, { oraclePass, calleeWouldPass });
@@ -186,9 +211,12 @@ export function agentConfigOf(agent, { allowedModels = null, modelPort = null } 
     runner: a.runner ?? null, models, model: a.model ?? null, tools, defaultTools,
     maxConcurrent: int('maxConcurrent', a.maxConcurrent ?? DEFAULT_AGENT_CONCURRENCY, 1, DEFAULT_AGENT_CONCURRENCY),
     maxPerRun: int('maxPerRun', a.maxPerRun ?? DEFAULT_AGENTS_PER_RUN, 1, DEFAULT_AGENTS_PER_RUN),
+    // A host that serves several solver runs (a builder session, a host check over many cases) allows maxPerRun per run.
+    sessionRuns: int('sessionRuns', a.sessionRuns ?? 1, 1, MAX_SESSION_RUNS),
     maxDepth: int('maxDepth', a.maxDepth ?? DEFAULT_MAX_AGENT_DEPTH, 0, HARD_MAX_DEPTH),
     stallRestarts: int('stallRestarts', a.stallRestarts ?? DEFAULT_STALL_RESTARTS, 0, MAX_STALL_RESTARTS),
-    floorUsd: a.floorUsd ?? DEFAULT_AGENT_FLOOR_USD, stallMs: a.stallMs ?? null, textLabel: a.textLabel ?? 'synthetic',
+    // D10 fails closed (review fix I4): without a declaration the run's text is third-party and no node runs.
+    floorUsd: a.floorUsd ?? DEFAULT_AGENT_FLOOR_USD, stallMs: a.stallMs ?? null, textLabel: a.textLabel ?? 'third-party',
     maxTimeoutMs: a.maxTimeoutMs ?? 30 * 60 * 1000,
   };
   if (cfg.model != null && typeof cfg.model !== 'string') throw new Error('createCallHost: agent.model must be a model id');
@@ -206,6 +234,8 @@ function returnsErrors(schema, value) {
   catch (e) { return (e.details ?? [{ message: String(e.message ?? e) }]).slice(0, 5).map(x => `${x.instancePath ?? ''} ${x.message ?? ''}`.trim()); }
 }
 const AGENT_SPAN_RE = /^agent:[^/]{1,200}#\d+$/;
+// The item attempt path a request carries (flow-v3 itemAttemptOf: '1', '0.2'), or undefined.
+const itemAttemptOf = req => (typeof req?.itemAttempt === 'string' && /^\d{1,2}(?:\.\d{1,2}){0,15}$/.test(req.itemAttempt) ? req.itemAttempt : undefined);
 
 const safe = s => String(s).replace(/[^A-Za-z0-9._-]+/g, '_').slice(0, 80);
 const dirOf = spanPath => spanPath.split('/').map(safe).join('__').slice(0, 200);
@@ -226,7 +256,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   for (const row of journal ?? []) if (row?.key && row.result?.status === 'ok') memo.set(row.key, { result: row.result, replayed: true });   // call and agent rows (keys differ)
   const tree = { children: 0 };
   const agentCfg = agentConfigOf(agent, { allowedModels, modelPort });
-  const agentState = { admitted: 0, running: 0, queue: [], harvests: [], ordinals: new Map() };
+  const agentState = { admitted: 0, started: 0, nodePaths: new Set(), running: 0, queue: [], harvests: [], ordinals: new Map() };
+  const envFaults = [];   // review fix C1/I5: {code, path, kind} per environment fault met anywhere in the tree
 
   const newScope = ({ span, parent, path: p, depth, budgetUsd, ancestors, ledger: l = null }) => {
     const s = { span, parent, path: p, depth, budgetUsd, spentUsd: 0, reservedUsd: 0, inFlight: 0, modelReservedUsd: 0, ancestors, ledger: l, ordinals: new Map(), usedSpans: new Set(), calls: 0 };
@@ -245,9 +276,11 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     if (amount < floor) return ['BUDGET_TOO_SMALL', { budgetUsd: amount, floorUsd: floor }];
     const remaining = remainingOf(scope, gatewayHoldUsd);
     if (amount < remaining) return null;
-    // It would fit if the siblings in flight were done: the budget tree, not this call, is short.
-    if (scope.inFlight > 0 && amount < remaining + scope.reservedUsd) {
+    // It would fit if the siblings in flight were done: the budget tree, not this call, is short. The scope's own model
+    // calls in flight hold reservations too (review fix C10), so they count as siblings here.
+    if ((scope.inFlight > 0 || scope.modelReservedUsd > 0) && amount < remaining + scope.reservedUsd + scope.modelReservedUsd) {
       return ['BUDGET_TREE', { budgetUsd: amount, remainingUsd: usd(remaining), shortfallUsd: usd(amount - remaining), inFlight: scope.inFlight, reservedInFlightUsd: usd(scope.reservedUsd),
+        ...(scope.modelReservedUsd > 0 ? { modelReservedUsd: usd(scope.modelReservedUsd) } : {}),
         parentBudgetUsd: scope.budgetUsd, parentSpentUsd: usd(scope.spentUsd), rule: 'Σ reservations in flight + this reservation < parent budget − spent' }];
     }
     return ['budget-exceeds-parent', { budgetUsd: amount, remainingUsd: usd(remaining) }];
@@ -297,7 +330,32 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
         scope.spentUsd += (r?.costUsd ?? 0); scope.calls++;
         return r;
       },
+      // Review fix (C2/T3): run-compiled's resume port served this flow:call answer from the first attempt at $0.
+      resumed(req, value) { if (req?.modelId === CALL_MODEL) noteResumed(req, value, scope); },
     };
+  }
+
+  // A flow:call or agent answer served by the run-level resume port (run-compiled.mjs createResumePort): logged as this
+  // host's event with memo 'resume' and no spend, so the retried attempt's calls.jsonl and totals() cover every call of the
+  // run (R4 scoreReuse reads the rows by name and inputDigest). Only completed answers are served, so only those come here.
+  function noteResumed(req, value, scope) {
+    let request = null; try { request = JSON.parse(req.prompt); } catch {}
+    if (!request || !value || typeof value !== 'object' || !['ok', 'interpreted'].includes(value.status)) return;
+    const agentOp = request.op === 'agent';
+    if (typeof value.span === 'string') scope.usedSpans.add(value.span);
+    const inputDigest = !agentOp && request.input !== undefined ? inputDigestOf(request.input) : null;
+    const promptDigest = !agentOp ? promptDigestOf(typeof request.prompt === 'string' ? request.prompt : undefined) : undefined;
+    const inputRef = !inputDigest ? {} : workRoot ? { inputFile: save('inputs', `${inputDigest}.json`, request.input) } : { input: request.input };
+    const outDigest = value.outDigest ?? outDigestOf(value.output);
+    const outputRef = workRoot ? { outputFile: save('outputs', `${outDigest}.json`, value.output) } : {};
+    const kind = agentOp ? 'agent-end' : value.status === 'interpreted' ? 'interpret-child' : 'call-end';
+    events.push({ at: new Date().toISOString(), kind, ...(agentOp ? { op: 'agent', model: value.model ?? null, tools: value.tools ?? null, attempt: value.attempt ?? null } : {}), arm, taskKey,
+      key: value.key ?? null, name: typeof request.name === 'string' ? request.name : null, ...(agentOp ? {} : { callee: request.callee ?? null, calleeVersion: value.calleeVersion ?? null }),
+      span: value.span ?? null, parent: scope.span, path: value.path ?? null, depth: value.depth ?? scope.depth + 1, ...(inputDigest ? { inputDigest } : {}), ...(promptDigest ? { promptDigest } : {}),
+      ...inputRef, budgetUsd: request.budgetUsd ?? null, outcome: value.interpreted ? (value.refused ? 'refused' : 'deopt') : 'ok', ...(value.refused ? { refused: value.refused } : {}),
+      ...(value.interpreted ? { interpreted: value.interpreted, localDeopt: true } : {}), outDigest, ...((agentOp || !workRoot) ? { output: value.output } : {}), ...outputRef,
+      spentUsd: 0, reservedUsd: 0, memo: 'resume', resumed: true, ms: 0 });
+    log(`${kind} ${value.path ?? '(resumed)'} resumed $0`);
   }
 
   async function runChild(entry, task, child, timeoutMs) {
@@ -308,7 +366,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
         agent: request => handleAgent(request, child).then(r => r.value), model: req => childPort.call(req) };
       const r = (await entry.stub(task.inputs, ctx)) ?? {};
       const status = r.status ?? 'ok';
-      let out = { status, output: r.output ?? null, deopt: r.deopt ?? null, error: r.error ?? null, costUsd: usd((r.costUsd ?? 0) + child.spentUsd), costUnknown: false };
+      let out = { status, output: r.output ?? null, deopt: r.deopt ?? null, error: r.error ?? null, costUsd: usd((r.costUsd ?? 0) + child.spentUsd), costUnknown: false, ...(r.meta ? { meta: r.meta } : {}) };
       if (status === 'ok') {
         const check = validateOutput(entry.contract.output, out.output);
         if (!check.valid) out = { ...out, status: 'invalid', meta: { schemaErrors: check.errors } };
@@ -347,7 +405,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     const childUsd = typeof req.budgetUsd === 'number' && Number.isFinite(req.budgetUsd) ? req.budgetUsd : null;
     const inputDigest = req.input === undefined ? null : inputDigestOf(req.input);
     const prompt = typeof req.prompt === 'string' ? req.prompt : null, promptDigest = promptDigestOf(prompt ?? undefined);
-    const key = callee && inputDigest ? callKeyOf({ callee, inputDigest, parentPath: scope.path, promptDigest }) : null;
+    const itemAttempt = itemAttemptOf(req);
+    const key = callee && inputDigest ? callKeyOf({ callee, inputDigest, parentPath: scope.path, promptDigest, itemAttempt }) : null;
     const onRefuse = ON_REFUSE.includes(req.onRefuse) ? req.onRefuse : 'deopt', onDeopt = ON_DEOPT.includes(req.onDeopt) ? req.onDeopt : 'propagate';
     let entry = null, span = null, applicability = { checked: false }, warning = null;
     if (name) {
@@ -377,7 +436,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       const outputRef = !ok ? {} : workRoot ? { outputFile: save('outputs', `${outDigestOf(result.output)}.json`, result.output) } : { output: result.output };
       // outcome: the reuse decision (an interpreted child keeps the refusal or deopt it replaced).
       const outcome = result.interpreted ? (result.refused ? 'refused' : 'deopt') : result.status;
-      events.push({ at: new Date().toISOString(), kind, arm, taskKey, key, name, callee, calleeVersion: entry?.version ?? null, calleeEvidence: entry?.evidence ?? null,
+      if (result.envFault) { value.envFault = result.envFault; envFaults.push({ code: result.envFault, path: childPath, kind }); }
+      events.push({ at: new Date().toISOString(), kind, arm, taskKey, key, name, callee, calleeVersion: entry?.version ?? null, calleeEvidence: entry?.evidence ?? null, ...(result.envFault ? { envFault: result.envFault } : {}),
         span, parent: scope.span, path: childPath, depth, inputDigest, ...(promptDigest ? { promptDigest } : {}), ...inputRef, budgetUsd: childUsd, outcome,
         ...(result.refused ? { refused: result.refused, refusedDetail: result.detail ?? null } : {}),
         applicability, ...(warning ? { warned: true } : {}), ...(result.status === 'deopt' || result.deopt ? { deopt: result.deopt, childStatus: result.childStatus } : {}),
@@ -406,7 +466,9 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       scope.spentUsd += r.costUsd;
       const interpreted = { ok: r.ok, by: 'interpreter', traceId: r.traceId, costUsd: r.costUsd, ...(r.ok ? {} : { error: r.error }) };
       if (r.ok) return finish({ status: 'interpreted', output: r.output, refused, detail, interpreted }, { costUsd: r.costUsd, costUnknown: r.costUnknown });
-      return finish({ status: 'deopt', childStatus: 'interpret-failed', refused, detail, interpreted, deopt: { kind: 'interpret-child', name: refused, detail: r.error ?? null } }, { costUsd: r.costUsd, costUnknown: r.costUnknown });
+      const envFault = envFaultOf({ error: r.error });
+      return finish({ status: 'deopt', childStatus: 'interpret-failed', refused, detail, interpreted, deopt: { kind: 'interpret-child', name: refused, detail: r.error ?? null }, ...(envFault ? { envFault } : {}) },
+        { costUsd: r.costUsd, costUnknown: r.costUnknown });
     };
 
     try {
@@ -448,13 +510,16 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       // Reserve, run, release. The reservation returns to the caller when the child ends; its spend is booked to the caller.
       tree.children++;
       const child = newScope({ span, parent: scope.span, path: childPath, depth, budgetUsd: childUsd, ancestors: [...scope.ancestors, callee] });
-      let r, interp = null;
+      let r, interp = null, childFault = null;
       await reserved(childUsd, async () => {
         try { r = await runChild(entry, task, child, timeoutMs); }
         catch (error) { r = { status: 'crash', error: { code: error.code ?? 'CALL_HOST', message: short(error, 400) }, costUsd: usd(child.spentUsd) }; }
+        // Review fix (C1/I5): an environment fault the child met (its own error, or any model call it made) is recorded; a
+        // child that failed with one is not interpreted: the run is retried as a whole, as a v2 run that met a fault is.
+        childFault = envFaultOf(r);
         // onDeopt 'interpret' (FLOW-V3 §1.5): a child that did not return a typed answer is interpreted with what it left of
         // the reservation, inside the same reservation.
-        if (r.status !== 'ok' && ['interpret', 'interpret-child'].includes(onDeopt) && interpreter) {
+        if (r.status !== 'ok' && !childFault && ['interpret', 'interpret-child'].includes(onDeopt) && interpreter) {
           const left = usd(childUsd - (r.costUsd ?? 0));
           interp = left >= interpretFloorUsd ? await interpretChild({ entry, task, span, childPath, budgetUsd: left, timeoutMs, reason: r.status })
             : { ok: false, error: { code: 'BUDGET_TOO_SMALL', budgetUsd: left, floorUsd: interpretFloorUsd }, costUsd: 0, costUnknown: false, traceId: null, skipped: true };
@@ -467,7 +532,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       if (r.status === 'ok') {
         result = { status: 'ok', output: r.output, ...trace };
         memo.set(key, { result: { status: 'ok', output: r.output, ...trace }, replayed: false });
-        journalOut.push({ key, callee, calleeVersion: entry.version, inputDigest, ...(promptDigest ? { promptDigest } : {}), parentPath: scope.path, result: { status: 'ok', output: r.output, ...trace } });
+        journalOut.push({ key, callee, calleeVersion: entry.version, inputDigest, ...(promptDigest ? { promptDigest } : {}), ...(itemAttempt ? { itemAttempt } : {}), parentPath: scope.path, result: { status: 'ok', output: r.output, ...trace } });
       } else if (r.status === 'invalid') {
         result = { status: 'deopt', childStatus: 'invalid', deopt: { kind: 'output-schema', name: 'contract.output', detail: { errors: r.meta?.schemaErrors ?? r.error?.message ?? null } }, ...trace };
       } else if (r.status === 'deopt') {
@@ -480,6 +545,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
         result = interp.ok ? { ...result, status: 'interpreted', output: interp.output, interpreted }
           : { ...result, interpreted, childStatus: result.childStatus };
       }
+      const envFault = childFault ?? (interp && !interp.ok ? envFaultOf({ error: interp.error }) : null);
+      if (envFault) result = { ...result, envFault };
       return finish(result, { costUsd, costUnknown: !!r.costUnknown || !!interp?.costUnknown, child });
     } catch (error) {
       // A host fault before the child ran (a malformed registry entry, a profile that cannot be read): a child deopt.
@@ -506,7 +573,12 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     const nodePath = span ? `${scope.path}/${span}` : null, depth = scope.depth + 1;
     const filesDigest = sha256(canonicalJson(files)), instructionsDigest = typeof req.instructions === 'string' ? sha256(req.instructions) : null;
     const returnsDigest = sha256(canonicalJson(req.returns ?? null)), inputsDigest = req.inputs === undefined ? null : sha256(canonicalJson(req.inputs));
-    const key = name ? sha256(canonicalJson({ op: 'agent', name, parentPath: scope.path, filesDigest, instructionsDigest, returnsDigest, inputsDigest, attempt, retryReason })) : null;
+    const itemAttempt = itemAttemptOf(req);
+    // Review fix (C3): the key names the model and the tools the node runs with (resolved below; a refusal before that point
+    // has neither), so a node escalated to a stronger model or other tools is a new node, never a memo of the weaker one.
+    const keyOf = (m, t) => (name ? sha256(canonicalJson({ op: 'agent', name, parentPath: scope.path, filesDigest, instructionsDigest, returnsDigest, inputsDigest, attempt, retryReason,
+      model: m ?? undefined, tools: t ? [...t].sort() : undefined, itemAttempt })) : null);
+    let key = keyOf(null, null);
     let model = null, tools = null;
     const fileBytes = Object.values(files).reduce((s, t) => s + (typeof t === 'string' ? Buffer.byteLength(t) : 0), 0);
 
@@ -522,7 +594,9 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
         key, span, path: nodePath, depth, model, tools, attempt, agent: agentInfo, ...(result.memo ? { memo: result.memo } : {}), spentUsd: usd(costUsd), reservedUsd };
       // The node's value stays on its event (W-BED-R5-NOTES item 17: the decode hand-off a bed scores, under the node's name).
       const outputRef = !ok ? {} : { output: result.output, ...(workRoot ? { outputFile: save('outputs', `${outDigestOf(result.output)}.json`, result.output) } : {}) };
+      if (result.envFault) { value.envFault = result.envFault; envFaults.push({ code: result.envFault, path: nodePath, kind }); }
       events.push({ at: new Date().toISOString(), kind, op: 'agent', arm, taskKey, key, name, span, parent: scope.span, path: nodePath, depth, model, tools, budgetUsd: amount, attempt,
+        ...(itemAttempt ? { itemAttempt } : {}), ...(result.envFault ? { envFault: result.envFault } : {}), ...(result.harvestDroppedShipped ? { harvestDroppedShipped: result.harvestDroppedShipped } : {}),
         ...(retryReason ? { retryReason } : {}), filesDigest, instructionsDigest, returnsDigest, files: Object.keys(files).length, fileBytes, cluster: filesClusterOf(files),
         outcome: result.status, ...(result.refused ? { refused: result.refused, refusedDetail: result.detail ?? null } : {}), ...(result.void ? { void: result.void } : {}),
         ...(result.error ? { error: result.error } : {}), ...(ok ? { outDigest: value.outDigest, ...outputRef } : {}), ...(result.harvestFile ? { harvestFile: result.harvestFile } : {}),
@@ -550,11 +624,16 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       if (req.inputs !== undefined && JSON.stringify(req.inputs) === undefined) return refuse('bad-request', { problem: 'inputs must be JSON' });
       // D10: an agent node gets text only from a run whose text the stream declared synthetic.
       if (agentCfg.textLabel !== 'synthetic') return refuse('third-party-text', { label: agentCfg.textLabel });
+      key = keyOf(model, tools);
       const hit = memo.get(key);
       if (hit) return finish({ ...hit.result, memo: hit.replayed ? 'replay' : 'repeat' });
-      if (agentState.admitted >= agentCfg.maxPerRun) return refuse('per-run-limit', { maxPerRun: agentCfg.maxPerRun });
+      // Review fix (C6): the limit counts nodes (a first attempt, or a retry of a node this host never admitted), not
+      // attempts, per solver run (sessionRuns runs for a builder session or a host check).
+      const startsNode = attempt === 0 || !agentState.nodePaths.has(nodePath), limit = agentCfg.maxPerRun * agentCfg.sessionRuns;
+      if (startsNode && agentState.started >= limit) return refuse('per-run-limit', { maxPerRun: agentCfg.maxPerRun, ...(agentCfg.sessionRuns > 1 ? { sessionRuns: agentCfg.sessionRuns } : {}) });
       const no = budgetRefusalFor(scope, amount, agentCfg.floorUsd, gatewayHoldUsd);
       if (no) return refuse(no[0], no[1]);
+      if (startsNode) { agentState.started++; agentState.nodePaths.add(nodePath); }
       agentState.admitted++;
       const timeoutMs = Math.min(agentCfg.maxTimeoutMs, Number.isInteger(req.timeoutMs) && req.timeoutMs > 0 ? req.timeoutMs : 10 * 60 * 1000);
       const stallMs = Number.isInteger(req.stallMs) && req.stallMs > 0 ? req.stallMs : agentCfg.stallMs;
@@ -597,11 +676,18 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
         const errs = returnsErrors(req.returns, run.answer);
         result = errs ? { status: 'failed', error: { code: 'RETURNS_SCHEMA', errors: errs } } : { status: 'ok', output: run.answer };
       }
-      result = { ...result, run, restarts, stalls };
-      // Harvest (FLOW-V3 §2.2): an ok node's scripts, task and answer, for a sub-compile once its verify passed.
-      if (result.status === 'ok' && req.harvest !== false && Array.isArray(run.scripts) && run.scripts.length) {
+      // Review fix (C1/I5): an environment fault of the runner (sandbox, launch, rate limit) is recorded and counted.
+      const envFault = envFaultOf(run);
+      result = { ...result, run, restarts, stalls, ...(envFault ? { envFault } : {}) };
+      // Harvest (FLOW-V3 §2.2): an ok node's scripts, task and answer, for a sub-compile once its verify passed. Review fix
+      // (I8): a script byte-identical to a file the node was given (a shipped decoder copied out of files/) is not the
+      // node's own work and is dropped, so a sub-compile never inlines code that came with the inputs.
+      const shipped = new Set(Object.values(files).filter(t => typeof t === 'string').map(t => sha256(t)));
+      const own = Array.isArray(run.scripts) ? run.scripts.filter(x => !shipped.has(sha256(x.text ?? ''))) : [];
+      if (Array.isArray(run.scripts) && own.length < run.scripts.length) result.harvestDroppedShipped = run.scripts.length - own.length;
+      if (result.status === 'ok' && req.harvest !== false && own.length) {
         const record = { name, span, attempt, key, model, cluster: filesClusterOf(files), instructions: req.instructions, files, ...(req.inputs !== undefined ? { inputs: req.inputs } : {}),
-          returns: req.returns, answer: run.answer, scripts: run.scripts.map(x => ({ path: x.path, bytes: x.bytes ?? Buffer.byteLength(x.text ?? ''), source: x.source ?? null, sha256: sha256(x.text ?? ''), text: x.text ?? '' })) };
+          returns: req.returns, answer: run.answer, scripts: own.map(x => ({ path: x.path, bytes: x.bytes ?? Buffer.byteLength(x.text ?? ''), source: x.source ?? null, sha256: sha256(x.text ?? ''), text: x.text ?? '' })) };
         agentState.harvests.push({ key, name, cluster: record.cluster, scripts: record.scripts.length, record: workRoot ? null : record });
         result.harvested = record.scripts.length;
         if (workRoot) result.harvestFile = save('harvest', `${key}.json`, record);
@@ -609,7 +695,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       if (result.status === 'ok') {
         const stored = { status: 'ok', output: run.answer, run: { turns: run.turns ?? null, transcriptSha256: run.transcriptSha256 ?? null, scriptCount: run.scripts?.length ?? 0 } };
         memo.set(key, { result: stored, replayed: false });
-        journalOut.push({ op: 'agent', key, name, parentPath: scope.path, attempt, filesDigest, instructionsDigest, result: stored });
+        journalOut.push({ op: 'agent', key, name, parentPath: scope.path, attempt, model, tools, ...(itemAttempt ? { itemAttempt } : {}), filesDigest, instructionsDigest, result: stored });
       }
       return finish(result, { costUsd: spent, costUnknown });
     } catch (error) {
@@ -655,6 +741,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
         out.agents = { nodes: nodes.length, ok: of('ok'), void: of('void'), failed: of('failed'), refused: of('refused'), spentUsd: usd(nodes.reduce((s, e) => s + (e.spentUsd ?? 0), 0)),
           harvested: agentState.harvests.length, stalls: nodes.reduce((s, e) => s + (e.stalled ?? 0), 0) };
       }
+      // Review fix (C1/I5): environment faults met anywhere in the tree (absent when none, so a slice 2a row is unchanged).
+      if (envFaults.length) { out.envFaults = envFaults.length; out.envFaultCodes = [...new Set(envFaults.map(e => e.code))].sort(); }
       return out;
     },
     writeEvents(file) { mkdirSync(path.dirname(file), { recursive: true }); for (const e of events) appendFileSync(file, JSON.stringify(e) + '\n'); return events.length; },

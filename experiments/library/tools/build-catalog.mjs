@@ -1,4 +1,5 @@
-// Rebuild experiments/library/cards/catalog.json: the 54 L1 catalog entries (L1-PATTERNS.md) as data, so the index
+// Rebuild experiments/library/cards/catalog.json: the 54 census L1 catalog entries (L1-PATTERNS.md) as data, plus any
+// executable card authored outside the census (cards/Pxx/card.json with an id the census lacks: P58-P60), so the index
 // covers every L1 item even where no executable card exists (BUILD-ORDER §2: a card is made executable when first
 // retrieved). $0; reads the design directory only:
 //   out/pattern-census.json   id, name, family, support counts, platforms (the census numbers)
@@ -6,7 +7,7 @@
 //   L1-PATTERNS.md §7 matrix  L0 constructs composed, tier, rung;  §4 / §5  the J1 question
 //
 //   node experiments/library/tools/build-catalog.mjs > experiments/library/cards/catalog.json
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 const DESIGN = new URL('../../../research/jit-20261008/design/library/', import.meta.url);
 const read = rel => readFileSync(new URL(rel, DESIGN), 'utf8');
@@ -46,5 +47,18 @@ const patterns = census.patterns.map(p => ({
   tier: matrix[p.id]?.tier ?? null, tierRaw: matrix[p.id]?.tierRaw ?? null, rung: matrix[p.id]?.rung ?? null, constructs: matrix[p.id]?.constructs ?? [],
   support: { items: p.items, viaNode: p.viaNode, viaToken: p.viaToken, viaPlumbing: p.viaPlumbing, oracle: p.oracle, platforms: p.nPlatforms ?? Object.keys(p.platforms ?? {}).length, grade: grade[p.id] ?? null },
   companions: companions[p.id] ?? [], when: j1[p.id] ? [{ id: 'J1', type: 'noul', instructions: j1[p.id] }] : [],
-})).sort((a, b) => a.id.localeCompare(b.id));
+}));
+// Cards authored outside the census (E-BED §8.1 step 1: P58-P60, written blind from outside sources and frozen in
+// cards/FROZEN-P58-P60.json): an executable card directory whose id the census does not have becomes a catalog entry
+// from its own card.json, with no corpus support (grade U: unmeasured) and no lift companions (none measured).
+const CARDS = new URL('../cards/', import.meta.url);
+const known = new Set(patterns.map(p => p.id));
+for (const dir of readdirSync(CARDS, { withFileTypes: true }).filter(d => d.isDirectory() && /^P\d\d$/.test(d.name) && !known.has(d.name)).map(d => d.name)) {
+  const card = JSON.parse(readFileSync(new URL(`${dir}/card.json`, CARDS), 'utf8'));
+  patterns.push({ id: card.id, layer: 'L1', name: card.name, short: shortName(card.name), gist: gist(card.name), family: card.family,
+    tier: card.tier ?? null, tierRaw: card.tier ?? null, rung: null, constructs: card.constructs ?? [],
+    support: { items: 0, viaNode: 0, viaToken: 0, viaPlumbing: 0, oracle: 0, platforms: 0, grade: 'U' },
+    companions: [], when: (card.when ?? []).filter(j => j.id === 'J1'), origin: 'authored' });
+}
+patterns.sort((a, b) => a.id.localeCompare(b.id));
 process.stdout.write(JSON.stringify({ schema: 'l1-catalog/1', generated: census.generated, generatedBy: 'experiments/library/tools/build-catalog.mjs', patterns }, null, 1) + '\n');

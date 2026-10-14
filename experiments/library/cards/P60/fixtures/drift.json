@@ -1,0 +1,10 @@
+{
+  "name": "drift",
+  "note": "The service desk added a status with no notice ('awaiting-vendor'). Whether it pauses the clock is a policy question, so the solver deopts instead of counting or skipping that time.",
+  "task": { "prompt": "Report each ticket's SLA clock as of the given time.", "inputs": { "asOf": "2026-10-14T15:00:00+01:00", "tickets": [
+    { "id": "k6", "priority": "P2", "events": [
+      { "at": "2026-10-14T09:00:00+01:00", "type": "created" },
+      { "at": "2026-10-14T10:00:00+01:00", "type": "status", "to": "awaiting-vendor" } ] } ] } },
+  "answers": {},
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "known-event" } }
+}

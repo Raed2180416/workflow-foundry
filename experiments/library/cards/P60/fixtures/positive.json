@@ -1,0 +1,32 @@
+{
+  "name": "positive",
+  "note": "Hand-computed in Europe/London (BST, +01:00). k1 starts Fri 9 Oct under sla-2026a (P2 480) and cal-2026a (09-17, Mon 12 Oct a company holiday); from Tue 13 Oct cal-2026b (08-18) applies per day: 60 + 0 + 120 before the pause, 240 after the resume = 420, due 16:00 local. k2 starts Tue 13 Oct under sla-2026b (P1 180): 240 + 120 = 360, breached at 17:00 local. k3 stopped after 45 minutes (met). k4 is paused after 90 minutes; its 08:55 status:open event comes before the start and is ignored.",
+  "task": { "prompt": "Report each ticket's SLA clock as of the given time.", "inputs": { "asOf": "2026-10-14T15:00:00+01:00", "tickets": [
+    { "id": "k1", "priority": "P2", "events": [
+      { "at": "2026-10-09T16:00:00+01:00", "type": "created" },
+      { "at": "2026-10-13T10:00:00+01:00", "type": "status", "to": "waiting-customer" },
+      { "at": "2026-10-14T11:00:00+01:00", "type": "status", "to": "in-progress" },
+      { "at": "2026-10-14T12:00:00+01:00", "type": "comment" } ] },
+    { "id": "k2", "priority": "P1", "events": [
+      { "at": "2026-10-13T14:00:00+01:00", "type": "created" },
+      { "at": "2026-10-14T10:00:00+01:00", "type": "status", "to": "resolved" } ] },
+    { "id": "k3", "priority": "P3", "events": [
+      { "at": "2026-10-14T08:30:00+01:00", "type": "created" },
+      { "at": "2026-10-14T09:15:00+01:00", "type": "status", "to": "resolved" } ] },
+    { "id": "k4", "priority": "P2", "events": [
+      { "at": "2026-10-14T08:55:00+01:00", "type": "status", "to": "open" },
+      { "at": "2026-10-14T09:00:00+01:00", "type": "created" },
+      { "at": "2026-10-14T10:30:00+01:00", "type": "status", "to": "waiting-customer" } ] } ] } },
+  "answers": {},
+  "expect": { "status": "ok", "output": { "clocks": [
+    { "id": "k1", "state": "running", "policyEdition": "sla-2026a", "calendarEditions": ["cal-2026a", "cal-2026b"], "targetMinutes": 480, "elapsedMinutes": 420, "remainingMinutes": 60,
+      "met": false, "breached": false, "dueAt": "2026-10-14T15:00:00.000Z",
+      "warnings": [ { "fraction": 0.5, "reached": true, "at": "2026-10-14T11:00:00.000Z" }, { "fraction": 0.75, "reached": true, "at": "2026-10-14T13:00:00.000Z" } ] },
+    { "id": "k2", "state": "stopped", "policyEdition": "sla-2026b", "calendarEditions": ["cal-2026b"], "targetMinutes": 180, "elapsedMinutes": 360, "remainingMinutes": -180,
+      "met": false, "breached": true, "dueAt": "2026-10-13T16:00:00.000Z",
+      "warnings": [ { "fraction": 0.75, "reached": true, "at": "2026-10-13T15:15:00.000Z" } ] },
+    { "id": "k3", "state": "stopped", "policyEdition": "sla-2026b", "calendarEditions": ["cal-2026b"], "targetMinutes": 1200, "elapsedMinutes": 45, "remainingMinutes": 1155,
+      "met": true, "breached": false, "dueAt": null, "warnings": [ { "fraction": 0.75, "reached": false, "at": null } ] },
+    { "id": "k4", "state": "paused", "policyEdition": "sla-2026b", "calendarEditions": ["cal-2026b"], "targetMinutes": 480, "elapsedMinutes": 90, "remainingMinutes": 390,
+      "met": false, "breached": false, "dueAt": null, "warnings": [ { "fraction": 0.75, "reached": false, "at": null } ] } ] } }
+}

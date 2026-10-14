@@ -561,3 +561,96 @@ label taken from a shadow pair needs an independent check before it feeds a comp
 compiler fed Haiku traces ends at parity with its own agent at 3.3× the dollars, with 50% silent misses. (3) The journals (5,792 calls)
 and the 25 archived solver versions with compile.json make the $0 replays D20 and the tier-down work assumed lost possible again; the
 shadow rebuild above is the first use.
+
+**D26. M3, the reuse acceptance rule: the one-sided exact bound on parent-clustered counts is chosen. A perfect gate
+now passes, but a good gate is decided only with about 300–360 admitted decisions (simulation, $0; ATTACK-20261014 §3
+M3, PROOF-LEDGER K1).**
+
+*Simulation only. No model call was made, and no gate or L4 data exist. Code: `experiments/lib/stats.mjs` (new exports
+`clustersOf`, `kishDeff`, `kishEffectiveN`, `iccAnova`, `clusterDeff`, `binomPmf`, `binomCdf`, `betaInc`,
+`exactBinomialBounds`, `reuseBoundRule`, `sprtDesign`, `reuseSprt`, `samplingPlanDesign`, `reuseSamplingPlan`,
+`RHO_REUSE_FLOOR`; existing exports unchanged); `experiments/lib/reuse-rule-sim.mjs` (simulator, exact DP and
+`decide`); tests in `experiments/lib/reuse-rule.test.mjs`. Output: `analysis/m3-reuse-rule/oc.{md,json}`
+(`--reps 20000 --seed m3`; the Monte Carlo SE at 5% is ±0.15 points; two runs gave identical numbers).*
+
+**1. Model.** Admitted reuse decisions cluster by parent, the offered task. Parent j has its own wrong rate
+p_j ~ Beta with mean p and ICC ρ, and its m_j decisions are Bernoulli(p_j), so the model is beta-binomial. Every rule
+corrects with Kish's Deff = 1 + (m* − 1)·ρ, where m* = Σm²/Σm and ρ = max(0.1, ANOVA ρ̂). The floor 0.1 is
+`RHO_PREREG`'s value and is an assumption, since no reuse ICC has been measured. Counts enter as x/Deff of n/Deff. The
+grid is p ∈ {0, 0.01, 0.03, 0.05} and ρ ∈ {0, 0.05, 0.1, 0.2}. The scenarios are L4 scale (96 parents × 6 = 576,
+the L4 text's 24 × 4 × 6), with equal sizes, with unequal sizes (1–11, m* 7.83) and as 576 independent decisions;
+a by-entry sensitivity (24 × 24); 180 decisions (30 × 6); and small n (10 × 6 and 60 × 1). Under the criterion,
+false kill = P(not served) at p ≤ 0.01 (a no-decision also leaves reuse off) and miss = P(served) at p = 0.05.
+
+**2. Every ATTACK figure reproduces** (exact, in the tests):
+- 0/60 gives 0.0602 two-sided Wilson, and 0.0432 one-sided;
+- 73 clean decisions pass the two-sided bound; 1 wrong passes at 110;
+- the SPRT steps are +1.609 and −0.0412, with bounds ±2.944, and 72 clean decisions accept;
+- the smallest α = β = 0.05 plan is n = 181, c = 4, with false kill 3.63% and miss 4.92%.
+
+**3. Results at L4 scale** (false kill / miss, %). The independent row is exact; the other rows are simulated.
+
+| rule | independent, n 576 | 96 × 6, ρ 0 / 0.05 / 0.1 / 0.2 | unequal sizes, ρ 0 / 0.05 / 0.1 / 0.2 |
+|---|---|---|---|
+| current (two-sided Wilson at ≥ 60, early kill, no Deff) | 0.3 / 1.8 | 0.2/1.7, 0.9/3.0, 1.7/4.2, 3.3/**6.6** | 0.3/1.8, 1.4/3.6, 2.7/4.8, 4.2/**7.9** |
+| (a) one-sided Wilson | 0.0 / **5.06** | 0.0/1.8, 0.0/3.1, 0.2/4.3, 1.5/**5.7** | 0.0/1.2, 0.1/2.3, 0.6/3.2, 3.7/**5.1** |
+| (a) one-sided exact (Clopper–Pearson) | 0.0 / 3.19 | 0.0/1.0, 0.0/1.9, 0.3/2.9, 2.1/4.6 | 0.0/1.2, 0.1/2.3, 0.8/3.1, 4.5/4.8 |
+| (b) SPRT, LLR / Deff after each parent | 2.91 / 4.99 | 0.9/1.1, 2.0/2.1, 2.9/3.6, **5.3/7.1** | 0.9/0.7, 2.5/1.7, 4.2/2.7, **7.1/5.9** |
+| (c) plan 181 / 4 in effective units | 3.63 / 4.92 | 2.2/1.2, 3.5/2.3, 4.6/3.3, **7.5/5.3** | 3.7/0.7, **6.0**/1.5, **8.3**/2.2, **14.2**/4.1 |
+
+The mean number of decisions read at p = 0.01 is 576 for (a), about 180–210 for (b) and 277–335 for (c). L4 scores every
+offer offline (memoised across arms), so the SPRT's early stop saves nothing there.
+
+**4. Decision under the section's rule.** The procedure is `decide` in the simulator:
+- *Binding cells:* every L4-scale parent-clustered cell at ρ ≤ 0.1 meets the criterion (equal and unequal sizes), and
+  the independent limit meets it exactly.
+- *Tie-break:* the most robustness cells met, then the lowest worst false kill. The robustness cells are L4 scale at
+  ρ 0.2, the by-entry sensitivity and the 180-decision scenario.
+
+Results:
+- (a)-Wilson fails the binding cells by 0.06 points: its exact miss is 5.06% in the independent limit. A one-sided 95%
+  bound misses about 5% at p = 0.05 by construction, and Wilson's discreteness lands just above.
+- (c) fails with unequal parent sizes (false kill 6.0% at ρ 0.05, 8.3% at ρ 0.1).
+- (a)-exact and (b) pass. (a)-exact meets 3 of 10 robustness cells: both L4 cells at ρ 0.2, and by-entry at ρ 0.
+  (b) meets 0. Clustered parents arrive in lumps that push the SPRT across its kill boundary, and its truncation
+  bites when Deff is large.
+
+**Chosen: (a) with the exact bound.** LIBRARY-TESTS L4 "Decision" is amended to it, as are the "Claim" and "Falsifier"
+lines that quote the bound. The replaced text is quoted in place, dated 2026-10-14. L4 drops the early kill.
+
+**5. Small n.** No rule meets the criterion below about 300 admitted decisions:
+- At 10 × 6 = 60, nothing ever serves: n_eff = 40 at Deff 1.5.
+- At 30 × 6 = 180, the false kill is 11–43% across rules and ρ (100% for (c), which never reaches n_eff 181), and
+  28–37% for (a)-exact.
+- In parents of 6, (a)-exact first meets the criterion at 50 parents (300) at ρ 0, 60 (360) at ρ 0.1, and 96 (576)
+  at ρ 0.2. At ρ 0, (a)-Wilson already meets it at 40 parents (240).
+
+A perfect gate is served from 59 effective decisions (0/59 → 0.0495), which is 60 independent decisions or about 89
+in parents of 6. That is K1's title claim. "A good gate is served 95% of the time" needs the larger numbers above.
+
+**6. The current rule is not broken at L4's full scale.** At 576 admitted decisions it meets the criterion for
+ρ ≤ 0.1. Its defects are the minimum it names (60, where 0/60 fails) and the missing clustering correction (miss 6.6%
+and 7.9% at ρ 0.2).
+
+**7. Deviations and limits.**
+- (a)-exact and the `decide` procedure were added after the first grid run, at the design stage, before any L4 data.
+  Under the three rules exactly as ATTACK wrote them, only (b) passes the binding cells.
+- Two exploratory runs (10,000 draws, scratchpad scripts, not committed):
+  - a ρ̂ > 0.2 → no-decision trigger was rejected: false kill 9.9% at ρ 0.1;
+  - raising the floor to 0.15–0.2 helps (a) at ρ 0.2 but not (b). It costs false kills at 180 decisions and in the
+    by-entry case.
+- At ρ 0.2 with unequal sizes, (a)-exact's 4.5% / 4.8% is within 2 Monte Carlo SE of 5%.
+- If wrong reuse clusters by library entry (24 × 24), every rule fails at ρ ≥ 0.1, and (a)-exact already at 0.05
+  (false kill 5.9%). L4's Deff counts parents only; crossed parent × entry clustering is not modelled.
+- LIBRARY §9's live kill (`LIBRARY.md:474`) is not amended. Live use is sequential, so the one-shot bound does not
+  transfer.
+
+**Consequences.**
+1. A perfect gate can now pass L4.
+2. Deciding a good gate needs about 300–360 admitted decisions in parents of ≤ 6. A selective gate admits far fewer
+   than the 576 offers (a perfect one admits at most one own-rung solver per task, plus near-misses and other-rung
+   entries that happen to pass [I]), so
+   L4 as seeded will most likely report a bound and "no decision" for a good gate. More parents is a seed-allocation
+   decision for the orchestrator.
+3. The reuse ICC is the unknown that sets the rule's validity. L4 should report ρ̂ with a cluster-bootstrap interval
+   beside the decision.
