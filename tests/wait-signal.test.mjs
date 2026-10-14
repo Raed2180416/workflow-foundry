@@ -29,7 +29,7 @@ const base = (nodes, acceptance, { id = 'SignalProbe', ...rest } = {}) => ({ sch
   budget: { maxSteps: 200, maxConcurrency: 4, maxDurationMs: 600000 }, nodes, acceptance, ...rest });
 // undefined in `extra` removes a field.
 const payWait = (extra = {}) => Object.fromEntries(Object.entries({ id: 'pay', kind: 'wait', needs: [], description: 'Wait for the payment of this order', signal: 'payment.settled', correlate: ref('input.order'),
-  schema: PAYMENT, timeoutMs: 600000, ...extra }).filter(([, value]) => value !== undefined));
+  schema: PAYMENT, timeoutMs: 300000, ...extra }).filter(([, value]) => value !== undefined));
 const echo = (id, needs, args, extra = {}) => ({ id, kind: 'task', needs, description: `Echo ${id}`, tool: 'core.identity', args, timeoutMs: 1000, retry: { maxAttempts: 1 }, ...extra });
 const ship = () => echo('ship', ['pay'], { amount: ref('nodes.pay.payload.amount') });
 const settled = (id, key, amount) => ({ id, name: 'payment.settled', key, payload: { amount } });
@@ -152,7 +152,7 @@ test('wait.signal: correlation — another key stays buffered; per-item keys in 
   clean(store, run.id);
 
   const lines = base([{ id: 'lines', kind: 'map', needs: [], description: 'Wait for the goods receipt of each line', items: ref('input.lines'), maxItems: 4, concurrency: 4,
-    body: { nodes: [{ id: 'receipt', kind: 'wait', needs: [], description: 'Wait for this line', signal: 'goods.received', correlate: ref('item'), schema: RECEIPT, timeoutMs: 600000 },
+    body: { nodes: [{ id: 'receipt', kind: 'wait', needs: [], description: 'Wait for this line', signal: 'goods.received', correlate: ref('item'), schema: RECEIPT, timeoutMs: 300000 },
       echo('qty', ['receipt'], { line: ref('item'), qty: ref('nodes.receipt.payload.qty') })],
     acceptance: [{ op: 'eq', left: ref('nodes.qty.line'), right: ref('item') }] } }], [{ op: 'eq', left: ref('nodes.lines.count'), right: 3 }], { id: 'LinesProbe' });
   store.saveWorkflow(lines);
@@ -187,7 +187,7 @@ test('wait.signal: without a run id, a signal goes to the one run whose parked w
 
 test('wait.signal: race of two signals — the first delivered wins, the loser is cancelled and a late loser stays buffered', async t => {
   const root = space(t), { store, runtime } = open(t, root);
-  const race = { id: 'pay', kind: 'wait', needs: [], description: 'Settled or failed, whichever comes first', timeoutMs: 600000,
+  const race = { id: 'pay', kind: 'wait', needs: [], description: 'Settled or failed, whichever comes first', timeoutMs: 300000,
     race: [{ signal: 'payment.settled', correlate: ref('input.order'), schema: PAYMENT }, { signal: 'payment.failed', correlate: ref('input.order'), schema: FAILURE }] };
   const wf = base([race, echo('route', ['pay'], { won: ref('nodes.pay.signal') })], [{ op: 'exists', value: ref('nodes.route.won') }], { id: 'RaceProbe' });
   store.saveWorkflow(wf);
@@ -294,8 +294,11 @@ test('wait.at: absolute timers — a past time completes at once, a time from th
   // A signal wait's timer can be absolute too.
   const deadline = base([payWait({ timeoutMs: undefined, at: ref('input.dueAt'), onTimeout: 'continue' }), echo('after', ['pay'], { o: ref('nodes.pay.outcome') })], [{ op: 'exists', value: ref('nodes.after.o') }], { id: 'AtSignal' });
   store.saveWorkflow(deadline);
-  const signalAt = Date.now() + 600000, waiting = await runtime.execute(runtime.create(deadline, { order: 'PO-T', dueAt: signalAt }).id);
+  const signalAt = Date.now() + 300000, waiting = await runtime.execute(runtime.create(deadline, { order: 'PO-T', dueAt: signalAt }).id);
   assert.deepEqual([waiting.status, waiting.nodes.pay.wakeAt], ['waiting', signalAt]);
+  // A timer after the run deadline could never be honoured (the run would stop on DEADLINE before any timeout branch): refused at start.
+  const beyond = await runtime.execute(runtime.create(deadline, { order: 'PO-U', dueAt: Date.now() + 3 * 3600000 }).id);
+  assert.deepEqual([beyond.status, beyond.error.code], ['failed', 'WAIT_DEADLINE']);
 });
 
 test('wait.signal: restart while waiting — a delivery and a tick in new processes finish the run; a dead owner\'s wait is taken over', async t => {
@@ -323,13 +326,34 @@ test('wait.signal: restart while waiting — a delivery and a tick in new proces
   assert.equal(second.store.run(other.id).outputs.ship.amount, 4);
   clean(second.store, run.id);
 
+  // A process killed (SIGKILL) right after its wait took a buffered signal and before the wait completed: the decision and a due timer
+  // survive, and the next tick completes the wait once, with the signal it took.
+  const killed = second.runtime.create(wf, { order: 'PO-K' }, { extra: { crashAfterWaitDecision: 'root/pay' } });
+  assert.equal(second.runtime.deliverSignal(killed.id, settled('kill-1', 'PO-K', 6)).consumedBy, null, 'the run has not started: buffered');
+  second.store.close();
+  const code = `
+    import { Store } from ${JSON.stringify(new URL('../src/store.mjs', import.meta.url).href)};
+    import { Runtime } from ${JSON.stringify(new URL('../src/runtime.mjs', import.meta.url).href)};
+    import { createDefaultRegistry } from ${JSON.stringify(new URL('../src/capabilities.mjs', import.meta.url).href)};
+    const store = new Store(${JSON.stringify(root)});
+    await new Runtime(store, createDefaultRegistry()).execute(${JSON.stringify(killed.id)});`;
+  const child = spawnSync(process.execPath, ['--input-type=module', '--eval', code], { encoding: 'utf8', timeout: 20000, env: { PATH: process.env.PATH ?? '' } });
+  assert.equal(child.signal, 'SIGKILL', child.stderr);
+  const third = open(t, root), dead = third.store.run(killed.id);
+  assert.deepEqual([dead.status, dead.nodes.pay.resolution.signalId, dead.signals['kill-1'].consumedBy], ['running', 'kill-1', 'root/pay']);
+  assert.equal(third.store.dueTimers(Date.now()).filter(x => x.runId === killed.id).length, 1, 'a due timer survives the crash');
+  assert.deepEqual((await third.runtime.tick()).runs, [{ runId: killed.id, status: 'succeeded' }]);
+  assert.equal(third.store.run(killed.id).outputs.ship.amount, 6);
+  assert.deepEqual(['wait.resolved', 'node.completed'].map(type => events(third.store, killed.id, type).filter(e => e.nodeKey === 'root/pay').length), [1, 1]);
+  clean(third.store, killed.id);
+
   // The state a crash leaves after a delivery decided the wait: the run marked running under a dead owner. The next tick takes it over.
-  const crashed = await second.runtime.execute(second.runtime.create(wf, { order: 'PO-C' }).id);
-  second.runtime.deliverSignal(crashed.id, settled('crash-1', 'PO-C', 5));
-  second.store.updateRun(crashed.id, r => { r.status = 'running'; r.owner = { token: 'lost', pid: 2 ** 22 + 4321, processStart: null, acquiredAt: Date.now() }; }, { type: 'test.simulated-crash' });
-  assert.deepEqual((await second.runtime.tick()).runs, [{ runId: crashed.id, status: 'succeeded' }]);
-  assert.equal(events(second.store, crashed.id, 'node.completed').filter(e => e.nodeKey === 'root/pay').length, 1);
-  clean(second.store, crashed.id);
+  const crashed = await third.runtime.execute(third.runtime.create(wf, { order: 'PO-C' }).id);
+  third.runtime.deliverSignal(crashed.id, settled('crash-1', 'PO-C', 5));
+  third.store.updateRun(crashed.id, r => { r.status = 'running'; r.owner = { token: 'lost', pid: 2 ** 22 + 4321, processStart: null, acquiredAt: Date.now() }; }, { type: 'test.simulated-crash' });
+  assert.deepEqual((await third.runtime.tick()).runs, [{ runId: crashed.id, status: 'succeeded' }]);
+  assert.equal(events(third.store, crashed.id, 'node.completed').filter(e => e.nodeKey === 'root/pay').length, 1);
+  clean(third.store, crashed.id);
 });
 
 test('wait.signal: duplicates are idempotent by id; a reused id with other content or for another run is refused; bad deliveries write nothing', async t => {

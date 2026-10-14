@@ -852,8 +852,12 @@ class Invocation {
   // What a wait fixes when it starts, recorded in its node.started event and state with its timer row (charge), so a crash keeps it: its
   // wake time (now + delayMs or timeoutMs, or the absolute `at`) and, for a signal wait, its subscriptions with the correlation key each
   // computes from the instance now (src/signals.mjs).
+  // A signal wait's or absolute timer's time after the run deadline could never be honoured (the run would stop on DEADLINE first, and a
+  // timeout branch would never run), so it is refused when the wait starts. A delay keeps its earlier behaviour.
   waitIntent(node, ctx) {
-    const wakeAt = node.at !== undefined ? parseAt(resolve(node.at, ctx)) : Date.now() + (node.timeoutMs ?? node.delayMs);
+    const wakeAt = node.at !== undefined ? parseAt(resolve(node.at, ctx)) : Date.now() + (node.timeoutMs ?? node.delayMs), { deadline } = this.head();
+    if ((isSignalWait(node) || node.at !== undefined) && wakeAt > deadline)
+      throw new FoundryError('WAIT_DEADLINE', `${node.id}: its timer (${new Date(wakeAt).toISOString()}) falls after the run deadline (${new Date(deadline).toISOString()}); raise maxDurationMs (the workflow budget and the runtime policy) or shorten the timer`, { wakeAt, deadline });
     if (!isSignalWait(node)) return { wakeAt };
     const subscriptions = subscriptionsOf(node).map(s => {
       if (s.correlate === undefined) return { signal: s.signal, keyHash: null };
@@ -886,8 +890,8 @@ class Invocation {
     this.finishWait(node, frameKey);
   }
   // One compare-and-swap update applies the rule of src/signals.mjs to a signal wait that no delivery has resolved: it takes the first
-  // buffered signal that matches and arrived before its timer (marking it consumed), or times out once the clock has reached its timer
-  // (clearing it), or parks with its timer. The decision is a `wait.resolved` event (by "buffer" or "timer") naming the losers it cancels.
+  // buffered signal that matches and arrived before its timer (marking it consumed), or times out once the clock has reached its timer,
+  // or parks with its timer. The decision is a `wait.resolved` event (by "buffer" or "timer") naming the losers it cancels.
   // Returns whether the wait is decided.
   decideWait(node, frameKey) {
     const nodeKey = `${frameKey}/${node.id}`, dispatch = this.dispatchMark.get(nodeKey);
@@ -898,12 +902,14 @@ class Invocation {
       if (s.resolution) { decided = s.resolution; return; } // a delivery resolved it since this execution read it: its event is written
       const inbox = r.signals ?? {}, pick = pickSignal(subscriptions, wakeAt, inbox);
       let resolution;
+      // A decided wait keeps a due timer until it completes (completion clears it, a seal clears them all), so a process that dies in
+      // between leaves a run that the next timer scan resumes.
       if (pick) {
         resolution = { outcome: 'signal', signalId: pick.id, signal: pick.name, receivedAt: pick.receivedAt, by: 'buffer' };
         r.signals = { ...inbox, [pick.id]: { ...inbox[pick.id], consumedBy: nodeKey } };
+        this.store.setTimer(r.id, nodeKey, Math.min(wakeAt, Date.now()));
       } else if (Date.now() >= wakeAt) {
         resolution = { outcome: 'timeout', at: wakeAt, by: 'timer' };
-        this.store.clearTimer(r.id, nodeKey);
       } else {
         parked = wakeAt;
         f.nodes[node.id] = { ...s, status: 'waiting' };
@@ -918,6 +924,8 @@ class Invocation {
       return event ? [{ ...event, ...(dispatch === undefined ? {} : { dispatch }) }] : [];
     });
     if (parked !== null || decided?.fresh) this.dispatchMark.delete(nodeKey);
+    // Fault injection is explicit, only available to trusted test callers: the process dies after the decision committed, before the wait completes.
+    if (decided?.fresh && this.head().extra?.crashAfterWaitDecision === nodeKey) process.kill(process.pid, 'SIGKILL');
     return decided !== null;
   }
   // Completes a decided signal wait from the chain, not from the record: the decision must be the one its wait.resolved event recorded, and

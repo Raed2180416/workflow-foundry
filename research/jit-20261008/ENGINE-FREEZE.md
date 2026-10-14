@@ -353,3 +353,49 @@ it (`ENGINE_DRIFT`), as with any engine change. Each step lists the files it cha
 - **Suites (2026-10-14, $0, no model calls).** Main (`node --test --test-concurrency=2 tests/*.test.mjs`, in the clean worktree with
   step 1 alone): 1025 tests, 1007 pass, **0 fail**, 18 skipped (the recorded opt-in and missing-binary lanes). Before step 1 (the clean
   tree at `7915fb1`, this session's start): 1004 tests, 986 pass, 0 fail, 18 skipped. `tests/state-node.test.mjs`: 21 of 21 (15 tests, 6 subtests).
+
+### 7.2 Step 2: one durable wait node (L0 row 19 `wait.signal` with `correlate` and `race`, row 18 `at`), 2026-10-14
+
+- **Base.** Step 1, `d27f532`: engine identity `c0d1d4870a9610974beca7cebe49596deb9e3a15f74f1432aebd553fb5e381aa` (§7.1).
+- **How it landed.** The step-2 code was first committed by the unreviewed autosave snapshots `251c5db` and `fdd707d` while it was
+  being built (they hold step-2 files only). The step-2 commit that carries this section adds the last runtime changes
+  (`WAIT_DEADLINE`, a decided wait keeps a due timer, the `crashAfterWaitDecision` fault hook), the tests, the documentation and this
+  record. `git diff d27f532 <that commit>` is step 2 exactly; it holds no step-1 hunk.
+- **After step 2:** engine identity `73dc31d6f36f77b0dd3f26388d12c22ec32bdbd7b8094fc7e94db35a589e6b96` (Node `v24.21.0`, ajv 8.20.0;
+  `src/engine.mjs` `engineHash`). Kit hash not computed (not a kit). A run created by the step-1 engine is not resumed by this one
+  (`ENGINE_DRIFT`).
+- **Design.** [ARCHITECTURE.md, "Signal waits and absolute timers"](../../docs/ARCHITECTURE.md). Engine-side only: the L0 card
+  (row 19's example `{"kind":"wait","signal":"payment.settled","timeoutMs":86400000,"onTimeout":"escalate"}` now validates when
+  `escalate` is a node that needs the wait), the library checker, `skills/` and `web/` are not changed.
+
+| file | change |
+|---|---|
+| `src/signals.mjs` | new: the one decision rule (`pickSignal`, `claimant`, `cancelledBy`), subscriptions and timeout modes, `parseAt` (epoch ms or ISO 8601 with an explicit offset, every field range-checked), `normalizeSignal`, `declaredSignals`, `signalCheckpointDrift` (record vs chain) and `replayWaits` (every decision re-derived from the chain) |
+| `src/runtime.mjs` | `Runtime.deliverSignal` (inbox entry, `signal.delivered`, claim by a parked wait with `wait.resolved` and a due-now timer, in one compare-and-swap update; idempotent by id) and `correlateSignal` (no run id: the one run whose parked wait correlates on the key); `Invocation.waitIntent` (wake time, `at`, correlation keys fixed at start; `WAIT_DEADLINE`), `wait`, `decideWait` (buffered pick, timeout or park), `finishWait` (completes from the chain's decision and delivery; `WAIT_TIMEOUT`), `routedAway` (onTimeout branch), `waitLabel`; the routed wait's label is control for its dependents; resume refuses a record whose inbox or decisions differ from the chain (`CHECKPOINT_TAMPERED`); fault hook `crashAfterWaitDecision` |
+| `src/validate.mjs` | wait fields; `checkWait` (`WAIT_SHAPE`, `WAIT_UNBOUNDED`, `WAIT_AT`), `checkWaitRoute` (`WAIT_ROUTE`), `SIGNAL_SCHEMA_CONFLICT`; payload schemas kept out of reference checks; wait labels and onTimeout routing in the taint pass |
+| `src/dataflow.mjs` | output schemas of delay, `at` and signal waits (one alternative per raced signal, a timeout alternative unless it fails); references in `at` and `correlate` |
+| `src/store.mjs` | table `signals` (workspace-unique signal ids), `signalRecord`, `recordSignal`, `openSignalWaits`, `findEvent` |
+| `src/verify-run.mjs` | §6c: `WAIT_REPLAY_MISMATCH` (re-derived decision differs; error on the recording engine, warning on another), `SIGNAL_EDITED`, `checks.waits` |
+| `src/verdict.mjs` | `WAIT_TIMEOUT` is `inconclusive` |
+| `src/engine.mjs` | `signals.mjs` joins the engine identity |
+| `src/foundry.mjs` | `Foundry.signal`, `Foundry.correlateSignal` |
+| `src/http.mjs` | `POST /api/runs/:id/signals`, `POST /api/signals` (local UI token, as for answers); a wait the signal resolved is resumed at once; `SIGNAL_CONFLICT`, `SIGNAL_AMBIGUOUS`, `SIGNAL_UNMATCHED` are 409 |
+| `bin/foundry.mjs` | `foundry signal [RUN_ID] --name --id [--key] [--payload]` |
+| `schemas/workflow.schema.json` | wait fields `at`, `signal`, `correlate`, `schema`, `race`, `onTimeout`, `label`; `definitions.signalName`, `signalSubscription`; `timeoutMs` up to 30 days on a wait only (other kinds keep 1 hour) |
+| `tests/wait-signal.test.mjs` | new |
+| `tests/verdict.test.mjs` | the pinned inconclusive-code list gains `WAIT_TIMEOUT` |
+| `docs/ARCHITECTURE.md` | section "Signal waits and absolute timers" |
+
+- **Behaviour of existing workflows.** A `delayMs` wait runs as before (same output, events and timer; `delayMs` keeps its 1-hour
+  bound). The schema gains optional wait fields; `timeoutMs` above 1 hour is accepted on a wait only. The verdict list gains a code
+  only a signal wait raises.
+- **Suites (2026-10-14, $0, no model calls).** Main (`node --test --test-concurrency=2 tests/*.test.mjs`, this tree with steps 1 and
+  2): 1041 tests, 1023 pass, **0 fail**, 18 skipped (the recorded lanes of §7.1). `tests/wait-signal.test.mjs`: 16 of 16 (validation,
+  taint, correlation hits and misses with per-item keys in a map, correlation without a run id, races signal vs signal and signal vs
+  timer, timeout routing, `onTimeout` fail, absolute timers and `WAIT_DEADLINE`, restart: CLI delivery and tick in new processes, a
+  SIGKILL between decision and completion, a dead owner; duplicates and refused deliveries, late signals, replay and tamper checks,
+  HTTP). Step 1 alone was 1025 / 1007 (§7.1); the 16 added tests are that file's. `tests/timers.test.mjs` and `tests/cancel.test.mjs`
+  pass unchanged.
+- **Open.** No re-execution of a recorded run's signals into a new run (the clock is not journaled; replay is the re-derivation),
+  no workspace-level buffer for signals that no run waits for yet, G3 reminders and G15/G16 calendar clocks not built, signal-wait
+  routing in the L0 card and the library checker not updated (the card is at its token budget).
