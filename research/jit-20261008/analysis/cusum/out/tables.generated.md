@@ -166,6 +166,24 @@ h sweep (same fitted model; ARL0 from the same simulated paths; diagnostic, in-s
 | sonnetV1 | 21 | 4 | 4 | 8 | – | 0 | none in 8 | 0.7297 | 17, 21 | 0 | 1 |
 | haikuV1 | 21 | 10 | 8 | 18 | – | 0 | none in 8 | 2.9434 | 10, 12, 16, 19, 23 | 2 | 0 |
 
+## Frozen versions (N-version probe), system: no risk adjustment model, h 3.233 (deopt only: the probe ran no shadows)
+
+| solver | monitored | deopts | wrong compiled | events | CUSUM alarms | CUSUM false | CUSUM delay | max S | count alarms | count false | count delay |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| opusV1 | 21 | 15 | 3 | 15 | 21 | 0 | 5 | 3.514 | 5, 8, 10, 16, 18, 20, 22 | 3 | 0 |
+| opusV2 | 21 | 0 | 9 | 0 | – | 0 | none in 8 | 0 | – | 0 | none in 8 |
+| sonnetV1 | 21 | 4 | 4 | 4 | – | 0 | none in 8 | 0.9403 | 17, 21 | 0 | 1 |
+| haikuV1 | 21 | 10 | 8 | 10 | – | 0 | none in 8 | 1.963 | 10, 12, 16, 19, 23 | 2 | 0 |
+
+## Frozen versions (N-version probe), oracle: no risk adjustment model, h 3.201 (deopt or wrong compiled answer)
+
+| solver | monitored | deopts | wrong compiled | events | CUSUM alarms | CUSUM false | CUSUM delay | max S | count alarms | count false | count delay |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| opusV1 | 21 | 15 | 3 | 18 | 17 | 0 | 1 | 3.52 | 5, 8, 10, 16, 18, 20, 22 | 3 | 0 |
+| opusV2 | 21 | 0 | 9 | 9 | – | 0 | none in 8 | 1.6001 | – | 0 | none in 8 |
+| sonnetV1 | 21 | 4 | 4 | 8 | – | 0 | none in 8 | 1.6001 | 17, 21 | 0 | 1 |
+| haikuV1 | 21 | 10 | 8 | 18 | 13 | 1 | none in 8 | 3.4131 | 10, 12, 16, 19, 23 | 2 | 0 |
+
 ## Input-drift diagnostic: the frozen profile as a detector (post hoc, in-sample; not part of the decision)
 
 | stream | k novel in a row | novel tasks (idx >= 3) | alarms | false | delay |

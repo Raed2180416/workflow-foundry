@@ -594,7 +594,7 @@ export async function analyze({ runsDir = DEFAULT_RUNS, nversionFile = DEFAULT_N
   if (nversionFile && existsSync(nversionFile)) {
     const nv = JSON.parse(readFileSync(nversionFile, 'utf8'));
     const nvUnits = nversionUnits(nv, units.filter(u => u.experiment === 'jit-dev-records-1'));
-    frozen = ['primary', 'oracle'].map(name => {
+    frozen = ['primary', 'oracle', 'system: no risk adjustment', 'oracle: no risk adjustment'].map(name => {
       const r = results.find(x => x.name === name);
       if (!r) return null;
       const v = { ...DESIGN, ...r.variant }, part = r.parts[0];

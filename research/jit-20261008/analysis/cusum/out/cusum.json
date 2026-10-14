@@ -21103,6 +21103,1702 @@
      }
     }
    ]
+  },
+  {
+   "name": "system: no risk adjustment",
+   "view": "system",
+   "h": 3.2329,
+   "note": "deopt only: the probe ran no shadows",
+   "streams": [
+    {
+     "arm": "nv-opusV1",
+     "solver": "opusV1",
+     "monitored": 21,
+     "events": 15,
+     "deopts": 15,
+     "wrong": 3,
+     "cusum": {
+      "alarms": [
+       21
+      ],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": 21,
+      "delay": 5,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": false,
+      "firstIdx": 3,
+      "lastIdx": 23,
+      "maxS": 3.514,
+      "path": [
+       {
+        "idx": 3,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 4,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.3878,
+        "alarm": false
+       },
+       {
+        "idx": 5,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.7755,
+        "alarm": false
+       },
+       {
+        "idx": 6,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0.4701,
+        "alarm": false
+       },
+       {
+        "idx": 7,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.8579,
+        "alarm": false
+       },
+       {
+        "idx": 8,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.2457,
+        "alarm": false
+       },
+       {
+        "idx": 9,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.6334,
+        "alarm": false
+       },
+       {
+        "idx": 10,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 2.0212,
+        "alarm": false
+       },
+       {
+        "idx": 11,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 1.7158,
+        "alarm": false
+       },
+       {
+        "idx": 12,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 1.4104,
+        "alarm": false
+       },
+       {
+        "idx": 13,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 1.1051,
+        "alarm": false
+       },
+       {
+        "idx": 14,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0.7997,
+        "alarm": false
+       },
+       {
+        "idx": 15,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.1875,
+        "alarm": false
+       },
+       {
+        "idx": 16,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.5752,
+        "alarm": false
+       },
+       {
+        "idx": 17,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.963,
+        "alarm": false
+       },
+       {
+        "idx": 18,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 2.3507,
+        "alarm": false
+       },
+       {
+        "idx": 19,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 2.7385,
+        "alarm": false
+       },
+       {
+        "idx": 20,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 3.1263,
+        "alarm": false
+       },
+       {
+        "idx": 21,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 3.514,
+        "alarm": true
+       },
+       {
+        "idx": 22,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.3878,
+        "alarm": false
+       },
+       {
+        "idx": 23,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.7755,
+        "alarm": false
+       }
+      ]
+     },
+     "count": {
+      "alarms": [
+       5,
+       8,
+       10,
+       16,
+       18,
+       20,
+       22
+      ],
+      "falseAlarms": 3,
+      "falseAlarmIdx": [
+       5,
+       8,
+       10
+      ],
+      "firstAlarmAtOrAfterDrift": 16,
+      "delay": 0,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": false,
+      "firstIdx": 3,
+      "lastIdx": 23
+     }
+    },
+    {
+     "arm": "nv-opusV2",
+     "solver": "opusV2",
+     "monitored": 21,
+     "events": 0,
+     "deopts": 0,
+     "wrong": 9,
+     "cusum": {
+      "alarms": [],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": null,
+      "delay": null,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": true,
+      "firstIdx": 3,
+      "lastIdx": 23,
+      "maxS": 0,
+      "path": [
+       {
+        "idx": 3,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 4,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 5,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 6,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 7,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 8,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 9,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 10,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 11,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 12,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 13,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 14,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 15,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 16,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 17,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 18,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 19,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 20,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 21,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 22,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 23,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       }
+      ]
+     },
+     "count": {
+      "alarms": [],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": null,
+      "delay": null,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": true,
+      "firstIdx": 3,
+      "lastIdx": 23
+     }
+    },
+    {
+     "arm": "nv-sonnetV1",
+     "solver": "sonnetV1",
+     "monitored": 21,
+     "events": 4,
+     "deopts": 4,
+     "wrong": 4,
+     "cusum": {
+      "alarms": [],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": null,
+      "delay": null,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": true,
+      "firstIdx": 3,
+      "lastIdx": 23,
+      "maxS": 0.9403,
+      "path": [
+       {
+        "idx": 3,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 4,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 5,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 6,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 7,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 8,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 9,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 10,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 11,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 12,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 13,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 14,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 15,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 16,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.3878,
+        "alarm": false
+       },
+       {
+        "idx": 17,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.7755,
+        "alarm": false
+       },
+       {
+        "idx": 18,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0.4701,
+        "alarm": false
+       },
+       {
+        "idx": 19,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.8579,
+        "alarm": false
+       },
+       {
+        "idx": 20,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0.5525,
+        "alarm": false
+       },
+       {
+        "idx": 21,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.9403,
+        "alarm": false
+       },
+       {
+        "idx": 22,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0.6349,
+        "alarm": false
+       },
+       {
+        "idx": 23,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0.3295,
+        "alarm": false
+       }
+      ]
+     },
+     "count": {
+      "alarms": [
+       17,
+       21
+      ],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": 17,
+      "delay": 1,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": false,
+      "firstIdx": 3,
+      "lastIdx": 23
+     }
+    },
+    {
+     "arm": "nv-haikuV1",
+     "solver": "haikuV1",
+     "monitored": 21,
+     "events": 10,
+     "deopts": 10,
+     "wrong": 8,
+     "cusum": {
+      "alarms": [],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": null,
+      "delay": null,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": true,
+      "firstIdx": 3,
+      "lastIdx": 23,
+      "maxS": 1.963,
+      "path": [
+       {
+        "idx": 3,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.3878,
+        "alarm": false
+       },
+       {
+        "idx": 4,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0.0824,
+        "alarm": false
+       },
+       {
+        "idx": 5,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 6,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 7,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 8,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 9,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 10,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.3878,
+        "alarm": false
+       },
+       {
+        "idx": 11,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 0.7755,
+        "alarm": false
+       },
+       {
+        "idx": 12,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.1633,
+        "alarm": false
+       },
+       {
+        "idx": 13,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.5511,
+        "alarm": false
+       },
+       {
+        "idx": 14,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 1.2457,
+        "alarm": false
+       },
+       {
+        "idx": 15,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 0.9403,
+        "alarm": false
+       },
+       {
+        "idx": 16,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.3281,
+        "alarm": false
+       },
+       {
+        "idx": 17,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.7158,
+        "alarm": false
+       },
+       {
+        "idx": 18,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 1.4104,
+        "alarm": false
+       },
+       {
+        "idx": 19,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.7982,
+        "alarm": false
+       },
+       {
+        "idx": 20,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 1.4928,
+        "alarm": false
+       },
+       {
+        "idx": 21,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.8806,
+        "alarm": false
+       },
+       {
+        "idx": 22,
+        "y": 0,
+        "p": 0.3571,
+        "w": -0.3054,
+        "s": 1.5752,
+        "alarm": false
+       },
+       {
+        "idx": 23,
+        "y": 1,
+        "p": 0.3571,
+        "w": 0.3878,
+        "s": 1.963,
+        "alarm": false
+       }
+      ]
+     },
+     "count": {
+      "alarms": [
+       10,
+       12,
+       16,
+       19,
+       23
+      ],
+      "falseAlarms": 2,
+      "falseAlarmIdx": [
+       10,
+       12
+      ],
+      "firstAlarmAtOrAfterDrift": 16,
+      "delay": 0,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": false,
+      "firstIdx": 3,
+      "lastIdx": 23
+     }
+    }
+   ]
+  },
+  {
+   "name": "oracle: no risk adjustment",
+   "view": "oracle",
+   "h": 3.201,
+   "note": "deopt or wrong compiled answer",
+   "streams": [
+    {
+     "arm": "nv-opusV1",
+     "solver": "opusV1",
+     "monitored": 21,
+     "events": 18,
+     "deopts": 15,
+     "wrong": 3,
+     "cusum": {
+      "alarms": [
+       17
+      ],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": 17,
+      "delay": 1,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": false,
+      "firstIdx": 3,
+      "lastIdx": 23,
+      "maxS": 3.52,
+      "path": [
+       {
+        "idx": 3,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 4,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.7466,
+        "alarm": false
+       },
+       {
+        "idx": 5,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.1199,
+        "alarm": false
+       },
+       {
+        "idx": 6,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.8,
+        "alarm": false
+       },
+       {
+        "idx": 7,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.1733,
+        "alarm": false
+       },
+       {
+        "idx": 8,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.5466,
+        "alarm": false
+       },
+       {
+        "idx": 9,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.9199,
+        "alarm": false
+       },
+       {
+        "idx": 10,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.2932,
+        "alarm": false
+       },
+       {
+        "idx": 11,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.6665,
+        "alarm": false
+       },
+       {
+        "idx": 12,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 2.3467,
+        "alarm": false
+       },
+       {
+        "idx": 13,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.72,
+        "alarm": false
+       },
+       {
+        "idx": 14,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 2.4001,
+        "alarm": false
+       },
+       {
+        "idx": 15,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.7734,
+        "alarm": false
+       },
+       {
+        "idx": 16,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 3.1467,
+        "alarm": false
+       },
+       {
+        "idx": 17,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 3.52,
+        "alarm": true
+       },
+       {
+        "idx": 18,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 19,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.7466,
+        "alarm": false
+       },
+       {
+        "idx": 20,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.1199,
+        "alarm": false
+       },
+       {
+        "idx": 21,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.4932,
+        "alarm": false
+       },
+       {
+        "idx": 22,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.8665,
+        "alarm": false
+       },
+       {
+        "idx": 23,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.2398,
+        "alarm": false
+       }
+      ]
+     },
+     "count": {
+      "alarms": [
+       5,
+       8,
+       10,
+       16,
+       18,
+       20,
+       22
+      ],
+      "falseAlarms": 3,
+      "falseAlarmIdx": [
+       5,
+       8,
+       10
+      ],
+      "firstAlarmAtOrAfterDrift": 16,
+      "delay": 0,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": false,
+      "firstIdx": 3,
+      "lastIdx": 23
+     }
+    },
+    {
+     "arm": "nv-opusV2",
+     "solver": "opusV2",
+     "monitored": 21,
+     "events": 9,
+     "deopts": 0,
+     "wrong": 9,
+     "cusum": {
+      "alarms": [],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": null,
+      "delay": null,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": true,
+      "firstIdx": 3,
+      "lastIdx": 23,
+      "maxS": 1.6001,
+      "path": [
+       {
+        "idx": 3,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 4,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 5,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 6,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 7,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 8,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.0534,
+        "alarm": false
+       },
+       {
+        "idx": 9,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 10,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 11,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 12,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.0534,
+        "alarm": false
+       },
+       {
+        "idx": 13,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.4267,
+        "alarm": false
+       },
+       {
+        "idx": 14,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.1069,
+        "alarm": false
+       },
+       {
+        "idx": 15,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 16,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 17,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.7466,
+        "alarm": false
+       },
+       {
+        "idx": 18,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.4267,
+        "alarm": false
+       },
+       {
+        "idx": 19,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.8,
+        "alarm": false
+       },
+       {
+        "idx": 20,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.4802,
+        "alarm": false
+       },
+       {
+        "idx": 21,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.8535,
+        "alarm": false
+       },
+       {
+        "idx": 22,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.2268,
+        "alarm": false
+       },
+       {
+        "idx": 23,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.6001,
+        "alarm": false
+       }
+      ]
+     },
+     "count": {
+      "alarms": [],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": null,
+      "delay": null,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": true,
+      "firstIdx": 3,
+      "lastIdx": 23
+     }
+    },
+    {
+     "arm": "nv-sonnetV1",
+     "solver": "sonnetV1",
+     "monitored": 21,
+     "events": 8,
+     "deopts": 4,
+     "wrong": 4,
+     "cusum": {
+      "alarms": [],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": null,
+      "delay": null,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": true,
+      "firstIdx": 3,
+      "lastIdx": 23,
+      "maxS": 1.6001,
+      "path": [
+       {
+        "idx": 3,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 4,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 5,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.0534,
+        "alarm": false
+       },
+       {
+        "idx": 6,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 7,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 8,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 9,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 10,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 11,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 12,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 13,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 14,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.0534,
+        "alarm": false
+       },
+       {
+        "idx": 15,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 16,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 17,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.7466,
+        "alarm": false
+       },
+       {
+        "idx": 18,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.4267,
+        "alarm": false
+       },
+       {
+        "idx": 19,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.8,
+        "alarm": false
+       },
+       {
+        "idx": 20,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0.4802,
+        "alarm": false
+       },
+       {
+        "idx": 21,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.8535,
+        "alarm": false
+       },
+       {
+        "idx": 22,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.2268,
+        "alarm": false
+       },
+       {
+        "idx": 23,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.6001,
+        "alarm": false
+       }
+      ]
+     },
+     "count": {
+      "alarms": [
+       17,
+       21
+      ],
+      "falseAlarms": 0,
+      "falseAlarmIdx": [],
+      "firstAlarmAtOrAfterDrift": 17,
+      "delay": 1,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": false,
+      "firstIdx": 3,
+      "lastIdx": 23
+     }
+    },
+    {
+     "arm": "nv-haikuV1",
+     "solver": "haikuV1",
+     "monitored": 21,
+     "events": 18,
+     "deopts": 10,
+     "wrong": 8,
+     "cusum": {
+      "alarms": [
+       13
+      ],
+      "falseAlarms": 1,
+      "falseAlarmIdx": [
+       13
+      ],
+      "firstAlarmAtOrAfterDrift": null,
+      "delay": null,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": true,
+      "firstIdx": 3,
+      "lastIdx": 23,
+      "maxS": 3.4131,
+      "path": [
+       {
+        "idx": 3,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 4,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.7466,
+        "alarm": false
+       },
+       {
+        "idx": 5,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.1199,
+        "alarm": false
+       },
+       {
+        "idx": 6,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.4932,
+        "alarm": false
+       },
+       {
+        "idx": 7,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.8665,
+        "alarm": false
+       },
+       {
+        "idx": 8,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 1.5466,
+        "alarm": false
+       },
+       {
+        "idx": 9,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.9199,
+        "alarm": false
+       },
+       {
+        "idx": 10,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.2932,
+        "alarm": false
+       },
+       {
+        "idx": 11,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.6665,
+        "alarm": false
+       },
+       {
+        "idx": 12,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 3.0398,
+        "alarm": false
+       },
+       {
+        "idx": 13,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 3.4131,
+        "alarm": true
+       },
+       {
+        "idx": 14,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 0,
+        "alarm": false
+       },
+       {
+        "idx": 15,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.3733,
+        "alarm": false
+       },
+       {
+        "idx": 16,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 0.7466,
+        "alarm": false
+       },
+       {
+        "idx": 17,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.1199,
+        "alarm": false
+       },
+       {
+        "idx": 18,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.4932,
+        "alarm": false
+       },
+       {
+        "idx": 19,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.8665,
+        "alarm": false
+       },
+       {
+        "idx": 20,
+        "y": 0,
+        "p": 0.3769,
+        "w": -0.3199,
+        "s": 1.5466,
+        "alarm": false
+       },
+       {
+        "idx": 21,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 1.9199,
+        "alarm": false
+       },
+       {
+        "idx": 22,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.2932,
+        "alarm": false
+       },
+       {
+        "idx": 23,
+        "y": 1,
+        "p": 0.3769,
+        "w": 0.3733,
+        "s": 2.6665,
+        "alarm": false
+       }
+      ]
+     },
+     "count": {
+      "alarms": [
+       10,
+       12,
+       16,
+       19,
+       23
+      ],
+      "falseAlarms": 2,
+      "falseAlarmIdx": [
+       10,
+       12
+      ],
+      "firstAlarmAtOrAfterDrift": 16,
+      "delay": 0,
+      "reachesDrift": true,
+      "postRows": 8,
+      "censored": false,
+      "firstIdx": 3,
+      "lastIdx": 23
+     }
+    }
+   ]
   }
  ],
  "inputDetector": [

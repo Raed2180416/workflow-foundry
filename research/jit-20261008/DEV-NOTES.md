@@ -822,3 +822,85 @@ status", M4.*
 2. The composer question stays "not now".
 3. Enumeration becomes viable only after a design change: per-card data-flow contracts, slot types known before S6, or
    per-task constraints from the TaskSpec. Re-run `tools/m4-coverage.mjs` after any of these.
+
+**D29. M9, a risk-adjusted CUSUM instead of `recompileOnDeopts: 2`: keep the count. At ARL0 500 the chart never alarms
+on the dev streams, so it detects 0 of 4 drifts; the count rule detects 3 of 4 but fails the false-alarm half of the
+same bar ($0; ATTACK-20261014 §3 M9, PROOF-LEDGER K15).**
+
+*Development evidence only: dev seeds 201–224, K = 1, the 260 as-run rows of `runs/jit-dev-records-1` (168) and
+`jit-dev-kinetics-1` (92), plus the committed N-version probe. No model or Jev call was made. The dev tasks were
+regenerated with the bed generators so that `profile.mjs` could score novelty, and 48 of 48 hashes match the rows. Code:
+`experiments/jit/cusum.mjs`. Tests: `experiments/jit/test/cusum.test.mjs` (13). Output:
+`analysis/cusum/out/{cusum.json,tables.generated.md}`, from 10,000 simulated paths per calibration, seed 9. The design
+was fixed before any chart statistic was computed, but after the per-row outcomes had been read (D25).*
+
+**1. Method.**
+- *Events, system view (decides).* A deopt, or a shadow disagreement, on a JIT row where compiled code ran. The risk
+  model is fit on those 98 rows, which hold 35 events.
+- *Events, oracle view (ceiling).* As the system view, plus silent misses, with the static arm monitored too. The fit is
+  on all 260 rows, as the ATTACK specifies.
+- *Risk inputs.*
+  - Novelty: the frozen-profile `checkProfile` score (the arm's first 3 tasks), capped at 3.
+  - Deopts in the previous 5 rows.
+  - Near-band P16 counts are not journaled in these streams, so that input is absent.
+  - Logistic fit, pooled.
+- *Chart.* Steiner et al.'s weight with R_A = 2. The chart restarts after an alarm and at an as-run version change. h is
+  set for ARL0 500 by Monte Carlo under the fitted model, with the history input fed back.
+- *Count rule.* Replayed from the rows. It equals `stateAfter.deoptsSinceCompile` on all 6 JIT arms.
+- *Drift index.* idx 16 in both streams, used for scoring only.
+
+**2. Results.**
+
+| | CUSUM, ARL0 500 (h 3.251) | count rule (`recompileOnDeopts: 2`) |
+|---|---|---|
+| alarms, all 6 JIT streams | none | 12 |
+| detection within 4 of the drift (streams reaching it) | 0 of 4 | 3 of 4 (delays 0, 1, 0; records O→H recompiled by the regression trigger instead) |
+| false alarms (71 monitored pre-drift tasks) | 0 (expected 0.14) | 8 (expected 7.1 at its in-control ARL of 10.0); kinetics H→H 2, S→H 3 |
+| meets the section rule | no (detection) | no (false alarms) |
+
+- **Fitted model, system view.**
+  - Intercept −1.10 ± 0.44, novelty 0.07 ± 0.26, history 0.45 ± 0.23. EPV 17.5, AUC 0.62.
+  - Observed / expected before the drift: records 0.64, kinetics 1.33. The pooled model is miscalibrated by family.
+- **Oracle view (h 3.215).** No alarm on any of 7 streams. The static arm fails 6 of 8 post-drift tasks; its chart peaks
+  at 1.91 and the count rule cannot see it.
+- **Variants.** Each of 20 sensitivity variants gives 0 alarms at ARL0 500: no risk adjustment, novelty only, history
+  only, version-profile novelty (0.74 ± 0.31, AUC 0.66), R_A 3 and 5, no restart, iid calibration, leave-one-family-out
+  (EPV 7.5, so the kill mode fires per family) and a phase-I fit. Each is run in both views.
+
+**3. Why: arithmetic, not the risk model.**
+- In-control adverse events occur on 26–49% of tasks. One event then moves S by at most 0.47.
+- So at ARL0 500, crossing h from zero needs ≥ 7 events in a row. The 5 rows from the drift index to drift + 4 add at
+  most 2.33; at R_A 5 that is 4.54 against h 4.47, and only for 5 events in a row, which no window had.
+- No h meets both halves:
+  - detecting 4 of 4 needs h ≤ 0.35 (ARL0 3.8, 18 false alarms);
+  - at most 1 false alarm per stream needs h ≥ 0.75 (ARL0 13, at most 1 of 4 detected).
+- At the count rule's own ARL0 (10; h 0.519), the chart has the same 8 false alarms and detects 2 of 4.
+- The deopt-history input works against detection. In the frozen N-version stream of Opus v1 (deopts on 8 of 8
+  post-drift tasks), p climbs from 0.38 to 0.79 and S peaks at 1.87. Unadjusted, the chart alarms at drift + 5.
+- Opus v2 never deopts and fails 6 of 8 post-drift tasks. Neither deployable rule sees it.
+
+**4. Lead (post hoc, in-sample; not part of the decision).**
+- The frozen input profile, used as a detector with an alarm at 2 novel tasks in a row, alarms 1 task after the drift in
+  both families, with 0 false alarms.
+- With an alarm at 1 novel task: delay 0, with 0 false alarms in records and 2 in kinetics.
+- Caveats:
+  - PARAMS were set on these streams.
+  - The records signal is size features only (`TOLERANT_CHECK` sees 0 of 8).
+  - It flags input drift whether or not the workflow fails on it.
+
+**5. Deviations and not done.**
+- The deciding (system) view is fit on 98 rows, not 260, because deployable events exist only there.
+- Near-band input absent.
+- Diagnostics added after the first run: the h sweep, matched ARL0, feasibility, unadjusted frozen replays and the input
+  detector. The primary verdict was identical in a 1,000-path trial.
+- The as-run streams embed the count rule's own recompiles.
+- The kinetics drift segment is 3 rows of one arm.
+- No counterfactual CUSUM-regime streams: they would need new compiles.
+
+**Consequences.**
+1. Keep `recompileOnDeopts: 2`. K15 is N on dev data.
+2. The bar itself (≤ 1 false alarm per ~13-task segment and ≤ 4-task delay) is out of reach for any outcome monitor
+   while the in-control deopt and disagreement rate is 25–60% (kinetics S→H: 7 of 10 pre-drift tasks). Lowering
+   spurious deopts (D3) is the lever. The count rule shares the problem.
+3. If drift detection is revisited, test the input-side detector (§4) on a held-out family with a drift segment,
+   frozen before the run.
