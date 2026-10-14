@@ -1,0 +1,5347 @@
+{
+ "generatedBy": "beds/wbed/references/validate.mjs",
+ "referenceSha256": {
+  "r1": "b267498f7aae0b6fa6e92765e0bc55a32afc0ad615acc27c4fca80ab33e4d73d",
+  "r3": "61e6e6236d1cd613a803e15b30288973ca90fc2a1a518815952a52d0b303f020"
+ },
+ "flowV3Sha256": "15da5c24efd537afb30eb8754955583c735fb6f36e8c55ca3646c13aa848f06b",
+ "split": "dev",
+ "seeds": [
+  313,
+  314,
+  315,
+  316,
+  317,
+  318,
+  319,
+  320,
+  321,
+  322,
+  323,
+  324
+ ],
+ "difficulties": [
+  3,
+  4,
+  5
+ ],
+ "policies": [
+  "world"
+ ],
+ "perTaskUsd": 1,
+ "stub": "stub-policy.mjs (A: first enum / first sentence; B: last enum / last sentence)",
+ "summary": {
+  "r1": {
+   "runs": 36,
+   "tasks": 36,
+   "perPolicy": {
+    "world": {
+     "runs": 36,
+     "ok": 35,
+     "deopt": 1,
+     "crash": 0,
+     "invalid": 0,
+     "timeout": 0,
+     "pass": 34,
+     "costUsd": {
+      "total": 0,
+      "max": 0,
+      "mean": 0
+     },
+     "modelCalls": {
+      "total": 0,
+      "max": 0
+     },
+     "sonnetCalls": 0,
+     "judgesFailed": 1,
+     "maxPromptChars": 0,
+     "latencyMs": {
+      "median": 440,
+      "max": 703
+     },
+     "flags": {
+      "vendex-entry-judged": 1,
+      "vendex-name-unread": 1
+     },
+     "deopts": {
+      "guard:names-read": 1
+     },
+     "relations": {
+      "shuffle-customer-rows": {
+       "agree": 35
+      },
+      "shuffle-invoice-lines": {
+       "agree": 35
+      },
+      "shuffle-bank-feed": {
+       "agree": 35
+      },
+      "duplicate-row": {
+       "agree": 35
+      },
+      "drop-idle-singleton": {
+       "skip": 2,
+       "agree": 33
+      }
+     }
+    }
+   },
+   "judgeIndependent": 36,
+   "judgeIndependentPass": 0,
+   "judgeIndependentFail": 36,
+   "judgeDependent": 0,
+   "passUnderSomeStub": 0,
+   "passWithWorldReadings": 34,
+   "tasksDetail": [
+    {
+     "task": "r1:313:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 4
+    },
+    {
+     "task": "r1:313:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 6
+    },
+    {
+     "task": "r1:313:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 8
+    },
+    {
+     "task": "r1:314:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 6
+    },
+    {
+     "task": "r1:314:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 8
+    },
+    {
+     "task": "r1:314:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r1:315:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 4
+    },
+    {
+     "task": "r1:315:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 8
+    },
+    {
+     "task": "r1:315:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r1:316:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 6
+    },
+    {
+     "task": "r1:316:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 7
+    },
+    {
+     "task": "r1:316:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 8
+    },
+    {
+     "task": "r1:317:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 3
+    },
+    {
+     "task": "r1:317:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 8
+    },
+    {
+     "task": "r1:317:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r1:318:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 5
+    },
+    {
+     "task": "r1:318:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 6
+    },
+    {
+     "task": "r1:318:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r1:319:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 4
+    },
+    {
+     "task": "r1:319:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 7
+    },
+    {
+     "task": "r1:319:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r1:320:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 5
+    },
+    {
+     "task": "r1:320:4",
+     "statuses": {
+      "world": "deopt"
+     },
+     "pass": {
+      "world": false
+     },
+     "judgeDependent": false,
+     "judges": 4
+    },
+    {
+     "task": "r1:320:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 8
+    },
+    {
+     "task": "r1:321:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 5
+    },
+    {
+     "task": "r1:321:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 7
+    },
+    {
+     "task": "r1:321:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r1:322:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 5
+    },
+    {
+     "task": "r1:322:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": false
+     },
+     "judgeDependent": false,
+     "judges": 8
+    },
+    {
+     "task": "r1:322:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r1:323:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 5
+    },
+    {
+     "task": "r1:323:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 7
+    },
+    {
+     "task": "r1:323:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r1:324:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 5
+    },
+    {
+     "task": "r1:324:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 6
+    },
+    {
+     "task": "r1:324:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 7
+    }
+   ]
+  },
+  "r3": {
+   "runs": 36,
+   "tasks": 36,
+   "perPolicy": {
+    "world": {
+     "runs": 36,
+     "ok": 36,
+     "deopt": 0,
+     "crash": 0,
+     "invalid": 0,
+     "timeout": 0,
+     "pass": 36,
+     "costUsd": {
+      "total": 0,
+      "max": 0,
+      "mean": 0
+     },
+     "modelCalls": {
+      "total": 0,
+      "max": 0
+     },
+     "sonnetCalls": 0,
+     "judgesFailed": 0,
+     "maxPromptChars": 0,
+     "latencyMs": {
+      "median": 406,
+      "max": 625
+     },
+     "flags": {},
+     "statementsMatchReference": 36,
+     "totalsMatchReference": 36,
+     "statementsMatchModuloJudged": 36,
+     "deopts": {},
+     "relations": {
+      "shuffle-statement-files": {
+       "agree": 36
+      },
+      "shuffle-ledger-lines": {
+       "agree": 36
+      },
+      "drop-clean-supplier": {
+       "agree": 36
+      }
+     }
+    }
+   },
+   "judgeIndependent": 36,
+   "judgeIndependentPass": 0,
+   "judgeIndependentFail": 36,
+   "judgeDependent": 0,
+   "passUnderSomeStub": 0,
+   "passWithWorldReadings": 36,
+   "tasksDetail": [
+    {
+     "task": "r3:313:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 12
+    },
+    {
+     "task": "r3:313:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 29
+    },
+    {
+     "task": "r3:313:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 42
+    },
+    {
+     "task": "r3:314:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 9
+    },
+    {
+     "task": "r3:314:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 25
+    },
+    {
+     "task": "r3:314:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 38
+    },
+    {
+     "task": "r3:315:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 11
+    },
+    {
+     "task": "r3:315:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 25
+    },
+    {
+     "task": "r3:315:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 36
+    },
+    {
+     "task": "r3:316:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 13
+    },
+    {
+     "task": "r3:316:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 25
+    },
+    {
+     "task": "r3:316:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 40
+    },
+    {
+     "task": "r3:317:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 13
+    },
+    {
+     "task": "r3:317:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 20
+    },
+    {
+     "task": "r3:317:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 39
+    },
+    {
+     "task": "r3:318:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 11
+    },
+    {
+     "task": "r3:318:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 23
+    },
+    {
+     "task": "r3:318:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 35
+    },
+    {
+     "task": "r3:319:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 12
+    },
+    {
+     "task": "r3:319:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 28
+    },
+    {
+     "task": "r3:319:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 39
+    },
+    {
+     "task": "r3:320:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 13
+    },
+    {
+     "task": "r3:320:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 30
+    },
+    {
+     "task": "r3:320:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 36
+    },
+    {
+     "task": "r3:321:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 12
+    },
+    {
+     "task": "r3:321:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 30
+    },
+    {
+     "task": "r3:321:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 36
+    },
+    {
+     "task": "r3:322:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 12
+    },
+    {
+     "task": "r3:322:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 25
+    },
+    {
+     "task": "r3:322:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 37
+    },
+    {
+     "task": "r3:323:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 11
+    },
+    {
+     "task": "r3:323:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 19
+    },
+    {
+     "task": "r3:323:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 39
+    },
+    {
+     "task": "r3:324:3",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 13
+    },
+    {
+     "task": "r3:324:4",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 28
+    },
+    {
+     "task": "r3:324:5",
+     "statuses": {
+      "world": "ok"
+     },
+     "pass": {
+      "world": true
+     },
+     "judgeDependent": false,
+     "judges": 48
+    }
+   ]
+  }
+ },
+ "rows": [
+  {
+   "rung": "r1",
+   "seed": 313,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "db4b7764fdb3681f",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 4,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 4,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 359,
+   "events": 36,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 111,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "skip"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 313,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "a2757353dd576dd5",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 6,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 6,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 407,
+   "events": 42,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 147,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 313,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "a688d980f0870332",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 8,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 8,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 416,
+   "events": 48,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 212,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 314,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "e58d150202f451f2",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 6,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 6,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 367,
+   "events": 42,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 94,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 314,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "8e1c52f32a5e2f22",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 8,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 8,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 471,
+   "events": 48,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 126,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 314,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "8cbe34f289eef569",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 411,
+   "events": 51,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 244,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 315,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "86ac03fbd9ee3e22",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 4,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 4,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 457,
+   "events": 36,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 81,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "skip"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 315,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "08cf54df5c671f91",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 8,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 8,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 703,
+   "events": 48,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 165,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 315,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "6bfdb2e8fce81ede",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 601,
+   "events": 51,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 221,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 316,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "672ed6ff3b2d7af7",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 6,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 6,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 631,
+   "events": 42,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 85,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 316,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "29c0b92d399b4e70",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 7,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 7,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 458,
+   "events": 45,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 151,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 316,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "d07c3e1a5544a861",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 8,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 8,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 439,
+   "events": 48,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 232,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 317,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "67f2b8d93975b66d",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 3,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 3,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 421,
+   "events": 33,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 110,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 317,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "84fbe31784941e00",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 8,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 8,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 414,
+   "events": 48,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 141,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 317,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "b61d1b6bb78d3ae6",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 465,
+   "events": 51,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 221,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 318,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "8a9ef7132316b534",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 5,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 5,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 502,
+   "events": 39,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 94,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 318,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "5b83b44bf532379f",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 6,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 6,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 485,
+   "events": 42,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 159,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 318,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "06b098b51aea6a8c",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 478,
+   "events": 51,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 274,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 319,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "73da624452faf5d4",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 4,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 4,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 485,
+   "events": 36,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 92,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 319,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "bc75c6ae00a2eb43",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 7,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 7,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 287,
+   "events": 45,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 150,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 319,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "fbdb947728e64686",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 321,
+   "events": 51,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 241,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 320,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "d661bd1a61b1ea74",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 5,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 5,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 368,
+   "events": 39,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 73,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 320,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "deopt",
+   "deopt": {
+    "kind": "guard",
+    "name": "names-read"
+   },
+   "error": null,
+   "pass": false,
+   "score": 0,
+   "outDigest": null,
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 4,
+   "judgesFailed": 1,
+   "judgeNames": [
+    "marker",
+    "vendex-entry"
+   ],
+   "escalations": 0,
+   "overridden": 4,
+   "flags": [
+    "vendex-entry-judged",
+    "vendex-name-unread"
+   ],
+   "flagCount": 2,
+   "latencyMs": 382,
+   "events": 24,
+   "maxPromptChars": 0,
+   "invariants": {},
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1
+   },
+   "stderrTail": ""
+  },
+  {
+   "rung": "r1",
+   "seed": 320,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "1e524020fa5ff373",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 8,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 8,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 527,
+   "events": 48,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 235,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 321,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "bb23e09abba4c851",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 5,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 5,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 508,
+   "events": 39,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 91,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 321,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "5ed49b0fdc5bb92a",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 7,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 7,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 469,
+   "events": 45,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 148,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 321,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "ae8b4c8b43c4fc83",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 369,
+   "events": 51,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 253,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 322,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "fb6647f7a1c62fa1",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 5,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 5,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 392,
+   "events": 39,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 92,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 322,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": false,
+   "score": 0.759322,
+   "outDigest": "a7acb2e172ee4df0",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 8,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 8,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 356,
+   "events": 48,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 132,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 322,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "9f21ed189945900a",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 440,
+   "events": 51,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 225,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 323,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "62f0f6aed463628e",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 5,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 5,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 277,
+   "events": 39,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 117,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 323,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "de1aeceeff7f5a4f",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 7,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 7,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 485,
+   "events": 45,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 162,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 323,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "b714653ec8546438",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker",
+    "place-country"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 466,
+   "events": 51,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 248,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 324,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "7cbfe38c52e6b13b",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 5,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 5,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 376,
+   "events": 39,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 6,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 106,
+    "invoice-dates-read": 3
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 324,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "9f51e993e04fb1c7",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 6,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 6,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 344,
+   "events": 42,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 150,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r1",
+   "seed": 324,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "a927d91eb8cdd79a",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 7,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "dob-order",
+    "marker"
+   ],
+   "escalations": 0,
+   "overridden": 7,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 528,
+   "events": 45,
+   "maxPromptChars": 0,
+   "invariants": {
+    "rows-conserved": 1,
+    "invoices-conserved": 1,
+    "payments-conserved": 1,
+    "amounts-converted": 1,
+    "report-arithmetic": 1,
+    "report-conserves-documents": 1,
+    "report-safe-integers": 1
+   },
+   "guards": {
+    "inputs-present": 1,
+    "close-date": 1,
+    "export-lines-parsed": 1,
+    "export-row-count": 1,
+    "export-ids-unique": 1,
+    "export-known-systems": 1,
+    "vendex-void-phrase": 1,
+    "invoice-format-known": 7,
+    "invoice-columns": 2,
+    "invoice-count": 1,
+    "invoice-amounts": 1,
+    "feed-parsed": 1,
+    "feed-count": 1,
+    "rates-known": 1,
+    "void-prefix-known": 1,
+    "nicknames-read": 1,
+    "renderings-read": 1,
+    "names-read": 1,
+    "dobs-read": 1,
+    "phone-table-read": 1,
+    "invoice-date-shape": 246,
+    "invoice-dates-read": 4
+   },
+   "relations": {
+    "shuffle-customer-rows": "agree",
+    "shuffle-invoice-lines": "agree",
+    "shuffle-bank-feed": "agree",
+    "duplicate-row": "agree",
+    "drop-idle-singleton": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 313,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "110783b3a577dfff",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 12,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 12,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 386,
+   "events": 66,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 287,
+    "ledger-amount": 287,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 313,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "f08f4fbb797122fb",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 29,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 29,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 430,
+   "events": 132,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 930,
+    "ledger-amount": 930,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 313,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "5ada796cd3c77e8f",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 42,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 42,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 493,
+   "events": 190,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1486,
+    "ledger-amount": 1486,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 314,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "b3a677f6be2db482",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 9,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 9,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 408,
+   "events": 60,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 241,
+    "ledger-amount": 241,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 314,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "68d26ece478fc201",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 25,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 25,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 507,
+   "events": 124,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 916,
+    "ledger-amount": 916,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 314,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "91e6ceefd5989f01",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 38,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 38,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 430,
+   "events": 182,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1485,
+    "ledger-amount": 1485,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 315,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "47ef45f7d7d41bfe",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 11,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 11,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 325,
+   "events": 64,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 298,
+    "ledger-amount": 298,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 315,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "858add8638e65e74",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 25,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 25,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 379,
+   "events": 124,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 889,
+    "ledger-amount": 889,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 315,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "a5f3ef8a4b63134d",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 36,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 36,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 360,
+   "events": 178,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1531,
+    "ledger-amount": 1531,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 316,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "2dc2679df3c3d0d1",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 13,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 13,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 314,
+   "events": 68,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 269,
+    "ledger-amount": 269,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 316,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "a9a62d60f295b878",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 25,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 25,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 522,
+   "events": 124,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 919,
+    "ledger-amount": 919,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 316,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "60c7444c991f478e",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 40,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 40,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 591,
+   "events": 186,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1527,
+    "ledger-amount": 1527,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 317,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "77b71f6511602e49",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 13,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 13,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 380,
+   "events": 68,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 288,
+    "ledger-amount": 288,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 317,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "13cf85e3cac8bee7",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 20,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 20,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 399,
+   "events": 114,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 933,
+    "ledger-amount": 933,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 317,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "f73016901549f6a6",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 39,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 39,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 455,
+   "events": 184,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1484,
+    "ledger-amount": 1484,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 318,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "0bc34b3e457a0a45",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 11,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 11,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 288,
+   "events": 64,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 256,
+    "ledger-amount": 256,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 318,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "89a17f169bf6c8ea",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 23,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 23,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 460,
+   "events": 120,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 921,
+    "ledger-amount": 921,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 318,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "a9fdf9595f71ced0",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 35,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 35,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 625,
+   "events": 176,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1547,
+    "ledger-amount": 1547,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 319,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "a3c292850a786793",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 12,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 12,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 507,
+   "events": 66,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 270,
+    "ledger-amount": 270,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 319,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "f06632f820daabfa",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 28,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 28,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 497,
+   "events": 130,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 899,
+    "ledger-amount": 899,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 319,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "aa67bdd07a988926",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 39,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 39,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 526,
+   "events": 184,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1586,
+    "ledger-amount": 1586,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 320,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "c2a80321f097af15",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 13,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 13,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 423,
+   "events": 68,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 258,
+    "ledger-amount": 258,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 320,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "387e5977ae6723e9",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 30,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 30,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 465,
+   "events": 134,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 921,
+    "ledger-amount": 921,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 320,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "6002c0996e5d7574",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 36,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 36,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 421,
+   "events": 178,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1538,
+    "ledger-amount": 1538,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 321,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "37cf54b31a9e41d6",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 12,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 12,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 310,
+   "events": 66,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 270,
+    "ledger-amount": 270,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 321,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "46209ab28509b64f",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 30,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 30,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 426,
+   "events": 134,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 895,
+    "ledger-amount": 895,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 321,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "71bc87f11303d760",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 36,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 36,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 406,
+   "events": 178,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1492,
+    "ledger-amount": 1492,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 322,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "899dc9e9ecf93c1c",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 12,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 12,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 305,
+   "events": 66,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 280,
+    "ledger-amount": 280,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 322,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "3e8772fc5ce1038d",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 25,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 25,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 392,
+   "events": 124,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 948,
+    "ledger-amount": 948,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 322,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "1821ace631580243",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 37,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 37,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 363,
+   "events": 180,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1467,
+    "ledger-amount": 1467,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 323,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "804d52ddc1c92d2b",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 11,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 11,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 246,
+   "events": 64,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 257,
+    "ledger-amount": 257,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 323,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "b9f8ff85a3519d18",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 19,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 19,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 333,
+   "events": 112,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 886,
+    "ledger-amount": 886,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 323,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "f7310688c1770d75",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 39,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 39,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 344,
+   "events": 184,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1477,
+    "ledger-amount": 1477,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 324,
+   "difficulty": 3,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "17dccfd7ae2429a8",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 13,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 13,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 290,
+   "events": 68,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 16,
+    "Z1-item-conservation": 16
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 48,
+    "ledger-parsed": 1,
+    "ledger-currency": 246,
+    "ledger-amount": 246,
+    "statement-shape": 16,
+    "statement-rows-read": 16
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 324,
+   "difficulty": 4,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "6386fade98e88a12",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 28,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 28,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 298,
+   "events": 130,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 32,
+    "Z1-item-conservation": 32
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 96,
+    "ledger-parsed": 1,
+    "ledger-currency": 875,
+    "ledger-amount": 875,
+    "statement-shape": 32,
+    "statement-rows-read": 32
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  },
+  {
+   "rung": "r3",
+   "seed": 324,
+   "difficulty": 5,
+   "policy": "world",
+   "status": "ok",
+   "deopt": null,
+   "error": null,
+   "pass": true,
+   "score": 1,
+   "outDigest": "e7b20eb45725d590",
+   "costUsd": 0,
+   "modelCalls": 0,
+   "sonnetCalls": 0,
+   "judges": 48,
+   "judgesFailed": 0,
+   "judgeNames": [
+    "reason"
+   ],
+   "escalations": 0,
+   "overridden": 48,
+   "flags": [],
+   "flagCount": 0,
+   "latencyMs": 291,
+   "events": 202,
+   "maxPromptChars": 0,
+   "invariants": {
+    "statement-running-balance": 48,
+    "Z1-item-conservation": 48
+   },
+   "guards": {
+    "inputs-present": 1,
+    "spec-dates": 1,
+    "spec-reasons": 1,
+    "vendor-count": 1,
+    "vendor-ids-unique": 1,
+    "statements-present": 1,
+    "rates-known": 1,
+    "vendor-names-unambiguous": 144,
+    "ledger-parsed": 1,
+    "ledger-currency": 1507,
+    "ledger-amount": 1507,
+    "statement-shape": 48,
+    "statement-rows-read": 48
+   },
+   "statementsMatchReference": true,
+   "totalsMatchReference": true,
+   "statementsMatchModuloJudged": true,
+   "relations": {
+    "shuffle-statement-files": "agree",
+    "shuffle-ledger-lines": "agree",
+    "drop-clean-supplier": "agree"
+   }
+  }
+ ]
+}

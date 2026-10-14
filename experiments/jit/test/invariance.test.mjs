@@ -14,10 +14,10 @@ import { ModelPort } from '../../../src/models/port.mjs';
 import { Journal } from '../../../src/journal.mjs';
 import { ScriptedProvider } from '../../../src/models/providers/scripted.mjs';
 import { subsetPolicy } from '../../lib/models.mjs';
-import { runCompiled, FLOW_V2 } from '../run-compiled.mjs';
+import { runCompiled, FLOW_V2, recordingPort, createMemoPort } from '../run-compiled.mjs';
 import { invarianceOf, invarianceDrawOf, selectRelations, validateRelations, runVariants, invarianceSummary, INVARIANCE_KIND, WITNESS_TAGS } from '../invariance.mjs';
 import { runStream, normalizeConfig, parseArm, POLICY_MODELS, shadowDrawOf, REFUSAL_KINDS, selectTraces } from '../stream.mjs';
-import { m1Rule, m1Rules, rowFlags, VIEWS, parseArgs, evalArchivedRow, compiledRowsOf, journalPrefixOf, DEFAULT_RUNS } from '../eval-invariance.mjs';
+import { m1Rule, m1Rules, rowFlags, VIEWS, parseArgs, evalArchivedRow, compiledRowsOf, journalPrefixOf, DEFAULT_RUNS, evalReferences } from '../eval-invariance.mjs';
 import { loadFamily } from '../../lib/beds.mjs';
 
 const skip = sandboxAvailable() ? false : 'no user namespaces';
@@ -30,10 +30,11 @@ const rel = (id, extra = {}) => ({ id, kind: 'invariant', distribution: 'in', te
 // ---------------------------------------------------------------------------------------------- invariance.mjs
 test('invarianceOf: absent is null; defaults written out; every field validated', () => {
   assert.equal(invarianceOf(undefined), null); assert.equal(invarianceOf(null), null);
-  assert.deepEqual(invarianceOf({ share: 0.25 }, { seedDefault: 'exp' }), { share: 0.25, seed: 'exp', distribution: 'in' });
-  assert.deepEqual(invarianceOf({ share: 1, seed: 7, relations: ['a'], distribution: 'all', perTask: 2, relTol: 0.01 }, { seedDefault: 'x' }),
-    { share: 1, seed: '7', relations: ['a'], distribution: 'all', perTask: 2, relTol: 0.01 });
-  for (const [bad, re] of [[{ share: 0 }, /share must be a number in \(0, 1\]/], [{ share: 1.5 }, /share/], [{ share: '0.5' }, /share/], [{ share: 0.5, extra: 1 }, /extra is not supported/],
+  assert.deepEqual(invarianceOf({ share: 0.25 }, { seedDefault: 'exp' }), { share: 0.25, seed: 'exp', distribution: 'in', judges: 'replay', mode: 'deopt' });
+  assert.deepEqual(invarianceOf({ share: 1, seed: 7, relations: ['a'], distribution: 'all', perTask: 2, relTol: 0.01, judges: 'fresh', mode: 'observe' }, { seedDefault: 'x' }),
+    { share: 1, seed: '7', relations: ['a'], distribution: 'all', perTask: 2, relTol: 0.01, judges: 'fresh', mode: 'observe' });
+  for (const [bad, re] of [[{ share: 0.5, judges: 'live' }, /judges must be one of replay, fresh/], [{ share: 0.5, mode: 'warn' }, /mode must be one of deopt, observe/],
+    [{ share: 0 }, /share must be a number in \(0, 1\]/], [{ share: 1.5 }, /share/], [{ share: '0.5' }, /share/], [{ share: 0.5, extra: 1 }, /extra is not supported/],
     [{ share: 0.5, distribution: 'out' }, /distribution must be 'in' or 'all'/], [{ share: 0.5, perTask: 0 }, /perTask/], [{ share: 0.5, relTol: 0.1 }, /relTol/],
     [{ share: 0.5, relations: [] }, /relations must be a non-empty list/], [{ share: 0.5, seed: {} }, /seed/], [[1], /must be an object/]]) assert.throws(() => invarianceOf(bad, { seedDefault: 's' }), re);
 });
@@ -54,6 +55,12 @@ test('invarianceDrawOf: deterministic, in [0, 1), independent of the shadow draw
   assert.throws(() => validateRelations([{ ...rel('a'), distribution: 'x' }]), /distribution/);
   assert.throws(() => validateRelations([{ ...rel('a'), kind: 'x' }]), /kind/);
   assert.throws(() => validateRelations([{ id: 'a' }]), /make\(\) and check\(\)/);
+  assert.throws(() => validateRelations([{ ...rel('a'), distributionOf: 'in' }]), /distributionOf must be a function/);
+  // Review fix (finding 3): a task-dependent label is read from the task when one is given.
+  const byD = [rel('a'), { ...rel('d', { distribution: 'out' }), distributionOf: t => (t.difficulty >= 4 ? 'in' : 'out') }];
+  assert.deepEqual(selectRelations(byD, { task: { difficulty: 3 } }).map(r => r.id), ['a']);
+  assert.deepEqual(selectRelations(byD, { task: { difficulty: 4 } }).map(r => r.id), ['a', 'd']);
+  assert.deepEqual(selectRelations(byD).map(r => r.id), ['a'], 'no task: the static label');
   assert.equal(INVARIANCE_KIND, 'invariance'); assert.deepEqual(WITNESS_TAGS, ['hash-total', 'exclusion-set', 'conservation', 'count', 'none']);
 });
 
@@ -90,32 +97,66 @@ const port = () => new ModelPort({ policy, journal: new Journal(new DatabaseSync
 const SCHEMA = { type: 'object', required: ['total'], properties: { total: { type: 'number' } } };
 const TASK = { id: 'fake:dev:d3:1', prompt: 'p', inputs: { rows: [5, 1, 4] } };
 // One gateway call, then the sum (order-free) or the sum and the first row (order-dependent).
-const SOLVE = first => `import { readFileSync } from 'node:fs';
+// keyed: the one request names the first row, so a reordered variant asks a changed request.
+const SOLVE = (first, keyed = false) => `import { readFileSync } from 'node:fs';
 import { callModel } from './tools/model.mjs';
 const task = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-await callModel({ model: 'claude-haiku-5-5', prompt: 'label', schema: { type: 'object', properties: { label: { type: 'string' } }, required: ['label'] } });
+await callModel({ model: 'claude-haiku-5-5', prompt: ${keyed ? '`label ${JSON.stringify(task.inputs.rows)}`' : "'label'"}, schema: { type: 'object', properties: { label: { type: 'string' } }, required: ['label'] } });
 const rows = task.inputs.rows;
 if (!Array.isArray(rows)) throw new Error('rows');
 console.log(JSON.stringify({ total: rows.reduce((a, b) => a + b, 0)${first ? ', first: rows[0]' : ''} }));`;
 
-test('runCompiled variants: absent or null changes nothing; an order-free solver agrees (spend added); an order-dependent one deopts with kind invariance; a crashing variant is recorded, not a disagreement', { skip }, async t => {
+test('recordingPort records model answers (not flow:call) that a memo port then serves; a missing request goes live', async () => {
+  let n = 0;
+  const live = { policy: { p: 1 }, providers: {}, call: async req => ({ ok: true, value: { n: ++n, prompt: req.prompt }, costUsd: 0.01, modelId: req.modelId }) };
+  const rec = recordingPort(live);
+  assert.deepEqual(rec.policy, { p: 1 });
+  await rec.call({ modelId: 'claude-haiku-5-5', prompt: 'a', schema: {} }); await rec.call({ modelId: 'flow:call', prompt: '{}', schema: {} });
+  assert.equal(rec.rows().length, 1);
+  const memo = createMemoPort({ journal: rec.rows(), live, strict: false, reuse: false });
+  const hit = await memo.call({ modelId: 'claude-haiku-5-5', prompt: 'a', schema: {} }), again = await memo.call({ modelId: 'claude-haiku-5-5', prompt: 'a', schema: {} });
+  assert.deepEqual([hit.replayed, hit.costUsd, hit.value.n], [true, 0, 1]);
+  assert.equal(again.replayed, undefined, 'reuse off: a second identical request goes live'); assert.equal(memo.memo.stats().live, 1);
+  assert.throws(() => recordingPort(null), /a port with call\(\) is required/);
+});
+
+test('runCompiled variants: absent or null changes nothing; an order-free solver agrees (judges replayed at $0, or fresh and billed); an order-dependent one deopts with kind invariance (or, observed, is recorded); a crashing variant is recorded, not a disagreement', { skip }, async t => {
   const root = tmp(t);
-  const solve = name => { const p = path.join(root, `${name}.mjs`); writeFileSync(p, SOLVE(name === 'first')); return p; };
+  const solve = name => { const p = path.join(root, `${name}.mjs`); writeFileSync(p, SOLVE(name === 'first', name === 'keyed')); return p; };
   const args = (name, extra = {}) => ({ solvePath: solve(name), task: TASK, modelPort: port(), perTaskUsd: 1, timeoutMs: 60000, workdir: path.join(root, `w-${name}-${Object.keys(extra).join('')}`), outputSchema: SCHEMA, allowedModels: MODELS, flowPath: FLOW_V2, label: 'inv', ...extra });
   const plain = await runCompiled(args('sum'));
   assert.equal(plain.status, 'ok'); assert.deepEqual(plain.output, { total: 10 }); assert.equal('variants' in plain.meta, false); assert.ok(Math.abs(plain.costUsd - 0.02) < 1e-9);
   const nul = await runCompiled(args('sum', { variants: null }));
   assert.deepEqual(Object.keys(nul).sort(), Object.keys(plain).sort()); assert.deepEqual(Object.keys(nul.meta).sort(), Object.keys(plain.meta).sort());
   assert.equal('variants' in nul.meta, false);
+  // judges 'replay' (default; review finding 4): the variant repeats the original's one request unchanged and is served the
+  // original's answer at $0; 'fresh' asks it again and pays.
   const ok = await runCompiled(args('sum', { variants: { relations: [rel('reverse')], seed: 's' } }));
   assert.equal(ok.status, 'ok'); assert.deepEqual(ok.output, { total: 10 });
   assert.deepEqual([ok.meta.variants.ran, ok.meta.variants.violated, ok.meta.variants.statuses], [1, null, { reverse: 'agree' }]);
-  assert.ok(Math.abs(ok.costUsd - 0.04) < 1e-9, 'the variant\'s gateway call is billed'); assert.ok(Math.abs(ok.meta.variants.costUsd - 0.02) < 1e-9);
+  assert.ok(Math.abs(ok.costUsd - 0.02) < 1e-9, String(ok.costUsd)); assert.equal(ok.meta.variants.costUsd, 0);
+  assert.deepEqual([ok.meta.variants.judges, ok.meta.variants.answersRecorded, ok.meta.variants.liveRequests], ['replay', 1, 0]);
+  assert.deepEqual(ok.meta.variants.results[0].memo, { requests: 1, served: 1, live: 0 });
+  const fresh = await runCompiled(args('sum', { variants: { relations: [rel('reverse')], seed: 's', judges: 'fresh' } }));
+  assert.ok(Math.abs(fresh.costUsd - 0.04) < 1e-9, 'fresh: the variant\'s gateway call is billed'); assert.ok(Math.abs(fresh.meta.variants.costUsd - 0.02) < 1e-9);
+  assert.equal(fresh.meta.variants.judges, 'fresh'); assert.equal('answersRecorded' in fresh.meta.variants, false);
+  // A request the variant changes goes live and is billed under 'replay' too.
+  const keyed = await runCompiled(args('keyed', { variants: { relations: [rel('reverse')], seed: 's' } }));
+  assert.equal(keyed.status, 'ok'); assert.ok(Math.abs(keyed.meta.variants.costUsd - 0.02) < 1e-9); assert.deepEqual(keyed.meta.variants.results[0].memo, { requests: 1, served: 0, live: 1 });
+  // The variants share one budget (review finding 8): capUsd 0 runs none of them; never a disagreement.
+  const capped0 = await runCompiled(args('first', { variants: { relations: [rel('reverse'), rel('again')], seed: 's', capUsd: 0 } }));
+  assert.equal(capped0.status, 'ok'); assert.deepEqual(capped0.meta.variants.statuses, { reverse: 'variant-budget', again: 'variant-budget' }); assert.ok(Math.abs(capped0.costUsd - 0.02) < 1e-9);
+  await assert.rejects(runCompiled(args('sum', { variants: { relations: [], judges: 'x' } })), /judges must be 'replay' or 'fresh'/);
+  await assert.rejects(runCompiled(args('sum', { variants: { relations: [], capUsd: -1 } })), /capUsd/);
   assert.ok(existsSync(`${args('sum', { variants: 1 }).workdir}-v-reverse`), 'the variant ran in its own workdir');
   const bad = await runCompiled(args('first', { variants: { relations: [rel('reverse')], seed: 's' } }));
   assert.equal(bad.status, 'deopt'); assert.equal(bad.output, null);
   assert.deepEqual([bad.deopt.kind, bad.deopt.name], ['invariance', 'reverse']); assert.deepEqual(bad.deopt.detail.violations, [{ level: 'output' }]);
   assert.deepEqual(bad.meta.variants.output, { total: 10, first: 5 }); assert.deepEqual(bad.meta.variants.results[0].variantOutput, { total: 10, first: 4 });
+  // mode observe (review finding 9): every relation runs, the disagreement is recorded, the answer is not withheld.
+  const seen = await runCompiled(args('first', { variants: { relations: [rel('reverse'), rel('again')], seed: 's', observe: true } }));
+  assert.equal(seen.status, 'ok'); assert.deepEqual(seen.output, { total: 10, first: 5 }); assert.equal(seen.deopt, null);
+  assert.deepEqual([seen.meta.variants.violated, seen.meta.variants.observe, seen.meta.variants.statuses], ['reverse', true, { reverse: 'disagree', again: 'disagree' }]);
   const crash = await runCompiled(args('sum', { variants: { relations: [{ ...rel('garble'), make: tk => ({ task: { ...tk, inputs: { rows: 'x' } }, info: {} }) }], seed: 's' } }));
   assert.equal(crash.status, 'ok'); assert.deepEqual(crash.meta.variants.statuses, { garble: 'variant-crash' }); assert.equal(crash.meta.variants.violated, null);
   // A failed original runs no variant.
@@ -142,12 +183,13 @@ function fakeDeps(plan) {
     },
     async runCompiled(a) {
       const idx = a.task.seed - 1;
-      calls.runCompiled.push({ idx, variants: a.variants ? { relations: a.variants.relations.map(r => r.id), seed: a.variants.seed, compare: a.variants.compare } : null });
+      calls.runCompiled.push({ idx, variants: a.variants ? { relations: a.variants.relations.map(r => r.id), seed: a.variants.seed, compare: a.variants.compare, judges: a.variants.judges, observe: a.variants.observe } : null });
       const out = plan.wrong?.includes(idx) ? { v: -1 } : TRUTH(a.task.seed);
       if (!a.variants) return { status: 'ok', output: out, deopt: null, trace: [], costUsd: 0.01, costUnknown: false, latencyMs: 1, error: null, meta: { errors: {} } };
-      const disagree = plan.disagree?.includes(idx), relations = a.variants.relations.map(r => r.id);
+      const disagree = plan.disagree?.includes(idx), relations = a.variants.relations.map(r => r.id), unknown = !!plan.unknown?.includes(idx);
       const variants = { ran: relations.length, relations, statuses: Object.fromEntries(relations.map((r, i) => [r, disagree && i === 0 ? 'disagree' : 'agree'])), violated: disagree ? relations[0] : null,
-        costUsd: 0.005, results: [], output: out, ...(disagree ? { levels: ['fields'] } : {}) };
+        costUsd: 0.005, costUnknown: unknown, originalCostUnknown: false, ...(a.variants.observe ? { observe: true } : {}), results: [], output: out, ...(disagree ? { levels: ['fields'] } : {}) };
+      if (a.variants.observe) return { status: 'ok', output: out, deopt: null, trace: [], costUsd: 0.015, costUnknown: unknown, latencyMs: 1, error: null, meta: { errors: {}, variants } };
       return disagree
         ? { status: 'deopt', output: null, deopt: { kind: 'invariance', name: relations[0], detail: {} }, trace: [], costUsd: 0.015, costUnknown: false, latencyMs: 1, error: null, meta: { errors: {}, variants } }
         : { status: 'ok', output: out, deopt: null, trace: [], costUsd: 0.015, costUnknown: false, latencyMs: 1, error: null, meta: { errors: {}, variants } };
@@ -214,6 +256,18 @@ test('jit.invariance in the stream: sampled runs carry the selected relations; a
   assert.ok(half.calls.runCompiled.some(c => c.variants) && half.calls.runCompiled.some(c => !c.variants));
   assert.ok(half.calls.runCompiled.filter(c => c.variants).every(c => c.variants.relations.join() === 'in-a'));
   for (const r of half.rows.filter(x => x.compiledStatus)) { assert.equal('invarianceDraw' in r, true); assert.equal('invariance' in r, invarianceDrawOf('S', r.idx) < 0.5); }
+  // Review fixes: the relations, judges and mode reach run-compiled; an unknown variant spend is booked on the invariance line
+  // only (finding 8); observe mode delivers the compiled answer and records the disagreement (finding 9).
+  const obs = await run('inv-obs', { share: 1, mode: 'observe', judges: 'fresh' }, { wrong: [4], disagree: [4], unknown: [3] });
+  const oc = obs.calls.runCompiled.filter(c => c.variants);
+  assert.ok(oc.length && oc.every(c => c.variants.observe === true && c.variants.judges === 'fresh'));
+  const o4 = obs.rows.find(r => r.idx === 4);
+  assert.deepEqual([o4.delivered, o4.deoptKind, o4.invariance.violated, o4.invariance.observe, o4.pass], ['compiled', null, 'in-a', true, false]);
+  assert.ok(!obs.rows.find(r => r.idx === 5).events.some(e => e.kind === 'recompile'), 'observe: no recompile');
+  const spends = readJsonl(path.join(root, 'runs/inv-obs', SLUG, 'events.jsonl')).filter(e => e.kind === 'spend' && e.idx === 3);
+  assert.deepEqual(spends.filter(e => ['compiled', 'invariance'].includes(e.component)).map(e => [e.component, e.costUnknown]), [['compiled', false], ['invariance', true]]);
+  assert.equal(obs.rows.find(r => r.idx === 3).invariance.costUnknown, true);
+  assert.equal(half.calls.runCompiled.find(c => c.variants).variants.judges, 'replay', 'replay is the default');
   // Off: no draw, no summary, no variants.
   const off = await run('inv-off', undefined, {});
   assert.ok(off.calls.runCompiled.every(c => c.variants === null));
@@ -226,9 +280,17 @@ const recOf = (compiledPass, variants) => ({ status: 'evaluated', compiledPass, 
 
 test('eval-invariance: rowFlags and the M1 rule per view (lower, measured, upper bounds; kill, meets, open)', () => {
   const r = recOf(false, [v(0, 'a', 'agree'), v(1, 'a', 'disagree'), v(0, 'b', 'needs-paid-judges', 'out'), v(0, 'c', 'skip')]);
-  assert.deepEqual(rowFlags(r), { measurable: true, flagged: true, pending: ['b'] });
-  assert.deepEqual(rowFlags(r, VIEWS.firstDraw), { measurable: true, flagged: false, pending: ['b'] });
-  assert.deepEqual(rowFlags(r, VIEWS.inDistribution), { measurable: true, flagged: true, pending: [] });
+  assert.deepEqual(rowFlags(r), { measurable: true, flagged: true, pending: ['b'], complete: false });
+  assert.deepEqual(rowFlags(r, VIEWS.firstDraw), { measurable: true, flagged: false, pending: ['b'], complete: false });
+  assert.deepEqual(rowFlags(r, VIEWS.inDistribution), { measurable: true, flagged: true, pending: [], complete: true });
+  // Review fix (finding 2): a relation with one measured and one unmeasured variant is pending, so the row's upper bound
+  // counts it; before the fix it was silently dropped and the "upper bound" was the measured share.
+  const partly = recOf(false, [v(0, 'a', 'agree'), v(1, 'a', 'needs-paid-judges')]);
+  assert.deepEqual(rowFlags(partly), { measurable: true, flagged: false, pending: ['a'], complete: false });
+  const pr = m1Rule([partly, partly, ...Array.from({ length: 6 }, () => recOf(false, [v(0, 'a', 'agree')]))]);
+  assert.deepEqual([pr.recallLowerPct, pr.recallUpperPct, pr.wrongPending], [0, 25, 2]); assert.match(pr.verdict, /^open: 2 of 8/);
+  assert.deepEqual([pr.codePath.wrongMeasurable, pr.codePath.wrongFlagged, pr.codePath.wrongComplete], [8, 0, 6]);
+  assert.match(pr.codePath.what, /code-path order and state dependence only/);
   const wrongClean = n => Array.from({ length: n }, () => recOf(false, [v(0, 'a', 'agree')]));
   const right = n => Array.from({ length: n }, () => recOf(true, [v(0, 'a', 'agree')]));
   assert.match(m1Rule([...wrongClean(10), ...right(5)]).verdict, /^KILL on \(i\)/);
@@ -255,4 +317,18 @@ test('eval-invariance part (A) on one archived compiled answer: rebuilt from its
   assert.deepEqual(rec.variants.map(x => x.relation), ['shuffle-rows', 'duplicate-row', 'drop-singleton']);
   for (const x of rec.variants) assert.ok(['agree', 'disagree', 'skip', 'needs-paid-judges'].includes(x.status) || x.status.startsWith('variant-'), x.status);
   assert.equal(rec.variants.find(x => x.relation === 'shuffle-rows').status, 'needs-paid-judges', 'the VENDEX judge sees the rows in another order');
+});
+
+// ---------------------------------------------------------------------------------------------- part (D): references
+test('eval-invariance part (D): the W-bed R1 and R3 relations hold for the frozen references with author readings (review finding 13; a subset, $0)', { skip }, async t => {
+  const work = tmp(t);
+  const out = await evalReferences({ seeds: [373], difficulties: [3, 4], k: 1, work });
+  assert.deepEqual(out.map(x => x.rung), ['r1', 'r3']);
+  for (const x of out) {
+    assert.equal(x.originalOk, x.runs, `${x.rung}: every original runs ok`);
+    const totals = Object.values(x.byRelation).reduce((a, y) => ({ agree: a.agree + y.agree, disagree: a.disagree + y.disagree, notOk: a.notOk + y.notOk }), { agree: 0, disagree: 0, notOk: 0 });
+    assert.equal(totals.disagree, 0, `${x.rung}: ${JSON.stringify(x.examples)}`); assert.equal(totals.notOk, 0, `${x.rung}: ${JSON.stringify(x.examples)}`);
+    assert.ok(totals.agree >= (x.rung === 'r1' ? 8 : 4), `${x.rung}: ${JSON.stringify(x.byRelation)}`);
+  }
+  assert.deepEqual(Object.keys(out[0].byRelation).sort(), ['drop-idle-singleton@in', 'duplicate-row@out', 'shuffle-bank-feed@out', 'shuffle-customer-rows@out', 'shuffle-invoice-lines@out']);
 });

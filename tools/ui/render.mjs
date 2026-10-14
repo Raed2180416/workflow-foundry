@@ -113,7 +113,7 @@ function fieldHtml(spec, field, { values, errorsByField, single }) {
   const group = field.group ? spec.groups.find(g => g.id === field.group) : null;
   const marker = single ? '' : ` <span class="req">${!field.required ? '(optional)' : group && !group.required ? '(required with this group)' : '(required)'}</span>`;
   const labelText = single ? t(spec.question) : t(field.label);
-  const hint = hintId ? `<p class="hint" id="${hintId}">${[description ? t(description) : '', rules ? escapeHtml(rules) : ''].filter(Boolean).join('\n')}</p>\n` : '';
+  const hint = hintId ? `<p class="hint" id="${hintId}">${[description ? t(description) : '', rules ? t(rules) : ''].filter(Boolean).join('\n')}</p>\n` : '';
   const err = error ? `<p class="error-message" id="${errorId}"><span class="vh">Error: </span>${t(error.message)}</p>\n` : '';
   const raw = values?.[field.name];
   const cls = `field${error ? ' field-error' : ''}`;

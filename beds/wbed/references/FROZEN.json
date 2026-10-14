@@ -1,7 +1,7 @@
 {
  "about": "W-bed arm (c) reference workflows for rungs R1 and R3 (PROOF-LEDGER B10; W-BED.md §2.3, §4 arm c), frozen by sha256. Hand-written on flow-v3 from the task view, the W-BED rung spec and the author fixtures; never from a bed's generator, oracle or controls. Never tuned again: a change to either file fails references.test.mjs.",
  "frozenAt": "2026-10-14",
- "protocol": "W-BED.md §2.3: author fixtures = wbed dev seeds 373-378 (inputs + referenceSolve outputs, d3 and d4); one validation on dev seeds 301-312 (d3, d4); because judges were stubs ($0), the '< 10/12' revision trigger was met for both rungs and each got its one revision; frozen whatever the score.",
+ "protocol": "W-BED.md §2.3: author fixtures = wbed dev seeds 373-378 (inputs + referenceSolve outputs, d3 and d4); one validation on dev seeds 301-312 (d3, d4); because judges were stubs ($0), the '< 10/12' revision trigger was met for both rungs and each got its one revision; frozen whatever the score. Review (2026-10-14): the one revision is spent, so dev 301-312 are development seeds for R1 (its three revision fixes came from 311 d3, 308 d4, 301 d4, 303 d3) and no later run on them is a validation; any paid run of these files is report-only, on dev seeds the author never saw, with no revision (README \"Protocol followed\").",
  "references": {
   "r1": {
    "file": "r1-reference.mjs",
@@ -92,13 +92,14 @@
      "country aliases gain the ISO alpha-2 code of every country in the spec's phone table (a bare 'CA' went to the place judge on 308 d4)",
      "the birth-date code reader reads only sentences about birth dates or numeric dates (a LEDGR sentence about restored change dates made it defer LEDGR's stated day.month.year to a judge on 301 d4, 303 d3, 311 d3)"
     ]
-   }
+   },
+   "bedFamilyVersionAtFreeze": "1.0.0"
   },
   "r3": {
    "file": "r3-reference.mjs",
    "sha256": "61e6e6236d1cd613a803e15b30288973ca90fc2a1a518815952a52d0b303f020",
    "bed": "wbed-r3",
-   "bedFamilyVersion": "1.0.0",
+   "bedFamilyVersion": "1.1.0",
    "rung": "R3 statement audit (fan-out / fan-in)",
    "entry": "a solve.mjs for experiments/jit/run-compiled.mjs with flowPath FLOW_V3 (createFlow budgetUsd 0.60; flow.wide budgetUsd 0.40, itemFloorUsd 0.002, concurrency 8, maxFanout 64)",
    "structure": {
@@ -156,7 +157,9 @@
     "revision": [
      "cosmetic: the per-supplier parse step is named 'parse-statement' instead of 'parse:<vendor id>' (one node in the W-BED §6.3 structure graph instead of one per supplier); no behaviour change"
     ]
-   }
+   },
+   "bedFamilyVersionAtFreeze": "1.0.0",
+   "bedRevalidation": "wbed-r3 1.1.0 (2026-10-14) stores FX quotes at their printed precision (beds/wbed/lib/fx.mjs drawQuotes); the frozen bytes are unchanged and were re-validated on 1.1.0: validation/r3-bed-1.1.0.json"
   }
  },
  "engine": {
@@ -164,7 +167,8 @@
   "flowV3": "experiments/jit/flow-v3.mjs (the E2 record after the slice 2 review fixes, FLOW-V3-SLICE2.md §17.6)",
   "runCompiledSha256": "2cb41585b57443d4b60e725d73147251def64e119d0ba4422ffd630cb0b585cf",
   "models": "claude-haiku-5-5, claude-sonnet-5-5 (policy/models.json)",
-  "streamNote": "stream.mjs runs a static:<solve.mjs> arm with flow.mjs (v1) unless the arm is given flow-v3; running arm (c) in the W-bed stream needs that one engine change (not made here)."
+  "streamNote": "stream.mjs runs a static:<solve.mjs> arm with flow.mjs (v1) unless the arm is given flow-v3; running arm (c) in the W-bed stream needs that one engine change (not made here).",
+  "runCompiledNote": "asserted by references.test.mjs since the 2026-10-14 review (finding 13), as flowV3Sha256 is"
  },
  "authorship": {
   "author": "Claude Opus 5.5 (claude-opus-5-5) as the expert workflow author, in a workflow-orchestrated Claude Code session (subagent; no claude -p builder session, no model call during authoring or validation)",
@@ -173,7 +177,7 @@
   "date": "2026-10-14",
   "tokenEstimate": {
    "sessionTokens": 690000,
-   "basis": "the session's token counter (15,000,000 budget minus about 14.31M left at the freeze); it counts every repo document, tool output and draft the session read or wrote, for both rungs together; not separable per rung (about two thirds R1)",
+   "basis": "the session's token counter (15,000,000 budget minus about 14.31M left at the freeze); it counts every repo document, tool output and draft the session read or wrote, for both rungs together; not separable per rung (about two thirds R1) A lower bound at best (review finding 10): the counter is the session's, not a billing record.",
    "listPriceUsdEstimate": "3-6 (Opus 5.5 at $4 / $20 per MTok in / out, most tokens input; the subscription meter is shared and cannot attribute it)"
   },
   "wallClock": "about 1 hour (15:05-16:00 UTC) for both references, their validation and this record",
@@ -187,13 +191,18 @@
    "the beds' generator, oracle and bad-control source",
    "the bed notes W-BED-R1-NOTES.md and W-BED-R2R3-NOTES.md",
    "beds/sealed/"
-  ]
+  ],
+  "seenNote": "review finding 11: the exported difficulty descriptors include difficulty.levels, the generator's trap catalogue and rates (voidRowInv, thirdParty, remitOnly, flags, atlasSwitch, partial and split probabilities); that is beyond the rung spec and labelled fixtures W-BED §2.3 allows and part of arm (c)'s ceiling asymmetry"
  },
  "validation": {
   "files": {
    "validation/fixtures-373-378.json": "57d299f7696bf55944147eeac8ca9570e4af160f1a2aa0f940d0107d6b96c6ed",
    "validation/dev-301-312.json": "4c78e7c2aa34173a77409f09d9c54de3bf5dd211b735322d8bb910bbae008fa8",
-   "validation/r1-sensitivity.json": "4a009e3f5c3c666c92e71ff2c993dd3c00d3670613aa6d892bce37439e0f6f3a"
+   "validation/r1-sensitivity.json": "4a009e3f5c3c666c92e71ff2c993dd3c00d3670613aa6d892bce37439e0f6f3a",
+   "validation/r3-bed-1.1.0.json": "6a3cb3ad2108a830554755ab7d13c7ce60b956e0f42de73a44d0ef2b724cb5f4",
+   "validation/dev-313-324.json": "1edd876c1e39ea6359befed3a49be58bf5aa04067562eb3631df3bef833e9a6b",
+   "validation/relations-author.json": "2d150699e5b435b9ab8b490bb3214cca92c16519d3174326f0095a3c1a3d76e7",
+   "validation/relations-world-313-324.json": "0d1ac2db428c493c406211746243deacc780551ea31f39498b4a3e878f4f486d"
   },
   "stub": "stub-policy.mjs: A = first enum / first quoted sentence, B = last enum / last quoted sentence (README 'Stub gateway')",
   "r1": {
@@ -498,13 +507,326 @@
     }
    },
    "judgeDependentTasks": 36,
-   "tasks": 36
+   "tasks": 36,
+   "bed110": {
+    "about": "the frozen R3 reference re-run on wbed-r3 1.1.0 (fixtures 373-378 and dev 301-312, d3 and d4); validation/r3-bed-1.1.0.json",
+    "A": {
+     "runs": 36,
+     "ok": 36,
+     "deopt": 0,
+     "crash": 0,
+     "pass": 0,
+     "labelMatch": 0,
+     "statementsMatchReference": 0,
+     "totalsMatchReference": 0,
+     "statementsMatchModuloJudged": 36,
+     "costUsd": {
+      "total": 0.333927,
+      "max": 0.0186748,
+      "mean": 0.009276
+     },
+     "modelCalls": {
+      "total": 973,
+      "max": 49
+     },
+     "sonnetCalls": 304,
+     "judgesFailed": 304,
+     "deopts": {}
+    },
+    "B": {
+     "runs": 36,
+     "ok": 36,
+     "deopt": 0,
+     "crash": 0,
+     "pass": 0,
+     "labelMatch": 0,
+     "statementsMatchReference": 0,
+     "totalsMatchReference": 0,
+     "statementsMatchModuloJudged": 36,
+     "costUsd": {
+      "total": 0.035467,
+      "max": 0.0016308000000000002,
+      "mean": 0.000985
+     },
+     "modelCalls": {
+      "total": 669,
+      "max": 31
+     },
+     "sonnetCalls": 0,
+     "judgesFailed": 0,
+     "deopts": {}
+    },
+    "author": {
+     "runs": 36,
+     "ok": 36,
+     "deopt": 0,
+     "crash": 0,
+     "pass": 36,
+     "labelMatch": 10,
+     "statementsMatchReference": 36,
+     "totalsMatchReference": 36,
+     "statementsMatchModuloJudged": 36,
+     "costUsd": {
+      "total": 0,
+      "max": 0,
+      "mean": 0
+     },
+     "modelCalls": {
+      "total": 0,
+      "max": 0
+     },
+     "sonnetCalls": 0,
+     "judgesFailed": 0,
+     "deopts": {}
+    }
+   }
+  },
+  "sampleNote": "fixtures 373-378 are the author's development fixtures and 301-312 the revision set: every number under r1 and r3 above is in-sample (development) evidence. Out-of-sample code results are under outOfSample.",
+  "outOfSample": {
+   "about": "dev 313-324 (seeds no author or revision saw; 325-348 are the dev-B stream and 349-372 jit-oos, untouched), d3, d4 and d5, analyst side, $0: policy world answers every judge from the generator world (analyst/world-readings.mjs), so it measures the frozen code given correct readings; A and B are the stubs. validation/dev-313-324.json",
+   "r1": {
+    "A": {
+     "runs": 36,
+     "ok": 35,
+     "deopt": 1,
+     "crash": 0,
+     "pass": 0,
+     "labelMatch": 0,
+     "costUsd": {
+      "total": 0.122086,
+      "max": 0.007005799999999999,
+      "mean": 0.003391
+     },
+     "modelCalls": {
+      "total": 319,
+      "max": 13
+     },
+     "sonnetCalls": 77,
+     "judgesFailed": 1,
+     "deopts": {
+      "guard:names-read": 1
+     }
+    },
+    "B": {
+     "runs": 36,
+     "ok": 35,
+     "deopt": 1,
+     "crash": 0,
+     "pass": 0,
+     "labelMatch": 0,
+     "costUsd": {
+      "total": 0.118631,
+      "max": 0.0074309,
+      "mean": 0.003295
+     },
+     "modelCalls": {
+      "total": 317,
+      "max": 13
+     },
+     "sonnetCalls": 75,
+     "judgesFailed": 1,
+     "deopts": {
+      "guard:names-read": 1
+     }
+    },
+    "world": {
+     "runs": 36,
+     "ok": 35,
+     "deopt": 1,
+     "crash": 0,
+     "pass": 34,
+     "labelMatch": 34,
+     "costUsd": {
+      "total": 0,
+      "max": 0,
+      "mean": 0
+     },
+     "modelCalls": {
+      "total": 0,
+      "max": 0
+     },
+     "sonnetCalls": 0,
+     "judgesFailed": 1,
+     "deopts": {
+      "guard:names-read": 1
+     }
+    },
+    "passWithWorldReadings": 34,
+    "tasks": 36,
+    "failures": [
+     "320 d4: deopt guard:names-read under world, A and B. VENDEX \"Supplier contact Femke van dn Berg\": a typo'd particle (\"dn\") outside the fixed particle list (r1-reference.mjs:265), so the code cannot read the name, and the span-extraction judge (vendex-entry) is answered by no stub and no world reading. With a live judge the outcome is unmeasured",
+     "322 d4: ok but wrong (score 0.759): ATLAS \"Nora vn der Meer\" and VENDEX \"Nora van der Meer\" are one customer; \"vn\" is not in the particle list (r1-reference.mjs:521), so the name splits as given \"Nora vn\", family \"der Meer\", the names do not match and the two rows stay two customers. Every judge answered correctly, 0 failed"
+    ],
+    "reading": "34/36 with correct readings (d3 12/12, d4 10/12, d5 12/12); both failures are the typo'd-particle class of the v1 \"Ryōta Ōta\" deopt; the generator types one error into a name (records/world.mjs) and the customer spec tolerates one per name. Wilson 95% for the wrong-or-deopt share: about 1.5-18%"
+   },
+   "r3": {
+    "A": {
+     "runs": 36,
+     "ok": 36,
+     "deopt": 0,
+     "crash": 0,
+     "pass": 0,
+     "labelMatch": 0,
+     "statementsMatchReference": 0,
+     "totalsMatchReference": 0,
+     "statementsMatchModuloJudged": 36,
+     "costUsd": {
+      "total": 0.496135,
+      "max": 0.026536,
+      "mean": 0.013782
+     },
+     "modelCalls": {
+      "total": 1370,
+      "max": 73
+     },
+     "sonnetCalls": 456,
+     "judgesFailed": 456,
+     "deopts": {}
+    },
+    "B": {
+     "runs": 36,
+     "ok": 36,
+     "deopt": 0,
+     "crash": 0,
+     "pass": 0,
+     "labelMatch": 0,
+     "statementsMatchReference": 0,
+     "totalsMatchReference": 0,
+     "statementsMatchModuloJudged": 36,
+     "costUsd": {
+      "total": 0.048313,
+      "max": 0.0025897000000000003,
+      "mean": 0.001342
+     },
+     "modelCalls": {
+      "total": 914,
+      "max": 48
+     },
+     "sonnetCalls": 0,
+     "judgesFailed": 0,
+     "deopts": {}
+    },
+    "world": {
+     "runs": 36,
+     "ok": 36,
+     "deopt": 0,
+     "crash": 0,
+     "pass": 36,
+     "labelMatch": 10,
+     "statementsMatchReference": 36,
+     "totalsMatchReference": 36,
+     "statementsMatchModuloJudged": 36,
+     "costUsd": {
+      "total": 0,
+      "max": 0,
+      "mean": 0
+     },
+     "modelCalls": {
+      "total": 0,
+      "max": 0
+     },
+     "sonnetCalls": 0,
+     "judgesFailed": 0,
+     "deopts": {}
+    },
+    "passWithWorldReadings": 36,
+    "tasks": 36,
+    "reading": "36/36 with correct readings at d3-d5 (48 suppliers at d5); wbed-r3 1.1.0"
+   }
+  },
+  "relations": {
+   "about": "ATTACK M1 relations (bed.invariance) run through the same sandbox and answers (validate.mjs --relations; review finding 7): a correct, order-free solver must keep each relation",
+   "inSampleAuthor": {
+    "file": "validation/relations-author.json",
+    "r1": {
+     "shuffle-customer-rows": {
+      "agree": 36
+     },
+     "shuffle-invoice-lines": {
+      "agree": 36
+     },
+     "shuffle-bank-feed": {
+      "agree": 36
+     },
+     "duplicate-row": {
+      "agree": 36
+     },
+     "drop-idle-singleton": {
+      "agree": 36
+     }
+    },
+    "r3": {
+     "shuffle-statement-files": {
+      "agree": 36
+     },
+     "shuffle-ledger-lines": {
+      "agree": 36
+     },
+     "drop-clean-supplier": {
+      "agree": 36
+     }
+    }
+   },
+   "outOfSampleWorld": {
+    "file": "validation/relations-world-313-324.json",
+    "r1": {
+     "shuffle-customer-rows": {
+      "agree": 35
+     },
+     "shuffle-invoice-lines": {
+      "agree": 35
+     },
+     "shuffle-bank-feed": {
+      "agree": 35
+     },
+     "duplicate-row": {
+      "agree": 35
+     },
+     "drop-idle-singleton": {
+      "skip": 2,
+      "agree": 33
+     }
+    },
+    "r3": {
+     "shuffle-statement-files": {
+      "agree": 36
+     },
+     "shuffle-ledger-lines": {
+      "agree": 36
+     },
+     "drop-clean-supplier": {
+      "agree": 36
+     }
+    },
+    "note": "no relation falsified; the R1 wrong answer on 322 d4 keeps every relation (an order-free code defect is invisible to M1, its kill mode)"
+   }
   }
  },
  "bedFinding": {
   "rung": "R3",
-  "claimStatus": "blocks R3 end-to-end success claims until resolved (AGENTS.md: an invalid evaluator blocks claims)",
+  "claimStatus": "no longer blocks: wbed-r3 1.0.0 results (and wbed-r4/r5 1.0.0 tasks with an R3 pack) stay invalid for totals",
   "finding": "The R3 oracle's by_reason usd_cents and totals are not reproducible from the task: on all 12 author fixtures the labelled values differ from the spec's rule ('add each supplier's amounts per reason, convert that sum once at the quote below, half away from zero') by +1 to +50 cents per reason; no reading of the printed quotes (per supplier, per discrepancy, per currency, rounding once) reproduces them, consistent with truth computed at rates more precise than the 4-decimal quotes the spec prints. With the correct reason on every discrepancy, the reference's statements equal the bed reference's in 36/36 tasks and its totals in 0/36, so the oracle fails it 36/36; a black-box probe (the reference's answer with the bed reference's totals swapped in) passes on fixtures 373 d3, 373 d4, 374 d3 and 375 d3.",
-  "owner": "beds/wbed/r3 (not edited here)"
+  "owner": "beds/wbed/r3 (not edited here)",
+  "status": "resolved in wbed-r3 1.1.0 (2026-10-14 review fixes)",
+  "rootCause": "beds/wbed/lib/fx.mjs drawQuotes stored USD-per-unit rates at six decimals (mulRate(round(rate*1e6))) while lib/domain.mjs quoteLine prints four (microText truncates at >= 0.05); records quantizes to the printed precision (records/world.mjs quant), R3 did not. 70 of 106 non-USD quotes on dev 301-312 and 373-378 (d3, d4) had hidden digits",
+  "resolution": "drawQuotes quantizes as records does (quantUsdPerUnit); wbed-r3 1.1.0, wbed-r4 1.0.1 and wbed-r5 1.0.1 (their R3 packs). On dev 301-390 x d2-d5 the worlds, attempts, statements and labelled reasons are unchanged; only the printed quotes (at most one in the fourth decimal) and the US-cent totals moved. The frozen reference with author readings now passes 36/36 (validation/r3-bed-1.1.0.json). Regression tests: beds/wbed/lib/lib.test.mjs (every stored rate is its printed line), beds/wbed/r3/r3.test.mjs (rule 5 at the printed quotes reproduces by_reason and totals), references.test.mjs (36/36)",
+  "claimStatusBeforeFix": "blocks R3 end-to-end success claims until resolved (AGENTS.md: an invalid evaluator blocks claims)"
+ },
+ "harness": {
+  "about": "The validation harness and recorded inputs, pinned by references.test.mjs (review finding 13). A change here is recorded with a re-validation (README \"Re-validation\").",
+  "files": {
+   "stub-policy.mjs": "bb32b48d14ad08e4d30299d66bb6075f3279861c566db7752b8aade07eb466ab",
+   "validate.mjs": "4b58a56e2578eb7e297030a6d6f20e21df12cd938e1e2a2935c2247ba2cbebee",
+   "author/author-override.mjs": "7511f3b9cd08a73922aa7cf16189326f9068d4465e42457a4962777d22a74536",
+   "author/fixture-answers.json": "51242a79bd3aaddaf4da1e267e206233d46b71f23f2278d7ddd5a6f9e4482054",
+   "author/validation-answers.json": "ac39f3a52a62f7bda8cdd55047564fad455ef46a5b8cb928f084da38ef252d94",
+   "analyst/world-readings.mjs": "4e289013bd0392ebc4b0216bbd1397301cb1ca90bd47274c2cfe09de9692c16d",
+   "analyst/world-override.mjs": "cb13b2695ebd464b176b9645a3a52cbcf518302a082882b39b797d93a3ae2e7d"
+  },
+  "changes": [
+   "author/validation-answers.json: the \"about\" text only (review finding 3: R1's 301-312 are development seeds, not unseen ones); no answer changed",
+   "validate.mjs: policy \"world\" (analyst-side readings from the generator world, any dev seed) and --relations (each bed relation through the same sandbox and answers); the author, A and B paths are unchanged",
+   "analyst/: new (world-readings.mjs host side, world-override.mjs in the sandbox)"
+  ]
  }
 }

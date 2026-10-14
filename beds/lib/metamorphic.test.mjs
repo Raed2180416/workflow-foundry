@@ -9,7 +9,7 @@
 //   - each witness check passes the reference answer and fires on what it is built to see.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { WITNESS_TAGS, permute, shuffleRuns, rngOf, compareKeyed, numClose } from './metamorphic.mjs';
+import { WITNESS_TAGS, permute, shuffleRuns, rngOf, compareKeyed, numClose, distributionOf, brokenRegularities, keepsRelativeOrder, distinctModuloRowId } from './metamorphic.mjs';
 import * as records from '../records/index.mjs';
 import * as kinetics from '../kinetics/index.mjs';
 import * as r1 from '../wbed/r1/index.mjs';
@@ -18,7 +18,10 @@ import * as r3 from '../wbed/r3/index.mjs';
 import * as r4 from '../wbed/r4/index.mjs';
 import * as r5 from '../wbed/r5/index.mjs';
 import { solveText, ABLATIONS } from '../records/solve-text.mjs';
-import { rowClassOf } from '../kinetics/invariance.mjs';
+import { rowClassOf, regularities as kineticsRegularities, DOCS_SHUFFLED_FROM } from '../kinetics/invariance.mjs';
+import { regularities as recordsRegularities } from '../records/invariance.mjs';
+import { regularities as r1Regularities } from '../wbed/r1/invariance.mjs';
+import { regularities as r3Regularities } from '../wbed/r3/invariance.mjs';
 import { heuristicSolve as whitebox } from '../kinetics/attacks/whitebox-v4.mjs';
 
 const BEDS = { records, kinetics, 'wbed-r1': r1, 'wbed-r2': r2, 'wbed-r3': r3, 'wbed-r4': r4, 'wbed-r5': r5 };
@@ -58,6 +61,56 @@ test('every bed declares a valid relation list and witness tag (records, kinetic
   assert.deepEqual(r1.invariance.map(r => r.id), ['shuffle-customer-rows', 'shuffle-invoice-lines', 'shuffle-bank-feed', 'duplicate-row', 'drop-idle-singleton']);
   assert.deepEqual(r3.invariance.map(r => r.id), ['shuffle-statement-files', 'shuffle-ledger-lines', 'drop-clean-supplier']);
   for (const b of [r2, r4, r5]) assert.deepEqual(b.invariance, []);
+  // Review fix (finding 3 and its siblings): the labels after the audit below. Static labels; shuffle-documents is 'in' only
+  // where the generator itself shuffles the documents (d >= 4).
+  const labels = b => b.invariance.map(r => `${r.id}:${r.distribution}`);
+  assert.deepEqual(labels(records), ['shuffle-rows:out', 'duplicate-row:out', 'drop-singleton:in']);
+  assert.deepEqual(labels(kinetics), ['shuffle-samples:out', 'shuffle-series:in', 'shuffle-documents:out']);
+  assert.deepEqual(labels(r1), ['shuffle-customer-rows:out', 'shuffle-invoice-lines:out', 'shuffle-bank-feed:out', 'duplicate-row:out', 'drop-idle-singleton:in']);
+  assert.deepEqual(labels(r3), ['shuffle-statement-files:out', 'shuffle-ledger-lines:out', 'drop-clean-supplier:out']);
+  const docs = rel(kinetics, 'shuffle-documents');
+  assert.deepEqual([2, 3, 4, 5].map(difficulty => distributionOf(docs, { difficulty })), ['out', 'out', 'in', 'in']);
+  assert.equal(distributionOf(docs, null), 'out', 'no task: the conservative static label'); assert.equal(DOCS_SHUFFLED_FROM, 4);
+  for (const b of Object.values(BEDS)) for (const r of b.invariance) if (r.distributionOf) assert.equal(r.distribution, 'out', `${r.id}: a task-dependent label is 'out' without a task`);
+});
+
+test('in/out labels are audited (review finding 3): the generator keeps every listed regularity, every variant labelled in for its task keeps them all, every relation labelled out breaks one', () => {
+  assert.ok(keepsRelativeOrder(['a', 'b', 'c'], ['a', 'x', 'c']) && !keepsRelativeOrder(['a', 'b', 'c'], ['c', 'a']));
+  assert.ok(distinctModuloRowId(['1 x', '2 y']) && !distinctModuloRowId(['1001 | a', '1002 | a']));
+  const REGS = { records: recordsRegularities, kinetics: kineticsRegularities, 'wbed-r1': r1Regularities, 'wbed-r3': r3Regularities };
+  for (const [id, regs] of Object.entries(REGS)) {
+    const bed = BEDS[id], out = new Map(), inSeen = new Map();
+    for (const d of [3, 4]) for (const seed of [201, 202, 203, 204, 205, 206]) {
+      const t = bed.generate({ seed, split: 'dev', difficulty: d }), o = bed.referenceSolve(t);
+      assert.deepEqual(brokenRegularities(regs, t), [], `${id} d${d} s${seed}: a generated task keeps every regularity`);
+      for (const r of bed.invariance) for (const k of [0, 1]) {
+        const m = r.make(structuredClone(t), { seed: `reg:${seed}:${d}:${k}`, output: structuredClone(o) });
+        if (!m || m.skip) continue;
+        const broken = brokenRegularities(regs, m.task, t), label = distributionOf(r, t);
+        if (label === 'in') { assert.deepEqual(broken, [], `${id}.${r.id} d${d} s${seed} k${k} is labelled in`); inSeen.set(r.id, (inSeen.get(r.id) ?? 0) + 1); }
+        else { const x = out.get(r.id) ?? { seen: 0, broken: 0 }; x.seen++; if (broken.length) x.broken++; out.set(r.id, x); }
+      }
+    }
+    for (const r of bed.invariance) {
+      if (r.distribution === 'in' || r.distributionOf) assert.ok(inSeen.get(r.id) > 0 || r.distributionOf, `${id}.${r.id}: variants labelled in were checked`);
+      if (out.has(r.id)) assert.ok(out.get(r.id).broken > 0, `${id}.${r.id}: labelled out, so some variant must break a regularity (${JSON.stringify(out.get(r.id))})`);
+    }
+    assert.ok(bed.invariance.filter(r => r.distribution === 'out' && !r.distributionOf).every(r => out.get(r.id)?.seen > 0), `${id}: every out relation was exercised`);
+  }
+  // kinetics: render.mjs:863-864, measured. At d2 and d3 every task has one document order; at d4 it varies by seed.
+  const kinds = d => new Set([201, 202, 203, 204, 205, 206, 207, 208].map(seed => kinetics.generate({ seed, split: 'dev', difficulty: d }).inputs.documents.map(x => x.kind).join(',')));
+  assert.equal(kinds(2).size, 1); assert.equal(kinds(3).size, 1); assert.ok(kinds(4).size > 1);
+  // The checks themselves see what they are for: an old-id document permutation, a gap in R3's ids, an exact duplicate.
+  const t4 = kinetics.generate({ seed: 204, split: 'dev', difficulty: 4 });
+  const oldIds = { ...t4, inputs: { ...t4.inputs, documents: [...t4.inputs.documents].reverse() } };
+  assert.deepEqual(brokenRegularities(kineticsRegularities, oldIds, t4), ['doc-ids-positional']);
+  const t3 = kinetics.generate({ seed: 204, split: 'dev', difficulty: 3 }), sd = rel(kinetics, 'shuffle-documents').make(structuredClone(t3), { seed: 'x' });
+  assert.deepEqual(sd.task.inputs.documents.map(x => x.doc_id), t3.inputs.documents.map((_, i) => `D${i + 1}`), 'renumbered by position');
+  assert.deepEqual(brokenRegularities(kineticsRegularities, sd.task, t3), ['doc-order-fixed-below-d4']);
+  const a3 = r3.generate({ seed: 301, split: 'dev', difficulty: 3 }), c3 = rel(r3, 'drop-clean-supplier').make(structuredClone(a3), { seed: 'a', output: r3.referenceSolve(a3) });
+  if (!c3.skip) assert.ok(brokenRegularities(r3Regularities, c3.task, a3).length > 0);
+  const rt = records.generate({ seed: 204, split: 'dev', difficulty: 3 }), dup = rel(records, 'duplicate-row').make(structuredClone(rt), { seed: 'a', output: solveText(rt) });
+  assert.deepEqual(brokenRegularities(recordsRegularities, dup.task, rt), ['no-exact-duplicate']);
 });
 
 test('records: variants are re-renderings (permutation, one copied line, one removed line), deterministic, with the prompt kept true', () => {
@@ -131,7 +184,9 @@ test('kinetics: row classes, shuffles move only table rows, shuffle-series keeps
     for (const [c, ids] of before) { const pos = new Map(after.get(c).map((x, j) => [x, j])); for (let j = 1; j < ids.length; j++) if (Number(ids[j].slice(3)) === Number(ids[j - 1].slice(3)) + 1) assert.ok(pos.get(ids[j]) > pos.get(ids[j - 1]), `${d.doc_id} ${ids[j - 1]} before ${ids[j]}`); }
   });
   const docs = rel(kinetics, 'shuffle-documents').make(t, { seed: 'a' });
-  assert.deepEqual(docs.task.inputs.documents.map(d => d.doc_id).sort(), t.inputs.documents.map(d => d.doc_id).sort());
+  assert.deepEqual(docs.task.inputs.documents.map(d => d.doc_id), t.inputs.documents.map((_, i) => `D${i + 1}`), 'doc_id renumbered by position, as the generator does');
+  assert.deepEqual(docs.task.inputs.documents.map(d => d.text).sort(), t.inputs.documents.map(d => d.text).sort());
+  assert.deepEqual(docs.info.order.slice().sort(), t.inputs.documents.map(d => d.doc_id).sort(), 'info keeps the original ids in their new order');
   // The white-box parser (input-only, right on most d3 tasks): the in-distribution series shuffle never moves a right answer;
   // the row shuffle flags d3 s201, whose chat names "the first study well (counting from the left) of plate 5, row A".
   let right = 0;

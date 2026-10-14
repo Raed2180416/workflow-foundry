@@ -5,6 +5,12 @@
 // and nothing it says reaches the reference. No model is called.
 //   node beds/wbed/references/validate.mjs --rung r1|r3 [--seeds 301-312] [--difficulties 3,4] [--policies A,B]
 //        [--concurrency 2] [--work <dir>] [--out <file.json>] [--labels]   (--labels: also compare with referenceSolve)
+//        [--relations]   (also run every metamorphic relation the bed declares (bed.invariance, ATTACK M1) through the same
+//                         sandbox, policy and answers, and record whether the reference's output keeps the relation)
+//   node beds/wbed/references/validate.mjs --revalidate [--concurrency 3]
+//        README "Re-validation": re-run every recorded row FROZEN.json's revalidate list names (deterministic: author, world
+//        and stub policies, $0) on the current engine and compare status, deopt, pass and output digest with the record.
+//        Prints the engine shas and the mismatches; FROZEN.json engine.revalidated gains an entry only with 0 mismatches.
 //   Policy 'author' (author fixtures 373-378 only): judges answered from author/fixture-answers.json through the flow-v3
 //   override hook (author/author-override.mjs); it checks the code given correct readings, not a model.
 //   Policy 'world' (any dev seed; analyst side, added by the 2026-10-14 review fixes): judges answered from the generator
@@ -42,7 +48,7 @@ export function stubPort(policyName, log) {
 
 // One run: the reference on one task under one stub policy. Returns the row the summary reads.
 export const AUTHOR_SEEDS = Object.freeze([373, 374, 375, 376, 377, 378]), VALIDATION_SEEDS = Object.freeze([301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312]);
-export async function runOne({ rung, seed, difficulty, policy, work, labels = false, flip = null }) {
+export async function runOne({ rung, seed, difficulty, policy, work, labels = false, flip = null, relations = false }) {
   const ref = REFERENCES[rung];
   const bed = await import(`../../${ref.bed}/index.mjs`);
   let author = {};
@@ -61,8 +67,10 @@ export async function runOne({ rung, seed, difficulty, policy, work, labels = fa
   const workdir = path.join(work, `${rung}-${seed}-d${difficulty}-${policy}${flip ? `-flip-${flip}` : ''}`);
   rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
   const log = [];
-  const rc = await runCompiled({ solvePath: ref.file, task: { prompt: task.prompt, inputs: task.inputs, ...(task.files ? { files: task.files } : {}) }, modelPort: stubPort(policy === 'author' || policy === 'world' ? 'A' : policy, log),
-    perTaskUsd: PER_TASK_USD, timeoutMs: TIMEOUT_MS, workdir, outputSchema: bed.outputSchema, allowedModels: MODELS, flowPath: FLOW_V3, label: `wbed-ref-${rung}-${seed}-${difficulty}-${policy}`, ...author });
+  const stubName = policy === 'author' || policy === 'world' ? 'A' : policy;
+  const runOn = (t, dir, label, sink) => runCompiled({ solvePath: ref.file, task: { prompt: t.prompt, inputs: t.inputs, ...(t.files ? { files: t.files } : {}) }, modelPort: stubPort(stubName, sink),
+    perTaskUsd: PER_TASK_USD, timeoutMs: TIMEOUT_MS, workdir: dir, outputSchema: bed.outputSchema, allowedModels: MODELS, flowPath: FLOW_V3, label, ...author });
+  const rc = await runOn(task, workdir, `wbed-ref-${rung}-${seed}-${difficulty}-${policy}`, log);
   let pass = false, score = 0;
   if (rc.status === 'ok') { const o = bed.oracle(task, rc.output); pass = !!o.pass; score = typeof o.score === 'number' ? o.score : 0; }
   const judges = rc.trace.filter(e => e.kind === 'judge');
@@ -87,6 +95,16 @@ export async function runOne({ rung, seed, difficulty, policy, work, labels = fa
     const blank = st => ({ ...st, adjusted_balance_minor: null, discrepancies: st.discrepancies.map(d => canonical({ ...d, reason: ['PRICE', 'FX', 'MISSING_CREDIT'].includes(d.reason) ? 'JUDGED' : d.reason === 'UNEXPLAINED' ? 'JUDGED-OR-UNEXPLAINED' : d.reason })).sort() });
     const loose = st => ({ ...blank(st), discrepancies: blank(st).discrepancies.map(x => x.replace('"JUDGED-OR-UNEXPLAINED"', '"JUDGED"')) });
     row.statementsMatchModuloJudged = canonical(rc.output.statements.map(loose)) === canonical(ref.statements.map(loose));
+  }
+  // --relations (review finding 7): each declared relation's variant through the same sandbox, policy and answers. With
+  // correct readings (author, world) a correct solver must keep every relation; 'disagree' is a relation or a reference
+  // defect. Analyst side; the variant rows are summarised, not kept.
+  if (relations && rc.status === 'ok' && Array.isArray(bed.invariance) && bed.invariance.length) {
+    const { runVariants } = await import('../../../experiments/jit/invariance.mjs');
+    const v = await runVariants({ relations: bed.invariance, task, output: rc.output, seed: `wbed-refs:${rung}:${seed}:${difficulty}`, stopOnViolation: false,
+      runVariant: (t, rel) => { const dir = `${workdir}-v-${rel.id}`; rmSync(dir, { recursive: true, force: true }); mkdirSync(dir, { recursive: true });
+        return runOn(t, dir, `wbed-ref-${rung}-${seed}-${difficulty}-${policy}-v-${rel.id}`, []); } });
+    row.relations = Object.fromEntries(v.results.map(r => [r.relation, r.status + (r.deopt ? `(${r.deopt.kind}:${r.deopt.name})` : '')]));
   }
   if (rc.status !== 'ok') row.stderrTail = (rc.meta?.stderrTail ?? '').slice(-300);
   return row;
@@ -122,6 +140,7 @@ export function summarize(rows) {
       ...(rs.some(r => 'statementsMatchReference' in r) ? { statementsMatchReference: rs.filter(r => r.statementsMatchReference).length, totalsMatchReference: rs.filter(r => r.totalsMatchReference).length,
         statementsMatchModuloJudged: rs.filter(r => r.statementsMatchModuloJudged).length } : {}),
       deopts: Object.fromEntries([...new Set(rs.filter(r => r.deopt).map(r => `${r.deopt.kind}:${r.deopt.name}`))].map(k => [k, rs.filter(r => r.deopt && `${r.deopt.kind}:${r.deopt.name}` === k).length])),
+      ...(rs.some(r => r.relations) ? { relations: rs.filter(r => r.relations).reduce((acc, r) => { for (const [id, st] of Object.entries(r.relations)) { acc[id] ??= {}; acc[id][st] = (acc[id][st] ?? 0) + 1; } return acc; }, {}) } : {}),
     }]; })),
     judgeIndependent: tasks.filter(t => !t.judgeDependent).length,
     judgeIndependentPass: tasks.filter(t => !t.judgeDependent && t.pass.A && t.pass.B).length,
@@ -134,15 +153,44 @@ export function summarize(rows) {
   };
 }
 
+// The recorded rows that a re-validation re-runs: [file, rungs]. The fixture and dev 301-312 files keep R1 only, because
+// their R3 rows were recorded on wbed-r3 1.0.0 (the printed quotes, so the R3 totals, moved in 1.1.0).
+export const REVALIDATE = Object.freeze([['validation/fixtures-373-378.json', ['r1']], ['validation/dev-301-312.json', ['r1']],
+  ['validation/r3-bed-1.1.0.json', ['r3']], ['validation/dev-313-324.json', ['r1', 'r3']]]);
+export async function revalidate({ concurrency = 3, work, log = () => {} } = {}) {
+  const jobs = [];
+  for (const [file, rungs] of REVALIDATE) for (const r of JSON.parse(readFileSync(path.join(HERE, file), 'utf8')).rows) if (rungs.includes(r.rung)) jobs.push({ file, rec: r });
+  const mismatches = [];
+  let next = 0, done = 0;
+  await Promise.all(Array.from({ length: concurrency }, async () => {
+    while (next < jobs.length) {
+      const { file, rec } = jobs[next++];
+      const row = await runOne({ rung: rec.rung, seed: rec.seed, difficulty: rec.difficulty, policy: rec.policy, work });
+      const a = { status: rec.status, deopt: rec.deopt, pass: rec.pass, outDigest: rec.outDigest }, b = { status: row.status, deopt: row.deopt, pass: row.pass, outDigest: row.outDigest };
+      if (canonical(a) !== canonical(b)) mismatches.push({ file, rung: rec.rung, seed: rec.seed, difficulty: rec.difficulty, policy: rec.policy, recorded: a, now: b });
+      if (++done % 50 === 0) log(`${done}/${jobs.length}`);
+    }
+  }));
+  return { rows: jobs.length, mismatches, flowV3Sha256: sha(readFileSync(FLOW_V3)), runCompiledSha256: sha(readFileSync(path.join(HERE, '../../../experiments/jit/run-compiled.mjs'))) };
+}
+
 async function main() {
   const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1]?.startsWith('--') || all[i + 1] === undefined ? true : all[i + 1]]] : acc), []));
+  if (args.revalidate) {
+    const work = mkdtempSync(path.join(os.tmpdir(), 'wbed-refs-reval-'));
+    const res = await revalidate({ concurrency: Number(args.concurrency ?? 3), work, log: m => process.stderr.write(m + '\n') });
+    rmSync(work, { recursive: true, force: true });
+    process.stdout.write(JSON.stringify(res, null, 1) + '\n');
+    if (res.mismatches.length) process.exitCode = 1;
+    return;
+  }
   const rungs = args.rung === 'all' || !args.rung ? Object.keys(REFERENCES) : String(args.rung).split(',');
   const seeds = parseRange(args.seeds ?? '301-312'), diffs = parseRange(args.difficulties ?? '3,4'), policies = String(args.policies ?? 'A,B').split(',');
   const work = args.work ?? mkdtempSync(path.join(os.tmpdir(), 'wbed-refs-'));
   const jobs = [];
   // --flip <class>: author policy with one judge class answered wrongly (sensitivity; see author-override.mjs).
   const flip = typeof args.flip === 'string' ? args.flip : null;
-  for (const rung of rungs) for (const seed of seeds) for (const difficulty of diffs) for (const policy of policies) jobs.push({ rung, seed, difficulty, policy, work, labels: !!args.labels, flip });
+  for (const rung of rungs) for (const seed of seeds) for (const difficulty of diffs) for (const policy of policies) jobs.push({ rung, seed, difficulty, policy, work, labels: !!args.labels, flip, relations: !!args.relations });
   const rows = [], conc = Number(args.concurrency ?? 2);
   let next = 0;
   await Promise.all(Array.from({ length: conc }, async () => {
