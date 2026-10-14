@@ -219,6 +219,28 @@ test('patterns: the matcher runs in a worker with a per-answer budget, so a patt
 });
 const tryCompile = schema => { const r = tryCompileForm({ answerSchema: schema, question: 'q', allowPattern: true }); return r.ok ? [] : r.errors.map(e => e.code); };
 
+test('patterns: random patterns the admission bound accepts never exhaust the budget on adversarial inputs (property, 3,000 patterns)', t => {
+  const r = rng(31337);
+  const atoms = ['a', '[a-z]', '.', '[^b]', '\\w', 'b', '[ab]', '\\S', '[^]', '[]'];
+  const quants = ['', '', '*', '+', '?', '{0,3}', '{2}', '{1,16}', '*?', '+?', '{0,16}'];
+  const atom = d => (d < 2 && r.chance(0.2) ? `(?:${Array.from({ length: r.int(1, 3) }, () => seq(d + 1)).join('|')})${r.pick(['', '?', '+'])}` : r.pick(atoms) + r.pick(quants));
+  const seq = d => Array.from({ length: r.int(1, 4) }, () => atom(d)).join('');
+  const inputs = ['a'.repeat(255) + '!', 'a'.repeat(256), 'ab'.repeat(127) + '!', 'a'.repeat(128) + 'b'.repeat(127) + '!', '!' + 'a'.repeat(255)];
+  let admitted = 0, slowest = 0;
+  for (let i = 0; i < 3000; i++) {
+    const p = (r.chance(0.7) ? '^' : '') + seq(0) + (r.chance(0.7) ? '$' : '');
+    if (patternProblems(p).length) continue;
+    admitted++;
+    for (const input of inputs) {
+      const t0 = performance.now();
+      assert.notEqual(patternTest(p, input, 2000), 'timeout', `${p} on ${input.slice(0, 12)}...`);
+      slowest = Math.max(slowest, performance.now() - t0);
+    }
+  }
+  assert.ok(admitted > 1000, `${admitted} admitted`);
+  t.diagnostic(`admitted ${admitted} of 3000 random patterns; slowest test ${slowest.toFixed(1)} ms`);
+});
+
 const HOSTILE = [
   '<img src=x onerror="window.__pwned=1">', '"><script>window.__pwned=2</script>', "'><svg onload=alert(1)>", '<a href="javascript:alert(1)">x</a>',
   '</textarea><script>x</script>', '</option></select><input name="answer/amount" value="0">', '<style>*{display:none}</style>', '<!--', ']]>', '&lt;b&gt;',
@@ -428,7 +450,7 @@ test('host: oversized bodies get a delivered 413, error pages are capped, and cl
   assert.equal(flood.status, 422);
   const html = await flood.text();
   assert.ok(html.length < 64 * 1024, `the error page is ${html.length} bytes`);
-  assert.equal((html.match(/<li>/g) ?? []).length + (html.match(/<li><a /g) ?? []).length, MAX_ERRORS);
+  assert.equal((html.match(/<li>/g) ?? []).length, MAX_ERRORS, 'one summary entry per listed error, linked or not');
   assert.match(html, /more problems are not listed/);
   assert.ok(performance.now() - t0 < 2000);
   handler.close();

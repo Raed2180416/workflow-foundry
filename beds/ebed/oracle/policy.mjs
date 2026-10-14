@@ -25,8 +25,11 @@ function currentNames(world, system, op, args, atMs) {
  * referenceArm({ item, world, timing, journal: () => rows }) → arm. `item.batch` maps 'system.op' of batch ops to
  * { group: lid -> group key, envelope: lid -> batch args, item: lid -> item args }; `item.taskSpec(tk, ctx)` builds a task.
  */
-export function referenceArm({ item, world, timing = 'earliest', journal, id = `reference-${timing}` }) {
+export function referenceArm({ item, world, timing = 'earliest', journal, id = `reference-${timing}`, variant = {} }) {
+  // `variant` turns the reference into a control (controls.mjs): armWorld (the world the arm believes), viewFilter,
+  // drop(lid) (never emitted, treated as done), due(lid, due) (when to act), merge (false: never merge), post(out, info).
   const off = offsetOf(world.t0);
+  const armWorld = variant.armWorld ?? world;
   const idx = new JournalIndex(world, { canonicalArgs: item.canonicalArgs });
   let fed = 0;
   return {
@@ -43,22 +46,27 @@ export function referenceArm({ item, world, timing = 'earliest', journal, id = `
       const inst = idx.instances.get(input.instance);
       const c = inst?.binding ?? null;
       if (c === null) return { decisions: { subject: null }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], close: true, carry: null };
-      const E = item.referenceTransition(world, caseView(idx, c, now, Infinity));
+      const view = caseView(idx, c, now, Infinity);
+      const E = item.referenceTransition(armWorld, variant.viewFilter ? variant.viewFilter({ ...view, world: armWorld }) : { ...view, world: armWorld });
       const subject = E.decisions.graded.subject ?? null;
       const out = { decisions: { ...E.decisions.graded }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], carry: null };
       // An instance started by an inbound message joins the case's open instance, if there is one.
       if (inst.startedBy?.kind === 'event' && input.carry === null && subject !== null) {
         const other = ctx.instances({ subject }).find(r => r.instance !== input.instance);
-        if (other) return { ...out, merge: { into: other.instance } };
+        if (other && variant.merge !== false) return post({ ...out, merge: { into: other.instance } });
+        if (other) return post({ ...out, close: true });
       }
       const bucket = idx.bucket(c);
       const done = new Set(bucket.ledger.filter(r => r.committed && r.key).map(r => r.key));
+      for (const e of E.effects.required) if (variant.drop?.(e)) done.add(e.lid);
       const tasksMade = bucket.tasks.map(t => t.task.id);
       // 'latest' acts LATE_SLACK before the window closes (never before it opens): a platform retry or a partial batch
       // after an injected fault needs a few minutes inside the window, as for any arm acting late.
-      const due = w => (timing === 'earliest' ? w.earliest : Math.max(w.earliest, w.latest - LATE_SLACK));
+      const due0 = w => (timing === 'earliest' ? w.earliest : Math.max(w.earliest, w.latest - LATE_SLACK));
+      const dueE = e => (variant.due ? variant.due(e, due0(e.window)) : due0(e.window));
+      const due = w => due0(w);
       const todo = E.effects.required.filter(e => !done.has(e.lid));
-      const ready = todo.filter(e => due(e.window) <= now && ctx.status(e.system, e.lid) !== 'pending');
+      const ready = todo.filter(e => dueE(e) <= now && ctx.status(e.system, e.lid) !== 'pending');
       // Effects in expectation order; a dependant goes out when its predecessors have committed, or with `after` on the
       // one predecessor emitted earlier in this output (a batch carries one `after` for all its items).
       const emitted = new Set();
@@ -86,21 +94,22 @@ export function referenceArm({ item, world, timing = 'earliest', journal, id = `
         out.humanTasks.push(item.taskSpec(tk, { now, subject, iso: m => iso(m, off) }));
       }
       // Wake at the next window to act in; close when the case has ended and nothing is left.
-      const future = [...todo.map(e => due(e.window)), ...E.humanTasks.required.filter(tk => !tasksMade.some(id => id.startsWith(`${tk.lid}#`))).map(tk => due(tk.window))].filter(m => m > now);
+      const future = [...todo.map(e => dueE(e)), ...E.humanTasks.required.filter(tk => !tasksMade.some(id => id.startsWith(`${tk.lid}#`))).map(tk => due(tk.window))].filter(m => m > now);
       // A task just created opens windows the next expectation names (deadlines from its creation): re-plan a minute on.
       if (out.humanTasks.length) future.push(now + MIN);
       if (future.length) out.obligations.upsert.push({ id: 'wake', kind: 'window', anchor: null, dueAt: iso(Math.min(...future), off), onDue: null });
       if (E.terminal && !todo.length && !out.effects.length && !out.humanTasks.length) out.close = true;
       if (subject === null) out.close = true;
-      return out;
+      return post(out);
+      function post(o) { return variant.post ? variant.post(o, { input, ctx, E, idx, c, now, iso: m => iso(m, off) }) : o; }
     },
   };
 }
 
 /** Run one reference run of `item` over `world` through the real host. Returns { journal rows, result }. */
-export async function runReference({ item, binding, world, timing = 'earliest', maxWakeups } = {}) {
+export async function runReference({ item, binding, world, timing = 'earliest', maxWakeups, variant, id } = {}) {
   const holder = {};
-  const arm = referenceArm({ item, world, timing, journal: () => ({ committed: holder.host.journal.rows, staged: holder.host.journal.staged }) });
+  const arm = referenceArm({ item, world, timing, variant, ...(id ? { id } : {}), journal: () => ({ committed: holder.host.journal.rows, staged: holder.host.journal.staged }) });
   holder.host = createHost({ item: binding, world, arm, ...(maxWakeups ? { maxWakeups } : {}) });
   const result = await holder.host.run();
   return { rows: holder.host.journal.contentRows(), result };

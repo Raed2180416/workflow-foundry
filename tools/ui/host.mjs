@@ -27,7 +27,11 @@ export const MAX_BODY_BYTES = 256 * 1024;
 const TOKEN = /^[A-Za-z0-9_-]{32,256}$/;
 const LOOPBACK = /^(?:127(?:\.[0-9]{1,3}){3}|::1|::ffff:127(?:\.[0-9]{1,3}){3})$/;
 
-const sameToken = (given, token) => typeof given === 'string' && given.length === token.length && timingSafeEqual(Buffer.from(given), Buffer.from(token));
+const sameToken = (given, token) => {
+  if (typeof given !== 'string') return false;
+  const a = Buffer.from(given), b = Buffer.from(token);
+  return a.length === b.length && timingSafeEqual(a, b);
+};
 const isTaskBound = bind => bind !== null && typeof bind === 'object' && (typeof bind.taskId === 'string' || (typeof bind.runId === 'string' && typeof bind.nodeKey === 'string'));
 
 /** Why a request may not reach the form at all (a short reason), or null. */

@@ -8,6 +8,7 @@
 // earlier instant, or in the same instant by a call that had not been given an event of this case (it could not react).
 
 const MIN = 60_000;
+const SEC = 1_000;
 const ms = s => Date.parse(s);
 const isoOf = (m, off = '+01:00') => { const d = new Date(m + 60 * MIN); return `${d.toISOString().slice(0, 19)}${off}`; };
 const sortBy = k => (a, b) => (a[k] < b[k] ? -1 : a[k] > b[k] ? 1 : 0);
@@ -156,7 +157,7 @@ function orderExpectation(world, view, t) {
     const ans = answers[0] ?? null;
     const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);
     if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 60 * MIN);
-    if (!ans) return cancelOrder('R2.2', deadline, deadline + 120 * MIN);
+    if (!ans) return cancelOrder('R2.2', deadline + SEC, deadline + 120 * MIN, deadline);         // after the deadline (S1)
     if (ans.payload.answer.decision === 'reject') return cancelOrder('R2.2', ans.at, ans.at + 120 * MIN);
     cleared = ans.at;
   }
@@ -174,9 +175,10 @@ function orderExpectation(world, view, t) {
     countedAction = custActions.find(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;
     for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });
     if (!countedAction) {
-      for (const f of alloc) { fst(f.fulfilmentId, 'cancelled', 'R3.2', D, D + 60 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }
-      ost('timedOut', 'R3.2', D, D + 60 * MIN);
-      ntf(O, 'order-timed-out', 'R3.2', D, D + 60 * MIN);
+      // The timeout is taken after D (an action at D counts, S1).
+      for (const f of alloc) { fst(f.fulfilmentId, 'cancelled', 'R3.2', D + SEC, D + 60 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }
+      ost('timedOut', 'R3.2', D + SEC, D + 60 * MIN);
+      ntf(O, 'order-timed-out', 'R3.2', D + SEC, D + 60 * MIN);
       done('timedOut', D);
       return out();
     }

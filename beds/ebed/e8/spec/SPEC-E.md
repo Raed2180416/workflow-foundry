@@ -82,7 +82,8 @@ you cancelled, or about a fulfilment that is already completed or failed, change
 ### 3.4 Human-task events
 
 `humanTask.answered`, `humanTask.answerRejected`, `humanTask.timeout`, `humanTask.withdrawn`, `humanTask.delegated`
-for the tasks you create (§4.3). An answer that arrives after you have decided the case (`late: true`) changes nothing.
+for the tasks you create (§4.3). `late: true` means after the `dueAt` you set; whether an answer still counts is
+decided by the rule's own deadline (R2.2), not by that flag.
 
 ### 3.5 Go-live (`migration`)
 
@@ -127,8 +128,9 @@ from the creation of the **first** review task for the order. You may ask again 
 unusable, was withdrawn or was rejected by your schema; the deadline does not move.
 - `approve` before the deadline: the order is **cleared** at the time of the answer.
 - `reject` before the deadline: cancel the order (R6.1) within **120 min** of the answer, reason `fraud`.
-- no usable answer by the deadline: cancel the order (R6.1) in the window **[deadline, deadline + 120 min]**, reason
-  `fraud-review-timeout`. A later answer changes nothing.
+- no usable answer by the deadline: cancel the order (R6.1) **after the deadline** and at the latest **deadline + 120
+  min**, reason `fraud-review-timeout` (an answer exactly at the deadline still counts). A later answer changes
+  nothing. An answer counts only if it carries `decision`; free text is unusable.
 
 ### 4.3 R3 Customer action on unavailable items
 
@@ -142,8 +144,9 @@ does not win against it). Later actions and repeats change nothing.
   with its available fulfilments, **ready** at a (R4). If none is available, cancel the order (R6.1), reason
   `nothing-available`.
 - `cancel` at time a: cancel the order (R6.1) within **60 min** of a, reason `customer`.
-- nothing counted by D: in the window **[D, D + 60 min]** set every fulfilment `cancelled`, set the order `timedOut`
-  and send `order-timed-out`. This is the end of the order.
+- nothing counted by D: **after D** and at the latest **D + 60 min** (the window (D, D + 60 min]) set every
+  fulfilment `cancelled`, set the order `timedOut` and send `order-timed-out`. This is the end of the order. Because an
+  action exactly at D counts, a timeout taken at D itself is too early.
 
 ### 4.4 R4 Processing (one saga per fulfilment)
 
@@ -244,7 +247,8 @@ Send each required notification exactly once.
 
 ## 5. Readings (where a rule could be read two ways, this is the reading)
 
-- S1 The customer's deadline is anchored at `p`, not at the time you set `customerActionRequired`.
+- S1 The customer's deadline is anchored at `p`, not at the time you set `customerActionRequired`. Deadlines are
+  inclusive for the party who must act by them and exclusive for the timeout that follows them (R2.2, R3.2).
 - S2 "Committed" for compensation is the system's truth as `status(key)` reports it, not what you last saw.
 - S3 One review deadline per order, from the first review task.
 - S4 A collection and a cancel in the same instant: the collection wins (R6.2).
