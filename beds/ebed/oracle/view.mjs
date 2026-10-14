@@ -6,8 +6,8 @@
 //     delivery, whatever the arm's routing;
 //   - ledger rows attributed to the case (the host's `subjectCase`), joined to the emitting effect's arguments under
 //     their internal names (F5 renames mapped back) and flattened per batch item, with the emitting call's time and
-//     whether that call had been given an event of the case at that instant ("knowledge", for same-instant
-//     withdrawals: a call cannot react to an event it has not been given);
+//     which truth events that call had been given at that instant (`given`, and their cases `knows`: "knowledge", for
+//     same-instant withdrawals: a call cannot react to an event it has not been given);
 //   - human tasks created about the case and their delivered events; case-ticks of instances bound to the case.
 // The index is incremental (rows are added in journal order) and can take tentative rows (a wake-up still staged) that
 // are rolled back, so an analyst-side reference policy can read the live journal in linear total time. Pure functions
@@ -100,6 +100,7 @@ export class JournalIndex {
           if (d.instance === row.target && d.round === round) rec.events.unshift(d);
         }
         rec.knows = new Set(rec.events.filter(d => d.truth).map(d => d.case));
+        rec.given = new Set(rec.events.filter(d => d.truth).map(d => d.event.id));      // the truth messages this call was given
         this.#push(this.calls, rec);
         this.#set(this.callNow, row.target, rec);
         const inst = this.instances.get(row.target);
@@ -127,7 +128,7 @@ export class JournalIndex {
         args = this.canonicalArgs(row.system, row.op, args);
         const r = { seq, at: ms(row.at), system: row.system, op: row.op, key, args, committed: !!row.committed, status: row.status, error: row.error ?? null,
           case: row.subjectCase ?? null, emission: row.emission, via: row.via, injected: !!row.injected, money: !!row.money,
-          callAt: em?.call?.at ?? em?.at ?? ms(row.at), knows: em?.call?.knows ?? new Set(), instance: row.instance ?? null };
+          callAt: em?.call?.at ?? em?.at ?? ms(row.at), knows: em?.call?.knows ?? new Set(), given: em?.call?.given ?? new Set(), instance: row.instance ?? null };
         this.#push(this.ledger, r);
         if (r.case !== null) this.#push(this.#bucket(r.case).ledger, r);
         break;

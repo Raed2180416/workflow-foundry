@@ -13,7 +13,9 @@
 // Lids open when an expectation first names them, take the window of the latest expectation that names them, and are
 // withdrawn when a later expectation stops naming them while unsatisfied. Same-instant knowledge: a withdrawal at
 // instant t does not apply to a row emitted in an earlier instant (an effect already in flight) or emitted at t by a
-// call that had not been given an event of the case at t (it could not have reacted).
+// call that could not have reacted to what caused it: when the cause is a delivered event (the one item that became
+// visible since the previous processing point), a call that had not been given that event; otherwise a call that had
+// been given no event of the case at t.
 import { indexJournal, caseView, caseIds } from './view.mjs';
 import { canonical, hashOf, hashSeq } from '../../lib/canonical.mjs';
 
@@ -91,7 +93,9 @@ export function gradeCase({ item, world, idx, c, pool = null }) {
   const diverge = (pt, layer, code, extra = {}) => { if (!first) first = { at: new Date(pt.at).toISOString(), layer, code, ...extra }; };
   const humanTasks = { required: 0, created: 0 };
 
-  const exemptFrom = (row, w) => row.callAt < w.at || (row.callAt === w.at && !row.knows.has(c));
+  const exemptFrom = (row, w) => row.callAt < w.at || (row.callAt === w.at
+    && !((w.by?.kind === 'delivery' ? row.given?.has(w.by.ref.event.id) : undefined) ?? row.knows.has(c)));
+  let seen = null;                           // the last point whose item entered the view: what the next withdrawal reacts to
   const live = (st, row) => st.withdrawn === null || st.satisfied || (row && exemptFrom(row, st.withdrawn));
 
   for (let pi = 0; pi < points.length; pi++) {
@@ -110,7 +114,7 @@ export function gradeCase({ item, world, idx, c, pool = null }) {
         else { st.def = e; if (!st.satisfied) st.withdrawn = null; }
         insertLatest(e.window.latest);
       }
-      for (const [id, st] of lids) if (!names.has(id) && !st.satisfied && st.withdrawn === null) st.withdrawn = { at: pt.at, seq: pt.seq };
+      for (const [id, st] of lids) if (!names.has(id) && !st.satisfied && st.withdrawn === null) st.withdrawn = { at: pt.at, seq: pt.seq, by: seen };
       const tnames = new Set();
       for (const tk of E.humanTasks.required) {
         tnames.add(tk.lid);
@@ -200,6 +204,7 @@ export function gradeCase({ item, world, idx, c, pool = null }) {
         if (L < pt.at || (L === pt.at && pt.seq === Infinity)) diverge({ at: L }, 4, 'under-escalation', { lid: id, kind: st.def.kind });
       }
     }
+    if (['delivery', 'row', 'task', 'taskEvent'].includes(pt.kind)) seen = pt;
   }
 
   const E = last;

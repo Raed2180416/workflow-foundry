@@ -4,8 +4,8 @@
 //
 // Logical effect ids (lids) are functions of rule and business keys only:
 //   create:O  ost:O:<status>  fst:F:<status>  rsv:F:<sku>  chg:F  shp:F  csh:F  rf:F  rel:F:<sku>  ntf:<about>:<template>
-// A step "happened before" an instant a when its row precedes a in the arm's knowledge (row.before(a)): committed at an
-// earlier instant, or in the same instant by a call that had not been given an event of this case (it could not react).
+// A step was taken before a message (S10) when its call was at an earlier instant, or in the same instant had not been given
+// that message (it could not react); with no message (a failure) the call must have been given no event of this case.
 
 const MIN = 60_000;
 const SEC = 1_000;
@@ -80,13 +80,13 @@ function orderExpectation(world, view, t) {
   const amount = f => f.items.reduce((s, i) => s + i.qty * price(i.sku), 0) + (f.location ? fee(f.location) : 0);
   const avail = alloc.filter(f => f.available), unavail = alloc.filter(f => !f.available);
   const stage = t.class.startsWith('gl-') ? t.class : null;
-  const before = (row, a) => row.callAt < a || (row.callAt === a && !row.knows.has(c));
+  const evAt = new Map(), before = (row, a, ev = evAt.get(a)) => row.callAt < a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));
   const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));
-  /** S9: a step superseded at `at` (a counted cancel or customer action) before the arm took it is no longer required; taking it anyway is permitted. */
-  const maybe = (at, emit) => {
+  /** S9: a step superseded by `ev` (a counted cancel or customer action) before the arm took it (S10) is no longer required; taking it anyway is permitted. */
+  const maybe = (ev, emit) => {
     const e = emit();
-    if (at === null || at === undefined) return;
-    if (view.rows.some(r => matches(e, r) && before(r, at))) return;
+    if (ev === null || ev === undefined) return;
+    if (view.rows.some(r => matches(e, r) && before(r, ev.at, ev))) return;
     required.splice(required.indexOf(e), 1);
     permitted.push({ rule: 'S9', system: e.system, op: e.op, match: e.match });
   };
@@ -117,8 +117,8 @@ function orderExpectation(world, view, t) {
 
   const rows = view.rows;
   const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op && r.committed && pred(r.args ?? {}));
-  const events = view.events;
-  const custActions = events.filter(e => e.type === 'customer.action').sort((a, b) => a.at - b.at || a.seq - b.seq);
+  const events = view.events, placedIdx = events.map(e => e.type).indexOf('order.placed');
+  const custActions = events.slice(placedIdx + 1).filter(e => e.type === 'customer.action').sort((a, b) => a.at - b.at || a.seq - b.seq);   // S11: none before its order
   const msgs = events.filter(e => e.type === 'carrier.status').map(e => ({ ...e, meaning: meaningOf(ed.codes, e.payload.carrier, e.payload.code), F: e.payload.fulfilmentRef }));
   if (stage === 'gl-dispatched') {
     const mig = events.find(e => e.type === 'migration');
@@ -179,8 +179,8 @@ function orderExpectation(world, view, t) {
     countedAction = custActions.find(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;
     if (!pre.actionRequired) {
       // S9: a customer action that comes first supersedes the R3.1 status and notice not yet taken.
-      maybe(countedAction?.at ?? null, () => ost('customerActionRequired', 'R3.1', cleared, cleared + 120 * MIN));
-      maybe(countedAction?.at ?? null, () => ntf(O, 'action-required', 'R3.1', cleared, cleared + 120 * MIN));
+      maybe(countedAction, () => ost('customerActionRequired', 'R3.1', cleared, cleared + 120 * MIN));
+      maybe(countedAction, () => ntf(O, 'action-required', 'R3.1', cleared, cleared + 120 * MIN));
     }
     rec.order = 'customerActionRequired';
     for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });
@@ -228,28 +228,30 @@ function orderExpectation(world, view, t) {
     const failedMsg = myMsgs.find(m => m.meaning === 'collectionFailed') ?? null;
     const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0] ?? null;
     const R = shipRow ? collectionAt(world, shipRow.args.location, shipRow.at, CUT) : null;
-    return { f, F, items, rF, chargeRow, shipRow, fails, collectedMsg, deliveredMsg, failedMsg, failAt, R, location: f.location, amount: amount(f) };
+    // S13: when the failure reached the arm: a carrier report on delivery, a failed attempt with its result one minute later.
+    const failSeen = [fails.at(0)?.at + MIN, failedMsg?.at].filter(Number.isFinite).sort((a, b) => a - b).at(0) ?? null;
+    return { f, F, items, rF, chargeRow, shipRow, fails, collectedMsg, deliveredMsg, failedMsg, failAt, failSeen, R, location: f.location, amount: amount(f) };
   });
 
   let abortAt = null;
   for (const a of procCancels) {
-    const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at < a.at) || (s.failAt !== null && s.failAt < a.at));
+    const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13
     if (endedBefore) { permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } }); continue; }
     if (collectedBy(a)) { ntf(O, 'cancel-refused', 'R6.3', a.at, a.at + 60 * MIN); continue; }
-    abortAt = a.at;
+    abortAt = a.at; evAt.set(a.at, a);
     break;
   }
   if (!pre.processing) {
     // S9: a counted cancel that comes first supersedes the R4.1 statuses not yet set.
-    maybe(abortAt, () => ost('processing', 'R4.1', tr, tr + 60 * MIN));
-    for (const f of avail) maybe(abortAt, () => fst(f.fulfilmentId, 'processing', 'R4.1', tr, tr + 60 * MIN));
+    maybe(evAt.get(abortAt), () => ost('processing', 'R4.1', tr, tr + 60 * MIN));
+    for (const f of avail) maybe(evAt.get(abortAt), () => fst(f.fulfilmentId, 'processing', 'R4.1', tr, tr + 60 * MIN));
   }
 
   let lastEnd = tr;
   const ends = [];
   for (const s of saga) {
     const { F } = s;
-    const aborted = abortAt !== null && !(s.failAt !== null && s.failAt < abortAt);
+    const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13
     const cut = aborted ? abortAt : s.failAt;          // forward steps are required only before this instant
     const forwardOk = row => cut === null || before(row, cut);
     // Forward steps (R4.2) and their records.
@@ -279,7 +281,7 @@ function orderExpectation(world, view, t) {
       if (s.shipRow && !s.failedMsg) {
         lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.min(L, (s.R ?? Infinity) - MIN));
         after.push(`csh:${F}`); rec.shipments[F] = 'cancelled';
-      }
+      } else if (s.failedMsg) rec.shipments[F] = 'failed';          // D1: the carrier wrote `failed` (R7.1)
       if (s.chargeRow) {
         lid(`rf:${F}`, 'R6.2', 'billing', 'refund', { orderId: O, fulfilmentId: F, amountMinor: s.chargeRow.args.amountMinor }, abortAt, L, { after: [...after], money: true });
         after.splice(0, after.length, `rf:${F}`); rec.charges[F].refundedMinor = s.chargeRow.args.amountMinor;
