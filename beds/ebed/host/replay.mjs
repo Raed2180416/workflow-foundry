@@ -4,11 +4,12 @@
 //   replayRun(opts)     re-run the host over a journal at $0: every call is answered from the journal, every content row
 //                       must come out byte-identical (canonical JSON), and the ledger and SoR digests must equal the
 //                       recorded run.end digests; otherwise the run is void ({ ok: false, divergence })
-//   resumeRun(opts)     continue a journal after a quota stop or crash: the committed prefix is replayed (verified), the
+//   resumeRun(opts)     continue a journal after a quota stop or crash (a torn tail is cut back to the last commit
+//                       boundary first, and the cut is recorded in the run.resume row): the committed prefix is replayed (verified), the
 //                       per-arm workspace is restored to its last committed snapshot, and live calls pick up at the
 //                       interrupted wake-up — the simulated clock never advanced past the last commit
 import { createHost } from './host.mjs';
-import { readJournal, ReplayDivergence, JournalIntegrityError } from './journal.mjs';
+import { readJournal, repairJournal, ReplayDivergence, JournalIntegrityError } from './journal.mjs';
 import { hashOf } from '../../lib/canonical.mjs';
 
 export async function runWorld(opts) {
@@ -38,8 +39,9 @@ export async function replayRun({ item, world, journal, profile }) {
 }
 
 export async function resumeRun({ journalFile, ...opts }) {
-  const rows = readJournal(journalFile);
-  const host = createHost({ ...opts, journalFile, recorded: rows, mode: 'live' });
+  // A crash (unlike a quota stop) can leave a torn line or a partial wake-up: cut back to the last commit boundary.
+  const { rows, dropped, tornLine } = repairJournal(journalFile);
+  const host = createHost({ ...opts, journalFile, recorded: rows, mode: 'live', resumeNote: dropped ? { repaired: { droppedRows: dropped, tornLine } } : null });
   const result = await host.run();
   return { ...result, host };
 }

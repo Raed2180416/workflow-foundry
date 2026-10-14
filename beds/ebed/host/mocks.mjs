@@ -4,7 +4,9 @@
 //   defineSystem({ id, latencyMinutes, description,
 //     tables: { <table>: { pk, fields: { <field>: schema }, computed?: [field], hidden?: true } },
 //     ops:    { <op>: { args: schema, keyed, subjectArgs: [arg], reverses?: 'system.op', money?: true,
-//                       readOnly?: true, batch?: true (args.items[] applied item by item, each with its own key),
+//                       readOnly?: true, batch?: true (args.items[] applied item by item, each with its own key;
+//                       `itemContext: [arg]` names the batch-level args that are part of each item's identity —
+//                       a batch envelope such as a run id is not, so an item resubmitted in a new run dedupes),
 //                       apply(db, args, ctx) -> result  |  applyItem(db, item, args, ctx) -> result } } })
 //
 // What a mock does: validate arguments against the op's schema (with any F5 rename active at that time), keyed
@@ -45,7 +47,7 @@ export function defineSystem(def) {
     if (op.batch && !(op.args.properties?.items?.type === 'array')) throw new Error(`${def.id}.${name}: batch op needs args.items`);
     if (!op.readOnly && typeof (op.batch ? op.applyItem : op.apply) !== 'function') throw new Error(`${def.id}.${name}: no apply`);
     ops[name] = Object.freeze({ keyed: !!op.keyed, subjectArgs: Object.freeze([...(op.subjectArgs ?? [])]), reverses: op.reverses ?? null,
-      money: !!op.money, readOnly: !!op.readOnly, batch: !!op.batch, args: op.args, apply: op.apply, applyItem: op.applyItem,
+      money: !!op.money, readOnly: !!op.readOnly, batch: !!op.batch, itemContext: Object.freeze([...(op.itemContext ?? [])]), args: op.args, apply: op.apply, applyItem: op.applyItem,
       description: op.description ?? '' });
   }
   if (Object.values(ops).some(o => o.keyed) && !ops.status) {
@@ -212,12 +214,18 @@ export class MockSystem {
     return { applied: true, committed: true, status: 'ok', result, touched };
   }
 
+  /** The identity of one batch item: the item plus the batch-level args the op declares as its context. */
+  itemDigest(op, item, batchArgs) {
+    const def = this.def.ops[op];
+    return hashOf({ item, context: Object.fromEntries(def.itemContext.map(k => [k, batchArgs?.[k] ?? null])) });
+  }
+
   /** Apply one item of a batch op (each item carries its own key). Same return shape as apply(). */
   applyItem(op, item, batchArgs, key, atMs, { fault = null, ctx = {} } = {}) {
     const def = this.def.ops[op];
     const touched = [];
     if (fault === 'F4') return { applied: false, committed: false, status: 'error', error: { code: 503, reason: 'batch-item-not-processed', retryable: true }, touched };
-    const argsDigest = hashOf({ ...batchArgs, items: undefined, item });
+    const argsDigest = this.itemDigest(op, item, batchArgs);
     if (def.keyed && key != null && this.keys.has(key)) {
       const prior = this.keys.get(key);
       if (prior.op !== op || prior.argsDigest !== argsDigest) return { applied: false, committed: false, status: 'error', error: { code: 409, reason: 'key-conflict' }, touched };

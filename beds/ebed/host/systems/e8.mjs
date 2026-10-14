@@ -54,7 +54,7 @@ export const inventory = defineSystem({
   ops: {
     reserve: {
       args: S.obj({ orderId: ID, fulfilmentId: ID, location: S.str(40, { minLength: 1 }), items: S.arr(S.obj({ key: S.str(200, { minLength: 1 }), sku: ID, qty: S.int({ minimum: 1 }) }, ['sku', 'qty']), 200, { minItems: 1 }) }),
-      keyed: true, batch: true, subjectArgs: ['orderId'],
+      keyed: true, batch: true, subjectArgs: ['orderId'], itemContext: ['orderId', 'fulfilmentId', 'location'],
       applyItem(db, item, a, ctx) {
         const stockId = `${a.location}/${item.sku}`;
         const s = db.require('stock', stockId);

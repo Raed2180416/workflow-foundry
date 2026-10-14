@@ -69,6 +69,7 @@ function checkWorld(world, systems) {
     if (!ev?.id || ids.has(ev.id)) throw new HostError(`world.arrivals[${i}]: missing or duplicate id`);
     ids.add(ev.id);
     if (!isIsoTime(ev.at)) throw new HostError(`world.arrivals[${i}].at: ISO time with offset`);
+    if (toMs(ev.at) < toMs(world.t0)) throw new HostError(`world.arrivals[${i}]: before t0 (pre-history belongs in the backlog export)`);
     if (!['inbound', 'world'].includes(ev.channel?.kind)) throw new HostError(`world.arrivals[${i}].channel: inbound or world (instances are arm-side)`);
     if (typeof ev.type !== 'string' || typeof ev.source !== 'string') throw new HostError(`world.arrivals[${i}]: type and source required`);
     if (ev.channel.kind === 'world' && typeof ev.sweep !== 'string') throw new HostError(`world.arrivals[${i}]: a world event names its sweep`);
@@ -102,7 +103,8 @@ export function createHost(options) { return new Host(options); }
 
 class Host {
   constructor({ item, world, arm, profile, journalFile = null, blobDir = null, recorded = null, mode = 'live', concurrency = 1,
-    callTimeoutMs = null, envRetries = 2, maxWakeups = 1_000_000, productConfig = null, workspaceDir = null, workspaceMaxBytes = undefined }) {
+    callTimeoutMs = null, envRetries = 2, envRetryDelayMs = 0, maxWakeups = 1_000_000, productConfig = null, workspaceDir = null, workspaceMaxBytes = undefined,
+    resumeNote = null }) {
     this.item = bindItem(item);
     this.world = world;
     this.arm = arm ?? null;
@@ -113,6 +115,8 @@ class Host {
     this.concurrency = Math.max(1, concurrency | 0);
     this.callTimeoutMs = callTimeoutMs;
     this.envRetries = envRetries;
+    this.envRetryDelayMs = envRetryDelayMs;          // wall-clock wait between env-fault retries (never simulated time)
+    this.resumeNote = resumeNote;
     this.maxWakeups = maxWakeups;
     this.productConfig = productConfig;
     this.journal = new Journal({ file: journalFile, recorded, blobDir });
@@ -140,6 +144,8 @@ class Host {
 
     const wsDir = workspaceDir ?? arm?.workspace?.dir ?? null;
     this.workspace = wsDir ? new Workspace({ dir: wsDir, ...(workspaceMaxBytes ? { maxBytes: workspaceMaxBytes } : {}) }) : null;
+    // One workspace has one writer at a time, or a snapshot could capture another call's writes.
+    if (this.workspace && this.concurrency > 1) throw new HostError('a persistent workspace needs concurrency 1');
     this.wsRestored = false;
 
     this.agenda = new Agenda();
@@ -148,6 +154,7 @@ class Host {
     for (const s of this.item.family.sweeps ?? []) this.sweeps.set(s.id, { id: s.id, carry: null, tickIndex: 0, queue: [] });
     for (const id of Object.keys(world.sweepTimes ?? {})) if (!this.sweeps.has(id)) this.sweeps.set(id, { id, carry: null, tickIndex: 0, queue: [] });
     this.refIndex = new Map();
+    this.hostEventCase = new Map();   // counterparty events (generated on-policy) -> the truth case of the effect that caused them
     this.pendingKeys = new Set();
     this.attempts = new Map();
     this.taskOrdinals = new Map();
@@ -166,7 +173,7 @@ class Host {
   bindingOf(inst) {
     if (!inst) return null;
     if (inst.startedBy.kind === 'backlog') return this.world.backlog[inst.startedBy.index]?.case ?? null;
-    return this.world.truth?.eventCase?.[inst.startedBy.eventId] ?? inst.startedBy.case ?? null;
+    return this.world.truth?.eventCase?.[inst.startedBy.eventId] ?? this.hostEventCase.get(inst.startedBy.eventId) ?? null;
   }
   caseOfArgs(opDef, args, item = null) {
     for (const a of opDef.subjectArgs) {
@@ -182,7 +189,9 @@ class Host {
   async run() {
     if (this.dead) throw new HostError('this host was frozen; resume a new host from the journal');
     if (!this.started) this.#start();
-    while (this.agenda.peek() && this.agenda.peek().atMs <= this.horizonMs) {
+    for (;;) {
+      while (this.agenda.peek() && this.#stale(this.agenda.peek())) this.agenda.pop();   // replaced, cancelled or superseded
+      if (!this.agenda.peek() || this.agenda.peek().atMs > this.horizonMs) break;
       if (++this.counters.wakeups > this.maxWakeups) throw new HostError(`more than ${this.maxWakeups} wake-ups`);
       const entries = this.agenda.popInstant();
       try {
@@ -200,20 +209,32 @@ class Host {
     return { status: 'complete', digests: this.digests(), stats: this.stats() };
   }
 
+  /** An agenda entry that can no longer deliver anything (so it must not cause a wake-up). */
+  #stale(e) {
+    if (e.kind === 'obligation') {
+      const inst = this.instances.get(e.instance);
+      return !inst || inst.closed || inst.obligations.get(e.obligationId)?.version !== e.version;
+    }
+    if (e.kind === 'task') {
+      const st = this.instances.get(e.instance)?.tasks.get(e.taskId);
+      return !st || st.version !== e.version || st.state === 'closed' || (e.event.type === 'humanTask.timeout' && st.state !== 'open');
+    }
+    return false;
+  }
+
   #commit(atMs) {
     this.stage('wakeup.commit', { at: this.iso(atMs), ledgerRows: this.ledger.committed.length + this.ledger.provisional.length });
     this.journal.commit();
     this.ledger.committed.push(...this.ledger.provisional);
     this.ledger.provisional = [];
     this.lastCommittedMs = atMs;
-    this.#markResume();
   }
 
-  /** On a resumed run, the first commit past the recorded prefix is preceded by a `run.resume` control row. */
+  /** On a resumed run, the first live wake-up (the first not in the recorded prefix) is preceded by a `run.resume` row. */
   #markResume() {
     if (!this.resuming || this.journal.verifying) return;
     this.resuming = false;
-    this.journal.control('run.resume', { at: this.lastCommittedMs === null ? null : this.iso(this.lastCommittedMs), host: HOST_VERSION });
+    this.journal.control('run.resume', { at: this.lastCommittedMs === null ? null : this.iso(this.lastCommittedMs), host: HOST_VERSION, ...(this.resumeNote ?? {}) });
   }
 
   #freeze(e, interruptedMs) {
@@ -244,11 +265,12 @@ class Host {
         payload: { records: b.export?.records ?? {}, events: b.export?.events ?? [] } };
       this.agenda.push({ kind: 'event', atMs: this.t0Ms, phase: 1, source: ev.source, id: ev.id, event: ev });
     });
+    this.stage('run.ready', { at: w.t0, instances: this.instances.size, agenda: this.agenda.size });
     this.journal.commit();
-    this.#markResume();
   }
 
   #end() {
+    this.#markResume();
     const open = [...this.instances.values()].filter(i => !i.closed);
     this.stage('run.end', {
       at: this.world.horizonEnd,
@@ -279,6 +301,7 @@ class Host {
 
   // ---------------------------------------------------------------------------------------------------------------
   async #wakeup(entries) {
+    this.#markResume();
     const t = entries[0].atMs;
     this.nowMs = t;
     this.stage('wakeup', { at: this.iso(t), entries: entries.length });
@@ -322,7 +345,7 @@ class Host {
         const ref = ev.payload?.ref;
         const target = typeof ref === 'string' && this.refIndex.has(ref) ? this.instances.get(this.refIndex.get(ref)) : null;
         if (target && !target.closed) { this.stage('deliver', { event: ev, instance: target.id, route: 'ref' }); add(round1, target, ev); continue; }
-        const inst = this.#newInstance({ kind: 'event', eventId: ev.id, ...(ev.case ? { case: ev.case } : {}) }, t, true);
+        const inst = this.#newInstance({ kind: 'event', eventId: ev.id }, t, true);
         this.stage('deliver', { event: ev, instance: inst.id, route: 'start' });
         add(round1, inst, ev);
       } else if (ev.channel.kind === 'world') {
@@ -340,7 +363,11 @@ class Host {
     const wakes = await this.#sweepRound(due);
     // Round 3: merge targets and sweep wakes, each at most once; they can neither merge nor wake.
     const round3 = new Map();
-    for (const [target, evs] of merges) { const inst = this.instances.get(target); if (inst && !inst.closed) for (const ev of evs) add(round3, inst, ev); }
+    for (const [target, evs] of merges) {
+      const inst = this.instances.get(target);
+      if (inst && !inst.closed) for (const ev of evs) add(round3, inst, ev);
+      else for (const ev of evs) this.stage('delivery.dropped', { event: ev, reason: 'merge-target-closed', instance: target });
+    }
     for (const [instId, sweep] of wakes) {
       const inst = this.instances.get(instId);
       if (!inst || inst.closed) continue;
@@ -411,11 +438,12 @@ class Host {
     const includeComputed = this.profile.product;
     const systems = this.systems;
     const pending = this.pendingKeys;
-    const index = this.index(undefined);
+    let index = null;                                     // computed on first use; no output is applied during a round
+    const host = this;
     return {
       files,
       // Read-only, as of the round start: open instances, matched only on the subject the arm itself declared.
-      instances(filter = {}) { return index.filter(r => filter?.subject === undefined || r.subject === filter.subject).map(r => ({ ...r })); },
+      instances(filter = {}) { index ??= host.index(undefined); return index.filter(r => filter?.subject === undefined || r.subject === filter.subject).map(r => ({ ...r })); },
       query(table, filter = {}) {
         const [sys, t] = String(table).split('.');
         const s = systems.get(sys);
@@ -456,7 +484,7 @@ class Host {
           if (e?.quota) { e.discardedCalls = [...(e.discardedCalls ?? []), { callId, costs }]; throw e; }
           if (e?.env) {
             envFaults.push({ attempt, code: String(e.code ?? 'ENV_FAULT') });
-            if (attempt < this.envRetries) continue;
+            if (attempt < this.envRetries) { if (this.envRetryDelayMs) await new Promise(r => setTimeout(r, this.envRetryDelayMs)); continue; }
             outcome = 'error'; error = { code: 'impaired', detail: String(e.code ?? 'ENV_FAULT') };
             break;
           }
@@ -587,11 +615,12 @@ class Host {
     if (errors.length) return armError('invalid-output', errors);
     inst.subject = out.decisions.subject;
     this.#emit(out.effects ?? [], { kind: 'case', instance: inst.id });
+    // Upserts first (an upsert replaces an obligation of the same id), then cancels: a cancel always wins.
+    for (const ob of out.obligations?.upsert ?? []) this.#upsertObligation(inst, ob);
     for (const id of out.obligations?.cancel ?? []) {
       if (inst.obligations.delete(id)) this.stage('obligation.cancel', { instance: inst.id, id });
       else this.stage('obligation.cancel', { instance: inst.id, id, unknown: true });
     }
-    for (const ob of out.obligations?.upsert ?? []) this.#upsertObligation(inst, ob);
     for (const task of out.humanTasks ?? []) this.#createTask(inst, task);
     if (out.merge) {
       this.stage('instance.merge', { instance: inst.id, into: out.merge.into, events: evs.map(e => e.id) });
@@ -612,7 +641,7 @@ class Host {
   }
 
   #upsertObligation(inst, ob) {
-    const dueMs = toMs(ob.dueAt);
+    const dueMs = Math.ceil(toMs(ob.dueAt) / SECOND) * SECOND;      // the clock's resolution is one second
     const clamped = dueMs <= this.nowMs;
     const fireMs = clamped ? this.nowMs + MINUTE : dueMs;
     const version = ++inst.obVersion;
@@ -628,7 +657,7 @@ class Host {
     const ordKey = `${c}\u0000${task.role}\u0000${task.kind}`;
     const ordinal = c === null ? 0 : (this.taskOrdinals.get(ordKey) ?? 0) + 1;
     if (c !== null) this.taskOrdinals.set(ordKey, ordinal);
-    const dueMsRaw = toMs(task.dueAt);
+    const dueMsRaw = Math.ceil(toMs(task.dueAt) / SECOND) * SECOND;
     const dueMs = dueMsRaw <= this.nowMs ? this.nowMs + MINUTE : dueMsRaw;
     const plan = planTask({ world: this.world, actors: this.item.actors, task, kinds: this.item.schemas.humanTasks, c, ordinal, createdMs: this.nowMs, dueMs, iso: ms => this.iso(ms) });
     const version = (cur?.version ?? 0) + 1;
@@ -726,6 +755,7 @@ class Host {
       const ev = { id: this.hid(), type: String(r.type), at: this.iso(atMs), source: String(r.source ?? sys.id), channel: r.channel === 'world' ? { kind: 'world' } : { kind: 'inbound' }, payload,
         ...(typeof r.doc === 'string' ? { doc: r.doc } : {}), ...(r.channel === 'world' ? { sweep: String(r.sweep) } : {}) };
       this.stage('counterparty.event', { event: ev, case: c, cause: em.id });
+      if (c !== null) this.hostEventCase.set(ev.id, c);
       this.agenda.push({ kind: 'event', atMs, phase: 1, source: ev.source, id: ev.id, event: ev });
     }
     for (const w of reaction.writes ?? []) {
@@ -816,7 +846,7 @@ class Host {
       const tags = kind ? [kind] : [];
       if (tags.length) anyInjected = true;
       if (r.deduped && !tags.length) this.stage('effect.deduped', { emission: em.id, system: eff.system, op: eff.op, key, via, batchIndex: index, status: r.status });
-      else this.#ledgerRow(em, { key, argsDigest: hashOf({ ...args, items: undefined, item }), subjectCase: c, ordinal, committed: r.committed, status: r.status,
+      else this.#ledgerRow(em, { key, argsDigest: sys.itemDigest(eff.op, item, args), subjectCase: c, ordinal, committed: r.committed, status: r.status,
         ...(r.error ? { error: { code: r.error.code, reason: r.error.reason } } : {}), faultTags: tags, ...(tags.length ? { injected: true } : {}), via, batchIndex: index,
         ...(op.money ? { money: true } : {}) });
       if (r.committed) { this.#touch(em, sys, r.touched); this.#counterparty(em, sys, c, ordinal, r.result, { ...args, items: undefined, item }); }

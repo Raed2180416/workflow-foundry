@@ -1,7 +1,7 @@
 // E-bed host (G20), public surface. See README.md for the contract it implements and the decisions taken.
 export { createHost, bindItem, HOST_VERSION, QuotaStop, EnvFault, HostError } from './host.mjs';
 export { runWorld, replayRun, resumeRun } from './replay.mjs';
-export { Journal, readJournal, verifyChain, ReplayDivergence, JournalIntegrityError, CONTROL_TYPES } from './journal.mjs';
+export { Journal, readJournal, repairJournal, verifyChain, ReplayDivergence, JournalIntegrityError, CONTROL_TYPES, COMMIT_ENDS } from './journal.mjs';
 export { defineSystem, MockSystem, MockError, effectSchemas, sorSchemas } from './mocks.mjs';
 export { PROFILES, profileOf, backoffSeconds, isRetryable } from './profiles.mjs';
 export { FAULT_KINDS, faultSchedule } from './faults.mjs';

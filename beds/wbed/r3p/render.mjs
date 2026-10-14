@@ -142,7 +142,9 @@ function conventions(house) {
     'returns null for bad input never throws for it.', '',
     '## 7. Arguments', '', 'Functions never change their arguments unless the contract says "in place".', '',
     '## 8. Text formats', '', 'CSV follows RFC 4180. HTML text uses the five entities &amp; &lt; &gt; &quot; &#39;. SQL LIKE patterns use the',
-    'backslash as the escape character.', ''].join('\n');
+    'backslash as the escape character.', '',
+    '## 9. Text', '', 'A character is one UTF-16 code unit (what a JavaScript string\'s length counts). Whitespace is what',
+    'String.prototype.trim removes.', ''].join('\n');
 }
 
 export function sweepSpec() {
@@ -152,7 +154,7 @@ export function sweepSpec() {
     '4. Root cause: when a function misbehaves only because a function it calls is defective, report the called function, not the caller.',
     '5. One finding per defect: {file, function, class}; optional line (inside the function) and witness {args}: arguments the contract allows on which the result, the thrown error or an argument after the call differs from the contract. Witnesses are run against the code.',
     '6. Class: exactly one code from defect_classes.',
-    '7. Scoring: a finding is verified when (file, function, class) is a defect of the repository. Precision = verified / findings, recall = verified / defects. Duplicates, wrong classes, callers and correct functions count against precision. Pass: precision >= 0.90 and recall >= 0.80.'].join('\n');
+    '7. Scoring: a finding is verified when (file, function, class) is a defect of the repository. Precision = verified / findings, recall = verified / defects. Duplicates, wrong classes, callers and correct functions count against precision. Pass: precision >= 0.90 (one false positive is always tolerated) and recall >= 0.80.'].join('\n');
 }
 
 function promptText(world, nFiles, nClasses) {
@@ -165,8 +167,8 @@ function promptText(world, nFiles, nClasses) {
     `defective, report the called function. Give each defect exactly one of the ${nClasses} classes in inputs.defect_classes.`, '',
     'Answer with JSON {"findings": [{"file": "src/...", "function": "<name>", "class": "<code>", "line": <optional>, "witness": {"args": [...]} }]}.',
     'A witness (optional) is a list of arguments the contract allows on which the function\'s result, thrown error or changed argument',
-    'differs from what the contract requires; witnesses are run. The rules are in inputs.sweep_spec. Pass: precision >= 0.90 and recall >= 0.80',
-    'over (file, function, class).'].join('\n');
+    'differs from what the contract requires; witnesses are run. The rules are in inputs.sweep_spec. Pass: precision >= 0.90 (one false',
+    'positive is always tolerated) and recall >= 0.80 over (file, function, class).'].join('\n');
 }
 
 export { CLASSES };

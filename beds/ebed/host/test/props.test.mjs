@@ -79,15 +79,19 @@ test('idempotency (host level): keyed re-emission makes one ledger row and ident
   };
   const res = await run({ item: p2pItem, world, arm });
   const ledger = ofType(res, 'ledger').filter(r => r.op === 'pay');
-  const results = ofType(res, 'deliver').filter(r => r.event.type === 'effect.result');
   assert.equal(ofType(res, 'effect.deduped').length, 2);
   for (const inv of ['INV-1001-001', 'INV-1001-002']) {
     assert.equal(ledger.filter(r => r.key === `k:${inv}`).length, 1);
   }
   assert.equal(ledger.filter(r => r.key === null).length, 4, 'two un-keyed pays per invoice, both applied');
   assert.equal(res.host.systems.get('bank').db.payments.size, 6);
-  // Results of the keyed pair are identical apart from their event ids (delivered to closed instances: dropped rows).
-  void results;
+  // The keyed pair's two results carry the same outcome (they reach a closed instance, so the journal keeps them as drops).
+  const results = ofType(res, 'delivery.dropped').filter(d => d.event.type === 'effect.result' && d.event.payload.key);
+  for (const inv of ['INV-1001-001', 'INV-1001-002']) {
+    const pair = results.filter(d => d.event.payload.key === `k:${inv}`).map(d => d.event.payload);
+    assert.equal(pair.length, 2);
+    assert.deepEqual(pair[0], pair[1]);
+  }
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -190,6 +194,8 @@ test('clock laws: event-driven, monotone, deliveries at their time, results >= 1
           current.delete(`${r.instance}/${r.event.payload.obligationId}`);
         }
       }
+      // No idle wake-up: stale entries (replaced or cancelled timers, superseded tasks) never wake the host.
+      rows.forEach((r, i) => { if (r.type === 'wakeup') assert.notEqual(rows[i + 1].type, 'wakeup.commit', `idle wake-up at ${r.at}`); });
       const wakeups = rows.filter(r => r.type === 'wakeup').length;
       assert.ok(wakeups < (horizon - ms(w.t0)) / MIN / 50, `idle time skipped (${wakeups} wake-ups)`);
     }
@@ -440,26 +446,27 @@ test('human tasks: late, delegated, withdrawn, free-text and wrong answers follo
   for (const seed of SEEDS.slice(0, 20)) {
     const world = p2pWorld({ seed, cases: 8, backlog: 0, faults: false, duplicates: false,
       noise: { none: 0.15, late: 0.2, delegate: 0.15, withdraw: 0.1, freeText: 0.1, wrong: 0.1, form: 0.5, formInvalid: 0.5 } });
-    const rec = recording(p2pSolver());
-    const res = await run({ item: p2pItem, world, arm: rec.arm });
-    const evs = rec.log.flatMap(l => l.input.events.map(e => ({ ...e, instance: l.input.instance })));
+    const res = await run({ item: p2pItem, world, arm: p2pSolver() });
     for (const c of ofType(res, 'humanTask.created')) {
       const cls = c.noise?.applied ?? (c.noAnswer ? 'none' : 'normal');
       classes.add(cls);
-      const mine = evs.filter(e => e.instance === c.instance && e.payload?.taskId === c.task.id && ms(e.at) >= ms(c.steps[0]?.at ?? '1970-01-01T00:00:00Z') - 1e12).map(e => e.type);
       const types = c.steps.filter(s => s.type !== 'form.rejected').map(s => s.type);
-      if (cls === 'late') { assert.deepEqual(types, ['humanTask.timeout', 'humanTask.answered']); }
+      if (cls === 'late') assert.deepEqual(types, ['humanTask.timeout', 'humanTask.answered']);
       if (cls === 'withdraw') assert.deepEqual(types, ['humanTask.withdrawn']);
       if (cls === 'delegate') assert.equal(types[0], 'humanTask.delegated');
       if (cls === 'none') assert.deepEqual(types, ['humanTask.timeout']);
-      void mine;
+      if (cls === 'freeText' || cls === 'wrong') {
+        const d = ofType(res, 'deliver').find(x => x.instance === c.instance && x.event.type.startsWith('humanTask.answer') && x.event.payload.taskId === c.task.id && ms(x.event.at) >= ms(c.steps[0].at));
+        if (cls === 'freeText' && d) assert.equal(d.event.type, 'humanTask.answerRejected', 'a { text } answer fails this object schema');
+        if (cls === 'wrong' && d?.event.type === 'humanTask.answered') assert.equal(d.event.payload.answer.approvedAmountMinor, world.truth.cases[c.case].amountMinor + 100);
+      }
     }
     for (const d of ofType(res, 'deliver').filter(x => x.event.type === 'humanTask.answered' && x.event.payload.late)) {
       const task = ofType(res, 'humanTask.created').find(c => c.instance === d.instance && c.task.id === d.event.payload.taskId);
       assert.ok(ms(d.event.at) > ms(task.task.dueAt));
     }
   }
-  for (const k of ['normal', 'late', 'delegate', 'withdraw', 'none']) assert.ok(classes.has(k), `class ${k} exercised`);
+  for (const k of ['normal', 'late', 'delegate', 'withdraw', 'none', 'freeText', 'wrong']) assert.ok(classes.has(k), `class ${k} exercised`);
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -605,11 +612,10 @@ test('censoring record: run.end lists exactly the open instances, their obligati
 
 test('bounds: 1,000 toy cases run in bounded time and memory (reported)', async () => {
   const t = performance.now();
-  const before = process.memoryUsage().heapUsed;
   const res = await run({ item: p2pItem, world: p2pWorld({ seed: 1030, cases: 1000, backlog: 50, horizonDays: 40 }), arm: p2pSolver() });
   const secs = (performance.now() - t) / 1000;
-  const mb = (process.memoryUsage().heapUsed - before) / 2 ** 20;
-  console.log(`[ebed-host] 1000 cases: ${res.stats.caseTicks} case-ticks, ${res.stats.sweepTicks} sweep ticks, ${res.stats.wakeups} wake-ups, ${secs.toFixed(2)} s, heap +${mb.toFixed(0)} MB, journal ${res.host.journal.rows.length} rows`);
+  const heap = process.memoryUsage().heapUsed / 2 ** 20, rss = process.resourceUsage().maxRSS / 1024;
+  console.log(`[ebed-host] 1000 cases: ${res.stats.caseTicks} case-ticks, ${res.stats.sweepTicks} sweep ticks, ${res.stats.wakeups} wake-ups, ${secs.toFixed(2)} s, heap ${heap.toFixed(0)} MB, peak RSS ${rss.toFixed(0)} MB (whole test process), journal ${res.host.journal.rows.length} rows`);
   assert.equal(res.status, 'complete');
   assert.ok(secs < 60, `${secs} s`);
 });

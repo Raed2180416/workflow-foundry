@@ -21,7 +21,7 @@ const tmp = () => mkdtempSync(path.join(os.tmpdir(), 'ebed-host-'));
 test('rounds: an inbound event merged into an existing instance is re-delivered to it in round 3 of the same instant', async () => {
   const w = quiet();
   const first = w.arrivals.find(e => e.channel.kind === 'inbound');
-  const second = { ...first, id: 'ev-again', at: at(3 * 24 * 60) };
+  const second = { ...first, id: 'ev-again', at: H.addMinutes(first.at, 3 * 24 * 60) };
   w.arrivals.push(second);
   w.truth.eventCase[second.id] = w.truth.eventCase[first.id];
   const log = [];
@@ -169,7 +169,7 @@ test('batch ops: F4 applies k of n items and the result is partial; resubmitting
       results.push(...input.events.filter(e => e.type === 'effect.result').map(e => e.payload));
       const items = cs.map(c => ({ key: `pay:${w.truth.cases[c].subject}`, invoiceId: w.truth.cases[c].subject, vendorId: 'V001', amountMinor: 1000, currency: 'EUR' }));
       if (!runOnce.done && input.instance === 'i-000001') { runOnce.done = true; return { decisions: { subject: null }, effects: [{ system: 'bank', op: 'payRun', args: { runId: 'R1', items } }], carry: null }; }
-      if (input.events.some(e => e.type === 'effect.result' && e.payload.status === 'partial')) return { decisions: { subject: null }, effects: [{ system: 'bank', op: 'payRun', args: { runId: 'R2', items } }], carry: null };
+      if (input.events.some(e => e.type === 'effect.result' && e.payload.status === 'partial') && results.length < 3) return { decisions: { subject: null }, effects: [{ system: 'bank', op: 'payRun', args: { runId: 'R2', items } }], carry: null };
       return empty(input);
     },
   };

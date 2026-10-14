@@ -7,9 +7,9 @@ export const CLASSES = ['OFF_BY_ONE', 'LOGIC_ERROR', 'MISSING_GUARD', 'ROUNDING'
 
 export const DEFINITIONS = {
   OFF_BY_ONE: 'a count, index, page number or range bound that is off by exactly one from the contract: an inclusive end treated as exclusive or the reverse, 0- and 1-based numbering confused, one item too many or too few.',
-  LOGIC_ERROR: 'a condition that does not express the contract\'s rule in any other way: negated, the wrong connective (and/or), the wrong operand, the wrong comparison direction, or one case of the rule left out.',
+  LOGIC_ERROR: 'a condition that does not express the contract\'s rule: negated, the wrong connective (and/or), the wrong operand, the wrong comparison direction, or one case of a several-case rule left out. A range bound off by one is OFF_BY_ONE; an empty, null or zero input is MISSING_GUARD; a calendar rule is DATE_ARITH; a unit or currency factor is UNIT_MISMATCH.',
   MISSING_GUARD: 'an empty, null, blank, zero or falsy input that the contract covers explicitly is not handled as it says: the function crashes, returns NaN or Infinity, or returns the wrong fallback.',
-  ROUNDING: 'a rounding that does not follow the contract or the house rule: the wrong direction, the wrong rule for halves, rounding at the wrong step, or parts that no longer add up to the total.',
+  ROUNDING: 'a rounding that does not follow the contract or the house rule: the wrong direction, the wrong rule for halves, or rounding at the wrong step (for example each part rounded on its own, so that the parts no longer add up to the total).',
   INPUT_MUTATION: 'the function changes an argument that its contract says is left unchanged.',
   DATE_ARITH: 'calendar arithmetic that is wrong for some valid date: leap years, month lengths, days past the end of a month.',
   ESCAPING: 'text escaped or quoted incompletely, or in the wrong order, for the format the contract names.',

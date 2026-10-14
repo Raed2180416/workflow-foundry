@@ -134,6 +134,28 @@ test('quota stop: the clock freezes at the last committed wake-up; resume (other
   }
 });
 
+test('crash: a journal torn mid-wake-up (partial line, partial commit) is cut back to the last commit and resumed to the same end', async () => {
+  for (const [seed, frac] of [[1048, 0.37], [1049, 0.71], [1050, 0.93]]) {
+    const dir = tmp();
+    try {
+      const file = path.join(dir, 'j.jsonl'), blobDir = path.join(dir, 'blobs');
+      const world = () => p2pWorld({ seed, renames: true });
+      const clean = await H.runWorld({ item: p2pItem, world: world(), arm: p2pSolver(), journalFile: file, blobDir });
+      const text = readFileSync(file, 'utf8');
+      writeFileSync(file, text.slice(0, Math.floor(text.length * frac)));     // the process died while appending
+      const { dropped, tornLine } = H.repairJournal(file, { dryRun: true });
+      assert.ok(dropped >= 1 && tornLine);
+      const res = await H.resumeRun({ item: p2pItem, world: world(), arm: p2pSolver(), journalFile: file, blobDir });
+      assert.equal(res.status, 'complete');
+      const rows = H.readJournal(file);
+      assert.equal(canonical(content(rows)), canonical(clean.host.journal.contentRows()), `seed ${seed}`);
+      const note = rows.find(r => r.type === 'run.resume');
+      assert.equal(note.repaired.droppedRows, dropped);
+      assert.equal((await H.replayRun({ item: p2pItem, world: world(), journal: file })).ok, true);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  }
+});
+
 test('the per-arm workspace persists across calls, is snapshotted per call and is restored to the last committed snapshot on resume', async () => {
   const dir = tmp();
   try {

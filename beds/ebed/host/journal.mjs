@@ -7,7 +7,7 @@
 // same position, byte for byte (canonical JSON); a mismatch throws ReplayDivergence and the run is void. Control rows
 // (`clock.freeze`, `run.resume`) record interruptions; they are chained but never regenerated, so they are skipped
 // while verifying. When the recorded content runs out the journal switches to live appending (resume), chaining on.
-import { appendFileSync, readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { canonical, sha256 } from '../../lib/canonical.mjs';
 
@@ -34,6 +34,35 @@ export function readJournal(source) {
     : readFileSync(source, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line));
   verifyChain(rows);
   return rows;
+}
+
+/** Rows that end a commit (a journal is valid only up to one of these; control rows are single-row commits). */
+export const COMMIT_ENDS = Object.freeze(new Set(['run.ready', 'wakeup.commit', 'run.end', 'clock.freeze', 'run.resume']));
+
+/**
+ * After a crash: read a journal file, drop a torn final line and any rows after the last commit boundary, verify the
+ * chain, and (unless `dryRun`) rewrite the file atomically. Returns { rows, dropped, tornLine }.
+ */
+export function repairJournal(file, { dryRun = false } = {}) {
+  const lines = readFileSync(file, 'utf8').split('\n');
+  if (lines.at(-1) === '') lines.pop();
+  const rows = [];
+  let tornLine = false;
+  for (const [i, line] of lines.entries()) {
+    try { rows.push(JSON.parse(line)); }
+    catch (e) { if (i === lines.length - 1) { tornLine = true; break; } throw new JournalIntegrityError(`line ${i} is not JSON`, i); }
+  }
+  let end = rows.length;
+  while (end > 0 && !COMMIT_ENDS.has(rows[end - 1].type)) end--;
+  const kept = rows.slice(0, end);
+  verifyChain(kept);
+  const dropped = rows.length - end + (tornLine ? 1 : 0);
+  if (dropped && !dryRun) {
+    const tmp = `${file}.repair-${process.pid}`;
+    writeFileSync(tmp, kept.map(r => JSON.stringify(r)).join('\n') + (kept.length ? '\n' : ''));
+    renameSync(tmp, file);
+  }
+  return { rows: kept, dropped, tornLine };
 }
 
 export function verifyChain(rows) {
