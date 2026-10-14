@@ -524,7 +524,7 @@ function derive(c, db, now, pol) {
     const ready = readyOf();
     if (ready === null || ready > a) continue;
     const out = outcomeOf(null);
-    if (colAt !== null && colAt <= a) { refusedAt ??= a; continue; }   // R6.3 (S4: a report in the same instant wins)
+    if (act.col) { refusedAt ??= a; continue; }            // R6.3 (S4: a collection in the same instant wins)
     if (out && out.at <= a) continue;                      // already ended
     cancel = { at: a, kind: 'R62', reason: 'customer', due: a };
   }
@@ -542,31 +542,36 @@ function derive(c, db, now, pol) {
   const ends = {};
   if (ready !== null) for (const f of avail) ends[f] = fulEnd(f, r62);
   const outcome = ready !== null && r62 === null ? outcomeOf(null) : null;
-  return { P, D, fuls, unav, avail, hasUnav, known, cleared, fraudEnd, review, counted, cancel, refusedAt, timeout, ready, r62, ends, outcome, colAt };
+  return { P, D, fuls, unav, avail, hasUnav, known, cleared, fraudEnd, review, counted, cancel, refusedAt, timeout, ready, r62, ends, outcome };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 function orderTick(input, ctx, env, c, extraEvents = null) {
   const now = ms(input.now);
   const events = extraEvents ?? [...(input.events ?? [])].sort(byAtId);
-  const db0 = readDb(ctx, c.oid);
-  if (c.pre) { for (const e of c.pre) applyEvent(c, e, env, db0); delete c.pre; }
+  const db = readDb(ctx, c.oid);
   // carrier reports before customer actions at the same instant (S4); results first so failures are known
   const order = { 'effect.result': 0, 'carrier.status': 1, 'customer.action': 2 };
-  for (const ev of [...events].sort((a, b) => (ms(a.at) - ms(b.at)) || ((order[a.type] ?? 1) - (order[b.type] ?? 1)) || (a.id < b.id ? -1 : 1))) applyEvent(c, ev, env, db0);
-  const db = db0;
+  const sortEv = list => [...list].sort((a, b) => (ms(a.at) - ms(b.at)) || ((order[a.type] ?? 1) - (order[b.type] ?? 1)) || (a.id < b.id ? -1 : 1));
+  if (c.pre) { for (const e of sortEv(c.pre)) applyEvent(c, e, env, db, true); delete c.pre; }
+  for (const ev of sortEv(events)) applyEvent(c, ev, env, db);
   const pol = env.policy(c.ed);
   const d = derive(c, db, now, pol);
   const pl = planOrder(input, ctx, env, c, db, d, now, pol);
   const out = { decisions: { subject: c.oid }, carry: c };
   if (pl.effects.length) out.effects = pl.effects;
   if (pl.tasks.length) out.humanTasks = pl.tasks;
+  // Close only on a tick that holds nothing but my own timers: the `timer` source sorts after every inbound source, so
+  // a message that merges into this instance at the same instant is validated before the close is applied.
+  const idle = pl.closable && !pl.effects.length && !pl.tasks.length && !Object.keys(c.fl).length;
+  const onlyTimers = events.length > 0 && events.every(e => e.type === 'timer.fired');
+  if (idle && onlyTimers) { out.close = true; return out; }
+  if (idle) pl.wakes.push(now + MIN);
   const next = pl.wakes.length ? Math.min(...pl.wakes) : null;
   const obl = {};
   if (next !== null && iso(next) !== c.wake) { obl.upsert = [{ id: 'wake', kind: 'reconcile', anchor: 'next-due', dueAt: iso(next), onDue: 'reconcile' }]; c.wake = iso(next); }
   if (next === null && c.wake) { obl.cancel = ['wake']; c.wake = null; }
   if (obl.upsert || obl.cancel) out.obligations = obl;
-  if (pl.closable && !pl.effects.length && !pl.tasks.length && !Object.keys(c.fl).length) { out.close = true; delete out.obligations; }
   return out;
 }
 
@@ -724,23 +729,23 @@ function planOrder(input, ctx, env, c, db, d, now, pol) {
 
     if (end && end.kind === 'failed') {
       const due = end.at + DELAY.failComp * MIN;
-      if (compensate(fid, due, due, { noShipCancel: rp.cf !== undefined }) === true) {
+      if (compensate(fid, due, due, { noShipCancel: !!rp.cf }) === true) {
         setF(fid, 'failed', due);
         notify(fid, 'fulfilment-failed', due, `Fulfilment ${fid} of order ${oid} failed.`);
       }
       continue;
     }
     if (end && end.kind === 'cancelled') {
-      const hasShipToCancel = ship && ship.status === 'created';
-      const dueRest = hasShipToCancel ? end.at : end.at + DELAY.r62Rest * MIN;
+      // R6.2: the shipment is cancelled at once; the rest of the chain from 10 minutes after the cancel.
+      const dueRest = end.at + DELAY.r62Rest * MIN;
       if (compensate(fid, end.at, dueRest, {}) === true) setF(fid, 'cancelled', dueRest);
       continue;
     }
-    // carrier reports (completed end included)
-    const dispFrom = minOf(rp.col, rp.del);
+    // carrier reports (completed end included), timed from the messages
+    const dispFrom = minOf(rp.col?.a, rp.del?.a);
     if (dispFrom !== null) {
       const s1 = setF(fid, 'dispatched', dispFrom + DELAY.carrier * MIN);
-      if (s1 === 'done' && rp.del !== undefined) setF(fid, 'completed', rp.del + DELAY.carrier * MIN);
+      if (s1 === 'done' && rp.del) setF(fid, 'completed', rp.del.a + DELAY.carrier * MIN);
       continue;
     }
     if (end || stopped || FRANK[r.status] < 1) continue;

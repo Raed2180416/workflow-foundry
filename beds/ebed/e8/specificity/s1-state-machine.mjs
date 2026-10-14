@@ -39,9 +39,14 @@
 // - The instance closes when the order's final status is set (or permanently refused) and nothing is in flight.
 //
 // READINGS (where the spec left a choice; section cited)
-// 1. §3.3/R6.2/S6 "reported collected": a carrier report meaning `inTransit` or `delivered` also proves collection,
-//    so it ends the right to cancel like `collected` does (a delivery can be reported before the collection, §3.3).
-//    Only the `collected` meaning (or `delivered`) sets `dispatched` (R4.4).
+// 1. §3.3/R6.2/S4/S6 "reported collected at or before the time of the cancel": the time of a report is its
+//    `reportedAt` (the carrier's report time), not the later instant the message happens to reach the arm (at d5 most
+//    collection reports arrive 10-50 min, some days, after `reportedAt`). So a cancel counts only if (a) no received
+//    report meaning collected / inTransit / delivered has reportedAt <= the cancel, and (b) the carrier's shipment
+//    records of the order (`ctx.query('carrier.shipments')`, read in the cancel's instant) show none collected,
+//    inTransit or delivered (observed: the record turns `collected` exactly at `reportedAt`). `inTransit`/`delivered`
+//    count because they imply collection (a delivery can be reported before the collection, §3.3). Statuses still
+//    follow the messages only: `dispatched` on `collected` (or before `completed` on `delivered`), timed from receipt.
 // 2. R4.4/§3.3 `collectionFailed` after any collection evidence for that shipment is contradictory and changes nothing.
 // 3. R6.2 vs R3.2 "later actions change nothing": an order that was amended is processing (ready at the amend, R3.2),
 //    so a later cancel is judged by R6.2 (and S6), not refused by R3.2. S5 is read as scoped to orders still waiting
@@ -55,7 +60,7 @@
 // 6. R6.2 in-flight steps: a charge/booking/reservation whose result arrives after a counted cancel is compensated if
 //    it committed; if it failed (e.g. 402) the fulfilment is still `cancelled` (the customer's cancel decided its
 //    fate), with no `fulfilment-failed`.
-// 7. R6.2 edge: if carrier.cancel answers `409 already-collected` (collected but not yet reported), the fulfilment
+// 7. R6.2 edge (should be unreachable after reading 1): if carrier.cancel answers `409 already-collected`, the fulfilment
 //    passed its point of no return (R4.3): it is not compensated, keeps following carrier messages, the order is not
 //    set cancelled, `cancel-refused` is sent, and R4.5 decides the order at the end. Other fulfilments stay cancelled.
 //    A carrier.cancel failing for another reason (shipment not live) does not stop the refund and releases.
@@ -73,7 +78,8 @@
 //    order is re-screened with fraud.check (a review gets its first task now, since a pre-go-live task is not exported).
 //    An unrecorded one is a new order. A collected/inTransit/delivered shipment record counts as collection evidence.
 // 13. Unknown carrier codes (not in the order's edition, nor in any other published edition) are `info`. Code and
-//    carrier match exactly first, then trimmed and case-insensitively.
+//    carrier match exactly first, then trimmed and case-insensitively. (Observed: PARCELLA sends the code `info`,
+//    which no carrier-codes.json lists.)
 // 14. R1.2: a location missing from the edition's fee table has fee 0; R1.3: if no edition has effectiveFrom on or
 //    before date(p), the earliest published edition is used.
 
@@ -467,7 +473,10 @@ function onCarrier(st, ev, ctx) {
   const fs = fstat(st, fid);
   if (fs === 'completed' || fs === 'failed') return;
   const m = meaningOf(st, ctx, pl.carrier, pl.code);
-  if (m === 'collected' || m === 'inTransit' || m === 'delivered') f.col = f.col == null ? at : Math.min(f.col, at);
+  if (m === 'collected' || m === 'inTransit' || m === 'delivered') {
+    const rep = Number.isNaN(t(pl.reportedAt)) ? at : Math.min(at, t(pl.reportedAt));
+    f.col = f.col == null ? rep : Math.min(f.col, rep);
+  }
   if (m === 'collected') f.colRep ??= at;
   if (m === 'delivered') f.del ??= at;
   if (m === 'collectionFailed' && f.col == null) f.cfail ??= at;
@@ -520,14 +529,22 @@ function clear(st, at) {
   } else st.ready = at;
 }
 
-function anyCollectedBy(st, a) { return st.fo.some(fid => st.F[fid].col != null && st.F[fid].col <= a); }
+/** R6.2/S4/S6: has any shipment of the order been collected at or before `a`? Received reports, plus the carrier's
+ *  shipment records read at this instant (a report can reach the arm after its reportedAt; reading 1). */
+function anyCollectedBy(st, P, a) {
+  if (st.fo.some(fid => st.F[fid].col != null && st.F[fid].col <= a)) return true;
+  if (a < P.now) return false; // a queued action judged later: only reports can speak for its time
+  let rows = [];
+  try { rows = P.ctx.query('carrier.shipments', { where: { orderId: st.oid }, limit: 1000 }) ?? []; } catch { rows = []; }
+  return rows.some(r => st.F[r.fulfilmentId] && ['collected', 'inTransit', 'delivered'].includes(r.status));
+}
 
-function classify(st, a, k) {
+function classify(st, P, a, k) {
   if (isOver(st)) return; // R6.3 second sentence, S5: changes nothing
   const cleared = st.cleared != null && st.cleared <= a;
   if (k === 'cancel') {
     if (st.ready != null && st.ready <= a) { // processing: R6.2 / R6.3 / S4 / S6
-      if (anyCollectedBy(st, a)) { st.refuse = true; return; }
+      if (anyCollectedBy(st, P, a)) { st.refuse = true; return; }
       const set = st.fo.filter(fid => !FEND.has(fstat(st, fid)) && st.F[fid].mode !== 'fail');
       for (const fid of set) st.F[fid].mode = 'cancel';
       st.cx = { at: a, reason: 'customer', kind: 'R62', set };
@@ -570,7 +587,7 @@ function transitions(st, P) {
   }
   // customer actions, in time order, once the order's state at their time is known
   if (st.q.length && st.fo.length && (st.fv || st.cleared != null || isOver(st))) {
-    for (const a of st.q.sort((x, y) => x.at - y.at)) classify(st, a.at, a.k);
+    for (const a of st.q.sort((x, y) => x.at - y.at)) classify(st, P, a.at, a.k);
     st.q = [];
   }
   // timers (strictly after their deadline)
