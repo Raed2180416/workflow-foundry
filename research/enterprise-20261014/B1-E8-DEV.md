@@ -132,3 +132,27 @@ Mean 98.2% (range 95.3–100%) at $0.39–0.62 per build, no critical violation 
 misses one whole requirement (one rule family, every case of it), not scattered cases: smoke feedback shows *what happened* but not
 *which stated requirement went unhandled*. That is the gap a per-requirement tracker (experiments/tracker/, in progress) is built to
 close: lineage 2 would show "go-live backlog: untested/fail", lineage 3 "partial batch: fail".
+
+## Result: B1N-H, the N-version repair loop (2026-10-14, dev evidence)
+
+Method (`experiments/tracker/nversion.mjs`, `experiments/ebed/repair.mjs`; research/need-router-20261014/N-VERSION-TRACKER.md):
+the three B1L-H builds run on the practice worlds 1235–1237; per order, a strict majority of their observable behaviour (committed
+effects, statuses, notifications) is the consensus; each minority build gets one repair session with only its disagreeing orders
+(the order's inbound messages, its own behaviour, the majority's) and decides from SPEC-E whether to change. No oracle, no grading,
+no truth labels anywhere in the loop; the grading worlds 1232–1234 are disjoint from the practice worlds.
+
+| lineage | before (grading worlds) | disagreeing orders (practice) | repair session | after |
+|---|---|---|---|---|
+| 1 | 1,022/1,022 | 0 | none | 1,022/1,022 |
+| 2 | 974/1,022 (95.3%) | 16 | $0.11, 19 turns, 4.9 min | **1,022/1,022** |
+| 3 | 1,015/1,022 (99.3%) | 4 | $0.05, 23 turns, 3.6 min | **1,022/1,022** |
+
+All three lineages end at 100% (651/651 tail each), no critical violation, no arm error. Total spend for the whole method: **$1.70**
+(three builds $1.54, two repairs $0.16), about 20 minutes of build time per lineage plus 4–5 minutes of repair. The repair notes cite
+the rules and find the real causes: lineage 3 treated a retryable item error in a partial batch as permanent (Platform §1, R4.2,
+R5.1, R5.2); lineage 2 closed migrated go-live orders without acting (§3.5 "continue each from where it stands", R1.1). Neither
+simply copied the majority: each verified its fix on the practice worlds.
+
+What it does not show: K = 3 lineages on one item; the defects happened to be independent across lineages (a misreading shared by
+two builds would out-vote the right behaviour; the K = 4 run with B1-O shows 12 orders splitting 2–2 where B1-O repeats a
+lineage's mistake); dev worlds only.

@@ -39,3 +39,10 @@ only), rebuilt, then graded on the grading worlds 1232–1234 (disjoint from the
 disagreements to pick which requirements to check (and which spec sentence decides) instead of writing 78 checks blind.
 
 Raw: `nversion-e8-k3.json`, `nversion-e8-k4.json`.
+
+## Update: the repair loop (B1N-H)
+
+Each minority build got one repair session with only its disagreeing orders. Lineage 2 (16 orders) went from 95.3% to 100% for
+$0.11; lineage 3 (4 orders) from 99.3% to 100% for $0.05, on the grading worlds 1232–1234 (disjoint from the practice worlds the
+disagreements came from). All three Haiku builds now pass 1,022/1,022. The whole loop, three builds plus two repairs, cost $1.70
+with no oracle. Details: research/enterprise-20261014/B1-E8-DEV.md "Result: B1N-H".
