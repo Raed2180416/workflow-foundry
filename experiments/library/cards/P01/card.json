@@ -107,7 +107,7 @@
    "type": "choice",
    "instructions": "What does the work look like?",
    "criteria": {
-    "one-pass": "one transformation",
+    "one-pass": "a single transformation, applied once",
     "stages": "an ordered sequence of distinct transformations",
     "per-item": "the same work repeated per item",
     "none": "none of these"
