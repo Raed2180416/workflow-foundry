@@ -200,7 +200,37 @@ export function createResumePort({ prior = [], live, invalidate = true } = {}) {
 // child reservations on it; flowScope {span, parent, path, depth}, written as tools/flow-scope.json for a child run (a stale
 // one is always removed first, so a reused workdir never carries a scope into a top-level run); resume (true or a prior
 // run's meta.resume.rows): the run goes through createResumePort and meta.resume = {rows, stats}.
-export async function runCompiled({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs = 20 * 60 * 1000, workdir, familyId = null, outputSchema = null,
+//
+// ATTACK-20261014 M1 (opt-in; absent or null = exactly the run above, nothing else is read): variants = { relations, seed,
+// compare?, modelPortOf? }. relations are a bed's metamorphic relations (beds/<family>/invariance.mjs, already selected by
+// the caller: invariance.mjs selectRelations); seed seeds every variant. After an ok original, each relation's variant of
+// the task runs through the same solver, flow, model port (or modelPortOf(relation): replay tools give every variant a
+// fresh memo port) and options, in its own workdir `${workdir}-v-<relation id>` with its own gateway Ledger at perTaskUsd,
+// and the relation's check compares the two outputs (invariance.mjs runVariants). A disagreement turns the result into
+// status 'deopt' with deopt {kind: 'invariance', name: <relation id>, detail: {violations, info}} and output null, as a
+// guard would. A variant that does not run ok is recorded, never a disagreement. meta.variants = {ran, relations,
+// statuses, violated, costUsd, results, output: the original output}; costUsd includes every variant's spend
+// (meta.variants.costUsd is that share). Not combined with ledger, flowScope or resume (library arms and child runs).
+export async function runCompiled(args = {}) {
+  const { variants = null, ...rest } = args;
+  if (variants == null) return runOnce(rest);
+  if (!Array.isArray(variants.relations)) throw new Error('runCompiled: variants.relations must be a list of relations (beds/<family>/invariance.mjs)');
+  if (rest.ledger != null || rest.flowScope != null || rest.resume) throw new Error('runCompiled: variants are not wired with ledger, flowScope or resume (library arms and child runs)');
+  if (variants.modelPortOf != null && typeof variants.modelPortOf !== 'function') throw new Error('runCompiled: variants.modelPortOf must be a function of the relation');
+  const r = await runOnce(rest);
+  if (r.status !== 'ok' || !variants.relations.length) return { ...r, meta: { ...r.meta, variants: { skipped: r.status !== 'ok' ? `original ${r.status}` : 'no relations', costUsd: 0 } } };
+  const { runVariants, invarianceSummary, INVARIANCE_KIND } = await import('./invariance.mjs');
+  const v = await runVariants({ relations: variants.relations, task: rest.task, output: r.output, seed: String(variants.seed ?? ''), compare: variants.compare ?? {},
+    runVariant: (task, rel) => runOnce({ ...rest, task, workdir: `${rest.workdir}-v-${rel.id}`, label: `${rest.label ?? 'compiled'}:v:${rel.id}`,
+      ...(variants.modelPortOf ? { modelPort: variants.modelPortOf(rel) } : {}) }) });
+  const results = v.results.map(x => (x === v.violated ? x : (({ variantOutput, ...keep }) => keep)(x)));
+  const meta = { ...r.meta, variants: { ...invarianceSummary(v), costUsd: v.costUsd, results, output: r.output } };
+  const cost = { costUsd: r.costUsd + v.costUsd, costUnknown: r.costUnknown || v.costUnknown };
+  if (!v.violated) return { ...r, ...cost, meta };
+  return { ...r, ...cost, status: 'deopt', output: null, deopt: { kind: INVARIANCE_KIND, name: v.violated.relation, detail: { violations: v.violated.violations.slice(0, 10), info: v.violated.info } }, meta };
+}
+
+async function runOnce({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs = 20 * 60 * 1000, workdir, familyId = null, outputSchema = null,
   allowedModels = null, flowPath = DEFAULT_FLOW, label = 'compiled', flowOverride = null, flowOverrideData, ledger: givenLedger = null, flowScope = null, resume = null }) {
   if (!solvePath || !task || !workdir) throw new Error('runCompiled needs solvePath, task and workdir');
   // S0-2 (opt-in): flowOverride is the path of an ESM module whose default export is flow-v2's override(callSite, request)

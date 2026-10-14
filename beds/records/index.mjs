@@ -18,6 +18,8 @@ export const family = {
 };
 
 export { LIMITS, outputSchema, validate, FIELDS, THRESHOLDS, scoreAgainst } from './score.mjs';
+// ATTACK-20261014 M1: output-invariance relations and the witness tag (host code, beside the oracle; never shown to arms).
+export { invariance, witness, witnessOf, witnessCheck } from './invariance.mjs';
 
 // ---------------------------------------------------------------------------------------
 export function generate({ seed, split = 'dev', difficulty = 3 }) {

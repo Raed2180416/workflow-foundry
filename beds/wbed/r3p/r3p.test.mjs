@@ -407,9 +407,11 @@ test('runtime: generate under 2 s and oracle under 2 s at difficulty 5 (cold)', 
 // Regression tests for the adversarial review of 2026-10-14 (W-BED-R3P-NOTES §17).
 
 const unperm = (f, args) => { const perm = f.p.order; if (!perm) return args; const out = []; perm.forEach((i, j) => { out[i] = args[j]; }); return out; };
-const specObs = (fn, args) => {
+// the spec takes the contract's (canonical) parameter order; `toSpec` maps a call's arguments to it (same objects, so an
+// in-place change shows in the arguments as the function received them)
+const specObs = (fn, args, toSpec = a => a) => {
   const a = JSON.parse(JSON.stringify(args));
-  try { return { returns: canonValue(fn(...a)), throws: null, argsAfter: canonValue(a) }; } catch (e) { return { returns: null, throws: e.name, argsAfter: canonValue(a) }; }
+  try { return { returns: canonValue(fn(...toSpec(a))), throws: null, argsAfter: canonValue(a) }; } catch (e) { return { returns: null, throws: e.name, argsAfter: canonValue(a) }; }
 };
 const sameAsSpec = (o, w) => o.returns === w.returns && o.throws === w.throws && o.argsAfter === w.argsAfter;
 
@@ -450,7 +452,7 @@ test('finding 2 (P1): every correct body and every decoy meets an independent sp
       const spec = SPEC[f.family](f.p, w.house), hints = (JSON.stringify(f.contract).match(/'[^']{1,20}'/g) ?? []).map(x => x.slice(1, -1));
       const inputs = [...f.probes];
       for (let n = 0, tries = 0; n < 12 && tries < 400; tries++) { const a = f.domain.params.map(s => randomValue(s, r, hints)); if (argsOk(f, a)) { inputs.push(a); n++; } }
-      for (const a of inputs) { runs++; assert.ok(sameAsSpec(observe(w.planted, f.name, a), specObs(spec, unperm(f, a))), `${f.name} (${f.family}, ${f.role}) on ${JSON.stringify(a).slice(0, 200)}`); }
+      for (const a of inputs) { runs++; assert.ok(sameAsSpec(observe(w.planted, f.name, a), specObs(spec, a, x => unperm(f, x))), `${f.name} (${f.family}, ${f.role}) on ${JSON.stringify(a).slice(0, 200)}`); }
     }
   }
   t.diagnostic(`contract specs: ${draws} family draws, ${runs} executions, 0 deviations`);
@@ -529,10 +531,15 @@ test('finding 1 (P0): the contract-fuzz script fails on single tasks and with a 
 test('finding 1 (P0): the same contract text rarely recurs across a stream of 24 tasks (the vote has almost nobody to vote with)', t => {
   const seen = new Map();
   for (let seed = 449; seed <= 472; seed++) for (const f of buildSweep(seed, 'dev', 3).fns) if (f.template) seen.set(f.template, (seen.get(f.template) ?? 0) + 1);
-  let defects = 0, voted = 0;
-  for (let seed = 449; seed <= 472; seed++) for (const f of buildSweep(seed, 'dev', 3).fns) if (f.role === 'defect') { defects++; if (seen.get(f.template) >= 3) voted++; }
-  assert.ok(voted / defects < 0.1, `${voted}/${defects} defects share their exact contract with >= 2 other functions of the 24 tasks`);
-  t.diagnostic(`d3, 24 tasks: ${voted}/${defects} defects have >= 2 same-template peers; ${seen.size} distinct templates`);
+  // the shared helpers (one or two per task, always defective, and inside the loud cap) are counted apart
+  let defects = 0, voted = 0, helpers = 0, helperVoted = 0;
+  for (let seed = 449; seed <= 472; seed++) for (const f of buildSweep(seed, 'dev', 3).fns) {
+    if (f.role !== 'defect') continue;
+    if (f.kind === 'helper') { helpers++; if (seen.get(f.template) >= 3) helperVoted++; continue; }
+    defects++; if (seen.get(f.template) >= 3) voted++;
+  }
+  assert.ok(voted / defects < 0.05, `${voted}/${defects} defects share their exact contract with >= 2 other functions of the 24 tasks`);
+  t.diagnostic(`d3, 24 tasks: ${voted}/${defects} non-helper defects have >= 2 same-template peers (helpers: ${helperVoted}/${helpers}); ${seen.size} distinct templates`);
 });
 
 test('finding 1 (P0): loud defects (crash, NaN, changed argument, wrong error type, the shared helpers) are capped; silent variants exist for MISSING_GUARD and SWALLOWED_ERROR', () => {

@@ -240,7 +240,7 @@ function attemptSweep(spec, attempt) {
     const out = [];
     for (const a of r.shuffle(f.probes)) {
       const o = obsGen(planted, f.name, a);
-      if (o.throws || o.returns.includes('"$') || o.argsAfter !== JSON.stringify(a)) continue;
+      if (o.throws || o.negZero || o.returns.includes('"$') || o.argsAfter !== JSON.stringify(a)) continue; // a -0 result would need Object.is in the test
       if ((f.role !== 'clean' || f.differs.length) && !sameObs(o, obsGen(correct, f.name, a))) continue;
       out.push({ args: a, expected: JSON.parse(o.returns) });
       if (out.length === 2) break;

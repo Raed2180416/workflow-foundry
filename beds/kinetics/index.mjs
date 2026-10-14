@@ -275,3 +275,5 @@ export function _internals(task) { return build(task.seed, task.split, task.diff
 export function _clearCache() { cache.clear(); }
 export { fitAll as _fitAll, assemble as _assemble };
 export { KNOBS, TOL };
+// ATTACK-20261014 M1: output-invariance relations and the witness tag (host code, beside the oracle; never shown to arms).
+export { invariance, witness, witnessOf, witnessCheck } from './invariance.mjs';

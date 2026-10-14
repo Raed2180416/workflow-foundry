@@ -16,6 +16,8 @@ import { estimateTokens } from '../lib/prng.mjs';
 
 export { outputSchema, CONTRACTS, RELATIONS, reportLocal, LEVELS, childSeedOf, CHILD_SEED_BASE, CHILD_SLOTS, PLANTED_STYLE, packDigestOf, PLACEHOLDER_LIBRARY };
 export const version = VERSION;
+// ATTACK-20261014 M1: output-invariance relations and the witness tag (host code, beside the oracle; never shown to arms).
+export { invariance, witness, witnessOf, witnessCheck } from './invariance.mjs';
 
 export const family = {
   id: 'wbed-r4',

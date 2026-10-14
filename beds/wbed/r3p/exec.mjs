@@ -46,7 +46,13 @@ export function observe(ctx, name, args, timeout = TIMEOUT_MS) {
   let ret = null, threw = null;
   try { CALL.runInContext(ctx, { timeout }); ret = ctx.__out.r; }
   catch (e) { threw = (e && typeof e === 'object' && typeof e.name === 'string') ? (e.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' ? 'Timeout' : e.name) : 'Thrown'; }
-  return { returns: threw ? null : canonValue(ret), throws: threw, argsAfter: canonValue(copy) };
+  return { returns: threw ? null : canonValue(ret), throws: threw, argsAfter: canonValue(copy), ...(!threw && hasNegZero(ret) ? { negZero: true } : {}) };
+}
+/** Does a value hold -0 somewhere? (canonValue writes -0 as 0, which a strict test assertion would not accept.) */
+function hasNegZero(v, depth = 0) {
+  if (Object.is(v, -0)) return true;
+  if (depth > 20 || v === null || typeof v !== 'object') return false;
+  return Array.isArray(v) ? v.some(x => hasNegZero(x, depth + 1)) : Object.values(v).some(x => hasNegZero(x, depth + 1));
 }
 export const sameObs = (a, b) => a.returns === b.returns && a.throws === b.throws && a.argsAfter === b.argsAfter;
 

@@ -29,6 +29,7 @@ import { createRegistry, createCallHost, withCallModel, HARD_MAX_DEPTH, DEFAULT_
 import { learnProfile, checkOptionsOf, PARAMS_V2, TOLERANT_CHECK } from './profile.mjs';
 import { DEFAULT_AGENT_FLOOR_USD, TEXT_LABELS } from './agent-node.mjs';
 import { assertSeedsAllowed, defaultPurpose, loadLedger } from './seeds.mjs';
+import { invarianceOf, invarianceDrawOf, selectRelations, validateRelations, INVARIANCE_KIND } from './invariance.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url))), HERE = path.dirname(fileURLToPath(import.meta.url));
 export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
@@ -129,11 +130,23 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //     shadowDraw (floor only) and shadowReason 'floor' | 'flag' | 'floor+flag'. For stats.mjs's IPW estimator a compiled
 //     row is {verified: it had a shadow, propensity: shadowPropensity, wrong: the shadow disagreed and the adjudicator
 //     sided against the compiled answer (delivered 'adjudicated')}. The export copies rows verbatim.
+//   jit.invariance (ATTACK-20261014 M1; default unset: no variants): {share, seed?, relations?, distribution?, perTask?,
+//     relTol?} (invariance.mjs invarianceOf; the seed defaults to config.seed, else the experiment, and is written out, so
+//     the draws are hashed). A compiled run of task idx is sampled when invarianceDrawOf(seed, idx) < share; it then
+//     carries the bed's selected metamorphic relations (beds/<family>/invariance.mjs; distribution 'in' by default) to
+//     run-compiled.mjs's variants hook, and a disagreement deopts the run with kind 'invariance' (interpreter fallback,
+//     trace pool, recompile count and v2.2 refusals as any deopt). The variants' spend is booked as 'invariance'. Rows of
+//     a JIT arm with the option carry invarianceDraw on compiled runs and, when sampled, invariance (the summary); an
+//     invariance deopt row also records compiledPass, the oracle on the compiled answer it withheld (experimenter's view,
+//     never read by the JIT state). Not with library (call-host runs are not wired). Set, it defines a new JIT arm.
 
 const sha = s => createHash('sha256').update(s).digest('hex');
 // The shadow-floor draw for task idx: u in [0, 1) from sha256(`${seed}:${idx}:shadow`) (52 bits), so a resume or a replay
 // of the same stream draws the same u, whatever ran before; every JIT arm of a stream shares the draw for a task.
 export const shadowDrawOf = (seed, idx) => parseInt(sha(`${seed}:${idx}:shadow`).slice(0, 13), 16) / 2 ** 52;
+// ATTACK M1: the variants' record on an event or a row (run-compiled meta.variants without outputs).
+const invarianceView = m => (m.skipped ? { skipped: m.skipped } : { ran: m.ran, relations: m.relations, statuses: m.statuses, violated: m.violated, costUsd: round(m.costUsd ?? 0),
+  ...(m.levels ? { levels: m.levels } : {}) });
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []);
 const round = x => Math.round(x * 1e6) / 1e6;
 const uniq = xs => [...new Set(xs)];
@@ -267,6 +280,11 @@ export function normalizeConfig(raw, { ledger = null } = {}) {
   // Integration (opt-in): answer gateway model calls from an exported journal first ($0 replays; run-compiled.mjs createMemoPort).
   if (jit.replayJournal != null && (typeof jit.replayJournal !== 'string' || !jit.replayJournal.trim())) throw new Error('config.jit.replayJournal must be the path of an exported journal.jsonl');
   if (jit.replayJournal == null) delete jit.replayJournal;
+  // ATTACK M1 (opt-in): output-invariance variants on a sampled share of compiled runs; absent, no key and no hash moves.
+  if (jit.invariance != null) {
+    jit.invariance = invarianceOf(jit.invariance, { seedDefault: raw.seed ?? raw.experiment });
+    if (raw.library != null) throw new Error('config.jit.invariance with config.library: variants are not wired for call-host runs (library arms)');
+  } else delete jit.invariance;
   if (jit.compare != null && !JIT_COMPARE_MODES.includes(jit.compare)) throw new Error(`config.jit.compare must be one of ${JIT_COMPARE_MODES.join(', ')}`);
   if (jit.compare === 'tolerant') { delete jit.allowLooseTolerance; Object.assign(jit, tolerance(raw.jit)); }
   else if (TOL_KEYS.some(k => jit[k] != null)) throw new Error('config.jit.relTol, absTol, tolerantKeys and allowLooseTolerance need jit.compare \'tolerant\'');
@@ -358,7 +376,7 @@ export function sameAnswer(a, b, mode = 'canonical', tol = {}) {
   return canonical(a) === canonical(b);
 }
 
-const DEOPT_KINDS = new Set(['guard', 'invariant', 'judge', 'budget', 'unknown', 'crash', 'timeout', 'invalid', 'call']);
+const DEOPT_KINDS = new Set(['guard', 'invariant', 'judge', 'budget', 'unknown', 'crash', 'timeout', 'invalid', 'call', 'invariance']);
 // SPEC §3.1: up to max traces, newest first, every deopt kind seen so far represented (its newest trace).
 export function selectTraces(pool, max) {
   const newest = [...pool].sort((a, b) => b.idx - a.idx || b.seq - a.seq);
@@ -370,7 +388,7 @@ export function selectTraces(pool, max) {
 
 // v2.2: the trace-pool entries that came from a refusal (a compiled deopt handed to the interpreter). Crashes, timeouts and
 // invalid outputs are failures to fix, not refusals.
-export const REFUSAL_KINDS = Object.freeze(new Set(['guard', 'invariant', 'judge', 'budget', 'unknown', 'call']));
+export const REFUSAL_KINDS = Object.freeze(new Set(['guard', 'invariant', 'judge', 'budget', 'unknown', 'call', 'invariance']));
 export const refusalPool = pool => pool.filter(x => x.role === 'fallback' && REFUSAL_KINDS.has(x.kind));
 // Every refusal trace joins the compile (up to `extra` beyond maxTraces, newest first), so the check can see whether each
 // refusal is kept, handled, or lost.
@@ -819,6 +837,8 @@ class ArmRun {
 
   // Slice 2a: a library arm's compiled run goes through a call host (JitRun.callSetup); every other arm passes nothing new.
   callSetup() { return null; }
+  // ATTACK M1: the variants a compiled run of task t carries (JitRun with jit.invariance only); null = none.
+  async variantsFor() { return null; }
 
   async compiled(tr, t, solvePath, version, state = null) {
     // Library arms (slice 2a item 1b): every compiled run records its model and call answers (run-compiled.mjs
@@ -829,14 +849,19 @@ class ArmRun {
       rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
       const label = `${this.config.experiment}:${this.arm.slug}:${t.idx}:v${version ?? 0}`;
       const lib = this.callSetup({ tr, t, workdir, label, state });
+      const variants = lib ? null : await this.variantsFor(t);
       const rc = await this.deps.runCompiled({ solvePath, task: t.task, modelPort: lib?.port ?? this.port, perTaskUsd: this.config.perTaskUsd, timeoutMs: this.config.compiledMinutes * 60 * 1000,
         workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: lib?.allowed ?? this.arm.models, label,
-        ...(this.flowPath ? { flowPath: this.flowPath } : {}), ...(lib ? { ledger: lib.ledger, resume: attempt > 0 && prior ? prior : true } : {}) });
+        ...(this.flowPath ? { flowPath: this.flowPath } : {}), ...(lib ? { ledger: lib.ledger, resume: attempt > 0 && prior ? prior : true } : {}), ...(variants ? { variants } : {}) });
       if (lib) { rc.calls = lib.done({ version, attempt }); prior = rc.meta?.resume?.rows ?? null; }
-      tr.spend('compiled', rc.costUsd ?? 0, rc.costUnknown);
+      // ATTACK M1: the variants' spend is booked apart from the compiled run's (rc.costUsd holds both).
+      const variantUsd = variants ? rc.meta?.variants?.costUsd ?? 0 : 0;
+      tr.spend('compiled', (rc.costUsd ?? 0) - variantUsd, rc.costUnknown);
+      if (variantUsd) tr.spend('invariance', variantUsd, false);
       tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null,
         ...(rc.flags?.count ? { flags: rc.flags.count } : {}), ...(rc.meta?.memo ? { memo: { requests: rc.meta.memo.requests, hits: rc.meta.memo.hits, reused: rc.meta.memo.reused, live: rc.meta.memo.live } } : {}),
-        ...(rc.calls ? { calls: rc.calls } : {}), ...(rc.meta?.resume?.stats?.served ? { resumed: rc.meta.resume.stats.served } : {}) });
+        ...(rc.calls ? { calls: rc.calls } : {}), ...(rc.meta?.resume?.stats?.served ? { resumed: rc.meta.resume.stats.served } : {}),
+        ...(variants && rc.meta?.variants ? { invariance: invarianceView(rc.meta.variants) } : {}) });
       return rc;
     }, compiledFaultOf);
   }
@@ -872,6 +897,21 @@ class JitRun extends ArmRun {
       ...(c.acceptanceIds ? { acceptanceIds: c.acceptanceIds } : {}), ...(c.allowSharedExplanation ? { allowSharedExplanation: true } : {}) };
   }
   get compareOf() { const c = this.config.compile; return c.compare === 'tolerant' ? { mode: 'tolerant', ...tolOf(c) } : null; }
+
+  // ---- ATTACK M1: output-invariance variants (config.jit.invariance) ----
+  async invarianceRelations() {
+    if (!this._relations) {
+      const fam = await this.deps.loadFamily(this.config.familyId);
+      this._relations = validateRelations(fam.invariance ?? [], this.config.familyId);
+    }
+    return this._relations;
+  }
+  async variantsFor(t) {
+    const I = this.config.jit.invariance;
+    if (!I || !(invarianceDrawOf(I.seed, t.idx) < I.share)) return null;
+    const relations = selectRelations(await this.invarianceRelations(), { ids: I.relations ?? null, distribution: I.distribution, perTask: I.perTask ?? null, seed: I.seed, idx: t.idx });
+    return relations.length ? { relations, seed: `${I.seed}:${t.idx}`, compare: I.relTol != null ? { relTol: I.relTol } : {} } : null;
+  }
 
   // ---- slice 2a: the arm's library (config.library) ----
   get library() { return this.config.library ?? null; }
@@ -1147,16 +1187,20 @@ class JitRun extends ArmRun {
     }
     const version = state.version.n;
     const rc = await this.compiled(tr, t, this.solvePathOf(state), version, state);
+    // ATTACK M1: with jit.invariance, every compiled run's row records its draw, and a sampled one the variants' summary.
+    const inv = J.invariance ? { invarianceDraw: round(invarianceDrawOf(J.invariance.seed, t.idx)), ...(rc.meta?.variants ? { invariance: invarianceView(rc.meta.variants) } : {}) } : {};
     if (rc.status !== 'ok') {
       const dk = rc.status === 'deopt' ? rc.deopt?.kind ?? 'unknown' : rc.status;
       tr.ev(rc.status === 'deopt' ? 'deopt' : rc.status, { version, deoptKind: dk, detail: rc.deopt?.name ?? rc.error?.code ?? null });
+      // The experimenter's view of an invariance deopt: did the withheld compiled answer pass? (row only)
+      if (dk === INVARIANCE_KIND && rc.meta?.variants?.output != null) inv.compiledPass = !!(await this.deps.score(this.config.familyId, t.task, rc.meta.variants.output))?.pass;
       const { trace } = await fallbackInterpret(dk, rc);
       return this.finish(tr, t, { delivered: 'interpreter', output: trace.answer, version, compiledStatus: rc.status, deoptKind: dk, error: trace.error ?? null,
-        extra: { traceId: trace.traceId, ...(rc.calls ? { calls: rc.calls } : {}) }, stateAfter: structuredClone(state) });
+        extra: { traceId: trace.traceId, ...(rc.calls ? { calls: rc.calls } : {}), ...inv }, stateAfter: structuredClone(state) });
     }
     state.compiledOks++;
     let delivered = 'compiled', output = rc.output;
-    const extra = rc.calls ? { calls: rc.calls } : {};
+    const extra = { ...(rc.calls ? { calls: rc.calls } : {}), ...inv };
     const flags = rc.flags?.count ?? 0;
     if (flags > 0) extra.flags = { count: flags, names: rc.flags.names ?? [] };
     // Scheduled shadows (every shadowEvery-th compiled ok, or with jit.shadowFloor a seeded draw u < shadowFloor) and,
