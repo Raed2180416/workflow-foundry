@@ -57,7 +57,7 @@ decision-table evaluator, obligation clock, saga planner, ledger checks), writte
 |---|---|
 | world | the output of `generateWorld`: one organisation, its calendars, parties, rulebook editions, go-live backlog, arrival process, actor pools, fault schedule and analyst-only truth. Pure JSON; its digest is the sha256 of its canonical JSON (`beds/lib/canonical.mjs`) |
 | case | one business object with its sub-objects (an invoice, order, dispute, claim, incident, application), as the item's spec-E defines it. **Truth cases** are the world's; they are what grading and pairing use |
-| subject | the business key that identifies a truth case's root object (E1: invoice id; E5: dispute's transaction ARN + claim date; …), declared in spec-E with the op arguments that name it (§5.2) |
+| subject | the business key that identifies a truth case's root object (E1: invoice id; E5: dispute's transaction ARN + claim date; …), declared in spec-E with the op arguments that name it (§5.1) |
 | instance | one arm-side run of the per-instance solver, identified by an opaque host id `i-<6 digits>`. Instances and truth cases need not be one-to-one; grading never relies on them being so |
 | wake-up | the set of deliveries the host makes at one simulated instant |
 | case-tick | one call of the arm's solver for one instance at one wake-up |
@@ -103,8 +103,8 @@ export const semantics;      // { file: 'ledger/SEMANTICS.md', in: n, out: n } (
 
 - **Purity.** `generateWorld`, `twins`, `actors.*`, `referenceTransition`, `referencePolicy` and `oracle` are pure
   functions of their arguments; randomness only from `beds/lib/rng.mjs` with the salts of §10.2; no wall clock.
-- **Who imports what.** The host imports `generateWorld`, `actors`, `schemas`, `specE` and the fault schedule. Only the
-  analyst-side scorer imports `referenceTransition`, `referencePolicy` and `oracle`. Arms import nothing (they get
+- **Who imports what.** The host imports `generateWorld`, `actors`, `schemas` and `specE` (the fault schedule is part of
+  the world). Only the analyst-side scorer imports `referenceTransition`, `referencePolicy` and `oracle`. Arms import nothing (they get
   files, §3.1). The oracle runs **offline over the journal** after (or during, for monitoring) the run; the host never
   calls it, so world dynamics cannot depend on the oracle.
 - **Difficulty and schedule.** `difficulty` sets the highest feature level present (E-BED §2.6 d1–d5); `schedule`
@@ -206,7 +206,8 @@ publication time with no event, or not at all (E-BED §2.5).
   system returns the original result and is **not applied again**; the same key with different arguments is rejected
   (`409 key-conflict`, not applied). An un-keyed op is applied every time it is emitted.
 - `status(key)` exists on every keyed system, is read-only and always allowed: `committed | not-found | pending`.
-- `after: key` defers an effect until the named effect of the same output committed; `compensates: key` records intent
+- `after: key` defers an effect until the named effect of the same output has committed; if that one fails, the
+  deferred effect is not applied and its result is `error` (`predecessor-failed`). `compensates: key` records intent
   (journaled; the oracle grades compensation by the effects that happen, not by this field).
 - Results come back as `effect.result` events `{ key, system, op, status: ok | error | unknown | rate-limited |
   partial, retryAfter?, items?, error? }` on the instance channel at `at + latency`, latency ≥ 1 minute as declared per
@@ -307,7 +308,8 @@ event carries `injected: true`. W1–W5 are world events, generated, not host be
 
 - **Human tasks** are routed to the actor policy by `(world, truth case of the subject, role, kind, ordinal)`, never by
   the question text (E-BED Errata 2). `kind` must come from spec-E's human-task vocabulary; an unknown kind gets no
-  answer. The answering user is the first holder of the role in the world's pool not in `excludeUsers`.
+  answer, and so does a task whose `subject` names no existing object (an approver cannot find the document). The
+  answering user is the first holder of the role in the world's pool not in `excludeUsers`.
 - **Answers** are typed world data. The host validates each against the arm's `answerSchema`: accepted →
   `humanTask.answered { taskId, user, answer }`; rejected → `humanTask.answerRejected { taskId, user, errors }` (the
   value is withheld; the arm may ask again). No answer by `dueAt` → `humanTask.timeout { taskId, onTimeout }`; a later
@@ -333,12 +335,13 @@ event carries `injected: true`. W1–W5 are world events, generated, not host be
   false revealing event is a truth case of its own (class `invalid`, whose expectation is what the rulebook says to do
   with it: reject, reply or ignore), and a duplicate delivery belongs to the original's case. So nothing an arm does
   escapes grading.
-- An instance is **bound** to the truth case of the event that started it, or to its backlog case; a merge binds the
-  merged event's case to the target's binding.
+- An instance is **bound** to the truth case of the event that started it, or to its backlog case. A merge changes no
+  binding: the target keeps its own, and a wrong merge shows up as the merged event's true case missing its required
+  effects (§3.2).
 - Effects and human tasks are **attributed by subject**: `schemas.effects[op].subjectArgs` names the arguments that
   identify a business object; the oracle maps the object to its owning truth case. An effect whose subject arguments
-  name no existing object (an invented or mistyped id) is attributed to the instance's binding. Grading is per truth case and never depends on how the
-  arm split its instances **[D-2]**.
+  name no existing object (an invented or mistyped id) is attributed to the instance's binding. Grading is per truth
+  case and never depends on how the arm split its instances **[D-2]**.
 - Decisions are graded per instance against its binding; when several instances are bound to one truth case, the
   latest decision record per case-tick time is the graded one.
 
@@ -379,23 +382,28 @@ Rules an implementer must keep:
 
 ### 5.3 The per-case grading machine
 
-For each truth case the oracle keeps open logical effects `lid → { window, rule, satisfied, count }` and processes, in
-time order, every case-tick of an instance attributed to it, every ledger commit attributed to it, and a checkpoint at
-every window's `latest`:
+For each truth case the oracle keeps open logical effects `lid → { window, rule, satisfied, count, key }` and walks the
+case's **processing points** in time order: every delivery of one of the case's truth events (to whichever instance
+the arm routed it, or to none), every case-tick of an instance bound to the case, every ledger row attributed to it,
+every window's `latest`, and the horizon end. Without the first kind, a case whose events the arm mis-routed would
+never open its obligations.
 
-1. **Expectation.** At each case-tick time `at`, compute `E = referenceTransition(world, view_at)` on the view before
-   the arm's output at `at`. New `lid`s open; an open `lid` takes the window of the latest expectation that names it;
-   an open unsatisfied `lid` that a later expectation no longer names is **withdrawn** (no failure: the rulebook no
-   longer requires it, e.g. after a cancellation).
-2. **Decisions (layer 1).** The arm's `decisions` projected on `E.decisions.graded` must be equal. Over-escalation (a
+1. **Expectation.** At each processing point `at`, compute `E = referenceTransition(world, view_at)` on the view as of
+   `at`, before any arm output at `at`. New `lid`s open (their windows may lie in the future: "escalate if no answer by
+   day 10" opens at the request, with a window starting on day 10); an open `lid` takes the window of the latest
+   expectation that names it; an open unsatisfied `lid` that a later expectation no longer names is **withdrawn** (no
+   failure: the rulebook no longer requires it, e.g. after a cancellation).
+2. **Decisions (layer 1).** At each case-tick of an instance bound to the case, the arm's `decisions` projected on
+   `E.decisions.graded` must be equal. Over-escalation (a
    human task outside the allowed set for a decidable case) and under-escalation (no required task for an
    `undecidable` case) are layer-1 divergences (W-bed R2 rule).
-3. **Effects (layer 2).** Each committed ledger row attributed to the case must match an open `lid` (same system, op
-   and `match`) or a permitted pattern. A row matching a `lid` at a time inside its window satisfies it; a second
-   committed row for a satisfied `lid` is `duplicate`; a commit before `earliest` is `early`; a row matching nothing is
-   `outside-allowed`; a commit whose `after` predecessors have not committed is `order`. Keys: a retry of one logical
-   effect must reuse its key, distinct logical effects must use distinct keys (`key-reuse`, `key-split`). Order is
-   checked only where a rule declares it (compensation order, notice before reversal).
+3. **Effects (layer 2).** Every ledger row attributed to the case (each attempt, committed or not) must match an open
+   `lid` (same system, op and `match`) or a permitted pattern; a row matching nothing is `outside-allowed` (acting
+   before the rule requires it included). A **committed** row inside its `lid`'s window satisfies it; a second committed
+   row for a satisfied `lid` is `duplicate`; a commit before `earliest` is `early`; a commit whose `after` predecessors
+   have not committed is `order` (checked only where a rule declares order: compensation order, notice before
+   reversal). Keys, over attempts: every attempt of one `lid` uses one key (`key-split` otherwise, e.g. a retry after
+   F1 or F3 under a new key), and two `lid`s never share a key (`key-reuse`).
 4. **Deadlines (layer 3).** At each checkpoint `latest`, an open unsatisfied `lid` is `missed`. Deadlines are graded
    only through their consequences; the arm's obligations are never compared.
 5. **Human tasks (layer 4).** A created task must match a required or permitted task expectation by `kind`; `role` must

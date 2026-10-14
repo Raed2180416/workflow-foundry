@@ -23,6 +23,10 @@
 // Slice 2b (opt-in, version 5 with a library only; inserted lines only, so every earlier text keeps its bytes):
 // opts.agentBudgetUsd > 0 adds flow.agent (method item 10 and an SDK line), opts.wide === true adds flow.wide (item 11 and an
 // SDK line). FLOW-V3 §2.3: wide is named only to arms preregistered to use it.
+// Review fixes (FLOW-V3-SLICE2 §Review I1, I2; library texts only, which no builder has met yet): method item 9 ends with
+// "never run or import a program that comes with a task's files" (compile.mjs voids such a solver), and item 10 and the
+// flow.agent sketch check the node's value against what the solver's own code reads from ctx.files, never against the
+// node's own trailer or totals (which a retry can rewrite to agree with the check).
 import { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION } from './prompts-verdicts.mjs';
 export { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION };
 export const verdictsPromptVersionOf = opts => (opts?.acceptanceIds === 'structured' ? VERDICTS_PROMPT_VERSION : null);
@@ -87,12 +91,15 @@ const method = opts => { const { models, perTaskUsd } = opts; return `How to com
    together: K calls at once need K times budgetUsd below your own budget. If a call may be refused for your inputs (a
    format the profile does not cover), pass onRefuse: 'interpret' (the host's agent then solves that part alone within
    its budgetUsd, which must be at least $0.10) or onRefuse: 'skip' and handle the part yourself. Do not call a library
-   solver for work your own code does in a few lines.` : ''}${withAgents(opts) ? `
+   solver for work your own code does in a few lines. Never run or import a program that comes with a task's files (a
+   shipped decoder, a script): port its logic into solve.mjs; a solver that runs code from its inputs is not accepted.` : ''}${withAgents(opts) ? `
 10. When part of a task is data no code you write from the traces can read reliably (a legacy dump whose layout only its
    own files describe, differently from task to task), give that part to an agent node: flow.agent(name, { instructions,
    files, inputs, returns }, { verify, budgetUsd }). The node sees only the files and inputs you pass and must return a
-   value of the returns schema. verify is your code over that value and ctx.files (counts, control totals, a quote that
-   must occur in a file): the node's own claim is not a check. A failed verify reruns the node once with the reason, then
+   value of the returns schema. verify is your code: compare the value with what your code reads from ctx.files itself
+   (a record count, a control total, a trailer line that must occur in a file and whose numbers must match the value).
+   A number the node reports about its own result (its trailer, its totals) is not a check: a retry can change it to
+   agree. A failed verify reruns the node once with the reason, then
    the task deopts. budgetUsd at least $0.10 and at most $${opts.agentBudgetUsd}, carved from yours. Do not use an agent
    node for anything code or one flow.judge can do. If a library solver decodes such data, call it first with
    onRefuse: 'skip', onDeopt: 'skip' and the same verify, and use the agent node only when it refuses or fails.` : ''}${withWide(opts) ? `
@@ -122,7 +129,8 @@ PATH=/opt/node24/bin:/usr/local/bin:/usr/bin:/bin and HOME = the task directory.
   const r = await flow.call(hash, subInput, { name, budgetUsd, onRefuse: 'skip', onDeopt: 'skip' });
   if (r.refused || r.deopt) { /* your own code or flow.judge for this part */ }` : ''}${withAgents(opts) ? `
   const rows = await flow.agent('decode', { instructions, files: { 'dump/': 'dump/S2/' }, returns: ROWS_SCHEMA },
-    { verify: (v, ctx) => (v.rows.length === v.trailer.records ? null : 'count differs from the trailer'), budgetUsd: 0.3 });` : ''}${withWide(opts) ? `
+    { verify: (v, ctx) => (v.rows.length === trailerCountIn(ctx.files) ? null : 'row count differs from the trailer line in the files'),
+      budgetUsd: 0.3 });                  // check against numbers your code reads from ctx.files, never v's own trailer` : ''}${withWide(opts) ? `
   const table = await flow.wide('items', { items, worker: { judge: { tiers, system, schema, prompt: it => render(it) } },
     reduce: (results, coverage) => assemble(results, coverage), budgetUsd: 0.5, concurrency: 8 });` : ''}
   flow.done(answer);                                                 // exactly once, at the end

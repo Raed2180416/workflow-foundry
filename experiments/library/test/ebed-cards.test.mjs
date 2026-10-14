@@ -53,7 +53,8 @@ test('E-bed cards: P58-P60 load as executable L1 cards, each with a skeleton, th
     assert.equal(c.fixtures.find(f => f.name === 'drift').expect.status, 'deopt');
     assert.ok(c.when.some(j => j.id === 'J1' && j.type === 'noul'));
     assert.ok(c.checklist.length >= 3 && c.slots.length >= 2);
-    assert.ok(Object.values(c.when.find(j => j.type === 'choice')?.criteria ?? { none: 1 }) && Object.keys(c.when.find(j => j.type === 'choice').criteria).includes('none'), `${id}: the choice question has a none option`);
+    const j2 = c.when.find(j => j.type === 'choice');
+    assert.ok(j2 && Object.keys(j2.criteria).includes('none'), `${id}: the choice question has a none option`);
   }
 });
 
@@ -290,14 +291,14 @@ test('P60: business time across the October DST change in Europe/London (Fri BST
   const k = await clk([tick('2026-10-23T16:00:00+01:00', 'created'), tick('2026-10-26T10:00:00Z', 'status', 'resolved')], '2026-10-26T12:00:00Z');
   assert.deepEqual([k.elapsedMinutes, k.state, k.met, k.breached, k.dueAt], [120, 'stopped', true, false, '2026-10-26T10:00:00.000Z'], 'exactly on target is met, not breached');
   const xmas = await clk([tick('2026-12-24T16:00:00Z', 'created')], '2026-12-28T10:00:00Z', {}, 'P2');
-  assert.deepEqual([xmas.elapsedMinutes, xmas.state, xmas.dueAt], [120, 'running', '2026-12-28T15:00:00.000Z'], 'Thu 24th 16-17, Fri 25th a holiday, Mon 28th 09-10; due after 360 more');
+  assert.deepEqual([xmas.elapsedMinutes, xmas.state, xmas.dueAt], [120, 'running', '2026-12-28T16:00:00.000Z'], 'Thu 24th 16-17, Fri 25th a holiday, Mon 28th 09-10; 360 more is 16:00');
 });
 
 test('P60: pause / resume no-ops, stop while paused, start after stop, timestamps, events after AS_OF, unknown targets', async () => {
   const evs = [tick('2026-10-14T09:00:00+01:00', 'created'), tick('2026-10-14T09:30:00+01:00', 'status', 'in-progress'), tick('2026-10-14T10:00:00+01:00', 'status', 'waiting-customer'),
     tick('2026-10-14T10:15:00+01:00', 'status', 'waiting-customer'), tick('2026-10-14T11:00:00+01:00', 'status', 'resolved')];
   const k = await clk(evs, '2026-10-14T15:00:00+01:00');
-  assert.deepEqual([k.state, k.elapsedMinutes, k.met, k.warnings], ['stopped', 60, true, [{ fraction: 0.5, reached: true, at: '2026-10-14T08:00:00.000Z' }]]);
+  assert.deepEqual([k.state, k.elapsedMinutes, k.met, k.warnings], ['stopped', 60, true, [{ fraction: 0.5, reached: true, at: '2026-10-14T09:00:00.000Z' }]]);
   assert.equal(await clk([...evs, tick('2026-10-14T12:00:00+01:00', 'created')], '2026-10-14T15:00:00+01:00'), 'guard/single-cycle');
   assert.equal(await clk([tick('2026-10-14 09:00', 'created')], '2026-10-14T15:00:00+01:00'), 'guard/event-time');
   assert.equal(await clk([tick('2026-10-14T16:00:00+01:00', 'created')], '2026-10-14T15:00:00+01:00'), 'guard/not-after-as-of');
