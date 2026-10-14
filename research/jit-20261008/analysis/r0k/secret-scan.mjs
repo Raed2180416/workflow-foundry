@@ -33,7 +33,7 @@ if (!control.some(c => c.hits.includes('api-key-prefix'))) { console.error('posi
 
 const args = process.argv.slice(2), outAt = args.indexOf('--out'), outFile = outAt >= 0 ? args[outAt + 1] : null;
 const targets = args.filter((a, i) => !(outAt >= 0 && (i === outAt || i === outAt + 1)));
-const report = { patterns: Object.keys(PATTERNS), positiveControl: 'found', locations: [], outsidePaths: { files: 0, withKey: 0, nonEmpty: 0, hostCredentialEntries: [], distinctEntries: 0 } };
+const report = { patterns: Object.keys(PATTERNS), positiveControl: 'found', locations: [], outsidePathsCheck: { files: 0, withKey: 0, nonEmpty: 0, hostCredentialEntries: [], distinctEntries: 0 } };
 const distinct = new Set();
 for (const t of targets) {
   const files = walk(t), hits = [], links = files.filter(f => f.link).map(f => f.p);
@@ -44,16 +44,16 @@ for (const t of targets) {
     const h = scanText(txt);
     if (h.length) hits.push({ file: f.p, patterns: h });
     if (/\.jsonl?$/.test(f.p) && txt.includes('outsidePaths')) {
-      report.outsidePaths.files++;
+      report.outsidePathsCheck.files++;
       const docs = f.p.endsWith('.jsonl') ? txt.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : [JSON.parse(txt)];
-      const visit = o => { if (Array.isArray(o)) o.forEach(visit); else if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { if (k === 'outsidePaths') { report.outsidePaths.withKey++; const a = Array.isArray(v) ? v : [v]; if (a.length) report.outsidePaths.nonEmpty++; for (const x of a) { const s = typeof x === 'string' ? x : JSON.stringify(x); distinct.add(s); if (HOST_CRED.test(s)) report.outsidePaths.hostCredentialEntries.push({ file: f.p, entry: s }); } } visit(v); } };
+      const visit = o => { if (Array.isArray(o)) o.forEach(visit); else if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { if (k === 'outsidePaths') { report.outsidePathsCheck.withKey++; const a = Array.isArray(v) ? v : [v]; if (a.length) report.outsidePathsCheck.nonEmpty++; for (const x of a) { const s = typeof x === 'string' ? x : JSON.stringify(x); distinct.add(s); if (HOST_CRED.test(s)) report.outsidePathsCheck.hostCredentialEntries.push({ file: f.p, entry: s }); } } visit(v); } };
       docs.forEach(visit);
     }
   }
   report.locations.push({ path: t, files: files.filter(f => !f.link).length, bytes, symlinks: links.length, hitFiles: hits });
 }
-report.outsidePaths.distinctEntries = distinct.size;
-report.clean = report.locations.every(l => !l.hitFiles.length) && !report.outsidePaths.hostCredentialEntries.length;
+report.outsidePathsCheck.distinctEntries = distinct.size;
+report.clean = report.locations.every(l => !l.hitFiles.length) && !report.outsidePathsCheck.hostCredentialEntries.length;
 if (outFile) writeFileSync(outFile, JSON.stringify(report, null, 1) + '\n');
-console.log(JSON.stringify({ clean: report.clean, locations: report.locations.map(l => ({ path: l.path, files: l.files, symlinks: l.symlinks, hitFiles: l.hitFiles.length })), outsidePaths: report.outsidePaths }, null, 1));
+console.log(JSON.stringify({ clean: report.clean, locations: report.locations.map(l => ({ path: l.path, files: l.files, symlinks: l.symlinks, hitFiles: l.hitFiles.length })), outsidePathsCheck: report.outsidePathsCheck }, null, 1));
 process.exit(report.clean ? 0 : 1);

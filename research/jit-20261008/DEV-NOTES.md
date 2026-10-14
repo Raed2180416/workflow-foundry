@@ -1377,8 +1377,12 @@ the scripts beside them).
   was not reviewed. **None is under `/home/claude` or `/root/.ccr`**, in any `compile.json` or trace.
 - **Secret scan** (the runbook's extended pattern, file names only; positive control found): the run directory (147
   files), the work directory (2,494), the kit-side mirror (74), the main-tree mirror (74), `analysis/r0k`, the stream log
-  and the launch record: **no file matches**, so no legitimate source reference needed explaining. No symlinks in any
-  scanned tree. The mirror had already been committed by an autosave before the scan; it is clean.
+  and the launch record (and the capped config copy): **no file matches**, so no legitimate source reference needed
+  explaining. No symlinks in any scanned tree. The mirror had already been committed by an autosave before the scan; it is
+  clean. No trace, command, answer or log names the managed-login file, the ingress-token file or the login directory (the
+  pattern covers all of them): that is the R0-K evidence for PROOF-LEDGER K9 under E1c only; K9's review of the earlier
+  exports is separate and unchanged. Of the documents this commit edits, the only match is the pre-existing K9 row itself,
+  which names the token file in prose (no value).
 
 **7. The PREREG-stream TBDs this resolves (R0-RUNBOOK §4), with values.**
 
