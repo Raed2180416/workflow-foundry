@@ -163,3 +163,143 @@ web experiments/jit experiments/lib` empty).
 | suites (G2) | main: 1038 tests, 1019 pass, 0 fail, 19 skipped. JIT: 247 tests, 246 pass, 1 flake: `flow-v3-compat` "judges inside map, concurrently" failed 2 of 4 runs under load (Stage B sessions and the owner's GPU jobs running) and passed 2 of 4; flow-v3 is not in the R0 kit (R0 compiles to `flow-v2.mjs`, sha pinned), so the gate is read as green for R0 and the flake is a flow-v3 follow-up (DEV-NOTES D23) | — |
 | quota (G5) | 5h 0.32, 7d 0.53 at 21:03 IST | — |
 | RAM (G6) | 3 GB available + 14 GB swap free; the owner's three Kev training processes hold ~3.3 GB. Stage B ran two sandboxed sessions under the same load without faults. Proceeding at concurrency 2 is a deviation from the 4 GB line, recorded here | — |
+
+## 6. E1c (cloud paid-run kit, 2026-10-14)
+
+E1c is the kit the cloud paid streams (R0-K first) run on. It is E1 with one `src/` commit, so the kit hash moves. The arm
+hashes, the policy hash and the JIT engine tree do not move. It is a detached commit in the worktree
+`/var/tmp/foundry-work/kit-e1`, not on any branch. The slice-2 work in `experiments/jit`, `experiments/library`,
+`beds/wbed*` and `research/`, which other agents were committing on the branch at the time, is not in it.
+
+**Why.**
+- **G4 failed in the cloud container on E1** (cloud-ops readiness, workflow `wf_30a7255d-88f`). Every process there is
+  uid 0, so `dropUidArgs` mapped the CLI to uid 0. The CLI's root check then refused the bypass-permissions mode:
+  `EXECUTOR_PROTOCOL`, $0, 0.8 s. The evidence is kept in `/var/tmp/foundry-work/g4-smoke/g4-summary.json`. Every
+  sandboxed session in the paid arms was blocked: interpreter, shadow, adjudicator and compile builder.
+- **The ingress token was exposed.** The cloud-ops verifier found that `DEFAULT_KEEP_RO` kept the whole
+  `/home/claude/.claude/remote` directory. That directory also holds `.session_ingress_token`, the parent cloud session's
+  own credential. With uid-0 host file access, every session could have read it. The committed mirrors scanned clean at
+  the time.
+- **The fix is `756d6de`, `src/executors/claude-code.mjs`:**
+  - On a root host, the program runs as `UNPRIVILEGED_ID` 65534, mapped onto host uid 0. A non-root host keeps its own uid.
+  - Only `CLOUD_LOGIN_FILE` (`/home/claude/.claude/remote/.oauth_token`) is kept, not the directory.
+  - `runSandboxed` shares `sandboxScript`. On a root host, compiled solver runs and host checks therefore also run as
+    65534.
+  - The CLI's safety opt-outs (`IS_SANDBOX`, `CLAUDE_CODE_BUBBLEWRAP`) are not used.
+
+**Construction (reproducible from the branch).**
+- The worktree was a detached checkout of `e608a98` (= E1 + `research/`, `beds/` and `experiments/library` only).
+  `node_modules` came from `npm ci --ignore-scripts`. In it: `git cherry-pick --no-edit 756d6de` → **`ba0eb22`**.
+- `git diff --name-only e608a98 ba0eb22` lists exactly two files: `src/executors/claude-code.mjs` and
+  `tests/executor-sandbox.test.mjs`. `git status --porcelain` in the worktree is empty; only the ignored `node_modules`
+  is present.
+- `ba0eb22` is not pushed. The worktree's HEAD keeps it from garbage collection.
+- Both inputs, `e608a98` and `756d6de`, are on `origin/claude/intelligent-hamilton-vg1f9a`. No kit or JIT path differs
+  between `e608a98` and `756d6de^` (`924453a`).
+- Applying `756d6de`'s diff to `e608a98` in a scratch index gives the same root tree `043b3b4f…`. A re-made cherry-pick
+  has the same tree; only its commit id differs, by committer date.
+
+| item | E1c value | vs E1 (§1, §5) |
+|---|---|---|
+| commit | `ba0eb22b9158f0c6566c54dffd3cd546cc40a32c` (detached; parent `e608a98`) | — |
+| root tree | `043b3b4f9a7cba49ea848b030c64499c7c795b24` | — |
+| **construction-kit hash** | **`852ebdf05588de97`** (3926 files, `kitHash()` in the worktree) | moved from `a572eeee1ac237aa`. The ops agent's draft patch (`kit-e1-proposed.patch`, uid change only) would have given `b757038cbc68406f`; `756d6de` also narrows `keepRo` |
+| kit hash without `node_modules` (diagnostic) | `e27f356f8d7fbaae` (98 files) | moved from `36f0df8c91080baf` |
+| B1 script kit hash | `6bc6b06eccf45cae` | equal |
+| `src` tree | `dc710129c998136cb449e1440a429a640f4bd53b` (= `756d6de:src` on the branch) | moved from `5bacd257…` |
+| `policy`, `schemas`, `bin`, `skills`, `web` trees; `package.json`, `package-lock.json` blobs | `80f34241…`, `3f614545…`, `3b481c7b…`, `88183bd4…`, `c6017c18…`; `fc4260a6…`, `5fe7475c…` | equal |
+| `tests` tree (not in the kit hash) | `287e4834107909c07091bb8a3f703e77c3b17a34` | moved from `3827e747…` |
+| `experiments/jit` tree | `3e485b50e0b5f7a7b8abbe03d1585b44a0f478f6`; `flow-v2.mjs` sha256 `5dde4666…5223` | equal to §5 |
+| `experiments/lib` tree | `6c414274c0bdb3a2f1da2db47cb4c45bff6a5586` | equal |
+| **policy hash** | **`cfe79728f185334b3f352cd77daa4ad6f732cfb810af9bde91a50369456bc297`** (`policyVersion` `2026-10-09.1`) | equal |
+| **R0 arm hashes** (`r0-records.json`) | `838a9040ccea77e5` agent, `ca4f763d5d03568e` static, `3b9dc642498f5df8` S/H, `333aabf59174c46d` O/H, `2559d6a68fc7e8a3` H/H | equal |
+| **R0-K arm hashes** (`r0-kinetics.json`) | `1fde4626b169c84c` `jit:claude-opus-5-5/claude-haiku-5-5`, `2e292709027b2786` `agent:claude-haiku-5-5` | equal to §5 |
+| Node | `v24.21.0` (`/opt/node24/bin/node`) | equal |
+| claude CLI | **`2.1.299`** (`/opt/node22/bin/claude` → `/opt/claude-code/bin/claude`). The container start script re-creates that link; the environment manager runs with `--upgrade-claude-code=False` | laptop `2.1.295` |
+| effective sandbox, launch environment | `DEFAULT_KEEP_RO` = `/root/.ccr`, `/home/claude/.claude/remote/.oauth_token`, `/opt/node22/bin/claude`, `/opt/claude-code/bin/claude`, `/root/.local/bin/node`, `/opt/node24/bin/node`. `dropUidArgs()` = `unshare --user --map-user=65534 --map-group=65534`. Session environment names: `HOME LANG PATH TERM TMPDIR` | host-dependent (§2) |
+
+Every hash was computed in the worktree. The script is `kitHash()`, `loadPolicy().hash`, and `parseArm(spec,
+normalizeConfig(config), { policyIds }).hash`.
+
+**Gates (2026-10-14, in the worktree, under `env -i PATH="$PATH" HOME=/root TMPDIR=/tmp LANG=C.UTF-8 TERM=dumb`; no
+token, no proxy variables).**
+
+| gate | result | evidence |
+|---|---|---|
+| G1 engine | PASS | The table above. The frozen paths are clean. `experiments/jit` and every arm hash are unchanged; only `src` and the kit hash moved, by `756d6de` alone |
+| G2 suites | PASS | **Main** (`--test-concurrency=2 tests/*.test.mjs experiments/lib/*.test.mjs`): 1038 tests, 1020 pass, **0 fail**, 18 skipped (opt-in or missing-binary lanes), 2 m 50 s. `tests/executor-sandbox.test.mjs` is 15/15, including the live probe re-run with the new ingress-token check. The earlier `OLDPWD` / node-link failure is gone. **JIT** (`--test-concurrency=2 experiments/jit/test/*.test.mjs`): see the note below the table |
+| G3 seeds | PASS | `stream.mjs --dry` on `r0-kinetics.json` validates the config, `assertSeedsAllowed` included. 24 tasks (`kinetics:dev:d4:s225` … `d5:s248`); both arms 0 done; `/var/tmp/foundry-work/runs/jit-r0-kinetics` does not exist yet |
+| G4 live smoke | PASS, **$0.0402** | See the note below the table |
+| G5 quota | PASS | One probe at 12:52:04Z ($0.00031). 5h 0.22, 7d 0.06; resets at 16:20Z today and 2026-10-21 11:00Z (`/var/tmp/foundry-work/meter.jsonl`). The 5h window was 0.03 at 12:07Z and 0.18 at 12:45Z, so other agents in this container use about 0.25/h |
+| G6 machine | PASS | 4 vCPU, 15 GB RAM, 13–14 GB available, no swap. `/` has 6.0 GB free (at least 3 GB is required). Load average 4–8, all from other agents. Before G4, no `stream.mjs` or `claude -p` was running |
+
+**G2, JIT suite.**
+- **Runs.** Run 1: 247 tests, 245 pass, 1 fail, 1 todo. Runs 2 and 3: 246 pass, **0 fail**, 1 todo.
+- **The failing test.** `flow-v3-compat` "judges inside map, concurrently", the §5 / D23 flake.
+- **Root cause.** The scenario is `unordered: true`, but `norm()` sorts only the trace lines. The stderr assertion
+  (`flow-v3-compat.test.mjs:151`) compares the `[model]` lines in completion order. The judges sleep 5–50 ms in 15 ms
+  steps, and under load the v2 and v3 subprocesses finish them in different orders.
+- **Confirmed.** In isolation the unmodified test passed 3 of 5 runs. With the stderr `[model]` lines sorted, it passed
+  6 of 6 (a temporary copy, deleted afterwards).
+- **Effect.** The failure is in the test, not in the engine. flow-v3 is not on the R0 or R0-K path (`flow-v2.mjs` is
+  sha-pinned). The fix is part of the uncommitted slice-2 work in the main tree, so it is deliberately not in the kit.
+
+**G4, live smoke.**
+- **Setup.** One sandboxed Haiku `interpret` on records dev d3 s225 (taskHash `15c64c77…`), cap $0.45.
+- **Result.**
+  - The sandbox was ready: 168 stream events, including the init event.
+  - **9 assistant events**; result `success`; 5 turns, 4 tools; 201 s.
+  - **Cost reported, $0.04024**, with **`costUnknown: false`**, no error, and **no `EXECUTOR_PROTOCOL`**.
+- **Answer.** The answer is schema-valid. The oracle scores it a fail (score 0), and so does the laptop's R0 Haiku agent
+  row 0 on the same task ($0.0438, score 0). The oracle is not a gate criterion.
+- **Isolation.**
+  - `nestedModelAttempts` 0.
+  - `hiddenPathAttempts` 1: the session wrote `…/work/g4-smoke-e1c/script/build.py` beside its workdir. The write landed
+    on the private tmpfs; the path does not exist on the host afterwards.
+  - No `outsidePaths` entry names `/home/claude` or `/root/.ccr`.
+- **Secret scan.** `grep -rlE 'sk-ant-|eyJ[A-Za-z0-9_-]{10,}\.eyJ|oauth_token|session_ingress|\.claude/remote'` over
+  `/var/tmp/foundry-work/g4-smoke-e1c`, `/var/tmp/foundry-work/work/g4-smoke-e1c` and
+  `/var/tmp/foundry-work/g4-smoke-e1c.log` printed nothing (exit 1).
+- **Files.** `/var/tmp/foundry-work/g4-smoke-e1c/g4-summary.json`, and the trace and transcript in
+  `/var/tmp/foundry-work/work/g4-smoke-e1c/interp/`.
+
+**Comparability.**
+- **Arm hashes are unchanged**: all five R0 and both R0-K arms. The arm hash does not cover the kit (§2), so every
+  E1c row must be read as kit `852ebdf05588de97` with CLI `2.1.299`. Rows carry neither value, so record both with
+  each run.
+- **A non-root host's argv is byte-identical** to E1's:
+  - `dropUidArgs(uid, gid)` is unchanged for uid ≠ 0.
+  - `maskSteps` emits no step for a kept path that does not exist. The laptop has no `/home/claude/.claude/remote`
+    (ISOLATION-PROBE-laptop §3, "CLI login: not visible"), so the narrowed keep changes nothing there.
+  - Laptop rows stay comparable, and a laptop run on E1c is a run on E1's argv.
+- **Differences of E1c cloud rows from laptop rows:**
+  - host (cloud container vs the owner's laptop);
+  - CPU count (4 vs 16);
+  - CLI version (2.1.299 vs 2.1.295);
+  - uid route: the session runs as 65534 mapped onto host uid 0, so it has root file access to whatever the mask leaves
+    visible (read-only). The laptop session runs as the laptop's own uid;
+  - auth route: the CLI's managed login file vs `CLAUDE_CODE_OAUTH_TOKEN` from the environment;
+  - direct egress: `api.anthropic.com` is reached directly from the cloud and verified against the system CA. No proxy
+    or CA variables are passed under `env -i`.
+- **Mixed lineage if R0 records resumes here.** A cloud resume of the R0 records H/H JIT arm would mix kit `a572eeee`
+  (rows 0–11, laptop) with `852ebdf0` (rows 12–23, cloud). R0-K starts fresh on E1c, so it has a single kit.
+
+**Launch notes for R0-K on E1c** (the owner's call; nothing was launched).
+- **Where.** Run from the worktree; `--arms` takes the two config arms above.
+- **The mirror lands in the worktree.** `persist.commitDir: true` resolves inside the worktree, at
+  `/var/tmp/foundry-work/kit-e1/research/jit-20261008/runs/jit-r0-kinetics`. An agent allowed to commit copies it to the
+  main tree.
+- **Concurrency 2 applies to the agent arm.** The JIT arm runs its tasks in sequence, beside it.
+- **The caps are soft.** `armSpendStopUsd` is O/H $25 and agent $5; `spendStopUsd` is $30. Each cap is checked only when
+  a task starts.
+- **One O/H task can spend up to about $28 at its session caps**, because the Opus fallback compile is still available
+  (0 of 2 used):
+  - Haiku compile $9 (builder 3 + gateway 1.5 + check 1.5 + recheck 3);
+  - Opus fallback compile $14;
+  - compiled run $1;
+  - Opus shadow and adjudicator $2 each.
+- **Worst case for the process:** about $60.
+- **The $25 cap will probably stop the arm early.** The dev-kinetics-1 O→H arm cost $20.73 for 19 rows (D25). That
+  points to about $26–30 for 24 tasks, so the cap probably stops the O/H arm before 24/24.
+- **Raising the caps.** Both caps are outside the arm hash. A config copy kept outside the repo can raise them; record its
+  path and sha256 if one is used.
