@@ -422,7 +422,7 @@ test('shortcut-breaker pairs exist: same structure at different lengths, differe
 });
 
 // ================================================================== differential test against the independent readings
-test('differential: oracle agrees with an independent reading of the rendered task on references, alternatives, controls and mutations', () => {
+test('differential: oracle agrees with an independent reading of the rendered task on references, alternatives, controls and mutations', t => {
   const stats = Object.fromEntries(SUBTYPES.map(s => [s, { total: 0, validNeighbours: 0, validNeighbourTasks: new Set(), invalid: 0 }]));
   const wordsPool = ['lamp', 'stone', 'quiet', 'the', 'very', 'cartographer', 'x', 'zzz'];
   for (const d of DIFFS) for (const seed of SEEDS) {
@@ -489,6 +489,7 @@ test('differential: oracle agrees with an independent reading of the rendered ta
     // answers that differ from the reference, were not produced by any solver, and are valid per the independent reading
     assert.ok(stats[sub].validNeighbours >= 5, `${sub}: found ${stats[sub].validNeighbours} valid mutated answers`);
   }
+  t.diagnostic(`differential corpus: ${JSON.stringify(Object.fromEntries(SUBTYPES.map(s => [s, { answers: stats[s].total, independentlyInvalid: stats[s].invalid, validMutatedAnswers: stats[s].validNeighbours, tasksWithOne: stats[s].validNeighbourTasks.size }])))}`);
 });
 
 test('differential: the rendered text parses completely (every order statement, every schedule rule) and matches the spec', () => {
@@ -535,6 +536,7 @@ test('every rule category can fail: mutation coverage of the checker ids that ar
         v = `${text.charAt(0).toUpperCase() + text.slice(1)}.`;
       } else if (sub === 'order') {
         const i = r.int(0, v.length - 1); const j = r.int(0, v.length - 1); [v[i], v[j]] = [v[j], v[i]];
+        if (k % 10 === 0) v[i] = v[(i + 1) % v.length]; // no longer a permutation
       } else {
         const people = task.inputs.people.map(p => p.name); const i = r.int(0, v.length - 1);
         if (k % 9 === 0) v.splice(i, 1); else if (k % 9 === 1) v.push({ ...v[i] }); else if (k % 9 === 2) v[i].day = 'Nope'; else v[i].person = r.pick(people);
@@ -545,9 +547,8 @@ test('every rule category can fail: mutation coverage of the checker ids that ar
   }
   for (const sub of SUBTYPES) {
     const missing = [...activeIds[sub]].filter(id => !failedIds[sub].has(id));
-    // rule categories that only exist in some tasks are covered across seeds; all of them must be shown to fail
-    const allowedMissing = sub === 'schedule' ? ['lead-coverage', 'trainee-with-lead', 'rest-rule', 'never-together', 'streak'] : [];
-    assert.deepEqual(missing.filter(id => !allowedMissing.includes(id)), [], `${sub}: categories never seen failing`);
+    // at difficulty 5 every rule category is active, and each one must be shown able to fail
+    assert.deepEqual(missing, [], `${sub}: categories never seen failing`);
   }
 });
 
