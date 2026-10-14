@@ -76,7 +76,7 @@ const signature = item => corpus.map(j => {
   return v.cases.filter(c => c.pool === 'completed').map(c => `${c.case}:${c.pass ? 1 : 0}${c.oracleError ? 'E' : ''}:${fd(c)}`).join(',');
 });
 const base = signature(oracleItem);
-const baseGold = runGoldens(oracleItem.referenceTransition);
+const baseGold = runGoldens(oracleItem.referenceTransition, oracleItem.recordsOf);
 if (baseGold.some(g => !g.pass)) throw new Error(`goldens fail the original transition: ${baseGold.filter(g => !g.pass).map(g => g.name)}`);
 console.log(`corpus: ${corpus.length} journals over ${worldsArg.length} worlds (${solvers.length} specificity solvers)`);
 const all = mutants(SRC);
@@ -94,7 +94,7 @@ for (const [k, m] of all.slice(0, limit).entries()) {
   let dead = false, by = null;
   try {
     const mod = await import(pathToFileURL(file).href);
-    const gold = runGoldens(mod.referenceTransition).filter(g => !g.pass);
+    const gold = runGoldens(mod.referenceTransition, mod.recordsOf).filter(g => !g.pass);
     if (gold.length) { dead = true; by = `golden:${gold[0].name}`; }
     else {
       const sig = signature({ ...oracleItem, referenceTransition: mod.referenceTransition, recordsOf: mod.recordsOf });

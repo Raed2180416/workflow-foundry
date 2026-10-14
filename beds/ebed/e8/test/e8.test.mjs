@@ -2,7 +2,7 @@
 //   node --test --test-concurrency=2 beds/ebed/e8/test/
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateWorld, referenceRuns, oracle, binding, referenceTransition, specE, family } from '../index.mjs';
+import { generateWorld, referenceRuns, oracle, binding, referenceTransition, recordsOf, specE, family } from '../index.mjs';
 import { runControl, CONTROLS } from '../controls.mjs';
 import { createHost } from '../../host/host.mjs';
 import { replayRun } from '../../host/replay.mjs';
@@ -230,7 +230,7 @@ test('golden: the customer-action race: an action exactly at D counts, the timeo
 
 test('golden module: every exported golden passes the reference transition (the same set the mutation tool runs per mutant)', () => {
   assert.ok(goldens.length >= 20, `only ${goldens.length} goldens`);
-  for (const r of runGoldens(referenceTransition)) assert.ok(r.pass, `${r.name} (${r.source}): ${r.detail}`);
+  for (const r of runGoldens(referenceTransition, recordsOf)) assert.ok(r.pass, `${r.name} (${r.source}): ${r.detail}`);
 });
 
 test('spec-E is the module\'s spec and names every rule the oracle cites', () => {
