@@ -50,10 +50,11 @@
 //    (strictly after the deadline, S1). answerSchema requires `decision` (enum), extra fields allowed.
 // A4 R3.2 + S1: the customer timeout is taken by an own timer at D + 1 min (strictly after D; an action at D wins).
 //    If the order is cleared only after D (long fraud review), R3.1 is still done and the timeout follows at once.
-// A5 R3.2/S5/R6.2 for orders that had unavailable fulfilments ("R3 orders"): only the first action at or before D
-//    counts; any later action (including a cancel while the amended order is processing) changes nothing (R3.2 "later
-//    actions and repeats change nothing", S5). R6.2 applies to orders that never had unavailable fulfilments. R6.4
-//    (cancel while the review is open) applies to every order, whatever D.
+// A5 R3.2/S5/S8 for orders that had unavailable fulfilments ("R3 orders"): only the first action at or before D
+//    counts for R3.2; later amends and repeats change nothing. S8: after a counted amend, a later cancel (whatever D)
+//    is judged like any cancel: R6.2 while the order is processing (refused if a collection was reported, else stop
+//    and compensate), R6.4 if the amend came while the fraud review is still open (A6). R6.4 (cancel while the review
+//    is open) applies to every order, whatever D.
 // A6 An amend that counts while the fraud review is still open (time <= D): unavailable fulfilments are cancelled
 //    within 60 min of it; the order is then ready when cleared (no R3.1, nothing is unavailable any more); if nothing
 //    is available it is cancelled with reason `nothing-available`.
@@ -372,7 +373,8 @@ function handleAction(S, ctx, out, a, action, now) {
   if (oEnded(S) || S.cx) return;                                        // R6.3 second sentence, repeats (A12)
   if (action !== 'amend' && action !== 'cancel') return;
   const D = S.pMs + S.pol.cah * HOUR;
-  if (S.hadUnav) {                                                      // R3 order (A5)
+  const s8 = S.act?.action === 'amend' && action === 'cancel';          // S8: judged below like any cancel (A5)
+  if (S.hadUnav && !s8) {                                               // R3 order (A5)
     if (S.act) return;                                                  // only the first counted action
     if (a > D) {
       if (S.cleared === null && action === 'cancel') cancelOrder(S, ctx, out, a, 'customer');   // R6.4
