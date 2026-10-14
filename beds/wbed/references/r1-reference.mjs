@@ -601,7 +601,7 @@ const dobConventions = await flow.phase('dob-conventions', async () => {
   const systemsNeeding = uniq(live.filter(r => r.dob.kind === 'numeric').map(r => r.system));
   for (const s of systemsNeeding) {
     const para = paraOf(CUSTOMER_NOTES, s);
-    const coded = codeOrder(para, /birth|dates?\b/i);
+    const coded = codeOrder(para, /birth/i);
     if (coded) { conv[s] = { order: coded, switch: null, by: 'code' }; continue; }
     const ref = /same order as ([A-Z]{3,})/.exec(para)?.[1];
     const ask = { para, context: ref ? paraOf(CUSTOMER_NOTES, ref) : null,
@@ -683,7 +683,7 @@ const COUNTRY_ALIASES = {
   DK: ['denmark', 'dänemark', 'daenemark', 'danmark', 'dnk', 'dk', 'danish'],
   NO: ['norway', 'norwegen', 'norge', 'nor', 'no', 'norwegian'],
 };
-for (const [iso, e] of Object.entries(PHONE_TABLE)) (COUNTRY_ALIASES[iso] ??= []).push(e.name.toLowerCase());
+for (const [iso, e] of Object.entries(PHONE_TABLE)) (COUNTRY_ALIASES[iso] ??= []).push(e.name.toLowerCase(), iso.toLowerCase());
 const ALIAS_LIST = Object.entries(COUNTRY_ALIASES).flatMap(([iso, names]) => names.map(n => [n, iso]));
 function countryOf(raw) {
   const s = WS(raw).toLowerCase().replace(/^the\s+/, '').replace(/\s+supplier$/, '');

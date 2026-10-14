@@ -251,7 +251,7 @@ const softJudge = (name, spec) => flow.map([0], async () => flow.judge(name, spe
 
 async function auditSupplier(v) {
   const text = STATEMENTS[v.file];
-  const st = flow.step(`parse:${v.id}`, () => parseStatement(text, v));
+  const st = flow.step('parse-statement', () => parseStatement(text, v));
   flow.guard('statement-shape', st.currency === v.currency && st.rows.length > 0 && st.unparsed.length === 0 && st.closingRaw,
     { vendor: v.id, currency: st.currency, rows: st.rows.length, unparsed: st.unparsed.slice(0, 3) });
   const order = await orderOf(v.system, st);

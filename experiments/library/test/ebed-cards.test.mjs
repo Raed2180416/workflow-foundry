@@ -13,6 +13,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { loadCard, loadL1, loadCatalog, expandedCard, CARDS_DIR } from '../cards.mjs';
 import { checkSlots, assemble, lintFn, HELPERS_SOURCE, fragmentOf, renderSlots, withDefaults } from '../assemble.mjs';
 import { runFixture } from '../run.mjs';
@@ -40,6 +41,22 @@ async function solve(c, slots, inputs) {
   catch (e) { if (e instanceof Deopt) return { status: 'deopt', deopt: e.deopt }; throw e; }
 }
 const deoptOf = r => (r.status === 'deopt' ? `${r.deopt.kind}/${r.deopt.name}` : `ok ${JSON.stringify(r.output).slice(0, 300)}`);
+// Many cases through one module (one skeleton, a rendered S per case): the mutation check below runs every mutant on
+// every case. A skeleton that does not import (a broken mutant) throws here rather than counting as a kill.
+async function solveAll(c, cases, skeleton = c.skeleton) {
+  const Ss = cases.map(k => renderSlots(c, withDefaults(c, { ...c.example.slots, ...(k.slots ?? {}) })));
+  const src = [HELPERS_SOURCE.replace(/^export /gm, ''), fragmentOf({ ...c, skeleton }, 0), `export const SS = [${Ss.join(',\n')}];`, `export const run = ${c.id}_0;`].join('\n');
+  const m = await import(`data:text/javascript;base64,${Buffer.from(src).toString('base64')}`);
+  const out = [];
+  for (let i = 0; i < cases.length; i++) {
+    const inputs = clone(cases[i].inputs);
+    try { out.push({ status: 'ok', output: await m.run(fakeFlow(), { prompt: '', inputs }, inputs, m.SS[i]) }); }
+    catch (e) { out.push(e instanceof Deopt ? { status: 'deopt', deopt: e.deopt } : { status: 'error', error: String(e?.message ?? e) }); }
+  }
+  return out;
+}
+const sameResult = (a, b) => a.status === b.status && (a.status === 'ok' ? isDeepStrictEqual(a.output, b.output)
+  : a.status === 'deopt' ? a.deopt.kind === b.deopt.kind && a.deopt.name === b.deopt.name : a.error === b.error);
 
 // ---- T4-style ----
 test('E-bed cards: P58-P60 load as executable L1 cards, each with a skeleton, three fixture kinds and a J1 noul question', () => {
@@ -318,6 +335,208 @@ test('P60: a 24x7 calendar counts wall time; breach while running projects nothi
   assert.equal(await clk([tick('2026-10-13T16:00:00Z', 'created')], '2026-10-14T10:00:00Z', { CALENDAR: gap }), 'guard/calendar-edition-in-force');
   assert.equal(await clk([], '2026-10-14T10:00:00Z', { CALENDAR: { ...CAL, timezone: 'Mars/Olympus' } }), 'invariant/calendar-well-formed');
   assert.equal(await clk([], '2026-10-14T10:00:00Z', { PAUSE_ON: ['created'] }), 'invariant/event-sets-disjoint');
+});
+
+// ---- review of v1 (research/enterprise-20261014/CARDS-P58-P60-REVIEW.md): regression tests for the fixed findings ----
+// R1 (P1): v1 P60 compared business minutes (elapsed > target), so a target reached at the end of a business window was
+// not breached until the next window opened, although dueAt had passed. v2 compares instants.
+test('P60 v2 (review R1): breach is the clock running past dueAt, also outside business hours; exactly at dueAt is on time', async () => {
+  const start = tick('2026-10-14T15:00:00+01:00', 'created'), due = '2026-10-14T16:00:00.000Z';   // Wed 15:00 BST + 120 business minutes on 09-17
+  const at = async (events, asOf) => { const k = await clk(events, asOf); return [k.state, k.elapsedMinutes, k.remainingMinutes, k.met, k.breached, k.dueAt]; };
+  assert.deepEqual(await at([start], '2026-10-14T17:00:00+01:00'), ['running', 120, 0, false, false, due], 'a wake-up at dueAt reads not breached');
+  assert.deepEqual(await at([start], '2026-10-14T17:00:01+01:00'), ['running', 120, 0, false, true, due], 'one second later it reads breached');
+  assert.deepEqual(await at([start], '2026-10-14T18:00:00+01:00'), ['running', 120, 0, false, true, due], 'v1: breached false at 18:00 with dueAt past');
+  assert.deepEqual(await at([start, tick('2026-10-14T18:00:00+01:00', 'status', 'resolved')], '2026-10-15T12:00:00+01:00'), ['stopped', 120, 0, false, true, due], 'v1: met');
+  assert.deepEqual(await at([start, tick('2026-10-15T08:59:00+01:00', 'status', 'resolved')], '2026-10-15T12:00:00+01:00'), ['stopped', 120, 0, false, true, due], 'v1: met the next morning');
+  assert.deepEqual(await at([start, tick('2026-10-14T17:00:00+01:00', 'status', 'resolved')], '2026-10-15T12:00:00+01:00'), ['stopped', 120, 0, true, false, due], 'stopped exactly at dueAt: met');
+  const wait = t => tick(t, 'status', 'waiting-customer');
+  assert.deepEqual(await at([start, wait('2026-10-14T17:00:00+01:00')], '2026-10-15T10:00:00+01:00'), ['paused', 120, 0, false, false, due], 'paused exactly at dueAt');
+  assert.deepEqual(await at([start, wait('2026-10-14T17:30:00+01:00')], '2026-10-15T10:00:00+01:00'), ['paused', 120, 0, false, true, due], 'paused after dueAt');
+  assert.deepEqual(await at([start, wait('2026-10-14T17:00:00+01:00'), tick('2026-10-15T09:30:00+01:00', 'status', 'in-progress')], '2026-10-15T09:31:00+01:00'), ['running', 121, -1, false, true, due]);
+});
+
+// R2 (P1): v1 P59 checked key distinctness within one saga, so KEY = step + action gave two sagas the same key.
+test('P59 v2 (review R2): idempotency keys are distinct across sagas and name their saga', async () => {
+  const run = async (ids, KEY) => solve(P59, KEY ? { KEY } : {}, { orders: ids.map(id => saga(id, [])) });
+  const why = r => (r.status === 'deopt' ? `${r.deopt.kind}/${r.deopt.name}: ${r.deopt.detail.why ?? ''}` : 'ok');
+  const noSaga = "(sagaId, step, action) => step + ':' + action";
+  assert.equal(why(await run(['o-1', 'o-2'], noSaga)), 'invariant/keys-distinct: the key does not name the saga', 'v1 returned ok with both next[0].key = reserve-stock:do');
+  assert.equal(why(await run(['o-1'], noSaga)), 'invariant/keys-distinct: the key does not name the saga', 'refused in a run of one saga too');
+  const stem = "(sagaId, step, action) => sagaId.replace(/-\\d+$/, '') + ':' + step + ':' + action";   // drops the number: o-1 and o-2 collide
+  assert.equal(why(await run(['o-1'], stem)), 'ok');
+  const two = await run(['o-1', 'o-2'], stem);
+  assert.equal(why(two), 'invariant/keys-distinct: two sagas share a key');
+  assert.deepEqual([two.deopt.detail.id, two.deopt.detail.other, two.deopt.detail.key], ['o-2', 'o-1', 'o:reserve-stock:do']);
+  const ok = await run(['o-1', 'o-2']);
+  assert.deepEqual(ok.output.plans.map(p => p.next[0].key), ['o-1:reserve-stock:do', 'o-2:reserve-stock:do']);
+});
+
+const FEEL_TABLE = {
+  ITEMS: 'inputs.apps', AS_OF: '(a) => a.date', INPUTS: { v: '(a) => a.v', n: '(a) => a.n' }, OUTPUTS: [{ name: 'hit' }], HIT_POLICY: 'RULE_ORDER',
+  EDITIONS: { editions: [{ edition: 'e1', effectiveFrom: '2026-01-01', rules: [
+    ['le', { v: '<= 5' }], ['lt', { v: '< 5' }], ['ge', { v: '>= 5' }], ['gt', { v: '> 5' }], ['lo-closed', { v: '[5..9]' }], ['lo-open', { v: '(5..9]' }],
+    ['hi-closed', { v: '[1..5]' }], ['hi-open', { v: '[1..5)' }], ['ne-null', { n: '!= 5' }], ['eq-null', { n: 'null' }], ['dash', { n: '-' }],
+  ].map(([id, when]) => ({ id, when, then: { hit: id } })) }] },
+};
+
+// R3 (P1): the v1 fixtures and suite left four semantic mutants alive (relational boundaries, != on null, unsorted
+// events). Hand-computed boundary cases first; then the whole mutant set must die.
+test('P58 (review R3): relational boundaries in the worked table and the FEEL subset; != on a null input', async () => {
+  const fine = async (date, actualSpeed, speedLimit) => (await solve(P58, {}, { violations: [{ id: 'b', date, type: 'speed', actualSpeed, speedLimit }] })).output.decisions[0];
+  assert.deepEqual(await fine('2026-03-01', 150, 120), { id: 'b', edition: 'fines-2020', rules: ['r2'], result: { amount: 1000, points: 7 } }, '>= 30 at 30');
+  assert.deepEqual(await fine('2026-08-01', 180, 130), { id: 'b', edition: 'fines-2026-07', rules: ['r3'], result: { amount: 2000, points: 12 } }, '>= 50 at 50');
+  assert.deepEqual(await fine('2026-08-01', 179, 130), { id: 'b', edition: 'fines-2026-07', rules: ['r2'], result: { amount: 1200, points: 7 } }, '[30..50) at 49');
+  const hits = async (v, n) => (await solveAll(P58, [{ slots: FEEL_TABLE, inputs: { apps: [{ id: 'i', date: '2026-06-01', v, n }] } }]))[0].output.decisions[0].rules;
+  assert.deepEqual(await hits(5, null), ['le', 'ge', 'lo-closed', 'hi-closed', 'ne-null', 'eq-null', 'dash']);
+  assert.deepEqual(await hits(6, 5), ['ge', 'gt', 'lo-closed', 'lo-open', 'dash']);
+  assert.deepEqual(await hits(4, 4), ['le', 'lt', 'hi-closed', 'hi-open', 'ne-null', 'dash']);
+});
+
+test('P60 (review R3): events are replayed in time order, whatever their input order', async () => {
+  const evs = [tick('2026-10-14T11:00:00+01:00', 'status', 'resolved'), tick('2026-10-14T10:00:00+01:00', 'status', 'waiting-customer'), tick('2026-10-14T09:00:00+01:00', 'created')];
+  const k = await clk(evs, '2026-10-14T15:00:00+01:00');
+  assert.deepEqual([k.state, k.elapsedMinutes, k.met, k.breached], ['stopped', 60, true, false]);
+});
+
+// The mutant set: the review's 48 semantic mutants (its scratch runner, re-applied to the current skeletons; P60's
+// breach mutants rewritten for v2) plus mutants of the v2 fixes. Each must die on the fixtures plus the cases below.
+const MUTATIONS = {
+  P58: {
+    'any-guard-deleted': [["if (P === 'ANY') flow.gua", 'if (false) flow.gua']],
+    'dash-rejects-null': [['if (test === null) return true;', 'if (test === null) return v !== null;']],
+    'distinct-ignored': [['const vals = S.DISTINCT ? vals0', 'const vals = false ? vals0']],
+    'edition-by-run-date': [['const asOf = S.AS_OF(it);', "const asOf = '2026-10-14';"]],
+    'edition-latest': [['const ed = table.find(e => e.effectiveFrom <= asOf && (e.effectiveTo === null || asOf < e.effectiveTo));', 'const ed = table[table.length - 1];']],
+    'first-takes-last': [['rules: [hits[0].id], result: resultOf(hits[0]) };', 'rules: [hits[hits.length - 1].id], result: resultOf(hits[hits.length - 1]) };']],
+    'from-exclusive': [['table.find(e => e.effectiveFrom <= asOf', 'table.find(e => e.effectiveFrom < asOf']],
+    'ge-to-gt': [[": u.op === '>' ? lt(a, v) : !lt(v, a);", ": u.op === '>' ? lt(a, v) : lt(a, v);"]],
+    'hi-closed-swap': [['(u.hiClosed ? !lt(u.hi.v, v) : lt(v, u.hi.v))', '(u.hiClosed ? lt(v, u.hi.v) : !lt(u.hi.v, v))']],
+    'le-to-lt': [["u.op === '<=' ? !lt(a, v)", "u.op === '<=' ? lt(v, a)"]],
+    'lo-closed-swap': [['(u.loClosed ? !lt(v, u.lo.v) : lt(u.lo.v, v))', '(u.loClosed ? lt(u.lo.v, v) : !lt(v, u.lo.v))']],
+    'mismatch-guard-deleted': [["flow.guard('input-type', !mismatches.length,", "flow.guard('input-type', true,"]],
+    'no-match-deopt-deleted': [["flow.guard('table-complete', S.ON_NO_MATCH !== 'deopt',", "flow.guard('table-complete', true,"]],
+    'null-never-matches-ne': [["if (v === null) return u.op === '!=';", 'if (v === null) return false;']],
+    'output-order-unsorted': [["const listed = P === 'OUTPUT_ORDER' ? [...hits].sort(byPriority) : hits;", 'const listed = hits;']],
+    'priority-reversed': [['const w = [...hits].sort(byPriority)[0];', 'const w = [...hits].sort((a, b) => byPriority(b, a))[0];']],
+    'scalar-guard-deleted': [["flow.guard('input-type', scalar(v[k]),", "flow.guard('input-type', true,"]],
+    'to-inclusive': [['(e.effectiveTo === null || asOf < e.effectiveTo)', '(e.effectiveTo === null || asOf <= e.effectiveTo)']],
+    'unique-guard-deleted': [["if (P === 'UNIQUE') flow.gua", 'if (false) flow.gua']],
+  },
+  P59: {
+    'attempt-not-incremented': [["cmd('do', n, st[n].tries + 1)", "cmd('do', n, st[n].tries || 1)"]],
+    'failed-step-never-undone': [['|| (n === doomed && kindOf', '|| (false && kindOf']],
+    'forward-order-compensation': [['sort((a, b) => st[b].at - st[a].at)', 'sort((a, b) => st[a].at - st[b].at)']],
+    'forward-order-no-invariant': [['sort((a, b) => st[b].at - st[a].at)', 'sort((a, b) => st[a].at - st[b].at)'], ["flow.invariant('undo-reverse-order', order.every", "flow.invariant('undo-reverse-order', true || order.every"]],
+    'key-per-attempt': [['key: S.KEY(sg.id, step, action), attempt', "key: S.KEY(sg.id, step, action) + ':' + attempt, attempt"]],
+    'max-attempts-off-by-one': [["st[n].s === 'failed' && st[n].tries >= S.MAX_ATTEMPTS", "st[n].s === 'failed' && st[n].tries > S.MAX_ATTEMPTS"]],
+    'no-wait-for-inflight': [['S.PARALLEL_UNDO ? ready : out.waitingFor.length ? [] : ready.slice(0, 1)', 'S.PARALLEL_UNDO ? ready : ready.slice(0, 1)']],
+    'parallel-ignored': [['out.next = (S.PARALLEL_UNDO ? ready :', 'out.next = (false ? ready :']],
+    'pin-guard-deleted': [["flow.guard('definition-pinned', sg.definition === S.VERSION,", "flow.guard('definition-pinned', true,"]],
+    'pivot-never-dooms': [["|| (kindOf[n] === 'pivot' && st[n].noEffect);", '|| (false);']],
+    'retry-compensable-instead': [["const dooms = n => kindOf[n] === 'compensable' ||", 'const dooms = n => false ||']],
+    'uncertain-pivot-dooms': [["(kindOf[n] === 'pivot' && st[n].noEffect);", "(kindOf[n] === 'pivot');"]],
+    'undo-max-off-by-one': [['st[n].utries >= S.MAX_ATTEMPTS', 'st[n].utries > S.MAX_ATTEMPTS']],
+    'v2-keys-probe-deleted': [["flow.invariant('keys-distinct', !keys.some(k => probe.has(k)),", "flow.invariant('keys-distinct', true,"]],
+    'v2-keys-across-sagas-deleted': [["flow.invariant('keys-distinct', clash === undefined,", "flow.invariant('keys-distinct', true,"]],
+  },
+  P60: {
+    'after-asof-allowed': [["flow.guard('not-after-as-of', at <= asOf,", "flow.guard('not-after-as-of', true,"]],
+    'calendar-by-asof-date': [['inForce(S.CALENDAR.editions, d);', 'inForce(S.CALENDAR.editions, localDate(asOf));']],
+    'calendar-by-start-date': [['const calendarUsed = new Set();', 'const calendarUsed = new Set(); let __sd = null;'], ['inForce(S.CALENDAR.editions, d);', 'inForce(S.CALENDAR.editions, __sd ?? d);'], ['const key = S.TARGET_KEY(c);', 'const key = S.TARGET_KEY(c); __sd = localDate(startAt);']],
+    'events-unsorted': [['}).sort((a, b) => a.at - b.at || a.i - b.i);', '});']],
+    'holidays-ignored': [['if ((ed.holidays ?? []).includes(d)) return [];', '']],
+    'pause-ignored': [["if (e.action === 'pause' && state === 'running') {", 'if (false) {']],
+    'paused-projects': [["reach(running, need) : state === 'running' ? project(asOf, need - elapsed) : null);", 'reach(running, need) : project(asOf, need - elapsed));']],
+    'policy-by-asof': [['inForce(S.POLICY.editions, localDate(startAt));', 'inForce(S.POLICY.editions, localDate(asOf));']],
+    'reopen-ignored': [["flow.guard('single-cycle', e.action !== 'start',", "flow.guard('single-cycle', true,"]],
+    'resume-ignored': [["else if (e.action === 'resume' && state === 'paused') {", 'else if (false) {']],
+    'stop-counts-pause': [["if (e.action === 'stop') { if (state === 'running') running.push", "if (e.action === 'stop') { running.push"]],
+    'unknown-event-ignored': [["flow.guard('known-event', typeof name === 'string' && actionOf[name] !== undefined,", "flow.guard('known-event', true,"]],
+    'utc-calendar': [["new Intl.DateTimeFormat('en-US', { timeZone: tz,", "new Intl.DateTimeFormat('en-US', { timeZone: 'UTC',"]],
+    'wall-time': [['running.reduce((n, [a, b]) => n + segments(a, b).reduce((m, [s, e]) => m + e - s, 0), 0);', 'running.reduce((n, [a, b]) => n + b - a, 0);']],
+    'warning-strict': [['reached: elapsed >= need,', 'reached: elapsed > need,']],
+    'v2-breach-by-business-time': [['const breached = due !== null && ranUntil > due;', 'const breached = elapsed > target;']],
+    'v2-breach-inclusive': [['ranUntil > due;', 'ranUntil >= due;']],
+    'v2-breach-at-as-of': [['ranUntil = running.length ? running[running.length - 1][1] : startAt;', 'ranUntil = asOf;']],
+  },
+};
+const mutate = (src, edits, label) => edits.reduce((s, [a, b]) => {
+  assert.equal(s.split(a).length - 1, 1, `${label}: the mutation site must occur exactly once: ${a}`);
+  return s.replace(a, () => b);
+}, src);
+
+// The cases that, with the fixtures, must kill every mutant (each hand-checked in the semantic tests above).
+const credit2 = (policy, extra) => ({ slots: credit(policy, extra), inputs: { apps: [app('a', 700, 0.5), app('b', 700, 0.5, true), app('c', 700, 0.1)] } });
+const P59_LOG = [...done('reserve-stock', 'authorize-card'), ev('book-courier', 'start'), ev('book-courier', 'error', 'timeout')];
+const pivotTry = [ev('capture-payment', 'start'), ev('capture-payment', 'error', 'timeout')];
+const undoTry = [ev('reserve-stock', 'undo'), ev('reserve-stock', 'undo-error')];
+const sagas = (...logs) => ({ orders: logs.map((log, i) => saga(`s${i}`, log)) });
+const clockCase = (events, asOf, slots = {}) => ({ slots: { CALENDAR: CAL, POLICY: POL, ...slots }, inputs: { asOf, tickets: [{ id: 't', priority: 'P1', events }] } });
+const KILLERS = {
+  P58: [
+    { inputs: { violations: [{ id: 'b1', date: '2026-03-01', type: 'speed', actualSpeed: 150, speedLimit: 120 }, { id: 'b2', date: '2026-08-01', type: 'speed', actualSpeed: 180, speedLimit: 130 }] } },
+    { slots: FEEL_TABLE, inputs: { apps: [{ id: 'i', date: '2026-06-01', v: 5, n: null }, { id: 'j', date: '2026-06-01', v: 6, n: 5 }, { id: 'k', date: '2026-06-01', v: 4, n: 4 }] } },
+    ...['UNIQUE', 'ANY', 'FIRST', 'PRIORITY', 'OUTPUT_ORDER', 'RULE_ORDER'].map(p => credit2(p)), credit2('COLLECT', { AGGREGATION: 'COUNT' }),
+    { slots: surcharge('SUM', true), inputs: { apps: [{ id: 'p', date: '2026-02-02', age: 22, claims: 2 }] } },
+    { slots: { ON_NO_MATCH: 'deopt' }, inputs: { violations: [{ id: 'v', date: '2026-09-01', type: 'speed', actualSpeed: 135, speedLimit: 130 }] } },
+    { slots: { INPUTS: { type: '(v) => v.type', overSpeed: '(v) => (v.type === "speed" ? String(v.actualSpeed - v.speedLimit) : null)' } }, inputs: { violations: [{ id: 'v', date: '2026-09-01', type: 'speed', actualSpeed: 145, speedLimit: 130 }] } },
+  ],
+  P59: [
+    { inputs: sagas([...done('reserve-stock', 'authorize-card', 'book-courier'), ev('capture-payment', 'start'), ev('capture-payment', 'error', 'declined')]) },
+    { inputs: sagas([...done('reserve-stock', 'authorize-card', 'book-courier'), ...pivotTry, ...pivotTry], [...done('reserve-stock', 'authorize-card', 'book-courier'), ...pivotTry, ...pivotTry, ...pivotTry]) },
+    { inputs: sagas([...done('reserve-stock'), ev('authorize-card', 'start'), ev('authorize-card', 'error', 'declined'), ...undoTry, ...undoTry, ...undoTry]) },
+    { inputs: sagas([...P59_LOG, ev('book-courier', 'undo')]) },
+    { slots: { PARALLEL_UNDO: true }, inputs: sagas(P59_LOG) },
+    { slots: { KEY: "(sagaId, step, action) => step + ':' + action" }, inputs: { orders: [saga('o-1', [])] } },
+    { slots: { KEY: "(sagaId, step, action) => sagaId.replace(/-\\d+$/, '') + ':' + step + ':' + action" }, inputs: { orders: [saga('o-1', []), saga('o-2', [])] } },
+  ],
+  P60: [
+    clockCase([tick('2026-10-14T11:00:00+01:00', 'status', 'resolved'), tick('2026-10-14T10:00:00+01:00', 'status', 'waiting-customer'), tick('2026-10-14T09:00:00+01:00', 'created')], '2026-10-14T15:00:00+01:00'),
+    clockCase([tick('2026-10-14T15:00:00+01:00', 'created')], '2026-10-14T18:00:00+01:00'),
+    clockCase([tick('2026-10-14T15:00:00+01:00', 'created'), tick('2026-10-14T17:00:00+01:00', 'status', 'waiting-customer')], '2026-10-15T10:00:00+01:00'),
+    clockCase([tick('2026-10-23T16:00:00+01:00', 'created'), tick('2026-10-26T10:00:00Z', 'status', 'resolved')], '2026-10-26T12:00:00Z'),
+    clockCase([tick('2026-10-14T09:00:00+01:00', 'created'), tick('2026-10-14T10:00:00+01:00', 'status', 'resolved')], '2026-10-14T15:00:00+01:00'),
+    clockCase([tick('2026-10-14T16:00:00+01:00', 'created')], '2026-10-14T15:00:00+01:00'),
+    clockCase([tick('2026-10-14T09:00:00+01:00', 'created'), tick('2026-10-14T10:00:00+01:00', 'status', 'resolved'), tick('2026-10-14T11:00:00+01:00', 'created')], '2026-10-14T15:00:00+01:00'),
+  ],
+};
+
+test('E-bed cards (review R3, E-BED §9.5): every semantic mutant dies on the fixtures plus the boundary cases; the identity mutant lives', async t => {
+  const report = {};
+  for (const id of EBED) {
+    const c = card[id], fx = c.fixtures.map(f => ({ slots: f.slots ?? {}, inputs: f.task.inputs }));
+    const cases = [...fx, ...KILLERS[id]];
+    const base = await solveAll(c, cases);
+    base.forEach((r, i) => assert.notEqual(r.status, 'error', `${id} case ${i}: ${r.error}`));
+    fx.forEach((_, i) => { const f = c.fixtures[i]; assert.equal(base[i].status, f.expect.status, `${id}/${f.name}`); });
+    const same = await solveAll(c, cases, `${c.skeleton}\n// identity mutant\n`);
+    assert.ok(same.every((r, i) => sameResult(r, base[i])), `${id}: the identity mutant must survive (the comparison is sound)`);
+    let byFixtures = 0;
+    for (const [name, edits] of Object.entries(MUTATIONS[id])) {
+      const got = await solveAll(c, cases, mutate(c.skeleton, edits, `${id} ${name}`));
+      const killers = got.map((r, i) => (sameResult(r, base[i]) ? null : i)).filter(i => i !== null);
+      assert.ok(killers.length > 0, `${id} mutant ${name} survives the fixtures and the boundary cases`);
+      if (killers[0] < fx.length) byFixtures++;
+    }
+    report[id] = `${Object.keys(MUTATIONS[id]).length} killed, ${byFixtures} by the frozen fixtures alone`;
+  }
+  t.diagnostic(JSON.stringify(report));
+});
+
+// R4 (cross-part; the differential itself belongs to beds/ebed/lib): the cards' side of the four readings on which the
+// review found the cards and the oracle-side libraries apart, pinned so the differential can name them as ledger rows.
+test('E-bed cards (review R4): card-side ledger readings for the step-3 differential', async () => {
+  const dash = await solveAll(P58, [{ slots: FEEL_TABLE, inputs: { apps: [{ id: 'i', date: '2026-06-01', v: 0, n: null }] } }]);
+  assert.ok(dash[0].output.decisions[0].rules.includes('dash'), 'reading 1: the dash matches a null input (Drools / Kogito reading)');
+  const compound = { ...credit('OUTPUT_ORDER'), OUTPUTS: [{ name: 'decision', values: ['decline', 'refer', 'accept'] }, { name: 'tier', values: ['a', 'b'] }] };
+  compound.EDITIONS = { editions: [{ ...compound.EDITIONS.editions[0], rules: compound.EDITIONS.editions[0].rules.map(r => ({ ...r, then: { ...r.then, tier: 'a' } })) }] };
+  assert.equal(deoptOf(await one(compound, app('a', 700, 0.5))), 'invariant/table-well-formed', 'reading 2: OUTPUT_ORDER over compound outputs is refused, not ranked');
+  const uncertain = await plan([...done('reserve-stock', 'authorize-card'), ev('book-courier', 'start'), ev('book-courier', 'error', 'timeout')]);
+  assert.deepEqual(uncertain.next.map(c => [c.action, c.step]), [['undo', 'book-courier']], 'reading 3a: an uncertain compensable failure is undone (if-uncertain), with no status query first');
+  const pivot = await plan([...done('reserve-stock', 'authorize-card', 'book-courier'), ev('capture-payment', 'start'), ev('capture-payment', 'error', 'timeout')]);
+  assert.deepEqual(pivot.next.map(c => [c.action, c.step, c.key, c.attempt]), [['do', 'capture-payment', 's:capture-payment:do', 2]], 'reading 3b: an uncertain pivot is retried under the same key');
+  const exact = await clk([tick('2026-10-14T09:00:00+01:00', 'created'), tick('2026-10-14T11:00:00+01:00', 'status', 'resolved')], '2026-10-14T15:00:00+01:00');
+  assert.deepEqual([exact.elapsedMinutes, exact.met, exact.breached], [120, true, false], 'reading 4: stopping exactly at dueAt is on time (exclusive boundary)');
 });
 
 // ---- freeze and catalog ----

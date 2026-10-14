@@ -1,10 +1,11 @@
-// Author-answered judges for the AUTHOR FIXTURES only (wbed dev seeds 373-378; W-BED.md §2.3). The reference author read
-// each fixture's notes and wrote down what a correct reader answers to each judge the reference asks there
-// (fixture-answers.json, keyed by bed, seed and difficulty, then by judge name). Run through the flow-v3 override hook
+// Author-answered judges (W-BED.md §2.3): for the author fixtures (wbed dev seeds 373-378, fixture-answers.json) and, at the
+// one revision the protocol allows, the validation seeds 301-312 (validation-answers.json). The reference author read each
+// task's notes and wrote down what a correct reader answers to each judge the reference asks there (keyed by bed, seed and
+// difficulty, then by judge name). Run through the flow-v3 override hook
 // (tools/flow-override.mjs, harness only): a judge whose name is in the table gets that answer at $0, with its quote taken
 // from the first sentence of the request's first fenced block (as stub policy A does); a judge that is not in the table
 // fails, so a gap in the table is visible as a judge failure, never silently answered. It measures the code given correct
-// readings (the deterministic part of the reference), not any model. Never used on validation or held-out seeds.
+// readings (the deterministic part of the reference), not any model. Never used on held-out seeds.
 import { readFileSync } from 'node:fs';
 
 const data = JSON.parse(readFileSync(new URL('./flow-override.json', import.meta.url), 'utf8'));
@@ -33,6 +34,12 @@ export default function override(callSite, request) {
   const answer = data.answers?.[name];
   if (answer === undefined) return { error: `author table has no answer for ${callSite.name}` };
   const block = /<<<\n([\s\S]*?)\n>>>/.exec(String(request.prompt ?? ''))?.[1] ?? '';
+  // place-country: the table maps each place (as the register writes it) to its country; the answer follows the lines.
+  if (name === 'place-country') {
+    const lines = block.split('\n').map(WS).filter(Boolean), missing = lines.filter(l => !(l in answer));
+    if (missing.length) return { error: `author table has no country for ${missing.join(' | ')}` };
+    return { value: { countries: lines.map(l => answer[l]) } };
+  }
   const wantsQuote = !!request.schema?.properties?.quote;
   return { value: wantsQuote && answer.quote === undefined ? { ...answer, quote: firstSentence(block) } : answer };
 }

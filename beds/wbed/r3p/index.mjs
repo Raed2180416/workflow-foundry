@@ -31,7 +31,7 @@ export const family = {
     + 'classes are planted, as many decoys (correct code that looks like a defect), and one or two shared helpers are defective, '
     + 'so callers inherit the misbehaviour and must not be reported (root cause). The answer is a list of findings '
     + '(file, function, class, optional witness arguments that are run). Scored exactly against a hidden manifest: precision, '
-    + 'recall and F1 per class, cost per verified finding; pass at precision >= 0.90 and recall >= 0.80. The best-known solution '
+    + 'recall and F1 per class, cost per verified finding; pass at recall >= 0.80 and precision >= 0.90, one false positive tolerated. The best-known solution '
     + 'is a map over files with a verify step and a code fan-in; at d4-d5 the inline task is 40-65K tokens.',
 };
 

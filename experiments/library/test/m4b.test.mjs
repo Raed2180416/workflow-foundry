@@ -7,9 +7,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { loadL1 } from '../cards.mjs';
 import { validates } from '../skeletons/helpers.mjs';
 import { interfaces, enumerateCompositions, listSites, schemaOfValue, closeTop, SLOT_TYPED } from '../enumerate.mjs';
-import { fixtureTasks, wbedTasks, cardDigests } from '../m4.mjs';
+import { fixtureTasks, wbedTasks } from '../m4.mjs';
 import { PRECISE, CATCH_ALLS, NON_NULL, param, union, isParam, preciseInterfaces, enumeratePrecise, arraySites, readersMet, outCompatible, citationProblems } from '../card-types.mjs';
-import { measureM4b } from '../m4b.mjs';
+import { measureM4b, interfaceDigests } from '../m4b.mjs';
 
 const l1 = loadL1(), cards = preciseInterfaces(l1), m4shape = preciseInterfaces(l1, { m4: true }), m4cards = interfaces(l1);
 const card = id => l1.find(e => e.id === id);
@@ -66,21 +66,26 @@ test('M4b types: array sites agree with listSites; params and unions read as spe
   assert.deepEqual(arraySites(Uc, { mode: 'checked' }), { items: [], more: [], open: false }, 'an unchecked param supplies nothing to rely on');
   const reader = [{ slot: 'ITEMS', kind: 'path', items: NON_NULL }];
   assert.equal(readersMet(reader, [{ type: 'object', properties: { a: { type: 'array', items: { type: 'null' } } }, additionalProperties: false }]), false, 'null items fail P12\'s requirement');
-  assert.equal(readersMet(reader, [{ type: 'object', properties: { a: { type: 'array', items: { type: 'object' } } }, additionalProperties: false }]), true);
-  assert.equal(readersMet([...reader, ...reader], [{ type: 'object', properties: { a: { type: 'array', items: { type: 'object' } } }, additionalProperties: false }]), false, 'two readers need two locations');
+  const one = { type: 'object', properties: { a: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' } }, additionalProperties: false } } }, additionalProperties: false };
+  assert.equal(readersMet(reader, [one]), true);
+  assert.equal(readersMet([...reader, ...reader], [one]), false, 'two readers need two locations');
+  assert.equal(readersMet([...reader, ...reader], [one, one]), true, 'one in the inputs, one in x');
+  assert.equal(readersMet(reader, [{ type: 'object', properties: { a: { type: 'array', items: { type: 'object' } } }, additionalProperties: false }]), true, 'an open item may hold anything');
   const u = union([{ type: 'object', properties: { a: { type: 'string' } }, additionalProperties: false }, { type: 'object', properties: { b: { type: 'array', items: {} } }, additionalProperties: false }]);
   assert.equal(readersMet(reader, [u]), true, 'a union is read branch by branch (existential)');
   assert.equal(outCompatible(u, R1), false); assert.equal(outCompatible(Uc, R1), true); assert.equal(outCompatible(PRECISE.P20.out, R1), false);
   assert.ok(isParam(PRECISE.P01.out) && PRECISE.P01.out.check === 'declared' && PRECISE.P54.out.check === 'unchecked' && PRECISE.P12.out.check === 'unchecked');
 });
 
-test('M4b walk: with M4\'s interfaces it returns exactly enumerate.mjs\'s candidates (15 fixtures + 3 rungs, typed and temporal)', async () => {
+test('M4b walk: with M4\'s interfaces it returns exactly enumerate.mjs\'s candidates (18 problems at depth 3; the rule\'s layer at depth 4 on 7)', async () => {
   const tasks = [...fixtureTasks(l1), ...await wbedTasks({ seeds: [373] })];
-  for (const t of tasks) for (const [layer, temporal] of [['typed', false], ['temporal', true]]) {
-    const a = enumerateCompositions({ input: t.input, output: t.output, cards: m4cards, layer });
-    const b = enumeratePrecise({ input: t.input, output: t.output, cards: m4shape, temporal });
-    assert.deepEqual(b.candidates, a.candidates, `${t.id} ${layer}`);
-  }
+  const same = (t, layer, maxDepth) => {
+    const a = enumerateCompositions({ input: t.input, output: t.output, cards: m4cards, layer, maxDepth });
+    const b = enumeratePrecise({ input: t.input, output: t.output, cards: m4shape, temporal: layer === 'temporal', maxDepth });
+    assert.deepEqual(b.candidates, a.candidates, `${t.id} ${layer} depth ${maxDepth}`);
+  };
+  for (const t of tasks) { same(t, 'typed', 3); same(t, 'temporal', 3); }
+  for (const t of tasks.filter(x => ['P01', 'P12', 'P17', 'P54'].includes(x.card) || x.set === 'wbed')) same(t, 'temporal', 4);
 });
 
 test('M4b counts: hand-derived W-bed numbers; P12\'s item requirement changes nothing; the four catch-alls alone exceed 100', async () => {
@@ -103,7 +108,7 @@ test('M4b result: out/M4b-enumeration.json reproduces from the code and cards it
   const url = new URL('../../../research/jit-20261008/design/library/out/M4b-enumeration.json', import.meta.url);
   if (!existsSync(url)) return t.skip('no committed result yet (run tools/m4b-coverage.mjs)');
   const saved = JSON.parse(readFileSync(url, 'utf8'));
-  assert.deepEqual(saved.cardDigests, cardDigests(), 'a card changed since the M4b run: regenerate with tools/m4b-coverage.mjs');
+  assert.deepEqual(saved.interfaceDigests, interfaceDigests(l1), 'a card interface changed since the M4b run: regenerate with tools/m4b-coverage.mjs');
   const r = await measureM4b();
   assert.deepEqual(r.files, saved.files);
   assert.deepEqual(r.decision, saved.decision);

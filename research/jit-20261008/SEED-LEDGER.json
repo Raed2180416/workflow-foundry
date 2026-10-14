@@ -400,7 +400,7 @@
    "allow": [
     "jit-dev"
    ],
-   "use": "W-bed R3' planted-defect sweep (PROOF-LEDGER J5), the wbed-dev layout shifted by 100: dev stream A 401-424, dev stream B 425-448, out-of-sample 449-472, reference fixtures 473-478, triviality/necessity attacks 479-490. Disjoint from every other bounded range (outside the Kev probe-pilot 1-400)",
+   "use": "W-bed R3' planted-defect sweep (PROOF-LEDGER J5), the wbed-dev layout shifted by 100: dev stream A 401-424, dev stream B 425-448, tuning and bed tests 449-472 (from v1.1, review 2026-10-14: the streams 401-448 stay untouched by tuning), reference fixtures 473-478, triviality/necessity attacks 479-490. Disjoint from every other bounded range (outside the Kev probe-pilot 1-400)",
    "source": "research/jit-20261008/design/W-BED-R3P-NOTES.md section 7"
   },
   {

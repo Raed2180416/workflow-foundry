@@ -1,0 +1,21 @@
+K 2 SE 0.139 true gap 0 {"sign":0.338,"wilcoxon":0.604}
+K 2 SE 0.139 true gap -0.05 {"sign":0.103,"wilcoxon":0.245}
+K 2 SE 0.139 true gap -0.1 {"sign":0.017,"wilcoxon":0.05}
+K 4 SE 0.098 true gap 0 {"sign":0.572,"wilcoxon":0.851}
+K 4 SE 0.098 true gap -0.05 {"sign":0.177,"wilcoxon":0.391}
+K 4 SE 0.098 true gap -0.1 {"sign":0.017,"wilcoxon":0.05}
+H-E2 n=50 p=0.93: one world 0.311, all 4 worlds 0.009, all 2 0.097
+H-E2 n=50 p=0.95: one world 0.541, all 4 worlds 0.085, all 2 0.292
+H-E2 n=50 p=0.96: one world 0.677, all 4 worlds 0.210, all 2 0.458
+H-E2 n=50 p=0.98: one world 0.922, all 4 worlds 0.721, all 2 0.849
+H-E2 n=50 p=0.99: one world 0.986, all 4 worlds 0.946, all 2 0.973
+H-E2 n=100 p=0.93: one world 0.291, all 4 worlds 0.007, all 2 0.085
+H-E2 n=100 p=0.95: one world 0.616, all 4 worlds 0.144, all 2 0.379
+H-E2 n=100 p=0.96: one world 0.788, all 4 worlds 0.386, all 2 0.622
+H-E2 n=100 p=0.98: one world 0.985, all 4 worlds 0.939, all 2 0.969
+H-E2 n=100 p=0.99: one world 0.999, all 4 worlds 0.998, all 2 0.999
+H-E2 n=300 p=0.93: one world 0.103, all 4 worlds 0.000, all 2 0.011
+H-E2 n=300 p=0.95: one world 0.568, all 4 worlds 0.104, all 2 0.323
+H-E2 n=300 p=0.96: one world 0.849, all 4 worlds 0.519, all 2 0.721
+H-E2 n=300 p=0.98: one world 1.000, all 4 worlds 0.998, all 2 0.999
+H-E2 n=300 p=0.99: one world 1.000, all 4 worlds 1.000, all 2 1.000

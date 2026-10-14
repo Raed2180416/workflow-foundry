@@ -17,9 +17,7 @@
    "order_after_switch": "DMY"
   },
   "place-country": {
-   "countries": [
-    "NO"
-   ]
+   "Tønsberg": "NO"
   }
  },
  "wbed-r1:373:d4": {
@@ -48,9 +46,7 @@
    "order_after_switch": "MDY"
   },
   "place-country": {
-   "countries": [
-    "CH"
-   ]
+   "Schaffhausen": "CH"
   },
   "marker:KOBO:確認中": {
    "meaning": "COUNTS"
@@ -69,10 +65,8 @@
    "order_after_switch": "DMY"
   },
   "place-country": {
-   "countries": [
-    "CH",
-    "IT"
-   ]
+   "Basel": "CH",
+   "Modena": "IT"
   }
  },
  "wbed-r1:374:d4": {
@@ -121,9 +115,7 @@
    "order_after_switch": "DMY"
   },
   "place-country": {
-   "countries": [
-    "BE"
-   ]
+   "Ostend": "BE"
   }
  },
  "wbed-r1:375:d4": {
@@ -152,10 +144,8 @@
    "order_after_switch": "MDY"
   },
   "place-country": {
-   "countries": [
-    "DE",
-    "DE"
-   ]
+   "Cologne": "DE",
+   "Hamburg": "DE"
   },
   "marker:VERITAS:held": {
    "meaning": "DOES_NOT_COUNT"
@@ -200,9 +190,7 @@
    "order_after_switch": "DMY"
   },
   "place-country": {
-   "countries": [
-    "AU"
-   ]
+   "Adelaide": "AU"
   },
   "marker:ATLAS:QUERY": {
    "meaning": "DOES_NOT_COUNT"
@@ -257,10 +245,8 @@
    "order_after_switch": "MDY"
   },
   "place-country": {
-   "countries": [
-    "JP",
-    "MX"
-   ]
+   "Nagoya": "JP",
+   "Hermosillo": "MX"
   },
   "marker:ATLAS:QUERY": {
    "meaning": "DOES_NOT_COUNT"

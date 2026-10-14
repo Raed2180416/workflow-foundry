@@ -130,7 +130,10 @@ test('M4 result: out/M4-enumeration.json reproduces from the code and cards it n
   const url = new URL('../../../research/jit-20261008/design/library/out/M4-enumeration.json', import.meta.url);
   if (!existsSync(url)) return t.skip('no committed result yet (run tools/m4-coverage.mjs)');
   const saved = JSON.parse(readFileSync(url, 'utf8'));
-  if (JSON.stringify(saved.cardDigests) !== JSON.stringify(cardDigests())) return t.skip('a card changed since the M4 run: regenerate with tools/m4-coverage.mjs');
+  // A card.json edit (a doc line, a version) changes its digest without changing what M4 reads, so a changed digest no
+  // longer skips this test (M4 verdict finding 5): the numbers are recomputed and must still match; a real interface change
+  // fails here (regenerate with tools/m4-coverage.mjs). M4b pins its result on interface digests (m4b.mjs).
+  if (JSON.stringify(saved.cardDigests) !== JSON.stringify(cardDigests())) t.diagnostic('card.json digests differ from the M4 run; comparing the numbers');
   const r = await measureM4();
   assert.deepEqual(r.files, saved.files, 'enumerate.mjs, m4.mjs and the gold are the files the result names');
   assert.deepEqual(r.decision, saved.decision);

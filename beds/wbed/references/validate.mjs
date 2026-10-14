@@ -38,14 +38,16 @@ export function stubPort(policyName, log) {
 }
 
 // One run: the reference on one task under one stub policy. Returns the row the summary reads.
-export const AUTHOR_SEEDS = Object.freeze([373, 374, 375, 376, 377, 378]);
+export const AUTHOR_SEEDS = Object.freeze([373, 374, 375, 376, 377, 378]), VALIDATION_SEEDS = Object.freeze([301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312]);
 export async function runOne({ rung, seed, difficulty, policy, work, labels = false }) {
   const ref = REFERENCES[rung];
   const bed = await import(`../../${ref.bed}/index.mjs`);
   let author = {};
   if (policy === 'author') {
-    if (!AUTHOR_SEEDS.includes(seed)) throw new Error('policy author is for the author fixtures (seeds 373-378) only');
-    const table = JSON.parse(readFileSync(path.join(HERE, 'author/fixture-answers.json'), 'utf8'));
+    // Fixtures 373-378 (development) or, at the protocol's one revision, the validation seeds 301-312 (diagnostic).
+    const file = AUTHOR_SEEDS.includes(seed) ? 'author/fixture-answers.json' : VALIDATION_SEEDS.includes(seed) ? 'author/validation-answers.json' : null;
+    if (!file) throw new Error('policy author is for the author fixtures (373-378) and the validation seeds (301-312) only');
+    const table = JSON.parse(readFileSync(path.join(HERE, file), 'utf8'));
     author = { flowOverride: path.join(HERE, 'author/author-override.mjs'), flowOverrideData: { answers: table[`${ref.bed}:${seed}:d${difficulty}`] ?? {} } };
   }
   const task = bed.generate({ seed, split: 'dev', difficulty });
@@ -106,6 +108,9 @@ export function summarize(rows) {
       invalid: rs.filter(r => r.status === 'invalid').length, timeout: rs.filter(r => r.status === 'timeout').length, pass: rs.filter(r => r.pass).length,
       costUsd: { total: Math.round(sum(rs, r => r.costUsd) * 1e6) / 1e6, max: Math.max(...rs.map(r => r.costUsd)), mean: Math.round((sum(rs, r => r.costUsd) / rs.length) * 1e6) / 1e6 },
       modelCalls: { total: sum(rs, r => r.modelCalls), max: Math.max(...rs.map(r => r.modelCalls)) }, sonnetCalls: sum(rs, r => r.sonnetCalls),
+      judgesFailed: sum(rs, r => r.judgesFailed), maxPromptChars: Math.max(...rs.map(r => r.maxPromptChars)),
+      latencyMs: { median: [...rs.map(r => r.latencyMs)].sort((a, b) => a - b)[Math.floor(rs.length / 2)], max: Math.max(...rs.map(r => r.latencyMs)) },
+      flags: Object.fromEntries([...new Set(rs.flatMap(r => r.flags))].sort().map(f => [f, rs.filter(r => r.flags.includes(f)).length])),
       ...(rs.some(r => 'labelMatch' in r) ? { labelMatch: rs.filter(r => r.labelMatch).length } : {}),
       ...(rs.some(r => 'statementsMatchReference' in r) ? { statementsMatchReference: rs.filter(r => r.statementsMatchReference).length, totalsMatchReference: rs.filter(r => r.totalsMatchReference).length,
         statementsMatchModuloJudged: rs.filter(r => r.statementsMatchModuloJudged).length } : {}),

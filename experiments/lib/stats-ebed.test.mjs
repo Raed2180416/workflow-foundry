@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {
   logGamma, betaInc, binomUpperTail, clopperPearson, lowerBoundAtLeast, maxFailures, minCleanCases, reliabilityVerdict,
   censoringReport, wilcoxonExact, wilcoxonCritical, holm, familyTest, familyDecision, itemGap, nonInferiority, itemGapSE,
-  familyPower,
+  familyPower, reliabilityProbability, minCasesFor, decisionPower, casePools,
 } from './stats-ebed.mjs';
 
 const close = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg ?? ''} got ${a}, want ${b} ± ${tol}`);
@@ -109,6 +109,34 @@ test('H-E2 thresholds of E-BED §6, decided by exact rational arithmetic', () =>
   assert.equal(minCleanCases(0.01), 299);   // ln 0.05 / ln 0.99 = 298.07 → 299
 });
 
+test('H-E2 operating characteristic: the smallest per-world n, and P(H-E2 holds) in closed form (review finding 1)', () => {
+  // Per world, bound 0.90: a clean pass needs 0.9^n <= 0.05 → n >= ln 0.05 / ln 0.9 = 28.43 → 29 (0.9^28 = 0.0523).
+  assert.equal(tailAtMostFivePercent(29, 9, 10, 29), true); assert.equal(tailAtMostFivePercent(28, 9, 10, 28), false);
+  // One failure: P(X >= 45 | 46, 0.9) = 4.6 · 0.9^45 + 0.9^46 = 0.04015 + 0.00786 = 0.0480 <= 0.05; at n = 45,
+  // 4.5 · 0.9^44 + 0.9^45 = 0.04364 + 0.00873 = 0.0524 > 0.05. Four failures: n = 89 (BigInt).
+  assert.equal(tailAtMostFivePercent(46, 9, 10, 45), true); assert.equal(tailAtMostFivePercent(45, 9, 10, 44), false);
+  assert.equal(tailAtMostFivePercent(89, 9, 10, 85), true); assert.equal(tailAtMostFivePercent(88, 9, 10, 84), false);
+  assert.deepEqual([minCasesFor(0, 0.90), minCasesFor(1, 0.90), minCasesFor(4, 0.90), minCasesFor(0, 0.95)], [29, 46, 89, 59]);
+  // At m = 40 per world both limits are zero failures (40 < 46; pooled 80 or 160 cases at 0.95: 0 and 3), so
+  // P(H-E2 holds) = p^(K·40): 0.99^80 = 0.4475 at K = 2, 0.99^160 = 0.2003 at K = 4 — more worlds, less chance.
+  assert.equal(maxFailures(40, 0.90), 0); assert.equal(maxFailures(80, 0.95), 0); assert.equal(maxFailures(160, 0.95), 3);
+  close(reliabilityProbability({ K: 2, m: 40, p: 0.99 }).probability, 0.99 ** 80, 1e-12);
+  close(reliabilityProbability({ K: 4, m: 40, p: 0.99 }).probability, 0.99 ** 160, 1e-12);
+  // m = 100, K = 2: per world <= 4, pooled 200 at 0.95 <= 4 (BigInt below), so P = P(Bin(200, 0.02) <= 4) = 0.6288.
+  assert.equal(tailAtMostFivePercent(200, 19, 20, 196), true); assert.equal(tailAtMostFivePercent(200, 19, 20, 195), false);
+  close(reliabilityProbability({ K: 2, m: 100, p: 0.98 }).probability, 1 - tailSum(200, 0.02, 5), 1e-10);
+  // m = 100, K = 4: each world <= 4 and the sum <= 12 (pooled 400); brute force over the 5^4 per-world counts.
+  const pmfs = [0, 1, 2, 3, 4].map(k => tailSum(100, 0.02, k) - tailSum(100, 0.02, k + 1)), pmf = k => pmfs[k];
+  let brute = 0;
+  for (let a = 0; a <= 4; a++) for (let b = 0; b <= 4; b++) for (let c = 0; c <= 4; c++) for (let d = 0; d <= 4; d++) if (a + b + c + d <= 12) brute += pmf(a) * pmf(b) * pmf(c) * pmf(d);
+  const k4 = reliabilityProbability({ K: 4, m: 100, p: 0.98 });
+  assert.deepEqual([k4.worldMaxFailures, k4.pooledMaxFailures], [[4, 4, 4, 4], 12]);
+  close(k4.probability, brute, 1e-10);
+  // Uneven worlds: a world with 28 completed cases can never pass the 0.90 bound.
+  assert.equal(reliabilityProbability({ m: [100, 28], p: 1 }).probability, 0);
+  assert.equal(reliabilityProbability({ m: [100, 29], p: 1 }).probability, 1);
+});
+
 test('reliabilityVerdict: pooled and per-world bounds, critical violations, censoring label', () => {
   const W = (world, completed, passed, critical = 0) => ({ world, completed, passed, critical });
   // 3 worlds × 100 = 300 pooled. Pooled, at most 8 failures (above); per world of 100, at most 4 (above).
@@ -127,20 +155,52 @@ test('reliabilityVerdict: pooled and per-world bounds, critical violations, cens
   // Zero critical violations over 3,000 clean cases establish the 0.1% bound; over 300 they do not.
   assert.equal(reliabilityVerdict([W('A', 3000, 3000)]).critical.established, true);
   assert.equal(reliabilityVerdict([W('A', 300, 300)]).critical.established, false);
-  // The censored label (E-BED §2.1): any epoch with a censored share > 20%.
+  // The censored label (E-BED §2.1): an epoch with a censored share > 20% (rows without an epoch id always count).
   const cens = reliabilityVerdict([W('A', 300, 300)], { censoring: [{ started: 100, censored: 5 }, { started: 50, censored: 11 }] });
   assert.equal(cens.holds, true); assert.equal(cens.label, 'holds (censored)');
+  // Review finding 5: a pooled verdict excepts the last epoch (BED-CONTRACT-v1.1 §6). Only ep4 is over 20% (60/100):
+  // the pooled label stays "holds"; an epoch-level claim about ep4 (exceptLast: false) carries the mark.
+  const lastOnly = [{ epoch: 'ep0', started: 100, censored: 2 }, { epoch: 'ep1', started: 100, censored: 3 }, { epoch: 'ep4', started: 100, censored: 60 }];
+  assert.equal(reliabilityVerdict([W('A', 300, 300)], { censoring: lastOnly }).label, 'holds');
+  assert.equal(reliabilityVerdict([W('A', 300, 300)], { censoring: lastOnly, censoringOptions: { exceptLast: false } }).label, 'holds (censored)');
+  // ... and the reading does not depend on the order of the rows (ep4 listed first).
+  assert.equal(reliabilityVerdict([W('A', 300, 300)], { censoring: [...lastOnly].reverse() }).label, 'holds');
   assert.throws(() => reliabilityVerdict([W('A', 10, 11)]), /passed > completed/);
   assert.throws(() => reliabilityVerdict([W('A', 10, 9), W('A', 10, 9)]), /repeated/);
 });
 
-test('censoringReport: 20% limit per epoch, the last epoch optionally excepted (bed-health rule)', () => {
-  const ep = [{ epoch: 'E0', started: 40, censored: 8 }, { epoch: 'E1', started: 30, censored: 7 }, { epoch: 'E4', started: 20, censored: 15 }];
+test('censoringReport: 20% limit per epoch, the last epoch (ep4, by id) optionally excepted (bed-health rule)', () => {
+  const ep = [{ epoch: 'ep0', started: 40, censored: 8 }, { epoch: 'ep1', started: 30, censored: 7 }, { epoch: 'ep4', started: 20, censored: 15 }];
   const r = censoringReport(ep);
   assert.deepEqual(r.epochs.map(e => e.over), [false, true, true], '8/40 = 0.20 is not over; 7/30 = 0.233 is');
   assert.equal(r.marked, true);
   const health = censoringReport(ep.slice(0, 1).concat(ep.slice(2)), { exceptLast: true });
   assert.equal(health.marked, false, 'the last epoch is excepted');
+  // By id, not by position (review finding 5): ep4 listed first is still the one excepted, and an over-limit ep0 listed
+  // last still marks the report.
+  assert.equal(censoringReport([ep[2], ep[0]], { exceptLast: true }).marked, false);
+  assert.equal(censoringReport([{ epoch: 'ep4', started: 10, censored: 9 }, { epoch: 'ep0', started: 10, censored: 3 }], { exceptLast: true }).marked, true);
+  // One row per world and epoch: both worlds' ep4 rows are excepted; gl (the backlog) is never the last epoch.
+  const perWorld = [{ world: 'A', epoch: 'ep4', started: 10, censored: 9 }, { world: 'B', epoch: 'ep4', started: 10, censored: 8 }, { world: 'A', epoch: 'gl', started: 10, censored: 1 }];
+  assert.equal(censoringReport(perWorld, { exceptLast: true }).marked, false);
+  assert.equal(censoringReport(perWorld, { exceptLast: true, last: 'gl' }).marked, true);
+});
+
+test('casePools: completed only when both the earliest- and the latest-timing reference runs close the case (review finding 2)', () => {
+  const end = '2027-06-30T18:00:00+02:00';
+  const pools = casePools([
+    { case: 'INV-1', terminalEarliest: '2027-03-01T10:00:00+01:00', terminalLatest: '2027-03-20T10:00:00+01:00' },
+    // Closed by the earliest-timing run (pay at earliest) but not by the latest-timing run (pay on the due date, after
+    // the horizon): a correct arm paying on the due date would be open at horizon end, so the case is censored.
+    { case: 'INV-2', terminalEarliest: '2027-06-01T10:00:00+02:00', terminalLatest: null },
+    { case: 'INV-3', terminalEarliest: '2027-06-30T18:00:00+02:00', terminalLatest: '2027-06-30T16:00:00Z' },   // 16:00Z = 18:00+02:00: inclusive
+    { case: 'INV-4', terminalEarliest: '2027-06-30T18:00:00+02:00', terminalLatest: '2027-06-30T16:01:00Z' },   // one minute late
+    { case: 'INV-5', terminalEarliest: null, terminalLatest: null },
+  ], end);
+  assert.deepEqual(pools, { completed: ['INV-1', 'INV-3'], censored: ['INV-2', 'INV-4', 'INV-5'] });
+  assert.throws(() => casePools([{ case: 'A', terminalEarliest: null }], end), /needs terminalLatest/);
+  assert.throws(() => casePools([{ case: 'A', terminalEarliest: null, terminalLatest: null }, { case: 'A', terminalEarliest: null, terminalLatest: null }], end), /repeated/);
+  assert.throws(() => casePools([{ case: 'A', terminalEarliest: 'soon', terminalLatest: null }], end), /must be a time/);
 });
 
 test('wilcoxonExact: hand-enumerated null distributions, ties by midranks, zeros dropped or Pratt', () => {
@@ -227,6 +287,22 @@ test('familyTest: E-BED §6 test (i) on {gap + delta}; exclusions; thresholds re
   assert.throws(() => familyTest([{ item: 'E1', gap: 0 }, { item: 'E1', gap: 0 }]), /repeated/);
 });
 
+test('familyTest fails closed: a missing gap or an unlisted exclusion reason throws (review finding 3)', () => {
+  // Dropping E5 (the worst item, d = −0.05) silently would turn p = 25/512 into 10/512 — an arm with no pairs on its
+  // worst item (budget stop, invalid worlds, a crash) must not be tested without it.
+  for (const gap of [undefined, null, NaN, Infinity]) {
+    assert.throws(() => familyTest(items9().map(it => (it.item === 'E5' ? { ...it, gap } : it))), /E5: admitted item without a finite gap/, String(gap));
+  }
+  for (const excluded of ['K4', 'K5', 'budget', true]) {
+    assert.throws(() => familyTest(items9().map(it => (it.item === 'E5' ? { ...it, excluded } : it))), /E5: exclusion .* is not a family-test exclusion/, String(excluded));
+  }
+  // The allowed reasons leave the test (K1' in either spelling), with or without a gap.
+  for (const excluded of ['K1', "K1'", 'K1′', 'K2']) {
+    const r = familyTest(items9().map(it => (it.item === 'E5' ? { item: 'E5', excluded } : it)));
+    assert.deepEqual([r.n, r.excluded], [8, [{ item: 'E5', reason: excluded }]]);
+  }
+});
+
 test('familyDecision: Holm across the arms tested, H-E2 on >= 7 items, no extra critical item', () => {
   const rows = (gaps, { reliable = 9, extraCritical = null } = {}) => items9(gaps).map((it, i) => ({ ...it, reliable: i < reliable, critical: it.item === extraCritical ? 1 : 0, criticalRef: 0 }));
   // Arm a: p = 25/512; arm b: all nine d positive → W- = 0 → p = 1/512; arm g: d9 negatives at ranks 1, 3, 5 → 33/512.
@@ -252,6 +328,47 @@ test('familyDecision: Holm across the arms tested, H-E2 on >= 7 items, no extra 
   assert.equal(prop.arms.a.reliableNeeded, 7); // ceil(56/9) = 7 for 8 admitted items
 });
 
+test('familyDecision: Holm over every arm that ran, the same admitted items for every arm (review finding 9)', () => {
+  const rows = gaps => items9(gaps).map(it => ({ ...it, reliable: true, critical: 0, criticalRef: 0 }));
+  // Arm z has d = 0 on four items (gap exactly −delta): 5 non-zero differences < 6, so it cannot be tested. It still
+  // counts in Holm with p = 1: a and b (p = 25/512 each) sorted 25/512 × 3 = 75/512, 25/512 × 2 → running max 75/512.
+  // (Leaving z out would give 2 · 25/512 = 50/512: the multiplicity would depend on another arm's data.)
+  const z = rows(GAPS9.map((g, i) => (i < 4 ? -0.10 : g)));
+  const r = familyDecision({ a: rows(GAPS9), b: rows(GAPS9), z });
+  assert.deepEqual([r.holmArms, r.armsTested], [['a', 'b', 'z'], ['a', 'b']]);
+  close(r.arms.a.holmP, 75 / 512, 1e-15); close(r.arms.b.holmP, 75 / 512, 1e-15); assert.equal(r.arms.z.holmP, 1);
+  // z's own p (W- = 1 of 5 non-zero differences: 2/32) is reported but never tested.
+  assert.deepEqual([r.arms.z.checks.i, r.arms.z.p, r.arms.z.family.claim], [false, 2 / 32, false]);
+  // Exclusions are per item: arms with different admitted sets are refused; one `exclusions` map applies to all arms.
+  const aEx = rows(GAPS9).map(x => (x.item === 'E1' ? { ...x, excluded: 'K1' } : x));
+  assert.throws(() => familyDecision({ a: aEx, b: rows(GAPS9) }), /differ in their items or admitted items/);
+  assert.throws(() => familyDecision({ a: rows(GAPS9), b: rows(GAPS9).slice(1) }), /differ in their items/);
+  const shared = familyDecision({ a: rows(GAPS9), b: aEx }, { exclusions: { E1: 'K1' } });
+  assert.deepEqual([shared.arms.a.family.n, shared.arms.b.family.n], [8, 8]);
+  assert.throws(() => familyDecision({ a: aEx }, { exclusions: { E1: 'K2' } }), /conflicts with the item exclusion/);
+  assert.throws(() => familyDecision({ a: rows(GAPS9) }, { exclusions: { E1: 'K4' } }), /not a family-test exclusion/);
+});
+
+test('familyDecision (iii): fails closed on missing counts; identities when given (review finding 4)', () => {
+  const rows = (patch = {}) => items9().map(it => ({ ...it, reliable: true, critical: 0, criticalRef: 0, ...(patch[it.item] ?? {}) }));
+  // Missing or non-integer counts on an admitted item throw instead of passing (iii).
+  for (const bad of [{ criticalRef: undefined }, { critical: null }, { critical: 1.5 }, { critical: -1 }]) {
+    assert.throws(() => familyDecision({ a: rows({ E4: { critical: 5, ...bad } }) }), /E4: critical and criticalRef must be non-negative integers/, JSON.stringify(bad));
+  }
+  // Counts only: 5 violations against (c)'s 1 is not "an item where (c) has none" — (iii) holds; moreCritical flags it.
+  const counts = familyDecision({ a: rows({ E4: { critical: 5, criticalRef: 1 } }) }).arms.a;
+  assert.deepEqual([counts.checks.iii, counts.extraCritical, counts.moreCritical], [true, [], ['E4']]);
+  // With identities, a violation (c) does not share is extra even though (c) has one of its own.
+  const keyed = familyDecision({ a: rows({ E4: { critical: 2, criticalRef: 1, criticalKeys: ['A|INV-7|duplicate-payment', 'B|INV-9|sod'], criticalRefKeys: ['A|INV-7|duplicate-payment'] } }) }).arms.a;
+  assert.deepEqual([keyed.checks.iii, keyed.extraCritical], [false, ['E4']]);
+  const sharedKeys = familyDecision({ a: rows({ E4: { critical: 1, criticalRef: 1, criticalKeys: ['A|INV-7|duplicate-payment'], criticalRefKeys: ['A|INV-7|duplicate-payment'] } }) }).arms.a;
+  assert.equal(sharedKeys.checks.iii, true);
+  assert.throws(() => familyDecision({ a: rows({ E4: { critical: 2, criticalRef: 0, criticalKeys: ['x'], criticalRefKeys: [] } }) }), /lengths equal/);
+  // A K1 item's oracle is invalid: its counts are not checked; a K2 (or K1') item's are, when reported.
+  assert.equal(familyDecision({ a: rows({ E4: { excluded: 'K1', critical: 3, criticalRef: 0 } }) }).arms.a.checks.iii, true);
+  assert.deepEqual(familyDecision({ a: rows({ E4: { excluded: 'K2', critical: 3, criticalRef: 0 } }) }).arms.a.extraCritical, ['E4']);
+});
+
 test('nonInferiority: degenerate, closed-form normal approximation, the Deff widening, K < 2', () => {
   // Identical arms: every replicate is 0, the bound is 0 > −0.10.
   const same = [];
@@ -275,8 +392,15 @@ test('nonInferiority: degenerate, closed-form normal approximation, the Deff wid
   assert.equal(nonInferiority(pairs, 0.05, { iterations: 10000 }).nonInferior, false);
   // rho = 0: no widening; the bound is the bootstrap's ≈ 0.0277.
   close(nonInferiority(pairs, 0.10, { iterations: 10000, rho: 0 }).lower, 0.027665, 0.003);
-  // Deterministic given the seed.
+  // Deterministic given the seed, and a function of the set of pairs, not their order (review finding 8: reversed input
+  // used to move the bound from −0.1813 to −0.1750 on the probe below).
   assert.deepEqual(nonInferiority(pairs, 0.10, { iterations: 500 }), nonInferiority(pairs, 0.10, { iterations: 500 }));
+  const probe = [];
+  for (const w of ['A', 'B']) for (let c = 0; c < 60; c++) { const k = c % 20; probe.push({ world: w, case: `c${c}`, x: (w === 'A' ? k < 17 : k < 13) ? 1 : 0, y: k < 16 ? 1 : 0 }); }
+  const fwd = nonInferiority(probe, 0.10, { iterations: 2000 });
+  assert.deepEqual(nonInferiority([...probe].reverse(), 0.10, { iterations: 2000 }), fwd);
+  const shuffled = probe.map((p, i) => [(i * 7919) % probe.length, p]).sort((a, b) => a[0] - b[0]).map(([, p]) => p);
+  assert.deepEqual(nonInferiority(shuffled, 0.10, { iterations: 2000 }), fwd);
   // One world: bounds reported, no decision.
   const one = nonInferiority(pairs.filter(p => p.world === 'A'), 0.10, { iterations: 500 });
   assert.equal(one.nonInferior, null); assert.match(one.reason, /no decision/);
@@ -306,13 +430,55 @@ test('power: the SE by hand, the sign rule in closed form, the exact null size, 
   // P(W- <= 8) = 25/512 = 0.04883 and the sign rate 10/512 = 0.01953 (whatever the SE).
   const h0 = familyPower({ K: 2, trueGap: -0.10, iterations: N });
   close(h0.wilcoxon, 25 / 512, mc(0.049), 'null size, Wilcoxon'); close(h0.sign, 10 / 512, mc(0.02), 'null size, sign');
-  // E-BED §6: Wilcoxon power at equality 0.60 (K = 2) and 0.85 (K = 4). This simulation gives 0.609 and 0.856 (± 0.001
-  // at 400k draws in an independent mulberry32 script). The E-BED figures came from a 31-bit LCG with Box-Muller whose
-  // sign-rule rates miss the closed forms above (0.572 vs 0.585 at K = 4; 0.017 vs 0.0195 at the null): the published
-  // 0.60 / 0.85 are about 0.005-0.01 low. Reproduced here to within 0.015, with the corrected values pinned.
-  close(k2.wilcoxon, 0.609, mc(0.61) + 0.002, 'K=2 corrected'); close(k4.wilcoxon, 0.856, mc(0.86) + 0.002, 'K=4 corrected');
-  close(k2.wilcoxon, 0.60, 0.015, 'E-BED K=2'); close(k4.wilcoxon, 0.85, 0.015, 'E-BED K=4');
   assert.ok(k4.wilcoxon > k2.wilcoxon && k2.wilcoxon > k2.sign, 'K = 4 has more power; Wilcoxon beats the sign rule');
   // Deterministic for a seed.
   assert.deepEqual(familyPower({ K: 2, iterations: 2000 }), familyPower({ K: 2, iterations: 2000 }));
+});
+
+test('power of test (i): the corrected 0.61 / 0.86, tight enough to tell them from E-BED\'s biased 0.604 / 0.851 (review finding 6)', () => {
+  // Independent references at 10^6 draws each (crypto uniforms + Marsaglia polar normals, two separate scripts; MC SE
+  // 0.0005 / 0.0004): Wilcoxon at equality 0.6101 and 0.6106 (K = 2), 0.8561 and 0.8561 (K = 4) → 0.6103, 0.8561.
+  // At 4 × 10^5 draws the module's MC SE is 0.0008 / 0.0006, so a tolerance of 0.003 (≈ 3.5σ of the difference) holds
+  // the module and excludes the original script's 0.604 / 0.851 (research/enterprise-20261014/evidence/efinal-pw.out),
+  // which are 0.006 / 0.005 away.
+  const N = 400000, k2 = familyPower({ K: 2, iterations: N }), k4 = familyPower({ K: 4, iterations: N });
+  close(k2.wilcoxon, 0.6103, 0.003, 'K=2 vs independent'); close(k4.wilcoxon, 0.8561, 0.003, 'K=4 vs independent');
+  assert.ok(Math.abs(0.604 - 0.6103) > 0.003 && Math.abs(0.851 - 0.8561) > 0.003, 'the tolerance excludes the biased values');
+  // The seeded values themselves, pinned (a regression guard for the module; recomputed by any change to the sampler).
+  assert.deepEqual([k2.wilcoxon, k4.wilcoxon, k2.sign, k4.sign], [0.60891, 0.8558325, 0.3353675, 0.5843525]);
+  // E-BED's rounded 0.60 / 0.85 are 0.010 / 0.006 below; the correction does not change the K = 4 recommendation for
+  // test (i) (whose power is all this function measures; the whole decision: decisionPower).
+  close(k2.wilcoxon, 0.60, 0.015, 'E-BED K=2'); close(k4.wilcoxon, 0.85, 0.015, 'E-BED K=4');
+});
+
+test('decisionPower: (i)∧(ii)∧(iii) jointly; at small per-world n more worlds lower the power (review finding 1)', () => {
+  // ρ = 0 and X ≡ (c): (ii) is P(Bin(9, q) >= 7) with q = reliabilityProbability (closed form above), within MC error.
+  const atLeast7 = q => [7, 8, 9].reduce((s, k) => s + [36, 9, 1][k - 7] * q ** k * (1 - q) ** (9 - k), 0);
+  const N = 4000, tol = p => 4 * Math.sqrt(p * (1 - p) / N) + 0.002;
+  for (const [K, m, p] of [[2, 100, 0.98], [4, 100, 0.98], [2, 40, 0.99]]) {
+    const d = decisionPower({ K, m, pX: p, rho: 0, iterations: N });
+    const want = atLeast7(reliabilityProbability({ K, m, p }).probability);
+    close(d.ii, want, tol(want), `P(ii) K=${K} m=${m} p=${p}`);
+    assert.ok(d.power <= Math.min(d.i, d.ii, d.iii) + 1e-12, 'the conjunction cannot exceed any part');
+  }
+  // m = 40 (E-BED's power model): K = 4 makes (ii) all but impossible even for a 0.99-reliable arm (q = 0.2003,
+  // P(>= 7 of 9) = 3.2e-4), so the whole decision fails although test (i) alone has power 0.86.
+  const m40 = decisionPower({ K: 4, m: 40, pX: 0.99, rho: 0, iterations: N });
+  assert.ok(m40.ii < 0.005 && m40.power < 0.005, `m = 40, K = 4: P(ii) ${m40.ii}`);
+  // m = 100: K = 4 helps (ii) at p = 0.98 (0.290 → 0.740 in closed form).
+  close(atLeast7(reliabilityProbability({ K: 2, m: 100, p: 0.98 }).probability), 0.290, 0.001);
+  close(atLeast7(reliabilityProbability({ K: 4, m: 100, p: 0.98 }).probability), 0.740, 0.001);
+  // Test (i) under the binomial model agrees with familyPower's normal model at a matched SE (pX = pC = 0.8, m = 40,
+  // ρ = 0.1, K = 4: SE = sqrt(0.32 · 4.9 / 160) = 0.0990) up to the count model's ties and zeros (< 0.03).
+  const tI = decisionPower({ K: 4, m: 40, pX: 0.8, rho: 0.1, iterations: N });
+  close(tI.i, familyPower({ se: Math.sqrt(0.32 * 4.9 / 160), iterations: 100000 }).wilcoxon, 0.03, 'test (i), two models');
+  // Size: X 10 points below (c) (the null boundary) rejects no more often than the exact 25/512 = 0.0488.
+  const h0 = decisionPower({ K: 4, m: 100, pX: 0.45, pC: 0.55, rho: 0, iterations: N });
+  assert.ok(h0.i <= 25 / 512 + 4 * Math.sqrt(0.0488 * 0.9512 / N), `size ${h0.i}`);
+  // (iii): with an extra critical violation on each item with probability 0.05, P(iii) = 0.95^9 = 0.6302.
+  const c = decisionPower({ K: 2, m: 100, pX: 0.99, rho: 0, pExtraCritical: 0.05, iterations: N });
+  close(c.iii, 0.95 ** 9, tol(0.63));
+  // Deterministic for a seed; argument checks.
+  assert.deepEqual(decisionPower({ K: 2, m: 30, iterations: 300 }), decisionPower({ K: 2, m: 30, iterations: 300 }));
+  assert.throws(() => decisionPower({ pX: [0.9, 0.9] }), /must be a probability or 9 of them/);
 });

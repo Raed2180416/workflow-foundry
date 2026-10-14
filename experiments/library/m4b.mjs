@@ -44,6 +44,14 @@ export const BOUNDS = Object.freeze({
 
 const coveredBy = (e, t) => covering(e.candidates, t.golds, t.match);
 
+// What the type model reads of each executable card: tier, fragment, slot names and types, temporal rules, and for a
+// catch-all its skeleton. A doc or checklist edit leaves it unchanged; an interface change changes it (the reproduction
+// test then fails rather than skips). cardDigests (whole card.json) is recorded beside it for information.
+export function interfaceDigests(l1 = loadL1()) {
+  return Object.fromEntries(l1.filter(e => e.executable).sort((a, b) => (a.id < b.id ? -1 : 1)).map(e => [e.id, sha(JSON.stringify({ tier: e.tier,
+    fragment: e.fragment ?? null, slots: (e.slots ?? []).map(d => [d.name, d.type]), temporal: e.temporal ?? null, ...(CATCH_ALLS.includes(e.id) ? { skeleton: e.skeletonSha256 } : {}) }))]));
+}
+
 export function measureTaskB(t, { cards, m4cards, l1 }) {
   const run = (o = {}) => enumeratePrecise({ input: t.input, output: t.output, cards, ...o });
   const m4 = enumerateCompositions({ input: t.input, output: t.output, cards: m4cards, layer: 'temporal', keep: false });
@@ -81,7 +89,7 @@ export async function measureM4b() {
   return {
     schema: 'library-m4b-enumeration/1', generatedBy: 'experiments/library/tools/m4b-coverage.mjs', costUsd: 0, modelCalls: 0, jevCalls: 0,
     files: { cardTypes: fileSha('./card-types.mjs'), m4b: fileSha('./m4b.mjs'), enumerate: fileSha('./enumerate.mjs'), m4: fileSha('./m4.mjs'), gold: fileSha('./fixtures/enumerate-gold.mjs') },
-    cardDigests: cardDigests(),
+    interfaceDigests: interfaceDigests(l1), cardDigests: cardDigests(),
     rule: { ...KILL, text: 'kill if > 100 candidates at depth <= 4 on more than half the tasks, or coverage < 80% (ATTACK-20261014 §3 M4); unchanged from M4', layer: 'precise interfaces + temporal constraints, existential reading', maxDepth: MAX_DEPTH },
     precise: Object.fromEntries(Object.entries(PRECISE).map(([id, p]) => [id, { readers: p.readers, reads: p.reads, out: p.out, preserving: p.preserving, notRead: p.notRead ?? null, claims: p.claims }])),
     cards: cards.map(c => ({ id: c.id, precise: c.precise, readers: c.readers.map(r => r.slot + (r.items ? ' (non-null items)' : '')), anyInput: c.anyInput, check: c.check })),

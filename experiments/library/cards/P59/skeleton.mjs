@@ -14,7 +14,9 @@
 // the undo is registered before the action and the participant skips it if nothing happened). A pivot or retryable step
 // that failed with an uncertain outcome is retried with the same key; past the pivot nothing is undone. Undo runs one at
 // a time unless PARALLEL_UNDO. MAX_ATTEMPTS exhausted -> status 'stuck' (a person decides). An instance on another
-// definition version deopts (guard definition-pinned): a saga finishes on the definition it started with.
+// definition version deopts (guard definition-pinned): a saga finishes on the definition it started with. Keys are
+// distinct across every saga, step and action of the run and name their saga (invariant keys-distinct; v2, see
+// FROZEN-P58-P60.json amendments).
 export default async function P59(flow, task, x, S) {
   const sagas = S.SAGAS(task, x);
   flow.guard('bounded', Array.isArray(sagas) && sagas.length <= S.MAX_SAGAS, { n: Array.isArray(sagas) ? sagas.length : null, max: S.MAX_SAGAS });
@@ -89,10 +91,19 @@ export default async function P59(flow, task, x, S) {
         else out.next = [cmd('do', n, st[n].tries + 1)];
       }
     }
-    const keys = names.flatMap(n => [S.KEY(sg.id, n, 'do'), ...(undoOf[n] ? [S.KEY(sg.id, n, 'undo')] : [])]);
+    const keysOf = id => names.flatMap(n => [S.KEY(id, n, 'do'), ...(undoOf[n] ? [S.KEY(id, n, 'undo')] : [])]);
+    const keys = keysOf(sg.id);
     flow.invariant('keys-distinct', keys.every(k => typeof k === 'string' && k.length > 0) && new Set(keys).size === keys.length, { id: sg.id, keys: keys.slice(0, 4) });
+    // v2: a key must name its saga. A probe saga (this id plus a suffix) gets keys of its own, so a KEY that drops or
+    // truncates the saga id is refused even in a run of one saga; across the run, no two sagas share a key.
+    const probe = new Set(keysOf(`${sg.id}~probe`));
+    flow.invariant('keys-distinct', !keys.some(k => probe.has(k)), { id: sg.id, why: 'the key does not name the saga', keys: keys.slice(0, 2) });
+    const clash = keys.find(k => owner.has(k));
+    flow.invariant('keys-distinct', clash === undefined, { id: sg.id, other: owner.get(clash) ?? null, key: clash ?? null, why: 'two sagas share a key' });
+    for (const k of keys) owner.set(k, sg.id);
     return out;
   };
+  const owner = new Map();   // key -> the saga that owns it (v1 checked distinctness within one saga only)
   const plans = sagas.map(plan);
   flow.invariant('one-plan-per-saga', plans.length === sagas.length && plans.every((p, i) => p.id === sagas[i].id), { plans: plans.length, sagas: sagas.length });
   flow.note('statuses', countBy(plans, p => p.status));

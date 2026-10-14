@@ -12,6 +12,11 @@ engine freeze holds). `beds/sealed/` was not read. Delivered with this document:
 (`research/jit-20261008/SEED-LEDGER.json`, §10) and the statistics module `experiments/lib/stats-ebed.mjs` with its
 tests (§13).*
 
+*Revised 2026-10-14 after an adversarial review of step 0 (§16): pools from two reference timings (§6, D-4), decision
+grading of close/merge-only ticks (§5.3, D-18), round snapshots (§3.6), a fail-closed family test and a Holm set that
+does not depend on the data (§13.2), the power of the whole decision with a K recommendation conditional on the
+per-world n (§13.5), seed confinement (§10.1). §16 lists what was fixed, deferred and rejected.*
+
 **Tags** as in E-BED: [M] a repo file read (cited); [M-c] computed at $0 (script or test cited); [I] design choice.
 
 ---
@@ -30,16 +35,20 @@ tests (§13).*
    own history; observable output must lie in the allowed set (exact decisions, effects exactly once inside
    rulebook windows, human tasks with the right role, exclusions and window, business records at close). First
    divergence fails the case. Obligations, timers and carry are internal and never graded.
-5. **Censoring** (§6): the completed/censored split comes from the arm-independent reference run, so every arm is paired
-   on the same cases **[D-4]**.
+5. **Censoring** (§6): the completed/censored split comes from the arm-independent reference runs (one acting at each
+   window's earliest, one at its latest), so every arm is paired on the same cases and a correct arm acting anywhere
+   inside its windows is not failed for leaving a case open at horizon end **[D-4]**.
 6. **Two tracks** (§7): Track P "engine port" and Track C "configure", same oracle, different inputs and claims.
 7. **Teacher-forced (TF)** grading is a diagnostic on informative case-ticks only (§8).
 8. **Seeds** (§10): per-item dev, rehearsal, held-out and sealed blocks in the seed ledger, with E-bed purposes that the
    default JIT purposes cannot use.
 9. **Admission** (§11) replaces CONTRACT v1's per-task oracle-health rules with per-item K1 checks: goldens, specificity,
    controls, mutation, leak, twins, censoring, calibration, determinism, budgets.
-10. **Statistics** (§13): `experiments/lib/stats-ebed.mjs`. The family-test power is **0.61 at K = 2 and 0.86 at K = 4**,
-    not E-BED's 0.60 / 0.85 (a biased generator; §13.4).
+10. **Statistics** (§13): `experiments/lib/stats-ebed.mjs`. The power of **test (i) alone** is **0.61 at K = 2 and
+    0.86 at K = 4**, not E-BED's 0.60 / 0.85 (a biased generator; §13.4). The power of the **whole decision**
+    (i)∧(ii)∧(iii) is governed by (ii) and by the completed tail-mix cases per world: below 46 per world any failure
+    fails a world, and at 40 per world K = 4 makes (ii) nearly impossible (§13.5). K = 4 is recommended only with
+    ≥ 100 such cases per world per item and a measured between-world correlation.
 
 ---
 
@@ -247,15 +256,19 @@ loop
              (instances started by inbound events at t included)
     round 2  sweep ticks due at t, in sweep-id order
     round 3  case-ticks for merge targets (round 1) and sweep wakes (round 2), each at most once
-  apply each output's effects as it returns; journal everything
+  within a round: every input, file and read (sor.query, status, the sweep index) is the state at the round's start;
+  after every call of the round has returned, outputs are validated and applied in round order; journal everything
 end
 at stop: journal the open instances and open obligations (the censoring record, §6)
 ```
 
 - At most three rounds per instant: only round-1 instances can merge; only sweeps can wake; round-3 ticks can do
   neither, and effect results are never same-instant.
-- Calls inside a round may run concurrently (a worker pool), but commits follow the round's order, so the journal is
-  identical whatever the concurrency.
+- Calls inside a round may run concurrently (a worker pool). Because no output is applied during a round (reads see
+  the round-start snapshot) and outputs apply after it in round order, inputs, commits and the journal are identical
+  whatever the concurrency or completion order. Round 2 sees round 1's applied outputs and round 3 sees both. (This is
+  what `beds/ebed/host/host.mjs` does: `#ctxFor` "no output is applied during a round", `#caseRound` applies after
+  `#pool` returns [M]; the earlier wording "apply each output's effects as it returns" contradicted it.)
 - **Clock freeze.** The simulated clock does not advance during a real quota stop or crash; the stream resumes from
   the journal at the last committed wake-up (E-BED §2.7).
 

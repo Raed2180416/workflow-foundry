@@ -13,7 +13,7 @@
     { "name": "STEPS", "type": "list", "required": true, "min": 1, "max": 12, "bound": true, "doc": "in order: compensable steps, at most one pivot, then retryable steps",
       "item": { "name": { "type": "name", "required": true }, "kind": { "type": "choice", "options": ["compensable", "pivot", "retryable"], "required": true }, "undo": { "type": "name", "requiredWhen": { "kind": "compensable" } } } },
     { "name": "ENTRY", "type": "fn", "required": true, "params": ["entry"], "doc": "log entry -> {step, phase: started|completed|failed|undo-started|undone|undo-failed, noEffect?}" },
-    { "name": "KEY", "type": "fn", "required": true, "params": ["sagaId", "step", "action"], "doc": "idempotency key, the same on every retry" },
+    { "name": "KEY", "type": "fn", "required": true, "params": ["sagaId", "step", "action"], "doc": "idempotency key, the same on every retry; names the saga (distinct across sagas)" },
     { "name": "COMPENSATE_FAILED", "type": "choice", "options": ["if-uncertain", "always", "never"], "required": true, "default": "if-uncertain", "doc": "undo the failed step itself too" },
     { "name": "PARALLEL_UNDO", "type": "bool", "required": true, "default": false },
     { "name": "MAX_ATTEMPTS", "type": "int", "range": [1, 10], "bound": true, "required": true, "default": 3 },

@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadLedger, assertSeedsAllowed, seedRefusals } from '../jit/seeds.mjs';
 import { ledgerReservationOf } from '../kev-data/lib/registry.mjs';
+import { assertEbedSeeds, ebedSeedRefusals, isEbedBed } from './ebed-seeds.mjs';
 
 const L = loadLedger();
 const ITEMS = Array.from({ length: 13 }, (_, i) => `ebed-e${i + 1}`);
@@ -70,6 +71,25 @@ test('per-item status: a consumed block refuses its own worlds only', () => {
   assert.match(seedRefusals(used, { bed: 'ebed-e8', split: 'test', seed: 9101, purpose: 'ebed-heldout' }).join(';'), /ebed-e8-heldout-ab is used and ebed-heldout needs fresh seeds/);
   assert.deepEqual(seedRefusals(used, { bed: 'ebed-e8', split: 'test', seed: 9103, purpose: 'ebed-heldout' }), [], 'K = 4 worlds C-D stay fresh');
   assert.deepEqual(seedRefusals(used, { bed: 'ebed-e1', split: 'test', seed: 9101, purpose: 'ebed-heldout' }), [], 'another item is unaffected');
+});
+
+test('confinement (review finding 10): the E-bed runner\'s check keeps every E-bed seed inside its own block', () => {
+  // The ledger alone accepts these: no range covers the seed, so nothing refuses it.
+  const escapes = [['ebed-e1', 'test', 9105, 'ebed-heldout'], ['ebed-e1', 'test', 8900, 'ebed-heldout'], ['ebed-e1', 'test', 9999, 'ebed-sealed'],
+    ['records', 'test', 9101, 'ebed-heldout'], ['ebed-e1', 'test', 9105, 'jit-heldout'], ['ebed-e10', 'test', 9301, 'ebed-scale']];
+  for (const [bed, split, seed, purpose] of escapes) {
+    assert.deepEqual(seedRefusals(L, { bed, split, seed, purpose }), [], `ledger alone: ${bed} ${seed} ${purpose}`);
+    assert.throws(() => assertEbedSeeds({ bed, split, seeds: [seed], purpose, ledger: L }), e => e.code === 'SEED_REFUSED', `confined: ${bed} ${seed} ${purpose}`);
+  }
+  assert.match(ebedSeedRefusals(L, { bed: 'ebed-e1', split: 'test', seed: 9105, purpose: 'ebed-heldout' }).join(';'), /outside every E-bed block of ebed-e1/);
+  assert.match(ebedSeedRefusals(L, { bed: 'records', split: 'test', seed: 9101, purpose: 'ebed-heldout' }).join(';'), /for the E-bed beds/);
+  // Every seed of every block passes for its own purpose; the ledger's own refusals still apply.
+  for (const r of ebed) {
+    const purpose = r.allow[0];
+    for (const bed of r.beds) assert.doesNotThrow(() => assertEbedSeeds({ bed, split: r.split, seeds: [r.from, r.to], purpose, ledger: L }), `${r.id} ${bed}`);
+  }
+  assert.throws(() => assertEbedSeeds({ bed: 'ebed-e8', split: 'test', seeds: [9201], purpose: 'ebed-heldout', ledger: L }), /reserved for ebed-sealed/);
+  assert.deepEqual(['ebed-e1', 'ebed-e13', 'ebed-e14', 'ebed-dev', 'records'].map(isEbedBed), [true, true, false, false, false]);
 });
 
 test('the Kev factory holds the E-bed ranges for the E-bed beds only', () => {
