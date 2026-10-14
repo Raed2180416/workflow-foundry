@@ -1,4 +1,4 @@
-// M3b (research/jit-20261008/DEV-NOTES.md D30; PROOF-LEDGER K1; LIBRARY-TESTS L4): the reuse acceptance rule under crossed
+// M3b (research/jit-20261008/DEV-NOTES.md D31; PROOF-LEDGER K1; LIBRARY-TESTS L4): the reuse acceptance rule under crossed
 // parent × entry clustering. $0, seeded, deterministic.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -93,7 +93,7 @@ test('the verifier\'s finding holds under the exact crossed model, and M3b remov
   assert.ok(s.byRule.aE2.serve <= 0.05, `M3b miss ${s.byRule.aE2.serve}`);
 });
 
-test('the chosen rule at the design D30 names (96 balanced entries, 576 admitted) meets the criterion at the top of the plausible range', () => {
+test('the chosen rule at the design D31 names (96 balanced entries, 576 admitted) meets the criterion at the top of the plausible range', () => {
   const cell = { rhoP: 0.1, rhoE: 0.1, entries: 96 }, rules = ['aE2'];
   const at = p => simulateCrossed({ reps: 2000, seed: 'm3b-test-design', rules, p, ...cell }).byRule.aE2;
   const falseKill = 1 - at(0.01).serve, miss = at(0.05).serve;         // grid, 20,000 draws: 2.8% and 3.2%

@@ -1061,3 +1061,170 @@ would be made only against frontier agents (claims like H1-C).
    - a witness tier in `verify-economics.mjs`, priced with M1's variant re-runs, before M1's paid part;
    - the R3 inequality check as soon as R3 dev rows exist;
    - drafting the engine-change arm's pre-registration.
+
+**D31. M3b, crossed parent × entry clustering: L4's rule gets a two-way design effect. Its miss stays ≤ 3.2% across
+the plausible range at any library size, but a good gate is decided only with about 96 entries offered equally often.
+With L4's 12 entries a good gate gets "no decision", and no rule can do much better there (simulation, $0;
+ATTACK-20261014 §3 M3, PROOF-LEDGER K1).**
+
+*Simulation only. No model call was made, and no gate or L4 data exist. This fixes the caveat that the M3 adversarial
+verifier raised (workflow `wf_6272b7d3-7af`, "verify:M3", finding 1). Code:
+- `experiments/lib/stats.mjs`: new exports `RHO_ENTRY_FLOOR`, `crossedOf`, `kishDeff2`, `clusterDeff2` and
+  `reuseBoundRule2`. `reuseBoundRule` gains an option `bounds: false` (speed only); its default behaviour is unchanged.
+- `experiments/lib/reuse-rule-sim.mjs`: an M3b section (`crossedParams`, `trueIccs`, `drawCrossed`, `RULES2`,
+  `simulateCrossed`, `runCrossedGrid`, `decide2`, `crossedNeeded`, `renderCrossedMarkdown`) and a CLI flag `--crossed`.
+- Tests: `experiments/lib/reuse-rule-2w.test.mjs` (8).
+- Output: `analysis/m3-reuse-rule/oc-crossed.{md,json}`
+  (`--crossed --reps 20000 --seed m3b --need-reps 4000`; 7m22s; the Monte Carlo SE at 5% is ±0.15 points).
+
+The M3 tables `oc.{md,json}` regenerate byte-identical after these changes (3m42s).*
+
+**1. Why.**
+- L4 offers each of 96 parents about 6 of 12 entries: 3 accepted solvers and 9 near-miss variants. Each entry is
+  therefore offered about 48 times.
+- A near-miss variant that the gate cannot tell apart is wrong on many parents at once, so wrong reuse clusters by
+  entry as well as by parent.
+- The M3 rule corrects for parents only. The verifier simulated entry-clustered data under the rule as written and found
+  that it serves a p = 0.05 gate 10.9% of the time (12 entries, entry ICC 0.05).
+
+**2. Model** (header of the M3b section in the simulator).
+- *Noisy-OR.* A decision is wrong when either of two independent mechanisms fires: the parent's input defeats the
+  reused artefact (rate u_i), or the entry is defective for this kind of input (rate v_j). So
+  q_ij = 1 − (1 − u_i)(1 − v_j).
+- *Exact covariances.* Two decisions sharing a parent have covariance Var(u)(1 − μ_v)². Two sharing an entry have
+  Var(v)(1 − μ_u)². Two sharing neither have 0. With ρ_P and ρ_E the probability-scale ICCs this gives, the Kish form
+  Deff₂ = 1 + (m*_P − 1)·ρ_P + (m*_E − 1)·ρ_E is the exact design effect of the wrong count (each parent–entry pair
+  is offered at most once).
+- *'beta' shape.* u and v are beta draws. The mean splits by the ICCs: 1 − μ_u = (1 − p)^s, with s = ρ_P/(ρ_P + ρ_E).
+  At ρ_E = 0 this is M3's beta-binomial model exactly.
+- *Checks* (tests). Over 3,000–4,000 draws the mean is p, and the variance of the wrong count, divided by the Deff₂
+  prediction, is 0.96–1.00 in seven cells.
+- *Grid.*
+  - 96 parents × 6 offers, all or half of them admitted.
+  - Entries E ∈ {12, 24, 48, 96}, offered by a balanced random deal, so each entry is offered 576/E times.
+  - p ∈ {0, 0.01, 0.05}.
+- *Plausible (binding) range, declared before the grid ran:* ρ_P ∈ {0, 0.1}, which is M3's binding range, and
+  ρ_E ∈ {0, 0.02, 0.05, 0.1}, which is the verifier's range. That makes 64 cells.
+- *Robustness cells* (36, all offers admitted):
+  - ρ_P = 0.2;
+  - ρ_E = 0.2;
+  - a 'blind-spot' shape: an entry is a blind spot with probability π and is then wrong on half of its admitted
+    decisions. Its entry ICC is about 0.24;
+  - a 'solver-heavy' allocation: every parent is offered one of the 3 solvers, so each solver is offered 32 times.
+
+**3. Two estimands, and why the 11% is real.**
+- On the library actually drawn (entries fixed, parents random), the M3 rule is valid. Judged against that library's
+  own rate θ_lib, its miss is ≤ 3.0% and its false kill ≤ 5.0% in every binding cell.
+- Its 11–18% miss is judged against p, the rate over entries the gate has not seen.
+- L4's question is whether a gate may serve production reuse. Production serves other entries, so p is the right
+  target, and the rule must count entries as a random factor. This is the "language-as-fixed-effect" problem of
+  subjects × items designs (Clark 1973; Judd, Westfall and Kenny 2012) [I: known literature, not opened this session].
+- The verifier's cells reproduce under the exact model (M3 rule's miss; verifier's figure in brackets):
+  - 12 entries, ρ_E 0.05: 11.1% (10.9%);
+  - 12 entries, ρ_E 0.1: 18.1% (19.0%);
+  - 24 entries, ρ_E 0.05: 5.9% (6.0%).
+
+**4. Rules and the decision procedure** (`decide2`, fixed before the grid ran).
+- *Candidates:*
+  - `aE`, the M3 rule;
+  - `aEe`, entry-only Deff;
+  - `aEx`, the larger of the two one-way Deffs;
+  - `aE2`, the two-way Deff₂ with floors ρ_P = 0.1 and ρ_E = 0.1 and the ANOVA ρ̂ of each axis when larger;
+  - `aE2h`, as `aE2` with an entry floor of 0.05;
+  - `aE2g`, `aE2` plus a per-entry guard: kill if any entry's Bonferroni exact lower bound is above 0.05.
+- *Reference, not deployable:* `ref` is Deff₂ at the generator's true ICCs. It shows what the information allows.
+- *Safety:* a rule is admissible iff its miss is ≤ 5% in every binding cell, at every E and admitted share.
+- *Design:* "E needed" is the smallest E at which, and above which, every binding cell meets both halves.
+- *Choice:*
+  1. the smallest E needed with all offers admitted;
+  2. then the smallest E needed with half admitted;
+  3. then the most robustness cells with miss ≤ 5%;
+  4. then the most robustness cells meeting both halves;
+  5. then the lowest worst false kill.
+
+**5. Results** (`oc-crossed.md`; binding cells unless stated).
+
+| rule | cells with miss > 5% (worst) | E needed, all / half admitted | robustness: miss ≤ 5% / both, of 36 | worst false kill at E needed |
+|---|---|---|---|---|
+| `aE`, L4 since M3 | **22 of 64 (18.1%)** | none / none | 9 / 9 | – |
+| `aEe` | 1 (5.2%) | none / none | 23 / 10 | – |
+| `aEx` | 0 (4.98%) | 96 / none | 24 / 10 | 1.4% |
+| **`aE2`** | **0 (3.2%)** | **96 / none** | **32 / 5** | **2.8%** |
+| `aE2h` | 1 (5.04%) | 96 / none | 27 / 8 | 2.6% |
+| `aE2g` | 0 (3.1%) | none / none | 33 / 3 | – (9.2% at 96) |
+| `ref` (true ICCs) | 0 (4.7%) | 48 / none | 36 / 19 | 3.0% |
+
+`aE2`'s false kill over the binding cells, with all 576 offers admitted:
+
+| entries | false kill |
+|---|---|
+| 12 | 35.0–41.6% |
+| 24 | 1.5–19.0% |
+| 48 | 0.1–9.7% |
+| 96 | 0.0–2.8% |
+
+At 96 entries with half admitted, and 96 parents, it is 3.7–13.3%. A perfect gate is served in every cell.
+
+**Chosen: `aE2`.** LIBRARY-TESTS L4's Claim and Decision are amended to it, the replaced text quoted in place and
+dated. Notes are added under "Library under test" and "Offers", and the Falsifier is amended to separate "undecided"
+from "falsified".
+
+**6. The limit is information, not the rule.**
+- At 12 entries even `ref`, which knows the true ICCs, false-kills 8.2–29.6% once ρ_E ≥ 0.05 with all offers
+  admitted, and 17.8–43.3% at half admission.
+- More parents do not fix it. With the ICCs at the top of the range (0.1 and 0.1), 12 entries and 192 parents
+  (1,152 decisions), `ref` false-kills 21%.
+- Roughly 1/n_eff = (1 − ρ_P − ρ_E)/N + ρ_P/P + ρ_E/E for balanced sizes. So n_eff ≤ E/ρ_E whatever the number of
+  parents. Separating p = 0.01 from 0.05 at 5% each way needs n_eff ≈ 170–181 (the plan n = 181, c = 4) [M].
+- *Decisions needed* for `aE2` (4,000 draws per cell, false kill / miss %):
+
+| ICCs | all admitted | half admitted |
+|---|---|---|
+| ρ_P = ρ_E = 0.1 | 96 entries at ≥ 96 parents (3.1 / 2.6). 48 entries fail even at 192 parents (5.4 / 2.6) | 96 entries at ≥ 144 parents, i.e. 432 admitted (4.3 / 2.6) |
+| both 0 | ≥ 24 entries at ≥ 96 parents | ≥ 48 entries at ≥ 144 parents |
+
+- This matches the subjects × items finding that power is capped by the number of stimuli (Westfall, Kenny and Judd
+  2014) [I: not opened].
+
+**7. Deviations.**
+- *First generator discarded.* It used the verifier's form, q = min(1, a·b/p) with two beta rates. Its cap removed
+  18–19% of the mean at p = 0.01 with both ICCs 0.1, and at p = 0.05 with both 0.2; the variance ratio was 0.50–0.51.
+  That would have understated false kills. It ran only in a moment check and one timing cell, never on the grid. The
+  noisy-OR replaced it.
+- *Smoke run.* A 200-draw run of the whole pipeline checked that it runs. Neither the grid nor `decide2` changed after
+  it.
+- *Borderline cells.* `aEx`'s worst miss (4.98%) and `aE2h`'s (5.04%) are within one Monte Carlo SE of 5%. Flipping
+  either changes nothing: `aE2` wins on robustness cells with miss ≤ 5% (32 against 24 and 27).
+- *The range is an assumption.* ρ_E ≤ 0.1 is the verifier's range; no reuse ICC has been measured. The entry floor 0.1
+  is the top of that range, chosen as M3 chose its parent floor.
+- *Outside the range.* At ρ_E 0.2 or with blind spots (ICC about 0.24), `aE2`'s miss exceeds 5% in 4 of the 18 cells
+  with 12–48 entries (5.1–7.1%). At 96 entries every robustness miss is ≤ 4.1%, with false kills up to 7.7%.
+- *Coverage of the needed table.* It covers two corners of the range at 4,000 draws (SE ±0.34 points at 5%).
+- *SPRT not re-tested.* An SPRT with Deff₂ was not tested. L4 scores every offer offline, so early stopping saves
+  nothing, and the parent-Deff SPRT's miss on the entry axis reached 10.3% (verifier).
+- *Which candidates.* The guard and the max were tested because the task named them. The guard never meets the
+  false-kill half.
+
+**8. Open.**
+- *L4's offer design.* The design that decides gives each parent a balanced sample of 6 of 96 entries.
+  - Offering each parent its own-rung solver (32 offers per solver) raises `aE2`'s false kill at 96 entries to 7.6%
+    (ρ 0.1 / 0.1).
+  - The missed-reuse metric needs those own-rung offers.
+  - Treating the 3 solvers as a fixed stratum might reconcile the two [I, not simulated].
+  - Offering every schema-admitted entry was not simulated either.
+- *Selective gates.* A good gate admits far fewer than the offers (M3 consequence 2). Half admission already needs 144
+  parents at 96 entries, so more parents is a seed-allocation decision for the orchestrator.
+- *Where the entries come from.* The 96 entries would come from M8's covering-array near-miss suite (20–40 per rung),
+  which waits for library steps 5–8.
+- *Live use.* LIBRARY §9's live kill (`LIBRARY.md:474`) is still not amended. Live use is sequential.
+- *The deciding unknown.* The entry ICC is unmeasured, and it sets whether the rule is valid. L4 must report ρ̂_E with a
+  cluster-bootstrap interval.
+
+**Consequences.**
+1. L4's rule is now safe on the entry axis at any library size: miss ≤ 3.2% over the plausible range, against 18.1% for
+   the M3 rule.
+2. L4 as designed, with 12 entries, cannot decide a good gate. It will report a bound and "no decision". This is
+   ATTACK M3's kill mode, firing on the entry axis rather than the parent axis.
+3. To decide a gate, L4 needs about 96 near-miss and solver entries offered about equally often, plus about 576
+   admitted decisions, or 432 from 144 parents at half admission. M8's suite supplies the entries. The near-miss suite
+   therefore becomes a prerequisite of L4's decision, not only of K14.
