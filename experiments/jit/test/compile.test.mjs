@@ -236,8 +236,8 @@ test('the SDK follows the prompt version: flow.mjs (frozen) for 1, flow-v2.mjs f
   const { traces } = await fixture();
   const args = { outputSchema: {}, traces: traces.slice(0, 1), gateway: {} };
   assert.equal(compileFiles(args)['tools/flow.mjs'], FLOW_TOOL); assert.equal(compileFiles({ ...args, promptVersion: 2 })['tools/flow.mjs'], FLOW_TOOL_V2);
-  assert.throws(() => flowToolOf(5), /promptVersion must be one of 1, 2, 3, 4/);
-  await assert.rejects(hostCheck({ dir: '/nonexistent/x', solveSource: '', traces: [], promptVersion: 5 }), /promptVersion must be one of 1, 2, 3, 4/);
+  assert.throws(() => flowToolOf(6), /promptVersion must be one of 1, 2, 3, 4, 5/);   // slice 2a: version 5 exists (flow-v3)
+  await assert.rejects(hostCheck({ dir: '/nonexistent/x', solveSource: '', traces: [], promptVersion: 6 }), /promptVersion must be one of 1, 2, 3, 4, 5/);
 });
 
 test('promptVersion: passed through to the builder prompt and recorded; version 2 builds and checks on flow-v2.mjs; an unknown version fails before anything starts', { skip }, async t => {
@@ -253,8 +253,8 @@ test('promptVersion: passed through to the builder prompt and recorded; version 
   assert.equal(readFileSync(path.join(workdir, '.host-check/tools/flow.mjs'), 'utf8'), FLOW_TOOL_V2, 'the host check runs it');
   assert.equal(record.flowSha256, sha(FLOW_TOOL_V2)); assert.equal(record.checkTraces.error, null, JSON.stringify(record.checkTraces.error));
   let ran = false;
-  await assert.rejects(compile({ familyId: 'records', traces: traces.slice(0, 1), modelPort: portOf(), workRoot, label: 'v9', models: MODELS, promptVersion: 5,
-    runner: async () => { ran = true; return {}; } }), /promptVersion must be one of 1, 2, 3, 4/);
+  await assert.rejects(compile({ familyId: 'records', traces: traces.slice(0, 1), modelPort: portOf(), workRoot, label: 'v9', models: MODELS, promptVersion: 6,
+    runner: async () => { ran = true; return {}; } }), /promptVersion must be one of 1, 2, 3, 4, 5/);
   assert.equal(ran, false); assert.equal(existsSync(path.join(workRoot, 'v9')), false);
 });
 

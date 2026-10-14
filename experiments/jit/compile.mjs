@@ -17,13 +17,29 @@ import { MODEL_TOOL, BUDGET_TOOL, taskFiles } from '../c0/construct.mjs';
 import { builderPrompt, promptVersionOf, flowFileOf, verdictsPromptVersionOf } from './prompts.mjs';
 import { tolerance } from './compare.mjs';
 import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals, acceptanceIdsOf, readVerdicts } from './acceptance.mjs';
+import { createCallHost, withCallModel } from './call-host.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // The SDK the builder reads and the host check runs follows the prompt version (prompts.mjs flowFileOf): FLOW_TOOL is
 // version 1 (flow.mjs, frozen), FLOW_TOOL_V2 adds flow.flag. Execution (run-compiled.mjs) gets the same file from stream.mjs.
 export const FLOW_TOOL = readFileSync(path.join(here, 'flow.mjs'), 'utf8');
 export const FLOW_TOOL_V2 = readFileSync(path.join(here, 'flow-v2.mjs'), 'utf8');
-export const flowToolOf = promptVersion => (flowFileOf({ promptVersion }) === 'flow.mjs' ? FLOW_TOOL : FLOW_TOOL_V2);
+// Prompt version 5 builds, checks and runs on flow-v3.mjs (flow.call, flow.phase; FLOW-V3-SLICE2 §4).
+export const FLOW_TOOL_V3 = readFileSync(path.join(here, 'flow-v3.mjs'), 'utf8');
+const FLOW_TOOLS = { 'flow.mjs': FLOW_TOOL, 'flow-v2.mjs': FLOW_TOOL_V2, 'flow-v3.mjs': FLOW_TOOL_V3 };
+export const flowToolOf = promptVersion => FLOW_TOOLS[flowFileOf({ promptVersion })];
+// The library a version-5 builder sees (FLOW-V3-SLICE1 §3 item 2): library/index.json = registry.list() (hash, contract,
+// profile size, evidence; no solver bytes), and the gateway's model port becomes a call host's root port over that
+// registry, so the builder's own runs and the host check can call library solvers by hash. Opt-in: compile({ library }).
+export const LIBRARY_INDEX = 'library/index.json';
+export const libraryIndexOf = registry => (registry ? registry.list() : null);
+// A call host for one gateway session (the builder's, or one host check): one root scope with the session's cap as its
+// budget, child workdirs under workRoot. interpreter (optional): onRefuse 'interpret' answers, as in execution.
+function sessionPort({ library, modelPort, models, workRoot, capUsd, ledger = null, interpreter = null, callHost = {} }) {
+  if (!library) return { port: modelPort, allowed: models, host: null };
+  const host = createCallHost({ registry: library, modelPort, workRoot, allowedModels: models, mode: 'sandbox', ...(interpreter ? { interpreter } : {}), ...callHost });
+  return { port: host.port({ budgetUsd: capUsd, ...(ledger ? { ledger } : {}) }), allowed: withCallModel(models), host };
+}
 export const CHECK_TOOL = readFileSync(path.join(here, 'check-traces.mjs'), 'utf8');
 // JIT v2.1, opt-in: with compare 'tolerant', compare.mjs goes beside check-traces.mjs (it loads it only then), and the builder's
 // workdir gets tools/check-traces.json so its own runs compare as the host check does. A canonical compile adds neither.
@@ -120,10 +136,11 @@ export function caseFiles(traces, regressions = []) {
 }
 
 // The builder's whole workdir (SPEC §3.2).
-export function compileFiles({ outputSchema, traces, regressions = [], previous = null, gateway, promptVersion = 1, compare = null }) {
+export function compileFiles({ outputSchema, traces, regressions = [], previous = null, gateway, promptVersion = 1, compare = null, libraryIndex = null }) {
   const cmp = compare && typeof compare === 'object' ? compare : comparisonOf({ compare });
   return {
     ...caseFiles(traces, regressions),
+    ...(libraryIndex ? { [LIBRARY_INDEX]: JSON.stringify(libraryIndex, null, 1) } : {}),
     'output-schema.json': JSON.stringify(outputSchema, null, 1),
     ...(previous ? { 'solve.mjs': previous } : {}),
     'tools/model.mjs': MODEL_TOOL, 'tools/gateway.json': JSON.stringify(gateway), 'tools/flow.mjs': flowToolOf(promptVersion),
@@ -138,12 +155,14 @@ const writeAll = (dir, files) => {
 
 // Independent acceptance measurement: check-traces over every case, in the execution sandbox, on its own ledger.
 export async function hostCheck({ dir, solveSource, traces, regressions = [], modelPort, models, capUsd, label, timeoutMs = 30 * 60 * 1000, caseSeconds = 600, jobs = 3,
-  promptVersion = 1, compare = null }) {
+  promptVersion = 1, compare = null, library = null, interpreter = null, callHost = {} }) {
   const flowTool = flowToolOf(promptVersion);   // an unknown prompt version fails here, before anything is started
   const cmp = compare && typeof compare === 'object' ? compare : comparisonOf({ compare });   // null: canonical
   rmSync(dir, { recursive: true, force: true }); mkdirSync(path.join(dir, 'tools'), { recursive: true });
   const ledger = new Ledger({ capUsd, label: `${label}:check` });
-  const svc = await startServices({ modelPort, ledger, scoreLimit: 0, runId: `jit-check:${label}:${randomUUID()}`, allowedModels: models, socketDir: path.join(dir, 'tools') });
+  // With a library: one call host for the whole check (one root scope, the check cap as its budget, children under .calls/).
+  const gw = sessionPort({ library, modelPort, models, workRoot: path.join(dir, '.calls'), capUsd, ledger, interpreter, callHost });
+  const svc = await startServices({ modelPort: gw.port, ledger, scoreLimit: 0, runId: `jit-check:${label}:${randomUUID()}`, allowedModels: gw.allowed, socketDir: path.join(dir, 'tools') });
   let r = null, error = null;
   try {
     writeAll(dir, { ...caseFiles(traces, regressions), 'solve.mjs': solveSource, 'tools/model.mjs': MODEL_TOOL, 'tools/flow.mjs': flowTool,
@@ -162,13 +181,14 @@ export async function hostCheck({ dir, solveSource, traces, regressions = [], mo
   const refs = [...regressions.map((x, i) => [`case-${i}`, x.caseId ?? null]), ...traces.map((t, i) => [`trace-${i}`, t.traceId ?? null])];
   const perCase = (summary?.perCase ?? []).map(c => ({ ...c, ref: Object.fromEntries(refs)[c.id] ?? null }));
   return { summary: summary && !summary.error ? { ...summary, perCase } : null, error, costUsd: ledger.spentUsd, calls: ledger.calls, unknownCalls: ledger.unknownCalls,
-    refusals: ledger.refusals, durationMs: r?.durationMs ?? null };
+    refusals: ledger.refusals, durationMs: r?.durationMs ?? null, ...(gw.host ? { callHost: gw.host.totals() } : {}) };
 }
 
 // runner: the session runner (tests wrap runClaudeCode to plant a stand-in CLI binary in the workdir).
 export async function compile({ familyId, traces, previous = null, regressions = [], builderModel = 'claude-haiku-5-5', builderEffort = 'high', builderBudgetUsd = 3,
   gatewayUsd = 1.5, minutes = 30, perTaskUsd = 1, modelPort, workRoot, label, models, version = 1, checkUsd = gatewayUsd, checkMinutes = 30, checkCaseSeconds = 600,
-  promptVersion = 1, compare = 'canonical', relTol, absTol, tolerantKeys, allowLooseTolerance, acceptance = 'named', minPartial, refusals = [], runner = runClaudeCode, acceptanceIds = 'exact', allowSharedExplanation = false }) {
+  promptVersion = 1, compare = 'canonical', relTol, absTol, tolerantKeys, allowLooseTolerance, acceptance = 'named', minPartial, refusals = [], runner = runClaudeCode, acceptanceIds = 'exact', allowSharedExplanation = false,
+  library = null, interpreter = null, callHost = {} }) {
   if (!Array.isArray(traces) || !traces.length) throw new Error('compile: at least one trace is required');
   // JIT v2.2 (opt-in): check-traces case ids (trace-<i>) whose input the current solver refused; see acceptance.mjs applyRefusals.
   if (!Array.isArray(refusals) || refusals.some(id => !/^trace-\d+$/.test(id) || Number(id.slice(6)) >= traces.length)) throw new Error('compile: refusals must be trace-<i> ids of the given traces');
@@ -192,11 +212,16 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const workdir = path.join(workRoot, label);
   rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
   const ledger = new Ledger({ capUsd: gatewayUsd, label });
+  // Slice 2a (opt-in): a library needs prompt version 5 (flow-v3; the builder is told about flow.call only there).
+  if (library && promptVersion < 5) throw new Error('compile: a library needs promptVersion 5 (flow-v3 and the flow.call prompt)');
+  const libraryIndex = libraryIndexOf(library);
+  const gw = sessionPort({ library, modelPort, models, workRoot: path.join(workdir, '.calls'), capUsd: gatewayUsd, ledger, interpreter, callHost });
   // No familyId and no probes: the gateway has no score route and no env route in this session.
-  const svc = await startServices({ modelPort, ledger, scoreLimit: 0, runId: `compile:${label}:${randomUUID()}`, allowedModels: models });
-  const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion, compare: cmp });
+  const svc = await startServices({ modelPort: gw.port, ledger, scoreLimit: 0, runId: `compile:${label}:${randomUUID()}`, allowedModels: gw.allowed });
+  const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion, compare: cmp, libraryIndex });
   const kind = previous ? 'recompile' : 'compile';
   const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models, promptVersion, ...(refusals.length ? { refusals } : {}),
+    ...(libraryIndex?.length ? { library: libraryIndex.length } : {}),
     ...(cmp ? { compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol, ...(cmp.tolerantKeys ? { tolerantKeys: cmp.tolerantKeys } : {}) } : {}), ...(acceptance === 'strict' ? { acceptance, minPartial } : {}),
     ...(acceptanceIds === 'structured' ? { acceptanceIds } : {}) });
   const started = Date.now();
@@ -214,7 +239,8 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const solvePath = path.join(workdir, 'solve.mjs'), solveSource = existsSync(solvePath) ? readFileSync(solvePath, 'utf8') : null;
   const notes = existsSync(path.join(workdir, 'BUILD-NOTES.md')) ? readFileSync(path.join(workdir, 'BUILD-NOTES.md'), 'utf8') : null;
   const check = solveSource
-    ? await hostCheck({ dir: path.join(workdir, '.host-check'), solveSource, traces, regressions, modelPort, models, capUsd: checkUsd, label, timeoutMs: checkMinutes * 60 * 1000, caseSeconds: checkCaseSeconds, promptVersion, compare: cmp })
+    ? await hostCheck({ dir: path.join(workdir, '.host-check'), solveSource, traces, regressions, modelPort, models, capUsd: checkUsd, label, timeoutMs: checkMinutes * 60 * 1000, caseSeconds: checkCaseSeconds, promptVersion, compare: cmp,
+      ...(library ? { library, interpreter, callHost } : {}) })
     : { summary: null, error: { code: 'NO_ARTIFACT' }, costUsd: 0, calls: 0, unknownCalls: 0, refusals: {}, durationMs: null };
   // v2.2: on refusal cases a deopt is acceptable and a different answer is not (applyRefusals); without refusals s is the summary.
   const { summary: s, refusalCheck } = applyRefusals(check.summary, refusals);
@@ -247,6 +273,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
     ...(acceptanceIds !== 'exact' ? { acceptanceIds } : {}), ...(allowSharedExplanation ? { allowSharedExplanation: true } : {}),
     ...(verdictsPromptVersionOf({ acceptanceIds }) ? { verdictsPromptVersion: verdictsPromptVersionOf({ acceptanceIds }) } : {}),
     promptSha256: sha(prompt), artifact: solveSource == null ? null : 'solve.mjs', artifactSha256,
+    ...(library ? { library: { entries: libraryIndex.length, indexSha256: sha(JSON.stringify(libraryIndex, null, 1)), builderCalls: gw.host.totals(), checkCalls: check.callHost ?? null } } : {}),
     builderCostUsd, builderCostReportedUsd: r.costUsd ?? null, builderCostUnknown: !!r.costUnknown, builderCostUpperUsd: r.costUpperUsd ?? null, builderBudgetUsd,
     builderUsage: r.usage ?? null, builderStreamUsage: r.streamUsage ?? null, builderSessionId: r.sessionId ?? null,
     gatewayCostUsd: ledger.spentUsd, gatewayCapUsd: ledger.capUsd, gatewayOvershootUsd: Math.max(0, ledger.spentUsd - ledger.capUsd), gatewayCalls: ledger.calls, gatewayErrors: ledger.errors,

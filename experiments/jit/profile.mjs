@@ -60,6 +60,21 @@
 // and the capitalised-word rule were written while reading the records and kinetics dev tasks, and PARAMS were set on
 // the same dev streams. eval-profiles.mjs --tune re-selects PARAMS across families; the design choices themselves can
 // only be tested on a family nobody looked at.
+//
+// Slice 2 (FLOW-V3-SLICE2.md §2; opt-in, so a profile learned with PARAMS is byte-identical to before): learnProfile(tasks,
+// PARAMS_V2) records params.observe = {jsonLines, looseLines}, which adds observations and changes none of the v1 ones:
+// - jsonLines: a string whose lines are JSON objects (JSON lines) is also walked field by field at `<path>⟨jl⟩.<key>`, with
+//   every per-path feature except enum values (values inside line text are not enum-checked, as for delimited lines);
+// - looseLines: per path, line-format and line-family maps of a tolerant line shape (looseLineShape: delimiters inside
+//   double quotes and thousands separators are not field delimiters, and a 'key=' label that holds a digit is a value,
+//   not a key), with a line count per signature, and a short single-line value that is a delimited record (one invoice
+//   line) is observed as a line too.
+// checkProfile(profile, task, opts) options beyond ignore: lineFormat 'tolerant' (needs observe.looseLines) checks the
+// loose maps with a line-weighted rate (the share of the value's lines whose signature is unseen, not of its distinct
+// signatures), and checks a single delimited record line at a line path as a line (no shape or class check);
+// vocabMinUnseen n (default 1) requires n unseen words before vocabulary novelty counts. TOLERANT_CHECK is the measured
+// preset (SIZE_FEATURES ignored, tolerant lines, vocabMinUnseen 2): R4 in-profile packs and planted packs in
+// FLOW-V3-SLICE2.md §2.
 
 export const PROFILE_SCHEMA = 'jit-profile/1';
 export const PARAMS = Object.freeze({
@@ -74,6 +89,10 @@ export const PARAMS = Object.freeze({
   caps: Object.freeze({ df: 20000, values: 64, promptValues: 200, examples: 4 }),
   fieldMax: 12, fieldsMax: 24, fieldLenMax: 32, fieldWordsMax: 3, headMax: 24, sentenceMax: 160,
 });
+// Slice 2 observation options (see the header). Absent from PARAMS, so a default profile keeps its bytes.
+export const OBSERVE_V2 = Object.freeze({ jsonLines: true, looseLines: true });
+export const PARAMS_V2 = Object.freeze({ ...PARAMS, observe: OBSERVE_V2 });
+export const JL = '⟨jl⟩';   // the path segment of JSON-lines records: inputs.invoices.VERITAS⟨jl⟩.issued
 
 // ------------------------------------------------------------------------------------------------ small helpers
 const sortDeep = v => {
@@ -168,6 +187,61 @@ export function lineShape(line) {
 }
 export const lineSig = line => lineShape(line).sig;
 
+// The tolerant line shape (observe.looseLines): as lineShape, except that delimiter characters inside double-quoted text
+// and thousands separators ('1,053,317', '53,423.00') do not cut fields, a 'key=' label that holds a digit ('dated 18
+// August 2024:') is a value field, not a key, and a field with digits keeps its shape (letters A, digit runs 9, as
+// shapeOf) instead of the coarse 'A9', with date-like tokens keeping their digit-group lengths (2024/10/25 -> ####/##/##).
+// A record line is a line this shape cuts into fields (or a JSON line).
+const QUOTED = /"[^"\n]*"/g, THOUSANDS = /(?<=(?:^|[^\d.,])\d{1,3}(?:,\d{3})*),(?=\d{3}(?!\d))/g, MASK = '\uE000';
+const DELIM_CHARS = /[,;|\t:]/g;
+// A date-like token (three digit groups joined by one of / . -) keeps its group lengths: 2024/10/25 -> 4/2/2, 25/10/2024 -> 2/2/4.
+const DATEISH = /(?<!\d)(\d{1,4})([/.-])(\d{1,2})\2(\d{1,4})(?!\d)/g;
+const dateShape = t => t.replace(DATEISH, (_, a, s, b, c) => `${"#".repeat(a.length)}${s}${"#".repeat(b.length)}${s}${"#".repeat(c.length)}`);
+const looseField = f => {
+  const raw = f.trim();
+  if (!raw) return '_';
+  const label = /^([\p{L}_][\p{L}\d_ -]{0,19})\s*[=:]/u.exec(raw);
+  if (label && !/\d/.test(label[1])) return `${label[1].trim()}=`;
+  // A field with digits (with or without letters) keeps its shape, date-like tokens with their digit-group lengths.
+  return /\d/.test(raw) || !/\p{L}/u.test(raw) ? shapeOf(dateShape(raw)).slice(0, PARAMS.fieldMax) : 'A';
+};
+export function looseLineShape(line) {
+  const t = line.trim();
+  if (/^[[{]/.test(t)) {
+    const v = tryJson(t);
+    if (v !== undefined) return { sig: `json:${jsonShape(v)}`, family: `json:${v && typeof v === 'object' ? Object.keys(v).length : typeOf(v)}`, record: true };
+  }
+  // Masked copy: same length, delimiters that are not field delimiters replaced by MASK (restored per field below).
+  const masked = t.replace(QUOTED, q => q.replace(DELIM_CHARS, MASK)).replace(THOUSANDS, MASK);
+  const m = /^[^\s\p{P}\p{S}]+/u.exec(t);
+  const tok = m ? m[0] : '';
+  const head = /^\p{L}+$/u.test(tok) ? tok.slice(0, PARAMS.headMax) : shapeOf(tok || t.slice(0, 1));
+  const rest = t.slice(tok.length).trim();
+  if (rest.startsWith('{')) {
+    const v = tryJson(rest);
+    if (v !== undefined) return { sig: `${head}~json:${jsonShape(v)}`, family: `${head}~json:${v && typeof v === 'object' ? Object.keys(v).length : typeOf(v)}`, record: true };
+  }
+  const median = xs => xs.sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+  const d = DELIMS.find(([s]) => {
+    const parts = masked.split(s);
+    if (parts.length < 3) return false;
+    return median(parts.map(x => x.trim().length)) <= PARAMS.fieldLenMax && median(parts.map(x => x.trim().split(/\s+/).filter(Boolean).length)) <= PARAMS.fieldWordsMax;
+  });
+  if (!d) return { sig: `${head}~text`, family: `${head}~text`, record: false };
+  // Cut the masked copy, then take each field's original characters (same offsets).
+  const fields = [];
+  let at = 0;
+  for (const part of masked.split(d[0])) { fields.push(looseField(t.slice(at, at + part.length))); at += part.length + d[0].length; }
+  const shown = fields.slice(0, PARAMS.fieldsMax).join('¦');
+  return { sig: `${head}~${d[1]}:${shown}${fields.length > PARAMS.fieldsMax ? `¦+${fields.length - PARAMS.fieldsMax}` : ''}`, family: `${head}~${d[1]}:${fields.length}`, record: true };
+}
+// JSON lines: at least half of the lines (and at least one) parse as JSON objects. Returns the parsed objects or null.
+function jsonLinesOf(lines) {
+  const objs = [];
+  for (const l of lines) if (l.startsWith('{')) { const v = tryJson(l); if (v && typeof v === 'object' && !Array.isArray(v)) objs.push(v); }
+  return objs.length && objs.length * 2 >= lines.length ? objs : null;
+}
+
 export const wordsOf = s => String(s).toLowerCase().match(/\p{L}{3,}/gu) ?? [];
 // Vocabulary words: lower-case-initial words of 3+ letters. Capitalised words (names, places, products, sentence starts)
 // are entity-like and change with every task, so they are left out of the vocabulary.
@@ -191,21 +265,30 @@ export function promptSentences(prompt, inputValues = []) {
 // One task's per-path aggregates (Sets inside; never stored as they are). Observation depends only on the task and the
 // fixed observation constants, never on a profile's params, so it is cached per task object (read-only for callers; a
 // task object must not be mutated after it was first observed).
+// The observation options (params.observe) also select a cache slot: a task observed for a v1 profile and for a v2 one is
+// observed twice.
 const OBS = new WeakMap();
-function observeCached(task) {
-  if (!task || typeof task !== 'object') return observe(task);
-  let o = OBS.get(task);
-  if (!o) { o = observe(task); OBS.set(task, o); }
+const observeKey = ob => (ob ? `jl${ob.jsonLines ? 1 : 0}ll${ob.looseLines ? 1 : 0}` : 'v1');
+function observeCached(task, ob = null) {
+  if (!task || typeof task !== 'object') return observe(task, ob);
+  let slots = OBS.get(task);
+  if (!slots) { slots = new Map(); OBS.set(task, slots); }
+  const k = observeKey(ob);
+  let o = slots.get(k);
+  if (!o) { o = observe(task, ob); slots.set(k, o); }
   return o;
 }
-function observe(task) {
+const count = (m, k) => m.set(k, (m.get(k) ?? 0) + 1);
+function observe(task, ob = null) {
   const t = taskView(task);
   const paths = new Map(), shortValues = new Set();
   const at = p => {
-    if (!paths.has(p)) paths.set(p, { types: new Set(), nums: [], ints: true, alens: [], slens: [], lineCounts: [], classes: new Set(), sigs: new Set(), values: new Map(), lineSigs: new Set(), lineFams: new Set(), vocab: new Set(), keys: new Set() });
+    if (!paths.has(p)) paths.set(p, { types: new Set(), nums: [], ints: true, alens: [], slens: [], lineCounts: [], classes: new Set(), sigs: new Set(), values: new Map(), lineSigs: new Set(), lineFams: new Set(), vocab: new Set(), keys: new Set(),
+      ...(ob?.looseLines ? { looseSigs: new Map(), looseFams: new Map(), recordShort: 0, plainShort: 0 } : {}) });
     return paths.get(p);
   };
-  const walk = (v, p, depth) => {
+  // inJl: inside a JSON-lines record (observe.jsonLines): no enum values and no prompt-masking values are taken there.
+  const walk = (v, p, depth, inJl = false) => {
     const o = at(p), ty = typeOf(v);
     o.types.add(ty);
     if (depth > 12) return;
@@ -215,20 +298,27 @@ function observe(task) {
       const lines = linesOf(v);
       if (v.length <= PARAMS.shortMax && lines.length <= 1) {
         o.classes.add(classOf(v)); o.sigs.add(shapeOf(v).slice(0, 32));
-        if (v.length <= PARAMS.enumMaxLen) o.values.set(v, (o.values.get(v) ?? 0) + 1);
-        if (v.trim().length >= 3 && v.length <= 64) shortValues.add(v.trim());
+        if (v.length <= PARAMS.enumMaxLen && !inJl) o.values.set(v, (o.values.get(v) ?? 0) + 1);
+        if (v.trim().length >= 3 && v.length <= 64 && !inJl) shortValues.add(v.trim());
       }
       if (lines.length >= PARAMS.linesMin) { o.lineCounts.push(lines.length); for (const l of lines) { const ls = lineShape(l); o.lineSigs.add(ls.sig); o.lineFams.add(ls.family); } }
+      if (ob?.looseLines && lines.length) {
+        // Line text is observed as lines; so is a value of one or two lines when each is a delimited record (a short list).
+        const shapes = lines.map(looseLineShape), asLines = lines.length >= PARAMS.linesMin || shapes.every(ls => ls.record);
+        if (asLines) for (const ls of shapes) { count(o.looseSigs, ls.sig); count(o.looseFams, ls.family); }
+        if (v.length <= PARAMS.shortMax && lines.length <= 1) { if (asLines) o.recordShort++; else o.plainShort++; }
+      }
+      if (ob?.jsonLines && lines.length) { const objs = jsonLinesOf(lines); if (objs) for (const x of objs) walk(x, `${p}${JL}`, depth + 1, true); }
       const words = wordsOf(v);
       if (words.length >= PARAMS.proseMinWords) for (const w of vocabOf(v)) o.vocab.add(w);
-    } else if (ty === 'array') { o.alens.push(v.length); for (const x of v) walk(x, `${p}[]`, depth + 1); }
+    } else if (ty === 'array') { o.alens.push(v.length); for (const x of v) walk(x, `${p}[]`, depth + 1, inJl); }
     else if (ty === 'object') {
       const keys = Object.keys(v);
       if (p === 'files' || keys.length > PARAMS.mapKeys) {
         o.types.delete('object'); o.types.add('map');
         o.alens.push(keys.length);
-        for (const k of keys) { o.keys.add(shapeOf(k).slice(0, 32)); walk(v[k], `${p}{}`, depth + 1); }
-      } else for (const k of keys) walk(v[k], p ? `${p}.${k}` : k, depth + 1);
+        for (const k of keys) { o.keys.add(shapeOf(k).slice(0, 32)); walk(v[k], `${p}{}`, depth + 1, inJl); }
+      } else for (const k of keys) walk(v[k], p ? `${p}.${k}` : k, depth + 1, inJl);
     }
   };
   if (t.inputs !== null) walk(t.inputs, 'inputs', 0);
@@ -268,7 +358,7 @@ export function emptyProfile(params = PARAMS) {
 export function widenProfile(profile, task) {
   const p = profile ? structuredClone(profile) : emptyProfile();
   if (p.schema !== PROFILE_SCHEMA) throw new Error(`profile: unsupported schema ${p.schema}`);
-  const obs = observeCached(task);
+  const obs = observeCached(task, p.params?.observe ?? null);
   p.n += 1;
   addDf(p.prompt, obs.prompt);
   for (const [path, o] of obs.paths) {
@@ -282,6 +372,11 @@ export function widenProfile(profile, task) {
     for (const [k, set] of [['classes', o.classes], ['sigs', o.sigs], ['lineSigs', o.lineSigs], ['lineFams', o.lineFams], ['vocab', o.vocab], ['keys', o.keys]]) {
       if (!set.size) continue;
       s[k] ??= emptyDf(); addDf(s[k], set);
+    }
+    // observe.looseLines: document frequency of the tolerant line shapes (the per-line counts are only for a check).
+    for (const [k, m] of [['lineSigsLoose', o.looseSigs], ['lineFamsLoose', o.looseFams]]) {
+      if (!m?.size) continue;
+      s[k] ??= emptyDf(); addDf(s[k], m.keys());
     }
     if (o.values.size) {
       if (!s.values) s.values = { df: {}, overflow: false };
@@ -310,6 +405,8 @@ const enumOf = (s, P) => {
 export const LEXICAL = new Set(['word', 'words', 'sentence', 'other', 'empty']);
 const isLexical = s => !!s.classes && Object.keys(s.classes.df).every(c => LEXICAL.has(c)) && !s.lines && !s.vocab;
 const parentOf = path => { const m = /^(.*?)(\[\]|\{\}|\.[^.[\]{}]+)$/.exec(path); return m ? m[1] : null; };
+// observe.jsonLines paths: '<path>⟨jl⟩' is a child of <path>, and a key segment never swallows the ⟨jl⟩ mark.
+const parentOfJl = path => { const m = /^(.*?)(\[\]|\{\}|⟨jl⟩|\.[^.[\]{}⟨⟩]+)$/u.exec(path); return m ? m[1] : null; };
 
 // Size features (how much input, not what kind): an ablation can ignore them (checkProfile opts.ignore) to see what the
 // content features alone detect. 'enum-ordinal' is an unseen member of a numbered id series (one more document, one more
@@ -319,17 +416,55 @@ export const SIZE_FEATURES = Object.freeze(['array-length', 'map-size', 'string-
 // A numbered-series value: non-digit prefix, one digit run, non-digit suffix ('D13' -> series 'D#', 13).
 export const ordinalOf = v => { const m = /^(\D*?)(\d+)(\D*)$/.exec(String(v)); return m ? { key: `${m[1]}#${m[3]}`, n: Number(m[2]) } : null; };
 
-// opts.ignore: feature names left out of the verdict, the reasons, near and score.
+// The measured tolerant preset (FLOW-V3-SLICE2.md §2): size features ignored, tolerant line formats, two unseen words
+// before vocabulary novelty counts. Needs a profile learned with PARAMS_V2 (observe.looseLines).
+export const TOLERANT_CHECK = Object.freeze({ ignore: SIZE_FEATURES, lineFormat: 'tolerant', vocabMinUnseen: 2 });
+export const LINE_FORMATS = Object.freeze(['exact', 'tolerant']);
+// Check options as a registry entry or a host may carry them: validated, defaults dropped (so {} is the v1 check).
+export function checkOptionsOf(opts) {
+  if (opts == null) return {};
+  if (typeof opts !== 'object' || Array.isArray(opts)) throw new Error('profile check options must be an object');
+  for (const k of Object.keys(opts)) if (!['ignore', 'lineFormat', 'vocabMinUnseen'].includes(k)) throw new Error(`profile check option ${k} is not supported (ignore, lineFormat, vocabMinUnseen)`);
+  const out = {};
+  if (opts.ignore != null) {
+    if (!Array.isArray(opts.ignore) || opts.ignore.some(f => typeof f !== 'string' || !f)) throw new Error('profile check option ignore must be a list of feature names');
+    if (opts.ignore.length) out.ignore = [...new Set(opts.ignore)].sort();
+  }
+  if (opts.lineFormat != null && !LINE_FORMATS.includes(opts.lineFormat)) throw new Error(`profile check option lineFormat must be one of ${LINE_FORMATS.join(', ')}`);
+  if (opts.lineFormat === 'tolerant') out.lineFormat = 'tolerant';
+  if (opts.vocabMinUnseen != null && !(Number.isInteger(opts.vocabMinUnseen) && opts.vocabMinUnseen >= 1)) throw new Error('profile check option vocabMinUnseen must be an integer >= 1');
+  if (opts.vocabMinUnseen > 1) out.vocabMinUnseen = opts.vocabMinUnseen;
+  return out;
+}
+// Whether a profile can be checked with these options (lineFormat 'tolerant' needs the loose line maps).
+export const profileSupports = (profile, opts = {}) => opts.lineFormat !== 'tolerant' || !!profile?.params?.observe?.looseLines;
+
+// opts.ignore: feature names left out of the verdict, the reasons, near and score. opts.lineFormat 'tolerant' and
+// opts.vocabMinUnseen: see the header (slice 2); at their defaults the check is the v1 check.
 export function checkProfile(profile, task, opts = {}) {
   const ignore = new Set(opts.ignore ?? []);
   if (!profile || profile.schema !== PROFILE_SCHEMA) throw new Error('checkProfile: not a profile');
-  const P = { ...PARAMS, ...profile.params }, ex = P.caps?.examples ?? 4;
-  const obs = observeCached(task), checks = [];
+  const P = { ...PARAMS, ...profile.params }, ex = P.caps?.examples ?? 4, ob = profile.params?.observe ?? null;
+  const tolerant = opts.lineFormat === 'tolerant', minWords = opts.vocabMinUnseen ?? 1;
+  if (tolerant && !ob?.looseLines) throw new Error("checkProfile: lineFormat 'tolerant' needs a profile learned with observe.looseLines (PARAMS_V2)");
+  const parentOf_ = ob?.jsonLines ? parentOfJl : parentOf;
+  const obs = observeCached(task, ob), checks = [];
   if (!profile.n) return { novel: true, score: 2, reasons: [{ feature: 'empty-profile', path: null, ratio: 2 }], near: [], n: 0 };
   const setCheck = (feature, path, m, items) => {
     if (!m || m.capped || !items.size) return;
     const unseen = [...items].filter(it => !Object.hasOwn(m.df, it)), rate = unseen.length / items.size, threshold = rateThreshold(m, P.rate);
     checks.push({ feature, path, rate: r3(rate), threshold: r3(threshold), unseen: unseen.length, of: items.size, examples: unseen.slice(0, ex).map(x => String(x).slice(0, 80)), ratio: r3(rate / threshold) });
+  };
+  // Line-weighted (lineFormat 'tolerant'): the share of the value's lines whose signature is unseen. One odd line in a
+  // long export moves it little; a re-rendered column moves every line.
+  const weightedCheck = (feature, path, m, counts) => {
+    if (!m || m.capped || !counts?.size) return;
+    let total = 0, bad = 0;
+    const unseen = [];
+    for (const [it, c] of counts) { total += c; if (!Object.hasOwn(m.df, it)) { bad += c; unseen.push(it); } }
+    const rate = bad / total, threshold = rateThreshold(m, P.rate);
+    checks.push({ feature, path, rate: r3(rate), threshold: r3(threshold), unseen: unseen.length, of: counts.size, lines: total, unseenLines: bad, weighted: true,
+      examples: unseen.slice(0, ex).map(x => String(x).slice(0, 80)), ratio: r3(rate / threshold) });
   };
   const rangeCheck = (feature, path, r, xs, margin) => {
     if (!r || !xs.length) return;
@@ -340,7 +475,7 @@ export function checkProfile(profile, task, opts = {}) {
   for (const [path, o] of obs.paths) {
     const s = profile.paths[path];
     if (!s) {
-      const parent = parentOf(path);
+      const parent = parentOf_(path);
       if (!parent || profile.paths[parent]) checks.push({ feature: 'new-path', path, types: [...o.types].sort(), ratio: 2 });
       continue;
     }
@@ -355,10 +490,14 @@ export function checkProfile(profile, task, opts = {}) {
       if (formats.length) checks.push({ feature: 'pattern-class', path, unseen: formats.sort(), seen: Object.keys(s.classes.df).sort(), note: 'a free-text path now carries a format class', ratio: 2 });
     } else rangeCheck('string-length', path, s.slen, o.slens, r => countMargin(r, P.countMargin));
     rangeCheck('line-count', path, s.lines, o.lineCounts, r => countMargin(r, P.countMargin));
-    if (!lexical) { setCheck('pattern-class', path, s.classes, o.classes); setCheck('shape', path, s.sigs, o.sigs); }
-    setCheck('line-family', path, s.lineFams, o.lineFams);
-    setCheck('line-format', path, s.lineSigs, o.lineSigs);
+    // Tolerant: a short value that is one delimited record, at a path whose values were line lists, is a list of one line:
+    // checked as a line below, not by shape or pattern class.
+    const oneRecord = tolerant && o.recordShort > 0 && o.plainShort === 0 && !!s.lineSigsLoose;
+    if (!lexical && !oneRecord) { setCheck('pattern-class', path, s.classes, o.classes); setCheck('shape', path, s.sigs, o.sigs); }
+    if (tolerant) { weightedCheck('line-family', path, s.lineFamsLoose, o.looseFams); weightedCheck('line-format', path, s.lineSigsLoose, o.looseSigs); }
+    else { setCheck('line-family', path, s.lineFams, o.lineFams); setCheck('line-format', path, s.lineSigs, o.lineSigs); }
     setCheck('vocabulary', path, s.vocab, o.vocab);
+    if (minWords > 1) { const v = checks.at(-1); if (v?.feature === 'vocabulary' && v.path === path && v.unseen < minWords && v.ratio > 1) { v.ratio = 1; v.belowMinUnseen = minWords; } }
     setCheck('map-keys', path, s.keys, o.keys);
     const en = enumOf(s, P);
     if (en && o.values.size) {
@@ -376,7 +515,7 @@ export function checkProfile(profile, task, opts = {}) {
   // Paths every profiled task had, absent now (top-most only: the parent is present in this task).
   for (const [path, s] of Object.entries(profile.paths)) {
     if (s.tasks < profile.n || obs.paths.has(path)) continue;
-    const parent = parentOf(path);
+    const parent = parentOf_(path);
     if (!parent || obs.paths.has(parent)) checks.push({ feature: 'missing-path', path, ratio: 2 });
   }
   for (let i = checks.length - 1; i >= 0; i--) if (ignore.has(checks[i].feature)) checks.splice(i, 1);

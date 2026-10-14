@@ -39,6 +39,8 @@ export const RUNGS = {
     necessity: 'none by design (W-BED §2.4 item 3: nesting never changes correctness); R4 is measured on construction cost through reuse (curriculum CUR - ISO, bed scoreReuse)' },
   r5: { family: 'wbed-r5', expect: 'fail', gate: ONE_CALL_GATE,
     necessity: 'the best workflow without the agent node: the R4 reference plus code parsers for the dev formats only (fixed-width, code-page, jsonl-versions, monthly-csv; bed necessityControls necessity:dev-parsers-only) must fail >= 50% of attack seeds; by construction it fails every task whose seed mod 3 != 0 at d2-d4 and every d5 task (attack seeds 379-390 at d3: 8/12)' },
+  r6: { family: 'wbed-r6', expect: 'fail', gate: ONE_CALL_GATE,
+    necessity: 'the best workflow without the plan: the reference workers over a fixed entity list taken from the inputs (the register\'s compounds registered by the lab; bed necessityControls necessity:no-plan-fixed-list) must fail >= 50% of attack seeds; by construction it misses >= 2 in-scope compounds on every task. The B6 comparison controls (best-of-n:equal-tokens, sequential-single-context, no-workflow:grep-agent at d >= 3) are size and retrieval stand-ins, not the paid best_of_n arm' },
 };
 export const MODEL = 'claude-haiku-5-5';
 export const ATTACK_SEEDS = Array.from({ length: 12 }, (_, i) => 379 + i); // W-BED §8 wbed-attack (dev 379-390)

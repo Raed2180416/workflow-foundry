@@ -21,6 +21,23 @@
 // in this run) and parent = the enclosing span ('root' at top level). Inside a call scope (tools/flow-scope.json, written
 // by the host), every event of the child also carries span and parent of its scope.
 //
+// Slice 2a (research/jit-20261008/design/FLOW-V3-SLICE2.md):
+//   const r = await flow.call(hash, input, {
+//     name: 'S2', budgetUsd: 0.25,
+//     prompt: subTask.prompt,                            // the child task's prompt (default: the entry's contract.taskTemplate)
+//     onRefuse: 'interpret',                             // 'deopt' (default) | 'interpret' | 'skip' (return {refused, detail}; 'value' is an alias)
+//     onDeopt: 'propagate',                              // 'propagate' (default) | 'interpret' | 'skip' (return {deopt, status}; 'value' is an alias)
+//   });
+// 'interpret' is FLOW-V3 §1.5 local deopt: the host's interpreter solves the child task alone under the call's carved budget
+// and its typed answer is returned in place of the child's (event interpret-child, localDeopt: true); only an outside-profile
+// or revoked refusal can be interpreted, and a refusal the host could not interpret deopts the caller (kind call). A host in
+// novelMode 'warn' runs an outside-profile call and its call-end carries profileWarning. A budget that is not strictly below
+// what remains is refused BUDGET_TREE (with the shortfall) when the run's children in flight hold the difference, else
+// budget-exceeds-parent.
+//   const rows = await flow.phase('extract', async () => { ... });   // a named run stage: phase-start / phase-end span events
+// (span 'phase:<name>#<n>', parent: the enclosing phase or scope); every event inside the phase carries phase: <its span>.
+// A solver that uses neither gets exactly the flow-v2 trace.
+//
 // The flow-v2 header follows; everything in it holds for flow-v3.
 //
 //   import { createFlow } from './tools/flow.mjs';
@@ -53,6 +70,7 @@
 // is a crash (an uncaught exception exits 1). Every event is one JSON line in ./trace.jsonl: {at, kind, name, ...}.
 import { readFileSync, writeFileSync, appendFileSync, rmSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { callModel } from './model.mjs';
 
 export const DEOPT_EXIT = 75;
@@ -83,7 +101,11 @@ export const requestDigest = request => sha(canonical(request));
 // flow-v3: a call's idempotency key (calleeHash, inputDigest, parentSpanPath), as the host (call-host.mjs callKeyOf)
 // computes it. inputDigest is the full sha256 of the input's canonical JSON.
 export const inputDigestOf = input => sha(canonical(input));
-export const callKeyOf = ({ callee, inputDigest, parentPath }) => sha(canonical({ callee, inputDigest, parentPath }));
+export const callKeyOf = ({ callee, inputDigest, parentPath, promptDigest }) => sha(canonical({ callee, inputDigest, parentPath, promptDigest }));
+// Slice 2a: a per-call prompt joins the key as its full sha256 (call-host.mjs promptDigestOf); without one the key is slice 1's.
+export const promptDigestOf = prompt => (typeof prompt === 'string' ? sha(prompt) : undefined);
+const ON_REFUSE = { deopt: 'deopt', interpret: 'interpret', skip: 'skip', value: 'skip' };
+const ON_DEOPT = { propagate: 'propagate', interpret: 'interpret', 'interpret-child': 'interpret', skip: 'skip', value: 'skip' };
 const usd = x => Math.round(x * 1e6) / 1e6;
 const short = (v, n = 300) => String(v?.message ?? v).slice(0, n);
 // A detail object in deopt.json and the trace stays small; a long one keeps its head.
@@ -105,7 +127,8 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     guards: {}, invariants: {}, judges: 0, flags: 0, flagNames: [], task: undefined };
   // A fresh trace per run; a stale deopt.json from an earlier run in the same directory must not be read as this run's.
   try { writeFileSync(TRACE, ''); rmSync(DEOPT, { force: true }); } catch {}
-  const sub = { n: 0, reservedUsd: 0, ordinals: new Map() };   // flow-v3 calls: count, budget held by calls in flight, span ordinals
+  const sub = { n: 0, reservedUsd: 0, inFlight: 0, ordinals: new Map(), interpreted: 0 };   // flow-v3 calls: count, budget held by calls in flight, span ordinals
+  const phases = { n: 0, ordinals: new Map(), als: new AsyncLocalStorage() };   // flow-v3 phases: count, span ordinals, the current phase
   let seen = 0;   // bytes of calls.jsonl already charged
   try { seen = readFileSync(CALLS).length; } catch {}
 
@@ -114,12 +137,15 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
   function event(e) {
     if (state.events >= MAX_EVENTS && !['done', 'deopt', 'crash'].includes(e.kind)) { state.dropped++; return; }
     state.events++;
-    const line = scope && e.span === undefined ? { at: new Date().toISOString(), ...e, span: scope.span, parent: scope.parent ?? null } : { at: new Date().toISOString(), ...e };
+    const ph = phases.n ? phases.als.getStore() : undefined;
+    const base = ph && e.phase === undefined ? { ...e, phase: ph.span } : e;
+    const line = scope && base.span === undefined ? { at: new Date().toISOString(), ...base, span: scope.span, parent: scope.parent ?? null } : { at: new Date().toISOString(), ...base };
     try { appendFileSync(TRACE, JSON.stringify(line) + '\n'); } catch {}
   }
   const totals = () => ({ spentUsd: usd(state.spentUsd), calls: state.calls, unknownCostCalls: state.unknownCostCalls, judges: state.judges,
     guards: state.guards, invariants: state.invariants, ms: Date.now() - state.started, ...(state.dropped ? { droppedEvents: state.dropped } : {}),
-    ...(state.flags ? { flags: state.flags, flagNames: state.flagNames } : {}), ...(sub.n ? { childCalls: sub.n } : {}) });
+    ...(state.flags ? { flags: state.flags, flagNames: state.flagNames } : {}), ...(sub.n ? { childCalls: sub.n } : {}), ...(sub.interpreted ? { interpretedChildren: sub.interpreted } : {}),
+    ...(phases.n ? { phases: phases.n } : {}) });
 
   // An uncertainty mark (a decision taken on weak evidence). It is counted in the totals and traced; it never throws,
   // and never changes the output or the exit code.
@@ -274,38 +300,52 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
     },
 
     // flow-v3: a nested compiled workflow by library hash, run by the host (see the header). Returns the callee's typed
-    // output; on a refusal or a child deopt it deopts this run with kind 'call', or returns {refused, detail} /
-    // {deopt, status} to the caller's code when onRefuse / onDeopt is 'value' (the caller's fallback).
+    // output (or, with onRefuse/onDeopt 'interpret', the interpreter's typed answer for the child task); on a refusal or a
+    // child deopt it deopts this run with kind 'call', or returns {refused, detail} / {deopt, status} to the caller's code
+    // when onRefuse / onDeopt is 'skip' (alias 'value': the caller's fallback).
     async call(ref, input, opts = {}) {
       const callee = typeof ref === 'string' ? ref : ref?.hash, name = opts?.name ?? opts?.label;
       if (typeof callee !== 'string' || !callee) throw new Error('flow.call: ref must be a library hash or { hash }');
       if (typeof name !== 'string' || !name) throw new Error(`flow.call(${callee.slice(0, 24)}): opts.name (the span name) is required`);
-      const { budgetUsd: childUsd, timeoutMs = 120000, onDeopt = 'propagate', onRefuse = 'deopt' } = opts;
+      const { budgetUsd: childUsd, timeoutMs = 120000, prompt } = opts;
+      const onDeopt = ON_DEOPT[opts.onDeopt ?? 'propagate'], onRefuse = ON_REFUSE[opts.onRefuse ?? 'deopt'];
       if (typeof childUsd !== 'number' || !(childUsd > 0)) throw new Error(`flow.call(${name}): budgetUsd must be a positive number`);
       if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) throw new Error(`flow.call(${name}): timeoutMs must be a positive integer`);
-      if (!['propagate', 'value'].includes(onDeopt)) throw new Error(`flow.call(${name}): onDeopt must be 'propagate' or 'value' ('interpret-child' is not in slice 1)`);
-      if (!['deopt', 'value'].includes(onRefuse)) throw new Error(`flow.call(${name}): onRefuse must be 'deopt' or 'value'`);
+      if (!onDeopt) throw new Error(`flow.call(${name}): onDeopt must be 'propagate', 'interpret' or 'skip'`);
+      if (!onRefuse) throw new Error(`flow.call(${name}): onRefuse must be 'deopt', 'interpret' or 'skip'`);
+      if (prompt !== undefined && typeof prompt !== 'string') throw new Error(`flow.call(${name}): prompt must be a string`);
       if (JSON.stringify(input) === undefined) throw new Error(`flow.call(${name}): input must be JSON`);
       // The span id is fixed before the first await, so concurrent calls (inside map) get ordinals in call order.
       const ordinal = sub.ordinals.get(name) ?? 0; sub.ordinals.set(name, ordinal + 1);
       const span = `call:${name}#${ordinal}`, parent = scope?.span ?? ROOT_SPAN, parentPath = scope?.path ?? ROOT_SPAN, depth = (scope?.depth ?? 0) + 1;
-      const inputDigest = inputDigestOf(input), key = callKeyOf({ callee, inputDigest, parentPath }), t0 = Date.now();
+      const promptDigest = promptDigestOf(prompt);
+      const inputDigest = inputDigestOf(input), key = callKeyOf({ callee, inputDigest, parentPath, promptDigest }), t0 = Date.now();
       sub.n++;
-      event({ kind: 'call-start', name, span, parent, callee, inputDigest, budgetUsd: childUsd, depth, key });
+      event({ kind: 'call-start', name, span, parent, callee, inputDigest, ...(promptDigest ? { promptDigest } : {}), budgetUsd: childUsd, depth, key,
+        ...(opts.onRefuse === 'interpret' || onDeopt === 'interpret' ? { localDeopt: { onRefuse, onDeopt } } : {}) });
       const end = (kind, extra) => event({ kind, name, span, parent, callee, ...extra, ms: Date.now() - t0 });
       const refuse = (refused, detail, extra = { spentUsd: 0, reservedUsd: 0 }) => {
         end('call-refused', { ok: false, refused, detail: clip(detail ?? null, 1000), ...extra });
-        if (onRefuse === 'value') return { refused, detail: detail ?? null };
+        if (onRefuse === 'skip') return { refused, detail: detail ?? null };
+        // 'deopt', or 'interpret' that the host could not honour (not an applicability refusal, no budget, no interpreter).
         deopt('call', name, { callee, refused, detail: detail ?? null });
       };
-      // The SDK's own check (as judge checks the soft budget): a child reservation is strictly below what remains.
+      // The SDK's own check (as judge checks the soft budget): a child reservation is strictly below what remains, where
+      // remaining already holds back the reservations of this run's calls in flight.
       const remaining = budgetUsd - state.spentUsd - sub.reservedUsd;
-      if (!(childUsd < remaining)) return refuse('budget-exceeds-parent', { budgetUsd: childUsd, remainingUsd: usd(remaining) }, { by: 'sdk', spentUsd: 0, reservedUsd: 0 });
-      sub.reservedUsd += childUsd;
+      if (!(childUsd < remaining)) {
+        if (sub.inFlight > 0 && childUsd < remaining + sub.reservedUsd) {
+          return refuse('BUDGET_TREE', { budgetUsd: childUsd, remainingUsd: usd(remaining), shortfallUsd: usd(childUsd - remaining), inFlight: sub.inFlight, reservedInFlightUsd: usd(sub.reservedUsd),
+            parentBudgetUsd: budgetUsd, parentSpentUsd: usd(state.spentUsd) }, { by: 'sdk', spentUsd: 0, reservedUsd: 0 });
+        }
+        return refuse('budget-exceeds-parent', { budgetUsd: childUsd, remainingUsd: usd(remaining) }, { by: 'sdk', spentUsd: 0, reservedUsd: 0 });
+      }
+      sub.reservedUsd += childUsd; sub.inFlight++;
       let r = null, error = null;
       try {
-        r = await callModel({ model: CALL_MODEL, prompt: JSON.stringify({ v: CALL_PROTOCOL, op: 'call', callee, input, name, span, parent, budgetUsd: childUsd, timeoutMs, key }), schema: { type: 'object' } });
-      } catch (e) { error = short(e); } finally { sub.reservedUsd = Math.max(0, sub.reservedUsd - childUsd); }
+        r = await callModel({ model: CALL_MODEL, prompt: JSON.stringify({ v: CALL_PROTOCOL, op: 'call', callee, input, name, span, parent, budgetUsd: childUsd, timeoutMs, key,
+          ...(prompt !== undefined ? { prompt } : {}), ...(onRefuse !== 'deopt' ? { onRefuse } : {}), ...(onDeopt !== 'propagate' ? { onDeopt } : {}) }), schema: { type: 'object' } });
+      } catch (e) { error = short(e); } finally { sub.reservedUsd = Math.max(0, sub.reservedUsd - childUsd); sub.inFlight--; }
       const cost = usd(charge());
       if (error != null) {
         // The gateway refused the request for budget: this run's own budget is spent, as for a judge.
@@ -315,17 +355,41 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
         }
         const d = { kind: 'host-error', name, detail: error };
         end('call-deopt', { ok: false, status: 'host-error', deopt: { kind: d.kind, name }, detail: error, spentUsd: cost, reservedUsd: childUsd });
-        if (onDeopt === 'value') return { deopt: d, status: 'host-error' };
+        if (onDeopt === 'skip') return { deopt: d, status: 'host-error' };
         deopt('call', name, { callee, status: 'host-error', child: d });
       }
       const common = { spentUsd: cost, reservedUsd: childUsd, ...(r?.calleeVersion != null ? { calleeVersion: r.calleeVersion } : {}),
-        ...(r?.childTrace ? { childTrace: r.childTrace, childTraceSha256: r.childTraceSha256 ?? null } : {}), ...(r?.memo ? { memo: r.memo } : {}) };
+        ...(r?.childTrace ? { childTrace: r.childTrace, childTraceSha256: r.childTraceSha256 ?? null } : {}), ...(r?.memo ? { memo: r.memo } : {}),
+        ...(r?.warning ? { profileWarning: clip(r.warning, 1000) } : {}) };
+      // A locally interpreted child (FLOW-V3 §1.5): the host's interpreter answered in place of the refused or deopted callee.
+      const local = r?.interpreted && typeof r.interpreted === 'object' ? { localDeopt: true, interpreted: clip(r.interpreted, 600), ...(r.refused ? { refused: String(r.refused) } : {}),
+        ...(r.status === 'interpreted' && r.deopt ? { replaced: { kind: r.deopt.kind, name: r.deopt.name ?? null } } : {}) } : null;
       if (r?.status === 'ok') { end('call-end', { ok: true, outDigest: digest(r.output), ...common }); return r.output; }
+      if (r?.status === 'interpreted') { sub.interpreted++; end('interpret-child', { ok: true, outDigest: digest(r.output), ...local, ...common }); return r.output; }
       if (r?.status === 'refused') return refuse(String(r.refused), r.detail ?? null, common);
       const d = r?.deopt && typeof r.deopt === 'object' ? r.deopt : { kind: 'unknown', name: null, detail: 'the host answered without a status' };
-      end('call-deopt', { ok: false, status: String(r?.status ?? 'unknown'), deopt: { kind: d.kind, name: d.name ?? null }, detail: clip(d.detail ?? null, 1000), ...common });
-      if (onDeopt === 'value') return { deopt: d, status: r?.status ?? 'unknown' };
+      end(local ? 'interpret-child' : 'call-deopt', { ok: false, status: String(r?.status ?? 'unknown'), deopt: { kind: d.kind, name: d.name ?? null }, detail: clip(d.detail ?? null, 1000), ...(local ?? {}), ...common });
+      if (onDeopt === 'skip') return { deopt: d, status: r?.status ?? 'unknown' };
       deopt('call', name, { callee, status: r?.status ?? 'unknown', child: { kind: d.kind, name: d.name ?? null, detail: clip(d.detail ?? null, 1000) } });
+    },
+
+    // flow-v3 slice 2a: a named run stage (Managed Agents workflow_run.phase_started/ended). Runs fn and returns its result;
+    // phase-start / phase-end carry span 'phase:<name>#<n>' (ordinal per name, fixed before the first await) and parent (the
+    // enclosing phase, else the call scope, else 'root'); every event emitted inside fn (also across awaits and inside map)
+    // carries phase: <span>. A throw inside fn ends the phase with ok: false and is rethrown; a deopt ends the run as usual.
+    async phase(name, fn) {
+      if (typeof name !== 'string' || !name) throw new Error('flow.phase: a name is required');
+      if (typeof fn !== 'function') throw new Error(`flow.phase(${name}): fn must be a function`);
+      const ordinal = phases.ordinals.get(name) ?? 0; phases.ordinals.set(name, ordinal + 1);
+      phases.n++;
+      const outer = phases.als.getStore(), span = `phase:${name}#${ordinal}`, parent = outer?.span ?? scope?.span ?? ROOT_SPAN;
+      const t0 = Date.now(), spent0 = state.spentUsd, calls0 = state.calls;
+      // Both events are emitted outside the new phase's context, so they carry the enclosing phase (if any) as phase.
+      event({ kind: 'phase-start', name, span, parent });
+      const close = (ok, error) => event({ kind: 'phase-end', name, span, parent, ok, spentUsd: usd(state.spentUsd - spent0), calls: state.calls - calls0, ms: Date.now() - t0,
+        ...(error ? { error: short(error) } : {}) });
+      try { const v = await phases.als.run({ span }, fn); close(true); return v; }
+      catch (error) { close(false, error); throw error; }
     },
 
     // A free-form trace event (what the solver decided and why), e.g. flow.note('systems', { names }).

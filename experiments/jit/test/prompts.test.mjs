@@ -93,9 +93,9 @@ test('prompt v3 states the comparison it is given: exact numbers at 0/0, the tol
 });
 
 test('an unknown promptVersion is refused', () => {
-  assert.deepEqual([...PROMPT_VERSIONS], [1, 2, 3, 4]);
+  assert.deepEqual([...PROMPT_VERSIONS], [1, 2, 3, 4, 5]);   // slice 2a: version 5 (flow-v3)
   assert.equal(promptVersionOf({}), 1); assert.equal(promptVersionOf({ promptVersion: 2 }), 2);
-  for (const bad of [0, 5, '2', 1.5, 'v2']) assert.throws(() => builderPrompt('compile', { ...A, promptVersion: bad }), /promptVersion must be one of 1, 2, 3, 4/);
+  for (const bad of [0, 6, '2', 1.5, 'v2']) assert.throws(() => builderPrompt('compile', { ...A, promptVersion: bad }), /promptVersion must be one of 1, 2, 3, 4, 5/);
 });
 
 // S0-6 (opt-in): acceptanceIds 'structured' appends the verdicts.json instructions; any other value moves no pinned text.

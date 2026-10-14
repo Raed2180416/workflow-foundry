@@ -24,6 +24,9 @@ import { promptVersionOf, flowFileOf } from './prompts.mjs';
 import { tolerantEqual, tolerance } from './compare.mjs';
 import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals, acceptanceIdsOf, readVerdicts, VERDICTS_FILE } from './acceptance.mjs';
 import { requestDigestOf, looseDigestOf } from './run-compiled.mjs';
+import { Ledger } from '../lib/services.mjs';
+import { createRegistry, createCallHost, withCallModel, HARD_MAX_DEPTH, DEFAULT_MAX_DEPTH, DEFAULT_INTERPRET_FLOOR_USD, NOVEL_MODES, REGISTRY_FILE } from './call-host.mjs';
+import { learnProfile, checkOptionsOf, PARAMS_V2, TOLERANT_CHECK } from './profile.mjs';
 import { assertSeedsAllowed, defaultPurpose, loadLedger } from './seeds.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url))), HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -88,6 +91,20 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //     are answered from first, at $0, with live calls for misses (replayPort below). Set, it defines a new JIT arm.
 //   armSpendStopUsd (default unset; not hashed): {<arm spec>: dollars}, a per-arm spend stop beside spendStopUsd.
 //   _blocked (any value): the config is refused until it is removed; an explicit null tolerance is refused too.
+//   library (default unset: no library; FLOW-V3-SLICE2 §3–§4, slice 2a): {mode: 'cur' | 'iso', childBudgetUsd, concurrency,
+//     parentMarginUsd, from?, maxDepth?, check?, novelMode?, interpretFloorUsd?, register?}. Needs compile.promptVersion 5
+//     (flow-v3). A JIT arm keeps a library registry at <armDir>/library/ (call-host.mjs createRegistry): 'iso' wipes it when
+//     the arm starts fresh (no recorded row); 'cur' keeps it, and seeds a fresh one from `from` ('{slug}' = the arm slug,
+//     relative to the run root: the previous rung's '<experiment>/{slug}/library'). Every adopted, accepted version is
+//     registered (solve bytes, contract {input: null, output: the bed's outputSchema, taskTemplate: the newest trace's
+//     prompt}, profile = learnProfile(its compile traces, PARAMS_V2), checkOptions = check (default profile.mjs
+//     TOLERANT_CHECK), novelMode (default 'refuse'), evidence). Every compiled run gets a call host over the registry
+//     (maxDepth default 3; the arm's interpreter answers onRefuse/onDeopt 'interpret' at interpretFloorUsd, default $0.10),
+//     a gateway Ledger it holds child reservations on, and withCallModel(models); host events go to <armDir>/calls.jsonl
+//     (childId = the call's name), its journal to calls-journal.jsonl, and the row gains calls (host totals). The builder
+//     sees library/index.json and its runs and host check call through a host too (compile.mjs). The budget rule is
+//     validated: perTaskUsd >= concurrency × childBudgetUsd + parentMarginUsd (parentMarginUsd > 0), so the reservations of
+//     `concurrency` children in flight stay strictly below the parent's budget. Set, it defines a new JIT arm.
 //   jit.shadowFloor (number in [0, 1]; default unset: the shadowEvery schedule): on every compiled ok, a seeded draw
 //     u = shadowDrawOf(jit.shadowSeed, idx) shadows the row iff u < shadowFloor; it replaces the periodic schedule, so
 //     jit.shadowEvery with it is refused. Flag-triggered shadows (shadowOnFlags) still fire. jit.shadowSeed (default
@@ -145,6 +162,35 @@ function armCapsOf(raw) {
     if (typeof usd !== 'number' || !Number.isFinite(usd) || usd <= 0) throw new Error(`config.armSpendStopUsd.${spec} must be a positive number of dollars`);
   }
   return { ...caps };
+}
+
+// Slice 2a: the library option, normalized (defaults written out, so spelling them changes no hash) and the stream budget
+// rule checked: perTaskUsd >= concurrency × childBudgetUsd + parentMarginUsd, with parentMarginUsd > 0 (the reservations of
+// the children in flight must stay strictly below the parent's budget, FLOW-V3 §1.3). null when the config has none.
+export const LIBRARY_MODES = Object.freeze(['cur', 'iso']);
+export function libraryOf(raw, { perTaskUsd = 1, promptVersion = 1 } = {}) {
+  const L = raw?.library;
+  if (L == null) return null;
+  if (typeof L !== 'object' || Array.isArray(L)) throw new Error('config.library must be an object');
+  const KEYS = ['mode', 'from', 'childBudgetUsd', 'concurrency', 'parentMarginUsd', 'maxDepth', 'check', 'novelMode', 'interpretFloorUsd', 'register'];
+  for (const k of Object.keys(L)) if (!KEYS.includes(k)) throw new Error(`config.library.${k} is not supported (${KEYS.join(', ')})`);
+  if (!LIBRARY_MODES.includes(L.mode)) throw new Error(`config.library.mode must be one of ${LIBRARY_MODES.join(', ')}`);
+  if (L.from != null && (typeof L.from !== 'string' || !L.from.trim() || L.mode !== 'cur')) throw new Error("config.library.from must be a path template, and only with mode 'cur'");
+  if (promptVersion < 5) throw new Error('config.library needs compile.promptVersion 5 (flow-v3: the builder learns flow.call only there)');
+  const pos = (k, v) => { if (typeof v !== 'number' || !Number.isFinite(v) || !(v > 0)) throw new Error(`config.library.${k} must be a positive number of dollars`); return v; };
+  const childBudgetUsd = pos('childBudgetUsd', L.childBudgetUsd), parentMarginUsd = pos('parentMarginUsd', L.parentMarginUsd);
+  if (!Number.isInteger(L.concurrency) || L.concurrency < 1) throw new Error('config.library.concurrency must be an integer >= 1 (the most child calls in flight at once)');
+  const need = L.concurrency * childBudgetUsd + parentMarginUsd;
+  if (perTaskUsd + 1e-9 < need) throw new Error(`config.library: perTaskUsd ${perTaskUsd} is below concurrency × childBudgetUsd + parentMarginUsd = ${L.concurrency} × ${childBudgetUsd} + ${parentMarginUsd} = ${round(need)} (the stream budget rule, FLOW-V3-SLICE2 §3)`);
+  const maxDepth = L.maxDepth ?? DEFAULT_MAX_DEPTH;
+  if (!Number.isInteger(maxDepth) || maxDepth < 1 || maxDepth > HARD_MAX_DEPTH) throw new Error(`config.library.maxDepth must be an integer in 1..${HARD_MAX_DEPTH}`);
+  const novelMode = L.novelMode ?? 'refuse';
+  if (!NOVEL_MODES.includes(novelMode)) throw new Error(`config.library.novelMode must be one of ${NOVEL_MODES.join(', ')}`);
+  const interpretFloorUsd = L.interpretFloorUsd ?? DEFAULT_INTERPRET_FLOOR_USD;
+  if (typeof interpretFloorUsd !== 'number' || !(interpretFloorUsd >= 0)) throw new Error('config.library.interpretFloorUsd must be a number >= 0');
+  if (L.register != null && typeof L.register !== 'boolean') throw new Error('config.library.register must be true or false');
+  return { mode: L.mode, ...(L.from ? { from: L.from } : {}), childBudgetUsd, concurrency: L.concurrency, parentMarginUsd, maxDepth, check: checkOptionsOf(L.check ?? TOLERANT_CHECK), novelMode,
+    interpretFloorUsd, register: L.register ?? true };
 }
 
 export function normalizeConfig(raw, { ledger = null } = {}) {
@@ -220,8 +266,10 @@ export function normalizeConfig(raw, { ledger = null } = {}) {
   if (compile.allowSharedExplanation && compile.acceptance !== 'strict') throw new Error('config.compile.allowSharedExplanation needs compile.acceptance \'strict\'');
   if (!compile.allowSharedExplanation) delete compile.allowSharedExplanation;
   const armSpendStopUsd = armCapsOf(raw);
+  const library = libraryOf(raw, { perTaskUsd: raw.perTaskUsd ?? 1, promptVersion: compile.promptVersion ?? 1 });
+  const { library: _rawLibrary, ...rest } = raw;
   return {
-    ...raw, segments, jit, compile,
+    ...rest, segments, jit, compile, ...(library ? { library } : {}),
     perTaskUsd: raw.perTaskUsd ?? 1, agentBudgetUsd: raw.agentBudgetUsd ?? 1, agentMinutes: raw.agentMinutes ?? 15, agentEffort: raw.agentEffort ?? null,
     compiledMinutes: raw.compiledMinutes ?? 20, concurrency: raw.concurrency ?? 3, staticFallback: raw.staticFallback ?? STATIC_FALLBACK,
     gatewayModels: raw.gatewayModels ?? [...POLICY_MODELS], spendStopUsd: raw.spendStopUsd ?? null,
@@ -255,7 +303,7 @@ export function parseArm(spec, config, { policyIds = null } = {}) {
   const def = { spec, familyId: config.familyId, split: config.split, perTaskUsd: config.perTaskUsd, agentBudgetUsd: config.agentBudgetUsd, agentMinutes: config.agentMinutes,
     agentEffort: config.agentEffort, models: arm.models,
     ...(kind === 'static' ? { scriptSha: existsSync(arm.scriptPath) ? sha(readFileSync(arm.scriptPath)) : null, compiledMinutes: config.compiledMinutes, fallback: arm.fallback } : {}),
-    ...(kind === 'jit' ? { jit: config.jit, compile: config.compile, compiledMinutes: config.compiledMinutes } : {}) };
+    ...(kind === 'jit' ? { jit: config.jit, compile: config.compile, compiledMinutes: config.compiledMinutes, ...(config.library ? { library: config.library } : {}) } : {}) };
   arm.def = def; arm.hash = sha(canonical(def)).slice(0, 16);
   return arm;
 }
@@ -276,7 +324,7 @@ export function sameAnswer(a, b, mode = 'canonical', tol = {}) {
   return canonical(a) === canonical(b);
 }
 
-const DEOPT_KINDS = new Set(['guard', 'invariant', 'judge', 'budget', 'unknown', 'crash', 'timeout', 'invalid']);
+const DEOPT_KINDS = new Set(['guard', 'invariant', 'judge', 'budget', 'unknown', 'crash', 'timeout', 'invalid', 'call']);
 // SPEC §3.1: up to max traces, newest first, every deopt kind seen so far represented (its newest trace).
 export function selectTraces(pool, max) {
   const newest = [...pool].sort((a, b) => b.idx - a.idx || b.seq - a.seq);
@@ -288,7 +336,7 @@ export function selectTraces(pool, max) {
 
 // v2.2: the trace-pool entries that came from a refusal (a compiled deopt handed to the interpreter). Crashes, timeouts and
 // invalid outputs are failures to fix, not refusals.
-export const REFUSAL_KINDS = Object.freeze(new Set(['guard', 'invariant', 'judge', 'budget', 'unknown']));
+export const REFUSAL_KINDS = Object.freeze(new Set(['guard', 'invariant', 'judge', 'budget', 'unknown', 'call']));
 export const refusalPool = pool => pool.filter(x => x.role === 'fallback' && REFUSAL_KINDS.has(x.kind));
 // Every refusal trace joins the compile (up to `extra` beyond maxTraces, newest first), so the check can see whether each
 // refusal is kept, handled, or lost.
@@ -450,6 +498,12 @@ function exportArm(armDir, outDir, slug, { maxBodyBytes, changed }) {
   copyTree(path.join(armDir, 'versions'), path.join(outDir, 'solvers'), changed, `${slug}/solvers`);
   copyTree(path.join(armDir, 'traces'), path.join(outDir, 'traces'), changed, `${slug}/traces`);
   copyTree(path.join(armDir, 'regressions'), path.join(outDir, 'regressions'), changed, `${slug}/regressions`);
+  // Slice 2a (library arms only; absent elsewhere): the call host log and journal, and the library registry with its solvers.
+  for (const f of ['calls.jsonl', 'calls-journal.jsonl']) {
+    const src = path.join(armDir, f);
+    if (existsSync(src) && writeIfChanged(path.join(outDir, f), readFileSync(src))) changed.push(`${slug}/${f}`);
+  }
+  copyTree(path.join(armDir, 'library'), path.join(outDir, 'library'), changed, `${slug}/library`);
 }
 
 function lockExport(dir, waitMs = 60000) {
@@ -555,8 +609,9 @@ async function liveDeps() {
     runCompiled: async a => (await import('./run-compiled.mjs')).runCompiled(a),
     compile: async a => (await import('./compile.mjs')).compile(a),
     // compile.mjs's host acceptance check again, on the solve.mjs the builder left, at a higher cap.
-    recheck: async ({ workdir, solvePath, traces, regressions, modelPort, models, capUsd, label, promptVersion, compare }) => (await import('./compile.mjs')).hostCheck({
-      dir: path.join(workdir, '.host-check-recheck'), solveSource: readFileSync(solvePath, 'utf8'), traces, regressions, modelPort, models, capUsd, label, promptVersion, compare }),
+    recheck: async ({ workdir, solvePath, traces, regressions, modelPort, models, capUsd, label, promptVersion, compare, library, interpreter, callHost }) => (await import('./compile.mjs')).hostCheck({
+      dir: path.join(workdir, '.host-check-recheck'), solveSource: readFileSync(solvePath, 'utf8'), traces, regressions, modelPort, models, capUsd, label, promptVersion, compare,
+      ...(library ? { library, interpreter, callHost } : {}) }),
     createModelPort: a => createModelPortSync(a),
     score: beds.score, makeTasks: beds.makeTasks, loadFamily: beds.loadFamily,
   };
@@ -719,16 +774,23 @@ class ArmRun {
     }, trace => ENV_FAULTS.has(trace?.error?.code));
   }
 
-  async compiled(tr, t, solvePath, version) {
+  // Slice 2a: a library arm's compiled run goes through a call host (JitRun.callSetup); every other arm passes nothing new.
+  callSetup() { return null; }
+
+  async compiled(tr, t, solvePath, version, state = null) {
     return this.retrying(tr, 'compiled', async attempt => {
       const workdir = path.join(this.work, `i${String(t.idx).padStart(3, '0')}-compiled-${randomUUID().slice(0, 6)}`);
       rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
-      const rc = await this.deps.runCompiled({ solvePath, task: t.task, modelPort: this.port, perTaskUsd: this.config.perTaskUsd, timeoutMs: this.config.compiledMinutes * 60 * 1000,
-        workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: this.arm.models, label: `${this.config.experiment}:${this.arm.slug}:${t.idx}:v${version ?? 0}`,
-        ...(this.flowPath ? { flowPath: this.flowPath } : {}) });
+      const label = `${this.config.experiment}:${this.arm.slug}:${t.idx}:v${version ?? 0}`;
+      const lib = this.callSetup({ tr, t, workdir, label, state });
+      const rc = await this.deps.runCompiled({ solvePath, task: t.task, modelPort: lib?.port ?? this.port, perTaskUsd: this.config.perTaskUsd, timeoutMs: this.config.compiledMinutes * 60 * 1000,
+        workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: lib?.allowed ?? this.arm.models, label,
+        ...(this.flowPath ? { flowPath: this.flowPath } : {}), ...(lib ? { ledger: lib.ledger } : {}) });
+      if (lib) rc.calls = lib.done({ version, attempt });
       tr.spend('compiled', rc.costUsd ?? 0, rc.costUnknown);
       tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null,
-        ...(rc.flags?.count ? { flags: rc.flags.count } : {}), ...(rc.meta?.memo ? { memo: { requests: rc.meta.memo.requests, hits: rc.meta.memo.hits, reused: rc.meta.memo.reused, live: rc.meta.memo.live } } : {}) });
+        ...(rc.flags?.count ? { flags: rc.flags.count } : {}), ...(rc.meta?.memo ? { memo: { requests: rc.meta.memo.requests, hits: rc.meta.memo.hits, reused: rc.meta.memo.reused, live: rc.meta.memo.live } } : {}),
+        ...(rc.calls ? { calls: rc.calls } : {}) });
       return rc;
     }, rc => rc?.status !== 'ok' && metEnvFault(rc));
   }
@@ -765,6 +827,77 @@ class JitRun extends ArmRun {
   }
   get compareOf() { const c = this.config.compile; return c.compare === 'tolerant' ? { mode: 'tolerant', ...tolOf(c) } : null; }
 
+  // ---- slice 2a: the arm's library (config.library) ----
+  get library() { return this.config.library ?? null; }
+  get libraryDir() { return path.join(this.p.dir, 'library'); }
+  // The registry, set up once per process: 'iso' wipes it when the arm starts fresh; 'cur' seeds a fresh one from `from`.
+  registryOf() {
+    const L = this.library;
+    if (!L) return null;
+    if (this._registry) return this._registry;
+    const dir = this.libraryDir;
+    if (L.mode === 'iso' && this.rows.size === 0) rmSync(dir, { recursive: true, force: true });
+    if (L.mode === 'cur' && L.from && !existsSync(path.join(dir, REGISTRY_FILE))) {
+      const src = path.resolve(path.dirname(this.runDir), L.from.replaceAll('{slug}', this.arm.slug));
+      if (!existsSync(path.join(src, REGISTRY_FILE))) throw new Error(`config.library.from: ${src} has no ${REGISTRY_FILE}`);
+      for (const f of listFiles(src)) { mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); copyFileSync(path.join(src, f), path.join(dir, f)); }
+      this.event(null, 'library-seeded', { from: path.relative(path.dirname(this.runDir), src), files: listFiles(dir).length });
+    }
+    mkdirSync(dir, { recursive: true });
+    this._registry = createRegistry({ dir });
+    return this._registry;
+  }
+  get callHostOpts() { const L = this.library; return { maxDepth: L.maxDepth, profileCheck: L.check, novelMode: L.novelMode, interpretFloorUsd: L.interpretFloorUsd }; }
+  // FLOW-V3 §1.5: the arm's interpreter answers a refused or deopted child alone (onRefuse/onDeopt 'interpret'), in an arm-
+  // and role-neutral session directory; the trace is kept (role 'child', not in this arm's own compile pool). Its cost reaches
+  // the row through the run that made the call (the gateway charges the call's costUsd), so it is not spent here.
+  childInterpreter(tr, t) {
+    return async ({ task, outputSchema, budgetUsd, callee, path: childPath, reason }) => {
+      const rand = randomUUID().slice(0, 8), traceId = `i${String(t.idx).padStart(3, '0')}-child-${rand.slice(0, 6)}`;
+      const workdir = path.join(this.sessions, sessionIdOf(this.arm.hash, t.idx, 'child', rand)), workdirRel = path.relative(this.workRoot, workdir);
+      rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
+      const e = this._registry?.get(callee);
+      const trace = await this.deps.interpret({ task, familyId: e?.evidence?.familyId ?? this.config.familyId, outputSchema, model: this.arm.interpreter, budgetUsd,
+        timeoutMs: Math.min(this.config.agentMinutes, this.config.compiledMinutes) * 60 * 1000, workdir, effort: this.config.agentEffort, traceId, ...(this.binary ? { binary: this.binary } : {}) });
+      writeFileSync(path.join(this.p.traces, `${trace.traceId}.json`), JSON.stringify({ ...trace, workdirRel, role: 'child', callee, childPath, reason }));
+      tr.ev('interpret-child', { model: this.arm.interpreter, traceId: trace.traceId, callee, path: childPath, reason, workdir: workdirRel, answer: trace.answer != null,
+        error: trace.error?.code ?? null, costUsd: trace.costUsd ?? 0, nestedModelAttempts: trace.nestedModelAttempts ?? 0, hiddenPathAttempts: trace.hiddenPathAttempts ?? 0 });
+      if ((trace.nestedModelAttempts ?? 0) > 0) return { answer: null, error: { code: 'NESTED_MODEL' }, costUsd: trace.costUsd ?? 0, costUnknown: !!trace.costUnknown, traceId: trace.traceId };
+      return { answer: trace.answer, costUsd: trace.costUsd ?? 0, costUnknown: !!trace.costUnknown, error: trace.error ?? null, traceId: trace.traceId };
+    };
+  }
+  // A compiled run of a library arm: a call host over the registry (root budget perTaskUsd, a gateway Ledger it can hold
+  // child reservations on, the version's own hash on the ancestor chain), and done() writes the host log and journal.
+  callSetup({ tr, t, workdir, label, state }) {
+    if (!this.library) return null;
+    const registry = this.registryOf(), ledger = new Ledger({ capUsd: this.config.perTaskUsd, label });
+    const host = createCallHost({ registry, modelPort: this.port, workRoot: path.join(workdir, 'calls-root'), allowedModels: this.arm.models, arm: this.arm.slug, taskKey: t.taskKey,
+      ...this.callHostOpts, interpreter: this.childInterpreter(tr, t) });
+    const port = host.port({ budgetUsd: this.config.perTaskUsd, ledger, selfHash: state?.version?.libraryHash ?? null });
+    return { port, ledger, allowed: withCallModel(this.arm.models), host,
+      done: ({ version, attempt }) => {
+        const tag = { experiment: this.config.experiment, armSpec: this.arm.spec, idx: t.idx, version, attempt };
+        for (const e of host.events) appendFileSync(path.join(this.p.dir, 'calls.jsonl'), JSON.stringify({ ...tag, childId: e.name ?? null, ...e }) + '\n');
+        for (const j of host.journalRows()) appendFileSync(path.join(this.p.dir, 'calls-journal.jsonl'), JSON.stringify({ ...tag, ...j }) + '\n');
+        return host.totals();
+      } };
+  }
+  // On adoption of an accepted version: register it (FLOW-V3 §1.2): the solver bytes (copied into the library), the contract,
+  // a PARAMS_V2 profile of its compile traces, the configured check options and novelMode, and its evidence.
+  registerVersion(tr, t, state, traces, best) {
+    const L = this.library, registry = this.registryOf();
+    const src = readFileSync(path.join(best.dir, 'solve.mjs')), rel = `solvers/${best.solveSha.slice(0, 16)}.mjs`;
+    if (!existsSync(path.join(this.libraryDir, rel))) { mkdirSync(path.join(this.libraryDir, 'solvers'), { recursive: true }); writeFileSync(path.join(this.libraryDir, rel), src); }
+    const tasks = traces.map(x => x.task).filter(Boolean);
+    const entry = registry.register({ solvePath: rel, flowVersion: 3, contract: { input: null, output: this.outputSchema ?? { type: 'object' }, taskTemplate: tasks[0]?.prompt ?? '' },
+      profile: tasks.length ? learnProfile(tasks, PARAMS_V2) : null, ...(Object.keys(L.check).length ? { checkOptions: L.check } : {}), ...(L.novelMode !== 'refuse' ? { novelMode: L.novelMode } : {}),
+      evidence: { familyId: this.config.familyId, experiment: this.config.experiment, arm: this.arm.slug, version: state.version.n, adoptedAt: t.idx, traces: tasks.length,
+        exactRate: exactOf(best.checkTraces), accepted: true }, effects: 'none' });
+    state.version.libraryHash = entry.hash;
+    tr.ev('library-register', { version: state.version.n, hash: entry.hash, entryVersion: entry.version, profileTasks: entry.profile?.n ?? 0 });
+    return entry;
+  }
+
   addTrace(state, trace, t, role, kind) {
     if (trace?.answer == null) return false;   // the compiler distils answers, not failures
     state.traces.push({ traceId: trace.traceId, idx: t.idx, seq: state.traces.length, role, kind });
@@ -786,7 +919,8 @@ class JitRun extends ArmRun {
       const r = await this.deps.compile({ familyId: this.config.familyId, traces: inputs.traces, previous: inputs.previous, regressions: inputs.regressions, builderModel,
         builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, checkUsd: settings.checkUsd ?? settings.gatewayUsd,
         minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}),
-        ...this.compileOpts, ...(inputs.refusals?.length ? { refusals: inputs.refusals } : {}), modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n });
+        ...this.compileOpts, ...(inputs.refusals?.length ? { refusals: inputs.refusals } : {}), modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n,
+        ...(this.library ? { library: this.registryOf(), interpreter: this.childInterpreter(tr, t), callHost: this.callHostOpts } : {}) });
       const rec = r.record ?? {};
       // Every dollar of the compile: the builder session, its gateway calls, and the host acceptance check.
       tr.spend('compileBuilder', rec.builderCostUsd ?? 0, rec.builderCostUnknown);
@@ -803,7 +937,7 @@ class JitRun extends ArmRun {
       tr.ev('recheck', { version: n, builderModel, reason: 'budget deopts in the host check', budgetDeopts: rec.checkTraces.deoptKinds.budget, capUsd });
       const rc = await this.deps.recheck({ workdir: res.workdir, solvePath: res.solvePath, traces: inputs.traces, regressions: inputs.regressions, modelPort: this.port, models: this.arm.models,
         capUsd, label: `v${n}-${tag}-recheck`, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}),
-        ...(this.compareOf ? { compare: this.compareOf } : {}) });
+        ...(this.compareOf ? { compare: this.compareOf } : {}), ...(this.library ? { library: this.registryOf(), interpreter: this.childInterpreter(tr, t), callHost: this.callHostOpts } : {}) });
       recheckUsd = rc.costUsd ?? 0;
       tr.spend('compileCheck', recheckUsd, (rc.unknownCalls ?? 0) > 0);
       const C = this.config.compile;
@@ -877,6 +1011,7 @@ class JitRun extends ArmRun {
     adoption(true);
     const kind = state.version ? 'recompile' : 'compile';
     state.version = { n, dir: path.relative(this.p.dir, best.dir), sha: best.solveSha, builderModel: best.builderModel, checkTraces: best.checkTraces, adoptedAt: t.idx, accepted: ok(best) };
+    if (this.library?.register && ok(best)) this.registerVersion(tr, t, state, traces, best);
     tr.ev(kind, { version: n, reason, builderModel: best.builderModel, exactRate: exactOf(best.checkTraces), accepted: ok(best), clean: !!best.checkTraces?.clean,
       traces: traces.length, regressions: regressions.length });
   }
@@ -910,17 +1045,17 @@ class JitRun extends ArmRun {
       return this.finish(tr, t, { delivered: 'interpreter', output: trace.answer, error: trace.error ?? null, extra: { traceId: trace.traceId }, stateAfter: structuredClone(state) });
     }
     const version = state.version.n;
-    const rc = await this.compiled(tr, t, this.solvePathOf(state), version);
+    const rc = await this.compiled(tr, t, this.solvePathOf(state), version, state);
     if (rc.status !== 'ok') {
       const dk = rc.status === 'deopt' ? rc.deopt?.kind ?? 'unknown' : rc.status;
       tr.ev(rc.status === 'deopt' ? 'deopt' : rc.status, { version, deoptKind: dk, detail: rc.deopt?.name ?? rc.error?.code ?? null });
       const { trace } = await fallbackInterpret(dk, rc);
       return this.finish(tr, t, { delivered: 'interpreter', output: trace.answer, version, compiledStatus: rc.status, deoptKind: dk, error: trace.error ?? null,
-        extra: { traceId: trace.traceId }, stateAfter: structuredClone(state) });
+        extra: { traceId: trace.traceId, ...(rc.calls ? { calls: rc.calls } : {}) }, stateAfter: structuredClone(state) });
     }
     state.compiledOks++;
     let delivered = 'compiled', output = rc.output;
-    const extra = {};
+    const extra = rc.calls ? { calls: rc.calls } : {};
     const flags = rc.flags?.count ?? 0;
     if (flags > 0) extra.flags = { count: flags, names: rc.flags.names ?? [] };
     // Scheduled shadows (every shadowEvery-th compiled ok, or with jit.shadowFloor a seeded draw u < shadowFloor) and,
@@ -1046,6 +1181,8 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
   const streams = runs.filter(r => r.arm.kind === 'jit').map(async run => {
     const s = status.get(run.arm.slug);
     let state = freshState();
+    // Slice 2a: the library registry is set up before the first task (ISO wipes it only when the arm starts fresh).
+    try { run.registryOf(); } catch (error) { note(run, error); return; }
     for (const t of tasks) {
       const prior = run.rows.get(t.idx);
       if (prior) { state = structuredClone(prior.stateAfter ?? state); continue; }

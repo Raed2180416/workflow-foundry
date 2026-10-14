@@ -148,7 +148,11 @@ for (const [name, sc] of Object.entries(SCENARIOS)) {
     const v2 = await run(t, FLOW_V2, sc), v3 = await run(t, FLOW_V3, sc);
     assert.ok(v2.raw.length > 0 || v2.code !== 0, 'the scenario wrote a trace');
     assert.deepEqual(norm(v3, sc), norm(v2, sc));
-    assert.equal(mask(v3.stderr.replace(/"at":"[^"]*"/g, ''), v3.dir), mask(v2.stderr.replace(/"at":"[^"]*"/g, ''), v2.dir), 'stderr matches too (model call lines, messages, stacks)');
+    // For scenarios whose calls run concurrently (unordered), the per-call '[model]' lines arrive in completion order, which
+    // the scheduler decides: they are compared as a sorted list (FLOW-V3-SLICE2 §5: the known order flake), everything else
+    // in order.
+    const err = r => { const lines = mask(r.stderr.replace(/"at":"[^"]*"/g, ''), r.dir).split('\n'); return sc.unordered ? [...lines.filter(l => !l.startsWith('[model] ')), ...lines.filter(l => l.startsWith('[model] ')).sort()].join('\n') : lines.join('\n'); };
+    assert.equal(err(v3), err(v2), 'stderr matches too (model call lines, messages, stacks)');
     for (const line of v3.raw.split('\n').filter(Boolean)) {
       const e = JSON.parse(line);
       assert.equal('span' in e || 'parent' in e, false, `no span/parent outside a call scope: ${line.slice(0, 120)}`);

@@ -1,6 +1,11 @@
 // Host-side services for construction and execution arms (research/construction-20261006/DESIGN.md §2).
 // - POST /score   {probe, output}        -> {pass, score}   (probe tasks only, call-limited; oracle stays on the host)
 // - POST /model   {model, system, prompt, schema?, decoding?} -> {ok, value, text, error, costUsd}  (policy-enforced, journaled, budgeted)
+//   model 'flow:call' (flow-v3 call requests, experiments/jit/call-host.mjs; FLOW-V3-SLICE2 §4): not subject to
+//   allowedModels; the child's reservation (prompt JSON budgetUsd) is held on this session's Ledger while the call runs
+//   when it fits strictly below what remains, and the port is told so (gatewayHoldUsd); one that does not fit is passed
+//   on unheld, and the call host refuses it with a typed BUDGET_TREE / budget-exceeds-parent refusal. 402 only when the
+//   session budget is spent. Every other model id is handled exactly as before.
 // - POST /env/<op> {episode, ...}        -> interactive bed env API (create/reset/step/observe/snapshot/restore/actions)
 // - GET  /budget                         -> {spentUsd, capUsd, scoreCallsLeft, unknownCalls, unknownUpperUsd}
 // Every request needs the per-session bearer token; the services bind to 127.0.0.1 only.
@@ -10,6 +15,8 @@ import { mkdirSync, symlinkSync, rmSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { score, loadFamily } from './beds.mjs';
 
+// The reserved model id of flow-v3 call requests (experiments/jit/call-host.mjs CALL_MODEL).
+export const FLOW_CALL_MODEL = 'flow:call';
 const json = (res, code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
 const readBody = req => new Promise((resolve, reject) => {
   let size = 0; const chunks = [];
@@ -93,6 +100,30 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
         scoreLog.push({ probe: i, pass: !!v.pass, score: v.score ?? null, at: new Date().toISOString() });
         log(`/score probe=${i} -> ${v.pass ? 'pass' : 'fail'} ${v.score}`);
         return json(res, 200, { pass: !!v.pass, score: v.score ?? null, scoreCallsLeft: scoreLimit - scoreCalls });
+      }
+      if (url.pathname === '/model' && body.model === FLOW_CALL_MODEL) {
+        if (!modelPort) { ledger.refuse?.('GATEWAY_NO_MODELS'); return json(res, 403, { error: 'no model access in this session' }); }
+        if (closing) { ledger.refuse('GATEWAY_CLOSING'); return json(res, 503, { error: 'session closing' }); }
+        if (ledger.spentUsd >= ledger.capUsd - 1e-9) {
+          ledger.refuse('GATEWAY_BUDGET'); log('/model flow:call refused: budget spent');
+          return json(res, 402, { error: 'budget exhausted', spentUsd: ledger.spentUsd, capUsd: ledger.capUsd });
+        }
+        let ask = null; try { ask = JSON.parse(String(body.prompt ?? '')); } catch {}
+        const want = typeof ask?.budgetUsd === 'number' && Number.isFinite(ask.budgetUsd) && ask.budgetUsd > 0 ? ask.budgetUsd : 0;
+        // Strictly below what remains (FLOW-V3 §1.3): Σ reservations in flight + this one < cap − spent.
+        const hold = want > 0 && ledger.spentUsd + (ledger.reservedUsd ?? 0) + want < ledger.capUsd - 1e-9 ? want : 0;
+        if (hold) ledger.hold(hold);
+        let r;
+        try {
+          r = await modelPort.call({ runId, nodeKey: `gateway/flow-call/${seq++}`, modelId: FLOW_CALL_MODEL, system: String(body.system ?? ''), prompt: String(body.prompt ?? ''),
+            schema: body.schema ?? { type: 'object' }, decoding: body.decoding ?? {}, signal: aborter.signal, gatewayHoldUsd: hold });
+        } catch (error) {
+          ledger.refuse(error.code ?? 'MODEL_REQUEST');
+          return json(res, 400, { ok: false, error: { code: error.code ?? 'MODEL_REQUEST', message: String(error.message).slice(0, 500) } });
+        } finally { if (hold) ledger.release(hold); }
+        ledger.charge(r);
+        return json(res, 200, { ok: r.ok, value: r.value ?? null, error: r.error ?? null, costUsd: r.costUsd, modelId: r.modelId, spentUsd: ledger.spentUsd,
+          ...(r.costUnknown ? { costUnknown: true, costUpperUsd: r.costUpperUsd ?? null } : {}) });
       }
       if (url.pathname === '/model') {
         if (!modelPort) { ledger.refuse?.('GATEWAY_NO_MODELS'); return json(res, 403, { error: 'no model access in this session' }); }

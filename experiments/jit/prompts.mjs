@@ -16,13 +16,19 @@
 // says how check-traces compares (opts.relTol, opts.absTol). Version 3 runs on flow-v2.mjs, like version 2.
 // opts.acceptanceIds 'structured' (S0-6, opt-in, any version): the verdicts.json instructions (prompts-verdicts.mjs) are
 // appended to the finishing rules; compile.mjs then records verdictsPromptVersion. Any other value leaves the text as it was.
+// Version 5 (flow-v3, FLOW-V3-SLICE1 §4 and SLICE2 §4) is the version 4 text, run on flow-v3.mjs; when opts.library (the
+// number of entries in the builder's library/index.json) is positive it adds inserted lines only: the input list names
+// library/index.json, the SDK sketch shows flow.call, and method item 9 says when and how to call a library solver. With
+// no library the version 5 text is the version 4 text byte for byte.
 import { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION } from './prompts-verdicts.mjs';
 export { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION };
 export const verdictsPromptVersionOf = opts => (opts?.acceptanceIds === 'structured' ? VERDICTS_PROMPT_VERSION : null);
 const verdictsPart = opts => (verdictsPromptVersionOf(opts) ? `\n${VERDICTS_PROMPT_TEXT.trim()}` : '');
 
-export const PROMPT_VERSIONS = Object.freeze([1, 2, 3, 4]);
-export const FLOW_FILES = Object.freeze({ 1: 'flow.mjs', 2: 'flow-v2.mjs', 3: 'flow-v2.mjs', 4: 'flow-v2.mjs' });
+export const PROMPT_VERSIONS = Object.freeze([1, 2, 3, 4, 5]);
+export const FLOW_FILES = Object.freeze({ 1: 'flow.mjs', 2: 'flow-v2.mjs', 3: 'flow-v2.mjs', 4: 'flow-v2.mjs', 5: 'flow-v3.mjs' });
+// Prompt version 5 with a non-empty library: the flow.call parts are in the text.
+const withLibrary = opts => promptVersionOf(opts) >= 5 && Number(opts?.library) > 0;
 export function promptVersionOf(opts) {
   const v = opts?.promptVersion ?? 1;
   if (!PROMPT_VERSIONS.includes(v)) throw new Error(`builder prompt: promptVersion must be one of ${PROMPT_VERSIONS.join(', ')}, got ${JSON.stringify(v)}`);
@@ -32,13 +38,15 @@ export function promptVersionOf(opts) {
 export const flowFileOf = opts => FLOW_FILES[promptVersionOf(opts)];
 
 const range = (dir, n) => (n === 1 ? `${dir}-0/` : `${dir}-0 .. ${dir.split('/').pop()}-${n - 1}/`);
-const cases = ({ traces, regressions }) => `Inputs:
+const cases = ({ traces, regressions, ...rest }) => `Inputs:
 - ${range('traces/trace', traces)}${traces > 1 ? ' (trace-0 is the newest)' : ''}: one task an agent with tools solved, each with
   prompt.md, inputs.json, files/ (if any), task.json (the task exactly as a solver receives it: {prompt, inputs, files?}),
   agent-answer.json (the agent's final answer) and agent-work.md (the scripts it wrote and the commands it ran).${regressions ? `
 - ${range('regressions/case', regressions)}: a task plus expected.json, an answer settled by a majority of independent
   agent runs after the compiled solver got it wrong. Every regression case must pass.` : ''}
-- output-schema.json: the answer format.`;
+- output-schema.json: the answer format.${withLibrary({ traces, regressions, ...rest }) ? `
+- library/index.json: the library of solvers accepted for earlier tasks (hash, contract, profile summary, evidence);
+  read-only.` : ''}`;
 
 const method = opts => { const { models, perTaskUsd } = opts; return `How to compile:
 1. The task text is the authority: its prompt, spec and notes say what is right. The agent answers are evidence of formats,
@@ -64,7 +72,17 @@ const method = opts => { const { models, perTaskUsd } = opts; return `How to com
    keys are similar (one edit apart, a dropped accent, swapped or abbreviated name parts) and that share a secondary
    attribute (the same date, phone, email, id or amount). Send those pairs to one narrow, batched same-entity flow.judge
    ("are these the same entity?") with a check code can verify (the pair ids echoed back, the shared attribute quoted
-   from the records), merge on its answer, and flow.flag every such pair. Clear cases stay in code.` : ''}`; };
+   from the records), merge on its answer, and flow.flag every such pair. Clear cases stay in code.` : ''}${withLibrary(opts) ? `
+9. library/index.json lists solvers already accepted for earlier tasks: each has a hash, an input schema, an output
+   schema, the task text it solves (taskTemplate) and how much evidence it has. When part of this task is exactly such a
+   subtask, call it with flow.call(hash, input, { name, budgetUsd }) instead of re-deriving it: build input to match its
+   input schema, pass prompt: <that part's own task text> when the part comes with one, and use the output as typed by
+   its output schema. Copy hashes exactly from the index; never invent one. Name each call after the part it solves (for
+   example the subsidiary id). Budgets are carved from yours and calls running at once (inside flow.map) must fit
+   together: K calls at once need K times budgetUsd below your own budget. If a call may be refused for your inputs (a
+   format the profile does not cover), pass onRefuse: 'interpret' (the host's agent then solves that part alone within
+   its budgetUsd, which must be at least $0.10) or onRefuse: 'skip' and handle the part yourself. Do not call a library
+   solver for work your own code does in a few lines.` : ''}`; };
 
 const sdk = opts => { const { models, perTaskUsd } = opts, v2 = promptVersionOf(opts) >= 2; return `Write ./solve.mjs: one Node 24 ESM file, no npm packages, run as  node solve.mjs task.json . At run time it gets only
 tools/model.mjs and tools/flow.mjs beside it, no network except model calls through flow.judge,
@@ -79,7 +97,13 @@ PATH=/opt/node24/bin:/usr/local/bin:/usr/bin:/bin and HOME = the task directory.
   flow.guard('known-columns', cols.every(c => KNOWN.has(c)), { cols });
   flow.invariant('rows-conserved', kept.length + dropped.length === rows.length, { kept: kept.length });
   const out = await flow.map(batches, async b => judgeBatch(b), { concurrency: 4 });${v2 ? `
-  if (best.score < CLEAR) flow.flag('weak-name-match', { name, best: best.id, score: best.score });   // trace only` : ''}
+  if (best.score < CLEAR) flow.flag('weak-name-match', { name, best: best.id, score: best.score });   // trace only` : ''}${withLibrary(opts) ? `
+  const sub = await flow.call('sha256:…', subInput, { name: 'S2', budgetUsd: 0.25, prompt: subTask.prompt });
+                                          // runs a library solver by hash (library/index.json) on subInput and returns its
+                                          // typed output; the host checks the input against the solver's contract and
+                                          // profile, and refuses what it was not proven on
+  const r = await flow.call(hash, subInput, { name, budgetUsd, onRefuse: 'skip', onDeopt: 'skip' });
+  if (r.refused || r.deopt) { /* your own code or flow.judge for this part */ }` : ''}
   flow.done(answer);                                                 // exactly once, at the end
 Schemas use only type, properties, required, additionalProperties, items, enum, const, minimum, maximum, minItems,
 maxItems, minLength, maxLength.`; };

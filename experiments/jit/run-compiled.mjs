@@ -17,6 +17,9 @@ export const DEOPT_EXIT = 75, MAX_TRACE_EVENTS = 5000;
 // DEFAULT_FLOW is the version-1 SDK (frozen); a prompt-version-2 arm passes flowPath = FLOW_V2 (stream.mjs, prompts.mjs flowFileOf).
 export const DEFAULT_FLOW = path.resolve(new URL('./flow.mjs', import.meta.url).pathname);
 export const FLOW_V2 = path.resolve(new URL('./flow-v2.mjs', import.meta.url).pathname);
+// flow-v3 (prompt version 5; FLOW-V3.md, design/FLOW-V3-SLICE1.md and SLICE2.md): flow-v2 plus flow.call and flow.phase.
+export const FLOW_V3 = path.resolve(new URL('./flow-v3.mjs', import.meta.url).pathname);
+export const SCOPE_FILE = 'tools/flow-scope.json';
 export const MAX_FLAG_NAMES = 50;   // as flow-v2.mjs caps flagNames on its totals
 
 const parseLines = text => text.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
@@ -141,10 +144,54 @@ export function createMemoPort({ journal, live = null, strict = live == null, po
   };
 }
 
+// ---- Slice 2a item 1b: run-level resume (PRIOR-ART-MANAGED-AGENTS-DW §3 B). ----
+// createResumePort({ prior, live, invalidate }): a model port that records every request of a run in arrival order, keyed by
+// (salt-free request digest, occurrence of that digest), and answers from a prior run's rows: a request whose key the
+// prior run completed (ok) returns the recorded result at $0; the first request whose key the prior run does not have (its
+// prompt differs, or it is new) and every request after it go live (invalidate, default true); a request the prior run
+// failed goes live too, and so does everything after it. This sits above the call host's per-call idempotency memo:
+// flow:call answers are recorded and served like model answers (memo: 'resume'). Solvers are deterministic given their
+// answers (no Date or Math.random in solvers; PRNG only), so a resumed prefix replays the same control flow.
+// rows(): this run's rows, the `prior` of the next resume. stats(): {requests, served, live, diverged, divergedAt}.
+export function createResumePort({ prior = [], live, invalidate = true } = {}) {
+  if (!live || typeof live.call !== 'function') throw new Error('createResumePort: a live port is required');
+  const byKey = new Map();
+  for (const row of prior ?? []) if (row && typeof row.digest === 'string' && Number.isInteger(row.occurrence)) byKey.set(`${row.digest}#${row.occurrence}`, row);
+  const rows = [], seen = new Map();
+  let requests = 0, served = 0, liveCalls = 0, diverged = false, divergedAt = null;
+  return {
+    policy: live.policy ?? null, providers: live.providers ?? {}, policyHash: live.policyHash ?? null, ...(live.memo ? { memo: live.memo } : {}), ...(live.scope ? { scope: live.scope } : {}),
+    rows: () => rows.slice(),
+    stats: () => ({ requests, served, live: liveCalls, diverged, divergedAt, priorRows: byKey.size }),
+    async call(req) {
+      const seq = requests++, digest = requestDigestOf(req), occurrence = seen.get(digest) ?? 0;
+      seen.set(digest, occurrence + 1);
+      const hit = diverged ? null : byKey.get(`${digest}#${occurrence}`) ?? null;
+      if (hit?.ok) {
+        served++;
+        const value = req.modelId === 'flow:call' && hit.value && typeof hit.value === 'object' ? { ...hit.value, memo: 'resume', spentUsd: 0 } : hit.value;
+        rows.push({ seq, digest, occurrence, modelId: req.modelId ?? null, ok: true, value: hit.value, costUsd: hit.costUsd ?? 0, resumed: true });
+        return { ok: true, value, costUsd: 0, imputedUsd: 0, latencyMs: 0, modelId: req.modelId, replayed: true, resumed: true };
+      }
+      if (!diverged && invalidate) { diverged = true; divergedAt = { seq, digest: digest.slice(0, 16), modelId: req.modelId ?? null, reason: hit ? 'failed-before' : 'new-request' }; }
+      liveCalls++;
+      let r;
+      try { r = await live.call(req); }
+      catch (error) { rows.push({ seq, digest, occurrence, modelId: req.modelId ?? null, ok: false, error: { code: error.code ?? 'MODEL_REQUEST' } }); throw error; }
+      rows.push({ seq, digest, occurrence, modelId: req.modelId ?? null, ok: !!r?.ok, ...(r?.ok ? { value: r.value } : { error: r?.error ?? null }), costUsd: r?.costUsd ?? 0 });
+      return r;
+    },
+  };
+}
+
 // status: ok | deopt | crash | timeout | invalid. An environment fault (sandbox could not start, provider rate limit)
 // is reported through error.code / meta.errors exactly as the B1 arm does, so the stream can apply ENV_FAULTS.
+// Slice 2a (opt-in, absent = as before): ledger, a gateway Ledger the caller made (cap perTaskUsd) so a call host can hold
+// child reservations on it; flowScope {span, parent, path, depth}, written as tools/flow-scope.json for a child run (a stale
+// one is always removed first, so a reused workdir never carries a scope into a top-level run); resume (true or a prior
+// run's meta.resume.rows): the run goes through createResumePort and meta.resume = {rows, stats}.
 export async function runCompiled({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs = 20 * 60 * 1000, workdir, familyId = null, outputSchema = null,
-  allowedModels = null, flowPath = DEFAULT_FLOW, label = 'compiled', flowOverride = null, flowOverrideData }) {
+  allowedModels = null, flowPath = DEFAULT_FLOW, label = 'compiled', flowOverride = null, flowOverrideData, ledger: givenLedger = null, flowScope = null, resume = null }) {
   if (!solvePath || !task || !workdir) throw new Error('runCompiled needs solvePath, task and workdir');
   // S0-2 (opt-in): flowOverride is the path of an ESM module whose default export is flow-v2's override(callSite, request)
   // (see flow-v2.mjs); it is copied in as tools/flow-override.mjs, and flowOverrideData (any JSON) as tools/flow-override.json
@@ -154,17 +201,24 @@ export async function runCompiled({ solvePath, task, modelPort, perTaskUsd = 1, 
   const schema = outputSchema ?? (familyId ? (await loadFamily(familyId)).outputSchema : null);
   const source = readFileSync(solvePath, 'utf8');
   mkdirSync(path.join(workdir, 'tools'), { recursive: true });
-  for (const stale of ['deopt.json', 'trace.jsonl', '.solve.stdout', '.solve.stderr', 'tools/flow-override.mjs', 'tools/flow-override.json']) rmSync(path.join(workdir, stale), { force: true });
+  for (const stale of ['deopt.json', 'trace.jsonl', '.solve.stdout', '.solve.stderr', 'tools/flow-override.mjs', 'tools/flow-override.json', SCOPE_FILE]) rmSync(path.join(workdir, stale), { force: true });
+  if (flowScope != null) {
+    if (typeof flowScope !== 'object' || typeof flowScope.span !== 'string' || typeof flowScope.path !== 'string' || !Number.isInteger(flowScope.depth)) throw new Error('runCompiled: flowScope must be {span, parent, path, depth}');
+    if (!flowPath || path.resolve(flowPath) !== FLOW_V3) throw new Error('runCompiled: flowScope needs flow-v3.mjs (only flow-v3 reads tools/flow-scope.json)');
+  }
+  if (givenLedger != null && (typeof givenLedger.remaining !== 'function' || givenLedger.capUsd !== perTaskUsd)) throw new Error('runCompiled: ledger must be a services.mjs Ledger with capUsd = perTaskUsd');
   const memoBefore = modelPort?.memo?.stats?.() ?? null;
-  const ledger = new Ledger({ capUsd: perTaskUsd, label });
+  const ledger = givenLedger ?? new Ledger({ capUsd: perTaskUsd, label });
+  const port = resume ? createResumePort({ prior: Array.isArray(resume) ? resume : [], live: modelPort }) : modelPort;
   // A fresh run id per attempt: a retried run (after an environment fault) is never served journaled answers.
-  const svc = await startServices({ modelPort, ledger, runId: `${label}:${randomUUID()}`, allowedModels, socketDir: path.join(workdir, 'tools') });
+  const svc = await startServices({ modelPort: port, ledger, runId: `${label}:${randomUUID()}`, allowedModels, socketDir: path.join(workdir, 'tools') });
   let r;
   try {
     const files = { 'solve.mjs': source, 'tools/model.mjs': MODEL_TOOL, 'tools/gateway.json': JSON.stringify({ socket: 'gw.sock', token: svc.token }), ...taskFiles(task) };
     if (flowPath && existsSync(flowPath)) files['tools/flow.mjs'] = readFileSync(flowPath, 'utf8');
     if (flowOverride) files['tools/flow-override.mjs'] = readFileSync(flowOverride, 'utf8');
     if (flowOverride && flowOverrideData !== undefined) files['tools/flow-override.json'] = JSON.stringify(flowOverrideData);
+    if (flowScope != null) files[SCOPE_FILE] = JSON.stringify({ span: flowScope.span, parent: flowScope.parent ?? null, path: flowScope.path, depth: flowScope.depth });
     for (const [rel, content] of Object.entries(files)) { mkdirSync(path.dirname(path.join(workdir, rel)), { recursive: true }); writeFileSync(path.join(workdir, rel), content); }
     r = await runSandboxed({ command: 'node', args: ['solve.mjs', 'task.json'], workdir, timeoutMs, network: false });
   } catch (error) {
@@ -190,12 +244,16 @@ export async function runCompiled({ solvePath, task, modelPort, perTaskUsd = 1, 
   if (status !== 'deopt') deopt = status === 'ok' || status === 'invalid' ? null : deopt;
   // A call whose spend could not be observed is charged at its bound (unbounded: the per-task cap), never $0.
   const unknownUsd = ledger.unknownCalls > 0 ? (ledger.unknownUpperUsd ?? perTaskUsd) : 0;
+  // flow-v3: the final totals line counts the run's call requests (absent when it made none, and under flow-v1/v2).
+  const totals = [...fullTrace].reverse().find(e => ['done', 'deopt', 'crash'].includes(e?.kind));
   return {
     status, output, deopt, trace, flags, costUsd: ledger.spentUsd + unknownUsd, costUnknown: ledger.unknownCalls > 0, imputedUsd: ledger.imputedUsd, latencyMs: r.durationMs, error,
     meta: { exitCode: r.code, calls: ledger.calls, errors: ledger.errors, refusals: ledger.refusals, unknownCalls: ledger.unknownCalls, unknownUpperUsd: ledger.unknownUpperUsd,
       spentUsd: ledger.spentUsd, overshootUsd: Math.max(0, ledger.spentUsd - perTaskUsd), schemaErrors, stderrTail: r.stderr.slice(-400),
       solveSha256: createHash('sha256').update(source).digest('hex'), flow: !!(flowPath && existsSync(flowPath)),
-      ...(flowOverride ? { flowOverride: true } : {}), ...(memoBefore ? { memo: memoDelta(memoBefore, modelPort.memo.stats()) } : {}) },
+      ...(flowOverride ? { flowOverride: true } : {}), ...(memoBefore ? { memo: memoDelta(memoBefore, modelPort.memo.stats()) } : {}),
+      ...(typeof totals?.childCalls === 'number' ? { childCalls: totals.childCalls } : {}), ...(flowScope ? { flowScope } : {}),
+      ...(resume ? { resume: { rows: port.rows(), stats: port.stats() } } : {}) },
   };
 }
 // This run's share of a (possibly shared) memo port's counters.
