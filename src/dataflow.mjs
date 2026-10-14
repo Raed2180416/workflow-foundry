@@ -3,7 +3,7 @@
 // outcome oracle or a proof that a producer's data is current/true.
 import { refParts, condition } from './data.mjs';
 import { subscriptionsOf, timeoutMode } from './signals.mjs';
-import { stateOutputSchema } from './state.mjs';
+import { slotOf, stateOutputSchema } from './state.mjs';
 
 // Agent checks read the parsed model output as output.* (DESIGN §1.1). data.mjs has no `output`
 // root (its bytes are pinned by the outcome evaluators), so checks are evaluated over a rewritten
@@ -188,7 +188,7 @@ export function analyzeDataflow(workflow, registry) {
     if (node.kind === 'verify') return verifyOutput;
     if (node.kind === 'state') {
       // A record or cursor value schema keeps its own root (its local $refs resolve in it, as a capability schema's do).
-      const slot = workflow.state?.[node.slot];
+      const slot = slotOf(workflow, node.slot);
       if (slot?.schema && typeof slot.schema === 'object') schemaRoots.set(slot.schema, slot.schema);
       const schema = stateOutputSchema(slot, node.op);
       return node.onError === 'continue' ? union([schema, failure]) : schema;

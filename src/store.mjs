@@ -306,11 +306,18 @@ export class Store {
     return row ? { id: row.id, runId: row.run_id, digest: row.digest, at: row.at } : null;
   }
   recordSignal(id, runId, digestText, at) { this.rows.stmt('INSERT INTO signals(id, run_id, digest, at) VALUES(?,?,?,?)').run(id, runId, digestText, at); }
-  /** The parked, unresolved signal waits of open runs subscribed to `name` with this correlation key hash: [{runId, nodeKey}]. */
-  openSignalWaits(name, keyHash, limit = 64) {
-    return this.rows.stmt(`SELECT DISTINCT n.run_id AS run_id, n.node_key AS node_key FROM run_nodes n JOIN runs r ON r.id=n.run_id, json_each(n.body, '$.subscriptions') s
-      WHERE n.status='waiting' AND json_type(n.body, '$.resolution') IS NULL AND json_extract(s.value, '$.signal')=? AND json_extract(s.value, '$.keyHash')=?
-        AND json_extract(r.body, '$.status') NOT IN ('succeeded','failed','cancelled') ORDER BY n.run_id, n.node_key LIMIT ?`).all(name, keyHash, limit).map(row => ({ runId: row.run_id, nodeKey: row.node_key }));
+  /**
+   * The open runs of workflow `workflowId` with an unresolved signal wait subscribed to `name` with this correlation key hash whose timer
+   * has not run out at `now` (an overdue wait times out, it takes nothing): parked waits, and waits started but never parked (`running`,
+   * with the run's owner, for the caller to check it is dead). One row per run and status (not per wait, so one run with many matching
+   * waits cannot hide another): [{runId, status, owner}], at most `limit` rows.
+   */
+  openSignalWaits(workflowId, name, keyHash, now, limit = 64) {
+    return this.rows.stmt(`SELECT DISTINCT n.run_id AS run_id, n.status AS status, json_extract(r.body, '$.owner') AS owner FROM run_nodes n JOIN runs r ON r.id=n.run_id, json_each(n.body, '$.subscriptions') s
+      WHERE n.status IN ('waiting','running') AND json_type(n.body, '$.resolution') IS NULL AND json_extract(n.body, '$.wakeAt') > ?
+        AND json_extract(s.value, '$.signal')=? AND json_extract(s.value, '$.keyHash')=? AND json_extract(r.body, '$.workflowId')=?
+        AND json_extract(r.body, '$.status') NOT IN ('succeeded','failed','cancelled') ORDER BY n.run_id LIMIT ?`).all(now, name, keyHash, workflowId, limit)
+      .map(row => ({ runId: row.run_id, status: row.status, owner: row.owner === null ? null : JSON.parse(row.owner) }));
   }
   /** The last event of a run of this type whose `field` equals `value`, checked against its own recorded hash (the whole chain is verified
    *  when a run is taken over and by verify-run); null when there is none. A point lookup for what the runtime must read back from the chain. */
@@ -320,6 +327,15 @@ export class Store {
     if (!row) return null;
     const event = JSON.parse(row.body);
     if (digest(event) !== row.hash) throw new FoundryError('CORRUPT_EVENTS', `Event ${event.seq} (${type}) does not match its recorded hash`, { seq: event.seq });
+    return { ...event, hash: row.hash };
+  }
+  /** The event of a run at sequence number `seq`, checked against its own recorded hash; null when there is none. */
+  eventAt(runId, seq) {
+    if (!Number.isSafeInteger(seq) || seq < 1) return null;
+    const row = this.rows.stmt('SELECT body, hash FROM events WHERE run_id=? AND seq=?').get(runId, seq);
+    if (!row) return null;
+    const event = JSON.parse(row.body);
+    if (digest(event) !== row.hash || event.seq !== seq) throw new FoundryError('CORRUPT_EVENTS', `Event ${seq} does not match its recorded hash`, { seq });
     return { ...event, hash: row.hash };
   }
   // Durable wake-ups for wait nodes (DESIGN §5.4). The runtime writes them inside its updateRun

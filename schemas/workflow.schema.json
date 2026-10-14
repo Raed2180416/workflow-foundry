@@ -126,7 +126,7 @@
       "allOf": [
         {"if": {"properties": {"type": {"enum": ["record", "cursor"]}}}, "then": {"required": ["schema"]}},
         {"if": {"properties": {"type": {"enum": ["set", "counter"]}}}, "then": {"not": {"required": ["schema"]}}},
-        {"if": {"properties": {"type": {"enum": ["set", "counter", "record"]}}}, "then": {"not": {"required": ["monotonic"]}}}
+        {"if": {"properties": {"type": {"enum": ["set", "counter", "record"]}}}, "then": {"not": {"anyOf": [{"required": ["monotonic"]}, {"required": ["order"]}]}}}
       ]
     },
     "flow": {

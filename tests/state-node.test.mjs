@@ -13,7 +13,7 @@ import { Runtime } from '../src/runtime.mjs';
 import { createDefaultRegistry } from '../src/capabilities.mjs';
 import { validateWorkflow } from '../src/validate.mjs';
 import { verifyRun } from '../src/verify-run.mjs';
-import { STATE_REFUSALS } from '../src/state.mjs';
+import { instantNanos, slotIdentity, STATE_REFUSALS, stateReplayKey, stateRequest } from '../src/state.mjs';
 
 const ref = $ref => ({ $ref });
 const registry = createDefaultRegistry();
@@ -485,4 +485,232 @@ test('state: a read of an untrusted slot carries its label at run time', async t
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
   assert.equal(run.nodes.look.outputLabel, 'untrusted:feed');
   assert.equal(run.nodes.mark.outputLabel, 'untrusted:feed');
+});
+
+// ---- review fixes (E3 step 1 review, 2026-10-14; ENGINE-FREEZE §7.3) ------------------------------------------------------------------
+
+const quota = flow('Quota', { used: { type: 'counter', maxItems: 10, writer: 'take' } }, [st('take', 'used', 'incr', { key: 'daily' })],
+  [{ op: 'lte', left: ref('nodes.take.value'), right: 3 }]);
+const plantOp = (store, { replayKey, runId, request, result }) => store.db.prepare(`INSERT INTO state_ops(replay_key, run_id, node_key, workflow_id, slot, op, request, result, ok, error_code, at, replayed_from, created_at)
+  VALUES(?, ?, 'root/take', 'Quota', 'used', 'incr', ?, ?, 1, NULL, 0, NULL, 0)`).run(replayKey, runId, JSON.stringify(request), JSON.stringify(result)).lastInsertRowid;
+
+test('state review: replay refuses a planted recording, whether it names a run that is not in the store or one that never bound it', async t => {
+  const { store, runtime } = open(t);
+  save(store, quota);
+  const live = await go(runtime, quota);
+  assert.equal(live.status, 'succeeded', JSON.stringify(live.error));
+  const request = stateRequest('Quota', 'used', 'incr', { key: 'daily' }, slotIdentity(quota, 'used'));
+  const replayKey = stateReplayKey({ salt: live.sampleSalt, nodeKey: 'root/take', request });
+  assert.equal(store.state.lookup(replayKey).runId, live.id, 'the test plants under the genuine replay key');
+  const forged = { ok: true, output: { value: 1, version: 99, previousVersion: 0 } };
+  const recorded = snapshot(store, 'Quota');
+  for (const runId of ['ghost-run', live.id]) {
+    const id = plantOp(store, { replayKey, runId, request, result: forged });
+    const replay = await go(runtime, quota, {}, { modelMode: 'replay', sampleSalt: live.sampleSalt });
+    assert.equal(replay.status, 'failed', `a planted row naming ${runId} is not served`);
+    assert.equal(replay.error.code, 'JOURNAL_TAMPERED');
+    assert.match(replay.error.message, runId === 'ghost-run' ? /ghost-run.*not in this store/ : /never bound/);
+    assert.notEqual(replay.verdict.verdict, 'pass');
+    assert.equal(replay.outputs.take, undefined);
+    store.db.prepare('DELETE FROM state_ops WHERE id=?').run(id);
+  }
+  assert.deepEqual(snapshot(store, 'Quota'), recorded, 'no replay wrote state');
+
+  await t.test('verify-run re-checks a replay\'s recording instead of trusting what the replay event says about it', async () => {
+    const replay = await go(runtime, quota, {}, { modelMode: 'replay', sampleSalt: live.sampleSalt });
+    assert.equal(replay.status, 'succeeded', JSON.stringify(replay.error));
+    assert.equal(verifyRun(store, replay.id).clean, true, JSON.stringify(verifyRun(store, replay.id).findings));
+    const source = stateEvents(store, replay.id)[0].replayedFrom;
+    const original = store.db.prepare('SELECT result FROM state_ops WHERE id=?').get(source).result;
+    store.db.prepare('UPDATE state_ops SET result=? WHERE id=?').run(JSON.stringify({ ok: true, output: { value: 3, version: 1, previousVersion: 0 } }), source);
+    const report = verifyRun(store, replay.id);
+    assert.equal(report.ok, false, 'an edited recording fails the replay run too, not only the recording run');
+    assert.ok(report.findings.some(f => f.code === 'STATE_REPLAY_UNVERIFIED' && f.severity === 'error' && /edited/.test(f.message)), JSON.stringify(report.findings));
+    store.db.prepare('UPDATE state_ops SET result=? WHERE id=?').run(original, source);
+    assert.equal(verifyRun(store, replay.id).clean, true);
+  });
+});
+
+test('state review: the writers are part of a slot\'s declaration, so another version cannot rewrite what this one trusts', async t => {
+  const clock = { now: 1_000 };
+  const { store, runtime } = open(t, { now: () => clock.now });
+  // A pay-once guard: an invoice in the seen-set is never paid again.
+  const v1 = flow('PayOnce', { paid: { type: 'set', maxItems: 100, ttlMs: 1000, writer: 'mark' } }, [
+    st('seen', 'paid', 'get', { key: ref('input.invoice') }),
+    { ...st('mark', 'paid', 'add', { key: ref('input.invoice') }, ['seen']), when: { op: 'eq', left: ref('nodes.seen.found'), right: false } }
+  ], [{ op: 'exists', value: ref('nodes.seen.version') }]);
+  // Version 2 keeps the slot declaration word for word but names another writer, which deletes the key.
+  const forget = { ...flow('PayOnce', { paid: { ...v1.state.paid, writer: 'forget' } }, [st('forget', 'paid', 'delete', { key: ref('input.invoice') })],
+    [{ op: 'exists', value: ref('nodes.forget.previousVersion') }]), version: 2 };
+  // Version 3 keeps the writer id but writes another key; version 4 only rewords the title and the descriptions.
+  const rekeyed = { ...v1, version: 3, nodes: [v1.nodes[0], { ...v1.nodes[1], key: ref('input.other') }] };
+  const reworded = { ...v1, version: 4, title: 'Pay once, reworded', nodes: v1.nodes.map(node => ({ ...node, description: `${node.description}, reworded` })) };
+  let head = null;
+  for (const wf of [v1, forget, rekeyed, reworded]) head = store.saveWorkflow(wf, { expectedHash: head }).hash;
+  assert.notEqual(slotIdentity(v1, 'paid'), slotIdentity(forget, 'paid'));
+  assert.equal(slotIdentity(v1, 'paid'), slotIdentity(reworded, 'paid'), 'descriptions and the title are not what a writer does');
+
+  const paid = await go(runtime, v1, { invoice: 'INV-1' });
+  assert.deepEqual(paid.outputs.mark, { added: true, version: 1 });
+  const deleted = await go(runtime, forget, { invoice: 'INV-1' });
+  assert.equal(deleted.status, 'failed');
+  assert.equal(deleted.error.code, 'STATE_DRIFT', 'a version with another writer is another declaration');
+  const other = await go(runtime, rekeyed, { invoice: 'INV-9', other: 'INV-9' });
+  assert.equal(other.error.code, 'STATE_DRIFT', 'the same writer id writing another key is another writer');
+  const again = await go(runtime, v1, { invoice: 'INV-1' });
+  assert.equal(again.status, 'succeeded', JSON.stringify(again.error));
+  assert.deepEqual(again.outputs.seen, { found: true, version: 1, expiresAt: 2_000 }, 'the guard still holds the invoice');
+  assert.equal(again.nodes.mark.status, 'skipped', 'so it is not paid twice');
+  const shared = await go(runtime, reworded, { invoice: 'INV-1' });
+  assert.deepEqual(shared.outputs.seen, { found: true, version: 1, expiresAt: 2_000 }, 'a version whose writers are unchanged shares the slot');
+  assert.deepEqual(store.state.entries('PayOnce', 'paid').map(e => e.key), ['INV-1']);
+  // Once every entry has expired, the slot is empty and the new declaration adopts it.
+  clock.now = 2_000;
+  const adopted = await go(runtime, forget, { invoice: 'INV-1' });
+  assert.equal(adopted.status, 'succeeded', JSON.stringify(adopted.error));
+  assert.deepEqual(adopted.outputs.forget, { deleted: false, previousVersion: 0 });
+});
+
+test('state review: keys with lone surrogates are refused, at run time and statically, so distinct keys never share an entry', async t => {
+  const { store, runtime } = open(t);
+  const wf = flow('Keys', { seen: { type: 'set', maxItems: 100, writer: 'mark' } }, [{ ...st('mark', 'seen', 'add', { key: ref('input.id') }), onError: 'continue' }],
+    [{ op: 'exists', value: ref('nodes.mark') }]);
+  save(store, wf);
+  for (const id of ['x\uD800', 'x\uDBFF', 'x\uDC00', '\uDC00x\uD800']) {
+    const run = await go(runtime, wf, { id });
+    assert.equal(run.outputs.mark.error?.code, 'STATE_KEY', JSON.stringify(id));
+  }
+  for (const id of ['x�', 'x\u{1F600}', 'x\0y']) assert.deepEqual((await go(runtime, wf, { id })).outputs.mark.added, true, JSON.stringify(id));
+  assert.deepEqual(store.state.entries('Keys', 'seen').map(e => e.key).sort(), ['x\0y', 'x�', 'x\u{1F600}'].sort(), 'one entry per distinct key');
+  const literal = validateWorkflow(flow('Lit', { seen: { type: 'set', maxItems: 10, writer: 'w' } }, [st('w', 'seen', 'add', { key: 'a\uD800' })], exists('w')), { registry });
+  assert.ok(codes(literal).includes('STATE_KEY'), JSON.stringify(literal.errors));
+});
+
+test('state review: the state journal is bounded with the run: oversized arguments are journaled by hash, and journal bytes count against the run budget', async t => {
+  const { store, runtime } = open(t);
+  const loose = { type: 'object', additionalProperties: false, required: ['owner'], properties: { owner: { type: 'string' } } };
+  const looped = (id, decl, iterations) => flow(id, { doc: decl }, [{
+    id: 'again', kind: 'loop', needs: [], description: 'Try the same write again', maxIterations: iterations, initial: 0, input: { blob: ref('input.blob') },
+    until: { op: 'gte', left: ref('iteration'), right: iterations - 1 },
+    body: { nodes: [st('w', 'doc', 'put', { key: 'k', value: { owner: ref('input.blob') }, ifVersion: 0, onError: 'continue' })], acceptance: [{ op: 'exists', value: ref('nodes.w.ok') }] }
+  }], [{ op: 'exists', value: ref('nodes.again.iterations') }], { budget: { maxSteps: 1000, maxConcurrency: 4, maxDurationMs: 600000 } });
+  const journalOf = runId => store.db.prepare('SELECT count(*) n, sum(length(CAST(request AS BLOB)) + length(CAST(result AS BLOB))) bytes, max(length(CAST(request AS BLOB))) widest FROM state_ops WHERE run_id=?').get(runId);
+
+  // A value over maxValueBytes is refused (STATE_VALUE_LIMIT); the journal keeps its sha256 and size, not the value.
+  const elide = looped('Elide', { type: 'record', maxItems: 2, maxValueBytes: 1024, writer: 'w', schema: loose }, 3);
+  save(store, elide);
+  const big = await go(runtime, elide, { blob: 'x'.repeat(100_000) });
+  assert.equal(big.status, 'succeeded', JSON.stringify(big.error));
+  assert.equal(big.outputs.again.last.w.error.code, 'STATE_VALUE_LIMIT');
+  const [op] = store.state.opsForRun(big.id);
+  assert.equal(op.request.value.$elided.bytes, 100_000 + '{"owner":""}'.length);
+  assert.match(op.request.value.$elided.sha256, /^[0-9a-f]{64}$/);
+  assert.ok(journalOf(big.id).widest < 1024, JSON.stringify(journalOf(big.id)));
+  assert.equal(store.run(big.id).stateJournalBytes, journalOf(big.id).bytes, 'the run counts what it journaled');
+  const replay = await go(runtime, elide, big.input, { modelMode: 'replay', sampleSalt: big.sampleSalt });
+  assert.equal(replay.status, 'succeeded', JSON.stringify(replay.error));
+  assert.deepEqual(replay.outputs, big.outputs, 'the replay key still binds the whole argument');
+  assert.equal(verifyRun(store, replay.id).clean, true, JSON.stringify(verifyRun(store, replay.id).findings));
+
+  // Refusals within maxValueBytes are journaled whole, so the journal counts against the run's state budget: before the fix this loop
+  // journaled 80 x 200 KB (16 MB) outside a 10 MB budget.
+  const flood = looped('Flood', { type: 'record', maxItems: 2, maxValueBytes: 262144, writer: 'w', schema: ownerSchema }, 80);
+  save(store, flood);
+  const run = await go(runtime, flood, { blob: 'y'.repeat(200_000) });
+  assert.equal(run.status, 'failed');
+  assert.equal(run.error.code, 'STATE_BUDGET');
+  const journal = journalOf(run.id);
+  assert.ok(journal.n < 80 && journal.n > 10, JSON.stringify(journal));
+  assert.ok(journal.bytes <= store.limits.budgetBytes + 300_000, `journal ${journal.bytes} bytes stays within the run budget plus one operation`);
+  assert.equal(store.run(run.id).stateJournalBytes, journal.bytes);
+});
+
+test('state review: a monotonic cursor compares in its declared order, and is never deleted or expired', async t => {
+  const { store, runtime } = open(t);
+  const wf = flow('Clock', { at: { type: 'cursor', maxItems: 1, writer: 'move', monotonic: true, order: 'instant', schema: { type: 'string', maxLength: 64 } } }, [
+    st('pos', 'at', 'get', { key: 'feed' }),
+    st('move', 'at', 'put', { key: 'feed', value: ref('input.to'), ifVersion: ref('nodes.pos.version'), onError: 'continue' }, ['pos'])
+  ], [{ op: 'exists', value: ref('nodes.pos.version') }]);
+  save(store, wf);
+  const move = async to => { const run = await go(runtime, wf, { to }); assert.equal(run.status, 'succeeded', JSON.stringify(run.error)); return run.outputs.move.error?.code ?? 'moved'; };
+  assert.equal(await move('2026-10-14T09:00:00Z'), 'moved');
+  assert.equal(await move('2026-10-14T10:00:00+05:00'), 'STATE_CURSOR_REGRESSION', '10:00+05:00 is 05:00Z, before 09:00Z (a code-unit compare took it as later)');
+  assert.equal(await move('2026-10-14T11:00:00+02:00'), 'moved', 'the same instant written with another offset is not a move back');
+  assert.equal(await move('2026-10-14T09:00:00.000000001Z'), 'moved', 'nanoseconds count');
+  assert.equal(await move('2026-10-14T09:00:00Z'), 'STATE_CURSOR_REGRESSION');
+  assert.equal(await move('2026-10-14T09:00:01-00:00'), 'moved');
+  for (const bad of ['2026-10-14 09:00:05Z', '2026-10-14T09:00:05', '2026-02-30T00:00:00Z', '2026-10-14T24:00:00Z']) assert.equal(await move(bad), 'STATE_SCHEMA', bad);
+  assert.equal(store.state.entries('Clock', 'at')[0].value, '2026-10-14T09:00:01-00:00');
+  assert.ok(instantNanos('2026-10-14T09:00:00.5Z') > instantNanos('2026-10-14T09:00:00.499999999Z'));
+  assert.equal(instantNanos('0099-01-01T00:00:00Z') < instantNanos('1970-01-01T00:00:00Z'), true, 'no two-digit-year mapping');
+
+  // A number-order cursor (the default) holds numbers: "9" -> "10" was a code-unit regression before; strings are refused now.
+  const counted = flow('Offset', { at: { type: 'cursor', maxItems: 1, writer: 'move', monotonic: true, schema: { type: 'number' } } }, [
+    st('pos', 'at', 'get', { key: 'feed' }), st('move', 'at', 'put', { key: 'feed', value: ref('input.to'), ifVersion: ref('nodes.pos.version'), onError: 'continue' }, ['pos'])
+  ], [{ op: 'exists', value: ref('nodes.pos.version') }]);
+  save(store, counted);
+  for (const [to, expected] of [[9, 'moved'], [10, 'moved'], [9.5, 'STATE_CURSOR_REGRESSION'], [10.25, 'moved']]) {
+    const run = await go(runtime, counted, { to });
+    assert.equal(run.outputs.move.error?.code ?? 'moved', expected, String(to));
+  }
+
+  const bad = (decl, nodes = [st('w', 'c', 'put', { key: 'k', value: 1, ifVersion: 0 })]) => codes(validateWorkflow(flow('Bad', { c: { type: 'cursor', maxItems: 1, writer: nodes.map(n => n.id), schema: { type: 'integer' }, ...decl } }, nodes, exists(nodes[0].id)), { registry }));
+  assert.ok(bad({ monotonic: true }, [st('w', 'c', 'put', { key: 'k', value: 1, ifVersion: 0 }), st('reset', 'c', 'delete', { key: 'k' }, ['w'])]).includes('STATE_OP'), 'no delete');
+  assert.ok(bad({ monotonic: true, ttlDays: 1 }).includes('STATE_MONOTONIC'), 'no TTL');
+  assert.ok(bad({ order: 'number' }).includes('STATE_MONOTONIC'), 'an order belongs to a monotonic cursor');
+  assert.ok(bad({ monotonic: true, schema: { type: 'string' } }).includes('STATE_MONOTONIC'), 'the default order holds numbers');
+  assert.ok(bad({ monotonic: true, order: 'instant' }).includes('STATE_MONOTONIC'), 'an instant cursor holds strings');
+  assert.ok(bad({ monotonic: true, order: 'instant', schema: { type: 'string' } }, [st('w', 'c', 'put', { key: 'k', value: '2026-13-01T00:00:00Z', ifVersion: 0 })]).includes('STATE_SCHEMA'), 'a literal instant is checked');
+  assert.deepEqual(bad({ monotonic: true, order: 'instant', schema: { type: 'string' } }, [st('w', 'c', 'put', { key: 'k', value: '2026-10-01T00:00:00+02:00', ifVersion: 0 })]), []);
+  assert.ok(codes(validateWorkflow(flow('Bad', { r: { type: 'record', maxItems: 1, writer: 'w', schema: { type: 'integer' }, order: 'number' } }, [st('w', 'r', 'delete', { key: 'k' })], exists('w')), { registry })).includes('SCHEMA'));
+
+  await t.test('the store refuses a delete or a TTL on a monotonic cursor even when the validator is bypassed', () => {
+    for (const [decl, op] of [[{ type: 'cursor', maxItems: 1, writer: 'w', monotonic: true, schema: { type: 'integer' } }, 'delete'], [{ type: 'cursor', maxItems: 1, writer: 'w', monotonic: true, ttlMs: 5, schema: { type: 'integer' } }, 'put']]) {
+      store.db.exec('BEGIN IMMEDIATE');
+      try {
+        assert.throws(() => store.state.apply(decl, stateRequest('Direct', 'c', op, { key: 'k', value: 1, ifVersion: 0 }, '0'.repeat(64)), { now: 1, runId: 'r', nodeKey: 'root/w', check: () => {} }), e => e.code === 'STATE_OP');
+      } finally { store.db.exec('ROLLBACK'); }
+    }
+  });
+});
+
+test('state review: the replay key names the slot declaration, so a replay cannot serve entries a changed declaration would refuse', async t => {
+  const { store, runtime } = open(t);
+  const team = { type: 'object', additionalProperties: false, required: ['owner'], properties: { owner: { type: 'integer' } } };
+  const v1 = flow('Doc', { doc: { type: 'record', maxItems: 10, writer: 'w', schema: ownerSchema } }, [
+    st('r', 'doc', 'get', { key: 'k' }), st('w', 'doc', 'put', { key: 'k', value: { owner: 'alice' }, ifVersion: ref('nodes.r.version'), onError: 'continue' }, ['r'])
+  ], [{ op: 'exists', value: ref('nodes.r.version') }]);
+  const v2 = { ...v1, version: 2, state: { doc: { ...v1.state.doc, schema: team } }, nodes: [v1.nodes[0], { ...v1.nodes[1], value: { owner: 7 } }] };
+  const h1 = store.saveWorkflow(v1).hash;
+  store.saveWorkflow(v2, { expectedHash: h1 });
+  await go(runtime, v1);
+  const live = await go(runtime, v1);
+  assert.equal(live.status, 'succeeded', JSON.stringify(live.error));
+  assert.equal((await go(runtime, v2)).error.code, 'STATE_DRIFT', 'live, v2 is refused');
+  const replay = await go(runtime, v2, {}, { modelMode: 'replay', sampleSalt: live.sampleSalt });
+  assert.equal(replay.status, 'failed');
+  assert.equal(replay.error.code, 'REPLAY_MISS', 'replayed with v1\'s salt, v2 is not served v1\'s {owner: "alice"}');
+  assert.equal((await go(runtime, v1, {}, { modelMode: 'replay', sampleSalt: live.sampleSalt })).status, 'succeeded', 'the same version still replays');
+});
+
+test('state review: slot names that are Object.prototype members are unknown slots, not validator crashes', () => {
+  for (const slot of ['toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'constructor']) {
+    const result = validateWorkflow(flow('Proto', { seen: { type: 'set', maxItems: 10, writer: 'w' } },
+      [st('w', 'seen', 'add', { key: 'a' }), st('r', slot, 'get', { key: 'a' }, ['w'])], [{ op: 'exists', value: ref('nodes.r.version') }]), { registry });
+    assert.ok(codes(result).includes('STATE_SLOT_UNKNOWN'), `${slot}: ${JSON.stringify(result.errors)}`);
+    assert.ok(!codes(result).includes('VALIDATION_ERROR'), `${slot}: ${JSON.stringify(result.errors)}`);
+  }
+});
+
+test('state review: a bad state clock is a harness fault that a collecting map does not swallow', async t => {
+  const { store, runtime } = open(t, { now: () => 0.5 });
+  const wf = flow('Clk', { seen: { type: 'set', maxItems: 10, writer: 'w' } }, [{
+    id: 'each', kind: 'map', needs: [], description: 'Mark each id', items: ref('input.ids'), maxItems: 4, failure: 'collect',
+    body: { nodes: [st('w', 'seen', 'add', { key: ref('item') })], acceptance: [{ op: 'exists', value: ref('nodes.w.version') }] }
+  }], [{ op: 'exists', value: ref('nodes.each.count') }]);
+  save(store, wf);
+  const run = await go(runtime, wf, { ids: ['a', 'b'] });
+  assert.equal(run.status, 'failed');
+  assert.equal(run.error.code, 'STATE_CLOCK');
+  assert.deepEqual(store.state.entries('Clk', 'seen'), []);
 });

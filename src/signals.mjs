@@ -135,10 +135,17 @@ export function signalCheckpointDrift(run, events) {
   const frames = [['root', run], ...Object.entries(run.frames && typeof run.frames === 'object' ? run.frames : {})];
   const seen = new Set();
   for (const [frameKey, frame] of frames) for (const [id, state] of Object.entries(frame?.nodes ?? {})) {
-    const nodeKey = `${frameKey}/${id}`, decision = decisions.get(nodeKey);
+    const nodeKey = `${frameKey}/${id}`, decision = decisions.get(nodeKey), start = started.get(nodeKey);
+    // The rule's inputs: what the wait subscribed to, when its timer runs out, and its place in the claim order (startedSequence).
+    if (start || (state?.kind === 'wait' && (state.startedSequence !== undefined || Array.isArray(state.subscriptions)))) {
+      const signalWait = Array.isArray(state?.subscriptions) || Array.isArray(start?.subscriptions);
+      if (!start || (signalWait && (digest(state?.subscriptions ?? null) !== digest(start.subscriptions ?? null) || (state?.startedSequence ?? null) !== start.seq))
+        || (Object.hasOwn(start, 'wakeAt') && (state?.wakeAt ?? null) !== start.wakeAt)) drift.push(`inputs of wait ${nodeKey} (subscriptions, timer or start)`);
+    }
     if (decision) seen.add(nodeKey);
     if (!state?.resolution && !decision) continue;
-    if (!decision || !state?.resolution || decision.outcome !== state.resolution.outcome || (decision.signalId ?? null) !== (state.resolution.signalId ?? null)) drift.push(`decision of wait ${nodeKey}`);
+    if (!decision || !state?.resolution || decision.outcome !== state.resolution.outcome || (decision.signalId ?? null) !== (state.resolution.signalId ?? null)
+      || (decision.deliverySeq ?? null) !== (state.resolution.deliverySeq ?? null)) drift.push(`decision of wait ${nodeKey}`);
   }
   for (const nodeKey of decisions.keys()) if (!seen.has(nodeKey)) drift.push(`decision of wait ${nodeKey} (node missing from the record)`);
   return drift;
@@ -147,13 +154,17 @@ export function signalCheckpointDrift(run, events) {
 /**
  * Re-derive every signal-wait decision of a run from its verified chain (store.events) and compare it with what the chain recorded.
  * Returns {waits, deliveries, decisions, mismatches: [{code, seq, nodeKey, message}]}. Codes: WAIT_CLAIM (a delivery went to another
- * wait than the rule gives, or to none when one was due), WAIT_PICK (a buffered signal other than the rule's), WAIT_TIMEOUT_EARLY (a
- * timeout before the timer, or while an eligible signal waited), WAIT_MISSED (a wait parked with an eligible signal in the inbox),
- * WAIT_CANCELLED (the cancelled losers differ), WAIT_OUTPUT (the completed output is not the decision's), SIGNAL_DOUBLE (one signal
- * consumed twice), WAIT_UNKNOWN (a decision for a wait that never started).
+ * wait than the rule gives, or to none when one was due), WAIT_PICK (a buffered signal other than the rule's, or a decision naming a
+ * delivery that is not that signal's), WAIT_TIMEOUT_EARLY (a timeout before the timer, or while an eligible signal waited), WAIT_MISSED
+ * (a wait parked with an eligible signal in the inbox), WAIT_CANCELLED (the cancelled losers differ), WAIT_OUTPUT (the completed output is
+ * not the decision's: the payload, name and time of the delivery the decision names), WAIT_UNDECIDED (a signal wait completed, or failed
+ * with WAIT_TIMEOUT, with no decision recorded before it), SIGNAL_DOUBLE (one signal consumed twice), SIGNAL_REDELIVERED (one signal id
+ * delivered twice), WAIT_UNKNOWN (a decision for a wait that never started). A wait that failed without a decision (its map item failed
+ * around it while it was parked) takes no signal afterwards.
  */
 export function replayWaits(events) {
-  const waits = new Map(), inbox = {}, payloads = new Map(), mismatches = [];
+  // inbox: signal id -> its (first) delivery; deliveries: delivery event seq -> what it carried.
+  const waits = new Map(), inbox = {}, delivered = new Map(), mismatches = [];
   let deliveries = 0, decisions = 0, pendingClaim = null;
   const miss = (code, event, message) => mismatches.push({ code, seq: event.seq, nodeKey: event.nodeKey ?? null, message });
   for (const event of events) {
@@ -173,12 +184,14 @@ export function replayWaits(events) {
       wait.parked = true;
     } else if (event.type === 'signal.delivered') {
       deliveries++;
+      pendingClaim = event.consumedBy ? { signalId: event.signalId, nodeKey: event.consumedBy, deliverySeq: event.seq } : null;
+      // An id is delivered once (the inbox refuses a second delivery): a second one is an edit, and the first stays the one the rule uses.
+      if (Object.hasOwn(inbox, event.signalId)) { miss('SIGNAL_REDELIVERED', event, `signal ${event.signalId} was delivered again (first at event ${inbox[event.signalId].seq}); an id is delivered once`); continue; }
       const entry = { name: event.name, keyHash: event.keyHash, receivedAt: event.receivedAt, seq: event.seq, consumedBy: null };
       const open = [...waits].filter(([, w]) => w.parked && !w.resolution).map(([nodeKey, w]) => ({ nodeKey, state: { ...w, startedSequence: w.startedSequence } }));
       const expected = claimant(open, entry)?.nodeKey ?? null;
       if (expected !== (event.consumedBy ?? null)) miss('WAIT_CLAIM', event, `signal ${event.signalId} went to ${event.consumedBy ?? 'no wait'}; the rule gives ${expected ?? 'no wait'}`);
-      inbox[event.signalId] = entry; payloads.set(event.signalId, event.payloadHash);
-      pendingClaim = event.consumedBy ? { signalId: event.signalId, nodeKey: event.consumedBy } : null;
+      inbox[event.signalId] = entry; delivered.set(event.seq, { id: event.signalId, name: event.name, payloadHash: event.payloadHash, receivedAt: event.receivedAt });
       continue;
     } else if (event.type === 'wait.resolved') {
       decisions++;
@@ -186,17 +199,20 @@ export function replayWaits(events) {
       if (wait.resolution) miss('WAIT_PICK', event, `${event.nodeKey} was resolved twice`);
       if (event.outcome === 'signal') {
         const entry = inbox[event.signalId];
+        // The delivery the decision names (a chain written before decisions named it: that id's first delivery).
+        const deliverySeq = event.deliverySeq ?? entry?.seq ?? null;
         if (event.by === 'delivery') {
-          if (pendingClaim?.signalId !== event.signalId || pendingClaim?.nodeKey !== event.nodeKey) miss('WAIT_CLAIM', event, `${event.nodeKey} claims delivery ${event.signalId}, which the delivery did not give it`);
+          if (pendingClaim?.signalId !== event.signalId || pendingClaim?.nodeKey !== event.nodeKey || pendingClaim?.deliverySeq !== deliverySeq) miss('WAIT_CLAIM', event, `${event.nodeKey} claims delivery ${event.signalId}, which the delivery did not give it`);
         } else {
           const expected = pickSignal(wait.subscriptions, wait.wakeAt, inbox);
           if (expected?.id !== event.signalId) miss('WAIT_PICK', event, `${event.nodeKey} took ${event.signalId}; the rule gives ${expected?.id ?? 'no signal'}`);
         }
         if (!entry) miss('WAIT_PICK', event, `${event.nodeKey} took ${event.signalId}, which was never delivered`);
+        else if (delivered.get(deliverySeq)?.id !== event.signalId) miss('WAIT_PICK', event, `${event.nodeKey} names event ${deliverySeq} as the delivery of ${event.signalId}, which it is not`);
         else if (entry.consumedBy) miss('SIGNAL_DOUBLE', event, `signal ${event.signalId} was consumed by ${entry.consumedBy} and again by ${event.nodeKey}`);
         else entry.consumedBy = event.nodeKey;
         if (digest(event.cancelled ?? null) !== digest(cancelledBy(wait.subscriptions, event.signal ?? entry?.name ?? null))) miss('WAIT_CANCELLED', event, `${event.nodeKey} cancelled ${JSON.stringify(event.cancelled)}`);
-        wait.resolution = { outcome: 'signal', signalId: event.signalId };
+        wait.resolution = { outcome: 'signal', signalId: event.signalId, deliverySeq };
       } else {
         const eligible = pickSignal(wait.subscriptions, wait.wakeAt, inbox);
         if (eligible) miss('WAIT_TIMEOUT_EARLY', event, `${event.nodeKey} timed out while signal ${eligible.id} was eligible`);
@@ -204,11 +220,15 @@ export function replayWaits(events) {
         if (digest(event.cancelled ?? null) !== digest(cancelledBy(wait.subscriptions, null))) miss('WAIT_CANCELLED', event, `${event.nodeKey} cancelled ${JSON.stringify(event.cancelled)}`);
         wait.resolution = { outcome: 'timeout' };
       }
-    } else if (event.type === 'node.completed' && wait?.resolution) {
-      const out = event.output ?? {}, r = wait.resolution;
-      const right = out.outcome === r.outcome && (r.outcome === 'timeout' ? out.at === wait.wakeAt
-        : out.id === r.signalId && digest(out.payload ?? null) === payloads.get(r.signalId) && out.signal === inbox[r.signalId]?.name && out.at === inbox[r.signalId]?.receivedAt);
-      if (!right) miss('WAIT_OUTPUT', event, `${event.nodeKey} completed with an output that is not its ${r.outcome} decision`);
+    } else if (event.type === 'node.completed' && wait) {
+      const out = event.output ?? {}, r = wait.resolution, from = r?.outcome === 'signal' ? delivered.get(r.deliverySeq) : null;
+      if (!r) miss('WAIT_UNDECIDED', event, `${event.nodeKey} completed, but no decision of that wait precedes it`);
+      else if (!(out.outcome === r.outcome && (r.outcome === 'timeout' ? out.at === wait.wakeAt
+        : out.id === r.signalId && digest(out.payload ?? null) === from?.payloadHash && out.signal === from?.name && out.at === from?.receivedAt)))
+        miss('WAIT_OUTPUT', event, `${event.nodeKey} completed with an output that is not its ${r.outcome} decision`);
+    } else if (event.type === 'node.failed' && wait && !wait.resolution) {
+      if (event.error?.code === 'WAIT_TIMEOUT') miss('WAIT_UNDECIDED', event, `${event.nodeKey} failed with WAIT_TIMEOUT, but no timeout decision of that wait precedes it`);
+      wait.resolution = { outcome: 'failed' };
     }
     pendingClaim = null;
   }

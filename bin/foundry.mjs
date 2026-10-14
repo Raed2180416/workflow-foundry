@@ -194,8 +194,8 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry calls --run RUN_ID --workspace PATH  (journaled model calls with cost)\n` +
 `  foundry answer RUN_ID --node root/NODE --answer JSON --workspace PATH\n` +
 `  foundry approve RUN_ID APPROVAL_ID --approved|--rejected --workspace PATH\n` +
-`  foundry signal [RUN_ID] --name SIGNAL --id SIGNAL_ID [--key JSON] [--payload JSON_OR_FILE] --workspace PATH\n` +
-`      (deliver a signal to a run, or without RUN_ID to the one run whose parked wait correlates on --key; the id is the idempotency key:\n` +
+`  foundry signal [RUN_ID] [--workflow WORKFLOW_ID] --name SIGNAL --id SIGNAL_ID [--key JSON] [--payload JSON_OR_FILE] --workspace PATH\n` +
+`      (deliver a signal to a run, or without RUN_ID (then --workflow is required) to the one run of that workflow whose wait correlates on --key; the id is the idempotency key:\n` +
 `       a repeat is a no-op. A wait it resolves is resumed by the next tick or serve scan)\n` +
 `  foundry serve --workspace PATH [--port 4177] [--tick-interval SECONDS] [--agent opencode-free|opencode-v2-free --model OBSERVED_FREE_ID --auto-apply]\n` +
 `  foundry mcp --workspace PATH\n\n` +
@@ -487,8 +487,10 @@ async function main() {
     if (command === 'answer') { print(foundry.publicRun(foundry.runtime.answer(item, args.node, jsonValue(args.answer, null)))); return; }
     if (command === 'signal') {
       if (positionals.length > 2) throw new FoundryError('CLI_ARGUMENT', 'signal takes at most one RUN_ID. Use --help.');
-      const signal = { id: args.id, name: args.name, ...(args.key === undefined ? {} : { key: jsonValue(args.key, null) }), ...(args.payload === undefined ? {} : { payload: jsonValue(args.payload, null) }) };
-      print(item ? foundry.signal(item, signal, { actor: 'cli' }) : foundry.correlateSignal(signal, { actor: 'cli' })); return;
+      // --key is JSON text only (a value naming a file is not read as that file); --payload may be JSON or a JSON file.
+      const key = () => { try { return checkData(JSON.parse(String(args.key))); } catch (error) { throw new FoundryError('CLI_ARGUMENT', `--key must be JSON text, such as '"PO-1"' (${error.code ?? error.message})`); } };
+      const signal = { id: args.id, name: args.name, ...(args.key === undefined ? {} : { key: key() }), ...(args.payload === undefined ? {} : { payload: jsonValue(args.payload, null) }) };
+      print(item ? foundry.signal(item, signal, { actor: 'cli', workflowId: args.workflow ?? null }) : foundry.correlateSignal(signal, { workflowId: args.workflow, actor: 'cli' })); return;
     }
     if (command === 'approve') {
       if (!!args.approved === !!args.rejected) throw new FoundryError('APPROVAL_CHOICE', 'Choose exactly one of --approved or --rejected');

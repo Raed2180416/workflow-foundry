@@ -62,10 +62,12 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
         }
         if (parts.length === 2 && parts[1] === 'repair-requests') return json(201, foundry.requestRepair({ requestId: data.requestId, failedRunId: data.failedRunId, expectedHash: data.expectedHash, diagnostic: data.diagnostic ?? '' }));
         if (parts.length === 2 && parts[1] === 'delivery') return json(200, foundry.delivery({ requestId: data.requestId, proposalId: data.proposalId, runId: data.runId }));
-        // A signal routed by correlation (src/signals.mjs): the one open run whose parked wait listens for this name and key takes it. Like an
-        // answer, it needs the local UI token; a wait it resolved is resumed now (and by the next timer scan if this process cannot).
+        // A signal routed by correlation (src/signals.mjs): the one open run of the named workflow ({workflowId, id, name, key, payload?})
+        // whose wait listens for this name and key takes it. Like an answer, it needs the local UI token; a wait it resolved is resumed now
+        // (and by the next timer scan if this process cannot).
         if (parts.length === 2 && parts[1] === 'signals') {
-          const result = foundry.correlateSignal(data, { actor: 'http' });
+          const { workflowId, ...signal } = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+          const result = foundry.correlateSignal(signal, { workflowId, actor: 'http' });
           if (result.consumedBy && !result.duplicate) foundry.startRun(result.runId).catch(error => console.error('Foundry signal resume:', error.code, error.message));
           return json(202, result);
         }
