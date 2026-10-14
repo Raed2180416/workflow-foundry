@@ -1,0 +1,89 @@
+// Run arm agent-H / agent-O (experiments/ebed/agent-arm.mjs) on E8 dev worlds and grade it with the item's oracle and the
+// reference pools, like B1 (build.mjs) so the two are paired per world. METERED: every case-tick is one model session.
+// A total cap stops the stream with a host QuotaStop (the clock freezes; cases still open are censored, not failed).
+//   node experiments/ebed/run-agent.mjs --model claude-haiku-5-5 --label agenth-e8-1 --seeds 1232 --difficulties 2 \
+//        --size 16 --tick-budget 0.5 --tick-minutes 8 --cap 15 --concurrency 4 [--effort low] [--workspace]
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import * as e8 from '../../beds/ebed/e8/index.mjs';
+import { createHost, QuotaStop } from '../../beds/ebed/host/host.mjs';
+import { agentArm } from './agent-arm.mjs';
+import { contractText } from './build.mjs';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(here, '..', '..');
+const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
+const POLICY = JSON.parse(readFileSync(path.join(ROOT, 'policy', 'models.json'), 'utf8'));
+
+/** Wrap an arm so the stream stops (QuotaStop) once recorded spend reaches capUsd; unknown costs count at their bound. */
+export function capped(arm, capUsd, spent = { usd: 0 }) {
+  return {
+    ...arm,
+    async tick(input, ctx) {
+      if (spent.usd >= capUsd) throw new QuotaStop(`arm cap $${capUsd} reached ($${spent.usd.toFixed(2)})`);
+      const rec = ctx.recordCost;
+      const c = { ...ctx, recordCost: row => { spent.usd += row.costUnknown ? (row.costUpperUsd ?? 0) : (row.costUsd ?? 0); rec(row); } };
+      return arm.tick.call(arm, input, c);
+    },
+    spent,
+  };
+}
+
+/** Grade a finished (or frozen) host run: completed-case pass rates, by class, first-divergence codes, costs. */
+export function summarize(world, rows, pools, label) {
+  const v = e8.oracle(world, rows, { pools, arm: label });
+  const comp = v.cases.filter(c => c.pool === 'completed');
+  const byClass = {}, codes = {};
+  for (const c of comp) { const k = (byClass[c.class] ??= { n: 0, pass: 0, censored: 0 }); k.n += 1; if (c.pass) k.pass += 1; if (c.armCensored) k.censored += 1; }
+  for (const c of comp.filter(x => !x.pass)) { const k = c.firstDivergence ? `L${c.firstDivergence.layer}:${c.firstDivergence.code}` : 'armCensored'; codes[k] = (codes[k] ?? 0) + 1; }
+  const calls = rows.filter(r => r.type === 'call');
+  const costs = calls.flatMap(r => r.costs ?? []);
+  return {
+    completed: comp.length, passed: comp.filter(c => c.pass).length, armCensored: comp.filter(c => c.armCensored).length,
+    critical: v.critical.length, armErrors: rows.filter(r => r.type === 'arm.error').length,
+    ticks: calls.length, costUsd: costs.reduce((s, c) => s + (c.costUsd ?? 0), 0), costUnknown: costs.filter(c => c.costUnknown).length,
+    byClass, codes,
+  };
+}
+
+async function main() {
+  const model = arg('--model', null);
+  if (!POLICY.models.some(m => m.id === model)) throw new Error(`--model must be a policy model id (policy/models.json): ${model}`);
+  const label = arg('--label', null);
+  if (!label) throw new Error('--label is required');
+  const out = path.join(ROOT, 'research/enterprise-20261014/runs', label);
+  if (existsSync(path.join(out, 'result.json'))) throw new Error(`${out}/result.json exists`);
+  mkdirSync(out, { recursive: true });
+  const [s0, s1] = arg('--seeds', '1232').split('-').map(Number);
+  const seeds = Array.from({ length: (s1 ?? s0) - s0 + 1 }, (_, i) => s0 + i);
+  const difficulties = arg('--difficulties', '2').split(',').map(Number);
+  const size = arg('--size', null) === null ? undefined : Number(arg('--size'));
+  const cap = Number(arg('--cap', '15')), tickBudget = Number(arg('--tick-budget', '0.5')), tickMinutes = Number(arg('--tick-minutes', '8'));
+  const concurrency = Number(arg('--concurrency', '4'));
+  const useWs = process.argv.includes('--workspace');
+  const spent = { usd: 0 };
+  const rows = [];
+  for (const d of difficulties) for (const seed of seeds) {
+    const w = e8.generateWorld({ seed, difficulty: d, mix: 'tail', ...(size ? { size } : {}) });
+    const { pools } = await e8.referenceRuns(w);
+    const workRoot = path.join('/var/tmp/foundry-work/ebed-arms', label, `w${seed}-d${d}`);
+    const arm = capped(agentArm({ id: label, model, workRoot, contract: contractText(), effort: arg('--effort', null), budgetUsdPerTick: tickBudget,
+      minutesPerTick: tickMinutes, journal: path.join(out, 'ticks.jsonl') }), cap, spent);
+    const host = createHost({ item: e8.binding, world: w, arm, concurrency: useWs ? 1 : concurrency, callTimeoutMs: (tickMinutes + 1) * 60_000,
+      ...(useWs ? { workspaceDir: path.join(workRoot, 'ws') } : {}) });
+    const t = Date.now();
+    let status;
+    try { status = (await host.run()).status; } catch (e) { status = `host-error: ${String(e?.message ?? e).slice(0, 200)}`; }
+    const s = summarize(w, host.journal.contentRows(), pools, label);
+    rows.push({ seed, d, size: size ?? null, status, wallMs: Date.now() - t, ...s });
+    console.log(`  d${d} seed ${seed}${size ? ` size ${size}` : ''}: ${status}; ${s.passed}/${s.completed} completed pass (${s.armCensored} open at freeze), critical ${s.critical}, arm errors ${s.armErrors}, ${s.ticks} ticks, $${s.costUsd.toFixed(2)}`);
+    writeFileSync(path.join(out, 'result.partial.json'), JSON.stringify({ label, model, rows }, null, 1));
+    if (spent.usd >= cap) break;
+  }
+  writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, item: e8.family.id, spec: e8.specE.sha256, model, effort: arg('--effort', null), workspace: useWs,
+    tickBudgetUsd: tickBudget, tickMinutes, capUsd: cap, spentUsd: spent.usd, seeds, difficulties, size: size ?? null, rows }, null, 1));
+  console.log(`spent $${spent.usd.toFixed(2)} of $${cap}`);
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();
