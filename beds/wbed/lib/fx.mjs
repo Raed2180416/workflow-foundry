@@ -6,13 +6,19 @@ import { USD_PER_UNIT_QUOTED } from '../../records/pools.mjs';
 
 export const USD_RATE = mulRate(1000000);
 
-/** Draw one quote per currency (USD is the identity) within +-3% of the records base rate. */
+/**
+ * Draw one quote per currency (USD is the identity) within +-3% of the records base rate. Every rate is exactly the
+ * rate its quote line prints (quoteLine): USD per unit is quantized as records quantizes it (records/world.mjs `quant`:
+ * six decimals below 0.05, four above), units per USD are four decimals. wbed-r3 1.0.0 stored six decimals and printed
+ * four, so its totals were not derivable from the task (references/README.md "R3 bed finding"; fixed in wbed-r3 1.1.0).
+ */
+export const quantUsdPerUnit = x => (x < 0.05 ? Math.round(x * 1e6) : Math.round(x * 1e4) * 100);
 export function drawQuotes(r, currencies) {
   const cur = { USD: USD_RATE };
   for (const c of [...new Set(currencies)].sort()) {
     if (c === 'USD') continue;
     const rate = CURRENCIES[c].rate * (1 + r.float(-0.03, 0.03));
-    cur[c] = USD_PER_UNIT_QUOTED.has(c) ? mulRate(Math.round(rate * 1e6)) : divRate(Math.round(1e4 / rate));
+    cur[c] = USD_PER_UNIT_QUOTED.has(c) ? mulRate(quantUsdPerUnit(rate)) : divRate(Math.round(1e4 / rate));
   }
   return cur;
 }

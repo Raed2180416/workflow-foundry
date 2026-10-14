@@ -1,0 +1,12 @@
+{
+  "fields": [
+    [
+      "answer",
+      "CheckBoxGroup",
+      "enum-array",
+      true,
+      null
+    ]
+  ],
+  "warnings": []
+}

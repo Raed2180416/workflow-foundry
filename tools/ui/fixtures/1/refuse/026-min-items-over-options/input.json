@@ -1,0 +1,13 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "array",
+    "items": {
+      "enum": [
+        "a",
+        "b"
+      ]
+    },
+    "minItems": 3
+  }
+}

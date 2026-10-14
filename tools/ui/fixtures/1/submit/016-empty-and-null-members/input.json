@@ -1,0 +1,27 @@
+{
+  "question": "Pick one.",
+  "answerSchema": {
+    "type": "object",
+    "required": [
+      "centre",
+      "level"
+    ],
+    "properties": {
+      "centre": {
+        "enum": [
+          "",
+          "CC-100"
+        ]
+      },
+      "level": {
+        "enum": [
+          1,
+          "1",
+          null,
+          true
+        ]
+      }
+    }
+  },
+  "formName": "pick"
+}

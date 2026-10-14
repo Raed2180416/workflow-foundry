@@ -1,0 +1,9 @@
+{
+  "question": "What priority should the incident get?",
+  "answerSchema": {
+    "type": "integer",
+    "minimum": 1,
+    "maximum": 4,
+    "description": "1 is the highest priority"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "string",
+    "minimum": 1
+  }
+}

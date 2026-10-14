@@ -55,6 +55,8 @@ function adapterError(source, code, field, path) {
 
 // Converts one field's formState value. Returns { value } (possibly BLANK) or { code }.
 function convert(field, value) {
+  // An enum may list "" or null as a real choice; membership is checked before blank handling.
+  if (field.valueType === 'enum') { const hit = field.options.find(o => o.value === value); if (hit) return { value: hit.value }; }
   if (value === null || value === undefined) return { value: BLANK };
   switch (field.valueType) {
     case 'string':

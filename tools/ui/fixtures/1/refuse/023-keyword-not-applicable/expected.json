@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "source": "schema",
+      "code": "keyword-not-applicable",
+      "path": "/minimum"
+    }
+  ]
+}

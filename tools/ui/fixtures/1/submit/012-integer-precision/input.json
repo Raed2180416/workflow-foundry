@@ -1,0 +1,15 @@
+{
+  "question": "How many units?",
+  "answerSchema": {
+    "type": "object",
+    "required": [
+      "units"
+    ],
+    "properties": {
+      "units": {
+        "type": "integer"
+      }
+    }
+  },
+  "formName": "units"
+}

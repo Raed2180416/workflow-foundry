@@ -1,0 +1,112 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "inv",
+        "formState": {
+          "inv": {
+            "answer": {
+              "value": "INV-123456"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "inv",
+        "formState": {
+          "inv": {
+            "answer": {
+              "value": "INV-12345X"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "inv",
+        "formState": {
+          "inv": {
+            "answer": {
+              "value": "inv-123456"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "inv",
+        "formState": {
+          "inv": {
+            "answer": {
+              "value": "INV-12345\n"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "inv",
+        "formState": {
+          "inv": {
+            "answer": {
+              "value": "INV-1234567"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": "INV-123456"
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "pattern-mismatch",
+            "statementId": "answer"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "pattern-mismatch",
+            "statementId": "answer"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "pattern-mismatch",
+            "statementId": "answer"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "too-long",
+            "statementId": "answer"
+          }
+        ]
+      }
+    ]
+  }
+}

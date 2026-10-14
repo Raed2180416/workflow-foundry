@@ -1,0 +1,14 @@
+{
+  "fields": [
+    [
+      "answer",
+      "Input",
+      "string",
+      true,
+      null
+    ]
+  ],
+  "warnings": [
+    "required-text-may-be-blank"
+  ]
+}

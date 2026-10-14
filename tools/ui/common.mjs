@@ -48,10 +48,23 @@ export const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ESCAPE
 // characters that can hide or reorder what a person reads: bidi controls, zero-width characters, other control
 // characters, lone surrogates and noncharacters become a visible marker ⟦U+XXXX⟧ (the run-view convention).
 // Tab and line feed stay; CRLF becomes LF. Values a person typed are echoed back unmarked (escaped only).
-// eslint-disable-next-line no-control-regex
-const HIDDEN = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F­؜᠎​-‏ -‮⁠-⁯﻿￹-￻￾￿]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
-export const displayText = value => String(value).replace(/\r\n/g, '\n')
-  .replace(HIDDEN, c => `⟦U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')}⟧`);
+const HIDDEN_RANGES = [[0x00, 0x08], [0x0B, 0x1F], [0x7F, 0x9F], [0xAD, 0xAD], [0x61C, 0x61C], [0x180E, 0x180E], [0x200B, 0x200F],
+  [0x2028, 0x202E], [0x2060, 0x206F], [0xFEFF, 0xFEFF], [0xFFF9, 0xFFFB], [0xFFFE, 0xFFFF]];
+const hiddenUnit = c => (c >= 0xD800 && c <= 0xDFFF) || HIDDEN_RANGES.some(([lo, hi]) => c >= lo && c <= hi);
+const marker = c => `\u27E6U+${c.toString(16).toUpperCase().padStart(4, '0')}\u27E7`;
+export function displayText(value) {
+  const s = String(value).replace(/\r\n/g, '\n');
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (c >= 0xD800 && c <= 0xDBFF && i + 1 < s.length) {
+      const d = s.charCodeAt(i + 1);
+      if (d >= 0xDC00 && d <= 0xDFFF) { out += s[i] + s[i + 1]; i++; continue; } // a valid surrogate pair
+    }
+    out += hiddenUnit(c) ? marker(c) : s[i];
+  }
+  return out;
+}
 
 // A field label from a property name when the schema gives no title: "holdAmount" -> "Hold amount".
 export function humanize(name) {

@@ -1,0 +1,21 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "object",
+    "properties": {
+      "a": {
+        "type": "string",
+        "format": "date"
+      },
+      "b": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "c": {
+        "enum": []
+      }
+    }
+  }
+}

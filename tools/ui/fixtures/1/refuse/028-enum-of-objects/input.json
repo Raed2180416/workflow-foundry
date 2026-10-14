@@ -1,0 +1,10 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "enum": [
+      {
+        "a": 1
+      }
+    ]
+  }
+}

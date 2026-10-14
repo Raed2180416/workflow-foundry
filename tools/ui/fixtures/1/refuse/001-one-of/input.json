@@ -1,0 +1,13 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "oneOf": [
+      {
+        "type": "string"
+      },
+      {
+        "type": "number"
+      }
+    ]
+  }
+}

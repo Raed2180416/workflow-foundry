@@ -1,0 +1,201 @@
+{
+  "interactions": [
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "7"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "release"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/amount",
+          "2"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ],
+        [
+          "answer/approvedBy",
+          "mallory"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ],
+        [
+          "__proto__",
+          "x"
+        ]
+      ]
+    },
+    {
+      "submitRaw": "_spec={{spec}}&_token={{token}}&answer%2Fdecision=0&answer%2Famount=1&answer%2Freason=%E0%A4"
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "unknown-option",
+            "statementId": "answer/decision"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "unknown-option",
+            "statementId": "answer/decision"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "duplicate-field",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "unknown-field",
+            "statementId": "answer/approvedBy"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "unknown-field",
+            "statementId": "__proto__"
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "answer": {
+          "decision": "release",
+          "amount": 1,
+          "reason": "�"
+        }
+      }
+    ]
+  }
+}

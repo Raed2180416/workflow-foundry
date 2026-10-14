@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "source": "schema",
+      "code": "pattern-needs-max-length",
+      "path": "/pattern"
+    }
+  ]
+}

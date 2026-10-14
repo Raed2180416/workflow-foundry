@@ -1,0 +1,85 @@
+{
+  "interactions": [
+    {
+      "answer": {
+        "decision": "release",
+        "amount": 1.5,
+        "reason": "x"
+      }
+    },
+    {
+      "answer": {
+        "decision": "release",
+        "amount": 1.5,
+        "reason": "x",
+        "approvedBy": "mallory"
+      }
+    },
+    {
+      "answer": {
+        "decision": "release",
+        "amount": "1.5",
+        "reason": "x"
+      }
+    },
+    {
+      "answer": [
+        "release"
+      ]
+    },
+    {
+      "answer": null
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": {
+          "decision": "release",
+          "amount": 1.5,
+          "reason": "x"
+        }
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "unknown-property",
+            "path": "/approvedBy"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "type-mismatch",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "type-mismatch",
+            "path": ""
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "type-mismatch"
+          }
+        ]
+      }
+    ]
+  }
+}

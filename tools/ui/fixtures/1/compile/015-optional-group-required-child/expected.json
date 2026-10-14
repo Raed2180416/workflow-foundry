@@ -1,0 +1,26 @@
+{
+  "fields": [
+    [
+      "answer/outcome",
+      "RadioGroup",
+      "enum",
+      true,
+      null
+    ],
+    [
+      "answer/chargeback/reasonCode",
+      "RadioGroup",
+      "enum",
+      true,
+      "g0"
+    ],
+    [
+      "answer/chargeback/amount",
+      "Input",
+      "number",
+      false,
+      "g0"
+    ]
+  ],
+  "warnings": []
+}

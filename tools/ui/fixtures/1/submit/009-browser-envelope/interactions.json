@@ -1,0 +1,156 @@
+{
+  "interactions": [
+    {
+      "submit": [
+        [
+          "_spec",
+          "sha256:00"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "tok-2"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "1"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ]
+      ]
+    },
+    {
+      "submitRaw": ""
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "stale-form"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "bad-token"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "bad-token"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "stale-form"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "stale-form"
+          },
+          {
+            "source": "host",
+            "code": "bad-token"
+          }
+        ]
+      }
+    ]
+  }
+}

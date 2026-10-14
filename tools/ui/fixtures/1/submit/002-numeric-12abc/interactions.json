@@ -1,0 +1,70 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release",
+              "componentType": "RadioGroup"
+            },
+            "answer/amount": {
+              "value": "12abc",
+              "componentType": "Input"
+            },
+            "answer/reason": {
+              "value": "ok",
+              "componentType": "TextArea"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release",
+              "componentType": "RadioGroup"
+            },
+            "answer/amount": {
+              "value": "1250.50",
+              "componentType": "Input"
+            },
+            "answer/reason": {
+              "value": "ok",
+              "componentType": "TextArea"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount",
+            "component": "Input",
+            "path": "/amount"
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "answer": {
+          "decision": "release",
+          "amount": 1250.5,
+          "reason": "ok"
+        }
+      }
+    ]
+  }
+}

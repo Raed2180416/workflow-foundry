@@ -1,0 +1,23 @@
+{
+  "question": "Who approves the change?",
+  "answerSchema": {
+    "type": "object",
+    "required": [
+      "approver_email"
+    ],
+    "properties": {
+      "approver_email": {
+        "type": "string",
+        "maxLength": 120,
+        "minLength": 3,
+        "title": "Approver e-mail",
+        "description": "Must be a person, not a shared mailbox.\nThe address is checked by the host."
+      },
+      "change-window": {
+        "type": "string",
+        "maxLength": 40,
+        "description": "For example Sat 02:00-04:00 UTC"
+      }
+    }
+  }
+}

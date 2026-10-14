@@ -1,0 +1,23 @@
+{
+  "question": "Confirm the schema version and pick a level.",
+  "answerSchema": {
+    "type": "object",
+    "required": [
+      "kind",
+      "level"
+    ],
+    "properties": {
+      "kind": {
+        "const": "v1"
+      },
+      "level": {
+        "enum": [
+          1,
+          "1",
+          null,
+          true
+        ]
+      }
+    }
+  }
+}

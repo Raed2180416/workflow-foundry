@@ -1,0 +1,14 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "object",
+    "properties": {
+      "a": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": {
+      "type": "string"
+    }
+  }
+}

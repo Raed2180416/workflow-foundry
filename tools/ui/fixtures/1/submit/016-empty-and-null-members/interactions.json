@@ -1,0 +1,122 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "pick",
+        "formState": {
+          "pick": {
+            "answer/centre": {
+              "value": ""
+            },
+            "answer/level": {
+              "value": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "pick",
+        "formState": {
+          "pick": {
+            "answer/centre": {
+              "value": "CC-100"
+            },
+            "answer/level": {
+              "value": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "pick",
+        "formState": {
+          "pick": {
+            "answer/centre": {
+              "value": "CC-100"
+            },
+            "answer/level": {
+              "value": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "pick",
+        "formState": {
+          "pick": {
+            "answer/centre": {
+              "value": "CC-100"
+            },
+            "answer/level": {
+              "value": "true"
+            }
+          }
+        }
+      }
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "answer/centre",
+          "0"
+        ],
+        [
+          "answer/level",
+          "2"
+        ]
+      ]
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": {
+          "centre": "",
+          "level": null
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "centre": "CC-100",
+          "level": "1"
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "centre": "CC-100",
+          "level": 1
+        }
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "enum-mismatch",
+            "statementId": "answer/level"
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "answer": {
+          "centre": "",
+          "level": null
+        }
+      }
+    ]
+  }
+}

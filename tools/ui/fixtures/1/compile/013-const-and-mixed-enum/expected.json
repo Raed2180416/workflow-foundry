@@ -1,0 +1,19 @@
+{
+  "fields": [
+    [
+      "answer/kind",
+      "RadioGroup",
+      "enum",
+      true,
+      null
+    ],
+    [
+      "answer/level",
+      "RadioGroup",
+      "enum",
+      true,
+      null
+    ]
+  ],
+  "warnings": []
+}

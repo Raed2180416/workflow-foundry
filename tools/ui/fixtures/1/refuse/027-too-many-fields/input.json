@@ -1,0 +1,191 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "object",
+    "properties": {
+      "flag00": {
+        "type": "boolean"
+      },
+      "flag01": {
+        "type": "boolean"
+      },
+      "flag02": {
+        "type": "boolean"
+      },
+      "flag03": {
+        "type": "boolean"
+      },
+      "flag04": {
+        "type": "boolean"
+      },
+      "flag05": {
+        "type": "boolean"
+      },
+      "flag06": {
+        "type": "boolean"
+      },
+      "flag07": {
+        "type": "boolean"
+      },
+      "flag08": {
+        "type": "boolean"
+      },
+      "flag09": {
+        "type": "boolean"
+      },
+      "flag10": {
+        "type": "boolean"
+      },
+      "flag11": {
+        "type": "boolean"
+      },
+      "flag12": {
+        "type": "boolean"
+      },
+      "flag13": {
+        "type": "boolean"
+      },
+      "flag14": {
+        "type": "boolean"
+      },
+      "flag15": {
+        "type": "boolean"
+      },
+      "flag16": {
+        "type": "boolean"
+      },
+      "flag17": {
+        "type": "boolean"
+      },
+      "flag18": {
+        "type": "boolean"
+      },
+      "flag19": {
+        "type": "boolean"
+      },
+      "flag20": {
+        "type": "boolean"
+      },
+      "flag21": {
+        "type": "boolean"
+      },
+      "flag22": {
+        "type": "boolean"
+      },
+      "flag23": {
+        "type": "boolean"
+      },
+      "flag24": {
+        "type": "boolean"
+      },
+      "flag25": {
+        "type": "boolean"
+      },
+      "flag26": {
+        "type": "boolean"
+      },
+      "flag27": {
+        "type": "boolean"
+      },
+      "flag28": {
+        "type": "boolean"
+      },
+      "flag29": {
+        "type": "boolean"
+      },
+      "flag30": {
+        "type": "boolean"
+      },
+      "flag31": {
+        "type": "boolean"
+      },
+      "flag32": {
+        "type": "boolean"
+      },
+      "flag33": {
+        "type": "boolean"
+      },
+      "flag34": {
+        "type": "boolean"
+      },
+      "flag35": {
+        "type": "boolean"
+      },
+      "flag36": {
+        "type": "boolean"
+      },
+      "flag37": {
+        "type": "boolean"
+      },
+      "flag38": {
+        "type": "boolean"
+      },
+      "flag39": {
+        "type": "boolean"
+      },
+      "flag40": {
+        "type": "boolean"
+      },
+      "flag41": {
+        "type": "boolean"
+      },
+      "flag42": {
+        "type": "boolean"
+      },
+      "flag43": {
+        "type": "boolean"
+      },
+      "flag44": {
+        "type": "boolean"
+      },
+      "flag45": {
+        "type": "boolean"
+      },
+      "flag46": {
+        "type": "boolean"
+      },
+      "flag47": {
+        "type": "boolean"
+      },
+      "flag48": {
+        "type": "boolean"
+      },
+      "flag49": {
+        "type": "boolean"
+      },
+      "flag50": {
+        "type": "boolean"
+      },
+      "flag51": {
+        "type": "boolean"
+      },
+      "flag52": {
+        "type": "boolean"
+      },
+      "flag53": {
+        "type": "boolean"
+      },
+      "flag54": {
+        "type": "boolean"
+      },
+      "flag55": {
+        "type": "boolean"
+      },
+      "flag56": {
+        "type": "boolean"
+      },
+      "flag57": {
+        "type": "boolean"
+      },
+      "flag58": {
+        "type": "boolean"
+      },
+      "flag59": {
+        "type": "boolean"
+      },
+      "flag60": {
+        "type": "boolean"
+      }
+    }
+  }
+}

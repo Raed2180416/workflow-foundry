@@ -1,0 +1,78 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "post",
+        "formState": {
+          "post": {
+            "answer": {
+              "value": "approve",
+              "componentType": "RadioGroup"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "post",
+        "formState": {
+          "post": {}
+        }
+      }
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "answer",
+          "1"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ]
+      ]
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": "approve"
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "missing-required",
+            "statementId": "answer",
+            "path": ""
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "answer": "reject"
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "missing-required",
+            "statementId": "answer"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "question": "Step post-ledger failed with LEDGER_LOCKED after 3 attempts. What should happen?",
+  "answerSchema": {
+    "type": "object",
+    "required": [
+      "action"
+    ],
+    "properties": {
+      "action": {
+        "enum": [
+          "retry",
+          "skip",
+          "abort"
+        ],
+        "title": "Action"
+      },
+      "retryAfterMinutes": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1440
+      },
+      "note": {
+        "type": "string",
+        "maxLength": 200
+      }
+    }
+  }
+}

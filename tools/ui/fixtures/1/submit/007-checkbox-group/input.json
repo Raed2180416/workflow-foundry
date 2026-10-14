@@ -1,0 +1,34 @@
+{
+  "question": "Review item 4 of 12. The invoice says \"net 30\"; the purchase order says \"net 45\". The judge split 2 to 1. Decide.",
+  "answerSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "decision",
+      "reasons"
+    ],
+    "properties": {
+      "decision": {
+        "enum": [
+          "approve",
+          "reject",
+          "undecidable"
+        ]
+      },
+      "reasons": {
+        "type": "array",
+        "items": {
+          "enum": [
+            "quote-missing",
+            "amount-mismatch",
+            "vendor-unknown",
+            "duplicate"
+          ]
+        },
+        "minItems": 1,
+        "maxItems": 2
+      }
+    }
+  },
+  "formName": "review-4"
+}

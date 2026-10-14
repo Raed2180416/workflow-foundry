@@ -1,0 +1,43 @@
+{
+  "question": "Incident INC-5531 will breach its resolution SLA in 40 minutes. Reassign it?",
+  "answerSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "assignee",
+      "priority",
+      "justification"
+    ],
+    "properties": {
+      "assignee": {
+        "enum": [
+          "network-l2",
+          "network-l3",
+          "database-l2",
+          "database-l3",
+          "apps-l2",
+          "apps-l3",
+          "security",
+          "vendor"
+        ]
+      },
+      "priority": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 4,
+        "description": "1 is the highest priority"
+      },
+      "escalate": {
+        "type": "boolean",
+        "title": "Escalate to the duty manager"
+      },
+      "justification": {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 300
+      }
+    }
+  },
+  "formName": "sla-INC-5531",
+  "token": "tok-fixed-for-golden"
+}

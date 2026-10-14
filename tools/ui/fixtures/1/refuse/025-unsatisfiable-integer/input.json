@@ -1,0 +1,8 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "integer",
+    "minimum": 1.2,
+    "maximum": 1.8
+  }
+}

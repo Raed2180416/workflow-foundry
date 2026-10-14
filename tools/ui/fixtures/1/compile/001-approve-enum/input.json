@@ -1,0 +1,9 @@
+{
+  "question": "Post 3 journal entries?",
+  "answerSchema": {
+    "enum": [
+      "approve",
+      "reject"
+    ]
+  }
+}

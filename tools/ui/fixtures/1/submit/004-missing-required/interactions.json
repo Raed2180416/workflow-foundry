@@ -1,0 +1,77 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {}
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": null
+            },
+            "answer/amount": {
+              "value": ""
+            },
+            "answer/reason": {
+              "value": ""
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "missing-required",
+            "statementId": "answer/decision",
+            "path": "/decision"
+          },
+          {
+            "source": "validator",
+            "code": "missing-required",
+            "statementId": "answer/amount",
+            "path": "/amount"
+          },
+          {
+            "source": "validator",
+            "code": "too-short",
+            "statementId": "answer/reason",
+            "path": "/reason"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "missing-required",
+            "statementId": "answer/decision"
+          },
+          {
+            "source": "validator",
+            "code": "missing-required",
+            "statementId": "answer/amount"
+          },
+          {
+            "source": "validator",
+            "code": "too-short",
+            "statementId": "answer/reason"
+          }
+        ]
+      }
+    ]
+  }
+}

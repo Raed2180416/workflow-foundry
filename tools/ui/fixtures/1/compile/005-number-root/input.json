@@ -1,0 +1,7 @@
+{
+  "question": "Refund amount in EUR?",
+  "answerSchema": {
+    "type": "number",
+    "minimum": 0
+  }
+}

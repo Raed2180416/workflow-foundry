@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "source": "schema",
+      "code": "required-undeclared",
+      "path": "/required"
+    }
+  ]
+}

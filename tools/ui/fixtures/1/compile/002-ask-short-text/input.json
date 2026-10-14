@@ -1,0 +1,7 @@
+{
+  "question": "Which account?",
+  "answerSchema": {
+    "type": "string",
+    "maxLength": 64
+  }
+}

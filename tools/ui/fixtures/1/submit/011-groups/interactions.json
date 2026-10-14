@@ -1,0 +1,141 @@
+{
+  "interactions": [
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "answer/outcome",
+          "1"
+        ],
+        [
+          "answer/provisionalCredit",
+          "false"
+        ],
+        [
+          "answer/chargeback/amount",
+          ""
+        ],
+        [
+          "answer/notes",
+          ""
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "answer/outcome",
+          "0"
+        ],
+        [
+          "answer/provisionalCredit",
+          "true"
+        ],
+        [
+          "answer/chargeback/amount",
+          "129.00"
+        ],
+        [
+          "answer/notes",
+          ""
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "answer/outcome",
+          "0"
+        ],
+        [
+          "answer/provisionalCredit",
+          "true"
+        ],
+        [
+          "answer/chargeback/reasonCode",
+          "1"
+        ],
+        [
+          "answer/chargeback/amount",
+          "129.00"
+        ],
+        [
+          "answer/notes",
+          "Card present; chip read."
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "answer/outcome",
+          "0"
+        ],
+        [
+          "answer/provisionalCredit",
+          "maybe"
+        ]
+      ]
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": {
+          "outcome": "reject-claim",
+          "provisionalCredit": false
+        }
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "missing-required",
+            "statementId": "answer/chargeback/reasonCode",
+            "path": "/chargeback/reasonCode",
+            "component": "RadioGroup"
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "answer": {
+          "outcome": "accept-liability",
+          "provisionalCredit": true,
+          "chargeback": {
+            "reasonCode": "4853",
+            "amount": 129
+          },
+          "notes": "Card present; chip read."
+        }
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "host",
+            "code": "unknown-option",
+            "statementId": "answer/provisionalCredit"
+          }
+        ]
+      }
+    ]
+  }
+}

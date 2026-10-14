@@ -1,0 +1,12 @@
+{
+  "fields": [
+    [
+      "answer",
+      "Input",
+      "string",
+      true,
+      null
+    ]
+  ],
+  "warnings": []
+}

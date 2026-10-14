@@ -1,0 +1,12 @@
+{
+  "fields": [
+    [
+      "answer",
+      "RadioGroup",
+      "enum",
+      true,
+      null
+    ]
+  ],
+  "warnings": []
+}

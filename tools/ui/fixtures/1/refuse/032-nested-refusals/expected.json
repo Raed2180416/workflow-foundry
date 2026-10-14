@@ -1,0 +1,19 @@
+{
+  "errors": [
+    {
+      "source": "schema",
+      "code": "unsupported-keyword",
+      "path": "/properties/a/format"
+    },
+    {
+      "source": "schema",
+      "code": "unsupported-array-items",
+      "path": "/properties/b/items"
+    },
+    {
+      "source": "schema",
+      "code": "invalid-schema",
+      "path": "/properties/c/enum"
+    }
+  ]
+}

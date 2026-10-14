@@ -1,0 +1,12 @@
+{
+  "question": "Any comment for the auditor?",
+  "answerSchema": {
+    "type": "object",
+    "properties": {
+      "comment": {
+        "type": "string",
+        "maxLength": 1000
+      }
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "units",
+        "formState": {
+          "units": {
+            "answer/units": {
+              "value": "9007199254740993"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "units",
+        "formState": {
+          "units": {
+            "answer/units": {
+              "value": "9007199254740991"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "units",
+        "formState": {
+          "units": {
+            "answer/units": {
+              "value": "100000000000000000000"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "units",
+        "formState": {
+          "units": {
+            "answer/units": {
+              "value": "2.5"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "units",
+        "formState": {
+          "units": {
+            "answer/units": {
+              "value": "2.0"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "units",
+        "formState": {
+          "units": {
+            "answer/units": {
+              "value": 3
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "number-precision",
+            "statementId": "answer/units"
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "answer": {
+          "units": 9007199254740991
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "units": 100000000000000000000
+        }
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "not-an-integer",
+            "statementId": "answer/units"
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "answer": {
+          "units": 2
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "units": 3
+        }
+      }
+    ]
+  }
+}

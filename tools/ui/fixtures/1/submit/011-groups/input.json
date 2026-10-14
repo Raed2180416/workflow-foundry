@@ -1,0 +1,51 @@
+{
+  "question": "Dispute D-311: cardholder reports a 129.00 EUR charge they did not make. Decide the disposition.",
+  "answerSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "outcome",
+      "provisionalCredit"
+    ],
+    "properties": {
+      "outcome": {
+        "enum": [
+          "accept-liability",
+          "reject-claim",
+          "request-information"
+        ]
+      },
+      "provisionalCredit": {
+        "type": "boolean",
+        "title": "Keep the provisional credit?"
+      },
+      "chargeback": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reasonCode"
+        ],
+        "description": "Fill only when a chargeback is raised",
+        "properties": {
+          "reasonCode": {
+            "enum": [
+              "4837",
+              "4853",
+              "4863"
+            ],
+            "title": "Network reason code"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0.01
+          }
+        }
+      },
+      "notes": {
+        "type": "string",
+        "maxLength": 2000
+      }
+    }
+  },
+  "formName": "dispute"
+}

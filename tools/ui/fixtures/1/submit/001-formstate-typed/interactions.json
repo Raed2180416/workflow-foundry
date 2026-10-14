@@ -1,0 +1,60 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release",
+              "componentType": "RadioGroup"
+            },
+            "answer/amount": {
+              "value": 1250.5,
+              "componentType": "Input"
+            },
+            "answer/reason": {
+              "value": "Paid in full on 2026-10-13",
+              "componentType": "TextArea"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "hold": {
+          "answer/decision": {
+            "value": "keep-hold"
+          },
+          "answer/amount": {
+            "value": 0
+          },
+          "answer/reason": {
+            "value": "x"
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": {
+          "decision": "release",
+          "amount": 1250.5,
+          "reason": "Paid in full on 2026-10-13"
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "decision": "keep-hold",
+          "amount": 0,
+          "reason": "x"
+        }
+      }
+    ]
+  }
+}

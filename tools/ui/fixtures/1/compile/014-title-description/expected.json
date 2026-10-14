@@ -1,0 +1,19 @@
+{
+  "fields": [
+    [
+      "answer/approver_email",
+      "Input",
+      "string",
+      true,
+      null
+    ],
+    [
+      "answer/change-window",
+      "Input",
+      "string",
+      false,
+      null
+    ]
+  ],
+  "warnings": []
+}

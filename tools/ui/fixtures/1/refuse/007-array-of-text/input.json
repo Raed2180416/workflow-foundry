@@ -1,0 +1,9 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
+  }
+}

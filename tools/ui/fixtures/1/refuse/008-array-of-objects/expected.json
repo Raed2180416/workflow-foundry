@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "source": "schema",
+      "code": "unsupported-array-items",
+      "path": "/items"
+    }
+  ]
+}

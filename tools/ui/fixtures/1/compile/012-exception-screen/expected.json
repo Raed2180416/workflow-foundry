@@ -1,0 +1,26 @@
+{
+  "fields": [
+    [
+      "answer/action",
+      "RadioGroup",
+      "enum",
+      true,
+      null
+    ],
+    [
+      "answer/retryAfterMinutes",
+      "Input",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "answer/note",
+      "TextArea",
+      "string",
+      false,
+      null
+    ]
+  ],
+  "warnings": []
+}

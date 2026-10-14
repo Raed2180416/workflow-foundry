@@ -1,0 +1,19 @@
+{
+  "fields": [
+    [
+      "answer/decision",
+      "RadioGroup",
+      "enum",
+      true,
+      null
+    ],
+    [
+      "answer/reasons",
+      "CheckBoxGroup",
+      "enum-array",
+      true,
+      null
+    ]
+  ],
+  "warnings": []
+}

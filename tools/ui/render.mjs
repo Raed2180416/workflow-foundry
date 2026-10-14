@@ -109,13 +109,15 @@ function fieldHtml(spec, field, { values, errorsByField, single }) {
   const rules = ruleText(field), description = field.description;
   const hintId = description || rules ? `${field.id}-hint` : undefined, errorId = error ? `${field.id}-error` : undefined;
   const described = [hintId, errorId].filter(Boolean).join(' ') || undefined;
-  const marker = single ? '' : ` <span class="req">${field.required ? '(required)' : '(optional)'}</span>`;
+  // A required field inside an optional group is required only when the group is answered.
+  const group = field.group ? spec.groups.find(g => g.id === field.group) : null;
+  const marker = single ? '' : ` <span class="req">${!field.required ? '(optional)' : group && !group.required ? '(required with this group)' : '(required)'}</span>`;
   const labelText = single ? t(spec.question) : t(field.label);
   const hint = hintId ? `<p class="hint" id="${hintId}">${[description ? t(description) : '', rules ? escapeHtml(rules) : ''].filter(Boolean).join('\n')}</p>\n` : '';
   const err = error ? `<p class="error-message" id="${errorId}"><span class="vh">Error: </span>${t(error.message)}</p>\n` : '';
   const raw = values?.[field.name];
   const cls = `field${error ? ' field-error' : ''}`;
-  const required = field.required || single;
+  const required = single || (field.required && (!group || group.required));
 
   if (field.componentType === 'Input' || field.componentType === 'TextArea' || field.componentType === 'Select') {
     const label = single ? `<h1><label for="${field.id}">${labelText}</label></h1>\n` : `<label for="${field.id}">${labelText}${marker}</label>\n`;

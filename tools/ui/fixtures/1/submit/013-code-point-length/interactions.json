@@ -1,0 +1,69 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "code",
+        "formState": {
+          "code": {
+            "answer": {
+              "value": "😀😀😀😀😀"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "code",
+        "formState": {
+          "code": {
+            "answer": {
+              "value": "😀😀😀😀😀😀"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "code",
+        "formState": {
+          "code": {
+            "answer": {
+              "value": "abcd"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": "😀😀😀😀😀"
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "too-long",
+            "statementId": "answer",
+            "path": ""
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "too-short",
+            "statementId": "answer"
+          }
+        ]
+      }
+    ]
+  }
+}

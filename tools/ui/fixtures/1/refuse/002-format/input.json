@@ -1,0 +1,8 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "string",
+    "format": "email",
+    "maxLength": 80
+  }
+}

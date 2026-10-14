@@ -1,0 +1,6 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "$ref": "#/definitions/x"
+  }
+}

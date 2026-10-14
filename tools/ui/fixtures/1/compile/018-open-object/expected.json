@@ -1,0 +1,12 @@
+{
+  "fields": [
+    [
+      "answer/comment",
+      "TextArea",
+      "string",
+      false,
+      null
+    ]
+  ],
+  "warnings": []
+}

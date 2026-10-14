@@ -1,0 +1,9 @@
+{
+  "question": "A five-character code?",
+  "answerSchema": {
+    "type": "string",
+    "minLength": 5,
+    "maxLength": 5
+  },
+  "formName": "code"
+}

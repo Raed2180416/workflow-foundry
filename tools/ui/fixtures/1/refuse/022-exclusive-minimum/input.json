@@ -1,0 +1,7 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "number",
+    "exclusiveMinimum": 0
+  }
+}

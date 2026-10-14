@@ -1,0 +1,507 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "0x10"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "1,000"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "12."
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": ".5"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "+5"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "Infinity"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "NaN"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "1 000"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "EUR 12"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "١٢"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "1e400"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "1e-400"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": " 12 "
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "1e3"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "-0"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "-1"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": "1000000.01"
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": true
+            },
+            "answer/reason": {
+              "value": "ok"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "number-out-of-range",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "number-out-of-range",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "answer": {
+          "decision": "release",
+          "amount": 12,
+          "reason": "ok"
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "decision": "release",
+          "amount": 1000,
+          "reason": "ok"
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "decision": "release",
+          "amount": 0,
+          "reason": "ok"
+        }
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "below-minimum",
+            "statementId": "answer/amount",
+            "path": "/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "above-maximum",
+            "statementId": "answer/amount"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "type-mismatch",
+            "statementId": "answer/amount"
+          }
+        ]
+      }
+    ]
+  }
+}

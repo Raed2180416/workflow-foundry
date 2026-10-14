@@ -1,0 +1,33 @@
+{
+  "fields": [
+    [
+      "answer/assignee",
+      "Select",
+      "enum",
+      true,
+      null
+    ],
+    [
+      "answer/priority",
+      "Input",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "answer/escalate",
+      "RadioGroup",
+      "boolean",
+      false,
+      null
+    ],
+    [
+      "answer/justification",
+      "TextArea",
+      "string",
+      true,
+      null
+    ]
+  ],
+  "warnings": []
+}

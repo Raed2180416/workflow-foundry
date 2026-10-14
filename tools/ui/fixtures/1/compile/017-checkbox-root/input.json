@@ -1,0 +1,15 @@
+{
+  "question": "Which controls failed?",
+  "answerSchema": {
+    "type": "array",
+    "items": {
+      "enum": [
+        "segregation-of-duties",
+        "three-way-match",
+        "vendor-master-change",
+        "duplicate-check"
+      ]
+    },
+    "minItems": 1
+  }
+}

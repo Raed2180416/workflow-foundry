@@ -1,0 +1,14 @@
+{
+  "question": "What would you like to do next?",
+  "answerSchema": {
+    "enum": [
+      "create ticket",
+      "update ticket",
+      "close ticket",
+      "reassign",
+      "escalate",
+      "add note",
+      "cancel"
+    ]
+  }
+}

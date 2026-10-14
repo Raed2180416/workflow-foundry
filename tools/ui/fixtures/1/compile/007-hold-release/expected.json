@@ -1,0 +1,26 @@
+{
+  "fields": [
+    [
+      "answer/decision",
+      "RadioGroup",
+      "enum",
+      true,
+      null
+    ],
+    [
+      "answer/amount",
+      "Input",
+      "number",
+      true,
+      null
+    ],
+    [
+      "answer/reason",
+      "TextArea",
+      "string",
+      true,
+      null
+    ]
+  ],
+  "warnings": []
+}

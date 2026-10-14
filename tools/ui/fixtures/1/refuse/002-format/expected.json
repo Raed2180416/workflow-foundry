@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "source": "schema",
+      "code": "unsupported-keyword",
+      "path": "/format"
+    }
+  ]
+}

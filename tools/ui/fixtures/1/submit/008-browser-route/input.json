@@ -1,0 +1,35 @@
+{
+  "question": "Order SO-1042 is on credit hold (exposure 48,200 EUR, limit 40,000 EUR). Release it?",
+  "answerSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "decision",
+      "amount",
+      "reason"
+    ],
+    "properties": {
+      "decision": {
+        "enum": [
+          "release",
+          "keep-hold",
+          "reduce-limit"
+        ],
+        "description": "What happens to the credit hold"
+      },
+      "amount": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1000000,
+        "title": "Amount to release (EUR)"
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    }
+  },
+  "formName": "hold",
+  "token": "tok-1"
+}

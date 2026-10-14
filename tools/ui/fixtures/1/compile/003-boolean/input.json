@@ -1,0 +1,6 @@
+{
+  "question": "Does this local review item pass?",
+  "answerSchema": {
+    "type": "boolean"
+  }
+}

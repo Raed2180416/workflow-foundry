@@ -172,7 +172,10 @@ function classifyEnum(schema, path, ctx) {
     const bad = valueErrors(noPattern, m).length > 0 || (pattern !== undefined && typeof m === 'string' && !new RegExp(pattern, 'u').test(m));
     if (bad) { refuse('enum-member-invalid', at, `enum member ${JSON.stringify(m)} does not satisfy the rest of its own schema, so choosing it could never be accepted`); return null; }
   }
-  const options = members.map((value, index) => ({ token: String(index), value, label: typeof value === 'string' ? (value === '' ? '(empty text)' : value) : JSON.stringify(value) }));
+  // When an enum mixes JSON types, every label is JSON text, so the string "1" and the number 1 read differently.
+  const mixed = new Set(members.map(m => (m === null ? 'null' : typeof m))).size > 1;
+  const label = value => mixed || typeof value !== 'string' ? JSON.stringify(value) : value === '' ? '(empty text)' : value;
+  const options = members.map((value, index) => ({ token: String(index), value, label: label(value) }));
   return { kind: 'enum', schema, options };
 }
 

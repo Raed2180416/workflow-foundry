@@ -1,0 +1,207 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "review-4",
+        "formState": {
+          "review-4": {
+            "answer/decision": {
+              "value": "reject"
+            },
+            "answer/reasons": {
+              "value": {
+                "0": false,
+                "1": true,
+                "2": false,
+                "3": true
+              },
+              "componentType": "CheckBoxGroup"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "review-4",
+        "formState": {
+          "review-4": {
+            "answer/decision": {
+              "value": "reject"
+            },
+            "answer/reasons": {
+              "value": [
+                "duplicate",
+                "amount-mismatch"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "review-4",
+        "formState": {
+          "review-4": {
+            "answer/decision": {
+              "value": "reject"
+            },
+            "answer/reasons": {
+              "value": {
+                "9": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "review-4",
+        "formState": {
+          "review-4": {
+            "answer/decision": {
+              "value": "reject"
+            },
+            "answer/reasons": {
+              "value": {
+                "0": "yes"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "review-4",
+        "formState": {
+          "review-4": {
+            "answer/decision": {
+              "value": "reject"
+            },
+            "answer/reasons": {
+              "value": [
+                "duplicate",
+                "duplicate",
+                "duplicate"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "review-4",
+        "formState": {
+          "review-4": {
+            "answer/decision": {
+              "value": "reject"
+            },
+            "answer/reasons": {
+              "value": [
+                "other"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "review-4",
+        "formState": {
+          "review-4": {
+            "answer/decision": {
+              "value": "undecidable"
+            },
+            "answer/reasons": {
+              "value": {
+                "0": false,
+                "1": false,
+                "2": false,
+                "3": false
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": {
+          "decision": "reject",
+          "reasons": [
+            "amount-mismatch",
+            "duplicate"
+          ]
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "decision": "reject",
+          "reasons": [
+            "duplicate",
+            "amount-mismatch"
+          ]
+        }
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "unknown-option",
+            "statementId": "answer/reasons"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "type-mismatch",
+            "statementId": "answer/reasons"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "too-many-items",
+            "statementId": "answer/reasons"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "enum-mismatch",
+            "statementId": "answer/reasons"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "validator",
+            "code": "too-few-items",
+            "statementId": "answer/reasons"
+          }
+        ]
+      }
+    ]
+  }
+}

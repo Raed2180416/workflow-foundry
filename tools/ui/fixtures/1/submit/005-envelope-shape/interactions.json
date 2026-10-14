@@ -1,0 +1,164 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "other",
+        "formState": {
+          "other": {
+            "answer/decision": {
+              "value": "release"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {},
+          "$page": 1
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": 1
+            },
+            "answer/reason": {
+              "value": "x"
+            },
+            "answer/approvedBy": {
+              "value": "mallory"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": "release",
+            "answer/amount": {
+              "value": 1
+            },
+            "answer/reason": {
+              "value": "x"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release",
+              "componentType": "RadioGroup",
+              "trusted": true
+            },
+            "answer/amount": {
+              "value": 1
+            },
+            "answer/reason": {
+              "value": "x"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "release"
+            },
+            "answer/amount": {
+              "value": 1,
+              "componentType": "Slider"
+            },
+            "answer/reason": {
+              "value": "x"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "unknown-form"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "unknown-form"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "unknown-field",
+            "statementId": "answer/approvedBy"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "field-shape",
+            "statementId": "answer/decision"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "field-shape",
+            "statementId": "answer/decision"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "component-mismatch",
+            "statementId": "answer/amount",
+            "component": "Input"
+          }
+        ]
+      }
+    ]
+  }
+}

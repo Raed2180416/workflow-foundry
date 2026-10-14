@@ -1,0 +1,10 @@
+{
+  "question": "Which cost centre (blank if none)?",
+  "answerSchema": {
+    "enum": [
+      "",
+      "CC-100",
+      "CC-200"
+    ]
+  }
+}

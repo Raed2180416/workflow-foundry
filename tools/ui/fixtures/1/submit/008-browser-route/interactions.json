@@ -1,0 +1,106 @@
+{
+  "interactions": [
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "1250.50"
+        ],
+        [
+          "answer/reason",
+          "Line one\r\nLine two"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "2"
+        ],
+        [
+          "answer/amount",
+          " 7 "
+        ],
+        [
+          "answer/reason",
+          "\r\nleading newline"
+        ]
+      ]
+    },
+    {
+      "submit": [
+        [
+          "_spec",
+          "{{spec}}"
+        ],
+        [
+          "_token",
+          "{{token}}"
+        ],
+        [
+          "answer/decision",
+          "0"
+        ],
+        [
+          "answer/amount",
+          "12abc"
+        ],
+        [
+          "answer/reason",
+          "x"
+        ]
+      ]
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": true,
+        "answer": {
+          "decision": "release",
+          "amount": 1250.5,
+          "reason": "Line one\nLine two"
+        }
+      },
+      {
+        "ok": true,
+        "answer": {
+          "decision": "reduce-limit",
+          "amount": 7,
+          "reason": "\nleading newline"
+        }
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "not-a-number",
+            "statementId": "answer/amount"
+          }
+        ]
+      }
+    ]
+  }
+}

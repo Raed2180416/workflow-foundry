@@ -1,0 +1,92 @@
+{
+  "interactions": [
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": "Release"
+            },
+            "answer/amount": {
+              "value": 1
+            },
+            "answer/reason": {
+              "value": "x"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": 0
+            },
+            "answer/amount": {
+              "value": 1
+            },
+            "answer/reason": {
+              "value": "x"
+            }
+          }
+        }
+      }
+    },
+    {
+      "formState": {
+        "formName": "hold",
+        "formState": {
+          "hold": {
+            "answer/decision": {
+              "value": " release"
+            },
+            "answer/amount": {
+              "value": 1
+            },
+            "answer/reason": {
+              "value": "x"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "results": [
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "enum-mismatch",
+            "statementId": "answer/decision"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "enum-mismatch",
+            "statementId": "answer/decision"
+          }
+        ]
+      },
+      {
+        "ok": false,
+        "errors": [
+          {
+            "source": "adapter",
+            "code": "enum-mismatch",
+            "statementId": "answer/decision"
+          }
+        ]
+      }
+    ]
+  }
+}
