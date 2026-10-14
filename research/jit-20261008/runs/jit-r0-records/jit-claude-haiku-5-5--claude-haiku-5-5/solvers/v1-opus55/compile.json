@@ -1,0 +1,297 @@
+{
+ "arm": "jit-compile",
+ "kind": "compile",
+ "familyId": "records",
+ "label": "v1-opus55",
+ "version": 1,
+ "parentSha": null,
+ "changed": true,
+ "traceIds": [
+  "i002-interpreter-df6814",
+  "i001-interpreter-66d9a7",
+  "i000-interpreter-d99d12"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "high",
+ "policyHash": "06da27b5d2ba15564bc092b1dcfa04ae6beeb6774cc95e7085ae4f08dfefb6ff",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v1-opus55:98fa4326-b1c3-40de-9dae-735c108b6094",
+ "flowSha256": "5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223",
+ "checkToolSha256": "8ff6cd24b342e9a549867c8c30a580943f0568bf84658ff021fbf7a9f1070bc0",
+ "promptVersion": 4,
+ "compare": {
+  "mode": "tolerant",
+  "relTol": 0,
+  "absTol": 0
+ },
+ "compareToolSha256": "77b623a9b86b039bba53715afdd6f8d125456e0be8db833aeac14b0ad2164e5c",
+ "acceptance": {
+  "mode": "strict",
+  "minPartial": 0.9
+ },
+ "promptSha256": "3d7db6dcab0825c527cf8743e98969419e3243ead26a0549a9de94dec96d596d",
+ "artifact": "solve.mjs",
+ "artifactSha256": "4f0d74b88040026f3b4bc4282a6277557637da322348ce311f85711346cf8604",
+ "builderCostUsd": 2.984868,
+ "builderCostReportedUsd": 2.984868,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 2.984868,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 56,
+  "cache_creation_input_tokens": 138684,
+  "cache_read_input_tokens": 2861360,
+  "output_tokens": 65145,
+  "output_tokens_details": {
+   "thinking_tokens": 31493
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 138684,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 877,
+    "cache_read_input_tokens": 143070,
+    "cache_creation_input_tokens": 264,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 264
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 56,
+  "outputTokens": 279,
+  "cacheReadTokens": 2861360,
+  "cacheWriteTokens": 138684
+ },
+ "builderSessionId": "dbe2d8fd-b614-462d-a597-e9ed5d4109ac",
+ "gatewayCostUsd": 0.2667789249999999,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 218,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.027413825,
+ "constructionCostUsd": 3.251646925,
+ "compileCostUsd": 3.27906075,
+ "startedAt": "2026-10-09T16:10:14.195Z",
+ "durationMs": 770939,
+ "builderMs": 748448,
+ "minutes": 45,
+ "turns": 29,
+ "toolUses": 28,
+ "builderError": null,
+ "builderCheckRuns": 6,
+ "checkTraces": {
+  "exact": 1,
+  "partial": 0.961,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 17996,
+    "costUsd": 0.009647,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": true,
+    "diffs": [],
+    "ref": "i002-interpreter-df6814"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 19629,
+    "costUsd": 0.008289,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.959,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[3].amount_usd",
+      "got": "438.7",
+      "want": "-438.7"
+     },
+     {
+      "path": "$.records[5].amount_usd",
+      "got": "-1208.13",
+      "want": "1208.13"
+     },
+     {
+      "path": "$.records[6].amount_usd",
+      "got": "-54.82",
+      "want": "54.82"
+     },
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-22494.52",
+      "want": "22494.52"
+     },
+     {
+      "path": "$.records[13].amount_usd",
+      "got": "33.99",
+      "want": "-33.99"
+     }
+    ],
+    "note": "$.records[3].amount_usd: got 438.7 want -438.7; $.records[5].amount_usd: got -1208.13 want 1208.13; +12 more",
+    "ref": "i001-interpreter-66d9a7"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 22049,
+    "costUsd": 0.009478,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.924,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[10].source_rows[3]",
+      "got": "<missing>",
+      "want": "9470"
+     },
+     {
+      "path": "$.records[10].given_name",
+      "got": "\"Anke\"",
+      "want": "\"Anja\""
+     },
+     {
+      "path": "$.records[10].amount_usd",
+      "got": "44.01",
+      "want": "41.91"
+     },
+     {
+      "path": "$.records[14].entity_id",
+      "got": "4934",
+      "want": "3918"
+     },
+     {
+      "path": "$.records[14].source_rows[0]",
+      "got": "<missing>",
+      "want": "3918"
+     }
+    ],
+    "note": "$.records[10].source_rows[3]: got <missing> want 9470; $.records[10].given_name: got \"Anke\" want \"Anja\"; +7 more",
+    "ref": "i000-interpreter-d99d12"
+   }
+  ],
+  "cases": 3,
+  "labeled": 3,
+  "exactRate": 0.333,
+  "diffs": 2,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.027413825,
+  "calls": 45,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 22463,
+  "error": null,
+  "compare": {
+   "mode": "tolerant",
+   "relTol": 0,
+   "absTol": 0
+  },
+  "canonicalExact": 1,
+  "acceptance": {
+   "mode": "strict",
+   "compare": "tolerant",
+   "minQuoteChars": 12,
+   "minQuoteWords": 3,
+   "criteria": {
+    "clean": {
+     "ok": true
+    },
+    "agreement": {
+     "ok": true,
+     "partial": 0.961,
+     "minPartial": 0.9,
+     "partialOk": true,
+     "exactTraces": 1,
+     "labelledTraces": 3,
+     "exactOk": true
+    },
+    "explained": {
+     "ok": true,
+     "cases": [
+      {
+       "id": "trace-1",
+       "mentioned": true,
+       "quotes": [
+        "Saldo changes sign in the master."
+       ],
+       "verified": "Saldo changes sign in the master.",
+       "ok": true,
+       "reason": null
+      },
+      {
+       "id": "trace-2",
+       "mentioned": true,
+       "quotes": [
+        "Supplier contact Prof. Anja Hoffmann (born 11/3/1960)",
+        "LEDGR;3986;Hoffmann, Anke;Frau Prof.;3.11.1960",
+        "name=Elisa GALLI | dob=11/06/2000",
+        "Mrs Elena Galli :: born 06/11/2000"
+       ],
+       "verified": "Supplier contact Prof. Anja Hoffmann (born 11/3/1960)",
+       "ok": true,
+       "reason": null
+      }
+     ]
+    }
+   },
+   "passed": [
+    "clean",
+    "agreement",
+    "explained"
+   ],
+   "failed": []
+  }
+ },
+ "notes": "# BUILD-NOTES\n\n**Code:** parses the six line formats; reads rates, calling codes/trunk rules and nicknames from the spec. Handles dates (ISO, era, words, numeric by order), German/parenthesised/CR/▲ amounts, words→numbers, country aliases (+fuzzy ≤1–2 edits, flagged), E.164, and exact BigInt conversion rounded half away from zero. Identity is rule 3 (accent renderings, nicknames, ≤1 OSA edit; dob or phone link) via union-find; winners follow rule 4 (re-stamped systems last, accent restoration).\n\n**Judges** (haiku → haiku retry → opus; quotes must lie in that system's notes paragraph):\n- `void-markers`: VOID/KEEP for each distinct stage/Status/flag/env/tag seen.\n- `balance-signs`, `restamped-systems`: per system.\n- `date-orders`: DMY/MDY for BRIGHTDESK/ATLAS/VENDEX, rejected if same-person rows contradict it.\n- These four run as three independent haiku calls voted on decisions only; a split goes to opus and is flagged.\n- `vendex-fields` (batches of 6): quotes for name/dob/phone/amount/revision date plus ISO country with cue. Code parses each quote and checks ids, substrings, cue-vs-country.\n- `country-names`: only for strings not in the alias table.\n\n**Guards:** input shape, row count, known line formats, unique ids, notes paragraphs, spec tables parsed, update dates parsed, rate per currency. **Invariants:** rows conserved, entity_id = min row, field shapes, E.164 shape. Flags: near-miss names (left apart per 3.1), fuzzy countries, date ties.\n\n**check-traces:** 0 crash/deopt/timeout; trace-0 exact, mean partial 96%, ~$0.01/task.\n\n**Disagreements:**\n- trace-1, amount_usd of LEDGR-won records (1206, 1498, 1641, …): notes say \"Saldo changes sign in the master.\" The agent kept the LEDGR sign; I flip it.\n- trace-2, records 3108 and 3918 (source_rows, given_name, amount_usd, phone_e164): \"Supplier contact Prof. Anja Hoffmann (born 11/3/1960)\" vs \"LEDGR;3986;Hoffmann, Anke;Frau Prof.;3.11.1960\", and \"name=Elisa GALLI | dob=11/06/2000\" vs \"Mrs Elena Galli :: born 06/11/2000\". Each given-name pair is two letters apart, beyond spec 3.1's single tolerated typing error. I keep them apart; the agent merged them.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i002-interpreter-df6814",
+   "i001-interpreter-66d9a7",
+   "i000-interpreter-d99d12"
+  ],
+  "regressionIds": [],
+  "previousSha": null
+ }
+}

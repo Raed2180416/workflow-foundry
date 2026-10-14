@@ -1,0 +1,349 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v2-haiku55",
+ "version": 2,
+ "parentSha": "4f0d74b88040026f3b4bc4282a6277557637da322348ce311f85711346cf8604",
+ "changed": true,
+ "traceIds": [
+  "i005-shadow-5410a5",
+  "i004-shadow-ea00ec",
+  "i002-interpreter-df6814",
+  "i001-interpreter-66d9a7",
+  "i000-interpreter-d99d12"
+ ],
+ "regressionIds": [
+  "reg-005-609bf9"
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "06da27b5d2ba15564bc092b1dcfa04ae6beeb6774cc95e7085ae4f08dfefb6ff",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-haiku55:7c2e47f4-6312-4b21-b3dc-a6918ceab07e",
+ "flowSha256": "5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223",
+ "checkToolSha256": "8ff6cd24b342e9a549867c8c30a580943f0568bf84658ff021fbf7a9f1070bc0",
+ "promptVersion": 4,
+ "compare": {
+  "mode": "tolerant",
+  "relTol": 0,
+  "absTol": 0
+ },
+ "compareToolSha256": "77b623a9b86b039bba53715afdd6f8d125456e0be8db833aeac14b0ad2164e5c",
+ "acceptance": {
+  "mode": "strict",
+  "minPartial": 0.9
+ },
+ "promptSha256": "a8794fa37a86beb8616daa9e916cde39581fda038d4786e783ba5c1ef1b0fb23",
+ "artifact": "solve.mjs",
+ "artifactSha256": "8dd1e3f6f485449684962c64e8dec7ee89de20a71488a12fca7f6609efcc7852",
+ "builderCostUsd": 0.13114243,
+ "builderCostReportedUsd": 0.13114243,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.13114243,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 54,
+  "cache_creation_input_tokens": 105851,
+  "cache_read_input_tokens": 1782243,
+  "output_tokens": 39660,
+  "output_tokens_details": {
+   "thinking_tokens": 28081
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 105851,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 699,
+    "cache_read_input_tokens": 112019,
+    "cache_creation_input_tokens": 225,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 225
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 54,
+  "outputTokens": 152,
+  "cacheReadTokens": 1782243,
+  "cacheWriteTokens": 105851
+ },
+ "builderSessionId": "2f37236b-2370-411a-b7ea-23037c60ee64",
+ "gatewayCostUsd": 0.2024342500000001,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 308,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.05608595999999999,
+ "constructionCostUsd": 0.33357668000000007,
+ "compileCostUsd": 0.38966264000000006,
+ "startedAt": "2026-10-09T16:41:33.767Z",
+ "durationMs": 362206,
+ "builderMs": 325645,
+ "minutes": 30,
+ "turns": 27,
+ "toolUses": 26,
+ "builderError": null,
+ "builderCheckRuns": 5,
+ "checkTraces": {
+  "exact": 4,
+  "partial": 0.981,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "case-0",
+    "kind": "regression",
+    "exitCode": 0,
+    "ms": 14712,
+    "costUsd": 0.008168,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": true,
+    "diffs": [],
+    "ref": "reg-005-609bf9"
+   },
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 22375,
+    "costUsd": 0.008733,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": true,
+    "diffs": [],
+    "ref": "i005-shadow-5410a5"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 20271,
+    "costUsd": 0.01136,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i004-shadow-ea00ec"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 17462,
+    "costUsd": 0.009941,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": true,
+    "diffs": [],
+    "ref": "i002-interpreter-df6814"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 13034,
+    "costUsd": 0.008357,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.959,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[3].amount_usd",
+      "got": "438.7",
+      "want": "-438.7"
+     },
+     {
+      "path": "$.records[5].amount_usd",
+      "got": "-1208.13",
+      "want": "1208.13"
+     },
+     {
+      "path": "$.records[6].amount_usd",
+      "got": "-54.82",
+      "want": "54.82"
+     },
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-22494.52",
+      "want": "22494.52"
+     },
+     {
+      "path": "$.records[13].amount_usd",
+      "got": "33.99",
+      "want": "-33.99"
+     }
+    ],
+    "note": "$.records[3].amount_usd: got 438.7 want -438.7; $.records[5].amount_usd: got -1208.13 want 1208.13; +12 more",
+    "ref": "i001-interpreter-66d9a7"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 13928,
+    "costUsd": 0.009527,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.924,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[10].source_rows[3]",
+      "got": "<missing>",
+      "want": "9470"
+     },
+     {
+      "path": "$.records[10].given_name",
+      "got": "\"Anke\"",
+      "want": "\"Anja\""
+     },
+     {
+      "path": "$.records[10].amount_usd",
+      "got": "44.01",
+      "want": "41.91"
+     },
+     {
+      "path": "$.records[14].entity_id",
+      "got": "4934",
+      "want": "3918"
+     },
+     {
+      "path": "$.records[14].source_rows[0]",
+      "got": "<missing>",
+      "want": "3918"
+     }
+    ],
+    "note": "$.records[10].source_rows[3]: got <missing> want 9470; $.records[10].given_name: got \"Anke\" want \"Anja\"; +7 more",
+    "ref": "i000-interpreter-d99d12"
+   }
+  ],
+  "cases": 6,
+  "labeled": 6,
+  "exactRate": 0.667,
+  "diffs": 2,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 1,
+  "regressionsPassed": 1,
+  "clean": true,
+  "unexplained": [
+   "trace-4"
+  ],
+  "accepted": false,
+  "costUsd": 0.05608595999999999,
+  "calls": 92,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 36539,
+  "error": null,
+  "compare": {
+   "mode": "tolerant",
+   "relTol": 0,
+   "absTol": 0
+  },
+  "canonicalExact": 3,
+  "acceptance": {
+   "mode": "strict",
+   "compare": "tolerant",
+   "minQuoteChars": 12,
+   "minQuoteWords": 3,
+   "criteria": {
+    "clean": {
+     "ok": true
+    },
+    "agreement": {
+     "ok": true,
+     "partial": 0.977,
+     "minPartial": 0.9,
+     "partialOk": true,
+     "exactTraces": 3,
+     "labelledTraces": 5,
+     "exactOk": true
+    },
+    "explained": {
+     "ok": false,
+     "cases": [
+      {
+       "id": "trace-3",
+       "mentioned": true,
+       "quotes": [
+        "Saldo changes sign in the master."
+       ],
+       "verified": "Saldo changes sign in the master.",
+       "ok": true,
+       "reason": null
+      },
+      {
+       "id": "trace-4",
+       "mentioned": true,
+       "quotes": [
+        "at most one typing error in total is tolerated across given and family name together"
+       ],
+       "verified": null,
+       "ok": false,
+       "reason": "its only verbatim quotes occur in every other case's task too (shared text explains no case)",
+       "shared": [
+        "at most one typing error in total is tolerated across given and family name together"
+       ]
+      }
+     ]
+    }
+   },
+   "passed": [
+    "clean",
+    "agreement"
+   ],
+   "failed": [
+    "explained"
+   ]
+  }
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\n- Parse each line by system; names, dates, phones and USD amounts are normalised in code.\n- Identity: union-find on spec rules 3(a)/(b), with a one-typo name match. Conflicts: most recent first, restamped systems last.\n\n## Judges (flow.judge, quote-checked)\n- void-markers, balance-signs, restamped-systems, date-orders: three haiku-5-5 votes; opus-5-5 once on disagreement. Quotes must sit in that system's paragraph.\n- vendex-fields: batches of 6 free-text entries; haiku, haiku, opus. Checks: quotes are substrings, dates and money parse.\n- country-names: only for unknown country strings (none here).\n\n## Guards and invariants\nGuards: input shape, rates, calling codes, nicknames, paragraphs, row count, LEDGR fields, VERITAS JSON, row names, update dates, rate per currency. Invariants: E.164 shape, rows conserved, no void row used, entity = lowest row, field shapes.\n\n## This compile\n- `tidy()` keeps particles (van, von, der, de, ...) lower-case before another family word: \"VAN LEEUWEN\" gives \"van Leeuwen\". Fixes case-0 and trace-0. Casing only.\n- No guard or check changed.\n- Two-typo name pairs are flagged (`near-miss-names`), not judged: the spec caps typos at one.\n\n## check-traces\nNo deopt, crash or timeout. Regression case-0 passes. Exact: case-0, trace-0, trace-1, trace-2. Mean partial 98%.\n\n## Disagreements\n- trace-3, `amount_usd` of the 14 LEDGR-won records: the agent did not flip LEDGR signs. The task says: \"Saldo changes sign in the master.\"\n- trace-4, 3108/9470 (Anke vs Anja) and 3918/4934 (Elena vs Elisa): the agent merged both pairs, each two letters apart. The task says: \"at most one typing error in total is tolerated across given and family name together\". We keep them apart.\n",
+ "hiddenPathAttempts": 1,
+ "outsidePaths": [
+  "/var/tmp/foundry-work/work/jit-r0-records/jit-claude-haiku-5-5--claude-haiku-5-5/regressions/case-0"
+ ],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i005-shadow-5410a5",
+   "i004-shadow-ea00ec",
+   "i002-interpreter-df6814",
+   "i001-interpreter-66d9a7",
+   "i000-interpreter-d99d12"
+  ],
+  "regressionIds": [
+   "reg-005-609bf9"
+  ],
+  "previousSha": "4f0d74b88040026f3b4bc4282a6277557637da322348ce311f85711346cf8604"
+ }
+}

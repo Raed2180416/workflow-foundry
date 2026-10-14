@@ -1,0 +1,19 @@
+{
+ "experiment": "jit-r0-records",
+ "spec": "agent:claude-haiku-5-5",
+ "slug": "agent-claude-haiku-5-5",
+ "kind": "agent",
+ "hash": "838a9040ccea77e5",
+ "def": {
+  "spec": "agent:claude-haiku-5-5",
+  "familyId": "records",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "agentMinutes": 15,
+  "agentEffort": null,
+  "models": [
+   "claude-haiku-5-5"
+  ]
+ }
+}

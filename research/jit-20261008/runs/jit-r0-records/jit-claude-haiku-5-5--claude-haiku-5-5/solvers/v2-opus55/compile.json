@@ -1,0 +1,343 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v2-opus55",
+ "version": 2,
+ "parentSha": "4f0d74b88040026f3b4bc4282a6277557637da322348ce311f85711346cf8604",
+ "changed": true,
+ "traceIds": [
+  "i005-shadow-5410a5",
+  "i004-shadow-ea00ec",
+  "i002-interpreter-df6814",
+  "i001-interpreter-66d9a7",
+  "i000-interpreter-d99d12"
+ ],
+ "regressionIds": [
+  "reg-005-609bf9"
+ ],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "high",
+ "policyHash": "06da27b5d2ba15564bc092b1dcfa04ae6beeb6774cc95e7085ae4f08dfefb6ff",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v2-opus55:10d0f23a-4d13-46ae-8f9f-3a9e0b89d475",
+ "flowSha256": "5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223",
+ "checkToolSha256": "8ff6cd24b342e9a549867c8c30a580943f0568bf84658ff021fbf7a9f1070bc0",
+ "promptVersion": 4,
+ "compare": {
+  "mode": "tolerant",
+  "relTol": 0,
+  "absTol": 0
+ },
+ "compareToolSha256": "77b623a9b86b039bba53715afdd6f8d125456e0be8db833aeac14b0ad2164e5c",
+ "acceptance": {
+  "mode": "strict",
+  "minPartial": 0.9
+ },
+ "promptSha256": "7692c73962e3fa45172cfe19598ba5a4dd0a2e0599d5739d37404d721d0377b4",
+ "artifact": "solve.mjs",
+ "artifactSha256": "3a3ff7fa052d243992576bb5040d8b2f82ca09ecfc4641382db0c57f06a649e7",
+ "builderCostUsd": 1.0120290000000003,
+ "builderCostReportedUsd": 1.0120290000000003,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 1.0120290000000003,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 42,
+  "cache_creation_input_tokens": 71570,
+  "cache_read_input_tokens": 1107005,
+  "output_tokens": 10895,
+  "output_tokens_details": {
+   "thinking_tokens": 2095
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 71570,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 601,
+    "cache_read_input_tokens": 75757,
+    "cache_creation_input_tokens": 1301,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1301
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 42,
+  "outputTokens": 792,
+  "cacheReadTokens": 1107005,
+  "cacheWriteTokens": 71570
+ },
+ "builderSessionId": "ad9a0f76-9ec2-4655-9624-8c7ac47f1508",
+ "gatewayCostUsd": 0.12798860000000004,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 213,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.05566990500000001,
+ "constructionCostUsd": 1.1400176000000004,
+ "compileCostUsd": 1.1956875050000004,
+ "startedAt": "2026-10-09T16:47:35.981Z",
+ "durationMs": 301747,
+ "builderMs": 247447,
+ "minutes": 45,
+ "turns": 25,
+ "toolUses": 24,
+ "builderError": null,
+ "builderCheckRuns": 4,
+ "checkTraces": {
+  "exact": 4,
+  "partial": 0.981,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "case-0",
+    "kind": "regression",
+    "exitCode": 0,
+    "ms": 22701,
+    "costUsd": 0.008418,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": true,
+    "diffs": [],
+    "ref": "reg-005-609bf9"
+   },
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 38424,
+    "costUsd": 0.010453,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": true,
+    "diffs": [],
+    "ref": "i005-shadow-5410a5"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 25490,
+    "costUsd": 0.00954,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": false,
+    "diffs": [],
+    "ref": "i004-shadow-ea00ec"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 18065,
+    "costUsd": 0.009535,
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "canonicalExact": true,
+    "diffs": [],
+    "ref": "i002-interpreter-df6814"
+   },
+   {
+    "id": "trace-3",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 20862,
+    "costUsd": 0.008331,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.959,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[3].amount_usd",
+      "got": "438.7",
+      "want": "-438.7"
+     },
+     {
+      "path": "$.records[5].amount_usd",
+      "got": "-1208.13",
+      "want": "1208.13"
+     },
+     {
+      "path": "$.records[6].amount_usd",
+      "got": "-54.82",
+      "want": "54.82"
+     },
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-22494.52",
+      "want": "22494.52"
+     },
+     {
+      "path": "$.records[13].amount_usd",
+      "got": "33.99",
+      "want": "-33.99"
+     }
+    ],
+    "note": "$.records[3].amount_usd: got 438.7 want -438.7; $.records[5].amount_usd: got -1208.13 want 1208.13; +12 more",
+    "ref": "i001-interpreter-66d9a7"
+   },
+   {
+    "id": "trace-4",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 15080,
+    "costUsd": 0.009393,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.924,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[10].source_rows[3]",
+      "got": "<missing>",
+      "want": "9470"
+     },
+     {
+      "path": "$.records[10].given_name",
+      "got": "\"Anke\"",
+      "want": "\"Anja\""
+     },
+     {
+      "path": "$.records[10].amount_usd",
+      "got": "44.01",
+      "want": "41.91"
+     },
+     {
+      "path": "$.records[14].entity_id",
+      "got": "4934",
+      "want": "3918"
+     },
+     {
+      "path": "$.records[14].source_rows[0]",
+      "got": "<missing>",
+      "want": "3918"
+     }
+    ],
+    "note": "$.records[10].source_rows[3]: got <missing> want 9470; $.records[10].given_name: got \"Anke\" want \"Anja\"; +7 more",
+    "ref": "i000-interpreter-d99d12"
+   }
+  ],
+  "cases": 6,
+  "labeled": 6,
+  "exactRate": 0.667,
+  "diffs": 2,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 1,
+  "regressionsPassed": 1,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.05566990500000001,
+  "calls": 92,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 54193,
+  "error": null,
+  "compare": {
+   "mode": "tolerant",
+   "relTol": 0,
+   "absTol": 0
+  },
+  "canonicalExact": 3,
+  "acceptance": {
+   "mode": "strict",
+   "compare": "tolerant",
+   "minQuoteChars": 12,
+   "minQuoteWords": 3,
+   "criteria": {
+    "clean": {
+     "ok": true
+    },
+    "agreement": {
+     "ok": true,
+     "partial": 0.977,
+     "minPartial": 0.9,
+     "partialOk": true,
+     "exactTraces": 3,
+     "labelledTraces": 5,
+     "exactOk": true
+    },
+    "explained": {
+     "ok": true,
+     "cases": [
+      {
+       "id": "trace-3",
+       "mentioned": true,
+       "quotes": [
+        "Saldo changes sign in the master."
+       ],
+       "verified": "Saldo changes sign in the master.",
+       "ok": true,
+       "reason": null
+      },
+      {
+       "id": "trace-4",
+       "mentioned": true,
+       "quotes": [
+        "HOFFMANN, Anke (Dr.)",
+        "Supplier contact Prof. Anja Hoffmann (born 11/3/1960)",
+        "Mrs Elena Galli"
+       ],
+       "verified": "HOFFMANN, Anke (Dr.)",
+       "ok": true,
+       "reason": null
+      }
+     ]
+    }
+   },
+   "passed": [
+    "clean",
+    "agreement",
+    "explained"
+   ],
+   "failed": []
+  }
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\nParse six line formats, spec tables (rates, calling codes, nicknames) and note paragraphs; normalise names, dates, countries, phones (E.164), money (exact BigInt, half away from zero). Identity: name distance ≤1 (nicknames, accent renderings) plus same DOB, or same phone when a DOB is missing; union-find. Conflicts by update-date order, re-stamped systems last; accent restoration.\n\n**Recompile change:** an all-caps winning name part takes the letter case of another row of the person spelling it identically in mixed case. regressions/case-0 and trace-0 failed because \"VAN LEEUWEN, Sanne (Ms.)\" was title-cased to \"Van Leeuwen\"; row \"Prof. Sanne van Leeuwen\" now supplies \"van Leeuwen\". Otherwise title case, flagged `all-caps-particle-name` when the name starts with a particle. No check loosened.\n\n## Judges (haiku → haiku → opus; 3-way haiku vote, opus on split)\nvoid-markers, balance-signs, restamped-systems, date-orders (quotes must be in that system's paragraph; date order checked against data); vendex-fields (quotes are substrings, dates/amounts parse); country-names (index/text echoed).\n\n## Guards / invariants\nGuards: input shape, row count vs prompt, known line formats, unique ids, tables found, update dates parse, rate per currency. Invariants: rows conserved, no void row used, entity_id = min row, field shapes, E.164 shape.\n\n## check-traces\n4/6 exact, mean partial 98%, 0 deopt/crash/timeout, regressions 1/1.\n\n## Disagreements (solver kept)\n- trace-3, amount_usd of LEDGR-winning records (1206, 1498, ...): \"Saldo changes sign in the master.\" The agent did not flip it.\n- trace-4, source_rows/given_name/amount_usd/phone of 3108 and 3918: \"HOFFMANN, Anke (Dr.)\" vs \"Supplier contact Prof. Anja Hoffmann (born 11/3/1960)\", and \"Mrs Elena Galli\" vs Elisa, are two letters apart; spec 3.1 tolerates one typing error, so they stay separate. The agent merged them.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i005-shadow-5410a5",
+   "i004-shadow-ea00ec",
+   "i002-interpreter-df6814",
+   "i001-interpreter-66d9a7",
+   "i000-interpreter-d99d12"
+  ],
+  "regressionIds": [
+   "reg-005-609bf9"
+  ],
+  "previousSha": "4f0d74b88040026f3b4bc4282a6277557637da322348ce311f85711346cf8604"
+ }
+}

@@ -1,0 +1,333 @@
+{
+ "arm": "jit-compile",
+ "kind": "compile",
+ "familyId": "records",
+ "label": "v1-haiku55",
+ "version": 1,
+ "parentSha": null,
+ "changed": true,
+ "traceIds": [
+  "i002-interpreter-df6814",
+  "i001-interpreter-66d9a7",
+  "i000-interpreter-d99d12"
+ ],
+ "regressionIds": [],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "policyHash": "06da27b5d2ba15564bc092b1dcfa04ae6beeb6774cc95e7085ae4f08dfefb6ff",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-opus-5-5",
+  "claude-sonnet-5-5"
+ ],
+ "runId": "compile:v1-haiku55:f2285f2e-a9a2-4a01-a7ac-cd70e9939cd6",
+ "flowSha256": "5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223",
+ "checkToolSha256": "8ff6cd24b342e9a549867c8c30a580943f0568bf84658ff021fbf7a9f1070bc0",
+ "promptVersion": 4,
+ "compare": {
+  "mode": "tolerant",
+  "relTol": 0,
+  "absTol": 0
+ },
+ "compareToolSha256": "77b623a9b86b039bba53715afdd6f8d125456e0be8db833aeac14b0ad2164e5c",
+ "acceptance": {
+  "mode": "strict",
+  "minPartial": 0.9
+ },
+ "promptSha256": "14945f2d44c021985eb6dc0021b0a29acad45f11369c43abb7d58353f0486e9f",
+ "artifact": "solve.mjs",
+ "artifactSha256": "654eef2993851407224350731b8a5660cef8a3fa92d315fef8a39b9543328764",
+ "builderCostUsd": 0.5078485100000001,
+ "builderCostReportedUsd": 0.5078485100000001,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.5078485100000001,
+ "builderBudgetUsd": 3,
+ "builderUsage": {
+  "input_tokens": 60,
+  "cache_creation_input_tokens": 204220,
+  "cache_read_input_tokens": 4379947,
+  "output_tokens": 142048,
+  "output_tokens_details": {
+   "thinking_tokens": 110270
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 204220,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1043,
+    "cache_read_input_tokens": 210354,
+    "cache_creation_input_tokens": 259,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 259
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 60,
+  "outputTokens": 275,
+  "cacheReadTokens": 4379947,
+  "cacheWriteTokens": 204220
+ },
+ "builderSessionId": "f72adfe2-8042-47d6-a045-81afa5640b0a",
+ "gatewayCostUsd": 0.028676144999999997,
+ "gatewayCapUsd": 1.5,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 28,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "checkCostUsd": 0.012324424999999998,
+ "constructionCostUsd": 0.5365246550000001,
+ "compileCostUsd": 0.5488490800000001,
+ "startedAt": "2026-10-09T15:57:31.345Z",
+ "durationMs": 762840,
+ "builderMs": 735690,
+ "minutes": 30,
+ "turns": 30,
+ "toolUses": 29,
+ "builderError": null,
+ "builderCheckRuns": 3,
+ "checkTraces": {
+  "exact": 0,
+  "partial": 0.868,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "trace-0",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 26039,
+    "costUsd": 0.004427,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.722,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[2].source_rows[1]",
+      "got": "<missing>",
+      "want": "6885"
+     },
+     {
+      "path": "$.records[2].birth_date",
+      "got": "\"1975-05-04\"",
+      "want": "\"1975-04-05\""
+     },
+     {
+      "path": "$.records[4].source_rows[2]",
+      "got": "<missing>",
+      "want": "4181"
+     },
+     {
+      "path": "$.records[4].birth_date",
+      "got": "\"1977-08-03\"",
+      "want": "\"1977-03-08\""
+     },
+     {
+      "path": "$.records[7].birth_date",
+      "got": "\"1968-07-01\"",
+      "want": "\"1968-01-07\""
+     }
+    ],
+    "note": "$.records[2].source_rows[1]: got <missing> want 6885; $.records[2].birth_date: got \"1975-05-04\" want \"1975-04-05\"; +18 more",
+    "ref": "i002-interpreter-df6814"
+   },
+   {
+    "id": "trace-1",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 21497,
+    "costUsd": 0.003433,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.959,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[3].amount_usd",
+      "got": "438.7",
+      "want": "-438.7"
+     },
+     {
+      "path": "$.records[5].amount_usd",
+      "got": "-1208.13",
+      "want": "1208.13"
+     },
+     {
+      "path": "$.records[6].amount_usd",
+      "got": "-54.82",
+      "want": "54.82"
+     },
+     {
+      "path": "$.records[8].amount_usd",
+      "got": "-22494.52",
+      "want": "22494.52"
+     },
+     {
+      "path": "$.records[13].amount_usd",
+      "got": "33.99",
+      "want": "-33.99"
+     }
+    ],
+    "note": "$.records[3].amount_usd: got 438.7 want -438.7; $.records[5].amount_usd: got -1208.13 want 1208.13; +12 more",
+    "ref": "i001-interpreter-66d9a7"
+   },
+   {
+    "id": "trace-2",
+    "kind": "trace",
+    "exitCode": 0,
+    "ms": 26800,
+    "costUsd": 0.004465,
+    "status": "diff",
+    "exact": false,
+    "partial": 0.924,
+    "canonicalExact": false,
+    "diffs": [
+     {
+      "path": "$.records[10].source_rows[3]",
+      "got": "<missing>",
+      "want": "9470"
+     },
+     {
+      "path": "$.records[10].given_name",
+      "got": "\"Anke\"",
+      "want": "\"Anja\""
+     },
+     {
+      "path": "$.records[10].amount_usd",
+      "got": "44.01",
+      "want": "41.91"
+     },
+     {
+      "path": "$.records[14].entity_id",
+      "got": "4934",
+      "want": "3918"
+     },
+     {
+      "path": "$.records[14].source_rows[0]",
+      "got": "<missing>",
+      "want": "3918"
+     }
+    ],
+    "note": "$.records[10].source_rows[3]: got <missing> want 9470; $.records[10].given_name: got \"Anke\" want \"Anja\"; +7 more",
+    "ref": "i000-interpreter-d99d12"
+   }
+  ],
+  "cases": 3,
+  "labeled": 3,
+  "exactRate": 0,
+  "diffs": 3,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 0,
+  "regressionsPassed": 0,
+  "clean": true,
+  "unexplained": [],
+  "accepted": false,
+  "costUsd": 0.012324424999999998,
+  "calls": 13,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 27123,
+  "error": null,
+  "compare": {
+   "mode": "tolerant",
+   "relTol": 0,
+   "absTol": 0
+  },
+  "canonicalExact": 0,
+  "acceptance": {
+   "mode": "strict",
+   "compare": "tolerant",
+   "minQuoteChars": 12,
+   "minQuoteWords": 3,
+   "criteria": {
+    "clean": {
+     "ok": true
+    },
+    "agreement": {
+     "ok": false,
+     "partial": 0.868,
+     "minPartial": 0.9,
+     "partialOk": false,
+     "exactTraces": 0,
+     "labelledTraces": 3,
+     "exactOk": false
+    },
+    "explained": {
+     "ok": true,
+     "cases": [
+      {
+       "id": "trace-0",
+       "mentioned": true,
+       "quotes": [
+        "For example, dob=11/02/1996 is 2 November 1996."
+       ],
+       "verified": "For example, dob=11/02/1996 is 2 November 1996.",
+       "ok": true,
+       "reason": null
+      },
+      {
+       "id": "trace-1",
+       "mentioned": true,
+       "quotes": [
+        "Saldo changes sign in the master."
+       ],
+       "verified": "Saldo changes sign in the master.",
+       "ok": true,
+       "reason": null
+      },
+      {
+       "id": "trace-2",
+       "mentioned": true,
+       "quotes": [
+        "Supplier contact Prof. Anja Hoffmann (born 11/3/1960)",
+        "ATLAS #3918 :: Mrs Elena Galli :: born 06/11/2000"
+       ],
+       "verified": "Supplier contact Prof. Anja Hoffmann (born 11/3/1960)",
+       "ok": true,
+       "reason": null
+      }
+     ]
+    }
+   },
+   "passed": [
+    "clean",
+    "explained"
+   ],
+   "failed": [
+    "agreement"
+   ]
+  }
+ },
+ "notes": "# BUILD-NOTES\n\n## Procedure in code\n- Rates, calling codes, trunk prefixes and nicknames parsed from the spec.\n- Six line formats parsed; dates by config order; exact BigInt money, rounded once.\n- E.164 phones; names cleaned, nicknames replaced, one-typo matching; union-find identity; §4 ordering and §7 USD.\n\n## Judges (haiku-5-5, escalating to opus-5-5 on a failed check)\n- `source-config`: one call reads the notes into 14 settings. Check: each non-default value quoted from the notes.\n- `vendex-fields`: free-text entries, batches of 8. Check: fields verbatim in the entry, country in the ISO table.\n- `near-miss-same-person`: similar names sharing an attribute, with no differing birth dates. Check: shared attribute quoted. Flagged.\n\n## Guards and invariants\n- Guards on line formats and on the enumerated values (env, stage, status, flag), plus unknown dates, amounts, currencies and countries.\n- Invariants: rows conserved, each row used once, entity_id is the minimum row, cents exact.\n\n## check-traces\n- No crash, deopt or timeout. Partials: trace-0 72%, trace-1 96%, trace-2 92%; mean 87%; 0/3 exact.\n- Below the 0.9 bar. The differences follow the task text, so I did not force agreement.\n\n## Disagreements with agent answers\n- **trace-0**, birth dates and merges: the agent read numeric dates month-first. \"For example, dob=11/02/1996 is 2 November 1996.\"\n- **trace-1**, LEDGR `amount_usd` signs: \"Saldo changes sign in the master.\"\n- **trace-2**, Anke/Anja and Elena/Elisa not merged (names two letters apart): \"Supplier contact Prof. Anja Hoffmann (born 11/3/1960)\" and \"ATLAS #3918 :: Mrs Elena Galli :: born 06/11/2000\".\n\n## Risks\n- The config judge samples once; a confident wrong convention passes the quote check unflagged.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [
+   "i002-interpreter-df6814",
+   "i001-interpreter-66d9a7",
+   "i000-interpreter-d99d12"
+  ],
+  "regressionIds": [],
+  "previousSha": null
+ }
+}
