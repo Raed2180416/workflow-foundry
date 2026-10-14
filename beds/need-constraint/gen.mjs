@@ -4,7 +4,7 @@
 // hidden planted material and the known-good solutions; none of it is rendered into the task.
 import { estimateTokens } from '../lib/canonical.mjs';
 import { rng } from '../lib/rng.mjs';
-import { checkNames } from './check.mjs';
+import { checkNames, checkOrder } from './check.mjs';
 import {
   CATALOGUES, DAYS, END_ANCHORS, FORBID_CONTENT, FUNCTION_WORDS, INITIALS, ORDER_SETTINGS, POSTCARD_TOWNS, PRODUCT_LINES, REQUIRED_POOL,
   RARE_LETTERS, ROTA_PLACES, START_ANCHORS, cap,
@@ -221,8 +221,10 @@ function buildOrder(S, d) {
     if (constraints.length - drop <= 3) break;
   }
   if (!found) throw new Error('order: no constraint set with several solutions');
-  const shown = r.shuffle(items);
-  if (shown.join() === planted.join()) shown.reverse();
+  // The presented item list must not be an answer itself (echoing the input would pass) nor the planted order.
+  let shown = r.shuffle(items);
+  for (let g = 0; g < 100 && (shown.join() === planted.join() || checkOrder(spec, shown).pass); g++) shown = r.shuffle(items);
+  if (checkOrder(spec, shown).pass) throw new Error('order: could not present the items in a non-solution order');
   const shownCons = r.shuffle(spec.constraints);
   const n = c.n;
   const prompt = [

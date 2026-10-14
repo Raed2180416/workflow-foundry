@@ -157,6 +157,12 @@ export function altSolve(task, variant = 0) {
   const { spec, truth } = rebuilt(task);
   if (variant === 0 && truth.solutions[1]) return clone(truth.solutions[1]);
   const r = rng('need-constraint', VERSION, task.split, task.seed, task.difficulty, 'alt', variant);
+  const found = variantAnswer(spec, truth, r, variant);
+  // a randomised search can land on the reference again when a task has few answers: then use the verified second one
+  return JSON.stringify(found) === JSON.stringify(truth.solutions[0]) && truth.solutions[1] ? clone(truth.solutions[1]) : found;
+}
+
+function variantAnswer(spec, truth, r, variant) {
   switch (spec.subtype) {
     case 'names': return { names: solveNames(spec, r, variant % 2 === 1 ? 'cv' : 'syll') };
     case 'sentence': return { sentence: solveSentence(spec, r, { allowRepeats: true }) };
@@ -204,11 +210,16 @@ function nearMiss(task) {
       return { sentence: words.join(' ') };
     }
     case 'order': { // the reference with two neighbours swapped, choosing a swap that breaks some statement
+      let best = null; // the swap that breaks the fewest statement groups
       for (let i = 0; i < ref.order.length - 1; i++) {
         const order = [...ref.order]; [order[i], order[i + 1]] = [order[i + 1], order[i]];
-        if (!checkOrder(spec, order).pass) return { order };
+        const res = checkOrder(spec, order);
+        if (res.pass) continue;
+        const failed = res.checks.filter(c => !c.ok).length;
+        if (!best || failed < best.failed) best = { failed, order };
+        if (failed === 1) break;
       }
-      return corruptedFallbackOrder(spec, ref);
+      return best ? { order: best.order } : corruptedFallbackOrder(spec, ref);
     }
     case 'schedule': { // one person swapped for someone else; prefer a swap that breaks exactly one rule category
       let best = null;
