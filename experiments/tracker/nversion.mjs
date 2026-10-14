@@ -57,7 +57,7 @@ async function main() {
   const [s0, s1] = arg('--seeds', '1235-1237').split('-').map(Number);
   const diffs = arg('--difficulties', '2,3,5').split(',').map(Number);
   const seeds = Array.from({ length: (s1 ?? s0) - s0 + 1 }, (_, i) => s0 + i);
-  const report = [];
+  const report = [], disagreements = files.map(() => []);
   const tally = files.map(() => ({ flagged: 0, flaggedFail: 0, notFlaggedFail: 0, notFlagged: 0 }));
   for (const [i, seed] of seeds.entries()) {
     const d = diffs[i % diffs.length];
@@ -79,6 +79,7 @@ async function main() {
     let noConsensus = 0;
     for (const [o, x] of votes) {
       if (x.unresolved) noConsensus++;
+      for (const b of x.suspects) disagreements[b].push({ seed, d, order: o, mine: runs[b].sigs.get(o) ?? null, consensus: x.consensus });
       runs.forEach((r, b) => {
         if (!r.failOrders.has(o) && !r.passOrders.has(o)) return;      // not a completed case: not scored
         const flagged = x.suspects.includes(b), failed = r.failOrders.has(o);
@@ -95,7 +96,7 @@ async function main() {
     console.log(`  ${files[b]}\n     flagged ${t.flagged}, of which oracle-failing ${t.flaggedFail} (precision ${prec === null ? '-' : prec.toFixed(2)}); oracle failures ${t.flaggedFail + t.notFlaggedFail}, caught ${t.flaggedFail} (recall ${rec === null ? '-' : rec.toFixed(2)})`);
   });
   const j = arg('--json', null);
-  if (j) writeFileSync(j, JSON.stringify({ files, report, tally }, null, 1));
+  if (j) writeFileSync(j, JSON.stringify({ files, report, tally, disagreements }, null, 1));
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();

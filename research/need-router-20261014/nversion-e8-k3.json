@@ -85,5 +85,152 @@
    "notFlaggedFail": 0,
    "notFlagged": 320
   }
+ ],
+ "disagreements": [
+  [],
+  [
+   {
+    "seed": 1235,
+    "d": 2,
+    "order": "ORD-1235-0001",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"billing.charge\",2],[\"carrier.create\",2],[\"inventory.reserve\",2],[\"orders.create\",1],[\"orders.setStatus\",8]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1235,
+    "d": 2,
+    "order": "ORD-1235-0002",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"orders.setStatus\",3]],\"st\":[\"F:cancelled\",\"O:cancelled\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1235,
+    "d": 2,
+    "order": "ORD-1235-0003",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"orders.setStatus\",2]],\"st\":[\"F:completed\",\"O:completed\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1236,
+    "d": 3,
+    "order": "ORD-1236-0001",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"billing.charge\",2],[\"carrier.create\",2],[\"inventory.reserve\",3],[\"orders.create\",1],[\"orders.setStatus\",8]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1236,
+    "d": 3,
+    "order": "ORD-1236-0004",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"billing.charge\",1],[\"carrier.create\",1],[\"inventory.reserve\",4],[\"orders.create\",1],[\"orders.setStatus\",5]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1236,
+    "d": 3,
+    "order": "ORD-1236-0002",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"billing.charge\",1],[\"carrier.create\",1],[\"inventory.reserve\",1],[\"orders.setStatus\",6]],\"st\":[\"F:cancelled\",\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1236,
+    "d": 3,
+    "order": "ORD-1236-0005",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"orders.setStatus\",2]],\"st\":[\"F:cancelled\",\"O:cancelled\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1236,
+    "d": 3,
+    "order": "ORD-1236-0003",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"orders.setStatus\",2]],\"st\":[\"F:completed\",\"O:completed\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0001",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"billing.charge\",1],[\"carrier.create\",1],[\"inventory.reserve\",1],[\"orders.create\",1],[\"orders.setStatus\",5]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0004",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"billing.charge\",2],[\"carrier.create\",2],[\"inventory.reserve\",2],[\"orders.create\",1],[\"orders.setStatus\",8]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0007",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"billing.charge\",2],[\"carrier.create\",2],[\"inventory.reserve\",3],[\"orders.create\",1],[\"orders.setStatus\",8]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0002",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"billing.charge\",1],[\"carrier.create\",1],[\"inventory.reserve\",2],[\"orders.setStatus\",6]],\"st\":[\"F:cancelled\",\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0008",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"orders.setStatus\",3]],\"st\":[\"F:cancelled\",\"O:timedOut\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0005",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"orders.setStatus\",3]],\"st\":[\"F:cancelled\",\"O:timedOut\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0006",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"orders.setStatus\",2]],\"st\":[\"F:completed\",\"O:completed\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0003",
+    "mine": null,
+    "consensus": "{\"ops\":[[\"orders.setStatus\",2]],\"st\":[\"F:completed\",\"O:completed\"],\"nt\":[]}"
+   }
+  ],
+  [
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0062",
+    "mine": "{\"ops\":[[\"billing.charge\",1],[\"carrier.create\",1],[\"inventory.release\",1],[\"inventory.reserve\",2],[\"orders.create\",1],[\"orders.setStatus\",7]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:failed\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}",
+    "consensus": "{\"ops\":[[\"billing.charge\",2],[\"carrier.create\",2],[\"inventory.reserve\",3],[\"orders.create\",1],[\"orders.setStatus\",8]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0100",
+    "mine": "{\"ops\":[[\"billing.charge\",2],[\"carrier.create\",2],[\"inventory.release\",1],[\"inventory.reserve\",3],[\"orders.create\",1],[\"orders.setStatus\",10]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:failed\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}",
+    "consensus": "{\"ops\":[[\"billing.charge\",3],[\"carrier.create\",3],[\"inventory.reserve\",4],[\"orders.create\",1],[\"orders.setStatus\",11]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0158",
+    "mine": "{\"ops\":[[\"billing.charge\",2],[\"carrier.create\",2],[\"inventory.release\",1],[\"inventory.reserve\",3],[\"orders.create\",1],[\"orders.setStatus\",10]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:failed\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}",
+    "consensus": "{\"ops\":[[\"billing.charge\",3],[\"carrier.create\",3],[\"inventory.reserve\",4],[\"orders.create\",1],[\"orders.setStatus\",11]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   },
+   {
+    "seed": 1237,
+    "d": 5,
+    "order": "ORD-1237-0190",
+    "mine": "{\"ops\":[[\"billing.charge\",1],[\"carrier.create\",1],[\"inventory.release\",1],[\"inventory.reserve\",3],[\"orders.create\",1],[\"orders.setStatus\",7]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:failed\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}",
+    "consensus": "{\"ops\":[[\"billing.charge\",2],[\"carrier.create\",2],[\"inventory.reserve\",4],[\"orders.create\",1],[\"orders.setStatus\",8]],\"st\":[\"F:completed\",\"F:dispatched\",\"F:processing\",\"O:completed\",\"O:processing\"],\"nt\":[]}"
+   }
+  ]
  ]
 }
