@@ -109,10 +109,12 @@ async function main() {
     const prompt = `${files['TASK.md']}\nRead SPEC-E.md, CONTRACT.md and api/*.schema.json first.`;
     const budgetUsd = Number(arg('--budget', '3')), minutes = Number(arg('--minutes', '40'));
     const t = Date.now();
-    const box = loop === 'none' ? null : serveMailbox({ item, workdir, mode: loop, journal: path.join(out, 'smoke.jsonl') });
+    // The live smoke journal stays outside the repository while the build runs; it is copied in afterwards.
+    const liveSmoke = path.join(path.dirname(workdir), `${label}.smoke.jsonl`);
+    const box = loop === 'none' ? null : serveMailbox({ item, workdir, mode: loop, journal: liveSmoke });
     let r;
     try { r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort: arg('--effort', 'high') }); }
-    finally { if (box) build = { smokeRuns: await box.stop() }; }
+    finally { if (box) { build = { smokeRuns: await box.stop() }; if (existsSync(liveSmoke)) copyFileSync(liveSmoke, path.join(out, 'smoke.jsonl')); } }
     build = { model, effort: arg('--effort', 'high'), budgetUsd, minutes, loop, ...(build ?? {}), wallMs: Date.now() - t, costUsd: r.costUsd ?? null, error: r.error ?? null, turns: r.turns ?? null };
     copyFileSync(path.join(workdir, '.executor-transcript.jsonl'), path.join(out, 'transcript.jsonl'));
     if (!existsSync(path.join(workdir, 'solver.mjs'))) { writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, build, solver: null }, null, 1)); throw new Error('no solver.mjs written'); }
