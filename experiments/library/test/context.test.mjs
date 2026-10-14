@@ -55,17 +55,52 @@ test('T2: every over-allocation is refused with CONTEXT_OVER_CLASS_BUDGET naming
   refusedWith(() => assemblePrompt('S9', {}), 'CONTEXT_UNKNOWN_CALL');
 });
 
-test('T2 finding: the L0 card as written measures over its 3,000-token allocation under the calibrated counter, so S6 refuses it', () => {
+// The L0 card fit (owner decision PAUSE-20261009 §5.10, taken 2026-10-14: cut the card, keep the 3,000 allocation).
+// Before the cut (L0-VOCABULARY.md at 57a5e1d): 3,643 by the bound, 3,167 point estimate; compact 3,406 / 2,962; S6
+// refused it. After: 2,962 / 2,576; compact 2,899 / 2,521 (BUILD-ORDER "Implementation status").
+const L0_CONSTRUCTS = [[1, 'input', 'E2'], [2, 'step', 'E2'], [3, 'judge', 'E2'], [4, 'guard', 'E2'], [5, 'invariant', 'E2'], [6, 'map', 'E2'],
+  [7, 'flag', 'E2'], [8, 'note', 'E2'], [9, 'done', 'E2'], [10, 'if / join / bounded for', 'E2'], [11, 'call', 'E3'], [12, 'agent', 'D'],
+  [13, 'wide', 'D'], [14, 'plan', 'D'], [15, 'effect', 'IR'], [16, 'approve', 'IR'], [17, 'ask', 'IR'], [18, 'wait.delay', 'IR'],
+  [19, 'wait.signal', 'N'], [20, 'retry', 'IR'], [21, 'route.error', 'IR partial'], [22, 'finally', 'IR partial / N'], [23, 'compensate', 'N'],
+  [24, 'trigger.webhook', 'N'], [25, 'trigger.schedule', 'N'], [26, 'trigger.event / trigger.poll', 'N'], [27, 'state', 'N'],
+  [28, 'admission', 'N'], [29, 'session', 'N'], [30, 'stream', 'N']];
+// Each rule the constructor contract (LIBRARY §5) or the composition checker (L1 §9, LIBRARY §6) relies on, by phrase.
+const L0_RULES = {
+  closed: 'Build only from these 30 constructs', refusedOutside: 'anything else\nis refused',
+  status: ['E2 built', 'E3 built', 'IR an engine node that runs today', 'D designed, not\nbuilt', 'N an engine node not built'],
+  EFFECT_IN_SOLVER: 'with no effects, no waits and no approvals', envelope: 'owns triggers, effects, waits,\napprovals, retries and cross-run state',
+  proposedEnvelope: 'only the solver runs and an envelope is a proposal', BRANCH_ON_TEXT: 'Never write control flow that untrusted data chooses',
+  UNBOUNDED: ['unbounded loop or wait', 'the cap is a literal', 'unbounded `while`', 'a `wait` with no timeout'], stepOnly: 'free-form JavaScript outside a `step` body',
+  oneDecision: 'one decision per judge', ENUM_NO_NONE: 'with a none or undecidable member', closedSchema: 'or a closed object',
+  JUDGE_NO_CHECK: 'code `check` on every judge whose answer cites the input', tiers: ['tiers go from cheapest to dearest', 'from `policy/models.json` only'],
+  samples: '`samples > 1` only for a gate on an effect', judgeIsData: 'its output\nis data', enumOnly: 'only through an enum',
+  doneOnce: 'exactly once', mapBounded: 'bounded parallel, fail-fast', agentVerify: 'parent-side verify required', wide: 'planned fan-out ≤ 32',
+  ONE_WRITER: 'with one writer', untrustedAsk: 'human input returned as untrusted data', refusals: 'Group chat, full-history handoff and interactive dashboard state',
+  scratchpad: 'rewritten as `wide`\nwith a typed reduce', effectInSolver: 'an effect inside a solver', RECURSION: 'recursion\nby hash',
+  MUTABLE_TARGET: 'a mutable call target', toolAllowList: 'a model-chosen tool outside the allow-list', selfModification: 'self-modification of the library',
+  CREDENTIAL_LITERAL: 'credential in any literal (env-var names only, through the L3 binding)', refuseForm: 'write `refuse:<reason>` instead',
+};
+
+test('T2: the L0 card fits its 3,000-token S6 allocation by the bound, with all 30 constructs and every contract and checker rule', () => {
   const v = l0Card(), c = l0Card({ form: 'compact' });
-  assert.ok(!v.text.includes('Changes since draft'), 'the changes block sits outside the budget');
-  assert.ok(v.text.startsWith('# L0: the closed vocabulary card') && v.text.includes('credential in any literal'));
-  assert.ok(c.tokens < v.tokens && c.text.length < v.text.length);
-  // Recorded numbers (BUILD-ORDER "Implementation status"): bound / point estimate.
-  assert.ok(v.tokens > 3000 && v.pointTokens > 3000, `verbatim ${v.tokens} / ${v.pointTokens}`);
-  assert.ok(c.tokens > 3000, `compact ${c.tokens} / ${c.pointTokens}`);
-  assert.ok(Math.ceil(v.text.length / 3.5) < 3000, 'under chars/3.5 it would have fitted, which is how the allocation looked feasible');
-  refusedWith(() => assemblePrompt('S6', { l0: v.text, task: 'x' }), REFUSAL, 'l0');
-  // With the allocation an owner decision would set, the rest of the S6 budget still holds.
-  const p = assemblePrompt('S6', { l0: v.text, index: lines.slice(0, 20), expanded: ['P07 card text'], task: textOf(2000), other: 'fill' }, { caps: { parts: { l0: 3700 } } });
+  assert.ok(!v.text.includes('Changes since draft') && !v.text.includes('Provenance (outside the prompt)'), 'the outside-budget block is not in the prompt');
+  assert.ok(v.text.startsWith('# L0: the closed vocabulary card'));
+  assert.ok(v.tokens <= CAP_TABLE.S6.parts.l0, `verbatim ${v.tokens} (bound) > ${CAP_TABLE.S6.parts.l0}`);
+  assert.ok(v.pointTokens < v.tokens && c.tokens < v.tokens && c.text.length < v.text.length, `compact ${c.tokens} / ${c.pointTokens}`);
+  assert.equal(CAP_TABLE.S6.parts.l0, 3000, 'the allocation was not raised (decision §5.10: cut, do not raise)');
+  // Every construct: one line with its number, name, status and a code example.
+  const items = v.text.split('\n').filter(l => /^- \d+ /.test(l));
+  assert.equal(items.length, 30, 'one line per construct');
+  for (const [n, name, st] of L0_CONSTRUCTS) {
+    const line = items.find(l => l.startsWith(`- ${n} `));
+    assert.ok(line, `construct ${n} missing`);
+    assert.ok(line.startsWith(`- ${n} ${name}`), `construct ${n} is not ${name}: ${line}`);
+    for (const s of st.split(' / ')) assert.ok(new RegExp(`[ (]${s.replace(/ /g, '\\s')}[,:) ]`).test(line), `construct ${n} lacks status ${s}`);
+    assert.ok(/: `/.test(line), `construct ${n} has no canonical example`);
+  }
+  for (const [rule, phrase] of Object.entries(L0_RULES)) for (const p of [phrase].flat()) assert.ok(v.text.replace(/\s+/g, ' ').includes(p.replace(/\s+/g, ' ')), `rule ${rule}: "${p}" missing`);
+  // S6 assembles the card with every other part at its full allocation; the call stays within the class M cap.
+  const p = assemblePrompt('S6', { l0: v.text, index: lines.slice(0, 20), expanded: [textOf(1200)], task: textOf(2500), other: textOf(500) });
+  assert.equal(p.tokens.l0, v.tokens);
   assert.ok(p.tokens.total <= 8000, `${p.tokens.total}`);
 });

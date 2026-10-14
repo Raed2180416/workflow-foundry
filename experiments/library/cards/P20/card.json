@@ -21,7 +21,9 @@
     { "text": "Defaults on exhaustion are explicit.", "code": "SILENT_DROP", "kw": { "class": "default", "n": 35 }, "minedFrom": ["dify:mkt-22fd4d00…"], "enforcedBy": "ON_FAIL" },
     { "text": "State across tries is local.", "code": "ONE_WRITER", "kw": { "class": "state", "n": 58 }, "minedFrom": ["activepieces:WSuSdjnA1rdJmIkfisphJ"] },
     { "text": "Schema validation is the cheapest verifier.", "code": null, "kw": { "class": "validate", "n": 42 }, "minedFrom": ["flowise:agentflowsv2-agentic-rag"] },
-    { "text": "A judge verifying its own family is not independent; prefer a code verifier, P49 when only judges exist.", "code": null }
+    { "text": "A judge verifying its own family is not independent; prefer a code verifier, P49 when only judges exist.", "code": null },
+    { "text": "A builder-written check names the task-contract clause it enforces and is never stricter; a heuristic check may demote a candidate but never veto one that passes more evidence; a repair can contest a check; every repair and fallback branch is exercised once by a known-legitimate change.", "code": null, "failure": "F06", "minedFrom": ["repo:research/construction-20261006/diagnosis/F-haiku-codefix.md"], "enforcedBy": "not yet (L6-a line, L1 revision 1)" },
+    { "text": "The exhaustion default is never the unpatched input when a candidate is better on every measured axis except a disputed check.", "code": "SILENT_DROP", "failure": "F07", "minedFrom": ["repo:research/construction-20261006/diagnosis/B1-opus-codefix.md"], "enforcedBy": "not yet (L6-a line, L1 revision 1)" }
   ],
   "rules": [
     { "code": "VERIFY_NOT_GATING", "fnSlot": "VERIFY", "constant": "null" },

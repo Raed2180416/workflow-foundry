@@ -68,16 +68,18 @@ Estimate: steps 1–8 ≈ 3–5 agent-days [I]; 9–10 ≈ 1 day [I].
 
 ## 5. The engine column (outside the library; ordered by corpus items unblocked)
 
-From L1-PATTERNS §7 [M-c]: items blocked only by unbuilt engine nodes, per node. If the owner wants the universality
-claim to move from 48.4% (65.6% with host triggers) toward 97.8%, the order is:
+From L1-PATTERNS §7 [M-c; census revision 1, a candidate generator, not a measurement]: items blocked only by unbuilt
+engine nodes, per node. If the owner wants the buildable share to move from 48.4% (65.6% with host triggers) toward the
+census ceiling of 96.9% not refused (97.8% without the dashboard criterion; the measured coverage is AUDIT-L1's 88.4%,
+Wilson 75.0–95.1%), the order is:
 
 | order | engine node (L0 row) | patterns | items unblocked (can overlap) |
 |---|---|---|---|
-| 1 | `state` (27): cross-run seen-set / cursor / counter, one writer, TTL | P42, P39 | 157 (+26) |
+| 1 | `state` (27): cross-run seen-set / cursor / counter, one writer, TTL | P42, P39 | 144 (+26) (157 before revision 1) |
 | 2 | `wait.signal` (19) with timeout routing | P33 | 108 |
 | 3 | `session` (29) with capped memory | P43 | 104 |
 | 4 | `admission` (28) | P40 | 56 |
-| 5 | `stream` (30) | P44 | 39 |
+| 5 | `stream` (30) | P44 | 27 (39 before revision 1) |
 | 6 | `compensate` (23), continue-as-new (P31) | P30, P31 | ≈ 9 (P30 has zero genuine support) |
 
 This work is ROADMAP Phase 6 and breaks the engine freeze for any round in flight (W-BED §3.7, ROADMAP rule 13) [M], so
@@ -113,16 +115,53 @@ it is listed, not scheduled. In the host-harness deployment, triggers (P36–P38
 ## Implementation status
 
 Steps 1–4 of §1 are built in `experiments/library/` (2026-10-09; commits 88473c7, f22f1a3, 7a11979, 297c3f6 on
-`claude/intelligent-hamilton-vg1f9a`). They cost $0: no model or Jev calls, no network, and nothing under `src/`,
-`experiments/jit/` or `experiments/lib/` changed. Tests: `node --test --test-concurrency=2 experiments/library/test/*.test.mjs`
-runs 63 tests, all green.
+`claude/intelligent-hamilton-vg1f9a`), step 9 (the audits) was run (0d9d329, AUDIT-L1; both decisions FAIL), and on
+2026-10-14 the L1 revision and the L0 card fit were applied (below). All of it cost $0: no model or Jev calls, no
+network, and nothing under `src/`, `experiments/jit/` or `experiments/lib/` changed. Tests:
+`node --test --test-concurrency=2 experiments/library/test/*.test.mjs` runs 63 tests, all green.
 
 | step | files | tests |
 |---|---|---|
-| 1 store and index | `store.mjs` (registry, revocations, evidence, judgments and index JSONL; the §7.1 states and transitions; verify-before-store and keep gates; circuit breaker; requalify; retire), `index.mjs` (code-generated index lines ≤ 30 tokens, `shape/1` features, `buildIndex`), `cards.mjs`, `schema.mjs` (validation through `src/validate.mjs`; conservative subsumption), `tokens.mjs`, `tools/build-catalog.mjs` → `cards/catalog.json` (54 entries), `tools/calibrate-tokens.mjs` → `fixtures/token-calibration.json` | T1 4, T8 7, counter 3 (14) |
-| 2 L0 and caps | `context.mjs`: the §5.2 cap table as code; `assemblePrompt` refuses with `CONTEXT_OVER_CLASS_BUDGET` (or `CONTEXT_PART_NOT_ALLOWED`) and never truncates; `l0Card()` | T2 partial 4 |
+| 1 store and index | `store.mjs` (registry, revocations, evidence, judgments and index JSONL; the §7.1 states and transitions; verify-before-store and keep gates; circuit breaker; requalify; retire), `index.mjs` (code-generated index lines ≤ 30 tokens, `shape/1` features, `buildIndex`), `cards.mjs`, `schema.mjs` (validation through `src/validate.mjs`; conservative subsumption), `tokens.mjs`, `tools/build-catalog.mjs` → `cards/catalog.json` (54 entries; rebuilt from census revision 1), `tools/calibrate-tokens.mjs` → `fixtures/token-calibration.json` | T1 4, T8 7, counter 3 (14) |
+| 2 L0 and caps | `context.mjs`: the §5.2 cap table as code; `assemblePrompt` refuses with `CONTEXT_OVER_CLASS_BUDGET` (or `CONTEXT_PART_NOT_ALLOWED`) and never truncates; `l0Card()` | T2 partial 4 (the L0 card now fits; the full T2 is step 6) |
 | 3 cards | `cards/P01 P03 P07 P08 P09 P12 P13 P15 P16 P17 P20 P54/{card.json, skeleton.mjs, fixtures/{positive,no-match,drift}.json}`, `skeletons/helpers.mjs`, `assemble.mjs` (typed slot checks, `fn:pure` lint, `solve.mjs` assembly), `run.mjs` ($0 runner) | T4 17 (all 36 fixtures pass; every drift fixture deopts with its expected kind and name) |
 | 4 checker | `check.mjs` (`checkTree` / `checkSolver`) | T3 28: the clean reference tree and the 12 card examples fire nothing; 24 mutants cover all 18 codes and each fires exactly its own code |
+| 9 audits | `research/…/design/library/AUDIT-L1.md`, `out/L1-audit*`, `out/L6-audit.json`, `out/audit-scripts/` | L1-a FAIL (coverage 88.4%, Wilson 75.0–95.1%; rule precision 0.73); L6-a FAIL (6 of 21 recorded failures named) |
+
+**L1 revision 1 (2026-10-14; PAUSE-20261009 §4 step 4, AUDIT-L1 §8).** The census tool
+(`design/library/tools/pattern-census.mjs`) now defaults to revision 1; `REVISION=0` reproduces the 2026-10-09 outputs
+byte for byte (checked). (1) The six support-only detectors with hit precision below 0.5 (P02 0.23, P16 0.31, P17 0.08,
+P18 0.18, P30 0.00, P49 0.31) are off: their patterns stay in the catalog with no census evidence (evidence grade U,
+P30 D). (2) P37 split: GitHub Actions and GitLab CI push, pull-request and other repository-event starts, and those
+platforms' `webhook-trigger` token, are P38; P37 282 → 163 items, P38 252 → 350. (3) Owner decision PAUSE §5.8
+(taken: both readings, the conservative one first): Node-RED items with ≥ 20 `ui_*` widgets are refused as
+"interactive dashboard state" (14 items), and the run writes the reading without the criterion beside it. (4) The 15
+L6-a lines are in L1-PATTERNS §4, §5 and §9 and in the `card.json` checklists of P03, P09, P16 and P20 (each with its
+failure id and `repo:` source); the eight §9 codes need run-time evidence and are **not** enforced by `check.mjs` yet.
+(5) Every statement of 97.8% as coverage in L1-PATTERNS, LIBRARY, LIBRARY-TESTS, this file and the library README now
+gives the audited 88.4% (75.0–95.1%), or 96.1% (85.2–99.1%) with dashboard apps explained, and says that the census
+counts "not refused".
+
+**Census revision 1, NOT a measurement** (a candidate generator; `out/pattern-census.json`, `.md`,
+`out/pattern-evidence.md`): not refused 1,510 of 1,559 (96.9%; 1,524, 97.8%, without the dashboard criterion); flat
+within the 5-pattern budget 1,276 (81.8%; was 1,281, 82.2%); hierarchical 234 (15.0%); refused 49 (35 by the corpus IR
+verdict + 14 by the criterion); greedy 90% at k = 38 (was 37); buildable S / +IR / +HOST / +D 26.9 / 48.4 / 65.6 /
+73.8% (unchanged). Per-pattern support (items / platforms; removed detectors 0): P01 744/32 (support-only), P38
+350/20, P08 229/14, P54 217/21, P27 214/24, P05 212/25, P45 209/26, P07 193/32, P06 172/26, P37 163/16, P36 154/15,
+P20 144/28, P42 144/19, P32 135/24, P21 115/9, P29 112/9, P12 109/12, P34 109/11, P10 108/13, P33 108/6, P03 106/18,
+P43 104/15, P14 100/20, P26 96/4, P55 91/15, P41 88/2, P04 75/19, P56 68/2, P13 66/18, P40 56/1, P53 53/20, P46 52/13,
+P51 47/22, P28 44/14, P25 43/5, P47 41/17, P19 33/12, P15 31/4, P44 27/8, P39 26/5, P09 20/10, P57 20/2, P35 15/12, P50
+12/10, P22 10/1, P31 9/6, P48 6/4; P02, P16, P17, P18, P23, P30, P49 0. `cards/catalog.json` was rebuilt from it, so
+index lines carry the revised support.
+
+**L0 card fit (owner decision PAUSE §5.10, taken 2026-10-14: cut the card, keep the allocation).** Before: 3,643 tokens
+by the bound (point estimate 3,167; compact 3,406 / 2,962), over its 3,000 S6 allocation, so S6 refused it. After:
+**2,962 by the bound** (point 2,576; compact 2,899 / 2,521); the S6 allocation stays 3,000 and S6 assembles the card
+with every other part at its full allocation inside 8,000. The cut moved provenance, file paths and citations out of the
+prompt into the card's outside-budget preamble, turned the two tables into one line per construct, and dropped the
+duplicate `retry` field from row 15's example. All 30 constructs (number, status, meaning, canonical example) and every
+rule the constructor contract and the checker rely on remain; T2 asserts each construct and each rule by phrase. One
+rule was added because the checker enforces it already (`ENUM_NO_NONE`).
 
 **Token counter (it replaces T1's chars/3.5).** No Claude tokenizer is available offline. The counter was fitted on
 1,243 real Haiku 5.5 calls, using total input tokens from three local journals and a per-journal intercept for CLI
@@ -130,16 +169,18 @@ overhead of about 990–998 tokens. The fit is tokens ≈ 0.94·letter-runs + 0.
 with rmse 18.7; a chars-only fit gives 2.73 chars/token with rmse 37.8. `countTokens` uses (1.0, 0.22, 0.9, 0.65) × 1.15
 as an upper bound. On those calls it undercounts 1 of 1,243, and its ratio to the measured count has min 0.98, median
 1.19 and max 1.27. chars/3.5 undercounts nearly every call (median 0.74, min 0.54), so it is not a safe cap check.
+Caveat: the bound counts whitespace as free; the card fit did not rely on that (no alignment padding was added).
 
-**Findings that need an owner decision.**
-- The L0 card does not fit its S6 allocation. As written (the "Changes since draft" block excluded) it measures 3,643
-  tokens (point estimate 3,167) against 3,000. The compact form measures 3,406 (2,962). S6 refuses it. Either cut the card
-  by about 650 tokens or raise the S6 L0 allocation to about 3,700, which still keeps S6 under 8,000 (asserted in T2).
+**Findings that still need work.**
 - Index lines of ≤ 30 tokens hold only an id, a name and a 2–4 word gist. The LIBRARY §4.1 example line measures 62
   tokens. `fitLine` drops fields by priority (gist, tier, grade, family, version, slots, support) and never truncates
   silently.
-- The expanded cards fit: 309–642 tokens against 1,200. `expandedCard()` renders the card head, J questions, slots and
-  checklist; it leaves out the skeleton and the worked example.
+- The expanded cards fit: 309–642 tokens against 1,200 (P03, P09, P16 and P20 grew with their L6-a lines; the largest is
+  still P54 at 642). `expandedCard()` renders the card head, J questions, slots and checklist; it leaves out the
+  skeleton and the worked example.
+- L1-a stays failed until a re-audit of the revised census on a fresh 60-item draw, with the owner's 10-item blind check
+  done or waived (AUDIT-L1 §7). AUDIT-L1 §8 item 4 (step-level tag rules, tool nodes tagged `model`, P15 / P20 scope,
+  P33 regex) and the `/form/` part of item 3 are open.
 
 **Deviations and stubs.**
 - The runner is a plain child process over the real flow-v3 SDK, `startServices` gateway and `createCallHost` in stub
@@ -163,4 +204,4 @@ as an upper bound. On those calls it undercounts 1 of 1,243, and its ratio to th
 - P12 `BODY` is fn only.
 - P09 votes in code, because the SDK has no `flow.flagged`.
 - The registry implements the full §7.1 state set, a superset of the call host's shadow / kept / revoked.
-- Steps 5–10 are not started.
+- Steps 5–8 and 10 are not started.

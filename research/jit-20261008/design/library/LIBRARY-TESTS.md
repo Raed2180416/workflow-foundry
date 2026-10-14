@@ -61,8 +61,13 @@ about $0.04 per million input tokens (unverified, `policy/models.json`) [M], so 
 
 ### L1 coverage
 
-**Claim.** 54 patterns explain 97.8% of corpus items structurally; 90% at 37; 82.2% within the 5-pattern budget;
-buildable shares by tier (L1-PATTERNS §0, §7) [M-c].
+**Claim (as drafted).** 54 patterns explain 97.8% of corpus items structurally; 90% at 37; 82.2% within the 5-pattern
+budget; buildable shares by tier (L1-PATTERNS §0, §7) [M-c]. **Result (L1-a, AUDIT-L1, 2026-10-09): FAIL.** The 97.8%
+counted items the census does not refuse; on 60 hand labels L0 + L1 explain **88.4% (Wilson 75.0–95.1%)**, the headline
+with a Node-RED dashboard app read as a refusal, or 96.1% (85.2–99.1%) with it explained (owner decision PAUSE §5.8:
+both reported, the conservative one first). The revised census (L1-PATTERNS revision 1, 2026-10-14) is a candidate
+generator: 96.9% not refused, 81.8% within the budget, 90% at 38 patterns; none of these is coverage. The re-audit on a
+fresh draw is the next L1-a run.
 
 - **L1-a hand audit ($0, agent time).** 60 items stratified by cluster (10 per cluster) and, within cluster, by number of
   patterns (0–1, 2–4, 5+). For each: does every assigned pattern's skeleton describe the node it owns (yes / partly /

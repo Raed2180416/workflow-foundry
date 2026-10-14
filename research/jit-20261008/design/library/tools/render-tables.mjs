@@ -8,6 +8,11 @@ const r = JSON.parse(fs.readFileSync(path.join(OUT, 'pattern-census.json'), 'utf
 const pct = (x, n) => `${(100 * x / n).toFixed(1)}%`, N = r.items;
 const L = [];
 L.push(`# Pattern census tables (generated ${r.generated}; ${N} items, ${r.platformCount} platforms, ${r.catalogSize} catalog entries, budget ${r.budget})`, '');
+if (r.revision != null) {
+  const dc = r.coverage.dashboardCriterion, w = dc?.withoutCriterion?.full;
+  L.push(`**A candidate generator, not a measurement** (AUDIT-L1): "flat" + "hier" counts items the rules do not refuse; the measured coverage is AUDIT-L1 §5. Census revision ${r.revision}: detectors removed ${r.removedDetectors.join(', ') || 'none'}; CI event platforms ${r.ciEventPlatforms.join(', ') || 'none'}` +
+    (dc?.widgets ? `; dashboard refusal at >= ${dc.widgets} \`ui_*\` widgets refuses ${dc.refusedByCriterion} more items (without it: flat ${w.flat}, hier ${w.hier}, refused ${w.refused}).` : '.'), '');
+}
 const f = r.coverage.full;
 L.push('| status (full catalog) | items | share |', '|---|---|---|');
 for (const k of ['flat', 'hier', 'refused', 'uncovered']) L.push(`| ${k} | ${f[k]} | ${pct(f[k], N)} |`);

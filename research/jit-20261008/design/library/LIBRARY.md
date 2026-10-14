@@ -30,9 +30,12 @@ folded in silently.*
   (§7.5).
 - **Headline metric: wrong-reuse rate**, with a kill threshold (§9). The repo's sharpest failure was a reuse judgment
   (a skills arm at 0/21, all false successes; THESIS §6) [M].
-- **Honest scope.** The library *explains* 97.8% of corpus items structurally, but only 48.4% are *buildable* on
-  today's engine, 65.6% if the host owns triggers (L1-PATTERNS §7) [M-c]. Universality depends on engine nodes the
-  library does not build (cross-run state first).
+- **Honest scope.** On 60 hand-audited items L0 + L1 *explain* **88.4% of corpus items structurally (Wilson 75.0–95.1%)**,
+  reading a Node-RED dashboard app as a refusal (the headline, owner decision PAUSE §5.8), or 96.1% (85.2–99.1%) reading
+  it as explained (AUDIT-L1 §5) [M]. The census's former 97.8% counted items it does not refuse and is not coverage
+  (revised census: 96.9% not refused, a candidate-generator figure). Only 48.4% of items are *buildable* on today's
+  engine, 65.6% if the host owns triggers (census counts, L1-PATTERNS §7) [M-c]. Universality depends on engine nodes
+  the library does not build (cross-run state first).
 
 ## 1. Placement and modes
 
@@ -311,8 +314,8 @@ solver; see an oracle (W-BED §2.2) [M].
 
 ## 6. Composition: `flow.call` and the composition checker
 
-Items needing more than 5 patterns (15.6% of the corpus, mostly n8n and Apple Shortcuts mega-flows; L1-PATTERNS §2.1)
-[M-c] are built as a parent solver plus called children (P54), each child within the budget. `flow.call` exists (flow-v3
+Items needing more than 5 patterns (15.0% of the corpus by the revised census, a candidate-generator count; mostly n8n
+and Apple Shortcuts mega-flows; L1-PATTERNS §2.1) [M-c] are built as a parent solver plus called children (P54), each child within the budget. `flow.call` exists (flow-v3
 slice 1, `experiments/jit/call-host.mjs`) [M], with refusals `unknown-hash, revoked, recursion, depth, tree-size,
 effects, input-schema, outside-profile, BUDGET_TOO_SMALL, budget-exceeds-parent` [M].
 
@@ -470,7 +473,7 @@ source text (L1-PATTERNS §1 item 1) [M]. An L4 reference entry built from a cor
 |---|---|---|
 | **wrong-reuse rate** (headline) | wrong / (correct + wrong) over reuse decisions, `classifyReuse` with the oracle | **kill**: if the 95% Wilson upper bound exceeds 0.05 after ≥ 60 reuse decisions, or the point estimate exceeds 0.10 after ≥ 20, the reuse mode is switched off for that gate configuration and every reuse falls back to `template`/`construct` until a new configuration passes LIBRARY-TESTS L4 [I: thresholds; the 0.05 bound is ROADMAP §2.7's GAC-style default] |
 | missed-reuse rate | missed / (missed + refused-correctly) | reported beside wrong reuse (a gate that refuses everything is not a win) |
-| coverage | share of corpus items explained by L0 + L1 within the expansion budget; buildable share by tier | 82.2% flat at b = 5; 48.4% buildable today [M-c] |
+| coverage | share of corpus items explained by L0 + L1 (hand audit); within the expansion budget and buildable by tier (census) | 88.4% (Wilson 75.0–95.1%) explained by the L1-a hand audit [M], 96.1% with dashboard apps explained; census, not a measurement: 81.8% flat at b = 5, 48.4% buildable today [M-c] |
 | construction success | share of library-first constructions whose output passes the oracle on held tasks | LIBRARY-TESTS L3 |
 | construction cost | $ and Haiku calls per construction | §5.2 prediction ≤ $0.05 |
 | overburden curve | success vs items expanded / index size | LIBRARY-TESTS L5 |
@@ -498,8 +501,9 @@ source text (L1-PATTERNS §1 item 1) [M]. An L4 reference entry built from a cor
 2. **Jev is not an independent voter.** Its errors are strongly associated with Claude's (φ 0.61 with Haiku, design
    weighted; 36 of 40 shared errors on the same wrong option) (independence README) [M]. Jev can rank and veto; it
    cannot serve as the "different family" verifier that P49 or §7.3's shadow needs.
-3. **"~40–60 patterns cover everything" is true structurally and false operationally.** 90% at 37 patterns [M-c], but
-   only 48.4% of items are buildable on today's engine; the gap is engine nodes (state, wait.signal, session), not
+3. **"~40–60 patterns cover everything" is false as stated, structurally and operationally.** The census reaches 90% at
+   38 patterns [M-c], but the hand audit measures 88.4% explained with all 54 (AUDIT-L1) [M], and only 48.4% of items
+   are buildable on today's engine; the gap is engine nodes (state, wait.signal, session), not
    library content. The universality claim should be stated with the tier.
 4. **L2 "corpus conversions" are low value.** Corpus workflows are on other platforms, mostly without oracles (438 of
    1,559 oracle-bearing; COVERAGE §7) [M], and whole structures do not recur. The corpus feeds L1 evidence; L2 grows
@@ -507,7 +511,8 @@ source text (L1-PATTERNS §1 item 1) [M]. An L4 reference entry built from a cor
 5. **Self-crystallised L2 components are the SkillsBench "self-generated" case** unless verification is real. The design
    therefore gates L2 on oracle or independent-shadow evidence, and measures it (LIBRARY-TESTS L3 library type
    "components").
-6. **The ≤ 5-item budget can hide a decomposition error.** 15.6% of items need decomposition (S5b); a wrong split is a
+6. **The ≤ 5-item budget can hide a decomposition error.** 15.0% of items need decomposition by the revised census
+   (S5b); a wrong split is a
    construction error Haiku may make, and C0 shows Haiku authoring from description is weak (11/16) [M]. Decomposition
    is therefore code-assisted (S5b) and measured separately on R4.
 

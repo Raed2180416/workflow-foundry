@@ -7,6 +7,8 @@
 //   B  >= 15 items detected by node/token, on >= 4 platforms
 //   C  detected by node/token below B, or support-only (idiom keyword/shape detector, precision unmeasured)
 //   D  zero genuine support (census count 0, or every hit a known false positive)
+//   U  unmeasured: the pattern's only detector was removed by the L1-a audit (L1 revision 1, census `removedDetectors`);
+//      the census holds no evidence for it either way (P30, whose 7 hits were all false, stays D)
 // Companions: for each pattern, the patterns most often required by the same items (lift = P(B|A) / P(B)), from `needs`.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,11 +17,14 @@ import { fileURLToPath } from 'node:url';
 const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../out');
 const r = JSON.parse(fs.readFileSync(path.join(OUT, 'pattern-census.json'), 'utf8'));
 const rows = fs.readFileSync(path.join(OUT, 'pattern-census-items.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
-const KNOWN_FALSE = new Set(['P30']);   // L1-PATTERNS §1 item 3: all 7 P30 hits are spurious
+const KNOWN_FALSE = new Set(['P30']);   // L1-PATTERNS §1 item 3: all 7 P30 hits are spurious (AUDIT-L1 §4: 0 of 7 genuine)
+const REMOVED = new Set(r.removedDetectors ?? []);
 
 const grade = p => {
   const detected = p.viaNode + p.viaToken;
-  if (p.items === 0 || KNOWN_FALSE.has(p.id)) return 'D';
+  if (KNOWN_FALSE.has(p.id)) return 'D';
+  if (REMOVED.has(p.id) && detected === 0) return 'U';
+  if (p.items === 0) return 'D';
   if (detected >= 50 && p.nPlatforms >= 10) return 'A';
   if (detected >= 15 && p.nPlatforms >= 4) return 'B';
   return 'C';
@@ -42,7 +47,7 @@ L.push(`# Pattern evidence and companions (from pattern-census.json, generated $
 L.push('| id | pattern | grade | items (node / token / idiom) | oracle-bearing | platforms | top edge keywords (share of the pattern\'s items) | companions (lift, co-items) | examples |');
 L.push('|---|---|---|---|---|---|---|---|---|');
 const order = [...r.patterns].sort((a, b) => a.id.localeCompare(b.id));
-const counts = { A: 0, B: 0, C: 0, D: 0 };
+const counts = { A: 0, B: 0, C: 0, D: 0, U: 0 };
 for (const p of order) {
   const g = grade(p); counts[g]++;
   const ed = Object.entries(p.edge).sort((a, b) => b[1] - a[1]).slice(0, 3)
@@ -51,7 +56,8 @@ for (const p of order) {
   const ex = p.examples.slice(0, 2).map(e => `\`${e.replace(' [oracle]', '')}\`${e.endsWith('[oracle]') ? ' [o]' : ''}`).join(', ') || '—';
   L.push(`| ${p.id} | ${p.name} | ${g} | ${p.items} (${p.viaNode} / ${p.viaToken} / ${p.viaPlumbing}) | ${p.oracle} | ${p.nPlatforms} | ${ed} | ${comp} | ${ex} |`);
 }
-L.push('', `Grades: A ${counts.A}, B ${counts.B}, C ${counts.C}, D ${counts.D}. Non-refused items in the companion base: ${N}.`);
+L.push('', `Grades: A ${counts.A}, B ${counts.B}, C ${counts.C}, D ${counts.D}, U ${counts.U}. Non-refused items in the companion base: ${N}.` +
+  (r.revision ? ` Census revision ${r.revision}: detectors removed ${[...REMOVED].join(', ')}; a candidate generator, not a measurement (AUDIT-L1).` : ''));
 
 // Buildability tiers (L1-PATTERNS §7): which items could be built if only the patterns whose L0 constructs exist at a tier
 // were available. Tier membership is the hand classification in L1-PATTERNS §7 (kept here as data, one list per tier).

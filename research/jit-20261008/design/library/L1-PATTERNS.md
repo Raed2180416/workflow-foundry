@@ -7,29 +7,48 @@ outputs: `out/pattern-census.json`, the per-item `out/pattern-census-items.jsonl
 `THETA=0.35 CLUSTER=1 node --max-old-space-size=2048 research/jit-20261008/design/library/tools/pattern-census.mjs`.
 No model was called.*
 
+*Revision 1, 2026-10-14 (AUDIT-L1 §8 items 1, 2, 5–7 and the CI split of item 3, §6; PAUSE-20261009 §4 step 4). The L1-a hand audit failed (AUDIT-L1):
+the census is a **candidate generator, not a measurement**, and its "explained" share is the share of items it does not
+refuse. Every [M-c] number below is from the revised census and is labelled as the census's; the measured coverage is the
+audit's (§0). Changes: six support-only detectors removed (P02, P16, P17, P18, P30, P49; §1 item 3); P37 split so CI
+push and pull-request starts count as P38 (§5); the "interactive dashboard state" refusal applied by a criterion (§2.5,
+owner decision PAUSE §5.8, reported both ways); 15 checklist lines and codes from the repo's own recorded failures
+(L6-a; §4, §5, §9). `REVISION=0` reproduces the 2026-10-09 census byte for byte (checked); AUDIT-L1 and its scripts in
+`out/audit-scripts/` were computed against that census, so regenerate it with `REVISION=0` before re-running them.*
+
 ## 0. Result in one paragraph
 
-The census assigns every control node in the corpus to either an L0 construct or one of 54 catalogued L1 patterns. There are 24,603
-control nodes; a control node is a trigger, condition, loop, human, model, wait, sub-workflow, merge or error-handler
-node, or any node with an error edge. Verdict tokens that have no node, such as `adaptive-retry` or `cross-run-state`,
-are assigned too. Results [M-c]:
+**Coverage (measured, AUDIT-L1 §5).** On 60 stratified hand labels, L0 plus L1 explain **88.4% of the 1,559 corpus
+workflows (Wilson 95% interval 75.0–95.1%, Kish effective n 40.3)**. That is the headline, and it reads a Node-RED
+dashboard app as the "interactive dashboard state" refusal (owner decision PAUSE §5.8: the conservative reading). Read
+the other way, with dashboard apps counted as explained, it is 96.1% (85.2–99.1%). Single auditor; the owner's 10-item
+blind check and a re-audit on a fresh draw are outstanding (§10).
 
-| | items | share of 1,559 |
+**The census (a candidate generator, not a measurement).** The census assigns every control node in the corpus to either
+an L0 construct or one of 54 catalogued L1 patterns. There are 24,603 control nodes; a control node is a trigger,
+condition, loop, human, model, wait, sub-workflow, merge or error-handler node, or any node with an error edge. Verdict
+tokens that have no node, such as `adaptive-retry` or `cross-run-state`, are assigned too. Its rules had a precision of
+0.73 on the audit's hand labels (below the 0.75 falsifier), so its counts say where to look, not what is true. Census
+figures, revision 1 [M-c]:
+
+| census (counts "not refused", not "explained") | items | share of 1,559 |
 |---|---|---|
-| explained by L0 + L1 | 1,524 | 97.8% |
-| fits the constructor's expansion budget (5 or fewer distinct L1 patterns), flat | 1,281 | 82.2% |
-| needs more than 5 patterns (a parent solver plus `call`ed children) | 243 | 15.6% |
-| refused by design (named in §2.5) | 35 | 2.2% |
-| uncovered | 0 | 0% |
+| not refused (assigned by the rules) | 1,510 | 96.9% (1,524, 97.8%, without the dashboard criterion) |
+| not refused, 5 or fewer distinct L1 patterns (the constructor's expansion budget), flat | 1,276 | 81.8% |
+| not refused, more than 5 patterns (a parent solver plus `call`ed children) | 234 | 15.0% |
+| refused by design (named in §2.5) | 49 | 3.1% (35 by the corpus IR verdict, 14 by the dashboard criterion) |
+| unassigned | 0 | 0% |
 
-- **90% of items are explained by the first 37 patterns** of the greedy order (refused items count as unexplained).
-  Counting refusals as decided, 90% is reached at 36. Either way this is well under the 60-pattern target.
-- **L0 alone explains 233 items (14.9%).** These are mostly linear science and orchestration DAGs.
+- **The census reaches 90% of items with the first 38 patterns** of the greedy order (refused items count as not
+  reached). Counting refusals as decided, 90% is reached at 36. Either way this is well under the 60-pattern target, and
+  either way it is the census's count, not coverage.
+- **L0 alone is assigned 233 items (14.9%).** These are mostly linear science and orchestration DAGs.
 - **Whole-workflow templates do not transfer across platforms.** At θ = 0.35, 776 structures form 19 families of 3 or
   more items, and only 3 of those families span 3 or more platforms (§2.6). The reusable unit is the idiom, not the workflow.
-- **What is buildable today is much less than what is explained.** Only 419 items (26.9%) need nothing beyond solver
-  constructs that exist (flow-v2/v3); 755 (48.4%) with today's engine envelope; 1,022 (65.6%) if the host harness owns
-  triggers. The rest wait on unbuilt engine nodes, led by cross-run `state` (157 items blocked) (§7).
+- **What is buildable today is much less than what the census assigns.** Only 419 items (26.9%) need nothing beyond
+  solver constructs that exist (flow-v2/v3); 755 (48.4%) with today's engine envelope; 1,022 (65.6%) if the host harness
+  owns triggers (census counts, unchanged by revision 1). The rest wait on unbuilt engine nodes, led by cross-run
+  `state` (144 items blocked) (§7).
 
 ## 1. Method, definitions, caveats (read before quoting any number)
 
@@ -39,15 +58,18 @@ are assigned too. Results [M-c]:
 2. **Assignment rules.** `ruleFor` in `tools/pattern-census.mjs` assigns each control node by its category and its
    neighbourhood: predecessors, successors, whether it sits in a cycle or loop body, and whether an effect follows.
    §2.7 gives the full rule table with node counts. Each verdict token adds its pattern through `TOKEN`.
-3. **Support-only detectors.** P01, P02, P16, P17, P18, P30, P49, P50 and P51 are *plumbing* idioms. They are
-   detected by shape and keyword (linear chain, read→transform→write, "dedupe", "reconcile", "vote" and so on). They
-   are counted as support but **do not** count toward explaining an item, because each control node already has an
-   owner. Their keyword precision is **unmeasured** [I]. Known false positives:
-   - P30 saga: all 7 hits are spurious (for example WDL `RevertSam`). The corpus has no Temporal saga sample, so P30 has **zero genuine support**.
-   - P16 dedupe: the science cluster is excluded because of de-duplication tools.
+3. **Support-only detectors.** P01, P50 and P51 are *plumbing* idioms detected by shape and keyword (linear chain,
+   "diagnose", "summarise"). They are counted as support but **do not** count toward explaining an item, because each
+   control node already has an owner. **Revision 1 removed six more** whose hit precision on fixed-seed samples was below
+   0.5 (AUDIT-L1 §4): P02 fetch-transform-write 0.23 (14 of 20 hits were CI caches, media or bioinformatics steps),
+   P16 dedupe 0.31, P17 reconcile 0.08, P18 best-of-N 0.18, P30 saga 0.00 (0 of 7 genuine: WDL `RevertSam`, an editor
+   undo tool) and P49 verify panel 0.31. The patterns stay in the catalog, but the census counts no evidence for them
+   (grade U, or D for P30; §8): P16 and P17 rest on W-bed R1 and R3, not on the corpus. P01 stays at hit precision 0.68:
+   about half its hits are control-order chains with no data hand-off, so "typed hand-offs" is not what it detects.
 4. **What "explained" means, and what it does not.** The rule list is total by construction: every non-refused item
-   gets an assignment. **So "decided 100%" is a tautology and is not quoted as coverage.** The informative numbers are
-   the following four.
+   gets an assignment. **So the census's "explained" share is the share it does not refuse (96.9%, or 97.8% without the
+   dashboard criterion), a tautology that is never quoted as coverage**; the measured coverage is the hand audit's
+   88.4% (§0). The informative census numbers are the following four, and they too are candidate-generator figures.
    - **(a) The greedy curve:** how many patterns are needed before the rest are rare.
    - **(b) The expansion-budget fit:** whether an item needs 5 or fewer distinct patterns, the constructor's
      context limit (LIBRARY.md §5).
@@ -57,19 +79,31 @@ are assigned too. Results [M-c]:
 5. **Structural, not executable.** "Explained" means *each control node maps onto a pattern skeleton*. It does not
    mean a constructor built the workflow, nor that the result would pass the item's oracle. Only 438 items carry an
    executable oracle (COVERAGE §7). LIBRARY-TESTS L1 is the executable check, on the oracle-bearing subset.
-6. **Single labeller.** The rules were written by one agent reading the corpus. Nobody has audited them [I].
-   LIBRARY-TESTS L1 includes a 60-item hand audit before any coverage claim leaves this directory.
+6. **Single labeller, audited once.** The rules were written by one agent reading the corpus. The L1-a hand audit
+   (AUDIT-L1, 2026-10-09; 60 stratified items, also by one agent) **failed**: rule precision 0.73 (Wilson 66.1–79.3%)
+   for node rules and tokens, 0.65 over all detector pairs, against a bar of 0.85 and a falsifier of 0.75; detector
+   recall against the blind labels 0.61. Hence revision 1 and the label "candidate generator". Outstanding: the owner's
+   10-item blind check (AUDIT-L1 §7) and a re-audit of the revised census on a fresh 60-item draw.
+7. **Revision 1 rules (2026-10-14).** (a) The six detectors of item 3 are off. (b) On GitHub Actions and GitLab CI
+   every start the webhook rule would take (push, pull or merge request, merge group, release, issue, pipeline source)
+   is a repository event with no reply, so it is P38, and so is those platforms' `webhook-trigger` verdict token;
+   P37 falls from 282 to 163 items and P38 rises from 252 to 350. (c) An unrefused Node-RED item with 20 or more `ui_*`
+   widget nodes is refused as "interactive dashboard state" (14 items); the census writes the reading without the
+   criterion beside it (`coverage.dashboardCriterion` in `out/pattern-census.json`). Not changed (AUDIT-L1 §8 items 4
+   and 5, open): rules for step-level tags (`when`, `matrix`, `retry`, `always`), tool nodes tagged `model`, P15 and
+   P20 scope, the P33 `resume` regex, and the `/form/` trigger regex that reads a Node-RED `ui_form` as a webhook.
 
-## 2. Coverage results [M-c]
+## 2. Census results [M-c] (candidate generator, not a measurement; revision 1)
 
-### 2.1 Expansion budget: items explained flat with at most b distinct L1 patterns
+### 2.1 Expansion budget: items assigned flat with at most b distinct L1 patterns
 
 | b | 1 | 2 | 3 | **5** | 8 | 12 |
 |---|---|---|---|---|---|---|
-| items | 546 | 796 | 994 | **1,281** | 1,468 | 1,511 |
-| share | 35.0% | 51.1% | 63.8% | **82.2%** | 94.2% | 96.9% |
+| items | 546 | 796 | 995 | **1,276** | 1,455 | 1,497 |
+| share | 35.0% | 51.1% | 63.8% | **81.8%** | 93.3% | 96.0% |
 
-Patterns per item (0 means L0 only): 233 · 313 · 250 · 198 · 161 · 126 · 98 · 52 · 37 · 16 · 18 · 7 · 2 · 7 · 4 · 2, for 0 through 15 patterns.
+Before revision 1: 546, 796, 994, 1,281 (82.2%), 1,468, 1,511. Patterns per item (0 means L0 only): 233 · 313 · 250 ·
+199 · 160 · 121 · 93 · 50 · 36 · 15 · 18 · 7 · 2 · 7 · 4 · 2, for 0 through 15 patterns.
 
 An item that needs more than 5 patterns is built as a parent with called children. Each child stays within the
 budget (`flow.call`, LIBRARY.md §6). Most of these items are n8n (94 of 135) and Apple Shortcuts (43 of 79), which
@@ -77,20 +111,23 @@ are mega-flows; the most complex, `n8n:7962`, `n8n:11772` and `n8n:12533`, need 
 
 ### 2.2 Greedy curve (each step adds the pattern that explains the most further items)
 
-| k | 1 | 5 | 10 | 15 | 20 | 25 | 30 | 34 | **37** | 40 | 44 | 47 |
+| k | 1 | 5 | 10 | 15 | 20 | 25 | 30 | 34 | **38** | 40 | 44 | 47 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| added | P37 | P27 | P14 | P07 | P03 | P13 | P19 | P10 | **P51** | P41 | P31 | P23 |
-| explained | 17.8% | 27.2% | 38.9% | 47.3% | 56.0% | 67.7% | 75.3% | 82.2% | **90.4%** | 94.4% | 97.2% | 97.8% |
+| added | P38 | P27 | P21 | P37 | P03 | P13 | P28 | P55 | **P09** | P41 | P31 | P23 |
+| assigned (census) | 18.2% | 28.1% | 39.3% | 47.3% | 56.0% | 67.7% | 74.9% | 83.7% | **90.7%** | 93.5% | 96.3% | 96.9% |
 
-The full 47-step curve is in `out/pattern-census.md`. The curve is shallow early: no single idiom explains more than 18% of
-items, because real workflows mix 2–5 idioms. One step is large: P55 at k = 35 adds 81 items. P55 is
-ask → validate → use, and it completes many Apple Shortcuts and Home Assistant items.
+The full 47-step curve is in `out/pattern-census.md`. The curve is shallow early: no single idiom is assigned more than
+18.2% of items, because real workflows mix 2–5 idioms. One step is large: P55 at k = 34 adds 59 items. P55 is
+ask → validate → use, and it completes many Apple Shortcuts and Home Assistant items. Before revision 1 the first step
+was P37 (17.8%) and 90% was reached at k = 37 (90.4%).
 
 ### 2.3 By cluster (flat / hierarchical / refused)
 
 | automation | orchestration | science | consumer-creative | agentic | first-party |
 |---|---|---|---|---|---|
-| 262 / 131 / 2 | 392 / 4 / 0 | 276 / 2 / 0 | 197 / 76 / 0 | 144 / 30 / 33 | 10 / 0 / 0 |
+| 257 / 122 / 16 | 392 / 4 / 0 | 276 / 2 / 0 | 197 / 76 / 0 | 144 / 30 / 33 | 10 / 0 / 0 |
+
+Automation before revision 1: 262 / 131 / 2 (the 14 dashboard apps were 5 flat and 9 hierarchical).
 
 ### 2.4 Per platform (all 49 platforms; L0-only = no L1 pattern needed)
 
@@ -123,7 +160,7 @@ ask → validate → use, and it completes many Apple Shortcuts and Home Assista
 | automation | flowise | 51 | 44 | 7 | 0 | 0 | 3 / 7 |
 | automation | langflow | 27 | 27 | 0 | 0 | 0 | 4 / 5 |
 | automation | n8n | 135 | 41 | 94 | 0 | 4 | 7 / 15 |
-| automation | node-red | 45 | 27 | 16 | 2 | 2 | 5 / 11 |
+| automation | node-red | 45 | 22 | 7 | 16 | 2 | 3 / 11 |
 | automation | zapier | 25 | 22 | 3 | 0 | 0 | 4 / 6 |
 | consumer-creative | apple-shortcuts | 79 | 36 | 43 | 0 | 2 | 6 / 11 |
 | consumer-creative | comfyui | 73 | 72 | 1 | 0 | 6 | 1 / 6 |
@@ -151,8 +188,8 @@ Reading this table [I]:
   a median of 0–1 patterns. Their difficulty is in the tasks' tools and data (L2 and L3), not in control flow.
 - **Automation and consumer platforms are where L1 matters.** On n8n, Apple Shortcuts, Home Assistant and Node-RED
   most items are hierarchical: they need a parent solver with called children.
-- **Every refusal is in agent frameworks.** The refusals are the multi-agent conversation shapes listed in §2.5,
-  plus two Node-RED dashboard items.
+- **Every refusal but the dashboards is in agent frameworks.** The refusals are the multi-agent conversation shapes
+  listed in §2.5, plus 16 Node-RED dashboard items (2 by the corpus IR verdict, 14 by the revision-1 criterion).
 
 ### 2.5 Refusals (the long tail that is declined, with reasons)
 
@@ -160,7 +197,7 @@ Reading this table [I]:
 |---|---|---|---|
 | by-design group chat | 13 | semantic-kernel 4, ag2 3, autogen 3, inngest-agentkit 1, langgraph 1, metagpt 1 | Model-chosen speaker order over a shared transcript breaks P9: untrusted text chooses control flow, and no contract fixes the hand-off types. **Offer:** P46 supervisor → agents as typed tools, or P49 verify panel, if the goal was critique. |
 | by-design full-history handoff | 20 | openai-agents 4, autogen 3, google-adk 3, langgraph 3, openai-swarm 3, ag2 1, haystack 1, llamaindex-workflows 1, semantic-kernel 1 | Passing the whole transcript to the next agent makes the payload untyped and the context unbounded. **Offer:** P07 router plus P46 with typed hand-off contracts. The rewrite loses the "conversation continuity" feature by design. |
-| interactive dashboard state | 2 | node-red 2 | Long-lived UI widget state is not a workflow. **Offer:** none; L3 binding to the host UI. |
+| interactive dashboard state | 16 | node-red 16 (2 by the IR verdict, 14 by the criterion: 20 or more `ui_*` widget nodes) | Long-lived UI widget state is not a workflow. **Offer:** none; L3 binding to the host UI. **Reported both ways** (owner decision PAUSE §5.8): the headline treats a dashboard app as this refusal; without the criterion the census refuses 35 items, not 49, and the audit's coverage is 96.1%, not 88.4% (§0). The corpus IR verdict of the 14 is `via-extension`, so the refusal is our reading, not the converter's. |
 
 Rewritten rather than refused: the `shared-scratchpad` and `state-reducer` tokens become P19 `wide`, with a typed
 reduce and one writer. This affects 6 items: agno `nested_shared_state`, claude-code `phase0-unblock`, two
@@ -199,10 +236,12 @@ The largest owners of control nodes:
 | human then branch | P10 | 1,234 |
 | output display | L0:notify | 1,179 |
 | media model | P56 | 1,154 |
+| trigger event | P38 | 1,067 (909 before revision 1) |
 | guard before effect | P08 | 991 |
 | trigger as input | L0:input | 919 |
-| trigger event | P38 | 909 |
 | code guard | L0:guard | 873 |
+
+The trigger-webhook rule (P37) fell from 377 nodes on 235 items to 219 on 122 (revision 1, CI starts moved to P38).
 
 The smallest rules:
 
@@ -240,7 +279,8 @@ time (review-20261007/05 §3.2 [M]).
 carries the task brief, an input sample and code-computed shape features, but no conclusion (JEV-PORTS §1). Each card
 lists 2–3 questions. Every choice question has a no-match option.
 
-**Checklist** items cite the corpus items they were mined from. Counts tagged `kw n` are items whose summaries or
+**Checklist** items cite the corpus items they were mined from, or, for the revision-1 lines, the recorded repo failure
+(`failure` id and a `repo:` source). Counts tagged `kw n` are items whose summaries or
 `ir.notes` contain the edge keyword (17 keyword classes, `EDGE_KW` in the census tool) [M-c]. Untagged checklist items
 are [I].
 
@@ -250,11 +290,12 @@ covering one positive case, one no-match case and one drift case. Tests run at $
 ## 4. First slice: 12 patterns, full cards
 
 These 12 are chosen because W-bed R1–R3 need them (W-BED §3.1–3.3: ledger close, inbox router, statement audit).
-Together they own 4,490 control nodes (18.2%), against 6,867 (27.9%) owned by L0. Alone they fully explain 316 items
-(20.3%) [M-c]. That is a construction-arm slice, not a coverage slice: the greedy-curve leaders (P37 webhook, P36
-schedule, P27 error route) are envelope patterns, which W-bed R7 parks.
+Together they own 4,490 control nodes (18.2%), against 6,867 (27.9%) owned by L0. Alone the census assigns them 316 items
+(20.3%) in full [M-c]. That is a construction-arm slice, not a coverage slice: the greedy-curve leaders (P38 event
+rule, P36 schedule, P27 error route) are envelope patterns, which W-bed R7 parks. Support counts in the headings are the
+revised census's (candidate-generator counts); P16 and P17 have none since revision 1.
 
-### P01 linear pipeline with typed hand-offs (spine) — 758 items, 32 platforms, 239 oracle-bearing [M-c]
+### P01 linear pipeline with typed hand-offs (spine) — 744 items, 32 platforms, 239 oracle-bearing (support-only; hit precision 0.68) [M-c]
 
 When to use:
 - J1 (noul): "Does the task consist of stages where each stage's output is the next stage's only input?"
@@ -332,6 +373,14 @@ Checklist:
   `dify:mkt-0fc0bb5c…`, `dify:mkt-431dd20f…`.
 - **A batch or chunk size bounds each read.** `kw batch 4`, for example `n8n:11382`, `n8n:2658`.
 - **REASONING_ON_EXTRACTION lint:** no chain-of-thought field in an extraction schema (review-20261007/05).
+- **Conventions are read once, then flipped.** Per-source date order, sign and perspective conventions are read once as
+  a global configuration (an evidence quote per decision, an explicit rule that a worked example decides, k ≥ 3
+  agreement or the strong tier), and a consequence check flips each convention in a copy and confirms the output
+  changes as the notes require. *L6-a, failure F03 (sign and perspective misread, C0 s207):*
+  `repo:research/jit-20261008/DEV-NOTES.md#D20`.
+- **An ambiguous clause is flagged, never chosen.** A spec clause that admits two readings that change an output set is
+  flagged with the clause quoted, never silently chosen. *L6-a, failure F18 (the "during this read" scope ambiguity, 13
+  of 13 wrong Haiku answers):* `repo:research/jit-20261008/DEV-NOTES.md#D13 dossier 5 N6`.
 
 Mined from: `google-adk:…workflows/nested_workflow`, `dspy:…rlm-cohort-analysis`, `airflow:…example_sagemaker_endpoint`.
 
@@ -403,6 +452,9 @@ Checklist:
   L3 binding (rate limit), not in the filter.
 
 Mined from: `airflow:…example_bedrock`, `galaxy:iwc/multiplex-tma`, `nf-core:scrnaseq@4.2.0`, `nextflow:workflowhub/462`.
+Detector note (AUDIT-L1 §3–4): on the 60 audited items the census's P08 rule found data filters (all 7 pairs only
+"partly" a guard before an effect) and missed 8 genuine step-level `when` guards, so its 229 items are filters and
+guards mixed, and step-level guards are under-counted (AUDIT-L1 §8 item 4, open).
 
 ### P09 judge → confidence gate → review queue (escalate, never guess) (branch) — 20 items, 10 platforms [M-c]
 
@@ -434,11 +486,14 @@ Checklist:
 - **An `undecidable` option exists in the judge schema.**
 - **Persistent trust is a P42 state entry with expiry.** For example `strands:…13-human-in-the-loop…hook-approval-with-persistent-trust`.
 - **The queue carries a quote.** A human never sees a bare id.
+- **An unresolved disagreement escalates.** An unresolved disagreement between two answers goes to the strongest tier or
+  a person and never defaults to either. *L6-a, failure F12 (no majority delivered the compiled answer: H/H s208, s214,
+  kinetics H/H s209):* `repo:research/jit-20261008/FRONTIER-GAPS.md#N3,S3`.
 
 Mined from: `langgraph:…wait-user-input#ask-human-agent`, `semantic-kernel:…Step02b_AccountOpening`,
 `autogen:…agentchat_chess_game`.
 
-### P12 map → code reduce (for-each with typed coverage) (fan) — 112 items, 12 platforms [M-c]
+### P12 map → code reduce (for-each with typed coverage) (fan) — 109 items, 12 platforms [M-c]
 
 When to use:
 - J1 (noul): "Is the same per-item work applied to a list whose length is only known at run time?"
@@ -492,7 +547,7 @@ Checklist:
 
 Mined from: `dspy:…refine-factuality-judge`, `google-adk:…on-brand-genmedia`, `smolagents:…benchmark-agent-type-switch`, `n8n:10156`.
 
-### P15 fan-in aggregate / report (fan) — 32 items, 5 platforms [M-c]
+### P15 fan-in aggregate / report (fan) — 31 items, 4 platforms [M-c]
 
 When to use:
 - J1 (noul): "Must results from many branches or items be combined into one total or report with checkable identities?"
@@ -518,7 +573,7 @@ Checklist:
 
 Mined from: `n8n:12472`, `gitlab-ci:…Jobs/Deploy.gitlab-ci.yml`, `galaxy:workflowhub/251`.
 
-### P16 dedupe by identity (blocking + pairwise judge + union-find) (fan) — 18 items, 7 platforms (support-only) [M-c]
+### P16 dedupe by identity (blocking + pairwise judge + union-find) (fan) — no census evidence (detector removed, hit precision 0.31) [M-c]
 
 When to use:
 - J1 (noul): "Can the same real-world entity appear more than once with different spellings or ids?"
@@ -544,12 +599,16 @@ Checklist:
 - **Transitivity:** union-find, not pairwise output.
 - **Rows are conserved.**
 - **Large inputs need a blocking key.**
+- **Near-twins sharing a secondary attribute go to a same-entity judge** with a quote check on the attribute. *L6-a,
+  failure B0a (the direct Haiku agent over-merged near-twins that share a phone: 2 of 10 such decisions wrong):* `repo:research/construction-20261006/diagnosis/B0-haiku-records.md`.
 
-Corpus support is small and keyword-detected. Science de-duplication tools are excluded. The pattern is
-justified mostly by the W-bed records domain [M]. Examples: `google-adk:…on-brand-genmedia`,
-`dspy:…multihop-pot`, `dagster:snowflake_cortex`.
+The census keeps no evidence for this pattern: its keyword detector (`dedup`, `duplicate`, `unique`) had a hit precision
+of 0.31 (1 real and 9 partial hits of 18; AUDIT-L1 §4) and was removed in revision 1. The pattern is justified by the
+W-bed records domain [M], and checklist line 1 is the only line in this catalog mined from a records failure
+(FRONTIER-GAPS N4). Former keyword examples: `google-adk:…on-brand-genmedia`, `dspy:…multihop-pot`,
+`dagster:snowflake_cortex`.
 
-### P17 reconcile two sources (join, diff, classify discrepancies) (fan) — 147 items, 23 platforms (support-only) [M-c]
+### P17 reconcile two sources (join, diff, classify discrepancies) (fan) — no census evidence (detector removed, hit precision 0.08) [M-c]
 
 When to use:
 - J1 (noul): "Must two record sets that describe the same things be matched and their differences explained?"
@@ -575,8 +634,9 @@ Checklist:
 - **Timing and FX reasons need the dates and quotes in the judge state.**
 - **A duplicate on one side** goes to P16 first.
 
-The detector is keyword-based ("reconcile", "match", "diff"). Precision is unmeasured, and examples such as
-`mastra:…support-supervisor` are weak matches [I]. W-bed R1 and R3 are the real anchors.
+The census keeps no evidence for this pattern: its keyword and shape detector ("reconcile", "match", "diff", two reads
+into one node) had a hit precision of 0.08 (0 real and 3 partial hits of 20; AUDIT-L1 §4: model loaders, tool lists and device reads) and
+was removed in revision 1. W-bed R1 and R3 are its only anchors [M].
 
 ### P20 generate → verify → retry (bounded) (loop) — 144 items, 28 platforms, 30 oracle-bearing [M-c]
 
@@ -609,10 +669,18 @@ Checklist:
 - **Schema validation is the cheapest verifier** `kw validate 42`, for example `flowise:agentflowsv2-agentic-rag`.
 - **A judge verifying its own family is not independent** (independence README: φ 0.61–0.82) [M]. Prefer a code
   verifier; use P49 when only judges exist.
+- **A builder-written check is never stricter than the contract.** It names the task-contract clause it enforces; a
+  heuristic check may demote a candidate but never veto one that passes more evidence; a repair can contest a check; and
+  every repair and fallback branch is exercised once by a known-legitimate change. *L6-a, failure F06 (a check that read
+  any default-value change as a signature change vetoed a correct patch):*
+  `repo:research/construction-20261006/diagnosis/F-haiku-codefix.md`.
+- **The exhaustion default is never the unpatched input** when a candidate is better on every measured axis except a
+  disputed check. *L6-a, failure F07 (the fallback emitted the original it had measured as failing):*
+  `repo:research/construction-20261006/diagnosis/B1-opus-codefix.md`.
 
 Mined from: `langgraph:memory-agent`, `pydantic-graph:…genai_email_feedback`, `strands:…graph_loops_example`.
 
-### P54 decompose into called sub-workflows (call by hash) (compose) — 221 items, 21 platforms [M-c]
+### P54 decompose into called sub-workflows (call by hash) (compose) — 217 items, 21 platforms [M-c]
 
 When to use:
 - J1 (noul): "Is part of this task a self-contained job with its own inputs and outputs that has been solved before,
@@ -650,46 +718,47 @@ Each row lists:
 - the checklist with mined sources.
 
 Envelope patterns (E) need engine nodes that are not built (L0 status **N**). Until those exist, the constructor
-emits the solver part and a *proposed* envelope.
+emits the solver part and a *proposed* envelope. Support is the revised census's candidate-generator count (items /
+platforms); "no census evidence" marks the six detectors removed in revision 1.
 
 | id | pattern | support [M-c] | skeleton (L0) | key slots | J1 (noul) | checklist (mined) |
 |---|---|---|---|---|---|---|
-| P02 | fetch → transform → write | 348 / 25p (support-only) | E: effect(read) → solver(step…) → effect(write) | READ, TRANSFORM, WRITE, IDEMPOTENCY_KEY | "Does the task move data from one system to another with a transformation?" | idempotency key on the write; partial-failure resume via P42 cursor [I] |
+| P02 | fetch → transform → write | no census evidence (detector removed: hit precision 0.23) | E: effect(read) → solver(step…) → effect(write) | READ, TRANSFORM, WRITE, IDEMPOTENCY_KEY | "Does the task move data from one system to another with a transformation?" | idempotency key on the write; partial-failure resume via P42 cursor [I] |
 | P04 | draft → check → deliver | 75 / 19p | judge(draft) → judge/step(check) → E: approve? → effect | DRAFT, CHECK, GATE (none / approve) | "Is generated text sent or published to someone?" | notify `kw 16` (`activepieces:S0tI31TsQZvtNg5BDH1Tq`); batch (`n8n:12120`) |
 | P05 | prompt chain | 212 / 25p | judge → judge → … with typed hand-offs | STEPS[] (judge, out schema) | "Does the task need several model steps, each refining the previous step's typed output?" | state `kw 13`; default `kw 7` (`dify:mkt-1b5493cc…`); one decision per judge |
 | P06 | retrieve → generate (untrusted context) | 172 / 26p | effect/step(retrieve, top-k) → judge(answer + cite) | INDEX (L3), K (int), ANSWER (judge with a quote check) | "Must the answer be grounded in documents fetched at run time?" | retrieved text is labelled untrusted; citation check; state `kw 63` (`activepieces:OZH5az2…`) |
 | P10 | human menu dispatch | 108 / 13p | E: ask(enum) → if → branches (bounded repeat) | MENU (enum), BRANCHES, MAX_REPEAT | "Does a person pick one of several actions, possibly repeatedly?" | cancel option `kw 32` (`apple-shortcuts:icloud-6ba47bd9…`); pagination of long menus `kw 22` |
-| P14 | scatter → parallel branches → gather | 102 / 20p | map over fixed branches → join | BRANCHES (2–8 fns or hashes), JOIN (fn) | "Are there several independent analyses of the same input to combine?" | lock / concurrency `kw 5` (`agno:…loop_with_parallel`); validate each branch `kw 6` |
-| P18 | best-of-N / sectioning with a verifier | 225 / 35p (support-only) | map(N × judge) → code select / verify | N (int[2,5]), GEN, SCORE (fn or P49) | "Would generating several candidates and picking by a check beat one attempt?" | the selector must be code or an independent verifier (independence README) |
+| P14 | scatter → parallel branches → gather | 100 / 20p | map over fixed branches → join | BRANCHES (2–8 fns or hashes), JOIN (fn) | "Are there several independent analyses of the same input to combine?" | lock / concurrency `kw 5` (`agno:…loop_with_parallel`); validate each branch `kw 6` |
+| P18 | best-of-N / sectioning with a verifier | no census evidence (detector removed: hit precision 0.18, 2 real hits of 20) | map(N × judge) → code select / verify | N (int[2,5]), GEN, SCORE (fn or P49) | "Would generating several candidates and picking by a check beat one attempt?" | the selector must be code or an independent verifier (independence README) |
 | P19 | planned fan-out (wide) / bounded expansion (plan) | 33 / 12p | wide(plan, check, worker, reduce, quorum) [D] | PLAN judge, CHECK, WORKER, REDUCE, MAX_FANOUT ≤ 32 | "Is the list of subtasks itself unknown until a model reads the input?" | the planner tier starts no lower than the workers; rewrite target for shared-scratchpad (6 items) |
-| P21 | poll until ready | 120 / 9p | loop(≤ N){ effect(check) → wait.delay } → guard(timeout) | CHECK, READY (fn), EVERY_MS, TIMEOUT_MS | "Must the workflow wait for an external job to finish by checking it repeatedly?" | backoff `kw 36` (`node-red:01276f61…`); airflow sensor `poke_interval…timeout` [M-c summary]; batch `kw 26` (`n8n:11772`) |
+| P21 | poll until ready | 115 / 9p | loop(≤ N){ effect(check) → wait.delay } → guard(timeout) | CHECK, READY (fn), EVERY_MS, TIMEOUT_MS | "Must the workflow wait for an external job to finish by checking it repeatedly?" | backoff `kw 36` (`node-red:01276f61…`); airflow sensor `poke_interval…timeout` [M-c summary]; batch `kw 26` (`n8n:11772`) |
 | P22 | loop until condition / dry | 10 / 1p | for(≤ N){ step; if(cond) break } + invariant(progress) | COND (fn), MAX_ITERS, PROGRESS (fn) | "Must a step repeat until a measurable condition holds?" | **low support:** Home Assistant only (`EPMatt/…xiaomi_wxcjkg11lm`); kept because loops elsewhere fold into P20 and P21 |
 | P23 | paginate with a cursor | **0** | E: loop{ effect(page, cursor) → state(cursor) } | PAGE_TOOL, CURSOR_PATH, MAX_PAGES | "Does a source return results in pages?" | **no corpus node support**; pagination appears only as an edge keyword (P10 22, P55 16, P08 1, P12 1). **Candidate: fold into the L3 binding as a pagination capability** |
-| P25 | bounded state machine | 49 / 5p | for(≤ N){ switch(state) … } with an enum state | STATES (enum), TRANSITIONS (code table), MAX_STEPS | "Does the process move between named states, re-entering some?" | Node-RED / LangGraph cycles; the transition table is code, never model-chosen except by an enum judge |
+| P25 | bounded state machine | 43 / 5p | for(≤ N){ switch(state) … } with an enum state | STATES (enum), TRANSITIONS (code table), MAX_STEPS | "Does the process move between named states, re-entering some?" | Node-RED / LangGraph cycles; the transition table is code, never model-chosen except by an enum judge |
 | P26 | retry with backoff / adaptive retry | 96 / 4p | E: retry{on error class, escalate resources} | ATTEMPTS, BACKOFF, ON (error classes), ESCALATE | "Can a step fail transiently, or because it needs more resources?" | nf-core `errorStrategy` + memory escalation (`nf-core:neutronstar@1.0.0`, `nextflow:workflowhub/1871`); classify the error before retrying (airflow LLM error-class example [M-c]) |
-| P27 | error route → notify / cleanup | 215 / 24p (108 oracle-bearing) | E: route.error → handler(notify, cleanup) | HANDLER, NOTIFY_BINDING, SCOPE | "Must failures be reported or cleaned up rather than just stopping?" | cancel `kw 19` (`n8n:11493`); continue-on-error `kw 10` (`github-actions:MODFLOW-ORG/modflow6`) |
+| P27 | error route → notify / cleanup | 214 / 24p (108 oracle-bearing) | E: route.error → handler(notify, cleanup) | HANDLER, NOTIFY_BINDING, SCOPE | "Must failures be reported or cleaned up rather than just stopping?" | cancel `kw 19` (`n8n:11493`); continue-on-error `kw 10` (`github-actions:MODFLOW-ORG/modflow6`) |
 | P28 | fallback on error (alternative path, rejoin) | 44 / 14p | E: route.error → alternative → join | ALT (fn / hash), FLAG_ON_USE | "Is there an acceptable alternative when the main path fails?" | fallback use is always flagged; silent fallback is refused; notify `kw 10` (`n8n:10143`) |
 | P29 | finally / completion hook | 112 / 9p (89 oracle-bearing) | E: finally(teardown) | TEARDOWN, RUN_ON (all_done) | "Is there cleanup that must run however the workflow ends?" | Airflow teardown defaults to `all_done_setup_success` [W: airflow DAG docs]; Tekton `finally` (`tekton:…pipelinerun-with-final-results`); KFP exit handlers |
-| P30 | saga: steps with compensation | **7, all false positives** | E: effect + compensate per step, reverse order | STEPS [{do, undo}] | "If a later step fails, must earlier completed actions be undone?" | **zero genuine corpus support** (hits are e.g. WDL `RevertSam`); kept as a candidate from Temporal docs; L0 `compensate` is **N** |
+| P30 | saga: steps with compensation | **no census evidence** (detector removed: 0 of 7 hits genuine) | E: effect + compensate per step, reverse order | STEPS [{do, undo}] | "If a later step fails, must earlier completed actions be undone?" | **zero genuine corpus support** (hits are e.g. WDL `RevertSam`); kept as a candidate from Temporal docs; L0 `compensate` is **N** |
 | P31 | checkpoint → resume / continue-as-new | 9 / 6p | E: checkpoint every N; continue-as-new on history size | EVERY, STATE_SCHEMA | "Is the run long enough that it must survive restarts?" | `temporal:samples-go/pso`; LangGraph time-travel |
 | P32 | approval gate before an effect | 135 / 24p | E: approve(timeout → route) → effect | QUESTION, APPROVERS, TIMEOUT, ON_TIMEOUT | "Should a person approve before an irreversible action?" | approve / reject `kw 32` (`activepieces:71gZO0fN…`); cancel `kw 18` (`airflow:…openlineage_hitl_dag`, `gitlab-ci:…5-Minute-Production-App`) |
 | P33 | wait for signal / external event | 108 / 6p | E: wait.signal(timeout) | SIGNAL, SCHEMA, TIMEOUT, ON_TIMEOUT | "Must the workflow pause until an outside event or reply arrives?" | timeout `kw 20` (`home-assistant:CCOSTAN/…announcements.yaml#0`); Temporal signals vs updates vs queries [W] |
-| P34 | durable delay / debounce → re-check → act | 118 / 11p | E: wait.delay → solver(re-check) → effect | DELAY, RECHECK (fn), DEBOUNCE_KEY | "Should the action happen only if a condition still holds after a delay?" | delay `kw 79` (`activepieces:1TPst6qx7bNcQ2jV2ZZ61`); re-check is mandatory |
+| P34 | durable delay / debounce → re-check → act | 109 / 11p | E: wait.delay → solver(re-check) → effect | DELAY, RECHECK (fn), DEBOUNCE_KEY | "Should the action happen only if a condition still holds after a delay?" | delay `kw 79` (`activepieces:1TPst6qx7bNcQ2jV2ZZ61`); re-check is mandatory |
 | P35 | interrupt → resume inside an agent node | 15 / 12p | agent [D] with a pause point → E: ask → resume | PAUSE_ON (tool list), RESUME_SCHEMA | "Must an agent stop for human input mid-task?" | `pydantic-graph:…deferred-tools`; requires `flow.agent` (D) |
-| P36 | scheduled batch | 164 / 15p | E: trigger.schedule → solver → effect | CRON, TZ, CATCHUP, WINDOW | "Does the task run on a timetable over the data that arrived since the last run?" | validate `kw 22` (`dagster:airlift-migration-tutorial`); lock `kw 5`; Airflow LatestOnly / `depends_on_past` [W] |
-| P37 | webhook → validate → act → respond | 282 / 18p | E: trigger.webhook(schema) → solver → effect → respond | SCHEMA, RESPOND, AUTH (env-var name) | "Is the workflow started by an incoming request that needs a reply?" | validate `kw 66` (`github-actions:DZakh/sury`); continue-on-error `kw 18`; timeout `kw 12` (`github-actions:Lightning-AI/…ci-pytorch_test-slow`) |
-| P38 | event → guard → act (automation rule) | 252 / 19p | E: trigger.event → solver(guard) → effect | EVENT, CONDITION, ACTION | "Is the workflow a rule: when this happens, if that holds, do this?" | state `kw 70` (`activepieces:OZH5az2…`, `node-red:2e10a76f…`); notify `kw 52` |
+| P36 | scheduled batch | 154 / 15p | E: trigger.schedule → solver → effect | CRON, TZ, CATCHUP, WINDOW | "Does the task run on a timetable over the data that arrived since the last run?" | validate `kw 22` (`dagster:airlift-migration-tutorial`); lock `kw 5`; Airflow LatestOnly / `depends_on_past` [W] |
+| P37 | webhook → validate → act → respond | 163 / 16p (282 / 18p before revision 1) | E: trigger.webhook(schema) → solver → effect → respond | SCHEMA, RESPOND, AUTH (env-var name) | "Is the workflow started by an incoming request that needs a reply?" | a reply is what makes it P37: a start with no reply (a CI push or pull request) is P38; state `kw 9`, notify `kw 8` (`activepieces:zSMIK2YM…`, `n8n:12264`), cache `kw 8` (`flowise:agentflows-agentic-rag`). The `/form/` regex still reads a Node-RED `ui_form` as a webhook (AUDIT-L1 §8 item 3, open) |
+| P38 | event → guard → act (automation rule) | 350 / 20p (252 / 19p before revision 1) | E: trigger.event → solver(guard) → effect | EVENT, CONDITION, ACTION | "Is the workflow a rule: when this happens, if that holds, do this?" | includes CI repository events (push, pull or merge request) since revision 1; state `kw 70` (`activepieces:OZH5az2…`, `node-red:2e10a76f…`); validate `kw 68` (`github-actions:DZakh/sury`); notify `kw 52`; continue-on-error `kw 18`, timeout `kw 11` (`github-actions:Lightning-AI/…ci-pytorch_test-slow`) |
 | P39 | poll → diff → notify | 26 / 5p | E: trigger.poll → step(diff vs state cursor) → effect | SOURCE, KEY, CURSOR | "Must changes in an outside source be detected by comparing against the last check?" | `dagster:…modal_pipes`, `n8n:12858`; the cursor is P42 |
 | P40 | run admission policy | 56 / 1p | E: admission(single / queue / restart / parallel) | MODE, MAX | "What should happen when a new run starts while one is still running?" | Home Assistant only (`mode:` field) |
 | P41 | build → test → gate → release | 88 / 2p | E: trigger → stages → barrier → approve? → effect | STAGES, GATES, ENV | "Is this a CI/CD pipeline?" | retry `kw 5` (`gitlab-ci:…dependabot`); cancel `kw 8`. **Two platforms only (GitHub Actions, GitLab):** a candidate to keep as an L4 family rather than an L1 pattern |
-| P42 | cross-run state: seen-set / cursor / counter | 157 / 19p (token) | E: state(type, ttl, one writer) | KIND, KEY, TTL, WRITER | "Must the workflow remember something between runs?" | one writer per key (composition checker); TTL required |
+| P42 | cross-run state: seen-set / cursor / counter | 144 / 19p (token) | E: state(type, ttl, one writer) | KIND, KEY, TTL, WRITER | "Must the workflow remember something between runs?" | one writer per key (composition checker); TTL required |
 | P43 | conversational session | 104 / 15p | E: session(memory cap) → solver(turn) | MEMORY (maxTurns, summarise), TURN | "Is each run one turn of a continuing conversation?" | memory is capped; summarisation is P51 |
-| P44 | bounded stream consumer / partial outputs | 39 / 8p | E: stream(batch, maxInFlight) → solver | BATCH, MAX_IN_FLIGHT | "Does input arrive as a continuous stream?" | Node-RED topics; back pressure |
+| P44 | bounded stream consumer / partial outputs | 27 / 8p | E: stream(batch, maxInFlight) → solver | BATCH, MAX_IN_FLIGHT | "Does input arrive as a continuous stream?" | Node-RED topics; back pressure |
 | P45 | capped tool loop (agent node + parent-side verify) | 209 / 26p | agent [D]{tools ≤ 5, budget} → verify(code) | INSTR, TOOLS, RETURNS, VERIFY, BUDGET | "Must a model use tools in an open-ended loop to finish part of the task?" | state / memory `kw 116`, cache `kw 66` (`flowise:chatflows-conversational-agent`); verify is required (FLOW-V3 §2.2) |
 | P46 | supervisor → agents as typed tools | 52 / 13p | judge(route) → call / agent(child, typed) → loop ≤ N | CHILDREN (hashes + contracts), ROUTER judge, MAX_TURNS | "Must a coordinator delegate subtasks to specialised workers and combine them?" | rewrite target for group chat and handoff refusals; lock `kw 6` (`agno:…research_sweep`) |
 | P47 | model-written code in a sandbox → run → check | 41 / 17p | agent [D] (writes code) → effect(sandbox run) → verify | LANG, SANDBOX, TESTS | "Is the most reliable route for the model to write and run code?" | outputs are tainted data; tests come from the caller, not the model |
 | P48 | guardrail tripwire (parallel check aborts) | 6 / 4p | map[main, check] → guard(check) aborts | CHECK (judge / fn), ABORT_ON | "Must output be blocked if a parallel safety check trips?" | **low support** (OpenAI Agents guardrails, strands steering) |
-| P49 | verify panel (independent verifiers vote) | 8 / 7p (support-only) | map(n × judge, different families) → vote | N, FAMILIES, QUORUM | "Is a single verifier's judgement not trustworthy enough?" | **low support**; Jev, Haiku and Sonnet share errors (φ 0.61–0.82, 36 of 40 same wrong option) [M]; panel independence must be measured, not assumed |
+| P49 | verify panel (independent verifiers vote) | no census evidence (detector removed: hit precision 0.31, 1 real hit of 8) | map(n × judge, different families) → vote | N, FAMILIES, QUORUM | "Is a single verifier's judgement not trustworthy enough?" | Jev, Haiku and Sonnet share errors (φ 0.61–0.82, 36 of 40 same wrong option) [M]; panel independence must be measured, not assumed; **unanimity of variants from one model family or one compile lineage is not a pass** (*L6-a, failure F17: s214 unanimous and wrong across two lineages;* `repo:research/jit-20261008/DEV-NOTES.md#D8 and erratum`) |
 | P50 | evidence → hypothesis → check / env session | 12 / 10p (mostly support) | loop ≤ N{ step(gather) → judge(hypothesis) → step(test) } | GATHER, HYPOTHESISE, TEST, MAX | "Must the task diagnose a cause by forming and testing hypotheses?" | THESIS §6 "diagnosis before repair" |
 | P51 | summarise-map-reduce / context compaction | 47 / 22p | map(chunk → judge summary) → judge(reduce) + invariant(coverage) | CHUNK, MAP_SUMMARY, REDUCE | "Is the input too long for one read and needs condensing?" | `haystack:…summarization-compaction`; every chunk id appears in the reduce |
 | P53 | sub-workflow per item | 53 / 20p | map(items → call(hash)) | REF, ITEMS, CHILD_BUDGET | "Must a whole stored sub-workflow run once per item?" | cancel `kw 9`; batch `kw 6` (`n8n:12533`) |
@@ -704,17 +773,20 @@ emits the solver part and a *proposed* envelope.
 | id | support | decision |
 |---|---|---|
 | P23 paginate | 0 nodes | Fold into the L3 binding as `pagination: {cursorPath, maxPages}`. Drop from L1 unless LIBRARY-TESTS L1 finds it in the oracle subset |
-| P30 saga | 0 genuine | Keep as a candidate. It needs L0 `compensate` (N). The owner's W-bed R7 is parked |
-| P22 loop-until | 10 items, 1 platform | Keep. It is the only bounded-convergence skeleton, and P20 and P21 cover the rest |
+| P30 saga | 0 genuine (0 of 7 hits; detector removed in revision 1) | Keep as a candidate. It needs L0 `compensate` (N). The owner's W-bed R7 is parked |
+| P22 loop-until | 10 items, 1 platform | Keep. It is the only bounded-convergence skeleton, and P20 and P21 cover the rest. All 10 hits are Home Assistant `repeat.while` loops, 8 from one blueprint collection (AUDIT-L1 §4): genuine, but one family |
 | P48 tripwire | 6 / 4 platforms | Keep as a candidate. The agentic slice is small |
-| P49 verify panel | 8 / 7 platforms | Keep, with the independence caveat in the card |
+| P49 verify panel | no census evidence (detector removed; 1 real hit of 8) | Keep, with the independence caveat and the F17 line in the card |
+| P02, P16, P17, P18 | no census evidence (detectors removed in revision 1) | Keep. P16 and P17 are first-slice cards anchored on W-bed R1 and R3; P18 on R6; P02 is an envelope sync shape whose corpus hits were mostly not syncs. Retrieval of a card the census has no evidence for is not guaranteed by the code ranker's support prior (LIBRARY §4.3); its J1 question and rung tags must carry it |
 | P40, P41, P56 | 1–2 platforms each | Platform-specific. Candidates for L4 families or L3 bindings, not L1 |
 
-**Counting the honest catalog** [M-c, recomputed from `out/pattern-census-items.jsonl`]. Dropping the two
-zero-support patterns (P23, P30) changes nothing: the ceiling stays at 97.8%, and 90% is still reached at k = 37 with
-45 effective patterns. Dropping the three platform-specific patterns as well (P40, P41, P56) lowers the ceiling to
-**88.0%**, because those items then have no owner. So P40, P41 and P56 stay in L1 until an L3 binding or L4 family is
-shown to take over their items. The coverage claim uses the catalog as it stands: 47 patterns used, 90% at 37.
+**Counting the honest catalog** [M-c, recomputed from `out/pattern-census-items.jsonl`, revision 1; census counts,
+not coverage]. 46 patterns are needed by some item (the seven without a node or token rule, P01, P02, P16, P17, P18,
+P30 and P49, cannot be, and P23 never is). Dropping the two zero-support patterns (P23, P30) changes nothing: the
+census ceiling stays at 96.9%, and 90% is still reached at k = 38. Dropping the three platform-specific patterns as well
+(P40, P41, P56) lowers the ceiling to **87.1%** (88.0% without the dashboard criterion, the figure before revision 1),
+because those items then have no owner. So P40, P41 and P56 stay in L1 until an L3 binding or L4 family is shown to
+take over their items.
 
 ## 7. Composition and buildability matrix (all 54 entries)
 
@@ -732,7 +804,7 @@ Rung = the first W-bed rung (W-BED §3) whose reference workflow exercises the p
 | id | L0 constructs composed (rows) | tier | rung | note |
 |---|---|---|---|---|
 | P01 | 1, 2, 3, 5, 9 (11 for stages > 8) | S | R1 | spine of every rung |
-| P02 | 15 read → 2 → 15 write (27 for resume) | IR | — | idempotency key on the write is an L3 binding field |
+| P02 | 15 read → 2 → 15 write (27 for resume) | IR | — | idempotency key on the write is an L3 binding field; no census evidence (revision 1) |
 | P03 | 1, 2, 3, 4, 5, 6 | S | R1 | conventions-once (review-05 §3.3) is its special case |
 | P04 | 3 → 2 / 3 → (16) → 15 | S + IR | R0 (draft only) | delivery is an effect; the solver returns the draft |
 | P05 | 3 × n, 5 | S | R2 | one decision per judge |
@@ -745,9 +817,9 @@ Rung = the first W-bed rung (W-BED §3) whose reference workflow exercises the p
 | P13 | 6, 3, 5 | S | R1, R3 | |
 | P14 | 6 over fixed branches, 10 (join) | S | R3 | |
 | P15 | 2, 5, 4, 9 | S | R3 | |
-| P16 | 2, 6, 3, 7, 5 | S | R1 | |
-| P17 | 2, 6, 3, 5 | S | R1, R3 | |
-| P18 | 6, 3, 2 | S | R6 | selector must be code |
+| P16 | 2, 6, 3, 7, 5 | S | R1 | no census evidence (revision 1); anchored on R1 |
+| P17 | 2, 6, 3, 5 | S | R1, R3 | no census evidence (revision 1); anchored on R1, R3 |
+| P18 | 6, 3, 2 | S | R6 | selector must be code; no census evidence (revision 1) |
 | P19 | 13 / 14 | D | R6 | |
 | P20 | 10 (bounded for), 3, 2, 4 | S | R1–R3 | |
 | P21 | 10, 15, 18, 4 | IR (≤ 1 h) / N | R7 (parked) | durable wait beyond 1 h is N |
@@ -758,7 +830,7 @@ Rung = the first W-bed rung (W-BED §3) whose reference workflow exercises the p
 | P27 | 21, 15 | IR partial | R8 | dedicated error edge is N |
 | P28 | 21, alternative, 7 | IR partial | R8 | |
 | P29 | 22 | IR partial / N | — | true always-run is N |
-| P30 | 15 + 23 | N | R7 (parked) | zero genuine support |
+| P30 | 15 + 23 | N | R7 (parked) | zero genuine support (detector removed, revision 1) |
 | P31 | 11 idempotency memo (child-granular resume) / 27 | S partial / N | R4 | `call-host.mjs` memo already serves a repeated child at $0 |
 | P32 | 16, 15 | IR | R7 (parked) | timeout routing is N |
 | P33 | 19 | N | R7 (parked) | |
@@ -777,7 +849,7 @@ Rung = the first W-bed rung (W-BED §3) whose reference workflow exercises the p
 | P46 | 3, 11 (12 for agent children), 10 | S (D with agents) | R4, R5 | |
 | P47 | 12, 15 (sandbox) | D | R5 | |
 | P48 | 6, 4 | S | — | |
-| P49 | 6, 3 (several tiers), 2 (vote) | S | R6 | independence unmeasured |
+| P49 | 6, 3 (several tiers), 2 (vote) | S | R6 | independence unmeasured; no census evidence (revision 1) |
 | P50 | 10, 2, 3 | S | — | |
 | P51 | 6, 3, 3, 5 | S | — | |
 | P53 | 6, 11 | S | R4 | |
@@ -786,8 +858,8 @@ Rung = the first W-bed rung (W-BED §3) whose reference workflow exercises the p
 | P56 | 15 chain | IR | — | mostly L3 |
 | P57 | 14 | D | — | |
 
-**What can be built now, as a number** [M-c, `tools/render-evidence.mjs`, table in `out/pattern-evidence.md`]. An
-item is buildable at a tier if every L1 pattern it needs is at that tier or below:
+**What can be built now, as a number** [M-c, `tools/render-evidence.mjs`, table in `out/pattern-evidence.md`; census
+counts, revision 1]. An item is buildable at a tier if every L1 pattern the census assigns it is at that tier or below:
 
 | tier (cumulative) | items | share of 1,559 |
 |---|---|---|
@@ -795,11 +867,13 @@ item is buildable at a tier if every L1 pattern it needs is at that tier or belo
 | + IR: engine envelope today | 755 | 48.4% |
 | + HOST: host-owned triggers | 1,022 | 65.6% |
 | + D: designed flow-v3 (`agent`, `wide`, `plan`) | 1,150 | 73.8% |
-| + N: unbuilt engine nodes | 1,524 | 97.8% |
+| + N: unbuilt engine nodes | 1,510 | 96.9% (1,524, 97.8%, without the dashboard criterion) |
 
-The 97.8% ceiling of §0 is reached only with engine nodes that do not exist. The single most valuable unbuilt node is
-**`state`** (P42 blocks 157 items), then `wait.signal` (P33, 108) and `session` (P43, 104); `admission` (P40, 56) and
-`stream` (P44, 39) follow. This is the input to BUILD-ORDER's engine column. W-bed arm (g) needs only tier S, which is
+The first four rows did not move in revision 1 (the 14 dashboard apps were all blocked by N nodes, and P37 and P38 share
+tier HOST). The last row is the census's non-refused ceiling, reached only with engine nodes that do not exist; it is
+not coverage (the audit measured 88.4%, §0). The single most valuable unbuilt node is **`state`** (P42 blocks 144
+items), then `wait.signal` (P33, 108) and `session` (P43, 104); `admission` (P40, 56) and `stream` (P44, 27) follow.
+This is the input to BUILD-ORDER's engine column. W-bed arm (g) needs only tier S, which is
 why the first slice (§4) is all S.
 
 ## 8. Evidence record per pattern
@@ -808,23 +882,32 @@ The per-pattern evidence table (grade, node / token / idiom support, oracle-bear
 keywords with their share of the pattern's items, companion patterns by lift, two example items) is generated, not hand
 copied: `out/pattern-evidence.md`, from `tools/render-evidence.mjs` [M-c]. The grade is a rule:
 
-| grade | rule | patterns |
+| grade | rule | patterns (revision 1) |
 |---|---|---|
 | A | ≥ 50 items detected by a control node or verdict token, on ≥ 10 platforms | 24: P03–P08, P10, P12–P14, P20, P27, P32, P34, P36–P38, P42, P43, P45, P46, P53–P55 |
 | B | ≥ 15 detected items, on ≥ 4 platforms | 14: P09, P15, P19, P21, P25, P26, P28, P29, P33, P35, P39, P44, P47, P51 |
-| C | detected below B, or support-only (keyword / shape detector, precision unmeasured) | 14: P01, P02, P16, P17, P18, P22, P31, P40, P41, P48, P49, P50, P56, P57 |
+| C | detected below B, or support-only (keyword / shape detector) | 9: P01, P22, P31, P40, P41, P48, P50, P56, P57 |
 | D | zero genuine support | 2: P23, P30 |
+| U | unmeasured: the only detector was removed by the L1-a audit (revision 1) | 5: P02, P16, P17, P18, P49 |
+
+A grade is a statement about the census (a candidate generator), not about the pattern's worth: U patterns are kept
+because a W-bed rung needs them (§6). Before revision 1, P02, P16, P17, P18 and P49 were C.
 
 Three things the table shows that the cards above do not:
-- **Companions are the retrieval prior.** Patterns that the same items need together, by lift: P10 → P55 (×10.5, 68
-  items) and P32 (×7.1); P27 → P29 (×6.3, 99 items) and P26 (×5.0); P45 → P46 (×7.2, 51 items); P03 → P05 (×5.1);
+- **Companions are the retrieval prior.** Patterns that the same items need together, by lift: P10 → P55 (×10.4, 68
+  items) and P32 (×7.0); P27 → P29 (×6.2, 99 items) and P26 (×5.0); P45 → P46 (×7.1, 51 items); P03 → P05 (×5.0);
   P07 → P09 (×5.1) and P20 (×4.0). LIBRARY.md §4.3 uses these as the "expand together" hint: when the ranker picks
   one, its top companion is offered as the next candidate rather than retrieved from scratch.
-- **Edge keywords concentrate where effects and agents are.** P45 (state 56%, cache 32%), P34 (backoff 67%), P10
+- **Edge keywords concentrate where effects and agents are.** P45 (state 56%, cache 32%), P34 (backoff 64%), P10
   (notify 53%, cancel 30%), P20 (state 40%, validate 29%). Patterns in science DAGs carry almost none, consistent with §2.4.
 - **The grade is not the oracle count.** P09 is grade B with 0 oracle-bearing items, P26 is B with 90. LIBRARY-TESTS L1
   draws its executable sample by oracle-bearing items, so P09's checklist is untested by the corpus and is tested on
   W-bed R2 instead.
+- **Checklists were corpus concerns, not our failures (L6-a).** Before revision 1 the L1 checklists and §9 codes named
+  6 of 21 recorded failure causes (28.6%, Wilson 13.8–50.0%; AUDIT-L1 §6); P16's line 1 was the only line mined from a
+  records failure, and nothing covered the compile and heal loop or input drift. Revision 1 adds 15 lines and codes
+  from the repo's own failures, each tagged with its failure id (F03, F06, F07, F09–F19, B0a) and a `repo:` source
+  (§4 P03, P09, P16, P20; §5 P49; §9). Whether they now name ≥ 50% is for the re-audit to say, not this edit.
 
 The keyword classes are coarse regexes (`EDGE_KW` in `tools/pattern-census.mjs`; for example `else` counts as
 "default / fallback" and `check` as "validate"). A keyword count says *a corpus author wrote about this edge*, not that
@@ -851,12 +934,43 @@ These come up under so many patterns that they are not repeated per card. Each h
 | `ONE_WRITER` | each state key, file or effect target has exactly one writer in the composed tree | P07, P42; THESIS P8 |
 | `CREDENTIAL_LITERAL` | credentials only as env-var names through an L3 binding | L0 refusals; owner rule |
 
+**Added in revision 1 from the repo's own recorded failures (L6-a, AUDIT-L1 §6).** These live in the layer above the
+cards: the construction and compile loop, the keep gate and heal. Most need run-time evidence (probes, traces,
+recompile replays), so `experiments/library/check.mjs` does **not** enforce them yet; the column says where each would
+run. Two codes are named here for the first time (the audit proposed the lines without names): `COMPILE_ACCEPTANCE`
+and `COMPILER_COMMON_MODE`.
+
+| code | rule | failure it comes from (AUDIT-L1 §6) | would run at |
+|---|---|---|---|
+| `PROBE_COVERAGE` | every per-task convention value and every defect class named in the task documents appears in at least one probe; a self-test flips each convention in a probe copy and confirms the solver follows the notes | F09: three probes all month-first and no wrong-default case, so 24 of 24 probes passed while 9 defects shipped; `repo:research/construction-20261006/REPORT-dev.md#3 obs 1` | S9 smoke, keep gate (LIBRARY §7.2) |
+| `DOMAIN_WIDENED` | a recompile replays every input on which its parent deopted and every guard-triggering trace; each must still deopt or match the strong tier; a guard diff reports deleted or widened conditions | F10: a recompile widened a guard and lost the ability to refuse (Opus-arm v2 answered 24 of 24, wrong on 6 of 8 d4 tasks); `repo:research/jit-20261008/DEV-NOTES.md#D8,D9` | recompile and heal (LIBRARY §7.5) |
+| `NO_INPUT_GUARD` | a solver states the input profile it was built on (schema, formats, conventions, size) and deopts outside it instead of answering | F11: the C0 records solver went 14 of 16 at d3, then 2 of 8 at d4 with no signal; `repo:research/jit-20261008/DEV-NOTES.md#D5` | S7 assemble (statically: a profile is declared), run time (the profile check) |
+| `GLOBAL_READ_TIER` | a judge whose output conditions many rows stays on the strongest tier or uses k ≥ 3 agreement plus a consequence check; leverage is the number of downstream output leaves that depend on it | F13: tiering down a global date-order judge broke the solver (Haiku 5 of 8, Sonnet 3 of 8 against 7 of 8) at leaf agreement 0.966; `repo:research/jit-20261008/DEV-NOTES.md#D6,D11` | S7 assemble (leverage from the tree), tier-down decisions |
+| `CHECK_FALSE_ALARM` | each check has a recorded false-alarm count on known-good probes; a check that fails on every tier for an input class becomes a hoisted guard or is loosened | F15: vendex-entries failed its own check on every tier (2 deopts at about $0.51 each); `repo:research/jit-20261008/DEV-NOTES.md#D3` | S9 smoke, evidence record (LIBRARY §3.7) |
+| `JUDGE_NO_CHECK` (extended) | for a judge that gates a status or an effect, require k ≥ 3 agreement when no code check can decide it | F19: a single-sample run-status read returned the injected error as success on all 88 reads; k = 3 passed all 88 at +15% cost; `repo:research/jit-20261008/FRONTIER-GAPS.md#S9 Heal B.6` | S7 assemble (static: the judge spec's `samples`) |
+| `COMPILE_ACCEPTANCE` | a compiled version is accepted only with a minimum agreement level against its traces, and every named disagreement quotes the deciding sentence | F14: kinetics H/H v1 accepted at exact 0 of 3; S/H v2 adopted with accepted false; `repo:research/jit-20261008/DEV-NOTES.md#D4` | keep gate (LIBRARY §7.3) |
+| `COMPILER_COMMON_MODE` | before promotion, compiled outputs are compared field by field with a second compiler model or a same-seed cheap agent | F16: recompile v3 missed 2 of 7 d4 deliveries with scores equal to the Haiku agent's to six decimals; `repo:research/jit-20261008/FRONTIER-GAPS.md#S8,N9` | shadow → keep (LIBRARY §7.3) |
+
+With the seven per-card lines in §4 and §5 (P03 F03 and F18, P09 F12, P16 B0a, P20 F06 and F07, P49 F17), these are the
+15 lines AUDIT-L1 §6 proposed. The four executable cards (P03, P09, P16, P20) carry their lines in `card.json` with
+`failure`, `minedFrom` and `enforcedBy: "not yet"`, so the S6 expanded card shows them to the constructor.
+
 ## 10. Status of this catalog
 
 Complete as a first catalog: 54 entries, 12 full cards (§4), 42 compact cards (§5), low-support candidates marked (§6),
-composition and tier per pattern (§7), evidence per pattern (§8). Not done, and owned by LIBRARY-TESTS:
-- the 60-item hand audit of the census rules (L1-a);
-- keyword precision for the support-only detectors (P01, P02, P16, P17, P18, P49; L1-a);
+composition and tier per pattern (§7), evidence per pattern (§8). **Revision 1 (2026-10-14)** applied AUDIT-L1 §8
+items 1, 2, 5, 6 and 7, the CI split of item 3, and the 15 L6-a lines (header note, §1 items 3, 6, 7). Done, and failed:
+- the 60-item hand audit of the census rules (L1-a, AUDIT-L1): coverage 88.4% (75.0–95.1%), rule precision 0.73; FAIL;
+- keyword precision for the support-only detectors (AUDIT-L1 §4): P01 0.68 kept; P02, P16, P17, P18, P30, P49 removed;
+- checklists against recorded failures (L6-a): 6 of 21 named; FAIL; 15 lines added.
+
+Not done, and owned by LIBRARY-TESTS:
+- **a re-audit of the revised census on a fresh 60-item draw** (a new seed, not 20261009), with the owner's 10-item
+  blind check (AUDIT-L1 §7 lists ten draw orders) done or explicitly waived; until then L1-a stays failed and no census
+  share is quoted as coverage;
+- a re-run of L6-a against the revised checklists;
+- AUDIT-L1 §8 items 4–5 (step-level tag rules, tool nodes tagged `model`, P15 and P20 scope, the P33 `resume` regex,
+  the `/form/` trigger regex);
 - full cards (slot tables, three fixtures each) for the 42 compact entries. They are written when a rung or a user task
   first retrieves the pattern, not in advance (BUILD-ORDER §2: a card nobody retrieves is the utility problem in
   miniature);

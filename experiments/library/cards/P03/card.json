@@ -22,7 +22,9 @@
     { "text": "Minor units for money; never floats.", "code": null },
     { "text": "Default or fallback values must be explicit and flagged.", "code": "SILENT_DROP", "kw": { "class": "default", "n": 9 }, "minedFrom": ["dify:mkt-0fc0bb5c…", "dify:mkt-431dd20f…"], "enforcedBy": "rejected rows go to review with a reason, or deopt" },
     { "text": "A batch or chunk size bounds each read.", "code": "UNBOUNDED", "kw": { "class": "batch", "n": 4 }, "minedFrom": ["n8n:11382", "n8n:2658"] },
-    { "text": "No chain-of-thought field in an extraction schema.", "code": "REASONING_ON_EXTRACTION" }
+    { "text": "No chain-of-thought field in an extraction schema.", "code": "REASONING_ON_EXTRACTION" },
+    { "text": "Per-source date order, sign and perspective conventions are read once as a global configuration (evidence quote per decision, an explicit rule that a worked example decides, k >= 3 agreement or the strong tier); a consequence check flips each convention in a copy and confirms the output changes as the notes require.", "code": null, "failure": "F03", "minedFrom": ["repo:research/jit-20261008/DEV-NOTES.md#D20"], "enforcedBy": "not yet (L6-a line, L1 revision 1)" },
+    { "text": "A spec clause that admits two readings that change an output set is flagged with the clause quoted, never silently chosen.", "code": null, "failure": "F18", "minedFrom": ["repo:research/jit-20261008/DEV-NOTES.md#D13 dossier 5 N6"], "enforcedBy": "not yet (L6-a line, L1 revision 1)" }
   ],
   "rules": [
     { "code": "JUDGE_NO_CHECK", "judgeSlot": "CONV_JUDGE", "skeletonCheck": true },
@@ -31,7 +33,7 @@
     { "code": "VERIFY_NOT_GATING", "fnSlot": "VALIDATE" }
   ],
   "minedFrom": ["google-adk:…workflows/nested_workflow", "dspy:…rlm-cohort-analysis", "airflow:…example_sagemaker_endpoint"],
-  "companions": [{ "id": "P05", "lift": 5.1, "n": 75 }, { "id": "P13", "lift": 3.7, "n": 17 }],
+  "companions": [{ "id": "P05", "lift": 5.0, "n": 75 }, { "id": "P13", "lift": 3.7, "n": 17 }],
   "tags": ["spine", "finance"],
   "example": { "slots": {
     "SOURCES": "inputs.sources",

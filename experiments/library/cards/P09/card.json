@@ -21,7 +21,8 @@
     { "text": "Both errors count: escalating a decidable item is an error, and so is deciding an undecidable one.", "code": null },
     { "text": "An undecidable option exists in the judge schema.", "code": "ENUM_NO_NONE" },
     { "text": "Persistent trust is a P42 state entry with expiry.", "code": "ONE_WRITER", "minedFrom": ["strands:…13-human-in-the-loop…hook-approval-with-persistent-trust"] },
-    { "text": "The queue carries a quote; a human never sees a bare id.", "code": "JUDGE_NO_CHECK" }
+    { "text": "The queue carries a quote; a human never sees a bare id.", "code": "JUDGE_NO_CHECK" },
+    { "text": "An unresolved disagreement between two answers escalates to the strongest tier or a person, never defaults to either.", "code": null, "failure": "F12", "minedFrom": ["repo:research/jit-20261008/FRONTIER-GAPS.md#N3,S3"], "enforcedBy": "not yet (L6-a line, L1 revision 1)" }
   ],
   "rules": [
     { "code": "JUDGE_NO_CHECK", "judgeSlot": "DECIDE" },

@@ -1,6 +1,6 @@
 {
  "schema": "l1-catalog/1",
- "generated": "2026-10-09",
+ "generated": "2026-10-14",
  "generatedBy": "experiments/library/tools/build-catalog.mjs",
  "patterns": [
   {
@@ -22,10 +22,10 @@
     11
    ],
    "support": {
-    "items": 758,
+    "items": 744,
     "viaNode": 0,
     "viaToken": 0,
-    "viaPlumbing": 758,
+    "viaPlumbing": 744,
     "oracle": 239,
     "platforms": 32,
     "grade": "C"
@@ -55,13 +55,13 @@
     27
    ],
    "support": {
-    "items": 348,
+    "items": 0,
     "viaNode": 0,
     "viaToken": 0,
-    "viaPlumbing": 348,
-    "oracle": 57,
-    "platforms": 25,
-    "grade": "C"
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "U"
    },
    "companions": [],
    "when": [
@@ -102,12 +102,12 @@
    "companions": [
     {
      "id": "P05",
-     "lift": 5.1,
+     "lift": 5,
      "n": 75
     },
     {
      "id": "P25",
-     "lift": 3.8,
+     "lift": 4.3,
      "n": 13
     },
     {
@@ -152,12 +152,12 @@
    "companions": [
     {
      "id": "P05",
-     "lift": 3.3,
+     "lift": 3.2,
      "n": 34
     },
     {
      "id": "P06",
-     "lift": 3,
+     "lift": 2.9,
      "n": 25
     },
     {
@@ -200,18 +200,18 @@
    "companions": [
     {
      "id": "P03",
-     "lift": 5.1,
+     "lift": 5,
      "n": 75
+    },
+    {
+     "id": "P25",
+     "lift": 4,
+     "n": 24
     },
     {
      "id": "P06",
      "lift": 3.7,
      "n": 89
-    },
-    {
-     "id": "P25",
-     "lift": 3.5,
-     "n": 24
     }
    ],
    "when": [
@@ -248,18 +248,18 @@
    },
    "companions": [
     {
+     "id": "P42",
+     "lift": 3.7,
+     "n": 61
+    },
+    {
      "id": "P05",
      "lift": 3.7,
      "n": 89
     },
     {
-     "id": "P42",
-     "lift": 3.4,
-     "n": 61
-    },
-    {
      "id": "P04",
-     "lift": 3,
+     "lift": 2.9,
      "n": 25
     }
    ],
@@ -309,7 +309,7 @@
     },
     {
      "id": "P25",
-     "lift": 3.2,
+     "lift": 3.6,
      "n": 20
     }
    ],
@@ -349,12 +349,12 @@
    "companions": [
     {
      "id": "P22",
-     "lift": 6.7,
+     "lift": 6.6,
      "n": 10
     },
     {
      "id": "P57",
-     "lift": 4.7,
+     "lift": 4.6,
      "n": 14
     },
     {
@@ -398,7 +398,7 @@
    "companions": [
     {
      "id": "P10",
-     "lift": 7.1,
+     "lift": 7,
      "n": 10
     },
     {
@@ -408,7 +408,7 @@
     },
     {
      "id": "P20",
-     "lift": 4.8,
+     "lift": 4.7,
      "n": 9
     }
    ],
@@ -446,17 +446,17 @@
    "companions": [
     {
      "id": "P55",
-     "lift": 10.5,
+     "lift": 10.4,
      "n": 68
     },
     {
      "id": "P32",
-     "lift": 7.1,
+     "lift": 7,
      "n": 68
     },
     {
      "id": "P09",
-     "lift": 7.1,
+     "lift": 7,
      "n": 10
     }
    ],
@@ -485,8 +485,8 @@
     9
    ],
    "support": {
-    "items": 112,
-    "viaNode": 112,
+    "items": 109,
+    "viaNode": 109,
     "viaToken": 0,
     "viaPlumbing": 0,
     "oracle": 9,
@@ -496,17 +496,17 @@
    "companions": [
     {
      "id": "P10",
-     "lift": 5.8,
+     "lift": 5.9,
      "n": 46
     },
     {
      "id": "P55",
-     "lift": 5.1,
+     "lift": 5.2,
      "n": 34
     },
     {
      "id": "P53",
-     "lift": 4.9,
+     "lift": 5,
      "n": 19
     }
    ],
@@ -550,7 +550,7 @@
     },
     {
      "id": "P28",
-     "lift": 3.7,
+     "lift": 3.6,
      "n": 7
     },
     {
@@ -582,8 +582,8 @@
     10
    ],
    "support": {
-    "items": 102,
-    "viaNode": 102,
+    "items": 100,
+    "viaNode": 100,
     "viaToken": 0,
     "viaPlumbing": 0,
     "oracle": 25,
@@ -593,18 +593,18 @@
    "companions": [
     {
      "id": "P25",
-     "lift": 3.7,
+     "lift": 4.2,
      "n": 12
     },
     {
      "id": "P47",
-     "lift": 3.6,
+     "lift": 3.7,
      "n": 10
     },
     {
-     "id": "P15",
-     "lift": 3.3,
-     "n": 7
+     "id": "P13",
+     "lift": 3,
+     "n": 13
     }
    ],
    "when": [
@@ -632,29 +632,29 @@
     9
    ],
    "support": {
-    "items": 32,
-    "viaNode": 32,
+    "items": 31,
+    "viaNode": 31,
     "viaToken": 0,
     "viaPlumbing": 0,
     "oracle": 3,
-    "platforms": 5,
+    "platforms": 4,
     "grade": "B"
    },
    "companions": [
     {
      "id": "P41",
-     "lift": 27.2,
+     "lift": 27.8,
      "n": 16
     },
     {
      "id": "P32",
-     "lift": 5.6,
+     "lift": 5.8,
      "n": 16
     },
     {
-     "id": "P37",
-     "lift": 4.2,
-     "n": 25
+     "id": "P38",
+     "lift": 3.3,
+     "n": 24
     }
    ],
    "when": [
@@ -683,13 +683,13 @@
     5
    ],
    "support": {
-    "items": 18,
+    "items": 0,
     "viaNode": 0,
     "viaToken": 0,
-    "viaPlumbing": 18,
-    "oracle": 6,
-    "platforms": 7,
-    "grade": "C"
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "U"
    },
    "companions": [],
    "when": [
@@ -717,13 +717,13 @@
     5
    ],
    "support": {
-    "items": 147,
+    "items": 0,
     "viaNode": 0,
     "viaToken": 0,
-    "viaPlumbing": 147,
-    "oracle": 35,
-    "platforms": 23,
-    "grade": "C"
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "U"
    },
    "companions": [],
    "when": [
@@ -750,13 +750,13 @@
     2
    ],
    "support": {
-    "items": 225,
+    "items": 0,
     "viaNode": 0,
     "viaToken": 0,
-    "viaPlumbing": 225,
-    "oracle": 51,
-    "platforms": 35,
-    "grade": "C"
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "U"
    },
    "companions": [],
    "when": [
@@ -793,12 +793,12 @@
    "companions": [
     {
      "id": "P46",
-     "lift": 8,
+     "lift": 7.9,
      "n": 9
     },
     {
      "id": "P47",
-     "lift": 6.8,
+     "lift": 6.7,
      "n": 6
     },
     {
@@ -843,17 +843,17 @@
    "companions": [
     {
      "id": "P48",
-     "lift": 10.6,
+     "lift": 10.5,
      "n": 6
     },
     {
      "id": "P35",
-     "lift": 7.1,
+     "lift": 7,
      "n": 10
     },
     {
      "id": "P51",
-     "lift": 6.2,
+     "lift": 6.1,
      "n": 14
     }
    ],
@@ -882,8 +882,8 @@
     4
    ],
    "support": {
-    "items": 120,
-    "viaNode": 120,
+    "items": 115,
+    "viaNode": 115,
     "viaToken": 0,
     "viaPlumbing": 0,
     "oracle": 41,
@@ -893,17 +893,17 @@
    "companions": [
     {
      "id": "P25",
-     "lift": 8,
-     "n": 31
+     "lift": 7.9,
+     "n": 26
     },
     {
      "id": "P33",
-     "lift": 5.1,
+     "lift": 5.2,
      "n": 43
     },
     {
      "id": "P57",
-     "lift": 4.4,
+     "lift": 4.6,
      "n": 7
     }
    ],
@@ -942,17 +942,17 @@
    "companions": [
     {
      "id": "P57",
-     "lift": 68.6,
+     "lift": 68,
      "n": 9
     },
     {
      "id": "P40",
-     "lift": 24.5,
+     "lift": 24.3,
      "n": 9
     },
     {
      "id": "P34",
-     "lift": 12.9,
+     "lift": 13.9,
      "n": 10
     }
    ],
@@ -1011,9 +1011,9 @@
     3
    ],
    "support": {
-    "items": 49,
-    "viaNode": 8,
-    "viaToken": 41,
+    "items": 43,
+    "viaNode": 7,
+    "viaToken": 36,
     "viaPlumbing": 0,
     "oracle": 11,
     "platforms": 5,
@@ -1022,18 +1022,18 @@
    "companions": [
     {
      "id": "P21",
-     "lift": 8,
-     "n": 31
+     "lift": 7.9,
+     "n": 26
     },
     {
      "id": "P44",
-     "lift": 8,
-     "n": 10
+     "lift": 7.8,
+     "n": 6
     },
     {
-     "id": "P42",
-     "lift": 5.2,
-     "n": 26
+     "id": "P33",
+     "lift": 4.9,
+     "n": 15
     }
    ],
    "when": [
@@ -1069,7 +1069,7 @@
    "companions": [
     {
      "id": "P29",
-     "lift": 10.2,
+     "lift": 10.1,
      "n": 72
     },
     {
@@ -1106,8 +1106,8 @@
     15
    ],
    "support": {
-    "items": 215,
-    "viaNode": 174,
+    "items": 214,
+    "viaNode": 173,
     "viaToken": 41,
     "viaPlumbing": 0,
     "oracle": 108,
@@ -1117,7 +1117,7 @@
    "companions": [
     {
      "id": "P29",
-     "lift": 6.3,
+     "lift": 6.2,
      "n": 99
     },
     {
@@ -1165,18 +1165,18 @@
    "companions": [
     {
      "id": "P46",
-     "lift": 6,
+     "lift": 5.9,
      "n": 9
     },
     {
-     "id": "P13",
-     "lift": 3.7,
-     "n": 7
+     "id": "P25",
+     "lift": 4,
+     "n": 5
     },
     {
-     "id": "P25",
-     "lift": 3.5,
-     "n": 5
+     "id": "P13",
+     "lift": 3.6,
+     "n": 7
     }
    ],
    "when": [
@@ -1212,12 +1212,12 @@
    "companions": [
     {
      "id": "P26",
-     "lift": 10.2,
+     "lift": 10.1,
      "n": 72
     },
     {
      "id": "P27",
-     "lift": 6.3,
+     "lift": 6.2,
      "n": 99
     },
     {
@@ -1249,12 +1249,12 @@
     23
    ],
    "support": {
-    "items": 7,
+    "items": 0,
     "viaNode": 0,
     "viaToken": 0,
-    "viaPlumbing": 7,
-    "oracle": 4,
-    "platforms": 4,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
     "grade": "D"
    },
    "companions": [],
@@ -1324,12 +1324,12 @@
    "companions": [
     {
      "id": "P41",
-     "lift": 9.7,
+     "lift": 9.6,
      "n": 24
     },
     {
      "id": "P35",
-     "lift": 8.3,
+     "lift": 8.2,
      "n": 11
     },
     {
@@ -1371,7 +1371,7 @@
    "companions": [
     {
      "id": "P40",
-     "lift": 7.1,
+     "lift": 7,
      "n": 28
     },
     {
@@ -1381,7 +1381,7 @@
     },
     {
      "id": "P21",
-     "lift": 5.1,
+     "lift": 5.2,
      "n": 43
     }
    ],
@@ -1409,8 +1409,8 @@
     15
    ],
    "support": {
-    "items": 118,
-    "viaNode": 91,
+    "items": 109,
+    "viaNode": 82,
     "viaToken": 27,
     "viaPlumbing": 0,
     "oracle": 3,
@@ -1420,17 +1420,17 @@
    "companions": [
     {
      "id": "P22",
-     "lift": 12.9,
+     "lift": 13.9,
      "n": 10
     },
     {
      "id": "P57",
-     "lift": 9.7,
+     "lift": 10.4,
      "n": 15
     },
     {
      "id": "P40",
-     "lift": 7.8,
+     "lift": 8.4,
      "n": 34
     }
    ],
@@ -1468,17 +1468,17 @@
    "companions": [
     {
      "id": "P47",
-     "lift": 12.4,
+     "lift": 12.3,
      "n": 5
     },
     {
      "id": "P32",
-     "lift": 8.3,
+     "lift": 8.2,
      "n": 11
     },
     {
      "id": "P45",
-     "lift": 7.3,
+     "lift": 7.2,
      "n": 15
     }
    ],
@@ -1505,8 +1505,8 @@
     15
    ],
    "support": {
-    "items": 164,
-    "viaNode": 160,
+    "items": 154,
+    "viaNode": 150,
     "viaToken": 4,
     "viaPlumbing": 0,
     "oracle": 21,
@@ -1515,18 +1515,18 @@
    },
    "companions": [
     {
-     "id": "P44",
-     "lift": 4.3,
-     "n": 18
+     "id": "P25",
+     "lift": 3.9,
+     "n": 17
     },
     {
-     "id": "P25",
-     "lift": 3.8,
-     "n": 20
+     "id": "P44",
+     "lift": 3.3,
+     "n": 9
     },
     {
      "id": "P39",
-     "lift": 2.9,
+     "lift": 3,
      "n": 8
     }
    ],
@@ -1553,29 +1553,29 @@
     15
    ],
    "support": {
-    "items": 282,
-    "viaNode": 235,
+    "items": 163,
+    "viaNode": 116,
     "viaToken": 47,
     "viaPlumbing": 0,
     "oracle": 22,
-    "platforms": 18,
+    "platforms": 16,
     "grade": "A"
    },
    "companions": [
     {
-     "id": "P41",
-     "lift": 5.4,
-     "n": 28
-    },
-    {
-     "id": "P15",
-     "lift": 4.2,
-     "n": 25
-    },
-    {
      "id": "P43",
-     "lift": 3,
+     "lift": 5.2,
      "n": 58
+    },
+    {
+     "id": "P42",
+     "lift": 3.6,
+     "n": 56
+    },
+    {
+     "id": "P45",
+     "lift": 3.2,
+     "n": 73
     }
    ],
    "when": [
@@ -1601,29 +1601,29 @@
     15
    ],
    "support": {
-    "items": 252,
-    "viaNode": 207,
-    "viaToken": 45,
+    "items": 350,
+    "viaNode": 307,
+    "viaToken": 43,
     "viaPlumbing": 0,
     "oracle": 16,
-    "platforms": 19,
+    "platforms": 20,
     "grade": "A"
    },
    "companions": [
     {
+     "id": "P41",
+     "lift": 4.3,
+     "n": 28
+    },
+    {
      "id": "P22",
-     "lift": 6,
+     "lift": 4.3,
      "n": 10
     },
     {
      "id": "P57",
-     "lift": 5.1,
+     "lift": 3.7,
      "n": 17
-    },
-    {
-     "id": "P40",
-     "lift": 5,
-     "n": 46
     }
    ],
    "when": [
@@ -1660,7 +1660,7 @@
    "companions": [
     {
      "id": "P36",
-     "lift": 2.9,
+     "lift": 3,
      "n": 8
     },
     {
@@ -1707,17 +1707,17 @@
    "companions": [
     {
      "id": "P22",
-     "lift": 24.5,
+     "lift": 24.3,
      "n": 9
     },
     {
      "id": "P57",
-     "lift": 15,
+     "lift": 14.8,
      "n": 11
     },
     {
      "id": "P34",
-     "lift": 7.8,
+     "lift": 8.4,
      "n": 34
     }
    ],
@@ -1756,17 +1756,17 @@
    "companions": [
     {
      "id": "P15",
-     "lift": 27.2,
+     "lift": 27.8,
      "n": 16
     },
     {
      "id": "P32",
-     "lift": 9.7,
+     "lift": 9.6,
      "n": 24
     },
     {
-     "id": "P37",
-     "lift": 5.4,
+     "id": "P38",
+     "lift": 4.3,
      "n": 28
     }
    ],
@@ -1792,9 +1792,9 @@
     27
    ],
    "support": {
-    "items": 157,
+    "items": 144,
     "viaNode": 0,
-    "viaToken": 157,
+    "viaToken": 144,
     "viaPlumbing": 0,
     "oracle": 17,
     "platforms": 19,
@@ -1802,19 +1802,19 @@
    },
    "companions": [
     {
-     "id": "P25",
-     "lift": 5.2,
-     "n": 26
+     "id": "P43",
+     "lift": 5.3,
+     "n": 53
     },
     {
-     "id": "P44",
-     "lift": 5,
+     "id": "P25",
+     "lift": 4.9,
      "n": 20
     },
     {
-     "id": "P43",
-     "lift": 4.9,
-     "n": 53
+     "id": "P46",
+     "lift": 4.6,
+     "n": 23
     }
    ],
    "when": [
@@ -1850,18 +1850,18 @@
    "companions": [
     {
      "id": "P42",
-     "lift": 4.9,
+     "lift": 5.3,
      "n": 53
+    },
+    {
+     "id": "P37",
+     "lift": 5.2,
+     "n": 58
     },
     {
      "id": "P46",
      "lift": 3.9,
      "n": 14
-    },
-    {
-     "id": "P45",
-     "lift": 3.7,
-     "n": 53
     }
    ],
    "when": [
@@ -1886,9 +1886,9 @@
     30
    ],
    "support": {
-    "items": 39,
+    "items": 27,
     "viaNode": 0,
-    "viaToken": 39,
+    "viaToken": 27,
     "viaPlumbing": 0,
     "oracle": 2,
     "platforms": 8,
@@ -1897,18 +1897,18 @@
    "companions": [
     {
      "id": "P25",
-     "lift": 8,
-     "n": 10
+     "lift": 7.8,
+     "n": 6
+    },
+    {
+     "id": "P34",
+     "lift": 3.6,
+     "n": 7
     },
     {
      "id": "P42",
-     "lift": 5,
-     "n": 20
-    },
-    {
-     "id": "P38",
-     "lift": 4.7,
-     "n": 30
+     "lift": 3.5,
+     "n": 9
     }
    ],
    "when": [
@@ -1944,12 +1944,12 @@
    "companions": [
     {
      "id": "P35",
-     "lift": 7.3,
+     "lift": 7.2,
      "n": 15
     },
     {
      "id": "P46",
-     "lift": 7.2,
+     "lift": 7.1,
      "n": 51
     },
     {
@@ -1994,17 +1994,17 @@
    "companions": [
     {
      "id": "P19",
-     "lift": 8,
+     "lift": 7.9,
      "n": 9
     },
     {
      "id": "P45",
-     "lift": 7.2,
+     "lift": 7.1,
      "n": 51
     },
     {
      "id": "P28",
-     "lift": 6,
+     "lift": 5.9,
      "n": 9
     }
    ],
@@ -2042,12 +2042,12 @@
    "companions": [
     {
      "id": "P35",
-     "lift": 12.4,
+     "lift": 12.3,
      "n": 5
     },
     {
      "id": "P19",
-     "lift": 6.8,
+     "lift": 6.7,
      "n": 6
     },
     {
@@ -2090,7 +2090,7 @@
    "companions": [
     {
      "id": "P20",
-     "lift": 10.6,
+     "lift": 10.5,
      "n": 6
     }
    ],
@@ -2118,13 +2118,13 @@
     2
    ],
    "support": {
-    "items": 8,
+    "items": 0,
     "viaNode": 0,
     "viaToken": 0,
-    "viaPlumbing": 8,
-    "oracle": 3,
-    "platforms": 7,
-    "grade": "C"
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "U"
    },
    "companions": [],
    "when": [
@@ -2195,17 +2195,17 @@
    "companions": [
     {
      "id": "P20",
-     "lift": 6.2,
+     "lift": 6.1,
      "n": 14
     },
     {
      "id": "P07",
-     "lift": 3,
+     "lift": 2.9,
      "n": 9
     },
     {
      "id": "P36",
-     "lift": 1.9,
+     "lift": 2,
      "n": 5
     }
    ],
@@ -2243,7 +2243,7 @@
    "companions": [
     {
      "id": "P55",
-     "lift": 7,
+     "lift": 6.9,
      "n": 22
     },
     {
@@ -2279,8 +2279,8 @@
     11
    ],
    "support": {
-    "items": 221,
-    "viaNode": 196,
+    "items": 217,
+    "viaNode": 192,
     "viaToken": 25,
     "viaPlumbing": 0,
     "oracle": 11,
@@ -2295,7 +2295,7 @@
     },
     {
      "id": "P55",
-     "lift": 4,
+     "lift": 4.1,
      "n": 53
     },
     {
@@ -2339,7 +2339,7 @@
    "companions": [
     {
      "id": "P10",
-     "lift": 10.5,
+     "lift": 10.4,
      "n": 68
     },
     {
@@ -2349,7 +2349,7 @@
     },
     {
      "id": "P53",
-     "lift": 7,
+     "lift": 6.9,
      "n": 22
     }
    ],
@@ -2386,7 +2386,7 @@
    "companions": [
     {
      "id": "P54",
-     "lift": 2.8,
+     "lift": 2.9,
      "n": 28
     },
     {
@@ -2433,17 +2433,17 @@
    "companions": [
     {
      "id": "P22",
-     "lift": 68.6,
+     "lift": 68,
      "n": 9
     },
     {
      "id": "P40",
-     "lift": 15,
+     "lift": 14.8,
      "n": 11
     },
     {
      "id": "P34",
-     "lift": 9.7,
+     "lift": 10.4,
      "n": 15
     }
    ],

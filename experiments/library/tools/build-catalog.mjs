@@ -18,7 +18,7 @@ const grade = {}, companions = {};
 for (const line of evidence.split('\n')) {
   const c = cells(line);
   if (!/^P\d\d$/.test(c[0] ?? '')) continue;
-  grade[c[0]] = /^[A-D]$/.test(c[2]) ? c[2] : null;
+  grade[c[0]] = /^[A-DU]$/.test(c[2]) ? c[2] : null;   // U: unmeasured, detector removed by L1-a (census revision 1)
   companions[c[0]] = [...(c[7] ?? '').matchAll(/(P\d\d) ×([\d.]+) \((\d+)\)/g)].map(m => ({ id: m[1], lift: Number(m[2]), n: Number(m[3]) }));
 }
 const matrix = {};

@@ -19,6 +19,21 @@
 //   anchor nodes' type-level summaries (timeouts, retries, fallbacks, ...).
 // The rule list is total for non-refused items by construction (every control category has a default); L1-PATTERNS.md §1.3
 // says what that does and does not prove, and reports how many nodes fell to a default rule.
+//
+// THIS TOOL IS A CANDIDATE GENERATOR, NOT A MEASUREMENT (AUDIT-L1, 2026-10-09: rule precision 0.73 on 60 hand labels, below
+// the 0.75 falsifier). Its "explained" count is the count of items it does not refuse. The measured coverage is the hand
+// audit's (AUDIT-L1 §5); never quote this tool's shares as coverage.
+//
+// L1 revision 1 (2026-10-14, AUDIT-L1 §8 items 1-3; default). REVISION=0 reproduces the 2026-10-09 census exactly.
+// - The six support-only detectors whose hit precision was below 0.5 are removed: P02 0.23, P16 0.31, P17 0.08, P18 0.18,
+//   P30 0.00, P49 0.31 (AUDIT-L1 §4). The patterns stay in the catalog; the census no longer counts any evidence for them.
+// - P37 split: on GitHub Actions and GitLab CI every start the webhook rule would take is a repository event (push, pull or
+//   merge request, merge group, release, issue, pipeline source) with no reply, so it is P38, and so is those platforms'
+//   `webhook-trigger` verdict token (AUDIT-L1 §4 P37: 8 of 10 sampled hits were such starts).
+// - Interactive dashboard state by a criterion (owner decision PAUSE §5.8, taken 2026-10-14: a Node-RED dashboard app is
+//   reported both ways and the headline is the conservative reading, a refusal): an unrefused Node-RED item with
+//   >= DASHBOARD_WIDGETS (default 20) `ui_*` nodes is refused. The other reading (criterion off) is computed in the same
+//   run and written beside it (`coverage.dashboardCriterion`). DASHBOARD_WIDGETS=0 switches the criterion off.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +43,11 @@ const ROOT = path.resolve(HERE, '../../../../..');
 const CORPUS = path.join(ROOT, 'research/corpus-20261006/items.jsonl');
 const OUT = path.resolve(HERE, '../out');
 const BUDGET = Number(process.env.BUDGET ?? 5);
+const REVISION = Number(process.env.REVISION ?? 1);
+const REMOVED_DETECTORS = new Set(REVISION >= 1 ? ['P02', 'P16', 'P17', 'P18', 'P30', 'P49'] : []);
+const CI_EVENT_PLATFORMS = new Set(REVISION >= 1 ? ['github-actions', 'gitlab-ci'] : []);
+const DASHBOARD_WIDGETS = REVISION >= 1 ? Number(process.env.DASHBOARD_WIDGETS ?? 20) : 0;
+const DASHBOARD_REFUSAL = 'unsupported:interactive-dashboard-state(census-criterion)';
 
 // ------------------------------------------------------------------------------------------------ catalog
 // id, name, family. Order here is presentation order, not the greedy order.
@@ -158,7 +178,7 @@ function triggerKind(n, it) {
   if (/@once|manual|executeworkflowtrigger|sub-?workflow.*trigger|workflow_call|\bentry\b|^start|shortcuts\.input|chatinput|chat-?trigger|inputreceiver|workflow_dispatch/.test(s)) return 'input';
   if (/schedul|cron|interval|every_|time_pattern|trigger\.time\b|@daily|@hourly|@weekly|timer/.test(s)) return 'schedule';
   if (/poll|rss|feed/.test(s) && a.has('poll')) return 'poll';
-  if (/webhook|http|form|pull_request|\bpush\b|pipeline-source|merge_request|api/.test(s)) return 'webhook';
+  if (/webhook|http|form|pull_request|\bpush\b|pipeline-source|merge_request|api/.test(s)) return CI_EVENT_PLATFORMS.has(it.source.platform) ? 'event' : 'webhook';
   if (/trigger|event|state|sensor|mqtt|device|zone|sun|calendar|telegram|slack|gmail|drive|github|issue/.test(s)) return a.has('poll') && !a.has('event') ? 'poll' : 'event';
   for (const k of ['schedule', 'webhook', 'event', 'poll']) if (a.has(k)) return k;
   return 'input';
@@ -278,8 +298,14 @@ function loopRules(g, it, tokens) {
   return { loopPatternOf: n => pat.get(n?.id) ?? 'P22', loopRule: why };
 }
 
-// support-only idiom detectors (never decide coverage)
+// support-only idiom detectors (never decide coverage). Detectors in REMOVED_DETECTORS stay in the source so REVISION=0
+// reproduces the 2026-10-09 census, but their hits are discarded (L1 revision 1).
 function plumbing(g, it) {
+  const out = plumbingAll(g, it);
+  for (const p of REMOVED_DETECTORS) out.delete(p);
+  return out;
+}
+function plumbingAll(g, it) {
   const out = new Set(), N = g.nodes;
   const plumb = x => ['action', 'transform', 'code', 'other'].includes(x.category);
   // P01: a chain of >= 3 plumbing nodes, each with in/out degree <= 1
@@ -343,7 +369,7 @@ for (const it of items) {
   }
   // tokens: explained by a pattern that fired structurally if possible, else the token's first pattern
   for (const t of tokens) {
-    const opts = TOKEN[t];
+    const opts = t === 'webhook-trigger' && CI_EVENT_PLATFORMS.has(plat) ? ['P38'] : TOKEN[t];
     if (!opts) { row.tokens.push({ t, p: null }); continue; }
     const p = opts.find(o => row.needs[o]) ?? opts[0];
     row.tokens.push({ t, p });
@@ -359,12 +385,18 @@ for (const it of items) {
     const text = [...near].map(id => TS(g.byId.get(id))).join(' \n ');
     row.edge[p] = EDGE_KW.filter(([, re]) => re.test(text)).map(([k]) => k);
   }
+  // L1 revision 1: the dashboard refusal by criterion (header). The row keeps its needs so the other reading can be computed.
+  if (DASHBOARD_WIDGETS > 0 && plat === 'node-red') {
+    const widgets = it.graph.nodes.filter(n => /^ui_/.test(n.type)).length;
+    if (widgets >= DASHBOARD_WIDGETS) Object.assign(row, { status: 'refused', refusal: DASHBOARD_REFUSAL, criterion: true, widgets });
+  }
   per.push(row);
 }
 
 // coverage under a catalog (set of L1 ids)
-function status(row, cat) {
-  if (row.status === 'refused') return 'refused';
+// criterion = false reads a criterion-refused dashboard item as not refused (the other reading of PAUSE §5.8).
+function status(row, cat, criterion = true) {
+  if (row.status === 'refused' && (criterion || !row.criterion)) return 'refused';
   const req = Object.keys(row.needs).filter(p => !p.startsWith('L0'));
   if (row.tokens.some(x => x.p === null)) return 'uncovered';
   if (!req.every(p => cat.has(p))) return 'uncovered';
@@ -372,7 +404,7 @@ function status(row, cat) {
 }
 const L1 = CATALOG.map(([id]) => id);
 const FULL = new Set(L1);
-const summarise = cat => { const c = { refused: 0, flat: 0, hier: 0, uncovered: 0 }; for (const r of per) c[status(r, cat)]++; return c; };
+const summarise = (cat, criterion = true) => { const c = { refused: 0, flat: 0, hier: 0, uncovered: 0 }; for (const r of per) c[status(r, cat, criterion)]++; return c; };
 const full = summarise(FULL), none = summarise(new Set());
 // flat share at other expansion budgets; the first-slice subset (BUILD-ORDER.md) and its node-level share
 const atBudget = b => per.filter(r => r.status !== 'refused' && Object.keys(r.needs).filter(p => !p.startsWith('L0')).length <= b).length;
@@ -421,10 +453,16 @@ const hierExamples = per.filter(r => status(r, FULL) === 'hier').sort((a, b) => 
 const rewrites = per.filter(r => r.rewrite).map(r => r.id);
 const thirdParty = per.filter(r => r.cl !== 'first-party');
 const tpStatus = (cat) => { const c = { refused: 0, flat: 0, hier: 0, uncovered: 0 }; for (const r of thirdParty) c[status(r, cat)]++; return c; };
+// Both readings of the dashboard question (PAUSE §5.8): the headline applies the criterion; `withoutCriterion` does not.
+const critRows = per.filter(r => r.criterion);
+const dashboardCriterion = { widgets: DASHBOARD_WIDGETS, refusedByCriterion: critRows.length, ids: critRows.map(r => `${r.id} (${r.widgets})`),
+  withoutCriterion: { full: summarise(FULL, false), flatAtBudget5: per.filter(r => status(r, FULL, false) === 'flat').length } };
 
 const result = {
   generated: new Date().toISOString().slice(0, 10), corpus: path.relative(ROOT, CORPUS), items: items.length, platformCount: new Set(items.map(i => i.source.platform)).size, budget: BUDGET,
-  catalogSize: L1.length, coverage: { full, noL1: none, thirdPartyFull: tpStatus(FULL), thirdPartyItems: thirdParty.length, flatAtBudget: budgets, byCluster,
+  revision: REVISION, removedDetectors: [...REMOVED_DETECTORS], ciEventPlatforms: [...CI_EVENT_PLATFORMS],
+  note: 'candidate generator, not a measurement: "explained" = not refused (AUDIT-L1); measured coverage is AUDIT-L1 §5',
+  catalogSize: L1.length, coverage: { full, noL1: none, dashboardCriterion, thirdPartyFull: tpStatus(FULL), thirdPartyItems: thirdParty.length, flatAtBudget: budgets, byCluster,
     firstSlice: { patterns: [...FIRST], items: first, controlNodes: { all: ctrlAll, l0: ctrlL0, firstSlice: ctrlFirst } } },
   defaultRuleNodes: defaultNodes, rewrites: { n: rewrites.length, ids: rewrites }, patternsPerItem: dist, curve, refusals, hierExamples,
   patterns: Object.values(sup).sort((a, b) => b.items - a.items), platforms: Object.values(plats).sort((a, b) => a.cl.localeCompare(b.cl) || a.plat.localeCompare(b.plat)), rules,
@@ -456,11 +494,12 @@ if (process.env.CLUSTER) {
 
 fs.mkdirSync(OUT, { recursive: true });
 fs.writeFileSync(path.join(OUT, 'pattern-census.json'), JSON.stringify(result, null, 1));
-fs.writeFileSync(path.join(OUT, 'pattern-census-items.jsonl'), per.map(r => JSON.stringify({ id: r.id, plat: r.plat, status: status(r, FULL), needs: r.needs, tokens: r.tokens, plumbing: r.plumbing, rewrite: r.rewrite })).join('\n') + '\n');
+fs.writeFileSync(path.join(OUT, 'pattern-census-items.jsonl'), per.map(r => JSON.stringify({ id: r.id, plat: r.plat, status: status(r, FULL), ...(r.criterion ? { criterion: true, widgets: r.widgets } : {}), needs: r.needs, tokens: r.tokens, plumbing: r.plumbing, rewrite: r.rewrite })).join('\n') + '\n');
 const pct = (x, n) => `${(100 * x / n).toFixed(1)}%`;
 console.log(`items ${items.length}, platforms ${result.platformCount}, catalog ${L1.length} L1 patterns, budget ${BUDGET}`);
 console.log(`full catalog: flat ${full.flat} (${pct(full.flat, items.length)}), hier ${full.hier} (${pct(full.hier, items.length)}), refused ${full.refused}, uncovered ${full.uncovered}; decided ${pct(full.flat + full.hier + full.refused, items.length)}`);
 console.log(`flat at budget: ${JSON.stringify(budgets)}; first slice ${[...FIRST].join(',')}: ${JSON.stringify(first)}; control nodes all ${ctrlAll}, L0 ${ctrlL0}, first-slice ${ctrlFirst}`);
+console.log(`revision ${REVISION}: removed detectors ${[...REMOVED_DETECTORS].join(',') || 'none'}; CI event platforms ${[...CI_EVENT_PLATFORMS].join(',') || 'none'}; dashboard criterion >= ${DASHBOARD_WIDGETS || 'off'} ui_* widgets refuses ${critRows.length} (without it: ${JSON.stringify(dashboardCriterion.withoutCriterion)})`);
 console.log(`no L1 (L0 only): flat ${none.flat} (${pct(none.flat, items.length)}), uncovered ${none.uncovered}`);
 console.log(`default-rule nodes ${defaultNodes.n} of ${defaultNodes.of} control nodes (${pct(defaultNodes.n, defaultNodes.of)})`);
 console.log('curve:', curve.map(c => `${c.k}:${c.add}->${pct(c.decided, items.length)}`).join(' '));

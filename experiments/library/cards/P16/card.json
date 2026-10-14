@@ -19,7 +19,8 @@
     { "text": "A borderline band goes to a judge (FRONTIER-GAPS N4).", "code": null, "enforcedBy": "skeleton" },
     { "text": "Transitivity: union-find, not pairwise output.", "code": null, "enforcedBy": "skeleton" },
     { "text": "Rows are conserved.", "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariant rows-conserved" },
-    { "text": "Large inputs need a blocking key.", "code": "UNBOUNDED", "enforcedBy": "guard blockable" }
+    { "text": "Large inputs need a blocking key.", "code": "UNBOUNDED", "enforcedBy": "guard blockable" },
+    { "text": "Near-twins sharing a secondary attribute go to a same-entity judge with a quote check on the attribute.", "code": "JUDGE_NO_CHECK", "failure": "B0a", "minedFrom": ["repo:research/construction-20261006/diagnosis/B0-haiku-records.md"], "enforcedBy": "not yet (L6-a line, L1 revision 1)" }
   ],
   "rules": [
     { "code": "JUDGE_NO_CHECK", "judgeSlot": "SAME" },
