@@ -27,11 +27,12 @@ measurements; the sections below describe v1.1. Seeds for all tuning and tests: 
   - every correct body and every decoy meets an independent specification of its contract (`spec.mjs`, exact integer
     arithmetic) on random in-domain inputs, so the truth "differs from the correct body" is the truth "breaks the
     contract" (v1.1; the review found two families where it was not).
-- **Why judgment is needed (v1.1).** Every defect-hosting family draws semantic knobs that the contract states (band
+- **Why a $0 script fails (v1.1).** Every defect-hosting family draws semantic knobs that the contract states (band
   ends, page base, grace days, tie rule, empty-input result, rounding rule, units, separators); most defect variants
   behave exactly like a correct instance with another knob setting. Contract wording varies in independent slots, and no
-  two functions of a repository share a contract template, so a script cannot vote among same-contract functions. At
-  most 40% of a task's defects are "loud" (a crash, NaN, a changed argument, a wrong error type, a shared helper).
+  two functions of a repository share a contract template, so the review's script finds almost nobody to vote with,
+  even across 24 earlier tasks. At most 40% of a task's defects are "loud" (a crash, NaN, a changed argument, a wrong
+  error type, a shared helper). That a model needs contract judgment for the rest is the bet, not yet a measurement.
 - **The shape.** Their benchmark's structure (PRIOR-ART §1 row "Benchmark"): planted defects in a repository, fan-out
   per file, verify before report. It is not their setting: the repository is synthetic, denser, and the necessity of
   fan-out and of a verify step is established here only by construction (§9, §17), not measured.
@@ -288,8 +289,8 @@ finding 4). The text controls read the files and nothing else.
 | **`grep-for-TODO`** | text | | every function containing TODO/FIXME/XXX/HACK | 0.22 / 0.12 / 0.06 / 0.06 |
 | **`linter-only`** | text | | 19 regex rules (eslint-style plus a money plugin), computed from the files alone | 0.44 / 0.41 / 0.31 / 0.23 |
 | **`report-everything`** | text | | every function × every class in scope | 0.07 / 0.04 / 0.02 / 0.01 |
-| `contract-fuzz-script` | text (slow) | | the review's $0 script on one task (attack.mjs) | §17: best F1 ⟦fuzzbest⟧, never passes |
-| `contract-fuzz-stream` | text (slow) | | the same script with 24 earlier tasks as an unlabelled corpus | §17: best F1 ⟦streambest⟧, never passes |
+| `contract-fuzz-script` | text (slow) | | the review's $0 script on one task (attack.mjs) | §17: best F1 0.50 / 0.57 / 0.55 / 0.50, never passes |
+| `contract-fuzz-stream` | text (slow) | | the same script with 24 earlier tasks as an unlabelled corpus | §17: best F1 — / 0.67 / 0.72 / —, never passes |
 | **`single-pass-no-verify`** | stage | yes | one reading pass: every site with a visible pattern (the patterned defects and all decoys), nothing verified | 0.50 / 0.46 / 0.40 / 0.32 |
 | `class-confused` | stage (near miss) | yes | all defects found and verified; OFF_BY_ONE ↔ LOGIC_ERROR swapped | 0.67 / 0.80 / 0.75 / 0.83 |
 | `file-level-only` | stage | yes | right file and class, pinned to the file's first function | 0.67 / 0.47 / 0.50 / 0.41 |
@@ -468,7 +469,7 @@ The R3′ tests cover:
   contract-fuzz script and stream controls failing, template uniqueness within a task and rarity across a stream, the
   loud cap and silent variants, in-pool conversion, the per-defect call log, timeouts.
 
-The full W-bed suite, `node --test --test-concurrency=2 'beds/wbed/**/*.test.mjs'`: ⟦SUITE⟧ [M].
+The full W-bed suite, `node --test --test-concurrency=2 'beds/wbed/**/*.test.mjs'`: **210/210 pass** in 469 s, R0–R6, R3′ and the attack driver (with other agents' uncommitted work in R1–R5 in the tree) [M].
 
 The two suites outside `beds/` that read the ledger:
 - `experiments/jit/test/stream.test.mjs` S0-5: 2/2 pass;
@@ -566,7 +567,22 @@ A `keyMode: 'numbers'` option abstracts numbers as well, a stronger grouping tha
 
 *Measured on v1.1* (the reviewer's script, unchanged logic) [M]:
 
-⟦ATTACKTABLE⟧
+| mode (v1.1, dev seeds) | d | tasks | pass | mean precision | mean recall | mean F1 | max recall | max F1 | v1.0 (review) |
+|---|---|---|---|---|---|---|---|---|---|
+| one task alone (449–468) | 2 | 20 | **0/20** | 0.94 | 0.15 | 0.25 | 0.33 | 0.50 | 0/20, recall 0.33 |
+| | 3 | 20 | **0/20** | 0.94 | 0.26 | 0.40 | 0.40 | 0.57 | 2/20, recall 0.59 |
+| | 4 | 20 | **0/20** | 0.99 | 0.25 | 0.40 | 0.38 | 0.55 | 2/20, recall 0.66 |
+| | 5 | 20 | **0/20** | 1.00 | 0.25 | 0.39 | 0.33 | 0.50 | 3/20, recall 0.72 |
+| 24 earlier tasks, unlabelled (corpus 425–448, targets 449–472) | 3 | 24 | **0/24** | 0.99 | 0.28 | 0.42 | 0.50 | 0.67 | **19/24**, recall 0.90 |
+| same, targets 449–460 | 4 | 12 | **0/12** | 0.97 | 0.35 | 0.51 | 0.56 | 0.72 | **8/12**, recall 0.89 |
+| same as d3, contract key with numbers abstracted (stronger than the review's) | 3 | 24 | **0/24** | 0.74 | 0.33 | 0.45 | 0.50 | 0.67 | — |
+
+Mean precision is over tasks with at least one finding. On one task the vote cannot fire (no contract template
+repeats within a repository), so the single-task rows are the generic properties alone: mean recall 0.15–0.26, the loud
+defects (capped at 40% of a task) minus the helpers whose contract does not use the script's regex wording. The vote now adds about 0.02 (d3) to 0.10 (d4) of mean recall with a
+24-task corpus, because almost no defect has a same-text peer; abstracting numbers buys more groups but mixes knob
+settings, so its precision falls to 0.74. The v1.0 rows are the reviewer's numbers on dev 401–420 and the same corpus
+protocol; the v1.1 single-task rows use the tuning block 449–468.
 
 *Not adopted:* the per-task re-draw until the script fails ("decisiveness"): it costs seconds per task against the 2 s
 generation budget, and re-drawing until one script fails would bias the task distribution towards what that script
