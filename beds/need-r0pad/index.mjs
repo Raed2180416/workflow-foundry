@@ -10,7 +10,7 @@ export const family = {
   id: 'need-r0pad', domain: 'back-office invoice extraction under irrelevant context (length-padded wbed-r0)', version, kind: 'oneshot', role: 'need-anchor',
   description: 'The same task as beds/wbed/r0 at the same (seed, split, difficulty) - read one printed invoice and return its number, customer row, ISO issue '
     + 'date, currency, net / tax / gross in minor units and whether its status voids it - plus 10-20 irrelevant but plausible generated archive documents '
-    + '(files/archive/, 15-25K tokens in all). Routing anchor and metamorphic length pair of wbed-r0: same structure, about 10-40x the input. Intended class '
+    + '(files/archive/, 15-25K tokens in all). Routing anchor and metamorphic length pair of wbed-r0: same structure, a few tens of times the input. Intended class '
     + '(a HYPOTHESIS, unmeasured): one direct call should suffice, because the added length carries no added structure; long-context loss of accuracy is the open question.',
 };
 

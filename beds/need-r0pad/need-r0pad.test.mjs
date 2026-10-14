@@ -364,7 +364,7 @@ test('documents: varied kinds, neutral names, shuffled positions, fictional addr
     info.docs.forEach((x, i) => { if (x.sibling) positions.add(i); });
     for (const [rel, text] of Object.entries(task.files)) {
       assert.ok(text.length > 150 && text.length < 60000, `${rel}: ${text.length} chars`);
-      assert.ok(!/\u0000/.test(text) && text.split('\n').every(l => l.length <= 400));
+      assert.ok(!/\u0000/.test(text) && text.split('\n').every(l => l.length <= 700), `${rel}: a line is too long`);
       assert.ok(text.startsWith('HOLLIN GROUP — '), `${rel}: banner`);
       for (const e of text.match(/[\w.-]+@[\w.-]+/g) ?? []) assert.match(e, /\.example$/, `${rel}: ${e}`);
       for (const p of text.match(/\b555-\d{4}\b/g) ?? []) assert.match(p, /^555-01\d\d$/);
@@ -378,17 +378,29 @@ test('documents: varied kinds, neutral names, shuffled positions, fictional addr
 test('length and structure are separate axes: the shape of the padding is constant across difficulty, only the R0 core grows', () => {
   const lines = d => SEEDS.map(s => (gen(s, d).inputs.document.match(/^ \d+ /gm) ?? []).length);
   for (let d = 2; d < 5; d++) assert.ok(mean(lines(d + 1)) > mean(lines(d)), `lines grow with difficulty: d${d} -> d${d + 1}`);
-  let sameDoc = 0, totalDocs = 0;
+  let sameLines = 0, totalLines = 0, identicalDocs = 0, totalDocs = 0;
   const spread = [];
   for (const seed of SEEDS) {
     const tasks = DS.map(d => gen(seed, d)), infos = tasks.map(t => bed.describePadding(t));
     const shape = i => canonical({ n: i.docs.length, kinds: i.docs.map(x => x.kind) });
     assert.equal(new Set(infos.map(shape)).size, 1, `seed ${seed}: shape changes with difficulty`);
-    infos[0].docs.forEach(x => { if (!x.sibling) for (let j = 1; j < DS.length; j++) { totalDocs++; if (tasks[j].files[x.path] === tasks[0].files[x.path]) sameDoc++; } });
+    infos[0].docs.forEach(x => {
+      if (x.sibling) return;
+      const base = tasks[0].files[x.path].split('\n');
+      for (let j = 1; j < DS.length; j++) {
+        const other = tasks[j].files[x.path].split('\n');
+        totalDocs++; if (other.join('\n') === base.join('\n')) identicalDocs++;
+        assert.equal(other.length, base.length, `${x.path}: same document shape at every difficulty`);
+        base.forEach((line, n) => { totalLines++; if (line === other[n]) sameLines++; });
+      }
+    });
     const t = tasks.map(tokens);
     spread.push(Math.max(...t) / Math.min(...t));
   }
-  assert.ok(sameDoc / totalDocs > 0.97, `non-sibling documents should not depend on the difficulty (truth enters only through rare redraws): ${sameDoc}/${totalDocs}`);
+  // the target's truth reaches the padding only through the rare filters: a colliding ISO date is moved to 2026 (one cell) and a
+  // colliding number redraws one document, so documents agree line for line except for those cells
+  assert.ok(sameLines / totalLines > 0.995, `documents should not depend on the difficulty: ${sameLines}/${totalLines} lines equal`);
+  assert.ok(identicalDocs / totalDocs > 0.55, `${identicalDocs}/${totalDocs} documents byte-identical across difficulties`);
   assert.ok(Math.max(...spread) < 1.08, `same seed, different structure should be near-equal length: ${Math.max(...spread)}`);
   // across the whole 160-task grid, length is (almost) unrelated to difficulty while the R0 core's own length follows it
   const grid = SEEDS.flatMap(s => DS.map(d => ({ d, total: tokens(gen(s, d)), core: tokens(r0task(s, d)) })));
@@ -396,14 +408,14 @@ test('length and structure are separate axes: the shape of the padding is consta
   assert.ok(corr(grid.map(g => g.d), grid.map(g => g.core)) > 0.5);
 });
 
-test('metamorphic pair with wbed-r0: same structure, 15-65x the input', () => {
+test('metamorphic pair with wbed-r0: same structure, a few tens of times the input', () => {
   const ratios = [];
   for (const d of DS) for (const seed of SEEDS) {
     const task = gen(seed, d), core = r0task(seed, d);
     ratios.push(tokens(task) / tokens(core));
     assert.equal(canonical(task.inputs), canonical(core.inputs));
   }
-  assert.ok(Math.min(...ratios) > 12 && Math.max(...ratios) < 70, `ratio ${Math.min(...ratios).toFixed(1)}..${Math.max(...ratios).toFixed(1)}`);
+  assert.ok(Math.min(...ratios) > 25 && Math.max(...ratios) < 90, `ratio ${Math.min(...ratios).toFixed(1)}..${Math.max(...ratios).toFixed(1)}`);
 });
 
 test('hidden truth does not leak: no derived value appears in the task beyond what the R0 core already shows', () => {

@@ -71,10 +71,15 @@ function pickSiblings(r, core, truth, forb, count) {
   return out;
 }
 
+// An ISO date equal to the target's issue date (or to its day/month-swapped reading) is moved to 2026 in place: a log with a
+// hundred random dates would otherwise contain the target's date about one time in four, and redrawing whole documents for a
+// one-cell coincidence would make them depend on the difficulty. Only that cell changes.
+const shiftDates = (text, dates) => dates.reduce((t, iso) => t.replaceAll(iso, `2026${iso.slice(4)}`), text);
+
 function buildDoc(kind, index, target, core, forb) {
   for (let attempt = 0; attempt < 40; attempt++) {
     const r = rng('need-r0pad', 'doc', core.split, core.seed, index, kind.id, attempt);
-    const text = kind.build(r, makeCtx(r), Math.min(target, kind.cap));
+    const text = shiftDates(kind.build(r, makeCtx(r), Math.min(target, kind.cap)), forb.dates);
     // a denylist hit is a template defect (it would repeat on every redraw): fail loudly. A forbidden-string hit is a
     // coincidence with this task's truth (a number that happens to equal an amount): a redraw fixes it.
     const deny = denyHits(text);

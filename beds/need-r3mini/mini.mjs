@@ -23,7 +23,7 @@ export { buildAudit, runPipeline, REASONS };
  *  differ only in which suppliers are cut out of it. */
 export const RUNG_DIFFICULTY = Object.freeze({ 1: 2, 2: 2, 3: 3, 4: 3, 5: 3 });
 export const MIN_SUPPLIERS = 2, MAX_SUPPLIERS = 3;
-export const MIN_DISCREPANCIES = 3, MAX_DISCREPANCIES = 6;
+export const MIN_DISCREPANCIES = 3, MAX_DISCREPANCIES = 5;
 /** Hard cap on the task's input tokens (prompt + inputs as pretty JSON, ceil(bytes / 4)). The family promise is < 3000. */
 export const TOKEN_CAP = 2950;
 
@@ -44,7 +44,7 @@ export const VARIANT_SCORE = Object.freeze({
 /** Reading effort of a statement: ISO dates 0; US dates, German numbers, a day/month order stated per task 1; sentences 2. */
 export const FORMAT_SCORE = Object.freeze({ VERITAS: 0, BRIGHTDESK: 1, LEDGR: 1, ATLAS: 1, TALLY: 1, KOBO: 1, VENDEX: 2 });
 /** Ambiguity-score band wanted at each difficulty (the score is the sum over the cut's discrepancies and suppliers). */
-export const BANDS = Object.freeze({ 1: [0, 3], 2: [4, 6], 3: [7, 9], 4: [10, 12], 5: [13, 99] });
+export const BANDS = Object.freeze({ 1: [0, 4], 2: [5, 7], 3: [8, 10], 4: [11, 13], 5: [14, 99] });
 
 /** Ambiguity facts per supplier of a rung world, from the rung's own truth. */
 export function supplierFacts(world, full) {
@@ -171,7 +171,7 @@ function plausible(truth, near, valid) {
 
 /**
  * Choose the cut: which 2-3 suppliers of the rung world the task is about. Candidates are every 2- or 3-supplier subset
- * with 3-6 discrepancies in all; they are tried in order of distance of their ambiguity score from the level's band
+ * with 3-5 discrepancies in all; they are tried in order of distance of their ambiguity score from the level's band
  * (BANDS), ties in a seeded order with a seeded preference for 2 or 3 suppliers; the first that is well posed wins:
  * under the token cap, adjusted balances not all equal (so rotating them is a real error), and at least one of the
  * rung's plausible mistakes gives a different, schema-valid answer. Returns { ids, k, facts, score, band, near }.
