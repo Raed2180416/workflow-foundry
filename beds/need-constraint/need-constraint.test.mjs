@@ -87,7 +87,7 @@ function indepSentence(task, out) {
     words.push(w.toLowerCase());
   }
   if (words.length < lo || words.length > hi) return false;
-  const gapM = p.match(/at least (\d+) other words? between/); const gap = gapM ? Number(gapM[1]) : 0;
+  const gapM = p.match(/there are at least (\d+) other words?\./); const gap = gapM ? Number(gapM[1]) : 0;
   const place = (j, from) => { if (j === req.length) return true; for (let i = from; i < words.length; i++) if (words[i] === req[j] && place(j + 1, i + 1 + (j + 1 < req.length ? gap : 0))) return true; return false; };
   if (!place(0, 0)) return false;
   if (words.some(w => forb.has(w))) return false;
@@ -522,12 +522,13 @@ test('every rule category can fail: mutation coverage of the checker ids that ar
       let v = clone(ref[field]);
       if (sub === 'names') {
         const i = r.int(0, v.length - 1); const at = r.int(0, v[i].length - 1);
-        v[i] = k % 6 === 0 ? v[0] : k % 6 === 1 ? task.inputs.reserved_names[k % task.inputs.reserved_names.length] : v[i].slice(0, at) + r.pick('abcdefghijklmnopqrstuvwxyz'.split('')) + v[i].slice(at + 1);
+        v[i] = k % 6 === 0 ? v[0] : k % 6 === 1 ? task.inputs.reserved_names[k % task.inputs.reserved_names.length] : k % 8 === 2 ? `${v[i].slice(0, at)}${r.pick(['7', ' ', '-', '_'])}${v[i].slice(at)}` : v[i].slice(0, at) + r.pick('abcdefghijklmnopqrstuvwxyz'.split('')) + v[i].slice(at + 1);
         if (k % 17 === 0) v.pop();
       } else if (sub === 'sentence') {
         const w = v.replace('.', '').replace(/,/g, '').split(' '); const i = r.int(0, w.length - 1);
         w[i] = k % 7 === 0 ? task.inputs.forbidden_words[k % task.inputs.forbidden_words.length] : k % 5 === 0 ? w[(i + 1) % w.length] : r.pick(wordsPool);
         if (k % 11 === 0) w.splice(i, 1);
+        if (k % 4 === 1) { const longest = w.reduce((best, x, idx) => (x.length > w[best].length ? idx : best), 0); w[longest] = 'lamp'; }
         if (k % 13 === 0) w.push(w[0]);
         if (k % 3 === 0) w[i] = `${w[i]},`;
         const text = w.join(' ');

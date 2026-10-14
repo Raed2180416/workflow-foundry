@@ -196,10 +196,22 @@ function corrupted(task) {
 function nearMiss(task) {
   const { spec } = rebuilt(task); const ref = referenceSolve(task);
   switch (spec.subtype) {
-    case 'names': { // one name carries a forbidden letter sequence; everything else is fine
-      const names = [...ref.names]; const last = names[names.length - 1]; const f = spec.forbidden[0];
-      names[names.length - 1] = last.slice(0, 1) + f + last.slice(1 + f.length);
-      return { names };
+    case 'names': { // one name is swapped for a plausible but rule-breaking one (a forbidden letter sequence, or a taken name)
+      const pool = []; // [index, replacement]
+      ref.names.forEach((nm, i) => {
+        for (const f of spec.forbidden) for (let at = 0; at + f.length <= nm.length; at++) pool.push([i, nm.slice(0, at) + f + nm.slice(at + f.length)]);
+        for (const taken of spec.reserved) pool.push([i, taken]);
+      });
+      let best = null;
+      for (const [i, replacement] of pool) {
+        const names = [...ref.names]; names[i] = replacement;
+        const res = checkNames(spec, names);
+        if (res.pass) continue;
+        const failed = res.checks.filter(c => !c.ok).length;
+        if (!best || failed < best.failed) best = { failed, names };
+        if (failed === 1) break;
+      }
+      return { names: best.names };
     }
     case 'sentence': { // a filler word swapped for a forbidden one
       const req = new Set(spec.required); const anchors = [spec.rules.startWord, spec.rules.endWord].filter(Boolean);
