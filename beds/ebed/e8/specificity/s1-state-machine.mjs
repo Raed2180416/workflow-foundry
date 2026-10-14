@@ -175,7 +175,8 @@ function priceAndFees(st, ctx, fulfilments) {
   const priceOf = sku => price.get(sku) ?? price.get(norm(sku)) ?? 0;
   const fees = J(ctx, `rulebook/${st.ed}/shipping-fees.json`) ?? [];
   const feeOf = loc => fees.find(f => f.location === loc)?.feeMinor ?? 0;
-  return fulfilments.map(f => f.items.reduce((s, it) => s + it.qty * priceOf(it.sku), 0) + (f.location == null ? 0 : feeOf(f.location)));
+  return fulfilments.map(f => f.items.reduce((s, it) => s + it.qty * priceOf(it.sku), 0)
+    + (f.location == null || f.available === false ? 0 : feeOf(f.location)));
 }
 
 // F5: fit canonical argument names to the current API schema.
@@ -223,10 +224,11 @@ function blank(oid, cust, cur, items, p) {
     rv: null, q: [], obl: {}, tm: {},
   };
 }
-function addFulfilment(st, { fulfilmentId, location, items, amountMinor, status }) {
+function addFulfilment(st, { fulfilmentId, location, items, amountMinor, status, available }) {
   const fid = fulfilmentId;
   if (!st.F[fid]) st.fo.push(fid);
-  st.F[fid] = { id: fid, loc: location ?? null, items: (items ?? []).map(i => ({ sku: i.sku, qty: i.qty })), amt: amountMinor, av: location != null,
+  const av = location != null && available !== false && status !== 'unavailable';
+  st.F[fid] = { id: fid, loc: location ?? null, items: (items ?? []).map(i => ({ sku: i.sku, qty: i.qty })), amt: amountMinor, av,
     base: status ?? (location == null ? 'unavailable' : 'pending'), col: null, colRep: null, del: null, cfail: null,
     mode: null, failAt: null, locked: false, shipId: null, m: null };
 }
@@ -409,9 +411,9 @@ function onResult(st, p, ctx) {
   if (p.system === 'inventory' && p.op === 'allocate' && !p.key) {
     if (p.status === 'ok' && p.result) {
       if (!st.fo.length) {
-        const fs = (p.result.fulfilments ?? []).map(f => ({ ...f, location: f.available === false ? null : f.location }));
+        const fs = p.result.fulfilments ?? [];
         const amts = priceAndFees(st, ctx, fs);
-        fs.forEach((f, i) => addFulfilment(st, { fulfilmentId: f.fulfilmentId, location: f.location, items: f.items, amountMinor: amts[i] }));
+        fs.forEach((f, i) => addFulfilment(st, { fulfilmentId: f.fulfilmentId, location: f.location ?? null, items: f.items, amountMinor: amts[i], available: f.available }));
       }
       st.rd.a = 2;
     } else st.rd.a = code === 400 || p.status === 'rate-limited' || p.status === 'unknown' ? 4 : 3;

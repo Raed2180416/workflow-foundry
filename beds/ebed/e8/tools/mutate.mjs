@@ -51,7 +51,7 @@ const worldsArg = arg('--worlds', '1009:3:60,1010:5:60').split(',').map(s => { c
 const corpus = [];
 const specDir = path.join(here, '..', 'specificity');
 let solvers = [];
-try { solvers = readdirSync(specDir).filter(f => f.endsWith('.mjs')); } catch { /* none yet */ }
+try { solvers = process.argv.includes('--no-specificity') ? [] : readdirSync(specDir).filter(f => f.endsWith('.mjs')); } catch { /* none yet */ }
 for (const { seed, d, size } of worldsArg) {
   const w = generateWorld({ seed, difficulty: d, mix: 'tail', size });
   const r = await referenceRuns(w);
@@ -89,6 +89,7 @@ for (const [k, m] of all.slice(0, limit).entries()) {
     dead = sig.some((s, i) => s !== base[i]);
   } catch { dead = true; }
   if (dead) killed += 1; else survivors.push({ k, line: m.line + 1, from: m.from.trim(), to: m.to.trim() });
+  if ((k + 1) % 10 === 0) console.log(`  ${k + 1}/${Math.min(limit, all.length)} mutants, killed ${killed}`);
 }
 rmSync(tmp, { recursive: true, force: true });
 const n = Math.min(limit, all.length);
