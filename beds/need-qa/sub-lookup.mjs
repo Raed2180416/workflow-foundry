@@ -7,8 +7,8 @@
 //   steps 5: same, also restricted to ports in one region (a filter on the joined table)
 import { ROWS, uniqueNames, uniqueCodes, uniqueInts, sum, composePrompt, FORM } from './core.mjs';
 
-const N_PORTS = [4, 5, 7, 9, 12];
-const N_CLIENTS = [2, 3, 4, 5, 7];
+const N_PORTS = [4, 5, 8, 12, 16];
+const N_CLIENTS = [2, 3, 4, 6, 8];
 const N_REGIONS = [3, 3, 4, 4, 5];
 const LABEL = { port: 'port name', region: 'region', fee: 'fee per crate', dock_days: 'number of dock days' };
 const CHARGE_RULE = "A parcel's charge is its number of crates multiplied by the fee of its port.";

@@ -3,7 +3,7 @@
 
 export const SUBTYPES = Object.freeze(['ledger', 'lookup', 'calendar', 'convert']);
 // Rows of the main table per size level 1..5 (tuned so difficulty 5 stays under 2K tokens for every subtype).
-export const ROWS = Object.freeze([6, 9, 12, 16, 22]);
+export const ROWS = Object.freeze([6, 10, 15, 22, 32]);
 
 const ONSETS = ['Br', 'Cal', 'Dor', 'Fen', 'Gal', 'Hav', 'Jor', 'Kel', 'Lum', 'Mar', 'Nev', 'Or', 'Pel', 'Quin', 'Rav', 'Sol', 'Tam', 'Vel', 'Wyn', 'Zor', 'Ash', 'Bel', 'Cor', 'Dun', 'Eld', 'Fal', 'Gry', 'Hol', 'Ith', 'Kor'];
 const MIDS = ['a', 'e', 'i', 'o', 'u', 'ar', 'el', 'in', 'or', 'un', 'al', 'em'];
