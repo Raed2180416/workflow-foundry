@@ -5,6 +5,8 @@
 // and nothing it says reaches the reference. No model is called.
 //   node beds/wbed/references/validate.mjs --rung r1|r3 [--seeds 301-312] [--difficulties 3,4] [--policies A,B]
 //        [--concurrency 2] [--work <dir>] [--out <file.json>] [--labels]   (--labels: also compare with referenceSolve)
+//   Policy 'author' (author fixtures 373-378 only): judges answered from author/fixture-answers.json through the flow-v3
+//   override hook (author/author-override.mjs); it checks the code given correct readings, not a model.
 import path from 'node:path';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import os from 'node:os';
@@ -36,15 +38,22 @@ export function stubPort(policyName, log) {
 }
 
 // One run: the reference on one task under one stub policy. Returns the row the summary reads.
+export const AUTHOR_SEEDS = Object.freeze([373, 374, 375, 376, 377, 378]);
 export async function runOne({ rung, seed, difficulty, policy, work, labels = false }) {
   const ref = REFERENCES[rung];
   const bed = await import(`../../${ref.bed}/index.mjs`);
+  let author = {};
+  if (policy === 'author') {
+    if (!AUTHOR_SEEDS.includes(seed)) throw new Error('policy author is for the author fixtures (seeds 373-378) only');
+    const table = JSON.parse(readFileSync(path.join(HERE, 'author/fixture-answers.json'), 'utf8'));
+    author = { flowOverride: path.join(HERE, 'author/author-override.mjs'), flowOverrideData: { answers: table[`${ref.bed}:${seed}:d${difficulty}`] ?? {} } };
+  }
   const task = bed.generate({ seed, split: 'dev', difficulty });
   const workdir = path.join(work, `${rung}-${seed}-d${difficulty}-${policy}`);
   rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
   const log = [];
-  const rc = await runCompiled({ solvePath: ref.file, task: { prompt: task.prompt, inputs: task.inputs, ...(task.files ? { files: task.files } : {}) }, modelPort: stubPort(policy, log),
-    perTaskUsd: PER_TASK_USD, timeoutMs: TIMEOUT_MS, workdir, outputSchema: bed.outputSchema, allowedModels: MODELS, flowPath: FLOW_V3, label: `wbed-ref-${rung}-${seed}-${difficulty}-${policy}` });
+  const rc = await runCompiled({ solvePath: ref.file, task: { prompt: task.prompt, inputs: task.inputs, ...(task.files ? { files: task.files } : {}) }, modelPort: stubPort(policy === 'author' ? 'A' : policy, log),
+    perTaskUsd: PER_TASK_USD, timeoutMs: TIMEOUT_MS, workdir, outputSchema: bed.outputSchema, allowedModels: MODELS, flowPath: FLOW_V3, label: `wbed-ref-${rung}-${seed}-${difficulty}-${policy}`, ...author });
   let pass = false, score = 0;
   if (rc.status === 'ok') { const o = bed.oracle(task, rc.output); pass = !!o.pass; score = typeof o.score === 'number' ? o.score : 0; }
   const judges = rc.trace.filter(e => e.kind === 'judge');
@@ -54,7 +63,7 @@ export async function runOne({ rung, seed, difficulty, policy, work, labels = fa
     pass, score, outDigest: rc.output == null ? null : sha(canonical(rc.output)).slice(0, 16),
     costUsd: rc.costUsd, modelCalls: log.length, sonnetCalls: log.filter(x => x.model === SONNET).length,
     judges: judges.length, judgesFailed: judges.filter(j => !j.ok).length, judgeNames: [...new Set(judges.map(j => j.name.replace(/:.*$/, '')))].sort(),
-    escalations: judges.filter(j => j.ok && j.escalations > 0).length, flags: rc.flags?.names ?? [], flagCount: rc.flags?.count ?? 0,
+    escalations: judges.filter(j => j.ok && j.escalations > 0).length, overridden: judges.filter(j => j.overridden).length, flags: rc.flags?.names ?? [], flagCount: rc.flags?.count ?? 0,
     latencyMs: rc.latencyMs, events: rc.trace.length, maxPromptChars: Math.max(0, ...log.map(x => x.promptChars)), invariants: done?.invariants ?? null, guards: done?.guards ?? null,
   };
   if (labels && rc.status === 'ok') row.labelMatch = canonical(bed.referenceSolve(task)) === canonical(rc.output);

@@ -1,0 +1,98 @@
+{
+ "about": "Author answers for the W-bed author fixtures (dev seeds 373-378, difficulties 3 and 4), read from each fixture's notes by the reference author. Keys: '<bed>:<seed>:d<difficulty>', then the judge name. Used only with author-override.mjs on these fixtures.",
+ "wbed-r1:373:d3": {
+  "dob-order:BRIGHTDESK": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
+  "dob-order:ATLAS": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
+  "place-country": { "countries": ["NO"] }
+ },
+ "wbed-r1:373:d4": {
+  "marker:VERITAS:\"env\":\"replay\"": { "meaning": "VOID" },
+  "marker:KOBO:flag: PAUSED": { "meaning": "VOID" },
+  "marker:ATLAS:DORMANT": { "meaning": "KEEP" },
+  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
+  "dob-order:ATLAS": { "order": "DMY", "switch_date": "2023-01-29", "order_after_switch": "MDY" },
+  "place-country": { "countries": ["CH"] },
+  "marker:KOBO:確認中": { "meaning": "COUNTS" }
+ },
+ "wbed-r1:374:d3": {
+  "marker:ATLAS:ARCHIVE": { "meaning": "KEEP" },
+  "marker:BRIGHTDESK:stage=review": { "meaning": "VOID" },
+  "dob-order:ATLAS": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
+  "place-country": { "countries": ["CH", "IT"] }
+ },
+ "wbed-r1:374:d4": {
+  "marker:ATLAS:QUERY": { "meaning": "KEEP" },
+  "marker:BRIGHTDESK:stage=review": { "meaning": "KEEP" },
+  "marker:KOBO:flag: GUEST": { "meaning": "VOID" },
+  "dob-order:ATLAS": { "order": "MDY", "switch_date": "2022-10-03", "order_after_switch": "DMY" },
+  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" }
+ },
+ "wbed-r1:375:d3": {
+  "marker:LEDGR:ruhend": { "meaning": "KEEP" },
+  "dob-order:ATLAS": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:BRIGHTDESK": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
+  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
+  "place-country": { "countries": ["BE"] }
+ },
+ "wbed-r1:375:d4": {
+  "marker:BRIGHTDESK:stage=hold": { "meaning": "VOID" },
+  "marker:VERITAS:\"env\":\"replay\"": { "meaning": "KEEP" },
+  "marker:KOBO:flag: GUEST": { "meaning": "VOID" },
+  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:ATLAS": { "order": "DMY", "switch_date": "2020-11-09", "order_after_switch": "MDY" },
+  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "place-country": { "countries": ["DE", "DE"] },
+  "marker:VERITAS:held": { "meaning": "DOES_NOT_COUNT" }
+ },
+ "wbed-r1:376:d3": {
+  "marker:ATLAS:DORMANT": { "meaning": "KEEP" },
+  "marker:KOBO:flag: GIFT": { "meaning": "VOID" },
+  "dob-order:ATLAS": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" }
+ },
+ "wbed-r1:376:d4": {
+  "marker:BRIGHTDESK:stage=legacy": { "meaning": "VOID" },
+  "marker:VERITAS:\"env\":\"replay\"": { "meaning": "KEEP" },
+  "marker:ATLAS:ARCHIVE": { "meaning": "VOID" },
+  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
+  "dob-order:ATLAS": { "order": "MDY", "switch_date": "2021-02-15", "order_after_switch": "DMY" },
+  "place-country": { "countries": ["AU"] },
+  "marker:ATLAS:QUERY": { "meaning": "DOES_NOT_COUNT" }
+ },
+ "wbed-r1:377:d3": {
+  "marker:VERITAS:\"env\":\"backfill\"": { "meaning": "VOID" },
+  "marker:LEDGR:Altdaten": { "meaning": "KEEP" },
+  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:ATLAS": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" },
+  "dob-order:VENDEX": { "order": "MDY", "switch_date": "", "order_after_switch": "DMY" }
+ },
+ "wbed-r1:377:d4": {
+  "marker:KOBO:flag: GIFT": { "meaning": "VOID" },
+  "marker:LEDGR:archiviert": { "meaning": "VOID" },
+  "marker:VERITAS:\"env\":\"backfill\"": { "meaning": "KEEP" },
+  "dob-order:ATLAS": { "order": "MDY", "switch_date": "2020-07-17", "order_after_switch": "DMY" },
+  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "place-country": { "countries": ["JP", "MX"] },
+  "marker:ATLAS:QUERY": { "meaning": "DOES_NOT_COUNT" }
+ },
+ "wbed-r1:378:d3": {
+  "marker:ATLAS:DORMANT": { "meaning": "VOID" },
+  "marker:VERITAS:\"env\":\"replay\"": { "meaning": "KEEP" },
+  "dob-order:ATLAS": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" }
+ },
+ "wbed-r1:378:d4": {
+  "marker:ATLAS:DORMANT": { "meaning": "VOID" },
+  "marker:LEDGR:ruhend": { "meaning": "KEEP" },
+  "marker:VERITAS:\"env\":\"batch\"": { "meaning": "KEEP" },
+  "dob-order:ATLAS": { "order": "MDY", "switch_date": "2020-09-05", "order_after_switch": "DMY" },
+  "dob-order:VENDEX": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "dob-order:BRIGHTDESK": { "order": "DMY", "switch_date": "", "order_after_switch": "MDY" },
+  "marker:BRIGHTDESK:batch": { "meaning": "COUNTS" }
+ }
+}

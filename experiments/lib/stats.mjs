@@ -289,7 +289,7 @@ export function reuseBoundRule(clusters, { bound = 0.05, z = 1.645, level = 0.95
 // (each (parent, entry) pair is offered at most once). ρ_P = max(rhoParent, ρ̂_P) and ρ_E = max(rhoEntry, ρ̂_E), each ρ̂
 // the one-way ANOVA ICC over that axis's clusters (`iccAnova`), each floor an assumption: RHO_REUSE_FLOOR 0.1 for parents
 // (M3) and RHO_ENTRY_FLOOR 0.1 for entries (never measured; the top of the plausible range in D30). combine 'max' takes
-// the larger one-way Deff instead (a candidate the D30 simulation rejected; kept for the record).
+// the larger one-way Deff instead (a D30 candidate: admissible, not chosen; kept for the record).
 export const RHO_ENTRY_FLOOR = 0.1;
 
 // Parent and entry clusters of one list of admitted decisions ({ parent, entry, wrong | label }).
@@ -319,7 +319,7 @@ export function clusterDeff2({ rows, cols }, { rhoParent = RHO_REUSE_FLOOR, rhoE
 }
 
 // The amended L4 rule (M3b): the one-sided exact bound of `reuseBoundRule` on the two-way effective counts x/Deff₂ of
-// n/Deff₂, read once over all admitted decisions. entryGuard (a candidate the D30 simulation rejected; off by default)
+// n/Deff₂, read once over all admitted decisions. entryGuard (a D30 candidate that never met the false-kill half; off)
 // also kills when any one entry's own one-sided exact lower bound, at level 1 − (1 − guardLevel)/entries (Bonferroni), is
 // above `bound` on its raw counts. bounds: false skips the reported interval (the decision does not use it; for speed).
 export function reuseBoundRule2(crossed, { bound = 0.05, level = 0.95, minN = 60, rhoParent = RHO_REUSE_FLOOR, rhoEntry = RHO_ENTRY_FLOOR,

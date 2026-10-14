@@ -261,18 +261,19 @@ const VENDEX_VOID_RE = VENDEX_VOID ? new RegExp(`${escapeRe(VENDEX_VOID)}\\s*$`)
 function parseVendex(body) {
   let s = body.replace(/\s*Remark:.*$/s, '').trim();
   const out = { name: null, dobRaw: null, dobMissing: false, phone: null, phoneMissing: false, place: null };
-  const name = '((?:(?:Mr|Mrs|Ms|Miss|Dr|Prof)\\.?\\s+)?[A-ZÀ-ÖØ-Þ][\\p{L}\'’.-]*(?:\\s+[A-ZÀ-ÖØ-Þ][\\p{L}\'’.-]*){0,4})';
+  const particle = '(?:van|von|de|der|den|da|di|del|della|du|le|la|ten|ter|zu|y)';
+  const name = `((?:(?:Mr|Mrs|Ms|Miss|Dr|Prof)\\.?\\s+)?[A-ZÀ-ÖØ-Þ][\\p{L}'’.-]*(?:\\s+(?:${particle}\\s+)*[A-ZÀ-ÖØ-Þ][\\p{L}'’.-]*){0,4})`;
   const dateRe = '((?:the\\s+)?\\d{1,2}(?:st|nd|rd|th)?(?:\\s+of)?[\\s-]+[A-Za-z]{3,9}\\.?[\\s,-]+\\d{2,4}|[A-Za-z]{3,9}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}|\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4})';
   let m;
   if ((m = new RegExp(`^${name}\\s+—\\s+([^—]+?)\\s+—`, 'u').exec(s))) { out.name = m[1]; out.place = m[2]; }
   else if ((m = new RegExp(`^Supplier contact\\s+${name}\\s*\\(`, 'u').exec(s))) out.name = m[1];
   else if ((m = new RegExp(`^Spoke with\\s+${name}\\s+on\\b`, 'u').exec(s))) out.name = m[1];
   else if ((m = new RegExp(`^Entry revised [^:]+:\\s+${name}\\s*(?:\\(([^)]+)\\))?,`, 'u').exec(s))) { out.name = m[1]; out.place = m[2] ?? null; }
-  else if ((m = new RegExp(`^${name}(?:,|\\s+(?=DOB|date of birth|b\\.|born))`, 'u').exec(s))) out.name = m[1];
+  else if ((m = new RegExp(`^${name}(?:,|\\s+(?=DOB|[Dd]ate of birth|b\\.|born|[Bb]irth date))`, 'u').exec(s))) out.name = m[1];
   if (out.name) out.name = out.name.replace(/\s+(?:DOB|b|born)\.?$/i, '').trim();
   // place
   if (!out.place) { const p = /\bbased in ([^,;.()]+(?:\.\s?[A-Z][a-z]+)?)/.exec(s) ?? /\(based in ([^)]+)\)/.exec(s); if (p) out.place = p[1].trim(); }
-  if (!out.place) { const p = /\ba ([A-Z][a-z]+) supplier\b/.exec(s) ?? /—\s+([A-Z][a-z]+) supplier\s+—/.exec(s); if (p) out.place = p[1]; }
+  if (!out.place) { const p = /\ban? ([A-Z][a-z]+) (?:supplier|contact|customer|company|vendor|firm)\b/.exec(s) ?? /—\s+([A-Z][a-z]+) (?:supplier|contact)\s+—/.exec(s); if (p) out.place = p[1]; }
   if (out.place && /^location not stated$/i.test(out.place)) out.place = null;
   // birth date
   if (/\b(?:DOB|date of birth|birth date)\s+(?:unknown|not on file|not recorded)\b/i.test(s) || /\bbirth date not on file\b/i.test(s)) out.dobMissing = true;
@@ -320,8 +321,10 @@ function templateRegex(template) {
   // "INV <number> :: acct #<row id> :: dated <date> :: <currency> <amount> :: <status>" -> a regex with named groups.
   const names = [];
   let re = '';
-  template = template.replace(/\b(?:YYYY|YY|DD|MM)(?:[/.\-](?:YYYY|YY|DD|MM)){2}\b/g, '<date>');
-  for (const part of template.split(/(<[^>]+>)/)) {
+  // A bare date format in the literal text (KOBO's "| YYYY/MM/DD |") is a date placeholder too.
+  const parts = template.split(/(<[^>]+>)/).flatMap(part => (part.startsWith('<') ? [part]
+    : part.split(/(\b(?:YYYY|YY|DD|MM)(?:[/.\-](?:YYYY|YY|DD|MM)){2}\b)/).map(x => (/^(?:YYYY|YY|DD|MM)[/.\-]/.test(x) ? `<${x}>` : x))));
+  for (const part of parts) {
     if (!part) continue;
     if (part.startsWith('<')) {
       const p = part.slice(1, -1).toLowerCase();
@@ -337,8 +340,9 @@ function invoiceFormatOf(system, text) {
   const de = /German number format|"\." groups thousands, "," is the decimal/.test(para);
   const tpl = /Lines "([^"]+)"/.exec(para)?.[1] ?? null;
   const first = text.split('\n').find(l => l.trim()) ?? '';
-  const kind = tpl && !first.trim().startsWith('{') ? 'template' : first.trim().startsWith('{') ? 'jsonl' : /;/.test(first) && /Rechnung|Satz|Status/i.test(first) ? 'semicolon'
-    : /,/.test(first) && /invoice|status|amount/i.test(first) ? 'csv' : system === 'VENDEX' || /free-text|typed in/i.test(para) ? 'prose' : 'unknown';
+  const header = !/\d/.test(first);
+  const kind = first.trim().startsWith('{') ? 'jsonl' : tpl ? 'template' : /free-text|typed in/i.test(para) ? 'prose'
+    : header && first.includes(';') ? 'semicolon' : header && first.includes(',') ? 'csv' : 'unknown';
   const defaultCcy = /Amounts are US dollars/i.test(para) ? 'USD' : /yen/i.test(para) ? 'JPY' : null;
   return { para, de, tpl, kind, defaultCcy };
 }
@@ -467,7 +471,7 @@ flow.note('rows', { total: exportRows.length, void: exportRows.length - live.len
 
 // ---- names ----
 const NICK = (() => {
-  const appendix = CUSTOMER_SPEC.split(/Appendix A/i)[1] ?? '';
+  const appendix = CUSTOMER_SPEC.split(/Appendix A\b/).at(-1) ?? '';
   const map = {};
   for (const m of appendix.matchAll(/([A-Za-zÀ-ÿ/ ]+?)\s*=\s*([A-Za-zÀ-ÿ]+)/g)) for (const nick of m[1].split('/')) map[nick.trim().toLowerCase()] = m[2].trim();
   return map;
@@ -574,7 +578,7 @@ function codeOrder(para, about) {
 // used (order_after_switch is then the other order; it is ignored without a switch_date).
 const ORDER_SCHEMA = { type: 'object', required: ['order', 'switch_date', 'order_after_switch', 'quote'], properties: {
   order: { type: 'string', enum: ['DMY', 'MDY'] }, switch_date: { type: 'string' }, order_after_switch: { type: 'string', enum: ['DMY', 'MDY'] }, quote: { type: 'string' } } };
-async function orderJudge({ name, para, context, what, comparator }) {
+async function orderJudge({ name, para, context, what, comparator, tiers = TIERS }) {
   const text = `${what}\nAnswer DMY when the day comes first and MDY when the month comes first. If the notes say that ${comparator} on or after some date use the other order, give that date as YYYY-MM-DD in switch_date and the order used from that date on in order_after_switch; otherwise switch_date is "" (order_after_switch is then ignored).\nThe notes:\n${fence(para)}${context ? `\nNotes on the other system they refer to:\n${fence(context)}` : ''}`;
   const all = `${para} ${context ?? ''}`;
   const check = v => {
@@ -585,7 +589,7 @@ async function orderJudge({ name, para, context, what, comparator }) {
     if (!datesInText(all).includes(k)) return 'switch_date does not appear in the notes';
     return v.order_after_switch !== v.order ? null : 'order_after_switch must be the other order';
   };
-  const v = await softJudge(name, { tiers: TIERS, system: SYSTEM_PROMPT, prompt: text, schema: ORDER_SCHEMA, check });
+  const v = await softJudge(name, { tiers, system: SYSTEM_PROMPT, prompt: text, schema: ORDER_SCHEMA, check });
   return v ? { order: v.order, switch: v.switch_date ? { at: Number(v.switch_date.replace(/-/g, '')), order: v.order_after_switch } : null } : null;
 }
 const flip = o => (o === 'DMY' ? 'MDY' : o === 'MDY' ? 'DMY' : o);
@@ -597,34 +601,49 @@ const dobConventions = await flow.phase('dob-conventions', async () => {
     const coded = codeOrder(para, /birth|dates?\b/i);
     if (coded) { conv[s] = { order: coded, switch: null, by: 'code' }; continue; }
     const ref = /same order as ([A-Z]{3,})/.exec(para)?.[1];
-    const v = await orderJudge({ name: `dob-order:${s}`, para, context: ref ? paraOf(CUSTOMER_NOTES, ref) : null,
-      what: `In what order does ${s} write NUMERIC birth dates (such as 04/06/1990) in the customer export?`, comparator: 'rows last changed' });
-    conv[s] = v ? { ...v, by: 'judge' } : { order: null, switch: null, by: 'none' };
+    const ask = { para, context: ref ? paraOf(CUSTOMER_NOTES, ref) : null,
+      what: `In what order does ${s} write NUMERIC birth dates (such as 04/06/1990) in the customer export?`, comparator: 'rows last changed' };
+    const v = await orderJudge({ name: `dob-order:${s}`, ...ask });
+    conv[s] = v ? { ...v, by: 'judge', ask } : { order: null, switch: null, by: 'none', ask };
   }
   return conv;
 });
-// Cross-system evidence: rows whose names match a row with an unambiguous birth date say which reading is right.
+// Cross-system evidence: rows whose names match a row with an unambiguous birth date say which reading agrees with it.
+// The export plants namesakes whose dates agree only under the wrong reading, so evidence never overrides the notes: a
+// reading that unanimous evidence (>= 2 rows, none for the other order) contradicts gets one second opinion from Sonnet,
+// whose answer stands. Only when no judge answered at all does unanimous evidence decide (flag); otherwise the run deopts.
 const orderFor = (r, conv) => { const c = conv[r.system]; if (!c?.order) return null; return c.switch && r.updatedKey != null && r.updatedKey >= c.switch.at ? c.switch.order : c.order; };
 await flow.phase('dob-evidence', async () => {
-  const anchors = live.filter(r => r.dob.kind === 'fixed');
+  const anchors = live.filter(r => r.dob.kind === 'fixed' || (r.dob.kind === 'numeric' && dobConventions[r.system]?.by === 'code'))
+    .map(r => ({ r, key: r.dob.kind === 'fixed' ? r.dob.key : readNumeric(r.dob.parts, dobConventions[r.system].order, 1900) })).filter(a => a.key != null);
+  const tallyOf = (s, c, side) => {
+    const rows = live.filter(r => r.system === s && r.dob.kind === 'numeric' && (side === 'all' || (side === 'after') === (r.updatedKey != null && r.updatedKey >= c.switch.at)));
+    const tally = { DMY: 0, MDY: 0 };
+    for (const r of rows) {
+      const dmy = readNumeric(r.dob.parts, 'DMY', 1900), mdy = readNumeric(r.dob.parts, 'MDY', 1900);
+      if (dmy === mdy) continue;
+      for (const a of anchors) if (a.r.system !== s && namesMatch(a.r.key, r.key)) { if (a.key === dmy) tally.DMY++; if (a.key === mdy) tally.MDY++; }
+    }
+    return tally;
+  };
+  const unanimous = t => (t.DMY >= 2 && t.MDY === 0 ? 'DMY' : t.MDY >= 2 && t.DMY === 0 ? 'MDY' : null);
   for (const s of Object.keys(dobConventions)) {
     const c = dobConventions[s];
-    for (const side of c.switch ? ['before', 'after'] : ['all']) {
-      const rows = live.filter(r => r.system === s && r.dob.kind === 'numeric' && (side === 'all' || (side === 'after') === (r.updatedKey != null && r.updatedKey >= c.switch.at)));
-      const tally = { DMY: 0, MDY: 0 };
-      for (const r of rows) {
-        const dmy = readNumeric(r.dob.parts, 'DMY', 1900), mdy = readNumeric(r.dob.parts, 'MDY', 1900);
-        if (dmy === mdy) continue;
-        for (const a of anchors) if (a.id !== r.id && namesMatch(a.key, r.key)) { if (a.dob.key === dmy) tally.DMY++; if (a.dob.key === mdy) tally.MDY++; }
-      }
-      const said = side === 'after' ? c.switch.order : c.order;
-      const evid = tally.DMY >= 2 && tally.MDY === 0 ? 'DMY' : tally.MDY >= 2 && tally.DMY === 0 ? 'MDY' : null;
-      flow.note(`dob-evidence:${s}:${side}`, { said, tally, evid });
-      if (evid && evid !== said) {
-        flag('dob-order-overridden-by-evidence', { system: s, side, said, tally });
-        if (side === 'after') c.switch.order = evid; else c.order = evid;
-      }
-      if (!said && !evid) flow.guard('dob-order-known', false, { system: s, side, tally });
+    if (c.by === 'code') continue;
+    const sides = c.switch ? ['before', 'after'] : ['all'];
+    const tallies = Object.fromEntries(sides.map(side => [side, tallyOf(s, c, side)]));
+    const against = sides.filter(side => { const e = unanimous(tallies[side]); return e && e !== (side === 'after' ? c.switch.order : c.order); });
+    flow.note(`dob-evidence:${s}`, { said: { order: c.order, switch: c.switch }, tallies, against });
+    if (c.by === 'none') {
+      const e = unanimous(tallies.all ?? { DMY: 0, MDY: 0 });
+      flow.guard('dob-order-known', !!e, { system: s, tallies });
+      c.order = e; c.by = 'evidence'; flag('dob-order-from-evidence', { system: s, tallies });
+      continue;
+    }
+    if (against.length) {
+      const second = await orderJudge({ name: `dob-order-second:${s}`, ...c.ask, tiers: [SONNET] });
+      flag('dob-order-second-opinion', { system: s, first: { order: c.order, switch: c.switch }, second, tallies });
+      if (second) Object.assign(c, second, { by: 'second-opinion' });
     }
   }
 });
@@ -717,14 +736,15 @@ const clusters = await flow.phase('identity', async () => {
   const needsPlace = new Set();
   for (const [a, b] of pairs) {
     if (a.dob.kind === 'fixed' && b.dob.kind === 'fixed') continue;
-    for (const r of [a, b]) if (r.ph.kind === 'local' && !r.iso && WS(r.country)) needsPlace.add(r);
+    for (const r of [a, b]) if (r.ph.kind === 'local' && !r.iso && (WS(r.country) || r.system === 'VENDEX')) needsPlace.add(r);
   }
   if (needsPlace.size) {
-    const rows = [...needsPlace], places = rows.map(r => WS(r.country));
+    // A VENDEX entry that names no place is sent whole (without its remark): the country may be implied by its wording.
+    const rows = [...needsPlace], places = rows.map(r => WS(r.country) || WS(String(r.body ?? '').replace(/\s*Remark:.*$/s, '')));
     const isoList = Object.keys(PHONE_TABLE);
     const schema = { type: 'object', required: ['countries'], properties: { countries: { type: 'array', items: { type: 'string', enum: [...isoList, 'UNKNOWN'] } } } };
     const got = await softJudge('place-country', { tiers: TIERS, system: SYSTEM_PROMPT, schema,
-      prompt: `Each line below is a place, region or nationality taken from a supplier register (fictional people, real places). For each line, in order, give the ISO 3166-1 alpha-2 code of the country it is in, choosing only from ${isoList.join(', ')}, or UNKNOWN when it is not clearly one of them.\n${fence(places.join('\n'))}`,
+      prompt: `Each line below is a place, a region, a nationality or a whole entry taken from a supplier register (fictional people, real places). For each line, in order, give the ISO 3166-1 alpha-2 code of the country it names or implies (for an entry: the country the contact is based in), choosing only from ${isoList.join(', ')}, or UNKNOWN when it is not clearly one of them.\n${fence(places.join('\n'))}`,
       check: v => (Array.isArray(v.countries) && v.countries.length === places.length ? null : `give exactly ${places.length} answers, one per line`) });
     rows.forEach((r, i) => { const c = got?.countries?.[i]; r.iso = c && c !== 'UNKNOWN' ? c : null; });
     flow.note('places', rows.map(r => ({ id: r.id, place: WS(r.country), iso: r.iso })));

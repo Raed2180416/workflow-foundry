@@ -93,6 +93,22 @@ test('the verifier\'s finding holds under the exact crossed model, and M3b remov
   assert.ok(s.byRule.aE2.serve <= 0.05, `M3b miss ${s.byRule.aE2.serve}`);
 });
 
+test('the chosen rule at the design D30 names (96 balanced entries, 576 admitted) meets the criterion at the top of the plausible range', () => {
+  const cell = { rhoP: 0.1, rhoE: 0.1, entries: 96 }, rules = ['aE2'];
+  const at = p => simulateCrossed({ reps: 2000, seed: 'm3b-test-design', rules, p, ...cell }).byRule.aE2;
+  const falseKill = 1 - at(0.01).serve, miss = at(0.05).serve;         // grid, 20,000 draws: 2.8% and 3.2%
+  assert.ok(falseKill <= 0.05 && miss <= 0.05, `false kill ${falseKill}, miss ${miss}`);
+  assert.equal(at(0).serve, 1);                                         // a perfect gate is served
+});
+
+test('at L4 as written (12 entries) a good gate is not decided, and knowing the true ICCs does not rescue it', () => {
+  const cell = { rhoP: 0.1, rhoE: 0.1, entries: 12 }, rules = ['aE2', 'ref'];
+  const s = simulateCrossed({ reps: 2000, seed: 'm3b-test-12', rules, p: 0.01, ...cell }).byRule;
+  assert.ok(1 - s.aE2.serve > 0.25, `aE2 false kill ${1 - s.aE2.serve}`);  // grid: 36.7%
+  assert.ok(s.aE2.none > 0.9 * (1 - s.aE2.serve));                          // mostly "no decision", not "kill"
+  assert.ok(1 - s.ref.serve > 0.15, `reference false kill ${1 - s.ref.serve}`); // grid: 29.6%: an information limit
+});
+
 test('decide2 applies the declared procedure mechanically', () => {
   const row = (rule, entries, admit, falseKill, miss, tier = 'binding') => ({ rule, tier, entries, admit, falseKill, miss, pass: falseKill <= 0.05 && miss <= 0.05 });
   const grid = [];

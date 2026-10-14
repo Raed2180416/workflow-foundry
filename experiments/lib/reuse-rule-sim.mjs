@@ -450,7 +450,7 @@ export function renderCrossedMarkdown({ reps, seed, grid, need, decision, genera
   }
   L.push('', `Chosen: **${decision.chosen ?? 'none'}**.`, '');
   L.push('## Grid: false kill / miss (%) by rule', '');
-  L.push(`Each cell is "false kill / miss". 96 parents × 6 offers. "true ICC" is the generator's (parent, entry). "mean q" is the realized mean wrong probability at p = 0.05 (the cap's loss). "lib bad" is P(θ_lib ≥ 0.05) at p = 0.05.`, '');
+  L.push(`Each cell is "false kill / miss". 96 parents × 6 offers. "true ICC" is the generator's (parent, entry). "mean q" is the realized mean wrong probability at p = 0.05 (a check on the generator). "lib bad" is P(θ_lib ≥ 0.05) at p = 0.05.`, '');
   L.push(`| tier | case | E | share | ρ_P | ρ_E | true ICC | admitted | mean q | lib bad | ${rules.join(' | ')} |`);
   L.push(`|---|---|---|---|---|---|---|---|---|---|${rules.map(() => '---').join('|')}|`);
   const cfgKey = r => [r.tier, r.name, r.shape, r.alloc, r.entries, r.admit, r.rhoP, r.rhoE].join('|');
