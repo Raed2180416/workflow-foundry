@@ -478,7 +478,8 @@ export function withCascades(rows, builds = [], specs = CASCADES, opts = {}) {
         outRows.push(row);
       });
     }
-    if (P.lineage) for (const l of P.lineageList) outBuilds.push({ ...l.build, job, mode: s.id, rep: l.rep });
+    // The build is paid either way; a failed build does not fail the cascade's tasks (the fallback runs them).
+    if (P.lineage) for (const l of P.lineageList) outBuilds.push({ ...l.build, job, mode: s.id, rep: l.rep, failed: false, primaryBuildFailed: l.failed });
   }
   return needTable([...rows, ...outRows], [...builds, ...outBuilds], opts);
 }
@@ -645,6 +646,12 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
     });
     per.set(job, { modes: ms, stats: st, cells: byCell });
   }
+  const pointOf = (job, cell, mode, k, f) => {
+    const p = per.get(job); if (!p) throw new Error(`no labels for job ${job}`);
+    const e = p.cells.get(cellKey(cell)), v = e ? e[k].get(mode) : p.stats.has(mode) ? f(p.stats.get(mode), cell) : undefined;
+    if (v === undefined) throw new Error(`mode ${mode} not labelled for ${job}`);
+    return v;
+  };
   const at = (job, cell) => {
     const p = per.get(job); if (!p) throw new Error(`no labels for job ${job}`);
     const e = p.cells.get(cellKey(cell)); if (!e) throw new Error(`no labels for ${job} at ${cellKey(cell)}`);
@@ -654,8 +661,9 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
     table, cells, delta, jobs: table.jobs, at,
     modesOf: job => per.get(job).modes,
     stats: (job, mode) => per.get(job).stats.get(mode),
-    u: (job, cell, mode) => { const v = at(job, cell).u.get(mode); if (v === undefined) throw new Error(`mode ${mode} not labelled for ${job}`); return v; },
-    usd: (job, cell, mode) => { const v = at(job, cell).usd.get(mode); if (v === undefined) throw new Error(`mode ${mode} not labelled for ${job}`); return v; },
+    // Utility and $ per task at any cell: precomputed on the grid, else from the point statistics (no labels there).
+    u: (job, cell, mode) => pointOf(job, cell, mode, 'u', needUtility),
+    usd: (job, cell, mode) => pointOf(job, cell, mode, 'usd', perTaskUsd),
   };
 }
 

@@ -39,7 +39,8 @@ export function extractPrompt(text) {
 Rules:
 1. One entry is one trigger-to-obligation pair. "quote" is the user's words that state it, copied EXACTLY (same words,
    same punctuation, same symbols, same markdown marks), at most one sentence. Never paraphrase inside "quote".
-2. If one sentence states several conditions, make one entry per condition with the same quote and a different summary.
+2. If one sentence states several conditions, make one entry per condition, each quoting the part of the sentence that
+   states it (two entries never have the same quote).
 3. If a condition only makes sense with another sentence (a definition, a reading of an ambiguous rule, the window it
    refers to, a constant), copy that sentence exactly into "context".
 4. Include conditions stated in tables, lists, definitions and "readings" sections. Leave out history, background and

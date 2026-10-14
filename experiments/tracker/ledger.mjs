@@ -147,7 +147,12 @@ export function buildLedger({ text, source = {}, extractor = null, entries = [],
     if (!at) { dropped.push({ index: i, quote, why: 'not a verbatim span of the text' }); continue; }
     const key = normQuote(quote, true);
     const dup = kept.find(k => k.key === key || (k.at.start === at.start && k.at.end === at.end));
-    if (dup) { dup.merged += 1; dup.contextRaw.push(...(Array.isArray(e.context) ? e.context : [])); continue; }
+    if (dup) {         // merged: the first entry is kept; a different summary is appended, so nothing the extractor said is lost
+      dup.merged += 1; dup.contextRaw.push(...(Array.isArray(e.context) ? e.context : []));
+      const s = typeof e.summary === 'string' ? e.summary.trim() : '';
+      if (s && !dup.summary.includes(s)) dup.summary = dup.summary ? `${dup.summary}; also: ${s}` : s;
+      continue;
+    }
     kept.push({ key, at, quote, kind: e.kind, summary: typeof e.summary === 'string' ? e.summary.trim() : '', contextRaw: Array.isArray(e.context) ? [...e.context] : [], merged: 0 });
   }
   kept.sort((a, b) => a.at.start - b.at.start || a.at.end - b.at.end);

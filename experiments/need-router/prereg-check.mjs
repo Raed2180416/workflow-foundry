@@ -307,7 +307,8 @@ export async function hashCollisions(stages, { jobs = null } = {}) {
 export function stamp(stages, { repo = REPO } = {}) {
   const git = args => { try { return execFileSync('git', args, { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; } };
   const fileSha = rel => (existsSync(path.join(repo, rel)) ? sha256(readFileSync(path.join(repo, rel))) : null);
-  const trees = ['experiments/need-router', 'experiments/lib', 'experiments/c0', 'experiments/jit', 'src', 'beds/wbed/references'];
+  // beds/wbed-rN and beds/ebed-e8 are registration shims: the rung code lives in beds/wbed and beds/ebed, so those trees are stamped too.
+  const trees = ['experiments/need-router', 'experiments/lib', 'experiments/c0', 'experiments/jit', 'src', 'beds/lib', 'beds/wbed', 'beds/ebed', 'beds/wbed/references'];
   const families = [...new Set(stages.jobs.filter(j => j.bedStatus === 'exists' && j.family && !j.family.startsWith('sealed')).map(j => j.family))].sort();
   return {
     commit: git(['rev-parse', 'HEAD']), rootTree: git(['rev-parse', 'HEAD^{tree}']),
