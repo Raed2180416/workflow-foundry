@@ -334,11 +334,11 @@ test('T1: the stream\'s own registration path (R1 dev 301-324, warmup 3, maxTrac
   assert.equal(lines(p.events).filter(x => x.kind === 'library-relearn').length, 1); assert.equal(createRegistry({ dir: path.join(p.dir, 'library') }).get(reg.hash).version, 2);
 });
 
-test('T4: a gateway budget deopt inside a wide item is never caught by the item policy (onItemError null): the run deopts kind budget', async t => {
+test('T4: a gateway budget deopt inside a wide item is never caught by the item policy (onItemError null): the run deopts kind budget (one item at a time, so the gateway refuses the call after the cap deterministically)', async t => {
   const port = { policy: POLICY, providers: {}, policyHash: 'stub', async call(r) { await sleep(5); return { ok: true, value: { v: 1 }, costUsd: 0.02, modelId: r.modelId }; } };
   const r = await runSolver(t, { port, capUsd: 0.05, source: `const flow = createFlow({ budgetUsd: 1 });
 const cov = await flow.wide('w', { items: Array.from({ length: 10 }, (_, i) => i), worker: { judge: { tiers: ['${HAIKU}'], prompt: i => 'item ' + i, schema: { type: 'object' } } },
-  reduce: (rs, cov) => cov, budgetUsd: 0.5, quorum: 0.1, onItemError: 'null', prefixShare: false });
+  reduce: (rs, cov) => cov, budgetUsd: 0.5, quorum: 0.1, onItemError: 'null', prefixShare: false, concurrency: 1 });
 flow.done({ done: cov.done });` });
   assert.equal(r.code, 75, r.stderr); assert.equal(r.deopt.kind, 'budget');
 });

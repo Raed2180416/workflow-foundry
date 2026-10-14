@@ -34,7 +34,7 @@
   ],
   "minedFrom": ["google-adk:…workflows/nested_workflow", "dspy:…rlm-cohort-analysis", "airflow:…example_sagemaker_endpoint"],
   "companions": [{ "id": "P05", "lift": 5.0, "n": 75 }, { "id": "P13", "lift": 3.7, "n": 17 }],
-  "order": [
+  "temporal": [
     { "before": ["P12", "P15", "P17"], "source": "J1: 'Must values be read out of free text ... before any calculation?'; calculation read as the fan cards that compute totals or differences (P12 REDUCE, P15 AGG with a minor-unit identity, P17 AMOUNT/ADJUST) [I] (ATTACK-20261014 M4, added 2026-10-14)" },
     { "before": ["P58"], "source": "P58 companions: P03 'inputs read from text first' (declared here because P58-P60 are frozen by hash, FROZEN-P58-P60.json)" }
   ],

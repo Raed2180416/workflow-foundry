@@ -31,7 +31,7 @@
     { "code": "CALLS", "mapSlot": "HANDLERS", "budgetUsd": 0.05, "concurrencySlot": "CONCURRENCY" }
   ],
   "companions": [{ "id": "P09", "why": "J3: ambiguous items" }],
-  "order": [
+  "temporal": [
     { "after": ["P58"], "source": "P58 companions: P07 'dispatch on the decided outcome' (declared here because P58-P60 are frozen by hash, FROZEN-P58-P60.json; ATTACK-20261014 M4, added 2026-10-14)" }
   ],
   "tags": ["branch", "inbox"],

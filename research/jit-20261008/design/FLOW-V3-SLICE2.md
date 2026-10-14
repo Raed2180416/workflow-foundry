@@ -125,7 +125,12 @@ Protocol of W-BED-R4-NOTES §6: the R1 profile is learned on the R1 stream shape
 checked on the R1 packs of R4 parents at d2–d5 (child difficulty clamped to 3–4). "in-dN" are unplanted (in-profile) packs
 at child difficulty N; "planted" are the CYYDDD packs; "on system" means a reason names the planted system's path. The
 options were chosen while looking at parents 341–346, so those numbers are development evidence; parents 301–324 were
-measured once with the same options as a second dev set (also dev split; not held-out) [M].
+measured with the same options as a second dev set (also dev split; not held-out) [M]. *Correction (review, §17 T1):* 301–324
+was not measured only once: it was also consulted when the finer field shapes were kept ("no false refusal on either set",
+below), so it is development evidence too, not a confirmation set. *And (review T1, P0):* at the 2b commit the stream did not
+register this profile: it learned the profile from the adopted version's compile traces only (3 at the first compile), which
+false-refuses 24/24 in-profile d4 packs. Fixed in §17: the stream now learns on every task input the arm was given and, at the
+end of the arm's stream, on the whole stream, which reproduces exactly the profile measured here.
 
 | parents | profile + check | in-d3 false refusals | in-d4 false refusals | planted refused (on system) |
 |---|---|---|---|---|
@@ -377,7 +382,8 @@ directory and the subsidiary id, nothing of the other packs (asserted). The runn
 fresh workdir; in a stream that workdir is an interpreter-family session directory named by `sessionIdOf(..., 'agent',
 ...)`, so the model-visible path names neither arm nor role (asserted). `agent.textLabel` is the stream's declaration of the
 run's text; `'third-party'` refuses every node. The label is declared per stream, not detected [I: correct for the W-bed,
-whose text is generated].
+whose text is generated]. *Review (§17 I4):* the label no longer defaults to `'synthetic'`: a stream config must declare it,
+and a host without one treats the text as third-party.
 
 **The runner** (`agent-node.mjs agentNodeRunner`): one `runClaudeCode` session with the node's prompt (instructions, the
 file list, the retry reason, the `answer.json` contract with `returns`), only the node's files, the tool list and an abort
@@ -426,7 +432,11 @@ budgetUsd, concurrency = 8, itemFloorUsd, onItemError, prefixShare = true, prefi
   `itemCheck(result, item, i)` judges each result in code; a failure fails the item.
 - **Budget.** The operator's `budgetUsd` must be below what the run has left (the SDK rule). An item starts only while the
   operator's spend plus an estimate for the items in flight and this one fits (estimate = `itemFloorUsd` or the mean cost of
-  finished items); the rest are `skipped`. `n × itemFloorUsd > budgetUsd` refuses `BUDGET_TOO_SMALL` up front.
+  finished items); the rest are `skipped`. `n × itemFloorUsd > budgetUsd` refuses `BUDGET_TOO_SMALL` up front. *Review (§17
+  C4/T2, P1):* as built this was not a bound (the estimate was 0 until an item finished, so `concurrency` items started at
+  once: 8 × $0.20 under a $0.50 budget spent $1.60) and the budget was not held against the run. Now the open operator holds
+  its budget, call and agent items carve their reservations from it, and judge and code items run one item before the
+  estimate exists.
 - **Coverage, reduce, verify.** `reduce(results, coverage)` (code) gets `null` for items not done and `{n, done, failed,
   skipped, retried, items[]}`; `done / n < quorum` deopts `quorum`; `verify(value)` (code) failing deopts `verify`. A panel
   verifier (FLOW-V3 §2.3) is not built.
@@ -508,7 +518,7 @@ refused; 315/1680, 315/1680, **0/1680**, **0/1680** wrong passes [M].
 - `slice2b-wiring.test.mjs` pins the separation on a fixed set (keyed-stanzas learned; held stanzas served; monthly-csv,
   column-store, print-image and code-page refused under v3 + STRUCTURE_CHECK; the monthly-csv dump passes the v2 profile).
 
-## 13. E2 freeze record after slice 2b
+## 13. E2 freeze record after slice 2b (superseded by §17.6, after the review fixes)
 
 | item | value |
 |---|---|
@@ -586,3 +596,237 @@ Suite: `node --test --test-concurrency=2 experiments/jit/test/*.test.mjs`: **300
   comparison with `best_of_n` at equal tokens, which decides whether `wide` becomes a default; the measured cache-read share
   on a live port; a bed-side `trace.decode` built from the node's host event; the compile prompt's agent and wide lines have
   never met a builder (the first paid R5/R6 compile is their test).
+
+## 17. Review round (2026-10-14): three adversarial reviews, the fixes, and what is left
+
+Three reviews read slices 2a and 2b at `3ce217b`: **correctness** (C1–C11), **tests and pins** (T1–T5), and **isolation and
+threats** (I1–I9). Each finding was checked here, first with the reviewer's own $0 script where there was one (r1–r7,
+`wide-burst`, `resume-probe`: all reproduced as reported), then with a regression test in
+`experiments/jit/test/slice2-review.test.mjs` (20 tests, named by finding id). The file was also run against a `git archive`
+of the pre-fix tree (`868eef8`, the reviewed code plus other agents' unrelated commits). **18 of its 20 tests failed there,
+each on its own assertion**, and all 20 pass after the fixes. T4 and T5 are coverage tests of behaviour that was already
+right, so they pass on both trees. Where two reviewers rated the same defect differently, the higher rating is used
+(C8/I3: P1). $0: no model was called; `beds/sealed/` was not read.
+
+**Where the code landed.** While this round was in progress, the orchestrator's autosave snapshots committed most of the
+review edits: `5853658`, `f90641c`, `e2c3e16`, `e1c62e4`, `e04f443`, `25eae8a`, `efc0d8f` and `e9868ec`, all titled "WIP
+snapshot of running agents". The `flow-v3 slice 2 review fixes:` commits finish the round. **Launch precondition:**
+unchanged from 2a and 2b. R0's streams run from the frozen worktree `/var/tmp/foundry-work/kit-e1`, which holds the
+pre-slice-2 JIT tree, so nothing here moves the code under a running stream.
+
+### 17.1 Fixed: P0 and P1
+
+**C1 + I5 (P0): environment faults inside the call tree.**
+- *Defect.* A rate limit or sandbox fault inside a child, the local interpreter or an agent node was dropped. The run then
+  deopted with kind `call` and was not retried. A v2 arm in the same situation retries.
+- *Fix in `call-host.mjs`.* The host records the fault (`envFaultOf`) on the event and in the answer as `envFault`, and
+  counts faults in `totals().envFaults` and `envFaultCodes`. Both fields are absent when there was no fault, so slice 2a rows
+  are unchanged. The fault can come from:
+  - the child's own error;
+  - any model call the child made;
+  - the interpreter's error;
+  - the agent runner's error.
+
+  A child that failed with an environment fault is never handed to the interpreter (`onDeopt: 'interpret'`).
+- *Fix in `stream.mjs`.* `compiledFaultOf(rc)` treats a run as an environment fault when its status is not `ok` and either
+  `metEnvFault(rc)` holds or `rc.calls.envFaults > 0`. `faultCode` names the codes.
+- *Tests.* `C1/I5` (host level), and `C1 end to end`: a CUR library arm whose child interpreter is rate-limited once logs
+  `fault-retry`, and the retried run delivers `compiled`.
+
+**C2 + T3 (P0): run-level resume.**
+- *Defect.* Resume served `flow:call` answers whose child had failed (the port-level `ok` is always true).
+- *Fix in `run-compiled.mjs createResumePort`.* A `flow:call` row counts as completed only when the child's status is `ok`
+  or `interpreted`. This applies both when the row is recorded (`ok: false, portOk: true`) and when it is served. Anything
+  else reruns, together with every request after it.
+- *Fix in the call host.* A served answer is reported to `live.resumed(req, value)`. The host logs it (`memo: 'resume'`, $0,
+  with `inputDigest` and the output), so the retried attempt's `calls.jsonl` and `totals()` cover the whole run.
+- *Test.* `C2/T3`.
+
+**T1 (P0, because R4 is in the first paid ladder run): the registered profile.**
+- *Defect.* `registerVersion` learned the profile from the adopted version's compile traces only: 3 at the first compile,
+  at most 8 later. The B4 numbers of §2.2 were measured on 24 stream tasks. The reviewer re-measured with the profiles the
+  stream could actually produce:
+
+  | profile learned on | in-d3 refused | in-d4 refused |
+  |---|---|---|
+  | 3 d3 tasks | 1/18 | 24/24 |
+  | 8 d3 tasks | 3/18 | 24/24 |
+  | 6 d3 + 2 d4 tasks | 3/18 | 2/24 |
+  | 8 d4 tasks | 18/18 | 10/24 |
+
+- *Fix in `stream.mjs`.*
+  - At adoption, the profile is learned on every task input the stream gave the arm, up to and including that task
+    (`profileTasksUpTo`). The evidence records `profileTasks` beside `traces`.
+  - When the arm finishes its stream, `relearnLibrary` registers the adopted version again with the whole stream's
+    profile. The solver and contract are the same, so the hash is the same; the entry version is new, and its evidence has
+    `profileFrom: 'stream'`.
+  - The next rung's CUR seed copies that entry. A resumed arm that has already finished writes nothing again.
+- *Test `T1`.* The real stream registration path over R1 dev 301–324 (warmup 3, maxTraces 8, fakes for the model work):
+  - registration at #3 has `profileTasks` 4;
+  - at stream end the entry has `n` 24 and is deep-equal to `learnProfile(R1 dev 301–324, PARAMS_V2)`;
+  - R4 parents 341–346 with `TOLERANT_CHECK` give **0/18 in-d3, 0/24 in-d4, planted 24/24**, the pinned measurement.
+
+**I1 (P0 for the R5 rung): a root solver could run code shipped in its inputs.**
+- *Defect.* `codeExecutionOf` ran only on library entries, so a JIT root solver could run the `decoder.mjs` shipped inside
+  a dump.
+- *Fix in `compile.mjs`.* A prompt-version-5 `solve.mjs` is scanned. A solver with findings is not host-checked and not
+  accepted: `checkTraces.error.code` is `EXECUTES_CODE` and `record.codeExecution` lists the findings.
+- *Fix in `stream.mjs`.* Such an attempt is void, like a nested-model compile (`void` event with `codeExecution`). It is
+  never adopted, under either adoption rule.
+- *Fix in `prompts.mjs`.* Method item 9 (library texts only) ends: "Never run or import a program that comes with a task's
+  files … port its logic into solve.mjs".
+- *Scope.* Prompt versions ≤ 4 are not scanned, so earlier arms keep their compile semantics.
+- *Test.* `I1`.
+
+**C3 (P1): the agent memo key.** The key now includes the resolved model, the sorted tool list and the item attempt, and the
+journal rows carry `model` and `tools`. `budgetUsd` is deliberately left out: a retry's budget is "what is left", and that
+changes under replay. *Test:* `C3`.
+
+**C4 + T2 (P1): `flow.wide`'s budget.**
+- *Hold.* An open operator holds its budget against the run, in the SDK. The run's remaining budget subtracts
+  `hold = max(0, cap − spent − reservations inside)` for each open top-level wide, and a nested wide is held inside its
+  parent.
+- *Call and agent items.* An item starts only while its reservation fits the operator's free budget, and
+  `flow.call`/`flow.agent` inside an item carve from the operator. The result is a hard bound on spend:
+  - before, 8 × $0.20 items under a $0.50 operator spent $1.60;
+  - now, 2 items run and spend $0.40.
+- *Judge and code items.* The first item runs alone until a cost is known (`itemFloorUsd > 0` gives the estimate up front).
+  After that, an item starts while (in flight + 1) × the mean cost fits.
+  - before, 10 × $0.02 items under $0.05 spent $0.16;
+  - now they spend $0.04.
+- *Waiting.* A worker that cannot start an item waits for an item in flight instead of exiting.
+- *Prefix sharing.* Held prefix siblings check the budget again after release, and the leader's group opens once its item is
+  booked.
+- *Test.* `C4/T2` covers call items, judge items, two wides at once in a `map` (the second is refused `BUDGET_TREE` with
+  `heldByWidesUsd`), and a call made next to an open wide.
+
+**C5 (P1): a refused agent retry.**
+- *Defect.* When the host refused a retry, the node deopted even under `onFail: 'skip'`.
+- *Fix.* A host refusal on attempt > 0 is a failed retry:
+  - the trace gets an `agent-refused` event with `retry: true`;
+  - the reasons gain `retry refused: <code>`;
+  - the node takes its `onFail` path: `skip` returns `{failed, status, reasons, attempts, spentUsd, retryRefused}`, and
+    `deopt` deopts with kind `agent` and those reasons.
+- *Test.* `C5`.
+
+**C6 (P1, not reachable yet): the agent-node limit.**
+- *Fix.* The limit counts nodes: a retry of a node already admitted is not a new node. `agent.sessionRuns` (1..1000,
+  default 1) multiplies the limit for a host that serves several solver runs. `compile.mjs sessionPort` passes the case
+  count for a host check, and `BUILDER_SESSION_RUNS` (1000) for the builder session, whose gateway cap is the real bound.
+- *Test.* `C6`.
+
+**C8 + I3 (P1): deopts inside items could be caught.**
+- *Defect.* Under `null` or `retry(n)`, solver code could catch a deopt raised inside an item (`try/catch`,
+  `Promise.allSettled`). The item then counted as done.
+- *Fix in `deopt()`.* The deopt is recorded on the item attempt's cell before it is thrown.
+- *Fix in `runItem`.* Each attempt runs on a fresh cell and attempt path, and an attempt whose cell is set fails with that
+  deopt even if the code returned. Plan and reduce contexts share the enclosing attempt's cell.
+- *Test.* `C8/I3`.
+
+**I2 (P1): a verify the node can satisfy by itself.**
+- *Fix in `prompts.mjs`.* Method item 10 and the `flow.agent` sketch tell the builder to compare the value with what its own
+  code reads from `ctx.files`: "a number the node reports about its own result (its trailer, its totals) is not a check".
+- *Fix in `agent-node.mjs agentPrompt`.* The retry text frames the reason as a symptom and says not to change a reported
+  value just to agree with the check.
+- *Test.* `I2/I9`.
+
+**I4 (P1): D10 failed open.**
+- *Fix in `stream.mjs`.* `library.agent.textLabel` is required, with no default.
+- *Fix in `call-host.mjs`.* The host's default is `'third-party'`, so a host with no declaration refuses every node.
+- *Test.* `I4`.
+
+### 17.2 Fixed: P2
+
+| id | finding | fix | test |
+|---|---|---|---|
+| C7 | `retry(n)` on a call/agent worker got the memo answer again | a retried item's calls and agent nodes carry its attempt path (`itemAttempt`) in the key and the request; first attempts keep slice 2a keys (SDK and host `callKeyOf` agree) | `C7` |
+| C10 | a child refused only because the parent's model calls hold reservations was labelled `budget-exceeds-parent` | the host's rule counts the scope's model reservations as siblings: `BUDGET_TREE` with `modelReservedUsd` | `C10` |
+| C11 | an `async` verify always failed ("verify returned object") and paid for retries | `verdictOf` throws on a returned Promise (a construction error: the run crashes once, no retry is paid) | `C11` |
+| I6 | `wide` counted refused, deopted and failed call/agent items as done | the `skip` objects carry a non-enumerable mark (`SKIPPED`, `isSkipped`; JSON unchanged); a call or agent item that returned one fails with reason `refused <code>` / `deopt <kind>` / `failed <status>` (under the default `crash` policy that fails the operator, as a failed `itemCheck` does) | `I6` |
+| I7 | `novelMode: 'warn'` hid drift from shadows | a warned call flags the run (`profile-warn:<name>`), so `shadowOnFlags` fires; `classifyReuse` returns `warned`, `warned-correct` or `warned-wrong` for a warned `call-end` | `I7` |
+| I8 | scan gaps; harvest of a shipped decoder | see below the table | `I1`, `I8` |
+| I9 (part) | retry reason inline without a data fence | the reason sits in a fenced block (longer than any backtick run in it), labelled as data that may quote the earlier answer or the files | `I2/I9` |
+| T4 | no test that a budget deopt inside an item is never caught | test added (one item at a time, so the gateway's refusal is deterministic) | `T4` |
+| T5 | r0-records JIT arm hashes not pinned | pinned against ENGINE-FREEZE §1 (`838a9040…`, `ca4f763d…`, `3b9dc642…`, `333aabf5…`, `2559d6a6…`) | `T5` |
+
+I8 in detail:
+- **Dynamic import.** It may name only `./tools/flow.mjs` or `./tools/model.mjs`.
+- **New scan rules.** The scan now flags:
+  - an import specifier containing `..`;
+  - `eval` in any call form: `globalThis.eval(s)`, `(0, eval)(s)`;
+  - the `Function` constructor with any argument, including `globalThis.Function`;
+  - a `.constructor(` call (the AsyncFunction constructor);
+  - the modules `node:module`, `wasi`, `inspector` and `repl`.
+- **Rule order.** Earlier rules keep their order.
+- **Harvest.** A script byte-identical to a file the node was given is dropped, counted as `harvestDroppedShipped`.
+
+### 17.3 Deferred (P2, recorded, not fixed)
+
+**C9: stall restarts do nothing with the real runner.**
+- `agentNodeRunner` books a killed session's unknown cost at its bound, which is the whole remaining reservation. So
+  `amount − spent < floor`, and the host stops before restarting.
+- With the real runner a stalled node therefore fails `STALLED`, and only the SDK's own retry (if any) runs again.
+- The fix would give each try `amount / (stallRestarts + 1)`, which halves a node's budget whenever `stallMs` is set. That
+  trade is the owner's call.
+- `stallMs` is off by default and no config sets it.
+
+**C10, second half: the stream budget rule.** The rule does not count the parent's own model reservations or a second agent
+node in flight. This does not cause overspend: the host refuses (now as a typed `BUDGET_TREE`) and judges wait at the
+gateway. The rule bounds the children's reservations, and §3 already says the margin is the room for the parent's judges.
+
+**I9, rest.** The retry reason is fenced and framed but still inline. Writing it to `./retry-reason.txt` was not done; the
+file would carry the same text under another path.
+
+**I2, the bed's side.** The R5 reference verify (`beds/wbed/r5/index.mjs:176`) checks that `trailer_quote` occurs in the
+dump but does not tie `o.trailer`'s numbers to it, so a node that rewrites its trailer passes it. That is a bed change, and
+`beds/wbed/` is another agent's area. It is recorded here for the bed owner and was not edited.
+
+**Related to C1, not raised by the reviews: faults during the compile host check.**
+- An environment fault inside a library child during the compile's host check is counted on the check's call host
+  (`record.library.checkCalls.envFaults`).
+- The stream's compile retry still reads only `builderError` and the check's own error code, so such a case counts against
+  acceptance.
+- A retry here would buy a new builder session; rechecking only the check is the better fix and is left open.
+
+### 17.4 Rejected, in part, with the reason
+
+**I2's SDK rule** ("fail a retry whose `trailer_quote` is unchanged but whose totals changed"). Rejected as an SDK rule: the
+SDK does not know which fields of a node's `returns` are claims about the files. The fix belongs where that knowledge is:
+- the builder's verify, which the prompt now steers to check against `ctx.files`;
+- the node's retry instructions;
+- the bed's own verify (§17.3).
+
+**C4's mechanism** ("hold the unspent wide budget in `sub.reservedUsd`"). Implemented differently but to the same rule:
+- The hold is computed from each open wide's control record, as `cap − spent − reservations inside`.
+- It is not a fixed amount added to `sub.reservedUsd`. A fixed amount would count the wide's own spend twice, once as spend
+  and once as hold.
+
+**I1's side observation** ("`tools/gateway.json` readable to dump code"). Not a separate defect: the solver needs the token
+to reach the gateway. The defence is that no solver runs dump code (I1, I8).
+
+Nothing else was rejected: every other finding was confirmed as stated.
+
+### 17.5 Semantics that changed (deviations to read before a paid run)
+
+1. **Wide admission.**
+   - Judge and code workers with no `itemFloorUsd` run their first item alone, which costs one item's latency per wide.
+   - Workers that cannot start an item wait rather than exit.
+   - A prefix group opens when the leader's item is booked, not when its call returns. For one-judge items the two are the
+     same moment.
+2. **Wide and skip objects.** A call or agent item that returned its `skip` object fails. Under the default `crash` policy
+   that fails the operator.
+3. **Synchronous checks.** `verify`, `check` and `itemCheck` must be synchronous.
+4. **Compile scan.** A v5 solver with scan findings is not checked and not adopted.
+5. **D10 default.** The host's `textLabel` default is now `'third-party'`, and a stream config must declare the label.
+6. **Library registry.** It gains one row per finished library arm (the stream-wide profile). Adoption-time profiles cover
+   every task input the arm was given.
+7. **Host totals.** `totals()` gains `envFaults` and `envFaultCodes` only when a fault happened. A call-host event may carry
+   `envFault`, `itemAttempt` or `harvestDroppedShipped`.
+8. **Existing tests edited (deliberate, and only these).**
+   - `agent-node.test.mjs` (7 host configs and the `hostWith` helper) and `wide.test.mjs` (1): agent hosts declare
+     `textLabel: 'synthetic'`.
+   - `slice2b-wiring.test.mjs`: `library.agent` configs declare `textLabel`, and the error-message regex follows the new
+     text.
+   - `stream-library.test.mjs`: v1's profile is learned on 2 task inputs instead of 1 compile trace, and the new evidence
+     fields are asserted.
+   - `slice2-wiring.test.mjs`: the flow-v3 pin.
