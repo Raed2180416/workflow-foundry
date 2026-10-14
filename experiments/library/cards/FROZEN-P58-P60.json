@@ -219,12 +219,12 @@
    }
   },
   "P60": {
-   "name": "SLA / obligation clock (pause, resume, business calendar, effective-dated editions)",
+   "name": "SLA / obligation clock (pause, resume, business calendar)",
    "version": 1,
-   "sha256": "806cd8a6065f5fe0c85e193ac3dd1a8277b69d9a396672f48d18aa05f49633c3",
+   "sha256": "cd9b392339a9b0e4ce4eb24aa9b8f2a6526d530267b595bd3f9a2dc8de16e4d3",
    "skeletonSha256": "0b7d1ce393fb59eb6109539ba215f53a5f3dfccf5f05e1e80e892cf19a1210d2",
    "files": {
-    "P60/card.json": "e62394f4fabfa9fc8cc1da367f782880e2a762d100ec8786dd336ee6c39fa6e1",
+    "P60/card.json": "9b125abc4610032fca1f5f2064a1c5c48d22e5c49b5e1c12b01d7d3243cd9c5b",
     "P60/fixtures/drift.json": "3f90d84b8264a06f11a00636418030df73c3288e69011464baddef22310c4758",
     "P60/fixtures/no-match.json": "ea21b8ed6b088254c02466c7d043a3bfa94fcfaf9546658ffc24968f82ce7da6",
     "P60/fixtures/positive.json": "1b34335f28f1557d77ca113b928e9a0ccf9d40e05f04854416e8059647381e0c",

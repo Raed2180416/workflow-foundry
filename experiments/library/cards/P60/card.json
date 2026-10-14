@@ -1,6 +1,6 @@
 {
   "id": "P60", "layer": "L1", "version": 1,
-  "name": "SLA / obligation clock (pause, resume, business calendar, effective-dated editions)", "short": "obligation-clock", "family": "async", "tier": "S", "constructs": [2, 4, 5, 10, 18, 19],
+  "name": "SLA / obligation clock (pause, resume, business calendar)", "short": "sla-obligation-clock", "family": "async", "tier": "S", "constructs": [2, 4, 5, 10, 18, 19],
   "flow": { "version": 3, "autoFlag": false },
   "fragment": { "in": "any (CASES reads it)", "out": { "type": "object", "required": ["clocks"], "properties": { "clocks": { "type": "array", "items": { "type": "object",
     "required": ["id", "state", "policyEdition", "calendarEditions", "targetMinutes", "elapsedMinutes", "remainingMinutes", "met", "breached", "dueAt", "warnings"], "properties": {

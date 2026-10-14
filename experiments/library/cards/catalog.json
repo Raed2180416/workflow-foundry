@@ -2531,9 +2531,9 @@
   {
    "id": "P60",
    "layer": "L1",
-   "name": "SLA / obligation clock (pause, resume, business calendar, effective-dated editions)",
+   "name": "SLA / obligation clock (pause, resume, business calendar)",
    "short": "sla-obligation-clock",
-   "gist": "pause, resume, business calendar, effective-dated editions",
+   "gist": "pause, resume, business calendar",
    "family": "async",
    "tier": "S",
    "tierRaw": "S",
