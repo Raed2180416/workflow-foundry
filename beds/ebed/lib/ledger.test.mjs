@@ -83,6 +83,10 @@ test('review P2: lid assignment is independent of list order; key, permitted-win
     // Both windows contain Jan 6: the earlier deadline (A) takes it, so Jan 20 can still satisfy B.
     assert.equal(matchEffects({ expected: order, rows: [row('06', 'k1'), row('20', 'k2')], end: '2026-02-01T00:00:00Z' }).ok, true);
   }
+  // A window containing the row comes before an earlier deadline that does not: C [Jan 10-12] ends before D [Jan 1-31],
+  // but a row on Jan 3 is inside D only.
+  const C = lid('C', '10', '12'), D = lid('D', '01', '31');
+  for (const order of [[D, C], [C, D]]) assert.equal(matchEffects({ expected: order, rows: [row('03', 'k1'), row('11', 'k2')], end: '2026-02-01T00:00:00Z' }).ok, true);
   // A retry keeps its key's lid: B's F3 retry under k2 is not taken by A (first by deadline), which would be a
   // key-split and key-reuse.
   const twin = [A, { ...A, lid: 'A2' }];
