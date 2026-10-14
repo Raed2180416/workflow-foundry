@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { VENV_PY, TOOL_CLIENT, adapterText, materializeWorkdir, readJson, scriptedRunner, stratifiedSubset } from '../lib.mjs';
 import { makeLedger, runTasks } from '../run.mjs';
+import { runClaudeCode, sandboxAvailable } from '../../../src/executors/claude-code.mjs';
 import { parity } from '../parity.mjs';
 
 const tmp = p => mkdtempSync(path.join(os.tmpdir(), `autobench-${p}-`));
@@ -184,4 +185,35 @@ test('parity (2 tasks): bridge path == official evaluate() path, exactly; the re
   assert.equal(r.all_exact, true, JSON.stringify(r.rows.map(x => [x.task, x.checks])));
   assert.equal(r.shim_neutrality.ok, true, JSON.stringify(r.rows.map(x => x.neutral)));
   assert.ok(r.rows.every(x => x.toolCalls > 5));
+});
+
+// A stand-in for `claude -p` (runClaudeCode's `binary`), run inside the real executor sandbox: it reaches the bridge
+// only through the mailbox in its workdir, and the host-only directories (grades, prepared task with assertions,
+// other forks) are invisible to it. Prints a stream-json result like the CLI, so runClaudeCode parses it.
+const STANDIN = String.raw`#!/bin/sh
+cat > /dev/null
+node tool.mjs call api_fetch '{"method": "GET", "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/msg_3001"}' > read.out 2>&1 && r=read-ok || r=read-failed
+node tool.mjs call api_fetch '{"method": "PATCH", "url": "https://yourinstance.salesforce.com/services/data/v61.0/sobjects/Contact/003001", "body": "{\"Phone\": \"+1-555-0101\"}"}' > patch.out 2>&1
+if [ -e "$AB_PROBE_HOST" ]; then h=host-visible; else h=host-hidden; fi
+if [ -e "$AB_PROBE_PREP" ]; then p=prep-visible; else p=prep-hidden; fi
+siblings=$(ls .. | wc -l)
+printf '{"type":"system","subtype":"init","session_id":"standin"}\n'
+printf '{"type":"result","subtype":"success","is_error":false,"result":"%s %s %s siblings=%s","total_cost_usd":0,"num_turns":2}\n' "$r" "$h" "$p" "$siblings"
+`;
+
+test('sandboxed: a stand-in CLI inside the executor sandbox reaches the bridge via the mailbox and cannot see host-only files', { skip: (!HAVE_VENV && 'AutomationBench venv missing') || (!sandboxAvailable() && 'no user namespaces') }, async () => {
+  const live = tmp('sbx');
+  let result = null;
+  const runner = async args => {
+    const bin = path.join(args.workdir, 'claude-standin.sh');
+    writeFileSync(bin, STANDIN, { mode: 0o755 });
+    const r = await runClaudeCode({ ...args, binary: bin, env: { AB_PROBE_HOST: path.join(live, 'host'), AB_PROBE_PREP: path.join(live, 'prep') }, timeoutMs: 120_000 });
+    result = r.result;
+    return r;
+  };
+  const { results } = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], runner, model: 'stand-in', det: 'record', liveRoot: live, outDir: null, log: () => {} });
+  assert.equal(result, 'read-ok host-hidden prep-hidden siblings=1');
+  assert.equal(results[0].forks[0].sessionError, null);
+  assert.equal(results[0].forks[0].steps, 2);
+  assert.equal(results[0].final.task_completed_correctly, 1);
 });

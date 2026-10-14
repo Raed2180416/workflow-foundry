@@ -8,8 +8,10 @@ E8: it reuses only the shared host, oracle and libraries (`beds/ebed/host/`, `or
 goldens are in place and pass (measurements below). Still missing before admission, as for E8: the three blind
 specificity solvers (`specificity/`, a separate session, DESIGN §18 step 5), the oracle mutation score (≥ 0.95), the
 metamorphic suite, an Intl minute-stepper N-version check (the N-version check built here compares three clocks that
-all use pinned zone tables), the paid triviality attack and the arm (c) reference. Nothing here is evidence about any
-arm.
+all use pinned zone tables), the paid triviality attack and the arm (c) reference. Not built from the design's module
+plan: `ledger/SEMANTICS.md` (DESIGN §14 is its draft) and the tools `arm-smoke`, `mutate`, `specificity-run`, `nversion`
+and `timeline` (part A's `world-health --case` prints a planned timeline; `historyOf` gives the oracle's). Nothing here
+is evidence about any arm.
 
 ```sh
 node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'           # world (part A) + item suites (part B)
@@ -84,7 +86,7 @@ fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (
 - **Critical** (contract §5.3): `effect-after-end` (an `itsm` op or an `sla.start` committed after the incident's close or
   cancel record), `sod` (an approval task routed to, or answered by, the incident's caller), `major-without-approval`.
 
-## Measurements ($0, dev seeds)
+## Measurements ($0)
 
 All numbers are from runs on 2026-10-14 at $0; wall times were taken with other jobs sharing the 4-core machine.
 
@@ -140,7 +142,7 @@ moves D earlier.
 engine and no deadline closures) passes 8/111 completed cases at seed 1241 d3: only the messages that name no incident.
 
 **Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 54 tests (19 part A, 35 part B), about
-80 s on an idle machine.
+70 s on an idle machine.
 
 ## Readings and decisions added in part B (for review)
 

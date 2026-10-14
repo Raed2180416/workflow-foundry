@@ -23,9 +23,10 @@ reading rules of §5–§8 and §11–§12 are also code: `experiments/need-rout
 Tags: [D] from DESIGN.md, [A] an adopted owner decision (DECISIONS-ADOPTED.md), [M] measured or read in a repository file
 today, [P] a choice made in this preregistration because DESIGN leaves it open (listed in §14 for review before freeze).
 
-Evaluation grades: **development** (TRAIN jobs, M0 diagnostics, M1, M1e, NL0, NL1, archived LEGACY rows; used to build
-and tune), **held-out** (NL2, NL2b, E2E; families never used for tuning), **sealed** (NL3; run once by a session that
-tuned nothing). Tests used to improve the router or the builders are development evidence, never held-out.
+Evaluation grades: **development** (TRAIN jobs, M0 diagnostics, M1 with its tags `m1` and `m1-d5`, M1e, NL0, NL1,
+judge-H on TRAIN, archived LEGACY rows; used to build and tune), **held-out** (NL2p, NL2, NL2bp, NL2b, E2E; families
+never used for tuning), **sealed** (NL3; run once by a session that tuned nothing). Tests used to improve the router or
+the builders are development evidence, never held-out.
 
 ---
 
@@ -383,11 +384,16 @@ lists in `stages.json engineStamp`, printed read-only by `prereg-check.mjs --sta
 - **Analysis stamp** `A-Freeze`: `features.mjs`, `router.mjs`, `voi.mjs`, `metrics.mjs`, `evaluate.mjs`, `card.mjs`,
   `prereg-rules.mjs`. These may change freely until the Freeze addendum pins them (§6), because they touch no label.
 
-**Allowed differences between two paid stages' label-engine stamps:** one bed directory first used by a job whose first
-paid rows are in the later stage. Example: the `codefix-notests` generator before NL1. **Any other difference** (a file,
-a tree, a bed used by both stages, the preregistered arms, prices, seeds, grid or meter, the need ledger, Node, the CLI)
-is a §13 deviation, recorded before the later stage starts. NL0 rows are never re-run or pooled differently because of
-it; the deviation says which rows each engine produced.
+**Allowed differences** between a paid stage's label-engine stamp and the earlier paid stages' stamps: a bed directory
+that no earlier stamp holds, which means its first paid use. No earlier label depends on it. Examples: the TRAIN families
+first run in NL1, the `codefix-notests` generator, the held-out families in NL2p and NL2. **Any other difference** is a
+§13 deviation, recorded before the later stage starts:
+- against the latest earlier stamp: a file, a tree, the preregistered arms, prices, seeds, grid or meter, the need
+  ledger, Node, the CLI;
+- against every earlier stamp that used it: a bed.
+
+NL0 rows are never re-run or pooled differently because of a deviation; the deviation says which rows each engine
+produced.
 
 | Item | Value |
 |---|---|
@@ -487,7 +493,7 @@ it; the deviation says which rows each engine produced.
 | Leaf modes per (V, N, W) cell | **TBD-FREEZE**: best mean TRAIN utility within each leaf [D] |
 | NR-probe | `voi.mjs bestProbe`; probeable {direct-H, agent-H}; kMax 2 (two direct-H draws, one agent-H run); the probe task (seed 601 at the band's median level, §3.3); Beta(1 + s, 1 + n − s) priors from TRAIN jobs in the leaf; deployable signals only (schema validity, agreement of the two direct-H answers, agent-H turns and cost, family-handed tests), never the oracle; probe iff net EVSI > 0, its cost charged as r; mapping from deployable pass to success **TBD-FREEZE** [D] |
 | NR-knn (secondary) | k ∈ {3, 5} by LOCO on TRAIN, **TBD-FREEZE**; demoted to the family-majority baseline if L8 trips [D] |
-| judge-H (secondary) | settings §4.1; prompt text pinned by sha in stamp S1 [P] |
+| judge-H (secondary) | settings §4.1; prompt text pinned in the label-engine stamp (§4.4) [P] |
 | Shas | the analysis stamp A-Freeze (§4.4: `features.mjs`, `router.mjs`, `voi.mjs`, `metrics.mjs`, `evaluate.mjs`, `card.mjs`, `prereg-rules.mjs`) and the price table: **TBD-FREEZE** [D] |
 | Envelope | `evaluate.mjs --commit-decisions` writes every held-out decision card (`need-decision/1`); its hash is committed before the held-out matrix is joined (L6) [D]. The probe and judge-H rows that feed those cards run in their own envelope stage (NL2p, NL2bp), and the matrix stage (NL2, NL2b, E2E) is gated on the committed hash (§12) [P] |
 
@@ -517,24 +523,65 @@ degenerate under the §1.1 hypotheses]:
 **Primary for C7b:** Δ = the mean over held-out clusters, each weighted 1, of (u_policy − u_SBS-train), in
 success-equivalents per task, where SBS-train is the single best fixed mode on TRAIN jobs for that cell; computed for
 NR-static and NR-probe. A policy's utility on a job is the utility of the mode its pinned decision chose (plus r/(N·V) for
-NR-probe); a cluster's value is the mean over its jobs. [D]
+NR-probe); a cluster's value is the mean over its jobs. [D] Jobs missing a primary mode are dropped and counted (§5).
+**Masked modes** [P]: on a job whose menu lacks a mode (direct-H on interactive families), SBS-train and every router take
+the next mode of their own TRAIN ranking for that cell (SBS-train: its ranking over all TRAIN jobs; a router: its leaf's
+ranking). This is what `evaluate.mjs` does (rank fallback). Every fallback decision is counted and printed per policy.
 
 **Inference** [D]: an exact one-sided sign-flip permutation test over the cluster-level Δ values (all 2^n patterns for
 n ≤ 20 clusters; Monte Carlo with 100,000 patterns, seed 20261020, above that). Holm over the two co-primaries at
 one-sided α = 0.05: the policy with the smaller p is tested at 0.025, the other at 0.05 if the first is rejected. Bounds
 by test inversion at the same level: the lower bound is the smallest δ₀ for which H: Δ ≤ δ₀ is not rejected, the upper
 bound the largest δ₀ for which H: Δ ≥ δ₀ is not rejected (shifted values d_c − δ₀, sign flips) [P wording]. The seeded
-cluster bootstrap (10,000 reps, seed 20261015) is a sensitivity. Floors: smallest p = 2^−n; with 5 clusters 1/32 = 0.031
-> 0.025, so **with 5 clusters no reading can be SUPPORTED**; 6 → 1/64; 7 → 1/128.
+cluster bootstrap (10,000 reps, seed 20261015) is a sensitivity.
 
-**Primary for C7a:** balanced accuracy of H0's need call against confident N = 1 labels on held-out non-forced jobs.
-Intervals: Wilson intervals on the workflow-class recall and the no-workflow-class recall, the balanced-accuracy bounds
-being the mean of the two lower (upper) bounds [P]; coverage printed; compared with the majority class (balanced
-accuracy 0.5) and the tuned size rule. If the confident labels hold one class only, balanced accuracy is undefined and C7a
-reads INCONCLUSIVE. [D]
+**Floors** [P, corrected]. The first draft gave the smallest p as 2^−n for n clusters, which assumes every Δ_c differs
+from 0. That assumption fails in a common case: where the policy's pinned mode equals SBS-train's on every job of a
+cluster, Δ_c is exactly 0, because both sides read the same matrix rows. A sign flip of 0 changes nothing, so
+**p ≥ 2^−(n − z)**, where z is the number of zero clusters.
+- The leaf calculator picks one mode per leaf, so every non-intrinsic job gets SBS's mode whenever that leaf's mode equals
+  SBS-train's. Zero clusters will therefore be common.
+- Example (`metrics.mjs signFlipTest`): Δ = (0.1, 0.1, 0.1, 0.1, 0, 0, 0) gives p = 8/128 = 0.0625 and a lower bound of 0.
+  SUPPORTED is impossible, even though all 4 informative clusters show +0.10.
+- The floor is therefore 2^−(informative clusters), where an informative cluster is one with Δ_c ≠ 0 (the policy chose
+  differently from SBS-train on some job of it). That count and the floor are **printed with every reading**
+  (`prereg-rules.mjs signFlipFloor`).
+- Holm's first step (0.025) needs at least 6 informative clusters; its second step (0.05) needs at least 5. With 5
+  informative clusters or fewer, the first-step policy cannot be SUPPORTED.
+
+**Levels of every interval** [P]:
+- **SUPPORTED:** Δ bounds one-sided at the policy's Holm level (0.025, then 0.05).
+- **Paired comparisons** with the tuned size rule and judge-H: one-sided 95% each, conjunctive, no further correction.
+- **REFUTED:** a one-sided 95% upper bound at each V. It is an intersection–union rule (all three V must hold), so it
+  needs no correction.
+- **HARMFUL:** Holm over the 6 tests of H: Δ ≥ 0 (3 V × 2 co-primaries) at familywise 0.05 (§8).
+- **C7a:** two-sided 95% (0.025 per side).
+- **G1:** exact one-sided 95% per cell (§8).
+
+**Primary for C7a:** balanced accuracy of H0's need call against confident N = 1 labels on held-out non-forced jobs [D].
+Coverage is printed. It is compared with the majority class (balanced accuracy 0.5) and the tuned size rule. If the
+confident labels hold one class only, balanced accuracy is undefined and C7a reads INCONCLUSIVE. [D]
+
+- **One joint interval** [P, replaces the first draft's mean of two Wilson bounds].
+  - Method: a two-sided 95% exact interval for BA = (TPR + TNR)/2. The lower bound inverts the exact unconditional
+    one-sided test of H: BA ≤ b (0.025), taking the sup of the tail over every (TPR, TNR) whose mean is b; the upper
+    bound mirrors it (`prereg-rules.mjs balancedAccuracyInterval`).
+  - Each confident job is one Bernoulli trial of its class. Jobs are treated as independent [assumption; jobs of one
+    cluster share a family].
+  - Coverage is at least 95% by construction. The mean of two marginal lower bounds has no such guarantee.
+- **Power precondition** [P]. Before C7a is read, compute the lower bound a perfect classifier would reach at the
+  realised confident class counts (`c7aPower`). If that bound is ≤ 0.5, C7a reads **INCONCLUSIVE (not powered)**, never
+  REFUTED, and F12 is not evaluated. The planned counts show why this is needed:
+  - With one held-out positive (`r3p`) and 7 negatives, a perfect H0 reaches a lower bound of 0.460. Under the first
+    draft's Wilson mean it reached 0.426. Either way, a perfect H0 would have read REFUTED.
+  - With 2 positives and 8 negatives a perfect H0 reaches 0.570.
+- **Minimum confident counts** for C7a to be powered (positives + negatives; symmetric): 1 + 15, 2 + 4, 3 + 3, 4 + 2,
+  15 + 1. In practice that means at least 2 confident jobs in each class and 6 in all (`c7aMinimumCounts`).
 
 **Secondaries, fixed order, all marked "not primary"** [D]:
-1. The same Δ at V = $0.10 and $10; at W = 0 and 10V; at N = 1 and 100; on L_ceiling; with r3p dropped.
+1. The same Δ at V = $0.10 and $10; at W = 0 and 10V; at N = 1 and 100; on L_ceiling. (The r3p-dropped reading and the
+   r3p-d3-dropped reading are no longer secondaries: they are printed beside every C7a and C7b reading, and the first
+   one decides whether a claim stands, §8.)
 2. Value decomposition: always-agent-H → SBS-global → SBS(V, N) → router → VBS\*.
 3. Closed gap and regret against VBS\*.
 4. C7a at N = 10; precision and recall of the workflow class; precision at assumed no-workflow base rates of 50, 80 and
@@ -552,27 +599,58 @@ reads INCONCLUSIVE. [D]
 
 ## 8. Decision rules
 
-**Gate G1 (TRAIN, after NL1)** [D]: cross-fitted VBS\* − SBS headroom per (V, N) cell at W = V (9 cells), hierarchical
-bootstrap 2,000 reps, seed 20261021, two-sided 95%:
-- upper bound below 0.03 and below 20% of the SBS's per-task cost in success-equivalents (c_SBS/V) in every cell →
-  REFUTED-PREMISE: stop paid labelling; ship the fixed policy, the guards and a V-threshold ladder (the calculator);
-- lower bound above 0 in some cell at V = $1 → continue;
-- anything else → the owner decides.
+**Gate G1 (TRAIN, after NL1)** [D]: cross-fitted VBS\* − SBS headroom per (V, N) cell at W = V (9 cells).
+- REFUTED-PREMISE: the upper bound is below 0.03 and below 20% of the SBS's per-task cost in success-equivalents
+  (c_SBS/V), in every cell. Then stop paid labelling and ship the fixed policy, the guards and a V-threshold ladder (the
+  calculator).
+- CONTINUE: the lower bound is above 0 in some cell at V = $1.
+- OWNER-DECIDES: anything else.
+
 This replaces ROADMAP:632–634 (decision 1). [A]
+
+**Which bound G1 reads** [P, corrected; `prereg-rules.mjs g1Reading`]. The first draft read both bounds from a
+hierarchical cluster bootstrap over the 4 TRAIN clusters. That bootstrap has only C(7, 4) = 35 distinct cluster
+multisets, and with this few clusters a percentile interval undercovers (§7 says so itself). An interval that is too
+narrow makes a false REFUTED-PREMISE, and so a false stop (K1), more likely. Now:
+- **REFUTED-PREMISE** reads the exact one-sided 95% cluster-level sign-flip upper bound in each cell. That bound is
+  finite only with at least 5 TRAIN clusters: with 4, the smallest p is 1/16 > 0.05. **With 4 TRAIN clusters G1 can only
+  read CONTINUE or OWNER-DECIDES**; it cannot stop the program on its own.
+- **CONTINUE** reads a lower bound above 0 at V = $1: the exact cluster-level one, or a job-level bootstrap (jobs pooled,
+  task → replicate or lineage; 2,000 reps, seed 20261021) printed as **diagnostic**. The asymmetry is deliberate. A false
+  CONTINUE costs at most the next gated stage, which still needs the owner's gate. A false REFUTED-PREMISE ends paid
+  labelling, with no reruns.
+- Until `evaluate.mjs gateG1` adds the diagnostic CONTINUE path, it reads OWNER-DECIDES at 4 clusters, which is the
+  conservative direction (§14).
 
 **Readings for C7b, per co-primary policy** [D, A decision 1]:
 
 | Reading | Condition |
 |---|---|
-| SUPPORTED | lower bound of Δ > 0; point ≥ 0.03; beats the tuned size rule and judge-H (paired cluster-level difference, the same sign-flip inversion, one-sided 95%, lower bound > 0; conjunctive conditions, no further correction); slider calibrated (at most 1 of 3 positions misses; realised success and $ per task non-decreasing in V); the sign of Δ holds with r3p dropped. "Useful size shown" only if the lower bound ≥ 0.03. |
-| SUPERIOR, BELOW USEFUL EFFECT | lower bound > 0; point < 0.03 |
-| REFUTED | upper bound < 0.03 at all three V, or G1 refuted |
-| HARMFUL | upper bound < 0 at any V; that slider position is disabled |
-| INCONCLUSIVE | anything else; the owner decides, with the achieved power printed |
+| SUPPORTED | lower bound of Δ > 0 (one-sided, at the policy's Holm level); point ≥ 0.03; beats the tuned size rule and judge-H (paired cluster-level difference, the same sign-flip inversion, one-sided 95%, lower bound > 0; conjunctive conditions, no further correction); slider calibrated (at most 1 of 3 positions misses; realised success and $ per task non-decreasing in V); the same reading with r3p dropped (below). "Useful size shown" only if the lower bound ≥ 0.03. |
+| SUPERIOR, BELOW USEFUL EFFECT | lower bound > 0 (Holm level); point < 0.03; the same reading with r3p dropped |
+| REFUTED | one-sided 95% upper bound < 0.03 at each of the three V (intersection–union, no correction), or G1 refuted; the same reading with r3p dropped |
+| HARMFUL | at a V, the exact one-sided p of H: Δ ≥ 0 is ≤ 0.05 after Holm over the 6 (policy, V) tests (3 V × 2 co-primaries); that policy's slider position is disabled. A safety rule: it stands on the full set |
+| INCONCLUSIVE | anything else; the owner decides, with the achieved power printed (the informative-cluster count and the floor, §7) |
 
-**C7a reading:** SUPPORTED-DIAGNOSTIC if H0's balanced-accuracy lower bound exceeds 0.5 (the majority class) and the
-tuned size rule's point estimate, with coverage ≥ 50%. Claim grade only at ≥ 10 held-out clusters including the owner-task
-set, with ≥ 50% confident labels (decision 16). REFUTED if F12 trips. Otherwise INCONCLUSIVE. [D, A]
+**r3p must not carry a claim** [P; `prereg-rules.mjs withDropAgreement`]. `r3p` is near (same author and library as W)
+and dev-observed (M1, Jev-need).
+- Every C7a and C7b reading is printed twice, with and without the `r3p` cluster.
+- SUPPORTED, SUPERIOR-BELOW-USEFUL, REFUTED, and C7a's SUPPORTED-DIAGNOSTIC stand only when the reading without `r3p` is
+  the same. Otherwise the reading is INCONCLUSIVE, with both printed.
+- The reading with r3p's d3 tasks dropped is printed beside them; it is not a gate.
+- Dropping `r3p` removes one cluster, so the floor of §7 is recomputed for that reading.
+
+**C7a reading** [D, A; power precondition and r3p rule P; `prereg-rules.mjs c7aReading`]. The cases, in order:
+1. **INCONCLUSIVE** when H0 is not fitted (§6), when the confident labels hold one class, or when the counts are not
+   powered (§7: a perfect classifier's lower bound ≤ 0.5). F12 is not evaluated in any of these cases.
+2. Otherwise **SUPPORTED-DIAGNOSTIC** when all of these hold: H0's exact balanced-accuracy lower bound exceeds 0.5 (the
+   majority class); its point estimate exceeds the tuned size rule's; coverage is at least 50%; and the reading without
+   `r3p` is the same.
+3. Otherwise **REFUTED** when F12 trips (powered, and the lower bound ≤ 0.5), and the reading without `r3p` is the same.
+4. Otherwise INCONCLUSIVE.
+
+Claim grade needs at least 10 held-out clusters including the owner-task set, with at least 50% confident labels
+(decision 16).
 
 **C7b claim grade** needs ≥ 30 held-out families (decision 16, lane 05); v1 reads C7b at diagnostic grade only. Until the
 owner tasks arrive, no reading goes above diagnostic (decision 10). [A]
@@ -592,16 +670,25 @@ success-equivalents per task) is likely to be detected; a good but moderate rout
 or INCONCLUSIVE. The firm outputs are the label matrix, the self-test measurements, C7a at diagnostic grade, and the
 calculator.
 
+Two more expectations follow from M1 and the corrected rules [P]:
+- **C7a.** C7a is expected to read INCONCLUSIVE until more positives arrive. The held-out set has at most one
+  hypothesised N = 1 positive (`r3p`, now revised to either). `far-1`, `far-2`, `gameqa` and the owner tasks are
+  pending. H0 is expected not to be fitted (§6).
+- **C7b.** NR-static is expected to share SBS-train's mode on many jobs, so fewer clusters than admitted will be
+  informative (§7).
+
 ## 9. Falsifiers (proposed for ROADMAP §4.3)
 
-F1 G1 refuted. F2 held-out Δ upper bound < 0.03 at every V. F3 no win over the tuned size rule or judge-H (ship the rule
+F1 G1 refuted (possible only with at least 5 TRAIN clusters, §8). F2 held-out Δ upper bound < 0.03 at every V. F3 no win over the tuned size rule or judge-H (ship the rule
 instead). F4 the gain vanishes once guard-forced jobs are excluded (it belongs to the guards). F5 padding, keyword, gadget
 or paraphrase metamorphs flip more than 20% of routes where the labels do not flip. F6 any leak test L1–L8 fails (the
 evaluator is invalid; every claim is blocked). F7 the slider is uncalibrated or not monotone. F8 in a mixed-stream
 replay, no slider setting dominates both always-no-workflow and always-construct. F9 on owner tasks, regret is worse than
 SBS (upper bound < 0). F10 the gain appears on near held-out families (r3p) but not far ones (the claim is limited to
 near families). F11 a build path's self-check false-pass rate > 0.2 with ≥ 10 oracle failures (that path is not
-deployable, whatever the router says). F12 at N = 1, H0's held-out balanced-accuracy lower bound ≤ 0.5. [D]
+deployable, whatever the router says). F12 at N = 1, H0's held-out balanced-accuracy lower bound ≤ 0.5 [D], read on the
+exact joint interval and only when the power precondition holds (§7) and H0 was fitted (§6) [P]; otherwise F12 is not
+evaluated and C7a reads INCONCLUSIVE.
 
 ## 10. Controls, baselines, leak tests, attacks
 
@@ -632,7 +719,7 @@ paraphrase; N off by 10× (regret reported); monotonicity (once a workflow is ch
 N). F5 reads them.
 
 **False-confidence guards** (DESIGN §6 table, adopted whole) [D]: cross-fitted VBS\*; SBS on TRAIN only; clusters by
-import graph with r3p dropped in a sensitivity; utility primary and coverage beside accuracy; drop-one-cluster influence on
+import graph with r3p dropped in a mandatory sensitivity that a claim must survive; utility primary and coverage beside accuracy; drop-one-cluster influence on
 the lower bound printed; L_today against L_ceiling; W = V headline with q charged and self-checks measured; one re-priced
 meter; timeouts at the bound and > 30%-imputed cells unlabelled; fragility recompute; bands frozen here; prose features
 removed, r0-pad and r3-mini in TRAIN, tuned size rule, L8; paraphrase-pool sharing stated as an unknown; N = 10 headline;
@@ -642,20 +729,32 @@ model ids and the monthly drift re-check (stage DRIFT); the live E2E lane.
 
 ## 11. Power
 
-- **Exact floor.** One-sided sign-flip test over n clusters: smallest p = 2^−n. Holm's first step needs p ≤ 0.025:
-  n = 5 → 0.031 (cannot pass); n = 6 → 0.016; n = 7 → 0.0078; n = 8 → 0.0039. [D]
+- **Exact floor.** One-sided sign-flip test: the smallest p is 2^−m, where m is the number of **informative** clusters
+  (Δ_c ≠ 0, §7), not the number of clusters [D, corrected P]. Holm's first step needs p ≤ 0.025: m = 5 → 0.031 (cannot
+  pass); m = 6 → 0.016; m = 7 → 0.0078; m = 8 → 0.0039. A cluster where the policy picks SBS-train's mode on every job
+  adds nothing. The informative count and the floor are printed with every reading.
 - **Interval width.** A t-type interval over 7 clusters has half-width about t(0.975, 6)·σ/√7 ≈ 0.93σ (σ = the
   between-cluster SD of Δ). A half-width of 0.03 needs σ ≤ 0.032; at σ = 0.10 only effects above about 0.09 are
   detectable [I, D].
-- **Power gate (after NL1).** σ is estimated by leave-one-cluster-out on TRAIN (cluster-level Δ of NR-static under LOCO).
-  If the projected half-width at the planned held-out cluster count exceeds 0.03, either add clusters (far families,
-  gameqa, owner tasks) or accept an expected INCONCLUSIVE, recorded in §13 before NL2. **TBD-NL1.**
+- **Power gate (after NL1)** [D; agreement share P; `prereg-rules.mjs powerGate`]. Two quantities are estimated by
+  leave-one-cluster-out on TRAIN, over defined folds only (§6):
+  - σ, from NR-static's cluster-level Δ under LOCO;
+  - the agreement share a, the fraction of TRAIN clusters where NR-static's LOCO choice equals SBS-train's on every job.
+
+  At the planned held-out cluster count n, the gate reports three things: the expected number of informative clusters
+  n·(1 − a); the floor 2^−floor(n·(1 − a)) that count allows; and the projected half-width. If that floor exceeds 0.025
+  or the half-width exceeds 0.03, the program either adds clusters (far families, gameqa, owner tasks) or accepts an
+  expected INCONCLUSIVE, recorded in §13 before NL2. Example: 8 clusters at a = 0.5 give 4 informative clusters, so the
+  floor is 1/16 and NR-static cannot be SUPPORTED. **TBD-NL1.**
 - **Simulation (M0).** Synthetic matrices with planted optima at the planned sizes (15 TRAIN jobs in 4 clusters; 5, 7 and
   8 held-out clusters; 12 tasks; the §4.1 replicates), seed 20261018: false SUPPORTED ≤ 5% under the null; P(SUPPORTED) at
-  planted Δ = 0.03, 0.08 and 0.15. **TBD-M0**: `evaluate.mjs` produces it, and freezing this file requires its numbers
-  in this section.
-- **C7a.** With 8–12 confident held-out jobs, a Wilson interval on balanced accuracy is about ±0.25 wide [I]; C7a at this
-  size is diagnostic.
+  planted Δ = 0.03, 0.08 and 0.15. The simulation must also **plant router = SBS agreement** at cluster shares a ∈ {0,
+  0.3, 0.5, 0.7}, the clusters where the router copies SBS having Δ_c = 0 exactly. Continuous Δ alone overstates the
+  power. **TBD-M0**: `evaluate.mjs` produces it, and freezing this file requires its numbers in this section.
+- **C7a.** The exact joint interval needs at least 2 confident jobs per class and 6 in all (§7). At the planned held-out
+  counts (at most 1 hypothesised positive) C7a is not powered and reads INCONCLUSIVE. With 2 positives and 8 negatives, a
+  perfect H0 reaches a lower bound of 0.570. One error on a negative brings it to 0.505; one error on a positive brings
+  it to 0.320. C7a at this size is diagnostic at best.
 
 ## 12. Stages, caps, kill and stop rules
 
@@ -675,21 +774,50 @@ NL0 (decision 14); later stages at their gates, each under the $500 pause. [A]
 | Stage | When | Grade | What | Est. $ | Cap $ | Approved | Gate |
 |---|---|---|---|---|---|---|---|
 | M0 | 10-15 → 10-17 | development | code, this preregistration, tests, D0–D6 on LEGACY rows | 0 | 0 | yes | – |
-| M1 | 10-15/16 | development | `node experiments/need-router/m1-run.mjs --cap 15`: 8 rungs (wbed-r0 … r6, wbed-r3p) × 12 seeds × 2 efforts = 192 Haiku calls at d3; also the W-bed one-call admission gate (R0 ≥ 10/12 per effort, other rungs ≤ 2/12) | 10 | 15 | yes | stamp S-M1 |
+| M1 | ran 10-14 | development | one Haiku call per W-rung task, two efforts, one approved $15 cap shared by tag. Tag `m1` (share $5, done): `m1-run.mjs --cap 15`, 8 rungs (wbed-r0 … r6, wbed-r3p) × 12 seeds × 2 efforts = 192 calls at d3, also the W-bed one-call admission gate. Tag `m1-d5` (share $10, in flight): `m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10`, 96 calls at d5. Results in §0.1 | 10 | 15 | yes | ran without stamp S-M1 (D1); K2 passed |
 | M1e | when #58 commits | diagnostic | read the in-flight E8 runs (agent-H paired with B1L-H lineages 1–3, B1-H, B1-O; same 9 dev worlds) | 0 | 0 | yes | – |
-| NL0 | 10-18/19 | development | `records-hi`, `wbed-r0`, `wbed-r3-hi` × five modes; build-O and (if stamped) ref-R3 on `wbed-r3-hi`; up to 5 owner tasks (`owner-dev`, all modes, one replicate) | 110 | 140 | yes | freeze of this file; stamp S1; K2 |
-| NL1 | 10-20 → 10-23 | development | the other 12 TRAIN jobs; build-O on `wbed-r1-hi` and `kinetics-hi`; ref-R1 if stamped; NR-probe rows on all 15 TRAIN jobs; then G1, the power gate, LOCO dev numbers | 272 | 340 | at gate | K7; owner |
-| Freeze | 10-24 | development | fit θ, leaf modes, k, probe mapping; hash the router; addendum; commit the decisions envelope (L6) | 0 | 0 | yes | K1 |
-| NL2 | 10-25 → 10-28 | held-out | `incident`, `synth-lo`, `synth-hi`, `ownerci`, `r3p`, `need-constraint`, `far-1`, `far-2` × five modes; build-O on `synth-hi` and `r3p`; NR-probe rows (decisions committed before the matrix is joined) | 206 | 270 | at gate | Freeze addendum; owner |
-| E2E | 10-29 → 11-02 | held-out | 6 held-out non-forced jobs by the seeded draw (below); decision card → owner override (48 h, logged) → build with self-check → 12 fresh tasks (8825–8836) → delivery gated by the deployable verifier; oracle scored offline | 60 | 80 | at gate | NL2 interim reading written |
-| NL2b | 10-29 → 11-04 | held-out | `gameqa` (held-out) and `runbook` (forced stratum), four modes (direct-H masked) | 98 | 140 | at gate | independent audit and agent smoke per family |
-| NL3 | owner tasks arrive (target 10-28) | sealed | `sealed-1` … `sealed-4` and `owner-sealed` (20–30 owner tasks), run once by a session that tuned nothing | 190 | 240 | at gate | – |
-| judge-H | with NL1 and NL2 | development / held-out | 3 draws × 3 V per job, about 180 typed calls | 5 | 10 | at gate | – |
-| **Total** | | | | **951** | **1,235** | | under the $1,500 session soft cap |
-| DRIFT (outside the totals) | monthly after NL2 | diagnostic | agent-H on `incident` and direct-H on `synth-lo`, seeds 8837–8848, one draw (24 tasks); drift flagged when the Wilson intervals of the NL2 and the re-check pass rates do not overlap | 5 | 8 | at each run | owner |
+| NL0 | 10-18/19 | development | `records-hi`, `wbed-r0`, `wbed-r3-hi` × five modes; build-O and (if stamped) ref-R3 on `wbed-r3-hi`; up to 5 owner tasks (`owner-dev`, all modes, one replicate) | 110 | 140 | yes | freeze of this file; stamp L-NL0; K2 |
+| NL1 | 10-20 → 10-23 | development | the other 12 TRAIN jobs; build-O on `wbed-r1-hi` and `kinetics-hi`; ref-R1 if stamped; NR-probe rows on all 15 TRAIN jobs; then G1, the power gate, LOCO dev numbers | 272 | 340 | at gate | K7; owner; stamp L-NL1 compared with L-NL0 |
+| judge-H | with NL1 | development | the "just ask a model" baseline on TRAIN: 3 draws × 3 V on each of the 15 TRAIN jobs (about 135 typed calls); its held-out calls run in NL2p | 3 | 6 | at gate | NL1 owner gate |
+| Freeze | 10-24 | development | fit θ (§6 rules), leaf modes, k, probe mapping; hash the router (stamp A-Freeze); addendum | 0 | 0 | yes | K1 |
+| NL2p | 10-25, before any NL2 matrix row | held-out | NR-probe rows and judge-H calls on the held-out jobs (probe task only, no evaluation seed); then `evaluate.mjs --commit-decisions` writes every held-out decision card and the envelope hash is committed (L6) | 4 | 8 | at gate | Freeze addendum; G1 not refuted (K1); owner |
+| NL2 | 10-25 → 10-28 | held-out | `incident`, `synth-lo`, `synth-hi`, `ownerci`, `r3p`, `need-constraint`, `far-1`, `far-2` × five modes; build-O on `synth-hi` and `r3p`; no probe or judge rows | 204 | 266 | at gate | NL2p envelope hash committed; owner |
+| NL2bp | after the gameqa and runbook audits, before NL2b and before E2E if gameqa is eligible | held-out | NR-probe on `gameqa` (agent-H only) and the guard decision on `runbook`; commit their decision cards (L6) | 1 | 2 | at gate | independent audit and agent smoke per family; owner |
+| E2E | 10-29 → 11-02 | held-out | 6 held-out non-forced jobs by the seeded draw (below); the committed decision card → owner override (48 h, logged) → build with self-check → 12 fresh tasks (8825–8836) → delivery gated by the deployable verifier; oracle scored offline | 60 | 80 | at gate | NL2 interim reading written; envelopes NL2p (and NL2bp if gameqa is drawn) |
+| NL2b | 10-29 → 11-04 | held-out | `gameqa` (held-out) and `runbook` (forced stratum), four modes (direct-H masked) | 97 | 138 | at gate | NL2bp envelope hash committed; audit and smoke |
+| NL3 | owner tasks arrive (target 10-28) | sealed | `sealed-1` … `sealed-4` and `owner-sealed` (20–30 owner tasks), run once by a session that tuned nothing; it commits its own decisions before its matrix | 190 | 240 | at gate | – |
+| **Total** | | | | **951** | **1,235** | | under the $1,500 session soft cap with DRIFT's $24 (= $1,259) |
+| DRIFT (recurring, outside the stage totals) | monthly after NL2, at most 3 runs | diagnostic | agent-H on `incident` and direct-H on `synth-lo`, seeds 8837–8848, one draw (the same 24 tasks each run); drift flagged when the Wilson intervals of the NL2 and the re-check pass rates do not overlap | 5 per run | 8 per run, 24 in all | at each run | owner |
 
-Core (M1, NL0, NL1, NL2, E2E, judge-H): est. $663, caps $855. [D] NR-probe rows are charged to NL1 (TRAIN) and NL2
-(held-out) [P]. DRIFT's jobs and cap are [P].
+Core (M1, NL0, NL1, judge-H, NL2p, NL2, E2E): est. $663, caps $855 [D]. The money moved between stages but the totals
+did not change:
+- The first draft's NL2 ($206 est. / $270 cap) and judge-H ($5 / $10) are now three stages: judge-H on TRAIN ($3 / $6);
+  NL2p ($4 / $8, made of NL2's $2 / $4 of probe rows plus judge-H's $2 / $4 of held-out calls); and NL2 ($204 / $266).
+- NL2b ($98 / $140) is now NL2bp ($1 / $2) plus NL2b ($97 / $138). NR-probe rows are charged to NL1 (TRAIN) and NL2p (held-out) [P].
+DRIFT's jobs, its 3-run limit and its cumulative $24 cap are [P]. The checker adds the $24 to the soft-cap check.
+
+**The split envelope stages** [P, review fix]. The first draft ran NR-probe rows and the five-mode matrix in one stage
+(NL2, and likewise NL2b) and said decisions are "committed before the matrix is joined". Nothing made the commit come
+before the evaluation runs, so oracle scores could exist, and be viewed, before NR-probe's held-out decisions were
+committed. Now:
+- NL2p and NL2bp run only probe-task rows, then commit every held-out decision card.
+- NL2, NL2b and E2E name the envelope stages they need (`requiresEnvelope`), and their launch is gated on the committed
+  hash.
+- The checker refuses a held-out probe or judge row outside an envelope stage, and a matrix stage whose jobs no earlier
+  envelope covers.
+
+**The one cap meter** (K5) [P, review fix; `stages.json spendMeter`; `prereg-rules.mjs capMeter, mayStart`]. It applies
+to every paid runner: `label-run.mjs`, `m1-run.mjs`, judge-H, probes and DRIFT.
+- **Meter.** Per stage, and per tag where a stage's cap is shared (M1), the meter is the sum of three parts:
+  - every row with an observed cost, at max(reported, re-priced);
+  - every row with no observed cost (a timeout or killed session, `costUnknown`, or no dollars and no tokens recorded),
+    at its bound;
+  - every start in flight, at its bound, **reserved before launch**.
+- **Starts.** A start is refused when the meter plus its bound would exceed the cap.
+- **Timeouts.** A timed-out call is never $0 on the meter, whatever the provider later bills.
+- **Concurrency.** Up to 4 starts may be in flight; their reservations count.
+- **M1 under this meter.** M1's runner booked timeouts at $0 and reserved nothing, so on this meter tag `m1` is $28.9957
+  against its $5 share and M1's $15 cap (§13 D3).
 
 **E2E draw** [P]: the eligible set is the admitted held-out non-forced jobs at E2E launch, sorted by id, shuffled by a
 seeded Fisher–Yates (mulberry32, seed 20261029; `prereg-check.mjs e2eDraw`), first 6 taken. Computed today for the
@@ -703,7 +831,7 @@ need-constraint`; neither → all six of `incident, synth-lo, synth-hi, ownerci,
   harness.
 - **K3** any leak test fails → the evaluator is invalid; no claim until fixed and re-run at $0.
 - **K4** an arm over 25% environment faults → that arm is invalid for the stage.
-- **K5** a stage reaches its cap → stop and analyse as it stands; no reruns.
+- **K5** a stage (or an M1 tag) reaches its cap on the one meter above → stop and analyse as it stands; no reruns.
 - **K6** any single experiment estimated over $500 → pause for the owner (`policy/models.json:21`).
 - **K7** NL0 cost per job over 1.5× the estimate → re-plan before NL1.
 - **K8** every construct-H lineage fails on every NL0 job while build-O passes → continue, but no "no need" reading may
@@ -718,7 +846,35 @@ families or analyses added after freeze form a separate stratum and never enter 
 results are kept. An owner overturn of an adopted decision is applied before the next paid stage, never retroactively to
 a frozen reading (DECISIONS-ADOPTED). [D, A]
 
-(none yet)
+After freeze: none yet.
+
+**Recorded before freeze** (2026-10-14, this revision; no need-router label had been viewed, because none exists):
+- **D1. M1 ran without its launch stamp.** S-M1 was "TBD at M1 launch" when M1 started at 21:31. A reconstructed record
+  is in `stages.json` (M1 `observed.*.engine`): trees, file shas and the runner's sha per tag. It is not a launch stamp.
+  Whether the working tree differed from e5defed (tag `m1`) or 56c0a82 (tag `m1-d5`) at launch is unknown.
+- **D2. M1-d5 was an unregistered run.** It was launched at 23:00 with its own `--cap 10` counter, after the first draft
+  and outside it. It is folded into M1's one approved $15 cap as tag `m1-d5` with a $10 share (tag `m1` $5). The tag is
+  development evidence, and its results enter §0.1 when it ends. It changes no band; any hypothesis revision it informs
+  is logged in §1.1. The M1 stage is closed when it ends: any further one-call run needs a new, approved stage.
+- **D3. M1's spend, re-metered.** Tag `m1` reported $2.9957, with 26 `MODEL_TIMEOUT` calls booked at $0 and nothing
+  reserved for calls in flight (concurrency 4).
+  - On the §12 meter, tag `m1` is $28.9957 against its $5 share and M1's $15 cap: an overrun of an approved cap, recorded
+    here and not re-approved. The provider's billing for the 26 timed-out calls is unknown. The report cites both
+    figures.
+  - On this meter, M1 was over its cap before tag `m1-d5` started, so K5 would have stopped it. This revision does not
+    stop a run in flight; the coordinator decides. Tag `m1-d5` is re-metered the same way when it ends.
+  - From the next paid stage on, every runner meters by §12. `m1-run.mjs`'s own counter does not meet §12, so it may not
+    be used again as it stands.
+- **D4. The first draft's --hashes pre-check generated held-out tasks before Freeze, outside the ledger.** That was 492
+  tasks, including held-out evaluation tasks 8801–8812 and E2E tasks 8825–8836 for 6 jobs, generated in-process and
+  hashed. No content was inspected, and no model saw them. The pre-check now checks every seed against the ledger and
+  generates held-out families only in a child process that prints counts and task ids. It was re-run that way for this
+  revision (512 tasks, 0 collisions, 0 refusals).
+- **D5. Edits to the first draft.** This revision fixed blockers and major and minor defects that an adversarial review
+  found. The changes are listed in §14, each marked [P]. The probe and judge-H task moved to the band's median level
+  (§3.3). judge-H's tie rule changed to a fixed order, which changed its settings hash from `6504fc674944022d`. The
+  stages were restructured: judge-H is now TRAIN-only; NL2p and NL2bp are new; DRIFT is recurring. No label existed when
+  any of this changed.
 
 ## 14. What this file resolved, what stays open
 
@@ -733,20 +889,46 @@ numeric tolerances (§3.2, §5); bootstrap, permutation, simulation and draw see
 `wbed-stage`, `codefix-notests`, `need-qa`, `need-constraint`; the per-seed difficulty, stage-kind, replacement and racing
 lineage rules; agent-O's "maximum over the nine examples"; K2 per draw in NL0; judge-H's effort, truncation, schema, tie
 rule and cells; the Haiku cache-read rate; RNG seed values; the VBS\* single-replicate fallback; the test-inversion and
-C7a interval wording; the primary-reading timing (§8); probe rows charged to NL1 and NL2; the E2E draw procedure; the
+C7a interval wording; the primary-reading timing (§8); probe rows charged to NL1 and NL2p; the E2E draw procedure; the
 DRIFT jobs and $8 cap; K9 wording; the forced jobs' requirement candidates.
+
+**Added by the review revision [P]** (2026-10-14; each item has a test in
+`experiments/need-router/test/prereg-rules.test.mjs` or `prereg-check.test.mjs`):
+- **C7a:** the exact joint balanced-accuracy interval and its power precondition; the minimum confident counts (§7, §8,
+  F12).
+- **Sign-flip floor:** counts informative clusters only. The power gate's agreement share, and the M0 simulation's planted
+  agreement (§7, §11).
+- **G1:** REFUTED-PREMISE only on exact cluster-level bounds, so not at 4 TRAIN clusters; CONTINUE also on a diagnostic
+  job-level bound. Label confidence has no cluster level (§5, §8).
+- **θ:** the fitting minimum; undefined LOCO folds; midpoint candidates with ties to the larger (§6).
+- **Stamps:** label-engine stamps per paid stage, the analysis stamp at Freeze, and the allowed-difference list (§4.4).
+- **Spend:** the one cap meter, with reservation; M1's tag shares; DRIFT's 3-run limit and the $24 in the soft-cap check
+  (§12).
+- **Envelopes:** NL2p and NL2bp as envelope stages ahead of their matrices (§12).
+- **Readings:** the level of every reading; Holm over the 6 HARMFUL tests; the masked-mode fallback (§7, §8).
+- **Missing data:** the missing-data rule and the conditional-job rule (§5).
+- **Probe and judge-H:** the probe task at the band's median level; judge-H's fixed tie order (§3.3, §4.1).
+- **M1 and r3p:** r3p flagged dev-observed, and the r3p-dropped agreement rule for every claim (§3.1, §8); the M1-informed
+  band decision (§3.2).
+- **Checker:** refusals for test seeds before Freeze for every role, forced jobs on TRAIN seeds, placeholders at freeze,
+  and stage ids as whole tokens (§15).
 
 **Still open, with who resolves it and when:**
 
 | Open item | Resolved by | When |
 |---|---|---|
-| Engine stamps S-M1, S1, S2 (§4.4), incl. `static@v3:` reachability and prompt shas | coordinator, from the launch commit | before M1 / NL0 / at Freeze |
-| selfCheck prompt paragraph; procedure-writer prompt; judge-H prompt (contracts fixed in §4.1) | M0 code, pinned by sha in S1 | before NL0 |
-| 600 s per-call timeout option for direct-H (createModelPort has none today; M1 uses the 300 s default) | M0 code | before NL0 |
-| `codefix-notests` generator and its example census | M0 item 8 | before NL1 |
-| Null-simulation numbers (§11) | `evaluate.mjs` | before freeze |
-| σ and the power gate outcome | NL1 leave-one-cluster-out | after NL1 |
-| θ_tok, θ_fan, leaf modes, k, probe mapping, router shas | Freeze addendum | 10-24 |
+| Label-engine stamp L-NL0 (§4.4), incl. `static@v3:` reachability, the claude CLI version and prompt shas | coordinator, from the launch commit | at freeze, before NL0 |
+| selfCheck prompt paragraph; procedure-writer prompt; judge-H prompt (contracts fixed in §4.1) | M0 code, pinned in the label-engine stamp | before NL0 |
+| 600 s per-call timeout option for direct-H (createModelPort has none today; M1 used the 300 s default) | M0 code | before NL0 |
+| **Every paid runner meters by §12** (max of reported and re-priced; bounds for rows without an observed cost; reservation before launch). `label-run.mjs StageBudget` reserves bounds and charges timeouts at the bound, but meters reported dollars rather than max(reported, re-priced); `m1-run.mjs` reserves nothing and books timeouts at $0 | label-run owner (`prereg-rules.mjs capMeter, mayStart`) | before NL0 |
+| **`evaluate.mjs` reads the rules from `prereg-rules.mjs`.** Today it does not in five places: `needDetection` takes the mean of Wilson bounds (it must use `balancedAccuracyInterval` and `c7aReading`); `gateG1` has no diagnostic CONTINUE path; `fitRule` breaks ties by fewest TRAIN workflow calls, puts candidates at every TRAIN value and has no fitting minimum or undefined folds (it must use `thetaFitStatus`, `locoFolds` and `fitOrRule`); `readingOf` flags HARMFUL without Holm and has no r3p agreement (it must use `harmfulPositions` and `withDropAgreement`); `powerSimulation` plants no router = SBS agreement | evaluate owner | before freeze (the simulation) and before Freeze (the rest) |
+| M1-d5's results into §0.1, its spend on the §12 meter into D3, any hypothesis revision it informs into §1.1 | coordinator | when M1-d5 ends, before Freeze |
+| `codefix-notests` generator and its example census. A generator is present as `beds/need-codefix-noverifier` (WIP autosave, unreviewed at this revision); the job's family id, `bedStatus` and census are updated, with a §13 note, when it is admitted | M0 item 8 | before NL1 |
+| Null-simulation numbers (§11), with planted router = SBS agreement | `evaluate.mjs` | before freeze |
+| σ, the agreement share and the power gate outcome | NL1 leave-one-cluster-out (defined folds only) | after NL1 |
+| **TRAIN N = 1 positives outside W.** Under §1.1 every hypothesised TRAIN positive is in W, so H0 is expected not to be fitted (§6). The owner may add a TRAIN job outside W expected to need a workflow at N = 1 before NL1 (for example an E-bed item once admitted), or accept "H0 not fitted" | owner | before NL1 |
+| **Narrow the ledger's `need-heldout` beds** (today `['*']`) to the held-out families, so the ledger itself keeps TRAIN families off held-out seeds | owner (the ledger is the owner's file) | before NL2 |
+| θ_tok, θ_fan, leaf modes, k, probe mapping, analysis stamp A-Freeze | Freeze addendum | 10-24 |
 | far-1, far-2 identity, author, band, verifier, hypothesis rows | owner (decision 11) and the admission audit | before NL2 |
 | gameqa and runbook bands, audits, runbook requirements | an independent audit session | before NL2b |
 | E8's requirements and role beyond the forced stratum | M1e, after #58 commits | M1e |
@@ -756,15 +938,41 @@ DRIFT jobs and $8 cap; K9 wording; the forced jobs' requirement candidates.
 ## 15. How to check this file
 
 ```
-node experiments/need-router/prereg-check.mjs            # ledger, policy, caps, text consistency; exit 0 = OK
-node experiments/need-router/prereg-check.mjs --hashes   # also the $0 taskHash disjointness pre-check (about 20 s)
-node experiments/need-router/prereg-check.mjs --stamp    # print the engine-stamp record of the working tree
-node --test experiments/need-router/test/prereg-check.test.mjs
+node experiments/need-router/prereg-check.mjs                       # ledger, policy, caps, seeds, envelopes, text; exit 0 = OK
+node experiments/need-router/prereg-check.mjs --hashes              # also the $0 taskHash pre-check (about 40 s; held-out in a child process)
+node experiments/need-router/prereg-check.mjs --stamp --stage NL1   # print the label-engine, analysis and document stamps
+node --test experiments/need-router/test/prereg-check.test.mjs experiments/need-router/test/prereg-rules.test.mjs
 ```
 
-The checker refuses: a seed the ledger refuses for its purpose; a held-out job on TRAIN seeds or evaluated before
-Freeze; a TRAIN job on held-out seeds; overlapping seed roles; a family in two clusters; a band that 12 tasks cannot
-spread over evenly; an arm whose settings hash differs from its definition; a model id or base price not in
-`policy/models.json`; a stage cap over the $500 pause or caps summing over the $1,500 soft cap; totals that differ from
-the stage sums; and a preregistration text that does not carry the status, every job id, every stage id and every arm
-hash.
+The checker refuses the following.
+- **Seeds:**
+  - a seed the ledger refuses for its purpose;
+  - **any test-split seed role (heldoutEval, heldoutReserve, e2e, drift) in a stage at or before Freeze, for any job**;
+  - a TRAIN job on any test-split role;
+  - a held-out, conditional, **forced** or sealed job on TRAIN evaluation seeds (trainEval, trainReserve);
+  - a non-held-out job in the E2E lane;
+  - overlapping seed roles.
+- **Envelopes:**
+  - a held-out probe or judge row outside an envelope stage;
+  - an envelope stage before Freeze or with evaluation seeds;
+  - a matrix stage whose held-out jobs no earlier envelope covers.
+- **Jobs and arms:**
+  - a family in two clusters;
+  - a band that 12 tasks cannot spread over evenly;
+  - an arm whose settings hash differs from its definition;
+  - a model id or base price not in `policy/models.json`;
+  - a near or dev-observed held-out job without a mandatory C7a and C7b drop sensitivity;
+  - a hypothesis revision without a date and what informed it.
+- **Spend:**
+  - a stage cap over the $500 pause;
+  - tagged runs without cap shares, or shares over the stage cap;
+  - a stage outside the totals without a recurring run limit and cumulative cap;
+  - caps plus recurring cumulative caps over the $1,500 soft cap;
+  - totals that differ from the stage sums.
+- **Text:**
+  - a preregistration text that does not carry the status, every job id, every stage id **as a whole token** ("NL2"
+    inside "NL2b" does not count) and every arm hash;
+  - no "dev-observed" flag when a job is dev-observed;
+  - **when frozen, any `TBD-M0` or "TBD at … launch" left in §4.4 or §11.**
+
+`--hashes` also refuses (as errors) any planned task seed the ledger refuses.

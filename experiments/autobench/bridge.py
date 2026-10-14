@@ -439,8 +439,7 @@ class Rollout:
         self.fork = fork
 
     async def setup(self):
-        vf = _vf()[0]
-        client = make_scripted_client({})
+        client = make_scripted_client({})  # never asked for a response: the model loop is the mailbox
         state = await self.env.init_state(self.input, client, model="bridge", sampling_args=None)
         st = await self.env.setup_state(state)
         self.state = st if st is not None else state
@@ -586,10 +585,16 @@ def _serve_loop(r: Rollout, box: Path, poll: float):
                 stop = True  # one more pass: answer anything that arrived before the stop
 
 
+def load_world(p):
+    """A world file is either prepare's {"task", "contract_sha256", "world"} or a raw dump (final-world.json)."""
+    w = load_json(p)
+    return w["world"] if isinstance(w, dict) and set(w) >= {"world", "task"} else w
+
+
 def cmd_serve(a):
     SHIM.install(a.det)
     row = load_json(a.input)
-    world = load_json(a.world)["world"] if a.world else None
+    world = load_world(a.world) if a.world else None
     r = Rollout(row, a.max_steps, world, a.fork)
     asyncio.run(r.setup())
     if a.expect_contract and r.contract != a.expect_contract:
@@ -606,7 +611,7 @@ def cmd_serve(a):
 def cmd_replay(a):
     SHIM.install(a.det)
     row = load_json(a.input)
-    world = load_json(a.world)["world"] if a.world else None
+    world = load_world(a.world) if a.world else None
     r = Rollout(row, a.max_steps, world, a.fork)
     asyncio.run(r.setup())
     for step in load_json(a.steps):
@@ -828,8 +833,7 @@ def cmd_neutral(a):
 def cmd_grade(a):
     SHIM.install(a.det)
     row = load_json(a.input)
-    w = load_json(a.world)
-    r = Rollout(row, a.max_steps, w["world"] if isinstance(w, dict) and set(w) >= {"world", "task"} else w)
+    r = Rollout(row, a.max_steps, load_world(a.world))
     asyncio.run(r.setup())
     g = asyncio.run(r.grade())
     write_json(Path(a.out), g, indent=1)

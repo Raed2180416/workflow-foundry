@@ -514,21 +514,28 @@ export function stamp(stages, { repo = REPO, stage = null } = {}) {
 }
 
 /**
- * Compare the label-engine stamps of two paid stages (PREREG §4.4). Allowed: a bed directory absent from `prev` that
- * belongs to a job whose first paid rows are in `next`'s stage (`newBeds`, e.g. the codefix-notests generator before
- * NL1); a bed directory present only in `prev`. Everything else that differs (a file, a tree, a bed used by both, the
- * preregistered arms, prices, seeds or grid, the need ledger, Node, the CLI) is a deviation, recorded in §13 before the
- * later stage starts.
+ * Compare a paid stage's label-engine stamp with the earlier paid stages' stamps (PREREG §4.4). `prev` is the previous
+ * stamp or the list of every earlier one, oldest first. Allowed: a bed directory no earlier stamp holds (its first paid
+ * use; no earlier label depends on it, e.g. the codefix-notests generator or the held-out families). Everything else
+ * that differs is a deviation, recorded in §13 before the stage starts: a file, a tree, the preregistered arms, prices,
+ * seeds, grid or meter, the need ledger, Node or the CLI (against the latest earlier stamp), or a bed against any earlier
+ * stamp that used it.
  */
-export function stampDiff(prev, next, { newBeds = [] } = {}) {
-  const deviations = [], allowed = [];
-  const cmp = (k, a, b) => { if (JSON.stringify(a ?? null) !== JSON.stringify(b ?? null)) deviations.push({ key: k, prev: a ?? null, next: b ?? null }); };
-  for (const g of ['files', 'trees', 'prereg']) for (const k of new Set([...Object.keys(prev[g] ?? {}), ...Object.keys(next[g] ?? {})])) cmp(`${g}.${k}`, prev[g]?.[k], next[g]?.[k]);
-  for (const k of ['ledgerNeed', 'node', 'cli']) cmp(k, prev[k], next[k]);
-  for (const d of new Set([...Object.keys(prev.beds ?? {}), ...Object.keys(next.beds ?? {})])) {
-    const a = prev.beds?.[d], b = next.beds?.[d];
-    if (a !== undefined && b !== undefined) cmp(`beds.${d}`, a, b);
-    else if (b !== undefined) (newBeds.includes(d) ? allowed : deviations).push({ key: `beds.${d}`, prev: null, next: b, ...(newBeds.includes(d) ? { why: 'new bed for a job first run in this stage' } : {}) });
+export function stampDiff(prev, next) {
+  const earlier = (Array.isArray(prev) ? prev : [prev]).filter(Boolean);
+  if (!earlier.length) throw new Error('stampDiff needs at least one earlier stamp');
+  const last = earlier[earlier.length - 1], deviations = [], allowed = [], seen = new Set();
+  const cmp = (k, a, b, at) => {
+    if (JSON.stringify(a ?? null) === JSON.stringify(b ?? null) || seen.has(`${k}|${a}`)) return;
+    seen.add(`${k}|${a}`);
+    deviations.push({ key: k, prev: a ?? null, next: b ?? null, ...(at ? { since: at } : {}) });
+  };
+  for (const g of ['files', 'trees', 'prereg']) for (const k of new Set([...Object.keys(last[g] ?? {}), ...Object.keys(next[g] ?? {})])) cmp(`${g}.${k}`, last[g]?.[k], next[g]?.[k]);
+  for (const k of ['ledgerNeed', 'node', 'cli']) cmp(k, last[k], next[k]);
+  for (const [d, tree] of Object.entries(next.beds ?? {})) {
+    const users = earlier.filter(e => e.beds?.[d] !== undefined);
+    if (!users.length) { allowed.push({ key: `beds.${d}`, next: tree, why: 'first paid use of this bed' }); continue; }
+    for (const e of users) cmp(`beds.${d}`, e.beds[d], tree, e.stage ?? null);
   }
   return { deviations, allowed, ok: !deviations.length };
 }

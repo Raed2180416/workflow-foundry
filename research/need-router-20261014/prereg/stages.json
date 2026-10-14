@@ -3524,8 +3524,8 @@
    ]
   },
   "allowedChanges": [
-   "a bed directory first used by a job whose first paid rows are in the later stage (for example the codefix-notests generator before NL1)"
+   "a bed directory that no earlier paid stage's label-engine stamp holds: its first paid use (the TRAIN families first run in NL1, the codefix-notests generator, the held-out families in NL2p and NL2)"
   ],
-  "otherwise": "any other difference between the label-engine stamps of two paid stages is a §13 deviation recorded before the later stage starts"
+  "otherwise": "any other difference from the latest earlier label-engine stamp (files, trees, the preregistered arms, prices, seeds, grid, derived cascades and meter, the need ledger, Node, the CLI), or a bed that differs from any earlier stamp that used it, is a §13 deviation recorded before the later stage starts"
  }
 }
