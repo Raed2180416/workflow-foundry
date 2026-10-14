@@ -399,3 +399,23 @@ it (`ENGINE_DRIFT`), as with any engine change. Each step lists the files it cha
 - **Open.** No re-execution of a recorded run's signals into a new run (the clock is not journaled; replay is the re-derivation),
   no workspace-level buffer for signals that no run waits for yet, G3 reminders and G15/G16 calendar clocks not built, signal-wait
   routing in the L0 card and the library checker not updated (the card is at its token budget).
+
+### G21 tier 0: human-task forms in `tools/ui` (no engine change), 2026-10-14
+
+- **`src/` files changed: none.** No kit allow-list path changed (`package.json`, `bin`, `src`, `schemas`, `policy`, `skills`,
+  `web`, `node_modules`). The engine identity is that of the step it runs on; this work adds nothing to it. The sidecar sits in
+  `tools/` because `web/` is in the kit hash (OPENUI.md §5.2, E-BED §7).
+- **New files.** `tools/ui/` (compile, pattern bound, validator, `formState` adapter, renderer, loopback host, fixtures and runner,
+  generators, `measure.mjs`, README) and `tests/ui-form.test.mjs`, `tests/ui-form-adapter.test.mjs`, `tests/ui-form-browser.test.mjs`.
+- **How it landed.** The files were committed while being built by the unreviewed autosave snapshots `bed1108` … `16efeaa` (which
+  also hold other agents' files). The commit carrying this section adds this record and the README map line;
+  `git diff c76ec66 <that commit> -- tools/ui tests/ui-form*.test.mjs` (`c76ec66` is the parent of `bed1108`) is the G21 work exactly, and the tree it names is the one the
+  suites below ran on.
+- **Coupling to the engine (read-only imports).** `tools/ui/common.mjs` uses `src/data.mjs` (`checkData`, `digest`). The tests and
+  `measure.mjs` call `src/validate.mjs` `validateData` as the differential oracle. The runtime test drives `src/runtime.mjs` and
+  `src/store.mjs` (`awaiting_human` → form → host → `Runtime.answer`). A later engine step that changes answer validation shows up
+  as a differential failure there, not as a silent drift.
+- **Suites (2026-10-14, $0, no model calls).** Main (`node --test --test-concurrency=2 tests/*.test.mjs`, this tree with steps 1
+  and 2): 1129 tests, 1111 pass, **0 fail**, 18 skipped (the recorded lanes). The 88 added tests are 75 + 10 + 3 in the three
+  files above; the browser file ran (Playwright 1.63.0, `/opt/pw-browsers/chromium`) and skips with a reason where either is
+  missing. Details and capability numbers: [tools/ui/README.md](../../tools/ui/README.md).
