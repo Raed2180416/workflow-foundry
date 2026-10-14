@@ -1,0 +1,56 @@
+jit-claude-opus-5-5--claude-haiku-5-5 #0 kinetics:dev:d4:s225: PASS score=1 by=interpreter $0.4034
+jit-claude-opus-5-5--claude-haiku-5-5 #1 kinetics:dev:d4:s226: PASS score=1 by=interpreter $0.4147
+jit-claude-opus-5-5--claude-haiku-5-5 #2 kinetics:dev:d4:s227: PASS score=1 by=interpreter $0.3914
+agent-claude-haiku-5-5 #1 kinetics:dev:d4:s226: fail score=0.8824 by=interpreter $0.0572
+agent-claude-haiku-5-5 #0 kinetics:dev:d4:s225: PASS score=1 by=interpreter $0.0542
+agent-claude-haiku-5-5 #2 kinetics:dev:d4:s227: fail score=0.9722 by=interpreter $0.0438
+agent-claude-haiku-5-5 #3 kinetics:dev:d4:s228: fail score=0.8824 by=interpreter $0.0499
+agent-claude-haiku-5-5 #5 kinetics:dev:d4:s230: fail score=0.9722 by=interpreter $0.0479
+agent-claude-haiku-5-5 #4 kinetics:dev:d4:s229: PASS score=1 by=interpreter $0.0589
+agent-claude-haiku-5-5 #7 kinetics:dev:d4:s232: PASS score=1 by=interpreter $0.0459
+agent-claude-haiku-5-5 #6 kinetics:dev:d4:s231: PASS score=1 by=interpreter $0.0522
+agent-claude-haiku-5-5 #8 kinetics:dev:d4:s233: PASS score=1 by=interpreter $0.0506
+agent-claude-haiku-5-5 #9 kinetics:dev:d4:s234: fail score=0.7857 by=interpreter $0.0447
+agent-claude-haiku-5-5 #11 kinetics:dev:d4:s236: PASS score=1 by=interpreter $0.0480
+agent-claude-haiku-5-5 #10 kinetics:dev:d4:s235: fail score=0.9545 by=interpreter $0.1239
+agent-claude-haiku-5-5 #13 kinetics:dev:d4:s238: fail score=0.95 by=interpreter $0.0417
+agent-claude-haiku-5-5 #12 kinetics:dev:d4:s237: PASS score=1 by=interpreter $0.1291
+agent-claude-haiku-5-5 #14 kinetics:dev:d4:s239: PASS score=1 by=interpreter $0.0493
+agent-claude-haiku-5-5 #15 kinetics:dev:d4:s240: fail score=0.9722 by=interpreter $0.0547
+agent-claude-haiku-5-5 #16 kinetics:dev:d5:s241: PASS score=1 by=interpreter $0.0916
+agent-claude-haiku-5-5 #17 kinetics:dev:d5:s242: PASS score=1 by=interpreter $0.1594
+agent-claude-haiku-5-5 #18 kinetics:dev:d5:s243: PASS score=1 by=interpreter $0.0712
+agent-claude-haiku-5-5 #19 kinetics:dev:d5:s244: PASS score=1 by=interpreter $0.2514
+agent-claude-haiku-5-5 #20 kinetics:dev:d5:s245: fail score=0.9773 by=interpreter $0.1059
+agent-claude-haiku-5-5 #21 kinetics:dev:d5:s246: PASS score=1 by=interpreter $0.1683
+agent-claude-haiku-5-5 #22 kinetics:dev:d5:s247: PASS score=1 by=interpreter $0.1257
+jit-claude-opus-5-5--claude-haiku-5-5 #3 kinetics:dev:d4:s228: PASS score=1 by=interpreter v1 $8.9247
+jit-claude-opus-5-5--claude-haiku-5-5 #4 kinetics:dev:d4:s229: PASS score=1 by=interpreter v1 $0.4736
+agent-claude-haiku-5-5 #23 kinetics:dev:d5:s248: PASS score=1 by=interpreter $0.1602
+jit-claude-opus-5-5--claude-haiku-5-5 #5 kinetics:dev:d4:s230: PASS score=1 by=interpreter v2 $1.6004
+jit-claude-opus-5-5--claude-haiku-5-5 #6 kinetics:dev:d4:s231: fail score=0.8929 by=compiled v2 $0.9519
+jit-claude-opus-5-5--claude-haiku-5-5 #7 kinetics:dev:d4:s232: PASS score=1 by=interpreter v2 $0.3962
+jit-claude-opus-5-5--claude-haiku-5-5 #8 kinetics:dev:d4:s233: PASS score=1 by=adjudicated v3 $3.1261
+jit-claude-opus-5-5--claude-haiku-5-5 #9 kinetics:dev:d4:s234: PASS score=1 by=adjudicated v4 $3.9757
+jit-claude-opus-5-5--claude-haiku-5-5 #10 kinetics:dev:d4:s235: PASS score=1 by=compiled v5 $3.4801
+jit-claude-opus-5-5--claude-haiku-5-5 #11 kinetics:dev:d4:s236: PASS score=1 by=interpreter v5 $0.4633
+jit-claude-opus-5-5--claude-haiku-5-5 #12 kinetics:dev:d4:s237: PASS score=1 by=interpreter v5 $0.4402
+jit-claude-opus-5-5--claude-haiku-5-5 #13 kinetics:dev:d4:s238: PASS score=1 by=compiled v6 $8.1329
+[
+ {
+  "spec": "jit:claude-opus-5-5/claude-haiku-5-5",
+  "slug": "jit-claude-opus-5-5--claude-haiku-5-5",
+  "done": 14,
+  "faults": 0,
+  "errors": [
+   "arm spend stop: jit:claude-opus-5-5/claude-haiku-5-5 $33.17 > $32"
+  ]
+ },
+ {
+  "spec": "agent:claude-haiku-5-5",
+  "slug": "agent-claude-haiku-5-5",
+  "done": 24,
+  "faults": 0,
+  "errors": []
+ }
+]
