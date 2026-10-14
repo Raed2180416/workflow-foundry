@@ -18,8 +18,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const cap = Number(arg('--cap', '15'));
 const rungs = arg('--rungs', Object.keys(RUNGS).join(',')).split(',');
-const live = '/var/tmp/foundry-work/need/m1';
-const out = path.join(ROOT, 'research/need-router-20261014/runs/m1');
+const difficulty = Number(arg('--difficulty', '3'));
+const tag = arg('--tag', difficulty === 3 ? 'm1' : `m1-d${difficulty}`);
+const live = `/var/tmp/foundry-work/need/${tag}`;
+const out = path.join(ROOT, 'research/need-router-20261014/runs', tag);
 mkdirSync(live, { recursive: true }); mkdirSync(out, { recursive: true });
 
 const tasks = [];
@@ -27,7 +29,7 @@ for (const r of rungs) {
   const seeds = RUNGS[r].seeds ?? ATTACK_SEEDS;
   const fam = await loadFamily(RUNGS[r].family);
   refuseSeeds(r, fam.family.id, seeds);
-  tasks.push(...await makeTasks(RUNGS[r].family, { split: 'dev', seeds, difficulty: 3 }));
+  tasks.push(...await makeTasks(RUNGS[r].family, { split: 'dev', seeds, difficulty }));
 }
 console.log(`M1: ${tasks.length} tasks over ${rungs.length} rungs x 2 efforts = ${tasks.length * 2} calls; cap $${cap}`);
 if (process.argv.includes('--dry')) process.exit(0);
@@ -51,7 +53,7 @@ function finish() {
   for (const f of ['results.jsonl', 'results.faults.jsonl']) if (existsSync(path.join(live, f))) copyFileSync(path.join(live, f), path.join(out, f));
   writeFileSync(path.join(out, 'spent.json'), JSON.stringify({ spentUsd: spent, cap, calls: tasks.length * 2 }, null, 1));
 }
-const recs = await runExperiment({ experiment: 'need-m1-wbed-triviality', arms, tasks, trials: 1, workRoot: path.join(live, 'work'),
+const recs = await runExperiment({ experiment: `need-${tag}-wbed-triviality`, arms, tasks, trials: 1, workRoot: path.join(live, 'work'),
   resultsFile: path.join(live, 'results.jsonl'), concurrency: 4, envFaultRule: true, strictResume: true });
 finish();
 const byRung = {};
