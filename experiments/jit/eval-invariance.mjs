@@ -93,34 +93,41 @@ export async function evalArchivedRow({ row, armDir, bed, relations, k, work, fl
   return rec;
 }
 
-// Flag rules over a row's measured variants: any relation and seed; the first seed only (one draw, as the stream runs it);
-// 'in'-distribution relations only.
+// Flag rules over a row's variants, for one view (a filter on variants: all, the first seed only, 'in' relations only, one
+// relation). measurable: at least one variant ran on journal answers alone; flagged: one of those disagreed; pending: the
+// relations of the view none of whose variants could run at $0 (only paid judge calls can say whether they would flag).
 const measured = vs => vs.filter(v => v.status === 'agree' || v.status === 'disagree');
-export function rowFlags(rec) {
-  const m = measured(rec.variants ?? []);
-  const flag = f => m.some(v => f(v) && v.status === 'disagree'), any = f => m.some(f);
-  return { measurable: m.length > 0, flagged: flag(() => true), measurableK0: any(v => v.k === 0), flaggedK0: flag(v => v.k === 0),
-    measurableIn: any(v => v.distribution === 'in'), flaggedIn: flag(v => v.distribution === 'in') };
+export const VIEWS = Object.freeze({ any: () => true, firstDraw: v => v.k === 0, inDistribution: v => v.distribution === 'in' });
+export function rowFlags(rec, view = VIEWS.any) {
+  const vs = (rec.variants ?? []).filter(view), m = measured(vs), rels = [...new Set(vs.map(v => v.relation))];
+  const pending = rels.filter(id => !m.some(v => v.relation === id) && vs.some(v => v.relation === id && v.status === 'needs-paid-judges'));
+  return { measurable: m.length > 0, flagged: m.some(v => v.status === 'disagree'), pending };
 }
 
-// The M1 rule on part (i) at $0. lower = flagged / all wrong (unmeasured counted as missed); measured = flagged / measurable
-// wrong; upper = (flagged + unmeasurable wrong) / all wrong (unmeasured counted as caught).
-export function m1Rule(recs, { flaggedKey = 'flagged', measurableKey = 'measurable' } = {}) {
+// The M1 rule on part (i) at $0 for one view. lower = flagged / all wrong (pending counted as missed); upper = (flagged +
+// wrong outputs with a pending relation) / all wrong (pending counted as caught); measured = flagged / measurable wrong;
+// false alarms = flagged / measurable right.
+export function m1Rule(recs, view = VIEWS.any) {
   const ev = recs.filter(r => r.status === 'evaluated'), wrong = ev.filter(r => !r.compiledPass), right = ev.filter(r => r.compiledPass);
-  const f = r => rowFlags(r);
-  const wM = wrong.filter(r => f(r)[measurableKey]), wF = wrong.filter(r => f(r)[flaggedKey]), cM = right.filter(r => f(r)[measurableKey]), cF = right.filter(r => f(r)[flaggedKey]);
-  const lower = wrong.length ? wF.length / wrong.length : null, upper = wrong.length ? (wF.length + wrong.length - wM.length) / wrong.length : null;
-  const fa = cM.length ? cF.length / cM.length : null;
+  const f = r => rowFlags(r, view);
+  const wM = wrong.filter(r => f(r).measurable).length, wF = wrong.filter(r => f(r).flagged).length, wP = wrong.filter(r => !f(r).flagged && f(r).pending.length).length;
+  const cM = right.filter(r => f(r).measurable).length, cF = right.filter(r => f(r).flagged).length;
+  const lower = wrong.length ? wF / wrong.length : null, upper = wrong.length ? (wF + wP) / wrong.length : null, fa = cM ? cF / cM : null;
   let verdict;
   if (!wrong.length) verdict = 'no wrong compiled output';
-  else if (!wM.length) verdict = 'not measurable at $0: every variant of every wrong output needs paid judge calls';
-  else if (upper < 0.25) verdict = 'KILL on (i): even counting every unmeasured wrong output as flagged, recall < 25%';
+  else if (upper < 0.25) verdict = 'KILL on (i): recall < 25% even if every relation that needs paid judges flagged its output';
   else if (lower >= 0.5 && fa != null && fa <= 0.1) verdict = 'meets (i); (ii) on a fresh dev range still decides';
-  else if (wF.length / wM.length < 0.25) verdict = 'below the kill line on the measurable part; the unmeasured wrong outputs need paid judges';
+  else if (wP) verdict = `open: ${wP} of ${wrong.length} wrong outputs have relations that only paid judge calls can run`;
   else verdict = 'open: between the lines on (i)';
-  return { wrong: wrong.length, wrongMeasurable: wM.length, wrongFlagged: wF.length, right: right.length, rightMeasurable: cM.length, rightFlagged: cF.length,
-    recallLowerPct: lower == null ? null : pct(wF.length, wrong.length), recallMeasuredPct: pct(wF.length, wM.length), recallUpperPct: upper == null ? null : Math.round(upper * 1000) / 10,
-    falseAlarmPct: fa == null ? null : pct(cF.length, cM.length), verdict };
+  return { wrong: wrong.length, wrongMeasurable: wM, wrongFlagged: wF, wrongPending: wP, right: right.length, rightMeasurable: cM, rightFlagged: cF,
+    recallLowerPct: lower == null ? null : pct(wF, wrong.length), recallMeasuredPct: pct(wF, wM), recallUpperPct: upper == null ? null : pct(wF + wP, wrong.length),
+    falseAlarmPct: fa == null ? null : pct(cF, cM), verdict };
+}
+// The rule per view and per relation.
+export function m1Rules(recs) {
+  const rels = [...new Set(recs.flatMap(r => (r.variants ?? []).map(v => v.relation)))];
+  return { ...Object.fromEntries(Object.entries(VIEWS).map(([k, view]) => [k, m1Rule(recs, view)])),
+    byRelation: Object.fromEntries(rels.map(id => [id, m1Rule(recs, v => v.relation === id)])) };
 }
 
 export async function evalArchived({ runs = DEFAULT_RUNS, experiments = DEFAULT_EXPERIMENTS, k = 3, work, concurrency = 2, log = () => {} }) {
@@ -138,7 +145,7 @@ export async function evalArchived({ runs = DEFAULT_RUNS, experiments = DEFAULT_
       await pool(rows, concurrency, async (row, i) => {
         recs[i] = await evalArchivedRow({ row, armDir, bed, relations, k, work, flowPath });
         const r = recs[i], fl = r.status === 'evaluated' ? rowFlags(r) : null;
-        log(`(A) ${experiment} ${arm} #${row.idx} ${row.taskKey.split(':').pop()} v${row.version}: ${r.status}${r.status === 'evaluated' ? ` ${r.compiledPass ? 'right' : 'WRONG'} (fidelity ${r.fidelity}), variants measured ${measured(r.variants).length}/${r.variants.length}, flagged ${fl.flagged}` : ''}`);
+        log(`(A) ${experiment} ${arm} #${row.idx} ${row.taskKey.split(':').pop()} v${row.version}: ${r.status}${r.status === 'evaluated' ? ` ${r.compiledPass ? 'right' : 'WRONG'} (fidelity ${r.fidelity}), variants measured ${measured(r.variants).length}/${r.variants.length}, flagged ${fl.flagged}${fl.pending.length ? `, pending ${fl.pending.join('+')}` : ''}` : ''}`);
       });
       out.push(...recs);
     }
@@ -150,11 +157,11 @@ export async function evalArchived({ runs = DEFAULT_RUNS, experiments = DEFAULT_
 export function relationTable(recs) {
   const t = {};
   for (const r of recs.filter(x => x.status === 'evaluated')) for (const v of r.variants) {
-    const key = `${r.experiment}|${v.relation}`, x = t[key] ??= { experiment: r.experiment, relation: v.relation, distribution: v.distribution, variants: 0, measured: 0, disagree: 0, disagreeOnWrong: 0, disagreeOnRight: 0, needsPaidJudges: 0, skip: 0, variantNotOk: 0 };
+    const key = `${r.experiment}|${v.relation}`, x = t[key] ??= { experiment: r.experiment, relation: v.relation, distribution: v.distribution, variants: 0, measured: 0, disagree: 0, disagreeOnWrong: 0, disagreeOnRight: 0, needsPaidJudges: 0, skip: 0, variantNotOk: 0, paidJudgeAt: {} };
     x.variants++;
     if (v.status === 'agree' || v.status === 'disagree') x.measured++;
     if (v.status === 'disagree') { x.disagree++; if (r.compiledPass) x.disagreeOnRight++; else x.disagreeOnWrong++; }
-    if (v.status === 'needs-paid-judges') x.needsPaidJudges++;
+    if (v.status === 'needs-paid-judges') { x.needsPaidJudges++; const at = v.deopt?.name ?? v.deopt?.kind ?? v.status; x.paidJudgeAt[at] = (x.paidJudgeAt[at] ?? 0) + 1; }
     if (v.status === 'skip') x.skip++;
     if (v.status.startsWith('variant-')) x.variantNotOk++;
   }
@@ -268,8 +275,8 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
       result.archived = {
         rows: recs,
         relations: relationTable(recs),
-        rule: Object.fromEntries(Object.entries(byExp).map(([e, rs]) => [e, { any: m1Rule(rs), firstDraw: m1Rule(rs, { flaggedKey: 'flaggedK0', measurableKey: 'measurableK0' }), inDistribution: m1Rule(rs, { flaggedKey: 'flaggedIn', measurableKey: 'measurableIn' }) }])),
-        pooled: { any: m1Rule(recs), firstDraw: m1Rule(recs, { flaggedKey: 'flaggedK0', measurableKey: 'measurableK0' }), inDistribution: m1Rule(recs, { flaggedKey: 'flaggedIn', measurableKey: 'measurableIn' }) },
+        rule: Object.fromEntries(Object.entries(byExp).map(([e, rs]) => [e, m1Rules(rs)])),
+        pooled: m1Rules(recs),
         fidelity: { checked: recs.filter(r => r.fidelity != null).length, matched: recs.filter(r => r.fidelity === true).length },
         notReplayable: recs.filter(r => r.status !== 'evaluated').map(r => ({ experiment: r.experiment, arm: r.arm, idx: r.idx, status: r.status, original: r.original ?? null })),
       };
@@ -281,9 +288,12 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
   if (o.json) log(JSON.stringify(result, null, 1));
   else {
     if (result.archived) {
-      for (const [e, r] of Object.entries(result.archived.rule)) for (const [view, x] of Object.entries(r))
-        log(`(i) ${e} [${view}]: wrong ${x.wrongFlagged}/${x.wrong} flagged (measurable ${x.wrongMeasurable}), right ${x.rightFlagged}/${x.rightMeasurable} measurable flagged; recall ${x.recallLowerPct}% (measured ${x.recallMeasuredPct}%, upper ${x.recallUpperPct}%), false alarms ${x.falseAlarmPct}% -> ${x.verdict}`);
-      for (const t of result.archived.relations) log(`    ${t.experiment} ${t.relation} (${t.distribution}): ${t.measured}/${t.variants} measured at $0, ${t.needsPaidJudges} need paid judges, ${t.skip} skipped, ${t.variantNotOk} variant not ok; disagree ${t.disagree} (wrong ${t.disagreeOnWrong}, right ${t.disagreeOnRight})`);
+      const line = (e, view, x) => log(`(i) ${e} [${view}]: wrong ${x.wrongFlagged}/${x.wrong} flagged (measurable ${x.wrongMeasurable}, pending ${x.wrongPending}), right ${x.rightFlagged}/${x.rightMeasurable} measurable flagged; recall ${x.recallLowerPct}% (measured ${x.recallMeasuredPct}%, upper ${x.recallUpperPct}%), false alarms ${x.falseAlarmPct}% -> ${x.verdict}`);
+      for (const [e, r] of [...Object.entries(result.archived.rule), ['pooled', result.archived.pooled]]) {
+        for (const view of Object.keys(VIEWS)) line(e, view, r[view]);
+        for (const [id, x] of Object.entries(r.byRelation)) line(e, id, x);
+      }
+      for (const t of result.archived.relations) log(`    ${t.experiment} ${t.relation} (${t.distribution}): ${t.measured}/${t.variants} measured at $0, ${t.needsPaidJudges} need paid judges ${JSON.stringify(t.paidJudgeAt)}, ${t.skip} skipped, ${t.variantNotOk} variant not ok; disagree ${t.disagree} (wrong ${t.disagreeOnWrong}, right ${t.disagreeOnRight})`);
       log(`    fidelity ${result.archived.fidelity.matched}/${result.archived.fidelity.checked}; not replayable ${result.archived.notReplayable.length}`);
     }
     if (result.synthetic) {

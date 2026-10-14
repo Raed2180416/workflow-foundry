@@ -18,7 +18,7 @@ import { taskRng } from '../lib/prng.mjs';
 import { hooks } from '../lib/faults.mjs';
 import { FAMILIES, acceptedClasses } from './families.mjs';
 import { LEVELS, MIN_D, MAX_D, CLASS_MIN, AREAS, LIB, NOUNS, PACKAGES, ORGS, TODOS, NOTES } from './vocab.mjs';
-import { makeContext, observe, sameObs, argsOk, GEN_TIMEOUT_MS } from './exec.mjs';
+import { makeContext, observe, sameObs, argsOk, returnsNegZero, GEN_TIMEOUT_MS } from './exec.mjs';
 import { renderRepo, domainText } from './render.mjs';
 
 export const VERSION = '1.1.0';
@@ -240,7 +240,7 @@ function attemptSweep(spec, attempt) {
     const out = [];
     for (const a of r.shuffle(f.probes)) {
       const o = obsGen(planted, f.name, a);
-      if (o.throws || o.negZero || o.returns.includes('"$') || o.argsAfter !== JSON.stringify(a)) continue; // a -0 result would need Object.is in the test
+      if (o.throws || o.returns.includes('"$') || o.argsAfter !== JSON.stringify(a) || returnsNegZero(planted, f.name, a, GEN_TIMEOUT_MS)) continue;
       if ((f.role !== 'clean' || f.differs.length) && !sameObs(o, obsGen(correct, f.name, a))) continue;
       out.push({ args: a, expected: JSON.parse(o.returns) });
       if (out.length === 2) break;

@@ -180,13 +180,15 @@ async function softJudge(name, spec) {
 // VOID / KEEP, kind 'invoice' asks COUNTS / DOES_NOT_COUNT. A code reader cross-checks: when it is confident and
 // disagrees, a Sonnet tie-break decides.
 function readMeaning(sentences, kind) {
-  const t0 = sentences.join(' ').toLowerCase(), t = t0, td = t0.replace(/\bnot void\b/g, ' ');
+  // Negated phrases are removed before the opposite test ("not void" is a keep phrase, "not real accounts" a drop phrase).
+  const t0 = sentences.join(' ').toLowerCase();
+  const t = t0.replace(/\bnot (?:real|genuine) accounts?\b|\bnot dropped\b|\bdo not keep\b/g, ' '), td = t0.replace(/\bnot void\b|\bnot (?:be )?dropped\b|\bdo not drop\b|\bnot a cancellation\b/g, ' ');
   const keep = kind === 'row'
-    ? /\bnot void\b|are genuine|real accounts?|stay in|keep (?:it|them)|still serve|still invoices|does not carry a void marker|still be migrated|ordinary live/
-    : /\bare ordinary\b|owed invoices and count|\band count\b|like open ones|treat these invoices like open|still owed|\bcount as (?:open|owed)/;
+    ? /\bnot void\b|are genuine|real accounts?|stay in\b|keep (?:it|them|these)|still serve|still invoices|does not carry a void marker|must (?:still )?be migrated|still on the books|ordinary live|do not drop|only means/
+    : /\bare ordinary\b|owed invoices and count|\band count\b|like open ones|treat these invoices like open|still owed|\bcount as (?:open|owed)|not a cancellation/;
   const drop = kind === 'row'
-    ? /\bis void\b|are void\b|\bvoid\.|counts as carrying a void marker|must be dropped|leave them out|never belonged|must not be migrated|drop it|aborted import/
-    : /does not count|do not count|not owed|never owed|withdrawn|cancelled after|is void/;
+    ? /\bis void\b|are void\b|\bvoid\.|counts as carrying a void marker|must be dropped|leave them out|never belonged|must not be migrated|drop it|aborted import|do not keep|stay out|not real accounts|rejected|demo accounts/
+    : /does not count|do not count|not owed|never owed|withdrawn|cancelled after|is void|cancelled invoices|reversed/;
   const k = keep.test(t), d = drop.test(td);
   return k && !d ? 'keep' : d && !k ? 'drop' : null;
 }

@@ -46,9 +46,14 @@ export function observe(ctx, name, args, timeout = TIMEOUT_MS) {
   let ret = null, threw = null;
   try { CALL.runInContext(ctx, { timeout }); ret = ctx.__out.r; }
   catch (e) { threw = (e && typeof e === 'object' && typeof e.name === 'string') ? (e.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' ? 'Timeout' : e.name) : 'Thrown'; }
-  return { returns: threw ? null : canonValue(ret), throws: threw, argsAfter: canonValue(copy), ...(!threw && hasNegZero(ret) ? { negZero: true } : {}) };
+  return { returns: threw ? null : canonValue(ret), throws: threw, argsAfter: canonValue(copy) };
 }
-/** Does a value hold -0 somewhere? (canonValue writes -0 as 0, which a strict test assertion would not accept.) */
+/** Does `name` return a value holding -0 on `args`? canonValue writes -0 as 0, which the repository's strict test
+ *  assertions (assert.deepEqual from node:assert/strict) would not accept, so such inputs are kept out of its tests. */
+export function returnsNegZero(ctx, name, args, timeout = TIMEOUT_MS) {
+  ctx.__args = JSON.parse(JSON.stringify(args)); ctx.__name = name; ctx.__out = null;
+  try { CALL.runInContext(ctx, { timeout }); return hasNegZero(ctx.__out.r); } catch { return false; }
+}
 function hasNegZero(v, depth = 0) {
   if (Object.is(v, -0)) return true;
   if (depth > 20 || v === null || typeof v !== 'object') return false;
