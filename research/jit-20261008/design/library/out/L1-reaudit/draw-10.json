@@ -1,0 +1,163 @@
+{
+ "id": "L1-reaudit-draw-10",
+ "date": "2026-10-14",
+ "purpose": "Fixed-seed 10-item sub-draw of draw.json for the second labeller (blind, as draw.json).",
+ "parent": {
+  "file": "research/jit-20261008/design/library/out/L1-reaudit/draw.json",
+  "seed": 20261014,
+  "n": 60
+ },
+ "seed": 20261015,
+ "prng": "mulberry32",
+ "method": "Stratified by cluster, 2 per cluster (five clusters, 10 items). Per cluster: its drawn ids sorted lexicographically, one Fisher-Yates shuffle on one mulberry32(seed) stream, first 2 taken (clusters visited automation, orchestration, science, consumer-creative, agentic); then the 10 shuffled once on the same stream for review order (subOrder). Stratified so that the second labeller sees every cluster the revision touched.",
+ "items": [
+  {
+   "subOrder": 1,
+   "drawOrder": 29,
+   "id": "node-red:a04546c46361167fd1d83aed8e4f22ec",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 71,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 354
+   },
+   "sourceUrl": "https://flows.nodered.org/flow/a04546c46361167fd1d83aed8e4f22ec"
+  },
+  {
+   "subOrder": 2,
+   "drawOrder": 1,
+   "id": "snakemake:zavolanlab/mirflowz@v0.10.0",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumFrameSize": 155,
+   "stratumPopSize": 159,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1032
+   },
+   "sourceUrl": "https://github.com/zavolanlab/mirflowz/tree/10b78c8b9877f1f26724b74c30d100d70ffefe4d"
+  },
+  {
+   "subOrder": 3,
+   "drawOrder": 35,
+   "id": "home-assistant:dannytsang/homeassistant-config/packages/integrations/energy/zappi.yaml#script/zappi_check_ev_charge",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumFrameSize": 101,
+   "stratumPopSize": 105,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1273
+   },
+   "sourceUrl": "https://github.com/dannytsang/homeassistant-config/blob/89e71604772cc4bc0722d0a8af0582509834ecf3/packages/integrations/energy/zappi.yaml"
+  },
+  {
+   "subOrder": 4,
+   "drawOrder": 10,
+   "id": "n8n:7635",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 71,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 307
+   },
+   "sourceUrl": "https://n8n.io/workflows/7635"
+  },
+  {
+   "subOrder": 5,
+   "drawOrder": 22,
+   "id": "strands:tools/src/strands_tools/workflow.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumFrameSize": 57,
+   "stratumPopSize": 60,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1559
+   },
+   "sourceUrl": "https://github.com/strands-agents/tools/blob/1dd0465da8a748b0e8ac87ec5b3485bccb60d70e/src/strands_tools/workflow.py"
+  },
+  {
+   "subOrder": 6,
+   "drawOrder": 56,
+   "id": "snakemake:epigen/dea_limma@v2.2.1",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumFrameSize": 155,
+   "stratumPopSize": 159,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1004
+   },
+   "sourceUrl": "https://github.com/epigen/dea_limma/tree/70fe01d1e56ec9223b542dfe1133fb28cc30202b"
+  },
+  {
+   "subOrder": 7,
+   "drawOrder": 31,
+   "id": "tekton:v1/pipelineruns/pipeline-with-displayname",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumFrameSize": 120,
+   "stratumPopSize": 124,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 748
+   },
+   "sourceUrl": "https://github.com/tektoncd/pipeline/blob/v1.17.0/examples/v1/pipelineruns/pipeline-with-displayname.yaml"
+  },
+  {
+   "subOrder": 8,
+   "drawOrder": 24,
+   "id": "github-actions:microsoft/promptflow/.github/workflows/samples_tutorials_flow_deploy_azure_app_service.yml",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "stratumFrameSize": 12,
+   "stratumPopSize": 14,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 616
+   },
+   "sourceUrl": "https://github.com/microsoft/promptflow/blob/148108106cec45b78cd1cafa21c3169ef2475efe/.github/workflows/samples_tutorials_flow_deploy_azure_app_service.yml"
+  },
+  {
+   "subOrder": 9,
+   "drawOrder": 36,
+   "id": "apple-shortcuts:workflowllm-seed-10817",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumFrameSize": 101,
+   "stratumPopSize": 105,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1138
+   },
+   "sourceUrl": "https://huggingface.co/datasets/openbmb/WorkflowLLM/blob/d0de182c3f9abac5c4ded9ae2eadcd8155ee1435/data.zip#seed_data.json[10817]"
+  },
+  {
+   "subOrder": 10,
+   "drawOrder": 54,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumFrameSize": 57,
+   "stratumPopSize": 60,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1511
+   },
+   "sourceUrl": "https://github.com/openai/openai-agents-python/blob/f007b3fb05e82ef2d2bea5646a0822769a52f7c9/examples/agent_patterns/streaming_guardrails.py"
+  }
+ ],
+ "composition": {
+  "agentic|C": 2,
+  "automation|A": 2,
+  "consumer-creative|B": 2,
+  "orchestration|B": 1,
+  "orchestration|C": 1,
+  "science|A": 2
+ }
+}

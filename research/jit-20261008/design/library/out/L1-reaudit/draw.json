@@ -1,0 +1,1034 @@
+{
+ "id": "L1-reaudit-draw-1",
+ "date": "2026-10-14",
+ "purpose": "Fresh stratified sample for the re-audit of the revised L1 (AUDIT-L1 successor; LIBRARY-TESTS L1). Blind: the labeller sees the item (title, description, graph) and the stratum letter; census verdicts, patterns, tokens and any L1-a label are not in this file.",
+ "census": {
+  "file": "research/jit-20261008/design/library/out/pattern-census-items.jsonl",
+  "sha256": "0998e4e74d8ef685e4d10a8d6407855549bd2acef1d7469729ac9494a2e902a5",
+  "rows": 1559,
+  "revision": "L1 revision 1 (REVISION=1, DASHBOARD_WIDGETS=20; HEAD 56d45de)"
+ },
+ "seed": 20261014,
+ "prng": "mulberry32",
+ "method": "Per stratum (cluster x A/B/C/R): frame = census rows in the stratum minus the 60 L1-a ids; ids sorted lexicographically; Fisher-Yates on one shared mulberry32(seed) stream; first k taken; strata visited in ALLOC order; then the 60 shuffled once on the same stream for review order (drawOrder). Strata: six platform clusters (automation, orchestration, science, consumer-creative, agentic, first-party) crossed with the distinct-L1-pattern count (A: 0-1, B: 2-4, C: 5+); refused items are R inside agentic and merged into A elsewhere (AUDIT-L1 §1).",
+ "allocationChange": "L1-a: automation A3 B4 C3; orchestration A4 B4 C2; science A4 B4 C2; consumer-creative A3 B4 C3; agentic R2 A1 B4 C3; first-party B10. First-party has no unlabelled item left (L1-a drew all 10 of its frame), so its 10 slots are reallocated: +2 to each of the five other clusters, raising A, B and C to 4 each (agentic keeps R2). 60 = 5 x 12.",
+ "firstPartyFrame": [
+  {
+   "stratum": "first-party|B",
+   "popSize": 10,
+   "l1aExcluded": 10,
+   "frameSize": 0
+  }
+ ],
+ "excludedL1a": {
+  "count": 60,
+  "source": "research/jit-20261008/design/library/out/L1-audit-draw.json (ids only; no label, adjudication or census field is read)",
+  "sha256": "f07f63e24941d24230d27d7538e0aaf2bae371929477ceae388ef1528d9af3b2",
+  "ids": [
+   "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "ag2:ag2/website/docs/user-guide/advanced-concepts/orchestration/group-chat/guardrails.mdx#support-agent-input-output-guardrails-group-chat",
+   "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_eks_with_nodegroups#example_eks_with_nodegroups",
+   "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_agent#example_agent_structured_output",
+   "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "apple-shortcuts:workflowllm-seed-00459",
+   "apple-shortcuts:workflowllm-seed-05668",
+   "apple-shortcuts:workflowllm-seed-07479",
+   "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js",
+   "claude-code-workflows:claude-session/workflows/scripts/beds-tier-a-wf_7c3e2774-94f.js",
+   "claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js",
+   "claude-code-workflows:claude-session/workflows/scripts/design-review-c-wf_1ab0b3e4-a4d.js",
+   "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js",
+   "claude-code-workflows:claude-session/workflows/scripts/kev-build-contracts-wf_dd485f40-503.js",
+   "claude-code-workflows:claude-session/workflows/scripts/kev-judge-program-design-wf_0a785d94-93f.js",
+   "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+   "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js",
+   "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "comfyui:Comfy-Org-workflow_templates-templates-audio_stable_audio_example.json",
+   "comfyui:Jonseed-ComfyUI-Detail-Daemon-example_workflows-Z-Image-txt2img-DetailDaemon.json",
+   "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_I2V_TTP_v1-.json",
+   "comfyui:xxyQwQ-ComfyBench-dataset-benchmark-workflow-001.json",
+   "coze:query-types-llm-intent-http-nodes",
+   "crewai:crewAI/lib/crewai/src/crewai/flow/templates/flow_definition_example.yaml#research-review-model-router-followup",
+   "cwl:EBI-Metagenomics/pipeline-v5/workflows/amplicon-wf--v.5-cond.cwl",
+   "dagster:tutorial_notebook_assets",
+   "flowise:chatflows-local-qn-a",
+   "flowise:chatflows-sql-db-chain",
+   "galaxy:iwc/Mitogenome-assembly-VGP0/Mitogenome-Assembly-VGP0",
+   "galaxy:iwc/annotation-maker/Genome_annotation_with_maker_short",
+   "galaxy:iwc/hi-c-contact-map-for-assembly-manual-curation/hi-c-map-for-assembly-manual-curation",
+   "galaxy:workflowhub/607",
+   "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+   "haystack:haystack-cookbook/notebooks/computer_use_agent_with_skills.ipynb",
+   "home-assistant:forum-871550",
+   "ifttt:vJmvEaAG",
+   "langgraph:langgraph/docs/docs/tutorials/reflexion/reflexion.ipynb",
+   "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "n8n:18122",
+   "n8n:3840",
+   "n8n:4428",
+   "nextflow:workflowhub/1030",
+   "nextflow:workflowhub/813",
+   "nf-core:proteogenomicsdb@1.0.0",
+   "nf-core:scrnaseq@4.2.0",
+   "node-red:1a43db3395478c8c30f18144f9eada82",
+   "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "node-red:29fd01f8a62fec86d875ecbd68001cb0",
+   "openai-agents:openai-agents-python/examples/agent_patterns/llm_as_a_judge.py",
+   "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py",
+   "openai-swarm:swarm/examples/airline/configs/agents.py#airline-triage-network",
+   "prefect:prefect/docs/v3/advanced/form-building.mdx",
+   "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine",
+   "tekton:v1/pipelineruns/beta/pipelinerun-with-matrix",
+   "wdl:github.com/MethodsDev/LongReadAlignmentAssembler/LRAA-cell_cluster_guided:main"
+  ]
+ },
+ "strata": {
+  "automation|A": {
+   "cluster": "automation",
+   "stratum": "A",
+   "popSize": 71,
+   "l1aExcluded": 5,
+   "frameSize": 66,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "automation|B": {
+   "cluster": "automation",
+   "stratum": "B",
+   "popSize": 157,
+   "l1aExcluded": 4,
+   "frameSize": 153,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "automation|C": {
+   "cluster": "automation",
+   "stratum": "C",
+   "popSize": 167,
+   "l1aExcluded": 1,
+   "frameSize": 166,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "orchestration|A": {
+   "cluster": "orchestration",
+   "stratum": "A",
+   "popSize": 258,
+   "l1aExcluded": 4,
+   "frameSize": 254,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "orchestration|B": {
+   "cluster": "orchestration",
+   "stratum": "B",
+   "popSize": 124,
+   "l1aExcluded": 4,
+   "frameSize": 120,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "orchestration|C": {
+   "cluster": "orchestration",
+   "stratum": "C",
+   "popSize": 14,
+   "l1aExcluded": 2,
+   "frameSize": 12,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "science|A": {
+   "cluster": "science",
+   "stratum": "A",
+   "popSize": 159,
+   "l1aExcluded": 4,
+   "frameSize": 155,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "science|B": {
+   "cluster": "science",
+   "stratum": "B",
+   "popSize": 104,
+   "l1aExcluded": 4,
+   "frameSize": 100,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "science|C": {
+   "cluster": "science",
+   "stratum": "C",
+   "popSize": 15,
+   "l1aExcluded": 2,
+   "frameSize": 13,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "consumer-creative|A": {
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "popSize": 69,
+   "l1aExcluded": 3,
+   "frameSize": 66,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "consumer-creative|B": {
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "popSize": 105,
+   "l1aExcluded": 4,
+   "frameSize": 101,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "consumer-creative|C": {
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "popSize": 99,
+   "l1aExcluded": 3,
+   "frameSize": 96,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "agentic|R": {
+   "cluster": "agentic",
+   "stratum": "R",
+   "popSize": 33,
+   "l1aExcluded": 2,
+   "frameSize": 31,
+   "sampled": 2,
+   "allocated": 2
+  },
+  "agentic|A": {
+   "cluster": "agentic",
+   "stratum": "A",
+   "popSize": 5,
+   "l1aExcluded": 1,
+   "frameSize": 4,
+   "sampled": 2,
+   "allocated": 2
+  },
+  "agentic|B": {
+   "cluster": "agentic",
+   "stratum": "B",
+   "popSize": 109,
+   "l1aExcluded": 4,
+   "frameSize": 105,
+   "sampled": 4,
+   "allocated": 4
+  },
+  "agentic|C": {
+   "cluster": "agentic",
+   "stratum": "C",
+   "popSize": 60,
+   "l1aExcluded": 3,
+   "frameSize": 57,
+   "sampled": 4,
+   "allocated": 4
+  }
+ },
+ "items": [
+  {
+   "drawOrder": 1,
+   "id": "snakemake:zavolanlab/mirflowz@v0.10.0",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumFrameSize": 155,
+   "stratumPopSize": 159,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1032
+   },
+   "sourceUrl": "https://github.com/zavolanlab/mirflowz/tree/10b78c8b9877f1f26724b74c30d100d70ffefe4d"
+  },
+  {
+   "drawOrder": 2,
+   "id": "openai-agents:openai-agents-python/examples/realtime/app/server.py",
+   "cluster": "agentic",
+   "stratum": "R",
+   "stratumFrameSize": 31,
+   "stratumPopSize": 33,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1515
+   },
+   "sourceUrl": "https://github.com/openai/openai-agents-python/blob/f007b3fb05e82ef2d2bea5646a0822769a52f7c9/examples/realtime/app/server.py"
+  },
+  {
+   "drawOrder": 3,
+   "id": "langgraph:react-agent/src/react_agent/graph.py",
+   "cluster": "agentic",
+   "stratum": "B",
+   "stratumFrameSize": 105,
+   "stratumPopSize": 109,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1478
+   },
+   "sourceUrl": "https://github.com/langchain-ai/react-agent/blob/f5520937686b06d7139a165e71af1b86e291b866/src/react_agent/graph.py"
+  },
+  {
+   "drawOrder": 4,
+   "id": "n8n:14988",
+   "cluster": "automation",
+   "stratum": "B",
+   "stratumFrameSize": 153,
+   "stratumPopSize": 157,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 237
+   },
+   "sourceUrl": "https://n8n.io/workflows/14988"
+  },
+  {
+   "drawOrder": 5,
+   "id": "node-red:e71d5246a2e80954b267b3079e1e9764",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 71,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 366
+   },
+   "sourceUrl": "https://flows.nodered.org/flow/e71d5246a2e80954b267b3079e1e9764"
+  },
+  {
+   "drawOrder": 6,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/agents_as_tools_conditional.py",
+   "cluster": "agentic",
+   "stratum": "B",
+   "stratumFrameSize": 105,
+   "stratumPopSize": 109,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1504
+   },
+   "sourceUrl": "https://github.com/openai/openai-agents-python/blob/f007b3fb05e82ef2d2bea5646a0822769a52f7c9/examples/agent_patterns/agents_as_tools_conditional.py"
+  },
+  {
+   "drawOrder": 7,
+   "id": "nf-core:viralrecon@3.0.0",
+   "cluster": "science",
+   "stratum": "C",
+   "stratumFrameSize": 13,
+   "stratumPopSize": 15,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 993
+   },
+   "sourceUrl": "https://nf-co.re/viralrecon/3.0.0"
+  },
+  {
+   "drawOrder": 8,
+   "id": "nf-core:proteinfold@2.0.0",
+   "cluster": "science",
+   "stratum": "C",
+   "stratumFrameSize": 13,
+   "stratumPopSize": 15,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 967
+   },
+   "sourceUrl": "https://nf-co.re/proteinfold/2.0.0"
+  },
+  {
+   "drawOrder": 9,
+   "id": "nf-core:mag@5.5.0",
+   "cluster": "science",
+   "stratum": "C",
+   "stratumFrameSize": 13,
+   "stratumPopSize": 15,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 946
+   },
+   "sourceUrl": "https://nf-co.re/mag/5.5.0"
+  },
+  {
+   "drawOrder": 10,
+   "id": "n8n:7635",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 71,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 307
+   },
+   "sourceUrl": "https://n8n.io/workflows/7635"
+  },
+  {
+   "drawOrder": 11,
+   "id": "node-red:b67248b9bc0777d641340403feb8bad6",
+   "cluster": "automation",
+   "stratum": "B",
+   "stratumFrameSize": 153,
+   "stratumPopSize": 157,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 357
+   },
+   "sourceUrl": "https://flows.nodered.org/flow/b67248b9bc0777d641340403feb8bad6"
+  },
+  {
+   "drawOrder": 12,
+   "id": "flowise:chatflows-re-act-agent",
+   "cluster": "automation",
+   "stratum": "B",
+   "stratumFrameSize": 153,
+   "stratumPopSize": 157,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 158
+   },
+   "sourceUrl": "https://github.com/FlowiseAI/Flowise/blob/9291856d1ea4a4ceea9f8fef8ce14f4f6c81e8eb/packages/server/marketplaces/chatflows/ReAct%20Agent.json"
+  },
+  {
+   "drawOrder": 13,
+   "id": "nf-core:slamseq@1.0.0",
+   "cluster": "science",
+   "stratum": "B",
+   "stratumFrameSize": 100,
+   "stratumPopSize": 104,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 984
+   },
+   "sourceUrl": "https://nf-co.re/slamseq/1.0.0"
+  },
+  {
+   "drawOrder": 14,
+   "id": "langflow:price-deal-finder",
+   "cluster": "automation",
+   "stratum": "B",
+   "stratumFrameSize": 153,
+   "stratumPopSize": 157,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 180
+   },
+   "sourceUrl": "https://github.com/langflow-ai/langflow/blob/504c02fc47e76087b82b0e7cbe4186e9cdd916d4/src/backend/base/langflow/initial_setup/starter_projects/Price%20Deal%20Finder.json"
+  },
+  {
+   "drawOrder": 15,
+   "id": "comfyui:Comfy-Org-workflow_templates-templates-video_wan2_2_14B_flf2v.json",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 69,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1162
+   },
+   "sourceUrl": "https://github.com/Comfy-Org/workflow_templates/blob/b4119d0fcecf78a376e087305ec4f485c66a03f5/templates/video_wan2_2_14B_flf2v.json"
+  },
+  {
+   "drawOrder": 16,
+   "id": "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/flight_booking.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumFrameSize": 57,
+   "stratumPopSize": 60,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1530
+   },
+   "sourceUrl": "https://github.com/pydantic/pydantic-ai/blob/5d43cfcc334a29222b0e6d23d797689dc3c2132c/examples/pydantic_ai_examples/flight_booking.py"
+  },
+  {
+   "drawOrder": 17,
+   "id": "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2123/ikea_e2123.yaml#0",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "stratumFrameSize": 96,
+   "stratumPopSize": 99,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1239
+   },
+   "sourceUrl": "https://github.com/EPMatt/awesome-ha-blueprints/blob/79b7c6b65a0d19de0863d588c600803cbc879a34/blueprints/controllers/ikea_e2123/ikea_e2123.yaml"
+  },
+  {
+   "drawOrder": 18,
+   "id": "apple-shortcuts:workflowllm-seed-04304",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumFrameSize": 101,
+   "stratumPopSize": 105,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1106
+   },
+   "sourceUrl": "https://huggingface.co/datasets/openbmb/WorkflowLLM/blob/d0de182c3f9abac5c4ded9ae2eadcd8155ee1435/data.zip#seed_data.json[4304]"
+  },
+  {
+   "drawOrder": 19,
+   "id": "anthropic:claude-cookbooks/patterns/agents/basic_workflows.ipynb#prompt-chaining",
+   "cluster": "agentic",
+   "stratum": "A",
+   "stratumFrameSize": 4,
+   "stratumPopSize": 5,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1368
+   },
+   "sourceUrl": "https://github.com/anthropics/claude-cookbooks/blob/d7265d6ae994ccd8429db0594b000073b2f9ad43/patterns/agents/basic_workflows.ipynb"
+  },
+  {
+   "drawOrder": 20,
+   "id": "nextflow:workflowhub/1864",
+   "cluster": "science",
+   "stratum": "B",
+   "stratumFrameSize": 100,
+   "stratumPopSize": 104,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 902
+   },
+   "sourceUrl": "https://workflowhub.eu/workflows/1864?version=1"
+  },
+  {
+   "drawOrder": 21,
+   "id": "github-actions:pyvista/pyvista/.github/workflows/docs.yml",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "stratumFrameSize": 12,
+   "stratumPopSize": 14,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 632
+   },
+   "sourceUrl": "https://github.com/pyvista/pyvista/blob/7959cb49138baf5a4933a681da33d69c60c20e57/.github/workflows/docs.yml"
+  },
+  {
+   "drawOrder": 22,
+   "id": "strands:tools/src/strands_tools/workflow.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumFrameSize": 57,
+   "stratumPopSize": 60,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1559
+   },
+   "sourceUrl": "https://github.com/strands-agents/tools/blob/1dd0465da8a748b0e8ac87ec5b3485bccb60d70e/src/strands_tools/workflow.py"
+  },
+  {
+   "drawOrder": 23,
+   "id": "n8n:12533",
+   "cluster": "automation",
+   "stratum": "C",
+   "stratumFrameSize": 166,
+   "stratumPopSize": 167,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 216
+   },
+   "sourceUrl": "https://n8n.io/workflows/12533"
+  },
+  {
+   "drawOrder": 24,
+   "id": "github-actions:microsoft/promptflow/.github/workflows/samples_tutorials_flow_deploy_azure_app_service.yml",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "stratumFrameSize": 12,
+   "stratumPopSize": 14,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 616
+   },
+   "sourceUrl": "https://github.com/microsoft/promptflow/blob/148108106cec45b78cd1cafa21c3169ef2475efe/.github/workflows/samples_tutorials_flow_deploy_azure_app_service.yml"
+  },
+  {
+   "drawOrder": 25,
+   "id": "airflow:apache-airflow-providers-common-sql/src/airflow/providers/common/sql/example_dags/example_analytics#example_analytics",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "stratumFrameSize": 254,
+   "stratumPopSize": 258,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 437
+   },
+   "sourceUrl": "https://files.pythonhosted.org/packages/0e/4f/58080a87b5ec66b713a4015c8e1fb51aad2400f49420cc484d2dc89749d1/apache_airflow_providers_common_sql-2.2.0.tar.gz#src/airflow/providers/common/sql/example_dags/example_analytics.py"
+  },
+  {
+   "drawOrder": 26,
+   "id": "home-assistant:docs/source/_docs/automation/action.markdown#block1.0",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 69,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1275
+   },
+   "sourceUrl": "https://github.com/home-assistant/home-assistant.io/blob/be62035471100102de772b812ac90bf92f786dfc/source/_docs/automation/action.markdown"
+  },
+  {
+   "drawOrder": 27,
+   "id": "galaxy:workflowhub/794",
+   "cluster": "science",
+   "stratum": "B",
+   "stratumFrameSize": 100,
+   "stratumPopSize": 104,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 895
+   },
+   "sourceUrl": "https://workflowhub.eu/workflows/794?version=2"
+  },
+  {
+   "drawOrder": 28,
+   "id": "apple-shortcuts:workflowllm-seed-10277",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumFrameSize": 101,
+   "stratumPopSize": 105,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1134
+   },
+   "sourceUrl": "https://huggingface.co/datasets/openbmb/WorkflowLLM/blob/d0de182c3f9abac5c4ded9ae2eadcd8155ee1435/data.zip#seed_data.json[10277]"
+  },
+  {
+   "drawOrder": 29,
+   "id": "node-red:a04546c46361167fd1d83aed8e4f22ec",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 71,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 354
+   },
+   "sourceUrl": "https://flows.nodered.org/flow/a04546c46361167fd1d83aed8e4f22ec"
+  },
+  {
+   "drawOrder": 30,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "stratumFrameSize": 12,
+   "stratumPopSize": 14,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 672
+   },
+   "sourceUrl": "https://gitlab.com/gitlab-org/gitlab/-/blob/a6c8ade79f3c34758c98df62fa93fd6bf7b4b1cb/.gitlab-ci.yml"
+  },
+  {
+   "drawOrder": 31,
+   "id": "tekton:v1/pipelineruns/pipeline-with-displayname",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumFrameSize": 120,
+   "stratumPopSize": 124,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 748
+   },
+   "sourceUrl": "https://github.com/tektoncd/pipeline/blob/v1.17.0/examples/v1/pipelineruns/pipeline-with-displayname.yaml"
+  },
+  {
+   "drawOrder": 32,
+   "id": "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumFrameSize": 57,
+   "stratumPopSize": 60,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1396
+   },
+   "sourceUrl": "https://github.com/camel-ai/camel/blob/24fde60ad739b4be8f8f533fea9ba54256fbc4a2/examples/workforce/hackathon_judges.py"
+  },
+  {
+   "drawOrder": 33,
+   "id": "llamaindex-workflows:llama_index/docs/examples/agent/agent_workflow_multi.ipynb",
+   "cluster": "agentic",
+   "stratum": "R",
+   "stratumFrameSize": 31,
+   "stratumPopSize": 33,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1479
+   },
+   "sourceUrl": "https://github.com/run-llama/llama_index/blob/cb4c917ffe8ca575075b4869cf0e8bb42a20edb6/docs/examples/agent/agent_workflow_multi.ipynb"
+  },
+  {
+   "drawOrder": 34,
+   "id": "apple-shortcuts:workflowllm-seed-05992",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "stratumFrameSize": 96,
+   "stratumPopSize": 99,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1114
+   },
+   "sourceUrl": "https://huggingface.co/datasets/openbmb/WorkflowLLM/blob/d0de182c3f9abac5c4ded9ae2eadcd8155ee1435/data.zip#seed_data.json[5992]"
+  },
+  {
+   "drawOrder": 35,
+   "id": "home-assistant:dannytsang/homeassistant-config/packages/integrations/energy/zappi.yaml#script/zappi_check_ev_charge",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumFrameSize": 101,
+   "stratumPopSize": 105,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1273
+   },
+   "sourceUrl": "https://github.com/dannytsang/homeassistant-config/blob/89e71604772cc4bc0722d0a8af0582509834ecf3/packages/integrations/energy/zappi.yaml"
+  },
+  {
+   "drawOrder": 36,
+   "id": "apple-shortcuts:workflowllm-seed-10817",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumFrameSize": 101,
+   "stratumPopSize": 105,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1138
+   },
+   "sourceUrl": "https://huggingface.co/datasets/openbmb/WorkflowLLM/blob/d0de182c3f9abac5c4ded9ae2eadcd8155ee1435/data.zip#seed_data.json[10817]"
+  },
+  {
+   "drawOrder": 37,
+   "id": "apple-shortcuts:workflowllm-seed-06338",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "stratumFrameSize": 96,
+   "stratumPopSize": 99,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1118
+   },
+   "sourceUrl": "https://huggingface.co/datasets/openbmb/WorkflowLLM/blob/d0de182c3f9abac5c4ded9ae2eadcd8155ee1435/data.zip#seed_data.json[6338]"
+  },
+  {
+   "drawOrder": 38,
+   "id": "n8n:17387",
+   "cluster": "automation",
+   "stratum": "C",
+   "stratumFrameSize": 166,
+   "stratumPopSize": 167,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 245
+   },
+   "sourceUrl": "https://n8n.io/workflows/17387"
+  },
+  {
+   "drawOrder": 39,
+   "id": "github-actions:aws/aws-sdk-pandas/.github/workflows/minimum-response-time.yml",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "stratumFrameSize": 254,
+   "stratumPopSize": 258,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 582
+   },
+   "sourceUrl": "https://github.com/aws/aws-sdk-pandas/blob/ecf9ab3a6dc229cfdce78b291771079ed6dab675/.github/workflows/minimum-response-time.yml"
+  },
+  {
+   "drawOrder": 40,
+   "id": "nf-core:crisprseq@2.3.0",
+   "cluster": "science",
+   "stratum": "C",
+   "stratumFrameSize": 13,
+   "stratumPopSize": 15,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 931
+   },
+   "sourceUrl": "https://nf-co.re/crisprseq/2.3.0"
+  },
+  {
+   "drawOrder": 41,
+   "id": "n8n:14064",
+   "cluster": "automation",
+   "stratum": "C",
+   "stratumFrameSize": 166,
+   "stratumPopSize": 167,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 233
+   },
+   "sourceUrl": "https://n8n.io/workflows/14064"
+  },
+  {
+   "drawOrder": 42,
+   "id": "snakemake:friendsofstrandseq/mosaicatcher-pipeline@v2.5.1",
+   "cluster": "science",
+   "stratum": "B",
+   "stratumFrameSize": 100,
+   "stratumPopSize": 104,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1007
+   },
+   "sourceUrl": "https://github.com/friendsofstrandseq/mosaicatcher-pipeline/tree/2289f7cc8ef20ef2914bc1381a03b0367b7fe445"
+  },
+  {
+   "drawOrder": 43,
+   "id": "argo:workflow-template/templates#3",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "stratumFrameSize": 254,
+   "stratumPopSize": 258,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 538
+   },
+   "sourceUrl": "https://github.com/argoproj/argo-workflows/blob/v3.7.18/examples/workflow-template/templates.yaml"
+  },
+  {
+   "drawOrder": 44,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-runner",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "stratumFrameSize": 12,
+   "stratumPopSize": 14,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 675
+   },
+   "sourceUrl": "https://gitlab.com/gitlab-org/gitlab-runner/-/blob/29703ea18f7a7c39ae7aaa66939e8338c966d3b6/.gitlab-ci.yml"
+  },
+  {
+   "drawOrder": 45,
+   "id": "langgraph:data-enrichment/src/enrichment_agent/graph.py",
+   "cluster": "agentic",
+   "stratum": "B",
+   "stratumFrameSize": 105,
+   "stratumPopSize": 109,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1461
+   },
+   "sourceUrl": "https://github.com/langchain-ai/data-enrichment/blob/eb30528db9e738a2459f72f61dff075363a03a7c/src/enrichment_agent/graph.py"
+  },
+  {
+   "drawOrder": 46,
+   "id": "gitlab-ci:gitlab.com/wireshark/wireshark",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumFrameSize": 120,
+   "stratumPopSize": 124,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 685
+   },
+   "sourceUrl": "https://gitlab.com/wireshark/wireshark/-/blob/4cf03d0ab38e108c9de7f2a3bda858dbec04ee07/.gitlab-ci.yml"
+  },
+  {
+   "drawOrder": 47,
+   "id": "github-actions:apache/arrow-adbc/.github/workflows/packaging-wheels.yml",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumFrameSize": 120,
+   "stratumPopSize": 124,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 578
+   },
+   "sourceUrl": "https://github.com/apache/arrow-adbc/blob/9f3c283126d91887b074847001aed0ec48083d4e/.github/workflows/packaging-wheels.yml"
+  },
+  {
+   "drawOrder": 48,
+   "id": "github-actions:opensearch-project/ml-commons/.github/workflows/CI-workflow.yml",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumFrameSize": 120,
+   "stratumPopSize": 124,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 625
+   },
+   "sourceUrl": "https://github.com/opensearch-project/ml-commons/blob/05d5f81c5b10abf309581e8cd5fbfabf05ae739e/.github/workflows/CI-workflow.yml"
+  },
+  {
+   "drawOrder": 49,
+   "id": "comfyui:ltdrdata-ComfyUI-Impact-Pack-tests-workflows-detailer-pipe-test.json",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 69,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1206
+   },
+   "sourceUrl": "https://github.com/ltdrdata/ComfyUI-Impact-Pack/blob/429d0159ad429e64d2b3916e6e7be9c22d025c3c/tests/workflows/detailer-pipe-test.json"
+  },
+  {
+   "drawOrder": 50,
+   "id": "cwl:workflowhub/289",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumFrameSize": 155,
+   "stratumPopSize": 159,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 823
+   },
+   "sourceUrl": "https://workflowhub.eu/workflows/289?version=3"
+  },
+  {
+   "drawOrder": 51,
+   "id": "n8n:17512",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 71,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 246
+   },
+   "sourceUrl": "https://n8n.io/workflows/17512"
+  },
+  {
+   "drawOrder": 52,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/deterministic.py",
+   "cluster": "agentic",
+   "stratum": "A",
+   "stratumFrameSize": 4,
+   "stratumPopSize": 5,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1505
+   },
+   "sourceUrl": "https://github.com/openai/openai-agents-python/blob/f007b3fb05e82ef2d2bea5646a0822769a52f7c9/examples/agent_patterns/deterministic.py"
+  },
+  {
+   "drawOrder": 53,
+   "id": "flowise:agentflows-support-routing-system",
+   "cluster": "automation",
+   "stratum": "C",
+   "stratumFrameSize": 166,
+   "stratumPopSize": 167,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 125
+   },
+   "sourceUrl": "https://github.com/FlowiseAI/Flowise/blob/9291856d1ea4a4ceea9f8fef8ce14f4f6c81e8eb/packages/server/marketplaces/agentflows/Support%20Routing%20System.json"
+  },
+  {
+   "drawOrder": 54,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumFrameSize": 57,
+   "stratumPopSize": 60,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1511
+   },
+   "sourceUrl": "https://github.com/openai/openai-agents-python/blob/f007b3fb05e82ef2d2bea5646a0822769a52f7c9/examples/agent_patterns/streaming_guardrails.py"
+  },
+  {
+   "drawOrder": 55,
+   "id": "home-assistant:forum-527354",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "stratumFrameSize": 96,
+   "stratumPopSize": 99,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1286
+   },
+   "sourceUrl": "https://gist.githubusercontent.com/Blackshome/e6c8f1bf846bab2fa4431934a0a85770/raw"
+  },
+  {
+   "drawOrder": 56,
+   "id": "snakemake:epigen/dea_limma@v2.2.1",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumFrameSize": 155,
+   "stratumPopSize": 159,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1004
+   },
+   "sourceUrl": "https://github.com/epigen/dea_limma/tree/70fe01d1e56ec9223b542dfe1133fb28cc30202b"
+  },
+  {
+   "drawOrder": 57,
+   "id": "burr:burr/examples/email-assistant/application.py",
+   "cluster": "agentic",
+   "stratum": "B",
+   "stratumFrameSize": 105,
+   "stratumPopSize": 109,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1389
+   },
+   "sourceUrl": "https://github.com/apache/burr/blob/8161159148e9b9c795f683625d6721f2c955f9d8/examples/email-assistant/application.py"
+  },
+  {
+   "drawOrder": 58,
+   "id": "snakemake:khanlab/SPIMprep@v0.1.0-alpha",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumFrameSize": 155,
+   "stratumPopSize": 159,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1008
+   },
+   "sourceUrl": "https://github.com/khanlab/SPIMprep/tree/85f518d103bcc07db253e6e1e90b7417f5cf2047"
+  },
+  {
+   "drawOrder": 59,
+   "id": "ifttt:ca9X7RwP",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "stratumFrameSize": 66,
+   "stratumPopSize": 69,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 1328
+   },
+   "sourceUrl": "https://ifttt.com/applets/ca9X7RwP-get-ifttt-notifications-for-new-rss-feed-matches"
+  },
+  {
+   "drawOrder": 60,
+   "id": "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Pages/Brunch.gitlab-ci.yml",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "stratumFrameSize": 254,
+   "stratumPopSize": 258,
+   "corpus": {
+    "file": "research/corpus-20261006/items.jsonl",
+    "line": 659
+   },
+   "sourceUrl": "https://gitlab.com/gitlab-org/gitlab/-/blob/a1ef5ed1e7fd72e58911cf4338742d42c8e0ed9b/lib/gitlab/ci/templates/Pages/Brunch.gitlab-ci.yml"
+  }
+ ],
+ "subDraw": {
+  "file": "research/jit-20261008/design/library/out/L1-reaudit/draw-10.json",
+  "seed": 20261015,
+  "ids": [
+   "node-red:a04546c46361167fd1d83aed8e4f22ec",
+   "snakemake:zavolanlab/mirflowz@v0.10.0",
+   "home-assistant:dannytsang/homeassistant-config/packages/integrations/energy/zappi.yaml#script/zappi_check_ev_charge",
+   "n8n:7635",
+   "strands:tools/src/strands_tools/workflow.py",
+   "snakemake:epigen/dea_limma@v2.2.1",
+   "tekton:v1/pipelineruns/pipeline-with-displayname",
+   "github-actions:microsoft/promptflow/.github/workflows/samples_tutorials_flow_deploy_azure_app_service.yml",
+   "apple-shortcuts:workflowllm-seed-10817",
+   "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py"
+  ]
+ }
+}
