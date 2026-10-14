@@ -8,7 +8,7 @@
 import { uniqueNames, weekdayNames, ordinal, composePrompt, FORM } from './core.mjs';
 
 const N_MONTHS = [4, 5, 6, 7, 8];
-const N_FESTIVALS = [3, 5, 8, 12, 18];
+const N_FESTIVALS = [3, 6, 10, 18, 30];
 
 /** The calendar as pure functions of an offset (days since day 1 of month 1 of year Y0). */
 function makeCalendar({ months, Y0, W, anchor }, leap) {

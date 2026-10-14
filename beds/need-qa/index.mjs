@@ -2,7 +2,7 @@
 // Routing anchor for the need router (experiments/need-router), not a Tier-A bed. See README.md for the knobs,
 // the answer comparison and the hypothesis. Trusted host code: solvers never see the oracle or the reference solver.
 import { rng, hashSeed } from '../lib/rng.mjs';
-import { SUBTYPES, schemaErrors, compareAnswer, answerOf, normText, numberTokens, parseDateAnswer } from './core.mjs';
+import { SUBTYPES, schemaErrors, compareAnswer, answerOf, normText, numberTokens } from './core.mjs';
 import { buildLedger } from './sub-ledger.mjs';
 import { buildLookup } from './sub-lookup.mjs';
 import { buildCalendar } from './sub-calendar.mjs';
@@ -123,22 +123,22 @@ function offByOne(c) {
   const t = c.truth;
   if (t.kind === 'int') return Number(t.value) + 1;
   if (t.kind === 'round') return Number(t.value) + 10 ** -t.dp;
-  if (t.kind === 'date') { const d = parseDateAnswer(t.value); return `${d.month} ${d.day + 1}, year ${d.year}`; }
+  if (t.kind === 'date') { const [, month, day, year] = /^(\S+) (\d+), year (\d+)$/.exec(t.value); return `${month} ${Number(day) + 1}, year ${year}`; }
   return c.alternatives[0].value;
 }
 function constantGuess(c) {
   const t = c.truth;
   if (t.kind === 'int' || t.kind === 'round') return 0;
-  if (t.kind === 'date') return `${parseDateAnswer(t.value).month} 1, year 1`;
+  if (t.kind === 'date') return `${/^(\S+) /.exec(t.value)[1]} 1, year 1`;
   return c.alternatives[c.alternatives.length - 1].value;
 }
 
 export const badControls = [
   { name: 'empty', make: () => ({ answer: '' }) },
-  { name: 'corrupted', make: task => ({ answer: corrupt(caseOf(task).truth) }) },
-  { name: 'plausible-but-wrong', make: task => ({ answer: answerOf(caseOf(task).near[0].truth) }) },
-  { name: 'plausible-but-wrong-alt', make: task => { const c = caseOf(task); return { answer: answerOf(c.near[c.near.length - 1].truth) }; } },
-  { name: 'off-by-one', make: task => ({ answer: offByOne(caseOf(task)) }) },
+  { name: 'shuffled-or-corrupted', make: task => ({ answer: corrupt(caseOf(task).truth) }) },
+  { name: 'plausible-but-wrong:first-near-miss', make: task => ({ answer: answerOf(caseOf(task).near[0].truth) }) },
+  { name: 'plausible-but-wrong:last-near-miss', make: task => { const c = caseOf(task); return { answer: answerOf(c.near[c.near.length - 1].truth) }; } },
+  { name: 'plausible-but-wrong:off-by-one', make: task => ({ answer: offByOne(caseOf(task)) }) },
   { name: 'constant-guess', make: task => ({ answer: constantGuess(caseOf(task)) }) },
 ];
 

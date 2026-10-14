@@ -52,7 +52,10 @@ export function buildConvert(r, { size, steps }) {
   const names = itemNames(r, n);
   const statuses = size <= 2 ? STATUSES.slice(0, 2) : STATUSES;
   const eligible = units.filter(u => depth[u] <= maxDepth);
-  const rows = names.map(item => ({ item, kind: r.pick(kinds), status: r.pick(statuses), qty: r.int(2, 120), unit: r.pick(eligible) }));
+  // a majority kind and status keep the filtered selection large enough even in a six-row table
+  const focus = r.pick(kinds);
+  const bias = steps >= 3 ? 0.65 : 0;
+  const rows = names.map(item => ({ item, kind: r.chance(bias) ? focus : r.pick(kinds), status: r.chance(bias) ? statuses[0] : r.pick(statuses), qty: r.int(2, 120), unit: r.pick(eligible) }));
   const total = (selection, { flip = null, dp, floor = false }) => {
     const f = selection.reduce((acc, row) => fadd(acc, fmul(frac(BigInt(row.qty)), multiplier(row.unit, flip))), FZERO);
     return { f, text: scaledToText((floor ? floorScaled : roundHalfUpScaled)(f, dp), dp) };
@@ -67,14 +70,16 @@ export function buildConvert(r, { size, steps }) {
     selection = [row];
     question = `How many ${root} is the quantity recorded for ${row.item}? Convert it using the relations. ${roundingPhrase(dp)}`;
   } else {
-    const kind = r.pick(kinds);
+    const kind = focus;
     filters = [{ name: 'kind', test: x => x.kind === kind }];
     let clause = `of kind ${kind}`;
-    if (steps >= 4) { const s = r.pick(statuses); filters.push({ name: 'status', test: x => x.status !== s }); clause += ` whose status is not ${s}`; }
+    if (steps >= 4) { const s = r.pick(statuses.slice(1)); filters.push({ name: 'status', test: x => x.status !== s }); clause += ` whose status is not ${s}`; }
     if (steps >= 5) {
       const pool = rows.filter(x => filters.every(f => f.test(x)));
       if (pool.length < 3) return null;
-      const op = r.pick(['gt', 'ge']), limit = r.pick(pool).qty;   // planted: a row sits exactly on the boundary
+      const op = r.pick(['gt', 'ge']);
+      const lows = pool.map(x => x.qty).sort((a, b) => a - b);
+      const limit = lows[r.int(0, Math.floor(lows.length / 3))];   // planted: a row sits exactly on the boundary, most rows stay
       filters.push({ name: 'qty', test: x => (op === 'gt' ? x.qty > limit : x.qty >= limit), flipped: x => (op === 'gt' ? x.qty >= limit : x.qty > limit) });
       clause += ` and whose recorded quantity is ${op === 'gt' ? 'more than' : 'at least'} ${limit}`;
     }
