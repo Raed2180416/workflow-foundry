@@ -118,5 +118,5 @@ export async function runReference({ item, binding, world, timing = 'earliest', 
   const arm = referenceArm({ item, world, timing, variant, ...(id ? { id } : {}), journal: () => ({ committed: holder.host.journal.rows, staged: holder.host.journal.staged }) });
   holder.host = createHost({ item: binding, world, arm, ...(maxWakeups ? { maxWakeups } : {}) });
   const result = await holder.host.run();
-  return { rows: holder.host.journal.contentRows(), result };
+  return { rows: holder.host.journal.contentRows(), journal: holder.host.journal.rows, result };
 }
