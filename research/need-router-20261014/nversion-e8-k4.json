@@ -1,0 +1,108 @@
+{
+ "files": [
+  "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+  "research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+  "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+  "research/enterprise-20261014/runs/b1o-e8-1/solver.mjs"
+ ],
+ "report": [
+  {
+   "seed": 1235,
+   "d": 2,
+   "orders": 53,
+   "noConsensus": 1,
+   "perBuild": [
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+     "oracleFails": 0
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+     "oracleFails": 3
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+     "oracleFails": 0
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1o-e8-1/solver.mjs",
+     "oracleFails": 37
+    }
+   ]
+  },
+  {
+   "seed": 1236,
+   "d": 3,
+   "orders": 85,
+   "noConsensus": 3,
+   "perBuild": [
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+     "oracleFails": 0
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+     "oracleFails": 5
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+     "oracleFails": 0
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1o-e8-1/solver.mjs",
+     "oracleFails": 55
+    }
+   ]
+  },
+  {
+   "seed": 1237,
+   "d": 5,
+   "orders": 208,
+   "noConsensus": 8,
+   "perBuild": [
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+     "oracleFails": 0
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+     "oracleFails": 8
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+     "oracleFails": 4
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1o-e8-1/solver.mjs",
+     "oracleFails": 148
+    }
+   ]
+  }
+ ],
+ "tally": [
+  {
+   "flagged": 12,
+   "flaggedFail": 0,
+   "notFlaggedFail": 0,
+   "notFlagged": 312
+  },
+  {
+   "flagged": 20,
+   "flaggedFail": 16,
+   "notFlaggedFail": 0,
+   "notFlagged": 304
+  },
+  {
+   "flagged": 12,
+   "flaggedFail": 4,
+   "notFlaggedFail": 0,
+   "notFlagged": 312
+  },
+  {
+   "flagged": 244,
+   "flaggedFail": 240,
+   "notFlaggedFail": 0,
+   "notFlagged": 80
+  }
+ ]
+}

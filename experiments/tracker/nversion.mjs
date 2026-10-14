@@ -45,7 +45,8 @@ export function vote(sigsPerBuild) {
     for (const s of sig) counts.set(s, (counts.get(s) ?? 0) + 1);
     const [top, n] = [...counts].sort((a, b) => b[1] - a[1])[0];
     const majority = n * 2 > sig.length ? top : null;           // strict majority, else no consensus
-    out.set(o, { consensus: majority, distinct: counts.size, suspects: majority === null ? sig.map((_, i) => i) : sig.map((s, i) => (s !== majority ? i : -1)).filter(i => i >= 0) });
+    // No strict majority: the order is unresolved (adjudicate against the spec), never a suspect flag on every build.
+    out.set(o, { consensus: majority, distinct: counts.size, unresolved: majority === null, suspects: majority === null ? [] : sig.map((s, i) => (s !== majority ? i : -1)).filter(i => i >= 0) });
   }
   return out;
 }
@@ -77,7 +78,7 @@ async function main() {
     const votes = vote(runs.map(r => r.sigs));
     let noConsensus = 0;
     for (const [o, x] of votes) {
-      if (x.consensus === null) noConsensus++;
+      if (x.unresolved) noConsensus++;
       runs.forEach((r, b) => {
         if (!r.failOrders.has(o) && !r.passOrders.has(o)) return;      // not a completed case: not scored
         const flagged = x.suspects.includes(b), failed = r.failOrders.has(o);

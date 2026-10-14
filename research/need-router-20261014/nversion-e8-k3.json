@@ -1,0 +1,89 @@
+{
+ "files": [
+  "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+  "research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+  "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs"
+ ],
+ "report": [
+  {
+   "seed": 1235,
+   "d": 2,
+   "orders": 53,
+   "noConsensus": 0,
+   "perBuild": [
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+     "oracleFails": 0
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+     "oracleFails": 3
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+     "oracleFails": 0
+    }
+   ]
+  },
+  {
+   "seed": 1236,
+   "d": 3,
+   "orders": 85,
+   "noConsensus": 0,
+   "perBuild": [
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+     "oracleFails": 0
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+     "oracleFails": 5
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+     "oracleFails": 0
+    }
+   ]
+  },
+  {
+   "seed": 1237,
+   "d": 5,
+   "orders": 208,
+   "noConsensus": 0,
+   "perBuild": [
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+     "oracleFails": 0
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+     "oracleFails": 8
+    },
+    {
+     "build": "research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+     "oracleFails": 4
+    }
+   ]
+  }
+ ],
+ "tally": [
+  {
+   "flagged": 0,
+   "flaggedFail": 0,
+   "notFlaggedFail": 0,
+   "notFlagged": 324
+  },
+  {
+   "flagged": 16,
+   "flaggedFail": 16,
+   "notFlaggedFail": 0,
+   "notFlagged": 308
+  },
+  {
+   "flagged": 4,
+   "flaggedFail": 4,
+   "notFlaggedFail": 0,
+   "notFlagged": 320
+  }
+ ]
+}
