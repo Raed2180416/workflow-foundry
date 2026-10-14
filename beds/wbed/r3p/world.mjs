@@ -10,7 +10,10 @@
 // v1.1 (review 2026-10-14, NOTES §17): no two functions of a repository share a contract template (family, semantic
 // knobs and wording; families.mjs); a slot is converted to another family only inside its file's area pool; the
 // repository's tests pick their inputs from a shuffled probe list for every role; an execution that times out during
-// generation is a generator error, never an observation; the manifest lists the accepted classes of each defect.
+// generation is a generator error, never an observation; the manifest lists the accepted classes of each defect; at
+// most LOUD_SHARE of a task's defects are "loud" (a crash, NaN, a changed argument, a wrong error type, or a shared
+// helper that a hand-written spec checks: families.mjs `loud`), so generic property checks without the contracts'
+// semantics cannot reach the pass threshold; INPUT_MUTATION, whose defects are all loud, keeps its quota minimum only.
 import { taskRng } from '../lib/prng.mjs';
 import { hooks } from '../lib/faults.mjs';
 import { FAMILIES, acceptedClasses } from './families.mjs';
@@ -21,11 +24,12 @@ import { renderRepo, domainText } from './render.mjs';
 export const VERSION = '1.1.0';
 export { MIN_D, MAX_D, LEVELS };
 const TESTED_P = 0.4, TESTED_DEFECT_SHARE = 0.3, TODO_P = 0.08, NOTE_P = 0.12, TEMPLATE_TRIES = 24;
+export const LOUD_SHARE = 0.4;
 
 const worldCache = new Map();
 let verifier = null;
 export function setVerifier(fn) { verifier = fn; }
-export const redrawStats = { attempts: 0, rejects: {}, templateRedraws: 0, templateClashes: 0 };
+export const redrawStats = { attempts: 0, rejects: {}, templateRedraws: 0, templateClashes: 0, quietRedraws: 0 };
 
 export function buildSweep(seed, split = 'dev', difficulty = 3) {
   const key = JSON.stringify([seed, split, difficulty]);
@@ -165,39 +169,46 @@ function attemptSweep(spec, attempt) {
   }
   const plan = [];
   for (const c of L.classes) for (let i = count[c]; i < CLASS_MIN[spec.difficulty]; i++) plan.push(c);
-  while (plan.length + Object.values(count).reduce((a, b) => a + b, 0) < L.defects) plan.push(r.pick(L.classes));
+  const fill = L.classes.filter(c => c !== 'INPUT_MUTATION'); // every INPUT_MUTATION defect is loud: quota minimum only
+  while (plan.length + Object.values(count).reduce((a, b) => a + b, 0) < L.defects) plan.push(r.pick(fill));
   for (const c of r.shuffle(plan)) { if (!place('defect', c)) return reject(`no-host:${c}`); count[c]++; }
   const decoyClasses = L.classes.filter(c => Object.values(FAMILIES).some(f => f.can.decoy.includes(c)));
   const dplan = [...decoyClasses];
   while (dplan.length < L.decoys) dplan.push(r.pick(decoyClasses));
   for (const c of r.shuffle(dplan.slice(0, L.decoys))) if (!place('decoy', c)) return reject(`no-decoy-host:${c}`);
 
-  // ---- instances (helpers first, so callers know their names). No two instances share a contract template: an
-  // instance whose template is taken is re-drawn (a forked stream, same role) up to TEMPLATE_TRIES times.
+  // ---- instances (helpers first, so callers know their names; then the always-loud INPUT_MUTATION defects). No two
+  // instances share a contract template, and a defect whose variant is loud once the task's loud budget is spent is
+  // re-drawn: a forked stream, same role, up to TEMPLATE_TRIES times.
   const name = namer(r);
   const fns = [];
-  const ordered = [...slots.filter(s => FAMILIES[s.family].kind === 'helper'), ...slots.filter(s => FAMILIES[s.family].kind !== 'helper')];
+  const isHelper = s => FAMILIES[s.family].kind === 'helper', isIM = s => s.role.kind === 'defect' && s.role.cls === 'INPUT_MUTATION';
+  const ordered = [...slots.filter(isHelper), ...slots.filter(s => !isHelper(s) && isIM(s)), ...slots.filter(s => !isHelper(s) && !isIM(s))];
   const helperName = {};
   const templates = new Set();
+  const loudCap = Math.floor(LOUD_SHARE * L.defects);
+  let loud = 0;
   for (const s of ordered) {
     const F = FAMILIES[s.family];
     const base = r.fork(`${s.file.path}#${s.idx}`);
     let p = null, fr = base, key = null;
-    for (let k = 0; k <= TEMPLATE_TRIES; k++) {
+    for (let k = 0; ; k++) {
       fr = k ? base.fork(`again-${k}`) : base;
       p = F.draw(fr, { house, name, split: spec.split }, s.role);
       if (F.kind === 'caller') p.helper = helperName[F.helper];
-      if (!hostsSomething(F)) break;
-      key = templateKey(F, p);
-      if (!templates.has(key)) break;
-      redrawStats.templateRedraws++;
-      if (k === TEMPLATE_TRIES) redrawStats.templateClashes++;
+      const tooLoud = s.role.kind === 'defect' && F.loud.includes(p.variant) && loud >= loudCap;
+      key = hostsSomething(F) ? templateKey(F, p) : null;
+      const clash = key !== null && templates.has(key);
+      if ((!tooLoud && !clash) || k === TEMPLATE_TRIES) { if (clash) redrawStats.templateClashes++; break; }
+      if (clash) redrawStats.templateRedraws++; else redrawStats.quietRedraws++;
     }
     if (key) templates.add(key);
+    if (s.role.kind === 'defect' && F.loud.includes(p.variant)) loud++;
     if (F.kind === 'helper') helperName[F.id] = p.name;
     fns.push({ path: s.file.path, idx: s.idx, family: F.id, kind: F.kind, helperFamily: F.helper ?? null, role: s.role.kind, cls: s.role.cls ?? null, p,
-      smell: s.role.kind === 'clean' ? null : F.smell(p), rng: fr, template: key });
+      smell: s.role.kind === 'clean' ? null : F.smell(p), loud: s.role.kind === 'defect' && F.loud.includes(p.variant), rng: fr, template: key });
   }
+  if (loud > loudCap) return reject('too-many-loud');
   fns.sort((a, b) => a.path.localeCompare(b.path) || a.idx - b.idx);
   for (const f of fns) finishFn(f, house);
 
@@ -254,7 +265,7 @@ function attemptSweep(spec, attempt) {
   let world = { spec, attempt, L, house, pkg, files: files.map(f => ({ path: f.path, lib: Boolean(f.lib), area: f.area?.dir ?? 'lib' })), fns, planted, correct, defectiveHelpers: [...defectiveHelpers] };
   world.byName = new Map(fns.map(f => [f.name, f]));
   world.manifest = defects.map(f => ({ id: `${f.path}#${f.name}`, file: f.path, function: f.name, class: f.cls, accepted: acceptedClasses(f.family, f.p.variant, f.cls),
-    family: f.family, variant: f.p.variant, smell: f.smell, witness: f.witness }));
+    family: f.family, variant: f.p.variant, smell: f.smell, loud: f.loud, witness: f.witness }));
   world = hooks.schemaDrift(world); // R8 f1 hook point (no-op in v1)
   world.render = renderRepo(world);
   if (verifier) {

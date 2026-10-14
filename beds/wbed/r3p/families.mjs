@@ -12,6 +12,9 @@
 //   smell(p) -> class | null                  the class a pattern-reading reviewer would report for the planted variant
 //   accept?: { variant: [classes] }           classes the oracle also accepts for a variant whose class two
 //                                             definitions fit (the manifest's first class is the primary one)
+//   loud?: [variant]                          variants whose misbehaviour shows without the contract's semantics (a
+//                                             crash, NaN, a changed argument, a wrong error type) or that a hand-written
+//                                             spec of a shared helper catches; world.mjs caps them per task (LOUD_SHARE)
 //
 // Kinds: 'fn' (self-contained), 'helper' (src/lib, called by callers), 'caller' (calls `p.helper`, the helper's name).
 // A family's `can.defect` / `can.decoy` list the classes it can host. Fillers host nothing.
@@ -58,7 +61,7 @@ const pws = r => [r.int(0, 5), r.int(0, 5), r.int(0, 5)];
 const PD = (p, i, ...opts) => opts[p.pw[i] % opts.length];
 
 export const FAMILIES = {};
-const fam = (id, def) => { FAMILIES[id] = { id, kind: 'fn', can: { defect: [], decoy: [] }, accept: {}, ...def }; };
+const fam = (id, def) => { FAMILIES[id] = { id, kind: 'fn', can: { defect: [], decoy: [] }, accept: {}, loud: [], ...def }; };
 
 // ===================================================================================================== OFF_BY_ONE hosts
 const BAND_ENDS = {
@@ -187,7 +190,7 @@ fam('day-count', {
 });
 
 fam('pairwise-deltas', {
-  can: { defect: ['OFF_BY_ONE'], decoy: ['OFF_BY_ONE'] },
+  can: { defect: ['OFF_BY_ONE'], decoy: ['OFF_BY_ONE'] }, loud: ['past-end'],
   draw(r, ctx, role) {
     return { name: ctx.name(['{n}Deltas', 'deltas{N}', 'step{N}Changes', '{n}Changes']), v: r.pick(['values', 'series', 'points']), k: r.pick([1, 1, 1, 2, 3, 7, 12]),
       fwd: r.chance(0.6), amax: r.pick(AMAX), R: r.pick(RANGES), w: words(r, ctx, [3, 2]), style: r.int(0, 1),
@@ -451,7 +454,7 @@ fam('is-overdue', {
 });
 
 fam('max-by', {
-  can: { defect: ['LOGIC_ERROR', 'MISSING_GUARD'], decoy: ['LOGIC_ERROR'] },
+  can: { defect: ['LOGIC_ERROR', 'MISSING_GUARD'], decoy: ['LOGIC_ERROR'] }, loud: ['noguard'],
   draw(r, ctx, role) {
     const big = r.chance(0.65);
     return { name: ctx.name(big ? ['largest{N}', 'top{N}', 'biggest{N}', 'max{N}'] : ['smallest{N}', 'lowest{N}', 'min{N}', 'cheapest{N}']), items: r.pick(['items', 'rows', 'entries']),
@@ -485,7 +488,7 @@ fam('max-by', {
 
 // ================================================================================================== MISSING_GUARD hosts
 fam('average', {
-  can: { defect: ['MISSING_GUARD'], decoy: ['MISSING_GUARD'] },
+  can: { defect: ['MISSING_GUARD'], decoy: ['MISSING_GUARD'] }, loud: ['noguard'],
   draw(r, ctx, role) {
     return { name: ctx.name(['average{N}', 'mean{N}', '{n}Average', 'avg{N}']), v: r.pick(['values', 'amounts', 'xs']), empty: role.kind === 'decoy' ? 'zero' : r.pick(['zero', 'null']),
       trunc: r.chance(0.3), amax: r.pick(AMAX), R: r.pick(RANGES), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
@@ -512,7 +515,7 @@ fam('average', {
 });
 
 fam('ratio', {
-  can: { defect: ['MISSING_GUARD'], decoy: ['MISSING_GUARD'] },
+  can: { defect: ['MISSING_GUARD'], decoy: ['MISSING_GUARD'] }, loud: ['noguard'],
   draw(r, ctx, role) {
     const [part, whole] = r.pick([['part', 'whole'], ['count', 'total'], ['paid', 'due']]);
     return { name: ctx.name(['{n}Share', 'share{N}', '{n}Ratio', 'ratio{N}']), part, whole, zero: r.pick(['null', 'null', 'zero']), pct: r.chance(0.35),
@@ -539,7 +542,7 @@ fam('ratio', {
 });
 
 fam('display-name', {
-  can: { defect: ['MISSING_GUARD'], decoy: ['MISSING_GUARD'] },
+  can: { defect: ['MISSING_GUARD'], decoy: ['MISSING_GUARD'] }, loud: ['null'],
   draw(r, ctx, role) {
     return { name: ctx.name(['{n}DisplayName', 'label{N}', '{n}Label', 'nameOf{N}']), c: r.pick(['contact', 'person', 'party']), fb: r.pick(['email', 'email', '(unnamed)', 'Unknown']),
       nf: r.pick(['name', 'name', 'fullName', 'displayName']), ef: r.pick(['email', 'mail']), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
@@ -594,12 +597,12 @@ fam('first-or', {
 });
 
 fam('safe-get', {
-  can: { defect: ['MISSING_GUARD'], decoy: [] },
+  can: { defect: ['MISSING_GUARD'], decoy: [] }, loud: ['nocheck', 'undef-only'],
   draw(r, ctx, role) {
     const [obj, path] = r.pick([['obj', 'path'], ['record', 'keyPath'], ['doc', 'dotted']]);
     return { name: ctx.name(['read{N}Field', 'pick{N}Value', 'get{N}At', 'lookup{N}']), obj, path, sep: r.pick(['.', '.', '/']), miss: r.pick(['undefined', 'undefined', 'null']),
       smax: r.pick([40, 60, 80]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
-      variant: pickVariant(r, role, { defect: { MISSING_GUARD: ['nocheck', 'undef-only'] } }) };
+      variant: pickVariant(r, role, { defect: { MISSING_GUARD: ['nocheck', 'undef-only', 'wrong-miss'] } }) };
   },
   smell: p => (p.variant === 'nocheck' ? 'MISSING_GUARD' : null),
   sig: p => [p.obj, p.path],
@@ -612,7 +615,8 @@ fam('safe-get', {
   },
   domain: p => ({ params: [{ t: 'json', maxBytes: 1500 }, { t: 'str', max: p.smax }] }),
   body(p, which) {
-    const vr = which === 'planted' ? p.variant : null, { obj, path } = p, split = `${path}.split('${p.sep}')`, M = p.miss;
+    const vr = which === 'planted' ? p.variant : null, { obj, path } = p, split = `${path}.split('${p.sep}')`;
+    const M = vr === 'wrong-miss' ? (p.miss === 'null' ? 'undefined' : 'null') : p.miss; // wrong-miss: the other "missing" value
     if (vr === 'nocheck') return p.style ? `return ${split}.reduce((cur, key) => cur[key], ${obj});` : J(`let cur = ${obj};`, `for (const key of ${split}) cur = cur[key];`, 'return cur;');
     if (vr === 'undef-only') {
       return p.style ? `return ${split}.reduce((cur, key) => (cur !== undefined && Object.hasOwn(cur, key) ? cur[key] : ${M}), ${obj});`
@@ -629,7 +633,7 @@ fam('safe-get', {
 
 // ======================================================================================================= ROUNDING hosts
 fam('round-minor', {
-  kind: 'helper', can: { defect: ['ROUNDING'], decoy: ['ROUNDING'] },
+  kind: 'helper', can: { defect: ['ROUNDING'], decoy: ['ROUNDING'] }, loud: ['math-round', 'other-rule'],
   draw(r, ctx, role) {
     return { name: ctx.name(['roundMinor', 'roundUnits', 'houseRound']), rule: ctx.house.rounding, v: r.pick(['value', 'x']), w: words(r, ctx, [3, 3]), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { ROUNDING: ['math-round', 'other-rule'] }, decoy: { ROUNDING: ['decoy'] } }) };
@@ -858,7 +862,7 @@ fam('timeout-ms', {
 
 // ================================================================================================= INPUT_MUTATION hosts
 fam('sort-by', {
-  can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] },
+  can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] }, loud: ['sort-arg', 'sort-if-long'],
   draw(r, ctx, role) {
     const inPlace = role.kind === 'decoy' ? true : role.kind === 'defect' ? false : r.chance(0.3);
     return { name: ctx.name(['sort{N}s', '{n}sSorted', 'order{N}s', 'rank{N}s']), items: r.pick(['items', 'rows', 'list']), f: r.pick(['amountMinor', 'dueDay', 'score', 'seq']), inPlace,
@@ -869,8 +873,8 @@ fam('sort-by', {
   sig: p => [p.items],
   doc: p => {
     const { items, f } = p, dir = p.desc ? 'descending' : 'ascending';
-    const T = p.inPlace ? [`Sorts ${items} by ${f} ${dir} in place (equal ${f} keep their order) and returns ${items}.`, `In-place ${dir} sort of ${items} by ${f}, stable for equal ${f}; returns ${items} itself.`,
-      `Reorders ${items} itself by ${f}, ${dir} (ties keep their order), and returns it.`]
+    const T = p.inPlace ? [`Sorts ${items} by ${f} ${dir} in place (equal ${f} keep their order) and returns ${items}.`, `Sorts ${items} in place, ${dir} by ${f} (stable for equal ${f}); returns ${items} itself.`,
+      `Reorders ${items} in place by ${f}, ${dir} (ties keep their order), and returns it.`]
       : [`A new array with the elements of ${items} sorted by ${f} ${dir} (equal ${f} keep their order); ${items} itself is not changed.`, `Returns a sorted copy of ${items}, by ${f} ${dir}, stable on ties; ${items} is left as it was.`,
         `${cap(items)} ordered by ${f} ${dir} (ties keep their order), as a new array; the argument is not changed.`];
     return { lines: [T[p.w[0]]], params: [`objects with id and ${f}`], returns: 'Array' };
@@ -887,7 +891,7 @@ fam('sort-by', {
 });
 
 fam('with-defaults', {
-  can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] },
+  can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] }, loud: ['fill-arg'],
   draw(r, ctx, role) {
     return { name: ctx.name(['{n}Options', 'with{N}Defaults', '{n}SettingsFor', 'resolve{N}Options']), o: r.pick(['options', 'opts', 'overrides']), defaults: drawDefaults(r),
       skipNull: r.chance(0.35), w: words(r, ctx, [3]), style: r.int(0, 1),
@@ -922,7 +926,7 @@ fam('with-defaults', {
 });
 
 fam('drop-status', {
-  can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] },
+  can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] }, loud: ['splice-arg'],
   draw(r, ctx, role) {
     const ss = r.sample(STATUS_WORDS, r.chance(0.3) ? 2 : 1), S = cap(ss[0]);
     return { name: ctx.name([`without${S}{N}s`, `remove${S}{N}s`, `drop${S}{N}s`]), ss, lines: r.pick(['lines', 'entries', 'items']), sf: r.pick(['status', 'status', 'state']), amax: r.pick(AMAX),
@@ -952,7 +956,7 @@ fam('drop-status', {
 });
 
 fam('append-total', {
-  can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] },
+  can: { defect: ['INPUT_MUTATION'], decoy: ['INPUT_MUTATION'] }, loud: ['push-arg'],
   draw(r, ctx, role) {
     return { name: ctx.name(['{n}RowWithTotal', 'with{N}Total', 'append{N}Total', '{n}sAndTotal']), row: r.pick(['row', 'amounts', 'cells']), front: r.chance(0.3), amax: r.pick(AMAX),
       R: r.pick([1e5, 1e6, 1e7]), w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1), variant: pickVariant(r, role, { defect: { INPUT_MUTATION: ['push-arg'] }, decoy: { INPUT_MUTATION: ['push-copy'] } }) };
@@ -979,7 +983,7 @@ fam('append-total', {
 // ===================================================================================================== DATE_ARITH hosts
 const LEAP = y => `(${y} % 4 === 0 && ${y} % 100 !== 0) || ${y} % 400 === 0`;
 fam('days-in-month', {
-  kind: 'helper', can: { defect: ['DATE_ARITH'], decoy: ['DATE_ARITH'] },
+  kind: 'helper', can: { defect: ['DATE_ARITH'], decoy: ['DATE_ARITH'] }, loud: ['leap4', 'no400'],
   draw(r, ctx, role) {
     return { name: ctx.name(['daysInMonth', 'monthLength', 'daysOfMonth']), y: 'year', m: 'month', w: words(r, ctx, [3]), pw: pws(r), style: r.int(0, 1),
       variant: pickVariant(r, role, { defect: { DATE_ARITH: ['leap4', 'no400'] }, decoy: { DATE_ARITH: ['date-utc'] } }) };
@@ -1183,7 +1187,7 @@ fam('like-pattern', {
 
 // ================================================================================================ SWALLOWED_ERROR hosts
 fam('parse-amount', {
-  can: { defect: ['SWALLOWED_ERROR'], decoy: ['SWALLOWED_ERROR'] },
+  can: { defect: ['SWALLOWED_ERROR'], decoy: ['SWALLOWED_ERROR'] }, loud: ['catch-zero', 'wrong-type'],
   accept: { 'blank-zero': ['SWALLOWED_ERROR', 'MISSING_GUARD'] }, // a blank input mapped to 0 instead of the stated error
   draw(r, ctx, role) {
     const mode = role.kind === 'decoy' ? 'null' : role.kind === 'defect' ? 'throw' : (r.chance(0.35) ? 'null' : 'throw');
@@ -1221,7 +1225,7 @@ fam('parse-amount', {
 
 const isObjectJson = s => { try { const v = JSON.parse(s); return v !== null && typeof v === 'object' && !Array.isArray(v); } catch { return true; } };
 fam('read-settings', {
-  can: { defect: ['SWALLOWED_ERROR'], decoy: ['SWALLOWED_ERROR'] },
+  can: { defect: ['SWALLOWED_ERROR'], decoy: ['SWALLOWED_ERROR'] }, loud: ['catch-defaults'],
   draw(r, ctx, role) {
     return { name: ctx.name(['read{N}Settings', 'parse{N}Config', 'load{N}Settings', '{n}Settings']), j: r.pick(['json', 'text', 'source']), defaults: drawDefaults(r), known: r.chance(0.35),
       w: words(r, ctx, [3]), variant: pickVariant(r, role, { defect: { SWALLOWED_ERROR: ['catch-defaults', 'empty-as-object'] }, decoy: { SWALLOWED_ERROR: ['rethrow'] } }) };

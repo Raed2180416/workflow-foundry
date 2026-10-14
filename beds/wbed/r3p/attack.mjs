@@ -120,3 +120,29 @@ export function contractFuzz(task, corpus = [], { tries = 150, keyMode = 'exact'
   for (const [name, x] of flagged) if ([...flagged.keys()].some(o => o !== name && new RegExp(`\\b${o}\\(`).test(x.f.code))) flagged.delete(name); // root cause
   return { findings: [...flagged.values()].map(x => ({ file: x.f.path, function: x.f.name, class: x.cls, witness: { args: JSON.parse(sub(JSON.stringify(x.args), x.f)) } })) };
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// CLI (dev seeds only; $0): node beds/wbed/r3p/attack.mjs --difficulty 3 --targets 449-472 [--corpus 425-448 | --loo]
+//   [--key exact|numbers] [--parts generic|vote]. --loo uses every other target as the corpus (leave one out).
+// Prints one JSON row per target and a summary line: pass count, mean and max precision / recall / F1.
+async function main(argv) {
+  const arg = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : d; };
+  const rg = s => { const [a, b] = s.split('-').map(Number); return Array.from({ length: (b ?? a) - a + 1 }, (_, i) => a + i); };
+  const bed = await import('./index.mjs');
+  const d = Number(arg('--difficulty', '3')), targets = rg(arg('--targets', '449-460')), keyMode = arg('--key', 'exact');
+  const parts = { generic: arg('--parts', 'both') !== 'vote', vote: arg('--parts', 'both') !== 'generic' };
+  const files = s => bed.generate({ seed: s, split: 'dev', difficulty: d }).files;
+  const fixed = arg('--corpus', null) ? rg(arg('--corpus')).map(files) : null;
+  const rows = [];
+  for (const seed of targets) {
+    const task = bed.generate({ seed, split: 'dev', difficulty: d });
+    const corpus = fixed ?? (argv.includes('--loo') ? targets.filter(s => s !== seed).map(files) : []);
+    const t0 = Date.now(), res = bed.oracle(task, contractFuzz(task, corpus, { keyMode, parts })), x = res.details;
+    rows.push({ seed, pass: res.pass, precision: x.precision, recall: x.recall, f1: x.f1, fp: x.falsePositives, ms: Date.now() - t0 });
+    console.log(JSON.stringify(rows[rows.length - 1]));
+  }
+  const mean = k => (rows.reduce((s, r) => s + (r[k] ?? 0), 0) / rows.length).toFixed(3), max = k => Math.max(...rows.map(r => r[k] ?? 0)).toFixed(3);
+  console.log(`contract-fuzz d${d} targets ${targets[0]}-${targets[targets.length - 1]} corpus ${fixed ? arg('--corpus') : argv.includes('--loo') ? 'leave-one-out' : 'none'} key ${keyMode} parts ${arg('--parts', 'both')}: `
+    + `pass ${rows.filter(r => r.pass).length}/${rows.length}; mean P ${mean('precision')} R ${mean('recall')} F1 ${mean('f1')}; max R ${max('recall')} F1 ${max('f1')}`);
+}
+if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) main(process.argv.slice(2)).catch(e => { console.error(e?.stack ?? e); process.exit(1); });
