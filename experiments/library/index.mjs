@@ -7,6 +7,7 @@
 // (line + when[] questions + task template + tags).
 import { countTokens } from './tokens.mjs';
 import { shapeLabel } from './schema.mjs';
+import { lineShape } from '../jit/profile.mjs';
 
 export const INDEX_LINE_MAX = 30;
 export const UNTRUSTED_MARK = '‹untrusted›';
@@ -100,15 +101,38 @@ export function lineOfL4(e) {
 }
 
 // ---- shape/1 (LIBRARY §4.2), from the task alone: code, $0 ----
+// Tabular text counts as an item list (BUILD-ORDER step 5; an [I] extension of §4.2's "JSON walk", because real task
+// inputs carry their lists as CSV / pipe-delimited text): a string with >= TABLE_MIN_ROWS non-empty lines of which
+// >= TABLE_SHARE share one delimited line family (profile.mjs lineShape: leading word, delimiter, field count) is a list
+// of those lines, and its header cells (the first delimited line, a leading '#' sentence stripped) are its keys for the
+// multi-source feature. A tabular string is a list, not prose.
+const TABLE_MIN_ROWS = 5, TABLE_SHARE = 0.6;
+export function tableOf(text) {
+  const lines = String(text).split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < TABLE_MIN_ROWS) return null;
+  const fam = new Map();
+  for (const l of lines) { const f = lineShape(l).family.replace(/^[^~]*~/, ''); if (!f.endsWith('text') && !f.startsWith('json:')) fam.set(f, (fam.get(f) ?? 0) + 1); }
+  const best = [...fam.entries()].sort((a, b) => b[1] - a[1])[0];
+  if (!best || best[1] < TABLE_MIN_ROWS || best[1] / lines.length < TABLE_SHARE) return null;
+  const delim = { pipe: '|', comma: ',', semi: ';', tab: '\t', dcolon: '::', dash: '—' }[best[0].split(':')[0]] ?? null;
+  const headLine = (lines.find(l => delim && l.replace(/^#[^|,;\t]*?\.\s+/, '').split(delim).length >= 2) ?? '').replace(/^#[^|,;\t]*?\.\s+/, '');
+  const keys = delim ? headLine.split(delim).map(c => c.trim().toLowerCase()).filter(c => /^[a-z][a-z _.'-]{0,30}$/.test(c)) : [];
+  return { n: best[1], keys };
+}
 export function shapeOf(task = {}) {
   const arrays = [], prose = [];
+  const text = (v, p) => {
+    const t = tableOf(v);
+    if (t) arrays.push({ path: p, n: t.n, keys: t.keys, tabular: true });
+    else if ((v.match(/\S+/g) ?? []).length >= PROSE_MIN_WORDS) prose.push({ path: p, text: v });
+  };
   const walk = (v, p) => {
     if (Array.isArray(v)) { arrays.push({ path: p, n: v.length, keys: v.length && v[0] && typeof v[0] === 'object' ? Object.keys(v[0]) : [] }); v.slice(0, 50).forEach(x => walk(x, `${p}[]`)); }
     else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, p ? `${p}.${k}` : k);
-    else if (typeof v === 'string' && (v.match(/\S+/g) ?? []).length >= PROSE_MIN_WORDS) prose.push({ path: p, text: v });
+    else if (typeof v === 'string') text(v, p);
   };
   walk(task.inputs ?? {}, '');
-  for (const [name, text] of Object.entries(task.files ?? {})) if (typeof text === 'string' && (text.match(/\S+/g) ?? []).length >= PROSE_MIN_WORDS) prose.push({ path: `files.${name}`, text });
+  for (const [name, t] of Object.entries(task.files ?? {})) if (typeof t === 'string') text(t, `files.${name}`);
   const prompt = String(task.prompt ?? '').toLowerCase();
   const words = new Set(prompt.match(/[a-z]+/g) ?? []);
   const jaccard = (a, b) => { const A = new Set(a), B = new Set(b); const i = [...A].filter(x => B.has(x)).length; return A.size + B.size - i ? i / (A.size + B.size - i) : 0; };
@@ -126,7 +150,7 @@ export function shapeOf(task = {}) {
     effectVerbs: EFFECT_VERBS.filter(w => words.has(w)),
     timeWords: TIME_WORDS.filter(w => words.has(w)),
     humanWords: HUMAN_WORDS.filter(w => words.has(w)),
-    verifiable: !!task.outputSchema || /\bschema\b|\btests?\b|\bchecker\b/.test(prompt),
+    verifiable: !!task.outputSchema || /\bschema\b|\btests?\b|\bchecker\b|\bjson of the form\b/.test(prompt),   // a stated output form is a schema
     sizeBand: inputTokens < 2000 ? 'S' : inputTokens < 8000 ? 'M' : 'L',
   };
   record.vector = [record.itemLists.count > 0, record.freeText.count > 0, record.multiSource.pairs > 0, record.conventionsInProse, record.outputShape != null,
@@ -149,11 +173,12 @@ const bm25Text = parts => parts.filter(Boolean).join(' ').toLowerCase().replace(
 
 // ---- build the index rows; writes index.jsonl when a library is given ----
 // l1: loadL1() entries; library: openLibrary(); bindings: L3 bindings the host adapter exposes (§3.4).
-export function buildIndex({ l1 = [], library = null, bindings = [] } = {}) {
+// write: false builds the rows without rewriting index.jsonl (retrieval over a library it only reads).
+export function buildIndex({ l1 = [], library = null, bindings = [], write = true } = {}) {
   const rows = [];
   for (const p of l1) {
     const line = lineOfL1(p);
-    rows.push({ id: p.id, layer: 'L1', version: p.version ?? 1, status: 'kept', line, tokens: countTokens(line), tags: [p.family, ...(p.tags ?? [])].filter(Boolean),
+    rows.push({ id: p.id, layer: 'L1', version: p.version ?? 1, status: 'kept', tier: p.tier ?? null, line, tokens: countTokens(line), tags: [p.family, ...(p.tags ?? [])].filter(Boolean),
       shape: shapeOfCard(p.id), bm25: bm25Text([line, p.name, ...(p.when ?? []).map(w => w.instructions)]), untrusted: false, executable: !!p.executable });
   }
   for (const e of library ? library.list() : []) {
@@ -170,6 +195,6 @@ export function buildIndex({ l1 = [], library = null, bindings = [] } = {}) {
     rows.push({ id: `B:${b.tool}`, layer: 'L3', version: b.version ?? 1, status: 'kept', line, tokens: countTokens(line), tags: [`effect:${b.effect?.kind ?? 'none'}`],
       shape: new Array(FEATURE_NAMES.length).fill(0), bm25: bm25Text([line]), untrusted: false, executable: false });
   }
-  if (library) library.writeIndex(rows);
+  if (library && write) library.writeIndex(rows);
   return rows;
 }
