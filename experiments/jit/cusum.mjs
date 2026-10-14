@@ -214,45 +214,49 @@ export function countRule(seq, { k = DESIGN.countK, restart = false } = {}) {
 
 // ------------------------------------------------------------------------------------------------ in-control simulation
 // An in-control process under a fitted model. features: subset of ['novelty', 'history']; noveltyPool: case-mix novelty
-// values (capped); casePool: [{ nov, hist }] for iid mode; deoptShare: P(event is a deopt).
-export function makeProcess({ beta, features, noveltyPool, casePool = null, histWindow = DESIGN.histWindow, deoptShare = 1, mode = 'feedback' }) {
+// values (capped); casePool: [{ nov, hist }] for iid mode; deoptShare: P(an event is a deopt) (it drives the history
+// covariate and the count rule). ra precomputes the chart weights. step(rng, state) -> { p, y, deopt, w }.
+export function makeProcess({ beta, features, noveltyPool, casePool = null, histWindow = DESIGN.histWindow, deoptShare = 1, mode = 'feedback', ra = DESIGN.ra }) {
   const useNov = features.includes('novelty'), useHist = features.includes('history');
   const xOf = (nov, hist) => [1, ...(useNov ? [nov] : []), ...(useHist ? [hist] : [])];
+  const cell = p => ({ p, wFail: raWeight(1, p, ra), wOk: raWeight(0, p, ra) });
   if (mode === 'iid' || !useHist) {
     const pool = mode === 'iid' && casePool ? casePool : noveltyPool.map(nov => ({ nov, hist: 0 }));
-    const ps = pool.map(c => predict(beta, xOf(c.nov, useHist ? c.hist : 0)));
-    return { kind: 'iid', start: () => null, step: (rng) => { const p = ps[Math.floor(rng() * ps.length)]; return { p, y: rng() < p ? 1 : 0, deopt: 0 }; }, ps };
+    const cells = pool.map(c => cell(predict(beta, xOf(c.nov, useHist ? c.hist : 0))));
+    return {
+      kind: 'iid', ra, ps: cells.map(c => c.p), start: () => null,
+      step: rng => { const c = cells[Math.floor(rng() * cells.length)], y = rng() < c.p ? 1 : 0; return { p: c.p, y, deopt: y && rng() < deoptShare ? 1 : 0, w: y ? c.wFail : c.wOk }; },
+    };
   }
   // Feedback: a ring buffer of the last histWindow deopts; p looked up by (novelty index, history).
-  const table = noveltyPool.map(nov => Array.from({ length: histWindow + 1 }, (_, hh) => predict(beta, xOf(nov, hh))));
+  const table = noveltyPool.map(nov => Array.from({ length: histWindow + 1 }, (_, hh) => cell(predict(beta, xOf(nov, hh)))));
   return {
-    kind: 'feedback',
+    kind: 'feedback', ra,
     start: () => ({ ring: new Uint8Array(histWindow), at: 0, hist: 0 }),
     step: (rng, st) => {
-      const p = table[Math.floor(rng() * table.length)][st.hist];
-      const y = rng() < p ? 1 : 0, deopt = y && rng() < deoptShare ? 1 : 0;
+      const c = table[Math.floor(rng() * table.length)][st.hist];
+      const y = rng() < c.p ? 1 : 0, deopt = y && rng() < deoptShare ? 1 : 0;
       st.hist += deopt - st.ring[st.at]; st.ring[st.at] = deopt; st.at = (st.at + 1) % st.ring.length;
-      return { p, y, deopt };
+      return { p: c.p, y, deopt, w: y ? c.wFail : c.wOk };
     },
   };
 }
 
 // Simulates `reps` in-control paths of `steps` steps each and keeps each path's record highs of S (value, time), so the
 // first passage time T(h) for any h is a lookup. Common random numbers: one seed for every h.
-export function simulateRecords({ process, ra = DESIGN.ra, reps, steps, seed = SIM.seed }) {
+export function simulateRecords({ process, reps, steps, seed = SIM.seed }) {
   const rng = mulberry32(seed), out = [];
   for (let r = 0; r < reps; r++) {
     const st = process.start();
     let s = 0, best = 0;
     const vals = [], times = [];
     for (let t = 1; t <= steps; t++) {
-      const { p, y } = process.step(rng, st);
-      s = Math.max(0, s + raWeight(y, p, ra));
+      s = Math.max(0, s + process.step(rng, st).w);
       if (s > best) { best = s; vals.push(s); times.push(t); }
     }
     out.push({ vals: Float64Array.from(vals), times: Int32Array.from(times) });
   }
-  return { paths: out, steps, reps };
+  return { paths: out, steps, reps, seed };
 }
 
 // ARL at h from simulated records (a path that never reaches h counts as `steps`: censored, a lower bound).
@@ -268,18 +272,20 @@ export function arlAt(sim, h) {
   return { arl, se: Math.sqrt(Math.max(sum2 / n - arl * arl, 0) / n), censored };
 }
 
-// The smallest h (to 1e-4) with ARL(h) >= target.
-export function calibrateH({ process, ra = DESIGN.ra, target = DESIGN.arl0, reps = SIM.reps, seed = SIM.seed, steps = target * SIM.stepsPerTarget }) {
-  const sim = simulateRecords({ process, ra, reps, steps, seed });
+// The smallest h (to 1e-4) with ARL(h) >= target, from simulated records.
+export function calibrateFromSim(sim, target) {
   let lo = 0, hi = 0.5;
   while (arlAt(sim, hi).arl < target) { lo = hi; hi *= 2; if (hi > 1e3) throw new Error('calibrateH: target not reached (increase steps)'); }
   while (hi - lo > 1e-5) { const m = (lo + hi) / 2; if (arlAt(sim, m).arl >= target) hi = m; else lo = m; }
   const h = Math.ceil(hi * 1e4) / 1e4, at = arlAt(sim, h);
-  return { h, arl: at.arl, se: at.se, censored: at.censored, reps, steps, seed };
+  return { h, target, arl: at.arl, se: at.se, censored: at.censored, reps: sim.reps, steps: sim.steps };
+}
+export function calibrateH({ process, target = DESIGN.arl0, reps = SIM.reps, seed = SIM.seed, steps = target * SIM.stepsPerTarget }) {
+  return { ...calibrateFromSim(simulateRecords({ process, reps, steps, seed }), target), ra: process.ra, seed };
 }
 
 // The count rule's in-control ARL under the same process (alarm at the k-th deopt since the last alarm).
-export function countRuleArl({ process, k = DESIGN.countK, reps = SIM.reps, seed = SIM.seed, steps = 100000 }) {
+export function countRuleArl({ process, k = DESIGN.countK, reps = SIM.reps, seed = SIM.seed, steps = 20000 }) {
   const rng = mulberry32(seed);
   let sum = 0, sum2 = 0, censored = 0;
   for (let r = 0; r < reps; r++) {
@@ -400,11 +406,11 @@ function calibrationTable(rows, ps, y) {
 }
 
 function processFor(model, monitoredUnits, v) {
-  const view = v.view, events = monitoredUnits.filter(u => eventOf(u, view) === 1);
+  const events = monitoredUnits.filter(u => eventOf(u, v.view) === 1);
   const deoptShare = events.length ? events.filter(u => u.deopt).length / events.length : 0;
-  const noveltyPool = monitoredUnits.map(u => featuresOf(u, { ...v, features: ['novelty'] })[1]);
-  const casePool = monitoredUnits.map(u => ({ nov: noveltyPool[0] === undefined ? 0 : featuresOf(u, { ...v, features: ['novelty'] })[1], hist: u.hist }));
-  return { process: makeProcess({ beta: model.beta, features: v.features, noveltyPool, casePool, histWindow: v.histWindow ?? DESIGN.histWindow, deoptShare, mode: v.calib }), deoptShare };
+  const novOf = u => featuresOf(u, { ...v, features: ['novelty'] })[1];
+  const noveltyPool = monitoredUnits.map(novOf), casePool = monitoredUnits.map(u => ({ nov: novOf(u), hist: u.hist }));
+  return { process: makeProcess({ beta: model.beta, features: v.features, noveltyPool, casePool, histWindow: v.histWindow ?? DESIGN.histWindow, deoptShare, mode: v.calib, ra: v.ra }), deoptShare };
 }
 
 // Summary of one stream's alarms against its drift index.
@@ -460,7 +466,9 @@ const groupStreams = units => {
   return [...g.values()].map(us => us.sort((a, b) => a.idx - b.idx));
 };
 
-// Runs one variant: fit, calibrate h, replay every monitored stream, decide.
+// Runs one variant: fit, calibrate h, replay every monitored stream, decide. arl0 'matchCount' sets the target to the
+// count rule's in-control ARL under the same fitted process (a matched-false-alarm comparison). sweep: also replay a grid of
+// h values (ARL0 at each from the same simulated paths) to show whether any h meets the rule on these rows.
 export function runVariant(units, variant, { sim = SIM } = {}) {
   const v = { ...DESIGN, ...variant };
   const scopes = v.fit === 'lofo' ? [...new Set(units.map(u => u.family))].map(f => ({ family: f, fitUnits: units.filter(u => u.family !== f), monUnits: units.filter(u => u.family === f) }))
@@ -470,18 +478,32 @@ export function runVariant(units, variant, { sim = SIM } = {}) {
     const model = fitModel(sc.fitUnits, v);
     const calibUnits = sc.monUnits.filter(u => isMonitored(u, v.view) && (v.fit !== 'phase1' || !u.post));
     const { process, deoptShare } = processFor(model, calibUnits, v);
-    const cal = calibrateH({ process, ra: v.ra, target: v.arl0, reps: sim.reps, seed: sim.seed, steps: v.arl0 * sim.stepsPerTarget });
     const countArl = countRuleArl({ process, k: v.countK, reps: Math.min(sim.reps, 4000), seed: sim.seed });
-    const streams = groupStreams(sc.monUnits).filter(us => us.some(u => isMonitored(u, v.view))).map(us => replayStream(us, model, cal.h, v));
-    parts.push({ family: sc.family, model, calibration: { ...cal, deoptShare: r3(deoptShare), caseMix: calibUnits.length }, countRuleInControlArl: countArl, streams });
+    const target = v.arl0 === 'matchCount' ? Math.max(2, Math.round(countArl.arl)) : v.arl0;
+    const paths = simulateRecords({ process, reps: sim.reps, steps: Math.max(200, target * sim.stepsPerTarget), seed: sim.seed });
+    const cal = { ...calibrateFromSim(paths, target), ra: v.ra, seed: sim.seed };
+    const groups = groupStreams(sc.monUnits).filter(us => us.some(u => isMonitored(u, v.view)));
+    const streams = groups.map(us => replayStream(us, model, cal.h, v));
+    // Feasibility: the largest one-event weight on the monitored rows, the events in a row needed to cross h from S = 0,
+    // and the most S can gain in the maxDelay + 1 rows from D to D + maxDelay.
+    const maxW = Math.max(...calibUnits.map(u => raWeight(1, predict(model.beta, featuresOf(u, v)), v.ra)));
+    const feasibility = { maxEventWeight: r4(maxW), eventsInARowNeeded: Math.ceil(cal.h / maxW - 1e-12), reachInWindow: r4((v.maxDelay + 1) * maxW), reachableFromZero: (v.maxDelay + 1) * maxW >= cal.h };
+    let sweep = null;
+    if (v.sweep) {
+      sweep = [];
+      for (let h = 0.05; h <= Math.max(cal.h * 1.25, 0.5) + 1e-9; h += 0.05) {
+        const hh = Math.round(h * 100) / 100, ss = groups.map(us => replayStream(us, model, hh, v)), d = decide(ss, 'cusum', v);
+        sweep.push({ h: hh, arl0: r3(arlAt(paths, hh).arl), falseAlarms: d.falseAlarms.total, worstStream: Math.max(0, ...ss.map(x => x.cusum.falseAlarms)), detected: d.detection.met, reaching: d.detection.streamsReachingDrift, adopt: d.adopt });
+      }
+    }
+    parts.push({ family: sc.family, model, calibration: { ...cal, deoptShare: r3(deoptShare), caseMix: calibUnits.length }, countRuleInControlArl: countArl, feasibility, sweep, streams });
   }
   const streams = parts.flatMap(p => p.streams);
-  return { name: v.name, view: v.view, variant: { ...variant }, parts, streams, decision: { cusum: decide(streams, 'cusum', v), count: v.view === 'system' || streams.some(s => s.count) ? decide(streams, 'count', v) : null } };
+  return { name: v.name, view: v.view, variant: { ...variant }, parts, streams, decision: { cusum: decide(streams, 'cusum', v), count: decide(streams, 'count', v) } };
 }
 
 // ------------------------------------------------------------------------------------------------ frozen versions (N-version)
 export function nversionUnits(nv, recordsUnits, { histWindow = DESIGN.histWindow } = {}) {
-  const byKey = new Map(recordsUnits.filter(u => u.kind === 'agent').map(u => [`records:dev:d${u.post ? 4 : 3}:s${u.seed}`, u]));
   const idxOf = new Map(recordsUnits.map(u => [u.seed, u])), out = [];
   for (const solver of Object.keys(nv.summary?.solvers ?? {})) {
     const rows = (nv.rows ?? []).map(r => ({ r, k: parseTaskKey(r.taskKey) })).map(({ r, k }) => ({ r, u: idxOf.get(k.seed) })).filter(x => x.u && x.r.runs?.[solver]).sort((a, b) => a.u.idx - b.u.idx);
@@ -496,7 +518,6 @@ export function nversionUnits(nv, recordsUnits, { histWindow = DESIGN.histWindow
       deoptAt.set(u.idx, deopt);
     }
   }
-  void byKey;
   return out;
 }
 
@@ -515,8 +536,10 @@ export function replayFrozen(nvUnits, model, h, v) {
 
 // ------------------------------------------------------------------------------------------------ the analysis
 export const VARIANTS = Object.freeze([
-  { name: 'primary', view: 'system' },
-  { name: 'oracle', view: 'oracle' },
+  { name: 'primary', view: 'system', sweep: true },
+  { name: 'oracle', view: 'oracle', sweep: true },
+  { name: 'system: ARL0 matched to the count rule', view: 'system', arl0: 'matchCount' },
+  { name: 'oracle: ARL0 matched to the count rule', view: 'oracle', arl0: 'matchCount' },
   ...['system', 'oracle'].flatMap(view => [
     { name: `${view}: no risk adjustment`, view, features: [] },
     { name: `${view}: novelty only`, view, features: ['novelty'] },
@@ -581,14 +604,14 @@ export function renderTables(res) {
     `profile.mjs sha256 ${res.provenance.profileSha256.slice(0, 16)}…, eval-profiles.mjs ${res.provenance.evalProfilesSha256.slice(0, 16)}…`, '',
     '## As-run count rule replay check', '', '| stream | arm | replayed alarms | logged (stateAfter) | equal |', '|---|---|---|---|---|'];
   for (const c of res.asRunCheck) L.push(`| ${c.experiment} | ${shortArm(c.arm)} | ${fmtAlarms(c.replay)} | ${fmtAlarms(c.logged)} | ${c.equal ? 'yes' : '**no**'} |`);
-  L.push('', '## Variants: fit, h and the rule', '', '| variant | view | fit rows | coefficients (SE) | EPV | AUC | h (ARL0 ± SE) | count-rule in-control ARL | CUSUM: false alarms (total, worst) | CUSUM: detection (met / reaching) | CUSUM adopt? | count rule: false alarms (total, worst) | count rule: detection | count meets rule? |', '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+  L.push('', '## Variants: fit, h and the rule', '', 'Feasibility: events in a row needed to cross h from S = 0 at the largest one-event weight; and whether the 5 rows from the drift index to drift + 4 can reach h from S = 0 at all.', '',
+    '| variant | view | fit rows | coefficients (SE) | EPV | AUC | target ARL0 | h (ARL0 ± SE) | events in a row needed (reach in 5 rows) | count-rule in-control ARL | CUSUM: false alarms (total, worst) | CUSUM: detection (met / reaching) | CUSUM meets rule? | count: false alarms (total, worst) | count: detection | count meets rule? |', '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
   for (const r of res.results) {
-    const coef = r.parts.map(p => `${p.family ? `${p.family}: ` : ''}${p.model.names.map((n, i) => `${n} ${p.model.beta[i].toFixed(2)} (${p.model.se[i]?.toFixed(2) ?? '–'})`).join(', ')}`).join('; ');
-    const h = r.parts.map(p => `${p.family ? `${p.family}: ` : ''}${p.calibration.h.toFixed(3)} (${p.calibration.arl.toFixed(0)} ± ${p.calibration.se.toFixed(0)})`).join('; ');
-    const carl = r.parts.map(p => `${p.family ? `${p.family}: ` : ''}${p.countRuleInControlArl.arl.toFixed(1)}`).join('; ');
-    const worst = rule => Math.max(0, ...r.streams.filter(s => s[rule]).map(s => s[rule].falseAlarms));
+    const pf = (p, f) => `${p.family ? `${p.family}: ` : ''}${f(p)}`, all = f => r.parts.map(p => pf(p, f)).join('; ');
+    const coef = all(p => p.model.names.map((n, i) => `${n} ${p.model.beta[i].toFixed(2)} (${p.model.se[i]?.toFixed(2) ?? '–'})`).join(', '));
+    const worst = rule => Math.max(0, ...r.streams.filter(s => s[rule]?.alarms).map(s => s[rule].falseAlarms));
     const d = r.decision.cusum, c = r.decision.count;
-    L.push(`| ${r.name} | ${r.view} | ${r.parts.map(p => p.model.rows).join(' / ')} | ${coef} | ${r.parts.map(p => p.model.epv == null ? '–' : p.model.epv.toFixed(1)).join(' / ')} | ${r.parts.map(p => p.model.auc == null ? '–' : p.model.auc.toFixed(2)).join(' / ')} | ${h} | ${carl} | ${d.falseAlarms.total}, ${worst('cusum')} | ${d.detection.met} / ${d.detection.streamsReachingDrift} | ${d.adopt ? '**yes**' : 'no'} | ${c ? `${c.falseAlarms.total}, ${worst('count')}` : '–'} | ${c ? `${c.detection.met} / ${c.detection.streamsReachingDrift}` : '–'} | ${c ? (c.adopt ? 'yes' : 'no') : '–'} |`);
+    L.push(`| ${r.name} | ${r.view} | ${r.parts.map(p => p.model.rows).join(' / ')} | ${coef} | ${r.parts.map(p => (p.model.epv == null ? '–' : p.model.epv.toFixed(1))).join(' / ')} | ${r.parts.map(p => (p.model.auc == null ? '–' : p.model.auc.toFixed(2))).join(' / ')} | ${all(p => p.calibration.target)} | ${all(p => `${p.calibration.h.toFixed(3)} (${p.calibration.arl.toFixed(p.calibration.target < 50 ? 1 : 0)} ± ${p.calibration.se.toFixed(p.calibration.target < 50 ? 1 : 0)})`)} | ${all(p => `${p.feasibility.eventsInARowNeeded} (${p.feasibility.reachInWindow.toFixed(2)}${p.feasibility.reachableFromZero ? '' : ' < h'})`)} | ${all(p => p.countRuleInControlArl.arl.toFixed(1))} | ${d.falseAlarms.total}, ${worst('cusum')} | ${d.detection.met} / ${d.detection.streamsReachingDrift} | ${d.adopt ? '**yes**' : 'no'} | ${c.falseAlarms.total}, ${worst('count')} | ${c.detection.met} / ${c.detection.streamsReachingDrift} | ${c.adopt ? 'yes' : 'no'} |`);
   }
   for (const name of ['primary', 'oracle']) {
     const r = res.results.find(x => x.name === name);
@@ -599,13 +622,20 @@ export function renderTables(res) {
     for (const c of r.parts[0].model.calibration) L.push(`| ${c.family} | ${c.segment} | ${c.n} | ${c.observed} | ${c.expected} | ${c.oe ?? '–'} |`);
     L.push('', 'Chart paths (idx:y/p/S, * = alarm):', '');
     for (const s of r.streams) L.push(`- ${s.experiment} ${shortArm(s.arm)}: ${s.cusum.path.map(x => `${x.idx}:${x.y}/${x.p.toFixed(2)}/${x.s.toFixed(2)}${x.alarm ? '*' : ''}`).join(' ')}`);
+    const sw = r.parts[0].sweep;
+    if (sw) {
+      const met = sw.filter(x => x.adopt);
+      L.push('', `h sweep (same fitted model; ARL0 from the same simulated paths; diagnostic, in-sample; grid 0.05 to 1.25 h in steps of 0.05, rows shown where the outcome changes; the full grid is in cusum.json): ${met.length ? `the rule is met at h ∈ {${met.map(x => x.h).join(', ')}}` : 'no h in the grid meets the rule'}.`, '', '| h | ARL0 | CUSUM false alarms (total, worst stream) | detected within 4 / reaching | meets rule |', '|---|---|---|---|---|');
+      const key = x => `${x.falseAlarms}|${x.worstStream}|${x.detected}|${x.adopt}`;
+      sw.forEach((x, i) => { if (i === 0 || i === sw.length - 1 || key(x) !== key(sw[i - 1])) L.push(`| ${x.h.toFixed(2)} | ${x.arl0} | ${x.falseAlarms}, ${x.worstStream} | ${x.detected} / ${x.reaching} | ${x.adopt ? '**yes**' : 'no'} |`); });
+    }
   }
   if (res.frozen) for (const f of res.frozen) {
     L.push('', `## Frozen versions (N-version probe), ${f.name} model, h ${f.h.toFixed(3)} (${f.note})`, '', '| solver | monitored | deopts | wrong compiled | events | CUSUM alarms | CUSUM false | CUSUM delay | max S | count alarms | count false | count delay |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
     for (const s of f.streams) L.push(`| ${s.solver} | ${s.monitored} | ${s.deopts} | ${s.wrong} | ${s.events} | ${fmtAlarms(s.cusum.alarms)} | ${s.cusum.falseAlarms} | ${fmtDelay(s.cusum)} | ${s.cusum.maxS} | ${fmtAlarms(s.count.alarms)} | ${s.count.falseAlarms} | ${fmtDelay(s.count)} |`);
   }
-  L.push('', '## Decision detail', '');
-  for (const r of res.results) L.push(`- **${r.name}**: CUSUM ${r.decision.cusum.adopt ? 'meets' : 'fails'} the rule (detection ${r.decision.cusum.detection.met}/${r.decision.cusum.detection.streamsReachingDrift}${r.decision.cusum.detection.failing.length ? `; failing ${r.decision.cusum.detection.failing.join(', ')}` : ''}; false alarms ≤ 1 in ${r.decision.cusum.falseAlarms.met}/${r.decision.cusum.falseAlarms.streams}${r.decision.cusum.falseAlarms.failing.length ? `; failing ${r.decision.cusum.falseAlarms.failing.join(', ')}` : ''}).${r.decision.count ? ` Count rule: detection ${r.decision.count.detection.met}/${r.decision.count.detection.streamsReachingDrift}${r.decision.count.detection.failing.length ? ` (failing ${r.decision.count.detection.failing.join(', ')})` : ''}; false alarms ≤ 1 in ${r.decision.count.falseAlarms.met}/${r.decision.count.falseAlarms.streams}${r.decision.count.falseAlarms.failing.length ? ` (failing ${r.decision.count.falseAlarms.failing.join(', ')})` : ''}.` : ''}`);
+  L.push('', '## Decision detail (primary, oracle and the matched-ARL0 diagnostics)', '');
+  for (const r of res.results.filter(x => ['primary', 'oracle'].includes(x.name) || x.variant.arl0 === 'matchCount')) L.push(`- **${r.name}**: CUSUM ${r.decision.cusum.adopt ? 'meets' : 'fails'} the rule (detection ${r.decision.cusum.detection.met}/${r.decision.cusum.detection.streamsReachingDrift}${r.decision.cusum.detection.failing.length ? `; failing ${r.decision.cusum.detection.failing.join(', ')}` : ''}; false alarms ≤ 1 in ${r.decision.cusum.falseAlarms.met}/${r.decision.cusum.falseAlarms.streams}${r.decision.cusum.falseAlarms.failing.length ? `; failing ${r.decision.cusum.falseAlarms.failing.join(', ')}` : ''}).${r.decision.count ? ` Count rule (deopts; the same in both views): detection ${r.decision.count.detection.met}/${r.decision.count.detection.streamsReachingDrift}${r.decision.count.detection.failing.length ? ` (failing ${r.decision.count.detection.failing.join(', ')})` : ''}; false alarms ≤ 1 in ${r.decision.count.falseAlarms.met}/${r.decision.count.falseAlarms.streams}${r.decision.count.falseAlarms.failing.length ? ` (failing ${r.decision.count.falseAlarms.failing.join(', ')})` : ''}.` : ''}`);
   return L.join('\n') + '\n';
 }
 
