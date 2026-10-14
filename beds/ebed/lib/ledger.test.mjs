@@ -71,6 +71,34 @@ test('permitted patterns, opening, withdrawal and censoring', () => {
   assert.equal(matchEffects({ expected: [PAY], rows: [], end: Z('10T23:59:59') }).ok, false); // latest <= end: graded
 });
 
+test('review P2: lid assignment is independent of list order; key, permitted-window and withdrawal boundaries', () => {
+  // Two payments with the same match, windows A [Jan 1-10] and B [Jan 5-31]; rows on Jan 3 and Jan 20 satisfy both
+  // whichever way the lids are listed (the old first-in-list rule gave early:B, missed:A for the order B, A).
+  const lid = (id, e, l) => ({ lid: id, system: 'bank', op: 'pay', match: { loan: 'L1' }, window: { earliest: `2026-01-${e}T00:00:00Z`, latest: `2026-01-${l}T23:59:59Z` } });
+  const row = (d, key, committed = true) => ({ at: `2026-01-${d}T12:00:00Z`, system: 'bank', op: 'pay', key, args: { loan: 'L1' }, committed });
+  const A = lid('A', '01', '10'), B = lid('B', '05', '31');
+  for (const order of [[A, B], [B, A]]) {
+    const g = matchEffects({ expected: order, rows: [row('03', 'k1'), row('20', 'k2')], end: '2026-02-01T00:00:00Z' });
+    assert.deepEqual([g.ok, g.lids.A.commitAt, g.lids.B.commitAt], [true, parseInstant('2026-01-03T12:00:00Z'), parseInstant('2026-01-20T12:00:00Z')], order.map(x => x.lid).join());
+    // Both windows contain Jan 6: the earlier deadline (A) takes it, so Jan 20 can still satisfy B.
+    assert.equal(matchEffects({ expected: order, rows: [row('06', 'k1'), row('20', 'k2')], end: '2026-02-01T00:00:00Z' }).ok, true);
+  }
+  // A retry keeps its key's lid: B's F3 retry under k2 is not taken by A (first by deadline), which would be a
+  // key-split and key-reuse.
+  const twin = [A, { ...A, lid: 'A2' }];
+  assert.deepEqual(codes(matchEffects({ expected: twin, rows: [row('02', 'k1'), row('03', 'k2'), row('04', 'k2', false)], end: '2026-02-01T00:00:00Z' })), []);
+  // A permitted pattern outside its window is not permitted.
+  const permitted = [{ system: 'mail', op: 'send', match: { kind: 'reminder' }, window: { earliest: Z('01T00:00:00'), latest: Z('05T00:00:00') } }];
+  assert.deepEqual(codes(grade([pay('05T10:00:00'), mail('06T09:00:00'), mail('06T09:30:00', 'reminder', 'm2')], { permitted })), ['outside-allowed']);
+  assert.deepEqual(codes(grade([mail('04T09:30:00', 'reminder', 'm2'), pay('05T10:00:00'), mail('06T09:00:00')], { permitted })), []);
+  // Withdrawal boundaries: acting at the withdrawal instant is outside the allowed set; a withdrawal exactly at the
+  // window's latest still withdraws the obligation (not missed).
+  const W = { ...PAY, withdrawnAt: Z('03T00:00:00') };
+  assert.deepEqual(codes(matchEffects({ expected: [W], rows: [pay('03T00:00:00')], end: Z('31T00:00:00') })), ['outside-allowed']);
+  const atLatest = matchEffects({ expected: [{ ...PAY, withdrawnAt: PAY.window.latest }], rows: [], end: Z('31T00:00:00') });
+  assert.deepEqual([atLatest.ok, atLatest.lids['pay:INV-1'].status], [true, 'withdrawn']);
+});
+
 test('input validation', () => {
   assert.equal(codeOf(() => grade([pay('06T00:00:00'), pay('05T00:00:00')])), 'LEDGER_ORDER');
   assert.equal(codeOf(() => matchEffects({ expected: [PAY, PAY] })), 'LEDGER_INVALID');

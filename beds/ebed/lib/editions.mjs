@@ -29,15 +29,20 @@ export function checkEditions(editions) {
     if (seen.has(e.id)) issues.push({ code: 'EDITION_INVALID', severity: 'error', detail: `duplicate edition id ${e.id}` });
     seen.add(e.id);
   }
+  // Sweep in start order, comparing each edition with every earlier one (overlaps) and with the furthest end seen so
+  // far (gaps). Review fix: comparing neighbours only missed A [Jan, next Jan) overlapping C [Apr, May) behind
+  // B [Feb, Mar), and reported a false gap from Mar to Apr inside A.
   const sorted = [...spans].sort((a, b) => a.from - b.from || (a.e.id < b.e.id ? -1 : 1));
-  for (let i = 0; i + 1 < sorted.length; i++) {
-    const a = sorted[i], b = sorted[i + 1];
-    if (b.from < a.to) {
-      issues.push({ code: 'EDITION_UNRESOLVED', severity: 'error', detail: `editions ${a.e.id} and ${b.e.id} overlap from ${dateOf(b.from)}`, editions: [a.e.id, b.e.id] });
-    } else if (b.from > a.to) {
-      issues.push({ code: 'EDITION_UNRESOLVED', severity: 'warning', detail: `no edition in force from ${dateOf(a.to)} to ${dateOf(b.from)}`, gap: { from: dateOf(a.to), to: dateOf(b.from) } });
+  let reach = -Infinity;
+  sorted.forEach((b, i) => {
+    if (i > 0 && b.from > reach) {
+      issues.push({ code: 'EDITION_UNRESOLVED', severity: 'warning', detail: `no edition in force from ${dateOf(reach)} to ${dateOf(b.from)}`, gap: { from: dateOf(reach), to: dateOf(b.from) } });
     }
-  }
+    for (const a of sorted.slice(0, i)) {
+      if (b.from < a.to) issues.push({ code: 'EDITION_UNRESOLVED', severity: 'error', detail: `editions ${a.e.id} and ${b.e.id} overlap from ${dateOf(b.from)}`, editions: [a.e.id, b.e.id] });
+    }
+    reach = Math.max(reach, b.to);
+  });
   return issues;
 }
 

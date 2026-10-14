@@ -19,8 +19,8 @@
 //    unsatisfied lid, else to a satisfied one (which makes it a duplicate). Each choice takes the earliest deadline
 //    (window latest, then earliest, then lid), so the verdict does not depend on the order lids are listed (review fix:
 //    "first in list order" graded A [Jan 1-10], B [Jan 5-31] with rows on Jan 3 and Jan 20 as passing or failing by
-//    list order). Rows are taken in journal order, and earliest-deadline-first among the containing windows is the
-//    greedy rule that matches the most rows to windows.
+//    list order). Rows are taken in journal order; for rows that fall inside windows, earliest-deadline-first among
+//    the containing windows is the classic greedy rule that matches the most rows to windows.
 // 2. Idempotency and multiplicity: keyViolations, atMostOnce, exactlyOnce.
 // 3. Conservation identities in exact integer minor units: identity, identityByGroup, netsToZero, doubleEntry, and
 //    the X12 835 balancing identities (balance835).
@@ -83,11 +83,12 @@ export function matchEffects({ expected = [], permitted = [], rows = [], end = I
     const t = toMs(row.at);
     if (t < last) fail('LEDGER_ORDER', `row ${idx} is out of journal order`);
     last = t;
-    const cands = list.filter(e => e.system === row.system && e.op === row.op && t >= e.openedAt && argsMatch(e.match, row.args)
+    const cands = byDeadline.filter(e => e.system === row.system && e.op === row.op && t >= e.openedAt && argsMatch(e.match, row.args)
       && !(t >= e.withdrawnAt && !st.get(e.lid).satisfied));
     let c = null;
     if (row.key !== undefined && row.key !== null) c = cands.find(e => st.get(e.lid).key === row.key) ?? null;
-    c = c ?? cands.find(e => !st.get(e.lid).satisfied) ?? cands[0] ?? null;
+    const unsatisfied = cands.filter(e => !st.get(e.lid).satisfied);
+    c = c ?? unsatisfied.find(e => t >= e.window.earliest && t <= e.window.latest) ?? unsatisfied[0] ?? cands[0] ?? null;
     if (!c) {
       const pi = pats.findIndex(p => p.system === row.system && p.op === row.op && argsMatch(p.match, row.args) && (!p.window || (t >= p.window.earliest && t <= p.window.latest)));
       if (pi >= 0) claimKey(row, `permitted:${pi}:${canonical(row.args ?? null)}`, t, idx, null);
