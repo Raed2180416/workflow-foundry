@@ -12,9 +12,12 @@
 // Clock: not-started -start-> running -pause-> paused -resume-> running; -stop-> stopped from running or paused. Events
 // before the start are ignored; repeated start / pause / resume are no-ops; a start after the stop deopts (guard
 // single-cycle: a reset or reopen is a new obligation). Events at the same instant keep their input order. Elapsed time is
-// business time while running; breached = elapsed > target (reaching the target exactly is on time); met = stopped and
-// not breached. dueAt = the instant elapsed reaches the target (past, or projected from AS_OF while running; null while
-// paused or once stopped short of it).
+// business time while running. dueAt = the instant elapsed reaches the target (past, or projected from AS_OF while
+// running; null while paused or once stopped short of it). breached = the clock ran past dueAt: AS_OF (running), the stop
+// or the pause came strictly after it, so a wake-up at dueAt reads 'not breached' and any later instant reads 'breached'
+// even outside business hours (reaching the target exactly is on time); met = stopped and not breached. (v2: v1 had
+// breached = elapsed > target, which stayed false from a dueAt at the end of a business window until the next window
+// opened; FROZEN-P58-P60.json amendments.)
 // G18 editions: the policy edition in force on the clock's start date (local to the calendar) fixes target and warnings;
 // the calendar edition is chosen per local day, so a clock running across an edition switch uses each day's hours.
 export default async function P60(flow, task, x, S) {
@@ -129,9 +132,12 @@ export default async function P60(flow, task, x, S) {
     const target = pol.targets[key] * MIN;
     const when = need => (elapsed >= need ? reach(running, need) : state === 'running' ? project(asOf, need - elapsed) : null);
     const warnings = pol.warnings.map(f => { const need = Math.round(f * target); return { fraction: f, reached: elapsed >= need, at: iso(when(need)) }; });
-    const breached = elapsed > target;
+    // Breach compares instants: the target was reached (due) and the clock still ran after it (the last running interval
+    // ends at AS_OF, the stop or the pause). Business time alone cannot say this: it does not advance outside the windows.
+    const due = elapsed >= target ? reach(running, target) : null, ranUntil = running.length ? running[running.length - 1][1] : startAt;
+    const breached = due !== null && ranUntil > due;
     return { id: c.id, state, policyEdition: pol.edition, calendarEditions, targetMinutes: pol.targets[key], elapsedMinutes: elapsed / MIN, remainingMinutes: (target - elapsed) / MIN,
-      met: state === 'stopped' && !breached, breached, dueAt: iso(when(target)), warnings };
+      met: state === 'stopped' && !breached, breached, dueAt: iso(due ?? when(target)), warnings };
   };
   const clocks = cases.map(clock);
   flow.invariant('one-clock-per-case', clocks.length === cases.length && clocks.every((k, i) => k.id === cases[i].id), { clocks: clocks.length, cases: cases.length });

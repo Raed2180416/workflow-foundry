@@ -1,5 +1,5 @@
 {
-  "id": "P59", "layer": "L1", "version": 1,
+  "id": "P59", "layer": "L1", "version": 2,
   "name": "saga planner (reverse-order compensation, idempotent commands)", "short": "saga-planner", "family": "failure", "tier": "S", "constructs": [2, 4, 5, 10, 15, 20, 23],
   "flow": { "version": 3, "autoFlag": false },
   "fragment": { "in": "any (SAGAS reads it)", "out": { "type": "object", "required": ["plans"], "properties": { "plans": { "type": "array", "items": { "type": "object",
@@ -25,7 +25,7 @@
   ],
   "checklist": [
     { "text": "Compensation runs in reverse order of completion, and only for completed compensable steps plus a failed step whose outcome is uncertain.", "code": null, "enforcedBy": "invariants undo-reverse-order, undo-covers-completed", "minedFrom": ["repo:temporalio/sdk-java Saga.java", "web:docs.camunda.org/manual/latest/reference/bpmn20/events/cancel-and-compensation-events/"] },
-    { "text": "Every command carries an idempotency key that is the same on each retry; activities and compensations must be idempotent.", "code": null, "enforcedBy": "invariant keys-distinct", "minedFrom": ["web:temporal.io/blog/saga-pattern-made-easy", "web:community.temporal.io/t/19226"] },
+    { "text": "Every command carries an idempotency key that is the same on each retry and names its saga: keys differ across every saga, step and action in the run; activities and compensations must be idempotent.", "code": null, "enforcedBy": "invariant keys-distinct", "minedFrom": ["web:temporal.io/blog/saga-pattern-made-easy", "web:community.temporal.io/t/19226"] },
     { "text": "Steps are ordered compensable, pivot, retryable; past the pivot nothing is undone, failures are retried.", "code": null, "enforcedBy": "invariant steps-well-formed", "minedFrom": ["web:learn.microsoft.com/azure/architecture/patterns/saga"] },
     { "text": "Retries are bounded; exhausted retries end in status stuck for a person, never in silence.", "code": "UNBOUNDED", "enforcedBy": "MAX_ATTEMPTS int[1,10]" },
     { "text": "The solver plans; the envelope executes the commands (effect, retry, compensate), so no effect runs in the solver.", "code": "EFFECT_IN_SOLVER" },

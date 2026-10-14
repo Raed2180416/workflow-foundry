@@ -67,6 +67,18 @@ export async function runOne({ rung, seed, difficulty, policy, work, labels = fa
     latencyMs: rc.latencyMs, events: rc.trace.length, maxPromptChars: Math.max(0, ...log.map(x => x.promptChars)), invariants: done?.invariants ?? null, guards: done?.guards ?? null,
   };
   if (labels && rc.status === 'ok') row.labelMatch = canonical(bed.referenceSolve(task)) === canonical(rc.output);
+  // Analyst-side decomposition for R3 (README "R3 bed finding"): are the per-supplier statements the bed reference's (up to
+  // the order of discrepancies), and are the totals? Counts only; nothing reaches the reference.
+  if (rung === 'r3' && rc.status === 'ok') {
+    const ref = bed.referenceSolve(task), norm = st => ({ ...st, discrepancies: [...st.discrepancies].map(d => canonical(d)).sort() });
+    row.statementsMatchReference = canonical(rc.output.statements.map(norm)) === canonical(ref.statements.map(norm));
+    row.totalsMatchReference = canonical({ b: rc.output.by_reason, t: rc.output.totals }) === canonical({ b: ref.by_reason, t: ref.totals });
+    // The code-decided part: every statement with the judged reasons (PRICE, FX, MISSING_CREDIT) and the adjusted balance
+    // (which follows them) blanked on both sides.
+    const blank = st => ({ ...st, adjusted_balance_minor: null, discrepancies: st.discrepancies.map(d => canonical({ ...d, reason: ['PRICE', 'FX', 'MISSING_CREDIT'].includes(d.reason) ? 'JUDGED' : d.reason === 'UNEXPLAINED' ? 'JUDGED-OR-UNEXPLAINED' : d.reason })).sort() });
+    const loose = st => ({ ...blank(st), discrepancies: blank(st).discrepancies.map(x => x.replace('"JUDGED-OR-UNEXPLAINED"', '"JUDGED"')) });
+    row.statementsMatchModuloJudged = canonical(rc.output.statements.map(loose)) === canonical(ref.statements.map(loose));
+  }
   if (rc.status !== 'ok') row.stderrTail = (rc.meta?.stderrTail ?? '').slice(-300);
   return row;
 }
@@ -80,7 +92,8 @@ export function summarize(rows) {
   const byTask = new Map();
   for (const r of rows) { const k = `${r.rung}:${r.seed}:${r.difficulty}`; if (!byTask.has(k)) byTask.set(k, []); byTask.get(k).push(r); }
   const tasks = [...byTask.entries()].map(([k, rs]) => {
-    const digests = new Set(rs.map(r => r.outDigest ?? `status:${r.status}`));
+    // Judge dependence compares the two stub policies only (the author policy answers judges correctly by construction).
+    const digests = new Set(rs.filter(r => r.policy === 'A' || r.policy === 'B').map(r => r.outDigest ?? `status:${r.status}`));
     return { task: k, statuses: Object.fromEntries(rs.map(r => [r.policy, r.status])), pass: Object.fromEntries(rs.map(r => [r.policy, r.pass])),
       judgeDependent: digests.size > 1, judges: Math.max(...rs.map(r => r.judges)) };
   });
@@ -94,6 +107,8 @@ export function summarize(rows) {
       costUsd: { total: Math.round(sum(rs, r => r.costUsd) * 1e6) / 1e6, max: Math.max(...rs.map(r => r.costUsd)), mean: Math.round((sum(rs, r => r.costUsd) / rs.length) * 1e6) / 1e6 },
       modelCalls: { total: sum(rs, r => r.modelCalls), max: Math.max(...rs.map(r => r.modelCalls)) }, sonnetCalls: sum(rs, r => r.sonnetCalls),
       ...(rs.some(r => 'labelMatch' in r) ? { labelMatch: rs.filter(r => r.labelMatch).length } : {}),
+      ...(rs.some(r => 'statementsMatchReference' in r) ? { statementsMatchReference: rs.filter(r => r.statementsMatchReference).length, totalsMatchReference: rs.filter(r => r.totalsMatchReference).length,
+        statementsMatchModuloJudged: rs.filter(r => r.statementsMatchModuloJudged).length } : {}),
       deopts: Object.fromEntries([...new Set(rs.filter(r => r.deopt).map(r => `${r.deopt.kind}:${r.deopt.name}`))].map(k => [k, rs.filter(r => r.deopt && `${r.deopt.kind}:${r.deopt.name}` === k).length])),
     }]; })),
     judgeIndependent: tasks.filter(t => !t.judgeDependent).length,

@@ -1,5 +1,5 @@
 {
-  "id": "P60", "layer": "L1", "version": 1,
+  "id": "P60", "layer": "L1", "version": 2,
   "name": "SLA / obligation clock (pause, resume, business calendar)", "short": "sla-obligation-clock", "family": "async", "tier": "S", "constructs": [2, 4, 5, 10, 18, 19],
   "flow": { "version": 3, "autoFlag": false },
   "fragment": { "in": "any (CASES reads it)", "out": { "type": "object", "required": ["clocks"], "properties": { "clocks": { "type": "array", "items": { "type": "object",
@@ -30,7 +30,7 @@
   "checklist": [
     { "text": "Start, pause, resume and stop are named event sets; an event in none of them deopts instead of being guessed.", "code": null, "enforcedBy": "guard known-event", "minedFrom": ["web:servicenow.com/docs zurich SLA conditions", "web:support.atlassian.com/jira-service-management-cloud/docs/set-up-sla-conditions/"] },
     { "text": "Time counts only inside the calendar's business windows, outside holidays, in the calendar's own time zone (DST by the runtime tz database).", "code": null, "enforcedBy": "invariant business-within-wall" },
-    { "text": "Breach is elapsed > target; warnings are fractions of the target; reaching the target exactly is on time.", "code": null },
+    { "text": "dueAt is the instant elapsed reaches the target; breach is the clock running past it (AS_OF, the stop or the pause after dueAt, also outside business hours), so reaching the target exactly is on time; warnings are fractions of the target.", "code": null },
     { "text": "Targets and calendars come in effective-dated editions (G18): the policy edition in force on the start date, the calendar edition per day; outputs name both.", "code": null, "enforcedBy": "guards policy-edition-in-force, calendar-edition-in-force" },
     { "text": "The evaluation instant is an input; the solver never reads the wall clock, and events after it deopt.", "code": null, "enforcedBy": "guard not-after-as-of" },
     { "text": "A reopen or reset (start after stop) is a new obligation, not this clock.", "code": null, "enforcedBy": "guard single-cycle" },

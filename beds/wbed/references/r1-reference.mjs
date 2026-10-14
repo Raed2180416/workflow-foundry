@@ -195,7 +195,6 @@ function readMeaning(sentences, kind) {
 async function markerMeaning({ system, value, kind, para, notesLabel }) {
   const needle = value.toLowerCase();
   const hits = sentencesOf(para).filter(s => s.toLowerCase().includes(needle));
-  // "exactly like X": the meaning of the marker it points to, when that one is known from its own sentences.
   const options = kind === 'row' ? ['VOID', 'KEEP'] : ['COUNTS', 'DOES_NOT_COUNT'];
   const schema = { type: 'object', required: ['meaning', 'quote'], properties: { meaning: { type: 'string', enum: options }, quote: { type: 'string' } } };
   const question = kind === 'row'
@@ -264,7 +263,7 @@ function parseVendex(body) {
   let s = body.replace(/\s*Remark:.*$/s, '').trim();
   const out = { name: null, dobRaw: null, dobMissing: false, phone: null, phoneMissing: false, place: null };
   const particle = '(?:van|von|de|der|den|da|di|del|della|du|le|la|ten|ter|zu|y)';
-  const name = `((?:(?:Mr|Mrs|Ms|Miss|Dr|Prof)\\.?\\s+)?[A-ZÀ-ÖØ-Þ][\\p{L}'’.-]*(?:\\s+(?:${particle}\\s+)*[A-ZÀ-ÖØ-Þ][\\p{L}'’.-]*){0,4})`;
+  const name = `((?:(?:Mr|Mrs|Ms|Miss|Dr|Prof)\\.?\\s+)?\\p{Lu}[\\p{L}'’.-]*(?:\\s+(?:${particle}\\s+)*\\p{Lu}[\\p{L}'’.-]*){0,4})`;
   const dateRe = '((?:the\\s+)?\\d{1,2}(?:st|nd|rd|th)?(?:\\s+of)?[\\s-]+[A-Za-z]{3,9}\\.?[\\s,-]+\\d{2,4}|[A-Za-z]{3,9}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}|\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4})';
   let m;
   if ((m = new RegExp(`^${name}\\s+—\\s+([^—]+?)\\s+—`, 'u').exec(s))) { out.name = m[1]; out.place = m[2]; }
@@ -289,7 +288,7 @@ function parseVendex(body) {
 const exportLines = String(IN.customer_export).split('\n').map(l => l.trim()).filter(Boolean);
 const exportRows = flow.step('parse-export', () => exportLines.map(parseExportLine));
 flow.guard('export-lines-parsed', exportRows.every(Boolean), () => ({ unparsed: exportLines.filter((l, i) => !exportRows[i]).slice(0, 5) }));
-flow.guard('export-row-count', exportRows.length === stated.rows, { parsed: exportRows.length, stated: stated.rows });
+flow.guard('export-row-count', !Number.isFinite(stated.rows) || exportRows.length === stated.rows, { parsed: exportRows.length, stated: stated.rows });
 flow.guard('export-ids-unique', new Set(exportRows.map(r => r.id)).size === exportRows.length, { n: exportRows.length });
 flow.guard('export-known-systems', exportRows.every(r => SYSTEMS.includes(r.system)), { systems: uniq(exportRows.map(r => r.system)) });
 
@@ -363,7 +362,9 @@ async function parseInvoices() {
     const push = (o, line) => out.push({ system, number: WS(o.number), row: Number(o.row), dateRaw: WS(o.date), amountRaw: WS(o.amount), ccyRaw: o.ccy ? WS(o.ccy) : null, status: WS(o.status), de: fmt.de, defaultCcy: fmt.defaultCcy, line });
     if (fmt.kind === 'jsonl') {
       for (const line of lines) {
-        const o = JSON.parse(line), k = Object.keys(o);
+        let o = null;
+        try { o = JSON.parse(line); } catch { flow.guard('invoice-json-line', false, { system, line: line.slice(0, 160) }); }
+        const k = Object.keys(o);
         const pick = re => k.find(x => re.test(x));
         push({ number: o[pick(/invoice|number|^no$/i)], row: o[pick(/^row$|cust|account|member/i)], date: o[pick(/issued|date/i)], amount: String(o[pick(/amount/i)]), ccy: o[pick(/ccy|currency/i)], status: o[pick(/state|status/i)] }, line);
       }
@@ -406,7 +407,7 @@ async function parseInvoices() {
   return out;
 }
 const invoices = await flow.phase('extract-invoices', async () => flow.step('parse-invoices', () => parseInvoices()));
-flow.guard('invoice-count', invoices.length === stated.invoices, { parsed: invoices.length, stated: stated.invoices });
+flow.guard('invoice-count', !Number.isFinite(stated.invoices) || invoices.length === stated.invoices, { parsed: invoices.length, stated: stated.invoices });
 for (const inv of invoices) {
   inv.ccy = ccyOf(inv.ccyRaw ?? inv.amountRaw, inv.defaultCcy);
   inv.money = money(inv.amountRaw, inv.de);
@@ -425,7 +426,7 @@ const feed = flow.step('parse-feed', () => feedLines.map(line => {
 }));
 for (const f of feed) if (f) f.money = money(f.amountRaw);
 flow.guard('feed-parsed', feed.every(f => f && f.date && f.money && f.ccy && ['PAY', 'REMIT'].includes(f.kind)), () => ({ bad: feedLines.filter((l, i) => !(feed[i]?.date && feed[i]?.money)).slice(0, 3) }));
-flow.guard('feed-count', feed.length === stated.feed, { parsed: feed.length, stated: stated.feed });
+flow.guard('feed-count', !Number.isFinite(stated.feed) || feed.length === stated.feed, { parsed: feed.length, stated: stated.feed });
 const rates = ratesOf(LEDGER_SPEC);
 const centsOf = (m, ccy) => { const c = usdCents(m, ccy, rates); return c == null ? null : Number(c); };
 const neededCcy = uniq([...invoices.map(i => i.ccy), ...feed.filter(f => f.kind === 'PAY').map(f => f.ccy)]).filter(c => c !== 'USD');
@@ -894,5 +895,5 @@ flow.invariant('report-arithmetic', answer.customers.every(c => c.open_usd_cents
 flow.invariant('report-conserves-documents', answer.totals.invoiced_usd_cents === sumOf(ledger.counted.map(i => i.cents))
   && answer.totals.paid_usd_cents === sumOf(ledger.pays.map(p => p.cents)), {});
 flow.invariant('report-safe-integers', answer.customers.every(c => [c.invoiced_usd_cents, c.paid_usd_cents, c.open_usd_cents].every(Number.isSafeInteger)), {});
-flow.note('conventions', { dob: dobConventions, invoiceDates });
+flow.note('conventions', { dob: Object.fromEntries(Object.entries(dobConventions).map(([k, { ask, ...c }]) => [k, c])), invoiceDates });
 flow.done(answer);

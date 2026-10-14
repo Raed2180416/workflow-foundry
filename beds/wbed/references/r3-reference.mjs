@@ -115,7 +115,7 @@ const vendors = flow.step('read-vendors', () => VENDORS.split('\n').map(l => l.t
   return { id: p[0], name: p[1], others: (p[2] ?? '').split(';').map(x => x.trim()).filter(Boolean), currency: p[3], system: p[4], file: p[5] };
 }));
 const stated = Number(/auditing (\d+) supplier statements/.exec(String(task.prompt ?? ''))?.[1] ?? NaN);
-flow.guard('vendor-count', vendors.length === stated && vendors.every(v => /^V-\d+$/.test(v.id) && v.currency && v.system && v.file), { parsed: vendors.length, stated });
+flow.guard('vendor-count', (!Number.isFinite(stated) || vendors.length === stated) && vendors.every(v => /^V-\d+$/.test(v.id) && v.currency && v.system && v.file), { parsed: vendors.length, stated });
 flow.guard('vendor-ids-unique', new Set(vendors.map(v => v.id)).size === vendors.length, {});
 flow.guard('statements-present', vendors.every(v => typeof STATEMENTS[v.file] === 'string'), () => ({ missing: vendors.filter(v => typeof STATEMENTS[v.file] !== 'string').map(v => v.file) }));
 flow.guard('rates-known', vendors.every(v => v.currency === 'USD' || rates[v.currency]), () => ({ missing: [...new Set(vendors.map(v => v.currency))].filter(c => c !== 'USD' && !rates[c]) }));

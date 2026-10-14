@@ -2,7 +2,8 @@
 // calls, no new dependencies (the seeded PRNG is beds/lib/rng.mjs). E-BED §6 asked for these in experiments/jit/stats.mjs;
 // they live in this new module instead so the JIT instrument (and its pinned tests) does not move.
 //
-//   node experiments/lib/stats-ebed.mjs power [--iterations N] [--json]     the family-test power table (K × true gap)
+//   node experiments/lib/stats-ebed.mjs power [--iterations N] [--json]     test (i) power table (K × true gap)
+//   node experiments/lib/stats-ebed.mjs decision [--iterations N] [--json]  power of the whole bar decision (i)∧(ii)∧(iii)
 //   node experiments/lib/stats-ebed.mjs thresholds [--json]                 H-E2 failure thresholds and the H-E2c case count
 //
 // Units. Success rates and gaps are proportions in [0, 1] (a "point" is 0.01). The decision unit is the closed-loop case
@@ -13,14 +14,17 @@
 //   clopperPearson(x, n, side)      exact binomial bounds; one-sided lower/upper or two-sided (E-BED §6 (ii))
 //   maxFailures, minCleanCases      the H-E2 / H-E2c thresholds those bounds imply (E-BED §6 table)
 //   reliabilityVerdict(worlds)      H-E2(i): pooled lower bound >= 0.95, every world >= 0.90, zero critical violations
+//   reliabilityProbability          exact P(H-E2(i) holds) for K worlds of m i.i.d. cases (the operating characteristic)
 //   censoringReport(epochs)         the "censored" mark (share > 20% in an epoch; E-BED §2.1)
+//   casePools(cases, horizonEnd)    completed / censored pools from the earliest- and latest-timing reference runs (§6)
 //   wilcoxonExact(d)                exact signed-rank test, conditional on the observed (mid)ranks (E-BED §6 (iii))
 //   wilcoxonCritical(n, alpha)      the no-ties one-sided critical W- (9 items: 8, p = 25/512)
 //   familyTest(items)               the family-level test (i): one-sided Wilcoxon on {gap_i + delta}, p < alpha
 //   familyDecision(arms)            (i) with Holm across arms, (ii) H-E2 on >= 7 items, (iii) no extra critical item
 //   holm(pValues)                   Holm step-down adjusted p-values (E-BED §6 (iv))
 //   nonInferiority(pairs, delta)    world-clustered bootstrap lower bound of the paired difference vs -delta (E-BED §6 (i))
-//   itemGapSE, familyPower          the power simulation behind "K = 4 is recommended" (E-BED §6 "Power")
+//   itemGapSE, familyPower          the power of test (i) alone (E-BED §6 "Power")
+//   decisionPower                   the power of the whole decision (i)∧(ii)∧(iii), which depends on the per-world n
 //
 // Inequalities. Every test here rejects on a strict "p < alpha" (E-BED §6 writes "p < 0.05"), Holm included; a bound
 // passes on ">= its threshold". Exact Wilcoxon p-values are dyadic (k / 2^n) and never equal 0.05 / j, so the strict
@@ -33,6 +37,11 @@ export const RHO_EBED = 0.1;            // assumed within-world ICC of paired ca
 export const H_E2 = Object.freeze({ pooled: 0.95, world: 0.90, level: 0.95, criticalRate: 0.001 });
 export const CENSOR_LIMIT = 0.20;       // E-BED §2.1: a verdict resting on a censored share > 20% in any epoch is "censored"
 export const FAMILY = Object.freeze({ minItems: 6, minReliable: 7 });   // E-BED §6: n < 6 means no claim; H-E2 on >= 7 items
+// The only reasons an item leaves the family test (E-BED §6): K1 "excluded: oracle", K1' "reference not buildable"
+// (written K1' or K1′), K2 triviality demotion. Anything else (a budget stop, an invalid world, a crash) leaves the arm
+// without a gap on an admitted item, which is an error, never a silent exclusion.
+export const FAMILY_EXCLUSIONS = Object.freeze(['K1', "K1'", 'K1′', 'K2']);
+export const LAST_EPOCH = 'ep4';        // BED-CONTRACT-v1.1 §1, §2: epochs ep0 … ep4 (+ gl for the backlog); ep4 is the last
 
 const isProb = p => typeof p === 'number' && Number.isFinite(p) && p >= 0 && p <= 1;
 const assertCount = (v, name) => { if (!Number.isInteger(v) || v < 0) throw new Error(`stats-ebed: ${name} must be a non-negative integer, got ${v}`); };
@@ -136,6 +145,14 @@ export function maxFailures(n, bound, { level = 0.95 } = {}) {
   return f;
 }
 
+// Smallest n whose one-sided lower bound still reaches `bound` with `failures` failures (maxFailures(n, bound) >=
+// failures): per world at 0.90, 29 cases for a clean pass, 46 to tolerate one failure, 89 for four; pooled at 0.95, 59.
+export function minCasesFor(failures, bound, { level = 0.95, max = 1e6 } = {}) {
+  assertCount(failures, 'failures');
+  for (let n = failures + 1; n <= max; n++) if (maxFailures(n, bound, { level }) >= failures) return n;
+  throw new Error(`stats-ebed: no n <= ${max} reaches ${bound} with ${failures} failures`);
+}
+
 // Smallest number of clean cases (0 critical violations) whose one-sided upper bound on the violation rate is <= rate:
 // 1 − alpha^(1/n) <= rate  <=>  n >= ln(alpha) / ln(1 − rate). E-BED H-E2c: rate 0.001 → 2,995.
 export function minCleanCases(rate = H_E2.criticalRate, { level = 0.95 } = {}) {
@@ -151,7 +168,10 @@ export function minCleanCases(rate = H_E2.criticalRate, { level = 0.95 } = {}) {
 // holds iff the pooled one-sided lower bound >= pooledBound (0.95), every world's own lower bound >= worldBound (0.90),
 // and no critical violation anywhere. H-E2c (critical rate <= 0.1%) is reported beside it as `criticalRate`: the upper
 // bound from the clean cases, established only when n >= minCleanCases() (2,995 at 0.1%).
-export function reliabilityVerdict(worlds, { pooledBound = H_E2.pooled, worldBound = H_E2.world, level = H_E2.level, criticalRate = H_E2.criticalRate, censoring = null } = {}) {
+// censoring: the epochs the verdict pools ([{ epoch, started, censored }], see censoringReport). A pooled verdict excepts
+// the last epoch (BED-CONTRACT-v1.1 §6), so censoringOptions defaults to { exceptLast: true }; pass { exceptLast: false }
+// for an epoch-level claim about the last epoch itself.
+export function reliabilityVerdict(worlds, { pooledBound = H_E2.pooled, worldBound = H_E2.world, level = H_E2.level, criticalRate = H_E2.criticalRate, censoring = null, censoringOptions = { exceptLast: true } } = {}) {
   if (!Array.isArray(worlds) || !worlds.length) throw new Error('stats-ebed: reliabilityVerdict needs at least one world');
   const seen = new Set();
   const per = worlds.map(w => {
@@ -168,25 +188,83 @@ export function reliabilityVerdict(worlds, { pooledBound = H_E2.pooled, worldBou
   const needed = minCleanCases(criticalRate, { level });
   const crit = { violations: critical, upper: critical === 0 ? clopperPearson(0, n, 'upper', { level }).upper : null, needed, established: critical === 0 && n >= needed };
   const holds = pooled.ok && per.every(w => w.ok) && critical === 0;
-  const cens = censoring ? censoringReport(censoring) : null;
+  const cens = censoring ? censoringReport(censoring, censoringOptions ?? {}) : null;
   return { holds, label: cens?.marked ? (holds ? 'holds (censored)' : 'fails (censored)') : (holds ? 'holds' : 'fails'), pooled, worlds: per, critical: crit, censoring: cens,
     rule: `one-sided ${level * 100}% Clopper-Pearson lower bound >= ${pooledBound} pooled and >= ${worldBound} in every world; zero critical violations` };
 }
 
-// Censoring per epoch: epochs [{ epoch, started, censored }] (cases assigned by start date; E-BED §2.1).
-//   marked: some counted epoch has censored / started > limit (E-BED §2.1: the verdict is labelled "censored").
-//   exceptLast: skip the last epoch (the bed-health rule of E-BED §9.2: the horizon closes >= 80% of the cases started
-//   in every epoch except the last).
-export function censoringReport(epochs, { limit = CENSOR_LIMIT, exceptLast = false } = {}) {
+// Binomial pmf over 0..n (log space; exact enough for the operating characteristics below).
+function binomPmf(n, q) {
+  const out = new Float64Array(n + 1);
+  if (q <= 0) { out[0] = 1; return out; }
+  if (q >= 1) { out[n] = 1; return out; }
+  let lc = 0;
+  for (let k = 0; k <= n; k++) { if (k) lc += Math.log(n - k + 1) - Math.log(k); out[k] = Math.exp(lc + k * Math.log(q) + (n - k) * Math.log1p(-q)); }
+  return out;
+}
+
+// The operating characteristic of H-E2(i): the exact probability that it holds for an arm whose completed cases succeed
+// i.i.d. with probability p, over K worlds of m completed cases each (m a number, or one count per world), with no
+// critical violation. Each world's failures must stay <= maxFailures(m_w, worldBound) and their sum <= maxFailures(Σm,
+// pooledBound). Example: m = 40, K = 2, p = 0.99 → both limits are 0 → 0.99^80 = 0.448; K = 4 → 0.99^160 = 0.200.
+export function reliabilityProbability({ K = null, m, p, pooledBound = H_E2.pooled, worldBound = H_E2.world, level = H_E2.level }) {
+  const ms = Array.isArray(m) ? m : Array.from({ length: K ?? 0 }, () => m);
+  if (!ms.length) throw new Error('stats-ebed: reliabilityProbability needs K >= 1 worlds (or a list of per-world counts)');
+  ms.forEach((v, i) => assertCount(v, `m[${i}]`));
+  if (!isProb(p)) throw new Error(`stats-ebed: p must be in [0, 1], got ${p}`);
+  const worldMax = ms.map(v => maxFailures(v, worldBound, { level })), pooledMax = maxFailures(ms.reduce((s, v) => s + v, 0), pooledBound, { level });
+  let dist = new Float64Array([1]);          // distribution of the total failures so far, each world truncated at its limit
+  ms.forEach((v, w) => {
+    const pmf = binomPmf(v, 1 - p), lim = worldMax[w];
+    const next = new Float64Array(dist.length + Math.max(0, lim));
+    if (lim >= 0) for (let s = 0; s < dist.length; s++) if (dist[s]) for (let f = 0; f <= lim; f++) next[s + f] += dist[s] * pmf[f];
+    dist = next;
+  });
+  let prob = 0;
+  for (let s = 0; s <= Math.min(pooledMax, dist.length - 1); s++) prob += dist[s];
+  return { K: ms.length, m: ms, p, worldMaxFailures: worldMax, pooledMaxFailures: pooledMax, probability: Math.min(1, prob) };
+}
+
+// Censoring per epoch: epochs [{ epoch, started, censored }] (cases assigned by start date; E-BED §2.1). Rows may repeat
+// an epoch id (one row per world and epoch).
+//   marked: some counted row has censored / started > limit (E-BED §2.1: the verdict is labelled "censored").
+//   exceptLast: rows of the last epoch (`last`, default ep4, by id and never by position in the list) are not counted:
+//   the pooled-verdict reading of BED-CONTRACT-v1.1 §6 and the bed-health rule of E-BED §9.2 (the horizon closes >= 80%
+//   of the cases started in every epoch except the last). A row without an epoch id is always counted.
+export function censoringReport(epochs, { limit = CENSOR_LIMIT, exceptLast = false, last = LAST_EPOCH } = {}) {
   if (!Array.isArray(epochs)) throw new Error('stats-ebed: censoringReport needs a list of epochs');
   const rows = epochs.map((e, i) => {
     assertCount(e.started, 'started'); assertCount(e.censored, 'censored');
     if (e.censored > e.started) throw new Error(`stats-ebed: epoch ${e.epoch ?? i}: censored > started`);
     const share = e.started ? e.censored / e.started : 0;
-    const counted = !(exceptLast && i === epochs.length - 1);
-    return { epoch: e.epoch ?? i, started: e.started, censored: e.censored, share, counted, over: counted && share > limit };
+    const counted = !(exceptLast && e.epoch !== undefined && e.epoch === last);
+    return { epoch: e.epoch ?? i, ...(e.world !== undefined ? { world: e.world } : {}), started: e.started, censored: e.censored, share, counted, over: counted && share > limit };
   });
-  return { limit, exceptLast, epochs: rows, marked: rows.some(r => r.over) };
+  return { limit, exceptLast, last: exceptLast ? last : null, epochs: rows, marked: rows.some(r => r.over) };
+}
+
+// The completed / censored pools of BED-CONTRACT-v1.1 §6 [D-4, amended]: a truth case is *completed* when both reference
+// runs make it terminal by horizonEnd, the earliest-timing run (required effects and tasks at each window's earliest)
+// and the latest-timing run (at each window's latest); *censored* otherwise. A correct arm that acts anywhere inside
+// its windows therefore closes every completed case by horizonEnd (up to the specificity check, §11), so an open
+// completed-pool case with no divergence (`armCensored`) is not a timing artefact and counts as not passed.
+//   cases: [{ case, terminalEarliest: time | null, terminalLatest: time | null }] (ISO 8601 with offset, or epoch ms)
+export function casePools(cases, horizonEnd) {
+  if (!Array.isArray(cases)) throw new Error('stats-ebed: casePools needs a list of cases');
+  const ms = (v, what) => {
+    const t = typeof v === 'number' ? v : typeof v === 'string' ? Date.parse(v) : NaN;
+    if (!Number.isFinite(t)) throw new Error(`stats-ebed: casePools: ${what} must be a time (ISO 8601 or ms), got ${v}`);
+    return t;
+  };
+  const end = ms(horizonEnd, 'horizonEnd'), seen = new Set(), completed = [], censored = [];
+  for (const c of cases) {
+    if (seen.has(c.case)) throw new Error(`stats-ebed: casePools: case ${c.case} repeated`);
+    seen.add(c.case);
+    for (const k of ['terminalEarliest', 'terminalLatest']) if (c[k] === undefined) throw new Error(`stats-ebed: casePools: case ${c.case} needs ${k} (a time, or null when that reference run leaves it open)`);
+    const closes = v => v !== null && ms(v, `case ${c.case} terminal time`) <= end;
+    (closes(c.terminalEarliest) && closes(c.terminalLatest) ? completed : censored).push(c.case);
+  }
+  return { completed, censored };
 }
 
 // ------------------------------------------------------------------------------------------------ Wilcoxon signed-rank
@@ -272,15 +350,22 @@ export function holm(pValues, { alpha = ALPHA } = {}) {
 
 // ------------------------------------------------------------------------------------------------ family test (E-BED §6)
 // items: [{ item, gap, excluded? }] with gap = Δ_i = pooled completed tail-mix success of arm X − (c) (a proportion).
-// An item leaves the test when `excluded` is set (K1 "excluded: oracle", K1' "reference not buildable", K2 demotion) or
-// its gap is not a finite number. Test (i): exact one-sided Wilcoxon signed-rank on {Δ_i + delta}, H1 location > 0,
-// rejecting on p < alpha; the sign test is not used. Fewer than minItems admitted (or non-zero) items: no claim.
+// An item leaves the test only when `excluded` names a FAMILY_EXCLUSIONS reason (K1 "excluded: oracle", K1' "reference
+// not buildable", K2 demotion). Fail closed: any other `excluded` value, or an admitted item without a finite gap (the
+// arm has no pairs there: budget stop, invalid worlds, a crash), throws; dropping it would let an arm leave its worst
+// item out of the test. Test (i): exact one-sided Wilcoxon signed-rank on {Δ_i + delta}, H1 location > 0, rejecting on
+// p < alpha; the sign test is not used. Fewer than minItems admitted (or non-zero) items: no claim.
 export function familyTest(items, { delta = NI_MARGIN, alpha = ALPHA, minItems = FAMILY.minItems, zeros = 'wilcox' } = {}) {
   if (!Array.isArray(items)) throw new Error('stats-ebed: familyTest needs a list of items');
   const ids = new Set();
-  for (const it of items) { if (ids.has(it.item)) throw new Error(`stats-ebed: item ${it.item} repeated`); ids.add(it.item); }
-  const admitted = items.filter(it => !it.excluded && typeof it.gap === 'number' && Number.isFinite(it.gap));
-  const excluded = items.filter(it => !admitted.includes(it)).map(it => ({ item: it.item, reason: it.excluded || 'gap undefined' }));
+  for (const it of items) {
+    if (ids.has(it.item)) throw new Error(`stats-ebed: item ${it.item} repeated`);
+    ids.add(it.item);
+    if (it.excluded !== undefined && it.excluded !== null && it.excluded !== false && !FAMILY_EXCLUSIONS.includes(it.excluded)) throw new Error(`stats-ebed: item ${it.item}: exclusion ${JSON.stringify(it.excluded)} is not a family-test exclusion (${FAMILY_EXCLUSIONS.join(', ')}; E-BED §6)`);
+    if (!it.excluded && !(typeof it.gap === 'number' && Number.isFinite(it.gap))) throw new Error(`stats-ebed: item ${it.item}: admitted item without a finite gap (${it.gap}); an arm with no pairs on an admitted item has no family decision until the gap exists`);
+  }
+  const admitted = items.filter(it => !it.excluded);
+  const excluded = items.filter(it => it.excluded).map(it => ({ item: it.item, reason: it.excluded }));
   for (const it of admitted) if (it.gap < -1 || it.gap > 1) throw new Error(`stats-ebed: item ${it.item}: gap must be a proportion difference in [-1, 1]`);
   const d = admitted.map(it => it.gap + delta);
   const base = { n: admitted.length, admitted: admitted.map(it => it.item), excluded, delta, alpha, d };
@@ -293,29 +378,61 @@ export function familyTest(items, { delta = NI_MARGIN, alpha = ALPHA, minItems =
 }
 
 // The family-level bar decision for each arm (E-BED §6): all of
-//   (i) familyTest rejects after Holm across the arms tested (family-wise alpha);
+//   (i) familyTest rejects after Holm across the arms (family-wise alpha);
 //   (ii) H-E2 holds for the arm on >= minReliable of the admitted items;
-//   (iii) no item where the arm has a critical violation and (c) has none (over every item that reports both counts).
-// arms: { [arm]: [{ item, gap, excluded?, reliable: boolean, critical: int, criticalRef: int }] }
+//   (iii) no item where the arm has a critical violation that (c) does not.
+// arms: { [arm]: [{ item, gap, excluded?, reliable: boolean, critical: int, criticalRef: int,
+//                   criticalKeys?: [string], criticalRefKeys?: [string] }] }
+//   `arms` is the pre-registered set of arms that ran (E-BED §6 names (a), (g), B1-H; (g) only once it runs). Holm runs
+//   over every one of them: an arm that cannot be tested (fewer than minItems admitted or non-zero differences) enters
+//   with p = 1, so no arm's adjusted p depends on whether another arm's data happened to be testable [D-13, amended].
+//   Item exclusions are per item: pass them once as `exclusions: { [item]: 'K1' | "K1'" | 'K2' }` (applied to every
+//   arm), or on the rows; either way every arm must report the same items and end with the same admitted set.
+//   (iii) is checked on every item whose oracle is valid (all but K1 exclusions). On admitted items both counts are
+//   required integers (fail closed). With criticalKeys / criticalRefKeys (identities such as `${world}|${case}|${code}`)
+//   a violation is extra when (c) has no violation with the same key; otherwise an item fails (iii) when X has a
+//   critical violation and (c) has none. `moreCritical` lists items where X has more violations than (c) (diagnostic).
 // minReliable: a number, or a function of the admitted count (E-BED fixes 7 for 9 core items; see BED-CONTRACT-v1.1 §13).
-export function familyDecision(arms, { delta = NI_MARGIN, alpha = ALPHA, minItems = FAMILY.minItems, minReliable = FAMILY.minReliable, zeros = 'wilcox' } = {}) {
+export function familyDecision(arms, { delta = NI_MARGIN, alpha = ALPHA, minItems = FAMILY.minItems, minReliable = FAMILY.minReliable, zeros = 'wilcox', exclusions = null } = {}) {
   const names = Object.keys(arms ?? {});
   if (!names.length) throw new Error('stats-ebed: familyDecision needs at least one arm');
-  const tests = Object.fromEntries(names.map(a => [a, familyTest(arms[a], { delta, alpha, minItems, zeros })]));
-  const tested = names.filter(a => tests[a].test && tests[a].test.n >= minItems);
-  const h = holm(Object.fromEntries(tested.map(a => [a, tests[a].test.p])), { alpha });
+  for (const [item, why] of Object.entries(exclusions ?? {})) if (!FAMILY_EXCLUSIONS.includes(why)) throw new Error(`stats-ebed: exclusions.${item}: ${JSON.stringify(why)} is not a family-test exclusion (${FAMILY_EXCLUSIONS.join(', ')})`);
+  const prepared = Object.fromEntries(names.map(a => {
+    if (!Array.isArray(arms[a])) throw new Error(`stats-ebed: arm ${a}: rows must be a list`);
+    return [a, arms[a].map(r => {
+      const ex = exclusions?.[r.item];
+      if (ex === undefined) return r;
+      if (r.excluded && r.excluded !== ex) throw new Error(`stats-ebed: arm ${a}, item ${r.item}: excluded ${r.excluded} conflicts with the item exclusion ${ex}`);
+      return { ...r, excluded: ex };
+    })];
+  }));
+  const tests = Object.fromEntries(names.map(a => [a, familyTest(prepared[a], { delta, alpha, minItems, zeros })]));
+  const signature = a => JSON.stringify([prepared[a].map(r => String(r.item)).sort(), tests[a].admitted.map(String).sort()]);
+  for (const a of names.slice(1)) if (signature(a) !== signature(names[0])) throw new Error(`stats-ebed: arms ${names[0]} and ${a} differ in their items or admitted items; exclusions (K1, K1', K2) are per item and apply to every arm`);
+  const testable = a => Boolean(tests[a].test && tests[a].test.n >= minItems);
+  const tested = names.filter(testable);
+  const h = holm(Object.fromEntries(names.map(a => [a, testable(a) ? tests[a].test.p : 1])), { alpha });
+  const isCount = v => Number.isInteger(v) && v >= 0;
   const out = {};
   for (const a of names) {
-    const t = tests[a], admitted = new Set(t.admitted), rows = arms[a];
+    const t = tests[a], admitted = new Set(t.admitted), rows = prepared[a];
     const need = typeof minReliable === 'function' ? minReliable(t.n) : minReliable;
     const reliable = rows.filter(r => admitted.has(r.item) && r.reliable === true).length;
-    const extraCritical = rows.filter(r => Number.isInteger(r.critical) && Number.isInteger(r.criticalRef) && r.critical > 0 && r.criticalRef === 0).map(r => r.item);
-    const i = tested.includes(a) ? h.reject[a] : false;
+    const valid = rows.filter(r => r.excluded !== 'K1');
+    for (const r of valid) {
+      if (admitted.has(r.item) && !(isCount(r.critical) && isCount(r.criticalRef))) throw new Error(`stats-ebed: arm ${a}, item ${r.item}: critical and criticalRef must be non-negative integers on an admitted item (got ${r.critical}, ${r.criticalRef})`);
+      const keyed = r.criticalKeys !== undefined || r.criticalRefKeys !== undefined;
+      if (keyed && !(Array.isArray(r.criticalKeys) && Array.isArray(r.criticalRefKeys) && r.criticalKeys.length === r.critical && r.criticalRefKeys.length === r.criticalRef)) throw new Error(`stats-ebed: arm ${a}, item ${r.item}: criticalKeys / criticalRefKeys must both be lists whose lengths equal critical / criticalRef`);
+    }
+    const extra = r => (Array.isArray(r.criticalKeys) ? r.criticalKeys.some(k => !r.criticalRefKeys.includes(k)) : isCount(r.critical) && isCount(r.criticalRef) && r.critical > 0 && r.criticalRef === 0);
+    const extraCritical = valid.filter(extra).map(r => r.item);
+    const moreCritical = valid.filter(r => isCount(r.critical) && isCount(r.criticalRef) && r.critical > r.criticalRef).map(r => r.item);
+    const i = testable(a) ? h.reject[a] : false;
     const checks = { i, ii: t.n > 0 && reliable >= need, iii: extraCritical.length === 0 };
-    out[a] = { meets: checks.i && checks.ii && checks.iii, checks, p: t.test?.p ?? null, holmP: tested.includes(a) ? h.adjusted[a] : null,
-      reliableItems: reliable, reliableNeeded: need, extraCritical, family: t };
+    out[a] = { meets: checks.i && checks.ii && checks.iii, checks, p: t.test?.p ?? null, holmP: h.adjusted[a],
+      reliableItems: reliable, reliableNeeded: need, extraCritical, moreCritical, family: t };
   }
-  return { alpha, delta, armsTested: tested, holm: h, arms: out };
+  return { alpha, delta, holmArms: names, armsTested: tested, holm: h, arms: out };
 }
 
 // ------------------------------------------------------------------------------------------------ non-inferiority
@@ -325,6 +442,9 @@ export function itemGap(pairs) {
   return ps.length ? ps.reduce((s, p) => s + p.x - p.y, 0) / ps.length : NaN;
 }
 
+// Pairs in a canonical order, (world, case) by code-unit string order, so every result (the bootstrap resamples by
+// position) is a function of the set of pairs, not of the order the scorer listed them in.
+const cmpStr = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 function normalisePairs(pairs) {
   if (!Array.isArray(pairs)) throw new Error('stats-ebed: pairs must be a list of { world, case, x, y }');
   const seen = new Set();
@@ -336,7 +456,7 @@ function normalisePairs(pairs) {
     const x = typeof p.x === 'boolean' ? +p.x : p.x, y = typeof p.y === 'boolean' ? +p.y : p.y;
     if (![0, 1].includes(x) || ![0, 1].includes(y)) throw new Error(`stats-ebed: pair (${p.world}, ${p.case}): x and y must be 0/1 or booleans`);
     return { world: String(p.world), case: String(p.case), x, y };
-  });
+  }).sort((p, q) => cmpStr(p.world, q.world) || cmpStr(p.case, q.case));
 }
 
 const quantileSorted = (sorted, q) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor(q * (sorted.length - 1))))];
@@ -430,6 +550,101 @@ export function familyPowerTable({ Ks = [2, 4], gaps = [0, -0.05, -0.10], iterat
   return cells;
 }
 
+// Samplers for decisionPower (all from one seeded mulberry32 stream).
+function gammaDraw(r, shape) {               // Marsaglia & Tsang (2000); shape < 1 by the U^(1/shape) boost
+  if (shape < 1) return gammaDraw(r, shape + 1) * Math.pow(Math.max(r.next(), 1e-300), 1 / shape);
+  const d = shape - 1 / 3, c = 1 / Math.sqrt(9 * d);
+  for (;;) {
+    let x, v;
+    do { x = r.normal(); v = 1 + c * x; } while (v <= 0);
+    v = v * v * v;
+    const u = Math.max(r.next(), 1e-300);
+    if (u < 1 - 0.0331 * x ** 4 || Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+  }
+}
+// A world's success probability: Beta with mean p and intra-world correlation rho (a + b = (1 − rho) / rho); p itself
+// when rho = 0 or p is 0 or 1.
+function worldRate(r, p, rho) {
+  if (!(rho > 0) || p <= 0 || p >= 1) return p;
+  const s = (1 - rho) / rho, g1 = gammaDraw(r, p * s), g2 = gammaDraw(r, (1 - p) * s);
+  return g1 + g2 > 0 ? g1 / (g1 + g2) : p;
+}
+// Number of failures in m Bernoulli trials with failure probability f, by geometric skips (O(m·f) draws).
+function failureCount(r, m, f) {
+  if (f <= 0) return 0;
+  if (f >= 1) return m;
+  const lq = Math.log1p(-f);
+  let pos = 0, k = 0;
+  for (;;) {
+    const u = r.next();
+    pos += u > 0 ? Math.floor(Math.log(u) / lq) + 1 : m + 1;
+    if (pos > m) return k;
+    k++;
+  }
+}
+
+// Monte Carlo power of the whole family-level bar decision for one arm X: P((i) ∧ (ii) ∧ (iii)), and of each part.
+// The test (i) power of familyPower is only an upper bound on it: (ii) needs H-E2 on >= minReliable items, and H-E2's
+// per-world bound needs zero failures in a world of fewer than 46 completed cases (reliabilityProbability), so at small
+// per-world n more worlds make (ii) harder, not easier.
+// Model, per item i and world w: X's and (c)'s world success rates are Beta(mean pX_i | pC_i, intra-world correlation
+// rho), independently (this reproduces itemGapSE's Var(d)·Deff / (K·m) for the gap when pX = pC); X fails
+// Bin(m, 1 − rate) of its m completed tail-mix cases and (c) passes Bin(m, rate_c) of the same m; X has a critical
+// violation (c) does not with probability pExtraCritical per item (failing (iii) and H-E2 on that item).
+//   (i) familyTest on the realised gaps (exact Wilcoxon on Δ_i + delta, ties and zeros as in the decision), p < alpha
+//       (pass alpha / arms for the Bonferroni lower bound on the Holm-adjusted rule);
+//   (ii) H-E2 by maxFailures, per world and pooled, on >= minReliable items (number or function of nItems).
+// pX, pC: a number (every item) or one per item; m: completed tail-mix cases per world (a number).
+export function decisionPower({ K = 4, m = 100, pX = 0.98, pC = null, rho = RHO_EBED, nItems = 9, delta = NI_MARGIN, alpha = ALPHA, minItems = FAMILY.minItems, minReliable = FAMILY.minReliable, pExtraCritical = 0, iterations = 20000, seed = 'ebed-decision-power' } = {}) {
+  if (!(Number.isInteger(K) && K >= 1)) throw new Error('stats-ebed: decisionPower needs an integer K >= 1');
+  assertCount(m, 'm'); if (m < 1) throw new Error('stats-ebed: decisionPower needs m >= 1');
+  if (!(rho >= 0 && rho < 1)) throw new Error(`stats-ebed: rho must be in [0, 1), got ${rho}`);
+  if (!isProb(pExtraCritical)) throw new Error('stats-ebed: pExtraCritical must be a probability');
+  const perItem = (v, name) => {
+    const list = Array.isArray(v) ? v : Array.from({ length: nItems }, () => v);
+    if (list.length !== nItems || !list.every(isProb)) throw new Error(`stats-ebed: ${name} must be a probability or ${nItems} of them`);
+    return list;
+  };
+  const px = perItem(pX, 'pX'), pc = perItem(pC ?? pX, 'pC');
+  const fW = maxFailures(m, H_E2.world), fP = maxFailures(K * m, H_E2.pooled);
+  const need = typeof minReliable === 'function' ? minReliable(nItems) : minReliable;
+  const r = rng(seed, `K${K}`, `m${m}`, `rho${rho}`, `n${nItems}`, px.join(','), pc.join(','));
+  let all = 0, ci = 0, cii = 0, ciii = 0, reliableItems = 0;
+  const items = Array.from({ length: nItems }, (_, i) => ({ item: `E${i + 1}`, gap: 0 }));
+  for (let it = 0; it < iterations; it++) {
+    let reliable = 0, extra = false;
+    for (let i = 0; i < nItems; i++) {
+      let fx = 0, sc = 0, worldsOk = true;
+      for (let w = 0; w < K; w++) {
+        const f = failureCount(r, m, 1 - worldRate(r, px[i], rho));
+        fx += f; if (f > fW) worldsOk = false;
+        sc += m - failureCount(r, m, 1 - worldRate(r, pc[i], rho));
+      }
+      const crit = pExtraCritical > 0 && r.next() < pExtraCritical;
+      if (crit) extra = true;
+      if (worldsOk && fx <= fP && !crit) reliable++;
+      items[i].gap = ((K * m - fx) - sc) / (K * m);
+    }
+    const iOk = familyTest(items, { delta, alpha, minItems }).reject, iiOk = reliable >= need, iiiOk = !extra;
+    reliableItems += reliable;
+    if (iOk) ci++;
+    if (iiOk) cii++;
+    if (iiiOk) ciii++;
+    if (iOk && iiOk && iiiOk) all++;
+  }
+  const rate = c => c / iterations, se = c => Math.sqrt(rate(c) * (1 - rate(c)) / iterations);
+  return { K, m, rho, nItems, pX: Array.isArray(pX) ? px : pX, pC: Array.isArray(pC ?? pX) ? pc : (pC ?? pX), delta, alpha, iterations,
+    worldMaxFailures: fW, pooledMaxFailures: fP, reliableNeeded: need,
+    power: rate(all), i: rate(ci), ii: rate(cii), iii: rate(ciii), reliableItemShare: reliableItems / (iterations * nItems),
+    mcse: { power: se(all), i: se(ci), ii: se(cii) } };
+}
+
+export function decisionPowerTable({ Ks = [2, 4], ms = [40, 100, 200], ps = [0.97, 0.98, 0.99], rhos = [0, RHO_EBED], iterations = 20000, ...opts } = {}) {
+  const cells = [];
+  for (const rho of rhos) for (const m of ms) for (const p of ps) for (const K of Ks) cells.push(decisionPower({ K, m, pX: p, rho, iterations, ...opts }));
+  return cells;
+}
+
 // ------------------------------------------------------------------------------------------------ CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
   const [cmd, ...rest] = process.argv.slice(2);
@@ -438,18 +653,30 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const t = familyPowerTable({ iterations });
     if (json) console.log(JSON.stringify(t, null, 1));
     else {
-      console.log(`Family test power: 9 items, gap_i ~ N(true gap, SE^2), SE from itemGapSE (m = 40, rho = 0.1, pRef = 0.8, discordance at 10 points), delta = 0.10, alpha = 0.05; ${iterations} draws.`);
+      console.log(`Test (i) power only (the whole decision: \`decision\`): 9 items, gap_i ~ N(true gap, SE^2), SE from itemGapSE (m = 40, rho = 0.1, pRef = 0.8, discordance at 10 points), delta = 0.10, alpha = 0.05; ${iterations} draws.`);
       console.log('| K | SE | true gap | Wilcoxon (W- <= 8) | sign (>= 8 of 9) |');
       console.log('|---|---|---|---|---|');
       for (const c of t) console.log(`| ${c.K} | ${c.se.toFixed(4)} | ${c.trueGap} | ${c.wilcoxon.toFixed(3)} ± ${c.mcse.wilcoxon.toFixed(3)} | ${c.sign.toFixed(3)} ± ${c.mcse.sign.toFixed(3)} |`);
     }
+  } else if (cmd === 'decision') {
+    const n = at >= 0 ? iterations : 20000, t = decisionPowerTable({ iterations: n });
+    if (json) console.log(JSON.stringify(t, null, 1));
+    else {
+      console.log(`Decision power: 9 items, pX = pC (equality with (c)), m completed tail-mix cases per world, world rates Beta(p, rho); delta = 0.10, alpha = 0.05, H-E2 on >= 7 items; ${n} draws per cell.`);
+      console.log('| rho | m | p | K | world / pooled max failures | P(H-E2 on an item) | P(i) | P(ii) | P(i ∧ ii ∧ iii) |');
+      console.log('|---|---|---|---|---|---|---|---|---|');
+      for (const c of t) console.log(`| ${c.rho} | ${c.m} | ${c.pX} | ${c.K} | ${c.worldMaxFailures} / ${c.pooledMaxFailures} | ${c.reliableItemShare.toFixed(3)} | ${c.i.toFixed(3)} | ${c.ii.toFixed(3)} | ${c.power.toFixed(3)} |`);
+    }
   } else if (cmd === 'thresholds') {
     const rows = [];
     for (const [n, bound] of [[100, 0.95], [300, 0.95], [100, 0.90], [300, 0.90]]) rows.push({ n, bound, maxFailures: maxFailures(n, bound) });
-    const out = { level: 0.95, rows, minCleanCases: minCleanCases(0.001) };
-    console.log(json ? JSON.stringify(out, null, 1) : [...rows.map(r => `n = ${r.n}, lower bound >= ${r.bound}: at most ${r.maxFailures} failures`), `critical rate <= 0.1% (one-sided 95% upper bound): >= ${out.minCleanCases} clean cases`].join('\n'));
+    const minN = [[0, 0.90], [1, 0.90], [4, 0.90], [0, 0.95], [8, 0.95]].map(([failures, bound]) => ({ failures, bound, n: minCasesFor(failures, bound) }));
+    const out = { level: 0.95, rows, minCases: minN, minCleanCases: minCleanCases(0.001) };
+    console.log(json ? JSON.stringify(out, null, 1) : [...rows.map(r => `n = ${r.n}, lower bound >= ${r.bound}: at most ${r.maxFailures} failures`),
+      ...minN.map(r => `lower bound >= ${r.bound} with ${r.failures} failure(s) needs n >= ${r.n}`),
+      `critical rate <= 0.1% (one-sided 95% upper bound): >= ${out.minCleanCases} clean cases`].join('\n'));
   } else {
-    console.error('usage: node experiments/lib/stats-ebed.mjs power [--iterations N] [--json] | thresholds [--json]');
+    console.error('usage: node experiments/lib/stats-ebed.mjs power [--iterations N] [--json] | decision [--iterations N] [--json] | thresholds [--json]');
     process.exit(2);
   }
 }
