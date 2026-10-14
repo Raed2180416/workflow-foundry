@@ -126,7 +126,7 @@ test('the manifest is proved by execution: defects reproduce on the bed witness,
     assert.equal(w.fns.filter(f => f.role === 'decoy').length, w.L.decoys);
     assert.ok(w.fns.filter(f => f.affected).length >= Math.ceil((w.L.defects + 1) / 9), 'enough inheriting callers for the root-cause rule to bite');
   }
-  t.diagnostic(`execution-checked over d2-d5 x seeds 401-406: ${JSON.stringify(tally)}`);
+  t.diagnostic(`execution-checked over d2-d5 x seeds 449-454: ${JSON.stringify(tally)}`);
 });
 
 test('controls: CONTRACT minimums, the four required sweep controls, >= 12 per difficulty, relation and necessity controls; pipeline controls are labelled by-construction', () => {
@@ -198,7 +198,7 @@ test('sizes, fan-out width and planted counts by difficulty', t => {
   assert.deepEqual(DS.map(d => rows[d].defects), [6, 10, 16, 24]);
   for (let d = 2; d < 5; d++) for (const k of ['functions', 'sourceLines', 'inline']) assert.ok(rows[d + 1][k] > rows[d][k], `${k} d${d + 1}`);
   assert.equal(rows[2].skimmed, 0);
-  t.diagnostic(`R3' sizes (means over seeds 401-410): ${JSON.stringify(rows)}`);
+  t.diagnostic(`R3' sizes (means over seeds 449-458): ${JSON.stringify(rows)}`);
 });
 
 test('drift: classes in scope per difficulty, new classes only at higher difficulty, every in-scope class planted', () => {

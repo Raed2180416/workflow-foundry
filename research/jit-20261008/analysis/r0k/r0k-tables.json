@@ -1,0 +1,696 @@
+{
+ "experiment": "jit-r0-kinetics",
+ "note": "development evidence only: dev seeds 225-248, K = 1, E1c kit 852ebdf05588de97, cloud container",
+ "arms": {
+  "agent": {
+   "arm": "agent:claude-haiku-5-5",
+   "hash": "2e292709027b2786",
+   "done": 24,
+   "pass": 15,
+   "bySegment": {
+    "d4": "8/16",
+    "d5": "7/8"
+   },
+   "totalUsd": 2.086,
+   "imputedUsd": 0,
+   "measuredUsd": 2.086,
+   "usdPerSuccess": 0.139,
+   "usdPerTask": 0.087,
+   "deliveredBy": {
+    "interpreter": 24
+   },
+   "firstStart": "2026-10-14T13:26:39.837Z",
+   "lastEnd": "2026-10-14T14:25:11.070Z",
+   "wallMin": 58.5,
+   "taskMin": {
+    "p50": 4.6,
+    "p95": 6.6,
+    "max": 6.7,
+    "sum": 113
+   },
+   "unknownCostRows": [],
+   "unknownCostSpend": [],
+   "rowErrors": 0,
+   "eventErrors": 0,
+   "retries": 0,
+   "interpretSessions": 24,
+   "isolation": {
+    "nestedModelAttempts": 0,
+    "hiddenPathAttempts": 65,
+    "outsidePathsReferencingHostCredentialDirs": 0
+   },
+   "sessionsLaunched": 24
+  },
+  "jit": {
+   "arm": "jit:claude-opus-5-5/claude-haiku-5-5",
+   "hash": "1fde4626b169c84c",
+   "done": 14,
+   "pass": 13,
+   "bySegment": {
+    "d4": "13/14"
+   },
+   "totalUsd": 33.175,
+   "imputedUsd": 3,
+   "measuredUsd": 30.175,
+   "usdPerSuccess": 2.552,
+   "usdPerTask": 2.37,
+   "deliveredBy": {
+    "interpreter": 9,
+    "compiled": 3,
+    "adjudicated": 2
+   },
+   "firstStart": "2026-10-14T13:26:39.839Z",
+   "lastEnd": "2026-10-14T15:50:13.897Z",
+   "wallMin": 143.6,
+   "taskMin": {
+    "p50": 3,
+    "p95": 53.2,
+    "max": 53.2,
+    "sum": 143.4
+   },
+   "unknownCostRows": [
+    3
+   ],
+   "unknownCostSpend": [
+    {
+     "idx": 3,
+     "component": "compileBuilder",
+     "usd": 3
+    }
+   ],
+   "rowErrors": 0,
+   "eventErrors": 0,
+   "retries": 0,
+   "interpretSessions": 17,
+   "isolation": {
+    "nestedModelAttempts": 0,
+    "hiddenPathAttempts": 36,
+    "outsidePathsReferencingHostCredentialDirs": 0
+   },
+   "sessionsLaunched": 25
+  }
+ },
+ "jit": {
+  "breakdown": {
+   "interpreter": 3.828,
+   "compileBuilder": 7.799,
+   "compileGateway": 10.303,
+   "compileCheck": 6.856,
+   "compiled": 1.027,
+   "shadow": 2.166,
+   "adjudicator": 1.196
+  },
+  "compileUsd": 24.957,
+  "compileSharePct": 75.2,
+  "nonCompileUsd": 8.218,
+  "attempts": [
+   {
+    "idx": 3,
+    "version": 1,
+    "builder": "haiku-5-5",
+    "usd": 4.665,
+    "builderError": "EXECUTOR_TIMEOUT",
+    "exact": "0/3",
+    "partial": 0.87,
+    "clean": true,
+    "accepted": false,
+    "failed": [
+     "agreement",
+     "explained"
+    ]
+   },
+   {
+    "idx": 3,
+    "version": 1,
+    "builder": "opus-5-5",
+    "usd": 3.6,
+    "builderError": null,
+    "exact": "3/3",
+    "partial": 1,
+    "clean": true,
+    "accepted": true,
+    "failed": []
+   },
+   {
+    "idx": 5,
+    "version": 2,
+    "builder": "haiku-5-5",
+    "usd": 1.175,
+    "builderError": null,
+    "exact": "3/5",
+    "partial": 0.6,
+    "clean": true,
+    "accepted": true,
+    "failed": []
+   },
+   {
+    "idx": 8,
+    "version": 3,
+    "builder": "haiku-5-5",
+    "usd": 2.179,
+    "builderError": null,
+    "exact": "7/7",
+    "partial": 1,
+    "clean": true,
+    "accepted": true,
+    "failed": []
+   },
+   {
+    "idx": 9,
+    "version": 4,
+    "builder": "haiku-5-5",
+    "usd": 2.982,
+    "builderError": null,
+    "exact": "9/9",
+    "partial": 1,
+    "clean": true,
+    "accepted": true,
+    "failed": []
+   },
+   {
+    "idx": 10,
+    "version": 5,
+    "builder": "haiku-5-5",
+    "usd": 2.867,
+    "builderError": null,
+    "exact": "10/10",
+    "partial": 1,
+    "clean": true,
+    "accepted": true,
+    "failed": []
+   },
+   {
+    "idx": 13,
+    "version": 6,
+    "builder": "haiku-5-5",
+    "usd": 2.265,
+    "builderError": null,
+    "exact": "8/11",
+    "partial": 0.815,
+    "clean": true,
+    "accepted": false,
+    "failed": [
+     "explained"
+    ]
+   },
+   {
+    "idx": 13,
+    "version": 6,
+    "builder": "opus-5-5",
+    "usd": 5.223,
+    "builderError": null,
+    "exact": "11/11",
+    "partial": 1,
+    "clean": true,
+    "accepted": true,
+    "failed": []
+   }
+  ],
+  "byBuilder": {
+   "haiku-5-5": {
+    "attempts": 6,
+    "accepted": 4,
+    "usd": 16.133
+   },
+   "opus-5-5": {
+    "attempts": 2,
+    "accepted": 2,
+    "usd": 8.823
+   }
+  },
+  "fallbacks": 2,
+  "rechecks": 1,
+  "recompiles": [
+   {
+    "idx": 5,
+    "version": 2,
+    "reason": "deopts",
+    "builder": "haiku-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 8,
+    "version": 3,
+    "reason": "deopts",
+    "builder": "haiku-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 9,
+    "version": 4,
+    "reason": "regression",
+    "builder": "haiku-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 10,
+    "version": 5,
+    "reason": "regression",
+    "builder": "haiku-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 13,
+    "version": 6,
+    "reason": "deopts",
+    "builder": "opus-5-5",
+    "accepted": true
+   }
+  ],
+  "adoptions": [
+   {
+    "idx": 3,
+    "version": 1,
+    "builder": "opus-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 5,
+    "version": 2,
+    "builder": "haiku-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 8,
+    "version": 3,
+    "builder": "haiku-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 9,
+    "version": 4,
+    "builder": "haiku-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 10,
+    "version": 5,
+    "builder": "haiku-5-5",
+    "accepted": true
+   },
+   {
+    "idx": 13,
+    "version": 6,
+    "builder": "opus-5-5",
+    "accepted": true
+   }
+  ],
+  "compiled": [
+   {
+    "idx": 3,
+    "version": 1,
+    "status": "deopt",
+    "deoptKind": "judge",
+    "usd": 0.24
+   },
+   {
+    "idx": 4,
+    "version": 1,
+    "status": "deopt",
+    "deoptKind": "guard",
+    "usd": 0
+   },
+   {
+    "idx": 5,
+    "version": 2,
+    "status": "deopt",
+    "deoptKind": "guard",
+    "usd": 0
+   },
+   {
+    "idx": 6,
+    "version": 2,
+    "status": "ok",
+    "deoptKind": null,
+    "usd": 0.167
+   },
+   {
+    "idx": 7,
+    "version": 2,
+    "status": "deopt",
+    "deoptKind": "guard",
+    "usd": 0
+   },
+   {
+    "idx": 8,
+    "version": 3,
+    "status": "ok",
+    "deoptKind": null,
+    "usd": 0.147
+   },
+   {
+    "idx": 9,
+    "version": 4,
+    "status": "ok",
+    "deoptKind": null,
+    "usd": 0.15
+   },
+   {
+    "idx": 10,
+    "version": 5,
+    "status": "ok",
+    "deoptKind": null,
+    "usd": 0.159
+   },
+   {
+    "idx": 11,
+    "version": 5,
+    "status": "deopt",
+    "deoptKind": "guard",
+    "usd": 0
+   },
+   {
+    "idx": 12,
+    "version": 5,
+    "status": "deopt",
+    "deoptKind": "guard",
+    "usd": 0
+   },
+   {
+    "idx": 13,
+    "version": 6,
+    "status": "ok",
+    "deoptKind": null,
+    "usd": 0.163
+   }
+  ],
+  "deoptRate": 0.545,
+  "compiledOk": 5,
+  "regressionRecompileCompileUsd": 5.849,
+  "regressionRecompiles": 2,
+  "shadows": [
+   {
+    "idx": 6,
+    "seed": 231,
+    "version": 2,
+    "reason": "flag",
+    "draw": 0.75,
+    "propensity": 1,
+    "belowFloor": false,
+    "agree": false,
+    "withinToleranceOnly": false,
+    "flags": 4,
+    "adjudication": "none",
+    "compiledOraclePass": false,
+    "delivered": "compiled",
+    "pass": false,
+    "score": 0.8929,
+    "shadowUsd": 0.39,
+    "adjudicatorUsd": 0.395
+   },
+   {
+    "idx": 8,
+    "seed": 233,
+    "version": 3,
+    "reason": "flag",
+    "draw": 0.666,
+    "propensity": 1,
+    "belowFloor": false,
+    "agree": false,
+    "withinToleranceOnly": false,
+    "flags": 4,
+    "adjudication": "interpreter",
+    "compiledOraclePass": true,
+    "delivered": "adjudicated",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.407,
+    "adjudicatorUsd": 0.393
+   },
+   {
+    "idx": 9,
+    "seed": 234,
+    "version": 4,
+    "reason": "flag",
+    "draw": 0.301,
+    "propensity": 1,
+    "belowFloor": false,
+    "agree": false,
+    "withinToleranceOnly": false,
+    "flags": 4,
+    "adjudication": "interpreter",
+    "compiledOraclePass": true,
+    "delivered": "adjudicated",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.436,
+    "adjudicatorUsd": 0.409
+   },
+   {
+    "idx": 10,
+    "seed": 235,
+    "version": 5,
+    "reason": "floor+flag",
+    "draw": 0.094,
+    "propensity": 1,
+    "belowFloor": true,
+    "agree": true,
+    "withinToleranceOnly": true,
+    "flags": 5,
+    "adjudication": null,
+    "compiledOraclePass": true,
+    "delivered": "compiled",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.453,
+    "adjudicatorUsd": 0
+   },
+   {
+    "idx": 13,
+    "seed": 238,
+    "version": 6,
+    "reason": "flag",
+    "draw": 0.272,
+    "propensity": 1,
+    "belowFloor": false,
+    "agree": true,
+    "withinToleranceOnly": true,
+    "flags": 5,
+    "adjudication": null,
+    "compiledOraclePass": true,
+    "delivered": "compiled",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.481,
+    "adjudicatorUsd": 0
+   }
+  ],
+  "shadowUsd": 2.166,
+  "adjudicatorUsd": 1.196,
+  "effectiveShadowRate": {
+   "shadowed": 5,
+   "compiledOk": 5,
+   "rate": 1,
+   "floorDrawsBelow025": 1,
+   "flagForced": 5
+  },
+  "steadyState": {
+   "fromIdx": 3,
+   "tasks": 11,
+   "usdPerTaskExCompile": 0.637,
+   "compiledRunsUsd": 1.027,
+   "interpreterFallbackUsd": 2.619,
+   "verificationUsd": 3.362
+  },
+  "capStop": {
+   "armCapUsd": 32,
+   "lastTaskStartedAtCumUsd": 25.042,
+   "lastTaskUsd": 8.133,
+   "endCumUsd": 33.175,
+   "overshootUsd": 1.175,
+   "last6MeanUsdPerTask": 3.27,
+   "meanUsdPerTask": 2.37
+  },
+  "projection24": {
+   "linearUsd": 56.871,
+   "lowUsd": 39.546,
+   "highUsd": 65.872
+  },
+  "projection24Min": {
+   "linear": 245.9,
+   "last6": 263.4
+  },
+  "deliveredOracle": {
+   "interpreter": "9/9",
+   "compiled": "2/3",
+   "adjudicated": "2/2"
+  }
+ },
+ "paired": {
+  "n": 14,
+  "both": 6,
+  "jitOnly": 7,
+  "agentOnly": 1,
+  "neither": 0,
+  "jitPass": 13,
+  "agentPass": 7,
+  "gapTasks": 6,
+  "gapPoints": 42.9,
+  "mcnemar": {
+   "xOnly": 7,
+   "yOnly": 1,
+   "discordant": 8,
+   "p": 0.0703125
+  },
+  "jitUsd": 33.175,
+  "agentUsd": 0.848,
+  "jitUsdPerSuccess": 2.552,
+  "agentUsdPerSuccess": 0.121,
+  "pairs": [
+   {
+    "idx": 0,
+    "taskKey": "kinetics:dev:d4:s225",
+    "jit": true,
+    "agent": true,
+    "jitUsd": 0.403391,
+    "agentUsd": 0.054195,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 1
+   },
+   {
+    "idx": 1,
+    "taskKey": "kinetics:dev:d4:s226",
+    "jit": true,
+    "agent": false,
+    "jitUsd": 0.414696,
+    "agentUsd": 0.057225,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 0.8824
+   },
+   {
+    "idx": 2,
+    "taskKey": "kinetics:dev:d4:s227",
+    "jit": true,
+    "agent": false,
+    "jitUsd": 0.391392,
+    "agentUsd": 0.043828,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 0.9722
+   },
+   {
+    "idx": 3,
+    "taskKey": "kinetics:dev:d4:s228",
+    "jit": true,
+    "agent": false,
+    "jitUsd": 8.924724,
+    "agentUsd": 0.049937,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 0.8824
+   },
+   {
+    "idx": 4,
+    "taskKey": "kinetics:dev:d4:s229",
+    "jit": true,
+    "agent": true,
+    "jitUsd": 0.473633,
+    "agentUsd": 0.058859,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 1
+   },
+   {
+    "idx": 5,
+    "taskKey": "kinetics:dev:d4:s230",
+    "jit": true,
+    "agent": false,
+    "jitUsd": 1.600402,
+    "agentUsd": 0.047898,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 0.9722
+   },
+   {
+    "idx": 6,
+    "taskKey": "kinetics:dev:d4:s231",
+    "jit": false,
+    "agent": true,
+    "jitUsd": 0.951852,
+    "agentUsd": 0.052167,
+    "jitDelivered": "compiled",
+    "jitScore": 0.8929,
+    "agentScore": 1
+   },
+   {
+    "idx": 7,
+    "taskKey": "kinetics:dev:d4:s232",
+    "jit": true,
+    "agent": true,
+    "jitUsd": 0.396195,
+    "agentUsd": 0.045915,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 1
+   },
+   {
+    "idx": 8,
+    "taskKey": "kinetics:dev:d4:s233",
+    "jit": true,
+    "agent": true,
+    "jitUsd": 3.126108,
+    "agentUsd": 0.050628,
+    "jitDelivered": "adjudicated",
+    "jitScore": 1,
+    "agentScore": 1
+   },
+   {
+    "idx": 9,
+    "taskKey": "kinetics:dev:d4:s234",
+    "jit": true,
+    "agent": false,
+    "jitUsd": 3.975727,
+    "agentUsd": 0.044665,
+    "jitDelivered": "adjudicated",
+    "jitScore": 1,
+    "agentScore": 0.7857
+   },
+   {
+    "idx": 10,
+    "taskKey": "kinetics:dev:d4:s235",
+    "jit": true,
+    "agent": false,
+    "jitUsd": 3.480062,
+    "agentUsd": 0.123882,
+    "jitDelivered": "compiled",
+    "jitScore": 1,
+    "agentScore": 0.9545
+   },
+   {
+    "idx": 11,
+    "taskKey": "kinetics:dev:d4:s236",
+    "jit": true,
+    "agent": true,
+    "jitUsd": 0.46334,
+    "agentUsd": 0.047955,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 1
+   },
+   {
+    "idx": 12,
+    "taskKey": "kinetics:dev:d4:s237",
+    "jit": true,
+    "agent": true,
+    "jitUsd": 0.440199,
+    "agentUsd": 0.129108,
+    "jitDelivered": "interpreter",
+    "jitScore": 1,
+    "agentScore": 1
+   },
+   {
+    "idx": 13,
+    "taskKey": "kinetics:dev:d4:s238",
+    "jit": true,
+    "agent": false,
+    "jitUsd": 8.132927,
+    "agentUsd": 0.0417,
+    "jitDelivered": "compiled",
+    "jitScore": 1,
+    "agentScore": 0.95
+   }
+  ]
+ }
+}

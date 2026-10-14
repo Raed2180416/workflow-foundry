@@ -867,7 +867,7 @@ test('S0-1 persist.commitDir: the export is mirrored (big bodies excepted) with 
   }
 });
 
-test('S0-5 seed ledger: Kev reserves, used and burned ranges, fresh R0 / out-of-sample ranges and held-out seeds below 8001 are refused; the dev configs validate', () => {
+test('S0-5 seed ledger: Kev reserves, used and burned ranges, fresh R0 (records) / out-of-sample ranges and held-out seeds below 8001 are refused; the spent R0-K range is refused for every purpose; the dev configs validate', () => {
   const L = loadLedger(), ok = (bed, split, seeds, purpose) => assert.doesNotThrow(() => assertSeedsAllowed({ bed, split, seeds, purpose, ledger: L }), `${bed}:${split} ${seeds} ${purpose}`);
   const no = (bed, split, seed, purpose, re) => {
     assert.throws(() => assertSeedsAllowed({ bed, split, seeds: [seed], purpose, ledger: L }), e => e.code === 'SEED_REFUSED' && re.test(e.message), `${bed}:${split}:s${seed} ${purpose}`);
@@ -876,12 +876,16 @@ test('S0-5 seed ledger: Kev reserves, used and burned ranges, fresh R0 / out-of-
   ok('records', 'dev', Array.from({ length: 24 }, (_, i) => 201 + i), 'jit-dev');
   ok('kinetics', 'dev', Array.from({ length: 24 }, (_, i) => 201 + i), 'jit-dev');
   ok('records', 'dev', Array.from({ length: 24 }, (_, i) => 225 + i), 'jit-r0');
-  ok('kinetics', 'dev', [225, 248], 'jit-r0');
+  // R0-K (kinetics 225-248) was run on 2026-10-14 (DEV-NOTES D32): the ledger range is split per bed and the kinetics half is used
+  no('kinetics', 'dev', 225, 'jit-r0', /jit-r0-kinetics-used is used and jit-r0 needs fresh seeds/);
+  no('kinetics', 'dev', 248, 'jit-r0', /jit-r0-kinetics-used is used and jit-r0 needs fresh seeds/);
   ok('records', 'dev', [249, 272], 'jit-oos');
   ok('records', 'test', [8001, 8024, 8101, 8124, 9000], 'jit-heldout');
   ok('fake', 'dev', [1, 12], 'jit-dev');
   // fresh ranges are reserved for their own use
   no('records', 'dev', 225, 'jit-dev', /jit-r0-fresh .*reserved for jit-r0/);
+  no('kinetics', 'dev', 230, 'jit-dev', /jit-r0-kinetics-used .*reserved for jit-r0/);
+  assert.deepEqual(L.ranges.filter(r => r.id.startsWith('jit-r0-')).map(r => [r.id, r.beds, r.from, r.to, r.status]), [['jit-r0-fresh', ['records'], 225, 248, 'fresh'], ['jit-r0-kinetics-used', ['kinetics'], 225, 248, 'used']], 'R0 split per bed: records fresh (its JIT arm is unfinished), kinetics used');
   no('records', 'dev', 260, 'jit-r0', /jit-oos-fresh .*reserved for jit-oos/);
   // used ranges for a purpose that needs fresh seeds
   no('records', 'dev', 201, 'jit-r0', /jit-dev-streams is used and jit-r0 needs fresh seeds/);
@@ -915,6 +919,7 @@ test('S0-5 stream config validation: the ledger refuses through normalizeConfig 
   assert.throws(() => normalizeConfig({ ...base, segments: [{ seeds: '225..248' }] }), /reserved for jit-r0/, 'a dev stream cannot take R0\'s seeds');
   assert.doesNotThrow(() => normalizeConfig({ ...base, seedPurpose: 'jit-r0', segments: [{ difficulty: 3, seeds: '225..240' }, { difficulty: 4, seeds: '241..248' }] }));
   assert.throws(() => normalizeConfig({ ...base, seedPurpose: 'jit-r0', segments: [{ seeds: '201..224' }] }), /used and jit-r0 needs fresh seeds/);
+  assert.throws(() => normalizeConfig({ ...base, familyId: 'kinetics', seedPurpose: 'jit-r0', segments: [{ difficulty: 4, seeds: '225..240' }, { difficulty: 5, seeds: '241..248' }] }), /jit-r0-kinetics-used is used and jit-r0 needs fresh seeds/, 'R0-K\'s seeds are spent');
   assert.throws(() => normalizeConfig({ ...base, seedPurpose: 7 }), /seedPurpose must be a ledger purpose name/);
   // seedPurpose is not hashed
   const c = normalizeConfig({ ...base, seedPurpose: 'jit-dev' }), c0 = normalizeConfig(base);
@@ -1081,7 +1086,7 @@ test('armSpendStopUsd: an arm stops at its own cap while the others run on; vali
   }
 });
 
-test('_blocked and null tolerances are refused; the R0 configs: records validates (seeds 225-248 fresh for jit-r0), kinetics validates with relTol 0.05 from Stage B', () => {
+test('_blocked and null tolerances are refused; the R0 configs: records validates (seeds 225-248 fresh for jit-r0); kinetics validated with relTol 0.05 from Stage B until R0-K spent its seeds (D32), so its checks run against the pre-flip ledger', () => {
   assert.throws(() => normalizeConfig({ ...CONFIG, _blocked: 'waiting on X' }), /config jit-fake is blocked: waiting on X/);
   assert.throws(() => normalizeConfig({ ...CONFIG, jit: { ...CONFIG.jit, compare: 'tolerant', relTol: null } }), /config.jit.relTol is null/);
   assert.throws(() => normalizeConfig({ ...CONFIG, compile: { compare: 'tolerant', absTol: null } }), /config.compile.absTol is null/);
@@ -1106,8 +1111,12 @@ test('_blocked and null tolerances are refused; the R0 configs: records validate
   assert.equal(kin.jit.relTol, 0.05); assert.equal('_blocked' in kin, false);
   assert.throws(() => normalizeConfig({ ...kin, _blocked: 'relTol TBD: row 2 Stage B' }), /is blocked: relTol TBD: row 2 Stage B/);
   assert.throws(() => normalizeConfig({ ...kin, jit: { ...kin.jit, relTol: null } }), /config.jit.relTol is null/);
-  const k = normalizeConfig(kin);
-  assert.deepEqual(hashes(kin), { 'jit:claude-opus-5-5/claude-haiku-5-5': '1fde4626b169c84c', 'agent:claude-haiku-5-5': '2e292709027b2786' }, 'R0-K arm hashes as stamped in ENGINE-FREEZE section 5');
+  // R0-K ran on 2026-10-14 (DEV-NOTES D32): the real ledger now refuses its seeds (jit-r0 needs fresh seeds), so a resume of its O/H arm is refused;
+  // everything else about the config is still pinned, against the ledger as it stood before the flip (kinetics range back to fresh)
+  assert.throws(() => normalizeConfig(kin), e => /jit-r0-kinetics-used is used and jit-r0 needs fresh seeds/.test(e.message));
+  const L0 = loadLedger(), preFlip = { ...L0, ranges: L0.ranges.map(r => (r.id === 'jit-r0-kinetics-used' ? { ...r, status: 'fresh' } : r)) };
+  const k = normalizeConfig(kin, { ledger: preFlip });
+  assert.deepEqual(Object.fromEntries(k.arms.map(a => [a, parseArm(a, k, { policyIds: [...POLICY_MODELS] }).hash])), { 'jit:claude-opus-5-5/claude-haiku-5-5': '1fde4626b169c84c', 'agent:claude-haiku-5-5': '2e292709027b2786' }, 'R0-K arm hashes as stamped in ENGINE-FREEZE section 5');
   assert.deepEqual(k.arms, ['jit:claude-opus-5-5/claude-haiku-5-5', 'agent:claude-haiku-5-5'], 'O/H first; no static kinetics solver exists');
   assert.deepEqual([k.jit.compare, k.jit.relTol, k.jit.absTol, k.jit.tolerantKeys], ['tolerant', 0.05, 1e-9, ['km', 'vmax']]);
   assert.deepEqual([k.jit.shadowFloor, k.jit.shadowSeed, 'shadowEvery' in k.jit, k.jit.shadowOnFlags], [0.25, 'jit-r0-kinetics', false, true]);

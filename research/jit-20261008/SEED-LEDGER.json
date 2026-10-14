@@ -195,8 +195,7 @@
   {
    "id": "jit-r0-fresh",
    "beds": [
-    "records",
-    "kinetics"
+    "records"
    ],
    "split": "dev",
    "from": 225,
@@ -206,8 +205,24 @@
    "allow": [
     "jit-r0"
    ],
-   "use": "R0 (records, 16 d3 + 8 d4) and R0-K (kinetics, 16 d4 + 8 d5); never used to tune v2.x",
-   "source": "BLOCKER-SYNTHESIS rows 8 and 9; FRONTIER-GAPS section 4.1 and P2 item 3"
+   "use": "R0 (records, 16 d3 + 8 d4); never used to tune v2.x. Stays fresh: the laptop R0 records JIT arm (H/H) stopped at 12/24 and is unfinished (PAUSE-20261009 section 1.2); flip it in the export commit that finishes it. The kinetics half was split off on 2026-10-14 as jit-r0-kinetics-used (R0-RUNBOOK G3)",
+   "source": "BLOCKER-SYNTHESIS rows 8 and 9; FRONTIER-GAPS section 4.1 and P2 item 3; R0-RUNBOOK G3 (split per bed)"
+  },
+  {
+   "id": "jit-r0-kinetics-used",
+   "beds": [
+    "kinetics"
+   ],
+   "split": "dev",
+   "from": 225,
+   "to": 248,
+   "status": "used",
+   "owner": "jit",
+   "allow": [
+    "jit-r0"
+   ],
+   "use": "R0-K (kinetics, d4 225-240 and d5 241-248), experiment jit-r0-kinetics on kit E1c (cloud, 2026-10-14): the Haiku agent arm finished 24/24, the O/H JIT arm stopped at its $32 arm cap after 14/24 (s225-s238, all d4). Development rehearsal, never used to tune v2.x. Spent: jit-r0 needs fresh seeds, so configs/r0-kinetics.json no longer validates against this ledger and resume-streams.mjs would refuse to resume its O/H arm; no other purpose may use the range (allow jit-r0 only)",
+   "source": "research/jit-20261008/runs/jit-r0-kinetics/ (MANIFEST.json sha256 556fc6a67ef86f666b7228337de255501d03174e173432d46f0f1da1abbcf481); DEV-NOTES D32; R0-RUNBOOK G3 (flip in the export commit)"
   },
   {
    "id": "jit-oos-fresh",

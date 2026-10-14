@@ -57,7 +57,7 @@ measurements; the sections below describe v1.1. Seeds for all tuning and tests: 
 | `beds/wbed/r3p/spec.mjs` | **new, test-only**: independent specifications of all 49 families and a random in-domain input generator |
 | `beds/wbed/r3p/lint.mjs` | text-only tools: `parseFunctions`, 19 linter rules, the TODO grep, report-everything |
 | `beds/wbed/r3p/impact.mjs` | the retroactive sweep (F2): impact sets, a per-defect production call log, exact scorers |
-| `beds/wbed/r3p/r3p.test.mjs` | ⟦NTESTS⟧ oracle-health and review-regression tests |
+| `beds/wbed/r3p/r3p.test.mjs` | 40 oracle-health and review-regression tests |
 | `beds/wbed-r3p/index.mjs` | one-line registration shim; `loadFamily('wbed-r3p')` works (tested) |
 | `beds/wbed/attacks/triviality.mjs` | **modified**: rung table gains `r3p`, with its own attack seeds (479–490); `plan()` uses a rung's own seeds when none are passed and refuses seeds the ledger refuses or that lie outside a rung's own rows (v1.1) |
 | `research/jit-20261008/SEED-LEDGER.json` | **modified** in v1.0: three new rows (§7) |
@@ -141,8 +141,8 @@ without reading the contract.
 **Wording (v1.1).** Contracts are built from independent slots (2–4 main sentences, nouns, clause phrasings, 2–3
 parameter descriptions, numeric domain bounds); the last main sentence of every family is held-out wording, drawn only on
 the test split. No two functions of a repository share a contract template (family, knobs and wording, with parameter
-names and quoted literals abstracted); across the 24 tasks of a d3 stream, 7/216 non-helper defects share their template
-with two or more other functions (§17) [M]. A d3 stream has 1,793 distinct templates.
+names and quoted literals abstracted); across the 24 tasks of a d3 stream, 3/216 non-helper defects share their template
+with two or more other functions (§17) [M]. A d3 stream has 1,794 distinct templates.
 
 **Loud cap (v1.1).** At most 40% of a task's defects are loud; a loud draw beyond the budget is re-drawn among the
 family's silent variants (new: `average`/`ratio` wrong fallback, `max-by` undefined for empty, `pairwise-deltas` one
@@ -284,22 +284,22 @@ finding 4). The text controls read the files and nothing else.
 | control | kind | by construction | what | best F1 d2 / d3 / d4 / d5 |
 |---|---|---|---|---|
 | `empty` | text | | no findings | 0 / 0 / 0 / 0 |
-| `shuffled-or-corrupted` | text | yes | reference findings with locations rotated by one | ⟦shuffled⟧ |
-| **`grep-for-TODO`** | text | | every function containing TODO/FIXME/XXX/HACK | ⟦grep⟧ |
-| **`linter-only`** | text | | 19 regex rules (eslint-style plus a money plugin), computed from the files alone | ⟦lint⟧ |
-| **`report-everything`** | text | | every function × every class in scope | ⟦everything⟧ |
+| `shuffled-or-corrupted` | text | yes | reference findings with locations rotated by one | 0.50 / 0.30 / 0.38 / 0.29 |
+| **`grep-for-TODO`** | text | | every function containing TODO/FIXME/XXX/HACK | 0.22 / 0.12 / 0.06 / 0.06 |
+| **`linter-only`** | text | | 19 regex rules (eslint-style plus a money plugin), computed from the files alone | 0.44 / 0.41 / 0.31 / 0.23 |
+| **`report-everything`** | text | | every function × every class in scope | 0.07 / 0.04 / 0.02 / 0.01 |
 | `contract-fuzz-script` | text (slow) | | the review's $0 script on one task (attack.mjs) | §17: best F1 ⟦fuzzbest⟧, never passes |
 | `contract-fuzz-stream` | text (slow) | | the same script with 24 earlier tasks as an unlabelled corpus | §17: best F1 ⟦streambest⟧, never passes |
-| **`single-pass-no-verify`** | stage | yes | one reading pass: every site with a visible pattern (the patterned defects and all decoys), nothing verified | ⟦single⟧ |
-| `class-confused` | stage (near miss) | yes | all defects found and verified; OFF_BY_ONE ↔ LOGIC_ERROR swapped | ⟦class⟧ |
-| `file-level-only` | stage | yes | right file and class, pinned to the file's first function | ⟦file⟧ |
-| `budget-half-files` | stage | yes | the sweep stops after half the files | ⟦half⟧ |
-| `tested-means-clean` | stage | yes | functions with green tests skipped | ⟦tested⟧ |
-| `report-ignores-verdict` | relation (V2) | yes | verification right, every suspect reported | ⟦ignores⟧ |
-| `verified-dropped-at-fan-in` | relation (V4) | yes | the middle third of the files lost at fan-in | ⟦dropped⟧ |
-| `sequential-single-context` | necessity (d ≥ 4) | yes | one context, skims past 24K tokens | ⟦seq⟧ |
-| `fan-out-no-verify` | necessity | yes | per-file fan-out, no verification: every decoy reported (precision 0.50, recall 1) | ⟦nv⟧ |
-| `fan-out-no-root-cause` | necessity (V3) | yes | verification, no root-cause fan-in: inheriting callers reported | ⟦nr⟧ |
+| **`single-pass-no-verify`** | stage | yes | one reading pass: every site with a visible pattern (the patterned defects and all decoys), nothing verified | 0.50 / 0.46 / 0.40 / 0.32 |
+| `class-confused` | stage (near miss) | yes | all defects found and verified; OFF_BY_ONE ↔ LOGIC_ERROR swapped | 0.67 / 0.80 / 0.75 / 0.83 |
+| `file-level-only` | stage | yes | right file and class, pinned to the file's first function | 0.67 / 0.47 / 0.50 / 0.41 |
+| `budget-half-files` | stage | yes | the sweep stops after half the files | 0.73 / 0.75 / 0.72 / 0.51 |
+| `tested-means-clean` | stage | yes | functions with green tests skipped | 0.80 / 0.82 / 0.81 / 0.80 |
+| `report-ignores-verdict` | relation (V2) | yes | verification right, every suspect reported | 0.67 / 0.67 / 0.67 / 0.67 |
+| `verified-dropped-at-fan-in` | relation (V4) | yes | the middle third of the files lost at fan-in | 0.80 / 0.82 / 0.81 / 0.80 |
+| `sequential-single-context` | necessity (d ≥ 4) | yes | one context, skims past 24K tokens | — / — / 0.81 / 0.42 |
+| `fan-out-no-verify` | necessity | yes | per-file fan-out, no verification: every decoy reported (precision 0.50, recall 1) | 0.67 / 0.67 / 0.67 / 0.67 |
+| `fan-out-no-root-cause` | necessity (V3) | yes | verification, no root-cause fan-in: inheriting callers reported | 0.86 / 0.91 / 0.94 / 0.76 |
 
 The four controls the brief requires are in bold. They fail as required:
 - **`grep-for-TODO`** fails by construction: comments are placed independently of the roles, so its precision is the
@@ -309,14 +309,14 @@ The four controls the brief requires are in bold. They fail as required:
   clean code.
 - **`single-pass-no-verify`** reports every decoy, so its precision is at most 1/2.
 
-The near misses (`class-confused`, `tested-means-clean`, `fan-out-no-root-cause`) reach F1 0.75–0.91. They fail only on
+The near misses (`class-confused`, `tested-means-clean`, `fan-out-no-root-cause`) reach F1 0.75–0.94. They fail only on
 the threshold, which is the intended difficulty.
 
 Two controls pick up a second failure at d4–d5. When `src/lib/` lies in the part of the repository they never read,
 the inheriting callers look like root causes (`budget-half-files`, `sequential-single-context`).
 
 **Decisiveness.** The generator re-draws a repository until every applicable fast control fails. Rejected attempts in
-the final test run: ⟦redraws⟧ [M]. Class quotas, balanced placement over thirds of the files, a 30% minimum of tested
+the final test run: 39 of 416 attempts (9.4%): 18 for want of a free slot for a needed caller, 12 because `verified-dropped-at-fan-in` would have passed (the middle third held too few defects), 9 for want of an ESCAPING decoy host [M]. Class quotas, balanced placement over thirds of the files, a 30% minimum of tested
 defects and the inheriting-caller minimum make the rest decisive by construction. The contract-fuzz controls are not in
 the re-draw (seconds per task, against a 2 s generation budget; and re-drawing until one script fails would bias the
 tasks towards what that script misses): they are gated by tests and by the measurements in §17.
@@ -361,8 +361,8 @@ Means over dev 449–458 [M]:
 | 4 | 32 | 282 | 3,808 | 16 / 16 | 7 | 107 | 42,705 (41.9K–43.8K) | 12 |
 | 5 | 48 | 423 | 5,707 | 24 / 24 | 15 | 163 | 63,229 (62.2K–64.4K) | 29 |
 
-Runtime, d5 cold [M]: `generate` ⟦gen⟧ ms including the proof by execution, the template and loud checks and every
-fast control's decisiveness check; `oracle` ⟦orc⟧ ms with all 24 witnesses run. Both are under the CONTRACT's 2 s.
+Runtime, d5 cold [M]: `generate` 189 (336 in a fresh process) ms including the proof by execution, the template and loud checks and every
+fast control's decisiveness check; `oracle` 11 ms with all 24 witnesses run. Both are under the CONTRACT's 2 s.
 
 ## 11. How arm (c′) versus arm (g) is scored on this bed (PROOF-LEDGER J4)
 
@@ -448,13 +448,14 @@ to any executable callee.
 ## 13. Test run
 
 `node --max-old-space-size=1536 --test --test-concurrency=2 beds/wbed/r3p/r3p.test.mjs beds/wbed/attacks/triviality.test.mjs`:
-**⟦TOTAL⟧ pass**: ⟦NTESTS⟧ for R3′ and 6 for the attack driver [M].
+**46/46 pass**: 40 for R3′ and 6 for the attack driver [M].
 
 The R3′ tests cover:
 - interface; portability; determinism, also in a fresh process;
 - the reference and every fast control on 20 seeds per difficulty (dev 449–468);
 - per-family domain and role coverage;
-- the manifest proved by execution (defects, decoys, inheriting and unaffected callers) and the loud cap;
+- the manifest proved by execution (over d2–d5 × 449–454: 336 defects, 336 decoys, 149 inheriting and 57 unaffected
+  callers) and the loud cap;
 - the control inventory, with the by-construction labels;
 - text controls read only the files; relation and necessity behaviour; sizes; drift; no leak;
 - oracle edge cases and thresholds; witness execution; the composed oracle agreeing with the end-to-end oracle; stage
@@ -462,7 +463,7 @@ The R3′ tests cover:
 - the repository as real code (`node --test` green, witnesses identical in real Node and in the vm);
 - cost aggregation; F2 scoring; seed-ledger disjointness and the tuning block; the attack plan and its seed refusals;
 - the test split (on dev seed numbers), held-out wording only there; runtime;
-- the review regressions (§17): every correct body and decoy against its independent specification (⟦SPECRUNS⟧ executions,
+- the review regressions (§17): every correct body and decoy against its independent specification (75,052 executions,
   0 deviations), the two reported contract violations, accepted classes, the one-false-positive tolerance, the
   contract-fuzz script and stream controls failing, template uniqueness within a task and rarity across a stream, the
   loud cap and silent variants, in-pool conversion, the per-defect call log, timeouts.
@@ -470,8 +471,8 @@ The R3′ tests cover:
 The full W-bed suite, `node --test --test-concurrency=2 'beds/wbed/**/*.test.mjs'`: ⟦SUITE⟧ [M].
 
 The two suites outside `beds/` that read the ledger:
-- `experiments/jit/test/stream.test.mjs` S0-5: ⟦S05⟧;
-- `experiments/kev-data/test/seed-ledger.test.mjs`: ⟦KEV⟧ (its test 2 lists the expected range ids and has not been
+- `experiments/jit/test/stream.test.mjs` S0-5: 2/2 pass;
+- `experiments/kev-data/test/seed-ledger.test.mjs`: 1/2 pass, as before this change (its test 2 lists the expected range ids and has not been
   updated for the `wbed-*` rows; not my file).
 
 ## 14. Deviations, and why
@@ -525,7 +526,7 @@ The two suites outside `beds/` that read the ledger:
 ## 16. Open questions for the owner
 
 1. **The pass thresholds.** Recall 0.80 and precision 0.90 with one false positive tolerated (v1.1), or F1 ≥ 0.85, or
-   per-class floors? The near-miss controls reach F1 0.75–0.91 and fail only on the threshold.
+   per-class floors? The near-miss controls reach F1 0.75–0.94 and fail only on the threshold.
 2. **Should witnesses gate the pass?** That makes "verify before report" enforceable by the oracle.
 3. **Held-out-only defect variants**, as R5's split-specific novel formats? v1.1 adds held-out-only wording (the last
    main sentence of every family is drawn only on the test split); defect shapes are still shared by both splits.
@@ -556,7 +557,7 @@ the same texts across tasks.
 *Fix (v1.1).* (1) Semantic knobs stated in every defect-hosting family's contract, chosen so most defect variants are
 another knob's correct behaviour (§4). (2) Independent wording slots and numeric domain bounds; held-out-only main
 sentences on the test split. (3) No two functions of a repository share a contract template; across a 24-task d3
-stream 7/216 non-helper defects share their exact template with two or more other functions, and the stream has 1,793
+stream 3/216 non-helper defects share their exact template with two or more other functions, and the stream has 1,794
 distinct templates [M]. (4) At most 40% loud defects per task, with new silent variants for MISSING_GUARD,
 SWALLOWED_ERROR, OFF_BY_ONE and INPUT_MUTATION; INPUT_MUTATION at its quota minimum. (5) The script is ported into the
 bed (`attack.mjs`, the reviewer's logic line for line, deterministic per task) and registered as two text controls,
@@ -584,7 +585,7 @@ it. Wording that said "spaces" where the code trims whitespace now says whitespa
 settings parser's domain admits only object JSON or invalid text. The regression is general: `spec.mjs` specifies all 49
 families from their contract text in exact integer arithmetic, and a test runs every correct body and every decoy against
 it on random in-domain inputs, at family level (every role and knob, both house rules, both splits) and in real tasks
-(⟦SPECRUNS⟧ executions, 0 deviations [M]). The test found one more unsound decoy, in v1.1's own new code
+(75,052 executions, 0 deviations [M]). The test found one more unsound decoy, in v1.1's own new code
 (`pairwise-deltas` lag k with fewer than k values), fixed before this commit; its probes now cover those lengths.
 
 ### Finding 3 (P1): the pass rule was brittle and class labels ambiguous. **Real; fixed.**
