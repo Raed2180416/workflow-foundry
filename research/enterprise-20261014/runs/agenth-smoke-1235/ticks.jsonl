@@ -24,3 +24,4 @@
 {"k":24,"instance":"i-000001","now":"2026-03-03T21:15:00+01:00","events":1,"source":"executor:claude-code","model":"claude-haiku-5-5","costUsd":0.008942760000000001,"costUnknown":false,"costUpperUsd":0.4,"turns":10,"error":null}
 {"k":25,"instance":"i-000006","now":"2026-03-03T21:17:00+01:00","events":1,"source":"executor:claude-code","model":"claude-haiku-5-5","costUsd":0.00917395,"costUnknown":false,"costUpperUsd":0.4,"turns":8,"error":null}
 {"k":26,"instance":"i-000006","now":"2026-03-03T21:18:00+01:00","events":2,"source":"executor:claude-code","model":"claude-haiku-5-5","costUsd":0.010764540000000001,"costUnknown":false,"costUpperUsd":0.4,"turns":10,"error":null}
+{"k":27,"instance":"i-000006","now":"2026-03-03T22:17:00+01:00","events":1,"source":"executor:claude-code","model":"claude-haiku-5-5","costUsd":0.008183639999999999,"costUnknown":false,"costUpperUsd":0.4,"turns":7,"error":null}
