@@ -1,0 +1,3 @@
+{"k":1,"instance":"i-000001","now":"2026-03-02T00:00:00+01:00","events":1,"source":"executor:claude-code","model":"claude-haiku-5-5","costUsd":0.010202160000000002,"costUnknown":false,"costUpperUsd":0.4,"turns":8,"error":null}
+{"k":2,"instance":"i-000002","now":"2026-03-02T00:00:00+01:00","events":1,"source":"executor:claude-code","model":"claude-haiku-5-5","costUsd":0.011173820000000001,"costUnknown":false,"costUpperUsd":0.4,"turns":14,"error":null}
+{"k":3,"instance":"i-000003","now":"2026-03-02T00:00:00+01:00","events":1,"source":"executor:claude-code","model":"claude-haiku-5-5","costUsd":0.009025620000000002,"costUnknown":false,"costUpperUsd":0.4,"turns":11,"error":null}
