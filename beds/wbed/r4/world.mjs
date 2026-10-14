@@ -15,7 +15,9 @@ import { IC_KINDS, KIND_IDS, STYLES, PACKS, periodKey, prevPeriod } from './voca
 import { childSeedOf, FAMILIES, reportDateOf, buildLedger, plantInputs, plantedTrace, plantableSystems, PLANTED_STYLE } from './children.mjs';
 import { renderGroup } from './render.mjs';
 
-export const VERSION = '1.0.0';
+// 1.0.1 (2026-10-14): no change of R4's own; its R3 children follow wbed-r3 1.1.0 (FX quotes stored at their printed
+// precision), so tasks with an R3 pack print some quotes one in the fourth decimal higher and their US-cent totals move.
+export const VERSION = '1.0.1';
 export const MIN_D = 2, MAX_D = 5;
 
 // Knobs per difficulty (W-BED §2.5 drift: subsidiaries, intercompany density, FX complexity, outside-profile rate).

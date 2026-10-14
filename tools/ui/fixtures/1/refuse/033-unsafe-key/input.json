@@ -1,0 +1,11 @@
+{
+  "question": "A question?",
+  "answerSchema": {
+    "type": "object",
+    "properties": {
+      "__proto__": {
+        "type": "string"
+      }
+    }
+  }
+}

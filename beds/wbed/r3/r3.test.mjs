@@ -23,7 +23,7 @@ const inlineTokens = t => estimateTokens(inlineRender(t));
 test('exports the bed interface plus the W-specific exports', async () => {
   for (const k of ['family', 'outputSchema', 'generate', 'oracle', 'referenceSolve', 'badControls', 'necessityControls', 'version', 'difficulty', 'stages', 'structure', 'relations', 'composedOracle']) assert.ok(k in bed, k);
   assert.equal(bed.family.id, 'wbed-r3');
-  assert.equal(bed.version, '1.0.0');
+  assert.equal(bed.version, '1.1.0');
   assert.deepEqual(bed.stages.map(s => s.id), ['split', 'match', 'classify', 'reduce']);
   assert.equal(bed.structure.shape, 'fan-out-fan-in');
   assert.ok(bed.structure.outline.some(l => /map\(statements/.test(l)) && bed.structure.outline.some(l => /reduce \(code\)/.test(l)));
@@ -182,6 +182,44 @@ test('hidden truth does not leak: USD totals and reason codes are not in the tas
     }
     for (const s of Object.values(t.inputs.statements)) for (const code of ['UNEXPLAINED', 'MISSING_CREDIT', 'DUPLICATE']) assert.ok(!s.includes(code));
   }
+});
+
+test('totals are derivable from the task: spec rule 5 at the printed quotes reproduces by_reason and totals (1.1.0 fix)', () => {
+  // wbed-r3 1.0.0 converted at six-decimal rates while the spec printed four, so no solver could reproduce its US-cent
+  // totals (beds/wbed/references/README.md "R3 bed finding"). Independent arithmetic: parse the quote lines the task
+  // prints, convert each supplier-and-reason sum once (BigInt, half away from zero), and compare with the oracle's truth.
+  const MINOR = { JPY: 0 }; // records/pools.mjs: yen have no minor unit, every other pool currency has two
+  const half = (num, den) => { const neg = (num < 0n) !== (den < 0n), a = num < 0n ? -num : num, b = den < 0n ? -den : den; let q = a / b; if ((a % b) * 2n >= b) q += 1n; return Number(neg ? -q : q); };
+  let checked = 0, converted = 0;
+  for (const seed of [301, 302, 303, 304, 305, 306, 373, 374, 375]) for (const d of [3, 4, 5]) {
+    const t = task(seed, d), truth = bed.referenceSolve(t);
+    const quotes = { USD: null };
+    for (const m of t.inputs.audit_spec.matchAll(/^\s+(?:USD\/([A-Z]{3})|([A-Z]{3})\/USD)\s+(\d+)\.(\d+)\s*$/gm)) {
+      const c = m[1] ?? m[2], num = BigInt(m[3] + m[4]), scale = 10n ** BigInt(m[4].length);
+      quotes[c] = m[1] ? { perUsd: true, num, scale } : { perUsd: false, num, scale };
+    }
+    const cents = (cur, minor) => {
+      if (cur === 'USD') return minor;
+      const q = quotes[cur]; assert.ok(q, `no printed quote for ${cur} (${t.id})`);
+      const md = 10n ** BigInt(MINOR[cur] ?? 2), m = BigInt(minor);
+      converted++;
+      // BASE/QUOTE x: 1 BASE = x QUOTE. XXX/USD: cents = minor/10^md * x * 100; USD/XXX: cents = minor/10^md / x * 100.
+      return q.perUsd ? half(m * 100n * q.scale, md * q.num) : half(m * 100n * q.num, md * q.scale);
+    };
+    const by = new Map(truth.by_reason.map(r => [r.reason, 0]));
+    for (const st of truth.statements) {
+      const sums = new Map();
+      for (const x of st.discrepancies) sums.set(x.reason, (sums.get(x.reason) ?? 0) + x.amount_minor);
+      for (const [reason, sum] of sums) by.set(reason, by.get(reason) + cents(st.currency, sum));
+    }
+    for (const r of truth.by_reason) assert.equal(r.usd_cents, by.get(r.reason), `${t.id} ${r.reason}`);
+    const all = [...by.values()].reduce((a, b) => a + b, 0), adj = ['PRICE', 'FX', 'MISSING_CREDIT'].reduce((a, k) => a + by.get(k), 0);
+    assert.equal(truth.totals.difference_usd_cents, all, t.id);
+    assert.equal(truth.totals.adjustments_usd_cents, adj, t.id);
+    checked++;
+  }
+  assert.equal(checked, 27);
+  assert.ok(converted > 100, `non-USD conversions checked: ${converted}`);
 });
 
 test('drift knob changes the task distribution measurably', () => {

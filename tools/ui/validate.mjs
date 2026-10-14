@@ -72,6 +72,7 @@ const MESSAGES = {
   'missing-required': l => [`${l} is required`, 'Give an answer'],
   'unknown-property': () => ['The answer has a property the form does not declare', 'Remove it'],
   'answer-limit': (l, d) => [`The answer is not bounded JSON: ${d.reason}`, 'Send a smaller answer'],
+  'unsafe-key': (l, d) => [`The answer uses a key the engine refuses: ${d.reason}`, 'Remove the key'],
 };
 const article = t => ({ string: 'text', number: 'a number', integer: 'a whole number', boolean: 'yes or no', array: 'a list', object: 'an object', null: 'null' })[t] ?? t;
 
@@ -86,7 +87,7 @@ export function toUiError(spec, source, raw, fieldOf) {
 /** Validates a typed answer against a compiled spec. Returns OpenUI-shaped errors; [] means accepted. */
 export function validateAnswer(spec, answer, { fieldOf = path => fieldForPath(spec, path) } = {}) {
   if (answer === undefined) return [toUiError(spec, 'validator', { code: 'missing-required', path: '', detail: {} }, fieldOf)];
-  try { checkData(answer); } catch (error) { return [toUiError(spec, 'validator', { code: 'answer-limit', path: '', detail: { reason: error.message } }, fieldOf)]; }
+  try { checkData(answer); } catch (error) { return [toUiError(spec, 'validator', { code: error.code === 'UNSAFE_KEY' ? 'unsafe-key' : 'answer-limit', path: '', detail: { reason: error.message } }, fieldOf)]; }
   return valueErrors(spec.schema, answer).map(raw => toUiError(spec, 'validator', raw, fieldOf));
 }
 

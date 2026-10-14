@@ -14,7 +14,8 @@ import { formatOf } from './catalogue.mjs';
 import { decodeStage, mistakesFor, rowsEqual, assertDecodes, verifyPredicate } from './decode.mjs';
 import { hooks } from '../lib/faults.mjs';
 
-export const VERSION = '1.0.0';
+// 1.0.1 (2026-10-14): no change of R5's own; groups with an R3 pack follow wbed-r3 1.1.0 through R4 1.0.1.
+export const VERSION = '1.0.1';
 export const MIN_D = 2, MAX_D = 5;
 
 // Knobs per difficulty (W-BED §2.5 drift plus R5's own axis):

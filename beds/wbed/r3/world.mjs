@@ -13,7 +13,11 @@ import { drawQuotes } from '../lib/fx.mjs';
 import { CR_SYSTEMS, EXPLAIN, NOISE, MONTH_NAMES, dateStyleOf } from './vocab.mjs';
 import { renderAudit } from './render.mjs';
 
-export const VERSION = '1.0.0';
+// 1.1.0 (2026-10-14): FX quotes are stored at the precision their quote lines print (lib/fx.mjs drawQuotes). In 1.0.0 a
+// USD-per-unit rate kept six decimals while the spec printed four, so by_reason and totals were not derivable from the
+// task (beds/wbed/references/README.md "R3 bed finding"). Worlds, statements and reasons are unchanged; only the printed
+// quotes (by at most one in the fourth decimal) and the US-cent totals move.
+export const VERSION = '1.1.0';
 export const MIN_D = 2, MAX_D = 5;
 
 // Knobs per difficulty. n: statements (the fan-out width); lines: statement lines per supplier; systems: billing

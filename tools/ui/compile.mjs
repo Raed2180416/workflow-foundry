@@ -48,7 +48,12 @@ export function tryCompileForm({ answerSchema, question, formName = 'task', bind
     else binding = Object.fromEntries(BIND_KEYS.filter(k => own(bind, k)).map(k => [k, bind[k]]));
   }
   try { checkData(answerSchema, { maxBytes: LIMITS.schemaBytes, maxDepth: 12 }); }
-  catch (error) { refuse('schema-limit', '', `answerSchema is not bounded JSON: ${error.message}`); return { ok: false, errors }; }
+  catch (error) {
+    // src/data.mjs checkData: the engine refuses __proto__, constructor and prototype keys in any JSON it handles.
+    if (error.code === 'UNSAFE_KEY') refuse('unsafe-key', '', `answerSchema uses a key the engine refuses: ${error.message}`, 'Rename the property');
+    else refuse('schema-limit', '', `answerSchema is not bounded JSON: ${error.message}`);
+    return { ok: false, errors };
+  }
   if (errors.length) return { ok: false, errors };
 
   const fields = [], groups = [], warnings = [];

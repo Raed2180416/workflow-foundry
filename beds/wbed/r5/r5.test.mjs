@@ -33,8 +33,8 @@ test('exports the bed interface plus the W-specific and R5-specific exports', as
   for (const k of ['family', 'outputSchema', 'generate', 'oracle', 'referenceSolve', 'badControls', 'necessityControls', 'version', 'difficulty', 'stages',
     'structure', 'relations', 'composedOracle', 'referenceTrace', 'invariants', 'verifyPredicate', 'restoreInputs', 'dumpOf', 'childTask', 'CATALOGUE', 'formatOf']) assert.ok(k in bed, k);
   assert.equal(bed.family.id, 'wbed-r5');
-  assert.equal(bed.family.version, '1.0.0');
-  assert.equal(bed.version, '1.0.0');
+  assert.equal(bed.family.version, '1.0.1');
+  assert.equal(bed.version, '1.0.1');
   assert.equal(bed.family.kind, 'oneshot');
   assert.deepEqual(bed.stages.map(s => s.id), ['decode', 'children', 'translate', 'pair', 'eliminate', 'report']);
   for (const s of bed.stages) for (const k of ['inputSchema', 'outputSchema', 'oracle', 'project']) assert.ok(s[k], `${s.id}.${k}`);

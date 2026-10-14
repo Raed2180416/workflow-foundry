@@ -2,6 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dayNum, fmtDate, parseDate, swappedDay, isoDay, refKey, roundHalfAway, quoteLine, mulRate, divRate, toUsdCents, lastDayOfMonth } from './domain.mjs';
+import { CURRENCIES } from './domain.mjs';
+import { drawQuotes, quoteLines, quantUsdPerUnit } from './fx.mjs';
 import { taskRng } from './prng.mjs';
 import { contract, obj, int, str } from './contracts.mjs';
 import { requireNoFaults, hooks, faultsAt, FAULT_KINDS, PREREG_SCHEDULE } from './faults.mjs';
@@ -29,6 +31,33 @@ test('money: exact rounding and quote lines', () => {
   assert.equal(quoteLine('JPY', divRate(1438737)), 'USD/JPY  143.8737');
   assert.equal(toUsdCents(10000, 'EUR', mulRate(1104000)), 11040);
   assert.equal(toUsdCents(1000, 'JPY', divRate(1438737)), 695); // 1000 / 143.8737 = 6.9505 USD
+});
+
+test('drawQuotes: every stored rate is exactly the rate its quote line prints (wbed-r3 1.1.0; references/README "R3 bed finding")', () => {
+  // A USD-per-unit rate with digits beyond what quoteLine prints made R3's totals underivable from the task in 1.0.0.
+  const parse = line => {
+    const m = /^(USD\/([A-Z]{3})|([A-Z]{3})\/USD)\s+(\d+)\.(\d+)$/.exec(line);
+    assert.ok(m, line);
+    const micro = Number(m[4]) * 1e6 + Number(m[5].padEnd(6, '0').slice(0, 6));
+    return m[2] ? [m[2], divRate(Number(m[4]) * 1e4 + Number(m[5].padEnd(4, '0')))] : [m[3], mulRate(micro)];
+  };
+  const all = Object.keys(CURRENCIES);
+  let n = 0;
+  for (let i = 0; i < 400; i++) {
+    const quotes = drawQuotes(taskRng('lib', 'fx', { seed: i, split: 'dev', difficulty: 3 }), all);
+    const lines = quoteLines(quotes);
+    assert.equal(lines.length, all.filter(c => c !== 'USD').length);
+    for (const line of lines) {
+      const [c, rate] = parse(line);
+      assert.deepEqual(rate, quotes[c], `${line} prints ${JSON.stringify(quotes[c])}`);
+      n++;
+    }
+  }
+  assert.ok(n >= 400 * 3);
+  // The quantization is records' (beds/records/world.mjs quant): six decimals below 0.05, four above.
+  assert.equal(quantUsdPerUnit(1.10422149), 1104200);
+  assert.equal(quantUsdPerUnit(1.10425), 1104300);
+  assert.equal(quantUsdPerUnit(0.0091234), 9123);
 });
 
 test('invoice reference keys ignore case, spaces, hyphens and slashes', () => {
