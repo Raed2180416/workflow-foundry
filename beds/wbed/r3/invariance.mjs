@@ -9,7 +9,12 @@
 //   (A statement's own lines are not shuffled: they carry a running balance, so a permuted statement is not a statement.)
 //   drop-clean-supplier      remove a supplier the audit reports with no discrepancy: its vendor line, its statement
 //       file and every ledger line that names it by its name or a listed other name (s.1, exact names). Nothing it had is
-//       a discrepancy, so by_reason and every other supplier stay and totals.statements falls by one (s.5). 'in'.
+//       a discrepancy, so by_reason and every other supplier stay and totals.statements falls by one (s.5). distribution
+//       'out' (review fix 2026-10-14, M1 review finding 3): it leaves gaps in the vendor ids (V-301...) and the ledger line
+//       ids (L0001...), which are contiguous in every generated task. Built as 'in'. (Renumbering both would make it 'in',
+//       at the price of an id map in the check; not done.)
+// Regularities (`regularities`, audited by beds/lib/metamorphic.test.mjs): vendor ids contiguous in order; statement files in
+// file-name order (render.mjs:15); ledger line ids L0001... contiguous in order. R3 has no 'in' relation.
 // Comparison: statements keyed by vendor_id (currency, the three balances exactly, discrepancies as a multiset), by_reason
 // keyed by reason, totals exactly.
 import { rngOf, permute, variantTask, compareKeyed, sameValue, shapeViolation, capped, witnessDescriptor } from '../../lib/metamorphic.mjs';
@@ -70,7 +75,7 @@ export const invariance = Object.freeze([
     check: (orig, variant) => compareAudits(orig, variant),
   },
   {
-    id: 'drop-clean-supplier', kind: 'transform', distribution: 'in', needsOutput: true,
+    id: 'drop-clean-supplier', kind: 'transform', distribution: 'out', needsOutput: true,
     text: 'Remove one supplier the audit reports with no discrepancy (vendor line, statement file, its ledger lines; seeded). The audit loses exactly that supplier.',
     make(task, { seed, output }) {
       const vendors = vendorsOf(task.inputs?.vendors);
@@ -91,6 +96,16 @@ export const invariance = Object.freeze([
       return compareAudits(expected, variant);
     },
   },
+]);
+
+// The generator's listing and numbering regularities (beds/lib/metamorphic.mjs).
+const contiguousFromFirst = xs => xs.length > 0 && xs.every((x, i) => Number.isInteger(x) && x === xs[0] + i);
+const ledgerIdsOf = task => String(task.inputs?.ledger ?? '').split('\n').filter(l => l.trim() !== '' && !l.startsWith('#')).map(l => Number(/^L(\d+)\b/.exec(l)?.[1]));
+export const regularities = Object.freeze([
+  { id: 'vendor-ids-contiguous', text: 'inputs.vendors lists V-<n> ids contiguous and in order', holds: task => contiguousFromFirst(vendorsOf(task.inputs?.vendors).map(v => Number(v.id.slice(2)))) },
+  { id: 'statement-files-by-name', text: 'inputs.statements is in file-name order (render.mjs:15)',
+    holds: task => { const n = Object.keys(task.inputs?.statements ?? {}); return n.every((x, i) => i === 0 || n[i - 1].localeCompare(x) < 0); } },
+  { id: 'ledger-ids-contiguous', text: 'ledger lines are L0001, L0002, ... in order', holds: task => { const ids = ledgerIdsOf(task); return contiguousFromFirst(ids) && ids[0] === 1; } },
 ]);
 
 // Witness (M1 b): conservation inside the audit (statement - ledger = the sum of a supplier's discrepancies; adjusted =

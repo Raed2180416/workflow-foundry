@@ -246,6 +246,10 @@ const valueAt = (answer, path) => {
   return { present: true, value: v };
 };
 
+// Whether a present value reads as "no answer" to the adapter (the same rule as convert(): text "" and an empty
+// selection are blank; an enum member, even "" or null, is a choice).
+const blankValue = (f, v) => (f.valueType === 'string' && v === '') || (f.valueType === 'enum-array' && Array.isArray(v) && v.length === 0);
+
 // Ways a valid answer can differ from anything the form produces (README "Completability").
 function representationGaps(spec, answer) {
   const gaps = [];
@@ -258,7 +262,7 @@ function representationGaps(spec, answer) {
       const names = new Set(spec.fields.filter(f => f.group === g.id).map(f => lastSegment(f.path)));
       for (const k of Object.keys(value)) if (!names.has(k)) gaps.push('undeclared-property');
       const members = spec.fields.filter(f => f.group === g.id);
-      const blank = members.every(f => { const at = valueAt(answer, f.path); return !at.present || at.value === '' || (Array.isArray(at.value) && at.value.length === 0); });
+      const blank = members.every(f => { const at = valueAt(answer, f.path); return !at.present || blankValue(f, at.value); });
       if (!g.required && blank) gaps.push('empty-optional-group');
     }
   }
@@ -335,6 +339,39 @@ export function submissionFromAnswer(spec, answer, { token = null } = {}) {
     }
   }
   return { params, body: params.toString(), gaps: [...new Set(gaps)] };
+}
+
+/**
+ * The answer the form produces when a person enters `answer`: undeclared properties dropped, a blank optional text or
+ * selection dropped, an optional group with nothing kept dropped, and checkbox selections in option order without
+ * duplicates. For a valid answer this is the representative the form can enter (README "Completability").
+ */
+export function canonicalAnswer(spec, answer) {
+  const leaf = (f, v) => (f.valueType === 'enum-array' && Array.isArray(v) ? f.options.filter(o => v.includes(o.value)).map(o => o.value) : v);
+  const blank = blankValue;
+  if (spec.rootKind === 'leaf') return leaf(spec.fields[0], answer);
+  if (!isPlainObject(answer)) return answer;
+  const out = {}, groups = new Map(spec.groups.map(g => [g.id, { group: g, object: {}, present: isPlainObject(valueAt(answer, g.path).value) }]));
+  const placed = new Set();
+  for (const f of spec.fields) {
+    let target = out;
+    if (f.group) {
+      const entry = groups.get(f.group);
+      if (!entry.present) continue;
+      if (!placed.has(f.group)) { put(out, lastSegment(entry.group.path), entry.object); placed.add(f.group); }
+      target = entry.object;
+    }
+    const at = valueAt(answer, f.path);
+    if (!at.present || (!f.required && blank(f, at.value))) continue;
+    put(target, lastSegment(f.path), leaf(f, at.value));
+  }
+  // An optional group whose fields are all blank is untouched, so the form leaves it out (required blanks included).
+  for (const { group } of groups.values()) {
+    if (!placed.has(group.id) || group.required) continue;
+    const untouched = spec.fields.filter(f => f.group === group.id).every(f => { const at = valueAt(answer, f.path); return !at.present || blankValue(f, at.value); });
+    if (untouched) delete out[lastSegment(group.path)];
+  }
+  return out;
 }
 
 export { fieldForPath, toUiError, BLANK };

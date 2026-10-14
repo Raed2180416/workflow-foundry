@@ -12,11 +12,19 @@
 //                   at the same update date: the person set and every field are unchanged and the person gains the new
 //                   row id in source_rows; a void row's copy is void. (A single-row person's row may have neither a birth
 //                   date nor a phone, and then its copy is a second person: found by the text solver at d4 s218.)
+//                   distribution 'out' (review fix 2026-10-14): no generated export has two lines that are equal once the
+//                   row id is masked (0 of 120 tasks, dev 201-240 d3-d5; regularity no-exact-duplicate below), and the copy
+//                   is such a line. It was labelled 'in' when built.
 //   drop-singleton  remove the only row of a person the original answer lists with one source row: no rule links a
-//                   singleton's row to another row, so the answer loses exactly that person.
+//                   singleton's row to another row, so the answer loses exactly that person. 'in': row ids are sparse
+//                   (no generated export has contiguous ids), so the gap is in distribution; the row count, a fixed knob
+//                   per difficulty (55/85/115/150), is the stated exception (beds/lib/metamorphic.mjs) and the prompt
+//                   restates it.
+// Regularities (`regularities`, audited by beds/lib/metamorphic.test.mjs): the export is ordered by row id (world.mjs:737,
+// and the prompt says so) and no two lines are equal once the row id is masked.
 // Known blind spot (M1 kill mode, ATTACK §3): a convention misread (a date order, a status meaning) or a threshold
 // under-merge is the same on every variant, so these relations cannot see it.
-import { rngOf, permute, variantTask, compareKeyed, sameValue, sortedInts, shapeViolation, witnessDescriptor } from '../lib/metamorphic.mjs';
+import { rngOf, permute, variantTask, compareKeyed, sameValue, sortedInts, shapeViolation, witnessDescriptor, ascending, distinctModuloRowId } from '../lib/metamorphic.mjs';
 
 const FIELDS = ['given_name', 'family_name', 'birth_date', 'country', 'phone_e164', 'amount_usd'];
 const rowIdOf = line => Number(line.match(/\d+/)?.[0]);
@@ -56,7 +64,7 @@ export const invariance = Object.freeze([
     check: (orig, variant) => compareRecords(orig, variant),
   },
   {
-    id: 'duplicate-row', kind: 'transform', distribution: 'in', needsOutput: true,
+    id: 'duplicate-row', kind: 'transform', distribution: 'out', needsOutput: true,
     text: 'Copy one export line (of a person with two or more rows, or a row the answer leaves out) under a fresh row id (seeded). The person set and every field are unchanged; the copied row\'s person gains the new id in source_rows.',
     make(task, { seed, output }) {
       const lines = exportLines(task), ids = lines.map(rowIdOf);
@@ -106,6 +114,14 @@ export const invariance = Object.freeze([
       return compareRecords({ records: E.filter(x => x.entity_id !== info.entity) }, variant);
     },
   },
+]);
+
+// The generator's listing regularities ('in' variants keep them; beds/lib/metamorphic.mjs).
+export const regularities = Object.freeze([
+  { id: 'rows-by-id', text: 'the export lines are in ascending row-id order (world.mjs:737; the prompt says "ordered by row id")',
+    holds: task => ascending(exportLines(task).map(rowIdOf)) },
+  { id: 'no-exact-duplicate', text: 'no two export lines are equal once the row id is masked (0 of 120 generated tasks have one)',
+    holds: task => distinctModuloRowId(exportLines(task)) },
 ]);
 
 // Witness (M1 b): none. The answer's only checkable structure is its partition (source rows exist in the export, no row in

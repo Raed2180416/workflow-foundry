@@ -3,6 +3,6 @@ export { SPEC_KIND, FormRefused, uiError, displayText } from './common.mjs';
 export { compileForm, tryCompileForm, LIMITS } from './compile.mjs';
 export { patternProblems } from './pattern.mjs';
 export { validateAnswer, valueErrors, fieldForPath } from './validate.mjs';
-export { answerFromFormState, formStateFromSubmission, acceptSubmission, formStateFromAnswer, submissionFromAnswer, parseNumberText } from './formstate.mjs';
+export { answerFromFormState, formStateFromSubmission, acceptSubmission, formStateFromAnswer, submissionFromAnswer, canonicalAnswer, parseNumberText } from './formstate.mjs';
 export { renderForm, renderAccepted, ruleText, FORM_CSS, FORM_CSP, FORM_CSP_HEADER, FORM_HEADERS, FORM_STYLE_HASH } from './render.mjs';
 export { createFormHandler, MAX_BODY_BYTES } from './host.mjs';

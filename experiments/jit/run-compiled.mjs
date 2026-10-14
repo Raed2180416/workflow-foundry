@@ -211,22 +211,66 @@ export function createResumePort({ prior = [], live, invalidate = true } = {}) {
 // guard would. A variant that does not run ok is recorded, never a disagreement. meta.variants = {ran, relations,
 // statuses, violated, costUsd, results, output: the original output}; costUsd includes every variant's spend
 // (meta.variants.costUsd is that share). Not combined with ledger, flowScope or resume (library arms and child runs).
+// Review fixes (2026-10-14, M1 review):
+//   - judges (finding 4): 'replay' (default) records the original run's model answers (recordingPort) and gives each variant
+//     a memo port over them with the caller's port live for the misses (createMemoPort, strict false, reuse false): a request
+//     the variant repeats unchanged gets the original's answer at $0 and only a changed request is paid. That is what the $0
+//     archived replay (eval-invariance.mjs part A) measures, so (i) and (ii) measure one detector. 'fresh' passes the
+//     caller's port, so every judge is asked again (order dependence mixed with fresh judge samples). modelPortOf, when
+//     given, wins over both.
+//   - capUsd (finding 8): the variants of one task share one gateway budget, capUsd (default perTaskUsd); each variant's
+//     Ledger is capped at what is left, and a variant with nothing left is not run (status 'budget', never a disagreement).
+//     So a sampled task spends at most perTaskUsd + capUsd. meta.variants carries costUnknown (the variants') and
+//     originalCostUnknown, so a stream can book each on its own cost line.
+//   - observe (finding 9): every relation runs (no stop at the first disagreement) and a disagreement is recorded in
+//     meta.variants.violated without withholding the original answer (status stays 'ok').
+export const FLOW_CALL_MODEL_ID = 'flow:call';
+// A port that passes every call through and records each model answer as a memo journal row {requestDigest, model,
+// response}. flow:call answers (child runs) are not recorded. rows() returns the rows so far.
+export function recordingPort(port) {
+  if (!port || typeof port.call !== 'function') throw new Error('recordingPort: a port with call() is required');
+  const rows = [];
+  return {
+    policy: port.policy ?? null, providers: port.providers ?? {}, policyHash: port.policyHash ?? null, ...(port.memo ? { memo: port.memo } : {}),
+    rows: () => rows.slice(),
+    async call(req) {
+      const r = await port.call(req);
+      if (req?.modelId !== FLOW_CALL_MODEL_ID && r && typeof r === 'object') rows.push({ requestDigest: requestDigestOf(req), model: req.modelId, response: { ok: !!r.ok, value: r.value, error: r.error ?? null } });
+      return r;
+    },
+  };
+}
 export async function runCompiled(args = {}) {
   const { variants = null, ...rest } = args;
   if (variants == null) return runOnce(rest);
   if (!Array.isArray(variants.relations)) throw new Error('runCompiled: variants.relations must be a list of relations (beds/<family>/invariance.mjs)');
   if (rest.ledger != null || rest.flowScope != null || rest.resume) throw new Error('runCompiled: variants are not wired with ledger, flowScope or resume (library arms and child runs)');
   if (variants.modelPortOf != null && typeof variants.modelPortOf !== 'function') throw new Error('runCompiled: variants.modelPortOf must be a function of the relation');
-  const r = await runOnce(rest);
+  const judges = variants.judges ?? 'replay';
+  if (!['replay', 'fresh'].includes(judges)) throw new Error("runCompiled: variants.judges must be 'replay' or 'fresh'");
+  const capUsd = variants.capUsd ?? rest.perTaskUsd ?? 1;
+  if (!(typeof capUsd === 'number' && Number.isFinite(capUsd) && capUsd >= 0)) throw new Error('runCompiled: variants.capUsd must be a number >= 0');
+  const record = judges === 'replay' && !variants.modelPortOf && rest.modelPort ? recordingPort(rest.modelPort) : null;
+  const r = await runOnce(record ? { ...rest, modelPort: record } : rest);
   if (r.status !== 'ok' || !variants.relations.length) return { ...r, meta: { ...r.meta, variants: { skipped: r.status !== 'ok' ? `original ${r.status}` : 'no relations', costUsd: 0 } } };
   const { runVariants, invarianceSummary, INVARIANCE_KIND } = await import('./invariance.mjs');
+  const answers = record ? record.rows() : null;
+  let left = capUsd;
+  const portOf = rel => (variants.modelPortOf ? variants.modelPortOf(rel)
+    : record ? createMemoPort({ journal: answers, live: rest.modelPort, strict: false, reuse: false }) : rest.modelPort);
   const v = await runVariants({ relations: variants.relations, task: rest.task, output: r.output, seed: String(variants.seed ?? ''), compare: variants.compare ?? {},
-    runVariant: (task, rel) => runOnce({ ...rest, task, workdir: `${rest.workdir}-v-${rel.id}`, label: `${rest.label ?? 'compiled'}:v:${rel.id}`,
-      ...(variants.modelPortOf ? { modelPort: variants.modelPortOf(rel) } : {}) }) });
+    stopOnViolation: !variants.observe,
+    runVariant: async (task, rel) => {
+      if (!(left > 1e-9)) return { status: 'budget', output: null, costUsd: 0, costUnknown: false };
+      const run = await runOnce({ ...rest, task, perTaskUsd: left, workdir: `${rest.workdir}-v-${rel.id}`, label: `${rest.label ?? 'compiled'}:v:${rel.id}`, modelPort: portOf(rel) });
+      left -= run.costUsd ?? 0;
+      return run;
+    } });
   const results = v.results.map(x => (x === v.violated ? x : (({ variantOutput, ...keep }) => keep)(x)));
-  const meta = { ...r.meta, variants: { ...invarianceSummary(v), costUsd: v.costUsd, results, output: r.output } };
+  const meta = { ...r.meta, variants: { ...invarianceSummary(v), costUsd: v.costUsd, costUnknown: !!v.costUnknown, originalCostUnknown: !!r.costUnknown, judges, capUsd,
+    ...(variants.observe ? { observe: true } : {}), ...(record ? { answersRecorded: answers.length } : {}), results, output: r.output } };
   const cost = { costUsd: r.costUsd + v.costUsd, costUnknown: r.costUnknown || v.costUnknown };
-  if (!v.violated) return { ...r, ...cost, meta };
+  if (!v.violated || variants.observe) return { ...r, ...cost, meta };
   return { ...r, ...cost, status: 'deopt', output: null, deopt: { kind: INVARIANCE_KIND, name: v.violated.relation, detail: { violations: v.violated.violations.slice(0, 10), info: v.violated.info } }, meta };
 }
 

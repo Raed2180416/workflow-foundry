@@ -15,17 +15,27 @@
 //       (beds/records/solve-text.mjs) and its single-judgment ablations (known-wrong solvers), and the kinetics white-box
 //       parser (beds/kinetics/attacks/whitebox-v4.mjs, written with the generator open) at d3, where it is mostly right.
 //   (C) witness. Per bed, witnessCheck on the reference answer (false alarms) and on every bad control (recall per tag).
+//       witnessOf ignores the task (one descriptor per bed), so "recall per tag" here is recall per bed.
+//   (D) references (review finding 13). The W-bed R1 and R3 relations checked against a correct solver: the frozen arm (c)
+//       references (beds/wbed/references) on the author fixtures 373-378 (d3, d4) with author-read judges (the flow-v3
+//       override; a stub port for anything else, $0), each relation's variants run through runCompiled's own variants hook
+//       (observe mode, judges replayed). A relation holds when every variant that runs ok agrees. R3's author readings are
+//       copies of the bed's labels (review finding 14), so this checks the relations under a correct reader, not a reader.
 // The M1 rule (ATTACK §3): adopt as a contract if the variants flag >= 50% of wrong compiled outputs at <= 10% false alarms
 // on correct ones in both (i) the archived versions and (ii) a fresh dev range; kill below 25%. Only part of (i) runs at $0.
+// Review fixes (2026-10-14): a wrong output with any unmeasured variant in the view and no disagreement is pending (finding
+// 2: the measured variants are exactly those whose judge requests did not change, so they see code-path order and state
+// dependence only; that result is reported apart as codePath); each variant carries its task's own in/out label (finding
+// 3); parts B and D are development evidence (finding 12: relations were revised on part B's panel).
 //
 //   node experiments/jit/eval-invariance.mjs [--runs research/jit-20261008/runs] [--experiments jit-dev-records-1,jit-dev-kinetics-1]
-//        [--k 3] [--parts archived,synthetic,witness] [--work <dir>] [--keep] [--out <file.json>] [--concurrency 2] [--json]
+//        [--k 3] [--parts archived,synthetic,witness,references] [--work <dir>] [--keep] [--out <file.json>] [--concurrency 2] [--json]
 import path from 'node:path';
 import os from 'node:os';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { runCompiled, createMemoPort, DEFAULT_FLOW } from './run-compiled.mjs';
-import { runVariants, validateRelations } from './invariance.mjs';
+import { runVariants, validateRelations, distributionOf } from './invariance.mjs';
 import { flowFileOf } from './prompts.mjs';
 import { loadFamily, makeTasks } from '../lib/beds.mjs';
 
@@ -84,7 +94,7 @@ export async function evalArchivedRow({ row, armDir, bed, relations, k, work, fl
     for (const x of v.results) {
       const st = stats.get(x.relation);
       const needsPaid = st && st.misses > 0;
-      rec.variants.push({ k: n, relation: x.relation, distribution: relations.find(r => r.id === x.relation)?.distribution ?? null,
+      rec.variants.push({ k: n, relation: x.relation, distribution: distributionOf(relations.find(r => r.id === x.relation), task) ?? null,
         status: needsPaid ? 'needs-paid-judges' : x.status, ...(st ? { requests: st.requests, hits: st.hits, misses: st.misses } : {}),
         ...(x.status === 'disagree' && !needsPaid ? { levels: [...new Set(x.violations.map(y => y.level))], violations: x.violations.slice(0, 5) } : {}),
         ...(x.reason ? { reason: x.reason } : {}), ...(x.deopt ? { deopt: x.deopt } : {}), ...(x.error ? { error: x.error } : {}), info: x.info ?? null });
@@ -95,24 +105,31 @@ export async function evalArchivedRow({ row, armDir, bed, relations, k, work, fl
 
 // Flag rules over a row's variants, for one view (a filter on variants: all, the first seed only, 'in' relations only, one
 // relation). measurable: at least one variant ran on journal answers alone; flagged: one of those disagreed; pending: the
-// relations of the view none of whose variants could run at $0 (only paid judge calls can say whether they would flag).
+// relations of the view with at least one variant that could not run at $0 (only paid judge calls can say whether it would
+// flag). Review fix (finding 2): a relation is pending when ANY of its variants is unmeasured, not only when all are; the
+// variants that ran at $0 are exactly those whose judge requests were all unchanged, so they cannot flag an error that
+// comes from a judge, and their agreement does not settle the relation. complete: every variant of the view measured.
 const measured = vs => vs.filter(v => v.status === 'agree' || v.status === 'disagree');
 export const VIEWS = Object.freeze({ any: () => true, firstDraw: v => v.k === 0, inDistribution: v => v.distribution === 'in' });
 export function rowFlags(rec, view = VIEWS.any) {
   const vs = (rec.variants ?? []).filter(view), m = measured(vs), rels = [...new Set(vs.map(v => v.relation))];
-  const pending = rels.filter(id => !m.some(v => v.relation === id) && vs.some(v => v.relation === id && v.status === 'needs-paid-judges'));
-  return { measurable: m.length > 0, flagged: m.some(v => v.status === 'disagree'), pending };
+  const pending = rels.filter(id => vs.some(v => v.relation === id && v.status === 'needs-paid-judges'));
+  return { measurable: m.length > 0, flagged: m.some(v => v.status === 'disagree'), pending, complete: vs.length > 0 && vs.every(v => v.status !== 'needs-paid-judges') };
 }
 
 // The M1 rule on part (i) at $0 for one view. lower = flagged / all wrong (pending counted as missed); upper = (flagged +
-// wrong outputs with a pending relation) / all wrong (pending counted as caught); measured = flagged / measurable wrong;
-// false alarms = flagged / measurable right.
+// wrong outputs not flagged with a pending relation) / all wrong (pending counted as caught); measured = flagged /
+// measurable wrong; false alarms = flagged / measurable right. codePath: the same counts restricted to the variants that ran
+// on journal answers alone, labelled as what they are (order and state dependence of the code path with judge answers held
+// fixed), never read as the M1 rule.
 export function m1Rule(recs, view = VIEWS.any) {
   const ev = recs.filter(r => r.status === 'evaluated'), wrong = ev.filter(r => !r.compiledPass), right = ev.filter(r => r.compiledPass);
   const f = r => rowFlags(r, view);
   const wM = wrong.filter(r => f(r).measurable).length, wF = wrong.filter(r => f(r).flagged).length, wP = wrong.filter(r => !f(r).flagged && f(r).pending.length).length;
   const cM = right.filter(r => f(r).measurable).length, cF = right.filter(r => f(r).flagged).length;
   const lower = wrong.length ? wF / wrong.length : null, upper = wrong.length ? (wF + wP) / wrong.length : null, fa = cM ? cF / cM : null;
+  const codePath = { what: 'variants whose judge requests were all unchanged (journal answers): code-path order and state dependence only',
+    wrongMeasurable: wM, wrongFlagged: wF, rightMeasurable: cM, rightFlagged: cF, wrongComplete: wrong.filter(r => f(r).complete).length, rightComplete: right.filter(r => f(r).complete).length };
   let verdict;
   if (!wrong.length) verdict = 'no wrong compiled output';
   else if (upper < 0.25) verdict = 'KILL on (i): recall < 25% even if every relation that needs paid judges flagged its output';
@@ -121,7 +138,7 @@ export function m1Rule(recs, view = VIEWS.any) {
   else verdict = 'open: between the lines on (i)';
   return { wrong: wrong.length, wrongMeasurable: wM, wrongFlagged: wF, wrongPending: wP, right: right.length, rightMeasurable: cM, rightFlagged: cF,
     recallLowerPct: lower == null ? null : pct(wF, wrong.length), recallMeasuredPct: pct(wF, wM), recallUpperPct: upper == null ? null : pct(wF + wP, wrong.length),
-    falseAlarmPct: fa == null ? null : pct(cF, cM), verdict };
+    falseAlarmPct: fa == null ? null : pct(cF, cM), verdict, codePath };
 }
 // The rule per view and per relation.
 export function m1Rules(recs) {
@@ -157,7 +174,7 @@ export async function evalArchived({ runs = DEFAULT_RUNS, experiments = DEFAULT_
 export function relationTable(recs) {
   const t = {};
   for (const r of recs.filter(x => x.status === 'evaluated')) for (const v of r.variants) {
-    const key = `${r.experiment}|${v.relation}`, x = t[key] ??= { experiment: r.experiment, relation: v.relation, distribution: v.distribution, variants: 0, measured: 0, disagree: 0, disagreeOnWrong: 0, disagreeOnRight: 0, needsPaidJudges: 0, skip: 0, variantNotOk: 0, paidJudgeAt: {} };
+    const key = `${r.experiment}|${v.relation}|${v.distribution}`, x = t[key] ??= { experiment: r.experiment, relation: v.relation, distribution: v.distribution, variants: 0, measured: 0, disagree: 0, disagreeOnWrong: 0, disagreeOnRight: 0, needsPaidJudges: 0, skip: 0, variantNotOk: 0, paidJudgeAt: {} };
     x.variants++;
     if (v.status === 'agree' || v.status === 'disagree') x.measured++;
     if (v.status === 'disagree') { x.disagree++; if (r.compiledPass) x.disagreeOnRight++; else x.disagreeOnWrong++; }
@@ -169,10 +186,17 @@ export function relationTable(recs) {
 }
 
 // ------------------------------------------------------------------------------------------------ (B) synthetic panel
+// Development evidence only (review finding 12): duplicate-row was narrowed after a false alarm on this records panel (d4
+// s218) and shuffle-series was added after alarms on this kinetics panel, and the ablations come from a deterministic,
+// order-free solver, so their 0 flagged follows by construction. Counts are keyed `<relation>@<in|out>` with the task's
+// own label (distributionOf), and kinetics also by difficulty (d3: documents in the generator's fixed order, so
+// shuffle-documents is 'out'; d4: shuffled by the generator, 'in').
+export const SYNTHETIC_EVIDENCE = 'development (in-sample): relations were revised on this panel; the records ablations are order-free by construction';
 export async function evalSynthetic({ k = 5 } = {}) {
   const rec = await import('../../beds/records/index.mjs'), { solveText, ABLATIONS } = await import('../../beds/records/solve-text.mjs');
-  const records = { solver: 'beds/records/solve-text.mjs (reads task.inputs only)', tasks: 0, right: 0, byRelation: {}, ablations: {} };
+  const records = { solver: 'beds/records/solve-text.mjs (reads task.inputs only)', evidence: SYNTHETIC_EVIDENCE, tasks: 0, right: 0, byRelation: {}, ablations: {} };
   const bump = (o, id, key) => { o[id] ??= { variants: 0, flagged: 0 }; o[id].variants++; if (key) o[id].flagged++; };
+  const keyOf = (rel, t) => `${rel.id}@${distributionOf(rel, t)}`;
   for (const d of [3, 4, 5]) for (let s = 201; s <= 224; s++) {
     const t = rec.generate({ seed: s, split: 'dev', difficulty: d }), o = solveText(t);
     records.tasks++;
@@ -181,7 +205,7 @@ export async function evalSynthetic({ k = 5 } = {}) {
     for (const rel of rec.invariance) for (let n = 0; n < k; n++) {
       const m = rel.make(structuredClone(t), { seed: `syn:${s}:${d}:${n}`, output: o });
       if (m.skip) continue;
-      bump(records.byRelation, rel.id, rel.check(o, solveText(m.task), m.info).length > 0);
+      bump(records.byRelation, keyOf(rel, t), rel.check(o, solveText(m.task), m.info).length > 0);
     }
   }
   for (const a of ABLATIONS) {
@@ -195,28 +219,34 @@ export async function evalSynthetic({ k = 5 } = {}) {
         const m = rel.make(structuredClone(t), { seed: `syn:${s}:3:0`, output: o });
         if (m.skip) continue;
         const hit = rel.check(o, solveText(m.task, { ablate: a }), m.info).length > 0;
-        bump(x.byRelation, rel.id, hit); any ||= hit;
+        bump(x.byRelation, keyOf(rel, t), hit); any ||= hit;
       }
       if (any) x.flagged++;
     }
   }
   const kin = await import('../../beds/kinetics/index.mjs'), { heuristicSolve } = await import('../../beds/kinetics/attacks/whitebox-v4.mjs');
-  const kinetics = { solver: 'beds/kinetics/attacks/whitebox-v4.mjs (white-box parser, generator source open; d3 dev 201-240)', tasks: 0, right: 0, rightByRelation: {}, wrong: 0, wrongFlagged: 0, wrongByRelation: {} };
-  for (let s = 201; s <= 240; s++) {
-    const t = kin.generate({ seed: s, split: 'dev', difficulty: 3 });
-    let o; try { o = heuristicSolve(structuredClone(t)); } catch { continue; }
-    kinetics.tasks++;
-    const right = kin.oracle(t, o).pass;
-    if (right) kinetics.right++; else kinetics.wrong++;
-    let any = false;
-    for (const rel of kin.invariance) for (let n = 0; n < Math.min(k, 3); n++) {
-      const m = rel.make(structuredClone(t), { seed: `syn:${s}:3:${n}`, output: o });
-      if (m.skip) continue;
-      let ov; try { ov = heuristicSolve(structuredClone(m.task)); } catch { ov = null; }
-      const hit = rel.check(o, ov, m.info, {}).length > 0;
-      bump(right ? kinetics.rightByRelation : kinetics.wrongByRelation, rel.id, hit); any ||= hit && !right;
+  const kinetics = { solver: 'beds/kinetics/attacks/whitebox-v4.mjs (white-box parser, generator source open; dev 201-240 at d3 and d4)', evidence: SYNTHETIC_EVIDENCE, byDifficulty: {} };
+  for (const d of [3, 4]) {
+    const x = kinetics.byDifficulty[`d${d}`] = { tasks: 0, right: 0, rightByRelation: {}, wrong: 0, wrongFlagged: 0, wrongFlaggedIn: 0, wrongByRelation: {} };
+    for (let s = 201; s <= 240; s++) {
+      const t = kin.generate({ seed: s, split: 'dev', difficulty: d });
+      let o; try { o = heuristicSolve(structuredClone(t)); } catch { continue; }
+      x.tasks++;
+      const right = kin.oracle(t, o).pass;
+      if (right) x.right++; else x.wrong++;
+      let any = false, anyIn = false;
+      for (const rel of kin.invariance) for (let n = 0; n < Math.min(k, 3); n++) {
+        // d3 keeps the seed strings of the first measurement (`syn:<seed>:3:<n>`).
+        const m = rel.make(structuredClone(t), { seed: `syn:${s}:${d}:${n}`, output: o });
+        if (m.skip) continue;
+        let ov; try { ov = heuristicSolve(structuredClone(m.task)); } catch { ov = null; }
+        const hit = rel.check(o, ov, m.info, {}).length > 0;
+        bump(right ? x.rightByRelation : x.wrongByRelation, keyOf(rel, t), hit);
+        any ||= hit && !right; anyIn ||= hit && !right && distributionOf(rel, t) === 'in';
+      }
+      if (any) x.wrongFlagged++;
+      if (anyIn) x.wrongFlaggedIn++;
     }
-    if (any) kinetics.wrongFlagged++;
   }
   return { records, kinetics };
 }
@@ -248,9 +278,46 @@ export async function evalWitness({ beds = WITNESS_BEDS, seeds = [301, 302, 303,
   return out;
 }
 
+// ------------------------------------------------------------------------------------------------ (D) references
+// The W-bed R1 and R3 relations against a correct solver (review finding 13): the frozen references with author-read judges
+// on the author fixtures, each relation's variants through runCompiled's variants hook (observe, judges replayed). $0: the
+// author override answers the judges, a stub port the rest (beds/wbed/references/validate.mjs).
+export const REFERENCE_EVIDENCE = 'development: the author fixtures 373-378 the references were written on; R3 author readings equal the bed labels (code-decided reasons included)';
+export async function evalReferences({ rungs = ['r1', 'r3'], seeds = [373, 374, 375, 376, 377, 378], difficulties = [3, 4], k = 2, work, concurrency = 2, log = () => {} } = {}) {
+  const { REFERENCES, MODELS, stubPort, PER_TASK_USD, TIMEOUT_MS } = await import('../../beds/wbed/references/validate.mjs');
+  const { FLOW_V3 } = await import('./run-compiled.mjs');
+  const refDir = path.join(REPO, 'beds/wbed/references');
+  const table = JSON.parse(readFileSync(path.join(refDir, 'author/fixture-answers.json'), 'utf8'));
+  const out = [];
+  for (const rung of rungs) {
+    const ref = REFERENCES[rung], bed = await loadFamily(ref.bed), relations = validateRelations(bed.invariance ?? [], ref.bed);
+    const x = { rung, bed: ref.bed, evidence: REFERENCE_EVIDENCE, k, runs: 0, originalOk: 0, originalPass: 0, byRelation: {}, examples: [] };
+    const jobs = difficulties.flatMap(d => seeds.flatMap(seed => Array.from({ length: k }, (_, n) => ({ d, seed, n }))));
+    await pool(jobs, concurrency, async ({ d, seed, n }) => {
+      const t = bed.generate({ seed, split: 'dev', difficulty: d });
+      const rc = await runCompiled({ solvePath: ref.file, task: { prompt: t.prompt, inputs: t.inputs }, modelPort: stubPort('A', []), perTaskUsd: PER_TASK_USD, timeoutMs: TIMEOUT_MS,
+        workdir: path.join(work, `refs-${rung}-${seed}-d${d}-${n}`), outputSchema: bed.outputSchema, allowedModels: MODELS, flowPath: FLOW_V3, label: `m1-refs-${rung}`,
+        flowOverride: path.join(refDir, 'author/author-override.mjs'), flowOverrideData: { answers: table[`${ref.bed}:${seed}:d${d}`] ?? {} },
+        variants: { relations, seed: `m1-refs:${rung}:${seed}:${d}:${n}`, observe: true } });
+      x.runs++;
+      if (rc.status !== 'ok') { log(`(D) ${rung} s${seed} d${d} #${n}: original ${rc.status}`); return; }
+      x.originalOk++;
+      if (bed.oracle(t, rc.output).pass) x.originalPass++;
+      for (const r of rc.meta.variants.results) {
+        const y = x.byRelation[`${r.relation}@${r.distribution}`] ??= { agree: 0, disagree: 0, notOk: 0, skip: 0, error: 0 };
+        if (r.status === 'agree') y.agree++; else if (r.status === 'disagree') y.disagree++; else if (r.status === 'skip') y.skip++; else if (r.status === 'error') y.error++; else y.notOk++;
+        if (r.status !== 'agree' && r.status !== 'skip' && x.examples.length < 10) x.examples.push({ seed, d, n, relation: r.relation, status: r.status, ...(r.deopt ? { deopt: r.deopt } : {}), ...(r.violations ? { violations: r.violations.slice(0, 3) } : {}) });
+      }
+      log(`(D) ${rung} s${seed} d${d} #${n}: ${JSON.stringify(rc.meta.variants.statuses)}`);
+    });
+    out.push(x);
+  }
+  return out;
+}
+
 // ------------------------------------------------------------------------------------------------ CLI
 export function parseArgs(argv) {
-  const o = { runs: DEFAULT_RUNS, experiments: [...DEFAULT_EXPERIMENTS], k: 3, parts: ['archived', 'synthetic', 'witness'], work: null, keep: false, out: null, concurrency: 2, json: false };
+  const o = { runs: DEFAULT_RUNS, experiments: [...DEFAULT_EXPERIMENTS], k: 3, parts: ['archived', 'synthetic', 'witness', 'references'], work: null, keep: false, out: null, concurrency: 2, json: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i], v = argv[i + 1];
     if (a === '--runs') { o.runs = path.resolve(v); i++; } else if (a === '--experiments') { o.experiments = v.split(','); i++; } else if (a === '--k') { o.k = Number(v); i++; }
@@ -259,7 +326,7 @@ export function parseArgs(argv) {
     else throw new Error(`unknown option ${a}`);
   }
   if (!(Number.isInteger(o.k) && o.k >= 1)) throw new Error('--k must be an integer >= 1');
-  for (const p of o.parts) if (!['archived', 'synthetic', 'witness'].includes(p)) throw new Error(`--parts: unknown part ${p}`);
+  for (const p of o.parts) if (!['archived', 'synthetic', 'witness', 'references'].includes(p)) throw new Error(`--parts: unknown part ${p}`);
   return o;
 }
 
@@ -283,12 +350,13 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
     }
     if (o.parts.includes('synthetic')) result.synthetic = await evalSynthetic({ k: 5 });
     if (o.parts.includes('witness')) result.witness = await evalWitness();
+    if (o.parts.includes('references')) result.references = await evalReferences({ work, concurrency: o.concurrency, log: o.json ? () => {} : log });
   } finally { if (!o.keep && !o.work) rmSync(work, { recursive: true, force: true }); }
   if (o.out) { mkdirSync(path.dirname(o.out), { recursive: true }); writeFileSync(o.out, JSON.stringify(result, null, 1) + '\n'); }
   if (o.json) log(JSON.stringify(result, null, 1));
   else {
     if (result.archived) {
-      const line = (e, view, x) => log(`(i) ${e} [${view}]: wrong ${x.wrongFlagged}/${x.wrong} flagged (measurable ${x.wrongMeasurable}, pending ${x.wrongPending}), right ${x.rightFlagged}/${x.rightMeasurable} measurable flagged; recall ${x.recallLowerPct}% (measured ${x.recallMeasuredPct}%, upper ${x.recallUpperPct}%), false alarms ${x.falseAlarmPct}% -> ${x.verdict}`);
+      const line = (e, view, x) => log(`(i) ${e} [${view}]: wrong ${x.wrongFlagged}/${x.wrong} flagged (measurable ${x.wrongMeasurable}, pending ${x.wrongPending}), right ${x.rightFlagged}/${x.rightMeasurable} measurable flagged; recall ${x.recallLowerPct}% (measured ${x.recallMeasuredPct}%, upper ${x.recallUpperPct}%), false alarms ${x.falseAlarmPct}% -> ${x.verdict}; code path only: complete wrong ${x.codePath.wrongComplete}, right ${x.codePath.rightComplete}`);
       for (const [e, r] of [...Object.entries(result.archived.rule), ['pooled', result.archived.pooled]]) {
         for (const view of Object.keys(VIEWS)) line(e, view, r[view]);
         for (const [id, x] of Object.entries(r.byRelation)) line(e, id, x);
@@ -300,9 +368,11 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
       const s = result.synthetic;
       log(`(B) records text solver: right ${s.records.right}/${s.records.tasks}; false alarms ${JSON.stringify(s.records.byRelation)}`);
       const ab = Object.values(s.records.ablations); log(`(B) records ablations: flagged ${ab.reduce((a, x) => a + x.flagged, 0)}/${ab.reduce((a, x) => a + x.wrong, 0)} wrong outputs over ${ab.length} ablations`);
-      log(`(B) kinetics white-box parser d3: right ${s.kinetics.right}/${s.kinetics.tasks}; on right answers ${JSON.stringify(s.kinetics.rightByRelation)}; wrong flagged ${s.kinetics.wrongFlagged}/${s.kinetics.wrong} ${JSON.stringify(s.kinetics.wrongByRelation)}`);
+      for (const [d, x] of Object.entries(s.kinetics.byDifficulty)) log(`(B) kinetics white-box parser ${d}: right ${x.right}/${x.tasks}; on right answers ${JSON.stringify(x.rightByRelation)}; wrong flagged ${x.wrongFlagged}/${x.wrong} (by 'in' relations ${x.wrongFlaggedIn}) ${JSON.stringify(x.wrongByRelation)}`);
+      log(`(B) evidence: ${SYNTHETIC_EVIDENCE}`);
     }
     if (result.witness) for (const w of result.witness) log(`(C) ${w.bed} [${w.primary}]: reference flagged ${w.referenceFlagged}/${w.reference}; bad controls flagged ${w.wrongFlagged}/${w.wrong}`);
+    if (result.references) for (const x of result.references) log(`(D) ${x.rung}: originals ok ${x.originalOk}/${x.runs} (oracle pass ${x.originalPass}); ${JSON.stringify(x.byRelation)}`);
   }
   return result;
 }

@@ -13,10 +13,18 @@
 // Policy (documented choices): a variant that does not run ok (deopt, crash, timeout, invalid, environment fault) is
 // recorded and never counts as a disagreement; a relation that cannot build a variant (skip) is recorded. No model is
 // called here: model calls happen only inside runVariant, through the caller's port.
+// Review fixes (2026-10-14, M1 review): a relation's in/out label may depend on the task (distributionOf, finding 3), so
+// selection and every result use the task's own label; jit.invariance gains `judges` (finding 4: 'replay', the default,
+// serves each variant the original run's answer to every request it repeats unchanged and pays only for the changed ones,
+// which is what the $0 archived replay measures; 'fresh' re-asks every judge) and `mode` (finding 9: 'deopt', the default,
+// as built; 'observe' runs every selected relation and records the result without withholding the compiled answer, for
+// measuring M1 without changing the stream it measures).
 import { createHash } from 'node:crypto';
-import { WITNESS_TAGS } from '../../beds/lib/metamorphic.mjs';
+import { WITNESS_TAGS, distributionOf } from '../../beds/lib/metamorphic.mjs';
 
-export { WITNESS_TAGS };
+export { WITNESS_TAGS, distributionOf };
+export const JUDGES = Object.freeze(['replay', 'fresh']);
+export const MODES = Object.freeze(['deopt', 'observe']);
 export const INVARIANCE_KIND = 'invariance';
 export const DISTRIBUTIONS = Object.freeze(['in', 'out']);
 
@@ -35,22 +43,25 @@ export function validateRelations(list, familyId = '?') {
     if (typeof r.make !== 'function' || typeof r.check !== 'function') throw new Error(`bed ${familyId}: relation ${r.id} needs make() and check()`);
     if (!['invariant', 'transform'].includes(r.kind)) throw new Error(`bed ${familyId}: relation ${r.id} kind must be invariant or transform`);
     if (!DISTRIBUTIONS.includes(r.distribution)) throw new Error(`bed ${familyId}: relation ${r.id} distribution must be in or out`);
+    if (r.distributionOf != null && typeof r.distributionOf !== 'function') throw new Error(`bed ${familyId}: relation ${r.id} distributionOf must be a function of the task`);
   }
   return list;
 }
 
-// jit.invariance (opt-in): { share, seed?, relations?, distribution?, perTask?, relTol? }.
+// jit.invariance (opt-in): { share, seed?, relations?, distribution?, perTask?, relTol?, judges?, mode? }.
 //   share         the probability a compiled ok run is checked, in (0, 1];
 //   seed          the draw seed (default config.seed, else config.experiment; written out, so it is hashed);
 //   relations     relation ids to run (default: every declared one, filtered by distribution);
-//   distribution  'in' (default: only relations whose variants keep the generator's regularities) or 'all';
+//   distribution  'in' (default: only relations whose variants keep the generator's regularities, for this task) or 'all';
 //   perTask       at most this many relations per sampled task, drawn seeded (default: all selected);
-//   relTol        the numeric tolerance handed to the relation's check (default: the relation's own).
+//   relTol        the numeric tolerance handed to the relation's check (default: the relation's own);
+//   judges        'replay' (default) or 'fresh' (above); written out;
+//   mode          'deopt' (default) or 'observe' (above); written out.
 // Absent, null is returned and the normalized config has no key, so no arm hash moves.
 export function invarianceOf(raw, { seedDefault } = {}) {
   if (raw == null) return null;
   if (typeof raw !== 'object' || Array.isArray(raw)) throw new Error('config.jit.invariance must be an object');
-  const KEYS = ['share', 'seed', 'relations', 'distribution', 'perTask', 'relTol'];
+  const KEYS = ['share', 'seed', 'relations', 'distribution', 'perTask', 'relTol', 'judges', 'mode'];
   for (const k of Object.keys(raw)) if (!KEYS.includes(k)) throw new Error(`config.jit.invariance.${k} is not supported (${KEYS.join(', ')})`);
   if (typeof raw.share !== 'number' || !Number.isFinite(raw.share) || !(raw.share > 0) || raw.share > 1) throw new Error('config.jit.invariance.share must be a number in (0, 1]');
   if (raw.seed != null && typeof raw.seed !== 'string' && !Number.isInteger(raw.seed)) throw new Error('config.jit.invariance.seed must be a string or an integer');
@@ -59,14 +70,18 @@ export function invarianceOf(raw, { seedDefault } = {}) {
   if (!['in', 'all'].includes(distribution)) throw new Error("config.jit.invariance.distribution must be 'in' or 'all'");
   if (raw.perTask != null && !(Number.isInteger(raw.perTask) && raw.perTask >= 1)) throw new Error('config.jit.invariance.perTask must be an integer >= 1');
   if (raw.relTol != null && !(typeof raw.relTol === 'number' && raw.relTol >= 0 && raw.relTol <= 0.05)) throw new Error('config.jit.invariance.relTol must be a number in [0, 0.05]');
+  const judges = raw.judges ?? 'replay', mode = raw.mode ?? 'deopt';
+  if (!JUDGES.includes(judges)) throw new Error(`config.jit.invariance.judges must be one of ${JUDGES.join(', ')}`);
+  if (!MODES.includes(mode)) throw new Error(`config.jit.invariance.mode must be one of ${MODES.join(', ')}`);
   return { share: raw.share, seed: String(raw.seed ?? seedDefault), ...(raw.relations ? { relations: [...raw.relations] } : {}), distribution,
-    ...(raw.perTask != null ? { perTask: raw.perTask } : {}), ...(raw.relTol != null ? { relTol: raw.relTol } : {}) };
+    ...(raw.perTask != null ? { perTask: raw.perTask } : {}), ...(raw.relTol != null ? { relTol: raw.relTol } : {}), judges, mode };
 }
 
-// The relations a sampled task runs: by id (in the order declared), else by distribution; then at most perTask, drawn with
-// the task's own seed so a replay picks the same ones.
-export function selectRelations(relations, { ids = null, distribution = 'in', perTask = null, seed = '', idx = 0 } = {}) {
-  let list = ids ? relations.filter(r => ids.includes(r.id)) : relations.filter(r => distribution === 'all' || r.distribution === distribution);
+// The relations a sampled task runs: by id (in the order declared), else by distribution (the task's own label when the
+// task is given, distributionOf; else the static one); then at most perTask, drawn with the task's own seed so a replay
+// picks the same ones.
+export function selectRelations(relations, { ids = null, distribution = 'in', perTask = null, seed = '', idx = 0, task = null } = {}) {
+  let list = ids ? relations.filter(r => ids.includes(r.id)) : relations.filter(r => distribution === 'all' || distributionOf(r, task) === distribution);
   if (ids) { const missing = ids.filter(id => !relations.some(r => r.id === id)); if (missing.length) throw new Error(`invariance: unknown relation ${missing.join(', ')}`); }
   if (perTask != null && list.length > perTask) {
     const key = r => createHash('sha256').update(`${seed}:${idx}:${r.id}:pick`).digest('hex');
@@ -90,7 +105,10 @@ export async function runVariants({ relations, task, output, seed, runVariant, c
     if (!made || made.skip) { results.push({ relation: rel.id, status: 'skip', reason: made?.skip ?? 'no variant' }); continue; }
     const run = await runVariant(made.task, rel);
     costUsd += run?.costUsd ?? 0; costUnknown ||= !!run?.costUnknown;
-    const base = { relation: rel.id, distribution: rel.distribution, info: made.info ?? null, costUsd: run?.costUsd ?? 0 };
+    // memo: the variant's model requests, how many the original's answers served and how many went live (judges 'replay').
+    const mm = run?.meta?.memo;
+    const base = { relation: rel.id, distribution: distributionOf(rel, task), info: made.info ?? null, costUsd: run?.costUsd ?? 0, ...(run?.costUnknown ? { costUnknown: true } : {}),
+      ...(mm ? { memo: { requests: mm.requests, served: (mm.hits ?? 0) + (mm.reused ?? 0), live: mm.live } } : {}) };
     if (run?.status !== 'ok') {
       results.push({ ...base, status: `variant-${run?.status ?? 'missing'}`, ...(run?.deopt ? { deopt: { kind: run.deopt.kind ?? null, name: run.deopt.name ?? null } } : {}), ...(run?.error?.code ? { error: run.error.code } : {}) });
       continue;
@@ -106,6 +124,11 @@ export async function runVariants({ relations, task, output, seed, runVariant, c
 }
 
 // A compact view of a runVariants result for an event or a row (no outputs).
-export const invarianceSummary = v => ({ ran: v.results.filter(r => r.status === 'agree' || r.status === 'disagree').length, relations: v.results.map(r => r.relation),
-  statuses: Object.fromEntries(v.results.map(r => [r.relation, r.status])), violated: v.violated?.relation ?? null, costUsd: Math.round(v.costUsd * 1e6) / 1e6,
-  ...(v.violated ? { levels: [...new Set(v.violated.violations.map(x => x.level))] } : {}) });
+// liveRequests: the variants' model requests that went live (judges 'replay'; absent when no variant reported a memo).
+export const invarianceSummary = v => {
+  const memo = v.results.filter(r => r.memo);
+  return { ran: v.results.filter(r => r.status === 'agree' || r.status === 'disagree').length, relations: v.results.map(r => r.relation),
+    statuses: Object.fromEntries(v.results.map(r => [r.relation, r.status])), violated: v.violated?.relation ?? null, costUsd: Math.round(v.costUsd * 1e6) / 1e6,
+    ...(v.costUnknown ? { costUnknown: true } : {}), ...(memo.length ? { liveRequests: memo.reduce((a, r) => a + (r.memo.live ?? 0), 0) } : {}),
+    ...(v.violated ? { levels: [...new Set(v.violated.violations.map(x => x.level))] } : {}) };
+};

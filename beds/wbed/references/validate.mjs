@@ -7,6 +7,9 @@
 //        [--concurrency 2] [--work <dir>] [--out <file.json>] [--labels]   (--labels: also compare with referenceSolve)
 //   Policy 'author' (author fixtures 373-378 only): judges answered from author/fixture-answers.json through the flow-v3
 //   override hook (author/author-override.mjs); it checks the code given correct readings, not a model.
+//   Policy 'world' (any dev seed; analyst side, added by the 2026-10-14 review fixes): judges answered from the generator
+//   world (analyst/world-readings.mjs, served by analyst/world-override.mjs for R1 and author/author-override.mjs for R3).
+//   It measures the frozen code on seeds the author never saw, given correct readings; it is never evidence about judges.
 import path from 'node:path';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import os from 'node:os';
@@ -49,12 +52,16 @@ export async function runOne({ rung, seed, difficulty, policy, work, labels = fa
     if (!file) throw new Error('policy author is for the author fixtures (373-378) and the validation seeds (301-312) only');
     const table = JSON.parse(readFileSync(path.join(HERE, file), 'utf8'));
     author = { flowOverride: path.join(HERE, 'author/author-override.mjs'), flowOverrideData: { answers: table[`${ref.bed}:${seed}:d${difficulty}`] ?? {}, ...(flip ? { flip } : {}) } };
+  } else if (policy === 'world') {
+    if (flip) throw new Error('--flip is for the author policy only');
+    const { readingsFor } = await import('./analyst/world-readings.mjs');
+    author = { flowOverride: path.join(HERE, rung === 'r1' ? 'analyst/world-override.mjs' : 'author/author-override.mjs'), flowOverrideData: await readingsFor(rung, seed, difficulty, 'dev') };
   }
   const task = bed.generate({ seed, split: 'dev', difficulty });
   const workdir = path.join(work, `${rung}-${seed}-d${difficulty}-${policy}${flip ? `-flip-${flip}` : ''}`);
   rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
   const log = [];
-  const rc = await runCompiled({ solvePath: ref.file, task: { prompt: task.prompt, inputs: task.inputs, ...(task.files ? { files: task.files } : {}) }, modelPort: stubPort(policy === 'author' ? 'A' : policy, log),
+  const rc = await runCompiled({ solvePath: ref.file, task: { prompt: task.prompt, inputs: task.inputs, ...(task.files ? { files: task.files } : {}) }, modelPort: stubPort(policy === 'author' || policy === 'world' ? 'A' : policy, log),
     perTaskUsd: PER_TASK_USD, timeoutMs: TIMEOUT_MS, workdir, outputSchema: bed.outputSchema, allowedModels: MODELS, flowPath: FLOW_V3, label: `wbed-ref-${rung}-${seed}-${difficulty}-${policy}`, ...author });
   let pass = false, score = 0;
   if (rc.status === 'ok') { const o = bed.oracle(task, rc.output); pass = !!o.pass; score = typeof o.score === 'number' ? o.score : 0; }
@@ -122,6 +129,7 @@ export function summarize(rows) {
     judgeDependent: tasks.filter(t => t.judgeDependent).length,
     passUnderSomeStub: tasks.filter(t => t.pass.A || t.pass.B).length,
     ...(policies.includes('author') ? { passWithAuthorReadings: tasks.filter(t => t.pass.author).length } : {}),
+    ...(policies.includes('world') ? { passWithWorldReadings: tasks.filter(t => t.pass.world).length } : {}),
     tasksDetail: tasks,
   };
 }

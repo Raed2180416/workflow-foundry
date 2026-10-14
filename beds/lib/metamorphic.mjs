@@ -14,8 +14,40 @@
 // generated task has but no task states as a rule (a listing order): it also flags a solver that leans on that regularity
 // while its answer is right (equivalence modulo inputs keeps variants inside the profiled inputs; an 'out' relation does
 // not). 'in' variants keep every such regularity the bed author knows of.
+//
+// Review fix (2026-10-14, M1 review finding 3): the label is audited, not argued. Each bed exports `regularities`, the
+// listing and numbering regularities its generator gives every task: [{ id, text, holds(task, { original }) -> boolean }]
+// (`original`, when given, is the task a variant was made from, for a regularity stated relative to it, such as an order the
+// generator fixes). beds/lib/metamorphic.test.mjs checks that every regularity holds on every generated dev task of a panel,
+// that every variant a relation labels 'in' for its task keeps all of them, and that every relation labelled 'out' breaks one
+// on the panel. One known exception is allowed for 'in': a cardinality the task's prompt states (the row or statement count,
+// a fixed knob per difficulty), which a transform relation cannot keep and restates truthfully in the variant's prompt; a
+// profile guard that pins the count sees such a variant as off-profile, and the variant then does not run ok (recorded,
+// never a disagreement). A relation whose label depends on the task (the generator shuffles some lists only at some
+// difficulties) also declares distributionOf(task) -> 'in' | 'out'; its static `distribution` is the label when no task is
+// known and must be the conservative one ('out').
 import { rng } from './rng.mjs';
 import { canonical } from './canonical.mjs';
+
+// The label of a relation for one task (distributionOf above, else the static label).
+export const distributionOf = (rel, task) => (typeof rel?.distributionOf === 'function' && task ? rel.distributionOf(task) : rel?.distribution);
+// The ids of the regularities a task breaks (original: the task it was made from, for the relative ones).
+export function brokenRegularities(regularities, task, original = null) {
+  return (regularities ?? []).filter(r => !r.holds(task, { original })).map(r => r.id);
+}
+// Lines of `lines` that are also lines of `original` appear in the original's relative order (lines the variant added are
+// ignored, lines it dropped are allowed): the regularity of a list the generator sorts by a key the lines print in several
+// formats (dates in R1's billing systems).
+export function keepsRelativeOrder(original, lines) {
+  const pos = new Map();
+  original.forEach((l, i) => { if (!pos.has(l)) pos.set(l, i); });
+  let last = -1;
+  for (const l of lines) { if (!pos.has(l)) continue; const p = pos.get(l); if (p < last) return false; last = p; }
+  return true;
+}
+// No two lines are equal once their first number (the row id) is masked.
+export const distinctModuloRowId = lines => new Set(lines.map(l => l.replace(/\d+/, '#'))).size === lines.length;
+export const ascending = xs => xs.every((x, i) => i === 0 || xs[i - 1] < x);
 
 // Witness tags (M1 b). A witness is a structure that code can check without the oracle:
 //   hash-total     the input carries control totals (counts, sums, text hash totals) the output must reproduce;

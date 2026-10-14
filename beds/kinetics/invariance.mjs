@@ -12,14 +12,24 @@
 //                      part B; d3 s201 is pinned in beds/lib/metamorphic.test.mjs).
 //   shuffle-series     whole plate rows move, each keeping its left-to-right order (details at seriesKeyOf below), so the
 //                      generator's listing regularity is kept; distribution 'in'.
-//   shuffle-documents  documents carry their own ids, authors and dates; the SOP in force is named by revision and status,
-//                      and "the raw export value is the one used" names a document kind. The generator's document order
-//                      is random (a chat may precede a notebook), so this stays in distribution. It is not in ATTACK M1's
-//                      list; it is added as the order probe for "which source wins" logic (the white-box parser applies a
-//                      tube-swap correction only to wells it has already read: d3 s218).
+//   shuffle-documents  documents carry their own authors and dates; the SOP in force is named by revision and status,
+//                      and "the raw export value is the one used" names a document kind. It is not in ATTACK M1's list; it is
+//                      added as the order probe for "which source wins" logic (the white-box parser applies a tube-swap
+//                      correction only to wells it has already read: d3 s218). Review fix (2026-10-14, M1 review finding 3):
+//                      the generator shuffles the documents only at d >= 4 (render.mjs:863; at d2 and d3 every task has the
+//                      same document order) and always numbers them by position (render.mjs:864, doc_id D1..Dn; no text
+//                      names a doc_id, the ids are assigned after the texts). So the variant renumbers doc_id by its new
+//                      position, and its label depends on the task: 'in' at d >= 4, 'out' below (distributionOf; the static
+//                      label is 'out'). Built as 'in' at every difficulty, with the old ids kept.
+// Regularities (`regularities`, audited by beds/lib/metamorphic.test.mjs): doc_id is D<position>; at d <= 3 the documents are
+// in the generator's fixed order; inside every table each plate row's study wells are listed left to right (blank wells
+// aside) and a grouped sheet lists [S] ascending (2,520 of 2,520 generated documents, dev 201-260 d2-d5).
 // Comparison: the exclusion set exactly, every condition's vmax and km within opts.relTol (default 1e-6: a correct solver
 // that fits the same points in another order differs only by rounding; the grading tolerance is 10%).
 import { rngOf, permute, shuffleRuns, variantTask, compareKeyed, numClose, shapeViolation, capped, witnessDescriptor } from '../lib/metamorphic.mjs';
+
+// The generator shuffles inputs.documents only from this difficulty on (render.mjs:863).
+export const DOCS_SHUFFLED_FROM = 4;
 
 const ID = /\b[A-Z]{2,4}-\d{2,4}\b/;
 // The table-row class of a document line, or null: markdown tables, CSV and semicolon exports, reader exports (well, then
@@ -149,16 +159,60 @@ export const invariance = Object.freeze([
     check: (orig, variant, info, opts = {}) => compareKinetics(orig, variant, opts),
   },
   {
-    id: 'shuffle-documents', kind: 'invariant', distribution: 'in',
-    text: 'Permute the order of inputs.documents (seeded). Documents carry their own ids, authors and dates, so the answer is unchanged.',
+    id: 'shuffle-documents', kind: 'invariant', distribution: 'out',
+    distributionOf: task => (Number(task?.difficulty) >= DOCS_SHUFFLED_FROM ? 'in' : 'out'),
+    text: 'Permute the order of inputs.documents and renumber doc_id by position, as the generator does (seeded). Documents carry their own authors and dates, so the answer is unchanged.',
     make(task, { seed }) {
       const docs = documentsOf(task);
       if (docs.length < 2) return { skip: 'fewer than two documents' };
-      const documents = permute(docs, rngOf(seed, 'kinetics', 'shuffle-documents'));
-      return { task: variantTask(task, { inputs: { ...task.inputs, documents } }), info: { order: documents.map(d => d?.doc_id ?? null) } };
+      const moved = permute(docs, rngOf(seed, 'kinetics', 'shuffle-documents'));
+      const documents = moved.map((d, i) => (d && typeof d === 'object' && 'doc_id' in d ? { ...d, doc_id: `D${i + 1}` } : d));
+      return { task: variantTask(task, { inputs: { ...task.inputs, documents } }), info: { order: moved.map(d => d?.doc_id ?? null) } };
     },
     check: (orig, variant, info, opts = {}) => compareKinetics(orig, variant, opts),
   },
+]);
+
+// ---- the generator's listing regularities ('in' variants keep them; beds/lib/metamorphic.mjs) ----
+const docKey = d => `${d?.kind ?? ''}\u0000${d?.title ?? ''}\u0000${d?.author ?? ''}\u0000${d?.date ?? ''}`;
+// A study well of a table row (blank wells, BLK-, aside): its series key and column; null when the line prints none.
+function wellOf(line, cls) {
+  if (/\bBLK-\d+/.test(line)) return null;
+  let m;
+  if (cls === 'delim') { const f = line.split(/[,;]/); m = /^([A-P])(\d{1,2})$/.exec(f[2] ?? ''); return m ? { key: `${f[1]}:${m[1]}`, col: Number(m[2]) } : null; }
+  if (cls === 'raw') { m = line.match(/^(\d{1,2})\s+([A-P])(\d{1,2})\s/); return m ? { key: `${m[1]}:${m[2]}`, col: Number(m[3]) } : null; }
+  if (cls === 'reader') { m = line.match(/^([A-P])(\d{2})\s/); return m ? { key: m[1], col: Number(m[2]) } : null; }
+  if (cls === 'pipe') { m = line.match(/^\|[^|]*\|\s*([A-P])(\d{1,2})\s*\|/); return m ? { key: m[1], col: Number(m[2]) } : null; }
+  return null;
+}
+const concOf = line => { const m = line.match(/^ {2}\[S\] = ([\d.]+(?:[eE][+-]?\d+)?)(?:×10\^(-?\d+))?/); return m ? Number(m[1]) * 10 ** Number(m[2] ?? 0) : null; };
+// Inside every run of table rows: each series' study wells left to right; a grouped sheet's [S] ascending.
+export function wellsInOrder(text) {
+  const lines = String(text ?? '').split('\n');
+  for (let i = 0; i < lines.length;) {
+    const c = rowClassOf(lines[i]);
+    if (!c) { i++; continue; }
+    let j = i;
+    while (j + 1 < lines.length && rowClassOf(lines[j + 1]) === c) j++;
+    if (c === 'grouped') {
+      const xs = lines.slice(i, j + 1).map(concOf).filter(x => x != null);
+      if (!xs.every((x, k) => k === 0 || xs[k - 1] <= x)) return false;
+    } else {
+      const last = new Map();
+      for (let k = i; k <= j; k++) { const w = wellOf(lines[k], c); if (!w) continue; if (last.has(w.key) && last.get(w.key) > w.col) return false; last.set(w.key, w.col); }
+    }
+    i = j + 1;
+  }
+  return true;
+}
+export const regularities = Object.freeze([
+  { id: 'doc-ids-positional', text: 'inputs.documents[i].doc_id is D<i+1> (render.mjs:864)',
+    holds: task => documentsOf(task).every((d, i) => d?.doc_id === `D${i + 1}`) },
+  { id: 'doc-order-fixed-below-d4', text: 'at d <= 3 the documents are in the generator\'s fixed order (render.mjs:863): a variant keeps its original\'s',
+    holds: (task, { original } = {}) => !original || Number(task?.difficulty) >= DOCS_SHUFFLED_FROM
+      || documentsOf(task).map(docKey).join('\u0001') === documentsOf(original).map(docKey).join('\u0001') },
+  { id: 'wells-left-to-right', text: 'inside every table each plate row\'s study wells are listed left to right (blank wells aside); a grouped sheet lists [S] ascending',
+    holds: task => documentsOf(task).every(d => typeof d?.text !== 'string' || wellsInOrder(d.text)) },
 ]);
 
 // Witness (M1 b): the exclusion set, an exact discrete part of every answer (13 of 13 wrong Stage B answers and 2 of 2 in the

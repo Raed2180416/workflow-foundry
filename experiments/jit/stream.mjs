@@ -139,6 +139,11 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //     a JIT arm with the option carry invarianceDraw on compiled runs and, when sampled, invariance (the summary); an
 //     invariance deopt row also records compiledPass, the oracle on the compiled answer it withheld (experimenter's view,
 //     never read by the JIT state). Not with library (call-host runs are not wired). Set, it defines a new JIT arm.
+//     Review fixes (2026-10-14, M1 review): the relation's in/out label is the task's own (selectRelations gets the
+//     task); judges 'replay' (default) serves each variant the original run's answers to unchanged requests, 'fresh'
+//     re-asks them; mode 'observe' records disagreements without deopting (no fallback, no recompile, no refusal: the stream
+//     measured is the stream without M1), 'deopt' (default) as built; the variants of a task share one gateway budget of
+//     perTaskUsd; an unknown variant spend is booked on the 'invariance' line and the original's on 'compiled'.
 
 const sha = s => createHash('sha256').update(s).digest('hex');
 // The shadow-floor draw for task idx: u in [0, 1) from sha256(`${seed}:${idx}:shadow`) (52 bits), so a resume or a replay
@@ -146,7 +151,9 @@ const sha = s => createHash('sha256').update(s).digest('hex');
 export const shadowDrawOf = (seed, idx) => parseInt(sha(`${seed}:${idx}:shadow`).slice(0, 13), 16) / 2 ** 52;
 // ATTACK M1: the variants' record on an event or a row (run-compiled meta.variants without outputs).
 const invarianceView = m => (m.skipped ? { skipped: m.skipped } : { ran: m.ran, relations: m.relations, statuses: m.statuses, violated: m.violated, costUsd: round(m.costUsd ?? 0),
-  ...(m.levels ? { levels: m.levels } : {}) });
+  ...(m.levels ? { levels: m.levels } : {}), ...(m.costUnknown ? { costUnknown: true } : {}), ...(m.liveRequests != null ? { liveRequests: m.liveRequests } : {}),
+  ...(m.observe ? { observe: true } : {}),
+  ...(Array.isArray(m.results) ? { distributions: Object.fromEntries(m.results.filter(r => r.distribution).map(r => [r.relation, r.distribution])) } : {}) });
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []);
 const round = x => Math.round(x * 1e6) / 1e6;
 const uniq = xs => [...new Set(xs)];
@@ -854,10 +861,11 @@ class ArmRun {
         workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: lib?.allowed ?? this.arm.models, label,
         ...(this.flowPath ? { flowPath: this.flowPath } : {}), ...(lib ? { ledger: lib.ledger, resume: attempt > 0 && prior ? prior : true } : {}), ...(variants ? { variants } : {}) });
       if (lib) { rc.calls = lib.done({ version, attempt }); prior = rc.meta?.resume?.rows ?? null; }
-      // ATTACK M1: the variants' spend is booked apart from the compiled run's (rc.costUsd holds both).
-      const variantUsd = variants ? rc.meta?.variants?.costUsd ?? 0 : 0;
-      tr.spend('compiled', (rc.costUsd ?? 0) - variantUsd, rc.costUnknown);
-      if (variantUsd) tr.spend('invariance', variantUsd, false);
+      // ATTACK M1: the variants' spend is booked apart from the compiled run's (rc.costUsd holds both), each line with its
+      // own unknown flag (review finding 8).
+      const mv = variants ? rc.meta?.variants ?? null : null, variantUsd = mv?.costUsd ?? 0;
+      tr.spend('compiled', (rc.costUsd ?? 0) - variantUsd, mv && typeof mv.originalCostUnknown === 'boolean' ? mv.originalCostUnknown : rc.costUnknown);
+      if (variantUsd || mv?.costUnknown) tr.spend('invariance', variantUsd, !!mv?.costUnknown);
       tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null,
         ...(rc.flags?.count ? { flags: rc.flags.count } : {}), ...(rc.meta?.memo ? { memo: { requests: rc.meta.memo.requests, hits: rc.meta.memo.hits, reused: rc.meta.memo.reused, live: rc.meta.memo.live } } : {}),
         ...(rc.calls ? { calls: rc.calls } : {}), ...(rc.meta?.resume?.stats?.served ? { resumed: rc.meta.resume.stats.served } : {}),
@@ -909,8 +917,9 @@ class JitRun extends ArmRun {
   async variantsFor(t) {
     const I = this.config.jit.invariance;
     if (!I || !(invarianceDrawOf(I.seed, t.idx) < I.share)) return null;
-    const relations = selectRelations(await this.invarianceRelations(), { ids: I.relations ?? null, distribution: I.distribution, perTask: I.perTask ?? null, seed: I.seed, idx: t.idx });
-    return relations.length ? { relations, seed: `${I.seed}:${t.idx}`, compare: I.relTol != null ? { relTol: I.relTol } : {} } : null;
+    const relations = selectRelations(await this.invarianceRelations(), { ids: I.relations ?? null, distribution: I.distribution, perTask: I.perTask ?? null, seed: I.seed, idx: t.idx, task: t.task });
+    return relations.length ? { relations, seed: `${I.seed}:${t.idx}`, compare: I.relTol != null ? { relTol: I.relTol } : {}, judges: I.judges ?? 'replay',
+      ...(I.mode === 'observe' ? { observe: true } : {}) } : null;
   }
 
   // ---- slice 2a: the arm's library (config.library) ----

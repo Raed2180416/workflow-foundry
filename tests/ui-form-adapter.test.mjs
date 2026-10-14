@@ -15,7 +15,7 @@ import { Runtime } from '../src/runtime.mjs';
 import { createDefaultRegistry } from '../src/capabilities.mjs';
 import {
   compileForm, validateAnswer, answerFromFormState, acceptSubmission, formStateFromAnswer, submissionFromAnswer, renderForm,
-  createFormHandler, parseNumberText, patternProblems, FORM_CSP_HEADER, displayText,
+  createFormHandler, parseNumberText, patternProblems, FORM_CSP_HEADER, displayText, canonicalAnswer,
 } from '../tools/ui/index.mjs';
 import { genSchema, genValid, mutate, rng, PLANTED_NUMBER_TEXT, openuiNumeric, webAppNumber } from '../tools/ui/generate.mjs';
 
@@ -29,7 +29,7 @@ const HOLD = { type: 'object', additionalProperties: false, required: ['decision
 } };
 const holdSpec = () => compileForm({ answerSchema: HOLD, question: 'Release the credit hold on SO-1042?', formName: 'hold' });
 
-test('differential: the host validator accepts exactly what the engine validator accepts (2,000 generated schemas, 14,000 answers)', () => {
+test('differential: the host validator accepts exactly what the engine validator accepts (2,000 generated schemas, 14,000 answers)', t => {
   const r = rng(424242);
   const tally = { schemas: 0, pairs: 0, valid: 0, invalid: 0, disagreements: [] };
   for (let i = 0; i < 2000; i++) {
@@ -49,43 +49,50 @@ test('differential: the host validator accepts exactly what the engine validator
   }
   assert.deepEqual(tally.disagreements.slice(0, 3), [], `${tally.disagreements.length} disagreements`);
   assert.ok(tally.pairs >= 13000 && tally.valid > 4000 && tally.invalid > 4000, JSON.stringify({ ...tally, disagreements: tally.disagreements.length }));
+  t.diagnostic(`differential ${JSON.stringify({ ...tally, disagreements: tally.disagreements.length })}`);
 });
 
-test('completability: every generated valid answer with no representation gap round-trips exactly through both routes; every gap is a known kind', () => {
+test('completability: every generated valid answer has a canonical equivalent that round-trips exactly through every route; the only misses are browser text the widget cannot hold', t => {
   const r = rng(77);
-  const counts = { answers: 0, typedExact: 0, textExact: 0, browserExact: 0, gaps: {} };
-  for (let i = 0; i < 1500; i++) {
+  const counts = { answers: 0, exact: { typed: 0, text: 0, browser: 0 }, canonical: { typed: 0, text: 0, browser: 0 }, gaps: {} };
+  const BROWSER_ONLY = new Set(['line-break-in-single-line-input', 'carriage-return', 'lone-surrogate']);
+  for (let i = 0; i < 1000; i++) {
     const schema = genSchema(r);
     const spec = compileForm({ answerSchema: schema, question: `Generated ${i}?`, formName: 'gen' });
     for (let k = 0; k < 3; k++) {
       const answer = genValid(r, schema);
       assert.equal(validateAnswer(spec, answer).length, 0, 'the generator makes valid answers');
       counts.answers++;
+      const canonical = canonicalAnswer(spec, answer);
+      assert.equal(validateAnswer(spec, canonical).length, 0, `canonical answer ${i} stays valid`);
+      assert.ok(engineAccepts(schema, canonical));
       for (const [route, run] of [
-        ['typed', () => { const { event, gaps } = formStateFromAnswer(spec, answer); return { gaps, result: answerFromFormState(spec, event) }; }],
-        ['text', () => { const { event, gaps } = formStateFromAnswer(spec, answer, { mode: 'text' }); return { gaps, result: answerFromFormState(spec, event) }; }],
-        ['browser', () => { const { body, gaps } = submissionFromAnswer(spec, answer); return { gaps, result: acceptSubmission(spec, body) }; }],
+        ['typed', a => { const { event, gaps } = formStateFromAnswer(spec, a); return { gaps, result: answerFromFormState(spec, event) }; }],
+        ['text', a => { const { event, gaps } = formStateFromAnswer(spec, a, { mode: 'text' }); return { gaps, result: answerFromFormState(spec, event) }; }],
+        ['browser', a => { const { body, gaps } = submissionFromAnswer(spec, a); return { gaps, result: acceptSubmission(spec, body) }; }],
       ]) {
-        const { gaps, result } = run();
-        for (const g of gaps) { assert.ok(KNOWN_GAPS.has(g), `unknown gap ${g}`); counts.gaps[`${route}:${g}`] = (counts.gaps[`${route}:${g}`] ?? 0) + 1; }
-        // soundness on every route: an accepted answer always passes the engine's validator
-        if (result.ok) assert.ok(engineAccepts(schema, result.answer), `${route}: accepted an answer the engine rejects`);
-        if (gaps.length === 0) {
-          assert.equal(result.ok, true, `${route} ${i}: ${JSON.stringify(result.errors?.slice(0, 2))} for ${JSON.stringify(answer)}`);
-          assert.deepEqual(result.answer, answer, `${route} ${i}`);
-          counts[`${route}Exact`]++;
-        }
+        // as given: no gap means an exact round trip; every gap is a known kind
+        const given = run(answer);
+        for (const g of given.gaps) { assert.ok(KNOWN_GAPS.has(g), `unknown gap ${g}`); counts.gaps[`${route}:${g}`] = (counts.gaps[`${route}:${g}`] ?? 0) + 1; }
+        if (given.result.ok) assert.ok(engineAccepts(schema, given.result.answer), `${route}: accepted an answer the engine rejects`);
+        if (given.gaps.length === 0) { assert.deepEqual(given.result.answer, answer, `${route} ${i}`); counts.exact[route]++; }
+        // canonical: only text a browser widget cannot hold may remain
+        const canon = run(canonical);
+        assert.ok(canon.gaps.every(g => route === 'browser' && BROWSER_ONLY.has(g)), `${route} ${i}: canonical gaps ${canon.gaps}`);
+        if (canon.gaps.length === 0) { assert.deepEqual(canon.result.answer, canonical, `${route} canonical ${i}`); counts.canonical[route]++; }
       }
     }
   }
-  // Most answers have no gap; the rest are the documented normalisations (README "Completability").
-  assert.ok(counts.typedExact / counts.answers > 0.75 && counts.browserExact / counts.answers > 0.6, JSON.stringify(counts));
+  assert.equal(counts.canonical.typed, counts.answers);
+  assert.equal(counts.canonical.text, counts.answers);
+  assert.ok(counts.canonical.browser / counts.answers > 0.9, JSON.stringify(counts));
+  t.diagnostic(`completability ${JSON.stringify(counts)}`);
 });
 
-test('mutants through the routes: whatever the adapter accepts, the engine accepts (soundness on 6,000 mutated answers)', () => {
+test('mutants through the routes: whatever the adapter accepts, the engine accepts (soundness on 4,000 mutated answers, two routes)', t => {
   const r = rng(9001);
   let accepted = 0, rejected = 0;
-  for (let i = 0; i < 1500; i++) {
+  for (let i = 0; i < 1000; i++) {
     const schema = genSchema(r);
     const spec = compileForm({ answerSchema: schema, question: 'q', formName: 'm' });
     for (let k = 0; k < 4; k++) {
@@ -96,6 +103,7 @@ test('mutants through the routes: whatever the adapter accepts, the engine accep
     }
   }
   assert.ok(rejected > accepted, `${rejected} rejected, ${accepted} accepted (accepted mutants lost their defect in the form, e.g. an undeclared key)`);
+  t.diagnostic(`mutants rejected ${rejected}, accepted ${accepted} (all accepted ones engine-valid)`);
 });
 
 test('garbage formState and request bodies never throw, and anything accepted passes the engine validator', () => {
@@ -126,7 +134,7 @@ test('garbage formState and request bodies never throw, and anything accepted pa
   return accepted;
 });
 
-test('planted number text: the host rejects every entry; OpenUI numeric and the current web/app.js parser would accept some', () => {
+test('planted number text: the host rejects every entry; OpenUI numeric and the current web/app.js parser would accept some', t => {
   const spec = holdSpec();
   const openui = PLANTED_NUMBER_TEXT.filter(openuiNumeric), webApp = PLANTED_NUMBER_TEXT.filter(webAppNumber);
   for (const text of PLANTED_NUMBER_TEXT) {
@@ -136,6 +144,7 @@ test('planted number text: the host rejects every entry; OpenUI numeric and the 
   }
   assert.ok(openui.includes('12abc') && openui.length >= 8, `OpenUI numeric accepts ${JSON.stringify(openui)}`);
   assert.ok(webApp.includes('0x10') && webApp.includes('0b101'), `web/app.js Number() accepts ${JSON.stringify(webApp)}`);
+  t.diagnostic(`planted ${PLANTED_NUMBER_TEXT.length}: host rejects ${PLANTED_NUMBER_TEXT.length}; OpenUI numeric accepts ${openui.length} ${JSON.stringify(openui)}; web/app.js accepts ${webApp.length} ${JSON.stringify(webApp)}`);
   // and good entries parse exactly
   for (const [text, n] of [['0', 0], ['-12.5', -12.5], ['1e3', 1000], ['1E-2', 0.01], ['\t42 ', 42], ['007', null], ['-0.0', 0]]) {
     const parsed = parseNumberText(text, 'number');

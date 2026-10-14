@@ -8,12 +8,17 @@
 //   duplicate-row   a copy of one customer row under a fresh row id that no list mentions, of a customer with two or more
 //       rows (or a row the report leaves out): it links to its original by the same identity rule (records' argument,
 //       beds/records/invariance.mjs), no invoice is booked to it, so the customer gains the new id in source_rows and
-//       every amount stays. distribution 'in'.
+//       every amount stays. distribution 'out' (review fix 2026-10-14): no generated customer export has two lines that are
+//       equal once the row id is masked (0 of 120 tasks, dev 201-240 d3-d5), and the copy is one. Built as 'in'.
 //   drop-idle-singleton  remove the only row of a customer the report lists with one row and nothing invoiced or paid:
 //       an invoice booked to it did not count before (nothing invoiced) and cannot count after (s.3 c), so no payment
-//       moves (s.4); the report loses exactly that customer. distribution 'in'.
+//       moves (s.4); the report loses exactly that customer. distribution 'in': row ids are sparse, so the gap is in
+//       distribution; the row count (a fixed knob per difficulty) is the stated exception and the prompt restates it.
+// Regularities (`regularities`, audited by beds/lib/metamorphic.test.mjs): customer rows in ascending row id; invoices
+// (by system, then date) and bank events (by date) in the generator's order (world.mjs:264-265); no two customer lines equal
+// once the row id is masked.
 // Comparison: customers keyed by customer_id (source rows as a set, the three amounts exactly) and the totals exactly.
-import { rngOf, permute, variantTask, compareKeyed, sameValue, sortedInts, shapeViolation, capped, witnessDescriptor } from '../../lib/metamorphic.mjs';
+import { rngOf, permute, variantTask, compareKeyed, sameValue, sortedInts, shapeViolation, capped, witnessDescriptor, ascending, distinctModuloRowId, keepsRelativeOrder } from '../../lib/metamorphic.mjs';
 
 const AMOUNTS = ['invoiced_usd_cents', 'paid_usd_cents', 'open_usd_cents'];
 const TOTALS = ['customers', 'invoiced_usd_cents', 'paid_usd_cents', 'open_usd_cents'];
@@ -88,7 +93,7 @@ export const invariance = Object.freeze([
     check: (orig, variant) => compareReports(orig, variant),
   },
   {
-    id: 'duplicate-row', kind: 'transform', distribution: 'in', needsOutput: true,
+    id: 'duplicate-row', kind: 'transform', distribution: 'out', needsOutput: true,
     text: 'Copy one customer row (of a customer with two or more rows, or a row the report leaves out) under a fresh row id no list mentions (seeded). The customer gains the new id in source_rows; every amount stays.',
     make(task, { seed, output }) {
       const lines = nonEmpty(task.inputs?.customer_export), ids = lines.map(rowIdOf);
@@ -131,6 +136,19 @@ export const invariance = Object.freeze([
       return compareReports(removeCustomerTotals(orig, info.customer), variant);
     },
   },
+]);
+
+// The generator's listing regularities ('in' variants keep them; beds/lib/metamorphic.mjs). Invoice and bank lines print
+// their dates in each system's own format, so their order is checked against the original task (world.mjs:264-265 sorts them).
+const listLines = text => nonEmpty(text);
+export const regularities = Object.freeze([
+  { id: 'customer-rows-by-id', text: 'customer export lines in ascending row id', holds: task => ascending(nonEmpty(task.inputs?.customer_export).map(rowIdOf)) },
+  { id: 'invoices-in-generator-order', text: 'each billing system\'s invoice lines keep the generator\'s date order (world.mjs:265): a variant keeps its original\'s',
+    holds: (task, { original } = {}) => !original || Object.entries(task.inputs?.invoices ?? {}).every(([sys, text]) => keepsRelativeOrder(listLines(original.inputs?.invoices?.[sys]), listLines(text))) },
+  { id: 'bank-feed-in-generator-order', text: 'bank events keep the generator\'s date order (world.mjs:264): a variant keeps its original\'s',
+    holds: (task, { original } = {}) => !original || keepsRelativeOrder(listLines(original.inputs?.payments), listLines(task.inputs?.payments)) },
+  { id: 'no-exact-duplicate', text: 'no two customer export lines are equal once the row id is masked (0 of 120 generated tasks have one)',
+    holds: task => distinctModuloRowId(nonEmpty(task.inputs?.customer_export)) },
 ]);
 
 // Witness (M1 b): conservation over the report itself (open = invoiced - paid; the totals are the sums and the count) and
