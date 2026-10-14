@@ -1,0 +1,3169 @@
+{
+ "schema": "need-prereg-stages/1",
+ "status": "draft",
+ "written": "2026-10-14",
+ "prereg": "research/need-router-20261014/PREREG-NEED-V1.md",
+ "design": "research/need-router-20261014/DESIGN.md",
+ "decisions": "research/need-router-20261014/DECISIONS-ADOPTED.md",
+ "ledger": "research/jit-20261008/SEED-LEDGER.json",
+ "checker": "node experiments/need-router/prereg-check.mjs",
+ "policy": {
+  "file": "policy/models.json",
+  "policyVersion": "2026-10-09.1",
+  "perExperimentPauseAboveUsd": 500,
+  "sessionSoftCapUsd": 1500
+ },
+ "grid": {
+  "V": [
+   0.1,
+   1,
+   10
+  ],
+  "N": [
+   1,
+   10,
+   100
+  ],
+  "W": [
+   "V",
+   0,
+   "10V"
+  ],
+  "headline": {
+   "V": 1,
+   "W": "V",
+   "N": 10
+  },
+  "lambdaT": 0,
+  "nExtrapolated": [
+   100
+  ],
+  "delta": 0.03,
+  "confident": 0.8,
+  "imputedMaxShare": 0.3,
+  "envFaultLimit": 0.25,
+  "racingMaxPerMode": 4,
+  "sliderPositions": {
+   "Frugal": 0.1,
+   "Balanced": 1,
+   "Careful": 10
+  }
+ },
+ "seeds": {
+  "purposes": {
+   "example": "need-example",
+   "train": "need-label",
+   "heldout": "need-heldout"
+  },
+  "examples": {
+   "from": 601,
+   "to": 609
+  },
+  "exampleSets": {
+   "1": [
+    601,
+    602,
+    603
+   ],
+   "2": [
+    604,
+    605,
+    606
+   ],
+   "3": [
+    607,
+    608,
+    609
+   ]
+  },
+  "probe": {
+   "seed": 601
+  },
+  "trainEval": {
+   "from": 610,
+   "to": 621
+  },
+  "trainReserve": {
+   "from": 622,
+   "to": 650
+  },
+  "heldoutEval": {
+   "from": 8801,
+   "to": 8812
+  },
+  "heldoutReserve": {
+   "from": 8813,
+   "to": 8824
+  },
+  "e2e": {
+   "from": 8825,
+   "to": 8836
+  },
+  "drift": {
+   "from": 8837,
+   "to": 8848
+  },
+  "difficultyRule": {
+   "evaluation": "band[floor(i * |band| / 12)], i = seed - first seed of the role",
+   "examples": "band[(seed - 601) mod |band|]",
+   "replacement": "a replaced seed is the lowest unused seed of the reserve range of the same split and takes the replaced task's difficulty (and stage kind)",
+   "racing": "top-ups reuse the same tasks; a lineage k > 3 uses example set ((k - 1) mod 3) + 1 with a fresh builder session",
+   "stageKinds": "kinds[i mod 4] for evaluation index i; kinds[(seed - 601) mod 4] for examples"
+  }
+ },
+ "rng": {
+  "labelBootstrap": 20261014,
+  "clusterBootstrap": 20261015,
+  "randomRouting": 20261016,
+  "shuffledLabelNull": 20261017,
+  "nullSimulation": 20261018,
+  "onlineReplayOrders": 20261019,
+  "permutationMonteCarlo": 20261020,
+  "g1Bootstrap": 20261021,
+  "e2eDraw": 20261029
+ },
+ "reps": {
+  "labelBootstrap": 2000,
+  "g1Bootstrap": 2000,
+  "clusterBootstrap": 10000,
+  "randomRouting": 1000,
+  "shuffledLabelNull": 1000,
+  "onlineReplayOrders": 100,
+  "permutationExactUpTo": 20,
+  "permutationMonteCarlo": 100000
+ },
+ "priceTable": {
+  "id": "need-v1-prices@2026-10-14",
+  "unit": "USD per million tokens",
+  "rule": "a request prices every token at the tier its prompt tokens (input + cache read + cache write) fall in; cache writes at the 5-minute rate (policy childEnv FORCE_PROMPT_CACHING_5M=1)",
+  "models": {
+   "claude-haiku-5-5": {
+    "tiers": [
+     {
+      "maxPromptTokens": 100000,
+      "input": 0.1,
+      "output": 0.5,
+      "cacheRead": 0.01,
+      "cacheWrite5m": 0.125
+     },
+     {
+      "maxPromptTokens": null,
+      "input": 0.5,
+      "output": 2.5,
+      "cacheRead": 0.05,
+      "cacheWrite5m": 0.625
+     }
+    ]
+   },
+   "claude-opus-5-5": {
+    "tiers": [
+     {
+      "maxPromptTokens": null,
+      "input": 4,
+      "output": 20,
+      "cacheRead": 0.2,
+      "cacheWrite5m": 5
+     }
+    ]
+   },
+   "claude-sonnet-5-5": {
+    "tiers": [
+     {
+      "maxPromptTokens": null,
+      "input": 2,
+      "output": 10,
+      "cacheRead": 0.2,
+      "cacheWrite5m": 2.5
+     }
+    ]
+   }
+  },
+  "sources": [
+   "base input/output: policy/models.json models[].price (policyVersion 2026-10-09.1; checked equal by prereg-check)",
+   "Haiku 5.5 long-context tier ($0.50/$2.50 above 100K prompt tokens): policy/models.json price.source and the claude-api skill model table (cached 2026-10-06) [S]",
+   "Opus 5.5 and Sonnet 5.5 cache read $0.20: claude-api skill shared/models.md [S]",
+   "cache write 5m = 1.25x input: claude-api skill shared/prompt-caching.md:144 [S]",
+   "Haiku 5.5 cache read = 0.1x input: the generic multiplier in shared/prompt-caching.md:144; no Haiku-5.5-specific figure was found [S, inference]"
+  ]
+ },
+ "derived": [
+  {
+   "id": "construct-H->agent-H",
+   "on": [
+    "null",
+    "crash",
+    "schema-invalid",
+    "self-check fail"
+   ],
+   "class": "workflow-built"
+  },
+  {
+   "id": "direct-H->agent-H",
+   "on": [
+    "null",
+    "crash",
+    "schema-invalid"
+   ],
+   "class": "no-workflow"
+  },
+  {
+   "id": "agent-H->agent-O",
+   "on": [
+    "null"
+   ],
+   "class": "no-workflow"
+  }
+ ],
+ "arms": {
+  "direct-H": {
+   "id": "direct-H",
+   "class": "no-workflow",
+   "factory": "b0Call",
+   "model": "claude-haiku-5-5",
+   "reasoning": "none",
+   "maxTokens": 16000,
+   "providerTimeoutMs": 600000,
+   "maxBudgetUsdPerCall": 1,
+   "timeoutChargeUsd": 1,
+   "replicates": 2,
+   "masked": "interactive families",
+   "settingsSha": "2f585e2ca931a758"
+  },
+  "agent-H": {
+   "id": "agent-H",
+   "class": "no-workflow",
+   "factory": "b0Agent",
+   "model": "claude-haiku-5-5",
+   "budgetUsd": 2,
+   "timeoutMs": 900000,
+   "replicates": 2,
+   "settingsSha": "692b1ee40db6b8fc"
+  },
+  "agent-O": {
+   "id": "agent-O",
+   "class": "no-workflow",
+   "factory": "b0Agent",
+   "model": "claude-opus-5-5",
+   "budgetUsd": 4,
+   "budgetUsdLargeInputs": 8,
+   "largeInputTokens": 30000,
+   "largeInputRule": "max estimated input tokens over the job's nine example seeds at their preregistered difficulties",
+   "timeoutMs": 1200000,
+   "replicates": 1,
+   "racingTopUp": "a second draw on every task where agent-O is in the draw-1 per-task acceptable set",
+   "settingsSha": "d3ac6f262b2852d4"
+  },
+  "agent-H+proc": {
+   "id": "agent-H+proc",
+   "class": "workflow-guided",
+   "build": {
+    "factory": "procedureWriter",
+    "model": "claude-haiku-5-5",
+    "reasoning": "medium",
+    "calls": 1,
+    "reads": [
+     "prompts",
+     "inputs truncated to 30000 tokens",
+     "output schema"
+    ],
+    "never": [
+     "answers",
+     "oracle",
+     "scores",
+     "held-out seeds"
+    ],
+    "returns": {
+     "procedureMaxWords": 1500,
+     "checks": "list of checks"
+    },
+    "exampleSet": "k"
+   },
+   "run": {
+    "factory": "b0Agent",
+    "model": "claude-haiku-5-5",
+    "budgetUsd": 2,
+    "timeoutMs": 900000,
+    "procedureFile": "PROCEDURE.md",
+    "checksFile": "checks.json",
+    "promptLine": "one line telling the agent to follow PROCEDURE.md and write checks.json"
+   },
+   "lineages": 2,
+   "exampleSets": [
+    1,
+    2
+   ],
+   "replicatesPerLineage": 1,
+   "settingsSha": "2778eacb045fa1b5"
+  },
+  "construct-H": {
+   "id": "construct-H",
+   "class": "workflow-built",
+   "build": {
+    "factory": "construct",
+    "arm": "B1",
+    "builderModel": "claude-haiku-5-5",
+    "builderEffort": "high",
+    "builderBudgetUsd": 3,
+    "constructionModelUsd": 1.5,
+    "perTaskUsd": 1,
+    "minutes": 30,
+    "scoreChecks": 0,
+    "models": [
+     "claude-haiku-5-5"
+    ],
+    "selfCheck": true,
+    "probeSeeds": "example set k, each seed at its preregistered difficulty"
+   },
+   "run": {
+    "factory": "b1Script",
+    "perTaskUsd": 1
+   },
+   "selfCheck": {
+    "file": "check.mjs",
+    "argv": [
+     "task.json",
+     "answer.json"
+    ],
+    "exitPass": 0,
+    "exitFail": 1,
+    "modelCalls": 0,
+    "recordedAs": "selfVerdict"
+   },
+   "lineages": 3,
+   "exampleSets": [
+    1,
+    2,
+    3
+   ],
+   "replicatesPerLineage": 1,
+   "settingsSha": "103ffe5ba56b570d"
+  },
+  "build-O": {
+   "id": "build-O",
+   "class": "ceiling",
+   "build": {
+    "factory": "construct",
+    "arm": "B1",
+    "builderModel": "claude-opus-5-5",
+    "builderEffort": "high",
+    "builderBudgetUsd": 8,
+    "constructionModelUsd": 1.5,
+    "perTaskUsd": 1,
+    "minutes": 30,
+    "scoreChecks": 0,
+    "models": [
+     "claude-haiku-5-5"
+    ],
+    "selfCheck": true,
+    "probeSeeds": "example set k, each seed at its preregistered difficulty"
+   },
+   "run": {
+    "factory": "b1Script",
+    "perTaskUsd": 1
+   },
+   "selfCheck": {
+    "file": "check.mjs",
+    "argv": [
+     "task.json",
+     "answer.json"
+    ],
+    "exitPass": 0,
+    "exitFail": 1,
+    "modelCalls": 0,
+    "recordedAs": "selfVerdict"
+   },
+   "lineages": 1,
+   "exampleSets": [
+    1
+   ],
+   "replicatesPerLineage": 1,
+   "labelSet": "L_ceiling only",
+   "settingsSha": "7eb484a07b3228d8"
+  },
+  "ref-R1": {
+   "id": "ref-R1",
+   "class": "ceiling",
+   "factory": "static@v3",
+   "script": "beds/wbed/references/r1-reference.mjs",
+   "sha256": "b267498f7aae0b6fa6e92765e0bc55a32afc0ad615acc27c4fca80ab33e4d73d",
+   "judges": "Haiku first, Sonnet on a failed check (live)",
+   "models": [
+    "claude-haiku-5-5",
+    "claude-sonnet-5-5"
+   ],
+   "condition": "only if the engine stamp carries static@v3:",
+   "replicates": 1,
+   "labelSet": "L_ceiling only",
+   "settingsSha": "2a0de67dec1761a3"
+  },
+  "ref-R3": {
+   "id": "ref-R3",
+   "class": "ceiling",
+   "factory": "static@v3",
+   "script": "beds/wbed/references/r3-reference.mjs",
+   "sha256": "61e6e6236d1cd613a803e15b30288973ca90fc2a1a518815952a52d0b303f020",
+   "judges": "Haiku first, Sonnet on a failed check (live)",
+   "models": [
+    "claude-haiku-5-5",
+    "claude-sonnet-5-5"
+   ],
+   "condition": "only if the engine stamp carries static@v3:",
+   "replicates": 1,
+   "labelSet": "L_ceiling only",
+   "settingsSha": "a82541dae8f6f563"
+  },
+  "judge-H": {
+   "id": "judge-H",
+   "class": "baseline",
+   "factory": "typed-call",
+   "model": "claude-haiku-5-5",
+   "reasoning": "medium",
+   "maxTokens": 16000,
+   "maxBudgetUsdPerCall": 1,
+   "reads": [
+    "family spec (the task prompt of example seed 601)",
+    "example 601 inputs truncated to 8000 tokens",
+    "N",
+    "V",
+    "W",
+    "the five-mode menu with one-line descriptions"
+   ],
+   "outputSchema": {
+    "choice": [
+     "direct-H",
+     "agent-H",
+     "agent-O",
+     "agent-H+proc",
+     "construct-H"
+    ],
+    "needsWorkflow": "boolean"
+   },
+   "draws": 3,
+   "vote": "majority on choice; a three-way split goes to the mode with the lowest TRAIN-mean c + B/N in the cell",
+   "cells": "V in {0.10, 1, 10} at N = 10, W = V",
+   "settingsSha": "6504fc674944022d"
+  },
+  "m1-call-none": {
+   "id": "m1-call-none",
+   "class": "m1",
+   "factory": "b0Call",
+   "runId": "b0-call-haiku-none",
+   "model": "claude-haiku-5-5",
+   "reasoning": "none",
+   "maxTokens": 16000,
+   "maxBudgetUsdPerCall": 1,
+   "providerTimeoutMs": 300000,
+   "code": "experiments/need-router/m1-run.mjs as committed (no new code)",
+   "settingsSha": "04c4c925502938bd"
+  },
+  "m1-call-medium": {
+   "id": "m1-call-medium",
+   "class": "m1",
+   "factory": "b0Call",
+   "runId": "b0-call-haiku-medium",
+   "model": "claude-haiku-5-5",
+   "reasoning": "medium",
+   "maxTokens": 16000,
+   "maxBudgetUsdPerCall": 1,
+   "providerTimeoutMs": 300000,
+   "code": "experiments/need-router/m1-run.mjs as committed (no new code)",
+   "settingsSha": "d32e71c4b1f17c09"
+  }
+ },
+ "clusters": {
+  "W": {
+   "split": "train",
+   "families": [
+    "records",
+    "wbed-r0",
+    "need-r0pad",
+    "wbed-r1",
+    "wbed-r2",
+    "wbed-r3",
+    "need-r3mini",
+    "need-stage",
+    "wbed-r6"
+   ],
+   "why": "import graph: r2 imports beds/records/pools.mjs; r3 imports r1/world.mjs; r4 imports r1 and r3; r5 r1 and r4; r6 wbed/lib/domain.mjs and parties.mjs; the anchors wrap R0, R3 and the rungs"
+  },
+  "kinetics": {
+   "split": "train",
+   "families": [
+    "kinetics"
+   ]
+  },
+  "codefix": {
+   "split": "train",
+   "families": [
+    "codefix",
+    "codefix-notests"
+   ]
+  },
+  "need-qa": {
+   "split": "train",
+   "families": [
+    "need-qa"
+   ]
+  },
+  "incident": {
+   "split": "heldout",
+   "families": [
+    "incident"
+   ]
+  },
+  "synth": {
+   "split": "heldout",
+   "families": [
+    "synth"
+   ]
+  },
+  "ownerci": {
+   "split": "heldout",
+   "families": [
+    "ownerci"
+   ]
+  },
+  "r3p": {
+   "split": "heldout",
+   "near": true,
+   "families": [
+    "wbed-r3p"
+   ],
+   "why": "imports only wbed/lib/{contracts,faults,prng}.mjs; same author and library as W (near)"
+  },
+  "need-constraint": {
+   "split": "heldout",
+   "families": [
+    "need-constraint"
+   ]
+  },
+  "far-1": {
+   "split": "heldout",
+   "families": []
+  },
+  "far-2": {
+   "split": "heldout",
+   "families": []
+  },
+  "gameqa": {
+   "split": "heldout-conditional",
+   "families": [
+    "gameqa"
+   ]
+  },
+  "runbook": {
+   "split": "forced",
+   "families": [
+    "runbook"
+   ]
+  },
+  "e8": {
+   "split": "forced",
+   "families": [
+    "ebed-e8"
+   ]
+  },
+  "owner-dev": {
+   "split": "owner",
+   "families": []
+  },
+  "owner-sealed": {
+   "split": "sealed",
+   "families": []
+  },
+  "sealed-1": {
+   "split": "sealed",
+   "families": []
+  },
+  "sealed-2": {
+   "split": "sealed",
+   "families": []
+  },
+  "sealed-3": {
+   "split": "sealed",
+   "families": []
+  },
+  "sealed-4": {
+   "split": "sealed",
+   "families": []
+  }
+ },
+ "jobs": [
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "records-lo",
+   "cluster": "W",
+   "split": "train",
+   "family": "records",
+   "bedStatus": "exists",
+   "band": [
+    1,
+    2
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "fieldAccuracy >= 0.97 AND pairF1 >= 0.95 AND extra, missing <= floor(0.02 E)",
+    "half": {
+     "fieldAccuracy": 0.985,
+     "pairF1": 0.975,
+     "entitySlack": 0.01
+    },
+    "double": {
+     "fieldAccuracy": 0.94,
+     "pairF1": 0.9,
+     "entitySlack": 0.04
+    },
+    "source": "beds/records/score.mjs:82"
+   },
+   "maxExampleTokens": 4938,
+   "estUsd": 12,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "small flat extraction: one call"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "records-hi",
+   "cluster": "W",
+   "split": "train",
+   "family": "records",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "fieldAccuracy >= 0.97 AND pairF1 >= 0.95 AND extra, missing <= floor(0.02 E)",
+    "half": {
+     "fieldAccuracy": 0.985,
+     "pairF1": 0.975,
+     "entitySlack": 0.01
+    },
+    "double": {
+     "fieldAccuracy": 0.94,
+     "pairF1": 0.9,
+     "entitySlack": 0.04
+    },
+    "source": "beds/records/score.mjs:82"
+   },
+   "maxExampleTokens": 10010,
+   "estUsd": 18,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "note": "agent at low V; slider-sensitive (agent-O expected to lead at V = $10)"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "wbed-r0",
+   "cluster": "W",
+   "split": "train",
+   "family": "wbed-r0",
+   "bedStatus": "exists",
+   "band": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 436,
+   "estUsd": 7,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "the negative control (K2: direct-H >= 10/12 per draw)"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "r0-pad",
+   "cluster": "W",
+   "split": "train",
+   "family": "need-r0pad",
+   "bedStatus": "exists",
+   "band": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 23491,
+   "estUsd": 8,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "R0 plus 15-25K tokens of irrelevant documents: breaks the length shortcut; must route as wbed-r0"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [
+    "build-O",
+    "ref-R1"
+   ],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "wbed-r1-hi",
+   "cluster": "W",
+   "split": "train",
+   "family": "wbed-r1",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 25072,
+   "estUsd": 30,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "note": "agent at N = 1; workflow at large N"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "wbed-r2-hi",
+   "cluster": "W",
+   "split": "train",
+   "family": "wbed-r2",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 8936,
+   "estUsd": 20,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "note": "looks like branching, not worth a workflow"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [
+    "build-O",
+    "ref-R3"
+   ],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "wbed-r3-hi",
+   "cluster": "W",
+   "split": "train",
+   "family": "wbed-r3",
+   "bedStatus": "exists",
+   "band": [
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 64952,
+   "estUsd": 45,
+   "hypothesis": {
+    "n1": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "n10": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "note": "the strongest built-in positive; at N = 1 agent-H+proc is the likely alternative in A"
+   },
+   "agentOBudgetUsd": 8
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "r3-mini",
+   "cluster": "W",
+   "split": "train",
+   "family": "need-r3mini",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 2844,
+   "estUsd": 6,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "R3 cut to 2-3 statements: breaks the fan-out shortcut; must route unlike wbed-r3 d5"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "wbed-stage",
+   "cluster": "W",
+   "split": "train",
+   "family": "need-stage",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "stageKinds": [
+    "r1-normalise",
+    "r2-route",
+    "r3-classify",
+    "r6-worker"
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 7575,
+   "estUsd": 8,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "one stage of a rung on a workflow-looking surface; 3 tasks per kind"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "wbed-r6",
+   "cluster": "W",
+   "split": "train",
+   "family": "wbed-r6",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 75249,
+   "estUsd": 60,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "note": "open (low confidence): agent or workflow"
+   },
+   "agentOBudgetUsd": 8
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "kinetics-lo",
+   "cluster": "kinetics",
+   "split": "train",
+   "family": "kinetics",
+   "bedStatus": "exists",
+   "band": [
+    1,
+    2,
+    3
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "relative error <= 0.10 on Vmax and Km",
+    "half": {
+     "relTol": 0.05
+    },
+    "double": {
+     "relTol": 0.2
+    },
+    "source": "beds/kinetics/world.mjs:13"
+   },
+   "maxExampleTokens": 7373,
+   "estUsd": 10,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "slider-sensitive: break-even near $5 per success"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [
+    "build-O"
+   ],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "kinetics-hi",
+   "cluster": "kinetics",
+   "split": "train",
+   "family": "kinetics",
+   "bedStatus": "exists",
+   "band": [
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "relative error <= 0.10 on Vmax and Km",
+    "half": {
+     "relTol": 0.05
+    },
+    "double": {
+     "relTol": 0.2
+    },
+    "source": "beds/kinetics/world.mjs:13"
+   },
+   "maxExampleTokens": 12095,
+   "estUsd": 17,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "slider-sensitive"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "codefix",
+   "cluster": "codefix",
+   "split": "train",
+   "family": "codefix",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "tests",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 20577,
+   "estUsd": 14,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "note": "visible tests are a deployable verifier"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "codefix-notests",
+   "cluster": "codefix",
+   "split": "train",
+   "family": "codefix-notests",
+   "bedStatus": "m0-generator",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 20577,
+   "maxExampleTokensNote": "upper bound from codefix (visible tests removed); re-measured when the generator lands",
+   "estUsd": 14,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "note": "the no-verifier toggle of codefix"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "need-qa",
+   "cluster": "need-qa",
+   "split": "train",
+   "family": "need-qa",
+   "bedStatus": "exists",
+   "band": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 869,
+   "estUsd": 4,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "trivia and arithmetic anchors"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "incident",
+   "cluster": "incident",
+   "split": "heldout",
+   "family": "incident",
+   "bedStatus": "exists",
+   "band": [
+    2,
+    3,
+    4
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "|first_bad_timestamp - T| <= 60 s AND Jaccard(impacted) >= 0.8 (plus exact fields)",
+    "half": {
+     "timeToleranceS": 30,
+     "jaccardMin": 0.9
+    },
+    "double": {
+     "timeToleranceS": 120,
+     "jaccardMin": 0.6
+    },
+    "source": "beds/incident/index.mjs:28-29"
+   },
+   "maxExampleTokens": 107229,
+   "estUsd": 30,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "note": "d4 inputs exceed 100K tokens (Haiku long-context price tier)"
+   },
+   "agentOBudgetUsd": 8
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "synth-lo",
+   "cluster": "synth",
+   "split": "heldout",
+   "family": "synth",
+   "bedStatus": "exists",
+   "band": [
+    1,
+    2
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "|value - truth| <= 0.01 |truth| per cell",
+    "half": {
+     "relTol": 0.005
+    },
+    "double": {
+     "relTol": 0.02
+    },
+    "source": "beds/synth/index.mjs:279"
+   },
+   "maxExampleTokens": 5510,
+   "estUsd": 10,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": ""
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [
+    "build-O"
+   ],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "synth-hi",
+   "cluster": "synth",
+   "split": "heldout",
+   "family": "synth",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "|value - truth| <= 0.01 |truth| per cell",
+    "half": {
+     "relTol": 0.005
+    },
+    "double": {
+     "relTol": 0.02
+    },
+    "source": "beds/synth/index.mjs:279"
+   },
+   "maxExampleTokens": 13421,
+   "estUsd": 22,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "workflow expected only at N = 100 (not in this table)"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "ownerci",
+   "cluster": "ownerci",
+   "split": "heldout",
+   "family": "ownerci",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "tests",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 25435,
+   "estUsd": 15,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "note": "a wrong-reuse trap; construct-H lineages scanned for copied example modules (AUDIT F10)"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [
+    "build-O"
+   ],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "r3p",
+   "cluster": "r3p",
+   "split": "heldout",
+   "near": true,
+   "family": "wbed-r3p",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "recall >= 0.80 AND (fp <= 1 OR precision >= 0.90)",
+    "half": {
+     "recall": 0.9,
+     "precision": 0.95,
+     "fpTolerated": 0
+    },
+    "double": {
+     "recall": 0.6,
+     "precision": 0.8,
+     "fpTolerated": 2
+    },
+    "source": "beds/wbed/r3p/score.mjs:9-10"
+   },
+   "maxExampleTokens": 64375,
+   "estUsd": 40,
+   "hypothesis": {
+    "n1": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "n10": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "note": "workflow at d4-5; near held-out (same author and library as W)"
+   },
+   "agentOBudgetUsd": 8
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "need-constraint",
+   "cluster": "need-constraint",
+   "split": "heldout",
+   "family": "need-constraint",
+   "bedStatus": "exists",
+   "band": [
+    3,
+    4,
+    5
+   ],
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "maxExampleTokens": 1059,
+   "estUsd": 4,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "n10": {
+     "class": "no-workflow",
+     "mode": "direct-H"
+    },
+    "note": "subtype = seed mod 4: each subtype once per difficulty"
+   },
+   "agentOBudgetUsd": 4
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "far-1",
+   "cluster": "far-1",
+   "split": "heldout",
+   "family": null,
+   "ledgerBed": "far-1",
+   "bedStatus": "post-freeze",
+   "band": null,
+   "bandStatus": "frozen at admission, before labels",
+   "verifier": "TBD at admission",
+   "estUsd": 15,
+   "hypothesis": {
+    "n1": {
+     "class": "pending",
+     "mode": null
+    },
+    "n10": {
+     "class": "pending",
+     "mode": null
+    },
+    "note": "written by an author who has not seen the router code, after Freeze; the hypothesis row is committed at admission, before labels"
+   }
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "far-2",
+   "cluster": "far-2",
+   "split": "heldout",
+   "family": null,
+   "ledgerBed": "far-2",
+   "bedStatus": "post-freeze",
+   "band": null,
+   "bandStatus": "frozen at admission, before labels",
+   "verifier": "TBD at admission",
+   "estUsd": 15,
+   "hypothesis": {
+    "n1": {
+     "class": "pending",
+     "mode": null
+    },
+    "n10": {
+     "class": "pending",
+     "mode": null
+    },
+    "note": "as far-1"
+   }
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "id": "gameqa",
+   "cluster": "gameqa",
+   "split": "heldout-conditional",
+   "family": "gameqa",
+   "bedStatus": "exists",
+   "interactive": true,
+   "modes": [
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "band": null,
+   "bandStatus": "TBD-NL2b: set by the independent audit, before labels",
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "recall >= 0.8 AND falseReports <= 1",
+    "half": {
+     "recall": 0.9,
+     "falseReports": 0
+    },
+    "double": {
+     "recall": 0.6,
+     "falseReports": 2
+    },
+    "source": "beds/gameqa/index.mjs:138"
+   },
+   "admission": "AUDIT.md by a session that did not write the bed, plus an agent smoke",
+   "estUsd": 40,
+   "hypothesis": {
+    "n1": {
+     "class": "no-workflow",
+     "mode": "agent-H"
+    },
+    "n10": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "note": "agent at low d, workflow at high d; direct-H masked (interactive)"
+   }
+  },
+  {
+   "requirements": [
+    "effects with authority",
+    "human approval"
+   ],
+   "ceiling": [],
+   "id": "runbook",
+   "cluster": "runbook",
+   "split": "forced",
+   "family": "runbook",
+   "bedStatus": "exists",
+   "interactive": true,
+   "modes": [
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "band": null,
+   "bandStatus": "TBD-NL2b: set by the independent audit, before labels",
+   "verifier": "schema",
+   "tolerance": {
+    "rule": "exact (no numeric tolerance): fragility recompute does not apply"
+   },
+   "requirementsStatus": "candidates from the bed README; confirmed by the NL2b audit and used by D5",
+   "admission": "AUDIT.md by a session that did not write the bed, plus an agent smoke",
+   "estUsd": 40,
+   "hypothesis": {
+    "n1": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "n10": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "note": "forced by typed requirements (guard); guard recall only"
+   }
+  },
+  {
+   "requirements": [
+    "durable wait",
+    "schedule",
+    "effects with authority"
+   ],
+   "ceiling": [],
+   "id": "e8",
+   "cluster": "e8",
+   "split": "forced",
+   "family": "ebed-e8",
+   "bedStatus": "exists",
+   "modes": [],
+   "band": null,
+   "bandStatus": "as run by #58 (E8 dev worlds); read at M1e",
+   "verifier": "tests",
+   "verifierNote": "the E8 smoke host",
+   "requirementsStatus": "candidates from E-BED; confirmed from spec-E at M1e and used by D5",
+   "externalArms": [
+    "agent-H (#58 paired run)",
+    "B1L-H lineages 1-3",
+    "B1-H",
+    "B1-O"
+   ],
+   "estUsd": 0,
+   "hypothesis": {
+    "n1": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "n10": {
+     "class": "workflow",
+     "mode": "construct-H"
+    },
+    "note": "diagnostic only; one-shot vs test-loop contrast read at $0"
+   }
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "owner-dev",
+   "cluster": "owner-dev",
+   "split": "owner",
+   "family": null,
+   "bedStatus": "owner",
+   "band": null,
+   "bandStatus": "one task per job (N = 1) unless the owner declares a recurrence N",
+   "verifier": "owner acceptance check",
+   "estUsd": 0,
+   "estNote": "inside the NL0 estimate",
+   "replicates": 1,
+   "maxTasks": 5,
+   "hypothesis": {
+    "n1": {
+     "class": "pending",
+     "mode": null
+    },
+    "n10": {
+     "class": "pending",
+     "mode": null
+    },
+    "note": "one row per owner task, written before its labels; development evidence only"
+   }
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "owner-sealed",
+   "cluster": "owner-sealed",
+   "split": "sealed",
+   "family": null,
+   "bedStatus": "owner",
+   "band": null,
+   "bandStatus": "as owner-dev",
+   "verifier": "owner acceptance check",
+   "estUsd": 0,
+   "estNote": "inside the NL3 estimate",
+   "hypothesis": {
+    "n1": {
+     "class": "pending",
+     "mode": null
+    },
+    "n10": {
+     "class": "pending",
+     "mode": null
+    },
+    "note": "written by the NL3 session before its labels"
+   }
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "sealed-1",
+   "cluster": "sealed-1",
+   "split": "sealed",
+   "family": null,
+   "bedStatus": "sealed",
+   "band": null,
+   "bandStatus": "chosen by the NL3 session (never read by a tuning session)",
+   "verifier": "TBD-NL3",
+   "estUsd": 0,
+   "estNote": "inside the NL3 estimate",
+   "hypothesis": {
+    "n1": {
+     "class": "pending",
+     "mode": null
+    },
+    "n10": {
+     "class": "pending",
+     "mode": null
+    },
+    "note": "written by the NL3 session before its labels"
+   }
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "sealed-2",
+   "cluster": "sealed-2",
+   "split": "sealed",
+   "family": null,
+   "bedStatus": "sealed",
+   "band": null,
+   "bandStatus": "chosen by the NL3 session (never read by a tuning session)",
+   "verifier": "TBD-NL3",
+   "estUsd": 0,
+   "estNote": "inside the NL3 estimate",
+   "hypothesis": {
+    "n1": {
+     "class": "pending",
+     "mode": null
+    },
+    "n10": {
+     "class": "pending",
+     "mode": null
+    },
+    "note": "written by the NL3 session before its labels"
+   }
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "sealed-3",
+   "cluster": "sealed-3",
+   "split": "sealed",
+   "family": null,
+   "bedStatus": "sealed",
+   "band": null,
+   "bandStatus": "chosen by the NL3 session (never read by a tuning session)",
+   "verifier": "TBD-NL3",
+   "estUsd": 0,
+   "estNote": "inside the NL3 estimate",
+   "hypothesis": {
+    "n1": {
+     "class": "pending",
+     "mode": null
+    },
+    "n10": {
+     "class": "pending",
+     "mode": null
+    },
+    "note": "written by the NL3 session before its labels"
+   }
+  },
+  {
+   "requirements": [],
+   "ceiling": [],
+   "modes": [
+    "direct-H",
+    "agent-H",
+    "agent-O",
+    "agent-H+proc",
+    "construct-H"
+   ],
+   "id": "sealed-4",
+   "cluster": "sealed-4",
+   "split": "sealed",
+   "family": null,
+   "bedStatus": "sealed",
+   "band": null,
+   "bandStatus": "chosen by the NL3 session (never read by a tuning session)",
+   "verifier": "TBD-NL3",
+   "estUsd": 0,
+   "estNote": "inside the NL3 estimate",
+   "hypothesis": {
+    "n1": {
+     "class": "pending",
+     "mode": null
+    },
+    "n10": {
+     "class": "pending",
+     "mode": null
+    },
+    "note": "written by the NL3 session before its labels"
+   }
+  }
+ ],
+ "stages": [
+  {
+   "id": "M0",
+   "when": "2026-10-15..2026-10-17",
+   "grade": "development",
+   "estUsd": 0,
+   "capUsd": 0,
+   "inTotals": true,
+   "core": false,
+   "approved": true,
+   "what": "code, this preregistration, tests, $0 diagnostics D0-D6 on LEGACY rows",
+   "runs": []
+  },
+  {
+   "id": "M1",
+   "when": "2026-10-15/16",
+   "grade": "development",
+   "estUsd": 10,
+   "capUsd": 15,
+   "inTotals": true,
+   "core": true,
+   "approved": true,
+   "what": "one Haiku call per W-rung task at d3, two efforts; also the W-bed one-call admission gate (R0 >= 10/12 per effort; other rungs <= 2/12)",
+   "command": "node experiments/need-router/m1-run.mjs --cap 15",
+   "runs": [
+    {
+     "bed": "wbed-r0",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ]
+    },
+    {
+     "bed": "wbed-r1",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ]
+    },
+    {
+     "bed": "wbed-r2",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ]
+    },
+    {
+     "bed": "wbed-r3",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ]
+    },
+    {
+     "bed": "wbed-r4",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ]
+    },
+    {
+     "bed": "wbed-r5",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ]
+    },
+    {
+     "bed": "wbed-r6",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ]
+    },
+    {
+     "bed": "wbed-r3p",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 479,
+      "to": 490
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "M1e",
+   "when": "when #58 commits",
+   "grade": "diagnostic",
+   "estUsd": 0,
+   "capUsd": 0,
+   "inTotals": true,
+   "core": false,
+   "approved": true,
+   "what": "read the in-flight E8 runs (agent-H paired with B1L-H lineages 1-3, B1-H, B1-O on the same 9 dev worlds)",
+   "runs": [
+    {
+     "job": "e8",
+     "arms": [],
+     "seedsFrom": "#58 runs on E8 ledger rows"
+    }
+   ]
+  },
+  {
+   "id": "NL0",
+   "when": "2026-10-18/19",
+   "grade": "development",
+   "estUsd": 110,
+   "capUsd": 140,
+   "inTotals": true,
+   "core": true,
+   "approved": true,
+   "what": "records-hi, wbed-r0, wbed-r3-hi with all five modes; build-O and (if stamped) ref-R3 on wbed-r3-hi; up to 5 owner tasks as dev",
+   "runs": [
+    {
+     "job": "records-hi",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r0",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r3-hi",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r3-hi",
+     "arms": [
+      "build-O"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r3-hi",
+     "arms": [
+      "ref-R3"
+     ],
+     "seedRoles": [
+      "trainEval"
+     ],
+     "condition": "engine stamp carries static@v3:"
+    },
+    {
+     "job": "owner-dev",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "owner tasks",
+     "replicates": 1
+    }
+   ]
+  },
+  {
+   "id": "NL1",
+   "when": "2026-10-20..2026-10-23",
+   "grade": "development",
+   "estUsd": 272,
+   "capUsd": 340,
+   "inTotals": true,
+   "core": true,
+   "approved": false,
+   "gate": "K7 (NL0 cost per job <= 1.5x estimate) and owner gate (decision 14)",
+   "what": "the other 12 TRAIN jobs; build-O on wbed-r1-hi and kinetics-hi; ref-R1 if stamped; NR-probe rows on every TRAIN job (LOCO); then G1 and the power gate",
+   "runs": [
+    {
+     "job": "records-lo",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "r0-pad",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r1-hi",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r2-hi",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "r3-mini",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-stage",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r6",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "kinetics-lo",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "kinetics-hi",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "codefix",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "codefix-notests",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ],
+     "condition": "the M0 generator exists and passes its tests"
+    },
+    {
+     "job": "need-qa",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r1-hi",
+     "arms": [
+      "build-O"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "kinetics-hi",
+     "arms": [
+      "build-O"
+     ],
+     "seedRoles": [
+      "examples",
+      "trainEval"
+     ]
+    },
+    {
+     "job": "wbed-r1-hi",
+     "arms": [
+      "ref-R1"
+     ],
+     "seedRoles": [
+      "trainEval"
+     ],
+     "condition": "engine stamp carries static@v3:"
+    },
+    {
+     "job": "records-lo",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "records-hi",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "wbed-r0",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "r0-pad",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "wbed-r1-hi",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "wbed-r2-hi",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "wbed-r3-hi",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "r3-mini",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "wbed-stage",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "wbed-r6",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "kinetics-lo",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "kinetics-hi",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "codefix",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "codefix-notests",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    },
+    {
+     "job": "need-qa",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+    }
+   ]
+  },
+  {
+   "id": "Freeze",
+   "when": "2026-10-24",
+   "grade": "development",
+   "estUsd": 0,
+   "capUsd": 0,
+   "inTotals": true,
+   "core": false,
+   "approved": true,
+   "what": "fit theta_tok, theta_fan, leaf modes, k and the probe mapping on TRAIN; hash the router; addendum; commit the held-out decisions envelope (L6)",
+   "runs": []
+  },
+  {
+   "id": "NL2",
+   "when": "2026-10-25..2026-10-28",
+   "grade": "held-out",
+   "estUsd": 206,
+   "capUsd": 270,
+   "inTotals": true,
+   "core": true,
+   "approved": false,
+   "gate": "Freeze addendum committed; G1 not refuted (K1); owner gate",
+   "what": "held-out jobs, five modes; build-O on synth-hi and r3p; NR-probe rows (decisions committed before the matrix is joined)",
+   "runs": [
+    {
+     "job": "incident",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "synth-lo",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "synth-hi",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "ownerci",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "r3p",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "need-constraint",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "far-1",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ],
+     "condition": "family admitted (written after Freeze, audited)"
+    },
+    {
+     "job": "far-2",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ],
+     "condition": "family admitted (written after Freeze, audited)"
+    },
+    {
+     "job": "synth-hi",
+     "arms": [
+      "build-O"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "r3p",
+     "arms": [
+      "build-O"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ]
+    },
+    {
+     "job": "incident",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "synth-lo",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "synth-hi",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "ownerci",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "r3p",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "need-constraint",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe"
+    },
+    {
+     "job": "far-1",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe",
+     "condition": "family admitted"
+    },
+    {
+     "job": "far-2",
+     "arms": [
+      "direct-H",
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe",
+     "condition": "family admitted"
+    }
+   ]
+  },
+  {
+   "id": "E2E",
+   "when": "2026-10-29..2026-11-02",
+   "grade": "held-out",
+   "estUsd": 60,
+   "capUsd": 80,
+   "inTotals": true,
+   "core": true,
+   "approved": false,
+   "gate": "NL2 reading written",
+   "what": "6 held-out non-forced jobs by the seeded draw; decision card -> owner override window (48 h, logged) -> build with self-check -> 12 fresh tasks -> delivery gated by the deployable verifier; oracle scored offline",
+   "runs": [
+    {
+     "eligible": [
+      "incident",
+      "synth-lo",
+      "synth-hi",
+      "ownerci",
+      "r3p",
+      "need-constraint",
+      "far-1",
+      "far-2",
+      "gameqa"
+     ],
+     "draw": {
+      "k": 6,
+      "seedKey": "e2eDraw",
+      "rule": "eligible = admitted held-out non-forced jobs at E2E launch"
+     },
+     "arms": [
+      "router-choice"
+     ],
+     "seedRoles": [
+      "examples",
+      "e2e"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "NL2b",
+   "when": "2026-10-29..2026-11-04",
+   "grade": "held-out",
+   "estUsd": 98,
+   "capUsd": 140,
+   "inTotals": true,
+   "core": false,
+   "approved": false,
+   "gate": "independent audit (AUDIT.md) and an agent smoke for each family",
+   "what": "gameqa (held-out) and runbook (forced stratum); direct-H masked",
+   "runs": [
+    {
+     "job": "gameqa",
+     "arms": [
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ],
+     "condition": "audit and smoke passed"
+    },
+    {
+     "job": "runbook",
+     "arms": [
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedRoles": [
+      "examples",
+      "heldoutEval"
+     ],
+     "condition": "audit and smoke passed"
+    },
+    {
+     "job": "gameqa",
+     "arms": [
+      "agent-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ],
+     "purpose": "NR-probe (agent-H only: direct-H masked)",
+     "condition": "audit and smoke passed"
+    }
+   ]
+  },
+  {
+   "id": "NL3",
+   "when": "when the owner tasks arrive (target 2026-10-28)",
+   "grade": "sealed",
+   "estUsd": 190,
+   "capUsd": 240,
+   "inTotals": true,
+   "core": false,
+   "approved": false,
+   "gate": "run once by a session that tuned nothing",
+   "what": "4 sealed families plus 20-30 owner tasks",
+   "runs": [
+    {
+     "job": "sealed-1",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "chosen and checked by the NL3 session"
+    },
+    {
+     "job": "sealed-2",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "chosen and checked by the NL3 session"
+    },
+    {
+     "job": "sealed-3",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "chosen and checked by the NL3 session"
+    },
+    {
+     "job": "sealed-4",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "chosen and checked by the NL3 session"
+    },
+    {
+     "job": "owner-sealed",
+     "arms": [
+      "direct-H",
+      "agent-H",
+      "agent-O",
+      "agent-H+proc",
+      "construct-H"
+     ],
+     "seedsFrom": "owner tasks"
+    }
+   ]
+  },
+  {
+   "id": "judge-H",
+   "when": "with NL1 (TRAIN) and NL2 (held-out)",
+   "grade": "development",
+   "estUsd": 5,
+   "capUsd": 10,
+   "inTotals": true,
+   "core": true,
+   "approved": false,
+   "what": "the \"just ask a model\" baseline: 3 draws x 3 V positions per job, about 180 typed calls",
+   "runs": [
+    {
+     "job": "records-lo",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "records-hi",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "wbed-r0",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "r0-pad",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "wbed-r1-hi",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "wbed-r2-hi",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "wbed-r3-hi",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "r3-mini",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "wbed-stage",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "wbed-r6",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "kinetics-lo",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "kinetics-hi",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "codefix",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "codefix-notests",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "need-qa",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "incident",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "synth-lo",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "synth-hi",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "ownerci",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "r3p",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "need-constraint",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "far-1",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    },
+    {
+     "job": "far-2",
+     "arms": [
+      "judge-H"
+     ],
+     "seedRoles": [
+      "probe"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "DRIFT",
+   "when": "monthly after NL2",
+   "grade": "diagnostic",
+   "estUsd": 5,
+   "capUsd": 8,
+   "inTotals": false,
+   "core": false,
+   "approved": false,
+   "what": "model and CLI drift re-check (24 tasks): agent-H on incident and direct-H on synth-lo, one draw, fresh seeds; flagged when the Wilson intervals of the NL2 and re-check pass rates do not overlap",
+   "runs": [
+    {
+     "job": "incident",
+     "arms": [
+      "agent-H"
+     ],
+     "seedRoles": [
+      "drift"
+     ]
+    },
+    {
+     "job": "synth-lo",
+     "arms": [
+      "direct-H"
+     ],
+     "seedRoles": [
+      "drift"
+     ]
+    }
+   ]
+  }
+ ],
+ "totals": {
+  "estUsd": 951,
+  "capUsd": 1235,
+  "coreEstUsd": 663,
+  "coreCapUsd": 855
+ }
+}

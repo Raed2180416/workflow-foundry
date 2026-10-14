@@ -318,7 +318,7 @@ min** (the window (D, D + 60 min]), `itsm.close({ number, reason: 'no-caller-res
 
 R6.4 **Resolution.** When an incident with a caller is resolved at r: send `resolved` to the caller within **15 min**
 of r. The confirmation deadline D2 is the instant at which B since r reaches `resolvedCloseDays` business days
-(edition at r); the same holds for an incident without a caller.
+(edition at r). An incident without a caller gets no notice; its D2 is computed the same way.
 
 R6.5 **Closing a resolved incident.** A caller `confirm` at time c, at or before D2, while the incident is resolved:
 `itsm.close({ number, reason: 'confirmed', at: c })` within **15 min** of c. Otherwise, if the incident is still

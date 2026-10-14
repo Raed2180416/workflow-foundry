@@ -27,7 +27,8 @@ export const E8_SUBJECT = Object.freeze({
   key: 'orderId',
   ofPayload: p => normId(p?.orderId ?? p?.orderRef ?? null)
     ?? (typeof p?.fulfilmentRef === 'string' ? normId(p.fulfilmentRef.replace(/-F\d+\s*$/i, '')) : null)
-    ?? normId(p?.records?.['orders.orders']?.[0]?.orderId ?? null),
+    ?? normId(p?.records?.['orders.orders']?.[0]?.orderId ?? null)
+    ?? normId(p?.events?.find?.(e => e?.payload?.orderId)?.payload?.orderId ?? null),
   ofArgs: a => normId(a?.orderId ?? null) ?? (typeof a?.fulfilmentId === 'string' ? normId(a.fulfilmentId.replace(/-F\d+\s*$/i, '')) : null),
 });
 
@@ -56,7 +57,10 @@ export function projectTrace(rows, { files = {}, records = {}, horizon = null, s
       const p = pending; pending = null;
       const sameTarget = p.kind === 'case' ? r.instance === p.target : r.sweep === p.target;
       if (r.type === 'arm.error' && sameTarget) {
-        t.refused.push({ at: now, instance: r.instance ?? null, ...(r.sweep ? { sweep: r.sweep } : {}), code: r.code ?? null, detail: clone(r.detail ?? null), proposed: p.outcome === 'ok' ? proposedOf(p.output) : [] });
+        const proposed = p.outcome === 'ok' ? proposedOf(p.output) : [];
+        t.refused.push({ id: `rf-${String(t.refused.length + 1).padStart(5, '0')}`, at: now, instance: r.instance ?? null, ...(r.sweep ? { sweep: r.sweep } : {}),
+          subject: proposed.map(e => subject.ofArgs(e.args)).find(Boolean) ?? normId(p.output?.decisions?.subject ?? null) ?? declared(r.instance),
+          code: r.code ?? null, detail: clone(r.detail ?? null), proposed });
         continue;
       }
       if (p.kind === 'case' && p.outcome === 'ok' && inst.has(p.target)) inst.get(p.target).subject = normId(p.output?.decisions?.subject ?? null);
@@ -67,7 +71,8 @@ export function projectTrace(rows, { files = {}, records = {}, horizon = null, s
       case 'run.end': end = r.at; break;
       case 'call': pending = r; break;
       case 'arm.error':   // an error with no output call before it (should not happen): still a refusal, nothing proposed
-        t.refused.push({ at: now, instance: r.instance ?? null, ...(r.sweep ? { sweep: r.sweep } : {}), code: r.code ?? null, detail: clone(r.detail ?? null), proposed: [] });
+        t.refused.push({ id: `rf-${String(t.refused.length + 1).padStart(5, '0')}`, at: now, instance: r.instance ?? null, ...(r.sweep ? { sweep: r.sweep } : {}),
+          subject: declared(r.instance), code: r.code ?? null, detail: clone(r.detail ?? null), proposed: [] });
         break;
       case 'instance.open': { const i = { instance: r.instance, openedAt: r.at, subject: null, closed: null }; inst.set(r.instance, i); t.instances.push(i); break; }
       case 'instance.close': { const i = inst.get(r.instance); if (i) i.closed = { at: now, reason: r.reason ?? null }; break; }
@@ -186,8 +191,8 @@ t.effects     [{ id, at, instance, subject, system, op, args, key, after, result
                 items    batch results: [{ index, key, status, result?, error? }], index = position in args.items
                 result   the system's answer for status 'ok' (read-only ops return their data here)
                 attempts how many times the platform issued it (it re-issues retryable outcomes itself)
-t.refused     [{ at, instance, code, detail, proposed: [{ system, op, args, key, after }] }] tick outputs the platform
-              refused: NOTHING in them was applied. code 'invalid-output' (detail lists why), 'crash', 'timeout'
+t.refused     [{ id, at, instance, subject, code, detail, proposed: [{ system, op, args, key, after }] }] tick outputs the
+              platform refused: NOTHING in them was applied. code 'invalid-output' (detail lists why), 'crash', 'timeout'
               (proposed is [] for those). A condition about what the workflow tried to do may need to look here too.
 t.tasks       [{ at, instance, task }] human tasks as the workflow declared them (task: { id, kind, role, subject,
               question, answerSchema, dueAt, ... }); at = creation time.
