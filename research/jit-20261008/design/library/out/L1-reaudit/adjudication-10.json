@@ -1,0 +1,114 @@
+{
+ "id": "L1-reaudit-adjudication-10",
+ "date": "2026-10-14",
+ "adjudicator": "orchestrator-delegated library audit agent (Opus 5.5), not blind: read both label files, the census rows, the corpus item and its raw source under /opt/corpus",
+ "scope": "Every disagreement between labels-sonnet-60.jsonl and labels-opus-10.jsonl on the 10 items of draw-10.json: the explained call, the blind pattern sets, and the detector-pair verdicts both labellers gave. A pattern verdict is yes (the skeleton describes nodes in the item), partly (the shape is there but a contract of the card is not met, or only some owning nodes fit) or no. Explained follows AUDIT-L1: yes, partly, no; the conservative reading (owner decision PAUSE 5.8, headline) reads a dashboard-criterion item as not explained.",
+ "items": [
+  {
+   "drawOrder": 29, "id": "node-red:a04546c46361167fd1d83aed8e4f22ec",
+   "explained": { "conservative": "no", "dashboardExplained": "yes" },
+   "explainedReason": "Both labellers read it the same way in substance: 41 ui_text widgets, all display-only, no input widget, so the logic (inject, function, http request, switch, delay) is explained; the IR verdict (unsupported:interactive-dashboard-state) and the revision-1 criterion make it a refusal on the owner's conservative reading. The difference between the label files is only where each recorded that reading (sonnet: explained yes + dashboardCriterion flag; opus: explained no + explainedDashboardExplained yes).",
+   "patterns": [
+    { "p": "P42", "verdict": "yes", "source": "opus", "reason": "function 'Set Flow Context ...' does flow.set('BaseURL'), flow.set('msgheaders'), flow.set('InverterSN0') in the init inject's run; every later inject reads flow.get(...): cross-run state with one writer per key" },
+    { "p": "P12", "verdict": "partly", "source": "opus", "reason": "'for (var i = 0; i < regArray.length; i++) { ... }' sends one request per register (19), routed per register; there is no code reduce, the results go to display widgets" },
+    { "p": "P01", "verdict": "partly", "source": "sonnet", "reason": "inject -> function -> http request -> function chains exist with data hand-off, but each is two or three hops of plumbing" },
+    { "p": "P08", "verdict": "no", "source": "sonnet", "reason": "the switches and 'Route Inverter Read' functions route a message by register number or serial; they do not gate an effect (L0 if)" },
+    { "p": "P34", "verdict": "no", "source": "sonnet", "reason": "delay 'Slow message stream' is pauseType rate, 1 msg per 1 s: a rate limit, not a debounce followed by a re-check" }
+   ],
+   "detectorPairs": []
+  },
+  {
+   "drawOrder": 1, "id": "snakemake:zavolanlab/mirflowz@v0.10.0",
+   "explained": { "conservative": "yes", "dashboardExplained": "yes" },
+   "patterns": [
+    { "p": "P14", "verdict": "yes", "source": "opus", "reason": "two mappers (segemehl, oligomap) on genome and transcriptome run in parallel per sample, then merge_genome_maps, merge_transcriptome_maps and merge_all_maps gather them: fixed branches then a join" },
+    { "p": "P29", "verdict": "no", "source": "sonnet", "reason": "workflow/Snakefile:43 'onsuccess: ... shell(\"rm -rf {INTERMEDIATES_DIR}\")' runs only on success, so it is not cleanup that runs however the workflow ends; the onerror half (Snakefile:48, writes failed_workflow.log) is P27, which both labelled" }
+   ],
+   "detectorPairs": []
+  },
+  {
+   "drawOrder": 35, "id": "home-assistant:dannytsang/homeassistant-config/packages/integrations/energy/zappi.yaml#script/zappi_check_ev_charge",
+   "explained": { "conservative": "yes", "dashboardExplained": "yes" },
+   "patterns": [
+    { "p": "P54", "verdict": "partly", "source": "sonnet", "reason": "the script calls other scripts (action: script.send_direct_notification) under each choose option: the decomposition is real, but the children have effects (notifications), and P54's call is to an effect-free child solver, so in L0 terms they are effect bindings" },
+    { "p": "P25", "verdict": "no", "source": "sonnet", "reason": "a choose over state and rate conditions with a default; no named state is re-entered" }
+   ],
+   "detectorPairs": [
+    { "p": "P54", "via": "node+token", "sonnet": "yes", "opus": "no", "adjudicated": "partly", "reason": "as the blind pattern above: decomposition into called scripts is genuine, the effect-free child contract is not met (same reading as #36)" }
+   ]
+  },
+  {
+   "drawOrder": 10, "id": "n8n:7635",
+   "explained": { "conservative": "yes", "dashboardExplained": "yes" },
+   "patterns": [],
+   "detectorPairs": [
+    { "p": "P37", "via": "node+token", "sonnet": "yes", "opus": "partly", "adjudicated": "partly", "reason": "a hosted-form trigger is a genuine incoming request, but no respond node exists; the reply is the platform's form-complete page, and a reply is what makes P37 (L1 compact card)" }
+   ]
+  },
+  {
+   "drawOrder": 22, "id": "strands:tools/src/strands_tools/workflow.py",
+   "explained": { "conservative": "partly", "dashboardExplained": "partly" },
+   "explainedReason": "Agrees with opus. The tool runs a model-written dependency graph of task agents (workflow.py: 'dependencies', 'priority', pool of 2-8 threads); L0 plan is a fragment over call / judge / map with no dependency edges, wide is a flat fan-out, and each task's model_provider and system_prompt are model-chosen (workflow.py:319-369), which L0 allows only as tiers from policy/models.json; a failed provider silently falls back to the parent's model. The sonnet label quotes the same fragments as gaps but called the item yes.",
+   "patterns": [
+    { "p": "P46", "verdict": "partly", "source": "opus", "reason": "per-task specialised agents receive their dependencies' outputs and the tool combines them; the coordinator is a code scheduler, not a router judge" }
+   ],
+   "detectorPairs": []
+  },
+  {
+   "drawOrder": 56, "id": "snakemake:epigen/dea_limma@v2.2.1",
+   "explained": { "conservative": "yes", "dashboardExplained": "yes" },
+   "patterns": [
+    { "p": "P15", "verdict": "yes", "source": "sonnet", "reason": "rule ova_stats_plot (workflow/rules/dea.smk:114) takes get_input_ova_stats_plot, which lists the results.csv of every one-vs-all contrast of the analysis (common.smk:12-16), and writes one stats_OvA.csv: fan-in report. (rule aggregate, the reason the labeller gave, reads one results.csv and splits it, so it is not the fan-in)" },
+    { "p": "P14", "verdict": "partly", "source": "opus", "reason": "volcanos, lfc_heatmap and the OvA branch are independent analyses of one DEA result, but nothing joins them except the 'all' target" }
+   ],
+   "detectorPairs": []
+  },
+  {
+   "drawOrder": 31, "id": "tekton:v1/pipelineruns/pipeline-with-displayname",
+   "explained": { "conservative": "yes", "dashboardExplained": "yes" },
+   "patterns": [],
+   "detectorPairs": [
+    { "p": "P27", "via": "node+token", "sonnet": "partly", "opus": "no", "adjudicated": "no", "reason": "the error edge is the converter's rendering of Tekton finally; the finally task prints the result and handles no failure, so no error route exists (P29 owns it). AUDIT-L1 scored the analogous tekton item #50 partly; the sonnet reason here already says 'not an error route'" }
+   ]
+  },
+  {
+   "drawOrder": 24, "id": "github-actions:microsoft/promptflow/.github/workflows/samples_tutorials_flow_deploy_azure_app_service.yml",
+   "explained": { "conservative": "yes", "dashboardExplained": "yes" },
+   "patterns": [
+    { "p": "P32", "verdict": "no", "source": "sonnet", "reason": "the job has 'environment: internal'; whether that environment requires a reviewer is repository configuration, not in the item" },
+    { "p": "P08", "verdict": "partly", "source": "sonnet", "reason": "'if: github.event_name == 'schedule'' picks the canary or the production workspace: an L0 if between two effects that P38's guard already owns, not a filter before one effect" }
+   ],
+   "detectorPairs": [
+    { "p": "P27", "via": "token", "sonnet": "partly", "opus": "no", "adjudicated": "no", "reason": "the error-branch token comes from the always() steps (pip list, upload-artifact), which P29 owns; there is no failure route. AUDIT-L1 scored the analogous #39 partly" },
+    { "p": "P41", "via": "plumbing", "sonnet": "no", "opus": "yes", "adjudicated": "partly", "reason": "a CI workflow that tests a tutorial by deploying it, so 'Is this a CI/CD pipeline?' is yes, but there is no build, barrier or release gate stage, which the P41 skeleton has" }
+   ]
+  },
+  {
+   "drawOrder": 36, "id": "apple-shortcuts:workflowllm-seed-10817",
+   "explained": { "conservative": "yes", "dashboardExplained": "yes" },
+   "patterns": [
+    { "p": "P32", "verdict": "yes", "source": "opus", "reason": "seed_data.json[10817].workflow_code lines 754 and 768 (1-based) ('Are you sure you want to DELETE YOUR ACCOUNT?', 'Are you 100% sure ...') and 1006 ('Are you sure you want to delete this channel?') gate irreversible deletions" },
+    { "p": "P02", "verdict": "no", "source": "sonnet", "reason": "notifications are fetched and cached in notifs.json for display; no transformation moves data between two systems" },
+    { "p": "P08", "verdict": "no", "source": "sonnet", "reason": "the checks before effects are the password validation (P55) and the delete confirmations (P32)" }
+   ],
+   "detectorPairs": [
+    { "p": "P10", "via": "node", "sonnet": "partly", "opus": "yes", "adjudicated": "partly", "reason": "genuine menus exist (choosefromlist and match input() menus), but several anchors are documentpicker reads and alerts; AUDIT-L1 scores a pair whose owning nodes only partly fit as partly" },
+    { "p": "P54", "via": "node+token", "sonnet": "yes", "opus": "partly", "adjudicated": "partly", "reason": "30 runworkflow calls; the child shortcuts have effects (and 'SNS Receiver' re-invokes the parent), so the effect-free call contract is not met (same reading as #35)" }
+   ]
+  },
+  {
+   "drawOrder": 54, "id": "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py",
+   "explained": { "conservative": "partly", "dashboardExplained": "partly" },
+   "explainedReason": "Both labellers: partly. P48 names the intent; reading a model's output while it streams and cancelling it mid-generation has no construct.",
+   "patterns": [
+    { "p": "P44", "verdict": "partly", "source": "opus", "reason": "a partial-output stream is consumed, but it is the model's own output, not a bounded input topic" },
+    { "p": "P20", "verdict": "no", "source": "sonnet", "reason": "nothing is regenerated after a failed check; the loop breaks" }
+   ],
+   "detectorPairs": [
+    { "p": "P20", "via": "node", "sonnet": "partly", "opus": "no", "adjudicated": "no", "reason": "the sonnet reason itself says nothing is regenerated" },
+    { "p": "P07", "via": "node", "sonnet": "partly", "opus": "no", "adjudicated": "no", "reason": "a boolean readability check that aborts (P48), not a classify-then-dispatch router; the sonnet reason says 'not a kind to route on'" },
+    { "p": "P04", "via": "node", "sonnet": "partly", "opus": "no", "adjudicated": "no", "reason": "the check never gates delivery (text is printed as it streams; the final check only prints its reasoning)" }
+   ]
+  }
+ ]
+}

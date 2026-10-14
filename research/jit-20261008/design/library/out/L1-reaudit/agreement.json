@@ -1,0 +1,1613 @@
+{
+ "generated": "agreement.mjs",
+ "dashboardSet": {
+  "n": 16,
+  "strata": [
+   "automation|A"
+  ],
+  "ids": [
+   "node-red:03fb3e10dded33d788f0990f4915f2c1",
+   "node-red:0cc3b1d4f7e159800c01c650c30752ae",
+   "node-red:1a43db3395478c8c30f18144f9eada82",
+   "node-red:1f1c0dde4ff193e5c14d5b99442a7d00",
+   "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "node-red:2f9c31009af651823796c4a97a8dfda4",
+   "node-red:3d1efc5cd0062528a20b6961fe44ce61",
+   "node-red:5203cdf15000bd64d1da800a005bab55",
+   "node-red:8b1159fd47b7f34ace103bdd46912b62",
+   "node-red:a04546c46361167fd1d83aed8e4f22ec",
+   "node-red:cce143b31a209e570a645d56c1830d51",
+   "node-red:d8b35d6c409f3527040f8fd97d01607d",
+   "node-red:e36b06bc36312d057c0541414d4f87f5",
+   "node-red:e71d5246a2e80954b267b3079e1e9764",
+   "node-red:ecedddbabd5cb5d6c9a829382d0f229b",
+   "node-red:eebfe0f84c34d0b9cce62f4f65f4fa4e"
+  ]
+ },
+ "explained": {
+  "conservative": {
+   "items": [
+    {
+     "d": 29,
+     "sonnet": "no",
+     "opus": "no",
+     "adjudicated": "no"
+    },
+    {
+     "d": 1,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 35,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 10,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 22,
+     "sonnet": "yes",
+     "opus": "partly",
+     "adjudicated": "partly"
+    },
+    {
+     "d": 56,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 31,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 24,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 36,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 54,
+     "sonnet": "partly",
+     "opus": "partly",
+     "adjudicated": "partly"
+    }
+   ],
+   "threeWay": {
+    "sonnetVsOpus": {
+     "n": 10,
+     "agree": 9,
+     "po": 0.9,
+     "pe": 0.59,
+     "kappa": 0.756
+    },
+    "sonnetVsAdjudicated": {
+     "n": 10,
+     "agree": 9,
+     "po": 0.9,
+     "pe": 0.59,
+     "kappa": 0.756
+    },
+    "opusVsAdjudicated": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 0.54,
+     "kappa": 1
+    }
+   },
+   "strict": {
+    "sonnetVsOpus": {
+     "n": 10,
+     "agree": 9,
+     "po": 0.9,
+     "pe": 0.62,
+     "kappa": 0.737
+    },
+    "sonnetVsAdjudicated": {
+     "n": 10,
+     "agree": 9,
+     "po": 0.9,
+     "pe": 0.62,
+     "kappa": 0.737
+    },
+    "opusVsAdjudicated": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 0.58,
+     "kappa": 1
+    }
+   },
+   "lenient": {
+    "sonnetVsOpus": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 0.82,
+     "kappa": 1
+    },
+    "sonnetVsAdjudicated": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 0.82,
+     "kappa": 1
+    },
+    "opusVsAdjudicated": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 0.82,
+     "kappa": 1
+    }
+   }
+  },
+  "dashboardExplained": {
+   "items": [
+    {
+     "d": 29,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 1,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 35,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 10,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 22,
+     "sonnet": "yes",
+     "opus": "partly",
+     "adjudicated": "partly"
+    },
+    {
+     "d": 56,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 31,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 24,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 36,
+     "sonnet": "yes",
+     "opus": "yes",
+     "adjudicated": "yes"
+    },
+    {
+     "d": 54,
+     "sonnet": "partly",
+     "opus": "partly",
+     "adjudicated": "partly"
+    }
+   ],
+   "threeWay": {
+    "sonnetVsOpus": {
+     "n": 10,
+     "agree": 9,
+     "po": 0.9,
+     "pe": 0.74,
+     "kappa": 0.615
+    },
+    "sonnetVsAdjudicated": {
+     "n": 10,
+     "agree": 9,
+     "po": 0.9,
+     "pe": 0.74,
+     "kappa": 0.615
+    },
+    "opusVsAdjudicated": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 0.68,
+     "kappa": 1
+    }
+   },
+   "strict": {
+    "sonnetVsOpus": {
+     "n": 10,
+     "agree": 9,
+     "po": 0.9,
+     "pe": 0.74,
+     "kappa": 0.615
+    },
+    "sonnetVsAdjudicated": {
+     "n": 10,
+     "agree": 9,
+     "po": 0.9,
+     "pe": 0.74,
+     "kappa": 0.615
+    },
+    "opusVsAdjudicated": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 0.68,
+     "kappa": 1
+    }
+   },
+   "lenient": {
+    "sonnetVsOpus": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 1,
+     "kappa": null
+    },
+    "sonnetVsAdjudicated": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 1,
+     "kappa": null
+    },
+    "opusVsAdjudicated": {
+     "n": 10,
+     "agree": 10,
+     "po": 1,
+     "pe": 1,
+     "kappa": null
+    }
+   }
+  }
+ },
+ "coverage10": {
+  "conservative": {
+   "sonnet": {
+    "strict": {
+     "unweighted": {
+      "x": 8,
+      "n": 10,
+      "p": 80,
+      "wilson": [
+       49,
+       94.3
+      ]
+     },
+     "weighted": {
+      "p": 85.9,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       51.6,
+       97.2
+      ]
+     }
+    },
+    "lenient": {
+     "unweighted": {
+      "x": 9,
+      "n": 10,
+      "p": 90,
+      "wilson": [
+       59.6,
+       98.2
+      ]
+     },
+     "weighted": {
+      "p": 92.3,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       58.6,
+       99
+      ]
+     }
+    }
+   },
+   "opus": {
+    "strict": {
+     "unweighted": {
+      "x": 7,
+      "n": 10,
+      "p": 70,
+      "wilson": [
+       39.7,
+       89.2
+      ]
+     },
+     "weighted": {
+      "p": 79.4,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       45.3,
+       94.7
+      ]
+     }
+    },
+    "lenient": {
+     "unweighted": {
+      "x": 9,
+      "n": 10,
+      "p": 90,
+      "wilson": [
+       59.6,
+       98.2
+      ]
+     },
+     "weighted": {
+      "p": 92.3,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       58.6,
+       99
+      ]
+     }
+    }
+   },
+   "adjudicated": {
+    "strict": {
+     "unweighted": {
+      "x": 7,
+      "n": 10,
+      "p": 70,
+      "wilson": [
+       39.7,
+       89.2
+      ]
+     },
+     "weighted": {
+      "p": 79.4,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       45.3,
+       94.7
+      ]
+     }
+    },
+    "lenient": {
+     "unweighted": {
+      "x": 9,
+      "n": 10,
+      "p": 90,
+      "wilson": [
+       59.6,
+       98.2
+      ]
+     },
+     "weighted": {
+      "p": 92.3,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       58.6,
+       99
+      ]
+     }
+    }
+   }
+  },
+  "dashboardExplained": {
+   "sonnet": {
+    "strict": {
+     "unweighted": {
+      "x": 9,
+      "n": 10,
+      "p": 90,
+      "wilson": [
+       59.6,
+       98.2
+      ]
+     },
+     "weighted": {
+      "p": 93.5,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       59.9,
+       99.3
+      ]
+     }
+    },
+    "lenient": {
+     "unweighted": {
+      "x": 10,
+      "n": 10,
+      "p": 100,
+      "wilson": [
+       72.2,
+       100
+      ]
+     },
+     "weighted": {
+      "p": 100,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       68,
+       100
+      ]
+     }
+    }
+   },
+   "opus": {
+    "strict": {
+     "unweighted": {
+      "x": 8,
+      "n": 10,
+      "p": 80,
+      "wilson": [
+       49,
+       94.3
+      ]
+     },
+     "weighted": {
+      "p": 87.1,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       52.8,
+       97.6
+      ]
+     }
+    },
+    "lenient": {
+     "unweighted": {
+      "x": 10,
+      "n": 10,
+      "p": 100,
+      "wilson": [
+       72.2,
+       100
+      ]
+     },
+     "weighted": {
+      "p": 100,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       68,
+       100
+      ]
+     }
+    }
+   },
+   "adjudicated": {
+    "strict": {
+     "unweighted": {
+      "x": 8,
+      "n": 10,
+      "p": 80,
+      "wilson": [
+       49,
+       94.3
+      ]
+     },
+     "weighted": {
+      "p": 87.1,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       52.8,
+       97.6
+      ]
+     }
+    },
+    "lenient": {
+     "unweighted": {
+      "x": 10,
+      "n": 10,
+      "p": 100,
+      "wilson": [
+       72.2,
+       100
+      ]
+     },
+     "weighted": {
+      "p": 100,
+      "kishN": 8.2,
+      "wilsonAtKish": [
+       68,
+       100
+      ]
+     }
+    }
+   }
+  }
+ },
+ "jaccard": {
+  "perItem": [
+   {
+    "d": 29,
+    "sonnet": [
+     "P01",
+     "P08",
+     "P34"
+    ],
+    "opus": [
+     "P12",
+     "P42"
+    ],
+    "adjudicated": [
+     "P01",
+     "P12",
+     "P42"
+    ],
+    "jPatterns": 0,
+    "jSonnetAdj": 0.2,
+    "jOpusAdj": 0.667,
+    "l0Sonnet": [
+     "done",
+     "effect",
+     "if",
+     "input",
+     "step",
+     "wait.delay"
+    ],
+    "l0Opus": [
+     "done",
+     "effect",
+     "if",
+     "input",
+     "map",
+     "state",
+     "step",
+     "wait.delay"
+    ],
+    "jL0": 0.75,
+    "jL0NoBookkeeping": 0.6
+   },
+   {
+    "d": 1,
+    "sonnet": [
+     "P01",
+     "P12",
+     "P27",
+     "P29"
+    ],
+    "opus": [
+     "P01",
+     "P12",
+     "P14",
+     "P27"
+    ],
+    "adjudicated": [
+     "P01",
+     "P12",
+     "P14",
+     "P27"
+    ],
+    "jPatterns": 0.6,
+    "jSonnetAdj": 0.6,
+    "jOpusAdj": 1,
+    "l0Sonnet": [
+     "effect",
+     "finally",
+     "map",
+     "route.error",
+     "step"
+    ],
+    "l0Opus": [
+     "done",
+     "effect",
+     "if",
+     "input",
+     "map",
+     "route.error",
+     "step"
+    ],
+    "jL0": 0.5,
+    "jL0NoBookkeeping": 0.6
+   },
+   {
+    "d": 35,
+    "sonnet": [
+     "P08",
+     "P25",
+     "P54"
+    ],
+    "opus": [
+     "P08"
+    ],
+    "adjudicated": [
+     "P08",
+     "P54"
+    ],
+    "jPatterns": 0.333,
+    "jSonnetAdj": 0.667,
+    "jOpusAdj": 0.5,
+    "l0Sonnet": [
+     "call",
+     "effect",
+     "if",
+     "step"
+    ],
+    "l0Opus": [
+     "effect",
+     "if",
+     "input",
+     "step"
+    ],
+    "jL0": 0.6,
+    "jL0NoBookkeeping": 0.667
+   },
+   {
+    "d": 10,
+    "sonnet": [
+     "P02",
+     "P37"
+    ],
+    "opus": [
+     "P02",
+     "P37"
+    ],
+    "adjudicated": [
+     "P02",
+     "P37"
+    ],
+    "jPatterns": 1,
+    "jSonnetAdj": 1,
+    "jOpusAdj": 1,
+    "l0Sonnet": [
+     "effect",
+     "step",
+     "trigger.webhook"
+    ],
+    "l0Opus": [
+     "done",
+     "effect",
+     "input",
+     "trigger.webhook"
+    ],
+    "jL0": 0.4,
+    "jL0NoBookkeeping": 1
+   },
+   {
+    "d": 22,
+    "sonnet": [
+     "P19",
+     "P26",
+     "P42",
+     "P45"
+    ],
+    "opus": [
+     "P19",
+     "P26",
+     "P42",
+     "P45",
+     "P46"
+    ],
+    "adjudicated": [
+     "P19",
+     "P26",
+     "P42",
+     "P45",
+     "P46"
+    ],
+    "jPatterns": 0.8,
+    "jSonnetAdj": 0.8,
+    "jOpusAdj": 1,
+    "l0Sonnet": [
+     "agent",
+     "call",
+     "plan",
+     "retry",
+     "state",
+     "wide"
+    ],
+    "l0Opus": [
+     "agent",
+     "effect",
+     "if",
+     "note",
+     "plan",
+     "retry",
+     "state",
+     "step",
+     "wide"
+    ],
+    "jL0": 0.5,
+    "jL0NoBookkeeping": 0.625
+   },
+   {
+    "d": 56,
+    "sonnet": [
+     "P01",
+     "P12",
+     "P15"
+    ],
+    "opus": [
+     "P01",
+     "P12",
+     "P14"
+    ],
+    "adjudicated": [
+     "P01",
+     "P12",
+     "P14",
+     "P15"
+    ],
+    "jPatterns": 0.5,
+    "jSonnetAdj": 0.75,
+    "jOpusAdj": 0.75,
+    "l0Sonnet": [
+     "effect",
+     "input",
+     "map",
+     "step"
+    ],
+    "l0Opus": [
+     "done",
+     "effect",
+     "if",
+     "input",
+     "map",
+     "step"
+    ],
+    "jL0": 0.667,
+    "jL0NoBookkeeping": 0.667
+   },
+   {
+    "d": 31,
+    "sonnet": [
+     "P01",
+     "P29"
+    ],
+    "opus": [
+     "P01",
+     "P29"
+    ],
+    "adjudicated": [
+     "P01",
+     "P29"
+    ],
+    "jPatterns": 1,
+    "jSonnetAdj": 1,
+    "jOpusAdj": 1,
+    "l0Sonnet": [
+     "effect",
+     "finally",
+     "step"
+    ],
+    "l0Opus": [
+     "call",
+     "done",
+     "finally",
+     "input",
+     "step"
+    ],
+    "jL0": 0.333,
+    "jL0NoBookkeeping": 0.333
+   },
+   {
+    "d": 24,
+    "sonnet": [
+     "P08",
+     "P29",
+     "P32",
+     "P36",
+     "P38",
+     "P41"
+    ],
+    "opus": [
+     "P29",
+     "P36",
+     "P38",
+     "P41"
+    ],
+    "adjudicated": [
+     "P08",
+     "P29",
+     "P36",
+     "P38",
+     "P41"
+    ],
+    "jPatterns": 0.667,
+    "jSonnetAdj": 0.833,
+    "jOpusAdj": 0.8,
+    "l0Sonnet": [
+     "approve",
+     "effect",
+     "finally",
+     "if",
+     "trigger.event",
+     "trigger.schedule",
+     "wait.delay"
+    ],
+    "l0Opus": [
+     "approve",
+     "effect",
+     "finally",
+     "if",
+     "input",
+     "step",
+     "trigger.event",
+     "trigger.schedule",
+     "wait.delay"
+    ],
+    "jL0": 0.778,
+    "jL0NoBookkeeping": 1
+   },
+   {
+    "d": 36,
+    "sonnet": [
+     "P02",
+     "P08",
+     "P10",
+     "P42",
+     "P54",
+     "P55"
+    ],
+    "opus": [
+     "P10",
+     "P32",
+     "P42",
+     "P54",
+     "P55"
+    ],
+    "adjudicated": [
+     "P10",
+     "P32",
+     "P42",
+     "P54",
+     "P55"
+    ],
+    "jPatterns": 0.571,
+    "jSonnetAdj": 0.571,
+    "jOpusAdj": 1,
+    "l0Sonnet": [
+     "ask",
+     "call",
+     "effect",
+     "if",
+     "state"
+    ],
+    "l0Opus": [
+     "approve",
+     "ask",
+     "done",
+     "effect",
+     "if",
+     "input",
+     "state",
+     "step"
+    ],
+    "jL0": 0.444,
+    "jL0NoBookkeeping": 0.667
+   },
+   {
+    "d": 54,
+    "sonnet": [
+     "P20",
+     "P48"
+    ],
+    "opus": [
+     "P44",
+     "P48"
+    ],
+    "adjudicated": [
+     "P44",
+     "P48"
+    ],
+    "jPatterns": 0.333,
+    "jSonnetAdj": 0.333,
+    "jOpusAdj": 1,
+    "l0Sonnet": [
+     "agent",
+     "guard",
+     "if",
+     "judge"
+    ],
+    "l0Opus": [
+     "done",
+     "guard",
+     "if",
+     "judge",
+     "map",
+     "note"
+    ],
+    "jL0": 0.429,
+    "jL0NoBookkeeping": 0.6
+   }
+  ],
+  "mean": {
+   "patterns": 0.58,
+   "sonnetVsAdjudicated": 0.675,
+   "opusVsAdjudicated": 0.872,
+   "l0": 0.54,
+   "l0NoBookkeeping": 0.676
+  },
+  "equalPatternSets": 2,
+  "patternPairs": {
+   "sonnet": 35,
+   "opus": 30,
+   "both": 23
+  }
+ },
+ "detectorAgreement": {
+  "onlyOneLabeller": [],
+  "rule": {
+   "verdicts": {
+    "n": 25,
+    "agree": 16,
+    "po": 0.64,
+    "pe": 0.366,
+    "kappa": 0.432
+   },
+   "sonnetHigher": 8,
+   "opusHigher": 1,
+   "precision": {
+    "sonnet": {
+     "pairs": 25,
+     "yes": 14,
+     "partly": 7,
+     "no": 4,
+     "precision": 0.7,
+     "wilson": [
+      50.4,
+      84.3
+     ]
+    },
+    "opus": {
+     "pairs": 25,
+     "yes": 12,
+     "partly": 3,
+     "no": 10,
+     "precision": 0.54,
+     "wilson": [
+      35.3,
+      71.7
+     ]
+    },
+    "adjudicated": {
+     "pairs": 25,
+     "yes": 11,
+     "partly": 5,
+     "no": 9,
+     "precision": 0.54,
+     "wilson": [
+      35.3,
+      71.7
+     ]
+    }
+   }
+  },
+  "plumbing": {
+   "verdicts": {
+    "n": 4,
+    "agree": 3,
+    "po": 0.75,
+    "pe": 0.375,
+    "kappa": 0.6
+   },
+   "sonnetHigher": 0,
+   "opusHigher": 1,
+   "precision": {
+    "sonnet": {
+     "pairs": 4,
+     "yes": 1,
+     "partly": 2,
+     "no": 1,
+     "precision": 0.5,
+     "wilson": [
+      15,
+      85
+     ]
+    },
+    "opus": {
+     "pairs": 4,
+     "yes": 2,
+     "partly": 2,
+     "no": 0,
+     "precision": 0.75,
+     "wilson": [
+      30.1,
+      95.4
+     ]
+    },
+    "adjudicated": {
+     "pairs": 4,
+     "yes": 1,
+     "partly": 3,
+     "no": 0,
+     "precision": 0.625,
+     "wilson": [
+      21.9,
+      90.8
+     ]
+    }
+   }
+  },
+  "l0": {
+   "verdicts": {
+    "n": 7,
+    "agree": 7,
+    "po": 1,
+    "pe": 0.755,
+    "kappa": 1
+   },
+   "sonnetHigher": 0,
+   "opusHigher": 0,
+   "precision": {
+    "sonnet": {
+     "pairs": 7,
+     "yes": 6,
+     "partly": 0,
+     "no": 1,
+     "precision": 0.857,
+     "wilson": [
+      48.7,
+      97.4
+     ]
+    },
+    "opus": {
+     "pairs": 7,
+     "yes": 6,
+     "partly": 0,
+     "no": 1,
+     "precision": 0.857,
+     "wilson": [
+      48.7,
+      97.4
+     ]
+    },
+    "adjudicated": {
+     "pairs": 7,
+     "yes": 6,
+     "partly": 0,
+     "no": 1,
+     "precision": 0.857,
+     "wilson": [
+      48.7,
+      97.4
+     ]
+    }
+   }
+  },
+  "all": {
+   "verdicts": {
+    "n": 36,
+    "agree": 26,
+    "po": 0.722,
+    "pe": 0.41,
+    "kappa": 0.529
+   },
+   "sonnetHigher": 8,
+   "opusHigher": 2,
+   "precision": {
+    "sonnet": {
+     "pairs": 36,
+     "yes": 21,
+     "partly": 9,
+     "no": 6,
+     "precision": 0.708,
+     "wilson": [
+      54.6,
+      83.1
+     ]
+    },
+    "opus": {
+     "pairs": 36,
+     "yes": 20,
+     "partly": 5,
+     "no": 11,
+     "precision": 0.625,
+     "wilson": [
+      46.2,
+      76.4
+     ]
+    },
+    "adjudicated": {
+     "pairs": 36,
+     "yes": 18,
+     "partly": 8,
+     "no": 10,
+     "precision": 0.611,
+     "wilson": [
+      44.9,
+      75.2
+     ]
+    }
+   }
+  },
+  "disputed": [
+   {
+    "d": 35,
+    "p": "P54",
+    "group": "rule",
+    "sonnet": "yes",
+    "opus": "no",
+    "adjudicated": "partly"
+   },
+   {
+    "d": 10,
+    "p": "P37",
+    "group": "rule",
+    "sonnet": "yes",
+    "opus": "partly",
+    "adjudicated": "partly"
+   },
+   {
+    "d": 31,
+    "p": "P27",
+    "group": "rule",
+    "sonnet": "partly",
+    "opus": "no",
+    "adjudicated": "no"
+   },
+   {
+    "d": 24,
+    "p": "P27",
+    "group": "rule",
+    "sonnet": "partly",
+    "opus": "no",
+    "adjudicated": "no"
+   },
+   {
+    "d": 24,
+    "p": "P41",
+    "group": "plumbing",
+    "sonnet": "no",
+    "opus": "yes",
+    "adjudicated": "partly"
+   },
+   {
+    "d": 36,
+    "p": "P10",
+    "group": "rule",
+    "sonnet": "partly",
+    "opus": "yes",
+    "adjudicated": "partly"
+   },
+   {
+    "d": 36,
+    "p": "P54",
+    "group": "rule",
+    "sonnet": "yes",
+    "opus": "partly",
+    "adjudicated": "partly"
+   },
+   {
+    "d": 54,
+    "p": "P20",
+    "group": "rule",
+    "sonnet": "partly",
+    "opus": "no",
+    "adjudicated": "no"
+   },
+   {
+    "d": 54,
+    "p": "P07",
+    "group": "rule",
+    "sonnet": "partly",
+    "opus": "no",
+    "adjudicated": "no"
+   },
+   {
+    "d": 54,
+    "p": "P04",
+    "group": "rule",
+    "sonnet": "partly",
+    "opus": "no",
+    "adjudicated": "no"
+   }
+  ]
+ },
+ "coverage60": {
+  "conservative/strict": {
+   "reauditPrespecified": {
+    "p": 93.6,
+    "wilsonAtKish": [
+     82.3,
+     97.9
+    ],
+    "kishN": 43.8,
+    "bootstrap": [
+     90.6,
+     96.7
+    ],
+    "items": 1549,
+    "labels": 60
+   },
+   "reauditAdjudicated10": {
+    "p": 92.7,
+    "wilsonAtKish": [
+     81.1,
+     97.4
+    ],
+    "kishN": 43.8,
+    "bootstrap": [
+     90.4,
+     95.8
+    ],
+    "items": 1549,
+    "labels": 60
+   },
+   "reauditKnownDashboard": {
+    "p": 94.9,
+    "wilsonAtKish": [
+     84.4,
+     97.9
+    ],
+    "kishN": 42.7,
+    "bootstrap": [
+     93,
+     96.8
+    ],
+    "items": 1549,
+    "labels": 58,
+    "dashboardStratum": {
+     "N": 16,
+     "labelled": 2,
+     "coverage": 0,
+     "exact": true
+    }
+   },
+   "pooled120": {
+    "p": 93.9,
+    "wilsonAtKish": [
+     86.5,
+     97.4
+    ],
+    "kishN": 81.6,
+    "bootstrap": [
+     91.3,
+     96.3
+    ],
+    "items": 1559,
+    "labels": 120
+   },
+   "pooled120KnownDashboard": {
+    "p": 94.9,
+    "wilsonAtKish": [
+     88.1,
+     97.5
+    ],
+    "kishN": 79.8,
+    "bootstrap": [
+     92.6,
+     96.9
+    ],
+    "items": 1559,
+    "labels": 116,
+    "dashboardStratum": {
+     "N": 16,
+     "labelled": 4,
+     "coverage": 0,
+     "exact": true
+    }
+   },
+   "l1aOnRevision1Strata": {
+    "p": 94.3,
+    "wilsonAtKish": [
+     80.5,
+     98.5
+    ],
+    "kishN": 31.5,
+    "bootstrap": [
+     90.7,
+     97.9
+    ],
+    "items": 1559,
+    "labels": 60
+   }
+  },
+  "conservative/lenient": {
+   "reauditPrespecified": {
+    "p": 95.6,
+    "wilsonAtKish": [
+     85,
+     98.8
+    ],
+    "kishN": 43.8,
+    "bootstrap": [
+     93.3,
+     97.9
+    ],
+    "items": 1549,
+    "labels": 60
+   },
+   "reauditAdjudicated10": {
+    "p": 95.6,
+    "wilsonAtKish": [
+     85,
+     98.8
+    ],
+    "kishN": 43.8,
+    "bootstrap": [
+     93.3,
+     97.9
+    ],
+    "items": 1549,
+    "labels": 60
+   },
+   "reauditKnownDashboard": {
+    "p": 96.8,
+    "wilsonAtKish": [
+     87.2,
+     98.6
+    ],
+    "kishN": 42.7,
+    "bootstrap": [
+     96.8,
+     96.8
+    ],
+    "items": 1549,
+    "labels": 58,
+    "dashboardStratum": {
+     "N": 16,
+     "labelled": 2,
+     "coverage": 0,
+     "exact": true
+    }
+   },
+   "pooled120": {
+    "p": 95.9,
+    "wilsonAtKish": [
+     89.1,
+     98.5
+    ],
+    "kishN": 81.6,
+    "bootstrap": [
+     94.3,
+     97.4
+    ],
+    "items": 1559,
+    "labels": 120
+   },
+   "pooled120KnownDashboard": {
+    "p": 96.9,
+    "wilsonAtKish": [
+     90.9,
+     98.4
+    ],
+    "kishN": 79.8,
+    "bootstrap": [
+     96.9,
+     96.9
+    ],
+    "items": 1559,
+    "labels": 116,
+    "dashboardStratum": {
+     "N": 16,
+     "labelled": 4,
+     "coverage": 0,
+     "exact": true
+    }
+   },
+   "l1aOnRevision1Strata": {
+    "p": 96.1,
+    "wilsonAtKish": [
+     82.9,
+     99.2
+    ],
+    "kishN": 31.5,
+    "bootstrap": [
+     94.2,
+     97.9
+    ],
+    "items": 1559,
+    "labels": 60
+   }
+  },
+  "dashboardExplained/strict": {
+   "reauditPrespecified": {
+    "p": 95.9,
+    "wilsonAtKish": [
+     85.5,
+     99
+    ],
+    "kishN": 43.8,
+    "bootstrap": [
+     94,
+     97.9
+    ],
+    "items": 1549,
+    "labels": 60
+   },
+   "reauditAdjudicated10": {
+    "p": 95,
+    "wilsonAtKish": [
+     84.1,
+     98.5
+    ],
+    "kishN": 43.8,
+    "bootstrap": [
+     94,
+     96.9
+    ],
+    "items": 1549,
+    "labels": 60
+   },
+   "reauditKnownDashboard": {
+    "p": 95.9,
+    "wilsonAtKish": [
+     85.4,
+     99
+    ],
+    "kishN": 42.7,
+    "bootstrap": [
+     94,
+     97.9
+    ],
+    "items": 1549,
+    "labels": 58,
+    "dashboardStratum": {
+     "N": 16,
+     "labelled": 2,
+     "coverage": 1,
+     "exact": false
+    }
+   },
+   "pooled120": {
+    "p": 95.9,
+    "wilsonAtKish": [
+     89.2,
+     98.5
+    ],
+    "kishN": 81.6,
+    "bootstrap": [
+     93.6,
+     97.9
+    ],
+    "items": 1559,
+    "labels": 120
+   },
+   "pooled120KnownDashboard": {
+    "p": 95.9,
+    "wilsonAtKish": [
+     89.1,
+     98.5
+    ],
+    "kishN": 79.8,
+    "bootstrap": [
+     93.6,
+     97.9
+    ],
+    "items": 1559,
+    "labels": 116,
+    "dashboardStratum": {
+     "N": 16,
+     "labelled": 4,
+     "coverage": 1,
+     "exact": false
+    }
+   },
+   "l1aOnRevision1Strata": {
+    "p": 96.1,
+    "wilsonAtKish": [
+     83,
+     99.2
+    ],
+    "kishN": 31.5,
+    "bootstrap": [
+     92.6,
+     97.9
+    ],
+    "items": 1559,
+    "labels": 60
+   }
+  },
+  "dashboardExplained/lenient": {
+   "reauditPrespecified": {
+    "p": 97.9,
+    "wilsonAtKish": [
+     88.4,
+     99.6
+    ],
+    "kishN": 43.8,
+    "bootstrap": [
+     97.9,
+     97.9
+    ],
+    "items": 1549,
+    "labels": 60
+   },
+   "reauditAdjudicated10": {
+    "p": 97.9,
+    "wilsonAtKish": [
+     88.4,
+     99.6
+    ],
+    "kishN": 43.8,
+    "bootstrap": [
+     97.9,
+     97.9
+    ],
+    "items": 1549,
+    "labels": 60
+   },
+   "reauditKnownDashboard": {
+    "p": 97.9,
+    "wilsonAtKish": [
+     88.3,
+     99.6
+    ],
+    "kishN": 42.7,
+    "bootstrap": [
+     97.9,
+     97.9
+    ],
+    "items": 1549,
+    "labels": 58,
+    "dashboardStratum": {
+     "N": 16,
+     "labelled": 2,
+     "coverage": 1,
+     "exact": false
+    }
+   },
+   "pooled120": {
+    "p": 97.9,
+    "wilsonAtKish": [
+     92,
+     99.5
+    ],
+    "kishN": 81.6,
+    "bootstrap": [
+     97.9,
+     97.9
+    ],
+    "items": 1559,
+    "labels": 120
+   },
+   "pooled120KnownDashboard": {
+    "p": 97.9,
+    "wilsonAtKish": [
+     91.9,
+     99.5
+    ],
+    "kishN": 79.8,
+    "bootstrap": [
+     97.9,
+     97.9
+    ],
+    "items": 1559,
+    "labels": 116,
+    "dashboardStratum": {
+     "N": 16,
+     "labelled": 4,
+     "coverage": 1,
+     "exact": false
+    }
+   },
+   "l1aOnRevision1Strata": {
+    "p": 97.9,
+    "wilsonAtKish": [
+     85.6,
+     99.7
+    ],
+    "kishN": 31.5,
+    "bootstrap": [
+     97.9,
+     97.9
+    ],
+    "items": 1559,
+    "labels": 60
+   }
+  }
+ }
+}
