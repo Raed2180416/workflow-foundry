@@ -179,8 +179,8 @@ export const CUE_HINTS = Object.freeze({
   'human-gate': 'human-approval', 'high-risk-not-model-owned': 'human-approval', 'durable-wait': 'durable-wait',
   'compensation-named-limit': 'effects-with-authority', humanWords: 'human-approval', timeWords: 'schedule', effectVerbs: 'effects-with-authority',
 });
-/** Verifiers that can arbitrate between two different answers without our oracle (a schema cannot). */
-export const DEPLOYABLE_VERIFIERS = Object.freeze(['tests', 'executable-tests', 'acceptance-check']);
+/** Declared verifiers (prereg/stages.json values, normalised) that can arbitrate between two different answers without our oracle; a schema cannot. */
+export const DEPLOYABLE_VERIFIERS = Object.freeze(['tests', 'executable-tests', 'acceptance-check', 'owner-acceptance-check']);
 
 const EPS = 1e-12;
 const finite = Number.isFinite;
@@ -394,7 +394,7 @@ function chooseK(items, { ks, order, delta }) {
 /**
  * Fit the v1 router on TRAIN items (trainItem shape, or evaluate.mjs's context through itemsFromContext). Options:
  *   modes        registry order of the modes it may choose (tie-break order); default: the modes seen in TRAIN, MODES order
- *   classOf      mode -> 'workflow' | 'no-workflow' (default metrics.classOf)
+ *   classOf      mode -> 'workflow' | 'no-workflow' (default metrics.classOf); kindOf: mode -> none | guided | built
  *   stage        'leaf' (NR-static, primary: stages 0-2) or 'knn' (NR-knn, secondary: stage 0 then the kNN stage)
  *   delta        δ for ties (DESIGN §2: 0.03); 0 gives exact ties to the cheaper mode
  *   ks, k        kNN candidates (chosen by leave-one-cluster-out) or a fixed k
@@ -403,7 +403,7 @@ function chooseK(items, { ks, order, delta }) {
  * Returns { decide(job, cell, { routingUsd, probe }), leafTable(cells), neighbours(features), fitted, ... }.
  */
 export function fitNeedRouter(train, opts = {}) {
-  const { modes = null, classOf = m => registryClassOf(m), stage = 'leaf', ruleKeys = RULE_KEYS, ruleCell = N1, delta = DELTA, ks = [3, 5], k = null,
+  const { modes = null, classOf = m => registryClassOf(m), kindOf = m => modeInfo(m).kind, stage = 'leaf', ruleKeys = RULE_KEYS, ruleCell = N1, delta = DELTA, ks = [3, 5], k = null,
     minLeafJobs = 1, engine = null, guardRecall = null, defaultMode = DEFAULT_MODE, cascades = CASCADES, checkpointAfter = 4 } = opts;
   if (!['leaf', 'knn'].includes(stage)) throw new Error(`stage must be leaf or knn, got ${stage}`);
   if (!(delta >= 0)) throw new Error(`delta must be >= 0, got ${delta}`);
@@ -480,7 +480,7 @@ export function fitNeedRouter(train, opts = {}) {
     return {
       stage, mode, best: r?.best ?? null, tie: r?.tie ?? false, acceptable: r?.acceptable ?? [], features, verifier, guard, structure, source,
       pred: Object.fromEntries(P.map(m => { const st = pred.get(m); return [m, { p: st.s, q: st.q, abstain: Math.max(0, 1 - st.s - st.q), c: st.c, F: st.B, usdPerTask: r.usd.get(m), n: st.n }]; })),
-      U: Object.fromEntries(P.map(m => [m, r.U.get(m)])), unsupported, needsWorkflow, class: classOf(mode), kind: modeInfo(mode).kind,
+      U: Object.fromEntries(P.map(m => [m, r.U.get(m)])), unsupported, needsWorkflow, class: classOf(mode), kind: kindOf(mode),
       cascade, checkpoint, askFlag: askReasons.length > 0, ask: askReasons, abstain: reasons.length ? { reasons, fallback } : null,
       routingCostUsd: routing, cell: c,
     };
@@ -538,7 +538,7 @@ export function nrStaticPolicy({ name = 'NR-static', role = 'primary', ...opts }
   return {
     name, role, features: [...(opts.ruleKeys ?? RULE_KEYS)], frozen: 'router.mjs v1',
     fit(ctx) {
-      const R = fitNeedRouter(itemsFromContext(ctx), { modes: ctx.modes, classOf: m => ctx.classOf(m), ...opts, stage: 'leaf' });
+      const R = fitNeedRouter(itemsFromContext(ctx), { modes: ctx.modes, classOf: m => ctx.classOf(m), kindOf: m => modeInfo(m, ctx.registry).kind, ...opts, stage: 'leaf' });
       const ch = (view, cell) => toPolicyDecision(R.decide(view, cell));
       ch.fitted = { thresholds: R.rule.thresholds, trainBalancedAccuracy: R.rule.trainBalancedAccuracy, confident: R.rule.confident, workflowCalls: R.rule.workflowCalls, loco: R.loco };
       ch.router = R;
@@ -552,7 +552,7 @@ export function nrKnnPolicy({ name = 'NR-knn', role = 'secondary', ...opts } = {
   return {
     name, role, features: [...TRUSTED_FEATURES], frozen: 'router.mjs v1',
     fit(ctx) {
-      const R = fitNeedRouter(itemsFromContext(ctx), { modes: ctx.modes, classOf: m => ctx.classOf(m), ...opts, stage: 'knn' });
+      const R = fitNeedRouter(itemsFromContext(ctx), { modes: ctx.modes, classOf: m => ctx.classOf(m), kindOf: m => modeInfo(m, ctx.registry).kind, ...opts, stage: 'knn' });
       const ch = (view, cell) => toPolicyDecision(R.decide(view, cell));
       ch.neighbours = view => R.neighbours(view.features);
       ch.k = R.k;

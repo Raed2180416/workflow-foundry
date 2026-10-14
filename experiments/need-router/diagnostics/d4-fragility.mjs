@@ -68,6 +68,7 @@ export function fragilityOfJob(job, { cells = GRID } = {}) {
     job: job.id, oracle: job.oracle, family: job.family, tolerance: job.oracle === 'records' ? RECORDS_RULE : { tol: KINETICS_TOL, source: KINETICS_SOURCE },
     units: job.pairing.paired, modes, rows: job.rows.length, sources: job.sources,
     reproduction: { rows: job.rows.length, mismatches: mismatch.length, unrecomputable, mismatchRows: mismatch.slice(0, 5).map(r => `${r.mode}/${r.unit}`) },
+    failuresWithWrongExclusion: job.oracle === 'kinetics' ? job.rows.filter(r => !r.pass && r.details?.excluded?.exact === false).length : null,
     rowFlips: { passes, fails, lostAtHalf, gainedAtDouble, lostShare: passes ? round(lostAtHalf / passes, 4) : null, gainedShare: fails ? round(gainedAtDouble / fails, 4) : null },
     passRates, headline,
     headlineFlips: { half: headline['0.5'].label !== headline['1'].label, double: headline['2'].label !== headline['1'].label },

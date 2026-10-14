@@ -223,6 +223,17 @@ export function validateCard(card) {
   return { ok: !problems.length, problems };
 }
 
+// Review of voi.mjs against DESIGN §3 (2026-10-14; voi.mjs is not edited here):
+//   V1 its utility U = H·(V·p − c) − F has no silent-miss term (W/V)·q and no routing term; probePlan folds W·q into c.
+//   V2 probeValue requires k <= H and bestProbe caps k at H even when the probe is not deliverable (examples, not the
+//      job's tasks), so at N = 1 the preregistered two-draw direct-H probe (kMax 2) is never priced; only k = 1 is.
+//   V3 an observed probe success is treated as a true success; DESIGN observes deployable signals only (schema validity,
+//      agreement of two draws, turns, family tests), and the signal-to-success mapping is TBD-FREEZE. The EVSI is
+//      optimistic by however far that mapping is from the oracle.
+//   V4 `best` keeps the first mode on an exact utility tie (array order), not the cheaper one (DESIGN §2 tie rule), and
+//      has no δ acceptable set; the router's own decision after a probe uses decideModes, so this only affects EVSI.
+//   V5 sound as written: Beta-Binomial pmf, exact enumeration over s, the build cost F sunk once a probed build is kept,
+//      the deliverable variant, and net > 0 as the run condition.
 /**
  * NR-probe's plan (DESIGN §3): voi.mjs bestProbe over the router's predictions for this job, priors Beta(1 + s·T,
  * 1 + (1 − s)·T) with T = support jobs × tasksPerJob, probeable {direct-H, agent-H}, kMax 2, examples only (not

@@ -382,7 +382,8 @@ test('NR-probe pieces: the Beta update moves p, the probe cost is charged as rou
   assert.equal(probed.routingCostUsd, 0.16);
   assert.ok(Math.abs((base.U['agent-H'] - probed.U['agent-H']) - 0.16 / (HEADLINE.N * HEADLINE.V)) < 1e-12);
   assert.equal(probed.askFlag, true); assert.match(probed.ask.at(-1), /cannot arbitrate/);
-  assert.equal(R.decide({ ...v, verifier: 'tests' }, HEADLINE, { probe: { observations: {}, costUsd: 0.16, disagree: true } }).askFlag, false);
+  for (const verifier of ['tests', 'owner acceptance check']) assert.equal(R.decide({ ...v, verifier }, HEADLINE, { probe: { observations: {}, costUsd: 0.16, disagree: true } }).askFlag, false, verifier);
+  assert.equal(R.decide({ ...v, verifier: 'schema' }, HEADLINE, { probe: { observations: {}, costUsd: 0.16, disagree: true } }).askFlag, true);
 });
 
 // ---------------------------------------------------------------------------------------- evaluate.mjs integration

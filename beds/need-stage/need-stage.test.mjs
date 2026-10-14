@@ -42,7 +42,7 @@ test('contract: family, schemas (portable subset), exports, controls', () => {
   assert.equal(bed.family.role, 'need-anchor');
   assert.ok(bed.family.domain && bed.family.description);
   assert.match(bed.family.description, /[Hh]ypothesis/);
-  for (const fn of ['generate', 'oracle', 'referenceSolve', 'describeTask', 'stageOf', 'outputSchemaOf']) assert.equal(typeof bed[fn], 'function');
+  for (const fn of ['generate', 'oracle', 'referenceSolve', 'describeTask', 'stageOf', 'outputSchemaOf', 'deployableCheck', 'kindFamily']) assert.equal(typeof bed[fn], 'function');
   const forbidden = new Set(['pattern', 'oneOf', 'anyOf', 'allOf', 'uniqueItems', '$ref', 'format']);
   const walk = s => { if (s && typeof s === 'object') for (const [k, v] of Object.entries(s)) { assert.ok(!forbidden.has(k), `schema uses ${k}`); walk(v); } };
   walk(bed.outputSchema);
@@ -343,7 +343,7 @@ test('input size per difficulty stays within the documented ranges (README table
     'r1-normalise': [[700, 2600], [700, 2600], [800, 3000], [800, 3000], [1500, 3500]],
     'r2-route': [[1000, 1500], [1000, 1500], [1100, 1600], [1200, 1800], [1300, 1900]],
     'r3-classify': [[900, 1800], [900, 1800], [1000, 2000], [1300, 2800], [1500, 3000]],
-    'r6-worker': [[3000, 8000], [3000, 8000], [4000, 10000], [6000, 12000], [7500, 13000]],
+    'r6-worker': [[3000, 8000], [3000, 8000], [4000, 10000], [5000, 12000], [7500, 13000]],
   };
   for (const d of DIFFICULTIES) for (const seed of SEEDS) {
     const task = gen(seed, d);
@@ -351,5 +351,164 @@ test('input size per difficulty stays within the documented ranges (README table
     const [lo, hi] = RANGE[kind][d - 1];
     const t = task.budget.inputTokensEstimate;
     assert.ok(t >= lo && t <= hi, `${kind} d${d} seed ${seed}: ${t} tokens outside [${lo}, ${hi}]`);
+  }
+});
+
+// ---- regression tests for the adversarial review of 2026-10-14 (one per fixed defect) ----
+const forbiddenKeys = new Set(['pattern', 'oneOf', 'anyOf', 'allOf', 'uniqueItems', '$ref', 'format']);
+const portable = s => !s || typeof s !== 'object' || Object.entries(s).every(([k, v]) => !forbiddenKeys.has(k) && portable(v));
+const KIND_SEEDS = SEEDS.slice(0, 20);
+
+// Major 1: the router harness featurises and labels per family id and calls generate({seed, split, difficulty}) without
+// `stage` (experiments/lib/beds.mjs makeTasks; features.mjs familyFeatures at seeds 601-603, d3), so need-stage alone
+// gives one blended vector. Each kind is also a homogeneous family `need-stage/<kind>` that the same loader resolves.
+test('regression (major 1): per-kind families load through the harness loader and are homogeneous, same cases as need-stage', async () => {
+  const { loadFamily, makeTasks } = await import('../../experiments/lib/beds.mjs');
+  assert.deepEqual(bed.family.kindFamilies, bed.STAGES.map(s => `need-stage/${s}`));
+  assert.deepEqual(Object.values(bed.KIND_FAMILY_IDS), bed.family.kindFamilies);
+  // the README caveat: the mixed family's harness example seeds blend three kinds and never sample r1-normalise
+  assert.deepEqual([601, 602, 603].map(s => bed.stageOf(s)), ['r3-classify', 'r2-route', 'r6-worker']);
+  for (const stage of bed.STAGES) {
+    const id = bed.KIND_FAMILY_IDS[stage];
+    const K = await loadFamily(id);
+    const direct = await import(`./${stage}/index.mjs`);
+    assert.equal(K.generate, direct.generate, `${id} resolves to beds/need-stage/${stage}/index.mjs`);
+    assert.equal(K.family.id, id);
+    assert.equal(K.family.version, '1.0.0');
+    assert.equal(K.family.kind, 'oneshot');
+    assert.equal(K.family.role, 'need-anchor');
+    assert.equal(K.family.parent, 'need-stage');
+    assert.equal(K.family.stage, stage);
+    assert.match(K.family.description, /Hypothesis \(not a fact\)/);
+    assert.equal(K.outputSchema, bed.stageSchemas[stage], 'the kind\'s strict schema, not the union envelope');
+    assert.ok(portable(K.outputSchema));
+    for (const n of ['empty', 'shuffled-or-corrupted', 'plausible-but-wrong']) assert.ok(K.badControls.some(c => c.name === n), n);
+    for (const d of DIFFICULTIES) {
+      const made = await makeTasks(id, { seeds: [601, 602, 603], difficulty: d });
+      for (const { task } of made) {
+        assert.equal(K.describeTask(task).stage, stage, `${id} d${d} seed ${task.seed}`);
+        assert.equal(task.family, id);
+        assert.equal(task.id, `${id}/dev/d${d}/${task.seed}`);
+        assert.deepEqual(task.knobs, { stage });
+        assert.equal(JSON.stringify(K.generate({ seed: task.seed, split: 'dev', difficulty: d })), JSON.stringify(task));
+        // the same case as need-stage with the stage override: surface, budget and truth identical
+        const p = gen(task.seed, d, { stage });
+        for (const k of ['prompt', 'inputs', 'files', 'budget']) assert.equal(JSON.stringify(task[k]), JSON.stringify(p[k]), `${id} ${k}`);
+        assert.equal(canonical(K.referenceSolve(task)), canonical(bed.referenceSolve(p)));
+        assert.equal(bed.oracle(task, K.referenceSolve(task)).pass, true, 'need-stage scores a per-kind task through knobs.stage');
+      }
+    }
+    const other = bed.STAGES.find(s => s !== stage);
+    assert.throws(() => K.generate({ seed: 601, split: 'dev', difficulty: 3, stage: other }));
+    assert.equal(K.generate({ seed: 601, split: 'dev', difficulty: 3, stage }).family, id);
+    // the per-kind oracle fixes its kind: a forged knobs.stage on the task changes nothing
+    const t = K.generate({ seed: 605, split: 'dev', difficulty: 3 });
+    assert.equal(K.oracle({ ...t, knobs: { stage: other } }, K.referenceSolve(t)).pass, true);
+    assert.equal(K.oracle({ ...t, knobs: { stage: other } }, bed.referenceSolve({ ...t, knobs: { stage: other } })).pass, false);
+  }
+});
+
+test('regression (major 1): per-kind families pass the contract checks (reference passes, every bad control fails, 20 seeds x 5 levels)', async () => {
+  for (const stage of bed.STAGES) {
+    const K = await import(`./${stage}/index.mjs`);
+    for (const d of DIFFICULTIES) {
+      let pass = 0;
+      const fails = Object.fromEntries(K.badControls.map(c => [c.name, 0]));
+      for (const seed of KIND_SEEDS) {
+        const task = K.generate({ seed, split: 'dev', difficulty: d });
+        const o = K.oracle(task, K.referenceSolve(task));
+        assert.equal(o.pass, true, `${stage} d${d} ${seed}: ${JSON.stringify(o.details)}`);
+        pass++;
+        for (const c of K.badControls) {
+          const b = K.oracle(task, c.make(task));
+          assert.equal(b.pass, false, `${stage} ${c.name} passes d${d} ${seed}`);
+          assert.ok(b.score < 1);
+          fails[c.name]++;
+        }
+      }
+      assert.ok(pass >= 20);
+      for (const [n, f] of Object.entries(fails)) assert.ok(f >= 20, `${stage} d${d} ${n}`);
+    }
+  }
+});
+
+test('regression (major 1): router features of a per-kind family describe that kind only', async () => {
+  const { familyFeatures, taskFeatures, schemaLeaves } = await import('../../experiments/need-router/features.mjs');
+  const med = xs => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
+  const feats = {};
+  for (const stage of bed.STAGES) {
+    const f = feats[stage] = await familyFeatures(bed.KIND_FAMILY_IDS[stage]); // the harness defaults: dev seeds 601-603, d3
+    const rows = [601, 602, 603].map(s => taskFeatures(gen(s, 3, { stage }), bed.stageSchemas[stage]));
+    for (const k of Object.keys(f)) assert.equal(f[k], +med(rows.map(r => r[k])).toFixed(4), `${stage} ${k}`);
+    assert.equal(f.logSchemaLeaves, +Math.log10(1 + schemaLeaves(bed.stageSchemas[stage])).toFixed(4));
+  }
+  // the kinds differ where their hypotheses differ: the worker slice is several times the size of one routed document
+  assert.ok(feats['r6-worker'].logInputTokens > feats['r2-route'].logInputTokens + 0.3);
+  // the mixed family's vector at the same seeds equals none of r1's (it never samples r1 there)
+  const mixed = await familyFeatures('need-stage');
+  assert.notDeepEqual(mixed, feats['r1-normalise']);
+});
+
+// Minor 2: label-run's schemaValid / deployableVerdict compile fam.outputSchema; the need-stage envelope has no
+// `required`, so {} and another kind's shape were schema-valid and deployable. deployableCheck applies the kind's schema.
+test('regression (minor 2): deployableCheck rejects {} and other kinds\' shapes; the envelope alone would accept them', async () => {
+  const { compileDataSchema } = await import('../../src/validate.mjs');
+  const envelope = compileDataSchema(bed.outputSchema, { trustedSchema: true });
+  const shapes = { 'r1-normalise': { invoices: [] }, 'r2-route': { doc: 1, kind: 'invoice' }, 'r3-classify': { reason: 'TIMING' },
+    'r6-worker': { in_scope: false, cells: [], void_doc_ids: [] } };
+  // the reviewer's case: task 604 at d3 is r1-normalise
+  const t604 = gen(604, 3);
+  assert.equal(kindOf(t604), 'r1-normalise');
+  for (const out of [{}, { reason: 'TIMING' }, { doc: 1, kind: 'invoice' }, { in_scope: false, cells: [], void_doc_ids: [] }]) {
+    assert.equal(envelope(out), true, `envelope accepts ${JSON.stringify(out)}`);
+    assert.equal(bed.deployableCheck(t604, out), false, `deployableCheck accepts ${JSON.stringify(out)}`);
+  }
+  for (const stage of bed.STAGES) {
+    const K = await import(`./${stage}/index.mjs`);
+    const strict = compileDataSchema(K.outputSchema, { trustedSchema: true });
+    for (const seed of SEEDS.slice(0, 5)) {
+      for (const [task, check] of [[gen(seed, 3, { stage }), bed.deployableCheck], [K.generate({ seed, split: 'dev', difficulty: 3 }), K.deployableCheck]]) {
+        assert.equal(check(task, bed.referenceSolve(task)), true);
+        // deployable means schema-valid, not right: the planted near misses are deployable and fail the oracle
+        for (const c of bed.badControls.filter(x => x.name.startsWith('plausible-but-wrong'))) assert.equal(check(task, c.make(task)), true, `${stage} ${c.name}`);
+        assert.equal(check(task, {}), false);
+        assert.equal(check(task, { ...bed.referenceSolve(task), extra_field: 1 }), false);
+        assert.equal(check(task, null), false);
+        for (const [s2, shape] of Object.entries(shapes)) if (s2 !== stage) {
+          assert.equal(check(task, shape), false, `${stage} task accepts the ${s2} shape`);
+          assert.equal(bed.oracle(task, shape).pass, false);
+        }
+        assert.equal(check(task, shapes[stage]), true, `${stage} own minimal shape`);
+      }
+      assert.equal(strict({}), false, `${stage} strict outputSchema accepts {} in the harness compiler`);
+    }
+  }
+});
+
+// Minor 3: at level 4 the out-of-scope roles scored 1-2 against WANT 3, so every level-4 R6 item was in scope and a
+// constant in_scope:true prior got every scope verdict right. Level 4 now draws its scope side first.
+test('regression (minor 3): r6-worker level 4 has a reachable out-of-scope share; level 5 is in scope by design', async () => {
+  const K = await import('./r6-worker/index.mjs');
+  for (const split of ['dev', 'test']) {
+    let out = 0;
+    for (const seed of SEEDS) {
+      const task = K.generate({ seed, split, difficulty: 4 });
+      const truth = K.referenceSolve(task), item = K.describeTask(task).item;
+      assert.equal(truth.in_scope, item.role === 'in', `${split} ${seed}`);
+      if (!truth.in_scope) {
+        out++;
+        assert.ok(['T1', 'T2', 'T3', 'T4'].includes(item.role));
+        assert.equal(truth.cells.length, 0);
+        // the constant prior is wrong here, and so is any answer that only gets the void set right
+        assert.equal(K.oracle(task, { in_scope: true, cells: [], void_doc_ids: truth.void_doc_ids }).pass, false);
+      } else assert.ok(item.score >= 2, `${split} ${seed}: an in-scope level-4 item has ambiguity 3 (2 when no 3 has a near miss)`);
+    }
+    assert.ok(out >= 12 && out <= 28, `${split} level 4 out of scope: ${out}/40`);
+  }
+  // level 5: in scope by design (README); the cells, not the scope verdict, carry the difficulty
+  for (const seed of KIND_SEEDS) {
+    const task = K.generate({ seed, split: 'dev', difficulty: 5 });
+    assert.equal(K.referenceSolve(task).in_scope, true);
+    assert.ok(K.describeTask(task).item.score >= 3);
   }
 });
