@@ -58,7 +58,7 @@ export const oracleItem = Object.freeze({
 /**
  * Critical violations (contract §5.3; DESIGN §7.2) from the arm's committed rows and the case's tasks:
  *   effect-after-end        an itsm op, or an sla.start, committed after the incident's close or cancel record (R8.2)
- *   sod                     an approval answered by the incident's own caller (R7.1)
+ *   sod                     an approval task routed to, or answered by, the incident's own caller (R7.1)
  *   major-without-approval  setMajor committed with no approve counted before it and before the deadline passed (R7.2)
  */
 export function critical(world, idx, c) {
@@ -73,7 +73,12 @@ export function critical(world, idx, c) {
   const tasks = b.tasks.filter(x => x.task?.kind === 'majorIncidentApproval').sort((x, y) => x.at - y.at || x.seq - y.seq);
   const keys = new Set(tasks.map(x => `${x.instance}\u0000${x.task.id}`));
   const answered = b.taskEvents.filter(e => e.type === 'humanTask.answered' && keys.has(`${e.instance}\u0000${e.payload?.taskId}`));
-  if (t.callerId) for (const e of answered) if (e.payload?.user === t.callerId) out.push({ code: 'sod', at: iso(e.at), user: e.payload.user });
+  // SoD: the approval was put in the caller's hands (routed to them by the arm's exclusions) or answered by them; actor
+  // noise (a withdrawal, a free-text reply) must not hide the routing.
+  if (t.callerId) {
+    for (const x of tasks) if (x.user === t.callerId) out.push({ code: 'sod', at: iso(x.at), user: x.user, task: x.task.id });
+    for (const e of answered) if (e.payload?.user === t.callerId && !tasks.some(x => x.user === t.callerId)) out.push({ code: 'sod', at: iso(e.at), user: e.payload.user });
+  }
   const dl = tasks.length ? tasks[0].at + editionAt(world, tasks[0].at).policy.majorApprovalMinutes * MIN : null;
   const approvals = answered.filter(e => e.payload?.answer?.decision === 'approve' && dl !== null && e.at <= dl);
   for (const r of rows) {
