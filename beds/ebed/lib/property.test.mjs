@@ -239,6 +239,49 @@ test('clock: an added pause never increases elapsed business time and never brin
   }
 });
 
+// Review P1 (BED-CONTRACT v1.1 §5.3 "monotone clocks"): for a fixed history with pauses, stops, cancels and resets,
+// `breached` never turns false as the query time grows, and it is true exactly from the final breachedAt on.
+function randomOpsHistory(r, start) {
+  const h = [{ at: start, op: 'start' }];
+  let t = start, state = 'running';
+  for (let k = r.int(1, 6); k > 0 && state !== 'stopped' && state !== 'cancelled'; k--) {
+    t += r.int(1, 2 * 1440) * MINUTE;
+    const op = r.pick(state === 'running' ? ['pause', 'stop', 'cancel', 'reset', 'reset'] : ['resume', 'stop', 'cancel', 'reset']);
+    h.push({ at: t, op });
+    state = { pause: 'paused', resume: 'running', stop: 'stopped', cancel: 'cancelled', reset: 'running' }[op];
+  }
+  return h;
+}
+
+test('clock: breach is monotone in query time across cancel and reset; generations are kept', () => {
+  const ops = new Map();
+  let breaches = 0;
+  for (const seed of SEEDS(80)) {
+    const r = R('clock-breach-mono', seed);
+    const { input, start } = randomCalendar(r);
+    const business = r.chance(0.6);
+    const def = { target: { amount: r.int(1, 40) * 30, unit: business ? 'business-minutes' : 'minutes' }, calendar: input, boundary: r.pick(['inclusive', 'exclusive']), warnings: [{ id: 'w', percent: 50 }] };
+    const history = randomOpsHistory(r, start + r.int(0, 1440) * MINUTE);
+    for (const o of history) ops.set(o.op, (ops.get(o.op) ?? 0) + 1);
+    const last = history[history.length - 1].at;
+    const final = clockAt(def, history, last + 30 * DAY);
+    const qs = [...new Set([...history.flatMap(o => [o.at - 1, o.at, o.at + 1]), ...Array.from({ length: 12 }, () => history[0].at + r.int(0, last - history[0].at + 5 * DAY)),
+      ...(final.breachedAt !== null ? [final.breachedAt - 1, final.breachedAt] : [])])].sort((a, b) => a - b);
+    let prev = null;
+    for (const q of qs) {
+      const s = clockAt(def, history, q);
+      assert.equal(s.breached, final.breachedAt !== null && final.breachedAt <= q, `seed ${seed} at ${q}`);
+      if (s.breached) assert.equal(s.breachedAt, final.breachedAt, `breachedAt seed ${seed}`);
+      // A generation closed by a reset never changes afterwards.
+      if (prev) prev.generations.forEach((g, i) => assert.deepEqual(s.generations[i], g, `generation seed ${seed}`));
+      prev = s;
+    }
+    if (final.breached) breaches++;
+  }
+  for (const op of ['pause', 'stop', 'cancel', 'reset']) assert.ok((ops.get(op) ?? 0) >= 5, `op ${op} exercised: ${ops.get(op) ?? 0}`);
+  assert.ok(breaches >= 10, `breaching histories: ${breaches}`);
+});
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Decision tables against a direct evaluation of structured tests
 
@@ -274,7 +317,7 @@ function randomTable(r) {
   if (r.chance(0.2)) table.default = r.pick(prio);
   return { table, rules, kinds, prio };
 }
-// DMN 1.3 §8.2.10 / §10.3.2.9, restated for one integer output.
+// DMN 1.3 §8.2.10 / §10.3.2.10, restated for one integer output.
 function bruteDecide({ table, rules, prio }, xs) {
   const matched = rules.map((x, i) => (x.tests.every((t, k) => t.f(xs[k])) ? i : -1)).filter(i => i >= 0);
   if (!matched.length) return { result: table.default ?? null };
@@ -295,7 +338,9 @@ function bruteDecide({ table, rules, prio }, xs) {
     default: throw new Error(table.hitPolicy);
   }
 }
-const GRID = { int: Array.from({ length: 25 }, (_, i) => i - 7), str: [...STR, 'D'], bool: [true, false] };
+// Integer literals reach -5..23 (x + 8 with x <= 15): the grid -7..25 covers every boundary +-1 (review P2: -7..17
+// could not see a gap at 21 that the checker reports).
+const GRID = { int: Array.from({ length: 33 }, (_, i) => i - 7), str: [...STR, 'D'], bool: [true, false] };
 function* grid(kinds, k = 0, acc = []) { if (k === kinds.length) { yield acc; return; } for (const v of GRID[kinds[k]]) yield* grid(kinds, k + 1, [...acc, v]); }
 const asInput = (table, xs) => Object.fromEntries(table.inputs.map((inp, k) => [inp.name, xs[k]]));
 function libDecide(table, xs) {
@@ -410,12 +455,20 @@ test('saga: plans equal the set/order model; keys deterministic and distinct', (
     const want = [...committed].reverse().filter(c => c.step.undo).map(c => `${c.step.id}/${c.item}`);
     assert.deepEqual(plan.compensations.map(c => `${c.step}/${c.item}`), want, `seed ${seed}`);
     assert.equal(new Set(plan.compensations.map(c => c.key)).size, plan.compensations.length);
+    // Groups = runs of one step (a batch is unordered); each compensation follows exactly the previous step's group.
+    const stepsInOrder = [...new Set(plan.compensations.map(c => c.step))];
+    for (const c of plan.compensations) {
+      const g = stepsInOrder.indexOf(c.step);
+      assert.equal(c.group, g, `group seed ${seed}`);
+      assert.deepEqual(c.after, g ? plan.compensations.filter(x => x.step === stepsInOrder[g - 1]).map(x => x.key) : [], `after seed ${seed}`);
+    }
   }
   for (const a of ['compensate', 'query-status', 'continue']) assert.ok((seen.get(a) ?? 0) >= 5, `action ${a} exercised: ${seen.get(a) ?? 0}`);
 });
 
 test('ledger: an exact compensation trajectory passes; each single mistake is caught with its code', () => {
   let graded = 0;
+  const swaps = { inside: 0, across: 0 };
   for (const seed of SEEDS(199)) {
     const r = R('saga-ledger', seed);
     const saga = randomSaga(r);
@@ -429,9 +482,16 @@ test('ledger: an exact compensation trajectory passes; each single mistake is ca
     const g = rows2 => matchEffects({ expected, rows: rows2, end: t0 + DAY });
     assert.equal(g(rows).ok, true, `seed ${seed}`);
     const i = r.int(0, rows.length - 2);
-    const swapped = rows.map(x => ({ ...x }));
-    [swapped[i].system, swapped[i].op, swapped[i].args, swapped[i + 1].system, swapped[i + 1].op, swapped[i + 1].args] = [rows[i + 1].system, rows[i + 1].op, rows[i + 1].args, rows[i].system, rows[i].op, rows[i].args];
-    assert.ok(g(swapped).divergences.some(d => d.code === 'order'), `swap seed ${seed}`);
+    const swap = j => {
+      const s = rows.map(x => ({ ...x }));
+      [s[j].system, s[j].op, s[j].args, s[j + 1].system, s[j + 1].op, s[j + 1].args] = [rows[j + 1].system, rows[j + 1].op, rows[j + 1].args, rows[j].system, rows[j].op, rows[j].args];
+      return s;
+    };
+    // Swapping neighbours across groups (two steps) is an order error; inside a group (one batch) it is not.
+    const sameGroup = plan.compensations[i].group === plan.compensations[i + 1].group;
+    if (sameGroup) assert.equal(g(swap(i)).ok, true, `swap inside a group seed ${seed}`);
+    else assert.ok(g(swap(i)).divergences.some(d => d.code === 'order'), `swap seed ${seed}`);
+    swaps[sameGroup ? 'inside' : 'across'] += 1;
     const dropped = rows.filter((_, j) => j !== i);
     assert.ok(g(dropped).divergences.some(d => d.code === 'missed' && d.lid === expected[i].lid), `drop seed ${seed}`);
     const dup = [...rows, { ...rows[i], at: t0 + 30 * MINUTE, key: 'fresh' }];
@@ -440,8 +500,11 @@ test('ledger: an exact compensation trajectory passes; each single mistake is ca
     assert.deepEqual(g(stray).divergences.map(d => d.code), ['outside-allowed'], `stray seed ${seed}`);
     const early = rows.map((x, j) => (j === 0 ? { ...x, at: t0 - MINUTE } : x));
     assert.equal(g(early).first.code, 'early', `early seed ${seed}`);
+    // The verdict does not depend on the order the expected effects are listed in.
+    assert.deepEqual(matchEffects({ expected: r.shuffle([...expected]), rows, end: t0 + DAY }).ok, true, `listing order seed ${seed}`);
   }
   assert.ok(graded >= 15, `graded ${graded}`);
+  assert.ok(swaps.inside >= 3 && swaps.across >= 10, `swaps ${JSON.stringify(swaps)}`);
 });
 
 test('835: random balanced remittances balance; any single amount off by one is caught', () => {

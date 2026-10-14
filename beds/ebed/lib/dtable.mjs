@@ -1,7 +1,7 @@
 // Decision-table evaluator with DMN hit-policy semantics (gap G17; BAR-SET §3 "P58, decision table"; E-BED §2.4 shared
 // oracle-side library). Written from the text of OMG DMN 1.3 (https://www.omg.org/spec/DMN/1.3/PDF, retrieved
 // 2026-10-14, sha256 b591d2417e8320d71cb988c6741fe590a1a85629bf317bc0857ea803bf4bf6a6): §8.2.10 "Hit policy" (printed
-// pp. 72-74), §8.2.11 "Default output values", §9 S-FEEL grammar rules 5-12 (p. 83) and semantics (p. 86), §10.3.2.9
+// pp. 72-74), §8.2.11 "Default output values", §9 S-FEEL grammar rules 5-12 (p. 83) and semantics (p. 86), §10.3.2.10
 // "Decision Table" semantics (pp. 114-115). Independent of the library cards (experiments/library/cards/P58-P60): no
 // code shared, cards not read.
 //
@@ -16,20 +16,28 @@
 //                 (strings and booleans compare for equality only, S-FEEL p. 86); input values are checked at
 //                 runtime (DT_TYPE), null only for inputs declared nullable.
 //   outputs       literal output entries (JSON values); output values = an ordered list of literals (decreasing
-//                 priority, §8.2.5 "Output values"); default output value per §8.2.11 / §10.3.2.9 step 2.
+//                 priority, §8.2.5 "Output values"); default output value per §8.2.11 / §10.3.2.10 step 2.
 //
 // Readings where the spec text is silent or inconsistent (stated once here; tests pin each):
-//   R1 '-' and null. §10.3.2.9 says '-' is satisfied iff e != null (or e in the input values when given); §9 (p. 86)
-//      says '-' always satisfies. Default: §10.3.2.9 (null does not match '-'); option dashMatchesNull for §9.
-//   R2 no hit. §10.3.2.9 step 2 applies to every hit policy: no matching rule gives the default output value, else
+//   R1 '-' and null. §10.3.2.10 (grammar rule 15.c, p. 115) says '-' is satisfied iff e != null, or, when input values
+//      v are given, iff FEEL(e in (v)) (so a nullable input whose input values list null matches '-' with null); the
+//      notation passages say '-' is satisfied by every value (§8.1 p. 66, §8.2.7 p. 71, §9 p. 86). Default: the
+//      execution-semantics text §10.3.2.10, the only one that addresses null; option dashMatchesNull for the others.
+//      Null inputs are refused unless the input is declared nullable. A non-null input outside its input values is
+//      refused (DT_DOMAIN) although 15.c would only make '-' unsatisfied for it: stricter on purpose (it means a
+//      generator or world bug in a bed).
+//   R2 no hit. §10.3.2.10 step 2 applies to every hit policy: no matching rule gives the default output value, else
 //      null; so a multi-hit table (R, O, C, C+, C#, C<, C>) with no hit returns null, not [] or 0.
 //   R3 COUNT counts outputs, not distinct outputs (§8.2.10 (d) "the number of outputs").
 //   R4 COLLECT returns "all hits in arbitrary order"; this evaluator returns rule order (one admissible order).
 //      Graders must compare COLLECT lists as multisets.
 //   R5 PRIORITY / OUTPUT ORDER compare the outputs that have output values, left to right (§8.2.10, compound
-//      outputs); rules equal on every prioritised output keep rule order (stable). A tie between different outputs
-//      is reported by checkTable as a HIT_POLICY warning.
-//   R6 OUTPUT ORDER with compound outputs is allowed (§8.2.10 lists it and Figure 8-19 shows one); §10.3.2.9 3.a says
+//      outputs); rules equal on every prioritised output keep rule order (stable). PRIORITY with a tie at the top
+//      between different outputs is refused at evaluation (HIT_POLICY; the result is undefined, as in R8; review fix:
+//      it returned the first in rule order, so permuting rules changed the result) and is a checkTable error. Under
+//      OUTPUT ORDER a tie only orders tied rules by rule order (graders compare a tied run as a multiset, as R4) and is
+//      a checkTable warning.
+//   R6 OUTPUT ORDER with compound outputs is allowed (§8.2.10 lists it and Figure 8-19 shows one); §10.3.2.10 3.a says
 //      "SHALL be single output". The §8.2.10 reading is used; the conflict is recorded in README.md.
 //   R7 SUM is exact integer arithmetic: outputs must be safe integers (money in minor units). FEEL decimals are not
 //      implemented, so non-integer sums are refused (DT_TYPE). MIN / MAX take numbers, or dates for date outputs.
@@ -197,9 +205,12 @@ function listValue(list, x) {
   return sawNull ? null : false;
 }
 
-/** Does typed value x (null allowed) satisfy the compiled input entry? (§10.3.2.9 rules 15.a-c) */
-function satisfies(test, x, dashMatchesNull) {
-  if (test.k === 'any') return x !== null || dashMatchesNull;
+/**
+ * Does typed value x (null allowed) satisfy the compiled input entry, given the input's compiled input values (or
+ * null)? (§10.3.2.10 grammar rules 15.a-c; R1)
+ */
+function satisfies(test, x, dashMatchesNull, values = null) {
+  if (test.k === 'any') return dashMatchesNull || (values ? satisfies(values, x, false) : x !== null);
   if (test.k === 'not') return listValue(test.list, x) === false;
   return listValue(test.list, x) === true;
 }
@@ -341,7 +352,8 @@ function readInputs(c, input) {
   });
 }
 
-const ruleMatches = (r, xs, dashMatchesNull) => r.entries.every((t, k) => satisfies(t, xs[k], dashMatchesNull));
+const ruleMatches = (c, r, xs, dashMatchesNull) => r.entries.every((t, k) => satisfies(t, xs[k], dashMatchesNull, c.inputs[k].values));
+const samePriority = (c, a, b) => canonical(priorityOf(c, a)) === canonical(priorityOf(c, b));
 
 function aggregate(c, hits) {
   const vals = hits.map(r => r.out[0]);
@@ -369,7 +381,7 @@ function aggregate(c, hits) {
 export function decide(table, input, { dashMatchesNull = false } = {}) {
   const c = compileTable(table);
   const xs = readInputs(c, input);
-  const matched = c.rules.filter(r => ruleMatches(r, xs, dashMatchesNull));
+  const matched = c.rules.filter(r => ruleMatches(c, r, xs, dashMatchesNull));
   const ids = rs => rs.map(r => r.id);
   if (!matched.length) return { result: c.hasDefault ? outputOf(c, c.dflt) : null, matched: [], hits: [], usedDefault: c.hasDefault };
   let hits;
@@ -382,7 +394,12 @@ export function decide(table, input, { dashMatchesNull = false } = {}) {
       if (matched.some(r => canonical(r.out) !== first)) fail('HIT_POLICY', `${c.id}: ANY table matched rules with different outputs: ${ids(matched).join(', ')}`, { rules: ids(matched) });
       hits = [matched[0]]; break;
     }
-    case 'PRIORITY': hits = [[...matched].sort((a, b) => comparePriority(c, a, b))[0]]; break;
+    case 'PRIORITY': {
+      const s = [...matched].sort((a, b) => comparePriority(c, a, b));
+      const top = s.filter(r => samePriority(c, r, s[0]));
+      if (top.some(r => canonical(r.out) !== canonical(s[0].out))) fail('HIT_POLICY', `${c.id}: PRIORITY tie at the top between rules ${ids(top).join(', ')} with different outputs`, { rules: ids(top) });
+      hits = [s[0]]; break;
+    }
     case 'FIRST': hits = [matched[0]]; break;
     case 'RULE ORDER': hits = matched; break;
     case 'OUTPUT ORDER': hits = [...matched].sort((a, b) => comparePriority(c, a, b)); break;
@@ -500,9 +517,9 @@ export function checkTable(table, { maxCells = 1e6, maxWitnesses = 20, dashMatch
         const s = [...active].sort((a, b) => comparePriority(c, a, b));
         for (let i = 0; i + 1 < s.length; i++) {
           const a = s[i], b = s[i + 1];
-          if (canonical(priorityOf(c, a)) === canonical(priorityOf(c, b)) && canonical(a.out) !== canonical(b.out)) {
-            pair('HIT_POLICY', 'warning', a, b, xs, 'priority tie between different outputs (resolved by rule order)');
-          }
+          if (!samePriority(c, a, b) || canonical(a.out) === canonical(b.out)) continue;
+          if (c.policy === 'OUTPUT ORDER') pair('HIT_POLICY', 'warning', a, b, xs, 'priority tie between different outputs (ordered by rule order)');
+          else if (samePriority(c, a, s[0])) pair('HIT_POLICY', 'error', a, b, xs, 'PRIORITY tie at the top between different outputs (refused at evaluation)');
         }
         if (c.policy === 'PRIORITY') everHit.add(s[0].id); else s.forEach(r => everHit.add(r.id));
         break;
@@ -530,7 +547,7 @@ export function checkTable(table, { maxCells = 1e6, maxWitnesses = 20, dashMatch
     }
     for (const v of W[k]) {
       const x = typedOf(k, v);
-      search(k + 1, active.filter(r => satisfies(r.entries[k], x, dashMatchesNull)), [...xs, v]);
+      search(k + 1, active.filter(r => satisfies(r.entries[k], x, dashMatchesNull, c.inputs[k].values)), [...xs, v]);
     }
   };
   if (W.some(w => !w.length)) issues.push({ code: 'TABLE_GAP', severity: 'warning', detail: 'an input has an empty domain' });

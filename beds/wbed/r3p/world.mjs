@@ -18,7 +18,7 @@ import { taskRng } from '../lib/prng.mjs';
 import { hooks } from '../lib/faults.mjs';
 import { FAMILIES, acceptedClasses } from './families.mjs';
 import { LEVELS, MIN_D, MAX_D, CLASS_MIN, AREAS, LIB, NOUNS, PACKAGES, ORGS, TODOS, NOTES } from './vocab.mjs';
-import { makeContext, observe, sameObs, argsOk, returnsNegZero, GEN_TIMEOUT_MS } from './exec.mjs';
+import { makeContext, observe, observeMany, sameObs, argsOk, GEN_TIMEOUT_MS } from './exec.mjs';
 import { renderRepo, domainText } from './render.mjs';
 
 export const VERSION = '1.1.0';
@@ -218,7 +218,8 @@ function attemptSweep(spec, attempt) {
   for (const f of fns) {
     for (const args of f.probes) if (!argsOk(f, args)) throw new Error(`wbed-r3p: family ${f.family} probe outside its own domain: ${JSON.stringify(args)}`);
     if (f.role === 'clean' && !(f.kind === 'caller' && defectiveHelpers.has(f.helperFamily))) { f.differs = []; continue; }
-    f.differs = f.probes.filter(a => !sameObs(obsGen(planted, f.name, a), obsGen(correct, f.name, a)));
+    const P = observeMany(planted, f.name, f.probes), C = observeMany(correct, f.name, f.probes);
+    f.differs = f.probes.filter((a, i) => !sameObs(P[i], C[i]));
     if (f.role === 'decoy' && f.differs.length) throw new Error(`wbed-r3p: decoy ${f.family}/${f.p.variant} differs from the correct code on ${JSON.stringify(f.differs[0])}`);
     if (f.role === 'defect') {
       if (!f.differs.length) return reject(`defect-silent:${f.family}/${f.p.variant}`);
@@ -237,11 +238,12 @@ function attemptSweep(spec, attempt) {
   // ---- repository extras: tests (non-separating probes only, taken from a shuffled probe list whatever the role), TODO
   // and note comments (independent of the roles)
   const testCases = f => {
-    const out = [];
-    for (const a of r.shuffle(f.probes)) {
-      const o = obsGen(planted, f.name, a);
-      if (o.throws || o.returns.includes('"$') || o.argsAfter !== JSON.stringify(a) || returnsNegZero(planted, f.name, a, GEN_TIMEOUT_MS)) continue;
-      if ((f.role !== 'clean' || f.differs.length) && !sameObs(o, obsGen(correct, f.name, a))) continue;
+    const out = [], order = r.shuffle(f.probes);
+    const P = observeMany(planted, f.name, order, { negZero: true }), C = f.role !== 'clean' || f.differs.length ? observeMany(correct, f.name, order) : null;
+    for (const [i, a] of order.entries()) {
+      const o = P[i]; // a -0 result would need Object.is in the repository's strict test assertion
+      if (o.throws || o.negZero || o.returns.includes('"$') || o.argsAfter !== JSON.stringify(a)) continue;
+      if (C && !sameObs(o, C[i])) continue;
       out.push({ args: a, expected: JSON.parse(o.returns) });
       if (out.length === 2) break;
     }

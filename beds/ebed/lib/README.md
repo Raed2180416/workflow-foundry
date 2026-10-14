@@ -43,14 +43,14 @@ stale results.
   close, not on the next opening.
 
 **Decision tables (DMN 1.3)** — R1-R8 in the `dtable.mjs` header:
-- R1 `'-'` does not match null (§10.3.2.9), option `dashMatchesNull` for the §9 reading; null inputs are refused unless
+- R1 `'-'` does not match null (§10.3.2.10), option `dashMatchesNull` for the §9 reading; null inputs are refused unless
   the input is declared `nullable`.
-- R2 no hit returns the default output, else null, for every hit policy (§10.3.2.9 step 2), including C+ / C# / R / O / C.
+- R2 no hit returns the default output, else null, for every hit policy (§10.3.2.10 step 2), including C+ / C# / R / O / C.
 - R3 C# counts outputs, not distinct outputs (§8.2.10 d).
 - R4 COLLECT returns rule order (one admissible "arbitrary order"); compare COLLECT lists as multisets.
 - R5 PRIORITY and OUTPUT ORDER compare outputs that have output values, left to right; ties keep rule order and are a
   checker warning.
-- R6 OUTPUT ORDER over compound outputs is allowed (§8.2.10 and Figure 8-19), although §10.3.2.9 3.a says "SHALL be
+- R6 OUTPUT ORDER over compound outputs is allowed (§8.2.10 and Figure 8-19), although §10.3.2.10 3.a says "SHALL be
   single output": **a contradiction inside DMN 1.3**, resolved for §8.2.10.
 - R7 C+ is exact integer arithmetic (minor units); non-integer sums are refused rather than summed in binary floating
   point. C< / C> take numbers, or dates for date outputs.
@@ -101,7 +101,7 @@ stale results.
 
 | source | URL | sha256 (retrieved 2026-10-14) | licence | used for |
 |---|---|---|---|---|
-| OMG DMN 1.3 (formal/21-01-01) | https://www.omg.org/spec/DMN/1.3/PDF | `b591d2417e8320d71cb988c6741fe590a1a85629bf317bc0857ea803bf4bf6a6` | OMG specification; copyright OMG, read for semantics, not redistributed | §8.2.10, §8.2.11, §9 rules 5-12 and p. 86, §10.3.2.9; Figures 8-19, 11-15, 11-17 transcribed as fixtures |
+| OMG DMN 1.3 (formal/21-01-01) | https://www.omg.org/spec/DMN/1.3/PDF | `b591d2417e8320d71cb988c6741fe590a1a85629bf317bc0857ea803bf4bf6a6` | OMG specification; copyright OMG, read for semantics, not redistributed | §8.2.10, §8.2.11, §9 rules 5-12 and p. 86, §10.3.2.10; Figures 8-19, 11-15, 11-17 transcribed as fixtures |
 | X12 RFI 2601 (quotes TR3 005010X221 §1.10.2.1.1-2) | https://x12.org/resources/requests-for-interpretation/rfi-2601-claim-line-balancing-relationship-charged-allowed | `387bea2ad3b680d395ebc8c19552a2ecb1859be5f1adb0548d711f9a13426b9e` (HTML) | X12 copyright; identities restated | line and claim balancing |
 | BCBSOK PLB segment guide (2018) | https://www.bcbsok.com/docs/provider/ok/claims/ec/ok-pl-segment-835era-2018.pdf | `2588f11f6d1fcd0f54d94a070283caa1975df020118310d9363c835e93a20e82` | payer document; identity restated | transaction balancing, PLB sign |
 | IBM APAR PH17298 | https://www.ibm.com/support/pages/apar/PH17298 | `3356c095cf448acc5a7d6f4e8b09682f32c37054373efd0e4a22473dd35ae65d` (HTML) | IBM support page; rule restated | ΣSVC02 = CLP03 |

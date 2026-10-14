@@ -50,8 +50,9 @@ export function witnessHolds(world, f, args) {
   return sameObs(a, b) ? { ok: false, why: 'no-difference' } : { ok: true };
 }
 
-/** Score `raw` against the world's manifest. */
-export function scoreSweep(world, raw) {
+/** Score `raw` against the world's manifest. `{ witnesses: false }` skips running witnesses (they never change the pass;
+ *  the generator's decisiveness check uses it). */
+export function scoreSweep(world, raw, { witnesses = true } = {}) {
   const out = snapshotOutput(raw);
   const errors = out === undefined ? ['$: not plain JSON-like data'] : out?.oversized ? ['$.findings: oversized'] : validate(outputSchema, out);
   if (errors.length) return { pass: false, score: 0, details: { reason: 'schema-invalid', errors: errors.slice(0, 8) } };
@@ -74,7 +75,7 @@ export function scoreSweep(world, raw) {
       credited.add(m.id);
       tp++; per[m.class].tp++; // true positives count under the defect's (primary) class
       if (x.class !== m.class) viaAlt++;
-      if (x.witness) {
+      if (x.witness && witnesses) {
         wit.given++;
         const h = witnessHolds(world, fnAt.get(locOf(m.file, m.function)), x.witness.args);
         if (h.ok) wit.valid++; else if (h.why === 'outside-domain') wit.outsideDomain++; else if (h.why === 'timeout') wit.timeout++; else wit.noDifference++;

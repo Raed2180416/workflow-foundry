@@ -1,0 +1,960 @@
+{
+ "experiment": "jit-r0-kinetics",
+ "family": "kinetics",
+ "runs": "/home/user/workflow-foundry/research/jit-20261008/runs",
+ "tolerantKeys": [
+  "vmax",
+  "km"
+ ],
+ "cases": [
+  {
+   "case": "O/H s231",
+   "idx": 6,
+   "taskKey": "kinetics:dev:d4:s231",
+   "version": 2,
+   "solver": "v2-haiku55",
+   "archived": {
+    "delivered": "compiled",
+    "pass": false,
+    "score": 0.8929,
+    "shadowUsd": 0.390089,
+    "adjudicatorUsd": 0.394817
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 8,
+    "requests": 8,
+    "hits": 8,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": false,
+     "score": 0.8929
+    },
+    "shadow": {
+     "pass": false,
+     "score": 0.975
+    },
+    "adjudicator": {
+     "pass": true,
+     "score": 1
+    }
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 0.1184,
+     "at": "C5.km",
+     "exclusionDiff": [
+      "MW-0451"
+     ]
+    },
+    "compiled-adjudicator": {
+     "maxRel": 0.1184,
+     "at": "C5.km",
+     "exclusionDiff": []
+    },
+    "shadow-adjudicator": {
+     "maxRel": 0.008738,
+     "at": "C4.km",
+     "exclusionDiff": [
+      "MW-0451"
+     ]
+    }
+   },
+   "decision": {
+    "tolerant rel 0.01": "none (unresolved, compiled delivered)",
+    "tolerant rel 0.02": "none (unresolved, compiled delivered)",
+    "tolerant rel 0.05": "none (unresolved, compiled delivered)",
+    "tolerant rel 0.1 (loose, diagnostic)": "none (unresolved, compiled delivered)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.5000185012924323,
+       "km": 116.17141556922097
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 1.161851319180764,
+       "km": 1071.9788799063722
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.9816032533534681,
+       "km": 511.8827895093732
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.5000185012924323,
+       "km": 567.323639409476
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 1.161851319180764,
+       "km": 172.66214931210814
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.7496701797641105,
+       "km": 228.66752992690127
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.5200026872665174,
+       "km": 165.74521401367466
+      }
+     ],
+     "excluded_samples": [
+      "MW-0442",
+      "MW-0451",
+      "MW-0458",
+      "MW-0509",
+      "MW-0555",
+      "MW-0588",
+      "MW-0591",
+      "MW-0606",
+      "MW-0669",
+      "MW-0696"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.5000185009918316,
+       "km": 116.17141516857619
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 1.2255924325207446,
+       "km": 1194.5205701929203
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.9816032465966398,
+       "km": 511.8827787376141
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.5000185009918316,
+       "km": 562.366149052564
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 1.2255924325207446,
+       "km": 195.86081351864064
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.7496701801206093,
+       "km": 228.6675303767467
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.5200026898902005,
+       "km": 165.74521823170397
+      }
+     ],
+     "excluded_samples": [
+      "MW-0696",
+      "MW-0442",
+      "MW-0591",
+      "MW-0458",
+      "MW-0588",
+      "MW-0669",
+      "MW-0606",
+      "MW-0555",
+      "MW-0509"
+     ]
+    },
+    "adjudicator": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.5000185013325334,
+       "km": 116.1714156226767
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 1.2255924319864975,
+       "km": 1194.5205621495834
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.9816032503245763,
+       "km": 511.88278468054034
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.5000185013325334,
+       "km": 567.3236399358659
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 1.2255924319864975,
+       "km": 195.86081312603295
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.7496701789984233,
+       "km": 228.66752896064116
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.5200026875571105,
+       "km": 165.7452144807562
+      }
+     ],
+     "excluded_samples": [
+      "MW-0588",
+      "MW-0669",
+      "MW-0696",
+      "MW-0591",
+      "MW-0606",
+      "MW-0458",
+      "MW-0555",
+      "MW-0442",
+      "MW-0451",
+      "MW-0509"
+     ]
+    }
+   }
+  },
+  {
+   "case": "O/H s233",
+   "idx": 8,
+   "taskKey": "kinetics:dev:d4:s233",
+   "version": 3,
+   "solver": "v3-haiku55",
+   "archived": {
+    "delivered": "adjudicated",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.406564,
+    "adjudicatorUsd": 0.392691
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 8,
+    "requests": 8,
+    "hits": 8,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": true,
+     "score": 1
+    },
+    "shadow": {
+     "pass": true,
+     "score": 1
+    },
+    "adjudicator": {
+     "pass": true,
+     "score": 1
+    }
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 0.08504,
+     "at": "C5.km",
+     "exclusionDiff": []
+    },
+    "compiled-adjudicator": {
+     "maxRel": 0.08489,
+     "at": "C5.km",
+     "exclusionDiff": []
+    },
+    "shadow-adjudicator": {
+     "maxRel": 0.0001727,
+     "at": "C3.km",
+     "exclusionDiff": []
+    }
+   },
+   "decision": {
+    "tolerant rel 0.01": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.02": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.05": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.1 (loose, diagnostic)": "agree (no adjudicator call)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.40286738801333755,
+       "km": 3549.8712748422404
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.718982822299272,
+       "km": 1600.510934063027
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.718982822299272,
+       "km": 329.9313923122423
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.40286738801333755,
+       "km": 671.3730044449755
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.45487542735704367,
+       "km": 276.2326095298463
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.37072101673683394,
+       "km": 464.0142285334971
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.7768505650481216,
+       "km": 192.32959055349343
+      }
+     ],
+     "excluded_samples": [
+      "OB-0186",
+      "OB-0254",
+      "OB-0276",
+      "OB-0287",
+      "OB-0344",
+      "OB-0355",
+      "OB-0364",
+      "OB-0384",
+      "OB-0403"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.4028702725991552,
+       "km": 3549.9725916397056
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.7189833463124653,
+       "km": 1600.4790733052234
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.7189833463124653,
+       "km": 329.9324256793553
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.4028702725991552,
+       "km": 671.3902034866893
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.45334632044772005,
+       "km": 252.74059292341124
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.37071973247394713,
+       "km": 464.0074996321449
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.7768517340259777,
+       "km": 192.3313145773065
+      }
+     ],
+     "excluded_samples": [
+      "OB-0344",
+      "OB-0186",
+      "OB-0384",
+      "OB-0403",
+      "OB-0254",
+      "OB-0355",
+      "OB-0287",
+      "OB-0364",
+      "OB-0276"
+     ]
+    },
+    "adjudicator": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.402876754677489,
+       "km": 3550.1769503708224
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.7190122401844113,
+       "km": 1600.479073305225
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.7190122401844113,
+       "km": 329.98940791083504
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.402876754677489,
+       "km": 671.4288529259525
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.4533619466355957,
+       "km": 252.7842434465165
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.37071463463213844,
+       "km": 463.98078998212577
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.7768367202926126,
+       "km": 192.30917289101595
+      }
+     ],
+     "excluded_samples": [
+      "OB-0344",
+      "OB-0186",
+      "OB-0384",
+      "OB-0403",
+      "OB-0254",
+      "OB-0355",
+      "OB-0287",
+      "OB-0364",
+      "OB-0276"
+     ]
+    }
+   }
+  },
+  {
+   "case": "O/H s234",
+   "idx": 9,
+   "taskKey": "kinetics:dev:d4:s234",
+   "version": 4,
+   "solver": "v4-haiku55",
+   "archived": {
+    "delivered": "adjudicated",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.43551,
+    "adjudicatorUsd": 0.408501
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 8,
+    "requests": 8,
+    "hits": 8,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": true,
+     "score": 1
+    },
+    "shadow": {
+     "pass": true,
+     "score": 1
+    },
+    "adjudicator": {
+     "pass": true,
+     "score": 1
+    }
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 0.07418,
+     "at": "C2.km",
+     "exclusionDiff": []
+    },
+    "compiled-adjudicator": {
+     "maxRel": 0.07418,
+     "at": "C2.km",
+     "exclusionDiff": []
+    },
+    "shadow-adjudicator": {
+     "maxRel": 0,
+     "at": null,
+     "exclusionDiff": []
+    }
+   },
+   "decision": {
+    "tolerant rel 0.01": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.02": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.05": "interpreter wins (deliver shadow, regression)",
+    "tolerant rel 0.1 (loose, diagnostic)": "agree (no adjudicator call)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.226186219967193,
+       "km": 559.746904724767
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.226186219967193,
+       "km": 168.22946978263943
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.1638843786503684,
+       "km": 555.4402431278029
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.4283226820261474,
+       "km": 181.94240584272504
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.3305770359517006,
+       "km": 235.44865942570195
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.17297514471427297,
+       "km": 1276.4746980578007
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.17297514471427297,
+       "km": 322.257864696682
+      }
+     ],
+     "excluded_samples": [
+      "MW-0160",
+      "MW-0228",
+      "MW-0261",
+      "MW-0280",
+      "MW-0336",
+      "MW-0361",
+      "MW-0395",
+      "MW-0431",
+      "MW-0434",
+      "MW-0449"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.22764808913844864,
+       "km": 569.0494396195515
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.22764808913844864,
+       "km": 181.70839820114858
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.1631127105808161,
+       "km": 543.5631415465307
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.4283209770859407,
+       "km": 181.9386634537746
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.3305776617482737,
+       "km": 235.45070761849382
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.17297479375420652,
+       "km": 1276.4388088113442
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.17297479375420652,
+       "km": 322.2552489887907
+      }
+     ],
+     "excluded_samples": [
+      "MW-0228",
+      "MW-0431",
+      "MW-0361",
+      "MW-0160",
+      "MW-0261",
+      "MW-0280",
+      "MW-0395",
+      "MW-0449",
+      "MW-0434",
+      "MW-0336"
+     ]
+    },
+    "adjudicator": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.22764808913844864,
+       "km": 569.0494396195515
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.22764808913844864,
+       "km": 181.70839820114858
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.1631127105808161,
+       "km": 543.5631415465307
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.4283209770859407,
+       "km": 181.9386634537746
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.3305776617482737,
+       "km": 235.45070761849382
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.17297479375420652,
+       "km": 1276.4388088113442
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.17297479375420652,
+       "km": 322.2552489887907
+      }
+     ],
+     "excluded_samples": [
+      "MW-0160",
+      "MW-0228",
+      "MW-0261",
+      "MW-0280",
+      "MW-0336",
+      "MW-0361",
+      "MW-0395",
+      "MW-0431",
+      "MW-0434",
+      "MW-0449"
+     ]
+    }
+   }
+  },
+  {
+   "case": "O/H s235",
+   "idx": 10,
+   "taskKey": "kinetics:dev:d4:s235",
+   "version": 5,
+   "solver": "v5-haiku55",
+   "archived": {
+    "delivered": "compiled",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.453342
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 8,
+    "requests": 8,
+    "hits": 8,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": true,
+     "score": 1
+    },
+    "shadow": {
+     "pass": true,
+     "score": 1
+    },
+    "adjudicator": null
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 0.0000221,
+     "at": "C1.km",
+     "exclusionDiff": []
+    },
+    "compiled-adjudicator": null,
+    "shadow-adjudicator": null
+   },
+   "decision": {
+    "tolerant rel 0.01": "agree (no adjudicator call)",
+    "tolerant rel 0.02": "agree (no adjudicator call)",
+    "tolerant rel 0.05": "agree (no adjudicator call)",
+    "tolerant rel 0.1 (loose, diagnostic)": "agree (no adjudicator call)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.6654233149371421,
+       "km": 155.44243792754128
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.6454113473698727,
+       "km": 275.00529033059024
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 2.0805889957227013,
+       "km": 752.1099580289464
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.9366794598661267,
+       "km": 228.51449654497338
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 1.4754265016175478,
+       "km": 215.5797221116357
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 2.0805889957227013,
+       "km": 125.32961978677275
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.6454113473698727,
+       "km": 74.34095326831512
+      }
+     ],
+     "excluded_samples": [
+      "QD-0531",
+      "QD-0543",
+      "QD-0558",
+      "QD-0616",
+      "QD-0639",
+      "QD-0661",
+      "QD-0677",
+      "QD-0704",
+      "QD-0772",
+      "QD-0851"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.6654196468758624,
+       "km": 155.4390022855797
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.6454090241710997,
+       "km": 275.00462638523436
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 2.080595791585417,
+       "km": 752.1076394528501
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.9366834148047312,
+       "km": 228.51778192920315
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 1.4754180981637954,
+       "km": 215.57579680386303
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 2.080595791585417,
+       "km": 125.33143147525462
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.6454090241710997,
+       "km": 74.3395623500527
+      }
+     ],
+     "excluded_samples": [
+      "QD-0661",
+      "QD-0851",
+      "QD-0558",
+      "QD-0677",
+      "QD-0531",
+      "QD-0543",
+      "QD-0639",
+      "QD-0616",
+      "QD-0772",
+      "QD-0704"
+     ]
+    },
+    "adjudicator": null
+   }
+  },
+  {
+   "case": "O/H s238",
+   "idx": 13,
+   "taskKey": "kinetics:dev:d4:s238",
+   "version": 6,
+   "solver": "v6-opus55",
+   "archived": {
+    "delivered": "compiled",
+    "pass": true,
+    "score": 1,
+    "shadowUsd": 0.480886
+   },
+   "replay": {
+    "status": "ok",
+    "journalRows": 8,
+    "requests": 8,
+    "hits": 8,
+    "misses": 0,
+    "costUsd": 0,
+    "scoreMatchesArchived": true
+   },
+   "oracle": {
+    "compiled": {
+     "pass": true,
+     "score": 1
+    },
+    "shadow": {
+     "pass": true,
+     "score": 1
+    },
+    "adjudicator": null
+   },
+   "distance": {
+    "compiled-shadow": {
+     "maxRel": 0.00003391,
+     "at": "C1.km",
+     "exclusionDiff": []
+    },
+    "compiled-adjudicator": null,
+    "shadow-adjudicator": null
+   },
+   "decision": {
+    "tolerant rel 0.01": "agree (no adjudicator call)",
+    "tolerant rel 0.02": "agree (no adjudicator call)",
+    "tolerant rel 0.05": "agree (no adjudicator call)",
+    "tolerant rel 0.1 (loose, diagnostic)": "agree (no adjudicator call)"
+   },
+   "answers": {
+    "compiled": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.11067885499158221,
+       "km": 430.6205249245519
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.07718665022585945,
+       "km": 90.24735170814779
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.11067885499158221,
+       "km": 142.53040435879305
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.14567757584545932,
+       "km": 538.9613625766763
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.14567757584545932,
+       "km": 111.52340616546799
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.1621166579291173,
+       "km": 325.70097623670773
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.10617282677993159,
+       "km": 276.91836200540763
+      }
+     ],
+     "excluded_samples": [
+      "DR-0314",
+      "DR-0331",
+      "DR-0418",
+      "DR-0432",
+      "DR-0502",
+      "DR-0505",
+      "DR-0552",
+      "DR-0567",
+      "DR-0612"
+     ]
+    },
+    "shadow": {
+     "conditions": [
+      {
+       "condition_id": "C1",
+       "vmax": 0.11067885512507653,
+       "km": 430.6059237289423
+      },
+      {
+       "condition_id": "C2",
+       "vmax": 0.07718665015297688,
+       "km": 90.24735125894878
+      },
+      {
+       "condition_id": "C3",
+       "vmax": 0.11067885512507653,
+       "km": 142.5304050270778
+      },
+      {
+       "condition_id": "C4",
+       "vmax": 0.14567757557306693,
+       "km": 538.9518909310843
+      },
+      {
+       "condition_id": "C5",
+       "vmax": 0.14567757557306693,
+       "km": 111.52340519154788
+      },
+      {
+       "condition_id": "C6",
+       "vmax": 0.1621166581905122,
+       "km": 325.70097800118265
+      },
+      {
+       "condition_id": "C7",
+       "vmax": 0.10617282679341648,
+       "km": 276.918362129294
+      }
+     ],
+     "excluded_samples": [
+      "DR-0567",
+      "DR-0432",
+      "DR-0331",
+      "DR-0505",
+      "DR-0502",
+      "DR-0552",
+      "DR-0612",
+      "DR-0418",
+      "DR-0314"
+     ]
+    },
+    "adjudicator": null
+   }
+  }
+ ]
+}

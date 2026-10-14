@@ -149,6 +149,8 @@ test('day-count deadlines: business and calendar days, rolls, end of day', () =>
   assert.deepEqual(d('2026-10-02', 30, { unit: 'calendar' }), ['2026-11-01', '2026-11-01T23:59:59.999-05:00']); // a Sunday, 25-hour day
   assert.deepEqual(d('2026-10-02', 30, { unit: 'calendar', roll: 'following' }), ['2026-11-02', '2026-11-02T23:59:59.999-05:00']);
   assert.deepEqual(d('2026-10-01', 30, { unit: 'calendar', roll: 'modifiedFollowing' }), ['2026-10-30', '2026-10-30T23:59:59.999-04:00']); // Sat 31 -> Fri 30
+  assert.deepEqual(d('2037-12-29', 2, { unit: 'calendar' }), ['2037-12-31', '2037-12-31T23:59:59.999-05:00']); // last supported day (review P2)
+  assert.equal(codeOf(() => dueByDays(AP, '2037-12-29', 3, { unit: 'calendar' })), 'TZ_RANGE');
   assert.equal(codeOf(() => dueByDays(AP, '2026-11-20', 10, { roll: 'following' })), 'CLOCK_INVALID');
   assert.equal(codeOf(() => dueByDays(AP, '2026-11-20', -1)), 'CLOCK_INVALID');
   assert.equal(codeOf(() => dueByDays(AP, '2026-11-20', 1, { unit: 'weeks' })), 'CLOCK_INVALID');

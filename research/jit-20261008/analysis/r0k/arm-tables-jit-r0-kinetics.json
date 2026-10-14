@@ -1,0 +1,172 @@
+[
+ {
+  "arm": "agent:claude-haiku-5-5",
+  "done": "24/24",
+  "pass": "15/24",
+  "bySegment": {
+   "d4": "8/16",
+   "d5": "7/8"
+  },
+  "totalUsd": 2.086,
+  "usdPerSuccess": 0.139,
+  "usdPerTask": 0.087,
+  "unfinishedUsd": 0,
+  "imputedUsd": 0,
+  "compileUsd": 0,
+  "compileUnfinishedUsd": 0,
+  "compileSharePct": 0,
+  "deliveredBy": {
+   "interpreter": 24
+  },
+  "deopts": {},
+  "shadows": 0,
+  "disagreements": 0,
+  "adjudications": {},
+  "unresolved": 0,
+  "regressions": 0,
+  "versions": [],
+  "compileAttempts": {},
+  "adopted": [],
+  "faults": {
+   "events": 0,
+   "byCode": {},
+   "first": null,
+   "last": null,
+   "lastComponent": null
+  },
+  "envRule": {
+   "planned": 24,
+   "impaired": 0,
+   "unresolved": 0,
+   "rate": 0,
+   "verdict": "valid"
+  }
+ },
+ {
+  "arm": "jit:claude-opus-5-5/claude-haiku-5-5",
+  "done": "14/24",
+  "pass": "13/14",
+  "bySegment": {
+   "d4": "13/14"
+  },
+  "totalUsd": 33.175,
+  "usdPerSuccess": 2.552,
+  "usdPerTask": 2.37,
+  "unfinishedUsd": 0,
+  "imputedUsd": 0,
+  "compileUsd": 24.957,
+  "compileUnfinishedUsd": 0,
+  "compileSharePct": 75.2,
+  "deliveredBy": {
+   "interpreter": 9,
+   "compiled": 3,
+   "adjudicated": 2
+  },
+  "deopts": {
+   "judge": 1,
+   "guard": 5
+  },
+  "shadows": 5,
+  "disagreements": 3,
+  "adjudications": {
+   "none": 1,
+   "interpreter": 2
+  },
+  "unresolved": 1,
+  "regressions": 2,
+  "versions": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "compileAttempts": {
+   "haiku-5-5": {
+    "attempts": 6,
+    "accepted": 4,
+    "clean": 6,
+    "usd": 16.134,
+    "bestPartial": 1
+   },
+   "opus-5-5": {
+    "attempts": 2,
+    "accepted": 2,
+    "clean": 2,
+    "usd": 8.823,
+    "bestPartial": 1
+   }
+  },
+  "adopted": [
+   {
+    "idx": 3,
+    "version": 1,
+    "builder": "opus-5-5",
+    "accepted": true,
+    "clean": true,
+    "compiledDelivered": 0,
+    "compiledPassed": 0
+   },
+   {
+    "idx": 5,
+    "version": 2,
+    "builder": "haiku-5-5",
+    "accepted": true,
+    "clean": true,
+    "compiledDelivered": 1,
+    "compiledPassed": 0
+   },
+   {
+    "idx": 8,
+    "version": 3,
+    "builder": "haiku-5-5",
+    "accepted": true,
+    "clean": true,
+    "compiledDelivered": 0,
+    "compiledPassed": 0
+   },
+   {
+    "idx": 9,
+    "version": 4,
+    "builder": "haiku-5-5",
+    "accepted": true,
+    "clean": true,
+    "compiledDelivered": 0,
+    "compiledPassed": 0
+   },
+   {
+    "idx": 10,
+    "version": 5,
+    "builder": "haiku-5-5",
+    "accepted": true,
+    "clean": true,
+    "compiledDelivered": 1,
+    "compiledPassed": 1
+   },
+   {
+    "idx": 13,
+    "version": 6,
+    "builder": "opus-5-5",
+    "accepted": true,
+    "clean": true,
+    "compiledDelivered": 1,
+    "compiledPassed": 1
+   }
+  ],
+  "faults": {
+   "events": 0,
+   "byCode": {},
+   "first": null,
+   "last": null,
+   "lastComponent": null
+  },
+  "envRule": {
+   "planned": 24,
+   "impaired": 0,
+   "unresolved": 0,
+   "rate": 0,
+   "verdict": "valid"
+  }
+ }
+]

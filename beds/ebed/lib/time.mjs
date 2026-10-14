@@ -7,9 +7,12 @@
 //
 // Time zones come from a pinned rule table, not from the host's ICU data: the oracle must give byte-identical results
 // on every machine and Node version, and tzdata releases change. Each named zone is a standard offset plus one of four
-// daylight-saving rules, valid for local years 2020-2037 (rules unchanged in that span for every listed zone; outside
-// it the zone throws TZ_RANGE). UTC and fixed offsets ('UTC+05:30') are valid for 1900-2199. The tests compare every
-// zone with Intl over 2020-2037 (differential, skipped when Intl lacks the zone).
+// daylight-saving rules, valid for instants whose local (wall-clock) date lies in 2020-2037 (rules unchanged in that
+// span for every listed zone; outside it the zone throws TZ_RANGE), including both edge days: 2020-01-01 and
+// 2037-12-31 have full day bounds and business time (review fix: they threw because the year was probed on a
+// neighbouring instant). The end of 2037-12-31 (24:00) is computable although that instant's own local date is
+// 2038-01-01. UTC and fixed offsets ('UTC+05:30') are valid for 1900-2199. The tests compare every zone with Intl over
+// 2020-2037 (differential, skipped when Intl lacks the zone).
 //
 // Local-to-instant disambiguation follows the Temporal proposal's names: 'compatible' (a time in a spring-forward gap
 // moves later by the gap; a time in a fall-back fold takes the earlier instant), 'earlier', 'later', 'reject'. Interval
@@ -175,16 +178,25 @@ function checkYear(z, y) {
   if (z.bounded && (y < RULE_YEAR_MIN || y > RULE_YEAR_MAX)) fail('TZ_RANGE', `${z.id}: local year ${y} outside the pinned rule span ${RULE_YEAR_MIN}-${RULE_YEAR_MAX}`);
 }
 
-/** Offset (minutes east of UTC) in effect at instant `ms` in zone `tz`. */
+// Offset of zone z at instant t under the DST rule of `ruleYear`, without a range check. No listed rule has a
+// transition within two months of 1 January, so the rules of two adjacent years agree on instants near the new year:
+// evaluating either is exact there.
+function ruleOffset(z, t, ruleYear) {
+  if (!z.rule) return z.std;
+  const { start, end } = RULES[z.rule](ruleYear, z.std);
+  const dst = start < end ? (t >= start && t < end) : (t < end || t >= start);
+  return dst ? z.std + SAVE : z.std;
+}
+const yearOfMs = ms => new Date(ms).getUTCFullYear();
+const clampRuleYear = y => Math.min(Math.max(y, RULE_YEAR_MIN), RULE_YEAR_MAX);
+
+/** Offset (minutes east of UTC) in effect at instant `ms` in zone `tz`; the instant's local year must be in range. */
 export function offsetAt(tz, ms) {
   const z = zoneOf(tz);
   const t = toMs(ms);
-  const y = new Date(t + z.std * MINUTE).getUTCFullYear();
-  checkYear(z, y);
-  if (!z.rule) return z.std;
-  const { start, end } = RULES[z.rule](y, z.std);
-  const dst = start < end ? (t >= start && t < end) : (t < end || t >= start);
-  return dst ? z.std + SAVE : z.std;
+  const off = ruleOffset(z, t, clampRuleYear(yearOfMs(t + z.std * MINUTE)));
+  checkYear(z, yearOfMs(t + off * MINUTE));
+  return off;
 }
 
 /** DST transitions of `tz` in local year `year`, ascending: [{ at, before, after }] (offsets in minutes). */
@@ -218,14 +230,21 @@ export function formatInstant(ms, tz = 'UTC') {
   return `${date}T${pad(h)}:${pad(mi)}:${pad(s)}${f ? `.${pad(f, 3)}` : ''}${offset < 0 ? '-' : '+'}${pad(Math.floor(a / 60))}:${pad(a % 60)}`;
 }
 
-function localCandidates(z, tz, localMs) {
+// Instants at which the wall clock reads `localMs` (ms since 1970-01-01 local), judged with the rule of `ruleYear`: the
+// wall-clock year, range-checked by the caller (for 24:00 the year of the day that ends).
+function localCandidates(z, localMs, ruleYear) {
   const offsets = z.rule ? [z.std, z.std + SAVE] : [z.std];
   const valid = [];
   for (const o of offsets) {
     const t = localMs - o * MINUTE;
-    if (offsetAt(tz, t) === o) valid.push(t);
+    if (ruleOffset(z, t, ruleYear) === o) valid.push(t);
   }
   return { valid: [...new Set(valid)].sort((a, b) => a - b), lo: localMs - Math.max(...offsets) * MINUTE, hi: localMs - Math.min(...offsets) * MINUTE };
+}
+function wallYear(z, day) {
+  const y = yearOfMs(day * DAY);
+  checkYear(z, y);
+  return z.bounded ? y : clampRuleYear(y);
 }
 
 const toMsOfDay = time => (typeof time === 'number' ? time : parseClock(time));
@@ -238,7 +257,8 @@ export function fromLocal(date, time, tz, disambiguation = 'compatible') {
   const z = zoneOf(tz);
   const msOfDay = toMsOfDay(time);
   if (!Number.isSafeInteger(msOfDay) || msOfDay < 0 || msOfDay >= DAY) fail('TIME_INVALID', `time of day out of range: ${time}`);
-  const { valid, lo, hi } = localCandidates(z, tz, toDay(date) * DAY + msOfDay);
+  const day = toDay(date);
+  const { valid, lo, hi } = localCandidates(z, day * DAY + msOfDay, wallYear(z, day));
   if (!['compatible', 'earlier', 'later', 'reject'].includes(disambiguation)) fail('TIME_INVALID', `unknown disambiguation ${disambiguation}`);
   if (valid.length === 1) return valid[0];
   if (valid.length === 2) {
@@ -258,9 +278,10 @@ export function wallStart(date, time, tz) {
   const z = zoneOf(tz);
   let day = toDay(date);
   let msOfDay = typeof time === 'number' ? time : parseClock(time, { allow24: true });
+  const ruleYear = wallYear(z, day); // 24:00 ends `date`: judged with the rule (and range) of `date`'s year
   if (msOfDay === DAY) { day += 1; msOfDay = 0; }
   if (!Number.isSafeInteger(msOfDay) || msOfDay < 0 || msOfDay >= DAY) fail('TIME_INVALID', `time of day out of range: ${time}`);
-  const { valid, lo, hi } = localCandidates(z, tz, day * DAY + msOfDay);
+  const { valid, lo, hi } = localCandidates(z, day * DAY + msOfDay, ruleYear);
   if (valid.length) return valid[0];
   const year = new Date(day * DAY).getUTCFullYear();
   const tr = [year - 1, year, year + 1].flatMap(y => { try { return transitionsOf(tz, y); } catch { return []; } }).find(x => x.at > lo && x.at <= hi);
@@ -269,4 +290,4 @@ export function wallStart(date, time, tz) {
 }
 
 /** Local midnight-to-midnight bounds of a date: { start, end } (end exclusive, = next day's start). */
-export const dayBounds = (date, tz) => ({ start: wallStart(date, 0, tz), end: wallStart(toDay(date) + 1, 0, tz) });
+export const dayBounds = (date, tz) => ({ start: wallStart(date, 0, tz), end: wallStart(date, DAY, tz) });

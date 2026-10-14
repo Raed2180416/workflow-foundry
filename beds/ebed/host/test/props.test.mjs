@@ -248,7 +248,7 @@ test('the host never computes deadlines, enforces rules for the arm, or fills de
     if (late) { assert.equal(r.status, 'error'); assert.deepEqual(r.faultTags, ['F5']); assert.equal(r.injected, true); }
     else assert.equal(r.status, 'ok');
   }
-  assert.ok(before.length >= 1 || posted.length === 0, 'a held invoice can be posted: the mock enforces no workflow rule');
+  assert.ok(before.length >= 1, `a held invoice can be posted: the mock enforces no workflow rule (posted ${posted.length}, held ${held.length})`);
   // The past-due obligation fires one minute after the tick, never at a host-computed time.
   for (const r of ofType(res, 'obligation.upsert')) { assert.equal(r.clamped, true); }
 });
@@ -264,8 +264,9 @@ test('faults: every injected row matches the world schedule (case, system, op, o
       if (!row.injected) { assert.deepEqual(row.faultTags, []); continue; }
       for (const tag of row.faultTags) {
         if (tag === 'F5') { assert.ok(w.faults.some(f => f.kind === 'F5' && f.system === row.system && f.op === row.op && ms(f.at) <= ms(row.at))); continue; }
+        // F6 is permanent: it covers its ordinal and every later one of that (case, system, op) (H-23).
         const f = w.faults.find(x => x.kind === tag && x.case === row.subjectCase && x.system === row.system && x.op === row.op
-          && row.ordinal >= x.ordinal && row.ordinal < x.ordinal + (x.params?.repeat ?? 1));
+          && row.ordinal >= x.ordinal && (x.kind === 'F6' || row.ordinal < x.ordinal + (x.params?.repeat ?? 1)));
         assert.ok(f, `injected ${tag} on ${row.system}.${row.op} #${row.ordinal} is scheduled`);
       }
     }

@@ -29,13 +29,18 @@ test('replay reproduces byte-identical content rows, ledger, SoR and outputs ($0
   for (const [name, item, world, arm, profile] of CASES) {
     const res = await H.runWorld({ item, world: world(), arm: arm(), profile });
     const rows = res.host.journal.rows;
-    let called = 0;
     const rp = await H.replayRun({ item, world: world(), journal: rows });
     assert.equal(rp.ok, true, `${name}: ${JSON.stringify(rp.divergence)?.slice(0, 400)}`);
     assert.equal(rp.status, 'complete');
     for (const k of ['journal', 'ledger', 'sor', 'outputs', 'content']) assert.equal(rp.digests[k], res.digests[k], `${name}: ${k}`);
     assert.equal(canonical(rp.ledger), canonical(res.host.ledger.committed));
-    assert.equal(called, 0);
+    // $0: even with an arm present, a replay never calls it (review finding 15: this used to be a vacuous counter).
+    let called = 0;
+    const spy = { id: arm().id, tick() { called++; throw new Error('called during replay'); }, sweep() { called++; throw new Error('called during replay'); } };
+    const again = await H.createHost({ item, world: world(), arm: spy, recorded: rows, mode: 'replay', profile: rows.find(r => r.type === 'run.start').profile }).run();
+    assert.equal(again.status, 'complete');
+    assert.equal(again.digests.content, res.digests.content);
+    assert.equal(called, 0, `${name}: the arm was called during replay`);
   }
 });
 

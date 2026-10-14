@@ -171,7 +171,8 @@ export function p2pSolver({ id = 'toy-solver', keys = true, statusCheck = true, 
             else if (p.op === 'reverse' || p.op === 'cancelInvoice') { c.stage = 'done'; out.close = true; }
           } else if (p.status === 'unknown') {
             if (statusCheck && keys && p.key && ctx.status(p.system, p.key) === 'committed') {
-              if (p.op === 'registerInvoice') proceed(); else if (p.op === 'pay') { c.stage = 'paid'; out.close = true; }
+              // A dependant `after` an unknown outcome is not applied (predecessor-unknown): pay once the post is known.
+              if (p.op === 'registerInvoice') proceed(); else if (p.op === 'post') out.effects.push(clean(pay(c))); else if (p.op === 'pay') { c.stage = 'paid'; out.close = true; }
             } else if (again) out.effects.push(clean(again()));
           } else if (p.status === 'rate-limited' || (p.status === 'error' && p.error?.retryable)) {
             if (again) reemitLater(clean(again()));
@@ -180,8 +181,8 @@ export function p2pSolver({ id = 'toy-solver', keys = true, statusCheck = true, 
           } else if (p.status === 'error' && p.op === 'pay' && p.error?.retryable === false) {
             out.effects.push({ ...k(`rev:${c.invoiceId}`), system: 'erp', op: 'reverse', args: { postingId: `P-${c.invoiceId}`, invoiceId: c.invoiceId } });
             c.stage = 'reversing';
-          } else if (p.status === 'error' && p.error?.code === 'predecessor-failed') {
-            /* the post failed; its own result drives the retry */
+          } else if (p.status === 'error' && (p.error?.code === 'predecessor-failed' || p.error?.code === 'predecessor-unknown')) {
+            /* the post failed or its outcome is unknown; its own result drives what happens next */
           }
         } else if (ev.type === 'timer.fired' && ev.payload.onDue?.effect) {
           out.effects.push(ev.payload.onDue.effect);

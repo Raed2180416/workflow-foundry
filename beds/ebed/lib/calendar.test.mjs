@@ -72,6 +72,31 @@ test('zones: 2026 transitions by hand', () => {
   assert.equal(offsetAt('UTC-03:30', Date.UTC(1950, 0, 1)), -210);
 });
 
+test('review P2: the first and last supported days work in full; the range is the local date', () => {
+  const H = HOUR;
+  for (const tz of [NY, 'Europe/London', 'Asia/Tokyo', 'Australia/Sydney', 'Pacific/Auckland']) {
+    for (const date of ['2020-01-01', '2037-12-31']) {
+      const b = dayBounds(date, tz);
+      assert.equal((b.end - b.start) / H, 24, `${tz} ${date}`); // no transition near the new year in any rule
+      assert.equal(localParts(b.start, tz).date, date);
+      const c9 = { tz, businessHours: { days: [1, 2, 3, 4, 5, 6, 7], hours: [['09:00', '17:00']] } };
+      assert.equal(businessMs(c9, b.start, b.end), 8 * H, `${tz} ${date}`);
+      assert.equal(businessMs({ tz, businessHours: '24x7' }, b.start, b.end), 24 * H, `${tz} ${date} 24x7`);
+      assert.equal(addBusinessMs(c9, b.start, 8 * H), fromLocal(date, '17:00', tz));
+    }
+  }
+  // 2020-01-01 00:30 in Sydney (daylight time, +11:00) is 2019-12-31T13:30Z: in range, because the local date is 2020.
+  assert.equal(offsetAt('Australia/Sydney', '2019-12-31T13:30:00Z'), 660);
+  assert.equal(formatInstant(fromLocal('2020-01-01', '00:30', 'Australia/Sydney'), 'UTC'), '2019-12-31T13:30:00+00:00');
+  // Outside the range, by local date: still refused.
+  assert.equal(codeOf(() => offsetAt(NY, '2020-01-01T03:00:00Z')), 'TZ_RANGE'); // 2019-12-31 22:00 in New York
+  assert.equal(codeOf(() => dayBounds('2019-12-31', NY)), 'TZ_RANGE');
+  assert.equal(codeOf(() => dayBounds('2038-01-01', NY)), 'TZ_RANGE');
+  assert.equal(codeOf(() => formatInstant(dayBounds('2037-12-31', NY).end, NY)), 'TZ_RANGE'); // 2038-01-01 00:00 local
+  assert.equal(formatInstant(dayBounds('2037-12-31', NY).end - 1, NY), '2037-12-31T23:59:59.999-05:00');
+  assert.equal(codeOf(() => addBusinessMs({ tz: NY, businessHours: '24x7' }, '2037-12-31T12:00:00-05:00', 13 * H)), 'TZ_RANGE');
+});
+
 test('zones: local times in gaps and folds', () => {
   // 2026-03-08 02:30 does not exist in New York (02:00 EST -> 03:00 EDT).
   assert.equal(fmt(fromLocal('2026-03-08', '02:30', NY)), '2026-03-08T03:30:00-04:00'); // compatible = later
@@ -154,6 +179,16 @@ test('calendar: business time between instants and adding business time', () => 
   assert.equal(businessMs(c24, '2026-11-01T00:00:00-04:00', '2026-11-02T00:00:00-05:00') / HOUR, 25);
   // Hours 00:00-02:30 on the spring-forward Sunday: the clock skips 02:00-03:00, so 2 hours of business time.
   assert.equal(businessMs({ tz: NY, businessHours: { sun: [['00:00', '02:30']] } }, '2026-03-08T00:00:00-05:00', '2026-03-09T00:00:00-04:00') / MINUTE, 120);
+  // Review P2: hours 02:00-02:30 lie wholly in that gap, so that Sunday has no business time and is not a business day.
+  const gapOnly = { tz: NY, businessHours: { sun: [['02:00', '02:30']] } };
+  assert.equal(businessMs(gapOnly, '2026-03-08T00:00:00-05:00', '2026-03-09T00:00:00-04:00'), 0);
+  assert.equal(isBusinessDay(gapOnly, '2026-03-08'), false);
+  assert.equal(isBusinessDay(gapOnly, '2026-03-15'), true);
+  assert.equal(addBusinessDays(gapOnly, '2026-03-07', 1), '2026-03-15');
+  // Fall-back fold, the wallStart reading: [01:30, 03:00) on 2026-11-01 runs from the first 01:30 (EDT) to 03:00 EST,
+  // 150 minutes, the second 01:00-01:30 (EST) included; counting minutes whose wall clock reads 01:30-03:00 would give
+  // 30 (EDT) + 90 (EST) = 120. Item goldens on fold days must state which reading they use (README).
+  assert.equal(businessMs({ tz: NY, businessHours: { sun: [['01:30', '03:00']] } }, '2026-11-01T00:00:00-04:00', '2026-11-02T00:00:00-05:00') / MINUTE, 150);
   // Representation invariance: the same instants written with different offsets.
   assert.equal(businessMs(AP, '2026-11-24T21:00:00Z', '2026-11-30T15:00:00Z'), 14 * HOUR);
 });
@@ -199,6 +234,13 @@ test('editions: anchor date decides, effectiveTo exclusive, published filters, n
   assert.deepEqual(checkEditions(gap).map(i => [i.code, i.severity, i.gap]), [['EDITION_UNRESOLVED', 'warning', { from: '2026-03-01', to: '2026-04-01' }]]);
   assert.equal(codeOf(() => checkEditions([{ id: 'x', effectiveFrom: '2026-02-01', effectiveTo: '2026-02-01' }])), 'EDITION_INVALID');
   assert.deepEqual(checkEditions([...gap, { id: 'a', effectiveFrom: '2027-01-01' }]).map(i => i.code).sort(), ['EDITION_INVALID', 'EDITION_UNRESOLVED', 'EDITION_UNRESOLVED']);
+  // Review P2: a long edition A overlaps both B and C, and there is no gap between B and C (A is in force there).
+  const nested = [{ id: 'A', effectiveFrom: '2026-01-01', effectiveTo: '2027-01-01' }, { id: 'B', effectiveFrom: '2026-02-01', effectiveTo: '2026-03-01' }, { id: 'C', effectiveFrom: '2026-04-01', effectiveTo: '2026-05-01' }];
+  assert.deepEqual(checkEditions(nested).map(i => [i.severity, i.editions]), [['error', ['A', 'B']], ['error', ['A', 'C']]]);
+  assert.equal(selectEdition(nested, '2026-03-15').id, 'A'); // agrees with the checker: no gap here
+  assert.equal(codeOf(() => selectEdition(nested, '2026-04-15')), 'EDITION_UNRESOLVED');
+  const after = [{ id: 'A', effectiveFrom: '2026-01-01', effectiveTo: '2026-06-01' }, { id: 'B', effectiveFrom: '2026-02-01', effectiveTo: '2026-03-01' }, { id: 'C', effectiveFrom: '2026-07-01' }];
+  assert.deepEqual(checkEditions(after).map(i => [i.severity, i.gap ?? i.editions]), [['error', ['A', 'B']], ['warning', { from: '2026-06-01', to: '2026-07-01' }]]);
 });
 
 // Differential check of the pinned zone table against the host's ICU tzdata (Node 24: full ICU). Skipped per zone when

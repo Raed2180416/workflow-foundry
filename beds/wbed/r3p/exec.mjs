@@ -10,14 +10,15 @@
 import vm from 'node:vm';
 
 // A call that runs longer than this is a timeout. The oracle's witness check uses TIMEOUT_MS and re-runs a timed-out call
-// once with GEN_TIMEOUT_MS before it gives up (score.mjs); generation always uses GEN_TIMEOUT_MS and treats a timeout as a
-// generator error (world.mjs obsGen), so a slow machine can never change a task. No generated body loops unboundedly.
+// once with GEN_TIMEOUT_MS before it gives up (score.mjs); generation always uses GEN_TIMEOUT_MS (observeMany batches a
+// function's probes into one call) and treats a timeout as a generator error (world.mjs obsGen), so a slow machine can
+// never change a task. No generated body loops unboundedly.
 export const TIMEOUT_MS = 200, GEN_TIMEOUT_MS = 2000;
 const CALL = new vm.Script('__out = { r: globalThis[__name](...__args) }');
 
 /** Build a context holding the given function sources (each `function name(...) {...}`, no export keyword). */
 export function makeContext(sources) {
-  const ctx = vm.createContext({ __args: [], __name: '', __out: null });
+  const ctx = vm.createContext({ __args: [], __argsList: [], __name: '', __out: null, __outs: null });
   vm.runInContext(sources.join('\n\n'), ctx, { timeout: 2000 });
   return ctx;
 }
@@ -48,16 +49,25 @@ export function observe(ctx, name, args, timeout = TIMEOUT_MS) {
   catch (e) { threw = (e && typeof e === 'object' && typeof e.name === 'string') ? (e.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' ? 'Timeout' : e.name) : 'Thrown'; }
   return { returns: threw ? null : canonValue(ret), throws: threw, argsAfter: canonValue(copy) };
 }
-/** Does `name` return a value holding -0 on `args`? canonValue writes -0 as 0, which the repository's strict test
- *  assertions (assert.deepEqual from node:assert/strict) would not accept, so such inputs are kept out of its tests. */
-export function returnsNegZero(ctx, name, args, timeout = TIMEOUT_MS) {
-  ctx.__args = JSON.parse(JSON.stringify(args)); ctx.__name = name; ctx.__out = null;
-  try { CALL.runInContext(ctx, { timeout }); return hasNegZero(ctx.__out.r); } catch { return false; }
-}
 function hasNegZero(v, depth = 0) {
   if (Object.is(v, -0)) return true;
   if (depth > 20 || v === null || typeof v !== 'object') return false;
   return Array.isArray(v) ? v.some(x => hasNegZero(x, depth + 1)) : Object.values(v).some(x => hasNegZero(x, depth + 1));
+}
+const MANY = new vm.Script(`__outs = __argsList.map(a => { try { return { ok: true, r: globalThis[__name](...a) }; }
+  catch (e) { return { ok: false, e: (e && typeof e === 'object' && typeof e.name === 'string') ? e.name : 'Thrown' }; } })`);
+/** observe() for many argument lists in ONE vm call (one timeout watchdog instead of one per call; the generator makes
+ *  thousands of calls). The timeout covers the whole batch; a timeout throws (generation treats it as an error). With
+ *  `negZero`, each observation also says whether the result holds -0. */
+export function observeMany(ctx, name, argsList, { timeout = GEN_TIMEOUT_MS, negZero = false } = {}) {
+  const copies = argsList.map(a => JSON.parse(JSON.stringify(a)));
+  ctx.__argsList = copies; ctx.__name = name; ctx.__outs = null;
+  try { MANY.runInContext(ctx, { timeout }); } catch (e) {
+    if (e?.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT') throw new Error(`wbed-r3p: ${name} timed out during generation`);
+    throw e;
+  }
+  return ctx.__outs.map((o, i) => ({ returns: o.ok ? canonValue(o.r) : null, throws: o.ok ? null : o.e, argsAfter: canonValue(copies[i]),
+    ...(negZero ? { negZero: o.ok && hasNegZero(o.r) } : {}) }));
 }
 export const sameObs = (a, b) => a.returns === b.returns && a.throws === b.throws && a.argsAfter === b.argsAfter;
 

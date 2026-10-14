@@ -119,10 +119,10 @@ export const necessityControls = NECESSITY_DEFS.map(asControl);
 
 setVerifier(world => {
   const truth = runPipeline(world).reduce;
-  if (!scoreSweep(world, truth).pass) return 'reference';
+  if (!scoreSweep(world, truth, { witnesses: false }).pass) return 'reference';
   for (const def of [...CONTROL_DEFS, ...NECESSITY_DEFS]) {
     if (def.slow || !appliesAt(def, world.spec.difficulty)) continue; // the contract-fuzz controls are gated by tests (seconds per task)
-    if (scoreSweep(world, outputOf(def, world, truth)).pass) return def.name;
+    if (scoreSweep(world, outputOf(def, world, truth), { witnesses: false }).pass) return def.name;
   }
   return null;
 });

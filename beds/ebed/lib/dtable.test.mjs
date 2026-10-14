@@ -92,7 +92,7 @@ test('R1: "-" does not match null unless dashMatchesNull; nulls only for nullabl
   const t = { id: 'n', hitPolicy: 'F', inputs: [{ name: 'x', type: 'string', nullable: true }], outputs: [{ name: 'y' }],
     rules: [{ when: ['"A"'], then: 'a' }, { when: ['-'], then: 'any' }, { when: ['null'], then: 'was null' }] };
   assert.equal(evaluate(t, { x: 'B' }), 'any');
-  assert.equal(evaluate(t, { x: null }), 'was null'); // §10.3.2.9: '-' requires e != null
+  assert.equal(evaluate(t, { x: null }), 'was null'); // §10.3.2.10: '-' requires e != null
   assert.equal(evaluate(t, {}), 'was null'); // a missing input is null
   assert.equal(evaluate(t, { x: null }, { dashMatchesNull: true }), 'any'); // §9 reading
   const strict = { ...t, inputs: [{ name: 'x', type: 'string' }] };
@@ -102,16 +102,39 @@ test('R1: "-" does not match null unless dashMatchesNull; nulls only for nullabl
   assert.equal(evaluate(n, { x: 7 }), 'big');
   assert.equal(evaluate(n, { x: 3 }), null);
   assert.equal(evaluate(n, { x: null }), null);
+  // §10.3.2.10 grammar rule 15.c with input values v: '-' is satisfied iff FEEL(e in (v)) (review P2: it ignored v).
+  const v = { id: 'v', hitPolicy: 'F', inputs: [{ name: 'x', type: 'integer', nullable: true, values: '1, 2, null' }], outputs: [{ name: 'y' }], rules: [{ when: ['-'], then: 'any' }] };
+  assert.equal(evaluate(v, { x: null }), 'any'); // null is in (1, 2, null)
+  assert.equal(evaluate(v, { x: 2 }), 'any');
+  assert.equal(evaluate({ ...v, inputs: [{ ...v.inputs[0], values: '[1..2]' }] }, { x: null }), null); // null in [1..2] is null, not true
+  assert.deepEqual(checkTable(v), []); // the checker uses the same reading: no gap at null
+  assert.equal(codeOf(() => evaluate(v, { x: 3 })), 'DT_DOMAIN'); // outside the input values: refused (R1, stricter than 15.c)
 });
 
-test('R5: PRIORITY ties keep rule order and are reported; FIRST shadowing is reported', () => {
+test('R5: a PRIORITY tie at the top between different outputs is refused; OUTPUT ORDER ties keep rule order; FIRST shadowing is reported', () => {
   const t = { id: 'tie', hitPolicy: 'P', inputs: [{ name: 'x', type: 'integer' }], outputs: [{ name: 'level', values: ['HIGH', 'LOW'] }, { name: 'note' }],
     rules: [{ when: ['>= 0'], then: ['LOW', 'first'] }, { when: ['>= 5'], then: ['HIGH', 'second'] }, { when: ['>= 5'], then: ['HIGH', 'third'] }] };
-  assert.deepEqual(evaluate(t, { x: 7 }), { level: 'HIGH', note: 'second' });
+  // Review P2: this returned 'second' (or 'third' with the rules permuted); the result is undefined, so it is refused.
+  assert.equal(codeOf(() => evaluate(t, { x: 7 })), 'HIT_POLICY');
+  assert.equal(codeOf(() => evaluate({ ...t, rules: [t.rules[0], t.rules[2], t.rules[1]] }, { x: 7 })), 'HIT_POLICY');
   assert.deepEqual(evaluate(t, { x: 1 }), { level: 'LOW', note: 'first' });
   const issues = checkTable(t);
-  assert.deepEqual(issues.map(i => [i.code, i.severity, i.rules]), [['HIT_POLICY', 'warning', ['2', '3']], ['TABLE_GAP', 'warning', undefined], ['TABLE_SHADOWED', 'warning', ['3']]]);
+  assert.deepEqual(issues.map(i => [i.code, i.severity, i.rules]), [['HIT_POLICY', 'error', ['2', '3']], ['TABLE_GAP', 'warning', undefined], ['TABLE_SHADOWED', 'warning', ['3']]]);
+  assert.equal(issues[0].witness.x, 5);
   assert.equal(issues[1].witness.x, -1);
+  // Equal outputs at the top are no tie; a tie below the top is never the result.
+  assert.deepEqual(evaluate({ ...t, rules: [t.rules[0], t.rules[1], { when: ['>= 6'], then: ['HIGH', 'second'] }] }, { x: 7 }), { level: 'HIGH', note: 'second' });
+  const low = { ...t, rules: [{ when: ['>= 0'], then: ['LOW', 'a'] }, { when: ['>= 0'], then: ['LOW', 'b'] }, { when: ['>= 5'], then: ['HIGH', 'c'] }] };
+  assert.deepEqual(evaluate(low, { x: 7 }), { level: 'HIGH', note: 'c' });
+  assert.deepEqual(checkTable(low).filter(i => i.code === 'HIT_POLICY').map(i => [i.severity, i.rules, i.witness.x]), [['error', ['1', '2'], 0]]); // at x < 5 the tie is on top
+  // OUTPUT ORDER: tied rules are listed in rule order, a warning.
+  const o = { ...t, hitPolicy: 'O' };
+  assert.deepEqual(evaluate(o, { x: 7 }).map(r => r.note), ['second', 'third', 'first']);
+  assert.deepEqual(checkTable(o).filter(i => i.code === 'HIT_POLICY').map(i => [i.severity, i.rules]), [['warning', ['2', '3']]]);
+  // Number inputs: the midpoint witness finds the gap (1, 2) between '<= 1' and '>= 2' (review P2: no golden had it).
+  const mid = { id: 'mid', inputs: [{ name: 'x', type: 'number' }], outputs: [{ name: 'y' }], rules: [{ when: ['<= 1'], then: 'a' }, { when: ['>= 2'], then: 'b' }] };
+  assert.deepEqual(checkTable(mid).map(i => [i.code, i.witness]), [['TABLE_GAP', { x: 1.5 }]]);
+  assert.deepEqual(checkTable({ ...mid, inputs: [{ name: 'x', type: 'integer' }] }), []); // no integer lies in (1, 2)
   const f = { id: 'first', hitPolicy: 'F', inputs: [{ name: 'x', type: 'integer' }], outputs: [{ name: 'y' }], rules: [{ when: ['< 20'], then: 'a' }, { when: ['< 10'], then: 'b' }, { when: ['-'], then: 'c' }] };
   assert.deepEqual(checkTable(f).map(i => [i.code, i.rules]), [['TABLE_SHADOWED', ['2']]]);
   assert.equal(codeOf(() => compileTable({ ...t, outputs: [{ name: 'level' }, { name: 'note' }] })), 'HIT_POLICY'); // no priorities

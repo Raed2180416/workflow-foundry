@@ -13,7 +13,7 @@
 //
 // Readings (stated here once; every function follows them):
 //   - business day: a date with non-zero business time after holiday closures (a half-day holiday leaves a business day;
-//     a closure covering all of the day's hours does not);
+//     a closure covering all of the day's hours does not, nor do hours lying wholly inside a DST gap);
 //   - addBusinessDays(d, n), n > 0: the n-th business day strictly after d (d itself never counts, whether or not it is
 //     a business day); n = 0 returns d unchanged; n < 0 counts backwards;
 //   - businessDaysBetween(a, b): the number of business days in (a, b] (negative when b < a);
@@ -123,7 +123,14 @@ export function wallIntervals(cal, date) {
   return cuts ? subtract(base, cuts) : base.map(x => [...x]);
 }
 
-export const isBusinessDay = (cal, date) => wallIntervals(cal, date).length > 0;
+/**
+ * A date with non-zero business time. Review fix: a date whose only business interval lies wholly inside a DST gap
+ * (hours 02:00-02:30 on a spring-forward Sunday) has no business time and is not a business day; it counted as one.
+ */
+export const isBusinessDay = (cal, date) => {
+  const c = calendar(cal), day = toDay(date);
+  return wallIntervals(c, day).length > 0 && dayInstants(c, day).length > 0;
+};
 
 function step(cal, day, dir, inclusive) {
   const c = calendar(cal);
@@ -186,7 +193,10 @@ export function businessIntervals(cal, from, to) {
   const c = calendar(cal);
   const a = toMs(from), b = toMs(to);
   if (b <= a) return [];
-  const first = localParts(a, c.tz).day - 1, last = localParts(b, c.tz).day + 1;
+  // Day d's intervals lie in [start of d, start of d + 1) (an interval ends at 24:00 at the latest), so the local days
+  // of a and of b - 1 bound the scan; no padding day (review fix: padding probed the zone outside its range on the
+  // first and last supported days).
+  const first = localParts(a, c.tz).day, last = localParts(b - 1, c.tz).day;
   const out = [];
   for (let d = first; d <= last; d++) {
     for (const [S, E] of dayInstants(c, d)) {
@@ -216,7 +226,7 @@ export function addBusinessMs(cal, from, ms) {
   if (ms === 0) return a;
   if (!c.hasHours) fail('CAL_NO_BUSINESS_TIME', `calendar ${c.id ?? ''} has no business hours`);
   let acc = 0, idle = 0;
-  for (let d = localParts(a, c.tz).day - 1; idle <= SEARCH_DAYS; d++) {
+  for (let d = localParts(a, c.tz).day; idle <= SEARCH_DAYS; d++) {
     const iv = dayInstants(c, d);
     let any = false;
     for (const [S, E] of iv) {
