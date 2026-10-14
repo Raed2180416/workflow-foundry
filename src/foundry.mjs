@@ -131,6 +131,11 @@ export class Foundry {
   cancel(id, options = {}) { return cancelRun(this, id, options); }
   // Cancel every run that has not reached a final status (src/control.mjs).
   stopAll(options = {}) { return stopAll(this, options); }
+  // Deliver a signal to a run, or by correlation to the one run whose parked wait listens for it (Runtime.deliverSignal / correlateSignal,
+  // src/signals.mjs). Nothing is resumed here: a wait the signal resolved has its timer due now, so the next timer scan resumes the run, and
+  // a host may call startRun at once (the HTTP surface does).
+  signal(runId, signal, { actor = 'host' } = {}) { return this.runtime.deliverSignal(runId, signal, { actor }); }
+  correlateSignal(signal, { actor = 'host' } = {}) { return this.runtime.correlateSignal(signal, { actor }); }
   designContext({ requestId, task, domain, includeSkills = true } = {}) {
     if (requestId && task) throw new FoundryError('DESIGN_INPUT', 'Use an existing request or a new task, not both');
     const request = requestId ? this.store.request(requestId) : null;

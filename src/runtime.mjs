@@ -15,6 +15,7 @@ import { MODES } from './models/port.mjs';
 import { AUDIT, identityChanges, journalSeal } from './audit.mjs';
 import { MATERIALIZE, STATE_BYTES, STATE_ITEMS } from './run-rows.mjs';
 import { isStateWrite, stateOpHash, stateReplayKey, stateRequest } from './state.mjs';
+import { cancelledBy, claimant, correlateTemplates, declaredSignals, isSignalWait, keyHashOf, normalizeSignal, parseAt, pickSignal, routeOf, SIGNAL_LIMITS, signalCheckpointDrift, subscriptionsOf, timeoutMode } from './signals.mjs';
 
 const finished = new Set(['succeeded', 'failed', 'cancelled']);
 // Is the ModelPort's journal the store's database? The same handle, or another handle on the same database file (an in-memory database
@@ -330,6 +331,84 @@ export class Runtime {
       else r.status = 'ready';
     }, run => [...(run.status === 'cancelled' && run.verdict ? [this.verdictEvent(run)] : []), { type: 'approval.decided', approvalId, approved: decision, actor }], { final: !decision });
   }
+  /**
+   * Deliver a signal to a run (src/signals.mjs): {id, name, key?, payload?}. The id is the idempotency key, unique in the workspace: the same
+   * signal delivered again (same run, name, key and payload) is a no-op that returns the first delivery (`duplicate: true`); the same id with
+   * other content, or for another run, is SIGNAL_CONFLICT and writes nothing. The run's workflow must declare the signal (SIGNAL_UNDECLARED)
+   * and its payload must satisfy the declared schema (no schema: no payload). A closed run, or one whose cancellation was requested, takes
+   * none (RUN_CLOSED), as for answers and approvals.
+   *
+   * In one compare-and-swap update the signal enters the run's inbox, with the time it was received, and its `signal.delivered` event (with
+   * the payload) is appended. If a parked wait takes it now (claimant: the matching wait that started first, while its timer has not run
+   * out), that wait's decision is recorded in the same commit (`wait.resolved`, by "delivery") and its timer is moved to now, so whichever
+   * process scans timers next (`foundry tick`, `serve`) resumes the run. Otherwise the signal stays buffered: a wait that starts or resumes
+   * later takes it if it matches and arrived before that wait's timer (out-of-order delivery), and a late signal is kept, unconsumed.
+   * `requireWait`: refuse (SIGNAL_UNMATCHED, nothing written) unless a parked wait takes the signal now (correlated delivery). `actor` is
+   * recorded as provenance; the authority is the surface's (the HTTP token, access to the workspace).
+   */
+  deliverSignal(runId, signal, { actor = 'host', requireWait = false } = {}) {
+    const { id, name, key, payload } = normalizeSignal(signal), who = String(actor).slice(0, 40);
+    const head = this.store.rows.header(runId); // NOT_FOUND
+    const declared = declaredSignals(this.store.workflow(head.workflowHash).workflow);
+    if (!declared.has(name)) throw new FoundryError('SIGNAL_UNDECLARED', `No wait of this run's workflow listens for signal ${name}`, { name });
+    try { checkData(key, { maxBytes: SIGNAL_LIMITS.keyBytes }); } catch (error) { throw new FoundryError('SIGNAL_KEY', `A signal key is JSON of at most ${SIGNAL_LIMITS.keyBytes} bytes (${error.code})`); }
+    try { checkData(payload, { maxBytes: SIGNAL_LIMITS.payloadBytes }); } catch (error) { throw new FoundryError('SIGNAL_PAYLOAD', `A signal payload is JSON of at most ${SIGNAL_LIMITS.payloadBytes} bytes (${error.code})`); }
+    const schema = declared.get(name);
+    if (schema) validateData(schema, payload, `signal ${name} payload`);
+    else if (payload !== null) throw new FoundryError('SIGNAL_PAYLOAD', `Signal ${name} carries no payload: no wait declares a schema for it`);
+    const contentDigest = digest({ name, key, payload }), keyHash = keyHashOf(key), payloadHash = digest(payload);
+    const duplicate = prior => {
+      if (prior.runId !== runId || prior.digest !== contentDigest) throw new FoundryError('SIGNAL_CONFLICT', `Signal id ${id} was already delivered ${prior.runId !== runId ? 'to another run' : 'with other content'}; an id is delivered once`, { signalId: id, runId: prior.runId });
+      const entry = this.store.rows.header(runId).signals?.[id];
+      return { runId, signalId: id, name, duplicate: true, receivedAt: entry?.receivedAt ?? prior.at, consumedBy: entry?.consumedBy ?? null };
+    };
+    const prior = this.store.signalRecord(id);
+    if (prior) return duplicate(prior);
+    let result = null, claimed = null;
+    this.store.updateRun(runId, r => {
+      if (finished.has(r.status)) throw new FoundryError('RUN_CLOSED', `The run is already ${r.status}; it takes no signal`, { status: r.status });
+      const closed = closingSeal(this.store.events(runId));
+      if (closed) throw closedError(closed, r.status);
+      if (cancelRequested(r)) throw cancelRequested(r);
+      const again = this.store.signalRecord(id); // delivered by another process since the check above
+      if (again) { result = duplicate(again); return; }
+      const inbox = r.signals ?? {};
+      if (Object.keys(inbox).length >= SIGNAL_LIMITS.perRun) throw new FoundryError('SIGNAL_BUDGET', `The run already holds ${SIGNAL_LIMITS.perRun} signals, its bound`);
+      // The delivery event is the first event of this update, so its sequence number is the one after the current head.
+      const receivedAt = Date.now(), entry = { name, key, keyHash, payloadHash, receivedAt, seq: (r.eventHead?.seq ?? 0) + 1, actor: who, consumedBy: null };
+      const claim = claimant(this.store.rows.withStatus(runId, 'waiting').map(w => ({ nodeKey: `${w.frameKey}/${w.nodeId}`, frameKey: w.frameKey, nodeId: w.nodeId, state: w.state })), entry);
+      if (requireWait && !claim) throw new FoundryError('SIGNAL_UNMATCHED', `No parked wait of run ${runId} takes signal ${name} with this key now`, { runId, name });
+      if (claim) {
+        const frame = frameOf(r, claim.frameKey);
+        frame.nodes[claim.nodeId] = { ...frame.nodes[claim.nodeId], resolution: { outcome: 'signal', signalId: id, signal: name, receivedAt, by: 'delivery' } };
+        entry.consumedBy = claim.nodeKey; claimed = claim;
+        this.store.setTimer(runId, claim.nodeKey, receivedAt); // due now: the next timer scan resumes the run
+      }
+      r.signals = { ...inbox, [id]: entry };
+      this.store.recordSignal(id, runId, contentDigest, receivedAt);
+      result = { runId, signalId: id, name, duplicate: false, receivedAt, consumedBy: entry.consumedBy };
+    }, () => result.duplicate ? [] : [
+      { type: 'signal.delivered', signalId: id, name, key, keyHash, payloadHash, payload, receivedAt: result.receivedAt, actor: who, consumedBy: result.consumedBy },
+      ...(claimed ? [{ type: 'wait.resolved', nodeKey: claimed.nodeKey, outcome: 'signal', signalId: id, signal: name, receivedAt: result.receivedAt, wakeAt: claimed.state.wakeAt, by: 'delivery',
+        cancelled: cancelledBy(claimed.state.subscriptions, name) }] : [])], { result: 'header' });
+    return result;
+  }
+  /**
+   * Deliver a signal by correlation (BAR-SET G1), without a run id: the one open run with a parked wait subscribed to this signal name and
+   * correlation key takes it. Only waits that declare `correlate` are found this way (an uncorrelated wait takes signals addressed to its
+   * run). None: SIGNAL_UNMATCHED; waits of several runs: SIGNAL_AMBIGUOUS (deliver to one run by id). Nothing is buffered without a run;
+   * a signal id delivered before is answered as its first delivery was (idempotent), wherever it went.
+   */
+  correlateSignal(signal, { actor = 'host' } = {}) {
+    const { id, name, key } = normalizeSignal(signal);
+    if (key === null) throw new FoundryError('SIGNAL_KEY_REQUIRED', 'A signal routed by correlation carries the key its wait correlates on');
+    const prior = this.store.signalRecord(id);
+    if (prior) return { ...this.deliverSignal(prior.runId, signal, { actor }), correlated: true };
+    const runs = [...new Set(this.store.openSignalWaits(name, keyHashOf(key)).map(w => w.runId))];
+    if (!runs.length) throw new FoundryError('SIGNAL_UNMATCHED', `No parked wait of an open run listens for ${name} with this key`, { name });
+    if (runs.length > 1) throw new FoundryError('SIGNAL_AMBIGUOUS', `Waits of ${runs.length} runs listen for ${name} with this key; deliver it to one run by id`, { name, runIds: runs.slice(0, 10) });
+    return { ...this.deliverSignal(runs[0], signal, { actor, requireWait: true }), correlated: true };
+  }
   // DESIGN §5.4: resume every run that has a due wait timer. Timers live in the store, so any Runtime instance
   // (a new process after a restart included) can do this. A timer whose node no longer waits is pruned; a run
   // that needs a ModelPort this runtime lacks is left untouched rather than failed. `start` lets a host route
@@ -505,7 +584,9 @@ class Invocation {
       const definitions = this.flowDefinitions.get(frameKey).nodes;
       for (const dep of node.needs) {
         parts.push(states[dep]?.controlLabel ?? 'trusted');
-        if (definitions.find(n => n.id === dep)?.onError === 'continue') parts.push(states[dep]?.outputLabel ?? 'trusted');
+        // A wait whose onTimeout names a branch decides by its outcome whether this node runs (routedAway), as onError "continue" lets data decide.
+        const definition = definitions.find(n => n.id === dep);
+        if (definition?.onError === 'continue' || routeOf(definition)) parts.push(states[dep]?.outputLabel ?? 'trusted');
       }
     }
     return joinLabels(parts);
@@ -543,6 +624,9 @@ class Invocation {
       if (changed.length) throw new FoundryError('RUN_BINDING_CORRUPT', `The run record no longer matches its immutable creation event (${changed.join(', ')}): the record was edited, so the run is not resumed`, { changed });
       const forged = forgedAnswers(this.workflow, run, log);
       if (forged.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run record holds human answers its chain did not record (${forged.slice(0, 5).join(', ')}): the record was edited, so the run is not resumed`, { nodeKeys: forged });
+      // Likewise its signal inbox and the decisions its waits hold (src/signals.mjs): a wait must never take a signal twice, or one nobody delivered.
+      const drift = signalCheckpointDrift(run, log);
+      if (drift.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run record's signals differ from its chain (${drift.slice(0, 3).join('; ')}): the record was edited, so the run is not resumed`, { signals: drift });
       // The node rows' status and label columns decide what runs and what taint a reference inherits; they must still repeat the node states.
       const mismatched = this.rows.mismatchedRows(this.runId);
       if (mismatched.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run's node rows were edited (${mismatched.slice(0, 3).map(m => `${m.nodeKey}: ${m.reason}`).join('; ')}), so the run is not resumed`, { nodeKeys: mismatched.map(m => m.nodeKey) });
@@ -717,12 +801,17 @@ class Invocation {
       this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { kind: node.kind, status: 'skipped', attempts: 0, reason: 'required predecessor did not succeed', ...controlState(control) }; }, 'node.skipped', { reason: 'required predecessor did not succeed' });
       return;
     }
+    const routed = !state && (node.join ?? 'all_success') === 'all_success' ? this.routedAway(node, frameKey, predecessors) : null;
+    if (routed) {
+      this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { kind: node.kind, status: 'skipped', attempts: 0, reason: routed, ...controlState(control) }; }, 'node.skipped', { reason: routed });
+      return;
+    }
     if (!state && node.when && !condition(node.when, ctx)) {
       this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { kind: node.kind, status: 'skipped', attempts: 0, ...controlState(control) }; }, 'node.skipped'); return;
     }
     if (node.kind === 'task') return this.task(node, frameKey, ctx);
     const resumed = state?.status === 'running';
-    if (!state) { this.charge(frameKey, node, 0, node.kind === 'wait' ? { wakeAt: Date.now() + node.delayMs } : {}); state = this.stateOf(frameKey, node.id); }
+    if (!state) { this.charge(frameKey, node, 0, node.kind === 'wait' ? this.waitIntent(node, ctx) : {}); state = this.stateOf(frameKey, node.id); }
     if (node.kind === 'agent') return this.agent(node, frameKey, ctx, state, resumed);
     if (node.kind === 'code') return this.code(node, frameKey, ctx);
     if (node.kind === 'verify') return this.verify(node, frameKey, ctx, state, resumed);
@@ -736,14 +825,7 @@ class Invocation {
         Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema), ...controlState(control) });
       }, 'human.requested', { question: node.question }); return;
     }
-    if (node.kind === 'wait') {
-      // DESIGN §5.4: the timer row commits with the waiting state; a tick (any process) resumes the run when it is due.
-      const wakeAt = state.wakeAt ?? Date.now() + node.delayMs, nodeKey = `${frameKey}/${node.id}`;
-      if (Date.now() < wakeAt) {
-        this.eventNode(frameKey, node.id, (f, r) => { Object.assign(f.nodes[node.id], { status: 'waiting', wakeAt }); this.store.setTimer(r.id, nodeKey, wakeAt); }, 'node.waiting', { wakeAt }); return;
-      }
-      this.complete(frameKey, node, { waitedMs: node.delayMs }, 'completed', { run: r => this.store.clearTimer(r.id, nodeKey) }); return;
-    }
+    if (node.kind === 'wait') return this.wait(node, frameKey, state);
     if (node.kind === 'map') return this.map(node, frameKey, ctx, input);
     if (node.kind === 'loop') {
       const childInput = Object.hasOwn(node, 'input') ? resolve(node.input, ctx) : input;
@@ -766,6 +848,107 @@ class Invocation {
       throw new FoundryError('LOOP_EXHAUSTED', `${node.id} exhausted its iteration budget without satisfying until`);
     }
     throw new FoundryError('UNKNOWN_NODE', `Unsupported node kind ${node.kind}`);
+  }
+  // What a wait fixes when it starts, recorded in its node.started event and state with its timer row (charge), so a crash keeps it: its
+  // wake time (now + delayMs or timeoutMs, or the absolute `at`) and, for a signal wait, its subscriptions with the correlation key each
+  // computes from the instance now (src/signals.mjs).
+  waitIntent(node, ctx) {
+    const wakeAt = node.at !== undefined ? parseAt(resolve(node.at, ctx)) : Date.now() + (node.timeoutMs ?? node.delayMs);
+    if (!isSignalWait(node)) return { wakeAt };
+    const subscriptions = subscriptionsOf(node).map(s => {
+      if (s.correlate === undefined) return { signal: s.signal, keyHash: null };
+      const key = resolve(s.correlate, ctx);
+      try { checkData(key, { maxBytes: SIGNAL_LIMITS.keyBytes }); }
+      catch (error) { throw new FoundryError('WAIT_KEY', `${node.id}: the correlation key of ${s.signal} is not JSON of at most ${SIGNAL_LIMITS.keyBytes} bytes (${error.code})`); }
+      return { signal: s.signal, key, keyHash: keyHashOf(key) };
+    });
+    return { wakeAt, subscriptions };
+  }
+  // A wait's output label: its declared label (signals are trusted by default, as answers are) joined with the labels of what decided which
+  // signal it takes and when it times out (its correlation keys and its `at`).
+  waitLabel(node, frameKey) {
+    const templates = [node.at ?? null, ...correlateTemplates(node)];
+    return labelState(joinLabels([node.label ?? 'trusted', ...templates.map(template => labelOf(template, this.labelScope(frameKey, template)))]));
+  }
+  // DESIGN §5.4 and src/signals.mjs. A timer wait parks (its timer row commits with the waiting state; a tick in any process resumes the run
+  // when it is due) and then completes. A signal wait is decided first, then completed from the decision (finishWait); a crash between the
+  // two keeps the decision.
+  wait(node, frameKey, state) {
+    const nodeKey = `${frameKey}/${node.id}`;
+    if (!Array.isArray(state.subscriptions)) {
+      const wakeAt = state.wakeAt ?? Date.now() + node.delayMs;
+      if (Date.now() < wakeAt) {
+        this.eventNode(frameKey, node.id, (f, r) => { Object.assign(f.nodes[node.id], { status: 'waiting', wakeAt }); this.store.setTimer(r.id, nodeKey, wakeAt); }, 'node.waiting', { wakeAt }); return;
+      }
+      this.complete(frameKey, node, node.at !== undefined ? { wakeAt } : { waitedMs: node.delayMs }, 'completed', { state: this.waitLabel(node, frameKey), run: r => this.store.clearTimer(r.id, nodeKey) }); return;
+    }
+    if (!state.resolution && !this.decideWait(node, frameKey)) return;
+    this.finishWait(node, frameKey);
+  }
+  // One compare-and-swap update applies the rule of src/signals.mjs to a signal wait that no delivery has resolved: it takes the first
+  // buffered signal that matches and arrived before its timer (marking it consumed), or times out once the clock has reached its timer
+  // (clearing it), or parks with its timer. The decision is a `wait.resolved` event (by "buffer" or "timer") naming the losers it cancels.
+  // Returns whether the wait is decided.
+  decideWait(node, frameKey) {
+    const nodeKey = `${frameKey}/${node.id}`, dispatch = this.dispatchMark.get(nodeKey);
+    let decided = null, parked = null, subscriptions = null, wakeAt = null;
+    this.update(r => {
+      const f = frameOf(r, frameKey), s = f.nodes[node.id];
+      ({ subscriptions, wakeAt } = s);
+      if (s.resolution) { decided = s.resolution; return; } // a delivery resolved it since this execution read it: its event is written
+      const inbox = r.signals ?? {}, pick = pickSignal(subscriptions, wakeAt, inbox);
+      let resolution;
+      if (pick) {
+        resolution = { outcome: 'signal', signalId: pick.id, signal: pick.name, receivedAt: pick.receivedAt, by: 'buffer' };
+        r.signals = { ...inbox, [pick.id]: { ...inbox[pick.id], consumedBy: nodeKey } };
+      } else if (Date.now() >= wakeAt) {
+        resolution = { outcome: 'timeout', at: wakeAt, by: 'timer' };
+        this.store.clearTimer(r.id, nodeKey);
+      } else {
+        parked = wakeAt;
+        f.nodes[node.id] = { ...s, status: 'waiting' };
+        this.store.setTimer(r.id, nodeKey, wakeAt);
+        return;
+      }
+      f.nodes[node.id] = { ...s, resolution }; decided = { ...resolution, fresh: true };
+    }, () => {
+      const event = parked !== null ? { type: 'node.waiting', nodeKey, wakeAt: parked }
+        : decided?.fresh ? { type: 'wait.resolved', nodeKey, outcome: decided.outcome, ...(decided.outcome === 'signal' ? { signalId: decided.signalId, signal: decided.signal, receivedAt: decided.receivedAt } : {}),
+          wakeAt, by: decided.by, cancelled: cancelledBy(subscriptions, decided.outcome === 'signal' ? decided.signal : null) } : null;
+      return event ? [{ ...event, ...(dispatch === undefined ? {} : { dispatch }) }] : [];
+    });
+    if (parked !== null || decided?.fresh) this.dispatchMark.delete(nodeKey);
+    return decided !== null;
+  }
+  // Completes a decided signal wait from the chain, not from the record: the decision must be the one its wait.resolved event recorded, and
+  // the signal's name, key, payload and time are read from its signal.delivered event. A timeout fails the node (onTimeout "fail", the
+  // default: WAIT_TIMEOUT) or completes it with outcome "timeout" (continue, or a branch: routedAway skips the other dependents).
+  finishWait(node, frameKey) {
+    const nodeKey = `${frameKey}/${node.id}`, state = this.stateOf(frameKey, node.id), resolution = state.resolution;
+    const recorded = this.store.findEvent(this.runId, 'wait.resolved', 'nodeKey', nodeKey);
+    if (!recorded || recorded.outcome !== resolution.outcome || (recorded.signalId ?? null) !== (resolution.signalId ?? null))
+      throw new FoundryError('CHECKPOINT_TAMPERED', `The decision ${nodeKey} holds is not the one its chain recorded: the record was edited`, { nodeKey });
+    const label = this.waitLabel(node, frameKey), done = r => this.store.clearTimer(r.id, nodeKey);
+    if (resolution.outcome === 'timeout') {
+      if (timeoutMode(node) === 'fail') throw new FoundryError('WAIT_TIMEOUT', `${node.id} timed out at ${new Date(state.wakeAt).toISOString()} with no ${subscriptionsOf(node).map(s => s.signal).join(' or ')} signal`, { nodeKey, wakeAt: state.wakeAt });
+      this.complete(frameKey, node, { outcome: 'timeout', at: state.wakeAt }, 'completed', { state: { ...label, outcome: 'timeout' }, run: done }); return;
+    }
+    const delivered = this.store.findEvent(this.runId, 'signal.delivered', 'signalId', resolution.signalId);
+    if (!delivered || digest(delivered.payload ?? null) !== delivered.payloadHash) throw new FoundryError('CORRUPT_EVENTS', `The delivery of signal ${resolution.signalId} that ${nodeKey} took is missing from its chain or does not match its payload hash`, { nodeKey });
+    this.complete(frameKey, node, { outcome: 'signal', signal: delivered.name, id: delivered.signalId, key: delivered.key ?? null, payload: delivered.payload ?? null, at: delivered.receivedAt },
+      'completed', { state: { ...label, outcome: 'signal', signal: delivered.name }, run: done });
+  }
+  // Timeout routing (onTimeout naming a node): the wait's outcome decides which of its direct dependents (joined all_success) run. On a
+  // timeout only the named branch runs; on a signal every dependent but the branch does. Returns the skip reason, or null.
+  routedAway(node, frameKey, predecessors) {
+    const definitions = this.flowDefinitions.get(frameKey).nodes;
+    for (const dep of node.needs) {
+      const target = routeOf(definitions.find(n => n.id === dep)), wait = predecessors[dep];
+      if (!target || wait?.status !== 'completed') continue;
+      if (wait.outcome === 'timeout' && node.id !== target) return `wait ${dep} timed out; its timeout branch ${target} runs instead`;
+      if (wait.outcome === 'signal' && node.id === target) return `wait ${dep} received ${wait.signal}; its timeout branch does not run`;
+    }
+    return null;
   }
   // DESIGN §1.4. Up to `concurrency` items run at once (capped by the run's concurrency); outputs are ordered by index.
   // An item that settles is recorded on its frame, so a resumed map re-enters only incomplete items. fail_fast

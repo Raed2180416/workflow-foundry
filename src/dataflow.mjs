@@ -2,6 +2,7 @@
 // under declared contracts. Unknown schemas remain unknown; this is not an
 // outcome oracle or a proof that a producer's data is current/true.
 import { refParts, condition } from './data.mjs';
+import { subscriptionsOf, timeoutMode } from './signals.mjs';
 import { stateOutputSchema } from './state.mjs';
 
 // Agent checks read the parsed model output as output.* (DESIGN §1.1). data.mjs has no `output`
@@ -151,6 +152,20 @@ const itemError = record({ $error: record({ code: { type: 'string' }, message: {
 const verifyOutput = record({ pass: { type: 'boolean' }, score: { type: 'number' }, reasons: { type: 'array', items: { type: 'string' } },
   independence: { enum: ['execution', 'different-model', 'same-model'] } });
 const contextRefs = node => (node.context?.inputs ?? []).map((spec, index) => [index, spec]).filter(([, spec]) => Object.hasOwn(spec, 'ref'));
+// A wait's output (src/signals.mjs): a delay reports waitedMs and an absolute timer its wakeAt. A signal wait reports the signal that
+// won (one alternative per raced signal, with that signal's payload schema; no schema means no payload) or, unless a timeout fails
+// the node, outcome "timeout" with the timer's time.
+function waitOutput(node) {
+  if (node.signal === undefined && node.race === undefined) return node.at !== undefined ? record({ wakeAt: { type: 'integer' } }) : record({ waitedMs: { type: 'integer' } });
+  const signalled = subscriptionsOf(node).map(s => {
+    if (s.schema && typeof s.schema === 'object') schemaRoots.set(s.schema, s.schema);
+    return record({ outcome: { const: 'signal' }, signal: { const: s.signal }, id: { type: 'string' }, key: unknown(), payload: s.schema ?? { type: 'null' }, at: { type: 'integer' } });
+  });
+  return union([...signalled, ...(timeoutMode(node) === 'fail' ? [] : [record({ outcome: { const: 'timeout' }, at: { type: 'integer' } })])]);
+}
+// The templates a wait computes when it starts: its absolute time and its correlation keys.
+const waitTemplates = node => [...(node.at !== undefined ? [['at', node.at]] : []), ...(node.correlate !== undefined ? [['correlate', node.correlate]] : []),
+  ...(node.race ?? []).flatMap((entry, index) => entry.correlate !== undefined ? [[`race/${index}/correlate`, entry.correlate]] : [])];
 
 export function analyzeDataflow(workflow, registry) {
   const errors = [], warnings = [], outputCache = new WeakMap();
@@ -162,7 +177,7 @@ export function analyzeDataflow(workflow, registry) {
     }
     if (node.kind === 'assert') return record({ passed: { const: true } });
     if (node.kind === 'human') return record({ answer: node.answerSchema });
-    if (node.kind === 'wait') return record({ waitedMs: { type: 'integer' } });
+    if (node.kind === 'wait') return waitOutput(node);
     // DESIGN §1.4: with failure "collect" an item is its body outputs or {$error}, and the map adds a failed count.
     if (node.kind === 'map') return node.failure === 'collect'
       ? record({ items: { type: 'array', items: union([outputs(node.body), itemError]), maxItems: node.maxItems }, count: { type: 'integer' }, failed: { type: 'integer' } })
@@ -225,6 +240,7 @@ export function analyzeDataflow(workflow, registry) {
         inspect(own ? bindOutput(node[key]) : node[key], scope, `${nodePath}/${key}`, phases, inheritedGuard || (key !== 'when' && !!node.when), key === 'when' || key === 'checks');
       }
       for (const [index, spec] of contextRefs(node)) inspect({ $ref: spec.ref }, context, `${nodePath}/context/inputs/${index}/ref`, phases, inheritedGuard || !!node.when);
+      if (node.kind === 'wait') for (const [where, template] of waitTemplates(node)) inspect(template, context, `${nodePath}/${where}`, phases, inheritedGuard || !!node.when);
       if (!node.body) continue;
       const childInput = Object.hasOwn(node, 'input') ? infer(node.input, context) : input;
       if (node.kind === 'map') {

@@ -8,6 +8,7 @@ import { AUDIT, anchorOfEvents, bindRow, identityChanges, journalRow, journalRow
 import { REPLAYABLE_ERRORS } from './journal.mjs';
 import { verdictOf } from './verdict.mjs';
 import { engineHash } from './engine.mjs';
+import { replayWaits, signalCheckpointDrift } from './signals.mjs';
 import { stateOpHash } from './state.mjs';
 
 const CALL_EVENTS = new Set(['model.called', 'node.recovered_from_journal', 'model.cancelled']);
@@ -278,5 +279,14 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
   }
   for (const [id, event] of requests) if (!Object.hasOwn(approvals, id)) add('error', 'APPROVAL_MISSING', `Approval ${String(id).slice(0, 12)} (event ${event.seq}) is gone from the run record`, { approvalId: id, seq: event.seq });
   checks.state = { outputsCompared: compared, approvalsCompared: Object.keys(approvals).length };
+
+  // 6c. Signal waits (src/signals.mjs): every decision re-derived from the chain alone (which signal a wait took, which wait a delivery
+  // went to, when a timeout was due, what the completed wait output), against what the chain recorded; and the record's inbox and wait
+  // decisions against the chain. A re-derived decision that differs is an error on the engine that recorded it (the rule is a pure function
+  // of the chain), a warning on another (a later engine may decide differently). Read-only.
+  const replay = replayWaits(events);
+  for (const miss of replay.mismatches) add(birth.engineHash === engineHash ? 'error' : 'warn', 'WAIT_REPLAY_MISMATCH', `Event ${miss.seq}${miss.nodeKey ? ` (${miss.nodeKey})` : ''}: ${miss.message} [${miss.code}]`, { seq: miss.seq, nodeKey: miss.nodeKey, rule: miss.code });
+  for (const drift of signalCheckpointDrift(run, events)) add('error', 'SIGNAL_EDITED', `The run record's ${drift} differs from what its chain recorded`, { drift });
+  checks.waits = { waits: replay.waits, deliveries: replay.deliveries, decisions: replay.decisions, mismatches: replay.mismatches.length };
   return result();
 }

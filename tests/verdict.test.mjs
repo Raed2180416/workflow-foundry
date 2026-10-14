@@ -82,9 +82,9 @@ test('verdict: a succeeded run is unverified unless its acceptance gates; eviden
   check({ status: 'succeeded', nodes: { b: { status: 'handled_error' } } }, 'pass', null, { workflow: read });
 });
 
-test('verdict: checks, loops, budgets, deadlines, lost state compare-and-swaps and full state slots are inconclusive', () => {
+test('verdict: checks, loops, budgets, deadlines, lost state compare-and-swaps, full state slots and failing wait timeouts are inconclusive', () => {
   assert.deepEqual([...INCONCLUSIVE_CODES], ['VERIFY_FAILED', 'ACCEPTANCE_FAILED', 'ASSERTION_FAILED', 'NODE_CHECK_FAILED', 'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'DEADLINE',
-    'STATE_VERSION_CONFLICT', 'STATE_FULL']);
+    'STATE_VERSION_CONFLICT', 'STATE_FULL', 'WAIT_TIMEOUT']);
   for (const code of INCONCLUSIVE_CODES) check(failed(code), 'inconclusive', code);
 });
 

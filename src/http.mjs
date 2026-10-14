@@ -62,6 +62,13 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
         }
         if (parts.length === 2 && parts[1] === 'repair-requests') return json(201, foundry.requestRepair({ requestId: data.requestId, failedRunId: data.failedRunId, expectedHash: data.expectedHash, diagnostic: data.diagnostic ?? '' }));
         if (parts.length === 2 && parts[1] === 'delivery') return json(200, foundry.delivery({ requestId: data.requestId, proposalId: data.proposalId, runId: data.runId }));
+        // A signal routed by correlation (src/signals.mjs): the one open run whose parked wait listens for this name and key takes it. Like an
+        // answer, it needs the local UI token; a wait it resolved is resumed now (and by the next timer scan if this process cannot).
+        if (parts.length === 2 && parts[1] === 'signals') {
+          const result = foundry.correlateSignal(data, { actor: 'http' });
+          if (result.consumedBy && !result.duplicate) foundry.startRun(result.runId).catch(error => console.error('Foundry signal resume:', error.code, error.message));
+          return json(202, result);
+        }
         // Cancel every run that has not finished; an executing run is asked to stop and records its own verdict. No owner process is signalled
         // over HTTP; only process groups a dead owner left running (src/children.mjs) are stopped, as a cancel does.
         if (parts.length === 2 && parts[1] === 'stop-all') {
@@ -89,6 +96,11 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
             if (data.approved) foundry.startRun(parts[2]).catch(error => console.error('Foundry approval resume:', error.code, error.message));
             return json(202, foundry.inspectRun(parts[2]));
           }
+          if (parts[3] === 'signals') {
+            const result = foundry.signal(parts[2], data, { actor: 'http' });
+            if (result.consumedBy && !result.duplicate) foundry.startRun(parts[2]).catch(error => console.error('Foundry signal resume:', error.code, error.message));
+            return json(202, result);
+          }
           if (parts[3] === 'resume') { foundry.startRun(parts[2]).catch(error => console.error(error.message)); return json(202, { id: parts[2], resumeRequested: true }); }
           // Durable cancellation (src/control.mjs): works for a run another process executes, closes a run nothing executes, and is a clear
           // no-op for one that has finished. It does not wait for the owner (graceMs 0) or signal it over HTTP: the owner records the
@@ -108,7 +120,7 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
       return json(404, { error: { code: 'NOT_FOUND', message: 'Unknown route' } });
     } catch (error) {
       const code = error.code ?? 'ERROR';
-      const status = ['HTTP_HOST', 'HTTP_ORIGIN', 'HTTP_TOKEN'].includes(code) ? 403 : code === 'NOT_FOUND' ? 404 : ['STALE_WORKFLOW', 'VERSION_CONFLICT', 'RUN_BUSY', 'PROPOSAL_CLOSED'].includes(code) ? 409 : code === 'BODY_LIMIT' ? 413 : 400;
+      const status = ['HTTP_HOST', 'HTTP_ORIGIN', 'HTTP_TOKEN'].includes(code) ? 403 : code === 'NOT_FOUND' ? 404 : ['STALE_WORKFLOW', 'VERSION_CONFLICT', 'RUN_BUSY', 'PROPOSAL_CLOSED', 'SIGNAL_CONFLICT', 'SIGNAL_AMBIGUOUS', 'SIGNAL_UNMATCHED'].includes(code) ? 409 : code === 'BODY_LIMIT' ? 413 : 400;
       json(status, { error: errorData(error), ...(error.details ? { details: error.details } : {}) });
     }
   });

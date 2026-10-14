@@ -6,6 +6,7 @@ import { portableSchemaViolations, quarantinedSchemaViolations } from './schema-
 import { inheritedLabel, joinLabels } from './context.mjs';
 import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
 import { lintWorkflow } from './lint.mjs';
+import { correlateTemplates, isSignalWait, parseAt, routeOf, subscriptionsOf, timeoutMode } from './signals.mjs';
 import { isStateWrite, STATE_ARGS, STATE_LIMITS, STATE_OPS } from './state.mjs';
 
 export { bindOutput, OUTPUT_KEY };
@@ -100,7 +101,7 @@ const entry = (key, label) => label === 'trusted' ? {} : { [key]: label };
 const common = new Set(['id', 'kind', 'needs', 'description', 'when', 'join']);
 const fields = {
   task: ['tool', 'args', 'timeoutMs', 'retry', 'onError'], assert: ['checks'],
-  human: ['question', 'answerSchema'], wait: ['delayMs'],
+  human: ['question', 'answerSchema'], wait: ['delayMs', 'at', 'signal', 'race', 'correlate', 'schema', 'timeoutMs', 'onTimeout', 'label'],
   map: ['items', 'maxItems', 'body', 'input', 'concurrency', 'failure'],
   loop: ['maxIterations', 'body', 'until', 'initial', 'input'],
   agent: ['role', 'instructions', 'context', 'returns', 'model', 'decoding', 'checks', 'escalation', 'quarantined', 'timeoutMs', 'onError'],
@@ -122,7 +123,10 @@ export const controlPolicyMessage = (tool, label, via = []) => `${tool} has effe
 // What every reference to a node sees is its OUT label, data joined with control: a skipped node's output is absent,
 // and absence (exists, default) is itself a read of the guard. A quarantined judgment declassifies its data, never the
 // control that decided whether it ran. Termination (a failed assert or verify stops the run) is not tracked; only
-// skip and iteration decisions are. Wait delays are schema literals, so there is nothing to taint.
+// skip and iteration decisions are. Wait delays are schema literals, so there is nothing to taint; a signal wait's output (and
+// so whatever reads its outcome) carries its declared label joined with the labels of what its correlation keys and its `at`
+// are computed from (they decide which signal it takes and when it times out), and a wait whose onTimeout names a branch
+// decides whether each direct dependent runs, so its label is control for them, as a predecessor's data is under onError.
 // A map with failure "collect" turns termination into a skip: a failing body node ends only its item, the rest of the item
 // does not run, and the run goes on with the failure recorded as an $error entry and a failed count. So inside such a body
 // every label that can decide a body failure (each body node's failure label: its data for task, code, verify and agent
@@ -168,7 +172,8 @@ function effectTaint(workflow, registry, add) {
       const own = { ...scope, ...outEntries(outs) };
       let nodeControl = joinControl([pc, controlFrom(node.when ? labelOf(node.when, own) : TRUSTED, () => `${node.id} is guarded by a when that reads ${untrustedRefs(node.when, own)}`),
         ...((node.join ?? 'all_success') === 'all_success' ? node.needs.map(dep => {
-          const through = joinControl([control.get(dep), byId.get(dep).onError === 'continue' ? controlFrom(data.get(dep), () => `${dep} continues on error over ${data.get(dep)} data`) : NO_CONTROL]);
+          const through = joinControl([control.get(dep), byId.get(dep).onError === 'continue' ? controlFrom(data.get(dep), () => `${dep} continues on error over ${data.get(dep)} data`)
+            : routeOf(byId.get(dep)) ? controlFrom(data.get(dep), () => `${dep} routes its timeout over ${data.get(dep)} data`) : NO_CONTROL]);
           return through.label === TRUSTED ? through : { label: through.label, via: through.via.map(step => `${node.id} needs ${dep} <- ${step}`.slice(0, 300)) };
         }) : [])]);
       // label: the node's data label. failure: what decides whether the node fails, beyond its control label (a when that cannot be
@@ -180,6 +185,7 @@ function effectTaint(workflow, registry, add) {
       else if (node.kind === 'assert') failure = labelOf(node.checks, own);
       else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), inputs()]);
       else if (node.kind === 'task' || node.kind === 'code') label = labelOf(node.args ?? null, own);
+      else if (isSignalWait(node) || node.at !== undefined) label = joinLabels([node.label ?? TRUSTED, labelOf(node.at ?? null, own), ...correlateTemplates(node).map(t => labelOf(t, own))]);
       else if (node.kind === 'state') {
         // A read carries the slot's label (what earlier runs wrote) and its key's; a write may not carry more taint than the slot's label, in
         // its data or in what decided that it runs, or a later run would read untrusted data as trusted.
@@ -240,7 +246,7 @@ function effectTaint(workflow, registry, add) {
         }
       }
       data.set(id, label); control.set(id, nodeControl); outs.set(id, joinLabels([label, nodeControl.label]));
-      if (['task', 'code', 'verify', 'agent', 'state'].includes(node.kind)) failure = joinLabels([failure, label]);
+      if (['task', 'code', 'verify', 'agent', 'state'].includes(node.kind) || (isSignalWait(node) && timeoutMode(node) === 'fail')) failure = joinLabels([failure, label]);
       failing(joinLabels([failure, nodeControl.label]), () => node.kind === 'assert' && failure !== TRUSTED ? `assert ${node.id} reads ${untrustedRefs(node.checks, own)}` : `${node.id} can fail over ${joinLabels([failure, nodeControl.label])} data`);
     };
     for (const id of byId.keys()) visit(id);
@@ -253,6 +259,40 @@ function effectTaint(workflow, registry, add) {
   for (const { code, message, location, extra } of walk(workflow, { ...(workflow.labels ?? {}) }, 'workflow', NO_CONTROL).findings) report(code, message, location, extra);
 }
 
+// Wait nodes (src/signals.mjs): a timer (delayMs or the absolute at) or a signal wait (signal or race, with one timer: timeoutMs or
+// at; an unbounded wait is refused, L0). `signalSchemas` collects the payload schemas each signal name is declared with: one name has
+// one payload type in a workflow, because a delivery is validated before any wait takes it.
+function checkWait(node, at, add, signalSchemas) {
+  const has = key => Object.hasOwn(node, key), shape = message => add('WAIT_SHAPE', message, at);
+  if (typeof node.at === 'string') try { parseAt(node.at); } catch (e) { add(e.code ?? 'WAIT_AT', e.message, `${at}.at`); }
+  if (!isSignalWait(node)) {
+    if (has('delayMs') === has('at')) shape('A timer wait has exactly one of delayMs (relative) or at (absolute)');
+    for (const key of ['timeoutMs', 'correlate', 'schema', 'onTimeout', 'label']) if (has(key)) shape(`${key} belongs to a signal wait (signal or race)`);
+    return;
+  }
+  if (has('signal') && has('race')) shape('A signal wait has one signal or a race, not both');
+  if (has('delayMs')) shape('A signal wait times out with timeoutMs or at, not delayMs');
+  if (has('timeoutMs') && has('at')) shape('A signal wait has one timer: timeoutMs or at');
+  if (!has('timeoutMs') && !has('at')) add('WAIT_UNBOUNDED', 'A signal wait needs a timer (timeoutMs or at); a wait with no timeout is refused', at);
+  if (has('race') && (has('correlate') || has('schema'))) shape('A race declares correlate and schema on each raced signal, not on the wait');
+  const subscriptions = subscriptionsOf(node), names = subscriptions.map(s => s.signal);
+  if (new Set(names).size !== names.length) shape('A race names each signal once');
+  subscriptions.forEach((s, index) => {
+    if (s.schema !== undefined) try { compileDataSchema(s.schema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `${has('race') ? `${at}.race.${index}` : at}.schema`); }
+    const seen = signalSchemas.get(s.signal) ?? new Map();
+    seen.set(digest(s.schema ?? null), at); signalSchemas.set(s.signal, seen);
+  });
+}
+// onTimeout naming a node: that node is the timeout branch, so it must be a node of the same flow that needs the wait and joins
+// all_success (an all_resolved join runs whatever the wait's outcome).
+function checkWaitRoute(node, byId, at, add) {
+  const target = isSignalWait(node) ? routeOf(node) : null;
+  if (!target) return;
+  const branch = byId.get(target);
+  if (!branch || target === node.id || !branch.needs.includes(node.id)) add('WAIT_ROUTE', `onTimeout names ${target}, which must be a node of the same flow that needs ${node.id}`, at);
+  else if ((branch.join ?? 'all_success') !== 'all_success') add('WAIT_ROUTE', `${target} joins all_resolved, so it would run whatever ${node.id}'s outcome; a timeout branch joins all_success`, at);
+}
+
 // strict: also run the construction lint (lint.mjs). Its error findings make the workflow invalid, its warnings are
 // appended to `warnings`, and the structured report is returned as `lint`. Default validation is unchanged.
 export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null, strict = false } = {}) {
@@ -261,6 +301,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
   if (!shape(workflow)) return { valid: false, errors: shape.errors.map(e => ({ code: 'SCHEMA', path: e.instancePath, message: `${e.message} ${JSON.stringify(e.params)}` })), warnings };
   let total = 0;
   const add = (code, message, location, extra = {}) => errors.push({ code, message, path: location, ...extra });
+  const signalSchemas = new Map();
   const policy = modelPolicy?.policy ?? modelPolicy;
   if (!policy && modelNodes(workflow).length) add('MODEL_POLICY_REQUIRED', 'Agent and model-verifier nodes are validated against the owner model policy; none was supplied', 'workflow');
   const candidates = node => {
@@ -319,6 +360,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
       if (node.kind === 'human') {
         try { compileDataSchema(node.answerSchema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `${prefix}.${node.id}.answerSchema`); }
       }
+      if (node.kind === 'wait') checkWait(node, `${prefix}.${node.id}`, add, signalSchemas);
       const at = `${prefix}.${node.id}`;
       if (node.kind === 'verify') {
         for (const key of Object.keys(node)) if (Object.values(verifyFields).flat().includes(key) && !verifyFields[node.method].includes(key)) add('WRONG_NODE_FIELD', `${key} does not belong to a ${node.method} verifier`, at);
@@ -376,7 +418,10 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
       } catch (e) { add(e.code, e.message, location); }
     };
     for (const node of flow.nodes) {
-      const { body, until, answerSchema, returns, context, instructions, source, model, decoding, escalation, ...own } = node;
+      // Schemas are not templates (a JSON schema's own $ref is not a data reference): a wait's payload schemas are left out.
+      const { body, until, answerSchema, returns, context, instructions, source, model, decoding, escalation, schema, ...own } = node;
+      if (node.kind === 'wait' && Array.isArray(own.race)) own.race = own.race.map(({ schema: _, ...rest }) => rest);
+      if (node.kind === 'wait') checkWaitRoute(node, byId, `${prefix}.${node.id}`, add);
       const outputChecks = node.kind === 'agent' ? own.checks : undefined;
       if (outputChecks) delete own.checks;
       inspectRefs(own, `${prefix}.${node.id}`, ancestors.get(node.id) ?? new Set());
@@ -407,6 +452,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
     if (flow.acceptance.every(c => references(c).length === 0)) add('VACUOUS_ACCEPTANCE', 'Acceptance must inspect runtime evidence, not constants', prefix);
   };
   try { walk(workflow, 'workflow'); } catch (e) { add('VALIDATION_ERROR', e.message, 'workflow'); }
+  for (const [name, schemas] of signalSchemas) if (schemas.size > 1) add('SIGNAL_SCHEMA_CONFLICT', `Signal ${name} is declared with ${schemas.size} different payload schemas (${[...new Set(schemas.values())].join(', ')}); one signal name has one payload schema`, 'workflow');
   for (const [name, slot] of Object.entries(workflow.state ?? {})) {
     if (slot.schema) try { compileDataSchema(slot.schema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `state.${name}.schema`); }
     const writers = stateWriters.get(name) ?? [];

@@ -53,6 +53,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS timers(run_id TEXT NOT NULL, node_key TEXT NOT NULL, wake_at INTEGER NOT NULL, PRIMARY KEY(run_id,node_key));
       CREATE INDEX IF NOT EXISTS timers_due ON timers(wake_at);
       CREATE TABLE IF NOT EXISTS run_children(run_id TEXT NOT NULL, pid INTEGER NOT NULL, pgid INTEGER NOT NULL, start TEXT, kind TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY(run_id,pid));
+      CREATE TABLE IF NOT EXISTS signals(id TEXT PRIMARY KEY, run_id TEXT NOT NULL, digest TEXT NOT NULL, at INTEGER NOT NULL);
     `);
     // Run state is per-node rows (src/run-rows.mjs). `limits` are the state bounds; an instance may lower them (tests do).
     installRunTables(this.db);
@@ -296,6 +297,30 @@ export class Store {
     }
     const bound = this.updateRun(runId, () => {}, { type: 'executor.finished', nodeKey, label, transcriptHash, bytes: data.length, location }, { result: 'header' });
     return { runId, nodeKey, label, transcriptHash, bytes: data.length, location, seq: bound.eventHead.seq };
+  }
+  // Signal ids are idempotency keys, unique in the workspace (src/signals.mjs): the run that took an id and the digest of what it carried
+  // ({name, key, payload}). Written in the same transaction as the delivery (the run's inbox and its signal.delivered event), so the index
+  // and the runs never disagree; the run's chain, not this table, is the evidence.
+  signalRecord(id) {
+    const row = this.rows.stmt('SELECT id, run_id, digest, at FROM signals WHERE id=?').get(id);
+    return row ? { id: row.id, runId: row.run_id, digest: row.digest, at: row.at } : null;
+  }
+  recordSignal(id, runId, digestText, at) { this.rows.stmt('INSERT INTO signals(id, run_id, digest, at) VALUES(?,?,?,?)').run(id, runId, digestText, at); }
+  /** The parked, unresolved signal waits of open runs subscribed to `name` with this correlation key hash: [{runId, nodeKey}]. */
+  openSignalWaits(name, keyHash, limit = 64) {
+    return this.rows.stmt(`SELECT DISTINCT n.run_id AS run_id, n.node_key AS node_key FROM run_nodes n JOIN runs r ON r.id=n.run_id, json_each(n.body, '$.subscriptions') s
+      WHERE n.status='waiting' AND json_type(n.body, '$.resolution') IS NULL AND json_extract(s.value, '$.signal')=? AND json_extract(s.value, '$.keyHash')=?
+        AND json_extract(r.body, '$.status') NOT IN ('succeeded','failed','cancelled') ORDER BY n.run_id, n.node_key LIMIT ?`).all(name, keyHash, limit).map(row => ({ runId: row.run_id, nodeKey: row.node_key }));
+  }
+  /** The last event of a run of this type whose `field` equals `value`, checked against its own recorded hash (the whole chain is verified
+   *  when a run is taken over and by verify-run); null when there is none. A point lookup for what the runtime must read back from the chain. */
+  findEvent(runId, type, field, value) {
+    if (!/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(field)) throw new FoundryError('EVENT_FIELD', 'An event field name is a plain identifier');
+    const row = this.rows.stmt(`SELECT body, hash FROM events WHERE run_id=? AND json_extract(body, '$.type')=? AND json_extract(body, '$.${field}')=? ORDER BY seq DESC LIMIT 1`).get(runId, type, value);
+    if (!row) return null;
+    const event = JSON.parse(row.body);
+    if (digest(event) !== row.hash) throw new FoundryError('CORRUPT_EVENTS', `Event ${event.seq} (${type}) does not match its recorded hash`, { seq: event.seq });
+    return { ...event, hash: row.hash };
   }
   // Durable wake-ups for wait nodes (DESIGN §5.4). The runtime writes them inside its updateRun
   // transaction, so a timer row and the node state that needs it commit together.

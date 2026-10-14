@@ -10,7 +10,7 @@ const require = createRequire(import.meta.url);
 // verdicts, sandboxing, model policy/replay keys and the journal, plus the trace contracts.
 const paths = ['engine.mjs', 'runtime.mjs', 'store.mjs', 'run-rows.mjs', 'data.mjs', 'dataflow.mjs', 'validate.mjs', 'lint.mjs', 'acceptance.mjs', 'capabilities.mjs',
   'context.mjs', 'verdict.mjs', 'audit.mjs', 'sandbox.mjs', 'children.mjs', 'schema-subset.mjs', 'models/port.mjs', 'models/policy.mjs', 'journal.mjs', 'state.mjs',
-  '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json'];
+  'signals.mjs', '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json'];
 const files = Object.fromEntries(paths.map(name => [name, createHash('sha256').update(readFileSync(new URL(name, import.meta.url))).digest('hex')]));
 const ajv = JSON.parse(readFileSync(require.resolve('ajv/package.json'), 'utf8'));
 const descriptor = Object.freeze({ contract: 'native-engine-identity/1', node: process.version, platform: process.platform,
