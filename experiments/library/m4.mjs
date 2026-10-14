@@ -15,9 +15,9 @@
 // The kill rule reads the temporal layer at depth <= 4 over all tasks (33); the 18 W-bed rows are 3 distinct type
 // problems repeated over 6 seeds (the TaskSpec and outputSchema are per rung), so the rule is also read over 18 distinct
 // problems (15 + 3). Sensitivities and the code-order rank are diagnostics, never part of the rule.
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { loadL1 } from './cards.mjs';
+import { loadL1, CARDS_DIR } from './cards.mjs';
 import { candidates } from './retrieve.mjs';
 import { shapeOf } from './index.mjs';
 import { ALWAYS } from './construct.mjs';
@@ -28,6 +28,12 @@ import { interfaces, enumerateCompositions, schemaOfValue, taskSpecInputType, li
 const sha = s => createHash('sha256').update(s).digest('hex');
 const fileSha = rel => sha(readFileSync(new URL(rel, import.meta.url)));
 const REPO = new URL('../../', import.meta.url);
+
+// The card files a measurement read (every Pxx/card.json), so a later change to a card is detectable.
+export function cardDigests(dir = CARDS_DIR) {
+  return Object.fromEntries(readdirSync(dir).filter(d => /^P\d\d$/.test(d) && existsSync(`${dir}/${d}/card.json`)).sort()
+    .map(d => [d, sha(readFileSync(`${dir}/${d}/card.json`))]));
+}
 
 // S4 as construct.mjs runs it (tier S, effects none/read, plus ALWAYS), as executable card ids in the shown order.
 export function s4Shown({ task, taskSpec = null, l1 }) {
@@ -111,7 +117,7 @@ export async function measureM4() {
   const sensDecision = k => decide(rows.map(r => ({ total: r.sensitivities[k].total, covered: r.sensitivities[k].covered })));
   return {
     schema: 'library-m4-enumeration/1', generatedBy: 'experiments/library/tools/m4-coverage.mjs', costUsd: 0, modelCalls: 0, jevCalls: 0,
-    files: { enumerate: fileSha('./enumerate.mjs'), gold: fileSha('./fixtures/enumerate-gold.mjs'), m4: fileSha('./m4.mjs') },
+    files: { enumerate: fileSha('./enumerate.mjs'), gold: fileSha('./fixtures/enumerate-gold.mjs'), m4: fileSha('./m4.mjs') }, cardDigests: cardDigests(),
     rule: { ...KILL, text: 'kill if > 100 candidates at depth <= 4 on more than half the tasks, or coverage < 80% (ATTACK-20261014 §3 M4)', layer: 'temporal', maxDepth: MAX_DEPTH },
     cards: cards.map(c => ({ id: c.id, readers: c.readers, needsLists: c.needsLists, out: c.out.slotTyped ? 'slot-typed' : Object.keys(c.out.properties) })),
     temporal: temporalPairs(cards).map(p => ({ pair: `${p.before}<${p.after}`, source: p.source })),
