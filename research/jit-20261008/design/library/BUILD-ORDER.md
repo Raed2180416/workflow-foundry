@@ -380,3 +380,101 @@ a tier-S solver performs no effect.
 - a per-card data-flow contract (fields read, fields passed through);
 - slot types known before S6;
 - per-task constraints from the TaskSpec (APE's mechanism).
+
+*Qualified by the verifier and by M4b below:* the first cannot work on its own. Under the strictest input typing the
+verifier found, W-bed still has 520 candidates per task, and M4b shows that the four catch-all cards alone give 191.
+Only the second and third act on the catch-alls.
+
+### M4b precise types for the catch-all cards (2026-10-14, $0; PROOF-LEDGER K6)
+
+**Decision under the unchanged M4 rule: KILL again, on the count clause. M4 does not pass.** P01, P12, P20 and P54 were
+re-typed by what their skeletons read, check and return. No count changes: all 33 tasks keep M4's numbers.
+- W-bed: 2,000 per rung.
+- Card fixtures: 2,000–12,308.
+- Coverage: 33/33.
+
+The precise derivation confirms what M4 assumed: the four cards are polymorphic by design, not under-typed. Output:
+`out/M4b-enumeration.{json,md}`. M4's code, gold and outputs are unchanged. No model, Jev or network call was made.
+
+**What the skeletons say.** Each claim cites a line, and a test checks that the cited text is still on that line
+(`card-types.mjs` PRECISE).
+- **P01: any value in, a declared type out.**
+  - x enters unchecked (`cards/P01/skeleton.mjs:8`). Only the stages read it: a step fn of v, a judge on the previous
+    value, or a call (10–12).
+  - Every stage output is checked against that stage's `out` schema slot (13), and the last one is returned (16). So the
+    output type is STAGES[−1].out, which the constructor fixes at S6.
+  - P01 never reads `task`.
+- **P54: any value in, an unchecked value out.**
+  - It reads (task, x) only through the fn PARTS (7).
+  - ARG checks the part inputs (8) and READS checks the child outputs (13), but neither checks P54's own output.
+  - COMBINE(kids, parts) is returned unchecked (14). No slot declares its schema.
+- **P12: a list of non-null items in, an unchecked value out.** ITEMS must be a list of non-null items (5–9).
+  REDUCE(results) is returned unchecked (10).
+- **P20: any value in, a closed union out.**
+  - GEN reads {input: x, problem} (9).
+  - The output is {result, tries} or {result: null, review: {problem, tries}} (14).
+  - `result` is a GEN value requested under the GEN.schema slot (`experiments/jit/flow.mjs:144`).
+- **None of the four is type-preserving.** In each card's own positive fixture the output has a different shape from
+  the input; for example P01 maps {csv, note} to {currency, count, totalMinor}.
+
+**Why typing the other cards cannot pass the rule** [M].
+- Compositions built only from the four catch-alls type-check whatever types the other eleven cards get.
+- On a W-bed task there are 2 + 9 + 36 + 144 = 191 of them:
+  - the first card is P01, P20 or P54;
+  - the last card is P01, P12 or P54;
+  - any of the four can stand in between.
+- On the fixtures there are 191–340 (191 on P01's fixture, whose inputs hold no list, like the W-bed tasks).
+- So the count clause fires on all 33 tasks under any typing of the other eleven.
+- The verifier's strictest input typing for those eleven leaves 776 per W-bed task here. Its own run gave 520 because it
+  read P20's `result` as a fixed key; here it is a declared slot type that a list reader can follow.
+
+**Diagnostics** (not the rule; over 33 tasks).
+
+| setting | tasks over 100 | coverage | W-bed per task |
+|---|---|---|---|
+| checked hand-offs: an unchecked output (P12, P54) feeds no list reader | 33 | 33/33 | 1,250 |
+| the four catch-alls alone, checked hand-offs | 33 | — | 138 |
+| P01 and P54 type-preserving (counterfactual; contradicts P01:13–16 and P54:14) | 33 | 31/33 | 306 |
+| both | 33 | 31/33 | 275 |
+| M4's sensitivities on the M4b layer (distinct; S4 alphabet; depth ≤ 3; all three) | 33, 29, 33, 3 | 33, 27, 21, 15 | — |
+| distinct + depth ≤ 3 (the verifier's row) | 14 | 21/33 | 98 |
+
+Under the type-preserving counterfactual, P01 and P54 can no longer produce their own fixture outputs. That is the
+evidence that they are adapters.
+
+**Checks.**
+- The new walk with M4's interfaces returns exactly `enumerate.mjs`'s candidates (tested).
+- An independent recount (`test/m4b-indep.test.mjs`) agrees on 126 of 126 numbers (18 distinct problems × 7
+  settings). It imports neither `enumerate.mjs` nor `card-types.mjs`.
+- The verifier's own scripts still reproduce M4.
+- `tools/m4-coverage.mjs --dry` regenerates `out/M4-enumeration.md` byte for byte.
+
+**Files.**
+- `card-types.mjs`: the cited precise table, the interfaces, array locations with item requirements, and the walk.
+- `m4b.mjs`: the measurement. It reuses `m4.mjs`'s task sets and the frozen gold.
+- `tools/m4b-coverage.mjs`: writes the outputs.
+- `test/m4b.test.mjs` (6 tests) and `test/m4b-indep.test.mjs` (1 test).
+- `test/enumerate.test.mjs` no longer skips its reproduction check when a card.json digest changes. It recomputes the
+  numbers and compares them (verifier finding 5). The E-bed agent's concurrent edits to P59 and P60 had made it skip.
+- M4b pins its result on interface digests (what the type model reads), so a doc edit does not break it, and an
+  interface change fails the test rather than skipping it.
+
+**Deviations.**
+- No card was edited. The precise interfaces live in `card-types.mjs`, for two reasons:
+  - P58–P60 are frozen by hash;
+  - a `fragment.out` on P01 would change what `run.mjs` validates fixtures against.
+- Only the four catch-alls were re-derived. The other eleven keep M4's interfaces; the bound makes their typing
+  irrelevant to the decision.
+- P12's non-null item requirement changes no count (tested).
+- P20's `result` is marked "declared" because flow.judge passes GEN.schema to the model. That the model port enforces it
+  is [I].
+- The checked reading is a diagnostic. The rule keeps M4's reading, that a slot can be filled to fit, so the rule is
+  unchanged.
+
+**What would change the answer** [I]. Only changes to the catch-alls' own contracts could, and each is a change to what
+the cards mean:
+- declare P12's and P54's outputs as schema slots that the skeleton checks, as P01 does at line 13;
+- have S5 fix every declared output type before enumeration (slot types known before S6);
+- per-task constraints from the TaskSpec.
+
+Even P01 and P54 typed as type-preserving would leave 306 candidates per W-bed task.
