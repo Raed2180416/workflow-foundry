@@ -1,0 +1,482 @@
+[
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1241,
+  "d": 2,
+  "completed": 49,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1241,
+  "d": 2,
+  "completed": 49,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1241,
+  "d": 2,
+  "completed": 49,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1242,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1242,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1242,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1243,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1243,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1243,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1244,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1244,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1244,
+  "d": 2,
+  "completed": 51,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1241,
+  "d": 3,
+  "completed": 86,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1241,
+  "d": 3,
+  "completed": 86,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1241,
+  "d": 3,
+  "completed": 86,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1242,
+  "d": 3,
+  "completed": 83,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1242,
+  "d": 3,
+  "completed": 83,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1242,
+  "d": 3,
+  "completed": 83,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1243,
+  "d": 3,
+  "completed": 81,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1243,
+  "d": 3,
+  "completed": 81,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1243,
+  "d": 3,
+  "completed": 81,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1244,
+  "d": 3,
+  "completed": 80,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1244,
+  "d": 3,
+  "completed": 80,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1244,
+  "d": 3,
+  "completed": 80,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1241,
+  "d": 4,
+  "completed": 105,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1241,
+  "d": 4,
+  "completed": 105,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1241,
+  "d": 4,
+  "completed": 105,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1242,
+  "d": 4,
+  "completed": 106,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1242,
+  "d": 4,
+  "completed": 106,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1242,
+  "d": 4,
+  "completed": 106,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1243,
+  "d": 4,
+  "completed": 102,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1243,
+  "d": 4,
+  "completed": 102,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1243,
+  "d": 4,
+  "completed": 102,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1244,
+  "d": 4,
+  "completed": 104,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1244,
+  "d": 4,
+  "completed": 104,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1244,
+  "d": 4,
+  "completed": 104,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1241,
+  "d": 5,
+  "completed": 200,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1241,
+  "d": 5,
+  "completed": 200,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1241,
+  "d": 5,
+  "completed": 200,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1242,
+  "d": 5,
+  "completed": 198,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1242,
+  "d": 5,
+  "completed": 198,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1242,
+  "d": 5,
+  "completed": 198,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1243,
+  "d": 5,
+  "completed": 198,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1243,
+  "d": 5,
+  "completed": 198,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1243,
+  "d": 5,
+  "completed": 198,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s1-state-machine.mjs",
+  "seed": 1244,
+  "d": 5,
+  "completed": 204,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s2-reconciler.mjs",
+  "seed": 1244,
+  "d": 5,
+  "completed": 204,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ },
+ {
+  "solver": "s3-saga-engine.mjs",
+  "seed": 1244,
+  "d": 5,
+  "completed": 204,
+  "failed": 0,
+  "critical": 0,
+  "armErrors": 0,
+  "fails": []
+ }
+]

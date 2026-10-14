@@ -3,13 +3,15 @@
 *E-BED §3 E8, §8.1 steps 4–5; BED-CONTRACT v1.1. Built 2026-10-14, $0 (no model calls). The first E-bed item; the
 generic oracle it introduced (`beds/ebed/oracle/`) is shared by every later item.*
 
-**Status: built, not admitted.** The K1 checks that exist pass (below). Still missing before admission: the three
-independent specificity solvers' verdicts (being written blind to the oracle), the oracle mutation score, the
-metamorphic suite (MR1–MR13), mined latent defects (step 6), the paid triviality attack (P1) and the arm (c)
-reference (P2). Nothing here is evidence about any arm.
+**Status: built, not admitted.** The K1 checks that exist pass (below), including specificity: three independently
+written solvers (`specificity/`, written blind to the oracle from SPEC-E and the contract) each pass **1,749/1,749**
+completed cases on 16 dev worlds (seeds 1241–1244 × d2–d5; 5,247 graded, 0 false rejects, 0 critical, 0 arm errors;
+`tools/specificity-run.mjs`). Still missing before admission: the oracle mutation score (≥ 0.95), the metamorphic suite
+(MR1–MR13), mined latent defects (step 6), the paid triviality attack (P1) and the arm (c) reference (P2). Nothing here
+is evidence about any arm.
 
 ```sh
-node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (13 tests, ~30 s)
+node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (14 tests, ~30 s)
 node beds/ebed/e8/tools/health.mjs --seeds 1001-1030                      # bed health: reference runs, pools, censoring
 node beds/ebed/e8/tools/controls-run.mjs --seeds 1211-1214                # controls on attack worlds
 node beds/ebed/e8/tools/arm-smoke.mjs <solver.mjs> --seed 1241 --difficulty 3   # run a solver; shows no grading
@@ -92,5 +94,9 @@ collection; the deadline race), each checked against the independent saga planne
 | E8-7 | Permanence of a failed step is read from the ledger's error code (402, `permanent`) | ledger rows keep code and reason only |
 | E8-8 | Customer cancels never meet out-of-order carrier reports in generated worlds | the cancel race is decided by reports (R6.2); a physically collected parcel whose report is late would make a counting cancel unexecutable |
 | E8-9 | No sweeps: E8 is per-instance only (E-BED §7: cross-run state ○) | no rule needs cross-case work |
+| E8-10 | Carrier collection is judged by the report's `reportedAt`, not its arrival (S7) | found by specificity: out-of-order reports arrive after later ones but state when the parcel moved |
+| E8-11 | A cancel after a counted amend falls under R6.2, not R3.2 (S8; class `amend-then-cancel`, d3+) | found by specificity: the first spec left a cancel following an amend unclassified |
+| E8-12 | Steps a counted cancel or customer action supersedes before they were due are not required but stay permitted (S9: R3.1 lids at the action, R4.1 processing lids at the abort) | found by specificity (S2 4/878 false rejects on cancel-processing): a solver that never set `processing` because the cancel came first was rejected |
+| E8-13 | Goldens are a module (`golden.mjs`, 24 rule-cited cases) run by the item suite and against every oracle mutant | one set of hand-derived expectations for both the oracle's self-check and mutation killing |
 
 Deviations from E-BED §3 E8 are listed in `ledger/SEMANTICS.md`.
