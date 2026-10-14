@@ -33,7 +33,10 @@ test('the registry reads the ledger file itself: only non-Kev reserved or fresh 
   const ledger = JSON.parse(readFileSync(LEDGER_FILE, 'utf8'));
   const held = ledgerHeldRanges().map(r => r.id).sort();
   assert.deepEqual(held, ledger.ranges.filter(r => r.owner !== 'kev' && ['reserved', 'fresh'].includes(r.status)).map(r => r.id).sort());
-  assert.deepEqual(held, ['jit-heldout-a', 'jit-heldout-b', 'jit-oos-fresh', 'jit-r0-fresh']);
+  // The JIT held-out and rehearsal ranges stay held; other programmes (W-bed, E-bed) add their own ranges, so the set is
+  // checked as a superset rather than pinned (the exact set is the derived one above), and no Kev range is ever held.
+  for (const id of ['jit-heldout-a', 'jit-heldout-b', 'jit-oos-fresh', 'jit-r0-fresh']) assert.ok(held.includes(id), id);
+  assert.ok(!held.some(id => id.startsWith('kev-')), 'a Kev range is held by the registry');
   assert.deepEqual(ledger.ranges.filter(r => r.owner === 'kev').map(r => [r.id, r.split, r.from, r.to, r.beds]).sort(),
     RESERVATIONS.map(r => [`kev-${r.id}`, r.bedSplit, r.seeds[0], r.seeds[1], ['*']]).sort());
 });
