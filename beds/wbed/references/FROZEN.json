@@ -168,7 +168,18 @@
   "runCompiledSha256": "2cb41585b57443d4b60e725d73147251def64e119d0ba4422ffd630cb0b585cf",
   "models": "claude-haiku-5-5, claude-sonnet-5-5 (policy/models.json)",
   "streamNote": "stream.mjs runs a static:<solve.mjs> arm with flow.mjs (v1) unless the arm is given flow-v3; running arm (c) in the W-bed stream needs that one engine change (not made here).",
-  "runCompiledNote": "asserted by references.test.mjs since the 2026-10-14 review (finding 13), as flowV3Sha256 is"
+  "runCompiledNote": "asserted by references.test.mjs since the 2026-10-14 review (finding 13), as flowV3Sha256 is: the current pair must be the freeze pair or a revalidated one",
+  "revalidated": [
+   {
+    "date": "2026-10-14",
+    "flowV3Sha256": "15da5c24efd537afb30eb8754955583c735fb6f36e8c55ca3646c13aa848f06b",
+    "runCompiledSha256": "d4bd7ee0e8932262456c00e3620a02aec531d6d9081ea972f1138687fa987857",
+    "rows": 432,
+    "mismatches": 0,
+    "by": "validate.mjs --revalidate (status, deopt, pass and output digest of every recorded R1 row and every wbed-r3 1.1.0 R3 row, policies author, world, A and B)",
+    "note": "run-compiled.mjs changed in autosave bc06129 (the M1 review fixes: the variants path only, which the references never use; runOnce unchanged)"
+   }
+  ]
  },
  "authorship": {
   "author": "Claude Opus 5.5 (claude-opus-5-5) as the expert workflow author, in a workflow-orchestrated Claude Code session (subagent; no claude -p builder session, no model call during authoring or validation)",
@@ -816,7 +827,7 @@
   "about": "The validation harness and recorded inputs, pinned by references.test.mjs (review finding 13). A change here is recorded with a re-validation (README \"Re-validation\").",
   "files": {
    "stub-policy.mjs": "bb32b48d14ad08e4d30299d66bb6075f3279861c566db7752b8aade07eb466ab",
-   "validate.mjs": "4b58a56e2578eb7e297030a6d6f20e21df12cd938e1e2a2935c2247ba2cbebee",
+   "validate.mjs": "8efb0d0120a848680ac34774f046ef823cecaae7a8a78b4ec02447b2dfe3bf30",
    "author/author-override.mjs": "7511f3b9cd08a73922aa7cf16189326f9068d4465e42457a4962777d22a74536",
    "author/fixture-answers.json": "51242a79bd3aaddaf4da1e267e206233d46b71f23f2278d7ddd5a6f9e4482054",
    "author/validation-answers.json": "ac39f3a52a62f7bda8cdd55047564fad455ef46a5b8cb928f084da38ef252d94",
@@ -825,7 +836,7 @@
   },
   "changes": [
    "author/validation-answers.json: the \"about\" text only (review finding 3: R1's 301-312 are development seeds, not unseen ones); no answer changed",
-   "validate.mjs: policy \"world\" (analyst-side readings from the generator world, any dev seed) and --relations (each bed relation through the same sandbox and answers); the author, A and B paths are unchanged",
+   "validate.mjs: policy \"world\" (analyst-side readings from the generator world, any dev seed), --relations (each bed relation through the same sandbox and answers) and --revalidate (README \"Re-validation\"); the author, A and B paths are unchanged",
    "analyst/: new (world-readings.mjs host side, world-override.mjs in the sandbox)"
   ]
  }

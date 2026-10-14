@@ -370,3 +370,9 @@ without, one R1 compile, one R3 compile and one parent compile.
 - At d4–d5, is the one-call attack a size test? Should the R4 stream start at d3 and stop at d4?
 - Arm (c) reference: an adapter for CYYDDD, or refuse and re-derive? This choice sets the "correct" construction-cost
   baseline.
+
+**Addendum (2026-10-14, refs-R1-R3 review fixes): wbed-r4 1.0.1.** R4 itself is unchanged, but its R3 packs follow
+wbed-r3 1.1.0, which stores FX quotes at their printed precision (W-BED-R2R3-NOTES §10). Tasks with an R3 pack print
+some quotes one higher in the fourth decimal, and their child and group US-cent totals move: 67 of 120 task hashes on dev
+301–330 × d2–d5. R1 packs are unchanged. The R4 suite passes, as do the profile measurements of FLOW-V3-SLICE2 §2.2 and
+§17.1 T1 (`profile-tolerant`, `slice2-review`, `stream-library` tests).

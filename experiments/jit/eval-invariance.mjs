@@ -257,7 +257,7 @@ export async function evalWitness({ beds = WITNESS_BEDS, seeds = [301, 302, 303,
   const out = [];
   for (const id of beds) {
     const b = await loadFamily(id), ds = id === 'kinetics' ? [4, 5] : [3, 4];
-    const x = { bed: id, primary: b.witness.primary, tags: b.witness.tags, checks: b.witness.checks.map(c => `${c.tag}/${c.scope}`), reference: 0, referenceFlagged: 0, wrong: 0, wrongFlagged: 0, byControl: {} };
+    const x = { bed: id, version: b.family?.version ?? null, primary: b.witness.primary, tags: b.witness.tags, checks: b.witness.checks.map(c => `${c.tag}/${c.scope}`), reference: 0, referenceFlagged: 0, wrong: 0, wrongFlagged: 0, byControl: {} };
     for (const d of ds) for (const seed of seeds) {
       const t = b.generate({ seed, split: 'dev', difficulty: d });
       // R5's hash-total check reads the trailer the way a correct decoder does: analyst side here (dumpOf), the agent node's
@@ -291,7 +291,7 @@ export async function evalReferences({ rungs = ['r1', 'r3'], seeds = [373, 374, 
   const out = [];
   for (const rung of rungs) {
     const ref = REFERENCES[rung], bed = await loadFamily(ref.bed), relations = validateRelations(bed.invariance ?? [], ref.bed);
-    const x = { rung, bed: ref.bed, evidence: REFERENCE_EVIDENCE, k, runs: 0, originalOk: 0, originalPass: 0, byRelation: {}, examples: [] };
+    const x = { rung, bed: ref.bed, version: bed.family?.version ?? null, evidence: REFERENCE_EVIDENCE, k, runs: 0, originalOk: 0, originalPass: 0, byRelation: {}, examples: [] };
     const jobs = difficulties.flatMap(d => seeds.flatMap(seed => Array.from({ length: k }, (_, n) => ({ d, seed, n }))));
     await pool(jobs, concurrency, async ({ d, seed, n }) => {
       const t = bed.generate({ seed, split: 'dev', difficulty: d });
@@ -372,7 +372,7 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
       log(`(B) evidence: ${SYNTHETIC_EVIDENCE}`);
     }
     if (result.witness) for (const w of result.witness) log(`(C) ${w.bed} [${w.primary}]: reference flagged ${w.referenceFlagged}/${w.reference}; bad controls flagged ${w.wrongFlagged}/${w.wrong}`);
-    if (result.references) for (const x of result.references) log(`(D) ${x.rung}: originals ok ${x.originalOk}/${x.runs} (oracle pass ${x.originalPass}); ${JSON.stringify(x.byRelation)}`);
+    if (result.references) for (const x of result.references) log(`(D) ${x.rung} (${x.bed} ${x.version}): originals ok ${x.originalOk}/${x.runs} (oracle pass ${x.originalPass}); ${JSON.stringify(x.byRelation)}`);
   }
   return result;
 }

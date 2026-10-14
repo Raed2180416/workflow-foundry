@@ -182,3 +182,29 @@ judgment test, not a size test.
 **Addendum (coordinator, 2026-10-09 12:40 UTC).** The per-call overhead question in §7 is answered by a live 20-call
 probe (DEV-NOTES D22): about $0.00011 and 1.4 s per tiny Haiku judge call through the claude-cli ModelPort. Per-item
 judge maps are cheap in dollars; batching matters for wall time only.
+
+## 10. wbed-r3 1.1.0: FX quotes stored at their printed precision (2026-10-14, adversarial review P0)
+
+*Fix by Claude Opus 5.5 in the refs-R1-R3 review round, $0, `beds/sealed/` not read.*
+
+- **Defect (1.0.0).** `lib/fx.mjs` `drawQuotes` stored a USD-per-unit rate at six decimals (`mulRate(round(rate × 1e6))`),
+  while `lib/domain.mjs` `quoteLine` prints four (it truncates at ≥ 0.05). Spec rule 5 says "convert … at the quote
+  below", so `by_reason` and `totals` were not derivable from the task. Example: seed 373 d3 stored EUR/USD 1.104221 and
+  printed "1.1042". On dev 301–312 and 373–378 (d3, d4), 70 of 106 non-USD quotes had hidden digits. records quantizes
+  to the printed precision (`records/world.mjs` `quant`); R3 did not. Found by the arm (c) reference author (references
+  README "R3 bed finding"): with correct reasons, its statements matched 36/36 and its totals 0/36.
+- **Fix.** `drawQuotes` quantizes as records does (`quantUsdPerUnit`: six decimals below 0.05, four above). USD/XXX
+  quotes were already four decimals. The RNG draws are unchanged.
+- **What moved.** On dev 301–390 × d2–d5: no world, attempt, statement or labelled reason changed (task hashes with the
+  quote lines masked: 360/360 equal). Only the printed quotes changed, by at most one in the fourth decimal, along with
+  the US-cent totals (253/360 task hashes). R1 is unchanged (360/360). R4 and R5 tasks with an R3 pack changed (67/120 on
+  dev 301–330), so they are now wbed-r4 1.0.1 and wbed-r5 1.0.1. Results recorded on wbed-r3 1.0.0, and on R4/R5 1.0.0
+  tasks with an R3 pack, stay invalid for US-cent totals.
+- **Tests.**
+  - `lib/lib.test.mjs`: every stored rate is exactly what its printed line says, over 400 draws of every currency.
+  - `r3/r3.test.mjs`: spec rule 5, computed independently in BigInt at the printed quotes, reproduces `by_reason` and
+    `totals` on 27 tasks.
+
+  Both fail on 1.0.0. The full W-bed R1/R3/R4/R5 suite, `beds/lib/metamorphic.test.mjs` and the R3/R4-dependent JIT
+  tests pass. The frozen R3 reference with author readings now passes 36/36
+  (`beds/wbed/references/validation/r3-bed-1.1.0.json`).

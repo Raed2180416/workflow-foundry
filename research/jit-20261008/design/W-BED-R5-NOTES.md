@@ -357,3 +357,7 @@ None is built yet. Each is an engine change for the E2 freeze.
 Full W-bed suite (`beds/wbed/**/*.test.mjs`, concurrency 2, with R0 running in the background at a load average of
 about 34): **127 tests, 127 pass, 0 fail**, 348 s. The 22 R5 tests are among them, and every R0–R4 test stays green
 [M]. In this run the d5 cold timing was R4 group draw 2,145 ms, R5 increment 45 ms, oracle 41 ms.
+
+**Addendum (2026-10-14, refs-R1-R3 review fixes): wbed-r5 1.0.1.** R5 itself is unchanged. Groups with an R3 pack follow
+wbed-r3 1.1.0 through wbed-r4 1.0.1 (FX quotes stored at their printed precision, W-BED-R2R3-NOTES §10): 67 of 120 task
+hashes moved on dev 301–330 × d2–d5. The R5 suite passes.

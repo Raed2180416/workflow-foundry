@@ -26,9 +26,13 @@ test('FROZEN.json pins the reference bytes, the validated v1 bytes and the engin
     const bed = await import(`../../${ref.bed}/index.mjs`);
     assert.equal(bed.family.version, ref.bedFamilyVersion, `${ref.bed} is ${bed.family.version}, validated on ${ref.bedFamilyVersion}: re-validate (README "Re-validation")`);
   }
+  // The engine: flow-v3 and run-compiled as frozen, or a pair a recorded re-validation ran on (validate.mjs --revalidate:
+  // every recorded deterministic row re-run with 0 mismatches; README "Re-validation").
   const engine = f => createHash('sha256').update(readFileSync(path.join(HERE, '../../../experiments/jit', f))).digest('hex');
-  assert.equal(engine('flow-v3.mjs'), FROZEN.engine.flowV3Sha256, 'flow-v3.mjs moved: re-validate the references (README "Re-validation") before a paid round uses them');
-  assert.equal(engine('run-compiled.mjs'), FROZEN.engine.runCompiledSha256, 'run-compiled.mjs moved: re-validate the references (README "Re-validation") before a paid round uses them');
+  const now = { flowV3Sha256: engine('flow-v3.mjs'), runCompiledSha256: engine('run-compiled.mjs') };
+  const validated = [{ flowV3Sha256: FROZEN.engine.flowV3Sha256, runCompiledSha256: FROZEN.engine.runCompiledSha256 }, ...(FROZEN.engine.revalidated ?? []).filter(e => e.mismatches === 0)];
+  assert.ok(validated.some(e => e.flowV3Sha256 === now.flowV3Sha256 && e.runCompiledSha256 === now.runCompiledSha256),
+    `flow-v3.mjs or run-compiled.mjs moved (${JSON.stringify(now)}): re-validate the references (README "Re-validation": validate.mjs --revalidate) before a paid round uses them`);
   // The harness and the recorded runs (stub policy, author tables, analyst readings, the driver, the validation files).
   for (const [file, digest] of Object.entries({ ...FROZEN.harness.files, ...FROZEN.validation.files })) assert.equal(sha(file), digest, `${file} changed: record it in FROZEN.json with the re-validation`);
 });
