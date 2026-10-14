@@ -1,0 +1,1667 @@
+{
+ "labels": "research/jit-20261008/design/library/out/L1-reaudit/labels-sonnet-60.jsonl",
+ "rows": 60,
+ "labeller": [
+  "sonnet-60"
+ ],
+ "seed": 20261014,
+ "note": "first-party has no unlabelled item (L1-a drew all 10), so the estimates are for the 1,549 non-first-party items; popSize weights treat the L1-a items as exchangeable with the frame",
+ "counts": {
+  "explained": {
+   "yes": 55,
+   "no": 3,
+   "partly": 2
+  },
+  "dashboardCriterionItems": [
+   5,
+   29
+  ],
+  "refusals": [
+   {
+    "d": 2,
+    "refusal": "full-history-handoff",
+    "confidence": "medium"
+   },
+   {
+    "d": 5,
+    "refusal": "interactive-dashboard-state",
+    "confidence": "high"
+   },
+   {
+    "d": 33,
+    "refusal": "full-history-handoff",
+    "confidence": "high"
+   }
+  ],
+  "itemsWithGaps": 25,
+  "gapFragments": 37
+ },
+ "coverage": {
+  "conservative/strict": {
+   "unweighted": {
+    "x": 54,
+    "n": 60,
+    "p": 90,
+    "wilson": [
+     79.9,
+     95.3
+    ]
+   },
+   "postStratified": {
+    "p": 93.6,
+    "kishN": 43.8,
+    "wilsonAtKish": [
+     82.3,
+     97.9
+    ],
+    "bootstrap": [
+     90.6,
+     96.7
+    ],
+    "targetItems": 1549
+   },
+   "frameWeights": {
+    "p": 93.8,
+    "kishN": 43.1,
+    "wilsonAtKish": [
+     82.5,
+     98
+    ],
+    "targetItems": 1499
+   }
+  },
+  "conservative/lenient": {
+   "unweighted": {
+    "x": 56,
+    "n": 60,
+    "p": 93.3,
+    "wilson": [
+     84.1,
+     97.4
+    ]
+   },
+   "postStratified": {
+    "p": 95.6,
+    "kishN": 43.8,
+    "wilsonAtKish": [
+     85,
+     98.8
+    ],
+    "bootstrap": [
+     93.3,
+     97.9
+    ],
+    "targetItems": 1549
+   },
+   "frameWeights": {
+    "p": 95.7,
+    "kishN": 43.1,
+    "wilsonAtKish": [
+     85.1,
+     98.9
+    ],
+    "targetItems": 1499
+   }
+  },
+  "dashboardExplained/strict": {
+   "unweighted": {
+    "x": 56,
+    "n": 60,
+    "p": 93.3,
+    "wilson": [
+     84.1,
+     97.4
+    ]
+   },
+   "postStratified": {
+    "p": 95.9,
+    "kishN": 43.8,
+    "wilsonAtKish": [
+     85.5,
+     99
+    ],
+    "bootstrap": [
+     94,
+     97.9
+    ],
+    "targetItems": 1549
+   },
+   "frameWeights": {
+    "p": 96,
+    "kishN": 43.1,
+    "wilsonAtKish": [
+     85.5,
+     99
+    ],
+    "targetItems": 1499
+   }
+  },
+  "dashboardExplained/lenient": {
+   "unweighted": {
+    "x": 58,
+    "n": 60,
+    "p": 96.7,
+    "wilson": [
+     88.6,
+     99.1
+    ]
+   },
+   "postStratified": {
+    "p": 97.9,
+    "kishN": 43.8,
+    "wilsonAtKish": [
+     88.4,
+     99.6
+    ],
+    "bootstrap": [
+     97.9,
+     97.9
+    ],
+    "targetItems": 1549
+   },
+   "frameWeights": {
+    "p": 97.9,
+    "kishN": 43.1,
+    "wilsonAtKish": [
+     88.4,
+     99.7
+    ],
+    "targetItems": 1499
+   }
+  },
+  "blind/strict": {
+   "unweighted": {
+    "x": 55,
+    "n": 60,
+    "p": 91.7,
+    "wilson": [
+     81.9,
+     96.4
+    ]
+   },
+   "postStratified": {
+    "p": 94.8,
+    "kishN": 43.8,
+    "wilsonAtKish": [
+     83.9,
+     98.4
+    ],
+    "bootstrap": [
+     91.7,
+     96.9
+    ],
+    "targetItems": 1549
+   },
+   "frameWeights": {
+    "p": 94.9,
+    "kishN": 43.1,
+    "wilsonAtKish": [
+     84,
+     98.5
+    ],
+    "targetItems": 1499
+   }
+  },
+  "blind/lenient": {
+   "unweighted": {
+    "x": 57,
+    "n": 60,
+    "p": 95,
+    "wilson": [
+     86.3,
+     98.3
+    ]
+   },
+   "postStratified": {
+    "p": 96.7,
+    "kishN": 43.8,
+    "wilsonAtKish": [
+     86.6,
+     99.3
+    ],
+    "bootstrap": [
+     94.4,
+     97.9
+    ],
+    "targetItems": 1549
+   },
+   "frameWeights": {
+    "p": 96.8,
+    "kishN": 43.1,
+    "wilsonAtKish": [
+     86.7,
+     99.3
+    ],
+    "targetItems": 1499
+   }
+  }
+ },
+ "census": {
+  "censusNotRefusedUnweighted": {
+   "x": 56,
+   "n": 60,
+   "p": 93.3
+  },
+  "censusStatusCounts": {
+   "flat": 46,
+   "refused": 4,
+   "hier": 10
+  },
+  "refusalAgreement": [
+   {
+    "d": 2,
+    "census": "unsupported:by-design-full-history-handoff",
+    "labeller": "full-history-handoff",
+    "explained": "no"
+   },
+   {
+    "d": 5,
+    "census": "via-extension:event-trigger+stream+cross-run-state+unstructured-cycle",
+    "labeller": "interactive-dashboard-state",
+    "explained": "no"
+   },
+   {
+    "d": 29,
+    "census": "unsupported:interactive-dashboard-state",
+    "labeller": "dashboard (explained as display-only)",
+    "explained": "yes"
+   },
+   {
+    "d": 33,
+    "census": "unsupported:by-design-full-history-handoff",
+    "labeller": "full-history-handoff",
+    "explained": "no"
+   }
+  ],
+  "explainedYesButCensusRefused": [
+   29
+  ],
+  "explainedNotYesButCensusAssigned": [
+   {
+    "d": 32,
+    "explained": "partly"
+   },
+   {
+    "d": 54,
+    "explained": "partly"
+   }
+  ]
+ },
+ "detectors": {
+  "nodeRuleAndToken": {
+   "pairs": 202,
+   "yes": 118,
+   "partly": 52,
+   "no": 32,
+   "precision": 0.713,
+   "strictPrecision": 0.584,
+   "wilson": [
+    64.7,
+    77.1
+   ],
+   "clusteredBootstrap": [
+    66.7,
+    76
+   ]
+  },
+  "allPairs": {
+   "pairs": 237,
+   "yes": 139,
+   "partly": 62,
+   "no": 36,
+   "precision": 0.717,
+   "strictPrecision": 0.586,
+   "wilson": [
+    65.7,
+    77.1
+   ],
+   "clusteredBootstrap": [
+    67.7,
+    75.7
+   ]
+  },
+  "node": {
+   "pairs": 159,
+   "yes": 92,
+   "partly": 36,
+   "no": 31,
+   "precision": 0.692,
+   "strictPrecision": 0.579,
+   "wilson": [
+    61.6,
+    75.8
+   ]
+  },
+  "token": {
+   "pairs": 43,
+   "yes": 26,
+   "partly": 16,
+   "no": 1,
+   "precision": 0.791,
+   "strictPrecision": 0.605,
+   "wilson": [
+    64.8,
+    88.6
+   ]
+  },
+  "plumbing": {
+   "pairs": 35,
+   "yes": 21,
+   "partly": 10,
+   "no": 4,
+   "precision": 0.743,
+   "strictPrecision": 0.6,
+   "wilson": [
+    57.9,
+    85.8
+   ]
+  },
+  "p01Only": {
+   "pairs": 27,
+   "yes": 16,
+   "partly": 9,
+   "no": 2,
+   "precision": 0.759,
+   "strictPrecision": 0.593,
+   "wilson": [
+    57.3,
+    88.1
+   ]
+  },
+  "allPairsIncludingCensusRefusedItems": {
+   "pairs": 244,
+   "yes": 142,
+   "partly": 66,
+   "no": 36,
+   "precision": 0.717,
+   "strictPrecision": 0.582,
+   "wilson": [
+    65.8,
+    77
+   ]
+  },
+  "l0Assignments": {
+   "pairs": 44,
+   "yes": 42,
+   "partly": 0,
+   "no": 2,
+   "precision": 0.955,
+   "strictPrecision": 0.955,
+   "wilson": [
+    84.9,
+    98.7
+   ],
+   "byConstruct": {
+    "L0:input": {
+     "pairs": 14,
+     "yes": 14,
+     "partly": 0,
+     "no": 0,
+     "precision": 1,
+     "strictPrecision": 1,
+     "wilson": [
+      78.5,
+      100
+     ]
+    },
+    "L0:if": {
+     "pairs": 14,
+     "yes": 14,
+     "partly": 0,
+     "no": 0,
+     "precision": 1,
+     "strictPrecision": 1,
+     "wilson": [
+      78.5,
+      100
+     ]
+    },
+    "L0:guard": {
+     "pairs": 5,
+     "yes": 5,
+     "partly": 0,
+     "no": 0,
+     "precision": 1,
+     "strictPrecision": 1,
+     "wilson": [
+      56.6,
+      100
+     ]
+    },
+    "L0:notify": {
+     "pairs": 5,
+     "yes": 5,
+     "partly": 0,
+     "no": 0,
+     "precision": 1,
+     "strictPrecision": 1,
+     "wilson": [
+      56.6,
+      100
+     ]
+    },
+    "L0:judge": {
+     "pairs": 5,
+     "yes": 3,
+     "partly": 0,
+     "no": 2,
+     "precision": 0.6,
+     "strictPrecision": 0.6,
+     "wilson": [
+      23.1,
+      88.2
+     ]
+    },
+    "L0:join": {
+     "pairs": 1,
+     "yes": 1,
+     "partly": 0,
+     "no": 0,
+     "precision": 1,
+     "strictPrecision": 1,
+     "wilson": [
+      20.7,
+      100
+     ]
+    }
+   }
+  },
+  "bar": {
+   "pass": "precision >= 0.85 with Wilson lower bound >= 0.75",
+   "falsifier": "precision < 0.75",
+   "source": "LIBRARY-TESTS L1-a / AUDIT-L1 §7"
+  },
+  "byPattern": {
+   "P01": {
+    "pairs": 27,
+    "yes": 16,
+    "partly": 9,
+    "no": 2,
+    "precision": 0.76,
+    "items": [
+     1,
+     4,
+     7,
+     8,
+     9,
+     11,
+     13,
+     15,
+     18,
+     20,
+     21,
+     23,
+     24,
+     25,
+     26,
+     27,
+     34,
+     36,
+     37,
+     38,
+     40,
+     42,
+     46,
+     47,
+     48,
+     50,
+     55
+    ]
+   },
+   "P38": {
+    "pairs": 15,
+    "yes": 13,
+    "partly": 2,
+    "no": 0,
+    "precision": 0.93,
+    "items": [
+     4,
+     17,
+     21,
+     23,
+     24,
+     26,
+     30,
+     38,
+     41,
+     44,
+     46,
+     47,
+     48,
+     55,
+     60
+    ]
+   },
+   "P27": {
+    "pairs": 14,
+    "yes": 8,
+    "partly": 5,
+    "no": 1,
+    "precision": 0.75,
+    "items": [
+     1,
+     4,
+     7,
+     8,
+     9,
+     21,
+     22,
+     23,
+     24,
+     30,
+     31,
+     38,
+     40,
+     42
+    ]
+   },
+   "P54": {
+    "pairs": 12,
+    "yes": 12,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     18,
+     21,
+     23,
+     30,
+     34,
+     35,
+     36,
+     37,
+     43,
+     44,
+     48,
+     55
+    ]
+   },
+   "P05": {
+    "pairs": 11,
+    "yes": 2,
+    "partly": 1,
+    "no": 8,
+    "precision": 0.23,
+    "items": [
+     8,
+     9,
+     12,
+     19,
+     20,
+     23,
+     24,
+     38,
+     41,
+     52,
+     53
+    ]
+   },
+   "P45": {
+    "pairs": 10,
+    "yes": 7,
+    "partly": 3,
+    "no": 0,
+    "precision": 0.85,
+    "items": [
+     3,
+     6,
+     12,
+     14,
+     16,
+     22,
+     32,
+     38,
+     45,
+     53
+    ]
+   },
+   "P08": {
+    "pairs": 10,
+    "yes": 7,
+    "partly": 3,
+    "no": 0,
+    "precision": 0.85,
+    "items": [
+     4,
+     7,
+     17,
+     20,
+     23,
+     34,
+     35,
+     37,
+     40,
+     55
+    ]
+   },
+   "P32": {
+    "pairs": 9,
+    "yes": 5,
+    "partly": 0,
+    "no": 4,
+    "precision": 0.56,
+    "items": [
+     6,
+     18,
+     30,
+     32,
+     34,
+     36,
+     37,
+     44,
+     46
+    ]
+   },
+   "P29": {
+    "pairs": 9,
+    "yes": 8,
+    "partly": 1,
+    "no": 0,
+    "precision": 0.94,
+    "items": [
+     7,
+     8,
+     9,
+     13,
+     21,
+     24,
+     30,
+     31,
+     40
+    ]
+   },
+   "P20": {
+    "pairs": 8,
+    "yes": 3,
+    "partly": 3,
+    "no": 2,
+    "precision": 0.56,
+    "items": [
+     3,
+     16,
+     22,
+     23,
+     32,
+     45,
+     54,
+     57
+    ]
+   },
+   "P41": {
+    "pairs": 8,
+    "yes": 7,
+    "partly": 0,
+    "no": 1,
+    "precision": 0.88,
+    "items": [
+     21,
+     24,
+     30,
+     30,
+     44,
+     44,
+     47,
+     48
+    ]
+   },
+   "P06": {
+    "pairs": 7,
+    "yes": 1,
+    "partly": 1,
+    "no": 5,
+    "precision": 0.21,
+    "items": [
+     7,
+     8,
+     9,
+     20,
+     38,
+     48,
+     53
+    ]
+   },
+   "P26": {
+    "pairs": 7,
+    "yes": 6,
+    "partly": 1,
+    "no": 0,
+    "precision": 0.93,
+    "items": [
+     7,
+     8,
+     9,
+     13,
+     32,
+     40,
+     42
+    ]
+   },
+   "P42": {
+    "pairs": 7,
+    "yes": 2,
+    "partly": 4,
+    "no": 1,
+    "precision": 0.57,
+    "items": [
+     11,
+     12,
+     14,
+     22,
+     38,
+     41,
+     53
+    ]
+   },
+   "P10": {
+    "pairs": 7,
+    "yes": 2,
+    "partly": 5,
+    "no": 0,
+    "precision": 0.64,
+    "items": [
+     18,
+     23,
+     28,
+     34,
+     36,
+     37,
+     57
+    ]
+   },
+   "P36": {
+    "pairs": 7,
+    "yes": 7,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     21,
+     23,
+     24,
+     25,
+     39,
+     47,
+     55
+    ]
+   },
+   "P07": {
+    "pairs": 7,
+    "yes": 2,
+    "partly": 5,
+    "no": 0,
+    "precision": 0.64,
+    "items": [
+     23,
+     32,
+     38,
+     41,
+     53,
+     54,
+     57
+    ]
+   },
+   "P37": {
+    "pairs": 6,
+    "yes": 4,
+    "partly": 2,
+    "no": 0,
+    "precision": 0.83,
+    "items": [
+     10,
+     11,
+     14,
+     38,
+     51,
+     53
+    ]
+   },
+   "P33": {
+    "pairs": 5,
+    "yes": 1,
+    "partly": 2,
+    "no": 2,
+    "precision": 0.4,
+    "items": [
+     17,
+     23,
+     37,
+     41,
+     55
+    ]
+   },
+   "P34": {
+    "pairs": 4,
+    "yes": 1,
+    "partly": 3,
+    "no": 0,
+    "precision": 0.63,
+    "items": [
+     11,
+     17,
+     34,
+     55
+    ]
+   },
+   "P21": {
+    "pairs": 4,
+    "yes": 1,
+    "partly": 2,
+    "no": 1,
+    "precision": 0.5,
+    "items": [
+     17,
+     28,
+     41,
+     55
+    ]
+   },
+   "P15": {
+    "pairs": 4,
+    "yes": 0,
+    "partly": 1,
+    "no": 3,
+    "precision": 0.13,
+    "items": [
+     27,
+     30,
+     44,
+     46
+    ]
+   },
+   "P55": {
+    "pairs": 4,
+    "yes": 4,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     28,
+     34,
+     36,
+     37
+    ]
+   },
+   "P53": {
+    "pairs": 3,
+    "yes": 1,
+    "partly": 1,
+    "no": 1,
+    "precision": 0.5,
+    "items": [
+     16,
+     23,
+     28
+    ]
+   },
+   "P19": {
+    "pairs": 3,
+    "yes": 2,
+    "partly": 1,
+    "no": 0,
+    "precision": 0.83,
+    "items": [
+     22,
+     32,
+     42
+    ]
+   },
+   "P04": {
+    "pairs": 3,
+    "yes": 0,
+    "partly": 1,
+    "no": 2,
+    "precision": 0.17,
+    "items": [
+     40,
+     48,
+     54
+    ]
+   },
+   "P46": {
+    "pairs": 2,
+    "yes": 2,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     6,
+     16
+    ]
+   },
+   "P35": {
+    "pairs": 2,
+    "yes": 2,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     6,
+     32
+    ]
+   },
+   "P43": {
+    "pairs": 2,
+    "yes": 2,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     14,
+     53
+    ]
+   },
+   "P56": {
+    "pairs": 2,
+    "yes": 2,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     15,
+     49
+    ]
+   },
+   "P03": {
+    "pairs": 2,
+    "yes": 0,
+    "partly": 1,
+    "no": 1,
+    "precision": 0.25,
+    "items": [
+     20,
+     23
+    ]
+   },
+   "P39": {
+    "pairs": 2,
+    "yes": 2,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     23,
+     59
+    ]
+   },
+   "P14": {
+    "pairs": 2,
+    "yes": 2,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     23,
+     27
+    ]
+   },
+   "P25": {
+    "pairs": 2,
+    "yes": 0,
+    "partly": 2,
+    "no": 0,
+    "precision": 0.5,
+    "items": [
+     23,
+     41
+    ]
+   },
+   "P09": {
+    "pairs": 1,
+    "yes": 0,
+    "partly": 0,
+    "no": 1,
+    "precision": 0,
+    "items": [
+     16
+    ]
+   },
+   "P22": {
+    "pairs": 1,
+    "yes": 1,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     17
+    ]
+   },
+   "P57": {
+    "pairs": 1,
+    "yes": 1,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     17
+    ]
+   },
+   "P12": {
+    "pairs": 1,
+    "yes": 0,
+    "partly": 1,
+    "no": 0,
+    "precision": 0.5,
+    "items": [
+     18
+    ]
+   },
+   "P47": {
+    "pairs": 1,
+    "yes": 1,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     32
+    ]
+   },
+   "P50": {
+    "pairs": 1,
+    "yes": 0,
+    "partly": 0,
+    "no": 1,
+    "precision": 0,
+    "items": [
+     32
+    ]
+   },
+   "P51": {
+    "pairs": 1,
+    "yes": 0,
+    "partly": 1,
+    "no": 0,
+    "precision": 0.5,
+    "items": [
+     32
+    ]
+   },
+   "P48": {
+    "pairs": 1,
+    "yes": 1,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     54
+    ]
+   },
+   "P44": {
+    "pairs": 1,
+    "yes": 0,
+    "partly": 1,
+    "no": 0,
+    "precision": 0.5,
+    "items": [
+     54
+    ]
+   },
+   "P40": {
+    "pairs": 1,
+    "yes": 1,
+    "partly": 0,
+    "no": 0,
+    "precision": 1,
+    "items": [
+     55
+    ]
+   }
+  },
+  "falsePairs": [
+   {
+    "d": 3,
+    "pattern": "P20",
+    "via": "node",
+    "why": "the conditional edge is the tool loop's own exit test (tool calls or end); there is no verifier and no regeneration"
+   },
+   {
+    "d": 7,
+    "pattern": "P06",
+    "via": "node",
+    "why": "artic/guppyplex is a read-filtering tool tagged model; nothing is retrieved or generated"
+   },
+   {
+    "d": 8,
+    "pattern": "P06",
+    "via": "node",
+    "why": "15 nodes are GPU structure predictors and database downloaders tagged model; none is retrieve then generate"
+   },
+   {
+    "d": 8,
+    "pattern": "P05",
+    "via": "node",
+    "why": "download_rna_rf2na tagged model; a download tool"
+   },
+   {
+    "d": 9,
+    "pattern": "P05",
+    "via": "node",
+    "why": "genomad download tagged model; a database download tool"
+   },
+   {
+    "d": 9,
+    "pattern": "P06",
+    "via": "node",
+    "why": "genomad endtoend tagged model; a classifier tool"
+   },
+   {
+    "d": 11,
+    "pattern": "P42",
+    "via": "token",
+    "why": "blanket Node-RED note ('uses flow/global context'); the REST proxy keeps no state across calls that I can see"
+   },
+   {
+    "d": 12,
+    "pattern": "P05",
+    "via": "node",
+    "why": "the ChatOpenAI node is the model configuration attached to the agent, not a prompt chain"
+   },
+   {
+    "d": 16,
+    "pattern": "P53",
+    "via": "node",
+    "why": "the extraction agent is called as the controlling agent's tool, not per item; owner is P46"
+   },
+   {
+    "d": 16,
+    "pattern": "P09",
+    "via": "node",
+    "why": "the human nodes are a buy-or-search menu and a seat question (P10, P55), not a confidence gate"
+   },
+   {
+    "d": 18,
+    "pattern": "P32",
+    "via": "node",
+    "why": "alert and an ask followed by a branch are a notice and an input, not an approval before an effect (P55)"
+   },
+   {
+    "d": 20,
+    "pattern": "P05",
+    "via": "node",
+    "why": "DeepVariant is a variant-calling tool tagged model"
+   },
+   {
+    "d": 20,
+    "pattern": "P06",
+    "via": "node",
+    "why": "merge_vcf_callers is a tool tagged model; nothing retrieved or generated"
+   },
+   {
+    "d": 20,
+    "pattern": "P03",
+    "via": "node",
+    "why": "DeepVariant is a tool tagged model; not extract-normalise-validate"
+   },
+   {
+    "d": 22,
+    "pattern": "P20",
+    "via": "node",
+    "why": "the ready-queue loop is a dependency scheduler running tasks to completion, not generate-verify-retry"
+   },
+   {
+    "d": 22,
+    "pattern": "P27",
+    "via": "node",
+    "why": "the tenacity retry wrapper (5 attempts, backoff) is P26, not an error route"
+   },
+   {
+    "d": 23,
+    "pattern": "P33",
+    "via": "node",
+    "why": "wait resume=timeInterval is a timed wait (P34), not a wait for a signal"
+   },
+   {
+    "d": 24,
+    "pattern": "P05",
+    "via": "node",
+    "why": "a shell script run tagged model"
+   },
+   {
+    "d": 24,
+    "pattern": "P41",
+    "via": "plumb",
+    "why": "a scheduled sample run with no barrier or release gate; 'deploy' is in the name only"
+   },
+   {
+    "d": 26,
+    "pattern": "P01",
+    "via": "plumb",
+    "why": "three turn_on actions in a row have no data hand-off; control order only"
+   },
+   {
+    "d": 28,
+    "pattern": "P21",
+    "via": "node",
+    "why": "the repeat loop is a game loop and its ifs are bet range checks; nothing polls for readiness"
+   },
+   {
+    "d": 30,
+    "pattern": "P15",
+    "via": "node",
+    "why": "stage barriers with many predecessors are barriers (P41), not aggregation of results"
+   },
+   {
+    "d": 32,
+    "pattern": "P50",
+    "via": "plumb",
+    "why": "quality scoring of results is verify-retry, not diagnosis by hypotheses"
+   },
+   {
+    "d": 34,
+    "pattern": "P32",
+    "via": "node",
+    "why": "an ask followed by an if then a call is input validation (P55), not an approval before an effect"
+   },
+   {
+    "d": 36,
+    "pattern": "P32",
+    "via": "node",
+    "why": "documentpicker_open file reads followed by an if are precondition checks, not approvals"
+   },
+   {
+    "d": 37,
+    "pattern": "P32",
+    "via": "node",
+    "why": "22 documentpicker_open reads then if (not) are record-exists checks, not approvals"
+   },
+   {
+    "d": 38,
+    "pattern": "P05",
+    "via": "node",
+    "why": "lmChatOpenAi is a model configuration node, not a chain"
+   },
+   {
+    "d": 40,
+    "pattern": "P04",
+    "via": "node",
+    "why": "medaka is a polishing tool tagged model followed by file outputs; no generated content is delivered"
+   },
+   {
+    "d": 41,
+    "pattern": "P05",
+    "via": "node",
+    "why": "lmChatOpenAi is a model configuration node"
+   },
+   {
+    "d": 41,
+    "pattern": "P33",
+    "via": "node",
+    "why": "wait resume=timeInterval is a timed wait inside poll loops (P21, P34), not a wait for a signal"
+   },
+   {
+    "d": 44,
+    "pattern": "P15",
+    "via": "node",
+    "why": "stage barriers are barriers, not result aggregation"
+   },
+   {
+    "d": 46,
+    "pattern": "P15",
+    "via": "node",
+    "why": "the stage barrier fans out to about 20 jobs; it is a barrier (P41)"
+   },
+   {
+    "d": 48,
+    "pattern": "P06",
+    "via": "node",
+    "why": "'Build and Run Tests' steps tagged model are shell runs"
+   },
+   {
+    "d": 48,
+    "pattern": "P04",
+    "via": "node",
+    "why": "a test run tagged model; nothing is generated and delivered"
+   },
+   {
+    "d": 53,
+    "pattern": "P05",
+    "via": "node",
+    "why": "chatOpenAI is a model configuration node"
+   },
+   {
+    "d": 55,
+    "pattern": "P01",
+    "via": "plumb",
+    "why": "sequences of service calls with no data hand-off"
+   }
+  ],
+  "decision": {
+   "nodeRuleAndToken": "FAIL (falsifier met)",
+   "allPairs": "below falsifier"
+  }
+ },
+ "recall": {
+  "all": {
+   "found": 138,
+   "total": 231,
+   "recall": 0.597,
+   "wilson": [
+    53.3,
+    65.9
+   ]
+  },
+  "excludingRemovedDetectors": {
+   "found": 138,
+   "total": 229,
+   "recall": 0.603,
+   "wilson": [
+    53.8,
+    66.4
+   ]
+  },
+  "missedByPattern": {
+   "P08": 17,
+   "P12": 16,
+   "P14": 8,
+   "P54": 6,
+   "P04": 4,
+   "P01": 4,
+   "P15": 3,
+   "P43": 3,
+   "P55": 3,
+   "P32": 3,
+   "P42": 3,
+   "P25": 3,
+   "P29": 2,
+   "P02": 2,
+   "P26": 2,
+   "P10": 1,
+   "P13": 1,
+   "P51": 1,
+   "P40": 1,
+   "P46": 1,
+   "P09": 1,
+   "P20": 1,
+   "P45": 1,
+   "P56": 1,
+   "P34": 1,
+   "P41": 1,
+   "P22": 1,
+   "P57": 1,
+   "P38": 1
+  },
+  "note": "a blind pattern counts as found when it is anywhere in the census detector set of its item (needs, tokens or plumbing), not necessarily on the same nodes"
+ },
+ "byClusterConservativeStrict": {
+  "science": {
+   "n": 12,
+   "yes": 12
+  },
+  "agentic": {
+   "n": 12,
+   "yes": 8
+  },
+  "automation": {
+   "n": 12,
+   "yes": 10
+  },
+  "consumer-creative": {
+   "n": 12,
+   "yes": 12
+  },
+  "orchestration": {
+   "n": 12,
+   "yes": 12
+  }
+ },
+ "gaps": [
+  {
+   "d": 2,
+   "id": "openai-agents:openai-agents-python/examples/realtime/app/server.py",
+   "explained": "no",
+   "fragment": "Browser microphone audio (24 kHz int16 chunks) streamed over a WebSocket; server-side voice activity detection decides turn ends",
+   "why": "realtime audio duplex stream with model/server-chosen turn boundaries; L0 stream is a bounded batch consumer and has no audio/turn-detection construct"
+  },
+  {
+   "d": 2,
+   "id": "openai-agents:openai-agents-python/examples/realtime/app/server.py",
+   "explained": "no",
+   "fragment": "transfers to the FAQ or seat-booking agent ... transfers back to triage if it cannot answer",
+   "why": "agent-to-agent handoff that keeps the live session conversation (the refused full-history handoff); P46 typed-tool rewrite changes the feature"
+  },
+  {
+   "d": 3,
+   "id": "langgraph:react-agent/src/react_agent/graph.py",
+   "explained": "yes",
+   "fragment": "Chat model with the tool list bound and a system prompt carrying the current time",
+   "why": "minor: wall-clock injected into the prompt is an input the solver does not declare (would be an L3 binding)"
+  },
+  {
+   "d": 5,
+   "id": "node-red:e71d5246a2e80954b267b3079e1e9764",
+   "explained": "no",
+   "fragment": "UI input widget ui_button / ui_slider / ui_switch / ui_dropdown (33 ui_* nodes); ui_text; ui_gauge",
+   "why": "long-lived dashboard widget state is the refused interactive dashboard state"
+  },
+  {
+   "d": 5,
+   "id": "node-red:e71d5246a2e80954b267b3079e1e9764",
+   "explained": "no",
+   "fragment": "device listener (29 nodes) ... set properties / device function / start-virtual-device / generate-event",
+   "why": "simulated-device event bus with node-level context state; closest is trigger.event + state but the elevator logic sits in 19 function nodes (opaque code)"
+  },
+  {
+   "d": 6,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/agents_as_tools_conditional.py",
+   "explained": "yes",
+   "fragment": "Code predicates over the run context decide which language tools the model sees",
+   "why": "minor: a per-run tool allow-list computed by code from context; L0 agent.tools is a static literal list (allowed, but the dynamic form is not a stated construct)"
+  },
+  {
+   "d": 6,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/agents_as_tools_conditional.py",
+   "explained": "yes",
+   "fragment": "Repeats while the result still holds interruptions",
+   "why": "minor: bounded repeat of interrupt-resume needs a literal cap (not stated in the example)"
+  },
+  {
+   "d": 11,
+   "id": "node-red:b67248b9bc0777d641340403feb8bad6",
+   "explained": "yes",
+   "fragment": "26 http in endpoints (GET/POST/PUT/DELETE) plus 28 manual inject test triggers in one flow",
+   "why": "minor: one flow hosting 26 independent webhook routes; L0 trigger.webhook is one trigger per envelope, so it decomposes into 26 envelopes (nothing is lost, but it is a bundle not a workflow)"
+  },
+  {
+   "d": 15,
+   "id": "comfyui:Comfy-Org-workflow_templates-templates-video_wan2_2_14B_flf2v.json",
+   "explained": "yes",
+   "fragment": "(bypassed) nodes: CLIPLoader, UNETLoader, LoraLoaderModelOnly, KSamplerAdvanced, SaveVideo ... (bypassed)",
+   "why": "minor: a static per-graph enable/disable of a whole branch (fast vs slow variant) baked into the template; maps to a build-time choice, not a runtime construct"
+  },
+  {
+   "d": 16,
+   "id": "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/flight_booking.py",
+   "explained": "yes",
+   "fragment": "any other answer re-runs the search agent with its message history and a request for another flight",
+   "why": "minor: re-entering the same agent with its own accumulated message history across turns; closest is session memory (P43), not stated as a construct for a solver"
+  },
+  {
+   "d": 17,
+   "id": "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2123/ikea_e2123.yaml#0",
+   "explained": "yes",
+   "fragment": "ha.action.repeat.while (hold-to-ramp volume loops, 2 nodes)",
+   "why": "minor: the loop runs while an external button state holds, with no literal cap; L0 refuses an unbounded while, so a cap must be added (representable, but not as written)"
+  },
+  {
+   "d": 17,
+   "id": "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2123/ikea_e2123.yaml#0",
+   "explained": "yes",
+   "fragment": "ha.action.!input (24 nodes)",
+   "why": "minor: blueprint inputs that let the installer supply the action list per button; P57 caller-supplied action list covers it"
+  },
+  {
+   "d": 19,
+   "id": "anthropic:claude-cookbooks/patterns/agents/basic_workflows.ipynb#prompt-chaining",
+   "explained": "yes",
+   "fragment": "Link 1: keep only numeric values with their metric names, one 'value: metric' line each",
+   "why": "minor: hand-offs are free text lines, not typed; the library would need a schema for each link (L0 allows it; the example does not carry it)"
+  },
+  {
+   "d": 22,
+   "id": "strands:tools/src/strands_tools/workflow.py",
+   "explained": "yes",
+   "fragment": "New Agent per task from the model-written spec: tool subset from the parent registry, optional provider and settings, optional prompt",
+   "why": "the parent model writes per-task model/provider/system prompt; L0 only allows model ids from policy/models.json and a plan fragment over call/judge/map, so a model-chosen provider must be narrowed to a tier enum (representable only after narrowing)"
+  },
+  {
+   "d": 22,
+   "id": "strands:tools/src/strands_tools/workflow.py",
+   "explained": "yes",
+   "fragment": "A scheduler runs ready tasks on a thread pool by priority",
+   "why": "minor: priority-ordered dependency scheduling of planned tasks; L0 map/wide have concurrency but no priority queue"
+  },
+  {
+   "d": 22,
+   "id": "strands:tools/src/strands_tools/workflow.py",
+   "explained": "yes",
+   "fragment": "persists it as JSON ... reloaded by a file watcher",
+   "why": "minor: durable workflow store with a file watcher is the host's state, not a construct"
+  },
+  {
+   "d": 23,
+   "id": "n8n:12533",
+   "explained": "yes",
+   "fragment": "outputParserAutofixing (5 nodes)",
+   "why": "minor: a second model call repairs malformed structured output; this is judge + code check + bounded retry (P20), nothing new"
+  },
+  {
+   "d": 23,
+   "id": "n8n:12533",
+   "explained": "yes",
+   "fragment": "slack sendAndWait (2 nodes)",
+   "why": "minor: human reply used as free-text edits then re-fed to a model; ask returns untrusted data, OK"
+  },
+  {
+   "d": 28,
+   "id": "apple-shortcuts:workflowllm-seed-10277",
+   "explained": "yes",
+   "fragment": "number_random (9 nodes)",
+   "why": "minor: random draws decide game outcomes; a solver's step is pure and L0 has no randomness/clock input (would be an L3 binding passed in as input)"
+  },
+  {
+   "d": 29,
+   "id": "node-red:a04546c46361167fd1d83aed8e4f22ec",
+   "explained": "yes",
+   "fragment": "ui_text (41 nodes)",
+   "why": "41 ui_text widgets are display-only outputs of the fetched GivEnergy API values (no ui_button/slider/switch inputs); the widget-count criterion would refuse it as dashboard state, but it is inject, HTTP GET, function parse, switch, display, i.e. a status poller, so I read it as explained (output display is done / an L3 notify binding)"
+  },
+  {
+   "d": 30,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab",
+   "explained": "yes",
+   "fragment": "environment=review-docs/mr-${CI_MERGE_REQ…; stop env",
+   "why": "minor: review-app environment with an on_stop teardown run later (deferred compensation tied to an environment lifetime); closest L0 are finally (22) and compensate (23, N)"
+  },
+  {
+   "d": 30,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab",
+   "explained": "yes",
+   "fragment": "resource_group",
+   "why": "minor: mutual exclusion across pipelines; admission (28, N) covers overlapping runs of one workflow, not a named cross-pipeline lock"
+  },
+  {
+   "d": 32,
+   "id": "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel",
+   "explained": "partly",
+   "fragment": "The coordinator writes role, system message and description for a new single-agent worker with default tools, which joins the live roster and starts.",
+   "why": "create_worker lets the model define a new agent (role, system prompt, tool set) at run time; L0 has a fixed agent construct with static tools and refuses model-chosen tools and self-modification, so this recovery branch has no construct"
+  },
+  {
+   "d": 32,
+   "id": "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel",
+   "explained": "partly",
+   "fragment": "A model picks retry, replan, reassign, decompose or create_worker, limited to the enabled list; at most 3 failures per task",
+   "why": "the strategy choice is a judged enum (fine), but replan and decompose re-enter the planner after execution started, an unbounded-looking plan loop that needs a literal cap; only the cap is missing"
+  },
+  {
+   "d": 33,
+   "id": "llamaindex-workflows:llama_index/docs/examples/agent/agent_workflow_multi.ipynb",
+   "explained": "no",
+   "fragment": "Handoff is a tool the model calls; all agents continue one chat memory, and their tools write a state dictionary the caller reads at the end.",
+   "why": "model-chosen hand-off between agents over one shared conversation is exactly the refused full-history handoff, and the shared state dict is a shared mutable scratchpad (rewritten as wide with a typed reduce, which loses the shared chat memory)"
+  },
+  {
+   "d": 36,
+   "id": "apple-shortcuts:workflowllm-seed-10817",
+   "explained": "yes",
+   "fragment": "documentpicker_open (17) / documentpicker_save (14)",
+   "why": "minor: account and channel records are kept in files read and written across runs; this is cross-run state (L0 state is N, designed not built)"
+  },
+  {
+   "d": 37,
+   "id": "apple-shortcuts:workflowllm-seed-06338",
+   "explained": "yes",
+   "fragment": "number_random (16 nodes)",
+   "why": "minor: random draws decide game outcomes; no randomness input in a pure solver step (L3 binding)"
+  },
+  {
+   "d": 37,
+   "id": "apple-shortcuts:workflowllm-seed-06338",
+   "explained": "yes",
+   "fragment": "documentpicker_open (14) / documentpicker_save (26)",
+   "why": "minor: per-user economy data persisted in files across runs, i.e. cross-run state (L0 state is N)"
+  },
+  {
+   "d": 38,
+   "id": "n8n:17387",
+   "explained": "yes",
+   "fragment": "documentDefaultDataLoader / textSplitterRecursiveCharacterTextSplitter / embeddingsGoogleGemini / vectorStoreSupabase mode=insert",
+   "why": "minor: the ingestion half of RAG (split, embed, upsert into an index, delete on request) has no pattern; P06 covers only retrieve-then-generate. It composes from map + effect but is not a stated idiom"
+  },
+  {
+   "d": 41,
+   "id": "n8n:14064",
+   "explained": "yes",
+   "fragment": "wait resume=timeInterval then blotato get then if, looping back to the wait (3 loops)",
+   "why": "minor: poll-until-published loops show no attempt cap or timeout in the graph; L0 requires a literal cap (P21 has TIMEOUT_MS), so one must be added"
+  },
+  {
+   "d": 42,
+   "id": "snakemake:friendsofstrandseq/mosaicatcher-pipeline@v2.5.1",
+   "explained": "yes",
+   "fragment": "checkpoint tune_predictions_based_on_threshold / checkpoint mosaic_count",
+   "why": "minor: Snakemake checkpoint re-evaluates the DAG after the job, so the set of per-cell downstream jobs depends on its output; this is a map over a run-time list (P12), not P31 checkpoint-resume (a name collision)"
+  },
+  {
+   "d": 45,
+   "id": "langgraph:data-enrichment/src/enrichment_agent/graph.py",
+   "explained": "yes",
+   "fragment": "Info ... whose parameter schema is the caller-supplied extraction schema",
+   "why": "minor: the output schema arrives as run-time input; L0 judge/agent schemas are literals chosen at compile time, so a caller-supplied schema needs the schema slot filled from input (allowed type, but dynamic)"
+  },
+  {
+   "d": 54,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py",
+   "explained": "partly",
+   "fragment": "its text deltas are read one by one while the model is still generating",
+   "why": "incremental consumption of a model's token stream while it generates; L0 judge/agent return a whole typed result, and stream (30) is a bounded input consumer, not an output-token stream"
+  },
+  {
+   "d": 54,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py",
+   "explained": "partly",
+   "fragment": "Every 300 characters ... starts a background guardrail check on the text so far ... If a check fails the stream loop breaks early",
+   "why": "periodic partial-output checks and cancelling an in-flight generation on a tripwire have no construct (P48 covers a parallel check aborting a whole output, not mid-stream cancellation); a post-hoc check of the full text is a different workflow"
+  },
+  {
+   "d": 55,
+   "id": "home-assistant:forum-527354",
+   "explained": "yes",
+   "fragment": "ha.action.repeat.until (20 nodes); ha.action.wait_for_trigger (44 nodes)",
+   "why": "minor: until-loops and waits for an external state change show no literal cap or timeout in the graph; L0 requires both (representable once added)"
+  },
+  {
+   "d": 55,
+   "id": "home-assistant:forum-527354",
+   "explained": "yes",
+   "fragment": "Delay (templated/input) (87 nodes)",
+   "why": "minor: delays whose duration is a user input or template; wait.delay is stated with a fixed delayMs and a 1 hour cap"
+  },
+  {
+   "d": 57,
+   "id": "burr:burr/examples/email-assistant/application.py",
+   "explained": "yes",
+   "fragment": "Non-empty feedback loops back to drafting; empty feedback goes to final_result",
+   "why": "minor: the draft loop ends only when the person accepts, with no cap; L0 requires a literal cap on every loop, so a max-rounds bound has to be added"
+  }
+ ]
+}
