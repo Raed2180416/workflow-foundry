@@ -260,6 +260,9 @@ Send each required notification exactly once.
   yet collected.
 - S8 "Later actions change nothing" (R3.2) covers the waiting period only: after a counted `amend` the order is ready and
   processing, and a later `cancel` is judged by R6.2 like any cancel during processing.
+- S9 A step that a counted customer cancel or action makes moot before you took it is no longer required: the R3.1
+  status and notice when the customer acts first, the R4.1 `processing` statuses when a counted cancel stops the order
+  first. Taking such a step anyway (before stopping the order) is allowed.
 - S7 Whether a shipment "has been reported collected" before a cancel is judged by the report's `reportedAt` (a
   `collected`, `inTransit` or `delivered` report all prove collection), as far as reports have reached you when you act.
 

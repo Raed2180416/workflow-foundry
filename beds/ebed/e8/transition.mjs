@@ -81,6 +81,15 @@ function orderExpectation(world, view, t) {
   const avail = alloc.filter(f => f.available), unavail = alloc.filter(f => !f.available);
   const stage = t.class.startsWith('gl-') ? t.class : null;
   const before = (row, a) => row.callAt < a || (row.callAt === a && !row.knows.has(c));
+  const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));
+  /** S9: a step superseded at `at` (a counted cancel or customer action) before the arm took it is no longer required; taking it anyway is permitted. */
+  const maybe = (at, emit) => {
+    const e = emit();
+    if (at === null || at === undefined) return;
+    if (view.rows.some(r => matches(e, r) && before(r, at))) return;
+    required.splice(required.indexOf(e), 1);
+    permitted.push({ rule: 'S9', system: e.system, op: e.op, match: e.match });
+  };
 
   const required = [], permitted = [], tasksReq = [], tasksPerm = [];
   const lid = (id, rule, system, op, match, earliest, latest, extra = {}) => {
@@ -166,13 +175,14 @@ function orderExpectation(world, view, t) {
   let ready = cleared;
   let countedAction = null;
   if (unavail.length) {
-    if (!pre.actionRequired) {
-      ost('customerActionRequired', 'R3.1', cleared, cleared + 120 * MIN);
-      ntf(O, 'action-required', 'R3.1', cleared, cleared + 120 * MIN);
-    }
-    rec.order = 'customerActionRequired';
     const D = p + H * 60 * MIN;
     countedAction = custActions.find(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;
+    if (!pre.actionRequired) {
+      // S9: a customer action that comes first supersedes the R3.1 status and notice not yet taken.
+      maybe(countedAction?.at ?? null, () => ost('customerActionRequired', 'R3.1', cleared, cleared + 120 * MIN));
+      maybe(countedAction?.at ?? null, () => ntf(O, 'action-required', 'R3.1', cleared, cleared + 120 * MIN));
+    }
+    rec.order = 'customerActionRequired';
     for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });
     if (!countedAction) {
       // The timeout is taken after D (an action at D counts, S1).
@@ -191,10 +201,6 @@ function orderExpectation(world, view, t) {
 
   // R4 processing, one saga per available fulfilment.
   const tr = ready;
-  if (!pre.processing) {
-    ost('processing', 'R4.1', tr, tr + 60 * MIN);
-    for (const f of avail) fst(f.fulfilmentId, 'processing', 'R4.1', tr, tr + 60 * MIN);
-  }
   rec.order = 'processing';
 
   // Customer cancels while processing (R6.2, R6.3): the first that counts aborts.
@@ -232,6 +238,11 @@ function orderExpectation(world, view, t) {
     if (collectedBy(a)) { ntf(O, 'cancel-refused', 'R6.3', a.at, a.at + 60 * MIN); continue; }
     abortAt = a.at;
     break;
+  }
+  if (!pre.processing) {
+    // S9: a counted cancel that comes first supersedes the R4.1 statuses not yet set.
+    maybe(abortAt, () => ost('processing', 'R4.1', tr, tr + 60 * MIN));
+    for (const f of avail) maybe(abortAt, () => fst(f.fulfilmentId, 'processing', 'R4.1', tr, tr + 60 * MIN));
   }
 
   let lastEnd = tr;
