@@ -11,7 +11,8 @@ Writes into HOSTDIR (host-only; nothing generated is committed):
   triggers.jsonl   host-only: payload + delta (world ops applied before the trigger) + kind + variant + traps
   truth.jsonl      host-only: per trigger, the expected outcome, effects, guards and AutomationBench assertion dicts
   end.json         host-only: the end-of-week expectations (graded at the week-close trigger)
-  serve-input.json the family input row for `bridge.py serve --input ... --world world_t.json` (assertions: [])
+  serve-inputs.jsonl one input row per trigger for `bridge.py serve --input <row> --world world_t.json`
+                   (assertions: [], current_time = trigger time; see serve_input)
   meta.json        family, version, seed, difficulty, counts and sha256 of every file
 
 Determinism: one random.Random(f"{family}:{version}:{seed}:{difficulty}"); no wall clock, no set iteration, every
@@ -830,14 +831,19 @@ def validate_world(world: dict) -> dict:
     return dumped
 
 
-def serve_input(seed: int) -> dict:
-    """The family input row for bridge.py serve (AutomationBenchEnv dataset row): the family's apps only (so the
-    allowed services are fixed), no assertions (the truth never enters the serve process), the api toolset."""
+def serve_input(seed: int, trigger: dict) -> dict:
+    """The input row for `bridge.py serve --input <row> --world <world_t>` for ONE trigger (an AutomationBenchEnv
+    dataset row): the family's apps only (so the allowed services are fixed), no assertions (the truth never enters
+    the serve process), the api toolset, and meta.current_time = the trigger time. serve seeds its determinism shim
+    from this row (task_seed(task_name), clock base = current_time), so records the arm creates carry the trigger's
+    time; a row without current_time would stamp them 2026-01-01. The prompt holds only arm-visible text."""
     policy = (HERE / "POLICY.md").read_text()
-    info = {"task_name": f"{FAMILY}.s{seed}", "zapier_tools": [], "assertions": [],
-            "initial_state": {"meta": {"schema_version": "0.1.0"}, "calendly": {}, "salesforce": {}, "slack": {}}}
-    return {"example_id": 0, "prompt": [{"role": "system", "content": "standing automation " + FAMILY},
-                                        {"role": "user", "content": policy}],
+    info = {"task_name": f"{FAMILY}.s{seed}.t{trigger['index']:02d}", "zapier_tools": [], "assertions": [],
+            "initial_state": {"meta": {"schema_version": "0.1.0", "current_time": trigger["at"]},
+                              "calendly": {}, "salesforce": {}, "slack": {}}}
+    return {"example_id": trigger["index"],
+            "prompt": [{"role": "system", "content": "standing automation " + FAMILY},
+                       {"role": "user", "content": policy + "\n\nTrigger:\n" + canon(trigger["payload"])}],
             "answer": "", "info": json.dumps(info)}
 
 
@@ -864,7 +870,7 @@ def write(out: dict, d: Path):
              "triggers.jsonl": "".join(canon(t) + "\n" for t in out["triggers"]),
              "truth.jsonl": "".join(canon(t) + "\n" for t in out["truth"]),
              "end.json": json.dumps(out["end"], sort_keys=True, indent=1) + "\n",
-             "serve-input.json": json.dumps(serve_input(out["meta"]["seed"]), sort_keys=True) + "\n"}
+             "serve-inputs.jsonl": "".join(canon(serve_input(out["meta"]["seed"], t)) + "\n" for t in out["triggers"])}
     for name, text in files.items():
         (d / name).write_text(text)
     meta = dict(out["meta"], sha256={n: sha(t) for n, t in files.items()})

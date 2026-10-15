@@ -83,12 +83,12 @@ class NoDedupe(R.DealDesk):
         return False
 
 
-class AsOfBlind(R.DealDesk):
-    def sheet(self, ref):
-        hdr, rows = super().sheet(ref)
-        if ref in (R.HIERARCHY, R.FX_RATES):  # pretend every row is already in force
-            rows = [dict(r, Updated="0000-00-00") if r.get("Updated") else r for r in rows][::-1]
-        return hdr, rows
+class AsOfBlind(R.DealDesk):  # newest row overall, even when it is dated after the close date
+    def tier_for(self, account, close_date):
+        return super().tier_for(account, "9999-12-31")
+
+    def rate_for(self, currency, close_date):
+        return super().rate_for(currency, "9999-12-31")
 
 
 class NoParent(R.DealDesk):

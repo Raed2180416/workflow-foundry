@@ -299,72 +299,75 @@ export function intrinsicOf(features, thresholds) {
   return { intrinsic: false, reason: below.join('; ') || 'no rule keys', missing };
 }
 
-function balancedAccuracy(pred, y) {
-  let tp = 0, tn = 0, pos = 0, neg = 0;
-  pred.forEach((p, i) => { if (y[i]) { pos += 1; tp += p ? 1 : 0; } else { neg += 1; tn += p ? 0 : 1; } });
-  return pos && neg ? (tp / pos + tn / neg) / 2 : pos ? tp / pos : neg ? tn / neg : 0;
+/**
+ * Balanced accuracy of need calls `pred` against truths `y`: { value, why, tp, fn, tn, fp }. It is undefined (value null,
+ * with the reason) when one class is absent: a one-class "balanced accuracy" would be a single recall under another name.
+ */
+export function balancedAccuracyOf(pred, y) {
+  let tp = 0, fn = 0, tn = 0, fp = 0;
+  pred.forEach((p, i) => { if (y[i]) { if (p) tp += 1; else fn += 1; } else if (p) fp += 1; else tn += 1; });
+  const pos = tp + fn, neg = tn + fp;
+  if (!pos || !neg) return { value: null, why: `balanced accuracy undefined: ${pos} positive and ${neg} negative confident item(s) scored (one class absent)`, tp, fn, tn, fp };
+  return { value: (tp / pos + tn / neg) / 2, why: null, tp, fn, tn, fp };
 }
 
-/** PREREG §6's fitting minimum over confident items ({ cluster, workflow }); mirrors prereg-rules.mjs thetaFitStatus (parity is tested). */
+/** PREREG §6's fitting minimum over confident items ({ cluster, workflow }): prereg-rules.mjs thetaFitStatus itself. */
 export function ruleFitStatus(conf, minimum = RULE_MINIMUM) {
-  const { minPos, minPosClusters, minNeg, minNegClusters } = { ...RULE_MINIMUM, ...minimum };
-  const pos = conf.filter(x => x.workflow), neg = conf.filter(x => !x.workflow);
-  const pc = new Set(pos.map(x => x.cluster)).size, nc = new Set(neg.map(x => x.cluster)).size, short = [];
-  if (pos.length < minPos) short.push(`${pos.length} confident positive(s) < ${minPos}`);
-  if (pc < minPosClusters) short.push(`positives in ${pc} cluster(s) < ${minPosClusters}`);
-  if (neg.length < minNeg) short.push(`${neg.length} confident negative(s) < ${minNeg}`);
-  if (nc < minNegClusters) short.push(`negatives in ${nc} cluster(s) < ${minNegClusters}`);
-  return { fit: !short.length, pos: pos.length, neg: neg.length, posClusters: pc, negClusters: nc, why: short.length ? `H0 not fitted: ${short.join('; ')}` : null };
+  return thetaFitStatus(conf, { ...RULE_MINIMUM, ...minimum });
 }
+
+const RULE_METHOD = 'PREREG §6: prereg-rules.mjs thetaFitStatus (minimum), fitOrRule on the confident items (midpoints, ties to the larger θ key by key)';
 
 /**
- * Fit H0's thresholds on TRAIN items' confident N = 1 NEED labels, maximising balanced accuracy in-sample (LOCO is the
- * reported estimate: ruleLoco). Candidates per key: +∞, the midpoints between adjacent TRAIN values (descending), the
- * smallest value. Ties go to fewer workflow calls on TRAIN, then to the larger thresholds (key order). Same candidates
- * and tie order as evaluate.mjs fitRule (parity is tested). Below the fitting minimum (`minimum`, PREREG §6) the rule is
- * not fitted: `fitted: false`, `why`, every θ = +∞ and no balanced accuracy; decide then reads the structure as unknown
- * and abstains (`rule-unfitted`) rather than calling every job "no workflow".
+ * Fit H0's thresholds by the preregistered rule (PREREG §6): thetaFitStatus is the gate (at least 2 confident N = 1
+ * positives from 2 TRAIN clusters and 2 negatives from 2 clusters), then prereg-rules.mjs fitOrRule on the CONFIDENT
+ * items only: candidates per key are +∞ and the midpoints between adjacent distinct confident values (never a job's own
+ * value), the highest in-sample balanced accuracy wins, ties go to the larger thresholds key by key (θ_tok first). LOCO
+ * (ruleLoco) is the reported estimate. Below the minimum the rule is not fitted: `fitted: false`, `why`, every θ = +∞ and
+ * no balanced accuracy; decide then reads the structure as unknown and abstains (`rule-unfitted`) rather than calling
+ * every job "no workflow". `workflowCalls` counts the TRAIN items the fitted rule fires on (reported, not a tie-break).
  */
 export function fitStructuralRule(items, { keys = RULE_KEYS, cell = N1, minimum = RULE_MINIMUM } = {}) {
   const val = (it, k) => (finite(it.features[k]) ? it.features[k] : -Infinity);
   const conf = items.filter(it => it.label(cell)?.confident), y = conf.map(it => it.label(cell).label === 'workflow');
   const status = ruleFitStatus(conf.map((it, i) => ({ cluster: it.cluster, workflow: y[i] })), minimum);
   const counts = { confident: conf.length, pos: status.pos, neg: status.neg, posClusters: status.posClusters, negClusters: status.negClusters };
-  if (!status.fit) return { keys: [...keys], thresholds: Object.fromEntries(keys.map(k => [k, Infinity])), trainBalancedAccuracy: null, ...counts, workflowCalls: 0, fitted: false, why: status.why };
-  const cands = keys.map(k => {
-    const v = [...new Set(items.map(it => it.features[k]).filter(finite))].sort((a, b) => a - b);
-    return [Infinity, ...v.slice(1).map((x, i) => (x + v[i]) / 2).reverse(), ...(v.length ? [v[0]] : [])];
-  });
-  let best = null;
-  const visit = (i, th) => {
-    if (i === keys.length) {
-      const fires = it => keys.some((k, j) => val(it, k) >= th[j]);
-      const ba = balancedAccuracy(conf.map(fires), y), calls = items.filter(fires).length;
-      if (!best || ba > best.ba + EPS || (Math.abs(ba - best.ba) <= EPS && calls < best.calls)) best = { ba, calls, th: [...th] };
-      return;
-    }
-    for (const t of cands[i]) visit(i + 1, [...th, t]);
-  };
-  visit(0, []);
-  return { keys: [...keys], thresholds: Object.fromEntries(keys.map((k, i) => [k, best.th[i]])), trainBalancedAccuracy: best.ba, ...counts, workflowCalls: best.calls, fitted: true, why: null };
+  if (!status.fit) return { keys: [...keys], thresholds: Object.fromEntries(keys.map(k => [k, Infinity])), trainBalancedAccuracy: null, ...counts, workflowCalls: 0, fitted: false, why: status.why, method: RULE_METHOD };
+  const fit = fitOrRule(conf.map((it, i) => ({ features: it.features, workflow: y[i] })), [...keys]);
+  const fires = it => keys.some(k => val(it, k) >= fit.thresholds[k]);
+  return { keys: [...keys], thresholds: { ...fit.thresholds }, trainBalancedAccuracy: fit.balancedAccuracy, ...counts, workflowCalls: items.filter(fires).length, fitted: true, why: null, method: RULE_METHOD };
 }
 
 /**
- * The fitting procedure's leave-one-cluster-out balanced accuracy (each fold refits θ without one TRAIN cluster). A fold
- * whose refit is not fitted (PREREG §6: its training part is below the minimum) is undefined: it is listed with its
- * reason and excluded from the estimate, never scored as θ = +∞.
+ * The preregistered leave-one-cluster-out balanced accuracy of H0 (PREREG §6; prereg-rules.mjs locoFolds and fitOrRule).
+ * Each fold refits θ by fitOrRule on the confident items of the other clusters. A fold is undefined only when its training
+ * part has no confident positive or no confident negative (locoFolds): it is listed with its reason and excluded from the
+ * estimate, never scored as θ = +∞. A held-out confident item whose structure cannot be read (a rule key missing and
+ * nothing fired, where decide would abstain) is skipped and counted, never scored as "no workflow". The pooled estimate
+ * is null, with `why`, when the scored items hold one class only.
  */
-export function ruleLoco(items, { keys = RULE_KEYS, cell = N1, minimum = RULE_MINIMUM } = {}) {
+export function ruleLoco(items, { keys = RULE_KEYS, cell = N1 } = {}) {
   const clusters = [...new Set(items.map(it => it.cluster))].sort();
   if (clusters.length < 2) return null;
-  const pred = [], y = [], folds = [];
-  for (const c of clusters) {
-    const r = fitStructuralRule(items.filter(it => it.cluster !== c), { keys, cell, minimum });
-    folds.push({ heldOutCluster: c, defined: r.fitted, why: r.why, thresholds: Object.fromEntries(Object.entries(r.thresholds).map(([k, t]) => [k, enc(t)])) });
-    if (!r.fitted) continue;
-    for (const it of items.filter(x => x.cluster === c && x.label(cell)?.confident)) { pred.push(intrinsicOf(it.features, r.thresholds).intrinsic === true); y.push(it.label(cell).label === 'workflow'); }
+  const conf = items.filter(it => it.label(cell)?.confident).map(it => ({ it, cluster: it.cluster, workflow: it.label(cell).label === 'workflow' }));
+  const lf = locoFolds(conf, clusters), pred = [], y = [], folds = [], skipped = [];
+  for (const f of lf.folds) {
+    const fold = { heldOutCluster: f.held, defined: f.defined, trainPos: f.trainPos, trainNeg: f.trainNeg, thresholds: null, scored: 0, skipped: 0,
+      why: f.defined ? null : `undefined (PREREG §6): the training part has ${f.trainPos} confident positive(s) and ${f.trainNeg} confident negative(s)` };
+    if (f.defined) {
+      const r = fitOrRule(conf.filter(x => x.cluster !== f.held).map(x => ({ features: x.it.features, workflow: x.workflow })), [...keys]);
+      fold.thresholds = Object.fromEntries(Object.entries(r.thresholds).map(([k, t]) => [k, enc(t)]));
+      for (const x of conf.filter(z => z.cluster === f.held)) {
+        const call = intrinsicOf(x.it.features, r.thresholds).intrinsic;
+        if (call === null) { fold.skipped += 1; skipped.push({ id: x.it.id, cluster: f.held, why: 'structure unreadable (a rule key is missing and none fired): decide abstains, so LOCO does not score it' }); continue; }
+        pred.push(call); y.push(x.workflow); fold.scored += 1;
+      }
+    }
+    folds.push(fold);
   }
-  return { balancedAccuracy: pred.length ? balancedAccuracy(pred, y) : null, confident: pred.length, defined: folds.filter(f => f.defined).length, undefined: folds.filter(f => !f.defined).length, folds };
+  const ba = balancedAccuracyOf(pred, y);
+  return { balancedAccuracy: ba.value, why: ba.why, confident: pred.length, counts: { tp: ba.tp, fn: ba.fn, tn: ba.tn, fp: ba.fp }, skipped: skipped.length, skippedItems: skipped,
+    defined: lf.defined, undefined: lf.undefined, folds, method: 'PREREG §6: prereg-rules.mjs locoFolds and fitOrRule' };
 }
 
 function checkStats(st, where) {
@@ -436,18 +439,58 @@ export function decideModes(pred, cell, { delta = DELTA, acceptDelta = delta, or
   return { mode: pick.mode, best: best.mode, tie: pick.mode !== best.mode, acceptable: rankModes(A), U: new Map(e.map(x => [x.mode, x.u])), usd: new Map(e.map(x => [x.mode, x.usd])), maxU: best.u };
 }
 
+const PRIOR_FLOOR = 1e-3;   // a Beta parameter floor: a leaf whose jobs all pass (or all fail) still gets a proper prior
+
 /**
- * NR-probe's update (DESIGN §3): for each probed mode, the TRAIN prior Beta(1 + s·T, 1 + (1 − s)·T) with T = support jobs
- * × tasksPerJob, updated with the probe's deployable passes. `observations`: { <mode>: { passes, n } }. Mapping a
- * deployable pass to a success is the caller's (TBD-FREEZE). q is capped so p + q <= 1.
+ * NR-probe's prior for one mode in one leaf, from the per-job verified-success rates `rates` of the leaf's TRAIN jobs.
+ * 'empirical-bayes' (default; review E5): a Beta whose mean is the leaf mean μ and whose concentration κ is the method-of-
+ * moments estimate of the between-job dispersion, corrected for the binomial noise of tasksPerJob tasks per job
+ * (Var(rate) = μ(1 − μ)·(1 + (n − 1)ρ)/n, ρ = 1/(κ + 1)); κ is clamped to [kappaMin, kappaMax], and is kappaMax (the cap,
+ * priorJobsCap jobs' worth of tasks) when the dispersion cannot be estimated (one job, every job at 0 or 1, or a spread
+ * within binomial noise). A probe of a few draws therefore moves a job's rate as far as jobs in the leaf actually differ.
+ * 'pooled-tasks' (the PREREG §6 text): Beta(1 + μ·T, 1 + (1 − μ)·T), T = jobs × tasksPerJob, which treats every TRAIN
+ * task of the leaf as a draw of this job's rate (review E5: a probe then hardly moves anything).
+ * Returns { a, b, kappa, mu, jobs, kind, why }.
  */
-export function withProbe(pred, { observations = {}, tasksPerJob = 12 } = {}) {
+export function leafPrior(rates, { kind = 'empirical-bayes', tasksPerJob = 12, kappaMax = PRIOR_JOBS_CAP * tasksPerJob, kappaMin = 1 } = {}) {
+  if (!PROBE_PRIORS.includes(kind)) throw new Error(`probe prior must be one of ${PROBE_PRIORS.join(', ')}, got ${kind}`);
+  if (!rates.length || !rates.every(r => finite(r) && r >= -1e-9 && r <= 1 + 1e-9)) throw new Error('leafPrior needs at least one rate in [0, 1]');
+  const J = rates.length, mu = Math.min(1, Math.max(0, rates.reduce((a, x) => a + x, 0) / J));
+  if (kind === 'pooled-tasks') { const T = J * tasksPerJob; return { a: 1 + mu * T, b: 1 + (1 - mu) * T, kappa: 2 + T, mu, jobs: J, kind, why: `pooled tasks: T = ${J} job(s) x ${tasksPerJob}` }; }
+  if (!(finite(kappaMax) && kappaMax >= kappaMin && kappaMin > 0)) throw new Error(`leafPrior: need 0 < kappaMin <= kappaMax (got ${kappaMin}, ${kappaMax})`);
+  let kappa = kappaMax, why;
+  const w = mu * (1 - mu);
+  if (J < 2) why = 'one TRAIN job: between-job dispersion not estimable, κ at the cap';
+  else if (w <= 1e-12) why = `every TRAIN job at rate ${mu}: dispersion not estimable, κ at the cap`;
+  else if (tasksPerJob < 2) why = 'one task per job: the binomial noise hides the dispersion, κ at the cap';
+  else {
+    const v = rates.reduce((a, x) => a + (x - mu) ** 2, 0) / (J - 1), rho = (tasksPerJob * v / w - 1) / (tasksPerJob - 1);
+    if (rho <= 0) why = `spread of ${J} job rates within binomial noise (variance ${v.toFixed(4)}): κ at the cap`;
+    else { kappa = Math.min(kappaMax, Math.max(kappaMin, 1 / rho - 1)); why = `method of moments over ${J} job rates (variance ${v.toFixed(4)}, ρ ${rho.toFixed(4)})${kappa === kappaMax ? ', capped' : kappa === kappaMin ? ', floored' : ''}`; }
+  }
+  return { a: Math.max(PRIOR_FLOOR, mu * kappa), b: Math.max(PRIOR_FLOOR, (1 - mu) * kappa), kappa, mu, jobs: J, kind, why };
+}
+
+/**
+ * NR-probe's update (DESIGN §3): each observed mode's prior Beta(a, b) updated with the probe's deployable passes,
+ * s = (a + passes)/(a + b + n). `priors`: { <mode>: { a, b } } (or a Map), the router's leaf priors (leafPrior); without
+ * `priors`, the 'pooled-tasks' prior Beta(1 + s·T, 1 + (1 − s)·T), T = support jobs × tasksPerJob, from the prediction
+ * itself. `observations`: { <mode>: { passes, n } }. An observation on a mode the prediction lacks, or without a prior,
+ * is refused, never ignored. Mapping a deployable pass to a success is the caller's (TBD-FREEZE). q is capped so p + q <= 1.
+ */
+export function withProbe(pred, { observations = {}, tasksPerJob = 12, priors = null } = {}) {
   const out = new Map(pred);
   for (const [m, o] of Object.entries(observations)) {
     const st = pred.get(m);
-    if (!st) continue;
+    if (!st) throw new Error(`probe observation for ${m}: the router has no prediction for this mode (refused, never ignored)`);
     if (!(Number.isInteger(o?.n) && o.n >= 0 && Number.isInteger(o.passes) && o.passes >= 0 && o.passes <= o.n)) throw new Error(`probe observation for ${m} needs integers 0 <= passes <= n`);
-    const T = (st.n ?? 1) * tasksPerJob, s = (1 + st.s * T + o.passes) / (2 + T + o.n);
+    let a, b;
+    if (priors) {
+      const pr = priors instanceof Map ? priors.get(m) : priors[m];
+      if (!(pr && finite(pr.a) && pr.a > 0 && finite(pr.b) && pr.b > 0)) throw new Error(`probe observation for ${m}: no prior for this mode`);
+      ({ a, b } = pr);
+    } else { const T = (st.n ?? 1) * tasksPerJob; a = 1 + st.s * T; b = 1 + (1 - st.s) * T; }
+    const s = (a + o.passes) / (a + b + o.n);
     out.set(m, Object.freeze({ ...st, s, q: Math.min(st.q, 1 - s) }));
   }
   return out;
@@ -461,7 +504,9 @@ function standardizer(items, keys = TRUSTED_FEATURES) {
     sd[k] = xs.length > 1 ? Math.sqrt(xs.reduce((a, x) => a + (x - mu[k]) ** 2, 0) / (xs.length - 1)) || 1 : 1;
   }
   const z = f => keys.map(k => ((finite(f[k]) ? f[k] : mu[k]) - mu[k]) / sd[k]);
-  return { z, mu, sd };
+  // The keys the distance reads (a key no TRAIN item has is 0 for everyone and moves no distance).
+  const used = keys.filter(k => items.some(it => finite(it.features[k])));
+  return { z, mu, sd, used, missingOf: f => used.filter(k => !finite(f?.[k])) };
 }
 function nearestOf(pool, std, features, k) {
   const q = std.z(features);
@@ -470,24 +515,33 @@ function nearestOf(pool, std, features, k) {
 }
 const knnPred = nb => poolStats(nb.map(x => x.it), nb.map(x => 1 / (1 + x.d)), { complete: true });
 
-/** k for the kNN stage by leave-one-cluster-out on TRAIN at the headline cell (ties to the first k listed). */
+/**
+ * k for the kNN stage by leave-one-cluster-out on TRAIN at the headline cell (ties to the first k listed). A held-out
+ * item with a missing kNN feature (decide abstains there) or with no mode in common with its neighbours' prediction is
+ * skipped, and a cluster with nothing scored drops out of the mean: both are counted per k in `skipped`, never lost.
+ */
 function chooseK(items, { ks, order, delta }) {
-  const clusters = [...new Set(items.map(it => it.cluster))].sort(), scores = {};
-  if (clusters.length < 2) return { k: ks[0], scores: null };
+  const clusters = [...new Set(items.map(it => it.cluster))].sort(), scores = {}, skipped = {};
+  if (clusters.length < 2) return { k: ks[0], scores: null, skipped: null };
   let k = ks[0], bestU = -Infinity;
   for (const kk of ks) {
+    const sk = { missingFeatures: [], noCommonMode: [], clusters: [] };
     const per = clusters.map(c => {
       const pool = items.filter(it => it.cluster !== c), std = standardizer(pool), us = [];
       for (const it of items.filter(x => x.cluster === c)) {
+        if (std.missingOf(it.features).length) { sk.missingFeatures.push(it.id); continue; }
         const pred = knnPred(nearestOf(pool, std, it.features, kk)), cand = new Map([...pred].filter(([m]) => it.statsMap.has(m)));
         if (cand.size) us.push(needUtility(it.statsMap.get(decideModes(cand, HEADLINE, { delta, order }).mode), HEADLINE));
+        else sk.noCommonMode.push(it.id);
       }
+      if (!us.length) sk.clusters.push(c);
       return us.length ? us.reduce((a, x) => a + x, 0) / us.length : null;
     }).filter(x => x !== null);
     scores[kk] = per.length ? per.reduce((a, x) => a + x, 0) / per.length : null;
+    skipped[kk] = { items: sk.missingFeatures.length + sk.noCommonMode.length, missingFeatures: sk.missingFeatures, noCommonMode: sk.noCommonMode, clusters: sk.clusters };
     if (scores[kk] !== null && scores[kk] > bestU + EPS) { bestU = scores[kk]; k = kk; }
   }
-  return { k, scores };
+  return { k, scores, skipped };
 }
 
 /**
