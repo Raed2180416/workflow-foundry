@@ -13,7 +13,7 @@ import {
   STAGES_FILE, PREREG_FILE, POLICY_FILE, checkStages, sectionOf, aFreezeShas, envelopeLaunchCheck, launchJobsOf, heldoutDryRefusal,
   e2eDraw,
 } from '../prereg-check.mjs';
-import { c7aReading, c7aPower, powerGate, missingDataRule, C7A_USEFUL, NEAR_CLUSTERS } from '../prereg-rules.mjs';
+import { c7aReading, c7aPower, c7aMinimumCounts, powerGate, missingDataRule, C7A_USEFUL, NEAR_CLUSTERS } from '../prereg-rules.mjs';
 import { needTable, needLabels, makeCell, cellStats } from '../metrics.mjs';
 import { verifyEnvelope, envelopeProvenance, loadLabels, ROUTER_FILES } from '../evaluate.mjs';
 import * as LR from '../label-run.mjs';
@@ -335,4 +335,45 @@ test('minor 13: budget overshoot is stated, and its archived measurement holds (
   assert.ok(C.every(c => c.gatewayOvershootUsd === 0));
   assert.match(STAGES.spendMeter.overshoot, /273 JIT agent and interpreter sessions/);
   assert.match(sectionOf(TEXT, /^## 12\./m), /\*\*Overshoot: the bound is not a hard ceiling\*\*/);
+});
+
+// ------------------------------------------------------------------------- refresh (2026-10-15): text against code
+test('major 1 (refresh): the planned-count chances and the minimum confident counts printed in §7 are what c7aPower computes', () => {
+  const s7 = sectionOf(TEXT, /^## 7\./m);
+  const planned = /Planned counts \(pExclude\):([^\n]*\n[^\n]*)/.exec(s7)[1];
+  const pairs = [...planned.matchAll(/(\d+) \+ (\d+): (\d\.\d{3})/g)].map(m => [Number(m[1]), Number(m[2]), Number(m[3])]);
+  assert.equal(pairs.length, 7, planned);
+  for (const [p, n, want] of pairs) close(c7aPower(p, n).pExclude, want, 0.0005, `pExclude ${p} + ${n}`);
+  // The minimum counts: the frontier of c7aMinimumCounts (a count of positives whose minimum equals the previous one adds
+  // nothing), the same list stages.json holds, and powered in both orders (symmetric).
+  const listed = [.../\*\*Minimum confident counts\*\*[^:]*:([^.]*)\./.exec(s7)[1].matchAll(/(\d+) \+ (\d+)/g)].map(m => [Number(m[1]), Number(m[2])]);
+  let prev = Infinity;
+  const frontier = c7aMinimumCounts({ maxPos: 10 }).filter(x => x.minNeg != null && x.minNeg < prev && (prev = x.minNeg, true)).map(x => [x.pos, x.minNeg]);
+  assert.deepEqual(listed, frontier);
+  assert.deepEqual(STAGES.analysis.c7a.minimumConfidentCounts.map(x => [x.pos, x.neg]), frontier);
+  for (const [p, n] of frontier) { assert.ok(c7aPower(p, n).powered && c7aPower(n, p).powered, `${p} + ${n}`); assert.ok(!c7aPower(p, n - 1).powered, `${p} + ${n - 1}`); }
+});
+
+test('minor 13 (refresh): the overshoot reporting the preregistration states is what label-run records', () => {
+  // A start settled above its bound is an overrun on its ledger entry and in the report's totals.spend (label-run.mjs, third
+  // label-harness review); the text and stages.json name exactly those fields, and the 10% rule reads overBoundUsd.
+  const dir = mkdtempSync(path.join(tmpdir(), 'nr-over-')), file = path.join(dir, LR.SPEND_FILE);
+  const b = new LR.StageBudget(10, 0, { stage: 'NL-T', files: [file] });
+  const t1 = b.reserve(2, { kind: 'trial', key: 'a' }), t2 = b.reserve(1, { kind: 'trial', key: 'b' });
+  b.settle(t1, 2.5); b.settle(t2, 0.4);
+  assert.deepEqual(b.overruns.map(o => [o.key, o.overBoundUsd]), [['a', 0.5]]);
+  const led = LR.loadSpend([file], 'NL-T');
+  assert.equal(led.entries.find(e => e.key === 'a').overBoundUsd, 0.5);
+  assert.deepEqual(LR.overBound(led), { starts: 1, usd: 0.5 });
+  const src = readFileSync(path.join(here, '..', 'label-run.mjs'), 'utf8');
+  for (const f of ['overBoundStarts', 'overBoundUsd', 'overCapUsd', 'STAGE_CAP_OVERRUN']) {
+    assert.ok(src.includes(f), `label-run.mjs has ${f}`);
+    assert.ok(STAGES.spendMeter.overshoot.includes(f), `stages.json spendMeter.overshoot names ${f}`);
+    assert.ok(sectionOf(TEXT, /^## 12\./m).includes(`\`${f}\``), `PREREG §12 names ${f}`);
+  }
+  assert.match(sectionOf(TEXT, /^## 12\./m), /total overshoot \(`totals\.spend\.overBoundUsd`\) exceeds 10% of its cap/);
+  // The CLI's budget is a soft bound by a code comment, not by a measurement: the text says so.
+  assert.match(readFileSync(path.join(REPO, 'src/executors/claude-code.mjs'), 'utf8').split('\n')[289], /soft bound: the CLI checks it between turns/);
+  assert.match(sectionOf(TEXT, /^## 12\./m), /the executor's own comment at `:290`; a\s+documentation claim, not measured here/);
+  assert.doesNotMatch(sectionOf(TEXT, /^## 12\./m), /A listing in the stage report is open/);
 });

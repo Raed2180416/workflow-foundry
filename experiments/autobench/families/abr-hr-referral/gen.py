@@ -705,9 +705,12 @@ class Gen:
         cases = r.choices(kinds, weights=[SUB_WEIGHTS[k] for k in kinds], k=n_trap) + ["clean"] * (n - n_trap)
         if "dup-week" in cases and "clean" not in cases:
             cases[cases.index("dup-week")] = "clean"
+        r.shuffle(cases)
+        if "dup-week" in cases:                     # a dup-week needs an earlier clean submission to duplicate
+            k = cases.index("clean")
+            cases = [c for c in cases[:k] if c != "dup-week"] + [cases[k]] + \
+                [c for c in cases[:k] if c == "dup-week"] + cases[k + 1:]
         times = sorted(self.slot() for _ in range(n))
-        order = sorted(range(n), key=lambda i: (cases[i] == "dup-week", i))      # a dup-week needs an earlier clean one
-        cases = [cases[i] for i in order]
         for t, case in zip(times, cases):
             self.events.append({"kind": "referral.submitted", "sub": case, "at": t})
         if d == "d3":

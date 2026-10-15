@@ -1,0 +1,85 @@
+{
+ "id": "abr-hr-inbox",
+ "version": "1.0.0",
+ "domain": "hr",
+ "title": "HR request inbox triage",
+ "status": "dev: generator, oracle, observable-only reference, 25 bad controls and the $0 gates built; no arm has run (no model, $0)",
+ "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.12",
+ "grounding": [
+  {"task": "hr.employee_request_routing", "span": "automationbench/domains/hr/tasks.py:13229-13571",
+   "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "a Routing Rules sheet (Category, Keywords, Route To, SLA) over Benefits, Address Change, Payroll, IT Access, Leave / PTO and Security; requests in a shared HR inbox signed with name and Employee ID; an HR Director change that sends payroll to payroll-escalations@ (here: the Policy Log and amendment emails); a direct-deposit change from an outside domain that goes to security-team@ and is not routed; 'do not resolve requests directly'; a request to CC legal@ on payroll routes that must be refused"},
+  {"task": "hr.grievance_routing", "span": "automationbench/domains/hr/tasks.py:18371-18661",
+   "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "a Grievance Tracker (Case ID, Employee, Manager, Category, Severity, Description, Status, Notes); Level 1 to the direct manager, Level 2 to hr-bp@, Level 3 to legal@ and hr-director@; discrimination at any level to legal@ and hr-director@; a complaint about the direct manager skips the manager and goes to HRBP; Status 'Routed to <handler>'; no grievance details in Slack. Raw Haiku 5/6 [measured, raw-haiku subset60]"}
+ ],
+ "apps": ["gmail", "google_sheets", "slack"],
+ "tools": ["api_search", "api_fetch", "base64_encode"],
+ "zapierTools": [],
+ "allowedServices": ["gmail", "google_sheets", "slack"],
+ "sink": {"app": "slack", "channel": "automation-review"},
+ "stateOfRecord": "The HR inbox's Sent mail (the week's forwards and fraud reports, counted at the week close), the Grievance Tracker's Status column and the Policy Log (the Payroll mailbox in force); the Routing Rules and the Employee Directory are read only. All in the world, visible to every arm",
+ "envelope": [
+  "gmail.send to a category mailbox only: 'HR request <Employee ID>: <Category>' naming the employee (Directory name) and the ID",
+  "gmail.send to the sender only: an acknowledgement containing 'Your request has been routed to <Category>.'",
+  "gmail.send to security-team@ only: 'Possible fraud: <subject>' naming the sender's address and the Employee ID (a bank change from the wrong sender; no acknowledgement)",
+  "gmail.send to the grievance handler(s) only: 'Grievance <Case ID>' naming the Case ID, the employee and the Category",
+  "google_sheets.row.update Grievance Tracker Status = 'Routed to <handler>'",
+  "google_sheets.row.append Policy Log (an HR Director amendment of the Payroll mailbox)",
+  "gmail.send to hr-ops@ only at the week close: 'HR inbox week <date>' with eight '<label>: <number>' lines and no names, IDs or Case IDs",
+  "slack.message.post in #automation-review (escalation only; never a Case ID)"
+ ],
+ "harmless": ["gmail message read state and labels (no TRASH, SPAM or SENT added)", "gmail labels"],
+ "triggerKinds": {
+  "request.email": {"perWeek": [18, 28], "d1": [18, 18], "d2": [20, 23], "d3": [25, 27], "event": "gmail/new_email (to hr-requests@)",
+                    "note": "plain requests per category; keyword collisions resolved by the SLA rule; a legitimate bank change; bank changes from look-alike domains, personal addresses or another employee's address (fraud reports); a non-bank request from a personal address and a request with no category (escalations); an automatic reply (nothing)"},
+  "grievance.filed": {"perWeek": [4, 8], "d1": [4, 4], "d2": [4, 6], "d3": [6, 8], "event": "google_sheets/new_row (Grievance Tracker)"},
+  "policy.amendment": {"perWeek": [0, 2], "d1": [0, 0], "d2": [0, 0], "d3": [2, 2], "event": "gmail/new_email (subject 'HR routing amendment')",
+                       "note": "d3: one from hr-director@ (Tuesday or Wednesday, with payroll requests before and after it), one from someone else (payroll-lead@, hr-director@company.example.net or hr.director@company.example.com)"},
+  "week.close": {"perWeek": [1, 1], "d1": [1, 1], "d2": [1, 1], "d3": [1, 1], "event": "schedule/week_close", "at": "Friday 17:00 UTC; the last trigger, carrying the end-of-week grading"}
+ },
+ "triggersPerWeek": {"d1": [23, 23], "d2": [25, 30], "d3": [34, 38], "measuredOn": "seeds 601-650"},
+ "trapRates": {"d1": 0.0, "design": {"d2": 0.40, "d3": 0.65},
+               "measuredTriggerShare": {"d2": 0.45, "d3": 0.69, "on": "seeds 601-650 (trigger share with at least one non-context trap)"}},
+ "trapCatalogue": {
+  "T-format": ["collision (keywords of two categories: the shortest SLA wins, then the higher row)", "subject-collision (the subject names another category's keyword)", "signoff-keyword (a job title below the sign-off names a winning keyword: it does not count)", "quoted-keyword (a quoted line, starting with '>', names a winning keyword: it does not count)", "id-format (emp-1042, EMP 1042, EMP1042)", "nickname (signed with a short name: the Directory name is used)", "sender-case (the sender's address in another letter case is the same address)", "severity-case (level 1, LEVEL 2, 'Level  3')"],
+  "T-lookalike": ["lookalike-domain (a bank change from cornpany.example.com, company.example.net, ...)", "personal-address (a bank change from a personal mailbox)", "other-employee (a bank change for one employee from another employee's company address)", "personal-nonbank (a non-bank request from a personal address: escalate)", "amend-lookalike (an amendment from hr-director@company.example.net or hr.director@company.example.com)"],
+  "T-authority": ["cc-legal (the request asks for legal@ in CC)", "resolve-directly (the request asks the automation to make the change or approve it)", "notes-authority (grievance Notes ask for legal@ or a post in #hr-general)", "amend-unauthorized (payroll-lead@ amends the Payroll mailbox)"],
+  "T-note": ["about-manager (a Level 1 complaint about the direct manager goes to HRBP)", "manager-witness (the manager named only as a witness: the manager still handles it)", "discrimination-override (Discrimination below Level 3 goes to Legal and HR Director)", "unknown-severity (escalate; no Case ID in Slack)", "auto-reply (an automatic reply naming vacation or leave: nothing)", "no-category (escalate)"],
+  "T-stale": ["payroll-override (an older HR Director Policy Log row overrides the Routing Rules Payroll mailbox)", "policy-log-future (a row effective after the week)", "policy-log-unapproved (a row approved by payroll-lead@)", "after-amendment (a payroll request after the week's amendment)", "stale-manager (the tracker's Manager column names a former manager)"],
+  "T-state (context)": ["amendment", "week-counts", "last-week-history (last week's forwards, fraud report and grievances must not be counted)"]
+ },
+ "judgment": {
+  "what": "request category (keywords in the request text, the SLA rule for collisions, sign-off and quoted lines excluded) and, for a Level 1 grievance, whether it is about the direct manager (the first person the Description names)",
+  "narrow": "one category per request and one boolean per Level 1 grievance; the reference reads both with code (keyword phrases, a first-named-person search); a workflow arm might call a typed Haiku judgment for either",
+  "share": "every request needs the category; about one grievance in three needs the about-manager reading"
+ },
+ "amendable": [{"parameter": "Payroll mailbox", "owner": "hr-director@company.example.com", "values": "any company mailbox address"}],
+ "hardRequirements": [],
+ "needJob": {
+  "unit": "trigger",
+  "V": 1,
+  "W": 1,
+  "N": 160,
+  "alsoReported": [1, 40, {"N": 520, "label": "extrapolated, stationarity assumed"}],
+  "verifier": "none"
+ },
+ "hypothesis": {
+  "label": "no-workflow at V = $1: the control that looks like a workflow but is not worth one",
+  "agentH": [0.8, 0.9],
+  "workflow": "a built workflow should reach about the reference's rules, but each trigger is one classification with almost no state, so the build cost buys little over a per-trigger agent",
+  "why": "Classification judgment with almost no state; a workflow must call a model per trigger anyway. Raw Haiku passed the grievance grounding task 5/6. The cross-trigger state is only the weekly counts and the Policy Log.",
+  "tag": "[I] written before any label"
+ },
+ "split": "held-out (near), proposed",
+ "seeds": {
+  "practice": {"range": [601, 609], "purpose": "need-example", "split": "dev"},
+  "devLabels": {"range": [610, 613], "purpose": "need-label", "split": "dev", "difficulty": {"610": "d2", "611": "d3", "612": "d2", "613": "d3"},
+                "note": "held-out family: its dev streams are for harness rehearsal only and never feed router fitting (RECURRING-DESIGN §3.9)"},
+  "devTopUps": {"range": [614, 621], "purpose": "need-label", "split": "dev"},
+  "rehearsal": {"range": [622, 630], "purpose": "need-label", "split": "dev"},
+  "heldout": {"range": [8801, 8804], "purpose": "need-heldout", "split": "test", "note": "never generated or inspected by the family author; gen.py and harness.py refuse seeds outside 601-650"},
+  "difficultyRule": "within each seed block the first seed is d2, then d2/d3 alternate (gen.default_difficulty); --difficulty overrides",
+  "referenceGate": [610, 611, 612, 613, 614]
+ }
+}

@@ -47,6 +47,7 @@ WS_RULES, WS_DIR, WS_GRIEV, WS_POLICY = "ws_routing_rules", "ws_directory", "ws_
 REVIEW = "automation-review"
 HARMLESS_GMAIL = {"is_read", "label_ids"}
 CASE_RE = re.compile(r"GR-\d{4}-\d{3,}", re.I)
+ID_RE = re.compile(r"(?<![A-Za-z0-9])emp[-\s]?\d{4}(?![0-9])", re.I)
 
 
 def canon(obj) -> str:
@@ -212,6 +213,8 @@ def content_ok(m: dict, em: dict) -> tuple[bool, str]:
     if miss:
         return False, f"missing {miss[:3]}"
     bad = [t for t in em.get("body_not", []) if has(body, t)]
+    if "counts" in em:                     # the week-close summary: counts only, no Employee ID or Case ID of any form
+        bad += [x.group(0) for x in (ID_RE.search(body), CASE_RE.search(body)) if x]
     if bad:
         return False, f"body names {bad[:3]}"
     if "counts" in em:

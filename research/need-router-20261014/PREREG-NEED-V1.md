@@ -399,9 +399,10 @@ already in the ledger as `wbed-dev` and `wbed-r3p-dev`. [D, M] Every runner call
   come from `heldoutReserve`) until the §4.4 A-Freeze row is filled. The only way past is `--allow-heldout-dry D<n>`, naming
   a deviation that §13 records (`prereg-check.mjs heldoutDryRefusal`). `hashCollisions` refuses `child: false` for any
   held-out, conditional or forced job, and the tests compare the child's counts with an in-process run on a TRAIN anchor
-  only. On 2026-10-15 `/var/tmp/foundry-work/need/` held no `nl2-dry`, `e2e-dry` or `drift-dry` work root, so no such
-  --dry run left files there [M]. The test suite's in-process hashing ran on every suite run, counts only. No model saw
-  those tasks.
+  only. The suite still runs that child on `need-constraint` (counts and task ids only), which is the child use above,
+  not a second one. On 2026-10-15 `/var/tmp/foundry-work/need/` held no `nl2-dry`, `e2e-dry` or `drift-dry` work root,
+  so no such --dry run left files there [M]. The test suite's in-process hashing ran on every suite run, counts only. No
+  model saw those tasks.
 - The ledger's `need-heldout` range admits every bed (`beds: ['*']`). So only `stages.json` and the checker keep TRAIN
   jobs off it. The owner is asked to narrow it to the held-out families (§14).
 
@@ -1034,9 +1035,10 @@ to every paid runner: `label-run.mjs`, `m1-run.mjs`, `m1-rerun.mjs`, judge-H, pr
 - **M1-R** used a copy of that runner. It is $17.8934 over its final rows and $25.8934 with its set-aside attempts,
   against its $25 plan cap (reported $7.8934; §13 D7).
 - **Overshoot: the bound is not a hard ceiling** [P, D9; `stages.json spendMeter.overshoot`].
-  - *Why.* Reservation treats each start's bound as its ceiling. But the CLI enforces `--max-budget-usd` only between
-    turns (the flag: `src/executors/claude-code.mjs:304`), so an agent session or a construct build can end above its
-    bound. The meter books max(reported, re-priced) after the fact.
+  - *Why.* Reservation treats each start's bound as its ceiling. But the CLI's `--max-budget-usd` (passed at
+    `src/executors/claude-code.mjs:304`) is a soft bound, checked between turns (the executor's own comment at `:290`; a
+    documentation claim, not measured here), so an agent session or a construct build can end above its bound. The meter
+    books max(reported, re-priced) after the fact.
   - *Worst case.* A stage can end above its cap by the overshoot of the starts in flight when the cap binds: at most 4
     starts, each by up to one model turn. This file pins no per-turn limit, so the overrun is measured, not bounded in
     advance.
@@ -1044,11 +1046,14 @@ to every paid runner: `label-run.mjs`, `m1-run.mjs`, `m1-rerun.mjs`, judge-H, pr
     reported above it. The largest is 1.00× (one `costUnknown` session booked at its bound), and the next largest 0.37×.
     The 8 C0 builds reached at most 0.28× of their $8 builder budget, with gateway overshoot $0. No archived session came
     near its budget with a reported cost, so overshoot at the budget is unmeasured.
-  - *Reporting.* Every start's reserved bound and its charge are in the stage's spend ledger (`spend.jsonl`), so each
-    overshoot can be recovered. A listing in the stage report is open (§14). The overshoot counts on the meter (K5) and
-    in committed spend (above).
-  - *Rule.* A stage whose total overshoot exceeds 10% of its cap is a §13 record before the next paid stage. That record
-    raises the later stages' reservation bounds by the largest charge-to-bound ratio observed.
+  - *Reporting.* Every start's reserved bound and its charge are in the stage's spend ledger (`spend.jsonl`). Since the
+    third label-harness review (2026-10-15; a WIP autosave, not reviewed at this revision) `label-run.mjs` marks a start
+    settled above its bound with `overBoundUsd` in that ledger, prints `overBoundStarts`, `overBoundUsd` and `overCapUsd`
+    in the report's `totals.spend`, and stops a stage whose meter is over its cap (`STAGE_CAP_OVERRUN`, K5). The
+    overshoot counts on the meter (K5) and in committed spend (above).
+  - *Rule.* A stage whose total overshoot (`totals.spend.overBoundUsd`) exceeds 10% of its cap is a §13 record before the
+    next paid stage. That record raises the later stages' reservation bounds by the largest charge-to-bound ratio
+    observed.
 
 **E2E draw** [P]: the eligible set is the admitted held-out non-forced jobs at E2E launch, sorted by id, shuffled by a
 seeded Fisher–Yates (mulberry32, seed 20261029; `prereg-check.mjs e2eDraw`), first 6 taken. Computed today for the
@@ -1226,7 +1231,8 @@ label exists):
   - *Overshoot* (§12). Measured at $0 on archived rows: 273 JIT agent and interpreter sessions with a known budget
     (`research/jit-20261008/runs/*/<arm>/arm.json` `agentBudgetUsd` against each session's `costUsd`), none above 1.00×;
     8 C0 builds at most 0.28× of their builder budget, gateway overshoot $0 (`archive/c0-dev/constructions.jsonl`). The
-    worst case is stated, with a 10% rule.
+    worst case is stated, with a 10% rule read from `label-run.mjs`'s `totals.spend.overBoundUsd`. That the CLI checks its
+    budget only between turns is the executor's code comment, cited as such, not a measurement.
   - *Spend* (§12). `totals.committedUsd` counts each stage at max(cap, recorded meter). The soft-cap check adds the
     externally budgeted M1-R ($1,372.81 in all).
   - *Owner tasks* (§3.2, §12, K5, K7). They moved from NL0 to NL0-owner (est. $15, cap $40, not yet approved), at $3 per
@@ -1324,7 +1330,7 @@ DRIFT jobs and $8 cap; K9 wording; the forced jobs' requirement candidates.
 | **Whether Jev property features enter NR-knn.** J-NEED-2's own rule put code + Jev in the NR-knn branch, but Jev's increment over code features is not above noise (§0.1). The decision reads J-NEED-2 **recomputed without `wbed-r3p`** (§6, D9); `jev-need2.mjs` has no family filter yet, so the recompute is a $0 code item. If they enter, the §6 feature list for NR-knn names them, and the pinned Jev version (`jev-1.13.0`) joins the analysis stamp. Jev is never the mode picker (decision 12) | the recompute: jev-need2 owner; the decision: Freeze addendum | before 10-24 |
 | **A runner for NL0-owner.** `label-run.mjs` plans no `seedsFrom` run, so the owner tasks need a runner. It must meter by §12, take a stamp and a `LAUNCH.json`, and read each task's size for agent-O's budget at admission | label-run owner | before the owner tasks run |
 | **The E2E runner calls `envelopeLaunchCheck`** with the drawn set and writes `LAUNCH.json`; `label-run.mjs` does not run `router-choice` | E2E runner owner | before E2E |
-| **The meter-gap sensitivity and overshoot listing.** `evaluate.mjs` prints the not-primary sensitivity that counts `usdMeterGap` as imputed (§5), and `label-run.mjs`'s report lists starts charged above their bound (§12) | evaluate owner; label-run owner | before freeze |
+| **The meter-gap sensitivity.** `evaluate.mjs` prints the not-primary sensitivity that counts `usdMeterGap` as imputed (§5; `metrics.mjs needTable` takes `meterGapAs: 'imputed'`, but `evaluate.mjs` does not call it yet). The overshoot listing (§12) is in `label-run.mjs`'s report since the third label-harness review, which is still a WIP autosave: its review closes the item | evaluate owner; label-run owner | before freeze |
 | **Voided lineages in `evaluate.mjs`.** Its validity block reads "voided lineage(s): claims blocked until rerun", but no stage is rerun (§12), and under §5 a voided lineage scores as a failure and keeps its job. The analysis must read voids as failures without blocking every claim, or this file must say why it blocks | evaluate owner | before Freeze |
 | **`powerGate` in the analysis.** `evaluate.mjs` must call it with `nearClusters` from `stages.json analysis.powerGate` (1, r3p) | evaluate owner | after NL1 |
 | `codefix-notests` generator and its example census. A generator is present as `beds/need-codefix-noverifier` (WIP autosave, unreviewed at this revision); the job's family id, `bedStatus` and census are updated, with a §13 note, when it is admitted | M0 item 8 | before NL1 |

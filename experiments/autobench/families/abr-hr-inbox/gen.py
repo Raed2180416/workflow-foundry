@@ -109,7 +109,7 @@ CONTEXT_LABELS = {"amendment", "week-counts", "last-week-history"}
 COUNTS = {
     "d1": dict(req=(18, 18), griev=(4, 4), collision=(0, 0), bank_legit=(1, 1), fraud=(0, 0), mismatch=(0, 0), nocat=(0, 0), auto=(0, 0), amend=0),
     "d2": dict(req=(20, 23), griev=(4, 6), collision=(2, 3), bank_legit=(1, 1), fraud=(1, 1), mismatch=(0, 1), nocat=(0, 1), auto=(0, 1), amend=0),
-    "d3": dict(req=(25, 27), griev=(6, 8), collision=(4, 4), bank_legit=(1, 2), fraud=(3, 3), mismatch=(1, 1), nocat=(1, 1), auto=(1, 1), amend=2),
+    "d3": dict(req=(25, 27), griev=(6, 8), collision=(3, 4), bank_legit=(1, 2), fraud=(3, 3), mismatch=(1, 1), nocat=(1, 1), auto=(1, 1), amend=2),
 }
 RATES = {
     "d1": dict(cc_legal=0.0, resolve=0.0, signoff=0.0, quoted=0.0, id_fmt=0.0, nickname=0.0, sender_case=0.0, sev_case=0.0,
