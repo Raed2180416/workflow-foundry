@@ -9,7 +9,7 @@
  "checker": "node experiments/need-router/prereg-check.mjs",
  "policy": {
   "file": "policy/models.json",
-  "policyVersion": "2026-10-09.1",
+  "policyVersion": "2026-10-15.2",
   "perExperimentPauseAboveUsd": 500,
   "sessionSoftCapUsd": 1500
  },
@@ -180,7 +180,7 @@
    }
   },
   "sources": [
-   "base input/output: policy/models.json models[].price (policyVersion 2026-10-09.1; checked equal by prereg-check)",
+   "base input/output: policy/models.json models[].price (policyVersion 2026-10-15.2, in force for NL0 and every later stage; M1 and M1-R ran under 2026-10-09.1, whose base prices are the same: PREREG §13 D6, D9; checked equal by prereg-check, and a version other than this one is an error once frozen)",
    "Haiku 5.5 long-context tier ($0.50/$2.50 above 100K prompt tokens): policy/models.json price.source and the claude-api skill model table (cached 2026-10-06) [S]",
    "Opus 5.5 and Sonnet 5.5 cache read $0.20: claude-api skill shared/models.md [S]",
    "cache write 5m = 1.25x input: claude-api skill shared/prompt-caching.md:144 [S]",
@@ -1759,8 +1759,8 @@
    "band": null,
    "bandStatus": "one task per job (N = 1) unless the owner declares a recurrence N",
    "verifier": "owner acceptance check",
-   "estUsd": 0,
-   "estNote": "inside the NL0 estimate",
+   "estUsd": 15,
+   "estNote": "per owner task, every L_today mode once: direct-H $0.03 (one Haiku call, beds/wbed/attacks/triviality.mjs:55), agent-H $0.10 and agent-O $0.56 (records dev stream, DESIGN Appendix B), agent-H+proc $0.13 (one writer call plus one agent-H run), construct-H $1.40 (one Haiku build, C0 dev $0.84-1.37, plus one run): $2.22, plus about 25% for unknown task size, $3 per task, $15 for 5; bound per task $19.50 = direct-H $1 + agent-H $2 + agent-O $8 (the large-input budget, since an owner task's size is known only at admission) + agent-H+proc ($1 writer + $2 run) + construct-H ($3 builder + $1.50 construction models + $1 run). Stage NL0-owner (PREREG §12)",
    "replicates": 1,
    "maxTasks": 5,
    "hypothesis": {
@@ -1773,7 +1773,10 @@
      "mode": null
     },
     "note": "one row per owner task, written before its labels; development evidence only"
-   }
+   },
+   "estPerTaskUsd": 3,
+   "boundPerTaskUsd": 19.5,
+   "lineages": 1
   },
   {
    "requirements": [],
@@ -2422,7 +2425,7 @@
    "inTotals": true,
    "core": true,
    "approved": true,
-   "what": "records-hi, wbed-r0, wbed-r3-hi with all five modes; build-O and (if stamped) ref-R3 on wbed-r3-hi; up to 5 owner tasks as dev",
+   "what": "records-hi, wbed-r0, wbed-r3-hi with all five modes; build-O and (if stamped) ref-R3 on wbed-r3-hi (the owner tasks run in stage NL0-owner)",
    "runs": [
     {
      "job": "records-hi",
@@ -2485,7 +2488,21 @@
       "trainEval"
      ],
      "condition": "engine stamp carries static@v3:"
-    },
+    }
+   ]
+  },
+  {
+   "id": "NL0-owner",
+   "when": "with NL0 if the owner's tasks have arrived; otherwise as soon as they arrive and before Freeze (tasks that arrive after Freeze all go to owner-sealed in NL3)",
+   "grade": "development",
+   "estUsd": 15,
+   "capUsd": 40,
+   "inTotals": true,
+   "core": false,
+   "approved": false,
+   "gate": "owner gate (decision 14): NL0's approved $140 cap covers its three jobs only; the owner tasks run under this stage's own cap once the owner approves it",
+   "what": "up to 5 owner tasks as development jobs (owner-dev): every L_today mode once per task (one draw each of direct-H, agent-H and agent-O; one lineage each of agent-H+proc and construct-H, whose procedure writer and builder read the task itself, never its acceptance check); no racing top-ups; K7 per owner task",
+   "runs": [
     {
      "job": "owner-dev",
      "arms": [
@@ -2496,9 +2513,11 @@
       "construct-H"
      ],
      "seedsFrom": "owner tasks",
-     "replicates": 1
+     "replicates": 1,
+     "lineages": 1
     }
-   ]
+   ],
+   "k7": "per owner task: a charged cost on the §12 meter over 1.5 x estPerTaskUsd ($4.50) is flagged in the report; a stage mean over $4.50 per task re-plans the owner-sealed budget before NL3. A cap stop (K5) here drops owner tasks only, never NL0 rows"
   },
   {
    "id": "NL1",
@@ -2720,7 +2739,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "records-hi",
@@ -2731,7 +2750,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "wbed-r0",
@@ -2742,7 +2761,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "r0-pad",
@@ -2753,7 +2772,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "wbed-r1-hi",
@@ -2764,7 +2783,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "wbed-r2-hi",
@@ -2775,7 +2794,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "wbed-r3-hi",
@@ -2786,7 +2805,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "r3-mini",
@@ -2797,7 +2816,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "wbed-stage",
@@ -2808,7 +2827,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "wbed-r6",
@@ -2819,7 +2838,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "kinetics-lo",
@@ -2830,7 +2849,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "kinetics-hi",
@@ -2841,7 +2860,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "codefix",
@@ -2852,7 +2871,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "codefix-notests",
@@ -2863,7 +2882,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     },
     {
      "job": "need-qa",
@@ -2874,7 +2893,7 @@
      "seedRoles": [
       "probe"
      ],
-     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on example 601)"
+     "purpose": "NR-probe (k <= 2 direct-H draws, 1 agent-H run, on the probe task: seed 601 at the band's median level, PREREG §3.3)"
     }
    ]
   },
@@ -3224,7 +3243,8 @@
       "probe"
      ]
     }
-   ]
+   ],
+   "envelopeFile": "research/need-router-20261014/envelopes/NL2p.json"
   },
   {
    "id": "NL2",
@@ -3235,7 +3255,7 @@
    "inTotals": true,
    "core": true,
    "approved": false,
-   "gate": "NL2p decisions envelope hash committed (L6); owner gate",
+   "gate": "NL2p envelope committed with the Freeze addendum's router shas (prereg-check envelopeLaunchCheck in label-run paidRunChecks); owner gate",
    "what": "held-out jobs, five modes; build-O on synth-hi and r3p; no probe or judge rows (they ran in NL2p)",
    "runs": [
     {
@@ -3405,7 +3425,8 @@
      "purpose": "NR-probe (agent-H only: direct-H masked)",
      "condition": "audit and smoke passed"
     }
-   ]
+   ],
+   "envelopeFile": "research/need-router-20261014/envelopes/NL2bp.json"
   },
   {
    "id": "E2E",
@@ -3416,7 +3437,7 @@
    "inTotals": true,
    "core": true,
    "approved": false,
-   "gate": "NL2 reading written",
+   "gate": "NL2 reading written; envelope NL2p, and NL2bp only when gameqa is in the drawn set (conditionalEnvelopes), each committed with the Freeze addendum's router shas (prereg-check envelopeLaunchCheck, run at launch)",
    "what": "6 held-out non-forced jobs by the seeded draw; decision card -> owner override window (48 h, logged) -> build with self-check -> 12 fresh tasks -> delivery gated by the deployable verifier; oracle scored offline",
    "runs": [
     {
@@ -3448,7 +3469,12 @@
    "requiresEnvelope": [
     "NL2p",
     "NL2bp"
-   ]
+   ],
+   "conditionalEnvelopes": {
+    "NL2bp": [
+     "gameqa"
+    ]
+   }
   },
   {
    "id": "NL2b",
@@ -3459,7 +3485,7 @@
    "inTotals": true,
    "core": false,
    "approved": false,
-   "gate": "NL2bp decisions envelope hash committed (L6); independent audit and agent smoke per family",
+   "gate": "NL2bp envelope committed with the Freeze addendum's router shas (envelopeLaunchCheck); independent audit and agent smoke per family; owner gate",
    "what": "gameqa (held-out) and runbook (forced stratum); direct-H masked",
    "runs": [
     {
@@ -3601,42 +3627,53 @@
   }
  ],
  "totals": {
-  "estUsd": 951,
-  "capUsd": 1235,
+  "estUsd": 966,
+  "capUsd": 1275,
   "coreEstUsd": 663,
   "coreCapUsd": 855,
+  "committedUsd": 1322.92,
   "recurringCapUsd": 24,
-  "softCapCheckUsd": 1259
+  "externalCommittedUsd": 25.89,
+  "softCapCheckUsd": 1372.81,
+  "note": "capUsd sums the preregistered caps of the stages in the totals; committedUsd counts each at max(cap, its recorded runs on the §12 meter): M1 at $62.92 against its $15 cap; softCapCheckUsd adds DRIFT's $24 and M1-R at $25.89 (externalBudget), against the $1,500 session soft cap"
  },
- "revised": "2026-10-14 (adversarial review fixes: M1 recorded, C7a power precondition, G1 bound, theta minimum, stamps, meter, envelopes); 2026-10-15 (M1-d5 results and M1-R recorded from their rows, J-NEED-2 noted; r3p's second hypothesis revision; set-aside attempts on the meter; freeze guards for recorded runs and for the analysis' rule imports)",
+ "revised": "2026-10-14 (adversarial review fixes: M1 recorded, C7a power precondition, G1 bound, theta minimum, stamps, meter, envelopes); 2026-10-15 (M1-d5 results and M1-R recorded from their rows, J-NEED-2 noted; r3p's second hypothesis revision; set-aside attempts on the meter; freeze guards for recorded runs and for the analysis' rule imports); 2026-10-15 second review (C7a REFUTED only on the upper bound, power as a chance; power gate without r3p; L6 as a launch gate; meter-gate rule; committed spend in the totals; owner tasks in NL0-owner; held-out --dry refused; Jev decision without r3p; policy version pinned; void policy; probe purposes; conditional NL2bp; overshoot)",
  "analysis": {
   "rulesModule": "experiments/need-router/prereg-rules.mjs",
   "c7a": {
    "interval": "one joint exact interval for balanced accuracy: inversion of the exact unconditional test of H: BA <= b (and its mirror), jobs as independent Bernoulli trials",
    "levelPerSide": 0.025,
-   "powerPrecondition": "the lower bound a perfect classifier would reach at the realised confident class counts must exceed 0.5; otherwise C7a reads INCONCLUSIVE (not powered) and F12 cannot trip",
+   "powerPrecondition": "the chance that the exact interval excludes a null classifier: P(lower bound > 0.5) for a classifier with TPR = TNR = 0.9 at the realised confident class counts must be >= 0.8 (prereg-rules.mjs c7aPower pExclude); otherwise C7a reads INCONCLUSIVE (not powered) and no decisive reading, F12 included, is read. The perfect classifier's lower bound is still printed, as is the chance a coin-flip classifier reads REFUTED",
+   "powerAlternative": {
+    "tpr": 0.9,
+    "tnr": 0.9
+   },
+   "powerMin": 0.8,
+   "usefulBalancedAccuracy": 0.7,
+   "refuted": "F12 / REFUTED only when the upper bound is below 0.7 (a useful balanced accuracy is excluded) and the lower bound is <= 0.5; lower bound > 0.5 with upper bound < 0.7 reads ABOVE-CHANCE-BELOW-USEFUL; lower bound <= 0.5 < 0.7 <= upper bound reads INCONCLUSIVE (uninformative), never REFUTED",
    "minimumConfidentCounts": [
     {
-     "pos": 1,
-     "neg": 15
-    },
-    {
-     "pos": 2,
-     "neg": 4
-    },
-    {
-     "pos": 3,
-     "neg": 3
-    },
-    {
      "pos": 4,
-     "neg": 2
+     "neg": 9
     },
     {
-     "pos": 15,
-     "neg": 1
+     "pos": 5,
+     "neg": 7
+    },
+    {
+     "pos": 6,
+     "neg": 6
+    },
+    {
+     "pos": 7,
+     "neg": 5
+    },
+    {
+     "pos": 9,
+     "neg": 4
     }
-   ]
+   ],
+   "minimumNote": "c7aMinimumCounts (symmetric): with 3 or fewer confident jobs of a class C7a is not powered at up to 24 of the other; at least 12 confident jobs in all"
   },
   "signFlip": {
    "floor": "2^-(informative clusters), informative = clusters with Delta_c != 0 (the policy chose a different mode from SBS-train on some job of the cluster); printed with every reading"
@@ -3714,13 +3751,33 @@
     "powerGate"
    ],
    "when": "a warning while the analysis may still change; an error once the PREREG §4.4 A-Freeze row is filled (the Freeze addendum pins the analysis)"
+  },
+  "powerGate": {
+   "nearClusters": 1,
+   "rule": "computed at the planned held-out cluster count n and at n - 1 (r3p, the near and dev-observed cluster, dropped), because SUPPORTED needs the same reading without r3p; the gate passes only when both pass (prereg-rules.mjs powerGate)"
+  },
+  "voidPolicy": "fail: a voided lineage (hidden-path or nested-model attempts, the ownerci copy scan) or voided agent draw scores as a failure on every task in the primary analysis (metrics.mjs needTable voidPolicy fail); its job stays in Delta and C7a and the void is listed; dropping voided lineages (voidPolicy drop) is a not-primary sensitivity. A void is never a missing-data reason",
+  "meterGate": {
+   "informedBy": "D6 (research/need-router-20261014/analysis/m0/REPORT.md, D6; PREREG §13 D9): re-priced Opus agent sessions land 2.11x-2.96x below the CLI figure because per-message usage lines miss output tokens, and every archived cache write was billed at the 1-hour rate",
+   "utility": "a session the meter gate books meterUnverified (its re-price misses the CLI figure beyond the 10% band) enters utility at the CLI-reported figure: re-priced dollars plus the gap (usdMeterGap), never the re-price alone",
+   "imputedRule": "the meter-gate gap (usdMeterGap) is not an imputed bound: it is the CLI's own observed figure, so it does not count toward the 30%-imputed rule (metrics.mjs moves it from usdImputed to observed dollars); it is counted and printed per cell. Sensitivity, not primary: the 30% rule with the gap counted as imputed",
+   "cacheWrite": "the price table prices cache writes at the 5-minute rate (1.25 x input); the rate billed is the one the launch environment sets. D6 found every archived cache write billed at the 1-hour rate (2 x input). The paid launch shape (PREREG §12) sets FORCE_PROMPT_CACHING_5M=1, and the meter-verification record that clears the gate must come from transcripts of that launch shape; if they still show 1-hour writes, the table gains the 1-hour rate by a §13 deviation before the stage starts",
+   "waiver": "a stage launched under the owner's meter-gate waiver (analysis/m0/meter-gate-waiver.json) is a §13 deviation, recorded before its labels are used"
+  },
+  "jevFeatureDecision": {
+   "source": "J-NEED-2",
+   "excludeFamilies": [
+    "wbed-r3p"
+   ],
+   "rule": "the Freeze decision on whether Jev property features enter NR-knn reads J-NEED-2 recomputed without wbed-r3p: no r3p fold, and r3p's 24 tasks and their one-call outcomes in no training fold (leave-one-family-out over the 7 TRAIN-side W rungs). The published J-NEED-2 numbers, which include r3p, are never read for it"
   }
  },
  "spendMeter": {
   "rule": "per stage (and per M1 tag): sum over rows of max(reported, re-priced) when the row has an observed cost, else the row's bound; plus the reserved bound of every start in flight (reserved before launch); a start is refused when meter + its bound > the cap",
   "appliesTo": "every paid runner (label-run.mjs, m1-run.mjs, judge-H, probes, DRIFT)",
   "executable": "experiments/need-router/prereg-rules.mjs capMeter, mayStart",
-  "setAside": "an attempt set aside outside the results (an invalid attempt, an environment-fault row re-run later) counts like a row: at max(reported, re-priced) when its cost was observed, else at its bound"
+  "setAside": "an attempt set aside outside the results (an invalid attempt, an environment-fault row re-run later) counts like a row: at max(reported, re-priced) when its cost was observed, else at its bound",
+  "overshoot": "a CLI agent session or a construct build is stopped at its budget only between turns (--max-budget-usd, src/executors/claude-code.mjs:304), so a start can be charged above its reserved bound; the meter books the charge after the fact. Worst case: a stage ends above its cap by the overshoot of the starts in flight when the cap binds (at most 4). Archived evidence ($0, PREREG §13 D9): 273 JIT agent and interpreter sessions with a known budget, none reported above it (largest 1.00x, one costUnknown session booked at its bound); 8 C0 builds at most 0.28x of the $8 builder budget, gateway overshoot $0. Every start charged above its bound is listed in the stage report and counted in committed spend (totals.committedUsd)"
  },
  "engineStamp": {
   "labelEngine": {

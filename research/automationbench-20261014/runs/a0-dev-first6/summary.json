@@ -1,0 +1,156 @@
+{
+ "runId": "a0-dev-first6",
+ "label": "model claude-haiku-5-5",
+ "model": "claude-haiku-5-5",
+ "scripted": false,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "arm": "A0 (no harness)",
+ "sealed": false,
+ "testSplitTasks": 0,
+ "harness": null,
+ "selection": {
+  "pool": "devTrain",
+  "subset": 6,
+  "seed": "11",
+  "domains": [
+   "sales",
+   "marketing",
+   "operations",
+   "support",
+   "finance",
+   "hr"
+  ]
+ },
+ "tasks": [
+  "sales.calendly_no_show_followup",
+  "marketing.social_content_calendar",
+  "operations.parking_allocation_management",
+  "support.intercom_sentiment_escalation",
+  "finance.forex_gain_loss",
+  "hr.zoom_orientation_sessions"
+ ],
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 0.75,
+ "capUsd": 1.5,
+ "tools": [
+  "Bash"
+ ],
+ "effort": "high",
+ "n": 6,
+ "n_graded": 6,
+ "pass_rate": 0,
+ "mean_partial_credit": 0.32573529411764707,
+ "by_domain": {
+  "sales": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.8333333333333334
+  },
+  "marketing": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.125
+  },
+  "operations": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.5294117647058824
+  },
+  "support": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.4666666666666667
+  },
+  "finance": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "hr": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  }
+ },
+ "live_pass_rate": 0,
+ "mean_cost_per_task_usd": 0.014187876666666668,
+ "accounting": {
+  "modelResponses": {
+   "mean": 11.333333333333334,
+   "max": 15
+  },
+  "toolResponses": {
+   "mean": 10.333333333333334,
+   "max": 14
+  },
+  "numTurnsCli": {
+   "mean": 12.5,
+   "max": 16
+  },
+  "worldSteps": {
+   "mean": 15.833333333333334,
+   "max": 29
+  },
+  "worldCalls": {
+   "mean": 28.5,
+   "max": 42
+  },
+  "reads": {
+   "mean": 10.333333333333334,
+   "max": 21
+  },
+  "searches": {
+   "mean": 11.666666666666666,
+   "max": 19
+  },
+  "writes": {
+   "mean": 5.333333333333333,
+   "max": 13
+  },
+  "stoppedByStepGuard": 0,
+  "extraModelCalls": 0,
+  "compactions": 0,
+  "capViolations": 0,
+  "l5Violations": 0,
+  "models": [
+   "claude-haiku-5-5"
+  ],
+  "ledger": null
+ },
+ "cost": {
+  "spentUsd": 0.08512726,
+  "knownUsd": 0.08512726,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 6,
+  "skipped": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "e5c88ca368c16f6089360cf731d5d89a08cd877d2035c2e4a31d61fd4c5f6638",
+  "policyHash": "3618a12ca5a4e211ace57b12837084e6a41272bf7883b963cba2fb43ecd052f4",
+  "policyVersion": "2026-10-15.2",
+  "policyFileSha256": "3364011cae3741fb4409386d16cfa2439aaa340181382ce1694a8f7778fd3793",
+  "node": "v24.21.0",
+  "cli": "2.1.300 (Claude Code)",
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  },
+  "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "harnessManifestSha256": null
+ },
+ "live": "/var/tmp/foundry-work/autobench/a0-dev-first6",
+ "finishedAt": "2026-10-15T08:26:38.356Z"
+}

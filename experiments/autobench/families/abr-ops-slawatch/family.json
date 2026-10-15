@@ -32,14 +32,14 @@
  "triggerKinds": {
   "tick": {"perWeek": [40, 40], "d1": [40, 40], "d2": [40, 40], "d3": [40, 40], "at": "hourly 10:00-17:00 UTC, Monday-Friday; the Friday 17:00 check is the week close"},
   "ticket.opened": {"perWeek": [5, 8], "d1": [5, 6], "d2": [5, 7], "d3": [7, 8], "note": "plus 10-14 tickets open at the start of the week (Waiting on Customer included)"},
-  "ticket.updated": {"perWeek": [5, 10], "d1": [5, 6], "d2": [5, 8], "d3": [8, 10], "note": "resolved or closed, reassigned with a new phone, LGL- hold placed or cleared, deadline extended, reopened, work resumed after Waiting on Customer"},
+  "ticket.updated": {"perWeek": [5, 10], "d1": [5, 6], "d2": [5, 8], "d3": [7, 10], "note": "resolved or closed, reassigned with a new phone, LGL- hold placed or cleared, deadline extended, reopened, work resumed after Waiting on Customer"},
   "policy.amendment": {"perWeek": [0, 2], "d1": [0, 0], "d2": [0, 0], "d3": [2, 2], "note": "d3: one from support-manager@ (authorized, in range), one from an agent, a team lead or a look-alike address"}
  },
- "triggersPerWeek": {"d2": [50, 55], "d3": [57, 60], "measured": "seeds 601-650"},
+ "triggersPerWeek": {"d2": [50, 55], "d3": [56, 60], "measured": "seeds 601-650"},
  "trapRates": {
   "d1": 0.0, "d2": 0.4, "d3": 0.7,
   "unit": "share of triggers at which at least one planted trap is exposed (a solver ignoring that one rule would act differently there, or the trap changes the literals of an effect made there)",
-  "measured": {"seeds": "601-650", "d2": 0.424, "d3": 0.673}
+  "measured": {"seeds": "601-650", "d2": 0.425, "d3": 0.647}
  },
  "trapCatalogue": {
   "T-lookalike": ["id (TK-4012 vs TK-40127: an open or last-week sibling whose posts, SMS and issues share the prefix)", "sender (support-manager@company-example.com and similar)"],

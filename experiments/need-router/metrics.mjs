@@ -260,7 +260,11 @@ export function leakTest(table, makeRouter, Vs) {
 //
 // Matrix rows (one per job x mode x task x replicate; label-run.mjs writes them; evaluate.mjs MATRIX_FORMAT):
 //   { job, mode, task, rep, pass, delivered, schemaValid?, selfVerdict?, deployableVerdict?, score?, passAt?, seed?,
-//     taskHash?, usdRepriced | usdReported | costUsd, usdImputed?, ms?, tokens?, error? }
+//     taskHash?, usdRepriced | usdReported | costUsd, usdImputed?, usdMeterGap?, ms?, tokens?, error? }
+//   usdMeterGap (rows and builds; label-run writes it when the meter gate books a session meterUnverified): the part of
+//   usdImputed that is the CLI's own reported figure above the re-price, not a bound. PREREG §5: utility uses the reported
+//   figure (cost = usd + imputed is unchanged) and the gap is observed dollars, so it is moved from imputed to usd here
+//   and never counts toward the 30%-imputed rule. It may not exceed usdImputed.
 //   `pass` is the oracle verdict on the answer the mode produced; `delivered` says an answer was produced at all, BEFORE
 //   the self-check gate: the gate is applied here from `selfVerdict`, so that F11 can withdraw its credit (K9).
 //   A delivered answer with no `schemaValid` field is read as schema-valid, so a wrong one is charged as a silent miss.
@@ -344,6 +348,16 @@ const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 /** A LEGACY-tagged row or build (harvest.mjs LEGACY_TAG; the same predicate as harvest.isLegacy, inlined to keep this module pure). */
 export const isLegacyRow = x => x?.legacy === true || x?.evidence === 'LEGACY';
 
+/** The meter gate's gap (usdMeterGap, PREREG §5) moved from imputed to observed dollars; the total is unchanged. */
+function meterGapSplit(usd, imputed, gapField, at) {
+  if (gapField == null) return { usd, imputed, meterGap: 0 };
+  const gap = fin(gapField);
+  if (gap === undefined || gap < 0) throw new Error(`${at}: usdMeterGap must be finite and >= 0`);
+  if (gap > imputed + 1e-9) throw new Error(`${at}: usdMeterGap ${gap} exceeds usdImputed ${imputed} (the gap is part of the imputed dollars label-run books)`);
+  const g = Math.min(gap, imputed);
+  return { usd: usd + g, imputed: imputed - g, meterGap: g };
+}
+
 function normRow(r, { requireRepriced = false } = {}) {
   const job = r.job, mode = r.mode ?? r.arm, task = r.task ?? r.taskKey;
   const at = `${job}/${mode}/${task}`;
@@ -353,8 +367,9 @@ function normRow(r, { requireRepriced = false } = {}) {
   if (typeof r.delivered !== 'boolean') throw new Error(`matrix row ${at}: delivered must be a boolean (a silent miss cannot be charged without it)`);
   if (r.pass && !r.delivered) throw new Error(`matrix row ${at}: a pass with no delivered answer`);
   if (requireRepriced && fin(r.usdRepriced) === undefined) throw new Error(`matrix row ${at}: no finite usdRepriced (one meter: utility uses the re-priced figure, never a fallback to usdReported or costUsd)`);
-  const usd = requireRepriced ? fin(r.usdRepriced) : fin(r.usdRepriced, r.usdReported, r.costUsd), imputed = fin(r.usdImputed, r.imputedUsd) ?? 0;
-  if (usd === undefined || usd < 0 || imputed < 0) throw new Error(`matrix row ${at}: dollars must be finite and >= 0`);
+  const usd0 = requireRepriced ? fin(r.usdRepriced) : fin(r.usdRepriced, r.usdReported, r.costUsd), imputed0 = fin(r.usdImputed, r.imputedUsd) ?? 0;
+  if (usd0 === undefined || usd0 < 0 || imputed0 < 0) throw new Error(`matrix row ${at}: dollars must be finite and >= 0`);
+  const { usd, imputed, meterGap } = meterGapSplit(usd0, imputed0, r.usdMeterGap, `matrix row ${at}`);
   const rep = r.rep ?? r.replicate ?? r.lineage ?? r.trial ?? 0;
   if (!Number.isInteger(rep) || rep < 0) throw new Error(`matrix row ${at}: rep must be an integer >= 0`);
   if (r.selfVerdict != null && r.selfVerdict !== 'pass' && r.selfVerdict !== 'fail') throw new Error(`matrix row ${at}: selfVerdict must be pass, fail or null`);
@@ -365,7 +380,7 @@ function normRow(r, { requireRepriced = false } = {}) {
   const voided = !!voidReason;
   return { job, mode, task, rep, pass: voided ? false : r.pass, delivered: voided ? false : r.delivered, schemaValid: r.schemaValid ?? true, selfVerdict: r.selfVerdict ?? null,
     deployableVerdict: r.deployableVerdict ?? null, score: typeof r.score === 'number' ? r.score : null, passAt: r.passAt ?? null,
-    seed: Number.isInteger(r.seed) ? r.seed : null, taskHash: r.taskHash ?? null, usd, imputed,
+    seed: Number.isInteger(r.seed) ? r.seed : null, taskHash: r.taskHash ?? null, usd, imputed, ...(meterGap > 0 ? { meterGap } : {}),
     error: voided ? 'VOIDED' : error, voidReason: voidReason ?? (error === 'VOIDED' ? 'VOIDED' : null), explicitVoid: voided,
     armHash: r.armHash ?? null, notRepriced: r.repriced === false, ...stampOf(r, at) };
 }
@@ -411,8 +426,9 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
       if (fin(b.usdRepriced, b.usd) === undefined) throw new Error(`build row ${job}/${mode}/${rep}: no finite usdRepriced (one meter: a build is never charged at usdReported or costUsd)`);
       if (fin(b.usdRepriced) !== undefined && fin(b.usd) !== undefined && Math.abs(b.usdRepriced - b.usd) > 1e-9) throw new Error(`build row ${job}/${mode}/${rep}: usd ${b.usd} and usdRepriced ${b.usdRepriced} disagree (two meters)`);
     }
-    const usd = requireRepriced ? fin(b.usdRepriced, b.usd) : fin(b.usd, b.usdRepriced, b.usdReported, b.costUsd), imputed = fin(b.usdImputed, b.imputedUsd) ?? 0;
-    if (usd === undefined || usd < 0 || imputed < 0) throw new Error(`build row ${job}/${mode}/${rep}: dollars must be finite and >= 0`);
+    const usd0 = requireRepriced ? fin(b.usdRepriced, b.usd) : fin(b.usd, b.usdRepriced, b.usdReported, b.costUsd), imputed0 = fin(b.usdImputed, b.imputedUsd) ?? 0;
+    if (usd0 === undefined || usd0 < 0 || imputed0 < 0) throw new Error(`build row ${job}/${mode}/${rep}: dollars must be finite and >= 0`);
+    const { usd, imputed } = meterGapSplit(usd0, imputed0, b.usdMeterGap, `build row ${job}/${mode}/${rep}`);
     const k = KEY(job, mode), L = lineages.get(k) ?? new Map();
     if (L.has(rep)) throw new Error(`duplicate build row ${job}/${mode}/lineage ${rep}`);
     const reasons = [];

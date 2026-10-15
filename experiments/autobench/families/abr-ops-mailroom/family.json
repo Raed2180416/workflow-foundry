@@ -1,0 +1,73 @@
+{
+ "id": "abr-ops-mailroom",
+ "version": "1.0.0",
+ "domain": "operations",
+ "title": "Mailroom package notifications",
+ "status": "dev: generator, oracle, observable-only reference, controls and gates built; no arm has run (no model, $0)",
+ "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.6",
+ "grounding": [
+  {"task": "operations.mailroom_package_routing", "span": "automationbench/domains/operations/tasks.py:26859-27234",
+   "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "Incoming Packages / Employee Directory / Mailroom Policies sheets; match on Name AND Department (two Alex Riveras); SMS with tracking number and pickup location for Refrigerated or Hazardous only; former (not found) and Terminated recipients skipped; On Leave held; 'customs hold' blocks routing and SMS; 'RETURNED TO SENDER' skipped entirely; 'oversized' goes to Loading Dock B and the SMS names it; routing summary in #mailroom"}
+ ],
+ "apps": ["google_sheets", "slack", "twilio"],
+ "tools": ["api_search", "api_fetch", "base64_encode"],
+ "zapierTools": [],
+ "allowedServices": ["google_sheets", "slack", "twilio"],
+ "sink": {"app": "slack", "channel": "automation-review"},
+ "stateOfRecord": "the Incoming Packages Status column (held packages, released by later triggers), the Employee Directory (On Leave -> Active) and the #mailroom history (the daily count); all in the world, visible to every arm",
+ "envelope": [
+  "google_sheets.row.update Incoming Packages Status (the package of the trigger, or the packages a hold release decides again)",
+  "slack.message.post in #mailroom ('<Tracking> → <location> (<Name>, <Department>)' per routed package; 'Routed today: <N>' at day close)",
+  "twilio.sms.send ('Package <Tracking> ready at <location>' to the recipient's Phone, Refrigerated or Hazardous only)",
+  "slack.message.post in #automation-review (escalation only)"
+ ],
+ "harmless": [],
+ "triggerKinds": {
+  "package.received": {"perWeek": [32, 45], "d1": [32, 34], "d2": [32, 38], "d3": [39, 45], "event": "google_sheets/new_row (Incoming Packages)"},
+  "customs.cleared": {"perWeek": [2, 4], "d1": [2, 2], "d2": [2, 3], "d3": [3, 4], "event": "google_sheets/row_updated (Incoming Packages, Notes)",
+                      "note": "d2: every one lifts a hold; d3: 1-2 lift a hold, plus one Notes update that still says customs hold and one on a package that is not Held - Customs (Held - On Leave, or Skipped)"},
+  "employee.returned": {"perWeek": [1, 2], "d1": [1, 1], "d2": [1, 2], "d3": [1, 2], "event": "google_sheets/row_updated (Employee Directory, Status On Leave -> Active)",
+                        "note": "every returning employee has at least one Held - On Leave package; d3: a namesake in another department is also On Leave with a held package"},
+  "day.close": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "event": "schedule/day_close", "at": "17:00 UTC Monday-Friday; Friday's is the last trigger and carries the end-of-week grading"}
+ },
+ "triggersPerWeek": {"d2": [41, 47], "d3": [50, 55], "measuredOn": "seeds 601-650"},
+ "trapRates": {"d1": 0.0, "d2": 0.24, "d3": 0.55,
+               "unit": "planted share of package.received triggers; release triggers are traps by construction and day closes carry count traps",
+               "measuredTriggerShare": {"d2": 0.357, "d3": 0.602, "design": {"d2": 0.35, "d3": 0.60}, "on": "seeds 601-650"}},
+ "trapCatalogue": {
+  "T-lookalike": ["lookalike (the recipient has a namesake in another department, with another floor and phone)", "wrong-dept (the name exists only in other departments: Skipped)", "release-lookalike (a namesake in another department is also On Leave with a held package: not released)"],
+  "T-note": ["terminated (Skipped; sometimes with an Active namesake)", "on-leave (Held - On Leave)", "customs (Held - Customs)", "returned (returned to sender: nothing at all)", "notes-variant (keyword in other letter case)", "notes-decoy ('Return to sender if undeliverable', 'cleared customs at port of entry', 'return label enclosed', 'large box': routed normally)", "not-found (a former employee)", "precedence (On Leave and customs hold: Held - On Leave)", "still-held (Notes updated, still customs hold)", "not-held (Notes cleared on a package that is not Held - Customs)", "requeue (back from leave, still customs hold: Held - Customs)"],
+  "T-format": ["oversized (Loading Dock B)", "oversized-sms (oversized and Refrigerated/Hazardous: the SMS names Loading Dock B)"],
+  "T-repeat": ["returned-rescan (a returned package scanned again under a tracking number already routed)"],
+  "T-state": ["release (a hold ends: route exactly the held packages)", "back-from-leave (a package for an employee back this week: route)", "count-noise (human messages in #mailroom today)", "count-release (packages released from holds today count)"]
+ },
+ "amendable": [],
+ "hardRequirements": [],
+ "needJob": {
+  "unit": "trigger",
+  "V": 1,
+  "W": 1,
+  "N": 160,
+  "alsoReported": [1, 40, {"N": 520, "label": "extrapolated, stationarity assumed"}],
+  "verifier": "none"
+ },
+ "hypothesis": {
+  "label": "either, slider-sensitive: the label should flip with V and N",
+  "agentH": [0.85, 0.95],
+  "workflow": "matches agent-H at a fraction of the per-trigger cost at about 50 triggers a week",
+  "why": "Most triggers are one sheet lookup and one or two exact writes, which a per-trigger agent should mostly get right; the failures concentrate on the cross-trigger state (releases, the daily count over the channel history) and the name+department and note-wording traps. A workflow built once removes the per-trigger session cost on ~45 near-identical triggers a week.",
+  "tag": "[I] written before any label"
+ },
+ "split": "held-out (near), proposed",
+ "seeds": {
+  "practice": {"range": [601, 609], "purpose": "need-example", "split": "dev"},
+  "devLabels": {"range": [610, 613], "purpose": "need-label", "split": "dev", "difficulty": {"610": "d2", "611": "d3", "612": "d2", "613": "d3"},
+                "note": "held-out family: dev streams are for harness rehearsal only, never router fitting (RECURRING-DESIGN §3.9)"},
+  "devTopUps": {"range": [614, 621], "purpose": "need-label", "split": "dev"},
+  "rehearsal": {"range": [622, 630], "purpose": "need-label", "split": "dev"},
+  "heldout": {"range": [8801, 8804], "purpose": "need-heldout", "split": "test", "note": "never generated or inspected by the family author; gen.py and harness.py refuse seeds outside 601-650"},
+  "difficultyRule": "within each seed block the first seed is d2, then d2/d3 alternate (gen.default_difficulty); --difficulty overrides",
+  "referenceGate": [610, 611, 612, 613, 614]
+ }
+}

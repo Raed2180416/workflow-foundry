@@ -543,7 +543,7 @@ class Gen:
             tid = f"s{self.seed}/t{n:02d}"
             at = p["at"]
             today = at.date().isoformat()
-            delta, payload_data = [], {}
+            delta = []
             if p.get("chatter"):
                 c = p["chatter"]
                 rec = {"ts": self.ts(c["at"]), "channel_id": self.chan[MAILROOM], "user_id": c["user"], "text": c["text"],

@@ -66,7 +66,7 @@ import { loadPolicy, policyHash } from '../../src/models/policy.mjs';
 import { materialize } from '../../src/executors/claude-code.mjs';
 import { compileDataSchema } from '../../src/validate.mjs';
 import { assertSeedsAllowed, loadLedger } from '../jit/seeds.mjs';
-import { STAGES_FILE, PREREG_FILE, ROLES, planTasks, exampleSet, span, checkStages, armSha, canonicalJson, stamp as engineStamp, stampDiff } from './prereg-check.mjs';
+import { STAGES_FILE, PREREG_FILE, ROLES, planTasks, exampleSet, span, checkStages, armSha, canonicalJson, stamp as engineStamp, stampDiff, envelopeLaunchCheck, launchJobsOf, heldoutDryRefusal } from './prereg-check.mjs';
 import { needTable, needLabels, HEADLINE, DELTA, MODES, ENV_FAULT_LIMIT } from './metrics.mjs';
 import { guardMeter, readCommittedMeterGate, readCommittedWaiver, readVerification, meterGateDecision, OUTPUT_TOLERANCE } from './meter-gate.mjs';
 import { perArm, cacheShareCell } from '../memory/cache-share.mjs';
@@ -446,7 +446,7 @@ export function copiedExampleLines(source, exampleTasks, { minLineChars = COPY_S
 // when its spend was not observed; each start in flight at its bound. Every reservation and settlement is appended to the
 // stage's spend ledger (spend.jsonl, in the work root and in --out), so the meter survives the process: a resume starts
 // from the ledger, and a reservation that was never settled (the process died with the start in flight) counts at its bound.
-export const SPEND_FILE = 'spend.jsonl', ARM_FAULTS_FILE = 'arm-faults.jsonl', STAMP_FILE = 'STAMP.json';
+export const SPEND_FILE = 'spend.jsonl', ARM_FAULTS_FILE = 'arm-faults.jsonl', STAMP_FILE = 'STAMP.json', LAUNCH_FILE = 'LAUNCH.json';
 export class StageBudget {
   constructor(capUsd, spentUsd = 0, { stage = null, files = [], attempts = new Map() } = {}) {
     Object.assign(this, { capUsd, spentUsd, reservedUsd: 0, refused: 0, stage, files: [...new Set(files)], attempts: new Map(attempts) });
@@ -757,7 +757,9 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo,
     schemaValid: meta.schemaValid ?? null, selfVerdict: meta.selfVerdict ?? null, deployableVerdict: meta.deployableVerdict ?? null,
     ...(meta.selfCheck?.error ? { selfCheckError: meta.selfCheck.error } : {}),
     usdReported: r6((rec.costUsd ?? 0) + (rec.imputedUsd ?? 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), repriced: cost.repriced !== false && !cost.fallback,
-    ...(cost.meterUnverified ? { meterUnverified: true } : {}), ...(cost.outputFromFinal ? { outputFromFinal: true } : {}),
+    // usdMeterGap: the part of usdImputed that is the CLI's own figure above the re-price (PREREG §5 meter-gate rule: observed
+    // dollars, read by metrics.mjs as such, never counted toward the 30%-imputed rule).
+    ...(cost.meterUnverified ? { meterUnverified: true, usdMeterGap: r6(cost.meterGapUsd ?? 0) } : {}), ...(cost.outputFromFinal ? { outputFromFinal: true } : {}),
     ms: rec.latencyMs ?? null, tokens: cost.tokens, turns: meta.turns ?? null, error: voided ? 'VOIDED' : rec.error?.code ?? null, rawError: rec.error?.code ?? null,
     void: voided ? voidReasons.join('; ') : null, ...(meta.stamp ? { stamp: meta.stamp } : {}),
   };
@@ -832,7 +834,7 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
   // text scan of every tool-input string (hiddenPathAttempts there) is kept for review by hand as pathMentions.
   const hidden = rec.hiddenPathAccesses ?? rec.hiddenPathAttempts;
   return { row: { ...head, factory: 'construct', model: b.builderModel, usdReported: r6(rec.constructionCostUsd), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed),
-    usd: r6(cost.measured), tokens: cost.tokens, minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
+    ...(cost.meterGap > 0 ? { usdMeterGap: r6(cost.meterGap) } : {}), usd: r6(cost.measured), tokens: cost.tokens, minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
     error: rec.builderError?.code ?? null, runSolverCalls: rec.runSolverCalls, hiddenPathAttempts: hidden, nestedModelAttempts: rec.nestedModelAttempts,
     outsidePaths: (rec.accessedOutsidePaths ?? rec.outsidePaths ?? []).slice(0, 10), pathMentions: rec.hiddenPathAttempts ?? null, mentionedPaths: (rec.outsidePaths ?? []).slice(0, 10),
     selfCheck: rec.selfCheck, checkPath: res.checkPath, checkSha256: rec.checkSha256, builderPromptSha256: rec.promptSha256 ?? null, copiedExampleLines: copied,
@@ -846,7 +848,7 @@ function buildCost(stages, b, rec, book, label, meter = null) {
     boundUsd: b.builderBudgetUsd, reportedUsd: rec.builderCostReportedUsd ?? 0, finalUsage: rec.builderUsage ?? null, meter });
   const gw = priceCalls(stages.priceTable, book.latest(`construct:${label}:`));
   const reported = rec.constructionCostUsd ?? 0, measured = builder.measured + gw.measured, imputed = builder.imputed + gw.imputed;
-  return { reported, measured, imputed, tokens: addUsage(addUsage(zeroUsage(), builder.tokens), gw.tokens), charged: Math.max(reported, measured + imputed) };
+  return { reported, measured, imputed, meterGap: builder.meterUnverified ? builder.meterGapUsd ?? 0 : 0, tokens: addUsage(addUsage(zeroUsage(), builder.tokens), gw.tokens), charged: Math.max(reported, measured + imputed) };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1049,6 +1051,9 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
  *  - the preregistration: the canonical file, equal to its frozen text (stages.json preregSha256 when the freeze records
  *    it, else the committed HEAD blob: no uncommitted edit);
  *  - the label-engine stamp (prereg-check stamp): a commit and no uncommitted change in the label engine;
+ *  - L6 at launch (prereg-check envelopeLaunchCheck; deps.envelopeCheck in tests): a stage with requiresEnvelope starts only when every envelope it needs
+ *    (a conditionalEnvelopes entry only when one of its jobs is launched or drawn) is a committed file (git commit time before now, one commit), equal to
+ *    its committed text, whose sealed routerShas are the PREREG §4.4 A-Freeze shas; the envelopes checked are returned (`envelopes`, for LAUNCH.json);
  *  - the cost-meter gate (meter-gate.mjs; D6 of the M0 diagnostics), read from the COMMITTED diagnostics.json (HEAD blob): no stage with an agent arm while it
  *    says block-until-verified and no passing meter-verification record is on file; none either when there is no gate to read (a missing, unparseable or
  *    partial file) unless the owner's waiver is logged (recorded in report.deviations), nor while the working-tree file differs from the HEAD blob;
@@ -1092,6 +1097,11 @@ export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters
   });
   if (!mg.allow) errors.push(`meter gate: ${mg.why}`);
   else if (mg.waived) deviations.push({ kind: 'meter-gate-waiver', text: `meter gate: ${mg.why}`, waiver: mg.waiver });
+  // L6 as a launch gate (PREREG §12): a stage that names decisions envelopes starts only on committed ones (git commit time
+  // before now, never rewritten) whose sealed router shas equal the committed Freeze addendum's A-Freeze row. A conditional
+  // envelope (E2E's NL2bp) is needed only when one of its jobs is launched or drawn.
+  const env = (deps.envelopeCheck ?? envelopeLaunchCheck)({ stages, stage, launchJobs: launchJobsOf(stages, stage, units), preregText });
+  for (const e of env.errors) errors.push(`envelope (L6): ${e}`);
   let st = null;
   try { st = stampOf(stages, { stage: stage.id }); } catch (e) { errors.push(`engine stamp: ${e.message}`); }
   if (st) {
@@ -1103,7 +1113,7 @@ export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters
     if (!deviation) errors.push(`${what} on a paid run drops preregistered jobs or modes (racing then reads a subset of the modes): pass --deviation TEXT to record it`);
     else deviations.push({ kind: 'filter', jobs: filters.jobs ?? null, arms: filters.arms ?? null, text: deviation });
   } else if (deviation) deviations.push({ kind: 'note', text: deviation });
-  return { errors, deviations, stamp: st };
+  return { errors, deviations, stamp: st, envelopes: env.envelopes };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1204,12 +1214,21 @@ export async function labelRun(opts) {
   const plan0 = loadPlan({ stageId, stagesFile, specFile }), { stages, stage, source, planSha } = plan0;
   const { units: planned, skipped } = stageUnits(stages, stage, { jobs, arms, withConditional });
   const deviations = [];
-  let stampRec = null;
+  let stampRec = null, launchEnvelopes = [];
   if (!dry) {
     const v = paidRunChecks({ plan: plan0, units: planned, prereg, allowDraft, filters: jobs || arms ? { jobs, arms } : null, deviation, deps: paidDeps });
     if (v.errors.length) throw Object.assign(new Error(`paid run refused (${v.errors.length} problem(s)): ${v.errors.join('; ')}`), { code: 'PAID_RUN_REFUSED', errors: v.errors });
-    deviations.push(...v.deviations); stampRec = v.stamp;
-  } else if (deviation) deviations.push({ kind: 'note', text: deviation });
+    deviations.push(...v.deviations); stampRec = v.stamp; launchEnvelopes = v.envelopes ?? [];
+  } else {
+    if (deviation) deviations.push({ kind: 'note', text: deviation });
+    // PREREG §3.3: before Freeze the only use of held-out (test-split) seeds is the --hashes child. A --dry plan on a
+    // test-split evaluation role would generate those tasks here and score stub outputs with the bed oracles: refused
+    // until the Freeze addendum is in the preregistration, unless --allow-heldout-dry names a §13 deviation.
+    const pf = prereg ? path.resolve(prereg) : PREREG_FILE, allowHeldoutDry = opts.allowHeldoutDry ?? null;
+    const why = heldoutDryRefusal({ units: planned, preregText: existsSync(pf) ? readFileSync(pf, 'utf8') : null, allow: allowHeldoutDry });
+    if (why) throw Object.assign(new Error(why), { code: 'HELDOUT_DRY_REFUSED' });
+    if (allowHeldoutDry != null) deviations.push({ kind: 'heldout-dry', text: `--allow-heldout-dry ${allowHeldoutDry}: held-out tasks generated in-process by a --dry run (PREREG §13 ${allowHeldoutDry})` });
+  }
   const id = stage.id.toLowerCase();
   const live = path.resolve(opts.workRoot ?? path.join(LIVE_ROOT, dry ? `${id}-dry` : id));
   if (live === REPO || live.startsWith(REPO + path.sep)) throw new Error(`the work root must be outside the repository: ${live}`);
@@ -1231,6 +1250,11 @@ export async function labelRun(opts) {
       if (!d.ok) throw Object.assign(new Error(`resume on a changed label engine: ${d.deviations.slice(0, 5).map(x => x.key).join(', ')} differ from ${sf}; finish or analyse the stage as it stands`), { code: 'ENGINE_CHANGED' });
     } else writeFileSync(sf, JSON.stringify(stampRec, null, 1) + '\n');
     copyFileSync(sf, path.join(live, STAMP_FILE));
+    // The launch record (L6, PREREG §12): when the stage first launched and the committed envelopes it launched against.
+    // Written once, before the first paid call; evaluate.mjs orders the envelope's git commit time before launchedAt.
+    const lf = path.join(out, LAUNCH_FILE);
+    if (!existsSync(lf)) writeFileSync(lf, JSON.stringify({ schema: 'need-launch/1', stage: stage.id, launchedAt: new Date().toISOString(), envelopes: launchEnvelopes }, null, 1) + '\n');
+    copyFileSync(lf, path.join(live, LAUNCH_FILE));
   }
   const ledger = loadLedger();
   // The negative control (K2) runs first, then the stage's own order.
@@ -1540,7 +1564,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (stageId && /\.json$/.test(stageId) && existsSync(stageId)) { specFile = stageId; stageId = arg('--stage-id') ?? JSON.parse(readFileSync(stageId, 'utf8')).stages?.[0]?.id; }
   if (!stageId) {
     console.error('usage: label-run.mjs --stage <ID|spec.json> [--stages FILE] [--stage-spec FILE] [--prereg FILE] [--work-root DIR] [--out DIR] [--dry]\n'
-      + '         [--jobs a,b] [--arms a,b] [--concurrency 1-4] [--no-racing] [--with-conditional] [--allow-draft] [--deviation TEXT] [--enforce-gates]');
+      + '         [--jobs a,b] [--arms a,b] [--concurrency 1-4] [--no-racing] [--with-conditional] [--allow-draft] [--deviation TEXT] [--enforce-gates] [--allow-heldout-dry D<n>]');
     process.exit(2);
   }
   const conc = arg('--concurrency', '4');
@@ -1548,7 +1572,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (!/^[1-4]$/.test(String(conc))) throw new Error(`--concurrency must be an integer from 1 to 4, got ${conc}`);
     const rep = await labelRun({ stageId, stagesFile: arg('--stages', STAGES_FILE), specFile, prereg: arg('--prereg'), workRoot: arg('--work-root'), out: arg('--out'), dry: has('--dry'),
       jobs: arg('--jobs')?.split(',') ?? null, arms: arg('--arms')?.split(',') ?? null, concurrency: Number(conc), racing: !has('--no-racing'),
-      withConditional: has('--with-conditional'), allowDraft: has('--allow-draft'), deviation: arg('--deviation'), ...(has('--enforce-gates') ? { enforceGates: true } : {}) });
+      withConditional: has('--with-conditional'), allowDraft: has('--allow-draft'), deviation: arg('--deviation'), ...(has('--enforce-gates') ? { enforceGates: true } : {}),
+      ...(has('--allow-heldout-dry') ? { allowHeldoutDry: arg('--allow-heldout-dry') } : {}) });
     process.stdout.write(renderReport(rep));
     process.exit(rep.stopped ? 3 : 0);
   } catch (e) { console.error(`label-run: ${e.code ? `${e.code}: ` : ''}${e.message}`); process.exit(2); }

@@ -38,6 +38,7 @@ import {
   signFlipTest, clusterBootstrapDelta, firstPassShort,
 } from './metrics.mjs';
 import { balancedAccuracyInterval, c7aReading, thetaFitStatus, missingDataRule } from './prereg-rules.mjs';
+import { aFreezeShas, gitHistory, PREREG_FILE } from './prereg-check.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
@@ -103,9 +104,10 @@ export function loadLabels(root, { trainOnly = false } = {}) {
       out.push(r);
     }
     armFaults.push(...readJsonl(path.join(dir, 'arm-faults.jsonl')).filter(r => !trainOnly || meta[r.job]?.split === 'train'));
-    const rep = readJsonIf(path.join(dir, 'report.json')), stamp = readJsonIf(path.join(dir, 'STAMP.json'));
+    const rep = readJsonIf(path.join(dir, 'report.json')), stamp = readJsonIf(path.join(dir, 'STAMP.json')), launch = readJsonIf(path.join(dir, 'LAUNCH.json'));
+    // LAUNCH.json (label-run, written before the first paid call): the launch time and the envelopes the stage launched against (L6).
     stageInfo.push({ stage: path.basename(dir), splits: [...new Set(Object.values(J).map(m => m.split))].sort(), priceTable: rep?.priceTable ?? null,
-      stamp: stamp ? sha256(canonical(stamp)) : null });
+      stamp: stamp ? sha256(canonical(stamp)) : null, launchedAt: launch?.launchedAt ?? null, launchEnvelopes: launch?.envelopes ?? [] });
   }
   return { meta, rows, builds, decisions, probes, stageInfo, stages, skipped, armFaults };
 }
@@ -819,12 +821,31 @@ export function nearestClusterTest(knnChoose, views, { threshold = 0.8 } = {}) {
  * (mode, routingUsd, needsWorkflow); every decision actually SCORED (`scored`) equals its sealed one; every sealed target
  * of the evaluated split is either scored or listed as dropped (`accounted`); and the envelope predates the first
  * held-out row.
+ * `provenance` (the CLI always supplies it for a held-out reading; envelopeProvenance): { committedAt (the git commit time
+ * of the envelope file's first commit, null when it is not committed), commits (how many commits touched it), aFreeze (the
+ * PREREG §4.4 A-Freeze shas, prereg-check aFreezeShas, null while TBD-FREEZE), firstHeldoutAt (the earliest launch of a
+ * held-out matrix stage, LAUNCH.json launchedAt), launched (the envelope shas those stages launched against) }. With it:
+ * the git commit time is required and must precede the first held-out launch or row (the self-reported createdAt is
+ * never used); a missing time, a rewritten file, a missing A-Freeze row, router shas other than A-Freeze's, or a stage
+ * launched against another envelope is a problem. Without it (programmatic calls, unit tests) L6 reports provenance
+ * 'not checked' and orders by createdAt as before; such a result is not a preregistered reading.
  */
-export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null, scored = null, accounted = null, split = null, meta = null } = {}) {
+export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null, scored = null, accounted = null, split = null, meta = null, provenance = undefined } = {}) {
   if (!committed) return { ok: false, problems: ['no committed decisions (evaluate.mjs --commit-decisions before the held-out matrix is joined)'] };
   const problems = [];
   const P = committed.payload ?? {}, Q = recomputed.payload;
   if (sha256(canonical(P)) !== committed.sha256) problems.push('committed payload does not match its sha256');
+  if (provenance !== undefined) {
+    const pv = provenance ?? {};
+    if (!pv.committedAt) problems.push('the envelope file has no git commit time (not committed): L6 orders the envelope by its git commit, never by the self-reported createdAt');
+    if ((pv.commits ?? 0) > 1) problems.push(`the envelope file changed after its first commit (${pv.commits} commits): an envelope is never rewritten`);
+    if (!pv.aFreeze) problems.push('no A-Freeze shas to compare with (PREREG §4.4 A-Freeze is TBD-FREEZE: the Freeze addendum is not committed)');
+    else for (const f of [...new Set([...Object.keys(pv.aFreeze), ...Object.keys(P.routerShas ?? {})])].sort()) if ((P.routerShas ?? {})[f] !== pv.aFreeze[f]) problems.push(`router file ${f} sealed as ${(P.routerShas ?? {})[f]?.slice(0, 16) ?? 'absent'}, the A-Freeze row pins ${pv.aFreeze[f]?.slice(0, 16) ?? 'nothing'}`);
+    const first = [firstHeldoutRowAt, pv.firstHeldoutAt].filter(Boolean).sort()[0] ?? null;
+    if (!first) problems.push('no launch time for the held-out matrix (LAUNCH.json launchedAt) or its rows: the envelope cannot be ordered before them');
+    else if (pv.committedAt && !(Date.parse(pv.committedAt) < Date.parse(first))) problems.push(`envelope committed at ${pv.committedAt}, not before the first held-out launch or row ${first}`);
+    for (const l of pv.launched ?? []) if (l.sha256 !== committed.sha256) problems.push(`stage ${l.stage ?? '?'} launched against envelope ${String(l.sha256).slice(0, 16)}, not this one (${String(committed.sha256).slice(0, 16)})`);
+  }
   for (const f of Object.keys({ ...(P.routerShas ?? {}), ...(Q.routerShas ?? {}) }).sort()) if ((P.routerShas ?? {})[f] !== (Q.routerShas ?? {})[f]) problems.push(`frozen file ${f} changed after commit`);
   for (const k of ['trainRows', 'trainBuilds', 'labelSet', 'reps', 'seed']) if (canonical(P[k] ?? null) !== canonical(Q[k] ?? null)) problems.push(`${k} changed after commit`);
   if (canonical(P.cells ?? null) !== canonical(Q.cells ?? null)) problems.push('cells changed after commit');
@@ -849,8 +870,8 @@ export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null
     if (!same(a, fields(d))) problems.push(`scored decision differs from the envelope: ${d.policy}|${d.job}|${d.cell} ${show(a)} -> ${show(fields(d))}`);
   }
   if (accounted && split) for (const j of P.targets ?? []) if (meta?.[j]?.split === split && !isForced(meta[j]) && !accounted.has(j)) problems.push(`sealed target ${j} was neither scored nor listed as dropped`);
-  if (firstHeldoutRowAt && committed.createdAt && !(committed.createdAt < firstHeldoutRowAt)) problems.push(`envelope created ${committed.createdAt}, not before the first held-out row ${firstHeldoutRowAt}`);
-  return { ok: !problems.length, compared, scoredCompared, problems: problems.slice(0, 50), more: Math.max(0, problems.length - 50) };
+  if (provenance === undefined && firstHeldoutRowAt && committed.createdAt && !(committed.createdAt < firstHeldoutRowAt)) problems.push(`envelope created ${committed.createdAt}, not before the first held-out row ${firstHeldoutRowAt}`);
+  return { ok: !problems.length, compared, scoredCompared, provenance: provenance === undefined ? 'not checked (not a preregistered reading)' : 'checked', problems: problems.slice(0, 50), more: Math.max(0, problems.length - 50) };
 }
 
 // ---------------------------------------------------------------------------------------------------- metamorphic
@@ -910,7 +931,24 @@ export function metamorphic(choose, jobs, { meta, labels = null, modesOf, policy
 
 // ---------------------------------------------------------------------------------------------------- envelope (L6)
 const fileSha = f => (existsSync(f) ? sha256(readFileSync(f)) : null);
-export const ROUTER_FILES = Object.freeze(['features.mjs', 'router.mjs', 'voi.mjs', 'metrics.mjs', 'evaluate.mjs']);
+// The analysis stamp A-Freeze (PREREG §4.4, stages.json engineStamp.analysis.files): the envelope seals the sha of each, and
+// L6 compares them with the A-Freeze row of the committed Freeze addendum, at launch and here.
+export const ROUTER_FILES = Object.freeze(['features.mjs', 'router.mjs', 'voi.mjs', 'metrics.mjs', 'evaluate.mjs', 'card.mjs', 'prereg-rules.mjs']);
+
+/**
+ * The provenance verifyEnvelope needs for a held-out reading (L6): the git history of the committed envelope file (its
+ * first commit's time, how many commits touched it), the A-Freeze shas of the preregistration text, and from the labels'
+ * stageInfo the earliest launch of a stage holding rows of the evaluated split (LAUNCH.json launchedAt) and the envelope
+ * shas those stages launched against. deps: history (rel -> prereg-check gitHistory shape).
+ */
+export function envelopeProvenance({ decFile, preregText, stageInfo = [], split, repo = ROOT, history = null }) {
+  const rel = path.relative(repo, path.resolve(decFile));
+  const h = (history ?? (r => gitHistory(r, { repo })))(rel);
+  const held = (stageInfo ?? []).filter(x => (x.splits ?? []).includes(split));
+  return { file: rel, committedAt: h.commits[0]?.committedAt ?? null, commits: h.commits.length, uncommittedEdit: h.head != null && h.work !== h.head,
+    aFreeze: aFreezeShas(preregText), firstHeldoutAt: held.map(x => x.launchedAt).filter(Boolean).sort()[0] ?? null,
+    launched: held.flatMap(x => (x.launchEnvelopes ?? []).map(e => ({ stage: x.stage, sha256: e.sha256 }))) };
+}
 
 /** The TRAIN meter and arm versions sealed in the envelope (DESIGN §2 one cost meter; ROADMAP §6 rule 13 engine stamp). */
 export function meterOf(rows, stageInfo = []) {
@@ -1118,7 +1156,8 @@ function buildLabels({ rows, builds, registry, cascades, labelSet, cells, reps, 
  * (loadLabels) carries each stage's price table and engine stamp.
  */
 export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], stageInfo = [], armFaults = [], split = 'heldout', policies = defaultPolicies(), cells = GRID, reps = 2000, seed = 1, bootReps = 10000,
-  l2Perms = 1000, alpha = 0.05, labelSet = 'today', registry = MODES, cascades = CASCADES, committed = null, ledger = null, leak = true, attacks = true, randomDraws = 1000, firstPass = FIRST_PASS }) {
+  l2Perms = 1000, alpha = 0.05, labelSet = 'today', registry = MODES, cascades = CASCADES, committed = null, ledger = null, leak = true, attacks = true, randomDraws = 1000, firstPass = FIRST_PASS,
+  envelopeProvenance = undefined }) {
   if (!['train', 'heldout', 'sealed', 'e2e'].includes(split)) throw new Error(`--split must be train, heldout, sealed or e2e, got ${split}`);
   if (!cells.some(c => c.key === HEADLINE.key) || !cells.some(c => c.key === N1.key)) throw new Error('cells must include the headline and the N = 1 cell');
   for (const x of [...rows, ...builds]) { const m = meta[x.job]; if (!m) throw new Error(`job ${x.job} has rows but no jobs.json entry`); if (typeof m.cluster !== 'string' || typeof m.split !== 'string') throw new Error(`job ${x.job}: cluster and split are required`); }
@@ -1302,7 +1341,8 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
       const scored = [];
       for (const [name, byJob] of decisions) if (!peekNames.has(name)) for (const j of EVAL) for (const [ck, d] of byJob.get(j) ?? []) scored.push({ policy: name, job: j, cell: ck, mode: d.mode, routingUsd: d.routingUsd, needsWorkflow: d.needsWorkflow });
       const recomputed = sealDecisions({ fit, rows: trainRows, builds: trainBuilds, meta, recorded, policies, cells, reps: fitReps, seed: fitSeed, registry, labelSet, createdAt: committed?.createdAt ?? null, stageInfo });
-      L6 = verifyEnvelope(committed, recomputed, { firstHeldoutRowAt: evalRows.filter(r => r.at).map(r => r.at).sort()[0] ?? null, scored, accounted: new Set([...EVAL, ...droppedEval.map(x => x.job)]), split, meta });
+      L6 = verifyEnvelope(committed, recomputed, { firstHeldoutRowAt: evalRows.filter(r => r.at).map(r => r.at).sort()[0] ?? null, scored, accounted: new Set([...EVAL, ...droppedEval.map(x => x.job)]), split, meta,
+        provenance: envelopeProvenance });
     }
     const iso = [buildIsolation(trainBuilds, fit.table, meta), ...(split === 'train' ? [] : [buildIsolation(evalBuilds, table, meta)])];
     const L7 = { ok: iso.every(x => x.ok), problems: iso.flatMap(x => x.problems) };
@@ -1403,7 +1443,7 @@ export function renderReport(R) {
     `  routing dollars: ${V.routing.ok ? 'reconciled' : 'PROBLEMS'} (${V.routing.checked} NR-probe charge(s) checked against ${V.routing.probeJobs} job(s) with probe rows; ${V.routing.unprobed} not probed)${V.routing.problems.length ? `: ${V.routing.problems.slice(0, 3).join('; ')}` : ''}`,
     `  meter: price tables ${V.meter.priceTables.join(', ') || 'not recorded'}; stages without an engine stamp ${V.meter.unstamped.join(', ') || 'none'}; rows of other splits ignored ${V.ignoredRows}`,
     ...(V.fragility.untested.length ? [`  fragility not testable (delivered rows with a tolerance spec but no score): ${V.fragility.untested.join(', ')} (${V.fragility.unscored.length} row(s))`] : []));
-  if (R.leaks) L.push('', `LEAK TESTS (F6 ${R.leaks.f6 ? 'TRIPPED' : 'clear'})`, ...['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'].map(k => `  ${k}: ${R.leaks[k].ok === false ? 'FAIL' : R.leaks[k].assessed === false ? 'not assessed' : 'ok'}${R.leaks[k].problems?.length ? ` (${R.leaks[k].problems.slice(0, 3).join('; ')})` : ''}${k === 'L8' && R.leaks.L8.demote ? ' (NR-knn demoted to family-majority)' : ''}`));
+  if (R.leaks) L.push('', `LEAK TESTS (F6 ${R.leaks.f6 ? 'TRIPPED' : 'clear'})`, ...['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'].map(k => `  ${k}: ${R.leaks[k].ok === false ? 'FAIL' : R.leaks[k].assessed === false ? 'not assessed' : 'ok'}${R.leaks[k].problems?.length ? ` (${R.leaks[k].problems.slice(0, 3).join('; ')})` : ''}${k === 'L8' && R.leaks.L8.demote ? ' (NR-knn demoted to family-majority)' : ''}${k === 'L6' && R.leaks.L6.provenance ? `; provenance ${R.leaks.L6.provenance}` : ''}`));
   if (R.metamorph) { L.push('', 'METAMORPHIC ATTACKS'); for (const [n, m] of Object.entries(R.metamorph)) L.push(`  ${n.padEnd(18)} pairs ${m.pairsOk ? 'ok' : 'FAIL'}; pad flips ${f3(m.pad.flipRate)}; injection ${f3(m.inject.flipRate)}; paraphrase ${m.paraphrase.n ? f3(m.paraphrase.flipRate) : '–'}; N-monotone violations ${m.monotone.violations}${m.f5 ? '; F5 TRIPPED' : ''}`); }
   return L.join('\n');
 }
@@ -1445,8 +1485,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (split !== 'train' && !decFile) { console.error(`--split ${split} joins non-TRAIN labels: it needs --decisions <the committed envelope> (L6); refusing`); process.exit(2); }
   const L = loadLabels(root, { trainOnly: split === 'train' });
   const committed = decFile ? JSON.parse(readFileSync(decFile, 'utf8')) : null;
+  // A held-out reading always checks the envelope's provenance (L6): its git commit time and history, the A-Freeze shas of
+  // the preregistration (--prereg, default PREREG-NEED-V1.md) and the held-out stages' launch records.
+  const preregFile = path.resolve(arg('--prereg', PREREG_FILE));
+  const envelopeProvenanceRec = decFile ? envelopeProvenance({ decFile, preregText: existsSync(preregFile) ? readFileSync(preregFile, 'utf8') : null, stageInfo: L.stageInfo, split }) : undefined;
   const R = evaluate({ rows: L.rows, builds: L.builds, meta: L.meta, recorded: L.decisions, probes: L.probes, stageInfo: L.stageInfo, armFaults: L.armFaults, split, policies, committed,
-    reps: num('--reps', 2000), bootReps: num('--boot', 10000), l2Perms: num('--perms', 1000), seed: num('--seed', 1), labelSet: arg('--label-set', 'today') });
+    reps: num('--reps', 2000), bootReps: num('--boot', 10000), l2Perms: num('--perms', 1000), seed: num('--seed', 1), labelSet: arg('--label-set', 'today'), envelopeProvenance: envelopeProvenanceRec });
   const text = renderReport(R), out = arg('--report', null);
   if (out) {
     mkdirSync(out, { recursive: true });

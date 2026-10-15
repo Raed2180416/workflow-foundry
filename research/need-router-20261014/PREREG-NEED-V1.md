@@ -18,6 +18,14 @@ wall, ran from 00:43 to 06:20. Both are recorded from their committed rows as de
 §0.1 does not name; an overrun that §13 does not record; a stage outside the totals with no budget; and, once the Freeze
 addendum pins the analysis, an analysis that does not import the preregistered rules (§15). No need-router label exists.
 
+**Revised a third time 2026-10-15, still DRAFT,** after a second adversarial review (§13 D9 lists every change). C7a reads
+REFUTED only when its upper bound excludes a useful balanced accuracy, and its power precondition is now a chance, not a
+best case (§7, §8, F12). The power gate is computed without r3p as well (§11). The decisions envelope is a launch gate in
+code, ordered by git commit time and compared with the A-Freeze row (§6, §12). The meter-gate rule, the cache-write rate
+billed and budget overshoot are stated (§5, §12). Committed spend counts recorded overruns (§12). The owner tasks have
+their own capped stage, NL0-owner (§12). A `--dry` run may not generate held-out tasks before Freeze (§3.3). The Jev
+feature decision excludes r3p (§6). Voided lineages score as failures (§5). No need-router label exists.
+
 Machine-readable half: [prereg/stages.json](prereg/stages.json) (jobs, clusters, arms with settings hashes, seeds, price
 table, grid, RNG seeds, stages with caps, the reading rules under `analysis`, the cap meter, the engine-stamp lists).
 Checked by `node experiments/need-router/prereg-check.mjs` (§15). Where this text and `stages.json` differ, the run is
@@ -30,7 +38,7 @@ Tags: [D] from DESIGN.md, [A] an adopted owner decision (DECISIONS-ADOPTED.md), 
 today, [P] a choice made in this preregistration because DESIGN leaves it open (listed in §14 for review before freeze).
 
 Evaluation grades: **development** (TRAIN jobs, M0 diagnostics, M1 with its tags `m1` and `m1-d5`, M1-R (tag `m1-r`),
-M1e, NL0, NL1, judge-H on TRAIN, archived LEGACY rows; used to build and tune), **held-out** (NL2p, NL2, NL2bp, NL2b,
+M1e, NL0, NL0-owner, NL1, judge-H on TRAIN, archived LEGACY rows; used to build and tune), **held-out** (NL2p, NL2, NL2bp, NL2b,
 E2E; families never used for tuning), **sealed** (NL3; run once by a session that tuned nothing). Tests used to improve the router or
 the builders are development evidence, never held-out.
 
@@ -230,7 +238,8 @@ Under these hypotheses C7a is therefore expected to read INCONCLUSIVE (§8).
 - **Primary population:** non-forced held-out jobs (split HELD-OUT and, once admitted, HELD-OUT conditional), L_today
   labels. [D]
 - **Forced stratum:** jobs with a typed hard requirement (`runbook`, `e8`). Reported separately; guard recall only. [D]
-- **Owner and sealed jobs:** `owner-dev` (up to 5 owner tasks in NL0) is development evidence only. `owner-sealed` and
+- **Owner and sealed jobs:** `owner-dev` (up to 5 owner tasks, in their own stage NL0-owner, §12) is development evidence
+  only. `owner-sealed` and
   `sealed-1` … `sealed-4` form the sealed stratum (NL3). The owner tasks are independent tasks, so the dev/sealed split of
   owner tasks does not break the one-family-one-split rule. [D]
 - **Weights:** each held-out cluster weighs 1; jobs within a cluster weigh equally. [D]
@@ -301,7 +310,8 @@ prompt, inputs and files, the `features.mjs` measure) over the nine example seed
 | `gameqa` | gameqa (interactive) | TBD-NL2b, set by the audit before labels | schema | – | rule | 40 |
 | `runbook` | runbook (interactive) | TBD-NL2b, set by the audit before labels | schema | – | rule | 40 |
 | `e8` | ebed-e8 | as run by #58 | the E8 smoke host | – | – | 0 here |
-| `owner-dev`, `owner-sealed` | owner tasks | one task per job unless the owner declares N | the owner's acceptance check | – | rule | in NL0 / NL3 |
+| `owner-dev` | owner tasks | one task per job unless the owner declares N | the owner's acceptance check | – | rule, on the task's own size at admission (the bound assumes 8) | 3 per task, at most 5 tasks (NL0-owner); bound 19.50 per task |
+| `owner-sealed` | owner tasks | as `owner-dev` | the owner's acceptance check | – | rule | in NL3 |
 | `sealed-1` … `sealed-4` | chosen by the NL3 session | NL3 | NL3 | – | rule | in NL3 |
 
 **Bands after M1** [P, informed by M1 and logged]. At d3, one call solved more than the W-BED §2.4 one-call gate allows
@@ -379,6 +389,19 @@ already in the ledger as `wbed-dev` and `wbed-r3p-dev`. [D, M] Every runner call
   generated. Held-out families are generated and hashed only inside a child process, whose only output is counts and
   task ids (`job:role:seed:difficulty`), never task content or hashes. This is the only use of held-out seeds before
   Freeze, it is recorded here and in §13 (D4), and no model sees the tasks.
+- **Enforced since D9** (2026-10-15, second review). Two paths had generated held-out tasks in-process before Freeze:
+  - `label-run.mjs --stage NL2|E2E|DRIFT --dry` skipped every paid-run check. It generated tasks 8801–8812, 8825–8836 or
+    8837–8848, wrote their workdirs under `/var/tmp`, and scored stub outputs with the bed oracles.
+  - The test suite hashed `need-constraint`'s held-out evaluation and E2E tasks in-process (`hashCollisions(..., { child:
+    false })`) on every run.
+
+  Now `label-run.mjs --dry` refuses any unit on a test-split evaluation role (`heldoutEval`, `e2e`, `drift`; replacements
+  come from `heldoutReserve`) until the §4.4 A-Freeze row is filled. The only way past is `--allow-heldout-dry D<n>`, naming
+  a deviation that §13 records (`prereg-check.mjs heldoutDryRefusal`). `hashCollisions` refuses `child: false` for any
+  held-out, conditional or forced job, and the tests compare the child's counts with an in-process run on a TRAIN anchor
+  only. On 2026-10-15 `/var/tmp/foundry-work/need/` held no `nl2-dry`, `e2e-dry` or `drift-dry` work root, so no such
+  --dry run left files there [M]. The test suite's in-process hashing ran on every suite run, counts only. No model saw
+  those tasks.
 - The ledger's `need-heldout` range admits every bed (`beds: ['*']`). So only `stages.json` and the checker keep TRAIN
   jobs off it. The owner is asked to narrow it to the held-out families (§14).
 

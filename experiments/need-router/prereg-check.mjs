@@ -2,9 +2,11 @@
 // Validates research/need-router-20261014/prereg/stages.json, the machine-readable half of PREREG-NEED-V1.md, against
 //   - the seed ledger (experiments/jit/seeds.mjs seedRefusals, the same rule every runner applies through assertSeedsAllowed),
 //   - the model policy (policy/models.json: model ids and base prices),
-//   - the spend rules (each stage cap <= the $500 pause, M1's tag shares within its cap, the sum of caps plus every
-//     recurring stage's cumulative cap <= the $1,500 session soft cap; a stage outside the totals is recurring or names
-//     an external budget whose plan file names it),
+//   - the spend rules (each stage cap <= the $500 pause, M1's tag shares within its cap; the committed spend, each stage
+//     at max(its cap, its recorded runs on the §12 meter), plus every recurring stage's cumulative cap plus every stage
+//     held by another plan's budget <= the $1,500 session soft cap; a stage outside the totals is recurring or names an
+//     external budget whose plan file names it; owner-task runs carry a per-task estimate and bound),
+//   - the policy version (a warning before the freeze, an error once frozen),
 //   - the recorded runs (`observed`: keyed by run tags, complete records carry calls, dollars, meter and runner sha, none
 //     in flight at freeze, each named in PREREG §0.1, an overrun of its cap share named in §13),
 //   - the analysis' imports of the preregistered rules (`analysis.requiredRules`: a warning until the §4.4 A-Freeze row
@@ -15,7 +17,8 @@
 //   - the preregistration text (status, every job id, every stage id as a whole token, every arm settings hash; when
 //     frozen, no TBD-M0 and no "TBD at ... launch" left in §4.4 or §11; "dev-observed" stated when a job is),
 // and exports the preregistered task plan (per-seed difficulty, example sets, probe task, E2E draw) so label-run reads
-// one rule, and the engine stamps (label engine per paid stage, analysis at Freeze) with their comparison.
+// one rule, the engine stamps (label engine per paid stage, analysis at Freeze) with their comparison, and the launch
+// checks label-run runs before a paid stage (envelopeLaunchCheck: L6 as a gate) or a --dry run (heldoutDryRefusal).
 //   node experiments/need-router/prereg-check.mjs [--stages FILE] [--prereg FILE] [--hashes] [--stamp [--stage ID]] [--json]
 //   --hashes  also generate every planned example, probe and evaluation task of each existing bed ($0), each seed checked
 //             against the ledger first, and report taskHash collisions between example and evaluation tasks of one
@@ -436,11 +439,12 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
   tot.softCapCheckUsd = round2(tot.committedUsd + recurringCap + tot.externalCommittedUsd);
   for (const k of Object.keys(tot)) if (stages.totals?.[k] !== tot[k]) err(`totals.${k} ${stages.totals?.[k]} != the stage sum ${tot[k]}`);
   if (!(tot.softCapCheckUsd <= softCap)) err(`committed spend $${tot.committedUsd} (each stage at max(cap, recorded meter)) plus recurring caps $${recurringCap} plus externally budgeted stages $${tot.externalCommittedUsd} is over the $${softCap} session soft cap`);
-  // Owner tasks (seedsFrom: owner tasks) carry a per-task estimate and bound, so K7 can be read per owner task, and their
-  // replicates and lineages are stated (no default K).
+  // Development owner tasks (an owner-split job run on seedsFrom: owner tasks) carry a per-task estimate and bound, so K7
+  // can be read per owner task, and their replicates and lineages are stated (no default K). The sealed owner tasks are
+  // planned by the NL3 session.
   for (const st of stageList) for (const [ri, run] of (st.runs ?? []).entries()) {
-    if (!run.seedsFrom) continue;
     const where = `${st.id}.runs[${ri}]`, job = (stages.jobs ?? []).find(j => j.id === run.job);
+    if (!run.seedsFrom || job?.split !== 'owner') continue;
     if (!Number.isInteger(run.replicates) || !Number.isInteger(run.lineages)) err(`${where}: a run on ${run.seedsFrom} states its replicates and lineages (integers)`);
     if (!(job?.estPerTaskUsd > 0) || !(job?.boundPerTaskUsd >= job?.estPerTaskUsd) || !Number.isInteger(job?.maxTasks)) { err(`${where}: job ${run.job} needs estPerTaskUsd > 0, boundPerTaskUsd >= it and an integer maxTasks (K7 reads them)`); continue; }
     if (st.estUsd + 1e-9 < job.maxTasks * job.estPerTaskUsd) err(`${where}: stage ${st.id} estimate $${st.estUsd} is below ${job.maxTasks} owner tasks at $${job.estPerTaskUsd}`);
@@ -555,13 +559,11 @@ export async function hashCollisions(stages, { jobs = null, child = true, ledger
   const a = await hashJobs(stages, dev, { ledger: L });
   let b = { tasks: 0, exampleEval: [], evalRepeats: [], refused: [] };
   if (held.length) {
-    {
-      const txt = execFileSync(process.execPath, [THIS_FILE, '--hash-child'], { cwd: REPO, input: JSON.stringify({ stages, jobs: held }), encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], maxBuffer: 1 << 24 });
-      b = JSON.parse(txt.trim().split('\n').pop());
-    }
+    const txt = execFileSync(process.execPath, [THIS_FILE, '--hash-child'], { cwd: REPO, input: JSON.stringify({ stages, jobs: held }), encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], maxBuffer: 1 << 24 });
+    b = JSON.parse(txt.trim().split('\n').pop());
   }
   return { tasks: a.tasks + b.tasks, exampleEval: [...a.exampleEval, ...b.exampleEval], evalRepeats: [...a.evalRepeats, ...b.evalRepeats], refused: [...a.refused, ...b.refused],
-    heldoutJobs: held.length, heldoutInChild: child && held.length > 0 };
+    heldoutJobs: held.length, heldoutInChild: held.length > 0 };
 }
 
 // ------------------------------------------------------------------------------------------------------ engine stamps
@@ -659,6 +661,107 @@ export function stampDiff(prev, next) {
     for (const e of users) cmp(`beds.${d}`, e.beds[d], tree, e.stage ?? null);
   }
   return { deviations, allowed, ok: !deviations.length };
+}
+
+// ------------------------------------------------------------------------------------------------------- launch checks
+/**
+ * The analysis stamp the Freeze addendum pins (PREREG §4.4, row "A-Freeze"): { <file basename>: sha256 }, read from the
+ * row as "`<file>` `<64 hex>`" pairs (an optional "sha256" between them), or null while the row says TBD-FREEZE or names
+ * no sha. This is what L6 compares an envelope's router shas with, at launch (envelopeLaunchCheck) and in evaluate.mjs.
+ */
+export function aFreezeShas(text) {
+  const row = text == null ? null : (/^\|\s*A-Freeze\b[^\n]*/m.exec(text) ?? [null])[0];
+  if (!row || /TBD-FREEZE/.test(row)) return null;
+  const out = {};
+  for (const m of row.matchAll(/`([\w./-]+\.mjs)`\s*(?:sha256\s*)?`([0-9a-f]{64})`/g)) out[path.posix.basename(m[1])] = m[2];
+  return Object.keys(out).length ? out : null;
+}
+
+/** A repository file's git history: { commits: [{ commit, committedAt }] oldest first, head: its HEAD text or null, work:
+ *  its working-tree text or null }. Read-only. */
+export function gitHistory(rel, { repo = REPO } = {}) {
+  const git = args => { try { return execFileSync('git', args, { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 26 }); } catch { return null; } };
+  const commits = (git(['log', '--format=%H %cI', '--', rel]) ?? '').split('\n').filter(Boolean).map(l => { const [commit, committedAt] = l.split(' '); return { commit, committedAt }; }).reverse();
+  const work = existsSync(path.join(repo, rel)) ? readFileSync(path.join(repo, rel), 'utf8') : null;
+  return { commits, head: commits.length ? git(['show', `HEAD:${rel}`]) : null, work };
+}
+
+/** The jobs a stage launches: the planned units' jobs (label-run), or every run's job when no units are given, plus the
+ *  seeded draw of a lane run (E2E: e2eDraw over the eligible jobs that are admitted, i.e. have a bed and a frozen band). */
+export function launchJobsOf(stages, stage, units = null) {
+  const ids = new Set((units ?? []).map(u => u.job?.id).filter(Boolean));
+  for (const run of stage.runs ?? []) {
+    if (run.job) { if (units == null) ids.add(run.job); continue; }
+    if (run.eligible && run.draw) {
+      const admitted = run.eligible.filter(id => { const j = (stages.jobs ?? []).find(x => x.id === id); return j && j.bedStatus === 'exists' && Array.isArray(j.band); });
+      for (const id of e2eDraw(admitted, stages.rng?.[run.draw.seedKey], run.draw.k)) ids.add(id);
+    }
+  }
+  return [...ids].sort();
+}
+
+/**
+ * L6 as a launch gate (PREREG §12): a stage that names envelopes (requiresEnvelope) starts only when each envelope it needs
+ * at this launch is committed, and its sealed router shas are the Freeze addendum's. An envelope listed in
+ * conditionalEnvelopes is needed only when one of its jobs is launched or drawn (NL2bp for E2E: only when gameqa is drawn).
+ * For each needed envelope, its stages.json envelopeFile must:
+ *  - be in a commit whose git commit time is earlier than now, and in no later commit (an envelope is never rewritten);
+ *  - equal its committed text in the working tree, and carry a payload that matches its sha256;
+ *  - seal routerShas equal to the PREREG §4.4 A-Freeze row of the committed Freeze addendum (aFreezeShas; the row must pin
+ *    every file of stages.json engineStamp.analysis.files);
+ *  - hold a sealed decision for every launched job it decides.
+ * The self-reported createdAt inside the envelope is never used. Returns { errors, envelopes (for the launch record:
+ * stage, file, sha256, commit, committedAt), required, skipped }. deps: history (rel -> gitHistory shape), now (ms).
+ */
+export function envelopeLaunchCheck({ stages, stage, launchJobs = [], preregText = null, repo = REPO, now = Date.now(), history = null }) {
+  const req = stage.requiresEnvelope ?? [], cond = stage.conditionalEnvelopes ?? {};
+  const required = req.filter(id => !cond[id] || cond[id].some(j => launchJobs.includes(j))), skipped = req.filter(id => !required.includes(id));
+  const errors = [], envelopes = [];
+  if (!required.length) return { errors, envelopes, required, skipped };
+  const hist = history ?? (rel => gitHistory(rel, { repo }));
+  const pinned = aFreezeShas(preregText);
+  if (!pinned) errors.push(`stage ${stage.id} needs a committed decisions envelope (${required.join(', ')}), but the Freeze addendum is not in the preregistration: PREREG §4.4 A-Freeze pins no file sha (TBD-FREEZE)`);
+  else for (const f of (stages.engineStamp?.analysis?.files ?? []).map(x => path.posix.basename(x))) if (!pinned[f]) errors.push(`the A-Freeze row does not pin ${f} (stages.json engineStamp.analysis.files)`);
+  for (const id of required) {
+    const e = (stages.stages ?? []).find(s => s.id === id), file = e?.envelopeFile;
+    if (!file) { errors.push(`envelope ${id}: stages.json names no envelopeFile`); continue; }
+    const h = hist(file);
+    if (!h.commits.length) { errors.push(`envelope ${id}: ${file} is in no commit (commit the envelope before this stage launches)`); continue; }
+    if (h.commits.length > 1) errors.push(`envelope ${id}: ${file} changed after its first commit (${h.commits.length} commits); an envelope is never rewritten: a new one needs a new file and a §13 deviation`);
+    const first = h.commits[0], t = Date.parse(first.committedAt ?? '');
+    if (!Number.isFinite(t)) errors.push(`envelope ${id}: ${file} has no git commit time`);
+    else if (!(t < now)) errors.push(`envelope ${id}: ${file} was committed at ${first.committedAt}, not before this launch`);
+    if (h.head == null) { errors.push(`envelope ${id}: ${file} is not in HEAD`); continue; }
+    if (h.work !== h.head) errors.push(`envelope ${id}: the working-tree ${file} differs from its committed text`);
+    let env = null;
+    try { env = JSON.parse(h.head); } catch { errors.push(`envelope ${id}: ${file} is not JSON`); continue; }
+    const P = env?.payload;
+    if (!P || sha256(canonicalJson(P)) !== env.sha256) errors.push(`envelope ${id}: its payload does not match its sha256`);
+    const R = P?.routerShas ?? {};
+    if (pinned) for (const f of [...new Set([...Object.keys(pinned), ...Object.keys(R)])].sort()) if (R[f] !== pinned[f]) errors.push(`envelope ${id}: router file ${f} is sealed as ${R[f] ? R[f].slice(0, 16) : 'absent'}, the A-Freeze row pins ${pinned[f] ? pinned[f].slice(0, 16) : 'nothing'}`);
+    const targets = new Set(P?.targets ?? []);
+    for (const j of launchJobs) if ((e.decides ?? []).includes(j) && !targets.has(j)) errors.push(`envelope ${id}: launched job ${j} has no sealed decision`);
+    envelopes.push({ stage: id, file, sha256: env?.sha256 ?? null, commit: first.commit, committedAt: first.committedAt ?? null });
+  }
+  return { errors, envelopes, required, skipped };
+}
+
+/**
+ * label-run --dry and held-out seeds (PREREG §3.3): before Freeze the only use of held-out (test-split) seeds is the
+ * --hashes child. A --dry plan whose units run on a test-split evaluation role is refused until the Freeze addendum is in
+ * the preregistration (A-Freeze pinned), unless `allow` names a §13 deviation (D<n>) that the preregistration's §13 names.
+ * Returns null (allowed) or the refusal.
+ */
+export function heldoutDryRefusal({ units, preregText = null, allow = null }) {
+  const held = units.filter(u => u.evalRole && TEST_ROLES.has(u.evalRole));
+  if (!held.length || aFreezeShas(preregText)) return null;
+  const what = held.map(u => `${u.job.id} (${u.evalRole})`).join(', ');
+  if (allow != null) {
+    const s13 = preregText == null ? null : sectionOf(preregText, /^## 13\./m);
+    if (/^D\d+$/.test(String(allow)) && s13 != null && namesToken(s13, String(allow))) return null;
+    return `--allow-heldout-dry ${allow}: not a deviation id (D<n>) that PREREG §13 names; record it there first (held-out units: ${what})`;
+  }
+  return `--dry would generate held-out tasks in this process before Freeze (${what}); PREREG §3.3 allows only the --hashes child. Wait for the Freeze addendum, or pass --allow-heldout-dry D<n> naming a §13 deviation`;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === THIS_FILE) {
