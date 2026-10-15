@@ -13,7 +13,7 @@ instructions.
 | Event (`app` / `event`) | What it means |
 |---|---|
 | `google_sheets` / `new_row` | A package was received: a new row in Incoming Packages. `data.row_id` is its row number, `data.row` its cells |
-| `google_sheets` / `row_updated` | A row changed in Incoming Packages or in the Employee Directory. `data.worksheet` names the worksheet, `data.row_id` the row number, `data.row` the cells after the change, `data.changed` the columns that changed |
+| `google_sheets` / `row_updated` | A row changed in Incoming Packages or in the Employee Directory. `data.worksheet` names the worksheet, `data.row_id` the row number, `data.changed` the columns that changed, `data.row` the row's key cells (Tracking Number, or Name and Department) and the changed cells after the change. Read the sheet for the rest of the row |
 | `schedule` / `day_close` | 17:00 UTC on each weekday. `data.date` is the day (`YYYY-MM-DD`) |
 
 ## 2. Where things live

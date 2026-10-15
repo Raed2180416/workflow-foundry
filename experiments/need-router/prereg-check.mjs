@@ -199,7 +199,9 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
 
   // Policy: model ids and base prices come from policy/models.json only.
   const policyModels = new Map((policy.models ?? []).map(m => [m.id, m]));
-  if (stages.policy?.policyVersion !== policy.policyVersion) warn(`policy version ${policy.policyVersion} differs from the preregistered ${stages.policy?.policyVersion}: record a deviation if model ids or prices changed`);
+  // Once frozen, a policy version other than the preregistered one (the version in force for NL0 and later stages) is an
+  // error: model ids or prices may have drifted between paid stages. Before the freeze it is a warning.
+  if (stages.policy?.policyVersion !== policy.policyVersion) (stages.status === 'frozen' ? err : warn)(`policy version ${policy.policyVersion} differs from the preregistered ${stages.policy?.policyVersion}: ${stages.status === 'frozen' ? 'a paid stage would run under another policy than the frozen one (record a §13 deviation and re-pin stages.json policy.policyVersion)' : 'record a deviation if model ids or prices changed, and pin the version in force for NL0 before freezing'}`);
   const pause = policy.spend?.perExperimentPauseAboveUsd, softCap = policy.spend?.sessionSoftCapUsd;
   if (stages.policy?.perExperimentPauseAboveUsd !== pause) err(`perExperimentPauseAboveUsd ${stages.policy?.perExperimentPauseAboveUsd} differs from policy ${pause}`);
   if (stages.policy?.sessionSoftCapUsd !== softCap) err(`sessionSoftCapUsd ${stages.policy?.sessionSoftCapUsd} differs from policy ${softCap}`);
@@ -265,6 +267,15 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
     if (!HELDOUT_SPLITS.has(j.split) || !(j.near || j.devObserved || clusters[j.cluster]?.near || clusters[j.cluster]?.devObserved)) continue;
     const ok = mandatory.some(m => (m.drop ?? []).includes(j.id) && ['C7a', 'C7b'].every(c => (m.appliesTo ?? []).includes(c)));
     if (!ok) err(`job ${j.id} is ${j.devObserved ? 'dev-observed' : 'near'}: analysis.mandatorySensitivities must drop it for both C7a and C7b`);
+  }
+  // A held-out family a Jev study read with its outcomes (J-NEED-2 read r3p's 24 M1 tasks and their one-call outcomes, part
+  // of r3p's held-out direct-H label) never informs a router design choice: the Freeze decision on Jev features reads that
+  // study recomputed without the family (analysis.jevFeatureDecision.excludeFamilies).
+  const jf = stages.analysis?.jevFeatureDecision;
+  for (const j of stages.jobs ?? []) {
+    if (!HELDOUT_SPLITS.has(j.split) || !(j.devObserved ?? []).some(x => /^J-NEED-2\b/.test(x))) continue;
+    if (!jf) err(`job ${j.id} was read by J-NEED-2 with its outcomes: analysis.jevFeatureDecision must say how the Freeze decision on Jev features excludes it`);
+    else if (!(jf.excludeFamilies ?? []).includes(j.family)) err(`analysis.jevFeatureDecision.excludeFamilies must name ${j.family} (held-out job ${j.id}, read by J-NEED-2 with its outcomes)`);
   }
   // A cluster sits in one split by construction (job.split === cluster.split); TRAIN and held-out never share a family.
 
@@ -366,11 +377,16 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
   const envelopes = new Map(stageList.filter(s => s.commitsEnvelope).map(s => [s.id, s]));
   const jobsOfRun = run => (run.job ? [run.job] : run.eligible ?? []);
   const isHeldoutJob = id => { const j = (stages.jobs ?? []).find(x => x.id === id); return j && HELDOUT_SPLITS.has(j.split) && j.split !== 'sealed'; };
+  const envelopeFiles = new Set();
   for (const st of stageList) {
     if (st.commitsEnvelope) {
       if (!Array.isArray(st.decides) || !st.decides.length) err(`stage ${st.id}: an envelope stage lists the jobs whose decisions it commits (decides)`);
       if (freezeAt != null && order.get(st.id) <= freezeAt) err(`stage ${st.id}: held-out decisions are committed after Freeze`);
       for (const [ri, run] of (st.runs ?? []).entries()) if ((run.seedRoles ?? []).some(r => r !== 'probe')) err(`${st.id}.runs[${ri}]: an envelope stage runs probe-task rows only (no evaluation seeds)`);
+      // The committed file the launch check (envelopeLaunchCheck) reads: one file per envelope, never shared or rewritten.
+      if (typeof st.envelopeFile !== 'string' || !/^research\/need-router-20261014\/envelopes\/[\w.-]+\.json$/.test(st.envelopeFile)) err(`stage ${st.id}: an envelope stage names its committed decisions file (envelopeFile: research/need-router-20261014/envelopes/<name>.json)`);
+      else if (envelopeFiles.has(st.envelopeFile)) err(`stage ${st.id}: envelopeFile ${st.envelopeFile} is used by another envelope stage`);
+      else envelopeFiles.add(st.envelopeFile);
       continue;
     }
     const matrixJobs = new Set(), probeJobs = new Set();
@@ -383,25 +399,52 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
       }
     }
     for (const id of probeJobs) err(`stage ${st.id}: probe or judge rows of held-out job ${id} outside an envelope stage (they must be committed before any matrix row)`);
+    // A conditional envelope (conditionalEnvelopes: { <envelope stage>: [jobs] }) is required at launch only when one of its
+    // jobs is launched or drawn (NL2bp for E2E: only when gameqa is drawn). Its jobs must be ones that envelope decides.
+    const cond = st.conditionalEnvelopes ?? {};
+    for (const [r, list] of Object.entries(cond)) {
+      if (!(st.requiresEnvelope ?? []).includes(r)) err(`stage ${st.id}: conditionalEnvelopes names ${r}, which requiresEnvelope does not list`);
+      if (!Array.isArray(list) || !list.length) { err(`stage ${st.id}: conditionalEnvelopes.${r} must list the jobs that require it`); continue; }
+      const e = envelopes.get(r);
+      for (const j of list) if (e && !(e.decides ?? []).includes(j)) err(`stage ${st.id}: conditionalEnvelopes.${r} names ${j}, which ${r} does not decide`);
+    }
     if (!matrixJobs.size) continue;
     const req = st.requiresEnvelope ?? [], covered = new Set();
     for (const r of req) {
       const e = envelopes.get(r);
       if (!e) { err(`stage ${st.id}: requiresEnvelope ${r} is not an envelope stage`); continue; }
       if (order.get(r) >= order.get(st.id)) err(`stage ${st.id}: its envelope ${r} must come before it`);
-      for (const id of e.decides ?? []) covered.add(id);
+      for (const id of cond[r] ?? e.decides ?? []) covered.add(id);
     }
     for (const id of matrixJobs) if (!covered.has(id)) err(`stage ${st.id}: held-out job ${id} joins the matrix with no committed decisions envelope (requiresEnvelope)`);
   }
 
+  // Totals. capUsd sums the preregistered caps. committedUsd counts each stage at max(its cap, the spend its recorded runs
+  // show on the §12 meter, set-aside attempts included): an overrun (M1 at $62.92 against its $15 cap) is spend, not a
+  // cap. The soft-cap check adds the recurring stages' cumulative caps and the stages held by another plan's budget
+  // (externalBudget, M1-R) at the same max: the session soft cap is one envelope across plans.
+  const observedUsd = s => sum(Object.values(s.observed ?? {}).map(o => Math.max(o?.meterUsd ?? 0, o?.meterWithSetAsideUsd ?? 0)));
+  const committedOf = s => Math.max(s.recurring ? s.recurring.cumulativeCapUsd ?? 0 : s.capUsd ?? 0, observedUsd(s));
   const counted = stageList.filter(s => s.inTotals);
   const core = counted.filter(s => s.core);
-  const recurringCap = round2(sum(stageList.filter(s => s.recurring).map(s => s.recurring.cumulativeCapUsd ?? 0)));
+  const recurringCap = round2(sum(stageList.filter(s => s.recurring).map(committedOf)));
+  const external = stageList.filter(s => !s.inTotals && !s.recurring && s.externalBudget);
   const tot = { estUsd: round2(sum(counted.map(s => s.estUsd))), capUsd: round2(sum(counted.map(s => s.capUsd))), coreEstUsd: round2(sum(core.map(s => s.estUsd))), coreCapUsd: round2(sum(core.map(s => s.capUsd))) };
+  tot.committedUsd = round2(sum(counted.map(committedOf)));
   tot.recurringCapUsd = recurringCap;
-  tot.softCapCheckUsd = round2(tot.capUsd + recurringCap);
+  tot.externalCommittedUsd = round2(sum(external.map(committedOf)));
+  tot.softCapCheckUsd = round2(tot.committedUsd + recurringCap + tot.externalCommittedUsd);
   for (const k of Object.keys(tot)) if (stages.totals?.[k] !== tot[k]) err(`totals.${k} ${stages.totals?.[k]} != the stage sum ${tot[k]}`);
-  if (!(tot.softCapCheckUsd <= softCap)) err(`sum of stage caps $${tot.capUsd} plus recurring caps $${recurringCap} is over the $${softCap} session soft cap`);
+  if (!(tot.softCapCheckUsd <= softCap)) err(`committed spend $${tot.committedUsd} (each stage at max(cap, recorded meter)) plus recurring caps $${recurringCap} plus externally budgeted stages $${tot.externalCommittedUsd} is over the $${softCap} session soft cap`);
+  // Owner tasks (seedsFrom: owner tasks) carry a per-task estimate and bound, so K7 can be read per owner task, and their
+  // replicates and lineages are stated (no default K).
+  for (const st of stageList) for (const [ri, run] of (st.runs ?? []).entries()) {
+    if (!run.seedsFrom) continue;
+    const where = `${st.id}.runs[${ri}]`, job = (stages.jobs ?? []).find(j => j.id === run.job);
+    if (!Number.isInteger(run.replicates) || !Number.isInteger(run.lineages)) err(`${where}: a run on ${run.seedsFrom} states its replicates and lineages (integers)`);
+    if (!(job?.estPerTaskUsd > 0) || !(job?.boundPerTaskUsd >= job?.estPerTaskUsd) || !Number.isInteger(job?.maxTasks)) { err(`${where}: job ${run.job} needs estPerTaskUsd > 0, boundPerTaskUsd >= it and an integer maxTasks (K7 reads them)`); continue; }
+    if (st.estUsd + 1e-9 < job.maxTasks * job.estPerTaskUsd) err(`${where}: stage ${st.id} estimate $${st.estUsd} is below ${job.maxTasks} owner tasks at $${job.estPerTaskUsd}`);
+  }
 
   let seedChecks = 0;
   for (const x of expandRuns(stages)) {
@@ -500,17 +543,19 @@ async function hashJobs(stages, jobIds, { ledger = loadLedger() } = {}) {
  *  for taskHash collisions (example or probe vs evaluation within a family; repeated evaluation tasks within a job).
  *  Every seed is checked against the ledger first (refusals are reported, never generated). TRAIN families are hashed
  *  in this process; held-out, conditional and forced families only inside a child process whose output is the counts
- *  and task ids (job:role:seed:difficulty), never task content or hashes (`child: false` hashes them here, for tests of
- *  the child itself). Families never span splits (checked), so the two halves cannot collide with each other. */
+ *  and task ids (job:role:seed:difficulty), never task content or hashes. `child: false` hashes TRAIN jobs here (tests of
+ *  the child's counts compare with it); with a held-out, conditional or forced job it is refused (PREREG §3.3: the child
+ *  is the only use of held-out seeds before Freeze). Families never span splits (checked), so the two halves cannot
+ *  collide with each other. */
 export async function hashCollisions(stages, { jobs = null, child = true, ledger = null } = {}) {
   const eligible = stages.jobs.filter(j => (!jobs || jobs.includes(j.id)) && j.bedStatus === 'exists' && j.band && j.family && !j.family.startsWith('sealed'));
   const dev = eligible.filter(j => j.split === 'train').map(j => j.id), held = eligible.filter(j => j.split !== 'train').map(j => j.id);
+  if (!child && held.length) throw Object.assign(new Error(`hashCollisions: child: false would generate held-out tasks in this process (${held.join(', ')}); held-out families are hashed only in the child (PREREG §3.3)`), { code: 'HELDOUT_IN_PROCESS' });
   const L = ledger ?? loadLedger();
   const a = await hashJobs(stages, dev, { ledger: L });
   let b = { tasks: 0, exampleEval: [], evalRepeats: [], refused: [] };
   if (held.length) {
-    if (!child) b = await hashJobs(stages, held, { ledger: L });
-    else {
+    {
       const txt = execFileSync(process.execPath, [THIS_FILE, '--hash-child'], { cwd: REPO, input: JSON.stringify({ stages, jobs: held }), encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], maxBuffer: 1 << 24 });
       b = JSON.parse(txt.trim().split('\n').pop());
     }

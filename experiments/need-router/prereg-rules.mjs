@@ -17,6 +17,12 @@
 export const MIN_USEFUL = 0.03;          // minimum useful effect (decision 1)
 export const C7A_ALPHA = 0.025;          // each side of C7a's two-sided 95% interval
 export const C7A_CHANCE = 0.5;           // the majority-class balanced accuracy
+// C7a's decisive readings (PREREG §7, §8, F12; review 2026-10-15). REFUTED needs the UPPER bound below a useful balanced
+// accuracy: a lower bound at or below chance alone is an uninformative interval, never a refutation.
+export const C7A_USEFUL = 0.7;           // the smallest balanced accuracy called useful; F12 trips only when hi < 0.7 [P]
+export const C7A_POWER_ALT = 0.9;        // the power precondition's alternative: a classifier with TPR = TNR = 0.9 [P]
+export const C7A_POWER_MIN = 0.8;        // powered when that classifier's interval excludes 0.5 with probability >= 0.8 [P]
+export const NEAR_CLUSTERS = 1;          // held-out clusters a claim must survive dropping (r3p: near and dev-observed, §3.1, §8)
 
 // ------------------------------------------------------------------------------------------------ binomial helpers
 const LF = [0];
@@ -64,6 +70,20 @@ function lowerBound(x1, n1, x2, n2, alpha) {
   for (let k = 0; k < 50; k++) { const mid = (lo + hi) / 2; if (supTail(n1, n2, T, mid) <= alpha) lo = mid; else hi = mid; }
   return lo;
 }
+// Whether the exact one-sided test of H: (p1 + p2)/2 <= b rejects at alpha for x1 of n1 and x2 of n2, i.e. whether
+// lowerBound(x1, n1, x2, n2, alpha) > b (the tail rises in b): one tail evaluation instead of a bisection.
+function rejectsAtMost(x1, n1, x2, n2, b, alpha) {
+  const T = x1 * n2 + x2 * n1;
+  if (T === 0 || (x1 / n1 + x2 / n2) / 2 <= b) return false;
+  return supTail(n1, n2, T, b) <= alpha;
+}
+// P(pred(x1, x2)) for X1 ~ Bin(n1, p1), X2 ~ Bin(n2, p2), by enumeration.
+function outcomeProb(n1, n2, p1, p2, pred) {
+  const a = binomPmf(n1, p1), b = binomPmf(n2, p2);
+  let s = 0;
+  for (let x1 = 0; x1 <= n1; x1++) for (let x2 = 0; x2 <= n2; x2++) if (a[x1] * b[x2] > 0 && pred(x1, x2)) s += a[x1] * b[x2];
+  return Math.min(1, s);
+}
 
 // ------------------------------------------------------------------------------------------------------------ §7 C7a
 /**
@@ -82,19 +102,31 @@ export function balancedAccuracyInterval({ tp, fn, tn, fp }, { alpha = C7A_ALPHA
   };
 }
 
-/** The power precondition (PREREG §7, §8, F12): the lower bound a perfect classifier would reach at these class counts. */
-export function c7aPower(nPos, nNeg, { alpha = C7A_ALPHA } = {}) {
-  if (!(nPos > 0 && nNeg > 0)) return { nPos, nNeg, perfectLowerBound: null, powered: false };
+/**
+ * The power precondition (PREREG §7, §8, F12; revised 2026-10-15). It is the CHANCE that the exact interval excludes a
+ * null classifier (lower bound > 0.5) when H0 is good, at the realised confident class counts: pExclude = P(lo > 0.5)
+ * for a classifier with TPR = TNR = `alt` (0.9). Powered when pExclude >= `min` (0.8). The first draft's precondition,
+ * "a perfect classifier's lower bound exceeds 0.5" (perfectLowerBound, still reported), is a best case, not a chance: at 2
+ * positives and 8 negatives it held while one error on a positive dropped the bound to 0.320. pRefuteAtChance is
+ * reported beside it: the probability that a coin-flip classifier (TPR = TNR = 0.5) reads REFUTED (hi < `useful`).
+ */
+const pExcludeAt = (nPos, nNeg, alt, alpha) => outcomeProb(nPos, nNeg, alt, alt, (x1, x2) => rejectsAtMost(x1, nPos, x2, nNeg, C7A_CHANCE, alpha));
+export function c7aPower(nPos, nNeg, { alpha = C7A_ALPHA, alt = C7A_POWER_ALT, min = C7A_POWER_MIN, useful = C7A_USEFUL } = {}) {
+  if (!(nPos > 0 && nNeg > 0)) return { nPos, nNeg, perfectLowerBound: null, alternative: alt, pExclude: 0, pRefuteAtChance: 0, min, powered: false };
   const perfectLowerBound = lowerBound(nPos, nPos, nNeg, nNeg, alpha);
-  return { nPos, nNeg, perfectLowerBound, powered: perfectLowerBound > C7A_CHANCE };
+  const pExclude = pExcludeAt(nPos, nNeg, alt, alpha);
+  // hi < useful  <=>  the error-rate lower bound exceeds 1 - useful (errors: fn = nPos - x1, fp = nNeg - x2).
+  const pRefuteAtChance = outcomeProb(nPos, nNeg, 0.5, 0.5, (x1, x2) => rejectsAtMost(nPos - x1, nPos, nNeg - x2, nNeg, 1 - useful, alpha));
+  return { nPos, nNeg, perfectLowerBound, alternative: alt, pExclude, pRefuteAtChance, min, powered: pExclude >= min };
 }
 
-/** For each count of confident positives 1..maxPos, the fewest confident negatives at which C7a is powered (symmetric). */
-export function c7aMinimumCounts({ alpha = C7A_ALPHA, maxPos = 4, maxNeg = 40 } = {}) {
+/** For each count of confident positives 1..maxPos, the fewest confident negatives (up to maxNeg) at which C7a is powered
+ *  (c7aPower's pExclude >= min; symmetric in the two classes); null when no count up to maxNeg is. */
+export function c7aMinimumCounts({ alpha = C7A_ALPHA, alt = C7A_POWER_ALT, min = C7A_POWER_MIN, maxPos = 8, maxNeg = 24 } = {}) {
   const out = [];
   for (let p = 1; p <= maxPos; p++) {
     let n = 1;
-    while (n <= maxNeg && !c7aPower(p, n, { alpha }).powered) n += 1;
+    while (n <= maxNeg && pExcludeAt(p, n, alt, alpha) < min) n += 1;
     out.push({ pos: p, minNeg: n <= maxNeg ? n : null });
   }
   return out;
@@ -124,22 +156,34 @@ export function withDropAgreement(full, dropped) {
 }
 
 /**
- * C7a reading (PREREG §8): INCONCLUSIVE when a class is empty or the counts are not powered (a perfect classifier's lower
- * bound <= 0.5): F12 cannot trip then. Powered: SUPPORTED-DIAGNOSTIC when the lower bound > 0.5, the point beats the
- * tuned size rule's point and coverage >= 50%; REFUTED (F12) when the lower bound <= 0.5; otherwise INCONCLUSIVE.
+ * C7a reading (PREREG §8; revised 2026-10-15). In order:
+ *  1. INCONCLUSIVE when a class is empty, or the counts are not powered (c7aPower: the chance that a TPR = TNR = 0.9
+ *     classifier's interval excludes 0.5 is under 0.8). Neither decisive reading, and not F12, is read then.
+ *  2. Powered, and the UPPER bound is below C7A_USEFUL (0.7): a useful balanced accuracy is excluded. REFUTED (F12) when
+ *     the lower bound is <= 0.5; ABOVE-CHANCE-BELOW-USEFUL when it is > 0.5 (detectable, but not usefully).
+ *  3. Powered: SUPPORTED-DIAGNOSTIC when the lower bound > 0.5, the point beats the tuned size rule's point and coverage
+ *     >= 50%.
+ *  4. Otherwise INCONCLUSIVE. In particular lo <= 0.5 < 0.7 <= hi (the interval holds both chance and a useful accuracy)
+ *     is uninformative, never REFUTED: the first draft read REFUTED whenever lo <= 0.5, so at 2 + 8 confident jobs a single
+ *     error on a positive (point 0.75, interval [0.320, 0.994]) refuted a good classifier.
  * withoutNear: { h0, tunedPoint, coverage } with the near cluster dropped; null when dropping it leaves no valid set.
  */
-export function c7aReading({ h0, tunedPoint = null, coverage = null, withoutNear = undefined }, { alpha = C7A_ALPHA, minCoverage = 0.5 } = {}) {
+export function c7aReading({ h0, tunedPoint = null, coverage = null, withoutNear = undefined }, { alpha = C7A_ALPHA, minCoverage = 0.5, useful = C7A_USEFUL } = {}) {
   const own = (() => {
     const nPos = h0.tp + h0.fn, nNeg = h0.tn + h0.fp;
-    if (!nPos || !nNeg) return { reading: 'INCONCLUSIVE', why: 'one class only: balanced accuracy undefined', f12: false, interval: null, power: c7aPower(nPos, nNeg, { alpha }) };
-    const power = c7aPower(nPos, nNeg, { alpha }), interval = balancedAccuracyInterval(h0, { alpha });
-    if (!power.powered) return { reading: 'INCONCLUSIVE', why: `not powered: a perfect classifier's lower bound at ${nPos} positive and ${nNeg} negative confident jobs is ${power.perfectLowerBound.toFixed(3)} <= 0.5`, f12: false, interval, power };
-    if (interval.lo <= C7A_CHANCE) return { reading: 'REFUTED', why: 'F12: lower bound <= 0.5', f12: true, interval, power };
-    if (tunedPoint !== null && interval.point > tunedPoint && coverage !== null && coverage >= minCoverage) return { reading: 'SUPPORTED-DIAGNOSTIC', why: 'lower bound > 0.5, beats the tuned size rule, coverage >= 50%', f12: false, interval, power };
-    return { reading: 'INCONCLUSIVE', why: 'lower bound > 0.5 but the tuned size rule or coverage condition fails', f12: false, interval, power };
+    if (!nPos || !nNeg) return { reading: 'INCONCLUSIVE', why: 'one class only: balanced accuracy undefined', f12: false, interval: null, power: c7aPower(nPos, nNeg, { alpha, useful }) };
+    const power = c7aPower(nPos, nNeg, { alpha, useful }), interval = balancedAccuracyInterval(h0, { alpha });
+    if (!power.powered) return { reading: 'INCONCLUSIVE', why: `not powered: at ${nPos} positive and ${nNeg} negative confident jobs a classifier with TPR = TNR = ${power.alternative} excludes 0.5 with probability ${power.pExclude.toFixed(3)} < ${power.min} (a perfect one's lower bound ${power.perfectLowerBound.toFixed(3)})`, f12: false, interval, power };
+    if (interval.hi < useful) {
+      return interval.lo > C7A_CHANCE
+        ? { reading: 'ABOVE-CHANCE-BELOW-USEFUL', why: `lower bound ${interval.lo.toFixed(3)} > 0.5 but upper bound ${interval.hi.toFixed(3)} < ${useful}`, f12: false, interval, power }
+        : { reading: 'REFUTED', why: `F12: upper bound ${interval.hi.toFixed(3)} < ${useful}: a useful balanced accuracy is excluded`, f12: true, interval, power };
+    }
+    if (interval.lo > C7A_CHANCE && tunedPoint !== null && interval.point > tunedPoint && coverage !== null && coverage >= minCoverage) return { reading: 'SUPPORTED-DIAGNOSTIC', why: 'lower bound > 0.5, beats the tuned size rule, coverage >= 50%', f12: false, interval, power };
+    if (interval.lo > C7A_CHANCE) return { reading: 'INCONCLUSIVE', why: 'lower bound > 0.5 but the tuned size rule or coverage condition fails', f12: false, interval, power };
+    return { reading: 'INCONCLUSIVE', why: `uninformative: lower bound ${interval.lo.toFixed(3)} <= 0.5 and upper bound ${interval.hi.toFixed(3)} >= ${useful} (the interval holds both chance and a useful accuracy; F12 is not read)`, f12: false, interval, power };
   })();
-  const dropped = withoutNear === undefined ? undefined : withoutNear === null ? null : c7aReading({ ...withoutNear, withoutNear: undefined }, { alpha, minCoverage }).reading;
+  const dropped = withoutNear === undefined ? undefined : withoutNear === null ? null : c7aReading({ ...withoutNear, withoutNear: undefined }, { alpha, minCoverage, useful }).reading;
   const agreed = withDropAgreement(own.reading, dropped);
   return { ...own, reading: agreed.reading, withoutNear: dropped, agrees: agreed.agrees };
 }
@@ -241,8 +285,10 @@ export function fitOrRule(items, keys) {
 // ------------------------------------------------------------------------------------------------------------ §5 data
 /**
  * Missing data (PREREG §5, §7): a job missing any of its primary modes (its L_today menu minus masked modes), for any
- * reason (a stage stopped at its cap, an arm invalidated by K4, a condition not met, a void lineage set), leaves Δ and
- * C7a and is printed on the "dropped" line. jobs: [{ id, cluster, required: [mode], present: [mode] }].
+ * reason (a stage stopped at its cap, an arm invalidated by K4, a condition not met), leaves Δ and C7a and is printed on
+ * the "dropped" line. jobs: [{ id, cluster, required: [mode], present: [mode] }]. A VOIDED lineage or draw is not missing:
+ * it scores as a failure in the primary analysis (metrics.mjs needTable voidPolicy 'fail', PREREG §5), so a mode whose
+ * every lineage was voided is present (all failures); dropping voided lineages ('drop') is a not-primary sensitivity.
  */
 export function missingDataRule(jobs) {
   const kept = [], dropped = [];
@@ -260,14 +306,26 @@ const T975 = [null, 12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.2
  * The power gate after NL1 (PREREG §11): the projected informative clusters (held-out clusters where the router's
  * choice is expected to differ from SBS-train, from the LOCO agreement share on TRAIN), the sign-flip floor they allow,
  * and the t-type half-width at the planned cluster count.
+ * SUPPORTED also needs the same reading with the near, dev-observed cluster(s) dropped (§8 withDropAgreement), so the gate
+ * is computed twice, on the full set (n clusters) and without the near clusters (n − nearClusters), and passes only when
+ * both pass: floorOk and widthOk are the conjunction, `binding` names the set that fails (or has the higher floor). The
+ * top-level expectedInformative, floorAtExpected and halfWidth are the full set's; `withoutNear` holds the other set's.
+ * nearClusters defaults to NEAR_CLUSTERS (1: r3p).
  */
-export function powerGate({ clusters, agreeShare, sigma, alpha = 0.025, halfWidthMax = MIN_USEFUL }) {
-  const expectedInformative = clusters * (1 - agreeShare), whole = Math.floor(expectedInformative + 1e-9);
-  const floor = 2 ** -whole, t = T975[Math.min(clusters - 1, T975.length - 1)] ?? 1.96;
-  const halfWidth = clusters > 1 ? (t * sigma) / Math.sqrt(clusters) : Infinity;
-  const floorOk = floor <= alpha, widthOk = halfWidth <= halfWidthMax;
-  return { clusters, agreeShare, expectedInformative, floorAtExpected: floor, floorOk, halfWidth, widthOk,
-    outcome: floorOk && widthOk ? 'powered' : 'expected INCONCLUSIVE (add clusters or accept; record in §13 before NL2)' };
+export function powerGate({ clusters, agreeShare, sigma, nearClusters = NEAR_CLUSTERS, alpha = 0.025, halfWidthMax = MIN_USEFUL }) {
+  const one = n => {
+    const expectedInformative = n * (1 - agreeShare), whole = Math.floor(expectedInformative + 1e-9);
+    const floor = 2 ** -whole, t = T975[Math.min(n - 1, T975.length - 1)] ?? 1.96;
+    const halfWidth = n > 1 ? (t * sigma) / Math.sqrt(n) : Infinity;
+    return { clusters: n, expectedInformative, floorAtExpected: floor, floorOk: floor <= alpha, halfWidth, widthOk: halfWidth <= halfWidthMax };
+  };
+  const full = one(clusters), dropped = nearClusters > 0 ? one(clusters - nearClusters) : null;
+  const ok = x => x.floorOk && x.widthOk;
+  const floorOk = full.floorOk && (dropped?.floorOk ?? true), widthOk = full.widthOk && (dropped?.widthOk ?? true);
+  const binding = !ok(full) || !dropped ? 'full' : !ok(dropped) || dropped.floorAtExpected > full.floorAtExpected ? 'without near' : 'full';
+  return { clusters, agreeShare, nearClusters, expectedInformative: full.expectedInformative, floorAtExpected: full.floorAtExpected, halfWidth: full.halfWidth,
+    withoutNear: dropped, floorOk, widthOk, binding, floorBinding: Math.max(full.floorAtExpected, dropped?.floorAtExpected ?? 0),
+    outcome: floorOk && widthOk ? 'powered' : `expected INCONCLUSIVE (${binding === 'full' ? 'on the full set' : `without the ${nearClusters} near cluster(s)`}; add clusters or accept; record in §13 before NL2)` };
 }
 
 // ------------------------------------------------------------------------------------------------------ §12 meter

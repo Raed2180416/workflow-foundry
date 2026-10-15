@@ -63,7 +63,7 @@ COUNTS = {
 }
 # Share of package.received triggers that get a planted trap. Release triggers are traps by construction, so these
 # put the share of trap-bearing TRIGGERS near the design's 35% (d2) and 60% (d3); meta reports both per stream.
-TRAP_RATE = {"d1": 0.0, "d2": 0.27, "d3": 0.55}
+TRAP_RATE = {"d1": 0.0, "d2": 0.24, "d3": 0.55}
 TRAP_WEIGHTS = {"twin-active": 2.0, "wrong-dept": 1.0, "not-found": 1.0, "terminated": 1.5, "on-leave": 1.5,
                 "customs": 1.5, "returned": 1.0, "returned-rescan": 1.0, "oversized": 1.0, "oversized-sms": 1.0,
                 "decoy": 1.5, "back": 0.7}
@@ -567,18 +567,21 @@ class Gen:
                 row["cells"]["Notes"] = p["notes"]
                 delta.append({"op": "set_cells", "spreadsheet_id": SS, "worksheet_id": WS_PKG, "row_id": row["row_id"],
                               "cells": {"Notes": p["notes"]}})
-                payload = {"app": "google_sheets", "event": "row_updated",
-                           "data": {"spreadsheet_id": SS, "worksheet": WS_TITLE[WS_PKG], "row_id": row["row_id"],
-                                    "row": dict(row["cells"]), "changed": ["Notes"]}}
+                payload = {"app": "google_sheets", "event": "row_updated",       # key + changed cells only: the
+                           "data": {"spreadsheet_id": SS, "worksheet": WS_TITLE[WS_PKG],  # Status is the arm's own state
+                                    "row_id": row["row_id"], "changed": ["Notes"],
+                                    "row": {"Tracking Number": row["cells"]["Tracking Number"], "Notes": p["notes"]}}}
             elif p["kind"] == "employee.returned":
                 e = p["emp"]
                 emps[e["row_id"]]["cells"]["Status"] = "Active"
                 returned_ids.append(e["id"])
                 delta.append({"op": "set_cells", "spreadsheet_id": SS, "worksheet_id": WS_EMP, "row_id": e["row_id"],
                               "cells": {"Status": "Active"}})
+                me = emps[e["row_id"]]["cells"]
                 payload = {"app": "google_sheets", "event": "row_updated",
                            "data": {"spreadsheet_id": SS, "worksheet": WS_TITLE[WS_EMP], "row_id": e["row_id"],
-                                    "row": dict(emps[e["row_id"]]["cells"]), "changed": ["Status"]}}
+                                    "changed": ["Status"],
+                                    "row": {"Name": me["Name"], "Department": me["Department"], "Status": me["Status"]}}}
             else:
                 payload = {"app": "schedule", "event": "day_close", "data": {"date": p["date"]}}
             directory = [v["cells"] for _, v in sorted(emps.items())]

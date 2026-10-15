@@ -8,8 +8,9 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
   determinism   two generations of a seed give identical sha256 for world0, payloads, triggers, truth and end;
                 different seeds give different streams; every world_t (after each delta) validates as WorldState and
                 survives dump -> load -> dump.
-  leakage       what an arm sees carries no hidden truth: the payload's row equals the world's row after the delta
-                (nothing more), payload keys are fixed per event, no truth vocabulary in payloads or world0, a package
+  leakage       what an arm sees carries no hidden truth: the payload's cells equal the world's cells after the delta
+                (a new package: the inserted row; an update: the row's key and changed cells, never a package
+                Status, which is the arm's own state), payload keys are fixed per event, no truth vocabulary in payloads or world0, a package
                 row arrives with the trigger (never in world0) and with an empty Status, the serve-input row holds
                 only POLICY.md and the payload with no assertions, and the reference imports no host module.
   solvability   the observable-only reference passes every trigger (and every week) of the practice and dev streams,
@@ -116,8 +117,12 @@ def gate_leakage(seeds: list[int]) -> dict:
             if payload["event"] in ("new_row", "row_updated"):
                 ws = gen.WS_PKG if d["worksheet"] == gen.WS_TITLE[gen.WS_PKG] else gen.WS_EMP
                 row = next((r for r in w["google_sheets"]["rows"] if r["worksheet_id"] == ws and r["row_id"] == d["row_id"]), None)
-                if row is None or row["cells"] != d["row"]:
-                    problems.append(f"{tid}: the payload's row is not the world's row after the delta")
+                if row is None or any(row["cells"].get(k) != v for k, v in d["row"].items()):
+                    problems.append(f"{tid}: the payload's cells are not the world's cells after the delta")
+                if payload["event"] == "row_updated" and ws == gen.WS_PKG and "Status" in d["row"]:
+                    problems.append(f"{tid}: a package update payload carries the Status (the arm's own state)")
+                if payload["event"] == "new_row" and row is not None and row["cells"] != d["row"]:
+                    problems.append(f"{tid}: a new package payload is not the inserted row")
             if payload["event"] == "new_row":
                 if d["row"].get("Status"):
                     problems.append(f"{tid}: a new package arrives with a Status")

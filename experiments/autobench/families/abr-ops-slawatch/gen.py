@@ -89,7 +89,7 @@ COUNTS = {
     "d2": {"init": (10, 13), "opened": (5, 7), "updated": (5, 8), "history": (3, 5), "void": (1, 2)},
     "d3": {"init": (12, 14), "opened": (7, 8), "updated": (8, 10), "history": (4, 5), "void": (2, 3)},
 }
-ATTR_RATE = {"d1": 0.0, "d2": 0.18, "d3": 0.6}
+ATTR_RATE = {"d1": 0.0, "d2": 0.18, "d3": 0.8}
 # Story mix (number of tickets per story) per difficulty: (min, max)
 STORIES = {
     "d1": {},
@@ -97,10 +97,10 @@ STORIES = {
            "reassign-after-warning": (1, 1), "extend-after-warning": (1, 1), "reopened": (0, 1),
            "breached-last-week": (1, 1), "exact-window": (1, 1), "exact-deadline": (0, 1), "after-hours": (1, 1),
            "eager-open": (1, 1), "lookalike": (1, 1)},
-    "d3": {"hold": (2, 3), "legal-mention": (1, 1), "waiting": (1, 2), "closed-duplicate": (2, 2),
+    "d3": {"hold": (2, 2), "legal-mention": (1, 1), "waiting": (1, 1), "closed-duplicate": (1, 2),
            "reassign-after-warning": (1, 2), "extend-after-warning": (1, 1), "reopened": (1, 1),
-           "breached-last-week": (1, 2), "exact-window": (1, 1), "exact-deadline": (1, 2), "after-hours": (2, 2),
-           "eager-open": (1, 2), "lookalike": (2, 2), "extended-last-week": (0, 1)},
+           "breached-last-week": (1, 1), "exact-window": (1, 1), "exact-deadline": (1, 1), "after-hours": (1, 2),
+           "eager-open": (2, 3), "lookalike": (1, 2), "extended-last-week": (0, 1)},
 }
 
 # Blind solver variants (one rule ignored) and the planted traps whose exposure each variant measures.
@@ -117,6 +117,9 @@ FLAG_TRAPS = {
     "lookahead": {"T-timing:after-hours"},
     "reopen": {"T-repeat:reopened"},
 }
+# Story tickets that may equally be opened during the week (their story does not need the ticket open on Monday)
+MOVABLE = {"legal-mention", "after-hours", "exact-deadline", "exact-window", "lookalike", "reassign-after-warning",
+           "extend-after-warning", "hold-static", "hold-placed", "hold-cleared-in-window", "hold-cleared-late"}
 WORLD_FLAGS = {"amend-ignored": "T-stale:window-amended", "amend-any": "T-authority:unauthorized-amendment",
                "amend-now": "T-timing:effective-date"}
 TRAP_KINDS = ["T-lookalike", "T-stale", "T-note", "T-authority", "T-format", "T-repeat", "T-timing"]
@@ -324,14 +327,41 @@ class Gen:
             if s != "eager-open":
                 self.make_story(s)
         n_init = r.randint(*COUNTS[d]["init"])
-        while sum(1 for tk in self.tickets if not tk["history"] and tk["st"] in L.MONITORED + ("waiting",)) < n_init:
-            self.make_plain()
         n_open = r.randint(*COUNTS[d]["opened"])
         n_eager = stories.count("eager-open")
-        for k in range(n_open):
-            self.make_opened(eager=k < n_eager)
+        # story tickets beyond the start-of-week count arrive during the week instead (a ticket.opened event)
+        spare = n_open - n_eager
+        movable = [tk for tk in self.tickets if tk["story"] in MOVABLE and not tk["history"]]
+        r.shuffle(movable)
+        for tk in movable:
+            if self.n_open_at_start() <= n_init or spare <= 0:
+                break
+            if self.move_to_week(tk):
+                spare -= 1
+        while self.n_open_at_start() < n_init:
+            self.make_plain()
+        for k in range(n_eager):
+            self.make_opened(eager=True)
+        while sum(1 for e in self.events if e["kind"] == "ticket.opened") < n_open:
+            self.make_opened(eager=False)
         self.init_state = {tk["rid"]: {k: tk[k] for k in STATE_KEYS} for tk in self.tickets}
         self.plan_updates()
+
+    def n_open_at_start(self) -> int:
+        opened = {e["rid"] for e in self.events if e["kind"] == "ticket.opened"}
+        return sum(1 for tk in self.tickets if not tk["history"] and tk["rid"] not in opened
+                   and tk["st"] in L.MONITORED + ("waiting",))
+
+    def move_to_week(self, tk: dict) -> bool:
+        """Turn a planned story ticket into one the support team opens during the week, well before its window."""
+        e = self.event_time(self.start, tk["D"] - timedelta(minutes=L.WINDOW_MAX + 60))
+        if e is None:
+            return False
+        tk["opened_at"] = e
+        if tk["status_cell"] == "In Progress":       # a new ticket starts Open (status-case variants stay as written)
+            tk["st"], tk["status_cell"] = "open", "Open"
+        self.events.append({"kind": "ticket.opened", "sub": "opened", "t": e, "rid": tk["rid"]})
+        return True
 
     def plan_amendments(self):
         if self.d != "d3":
@@ -342,7 +372,7 @@ class Gen:
         eff = t.date() + timedelta(days=r.choice([0, 1]))
         self.amend.append({"t": t, "authorized": True, "from": L.MANAGER, "from_name": MANAGER_NAME, "value": value,
                            "effective": eff, "traps": []})
-        t2 = self.event_time(self.monday + timedelta(hours=9), self.monday + timedelta(days=3, hours=16))
+        t2 = self.event_time(self.monday + timedelta(hours=9), self.monday + timedelta(days=1, hours=16))
         kind = r.choice(["agent", "lookalike", "lead"])
         if kind == "agent":
             name, _ = r.choice(self.agents)
@@ -354,8 +384,7 @@ class Gen:
                                                          "support.manager@company.example.com",
                                                          "support-manager@cornpany.example.com"]), "T-lookalike:sender"
         self.amend.append({"t": t2, "authorized": False, "from": sender, "from_name": name,
-                           "value": r.choice([45, 90, 150, 240, 60]), "effective": t2.date() + timedelta(days=r.choice([0, 1])),
-                           "traps": [trap]})
+                           "value": r.choice([45, 60, 90, 150, 240]), "effective": t2.date(), "traps": [trap]})
 
     def plan_history(self):
         """Last week's rows: resolved/closed (warned, some breached), archived/void rows with non-date deadlines."""
@@ -574,7 +603,7 @@ class Gen:
                     self.add_update(tk, t, "hold-cleared", {"hold": False})
                     n += 1
             elif s == "hold-placed":
-                t = self.event_time(self.start, tk["D"] - timedelta(minutes=200))
+                t = self.event_time(tk["opened_at"] or self.start, tk["D"] - timedelta(minutes=200))
                 if t:
                     self.add_update(tk, t, "hold-placed", {"hold": True})
                     n += 1

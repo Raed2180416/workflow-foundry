@@ -1,0 +1,96 @@
+{
+ "id": "abr-ops-slawatch",
+ "version": "1.0.0",
+ "domain": "operations",
+ "title": "Support SLA early warning",
+ "status": "dev: generator, oracle, observable-only reference, 16 bad controls, $0 validity gates and tests built; no arm has run (no model, $0)",
+ "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.5",
+ "grounding": [
+  {"task": "operations.sla_breach_early_warning", "span": "automationbench/domains/operations/tasks.py:20926-21269", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "Open Tickets tracker (Ticket ID, Subject, Assigned Agent, Agent Phone, SLA Deadline, Status, Priority, Notes); a 2-hour warning window; SMS to the assigned agent, a #support-escalation post and an email to the support manager; resolved, closed and past-deadline tickets skipped; an LGL- legal-hold code in Notes blocks every notification (SLA Hold Policy sheet); a closed '- duplicate' row; a deadline exactly at the current time is not in the window",
+   "rawHaiku": "1/7 (never found Twilio or Slack)"},
+  {"task": "support.freshdesk_sla_monitoring", "span": "automationbench/domains/support/tasks.py:16597-16991", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "approaching vs breached tiers; real breaches get a Jira issue in project SUPPORT; within-SLA and resolved tickets get nothing",
+   "rawHaiku": "14/14"}
+ ],
+ "apps": ["google_sheets", "twilio", "slack", "gmail", "jira"],
+ "tools": ["api_search", "api_fetch", "base64_encode"],
+ "zapierTools": [],
+ "allowedServices": ["gmail", "google_sheets", "jira", "slack", "twilio"],
+ "sink": {"app": "slack", "channel": "automation-review"},
+ "stateOfRecord": "the tracker's Warned At, Warned Agent, Warned Deadline and Breached At columns (Open Tickets worksheet); legal holds and extended deadlines are ticket columns; the warning window lives in the SLA Policy Log; all in the world, visible to every arm",
+ "envelope": [
+  "twilio.sms.send from +15550001111 (a warning to the assigned agent; a reassignment SMS to the new agent)",
+  "slack.message.post in #support-escalation (the warning line; BREACHED <ID>)",
+  "gmail.message.send to the support manager only (subject 'SLA warning <ID>')",
+  "jira.issue.create in project SUPPORT (summary 'SLA breach <ID>')",
+  "google_sheets.row.update Open Tickets: Warned At / Warned Agent / Warned Deadline (warning), Warned Agent (reassignment), Breached At (breach), on the acted ticket's row only",
+  "google_sheets.row.append Policy Log (authorized amendment only)",
+  "slack.message.post in #automation-review (escalation only)"
+ ],
+ "harmless": ["gmail inbound message is_read / label_ids / is_starred changes"],
+ "triggerKinds": {
+  "tick": {"perWeek": [40, 40], "d1": [40, 40], "d2": [40, 40], "d3": [40, 40], "at": "hourly 10:00-17:00 UTC, Monday-Friday; the Friday 17:00 check is the week close"},
+  "ticket.opened": {"perWeek": [5, 8], "d1": [5, 6], "d2": [5, 7], "d3": [7, 8], "note": "plus 10-14 tickets open at the start of the week (Waiting on Customer included)"},
+  "ticket.updated": {"perWeek": [5, 10], "d1": [5, 6], "d2": [5, 8], "d3": [8, 10], "note": "resolved or closed, reassigned with a new phone, LGL- hold placed or cleared, deadline extended, reopened, work resumed after Waiting on Customer"},
+  "policy.amendment": {"perWeek": [0, 2], "d1": [0, 0], "d2": [0, 0], "d3": [2, 2], "note": "d3: one from support-manager@ (authorized, in range), one from an agent, a team lead or a look-alike address"}
+ },
+ "triggersPerWeek": {"d2": [50, 55], "d3": [57, 60], "measured": "seeds 601-650"},
+ "trapRates": {
+  "d1": 0.0, "d2": 0.4, "d3": 0.7,
+  "unit": "share of triggers at which at least one planted trap is exposed (a solver ignoring that one rule would act differently there, or the trap changes the literals of an effect made there)",
+  "measured": {"seeds": "601-650", "d2": 0.424, "d3": 0.673}
+ },
+ "trapCatalogue": {
+  "T-lookalike": ["id (TK-4012 vs TK-40127: an open or last-week sibling whose posts, SMS and issues share the prefix)", "sender (support-manager@company-example.com and similar)"],
+  "T-stale": ["window-amended (the window changes mid-week: a solver keeping 120 minutes)", "former-manager (d3: a 'Former Support Manager Email' row first in SLA Config)", "old-window-row (d3: an older 180-minute Policy Log row)"],
+  "T-note": ["legal-hold (LGL- code in Notes, any case, any code; held all week, cleared late or inside the window, or placed mid-week)", "legal-mention (Notes mention legal without a code: not a hold)", "waiting (Waiting on Customer: not monitored until work resumes)", "void-row (archived or void rows with non-date deadlines: world-level)"],
+  "T-authority": ["unauthorized-amendment (an agent or team lead asks to change the window)"],
+  "T-format": ["offset (SLA Deadline written with a UTC offset: -05:00, -04:00, +01:00, +02:00, +05:30)", "phone (agent phones in six US formats; E.164 required)", "status-case (d3: 'in progress', 'OPEN', ' Open ')"],
+  "T-repeat": ["closed-duplicate (a Closed '- duplicate' row with a deadline in the window)", "breached-last-week (In Progress, Breached At already filled)", "reassigned (reassigned after the warning: SMS the new agent only)", "extended (a later deadline: warned once more; also a deadline extended last week)", "reopened (resolved after the warning, reopened before the deadline: no second warning)"],
+  "T-timing": ["exact-window (deadline exactly window minutes after a check: warn at that check)", "exact-deadline (deadline on the hour: breach at that check, not a warning)", "after-hours (deadline between the 17:00 check + window and the next morning: no warning, breach at 10:00)", "eager-open / eager-update (a ticket event whose ticket is already inside the window or past its deadline: nothing until the next check)"]
+ },
+ "amendable": [
+  {"parameter": "Warning window", "owner": "support-manager@company.example.com", "values": "60-180 minutes"}
+ ],
+ "hardRequirements": ["schedule", "durable-wait"],
+ "hardRequirementNote": "A warning is correct only at the first hourly check inside the window (early or late fails), and a breach only at the first check at or after the deadline; the oracle checks each effect's timestamp and the Warned At / Breached At values against the check time.",
+ "needJob": {
+  "unit": "trigger",
+  "V": 1,
+  "W": 1,
+  "N": 160,
+  "alsoReported": [1, 40, {"N": 520, "label": "extrapolated, stationarity assumed"}],
+  "verifier": "none"
+ },
+ "hypothesis": {
+  "label": "forced (typed schedule requirement): workflow",
+  "agentH": [0.75, 0.9],
+  "cleanWeeks": "rare for agent-H (a double SMS, a missed or early window, a held ticket)",
+  "why": "agent-H must rebuild the state from the tracker at every check; about 40 sessions a week go to near-empty checks, which a workflow handles in code with no model. Tests whether the need router's typed guard is also right on economics.",
+  "tag": "[I] written before any label"
+ },
+ "split": "TRAIN (forced stratum), proposed",
+ "seeds": {
+  "practice": {"range": [601, 609], "purpose": "need-example", "split": "dev"},
+  "devLabels": {"range": [610, 613], "purpose": "need-label", "split": "dev", "difficulty": {"610": "d2", "611": "d3", "612": "d2", "613": "d3"}},
+  "devTopUps": {"range": [614, 621], "purpose": "need-label", "split": "dev"},
+  "rehearsal": {"range": [622, 630], "purpose": "need-label", "split": "dev"},
+  "heldout": {"range": [8801, 8804], "purpose": "need-heldout", "split": "test", "note": "never generated or inspected by the family author"},
+  "difficultyRule": "within each block, the first seed is d2 and difficulties alternate d2, d3 (gen.default_difficulty)",
+  "referenceGate": [610, 611, 612, 613, 614]
+ },
+ "controls": ["null", "echo", "naive", "eager", "no-hold", "utc-naive", "status-blind", "no-reassign", "warn-once", "strict-window", "slack-dedupe", "raw-phone", "any-amendment", "fixed-window", "late-warning", "early-warning"],
+ "files": {
+  "policy": "POLICY.md",
+  "lib": "lib.py",
+  "generator": "gen.py",
+  "oracle": "oracle.py",
+  "reference": "reference.py",
+  "controls": "controls.py",
+  "harness": "harness.py",
+  "gates": "gates.py",
+  "tests": "tests/test_slawatch.py",
+  "readme": "README.md"
+ }
+}
