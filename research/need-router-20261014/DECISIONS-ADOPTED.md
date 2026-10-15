@@ -26,3 +26,12 @@ of them at any time, and an overturn is applied before the next paid stage, neve
 
 The designer's own calls (structural rule primary and kNN secondary; W = V; N = 10 headline; agent-H+proc in v1; JIT out of v1;
 cluster W in TRAIN; agent-O at one draw) stand as well.
+
+## Addendum (2026-10-15): decisions of research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §6, adopted at their defaults
+
+Under the same standing authority, each overturnable: (1) AutomationBench text reaches a model through a host-run tool loop (D15);
+(2) need-router decision 13 is amended to allow the penny Jev tests (J0, J-NEED-2, J-Q, J-APP) on synthetic text; (3) MA-0 (cap $40),
+MA-1 (cap $45) and REC-1 (pilot $30, main $300) approved, each at its gate; (4) far-family authors if available, otherwise MA-1 stays
+report-only on H2; (5) precedence: invariants above pins, pins from MCP and ARC count as the owner's, guard waivers only from UI or CLI;
+(6) verifier independence measured as a conditional miss rate on planted mutants; (7) AWS keys unused until the owner says what they are
+for; (8) the usage rule stays the owner's call; (9) no non-synthetic text to TypeSafe.
