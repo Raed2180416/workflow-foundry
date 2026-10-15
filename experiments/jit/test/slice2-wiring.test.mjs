@@ -54,8 +54,12 @@ test('compile.mjs: FLOW_TOOL_V3 for version 5; library/index.json only with a li
   assert.equal(compileFiles(args)['tools/flow.mjs'], FLOW_TOOL_V3); assert.equal(LIBRARY_INDEX in compileFiles(args), false);
   const index = [{ hash: 'sha256:ab', contract: { output: { type: 'object' } } }];
   assert.deepEqual(JSON.parse(compileFiles({ ...args, libraryIndex: index })[LIBRARY_INDEX]), index);
-  await assert.rejects(compile({ familyId: 'records', traces: [{ traceId: 't', task: { prompt: 'p', inputs: {} } }], modelPort: portOf(), workRoot: '/nonexistent/w', label: 'x', models: MODELS,
-    promptVersion: 4, library: createRegistry() }), /a library needs promptVersion 5/);
+  // compile() creates its workdir before this check, so the work root must be writable on a non-root host too.
+  const workRoot = mkdtempSync(path.join(tmpdir(), 'slice2-lib-v4-'));
+  try {
+    await assert.rejects(compile({ familyId: 'records', traces: [{ traceId: 't', task: { prompt: 'p', inputs: {} } }], modelPort: portOf(), workRoot, label: 'x', models: MODELS,
+      promptVersion: 4, library: createRegistry() }), /a library needs promptVersion 5/);
+  } finally { rmSync(workRoot, { recursive: true, force: true }); }
 });
 
 const portOf = () => new ModelPort({ policy: subsetPolicy(loadPolicy().policy, MODELS), journal: new Journal(new DatabaseSync(':memory:')),
