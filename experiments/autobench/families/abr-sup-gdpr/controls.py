@@ -23,7 +23,7 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
     skip-verified    does not log the Verified transition (only the outcome)
     no-dedupe        handles a duplicate request as a new one (a second verification)
     dedupe-any       treats any earlier request for the address as open (re-requests after Not Found / Closed)
-    exact-deadline   closes only at exactly day 30 (misses deadlines that fell on a weekend)
+    exact-deadline   closes only at exactly day 30 (misses a request already past day 30 at its first close)
     late-deadline    closes from day 31
     count-all        the summary counts every Purged / Blocked row in the log, not today's
     stale-batch      takes the first setting whose name contains 'Batch' (the previous batch at d3)

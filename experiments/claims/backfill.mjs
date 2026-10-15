@@ -63,15 +63,21 @@ export function predictionChecks(rows, { cen, lat, cov }) {
     const m1 = rows.filter(r => ['m1', 'm1-d5', 'm1-r'].includes(r.run));
     const m1Diff = m1.reduce((a, r) => a + (r.usd.charged ?? 0) - (r.usd.reported ?? 0), 0);
     const ratio = rep > 0 ? ch / rep : null, share = ch - rep > 0 ? m1Diff / (ch - rep) : null;
-    out.P2 = { reading: three(ratio >= 2.5 && share >= 0.8, ratio < 1.5), reportedUsd: rep, chargedUsd: ch, ratio, m1ShareOfDifference: share,
+    out.P2 = { reading: ratio === null ? 'inconclusive' : three(ratio >= 2.5 && share !== null && share >= 0.8, ratio < 1.5), reportedUsd: rep, chargedUsd: ch, ratio, m1ShareOfDifference: share,
       notInRepo: needRouter.NOT_IN_REPO, chargedWithNotInRepoUsd: ch + needRouter.NOT_IN_REPO.reduce((a, x) => a + (x.meterUsd ?? 0), 0) };
   }
   // P3 M1 tails at d3 (tag m1)
   {
     const arms = lat.arms.filter(a => a.bed === 'wbed' && a.run === 'm1');
     const ratios = Object.fromEntries(arms.map(a => [a.arm, a.wall.p50 ? a.wall.p99 / a.wall.p50 : null]));
+    // A p99 that lands on a timed-out call is the runner's deadline, so the ratio is a lower bound (true p99 >= deadline):
+    // it can still support (>= 10), but a truncated ratio below 5 cannot refute.
+    const truncated = Object.fromEntries(arms.map(a => [a.arm, !!a.wall.atDeadline?.p99]));
     const v = Object.values(ratios);
-    out.P3 = { reading: three(v.length === 2 && v.every(x => x >= 10), v.some(x => x < 5)), p99OverP50: ratios, note: 'p99 at n = 96 is the maximum' };
+    const refuted = arms.some(a => ratios[a.arm] !== null && ratios[a.arm] < 5 && !truncated[a.arm]);
+    out.P3 = { reading: three(v.length === 2 && v.every(x => x >= 10), refuted), p99OverP50: ratios, p99AtDeadline: truncated,
+      deadlineHits: Object.fromEntries(arms.map(a => [a.arm, a.wall.deadlineHits])),
+      note: 'p99 at n = 96 is the maximum; where p99AtDeadline is true the p99 is the 300 s model-port deadline (timed-out calls), so p99/p50 is a lower bound capped by construction at deadline/p50' };
   }
   // P4 AutomationBench time to first effect as a share of wall time
   {
@@ -135,7 +141,8 @@ async function main() {
   const argv = process.argv.slice(2);
   const live = !argv.includes('--no-live');
   const oi = argv.indexOf('--out');
-  const out = path.join(ROOT, oi >= 0 ? argv[oi + 1] : OUT);
+  // resolve, not join: an absolute --out must not land inside the repository as ROOT/<absolute path>
+  const out = path.resolve(ROOT, oi >= 0 ? argv[oi + 1] : OUT);
   // 1. MDE and prediction, before any run output is read
   console.log('SPINE-0 + LAT-0 + OUT-0 back-fill ($0). Minimum detectable effects:');
   for (const l of mdeLines()) console.log(`  - ${l}`);

@@ -1,0 +1,443 @@
+{
+ "schema": "ebed-e8-latent-defect/1",
+ "id": "ld-k118",
+ "evidence": "development (dev worlds 1001-1199); $0",
+ "mutant": {
+  "id": "ref-k118",
+  "kind": "transition",
+  "operator": "relational boundary",
+  "file": "beds/ebed/e8/transition.mjs",
+  "line": 181,
+  "from": "countedAction = custActions.find(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;",
+  "to": "countedAction = custActions.find(a => a.at < D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;",
+  "sourceSha256": "eca12d486c688bb7d9b9c86fb93b7da3277f9d77ac0f1cf7af9bc089b0288390",
+  "asOracleMutant": {
+   "verdict": "killed",
+   "ledger": "ledger/MUTANTS.md"
+  }
+ },
+ "members": [
+  "ref-k118"
+ ],
+ "band": [
+  5
+ ],
+ "outsideBand": {
+  "world": "ebed-e8-dev-1101-d4-tail",
+  "case": "o0018",
+  "epoch": "ep0",
+  "code": "outside-allowed"
+ },
+ "solver": {
+  "policy": "beds/ebed/oracle/policy.mjs referenceArm",
+  "timing": "earliest",
+  "oracle": "original transition.mjs"
+ },
+ "contradicts": [
+  "R3.1",
+  "R4.1"
+ ],
+ "revealedBy": "in-world event (planted)",
+ "params": {
+  "e0Epochs": [
+   "gl",
+   "ep0"
+  ],
+  "revealEpochs": [
+   "ep2",
+   "ep3"
+  ],
+  "lagMinutes": 1440
+ },
+ "e0Silence": {
+  "executed": true,
+  "worlds": 2,
+  "casesChecked": 114,
+  "failed": 0
+ },
+ "worlds": [
+  {
+   "world": "ebed-e8-dev-1101-d5-tail",
+   "seed": 1101,
+   "split": "dev",
+   "difficulty": 5,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "ce5872d5a4a4f0d0580668bde0eae322bee7ff1423fc4898655cad0b658aece6",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0020",
+     "o0022",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0034",
+     "o0037",
+     "o0039",
+     "o0041",
+     "o0042",
+     "o0043",
+     "o0044",
+     "o0045",
+     "o0047",
+     "o0048",
+     "o0049",
+     "o0050",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059",
+     "o0060",
+     "o0061",
+     "o0062",
+     "o0063",
+     "x0211",
+     "x0212",
+     "x0213"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0019",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-07T22:54:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    {
+     "case": "o0021",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T02:17:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    {
+     "case": "o0145",
+     "epoch": "ep3",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-10T18:16:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    }
+   ],
+   "reveal": {
+    "case": "o0019",
+    "class": "action-at-deadline",
+    "epoch": "ep2",
+    "observableAt": "2026-03-07T23:54:01+01:00",
+    "eventEpoch": "ep2",
+    "divergence": {
+     "case": "o0019",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-07T22:54:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    "event": {
+     "id": "rev-ld-k118-1101-d5",
+     "type": "customer.complaint",
+     "at": "2026-03-08T23:54:01+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "rev-ld-k118-1101-d5",
+      "orderRef": "ORD-1101-0019",
+      "assert": "wrong",
+      "subject": "order status",
+      "fields": [
+       "status"
+      ],
+      "from": "c0002@hollin-shop.example",
+      "text": "The order status for order ORD-1101-0019 is wrong (status)."
+     }
+    },
+    "truth": {
+     "valid": true,
+     "defect": "ld-k118",
+     "rule": "R3.1",
+     "hardness": "rulebook",
+     "reason": "the oracle fails o0019 at 2026-03-07T22:54:01.000Z (outside-allowed) on the defect's trajectory"
+    }
+   },
+   "falseReveal": {
+    "case": "o0059",
+    "class": "straight",
+    "epoch": "ep0",
+    "eventEpoch": "ep2",
+    "event": {
+     "id": "inv-ld-k118-1101-d5",
+     "type": "customer.complaint",
+     "at": "2026-03-08T23:49:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "inv-ld-k118-1101-d5",
+      "orderRef": "ORD-1101-0059",
+      "assert": "wrong",
+      "subject": "order status",
+      "fields": [
+       "status"
+      ],
+      "from": "c0023@hollin-shop.example",
+      "text": "The order status for order ORD-1101-0059 is wrong (status)."
+     }
+    },
+    "truth": {
+     "valid": false,
+     "defect": "ld-k118",
+     "hardness": "rulebook",
+     "reason": "the oracle passes o0059 on this trajectory, so the claim (wrong order status) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
+    }
+   },
+   "sweep": {
+    "before": [
+     "o0019",
+     "o0021"
+    ],
+    "after": [
+     "o0145"
+    ]
+   },
+   "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d5-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 5,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "d27cb8d02aaf21126d1f6ef148912140c0a27515bdcaa0b67680bf1b33f79e29",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0032",
+     "o0033",
+     "o0034",
+     "o0035",
+     "o0036",
+     "o0038",
+     "o0039",
+     "o0040",
+     "o0041",
+     "o0042",
+     "o0043",
+     "o0044",
+     "o0045",
+     "o0046",
+     "o0047",
+     "o0048",
+     "o0049",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059",
+     "o0060",
+     "x0213"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0050",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T05:10:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    {
+     "case": "o0069",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T02:12:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    {
+     "case": "o0125",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-09T05:37:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    {
+     "case": "o0188",
+     "epoch": "ep3",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-13T09:44:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    }
+   ],
+   "reveal": {
+    "case": "o0069",
+    "class": "action-at-deadline",
+    "epoch": "ep2",
+    "observableAt": "2026-03-08T03:12:01+01:00",
+    "eventEpoch": "ep2",
+    "divergence": {
+     "case": "o0069",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T02:12:01.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    "event": {
+     "id": "rev-ld-k118-1102-d5",
+     "type": "customer.complaint",
+     "at": "2026-03-09T03:12:01+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "rev-ld-k118-1102-d5",
+      "orderRef": "ORD-1102-0069",
+      "assert": "wrong",
+      "subject": "fulfilment status",
+      "fulfilmentRef": "ORD-1102-0069-F1",
+      "fields": [
+       "status"
+      ],
+      "from": "c0026@hollin-shop.example",
+      "text": "The fulfilment status for fulfilment ORD-1102-0069-F1 of order ORD-1102-0069 is wrong (status)."
+     }
+    },
+    "truth": {
+     "valid": true,
+     "defect": "ld-k118",
+     "rule": "R4.1",
+     "hardness": "rulebook",
+     "reason": "the oracle fails o0069 at 2026-03-08T02:12:01.000Z (outside-allowed) on the defect's trajectory"
+    }
+   },
+   "falseReveal": {
+    "case": "o0078",
+    "class": "timeout",
+    "epoch": "ep2",
+    "eventEpoch": "ep2",
+    "event": {
+     "id": "inv-ld-k118-1102-d5",
+     "type": "customer.complaint",
+     "at": "2026-03-09T02:08:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "inv-ld-k118-1102-d5",
+      "orderRef": "ORD-1102-0078",
+      "assert": "wrong",
+      "subject": "fulfilment status",
+      "fulfilmentRef": "ORD-1102-0078-F1",
+      "fields": [
+       "status"
+      ],
+      "from": "c0005@hollin-shop.example",
+      "text": "The fulfilment status for fulfilment ORD-1102-0078-F1 of order ORD-1102-0078 is wrong (status)."
+     }
+    },
+    "truth": {
+     "valid": false,
+     "defect": "ld-k118",
+     "hardness": "rulebook",
+     "reason": "the oracle passes o0078 on this trajectory, so the claim (wrong fulfilment status) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
+    }
+   },
+   "sweep": {
+    "before": [
+     "o0069",
+     "o0050"
+    ],
+    "after": [
+     "o0125",
+     "o0188"
+    ]
+   },
+   "natural": []
+  }
+ ]
+}

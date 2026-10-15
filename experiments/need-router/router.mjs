@@ -853,7 +853,7 @@ export function fitNeedRouter(train, opts = {}) {
 
   function decide(job = {}, cell = HEADLINE, { routingUsd = 0, probe = null } = {}) {
     const c = resolveCell(cell);
-    const pr = probeRecord(probe, { tasksPerJob, jobId: typeof job.id === 'string' ? job.id : null });
+    const pr = probeRecord(probe, { tasksPerJob, jobId: job.id == null ? null : String(job.id) });
     if (pr && stage !== 'leaf') throw new Error('a probe updates the leaf calculator (NR-probe = stages 0-1, the probe, stage 2); the kNN stage takes no probe');
     if (typeof routingUsd !== 'number' || !finite(routingUsd) || routingUsd < 0) throw new Error(`routingUsd must be a finite number >= 0, got ${routingUsd}`);
     const features = trustedFeatures(job.features);

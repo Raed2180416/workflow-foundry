@@ -55,6 +55,12 @@ test('consistency rules: verdict counts, meter floor, timing order, origin group
   assert.ok(validateClaimRow(f).some(e => e.includes('origin.group must be third-party')));
   const g = validRow(); g.models = [{ role: 'executor', id: 'gpt-x' }];
   assert.ok(validateClaimRow(g, { modelIds: new Set(['claude-haiku-5-5']) }).some(e => e.includes('not in policy/models.json')));
+  const n = validRow(); Object.assign(n.usd, { reported: 0, charged: 0, observed: false, bound: null });
+  assert.ok(validateClaimRow(n).some(e => e.includes('unobserved row needs a numeric usd.bound')), 'a timeout with no bound would be booked at $0');
+  const dl = validRow(); dl.timing.deadline = { ms: 300000, hit: 'yes' };
+  assert.ok(validateClaimRow(dl).some(e => e.includes('timing.deadline')));
+  const dk = validRow(); dk.timing.deadline = { ms: 300000, hit: false };
+  assert.deepEqual(validateClaimRow(dk), []);
   const h = validRow(); h.rowKind = 'set-aside';
   assert.ok(validateClaimRow(h).some(e => e.includes('set-aside row is excluded')));
   assert.equal(validateRows([validRow(), validRow()]).length, 1, 'duplicate ids are reported');

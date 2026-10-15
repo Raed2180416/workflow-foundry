@@ -23,7 +23,7 @@
 // an interrupted run resumes (--resume). Survivors are printed with their diff for triage in ledger/MUTANTS.md.
 //   node beds/ebed/e7/tools/mutate.mjs [--worlds 1009:3:60,1010:5:60,1011:4:60,1012:2:60] [--only t12,e3] [--limit N]
 //        [--sample N --sample-seed s] [--no-specificity] [--no-controls] [--golden-only] [--corpus-always] [--jobs 1]
-//        [--work .foundry/e7-mutate] [--resume] [--json out.json] [--list]
+//        [--work .foundry/e7-mutate] [--tag name] [--resume] [--json out.json] [--list] [--rss-mb 2500]
 // Seeds: dev block 1001-1199 only (DESIGN §13: mutation suites); every other seed is refused.
 import { readFileSync, writeFileSync, mkdirSync, existsSync, appendFileSync, readdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
@@ -544,7 +544,8 @@ async function main() {
 
   // Self-check: the identity module set (the original re-imported through writeModuleSet) must equal the original.
   const runId = sha(JSON.stringify({ t: sha(sources.t), e: sha(sources.e), corpus: corpus?.meta.key ?? 'golden-only' })).slice(0, 12);
-  const resultsFile = path.join(work, `results-${runId}.jsonl`);
+  const tag = arg('--tag', null);
+  const resultsFile = path.join(work, `results-${runId}${tag ? `-${tag.replace(/[^\w-]/g, '')}` : ''}.jsonl`);
   const done = new Map();
   if (flag('--resume') && existsSync(resultsFile)) for (const l of readFileSync(resultsFile, 'utf8').split('\n').filter(Boolean)) { const r = JSON.parse(l); done.set(r.id, r); }
   else writeFileSync(resultsFile, '');
@@ -552,7 +553,11 @@ async function main() {
   const modDir = path.join(work, 'modules');
   rmSync(modDir, { recursive: true, force: true });
   const timeoutMs = Number(arg('--timeout', '0')) * 1000;
-  const goldenLimit = Number(arg('--golden-timeout', '60')) * 1000;
+  const goldenLimit = Number(arg('--golden-timeout', '30')) * 1000;
+  // A mutant whose loop allocates without end can push the process past the worker's heap cap before its time limit
+  // (2026-10-15: t223 took the process to 6.5 GB and the kernel killed the run). The main thread watches the process RSS
+  // and terminates the worker past --rss-mb: that mutant is killed by `memory` (after one retry in a fresh worker).
+  const rssLimit = Number(arg('--rss-mb', '2500')) * 2 ** 20;
   // Lines of transition.mjs whose mutants change what the grader's index reads (utc .. canonicalArgs): graded with their
   // own canonicalArgs over the raw rows.
   const tLines = sources.t.split('\n');
@@ -570,6 +575,7 @@ async function main() {
 
   const classify = (m, r) => {
     if (r.timeout) return { killed: true, by: 'timeout' };
+    if (r.memory) return { killed: true, by: 'memory' };
     if (r.error) return { killed: true, by: `error:${r.error.split('\n')[0].slice(0, 80)}` };
     if (r.goldenFails.length) return { killed: true, by: `golden:${r.goldenFails[0].name ?? r.goldenFails[0]}` };
     if (r.corpus?.first) return { killed: true, by: `corpus:${r.corpus.first.journals[0]}/${r.corpus.first.case}` };
@@ -581,7 +587,7 @@ async function main() {
     const next = () => queue.shift();
     const spawn = slot => {
       const w = new Worker(fileURLToPath(import.meta.url), { workerData: { role: 'e7-mutate-worker', bucketsFile: corpus?.bucketsFile ?? null, worlds, baseline: corpus ? baseline : [] },
-        resourceLimits: { maxOldGenerationSizeMb: Number(arg('--heap-mb', goldenOnly ? '768' : '2048')) }, execArgv: [] });
+        resourceLimits: { maxOldGenerationSizeMb: Number(arg('--heap-mb', goldenOnly ? '768' : '1536')), maxYoungGenerationSizeMb: 64 }, execArgv: [] });
       slot.worker = w; slot.count = 0; slot.current = null; slot.ready = false;
       w.on('message', msg => {
         if (msg.type === 'baseline') { baseline = msg.sigs; baseMs = msg.ms; console.log(`baseline: ${msg.sigs.length} case contents graded in ${Math.round(msg.ms / 1000)} s`); }
@@ -622,7 +628,7 @@ async function main() {
       if (!m) return;
       // A worker that died (memory, crash) after other mutants gets one retry in a fresh worker: what killed it may be
       // the earlier mutants' leftovers, not this one.
-      if (respawn && !r.timeout && slot.count > 1 && !m.retried) { m.retried = true; queue.unshift(m); spawn(slot); return; }
+      if (respawn && !r.timeout && slot.count > 1 && !m.retried) { m.retried = true; queue.unshift(m); rmSync(path.join(modDir, m.id), { recursive: true, force: true }); spawn(slot); return; }
       if (m.id === 'identity') {
         if (r.error || r.goldenFails.length || r.corpus?.diffs) { reject(new Error(`identity module set differs from the original: ${JSON.stringify(r).slice(0, 600)}`)); return; }
         console.log(`identity: goldens pass, corpus ${r.corpus ? `${r.corpus.diffs} differences in ${r.corpus.graded} (${Math.round(r.corpus.ms / 1000)} s)` : 'skipped'}`);
@@ -640,6 +646,18 @@ async function main() {
       rmSync(path.join(modDir, m.id), { recursive: true, force: true });
       if (respawn) spawn(slot); else dispatch(slot);
     };
+    let lastKill = 0;
+    const watch = setInterval(() => {
+      // A terminated worker's memory is released asynchronously: no second verdict within 15 s of a kill.
+      if (Date.now() - lastKill < 15_000 || process.memoryUsage().rss <= rssLimit) return;
+      for (const slot of slots) {
+        if (!slot.current) continue;
+        lastKill = Date.now();
+        slot.closing = true; slot.worker.terminate(); slot.closing = false;
+        finish(slot, { type: 'result', id: slot.current.id, goldenFails: [], corpus: null, error: null, memory: true }, true);
+      }
+    }, 500);
+    watch.unref();
     for (let k = 0; k < Math.min(jobs, queue.length); k++) { const slot = {}; slots.push(slot); spawn(slot); }
   });
   rmSync(modDir, { recursive: true, force: true });

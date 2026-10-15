@@ -6,8 +6,9 @@ sha256 `05c6609dde239584…`) and its SLA engine `sla.mjs` (ids e1–e196, sha25
 changed by this review. The measured run is `ledger/mutation-20261015.json`.
 
 **In short.** The first measured run (run 1) used 29 goldens: the item's 28, plus the instants golden written first in this review. It killed 504 of 679. Its 175 survivors
-were triaged one by one: 44 were killable, 129 are grader-equivalent and 2 are uncertain. The 44 killable ones got 25
-new goldens, each asserting a spec-stated outcome the grader sees. The final run with the 54 goldens: FINAL_LINE.
+were triaged one by one: 45 were killable, 128 are grader-equivalent and 2 are uncertain. One of the killable, t66, was
+first triaged as equivalent and was corrected when the final run killed it (§4). The killable ones got 25 new goldens,
+each asserting a spec-stated outcome the grader sees. The final run with the 54 goldens: FINAL_LINE.
 
 | formula | value |
 |---|---|
@@ -15,7 +16,7 @@ new goldens, each asserting a spec-stated outcome the grader sees. The final run
 | E-BED §9.5 (killed / (all − equivalent)) | FINAL_EXCL |
 | run 1 (29 goldens), raw | 504 / 679 = 0.742 |
 
-The raw formula cannot reach K1 (0.95) while the 129 equivalents stay in the operator set, as for E8 (whether K1
+The raw formula cannot reach K1 (0.95) while the 128 equivalents stay in the operator set, as for E8 (whether K1
 counts equivalents in the denominator is the owner's decision). Under the second formula, which is the one E-BED §9.5
 uses ("each survivor is equivalent or gets a new golden"), only the two uncertain mutants are left (§4).
 
@@ -99,14 +100,16 @@ FINAL_TABLE
 Kills by check in the final run: FINAL_KILLEDBY. Run 1, with 29 goldens, was 385 by goldens, 115 by the corpus and 4 by
 the time limit.
 
-Four mutants never terminate and are killed by the time limit. Each leaves a deadline in the list that its firing never
-removes, so the deadline loop never ends:
+Four mutants never terminate and are killed by the time limit or the memory watchdog. Each leaves a deadline in the list
+that its firing never removes, so the deadline loop never ends:
 - t223 deletes `appr.dl = …`;
 - t273 sends a caller deadline into the fail-safe branch;
 - t283 sends the approval deadline into the auto-closure branch;
 - t291 deletes `appr.declared = D`.
 
-An oracle that never answers cannot grade.
+An oracle that never answers cannot grade. The loop also allocates on every turn. A first attempt at the final run was
+killed by the kernel at 6.5 GB while running t223, because the worker's old-generation cap did not bound the process.
+The tool now has an RSS watchdog in the main thread (§7).
 
 ## 2. The mutant set
 
@@ -201,8 +204,8 @@ By first-differing signature:
 
 ## 4. Run 1's 175 survivors, triaged
 
-Every survivor of run 1 is either killed by a new golden (44, named in the evidence column, final run) or equivalent
-(129) or uncertain (2). For equivalents the corpus figure is from the final run. Lines are the current sources';
+Every survivor of run 1 is either killed by a new golden (45, named in the evidence column, final run) or equivalent
+(128) or uncertain (2). For equivalents the corpus figure is from the final run. Lines are the current sources';
 `tr` is transition.mjs.
 
 FINAL_SURVIVORS
@@ -237,7 +240,7 @@ run. Each kills the mutants named.
 |---|---|---|---|
 | instants compared as instants, whatever their offset | §1 Time, R4.5 | `canonicalArgs`: an instant at any offset, with or without seconds or milliseconds, is the same instant; a time without an offset or no valid date is compared as written; other arguments as written | t13–t16, t18 |
 | G22 approval anchored where the priority first became 1 | R7.1, R2.3 | a reclassification that keeps P1 records the impact change and does not move the task window | t58, t159, t163 |
-| G14d an approval is moot from the first instant it is moot | R7.3, S11 | a later change of an ended incident does not move the moot instant | t67 |
+| G14d an approval is moot from the first instant it is moot | R7.3, S11 | a later change of an ended incident does not move the moot instant | t66, t67 |
 | G14e a re-ask at the deadline counts | R7.2, S1 | a re-ask and its approve at the deadline count | t225 |
 | G14f a closure at the caller deadline makes a pending approval moot | R6.3, R7.3 | no declaration after the closure | t281, t304 |
 | G14g a declaration at the deadline comes before later events and deadlines | R7.2, R6.3, R4.5, S14 | (d4) RES-MAJOR attaches at the fail-safe, paused since the hold, resumes at a later reply; with no reply it stops at the later caller deadline | t272, t302–t304 |
@@ -295,7 +298,7 @@ Three new goldens rest on a narrow witness, and are named here so a reviewer can
    engine. 17 mutants inside them are contract equivalents (e30, e31, e33, e152, e154–e163, e172), because no
    generated world carries the flags. Moving the switches to `controls.mjs` would shrink the operator set without
    losing anything.
-6. **Corpus coverage.** 44 killable mutants survived the four-world corpus. Every one of them needs an input that is in
+6. **Corpus coverage.** 45 killable mutants survived the four-world corpus. Every one of them needs an input that is in
    the spec but not in the generator's class mix, or a same-instant coincidence: replies during vendor holds, updates
    after the resolution, a P1 reached during a hold, two deadlines between two events, a reset across the edition
    switch. The goldens now cover them; the generator's tail classes do not.
@@ -312,8 +315,11 @@ node beds/ebed/e7/tools/mutate.mjs --golden-only                            # th
 The corpus is built on first use (about 3 minutes) and cached under `.foundry/e7-mutate/corpus/<key>/`, which is
 ignored by git. The key hashes the world specs, the oracle sources and the solvers.
 
-Each mutant runs in a worker thread with a 60 s limit for the goldens, a ≥ 20 min limit for the corpus and a 2 GB
-heap. A worker is replaced every 30 mutants. A worker that dies after earlier mutants gets one retry in a fresh worker.
+Each mutant runs in a worker thread with these limits: 30 s for the goldens, ≥ 20 min for the corpus (the
+cache-disabling mutants take about 250 s), and a 1.5 GB old generation. The main thread also runs a process-RSS
+watchdog at 2.5 GB, against a normal peak of about 0.85 GB. A worker is replaced every 30 mutants. A worker that dies,
+or is stopped by the watchdog, after earlier mutants gets one retry in a fresh worker. `--tag` keeps a run's results
+file apart.
 Results stream to `.foundry/e7-mutate/results-<run>.jsonl`, and `--resume` continues an interrupted run.
 
 Before any mutant, the run checks itself: the original oracle re-imported through the mutant machinery must pass every

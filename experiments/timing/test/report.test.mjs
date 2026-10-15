@@ -36,3 +36,15 @@ test('armSummary pools wall, successes and first-effect share', () => {
   assert.equal(s.modelShareP50, 0.5);
   assert.deepEqual(s.concurrency, { configured: [4], observedMax: 2 });
 });
+
+test('a quantile that lands on a deadline-truncated row is flagged, not reported as a measured tail', () => {
+  const row = (wall, hit) => ({ timing: { wallMs: wall, timeToFirstEffectMs: null, components: {}, concurrency: {}, deadline: { ms: 300000, hit } },
+    verdict: { successes: 0, total: 1 }, usd: {} });
+  const rs = [...Array.from({ length: 8 }, (_, i) => row(10000 * (i + 1), false)), row(300040, true), row(300100, true)];
+  const s = armSummary(rs);
+  assert.equal(s.wall.deadlineHits, 2);
+  assert.deepEqual(s.wall.deadlineMs, [300000]);
+  assert.deepEqual(s.wall.atDeadline, { p50: false, p90: true, p99: true });
+  const none = armSummary([row(5, false), row(7, false)]);
+  assert.deepEqual(none.wall.atDeadline, { p50: false, p90: false, p99: false });
+});

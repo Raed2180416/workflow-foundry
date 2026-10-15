@@ -19,12 +19,26 @@
  "members": [
   "ref-k8"
  ],
+ "band": [
+  5,
+  4,
+  3,
+  2
+ ],
+ "outsideBand": null,
  "solver": {
   "policy": "beds/ebed/oracle/policy.mjs referenceArm",
   "timing": "earliest",
   "oracle": "original transition.mjs"
  },
- "contradicts": [],
+ "contradicts": [
+  "R1.1",
+  "R3.1",
+  "R3.2",
+  "R4.1",
+  "R4.2"
+ ],
+ "revealedBy": "self (arm error)",
  "params": {
   "e0Epochs": [
    "gl",
@@ -43,252 +57,6 @@
   "failed": 0
  },
  "worlds": [
-  {
-   "world": "ebed-e8-dev-1101-d2-tail",
-   "seed": 1101,
-   "split": "dev",
-   "difficulty": 2,
-   "mix": "tail",
-   "generator": "1.0.0",
-   "journal": "cf2e994e65bada279cfe9969a891d08a63d2a890d38ecb97d620b99d46639924",
-   "inert": true,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019"
-    ],
-    "failed": 0,
-    "graded": true
-   },
-   "affected": []
-  },
-  {
-   "world": "ebed-e8-dev-1101-d3-tail",
-   "seed": 1101,
-   "split": "dev",
-   "difficulty": 3,
-   "mix": "tail",
-   "generator": "1.0.0",
-   "journal": "de1c3dd35d8da621acc0afac384a41a12ab372d4588237020b48a02876eb132b",
-   "inert": true,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0022",
-     "o0023",
-     "o0024",
-     "x0086",
-     "x0087"
-    ],
-    "failed": 0,
-    "graded": true
-   },
-   "affected": []
-  },
-  {
-   "world": "ebed-e8-dev-1101-d4-tail",
-   "seed": 1101,
-   "split": "dev",
-   "difficulty": 4,
-   "mix": "tail",
-   "generator": "1.0.0",
-   "journal": "9564a322d98837b3029ec8c2ddd77e46ad28429e6dbb92ebdce4d6431371929c",
-   "inert": false,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0012",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0023",
-     "o0024",
-     "o0025",
-     "o0026",
-     "o0027",
-     "o0028",
-     "o0029",
-     "o0030",
-     "o0031",
-     "o0032",
-     "o0033",
-     "o0034",
-     "o0035",
-     "x0108",
-     "x0109"
-    ],
-    "failed": 0,
-    "graded": true
-   },
-   "affected": [
-    {
-     "case": "o0011",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-07T23:32:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0013",
-     "epoch": "ep2",
-     "class": "amend",
-     "pool": "completed",
-     "at": "2026-03-08T01:41:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0054",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-07T23:38:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0055",
-     "epoch": "ep2",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-08T07:44:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0056",
-     "epoch": "ep2",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-08T14:04:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0057",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T15:06:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0058",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T17:41:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0059",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T19:53:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0092",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-08T00:58:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0104",
-     "epoch": "ep2",
-     "class": "cancel-wait",
-     "pool": "completed",
-     "at": "2026-03-08T01:17:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    }
-   ],
-   "reveal": {
-    "case": "o0011",
-    "class": "action-at-deadline",
-    "epoch": "ep2",
-    "selfRevealing": "arm-error",
-    "at": "2026-03-07T23:32:00.000Z",
-    "event": null
-   },
-   "falseReveal": null,
-   "sweep": {
-    "before": [
-     "o0011",
-     "o0054",
-     "o0092",
-     "o0104",
-     "o0013",
-     "o0055",
-     "o0056",
-     "o0057",
-     "o0058",
-     "o0059"
-    ],
-    "after": []
-   },
-   "natural": []
-  },
   {
    "world": "ebed-e8-dev-1101-d5-tail",
    "seed": 1101,
@@ -530,12 +298,19 @@
     "epoch": "ep2",
     "selfRevealing": "arm-error",
     "at": "2026-03-07T23:29:00.000Z",
+    "blocked": [
+     "R1.1",
+     "R4.1",
+     "R4.2"
+    ],
     "event": null
    },
    "falseReveal": null,
    "sweep": {
     "before": [
-     "o0101",
+     "o0101"
+    ],
+    "after": [
      "o0082",
      "o0038",
      "o0102",
@@ -553,20 +328,19 @@
      "o0111",
      "o0112",
      "o0113"
-    ],
-    "after": []
+    ]
    },
    "natural": []
   },
   {
-   "world": "ebed-e8-dev-1102-d2-tail",
-   "seed": 1102,
+   "world": "ebed-e8-dev-1101-d4-tail",
+   "seed": 1101,
    "split": "dev",
-   "difficulty": 2,
+   "difficulty": 4,
    "mix": "tail",
    "generator": "1.0.0",
-   "journal": "f6087dcd855a5f3d104bfd89bda004319deb24cf270b032db4f29c71b3dbde0e",
-   "inert": true,
+   "journal": "9564a322d98837b3029ec8c2ddd77e46ad28429e6dbb92ebdce4d6431371929c",
+   "inert": false,
    "e0": {
     "checked": [
      "o0001",
@@ -579,26 +353,166 @@
      "o0008",
      "o0009",
      "o0010",
-     "o0011",
      "o0012",
-     "o0013",
      "o0014",
      "o0015",
-     "o0016"
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0032",
+     "o0033",
+     "o0034",
+     "o0035",
+     "x0108",
+     "x0109"
     ],
     "failed": 0,
     "graded": true
    },
-   "affected": []
+   "affected": [
+    {
+     "case": "o0011",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-07T23:32:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0013",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-08T01:41:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0054",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-07T23:38:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0055",
+     "epoch": "ep2",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-08T07:44:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0056",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-08T14:04:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0057",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T15:06:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0058",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T17:41:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0059",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T19:53:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0092",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T00:58:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0104",
+     "epoch": "ep2",
+     "class": "cancel-wait",
+     "pool": "completed",
+     "at": "2026-03-08T01:17:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    }
+   ],
+   "reveal": {
+    "case": "o0011",
+    "class": "action-at-deadline",
+    "epoch": "ep2",
+    "selfRevealing": "arm-error",
+    "at": "2026-03-07T23:32:00.000Z",
+    "blocked": [
+     "R1.1",
+     "R3.1",
+     "R3.2"
+    ],
+    "event": null
+   },
+   "falseReveal": null,
+   "sweep": {
+    "before": [
+     "o0011"
+    ],
+    "after": [
+     "o0054",
+     "o0092",
+     "o0104",
+     "o0013",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059"
+    ]
+   },
+   "natural": []
   },
   {
-   "world": "ebed-e8-dev-1102-d3-tail",
-   "seed": 1102,
+   "world": "ebed-e8-dev-1101-d3-tail",
+   "seed": 1101,
    "split": "dev",
    "difficulty": 3,
    "mix": "tail",
    "generator": "1.0.0",
-   "journal": "fd40713377a7c6c26678bf8fefe3297121172aa6f21ccfee9a88ca2de4459b4d",
+   "journal": "de1c3dd35d8da621acc0afac384a41a12ab372d4588237020b48a02876eb132b",
    "inert": true,
    "e0": {
     "checked": [
@@ -626,6 +540,7 @@
      "o0022",
      "o0023",
      "o0024",
+     "x0086",
      "x0087"
     ],
     "failed": 0,
@@ -634,14 +549,14 @@
    "affected": []
   },
   {
-   "world": "ebed-e8-dev-1102-d4-tail",
-   "seed": 1102,
+   "world": "ebed-e8-dev-1101-d2-tail",
+   "seed": 1101,
    "split": "dev",
-   "difficulty": 4,
+   "difficulty": 2,
    "mix": "tail",
    "generator": "1.0.0",
-   "journal": "f0762587007cd221c4ca1bdc10d66dd5d99d1c64c1c21aa0076feb35d2cdf531",
-   "inert": false,
+   "journal": "cf2e994e65bada279cfe9969a891d08a63d2a890d38ecb97d620b99d46639924",
+   "inert": true,
    "e0": {
     "checked": [
      "o0001",
@@ -662,154 +577,12 @@
      "o0016",
      "o0017",
      "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0022",
-     "o0023",
-     "x0107",
-     "x0108"
+     "o0019"
     ],
     "failed": 0,
     "graded": true
    },
-   "affected": [
-    {
-     "case": "o0034",
-     "epoch": "ep2",
-     "class": "amend",
-     "pool": "completed",
-     "at": "2026-03-07T23:05:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0046",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-08T03:32:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0047",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-08T05:24:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0048",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T05:31:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0049",
-     "epoch": "ep2",
-     "class": "review-approve",
-     "pool": "completed",
-     "at": "2026-03-08T07:11:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0050",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-08T08:16:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0051",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T10:04:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0052",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T12:40:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0053",
-     "epoch": "ep2",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-08T22:11:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0054",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T22:42:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0058",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T03:31:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    },
-    {
-     "case": "o0071",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-07T23:48:00.000Z",
-     "layer": 0,
-     "code": "arm-error"
-    }
-   ],
-   "reveal": {
-    "case": "o0034",
-    "class": "amend",
-    "epoch": "ep2",
-    "selfRevealing": "arm-error",
-    "at": "2026-03-07T23:05:00.000Z",
-    "event": null
-   },
-   "falseReveal": null,
-   "sweep": {
-    "before": [
-     "o0034",
-     "o0071",
-     "o0058",
-     "o0046",
-     "o0047",
-     "o0048",
-     "o0049",
-     "o0050",
-     "o0051",
-     "o0052",
-     "o0053",
-     "o0054"
-    ],
-    "after": []
-   },
-   "natural": []
+   "affected": []
   },
   {
    "world": "ebed-e8-dev-1102-d5-tail",
@@ -1135,12 +908,19 @@
     "epoch": "ep2",
     "selfRevealing": "arm-error",
     "at": "2026-03-07T23:41:00.000Z",
+    "blocked": [
+     "R1.1",
+     "R3.1",
+     "R3.2"
+    ],
     "event": null
    },
    "falseReveal": null,
    "sweep": {
     "before": [
-     "o0037",
+     "o0037"
+    ],
+    "after": [
      "o0164",
      "o0069",
      "o0104",
@@ -1167,10 +947,268 @@
      "o0121",
      "o0122",
      "o0123"
-    ],
-    "after": []
+    ]
    },
    "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d4-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 4,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "f0762587007cd221c4ca1bdc10d66dd5d99d1c64c1c21aa0076feb35d2cdf531",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "x0107",
+     "x0108"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0034",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-07T23:05:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0046",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T03:32:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0047",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T05:24:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0048",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T05:31:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0049",
+     "epoch": "ep2",
+     "class": "review-approve",
+     "pool": "completed",
+     "at": "2026-03-08T07:11:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0050",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T08:16:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0051",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T10:04:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0052",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T12:40:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0053",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-08T22:11:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0054",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T22:42:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0058",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T03:31:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0071",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-07T23:48:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    }
+   ],
+   "reveal": {
+    "case": "o0034",
+    "class": "amend",
+    "epoch": "ep2",
+    "selfRevealing": "arm-error",
+    "at": "2026-03-07T23:05:00.000Z",
+    "blocked": [
+     "R1.1",
+     "R3.1",
+     "R3.2"
+    ],
+    "event": null
+   },
+   "falseReveal": null,
+   "sweep": {
+    "before": [
+     "o0034"
+    ],
+    "after": [
+     "o0071",
+     "o0058",
+     "o0046",
+     "o0047",
+     "o0048",
+     "o0049",
+     "o0050",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054"
+    ]
+   },
+   "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d3-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 3,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "fd40713377a7c6c26678bf8fefe3297121172aa6f21ccfee9a88ca2de4459b4d",
+   "inert": true,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "o0024",
+     "x0087"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d2-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 2,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "f6087dcd855a5f3d104bfd89bda004319deb24cf270b032db4f29c71b3dbde0e",
+   "inert": true,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": []
   }
  ]
 }

@@ -5,7 +5,7 @@
 //
 //   node experiments/need-router/evaluate.mjs --labels research/need-router-20261014/runs --split <train|heldout> \
 //        --report research/need-router-20261014/analysis/<id>/ [--router <module>] [--decisions <committed.json>] \
-//        [--reps 2000] [--boot 10000] [--perms 1000] [--seed 1] [--label-set today|ceiling]
+//        [--reps 2000] [--boot 10000] [--perms 1000] [--seed 20261014] [--label-set today|ceiling]   (defaults: PREREG_REPS, PREREG_RNG)
 //   node experiments/need-router/evaluate.mjs --labels <dir> --commit-decisions <out.json> [--router <module>]
 //   node experiments/need-router/evaluate.mjs --power [--sims 2000] [--json]
 //

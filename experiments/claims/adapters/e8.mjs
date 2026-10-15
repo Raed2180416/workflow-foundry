@@ -67,7 +67,8 @@ function buildRow(b) {
   r.id = buildRowId(b.label);
   const B = res.build;
   const spec = res.spec ?? null;
-  r.task.key = buildKey(b, spec ?? 'c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1');
+  if (b.kind === 'build' && !spec) throw new Error(`${b.label}: result.json has no spec hash; a build row's task key needs it`);
+  r.task.key = buildKey(b, spec);
   r.task.unit = 'build'; r.task.split = 'dev'; r.task.cases = null;
   const model = B?.model ?? init?.model ?? null;
   common(r, { model, role: b.kind === 'repair' ? 'repairer' : 'builder', spec });
@@ -81,7 +82,7 @@ function buildRow(b) {
   // dollars
   const cost = B?.costUsd ?? fin?.total_cost_usd ?? null;
   const bound = B?.budgetUsd ?? (b.label === 'b1h-e8-1' ? 3 : null);
-  const m = chargeOf({ reportedUsd: cost ?? 0, costUnknown: cost === null }, bound ?? 0);
+  const m = chargeOf({ reportedUsd: cost ?? 0, costUnknown: cost === null, errorCode: B?.error ? String(B.error.code ?? B.error) : null }, bound ?? 0);
   Object.assign(r.usd, { build: cost, run: null, reported: cost, repriced: null, bound, starts: 1, charged: m.charged, observed: m.observed, imputed: m.imputed });
   r.provenance['usd.reported'] = B?.costUsd != null ? P.copied('result.json build.costUsd') : P.copied('transcript.jsonl result.total_cost_usd (result.json build is null)');
   r.provenance['usd.build'] = r.provenance['usd.reported'];
@@ -176,17 +177,21 @@ const tickCost = t => ({ reportedUsd: t.costUsd ?? 0, costUnknown: !!t.costUnkno
   tokens: t.tokens ? { input: (t.tokens.inputTokens ?? 0) + (t.tokens.cacheReadTokens ?? 0) + (t.tokens.cacheWriteTokens ?? 0), output: t.tokens.outputTokens ?? 0 } : null });
 const simSpan = ticks => { const ts = ticks.map(t => Date.parse(t.now)).filter(Number.isFinite); return ts.length ? Math.max(...ts) - Math.min(...ts) : null; };
 
-function agentCommon(r, { model, spec, ticks, bound }) {
+function agentCommon(r, { model, spec, ticks, bound, killedInFlight = 0 }) {
   common(r, { model, role: 'executor', spec });
   r.provenance.models = P.copied('result.json model / ticks.jsonl model');
   r.provenance['harness.hashes'] = spec ? P.copied('result.json spec (SPEC-E sha256); agent-arm source hash not recorded') : P.missing('no result.json for this run');
   if (!spec) r.harness.hashes = null;
-  const m = chargeMany(ticks.map(tickCost), () => bound);
-  Object.assign(r.usd, { run: m.reported, build: null, reported: m.reported, repriced: null, bound, starts: ticks.length, charged: m.charged, observed: m.observed, imputed: m.imputed });
+  // A run killed by the job limit leaves its in-flight tick session(s) out of the tick log: §12 charges a killed start at
+  // its bound (prereg-rules NO_COST_ERRORS has KILLED), and its reservation was never settled.
+  const killed = Array.from({ length: killedInFlight }, () => ({ reportedUsd: 0, errorCode: 'KILLED' }));
+  const m = chargeMany([...ticks.map(tickCost), ...killed], () => bound);
+  Object.assign(r.usd, { run: m.reported, build: null, reported: m.reported, repriced: null, bound, starts: ticks.length + killedInFlight, charged: m.charged, observed: m.observed, imputed: m.imputed,
+    reservedUnsettled: killedInFlight * (bound ?? 0) });
   r.provenance['usd.reported'] = P.computed('sum of ticks.jsonl costUsd (one model session per case-tick)');
   r.provenance['usd.repriced'] = P.missing('per-request prompt sizes (the price tier) are not in the tick log');
   r.provenance['usd.bound'] = P.copied('ticks.jsonl costUpperUsd (the per-tick session bound)');
-  r.provenance['usd.charged'] = P.computed('§12 meter over the ticks (meter.mjs chargeMany): observed ticks at max(reported, re-priced), unobserved ticks at the per-tick bound');
+  r.provenance['usd.charged'] = P.computed(`§12 meter over the ticks (meter.mjs chargeMany): observed ticks at max(reported, re-priced), unobserved ticks at the per-tick bound${killedInFlight ? `; plus ${killedInFlight} tick session killed in flight by the job limit, charged at its bound (a lower bound: up to the run's concurrency, default 4 and not recorded, may have been in flight)` : ''}`);
   r.provenance['usd.build'] = P.na('the agent arm builds nothing');
   r.provenance['timing.timeToFirstEffectMs'] = P.missing('ticks carry the simulated clock only; no wall timestamp per tick or effect');
   r.provenance['timing.components.modelMs'] = P.missing('tick sessions are not timed');
@@ -254,7 +259,7 @@ function agentRows() {
     const key = worldKey({ seed: 1232, d: 2, size: null });
     const r = baseRow({ adapter: ADAPTER, files: [p], experiment: 'E8-agent', arm: 'agent-H', run: `agenth-e8-1-run${n}`, taskKey: key });
     r.task.unit = 'world'; r.task.split = 'dev'; r.task.cases = null;
-    agentCommon(r, { model: ticks[0]?.model, spec: null, ticks, bound: ticks[0]?.costUpperUsd ?? null });
+    agentCommon(r, { model: ticks[0]?.model, spec: null, ticks, bound: ticks[0]?.costUpperUsd ?? null, killedInFlight: 1 });
     r.provenance['task.key'] = P.doc(`${DOC}: "The full d2 world 1232 has 71 arrivals" (the tick log names no world)`);
     r.verdict = { ...r.verdict, kind: 'none', censored: true };
     r.provenance.verdict = P.doc(`${DOC}: "Each of two runs stopped at the 2-hour limit"; never graded (no result.json)`);

@@ -2,8 +2,8 @@
 // Run alone: node --test --test-concurrency=1 experiments/agentv/test/agentv.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { spawn } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync, existsSync, mkdirSync, symlinkSync, rmSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,9 +12,9 @@ import { createHost, bindItem } from '../../../beds/ebed/host/host.mjs';
 import { validateCaseOutput } from '../../../beds/ebed/host/output.mjs';
 import { contractText } from '../../ebed/build.mjs';
 import { TICK_PROMPT } from '../../ebed/agent-arm.mjs';
-import { validateDraft, MERGE_NOTE } from '../validator.mjs';
-import { agentVArm, VALIDATOR_PROMPT } from '../arm.mjs';
-import { makeMeter, runWorldV, preregBanner, mcnemarExact, paired, validatorStats, PREREG_FILE } from '../run.mjs';
+import { validateDraft, MERGE_NOTE, serveValidator, readSessionFile } from '../validator.mjs';
+import { agentVArm, VALIDATOR_PROMPT, EnvFaultStop } from '../arm.mjs';
+import { makeMeter, runWorldV, preregBanner, mcnemarExact, paired, validatorStats, committedValidatorRows, armErrorsOf, checkLaunch, wallOf, PREREG_FILE } from '../run.mjs';
 import { conformance, AGENTH_JOURNAL } from '../conformance.mjs';
 import { summarize } from '../../ebed/run-agent.mjs';
 
@@ -189,19 +189,102 @@ test('the wrapper never repairs: an output still refused after the retry goes to
   }
 });
 
-test('an environment fault is not retried; a session that throws still settles its reservation at the bound', async () => {
+test('an environment fault is not retried; a thrown session settles its reservation: $0 before the CLI starts, else its bound', async () => {
   const calls = [];
   const arm = agentVArm({ id: 'env', model: 'claude-haiku-5-5', workRoot: tmp('env'), contract: 'c', schemas: SCHEMAS,
     runner: async () => { calls.push(1); return { costUsd: null, error: { code: 'MODEL_RATE_LIMIT' } }; } });
   await assert.rejects(arm.tick(tickInput('i-000001'), fakeCtx()), /no output\.json/);
   assert.equal(calls.length, 1);
-  const dir = tmp('throw');
-  const meter = makeMeter({ capUsd: 5, stage: 's', spendFile: path.join(dir, 'spend.jsonl'), priceTable: PRICES });
-  const arm2 = agentVArm({ id: 't', model: 'claude-haiku-5-5', workRoot: path.join(dir, 'w'), contract: 'c', schemas: SCHEMAS, meter, budgetUsdPerTick: 0.4,
+  for (const [code, charge] of [['SANDBOX_UNAVAILABLE', 0], ['EIO', 0.4]]) {
+    const dir = tmp('throw');
+    const meter = makeMeter({ capUsd: 5, stage: 's', spendFile: path.join(dir, 'spend.jsonl'), priceTable: PRICES });
+    const arm2 = agentVArm({ id: 't', model: 'claude-haiku-5-5', workRoot: path.join(dir, 'w'), contract: 'c', schemas: SCHEMAS, meter, budgetUsdPerTick: 0.4,
+      runner: async () => { throw Object.assign(new Error('boom'), { code }); } });
+    await assert.rejects(arm2.tick(tickInput('i-000001'), fakeCtx()), /boom/);
+    assert.equal(meter.budget.reservedUsd, 0);
+    assert.equal(meter.budget.spentUsd, charge, code);
+  }
+});
+
+test('stopOnEnvFault: the first environment fault is a host QuotaStop (its cost recorded); a thrown pre-launch fault too', async () => {
+  const costs = [];
+  const arm = agentVArm({ id: 'envstop', model: 'claude-haiku-5-5', workRoot: tmp('envstop'), contract: 'c', schemas: SCHEMAS, stopOnEnvFault: true,
+    runner: async ({ workdir }) => { writeFileSync(path.join(workdir, 'output.json'), JSON.stringify(good('ORD-1'))); return { costUsd: 0, error: { code: 'MODEL_RATE_LIMIT' } }; } });
+  await assert.rejects(arm.tick(tickInput('i-000001'), fakeCtx(costs)), e => e instanceof EnvFaultStop && e.quota === true && e.envFault === 'MODEL_RATE_LIMIT');
+  assert.equal(costs.length, 1); assert.equal(costs[0].envFault, 'MODEL_RATE_LIMIT');
+  const arm2 = agentVArm({ id: 'envstop2', model: 'claude-haiku-5-5', workRoot: tmp('envstop2'), contract: 'c', schemas: SCHEMAS, stopOnEnvFault: true,
     runner: async () => { throw Object.assign(new Error('no sandbox'), { code: 'SANDBOX_UNAVAILABLE' }); } });
-  await assert.rejects(arm2.tick(tickInput('i-000001'), fakeCtx()), /no sandbox/);
-  assert.equal(meter.budget.reservedUsd, 0);
-  assert.equal(meter.budget.spentUsd, 0.4);
+  await assert.rejects(arm2.tick(tickInput('i-000001'), fakeCtx()), e => e.quota === true && e.envFault === 'SANDBOX_UNAVAILABLE');
+});
+
+test('mailbox and gate never follow a link the session planted: no host file is read, quoted or written through', async () => {
+  const work = tmp('link'), outside = tmp('outside');
+  const secret = path.join(outside, 'secret.txt'), victim = path.join(outside, 'victim.txt');
+  writeFileSync(secret, 'SECRET-123'); writeFileSync(victim, 'untouched');
+  assert.deepEqual(readSessionFile(secret), { text: 'SECRET-123' });
+  const answers = [];
+  const box = serveValidator(work, d => validateDraft(d, { schemas: SCHEMAS, self: 'i-000001', openInstances: [] }), { pollMs: 20, onCall: o => answers.push(o) });
+  try {
+    symlinkSync(secret, path.join(work, '.val', 'req-a.json'));
+    symlinkSync(victim, path.join(work, '.val', `res-b.json.${process.pid}.tmp`));
+    writeFileSync(path.join(work, '.val', 'req-b.json'), 'SECRET-456 not json');
+    const until = Date.now() + 5000;
+    while (answers.length < 2 && Date.now() < until) await new Promise(r => setTimeout(r, 20));
+  } finally { box.stop(); }
+  const a = JSON.parse(readFileSync(path.join(work, '.val', 'res-a.json'), 'utf8'));
+  assert.match(a.error, /symbolic link/); assert.doesNotMatch(JSON.stringify(answers), /SECRET/);
+  assert.equal(readFileSync(victim, 'utf8'), 'untouched', 'the planted temp link was not written through');
+  // The gate: a linked output.json is refused as a link, retried, and removed if the retry leaves a link too.
+  const log = [];
+  const arm = agentVArm({ id: 'lnk', model: 'claude-haiku-5-5', workRoot: tmp('lnkw'), contract: 'c', schemas: SCHEMAS, validatorJournal: path.join(work, 'v.jsonl'),
+    runner: async ({ workdir, prompt }) => { log.push(prompt); rmSync(path.join(workdir, 'output.json'), { force: true }); symlinkSync(secret, path.join(workdir, 'output.json')); return { costUsd: 0.01, error: null }; } });
+  await assert.rejects(arm.tick(tickInput('i-000001'), fakeCtx()), /no output\.json/);
+  assert.equal(log.length, 2);
+  assert.ok(log[1].includes('output.json is a symbolic link') && !log[1].includes('SECRET'));
+  const [row] = readFileSync(path.join(work, 'v.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  assert.deepEqual(row.gates.map(g => g.kind), ['link', 'link']);
+  // A FIFO under a request's name is refused without blocking this process.
+  const fifoDir = tmp('fifo');
+  mkdirSync(path.join(fifoDir, '.val'));
+  assert.equal(spawnSync('mkfifo', [path.join(fifoDir, '.val', 'req-f.json')]).status, 0);
+  assert.deepEqual(readSessionFile(path.join(fifoDir, '.val', 'req-f.json')), { refused: 'is not a regular file' });
+});
+
+test('launch stamp: a resume with other settings is refused, other code only with --allow-changed-code', () => {
+  const f = path.join(tmp('launch'), 'launch.jsonl');
+  const L = (cap, code) => ({ at: 'x', settings: { label: 'a', cap }, code: { 'arm.mjs': code } });
+  checkLaunch(f, L(5, 'h1'));
+  assert.equal(checkLaunch(f, L(5, 'h1')).length, 2);
+  assert.throws(() => checkLaunch(f, L(6, 'h1')), /other settings/);
+  assert.throws(() => checkLaunch(f, L(5, 'h2')), /code changed since the first launch: arm\.mjs/);
+  const all = checkLaunch(f, L(5, 'h2'), { allowChangedCode: true });
+  assert.deepEqual(all.at(-1).changedCode, ['arm.mjs']);
+  assert.deepEqual(wallOf([{ inv: 'a', seed: 1, d: 2, wallMs: 60 }, { inv: 'a', seed: 1, d: 2, wallMs: 120 }, { inv: 'b', seed: 1, d: 2, wallMs: 30 }, { inv: 'c', seed: 9, d: 2, wallMs: 999 }], 1, 2), { invocations: 2, wallMs: 150 });
+});
+
+test('runner: an environment fault stops the world at its last commit; the same arm resumes it to the end, P1 and validator totals from committed ticks', async () => {
+  const opts = { seed: 1235, d: 2, size: 4, concurrency: 2, callTimeoutMs: 60_000, allowNewWorld: true };
+  const dir = tmp('envres'), vj = path.join(dir, 'validator.jsonl'), log = [];
+  let n = 0;
+  const faultAt = 5;
+  const faulting = async a => { n += 1; if (n === faultAt) return { costUsd: 0, turns: 0, error: { code: 'MODEL_RATE_LIMIT' } }; return scripted('uses-validator', log)(a); };
+  const armFor = runner => workRoot => agentVArm({ id: 'agentv-envres', model: 'claude-haiku-5-5', workRoot, contract: 'c', runner, schemas: SCHEMAS, validatorJournal: vj, stopOnEnvFault: true, budgetUsdPerTick: 0.1 });
+  const first = await runWorldV({ ...opts, liveDir: dir, armFor: armFor(faulting) });
+  assert.equal(first.status, 'frozen');
+  const freeze = readFileSync(first.journalFile, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(r => r.type === 'clock.freeze');
+  assert.equal(freeze.length, 1); assert.match(freeze[0].reason, /environment fault MODEL_RATE_LIMIT/);
+  const firstRows = first.host.journal.contentRows();
+  assert.equal(firstRows.filter(r => r.type === 'arm.error').length, 0, 'the faulted tick never reaches the committed journal');
+  const second = await runWorldV({ ...opts, liveDir: dir, armFor: armFor(scripted('uses-validator', log)) });
+  assert.equal(second.resumed, true); assert.equal(second.status, 'complete');
+  const content = second.host.journal.contentRows();
+  assert.deepEqual(armErrorsOf(content), { byCode: {}, invalidOutputs: 0 });
+  const all = readFileSync(vj, 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  const c = committedValidatorRows(all, content, second.world.publicId ?? second.world.id);
+  assert.equal(c.matched, c.committedCalls);
+  assert.ok(all.length > c.matched, `${all.length} attempted, ${c.matched} committed`);
+  assert.ok(all.some(r => r.final === 'env-stop') && !c.rows.some(r => r.final === 'env-stop'));
+  assert.equal(validatorStats(c.rows).envStops, 0);
 });
 
 test('§12 meter: bound reserved before launch, a start that does not fit is a QuotaStop, unknown cost at its bound, resume from the ledger', () => {
@@ -226,7 +309,7 @@ test('§12 meter: bound reserved before launch, a start that does not fit is a Q
 });
 
 test('runner: a run stopped mid-world resumes from its journal and ends where an uninterrupted run ends', async () => {
-  const opts = { seed: 1235, d: 2, size: 4, concurrency: 2, callTimeoutMs: 60_000 };
+  const opts = { seed: 1235, d: 2, size: 4, concurrency: 2, callTimeoutMs: 60_000, allowNewWorld: true };
   const armFor = (meter, log) => workRoot => agentVArm({ id: 'agentv-resume', model: 'claude-haiku-5-5', workRoot, contract: 'c', runner: scripted('ignores', log), schemas: SCHEMAS, meter, budgetUsdPerTick: 0.1 });
   // Uninterrupted reference.
   const refDir = tmp('ref'), refLog = [];
@@ -250,7 +333,7 @@ test('runner: a run stopped mid-world resumes from its journal and ends where an
   assert.equal(sum.armErrors, 0);
 });
 
-test('preregistration banner is required and carries the MDE, the prediction and the refutation; paired statistics', () => {
+test('preregistration banner is required and carries the MDE, the prediction and the refutation; paired statistics; only its world runs', async () => {
   const b = preregBanner();
   assert.match(b.text, /MDE/); assert.match(b.text, /PREDICTION/); assert.match(b.text, /REFUTED/); assert.match(b.text, /cap \$5/);
   assert.match(b.sha256, /^[0-9a-f]{64}$/);
@@ -258,6 +341,8 @@ test('preregistration banner is required and carries the MDE, the prediction and
   assert.throws(() => preregBanner(f), /no prereg-banner/);
   assert.throws(() => preregBanner(path.join(tmp('pre2'), 'missing.md')), /no preregistration/);
   assert.ok(existsSync(PREREG_FILE));
+  // Only the preregistered world runs without --allow-new-world (refused before any host call).
+  await assert.rejects(runWorldV({ seed: 1233, d: 2, size: 12, liveDir: tmp('nw'), armFor: () => { throw new Error('no arm may be built'); }, concurrency: 1, callTimeoutMs: 1000 }), /not in this preregistration/);
   assert.equal(mcnemarExact(4, 0), 0.125); assert.equal(mcnemarExact(5, 0), 0.0625); assert.equal(mcnemarExact(6, 0), 0.03125); assert.equal(mcnemarExact(0, 0), 1);
   const A = [{ case: 'a', pass: true }, { case: 'b', pass: true }, { case: 'c', pass: false }, { case: 'd', pass: false }];
   const B = [{ case: 'a', pass: true }, { case: 'b', pass: false }, { case: 'c', pass: true }, { case: 'd', pass: false }];

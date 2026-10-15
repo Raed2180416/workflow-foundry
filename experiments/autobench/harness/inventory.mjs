@@ -53,7 +53,8 @@ export const ENUM_PLAN = Object.freeze([
   { app: 'google_sheets', l0: [], expand: (kind, j) => {
     if (kind === 'spreadsheet' && j.spreadsheetId) {
       const titles = (j.sheets ?? []).map(s => s.properties?.title).filter(Boolean);
-      return titles.length ? [{ kind: 'values', call: G(`https://sheets.googleapis.com/v4/spreadsheets/${enc(j.spreadsheetId)}/values:batchGet`, { ranges: titles }), meta: { spreadsheetId: j.spreadsheetId, title: j.properties?.title ?? null } }] : [];
+      const sheetIds = Object.fromEntries((j.sheets ?? []).filter(s => s.properties?.title).map(s => [s.properties.title, String(s.properties.sheetId ?? s.properties.title)]));
+      return titles.length ? [{ kind: 'values', call: G(`https://sheets.googleapis.com/v4/spreadsheets/${enc(j.spreadsheetId)}/values:batchGet`, { ranges: titles }), meta: { spreadsheetId: j.spreadsheetId, title: j.properties?.title ?? null, sheetIds } }] : [];
     }
     return [];
   } },
@@ -200,11 +201,13 @@ function recordsFromResponse(app, kind, j, meta = null) {
     for (const vr of j.valueRanges ?? []) {
       const [header, ...rows] = vr.values ?? [];
       const tab = String(vr.range ?? '').replace(/!.*$/, '').replace(/^'|'$/g, '');
+      // Pointers carry no spaces: the tab's sheet id when known, else its title with spaces as underscores.
+      const tabId = String(meta?.sheetIds?.[tab] ?? tab).replace(/\s+/g, '_');
       rows.forEach((r, i) => {
         const data = Object.fromEntries((header ?? []).map((h, c) => [h, r[c] ?? '']));
-        out.push({ kind: 'row', id: `${j.spreadsheetId}/${tab}#${i + 2}`, data: { spreadsheet: meta?.title ?? j.spreadsheetId, spreadsheetId: j.spreadsheetId, worksheet: tab, row: i + 2, ...data } });
+        out.push({ kind: 'row', id: `${j.spreadsheetId}/${tabId}#${i + 2}`, data: { spreadsheet: meta?.title ?? j.spreadsheetId, spreadsheetId: j.spreadsheetId, worksheet: tab, row: i + 2, ...data } });
       });
-      if (!rows.length) out.push({ kind: 'worksheet', id: `${j.spreadsheetId}/${tab}`, data: { spreadsheet: meta?.title ?? j.spreadsheetId, spreadsheetId: j.spreadsheetId, worksheet: tab, header: header ?? [], rows: 0 } });
+      if (!rows.length) out.push({ kind: 'worksheet', id: `${j.spreadsheetId}/${tabId}`, data: { spreadsheet: meta?.title ?? j.spreadsheetId, spreadsheetId: j.spreadsheetId, worksheet: tab, header: header ?? [], rows: 0 } });
     }
     return out;
   }
@@ -301,7 +304,7 @@ export async function buildInventory({ request, client, maxSteps = 16, caps = DE
       if (app === 'google_drive' && /spreadsheet/.test(String(r.data?.mimeType ?? ''))) continue; // listed again as a spreadsheet
       // Epoch-millisecond dates are shown as ISO beside the raw value (records carry their own dates; the host's is not the task's).
       if (r.data && typeof r.data === 'object' && !Array.isArray(r.data)) for (const k of ['date', 'internal_date', 'created_at', 'timestamp']) { const iso = msIso(r.data[k]); if (iso && !r.data[`${k}_iso`]) r.data[`${k}_iso`] = iso; }
-      const ptr = `${app}:${r.kind}:${r.id}`;
+      const ptr = `${app}:${r.kind}:${String(r.id).replace(/\s+/g, '_')}`;
       if (inv.records.some(x => x.ptr === ptr)) continue;
       inv.records.push({ ptr, app, kind: r.kind, id: r.id, url, date: dateOf(r.data), data: r.data });
       appState(app).records += 1;

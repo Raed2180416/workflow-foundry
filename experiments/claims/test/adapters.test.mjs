@@ -10,6 +10,7 @@ import * as ab from '../adapters/automationbench.mjs';
 import * as jq from '../adapters/jq.mjs';
 import * as jn from '../adapters/jneed2.mjs';
 import { MUTATING as AB_MUTATING } from '../../autobench/accounting.mjs';
+import { loadSplit } from '../../autobench/split.mjs';
 
 const ids = policyModelIds(JSON.parse(readFileSync(`${ROOT}/policy/models.json`, 'utf8')));
 const valid = rows => assert.deepEqual(validateRows(rows, { modelIds: ids }), []);
@@ -44,6 +45,13 @@ test('E8: builds, gradings, agent-H rows; the s12 pairing and the set-aside mete
   const k = rs.filter(r => r.run.startsWith('agenth-e8-1-run'));
   assert.equal(k.length, 2);
   for (const r of k) { assert.equal(r.verdict.censored, true); assert.equal(r.provenance['timing.wallMs'].kind, 'doc'); }
+  // §12: the tick session the job limit killed in flight is not in the tick log; it is charged at its $0.40 bound
+  for (const r of k) {
+    assert.equal(r.usd.observed, false);
+    assert.ok(Math.abs(r.usd.charged - (r.usd.reported + 0.4)) < 1e-9, `${r.run}: killed in-flight tick at its bound`);
+    assert.equal(r.usd.reservedUnsettled, 0.4);
+  }
+  assert.deepEqual(k.map(r => r.usd.starts).sort(), [172, 198]);
 });
 
 test('need router: 342 one-call rows; timeouts carry no first effect; tag meters as PREREG §12', () => {
@@ -54,6 +62,11 @@ test('need router: 342 one-call rows; timeouts carry no first effect; tag meters
   assert.ok(Math.abs(tag('m1') - 28.9957) < 1e-4 && Math.abs(tag('m1-d5') - 33.9199) < 1e-4 && Math.abs(tag('m1-r') - 17.8934) < 1e-4);
   const to = rs.filter(r => r.provenance['timing.timeToFirstEffectMs'].kind === 'n/a');
   assert.equal(to.length, 64, 'the 64 MODEL_TIMEOUT rows delivered no answer');
+  // the same 64 rows hit the runner's deadline, and their wall time sits at it (truncated, not measured)
+  const hit = rs.filter(r => r.timing.deadline.hit);
+  assert.equal(hit.length, 64);
+  assert.ok(hit.every(r => r.timing.wallMs >= r.timing.deadline.ms && r.timing.wallMs < r.timing.deadline.ms + 1000));
+  assert.ok(rs.filter(r => !r.timing.deadline.hit).every(r => r.timing.wallMs < r.timing.deadline.ms));
   assert.ok(rs.every(r => r.timing.concurrency.configured === 4 && r.timing.concurrency.observedMax <= 4));
 });
 
@@ -75,6 +88,26 @@ test('AutomationBench: dev-train or pre-split runs only; verdicts and dollars as
   assert.ok(rs.every(r => r.origin.group === 'third-party' && r.timing.timeToFirstEffectMs === null && r.provenance['timing.timeToFirstEffectMs'].kind === 'missing'));
   assert.equal(ab.firstWriteT([{ t: 1, calls: [{ name: 'api_fetch', arguments: '{"method":"GET"}' }] }, { t: 2, calls: [{ name: 'api_fetch', arguments: '{"method":"post"}' }] }]), 2);
   assert.equal(ab.firstWriteT([{ t: 1, calls: [{ name: 'api_search', arguments: '{}' }] }]), null);
+  // the AutomationBench world is served by our bridge, whose cost was never recorded: world cost is missing, not $0
+  assert.ok(rs.every(r => r.usd.world === null && r.provenance['usd.world'].kind === 'missing'));
+});
+
+test('AutomationBench guard: only dev-train tasks (SPLIT-v1 dev minus devCheck) or simple.* sanity tasks pass', () => {
+  const split = loadSplit();
+  const devCheck = new Set(split.devCheck);
+  const devTrain = split.dev.find(t => !devCheck.has(t));
+  assert.equal(ab.devTrainOnly([devTrain, 'simple.anything'], split), true);
+  assert.equal(ab.devTrainOnly([devTrain, split.devCheck[0]], split), false, 'devCheck is sealed until the go/no-go');
+  assert.equal(ab.devTrainOnly([devTrain, split.test[0]], split), false, 'a test task');
+  assert.equal(ab.devTrainOnly(['sales.not-a-task'], split), false, 'an unknown task');
+  assert.equal(ab.devTrainOnly([], split), false);
+  // every run the back-fill reads passes the guard, and none is k > 1
+  const { runs } = ab.discoverRuns();
+  for (const run of runs) {
+    const s = readJson(`research/automationbench-20261014/runs/${run}/summary.json`);
+    assert.equal(ab.devTrainOnly(s.tasks, split), true, run);
+    assert.equal(s.k ?? 1, 1, run);
+  }
 });
 
 test('J-Q: 600 rows; recall and FPR per screen reproduce result.json', () => {

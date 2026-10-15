@@ -359,9 +359,12 @@ def equivalents(before: dict, after: dict, truth: dict):
         m("log-at-no-seconds", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("At", c["At"][:16].replace("T", " ")))
         m("log-transition-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Transition", c["Transition"].upper()))
         m("log-email-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Email", c["Email"].upper()))
-        if "," in (c.get("Reference") or ""):
-            m("log-reference-order", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__(
-                "Reference", ";".join(reversed([x.strip() for x in c["Reference"].split(",")]))))
+        multi = [j for j in rows_new if "," in (after["google_sheets"]["rows"][j]["cells"].get("Reference") or "")]
+        if multi:
+            j = multi[0]
+            ref = after["google_sheets"]["rows"][j]["cells"]["Reference"]
+            m("log-reference-order", lambda w: w["google_sheets"]["rows"][j]["cells"].__setitem__(
+                "Reference", ";".join(reversed([x.strip() for x in ref.split(",")]))))
     if mails:
         i = mails[0]
         g = after["gmail"]["messages"][i]

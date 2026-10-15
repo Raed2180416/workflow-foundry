@@ -26,9 +26,14 @@ HYPOTHESIS "E8's workflow advantage survives the strongest simple agent": SUPPOR
            14/14; 11-13/14 inconclusive (it then only decides which agent arm F1, F3, F4 and F7 use as their baseline).
 PREDICTION (author's, fixed now) P1 at most 2 invalid outputs reach the host (agent-H: 27). P2 agent-H + V passes >= 13/14.
            P3 metered spend <= $3.00 on the §12 meter. P4 at most 1 case that agent-H passed is failed by agent-H + V.
-REFUTED    (the prediction) if >= 3 invalid outputs reach the host, or <= 12/14 pass, or metered spend > $3.00, or >= 2 cases
-           agent-H passed are failed. A refuted P2 with P1 holding reads: E8's gap is not only the form misreading.
+REFUTED    (the prediction) if >= 3 invalid outputs reach the host (P1, a count from the committed host journal: read as
+           written), or metered spend > $3.00 (P3, a measurement: read as written). P2 (<= 12/14 pass) and P4 (>= 2 cases agent-H
+           passed are failed) sit below the MDE: a miss is reported as a miss of the author's prediction and reads inconclusive
+           unless the 95% interval excludes the threshold (FIRST-CLASS-PROGRAMS §0.3). A missed P2 with P1 holding reads: E8's gap
+           is not only the form misreading.
 CAP        cap $5 on the PREREG-NEED-V1 §12 meter (each session's bound reserved before launch; unknown cost at its bound).
+STOP       the first environment fault (rate limit, model unavailable, no sandbox) stops the run at its last commit (exit 3, no
+           result); the same command resumes. A resume with other settings, prereg or code is refused (launch.jsonl).
 ```
 
 ## 1. Question
@@ -86,12 +91,36 @@ not the weaker one (schema only, refusal shown to the next tick).
 3. The arm has both validator forms: the in-session tool (the orchestrator's design) and the pre-commit gate with one retry
    (the plan's design). The per-tick validator journal separates their effects (§4).
 4. The host call timeout is 13 minutes, not 7, so that a retried tick (two 6-minute sessions) fits in one call.
+5. Added at review (2026-10-15, before any paid row; the sha256 the runner records is of this text):
+   - **Stop on the first environment fault.** The arm raises a host QuotaStop (`EnvFaultStop`) on a session that ends in
+     `MODEL_RATE_LIMIT`, `MODEL_UNAVAILABLE` or `SANDBOX_UNAVAILABLE`. The host freezes at its last commit and discards the
+     fault's round, which is the cut-back §6 asks for, done by the host instead of by hand. The runner writes no
+     `result.json` (exit code 3), so the same command resumes. agent-H s12's first run kept going for 12 rate-limited
+     ticks after its first fault [M `ebed-arms/agenth-e8-s12/contaminated-ratelimit/ticks.jsonl`: 13 `MODEL_RATE_LIMIT` of
+     97 sessions].
+   - **A paid run refuses to start without the executor sandbox**, and a session that throws before the CLI starts
+     (`SANDBOX_UNAVAILABLE`, `EXECUTOR_MODEL`, `EXECUTOR_PATH`) is charged $0, as `label-run.mjs` charges a thrown
+     session; any other throw is charged its bound.
+   - **Resume stamp.** `launch.jsonl` records each invocation's settings, the prereg sha256 and the sha256 of the arm,
+     validator, runner, `agent-arm.mjs` and `host/output.mjs`. A resume with other settings is refused; with other code it
+     is refused unless `--allow-changed-code`, which records the change in the result.
+   - **Session files are read without following links.** The validator mailbox and the gate open what the session wrote
+     with `O_NOFOLLOW`, as regular files of at most 4 MB, and never quote a parse error (V8 quotes the input). Before this,
+     a session could plant `.val/req-x.json -> /any/host/file` and get the file's first characters back in the error text,
+     or plant the answer's temp file as a link and have the arm write through it. A linked `output.json` is refused at the
+     gate and, if still a link after the retry, removed, so the host records no output (an arm error).
+   - **P1 and wall time are read from records a kill cannot lose.** P1 counts `arm.error` rows with code `invalid-output`
+     in the committed host journal. `validator.jsonl` also holds rounds that a freeze or a killed process discarded and a
+     resume re-ran, so the result reports its totals twice: over every attempt and over the committed ticks only.
+     `wall.jsonl` gets a heartbeat each minute, so an invocation stopped by a background job limit keeps its wall time to
+     the minute.
 
 ## 3. Bed
 
 - **World** [M]. E8 dev world 1232, difficulty 2, mix `tail`, size 12: 21 orders, 14 completed cases in the reference
   pools. World digest `56971c9b3aaa4886229ac81fd55dcc4f9d41640a7be06fae2651ba0b087f1bff`, identical to agent-H s12's
-  `run.start` digest. The runner refuses any other world under this configuration (`EXPECTED_WORLDS`).
+  `run.start` digest. The runner refuses any other world under this configuration (`EXPECTED_WORLDS`), and any world
+  this file does not name unless `--allow-new-world` is passed after an amendment.
 - **Grading** [M]. `e8.oracle` with the reference pools, in the analyst process after the run, exactly as `run-agent.mjs
   summarize` grades agent-H.
 - **Not in this row.** World 1233 ("added if the cap allows", §1.5). Adding it needs an amendment here first: no agent-H
@@ -99,7 +128,9 @@ not the weaker one (schema only, refusal shown to the next tick).
 
 ## 4. What is reported
 
-- Completed-case passes (n = 14), by class, first-divergence codes, critical violations, arm errors.
+- Completed-case passes (n = 14), by class, first-divergence codes, critical violations, arm errors by code. **P1** is
+  the count of `arm.error` rows with code `invalid-output` in the committed host journal (`rows[].invalidOutputsAtHost`);
+  other arm errors (no output, timeout, crash) are reported beside it.
 - **Paired table against agent-H**, with the exact McNemar p. agent-H's journal is regraded at $0 by the same oracle.
   Against the workflows the table is 14/14 by their rows.
 - **Validator use**, per tick (`validator.jsonl`): in-session calls, ticks that used it, problem classes it returned,
@@ -130,7 +161,13 @@ not the weaker one (schema only, refusal shown to the next tick).
   - environment faults are not retried;
   - the §12 meter reserves before launch, stops with a QuotaStop, charges timeouts at their bound and resumes from its
     ledger;
-  - an interrupted run resumes from its journal and ends where an uninterrupted run ends.
+  - an interrupted run resumes from its journal and ends where an uninterrupted run ends;
+  - added at review: the first environment fault stops the world at its last commit and the same arm resumes it to the
+    end; links planted in the mailbox or as `output.json` are never followed, quoted or written through; a resume with
+    other settings or code is refused; a session that throws before the CLI starts is charged $0; P1 and the committed
+    validator totals come from the committed journal; a world this file does not name is refused.
+  - `--dry --dry-env-fault-at 7` on world 1232 (scripted sessions, $0) stopped with exit code 3 and no result, refused a
+    resume with another `--tick-budget`, and resumed to the end with the same command [M, 2026-10-15].
 
 ## 6. Reading rules (fixed now)
 
@@ -144,14 +181,17 @@ not the weaker one (schema only, refusal shown to the next tick).
   "No E8-only claims").
 - **Which agent arm later programs use.** At ≥ 13/14, F1, F3, F4 and F7 use agent-H + V as their agent baseline. At
   ≤ 12/14, they use it beside agent-H.
-- **The author's prediction** (P1–P4 in the banner) is read as written. P1 and P3 are counts, with no sampling reading. P2
-  and P4 are below the MDE, so they are reported as observed.
+- **The author's prediction** (P1–P4 in the banner). P1 and P3 are a count and a measurement, with no sampling reading:
+  read as written. P2 and P4 are below the MDE: each is reported as observed, and a miss reads inconclusive unless the
+  95% interval excludes the threshold (FIRST-CLASS-PROGRAMS §0.3; for P2 at n = 14, Clopper-Pearson, that takes 10/14 or
+  fewer: the upper bound at 10/14 is 0.916 < 13/14, at 11/14 it is 0.953).
 - **Censoring.** A QuotaStop freezes the clock. Cases still open are censored and reported as such, never as failures.
   A censored case counts against P2 (the prediction needs 13 passes of 14).
 - **Environment faults.** If a session ends in `MODEL_RATE_LIMIT` or `MODEL_UNAVAILABLE` (agent-H s12's first run did,
-  from tick 85), the run is contaminated from that tick. The host journal is cut back to the last clean commit and the
-  run resumed (`run.mjs` resumes from the on-disk journal and the spend ledger). The contaminated segment is kept beside
-  the result and its spend stays on the meter. It is reported, never graded as an outcome.
+  from tick 85), the run is contaminated from that tick. The arm stops the run there (§2 deviation 5): the host freezes
+  at the last clean commit and discards the fault's round, and re-running the same command resumes from the on-disk
+  journal and the spend ledger. The discarded round stays in the journal's freeze record and in `validator.jsonl`, and
+  its spend stays on the meter. It is reported, never graded as an outcome.
 
 ## 7. Cost and cap
 
@@ -175,9 +215,10 @@ node experiments/agentv/run.mjs --model claude-haiku-5-5 --label agentv-e8-s12 -
 ```
 
 - **Resuming.** Re-running the same command resumes from the journal, at $0 for the committed prefix. A finished run
-  refuses to start again (`result.json` exists).
+  refuses to start again (`result.json` exists). Exit code 3 means the run stopped on an environment fault: wait for it
+  to clear, then run the same command again.
 - **Where things go.** Results go to `research/enterprise-20261014/runs/agentv-e8-s12/`: `result.json`, `ticks.jsonl`,
-  `validator.jsonl`, `spend.jsonl` and `wall.jsonl`. The host journal stays under
+  `validator.jsonl`, `spend.jsonl`, `wall.jsonl` and `launch.jsonl`. The host journal stays under
   `/var/tmp/foundry-work/agentv-arms/agentv-e8-s12/`.
 - **Expected duration.** About 1–2 h, like agent-H. A background job limit stops it, so the same command is run again
   to resume.

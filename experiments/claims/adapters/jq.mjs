@@ -75,8 +75,8 @@ export function rows() {
         r.provenance['usd.charged'] = P.computed('§12 meter: $0');
       } else if (S.arm === 'jq-jev@0.5') {
         const rs = jevBy.get(it.id) ?? [];
-        r.models = [{ role: 'reader', id: rs[0]?.model ?? 'jev-1.13.0' }];
-        r.provenance.models = P.copied('jev-rows.jsonl model (served version)');
+        r.models = rs.length ? [{ role: 'reader', id: rs[0].model }] : [];
+        r.provenance.models = rs.length ? P.copied('jev-rows.jsonl model (served version)') : P.computed('no Jev row for this item: no served version to record');
         const tin = rs.reduce((s, x) => s + (x.usage?.input_tokens ?? 0), 0), tout = rs.reduce((s, x) => s + (x.usage?.output_tokens ?? 0), 0);
         const repriced = tin * JEV_IN_PER_TOKEN;
         const m = chargeOf({ repricedUsd: repriced, tokens: { input: tin, output: tout } }, 0);

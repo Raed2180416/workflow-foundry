@@ -105,6 +105,19 @@ for (const m of latent) {
   if (!groups.has(sig)) groups.set(sig, []);
   groups.get(sig).push(m);
 }
+// A behaviour whose band lies inside another's, with the same journals on its band worlds, is the same defect there
+// (for example k10 and k11 at d4-d5): it joins the wider-band defect as a member with its own band.
+const digestOn = (m, d) => status.get(m.id).worlds.filter(w => w.difficulty === d).map(w => w.digest).join('|');
+const ordered = [...groups.values()].sort((a, b) => status.get(b[0].id).band.length - status.get(a[0].id).band.length);
+const memberBand = {};
+for (const g of ordered) for (const m of g) memberBand[m.id] = status.get(m.id).band;
+for (let i = ordered.length - 1; i > 0; i--) {
+  const g = ordered[i], gb = status.get(g[0].id).band;
+  const host = ordered.slice(0, i).find(h => h !== g && gb.every(d => status.get(h[0].id).band.includes(d) && digestOn(h[0], d) === digestOn(g[0], d)));
+  if (host) { host.push(...g); ordered.splice(i, 1); }
+}
+groups.clear();
+for (const g of ordered) groups.set(g[0].id, g);
 console.log(`${latent.length} E0-silent mutants that die later, ${groups.size} distinct behaviours; planning revealing events`);
 const manifests = [];
 const unrevealed = [];
@@ -122,7 +135,8 @@ for (const members of groups.values()) {
     results.push({ ...keep, plan });
   }
   const e0 = status.get(rep.id).e0First;
-  const man = defectManifest({ id, mutant: rep, members: members.map(m => m.id), results, oracleVerdict: oracleVerdicts[rep.id] ?? null,
+  const narrower = Object.fromEntries(members.filter(m => memberBand[m.id].join() !== band.join()).map(m => [m.id, memberBand[m.id]]));
+  const man = defectManifest({ id, mutant: rep, members: members.map(m => m.id), membersBand: narrower, results, oracleVerdict: oracleVerdicts[rep.id] ?? null,
     band, outsideBand: e0 ? { world: e0.world, case: e0.case, epoch: e0.epoch, code: e0.code ?? null, ...(e0.lid ? { lid: e0.lid } : {}) } : null });
   if (results.some(r => r.plan?.reveal)) manifests.push(man);
   else unrevealed.push({ id, members: members.map(m => m.id), why: results.filter(r => r.plan).map(r => `${r.meta.world}: ${r.plan.why}`) });

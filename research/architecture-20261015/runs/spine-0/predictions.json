@@ -2,15 +2,15 @@
  "P1": {
   "reading": "inconclusive",
   "thirdPartyVerdictRowShare": 0.10966415352981494,
-  "thirdPartyChargedUsdShare": 0.037467972051504844,
+  "thirdPartyChargedUsdShare": 0.03718404120939487,
   "realLogRows": 0
  },
  "P2": {
   "reading": "supported",
   "reportedUsd": 35.89260317999999,
-  "chargedUsd": 104.76929081200007,
-  "ratio": 2.9189660690417525,
-  "m1ShareOfDifference": 0.929196832779537,
+  "chargedUsd": 105.56929081200008,
+  "ratio": 2.9412547839613152,
+  "m1ShareOfDifference": 0.9185281645134777,
   "notInRepo": [
    {
     "tag": "m1-r",
@@ -23,7 +23,7 @@
     "from": "research/need-router-20261014/PREREG-NEED-V1.md §13 D7: attempt 1's 4 rows \"are kept outside the repository\"; at 02:09 \"four trials hit MODEL_RATE_LIMIT ... set aside outside the repository\"; §12: \"Counting the 8 set-aside attempts at their bound as well (§12): $25.8934\""
    }
   ],
-  "chargedWithNotInRepoUsd": 112.76929081200007
+  "chargedWithNotInRepoUsd": 113.56929081200008
  },
  "P3": {
   "reading": "inconclusive",
@@ -31,7 +31,15 @@
    "b0-call-haiku-medium": 6.188975241707724,
    "b0-call-haiku-none": 8.618046581086126
   },
-  "note": "p99 at n = 96 is the maximum"
+  "p99AtDeadline": {
+   "b0-call-haiku-medium": true,
+   "b0-call-haiku-none": true
+  },
+  "deadlineHits": {
+   "b0-call-haiku-medium": 19,
+   "b0-call-haiku-none": 7
+  },
+  "note": "p99 at n = 96 is the maximum; where p99AtDeadline is true the p99 is the 300 s model-port deadline (timed-out calls), so p99/p50 is a lower bound capped by construction at deadline/p50"
  },
  "P4": {
   "reading": "supported",

@@ -11,9 +11,9 @@ const PREREG = 'research/need-router-20261014/PREREG-NEED-V1.md';
 // Launch facts per tag. The runner source at the launch commit is the evidence for concurrency, bound and timeout; the
 // sha256 values are the ones PREREG-NEED-V1 records (m1-d5, M1-R) or the launch commit's blob (m1, e5defed).
 export const TAGS = Object.freeze([
-  { tag: 'm1', dir: 'm1', experiment: 'need-m1-wbed-triviality', runner: 'experiments/need-router/m1-run.mjs@e5defed', runnerSha: '478744664b95accf016fe7ea628ee856b3ab7bdb559081a0b7ac261d4c8a58e7', timeoutMs: 300000 },
-  { tag: 'm1-d5', dir: 'm1-d5', experiment: 'need-m1-wbed-triviality', runner: 'experiments/need-router/m1-run.mjs@56c0a82', runnerSha: '7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692', timeoutMs: 300000 },
-  { tag: 'm1-r', dir: 'm1-r', experiment: 'need-m1-r', runner: 'experiments/need-router/m1-rerun.mjs@4e2e8fe', runnerSha: '662ae4407990fc5a5178d28d64fe1a948a0a58dda63a4e7892bda1e2d7508a49', timeoutMs: 600000 },
+  { tag: 'm1', dir: 'm1', experiment: 'need-m1-wbed-triviality', runner: 'experiments/need-router/m1-run.mjs@e5defed', runnerSha: '478744664b95accf016fe7ea628ee856b3ab7bdb559081a0b7ac261d4c8a58e7', timeoutMs: 300000, timeoutFrom: 'src/models/port.mjs@e5defed ModelPort default timeoutMs = 300000 (m1-run.mjs sets none)' },
+  { tag: 'm1-d5', dir: 'm1-d5', experiment: 'need-m1-wbed-triviality', runner: 'experiments/need-router/m1-run.mjs@56c0a82', runnerSha: '7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692', timeoutMs: 300000, timeoutFrom: 'src/models/port.mjs@56c0a82 ModelPort default timeoutMs = 300000 (m1-run.mjs sets none)' },
+  { tag: 'm1-r', dir: 'm1-r', experiment: 'need-m1-r', runner: 'experiments/need-router/m1-rerun.mjs@4e2e8fe', runnerSha: '662ae4407990fc5a5178d28d64fe1a948a0a58dda63a4e7892bda1e2d7508a49', timeoutMs: 600000, timeoutFrom: 'experiments/need-router/m1-rerun.mjs@4e2e8fe --timeout-ms default 600000, passed to createModelPort' },
 ]);
 const BOUND = 1;          // maxBudgetUsdPerCall: 1 in every runner (createModelPort), the §12 bound per call
 const CONCURRENCY = 4;    // pool concurrency: 4 in every runner at its launch commit
@@ -76,6 +76,10 @@ export function rows() {
       r.provenance['timing.concurrency.configured'] = P.code(`${T.runner} pool concurrency: 4`);
       r.provenance['timing.concurrency.observedMax'] = obsMax ? P.computed(`max overlap of [at - latencyMs, at] over the ${rs.length} rows of tag ${T.tag}`) : P.missing('no intervals');
       r.provenance['timing.businessTime.simulatedMs'] = P.na('no simulated clock');
+      // The runner's per-call wall limit: a MODEL_TIMEOUT row's latency is truncated at it, so a tail quantile that lands on
+      // such a row is the deadline, not a measured latency (report.mjs flags it).
+      r.timing.deadline = { ms: T.timeoutMs, hit: x.error?.code === 'MODEL_TIMEOUT' };
+      r.provenance['timing.deadline'] = P.code(`${T.timeoutFrom}; hit = error.code MODEL_TIMEOUT`);
       r.envFaults = [];
       r.provenance.envFaults = P.computed(`final rows only: env-fault attempts were set aside outside the repository (${T.tag === 'm1-r' ? 'M1-R: 8 set-aside attempts, 4 invalid attempt-1 timeouts and 4 MODEL_RATE_LIMIT, PREREG §13 D7' : 'none recorded'})`);
       out.push(r);

@@ -4,7 +4,7 @@
    "rows": 1354,
    "verdictRows": 1299,
    "successes": 7118,
-   "chargedUsd": 100.843797952,
+   "chargedUsd": 101.64379795200001,
    "reportedUsd": 31.96711031999995,
    "beds": [
     "ebed-e8",
@@ -40,7 +40,7 @@
    "rows": 1354,
    "verdictRows": 1299,
    "successes": 7118,
-   "chargedUsd": 100.843797952,
+   "chargedUsd": 101.64379795200001,
    "reportedUsd": 31.96711031999995,
    "beds": [
     "ebed-e8",
@@ -94,7 +94,7 @@
    "rows": 124,
    "verdictRows": 69,
    "successes": 5418,
-   "chargedUsd": 19.870933810000004,
+   "chargedUsd": 20.67093381,
    "reportedUsd": 15.070933810000001,
    "beds": [
     "ebed-e8"
@@ -149,13 +149,13 @@
  "shares": {
   "thirdPartyRows": 0.10568031704095113,
   "thirdPartyVerdictRows": 0.10966415352981494,
-  "thirdPartyChargedUsd": 0.037467972051504844,
+  "thirdPartyChargedUsd": 0.03718404120939487,
   "realLogRows": 0
  },
  "totals": {
   "rows": 1514,
   "verdictRows": 1459,
-  "chargedUsd": 104.76929081200001,
+  "chargedUsd": 105.56929081200002,
   "reportedUsd": 35.89260317999995
  }
 }

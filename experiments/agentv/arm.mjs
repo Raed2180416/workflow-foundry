@@ -8,8 +8,10 @@
 //   2. After the session (pre-commit gate): the wrapper checks output.json the same way. On a refusal (or no output.json,
 //      or one that is not JSON) it runs at most `retries` more fresh sessions in the same workdir, each told the refusal
 //      text, with the refused output kept as rejected-output.json. An environment fault (rate limit, model unavailable,
-//      no sandbox) is never retried. The wrapper never edits an output: whatever the last session wrote goes to the host,
-//      which still validates it (an output the retry did not fix is still an arm error).
+//      no sandbox) is never retried; with stopOnEnvFault (run.mjs sets it) it stops the run at its last commit
+//      (EnvFaultStop, a host QuotaStop: the fault's round is discarded, a re-run resumes). The wrapper never edits an
+//      output: whatever the last session wrote goes to the host, which still validates it (an output the retry did not
+//      fix is still an arm error). Files the session wrote are read without following symbolic links (validator.mjs).
 // The validator never sees the oracle, the reference transition, grades or truth (validator.mjs header; a test walks the
 // import closure of this file). How it is wired: agentArm calls its `runner` once per tick; this module passes a runner
 // that wraps the real one, and an AsyncLocalStorage carries the tick's input and ctx to it (concurrent ticks stay apart).
@@ -18,11 +20,11 @@
 // session's bound before launch; throws a host QuotaStop when it does not fit) and after(token, result) → charge. The
 // runner (run.mjs) supplies the §12 meter; tests supply their own.
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { existsSync, readFileSync, writeFileSync, renameSync, rmSync, appendFileSync } from 'node:fs';
+import { existsSync, writeFileSync, renameSync, rmSync, appendFileSync, lstatSync } from 'node:fs';
 import path from 'node:path';
 import { agentArm } from '../ebed/agent-arm.mjs';
 import { runClaudeCode } from '../../src/executors/claude-code.mjs';
-import { validateDraft, VALIDATE_CLIENT, serveValidator } from './validator.mjs';
+import { validateDraft, VALIDATE_CLIENT, serveValidator, readSessionFile } from './validator.mjs';
 
 export const VALIDATOR_PROMPT = `
 Before you write output.json (step 4), check it: write the JSON to draft.json and run
@@ -49,14 +51,30 @@ export const problemClass = p => String(p).replace(/\[\d+\]/g, '[i]');
 const codeOf = r => (typeof r?.error === 'string' ? r.error : r?.error?.code ?? null);
 const safeInstances = ctx => { try { const r = ctx.instances({}); return Array.isArray(r) ? r : null; } catch { return null; } };
 
-/** The pre-commit gate: what the host would say about the output.json a session left. */
+/**
+ * The pre-commit gate: what the host would say about the output.json a session left. Read without following a link
+ * (validator.mjs readSessionFile): a planted `output.json -> /host/file` is refused as such, never read and quoted back.
+ */
 export function gateOf(workdir, check) {
   const f = path.join(workdir, 'output.json');
-  if (!existsSync(f)) return { kind: 'missing', problems: ['no output.json was written'] };
+  let st;
+  try { st = lstatSync(f); } catch { return { kind: 'missing', problems: ['no output.json was written'] }; }
+  if (st.isSymbolicLink()) return { kind: 'link', problems: ['output.json is a symbolic link: write the JSON itself to output.json'] };
+  if (!st.isFile()) return { kind: 'link', problems: ['output.json is not a regular file: write the JSON itself to output.json'] };
+  const file = readSessionFile(f);
+  if (file.refused) return { kind: 'not-json', problems: [`output.json ${file.refused}`] };
   let out;
-  try { out = JSON.parse(readFileSync(f, 'utf8')); } catch (e) { return { kind: 'not-json', problems: [`output.json is not JSON: ${String(e.message).slice(0, 160)}`] }; }
+  try { out = JSON.parse(file.text); } catch (e) { return { kind: 'not-json', problems: [`output.json is not JSON: ${String(e.message).slice(0, 160)}`] }; }
   const r = check(out);
   return { kind: r.valid ? 'valid' : 'invalid', problems: r.problems };
+}
+
+/** runClaudeCode throws only before the CLI starts for these codes (src/executors/claude-code.mjs): nothing was spent. */
+export const PRELAUNCH_THROW_CODES = Object.freeze(new Set(['SANDBOX_UNAVAILABLE', 'EXECUTOR_MODEL', 'EXECUTOR_PATH']));
+
+/** The stop raised on an environment fault when stopOnEnvFault is set: a host QuotaStop (the clock freezes at the last commit). */
+export class EnvFaultStop extends Error {
+  constructor(code, detail = '') { super(`environment fault ${code}${detail ? `: ${detail}` : ''} (the run stops at its last commit; re-run the same command to resume)`); this.name = 'EnvFaultStop'; this.quota = true; this.envFault = code; }
 }
 
 /**
@@ -66,7 +84,7 @@ export function gateOf(workdir, check) {
  *   validatorJournal  JSONL file: one row per tick (sessions, validator calls, gate verdicts, retries)
  * Every other option is agentArm's (id, model, workRoot, contract, effort, budgetUsdPerTick, minutesPerTick, journal, ...).
  */
-export function agentVArm({ schemas, retries = 1, runner = runClaudeCode, meter = null, validatorJournal = null, keepWorkdirs = false, ...rest }) {
+export function agentVArm({ schemas, retries = 1, runner = runClaudeCode, meter = null, validatorJournal = null, keepWorkdirs = false, stopOnEnvFault = false, ...rest }) {
   if (!schemas?.effects) throw new Error('agentVArm needs the host item schemas');
   if (!(Number.isInteger(retries) && retries >= 0 && retries <= 3)) throw new Error('agentVArm: retries must be an integer 0..3');
   const als = new AsyncLocalStorage();
@@ -88,14 +106,37 @@ export function agentVArm({ schemas, retries = 1, runner = runClaudeCode, meter 
         const t0 = Date.now();
         let r;
         try { r = await runner({ ...opts, prompt }); }
-        catch (e) { if (meter) meter.after(tok, { costUsd: null, costUnknown: true, error: { code: e?.code ?? 'EXECUTOR_THROW' } }); throw e; }
+        catch (e) {
+          // runClaudeCode throws only before the CLI starts for the pre-launch codes: nothing was spent (the §12 convention,
+          // label-run.mjs withSignals). Any other throw is charged its bound.
+          const code = typeof e?.code === 'string' ? e.code : 'EXECUTOR_THROW', pre = PRELAUNCH_THROW_CODES.has(code);
+          const charged = meter ? meter.after(tok, pre ? { costUsd: 0, error: { code } } : { costUsd: null, costUnknown: true, error: { code } }) : null;
+          log.sessions.push({ attempt, costUsd: pre ? 0 : null, costUnknown: !pre, costUpperUsd: opts.budgetUsd, charged, turns: null, error: code, threw: true, tokens: null, wallMs: Date.now() - t0 });
+          if (stopOnEnvFault && ENV_FAULT_CODES.has(code)) throw new EnvFaultStop(code, String(e?.message ?? '').slice(0, 160));
+          throw e;
+        }
         const charged = meter ? meter.after(tok, r) : null;
         const code = codeOf(r);
         log.sessions.push({ attempt, costUsd: r?.costUsd ?? null, costUnknown: r?.costUsd === null || r?.costUsd === undefined, costUpperUsd: opts.budgetUsd,
           charged, turns: r?.turns ?? null, error: code, tokens: r?.streamUsage ?? null, wallMs: Date.now() - t0 });
+        if (stopOnEnvFault && ENV_FAULT_CODES.has(code)) {
+          // The preregistration (§6) reads a run as contaminated from its first environment fault: stop at the last commit
+          // (the fault's round is discarded by the host's freeze) instead of grading ticks that ran against a rate limit.
+          // This session's cost reaches the freeze record (agentArm records costs only for a session that returns).
+          try { st.ctx.recordCost({ source: 'executor:claude-code', model: opts.model, costUsd: r?.costUsd ?? null, costUnknown: r?.costUsd === null || r?.costUsd === undefined,
+            costUpperUsd: opts.budgetUsd, turns: r?.turns ?? null, attempt, envFault: code }); } catch { /* a revoked ctx: the meter still has it */ }
+          log.gates.push({ attempt, kind: 'env-fault', problems: [] });
+          throw new EnvFaultStop(code);
+        }
         const gate = gateOf(workdir, check);
         log.gates.push({ attempt, kind: gate.kind, problems: gate.problems });
-        if (gate.kind === 'valid' || attempt > retries || ENV_FAULT_CODES.has(code)) return r;
+        if (gate.kind === 'valid' || attempt > retries || ENV_FAULT_CODES.has(code)) {
+          // A symbolic link (or a FIFO, a directory) is not an output: agentArm would read through it to a host file, or
+          // block on it. Remove it so the host records "no output.json" (an arm error, as for any refused output); the
+          // wrapper never edits an output's content.
+          if (gate.kind === 'link') rmSync(path.join(workdir, 'output.json'), { force: true, recursive: true });
+          return r;
+        }
         // A retry follows. This attempt's cost is recorded now (agentArm records the last attempt's from the result).
         st.ctx.recordCost({ source: 'executor:claude-code', model: opts.model, costUsd: r?.costUsd ?? null, costUnknown: r?.costUsd === null || r?.costUsd === undefined,
           costUpperUsd: opts.budgetUsd, turns: r?.turns ?? null, attempt, refusedByGate: true });
@@ -114,14 +155,14 @@ export function agentVArm({ schemas, retries = 1, runner = runClaudeCode, meter 
   return {
     id: inner.id,
     async tick(input, ctx) {
-      const log = { k: ++k, instance: input.instance, now: input.now, events: input.events?.length ?? 0, sessions: [], gates: [], retries: 0,
+      const log = { k: ++k, world: input.world ?? null, instance: input.instance, now: input.now, events: input.events?.length ?? 0, sessions: [], gates: [], retries: 0,
         validateCalls: 0, validateInvalid: 0, validateErrors: 0, problemsSeen: {}, final: null };
       try {
         const out = await als.run({ ctx, input, log }, () => inner.tick(input, ctx));
         log.final = log.gates.at(-1)?.kind ?? 'unknown';
         return out;
       } catch (e) {
-        log.final = e?.quota ? 'quota-stop' : (log.gates.at(-1)?.kind ?? 'threw');
+        log.final = e?.envFault ? 'env-stop' : e?.quota ? 'quota-stop' : (log.gates.at(-1)?.kind ?? 'threw');
         log.error = String(e?.message ?? e).slice(0, 200);
         throw e;
       } finally {

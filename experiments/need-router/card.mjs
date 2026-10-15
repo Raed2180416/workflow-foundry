@@ -102,6 +102,7 @@ const thresholdsOut = th => Object.fromEntries(Object.entries(th).map(([k, t]) =
 export function decisionCard(router, job = {}, cell = HEADLINE, { policy = null, text = null, probe = null } = {}) {
   assertCodeUnchanged();
   const c = resolveCell(cell);
+  if (probe != null && job.id == null) throw new Error('decisionCard: a probed card needs the job id its probe rows name (job.id)');
   const { text: jobText, ...rest } = job;
   const cues = [...new Set([...(job.cues ?? []), ...textCues(text ?? jobText ?? null), ...proseCues(job.features)])].sort();
   const d = router.decide({ ...rest, cues }, c, { probe });
@@ -265,7 +266,7 @@ export function validateCard(card) {
   if (card.probe) {
     // The probe's provenance (third review R3): probeable modes, the preregistered bundle's draws, a signal kind and the
     // probe rows per observation, one job; the same rules router.probeRecord applies (probeProblems).
-    for (const x of probeProblems(card.probe.observations, { k: card.probe.k })) problems.push(`probe: ${x}`);
+    for (const x of probeProblems(card.probe.observations, { k: card.probe.k, jobId: card.job.id })) problems.push(`probe: ${x}`);
     if (canonicalJson([...card.probe.modes].sort()) !== canonicalJson(Object.keys(card.probe.observations).sort())) problems.push('probe.modes and probe.observations name different modes');
   }
   const pm = policyMismatch(card.policy, card.structure.stage, card.probe !== null);

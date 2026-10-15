@@ -1,0 +1,452 @@
+{
+ "schema": "ebed-e8-latent-defect/1",
+ "id": "ld-k149",
+ "evidence": "development (dev worlds 1001-1199); $0",
+ "mutant": {
+  "id": "ref-k149",
+  "kind": "transition",
+  "operator": "connective swap",
+  "file": "beds/ebed/e8/transition.mjs",
+  "line": 212,
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) || (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "sourceSha256": "c1fb43732cd6198655576e37615ac466da1cdb3f8b25ea1db2c3a378545e9e36",
+  "asOracleMutant": {
+   "verdict": "killed",
+   "ledger": "ledger/MUTANTS.md"
+  }
+ },
+ "members": [
+  "ref-k149",
+  "ref-k151"
+ ],
+ "band": [
+  5
+ ],
+ "outsideBand": {
+  "world": "ebed-e8-dev-1101-d4-tail",
+  "case": "o0009",
+  "epoch": "ep0",
+  "code": "outside-allowed"
+ },
+ "solver": {
+  "policy": "beds/ebed/oracle/policy.mjs referenceArm",
+  "timing": "earliest",
+  "oracle": "original transition.mjs"
+ },
+ "contradicts": [
+  "R6.2"
+ ],
+ "revealedBy": "in-world event (planted)",
+ "params": {
+  "e0Epochs": [
+   "gl",
+   "ep0"
+  ],
+  "revealEpochs": [
+   "ep2",
+   "ep3"
+  ],
+  "lagMinutes": 1440
+ },
+ "e0Silence": {
+  "executed": true,
+  "worlds": 2,
+  "casesChecked": 114,
+  "failed": 0
+ },
+ "worlds": [
+  {
+   "world": "ebed-e8-dev-1101-d5-tail",
+   "seed": 1101,
+   "split": "dev",
+   "difficulty": 5,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "82de4c8bf836ca1903ef6aeb2ee73c98cc8e772deaee21fa244ef0eb0ae9e806",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0020",
+     "o0022",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0034",
+     "o0037",
+     "o0039",
+     "o0041",
+     "o0042",
+     "o0043",
+     "o0044",
+     "o0045",
+     "o0047",
+     "o0048",
+     "o0049",
+     "o0050",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059",
+     "o0060",
+     "o0061",
+     "o0062",
+     "o0063",
+     "x0211",
+     "x0212",
+     "x0213"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0099",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-07T22:02:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    },
+    {
+     "case": "o0144",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-11T00:13:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    },
+    {
+     "case": "o0179",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-13T02:32:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    },
+    {
+     "case": "o0184",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-13T12:43:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    },
+    {
+     "case": "o0187",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-13T10:35:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    }
+   ],
+   "reveal": {
+    "case": "o0099",
+    "class": "cancel-processing",
+    "epoch": "ep2",
+    "observableAt": "2026-03-07T23:02:00+01:00",
+    "eventEpoch": "ep2",
+    "divergence": {
+     "case": "o0099",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-07T22:02:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    },
+    "event": {
+     "id": "rev-ld-k149-1101-d5",
+     "type": "customer.complaint",
+     "at": "2026-03-08T23:02:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "rev-ld-k149-1101-d5",
+      "orderRef": "ORD-1101-0099",
+      "assert": "wrong",
+      "subject": "notification",
+      "fields": [
+       "template"
+      ],
+      "from": "c0029@hollin-shop.example",
+      "text": "The notification for order ORD-1101-0099 is wrong (template)."
+     }
+    },
+    "truth": {
+     "valid": true,
+     "defect": "ld-k149",
+     "rule": "R6.2",
+     "hardness": "rulebook",
+     "reason": "the oracle fails o0099 at 2026-03-07T22:02:00.000Z (outside-allowed) on the defect's trajectory"
+    }
+   },
+   "falseReveal": {
+    "case": "o0089",
+    "class": "cancel-processing",
+    "epoch": "ep1",
+    "eventEpoch": "ep2",
+    "event": {
+     "id": "inv-ld-k149-1101-d5",
+     "type": "customer.complaint",
+     "at": "2026-03-08T11:39:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "inv-ld-k149-1101-d5",
+      "orderRef": "ORD-1101-0089",
+      "assert": "wrong",
+      "subject": "notification",
+      "fields": [
+       "template"
+      ],
+      "from": "c0022@hollin-shop.example",
+      "text": "The notification for order ORD-1101-0089 is wrong (template)."
+     }
+    },
+    "truth": {
+     "valid": false,
+     "defect": "ld-k149",
+     "hardness": "rulebook",
+     "reason": "the oracle passes o0089 on this trajectory, so the claim (wrong notification) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
+    }
+   },
+   "sweep": {
+    "before": [
+     "o0099"
+    ],
+    "after": [
+     "o0144",
+     "o0179",
+     "o0187",
+     "o0184"
+    ]
+   },
+   "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d5-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 5,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "e9caaf75d63c1ef226d98825bf2062c9d353d9352f69e3b0e9bd5b1c38dd4838",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0032",
+     "o0033",
+     "o0034",
+     "o0035",
+     "o0036",
+     "o0038",
+     "o0039",
+     "o0040",
+     "o0041",
+     "o0042",
+     "o0043",
+     "o0044",
+     "o0045",
+     "o0046",
+     "o0047",
+     "o0048",
+     "o0049",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059",
+     "o0060",
+     "x0213"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0137",
+     "epoch": "ep2",
+     "class": "amend-then-cancel",
+     "pool": "completed",
+     "at": "2026-03-10T12:09:00.000Z",
+     "layer": 3,
+     "code": "missed",
+     "lid": "fst:ORD-1102-0137-F1:cancelled",
+     "rule": "R6.2"
+    },
+    {
+     "case": "o0147",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-10T11:09:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    },
+    {
+     "case": "o0148",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-10T23:33:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    }
+   ],
+   "reveal": {
+    "case": "o0147",
+    "class": "cancel-processing",
+    "epoch": "ep3",
+    "observableAt": "2026-03-10T12:09:00+01:00",
+    "eventEpoch": "ep3",
+    "divergence": {
+     "case": "o0147",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-10T11:09:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "notify.send"
+    },
+    "event": {
+     "id": "rev-ld-k149-1102-d5",
+     "type": "customer.complaint",
+     "at": "2026-03-11T12:09:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "rev-ld-k149-1102-d5",
+      "orderRef": "ORD-1102-0147",
+      "assert": "wrong",
+      "subject": "notification",
+      "fields": [
+       "template"
+      ],
+      "from": "c0037@hollin-shop.example",
+      "text": "The notification for order ORD-1102-0147 is wrong (template)."
+     }
+    },
+    "truth": {
+     "valid": true,
+     "defect": "ld-k149",
+     "rule": "R6.2",
+     "hardness": "rulebook",
+     "reason": "the oracle fails o0147 at 2026-03-10T11:09:00.000Z (outside-allowed) on the defect's trajectory"
+    }
+   },
+   "falseReveal": {
+    "case": "o0138",
+    "class": "cancel-processing",
+    "epoch": "ep2",
+    "eventEpoch": "ep3",
+    "event": {
+     "id": "inv-ld-k149-1102-d5",
+     "type": "customer.complaint",
+     "at": "2026-03-11T09:59:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "inv-ld-k149-1102-d5",
+      "orderRef": "ORD-1102-0138",
+      "assert": "wrong",
+      "subject": "notification",
+      "fields": [
+       "template"
+      ],
+      "from": "c0014@hollin-shop.example",
+      "text": "The notification for order ORD-1102-0138 is wrong (template)."
+     }
+    },
+    "truth": {
+     "valid": false,
+     "defect": "ld-k149",
+     "hardness": "rulebook",
+     "reason": "the oracle passes o0138 on this trajectory, so the claim (wrong notification) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
+    }
+   },
+   "sweep": {
+    "before": [
+     "o0147",
+     "o0137",
+     "o0148"
+    ],
+    "after": []
+   },
+   "natural": []
+  }
+ ]
+}

@@ -11,7 +11,7 @@
   "view": "4af79f13fdeb10e5c16061eded6590d6bb060656",
   "world": "26cfec62a1b1ba9490dfaf5705c11bb9a134d821",
   "controls": "e15e97b36fa1b1c45ca37fae98874dfae58b6d7d",
-  "defects": "a403138f5df79a5b666a7e6c11fb35597ab03327"
+  "defects": "ac38afa50d382305f7f6e6402ae74b092d7a27e2"
  },
  "params": {
   "e0Epochs": [
@@ -26,16 +26,16 @@
   "timing": "earliest",
   "runawayFactor": 3,
   "stage1": [
-   "ebed-e8-dev-1101-d2-tail",
-   "ebed-e8-dev-1101-d3-tail",
+   "ebed-e8-dev-1101-d5-tail",
    "ebed-e8-dev-1101-d4-tail",
-   "ebed-e8-dev-1101-d5-tail"
+   "ebed-e8-dev-1101-d3-tail",
+   "ebed-e8-dev-1101-d2-tail"
   ],
   "stage2": [
-   "ebed-e8-dev-1102-d2-tail",
-   "ebed-e8-dev-1102-d3-tail",
+   "ebed-e8-dev-1102-d5-tail",
    "ebed-e8-dev-1102-d4-tail",
-   "ebed-e8-dev-1102-d5-tail"
+   "ebed-e8-dev-1102-d3-tail",
+   "ebed-e8-dev-1102-d2-tail"
   ],
   "e0CasesChecked": {
    "stage1": 135,
@@ -43,20 +43,22 @@
   }
  },
  "counts": {
-  "mutants": 308,
+  "mutants": 310,
   "transition": 304,
-  "hand": 4,
-  "latent": 4,
+  "policy": 6,
+  "latent": 8,
   "inert": 186,
   "silent": 9,
-  "e0-visible": 105,
+  "e0-visible": 103,
   "load-error": 2,
-  "runaway": 2,
-  "behaviours": 4,
-  "admitted": 4,
-  "unrevealed": 0,
-  "trueRevealingEvents": 12,
-  "falseRevealingEvents": 12
+  "latent-unrevealed": 2,
+  "behaviours": 8,
+  "admitted": 7,
+  "unrevealed": 1,
+  "trueRevealingEvents": 20,
+  "falseRevealingEvents": 20,
+  "admittedAllDifficulties": 4,
+  "selfRevealing": 1
  },
  "defects": [
   {
@@ -66,21 +68,28 @@
     "ref-k0"
    ],
    "operator": "window constant",
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
+   "revealedBy": "in-world event (planted)",
    "contradicts": [
     "R1.1",
     "R3.2"
    ],
    "worldsRevealing": [
-    "ebed-e8-dev-1101-d4-tail",
     "ebed-e8-dev-1101-d5-tail",
-    "ebed-e8-dev-1102-d4-tail",
-    "ebed-e8-dev-1102-d5-tail"
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1102-d5-tail",
+    "ebed-e8-dev-1102-d4-tail"
    ],
    "firstReveal": {
-    "world": "ebed-e8-dev-1101-d4-tail",
-    "case": "o0053",
-    "class": "straight",
-    "at": "2026-03-08T23:46:00+01:00",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0197",
+    "class": "amend",
+    "at": "2026-03-08T23:31:00+01:00",
     "type": "customer.complaint"
    }
   },
@@ -91,18 +100,31 @@
     "ref-k8"
    ],
    "operator": "relational boundary",
-   "contradicts": [],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
+   "revealedBy": "self (arm error)",
+   "contradicts": [
+    "R1.1",
+    "R3.1",
+    "R3.2",
+    "R4.1",
+    "R4.2"
+   ],
    "worldsRevealing": [
-    "ebed-e8-dev-1101-d4-tail",
     "ebed-e8-dev-1101-d5-tail",
-    "ebed-e8-dev-1102-d4-tail",
-    "ebed-e8-dev-1102-d5-tail"
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1102-d5-tail",
+    "ebed-e8-dev-1102-d4-tail"
    ],
    "firstReveal": {
-    "world": "ebed-e8-dev-1101-d4-tail",
-    "case": "o0011",
-    "class": "action-at-deadline",
-    "at": "2026-03-07T23:32:00.000Z",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0101",
+    "class": "f3-refund",
+    "at": "2026-03-07T23:29:00.000Z",
     "type": "arm-error"
    }
   },
@@ -113,21 +135,58 @@
     "ref-k9"
    ],
    "operator": "relational boundary",
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
+   "revealedBy": "in-world event (planted)",
    "contradicts": [
     "R1.1",
     "R3.2"
    ],
    "worldsRevealing": [
-    "ebed-e8-dev-1101-d4-tail",
     "ebed-e8-dev-1101-d5-tail",
-    "ebed-e8-dev-1102-d4-tail",
-    "ebed-e8-dev-1102-d5-tail"
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1102-d5-tail",
+    "ebed-e8-dev-1102-d4-tail"
    ],
    "firstReveal": {
-    "world": "ebed-e8-dev-1101-d4-tail",
-    "case": "o0011",
-    "class": "action-at-deadline",
-    "at": "2026-03-09T00:32:00+01:00",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0101",
+    "class": "f3-refund",
+    "at": "2026-03-09T00:29:00+01:00",
+    "type": "customer.complaint"
+   }
+  },
+  {
+   "id": "ld-k10",
+   "file": "ld-k10.json",
+   "members": [
+    "ref-k10"
+   ],
+   "operator": "negated condition",
+   "band": [
+    5,
+    4
+   ],
+   "revealedBy": "in-world event (planted)",
+   "contradicts": [
+    "R1.1",
+    "R3.2"
+   ],
+   "worldsRevealing": [
+    "ebed-e8-dev-1101-d5-tail",
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1102-d5-tail",
+    "ebed-e8-dev-1102-d4-tail"
+   ],
+   "firstReveal": {
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0101",
+    "class": "f3-refund",
+    "at": "2026-03-09T00:29:00+01:00",
     "type": "customer.complaint"
    }
   },
@@ -138,40 +197,118 @@
     "ref-k11"
    ],
    "operator": "connective swap",
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
+   "revealedBy": "in-world event (planted)",
    "contradicts": [
     "R1.1",
     "R3.2"
    ],
    "worldsRevealing": [
-    "ebed-e8-dev-1101-d4-tail",
     "ebed-e8-dev-1101-d5-tail",
-    "ebed-e8-dev-1102-d4-tail",
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1102-d5-tail",
+    "ebed-e8-dev-1102-d4-tail"
+   ],
+   "firstReveal": {
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0101",
+    "class": "f3-refund",
+    "at": "2026-03-09T00:29:00+01:00",
+    "type": "customer.complaint"
+   }
+  },
+  {
+   "id": "ld-k118",
+   "file": "ld-k118.json",
+   "members": [
+    "ref-k118"
+   ],
+   "operator": "relational boundary",
+   "band": [
+    5
+   ],
+   "revealedBy": "in-world event (planted)",
+   "contradicts": [
+    "R3.1",
+    "R4.1"
+   ],
+   "worldsRevealing": [
+    "ebed-e8-dev-1101-d5-tail",
     "ebed-e8-dev-1102-d5-tail"
    ],
    "firstReveal": {
-    "world": "ebed-e8-dev-1101-d4-tail",
-    "case": "o0011",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0019",
     "class": "action-at-deadline",
-    "at": "2026-03-09T00:32:00+01:00",
+    "at": "2026-03-08T23:54:01+01:00",
+    "type": "customer.complaint"
+   }
+  },
+  {
+   "id": "ld-k149",
+   "file": "ld-k149.json",
+   "members": [
+    "ref-k149",
+    "ref-k151"
+   ],
+   "operator": "connective swap",
+   "band": [
+    5
+   ],
+   "revealedBy": "in-world event (planted)",
+   "contradicts": [
+    "R6.2"
+   ],
+   "worldsRevealing": [
+    "ebed-e8-dev-1101-d5-tail",
+    "ebed-e8-dev-1102-d5-tail"
+   ],
+   "firstReveal": {
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0099",
+    "class": "cancel-processing",
+    "at": "2026-03-08T23:02:00+01:00",
     "type": "customer.complaint"
    }
   }
  ],
- "unrevealed": [],
+ "unrevealed": [
+  {
+   "id": "ld-k145",
+   "members": [
+    "ref-k145",
+    "ref-k148"
+   ],
+   "why": [
+    "ebed-e8-dev-1101-d5-tail: no failure observable inside the E2/E3 window"
+   ]
+  }
+ ],
  "mutants": [
   {
    "id": "ref-k0",
    "operator": "window constant",
    "line": 15,
    "status": "latent",
-   "affected": [
-    0,
-    0,
-    2,
-    6,
-    0,
-    0,
-    2,
+   "perWorld": [
+    "0/6",
+    "0/2",
+    "0/0",
+    "0/0",
+    "0/2",
+    "0/2",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
     2
    ],
    "asOracleMutant": "killed"
@@ -181,6 +318,18 @@
    "operator": "relational boundary",
    "line": 16,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -188,6 +337,18 @@
    "operator": "relational boundary",
    "line": 16,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -195,11 +356,17 @@
    "operator": "negated condition",
    "line": 21,
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -208,6 +375,18 @@
    "operator": "connective swap",
    "line": 21,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -215,11 +394,17 @@
    "operator": "negated condition",
    "line": 22,
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -228,11 +413,17 @@
    "operator": "negated condition",
    "line": 22,
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -241,6 +432,18 @@
    "operator": "connective swap",
    "line": 22,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -248,15 +451,21 @@
    "operator": "relational boundary",
    "line": 34,
    "status": "latent",
-   "affected": [
-    0,
-    0,
-    10,
-    18,
-    0,
-    0,
-    12,
-    27
+   "perWorld": [
+    "0/18",
+    "0/10",
+    "0/0",
+    "0/0",
+    "0/27",
+    "0/12",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -265,15 +474,21 @@
    "operator": "relational boundary",
    "line": 34,
    "status": "latent",
-   "affected": [
-    0,
-    0,
-    7,
-    13,
-    0,
-    0,
-    11,
-    23
+   "perWorld": [
+    "0/13",
+    "0/7",
+    "0/0",
+    "0/0",
+    "0/23",
+    "0/11",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -281,14 +496,24 @@
    "id": "ref-k10",
    "operator": "negated condition",
    "line": 34,
-   "status": "e0-visible",
-   "stage": "stage1",
+   "status": "latent",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d3-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "arm-error"
    },
+   "perWorld": [
+    "0/98",
+    "0/47",
+    "24/0",
+    "0/96",
+    "0/51"
+   ],
+   "band": [
+    5,
+    4
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -296,15 +521,21 @@
    "operator": "connective swap",
    "line": 34,
    "status": "latent",
-   "affected": [
-    0,
-    0,
-    47,
-    98,
-    0,
-    0,
-    51,
-    96
+   "perWorld": [
+    "0/98",
+    "0/47",
+    "0/0",
+    "0/0",
+    "0/96",
+    "0/51",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -313,13 +544,15 @@
    "operator": "connective swap",
    "line": 34,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "arm-error"
    },
+   "perWorld": [
+    "53/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -327,6 +560,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 34,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -334,6 +579,18 @@
    "operator": "negated condition",
    "line": 41,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -341,6 +598,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 41,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -348,6 +617,18 @@
    "operator": "relational boundary",
    "line": 45,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -355,6 +636,18 @@
    "operator": "relational boundary",
    "line": 47,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -362,14 +655,16 @@
    "operator": "negated condition",
    "line": 52,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "fst:ORD-1101-0001-F1:dispatched"
    },
+   "perWorld": [
+    "42/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -377,14 +672,16 @@
    "operator": "negated condition",
    "line": 52,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "fst:ORD-1101-0001-F1:dispatched"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -392,14 +689,16 @@
    "operator": "connective swap",
    "line": 52,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
-    "lid": "fst:ORD-1101-0001-F2:completed"
+    "lid": "fst:ORD-1101-0001-F1:completed"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -407,6 +706,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 52,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -414,13 +725,15 @@
    "operator": "negated condition",
    "line": 55,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0055",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "3/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -428,13 +741,15 @@
    "operator": "negated condition",
    "line": 55,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
     "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0028",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "3/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -442,13 +757,15 @@
    "operator": "connective swap",
    "line": 55,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
     "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0055",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -456,13 +773,15 @@
    "operator": "connective swap",
    "line": 55,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "arm-error"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -470,13 +789,15 @@
    "operator": "connective swap",
    "line": 55,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0028",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "2/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -484,14 +805,16 @@
    "operator": "negated condition",
    "line": 64,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "create:ORD-1101-0001"
    },
+   "perWorld": [
+    "56/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -499,13 +822,15 @@
    "operator": "negated condition",
    "line": 78,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "49/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -513,6 +838,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 78,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -520,13 +857,15 @@
    "operator": "negated condition",
    "line": 79,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "49/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -534,6 +873,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 79,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -541,13 +892,15 @@
    "operator": "negated condition",
    "line": 80,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0002",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0005",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "17/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -555,6 +908,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 80,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -562,13 +927,15 @@
    "operator": "negated condition",
    "line": 81,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "32/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -576,6 +943,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 81,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -583,6 +962,18 @@
    "operator": "relational boundary",
    "line": 85,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -590,6 +981,18 @@
    "operator": "negated condition",
    "line": 85,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -597,6 +1000,18 @@
    "operator": "connective swap",
    "line": 85,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -604,6 +1019,18 @@
    "operator": "connective swap",
    "line": 85,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -611,6 +1038,18 @@
    "operator": "negated condition",
    "line": 86,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -618,6 +1057,18 @@
    "operator": "negated condition",
    "line": 86,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -625,6 +1076,18 @@
    "operator": "negated condition",
    "line": 86,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -632,6 +1095,18 @@
    "operator": "connective swap",
    "line": 86,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -639,6 +1114,18 @@
    "operator": "connective swap",
    "line": 86,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -646,6 +1133,18 @@
    "operator": "connective swap",
    "line": 86,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -653,14 +1152,16 @@
    "operator": "negated condition",
    "line": 90,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "ost:ORD-1101-0001:processing"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -668,6 +1169,18 @@
    "operator": "negated condition",
    "line": 90,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -675,14 +1188,16 @@
    "operator": "connective swap",
    "line": 90,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "ost:ORD-1101-0001:processing"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -690,6 +1205,18 @@
    "operator": "connective swap",
    "line": 91,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -697,6 +1224,18 @@
    "operator": "dropped rule row",
    "line": 93,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -704,6 +1243,18 @@
    "operator": "arithmetic swap (max/min)",
    "line": 98,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -711,14 +1262,16 @@
    "operator": "negated condition",
    "line": 101,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "order",
-    "lid": "rsv:ORD-1101-0001-F2:SKU-1024"
+    "lid": "rsv:ORD-1101-0001-F1:SKU-1007"
    },
+   "perWorld": [
+    "53/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -726,11 +1279,17 @@
    "operator": "relational boundary",
    "line": 102,
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "equivalent"
   },
@@ -739,14 +1298,16 @@
    "operator": "negated condition",
    "line": 106,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0002",
     "epoch": "gl",
     "code": "missed",
-    "lid": "fst:ORD-1101-0002-F2:cancelled"
+    "lid": "ost:ORD-1101-0002:processing"
    },
+   "perWorld": [
+    "5/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -754,11 +1315,17 @@
    "operator": "negated condition",
    "line": 118,
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -767,14 +1334,16 @@
    "operator": "negated condition",
    "line": 121,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "chg:ORD-1101-0001-F1"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -782,14 +1351,16 @@
    "operator": "negated condition",
    "line": 121,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "chg:ORD-1101-0001-F1"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -797,13 +1368,15 @@
    "operator": "connective swap",
    "line": 121,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0014",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "4/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -811,13 +1384,15 @@
    "operator": "connective swap",
    "line": 121,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0014",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "6/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -825,13 +1400,15 @@
    "operator": "connective swap",
    "line": 121,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0014",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "6/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -839,14 +1416,15 @@
    "operator": "negated condition",
    "line": 123,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0005",
-    "epoch": "ep0",
-    "code": "missed",
-    "lid": "fst:ORD-1101-0005-F2:cancelled"
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "outside-allowed"
    },
+   "perWorld": [
+    "6/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -854,6 +1432,18 @@
    "operator": "connective swap",
    "line": 123,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -861,14 +1451,16 @@
    "operator": "negated condition",
    "line": 124,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "fst:ORD-1101-0001-F1:dispatched"
    },
+   "perWorld": [
+    "42/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -876,6 +1468,18 @@
    "operator": "negated condition",
    "line": 125,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -883,6 +1487,18 @@
    "operator": "negated condition",
    "line": 126,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -890,6 +1506,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 126,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -897,6 +1525,18 @@
    "operator": "negated condition",
    "line": 127,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -904,14 +1544,16 @@
    "operator": "dropped rule row",
    "line": 133,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0004",
-    "epoch": "ep0",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0005",
+    "epoch": "gl",
     "code": "missed",
-    "lid": "ost:ORD-1101-0004:cancelled"
+    "lid": "ost:ORD-1101-0005:cancelled"
    },
+   "perWorld": [
+    "7/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -919,14 +1561,16 @@
    "operator": "dropped rule row",
    "line": 134,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0004",
-    "epoch": "ep0",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0005",
+    "epoch": "gl",
     "code": "missed",
-    "lid": "ntf:ORD-1101-0004:order-cancelled"
+    "lid": "ntf:ORD-1101-0005:order-cancelled"
    },
+   "perWorld": [
+    "7/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -934,13 +1578,15 @@
    "operator": "negated condition",
    "line": 140,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0002",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "6/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -948,14 +1594,16 @@
    "operator": "negated condition",
    "line": 140,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "ost:ORD-1101-0001:processing"
    },
+   "perWorld": [
+    "44/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -963,14 +1611,16 @@
    "operator": "negated condition",
    "line": 140,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "order",
-    "lid": "rsv:ORD-1101-0001-F1:SKU-1025"
+    "lid": "rsv:ORD-1101-0001-F1:SKU-1024"
    },
+   "perWorld": [
+    "8/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -978,14 +1628,16 @@
    "operator": "connective swap",
    "line": 140,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "order",
-    "lid": "rsv:ORD-1101-0001-F1:SKU-1025"
+    "lid": "rsv:ORD-1101-0001-F1:SKU-1024"
    },
+   "perWorld": [
+    "38/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1001,13 +1653,15 @@
    "operator": "negated condition",
    "line": 144,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0001",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0007",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "31/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1015,6 +1669,18 @@
    "operator": "negated condition",
    "line": 144,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1022,6 +1688,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 144,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1029,6 +1707,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 144,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1036,6 +1726,18 @@
    "operator": "window constant",
    "line": 145,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1043,6 +1745,18 @@
    "operator": "negated condition",
    "line": 151,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1050,13 +1764,15 @@
    "operator": "connective swap",
    "line": 151,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0004",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0012",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "5/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1064,13 +1780,15 @@
    "operator": "negated condition",
    "line": 152,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "over-escalation"
    },
+   "perWorld": [
+    "48/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1078,13 +1796,15 @@
    "operator": "negated condition",
    "line": 153,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0004",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0012",
     "epoch": "ep0",
     "code": "over-escalation"
    },
+   "perWorld": [
+    "5/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1092,6 +1812,18 @@
    "operator": "window constant",
    "line": 153,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1099,6 +1831,18 @@
    "operator": "window constant",
    "line": 155,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1106,14 +1850,16 @@
    "operator": "dropped rule row",
    "line": 155,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0037",
     "epoch": "ep0",
     "code": "under-escalation",
-    "lid": "review:ORD-1101-0019"
+    "lid": "review:ORD-1101-0037"
    },
+   "perWorld": [
+    "3/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1121,14 +1867,16 @@
    "operator": "negated condition",
    "line": 156,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0037",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "fst:ORD-1101-0019-F1:cancelled"
+    "lid": "ost:ORD-1101-0037:processing"
    },
+   "perWorld": [
+    "3/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1136,6 +1884,18 @@
    "operator": "connective swap",
    "line": 156,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1143,6 +1903,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 157,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1150,6 +1922,18 @@
    "operator": "negated condition",
    "line": 159,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1157,6 +1941,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 159,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1164,6 +1960,18 @@
    "operator": "window constant",
    "line": 160,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1171,13 +1979,16 @@
    "operator": "window constant",
    "line": 163,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0049",
     "epoch": "ep0",
-    "code": "outside-allowed"
+    "code": "missed",
+    "lid": "fst:ORD-1101-0049-F1:cancelled"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1185,14 +1996,16 @@
    "operator": "negated condition",
    "line": 166,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d4-tail",
-    "case": "o0027",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0037",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "ost:ORD-1101-0027:processing"
+    "lid": "ost:ORD-1101-0037:processing"
    },
+   "perWorld": [
+    "1/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1200,6 +2013,18 @@
    "operator": "connective swap",
    "line": 166,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1207,6 +2032,18 @@
    "operator": "relational boundary",
    "line": 167,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1214,6 +2051,18 @@
    "operator": "connective swap",
    "line": 167,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1221,13 +2070,15 @@
    "operator": "connective swap",
    "line": 167,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0049",
     "epoch": "ep0",
     "code": "arm-error"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1235,6 +2086,18 @@
    "operator": "connective swap",
    "line": 167,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1242,6 +2105,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 168,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1249,6 +2124,18 @@
    "operator": "relational boundary",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1256,6 +2143,18 @@
    "operator": "relational boundary",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1263,6 +2162,18 @@
    "operator": "relational boundary",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1270,6 +2181,18 @@
    "operator": "negated condition",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1277,6 +2200,18 @@
    "operator": "negated condition",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1284,6 +2219,18 @@
    "operator": "connective swap",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1291,6 +2238,18 @@
    "operator": "connective swap",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1298,6 +2257,18 @@
    "operator": "connective swap",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1305,6 +2276,18 @@
    "operator": "connective swap",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1312,6 +2295,18 @@
    "operator": "connective swap",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1319,6 +2314,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 169,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1326,6 +2333,18 @@
    "operator": "window constant",
    "line": 170,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1333,6 +2352,18 @@
    "operator": "window constant",
    "line": 171,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1340,14 +2371,16 @@
    "operator": "deadline boundary",
    "line": 171,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0049",
     "epoch": "ep0",
     "code": "early",
-    "lid": "fst:ORD-1101-0019-F1:cancelled"
+    "lid": "fst:ORD-1101-0049-F1:cancelled"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1355,14 +2388,16 @@
    "operator": "negated condition",
    "line": 172,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d4-tail",
-    "case": "o0027",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0037",
     "epoch": "ep0",
     "code": "early",
-    "lid": "fst:ORD-1101-0027-F1:cancelled"
+    "lid": "fst:ORD-1101-0037-F1:cancelled"
    },
+   "perWorld": [
+    "1/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1370,6 +2405,18 @@
    "operator": "window constant",
    "line": 172,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1377,28 +2424,36 @@
    "operator": "window constant",
    "line": 180,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0002",
-    "epoch": "gl",
-    "code": "missed",
-    "lid": "fst:ORD-1101-0002-F1:cancelled"
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0050",
+    "epoch": "ep0",
+    "code": "outside-allowed"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
    "id": "ref-k118",
    "operator": "relational boundary",
    "line": 181,
-   "status": "e0-visible",
-   "stage": "stage1",
+   "status": "latent",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0021",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0018",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "0/3",
+    "1/0",
+    "0/4"
+   ],
+   "band": [
+    5
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1406,13 +2461,15 @@
    "operator": "connective swap",
    "line": 181,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
     "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0050",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1420,6 +2477,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 181,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1427,6 +2496,18 @@
    "operator": "window constant",
    "line": 184,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1434,6 +2515,18 @@
    "operator": "window constant",
    "line": 185,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1441,6 +2534,18 @@
    "operator": "relational boundary",
    "line": 188,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1448,6 +2553,18 @@
    "operator": "negated condition",
    "line": 188,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1455,6 +2572,18 @@
    "operator": "negated condition",
    "line": 188,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1462,6 +2591,18 @@
    "operator": "connective swap",
    "line": 188,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1469,6 +2610,18 @@
    "operator": "connective swap",
    "line": 188,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1476,6 +2629,18 @@
    "operator": "window constant",
    "line": 191,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1483,14 +2648,16 @@
    "operator": "deadline boundary",
    "line": 191,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0002",
-    "epoch": "gl",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0050",
+    "epoch": "ep0",
     "code": "early",
-    "lid": "fst:ORD-1101-0002-F1:cancelled"
+    "lid": "fst:ORD-1101-0050-F1:cancelled"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1498,6 +2665,18 @@
    "operator": "window constant",
    "line": 192,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1505,14 +2684,16 @@
    "operator": "deadline boundary",
    "line": 192,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0002",
-    "epoch": "gl",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0050",
+    "epoch": "ep0",
     "code": "early",
-    "lid": "ost:ORD-1101-0002:timedOut"
+    "lid": "ost:ORD-1101-0050:timedOut"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1520,14 +2701,16 @@
    "operator": "dropped rule row",
    "line": 192,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0002",
-    "epoch": "gl",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0050",
+    "epoch": "ep0",
     "code": "missed",
-    "lid": "ost:ORD-1101-0002:timedOut"
+    "lid": "ost:ORD-1101-0050:timedOut"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1535,6 +2718,18 @@
    "operator": "window constant",
    "line": 193,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1542,14 +2737,16 @@
    "operator": "deadline boundary",
    "line": 193,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0002",
-    "epoch": "gl",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0050",
+    "epoch": "ep0",
     "code": "early",
-    "lid": "ntf:ORD-1101-0002:order-timed-out"
+    "lid": "ntf:ORD-1101-0050:order-timed-out"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1557,14 +2754,16 @@
    "operator": "dropped rule row",
    "line": 193,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0002",
-    "epoch": "gl",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0050",
+    "epoch": "ep0",
     "code": "missed",
-    "lid": "ntf:ORD-1101-0002:order-timed-out"
+    "lid": "ntf:ORD-1101-0050:order-timed-out"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1572,13 +2771,15 @@
    "operator": "negated condition",
    "line": 198,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0005",
-    "epoch": "ep0",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0002",
+    "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "3/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1586,6 +2787,18 @@
    "operator": "window constant",
    "line": 198,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1593,6 +2806,18 @@
    "operator": "window constant",
    "line": 199,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1600,6 +2825,18 @@
    "operator": "window constant",
    "line": 200,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1607,6 +2844,18 @@
    "operator": "relational boundary",
    "line": 209,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1614,14 +2863,16 @@
    "operator": "negated condition",
    "line": 209,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0006",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0027",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "ntf:ORD-1101-0006:cancel-refused"
+    "lid": "ntf:ORD-1101-0027:cancel-refused"
    },
+   "perWorld": [
+    "1/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1629,14 +2880,16 @@
    "operator": "negated condition",
    "line": 209,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0006",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0027",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "ntf:ORD-1101-0006:cancel-refused"
+    "lid": "ntf:ORD-1101-0027:cancel-refused"
    },
+   "perWorld": [
+    "1/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1644,6 +2897,18 @@
    "operator": "connective swap",
    "line": 209,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1651,22 +2916,31 @@
    "operator": "connective swap",
    "line": 209,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0005",
-    "epoch": "ep0",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0002",
+    "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
    "id": "ref-k145",
    "operator": "relational boundary",
    "line": 212,
-   "status": "runaway",
-   "stage": "stage1",
-   "error": "ebed-e8-dev-1101-d3-tail: more than 2771 wake-ups; E0 silent up to the stop at 2026-03-12T04:50:00+01:00",
+   "status": "latent-unrevealed",
+   "stopped": "ebed-e8-dev-1101-d4-tail: more than 3419 wake-ups; E0 silent up to the stop at 2026-03-08T17:16:00+01:00",
+   "perWorld": [
+    "0/1",
+    "0/0!",
+    "0/0"
+   ],
+   "band": [
+    5
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1674,6 +2948,18 @@
    "operator": "relational boundary",
    "line": 212,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1681,29 +2967,55 @@
    "operator": "relational boundary",
    "line": 212,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
    "id": "ref-k148",
    "operator": "negated condition",
    "line": 212,
-   "status": "runaway",
-   "stage": "stage1",
-   "error": "ebed-e8-dev-1101-d3-tail: more than 2771 wake-ups; E0 silent up to the stop at 2026-03-12T04:50:00+01:00",
+   "status": "latent-unrevealed",
+   "stopped": "ebed-e8-dev-1101-d4-tail: more than 3419 wake-ups; E0 silent up to the stop at 2026-03-08T17:16:00+01:00",
+   "perWorld": [
+    "0/1",
+    "0/0!",
+    "0/0"
+   ],
+   "band": [
+    5
+   ],
    "asOracleMutant": "killed"
   },
   {
    "id": "ref-k149",
    "operator": "connective swap",
    "line": 212,
-   "status": "e0-visible",
-   "stage": "stage1",
+   "status": "latent",
    "e0First": {
     "world": "ebed-e8-dev-1101-d4-tail",
     "case": "o0009",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "0/5",
+    "2/0",
+    "0/3"
+   ],
+   "band": [
+    5
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1711,20 +3023,39 @@
    "operator": "connective swap",
    "line": 212,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
    "id": "ref-k151",
    "operator": "connective swap",
    "line": 212,
-   "status": "e0-visible",
-   "stage": "stage1",
+   "status": "latent",
    "e0First": {
     "world": "ebed-e8-dev-1101-d4-tail",
     "case": "o0009",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "0/5",
+    "2/0",
+    "0/3"
+   ],
+   "band": [
+    5
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1732,13 +3063,15 @@
    "operator": "connective swap",
    "line": 212,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0006",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0027",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "1/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1746,6 +3079,18 @@
    "operator": "deleted condition",
    "line": 212,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1753,14 +3098,16 @@
    "operator": "negated condition",
    "line": 217,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "chg:ORD-1101-0001-F1"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1768,14 +3115,16 @@
    "operator": "negated condition",
    "line": 219,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0001",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0002",
     "epoch": "gl",
     "code": "missed",
-    "lid": "chg:ORD-1101-0001-F2"
+    "lid": "chg:ORD-1101-0002-F1"
    },
+   "perWorld": [
+    "31/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1783,6 +3132,18 @@
    "operator": "connective swap",
    "line": 219,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1790,6 +3151,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 219,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1797,14 +3170,16 @@
    "operator": "connective swap",
    "line": 222,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "chg:ORD-1101-0001-F1"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1812,6 +3187,18 @@
    "operator": "arithmetic swap (max/min)",
    "line": 223,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1819,6 +3206,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 224,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1826,6 +3225,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 225,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1833,13 +3244,15 @@
    "operator": "negated condition",
    "line": 226,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0063",
     "epoch": "ep0",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "1/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1847,13 +3260,15 @@
    "operator": "connective swap",
    "line": 226,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1861,13 +3276,15 @@
    "operator": "connective swap",
    "line": 226,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1875,13 +3292,16 @@
    "operator": "negated condition",
    "line": 227,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
-    "code": "outside-allowed"
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F1:dispatched"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1889,6 +3309,18 @@
    "operator": "connective swap",
    "line": 227,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1896,14 +3328,16 @@
    "operator": "negated condition",
    "line": 228,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "fst:ORD-1101-0001-F1:dispatched"
    },
+   "perWorld": [
+    "38/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1911,6 +3345,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 228,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1918,13 +3364,15 @@
    "operator": "negated condition",
    "line": 229,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "40/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1932,6 +3380,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 229,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1939,13 +3399,15 @@
    "operator": "negated condition",
    "line": 230,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1953,6 +3415,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 230,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1960,13 +3434,16 @@
    "operator": "negated condition",
    "line": 231,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0014",
     "epoch": "ep0",
-    "code": "outside-allowed"
+    "code": "missed",
+    "lid": "rf:ORD-1101-0014-F2"
    },
+   "perWorld": [
+    "6/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1974,6 +3451,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 231,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1981,6 +3470,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 231,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -1988,6 +3489,18 @@
    "operator": "relational boundary",
    "line": 240,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -1995,6 +3508,18 @@
    "operator": "relational boundary",
    "line": 240,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2002,14 +3527,16 @@
    "operator": "negated condition",
    "line": 240,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0006",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0027",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "ntf:ORD-1101-0006:cancel-refused"
+    "lid": "ntf:ORD-1101-0027:cancel-refused"
    },
+   "perWorld": [
+    "1/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2017,13 +3544,15 @@
    "operator": "connective swap",
    "line": 240,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0006",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0027",
     "epoch": "ep0",
     "code": "arm-error"
    },
+   "perWorld": [
+    "1/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2031,14 +3560,16 @@
    "operator": "connective swap",
    "line": 240,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0006",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0027",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "ntf:ORD-1101-0006:cancel-refused"
+    "lid": "ntf:ORD-1101-0027:cancel-refused"
    },
+   "perWorld": [
+    "1/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2046,6 +3577,18 @@
    "operator": "connective swap",
    "line": 240,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2053,6 +3596,18 @@
    "operator": "window constant",
    "line": 242,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2060,6 +3615,18 @@
    "operator": "window constant",
    "line": 248,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2067,6 +3634,18 @@
    "operator": "window constant",
    "line": 249,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2074,6 +3653,18 @@
    "operator": "relational boundary",
    "line": 256,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2081,13 +3672,15 @@
    "operator": "negated condition",
    "line": 256,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "44/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2095,14 +3688,18 @@
    "operator": "negated condition",
    "line": 256,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0016",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "csh:ORD-1101-0016-F1"
+    "lid": "csh:ORD-1101-0009-F1"
    },
+   "perWorld": [
+    "0/10",
+    "3/0",
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2110,13 +3707,15 @@
    "operator": "connective swap",
    "line": 256,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "44/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2124,14 +3723,18 @@
    "operator": "connective swap",
    "line": 256,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0016",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "csh:ORD-1101-0016-F1"
+    "lid": "csh:ORD-1101-0009-F1"
    },
+   "perWorld": [
+    "0/10",
+    "3/0",
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2139,6 +3742,18 @@
    "operator": "negated condition",
    "line": 258,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2146,6 +3761,18 @@
    "operator": "connective swap",
    "line": 258,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2153,6 +3780,18 @@
    "operator": "anchor swap (same-instant knowledge)",
    "line": 258,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2160,6 +3799,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 260,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2167,14 +3818,16 @@
    "operator": "negated condition",
    "line": 262,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
-    "lid": "rsv:ORD-1101-0001-F1:SKU-1025"
+    "lid": "rsv:ORD-1101-0001-F1:SKU-1024"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2182,6 +3835,18 @@
    "operator": "deleted guard",
    "line": 262,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2189,6 +3854,18 @@
    "operator": "window constant",
    "line": 263,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2196,14 +3873,16 @@
    "operator": "negated condition",
    "line": 267,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "chg:ORD-1101-0001-F1"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2211,14 +3890,16 @@
    "operator": "negated condition",
    "line": 267,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "chg:ORD-1101-0001-F1"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2226,13 +3907,15 @@
    "operator": "connective swap",
    "line": 267,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0003",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "3/0!"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2240,6 +3923,18 @@
    "operator": "deleted guard",
    "line": 267,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2247,6 +3942,18 @@
    "operator": "window constant",
    "line": 268,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2262,6 +3969,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 272,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2269,14 +3988,16 @@
    "operator": "negated condition",
    "line": 273,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "shp:ORD-1101-0001-F1"
    },
+   "perWorld": [
+    "41/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2284,13 +4005,15 @@
    "operator": "connective swap",
    "line": 273,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "arm-error"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2298,13 +4021,15 @@
    "operator": "connective swap",
    "line": 273,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "arm-error"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2312,6 +4037,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 273,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2319,6 +4056,18 @@
    "operator": "deleted guard",
    "line": 273,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2326,6 +4075,18 @@
    "operator": "window constant",
    "line": 274,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2333,14 +4094,16 @@
    "operator": "dropped rule row",
    "line": 274,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "shp:ORD-1101-0001-F1"
    },
+   "perWorld": [
+    "41/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2348,6 +4111,18 @@
    "operator": "connective swap",
    "line": 276,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2355,6 +4130,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 276,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2362,6 +4149,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 276,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2369,6 +4168,18 @@
    "operator": "negated condition",
    "line": 280,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2376,6 +4187,18 @@
    "operator": "negated condition",
    "line": 280,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2383,6 +4206,18 @@
    "operator": "connective swap",
    "line": 280,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2390,6 +4225,18 @@
    "operator": "arithmetic swap (max/min)",
    "line": 280,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2397,6 +4244,18 @@
    "operator": "window constant",
    "line": 281,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2404,6 +4263,18 @@
    "operator": "connective swap",
    "line": 283,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2411,6 +4282,18 @@
    "operator": "deleted guard",
    "line": 283,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2418,6 +4301,18 @@
    "operator": "window boundary",
    "line": 284,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2425,6 +4320,18 @@
    "operator": "arithmetic swap (max/min)",
    "line": 284,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2432,14 +4339,18 @@
    "operator": "dropped rule row",
    "line": 284,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0016",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "csh:ORD-1101-0016-F1"
+    "lid": "csh:ORD-1101-0009-F1"
    },
+   "perWorld": [
+    "0/10",
+    "3/0",
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2447,11 +4358,17 @@
    "operator": "ordering dependency dropped",
    "line": 288,
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -2460,14 +4377,18 @@
    "operator": "dropped rule row",
    "line": 288,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0016",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "rf:ORD-1101-0016-F1"
+    "lid": "rf:ORD-1101-0009-F1"
    },
+   "perWorld": [
+    "0/10",
+    "3/0",
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2475,11 +4396,17 @@
    "operator": "ordering dependency dropped",
    "line": 291,
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -2488,14 +4415,18 @@
    "operator": "dropped rule row",
    "line": 292,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0016",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "fst:ORD-1101-0016-F1:cancelled"
+    "lid": "fst:ORD-1101-0009-F1:cancelled"
    },
+   "perWorld": [
+    "0/10",
+    "3/0",
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2503,13 +4434,15 @@
    "operator": "negated condition",
    "line": 297,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2517,6 +4450,18 @@
    "operator": "negated condition",
    "line": 300,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2524,6 +4469,18 @@
    "operator": "negated condition",
    "line": 300,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2531,6 +4488,18 @@
    "operator": "connective swap",
    "line": 300,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2538,6 +4507,18 @@
    "operator": "arithmetic swap (max/min)",
    "line": 300,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2545,6 +4526,18 @@
    "operator": "window constant",
    "line": 301,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2552,14 +4545,16 @@
    "operator": "dropped rule row",
    "line": 304,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d4-tail",
-    "case": "o0030",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0014",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "rf:ORD-1101-0030-F1"
+    "lid": "rf:ORD-1101-0014-F2"
    },
+   "perWorld": [
+    "5/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2567,11 +4562,17 @@
    "operator": "ordering dependency dropped",
    "line": 307,
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ],
    "asOracleMutant": "killed"
   },
@@ -2580,14 +4581,16 @@
    "operator": "dropped rule row",
    "line": 308,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0014",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "fst:ORD-1101-0019-F1:failed"
+    "lid": "fst:ORD-1101-0014-F2:failed"
    },
+   "perWorld": [
+    "6/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2595,14 +4598,16 @@
    "operator": "dropped rule row",
    "line": 309,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0019",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0014",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "ntf:ORD-1101-0019-F1:fulfilment-failed"
+    "lid": "ntf:ORD-1101-0014-F2:fulfilment-failed"
    },
+   "perWorld": [
+    "6/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2610,6 +4615,18 @@
    "operator": "arithmetic swap (max/min)",
    "line": 312,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2617,6 +4634,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 316,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2624,14 +4653,16 @@
    "operator": "negated condition",
    "line": 319,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "fst:ORD-1101-0001-F1:dispatched"
    },
+   "perWorld": [
+    "40/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2639,6 +4670,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 319,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2646,14 +4689,16 @@
    "operator": "negated condition",
    "line": 320,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "fst:ORD-1101-0001-F1:dispatched"
    },
+   "perWorld": [
+    "40/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2661,13 +4706,15 @@
    "operator": "connective swap",
    "line": 320,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0003",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2675,6 +4722,18 @@
    "operator": "window constant",
    "line": 320,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2682,13 +4741,15 @@
    "operator": "deleted guard",
    "line": 320,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0003",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2696,6 +4757,18 @@
    "operator": "window constant",
    "line": 323,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2703,14 +4776,16 @@
    "operator": "dropped rule row",
    "line": 323,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
-    "lid": "fst:ORD-1101-0001-F2:completed"
+    "lid": "fst:ORD-1101-0001-F1:completed"
    },
+   "perWorld": [
+    "42/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2718,6 +4793,18 @@
    "operator": "arithmetic swap (max/min)",
    "line": 325,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2725,6 +4812,18 @@
    "operator": "negated condition",
    "line": 327,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2732,6 +4831,18 @@
    "operator": "negated condition",
    "line": 327,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2739,6 +4850,18 @@
    "operator": "connective swap",
    "line": 327,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2746,6 +4869,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 327,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2753,13 +4888,15 @@
    "operator": "negated condition",
    "line": 332,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2767,6 +4904,18 @@
    "operator": "window constant",
    "line": 333,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2774,14 +4923,18 @@
    "operator": "dropped rule row",
    "line": 333,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0016",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "ost:ORD-1101-0016:cancelled"
+    "lid": "ost:ORD-1101-0009:cancelled"
    },
+   "perWorld": [
+    "0/10",
+    "3/0",
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2789,6 +4942,18 @@
    "operator": "window constant",
    "line": 334,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2796,14 +4961,18 @@
    "operator": "dropped rule row",
    "line": 334,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0016",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
     "epoch": "ep0",
     "code": "missed",
-    "lid": "ntf:ORD-1101-0016:order-cancelled"
+    "lid": "ntf:ORD-1101-0009:order-cancelled"
    },
+   "perWorld": [
+    "0/10",
+    "3/0",
+    "2/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2811,13 +4980,15 @@
    "operator": "negated condition",
    "line": 340,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2825,13 +4996,15 @@
    "operator": "connective swap",
    "line": 340,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "outside-allowed"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2839,6 +5012,18 @@
    "operator": "window constant",
    "line": 342,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2846,14 +5031,16 @@
    "operator": "dropped rule row",
    "line": 342,
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
+    "world": "ebed-e8-dev-1101-d5-tail",
     "case": "o0001",
     "epoch": "gl",
     "code": "missed",
     "lid": "ost:ORD-1101-0001:completed"
    },
+   "perWorld": [
+    "44/0"
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2861,6 +5048,18 @@
    "operator": "negated condition",
    "line": 355,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2868,6 +5067,18 @@
    "operator": "connective swap",
    "line": 355,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2875,6 +5086,18 @@
    "operator": "negated condition",
    "line": 357,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2882,6 +5105,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 357,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2889,6 +5124,18 @@
    "operator": "negated condition",
    "line": 360,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2896,6 +5143,18 @@
    "operator": "precedence swap (first to last match)",
    "line": 360,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2903,6 +5162,18 @@
    "operator": "negated condition",
    "line": 362,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2910,6 +5181,18 @@
    "operator": "negated condition",
    "line": 362,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2917,6 +5200,18 @@
    "operator": "connective swap",
    "line": 362,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -2924,6 +5219,18 @@
    "operator": "negated condition",
    "line": 363,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2931,6 +5238,18 @@
    "operator": "negated condition",
    "line": 364,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2938,6 +5257,18 @@
    "operator": "negated condition",
    "line": 365,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2945,6 +5276,18 @@
    "operator": "negated condition",
    "line": 366,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2952,6 +5295,18 @@
    "operator": "negated condition",
    "line": 370,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2959,6 +5314,18 @@
    "operator": "connective swap",
    "line": 370,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2966,6 +5333,18 @@
    "operator": "connective swap",
    "line": 370,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2973,6 +5352,18 @@
    "operator": "negated condition",
    "line": 371,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2980,6 +5371,18 @@
    "operator": "negated condition",
    "line": 371,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2987,6 +5390,18 @@
    "operator": "negated condition",
    "line": 371,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -2994,6 +5409,18 @@
    "operator": "connective swap",
    "line": 371,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3001,6 +5428,18 @@
    "operator": "connective swap",
    "line": 371,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3008,6 +5447,18 @@
    "operator": "connective swap",
    "line": 371,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3015,6 +5466,18 @@
    "operator": "connective swap",
    "line": 371,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3022,6 +5485,18 @@
    "operator": "negated condition",
    "line": 374,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3029,6 +5504,18 @@
    "operator": "negated condition",
    "line": 377,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3036,6 +5523,18 @@
    "operator": "negated condition",
    "line": 377,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -3043,6 +5542,18 @@
    "operator": "negated condition",
    "line": 377,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -3050,6 +5561,18 @@
    "operator": "connective swap",
    "line": 377,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3057,6 +5580,18 @@
    "operator": "negated condition",
    "line": 378,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3064,6 +5599,18 @@
    "operator": "negated condition",
    "line": 378,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3071,6 +5618,18 @@
    "operator": "negated condition",
    "line": 378,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3078,6 +5637,18 @@
    "operator": "connective swap",
    "line": 378,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3085,6 +5656,18 @@
    "operator": "negated condition",
    "line": 379,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3092,6 +5675,18 @@
    "operator": "negated condition",
    "line": 380,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3099,6 +5694,18 @@
    "operator": "negated condition",
    "line": 381,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3106,6 +5713,18 @@
    "operator": "negated condition",
    "line": 382,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3113,6 +5732,18 @@
    "operator": "connective swap",
    "line": 382,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3120,6 +5751,18 @@
    "operator": "negated condition",
    "line": 383,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3127,6 +5770,18 @@
    "operator": "negated condition",
    "line": 384,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3134,6 +5789,18 @@
    "operator": "negated condition",
    "line": 398,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "equivalent"
   },
   {
@@ -3141,6 +5808,18 @@
    "operator": "negated condition",
    "line": 404,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
@@ -3148,57 +5827,111 @@
    "operator": "dropped rule row",
    "line": 405,
    "status": "inert",
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
+   ],
    "asOracleMutant": "killed"
   },
   {
    "id": "hc-refund-no-key",
    "operator": "missing key",
    "status": "silent",
-   "affected": [
-    0,
-    0,
-    0,
-    0
+   "perWorld": [
+    "0/0",
+    "0/0",
+    "0/0",
+    "0/0"
+   ],
+   "band": [
+    5,
+    4,
+    3,
+    2
    ]
   },
   {
    "id": "hc-cancel-keeps-shipment",
    "operator": "deleted compensation step",
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0016",
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
     "epoch": "ep0",
     "code": "order",
-    "lid": "rf:ORD-1101-0016-F1"
-   }
+    "lid": "rf:ORD-1101-0009-F1"
+   },
+   "perWorld": [
+    "0/10",
+    "3/0",
+    "2/0"
+   ]
   },
   {
    "id": "hc-late-signal-regresses",
    "operator": "deleted guard (monotone status)",
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d3-tail",
-    "case": "o0017",
-    "epoch": "ep0",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0001",
+    "epoch": "gl",
     "code": "key-split",
-    "lid": "fst:ORD-1101-0017-F1:dispatched"
-   }
+    "lid": "fst:ORD-1101-0001-F1:dispatched"
+   },
+   "perWorld": [
+    "14/0"
+   ]
+  },
+  {
+   "id": "op-edition-by-publication",
+   "operator": "edition by run date",
+   "status": "e0-visible",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0057",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "perWorld": [
+    "7/0"
+   ]
+  },
+  {
+   "id": "op-latest-edition-always",
+   "operator": "latest edition always",
+   "status": "e0-visible",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "perWorld": [
+    "50/0"
+   ]
   },
   {
    "id": "hc-timer-first",
    "operator": "precedence swap (timer before signal)",
    "status": "e0-visible",
-   "stage": "stage1",
    "e0First": {
-    "world": "ebed-e8-dev-1101-d2-tail",
-    "case": "o0002",
-    "epoch": "gl",
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0049",
+    "epoch": "ep0",
     "code": "early",
-    "lid": "fst:ORD-1101-0002-F1:cancelled"
-   }
+    "lid": "fst:ORD-1101-0049-F1:cancelled"
+   },
+   "perWorld": [
+    "4/0"
+   ]
   }
  ]
 }

@@ -355,7 +355,14 @@
     "p50": 52734,
     "p90": 81203,
     "p99": 81203,
-    "sum": 344774
+    "sum": 344774,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": null,
    "timeToFirstEffect": {
@@ -392,7 +399,14 @@
     "p50": 60226,
     "p90": 99447,
     "p99": 182825,
-    "sum": 3987557
+    "sum": 3987557,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": {
     "point": 3987557,
@@ -435,7 +449,14 @@
     "p50": 29667,
     "p90": 51452,
     "p99": 51452,
-    "sum": 224301
+    "sum": 224301,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": null,
    "timeToFirstEffect": {
@@ -472,7 +493,14 @@
     "p50": 70802,
     "p90": 98451,
     "p99": 98451,
-    "sum": 427169
+    "sum": 427169,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": null,
    "timeToFirstEffect": {
@@ -509,7 +537,14 @@
     "p50": 1113,
     "p90": 1242,
     "p99": 1242,
-    "sum": 6101
+    "sum": 6101,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": null,
    "timeToFirstEffect": {
@@ -546,7 +581,14 @@
     "p50": 33154,
     "p90": 58092,
     "p99": 58092,
-    "sum": 250529
+    "sum": 250529,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": {
     "point": 250529,
@@ -589,7 +631,14 @@
     "p50": 58268,
     "p90": 87644,
     "p99": 747543,
-    "sum": 4359051
+    "sum": 4359051,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": {
     "point": 4359051,
@@ -632,7 +681,14 @@
     "p50": 19537,
     "p90": 27879,
     "p99": 35928,
-    "sum": 223212
+    "sum": 223212,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": {
     "point": 223212,
@@ -675,7 +731,14 @@
     "p50": 4299,
     "p90": 5487,
     "p99": 20847,
-    "sum": 624430
+    "sum": 624430,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": {
     "point": 624430,
@@ -718,7 +781,14 @@
     "p50": null,
     "p90": null,
     "p99": null,
-    "sum": null
+    "sum": null,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": null,
    "timeToFirstEffect": {
@@ -755,7 +825,14 @@
     "p50": null,
     "p90": null,
     "p99": null,
-    "sum": null
+    "sum": null,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": null,
    "timeToFirstEffect": {
@@ -792,7 +869,14 @@
     "p50": null,
     "p90": null,
     "p99": null,
-    "sum": null
+    "sum": null,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": null,
    "timeToFirstEffect": {
@@ -829,7 +913,14 @@
     "p50": null,
     "p90": null,
     "p99": null,
-    "sum": null
+    "sum": null,
+    "deadlineHits": 0,
+    "deadlineMs": [],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": null,
    "timeToFirstEffect": {
@@ -866,7 +957,16 @@
     "p50": 87113,
     "p90": 300064,
     "p99": 300127,
-    "sum": 8686620
+    "sum": 8686620,
+    "deadlineHits": 20,
+    "deadlineMs": [
+     300000
+    ],
+    "atDeadline": {
+     "p50": false,
+     "p90": true,
+     "p99": true
+    }
    },
    "wallPerSuccess": {
     "point": 8686620,
@@ -911,7 +1011,16 @@
     "p50": 52931,
     "p90": 300070,
     "p99": 300134,
-    "sum": 6019039
+    "sum": 6019039,
+    "deadlineHits": 8,
+    "deadlineMs": [
+     300000
+    ],
+    "atDeadline": {
+     "p50": false,
+     "p90": true,
+     "p99": true
+    }
    },
    "wallPerSuccess": {
     "point": 6019039,
@@ -956,7 +1065,16 @@
     "p50": 386519,
     "p90": 600135,
     "p99": 600165,
-    "sum": 16021485
+    "sum": 16021485,
+    "deadlineHits": 10,
+    "deadlineMs": [
+     600000
+    ],
+    "atDeadline": {
+     "p50": false,
+     "p90": true,
+     "p99": true
+    }
    },
    "wallPerSuccess": {
     "point": 16021485,
@@ -1001,7 +1119,16 @@
     "p50": 282275,
     "p90": 341961,
     "p99": 398191,
-    "sum": 3729938
+    "sum": 3729938,
+    "deadlineHits": 0,
+    "deadlineMs": [
+     600000
+    ],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": false
+    }
    },
    "wallPerSuccess": {
     "point": 3729938,
@@ -1046,7 +1173,16 @@
     "p50": 48509,
     "p90": 300041,
     "p99": 300221,
-    "sum": 12046399
+    "sum": 12046399,
+    "deadlineHits": 19,
+    "deadlineMs": [
+     300000
+    ],
+    "atDeadline": {
+     "p50": false,
+     "p90": true,
+     "p99": true
+    }
    },
    "wallPerSuccess": {
     "point": 12046399,
@@ -1091,7 +1227,16 @@
     "p50": 34821,
     "p90": 283551,
     "p99": 300089,
-    "sum": 9088498
+    "sum": 9088498,
+    "deadlineHits": 7,
+    "deadlineMs": [
+     300000
+    ],
+    "atDeadline": {
+     "p50": false,
+     "p90": false,
+     "p99": true
+    }
    },
    "wallPerSuccess": {
     "point": 9088498,
@@ -1158,9 +1303,9 @@
    ],
    "wallMs": 7200000,
    "wallProv": "doc",
-   "chargedUsd": 1.8760919700000007,
+   "chargedUsd": 2.276091970000001,
    "reportedUsd": 1.8760919700000007,
-   "starts": 197,
+   "starts": 198,
    "concurrency": {
     "configured": null,
     "observedMax": null
@@ -1182,9 +1327,9 @@
    ],
    "wallMs": 7200000,
    "wallProv": "doc",
-   "chargedUsd": 1.6305736700000006,
+   "chargedUsd": 2.0305736700000008,
    "reportedUsd": 1.6305736700000006,
-   "starts": 171,
+   "starts": 172,
    "concurrency": {
     "configured": null,
     "observedMax": null

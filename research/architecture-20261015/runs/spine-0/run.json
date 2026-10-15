@@ -1,11 +1,11 @@
 {
  "schema": "spine-0/run@1",
- "at": "2026-10-15T09:08:40.292Z",
- "head": "b1fe87e",
+ "at": "2026-10-15T09:28:50.731Z",
+ "head": "4b8c17f",
  "live": true,
- "ms": 2535,
+ "ms": 1941,
  "rows": 1514,
- "claimsJsonlSha256": "372987e1d8fddc204c36dd3ef9a80b4e7cf4eec0ff2229438a6faccb31ac6a4e",
+ "claimsJsonlSha256": "ccf64f9cea7202844d29159e20c312099adb11983a732242780fe77d9867a343",
  "predictionSha256": "1c92729bcd07a88d3fa916648363938de6be3951d1aff4219d2ccbc588bf13d3",
  "automationbench": {
   "runs": [

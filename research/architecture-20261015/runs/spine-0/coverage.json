@@ -70,8 +70,8 @@
    "supplied": 1514,
    "share": 1,
    "byKind": {
-    "copied": 448,
-    "computed": 0,
+    "copied": 288,
+    "computed": 160,
     "code": 0,
     "doc": 1066,
     "missing": 0,
@@ -171,14 +171,14 @@
   },
   "usd.world": {
    "rows": 1514,
-   "supplied": 160,
-   "share": 0.10568031704095113,
+   "supplied": 0,
+   "share": 0,
    "byKind": {
     "copied": 0,
-    "computed": 160,
+    "computed": 0,
     "code": 0,
     "doc": 0,
-    "missing": 1066,
+    "missing": 1226,
     "n/a": 288
    }
   },
@@ -1138,8 +1138,8 @@
      "supplied": 160,
      "share": 1,
      "byKind": {
-      "copied": 160,
-      "computed": 0,
+      "copied": 0,
+      "computed": 160,
       "code": 0,
       "doc": 0,
       "missing": 0,
@@ -1239,14 +1239,14 @@
     },
     "usd.world": {
      "rows": 160,
-     "supplied": 160,
-     "share": 1,
+     "supplied": 0,
+     "share": 0,
      "byKind": {
       "copied": 0,
-      "computed": 160,
+      "computed": 0,
       "code": 0,
       "doc": 0,
-      "missing": 0,
+      "missing": 160,
       "n/a": 0
      }
     },
@@ -2275,6 +2275,10 @@
    {
     "n": 288,
     "reason": "jneed2@0 | n/a | no world: the tasks are W-bed documents (their authoring cost is on the M1 rows as missing)"
+   },
+   {
+    "n": 160,
+    "reason": "automationbench@0 | missing | the third-party apps came as a $0 shallow clone (research/automationbench-20261014/ACQUISITION.md), but the world as run here is served by our bridge.py and its parity work, written by frontier sessions whose cost was never recorded (as E8's world)"
    },
    {
     "n": 124,

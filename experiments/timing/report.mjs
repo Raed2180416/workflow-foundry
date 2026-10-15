@@ -4,6 +4,10 @@
 // wall time per verified success (sum of wall over the arm's rows / verified successes, with the success count's two-sided
 // 95% Clopper-Pearson interval carried into the ratio), time to first effect, model share, configured and observed
 // concurrency. Environment-fault, censored and set-aside rows are listed apart with their concurrency, never pooled.
+// Wall time per verified success sums each row's own wall time (session time), so at concurrency > 1 it is compute time
+// per success, not the elapsed time the owner waited (the configured and observed concurrency are reported beside it).
+// A row that hit its runner's deadline (timing.deadline.hit) has a wall time truncated at the deadline: a quantile that
+// lands on such a row is reported as the deadline (wall.atDeadline), a lower bound on latency, never a measured tail.
 import { exactBinomialBounds } from '../lib/stats.mjs';
 
 /** Nearest-rank quantile (q in (0, 1]) of finite numbers; null when empty. */
@@ -44,9 +48,14 @@ export function armSummary(rows) {
   const modelShare = rows.filter(r => Number.isFinite(r.timing.components?.modelMs) && r.timing.wallMs > 0).map(r => r.timing.components.modelMs / r.timing.wallMs);
   const conf = [...new Set(rows.map(r => r.timing.concurrency?.configured).filter(x => x != null))];
   const obs = rows.map(r => r.timing.concurrency?.observedMax).filter(Number.isFinite);
+  const hitWalls = rows.filter(r => r.timing.deadline?.hit === true).map(r => r.timing.wallMs).filter(Number.isFinite);
+  const minHit = hitWalls.length ? Math.min(...hitWalls) : null;
+  const q = { p50: median(walls), p90: quantile(walls, 0.9), p99: quantile(walls, 0.99) };
+  const atDeadline = Object.fromEntries(Object.entries(q).map(([k, v]) => [k, v !== null && minHit !== null && v >= minHit]));
   return {
     rows: rows.length, successes: succ, total: tot, successRate: tot ? succ / tot : null, successCi: cp95(succ, tot),
-    wall: { rows: walls.length, p50: median(walls), p90: quantile(walls, 0.9), p99: quantile(walls, 0.99), sum: sumWall },
+    wall: { rows: walls.length, ...q, sum: sumWall, deadlineHits: hitWalls.length,
+      deadlineMs: [...new Set(rows.map(r => r.timing.deadline?.ms).filter(Number.isFinite))], atDeadline },
     wallPerSuccess: sumWall === null ? null : perSuccess(sumWall, succ, tot),
     timeToFirstEffect: { rows: ttfe.length, p50: median(ttfe), p90: quantile(ttfe, 0.9), shareOfWallP50: median(share) },
     modelShareP50: median(modelShare), modelShareRows: modelShare.length,

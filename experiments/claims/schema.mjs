@@ -25,7 +25,9 @@
 //   timing (S6)   {wallMs, wallMsBounds {lo, hi}, timeToFirstEffectMs, timeToDoneMs, startedAt, endedAt,
 //                  stages[] {stage, ms, n?}, components {modelMs, nonModelMs, toolMs, mockMs,
 //                  waits {rateLimitMs, retryAfterMs, queueMs, humanMs}}, concurrency {configured, observedMax},
-//                  businessTime {simulatedMs}}   compute wall time and simulated business time are never mixed
+//                  businessTime {simulatedMs}, deadline {ms, hit} | null}   compute wall time and simulated business time are
+//                  never mixed; deadline is the runner's per-start wall limit when known: a row that hit it has a wall time
+//                  truncated at the limit (a latency quantile that lands on such a row is a lower bound, not a measurement)
 //   envFaults[]   {code, n}: environment faults (rate limits, job limits), kept apart from outcomes
 //   refs          {build, setAsideOf, supersedes, supersededBy}: other row ids (a superseded row is kept, never used in tables)
 //   source        {adapter, files[] {path, sha256}}
@@ -76,7 +78,7 @@ export function emptyRow() {
     timing: {
       wallMs: null, wallMsBounds: null, timeToFirstEffectMs: null, timeToDoneMs: null, startedAt: null, endedAt: null, stages: null,
       components: { modelMs: null, nonModelMs: null, toolMs: null, mockMs: null, waits: null },
-      concurrency: { configured: null, observedMax: null }, businessTime: { simulatedMs: null },
+      concurrency: { configured: null, observedMax: null }, businessTime: { simulatedMs: null }, deadline: null,
     },
     envFaults: null, refs: { build: null, setAsideOf: null, supersedes: null, supersededBy: null }, source: { adapter: null, files: [] }, provenance: {},
   };
@@ -150,6 +152,8 @@ export function validateClaimRow(row, { modelIds = null } = {}) {
   if (isNum(u.charged) && isNum(u.reported)) need(u.charged + 1e-9 >= u.reported, 'usd.charged must be >= usd.reported (the meter never books below what was reported)');
   if (isNum(u.charged) && isNum(u.repriced)) need(u.charged + 1e-9 >= u.repriced, 'usd.charged must be >= usd.repriced');
   if (u.observed === false && isNum(u.bound) && isNum(u.charged) && isInt(u.starts)) need(u.charged + 1e-9 >= u.bound, 'an unobserved row is charged at least its bound');
+  // §12: a start with no observed cost is charged at its bound, so it must carry one (a null bound would book it at $0).
+  if (u.observed === false) need(isNum(u.bound), 'an unobserved row needs a numeric usd.bound (the meter charges it at its bound)');
   // timing
   const t = row.timing ?? {};
   for (const k of ['wallMs', 'timeToFirstEffectMs', 'timeToDoneMs']) need(t[k] === null || isNonNeg(t[k]), `timing.${k} must be a non-negative number or null`);
@@ -164,6 +168,7 @@ export function validateClaimRow(row, { modelIds = null } = {}) {
   if (c.waits !== null && c.waits !== undefined) for (const k of ['rateLimitMs', 'retryAfterMs', 'queueMs', 'humanMs']) need(c.waits[k] === null || isNonNeg(c.waits[k]), `timing.components.waits.${k} invalid`);
   for (const k of ['configured', 'observedMax']) need(t.concurrency?.[k] === null || (isInt(t.concurrency?.[k]) && t.concurrency[k] >= 1), `timing.concurrency.${k} must be an integer >= 1 or null`);
   need(t.businessTime?.simulatedMs === null || isNonNeg(t.businessTime?.simulatedMs), 'timing.businessTime.simulatedMs must be non-negative or null');
+  if (t.deadline !== null && t.deadline !== undefined) need(isNonNeg(t.deadline.ms) && typeof t.deadline.hit === 'boolean', 'timing.deadline needs {ms >= 0, hit: boolean} or null');
   if (row.envFaults !== null) {
     need(Array.isArray(row.envFaults), 'envFaults must be an array or null');
     for (const f of row.envFaults ?? []) need(f && typeof f.code === 'string' && isInt(f.n) && f.n >= 1, `envFault ${JSON.stringify(f)} invalid`);

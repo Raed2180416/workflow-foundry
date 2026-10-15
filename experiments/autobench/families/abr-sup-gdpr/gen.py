@@ -145,7 +145,7 @@ TRAP_KIND = {
     "case-address": "T-format", "case-sender": "T-format", "keep-tags": "T-format", "no-tickets": "T-format",
     "id-in-body": "T-format", "backdated": "T-format",
     "re-request": "T-stale", "hold-lifted-row": "T-stale", "batch-changed": "T-stale",
-    "deadline": "T-timing", "deadline-weekend": "T-timing", "deadline-not-yet": "T-timing", "deadline-day": "T-timing",
+    "deadline": "T-timing", "deadline-late": "T-timing", "deadline-not-yet": "T-timing", "deadline-day": "T-timing",
     "hold-lift": "T-state", "hold-still": "T-state", "count-lift": "T-state",
 }
 BAD_TYPES = ["spoof-lookalike", "spoof-forward", "spoof-display", "spoof-colleague", "no-id", "late-reply",
@@ -222,7 +222,6 @@ class Gen:
         self.users: list[dict] = []         # world0 Zendesk users (end-users)
         self.tickets: list[dict] = []       # world0 Zendesk tickets
         self.requests: list[dict] = []      # every request (history, pre-seeded, this week)
-        self.log0: list[dict] = []          # world0 Compliance Log rows {cells, at}
         self.holds0: list[dict] = []        # world0 Legal Hold rows {cells}
         self.mail0: list[dict] = []         # world0 Gmail messages
         self.posts0: list[dict] = []        # world0 Slack messages
@@ -449,10 +448,6 @@ class Gen:
         self.requests.append(q)
         return q
 
-    def hist_rows(self, q: dict, rows: list[tuple[str, datetime, str]]):
-        for tr, at, ref in rows:
-            self.log0.append({"q": q, "Transition": tr, "at": at, "Reference": ref})
-
     def verification_body(self, q: dict) -> str:
         return (f"Hello {q['name'].split()[0]},\n\nWe received a request to erase your personal data (request {q['rid']}). "
                 f"To confirm it, reply to this email from this address and quote {q['rid']}.\n\nPrivacy Office")
@@ -495,7 +490,6 @@ class Gen:
             q = self.request(em, nm, mon - timedelta(days=ago), self.past(ago), "history", "hist-closed", u)
             self.hist_closed.append(q)
         hd = self.hist_purged[0]
-        ago = (mon - hd["date"]).days
         dup_at = hd["v_at"] + timedelta(days=1, minutes=r.randint(10, 200))
         if dup_at.date() >= mon:
             dup_at = self.past(1)
@@ -542,11 +536,8 @@ class Gen:
         n_deadline = {"d1": 1, "d2": r.randint(1, 2), "d3": 2}[d]
         self.pre_deadline = []
         for k in range(n_deadline):
-            if d3 and k == 0:
-                c, age = 0, r.choice([31, 32])           # day 30 fell on the weekend: closed at Monday's close
-            else:
-                c = r.randint(0, 3)
-                age = DEADLINE_DAYS - c
+            c = r.randint(1, 3)                           # pre-seeded requests are at most 29 days old on Monday
+            age = DEADLINE_DAYS - c
             u = self.pick_user() if r.random() < 0.6 else None
             q = pre("pre-deadline", age, u)
             q["close_day"] = c
@@ -577,7 +568,7 @@ class Gen:
         # ---------- this week's new requests
         n_nf = 2 if d3 else 1
         n_rereq = 1 if (d3 or (d2 and r.random() < 0.5)) else 0
-        n_back = 1 if d3 else 0
+        n_back = 2 if d3 else 0
         n_pending = C["req"] - n_purge - n_add_block - n_block_pre - n_nf - n_rereq - n_back
         while n_pending < 0:
             if n_back:
@@ -664,9 +655,8 @@ class Gen:
             self.rereq.append(week("re-request", None, email=hc["email"], name=hc["name"]))
             self.rereq[-1]["user"] = hc["user"]
         self.backdated = []
-        if n_back:
-            u = self.pick_user()
-            q = week("backdated", u)
+        for k in range(n_back):                                # postal letters entered with their own date
+            q = week("backdated" if k == 0 else "backdated-late", self.pick_user())
             q["source"] = "Postal letter (entered by staff)"
             self.backdated.append(q)
         self.pending = [week("pending", self.pick_user()) for _ in range(n_pending)]
@@ -712,11 +702,15 @@ class Gen:
         for q in self.notfound + self.rereq + self.pending:
             at_req(q, 0, 4, 16.5)
         for q in self.backdated:
-            e = r.randint(0, 1)
+            if q["story"] == "backdated":                     # day 30 falls later this week
+                e = r.randint(0, 1)
+                k = r.randint(26 + e, 29)
+            else:                                             # already past day 30 when entered: closed that day
+                e = r.randint(0, 3)
+                k = r.randint(31, 33)
             t = self.slot(self.day(e), self.day(e) + timedelta(hours=12), h_hi=12)
-            k = r.randint(26 + e, 29)
             q["sub_at"], q["date"] = t, t.date() - timedelta(days=k)
-            ev.append({"kind": "erasure.requested", "sub": "backdated", "at": t, "q": q})
+            ev.append({"kind": "erasure.requested", "sub": q["story"], "at": t, "q": q})
 
         # replies that verify (genuine)
         self.genuine = []
@@ -740,7 +734,6 @@ class Gen:
         for q in self.blocks:
             if q["story"] == "block-add":
                 th = self.slot(q["sub_at"] + timedelta(minutes=5), self.day(3) + timedelta(hours=12))
-                f, ln = q["name"].split(" ", 1)
                 hold = {"Email": q["email"], "Status": "Active", "q": q, "added_at": th}
                 ev.append({"kind": "legal_hold.changed", "sub": "hold-added", "at": th, "hold": hold, "op": "add"})
                 genuine(q, th + timedelta(minutes=15), fri_end - timedelta(minutes=30))
@@ -754,7 +747,6 @@ class Gen:
             q["lift_at"] = t
 
         # duplicates
-        dup_targets = []
         opens = [q for q in self.pending + self.pre_open + self.pre_verify if q["phase"] != "history"]
         purged_after = [q for q in self.purge]
         kinds = ["open", "purged", "blocked"]
@@ -938,7 +930,6 @@ class Gen:
 
     # -- canonical simulation (truth) ---------------------------------------------------------------------------------
     def simulate(self):
-        r = self.r
         self.events.sort(key=lambda e: (e["at"], e["kind"]))
         # state as the automation left it at world0
         S = {"users": {u["id"]: dict(u) for u in self.world_users},
@@ -1092,6 +1083,7 @@ class Gen:
                         labels.append("backdated")
                     asserts.append({"type": "zendesk_user_exists", "user_id": u["id"]})
                 intent = {"purge": VS, "block-add": VS, "block-pre": VS, "pending": VS, "re-request": VS, "backdated": VS,
+                          "backdated-late": VS,
                           "notfound": NOT_FOUND, "notfound-lookalike": NOT_FOUND}.get(q["story"], DUPLICATE)
                 if ex["log"][-1]["Transition"] != intent:
                     raise PlanError(f"{tid}: {q['story']} derived {ex['log'][-1]['Transition']}, planned {intent}")
@@ -1206,7 +1198,7 @@ class Gen:
                         mail(v["email"], subj_closed(x), x)
                         labels.append("deadline")
                         if age > DEADLINE_DAYS:
-                            labels.append("deadline-weekend")
+                            labels.append("deadline-late")
                     elif state(x) == VS and age == DEADLINE_DAYS - 1:
                         labels.append("deadline-not-yet")
                 n_p = sum(1 for x in S["log"] if x["Transition"] == PURGED and x["At"][:10] == e["date"])
@@ -1284,9 +1276,6 @@ class Gen:
         """Request rows, log rows, holds, config, Gmail and Slack history as the automation left them."""
         r = self.r
         mon = self.monday.date()
-        purged_users = set()
-        for q in self.hist_purged:
-            purged_users.add(q["email"])
         # Zendesk users present at world0: everyone generated (history-purged requesters were never users here)
         self.world_users = [u for u in self.users]
         self.req_cells0, rows = [], []

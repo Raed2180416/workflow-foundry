@@ -33,7 +33,7 @@
  ],
  "triggerKinds": {
   "erasure.requested": {"perWeek": [8, 12], "d1": [8, 8], "d2": [8, 10], "d3": [10, 12], "event": "google_sheets/new_row (Erasure Requests)",
-                        "note": "new requests: purge stories, a legal-hold story, not found (fresh or a look-alike address), pending, a re-request after Closed - Unverified, and at d3 a backdated postal request whose day 30 falls this week; pre-seeded requests from earlier weeks reach day 29 to 32 during the week"},
+                        "note": "new requests: purge stories, a legal-hold story, not found (fresh or a look-alike address), pending, a re-request after Closed - Unverified, and at d3 two backdated postal requests (day 30 later this week; already past day 30 on entry); pre-seeded open requests are at most 29 days old on Monday and reach day 30 during the week"},
   "verification.reply": {"perWeek": [6, 10], "d1": [6, 6], "d2": [6, 8], "d3": [8, 10], "event": "gmail/new_email (privacy inbox)",
                          "note": "genuine replies (some capitalized, some with a display name, some quoting the ID only deep in the body) and replies that verify nothing: d2 2, d3 4 (look-alike sender, forwarded from another address, display-name spoof, colleague, no ID, late after closure, repeated, wrong ID)"},
   "legal_hold.changed": {"perWeek": [1, 3], "d1": [1, 1], "d2": [1, 2], "d3": [2, 3], "event": "google_sheets/new_row or row_updated (Legal Hold)",
@@ -66,10 +66,10 @@
                "repeat-reply (a second confirmation after purge or block: nothing)", "late-reply (a confirmation after Closed - Unverified: nothing)"],
   "T-format": ["case-address / case-sender (capitalized addresses are the same address)", "keep-tags (purged tickets keep their other tags)",
                "no-tickets (Purged with Reference 'none')", "id-in-body (the Request ID only deep in the body, not in the subject or snippet)",
-               "backdated (d3: a postal request entered with an earlier Requested Date)"],
+               "backdated (d3: postal requests entered with an earlier Requested Date)"],
   "T-stale": ["re-request (an earlier request for the address ended Closed - Unverified: handled as new)", "hold-lifted-row (a Lifted hold row for the exact address: no hold)",
               "batch-changed (d3: Batch_Reference changes mid-week, with a Previous_Batch_Reference row above it)"],
-  "T-timing": ["deadline (Closed - Unverified at the first close with age >= 30)", "deadline-weekend (day 30 fell on a weekend: closed at Monday's close at age 31 or 32)",
+  "T-timing": ["deadline (Closed - Unverified at the first close with age >= 30)", "deadline-late (d3: a postal letter entered 31-33 days after its date: closed at that day's close, age above 30)",
                "deadline-not-yet (an open request at age 29: not closed)", "deadline-day (d3: verified on the morning of day 30: purged, not closed)"],
   "T-state": ["hold-lift (a hold lifted: the blocked request is purged at that trigger)", "hold-still (d3: one of two holds lifted: still held)",
               "count-lift (today's summary counts a hold-lift purge)"]

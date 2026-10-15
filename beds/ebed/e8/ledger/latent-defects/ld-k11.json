@@ -19,6 +19,13 @@
  "members": [
   "ref-k11"
  ],
+ "band": [
+  5,
+  4,
+  3,
+  2
+ ],
+ "outsideBand": null,
  "solver": {
   "policy": "beds/ebed/oracle/policy.mjs referenceArm",
   "timing": "earliest",
@@ -28,6 +35,7 @@
   "R1.1",
   "R3.2"
  ],
+ "revealedBy": "in-world event (planted)",
  "params": {
   "e0Epochs": [
    "gl",
@@ -46,874 +54,6 @@
   "failed": 0
  },
  "worlds": [
-  {
-   "world": "ebed-e8-dev-1101-d2-tail",
-   "seed": 1101,
-   "split": "dev",
-   "difficulty": 2,
-   "mix": "tail",
-   "generator": "1.0.0",
-   "journal": "cf2e994e65bada279cfe9969a891d08a63d2a890d38ecb97d620b99d46639924",
-   "inert": true,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019"
-    ],
-    "failed": 0,
-    "graded": true
-   },
-   "affected": []
-  },
-  {
-   "world": "ebed-e8-dev-1101-d3-tail",
-   "seed": 1101,
-   "split": "dev",
-   "difficulty": 3,
-   "mix": "tail",
-   "generator": "1.0.0",
-   "journal": "de1c3dd35d8da621acc0afac384a41a12ab372d4588237020b48a02876eb132b",
-   "inert": true,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0022",
-     "o0023",
-     "o0024",
-     "x0086",
-     "x0087"
-    ],
-    "failed": 0,
-    "graded": true
-   },
-   "affected": []
-  },
-  {
-   "world": "ebed-e8-dev-1101-d4-tail",
-   "seed": 1101,
-   "split": "dev",
-   "difficulty": 4,
-   "mix": "tail",
-   "generator": "1.0.0",
-   "journal": "43851dbc4a5bf42df9e28287477a69c5a1e308dd46d377b6b78b9f74b6d62a24",
-   "inert": false,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0012",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0023",
-     "o0024",
-     "o0025",
-     "o0026",
-     "o0027",
-     "o0028",
-     "o0029",
-     "o0030",
-     "o0031",
-     "o0032",
-     "o0033",
-     "o0034",
-     "o0035",
-     "x0108",
-     "x0109"
-    ],
-    "failed": 0,
-    "graded": true
-   },
-   "affected": [
-    {
-     "case": "o0011",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-07T23:32:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0054",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-07T23:38:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0055",
-     "epoch": "ep2",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-08T07:44:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0056",
-     "epoch": "ep2",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-08T14:04:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0057",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T15:06:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0058",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T17:41:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0059",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T19:53:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0061",
-     "epoch": "ep2",
-     "class": "action-late",
-     "pool": "completed",
-     "at": "2026-03-09T16:24:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.setStatus"
-    },
-    {
-     "case": "o0062",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-09T14:51:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0063",
-     "epoch": "ep2",
-     "class": "cancel-at-collection",
-     "pool": "completed",
-     "at": "2026-03-09T19:23:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0064",
-     "epoch": "ep2",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-09T19:28:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0065",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-09T21:41:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0066",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-10T01:58:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0067",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-10T06:26:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0068",
-     "epoch": "ep3",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-10T12:30:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0069",
-     "epoch": "ep3",
-     "class": "fraud-reject",
-     "pool": "completed",
-     "at": "2026-03-10T18:05:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0070",
-     "epoch": "ep3",
-     "class": "review-approve",
-     "pool": "completed",
-     "at": "2026-03-10T22:38:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0071",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-10T23:14:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0072",
-     "epoch": "ep3",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-11T00:35:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0073",
-     "epoch": "ep3",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-11T04:05:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0075",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-11T08:03:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0076",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-11T08:22:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0077",
-     "epoch": "ep3",
-     "class": "review-reject",
-     "pool": "completed",
-     "at": "2026-03-11T08:23:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0078",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-11T09:49:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0079",
-     "epoch": "ep3",
-     "class": "cancel-after-collection",
-     "pool": "completed",
-     "at": "2026-03-11T09:50:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0080",
-     "epoch": "ep3",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-11T10:04:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0081",
-     "epoch": "ep3",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-11T10:37:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0083",
-     "epoch": "ep3",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-11T16:07:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0085",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-12T02:08:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0086",
-     "epoch": "ep3",
-     "class": "review-approve",
-     "pool": "completed",
-     "at": "2026-03-12T02:32:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0087",
-     "epoch": "ep3",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-12T05:15:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0088",
-     "epoch": "ep3",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-12T11:16:00.000Z",
-     "layer": 3,
-     "code": "missed",
-     "lid": "fst:ORD-1101-0088-F1:cancelled",
-     "rule": "R3.2"
-    },
-    {
-     "case": "o0089",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-12T10:08:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0090",
-     "epoch": "ep3",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-12T13:28:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0091",
-     "epoch": "ep3",
-     "class": "fraud-reject",
-     "pool": "completed",
-     "at": "2026-03-12T13:44:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0093",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-12T17:15:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0094",
-     "epoch": "ep3",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-12T19:27:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0095",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-12T20:43:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0096",
-     "epoch": "ep3",
-     "class": "cancel-wait",
-     "pool": "completed",
-     "at": "2026-03-13T00:30:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0097",
-     "epoch": "ep3",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-13T02:04:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0098",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-13T06:57:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0099",
-     "epoch": "ep3",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-13T08:03:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0100",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "censored",
-     "at": "2026-03-13T08:12:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0102",
-     "epoch": "ep3",
-     "class": "fraud-reject",
-     "pool": "completed",
-     "at": "2026-03-13T17:59:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0103",
-     "epoch": "ep4",
-     "class": "straight",
-     "pool": "censored",
-     "at": "2026-03-14T02:20:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0105",
-     "epoch": "ep4",
-     "class": "cancel-after-collection",
-     "pool": "censored",
-     "at": "2026-03-14T05:58:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0106",
-     "epoch": "ep4",
-     "class": "cancel-at-collection",
-     "pool": "censored",
-     "at": "2026-03-14T08:30:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    }
-   ],
-   "reveal": {
-    "case": "o0011",
-    "class": "action-at-deadline",
-    "epoch": "ep2",
-    "observableAt": "2026-03-08T00:32:00+01:00",
-    "eventEpoch": "ep2",
-    "divergence": {
-     "case": "o0011",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-07T23:32:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    "event": {
-     "id": "rev-ld-k11-1101-d4",
-     "type": "customer.complaint",
-     "at": "2026-03-09T00:32:00+01:00",
-     "source": "customer-service",
-     "payload": {
-      "claimId": "rev-ld-k11-1101-d4",
-      "orderRef": "ORD-1101-0011",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0005@hollin-shop.example",
-      "text": "The order record for order ORD-1101-0011 is wrong (fulfilments, totalMinor)."
-     }
-    },
-    "truth": {
-     "valid": true,
-     "defect": "ld-k11",
-     "rule": "R1.1",
-     "hardness": "rulebook",
-     "reason": "the oracle fails o0011 at 2026-03-07T23:32:00.000Z (outside-allowed) on the defect's trajectory"
-    }
-   },
-   "falseReveal": {
-    "case": "o0092",
-    "class": "action-at-deadline",
-    "epoch": "ep2",
-    "eventEpoch": "ep2",
-    "event": {
-     "id": "inv-ld-k11-1101-d4",
-     "type": "customer.complaint",
-     "at": "2026-03-09T03:58:00+01:00",
-     "source": "customer-service",
-     "payload": {
-      "claimId": "inv-ld-k11-1101-d4",
-      "orderRef": "ORD-1101-0092",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0027@hollin-shop.example",
-      "text": "The order record for order ORD-1101-0092 is wrong (fulfilments, totalMinor)."
-     }
-    },
-    "truth": {
-     "valid": false,
-     "defect": "ld-k11",
-     "hardness": "rulebook",
-     "reason": "the oracle passes o0092 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
-    }
-   },
-   "sweep": {
-    "before": [
-     "o0011",
-     "o0054",
-     "o0055",
-     "o0056",
-     "o0057",
-     "o0058",
-     "o0059"
-    ],
-    "after": [
-     "o0062",
-     "o0061",
-     "o0063",
-     "o0064",
-     "o0065",
-     "o0066",
-     "o0067",
-     "o0068",
-     "o0069",
-     "o0070",
-     "o0071",
-     "o0072",
-     "o0073",
-     "o0075",
-     "o0076",
-     "o0077",
-     "o0078",
-     "o0079",
-     "o0080",
-     "o0081",
-     "o0083",
-     "o0085",
-     "o0086",
-     "o0087",
-     "o0089",
-     "o0088",
-     "o0090",
-     "o0091",
-     "o0093",
-     "o0094",
-     "o0095",
-     "o0096",
-     "o0097",
-     "o0098",
-     "o0099",
-     "o0100",
-     "o0102",
-     "o0103",
-     "o0105",
-     "o0106"
-    ]
-   },
-   "natural": []
-  },
   {
    "world": "ebed-e8-dev-1101-d5-tail",
    "seed": 1101,
@@ -2509,14 +1649,14 @@
    "natural": []
   },
   {
-   "world": "ebed-e8-dev-1102-d2-tail",
-   "seed": 1102,
+   "world": "ebed-e8-dev-1101-d4-tail",
+   "seed": 1101,
    "split": "dev",
-   "difficulty": 2,
+   "difficulty": 4,
    "mix": "tail",
    "generator": "1.0.0",
-   "journal": "f6087dcd855a5f3d104bfd89bda004319deb24cf270b032db4f29c71b3dbde0e",
-   "inert": true,
+   "journal": "43851dbc4a5bf42df9e28287477a69c5a1e308dd46d377b6b78b9f74b6d62a24",
+   "inert": false,
    "e0": {
     "checked": [
      "o0001",
@@ -2529,26 +1669,782 @@
      "o0008",
      "o0009",
      "o0010",
-     "o0011",
      "o0012",
-     "o0013",
      "o0014",
      "o0015",
-     "o0016"
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0032",
+     "o0033",
+     "o0034",
+     "o0035",
+     "x0108",
+     "x0109"
     ],
     "failed": 0,
     "graded": true
    },
-   "affected": []
+   "affected": [
+    {
+     "case": "o0011",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-07T23:32:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0054",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-07T23:38:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0055",
+     "epoch": "ep2",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-08T07:44:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0056",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-08T14:04:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0057",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T15:06:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0058",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T17:41:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0059",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T19:53:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0061",
+     "epoch": "ep2",
+     "class": "action-late",
+     "pool": "completed",
+     "at": "2026-03-09T16:24:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    {
+     "case": "o0062",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-09T14:51:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0063",
+     "epoch": "ep2",
+     "class": "cancel-at-collection",
+     "pool": "completed",
+     "at": "2026-03-09T19:23:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0064",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-09T19:28:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0065",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-09T21:41:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0066",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-10T01:58:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0067",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-10T06:26:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0068",
+     "epoch": "ep3",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-10T12:30:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0069",
+     "epoch": "ep3",
+     "class": "fraud-reject",
+     "pool": "completed",
+     "at": "2026-03-10T18:05:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0070",
+     "epoch": "ep3",
+     "class": "review-approve",
+     "pool": "completed",
+     "at": "2026-03-10T22:38:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0071",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-10T23:14:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0072",
+     "epoch": "ep3",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-11T00:35:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0073",
+     "epoch": "ep3",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-11T04:05:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0075",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-11T08:03:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0076",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-11T08:22:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0077",
+     "epoch": "ep3",
+     "class": "review-reject",
+     "pool": "completed",
+     "at": "2026-03-11T08:23:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0078",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-11T09:49:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0079",
+     "epoch": "ep3",
+     "class": "cancel-after-collection",
+     "pool": "completed",
+     "at": "2026-03-11T09:50:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0080",
+     "epoch": "ep3",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-11T10:04:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0081",
+     "epoch": "ep3",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-11T10:37:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0083",
+     "epoch": "ep3",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-11T16:07:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0085",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-12T02:08:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0086",
+     "epoch": "ep3",
+     "class": "review-approve",
+     "pool": "completed",
+     "at": "2026-03-12T02:32:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0087",
+     "epoch": "ep3",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-12T05:15:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0088",
+     "epoch": "ep3",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-12T11:16:00.000Z",
+     "layer": 3,
+     "code": "missed",
+     "lid": "fst:ORD-1101-0088-F1:cancelled",
+     "rule": "R3.2"
+    },
+    {
+     "case": "o0089",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-12T10:08:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0090",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-12T13:28:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0091",
+     "epoch": "ep3",
+     "class": "fraud-reject",
+     "pool": "completed",
+     "at": "2026-03-12T13:44:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0093",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-12T17:15:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0094",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-12T19:27:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0095",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-12T20:43:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0096",
+     "epoch": "ep3",
+     "class": "cancel-wait",
+     "pool": "completed",
+     "at": "2026-03-13T00:30:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0097",
+     "epoch": "ep3",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-13T02:04:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0098",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-13T06:57:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0099",
+     "epoch": "ep3",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-13T08:03:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0100",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "censored",
+     "at": "2026-03-13T08:12:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0102",
+     "epoch": "ep3",
+     "class": "fraud-reject",
+     "pool": "completed",
+     "at": "2026-03-13T17:59:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0103",
+     "epoch": "ep4",
+     "class": "straight",
+     "pool": "censored",
+     "at": "2026-03-14T02:20:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0105",
+     "epoch": "ep4",
+     "class": "cancel-after-collection",
+     "pool": "censored",
+     "at": "2026-03-14T05:58:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0106",
+     "epoch": "ep4",
+     "class": "cancel-at-collection",
+     "pool": "censored",
+     "at": "2026-03-14T08:30:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    }
+   ],
+   "reveal": {
+    "case": "o0011",
+    "class": "action-at-deadline",
+    "epoch": "ep2",
+    "observableAt": "2026-03-08T00:32:00+01:00",
+    "eventEpoch": "ep2",
+    "divergence": {
+     "case": "o0011",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-07T23:32:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    "event": {
+     "id": "rev-ld-k11-1101-d4",
+     "type": "customer.complaint",
+     "at": "2026-03-09T00:32:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "rev-ld-k11-1101-d4",
+      "orderRef": "ORD-1101-0011",
+      "assert": "wrong",
+      "subject": "order record",
+      "fields": [
+       "fulfilments",
+       "totalMinor"
+      ],
+      "from": "c0005@hollin-shop.example",
+      "text": "The order record for order ORD-1101-0011 is wrong (fulfilments, totalMinor)."
+     }
+    },
+    "truth": {
+     "valid": true,
+     "defect": "ld-k11",
+     "rule": "R1.1",
+     "hardness": "rulebook",
+     "reason": "the oracle fails o0011 at 2026-03-07T23:32:00.000Z (outside-allowed) on the defect's trajectory"
+    }
+   },
+   "falseReveal": {
+    "case": "o0092",
+    "class": "action-at-deadline",
+    "epoch": "ep2",
+    "eventEpoch": "ep2",
+    "event": {
+     "id": "inv-ld-k11-1101-d4",
+     "type": "customer.complaint",
+     "at": "2026-03-09T03:58:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "inv-ld-k11-1101-d4",
+      "orderRef": "ORD-1101-0092",
+      "assert": "wrong",
+      "subject": "order record",
+      "fields": [
+       "fulfilments",
+       "totalMinor"
+      ],
+      "from": "c0027@hollin-shop.example",
+      "text": "The order record for order ORD-1101-0092 is wrong (fulfilments, totalMinor)."
+     }
+    },
+    "truth": {
+     "valid": false,
+     "defect": "ld-k11",
+     "hardness": "rulebook",
+     "reason": "the oracle passes o0092 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
+    }
+   },
+   "sweep": {
+    "before": [
+     "o0011",
+     "o0054",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059"
+    ],
+    "after": [
+     "o0062",
+     "o0061",
+     "o0063",
+     "o0064",
+     "o0065",
+     "o0066",
+     "o0067",
+     "o0068",
+     "o0069",
+     "o0070",
+     "o0071",
+     "o0072",
+     "o0073",
+     "o0075",
+     "o0076",
+     "o0077",
+     "o0078",
+     "o0079",
+     "o0080",
+     "o0081",
+     "o0083",
+     "o0085",
+     "o0086",
+     "o0087",
+     "o0089",
+     "o0088",
+     "o0090",
+     "o0091",
+     "o0093",
+     "o0094",
+     "o0095",
+     "o0096",
+     "o0097",
+     "o0098",
+     "o0099",
+     "o0100",
+     "o0102",
+     "o0103",
+     "o0105",
+     "o0106"
+    ]
+   },
+   "natural": []
   },
   {
-   "world": "ebed-e8-dev-1102-d3-tail",
-   "seed": 1102,
+   "world": "ebed-e8-dev-1101-d3-tail",
+   "seed": 1101,
    "split": "dev",
    "difficulty": 3,
    "mix": "tail",
    "generator": "1.0.0",
-   "journal": "fd40713377a7c6c26678bf8fefe3297121172aa6f21ccfee9a88ca2de4459b4d",
+   "journal": "de1c3dd35d8da621acc0afac384a41a12ab372d4588237020b48a02876eb132b",
    "inert": true,
    "e0": {
     "checked": [
@@ -2576,6 +2472,7 @@
      "o0022",
      "o0023",
      "o0024",
+     "x0086",
      "x0087"
     ],
     "failed": 0,
@@ -2584,14 +2481,14 @@
    "affected": []
   },
   {
-   "world": "ebed-e8-dev-1102-d4-tail",
-   "seed": 1102,
+   "world": "ebed-e8-dev-1101-d2-tail",
+   "seed": 1101,
    "split": "dev",
-   "difficulty": 4,
+   "difficulty": 2,
    "mix": "tail",
    "generator": "1.0.0",
-   "journal": "1c0626d6534a826947b85a67ff455117cec976f4e7a09711da297095ed4af59f",
-   "inert": false,
+   "journal": "cf2e994e65bada279cfe9969a891d08a63d2a890d38ecb97d620b99d46639924",
+   "inert": true,
    "e0": {
     "checked": [
      "o0001",
@@ -2612,833 +2509,12 @@
      "o0016",
      "o0017",
      "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0022",
-     "o0023",
-     "x0107",
-     "x0108"
+     "o0019"
     ],
     "failed": 0,
     "graded": true
    },
-   "affected": [
-    {
-     "case": "o0046",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-08T03:32:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0047",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-08T05:24:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0048",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T08:31:00.000Z",
-     "layer": 3,
-     "code": "missed",
-     "lid": "fst:ORD-1102-0048-F1:cancelled",
-     "rule": "R3.2"
-    },
-    {
-     "case": "o0049",
-     "epoch": "ep2",
-     "class": "review-approve",
-     "pool": "completed",
-     "at": "2026-03-08T07:11:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0050",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-08T08:16:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0051",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T10:04:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0052",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T12:40:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0053",
-     "epoch": "ep2",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-08T22:11:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0054",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T22:42:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0055",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-09T03:11:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0056",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-09T09:59:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0057",
-     "epoch": "ep2",
-     "class": "cancel-after-collection",
-     "pool": "completed",
-     "at": "2026-03-09T10:18:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0058",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T03:31:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0059",
-     "epoch": "ep2",
-     "class": "review-approve",
-     "pool": "completed",
-     "at": "2026-03-09T17:18:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0060",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-09T19:16:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0061",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-10T02:15:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0063",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-10T04:57:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0064",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-10T09:40:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0065",
-     "epoch": "ep3",
-     "class": "fraud-reject",
-     "pool": "completed",
-     "at": "2026-03-10T10:05:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0066",
-     "epoch": "ep3",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-10T15:25:00.000Z",
-     "layer": 3,
-     "code": "missed",
-     "lid": "fst:ORD-1102-0066-F1:cancelled",
-     "rule": "R3.2"
-    },
-    {
-     "case": "o0068",
-     "epoch": "ep3",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-10T16:45:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0069",
-     "epoch": "ep3",
-     "class": "amend-then-cancel",
-     "pool": "completed",
-     "at": "2026-03-10T17:01:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0070",
-     "epoch": "ep3",
-     "class": "cancel-after-collection",
-     "pool": "completed",
-     "at": "2026-03-11T01:38:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0071",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-07T23:48:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0072",
-     "epoch": "ep3",
-     "class": "review-timeout",
-     "pool": "completed",
-     "at": "2026-03-11T04:23:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0073",
-     "epoch": "ep3",
-     "class": "cancel-at-collection",
-     "pool": "completed",
-     "at": "2026-03-11T04:29:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0074",
-     "epoch": "ep3",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-11T06:27:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0076",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-11T13:09:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0078",
-     "epoch": "ep3",
-     "class": "review-approve",
-     "pool": "completed",
-     "at": "2026-03-11T20:54:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0079",
-     "epoch": "ep3",
-     "class": "action-late",
-     "pool": "completed",
-     "at": "2026-03-11T21:19:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0081",
-     "epoch": "ep3",
-     "class": "amend-then-cancel",
-     "pool": "completed",
-     "at": "2026-03-12T08:08:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0082",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-12T08:45:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0083",
-     "epoch": "ep3",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-12T10:45:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0084",
-     "epoch": "ep3",
-     "class": "action-late",
-     "pool": "completed",
-     "at": "2026-03-12T14:58:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.setStatus"
-    },
-    {
-     "case": "o0085",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-12T12:59:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0086",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "censored",
-     "at": "2026-03-12T14:10:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0087",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "censored",
-     "at": "2026-03-12T16:15:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0088",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-12T16:30:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0089",
-     "epoch": "ep3",
-     "class": "action-late",
-     "pool": "completed",
-     "at": "2026-03-12T21:23:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0090",
-     "epoch": "ep3",
-     "class": "cancel-wait",
-     "pool": "completed",
-     "at": "2026-03-12T21:28:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0091",
-     "epoch": "ep3",
-     "class": "fraud-reject",
-     "pool": "completed",
-     "at": "2026-03-12T23:10:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0092",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-13T02:44:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0093",
-     "epoch": "ep3",
-     "class": "review-approve",
-     "pool": "censored",
-     "at": "2026-03-13T03:54:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0094",
-     "epoch": "ep3",
-     "class": "cancel-after-collection",
-     "pool": "censored",
-     "at": "2026-03-13T12:10:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0095",
-     "epoch": "ep3",
-     "class": "cancel-after-collection",
-     "pool": "censored",
-     "at": "2026-03-13T13:11:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0096",
-     "epoch": "ep3",
-     "class": "straight",
-     "pool": "censored",
-     "at": "2026-03-13T17:23:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0097",
-     "epoch": "ep4",
-     "class": "straight",
-     "pool": "censored",
-     "at": "2026-03-13T20:52:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0098",
-     "epoch": "ep4",
-     "class": "fraud-reject",
-     "pool": "completed",
-     "at": "2026-03-13T22:33:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0102",
-     "epoch": "ep4",
-     "class": "straight",
-     "pool": "censored",
-     "at": "2026-03-14T02:06:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0103",
-     "epoch": "ep4",
-     "class": "fraud-reject",
-     "pool": "completed",
-     "at": "2026-03-14T03:34:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0106",
-     "epoch": "ep4",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-14T07:14:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    }
-   ],
-   "reveal": {
-    "case": "o0071",
-    "class": "timeout",
-    "epoch": "ep2",
-    "observableAt": "2026-03-08T00:48:00+01:00",
-    "eventEpoch": "ep2",
-    "divergence": {
-     "case": "o0071",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-07T23:48:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    "event": {
-     "id": "rev-ld-k11-1102-d4",
-     "type": "customer.complaint",
-     "at": "2026-03-09T00:48:00+01:00",
-     "source": "customer-service",
-     "payload": {
-      "claimId": "rev-ld-k11-1102-d4",
-      "orderRef": "ORD-1102-0071",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0025@hollin-shop.example",
-      "text": "The order record for order ORD-1102-0071 is wrong (fulfilments, totalMinor)."
-     }
-    },
-    "truth": {
-     "valid": true,
-     "defect": "ld-k11",
-     "rule": "R1.1",
-     "hardness": "rulebook",
-     "reason": "the oracle fails o0071 at 2026-03-07T23:48:00.000Z (outside-allowed) on the defect's trajectory"
-    }
-   },
-   "falseReveal": {
-    "case": "o0100",
-    "class": "timeout",
-    "epoch": "ep2",
-    "eventEpoch": "ep2",
-    "event": {
-     "id": "inv-ld-k11-1102-d4",
-     "type": "customer.complaint",
-     "at": "2026-03-09T03:33:00+01:00",
-     "source": "customer-service",
-     "payload": {
-      "claimId": "inv-ld-k11-1102-d4",
-      "orderRef": "ORD-1102-0100",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0036@hollin-shop.example",
-      "text": "The order record for order ORD-1102-0100 is wrong (fulfilments, totalMinor)."
-     }
-    },
-    "truth": {
-     "valid": false,
-     "defect": "ld-k11",
-     "hardness": "rulebook",
-     "reason": "the oracle passes o0100 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
-    }
-   },
-   "sweep": {
-    "before": [
-     "o0071",
-     "o0058",
-     "o0046",
-     "o0047",
-     "o0049",
-     "o0050",
-     "o0048",
-     "o0051",
-     "o0052",
-     "o0053",
-     "o0054"
-    ],
-    "after": [
-     "o0055",
-     "o0056",
-     "o0057",
-     "o0059",
-     "o0060",
-     "o0061",
-     "o0063",
-     "o0064",
-     "o0065",
-     "o0066",
-     "o0068",
-     "o0069",
-     "o0070",
-     "o0072",
-     "o0073",
-     "o0074",
-     "o0076",
-     "o0078",
-     "o0079",
-     "o0081",
-     "o0082",
-     "o0083",
-     "o0085",
-     "o0086",
-     "o0084",
-     "o0087",
-     "o0088",
-     "o0089",
-     "o0090",
-     "o0091",
-     "o0092",
-     "o0093",
-     "o0094",
-     "o0095",
-     "o0096",
-     "o0097",
-     "o0098",
-     "o0102",
-     "o0103",
-     "o0106"
-    ]
-   },
-   "natural": []
+   "affected": []
   },
   {
    "world": "ebed-e8-dev-1102-d5-tail",
@@ -4971,6 +4047,938 @@
     ]
    },
    "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d4-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 4,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "1c0626d6534a826947b85a67ff455117cec976f4e7a09711da297095ed4af59f",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "x0107",
+     "x0108"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0046",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T03:32:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0047",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T05:24:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0048",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T08:31:00.000Z",
+     "layer": 3,
+     "code": "missed",
+     "lid": "fst:ORD-1102-0048-F1:cancelled",
+     "rule": "R3.2"
+    },
+    {
+     "case": "o0049",
+     "epoch": "ep2",
+     "class": "review-approve",
+     "pool": "completed",
+     "at": "2026-03-08T07:11:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0050",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T08:16:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0051",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T10:04:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0052",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T12:40:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0053",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-08T22:11:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0054",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T22:42:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0055",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-09T03:11:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0056",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-09T09:59:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0057",
+     "epoch": "ep2",
+     "class": "cancel-after-collection",
+     "pool": "completed",
+     "at": "2026-03-09T10:18:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0058",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T03:31:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0059",
+     "epoch": "ep2",
+     "class": "review-approve",
+     "pool": "completed",
+     "at": "2026-03-09T17:18:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0060",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-09T19:16:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0061",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-10T02:15:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0063",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-10T04:57:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0064",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-10T09:40:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0065",
+     "epoch": "ep3",
+     "class": "fraud-reject",
+     "pool": "completed",
+     "at": "2026-03-10T10:05:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0066",
+     "epoch": "ep3",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-10T15:25:00.000Z",
+     "layer": 3,
+     "code": "missed",
+     "lid": "fst:ORD-1102-0066-F1:cancelled",
+     "rule": "R3.2"
+    },
+    {
+     "case": "o0068",
+     "epoch": "ep3",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-10T16:45:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0069",
+     "epoch": "ep3",
+     "class": "amend-then-cancel",
+     "pool": "completed",
+     "at": "2026-03-10T17:01:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0070",
+     "epoch": "ep3",
+     "class": "cancel-after-collection",
+     "pool": "completed",
+     "at": "2026-03-11T01:38:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0071",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-07T23:48:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0072",
+     "epoch": "ep3",
+     "class": "review-timeout",
+     "pool": "completed",
+     "at": "2026-03-11T04:23:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0073",
+     "epoch": "ep3",
+     "class": "cancel-at-collection",
+     "pool": "completed",
+     "at": "2026-03-11T04:29:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0074",
+     "epoch": "ep3",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-11T06:27:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0076",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-11T13:09:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0078",
+     "epoch": "ep3",
+     "class": "review-approve",
+     "pool": "completed",
+     "at": "2026-03-11T20:54:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0079",
+     "epoch": "ep3",
+     "class": "action-late",
+     "pool": "completed",
+     "at": "2026-03-11T21:19:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0081",
+     "epoch": "ep3",
+     "class": "amend-then-cancel",
+     "pool": "completed",
+     "at": "2026-03-12T08:08:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0082",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-12T08:45:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0083",
+     "epoch": "ep3",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-12T10:45:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0084",
+     "epoch": "ep3",
+     "class": "action-late",
+     "pool": "completed",
+     "at": "2026-03-12T14:58:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.setStatus"
+    },
+    {
+     "case": "o0085",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-12T12:59:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0086",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "censored",
+     "at": "2026-03-12T14:10:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0087",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "censored",
+     "at": "2026-03-12T16:15:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0088",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-12T16:30:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0089",
+     "epoch": "ep3",
+     "class": "action-late",
+     "pool": "completed",
+     "at": "2026-03-12T21:23:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0090",
+     "epoch": "ep3",
+     "class": "cancel-wait",
+     "pool": "completed",
+     "at": "2026-03-12T21:28:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0091",
+     "epoch": "ep3",
+     "class": "fraud-reject",
+     "pool": "completed",
+     "at": "2026-03-12T23:10:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0092",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-13T02:44:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0093",
+     "epoch": "ep3",
+     "class": "review-approve",
+     "pool": "censored",
+     "at": "2026-03-13T03:54:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0094",
+     "epoch": "ep3",
+     "class": "cancel-after-collection",
+     "pool": "censored",
+     "at": "2026-03-13T12:10:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0095",
+     "epoch": "ep3",
+     "class": "cancel-after-collection",
+     "pool": "censored",
+     "at": "2026-03-13T13:11:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0096",
+     "epoch": "ep3",
+     "class": "straight",
+     "pool": "censored",
+     "at": "2026-03-13T17:23:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0097",
+     "epoch": "ep4",
+     "class": "straight",
+     "pool": "censored",
+     "at": "2026-03-13T20:52:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0098",
+     "epoch": "ep4",
+     "class": "fraud-reject",
+     "pool": "completed",
+     "at": "2026-03-13T22:33:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0102",
+     "epoch": "ep4",
+     "class": "straight",
+     "pool": "censored",
+     "at": "2026-03-14T02:06:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    },
+    {
+     "case": "o0103",
+     "epoch": "ep4",
+     "class": "fraud-reject",
+     "pool": "completed",
+     "at": "2026-03-14T03:34:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    {
+     "case": "o0106",
+     "epoch": "ep4",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-14T07:14:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create",
+     "critical": [
+      "money-outside-allowed",
+      "money-outside-allowed"
+     ]
+    }
+   ],
+   "reveal": {
+    "case": "o0071",
+    "class": "timeout",
+    "epoch": "ep2",
+    "observableAt": "2026-03-08T00:48:00+01:00",
+    "eventEpoch": "ep2",
+    "divergence": {
+     "case": "o0071",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-07T23:48:00.000Z",
+     "layer": 2,
+     "code": "outside-allowed",
+     "effect": "orders.create"
+    },
+    "event": {
+     "id": "rev-ld-k11-1102-d4",
+     "type": "customer.complaint",
+     "at": "2026-03-09T00:48:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "rev-ld-k11-1102-d4",
+      "orderRef": "ORD-1102-0071",
+      "assert": "wrong",
+      "subject": "order record",
+      "fields": [
+       "fulfilments",
+       "totalMinor"
+      ],
+      "from": "c0025@hollin-shop.example",
+      "text": "The order record for order ORD-1102-0071 is wrong (fulfilments, totalMinor)."
+     }
+    },
+    "truth": {
+     "valid": true,
+     "defect": "ld-k11",
+     "rule": "R1.1",
+     "hardness": "rulebook",
+     "reason": "the oracle fails o0071 at 2026-03-07T23:48:00.000Z (outside-allowed) on the defect's trajectory"
+    }
+   },
+   "falseReveal": {
+    "case": "o0100",
+    "class": "timeout",
+    "epoch": "ep2",
+    "eventEpoch": "ep2",
+    "event": {
+     "id": "inv-ld-k11-1102-d4",
+     "type": "customer.complaint",
+     "at": "2026-03-09T03:33:00+01:00",
+     "source": "customer-service",
+     "payload": {
+      "claimId": "inv-ld-k11-1102-d4",
+      "orderRef": "ORD-1102-0100",
+      "assert": "wrong",
+      "subject": "order record",
+      "fields": [
+       "fulfilments",
+       "totalMinor"
+      ],
+      "from": "c0036@hollin-shop.example",
+      "text": "The order record for order ORD-1102-0100 is wrong (fulfilments, totalMinor)."
+     }
+    },
+    "truth": {
+     "valid": false,
+     "defect": "ld-k11",
+     "hardness": "rulebook",
+     "reason": "the oracle passes o0100 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
+    }
+   },
+   "sweep": {
+    "before": [
+     "o0071",
+     "o0058",
+     "o0046",
+     "o0047",
+     "o0049",
+     "o0050",
+     "o0048",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054"
+    ],
+    "after": [
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0059",
+     "o0060",
+     "o0061",
+     "o0063",
+     "o0064",
+     "o0065",
+     "o0066",
+     "o0068",
+     "o0069",
+     "o0070",
+     "o0072",
+     "o0073",
+     "o0074",
+     "o0076",
+     "o0078",
+     "o0079",
+     "o0081",
+     "o0082",
+     "o0083",
+     "o0085",
+     "o0086",
+     "o0084",
+     "o0087",
+     "o0088",
+     "o0089",
+     "o0090",
+     "o0091",
+     "o0092",
+     "o0093",
+     "o0094",
+     "o0095",
+     "o0096",
+     "o0097",
+     "o0098",
+     "o0102",
+     "o0103",
+     "o0106"
+    ]
+   },
+   "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d3-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 3,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "fd40713377a7c6c26678bf8fefe3297121172aa6f21ccfee9a88ca2de4459b4d",
+   "inert": true,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "o0024",
+     "x0087"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d2-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 2,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "f6087dcd855a5f3d104bfd89bda004319deb24cf270b032db4f29c71b3dbde0e",
+   "inert": true,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": []
   }
  ]
 }

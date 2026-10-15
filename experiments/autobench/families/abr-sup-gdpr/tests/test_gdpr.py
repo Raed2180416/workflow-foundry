@@ -45,7 +45,7 @@ ONE_DEFECT = {
     "skip-verified": {"verification.reply"},
     "no-dedupe": {"duplicate-open", "duplicate-blocked", "duplicate-purged"},
     "dedupe-any": {"re-request"},
-    "exact-deadline": {"deadline-weekend"},
+    "exact-deadline": {"deadline-late"},
     "late-deadline": {"deadline"},
     "count-all": {"day.close"},
     "stale-batch": {"day.close"},
@@ -103,8 +103,16 @@ def test_trap_coverage_on_dev_label_streams():
 
 
 def test_pre_seeded_requests_reach_the_deadline(streams):
-    """Pre-seeded requests reach day 29 to 32 during the week, and every stream closes at least one."""
+    """The spec: pre-seeded open requests are at most 29 days old when the week starts and reach day 30 during it;
+    every stream closes at least one request, and only at a daily close."""
+    from datetime import date
     for out in streams.values():
+        mon = date.fromisoformat(out["end"]["week_start"])
+        states = {}
+        for c in out["end"]["log0"]:
+            states[c["Request ID"]] = c["Transition"]
+        ages = [(mon - date.fromisoformat(v["date"])).days for rid, v in out["end"]["requests"].items() if states.get(rid) == gen.VS]
+        assert ages and max(ages) <= 29, ages
         closes = [t for t in out["truth"] if any(x["Transition"] == gen.CLOSED for x in t["expect"]["log"])]
         assert closes, out["meta"]
         assert all(t["kind"] == "day.close" for t in closes)

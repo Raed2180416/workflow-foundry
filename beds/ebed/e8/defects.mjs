@@ -517,7 +517,7 @@ export function baseDigests() {
  * One latent defect's manifest. `results` are the mined worlds of the representative mutant (mineOnWorld with keep), with
  * `plan` from planReveal on each; `members` the mutants with the same behaviour on every mining world.
  */
-export function defectManifest({ id, mutant, members, results, oracleVerdict = null, band = null, outsideBand = null }) {
+export function defectManifest({ id, mutant, members, membersBand = {}, results, oracleVerdict = null, band = null, outsideBand = null }) {
   const rules = new Set();
   for (const r of results) for (const a of r.affected) if (a.rule) rules.add(a.rule);
   for (const r of results) if (r.plan?.reveal?.truth?.rule) rules.add(r.plan.reveal.truth.rule);
@@ -531,6 +531,7 @@ export function defectManifest({ id, mutant, members, results, oracleVerdict = n
         : { file: 'beds/ebed/e8/defects.mjs', candidate: mutant.candidate, origin: mutant.origin }),
       ...(oracleVerdict ? { asOracleMutant: oracleVerdict } : {}) },
     members,
+    ...(Object.keys(membersBand).length ? { membersBand } : {}),
     ...(band ? { band, outsideBand } : {}),
     solver: { policy: 'beds/ebed/oracle/policy.mjs referenceArm', timing: PARAMS.timing, oracle: 'original transition.mjs' },
     contradicts: [...rules].sort(),

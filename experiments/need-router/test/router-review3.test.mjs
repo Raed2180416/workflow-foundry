@@ -135,6 +135,8 @@ test('R3 a probe must name its probeable modes, the bundle\'s draws, its signal 
   assert.ok(tamper(c => { c.probe.observations['construct-H'] = { passes: 1, n: 1, signal: 'schemaValid', rows: [`${id}|construct-H|0`] }; }).problems.some(p => /not a probeable mode/.test(p)));
   assert.ok(tamper(c => { delete c.probe.observations['agent-H']; }).problems.some(p => /name different modes/.test(p)));
   assert.equal(tamper(c => { c.probe.modes = ['construct-H']; }).ok, false);
+  assert.ok(tamper(c => { c.job.id = 'another-job'; }).problems.some(p => /probe rows are .*'s, not another-job's/.test(p)), 'a card\'s probe rows name its own job');
+  assert.throws(() => decisionCard(R, { ...j, id: undefined }, HEADLINE, { probe: pr }), /needs the job id its probe rows name/);
   // probeFromRows reads label-run's need-probe-row/1 rows (deployable signals only); verifyProbeRows checks a card against them.
   const row = (mode, draw, extra = {}) => ({ schema: 'need-probe-row/1', job: id, mode, draw, delivered: true, schemaValid: true, deployableVerdict: 'pass', outputHash: `h${draw}`, usdReported: 0.03, usdRepriced: 0.028, usdImputed: 0, ...extra });
   const rows = [row('direct-H', 0, { outputHash: 'same' }), row('direct-H', 1, { outputHash: 'same' }), row('agent-H', 0, { schemaValid: false, deployableVerdict: 'fail', usdReported: 0.1, usdRepriced: 0.11 })];

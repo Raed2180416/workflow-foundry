@@ -5,6 +5,7 @@
 // computed from it, and the files' sha256 are recorded. When it does not, those fields are missing.
 // No AB-v1 test task is opened: only dev-train runs and runs made before the split are read (their result rows, not tasks).
 import { existsSync, readdirSync } from 'node:fs';
+import { loadSplit } from '../../autobench/split.mjs';   // read-only import (AB-v1 file; never edited here)
 import { originOf } from '../origin.mjs';
 import { chargeOf } from '../meter.mjs';
 import { P, baseRow, readJson, readJsonl, observedMax, iso, abs } from './util.mjs';
@@ -14,11 +15,24 @@ const RUNS = 'research/automationbench-20261014/runs';
 // mutating methods, as experiments/autobench/accounting.mjs MUTATING (checked equal by test; that file is read-only here)
 export const MUTATING = Object.freeze(['POST', 'PUT', 'PATCH', 'DELETE']);
 /**
- * Finished runs under runs/ (depth <= 2): a summary.json with finishedAt and a results.jsonl. A run that holds AB-v1 test
- * tasks (summary.testSplitTasks > 0) is skipped and reported, never read: F programs use dev-train only (PREREG-AB-v1 §1.3).
+ * Whether every task a run names (summary.json `tasks`, read before results.jsonl) is a dev-train task: in SPLIT-v1's dev
+ * list and not in its devCheck list (devCheck is sealed until the go/no-go), or one of the unscored `simple.*` sanity tasks.
+ * Runs made before the split carry no testSplitTasks field, so the split itself is the guard, not that field.
+ */
+export function devTrainOnly(tasks, split = loadSplit()) {
+  if (!Array.isArray(tasks) || !tasks.length) return false;
+  const dev = new Set(split.dev), devCheck = new Set(split.devCheck);
+  return tasks.every(t => typeof t === 'string' && (t.startsWith('simple.') || (dev.has(t) && !devCheck.has(t))));
+}
+/**
+ * Finished runs under runs/ (depth <= 2): a summary.json with finishedAt and a results.jsonl. A run is skipped and
+ * reported, never read, when it is sealed, holds AB-v1 test tasks, or names any task outside dev-train (PREREG-AB-v1 §1.3,
+ * AM-4: F programs use dev-train only). A run with k > 1 is skipped too: its per-task verdict is the fork vote
+ * (results.jsonl final), which this adapter does not map onto per-fork rows (unsupported, so rejected, not flattened).
  */
 export function discoverRuns() {
   const found = [], skipped = [];
+  const split = loadSplit();
   const walk = (dir, depth) => {
     for (const e of readdirSync(abs(dir), { withFileTypes: true })) {
       if (!e.isDirectory()) continue;
@@ -26,7 +40,9 @@ export function discoverRuns() {
       if (existsSync(abs(`${d}/summary.json`)) && existsSync(abs(`${d}/results.jsonl`))) {
         const s = readJson(`${d}/summary.json`);
         if (!s.finishedAt) skipped.push({ dir: d, why: 'not finished (no finishedAt)' });
-        else if ((s.testSplitTasks ?? 0) > 0 || s.sealed === true) skipped.push({ dir: d, why: 'holds AB-v1 test tasks: never read' });
+        else if ((s.testSplitTasks ?? 0) > 0 || s.sealed === true) skipped.push({ dir: d, why: 'sealed or holds AB-v1 test tasks: never read' });
+        else if (!devTrainOnly(s.tasks, split)) skipped.push({ dir: d, why: 'names a task outside dev-train (SPLIT-v1 dev minus devCheck): never read' });
+        else if ((s.k ?? 1) > 1) skipped.push({ dir: d, why: `k = ${s.k}: per-fork rows from a voted final verdict are not supported by ${ADAPTER}` });
         else found.push(d.slice(RUNS.length + 1));
       } else if (depth < 2) walk(d, depth + 1);
     }
@@ -70,12 +86,16 @@ export function rows({ live = true, runs = discoverRuns().runs } = {}) {
   for (const d of runs) {
     const sFile = `${RUNS}/${d}/summary.json`, rFile = `${RUNS}/${d}/results.jsonl`;
     const s = readJson(sFile), rs = readJsonl(rFile);
+    const named = new Set(s.tasks ?? []);
+    if (rs.some(x => !named.has(x.task))) throw new Error(`${d}: results.jsonl holds a task its summary.json does not name; refusing to read it`);
+    if ((s.k ?? 1) > 1) throw new Error(`${d}: k = ${s.k} is not supported by ${ADAPTER} (the task verdict is the fork vote)`);
     const arm = armOf(s), scripted = !!s.scripted;
     const prov = s.provenance ?? {};
     const hashes = Object.fromEntries(Object.entries({ automationbench: prov.automationbenchCommit, uvLock: prov.uvLockSha256, bridge: prov.bridgeSha256,
       toolClient: prov.toolClientSha256, runner: prov.runnerSha256, policy: prov.policyHash, policyFile: prov.policyFileSha256, accounting: prov.accountingSha256,
       harnessManifest: prov.harnessManifestSha256 }).filter(([, v]) => v));
-    const forks = rs.flatMap(x => (x.forks ?? []).map(f => {
+    // A fork refused by the run's cap before launch (forks[].skipped) is not a start: no row, no charge.
+    const forks = rs.flatMap(x => (x.forks ?? []).filter(f => !f.skipped).map(f => {
       const got = live && s.live ? liveFork(`${s.live}/host/${x.task}/fork-${f.fork}`) : null;
       return { x, f, lv: got?.incomplete ? null : got, why: got?.incomplete ?? null };
     }));
@@ -91,7 +111,7 @@ export function rows({ live = true, runs = discoverRuns().runs } = {}) {
       r.provenance['origin.class'] = P.computed(`bed registry (origin.mjs BEDS.automationbench): ${o.why}`);
       r.provenance.fidelity = P.computed('AutomationBench apps are M1 relative to their vendors (FIRST-CLASS-PROGRAMS §5.4); no S5 manifest yet');
       r.evidence = { class: evidence, K: s.k ?? 1 };
-      r.provenance['evidence.class'] = P.copied(`summary.json evidence ("${s.evidence}")${evidence === 'diagnostic' ? '; scripted or sanity runs are diagnostic' : ''}`);
+      r.provenance['evidence.class'] = P.computed(`summary.json evidence ("${s.evidence}") read as development${evidence === 'diagnostic' ? ', except scripted or sanity runs, which are diagnostic' : ''}`);
       r.models = scripted ? [] : [{ role: 'executor', id: s.model }];
       r.provenance.models = P.copied(scripted ? 'summary.json scripted: true (no model)' : 'summary.json model');
       r.harness = { id: s.harness?.id ?? (s.arm ? 'none (A0)' : 'none (raw runner)'), version: s.harness?.version ?? null, hashes };
@@ -112,13 +132,13 @@ export function rows({ live = true, runs = discoverRuns().runs } = {}) {
       // dollars
       const bound = scripted ? 0 : (s.budgetUsdPerSession ?? null);
       const m = chargeOf({ reportedUsd: f.costUsd ?? 0, costUnknown: !!f.costUnknown, errorCode: f.sessionError ?? null }, bound ?? 0);
-      Object.assign(r.usd, { run: f.costUsd ?? null, build: null, reported: f.costUsd ?? null, repriced: null, bound, starts: 1, charged: m.charged, observed: m.observed, imputed: m.imputed, world: 0 });
+      Object.assign(r.usd, { run: f.costUsd ?? null, build: null, reported: f.costUsd ?? null, repriced: null, bound, starts: 1, charged: m.charged, observed: m.observed, imputed: m.imputed, world: null });
       r.provenance['usd.reported'] = P.copied('results.jsonl forks[].costUsd');
       r.provenance['usd.repriced'] = P.missing('session tokens are in the live transcript only; not re-priced in the back-fill');
       r.provenance['usd.bound'] = scripted ? P.computed('scripted: no model call, bound $0') : P.copied('summary.json budgetUsdPerSession');
       r.provenance['usd.charged'] = P.computed('§12 meter (meter.mjs chargeOf): observed cost at max(reported, re-priced); costUnknown or no cost at the session bound');
       r.provenance['usd.build'] = P.na(s.harness ? 'the A1 harness is hand-written, not built per task; its authoring cost is not a per-row cost' : 'no build in this arm');
-      r.provenance['usd.world'] = P.computed('third-party world, acquired as a shallow clone (research/automationbench-20261014/ACQUISITION.md); a clone makes no model call, so its cost to us is $0');
+      r.provenance['usd.world'] = P.missing('the third-party apps came as a $0 shallow clone (research/automationbench-20261014/ACQUISITION.md), but the world as run here is served by our bridge.py and its parity work, written by frontier sessions whose cost was never recorded (as E8\'s world)');
       // timing
       const wall = f.durationMs ?? null;
       r.timing.wallMs = wall; r.timing.timeToDoneMs = wall;
