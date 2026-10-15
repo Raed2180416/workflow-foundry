@@ -1,0 +1,74 @@
+{
+ "label": "grade-s12-b1lh-e8-1",
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "build": null,
+ "seeds": [
+  1232
+ ],
+ "difficulties": [
+  2
+ ],
+ "size": 12,
+ "summary": {
+  "completed": 14,
+  "passed": 14,
+  "tail": 8,
+  "tailPassed": 8,
+  "critical": 0,
+  "armErrors": 0
+ },
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "completed": 14,
+   "passed": 14,
+   "tail": 8,
+   "tailPassed": 8,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 1,
+     "pass": 1
+    },
+    "gl-awaiting": {
+     "n": 1,
+     "pass": 1
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 1
+    },
+    "straight": {
+     "n": 6,
+     "pass": 6
+    },
+    "collection-failed": {
+     "n": 1,
+     "pass": 1
+    },
+    "cancel-after-collection": {
+     "n": 1,
+     "pass": 1
+    },
+    "cancel-processing": {
+     "n": 1,
+     "pass": 1
+    },
+    "fraud-reject": {
+     "n": 1,
+     "pass": 1
+    },
+    "amend": {
+     "n": 1,
+     "pass": 1
+    }
+   },
+   "codes": {}
+  }
+ ]
+}

@@ -4,7 +4,7 @@
 // sandbox-arm.mjs) on dev worlds and graded by the item's oracle with the reference pools. Model ids come from
 // policy/models.json only. METERED: the build session spends model budget (its own cap); grading is $0.
 //   node experiments/ebed/build.mjs --model claude-haiku-5-5 --effort high --budget 3 --minutes 40 --label b1h-1 \
-//        [--grade-only <solver.mjs>] [--seeds 1232-1234] [--difficulties 2,3,5] [--loop none|smoke|graded]
+//        [--grade-only <solver.mjs>] [--seeds 1232-1234] [--difficulties 2,3,5] [--size N] [--loop none|smoke|graded]
 // --loop (default none = B1 as declared): the builder may run its solver on practice worlds 1235-1237 through a
 // host-side smoke service (smoke-service.mjs) and see arm errors and effect results (smoke) or also first divergences
 // on those practice worlds (graded). A different arm from B1; reported under its own label.
@@ -63,10 +63,10 @@ complete solver. Work carefully through every rule, race and reading in SPEC-E.m
 }
 
 /** Run a solver (source) out of process on dev worlds and grade it with the item's oracle. $0. */
-export async function grade(item, solverSource, { seeds, difficulties, label }) {
+export async function grade(item, solverSource, { seeds, difficulties, label, size = null }) {
   const rows = [];
   for (const d of difficulties) for (const seed of seeds) {
-    const w = item.generateWorld({ seed, difficulty: d, mix: 'tail' });
+    const w = item.generateWorld({ seed, difficulty: d, mix: 'tail', ...(size ? { size } : {}) });   // size: a smaller world, paired with a sized agent run
     const { pools } = await item.referenceRuns(w);
     const arm = sandboxArm({ id: label, solverSource, timeoutMs: 20_000 });
     const host = createHost({ item: item.binding, world: w, arm, callTimeoutMs: 25_000 });
@@ -79,7 +79,7 @@ export async function grade(item, solverSource, { seeds, difficulties, label }) 
     const codes = {};
     for (const c of comp.filter(x => !x.pass)) { const k = c.firstDivergence ? `L${c.firstDivergence.layer}:${c.firstDivergence.code}` : 'armCensored'; codes[k] = (codes[k] ?? 0) + 1; }
     const armErrors = host.journal.contentRows().filter(r => r.type === 'arm.error').length;
-    rows.push({ seed, d, status, completed: comp.length, passed: comp.filter(c => c.pass).length, tail: comp.filter(c => c.tail).length,
+    rows.push({ seed, d, size, status, completed: comp.length, passed: comp.filter(c => c.pass).length, tail: comp.filter(c => c.tail).length,
       tailPassed: comp.filter(c => c.tail && c.pass).length, critical: v.critical.length, armErrors, byClass, codes });
     console.log(`  d${d} seed ${seed}: ${rows.at(-1).passed}/${comp.length} completed cases pass (tail ${rows.at(-1).tailPassed}/${rows.at(-1).tail}), critical ${v.critical.length}, arm errors ${armErrors}`);
   }
@@ -122,10 +122,11 @@ async function main() {
     writeFileSync(path.join(out, 'solver.mjs'), solverSource);
     console.log(`build: ${JSON.stringify(build)}`);
   }
-  const rows = await grade(item, solverSource, { seeds, difficulties, label });
+  const size = arg('--size', null) === null ? null : Number(arg('--size'));
+  const rows = await grade(item, solverSource, { seeds, difficulties, label, size });
   const sum = k => rows.reduce((s, r) => s + r[k], 0);
   const summary = { completed: sum('completed'), passed: sum('passed'), tail: sum('tail'), tailPassed: sum('tailPassed'), critical: sum('critical'), armErrors: sum('armErrors') };
-  writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, item: item.family.id, spec: item.specE.sha256, build, seeds, difficulties, summary, rows }, null, 1));
+  writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, item: item.family.id, spec: item.specE.sha256, build, seeds, difficulties, size, summary, rows }, null, 1));
   console.log(`summary: ${JSON.stringify(summary)}`);
 }
 
