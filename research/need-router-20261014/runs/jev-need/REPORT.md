@@ -31,3 +31,15 @@ design's decision 12 (Jev as a feature and baseline, never the mode-picker in v1
 counterfactual, settled only by running modes (or a cheap probe), not by reading the spec. What could change it: Jev calibrated
 on labelled outcomes (the label factory produces exactly those), questions about concrete properties instead of the verdict
 ("does the answer depend on combining more than N items?", "is there a deterministic check?"), and the probe outcome as an input.
+
+## Update: d3 + d5 together (144 tasks, 12 family × difficulty cells)
+
+| measure | Jev | size rule |
+|---|---|---|
+| task-level AUROC | **0.46** | 0.65 |
+| cell-level Spearman | −0.16 | – |
+| accuracy at p ≥ 0.5 (base rate 0.42) | 0.58 | – |
+
+Jev moves a little in the right direction within a family when difficulty rises (R3: p(single) 0.20 at d3 → 0.12 at d5, while one
+call goes 12/12 → 0/12), but its ranking across families is wrong: it is most sure that one call fails on R3′ (p 0.02–0.03), which one
+call solves 10–12/12 at both levels. Below chance overall. The reading stands: stock Jev is not a need decider.

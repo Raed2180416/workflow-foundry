@@ -29,3 +29,17 @@ session at its bound ($1 per call here), so for utility the label factory must r
   a real outcome for the router (direct is not viable there), not an environment fault.
 - For the W-bed itself: R2, R3, R3′ and R6 fail their one-call admission gate at d3 (W-BED §2.4: attack success drops the rung at
   that difficulty); they stay usable at d4–d5 if the gate is re-run there.
+
+## M1 at difficulty 5 (R2, R3, R3′, R6; `runs/m1-d5/`; $5.92)
+
+| rung | d3 (none / medium) | d5 (none / medium) | reading |
+|---|---|---|---|
+| R2 | 4/12 / 3/12 | 2/12 / 2/12 | passes its one-call gate at d5 |
+| R3 | 8/12 / 9/12 | **0/12 / 0/12** (12 + 5 timeouts, 4 schema-invalid) | one call suffices at d3, fails at d5: the need flips with difficulty |
+| R3′ | 12/12 / 11/12 | **10/12 / 11/12** | one call still suffices at d5: this rung does not need a workflow for Haiku at either level |
+| R6 | 2/12 / 6/12 | **0/12 / 0/12** (11 timeouts) | flips like R3 |
+
+The same family needs no workflow at one difficulty and clearly needs one at another (R3, R6), and one family built to need
+structure never does at the levels tested (R3′). "Needs a workflow" is a property of the job instance (size, difficulty), so the
+router must read the instance, never the family name. For the W-bed: R2, R3 and R6 pass their one-call gate at d5; R3′ fails it at
+both levels.
