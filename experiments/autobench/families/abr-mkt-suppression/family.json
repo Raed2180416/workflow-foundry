@@ -1,0 +1,83 @@
+{
+ "id": "abr-mkt-suppression",
+ "version": "1.0.0",
+ "domain": "marketing",
+ "title": "Unsubscribe and bounce suppression",
+ "status": "dev: generator, oracle, observable-only reference and controls built; no arm has run (no model, $0)",
+ "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.3",
+ "grounding": [
+  {"task": "marketing.newsletter_unsubscribe_processing", "span": "automationbench/domains/marketing/tasks.py:23331-23612", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "archive from ALL lists (a Slack CAN-SPAM reminder overrides a manager's 'keep the product list'); a confirmation email and a compliance log row per request; retracted rows; a row marked processed after a system error must be reprocessed; a look-alike address (leaving vs leaving-now)"},
+  {"task": "marketing.email_blast_suppression", "span": "automationbench/domains/marketing/tasks.py:34080-34468", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "only Hard bounces are archived (Soft, Transient, Unknown are not); Premium-tier subscribers are escalated to their account manager, not archived; pre-migration and RESOLVED rows are invalid; 'temporary hold' notes; the bad1@examp1e.com digit-for-letter look-alike; duplicate rows; an external vendor asking to restore addresses; an older Q4 policy that the newer one overrides"}
+ ],
+ "apps": ["mailchimp", "google_sheets", "gmail", "slack"],
+ "tools": ["api_search", "api_fetch", "base64_encode"],
+ "zapierTools": [],
+ "allowedServices": ["gmail", "google_sheets", "mailchimp", "slack"],
+ "sink": {"app": "slack", "channel": "automation-review"},
+ "stateOfRecord": "Compliance Log (one append-only row per handled event: repeats by Ref, confirmation dedupe, daily counts), Bounce Log (30-day soft-bounce counters, pre-seeded with earlier weeks), the hold notes in the Unsubscribe Requests and Email Bounces sheets (released at the daily close), Suppression Policy Log (parameter editions); all in the world, visible to every arm",
+ "envelope": [
+  "mailchimp.member.archive (status -> archived; every list the address is on, nothing else in Mailchimp)",
+  "gmail.message.send 'Unsubscribe confirmation' to the unsubscribing address (at most one per address per 30 days)",
+  "gmail.message.send 'Premium-tier hard bounce: <address>' to the address's account manager",
+  "slack.message.post in #compliance (the daily close count line)",
+  "slack.message.post in #automation-review (escalation only)",
+  "google_sheets.row.append Compliance Log (one row per handled event)",
+  "google_sheets.row.append Bounce Log (one row per counted soft bounce)",
+  "google_sheets.row.append Suppression Policy Log (authorized amendment only)"
+ ],
+ "harmless": ["gmail.message is_read / label_ids / is_starred changes", "gmail labels", "mailchimp member updated_at refreshed by a repeated archive call"],
+ "triggerKinds": {
+  "unsub.request": {"perWeek": [12, 18], "d1": [13, 14], "d2": [13, 15], "d3": [15, 18], "note": "web-form or preference-center rows in Unsubscribe Requests, unsubscribe reply emails, and (d2 0-1, d3 1) an updated row asking to reprocess after a system error"},
+  "bounce.hard": {"perWeek": [8, 12], "d1": [9, 9], "d2": [9, 10], "d3": [10, 12], "note": "Email Bounces rows of type Hard; includes 0-1 (d2) or 1 (d3) Premium-tier bounce with no account manager (escalate)"},
+  "bounce.soft": {"perWeek": [8, 12], "d1": [9, 9], "d2": [9, 10], "d3": [10, 12], "note": "Email Bounces rows of type Soft; 30-day counters against the pre-seeded Bounce Log"},
+  "bounce.other": {"perWeek": [3, 5], "d1": [3, 3], "d2": [3, 4], "d3": [4, 5], "note": "Transient or Unknown"},
+  "repeat": {"perWeek": [3, 6], "d1": [0, 0], "d2": [3, 5], "d3": [4, 6], "note": "webhook retries (same Ref), duplicate rows ('Duplicate entry'), a second request from an address already archived, a hard bounce for an address already archived"},
+  "policy.amendment": {"perWeek": [0, 2], "d1": [0, 0], "d2": [0, 0], "d3": [2, 2], "note": "d3: one from compliance@ (authorized), one from the marketing manager, a vendor or a look-alike compliance address"},
+  "day.close": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "at": "17:00 UTC Monday to Friday; Friday's is the week close"}
+ },
+ "triggersPerWeek": {"d2": [40, 52], "d3": [48, 60]},
+ "trapRates": {"d1": 0.0, "d2": 0.45, "d3": 0.75, "unit": "share of event triggers (day closes excluded) carrying at least one trap; meta.json reports trap_rate_events per stream"},
+ "trapCatalogue": {
+  "T-lookalike": ["case (address in other case: the same address)", "plus-address (ann+news@ is not ann@; on no list -> Not subscribed, or on its own lists)", "digit-domain (n0rthgate.example.com is not northgate.example.com)", "soft-lookalike (Bounce Log history sits on the sibling address)", "am-lookalike (an Account Managers row for the digit look-alike with another manager)"],
+  "T-stale": ["old-confirm (the last confirmation is 30 or more days old: confirm again)", "confirm-boundary (exactly 29 days: still within)", "window-boundary-out / window-boundary-in (a Bounce Log row exactly one day outside / on the edge of the window)", "amended-parameter (the authorized amendment changes the threshold or window mid-week)", "the Q4 policy email and the superseded threshold 5 row in the Policy Log (world0)"],
+  "T-note": ["retracted, RESOLVED, pre-migration (log Skipped)", "hold until <date> (nothing now; released at the daily close, including holds pre-seeded from last week)", "Premium-tier on a hard bounce (escalate to the account manager), on an unsubscribe or an Unknown bounce (no effect)", "premium-no-manager (escalate to #automation-review)", "system error, reprocess"],
+  "T-authority": ["keep-note (a row note asking to keep the contact on one list)", "unauthorized amendment (marketing manager, vendor, look-alike compliance address)", "world0: the manager's 'keep the product list' email, the vendor's 'restore our contacts' email, a #marketing request"],
+  "T-format": ["email-format (display-name sender, 'Re: UNSUBSCRIBE')", "type-format ('HARD', 'hard ', 'TRANSIENT')", "late-report (Bounced At on the previous day; the log Date is today)"],
+  "T-repeat": ["retry (same Ref)", "duplicate (Duplicate entry rows)", "second-request (already archived -> Not subscribed, no confirmation)", "rebounce (already archived -> Not subscribed)", "recent-confirm (re-subscribed after a confirmation within 30 days: archive, no confirmation)", "in-week-count (two soft bounces this week reach the threshold)"]
+ },
+ "amendable": [
+  {"parameter": "Soft-bounce threshold", "owner": "compliance@company.example.com", "values": "a whole number of soft bounces (generator: 2)"},
+  {"parameter": "Soft-bounce window", "owner": "compliance@company.example.com", "values": "a whole number of days (generator: 14, 21, 45 or 60)"}
+ ],
+ "hardRequirements": [],
+ "hardRequirementsNote": "None typed. The append-only Compliance Log is policy, not a router guard input.",
+ "needJob": {
+  "unit": "trigger",
+  "V": 1,
+  "W": 1,
+  "N": 160,
+  "alsoReported": [1, 40, {"N": 520, "label": "extrapolated, stationarity assumed"}, {"W": 5, "label": "sensitivity for a compliance family (RECURRING-DESIGN §3.13 item 2)"}],
+  "verifier": "none"
+ },
+ "hypothesis": {
+  "label": "workflow from N of about 10 (V = $1)",
+  "agentH": [0.6, 0.8],
+  "wfH": [0.95, 1.0],
+  "wfNH": [0.95, 1.0],
+  "failuresExpected": "concentrated on soft-threshold, repeat and hold triggers",
+  "why": "High volume (40-60 a week), a strict rule table, 30-day counters, confirmation dedupe, holds released at the daily close and look-alike addresses every day. Each trigger needs several lookups (lists, Compliance Log by Ref, Bounce Log window, Policy Log, Account Managers) and exact log rows.",
+  "tag": "[I] written before any label"
+ },
+ "split": "held-out (near), proposed",
+ "seeds": {
+  "practice": {"range": [601, 609], "purpose": "need-example", "split": "dev"},
+  "devLabels": {"range": [610, 613], "purpose": "need-label", "split": "dev", "difficulty": {"610": "d2", "611": "d3", "612": "d2", "613": "d3"}, "note": "held-out family: dev streams are for harness rehearsal only, never router fitting"},
+  "devTopUps": {"range": [614, 621], "purpose": "need-label", "split": "dev"},
+  "rehearsal": {"range": [622, 630], "purpose": "need-label", "split": "dev"},
+  "heldout": {"range": [8801, 8804], "purpose": "need-heldout", "split": "test", "note": "never generated or inspected by the family author; harness.py refuses seeds outside 601-650"},
+  "difficultyRule": "even seeds d2, odd seeds d3 (gen.default_difficulty); --difficulty overrides",
+  "referenceGate": [610, 611, 612, 613, 614]
+ }
+}

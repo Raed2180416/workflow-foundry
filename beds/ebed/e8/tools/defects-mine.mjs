@@ -48,7 +48,10 @@ async function mineAll(list, prepared, stageName) {
     try { item = await armItemOf(m, dir); } catch (e) { st.status = 'load-error'; st.error = String(e?.message ?? e).slice(0, 120); continue; }
     for (const p of prepared) {
       let r;
-      try { r = await mineOnWorld({ mutant: m, item, prepared: p }); } catch (e) { st.status = 'run-error'; st.error = `${p.world.id}: ${String(e?.message ?? e).slice(0, 120)}`; break; }
+      try { r = await mineOnWorld({ mutant: m, item, prepared: p }); } catch (e) {
+        const msg = String(e?.message ?? e);
+        st.status = /wake-ups/.test(msg) ? 'runaway' : 'run-error'; st.stage = stageName; st.error = `${p.world.id}: ${msg.slice(0, 120)}`; break;
+      }
       if (r.e0.failed.length) { st.status = `e0-visible`; st.stage = stageName; st.e0First = { world: p.world.id, ...r.e0.failed[0] }; break; }
       st.worlds.push({ world: p.world.id, digest: r.digest, inert: r.inert, affected: r.affected.length, oracleErrors: r.affected.filter(a => a.oracleError).length });
     }
@@ -56,6 +59,7 @@ async function mineAll(list, prepared, stageName) {
       const errs = st.worlds.reduce((s, w) => s + w.oracleErrors, 0);
       st.status = errs ? 'oracle-error' : st.worlds.some(w => w.affected) ? 'candidate' : st.worlds.every(w => w.inert) ? 'inert' : 'silent';
     }
+    console.log(`    ${m.id} ${st.status}${st.e0First ? ` (${st.e0First.world.replace('ebed-e8-dev-', '')} ${st.e0First.case} ${st.e0First.code ?? ''})` : ''}${st.worlds.length ? ` affected ${st.worlds.map(w => w.affected).join('/')}` : ''} (${secs()} s)`);
     if ((n + 1) % 10 === 0 || n + 1 === list.length) {
       const tally = {}; for (const x of list.slice(0, n + 1)) { const s = status.get(x.id).status; tally[s] = (tally[s] ?? 0) + 1; }
       console.log(`  ${stageName} ${n + 1}/${list.length} (${secs()} s) ${JSON.stringify(tally)}`);

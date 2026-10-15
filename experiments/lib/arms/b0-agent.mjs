@@ -17,8 +17,8 @@ export const PROCEDURE_LINE = 'Follow the procedure in ./PROCEDURE.md. Before yo
 const sha16 = text => createHash('sha256').update(text).digest('hex').slice(0, 16);
 // Hidden-path scan of an agent session (need router v1: a draw that reaches outside its workdir is voided). It counts only
 // paths a tool use accesses (experiments/c0/construct.mjs accessedOutsidePaths: file-tool path arguments and Bash commands
-// without heredoc bodies; never Write or Edit content or Grep patterns), and a path the task itself states is not an
-// attempt (`ignore`, from taskHostPaths). mentionedPaths is the older scan of every string of a tool input (the same host
+// without heredoc bodies; never Write or Edit content or Grep patterns), and a path the task itself (or the lineage's
+// PROCEDURE.md) states, or a directory above one, is not an attempt (`ignore`, from taskHostPaths). mentionedPaths is the older scan of every string of a tool input (the same host
 // roots as construct()'s `outside` closure, which other code reads as text and is therefore left as it is): its hits are
 // recorded for review by hand and never void anything. /tmp is private to the sandbox, so it is not listed.
 const HOST_PATH = new RegExp(`/(?:${HOST_ROOTS.join('|')})/[\\w./-]*`, 'g');
@@ -90,7 +90,10 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
       let r;
       try { r = await executor({ model, prompt, workdir, files, budgetUsd, timeoutMs, effort, binary }); }
       finally { await svc?.close(); }
-      const outside = outsidePaths(r.toolUses, [workdir], { ignore: taskHostPaths([view.prompt, view.files]) }), mentioned = mentionedPaths(r.toolUses, [workdir]);
+      // Stated paths: the task's prompt, inputs and files, and PROCEDURE.md (written from example tasks of the family only); never
+      // notes.md, which the model writes itself.
+      const stated = taskHostPaths([view.prompt, view.files, procedure ?? '']);
+      const outside = outsidePaths(r.toolUses, [workdir], { ignore: stated }), mentioned = mentionedPaths(r.toolUses, [workdir]);
       const checks = procedure !== null ? readJsonFile(workdir, CHECKS_FILE) : undefined;
       // A killed session (no result event) is charged at its budget bound, never $0; costUnknown marks it.
       return { output: readJsonFile(workdir, 'answer.json'), costUsd: r.costUsd ?? r.costUpperUsd, costUnknown: r.costUnknown, latencyMs: r.durationMs, error: r.error,

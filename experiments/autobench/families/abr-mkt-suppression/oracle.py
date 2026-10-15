@@ -253,7 +253,8 @@ def grade_trigger(before: dict, after: dict, truth: dict, payload: dict) -> dict
             continue
         gotm[(rc[0], (m.get("subject") or "").strip().lower())] += 1
     wantm = Counter((x["to"].lower(), x["subject"].lower()) for x in exp["emails"])
-    check("email.exact", not bad and gotm == wantm, {"got": dict(gotm), "want": dict(wantm), "bad": bad})
+    check("email.exact", not bad and gotm == wantm, {"got": {" | ".join(k): v for k, v in gotm.items()},
+                                                     "want": {" | ".join(k): v for k, v in wantm.items()}, "bad": bad})
     for x in exp["emails"]:
         hits = [m for m in led["emails"] if recipients(m) == [x["to"].lower()]
                 and (m.get("subject") or "").strip().lower() == x["subject"].lower()]

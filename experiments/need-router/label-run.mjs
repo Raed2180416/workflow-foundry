@@ -34,9 +34,11 @@
 //   faults    per (job, mode): attempts and environment faults of trials (results + results.faults) and builds
 //             (builds + construction-faults); an arm over the 25% limit is invalid (K4): report.validity.invalidArms and
 //             arm-faults.jsonl, which evaluate.mjs reads;
-//   resume    build, probe and racing records carry a stamp (stageSha: the plan restricted to what this stage reads; the
-//             arm's computed settings hash; the prompt shas; the price-table id); a resume over records with another
-//             stamp is refused, as runExperiment's strictResume refuses trials of another arm version;
+//   resume    build, probe, racing and trial records (and so the rows) carry a stamp (stageSha: the plan restricted to
+//             what this stage reads; the arm's computed settings hash; the prompt shas; the price-table id); a resume over
+//             records with another stamp is refused, as runExperiment's strictResume refuses trials of another arm version;
+//             the jobs' replacement seeds are written to plan.json before anything is spent, and a resume whose
+//             replacements differ is refused;
 //   paid      a run without --dry checks its plan first (paidRunChecks): the canonical stages.json or a spec whose sha256
 //             the preregistration lists, prereg-check's checkStages with no error, every arm's settingsSha = armSha, the
 //             preregistration equal to its frozen (committed) text, a clean label-engine stamp (written to STAMP.json
@@ -230,19 +232,20 @@ export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe
 }
 
 /**
- * Reserve seeds earlier stages took as replacements, per family (ledger bed): read from the report.json of every other
- * stage directory under `root` (the parent of --out: research/need-router-20261014/runs). The held-out evaluation, E2E and
- * DRIFT roles share one reserve range (8813-8824); "lowest unused" is then computed over every stage, not one process.
+ * Reserve seeds earlier stages took as replacements, per family (ledger bed): read from the report.json and the plan.json
+ * of every other stage directory under `root` (the parent of --out: research/need-router-20261014/runs). plan.json is
+ * written before a stage spends anything, so a stage that stopped without a report still counts. The held-out evaluation,
+ * E2E and DRIFT roles share one reserve range (8813-8824); "lowest unused" is then computed over every stage, not one process.
  */
 export function priorReplacementSeeds(root, stageId) {
   const out = new Map();
   let dirs = [];
   try { dirs = readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => path.join(root, d.name)); } catch { return out; }
-  for (const d of dirs.sort()) {
-    const f = path.join(d, 'report.json');
+  for (const d of dirs.sort()) for (const [name, schema] of [['report.json', REPORT_SCHEMA], [PLAN_FILE, PLAN_SCHEMA]]) {
+    const f = path.join(d, name);
     if (!existsSync(f)) continue;
     let rep; try { rep = JSON.parse(readFileSync(f, 'utf8')); } catch { continue; }
-    if (rep?.schema !== REPORT_SCHEMA || rep.stage === stageId) continue;
+    if (rep?.schema !== schema || rep.stage === stageId) continue;
     for (const j of rep.jobs ?? []) for (const r of j.replacements ?? []) {
       const fam = j.bed ?? j.family;
       if (!fam || !Number.isInteger(r.to)) continue;
@@ -250,6 +253,30 @@ export function priorReplacementSeeds(root, stageId) {
     }
   }
   return out;
+}
+
+export const PLAN_FILE = 'plan.json', PLAN_SCHEMA = 'need-label-plan/1';
+/**
+ * Record the jobs' replacement seeds (plan.json, in every file given) before anything is spent. A job already on record
+ * with other replacements (another stage took reserve seeds in between, or the plan changed) refuses the run: its recorded
+ * trials were drawn on the old task set. Jobs not run this time (--jobs) keep their record.
+ */
+export function writePlanRecord({ files, stage, jobs }) {
+  const prev = new Map();
+  for (const f of files) {
+    if (!existsSync(f)) continue;
+    let rec; try { rec = JSON.parse(readFileSync(f, 'utf8')); } catch { continue; }
+    if (rec?.schema === PLAN_SCHEMA && rec.stage === stage.id) for (const j of rec.jobs ?? []) prev.set(j.job, j);
+  }
+  const now = jobs.map(({ job, plan }) => ({ job, bed: plan.bed, replacements: plan.replacements, tasks: plan.evalTasks.map(t => t.taskKey) }));
+  const changed = now.filter(j => prev.has(j.job) && canonicalJson(prev.get(j.job).replacements ?? []) !== canonicalJson(j.replacements));
+  if (changed.length) {
+    throw Object.assign(new Error(`resume would change the task set: replacement seeds of ${changed.map(j => j.job).join(', ')} differ from plan.json (${changed.map(j => `${j.job}: ${JSON.stringify((prev.get(j.job).replacements ?? []).map(r => r.to))} -> ${JSON.stringify(j.replacements.map(r => r.to))}`).join('; ')}); finish or analyse the stage as it stands`), { code: 'PLAN_CHANGED' });
+  }
+  for (const j of now) prev.set(j.job, j);
+  const rec = { schema: PLAN_SCHEMA, stage: stage.id, jobs: [...prev.values()].sort((a, b) => (a.job < b.job ? -1 : a.job > b.job ? 1 : 0)) };
+  for (const f of files) { mkdirSync(path.dirname(f), { recursive: true }); writeFileSync(f, stableJson(rec)); }
+  return rec;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -500,9 +527,11 @@ const SELF_CHECK_ENV = code => (ENV_FAULTS.has(code) ? code : 'EXECUTOR_LAUNCH')
 // Every arm's run goes through this: the cap (reserve, then settle on the meter, with the attempt in the spend ledger), then
 // the deployable signals of its answer (delivered, schema validity, the family-handed check when a bed exports
 // deployableCheck), then the post-run self-check of a construct-H lineage. attemptOf(a): which calls.jsonl entries belong
-// to the attempt (b0Call: exact run id; b1Script: run-id prefix); the seq range is recorded in meta.callSeq.
-function withSignals(arm, { ctx, job, kind, model = null, bound, schemaTest, fam, selfCheck = null, attemptOf = null, ledgerKind = 'trial' }) {
-  const { budget, book, stages } = ctx;
+// to the attempt (b0Call: exact run id; b1Script: run-id prefix); the seq range is recorded in meta.callSeq. meta.stamp is
+// the record's version stamp (recordStamp of its mode): rows carry it, and a resume over trials of another stamp is refused
+// (the runtime armHash does not cover every arm setting, e.g. a b0Call's provider timeout or its per-call bound).
+function withSignals(arm, { ctx, job, kind, model = null, bound, schemaTest, fam, selfCheck = null, attemptOf = null, ledgerKind = 'trial', mode = parseArmId(arm.id).mode }) {
+  const { budget, book, stages } = ctx, stamp = recordStamp(ctx, mode);
   return {
     ...arm, def: selfCheck ? { ...arm.def, selfCheckSha: selfCheck.sha } : arm.def,
     async run(a) {
@@ -522,7 +551,7 @@ function withSignals(arm, { ctx, job, kind, model = null, bound, schemaTest, fam
         if (delivered && schemaTest) { try { schemaValid = schemaTest(out) === true; } catch { schemaValid = false; } }
         let deployableVerdict = delivered ? (schemaValid === false ? 'fail' : 'pass') : null;
         if (delivered && typeof fam.deployableCheck === 'function') { try { if ((await fam.deployableCheck(a.task, out)) === false) deployableVerdict = 'fail'; } catch { deployableVerdict = 'fail'; } }
-        const meta = { ...(r.meta ?? {}), delivered, schemaValid, deployableVerdict, ...(kind !== 'session' && attemptOf ? { callSeq: seq } : {}) };
+        const meta = { ...(r.meta ?? {}), delivered, schemaValid, deployableVerdict, ...(kind !== 'session' && attemptOf ? { callSeq: seq } : {}), stamp };
         if (selfCheck) {
           const sc = delivered ? await selfCheck.run({ checkPath: selfCheck.checkPath, task: a.task, output: out, workdir: a.workdir }) : null;
           // A crashing or timed-out check did not say "pass": it withholds the answer like a failing one (detail kept).
@@ -730,7 +759,7 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo,
     usdReported: r6((rec.costUsd ?? 0) + (rec.imputedUsd ?? 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), repriced: cost.repriced !== false && !cost.fallback,
     ...(cost.meterUnverified ? { meterUnverified: true } : {}), ...(cost.outputFromFinal ? { outputFromFinal: true } : {}),
     ms: rec.latencyMs ?? null, tokens: cost.tokens, turns: meta.turns ?? null, error: voided ? 'VOIDED' : rec.error?.code ?? null, rawError: rec.error?.code ?? null,
-    void: voided ? voidReasons.join('; ') : null,
+    void: voided ? voidReasons.join('; ') : null, ...(meta.stamp ? { stamp: meta.stamp } : {}),
   };
 }
 
@@ -889,7 +918,7 @@ async function runProbes({ ctx, unit, plan }) {
         ? b0Call({ id, model: def.model, modelPort: ctx.metered({ timeoutMs: def.providerTimeoutMs ?? null }), reasoning: def.reasoning, maxTokens: def.maxTokens })
         : b0Agent({ id, model: def.model, budgetUsd: def.budgetUsd, timeoutMs: def.timeoutMs, ...(ctx.ports.executor ? { executor: ctx.ports.executor } : {}) });
       const bound = call ? def.maxBudgetUsdPerCall ?? 1 : def.budgetUsd;
-      const arm = withSignals(inner, { ctx, job: job.id, kind: call ? 'call' : 'session', model: def.model, bound, schemaTest, fam, ledgerKind: 'probe',
+      const arm = withSignals(inner, { ctx, job: job.id, kind: call ? 'call' : 'session', model: def.model, bound, schemaTest, fam, ledgerKind: 'probe', mode,
         attemptOf: call ? a => ({ exact: `${id}:${a.taskKey}:t${a.trial}` }) : null });
       const workdir = path.join(ctx.live, 'work', `${ctx.stage.id}.${job.id}.probe`, mode, `${t.taskKey.replaceAll(':', '_')}_t${d}`);
       rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
@@ -1208,6 +1237,9 @@ export async function labelRun(opts) {
     plans.set(u.job.id, p);
     allTasks.push(...p.evalTasks, ...Object.values(p.examples).flat(), ...(p.probeTask ? [p.probeTask] : []));
   }
+  // The jobs' replacement seeds, on record before anything is spent (plan.json in the work root and --out): another stage
+  // reads them even when this one never writes a report, and a resume that would hand out other replacements is refused.
+  writePlanRecord({ files: [path.join(live, PLAN_FILE), path.join(out, PLAN_FILE)], stage, jobs: units.map(u => ({ job: u.job.id, plan: plans.get(u.job.id) })) });
   const gatewayModels = [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]).flatMap(a => {
     const d = stages.arms[a]; return d.factory === 'b0Call' ? [d.model] : d.build?.factory === 'procedureWriter' ? [d.build.model] : d.build?.factory === 'construct' ? d.build.models : [];
   }))].sort();
@@ -1227,12 +1259,15 @@ export async function labelRun(opts) {
   // that already holds their top-ups, so a rerun reaches the same rows and the same report.
   const racingFile = path.join(live, 'racing.jsonl');
   const decided = new Map(readJsonl(racingFile).filter(e => e.stage === stage.id).map(e => [`${e.round}|${e.job}`, e]));
-  // Resume never mixes versions: every build, probe and racing record of this stage must carry the current stamp.
+  // Resume never mixes versions: every build, probe, racing and trial record of this stage must carry the current stamp (a
+  // trial with no meta threw or was capped before it ran: nothing of its version was recorded).
   const vctx = { stages, stageSha: stageSha(stages, stage), prompts: promptShas() };
   const mixed = [
     ...[...builds.values()].filter(b => !sameStamp(b.stamp, recordStamp(vctx, b.mode))).map(b => `build ${b.job}/${b.mode}#${b.lineage}`),
     ...[...probes.values()].filter(p => !sameStamp(p.stamp, recordStamp(vctx, p.mode))).map(p => `probe ${p.job}/${p.mode}/${p.draw}`),
     ...[...decided.values()].filter(e => !sameStamp(e.stamp, recordStamp(vctx))).map(e => `racing round ${e.round} ${e.job}`),
+    ...readJsonl(resultsFile).filter(r => r.experiment?.startsWith(`${stage.id}.`) && r.meta && !sameStamp(r.meta.stamp, recordStamp(vctx, parseArmId(r.arm).mode)))
+      .map(r => `trial ${r.experiment.slice(stage.id.length + 1)}/${r.arm}/${r.taskKey}/t${r.trial}`),
   ];
   if (mixed.length) throw Object.assign(new Error(`resume would mix versions: ${mixed.length} record(s) of stage ${stage.id} were made under another plan, arm settings, prompts or prices (${mixed.slice(0, 4).join(', ')}${mixed.length > 4 ? ', ...' : ''}): use a new work root and --out`), { code: 'RESUME_MIXES_VERSIONS' });
 
@@ -1407,7 +1442,7 @@ export async function labelRun(opts) {
       spend: { meterUsd: r6(spend.totalUsd), settledUsd: r6(spend.settledUsd), inFlightUsd: r6(spend.openUsd), carriedUsd: r6(spend.carriedUsd), capUsd: stage.capUsd ?? null } },
     stopped,
     rules: { rowCost: 'usdRepriced = measured tokens at the pinned table; usdImputed = bound minus measured for killed sessions and timeouts; total = sum',
-      voids: 'lineage: build row hiddenPathAttempts or nestedModelAttempts > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept). hiddenPathAttempts counts paths a tool use accesses (file-tool paths, Bash without heredoc bodies), never Write/Edit content or Grep patterns, and never a path the task states; pathMentions (every string scanned) is for review by hand',
+      voids: 'lineage: build row hiddenPathAttempts or nestedModelAttempts > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept). hiddenPathAttempts counts paths a tool use accesses (file-tool paths, Bash without heredoc bodies), never Write/Edit content or Grep patterns, and never a path the task (or the lineage\'s PROCEDURE.md) states or a directory above one; pathMentions (every string scanned) is for review by hand',
       copyScan: `ownerci: more than ${COPY_SCAN.maxLines} distinct example lines of >= ${COPY_SCAN.minLineChars} characters in solve.mjs voids the lineage`,
       racing: 'headline cell; P(best class) < confident adds one draw or lineage per acceptable mode (max racingMaxPerMode); agent-O second draw on draw-1 per-task acceptable tasks',
       cap: 'the cap meter (PREREG §12): each start at max(reported, re-priced), at least its bound when unobserved (call $1, agent budget, script perTaskUsd, build builder + gateway budget), every start in flight at its bound; persisted in spend.jsonl (work root and --out); totals.spend.meterUsd',

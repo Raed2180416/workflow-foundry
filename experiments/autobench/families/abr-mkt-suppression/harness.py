@@ -167,8 +167,17 @@ def run_stream(solver: str, seed: int, difficulty: str | None = None, mode: str 
     return res
 
 
+def _jsonable(x):
+    if isinstance(x, dict):
+        return {(k if isinstance(k, (str, int, float, bool)) or k is None else " | ".join(map(str, k)) if isinstance(k, tuple) else str(k)):
+                _jsonable(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple, set, frozenset)):
+        return [_jsonable(v) for v in x]
+    return x
+
+
 def _short(d, n=300):
-    s = json.dumps(d, default=str, ensure_ascii=False)
+    s = json.dumps(_jsonable(d), default=str, ensure_ascii=False)
     return s if len(s) <= n else s[:n] + "..."
 
 

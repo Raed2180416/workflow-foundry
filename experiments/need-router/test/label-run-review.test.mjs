@@ -396,3 +396,96 @@ test('evaluate.mjs: an arm that label-run\'s fault table marks invalid is an inv
   assert.deepEqual(loadLabels(dir).armFaults.map(x => x.job), ['T0-j0', 'H0-j0']);
   assert.deepEqual(loadLabels(dir, { trainOnly: true }).armFaults.map(x => x.job), ['T0-j0']);
 });
+
+// ------------------------------------------------------------------------------- resume follow-up (2026-10-15, later)
+test('hidden-path scan: a directory above a stated path (two or more segments) is not an attempt; a bare root, a sibling or a path below one is', () => {
+  const ignore = taskHostPaths([{ prompt: 'Logs: /var/log/syslog. Runner: /home/runner/work/app/app.' }]);
+  const bash = command => ({ name: 'Bash', input: { command } });
+  assert.equal(accessedOutsidePaths([bash('grep -rn /var/log files/'), bash('grep -c /home/runner/work inputs.json'), bash('ls /home/runner')], ['/w'], { ignore }).attempts, 0);
+  for (const c of ['ls /var', 'ls /home', 'cat /var/log/auth.log', 'cat /var/log/syslog/x', 'cat /home/user/workflow-foundry/beds/records/score.mjs', 'ls /home/runner/.ssh'])
+    assert.equal(accessedOutsidePaths([bash(c)], ['/w'], { ignore }).attempts, 1, c);
+});
+
+test('hidden-path scan over the incident and ownerci example tasks: grepping the directories above stated paths is not an attempt (child process, counts only)', () => {
+  const child = `
+    import { readFileSync } from 'node:fs';
+    const R = ${JSON.stringify(REPO)};
+    const { planTasks, STAGES_FILE, ROLES } = await import(R + '/experiments/need-router/prereg-check.mjs');
+    const { loadFamily, solverView } = await import(R + '/experiments/lib/beds.mjs');
+    const { accessedOutsidePaths, taskHostPaths, statedAncestors } = await import(R + '/experiments/c0/construct.mjs');
+    const { loadLedger, seedRefusals } = await import(R + '/experiments/jit/seeds.mjs');
+    const stages = JSON.parse(readFileSync(STAGES_FILE, 'utf8')), ledger = loadLedger(), out = {};
+    for (const jobId of ['incident', 'ownerci']) {
+      const job = stages.jobs.find(j => j.id === jobId), fam = await loadFamily(job.family);
+      const o = { tasks: 0, refused: 0, ancestors: 0, unstated: 0, narrow: 0, roots: 0 };
+      for (const t of planTasks(stages, jobId, 'examples')) {
+        if (seedRefusals(ledger, { bed: job.ledgerBed ?? job.family, split: t.split, seed: t.seed, purpose: stages.seeds.purposes[ROLES.examples.purposeKey] }).length) { o.refused++; continue; }
+        const task = fam.generate({ seed: t.seed, split: t.split, difficulty: t.difficulty }), view = solverView(task), ignore = taskHostPaths([view.prompt, view.files]);
+        const up = [...statedAncestors(ignore)];
+        o.tasks++; o.ancestors += up.length; o.unstated += up.filter(p => !ignore.has(p)).length;
+        o.narrow += accessedOutsidePaths(up.map(p => ({ name: 'Bash', input: { command: "grep -rln '" + p + "' files/ inputs.json" } })), ['/w'], { ignore }).attempts;
+        o.roots += accessedOutsidePaths([...new Set([...ignore].map(p => '/' + p.split('/')[1]))].map(p => ({ name: 'Bash', input: { command: 'ls ' + p } })), ['/w'], { ignore }).attempts;
+      }
+      out[jobId] = o;
+    }
+    process.stdout.write(JSON.stringify(out) + '\\n');`;
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', child], { cwd: REPO, encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  const res = JSON.parse(r.stdout.trim().split('\n').pop());
+  for (const [job, o] of Object.entries(res)) {
+    assert.equal(o.refused, 0, `${job}: example seeds allowed by the ledger`);
+    assert.ok(o.unstated > 0, `${job}: directories above stated paths that the task does not state itself (${o.unstated} of ${o.ancestors}): exact matching alone counted them`);
+    assert.equal(o.narrow, 0, `${job}: grepping them is no attempt`);
+    assert.ok(o.roots > 0, `${job}: listing a bare host root still is`);
+  }
+});
+
+test('b0Agent: a path PROCEDURE.md states is not an attempt; one only notes.md (model-written) states still is', async t => {
+  const dir = tmp(t), proc = path.join(dir, 'PROCEDURE.md');
+  writeFileSync(proc, '# Procedure\n\nThe service logs are under /srv/app/logs; check them.\n');
+  const task = { prompt: 'Summarise the incident.', inputs: { n: 1 } };
+  const uses = [{ name: 'Bash', input: { command: 'ls /srv/app/logs' } }];
+  const a = await b0Agent({ id: 'agent-H+proc#1', model: 'claude-haiku-5-5', procedureFile: proc, executor: fakeSession([], { answer: { v: 1 }, toolUses: uses }) })
+    .run({ task, familyId: 'records', outputSchema: { type: 'object' }, workdir: path.join(dir, 'a'), state: {} });
+  assert.equal(a.meta.hiddenPathAttempts, 0);
+  const b = await b0Agent({ id: 'agent-H', model: 'claude-haiku-5-5', notes: true, executor: fakeSession([], { answer: { v: 1 }, toolUses: uses }) })
+    .run({ task, familyId: 'records', outputSchema: { type: 'object' }, workdir: path.join(dir, 'b'), state: { notes: 'logs are under /srv/app/logs' } });
+  assert.equal(b.meta.hiddenPathAttempts, 1);
+});
+
+test('resume: trial records and rows carry the stamp; a resume after an arm setting the runtime armHash does not cover changed is refused', async t => {
+  const dir = tmp(t), runs = [{ job: 'wbed-r0', arms: ['direct-H'], seedRoles: ['trainEval'] }];
+  await dry(dir, runs);
+  const rows = readJsonl(path.join(dir, 'out', 'rows.jsonl'));
+  assert.ok(rows.length === 24 && rows.every(r => r.stamp?.settingsSha === armSha(STAGES.arms['direct-H']) && r.stamp.priceTable === STAGES.priceTable.id && /^[0-9a-f]{16}$/.test(r.stamp.stageSha)));
+  assert.ok(readJsonl(path.join(dir, 'live', 'results.jsonl')).every(r => r.meta?.stamp?.settingsSha === rows[0].stamp.settingsSha));
+  // providerTimeoutMs lives in the metered port, not in b0Call's definition: the runtime armHash is unchanged.
+  const arms = { ...STAGES.arms, 'direct-H': { ...STAGES.arms['direct-H'], providerTimeoutMs: 300000 } };
+  const file = spec(dir, { runs, arms, name: 'edited.json' });
+  await assert.rejects(LR.labelRun({ stageId: 'NL-T', specFile: file, workRoot: path.join(dir, 'live'), out: path.join(dir, 'out'), dry: true, racing: false, log: quiet }),
+    e => e.code === 'RESUME_MIXES_VERSIONS' && /trial wbed-r0\/direct-H\//.test(e.message));
+  // The same plan resumes (nothing left to run) to the same rows.
+  await LR.labelRun({ stageId: 'NL-T', specFile: path.join(dir, 'spec.json'), workRoot: path.join(dir, 'live'), out: path.join(dir, 'out'), dry: true, racing: false, log: quiet });
+  assert.deepEqual(readJsonl(path.join(dir, 'out', 'rows.jsonl')), rows);
+});
+
+test('reserve seeds: plan.json is written before anything is spent; another stage counts it without a report; a resume that would change the replacements is refused', async t => {
+  const dir = tmp(t), runsDir = path.join(dir, 'runs');
+  const seeds = { ...STAGES.seeds, purposes: { ...STAGES.seeds.purposes, example: 'need-label' }, examples: { from: 610, to: 618 }, exampleSets: { 1: [610, 611, 612], 2: [613, 614, 615], 3: [616, 617, 618] }, probe: { seed: 610 } };
+  const file = spec(dir, { runs: [{ job: 'records-lo', arms: ['direct-H'], seedRoles: ['trainEval'] }], seeds, capUsd: 0 });
+  // Stage A stops at its cap before any trial; its plan is on record anyway.
+  const a = await LR.labelRun({ stageId: 'NL-T', specFile: file, workRoot: path.join(dir, 'live-a'), out: path.join(runsDir, 'a'), dry: true, racing: false, log: quiet });
+  assert.match(a.stopped, /^STAGE_CAP/);
+  const pa = JSON.parse(readFileSync(path.join(runsDir, 'a', LR.PLAN_FILE), 'utf8'));
+  assert.equal(pa.schema, LR.PLAN_SCHEMA); assert.deepEqual(pa.jobs[0].replacements.map(r => r.to), [622, 623, 624, 625]);
+  unlinkSync(path.join(runsDir, 'a', 'report.json'));
+  assert.deepEqual([...LR.priorReplacementSeeds(runsDir, 'NL-U').get('records')].sort(), [622, 623, 624, 625], 'plan.json alone reserves them');
+  // A resume of A after another stage's plan took 622: its replacements would move, so it is refused.
+  mkdirSync(path.join(runsDir, 'b'), { recursive: true });
+  writeFileSync(path.join(runsDir, 'b', LR.PLAN_FILE), JSON.stringify({ schema: LR.PLAN_SCHEMA, stage: 'NL-U', jobs: [{ job: 'x', bed: 'records', replacements: [{ from: 1, to: 622 }] }] }));
+  await assert.rejects(LR.labelRun({ stageId: 'NL-T', specFile: file, workRoot: path.join(dir, 'live-a'), out: path.join(runsDir, 'a'), dry: true, racing: false, log: quiet }),
+    e => e.code === 'PLAN_CHANGED' && /records-lo: \[622,623,624,625\] -> \[623,624,625,626\]/.test(e.message));
+  rmSync(path.join(runsDir, 'b'), { recursive: true });
+  const a2 = await LR.labelRun({ stageId: 'NL-T', specFile: file, workRoot: path.join(dir, 'live-a'), out: path.join(runsDir, 'a'), dry: true, racing: false, log: quiet });
+  assert.deepEqual(a2.jobs[0].replacements.map(r => r.to), [622, 623, 624, 625], 'the unchanged plan resumes');
+});

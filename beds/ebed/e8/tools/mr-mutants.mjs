@@ -10,7 +10,8 @@
 // where the mutant's verdict differs from the original's (oracle kills: one side must differ, since the original's
 // verdicts agree across the pair); for reference kills, the mutant reference's journals graded by both, else
 // 'reference-only' (the policy differs, no graded verdict does).
-//   node beds/ebed/e8/tools/mr-mutants.mjs [--only 3,17] [--from K] [--limit N] [--no-reference] [--json out.json]
+//   node beds/ebed/e8/tools/mr-mutants.mjs [--only 3,17 | --from K --limit N] [--equivalents | --non-equivalents]
+//          [--arms ref-earliest,ref-latest,...] [--no-reference] [--json out.json]
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -30,9 +31,13 @@ const ledgerVerdict = new Map(classes.map(c => [c.k, c.v]));
 const only = arg('--only', null)?.split(',').map(Number) ?? null;
 const from = Number(arg('--from', '0'));
 const limit = Number(arg('--limit', String(ALL.length)));
-const ks = (only ?? ALL.map((_, k) => k).slice(from, from + limit));
+let ks = (only ?? ALL.map((_, k) => k).slice(from, from + limit));
 const withReference = !process.argv.includes('--no-reference');
 const jsonOut = arg('--json', null);
+const ARMS = arg('--arms', null)?.split(',') ?? null;        // a subset of each relation's arms (both flavours)
+const EQUIV_ONLY = process.argv.includes('--equivalents'), SKIP_EQUIV = process.argv.includes('--non-equivalents');
+if (EQUIV_ONLY) ks = ks.filter(k => EQUIV.has(k));
+if (SKIP_EQUIV) ks = ks.filter(k => !EQUIV.has(k));
 const t0 = Date.now();
 const log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)}s]`, ...a);
 
@@ -42,7 +47,7 @@ const fixtures = new Map();
 for (const mr of MRS) {
   const list = [];
   for (const c of mr.mutCases) {
-    const fx = await fixture(mr, c, { cache });
+    const fx = await fixture(mr, c, { cache, arms: ARMS ? mr.arms.filter(a => ARMS.includes(a)) : mr.arms });
     const o = mr.kind === 'mr11' ? mr11OracleCheck(fx) : oracleCheck(fx);
     const r = await referenceCheck(fx);
     if (o.length || r.length) throw new Error(`${caseLabel(mr, c)} fails on the unmutated oracle: ${JSON.stringify(o[0] ?? r[0]).slice(0, 400)}`);

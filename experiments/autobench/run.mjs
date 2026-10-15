@@ -12,15 +12,26 @@
 //   node experiments/autobench/run.mjs --model claude-haiku-5-5 --tasks sales.multi_hop_lookup,hr.x --cap 2
 //   node experiments/autobench/run.mjs --scripted steps.json --tasks ...     ($0: no model; steps.json = {task: [{calls}]})
 //   node experiments/autobench/run.mjs --dry-run --subset 12                 (select + prepare + print one prompt; $0)
+//   node experiments/autobench/run.mjs --harness foundry --pool devTrain --subset 6 --model claude-haiku-5-5 --cap 1
+//                                                                            (arm A1: harness/foundry.mjs; dev tasks only
+//                                                                             unless --harness-hash matches the frozen one)
 // Options: --domains sales,hr (default: the six scored domains; 'simple' is allowed) --budget 0.75 (USD per session)
 //   --max-steps 50 --timeout-min 20 --det record|seed|off --effort low|medium|high --tools Bash --keep (workdirs)
 //   --run-id ID --live DIR --out DIR (default research/automationbench-20261014/runs/<run-id>) --no-copy
+//   --pool dev|devTrain|devCheck|test|testRef (select from SPLIT-v1.json; with --subset N: N stratified, seeded)
+//   --harness foundry --harness-hash H --cli-max-turns N|off (A1 step guard, default max-steps - 1)
+// Every fork is audited host-side after its session (accounting.mjs): model responses as the official loop counts them,
+// world usage, and the H3 rule (more than max-steps responses, or a world step issued by response >= max-steps, scores
+// as a fail in the headline; the live grade is kept as liveFinal).
 import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, appendFileSync, writeFileSync, constants as fsc } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import { runClaudeCode, WORK_ROOT, nestedModelUses } from '../../src/executors/claude-code.mjs';
+import { runClaudeCode, WORK_ROOT, nestedModelUses, DEFAULT_KEEP_RO } from '../../src/executors/claude-code.mjs';
 import { loadPolicy, modelById } from '../../src/models/policy.mjs';
 import { BRIDGE, CORPUS, PUBLIC_DOMAINS, REPO, TOOL_CLIENT, adapterText, bridgeJson, listTasks, materializeWorkdir, readJson, scriptedRunner, sha256, startServe, stratifiedSubset, writeJson } from './lib.mjs';
+import { auditSession, readCalls, readStream, worldUsage } from './accounting.mjs';
+import { assertDevOnly, domainOf, loadSplit } from './split.mjs';
+import { HARNESS_ID, HARNESS_VERSION, cliVersion, collectLedger, harnessConfig, harnessManifest, harnessSystemPrompt, writeCliGuard } from './harness/foundry.mjs';
 
 export const DEFAULTS = Object.freeze({ k: 1, budgetUsd: 0.75, concurrency: 4, maxSteps: 50, timeoutMin: 20, det: 'record', tools: ['Bash'], seed: '1' });
 
@@ -66,6 +77,34 @@ function copyTranscript(workdir, hostDir) {
 const summarizeGrade = g => g && ({ partial_credit: g.partial_credit, task_completed_correctly: g.task_completed_correctly, n_scored: g.n_scored, n_passed: g.n_passed,
   failed_types: [...new Set((g.assertion_results ?? []).filter(a => !a.excluded && !a.passed).map(a => a.type))].sort(), grade_error: g.error ?? null });
 
+/** Tasks from the frozen split (SPLIT-v1.json): a named pool, all of it in domain order, or n stratified and seeded. */
+export function poolTasks(pool, { subset, seed, domains = PUBLIC_DOMAINS, split = loadSplit() } = {}) {
+  const pools = { dev: split.dev, devTrain: split.dev.filter(t => !split.devCheck.includes(t)), devCheck: split.devCheck, test: split.test, testRef: split.testRef };
+  if (!pools[pool]) throw new Error(`unknown pool ${pool} (one of ${Object.keys(pools).join(', ')})`);
+  const rows = pools[pool].map(t => ({ task: t, domain: domainOf(t) })).filter(r => domains.includes(r.domain));
+  return subset ? stratifiedSubset(rows, subset, seed, domains) : domains.flatMap(d => rows.filter(r => r.domain === d).map(r => r.task));
+}
+
+const mean = xs => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
+const max = xs => (xs.length ? Math.max(...xs) : null);
+/** Host-side accounting over the forks of a run (both arms): usage, step accounting, ledgers, H3 overrides. */
+function accountingSummary(results) {
+  const fs = results.flatMap(r => r.forks).filter(f => !f.skipped);
+  const num = (f, k1, k2) => f[k1]?.[k2];
+  const col = (k1, k2) => fs.map(f => num(f, k1, k2)).filter(x => typeof x === 'number');
+  const stat = (k1, k2) => ({ mean: mean(col(k1, k2)), max: max(col(k1, k2)) });
+  const ledgers = fs.filter(f => f.ledger);
+  return {
+    modelResponses: stat('session', 'modelResponses'), toolResponses: stat('session', 'toolResponses'), numTurnsCli: stat('session', 'numTurns'),
+    worldSteps: stat('usage', 'worldSteps'), worldCalls: stat('usage', 'worldCalls'), reads: stat('usage', 'reads'), searches: stat('usage', 'searches'), writes: stat('usage', 'writes'),
+    stoppedByStepGuard: fs.filter(f => f.session?.stopReason === 'max_turns').length,
+    extraModelCalls: fs.reduce((s, f) => s + (f.session?.extraModelCalls ?? 0), 0),
+    capViolations: results.filter(r => r.headlineOverride).length,
+    ledger: ledgers.length ? { collected: ledgers.filter(f => f.ledger.present).length, of: ledgers.length, items: { mean: mean(ledgers.filter(f => f.ledger.present).map(f => f.ledger.items)), max: max(ledgers.filter(f => f.ledger.present).map(f => f.ledger.items)) },
+      withPlan: ledgers.filter(f => f.ledger.hasPlan).length, withVerification: ledgers.filter(f => f.ledger.hasVerification).length } : null,
+  };
+}
+
 /**
  * runTasks(opts) -> { summary, results }. opts: { model, tasks?, subset?, seed?, domains?, k, capUsd, budgetUsd,
  * concurrency, maxSteps, timeoutMin, det, effort, tools, runId, liveRoot, outDir|null, keep, runner, dryRun, log }.
@@ -76,6 +115,13 @@ export async function runTasks(o) {
   const log = opt.log ?? (m => process.stderr.write(m + '\n'));
   const scripted = Boolean(opt.runner);
   const runner = opt.runner ?? runClaudeCode;
+  // Arm A1 (harness/foundry.mjs). A0 (no harness) keeps every byte of its prompt and runner arguments.
+  const harness = opt.harness ?? null;
+  if (harness !== null && harness !== HARNESS_ID) throw new Error(`unknown harness ${harness} (known: ${HARNESS_ID})`);
+  if (harness && opt.k !== 1) throw new Error('the Foundry harness (A1) acts once per task in one world: k > 1 is forked rehearsal (A1F), a separate arm');
+  const cliMaxTurns = harness ? (opt.cliMaxTurns ?? opt.maxSteps - 1) : null;
+  // The guard may be off (0) or tighter, never looser than the official loop (maxSteps - 1 tool-calling responses).
+  if (harness && !(Number.isInteger(cliMaxTurns) && cliMaxTurns >= 0 && cliMaxTurns <= opt.maxSteps - 1)) throw new Error(`--cli-max-turns must be off or an integer in 1..${opt.maxSteps - 1}`);
   let policy = null;
   if (!scripted && !opt.dryRun) {
     policy = loadPolicy();
@@ -90,19 +136,31 @@ export async function runTasks(o) {
 
   // 1. selection
   let tasks = opt.tasks;
+  if (!tasks?.length && opt.pool) tasks = poolTasks(opt.pool, { subset: opt.subset, seed: opt.seed, domains });
   if (!tasks?.length) {
     const all = await listTasks(domains, { liveDir: live });
     tasks = stratifiedSubset(all, opt.subset ?? 12, opt.seed, domains);
   }
   const taskDomains = [...new Set(tasks.map(t => t.split('.')[0]))];
-  log(`[autobench] run ${runId}: ${tasks.length} tasks, k=${opt.k}, live ${live}`);
+  // A1 split hygiene (PREREG-AB-v1 §1.3, §6.1): dev tasks only, unless given the frozen harness hash, which must equal
+  // the hash recomputed from disk and this run's settings. Checked before anything is prepared.
+  let manifest = null, guard = null;
+  if (harness) {
+    manifest = harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli: scripted ? null : cliVersion() }));
+    if (opt.harnessHash) {
+      if (opt.harnessHash !== manifest.sha256) throw new Error(`harness hash mismatch: given ${opt.harnessHash}, recomputed ${manifest.sha256} (files or settings changed)`);
+    } else assertDevOnly(tasks);
+    if (cliMaxTurns > 0) guard = writeCliGuard(path.join(live, 'harness-bin'), { maxTurns: cliMaxTurns, target: opt.cliTarget ?? 'claude' });
+  }
+  log(`[autobench] run ${runId}: ${tasks.length} tasks, k=${opt.k}, ${harness ? `harness ${HARNESS_ID} ${HARNESS_VERSION} (${manifest.sha256.slice(0, 12)})` : 'no harness'}, live ${live}`);
 
   // 2. prepare (one official dataset build)
   const prep = path.join(live, 'prep');
   await bridgeJson(['prepare', '--domains', taskDomains.join(','), '--tasks', tasks.join(','), '--out', prep, '--det', opt.det, '--max-steps', String(opt.maxSteps)], { liveDir: live });
+  const systemPromptFor = (p, cat) => (harness ? harnessSystemPrompt(p.system, cat, opt.maxSteps) : `${p.system}\n\n${adapterText(cat, opt.maxSteps)}`);
   if (opt.dryRun) {
     const p = readJson(path.join(prep, tasks[0], 'prompt.json')), cat = readJson(path.join(prep, tasks[0], 'catalog.json'));
-    return { summary: { runId, dryRun: true, tasks, live, systemPrompt: `${p.system}\n\n${adapterText(cat, opt.maxSteps)}`, user: p.user }, results: [] };
+    return { summary: { runId, dryRun: true, tasks, live, harness, systemPrompt: systemPromptFor(p, cat), user: p.user }, results: [] };
   }
 
   // 3. sessions
@@ -126,8 +184,17 @@ export async function runTasks(o) {
     }
     const rec = { task, domain: meta.domain, example_id: meta.example_id, contract_sha256: meta.contract_sha256, k: opt.k,
       forks: fs.map(f => ({ fork: f.fork, ...summarizeGrade(f.grade), steps: f.steps ?? null, costUsd: f.costUsd ?? null, costUnknown: f.costUnknown ?? false,
-        turns: f.turns ?? null, durationMs: f.durationMs ?? null, sessionError: f.sessionError ?? null, harnessError: f.harnessError ?? null, skipped: f.skipped ?? null, nestedModelUses: f.nestedModelUses ?? 0 })),
+        turns: f.turns ?? null, durationMs: f.durationMs ?? null, sessionError: f.sessionError ?? null, harnessError: f.harnessError ?? null, skipped: f.skipped ?? null, nestedModelUses: f.nestedModelUses ?? 0,
+        session: f.session ?? null, usage: f.usage ?? null, ...(harness ? { ledger: f.ledger ?? null } : {}), accountingError: f.accountingError ?? null })),
       vote, final: final ? summarizeGrade(final) : null, costUsd: fs.reduce((s, f) => s + (f.costUsd ?? f.costUpperUsd ?? 0), 0) };
+    // H3 (host-side step cap): a single-rollout task-run whose session exceeded the official step accounting scores as a
+    // fail in the headline; its live grade is kept beside it.
+    const over = opt.k === 1 ? fs[0]?.session?.violations ?? [] : [];
+    if (over.length && rec.final) {
+      rec.liveFinal = rec.final;
+      rec.final = { ...rec.final, partial_credit: 0, task_completed_correctly: 0 };
+      rec.headlineOverride = `H3 step cap: ${over.join('; ')}`;
+    }
     results.push(rec);
     appendFileSync(resultsFile, JSON.stringify(rec) + '\n');
     log(`[autobench] ${task}: ${rec.final ? `pc=${rec.final.partial_credit.toFixed(3)} pass=${rec.final.task_completed_correctly}` : 'no grade'}${vote?.agreement !== undefined ? ` vote=${vote.agreement}` : ''} $${rec.costUsd.toFixed(4)}`);
@@ -152,8 +219,11 @@ export async function runTasks(o) {
           hostDir, det: opt.det, maxSteps: opt.maxSteps, fork, expectContract: meta.contract_sha256 });
         await bridge.ready;
         started = true;
-        r = await runner({ model: opt.model, prompt: prompt.user, systemPrompt: `${prompt.system}\n\n${adapterText(catalog, opt.maxSteps)}`, workdir, files: {},
-          budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, effort: opt.effort ?? null, tools: opt.tools, task: { name: task, fork } });
+        // A1 adds only: its system prompt (official + A0's tool section + the harness section), the step guard (CLI
+        // wrapper, kept read-only outside the workdir) and maxTurns for scripted stand-ins of the guard.
+        r = await runner({ model: opt.model, prompt: prompt.user, systemPrompt: systemPromptFor(prompt, catalog), workdir, files: {},
+          budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, effort: opt.effort ?? null, tools: opt.tools, task: { name: task, fork },
+          ...(harness ? { maxTurns: cliMaxTurns || null } : {}), ...(guard ? { binary: guard.binary, keepRo: [...DEFAULT_KEEP_RO, guard.dir] } : {}) });
         Object.assign(rec, { costUsd: r.costUsd ?? null, costUnknown: Boolean(r.costUnknown), costUpperUsd: r.costUpperUsd ?? opt.budgetUsd, turns: r.turns ?? null,
           durationMs: r.durationMs ?? null, sessionError: r.error?.code ?? null, nestedModelUses: nestedModelUses(r.toolUses ?? []) });
         const done = await bridge.stop();
@@ -167,7 +237,16 @@ export async function runTasks(o) {
         if (!r && started) Object.assign(rec, { costUsd: null, costUnknown: true, costUpperUsd: opt.budgetUsd });
         ledger.settle(opt.budgetUsd, r ?? (started ? { costUsd: null, costUpperUsd: opt.budgetUsd } : { costUsd: 0 }));
         copyTranscript(workdir, hostDir);
+        if (harness && started) { try { rec.ledger = collectLedger(workdir, hostDir); } catch (e) { rec.ledger = { present: false, reason: `error: ${String(e?.message ?? e).slice(0, 200)}` }; } }
         if (!opt.keep) rmSync(workdir, { recursive: true, force: true });
+      }
+      // Host-side accounting, after the session, from host-captured files only (both arms).
+      if (started) {
+        try {
+          const calls = readCalls(path.join(hostDir, 'calls.jsonl'));
+          rec.usage = worldUsage(calls);
+          rec.session = auditSession({ events: readStream(path.join(hostDir, 'transcript.jsonl')), calls, maxSteps: opt.maxSteps, fallbackTurns: rec.turns ?? null });
+        } catch (e) { rec.accountingError = String(e?.message ?? e).slice(0, 500); }
       }
     }
     forks.get(task).push(rec);
@@ -177,16 +256,21 @@ export async function runTasks(o) {
 
   // 4. summary
   results.sort((a, b) => tasks.indexOf(a.task) - tasks.indexOf(b.task));
-  const mean = xs => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
   const pass = r => (r.final ? r.final.task_completed_correctly : 0), pc = r => (r.final ? r.final.partial_credit : 0);
   const byDomain = Object.fromEntries(taskDomains.map(d => { const rs = results.filter(r => r.domain === d); return [d, { n: rs.length, pass_rate: mean(rs.map(pass)), mean_partial_credit: mean(rs.map(pc)) }]; }));
   const fork0 = results.map(r => r.forks.find(f => f.fork === 0)).filter(Boolean);
   const summary = {
     runId, label: scripted ? 'scripted (no model)' : `model ${opt.model}`, model: scripted ? null : opt.model, scripted, evidence: 'development/diagnostic (public AutomationBench set; not held-out)',
-    selection: opt.tasks?.length ? { tasks: opt.tasks } : { subset: opt.subset ?? 12, seed: opt.seed, domains }, tasks,
+    arm: harness ? 'A1 (harness)' : 'A0 (no harness)',
+    harness: harness ? { id: HARNESS_ID, version: HARNESS_VERSION, manifestSha256: manifest.sha256, frozenHashGiven: Boolean(opt.harnessHash), cliMaxTurns, stepGuard: Boolean(guard), extraModelCalls: 0 } : null,
+    selection: opt.tasks?.length ? { tasks: opt.tasks } : opt.pool ? { pool: opt.pool, subset: opt.subset ?? null, seed: opt.subset ? opt.seed : null, domains } : { subset: opt.subset ?? 12, seed: opt.seed, domains }, tasks,
     k: opt.k, det: opt.det, maxSteps: opt.maxSteps, budgetUsdPerSession: opt.budgetUsd, capUsd: scripted ? null : opt.capUsd, tools: opt.tools, effort: opt.effort ?? null,
     n: results.length, n_graded: results.filter(r => r.final).length,
     pass_rate: mean(results.map(pass)), mean_partial_credit: mean(results.map(pc)), by_domain: byDomain,
+    // The live grades before the H3 step-cap override (equal to the headline when no task-run exceeded the cap).
+    live_pass_rate: mean(results.map(r => (r.liveFinal ?? r.final)?.task_completed_correctly ?? 0)),
+    mean_cost_per_task_usd: results.length ? results.reduce((s, r) => s + r.costUsd, 0) / results.length : null,
+    accounting: accountingSummary(results),
     ...(opt.k > 1 ? { fork0_pass_rate: mean(fork0.map(f => f.task_completed_correctly ?? 0)), any_fork_pass_rate_diagnostic: mean(results.map(r => (r.forks.some(f => f.task_completed_correctly === 1) ? 1 : 0))),
       majority_rate: mean(results.map(r => (r.vote?.majority ? 1 : 0))) } : {}),
     // spentUsd is an upper bound: CLI-reported costs plus every session whose cost is unknown counted at its budget.
@@ -196,7 +280,8 @@ export async function runTasks(o) {
     nestedModelUses: results.reduce((s, r) => s + r.forks.reduce((t, f) => t + (f.nestedModelUses ?? 0), 0), 0),
     void: results.some(r => r.forks.some(f => (f.nestedModelUses ?? 0) > 0)) ? 'nested model use in a session transcript' : null,
     errors: results.flatMap(r => r.forks.filter(f => f.sessionError || f.harnessError).map(f => ({ task: r.task, fork: f.fork, sessionError: f.sessionError, harnessError: f.harnessError }))),
-    provenance: provenance(policy), live, finishedAt: new Date().toISOString(),
+    provenance: { ...provenance(policy), accountingSha256: sha256(readFileSync(new URL('./accounting.mjs', import.meta.url))), harnessManifestSha256: manifest?.sha256 ?? null },
+    live, finishedAt: new Date().toISOString(),
   };
   writeJson(path.join(live, 'summary.json'), summary);
   // 5. copy results into the repo (summary + per-task records; transcripts, worlds and grades with assertions stay live)
@@ -225,13 +310,19 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const a = parseArgs(process.argv.slice(2));
   const num = (v, d) => (v === undefined ? d : Number(v));
   let runner;
-  if (a.scripted) { const steps = readJson(a.scripted); runner = scriptedRunner(({ name }) => steps[name] ?? []); }
+  if (a.scripted && a.harness) {
+    // Scripted A1 stand-in ($0): steps.json = {task: [{calls} | {write: {content, append}} | both]} (harness/scripted-session.mjs).
+    const steps = readJson(a.scripted);
+    const { scriptedHarnessRunner } = await import('./harness/scripted-session.mjs');
+    runner = scriptedHarnessRunner(({ task }) => steps[task.name] ?? []);
+  } else if (a.scripted) { const steps = readJson(a.scripted); runner = scriptedRunner(({ name }) => steps[name] ?? []); }
   const { summary } = await runTasks({
     model: a.model, tasks: a.tasks ? a.tasks.split(',').filter(Boolean) : undefined, subset: num(a.subset, undefined), seed: a.seed ?? DEFAULTS.seed,
     domains: a.domains ? a.domains.split(',') : undefined, k: num(a.k, DEFAULTS.k), capUsd: num(a.cap, undefined), budgetUsd: num(a.budget, DEFAULTS.budgetUsd),
     concurrency: num(a.concurrency, DEFAULTS.concurrency), maxSteps: num(a['max-steps'], DEFAULTS.maxSteps), timeoutMin: num(a['timeout-min'], DEFAULTS.timeoutMin),
     det: a.det ?? DEFAULTS.det, effort: a.effort, tools: a.tools ? a.tools.split(',') : DEFAULTS.tools, runId: a['run-id'], liveRoot: a.live,
-    outDir: a['no-copy'] ? null : a.out, keep: Boolean(a.keep), dryRun: Boolean(a['dry-run']), runner,
+    outDir: a['no-copy'] ? null : a.out, keep: Boolean(a.keep), dryRun: Boolean(a['dry-run']), runner, pool: a.pool,
+    harness: a.harness ?? null, harnessHash: a['harness-hash'], cliMaxTurns: a['cli-max-turns'] === undefined ? undefined : a['cli-max-turns'] === 'off' ? 0 : Number(a['cli-max-turns']),
   });
   process.stdout.write(JSON.stringify(summary, null, 1) + '\n');
 }

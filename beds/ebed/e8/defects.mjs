@@ -46,7 +46,7 @@ export const PARAMS = Object.freeze({
   revealEpochs: Object.freeze(['ep2', 'ep3']),   // §2.10: revealed in E2 or E3 (window [start ep2, start ep4))
   lagMinutes: 24 * 60,                           // a claim arrives one day after its failure became observable
   timing: 'earliest',                            // the reference policy's timing for every mutant run
-  maxWakeups: 400_000,                           // a runaway mutant stops the host (status run-error)
+  runawayFactor: 5,                              // a mutant waking more than 5x as often as the reference (+500) is stopped: runaway
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -121,9 +121,9 @@ export const scratchDir = () => mkdtempSync(path.join(tmpdir(), 'e8-defects-'));
 export const removeDir = dir => rmSync(dir, { recursive: true, force: true });
 
 /** Run a mutant (as the arm) over a world through the real host; returns the journal content rows. */
-export async function runMutant(mutant, world, { item, timing = PARAMS.timing, maxWakeups = PARAMS.maxWakeups } = {}) {
+export async function runMutant(mutant, world, { item, timing = PARAMS.timing, maxWakeups } = {}) {
   const variant = mutant.kind === 'policy' ? mutant.variant(world) : undefined;
-  const r = await runReference({ item: item ?? oracleItem, binding, world, timing, variant, id: `defect-${mutant.id}`, maxWakeups });
+  const r = await runReference({ item: item ?? oracleItem, binding, world, timing, variant, id: `defect-${mutant.id}`, ...(maxWakeups ? { maxWakeups } : {}) });
   return r.rows;
 }
 
@@ -145,7 +145,9 @@ export function worldMeta(w) {
 export async function prepareWorld({ seed, difficulty, mix = 'tail', size = null }) {
   const world = generateWorld({ seed, difficulty, mix, ...(size ? { size } : {}) });
   const ref = await referenceRuns(world);
-  return { world, pools: ref.pools, refDigest: behaviourDigest(ref.runs[PARAMS.timing].rows) };
+  const rows = ref.runs[PARAMS.timing].rows;
+  const wakeups = rows.filter(r => r.type === 'wakeup').length;
+  return { world, pools: ref.pools, refDigest: behaviourDigest(rows), maxWakeups: PARAMS.runawayFactor * wakeups + 500 };
 }
 
 const epochIndex = (world, atMs) => world.epochBounds.map(Date.parse).reduce((k, s, i) => (atMs >= s ? i : k), 0);
@@ -169,7 +171,7 @@ const brief = v => ({ case: v.case, epoch: v.epoch, class: v.class, pool: v.pool
  */
 export async function mineOnWorld({ mutant, item, prepared, keep = false }) {
   const { world, pools, refDigest } = prepared;
-  const rows = await runMutant(mutant, world, { item });
+  const rows = await runMutant(mutant, world, { item, maxWakeups: prepared.maxWakeups });
   const digest = behaviourDigest(rows);
   const meta = { ...worldMeta(world), journal: digest };
   const checked = e0Cases(world);

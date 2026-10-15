@@ -87,6 +87,6 @@ def addr(s: str | None) -> str:
 
 def has_token(text, token: str) -> bool:
     """`token` occurs in `text` (whitespace-normalized, ignoring case) and is not the prefix of a longer number or
-    word: 'tickets 1, thank-yous 2' does not match 'tickets 1, thank-yous 23', and 's610/t01' does not match
-    's610/t012'."""
-    return re.search(re.escape(norm(token).lower()) + r"(?![\w-])", norm(text).lower()) is not None
+    word: 'tickets 1, thank-yous 2' does not match 'tickets 1, thank-yous 23', 's610/t01' does not match
+    's610/t012', and 'TRIAGE-412-W10' does not match 'XTRIAGE-412-W10'."""
+    return re.search(r"(?<![\w-])" + re.escape(norm(token).lower()) + r"(?![\w-])", norm(text).lower()) is not None
