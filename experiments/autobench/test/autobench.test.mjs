@@ -298,6 +298,36 @@ test('vote: text around a fresh id is compared (different decisions do not merge
   assert.equal(v2.majority, true);
 });
 
+test('environment fault: the run stops without a headline, the faulted task is kept aside and reruns on --resume; a plain rerun or changed settings are refused', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 300_000 }, async () => {
+  const live = tmp('envfault');
+  const TASKS = [PHONE_TASK, 'simple.email_sf_contact_email_update', 'simple.slack_office_closure'];
+  const inner = scriptedRunner(({ name }) => (name === PHONE_TASK ? [{ calls: [read()] }, { calls: [sf('003001', 'Phone', '+1-555-0101')] }] : [{ calls: [read()] }]));
+  const calls = [];
+  const limited = async args => { calls.push(args.task.name); const r = await inner(args); return args.task.name === TASKS[1] ? { ...r, costUsd: 0, error: { code: 'MODEL_RATE_LIMIT' } } : { ...r, costUsd: 0.01 }; };
+  const base = { tasks: TASKS, domains: ['simple'], det: 'record', concurrency: 1, liveRoot: live, outDir: path.join(live, 'out'), log: () => {} };
+  const first = await runTasks({ ...base, runner: limited });
+  assert.match(first.stopped, /MODEL_RATE_LIMIT at simple\.email_sf_contact_email_update/);
+  assert.deepEqual(calls, TASKS.slice(0, 2)); // the third task never started
+  assert.deepEqual(first.results.map(r => r.task), [PHONE_TASK]);
+  assert.equal(first.summary.pass_rate, undefined); // no headline from a stopped run
+  assert.ok(!existsSync(path.join(live, 'out', 'summary.json')));
+  const faults = readFileSync(path.join(live, 'results.faults.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  assert.deepEqual(faults.map(r => [r.task, r.forks[0].sessionError]), [[TASKS[1], 'MODEL_RATE_LIMIT']]);
+  await assert.rejects(runTasks({ ...base, runner: limited }), /already holds a run: pass --resume/);
+  await assert.rejects(runTasks({ ...base, runner: limited, resume: true, maxSteps: 40 }), /resume refused: the settings or the runner differ/);
+  calls.length = 0;
+  const ok = async args => { calls.push(args.task.name); return { ...(await inner(args)), costUsd: 0.01 }; };
+  const second = await runTasks({ ...base, runner: ok, resume: true });
+  assert.equal(second.stopped, undefined);
+  assert.deepEqual(calls, TASKS.slice(1)); // the recorded task is kept, not rerun
+  assert.deepEqual(second.results.map(r => r.task), TASKS);
+  assert.equal(second.results[0].final.task_completed_correctly, 1);
+  assert.deepEqual(second.summary.envFaults, { records: 1, tasks: 1, sessions: 1, spentUsd: 0 });
+  assert.ok(Math.abs(second.summary.cost.spentUsd - 0.03) < 1e-9); // earlier spend stays on the cap
+  assert.equal(second.summary.cost.sessions, 3);
+  assert.ok(existsSync(path.join(live, 'out', 'results.faults.jsonl')));
+});
+
 test('cost: a runner that throws after it started is counted at its budget (unknown), not at $0; a nested model use voids the run', { skip: !HAVE_VENV && 'AutomationBench venv missing' }, async () => {
   const { summary, results } = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], runner: async () => { throw new Error('boom after start'); }, budgetUsd: 0.5,
     det: 'record', liveRoot: tmp('cost'), outDir: null, log: () => {} });

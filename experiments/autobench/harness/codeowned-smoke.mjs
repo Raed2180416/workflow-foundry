@@ -6,16 +6,22 @@
 // accounting over every node) on real dev worlds, not capability: its scores are not evidence of anything.
 //
 //   node experiments/autobench/harness/codeowned-smoke.mjs [--per-domain 1] [--seed a1c-smoke-1] [--out DIR|none] [--concurrency 2]
+// (the recorded smoke used --seed 11: the six dev-first6 tasks of the a1-dev-first6 diagnosis)
+import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { WORK_ROOT } from '../../../src/executors/claude-code.mjs';
 import { PUBLIC_DOMAINS, REPO } from '../lib.mjs';
 import { poolTasks, runTasks } from '../run.mjs';
 import { stubNodeRunner, stubSessionRunner } from './codeowned-stubs.mjs';
 
 export async function smoke({ perDomain = 1, seed = 'a1c-smoke-1', out, concurrency = 2, log, tasks = null, dateNote = true } = {}) {
   const list = tasks ?? poolTasks('devTrain', { subset: perDomain * PUBLIC_DOMAINS.length, seed });
+  // A scripted smoke always starts from a fresh live directory (the runner refuses to reuse one without --resume).
+  const runId = `a1c-smoke-scripted-${seed}`, liveRoot = path.join(WORK_ROOT, 'autobench', runId);
+  rmSync(liveRoot, { recursive: true, force: true });
   return runTasks({ tasks: list, harness: 'codeowned', runner: stubSessionRunner({ skipLast: true }), nodeRunner: stubNodeRunner(), det: 'record', k: 1, concurrency, dateNote,
-    runId: `a1c-smoke-scripted-${seed}`, outDir: out === 'none' ? null : (out ?? path.join(REPO, 'research/automationbench-20261014/runs/a1c-smoke-scripted')), log });
+    runId, liveRoot, outDir: out === 'none' ? null : (out ?? path.join(REPO, 'research/automationbench-20261014/runs/a1c-smoke-scripted')), log });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

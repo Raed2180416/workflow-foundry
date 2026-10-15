@@ -60,7 +60,7 @@ tokens: 34,122 characters, at the 3.5 characters per token of the earlier 9K est
 | `transition.mjs` | `referenceTransition` (the oracle core), `recordsOf`, `canonicalArgs`, `historyOf`, `editionAt`, `priorityAt` |
 | `index.mjs` | the module interface: `family`, `specE`, `schemas`, `binding`, `oracleItem` hooks, `critical`, `referencePolicy`, `referenceRuns`, `oracle` |
 | `controls.mjs` | bad, gaming and necessity controls; `targetCases`, `plannedView` |
-| `golden.mjs` | 54 hand-derived, rule-cited goldens + `runGoldens` (25 added by the mutation review, 2026-10-15) |
+| `golden.mjs` | 54 hand-derived, rule-cited goldens + `runGoldens` (26 added by the mutation review, 2026-10-15) |
 | `tools/` | `health`, `controls-run`, `walker-grade`, `specificity-run`, `mutate` (part B); `world-health`, `walker` (part A) |
 | `ledger/MUTANTS.md` | the oracle mutation ledger: standard, result, every survivor triaged; `ledger/mutation-20261015.json` the measured run |
 | `test/` | `world.test.mjs` (part A, 22 tests), `e7.test.mjs` (part B, 75 tests: 47 + 26 goldens and 2 unit checks of the 2026-10-15 mutation review), `sla-independent.mjs` (an independent R4.2–R5 evaluator and the history fuzzer for the N-version check; a fixture, not a suite) |

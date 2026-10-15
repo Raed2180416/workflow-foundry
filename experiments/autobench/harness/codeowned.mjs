@@ -16,16 +16,19 @@
 //   6. TERMINATION code-owned (checker.mjs): repair sessions given only the failing checks and their evidence, until all
 //                 hard checks pass or no round fits the remaining responses, steps, money or time.
 // Every model call counts toward the 50 model responses (the same counting as accounting.mjs), every world step
-// (code-issued or session-issued) toward the bridge's 49; both are audited per task (auditPipeline). Nothing here
+// (code-issued or session-issued) toward the bridge's 49; both are audited per task (auditPipeline). An environment
+// fault in any node (experiments/lib ENV_FAULTS: rate or usage limit, model unavailable, no sandbox) stops the pipeline
+// at once and is returned as the task's session error, so the runner treats the task as not run, like an A0 session. Nothing here
 // reads the task's name, the prepared task files, the initial-world dump, assertions, grades or host directories: the
 // pipeline receives the official prompt, the tool catalog and a mailbox, and writes host-side logs it never reads back.
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, constants as fsc } from 'node:fs';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync, constants as fsc } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_KEEP_RO } from '../../../src/executors/claude-code.mjs';
 import { CHILD_ENV_ALLOWED } from '../../../src/models/policy.mjs';
 import { DATE_NOTE, REPO, adapterText, sha256 } from '../lib.mjs';
 import { auditSession, readStream } from '../accounting.mjs';
+import { ENV_FAULTS } from '../../lib/runner.mjs';
 import { corpusPin, localImports, writeCliGuard } from './foundry.mjs';
 import { bridgeClient } from './bridge-client.mjs';
 import { buildInventory, renderInventory } from './inventory.mjs';
@@ -37,7 +40,7 @@ export const HARNESS_ID = 'codeowned';
 export const HARNESS_VERSION = 'a1c-v1';
 export const ROLES = Object.freeze(['ledger', 'adjudicate', 'pcmap', 'checker', 'act', 'repair']);
 export const PIPELINE_DEFAULTS = Object.freeze({ K: 3, inventorySteps: 16, checkSteps: 3, maxRounds: 2, actReserveResponses: 8, minRepairResponses: 4, nodeTimeoutMs: 240_000,
-  inlineInventoryChars: 40_000, ledgerInventoryChars: 150_000, systemMaxBytes: 90_000, nodeBudgetShare: 0.1, reserveShare: 0.25, pcmap: true, parallelLedgers: true });
+  inlineInventoryChars: 70_000, ledgerInventoryChars: 150_000, systemMaxBytes: 90_000, nodeBudgetShare: 0.1, reserveShare: 0.25, pcmap: true, parallelLedgers: true });
 
 /** H8: every knowledge source compiled into A1-C. Update with every harness version. */
 export const KNOWLEDGE = Object.freeze([
@@ -128,10 +131,16 @@ export async function runPipeline(o) {
   const models = o.models;
   const mailbox = path.join(o.workdir, '.tools');
   const pdir = path.join(o.hostDir, 'pipeline');
+  // A task rerun after an environment fault (run.mjs --resume) keeps the earlier attempt's files beside the new ones.
+  if (existsSync(pdir)) { let n = 1; while (existsSync(`${pdir}.prev-${n}`)) n += 1; renameSync(pdir, `${pdir}.prev-${n}`); }
   mkdirSync(pdir, { recursive: true });
   const hostWrite = (name, obj) => writeFileSync(path.join(pdir, name), typeof obj === 'string' ? obj : JSON.stringify(obj, null, 1));
   const nodes = [];
-  let responses = 0, spent = 0, upper = 0, unknown = false;
+  let responses = 0, spent = 0, upper = 0, unknown = false, envFault = null;
+  const HALT = Symbol('environment fault');
+  /** Stop the pipeline after a node that met an environment fault (the task is not run, not failed). */
+  const halt = () => { if (envFault) throw HALT; };
+  const noteFault = code => { if (ENV_FAULTS.has(code)) envFault ??= code; };
   const toolUses = [];
   const client = bridgeClient({ mailbox, responsesSoFar: () => responses });
   const msLeft = () => o.timeoutMs - (Date.now() - t0);
@@ -159,7 +168,8 @@ export async function runPipeline(o) {
     try {
       r = await o.nodeRunner({ model, prompt, systemPrompt: system, workdir: dir, files: {}, budgetUsd: budget, timeoutMs: Math.max(30_000, Math.min(P.nodeTimeoutMs, msLeft() - 60_000)), effort: o.effort ?? null,
         tools: [], task: { name: role, fork: 0 }, maxTurns: 1, binary: guardOne.binary, keepRo: [...DEFAULT_KEEP_RO, guardOne.dir] });
-    } catch (e) { r = { ok: false, error: { code: 'NODE_ERROR', message: String(e?.message ?? e).slice(0, 300) }, costUsd: null, costUnknown: true, costUpperUsd: budget }; }
+    } catch (e) { r = { ok: false, error: { code: ENV_FAULTS.has(e?.code) ? e.code : 'NODE_ERROR', message: String(e?.message ?? e).slice(0, 300) }, costUsd: null, costUnknown: true, costUpperUsd: budget }; }
+    noteFault(r?.error?.code);
     const ended = Date.now() / 1000;
     const copied = copyTranscript(path.join(dir, '.executor-transcript.jsonl'), tfile);
     const events = copied ? readStream(tfile) : [];
@@ -199,7 +209,8 @@ export async function runPipeline(o) {
     try {
       r = await o.runner({ model, prompt: o.official.user, systemPrompt, workdir: o.workdir, files: {}, budgetUsd: budget, timeoutMs: Math.max(60_000, msLeft() - 3 * 60_000), effort: o.effort ?? null,
         tools: o.tools ?? ['Bash'], task: { name: role, fork: 0 }, maxTurns: cap, binary: guard.binary, keepRo: [...DEFAULT_KEEP_RO, guard.dir] });
-    } catch (e) { r = { ok: false, error: { code: 'SESSION_ERROR', message: String(e?.message ?? e).slice(0, 300) }, costUsd: null, costUnknown: true, costUpperUsd: budget }; }
+    } catch (e) { r = { ok: false, error: { code: ENV_FAULTS.has(e?.code) ? e.code : 'SESSION_ERROR', message: String(e?.message ?? e).slice(0, 300) }, costUsd: null, costUnknown: true, costUpperUsd: budget }; }
+    noteFault(r?.error?.code);
     const ended = Date.now() / 1000;
     const copied = copyTranscript(live, tfile);
     rmSync(live, { force: true });
@@ -246,11 +257,13 @@ export async function runPipeline(o) {
     const ledgers = [];
     if (P.parallelLedgers) ledgers.push(...await Promise.all(Array.from({ length: P.K }, (_, k) => reader(k))));
     else for (let k = 0; k < P.K; k++) ledgers.push(await reader(k));
+    halt();
     const merged = mergeLedgers(ledgers, { sources });
     const { settled, open } = settleByCode(merged.conflicts, sources);
     const decisions = settled.map(s => ({ conflict: s.conflict, choice: s.choice, by: 'code', rule: s.rule }));
     if (open.length && responses + 1 <= maxSteps - P.actReserveResponses) {
       const reply = await modelNode('adjudicate', 'adjudicate', ADJUDICATE_SYSTEM, adjudicatePrompt({ request: o.official.user, conflicts: open, sourceSpans: conflictSpans(open, sources), dateNote }));
+      halt();
       decisions.push(...readDecisions(reply, open));
     } else for (const c of open) decisions.push({ conflict: c, choice: null, by: 'unsettled (no budget)' });
     applyDecisions(merged, decisions);
@@ -262,6 +275,7 @@ export async function runPipeline(o) {
     let mapped = 0;
     if (P.pcmap && judgedItems.length && responses + 1 <= maxSteps - P.actReserveResponses) {
       const reply = await modelNode('pcmap', 'pcmap', PCMAP_SYSTEM, pcmapPrompt({ items: judgedItems, inventoryText: renderInventory(inv, { maxChars: 40_000 }), dateNote }));
+      halt();
       for (const c of Array.isArray(reply?.checks) ? reply.checks : []) {
         const item = judgedItems.find(i => i.id === String(c?.requirement));
         const params = item ? validateMapped(c, sources, inv) : null;
@@ -292,6 +306,7 @@ export async function runPipeline(o) {
     const actBudget = Math.max(0.02, usdLeft() - P.reserveShare * B);
     const act = await sessionNode('act', 'act', brief, actCap, actBudget);
     actError = act?.error?.code ?? null;
+    halt();
 
     // 5-6. CHECK, then code-owned TERMINATION with repair rounds
     // The checker decides only what code cannot; after round 0 only when a hard check depends on it (advisory verdicts
@@ -299,6 +314,7 @@ export async function runPipeline(o) {
     const judge = async its => (responses + 1 <= maxSteps && (stats.rounds === 0 || its.some(x => x.hard)) ? modelNode(`checker-${stats.rounds}`, 'checker', CHECKER_SYSTEM, checkerPrompt({ items: its, dateNote })) : null);
     for (;;) {
       const chk = await codeNode(`check-${stats.rounds}`, () => runChecks({ client, inv, pcs, maxSteps: P.checkSteps, judge, sources, node: `check-${stats.rounds}` }));
+      halt();
       const row = { round: stats.rounds, checks: chk.results.length, pass: chk.results.filter(r => r.pass === true).length, fail: chk.results.filter(r => r.pass === false).length, undecided: chk.results.filter(r => r.pass === null).length,
         hardFail: chk.results.filter(r => r.pc.hard && r.pass === false).length, judged: chk.judged, steps: chk.steps };
       stats.checks.push(row);
@@ -313,11 +329,18 @@ export async function runPipeline(o) {
       const rb = fit(repairSection({ failing, passing, stepsLeft: maxWorldSteps - servedSteps(mailbox) - P.checkSteps, responseCap: cap, round: stats.rounds }));
       writeFileSync(path.join(o.workdir, BRIEF_FILES.repair), `${renderChecks(failing.map(f => f.pc))}\n\n${failing.map(f => `${f.pc.id}: ${f.evidence}`).join('\n')}\n`);
       await sessionNode(`repair-${stats.rounds}`, 'repair', rb, cap, Math.max(0.01, usdLeft() - P.nodeBudgetShare * B));
+      halt();
     }
   } catch (e) {
-    actError = actError ?? 'PIPELINE_ERROR';
-    stats.error = String(e?.stack ?? e).slice(0, 1500);
-    log(`[codeowned] pipeline error: ${String(e?.message ?? e).slice(0, 300)}`);
+    if (e === HALT) {
+      actError = envFault;
+      stats.envFault = envFault;
+      log(`[codeowned] environment fault ${envFault}: pipeline stopped after node ${nodes.filter(Boolean).at(-1)?.name ?? '?'}`);
+    } else {
+      actError = envFault ?? actError ?? 'PIPELINE_ERROR';
+      stats.error = String(e?.stack ?? e).slice(0, 1500);
+      log(`[codeowned] pipeline error: ${String(e?.message ?? e).slice(0, 300)}`);
+    }
   }
   hostWrite('client-log.json', client.log);
   for (let i = 0; i < nodes.length; i++) if (!nodes[i]) nodes[i] = { idx: i, name: 'unfinished', kind: 'code', responses: 0, steps: 0, started: 0, ended: 0 };

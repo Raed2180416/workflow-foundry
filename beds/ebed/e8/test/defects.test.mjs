@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { transitionMutants, HAND_CANDIDATES, armItemOf, mineOnWorld, prepareWorld, planReveal, defectManifest, scratchDir, removeDir, baseDigests, e0Cases, failing, PARAMS, TRANSITION_FILE } from '../defects.mjs';
+import { transitionMutants, HAND_CANDIDATES, armItemOf, mineOnWorld, prepareWorld, planReveal, defectManifest, scratchDir, removeDir, baseDigests, e0Cases, failing, compactJson, PARAMS, TRANSITION_FILE } from '../defects.mjs';
 import { generateWorld, oracleItem } from '../index.mjs';
 import { gradeCase } from '../../oracle/grade.mjs';
 import { canonical } from '../../../lib/canonical.mjs';
@@ -29,6 +29,15 @@ test('defects: the transition mutants are tools/mutate.mjs\'s, numbered as the o
     const man = JSON.parse(readFileSync(path.join(EVIDENCE, 'data', 'manifest.json'), 'utf8'));
     assert.equal(ms.length, man.length);
     for (const m of ms) assert.deepEqual([m.line, m.from, m.to], [man[m.k].line, man[m.k].from, man[m.k].to], `k${m.k}`);
+  }
+});
+
+test('defects: the ledger files are compact JSON (one leaf per line) that parse back to the same value', { skip: !index && 'no ledger' }, () => {
+  const sample = { a: [1, 'x', null], b: { c: 1, d: [true] }, e: [{ f: 1, g: ['h'] }, { i: { j: 2 } }], k: undefined, long: 'y'.repeat(120) };
+  assert.deepEqual(JSON.parse(compactJson(sample)), JSON.parse(JSON.stringify(sample)));
+  for (const f of readdirSync(LEDGER).filter(x => x.endsWith('.json'))) {
+    const text = readFileSync(path.join(LEDGER, f), 'utf8');
+    assert.equal(text, `${compactJson(JSON.parse(text))}\n`, `${f} is written by compactJson`);
   }
 });
 
@@ -72,10 +81,13 @@ test('defects: every manifest is complete; true and false revealing events are p
     assert.equal(m.e0Silence.executed, true);
     assert.equal(m.e0Silence.failed, 0);
     assert.ok(m.members.includes(m.mutant.id));
+    for (const [id, b] of Object.entries(m.membersBand ?? {})) assert.ok(m.members.includes(id) && b.length < m.band.length && b.every(d => m.band.includes(d)), `${m.id}: ${id} joins on a narrower band`);
     assert.ok(m.contradicts.length > 0, `${m.id}: a latent defect contradicts a rule (E-BED §2.5)`);
     assert.ok(m.band.length > 0 && m.band.every(d => d >= 2 && d <= 5));
     for (const d of m.band) assert.equal(m.worlds.filter(w => w.difficulty === d).length, 2, `${m.id}: two seeds at d${d}, both E0-silent`);
     assert.ok(m.worlds.every(w => m.band.includes(w.difficulty)));
+    assert.deepEqual(m.revealedOn, m.worlds.filter(w => w.reveal).map(w => w.world), `${m.id}: revealedOn lists the revealing worlds`);
+    assert.ok(m.worlds.every(w => w.affected.every(a => a.at === undefined || a.at === null || /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\+01:00$/.test(a.at))), `${m.id}: times in the world's offset`);
     let revealed = 0;
     for (const w of m.worlds) {
       assert.ok(w.seed >= 1001 && w.seed <= 1199, 'dev block only');

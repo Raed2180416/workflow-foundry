@@ -7,6 +7,8 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { REPO, VENV_PY, readJson } from '../lib.mjs';
 import { runTasks } from '../run.mjs';
 import { loadSplit } from '../split.mjs';
@@ -392,6 +394,54 @@ test('end to end (A1-C, scripted): a failing hard check triggers a repair round 
   assert.match(rc.headlineOverride, /H3 step cap: model responses \d+ > 14 \(sum over 4 model call\(s\)\)/);
   assert.equal(rc.final.task_completed_correctly, 0);
   assert.equal(rc.liveFinal.task_completed_correctly, 1);
+});
+
+test('end to end (A1-C, scripted): an environment fault in any model node stops the pipeline before acting and is the task\'s session error (not a task outcome)', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 600_000 }, async () => {
+  const stub = stubNodeRunner({ replies: { ledger: phoneLedger } });
+  let calls = 0;
+  const limited = async args => { const n = ++calls; const r = await stub(args); return n === 2 ? { ...r, ok: false, error: { code: 'MODEL_RATE_LIMIT' }, result: null } : r; };
+  const seen = [], live = tmp('fault');
+  const { summary, results } = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'codeowned', det: 'record', liveRoot: live, outDir: null, log: quiet,
+    runner: stubSessionRunner({ seen }), nodeRunner: limited });
+  assert.equal(seen.length, 0);                                               // no act session after the fault
+  const nodes = readJson(path.join(live, 'host', PHONE_TASK, 'fork-0', 'pipeline', 'nodes.json'));
+  assert.deepEqual(nodes.map(n => n.name), ['inventory', 'ledger-1', 'ledger-2', 'ledger-3']);
+  assert.equal(nodes.find(n => n.error)?.error, 'MODEL_RATE_LIMIT');
+  // The runner sees the fault as the session error (a runner with the environment-fault rule defers the task instead).
+  if (results.length) assert.equal(results[0].forks[0].sessionError, 'MODEL_RATE_LIMIT');
+  else assert.match(String(summary.stopped), /MODEL_RATE_LIMIT/);
+});
+
+// The runner as it was before the A1-C wiring (the last commit that changed run.mjs before it), loaded from git into a
+// temporary module whose relative imports point back into the repository.
+const RUN_BASE = '4049b06';
+async function baseRunner() {
+  let src;
+  try { src = execFileSync('git', ['-C', REPO, 'show', `${RUN_BASE}:experiments/autobench/run.mjs`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return null; }
+  const here = pathToFileURL(path.join(REPO, 'experiments/autobench')).href + '/';
+  const srcDir = pathToFileURL(path.join(REPO, 'src')).href + '/';
+  const fixed = src.replaceAll("from '../../src/", `from '${srcDir}`).replaceAll("from './", `from '${here}`).replaceAll("import('./", `import('${here}`)
+    .replaceAll("new URL('./accounting.mjs', import.meta.url)", `new URL('${here}accounting.mjs')`);
+  const f = path.join(tmp('base-runner'), 'run-base.mjs');
+  writeFileSync(f, fixed);
+  return import(pathToFileURL(f).href);
+}
+
+test('A0 and A1 sessions are byte-identical to the pre-A1-C runner (git ' + RUN_BASE + '): every runner argument, with and without --date-note', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 600_000 }, async t => {
+  const base = await baseRunner();
+  if (!base) return t.skip('git history unavailable');
+  const capture = seen => async args => { seen.push(args); return { ok: true, error: null, costUsd: 0, costUnknown: false, costUpperUsd: 0, turns: 0, durationMs: 1, toolUses: [], label: 'capture' }; };
+  for (const variant of [{}, { dateNote: true }, { harness: 'foundry' }, { harness: 'foundry', dateNote: true }]) {
+    const out = [];
+    for (const impl of [base.runTasks, runTasks]) {
+      const live = tmp('ident'), seen = [];
+      const { summary } = await impl({ tasks: [PHONE_TASK], domains: ['simple'], det: 'record', liveRoot: live, outDir: null, log: quiet, runner: capture(seen), ...variant });
+      // Paths differ only by the run's live directory.
+      out.push({ args: JSON.parse(JSON.stringify(seen).replaceAll(live, '<live>')), arm: summary.arm, harness: summary.harness && { ...summary.harness, manifestSha256: typeof summary.harness.manifestSha256 } });
+    }
+    assert.equal(out[0].args.length, 1);
+    assert.deepEqual(out[1], out[0], JSON.stringify(variant));
+  }
 });
 
 test('A0 and A1 are untouched by the A1-C wiring: same prompts in a dry run; the codeowned modules are not loaded for them', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 300_000 }, async () => {

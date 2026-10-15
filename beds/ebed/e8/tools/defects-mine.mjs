@@ -15,7 +15,7 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { transitionMutants, HAND_CANDIDATES, armItemOf, mineOnWorld, prepareWorld, planReveal, defectManifest, baseDigests, scratchDir, removeDir, PARAMS } from '../defects.mjs';
+import { transitionMutants, HAND_CANDIDATES, armItemOf, mineOnWorld, prepareWorld, planReveal, defectManifest, baseDigests, scratchDir, removeDir, compactJson, PARAMS } from '../defects.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
@@ -182,7 +182,7 @@ console.log(`done in ${secs()} s: ${JSON.stringify(index.counts)}`);
 if (write) {
   mkdirSync(out, { recursive: true });
   for (const f of existsSync(out) ? readdirSync(out) : []) if (/^ld-.*\.json$/.test(f)) rmSync(path.join(out, f));
-  for (const x of manifests) writeFileSync(path.join(out, `${x.id}.json`), `${JSON.stringify(x, null, 1)}\n`);
-  writeFileSync(path.join(out, 'index.json'), `${JSON.stringify(index, null, 1)}\n`);
+  for (const x of manifests) writeFileSync(path.join(out, `${x.id}.json`), `${compactJson(x)}\n`);
+  writeFileSync(path.join(out, 'index.json'), `${compactJson(index)}\n`);
   console.log(`wrote ${manifests.length} manifests and index.json to ${path.relative(process.cwd(), out)}`);
 }

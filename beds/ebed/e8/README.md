@@ -24,6 +24,8 @@ node beds/ebed/e8/tools/controls-run.mjs --seeds 1211-1214                # cont
 node beds/ebed/e8/tools/arm-smoke.mjs <solver.mjs> --seed 1241 --difficulty 3   # run a solver; shows no grading
 node beds/ebed/e8/tools/mutate.mjs                                        # oracle mutation score (K1 >= 0.95)
 node beds/ebed/e8/tools/mr-mutants.mjs --equivalents                     # the relations against mutate.mjs's mutants
+node beds/ebed/e8/tools/defects-mine.mjs --date 2026-10-15               # latent defects from reference mutants (step 6)
+node --test beds/ebed/e8/test/defects.test.mjs                           # re-executes one E0 rejection and one manifest
 ```
 
 ## What the item is
@@ -63,6 +65,8 @@ The spec every arm gets is `spec/SPEC-E.md` (about 6K tokens); what is in and ou
 | `ledger/MUTANTS.md`, `ledger/mutants-20261015/` | the oracle mutants under one standard, and the harness and data behind every verdict |
 | `metamorphic.mjs`, `test/metamorphic.test.mjs` | E-BED §9.3 MR1–MR13 on the oracle and the reference policy: transformations, arm wrappers (MR6, MR13), the saga-planner check (MR11) |
 | `tools/mr-mutants.mjs`, `ledger/mr-mutants-20261015.json` | the relations against `mutate.mjs`'s 304 mutants (its operator set read from its text; its scoring untouched) |
+| `defects.mjs`, `tools/defects-mine.mjs`, `test/defects.test.mjs` | E-BED §2.10 / §9.5 latent defects: reference mutants (the policy driven by `mutate.mjs`'s transition edits, plus §3's hand candidates as policy variants) run as the arm against the original oracle; executed E0-silence check; planned true and false revealing events |
+| `ledger/latent-defects/` | one manifest per admitted latent defect (`ld-*.json`) and `index.json` (every mutant's status, counts, digests of the files the run rests on) |
 | `../oracle/view.mjs`, `grade.mjs`, `policy.mjs` | item-independent: journal index and case views, the grading machine (contract §5.3), the reference policy (§5.6) |
 
 ## Measurements ($0, dev seeds)

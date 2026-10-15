@@ -173,7 +173,7 @@ export const e0Cases = world => caseIds(world).filter(c => PARAMS.e0Epochs.inclu
 export const failing = v => !!(v.firstDivergence || v.oracleError || v.critical.length || (v.pool === 'completed' && !v.pass));
 
 const brief = v => ({ case: v.case, epoch: v.epoch, class: v.class, pool: v.pool,
-  ...(v.firstDivergence ? { at: v.firstDivergence.at, layer: v.firstDivergence.layer, code: v.firstDivergence.code,
+  ...(v.firstDivergence ? { at: isoAt(v.firstDivergence.at), layer: v.firstDivergence.layer, code: v.firstDivergence.code,
     ...(v.firstDivergence.lid ? { lid: v.firstDivergence.lid } : {}), ...(v.firstDivergence.rule ? { rule: v.firstDivergence.rule } : {}),
     ...(v.firstDivergence.system ? { effect: `${v.firstDivergence.system}.${v.firstDivergence.op}` } : {}),
     ...(v.firstDivergence.field ? { field: v.firstDivergence.field } : {}) } : {}),
@@ -267,6 +267,7 @@ function effectOf(p, O) {
 const argsMatch = (match, args) => Object.keys(match).every(k => args && canonical(args[k] ?? null) === canonical(match[k]));
 const committedRows = (idx, c, eff, atMs) => (eff ? idx.bucket(c).ledger.filter(r => r.committed && r.system === eff.system && r.op === eff.op && r.at <= atMs && argsMatch(eff.match, r.args)) : []);
 const iso = m => `${new Date(m + 60 * MIN).toISOString().slice(0, 19)}+01:00`;   // E8 worlds: Europe/Amsterdam before 29 March, UTC+01:00
+const isoAt = s => (s === null || s === undefined ? null : iso(Date.parse(s)));   // every time in a manifest in the world's own offset
 
 function claimText(assert, p, O, fields) {
   const subj = p.F ? `fulfilment ${p.F} of order ${O}` : p.about && p.about !== O ? `${p.about} (order ${O})` : `order ${O}`;
@@ -475,7 +476,7 @@ export function planReveal({ world, mined, defectId, lag = PARAMS.lagMinutes * M
       // open at the crash.
       let blocked = [];
       try { blocked = [...new Set(referenceTransition(world, caseView(idx, v.case, at, Infinity)).effects.required.map(e => e.rule))].sort(); } catch { /* past totality */ }
-      return { reveal: { case: v.case, class: v.class, epoch: v.epoch, selfRevealing: 'arm-error', at: v.firstDivergence.at, blocked, event: null }, falseReveal: null,
+      return { reveal: { case: v.case, class: v.class, epoch: v.epoch, selfRevealing: 'arm-error', at: iso(at), blocked, event: null }, falseReveal: null,
         sweep: sweepOf(obs, at), natural };
     }
     const claim = trueClaim(world, idx, v, T);
@@ -484,7 +485,7 @@ export function planReveal({ world, mined, defectId, lag = PARAMS.lagMinutes * M
     const ev = claimEvent({ world, c: v.case, p: claim.p, assert: claim.assert, fields: claim.fields, atMs: T, id: `rev-${defectId}-${wm.seed}-d${wm.difficulty}` });
     const reveal = { case: v.case, class: v.class, epoch: v.epoch, observableAt: iso(at), eventEpoch: `ep${epochIndex(world, T)}`, divergence: brief(v),
       event: ev, truth: { valid: true, defect: defectId, rule: claim.rule, hardness: claim.hardness,
-        reason: `the oracle fails ${v.case} at ${v.firstDivergence.at} (${v.firstDivergence.code}${v.firstDivergence.lid ? ` ${v.firstDivergence.lid}` : ''}) on the defect's trajectory` } };
+        reason: `the oracle fails ${v.case} at ${isoAt(v.firstDivergence.at)} (${v.firstDivergence.code}${v.firstDivergence.lid ? ` ${v.firstDivergence.lid}` : ''}) on the defect's trajectory` } };
     const f = falseClaim({ world, idx, verdicts, affected: mined.affected, claim, trueAt: T, trueClass: v.class, window, lag });
     const falseReveal = f ? { case: f.c, class: f.cls, epoch: world.truth.cases[f.c].epoch, eventEpoch: `ep${epochIndex(world, f.at)}`,
       event: claimEvent({ world, c: f.c, p: f.p, assert: claim.assert, fields: claim.fields, atMs: f.at, id: `inv-${defectId}-${wm.seed}-d${wm.difficulty}` }),
@@ -505,6 +506,20 @@ function sweepOf(obs, T) {
 // Manifests
 
 const git = file => { try { const b = readFileSync(file); return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex'); } catch { return null; } };
+
+/** JSON for the ledger files: one level per line, but a leaf (an array of scalars, or an object whose values are scalars
+ * or arrays of scalars, such as one affected case) or anything short on one line. JSON.parse gives back the same value. */
+export function compactJson(v, indent = '') {
+  const flat = JSON.stringify(v);
+  if (v === null || typeof v !== 'object' || flat.length <= 100) return flat ?? 'null';
+  const scalar = x => x === null || typeof x !== 'object';
+  const leaf = Array.isArray(v) ? v.every(scalar) : Object.values(v).every(x => scalar(x) || (Array.isArray(x) && x.every(scalar)));
+  if (leaf) return flat;
+  const inner = `${indent} `;
+  if (Array.isArray(v)) return `[\n${v.map(x => inner + (x === undefined ? 'null' : compactJson(x, inner))).join(',\n')}\n${indent}]`;
+  const kv = Object.entries(v).filter(([, x]) => x !== undefined && typeof x !== 'function');
+  return `{\n${kv.map(([k, x]) => `${inner}${JSON.stringify(k)}: ${compactJson(x, inner)}`).join(',\n')}\n${indent}}`;
+}
 
 /** Git blob ids of the files a manifest rests on (the mutant set, the arm, the oracle, the world). */
 export function baseDigests() {
@@ -536,6 +551,7 @@ export function defectManifest({ id, mutant, members, membersBand = {}, results,
     solver: { policy: 'beds/ebed/oracle/policy.mjs referenceArm', timing: PARAMS.timing, oracle: 'original transition.mjs' },
     contradicts: [...rules].sort(),
     revealedBy: results.some(r => r.plan?.reveal?.event) ? 'in-world event (planted)' : 'self (arm error)',
+    revealedOn: results.filter(r => r.plan?.reveal).map(r => r.meta.world),
     params: { e0Epochs: PARAMS.e0Epochs, revealEpochs: PARAMS.revealEpochs, lagMinutes: PARAMS.lagMinutes },
     e0Silence: { executed: true, worlds: results.length, casesChecked: results.reduce((s, r) => s + r.e0.checked.length, 0), failed: 0 },
     worlds: results.map(r => ({
