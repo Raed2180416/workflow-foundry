@@ -64,9 +64,10 @@ a double SMS, a missed or early window, a held ticket. About 40 sessions a week 
 workflow handles in code with no model at all (the reference is that workflow). The family tests whether the need
 router's typed guard (`schedule` → workflow class) is also right on economics. Proposed split: TRAIN, forced stratum.
 
-What the controls below show, and what they do not: every single-rule mistake costs 2–33% of triggers, and a third of
-the mistakes still leave most weeks unclean, so a per-trigger agent has to get every rule right at every check to keep
-a clean week. That is consistent with the hypothesis but does not test it; only an agent-H run does.
+What the controls below show, and what they do not: each single-rule mistake costs 3–32% of triggers on the dev
+streams, and none of the 13 plausible controls keeps all five weeks clean (the best keeps 3 of 5). A per-trigger agent
+has to get every rule right at every check to keep a clean week. That is consistent with the hypothesis but does not
+test it; only an agent-H run does.
 
 ## Files
 
@@ -125,4 +126,94 @@ has an effect whose literals the trap changes. Every trap is resolvable from `PO
 | `T-timing:after-hours` | deadline between 17:00 + window and the next morning | no warning; breach at the next check |
 | `T-timing:eager-open`, `eager-update` | a ticket event whose ticket is already inside the window or past its deadline | ticket events need no effect |
 
-NUMBERS_PLACEHOLDER
+## Numbers [measured, $0, development evidence]
+
+From `gates.py` (default seeds: dev 610–614, practice 601–609) and `harness.py`, 2026-10-15. Generator version 1.0.0.
+
+**Stream shape** (seeds 601–650): 50–55 triggers at d2 and 56–60 at d3; 40 checks, 5–8 opened tickets, 5–10 ticket
+updates, 2 amendments at d3; 10–14 tickets open on Monday. Per stream 14–26 of the 40 checks have effects and the rest are
+quiet; 7–19 warnings, 0–2 reassignment SMS and 9–19 breaches a week. Measured share of triggers with an exposed trap: **0.425 at d2 and 0.647 at d3** (design: 40% and 70%; d3
+is short because more held or waiting tickets would break the 10–14 open-ticket budget).
+
+**Reference** (observable-only code, no model):
+- 2,773/2,773 triggers and 50/50 clean weeks on seeds 601–650 (carry mode);
+- 1,659/1,659 on 601–630 in rebased mode;
+- 510/510 and 585/585 on 631–640 forced to d1 and to d3;
+- tool steps: 1 per quiet check, 3 per check with effects (read, row lookup, writes), 0 per ticket event.
+
+The dev gate asks for ≥ 95% on 5 dev seeds. Result: **269/269 (100%) on 610–614** (52/52, 57/57, 51/51, 59/59, 50/50),
+5/5 clean weeks. Generator and reference agree on every effect of every stream run.
+
+**Bad controls** on 610–614 (269 triggers; 158 of them are passed by doing nothing: the no-op triggers apart from
+week-close checks that end a week with expected effects):
+
+| Control | What is wrong | Pass | Rate | Clean weeks | Outcomes |
+|---|---|---|---|---|---|
+| `null` | does nothing | 158 | 0.587 | 0/5 | 107 miss, 4 wrong |
+| `echo` | posts every trigger to #support-escalation and texts it to an agent | 0 | 0.000 | 0/5 | 269 wrong |
+| `naive` (20 lines) | warns every row within 2 h of its deadline (offset dropped) and breaches every past one; no status, hold, dedupe, phone normalisation or tracker state | 67 | 0.249 (d3: 0.293) | 0/5 | 200 wrong, 2 miss |
+| `eager` | applies the check rules at ticket events | 226 | 0.840 | 0/5 | 33 wrong, 10 miss |
+| `no-hold` | ignores `LGL-` holds | 243 | 0.903 | 0/5 | 25 wrong, 1 miss |
+| `utc-naive` | drops the deadline's UTC offset | 209 | 0.777 | 2/5 | 45 wrong, 15 miss |
+| `status-blind` | monitors every row with a readable deadline | 234 | 0.870 | 0/5 | 33 wrong, 2 miss |
+| `no-reassign` | no SMS to the new agent after a reassignment | 261 | 0.970 | 1/5 | 5 wrong, 3 miss |
+| `warn-once` | never warns an extended deadline | 257 | 0.955 | 0/5 | 8 wrong, 4 miss |
+| `strict-window` | `<` instead of `≤` for the window and the breach | 231 | 0.859 | 0/5 | 26 wrong, 12 miss |
+| `slack-dedupe` | reads "already warned / breached" from Slack by substring | 250 | 0.929 | 0/5 | 15 wrong, 4 miss |
+| `raw-phone` | texts the phone as written | 238 | 0.885 | 1/5 | 31 wrong |
+| `any-amendment` | applies amendments from anyone | 259 | 0.963 | 3/5 | 7 wrong, 2 miss, 1 abstained |
+| `fixed-window` | window fixed at 120 minutes | 243 | 0.903 | 3/5 (the d2 weeks) | 21 wrong, 5 miss |
+| `late-warning` | warns at the second check inside the window | 195 | 0.725 | 0/5 | 47 wrong, 27 miss |
+| `early-warning` | warns one check before the window opens | 183 | 0.680 | 0/5 | 64 wrong, 22 miss |
+
+Every control fails: none passes every trigger or keeps every week clean, and 13 of 16 are below the 95% bar. The
+tests also check that each plausible control is rejected **on its own trap** (for example `no-hold` on triggers where
+`T-note:legal-hold` is exposed, `utc-naive` on `T-format:offset`, `eager` only on ticket events with an eager trap), and
+that the late and early controls fail at checks through the warning SMS and the envelope.
+
+**Gates** (`gates.py`, all pass, exit 0):
+
+| Gate | Result |
+|---|---|
+| determinism | Identical sha256 on regeneration (610, 611, 601); every `world_t` validates and round-trips |
+| leakage | 0 problems on 610–614. Payload rows carry ticket columns only (never the state columns), no truth vocabulary, no record ids; `world0` holds no row, email or state of the week; serve rows carry no assertions or records; the reference imports no host module |
+| solvability | 770/770 triggers, 14/14 clean weeks on 601–614 |
+| controls | As above. `null` passes exactly the 158 expected triggers; `naive` scores 0.293 at d3 (below 60%) |
+| trap coverage (610–613) | lookalike 14, stale 39, note 25, authority 13, format 57, repeat 23, timing 53 (each ≥ 5) |
+| oracle mutation | 5,969/5,969 single-fault mutants killed on 610–614 (score 1.000, 63 operators), each for the intended check (spot-checked: e.g. an SMS an hour late fails `timing.records`, a duplicate SMS fails the envelope, Warned At set to the deadline fails `warn.row.Warned At`) |
+| oracle specificity | 556/556 policy-neutral variants accepted (greeting around the SMS text, subject case, other ISO forms of written times, Warned Deadline as written with its offset, Jira issue type Bug with a description, reading the inbound email) |
+
+**Tests:** 26 passed (pytest 9.0.2 in the AutomationBench venv, 180 s).
+
+## Limits and open items
+
+- **No arm has run.** `agent-H`, `wf-H` and the others need the shared stream runner (`stream.mjs`) and the `bridge.py`
+  `abr-*` commands of RECURRING-DESIGN §3.7. Neither exists yet.
+  - `harness.py` is the in-process $0 path for code solvers. `gen.py` already writes the per-trigger `serve-inputs.jsonl`
+    rows that `bridge.py serve` takes.
+  - The timing check relies on the determinism shim's clock starting at the trigger time. `serve` seeds it from the
+    row's `current_time` (gen writes it), and `harness.py` pins `TZ=UTC` because the shim's naive clock is local time;
+    a model-arm `serve` path must run under UTC too.
+- **The second-reader fairness gate (§3.11 gate 6) is not done.** It needs a session that did not write this family (a
+  model cost). The reference and the generator share an author, so their agreement does not rule out a shared misreading
+  of `POLICY.md`; they are independent implementations only in code (typed model vs strings through the tools).
+- **AutomationBench API quirks an arm must get past** [code]: `PUT .../values/{ws}/rows/{rowId}` needs the worksheet
+  **id** (`ws-open-tickets`), not its title (`automationbench/schema/google_sheets/base.py:197-222`), so POLICY.md lists
+  the ids; Gmail `messages/send` takes `raw` (RFC 2822, base64url), not a `body` field (the error says so). Both fail
+  loudly, so an arm can retry.
+- **Volume of breaches.** Most open tickets are breached during the week (9–19 breaches a week), because ticket
+  updates are capped at 5–10 and resolutions share that budget. This is a generator choice, not a claim about real
+  support desks.
+- **Trap rates** were tuned on practice and dev seeds before any arm ran. They are generator parameters, not results.
+  `T-repeat:reopened` and `T-lookalike:sender` are rare on 610–613 (1–2 exposures each); they appear across 601–650.
+- **Not generated:** an unreadable deadline or phone on a monitored ticket, and an out-of-range amendment from the
+  manager. POLICY.md says to escalate; the reference implements it; nothing tests it.
+
+## History
+
+- 2026-10-15, first session: POLICY.md, family.json, lib.py, gen.py, oracle.py, reference.py, controls.py (16),
+  harness.py, gates.py, tests and this README. Fixes made during the session, before any stream was used for a label:
+  last week's breach checks landed on this Monday (history deadlines moved into last week's working hours); the d3
+  start-of-week ticket count exceeded 14 (story tickets may now open mid-week); the reopen story now reopens before the
+  deadline, and "work resumed" now happens inside the window, so both traps are exposed. The generator stays at version
+  1.0.0, because no stream from it has been used for any label.

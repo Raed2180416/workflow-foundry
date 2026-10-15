@@ -280,7 +280,7 @@ class Gen:
     # -- directory ----------------------------------------------------------------------------------------------------
     def build_directory(self):
         r = self.r
-        people = [f"{f} {l}" for f in FIRST for l in LAST]
+        people = [f"{f} {ln}" for f in FIRST for ln in LAST]
         r.shuffle(people)
         self.people = people
         names = [d[0] for d in DEPTS]
@@ -725,7 +725,6 @@ class Gen:
 
     # -- world0 -------------------------------------------------------------------------------------------------------
     def world_dict(self) -> dict:
-        r = self.r
         pkg_rows = [{"id": x["id"], "row_id": x["row_id"], "cells": dict(x["cells"])} for x in self.rows0]
         emp_rows = [{"id": e["id"], "row_id": e["row_id"], "cells": self.emp_cells(e)} for e in sorted(self.emps, key=lambda e: e["row_id"])]
         pol_rows = [{"id": self.hexid(), "row_id": i + 2, "cells": {"Policy": p, "Rule": rule, "Effective Date": d}}
