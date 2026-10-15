@@ -7,9 +7,11 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { familyFeatures } from '../features.mjs';
+import { familyFeatures, taskFeatures } from '../features.mjs';
+import { planTasks } from '../prereg-check.mjs';
 import { loadFamily } from '../../lib/beds.mjs';
-import { ANCHOR_BEDS } from './d1-shortcut.mjs';
+import { ANCHOR_BEDS, hypothesisJobs } from './d1-shortcut.mjs';
+import { loadStages } from './census.mjs';
 import { REPO, assertExampleSeeds } from './common.mjs';
 
 const sha = x => createHash('sha256').update(x).digest('hex');
@@ -65,4 +67,34 @@ export async function computeAnchorFeatures({ beds = [...new Set(Object.values(A
     try { stamps[bed] = bedStamp(bed, { repo, version }); } catch (e) { errors.push({ bed, error: `bed stamp: ${String(e?.message ?? e).slice(0, 160)}` }); }
   }
   return { features, errors, seeds, difficulties, beds: stamps };
+}
+
+const median = xs => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
+/**
+ * The router's feature measure for each hypothesis job, computed the way PREREG-NEED-V1 §3.3 runs the examples (review of 2026-10-15: D1 used census features at d3 and d5
+ * averaged over the band). For every TRAIN and held-out job with a hypothesis: the example tasks of set 1 (`seeds`, 601-603) as prereg-check.mjs planTasks plans them,
+ * each at ITS OWN difficulty exampleDifficulty(band, seed) = band[(seed - 601) mod |band|] (and wbed-stage at its stage kind by position), generated from the job's bed
+ * with the seed gate (purpose need-example) applied first; logInputTokens and maxListLength are the medians of the three tasks' features, as features.mjs familyFeatures
+ * takes them. $0, code only: no oracle, no reference, no label. A job whose bed fails to load is listed in `errors` and keeps its census row in D1.
+ * Returns { seeds, jobs: { <jobId>: { bed, perSeed: [{ seed, difficulty, stage?, tokens, logInputTokens, maxListLength }], logInputTokens, maxListLength } }, errors }.
+ */
+export async function computeExampleFeatures({ stagesInfo = loadStages(), jobs = hypothesisJobs(stagesInfo.stages), seeds = [601, 602, 603], bedOf = f => ANCHOR_BEDS[f] ?? f, ledger = null, generate = null } = {}) {
+  const out = {}, errors = [];
+  for (const j of jobs) {
+    const bed = bedOf(j.family);
+    let planned;
+    try { planned = planTasks(stagesInfo.stages, j.id, 'examples').filter(t => seeds.includes(t.seed)); }
+    catch (e) { errors.push({ job: j.id, error: `plan: ${String(e?.message ?? e).slice(0, 160)}` }); continue; }
+    assertExampleSeeds({ bed, seeds: planned.map(t => t.seed), ledger });   // L4: before any task of this job is generated; a refusal throws
+    try {
+      const fam = generate ? null : await loadFamily(bed);
+      const perSeed = planned.map(t => {
+        const task = generate ? generate(bed, t) : fam.generate({ seed: t.seed, split: t.split, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}) });
+        const f = taskFeatures(task, generate ? (generate.outputSchema ?? null) : fam.outputSchema);
+        return { seed: t.seed, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}), tokens: Math.round(10 ** f.logInputTokens - 1), logInputTokens: +f.logInputTokens.toFixed(4), maxListLength: +f.maxListLength.toFixed(4) };
+      });
+      out[j.id] = { bed, perSeed, logInputTokens: +median(perSeed.map(p => p.logInputTokens)).toFixed(4), maxListLength: +median(perSeed.map(p => p.maxListLength)).toFixed(4) };
+    } catch (e) { errors.push({ job: j.id, bed, error: String(e?.message ?? e).slice(0, 200) }); }
+  }
+  return { seeds, jobs: out, errors };
 }

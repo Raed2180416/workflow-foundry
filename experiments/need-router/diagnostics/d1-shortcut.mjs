@@ -2,10 +2,13 @@
 // preregistered hypotheses table (PREREG-NEED-V1 §1.1 = prereg/stages.json jobs[].hypothesis)? If one token threshold sorts the
 // table into workflow and no-workflow, the table is a size table in disguise and the router's structure features cannot be
 // told apart from a size rule on it; the jobs a threshold gets wrong are exactly the shortcut breakers that must carry the test.
-//   Two token measures, same method. `router`: logInputTokens as features.mjs computes it (median over example seeds 601-603, mean over
-//            the census difficulties inside the job band; the anchor beds computed now), the input the router actually reads.
-//            `maxExample`: the largest example input over the nine example seeds (stages.json maxExampleTokens, ceil(bytes/4)), the
-//            measure agent-O budgets use. For each: the best single threshold on log10(1 + tokens) for the N = 1 and N = 10 class
+//   Token measures, same method. `router`: logInputTokens the way the router will compute it (PREREG-NEED-V1 §3.3): the median over the job's example set 1
+//            (seeds 601-603) of the features of the example task at its PER-SEED difficulty, `exampleDifficulty(band, seed)` = band[(seed - 601) mod |band|]
+//            (prereg-check.mjs planTasks, with the stage kind of wbed-stage by position), generated now from the bed (anchors.mjs computeExampleFeatures; the anchor beds
+//            and every census family alike). `censusProxy`: what this table used for `router` until the review of 2026-10-15, the census features at difficulty 3 and 5
+//            averaged over the levels inside the job band (a proxy: a 2-level band 2-3 shows only d3, a 4-5 band shows both, whatever seeds 601-603 would run at);
+//            kept beside it so the difference is visible. `maxExample`: the largest example input over the nine example seeds (stages.json maxExampleTokens, ceil(bytes/4)),
+//            the measure agent-O budgets use. For each: the best single threshold on log10(1 + tokens) for the N = 1 and N = 10 class
 //            hypotheses (balanced accuracy, ties to the larger threshold as the preregistration says), the same fitted
 //            leave-one-cluster-out, fitted on TRAIN and applied to the held-out jobs, and the fixed size rule of DESIGN §6
 //            (< 2K direct-H, 2-30K agent-H, > 30K construct-H) as class and as mode.
@@ -126,17 +129,40 @@ function tokenTable(pts, getX, tokensOf, N) {
   };
 }
 
-export function runD1({ stagesInfo = loadStages(), census = loadCensus(), anchors = {} } = {}) {
+/**
+ * r0-pad's token margin against the smallest and the largest N = 10 workflow job on one token measure: { padTokens, smallestWorkflow: {id, tokens}, largestWorkflow,
+ * ratioOverSmallest }. null when r0-pad or a workflow job is missing from `pts` (each { id, n10, <measure> }). tokensOf(p) is the measure.
+ */
+export function padMargin(pts, tokensOf, padId = 'r0-pad') {
+  const wf = pts.filter(p => p.n10.class === WF && p.id !== padId), pad = pts.find(p => p.id === padId);
+  if (!pad || !wf.length) return null;
+  const by = (a, b) => (tokensOf(a) <= tokensOf(b) ? a : b), small = wf.reduce(by), large = wf.reduce((a, b) => (tokensOf(a) >= tokensOf(b) ? a : b));
+  return { padTokens: Math.round(tokensOf(pad)), smallestWorkflow: { id: small.id, tokens: Math.round(tokensOf(small)) }, largestWorkflow: { id: large.id, tokens: Math.round(tokensOf(large)) }, ratioOverSmallest: round(tokensOf(pad) / tokensOf(small), 3) };
+}
+
+/**
+ * exampleFeatures: the router measure per job ({ jobs: { <jobId>: { logInputTokens, maxListLength, perSeed } } } from anchors.mjs computeExampleFeatures, or null: then the
+ * `router` rows fall back to the census proxy and say so). A job with no example features keeps its census row and `measure: 'census-proxy'`.
+ */
+export function runD1({ stagesInfo = loadStages(), census = loadCensus(), anchors = {}, exampleFeatures = null } = {}) {
   const jobs = hypothesisJobs(stagesInfo.stages);
   const idx = featureIndex(census, anchors);
   const bedOf = f => ANCHOR_BEDS[f] ?? f;
   const rows = [];
-  for (const j of jobs) { const row = jobFeatureRow(j, idx, bedOf); if (row) rows.push({ ...j, ...row, computedFromBed: !!ANCHOR_BEDS[j.family] }); }
+  for (const j of jobs) {
+    const proxyRow = jobFeatureRow(j, idx, bedOf), ex = exampleFeatures?.jobs?.[j.id] ?? null;
+    if (!proxyRow && !ex) continue;
+    rows.push({ ...j, difficulties: proxyRow?.difficulties ?? null, proxy: proxyRow?.proxy ?? null, computedFromBed: !!ANCHOR_BEDS[j.family],
+      censusLogInputTokens: proxyRow?.logInputTokens ?? null, censusMaxListLength: proxyRow?.maxListLength ?? null,
+      logInputTokens: ex ? ex.logInputTokens : proxyRow.logInputTokens, maxListLength: ex ? ex.maxListLength : proxyRow.maxListLength, measure: ex ? 'example-set' : 'census-proxy', perSeed: ex?.perSeed ?? null });
+  }
   const missing = jobs.filter(j => !rows.some(r => r.id === j.id)).map(j => j.id);
-  const router = {}, maxExample = {}, fan = {};
+  const censusRows = rows.filter(r => r.censusLogInputTokens != null).map(r => ({ ...r, logInputTokens: r.censusLogInputTokens, maxListLength: r.censusMaxListLength }));
+  const router = {}, censusProxy = {}, maxExample = {}, fan = {};
   for (const N of ['n1', 'n10']) {
     const truth = p => p[N].class;
     router[N] = tokenTable(rows, p => p.logInputTokens, p => 10 ** p.logInputTokens - 1, N);
+    if (exampleFeatures) censusProxy[N] = tokenTable(censusRows, p => p.logInputTokens, p => 10 ** p.logInputTokens - 1, N);
     maxExample[N] = tokenTable(jobs, p => p.x, p => p.tokens, N);
     const orFit = bestOrRule(rows, p => p.logInputTokens, p => p.maxListLength, truth), orLoco = locoOrRule(rows, p => p.logInputTokens, p => p.maxListLength, truth);
     fan[N] = {
@@ -145,19 +171,24 @@ export function runD1({ stagesInfo = loadStages(), census = loadCensus(), anchor
         balancedAccuracy: round(orFit.ba, 3), accuracy: round(orFit.accuracy, 3), tp: orFit.tp, fp: orFit.fp, tn: orFit.tn, fn: orFit.fn, wrong: orFit.wrong, perfect: orFit.perfect, loco: slimC(orLoco) },
     };
   }
+  // r0-pad's margin on each measure (Recommendation 1 of the report rests on the router measure; the census proxy and max-example are beside it).
+  const margin = { router: padMargin(rows, p => 10 ** p.logInputTokens - 1), censusProxy: exampleFeatures ? padMargin(censusRows, p => 10 ** p.logInputTokens - 1) : null, maxExample: padMargin(jobs, p => p.tokens) };
   const R1 = router.n1.tokenThreshold, R10 = router.n10.tokenThreshold, M1 = maxExample.n1.tokenThreshold, M10 = maxExample.n10.tokenThreshold;
   return {
     id: 'D1', grade: 'dev', question: 'Does logInputTokens alone reproduce the hypotheses table?',
     sources: [stagesInfo.source, census.source],
     note: 'The hypotheses are expectations written before any label (PREREG-NEED-V1 §1.1), not labels. Jobs: TRAIN and HELD-OUT with a measured max example token count; forced, pending, conditional and unmeasured jobs are left out. '
-      + 'Two token measures: `router` is logInputTokens as features.mjs computes it (median over example seeds 601-603, mean over the census difficulties inside the job band), the input the router reads; `maxExample` is the largest example input over the nine example seeds (stages.json), the measure agent-O budgets use.',
+      + 'Token measures: `router` is logInputTokens the way the router computes it (PREREG-NEED-V1 §3.3): the median over example seeds 601-603, each example task at its per-seed difficulty band[(seed - 601) mod |band|] (prereg-check.mjs planTasks), generated from the bed; `censusProxy` (present when `router` is computed from the beds) is the earlier measure, the census features at difficulty 3 and 5 averaged over the levels inside the band; `maxExample` is the largest example input over the nine example seeds (stages.json), the measure agent-O budgets use.',
     jobs: jobs.map(j => ({ id: j.id, cluster: j.cluster, split: j.split, tokens: j.tokens, n1: j.n1, n10: j.n10 })),
-    featureRows: rows.map(r => ({ id: r.id, family: r.family, difficulties: r.difficulties, proxy: r.proxy, computedFromBed: r.computedFromBed, logInputTokens: round(r.logInputTokens, 4), tokens: Math.round(10 ** r.logInputTokens - 1), maxListLength: round(r.maxListLength, 4) })),
-    router, maxExample, withFanOut: fan, jobsWithoutFeatureRow: missing,
+    featureRows: rows.map(r => ({ id: r.id, family: r.family, measure: r.measure, difficulties: r.difficulties, proxy: r.proxy, computedFromBed: r.computedFromBed, logInputTokens: round(r.logInputTokens, 4), tokens: Math.round(10 ** r.logInputTokens - 1), maxListLength: round(r.maxListLength, 4),
+      ...(r.perSeed ? { perSeed: r.perSeed } : {}), ...(r.censusLogInputTokens != null && r.measure === 'example-set' ? { censusTokens: Math.round(10 ** r.censusLogInputTokens - 1) } : {}) })),
+    router, ...(exampleFeatures ? { censusProxy } : {}), maxExample, withFanOut: fan, padMargin: margin, jobsWithoutFeatureRow: missing,
+    exampleFeatures: exampleFeatures ? { seeds: exampleFeatures.seeds, jobs: rows.filter(r => r.measure === 'example-set').length, errors: exampleFeatures.errors ?? [] } : null,
     summary: {
       jobs: jobs.length, jobsWithFeatureRow: rows.length,
       router: { reproducedN1: R1.perfect, reproducedN10: R10.perfect, balancedAccuracyN1: R1.balancedAccuracy, balancedAccuracyN10: R10.balancedAccuracy, errorsN1: R1.wrong, errorsN10: R10.wrong },
       maxExample: { reproducedN1: M1.perfect, reproducedN10: M10.perfect, balancedAccuracyN1: M1.balancedAccuracy, balancedAccuracyN10: M10.balancedAccuracy, errorsN1: M1.wrong, errorsN10: M10.wrong },
+      ...(exampleFeatures ? { censusProxy: { reproducedN1: censusProxy.n1.tokenThreshold.perfect, reproducedN10: censusProxy.n10.tokenThreshold.perfect, balancedAccuracyN1: censusProxy.n1.tokenThreshold.balancedAccuracy, balancedAccuracyN10: censusProxy.n10.tokenThreshold.balancedAccuracy, errorsN1: censusProxy.n1.tokenThreshold.wrong, errorsN10: censusProxy.n10.tokenThreshold.wrong } } : {}),
       orRuleReproducedN1: fan.n1.orRule.perfect, orRuleReproducedN10: fan.n10.orRule.perfect, orRuleErrorsN1: fan.n1.orRule.wrong, orRuleErrorsN10: fan.n10.orRule.wrong,
     },
   };
