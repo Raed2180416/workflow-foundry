@@ -506,9 +506,37 @@ produced.
   is reported. **Headline cell: V = $1, W = V, N = 10.** [A, D]
 - **One cost meter:** every row is re-priced from recorded token usage with the pinned table `need-v1-prices@2026-10-14`
   (`stages.json priceTable`), cache reads and writes included; both the reported and the re-priced figure are shown;
-  utility uses the re-priced one. Timeouts and killed sessions are charged at their bound. Measured and imputed dollars are
-  split; a cell with more than 30% of its dollars imputed is left unlabelled. [D] Price table (USD per million tokens) [P,
-  sources in `stages.json`]:
+  utility uses the re-priced one, except under the meter-gate rule below. Timeouts and killed sessions are charged at
+  their bound. Measured and imputed dollars are split; a cell with more than 30% of its dollars imputed is left
+  unlabelled. [D]
+- **The meter-gate rule** [P, informed by D6 (§13 D9); `stages.json analysis.meterGate`; `label-run.mjs` with
+  `meter-gate.mjs guardMeter`; `metrics.mjs`].
+  - *Why.* D6 found that a re-priced Opus agent session lands 2.11 to 2.96 times below the CLI's own figure. The
+    per-message usage lines miss the output tokens (`analysis/m0/REPORT.md`, D6 checks 1 and 2).
+  - *The check.* `label-run.mjs` checks every priced agent or builder session.
+    - Its per-message output tokens must be within 5% of the CLI's final usage.
+    - If they are not, the missing output is priced from the final usage. The session is accepted as measured only if
+      that lands within 10% of the CLI figure (`outputFromFinal`).
+    - Otherwise it is booked **meterUnverified**, at the CLI-reported figure. The re-price stays in `usdRepriced`, and the
+      shortfall goes into `usdImputed` and is also recorded as `usdMeterGap`.
+  - *Utility* for a meterUnverified session uses the **reported** figure (re-priced plus the gap), never the re-price
+    alone.
+  - *The 30%-imputed rule does not count the gap.* The gap is the CLI's observed figure, not a bound charged for an
+    unobserved cost, so `metrics.mjs` reads `usdMeterGap` as observed dollars. Gap dollars are counted and printed per cell.
+    A sensitivity marked "not primary" applies the 30% rule with the gap counted as imputed. Without this rule, an Opus
+    session's gap (about two thirds of its figure) would leave agent-O cells unlabelled across the board.
+  - *The cache-write rate billed.* The table prices cache writes at the 5-minute rate (1.25 × input). The CLI bills the
+    rate the launch environment sets. D6 found every archived cache write billed at the 1-hour rate (2 × input): the 4
+    Opus builder sessions reproduce the CLI figure exactly at that rate.
+    - The paid launch shape (§12) therefore sets `FORCE_PROMPT_CACHING_5M=1`.
+    - The meter-verification record that clears the gate (`meter-gate-cli.mjs --verify`) must come from at least 2
+      transcripts of that launch shape. It reports `cacheWrite1hShare`.
+    - If those transcripts still show 1-hour writes, the table gains the 1-hour rate by a §13 deviation before the stage
+      starts. Otherwise every agent session would miss the 10% band and be booked meterUnverified.
+  - *The waiver.* The gate fails closed. A paid agent stage launched under the owner's meter-gate waiver
+    (`analysis/m0/meter-gate-waiver.json`, recorded in the run's `report.deviations`) is a §13 deviation, recorded before
+    any of its labels is used.
+- **Price table** (USD per million tokens) [P, sources in `stages.json`]:
 
   | Model | Tier (prompt tokens = input + cache read + cache write) | Input | Output | Cache read | Cache write (5 min) |
   |---|---|---|---|---|---|
@@ -537,8 +565,13 @@ produced.
 - **Missing data** [P]. A job missing any primary mode of its menu, for any reason, leaves Δ and C7a and is counted.
   - The menu is the L_today modes minus the masked ones (direct-H on interactive families).
   - Missing means: a mode with no row on some evaluation task, or without its first-pass replicates or lineages.
-  - Reasons include: a stage stopped at its cap (K5), an arm invalidated by K4, a run condition not met, every lineage
-    voided.
+  - Reasons include: a stage stopped at its cap (K5), an arm invalidated by K4, a run condition not met.
+  - **A voided lineage or draw is not missing** [P, D9]. It scores as a failure on every task in the primary analysis
+    (`metrics.mjs needTable` with `voidPolicy: 'fail'`, the default; `stages.json analysis.voidPolicy`). This holds even
+    when every lineage of a mode is voided, so the job stays in Δ and C7a. The voids are listed. Dropping voided
+    lineages (`voidPolicy: 'drop'`) is a sensitivity marked "not primary". The first draft listed "every lineage voided"
+    as a missing-data reason. That would have removed from Δ exactly the jobs where the builder cheated, the cases where
+    construct-H is bad.
   - Dropped jobs are printed on a "dropped" line with the missing modes. Their rows are kept and reported. If a whole
     cluster drops, the cluster count and the floor (§7) are recomputed.
   - A sensitivity printed as "not primary" keeps those jobs, with the missing mode removed from both menus.
