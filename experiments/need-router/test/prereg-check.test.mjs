@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { loadLedger, seedRefusals } from '../../jit/seeds.mjs';
 import {
   STAGES_FILE, PREREG_FILE, POLICY_FILE, EVAL_TASKS, checkStages, armSha, canonicalJson, evalDifficulty, exampleDifficulty, planTasks,
-  exampleSet, e2eDraw, expandRuns, hashCollisions, span,
+  exampleSet, e2eDraw, expandRuns, hashCollisions, span, probeDifficulty, namesToken, sectionOf, stamp, stampDiff, bedClosure,
 } from '../prereg-check.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -24,7 +24,7 @@ test('the committed stages.json and PREREG-NEED-V1.md pass every check (ledger, 
   assert.deepEqual(res.errors, []);
   assert.equal(res.summary.status, 'draft');
   assert.ok(res.summary.seedChecks > 900, `seed checks ${res.summary.seedChecks}`);
-  assert.deepEqual(res.summary.totals, { estUsd: 951, capUsd: 1235, coreEstUsd: 663, coreCapUsd: 855 });
+  assert.deepEqual(res.summary.totals, { estUsd: 951, capUsd: 1235, coreEstUsd: 663, coreCapUsd: 855, recurringCapUsd: 24, softCapCheckUsd: 1259 });
   assert.deepEqual(res.summary.clusters.train, ['W', 'kinetics', 'codefix', 'need-qa']);
   assert.match(TEXT, /Status: \*\*DRAFT/);
 });
@@ -50,7 +50,7 @@ test('seed roles stay disjoint; example sets partition the examples; the probe i
 });
 
 test('held-out evaluation never precedes Freeze, and a TRAIN job never runs on held-out seeds', () => {
-  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'NL1').runs.push({ job: 'r3p', arms: ['agent-H'], seedRoles: ['heldoutEval'] }); })), /held-out evaluation of r3p before Freeze/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'NL1').runs.push({ job: 'r3p', arms: ['agent-H'], seedRoles: ['heldoutEval'] }); })), /heldoutEval seeds \(test split\) before Freeze for r3p/));
   assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'NL2').runs.push({ job: 'records-hi', arms: ['agent-H'], seedRoles: ['heldoutEval'] }); })), /TRAIN job records-hi on heldoutEval seeds/));
 });
 
@@ -102,11 +102,15 @@ test('every expanded run resolves to ledger-allowed seeds; example and evaluatio
   }
   const ex = new Set(span(STAGES.seeds.examples));
   for (const r of ['trainEval', 'trainReserve']) assert.ok(span(STAGES.seeds[r]).every(s => !ex.has(s)), r);
-  // M1 runs on the W-bed attack seeds under jit-dev, the purpose triviality.mjs refuses against.
+  // M1 runs on the W-bed attack seeds under jit-dev, the purpose triviality.mjs refuses against: tag m1 (8 rungs at d3,
+  // 192 calls) and tag m1-d5 (R2, R3, R3', R6 at d5, 96 calls).
   const m1 = runs.filter(x => x.stage === 'M1');
-  assert.equal(m1.length, 8);
-  assert.equal(m1.reduce((n, x) => n + x.seeds.length, 0) * STAGES.stages.find(s => s.id === 'M1').runs[0].arms.length, 192);
-  assert.deepEqual(m1.find(x => x.bed === 'wbed-r3p').seeds, span({ from: 479, to: 490 }));
+  const calls = tag => m1.filter(x => x.run.tag === tag).reduce((n, x) => n + x.seeds.length * x.run.arms.length, 0);
+  assert.equal(m1.length, 12);
+  assert.equal(calls('m1'), 192);
+  assert.equal(calls('m1-d5'), 96);
+  assert.ok(m1.filter(x => x.run.tag === 'm1-d5').every(x => x.run.difficulty === 5));
+  assert.deepEqual(m1.filter(x => x.bed === 'wbed-r3p').map(x => x.seeds), [span({ from: 479, to: 490 }), span({ from: 479, to: 490 })]);
 });
 
 test('per-seed difficulty: even blocks over the band, parity-balanced halves, examples cover the band', () => {
@@ -130,7 +134,7 @@ test('per-seed difficulty: even blocks over the band, parity-balanced halves, ex
   const held = planTasks(STAGES, 'need-constraint', 'heldoutEval');
   assert.deepEqual(held.map(t => t.seed), span({ from: 8801, to: 8812 }));
   assert.ok(held.every(t => t.split === 'test'));
-  assert.deepEqual(planTasks(STAGES, 'wbed-r0', 'probe'), [{ seed: 601, split: 'dev', difficulty: 2 }]);
+  assert.deepEqual(planTasks(STAGES, 'wbed-r0', 'probe'), [{ seed: 601, split: 'dev', difficulty: 4 }], 'the probe task sits at the band\'s median level (band [2..5])');
   assert.throws(() => planTasks(STAGES, 'gameqa', 'heldoutEval'), /no frozen band/);
 });
 
@@ -147,7 +151,9 @@ test('the E2E draw is seeded, order-independent and drawn from the eligible set'
 
 test('L4 pre-check: example and evaluation tasks of small anchor jobs never share a taskHash ($0)', async () => {
   const r = await hashCollisions(STAGES, { jobs: ['wbed-r0', 'need-qa', 'need-constraint', 'records-lo'] });
-  assert.equal(r.tasks, 3 * 21 + 33);
+  assert.equal(r.tasks, 3 * 22 + 34, 'TRAIN: 9 examples + the probe task + 12; held-out need-constraint: 9 + 1 + 12 + 12 E2E');
+  assert.deepEqual(r.refused, []);
+  assert.equal(r.heldoutInChild, true);
   assert.deepEqual(r.exampleEval, []);
   assert.deepEqual(r.evalRepeats, []);
 });
@@ -159,4 +165,155 @@ test('the checker imports no bed, oracle or sealed code at load time, and its CL
   assert.ok(!/import\([^)]*sealed/.test(src));
   const out = execFileSync(process.execPath, [path.join(here, '..', 'prereg-check.mjs')], { encoding: 'utf8' });
   assert.match(out, /\nOK\n?$/);
+});
+
+// ------------------------------------------------------------------------------------- review fixes (2026-10-14)
+const frozen = (s, text = TEXT) => { s.status = 'frozen'; return check(s, text.replace('Status: **DRAFT', 'Status: **FROZEN')); };
+// The freeze-time placeholders filled, as the orchestrator would before freezing (for tests that freeze a copy).
+const FILLED = TEXT.replace('| TBD at NL0 launch |', '| (stamp pasted at freeze) |').replace('**TBD-M0**', '**(simulation numbers)**');
+
+test('review M4: before Freeze every test-split role is refused for every job; forced jobs never touch TRAIN seeds', () => {
+  // The reviewer's scratch copy: frozen, plus four leaking runs. The first draft's checker printed OK.
+  const leaky = mutate(s => {
+    s.stages.find(x => x.id === 'NL0').runs.push({ job: 'incident', arms: ['agent-H'], seedRoles: ['e2e'] }, { job: 'runbook', arms: ['agent-H'], seedRoles: ['heldoutEval'] });
+    s.stages.find(x => x.id === 'NL1').runs.push({ job: 'r3p', arms: ['agent-H'], seedRoles: ['heldoutReserve'] }, { job: 'synth-lo', arms: ['direct-H'], seedRoles: ['drift'] });
+  });
+  const res = frozen(leaky, FILLED);
+  for (const re of [/NL0\.runs\[\d+\] \(incident\): e2e seeds \(test split\) before Freeze/, /NL0\.runs\[\d+\] \(runbook\): heldoutEval seeds \(test split\) before Freeze/,
+    /NL1\.runs\[\d+\] \(r3p\): heldoutReserve seeds \(test split\) before Freeze/, /NL1\.runs\[\d+\] \(synth-lo\): drift seeds \(test split\) before Freeze/]) assert.ok(hasError(res, re), String(re));
+  // A TRAIN job on a test reserve role after Freeze, and a forced job on TRAIN evaluation seeds, are refused too.
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'NL2').runs.push({ job: 'records-hi', arms: ['agent-H'], seedRoles: ['heldoutReserve'] }); })), /TRAIN job records-hi on heldoutReserve seeds/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'NL2b').runs.push({ job: 'runbook', arms: ['agent-H'], seedRoles: ['trainEval'] }); })), /held-out job runbook on TRAIN evaluation seeds \(trainEval\)/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'E2E').runs.push({ job: 'runbook', arms: ['router-choice'], seedRoles: ['e2e'] }); })), /E2E lane runs held-out non-forced jobs only \(runbook is forced\)/));
+  // An explicit-seed run on the test split before Freeze (an M1-style run) is refused.
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'M1').runs[0].split = 'test'; })), /test-split seeds before Freeze/));
+});
+
+test('review M4: a frozen preregistration may not keep TBD-M0 or "TBD at ... launch" in §4.4 or §11', () => {
+  const res = frozen(structuredClone(STAGES));
+  assert.ok(hasError(res, /frozen, but PREREG §11 still carries TBD-M0/));
+  assert.ok(hasError(res, /frozen, but PREREG §4\.4 still carries "TBD at NL0 launch"/));
+  assert.deepEqual(frozen(structuredClone(STAGES), FILLED).errors, [], 'filled placeholders freeze cleanly; TBD-FREEZE and TBD-NL1 may stay');
+  assert.match(sectionOf(TEXT, /^## 11\./m), /^## 11\. Power[\s\S]*TBD-M0[\s\S]*$/);
+  assert.ok(!sectionOf(TEXT, /^## 11\./m).includes('## 12.'), 'a section ends at the next heading of its level');
+  assert.ok(sectionOf(TEXT, /^### 4\.4\b/m).includes('TBD at NL0 launch') && !sectionOf(TEXT, /^### 4\.4\b/m).includes('## 5.'));
+});
+
+test('review M4: stage ids are matched as whole tokens (NL2 inside NL2b, M1 inside M1e do not count)', () => {
+  assert.equal(namesToken('only NL2b and M1e here', 'NL2'), false);
+  assert.equal(namesToken('only NL2b and M1e here', 'M1'), false);
+  assert.equal(namesToken('the judge-H stage, then NL2.', 'NL2'), true);
+  assert.equal(namesToken('see `judge-H`', 'judge-H'), true);
+  // Remove every whole-token NL2p from the text: NL2bp still contains the letters, but the stage is no longer named.
+  const text = TEXT.replace(/(^|[^A-Za-z0-9_-])NL2p(?=$|[^A-Za-z0-9_-])/gm, '$1NL-two-p');
+  assert.ok(text.includes('NL2bp'));
+  assert.ok(hasError(check(STAGES, text), /does not name stage NL2p \(as a whole token\)/));
+});
+
+test('review m1 (minor): held-out probe and judge rows run in an envelope stage committed before any matrix stage needs it', () => {
+  const nl2p = STAGES.stages.find(s => s.id === 'NL2p'), nl2 = STAGES.stages.find(s => s.id === 'NL2');
+  assert.equal(nl2p.commitsEnvelope, true);
+  assert.ok(nl2p.runs.every(r => r.seedRoles.every(x => x === 'probe')));
+  assert.ok(nl2.runs.every(r => !r.seedRoles.includes('probe')), 'NL2 holds no probe rows');
+  assert.deepEqual(nl2.requiresEnvelope, ['NL2p']);
+  const order = STAGES.stages.map(s => s.id);
+  for (const [env, mat] of [['NL2p', 'NL2'], ['NL2bp', 'NL2b'], ['NL2p', 'E2E'], ['NL2bp', 'E2E']]) assert.ok(order.indexOf(env) < order.indexOf(mat), `${env} before ${mat}`);
+  // Merging the probe rows back into the matrix stage (the first draft's NL2) is refused.
+  assert.ok(hasError(check(mutate(s => { const p = s.stages.find(x => x.id === 'NL2p'); s.stages.find(x => x.id === 'NL2').runs.push(...p.runs); p.runs = []; })), /probe or judge rows of held-out job incident outside an envelope stage/));
+  assert.ok(hasError(check(mutate(s => { delete s.stages.find(x => x.id === 'NL2').requiresEnvelope; })), /NL2: held-out job incident joins the matrix with no committed decisions envelope/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'NL2p').runs.push({ job: 'incident', arms: ['agent-H'], seedRoles: ['heldoutEval'] }); })), /an envelope stage runs probe-task rows only/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'NL2bp').decides = ['runbook']; })), /E2E: held-out job gameqa joins the matrix with no committed decisions envelope|NL2b: held-out job gameqa/));
+  assert.ok(hasError(check(mutate(s => { const st = s.stages; const i = st.findIndex(x => x.id === 'NL2p'), j = st.findIndex(x => x.id === 'NL2'); [st[i], st[j]] = [st[j], st[i]]; })), /NL2: its envelope NL2p must come before it/));
+});
+
+test('review B2 and M7: M1 is recorded (both tags, one cap shared by tag); DRIFT is capped in the soft-cap check', () => {
+  const m1 = STAGES.stages.find(s => s.id === 'M1');
+  assert.deepEqual(m1.capShares, { m1: 5, 'm1-d5': 10 });
+  assert.equal(m1.observed.m1.calls, 192);
+  assert.equal(m1.observed.m1.timeoutRowsAtZero, 26);
+  assert.ok(Math.abs(m1.observed.m1.meterUsd - (m1.observed.m1.reportedUsd + 26 * 1)) < 1e-9, 'the §12 meter charges each $0 timeout at its $1 bound');
+  assert.equal(m1.observed.m1.m1RunSha256, '478744664b95accf016fe7ea628ee856b3ab7bdb559081a0b7ac261d4c8a58e7');
+  assert.equal(m1.observed['m1-d5'].m1RunSha256, '7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692');
+  for (const sha of [m1.observed.m1.m1RunSha256, m1.observed['m1-d5'].m1RunSha256]) assert.ok(TEXT.includes(sha), 'the runner sha per tag is in the text');
+  assert.match(sectionOf(TEXT, /^### 0\.1\b/m), /M1-d5/);
+  assert.match(sectionOf(TEXT, /^## 13\./m), /D1\. M1 ran without its launch stamp[\s\S]*D2\. M1-d5 was an unregistered run[\s\S]*D3\. M1's spend, re-metered/);
+  assert.ok(hasError(check(mutate(s => { delete s.stages.find(x => x.id === 'M1').capShares; })), /M1: run tag m1 has no cap share/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'M1').capShares['m1-d5'] = 15; })), /M1: cap shares \$20 exceed the stage cap \$15/));
+  // DRIFT recurs: its cumulative cap enters the soft-cap check; a stage outside the totals without a run limit is refused.
+  assert.ok(hasError(check(mutate(s => { delete s.stages.find(x => x.id === 'DRIFT').recurring; })), /DRIFT is outside the totals with no recurring run limit/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'DRIFT').recurring.cumulativeCapUsd = 8; })), /DRIFT: recurring needs/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'DRIFT').recurring = { maxRuns: 40, cumulativeCapUsd: 320 }; })), /plus recurring caps \$320 is over the \$1500 session soft cap/));
+});
+
+test('review B2: r3p is near and dev-observed; its original hypothesis row stays, the M1-informed revision is logged; a drop sensitivity is mandatory', () => {
+  const r3p = STAGES.jobs.find(j => j.id === 'r3p');
+  assert.ok(r3p.near && r3p.devObserved.length >= 2);
+  assert.equal(r3p.hypothesis.n1.class, 'workflow', 'the row written before M1 was read is kept');
+  assert.equal(r3p.hypothesis.revisions[0].n1.class, 'either');
+  assert.match(r3p.hypothesis.revisions[0].informedBy, /M1/);
+  assert.deepEqual(r3p.band, [3, 4, 5], 'bands are not changed by one-call outcomes (DESIGN §6)');
+  for (const id of ['wbed-r2-hi', 'wbed-r6', 'r3p']) assert.match(STAGES.jobs.find(j => j.id === id).bandDecision, /kept d3 after M1/);
+  assert.ok(STAGES.analysis.mandatorySensitivities.some(m => m.drop?.includes('r3p') && m.appliesTo.includes('C7a') && m.appliesTo.includes('C7b')));
+  assert.ok(hasError(check(mutate(s => { s.analysis.mandatorySensitivities = []; })), /job r3p is dev-observed: analysis.mandatorySensitivities must drop it for both C7a and C7b/));
+  assert.ok(hasError(check(mutate(s => { delete s.jobs.find(j => j.id === 'r3p').hypothesis.revisions[0].informedBy; })), /r3p: hypothesis.revisions\[0\] needs a date and informedBy/));
+  assert.ok(hasError(check(STAGES, TEXT.replaceAll('dev-observed', 'observed')), /does not flag the dev-observed job/));
+});
+
+test('review m4 (minor): the probe and judge-H read the band\'s median level; judge-H breaks ties without label data', () => {
+  for (const j of STAGES.jobs.filter(x => x.band)) {
+    const [p] = planTasks(STAGES, j.id, 'probe');
+    assert.equal(p.seed, 601);
+    assert.equal(p.difficulty, j.band[Math.floor(j.band.length / 2)], j.id);
+    if (j.band.length > 1) assert.notEqual(p.difficulty, j.band[0], `${j.id}: not the band's easiest level`);
+  }
+  assert.equal(probeDifficulty([4, 5]), 5);
+  assert.equal(probeDifficulty([3, 4, 5]), 4);
+  assert.equal(probeDifficulty([2, 3, 4, 5]), 4);
+  const jh = STAGES.arms['judge-H'];
+  assert.doesNotMatch(jh.vote, /TRAIN/);
+  assert.match(jh.vote, /fixed order direct-H, agent-H, agent-H\+proc, construct-H, agent-O/);
+  assert.equal(armSha(jh), jh.settingsSha);
+  assert.ok(TEXT.includes(jh.settingsSha));
+});
+
+test('review m6 (minor): --hashes checks every seed against the ledger and hashes held-out families only in a child process', async () => {
+  // The child prints one line: counts and task ids, never task content or a hash.
+  const out = execFileSync(process.execPath, [path.join(here, '..', 'prereg-check.mjs'), '--hash-child'], { input: JSON.stringify({ stages: STAGES, jobs: ['need-constraint'] }), encoding: 'utf8' });
+  const lines = out.trim().split('\n');
+  assert.equal(lines.length, 1);
+  const r = JSON.parse(lines[0]);
+  assert.deepEqual(Object.keys(r).sort(), ['evalRepeats', 'exampleEval', 'refused', 'tasks']);
+  assert.equal(r.tasks, 34);
+  assert.doesNotMatch(out, /[0-9a-f]{64}/, 'no task hash leaves the child');
+  // The same counts in-process (child: false is for this test only).
+  const here2 = await hashCollisions(STAGES, { jobs: ['need-constraint'], child: false });
+  assert.equal(here2.tasks, r.tasks);
+  // A seed the ledger refuses is reported and never generated (held-out evaluation moved onto the JIT reservation).
+  const bad = mutate(s => { s.seeds.heldoutEval = { from: 8001, to: 8012 }; });
+  const rb = await hashCollisions(bad, { jobs: ['need-constraint'] });
+  assert.equal(rb.refused.length, 12);
+  assert.equal(rb.tasks, 34 - 12);
+});
+
+test('review M6: label-engine stamps per paid stage; a first-used bed is allowed, any other engine change is a deviation', () => {
+  assert.deepEqual(bedClosure(['wbed-r2']), ['lib', 'records', 'wbed', 'wbed-r2'], 'r2 reaches the W-bed library and records pools');
+  const nl0 = stamp(STAGES, { stage: 'NL0' }).labelEngine, nl1 = stamp(STAGES, { stage: 'NL1' }).labelEngine;
+  assert.equal(nl0.stage, 'NL0');
+  assert.ok(nl0.files['experiments/need-router/label-run.mjs'] && !('experiments/need-router/router.mjs' in nl0.files), 'router code is in the analysis stamp, not the label engine');
+  assert.ok(!('experiments/need-router' in nl0.trees), 'the whole need-router tree is no longer stamped');
+  const d = stampDiff(nl0, nl1);
+  assert.equal(d.ok, true);
+  assert.ok(d.allowed.some(x => x.key === 'beds.kinetics'), 'TRAIN families first run in NL1 are first uses');
+  // Changes that are deviations: a label-engine file, a bed used earlier, the preregistered prices, Node.
+  const edit = (x, f) => { const y = structuredClone(x); f(y); return y; };
+  assert.ok(stampDiff(nl0, edit(nl1, y => { y.files['experiments/need-router/label-run.mjs'] = 'changed'; })).deviations.some(x => x.key === 'files.experiments/need-router/label-run.mjs'));
+  assert.ok(stampDiff(nl0, edit(nl1, y => { y.beds.wbed = 'changed'; })).deviations.some(x => x.key === 'beds.wbed' && x.since === 'NL0'));
+  assert.ok(stampDiff(nl0, edit(nl1, y => { y.prereg.priceTable = 'changed'; })).deviations.some(x => x.key === 'prereg.priceTable'));
+  assert.ok(stampDiff(nl0, edit(nl1, y => { y.node = 'v0'; })).deviations.some(x => x.key === 'node'));
+  // A bed used in NL0 but not in NL1 is compared again when a later stage uses it (against every earlier stamp).
+  const later = edit(nl1, y => { y.beds['wbed-r0'] = 'changed'; });
+  assert.ok(stampDiff([nl0, nl1], later).deviations.some(x => x.key === 'beds.wbed-r0' && x.since === 'NL0'));
+  // The analysis stamp lists the router and evaluation code that Freeze pins.
+  const an = stamp(STAGES).analysis.files;
+  for (const f of ['router.mjs', 'evaluate.mjs', 'card.mjs', 'prereg-rules.mjs']) assert.ok(`experiments/need-router/${f}` in an, f);
 });

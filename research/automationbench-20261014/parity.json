@@ -1,0 +1,1051 @@
+{
+ "what": "bridge vs official environment API, same scripted action sequence (no model, $0)",
+ "date": "2026-10-14T23:56:03.268Z",
+ "evidence": "harness validation (development)",
+ "command": "node experiments/autobench/parity.mjs",
+ "seed": "parity-20261014",
+ "det": "seed (both paths)",
+ "tasks": 35,
+ "exact": 35,
+ "all_exact": true,
+ "shim_neutrality": {
+  "ok": true,
+  "compared": "official --det off vs official --det record, same scripts"
+ },
+ "nonzero_scores": 27,
+ "full_passes": 7,
+ "total_tool_calls": 509,
+ "total_writes": 120,
+ "wall_ms": {
+  "bridge": 119392,
+  "official_seed": 9101
+ },
+ "costUsd": 0,
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "84cd5d842b062a4d0109677892b798bf4d5637ff903925bd99c870b1d2b5809a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "65a1249ea9c44d86194aed39e473e7a07720a25c76a2fe0e63b31cd534e0a8eb",
+  "policyHash": null,
+  "policyVersion": null,
+  "node": "v24.21.0"
+ },
+ "rows": [
+  {
+   "task": "sales.form_to_crm_qualification",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 13,
+   "writes": 1,
+   "partial_credit": 0.1,
+   "task_completed_correctly": 0,
+   "n_scored": 10,
+   "n_passed": 1,
+   "world_sha256": "9ae662895a0e01a76c349fc94633f67d0c000838ada803568c5f04d803ec7470",
+   "neutral": {
+    "explained_by_generators": 248,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 2,
+    "unexplained": [],
+    "world_leaves_differing": 246
+   }
+  },
+  {
+   "task": "sales.cross_reference_validation",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 13,
+   "writes": 1,
+   "partial_credit": 0,
+   "task_completed_correctly": 0,
+   "n_scored": 4,
+   "n_passed": 0,
+   "world_sha256": "61417227d01c42b37d6f0217c9c05f07a0b47eb9c8bba5f70a301f86df4d9660",
+   "neutral": {
+    "explained_by_generators": 236,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 5,
+    "unexplained": [],
+    "world_leaves_differing": 231
+   }
+  },
+  {
+   "task": "sales.zoom_meeting_followup",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 15,
+   "writes": 3,
+   "partial_credit": 0.375,
+   "task_completed_correctly": 0,
+   "n_scored": 8,
+   "n_passed": 3,
+   "world_sha256": "cef73b7e0659fed183898733eabc3d63b3769782f16325e5871ac0ff2eb091ef",
+   "neutral": {
+    "explained_by_generators": 254,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 4,
+    "unexplained": [],
+    "world_leaves_differing": 250
+   }
+  },
+  {
+   "task": "sales.docusign_void_resend",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 14,
+   "writes": 3,
+   "partial_credit": 0.15384615384615385,
+   "task_completed_correctly": 0,
+   "n_scored": 13,
+   "n_passed": 2,
+   "world_sha256": "4409d724ac53ff8f00b7a896b4f5bfd49ce6e338907f84cd7c56954b1bf41276",
+   "neutral": {
+    "explained_by_generators": 259,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 4,
+    "unexplained": [],
+    "world_leaves_differing": 255
+   }
+  },
+  {
+   "task": "sales.slack_channel_for_new_account",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 12,
+   "writes": 2,
+   "partial_credit": 0,
+   "task_completed_correctly": 0,
+   "n_scored": 7,
+   "n_passed": 0,
+   "world_sha256": "fd86ae9f26630d887dde4dbe56116b016ba766a6f3488872350aaed44e1f3627",
+   "neutral": {
+    "explained_by_generators": 187,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 0,
+    "unexplained": [],
+    "world_leaves_differing": 187
+   }
+  },
+  {
+   "task": "marketing.landing_page_alert",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 17,
+   "writes": 5,
+   "partial_credit": 1,
+   "task_completed_correctly": 1,
+   "n_scored": 5,
+   "n_passed": 5,
+   "world_sha256": "82fdc3cf5282593d52c60ad23a38039eff7a7fc24b78ec7715ff1093f21dd88e",
+   "neutral": {
+    "explained_by_generators": 30,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 10,
+    "unexplained": [],
+    "world_leaves_differing": 20
+   }
+  },
+  {
+   "task": "marketing.newsletter_dedup",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 8,
+   "toolCalls": 25,
+   "writes": 13,
+   "partial_credit": 0.8125,
+   "task_completed_correctly": 0,
+   "n_scored": 16,
+   "n_passed": 13,
+   "world_sha256": "cb66afd162ea080eb5b75f3c87bb69018c1da6f46f790f0f8496d9175ae70ea1",
+   "neutral": {
+    "explained_by_generators": 90,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 26,
+    "unexplained": [],
+    "world_leaves_differing": 64
+   }
+  },
+  {
+   "task": "marketing.brand_mention_analysis",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 13,
+   "writes": 1,
+   "partial_credit": 0.25,
+   "task_completed_correctly": 0,
+   "n_scored": 4,
+   "n_passed": 1,
+   "world_sha256": "ecd7ebb369c1d8c10e43878895ac9df4b2797a6276f7b576e332b1703a94c667",
+   "neutral": {
+    "explained_by_generators": 14,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 2,
+    "unexplained": [],
+    "world_leaves_differing": 12
+   }
+  },
+  {
+   "task": "marketing.customer_milestone",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 7,
+   "toolCalls": 23,
+   "writes": 11,
+   "partial_credit": 0.6875,
+   "task_completed_correctly": 0,
+   "n_scored": 16,
+   "n_passed": 11,
+   "world_sha256": "257ea9edf3e003d0b83193d8fccc2dd3c283882677bc9a10f69c255ae84ea2a8",
+   "neutral": {
+    "explained_by_generators": 76,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 22,
+    "unexplained": [],
+    "world_leaves_differing": 54
+   }
+  },
+  {
+   "task": "marketing.utm_audit_and_fix",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 6,
+   "toolCalls": 19,
+   "writes": 7,
+   "partial_credit": 0.3333333333333333,
+   "task_completed_correctly": 0,
+   "n_scored": 18,
+   "n_passed": 6,
+   "world_sha256": "716438aa86fd759c32edbd6e382a6e532ed2bfba0d391065cc674835faa8bde6",
+   "neutral": {
+    "explained_by_generators": 58,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 14,
+    "unexplained": [],
+    "world_leaves_differing": 44
+   }
+  },
+  {
+   "task": "operations.contractor_badge_expiration",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 18,
+   "writes": 6,
+   "partial_credit": 0.6,
+   "task_completed_correctly": 0,
+   "n_scored": 10,
+   "n_passed": 6,
+   "world_sha256": "e111901958614e516157306b9fdda1668ed20a4c5429af51662d37957167acf1",
+   "neutral": {
+    "explained_by_generators": 38,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 12,
+    "unexplained": [],
+    "world_leaves_differing": 26
+   }
+  },
+  {
+   "task": "operations.sheets_asana_approved_request",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 3,
+   "toolCalls": 11,
+   "writes": 0,
+   "partial_credit": 0,
+   "task_completed_correctly": 0,
+   "n_scored": 5,
+   "n_passed": 0,
+   "world_sha256": "6028907cee303c0aa4f480f571c3e97a078067af7cda9775ed1ddebf210c7b0e",
+   "neutral": {
+    "explained_by_generators": 41,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 5,
+    "unexplained": [],
+    "world_leaves_differing": 36
+   }
+  },
+  {
+   "task": "operations.training_compliance_check",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 13,
+   "writes": 2,
+   "partial_credit": 0.6666666666666666,
+   "task_completed_correctly": 0,
+   "n_scored": 3,
+   "n_passed": 2,
+   "world_sha256": "f3d0ba9970daba85f73fa728448f8cd44ab1e12dbfb8ffb5d39819459f2ef340",
+   "neutral": {
+    "explained_by_generators": 27,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 4,
+    "unexplained": [],
+    "world_leaves_differing": 23
+   }
+  },
+  {
+   "task": "operations.docusign_contractor_offboard",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 12,
+   "writes": 1,
+   "partial_credit": 0.2,
+   "task_completed_correctly": 0,
+   "n_scored": 5,
+   "n_passed": 1,
+   "world_sha256": "ac449eacdb252cb8481717dc2374468b2208d0e75597029948b5d7642d670d5e",
+   "neutral": {
+    "explained_by_generators": 20,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 2,
+    "unexplained": [],
+    "world_leaves_differing": 18
+   }
+  },
+  {
+   "task": "operations.insurance_cert_validation",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 14,
+   "writes": 3,
+   "partial_credit": 0.42857142857142855,
+   "task_completed_correctly": 0,
+   "n_scored": 7,
+   "n_passed": 3,
+   "world_sha256": "dee608e7aba76f8a4867dec8c4680281abe61408e7860f5cbb14a651830192bd",
+   "neutral": {
+    "explained_by_generators": 45,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 6,
+    "unexplained": [],
+    "world_leaves_differing": 39
+   }
+  },
+  {
+   "task": "support.hiver_team_performance",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 6,
+   "toolCalls": 21,
+   "writes": 9,
+   "partial_credit": 0.38095238095238093,
+   "task_completed_correctly": 0,
+   "n_scored": 21,
+   "n_passed": 8,
+   "world_sha256": "4a62f7dea5a2cbc002cbbfecd2a422aa113adb526f79b6c9c2f635f29e086f1b",
+   "neutral": {
+    "explained_by_generators": 92,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 18,
+    "unexplained": [],
+    "world_leaves_differing": 74
+   }
+  },
+  {
+   "task": "support.helpcrunch_zoho_desk_bridge",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 13,
+   "writes": 1,
+   "partial_credit": 0.058823529411764705,
+   "task_completed_correctly": 0,
+   "n_scored": 17,
+   "n_passed": 1,
+   "world_sha256": "7029b4f458207aa9de1143a0e2379efe3e4b3a2993167fa170460d18516e10ba",
+   "neutral": {
+    "explained_by_generators": 47,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 2,
+    "unexplained": [],
+    "world_leaves_differing": 45
+   }
+  },
+  {
+   "task": "support.freshdesk_multi_queue_routing",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 14,
+   "writes": 3,
+   "partial_credit": 0.15789473684210525,
+   "task_completed_correctly": 0,
+   "n_scored": 19,
+   "n_passed": 3,
+   "world_sha256": "75d87d80b19dcb011acf5dd5389fad9497b148e083c5bcead9f564e7711b1d12",
+   "neutral": {
+    "explained_by_generators": 108,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 6,
+    "unexplained": [],
+    "world_leaves_differing": 102
+   }
+  },
+  {
+   "task": "support.reamaze_knowledge_routing",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 3,
+   "toolCalls": 10,
+   "writes": 0,
+   "partial_credit": 0,
+   "task_completed_correctly": 0,
+   "n_scored": 31,
+   "n_passed": 0,
+   "world_sha256": "50a454c64ecb70adb475ef75fbff38e3e5aa2fe8d794cb450eda0410090ec61f",
+   "neutral": {
+    "explained_by_generators": 63,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 0,
+    "unexplained": [],
+    "world_leaves_differing": 63
+   }
+  },
+  {
+   "task": "support.reamaze_campaign_tracking",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 14,
+   "writes": 3,
+   "partial_credit": 0.21428571428571427,
+   "task_completed_correctly": 0,
+   "n_scored": 14,
+   "n_passed": 3,
+   "world_sha256": "a609f207564f53b057823f0c4ba4b9db2d50a09c501cc69343fa12eefa310836",
+   "neutral": {
+    "explained_by_generators": 81,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 6,
+    "unexplained": [],
+    "world_leaves_differing": 75
+   }
+  },
+  {
+   "task": "finance.capex_approval",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 14,
+   "writes": 2,
+   "partial_credit": 0.6666666666666666,
+   "task_completed_correctly": 0,
+   "n_scored": 3,
+   "n_passed": 2,
+   "world_sha256": "e47ec07c907127993270fb6b448248b06fd140d0bfdcead78b2b80678dcd47b9",
+   "neutral": {
+    "explained_by_generators": 16,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 4,
+    "unexplained": [],
+    "world_leaves_differing": 12
+   }
+  },
+  {
+   "task": "finance.wave_tax_compliance",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 14,
+   "writes": 3,
+   "partial_credit": 1,
+   "task_completed_correctly": 1,
+   "n_scored": 5,
+   "n_passed": 5,
+   "world_sha256": "2dc14962c0e214afa64dbb81809477d02388005bcc7b77fc46f1b84d0cf0acca",
+   "neutral": {
+    "explained_by_generators": 41,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 6,
+    "unexplained": [],
+    "world_leaves_differing": 35
+   }
+  },
+  {
+   "task": "finance.prepaid_amortization",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 16,
+   "writes": 4,
+   "partial_credit": 1,
+   "task_completed_correctly": 1,
+   "n_scored": 8,
+   "n_passed": 8,
+   "world_sha256": "d5802cc320e5474e55d29c6c0160ae0628de564594e27a6d4c99fa406931fb14",
+   "neutral": {
+    "explained_by_generators": 29,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 8,
+    "unexplained": [],
+    "world_leaves_differing": 21
+   }
+  },
+  {
+   "task": "finance.project_profitability",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 16,
+   "writes": 5,
+   "partial_credit": 1,
+   "task_completed_correctly": 1,
+   "n_scored": 6,
+   "n_passed": 6,
+   "world_sha256": "fab4e56952c80a878dd50db1b18ba6e12d6e46bd269a86e04faf1db95ef4f838",
+   "neutral": {
+    "explained_by_generators": 34,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 10,
+    "unexplained": [],
+    "world_leaves_differing": 24
+   }
+  },
+  {
+   "task": "finance.invoice_dispute",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 17,
+   "writes": 5,
+   "partial_credit": 0.5555555555555556,
+   "task_completed_correctly": 0,
+   "n_scored": 9,
+   "n_passed": 5,
+   "world_sha256": "f68f7c11fbc40b49deb6e5489954779a501af4fe28ea2984505bcc93b887a8d8",
+   "neutral": {
+    "explained_by_generators": 39,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 10,
+    "unexplained": [],
+    "world_leaves_differing": 29
+   }
+  },
+  {
+   "task": "hr.job_board_monitoring",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 14,
+   "writes": 2,
+   "partial_credit": 0.2857142857142857,
+   "task_completed_correctly": 0,
+   "n_scored": 7,
+   "n_passed": 2,
+   "world_sha256": "ce242de4addd97c4d16337331d436f96cf9ba26afaa81d7b2a71750ed8e57471",
+   "neutral": {
+    "explained_by_generators": 21,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 4,
+    "unexplained": [],
+    "world_leaves_differing": 17
+   }
+  },
+  {
+   "task": "hr.employee_request_routing",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 17,
+   "writes": 6,
+   "partial_credit": 1,
+   "task_completed_correctly": 1,
+   "n_scored": 6,
+   "n_passed": 6,
+   "world_sha256": "b19acd72543eae6d02d066341de698c5d534a670766254caf1bdb728e3206b21",
+   "neutral": {
+    "explained_by_generators": 42,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 12,
+    "unexplained": [],
+    "world_leaves_differing": 30
+   }
+  },
+  {
+   "task": "hr.payroll_discrepancy",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 18,
+   "writes": 6,
+   "partial_credit": 0.5,
+   "task_completed_correctly": 0,
+   "n_scored": 10,
+   "n_passed": 5,
+   "world_sha256": "37cdd1a9bdbaadafd87aa2dc2bd914bb8d124f5179f8fb81bc03d935f39ca97e",
+   "neutral": {
+    "explained_by_generators": 48,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 12,
+    "unexplained": [],
+    "world_leaves_differing": 36
+   }
+  },
+  {
+   "task": "hr.grievance_routing",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 17,
+   "writes": 5,
+   "partial_credit": 0.8333333333333334,
+   "task_completed_correctly": 0,
+   "n_scored": 6,
+   "n_passed": 5,
+   "world_sha256": "2427b83e807e00f621b899e80b8f41f1bc377c2668e1a12df8f2351fdb9f98fe",
+   "neutral": {
+    "explained_by_generators": 38,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 10,
+    "unexplained": [],
+    "world_leaves_differing": 28
+   }
+  },
+  {
+   "task": "hr.promotion_announcement",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 5,
+   "toolCalls": 18,
+   "writes": 6,
+   "partial_credit": 1,
+   "task_completed_correctly": 1,
+   "n_scored": 5,
+   "n_passed": 5,
+   "world_sha256": "d1b65419688f6277e986a082002718b6224692409384e98f4dfcd0c7d09e856a",
+   "neutral": {
+    "explained_by_generators": 44,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 12,
+    "unexplained": [],
+    "world_leaves_differing": 32
+   }
+  },
+  {
+   "task": "simple.partner_hubspot_asana",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 2,
+   "toolCalls": 8,
+   "writes": 0,
+   "partial_credit": 0,
+   "task_completed_correctly": 0,
+   "n_scored": 2,
+   "n_passed": 0,
+   "world_sha256": "36329870901983d594e7412cc60bcd498179d792f65355737081e683202c4cb7",
+   "neutral": {
+    "explained_by_generators": 1,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 0,
+    "unexplained": [],
+    "world_leaves_differing": 1
+   }
+  },
+  {
+   "task": "simple.email_sf_contact_email_update",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 3,
+   "toolCalls": 10,
+   "writes": 0,
+   "partial_credit": 0,
+   "task_completed_correctly": 0,
+   "n_scored": 1,
+   "n_passed": 0,
+   "world_sha256": "64766de07cf86c2b07672cff3b4cd0c899a5593c44455b407df0494417614370",
+   "neutral": {
+    "explained_by_generators": 3,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 0,
+    "unexplained": [],
+    "world_leaves_differing": 3
+   }
+  },
+  {
+   "task": "simple.sheets_project_tracker",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 3,
+   "toolCalls": 8,
+   "writes": 0,
+   "partial_credit": 0,
+   "task_completed_correctly": 0,
+   "n_scored": 1,
+   "n_passed": 0,
+   "world_sha256": "8d8cbae0bddfb1e3a8ca163361494ca35b13821ade0d54cbc7cc3cc209ff4650",
+   "neutral": {
+    "explained_by_generators": 2,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 0,
+    "unexplained": [],
+    "world_leaves_differing": 2
+   }
+  },
+  {
+   "task": "simple.zendesk_billing_ticket",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 3,
+   "toolCalls": 9,
+   "writes": 0,
+   "partial_credit": 0,
+   "task_completed_correctly": 0,
+   "n_scored": 1,
+   "n_passed": 0,
+   "world_sha256": "e5b488c702cd7bf0e23bbdda6512342bad72eb14002d99ca6d99423da4460442",
+   "neutral": {
+    "explained_by_generators": 5,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 0,
+    "unexplained": [],
+    "world_leaves_differing": 5
+   }
+  },
+  {
+   "task": "simple.slack_office_closure",
+   "exact": true,
+   "checks": {
+    "final_world": true,
+    "tool_results": true,
+    "assertion_results": true,
+    "partial_credit": true,
+    "task_completed_correctly": true,
+    "contract": true
+   },
+   "steps": 4,
+   "toolCalls": 9,
+   "writes": 1,
+   "partial_credit": 1,
+   "task_completed_correctly": 1,
+   "n_scored": 1,
+   "n_passed": 1,
+   "world_sha256": "2bb5e84d2352752a7ecf77c1353a358269edcfde44cb348472a19e559577f92a",
+   "neutral": {
+    "explained_by_generators": 5,
+    "ok": true,
+    "same_scores": true,
+    "same_verdicts": true,
+    "tool_result_leaves_differing": 2,
+    "unexplained": [],
+    "world_leaves_differing": 3
+   }
+  }
+ ]
+}

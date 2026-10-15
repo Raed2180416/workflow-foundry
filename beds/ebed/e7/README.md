@@ -97,8 +97,8 @@ violations**.
 | d | cases | completed | ep0–ep2 | ep3 | go-live | s/world (2 runs + 2 gradings) |
 |---|---|---|---|---|---|---|
 | d2 | 1,938 | 1,937 (99.9%) | 100% | 99.8% | 100% | 1.95 |
-| d3 | 3,304 | 3,300 (99.9%) | 100% | 99.5% | 100% | 3.1 |
-| d4 | 3,905 | 3,899 (99.8%) | 100% | 99.4% | 100% | 3.9 |
+| d3 | 3,304 | 3,300 (99.9%) | 100% | 99.5% | 100% | 3.0 |
+| d4 | 3,905 | 3,899 (99.8%) | 100% | 99.4% | 100% | 3.8 |
 | d5 | 8,453 | 8,445 (99.9%) | 100% | 99.6% | 100% | 17.7 |
 
 ep4 holds no cases (arrivals stop at business day 24, DESIGN §4.8). The censored cases are late resolutions or closures

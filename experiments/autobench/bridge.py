@@ -519,6 +519,36 @@ def cmd_list(a):
                          "n_assertions": len(info["assertions"]), "services": services}))
 
 
+def cmd_stats(a):
+    """Per-domain task statistics (NOTES.md §2): assertion counts, guardrail share, assertions already true at start
+    (excluded from scoring unless broken), services per task, current_time pinning, prompt length."""
+    import statistics as st
+    o = official_modules()
+    from automationbench.rubric.registry import AssertionRegistry
+    from automationbench.runner import compute_allowed_services
+    from automationbench.schema.world import WorldState
+    domains = a.domains.split(",") if a.domains else list(o["DOMAINS"])
+    neg = lambda t: "_not_" in t or t.endswith("_not_exists") or t.startswith("no_")  # noqa: E731
+    for d in domains:
+        rows = list(o["DOMAINS"][d]())
+        na, nn, free, svc, plen, pinned = [], [], [], [], [], 0
+        for r in rows:
+            info = json.loads(r["info"])
+            A = info["assertions"]
+            na.append(len(A))
+            nn.append(sum(1 for x in A if neg(x["type"])))
+            w0 = WorldState(**info["initial_state"])
+            free.append(sum(1 for x in A if x.get("scored") is not False and x.get("excluded") is None and AssertionRegistry.check(w0, x)))
+            svc.append(len(compute_allowed_services(info["initial_state"], A, info["zapier_tools"])))
+            plen.append(sum(len(m["content"]) for m in r["prompt"] if m["role"] == "user"))
+            pinned += 1 if (info["initial_state"].get("meta") or {}).get("current_time") else 0
+        print(canon({"domain": d, "tasks": len(rows), "assertions_mean": round(st.mean(na), 1), "assertions_max": max(na),
+                     "guardrail_share": round(sum(nn) / sum(na), 2), "true_at_start_mean": round(st.mean(free), 1),
+                     "scored_at_start_mean": round(st.mean(na) - st.mean(free), 1), "services_mean": round(st.mean(svc), 1),
+                     "services_max": max(svc), "current_time_pinned": pinned, "user_prompt_chars_median": int(st.median(plen)),
+                     "user_prompt_chars_max": max(plen), "uses_excluded_or_scored_flags": sum(1 for r in rows for x in json.loads(r["info"])["assertions"] if "excluded" in x or "scored" in x)}))
+
+
 def cmd_prepare(a):
     """One official dataset build for all selected tasks -> per-task directories under --out."""
     SHIM.install(a.det)
@@ -870,6 +900,9 @@ def main():
     s = sub.add_parser("list")
     s.add_argument("--domains")
     s.set_defaults(fn=cmd_list)
+    s = sub.add_parser("stats")
+    s.add_argument("--domains")
+    s.set_defaults(fn=cmd_stats)
     s = sub.add_parser("prepare")
     common(s)
     s.add_argument("--domains")
