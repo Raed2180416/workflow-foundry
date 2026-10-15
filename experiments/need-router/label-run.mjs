@@ -1369,10 +1369,12 @@ export async function labelRun(opts) {
       usdCharged: r6(jobCharged), estUsd: est, k7Ratio: est ? r6(jobCharged / est) : null, pairing: t.error ? `incomplete: ${t.error}` : 'ok',
       r0Control: r0Gate(rows, u.job.id) ?? undefined });
   }
-  const allProbes = [...ctx.probes.values()].sort((a, b) => (a.job < b.job ? -1 : a.job > b.job ? 1 : a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : a.draw - b.draw));
+  // The totals cover the jobs this report lists (a filtered run lists fewer); the cap meter (totals.spend) is the whole stage.
+  const unitJobs = new Set(units.map(u => u.job.id)), unrecHere = [...unrec.entries()].filter(([job]) => unitJobs.has(job)).map(([, v]) => v);
+  const allProbes = [...ctx.probes.values()].filter(p => unitJobs.has(p.job)).sort((a, b) => (a.job < b.job ? -1 : a.job > b.job ? 1 : a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : a.draw - b.draw));
   const sumPart = (xs, k) => { const o = zero(); for (const x of xs) for (const f of Object.keys(o)) o[f] += x[k][f]; return Object.fromEntries(Object.entries(o).map(([f, v]) => [f, r6(v)])); };
-  const parts = { usdTaskRows: tot(allRows), usdBuilds: tot(allBuilds), usdProbes: tot(allProbes), usdFaultedTrials: sumPart([...unrec.values()], 'faulted'),
-    usdConstructionFaults: tot(cfaults.map(cfCost)), usdUnrecorded: sumPart([...unrec.values()], 'unrecorded') };
+  const parts = { usdTaskRows: tot(allRows), usdBuilds: tot(allBuilds), usdProbes: tot(allProbes), usdFaultedTrials: sumPart(unrecHere, 'faulted'),
+    usdConstructionFaults: tot(cfaults.filter(f => unitJobs.has(f.job)).map(cfCost)), usdUnrecorded: sumPart(unrecHere, 'unrecorded') };
   const measured = sum(Object.values(parts).map(x => x.usdRepriced)), imputed = sum(Object.values(parts).map(x => x.usdImputed));
   const limit = stages.grid?.envFaultLimit ?? ENV_FAULT_LIMIT;
   const armFaults = armFaultTable({ stageId: stage.id, results, faults: runFaultRecs, builds: allBuilds, constructionFaults: cfaults, limit });
