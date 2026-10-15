@@ -1,0 +1,157 @@
+{
+ "runId": "a0s-dev-first6",
+ "label": "model claude-sonnet-5-5",
+ "model": "claude-sonnet-5-5",
+ "scripted": false,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "arm": "A0 (no harness)",
+ "sealed": false,
+ "testSplitTasks": 0,
+ "harness": null,
+ "selection": {
+  "pool": "devTrain",
+  "subset": 6,
+  "seed": "11",
+  "domains": [
+   "sales",
+   "marketing",
+   "operations",
+   "support",
+   "finance",
+   "hr"
+  ]
+ },
+ "tasks": [
+  "sales.calendly_no_show_followup",
+  "marketing.social_content_calendar",
+  "operations.parking_allocation_management",
+  "support.intercom_sentiment_escalation",
+  "finance.forex_gain_loss",
+  "hr.zoom_orientation_sessions"
+ ],
+ "dateNote": true,
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 1.5,
+ "capUsd": 6,
+ "tools": [
+  "Bash"
+ ],
+ "effort": "high",
+ "n": 6,
+ "n_graded": 6,
+ "pass_rate": 0,
+ "mean_partial_credit": 0.552457264957265,
+ "by_domain": {
+  "sales": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.8333333333333334
+  },
+  "marketing": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.125
+  },
+  "operations": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.6
+  },
+  "support": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.9230769230769231
+  },
+  "finance": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "hr": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.8333333333333334
+  }
+ },
+ "live_pass_rate": 0,
+ "mean_cost_per_task_usd": 0.14133528333333334,
+ "accounting": {
+  "modelResponses": {
+   "mean": 8.833333333333334,
+   "max": 11
+  },
+  "toolResponses": {
+   "mean": 7.833333333333333,
+   "max": 10
+  },
+  "numTurnsCli": {
+   "mean": 9.166666666666666,
+   "max": 11
+  },
+  "worldSteps": {
+   "mean": 15.833333333333334,
+   "max": 29
+  },
+  "worldCalls": {
+   "mean": 24,
+   "max": 41
+  },
+  "reads": {
+   "mean": 7.666666666666667,
+   "max": 14
+  },
+  "searches": {
+   "mean": 10.833333333333334,
+   "max": 21
+  },
+  "writes": {
+   "mean": 5.5,
+   "max": 11
+  },
+  "stoppedByStepGuard": 0,
+  "extraModelCalls": 0,
+  "compactions": 0,
+  "capViolations": 0,
+  "l5Violations": 0,
+  "models": [
+   "claude-sonnet-5-5"
+  ],
+  "ledger": null
+ },
+ "cost": {
+  "spentUsd": 0.8480117,
+  "knownUsd": 0.8480117,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 6,
+  "skipped": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "c65942db4f5f1744c5fedd4cbfc44e25c63b22cdda9f5ec74e58da9a6e4f47fb",
+  "policyHash": "3618a12ca5a4e211ace57b12837084e6a41272bf7883b963cba2fb43ecd052f4",
+  "policyVersion": "2026-10-15.2",
+  "policyFileSha256": "3364011cae3741fb4409386d16cfa2439aaa340181382ce1694a8f7778fd3793",
+  "node": "v24.21.0",
+  "cli": "2.1.300 (Claude Code)",
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  },
+  "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "harnessManifestSha256": null
+ },
+ "live": "/var/tmp/foundry-work/autobench/a0s-dev-first6",
+ "finishedAt": "2026-10-15T08:43:41.939Z"
+}

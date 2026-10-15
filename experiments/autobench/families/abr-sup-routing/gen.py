@@ -334,7 +334,7 @@ class Gen:
         return self.uid("0123456789abcdef", n)
 
     def numid(self, n: int) -> str:
-        return self.uid("123456789", 1) [:0] + self.uid("0123456789", n - 1, self.r.choice("123456789"))
+        return self.uid("0123456789", n - 1, self.r.choice("123456789"))
 
     def ts(self, at: datetime) -> str:
         while True:
@@ -570,8 +570,7 @@ class Gen:
                                    "cells": {"Notes": r.choice(STILL_HELD).format(wd=(t + timedelta(days=1)).strftime("%A"),
                                                                                    d=(t + timedelta(days=3)).date().isoformat())}})
             else:
-                c = r.choice([x for x in clean if x["role"] == "clean" and x["row"]["Tier"] != "Standard" or
-                              x["role"] == "clean" and x["row"]["Tier"] == "Standard"])
+                c = r.choice([x for x in clean if x["role"] == "clean"])
                 c["role"] = "tier-change"
                 old = c["row"]["Tier"]
                 new = {"Standard": "Premium", "Premium": r.choice(["Enterprise", "Standard"]), "Enterprise": "Premium"}[old]
@@ -676,8 +675,7 @@ class Gen:
             eff += [p["company"] for p in self.plans if p["kind"] == "tier.changed" and p["sub"] == "tier-change"
                     and p["at"] < t and ok(p["company"])]
             co = r.choice(eff) if eff else None
-            if co is not None and co["row"]["Tier"] == "Premium" or co is not None and "Premium" in (
-                    co["row"]["Previous Tier"],):
+            if co is not None and "Premium" in (co["row"]["Tier"], co["row"]["Previous Tier"]):
                 priority = r.choice([1, 2, 2, 3])
         elif case == "cue-nonpremium":
             co = r.choice([c for c in clean if c["row"]["Tier"] != "Premium"])
@@ -805,7 +803,8 @@ class Gen:
                 by_name.setdefault(norm(c["row"]["Company"]), c["id"])
         tickets: dict[str, dict] = {}
         for tk in self.tickets0:
-            tickets[tk["id"]] = {k: copy.deepcopy(v) for k, v in tk.items() if k != "_desc"}
+            tickets[tk["id"]] = dict({k: copy.deepcopy(v) for k, v in tk.items() if k != "_desc"},
+                                     _desc=tk["_desc"], _topic=self.topic_of(tk["_desc"]))
         contacts = {c["id"]: c for c in self.contacts}
         companies = {c["id"]: c for c in self.companies}
         self.truth, self.triggers, self.payloads = [], [], []
@@ -890,8 +889,8 @@ class Gen:
                     why.append("tag-case")
                 if any(t in TAG_LOOKALIKES for t in tk["tags"]):
                     why.append("tag-lookalike")
-                topic = tk.get("_topic", "-")
-                if topic != "-" and (topic is None and area_tags(tk["tags"]) or topic is not None and topic not in area_tags(tk["tags"])):
+                topic = tk["_topic"]
+                if (topic is None and area_tags(tk["tags"])) or (topic is not None and topic not in area_tags(tk["tags"])):
                     why.append("tags-vs-desc")
                 if tier == "Premium":
                     if any(x >= RECORDS_THRESHOLD for x in d.records):
@@ -904,7 +903,8 @@ class Gen:
                         why.append("systems-complex")
                     elif d.negated or len([p_ for p_ in d.parts if p_["kind"] in ("problem", "sys") and p_.get("systems")]) >= 2:
                         why.append("systems-decoy")
-                elif tier in ("Enterprise", "Standard") and (reasons and (tier == "Standard" or "priority" not in reasons)):
+                elif tier in ("Enterprise", "Standard") and (
+                        "records" in reasons or "systems" in reasons or (tier == "Standard" and tk["priority"] == 4)):
                     why.append("cue-nonpremium")
                 if co is not None:
                     names = [norm(x["name"]) for x in self.companies if x is not co]
@@ -930,8 +930,7 @@ class Gen:
                        "responder_id": None, "group_id": p["group"], "company_id": None, "tags": list(p["tags"]),
                        "notes": [], "source": 2, "created_at": naive(at), "updated_at": naive(at)}
                 delta.append({"op": "insert", "app": "freshdesk", "collection": "tickets", "record": copy.deepcopy(rec)})
-                tk = dict(copy.deepcopy(rec), _desc=d, _topic=next((x["topic"] for x in [p] if "topic" in x), "-"))
-                tk["_topic"] = self.topic_of(d)
+                tk = dict(copy.deepcopy(rec), _desc=d, _topic=self.topic_of(d))
                 tickets[tk["id"]] = tk
                 ct = p["contact"]
                 payload = {"app": "freshdesk", "event": "ticket_created",
@@ -1022,13 +1021,9 @@ class Gen:
                                                               "systems-decoy", "multi-area", "tags-vs-desc"))
                     others = [tk for tk in tickets.values() if company_of(tk) is not None and company_of(tk)["id"] == c["id"]
                               and tk["id"] not in {w["id"] for w in waiting} and not tk["group_id"]]
-                    if any(tk["status"] != OPEN for tk in others):
+                    if waiting and any(tk["status"] != OPEN for tk in others):
                         labels.append("held-not-open")
-                    if any(company_of(tk) is not None and company_of(tk)["id"] == c["id"] and tk["group_id"]
-                           and any(nt["body"].startswith("Moved to") is False and False for nt in tk["notes"])
-                           for tk in tickets.values()):
-                        pass
-                    if any(tk.get("_assigned_held") for tk in tickets.values() if company_of(tk) and company_of(tk)["id"] == c["id"]):
+                    if waiting and any(tk.get("_assigned_held") for tk in tickets.values() if company_of(tk) and company_of(tk)["id"] == c["id"]):
                         labels.append("assigned-held")
                     me = norm(c["name"])
                     for x in self.companies:
@@ -1079,7 +1074,8 @@ class Gen:
                                        "tags": tk["tags"], "subject": tk["subject"], "description": tk["description"],
                                        "requester_id": tk["requester_id"],
                                        "routing_notes": [nt["body"] for nt in tk["notes"] if nt["id"] is None],
-                                       "notes0": [nt["id"] for nt in tk["notes"] if nt["id"] is not None]}
+                                       "notes0": [{"id": nt["id"], "body": nt["body"]} for nt in tk["notes"]
+                                                  if nt["id"] is not None]}
                                 for tid_, tk in sorted(tickets.items())},
                     "tiers": {str(v["row_id"]): v["cells"] for _, v in sorted(tiers.items(), key=lambda kv: kv[1]["row_id"])},
                     "routing": sorted(week_posts + week_chatter),
