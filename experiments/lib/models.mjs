@@ -24,7 +24,7 @@ export function subsetPolicy(owner, ids) {
     providers: Object.fromEntries(Object.entries(owner.providers).filter(([n]) => used.has(n))) })));
 }
 
-export function createModelPort({ journalFile, mode = 'live', salt = null, concurrency = {}, maxBudgetUsdPerCall = 1, allowedModels = null } = {}) {
+export function createModelPort({ journalFile, mode = 'live', salt = null, concurrency = {}, maxBudgetUsdPerCall = 1, allowedModels = null, timeoutMs = undefined } = {}) {
   const owner = loadPolicy();
   const policy = allowedModels ? subsetPolicy(owner.policy, allowedModels) : owner.policy, hash = policyHash(policy);
   mkdirSync(path.dirname(journalFile), { recursive: true });
@@ -33,7 +33,8 @@ export function createModelPort({ journalFile, mode = 'live', salt = null, concu
   const journal = new Journal(db);
   // Only the providers the policy names: with no llama-server model in the subset no local server can be started.
   const providers = {};
-  if (policy.providers['claude-cli']) providers['claude-cli'] = new ClaudeCliProvider({ policy, maxBudgetUsd: maxBudgetUsdPerCall });
+  // timeoutMs: the per-call wall limit (the provider's default, 300 s, when omitted; M1-R re-runs timeouts at 600 s).
+  if (policy.providers['claude-cli']) providers['claude-cli'] = new ClaudeCliProvider({ policy, maxBudgetUsd: maxBudgetUsdPerCall, ...(timeoutMs ? { timeoutMs } : {}) });
   if (policy.providers['llama-server']) providers['llama-server'] = new LlamaServerProvider({ policy });
   const port = new ModelPort({ policy, providers, journal, mode, salt, concurrency });
   return { port, policy, policyHash: hash, ownerPolicyHash: owner.hash, journal, db };

@@ -34,7 +34,9 @@ for (const r of rungs) {
 console.log(`M1: ${tasks.length} tasks over ${rungs.length} rungs x 2 efforts = ${tasks.length * 2} calls; cap $${cap}`);
 if (process.argv.includes('--dry')) process.exit(0);
 
-const { port } = createModelPort({ journalFile: path.join(live, 'journal.sqlite'), allowedModels: ['claude-haiku-5-5'], maxBudgetUsdPerCall: 1 });
+const timeoutMs = Number(arg('--timeout-ms', '0')) || undefined;
+const only = arg('--only', null);   // a JSON file of [{ taskKey, arm }] to (re-)run; others are skipped
+const { port } = createModelPort({ journalFile: path.join(live, 'journal.sqlite'), allowedModels: ['claude-haiku-5-5'], maxBudgetUsdPerCall: 1, timeoutMs });
 let spent = 0;
 const capped = arm => ({
   ...arm,

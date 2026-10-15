@@ -492,10 +492,13 @@ class Rollout:
                 "n_scored": sum(1 for a in ar if not a.get("excluded")), "n_passed": sum(1 for a in ar if not a.get("excluded") and a.get("passed")),
                 "error": err, "contract_sha256": self.contract, "steps": self.steps}
 
-    def finish(self, host: Path, grade: dict):
+    def finish(self, host: Path, grade: dict, generated: dict):
+        """generated: the generator log snapshotted BEFORE grading. The rubric itself draws ids and clock reads (it
+        rebuilds the initial world), and the vote masks with this log, so a post-grading snapshot would let the grader
+        shape the vote's input."""
         write_json(host / "final-world.json", self.world())
         write_json(host / "grade.json", grade, indent=1)
-        write_json(host / "generated.json", SHIM.generated())
+        write_json(host / "generated.json", generated)
         with open(host / "calls.jsonl", "w") as f:
             for r in self.log:
                 f.write(canon(r) + "\n")
@@ -693,8 +696,9 @@ def cmd_serve(a):
     box = Mailbox(Path(a.mailbox))  # opened before 'ready', i.e. before the session can touch the workdir
     emit("ready", contract=r.contract, pid=os.getpid())
     _serve_loop(r, box, a.poll)
+    gen = SHIM.generated()
     grade = asyncio.run(r.grade())
-    r.finish(host, grade)
+    r.finish(host, grade, gen)
     emit("done", steps=r.steps, partial_credit=grade["partial_credit"], task_completed_correctly=grade["task_completed_correctly"])
 
 
@@ -707,8 +711,9 @@ def cmd_replay(a):
     for step in load_json(a.steps):
         if step.get("calls"):
             asyncio.run(r.batch(step["calls"]))
+    gen = SHIM.generated()
     grade = asyncio.run(r.grade())
-    r.finish(Path(a.host), grade)
+    r.finish(Path(a.host), grade, gen)
     print(canon({"steps": r.steps, "partial_credit": grade["partial_credit"], "task_completed_correctly": grade["task_completed_correctly"]}))
 
 

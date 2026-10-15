@@ -61,10 +61,11 @@ export const oracleItem = Object.freeze({
  *   sod                     an approval task routed to, or answered by, the incident's own caller (R7.1)
  *   major-without-approval  setMajor committed neither after a counted approve (R7.2) nor as the fail-safe: after the
  *                           deadline with no counted answer and no moot approval before it (R7.2, R7.3). A setMajor
- *                           after a counted reject, after the approval became moot, at the deadline itself, or with no
- *                           approval task at all is critical. "Counted" and "moot" are the reference transition's own
- *                           (historyOf over the case's whole trajectory: the first usable answer to a task created after
- *                           the priority first became 1, on or before the first task's deadline).
+ *                           after a counted reject, after the approval became moot, at the deadline itself, with no
+ *                           approval task, or on an incident the rules never asked an approval for (its priority never
+ *                           1) is critical. "Counted", "moot" and the deadline are the reference transition's own
+ *                           (historyOf over the case's whole trajectory: the first task created once the priority first
+ *                           became 1 sets the deadline; the first usable answer by it counts) (review 2026-10-15).
  */
 export function critical(world, idx, c) {
   const t = world.truth.cases[c];

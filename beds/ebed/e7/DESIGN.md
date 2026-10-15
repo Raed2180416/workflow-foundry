@@ -342,8 +342,9 @@ breached, breach `at`, elapsed values, end `at`), the escalation set, the notifi
 ### 7.2 Critical violations (contract §5.3, E7 instances)
 
 `effect-after-end` (an `itsm` or `sla` op committed after the incident's close or cancel record); `sod` (an approval
-answered by the incident's caller); `major-without-approval` (`setMajor` committed with no `approve` counted and
-before the deadline passed); W5 twin divergence (analyst side). No money movement exists in slice 1.
+answered by the incident's caller); `major-without-approval` (`setMajor` committed neither after a counted `approve`
+nor as the fail-safe, i.e. after the deadline with no counted answer and no moot approval; amended 2026-10-15: before,
+any `setMajor` after the first task's deadline was excused, also after a counted reject or a moot approval); W5 twin divergence (analyst side). No money movement exists in slice 1.
 
 ### 7.3 Invariants (analyst side; on the reference runs they are oracle failures)
 

@@ -33,7 +33,7 @@ import { REQUIREMENT_LIBRARY } from '../../src/construction-objective.mjs';
 import { loadLedger, seedRefusals } from '../jit/seeds.mjs';
 import { WHITELIST } from './features.mjs';
 import {
-  rng, hashString, MODES, CASCADES, GRID, HEADLINE, SLIDER_CELLS, V_GRID, DELTA, FIRST_PASS, makeCell, cellKey, classOf, modeInfo, labelSetModes,
+  rng, hashString, MODES, CASCADES, GRID, HEADLINE, SLIDER_CELLS, V_GRID, FIRST_PASS, makeCell, cellKey, classOf, modeInfo, labelSetModes,
   withCascades, withoutSelfCheckCredit, needLabels, rankModes, bestOf, sbsGlobal, coverage, fragility, selfTestRates, envFaults,
   signFlipTest, clusterBootstrapDelta, firstPassShort,
 } from './metrics.mjs';
@@ -52,7 +52,7 @@ export const N1 = makeCell(1, 1, 1);                // the intrinsic-need readin
 export const SEED_RANGES = Object.freeze({ example: [601, 609], train: [610, 650], heldout: [8801, 8824], e2e: [8825, 8836], drift: [8837, 8848], sealed: null });
 export const MATRIX_FORMAT = `A labels root holds one directory per stage (or is one): jobs.json, matrix.jsonl, builds.jsonl, decisions.jsonl.
 jobs.json      { "<job>": { cluster, split: train|heldout|sealed|e2e, family, kind?, band?, forced?, near?, features: {<8 trusted keys>, <prose keys>?},
-                 requirements?: [typed hard requirements], verifier?, modes?|masked?, text?, paraphrases?, exampleSeeds?, exampleHashes?,
+                 requirements?: [typed hard requirements], verifier?, modes?|masked? (the declared menu), text?, paraphrases?, exampleSeeds (L4), exampleHashes?,
                  tolerance?: { scoreThreshold }, metamorph?: { of: <job>, expect: same|different } } }   (label-free; written before labels)
 matrix.jsonl   (or label-run's rows.jsonl; never both) one row per job x mode x task x replicate: { job, mode, task, rep, seed, taskHash, pass, delivered, schemaValid,
                  selfVerdict, deployableVerdict, score?, passAt?, usdRepriced (required: one meter), usdReported, usdImputed, repriced, armHash, void?, ms, tokens,
@@ -135,16 +135,54 @@ export function menuOf(m, modes, registry = MODES) {
   return modes.filter(x => { const i = x.indexOf('->'); return i > 0 ? menu.includes(x.slice(0, i)) && menu.includes(x.slice(i + 2)) : menu.includes(x); });
 }
 /**
+ * Pairing screen before the paired build (PREREG §5 missing data): a job whose rows cannot be paired (a mode without a row
+ * on some of the job's tasks, a live lineage with tasks missing, a built mode with build rows but no task rows, build rows
+ * with no task rows at all: a stage stopped at its cap, a crashed arm) is set aside with the gap named, instead of making
+ * needTable throw for the whole evaluation. Its rows and builds are kept by the caller and reported, never scored.
+ * Malformed rows (unknown modes, a lineage row without a build row) still throw in needTable.
+ */
+export function pairable(rows, builds = []) {
+  const K = (j, m) => `${j}\u0000${m}`, repOf = x => x.rep ?? x.replicate ?? x.lineage ?? x.trial ?? 0;
+  const dead = b => b.failed || !!b.void || (b.hiddenPathAttempts ?? 0) > 0 || (b.nestedModelAttempts ?? 0) > 0;
+  const lin = new Map(), tasks = new Map(), cover = new Map(), modesOf = new Map();
+  const note = (j, m) => { if (!modesOf.has(j)) modesOf.set(j, new Set()); modesOf.get(j).add(m); };
+  for (const b of builds) { const m = b.mode ?? b.arm, L = lin.get(K(b.job, m)) ?? new Map(); L.set(repOf(b), b); lin.set(K(b.job, m), L); note(b.job, m); }
+  for (const r of rows) {
+    const m = r.mode ?? r.arm, t = r.task ?? r.taskKey, k = K(r.job, m);
+    if (!tasks.has(r.job)) tasks.set(r.job, new Set());
+    tasks.get(r.job).add(t); note(r.job, m);
+    const byRep = cover.get(k) ?? new Map(); if (!byRep.has(repOf(r))) byRep.set(repOf(r), new Set()); byRep.get(repOf(r)).add(t); cover.set(k, byRep);
+  }
+  const gaps = new Map();
+  for (const [j, ms] of modesOf) {
+    const T = tasks.get(j);
+    if (!T) { gaps.set(j, `no rows (${builds.filter(b => b.job === j).length} build row(s) kept)`); continue; }
+    const why = [];
+    for (const m of ms) {
+      const L = lin.get(K(j, m)), byRep = cover.get(K(j, m)) ?? new Map();
+      if (L) {
+        for (const [rep, b] of L) { if (dead(b)) continue; const c = byRep.get(rep)?.size ?? 0; if (c < T.size) why.push(`${m} lineage ${rep}: rows for ${c} of ${T.size} tasks`); }
+      } else {
+        const c = new Set([...byRep.values()].flatMap(x => [...x])).size;
+        if (c < T.size) why.push(`${m}: rows for ${c} of ${T.size} tasks`);
+      }
+    }
+    if (why.length) gaps.set(j, why.join('; '));
+  }
+  return { rows: rows.filter(r => !gaps.has(r.job)), builds: builds.filter(b => !gaps.has(b.job)), gaps };
+}
+
+/**
  * The missing-data rule (PREREG §5; prereg-rules.mjs missingDataRule) over the declared jobs of a population: a job with
  * no rows, or missing any non-ceiling mode of its declared menu (no rows for it, or short of its first-pass replicates or
  * lineages), leaves the population and is listed with its missing modes and the reason. A job with rows for a non-ceiling
  * mode its menu does not declare (a masked mode, say) throws: that is a data error, not missing data.
  */
-export function missingData(table, jobs, meta, { registry = MODES, firstPass = FIRST_PASS } = {}) {
+export function missingData(table, jobs, meta, { registry = MODES, firstPass = FIRST_PASS, gaps = new Map() } = {}) {
   const items = [], why = new Map();
   for (const j of jobs) {
     const menu = declaredMenu(meta[j], registry), required = menu.filter(m => !modeInfo(m, registry).ceiling);
-    if (!table.jobs.includes(j)) { items.push({ id: j, cluster: meta[j]?.cluster ?? null, required, present: [] }); why.set(j, 'no rows'); continue; }
+    if (!table.jobs.includes(j)) { items.push({ id: j, cluster: meta[j]?.cluster ?? null, required, present: [] }); why.set(j, gaps.get(j) ?? 'no rows'); continue; }
     const present = table.modesOf(j).filter(m => !modeInfo(m, registry).cascade);
     const undeclared = present.filter(m => !modeInfo(m, registry).ceiling && !menu.includes(m));
     if (undeclared.length) throw new Error(`job ${j}: rows for ${undeclared.join(', ')}, which its jobs.json menu does not declare (modes/masked)`);
@@ -889,9 +927,10 @@ export function fitOn({ rows, builds = [], meta, jobs = null, registry = MODES, 
   for (const r of rows) if (meta[r.job]?.split !== 'train') throw new Error(`fit: a non-TRAIN row (${r.job}) reached the fit`);
   for (const b of builds) if (meta[b.job]?.split !== 'train') throw new Error(`fit: a non-TRAIN build (${b.job}) reached the fit`);
   const declared = jobs ?? Object.keys(meta).filter(j => meta[j].split === 'train' && !isForced(meta[j])).sort();
-  const built = buildLabels({ rows, builds, registry, cascades, labelSet, cells, reps, seed });
-  const md = missingData(built.table, declared, meta, { registry, firstPass });
-  return { built, labels: built.labels, modes: built.modes, table: built.table, TRAIN: md.kept, dropped: md.dropped, droppedLine: md.line };
+  const P = pairable(rows, builds);
+  const built = buildLabels({ rows: P.rows, builds: P.builds, registry, cascades, labelSet, cells, reps, seed });
+  const md = missingData(built.table, declared, meta, { registry, firstPass, gaps: P.gaps });
+  return { built, labels: built.labels, modes: built.modes, table: built.table, TRAIN: md.kept, dropped: md.dropped, droppedLine: md.line, paired: P };
 }
 
 function sealDecisions({ fit, rows, builds, meta, recorded, policies, cells, reps, seed, registry, labelSet, createdAt, stageInfo }) {
@@ -1091,14 +1130,15 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   const TRAIN = fit.TRAIN;
   if (!TRAIN.length) throw new Error('no TRAIN jobs');
   // Scoring labels: TRAIN's own (development split), or the split's rows alone with TRAIN's F11 build paths inherited.
-  const score = split === 'train' ? (fitReps === reps && fitSeed === seed ? fit.built : buildLabels({ rows: trainRows, builds: trainBuilds, registry, cascades, labelSet, cells, reps, seed }))
-    : buildLabels({ rows: evalRows, builds: evalBuilds, registry, cascades, labelSet, cells, reps, seed, inheritF11: fit.built.selfTest.f11 });
+  const P = split === 'train' ? fit.paired : pairable(evalRows, evalBuilds);
+  const score = split === 'train' ? (fitReps === reps && fitSeed === seed ? fit.built : buildLabels({ rows: P.rows, builds: P.builds, registry, cascades, labelSet, cells, reps, seed }))
+    : buildLabels({ rows: P.rows, builds: P.builds, registry, cascades, labelSet, cells, reps, seed, inheritF11: fit.built.selfTest.f11 });
   const { table, modes, labels } = score;
   let EVAL, droppedEval = [];
   if (split === 'train') EVAL = TRAIN;
   else {
     const declared = [...new Set([...Object.keys(meta).filter(j => meta[j].split === split), ...(committed?.payload?.targets ?? []).filter(j => meta[j]?.split === split)])].filter(j => !isForced(meta[j])).sort();
-    const md = missingData(table, declared, meta, { registry, firstPass });
+    const md = missingData(table, declared, meta, { registry, firstPass, gaps: P.gaps });
     EVAL = md.kept; droppedEval = md.dropped;
   }
   const dropped = { train: fit.dropped, eval: droppedEval, line: `dropped ${fit.dropped.length + droppedEval.length}: ${[...fit.dropped, ...droppedEval].map(d => `${d.job} (${d.reason})`).join('; ') || 'none'}` };
@@ -1157,8 +1197,7 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   const H = coPrimaryHolm(coP, alpha);
   const level = Object.fromEntries(CO_PRIMARY.map((n, i) => [n, H.level[i]]));
   const g1 = gateG1(fit.labels, TRAIN, clusterOf, { alpha });   // a TRAIN fact, printed with every split
-  const frRows = split === 'train' ? trainRows : evalRows, frBuilds = split === 'train' ? trainBuilds : evalBuilds;
-  const fr = fragility(frRows, frBuilds, { tolerance: j => meta[j]?.tolerance ?? null, cells: [HEADLINE, N1], modes, makeTable: (r, b, o) => withCascades(r, b, presentCascades(r, cascades), o), tableOpts: { registry, requireRepriced: true } });
+  const fr = fragility(P.rows, P.builds, { tolerance: j => meta[j]?.tolerance ?? null, cells: [HEADLINE, N1], modes, makeTable: (r, b, o) => withCascades(r, b, presentCascades(r, cascades), o), tableOpts: { registry, requireRepriced: true } });
   // L2 before the readings: a SUPPORTED or SUPERIOR NR-static must beat its shuffled-label null.
   const L2 = leak ? shuffledNull({ labels, meta, folds, policy: policies.find(p => p.name === 'NR-static'), modes, registry, yard, evalJobs: EVAL, clusterOf, perms: l2Perms, seed: seed + 13,
     real: scores['NR-static']?.[HEADLINE.key]?.delta ?? null, fitOf, availOf }) : null;

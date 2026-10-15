@@ -54,6 +54,7 @@ export async function parity({ perDomain = 2, seed = 'parity-20261014', out = pa
   const rows = tasks.map(task => {
     const host = path.join(bridgeLive, 'host', task, 'fork-0');
     const grade = readJson(path.join(host, 'grade.json'));
+    const gen = readJson(path.join(host, 'generated.json'));
     const world = readJson(path.join(host, 'final-world.json'));
     const calls = readFileSync(path.join(host, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
     const toolA = calls.flatMap(c => c.results);
@@ -66,6 +67,9 @@ export async function parity({ perDomain = 2, seed = 'parity-20261014', out = pa
       partial_credit: grade.partial_credit === b.partial_credit,
       task_completed_correctly: grade.task_completed_correctly === b.task_completed_correctly,
       contract: grade.contract_sha256 === meta.contract_sha256,
+      // The generator log the vote masks with: seeded draws up to the last tool step, identical in both paths (the
+      // bridge snapshots it before grading, so the rubric's own draws never reach the vote).
+      generated: ['uuid', 'rand', 'clock'].every(k => canon(gen[k]) === canon(b.generated?.[k])),
     };
     const writes = calls.flatMap(c => c.calls).filter(c => { try { return ['POST', 'PATCH', 'PUT', 'DELETE'].includes(JSON.parse(c.arguments).method); } catch { return false; } }).length;
     return { task, exact: Object.values(checks).every(Boolean), checks, steps: calls.length, toolCalls: toolA.length, writes,

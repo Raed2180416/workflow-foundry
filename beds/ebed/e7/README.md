@@ -53,8 +53,8 @@ fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (
 | `transition.mjs` | `referenceTransition` (the oracle core), `recordsOf`, `canonicalArgs`, `historyOf`, `editionAt`, `priorityAt` |
 | `index.mjs` | the module interface: `family`, `specE`, `schemas`, `binding`, `oracleItem` hooks, `critical`, `referencePolicy`, `referenceRuns`, `oracle` |
 | `controls.mjs` | bad, gaming and necessity controls; `targetCases`, `plannedView` |
-| `golden.mjs` | 23 hand-derived, rule-cited goldens + `runGoldens` |
-| `tools/` | `health`, `controls-run` (part B); `world-health`, `walker` (part A) |
+| `golden.mjs` | 24 hand-derived, rule-cited goldens + `runGoldens` |
+| `tools/` | `health`, `controls-run`, `walker-grade` (part B); `world-health`, `walker` (part A) |
 | `test/` | `world.test.mjs` (part A, 19 tests), `e7.test.mjs` (part B) |
 | `../../ebed-e7/index.mjs` | the registration shim (as for E8) |
 
@@ -84,7 +84,9 @@ fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (
   startAt, schedule, zone, pauses, breach, end, elapsed values, cancel reason), the escalations and the notifications.
   Instants are compared in canonical UTC.
 - **Critical** (contract §5.3): `effect-after-end` (an `itsm` op or an `sla.start` committed after the incident's close or
-  cancel record), `sod` (an approval task routed to, or answered by, the incident's caller), `major-without-approval`.
+  cancel record), `sod` (an approval task routed to, or answered by, the incident's caller), `major-without-approval`
+  (a `setMajor` that neither follows a counted `approve` nor is the fail-safe: after the deadline, with no counted
+  answer and no moot approval before it; "counted" and "moot" are the reference transition's own, R7.2–R7.3).
 
 ## Measurements ($0)
 
@@ -127,7 +129,7 @@ d2–d5:
 | no-sod (d3–d5) | 20/20 (100%); `sod` critical on every major-sod case |
 | no-correlation (caller messages not merged) | 1,004/1,055 (95%; the passes are messages that change nothing: late replies and confirmations, a reply after a reassignment) |
 
-**Goldens** (`golden.mjs`): 23 hand-derived, rule-cited goldens (G1–G18 of DESIGN §9 with G4 in three zones, plus a
+**Goldens** (`golden.mjs`): 24 hand-derived, rule-cited goldens (G1–G18 of DESIGN §9 with G4 in three zones, G11b, plus a
 duplicate-delivery/stray golden and a records golden) pass the reference transition. Every SLA-engine control (world edit
 or engine switch) fails at least one golden, so the goldens see each construct. One hand value of DESIGN §9 was wrong
 and is corrected in the golden: G11's start record plans Wed 03-18 17:00 (1,440 business minutes from Mon 09:00 end at a
@@ -138,8 +140,14 @@ pauses) `sla.mjs` gives the same D, thresholds, elapsed and business-elapsed val
 (exclusive boundary) and, for D, as the generator's own clock (`world.mjs`, its own zone table); one more pause never
 moves D earlier.
 
-**Discrimination sanity check:** the part-A walker (keeps every incident record of R1–R3, R6 and R7.1 but has no SLA
-engine and no deadline closures) passes 8/111 completed cases at seed 1241 d3: only the messages that name no incident.
+**Discrimination sanity check** (`tools/walker-grade.mjs`, dev seed 1101 d3, rerun 2026-10-15): the part-A walker
+(keeps every incident record of R1–R3, R6 and R7.1 but has no SLA engine and no deadline closures) passes 8/109 completed
+cases, 0 critical: the 5 messages that name no incident (3 stray caller messages, 2 warnings) and 3 incidents on which
+nothing the walker leaves out is due (two P5 incidents, which no SLA definition covers, closed on the caller's
+confirmation; one go-live incident whose SLAs ended before t0, closed on confirmation). The other 101 fail at layer 3
+(a missed record). The first run of this check (8/111, 2026-10-14) used seed 1241, which DESIGN §13 reserves for the
+specificity solvers and Track C rehearsals; that touch (walker only) is recorded in SEED-LEDGER and DESIGN §13, and the
+tool now refuses the rehearsal block 1201–1249.
 
 **Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 54 tests (19 part A, 35 part B), about
 70 s on an idle machine.
@@ -148,9 +156,9 @@ engine and no deadline closures) passes 8/111 completed cases at seed 1241 d3: o
 
 | id | decision | why |
 |---|---|---|
-| E7-B1 | Each SLA record's `plannedBreachAt` is the planned breach as of that record's own instant: the start plans from `startAt` with no pause; each resume (past ones included) from the pauses so far | R4.4 defines the planned breach "as if not paused again"; records carry the instant the rule gives them (§4). G11 pins it (start Wed 03-18 17:00, resume Thu 03-19 11:00) |
-| E7-B2 | An SLA that attaches while its pause condition holds attaches paused, also when it is not retroactive (pause at the attach) | R4.3 states it for retroactive SLAs only; leaving the other case to the next change instant would make it depend on unrelated changes. Never generated in slice 1 |
-| E7-B3 | A reset re-attach also requires the stop condition not to hold; an empty condition list never holds | consistent with the R4.2 attach rule; no generated definition has an empty list |
+| E7-B1 | Each SLA record's `plannedBreachAt` is the planned breach as of that record's own instant: the start plans from `startAt` with no pause (also for a retroactive SLA with past pauses and one that attaches paused); each resume (past ones included) from the pauses so far. **Stated in SPEC-E as S13 (R4.4, R4.5 amended) on 2026-10-15** | R4.4 defines the planned breach "as if not paused again"; records carry the instant the rule gives them (§4). G11 pins it (start Wed 03-18 17:00, resume Thu 03-19 11:00); G11b pins the attaches-paused case (start Wed 03-18 17:00, not null) |
+| E7-B2 | An SLA that attaches while its pause condition holds attaches paused, also when it is not retroactive (pause at the attach). **SPEC-E S14 (R4.3 amended)** | R4.3 states it for retroactive SLAs only; leaving the other case to the next change instant would make it depend on unrelated changes. Never generated in slice 1 |
+| E7-B3 | A reset re-attach also requires the stop condition not to hold; an empty condition list never holds. **SPEC-E S15 (R4.2 amended)** | consistent with the R4.2 attach rule; no generated definition has an empty list |
 | E7-B4 | The escalation recipient is read after every change of the due instant (S5); `priority` is not graded at the instant a later event changed it | S5 orders changes before SLA evaluation; same-instant knowledge as in the grader (E8-5) |
 | E7-B5 | Lids at instants before t0 are already recorded for go-live incidents (the export); the oracle's engine recomputes them and layer 5 compares | the generator's own SLA engine wrote the export: the reference runs cross-check two independent engines on every go-live case |
 | E7-B6 | `sod` is critical when the approval task is routed to the caller (also when they delegate it on), not only when the caller answers | with actor noise the caller may delegate, withdraw or answer in free text; the routing is the separation-of-duties failure |

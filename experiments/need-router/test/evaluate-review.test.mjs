@@ -132,15 +132,19 @@ test('major 3: declared or sealed jobs without rows or without their full menu a
   const W = plantedWorld({ train: 4, heldout: 4, jobs: 2, seed: 21 });
   const committed = commitDecisions({ ...trainOnly(W), meta: W.meta, reps: 60, createdAt: '2026-10-24T00:00:00Z' });
   assert.equal(committed.payload.targets.length, 8);
-  // H3-j1 lost every row (a crashed stage); H2-j0 lost agent-H's second draw (a stage stopped at its cap).
-  const rows = W.rows.filter(r => r.job !== 'H3-j1' && !(r.job === 'H2-j0' && r.mode === 'agent-H' && r.rep === 1));
+  // H3-j1 lost every task row (a crashed stage; its build rows remain); H2-j0 lost agent-H's second draw and H1-j1 three
+  // tasks of construct-H lineage 2 (a stage stopped at its cap). Before the fix the first vanished from Δ silently and the
+  // last made needTable throw for the whole evaluation.
+  const rows = W.rows.filter(r => r.job !== 'H3-j1' && !(r.job === 'H2-j0' && r.mode === 'agent-H' && r.rep === 1)
+    && !(r.job === 'H1-j1' && r.mode === 'construct-H' && r.rep === 2 && ['t09', 't10', 't11'].includes(r.task)));
   const R = evaluate({ ...W, rows, committed, split: 'heldout', ...FAST, leak: true, l2Perms: 10 });
-  assert.equal(R.jobs.eval, 6); assert.equal(R.jobs.dropped, 2);
+  assert.equal(R.jobs.eval, 5); assert.equal(R.jobs.dropped, 3);
   const why = Object.fromEntries(R.validity.dropped.eval.map(d => [d.job, d.reason]));
-  assert.equal(why['H3-j1'], 'no rows');
+  assert.equal(why['H3-j1'], 'no rows (5 build row(s) kept)');
   assert.match(why['H2-j0'], /agent-H: 12 task\(s\) with fewer than 2 first-pass draws/);
+  assert.equal(why['H1-j1'], 'construct-H lineage 2: rows for 9 of 12 tasks');
   assert.equal(R.leaks.L6.ok, true, JSON.stringify(R.leaks.L6.problems));
-  assert.match(renderReport(R), /DROPPED \(PREREG §5 missing data[^\n]*H3-j1 \(no rows\)/);
+  assert.match(renderReport(R), /DROPPED \(PREREG §5 missing data[^\n]*H3-j1 \(no rows/);
   // A sealed target that is neither scored nor listed fails L6.
   const v = verifyEnvelope(committed, committed, { accounted: new Set(['H0-j0']), split: 'heldout', meta: W.meta });
   assert.ok(v.problems.some(p => /sealed target H1-j0 was neither scored nor listed as dropped/.test(p)));
