@@ -736,3 +736,9 @@ The owner asked to try the harness "with haiku or opus whatever works the best".
 - Caps per run stay enforced in code by `--cap`.
 
 *Model naming in any published claim.* The model and harness are named exactly, for example "claude-opus-5-5 + Foundry harness a1-vN". No headline says "Haiku" unless the chosen arm is Haiku.
+
+**AM-11 (2026-10-15) Owner direction: Sonnet instead of Opus.**
+- The owner wrote "Or wait try sonnet instead of opus".
+- The Opus probe (`a0o-dev-first6`) was stopped before any task finished. No Opus result exists, and its partial spend is booked in its live directory.
+- The alternative-model arms under AM-10 are now A0-S and A1-S: `claude-sonnet-5-5`, effort high, `--date-note`, session budget $1.50.
+- The AM-10 selection rule and budgets apply unchanged, with Sonnet in place of Opus.

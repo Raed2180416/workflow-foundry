@@ -96,11 +96,11 @@ BUMP) arrived cut off, so I re-checked both by search.
    **Resolution rule.** Every first experiment prints its minimum detectable effect (MDE) before it runs. Its reading is
    *supported*, *refuted* or *inconclusive*, and a threshold below the MDE can only read inconclusive (§0.3).
 3. **$0 first.** Every program has a $0 stage that can start now, in new directories:
-   - none of them touches `src/`, `policy/models.json`, `experiments/lib/`, `experiments/c0/`, `beds/lib/` or the need-router
-     stamped files;
+   - none of them touches `src/`, `policy/models.json`, `experiments/lib/`, `experiments/c0/`, `beds/lib/`, the need-router
+     stamped files, or the AB-v1 harness files (`experiments/autobench/{bridge.py,tool.mjs,lib.mjs,run.mjs}`, `harness/`);
    - product schema changes wait for the engine bump after the matrix, on or after 11-04.
 4. **New paid spend.**
-   - **Total:** about $81–106 estimated and $164 at the caps, across eight paid first experiments plus the penny J-Q2
+   - **Total:** about $81–106 estimated and $164 at the caps, across ten paid development runs plus the penny J-Q2 (LP-0b)
      [arith, §11]. Each is far below the $500 pause.
    - **F6 and F8 add $0.** They ride on AB-v1, MA-0 and every other run.
 5. **Budget warning.** The soft cap is checked on a **cap basis**: each stage counts at the larger of its cap and its
@@ -108,7 +108,7 @@ BUMP) arrived cut off, so I re-checked both by search.
    - On that basis, the need router ($1,372.81) plus the rest of the MRR plan (about $425) already reach about $1,800,
      which is over the $1,500 soft cap before AB-v1, AB-R or these programs.
    - With AB-v1 and AB-R added, the total is about $2,350–2,450, and about $2,510–2,610 with this plan. At estimates it is
-     about $1,920–2,050 with this plan [arith, §11].
+     about $1,920–2,045 with this plan [arith, §11].
    - **Default changed:** every $0 stage runs.
      - **Two small paid rows run anyway:** AGENTV-E8 and LP-0b, $6 together at the caps. Their results reshape the larger
        rows, and they are recorded as a soft-cap deviation.
@@ -384,6 +384,9 @@ where a workflow advantage was measured.
 - **Arm.** agent-H per tick (`experiments/ebed/run-agent.mjs`, used unchanged) inside a wrapper in `experiments/earned/`.
   The wrapper validates the tick output against the contract schema and the host's own refusal before commit. On a
   refusal, it retries once with the refusal text. It never shows grading.
+  - **Not verified:** whether the E8 host can check a tick output without committing it.
+  - **If it cannot,** a weaker variant runs and is labelled so: validation against the contract schema only, with the
+    committed tick's refusal passed into the next tick's session.
 - **Bed.** Sized world 1232 d2 size 12, the identical 14 cases (10/14 for agent-H, 14/14 for the workflows); 1233 is added
   if the cap allows.
 - **Reading.**
@@ -391,8 +394,11 @@ where a workflow advantage was measured.
     advantage. F1, F3 and F7 then use this arm as their agent baseline.
   - If it stays ≤ 11/14, the advantage survives the strongest simple agent.
   - Either way, its wall time and dollars enter LAT-0.
-- **Resolution.** The MDE at 14 paired cases is large: about 4–5 discordant cases. The run reads "supported" only at 14/14
-  vs ≤ 10/14. Anything else is inconclusive and informs only which agent arm the later programs use.
+- **Resolution.** The MDE at 14 paired cases is large: about 4–5 discordant cases. Against the workflows' 14/14, the
+  hypothesis "E8's workflow advantage survives the strongest simple agent" reads:
+  - *supported* only if agent-H + validator stays at or below 10/14;
+  - *refuted* only at 14/14;
+  - anything else is inconclusive, and only decides which agent arm the later programs use.
 
 **EARN-1 (paid pilot, development, K = 1 chained history per family and arm).**
 
@@ -429,7 +435,8 @@ where a workflow advantage was measured.
   - **Capability number:** pooled u(A-earn) − max(u(A-agentV), u(A-wf)), with a family-cluster bootstrap. Also reported:
     regret against the best fixed policy for each family in hindsight.
   - **MDE, printed before the run [arith].** Take a family-level SD of utility differences of about 0.10, and 3 TRAIN
-    clusters. Then SE ≈ 0.058, and the MDE at 80% power is about 0.16. With 6 TRAIN clusters it is about 0.11.
+    clusters. Then SE ≈ 0.058, and the MDE at 80% power is about 0.16. With 6 TRAIN clusters it is about 0.11. These use a
+    normal approximation; a permutation or t bound at 3 clusters is wider.
 - **Beds:**
   - **AB-R TRAIN families only**, after AB-R's $0 validity gates (RECURRING-DESIGN §3.11) and after the owner fixes the
     split (§12 decision 9). Today these are dealdesk, reviews and slawatch, plus routing, receipts and referral once
