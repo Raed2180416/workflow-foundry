@@ -912,7 +912,8 @@ export function nearestClusterTest(knnChoose, views, { threshold = 0.8 } = {}) {
  * (the earliest launch of a held-out matrix stage, LAUNCH.json launchedAt), launched (the envelope shas those stages
  * launched against) }. With it: the git commit time is required and must precede the first held-out launch and row (the
  * self-reported createdAt is never used); a missing time, a rewritten or locally edited file, a missing A-Freeze row,
- * router shas other than A-Freeze's, a missing launch record or a stage launched against another envelope is a problem.
+ * router shas other than A-Freeze's, a --router module that is not itself an A-Freeze file, a missing launch record or a
+ * stage launched against another envelope is a problem.
  * `heldoutRows` ({ total, timestamped }; evaluate supplies it): under provenance every held-out row must carry label-run's
  * record time `at` (a reading with no timestamped held-out row cannot order the envelope before the rows).
  * `rowsGit` (heldoutRowsGit; the CLI supplies it): under provenance the envelope file's first commit must be a strict git
@@ -937,6 +938,13 @@ export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null
     if (pv.uncommittedEdit) problems.push('the envelope file read differs from its committed text (an uncommitted edit): L6 reads the committed envelope only');
     if (!pv.aFreeze) problems.push('no A-Freeze shas to compare with (PREREG §4.4 A-Freeze is TBD-FREEZE: the Freeze addendum is not committed)');
     else for (const f of [...new Set([...Object.keys(pv.aFreeze), ...Object.keys(P.routerShas ?? {})])].sort()) if ((P.routerShas ?? {})[f] !== pv.aFreeze[f]) problems.push(`router file ${f} sealed as ${(P.routerShas ?? {})[f]?.slice(0, 16) ?? 'absent'}, the A-Freeze row pins ${pv.aFreeze[f]?.slice(0, 16) ?? 'nothing'}`);
+    // A --router module in a preregistered reading is an A-Freeze file itself (router.mjs, say), so the preregistration pins
+    // its sha; a module elsewhere is sealed by the envelope only, never preregistered (review 2026-10-15, residual of major 3).
+    if (P.routerModule) {
+      const rm = P.routerModule, base = path.posix.basename(String(rm.path ?? '').split(path.sep).join('/'));
+      if (!ROUTER_FILES.includes(base) || rm.path !== `experiments/need-router/${base}`) problems.push(`the --router module ${rm.path} is not an A-Freeze file (experiments/need-router/{${ROUTER_FILES.join(',')}}): a preregistered reading routes with the frozen router only`);
+      else if (pv.aFreeze && pv.aFreeze[base] !== rm.sha256) problems.push(`the --router module ${rm.path} sealed as ${String(rm.sha256).slice(0, 16)}, the A-Freeze row pins ${pv.aFreeze[base]?.slice(0, 16) ?? 'nothing'}`);
+    }
     // The launch record and the rows' own record times are both required: one alone can be missing or edited.
     if (!pv.firstHeldoutAt) problems.push('no launch time for the held-out matrix (LAUNCH.json launchedAt): the envelope cannot be ordered before its launch');
     if (heldoutRows) {
@@ -1773,14 +1781,26 @@ export function renderReport(R) {
 }
 
 // ------------------------------------------------------------------------------------------------------------- CLI
+/** The roles a --router module may supply: routers. The yardstick, the baselines and the controls are the evaluator's own. */
+export const MODULE_ROLES = Object.freeze(['primary', 'secondary']);
 /** The policy set with a --router module's policies replacing the defaults by name, validated (validatePolicies: a module
- *  policy that declares peek, or a co-primary under another role, is refused). */
+ *  policy that declares peek, or a co-primary under another role, is refused). A module supplies routers only (MODULE_ROLES):
+ *  it may not replace the yardstick SBS-train, a fixed mode, a baseline such as the tuned size rule or a control, since Δ
+ *  and the SUPPORTED comparisons are read against them (review 2026-10-15, residual of majors 1 and 3: a module outside the
+ *  A-Freeze files could otherwise move the yardstick), and it names each policy once. */
 export async function loadRouterPolicies(file) {
   if (!file) return defaultPolicies();
   const mod = await import(pathToFileURL(path.resolve(file)).href);
   if (!Array.isArray(mod.policies)) throw new Error(`${file} must export \`policies\` (an array of { name, role, fit })`);
-  const by = new Map(defaultPolicies().map(p => [p.name, p]));
-  for (const p of mod.policies) by.set(p.name, p);
+  const by = new Map(defaultPolicies().map(p => [p.name, p])), seen = new Set();
+  for (const p of mod.policies) {
+    const d = by.get(p?.name);
+    if (seen.has(p?.name)) throw new Error(`${file}: two policies are named ${p?.name}`);
+    seen.add(p?.name);
+    if (d && !MODULE_ROLES.includes(d.role)) throw new Error(`${file}: policy ${p?.name} would replace the evaluator's ${d.role} ${d.name}: a --router module supplies routers (role ${MODULE_ROLES.join(' or ')}), never the yardstick, a baseline or a control`);
+    if (!MODULE_ROLES.includes(p?.role)) throw new Error(`${file}: policy ${p?.name} has role ${p?.role}: a --router module supplies routers (role ${MODULE_ROLES.join(' or ')})`);
+    by.set(p.name, p);
+  }
   return validatePolicies([...by.values()]);
 }
 

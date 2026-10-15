@@ -357,3 +357,36 @@ test('minor 10: a cluster or family stays in one split; L4 checks the seeds of j
   assert.ok(R.leaks.L4.problems.some(p => /H1-j1\/t00: seed 610 outside the heldout range/.test(p)), R.leaks.L4.problems.join('\n'));
   assert.equal(R.leaks.L4.ok, false);
 });
+
+// ------------------------------------------------------- residual of majors 1 and 3: what a --router module may supply
+test('majors 1 and 3 (residual): a --router module supplies routers only, and a preregistered reading routes with an A-Freeze file', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'nr-modroles-'));
+  const mod = (name, body) => { const f = path.join(dir, `${name}.mjs`); writeFileSync(f, `export const policies = [${body}];\n`); return f; };
+  const fit = "fit: () => (view) => ({ mode: view.modes[view.modes.length - 1] })";
+  // A module that moves the yardstick (SBS-train always picks the dearest mode) would inflate every Δ: refused, as is any
+  // module policy that replaces a baseline, a fixed mode or a control, or that is not a router.
+  for (const [name, role] of [['SBS-train', 'yardstick'], ['tuned-size-rule', 'baseline'], ['always-agent-H', 'baseline'], ['peek', 'control'], ['SBS-test', 'optimistic']]) {
+    await assert.rejects(loadRouterPolicies(mod(`m-${name}`, `{ name: '${name}', role: '${role}', ${fit} }`)), new RegExp(`would replace the evaluator's ${role} ${name}`), name);
+    await assert.rejects(loadRouterPolicies(mod(`p-${name}`, `{ name: '${name}', role: 'primary', ${fit} }`)), /would replace the evaluator's/, `${name} renamed to primary`);
+  }
+  await assert.rejects(loadRouterPolicies(mod('newbase', `{ name: 'my-baseline', role: 'baseline', ${fit} }`)), /has role baseline: a --router module supplies routers/);
+  await assert.rejects(loadRouterPolicies(mod('dup', `{ name: 'NR-x', role: 'secondary', ${fit} }, { name: 'NR-x', role: 'secondary', ${fit} }`)), /two policies are named NR-x/);
+  // The frozen router (router.mjs: NR-static primary, NR-knn secondary) and a new secondary router load.
+  const R = await loadRouterPolicies(path.join(REPO, 'experiments/need-router/router.mjs'));
+  assert.equal(R.find(p => p.name === 'NR-static').frozen, 'router.mjs v1'); assert.equal(R.find(p => p.name === 'SBS-train').role, 'yardstick');
+  assert.ok((await loadRouterPolicies(mod('extra', `{ name: 'NR-extra', role: 'secondary', ${fit} }`))).some(p => p.name === 'NR-extra'));
+  // Under provenance the sealed module must be an A-Freeze file whose sha the A-Freeze row pins.
+  const W = plantedWorld({ train: 3, heldout: 3, jobs: 1, seed: 42 });
+  const pvOf = env => ({ committedAt: '2026-10-25T08:00:00Z', commits: 1, aFreeze: env.payload.routerShas, firstHeldoutAt: '2026-10-25T10:00:00Z', launched: [] });
+  const seal = routerModule => commitDecisions({ ...trainOnly(W), meta: W.meta, reps: 30, createdAt: '2026-10-24T00:00:00Z', routerModule });
+  const frozen = seal(routerModuleRecord(path.join(REPO, 'experiments/need-router/router.mjs')));
+  assert.equal(frozen.payload.routerModule.path, 'experiments/need-router/router.mjs');
+  const vf = verifyEnvelope(frozen, frozen, { provenance: pvOf(frozen) });
+  assert.equal(vf.ok, true, vf.problems.join('\n'));
+  const outside = seal(routerModuleRecord(mod('outside', `{ name: 'NR-static', role: 'primary', ${fit} }`)));
+  const vo = verifyEnvelope(outside, outside, { provenance: pvOf(outside) });
+  assert.ok(vo.problems.some(p => /the --router module .*outside\.mjs is not an A-Freeze file/.test(p)), vo.problems.join('\n'));
+  assert.equal(verifyEnvelope(outside, outside).ok, true, 'without provenance (not a preregistered reading) the module is only compared with itself');
+  const pinnedOther = { ...pvOf(frozen), aFreeze: { ...frozen.payload.routerShas, 'router.mjs': '0'.repeat(64) } };
+  assert.ok(verifyEnvelope(frozen, frozen, { provenance: pinnedOther }).problems.some(p => /the --router module experiments\/need-router\/router\.mjs sealed as .*, the A-Freeze row pins 0000/.test(p)));
+});

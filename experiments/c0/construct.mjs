@@ -196,13 +196,19 @@ const reEscape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export function repoPathForms(root = REPO_ROOT) {
   const out = [], add = (form, text, re) => { if (text && !out.some(x => x.text === text)) out.push({ form, text, re }); };
   const tail = '(?![\\w-])';
-  add('absolute', root, new RegExp(`(?<![\\w.~-])${reEscape(root)}${tail}`));
+  // Not inside a longer path or word (x/home/..., ~/home/..., a relative ./home/...), but a traversal (../../home/...) counts.
+  add('absolute', root, new RegExp(`(?<![\\w~-])(?<!(?:^|[^.])\\.)${reEscape(root)}${tail}`));
   const m = /^\/(?:home\/([^/]+)|root)\/(.+)$/.exec(root);
   if (m) {
     const user = m[1] ?? 'root', rest = m[2];
     for (const text of [`~/${rest}`, `~${user}/${rest}`]) add('home', text, new RegExp(`(?<![\\w./~-])${reEscape(text)}${tail}`));
     for (const text of [`$HOME/${rest}`, `\${HOME}/${rest}`]) add('home', text, new RegExp(`${reEscape(text)}${tail}`));
   }
+  // The repository's own directory name as a word of its own (`cd ~ && cat workflow-foundry/beds/...`, path.join('/home/user',
+  // 'workflow-foundry')), when it is distinctive (8+ characters with a separator); never as a segment of another absolute path
+  // (/home/runner/work/workflow-foundry, which ownerci tasks state) or of a longer name.
+  const name = path.basename(root);
+  if (name.length >= 8 && /[-_.]/.test(name)) add('name', name, new RegExp(`(?<![\\w./~-])${reEscape(name)}${tail}`));
   // Encoded: the base64 characters fixed by the root's bytes alone at each of the three alignments (a string that contains the
   // root encodes to one of them, whatever precedes it), their base64url spelling, and hex. The leading slash is left out, so a
   // path written without it (home/user/...) is found too.
@@ -228,9 +234,12 @@ export function repoPathMentions(toolUses = [], { root = REPO_ROOT, ignoreText =
   const forms = repoPathForms(root).filter(f => !String(ignoreText).includes(f.text));
   const found = new Set();
   let attempts = 0;
+  // Every string of the input as it is (never its JSON text: there a path that starts a line or follows a tab sits behind
+  // the letter of a `\n` or `\t` escape, which the forms' "not inside a word" guard would take for part of a word).
+  const strings = v => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.flatMap(strings) : v && typeof v === 'object' ? Object.values(v).flatMap(strings) : []);
   for (const u of toolUses) {
-    const s = JSON.stringify(u?.input ?? '').replace(/\\\//g, '/');
-    const hits = forms.filter(f => f.re.test(s));
+    const ss = strings(u?.input);
+    const hits = forms.filter(f => ss.some(s => f.re.test(s)));
     if (!hits.length || counted(u)) continue;
     attempts += 1;
     for (const h of hits) found.add(h.form);

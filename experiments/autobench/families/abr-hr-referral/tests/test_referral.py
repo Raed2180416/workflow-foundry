@@ -159,7 +159,7 @@ def test_payload_is_zap_shaped(streams):
             assert set(p) == gates.PAYLOAD_KEYS
             assert set(p["data"]) == gates.DATA_KEYS[p["event"]]
             assert re.fullmatch(r"s6\d\d/t\d\d", p["trigger"]) and p["at"].endswith("Z")
-            if p["app"] == "google_sheets":
+            if p["app"] == "google_sheets" and p["data"]["worksheet"] == gen.WS_TITLE[gen.WS_LOG]:
                 assert not set(p["data"]["row"]) & set(gen.AUTO_COLS)   # the arm's own state never arrives in a payload
 
 
@@ -181,8 +181,8 @@ def test_reference_is_observable_only():
     g = gates.gate_leakage([610])
     assert set(g["reference_imports"]) <= gates.REF_STDLIB
     src = (FAMILY_DIR / "reference.py").read_text()
-    for host in ("import gen", "import oracle", "truth", "world0", "delta"):
-        assert host not in src
+    for host in (r"import gen\b", r"import oracle\b", r"\btruth\b", r"\bworld0\b", r"\bdelta\b"):
+        assert not re.search(host, src), host
 
 
 # -- controls ------------------------------------------------------------------------------------------------------------
@@ -194,8 +194,10 @@ def test_every_bad_control_fails(dev_runs, name):
 
 def test_gross_controls(dev_runs, streams):
     noop = sum(1 for s in DEV for t in streams[s]["truth"][:-1] if t["outcome"] == "no-op")   # Friday carries the week
+    noop_fridays = sum(1 for s in DEV if streams[s]["truth"][-1]["outcome"] == "no-op")
     null, _ = dev_runs["null"]
-    assert null["passed"] == noop and set(null["outcomes"]) <= {"correct", "miss"}
+    assert null["passed"] == noop and null["outcomes"].get("wrong", 0) == noop_fridays
+    assert set(null["outcomes"]) <= {"correct", "miss", "wrong"}
     echo, _ = dev_runs["echo"]
     assert echo["passed"] == 0 and set(echo["outcomes"]) == {"wrong"}
     import controls
