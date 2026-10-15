@@ -877,8 +877,9 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
     }
     // An environment fault on the writer call is not an outcome (as for a construction): kept aside, retried on resume, K4.
     if (!w.ok && BUILD_ENV_FAULTS.has(w.error)) return { fault: { stage: stage.id, job: job.id, mode, lineage: k, factory: 'procedureWriter', error: { code: w.error }, costUsd: w.costUsd ?? 0,
-      usdReported: r6(m.reported), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), stamp: head.stamp } };
-    return { row: { ...head, factory: 'procedureWriter', model: b.model, usdReported: r6(w.costUsd ?? 0), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), usd: r6(m.measured), tokens: m.tokens,
+      usdReported: r6(m.reported), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), repriced: m.repriced, stamp: head.stamp } };
+    // repriced: false when the writer call was priced at its own figure (a model the table does not price): metrics leaves the job unlabelled.
+    return { row: { ...head, factory: 'procedureWriter', model: b.model, usdReported: r6(w.costUsd ?? 0), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), repriced: m.repriced, usd: r6(m.measured), tokens: m.tokens,
       minutes: null, artifactSha: w.ok ? w.sha : null, artifactPath: w.ok ? w.file : null, failed: !w.ok, error: w.ok ? null : w.error, runSolverCalls: null,
       hiddenPathAttempts: 0, nestedModelAttempts: 0, words: w.words ?? null, truncatedWords: w.truncatedWords ?? null, checks: w.checks ?? null, promptSha: w.promptSha, void: null } };
   }
@@ -899,7 +900,7 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
   }
   const rec = res.record;
   if (rec.builderError && BUILD_ENV_FAULTS.has(rec.builderError.code)) return { fault: { stage: stage.id, job: job.id, mode, lineage: k, factory: 'construct', error: rec.builderError, costUsd: rec.constructionCostUsd,
-    usdReported: r6(cost.reported), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), stamp: head.stamp } };
+    usdReported: r6(cost.reported), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), repriced: cost.repriced, stamp: head.stamp } };
   const reasons = [];
   let copied = null;
   if (job.family === 'ownerci' && res.artifactPath) {
@@ -910,7 +911,7 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
   // text scan of every tool-input string (hiddenPathAttempts there) is kept for review by hand as pathMentions.
   const hidden = rec.hiddenPathAccesses ?? rec.hiddenPathAttempts;
   return { row: { ...head, factory: 'construct', model: b.builderModel, usdReported: r6(rec.constructionCostUsd), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed),
-    ...(cost.meterGap > 0 ? { usdMeterGap: r6(cost.meterGap) } : {}), usd: r6(cost.measured), tokens: cost.tokens, minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
+    repriced: cost.repriced, ...(cost.meterGap > 0 ? { usdMeterGap: r6(cost.meterGap) } : {}), usd: r6(cost.measured), tokens: cost.tokens, minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
     error: rec.builderError?.code ?? null, runSolverCalls: rec.runSolverCalls, hiddenPathAttempts: hidden, nestedModelAttempts: rec.nestedModelAttempts,
     outsidePaths: (rec.accessedOutsidePaths ?? rec.outsidePaths ?? []).slice(0, 10), pathMentions: rec.hiddenPathAttempts ?? null, mentionedPaths: (rec.outsidePaths ?? []).slice(0, 10),
     selfCheck: rec.selfCheck, checkPath: res.checkPath, checkSha256: rec.checkSha256, builderPromptSha256: rec.promptSha256 ?? null, copiedExampleLines: copied,
