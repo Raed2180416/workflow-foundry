@@ -1,0 +1,411 @@
+{
+ "label": "agentv-e8-s12",
+ "experiment": "AGENTV-E8",
+ "arm": "agent-H+V",
+ "prereg": {
+  "file": "research/enterprise-20261014/AGENTV-E8-PREREG.md",
+  "sha256": "051b7930d7fea47246bba1ce0d629ed80c5bceace8a53d18693190a2a15b8b63"
+ },
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "model": "claude-haiku-5-5",
+ "effort": null,
+ "tickBudgetUsd": 0.4,
+ "tickMinutes": 6,
+ "retries": 1,
+ "concurrency": 4,
+ "callTimeoutMs": 780000,
+ "launches": [
+  {
+   "at": "2026-10-15T09:43:50.996Z",
+   "pid": 23481,
+   "settings": {
+    "label": "agentv-e8-s12",
+    "model": "claude-haiku-5-5",
+    "effort": null,
+    "tickBudget": 0.4,
+    "tickMinutes": 6,
+    "retries": 1,
+    "concurrency": 4,
+    "cap": 5,
+    "seeds": [
+     1232
+    ],
+    "difficulties": [
+     2
+    ],
+    "size": 12,
+    "dry": false,
+    "prereg": "research/enterprise-20261014/AGENTV-E8-PREREG.md",
+    "preregSha256": "051b7930d7fea47246bba1ce0d629ed80c5bceace8a53d18693190a2a15b8b63"
+   },
+   "code": {
+    "experiments/agentv/arm.mjs": "652ccd2cfc53fce58c9b395b0c63e363de7c9a8ee4eb8ea7cd4a7d18a1f6ad93",
+    "experiments/agentv/validator.mjs": "b36ba1fab8baf05ba4f4364ba51cbd9eab39a787883f709ed886452f55b0bcba",
+    "experiments/agentv/run.mjs": "7862118046705d59f280c0b145abdb6adf137f627163f3c3b21ff77a21ff78f6",
+    "experiments/ebed/agent-arm.mjs": "fed500b7d36877891de65974982e452eb4c61d6f1a51f6bc451b960a366e52af",
+    "beds/ebed/host/output.mjs": "7b4a87ca14972ea23dafd8395b548c4b85c4d7ae28fea386428af8cf19a70ad3"
+   }
+  },
+  {
+   "at": "2026-10-15T11:06:13.620Z",
+   "pid": 6486,
+   "settings": {
+    "label": "agentv-e8-s12",
+    "model": "claude-haiku-5-5",
+    "effort": null,
+    "tickBudget": 0.4,
+    "tickMinutes": 6,
+    "retries": 1,
+    "concurrency": 4,
+    "cap": 5,
+    "seeds": [
+     1232
+    ],
+    "difficulties": [
+     2
+    ],
+    "size": 12,
+    "dry": false,
+    "prereg": "research/enterprise-20261014/AGENTV-E8-PREREG.md",
+    "preregSha256": "051b7930d7fea47246bba1ce0d629ed80c5bceace8a53d18693190a2a15b8b63"
+   },
+   "code": {
+    "experiments/agentv/arm.mjs": "652ccd2cfc53fce58c9b395b0c63e363de7c9a8ee4eb8ea7cd4a7d18a1f6ad93",
+    "experiments/agentv/validator.mjs": "b36ba1fab8baf05ba4f4364ba51cbd9eab39a787883f709ed886452f55b0bcba",
+    "experiments/agentv/run.mjs": "7862118046705d59f280c0b145abdb6adf137f627163f3c3b21ff77a21ff78f6",
+    "experiments/ebed/agent-arm.mjs": "fed500b7d36877891de65974982e452eb4c61d6f1a51f6bc451b960a366e52af",
+    "beds/ebed/host/output.mjs": "7b4a87ca14972ea23dafd8395b548c4b85c4d7ae28fea386428af8cf19a70ad3"
+   },
+   "changedCode": []
+  },
+  {
+   "at": "2026-10-15T11:26:32.878Z",
+   "pid": 28663,
+   "settings": {
+    "label": "agentv-e8-s12",
+    "model": "claude-haiku-5-5",
+    "effort": null,
+    "tickBudget": 0.4,
+    "tickMinutes": 6,
+    "retries": 1,
+    "concurrency": 4,
+    "cap": 5,
+    "seeds": [
+     1232
+    ],
+    "difficulties": [
+     2
+    ],
+    "size": 12,
+    "dry": false,
+    "prereg": "research/enterprise-20261014/AGENTV-E8-PREREG.md",
+    "preregSha256": "051b7930d7fea47246bba1ce0d629ed80c5bceace8a53d18693190a2a15b8b63"
+   },
+   "code": {
+    "experiments/agentv/arm.mjs": "652ccd2cfc53fce58c9b395b0c63e363de7c9a8ee4eb8ea7cd4a7d18a1f6ad93",
+    "experiments/agentv/validator.mjs": "b36ba1fab8baf05ba4f4364ba51cbd9eab39a787883f709ed886452f55b0bcba",
+    "experiments/agentv/run.mjs": "7862118046705d59f280c0b145abdb6adf137f627163f3c3b21ff77a21ff78f6",
+    "experiments/ebed/agent-arm.mjs": "fed500b7d36877891de65974982e452eb4c61d6f1a51f6bc451b960a366e52af",
+    "beds/ebed/host/output.mjs": "7b4a87ca14972ea23dafd8395b548c4b85c4d7ae28fea386428af8cf19a70ad3"
+   },
+   "changedCode": []
+  }
+ ],
+ "meter": {
+  "capUsd": 5,
+  "totalUsd": 1.851435209999999,
+  "settledUsd": 1.4514352099999992,
+  "unsettledAtBoundUsd": 0.4,
+  "rule": "PREREG-NEED-V1 §12 K5 (label-run.mjs StageBudget, meterOf)"
+ },
+ "prediction": {
+  "P1invalidOutputsAtHost": 0,
+  "P3meteredUsd": 1.851435209999999,
+  "source": "P1 from the committed host journal (arm.error invalid-output); P2/P4 from rows[].cases and rows[].pairedVsAgentH"
+ },
+ "validatorAllAttempts": {
+  "ticks": 161,
+  "sessions": 161,
+  "retries": 0,
+  "ticksRetried": 0,
+  "retryFixed": 0,
+  "finalInvalid": 0,
+  "finalMissing": 0,
+  "quotaStops": 0,
+  "envStops": 1,
+  "validateCalls": 187,
+  "ticksUsingValidator": 160,
+  "validateInvalid": 18,
+  "inSessionProblemClasses": {
+   "close: must be true when present": 9,
+   "effects[i].key: a batch op keys its items, not the batch": 15
+  },
+  "firstGateRefusalClasses": {},
+  "envFaultSessions": 1,
+  "reportedUsd": 1.4514352099999996,
+  "chargedUsd": 1.4514352099999996,
+  "usage": {
+   "inputTokens": 2346,
+   "outputTokens": 10490,
+   "cacheReadTokens": 24742791,
+   "cacheWriteTokens": 4148766
+  },
+  "cacheReadShare": 0.8563,
+  "scope": "every tick attempted, including rounds discarded by a freeze or a killed process (re-run on resume); rows[].validatorCommitted is the committed ticks only"
+ },
+ "seeds": [
+  1232
+ ],
+ "difficulties": [
+  2
+ ],
+ "size": 12,
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "worldDigest": "56971c9b3aaa4886229ac81fd55dcc4f9d41640a7be06fae2651ba0b087f1bff",
+   "status": "complete",
+   "wallMs": 4400425,
+   "wallAllInvocationsMs": 4726585,
+   "invocations": 3,
+   "completed": 14,
+   "passed": 12,
+   "armCensored": 0,
+   "critical": 0,
+   "armErrors": 0,
+   "ticks": 160,
+   "costUsd": 1.4511916099999995,
+   "costUnknown": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "gl-awaiting": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "straight": {
+     "n": 6,
+     "pass": 5,
+     "censored": 0
+    },
+    "collection-failed": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "cancel-after-collection": {
+     "n": 1,
+     "pass": 0,
+     "censored": 0
+    },
+    "cancel-processing": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "fraud-reject": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "amend": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    }
+   },
+   "codes": {
+    "L2:key-split": 2
+   },
+   "invalidOutputsAtHost": 0,
+   "armErrorsByCode": {},
+   "validatorCommitted": {
+    "ticks": 160,
+    "sessions": 160,
+    "retries": 0,
+    "ticksRetried": 0,
+    "retryFixed": 0,
+    "finalInvalid": 0,
+    "finalMissing": 0,
+    "quotaStops": 0,
+    "envStops": 0,
+    "validateCalls": 187,
+    "ticksUsingValidator": 160,
+    "validateInvalid": 18,
+    "inSessionProblemClasses": {
+     "close: must be true when present": 9,
+     "effects[i].key: a batch op keys its items, not the batch": 15
+    },
+    "firstGateRefusalClasses": {},
+    "envFaultSessions": 0,
+    "reportedUsd": 1.4511916099999995,
+    "chargedUsd": 1.4511916099999995,
+    "usage": {
+     "inputTokens": 2344,
+     "outputTokens": 10481,
+     "cacheReadTokens": 24735351,
+     "cacheWriteTokens": 4148386
+    },
+    "cacheReadShare": 0.8563,
+    "committedCalls": 160,
+    "matched": 160
+   },
+   "cases": [
+    {
+     "case": "o0001",
+     "class": "gl-intake",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0002",
+     "class": "gl-awaiting",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0003",
+     "class": "gl-dispatched",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0004",
+     "class": "straight",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0005",
+     "class": "straight",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0006",
+     "class": "collection-failed",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0007",
+     "class": "straight",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0008",
+     "class": "cancel-after-collection",
+     "pass": false,
+     "armCensored": false,
+     "divergence": "L2:key-split"
+    },
+    {
+     "case": "o0009",
+     "class": "straight",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0010",
+     "class": "straight",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0011",
+     "class": "straight",
+     "pass": false,
+     "armCensored": false,
+     "divergence": "L2:key-split"
+    },
+    {
+     "case": "o0012",
+     "class": "cancel-processing",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0013",
+     "class": "fraud-reject",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    },
+    {
+     "case": "o0015",
+     "class": "amend",
+     "pass": true,
+     "armCensored": false,
+     "divergence": null
+    }
+   ],
+   "pairedVsAgentH": {
+    "n": 14,
+    "both": 10,
+    "aOnly": 2,
+    "bOnly": 0,
+    "neither": 2,
+    "mcnemarP": 0.5,
+    "flips": [
+     {
+      "case": "o0004",
+      "class": "straight",
+      "pass": "A"
+     },
+     {
+      "case": "o0006",
+      "class": "collection-failed",
+      "pass": "A"
+     }
+    ]
+   }
+  }
+ ],
+ "claimRow": {
+  "schema": "claim-row/0 fields for back-fill (experiments/claims/ not built yet, SPINE-0)",
+  "program": "F1",
+  "experiment": "AGENTV-E8",
+  "arm": "agent-H+V",
+  "bed": "ebed-e8",
+  "origin": "our generator",
+  "fidelityTier": null,
+  "evidence": "development",
+  "K": 1,
+  "usd": {
+   "run": 1.851435209999999,
+   "build": 0,
+   "world": null,
+   "upkeep": 0,
+   "imputedInMeter": 0,
+   "reservedUnsettled": 0.4
+  },
+  "timing": {
+   "wallMs": 4726585,
+   "concurrency": 4
+  },
+  "envFaults": 1
+ }
+}

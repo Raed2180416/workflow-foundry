@@ -234,3 +234,58 @@ node experiments/agentv/run.mjs --model claude-haiku-5-5 --label agentv-e8-s12 -
   LAT-0 and EARN-1 read those.
 - The validator checks form only. A misreading of a business rule (SPEC-E) passes it. Agent-H + V's remaining failures,
   if any, are such misreadings, and F4 (spec from a messy business) is where they belong.
+
+## 10. Result (2026-10-15; development evidence, read by §6)
+
+**Run.** `runs/agentv-e8-s12/result.json`, world 1232 d2 size 12.
+- Three invocations:
+  - The 09:55 owner pause.
+  - A `MODEL_RATE_LIMIT` stop at about 11:0x UTC. That session's round was discarded at the freeze and re-run, as §6
+    requires; its $0.40 bound stays on the meter.
+  - The completing run.
+- 160 graded ticks, 73 min of wall time.
+
+| | agent-H + V (this row) | agent-H | built workflows (B1L-H l1, B1N-H l2, l3) |
+|---|---|---|---|
+| Completed cases passed | **12/14** [0.65, 0.98] | 10/14 | 14/14 each |
+| Invalid outputs reaching the host | **0** | 27 | 0 |
+| Critical violations, arm errors | 0, 0 | 0 | 0 |
+| Cost | $1.45 reported; **$1.85 metered** ($0.40 is the discarded session's bound) | $1.45 reported | built once; seconds to run |
+
+**Paired against agent-H.**
+- Both pass 10 cases; agent-H + V passes 2 more (o0004 straight, o0006 collection-failed); agent-H passes none that
+  agent-H + V fails; neither passes 2.
+- Exact McNemar p = 0.50. As the banner said, no outcome could be significant at n = 14.
+
+**What the validator did.**
+- 187 `validate.mjs` calls, used on all 160 ticks.
+- Inside the sessions it caught 15 batch-keying problems ("a batch op keys its items, not the batch") and 9 `close`
+  problems, and the agent fixed each before committing.
+- The host gate never refused a commit, and no retry was needed.
+
+**The 2 failures** (o0008 cancel-after-collection, o0011 straight) are both `L2:key-split` grade divergences.
+- The outputs were valid, so the validator passed them. But the effects were split under item keys in a way the spec's
+  semantics do not give.
+- So the form error is gone, and a semantic error remains in the same place.
+
+**Reading (§6).**
+
+| | Rule | Observed | Reads |
+|---|---|---|---|
+| H-E8 | supported ≤ 10/14; refuted at 14/14 | 12/14 | **inconclusive** |
+| P1 | ≤ 2 invalid outputs at the host | 0 | held |
+| P2 | ≥ 13/14 | 12/14. The Clopper-Pearson upper bound 0.98 does not exclude 13/14 | missed; **inconclusive** |
+| P3 | metered ≤ $3.00 | $1.85 | held |
+| P4 | ≤ 1 agent-H pass lost | 0 | held |
+
+- **"A missed P2 with P1 holding reads: E8's gap is not only the form misreading"** (§6). That is the reading here.
+  - The validator removed every invalid output (27 → 0) and recovered 2 of agent-H's 4 failures.
+  - The other 2 remain as semantic batch-keying errors that a form check cannot see.
+  - The built workflows have neither failure.
+- **Baseline for later programs.** At ≤ 12/14, F1, F3, F4 and F7 use agent-H + V **beside** agent-H, not instead of it.
+- **Cost and time.** The validator added no reported cost, the same $1.45 over 160 ticks against agent-H's 143.
+  - The agent arms still take about 70 minutes of wall time on this world. The built workflows grade it in seconds.
+  - At full world size (§9), agent-H was estimated at about 7 h.
+
+**What this cannot show** (§9): one world, one seed, K = 1, our generator. It shows no difference significant against
+agent-H, and none against the workflows. It is development evidence only.

@@ -5,14 +5,25 @@ $0 (no model calls, nothing installed). The second E-bed item and the first that
 E8: it reuses only the shared host, oracle and libraries (`beds/ebed/host/`, `oracle/`, `lib/`), unchanged.*
 
 **Status: built, not admitted.** The reference transition, its SLA engine, both reference runs, the controls and the
-goldens are in place and pass (measurements below). The oracle mutation score is measured (2026-10-15,
-[`ledger/MUTANTS.md`](ledger/MUTANTS.md): 679 mutants of `transition.mjs` and `sla.mjs`, 551 killed, 126 grader-equivalent, 2 uncertain: 551/553 = 0.996 excluding equivalents, 0.811 raw). Still
-missing before admission, as for E8: K1 specificity (the three blind solvers of `specificity/` were run on 2026-10-15
-and none passes as written: all three guessed the id field of master records, which SPEC-E did not state until S17,
-E7-B11; with only that guess bridged by a diagnostic shim, s2 and s3 pass 2,337/2,337 completed cases each and s1
-2,270/2,337, its own go-live bug, with 0 oracle false rejects; **Specificity** below), the metamorphic suite beyond its first relation (retroactive history = live history, review round 2), an Intl
-minute-stepper N-version check (the clock N-version checks built here compare clocks that all use pinned zone tables;
-the R4.2 evaluator of round 2 uses the generator's clock), the paid triviality attack and the arm (c) reference. Not built from the design's module
+goldens are in place and pass (measurements below). K1 (E-BED §6, §9; ROADMAP row 5) item by item, as of the final
+review of 2026-10-15 ($0; **Final review** below):
+
+| K1 item | status | evidence |
+|---|---|---|
+| goldens (incl. discriminating) | **met** | 55/55 pass on the oracle; every SLA-engine control fails at least one; each cites its rule |
+| mutation ≥ 0.95 (E-BED §9.5: each survivor equivalent or killed by a new golden) | **met under §9.5's formula** | 551/553 = **0.996** (679 mutants, 126 grader-equivalent, 2 uncertain: t185, t188 need the owner's reading of a hold during a hold); raw 551/679 = 0.811 cannot reach 0.95 while equivalents stay in the denominator (owner's call, as for E8). Reviewer caveats (3 mutants, below) leave it ≥ 0.991 |
+| specificity: ≥ 3 correct solvers, 0 false rejects | **not met** | 0 oracle false rejects in 3 × 2,337 completed cases (met); but 0 of 3 solvers pass as written (all guessed the master-record id field, E7-B11/S17); with the diagnostic shim s2 and s3 pass 2,337/2,337, s1 2,270/2,337 (its own go-live bug). Also 4 worlds per difficulty, where DESIGN §18 asks 16+ per difficulty and E-BED §9.1 20 dev worlds |
+| controls (bad, gaming, necessity) | **met, at reduced scale** | every bad and gaming control fails every world; every necessity control fails its targets; on 16 attack worlds (4 per difficulty), where E-BED §9.4 asks ≥ 20 per difficulty |
+| N-version | partly | clock vs `lib/clock` and the generator's clock (300 fuzzed lifecycles) and an independent R4.2–R4.3 evaluator (600 histories): 0 differences; no Intl minute-stepper (every clock compared uses pinned zone tables) and no 10⁴-world differential fuzz |
+| metamorphic | **not met** | one relation (retroactive history = live history); no MR1–MR13 suite as E8 has |
+| leak, twin, censoring | met | leak tests (walker and reference arm), W5 twin at d2 (E7-B9), censored share ≤ 0.6% in every epoch |
+| K2 paid triviality attack (P1), K1′ arm (c) reference (P2) | **not done** | paid steps; not run |
+
+What remains before E7 is a candidate for paid arms (DESIGN §18 step 5): specificity solvers written against S17 that
+pass as written (or the owner's decision on the shim evidence), on more worlds (only 1246–1249 are left in the
+specificity block; more from dev 1001–1199), with the planned +7 and +12 min late-acting solvers; the metamorphic suite;
+the Intl N-version check; the controls on ≥ 20 worlds per difficulty; the owner readings listed under **Final review**;
+then P1 and P2. Not built from the design's module
 plan: `ledger/SEMANTICS.md` (DESIGN §14 is its draft) and the tools `arm-smoke`, `nversion` and `timeline`
 (part A's `world-health --case` prints a planned timeline; `historyOf` gives the oracle's). `tools/specificity-run.mjs`
 is built (2026-10-15, mirroring E8's; its `--shim master-ids` is a diagnostic wrapper, never evidence); E7 also runs through the item-generic B1 wiring
@@ -238,8 +249,50 @@ of DESIGN §18 step 5 (4 seeds of the specificity block are left, 1246–1249; m
 late in its windows (the design's +7 and +12 min solvers were not written); and the shim numbers grade the solvers'
 behaviour past one interface guess, not solvers as written.
 
-**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 69 tests (22 part A, 47 part B; 98 since the mutation review: 76 part B), about
-70 s with other jobs on the machine (2026-10-15, after review round 2); `specificity.test.mjs` adds 3 (about 1 s).
+**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 101 tests (22 part A, 76 part B, 3
+specificity), all passing at the final review (2026-10-15, `--test-concurrency=1`, one file at a time: 19 s, 101 s, 1 s
+with other jobs on the machine).
+
+## Final review (2026-10-15, $0)
+
+A final review of the mutation report and the specificity adjudication. Nothing in `host/`, `oracle/`, `lib/`,
+`beds/lib/`, `src/`, `policy/` or `experiments/lib/` was changed or needed changing; no model calls.
+
+- **Blindness of `specificity/`.** s1–s3 import only `node:fs` and `node:path`; no `import()`, `createRequire` or path
+  into `beds/`. Their self-tests in `/var/tmp/foundry-work/e7-blind/s{1,2,3}/` import only the solver under test and
+  their own fake hosts and invented fixtures. Overlap with the oracle is 13–41 shared 12-token runs per (solver, oracle
+  file) out of about 24K–26K (API field lists, SPEC-E field names, generic idioms), against 1,173–1,304 between solvers
+  (mostly the API schemas' field lists). Shared names (`checkMoot` in s2 and s3; `sameValue`, `rf`, `resetChange` and
+  the R4.2 loop order in s2) follow SPEC-E's own vocabulary (S16 "moot", R4.2 `reset.onChangeOf`, `whenStartFails`
+  and the order cancel → stop → reset → pause/resume); s2's `sameValue` is a different function (case-insensitive).
+  Not disqualifying. The solver hashes are the ones the mutation corpus key records.
+- **Tests.** E7 101/101; E8 `e8` 16/16, `defects` 6/6, `metamorphic` 17 pass + 4 todo; `experiments/ebed` `e7-wiring`
+  5/5, `smoke-service` 5/5, `agent-arm` 4/4. Goldens 55/55 on the original oracle.
+- **Mutation numbers** recounted from `ledger/mutation-20261015.json`: 679 = 551 killed (461 golden, 86 corpus, 4
+  memory) + 126 equivalent (60 contract, 53 code, 8 consumed, 5 stopped) + 2 uncertain; 551/553 = 0.9964.
+- **Eight sampled equivalents, probed for a witness** (a reviewer script comparing the original and the mutant
+  transition's whole expectation over a sweep of view instants on dev seed 1001; histories built to stress each
+  argument, some outside the world contract on purpose): t132 (joins across the d4 edition switch with a pending
+  approval), t139 (an accept during a vendor hold, outside R8.2, d5), t290 (auto-closure after a vendor hold at d5, and a
+  P1 approved after its resolution under RES-MAJOR at d4), e104 and e105 (resets across the edition switch at d4; OLA
+  group moves EU → AU → US at d5), t195 (confirmations before the resolution, during a hold, at D2 and after), e147
+  (a pause ending at a retroactive attach; adjacent-minute pause/resume pairs) and t371 (escalations after
+  reassignments). All 8 give an identical expectation at every instant (105–3,361 instants each), which supports the
+  ledger's one-line reasons. t132 holds more simply than the ledger says: every P1 cell of every edition has urgency 1,
+  so a joining alert can never lower the urgency of a P1 incident.
+- **t178 (equivalent, contract) is contract-dependent.** A caller `withdraw` in the report's own minute is delivered
+  before the report (host order (source, id), `mail` < `portal`); the mutant then requires `cnc:<N>` and the original
+  ignores the message. The world never generates it (0 of 22 caller messages with an in-stream opening, seeds
+  1001–1003 × d3, d5, fall at or before it), but the ledger's own reachability list counts "a withdrawal at any time
+  (R6.6)" as reachable, and R1.1 records the incident in that same instant, so R6.6 arguably favours the mutant. It needs
+  the owner's reading, like t185/t188.
+- **Goldens added by the mutation review.** All 27 cite rules and assert outcomes the grader sees. One soft spot, which
+  `ledger/MUTANTS.md` §5 already names: t14 and t15 are killed only by the instants golden's clauses for a time without
+  an offset and a non-ISO time, which are the oracle's reading (SPEC §1 states instants written with an offset only);
+  t16 is killed by the "no date" clause and would also be killed by a throw (`utc(NaN)`) on an arm-writable `TIME`.
+  Counting t14, t15 and t178 as not killed the score is 549/554 = 0.991, still ≥ 0.95.
+- **Housekeeping.** `/var/tmp/foundry-work/e7-blind/arm-files/SPEC-E.md` is the pre-S17 copy (34,122 bytes against
+  34,872): regenerate it before any new blind round.
 
 ## Readings and decisions added in part B (for review)
 
