@@ -1,0 +1,3204 @@
+{
+ "schema": "ebed-e8-latent-defects-index/1",
+ "date": "2026-10-15",
+ "evidence": "development (dev worlds, E-bed dev block 1001-1199); $0, no model calls",
+ "command": "node beds/ebed/e8/tools/defects-mine.mjs --date 2026-10-15",
+ "base": {
+  "transition": "86f211c1a441e363280e05d9856ceef157376206",
+  "mutate": "cf03dda423611ce869a9545d10ec9481d672ac84",
+  "policy": "00d55229c60f20247fb1a7aaff18c8117a1a234a",
+  "grade": "9c2ab2e97467185638fe254f41378f1fbb505649",
+  "view": "4af79f13fdeb10e5c16061eded6590d6bb060656",
+  "world": "26cfec62a1b1ba9490dfaf5705c11bb9a134d821",
+  "controls": "e15e97b36fa1b1c45ca37fae98874dfae58b6d7d",
+  "defects": "a403138f5df79a5b666a7e6c11fb35597ab03327"
+ },
+ "params": {
+  "e0Epochs": [
+   "gl",
+   "ep0"
+  ],
+  "revealEpochs": [
+   "ep2",
+   "ep3"
+  ],
+  "lagMinutes": 1440,
+  "timing": "earliest",
+  "runawayFactor": 3,
+  "stage1": [
+   "ebed-e8-dev-1101-d2-tail",
+   "ebed-e8-dev-1101-d3-tail",
+   "ebed-e8-dev-1101-d4-tail",
+   "ebed-e8-dev-1101-d5-tail"
+  ],
+  "stage2": [
+   "ebed-e8-dev-1102-d2-tail",
+   "ebed-e8-dev-1102-d3-tail",
+   "ebed-e8-dev-1102-d4-tail",
+   "ebed-e8-dev-1102-d5-tail"
+  ],
+  "e0CasesChecked": {
+   "stage1": 135,
+   "stage2": 124
+  }
+ },
+ "counts": {
+  "mutants": 308,
+  "transition": 304,
+  "hand": 4,
+  "latent": 4,
+  "inert": 186,
+  "silent": 9,
+  "e0-visible": 105,
+  "load-error": 2,
+  "runaway": 2,
+  "behaviours": 4,
+  "admitted": 4,
+  "unrevealed": 0,
+  "trueRevealingEvents": 12,
+  "falseRevealingEvents": 12
+ },
+ "defects": [
+  {
+   "id": "ld-k0",
+   "file": "ld-k0.json",
+   "members": [
+    "ref-k0"
+   ],
+   "operator": "window constant",
+   "contradicts": [
+    "R1.1",
+    "R3.2"
+   ],
+   "worldsRevealing": [
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1101-d5-tail",
+    "ebed-e8-dev-1102-d4-tail",
+    "ebed-e8-dev-1102-d5-tail"
+   ],
+   "firstReveal": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0053",
+    "class": "straight",
+    "at": "2026-03-08T23:46:00+01:00",
+    "type": "customer.complaint"
+   }
+  },
+  {
+   "id": "ld-k8",
+   "file": "ld-k8.json",
+   "members": [
+    "ref-k8"
+   ],
+   "operator": "relational boundary",
+   "contradicts": [],
+   "worldsRevealing": [
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1101-d5-tail",
+    "ebed-e8-dev-1102-d4-tail",
+    "ebed-e8-dev-1102-d5-tail"
+   ],
+   "firstReveal": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0011",
+    "class": "action-at-deadline",
+    "at": "2026-03-07T23:32:00.000Z",
+    "type": "arm-error"
+   }
+  },
+  {
+   "id": "ld-k9",
+   "file": "ld-k9.json",
+   "members": [
+    "ref-k9"
+   ],
+   "operator": "relational boundary",
+   "contradicts": [
+    "R1.1",
+    "R3.2"
+   ],
+   "worldsRevealing": [
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1101-d5-tail",
+    "ebed-e8-dev-1102-d4-tail",
+    "ebed-e8-dev-1102-d5-tail"
+   ],
+   "firstReveal": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0011",
+    "class": "action-at-deadline",
+    "at": "2026-03-09T00:32:00+01:00",
+    "type": "customer.complaint"
+   }
+  },
+  {
+   "id": "ld-k11",
+   "file": "ld-k11.json",
+   "members": [
+    "ref-k11"
+   ],
+   "operator": "connective swap",
+   "contradicts": [
+    "R1.1",
+    "R3.2"
+   ],
+   "worldsRevealing": [
+    "ebed-e8-dev-1101-d4-tail",
+    "ebed-e8-dev-1101-d5-tail",
+    "ebed-e8-dev-1102-d4-tail",
+    "ebed-e8-dev-1102-d5-tail"
+   ],
+   "firstReveal": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0011",
+    "class": "action-at-deadline",
+    "at": "2026-03-09T00:32:00+01:00",
+    "type": "customer.complaint"
+   }
+  }
+ ],
+ "unrevealed": [],
+ "mutants": [
+  {
+   "id": "ref-k0",
+   "operator": "window constant",
+   "line": 15,
+   "status": "latent",
+   "affected": [
+    0,
+    0,
+    2,
+    6,
+    0,
+    0,
+    2,
+    2
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k1",
+   "operator": "relational boundary",
+   "line": 16,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k2",
+   "operator": "relational boundary",
+   "line": 16,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k3",
+   "operator": "negated condition",
+   "line": 21,
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k4",
+   "operator": "connective swap",
+   "line": 21,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k5",
+   "operator": "negated condition",
+   "line": 22,
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k6",
+   "operator": "negated condition",
+   "line": 22,
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k7",
+   "operator": "connective swap",
+   "line": 22,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k8",
+   "operator": "relational boundary",
+   "line": 34,
+   "status": "latent",
+   "affected": [
+    0,
+    0,
+    10,
+    18,
+    0,
+    0,
+    12,
+    27
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k9",
+   "operator": "relational boundary",
+   "line": 34,
+   "status": "latent",
+   "affected": [
+    0,
+    0,
+    7,
+    13,
+    0,
+    0,
+    11,
+    23
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k10",
+   "operator": "negated condition",
+   "line": 34,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "arm-error"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k11",
+   "operator": "connective swap",
+   "line": 34,
+   "status": "latent",
+   "affected": [
+    0,
+    0,
+    47,
+    98,
+    0,
+    0,
+    51,
+    96
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k12",
+   "operator": "connective swap",
+   "line": 34,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "arm-error"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k13",
+   "operator": "precedence swap (first to last match)",
+   "line": 34,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k14",
+   "operator": "negated condition",
+   "line": 41,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k15",
+   "operator": "precedence swap (first to last match)",
+   "line": 41,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k16",
+   "operator": "relational boundary",
+   "line": 45,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k17",
+   "operator": "relational boundary",
+   "line": 47,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k18",
+   "operator": "negated condition",
+   "line": 52,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F1:dispatched"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k19",
+   "operator": "negated condition",
+   "line": 52,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F1:dispatched"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k20",
+   "operator": "connective swap",
+   "line": 52,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F2:completed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k21",
+   "operator": "precedence swap (first to last match)",
+   "line": 52,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k22",
+   "operator": "negated condition",
+   "line": 55,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k23",
+   "operator": "negated condition",
+   "line": 55,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0028",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k24",
+   "operator": "connective swap",
+   "line": 55,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0055",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k25",
+   "operator": "connective swap",
+   "line": 55,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "arm-error"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k26",
+   "operator": "connective swap",
+   "line": 55,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k27",
+   "operator": "negated condition",
+   "line": 64,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "create:ORD-1101-0001"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k28",
+   "operator": "negated condition",
+   "line": 78,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k29",
+   "operator": "precedence swap (first to last match)",
+   "line": 78,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k30",
+   "operator": "negated condition",
+   "line": 79,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k31",
+   "operator": "precedence swap (first to last match)",
+   "line": 79,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k32",
+   "operator": "negated condition",
+   "line": 80,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k33",
+   "operator": "precedence swap (first to last match)",
+   "line": 80,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k34",
+   "operator": "negated condition",
+   "line": 81,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k35",
+   "operator": "precedence swap (first to last match)",
+   "line": 81,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k36",
+   "operator": "relational boundary",
+   "line": 85,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k37",
+   "operator": "negated condition",
+   "line": 85,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k38",
+   "operator": "connective swap",
+   "line": 85,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k39",
+   "operator": "connective swap",
+   "line": 85,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k40",
+   "operator": "negated condition",
+   "line": 86,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k41",
+   "operator": "negated condition",
+   "line": 86,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k42",
+   "operator": "negated condition",
+   "line": 86,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k43",
+   "operator": "connective swap",
+   "line": 86,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k44",
+   "operator": "connective swap",
+   "line": 86,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k45",
+   "operator": "connective swap",
+   "line": 86,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k46",
+   "operator": "negated condition",
+   "line": 90,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "ost:ORD-1101-0001:processing"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k47",
+   "operator": "negated condition",
+   "line": 90,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k48",
+   "operator": "connective swap",
+   "line": 90,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "ost:ORD-1101-0001:processing"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k49",
+   "operator": "connective swap",
+   "line": 91,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k50",
+   "operator": "dropped rule row",
+   "line": 93,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k51",
+   "operator": "arithmetic swap (max/min)",
+   "line": 98,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k52",
+   "operator": "negated condition",
+   "line": 101,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "order",
+    "lid": "rsv:ORD-1101-0001-F2:SKU-1024"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k53",
+   "operator": "relational boundary",
+   "line": 102,
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k54",
+   "operator": "negated condition",
+   "line": 106,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0002-F2:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k55",
+   "operator": "negated condition",
+   "line": 118,
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k56",
+   "operator": "negated condition",
+   "line": 121,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "chg:ORD-1101-0001-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k57",
+   "operator": "negated condition",
+   "line": 121,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "chg:ORD-1101-0001-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k58",
+   "operator": "connective swap",
+   "line": 121,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k59",
+   "operator": "connective swap",
+   "line": 121,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k60",
+   "operator": "connective swap",
+   "line": 121,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k61",
+   "operator": "negated condition",
+   "line": 123,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0005",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0005-F2:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k62",
+   "operator": "connective swap",
+   "line": 123,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k63",
+   "operator": "negated condition",
+   "line": 124,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F1:dispatched"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k64",
+   "operator": "negated condition",
+   "line": 125,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k65",
+   "operator": "negated condition",
+   "line": 126,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k66",
+   "operator": "precedence swap (first to last match)",
+   "line": 126,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k67",
+   "operator": "negated condition",
+   "line": 127,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k68",
+   "operator": "dropped rule row",
+   "line": 133,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0004",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ost:ORD-1101-0004:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k69",
+   "operator": "dropped rule row",
+   "line": 134,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0004",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ntf:ORD-1101-0004:order-cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k70",
+   "operator": "negated condition",
+   "line": 140,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k71",
+   "operator": "negated condition",
+   "line": 140,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "ost:ORD-1101-0001:processing"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k72",
+   "operator": "negated condition",
+   "line": 140,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "order",
+    "lid": "rsv:ORD-1101-0001-F1:SKU-1025"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k73",
+   "operator": "connective swap",
+   "line": 140,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "order",
+    "lid": "rsv:ORD-1101-0001-F1:SKU-1025"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k74",
+   "operator": "dropped rule row",
+   "line": 143,
+   "status": "load-error",
+   "error": "Unexpected token ':'",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k75",
+   "operator": "negated condition",
+   "line": 144,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k76",
+   "operator": "negated condition",
+   "line": 144,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k77",
+   "operator": "precedence swap (first to last match)",
+   "line": 144,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k78",
+   "operator": "precedence swap (first to last match)",
+   "line": 144,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k79",
+   "operator": "window constant",
+   "line": 145,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k80",
+   "operator": "negated condition",
+   "line": 151,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k81",
+   "operator": "connective swap",
+   "line": 151,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0004",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k82",
+   "operator": "negated condition",
+   "line": 152,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "over-escalation"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k83",
+   "operator": "negated condition",
+   "line": 153,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0004",
+    "epoch": "ep0",
+    "code": "over-escalation"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k84",
+   "operator": "window constant",
+   "line": 153,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k85",
+   "operator": "window constant",
+   "line": 155,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k86",
+   "operator": "dropped rule row",
+   "line": 155,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "under-escalation",
+    "lid": "review:ORD-1101-0019"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k87",
+   "operator": "negated condition",
+   "line": 156,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0019-F1:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k88",
+   "operator": "connective swap",
+   "line": 156,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k89",
+   "operator": "precedence swap (first to last match)",
+   "line": 157,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k90",
+   "operator": "negated condition",
+   "line": 159,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k91",
+   "operator": "precedence swap (first to last match)",
+   "line": 159,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k92",
+   "operator": "window constant",
+   "line": 160,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k93",
+   "operator": "window constant",
+   "line": 163,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k94",
+   "operator": "negated condition",
+   "line": 166,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0027",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ost:ORD-1101-0027:processing"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k95",
+   "operator": "connective swap",
+   "line": 166,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k96",
+   "operator": "relational boundary",
+   "line": 167,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k97",
+   "operator": "connective swap",
+   "line": 167,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k98",
+   "operator": "connective swap",
+   "line": 167,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "arm-error"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k99",
+   "operator": "connective swap",
+   "line": 167,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k100",
+   "operator": "precedence swap (first to last match)",
+   "line": 168,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k101",
+   "operator": "relational boundary",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k102",
+   "operator": "relational boundary",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k103",
+   "operator": "relational boundary",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k104",
+   "operator": "negated condition",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k105",
+   "operator": "negated condition",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k106",
+   "operator": "connective swap",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k107",
+   "operator": "connective swap",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k108",
+   "operator": "connective swap",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k109",
+   "operator": "connective swap",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k110",
+   "operator": "connective swap",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k111",
+   "operator": "precedence swap (first to last match)",
+   "line": 169,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k112",
+   "operator": "window constant",
+   "line": 170,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k113",
+   "operator": "window constant",
+   "line": 171,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k114",
+   "operator": "deadline boundary",
+   "line": 171,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "early",
+    "lid": "fst:ORD-1101-0019-F1:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k115",
+   "operator": "negated condition",
+   "line": 172,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0027",
+    "epoch": "ep0",
+    "code": "early",
+    "lid": "fst:ORD-1101-0027-F1:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k116",
+   "operator": "window constant",
+   "line": 172,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k117",
+   "operator": "window constant",
+   "line": 180,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0002-F1:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k118",
+   "operator": "relational boundary",
+   "line": 181,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0021",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k119",
+   "operator": "connective swap",
+   "line": 181,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d5-tail",
+    "case": "o0050",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k120",
+   "operator": "precedence swap (first to last match)",
+   "line": 181,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k121",
+   "operator": "window constant",
+   "line": 184,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k122",
+   "operator": "window constant",
+   "line": 185,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k123",
+   "operator": "relational boundary",
+   "line": 188,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k124",
+   "operator": "negated condition",
+   "line": 188,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k125",
+   "operator": "negated condition",
+   "line": 188,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k126",
+   "operator": "connective swap",
+   "line": 188,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k127",
+   "operator": "connective swap",
+   "line": 188,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k128",
+   "operator": "window constant",
+   "line": 191,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k129",
+   "operator": "deadline boundary",
+   "line": 191,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "early",
+    "lid": "fst:ORD-1101-0002-F1:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k130",
+   "operator": "window constant",
+   "line": 192,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k131",
+   "operator": "deadline boundary",
+   "line": 192,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "early",
+    "lid": "ost:ORD-1101-0002:timedOut"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k132",
+   "operator": "dropped rule row",
+   "line": 192,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "ost:ORD-1101-0002:timedOut"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k133",
+   "operator": "window constant",
+   "line": 193,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k134",
+   "operator": "deadline boundary",
+   "line": 193,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "early",
+    "lid": "ntf:ORD-1101-0002:order-timed-out"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k135",
+   "operator": "dropped rule row",
+   "line": 193,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "ntf:ORD-1101-0002:order-timed-out"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k136",
+   "operator": "negated condition",
+   "line": 198,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0005",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k137",
+   "operator": "window constant",
+   "line": 198,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k138",
+   "operator": "window constant",
+   "line": 199,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k139",
+   "operator": "window constant",
+   "line": 200,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k140",
+   "operator": "relational boundary",
+   "line": 209,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k141",
+   "operator": "negated condition",
+   "line": 209,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0006",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ntf:ORD-1101-0006:cancel-refused"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k142",
+   "operator": "negated condition",
+   "line": 209,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0006",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ntf:ORD-1101-0006:cancel-refused"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k143",
+   "operator": "connective swap",
+   "line": 209,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k144",
+   "operator": "connective swap",
+   "line": 209,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0005",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k145",
+   "operator": "relational boundary",
+   "line": 212,
+   "status": "runaway",
+   "stage": "stage1",
+   "error": "ebed-e8-dev-1101-d3-tail: more than 2771 wake-ups; E0 silent up to the stop at 2026-03-12T04:50:00+01:00",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k146",
+   "operator": "relational boundary",
+   "line": 212,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k147",
+   "operator": "relational boundary",
+   "line": 212,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k148",
+   "operator": "negated condition",
+   "line": 212,
+   "status": "runaway",
+   "stage": "stage1",
+   "error": "ebed-e8-dev-1101-d3-tail: more than 2771 wake-ups; E0 silent up to the stop at 2026-03-12T04:50:00+01:00",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k149",
+   "operator": "connective swap",
+   "line": 212,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k150",
+   "operator": "connective swap",
+   "line": 212,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k151",
+   "operator": "connective swap",
+   "line": 212,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0009",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k152",
+   "operator": "connective swap",
+   "line": 212,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0006",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k153",
+   "operator": "deleted condition",
+   "line": 212,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k154",
+   "operator": "negated condition",
+   "line": 217,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "chg:ORD-1101-0001-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k155",
+   "operator": "negated condition",
+   "line": 219,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "chg:ORD-1101-0001-F2"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k156",
+   "operator": "connective swap",
+   "line": 219,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k157",
+   "operator": "precedence swap (first to last match)",
+   "line": 219,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k158",
+   "operator": "connective swap",
+   "line": 222,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "chg:ORD-1101-0001-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k159",
+   "operator": "arithmetic swap (max/min)",
+   "line": 223,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k160",
+   "operator": "precedence swap (first to last match)",
+   "line": 224,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k161",
+   "operator": "precedence swap (first to last match)",
+   "line": 225,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k162",
+   "operator": "negated condition",
+   "line": 226,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k163",
+   "operator": "connective swap",
+   "line": 226,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k164",
+   "operator": "connective swap",
+   "line": 226,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k165",
+   "operator": "negated condition",
+   "line": 227,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k166",
+   "operator": "connective swap",
+   "line": 227,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k167",
+   "operator": "negated condition",
+   "line": 228,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F1:dispatched"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k168",
+   "operator": "precedence swap (first to last match)",
+   "line": 228,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k169",
+   "operator": "negated condition",
+   "line": 229,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k170",
+   "operator": "precedence swap (first to last match)",
+   "line": 229,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k171",
+   "operator": "negated condition",
+   "line": 230,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k172",
+   "operator": "precedence swap (first to last match)",
+   "line": 230,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k173",
+   "operator": "negated condition",
+   "line": 231,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k174",
+   "operator": "precedence swap (first to last match)",
+   "line": 231,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k175",
+   "operator": "precedence swap (first to last match)",
+   "line": 231,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k176",
+   "operator": "relational boundary",
+   "line": 240,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k177",
+   "operator": "relational boundary",
+   "line": 240,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k178",
+   "operator": "negated condition",
+   "line": 240,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0006",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ntf:ORD-1101-0006:cancel-refused"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k179",
+   "operator": "connective swap",
+   "line": 240,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0006",
+    "epoch": "ep0",
+    "code": "arm-error"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k180",
+   "operator": "connective swap",
+   "line": 240,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0006",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ntf:ORD-1101-0006:cancel-refused"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k181",
+   "operator": "connective swap",
+   "line": 240,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k182",
+   "operator": "window constant",
+   "line": 242,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k183",
+   "operator": "window constant",
+   "line": 248,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k184",
+   "operator": "window constant",
+   "line": 249,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k185",
+   "operator": "relational boundary",
+   "line": 256,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k186",
+   "operator": "negated condition",
+   "line": 256,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k187",
+   "operator": "negated condition",
+   "line": 256,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0016",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "csh:ORD-1101-0016-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k188",
+   "operator": "connective swap",
+   "line": 256,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k189",
+   "operator": "connective swap",
+   "line": 256,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0016",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "csh:ORD-1101-0016-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k190",
+   "operator": "negated condition",
+   "line": 258,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k191",
+   "operator": "connective swap",
+   "line": 258,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k192",
+   "operator": "anchor swap (same-instant knowledge)",
+   "line": 258,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k193",
+   "operator": "precedence swap (first to last match)",
+   "line": 260,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k194",
+   "operator": "negated condition",
+   "line": 262,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "rsv:ORD-1101-0001-F1:SKU-1025"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k195",
+   "operator": "deleted guard",
+   "line": 262,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k196",
+   "operator": "window constant",
+   "line": 263,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k197",
+   "operator": "negated condition",
+   "line": 267,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "chg:ORD-1101-0001-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k198",
+   "operator": "negated condition",
+   "line": 267,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "chg:ORD-1101-0001-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k199",
+   "operator": "connective swap",
+   "line": 267,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0003",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k200",
+   "operator": "deleted guard",
+   "line": 267,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k201",
+   "operator": "window constant",
+   "line": 268,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k202",
+   "operator": "dropped rule row",
+   "line": 268,
+   "status": "load-error",
+   "error": "Unexpected token ':'",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k203",
+   "operator": "precedence swap (first to last match)",
+   "line": 272,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k204",
+   "operator": "negated condition",
+   "line": 273,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "shp:ORD-1101-0001-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k205",
+   "operator": "connective swap",
+   "line": 273,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "arm-error"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k206",
+   "operator": "connective swap",
+   "line": 273,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "arm-error"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k207",
+   "operator": "precedence swap (first to last match)",
+   "line": 273,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k208",
+   "operator": "deleted guard",
+   "line": 273,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k209",
+   "operator": "window constant",
+   "line": 274,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k210",
+   "operator": "dropped rule row",
+   "line": 274,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "shp:ORD-1101-0001-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k211",
+   "operator": "connective swap",
+   "line": 276,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k212",
+   "operator": "precedence swap (first to last match)",
+   "line": 276,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k213",
+   "operator": "precedence swap (first to last match)",
+   "line": 276,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k214",
+   "operator": "negated condition",
+   "line": 280,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k215",
+   "operator": "negated condition",
+   "line": 280,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k216",
+   "operator": "connective swap",
+   "line": 280,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k217",
+   "operator": "arithmetic swap (max/min)",
+   "line": 280,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k218",
+   "operator": "window constant",
+   "line": 281,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k219",
+   "operator": "connective swap",
+   "line": 283,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k220",
+   "operator": "deleted guard",
+   "line": 283,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k221",
+   "operator": "window boundary",
+   "line": 284,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k222",
+   "operator": "arithmetic swap (max/min)",
+   "line": 284,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k223",
+   "operator": "dropped rule row",
+   "line": 284,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0016",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "csh:ORD-1101-0016-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k224",
+   "operator": "ordering dependency dropped",
+   "line": 288,
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k225",
+   "operator": "dropped rule row",
+   "line": 288,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0016",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "rf:ORD-1101-0016-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k226",
+   "operator": "ordering dependency dropped",
+   "line": 291,
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k227",
+   "operator": "dropped rule row",
+   "line": 292,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0016",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0016-F1:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k228",
+   "operator": "negated condition",
+   "line": 297,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k229",
+   "operator": "negated condition",
+   "line": 300,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k230",
+   "operator": "negated condition",
+   "line": 300,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k231",
+   "operator": "connective swap",
+   "line": 300,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k232",
+   "operator": "arithmetic swap (max/min)",
+   "line": 300,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k233",
+   "operator": "window constant",
+   "line": 301,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k234",
+   "operator": "dropped rule row",
+   "line": 304,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d4-tail",
+    "case": "o0030",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "rf:ORD-1101-0030-F1"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k235",
+   "operator": "ordering dependency dropped",
+   "line": 307,
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k236",
+   "operator": "dropped rule row",
+   "line": 308,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0019-F1:failed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k237",
+   "operator": "dropped rule row",
+   "line": 309,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0019",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ntf:ORD-1101-0019-F1:fulfilment-failed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k238",
+   "operator": "arithmetic swap (max/min)",
+   "line": 312,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k239",
+   "operator": "precedence swap (first to last match)",
+   "line": 316,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k240",
+   "operator": "negated condition",
+   "line": 319,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F1:dispatched"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k241",
+   "operator": "precedence swap (first to last match)",
+   "line": 319,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k242",
+   "operator": "negated condition",
+   "line": 320,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F1:dispatched"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k243",
+   "operator": "connective swap",
+   "line": 320,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0003",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k244",
+   "operator": "window constant",
+   "line": 320,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k245",
+   "operator": "deleted guard",
+   "line": 320,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0003",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k246",
+   "operator": "window constant",
+   "line": 323,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k247",
+   "operator": "dropped rule row",
+   "line": 323,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "fst:ORD-1101-0001-F2:completed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k248",
+   "operator": "arithmetic swap (max/min)",
+   "line": 325,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k249",
+   "operator": "negated condition",
+   "line": 327,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k250",
+   "operator": "negated condition",
+   "line": 327,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k251",
+   "operator": "connective swap",
+   "line": 327,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k252",
+   "operator": "precedence swap (first to last match)",
+   "line": 327,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k253",
+   "operator": "negated condition",
+   "line": 332,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k254",
+   "operator": "window constant",
+   "line": 333,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k255",
+   "operator": "dropped rule row",
+   "line": 333,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0016",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ost:ORD-1101-0016:cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k256",
+   "operator": "window constant",
+   "line": 334,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k257",
+   "operator": "dropped rule row",
+   "line": 334,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0016",
+    "epoch": "ep0",
+    "code": "missed",
+    "lid": "ntf:ORD-1101-0016:order-cancelled"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k258",
+   "operator": "negated condition",
+   "line": 340,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k259",
+   "operator": "connective swap",
+   "line": 340,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "outside-allowed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k260",
+   "operator": "window constant",
+   "line": 342,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k261",
+   "operator": "dropped rule row",
+   "line": 342,
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0001",
+    "epoch": "gl",
+    "code": "missed",
+    "lid": "ost:ORD-1101-0001:completed"
+   },
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k262",
+   "operator": "negated condition",
+   "line": 355,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k263",
+   "operator": "connective swap",
+   "line": 355,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k264",
+   "operator": "negated condition",
+   "line": 357,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k265",
+   "operator": "precedence swap (first to last match)",
+   "line": 357,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k266",
+   "operator": "negated condition",
+   "line": 360,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k267",
+   "operator": "precedence swap (first to last match)",
+   "line": 360,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k268",
+   "operator": "negated condition",
+   "line": 362,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k269",
+   "operator": "negated condition",
+   "line": 362,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k270",
+   "operator": "connective swap",
+   "line": 362,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k271",
+   "operator": "negated condition",
+   "line": 363,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k272",
+   "operator": "negated condition",
+   "line": 364,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k273",
+   "operator": "negated condition",
+   "line": 365,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k274",
+   "operator": "negated condition",
+   "line": 366,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k275",
+   "operator": "negated condition",
+   "line": 370,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k276",
+   "operator": "connective swap",
+   "line": 370,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k277",
+   "operator": "connective swap",
+   "line": 370,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k278",
+   "operator": "negated condition",
+   "line": 371,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k279",
+   "operator": "negated condition",
+   "line": 371,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k280",
+   "operator": "negated condition",
+   "line": 371,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k281",
+   "operator": "connective swap",
+   "line": 371,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k282",
+   "operator": "connective swap",
+   "line": 371,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k283",
+   "operator": "connective swap",
+   "line": 371,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k284",
+   "operator": "connective swap",
+   "line": 371,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k285",
+   "operator": "negated condition",
+   "line": 374,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k286",
+   "operator": "negated condition",
+   "line": 377,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k287",
+   "operator": "negated condition",
+   "line": 377,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k288",
+   "operator": "negated condition",
+   "line": 377,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k289",
+   "operator": "connective swap",
+   "line": 377,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k290",
+   "operator": "negated condition",
+   "line": 378,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k291",
+   "operator": "negated condition",
+   "line": 378,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k292",
+   "operator": "negated condition",
+   "line": 378,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k293",
+   "operator": "connective swap",
+   "line": 378,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k294",
+   "operator": "negated condition",
+   "line": 379,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k295",
+   "operator": "negated condition",
+   "line": 380,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k296",
+   "operator": "negated condition",
+   "line": 381,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k297",
+   "operator": "negated condition",
+   "line": 382,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k298",
+   "operator": "connective swap",
+   "line": 382,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k299",
+   "operator": "negated condition",
+   "line": 383,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k300",
+   "operator": "negated condition",
+   "line": 384,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k301",
+   "operator": "negated condition",
+   "line": 398,
+   "status": "inert",
+   "asOracleMutant": "equivalent"
+  },
+  {
+   "id": "ref-k302",
+   "operator": "negated condition",
+   "line": 404,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "ref-k303",
+   "operator": "dropped rule row",
+   "line": 405,
+   "status": "inert",
+   "asOracleMutant": "killed"
+  },
+  {
+   "id": "hc-refund-no-key",
+   "operator": "missing key",
+   "status": "silent",
+   "affected": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "hc-cancel-keeps-shipment",
+   "operator": "deleted compensation step",
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0016",
+    "epoch": "ep0",
+    "code": "order",
+    "lid": "rf:ORD-1101-0016-F1"
+   }
+  },
+  {
+   "id": "hc-late-signal-regresses",
+   "operator": "deleted guard (monotone status)",
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d3-tail",
+    "case": "o0017",
+    "epoch": "ep0",
+    "code": "key-split",
+    "lid": "fst:ORD-1101-0017-F1:dispatched"
+   }
+  },
+  {
+   "id": "hc-timer-first",
+   "operator": "precedence swap (timer before signal)",
+   "status": "e0-visible",
+   "stage": "stage1",
+   "e0First": {
+    "world": "ebed-e8-dev-1101-d2-tail",
+    "case": "o0002",
+    "epoch": "gl",
+    "code": "early",
+    "lid": "fst:ORD-1101-0002-F1:cancelled"
+   }
+  }
+ ]
+}

@@ -48,7 +48,8 @@ test('meterGateDecision: refuses an agent stage while blocked, allows without an
   assert.equal(no.allow, false); assert.match(no.why, /block-until-verified.*OUTPUT_TOKENS_UNDER_RECORDED/);
   assert.equal(G.meterGateDecision({ gate: BLOCK, arms: [call] }).allow, true, 'a calls-only stage (M1) does not need the agent meter');
   assert.equal(G.meterGateDecision({ gate: CLEAR, arms: [agent] }).allow, true);
-  assert.equal(G.meterGateDecision({ gate: null, arms: [agent] }).allow, true, 'no gate on file: reported, and the per-session check still applies');
+  assert.equal(G.meterGateDecision({ gate: null, arms: [agent] }).allow, false, 'no gate on file: the gate fails closed (it used to allow, which let a partial diagnostics.json switch it off)');
+  assert.equal(G.meterGateDecision({ gate: null, arms: [call] }).allow, true, 'a calls-only stage needs no gate');
   const good = { schema: G.VERIFICATION_SCHEMA, sessions: [{ method: 'per-message', recorded: 990, final: 1000 }, { method: 'per-message', recorded: 5000, final: 5100 }] };
   assert.equal(G.meterGateDecision({ gate: BLOCK, verification: good, arms: [agent] }).allow, true);
   for (const bad of [null, { ...good, passed: true, sessions: [good.sessions[0]] }, { ...good, passed: true, sessions: [...good.sessions, { method: 'per-message', recorded: 100, final: 1000 }] },
@@ -247,6 +248,116 @@ test('meter-gate-cli: --verify writes a record label-run accepts, exits 1 for a 
   const no = spawnSync(process.execPath, [cli, '--verify', good1, snap], { encoding: 'utf8' });
   assert.equal(no.status, 1); assert.equal(JSON.parse(no.stdout).passed, false);
   const status = spawnSync(process.execPath, [cli], { encoding: 'utf8' });
-  assert.equal(status.status, 1, 'the committed gate blocks and no record is on file');
-  assert.equal(JSON.parse(status.stdout).gate.status, 'block-until-verified');
+  assert.equal(status.status, 1, 'the committed gate blocks and no record is on file (or there is no committed gate to read: refused either way)');
+  const rep = JSON.parse(status.stdout);
+  if (rep.gate) assert.equal(rep.gate.status, 'block-until-verified'); else assert.match(rep.problem, /not committed at HEAD|no d6|does not parse/i);
+  assert.equal(rep.agentStage.allow, false);
+});
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// Fail-closed gate (review of 2026-10-15): a missing, unparseable or partial diagnostics.json, an unknown status or an uncommitted regeneration
+// refuses a stage with an agent arm; only the owner's logged waiver passes a missing gate.
+const AGENT = { factory: 'b0Agent' }, CALL = { factory: 'b0Call' };
+const WAIVER = { schema: G.WAIVER_SCHEMA, by: 'owner', at: '2026-10-15T09:00:00Z', reason: 'owner accepts the per-session meter check alone for the NL0 smoke row' };
+
+test('meterGateDecision fails closed: no gate, an unrecognised status or a dirty file refuse an agent stage; only a valid logged owner waiver passes a missing gate', () => {
+  const none = G.meterGateDecision({ gate: null, arms: [AGENT], problem: 'diagnostics.json is a partial run (d0 only) with no D6 section' });
+  assert.equal(none.allow, false); assert.match(none.why, /no D6 meter gate on file \(diagnostics\.json is a partial run/); assert.match(none.why, /owner's waiver/); assert.match(none.why, /meter-gate-waiver\.json/);
+  assert.equal(G.meterGateDecision({ gate: null, arms: [CALL] }).allow, true, 'no agent arm, no gate needed');
+  const waived = G.meterGateDecision({ gate: null, arms: [AGENT], waiver: WAIVER, problem: 'diagnostics.json is missing' });
+  assert.equal(waived.allow, true); assert.equal(waived.waived, true); assert.deepEqual(waived.waiver, WAIVER); assert.match(waived.why, /waiver of 2026-10-15T09:00:00Z is logged/);
+  for (const bad of [{ ...WAIVER, by: 'claude' }, { ...WAIVER, by: undefined }, { ...WAIVER, reason: 'ok' }, { ...WAIVER, reason: '' }, { ...WAIVER, at: 'tomorrow' }, { ...WAIVER, at: undefined }, { ...WAIVER, schema: 'x' }, {}, null, 'owner']) {
+    assert.equal(G.waiverValid(bad), false, JSON.stringify(bad)); assert.equal(G.meterGateDecision({ gate: null, arms: [AGENT], waiver: bad }).allow, false, JSON.stringify(bad));
+  }
+  assert.equal(G.waiverValid(WAIVER), true);
+  // A waiver covers a missing gate, never a blocking one and never an uncommitted file.
+  assert.equal(G.meterGateDecision({ gate: BLOCK, arms: [AGENT], waiver: WAIVER }).allow, false);
+  const odd = G.meterGateDecision({ gate: { ...CLEAR, status: 'blocked' }, arms: [AGENT] });
+  assert.equal(odd.allow, false); assert.match(odd.why, /unrecognised status "blocked"/);
+  assert.equal(G.meterGateDecision({ gate: { ...CLEAR, status: undefined }, arms: [AGENT] }).allow, false);
+  const dirty = G.meterGateDecision({ gate: CLEAR, arms: [AGENT], dirty: 'the working-tree diagnostics.json differs from its committed HEAD blob (an uncommitted regeneration)' });
+  assert.equal(dirty.allow, false); assert.match(dirty.why, /committed HEAD blob/);
+  assert.equal(G.meterGateDecision({ gate: CLEAR, arms: [AGENT], waiver: WAIVER, dirty: 'x' }).allow, false, 'a waiver does not excuse an uncommitted gate file');
+  assert.equal(G.meterGateDecision({ gate: BLOCK, arms: [CALL], dirty: 'x' }).allow, true, 'a calls-only stage does not read the gate at all');
+  assert.equal(G.meterGateDecision({ gate: { ...BLOCK, reasons: undefined }, arms: [AGENT] }).allow, false, 'a malformed blocking gate does not throw');
+});
+
+test('parseMeterGate and readMeterGateFile say why there is no gate: missing, unparseable, partial, no D6 section, malformed gate', () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), 'mg-file-')), f = (name, text) => { const p = path.join(tmp, name); writeFileSync(p, text); return p; };
+  assert.equal(G.parseMeterGate(JSON.stringify({ d6: { summary: { meterGate: BLOCK } } })).gate.status, 'block-until-verified');
+  assert.equal(G.parseMeterGate(JSON.stringify({ d6: { summary: { meterGate: BLOCK } } })).problem, null);
+  assert.match(G.parseMeterGate('{ nope').problem, /does not parse/);
+  assert.match(G.parseMeterGate(JSON.stringify({ d0: {} })).problem, /has no d6\.summary\.meterGate/);
+  assert.match(G.parseMeterGate(JSON.stringify({ d0: {}, partial: { ran: ['d0', 'd3'], notRun: ['d6'] } })).problem, /partial run \(d0, d3 only\) with no D6 section/);
+  assert.match(G.parseMeterGate(JSON.stringify({ d6: { summary: { meterGate: { status: 'clear' } } } })).problem, /not a need-meter-gate\/1 record/, 'a gate without the schema is not a gate');
+  assert.match(G.parseMeterGate(JSON.stringify({ d6: { summary: { meterGate: { schema: G.METER_GATE_SCHEMA } } } })).problem, /with a status/);
+  assert.match(G.readMeterGateFile(path.join(tmp, 'absent.json')).problem, /is missing/);
+  assert.equal(G.readMeterGate(f('partial.json', JSON.stringify({ d0: {}, partial: { ran: ['d0'] } }))), null);
+  // The failure the review reproduced: a file without D6 used to read as "no gate", which allowed the stage; the decision now refuses it.
+  const r = G.readMeterGateFile(f('d0only.json', JSON.stringify({ d0: {}, partial: { ran: ['d0'], notRun: ['d6'] } })));
+  assert.equal(G.meterGateDecision({ gate: r.gate, problem: r.problem, arms: [AGENT] }).allow, false);
+});
+
+test('readCommittedMeterGate reads the HEAD blob, not the working tree, and names an uncommitted difference; the waiver is read from HEAD too', () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), 'mg-head-')), file = path.join(tmp, 'diagnostics.json');
+  const committed = JSON.stringify({ d6: { summary: { meterGate: BLOCK } } });
+  writeFileSync(file, committed);
+  const same = G.readCommittedMeterGate({ file, show: () => Buffer.from(committed) });
+  assert.equal(same.gate.status, 'block-until-verified'); assert.equal(same.dirty, null); assert.equal(same.source, 'HEAD');
+  // The working tree was regenerated by `run.mjs --only d0` into a file without D6: HEAD still has the gate, and the file differs.
+  writeFileSync(file, JSON.stringify({ d0: {}, partial: { ran: ['d0'] } }));
+  const dirty = G.readCommittedMeterGate({ file, show: () => Buffer.from(committed) });
+  assert.equal(dirty.gate.status, 'block-until-verified', 'the gate is the committed one');
+  assert.match(dirty.dirty, /differs from its committed HEAD blob/);
+  assert.equal(G.meterGateDecision({ gate: dirty.gate, arms: [AGENT], dirty: dirty.dirty, verification: null }).allow, false);
+  // Deleted from the working tree; not committed at all.
+  assert.match(G.readCommittedMeterGate({ file: path.join(tmp, 'gone.json'), show: () => Buffer.from(committed) }).dirty, /missing/);
+  const nowhere = G.readCommittedMeterGate({ file, show: () => null });
+  assert.equal(nowhere.gate, null); assert.match(nowhere.problem, /not committed at HEAD/);
+  // The real reader on a path outside the repository finds nothing.
+  assert.equal(G.gitHeadBlob(path.join(os.tmpdir(), 'x.json')), null);
+  assert.equal(G.readCommittedWaiver({ show: () => Buffer.from(JSON.stringify(WAIVER)) }).by, 'owner');
+  assert.equal(G.readCommittedWaiver({ show: () => null }), null); assert.equal(G.readCommittedWaiver({ show: () => Buffer.from('{ no') }), null);
+  // And the real HEAD blob of the committed diagnostics.json carries a gate (the file was committed with D6).
+  const real = G.readCommittedMeterGate();
+  assert.ok(real.gate || real.problem, 'git is reachable in this checkout, or the reason is given');
+});
+
+test('paidRunChecks fails closed on a missing gate (waiver logged as a deviation), on an uncommitted gate file, and not for a stage of single calls', () => {
+  const stages = JSON.parse(readFileSync(path.join(REPO, 'research/need-router-20261014/prereg/stages.json'), 'utf8'));
+  const stage = stages.stages.find(s => s.id === 'M1'), plan = { stages, stage, file: 'x', planSha256: 'x' };
+  const run = (arms, deps) => LR.paidRunChecks({ plan, units: [{ job: {}, arms, probeArms: [] }], prereg: null, deps: { stampOf: () => null, checkStagesFn: () => ({ errors: [] }), meterVerification: () => null, ...deps } });
+  const gateErrors = r => r.errors.filter(e => e.startsWith('meter gate:'));
+  // The reproduced failure: the gate reads as null (a partial or missing diagnostics.json).
+  const closed = gateErrors(run(['agent-H', 'direct-H'], { meterGate: () => null }));
+  assert.equal(closed.length, 1); assert.match(closed[0], /no D6 meter gate on file/); assert.match(closed[0], /owner's waiver/);
+  assert.deepEqual(gateErrors(run(['direct-H'], { meterGate: () => null })), [], 'single calls need no agent meter');
+  const waived = run(['agent-H'], { meterGate: () => null, meterGateWaiver: () => WAIVER });
+  assert.deepEqual(gateErrors(waived), []);
+  assert.deepEqual(waived.deviations.map(d => d.kind), ['meter-gate-waiver']); assert.match(waived.deviations[0].text, /waiver of 2026-10-15T09:00:00Z is logged/); assert.equal(waived.deviations[0].waiver.by, 'owner');
+  assert.equal(gateErrors(run(['agent-H'], { meterGate: () => null, meterGateWaiver: () => ({ ...WAIVER, by: 'agent' }) })).length, 1, 'only an owner waiver counts');
+  // A clear gate in a file that differs from HEAD still refuses.
+  assert.deepEqual(gateErrors(run(['agent-O'], { meterGate: () => CLEAR })), []);
+  const dirty = gateErrors(run(['agent-O'], { meterGate: () => CLEAR, meterGateDirty: () => 'the working-tree diagnostics.json differs from its committed HEAD blob (an uncommitted regeneration): commit or restore it' }));
+  assert.equal(dirty.length, 1); assert.match(dirty[0], /committed HEAD blob/);
+  // An unknown status is refused too.
+  assert.equal(gateErrors(run(['agent-O'], { meterGate: () => ({ ...CLEAR, status: 'ok' }) })).length, 1);
+  // The default path reads the COMMITTED file (meterGateSource, the HEAD blob), not the working tree: its gate, its reason for having none and its dirty flag decide.
+  const src = (gate, problem = null, dirty = null) => ({ meterGateSource: () => ({ gate, problem, dirty, source: 'HEAD' }) });
+  assert.deepEqual(gateErrors(run(['agent-O'], src(CLEAR))), []);
+  const blocked = gateErrors(run(['agent-O'], src(BLOCK)));
+  assert.equal(blocked.length, 1); assert.match(blocked[0], /block-until-verified/);
+  const partial = gateErrors(run(['agent-O'], src(null, 'diagnostics.json is a partial run (d0 only) with no D6 section')));
+  assert.equal(partial.length, 1); assert.match(partial[0], /partial run \(d0 only\)/);
+  const stale = gateErrors(run(['agent-O'], src(CLEAR, null, 'the working-tree diagnostics.json differs from its committed HEAD blob (an uncommitted regeneration)')));
+  assert.equal(stale.length, 1); assert.match(stale[0], /committed HEAD blob/);
+  assert.deepEqual(gateErrors(run(['agent-O'], { ...src(null, 'diagnostics.json is missing'), meterGateWaiver: () => WAIVER })), [], 'the logged owner waiver passes a missing committed gate');
+  assert.deepEqual(gateErrors(run(['direct-H'], src(null, 'diagnostics.json is missing'))), []);
+});
+
+test('meter-gate-cli reports whether an agent stage may start and exits 1 when it may not', () => {
+  const status = spawnSync(process.execPath, [path.join(REPO, 'experiments/need-router/meter-gate-cli.mjs')], { encoding: 'utf8' });
+  const out = JSON.parse(status.stdout);
+  assert.equal(typeof out.agentStage.allow, 'boolean'); assert.ok('problem' in out && 'dirty' in out);
+  assert.equal(status.status, out.agentStage.allow ? 0 : 1, 'the exit code is the decision');
 });

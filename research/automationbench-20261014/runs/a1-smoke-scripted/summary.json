@@ -5,10 +5,12 @@
  "scripted": true,
  "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
  "arm": "A1 (harness)",
+ "sealed": false,
+ "testSplitTasks": 0,
  "harness": {
   "id": "foundry",
   "version": "a1-v1",
-  "manifestSha256": "1857429d47eec9acfed61d0286c6278e06c361f2cf8f13ab74d7db56f7012d3d",
+  "manifestSha256": "494664d5a46148176571dc0b65549dffe95431927c7ab1c41021f3f3e1f69cfa",
   "frozenHashGiven": false,
   "cliMaxTurns": 49,
   "stepGuard": true,
@@ -114,7 +116,10 @@
   },
   "stoppedByStepGuard": 0,
   "extraModelCalls": 0,
+  "compactions": 0,
   "capViolations": 0,
+  "l5Violations": 0,
+  "models": [],
   "ledger": {
    "collected": 6,
    "of": 6,
@@ -142,13 +147,22 @@
   "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
   "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
   "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
-  "runnerSha256": "749ec64e237857dc491b8ebcbc94b54f908f0a40a76857bf31026c4dd554fc33",
+  "runnerSha256": "e5c88ca368c16f6089360cf731d5d89a08cd877d2035c2e4a31d61fd4c5f6638",
   "policyHash": null,
   "policyVersion": null,
+  "policyFileSha256": "3364011cae3741fb4409386d16cfa2439aaa340181382ce1694a8f7778fd3793",
   "node": "v24.21.0",
-  "accountingSha256": "d850855ae1ddebebad7c33e12ff04bdb129dffc3cd7305617787661b7b89f07c",
-  "harnessManifestSha256": "1857429d47eec9acfed61d0286c6278e06c361f2cf8f13ab74d7db56f7012d3d"
+  "cli": null,
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  },
+  "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "harnessManifestSha256": "494664d5a46148176571dc0b65549dffe95431927c7ab1c41021f3f3e1f69cfa"
  },
  "live": "/var/tmp/foundry-work/autobench/a1-smoke-scripted-a1-smoke-1",
- "finishedAt": "2026-10-15T07:18:50.094Z"
+ "finishedAt": "2026-10-15T08:10:14.653Z"
 }

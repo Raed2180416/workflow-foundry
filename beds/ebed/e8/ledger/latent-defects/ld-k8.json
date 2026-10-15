@@ -1,0 +1,1176 @@
+{
+ "schema": "ebed-e8-latent-defect/1",
+ "id": "ld-k8",
+ "evidence": "development (dev worlds 1001-1199); $0",
+ "mutant": {
+  "id": "ref-k8",
+  "kind": "transition",
+  "operator": "relational boundary",
+  "file": "beds/ebed/e8/transition.mjs",
+  "line": 34,
+  "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+  "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom < date && (e.effectiveTo === null || date < e.effectiveTo));",
+  "sourceSha256": "12337a9d4b5674f2188f47b1dbd072543bf44aae80be01eb1bddad64b61437fe",
+  "asOracleMutant": {
+   "verdict": "killed",
+   "ledger": "ledger/MUTANTS.md"
+  }
+ },
+ "members": [
+  "ref-k8"
+ ],
+ "solver": {
+  "policy": "beds/ebed/oracle/policy.mjs referenceArm",
+  "timing": "earliest",
+  "oracle": "original transition.mjs"
+ },
+ "contradicts": [],
+ "params": {
+  "e0Epochs": [
+   "gl",
+   "ep0"
+  ],
+  "revealEpochs": [
+   "ep2",
+   "ep3"
+  ],
+  "lagMinutes": 1440
+ },
+ "e0Silence": {
+  "executed": true,
+  "worlds": 8,
+  "casesChecked": 259,
+  "failed": 0
+ },
+ "worlds": [
+  {
+   "world": "ebed-e8-dev-1101-d2-tail",
+   "seed": 1101,
+   "split": "dev",
+   "difficulty": 2,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "cf2e994e65bada279cfe9969a891d08a63d2a890d38ecb97d620b99d46639924",
+   "inert": true,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": []
+  },
+  {
+   "world": "ebed-e8-dev-1101-d3-tail",
+   "seed": 1101,
+   "split": "dev",
+   "difficulty": 3,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "de1c3dd35d8da621acc0afac384a41a12ab372d4588237020b48a02876eb132b",
+   "inert": true,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "o0024",
+     "x0086",
+     "x0087"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": []
+  },
+  {
+   "world": "ebed-e8-dev-1101-d4-tail",
+   "seed": 1101,
+   "split": "dev",
+   "difficulty": 4,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "9564a322d98837b3029ec8c2ddd77e46ad28429e6dbb92ebdce4d6431371929c",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0012",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0032",
+     "o0033",
+     "o0034",
+     "o0035",
+     "x0108",
+     "x0109"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0011",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-07T23:32:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0013",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-08T01:41:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0054",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-07T23:38:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0055",
+     "epoch": "ep2",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-08T07:44:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0056",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-08T14:04:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0057",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T15:06:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0058",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T17:41:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0059",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T19:53:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0092",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T00:58:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0104",
+     "epoch": "ep2",
+     "class": "cancel-wait",
+     "pool": "completed",
+     "at": "2026-03-08T01:17:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    }
+   ],
+   "reveal": {
+    "case": "o0011",
+    "class": "action-at-deadline",
+    "epoch": "ep2",
+    "selfRevealing": "arm-error",
+    "at": "2026-03-07T23:32:00.000Z",
+    "event": null
+   },
+   "falseReveal": null,
+   "sweep": {
+    "before": [
+     "o0011",
+     "o0054",
+     "o0092",
+     "o0104",
+     "o0013",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059"
+    ],
+    "after": []
+   },
+   "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1101-d5-tail",
+   "seed": 1101,
+   "split": "dev",
+   "difficulty": 5,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "f79f44918ba423a95d8447e33c5f7b5a44a890a612a63a3cc6ce7165e239866a",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0020",
+     "o0022",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0034",
+     "o0037",
+     "o0039",
+     "o0041",
+     "o0042",
+     "o0043",
+     "o0044",
+     "o0045",
+     "o0047",
+     "o0048",
+     "o0049",
+     "o0050",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059",
+     "o0060",
+     "o0061",
+     "o0062",
+     "o0063",
+     "x0211",
+     "x0212",
+     "x0213"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0038",
+     "epoch": "ep2",
+     "class": "cancel-wait",
+     "pool": "completed",
+     "at": "2026-03-08T00:27:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0040",
+     "epoch": "ep2",
+     "class": "cancel-wait",
+     "pool": "completed",
+     "at": "2026-03-08T01:14:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0046",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T01:58:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0082",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-07T23:45:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0101",
+     "epoch": "ep2",
+     "class": "f3-refund",
+     "pool": "completed",
+     "at": "2026-03-07T23:29:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0102",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T00:51:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0104",
+     "epoch": "ep2",
+     "class": "action-late",
+     "pool": "completed",
+     "at": "2026-03-08T10:50:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0105",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-08T11:09:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0106",
+     "epoch": "ep2",
+     "class": "f3-refund",
+     "pool": "completed",
+     "at": "2026-03-08T11:16:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0107",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T12:16:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0108",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T12:47:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0109",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T14:56:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0110",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T16:28:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0111",
+     "epoch": "ep2",
+     "class": "f3-charge",
+     "pool": "completed",
+     "at": "2026-03-08T17:01:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0112",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T17:30:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0113",
+     "epoch": "ep2",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-08T18:30:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0127",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-08T01:28:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0182",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-08T01:08:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    }
+   ],
+   "reveal": {
+    "case": "o0101",
+    "class": "f3-refund",
+    "epoch": "ep2",
+    "selfRevealing": "arm-error",
+    "at": "2026-03-07T23:29:00.000Z",
+    "event": null
+   },
+   "falseReveal": null,
+   "sweep": {
+    "before": [
+     "o0101",
+     "o0082",
+     "o0038",
+     "o0102",
+     "o0182",
+     "o0040",
+     "o0127",
+     "o0046",
+     "o0104",
+     "o0105",
+     "o0106",
+     "o0107",
+     "o0108",
+     "o0109",
+     "o0110",
+     "o0111",
+     "o0112",
+     "o0113"
+    ],
+    "after": []
+   },
+   "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d2-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 2,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "f6087dcd855a5f3d104bfd89bda004319deb24cf270b032db4f29c71b3dbde0e",
+   "inert": true,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d3-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 3,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "fd40713377a7c6c26678bf8fefe3297121172aa6f21ccfee9a88ca2de4459b4d",
+   "inert": true,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "o0024",
+     "x0087"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d4-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 4,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "f0762587007cd221c4ca1bdc10d66dd5d99d1c64c1c21aa0076feb35d2cdf531",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0016",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "x0107",
+     "x0108"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0034",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-07T23:05:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0046",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T03:32:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0047",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T05:24:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0048",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T05:31:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0049",
+     "epoch": "ep2",
+     "class": "review-approve",
+     "pool": "completed",
+     "at": "2026-03-08T07:11:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0050",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T08:16:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0051",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T10:04:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0052",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T12:40:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0053",
+     "epoch": "ep2",
+     "class": "cancel-processing",
+     "pool": "completed",
+     "at": "2026-03-08T22:11:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0054",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T22:42:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0058",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T03:31:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0071",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-07T23:48:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    }
+   ],
+   "reveal": {
+    "case": "o0034",
+    "class": "amend",
+    "epoch": "ep2",
+    "selfRevealing": "arm-error",
+    "at": "2026-03-07T23:05:00.000Z",
+    "event": null
+   },
+   "falseReveal": null,
+   "sweep": {
+    "before": [
+     "o0034",
+     "o0071",
+     "o0058",
+     "o0046",
+     "o0047",
+     "o0048",
+     "o0049",
+     "o0050",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054"
+    ],
+    "after": []
+   },
+   "natural": []
+  },
+  {
+   "world": "ebed-e8-dev-1102-d5-tail",
+   "seed": 1102,
+   "split": "dev",
+   "difficulty": 5,
+   "mix": "tail",
+   "generator": "1.0.0",
+   "journal": "f1ecc194a2e5e1f66ce88fef6c3a994d5dd8fbbf2b8168142d810140184babfd",
+   "inert": false,
+   "e0": {
+    "checked": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0009",
+     "o0010",
+     "o0011",
+     "o0012",
+     "o0013",
+     "o0014",
+     "o0015",
+     "o0017",
+     "o0018",
+     "o0019",
+     "o0020",
+     "o0021",
+     "o0022",
+     "o0023",
+     "o0024",
+     "o0025",
+     "o0026",
+     "o0027",
+     "o0028",
+     "o0029",
+     "o0030",
+     "o0031",
+     "o0032",
+     "o0033",
+     "o0034",
+     "o0035",
+     "o0036",
+     "o0038",
+     "o0039",
+     "o0040",
+     "o0041",
+     "o0042",
+     "o0043",
+     "o0044",
+     "o0045",
+     "o0046",
+     "o0047",
+     "o0048",
+     "o0049",
+     "o0051",
+     "o0052",
+     "o0053",
+     "o0054",
+     "o0055",
+     "o0056",
+     "o0057",
+     "o0058",
+     "o0059",
+     "o0060",
+     "x0213"
+    ],
+    "failed": 0,
+    "graded": true
+   },
+   "affected": [
+    {
+     "case": "o0037",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-07T23:41:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0050",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T03:10:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0069",
+     "epoch": "ep2",
+     "class": "action-at-deadline",
+     "pool": "completed",
+     "at": "2026-03-08T00:12:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0104",
+     "epoch": "ep2",
+     "class": "review-reject",
+     "pool": "completed",
+     "at": "2026-03-08T00:23:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0105",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T03:02:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0106",
+     "epoch": "ep2",
+     "class": "cancel-after-collection",
+     "pool": "completed",
+     "at": "2026-03-08T03:55:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0107",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T04:47:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0108",
+     "epoch": "ep2",
+     "class": "decline",
+     "pool": "completed",
+     "at": "2026-03-08T06:24:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0109",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T07:06:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0110",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T07:31:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0111",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T07:59:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0112",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T08:04:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0113",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T08:28:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0114",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T12:41:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0115",
+     "epoch": "ep2",
+     "class": "f3-refund",
+     "pool": "completed",
+     "at": "2026-03-08T13:10:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0116",
+     "epoch": "ep2",
+     "class": "f3-refund",
+     "pool": "completed",
+     "at": "2026-03-08T13:27:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0117",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T13:31:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0118",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T14:44:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0119",
+     "epoch": "ep2",
+     "class": "f4-reserve",
+     "pool": "completed",
+     "at": "2026-03-08T16:54:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0120",
+     "epoch": "ep2",
+     "class": "action-late",
+     "pool": "completed",
+     "at": "2026-03-08T20:42:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0121",
+     "epoch": "ep2",
+     "class": "collection-failed",
+     "pool": "completed",
+     "at": "2026-03-08T20:51:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0122",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T21:23:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0123",
+     "epoch": "ep2",
+     "class": "straight",
+     "pool": "completed",
+     "at": "2026-03-08T22:07:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0164",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-07T23:48:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0165",
+     "epoch": "ep2",
+     "class": "amend",
+     "pool": "completed",
+     "at": "2026-03-08T03:21:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0174",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T03:51:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    },
+    {
+     "case": "o0190",
+     "epoch": "ep2",
+     "class": "timeout",
+     "pool": "completed",
+     "at": "2026-03-08T02:55:00.000Z",
+     "layer": 0,
+     "code": "arm-error"
+    }
+   ],
+   "reveal": {
+    "case": "o0037",
+    "class": "amend",
+    "epoch": "ep2",
+    "selfRevealing": "arm-error",
+    "at": "2026-03-07T23:41:00.000Z",
+    "event": null
+   },
+   "falseReveal": null,
+   "sweep": {
+    "before": [
+     "o0037",
+     "o0164",
+     "o0069",
+     "o0104",
+     "o0190",
+     "o0105",
+     "o0050",
+     "o0165",
+     "o0174",
+     "o0106",
+     "o0107",
+     "o0108",
+     "o0109",
+     "o0110",
+     "o0111",
+     "o0112",
+     "o0113",
+     "o0114",
+     "o0115",
+     "o0116",
+     "o0117",
+     "o0118",
+     "o0119",
+     "o0120",
+     "o0121",
+     "o0122",
+     "o0123"
+    ],
+    "after": []
+   },
+   "natural": []
+  }
+ ]
+}

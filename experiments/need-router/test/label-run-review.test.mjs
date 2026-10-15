@@ -222,9 +222,9 @@ test('agent-H+proc: an environment fault on the writer call is kept aside and re
 });
 
 // ---------------------------------------------------------------------------------------- major: paid-run checks
-// The D6 cost-meter gate (meter-gate.mjs) is another check of paidRunChecks; these tests pin it open so they do not read the
-// diagnostics file on disk.
-const NO_METER_GATE = { meterGate: () => null, meterVerification: () => null };
+// The D6 cost-meter gate (meter-gate.mjs) is another check of paidRunChecks; these tests pin it with a clear gate so they do not read the
+// diagnostics file on disk. (A missing gate no longer passes: the gate fails closed, meter-gate.test.mjs.)
+const NO_METER_GATE = { meterGate: () => ({ schema: 'need-meter-gate/1', status: 'clear', reasons: [] }), meterVerification: () => null };
 const cleanStamp = (files = {}) => ({ labelEngine: { stage: 'NL0', commit: 'c0ffee', dirty: 0, files, trees: {}, beds: {}, prereg: {}, ledgerNeed: null, node: process.version }, analysis: { files: {} }, documents: {} });
 test('paid runs: the plan, checkStages, arm hashes, the frozen preregistration and a clean engine stamp are checked before anything is spent', async t => {
   const dir = tmp(t);

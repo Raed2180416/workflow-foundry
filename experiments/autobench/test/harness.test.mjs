@@ -9,9 +9,9 @@ import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync
 import os from 'node:os';
 import path from 'node:path';
 import { REPO, VENV_PY, adapterText, listTasks, readJson } from '../lib.mjs';
-import { DEFAULTS, runTasks } from '../run.mjs';
-import { auditSession, sessionResponses, worldUsage } from '../accounting.mjs';
-import { LEDGER_FILE, SECTION_BEGIN, SECTION_END, collectLedger, harnessConfig, harnessManifest, harnessSection, harnessSystemPrompt, ledgerStats, manifestFiles, writeCliGuard } from '../harness/foundry.mjs';
+import { DEFAULTS, TEST_RUN_TOKEN, runTasks } from '../run.mjs';
+import { auditSession, commandFlags, sessionResponses, worldUsage } from '../accounting.mjs';
+import { LEDGER_FILE, SECTION_BEGIN, SECTION_END, collectLedger, harnessConfig, harnessManifest, harnessSection, harnessSystemPrompt, ledgerStats, manifestFiles, policyEntries, writeCliGuard } from '../harness/foundry.mjs';
 import { scriptedHarnessRunner } from '../harness/scripted-session.mjs';
 import { procedureScript } from '../harness/smoke.mjs';
 import { runClaudeCode, sandboxAvailable } from '../../../src/executors/claude-code.mjs';
@@ -86,13 +86,27 @@ test('L1: no public task name in any file of the A1 manifest', { skip: !HAVE_VEN
 test('manifest: covers what run.mjs loads; the hash pins files and settings', () => {
   const files = manifestFiles();
   for (const f of ['experiments/autobench/run.mjs', 'experiments/autobench/lib.mjs', 'experiments/autobench/split.mjs', 'experiments/autobench/bridge.py', 'experiments/autobench/tool.mjs',
-    'experiments/autobench/accounting.mjs', 'experiments/autobench/harness/foundry.mjs', 'src/executors/claude-code.mjs', 'src/models/policy.mjs', 'src/data.mjs', 'policy/models.json']) assert.ok(files.includes(f), f);
+    'experiments/autobench/accounting.mjs', 'experiments/autobench/harness/foundry.mjs', 'src/executors/claude-code.mjs', 'src/models/policy.mjs', 'src/data.mjs']) assert.ok(files.includes(f), f);
   const cfg = harnessConfig({ ...DEFAULTS, model: 'claude-haiku-5-5', effort: 'high', cliMaxTurns: 49, cli: null });
   const a = harnessManifest(cfg), b = harnessManifest(cfg);
   assert.equal(a.sha256, b.sha256);
   assert.match(a.sha256, /^[0-9a-f]{64}$/);
   assert.notEqual(harnessManifest({ ...cfg, effort: 'low' }).sha256, a.sha256);
   assert.notEqual(harnessManifest({ ...cfg, cliMaxTurns: 48 }).sha256, a.sha256);
+  // §7 / H8: the config pins the policy entries the run uses, the CLI child environment, the corpus and the knowledge.
+  assert.equal(cfg.policy.model.id, 'claude-haiku-5-5');
+  assert.equal(cfg.policy.provider.kind, 'claude-cli');
+  assert.deepEqual(Object.keys(cfg.childEnv).sort(), ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'DISABLE_AUTOUPDATER', 'DISABLE_ERROR_REPORTING', 'DISABLE_TELEMETRY', 'FORCE_PROMPT_CACHING_5M']);
+  assert.ok(cfg.knowledge.length >= 1);
+  assert.notEqual(harnessManifest({ ...cfg, childEnv: { ...cfg.childEnv, FORCE_PROMPT_CACHING_5M: cfg.childEnv.FORCE_PROMPT_CACHING_5M === '1' ? null : '1' } }).sha256, a.sha256);
+  assert.notEqual(harnessManifest({ ...cfg, corpus: { ...cfg.corpus, commit: '0'.repeat(40) } }).sha256, a.sha256);
+  // An edit elsewhere in the policy file leaves the hash alone; an edit to the run's model entry changes it.
+  const dir = tmp('pol');
+  const pol = JSON.parse(readFileSync(path.join(REPO, 'policy/models.json'), 'utf8'));
+  writeFileSync(path.join(dir, 'other.json'), JSON.stringify({ ...pol, policyVersion: 'x', notes: [...(pol.notes ?? []), 'unrelated'], models: [...pol.models, { id: 'other-model', provider: 'claude-cli' }] }));
+  writeFileSync(path.join(dir, 'haiku.json'), JSON.stringify({ ...pol, models: pol.models.map(m => (m.id === 'claude-haiku-5-5' ? { ...m, price: { ...m.price, inputPerMTok: 9 } } : m)) }));
+  assert.equal(harnessManifest({ ...cfg, policy: policyEntries('claude-haiku-5-5', path.join(dir, 'other.json')) }).sha256, a.sha256);
+  assert.notEqual(harnessManifest({ ...cfg, policy: policyEntries('claude-haiku-5-5', path.join(dir, 'haiku.json')) }).sha256, a.sha256);
 });
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -299,6 +313,8 @@ args="$1 $2 $3 $4 $5"
 if touch "$(dirname "$0")/planted" 2>/dev/null; then g=guard-writable; else g=guard-readonly; fi
 if [ -e "$AB_PROBE_HOST" ]; then h=host-visible; else h=host-hidden; fi
 if [ -e "$AB_PROBE_PREP" ]; then p=prep-visible; else p=prep-hidden; fi
+# L4 (PREREG §8): the corpus, research/, the families, other runs' live directories and the agent transcript store.
+l4=ok; for d in "$AB_PROBE_CORPUS" "$AB_PROBE_RESEARCH" "$AB_PROBE_FAMILIES" "$AB_PROBE_RUNS" "$AB_PROBE_TRANSCRIPTS"; do if [ -e "$d" ]; then l4="visible:$d"; fi; done
 printf '{"type":"system","subtype":"init","session_id":"standin"}\n'
 printf '{"type":"assistant","timestamp":"%s","message":{"id":"m1","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"node tool.mjs call ..."}}]}}\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
 printf -- '- [ ] R1: update the phone (source: trigger; date: undated)\n' > REQUIREMENTS.md
@@ -306,7 +322,7 @@ node tool.mjs call api_fetch '{"method": "GET", "url": "https://gmail.googleapis
 node tool.mjs call api_fetch '{"method": "PATCH", "url": "https://yourinstance.salesforce.com/services/data/v61.0/sobjects/Contact/003001", "body": "{\"Phone\": \"+1-555-0101\"}"}' > patch.out 2>&1
 printf '{"type":"user","timestamp":"%s","message":{"content":[{"type":"tool_result","tool_use_id":"t1","content":"ok"}]}}\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
 printf '{"type":"assistant","message":{"id":"m2","content":[{"type":"text","text":"Done."}]}}\n'
-printf '{"type":"result","subtype":"success","is_error":false,"result":"%s %s %s %s","total_cost_usd":0,"num_turns":2}\n' "$g" "$h" "$p" "$args"
+printf '{"type":"result","subtype":"success","is_error":false,"result":"%s %s %s l4=%s %s","total_cost_usd":0,"num_turns":2}\n' "$g" "$h" "$p" "$l4" "$args"
 `;
 
 test('sandboxed (A1): the step-guard wrapper runs read-only in the executor sandbox, with --max-turns; ledger collected; accounting from the executor transcript', { skip: (!HAVE_VENV && 'AutomationBench venv missing') || (!sandboxAvailable() && 'no user namespaces'), timeout: 300_000 }, async () => {
@@ -317,13 +333,14 @@ test('sandboxed (A1): the step-guard wrapper runs read-only in the executor sand
   let result = null, binary = null;
   const runner = async args => {
     binary = args.binary;
-    const r = await runClaudeCode({ ...args, env: { AB_PROBE_HOST: path.join(live, 'host'), AB_PROBE_PREP: path.join(live, 'prep') }, timeoutMs: 120_000 });
+    const r = await runClaudeCode({ ...args, env: { AB_PROBE_HOST: path.join(live, 'host'), AB_PROBE_PREP: path.join(live, 'prep'), AB_PROBE_CORPUS: path.join(REPO, 'corpus/AutomationBench'),
+      AB_PROBE_RESEARCH: path.join(REPO, 'research'), AB_PROBE_FAMILIES: path.join(REPO, 'experiments/autobench/families'), AB_PROBE_RUNS: '/var/tmp/foundry-work/autobench', AB_PROBE_TRANSCRIPTS: path.join(os.homedir(), '.claude') }, timeoutMs: 120_000 });
     result = r.result;
     return r;
   };
   const { results } = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'foundry', runner, cliTarget: path.join(bin, 'standin.sh'), model: 'stand-in', det: 'record', liveRoot: live, outDir: null, log: quiet });
   assert.equal(binary, path.join(bin, 'claude-a1'));
-  assert.equal(result, 'guard-readonly host-hidden prep-hidden --max-turns 49 -p --model stand-in');
+  assert.equal(result, 'guard-readonly host-hidden prep-hidden l4=ok --max-turns 49 -p --model stand-in');
   const r = results[0], f = r.forks[0];
   assert.equal(f.sessionError, null);
   assert.equal(f.steps, 2);
@@ -331,4 +348,75 @@ test('sandboxed (A1): the step-guard wrapper runs read-only in the executor sand
   assert.deepEqual([f.session.modelResponses, f.session.toolResponses, f.session.mapping, f.session.maxWorldResponse, f.session.violations.length], [2, 1, 'timestamps', 1, 0]);
   assert.deepEqual([f.ledger.present, f.ledger.items, f.ledger.requirements], [true, 1, 1]);
   assert.ok(!existsSync(path.join(bin, 'planted')));
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// Integrity review (2026-10-15): L5 audit, split hygiene for every arm and mode, sealed runs.
+
+test('L5: network and package commands, network code and benchmark references are flagged; request bodies and ledger text are not', () => {
+  const clean = [
+    `node tool.mjs call api_fetch '{"method":"POST","body":"we use git and curl; fetch( automationbench"}'`,
+    "cat > REQUIREMENTS.md <<'EOF'\n- [ ] R1: curl the vendor (source: doc; date: undated)\n- [ ] F1: git\nEOF\nnode tool.mjs batch @step.json",
+    'for i in 1 2; do node tool.mjs call api_fetch "{}"; done | jq .',
+    'echo "curl" && grep -i git out.txt',
+    "node tool.mjs call api_fetch - <<'EOF'\n{\"body\": \"fetch( automationbench\"}\nEOF",
+  ];
+  for (const c of clean) assert.deepEqual(commandFlags(c), [], c);
+  const bad = {
+    'curl -s https://example.org/x': "network command 'curl'", 'cd x && git clone https://example.org/r': "network command 'git'",
+    'sudo -E pip install requests': "network command 'pip'", 'timeout 5 wget http://x': "network command 'wget'", 'FOO=1 env npx thing': "network command 'npx'",
+    '/usr/bin/curl x': "network command 'curl'", 'x=$(curl -s y)': "network command 'curl'", 'python3 -c "import urllib.request"': 'network code',
+    "node -e \"fetch('https://x')\"": 'network code', 'python3 -m pip install x': 'network code', "cat > a.py <<'EOF'\nimport requests\nEOF\npython3 a.py": 'network code',
+    'ls ~/.cache/automation_bench': 'benchmark reference',
+  };
+  for (const [c, f] of Object.entries(bad)) assert.ok(commandFlags(c).includes(f), `${c} -> ${commandFlags(c)}`);
+});
+
+test('L5 in the audit: another model, a flagged command and a compaction count; synthetic error messages do not', () => {
+  const T = 1_800_000_000_000;
+  const base = [
+    { type: 'system', subtype: 'init' },
+    { type: 'assistant', timestamp: iso(T), message: { id: 'm1', model: 'claude-haiku-5-5', content: [bash('t1', 'node tool.mjs call api_search \'{}\'')] } },
+    res(['t1'], T + 100),
+    { type: 'assistant', timestamp: iso(T + 200), message: { id: 'syn', model: '<synthetic>', content: [{ type: 'text', text: 'API Error' }] } },
+  ];
+  const ok = auditSession({ events: [...base, { type: 'result', subtype: 'success', num_turns: 2, modelUsage: { 'claude-haiku-5-5': {} } }], expectModel: 'claude-haiku-5-5' });
+  assert.deepEqual([ok.violations, ok.models, ok.compactions, ok.l5Flags], [[], ['claude-haiku-5-5'], 0, 0]);
+  const other = auditSession({ events: [...base, { type: 'result', subtype: 'success', modelUsage: { 'claude-haiku-5-5': {}, 'claude-sonnet-5-5': {} } }], expectModel: 'claude-haiku-5-5' });
+  assert.deepEqual(other.violations, ['L5: model claude-sonnet-5-5 reported (run model claude-haiku-5-5)']);
+  assert.deepEqual(auditSession({ events: base, expectModel: 'claude-haiku-5-5-20261001' }).violations.length, 1);
+  const net = auditSession({ events: [...base, { type: 'assistant', message: { id: 'm2', model: 'claude-haiku-5-5', content: [bash('t2', 'curl -s https://example.org')] } }] });
+  assert.deepEqual(net.violations, ["L5: network command 'curl' in response 3"]);
+  const comp = auditSession({ events: [...base, { type: 'system', subtype: 'compact_boundary' }], maxSteps: 2 });
+  assert.equal(comp.compactions, 1);
+  assert.equal(comp.modelResponses, 3);
+  assert.deepEqual(comp.violations, ['model responses 3 > 2']);
+});
+
+test('split hygiene, every arm and mode: test tasks refused for A0 model, scripted and dry runs; only --test-run AB-v1 (A0 model run) or the frozen hash (A1) lifts it', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 120_000 }, async () => {
+  const testTask = loadSplit().test[0]; // a name only: nothing of the task is opened
+  const never = async () => { throw new Error('must not run'); };
+  const base = { liveRoot: tmp('split-guard'), outDir: null, log: quiet };
+  await assert.rejects(runTasks({ ...base, tasks: [testTask], runner: never }), /not dev-split tasks/);                         // scripted A0
+  await assert.rejects(runTasks({ ...base, tasks: [testTask], runner: never, testRun: TEST_RUN_TOKEN }), /not dev-split tasks/);  // scripted A0 + token
+  await assert.rejects(runTasks({ ...base, tasks: [testTask], dryRun: true }), /not dev-split tasks/);                          // dry run
+  await assert.rejects(runTasks({ ...base, tasks: [testTask], dryRun: true, runner: never, harness: 'foundry', harnessHash: 'f'.repeat(64) }), /hash mismatch/);
+  await assert.rejects(runTasks({ ...base, tasks: [testTask], model: 'claude-haiku-5-5', capUsd: 1 }), /not dev-split tasks/);   // A0 model run, no token
+  await assert.rejects(runTasks({ ...base, tasks: [PHONE_TASK], model: 'claude-haiku-5-5', capUsd: 1, testRun: 'yes' }), /--test-run must be AB-v1/);
+  // With the token, an A0 model run gets past the split guard (shown on an unknown name, so no test task is touched and
+  // no session starts: the official dataset build refuses the name).
+  await assert.rejects(runTasks({ ...base, tasks: ['sales.__not_a_task__'], model: 'claude-haiku-5-5', capUsd: 1, testRun: TEST_RUN_TOKEN }), e => !/not dev-split/.test(e.message) && /bridge prepare failed|not found/.test(e.message));
+});
+
+test('sealed run (devCheck or test tasks): no per-task grade in the log; the repo copy keeps per-task records in results.sealed.jsonl', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 300_000 }, async () => {
+  const live = tmp('sealed'), lines = [];
+  const runner = scriptedHarnessRunner(() => [{ calls: [sf('003001', 'Phone', '+1-555-0101')] }]);
+  const { summary } = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'foundry', runner, det: 'record', sealed: true, liveRoot: live, outDir: path.join(live, 'out'), log: m => lines.push(m) });
+  assert.equal(summary.sealed, true);
+  assert.ok(lines.some(l => l.includes(`${PHONE_TASK}: graded (sealed run`)));
+  assert.ok(!lines.some(l => /pc=|pass=/.test(l)), lines.join('\n'));
+  assert.ok(existsSync(path.join(live, 'out', 'results.sealed.jsonl')) && !existsSync(path.join(live, 'out', 'results.jsonl')));
+  // devCheck and test membership seal a run by default (computed from the split, before any work).
+  const s = loadSplit();
+  assert.ok(s.devCheck.length === 60 && s.test.length === 300);
 });

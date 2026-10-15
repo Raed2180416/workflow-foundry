@@ -547,19 +547,42 @@ golden('report delivered twice; a message naming no incident', 'R1.1, R1.4, §3.
       const inc = b.export.records['itsm.incidents'][0];
       if (rb.incident.state !== inc.state || Object.keys(rb.slas).length !== b.export.records['sla.slas'].length) return `go-live ${b.case}: ${JSON.stringify(rb).slice(0, 200)}`;
     }
-    const stray = Object.entries(W3.truth.cases).find(([, x]) => x.subject === null)[0];
-    return recordsOf(W3, { bucket: () => ({ ledger: [] }) }, stray) === null ? true : 'records for a case with no incident';
+    // (recordsOf of a case with no incident is a unit check in test/e7.test.mjs: the grader never asks for those records.)
+    return true;
   });
 }
 
+// SPEC §1 (Time): instants are compared as instants, whatever offset they are written in. The grader reads every
+// instant-valued argument (`at`, `startAt`, `openedAt`, `plannedBreachAt`) of an arm's rows through the item's
+// canonicalArgs, so this golden fixes what an arm's written values match: an instant at any offset, with or without
+// seconds or milliseconds, is the same instant; a time without an offset, or no valid date, names no instant and is
+// compared as written (it matches no record; reading it in the grader's own zone would make the verdict depend on the
+// machine); other arguments are compared as written, also when they look like an instant (mutation ledger 2026-10-15).
+golden('instants compared as instants, whatever their offset', 'SPEC §1 (Time), R4.5', (tr, recordsOf, canonicalArgs) => {
+  if (typeof canonicalArgs !== 'function') return 'canonicalArgs not supplied: call runGoldens(transition, recordsOf, canonicalArgs)';
+  const same = (got, want, what) => (JSON.stringify(got) === JSON.stringify(want) ? true : `${what}: ${JSON.stringify(got)}, expected ${JSON.stringify(want)}`);
+  return all(
+    same(canonicalArgs('itsm', 'assign', { number: 'INC-RPT-X', group: 'GRP-SD-EU', at: '2026-03-10T10:00:00+01:00', ref: 'r1' }),
+      { number: 'INC-RPT-X', group: 'GRP-SD-EU', at: '2026-03-10T09:00:00Z', ref: 'r1' }, 'an `at` at +01:00'),
+    same(canonicalArgs('sla', 'start', { number: 'INC-RPT-X', definition: 'RSP-STD', generation: 1, startAt: '2026-03-10T05:00:00-04:00', schedule: 'SCH-US-STD', timezone: 'America/New_York', plannedBreachAt: null }),
+      { number: 'INC-RPT-X', definition: 'RSP-STD', generation: 1, startAt: '2026-03-10T09:00:00Z', schedule: 'SCH-US-STD', timezone: 'America/New_York', plannedBreachAt: null }, 'startAt at -04:00, plannedBreachAt null'),
+    same(canonicalArgs('sla', 'resume', { number: 'N', definition: 'D', generation: 2, at: '2026-03-10T10:00:30+01:00', plannedBreachAt: '2026-03-11T09:00:00.000Z' }),
+      { number: 'N', definition: 'D', generation: 2, at: '2026-03-10T09:00:30Z', plannedBreachAt: '2026-03-11T09:00:00Z' }, 'seconds and milliseconds'),
+    same(canonicalArgs('itsm', 'create', { number: 'N', openedAt: '2026-03-10T09:00Z', summary: '2026-03-10T10:00:00+01:00' }),
+      { number: 'N', openedAt: '2026-03-10T09:00:00Z', summary: '2026-03-10T10:00:00+01:00' }, 'openedAt without seconds; a summary that looks like an instant'),
+    same(canonicalArgs('itsm', 'close', { number: 'N', reason: 'auto', at: '2026-03-10T10:00:00' }), { number: 'N', reason: 'auto', at: '2026-03-10T10:00:00' }, 'an `at` without an offset'),
+    same(canonicalArgs('itsm', 'close', { number: 'N', reason: 'auto', at: '2026-03-10 10:00' }), { number: 'N', reason: 'auto', at: '2026-03-10 10:00' }, 'an `at` that is not ISO 8601'),
+    same(canonicalArgs('itsm', 'close', { number: 'N', reason: 'auto', at: '2026-13-10T10:00:00Z' }), { number: 'N', reason: 'auto', at: '2026-13-10T10:00:00Z' }, 'an `at` that is no date'));
+});
+
 /**
- * Run every golden against a transition and, for the records golden, the same module's recordsOf (a mutant's own, in a
- * mutation tool); returns [{ name, source, pass, detail }]. A throw is a failure.
+ * Run every golden against a transition and, for the records and instants goldens, the same module's recordsOf and
+ * canonicalArgs (a mutant's own, in a mutation tool); returns [{ name, source, pass, detail }]. A throw is a failure.
  */
-export function runGoldens(transition, recordsOf = null) {
+export function runGoldens(transition, recordsOf = null, canonicalArgs = null) {
   return goldens.map(g => {
     let r;
-    try { r = g.check(transition, recordsOf); } catch (e) { r = `threw: ${String(e?.message ?? e).slice(0, 300)}`; }
+    try { r = g.check(transition, recordsOf, canonicalArgs); } catch (e) { r = `threw: ${String(e?.message ?? e).slice(0, 300)}`; }
     return { name: g.name, source: g.source, pass: r === true, detail: r === true ? null : r };
   });
 }

@@ -6,20 +6,21 @@
   "common.mjs": "a09ac46a0d78ad7c",
   "census.mjs": "babf4d67b76c6153",
   "currency.mjs": "c41883e76159772f",
-  "legacy.mjs": "0a8fd2f4ce41bcdd",
+  "legacy.mjs": "136c55e08df03ca8",
   "anchors.mjs": "dcef53df6eaa3f87",
   "d0-knn.mjs": "f1b435699327e5e0",
   "d1-shortcut.mjs": "fd377e498af87c99",
   "d2-cofailure.mjs": "694710c793e39674",
-  "d3-signals.mjs": "5307ba9da4580394",
-  "d4-fragility.mjs": "acfe793690df2a55",
+  "d3-signals.mjs": "5b73f284fb916f38",
+  "d4-fragility.mjs": "70c082107e55d654",
   "d5-guard.mjs": "4f6d8ac26f1bc14a",
-  "d6-cost.mjs": "982967954b24aa20",
+  "d6-cost.mjs": "36c5426459230d5a",
+  "launch-env.mjs": "4db88aa2580a632c",
   "rescue.mjs": "69a0f77b8e7596e0",
-  "metrics.mjs": "65b310661d8670ec",
-  "harvest.mjs": "19a41592faad7bd8",
+  "metrics.mjs": "ef92d118c2b403bd",
+  "harvest.mjs": "2bbc694cb3121a88",
   "features.mjs": "748d34eb086a3d58",
-  "meter-gate.mjs": "51383b8c89298bd5"
+  "meter-gate.mjs": "edd67191a61c95c4"
  },
  "inputs": {
   "legacySources": [
@@ -142,6 +143,32 @@
    "jit-dev-records-1 jit-HH records:dev:d4:s223: costUnknown, recorded $2.273; already at or above the $2 per-task bound (arm.json agentBudgetUsd), nothing to impute",
    "jit-r0-kinetics jit-OH kinetics:dev:d4:s228: costUnknown, recorded $0.660; imputed $1.340 up to the $2 per-task bound (arm.json agentBudgetUsd)"
   ],
+  "skippedStreams": [],
+  "ceilingRule": {
+   "cheapBuilder": "haiku",
+   "ceilingBuilders": [
+    "opus",
+    "sonnet"
+   ],
+   "byBuilder": {
+    "haiku": [
+     "wf-H",
+     "script-H",
+     "static-b1h",
+     "jit-HH"
+    ],
+    "opus": [
+     "hand-H",
+     "hand-S",
+     "wf-O",
+     "script-O",
+     "jit-OH"
+    ],
+    "sonnet": [
+     "jit-SH"
+    ]
+   }
+  },
   "p1Authoring": {
    "usd": 24.91,
    "lowerBound": true,
@@ -476,8 +503,8 @@
    },
    {
     "path": "research/need-router-20261014/prereg/stages.json",
-    "sha256": "1584a69d758943983d3b2f21a3fd14203479bc43edf325d87156d87aef6d9c5f",
-    "bytes": 76283
+    "sha256": "15c2496135721b794c42fc1e7b5ea324f26c64169ec0bc2aa29b6e00ba5b6993",
+    "bytes": 85260
    }
   ],
   "censusErrors": [],
@@ -4804,8 +4831,8 @@
   "sources": [
    {
     "path": "research/need-router-20261014/prereg/stages.json",
-    "sha256": "1584a69d758943983d3b2f21a3fd14203479bc43edf325d87156d87aef6d9c5f",
-    "bytes": 76283
+    "sha256": "15c2496135721b794c42fc1e7b5ea324f26c64169ec0bc2aa29b6e00ba5b6993",
+    "bytes": 85260
    },
    {
     "path": "research/need-router-20261014/features-census.json",
@@ -7411,6 +7438,7 @@
      "logTools": 0.612,
      "logCost": 0.528
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.685,
      "postHoc": 0.528,
@@ -7463,6 +7491,7 @@
      "logCost": 0.775,
      "logTokensOut": 0.73
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.635,
      "postHoc": 0.775,
@@ -7531,6 +7560,7 @@
      "logCost": 0.904,
      "logTokensOut": 0.923
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.471,
      "postHoc": 0.904,
@@ -7599,6 +7629,7 @@
      "logCost": 0.382,
      "logTokensOut": 0.409
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.364,
      "postHoc": 0.382,
@@ -7704,6 +7735,7 @@
      "logTools": 0.344,
      "logCost": 0.625
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.125,
      "postHoc": 0.625,
@@ -7912,6 +7944,7 @@
      "logCost": 1,
      "logCalls": 1
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.5,
      "postHoc": 1,
@@ -8030,6 +8063,7 @@
      "logTools": 0.447,
      "logCost": 0.6
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.32,
      "postHoc": 0.6,
@@ -8111,6 +8145,7 @@
      "logTools": 0.345,
      "logCost": 0.4
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.836,
      "postHoc": 0.4,
@@ -8165,6 +8200,7 @@
      "logTools": 0.308,
      "logCost": 0.467
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.45,
      "postHoc": 0.467,
@@ -8230,6 +8266,7 @@
      "logTools": 0.41,
      "logCost": 0.433
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.299,
      "postHoc": 0.433,
@@ -8295,6 +8332,7 @@
      "logTools": 0.73,
      "logCost": 0.365
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.317,
      "postHoc": 0.365,
@@ -8357,6 +8395,7 @@
      "logTools": 0.444,
      "logCost": 0.352
     },
+    "postHocPartlyRecorded": {},
     "primary": {
      "exAnte": 0.408,
      "postHoc": 0.352,
@@ -8520,6 +8559,7 @@
      "below": 0
     }
    },
+   "postHocPartlyRecorded": [],
    "selfVerdict": {
     "arms": 3,
     "oracleFailures": 6,
@@ -8668,11 +8708,10 @@
     },
     "headline": {
      "1": {
-      "label": "no-workflow",
-      "top": "agent-H",
-      "acceptable": [
-       "agent-H"
-      ],
+      "label": "unlabelled",
+      "unlabelled": "imputed dollars over 0.3 in direct-H-med",
+      "top": null,
+      "acceptable": null,
       "u": {
        "direct-H45": -1.0551,
        "direct-S": 0.3086,
@@ -8683,11 +8722,10 @@
       }
      },
      "2": {
-      "label": "no-workflow",
-      "top": "direct-H",
-      "acceptable": [
-       "direct-H"
-      ],
+      "label": "unlabelled",
+      "unlabelled": "imputed dollars over 0.3 in direct-H",
+      "top": null,
+      "acceptable": null,
       "u": {
        "direct-H45": -1.0551,
        "direct-S": 0.642,
@@ -8699,6 +8737,7 @@
      },
      "0.5": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
@@ -8715,7 +8754,7 @@
     },
     "labelCounts": {
      "workflow": 0,
-     "no-workflow": 27,
+     "no-workflow": 6,
      "either": 0
     },
     "workflowCells": [],
@@ -8725,23 +8764,29 @@
     },
     "headlineTopChanges": {
      "half": false,
-     "double": true
+     "double": false
     },
     "grid": {
      "cells": 27,
+     "labelled": 6,
+     "unlabelled": 21,
+     "unlabelledReasons": {
+      "imputed dollars over 0.3 in direct-H-med": 12,
+      "imputed dollars over 0.3 in direct-H, direct-H-med, direct-H-notes": 9
+     },
      "flipped": 0,
      "fragile": false,
      "flippedCells": [],
-     "topChangedCells": 18
+     "lostLabelCells": 3,
+     "topChangedCells": 3
     },
     "ceiling": {
      "headline": {
       "1": {
-       "label": "no-workflow",
-       "top": "agent-H",
-       "acceptable": [
-        "agent-H"
-       ],
+       "label": "unlabelled",
+       "unlabelled": "imputed dollars over 0.3 in direct-H-med",
+       "top": null,
+       "acceptable": null,
        "u": {
         "direct-H45": -1.0551,
         "direct-S": 0.3086,
@@ -8754,11 +8799,10 @@
        }
       },
       "2": {
-       "label": "no-workflow",
-       "top": "direct-H",
-       "acceptable": [
-        "direct-H"
-       ],
+       "label": "unlabelled",
+       "unlabelled": "imputed dollars over 0.3 in direct-H",
+       "top": null,
+       "acceptable": null,
        "u": {
         "direct-H45": -1.0551,
         "direct-S": 0.642,
@@ -8772,6 +8816,7 @@
       },
       "0.5": {
        "label": "no-workflow",
+       "unlabelled": null,
        "top": "agent-H",
        "acceptable": [
         "agent-H"
@@ -8789,14 +8834,13 @@
       }
      },
      "labelCounts": {
-      "workflow": 8,
-      "no-workflow": 18,
+      "workflow": 7,
+      "no-workflow": 4,
       "either": 1
      },
      "workflowCells": [
       "V=10 N=10 W=1V",
       "V=1 N=100 W=1V",
-      "V=0.1 N=100 W=10V",
       "V=1 N=100 W=10V",
       "V=10 N=10 W=10V",
       "V=10 N=100 W=1V",
@@ -8809,11 +8853,17 @@
      },
      "headlineTopChanges": {
       "half": false,
-      "double": true
+      "double": false
      },
      "grid": {
       "cells": 27,
-      "flipped": 3,
+      "labelled": 12,
+      "unlabelled": 15,
+      "unlabelledReasons": {
+       "imputed dollars over 0.3 in direct-H-med": 6,
+       "imputed dollars over 0.3 in direct-H, direct-H-med, direct-H-notes": 9
+      },
+      "flipped": 1,
       "fragile": true,
       "flippedCells": [
        {
@@ -8821,21 +8871,10 @@
         "cell": "V=10 N=10 W=1V",
         "nominal": "workflow",
         "0.5": "workflow"
-       },
-       {
-        "2": "either",
-        "cell": "V=1 N=100 W=1V",
-        "nominal": "workflow",
-        "0.5": "workflow"
-       },
-       {
-        "2": "no-workflow",
-        "cell": "V=0.1 N=100 W=10V",
-        "nominal": "workflow",
-        "0.5": "workflow"
        }
       ],
-      "topChangedCells": 14
+      "lostLabelCells": 5,
+      "topChangedCells": 3
      }
     }
    },
@@ -8966,6 +9005,7 @@
     "headline": {
      "1": {
       "label": "workflow",
+      "unlabelled": null,
       "top": "script-H",
       "acceptable": [
        "script-H"
@@ -8979,6 +9019,7 @@
      },
      "2": {
       "label": "workflow",
+      "unlabelled": null,
       "top": "script-H",
       "acceptable": [
        "script-H"
@@ -8992,6 +9033,7 @@
      },
      "0.5": {
       "label": "workflow",
+      "unlabelled": null,
       "top": "script-H",
       "acceptable": [
        "script-H"
@@ -9039,15 +9081,20 @@
     },
     "grid": {
      "cells": 27,
+     "labelled": 27,
+     "unlabelled": 0,
+     "unlabelledReasons": {},
      "flipped": 0,
      "fragile": false,
      "flippedCells": [],
+     "lostLabelCells": 0,
      "topChangedCells": 2
     },
     "ceiling": {
      "headline": {
       "1": {
        "label": "workflow",
+       "unlabelled": null,
        "top": "script-H",
        "acceptable": [
         "script-H"
@@ -9063,6 +9110,7 @@
       },
       "2": {
        "label": "workflow",
+       "unlabelled": null,
        "top": "script-H",
        "acceptable": [
         "script-H"
@@ -9078,6 +9126,7 @@
       },
       "0.5": {
        "label": "workflow",
+       "unlabelled": null,
        "top": "script-H",
        "acceptable": [
         "script-H"
@@ -9127,9 +9176,13 @@
      },
      "grid": {
       "cells": 27,
+      "labelled": 27,
+      "unlabelled": 0,
+      "unlabelledReasons": {},
       "flipped": 0,
       "fragile": false,
       "flippedCells": [],
+      "lostLabelCells": 0,
       "topChangedCells": 2
      }
     }
@@ -9241,6 +9294,20 @@
        "agent-O",
        "agent-S",
        "jit-HH",
+       "static-b1h"
+      ],
+      "workflowModes": [
+       "jit-HH",
+       "static-b1h"
+      ],
+      "vacuous": false
+     },
+     "ceiling": {
+      "modes": [
+       "agent-H",
+       "agent-O",
+       "agent-S",
+       "jit-HH",
        "jit-OH",
        "jit-SH",
        "static-b1h"
@@ -9251,13 +9318,16 @@
        "jit-SH",
        "static-b1h"
       ],
-      "vacuous": false
-     },
-     "ceiling": null
+      "extra": [
+       "jit-OH",
+       "jit-SH"
+      ]
+     }
     },
     "headline": {
      "1": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-O",
       "acceptable": [
        "agent-O"
@@ -9267,13 +9337,12 @@
        "agent-O": 0.4077,
        "agent-S": -0.2218,
        "jit-HH": -0.4267,
-       "jit-OH": 0.0531,
-       "jit-SH": 0.1701,
        "static-b1h": 0.1458
       }
      },
      "2": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
@@ -9283,13 +9352,12 @@
        "agent-O": 0.4077,
        "agent-S": 0.4448,
        "jit-HH": -0.01,
-       "jit-OH": 0.2198,
-       "jit-SH": 0.1701,
        "static-b1h": 0.3958
       }
      },
      "0.5": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-O",
       "acceptable": [
        "agent-O"
@@ -9299,19 +9367,16 @@
        "agent-O": 0.4077,
        "agent-S": -0.3052,
        "jit-HH": -0.51,
-       "jit-OH": -0.0302,
-       "jit-SH": 0.0034,
        "static-b1h": -0.0209
       }
      }
     },
     "labelCounts": {
-     "workflow": 5,
-     "no-workflow": 22,
+     "workflow": 4,
+     "no-workflow": 23,
      "either": 0
     },
     "workflowCells": [
-     "V=1 N=100 W=1V",
      "V=0.1 N=100 W=1V",
      "V=0.1 N=100 W=0V",
      "V=0.1 N=100 W=10V",
@@ -9327,12 +9392,120 @@
     },
     "grid": {
      "cells": 27,
-     "flipped": 0,
-     "fragile": false,
-     "flippedCells": [],
+     "labelled": 27,
+     "unlabelled": 0,
+     "unlabelledReasons": {},
+     "flipped": 3,
+     "fragile": true,
+     "flippedCells": [
+      {
+       "2": "workflow",
+       "cell": "V=1 N=100 W=1V",
+       "nominal": "no-workflow",
+       "0.5": "no-workflow"
+      },
+      {
+       "2": "workflow",
+       "cell": "V=0.1 N=100 W=10V",
+       "nominal": "workflow",
+       "0.5": "no-workflow"
+      },
+      {
+       "2": "workflow",
+       "cell": "V=1 N=100 W=0V",
+       "nominal": "workflow",
+       "0.5": "either"
+      }
+     ],
+     "lostLabelCells": 0,
      "topChangedCells": 4
     },
-    "ceiling": null
+    "ceiling": {
+     "headline": {
+      "1": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-O",
+       "acceptable": [
+        "agent-O"
+       ],
+       "u": {
+        "agent-H": 0.1441,
+        "agent-O": 0.4077,
+        "agent-S": -0.2218,
+        "jit-HH": -0.4267,
+        "jit-OH": 0.0531,
+        "jit-SH": 0.1701,
+        "static-b1h": 0.1458
+       }
+      },
+      "2": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "agent-H": 0.4774,
+        "agent-O": 0.4077,
+        "agent-S": 0.4448,
+        "jit-HH": -0.01,
+        "jit-OH": 0.2198,
+        "jit-SH": 0.1701,
+        "static-b1h": 0.3958
+       }
+      },
+      "0.5": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-O",
+       "acceptable": [
+        "agent-O"
+       ],
+       "u": {
+        "agent-H": 0.1441,
+        "agent-O": 0.4077,
+        "agent-S": -0.3052,
+        "jit-HH": -0.51,
+        "jit-OH": -0.0302,
+        "jit-SH": 0.0034,
+        "static-b1h": -0.0209
+       }
+      }
+     },
+     "labelCounts": {
+      "workflow": 5,
+      "no-workflow": 22,
+      "either": 0
+     },
+     "workflowCells": [
+      "V=1 N=100 W=1V",
+      "V=0.1 N=100 W=1V",
+      "V=0.1 N=100 W=0V",
+      "V=0.1 N=100 W=10V",
+      "V=1 N=100 W=0V"
+     ],
+     "headlineFlips": {
+      "half": false,
+      "double": false
+     },
+     "headlineTopChanges": {
+      "half": false,
+      "double": true
+     },
+     "grid": {
+      "cells": 27,
+      "labelled": 27,
+      "unlabelled": 0,
+      "unlabelledReasons": {},
+      "flipped": 0,
+      "fragile": false,
+      "flippedCells": [],
+      "lostLabelCells": 0,
+      "topChangedCells": 4
+     }
+    }
    },
    {
     "job": "jit-r0-records",
@@ -9403,6 +9576,7 @@
     "headline": {
      "1": {
       "label": "workflow",
+      "unlabelled": null,
       "top": "jit-HH",
       "acceptable": [
        "jit-HH"
@@ -9414,6 +9588,7 @@
      },
      "2": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
@@ -9425,6 +9600,7 @@
      },
      "0.5": {
       "label": "workflow",
+      "unlabelled": null,
       "top": "jit-HH",
       "acceptable": [
        "jit-HH"
@@ -9466,6 +9642,9 @@
     },
     "grid": {
      "cells": 27,
+     "labelled": 27,
+     "unlabelled": 0,
+     "unlabelledReasons": {},
      "flipped": 2,
      "fragile": true,
      "flippedCells": [
@@ -9482,6 +9661,7 @@
        "0.5": "workflow"
       }
      ],
+     "lostLabelCells": 0,
      "topChangedCells": 2
     },
     "ceiling": null
@@ -9571,6 +9751,17 @@
       "modes": [
        "agent-H",
        "agent-S",
+       "jit-HH"
+      ],
+      "workflowModes": [
+       "jit-HH"
+      ],
+      "vacuous": false
+     },
+     "ceiling": {
+      "modes": [
+       "agent-H",
+       "agent-S",
        "jit-HH",
        "jit-OH",
        "jit-SH"
@@ -9580,13 +9771,16 @@
        "jit-OH",
        "jit-SH"
       ],
-      "vacuous": false
-     },
-     "ceiling": null
+      "extra": [
+       "jit-OH",
+       "jit-SH"
+      ]
+     }
     },
     "headline": {
      "1": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
@@ -9594,13 +9788,12 @@
       "u": {
        "agent-H": 0.4396,
        "agent-S": 0.2289,
-       "jit-HH": -0.8365,
-       "jit-OH": -0.8765,
-       "jit-SH": -1.838
+       "jit-HH": -0.8365
       }
      },
      "2": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
@@ -9608,13 +9801,12 @@
       "u": {
        "agent-H": 0.4396,
        "agent-S": 0.2289,
-       "jit-HH": -0.8365,
-       "jit-OH": -0.8765,
-       "jit-SH": -1.838
+       "jit-HH": -0.8365
       }
      },
      "0.5": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
@@ -9622,27 +9814,16 @@
       "u": {
        "agent-H": 0.4396,
        "agent-S": 0.0623,
-       "jit-HH": -1.0032,
-       "jit-OH": -0.8765,
-       "jit-SH": -1.838
+       "jit-HH": -1.0032
       }
      }
     },
     "labelCounts": {
-     "workflow": 8,
-     "no-workflow": 18,
-     "either": 1
+     "workflow": 0,
+     "no-workflow": 27,
+     "either": 0
     },
-    "workflowCells": [
-     "V=10 N=10 W=1V",
-     "V=1 N=10 W=10V",
-     "V=1 N=100 W=10V",
-     "V=10 N=1 W=10V",
-     "V=10 N=10 W=10V",
-     "V=10 N=100 W=1V",
-     "V=10 N=100 W=0V",
-     "V=10 N=100 W=10V"
-    ],
+    "workflowCells": [],
     "headlineFlips": {
      "half": false,
      "double": false
@@ -9653,12 +9834,98 @@
     },
     "grid": {
      "cells": 27,
+     "labelled": 27,
+     "unlabelled": 0,
+     "unlabelledReasons": {},
      "flipped": 0,
      "fragile": false,
      "flippedCells": [],
+     "lostLabelCells": 0,
      "topChangedCells": 0
     },
-    "ceiling": null
+    "ceiling": {
+     "headline": {
+      "1": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "agent-H": 0.4396,
+        "agent-S": 0.2289,
+        "jit-HH": -0.8365,
+        "jit-OH": -0.8765,
+        "jit-SH": -1.838
+       }
+      },
+      "2": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "agent-H": 0.4396,
+        "agent-S": 0.2289,
+        "jit-HH": -0.8365,
+        "jit-OH": -0.8765,
+        "jit-SH": -1.838
+       }
+      },
+      "0.5": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "agent-H": 0.4396,
+        "agent-S": 0.0623,
+        "jit-HH": -1.0032,
+        "jit-OH": -0.8765,
+        "jit-SH": -1.838
+       }
+      }
+     },
+     "labelCounts": {
+      "workflow": 8,
+      "no-workflow": 18,
+      "either": 1
+     },
+     "workflowCells": [
+      "V=10 N=10 W=1V",
+      "V=1 N=10 W=10V",
+      "V=1 N=100 W=10V",
+      "V=10 N=1 W=10V",
+      "V=10 N=10 W=10V",
+      "V=10 N=100 W=1V",
+      "V=10 N=100 W=0V",
+      "V=10 N=100 W=10V"
+     ],
+     "headlineFlips": {
+      "half": false,
+      "double": false
+     },
+     "headlineTopChanges": {
+      "half": false,
+      "double": false
+     },
+     "grid": {
+      "cells": 27,
+      "labelled": 27,
+      "unlabelled": 0,
+      "unlabelledReasons": {},
+      "flipped": 0,
+      "fragile": false,
+      "flippedCells": [],
+      "lostLabelCells": 0,
+      "topChangedCells": 0
+     }
+    }
    },
    {
     "job": "jit-r0-kinetics",
@@ -9714,67 +9981,65 @@
     "labelSets": {
      "today": {
       "modes": [
+       "agent-H"
+      ],
+      "workflowModes": [],
+      "vacuous": true
+     },
+     "ceiling": {
+      "modes": [
        "agent-H",
        "jit-OH"
       ],
       "workflowModes": [
        "jit-OH"
       ],
-      "vacuous": false
-     },
-     "ceiling": null
+      "extra": [
+       "jit-OH"
+      ]
+     }
     },
     "headline": {
      "1": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
       ],
       "u": {
-       "agent-H": -0.0606,
-       "jit-OH": -2.3212
+       "agent-H": -0.0606
       }
      },
      "2": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
       ],
       "u": {
-       "agent-H": -0.0606,
-       "jit-OH": -2.1784
+       "agent-H": -0.0606
       }
      },
      "0.5": {
       "label": "no-workflow",
+      "unlabelled": null,
       "top": "agent-H",
       "acceptable": [
        "agent-H"
       ],
       "u": {
-       "agent-H": -0.0606,
-       "jit-OH": -2.3212
+       "agent-H": -0.0606
       }
      }
     },
     "labelCounts": {
-     "workflow": 9,
-     "no-workflow": 17,
-     "either": 1
+     "workflow": 0,
+     "no-workflow": 27,
+     "either": 0
     },
-    "workflowCells": [
-     "V=10 N=10 W=1V",
-     "V=1 N=10 W=10V",
-     "V=1 N=100 W=10V",
-     "V=10 N=1 W=10V",
-     "V=10 N=10 W=0V",
-     "V=10 N=10 W=10V",
-     "V=10 N=100 W=1V",
-     "V=10 N=100 W=0V",
-     "V=10 N=100 W=10V"
-    ],
+    "workflowCells": [],
     "headlineFlips": {
      "half": false,
      "double": false
@@ -9785,19 +10050,97 @@
     },
     "grid": {
      "cells": 27,
-     "flipped": 1,
-     "fragile": true,
-     "flippedCells": [
-      {
-       "2": "workflow",
-       "cell": "V=1 N=100 W=1V",
-       "nominal": "either",
-       "0.5": "either"
-      }
-     ],
-     "topChangedCells": 1
+     "labelled": 27,
+     "unlabelled": 0,
+     "unlabelledReasons": {},
+     "flipped": 0,
+     "fragile": false,
+     "flippedCells": [],
+     "lostLabelCells": 0,
+     "topChangedCells": 0
     },
-    "ceiling": null
+    "ceiling": {
+     "headline": {
+      "1": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "agent-H": -0.0606,
+        "jit-OH": -2.3212
+       }
+      },
+      "2": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "agent-H": -0.0606,
+        "jit-OH": -2.1784
+       }
+      },
+      "0.5": {
+       "label": "no-workflow",
+       "unlabelled": null,
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "agent-H": -0.0606,
+        "jit-OH": -2.3212
+       }
+      }
+     },
+     "labelCounts": {
+      "workflow": 9,
+      "no-workflow": 17,
+      "either": 1
+     },
+     "workflowCells": [
+      "V=10 N=10 W=1V",
+      "V=1 N=10 W=10V",
+      "V=1 N=100 W=10V",
+      "V=10 N=1 W=10V",
+      "V=10 N=10 W=0V",
+      "V=10 N=10 W=10V",
+      "V=10 N=100 W=1V",
+      "V=10 N=100 W=0V",
+      "V=10 N=100 W=10V"
+     ],
+     "headlineFlips": {
+      "half": false,
+      "double": false
+     },
+     "headlineTopChanges": {
+      "half": false,
+      "double": false
+     },
+     "grid": {
+      "cells": 27,
+      "labelled": 27,
+      "unlabelled": 0,
+      "unlabelledReasons": {},
+      "flipped": 1,
+      "fragile": true,
+      "flippedCells": [
+       {
+        "2": "workflow",
+        "cell": "V=1 N=100 W=1V",
+        "nominal": "either",
+        "0.5": "either"
+       }
+      ],
+      "lostLabelCells": 0,
+      "topChangedCells": 1
+     }
+    }
    }
   ],
   "recordsMismatches": {
@@ -9818,36 +10161,68 @@
   "summary": {
    "jobs": 6,
    "fragileJobs": [
-    "jit-r0-records",
-    "jit-r0-kinetics"
+    "jit-dev-records-1",
+    "jit-r0-records"
    ],
    "fragileAtHeadline": [
     "jit-r0-records"
    ],
    "vacuousJobs": [
-    "p1-records"
+    "p1-records",
+    "jit-r0-kinetics"
    ],
    "ceilingJobs": [
     "p1-records",
-    "c0-dev-records"
+    "c0-dev-records",
+    "jit-dev-records-1",
+    "jit-dev-kinetics-1",
+    "jit-r0-kinetics"
    ],
    "ceilingFragileJobs": [
-    "p1-records"
+    "p1-records",
+    "jit-r0-kinetics"
    ],
    "ceilingFragileAtHeadline": [],
    "rowsTotal": 616,
    "lostAtHalf": 17,
    "gainedAtDouble": 45,
    "nominalReproduced": true,
-   "flippedCells": 3,
+   "flippedCells": 5,
    "cells": 162,
-   "topChangedCells": 27,
+   "labelledCells": 141,
+   "unlabelledCells": 21,
+   "unlabelledByJob": {
+    "p1-records": {
+     "today": 21,
+     "ceiling": 15
+    },
+    "c0-dev-records": {
+     "today": 0,
+     "ceiling": 0
+    },
+    "jit-dev-records-1": {
+     "today": 0,
+     "ceiling": 0
+    },
+    "jit-r0-records": {
+     "today": 0,
+     "ceiling": null
+    },
+    "jit-dev-kinetics-1": {
+     "today": 0,
+     "ceiling": 0
+    },
+    "jit-r0-kinetics": {
+     "today": 0,
+     "ceiling": 0
+    }
+   },
+   "topChangedCells": 11,
    "jobsWithTopChange": [
     "p1-records",
     "c0-dev-records",
     "jit-dev-records-1",
-    "jit-r0-records",
-    "jit-r0-kinetics"
+    "jit-r0-records"
    ]
   }
  },
@@ -10389,8 +10764,8 @@
   "sources": [
    {
     "path": "research/need-router-20261014/prereg/stages.json",
-    "sha256": "1584a69d758943983d3b2f21a3fd14203479bc43edf325d87156d87aef6d9c5f",
-    "bytes": 76283
+    "sha256": "15c2496135721b794c42fc1e7b5ea324f26c64169ec0bc2aa29b6e00ba5b6993",
+    "bytes": 85260
    }
   ],
   "builderSessions": {
@@ -11050,20 +11425,28 @@
     ],
     "cells": 27,
     "reported": {
-     "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "unlabelledCells": 21,
+     "headlineLabel": "unlabelled",
+     "headlineTop": null,
+     "headlineUnlabelled": "imputed dollars over 0.3 in direct-H-med"
     },
     "p5": {
      "labelFlips": 0,
      "topChanges": 0,
-     "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "comparableCells": 6,
+     "unlabelledCells": 21,
+     "headlineLabel": "unlabelled",
+     "headlineTop": null,
+     "headlineUnlabelled": "imputed dollars over 0.3 in direct-H-med"
     },
     "p1h": {
      "labelFlips": 0,
      "topChanges": 0,
-     "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "comparableCells": 3,
+     "unlabelledCells": 24,
+     "headlineLabel": "unlabelled",
+     "headlineTop": null,
+     "headlineUnlabelled": "imputed dollars over 0.3 in direct-H, direct-H-med"
     },
     "labelSets": {
      "today": {
@@ -11101,20 +11484,28 @@
     },
     "ceiling": {
      "reported": {
-      "headlineTop": "agent-H",
-      "headlineLabel": "no-workflow"
+      "unlabelledCells": 15,
+      "headlineLabel": "unlabelled",
+      "headlineTop": null,
+      "headlineUnlabelled": "imputed dollars over 0.3 in direct-H-med"
      },
      "p5": {
-      "labelFlips": 1,
-      "topChanges": 2,
-      "headlineTop": "agent-H",
-      "headlineLabel": "no-workflow"
+      "labelFlips": 0,
+      "topChanges": 1,
+      "comparableCells": 12,
+      "unlabelledCells": 15,
+      "headlineLabel": "unlabelled",
+      "headlineTop": null,
+      "headlineUnlabelled": "imputed dollars over 0.3 in direct-H-med"
      },
      "p1h": {
       "labelFlips": 0,
       "topChanges": 0,
-      "headlineTop": "agent-H",
-      "headlineLabel": "no-workflow"
+      "comparableCells": 10,
+      "unlabelledCells": 17,
+      "headlineLabel": "unlabelled",
+      "headlineTop": null,
+      "headlineUnlabelled": "imputed dollars over 0.3 in direct-H, direct-H-med"
      }
     }
    },
@@ -11126,20 +11517,28 @@
     ],
     "cells": 27,
     "reported": {
+     "unlabelledCells": 0,
+     "headlineLabel": "workflow",
      "headlineTop": "script-H",
-     "headlineLabel": "workflow"
+     "headlineUnlabelled": null
     },
     "p5": {
      "labelFlips": 12,
      "topChanges": 10,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "either",
      "headlineTop": "agent-O",
-     "headlineLabel": "either"
+     "headlineUnlabelled": null
     },
     "p1h": {
      "labelFlips": 6,
      "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "workflow",
      "headlineTop": "script-H",
-     "headlineLabel": "workflow"
+     "headlineUnlabelled": null
     },
     "labelSets": {
      "today": {
@@ -11178,20 +11577,28 @@
     },
     "ceiling": {
      "reported": {
+      "unlabelledCells": 0,
+      "headlineLabel": "workflow",
       "headlineTop": "script-H",
-      "headlineLabel": "workflow"
+      "headlineUnlabelled": null
      },
      "p5": {
       "labelFlips": 12,
       "topChanges": 10,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "either",
       "headlineTop": "agent-O",
-      "headlineLabel": "either"
+      "headlineUnlabelled": null
      },
      "p1h": {
       "labelFlips": 6,
       "topChanges": 0,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "workflow",
       "headlineTop": "script-H",
-      "headlineLabel": "workflow"
+      "headlineUnlabelled": null
      }
     }
    },
@@ -11203,20 +11610,28 @@
     ],
     "cells": 27,
     "reported": {
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "p5": {
      "labelFlips": 0,
      "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "p1h": {
      "labelFlips": 3,
      "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "labelSets": {
      "today": {
@@ -11255,20 +11670,28 @@
     },
     "ceiling": {
      "reported": {
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
       "headlineTop": "agent-H",
-      "headlineLabel": "no-workflow"
+      "headlineUnlabelled": null
      },
      "p5": {
       "labelFlips": 0,
       "topChanges": 0,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
       "headlineTop": "agent-H",
-      "headlineLabel": "no-workflow"
+      "headlineUnlabelled": null
      },
      "p1h": {
       "labelFlips": 3,
       "topChanges": 0,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
       "headlineTop": "agent-H",
-      "headlineLabel": "no-workflow"
+      "headlineUnlabelled": null
      }
     }
    },
@@ -11281,23 +11704,45 @@
     ],
     "cells": 27,
     "reported": {
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-O",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "p5": {
-     "labelFlips": 3,
-     "topChanges": 7,
+     "labelFlips": 2,
+     "topChanges": 6,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-O",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "p1h": {
-     "labelFlips": 3,
-     "topChanges": 7,
+     "labelFlips": 2,
+     "topChanges": 6,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-O",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "labelSets": {
      "today": {
+      "modes": [
+       "agent-H",
+       "agent-O",
+       "agent-S",
+       "jit-HH",
+       "static-b1h"
+      ],
+      "workflowModes": [
+       "jit-HH",
+       "static-b1h"
+      ],
+      "vacuous": false
+     },
+     "ceiling": {
       "modes": [
        "agent-H",
        "agent-O",
@@ -11313,11 +11758,38 @@
        "jit-SH",
        "static-b1h"
       ],
-      "vacuous": false
-     },
-     "ceiling": null
+      "extra": [
+       "jit-OH",
+       "jit-SH"
+      ]
+     }
     },
-    "ceiling": null
+    "ceiling": {
+     "reported": {
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-O",
+      "headlineUnlabelled": null
+     },
+     "p5": {
+      "labelFlips": 3,
+      "topChanges": 7,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-O",
+      "headlineUnlabelled": null
+     },
+     "p1h": {
+      "labelFlips": 3,
+      "topChanges": 7,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-O",
+      "headlineUnlabelled": null
+     }
+    }
    },
    {
     "job": "jit-r0-records",
@@ -11326,20 +11798,28 @@
     ],
     "cells": 27,
     "reported": {
+     "unlabelledCells": 0,
+     "headlineLabel": "workflow",
      "headlineTop": "jit-HH",
-     "headlineLabel": "workflow"
+     "headlineUnlabelled": null
     },
     "p5": {
      "labelFlips": 0,
      "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "workflow",
      "headlineTop": "jit-HH",
-     "headlineLabel": "workflow"
+     "headlineUnlabelled": null
     },
     "p1h": {
      "labelFlips": 1,
      "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "workflow",
      "headlineTop": "jit-HH",
-     "headlineLabel": "workflow"
+     "headlineUnlabelled": null
     },
     "labelSets": {
      "today": {
@@ -11364,23 +11844,42 @@
     ],
     "cells": 27,
     "reported": {
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "p5": {
      "labelFlips": 0,
      "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "p1h": {
      "labelFlips": 0,
      "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "labelSets": {
      "today": {
+      "modes": [
+       "agent-H",
+       "agent-S",
+       "jit-HH"
+      ],
+      "workflowModes": [
+       "jit-HH"
+      ],
+      "vacuous": false
+     },
+     "ceiling": {
       "modes": [
        "agent-H",
        "agent-S",
@@ -11393,11 +11892,38 @@
        "jit-OH",
        "jit-SH"
       ],
-      "vacuous": false
-     },
-     "ceiling": null
+      "extra": [
+       "jit-OH",
+       "jit-SH"
+      ]
+     }
     },
-    "ceiling": null
+    "ceiling": {
+     "reported": {
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-H",
+      "headlineUnlabelled": null
+     },
+     "p5": {
+      "labelFlips": 0,
+      "topChanges": 0,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-H",
+      "headlineUnlabelled": null
+     },
+     "p1h": {
+      "labelFlips": 0,
+      "topChanges": 0,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-H",
+      "headlineUnlabelled": null
+     }
+    }
    },
    {
     "job": "jit-r0-kinetics",
@@ -11406,23 +11932,38 @@
     ],
     "cells": 27,
     "reported": {
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "p5": {
      "labelFlips": 0,
-     "topChanges": 1,
+     "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "p1h": {
-     "labelFlips": 1,
-     "topChanges": 1,
+     "labelFlips": 0,
+     "topChanges": 0,
+     "comparableCells": 27,
+     "unlabelledCells": 0,
+     "headlineLabel": "no-workflow",
      "headlineTop": "agent-H",
-     "headlineLabel": "no-workflow"
+     "headlineUnlabelled": null
     },
     "labelSets": {
      "today": {
+      "modes": [
+       "agent-H"
+      ],
+      "workflowModes": [],
+      "vacuous": true
+     },
+     "ceiling": {
       "modes": [
        "agent-H",
        "jit-OH"
@@ -11430,11 +11971,37 @@
       "workflowModes": [
        "jit-OH"
       ],
-      "vacuous": false
-     },
-     "ceiling": null
+      "extra": [
+       "jit-OH"
+      ]
+     }
     },
-    "ceiling": null
+    "ceiling": {
+     "reported": {
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-H",
+      "headlineUnlabelled": null
+     },
+     "p5": {
+      "labelFlips": 0,
+      "topChanges": 1,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-H",
+      "headlineUnlabelled": null
+     },
+     "p1h": {
+      "labelFlips": 1,
+      "topChanges": 1,
+      "comparableCells": 27,
+      "unlabelledCells": 0,
+      "headlineLabel": "no-workflow",
+      "headlineTop": "agent-H",
+      "headlineUnlabelled": null
+     }
+    }
    }
   ],
   "summary": {
@@ -11510,13 +12077,14 @@
    "meterChangesLabels": true,
    "jobsAffected": [
     "c0-dev-records",
-    "jit-dev-records-1",
-    "jit-r0-kinetics"
+    "jit-dev-records-1"
    ],
    "meterChangesCeilingLabels": true,
    "ceilingJobsAffected": [
     "p1-records",
-    "c0-dev-records"
+    "c0-dev-records",
+    "jit-dev-records-1",
+    "jit-r0-kinetics"
    ],
    "meterGate": {
     "schema": "need-meter-gate/1",
@@ -11564,6 +12132,57 @@
     ],
     "blocks": "a paid stage with an agent arm (agent-H, agent-O, agent-H+proc, construct-H, build-O): label-run.mjs refuses to start it",
     "clearedBy": "a passing meter-verification record: node experiments/need-router/meter-gate-cli.mjs --verify <transcript>... --write research/need-router-20261014/analysis/m0/meter-verification.json, on at least 2 saved CLI transcripts, each either with per-message output tokens within 5% of the final result usage or with a re-price that takes its output tokens from the final usage and lands within 10% of the CLI-reported cost; until then every agent session label-run prices is checked individually and a session that passes neither test is booked at the reported figure"
+   }
+  },
+  "launchEnv": {
+   "source": {
+    "path": "research/need-router-20261014/analysis/m0/launch-env.json",
+    "sha256": "9460316a5813643507351304ce5da47551c16fcec39e7bb6a549050de0078027",
+    "bytes": 234993
+   },
+   "measuredAt": "2026-10-15T07:25:06.865Z",
+   "after": "2026-10-08T20:55:17Z",
+   "priceTable": "need-v1-prices@2026-10-14",
+   "summary": {
+    "transcripts": 479,
+    "withFinalUsage": 336,
+    "skipped": 143,
+    "skippedReasons": {
+     "no usage or no CLI-reported cost in the final result": 140,
+     "no final result event (a session still running, or killed)": 3
+    },
+    "byModel": {
+     "claude-haiku-5-5": {
+      "sessions": 157,
+      "allWritesOneHour": 157,
+      "withCacheWrites": 157,
+      "exact1h": 92,
+      "exact5m": 0,
+      "exactBilledSplit": 92,
+      "medianRatio5mOverReported": 0.851,
+      "medianRatio1hOverReported": 1
+     },
+     "claude-opus-5-5": {
+      "sessions": 76,
+      "allWritesOneHour": 76,
+      "withCacheWrites": 76,
+      "exact1h": 76,
+      "exact5m": 0,
+      "exactBilledSplit": 76,
+      "medianRatio5mOverReported": 0.829,
+      "medianRatio1hOverReported": 1
+     },
+     "claude-sonnet-5-5": {
+      "sessions": 103,
+      "allWritesOneHour": 103,
+      "withCacheWrites": 103,
+      "exact1h": 103,
+      "exact5m": 0,
+      "exactBilledSplit": 103,
+      "medianRatio5mOverReported": 0.826,
+      "medianRatio1hOverReported": 1
+     }
+    }
    }
   }
  }

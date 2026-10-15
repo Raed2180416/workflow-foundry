@@ -4,6 +4,8 @@
 // No model call, no network. Inputs: the rescued archive (research/need-router-20261014/archive/, see rescue.mjs), the committed JIT stream
 // exports (research/jit-20261008/runs/), the feature census, prereg/stages.json, the corpus overlay and the E8 and runbook beds.
 //   node experiments/need-router/diagnostics/rescue.mjs                      once: copy the git-ignored P1 and C0-dev JSONL into the archive
+//   node experiments/need-router/diagnostics/launch-env.mjs --write           once per measurement: scan the saved CLI transcripts for the cache-write rate they were
+//                                                                            billed at, into analysis/m0/launch-env.json (this file, not the transcripts, is what run.mjs reads)
 //   node experiments/need-router/diagnostics/run.mjs [--only d0,d3 --out DIR] [--report] [--out DIR] [--check]
 // A run that skips a diagnostic (--only) may not write analysis/m0/diagnostics.json: label-run reads D6's cost-meter gate from that file, and a copy without
 // D6 would switch the gate off. A subset needs an --out directory other than analysis/m0 (its diagnostics.json then carries `partial`); --check takes no --only.

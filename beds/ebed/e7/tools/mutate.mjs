@@ -323,10 +323,21 @@ export function writeModuleSet(dir, m, sources) {
  * or wake-ups, closed or merged (gradeCase reads nothing else of it; the carry and the events it was given are dropped).
  */
 function reduceBucket(b) {
-  const out = o => (o ? { decisions: o.decisions ?? null, close: o.close ?? null, merge: o.merge ?? null, effects: o.effects?.length ? [0] : [], humanTasks: o.humanTasks?.length ? [0] : [],
+  const out = o => (o ? { decisions: o.decisions ?? null, close: o.close ?? null, merge: o.merge ? 1 : null, effects: o.effects?.length ? [0] : [], humanTasks: o.humanTasks?.length ? [0] : [],
     obligations: { upsert: o.obligations?.upsert?.length ? [0] : [] } } : null);
-  return { deliveries: b.deliveries, ledger: b.ledger, tasks: b.tasks, taskEvents: b.taskEvents,
-    calls: b.calls.map(k => ({ seq: k.seq, at: k.at, callId: k.callId, instance: k.instance, round: k.round, outcome: k.outcome, error: k.error ?? null, output: out(k.output) })) };
+  // Instance ids are journal-wide counters; within a case they are only compared for equality (task and answer keys,
+  // the instance named in a divergence), so they are renamed by first appearance in the case's own order.
+  const items = [...b.deliveries, ...b.calls, ...b.ledger, ...b.tasks, ...b.taskEvents].sort((x, y) => x.seq - y.seq);
+  const names = new Map();
+  for (const x of items) if (x.instance !== null && x.instance !== undefined && !names.has(x.instance)) names.set(x.instance, `I${names.size + 1}`);
+  const I = v => (v === null || v === undefined ? v : names.get(v) ?? v);
+  return {
+    deliveries: b.deliveries.map(d => ({ ...d, instance: I(d.instance) })),
+    ledger: b.ledger.map(r => ({ ...r, instance: I(r.instance) })),
+    tasks: b.tasks.map(t => ({ ...t, instance: I(t.instance) })),
+    taskEvents: b.taskEvents.map(e => ({ ...e, instance: I(e.instance) })),
+    calls: b.calls.map(k => ({ seq: k.seq, at: k.at, instance: I(k.instance), round: k.round, outcome: k.outcome, error: k.error ?? null, output: out(k.output) })),
+  };
 }
 
 /** A case's content as the grader reads it, with journal sequence numbers replaced by their rank. */
@@ -431,17 +442,17 @@ async function workerMain() {
   const EMPTY = { deliveries: [], ledger: [], tasks: [], taskEvents: [], calls: [] };
   const fd = v => (v.firstDivergence ? `${v.firstDivergence.layer}/${v.firstDivergence.code}/${v.firstDivergence.lid ?? v.firstDivergence.field ?? ''}` : '');
   const sigOf = v => `${v.pool === 'completed' ? `${v.pass ? 1 : 0}${v.oracleError ? 'E' : ''}:${fd(v)}` : '-'}|${v.critical.map(x => x.code).sort().join(',')}`;
-  /** Grade bucket i under an item; the bucket's ledger args go through the item's own canonicalArgs (memoised per item). */
-  const canonCache = new WeakMap();
-  const grade = (item, worldsFor, i) => {
+  /**
+   * Grade bucket i under an item. The bucket's ledger args go through the item's canonicalArgs: the original's once for
+   * every mutant that leaves canonicalArgs and utc alone (`shared`), the mutant's own, per mutant and never kept, for one
+   * that changes them (a cache keyed by a mutant's item would live as long as its module, i.e. for the worker's life).
+   */
+  const canon = (fn, x) => ({ ...x.bucket, ledger: x.bucket.ledger.map(r => ({ ...r, args: fn(r.system, r.op, structuredClone(r.args)) })) });   // a mutant may write into its input
+  const { canonicalArgs: originalCanon } = await import('../transition.mjs');
+  const shared = B.map(x => canon(originalCanon, x));
+  const grade = (item, worldsFor, i, own = false) => {
     const x = B[i];
-    let byItem = canonCache.get(item);
-    if (!byItem) { byItem = new Map(); canonCache.set(item, byItem); }
-    let b = byItem.get(i);
-    if (!b) {
-      b = { ...x.bucket, ledger: x.bucket.ledger.map(r => ({ ...r, args: item.canonicalArgs(r.system, r.op, r.args) })) };
-      byItem.set(i, b);
-    }
+    const b = own ? canon(item.canonicalArgs, x) : shared[i];
     const world = worldsFor[x.w];
     const idx = { world: W[x.w], horizonMs: Date.parse(W[x.w].horizonEnd), bucket: cc => (cc === x.c ? b : EMPTY) };
     return sigOf(gradeCase({ item, world, idx, c: x.c, pool: x.pool }));
@@ -463,17 +474,18 @@ async function workerMain() {
     try {
       const mod = await import(msg.urls.transition);
       const idxMod = await import(msg.urls.index);
-      const gold = runGoldens(mod.referenceTransition, mod.recordsOf).filter(g => !g.pass);
+      const gold = runGoldens(mod.referenceTransition, mod.recordsOf, mod.canonicalArgs).filter(g => !g.pass);
       out.goldenFails = gold.map(g => ({ name: g.name, detail: String(g.detail).slice(0, 300) }));
       out.goldenMs = Date.now() - t0;
       if (!msg.goldenOnly && (!gold.length || msg.corpusAlways)) {
+        parentPort.postMessage({ type: 'phase', id: msg.id, phase: 'corpus' });
         const t1 = Date.now();
         const item = idxMod.oracleItem;
         const wf = freshWorlds();
         let first = null, diffs = 0, graded = 0;
         for (let i = 0; i < B.length; i++) {
           let s;
-          try { s = grade(item, wf, i); } catch (e) { s = `THROW ${String(e?.message ?? e).slice(0, 120)}`; }
+          try { s = grade(item, wf, i, !!msg.canonical); } catch (e) { s = `THROW ${String(e?.message ?? e).slice(0, 120)}`; }
           graded += 1;
           if (s !== base[i]) {
             diffs += 1;
@@ -539,6 +551,13 @@ async function main() {
   const modDir = path.join(work, 'modules');
   rmSync(modDir, { recursive: true, force: true });
   const timeoutMs = Number(arg('--timeout', '0')) * 1000;
+  const goldenLimit = Number(arg('--golden-timeout', '60')) * 1000;
+  // Lines of transition.mjs whose mutants change what the grader's index reads (utc .. canonicalArgs): graded with their
+  // own canonicalArgs over the raw rows.
+  const tLines = sources.t.split('\n');
+  const canonSpan = [tLines.findIndex(l => l.startsWith('export const utc')), tLines.findIndex((l, i) => i > tLines.findIndex(x => x.startsWith('export function canonicalArgs')) && l === '}')];
+  if (canonSpan.some(i => i < 0)) throw new Error('transition.mjs: utc/canonicalArgs not found');
+  const corpusLimit = () => timeoutMs || Math.max(1_200_000, 60 * (baseMs ?? 30_000));   // cache-disabling mutants are slow, not wrong
   const recycle = Number(arg('--recycle', '30'));
   const jobs = Math.max(1, Number(arg('--jobs', '1')));
   let baseline = null, baseMs = null;
@@ -561,11 +580,12 @@ async function main() {
     const next = () => queue.shift();
     const spawn = slot => {
       const w = new Worker(fileURLToPath(import.meta.url), { workerData: { role: 'e7-mutate-worker', bucketsFile: corpus?.bucketsFile ?? null, worlds, baseline: corpus ? baseline : [] },
-        resourceLimits: { maxOldGenerationSizeMb: Number(arg('--heap-mb', '3072')) }, execArgv: [] });
+        resourceLimits: { maxOldGenerationSizeMb: Number(arg('--heap-mb', goldenOnly ? '768' : '2048')) }, execArgv: [] });
       slot.worker = w; slot.count = 0; slot.current = null; slot.ready = false;
       w.on('message', msg => {
         if (msg.type === 'baseline') { baseline = msg.sigs; baseMs = msg.ms; console.log(`baseline: ${msg.sigs.length} case contents graded in ${Math.round(msg.ms / 1000)} s`); }
         else if (msg.type === 'ready') { slot.ready = true; dispatch(slot); }
+        else if (msg.type === 'phase' && slot.current?.id === msg.id) arm(slot, corpusLimit());
         else if (msg.type === 'result') finish(slot, msg);
       });
       w.on('error', e => { if (slot.current) finish(slot, { type: 'result', id: slot.current.id, goldenFails: [], corpus: null, error: `worker: ${String(e?.message ?? e)}` }, true); else reject(e); });
@@ -579,19 +599,29 @@ async function main() {
       if (m.id !== 'identity' && !baseline && corpus) { queue.unshift(m); setTimeout(() => dispatch(slot), 500); return; }
       slot.current = m; slot.count += 1;
       const urls = writeModuleSet(path.join(modDir, m.id), m.file ? m : null, sources);
-      const limitMs = timeoutMs || Math.max(180_000, 6 * (baseMs ?? 60_000));
+      slot.started = Date.now();
+      arm(slot, m.id === 'identity' ? corpusLimit() : goldenLimit);
+      slot.worker.postMessage({ type: 'mutant', id: m.id, urls, goldenOnly, corpusAlways: corpusAlways || m.id === 'identity', allDiffs: allDiffs || m.id === 'identity',
+        canonical: m.id === 'identity' || (m.file === 't' && m.lines.some(ed => ed.i >= canonSpan[0] && ed.i <= canonSpan[1])) });
+    };
+    /** (Re)arm the slot's time limit: the goldens take well under a second, the corpus a multiple of the baseline pass. */
+    const arm = (slot, limitMs) => {
+      clearTimeout(slot.timer);
       slot.timer = setTimeout(() => {
         const cur = slot.current;
         slot.closing = true; slot.worker.terminate(); slot.closing = false;
-        finish(slot, { type: 'result', id: cur.id, goldenFails: [], corpus: null, error: null, timeout: true, ms: limitMs }, true);
+        finish(slot, { type: 'result', id: cur.id, goldenFails: [], corpus: null, error: null, timeout: true }, true);
       }, limitMs);
-      slot.worker.postMessage({ type: 'mutant', id: m.id, urls, goldenOnly, corpusAlways: corpusAlways || m.id === 'identity', allDiffs: allDiffs || m.id === 'identity' });
     };
     const finish = (slot, r, respawn = false) => {
       clearTimeout(slot.timer);
+      if (r.ms === undefined) r.ms = Date.now() - slot.started;
       const m = slot.current;
       slot.current = null;
       if (!m) return;
+      // A worker that died (memory, crash) after other mutants gets one retry in a fresh worker: what killed it may be
+      // the earlier mutants' leftovers, not this one.
+      if (respawn && !r.timeout && slot.count > 1 && !m.retried) { m.retried = true; queue.unshift(m); spawn(slot); return; }
       if (m.id === 'identity') {
         if (r.error || r.goldenFails.length || r.corpus?.diffs) { reject(new Error(`identity module set differs from the original: ${JSON.stringify(r).slice(0, 600)}`)); return; }
         console.log(`identity: goldens pass, corpus ${r.corpus ? `${r.corpus.diffs} differences in ${r.corpus.graded} (${Math.round(r.corpus.ms / 1000)} s)` : 'skipped'}`);

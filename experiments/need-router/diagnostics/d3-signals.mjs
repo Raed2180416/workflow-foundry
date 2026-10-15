@@ -6,7 +6,9 @@
 //   target      the oracle pass flag
 //   ex-ante     the 8 trusted structure features of the task (regenerated from the task key; the taskHash is checked against the archive)
 //   post-hoc    signals a user could see without the oracle: schema validity, agent turns and tool uses, the run's cost, output tokens,
-//               workflow node calls and escalations, the workflow's own verdict. NEVER score, oracle details or the pass flag.
+//               workflow node calls and escalations, the workflow's own verdict. NEVER score, oracle details or the pass flag. (Schema validity is the one
+//               exception in kind: no archived row stored a schema check, so legacy.mjs schemaValidOf RECONSTRUCTS it from the oracle's own schema-invalid
+//               reason; a row without oracle details has none, null = not recorded. A signal is scored only where every row of an arm records it.)
 //               Wall time is left out: DESIGN §2 calls it confounded by concurrency and stalls (one stall lasted 187 minutes).
 //   score       parameter-free, with a direction fixed in advance (a bigger value predicts a failure: more input tokens, a longer list,
 //               a costlier run, more turns, an invalid schema, a failed own verdict). Nothing is fitted, so there is no selection and no

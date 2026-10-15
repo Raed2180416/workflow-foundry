@@ -152,7 +152,7 @@ const noopArm = () => ({ id: 'noop', tick: () => ({ decisions: { subject: null }
  * `maxWakeups` wake-ups or `maxRows` journal rows stops the run (the latter as a quota stop, so the host freezes
  * cleanly) and throws.
  */
-export async function runArm({ item = oracleItem, B = binding, world, arm, wrap = null, maxWakeups = 5_000, maxRows = 100_000 }) {
+export async function runArm({ item = oracleItem, B = binding, world, arm, wrap = null, maxWakeups = 2_000, maxRows = 20_000 }) {
   const holder = {};
   let a;
   if (arm === 'noop') a = noopArm();

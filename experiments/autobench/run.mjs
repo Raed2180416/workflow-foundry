@@ -20,27 +20,40 @@
 //   --run-id ID --live DIR --out DIR (default research/automationbench-20261014/runs/<run-id>) --no-copy
 //   --pool dev|devTrain|devCheck|test|testRef (select from SPLIT-v1.json; with --subset N: N stratified, seeded)
 //   --harness foundry --harness-hash H --cli-max-turns N|off (A1 step guard, default max-steps - 1)
+//   --test-run AB-v1 (A0 only: the preregistered test run may hold test-split tasks)
 // Every fork is audited host-side after its session (accounting.mjs): model responses as the official loop counts them,
-// world usage, and the H3 rule (more than max-steps responses, or a world step issued by response >= max-steps, scores
-// as a fail in the headline; the live grade is kept as liveFinal).
+// world usage, the H3 rule (more than max-steps responses, or a world step issued by response >= max-steps) and L5
+// (other models, network or package commands, benchmark references, no host transcript); a violation scores as a fail
+// in the headline and the live grade is kept as liveFinal.
+// Split hygiene (PREREG-AB-v1 §1.3, §6.1), every arm and mode: test-split tasks are refused before anything is prepared,
+// except A1 given the frozen harness hash and A0 given --test-run AB-v1 (model runs only; never a dry or scripted run).
+// A run that holds devCheck or test tasks is sealed: no per-task grade is logged, and the repo copy keeps the per-task
+// records in results.sealed.jsonl (read only after the go/no-go or the analysis, PREREG §5, §6.3).
 import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, appendFileSync, writeFileSync, constants as fsc } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { runClaudeCode, WORK_ROOT, nestedModelUses, DEFAULT_KEEP_RO } from '../../src/executors/claude-code.mjs';
-import { loadPolicy, modelById } from '../../src/models/policy.mjs';
+import { CHILD_ENV_ALLOWED, loadPolicy, modelById } from '../../src/models/policy.mjs';
 import { BRIDGE, CORPUS, PUBLIC_DOMAINS, REPO, TOOL_CLIENT, adapterText, bridgeJson, listTasks, materializeWorkdir, readJson, scriptedRunner, sha256, startServe, stratifiedSubset, writeJson } from './lib.mjs';
 import { auditSession, readCalls, readStream, worldUsage } from './accounting.mjs';
 import { assertDevOnly, domainOf, loadSplit } from './split.mjs';
 import { HARNESS_ID, HARNESS_VERSION, cliVersion, collectLedger, harnessConfig, harnessManifest, harnessSystemPrompt, writeCliGuard } from './harness/foundry.mjs';
 
 export const DEFAULTS = Object.freeze({ k: 1, budgetUsd: 0.75, concurrency: 4, maxSteps: 50, timeoutMin: 20, det: 'record', tools: ['Bash'], seed: '1' });
+/** The A0 test-run acknowledgement (PREREG-AB-v1 §6): `--test-run AB-v1`. */
+export const TEST_RUN_TOKEN = 'AB-v1';
 
-function provenance(policy) {
+/** The cost- and prompt-relevant variables the CLI child inherits (the policy's closed childEnv list): name -> value or
+ * null. The executor passes these through from the host shell, so they are recorded per run. */
+export const childEnvSnapshot = (env = process.env) => Object.fromEntries(CHILD_ENV_ALLOWED.map(k => [k, typeof env[k] === 'string' ? env[k] : null]));
+
+function provenance(policy, { cli = null } = {}) {
   const git = args => { try { return execFileSync('git', ['-C', CORPUS, ...args], { encoding: 'utf8' }).trim(); } catch { return null; } };
   const file = p => (existsSync(p) ? sha256(readFileSync(p)) : null);
   return { automationbenchCommit: git(['rev-parse', 'HEAD']), uvLockSha256: file(path.join(CORPUS, 'uv.lock')), bridgeSha256: file(BRIDGE),
     toolClientSha256: file(TOOL_CLIENT), runnerSha256: file(new URL(import.meta.url).pathname), policyHash: policy?.hash ?? null,
-    policyVersion: policy?.policy?.policyVersion ?? null, node: process.version };
+    policyVersion: policy?.policy?.policyVersion ?? null, policyFileSha256: file(path.join(REPO, 'policy/models.json')), node: process.version,
+    cli, childEnv: childEnvSnapshot() };
 }
 
 /** A hard USD cap over reserved session budgets: a session starts only if spent + reserved + its budget <= cap. */
@@ -99,7 +112,10 @@ function accountingSummary(results) {
     worldSteps: stat('usage', 'worldSteps'), worldCalls: stat('usage', 'worldCalls'), reads: stat('usage', 'reads'), searches: stat('usage', 'searches'), writes: stat('usage', 'writes'),
     stoppedByStepGuard: fs.filter(f => f.session?.stopReason === 'max_turns').length,
     extraModelCalls: fs.reduce((s, f) => s + (f.session?.extraModelCalls ?? 0), 0),
+    compactions: fs.reduce((s, f) => s + (f.session?.compactions ?? 0), 0),
     capViolations: results.filter(r => r.headlineOverride).length,
+    l5Violations: fs.filter(f => (f.session?.violations ?? []).some(v => v.startsWith('L5'))).length,
+    models: [...new Set(fs.flatMap(f => f.session?.models ?? []))].sort(),
     ledger: ledgers.length ? { collected: ledgers.filter(f => f.ledger.present).length, of: ledgers.length, items: { mean: mean(ledgers.filter(f => f.ledger.present).map(f => f.ledger.items)), max: max(ledgers.filter(f => f.ledger.present).map(f => f.ledger.items)) },
       withPlan: ledgers.filter(f => f.ledger.hasPlan).length, withVerification: ledgers.filter(f => f.ledger.hasVerification).length } : null,
   };
@@ -142,16 +158,23 @@ export async function runTasks(o) {
     tasks = stratifiedSubset(all, opt.subset ?? 12, opt.seed, domains);
   }
   const taskDomains = [...new Set(tasks.map(t => t.split('.')[0]))];
-  // A1 split hygiene (PREREG-AB-v1 §1.3, §6.1): dev tasks only, unless given the frozen harness hash, which must equal
-  // the hash recomputed from disk and this run's settings. Checked before anything is prepared.
+  // Split hygiene (PREREG-AB-v1 §1.3, §6.1), every arm and mode, checked before anything is prepared: dev tasks (and
+  // simple) only. Only the test run lifts it: A1 given the frozen harness hash, which must equal the hash recomputed from
+  // disk and this run's settings; A0 (a model run) given --test-run AB-v1. A dry run prints a task's prompt and a
+  // scripted A0 run grades host-side, so neither ever touches a test task.
+  if (opt.testRun != null && opt.testRun !== TEST_RUN_TOKEN) throw new Error(`--test-run must be ${TEST_RUN_TOKEN}`);
+  const cli = scripted ? null : cliVersion();
   let manifest = null, guard = null;
   if (harness) {
-    manifest = harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli: scripted ? null : cliVersion() }));
-    if (opt.harnessHash) {
-      if (opt.harnessHash !== manifest.sha256) throw new Error(`harness hash mismatch: given ${opt.harnessHash}, recomputed ${manifest.sha256} (files or settings changed)`);
-    } else assertDevOnly(tasks);
-    if (cliMaxTurns > 0) guard = writeCliGuard(path.join(live, 'harness-bin'), { maxTurns: cliMaxTurns, target: opt.cliTarget ?? 'claude' });
+    manifest = harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli }));
+    if (opt.harnessHash && opt.harnessHash !== manifest.sha256) throw new Error(`harness hash mismatch: given ${opt.harnessHash}, recomputed ${manifest.sha256} (files or settings changed)`);
   }
+  const testRunAuthorized = !opt.dryRun && (harness ? Boolean(opt.harnessHash) : !scripted && opt.testRun === TEST_RUN_TOKEN);
+  if (!testRunAuthorized) assertDevOnly(tasks);
+  if (harness && cliMaxTurns > 0) guard = writeCliGuard(path.join(live, 'harness-bin'), { maxTurns: cliMaxTurns, target: opt.cliTarget ?? 'claude' });
+  // Sealed run (devCheck go/no-go looks, the test run): per-task grades never reach the log or a plain repo file.
+  const split = loadSplit();
+  const sealed = opt.sealed ?? tasks.some(t => split.devCheck.includes(t) || split.test.includes(t));
   log(`[autobench] run ${runId}: ${tasks.length} tasks, k=${opt.k}, ${harness ? `harness ${HARNESS_ID} ${HARNESS_VERSION} (${manifest.sha256.slice(0, 12)})` : 'no harness'}, live ${live}`);
 
   // 2. prepare (one official dataset build)
@@ -187,16 +210,17 @@ export async function runTasks(o) {
         turns: f.turns ?? null, durationMs: f.durationMs ?? null, sessionError: f.sessionError ?? null, harnessError: f.harnessError ?? null, skipped: f.skipped ?? null, nestedModelUses: f.nestedModelUses ?? 0,
         session: f.session ?? null, usage: f.usage ?? null, ...(harness ? { ledger: f.ledger ?? null } : {}), accountingError: f.accountingError ?? null })),
       vote, final: final ? summarizeGrade(final) : null, costUsd: fs.reduce((s, f) => s + (f.costUsd ?? f.costUpperUsd ?? 0), 0) };
-    // H3 (host-side step cap): a single-rollout task-run whose session exceeded the official step accounting scores as a
-    // fail in the headline; its live grade is kept beside it.
+    // H3 (host-side step cap) and L5 (PREREG §8): a single-rollout task-run whose session exceeded the official step
+    // accounting or broke L5 scores as a fail in the headline; its live grade is kept beside it.
     const over = opt.k === 1 ? fs[0]?.session?.violations ?? [] : [];
     if (over.length && rec.final) {
       rec.liveFinal = rec.final;
       rec.final = { ...rec.final, partial_credit: 0, task_completed_correctly: 0 };
-      rec.headlineOverride = `H3 step cap: ${over.join('; ')}`;
+      rec.headlineOverride = `${over.some(v => v.startsWith('L5')) ? 'L5 audit' : 'H3 step cap'}: ${over.join('; ')}`;
     }
     results.push(rec);
     appendFileSync(resultsFile, JSON.stringify(rec) + '\n');
+    if (sealed) { log(`[autobench] ${task}: ${rec.final ? 'graded' : 'no grade'} (sealed run: the grade stays in the per-task records)`); return; }
     log(`[autobench] ${task}: ${rec.final ? `pc=${rec.final.partial_credit.toFixed(3)} pass=${rec.final.task_completed_correctly}` : 'no grade'}${rec.headlineOverride ? ` [${rec.headlineOverride}; live pass=${rec.liveFinal.task_completed_correctly}]` : ''}${vote?.agreement !== undefined ? ` vote=${vote.agreement}` : ''} $${rec.costUsd.toFixed(4)}`);
   };
   const remaining = new Map(tasks.map(t => [t, opt.k]));
@@ -244,8 +268,12 @@ export async function runTasks(o) {
       if (started) {
         try {
           const calls = readCalls(path.join(hostDir, 'calls.jsonl'));
+          const events = readStream(path.join(hostDir, 'transcript.jsonl'));
           rec.usage = worldUsage(calls);
-          rec.session = auditSession({ events: readStream(path.join(hostDir, 'transcript.jsonl')), calls, maxSteps: opt.maxSteps, fallbackTurns: rec.turns ?? null });
+          rec.session = auditSession({ events, calls, maxSteps: opt.maxSteps, fallbackTurns: rec.turns ?? null, expectModel: scripted ? null : opt.model });
+          // A model session without a host copy of its transcript (none written, or a planted link refused) cannot be
+          // audited: L5 fails it.
+          if (!scripted && !events.length) rec.session.violations.push('L5: no host transcript (step and model accounting unavailable)');
         } catch (e) { rec.accountingError = String(e?.message ?? e).slice(0, 500); }
       }
     }
@@ -260,8 +288,9 @@ export async function runTasks(o) {
   const byDomain = Object.fromEntries(taskDomains.map(d => { const rs = results.filter(r => r.domain === d); return [d, { n: rs.length, pass_rate: mean(rs.map(pass)), mean_partial_credit: mean(rs.map(pc)) }]; }));
   const fork0 = results.map(r => r.forks.find(f => f.fork === 0)).filter(Boolean);
   const summary = {
-    runId, label: scripted ? 'scripted (no model)' : `model ${opt.model}`, model: scripted ? null : opt.model, scripted, evidence: 'development/diagnostic (public AutomationBench set; not held-out)',
-    arm: harness ? 'A1 (harness)' : 'A0 (no harness)',
+    runId, label: scripted ? 'scripted (no model)' : `model ${opt.model}`, model: scripted ? null : opt.model, scripted,
+    evidence: tasks.some(t => split.test.includes(t)) ? 'sealed: PREREG-AB-v1 test split (held-out half of the public set)' : 'development/diagnostic (public AutomationBench set; not held-out)',
+    arm: harness ? 'A1 (harness)' : 'A0 (no harness)', sealed, testSplitTasks: tasks.filter(t => split.test.includes(t)).length,
     harness: harness ? { id: HARNESS_ID, version: HARNESS_VERSION, manifestSha256: manifest.sha256, frozenHashGiven: Boolean(opt.harnessHash), cliMaxTurns, stepGuard: Boolean(guard), extraModelCalls: 0 } : null,
     selection: opt.tasks?.length ? { tasks: opt.tasks } : opt.pool ? { pool: opt.pool, subset: opt.subset ?? null, seed: opt.subset ? opt.seed : null, domains } : { subset: opt.subset ?? 12, seed: opt.seed, domains }, tasks,
     k: opt.k, det: opt.det, maxSteps: opt.maxSteps, budgetUsdPerSession: opt.budgetUsd, capUsd: scripted ? null : opt.capUsd, tools: opt.tools, effort: opt.effort ?? null,
@@ -280,16 +309,17 @@ export async function runTasks(o) {
     nestedModelUses: results.reduce((s, r) => s + r.forks.reduce((t, f) => t + (f.nestedModelUses ?? 0), 0), 0),
     void: results.some(r => r.forks.some(f => (f.nestedModelUses ?? 0) > 0)) ? 'nested model use in a session transcript' : null,
     errors: results.flatMap(r => r.forks.filter(f => f.sessionError || f.harnessError).map(f => ({ task: r.task, fork: f.fork, sessionError: f.sessionError, harnessError: f.harnessError }))),
-    provenance: { ...provenance(policy), accountingSha256: sha256(readFileSync(new URL('./accounting.mjs', import.meta.url))), harnessManifestSha256: manifest?.sha256 ?? null },
+    provenance: { ...provenance(policy, { cli }), accountingSha256: sha256(readFileSync(new URL('./accounting.mjs', import.meta.url))), harnessManifestSha256: manifest?.sha256 ?? null },
     live, finishedAt: new Date().toISOString(),
   };
   writeJson(path.join(live, 'summary.json'), summary);
-  // 5. copy results into the repo (summary + per-task records; transcripts, worlds and grades with assertions stay live)
+  // 5. copy results into the repo (summary + per-task records; transcripts, worlds and grades with assertions stay live).
+  // A sealed run's per-task records go to results.sealed.jsonl: not to be read before the go/no-go or the analysis.
   const out = opt.outDir === null ? null : (opt.outDir ?? path.join(REPO, 'research/automationbench-20261014/runs', runId));
   if (out) {
     mkdirSync(out, { recursive: true });
     cpSync(path.join(live, 'summary.json'), path.join(out, 'summary.json'));
-    writeFileSync(path.join(out, 'results.jsonl'), results.map(r => JSON.stringify(r)).join('\n') + '\n');
+    writeFileSync(path.join(out, sealed ? 'results.sealed.jsonl' : 'results.jsonl'), results.map(r => JSON.stringify(r)).join('\n') + '\n');
     summary.copiedTo = out;
   }
   return { summary, results };
@@ -322,7 +352,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     concurrency: num(a.concurrency, DEFAULTS.concurrency), maxSteps: num(a['max-steps'], DEFAULTS.maxSteps), timeoutMin: num(a['timeout-min'], DEFAULTS.timeoutMin),
     det: a.det ?? DEFAULTS.det, effort: a.effort, tools: a.tools ? a.tools.split(',') : DEFAULTS.tools, runId: a['run-id'], liveRoot: a.live,
     outDir: a['no-copy'] ? null : a.out, keep: Boolean(a.keep), dryRun: Boolean(a['dry-run']), runner, pool: a.pool,
-    harness: a.harness ?? null, harnessHash: a['harness-hash'], cliMaxTurns: a['cli-max-turns'] === undefined ? undefined : a['cli-max-turns'] === 'off' ? 0 : Number(a['cli-max-turns']),
+    harness: a.harness ?? null, harnessHash: a['harness-hash'], testRun: a['test-run'], cliMaxTurns: a['cli-max-turns'] === undefined ? undefined : a['cli-max-turns'] === 'off' ? 0 : Number(a['cli-max-turns']),
   });
   process.stdout.write(JSON.stringify(summary, null, 1) + '\n');
 }

@@ -272,7 +272,7 @@ function makeFiles(files) {
     for (const [k, v] of Object.entries(obj)) {
       if (v == null) continue;
       const p = prefix + k;
-      if (typeof v === 'string' || v instanceof Uint8Array || /\.[A-Za-z0-9]{1,5}$/.test(k) || depth > 6 || Array.isArray(v)) map.set(norm(p), v);
+      if (typeof v === 'string' || v instanceof Uint8Array || /\.(json|csv|txt|md)$/i.test(k) || depth > 6 || Array.isArray(v)) map.set(norm(p), v);
       else if (isObj(v)) addFlat(v, `${p}/`, depth + 1);
     }
   };
@@ -299,6 +299,22 @@ function makeFiles(files) {
         const r = lister();
         if (r && typeof r.then !== 'function') for (const p of (Array.isArray(r) ? r : [...(r[Symbol.iterator] ? r : Object.keys(r))])) s.add(norm(p));
       } catch { /* ignore */ }
+    }
+    if (!lister && reader && !dir) {
+      for (const probe of ['rulebook', 'rulebook/', 'rulebook/index.json']) {
+        let r;
+        try { r = reader(probe); } catch { r = undefined; }
+        if (typeof r === 'string') { try { r = JSON.parse(r); } catch { r = r.split(/\r?\n/); } }
+        if (Array.isArray(r)) {
+          for (const x of r) {
+            const name = typeof x === 'string' ? x : x?.name ?? x?.id;
+            if (typeof name !== 'string' || !name.trim()) continue;
+            const nm = norm(name.trim()).replace(/^rulebook\//, '').replace(/\/.*$/, '');
+            if (nm) s.add(`rulebook/${nm}/edition.json`);
+          }
+          break;
+        }
+      }
     }
     if (dir) {
       const walk = (d, rel, depth) => {
@@ -897,8 +913,9 @@ function replay(ic, env, now) {
       if (ev.k === 'upd') applyUpd(ev, t);
       else if (ev.k === 'msg') applyMsg(ev, t);
       else if (ev.k !== 'join') applyTask(ev, t);
+      checkMoot(t); // within one instant, what happened first decides (S16)
     }
-    for (const ev of grp) if (ev.k === 'join') applyJoin(ev, t); // S8: judged after the instant's updates
+    for (const ev of grp) if (ev.k === 'join') { applyJoin(ev, t); checkMoot(t); } // S8: judged after the instant's updates
     if (chg) { snaps.push({ t, sub: 0, s: snap(S) }); checkMoot(t); }
     chg = false;
     i = j;
@@ -1192,7 +1209,8 @@ function instancesFor(ctx, subject, self) {
     const r = ctx.instances({ subject });
     if (r && typeof r.then === 'function') return [];
     const arr = Array.isArray(r) ? r : rowsFrom(r);
-    return arr.map((x) => (typeof x === 'string' ? { id: x, subject } : { id: x?.instance ?? x?.id, subject: x?.subject ?? subject }))
+    return arr.filter((x) => !(isObj(x) && (x.open === false || x.closed === true || x.state === 'closed')))
+      .map((x) => (typeof x === 'string' ? { id: x, subject } : { id: x?.instance ?? x?.id, subject: x?.subject ?? subject }))
       .filter((x) => x.id && x.id !== self && (x.subject == null || normNum(x.subject) === normNum(subject)))
       .map((x) => x.id).sort();
   } catch { return []; }
@@ -1214,10 +1232,14 @@ function incRecord(ctx, num) {
 function openInstanceFor(ctx, num, self) {
   const ids = instancesFor(ctx, num, self);
   if (ids.length) return ids[0];
+  const canList = typeof ctx?.instances === 'function';
+  let stillOpen = null;
   for (const r of query(ctx, 'notify.notifications', { about: num })) {
     const m = /^R\|([^|]+)\|([^|]+)\|([^|]+)\|/.exec(String(r.ref ?? ''));
     if (!m || normNum(m[3]) !== num || m[1] === self) continue;
-    if (instancesFor(ctx, m[2], self).includes(m[1])) return m[1];
+    if (canList) { if (instancesFor(ctx, m[2], self).includes(m[1])) return m[1]; continue; }
+    if (stillOpen == null) { const rec = incRecord(ctx, num); stillOpen = !!rec && !ENDED.has(rec.state); }
+    if (stillOpen) return m[1]; // no instance listing: trust the owner we wrote, while the incident is not closed
   }
   return null;
 }
@@ -1256,7 +1278,10 @@ function buildBase(env, num, recs, t0, inst) {
   const rec = recs.inc.find((r) => normNum(r.number) === num) ?? recs.inc[0];
   if (!rec) return null;
   const n = normNum(rec.number);
-  const slas = recs.sla.filter((r) => normNum(r.number) === n).map((r) => compactSla(r, recs.esc))
+  const seenSla = new Set();
+  const slas = recs.sla.filter((r) => normNum(r.number) === n)
+    .filter((r) => { const id = String(r.slaId ?? `${r.number}/${r.definition}/${r.generation}`); if (seenSla.has(id)) return false; seenSla.add(id); return true; })
+    .map((r) => compactSla(r, recs.esc))
     .sort((a, b) => (a.startAt ?? 0) - (b.startAt ?? 0) || a.gen - b.gen);
   const state = rec.state;
   const holdReason = state === 'onHold' ? rec.holdReason ?? null : null;
@@ -1335,7 +1360,7 @@ function reportIncident(env, ev, inst) {
 }
 function alertOf(env, p) {
   const ciRec = env.ci(p.ci);
-  return { id: normId(p.alertId), ciRec, ci: ciRec?.id != null ? String(ciRec.id) : String(p.ci ?? '').trim(), check: p.check == null ? null : String(p.check), sev: p.severity };
+  return { id: normId(p.alertId), ciRec, ci: ciRec?.id != null ? String(ciRec.id) : String(p.ci ?? '').trim(), check: p.check == null ? null : String(p.check).trim(), sev: p.severity };
 }
 function alertIncident(env, a, urg, t, inst, primary) {
   return newIncident(env, {
@@ -1473,7 +1498,8 @@ function onMessage(C, ev, env) {
 }
 function onTask(C, ev) {
   const p = ev.biz.p;
-  const cands = [p.taskId, p.humanTaskId, p.task?.id, p.id, p.task].filter((x) => typeof x === 'string');
+  const e = ev.e ?? {};
+  const cands = [p.taskId, p.humanTaskId, p.task?.id, p.id, p.task, e.taskId, e.humanTaskId, e.task?.id].filter((x) => typeof x === 'string');
   let ic = null, tid = null;
   for (const c of cands) {
     ic = C.incs.find((i) => (i.tasks ?? []).some((tk) => tk.id === c));
@@ -1482,7 +1508,8 @@ function onTask(C, ev) {
   if (!ic) return;
   const sub = ev.biz.sub;
   const k = sub === 'answered' ? 'ans' : sub === 'answerRejected' ? 'rej' : sub === 'withdrawn' ? 'wd' : sub === 'timeout' ? 'to' : 'dlg';
-  const ans = p.answer ?? p.value ?? p.response ?? p.result ?? p.data;
+  let ans = p.answer ?? p.value ?? p.response ?? p.result ?? p.data;
+  if (typeof ans === 'string' && /^\s*\{/.test(ans)) { try { ans = JSON.parse(ans); } catch { /* free text: unusable */ } }
   let dec = isObj(ans) ? ans.decision : (p.decision ?? null);
   dec = typeof dec === 'string' ? dec.trim().toLowerCase() : null;
   const sg = `${k}|${tid}|${ev.t}`;
@@ -1528,7 +1555,7 @@ function classifyErr(p) {
   if (s.includes('key-conflict') || s.includes('key conflict')) return 'dead';
   if (/\b409\b/.test(s) || s.includes('conflict') || s.includes('stage')) return 'dead';
   if (/\b5\d\d\b/.test(s) || s.includes('unavailable') || s.includes('internal') || s.includes('timeout') || s.includes('retry')) return 'retry';
-  if (/\b400\b/.test(s) || s.includes('invalid') || s.includes('renamed') || s.includes('bad request')) return 'retry';
+  if (/\b400\b/.test(s) || s.includes('invalid') || s.includes('renamed') || s.includes('bad request')) return 'fix';
   if (/\b4\d\d\b/.test(s) || s.includes('not-found') || s.includes('forbidden')) return 'dead';
   return 'retry';
 }
@@ -1544,7 +1571,8 @@ function onResult(C, ev) {
   if (st === 'unknown' || st === 'partial') { f.s = 'u'; return; }
   if (st === 'rate-limited') { f.s = 'r'; f.nb = ev.t + ra; f.nb1 = f.a + ra; }
   else if (st === 'error') {
-    if (classifyErr(p) === 'dead') { f.s = 'd'; return; }
+    const c = classifyErr(p);
+    if (c === 'dead' || (c === 'fix' && (f.n ?? 0) >= 3)) { f.s = 'd'; return; }
     f.s = 'r'; f.nb = ev.t + ra; f.nb1 = f.a + ra;
   } else { f.s = 'u'; return; }
   if ((f.n ?? 0) >= 8) f.s = 'd';
@@ -1591,7 +1619,22 @@ function tickImpl(input, ctx) {
   return schedule(C, env, ctx, now, inst);
 }
 
+const instNum = (id) => { const m = /(\d+)\s*$/.exec(String(id)); return m ? Number(m[1]) : null; };
+const instBefore = (a, b) => {
+  const x = instNum(a), y = instNum(b);
+  return x != null && y != null && x !== y ? x < y : String(a) < String(b);
+};
+
 function schedule(C, env, ctx, now, inst) {
+  // 0. two instances started in the same instant for one incident (a repeated delivery): the older one runs it
+  if (C.subj && C.t0 < now && C.incs.some((i) => i.cr && i.cr.t === C.t0)) {
+    const others = instancesFor(ctx, C.subj, inst);
+    if (others.some((o) => instBefore(o, inst))) {
+      const pri = C.incs.find((i) => i.n === C.subj)?.cr?.priority ?? null;
+      const obl = { upsert: [], cancel: C.wake != null ? [`${inst}:wake`] : [] };
+      return { decisions: { subject: C.subj, priority: pri }, effects: [], obligations: obl, humanTasks: [], close: true, carry: { ...C, wake: null, yielded: true } };
+    }
+  }
   // 1. settle in-flight effects whose result is overdue or unknown, from the system's own status
   for (const [key, f] of Object.entries(C.fx)) {
     if (f.s !== 's' && f.s !== 'u') continue;

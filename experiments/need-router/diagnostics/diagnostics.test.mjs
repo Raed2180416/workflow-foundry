@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as C from './common.mjs';
 import { rescue, scanSecrets, RESCUE_FILES } from './rescue.mjs';
-import { loadLegacyJobs, loadConstructions, loadJitJobs, loadArmDef, jitRowBound, toMatrix, labelSetsOf, LEGACY_REGISTRY, LEGACY_JOB_DEFS, P1_HAND_AUTHORING, pairJob } from './legacy.mjs';
+import { loadLegacyJobs, loadConstructions, loadJitJobs, loadArmDef, jitRowBound, toMatrix, labelSetsOf, LEGACY_REGISTRY, LEGACY_JOB_DEFS, P1_HAND_AUTHORING, pairJob, normaliseRunRow, schemaValidOf, ceilingRule, CHEAP_BUILDER, JIT_EXPERIMENTS, P1_MODES } from './legacy.mjs';
 import { nearest, TRUSTED8, loadCensus, loadStages } from './census.mjs';
 import { chanceShare, runD0, collapseFamilies, anchorEntries } from './d0-knn.mjs';
 import { bestThreshold, bestOrRule, hypothesisJobs, runD1, jobFeatureRow, featureIndex } from './d1-shortcut.mjs';
@@ -22,8 +22,11 @@ import { bedStamp, bedGeneratorFiles } from './anchors.mjs';
 import { splitProvenance, compareCurrency, describeCurrency } from './currency.mjs';
 import { loadLedger } from '../../jit/seeds.mjs';
 import { buildMeterGate } from '../meter-gate.mjs';
-import { priceTokens, priceTable, builderCheck, repriceSession, eraOf, runD6 } from './d6-cost.mjs';
-import { runAll } from './run.mjs';
+import { priceTokens, priceTable, builderCheck, repriceSession, eraOf, runD6, meterImpact } from './d6-cost.mjs';
+import { runAll, planRun, ALL, MODULES } from './run.mjs';
+import { cacheRateOf, measureTranscripts, summariseLaunchEnv, readLaunchEnv, LAUNCH_ENV_FILE, finalResult, LAUNCH_ENV_SCHEMA } from './launch-env.mjs';
+import { parseMeterGate } from '../meter-gate.mjs';
+import { execFileSync } from 'node:child_process';
 import { renderReport } from './report.mjs';
 import { harvest, readStreams, assertNotLegacy, isLegacy, LEGACY_TAG } from '../harvest.mjs';
 import { labelTable, labelSetModes, needTable, needLabels, makeCell, HEADLINE } from '../metrics.mjs';
@@ -366,15 +369,20 @@ test('fragilityOfJob flags a label that flips with the tolerance (synthetic job)
   assert.equal(f.rowFlips.gainedAtDouble, 10);
 });
 
-test('D4 on the archive: nominal flags reproduce for all 616 rows; two jobs have a flipping L_today label', () => {
+test('D4 on the archive: nominal flags reproduce for all 616 rows; two jobs have a flipping L_today label, among those that have a workflow arm there', () => {
   const d = runD4(legacy().jobs);
   assert.equal(d.summary.nominalReproduced, true);
   assert.equal(d.summary.rowsTotal, 616);
-  assert.deepEqual(d.summary.fragileJobs, ['jit-r0-records', 'jit-r0-kinetics'], 'jit-r0-kinetics flips once its unobserved-cost row is imputed to the bound');
-  assert.deepEqual(d.summary.vacuousJobs, ['p1-records']); assert.deepEqual(d.summary.ceilingJobs, ['p1-records', 'c0-dev-records']);
+  // The L_today / L_ceiling split is one rule (the author of the workflow): jit-OH and jit-SH are ceiling arms like wf-O and script-O, so jit-r0-kinetics (agent-H and jit-OH) is vacuous
+  // in L_today and its flip there is gone, while jit-dev-records-1 keeps its two Haiku-written workflow arms (jit-HH, static-b1h) against its agents.
+  assert.deepEqual(d.summary.fragileJobs, ['jit-dev-records-1', 'jit-r0-records']);
+  assert.deepEqual(d.summary.vacuousJobs, ['p1-records', 'jit-r0-kinetics']);
+  assert.deepEqual(d.summary.ceilingJobs, ['p1-records', 'c0-dev-records', 'jit-dev-records-1', 'jit-dev-kinetics-1', 'jit-r0-kinetics']);
   assert.deepEqual([d.summary.lostAtHalf, d.summary.gainedAtDouble], [17, 45]);
   assert.equal(d.jobs.find(j => j.job === 'jit-dev-kinetics-1').failuresWithWrongExclusion, 16);
   assert.ok(d.jobs.every(j => j.reproduction.mismatches === 0));
+  assert.equal(d.summary.cells, 162); assert.equal(d.summary.unlabelledCells, 21); assert.equal(d.summary.labelledCells, 141);
+  assert.deepEqual(Object.fromEntries(Object.entries(d.summary.unlabelledByJob).filter(([, v]) => v.today || v.ceiling).map(([j, v]) => [j, [v.today, v.ceiling]])), { 'p1-records': [21, 15] });
 });
 
 // ------------------------------------------------------------------------------------------------------------- D5
@@ -548,7 +556,7 @@ test('P1 hand workflows: ceiling arms charged the >= $24.91 authoring cost; free
   assert.match(P1_HAND_AUTHORING.source, /README\.md:307/, 'the figure is in the README cost ledger; research/core-20261006/REPORT.md does not contain it');
   assert.ok(!/core-20261006\/REPORT\.md/.test(P1_HAND_AUTHORING.source));
   assert.ok(Object.entries(LEGACY_REGISTRY).every(([, r]) => !r.prebuilt), 'no LEGACY mode switches off metrics.needTable\'s build-row guard');
-  assert.deepEqual(['hand-H', 'hand-S', 'wf-O', 'script-O'].map(m => LEGACY_REGISTRY[m].ceiling), [true, true, true, true]);
+  assert.deepEqual(['hand-H', 'hand-S', 'wf-O', 'script-O', 'jit-OH', 'jit-SH'].map(m => LEGACY_REGISTRY[m].ceiling), [true, true, true, true, true, true]);
   assert.ok(['agent-H', 'wf-H', 'script-H', 'static-b1h', 'jit-HH'].every(m => !LEGACY_REGISTRY[m].ceiling));
   const { rows, builds } = toMatrix(p1);
   assert.throws(() => needTable(rows, [], { registry: LEGACY_REGISTRY }), /guided mode with no build row/, 'the guard is live: the missing P1 build row is refused');
@@ -571,16 +579,24 @@ test('P1 hand workflows: ceiling arms charged the >= $24.91 authoring cost; free
   assert.ok(labelSetModes(p1.pairing.modes, 'today', LEGACY_REGISTRY).every(m => !m.startsWith('hand')));
 });
 
-test('D4 reports P1 under both label sets: vacuous in L_today, no-workflow at the headline in L_ceiling and workflow only at large N or V', () => {
+test('D4 reports P1 under both label sets: vacuous in L_today, the headline cell UNLABELLED in both (imputed dollars over 0.3 in direct-H-med), workflow only at large N or V', () => {
   const p1 = runD4(legacy().jobs).jobs.find(j => j.job === 'p1-records');
-  assert.deepEqual(['0.5', '1', '2'].map(f => p1.headline[f].label), ['no-workflow', 'no-workflow', 'no-workflow']);
   assert.equal(p1.labelSets.today.vacuous, true); assert.equal(p1.labelCounts.workflow, 0);
   assert.deepEqual(p1.builds.map(b => [b.mode, b.usd]), [['hand-H', 24.91], ['hand-S', 24.91]]);
-  assert.deepEqual([p1.ceiling.headline['1'].label, p1.ceiling.headline['1'].top], ['no-workflow', 'agent-H']);
+  // The headline cell has no label: direct-H-med's 11 timeouts are charged at the $1 bound, so more than 30% of its dollars are imputed (DESIGN §2).
+  for (const h of [p1.headline['1'], p1.ceiling.headline['1']]) { assert.equal(h.label, 'unlabelled'); assert.equal(h.top, null); assert.match(h.unlabelled, /^imputed dollars over 0\.3 in direct-H-med/); }
+  assert.deepEqual(['0.5', '1', '2'].map(f => p1.headline[f].label), ['no-workflow', 'unlabelled', 'unlabelled'], 'at x0.5 fewer passes keep direct-H-med out of reach, so that one cell is labelled');
+  assert.deepEqual(p1.headlineFlips, { half: false, double: false }, 'a cell that is unlabelled on one side is not a flip');
+  assert.deepEqual([p1.grid.unlabelled, p1.ceiling.grid.unlabelled], [21, 15]);
+  assert.equal(p1.grid.labelled + p1.grid.unlabelled, p1.grid.cells);
+  assert.equal(Object.values(p1.labelCounts).reduce((a, x) => a + x, 0), p1.grid.labelled, 'label counts cover labelled cells only');
+  assert.equal(Object.values(p1.ceiling.labelCounts).reduce((a, x) => a + x, 0), 12); assert.equal(p1.ceiling.labelCounts.workflow, 7);
+  assert.ok(Object.keys(p1.grid.unlabelledReasons).every(r => /^imputed dollars over 0\.3 in /.test(r)));
   approx(p1.ceiling.headline['1'].u['hand-H'], -1.5623, 5e-4);
   assert.ok(p1.ceiling.workflowCells.includes('V=1 N=100 W=1V') && !p1.ceiling.workflowCells.includes('V=1 N=10 W=1V'), 'the hand workflow pays back between N = 10 and N = 100 at V = $1');
-  assert.equal(p1.ceiling.grid.flipped, 3, 'and the ceiling label is itself fragile');
-  assert.equal(runD4(legacy().jobs).jobs.find(j => j.job === 'jit-dev-records-1').ceiling, null);
+  assert.equal(p1.ceiling.grid.flipped, 1, 'one labelled L_ceiling cell flips; the unlabelled ones cannot');
+  assert.equal(runD4(legacy().jobs).jobs.find(j => j.job === 'jit-r0-records').ceiling, null, 'only a job with a ceiling arm has an L_ceiling view');
+  assert.ok(runD4(legacy().jobs).jobs.find(j => j.job === 'jit-dev-records-1').ceiling, 'jit-OH and jit-SH are ceiling arms');
 });
 
 test('D4 on a synthetic job: a charged ceiling workflow stays out of L_today, and a build that costs more than the gain cannot win the ceiling label', () => {
@@ -617,7 +633,7 @@ test('loadJitJobs imputes a costUnknown stream row up to the arm\'s per-task bou
       { taskKey: tk(3), costUsd: 0.2, costUnknown: true, taskHash: 'h3', events: [{ kind: 'compiled' }] },     // gateway only: the per-task bound 1
       { taskKey: tk(4), costUsd: 0.3, taskHash: 'h4', events: interpret }] },                                    // observed: untouched
   });
-  const j = loadJitJobs(root).jobs.get('exp1');
+  const j = loadJitJobs(root, { experiments: ['exp1'] }).jobs.get('exp1');
   const by = n => j.rows.find(r => r.mode === 'jit-OH' && r.taskKey === tk(n));
   approx(by(1).usdImputed, 1.34, 1e-9); approx(by(1).usdReported + by(1).usdImputed, 2, 1e-9);
   assert.equal(by(2).usdImputed, 0); approx(by(3).usdImputed, 0.8, 1e-9); assert.equal(by(4).usdImputed, 0);
@@ -828,8 +844,257 @@ test('D6 emits a machine-readable cost-meter gate: block-until-verified on the a
 test('D6 label impact is reported for L_today and L_ceiling; the gate is clear when the recorded output matches the final usage', async () => {
   const d = (await everything()).d6;
   const p1 = d.meterImpact.find(i => i.job === 'p1-records');
-  assert.deepEqual([p1.reported.headlineLabel, p1.reported.headlineTop], ['no-workflow', 'agent-H']);
-  assert.deepEqual([p1.ceiling.reported.headlineLabel, p1.ceiling.reported.headlineTop], ['no-workflow', 'agent-H'], 'the charged hand workflow does not win in either label set');
-  assert.equal(d.meterImpact.find(i => i.job === 'jit-dev-records-1').ceiling, null);
+  // P1's headline cell is unlabelled under every meter (imputed dollars in direct-H-med): no label, no best mode, in either label set.
+  for (const h of [p1.reported, p1.p5, p1.p1h, p1.ceiling.reported, p1.ceiling.p5, p1.ceiling.p1h]) { assert.equal(h.headlineLabel, 'unlabelled'); assert.equal(h.headlineTop, null); assert.match(h.headlineUnlabelled, /imputed dollars over 0\.3 in direct-H/); }
+  assert.equal(p1.reported.unlabelledCells, 21); assert.equal(p1.ceiling.reported.unlabelledCells, 15);
+  assert.ok(p1.p5.comparableCells <= 27 - 21, 'a flip or a best-mode change is counted only on cells labelled under both meters');
+  assert.ok(d.meterImpact.find(i => i.job === 'jit-dev-records-1').ceiling, 'jit-OH and jit-SH are ceiling arms, so the job has an L_ceiling view');
+  assert.equal(d.meterImpact.find(i => i.job === 'jit-r0-records').ceiling, null);
   assert.equal(buildMeterGate({ outputRatios: [{ recorded: 970, final: 1000 }], eraRatios: [{ key: 'k', sessions: 9, ratio: 1.03 }] }).status, 'clear');
+});
+
+// =====================================================================================================================================
+// Regressions for the second adversarial review of the diagnostics (2026-10-15): unlabelled cells, the ceiling rule, the allow-listed
+// stream loader, D3 signal hygiene, the fail-closed meter gate and the reproducible launch-environment measurement.
+// =====================================================================================================================================
+
+// ------------------------------------------------------------------------------------------------ D4 and D6 read `unlabelled`
+const recRow = (mode, i, pass, usd, imputed = 0, extra = {}) => ({ mode, unit: `t${i}`, taskKey: `t${i}`, seed: 100 + i, taskHash: `h${i}`, pass, score: null, delivered: true, schemaValid: true, error: null, usdReported: usd, usdImputed: imputed, details: { entities: 40, extra: 0, missing: 0, fieldAccuracy: pass ? 0.99 : 0.9, pairF1: 1 }, ...extra });
+test('D4 leaves unlabelled cells out: no label, no best mode, no count, no flip, no fragility (a mode with over 30% imputed dollars contends)', () => {
+  const mk = imputed => {
+    const rows = Array.from({ length: 10 }, (_, i) => [recRow('agent-H', i, i < 6, 0.05), recRow('direct-H', i, true, 0.01, imputed), recRow('script-H', i, i < 8, 0.01)]).flat();
+    return { id: 'syn-unl', oracle: 'records', family: 'records', rows, builds: [{ mode: 'script-H', usd: 0.01 }], pairing: { modes: ['agent-H', 'direct-H', 'script-H'], paired: 10 }, sources: [] };
+  };
+  const f = fragilityOfJob(mk(0.5));   // direct-H books $0.51 a task, $0.50 of it imputed: it would win at $0.01, so the label rests on imputed dollars everywhere
+  assert.equal(f.grid.unlabelled, 27); assert.equal(f.grid.labelled, 0);
+  assert.deepEqual(f.labelCounts, { workflow: 0, 'no-workflow': 0, either: 0 }, 'an unlabelled cell is in no label count');
+  assert.deepEqual(f.workflowCells, []);
+  assert.equal(f.headline['1'].label, 'unlabelled'); assert.equal(f.headline['1'].top, null); assert.match(f.headline['1'].unlabelled, /^imputed dollars over 0\.3 in direct-H/);
+  assert.deepEqual([f.grid.flipped, f.grid.topChangedCells, f.grid.fragile, f.headlineFlips.half, f.headlineFlips.double], [0, 0, false, false, false], 'nothing to flip or compare on a cell without a label');
+  assert.deepEqual(Object.values(f.grid.unlabelledReasons), [27]);
+  // The same job with its dollars observed is labelled everywhere: the difference is the flag, not the data.
+  const ok = fragilityOfJob(mk(0));
+  assert.equal(ok.grid.unlabelled, 0); assert.equal(Object.values(ok.labelCounts).reduce((a, x) => a + x, 0), 27);
+  assert.notEqual(ok.headline['1'].label, 'unlabelled');
+  // The summary counts them and the report prints the reason, not a label.
+  const d = runD4([mk(0.5)]);
+  assert.deepEqual([d.summary.cells, d.summary.unlabelledCells, d.summary.labelledCells, d.summary.flippedCells, d.summary.topChangedCells], [27, 27, 0, 0, 0]);
+  assert.deepEqual(d.summary.unlabelledByJob, { 'syn-unl': { today: 27, ceiling: null } });
+});
+
+test('D4: a cell unlabelled at x1 is not a flip even when the tolerance factor gives it a different label', () => {
+  // direct-H passes at x1 and x2 (field accuracy 0.975 against 0.97 and 0.94) but fails at x0.5 (0.985): at x1 it contends on imputed dollars (unlabelled), at x0.5 it is out
+  // of the running and the cell is labelled workflow. The old code compared the raw x1 label (no-workflow) with it and called the job fragile.
+  const rows = Array.from({ length: 10 }, (_, i) => [recRow('agent-H', i, i < 6, 0.05), recRow('direct-H', i, true, 0.01, 0.5, { details: { entities: 40, extra: 0, missing: 0, fieldAccuracy: 0.975, pairF1: 1 } }), recRow('script-H', i, i < 8, 0.01)]).flat();
+  const job = { id: 'syn-flip', oracle: 'records', family: 'records', rows, builds: [{ mode: 'script-H', usd: 0.01 }], pairing: { modes: ['agent-H', 'direct-H', 'script-H'], paired: 10 }, sources: [] };
+  const f = fragilityOfJob(job);
+  assert.equal(f.reproduction.mismatches, 0);
+  assert.deepEqual([f.headline['0.5'].label, f.headline['1'].label, f.headline['2'].label], ['workflow', 'unlabelled', 'unlabelled']);
+  assert.equal(f.grid.unlabelled, 27);
+  assert.deepEqual([f.grid.flipped, f.grid.fragile, f.headlineFlips.half, f.grid.topChangedCells, f.headlineTopChanges.half], [0, false, false, 0, false], 'unlabelled at x1: nothing to flip from');
+});
+
+test('D6 meterImpact counts a label flip or a best-mode change only on cells labelled under both meters, and reports the unlabelled ones', () => {
+  const table = priceTable();
+  const su = { inputTokens: 1.5e6, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };   // p5 re-prices it at the upper Haiku tier: $0.75 against the reported $0.01
+  const mk = withDirect => {
+    const rows = Array.from({ length: 10 }, (_, i) => [
+      recRow('agent-H', i, true, 0.01, 0, { streamUsage: su, model: 'claude-haiku-5-5' }), recRow('script-H', i, i < 8, 0.01),
+      ...(withDirect ? [recRow('direct-H', i, true, 0.01, 0.5)] : [])]).flat();
+    return { id: 'syn-d6', oracle: 'records', rows, builds: [{ mode: 'script-H', usd: 0.01 }], pairing: { modes: withDirect ? ['agent-H', 'script-H', 'direct-H'] : ['agent-H', 'script-H'], paired: 10 }, sources: [] };
+  };
+  const [clean] = meterImpact([mk(false)], table), [dirty] = meterImpact([mk(true)], table);
+  assert.ok(clean.p5.labelFlips > 0 && clean.p5.topChanges > 0, 'with observed dollars the re-price moves the best mode from agent-H to script-H, and the class with it');
+  assert.equal(clean.p5.comparableCells, 27); assert.equal(clean.reported.unlabelledCells, 0);
+  assert.deepEqual([dirty.p5.labelFlips, dirty.p5.topChanges, dirty.p5.comparableCells, dirty.p5.unlabelledCells, dirty.reported.unlabelledCells], [0, 0, 0, 27, 27],
+    'direct-H is over 30% imputed and contends under both meters: every cell is unlabelled, so none is compared');
+  assert.equal(dirty.reported.headlineLabel, 'unlabelled'); assert.equal(dirty.reported.headlineTop, null); assert.match(dirty.reported.headlineUnlabelled, /imputed dollars over 0\.3 in direct-H/);
+  assert.equal(dirty.p5.headlineLabel, 'unlabelled');
+});
+
+test('the committed D4 and D6 sections count P1\'s unlabelled cells and the report prints a reason, never a label, for the headline', async () => {
+  const r = await everything(), md = renderReport(r);
+  const p1 = r.d4.jobs.find(j => j.job === 'p1-records');
+  assert.equal(p1.headline['1'].label, 'unlabelled');
+  assert.ok(md.includes('unlabelled (imputed dollars over 0.3 in direct-H-med)'), 'the findings and tables print the reason');
+  assert.ok(!/L_ceiling says no-workflow at the headline/.test(md) && !/L_ceiling's headline label is \*\*no-workflow\*\*/.test(md), 'the old claim about P1\'s ceiling label is gone');
+  assert.ok(md.includes('P1\'s headline cell is then unlabelled: imputed dollars over 0.3 in direct-H-med'));
+  assert.match(md, /Why cells are unlabelled \(21 of 162 job-by-cell cells in L_today\)/);
+});
+
+// ------------------------------------------------------------------------------------------------ the ceiling rule: one field, the author
+test('LEGACY_REGISTRY: ceiling is derived from who wrote the workflow; jit-OH (Opus) and jit-SH (Sonnet) are ceiling arms, so L_today is vacuous for an agent-H + jit-OH job', async () => {
+  const wf = Object.entries(LEGACY_REGISTRY).filter(([, r]) => r.cls === 'workflow');
+  assert.ok(wf.length >= 10 && wf.every(([, r]) => typeof r.builder === 'string'), 'every workflow mode says who wrote its workflow');
+  assert.ok(wf.every(([, r]) => !!r.ceiling === (r.builder !== CHEAP_BUILDER)), 'ceiling is exactly "not written by the cheap builder"');
+  assert.equal(CHEAP_BUILDER, 'haiku');
+  assert.deepEqual(wf.filter(([, r]) => !r.ceiling).map(([m]) => m).sort(), ['jit-HH', 'script-H', 'static-b1h', 'wf-H']);
+  assert.deepEqual(wf.filter(([, r]) => r.ceiling).map(([m]) => m).sort(), ['hand-H', 'hand-S', 'jit-OH', 'jit-SH', 'script-O', 'wf-O']);
+  assert.deepEqual(['jit-HH', 'jit-OH', 'jit-SH'].map(m => LEGACY_REGISTRY[m].builder), ['haiku', 'opus', 'sonnet']);
+  const rule = ceilingRule();
+  assert.deepEqual(rule.ceilingBuilders, ['opus', 'sonnet']); assert.deepEqual(rule.byBuilder.sonnet, ['jit-SH']);
+  // The label sets of the two kinetics jobs: jit-r0-kinetics ran agent-H and jit-OH only.
+  const r0 = labelSetsOf(['agent-H', 'jit-OH']);
+  assert.equal(r0.today.vacuous, true); assert.deepEqual(r0.today.modes, ['agent-H']); assert.deepEqual(r0.ceiling.extra, ['jit-OH']);
+  const dev = labelSetsOf(['agent-H', 'agent-S', 'jit-HH', 'jit-OH', 'jit-SH']);
+  assert.equal(dev.today.vacuous, false); assert.deepEqual(dev.today.workflowModes, ['jit-HH']); assert.deepEqual(dev.ceiling.extra, ['jit-OH', 'jit-SH']);
+  // On the archive.
+  const jobs = Object.fromEntries(runD4(legacy().jobs).jobs.map(j => [j.job, j]));
+  assert.equal(jobs['jit-r0-kinetics'].labelSets.today.vacuous, true, 'jit-r0-kinetics has no Haiku-written workflow arm, so its L_today says nothing about need');
+  assert.equal(jobs['jit-r0-kinetics'].grid.flipped, 0, 'and its L_today can no longer flip');
+  assert.equal(jobs['jit-dev-kinetics-1'].labelSets.today.vacuous, false);
+  assert.deepEqual(jobs['jit-dev-kinetics-1'].labelSets.today.workflowModes, ['jit-HH']);
+  const md = renderReport(await everything());
+  assert.ok(md.includes('sonnet: jit-SH') && md.includes('opus: hand-H, hand-S, wf-O, script-O, jit-OH'), 'the report states the rule and which modes it puts where');
+});
+
+// ------------------------------------------------------------------------------------------------ the loader reads only the experiments the job definitions name
+test('loadJitJobs opens only the experiments the LEGACY job definitions name: a held-out stream under the same root is skipped, listed, and never read', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'jit-allow-'));
+  const arm = (exp, slug, rows, kind = 'agent') => {
+    const dir = path.join(root, exp, slug); mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, 'arm.json'), JSON.stringify({ kind, def: { perTaskUsd: 1, agentBudgetUsd: 2 } }));
+    writeFileSync(path.join(dir, 'results.jsonl'), rows);
+  };
+  const row = n => JSON.stringify({ taskKey: `records:dev:d3:s${n}`, taskHash: `h${n}`, costUsd: 0.1, costBreakdown: {}, orphanUsd: 0, pass: true, error: null });
+  arm('jit-dev-records-1', 'agent-claude-haiku-5-5', `${row(1)}\n${row(2)}\n`);
+  // A held-out stream (test seeds in the held-out range): its file would not even parse, so any read of it throws.
+  arm('jit-a11-heldout', 'agent-claude-haiku-5-5', '{"taskKey": "records:test:d3:s8805", this is not json\n');
+  writeFileSync(path.join(root, 'MANIFEST.json'), '{}');
+  assert.deepEqual(JIT_EXPERIMENTS, ['jit-dev-records-1', 'jit-r0-records', 'jit-dev-kinetics-1', 'jit-r0-kinetics']);
+  const loaded = loadJitJobs(root);
+  assert.deepEqual([...loaded.jobs.keys()], ['jit-dev-records-1']);
+  assert.deepEqual(loaded.skipped.map(x => x.experiment), ['jit-a11-heldout']);
+  assert.match(loaded.skipped[0].reason, /not read/);
+  assert.ok(loaded.sources.every(p => !p.includes('jit-a11-heldout')), 'it is not among the hashed sources');
+  assert.ok([...loaded.jobs.values()].every(j => j.allRows.every(r => !String(r.taskKey).includes('8805'))));
+  // Opening it explicitly (a caller that names it) is the only way to read it; that read does throw here.
+  assert.throws(() => loadJitJobs(root, { experiments: ['jit-a11-heldout'] }), /JSON|Unexpected|Expected/);
+  // readStreams, the shared reader, takes the same restriction.
+  assert.deepEqual(readStreams(root, { only: ['jit-dev-records-1'] }).map(s => s.family), ['jit-dev-records-1']);
+  // The real runs root: nothing is skipped today, and every run names its skipped streams in the results.
+  assert.deepEqual(loadJitJobs().skipped, []);
+});
+
+// ------------------------------------------------------------------------------------------------ D3 signal hygiene
+test('D3: "not recorded" is not a zero. Schema validity is null without oracle details, a partly recorded signal is left out of the arm, never scored as 0', () => {
+  assert.equal(schemaValidOf(null), null); assert.equal(schemaValidOf(undefined), null); assert.equal(schemaValidOf({}), true);
+  assert.equal(schemaValidOf({ reason: 'schema-invalid' }), false); assert.equal(schemaValidOf({ reason: 'row-in-multiple-records' }), true);
+  const base = { arm: 'b0call-haiku-none', experiment: 'p1', family: 'records', taskKey: 'records:dev:d3:s301', taskHash: 'h', trial: 0, pass: true, costUsd: 0.1 };
+  const norm = r => normaliseRunRow({ ...base, ...r }, { modes: P1_MODES, source: 'x' });
+  assert.equal(norm({}).schemaValid, null, 'no oracleDetails: not recorded');
+  assert.equal(norm({ oracleDetails: null }).schemaValid, null);
+  assert.equal(norm({ oracleDetails: JSON.stringify({ fieldAccuracy: 1 }) }).schemaValid, true);
+  assert.equal(norm({ oracleDetails: JSON.stringify({ reason: 'schema-invalid' }) }).schemaValid, false);
+  assert.equal(postHocSignals({ schemaValid: null }).schemaInvalid, null); assert.equal(postHocSignals({}).schemaInvalid, null);
+  assert.equal(postHocSignals({ schemaValid: true }).schemaInvalid, 0); assert.equal(postHocSignals({ schemaValid: false }).schemaInvalid, 1);
+  // A group where turns are recorded for half the rows: the old code scored the missing half as 0 (an artificial split of passes from failures); now the signal is skipped and listed.
+  const struct = new Map(), rows = [];
+  for (let i = 0; i < 24; i++) {
+    const key = `t${i}`; struct.set(key, { vector: TRUSTED8.map((_, j) => (j === 0 ? 3.8 + (i % 5) * 0.001 : 1)), hashOk: true });
+    const pass = i % 2 === 0;
+    rows.push({ taskKey: key, pass, difficulty: 3, schemaValid: i < 12 ? true : null, usdReported: pass ? 0.01 : 0.2 + i * 0.001, turns: i % 2 === 0 ? null : 7, tools: pass ? 3 : 5 });
+  }
+  const g = evaluateGroup(rows, struct, { boot: 50 });
+  assert.deepEqual(g.postHocPartlyRecorded.logTurns, { missing: 12, of: 24 }, 'turns recorded on the 12 failing rows only');
+  assert.deepEqual(g.postHocPartlyRecorded.schemaInvalid, { missing: 12, of: 24 });
+  assert.ok(!('logTurns' in g.postHocAuc) && !('schemaInvalid' in g.postHocAuc), 'partly recorded signals get no AUC');
+  assert.ok('logTools' in g.postHocAuc && 'logCost' in g.postHocAuc, 'fully recorded ones do');
+  // The old scoring would have given logTurns a perfect AUC from the artifact alone (missing = 0 on every pass, 7 on every failure).
+  assert.equal(g.primary.postHoc, 1);
+  const none = evaluateGroup(rows.map(r => ({ ...r, turns: null, schemaValid: true })), struct, { boot: 50 });
+  assert.deepEqual(none.postHocPartlyRecorded, {}, 'a signal no row records is simply not one of the arm\'s signals');
+});
+
+test('D3 results list partly recorded signals; the archive has none today and the report says nothing about them', async () => {
+  const d = (await everything()).d3;
+  assert.deepEqual(d.summary.postHocPartlyRecorded, []);
+  assert.ok(d.groups.every(g => !g.postHocAuc || g.postHocPartlyRecorded));
+});
+
+// ------------------------------------------------------------------------------------------------ run.mjs may not switch the meter gate off
+test('run.mjs: a subset of the diagnostics may not rewrite analysis/m0; it needs another --out, and --check takes the full set', () => {
+  const OUT = path.join(C.REPO, 'research/need-router-20261014/analysis/m0'), tmpOut = mkdtempSync(path.join(os.tmpdir(), 'm0-'));
+  assert.deepEqual(planRun({ only: ALL, outDir: OUT }).errors, []);
+  assert.equal(planRun({ only: ALL, outDir: OUT }).full, true);
+  const sub = planRun({ only: ['d0'], outDir: OUT });
+  assert.equal(sub.errors.length, 1); assert.match(sub.errors[0], /would rewrite the committed .*diagnostics\.json without d1, d2, d3, d4, d5, d6/); assert.match(sub.errors[0], /meter gate|gate/);
+  assert.deepEqual(planRun({ only: ['d0', 'd3'], outDir: tmpOut }).errors, [], 'a subset is fine elsewhere');
+  assert.equal(planRun({ only: ['d0'], outDir: tmpOut }).full, false);
+  assert.match(planRun({ only: ['d0'], outDir: tmpOut, check: true }).errors[0], /--check .* cannot take --only/);
+  assert.match(planRun({ only: ['d0', 'nope'], outDir: tmpOut }).errors[0], /unknown diagnostic\(s\) nope/);
+  assert.equal(planRun({ only: ['d6', 'd0'], outDir: path.join(OUT, '.') }).errors.length, 1, 'the same directory spelled another way');
+  assert.ok(MODULES.includes('launch-env.mjs'));
+});
+
+test('run.mjs --only against the committed analysis/m0 exits 2 before computing anything and leaves diagnostics.json byte for byte as it was', () => {
+  const file = path.join(C.REPO, 'research/need-router-20261014/analysis/m0/diagnostics.json');
+  const before = readFileSync(file);
+  let code = 0, err = '';
+  try { execFileSync(process.execPath, [path.join(here, 'run.mjs'), '--only', 'd0'], { cwd: C.REPO, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', timeout: 20000 }); }
+  catch (e) { code = e.status; err = String(e.stderr); }
+  const after = readFileSync(file);
+  if (Buffer.compare(before, after) !== 0) { writeFileSync(file, before); assert.fail('run.mjs --only rewrote the committed diagnostics.json (restored)'); }
+  assert.equal(code, 2); assert.match(err, /refused: --only d0 would rewrite/);
+});
+
+test('a subset run names itself partial, and the gate reader finds no gate in it (so label-run refuses an agent stage on it)', async () => {
+  const r = await runAll({ only: ['d2'] });
+  assert.deepEqual(r.partial, { ran: ['d2'], notRun: ['d0', 'd1', 'd3', 'd4', 'd5', 'd6'] });
+  const g = parseMeterGate(JSON.stringify(r));
+  assert.equal(g.gate, null); assert.match(g.problem, /partial run \(d2 only\)/);
+  assert.equal((await everything()).partial, undefined, 'the full run carries no partial marker');
+  assert.deepEqual(parseMeterGate(JSON.stringify(await everything())).problem, null);
+  assert.deepEqual((await everything()).inputs.skippedStreams, []);
+});
+
+// ------------------------------------------------------------------------------------------------ the launch-environment measurement is a committed file
+test('launch-env: cacheRateOf prices a session at the 1-hour and the 5-minute cache-write rate and says which the CLI billed; the summary counts them', () => {
+  const table = priceTable();
+  const result = (model, { w1 = 0, w5 = 0, cost = null, out = 5000, input = 20, read = 100000 } = {}) => {
+    const u = { input_tokens: input, output_tokens: out, cache_read_input_tokens: read, cache_creation_input_tokens: w1 + w5, cache_creation: { ephemeral_1h_input_tokens: w1, ephemeral_5m_input_tokens: w5 } };
+    const at1 = priceTokens(table, model, { input, output: out, cacheRead: read, cacheWrite1h: w1 + w5 }).usd;
+    return { type: 'result', usage: u, total_cost_usd: cost ?? at1, modelUsage: { [model]: {} } };
+  };
+  const opus1h = cacheRateOf(result('claude-opus-5-5', { w1: 50000 }), table);
+  assert.equal(opus1h.exact1h, true); assert.equal(opus1h.exact5m, false); assert.equal(opus1h.cacheWrite1hShare, 1);
+  approx(opus1h.ratio1hOverReported, 1, 1e-6); assert.ok(opus1h.ratio5mOverReported < 0.9 && opus1h.ratio5mOverReported > 0.7);
+  const opus5m = cacheRateOf(result('claude-opus-5-5', { w5: 50000, cost: priceTokens(table, 'claude-opus-5-5', { input: 20, output: 5000, cacheRead: 100000, cacheWrite5m: 50000 }).usd }), table);
+  assert.equal(opus5m.exact5m, true); assert.equal(opus5m.exact1h, false); assert.equal(opus5m.cacheWrite1hShare, 0);
+  assert.match(cacheRateOf({ type: 'result', usage: {}, total_cost_usd: 0, modelUsage: {} }, table).skipped, /no usage or no CLI-reported cost/);
+  assert.match(cacheRateOf({ ...result('claude-opus-5-5', { w1: 1 }), modelUsage: { 'claude-opus-5-5': {}, 'claude-haiku-5-5': {} } }, table).skipped, /more than one model/);
+  assert.match(cacheRateOf({ ...result('claude-opus-5-5', { w1: 1 }), modelUsage: { 'claude-future-9': {} } }, table).skipped, /not in the pinned price table/);
+  // Transcripts: the last result event wins, a torn last line is ignored, a transcript with no result is skipped with its hash.
+  const line = o => JSON.stringify(o);
+  const t1 = [line({ type: 'assistant' }), line(result('claude-sonnet-5-5', { w1: 1000, cost: 1 })), line(result('claude-sonnet-5-5', { w1: 1000 })), '{"type":"result","usage":{'].join('\n');
+  assert.equal(finalResult(t1).modelUsage['claude-sonnet-5-5'] !== undefined, true);
+  const files = { '/x/a/.executor-transcript.jsonl': t1, '/x/b/.executor-transcript.jsonl': line({ type: 'assistant' }) };
+  const recs = measureTranscripts(Object.keys(files).map(file => ({ file, bytes: files[file].length, mtime: '2026-10-09T00:00:00.000Z' })), table, { root: '/x', read: f => files[f] });
+  assert.deepEqual(recs.map(r => r.path), ['a/.executor-transcript.jsonl', 'b/.executor-transcript.jsonl']);
+  assert.ok(recs.every(r => /^[0-9a-f]{16}$/.test(r.sha256)));
+  assert.equal(recs[0].exact1h, true); assert.match(recs[1].skipped, /no final result event/);
+  const sum = summariseLaunchEnv(recs);
+  assert.deepEqual([sum.transcripts, sum.withFinalUsage, sum.skipped], [2, 1, 1]);
+  assert.deepEqual([sum.byModel['claude-sonnet-5-5'].sessions, sum.byModel['claude-sonnet-5-5'].exact1h, sum.byModel['claude-sonnet-5-5'].exact5m, sum.byModel['claude-sonnet-5-5'].allWritesOneHour], [1, 1, 0, 1]);
+});
+
+test('launch-env.json is the committed record behind the D6 launch-environment paragraph: self-consistent, hashed per transcript, rendered with no number written by hand', async () => {
+  const le = readLaunchEnv();
+  assert.ok(le, 'analysis/m0/launch-env.json is committed'); assert.equal(le.schema, LAUNCH_ENV_SCHEMA);
+  assert.ok(le.transcripts.length > 0 && le.transcripts.every(t => /^[0-9a-f]{16}$/.test(t.sha256) && t.path && Number.isFinite(t.bytes) && Date.parse(t.mtime) >= Date.parse(le.after)));
+  assert.deepEqual(summariseLaunchEnv(le.transcripts), le.summary, 'the summary is recomputed from the per-transcript records');
+  assert.equal(le.summary.transcripts, le.transcripts.length);
+  const r = await everything();
+  assert.deepEqual(r.d6.launchEnv.summary, le.summary); assert.equal(r.d6.launchEnv.source.path, 'research/need-router-20261014/analysis/m0/launch-env.json');
+  assert.match(r.d6.launchEnv.source.sha256, /^[0-9a-f]{64}$/);
+  const md = renderReport(r);
+  const total = le.summary.withFinalUsage, opus = le.summary.byModel['claude-opus-5-5'];
+  assert.ok(md.includes(`Of the ${le.summary.transcripts} CLI transcripts`) && md.includes(`${total} have a final usage record`));
+  assert.ok(md.includes(`${opus.exact1h} of ${opus.sessions} opus`));
+  // Without the committed measurement the paragraph says so and states no session count.
+  const without = renderReport({ ...r, d6: { ...r.d6, launchEnv: null } });
+  assert.ok(without.includes('No launch-environment measurement is committed') && !without.includes('CLI transcripts under'));
+  // The old hand-measured, unreproducible figures are not in the report source.
+  const src = readFileSync(path.join(here, 'report.mjs'), 'utf8');
+  for (const gone of ['336 final-usage records', 'to within 1% for all 76 Opus', 'not reproduced by', 'Every number in the report is read from']) assert.ok(!src.includes(gone), gone);
 });

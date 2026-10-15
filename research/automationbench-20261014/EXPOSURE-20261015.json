@@ -1,0 +1,148 @@
+{
+ "schema": "foundry.autobench.exposure/v1",
+ "recordedAt": "2026-10-15",
+ "recordedBy": "integrity review of AB-v1 (claude-opus-5-5 subagent); count-only scan: names, header markers and counts were read, never task text",
+ "source": {
+  "workflow": "wf_c02e0b27-037, the AutomationBench-R recurring-families workflow (subagent of session d3c9fb19)",
+  "transcript": "~/.claude/projects/-home-user-workflow-foundry/d3c9fb19-46ab-5a0c-bfdd-4f8b7871088a/subagents/workflows/wf_c02e0b27-037/agent-a149177bcc0a77ba0.jsonl (container-local) and its persisted output tool-results/b333e19m5.txt",
+  "window": {
+   "first": "2026-10-15T01:11:56.880Z",
+   "last": "2026-10-15T01:39:05.518Z"
+  },
+  "tool": "scratchpad/scripts/brief.py (agent-written): per named task, the apps, the USER prompt (first 650-900 characters) and, in its first version, the assertion list (first 14, 160 characters each)",
+  "beforeFreeze": true,
+  "missedBecause": "the freeze exposure scan (PREREG-AB-v1 \u00a70, \u00a714.2) covered the repository and /var/tmp/foundry-work for task names; agent transcripts and the session scratchpad were not scanned, and brief.py wrote nothing to disk"
+ },
+ "test": {
+  "burned": [
+   "finance.payment_fraud_detection",
+   "finance.po_email_logging",
+   "finance.refund_processing",
+   "finance.xero_bill_entry",
+   "hr.break_schedule_processing",
+   "hr.pto_reconciliation",
+   "hr.recruitment_dedup_alert",
+   "hr.tuition_reimbursement",
+   "marketing.event_registration_sync",
+   "marketing.influencer_contract_reminders",
+   "marketing.partner_content_approval",
+   "marketing.referral_processing",
+   "marketing.ugc_moderation",
+   "operations.access_request_validation",
+   "operations.conference_room_booking_conflicts",
+   "operations.facility_incident_triage",
+   "operations.pipefy_gmail_vendor_approval",
+   "operations.pipefy_slack_purchase_request",
+   "operations.purchase_order_three_way_match",
+   "operations.safety_incident_investigation_routing",
+   "operations.sensor_monitoring_alert",
+   "operations.twilio_afterhours_incident",
+   "sales.calendly_sla_monitoring",
+   "sales.chatgpt_lead_classification_pipeline",
+   "sales.cross_modal_renewal_processing",
+   "sales.docusign_renewal_automation",
+   "sales.invalid_email_cleanup",
+   "sales.linkedin_job_change",
+   "support.freshdesk_escalation_matrix",
+   "support.freshdesk_warranty_adjudication",
+   "support.gorgias_fraud_detection",
+   "support.gorgias_refund_processing",
+   "support.zendesk_escalation_waterfall",
+   "support.zoho_desk_warranty_processing"
+  ],
+  "promptAndAssertions": [
+   "marketing.event_registration_sync",
+   "marketing.influencer_contract_reminders",
+   "marketing.partner_content_approval",
+   "marketing.referral_processing",
+   "marketing.ugc_moderation",
+   "operations.pipefy_gmail_vendor_approval",
+   "sales.calendly_sla_monitoring",
+   "sales.chatgpt_lead_classification_pipeline",
+   "sales.cross_modal_renewal_processing",
+   "sales.docusign_renewal_automation",
+   "sales.invalid_email_cleanup",
+   "sales.linkedin_job_change"
+  ],
+  "promptOnly": [
+   "finance.payment_fraud_detection",
+   "finance.po_email_logging",
+   "finance.refund_processing",
+   "finance.xero_bill_entry",
+   "hr.break_schedule_processing",
+   "hr.pto_reconciliation",
+   "hr.recruitment_dedup_alert",
+   "hr.tuition_reimbursement",
+   "operations.access_request_validation",
+   "operations.conference_room_booking_conflicts",
+   "operations.facility_incident_triage",
+   "operations.pipefy_slack_purchase_request",
+   "operations.purchase_order_three_way_match",
+   "operations.safety_incident_investigation_routing",
+   "operations.sensor_monitoring_alert",
+   "operations.twilio_afterhours_incident",
+   "support.freshdesk_escalation_matrix",
+   "support.freshdesk_warranty_adjudication",
+   "support.gorgias_fraud_detection",
+   "support.gorgias_refund_processing",
+   "support.zendesk_escalation_waterfall",
+   "support.zoho_desk_warranty_processing"
+  ],
+  "namedOnly": [
+   "sales.calendly_meeting_prep"
+  ],
+  "burnedPerDomain": {
+   "sales": 6,
+   "marketing": 5,
+   "operations": 9,
+   "support": 6,
+   "finance": 4,
+   "hr": 4
+  },
+  "burnedInTestRef": [
+   "finance.xero_bill_entry",
+   "hr.tuition_reimbursement",
+   "operations.sensor_monitoring_alert",
+   "sales.cross_modal_renewal_processing"
+  ]
+ },
+ "dev": {
+  "exposedNotForced": [
+   "finance.airtable_expense_approval",
+   "finance.payment_reconciliation",
+   "finance.wire_transfer_approval",
+   "hr.background_check_followup",
+   "hr.candidate_rejection_followup",
+   "hr.equipment_provisioning",
+   "hr.pto_balance_alert",
+   "marketing.lead_enrichment",
+   "marketing.lifecycle_stage",
+   "marketing.social_mention_response",
+   "marketing.trial_extension_processing",
+   "operations.hubspot_ticket_escalation",
+   "sales.calendly_lead_scoring",
+   "sales.champion_change_alert",
+   "support.freshdesk_auto_merge",
+   "support.reamaze_multi_channel_dedup",
+   "support.zendesk_weekend_handoff"
+  ],
+  "exposedInDevCheck": [
+   "marketing.social_mention_response",
+   "marketing.trial_extension_processing",
+   "operations.hubspot_ticket_escalation",
+   "support.freshdesk_auto_merge",
+   "support.reamaze_multi_channel_dedup",
+   "support.zendesk_weekend_handoff"
+  ],
+  "exposedAlreadyForced": 32
+ },
+ "reviewedNamesOnly": {
+  "what": "transcripts that name test-split tasks without any task text (split lists, swap lists, this record); reviewed 2026-10-15, no burn",
+  "files": [
+   "wf_e705582b-86a/agent-a9c61b769491dfc39.jsonl (freeze agent: split and swap lists)",
+   "wf_e705582b-86a/journal.jsonl (workflow journal: the freeze report)",
+   "wf_e705582b-86a/agent-afe7da67e2e7443b0.jsonl (this integrity review: names and counts only)"
+  ],
+  "harnessBuilder": "wf_e705582b-86a/agent-a42a8221ad914ca96.jsonl (A1 build) names no test-split task"
+ }
+}

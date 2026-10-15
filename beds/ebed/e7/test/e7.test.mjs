@@ -5,7 +5,7 @@
 //   node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateWorld, twins, referenceRuns, oracle, binding, referenceTransition, recordsOf, specE, family, oracleItem, schemas } from '../index.mjs';
+import { generateWorld, twins, referenceRuns, oracle, binding, referenceTransition, recordsOf, canonicalArgs, specE, family, oracleItem, schemas } from '../index.mjs';
 import { runControl, CONTROLS, VARIANTS, targetCases, plannedView } from '../controls.mjs';
 import { runGoldens, goldens } from '../golden.mjs';
 import { slaTimeline, reachAt, boundCalendar } from '../sla.mjs';
@@ -513,10 +513,20 @@ test('seed discipline: the walker check runs on dev seeds only and the touch of 
 
 test('golden module: every exported golden passes the reference transition', () => {
   assert.ok(goldens.length >= 20, `only ${goldens.length} goldens`);
-  for (const r of runGoldens(referenceTransition, recordsOf)) assert.ok(r.pass, `${r.name} (${r.source}): ${r.detail}`);
+  for (const r of runGoldens(referenceTransition, recordsOf, canonicalArgs)) assert.ok(r.pass, `${r.name} (${r.source}): ${r.detail}`);
 });
 
-for (const g of goldens) test(`golden ${g.name}`, () => { const r = g.check(referenceTransition, recordsOf); assert.equal(r, true, `${g.source}: ${r}`); });
+for (const g of goldens) test(`golden ${g.name}`, () => { const r = g.check(referenceTransition, recordsOf, canonicalArgs); assert.equal(r, true, `${g.source}: ${r}`); });
+
+// A unit check, not a golden (ledger/MUTANTS.md, 2026-10-15): goldens assert only what the grader sees, and the grader
+// compares records only when the expectation has them, which a case with no incident never does (mutants t437 and t438
+// change only this answer and are grader-equivalent).
+test('unit check: recordsOf gives no records for a case with no incident', () => {
+  const w = generateWorld({ seed: 1001, difficulty: 3, mix: 'tail' });
+  const stray = Object.entries(w.truth.cases).find(([, x]) => x.subject === null)[0];
+  assert.equal(recordsOf(w, { bucket: () => ({ ledger: [] }) }, stray), null);
+  assert.equal(referenceTransition(w, { case: stray, at: Date.parse(w.horizonEnd), seq: Infinity, world: w, truth: w.truth.cases[stray], events: [], rows: [], tasks: [], taskEvents: [] }).records, null);
+});
 
 test('goldens discriminate: each SLA-engine control changes at least one golden (the goldens see the constructs)', () => {
   // A transition that reads the control's world: if no golden changes, the goldens cannot see the construct.
@@ -527,7 +537,7 @@ test('goldens discriminate: each SLA-engine control changes at least one golden 
       const a = arms.get(world);
       return referenceTransition(a, { ...view, world: a });
     };
-    const failed = runGoldens(tr, recordsOf).filter(r => !r.pass).map(r => r.name);
+    const failed = runGoldens(tr, recordsOf, canonicalArgs).filter(r => !r.pass).map(r => r.name);
     assert.ok(failed.length > 0, `${id}: every golden still passes`);
   }
 });

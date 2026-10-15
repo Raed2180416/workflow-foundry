@@ -6,6 +6,8 @@
 // per admitted defect and index.json under --out (default ledger/latent-defects/).
 //   node beds/ebed/e8/tools/defects-mine.mjs [--stage1 1101:2,1101:3,1101:4,1101:5] [--stage2 1102:2,1102:3,1102:4,1102:5]
 //        [--only ref-k12,hc-timer-first] [--limit N] [--out DIR] [--no-write]
+// index.json `perWorld` is `<failed E0 cases>/<failed later cases>` per mining world (stage 1, then stage 2); `!` marks a
+// runaway stopped by the host (graded up to the stop).
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,43 +42,49 @@ const dir = scratchDir();
 const prepare = async list => { const r = []; for (const w of list) { r.push(await prepareWorld(w)); console.log(`  world ${r.at(-1).world.id}: ${Object.keys(r.at(-1).world.truth.cases).length} cases (${secs()} s)`); } return r; };
 const status = new Map();        // id -> { status, e0First?, worlds: [{ world, digest, inert, affected }] }
 
-async function mineAll(list, prepared, stageName) {
+// Stage 1 mines every world (so world-latent mutants, E0-silent and failing later on some world but E0-visible on another,
+// are recorded); stage 2 stops at the first E0 failure.
+async function mineAll(list, prepared, stageName, { stopAtE0 }) {
   for (const [n, m] of list.entries()) {
     const st = status.get(m.id) ?? { status: 'pending', worlds: [] };
     status.set(m.id, st);
     let item;
-    try { item = await armItemOf(m, dir); } catch (e) { st.status = 'load-error'; st.error = String(e?.message ?? e).slice(0, 120); continue; }
+    try { item = await armItemOf(m, dir); } catch (e) { st.status = 'load-error'; st.error = String(e?.message ?? e).slice(0, 120); console.log(`    ${m.id} load-error`); continue; }
     for (const p of prepared) {
       let r;
       try { r = await mineOnWorld({ mutant: m, item, prepared: p }); } catch (e) {
-        const msg = String(e?.message ?? e);
-        st.status = /wake-ups/.test(msg) ? 'runaway' : 'run-error'; st.stage = stageName; st.error = `${p.world.id}: ${msg.slice(0, 120)}`; break;
+        st.status = 'run-error'; st.stage = stageName; st.error = `${p.world.id}: ${String(e?.message ?? e).slice(0, 120)}`; break;
       }
-      if (r.e0.failed.length) { st.status = `e0-visible`; st.stage = stageName; st.e0First = { world: p.world.id, ...r.e0.failed[0] }; break; }
-      if (r.aborted) { st.status = 'runaway'; st.stage = stageName; st.error = `${p.world.id}: ${r.aborted.slice(0, 80)}; E0 silent up to the stop at ${r.stoppedAt}`; break; }
-      st.worlds.push({ world: p.world.id, digest: r.digest, inert: r.inert, affected: r.affected.length, oracleErrors: r.affected.filter(a => a.oracleError).length });
+      const w = { world: p.world.id, digest: r.digest, inert: r.inert, e0Failed: r.e0.failed.length, affected: r.affected.length, oracleErrors: r.affected.filter(a => a.oracleError).length };
+      if (r.aborted) w.stopped = r.stoppedAt;
+      st.worlds.push(w);
+      if (r.e0.failed.length && !st.e0First) { st.stage = stageName; st.e0First = { world: p.world.id, ...r.e0.failed[0] }; }
+      if (r.aborted && !st.stopped) st.stopped = `${p.world.id}: ${r.aborted.slice(0, 80)}; stopped at ${r.stoppedAt}`;
+      if (stopAtE0 && r.e0.failed.length) break;
     }
     if (st.status === 'pending' || st.status === 'candidate') {
-      const errs = st.worlds.reduce((s, w) => s + w.oracleErrors, 0);
-      st.status = errs ? 'oracle-error' : st.worlds.some(w => w.affected) ? 'candidate' : st.worlds.every(w => w.inert) ? 'inert' : 'silent';
+      const errs = st.worlds.reduce((s2, w) => s2 + w.oracleErrors, 0);
+      st.status = st.e0First ? 'e0-visible' : st.stopped ? 'runaway' : errs ? 'oracle-error'
+        : st.worlds.some(w => w.affected) ? 'candidate' : st.worlds.every(w => w.inert) ? 'inert' : 'silent';
+      st.worldLatent = st.worlds.filter(w => !w.e0Failed && !w.stopped && w.affected).map(w => w.world);
     }
-    console.log(`    ${m.id} ${st.status}${st.e0First ? ` (${st.e0First.world.replace('ebed-e8-dev-', '')} ${st.e0First.case} ${st.e0First.code ?? ''})` : ''}${st.worlds.length ? ` affected ${st.worlds.map(w => w.affected).join('/')}` : ''} (${secs()} s)`);
+    console.log(`    ${m.id} ${st.status}${st.e0First ? ` (${st.e0First.world.replace('ebed-e8-dev-', '')} ${st.e0First.case} ${st.e0First.code ?? ''})` : ''} e0/affected ${st.worlds.map(w => `${w.e0Failed}/${w.affected}${w.stopped ? '!' : ''}`).join(' ')} (${secs()} s)`);
     if ((n + 1) % 10 === 0 || n + 1 === list.length) {
-      const tally = {}; for (const x of list.slice(0, n + 1)) { const s = status.get(x.id).status; tally[s] = (tally[s] ?? 0) + 1; }
+      const tally = {}; for (const x of list.slice(0, n + 1)) { const s2 = status.get(x.id).status; tally[s2] = (tally[s2] ?? 0) + 1; }
       console.log(`  ${stageName} ${n + 1}/${list.length} (${secs()} s) ${JSON.stringify(tally)}`);
     }
   }
 }
 
-console.log(`${mutants.length} reference mutants (${mutants.filter(m => m.kind === 'transition').length} transition, ${mutants.filter(m => m.kind === 'policy').length} hand candidates)`);
+console.log(`${mutants.length} reference mutants (${mutants.filter(m => m.kind === 'transition').length} transition, ${mutants.filter(m => m.kind === 'policy').length} policy mutants)`);
 console.log('stage 1 worlds');
 const p1 = await prepare(stage1);
-await mineAll(mutants, p1, 'stage1');
+await mineAll(mutants, p1, 'stage1', { stopAtE0: false });
 const cands1 = mutants.filter(m => status.get(m.id).status === 'candidate');
 console.log(`stage 2 worlds (${cands1.length} stage-1 candidates)`);
 const p2 = cands1.length ? await prepare(stage2) : [];
 for (const m of cands1) status.get(m.id).status = 'pending';
-await mineAll(cands1, p2, 'stage2');
+await mineAll(cands1, p2, 'stage2', { stopAtE0: true });
 const allPrepared = [...p1, ...p2];
 const latent = mutants.filter(m => status.get(m.id).status === 'candidate');
 
@@ -123,8 +131,10 @@ const index = {
   params: { ...PARAMS, stage1: p1.map(p => p.world.id), stage2: p2.map(p => p.world.id),
     e0CasesChecked: { stage1: p1.map(p => p.world.id).length && p1.reduce((s, p) => s + Object.values(p.world.truth.cases).filter(t => PARAMS.e0Epochs.includes(t.epoch)).length, 0),
       stage2: p2.reduce((s, p) => s + Object.values(p.world.truth.cases).filter(t => PARAMS.e0Epochs.includes(t.epoch)).length, 0) } },
-  counts: { mutants: mutants.length, transition: mutants.filter(m => m.kind === 'transition').length, hand: mutants.filter(m => m.kind === 'policy').length, ...tally,
-    behaviours: groups.size, admitted: manifests.length, unrevealed: unrevealed.length, trueRevealingEvents: trueEvents, falseRevealingEvents: falseEvents },
+  counts: { mutants: mutants.length, transition: mutants.filter(m => m.kind === 'transition').length, policy: mutants.filter(m => m.kind === 'policy').length, ...tally,
+    behaviours: groups.size, admitted: manifests.length, unrevealed: unrevealed.length, trueRevealingEvents: trueEvents, falseRevealingEvents: falseEvents,
+    worldLatentOnly: mutants.filter(m => ['e0-visible', 'runaway'].includes(status.get(m.id).status) && status.get(m.id).worldLatent?.length).length,
+    selfRevealing: manifests.filter(x => x.worlds.every(w => !w.reveal || !w.reveal.event)).length },
   defects: manifests.map(x => {
     const first = x.worlds.find(w => w.reveal);
     return { id: x.id, file: `${x.id}.json`, members: x.members, operator: x.mutant.operator, contradicts: x.contradicts,
@@ -135,8 +145,9 @@ const index = {
     const st = status.get(m.id);
     return { id: m.id, operator: m.operator, ...(m.line ? { line: m.line } : {}), status: st.status, ...(st.stage ? { stage: st.stage } : {}),
       ...(st.e0First ? { e0First: { world: st.e0First.world, case: st.e0First.case, epoch: st.e0First.epoch, code: st.e0First.code ?? null, ...(st.e0First.lid ? { lid: st.e0First.lid } : {}) } } : {}),
-      ...(st.error ? { error: st.error } : {}),
-      ...(['latent', 'latent-unrevealed', 'silent', 'oracle-error'].includes(st.status) ? { affected: st.worlds.map(w => w.affected) } : {}),
+      ...(st.error ? { error: st.error } : {}), ...(st.stopped ? { stopped: st.stopped } : {}),
+      ...(st.worlds.length ? { perWorld: st.worlds.map(w => `${w.e0Failed}/${w.affected}${w.stopped ? '!' : ''}`) } : {}),
+      ...(st.worldLatent?.length && !['latent', 'latent-unrevealed'].includes(st.status) ? { worldLatent: st.worldLatent } : {}),
       ...(oracleVerdicts[m.id] ? { asOracleMutant: oracleVerdicts[m.id].verdict } : {}) };
   }),
 };

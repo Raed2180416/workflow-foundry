@@ -39,8 +39,9 @@ BITES = {"nodedupe": {"retry"}, "fuzzy": {"plus-address", "digit-domain", "soft-
          "nohold": {"hold", "hold-release"}, "nopremium": {"premium"}, "nowindow": {"window-boundary-out"},
          "confirmall": {"recent-confirm", "reprocess"}, "anyauthor": {"unauthorized-amendment"}, "noreprocess": {"reprocess"},
          "noskip": {"resolved", "retracted", "pre-migration"}}
-# variants whose clause exists only in some weeks (amendments and reprocess at d3, window edges, recent confirmations)
-NARROW = {"anyauthor", "noreprocess", "nowindow", "confirmall"}
+# variants whose clause exists only in some weeks (amendments and reprocess at d3, window edges, recent confirmations,
+# invalid-note rows)
+NARROW = {"anyauthor", "noreprocess", "nowindow", "confirmall", "noskip"}
 
 
 @pytest.fixture(scope="module")

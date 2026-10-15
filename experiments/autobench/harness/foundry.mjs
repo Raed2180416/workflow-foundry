@@ -19,6 +19,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { shellQuote } from '../../../src/executors/claude-code.mjs';
+import { CHILD_ENV_ALLOWED } from '../../../src/models/policy.mjs';
 import { REPO, adapterText, sha256 } from '../lib.mjs';
 
 export const HARNESS_ID = 'foundry';
@@ -32,7 +33,7 @@ export const LEDGER_MAX_BYTES = 256 * 1024;
 export function harnessSection({ maxSteps = 50 } = {}) {
   const n = maxSteps - 1;
   return `${SECTION_BEGIN}
-This section is added by the evaluation harness. It is the same for every task and says nothing about this task: the task is the user message, and everything above still applies. Work in these six phases, in order.
+This section is added by the harness that runs this session. It is the same for every task and says nothing about this task: the task is the user message, and everything above still applies. Work in these six phases, in order.
 
 1. Discover (read only). Find out what the request touches before you change anything. Use api_search to find the endpoints for every app and action that the request, and anything you read, refers to. Read the messages, documents, pages, sheets and records that can hold the instructions, policies, people, thresholds and data the request depends on, including anything it only alludes to (a policy, a process, a list, "the latest" version). Make no change in this phase: nothing that creates, updates, sends, posts or deletes.
 
@@ -48,7 +49,7 @@ This section is added by the evaluation harness. It is the same for every task a
 
 5. Verify. Re-read the world for every write: fetch each record you created or changed and the messages you sent or posted. Compare them with the ledger: every R item done with the exact values, nothing an F item forbids done, nothing done twice. Fix anything wrong or missing, then re-read it. Add "## Verification" to ${LEDGER_FILE}: one line per item, marked done, not needed (why) or blocked (why).
 
-6. Stop. Only after the verification, end with the short summary the instructions above ask for.
+6. Stop. Only after the verification, end the session with a short final reply here: plain text in this conversation, not a new message, post or record in any app.
 
 Steps: every response in which you run a command counts as one step, whether the command calls the environment or only writes ${LEDGER_FILE}. At most ${n} such responses run; then the session ends. Keep the procedure lean: batch independent calls, and write ledger updates in the same command as your next tool call where you can (\`cat > ${LEDGER_FILE} <<'EOF'\` ... \`EOF\`, then \`node tool.mjs batch ...\` on the next line).
 ${SECTION_END}`;
@@ -118,11 +119,35 @@ export function collectLedger(workdir, hostDir, { name = LEDGER_FILE, maxBytes =
 
 // ---------------------------------------------------------------------------------------------------------------
 // Manifest (PREREG-AB-v1 §6.1): sha256 of the canonical JSON {files: [{path, sha256}] sorted by path, config}. Files are
-// every local module run.mjs loads (static and dynamic imports, transitively), the bridge, the agent-side client and
-// the model policy file.
+// every local module run.mjs loads (static and dynamic imports, transitively), the bridge and the agent-side client.
+// The config pins the run settings and what else can change what A1's model sees or does (§7): the policy entries the
+// run uses (the claude-cli provider and the run's model; the rest of policy/models.json is other experiments' and
+// changes often, so the whole-file hash is recorded in the run's provenance instead), the CLI child environment (the
+// cache and traffic switches change cost and the prompt the CLI builds), the CLI version, the corpus commit and lock,
+// and the declared knowledge sources (H8).
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const RUNNER = path.resolve(HERE, '../run.mjs');
+
+/** H8: every knowledge source compiled into the harness. Update with every harness version. */
+export const KNOWLEDGE = Object.freeze([
+  'architect-written procedure (claude-opus-5-5, build time) from the dev-side raw-Haiku subset60 failure classes (dev split only): endpoint discovery, policy or guardrail violation, misleading record, wrong field, incomplete multi-step',
+  'the official system prompt and the api tool catalog, as every session receives them (no task-specific content)',
+]);
+
+/** The policy entries a run uses: the claude-cli provider and the model entry (null for scripted runs). */
+export function policyEntries(model, file = path.join(REPO, 'policy/models.json')) {
+  const p = JSON.parse(readFileSync(file, 'utf8'));
+  return { provider: p.providers?.['claude-cli'] ?? null, model: (p.models ?? []).find(m => m.id === model) ?? null };
+}
+
+/** The corpus pin: commit and uv.lock sha256 (null when absent). */
+export function corpusPin(corpus = path.join(REPO, 'corpus/AutomationBench')) {
+  let commit = null, uvLock = null;
+  try { commit = spawnSync('git', ['-C', corpus, 'rev-parse', 'HEAD'], { encoding: 'utf8', timeout: 20_000 }).stdout.trim() || null; } catch {}
+  try { uvLock = sha256(readFileSync(path.join(corpus, 'uv.lock'))); } catch {}
+  return { commit, uvLockSha256: uvLock };
+}
 const IMPORT_RE = /(?:\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)['"](\.{1,2}\/[^'"]+)['"]/g;
 
 /** Local .mjs files reachable from `entry` through relative imports. */
@@ -138,7 +163,7 @@ export function localImports(entry = RUNNER) {
 }
 
 export function manifestFiles() {
-  const extra = ['experiments/autobench/bridge.py', 'experiments/autobench/tool.mjs', 'policy/models.json'].map(p => path.join(REPO, p));
+  const extra = ['experiments/autobench/bridge.py', 'experiments/autobench/tool.mjs'].map(p => path.join(REPO, p));
   return [...new Set([...localImports(), ...extra])].map(f => path.relative(REPO, f)).sort();
 }
 
@@ -148,11 +173,14 @@ export function cliVersion(binary = 'claude') {
   return r.status === 0 ? r.stdout.trim() : null;
 }
 
-/** The run settings the manifest pins (H3, H4, H9 and §7: model, effort, budgets, step limits, executor options). */
+/** The run settings the manifest pins (H3, H4, H8, H9 and §7: model, effort, budgets, step limits, executor options, the
+ * policy entries, the CLI child environment and version, the corpus pin, the declared knowledge). */
 export function harnessConfig(o) {
   return { harness: HARNESS_ID, version: HARNESS_VERSION, model: o.model ?? null, effort: o.effort ?? null, budgetUsd: o.budgetUsd, timeoutMin: o.timeoutMin,
     maxSteps: o.maxSteps, cliMaxTurns: o.cliMaxTurns, tools: o.tools, det: o.det, k: o.k, concurrency: o.concurrency,
-    executor: 'src/executors/claude-code.mjs runClaudeCode, DEFAULT_HIDDEN, DEFAULT_KEEP_RO + the step-guard directory', cli: o.cli ?? null };
+    executor: 'src/executors/claude-code.mjs runClaudeCode, DEFAULT_HIDDEN, DEFAULT_KEEP_RO + the step-guard directory', cli: o.cli ?? null,
+    childEnv: o.childEnv ?? Object.fromEntries(CHILD_ENV_ALLOWED.map(k => [k, typeof process.env[k] === 'string' ? process.env[k] : null])),
+    policy: o.policy ?? policyEntries(o.model ?? null), corpus: o.corpus ?? corpusPin(), knowledge: o.knowledge ?? [...KNOWLEDGE] };
 }
 
 const canon = v => JSON.stringify(sortKeys(v));

@@ -529,4 +529,163 @@ Once it is appended, nothing in §2–§12 may change.
 
 ## 16. Amendments
 
-(dated entries only; none yet)
+Dated entries only. Entries AM-1 to AM-7 come from the integrity review of 2026-10-15 (an Opus 5.5 subagent, after the
+A1 build and before any paid A1 session). No model was called and no test task's text was read: the exposure check
+read task names, header markers and counts only.
+
+**AM-1 (2026-10-15) H3 step counting.** §4 H3 said responses are "counted as the executor reports them: `num_turns` per
+`claude -p` session". That count is wrong. In the CLI the subset60 sessions ran on (2.1.299, see AM-5), `num_turns` is
+the number of tool results + 1, not the number of model responses. It differed from the real response count in 22 of 60
+subset60 sessions (by −1 to +3), and a session re-woken by a background task reported `num_turns` 1 for 16 responses.
+From now on, for both arms:
+
+- a model response is one distinct assistant message id across the whole stream;
+- each context compaction (`compact_boundary`) counts as one more response;
+- `num_turns` is reported beside it (`accounting.mjs`).
+
+The rule itself is unchanged. More than 50 responses, or a world step issued by response 50 or later, fails the
+task-run in the headline. A1's CLI step guard (`--max-turns 49`) exists in A1 only. It can stop an A1 session early,
+never late, and is disclosed (AM-7).
+
+**AM-2 (2026-10-15) Exposure missed by the freeze, and burned test tasks.** The freeze's exposure scan (§0, §14.2)
+covered the repository and `/var/tmp/foundry-work`. It did not cover agent transcripts or the session scratchpad.
+
+*What was found.* The AutomationBench-R families workflow (`wf_c02e0b27-037`) ran before the freeze, from 01:11 to 01:39
+UTC on 2026-10-15. Its agent ran a scratch script (`brief.py`) that printed task briefs into its context:
+
+- the user prompt (the first 650–900 characters);
+- in the script's first version, also up to 14 assertions per task.
+
+The script wrote nothing to disk. The full lists, the evidence path and the method are in
+[EXPOSURE-20261015.json](EXPOSURE-20261015.json).
+
+*Test split.* 34 test-split tasks had their prompt printed, and 12 of these also had their assertions printed. By
+§1.2's own standard they are not held out.
+
+| Domain | sales | marketing | operations | support | finance | hr | total |
+|---|---|---|---|---|---|---|---|
+| Burned | 6 | 5 | 9 | 6 | 4 | 4 | **34** |
+| Test tasks left | 44 | 45 | 41 | 44 | 46 | 46 | **266** |
+
+One more test task (`test.namedOnly` in the JSON) was only named in a source-span lookup. It is not burned.
+
+*Dev split.* 17 non-forced dev tasks were also briefed. 6 of them are in devCheck.
+
+*Who saw it.* The agents of the AB-v1 workflow that built the split and the A1 harness never saw the briefs. A count of
+test names over the whole transcript store found them only in:
+
+- the families agent;
+- the freeze agent's swap list (names only);
+- the workflow journal (names only);
+- this review (names only).
+
+**Rule from now on (§1.3 applies).**
+
+- The 34 tasks are burned.
+- The test run still runs all 300 tasks in both arms.
+- The **headline is computed without the burned tasks**:
+  - Strict pass rate is the mean over the six domains of each domain's pass rate on its remaining tasks. This is the
+    official domain weighting. The pooled mean over the 266 tasks is also reported.
+  - McNemar and the bootstrap use the 266 paired tasks.
+  - The all-300 numbers are reported beside the headline.
+- testRef loses 4 tasks. A2 and A1F run on all 60 and are reported on the 56 that remain.
+- `RECURRING-DESIGN.md` and `experiments/autobench/families/` were written by the exposed agent. They are **not allowed
+  as A1 knowledge sources** (H8), and A1 developers do not read them.
+- The 6 exposed devCheck tasks stay in devCheck. Their exposure went to the families agent, not to the harness
+  developer, and it is disclosed.
+
+**Owner decision before the first paid dev session.** The alternative is SPLIT-v2: the same rule, with the forced set
+extended by:
+
+- the 51 newly exposed tasks;
+- the 6 scripted-smoke tasks (`runs/a1-smoke-scripted`).
+
+That keeps the test split at 300 balanced and unexposed tasks. It is admissible only before any paid dev session,
+because a re-split moves dev tasks into test.
+
+*Scan from now on.* `node experiments/autobench/exposure-scan.mjs` scans:
+
+- the repository;
+- `/var/tmp/foundry-work`;
+- this project's agent transcripts.
+
+Pass `--roots` to add scratchpads. It prints file names and counts only. It runs before the addendum, and its result is
+recorded there.
+
+**AM-3 (2026-10-15) L5 implemented; session egress.** The executor sandbox hides the repository, the corpus and the
+host-only directories. It does not block the network: the CLI needs its API, and `HTTPS_PROXY` passes into the sandbox
+(`src/executors/claude-code.mjs:101-102`, frozen). So a session's Bash could reach the public AutomationBench
+repository. L5 is now enforced host-side for both arms (`accounting.mjs` `commandFlags`, `auditSession`). Each of the
+following is a violation, and a violation fails the task-run in the headline:
+
+- a model other than the run's model in the stream or the result's `modelUsage`;
+- a network or package command (curl, wget, git, pip, npm and so on);
+- network code;
+- a reference to the benchmark's distribution;
+- a missing host transcript.
+
+Request bodies and heredoc text written by the session are excluded. On the 60 subset60 transcripts (749 Bash
+commands) this flagged 0 commands.
+
+**AM-4 (2026-10-15) Split hygiene for every arm; sealed runs.** §1.3 required `assertDevOnly` for A1 only. A0 runs, dry
+runs (which print a prompt), scripted runs and `parity.mjs` with any other seed or size could open test tasks: for
+example, `parity.mjs --per-domain 10` selects 13 test tasks, and `run.mjs --subset 12 --seed 2` selects 5. `run.mjs` now
+refuses test-split tasks in every mode before anything is prepared. Only two cases are exempt:
+
+- A1 given the frozen harness hash;
+- an A0 model run given `--test-run AB-v1`. A dry or scripted run is never exempt.
+
+A run holding devCheck or test tasks is **sealed**:
+
+- per-task grades are not logged;
+- the repo copy writes per-task records to `results.sealed.jsonl`, which is read only after the go/no-go decision (§5)
+  or after the analysis (§6.4).
+
+**AM-5 (2026-10-15) Cost flags, CLI version and policy version: corrections.** The subset60 baseline (A0, dev) ran on:
+
+- Claude Code **2.1.299** (§2 said 2.1.300; 2.1.300 is today's CLI);
+- policy 2026-10-09.1;
+- with `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` and `FORCE_PROMPT_CACHING_5M` **unset**. Every session wrote 1-hour
+  prompt-cache entries (`ephemeral_1h_input_tokens`), and `analytics_disabled` was false. The executor passes these
+  variables through from the shell. The policy's `childEnv` is not applied by this runner.
+
+§11 item 7 is corrected. Costs are the CLI's list prices under the **recorded** child environment, not under
+`FORCE_PROMPT_CACHING_5M=1`. Run provenance now records the CLI version, the child environment and the policy-file
+hash. A0's prompt-identity check (§3) must also show the same CLI version and child environment for A0 and A1.
+
+**AM-6 (2026-10-15) Harness manifest scope.** The manifest config now pins:
+
+- the policy *entries* the run uses (the `claude-cli` provider and the model entry). These are the §7 definition. The
+  whole policy file changes for other experiments: it went to 2026-10-15.2 today for a Jev entry, so its file hash is in
+  run provenance instead;
+- the CLI child environment;
+- the corpus commit and the uv.lock hash;
+- the declared knowledge sources (H8, `KNOWLEDGE` in `harness/foundry.mjs`).
+
+**AM-7 (2026-10-15) Additions to the disclosure list (§11).**
+
+- Session egress, and the L5 counts per arm (AM-3).
+- The burned tasks, with the headline on the remainder (AM-2).
+- H3 counting (AM-1).
+- The A1-only CLI step guard.
+- Claude Code's own scaffolding around the official text, in both arms:
+  - the CLI's Bash tool definition;
+  - [doc, unverified at $0] the CLI's truncation of long command output, where the official loop returns full tool
+    messages.
+- The official Claude configuration sets thinking from `--reasoning-effort`, either adaptive with `output_config.effort`
+  or a token budget, with `max_tokens` 64000 (`eval.py:246-265`). Here thinking follows the CLI's `--effort high`.
+- The CLI version and child environment of each run (AM-5).
+
+Two harness wording changes were made by the review before any paid A1 session: "evaluation harness" became "harness",
+and the Stop phase now says the final reply stays in the conversation, never in an app. The harness id stays a1-v1.
+
+**AM-8 (2026-10-15) Decision on AM-2, and a rescan before the test run.** Decided by the orchestrating session under the owner's standing authorization ("don't ask me for perms", 2026-10-14). It is recorded here before any paid dev session.
+
+1. SPLIT-v1 is kept. The 34 burned test tasks are excluded, and the headline uses the remaining 266 test tasks, domain-weighted as AM-2 states. There is no re-split: a SPLIT-v2 would move dev tasks into test and gains nothing over excluding the burned ones.
+2. Before the test run, `experiments/autobench/exposure-scan.mjs` is re-run over the repository, the live directories and every agent transcript of this session, after the families workflow and any other workflow has finished.
+   - Every test task newly found exposed (its prompt or its assertions in any context) is burned by the same AM-2 rule.
+   - The scan output and the final headline task list are committed before the A1 hash is frozen.
+3. Conditions (b), (c) and (d) of the 2026-10-15 integrity review apply as written:
+   - (b) dev pools only, each run capped within the remaining dev budget; devCheck sealed, with at most 3 looks;
+   - (c) the first paid run is tiny and checks the CLI step guard and the L5 audit on real A1 transcripts;
+   - (d) `RECURRING-DESIGN.md` and `families/` are never A1 knowledge.

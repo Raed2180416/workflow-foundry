@@ -37,7 +37,7 @@
   "policy.amendment": {"perWeek": [0, 2], "d1": [0, 0], "d2": [0, 0], "d3": [2, 2], "note": "d3: one from compliance@ (authorized), one from the marketing manager, a vendor or a look-alike compliance address"},
   "day.close": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "at": "17:00 UTC Monday to Friday; Friday's is the week close"}
  },
- "triggersPerWeek": {"d2": [40, 52], "d3": [48, 60]},
+ "triggersPerWeek": {"d2": [42, 49], "d3": [50, 60], "observed601to650": {"d2": [42, 49], "d3": [52, 59]}},
  "trapRates": {"d1": 0.0, "d2": 0.45, "d3": 0.75, "unit": "share of event triggers (day closes excluded) carrying at least one trap; meta.json reports trap_rate_events per stream"},
  "trapCatalogue": {
   "T-lookalike": ["case (address in other case: the same address)", "plus-address (ann+news@ is not ann@; on no list -> Not subscribed, or on its own lists)", "digit-domain (n0rthgate.example.com is not northgate.example.com)", "soft-lookalike (Bounce Log history sits on the sibling address)", "am-lookalike (an Account Managers row for the digit look-alike with another manager)"],

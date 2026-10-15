@@ -1036,7 +1036,7 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
  * What a paid run (no --dry) must pass before anything is spent. Returns { errors, deviations, stamp }; the run is refused
  * on any error. deps (tests): { canonicalFile, preregFile, checkStagesFn, stampOf, frozenSha (file -> sha256 hex of its
  * frozen text, default: its committed HEAD blob), ledger, policy, meterGate (() -> D6's summary.meterGate or null; default: read from the committed
- * HEAD blob of diagnostics.json), meterGateWaiver (() -> the owner's logged waiver or null), meterGateDirty (() -> why the working-tree diagnostics.json
+ * HEAD blob of diagnostics.json: meterGateSource () -> { gate, problem, dirty }), meterGateWaiver (() -> the owner's logged waiver or null), meterGateDirty (() -> why the working-tree diagnostics.json
  * differs from HEAD, or null; default: compared with the HEAD blob, and null when `meterGate` is injected), meterVerification (() -> the verification record
  * or null) }.
  *  - approval: the stage's approved flag (the owner's gate);
@@ -1056,7 +1056,7 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
  */
 export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters = null, deviation = null, deps = {} }) {
   const { canonicalFile = STAGES_FILE, preregFile = PREREG_FILE, checkStagesFn = checkStages, stampOf = engineStamp, frozenSha = gitBlobSha256, ledger = undefined, policy = undefined,
-    meterGate = null, meterGateWaiver = null, meterGateDirty = null, meterVerification = readVerification } = deps;
+    meterGate = null, meterGateSource = readCommittedMeterGate, meterGateWaiver = null, meterGateDirty = null, meterVerification = readVerification } = deps;
   const { stages, stage } = plan, errors = [], deviations = [];
   if (stage.approved !== true) errors.push(`stage ${stage.id} is not approved (stages.json approved: ${stage.approved}); paid runs need the owner's gate`);
   if (stages.status !== 'frozen') {
@@ -1085,10 +1085,10 @@ export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters
   // The cost-meter gate (D6, meter-gate.mjs): a stage with an agent arm does not start while the committed gate is block-until-verified and no
   // passing meter-verification record is on file.
   // Fail closed: no gate on file refuses the stage unless the owner's waiver is logged; the gate is the committed one, and a working tree that differs refuses it.
-  const committed = meterGate ? null : readCommittedMeterGate();
+  const committed = meterGate ? null : meterGateSource();
   const mg = meterGateDecision({
     gate: meterGate ? meterGate() : committed.gate, verification: meterVerification(), arms: [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => stages.arms[a]),
-    waiver: meterGateWaiver ? meterGateWaiver() : meterGate ? null : readCommittedWaiver(), problem: committed?.problem ?? null, dirty: meterGateDirty ? meterGateDirty() : committed?.dirty ?? null,
+    waiver: meterGateWaiver ? meterGateWaiver() : meterGate || deps.meterGateSource ? null : readCommittedWaiver(), problem: committed?.problem ?? null, dirty: meterGateDirty ? meterGateDirty() : committed?.dirty ?? null,
   });
   if (!mg.allow) errors.push(`meter gate: ${mg.why}`);
   else if (mg.waived) deviations.push({ kind: 'meter-gate-waiver', text: `meter gate: ${mg.why}`, waiver: mg.waiver });

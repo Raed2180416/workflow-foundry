@@ -93,7 +93,7 @@ export function transitionMutants({ src = readFileSync(TRANSITION_FILE, 'utf8'),
 
 /** E-BED §3 E8's hand-proposed candidate defects, as reference-policy variants: admitted only by the same executed check. */
 export const HAND_CANDIDATES = Object.freeze([
-  { id: 'hc-refund-no-key', kind: 'policy', operator: 'missing key', candidate: 'refund retried without a key',
+  { id: 'hc-refund-no-key', kind: 'policy', origin: 'E-BED §3 E8 candidate defect (hand-proposed)', operator: 'missing key', candidate: 'refund retried without a key',
     variant: () => ({ post: out => {
       // The refund goes out without a key; its dependants (releases) wait for it to commit (the next tick), since `after`
       // can only name a key.
@@ -101,11 +101,21 @@ export const HAND_CANDIDATES = Object.freeze([
       if (!bare.size) return out;
       return { ...out, effects: out.effects.filter(e => !bare.has(e.after)).map(e => (bare.has(e.key) ? (({ key, ...x }) => x)(e) : e)) };
     } }) },
-  { id: 'hc-cancel-keeps-shipment', kind: 'policy', operator: 'deleted compensation step', candidate: 'order cancel not cancelling a started child shipment',
+  { id: 'hc-cancel-keeps-shipment', kind: 'policy', origin: 'E-BED §3 E8 candidate defect (hand-proposed)', operator: 'deleted compensation step', candidate: 'order cancel not cancelling a started child shipment',
     variant: () => ({ drop: e => e.lid.startsWith('csh:') && e.rule === 'R6.2' }) },
-  { id: 'hc-late-signal-regresses', kind: 'policy', operator: 'deleted guard (monotone status)', candidate: 'late in-transit signal regressing a delivered status',
+  { id: 'hc-late-signal-regresses', kind: 'policy', origin: 'E-BED §3 E8 candidate defect (hand-proposed)', operator: 'deleted guard (monotone status)', candidate: 'late in-transit signal regressing a delivered status',
     variant: world => VARIANTS['last-signal-wins'].variant(world) },
-  { id: 'hc-timer-first', kind: 'policy', operator: 'precedence swap (timer before signal)', candidate: 'cancel-vs-timeout race resolved timer-first',
+  // E-BED §9.5 "edition by run date" and §2.9 "latest edition always", applied to the reference policy's view of the rulebook.
+  { id: 'op-edition-by-publication', kind: 'policy', origin: 'E-BED §9.5 operator', operator: 'edition by run date', candidate: 'an edition applied from its publication, not its effectiveFrom',
+    variant: world => VARIANTS['edition-by-publication'].variant(world) },
+  { id: 'op-latest-edition-always', kind: 'policy', origin: 'E-BED §2.9 necessity construct as an operator', operator: 'latest edition always', candidate: 'the newest published edition applied to every order',
+    variant: world => {
+      const w = structuredClone(world);
+      const eds = w.rulebook.editions;
+      if (eds.length > 1) w.rulebook.editions = [{ ...eds.at(-1), effectiveFrom: eds[0].effectiveFrom, effectiveTo: null }];
+      return { armWorld: w };
+    } },
+  { id: 'hc-timer-first', kind: 'policy', origin: 'E-BED §3 E8 candidate defect (hand-proposed)', operator: 'precedence swap (timer before signal)', candidate: 'cancel-vs-timeout race resolved timer-first',
     variant: world => VARIANTS['timer-first'].variant(world) },
 ].map(Object.freeze));
 
@@ -461,8 +471,12 @@ export function planReveal({ world, mined, defectId, lag = PARAMS.lagMinutes * M
     const T = at + lag;
     if (!(T >= window[0] && T < window[1] && T <= idx.horizonMs)) continue;
     if (v.firstDivergence.layer === 0) {
-      return { reveal: { case: v.case, class: v.class, epoch: v.epoch, selfRevealing: 'arm-error', at: v.firstDivergence.at, event: null }, falseReveal: null,
-        sweep: sweepOf(obs, T), natural };
+      // A crash reveals itself when it happens (no planted event, no false twin); the rules it blocked are the obligations
+      // open at the crash.
+      let blocked = [];
+      try { blocked = [...new Set(referenceTransition(world, caseView(idx, v.case, at, Infinity)).effects.required.map(e => e.rule))].sort(); } catch { /* past totality */ }
+      return { reveal: { case: v.case, class: v.class, epoch: v.epoch, selfRevealing: 'arm-error', at: v.firstDivergence.at, blocked, event: null }, falseReveal: null,
+        sweep: sweepOf(obs, at), natural };
     }
     const claim = trueClaim(world, idx, v, T);
     if (!claim) continue;
@@ -507,17 +521,19 @@ export function defectManifest({ id, mutant, members, results, oracleVerdict = n
   const rules = new Set();
   for (const r of results) for (const a of r.affected) if (a.rule) rules.add(a.rule);
   for (const r of results) if (r.plan?.reveal?.truth?.rule) rules.add(r.plan.reveal.truth.rule);
+  for (const r of results) for (const x of r.plan?.reveal?.blocked ?? []) rules.add(x);
   return {
     schema: 'ebed-e8-latent-defect/1',
     id,
     evidence: 'development (dev worlds 1001-1199); $0',
     mutant: { id: mutant.id, kind: mutant.kind, operator: mutant.operator,
       ...(mutant.kind === 'transition' ? { file: 'beds/ebed/e8/transition.mjs', line: mutant.line, from: mutant.from, to: mutant.to, sourceSha256: sha256(mutant.source) }
-        : { file: 'beds/ebed/e8/defects.mjs', candidate: mutant.candidate, origin: 'E-BED §3 E8 candidate defects (hand-proposed)' }),
+        : { file: 'beds/ebed/e8/defects.mjs', candidate: mutant.candidate, origin: mutant.origin }),
       ...(oracleVerdict ? { asOracleMutant: oracleVerdict } : {}) },
     members,
     solver: { policy: 'beds/ebed/oracle/policy.mjs referenceArm', timing: PARAMS.timing, oracle: 'original transition.mjs' },
     contradicts: [...rules].sort(),
+    revealedBy: results.some(r => r.plan?.reveal?.event) ? 'in-world event (planted)' : 'self (arm error)',
     params: { e0Epochs: PARAMS.e0Epochs, revealEpochs: PARAMS.revealEpochs, lagMinutes: PARAMS.lagMinutes },
     e0Silence: { executed: true, worlds: results.length, casesChecked: results.reduce((s, r) => s + r.e0.checked.length, 0), failed: 0 },
     worlds: results.map(r => ({
