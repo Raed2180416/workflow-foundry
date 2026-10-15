@@ -849,7 +849,14 @@
      "class": "no-workflow",
      "mode": "agent-H"
     },
-    "note": "looks like branching, not worth a workflow"
+    "note": "looks like branching, not worth a workflow",
+    "checkedAgainst": [
+     {
+      "date": "2026-10-15",
+      "by": "M1 tags m1-d5 and M1-R",
+      "changed": false
+     }
+    ]
    },
    "agentOBudgetUsd": 4,
    "bandDecision": "kept d3 after M1 (R2 one call 4/12 and 3/12 at d3): the W-BED §2.4 gate admits rungs for W-bed claims, not need-router labels; a band where one call suffices is a valid negative region, and dropping levels after seeing one-call outcomes would choose bands to produce labels (DESIGN §6). Per-difficulty labels are reported",
@@ -892,7 +899,14 @@
      "class": "workflow",
      "mode": "construct-H"
     },
-    "note": "the strongest built-in positive; at N = 1 agent-H+proc is the likely alternative in A"
+    "note": "the strongest built-in positive; at N = 1 agent-H+proc is the likely alternative in A",
+    "checkedAgainst": [
+     {
+      "date": "2026-10-15",
+      "by": "M1 tags m1-d5 and M1-R",
+      "changed": false
+     }
+    ]
    },
    "agentOBudgetUsd": 8,
    "m1OneCallD3": "8/12, 9/12 (d3 is outside its d4-5 band) (dev attack seeds, efforts none and medium); hypothesis rows unchanged"
@@ -1015,7 +1029,14 @@
      "class": "workflow",
      "mode": "construct-H"
     },
-    "note": "open (low confidence): agent or workflow"
+    "note": "open (low confidence): agent or workflow",
+    "checkedAgainst": [
+     {
+      "date": "2026-10-15",
+      "by": "M1 tags m1-d5 and M1-R",
+      "changed": false
+     }
+    ]
    },
    "agentOBudgetUsd": 8,
    "bandDecision": "kept d3 after M1 (R6 one call 2/12 and 6/12 at d3): the W-BED §2.4 gate admits rungs for W-bed claims, not need-router labels; a band where one call suffices is a valid negative region, and dropping levels after seeing one-call outcomes would choose bands to produce labels (DESIGN §6). Per-difficulty labels are reported",
@@ -1472,16 +1493,30 @@
        "mode": "direct-H"
       },
       "note": "a third of the band (d3) is solved by one call; d4-5 untested at this revision. The original row (workflow / construct-H, written before M1 was read) stays the record; this revision does not change the band"
+     },
+     {
+      "date": "2026-10-15",
+      "informedBy": "M1 tag m1-d5 (d5): one call solved r3p 10/12 and 11/12 on the same dev attack seeds 479-490",
+      "n1": {
+       "class": "no-workflow",
+       "mode": "direct-H"
+      },
+      "n10": {
+       "class": "either",
+       "mode": "direct-H"
+      },
+      "note": "one call solves both observed levels (d3 and d5); d4 is untested. At N = 10 a built workflow could only tie one call's ~0.9 if its build is cheap, so one call is expected to lead. The original row and the first revision stay the record; the band is unchanged (§3.2)"
      }
     ]
    },
    "agentOBudgetUsd": 8,
    "devObserved": [
     "M1 tag m1 (d3, dev attack seeds 479-490): one Haiku call passed 12/12 (effort none) and 11/12 (medium)",
-    "Jev-need (2026-10-14, hosted Jev, dev): read the 12 r3p M1 tasks and their one-call outcomes",
-    "M1 tag m1-d5 (d5, the same dev seeds): in flight at this revision; its rows were not read by this revision's author"
+    "M1 tag m1-d5 (d5, the same dev seeds): one Haiku call passed 10/12 (none) and 11/12 (medium)",
+    "Jev-need (2026-10-14, hosted Jev, dev): read the 12 r3p d3 M1 tasks and their one-call outcomes; its d3+d5 update read the 12 d5 tasks as well",
+    "J-NEED-2 (2026-10-15, hosted Jev and a Haiku typed arm, dev): property questions on all 24 r3p M1 tasks, scored against their one-call outcomes"
    ],
-   "bandDecision": "kept d3 after M1 (R3' one call 12/12 and 11/12 at d3): the W-BED §2.4 gate admits rungs for W-bed claims, not need-router labels; a band where one call suffices is a valid negative region, and dropping levels after seeing one-call outcomes would choose bands to produce labels (DESIGN §6). Per-difficulty labels are reported; for r3p the d3-dropped reading is a mandatory sensitivity (analysis.mandatorySensitivities)"
+   "bandDecision": "kept d3 after M1 (R3' one call 12/12 and 11/12 at d3): the W-BED §2.4 gate admits rungs for W-bed claims, not need-router labels; a band where one call suffices is a valid negative region, and dropping levels after seeing one-call outcomes would choose bands to produce labels (DESIGN §6). Per-difficulty labels are reported; for r3p the d3-dropped reading is a mandatory sensitivity (analysis.mandatorySensitivities). M1-d5, read after this rule was fixed, changes no band"
   },
   {
    "requirements": [],
@@ -1916,14 +1951,14 @@
   },
   {
    "id": "M1",
-   "when": "2026-10-15/16",
+   "when": "ran 2026-10-14 21:31 -> 2026-10-15 00:02 (tags m1, m1-d5); closed (PREREG §13 D2)",
    "grade": "development",
    "estUsd": 10,
    "capUsd": 15,
    "inTotals": true,
    "core": true,
    "approved": true,
-   "what": "one Haiku call per W-rung task, two efforts: tag m1 (8 rungs at d3, 192 calls; also the W-bed one-call admission gate: R0 >= 10/12 per effort, other rungs <= 2/12) and tag m1-d5 (R2, R3, R3', R6 at d5, 96 calls); both are development runs and both are recorded in PREREG §0, §12 and §13",
+   "what": "one Haiku call per W-rung task, two efforts: tag m1 (8 rungs at d3, 192 calls; also the W-bed one-call admission gate: R0 >= 10/12 per effort, other rungs <= 2/12) and tag m1-d5 (R2, R3, R3', R6 at d5, 96 calls); both are development runs, recorded in PREREG §0.1, §12 and §13. Their timeouts were re-run by stage M1-R",
    "command": [
     "node experiments/need-router/m1-run.mjs --cap 15",
     "node experiments/need-router/m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10"
@@ -2158,7 +2193,10 @@
      "report": "research/need-router-20261014/runs/m1/REPORT.md"
     },
     "m1-d5": {
-     "status": "in flight at this revision (process started 2026-10-14 23:00); its rows were not read by this revision's author",
+     "status": "complete",
+     "firstRow": "2026-10-14T23:01:42Z",
+     "lastRow": "2026-10-15T00:02:45Z",
+     "committed": "5f75f17 (2026-10-15 00:03:53)",
      "committedRunner": "56c0a82 (2026-10-14 23:00:46)",
      "command": "node experiments/need-router/m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10",
      "m1RunSha256": "7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692",
@@ -2176,8 +2214,184 @@
       }
      },
      "calls": 96,
-     "ownCounterCapUsd": 10,
-     "results": "recorded in PREREG §0 when the run ends, before Freeze"
+     "reportedUsd": 5.9199,
+     "timeoutRowsAtZero": 28,
+     "meterUsd": 33.9199,
+     "meterNote": "PREREG §12 meter: 28 MODEL_TIMEOUT rows booked at $0 are charged at the $1 per-call bound, against the tag's $10 share; with tag m1, M1 is $62.9156 on the meter against its $15 cap (reported $8.9156)",
+     "errors": {
+      "MODEL_TIMEOUT": 28,
+      "MODEL_SCHEMA": 4
+     },
+     "onePassPerEffort": {
+      "wbed-r2": "2/12, 2/12",
+      "wbed-r3": "0/12, 0/12",
+      "wbed-r3p": "10/12, 11/12",
+      "wbed-r6": "0/12, 0/12"
+     },
+     "gates": {
+      "wbedAdmission": "at d5: passed for R2, R3 and R6 (<= 2/12 at each effort); failed for R3' (10/12, 11/12)"
+     },
+     "readBy": "the 2026-10-15 revision of PREREG (after the band rule of §3.2 was fixed)",
+     "report": "research/need-router-20261014/runs/m1/REPORT.md (section \"M1 at difficulty 5\")"
+    }
+   }
+  },
+  {
+   "id": "M1-R",
+   "when": "ran 2026-10-15 00:43 -> 06:20 (attempt 1 invalid; attempt 2 and its resume)",
+   "grade": "development",
+   "estUsd": 15,
+   "capUsd": 25,
+   "inTotals": false,
+   "core": false,
+   "approved": "a plan item (research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §5 row 4, cap $25), run under the owner's standing authority; no decision in DECISIONS-ADOPTED.md names it; after PREREG §13 D2 had closed M1 (deviation D7)",
+   "externalBudget": {
+    "plan": "research/architecture-20261014/MEMORY-ROUTING-RECURSION.md",
+    "row": "§5 row 4",
+    "capUsd": 25
+   },
+   "what": "re-ran every MODEL_TIMEOUT trial of tags m1 (26) and m1-d5 (28) at a 600 s wall with the same arm definitions (runner arm hashes checked equal to the source rows), so one-call labels stop counting a wall-clock limit as a model failure; the merged labelling (m1r) is runs/m1-r/merged.jsonl. Development evidence",
+   "command": "node experiments/need-router/m1-rerun.mjs (defaults: --from m1,m1-d5 --tag m1-r --timeout-ms 600000 --cap 25)",
+   "runs": [
+    {
+     "bed": "wbed-r1",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ],
+     "tag": "m1-r",
+     "portTimeoutMs": 600000,
+     "subset": "the 18 MODEL_TIMEOUT trials of tag m1 (6 at effort none, 12 at medium)"
+    },
+    {
+     "bed": "wbed-r4",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 3,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ],
+     "tag": "m1-r",
+     "portTimeoutMs": 600000,
+     "subset": "the 8 MODEL_TIMEOUT trials of tag m1 (1 none, 7 medium)"
+    },
+    {
+     "bed": "wbed-r3",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 5,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ],
+     "tag": "m1-r",
+     "portTimeoutMs": 600000,
+     "subset": "the 17 MODEL_TIMEOUT trials of tag m1-d5 (5 none, 12 medium)"
+    },
+    {
+     "bed": "wbed-r6",
+     "split": "dev",
+     "purpose": "jit-dev",
+     "seeds": {
+      "from": 379,
+      "to": 390
+     },
+     "difficulty": 5,
+     "arms": [
+      "m1-call-none",
+      "m1-call-medium"
+     ],
+     "tag": "m1-r",
+     "portTimeoutMs": 600000,
+     "subset": "the 11 MODEL_TIMEOUT trials of tag m1-d5 (3 none, 8 medium)"
+    }
+   ],
+   "capShares": {
+    "m1-r": 25
+   },
+   "capSharesNote": "one tag; its cap is the plan's $25 (externalBudget)",
+   "observed": {
+    "m1-r": {
+     "status": "complete",
+     "firstRow": "2026-10-15T00:55:11Z",
+     "lastRow": "2026-10-15T06:20:22Z",
+     "committed": "8f72e17 (2026-10-15 06:22:02)",
+     "committedRunner": "4e2e8fe (2026-10-15 00:38:13)",
+     "command": "node experiments/need-router/m1-rerun.mjs",
+     "m1RerunSha256": "662ae4407990fc5a5178d28d64fe1a948a0a58dda63a4e7892bda1e2d7508a49",
+     "attempts": [
+      {
+       "attempt": 1,
+       "rows": 4,
+       "at": "2026-10-15T00:43Z",
+       "outcome": "invalid: the ModelPort's own 300 s deadline overrode the 600 s provider wall (fixed in 29c6c48, 00:48:32); 4 MODEL_TIMEOUT rows booked at $0, kept outside the repository (/var/tmp/foundry-work/need/m1-r-attempt1-portcap300s/)"
+      },
+      {
+       "attempt": 2,
+       "rows": 54,
+       "outcome": "from 00:55; 4 trials hit MODEL_RATE_LIMIT at 02:09 (the subscription session limit: environment faults, $0, no tokens), set aside outside the repository (results.envfaults-ratelimit.jsonl) and re-run by a resume at 06:20; results.jsonl holds the 54 final rows",
+       "reportedUsd": {
+        "first": 6.6318,
+        "resume": 1.2616
+       }
+      }
+     ],
+     "engine": {
+      "stamp": "not taken at launch",
+      "reconstructedFrom": "commit 29c6c48 (2026-10-15 00:48:32), the last engine change before attempt 2; m1-rerun.mjs is unchanged since 4e2e8fe; policy/models.json version 2026-10-09.1, loaded at start (PREREG §13 D6)",
+      "trees": {
+       "experiments/lib": "bf88d80f70efb659b958962dc1ede7b2c9b13fb4",
+       "experiments/need-router": "1e1091e41ab5eda59a9dddd2a68e3d2335d63265",
+       "beds/wbed": "882d3ab58f593c9a779b3303bf4dea2a892129ed"
+      },
+      "files": {
+       "policy/models.json": "96d5586281a0e8e43c73db63118189aaf18e8da5a492bb0dddfd43ab676cb4cf"
+      }
+     },
+     "calls": 54,
+     "reportedUsd": 7.8934,
+     "timeoutRowsAtZero": 10,
+     "meterUsd": 17.8934,
+     "setAsideRowsAtZero": 8,
+     "meterWithSetAsideUsd": 25.8934,
+     "meterNote": "PREREG §12 meter: the 10 rows still at MODEL_TIMEOUT (600 s) are charged at the $1 bound; the 8 set-aside attempts (4 invalid-attempt timeouts, 4 rate-limit refusals) count like rows, each at its bound, giving $25.8934 against the $25 plan cap. The runner kept its own counter (reported dollars, timeouts at $0, no reservation) and stopped nothing",
+     "outcomes": {
+      "pass": 4,
+      "failWithAnswer": 34,
+      "MODEL_TIMEOUT": 10,
+      "MODEL_SCHEMA": 6
+     },
+     "passes": [
+      "wbed-r1:dev:d3:s383 medium",
+      "wbed-r1:dev:d3:s390 medium",
+      "wbed-r6:dev:d5:s383 none",
+      "wbed-r6:dev:d5:s389 none"
+     ],
+     "mergedOnePassPerEffort": {
+      "wbed-r1 d3": "0/12, 2/12 (was 0/12, 0/12)",
+      "wbed-r6 d5": "2/12, 0/12 (was 0/12, 0/12)"
+     },
+     "labels": "tasks solved by one call at either effort: 61/144 under m1 (tags m1 and m1-d5) -> 65/144 under m1r",
+     "gates": {
+      "wbedAdmission": "unchanged: R1 at d3 and R6 at d5 stay within <= 2/12 at each effort"
+     },
+     "report": "research/need-router-20261014/runs/m1-r/REPORT.md"
     }
    }
   },
@@ -3394,7 +3608,7 @@
   "recurringCapUsd": 24,
   "softCapCheckUsd": 1259
  },
- "revised": "2026-10-14 (adversarial review fixes: M1 recorded, C7a power precondition, G1 bound, theta minimum, stamps, meter, envelopes)",
+ "revised": "2026-10-14 (adversarial review fixes: M1 recorded, C7a power precondition, G1 bound, theta minimum, stamps, meter, envelopes); 2026-10-15 (M1-d5 results and M1-R recorded from their rows, J-NEED-2 noted; r3p's second hypothesis revision; set-aside attempts on the meter; freeze guards for recorded runs and for the analysis' rule imports)",
  "analysis": {
   "rulesModule": "experiments/need-router/prereg-rules.mjs",
   "c7a": {
@@ -3468,20 +3682,45 @@
    },
    {
     "dropTasks": {
-     "r3p": "d3"
+     "r3p": [
+      "d3",
+      "d5"
+     ]
     },
     "appliesTo": [
      "C7a",
      "C7b"
     ],
-    "why": "the d3 third of r3p was observed in M1; printed beside every reading (not a gate)"
+    "why": "the d3 and d5 thirds of r3p were observed in M1 (tags m1 and m1-d5), leaving d4 (4 tasks); printed beside every reading (not a gate)"
    }
-  ]
+  ],
+  "requiredRules": {
+   "module": "experiments/need-router/prereg-rules.mjs",
+   "readers": [
+    "experiments/need-router/evaluate.mjs",
+    "experiments/need-router/router.mjs"
+   ],
+   "rules": [
+    "balancedAccuracyInterval",
+    "c7aReading",
+    "g1Reading",
+    "thetaFitStatus",
+    "locoFolds",
+    "fitOrRule",
+    "harmfulPositions",
+    "withDropAgreement",
+    "signFlipFloor",
+    "missingDataRule",
+    "powerGate"
+   ],
+   "when": "a warning while the analysis may still change; an error once the PREREG §4.4 A-Freeze row is filled (the Freeze addendum pins the analysis)"
+  }
  },
  "spendMeter": {
   "rule": "per stage (and per M1 tag): sum over rows of max(reported, re-priced) when the row has an observed cost, else the row's bound; plus the reserved bound of every start in flight (reserved before launch); a start is refused when meter + its bound > the cap",
   "appliesTo": "every paid runner (label-run.mjs, m1-run.mjs, judge-H, probes, DRIFT)",
-  "executable": "experiments/need-router/prereg-rules.mjs capMeter, mayStart"
+  "executable": "experiments/need-router/prereg-rules.mjs capMeter, mayStart",
+  "setAside": "an attempt set aside outside the results (an invalid attempt, an environment-fault row re-run later) counts like a row: at max(reported, re-priced) when its cost was observed, else at its bound"
  },
  "engineStamp": {
   "labelEngine": {
