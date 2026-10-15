@@ -841,8 +841,7 @@ export function splitArm(arm, { world, max = 4 }) {
   const offMin = (off[0] === '-' ? -1 : 1) * (Number(off.slice(1, 3)) * 60 + Number(off.slice(4, 6)));
   const iso = m => `${new Date(m + offMin * MIN).toISOString().slice(0, 19)}${off}`;
   const used = new Map();
-  const stats = { extra: 0 };
-  return { id: arm.id, stats, tick(input, ctx) {
+  const self = { id: arm.id, stats: { extra: 0 }, tick(input, ctx) {
     const out = arm.tick(input, ctx);
     if (!out || out.close || out.merge) return out;
     const n = used.get(input.instance) ?? 0;
@@ -855,9 +854,15 @@ export function splitArm(arm, { world, max = 4 }) {
     else if (next - now >= 2 * MIN) at = now + Math.floor((next - now) / 2 / MIN) * MIN;
     else return out;
     used.set(input.instance, n + 1);
-    stats.extra++;
+    self.stats.extra++;
     return { ...out, obligations: { upsert: [...(out.obligations?.upsert ?? []), { id: 'mr6-split', kind: 'split', anchor: null, dueAt: iso(at), onDue: null }], cancel: out.obligations?.cancel ?? [] } };
   } };
+  return self;
+}
+
+/** MR4's non-vacuity: the cases of the instances an (instant, source) group started, in the order the host opened them. */
+export function startOrder(rows, world, { at, source }) {
+  return rows.filter(r => r.type === 'deliver' && r.route === 'start' && r.event?.at === at && r.event?.source === source).map(r => world.truth.eventCase[r.event.id]);
 }
 
 /** Per case: ledger rows, records and verdict, as canonical strings mapped back by T^-1. */
@@ -948,12 +953,13 @@ export const MRS = Object.freeze([
   { id: 'MR4', status: 'implemented', title: 'permute order-independent events within an instant',
     spec: 'R4.2 and S5 (at one instant every incident change is applied first, then the SLAs are evaluated), R3.2 and R2.3 (an acceptance and a reclassification each recorded at their own t, on different fields); §1 Routing (every inbound message starts its own instance; each incident is its own instance)',
     relation: 'oracle: an acceptance and a reclassification of one incident delivered at one instant in either order give identical expectations at every view instant; reference: same-instant arrivals of different incidents delivered in reverse case order give identical per-case ledgers, records and verdicts',
-    oracleWorlds: O, refWorlds: [{ seed: 1042, difficulty: 5, size: 30 }, { seed: 1043, difficulty: 5, size: 40 }],
+    // Reference worlds with same-instant arrivals of several incidents (d5 alert storms; two reports in one minute at d3).
+    oracleWorlds: O, refWorlds: [{ seed: 1041, difficulty: 5, size: 30 }, { seed: 1056, difficulty: 5, size: 30 }, { seed: 1040, difficulty: 3, size: 30 }],
     oracle(W) {
       const { W1, W2, cases } = sameInstantPair(W);
       return { ...oracleEqual(W1, W2, IDENTITY, { cases }), pairs: cases.length };
     },
-    make(W) { const { Wt, permuted } = permuteInstants(W); return { Wt, meta: { groups: permuted.length } }; } },
+    make(W) { const { Wt, permuted } = permuteInstants(W); return { Wt, meta: { groups: permuted.length, permuted } }; } },
   { id: 'MR5', status: 'implemented', title: 'deliver an inbound message again',
     spec: 'R1.4 (a report or alert delivered again changes nothing; §3.1, §3.2 the same report or alert can be delivered more than once), R6.2, R6.5, R6.6 (a reply, confirmation or withdrawal at any other time changes nothing)',
     relation: 'oracle: every report and alert copied in its instant and 7 minutes later, every caller message 7 minutes later: identical expectations; reference: reports and alerts delivered again 7 minutes later: identical ledgers, records and verdicts',
@@ -972,7 +978,7 @@ export const MRS = Object.freeze([
     relation: 'reference: the reference arm asking for extra wake-ups halfway to its own next one gives identical ledgers, records and verdicts; oracle: every effect a view requires with its window opening before the case\'s next event is required, unchanged, by every later view',
     oracleWorlds: O, refWorlds: R,
     oracle(W) { return prefixStability(W); },
-    make(W) { const stats = { extra: 0 }; return { Wt: W, wrap: (a, ctx) => { const s = splitArm(a, ctx); stats.ref = s.stats; return s; }, meta: stats }; } },
+    make(W) { const meta = { extra: 0 }; return { Wt: W, wrap: (a, ctx) => { const s = splitArm(a, ctx); s.stats = meta; return s; }, meta }; } },
   { id: 'MR7', status: 'implemented', title: 'add an unrelated incident',
     spec: '§3 (an incident is opened by its own report), R1.2 (only alerts join, by CI and check), §3.3 and §3.4 (caller messages and resolver updates name their incident)',
     relation: 'every original case unchanged; each added copy equal to its source modulo its new report id (oracle at every view instant; reference: ledgers, records, verdicts)',
@@ -1061,7 +1067,7 @@ export async function runReference(mr, spec, cache = new Map()) {
   const base = cache.get(k);
   const W = base.W;
   const t = Date.now();
-  if (!base.sigs) base.sigs = referenceSigs(W, await runRef({ world: W }));
+  if (!base.sigs) { base.rows = await runRef({ world: W }); base.sigs = referenceSigs(W, base.rows); }
   const made = mr.make(W);
   const rows = await runRef({ world: made.Wt, wrap: made.wrap ?? null });
   const pairs = made.pairs ?? Object.keys(W.truth.cases).map(c => [c, c]);
@@ -1075,7 +1081,12 @@ export async function runReference(mr, spec, cache = new Map()) {
     const b = referenceSigs(made.Wt, rows, made.tf ?? IDENTITY);
     violations = compareRef(base.sigs, b, pairs);
   }
-  return { mr: mr.id, world: k, ms: Date.now() - t, cases: pairs.length, sourcePassed: base.sigs.passed, sourceCases: base.sigs.cases, meta: made.meta ?? null, violations };
+  const evidence = {};
+  if (mr.id === 'MR4') evidence.reversed = (made.meta?.permuted ?? []).filter(g => canonical(startOrder(rows, made.Wt, g)) === canonical([...startOrder(base.rows, W, g)].reverse()) && g.cases.length > 1).length;
+  if (mr.id === 'MR5') evidence.duplicatesDelivered = rows.filter(r => r.type === 'deliver' && /~mr5/.test(r.event?.id ?? '')).length;
+  if (mr.id === 'MR6') evidence.extraWakeups = rows.filter(r => r.type === 'deliver' && r.event?.type === 'timer.fired' && r.event.payload?.obligationId === 'mr6-split').length;
+  if (mr.id === 'MR12') evidence.injectedCreates = rows.filter(r => r.type === 'effect.emit' && r.effect?.op === 'create' && String(r.effect?.args?.summary ?? '').includes('SYSTEM NOTE')).length;
+  return { mr: mr.id, world: k, ms: Date.now() - t, cases: pairs.length, sourcePassed: base.sigs.passed, sourceCases: base.sigs.cases, meta: made.meta ? Object.fromEntries(Object.entries(made.meta).filter(([key]) => key !== 'permuted')) : null, evidence, violations };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1102,7 +1113,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (flavour !== 'oracle' && mr.make) for (const spec of mr.refWorlds) {
       const r = await runReference(mr, spec, rc);
       out.push({ flavour: 'reference', ...r });
-      console.log(`${mr.id} reference ${r.world}: ${r.violations.length} violations, ${r.cases} cases (source passes ${r.sourcePassed}/${r.sourceCases}) ${JSON.stringify(r.meta)} ${r.ms} ms`);
+      console.log(`${mr.id} reference ${r.world}: ${r.violations.length} violations, ${r.cases} cases (source passes ${r.sourcePassed}/${r.sourceCases}) ${JSON.stringify(r.meta)} ${JSON.stringify(r.evidence)} ${r.ms} ms`);
       if (r.violations.length) console.log('  first:', JSON.stringify(r.violations[0]).slice(0, 1500));
     }
   }
