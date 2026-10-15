@@ -79,21 +79,51 @@ test('the committed diagnostics.json carries the gate D6 emitted, blocking until
   assert.equal(G.readMeterGate(path.join(os.tmpdir(), 'no-such-diagnostics.json')), null);
 });
 
-test('meterGateDecision: refuses an agent stage while blocked, allows without an agent arm, with a clear gate, or with a passing verification record', () => {
-  const agent = { factory: 'b0Agent' }, call = { factory: 'b0Call' }, built = { build: { factory: 'construct' }, run: { factory: 'b1Script' } }, guided = { build: { factory: 'procedureWriter' }, run: { factory: 'b0Agent' } };
+test('meterGateDecision: refuses an agent stage while blocked, allows without an agent arm, with a clear gate, or with a passing verification record re-derived from its transcripts', () => {
+  const agent = AGENT_O, call = { factory: 'b0Call' }, built = { build: { factory: 'construct', builderModel: HAIKU }, run: { factory: 'b1Script' } }, guided = { build: { factory: 'procedureWriter' }, run: { factory: 'b0Agent', model: HAIKU } };
   assert.deepEqual([agent, call, built, guided, { factory: 'static@v3' }].map(G.isAgentArmDef), [true, false, true, true, false]);
+  assert.deepEqual(G.agentModelsOf([agent, call, built, guided, { factory: 'static@v3' }]), [HAIKU, OPUS], 'a b0Agent model, a run model and a construct builder model; calls and static arms name none');
   const no = G.meterGateDecision({ gate: BLOCK, arms: [call, agent] });
   assert.equal(no.allow, false); assert.match(no.why, /block-until-verified.*OUTPUT_TOKENS_UNDER_RECORDED/);
   assert.equal(G.meterGateDecision({ gate: BLOCK, arms: [call] }).allow, true, 'a calls-only stage (M1) does not need the agent meter');
   assert.equal(G.meterGateDecision({ gate: CLEAR, arms: [agent] }).allow, true);
   assert.equal(G.meterGateDecision({ gate: null, arms: [agent] }).allow, false, 'no gate on file: the gate fails closed (it used to allow, which let a partial diagnostics.json switch it off)');
   assert.equal(G.meterGateDecision({ gate: null, arms: [call] }).allow, true, 'a calls-only stage needs no gate');
-  const good = { schema: G.VERIFICATION_SCHEMA, sessions: [{ method: 'per-message', recorded: 990, final: 1000 }, { method: 'per-message', recorded: 5000, final: 5100 }] };
-  assert.equal(G.meterGateDecision({ gate: BLOCK, verification: good, arms: [agent] }).allow, true);
-  for (const bad of [null, { ...good, passed: true, sessions: [good.sessions[0]] }, { ...good, passed: true, sessions: [...good.sessions, { method: 'per-message', recorded: 100, final: 1000 }] },
-    { ...good, passed: true, sessions: [...good.sessions, { method: 'unverified', recorded: 100, final: 100 }] }, { schema: 'x', sessions: good.sessions }]) {
-    assert.equal(G.meterGateDecision({ gate: BLOCK, verification: bad, arms: [agent] }).allow, false, JSON.stringify(bad)?.slice(0, 60));
+  const clear = (v, extra = {}) => G.meterGateDecision({ gate: BLOCK, verification: v, arms: [agent], priceTableId: P.id, rederive: REDERIVED, ...extra });
+  assert.equal(clear(REC()).allow, true);
+  assert.match(clear(REC()).why, /re-derived from its 2 transcripts/);
+  const good = REC();
+  for (const bad of [null, { ...good, passed: true, sessions: [good.sessions[0]] }, { ...good, passed: true, sessions: [...good.sessions, sess(OPUS, { recorded: 100, final: 1000 })] },
+    { ...good, passed: true, sessions: [...good.sessions, sess(OPUS, { method: 'unverified' })] }, { ...good, schema: 'need-meter-verification/1' }, { schema: 'x', sessions: good.sessions }]) {
+    assert.equal(clear(bad).allow, false, JSON.stringify(bad)?.slice(0, 60));
   }
+  assert.match(clear(null).why, /no meter-verification record is committed at HEAD/); assert.match(clear(null, { verificationProblem: 'x is in the working tree but not committed' }).why, /not committed/);
+});
+
+test('a forged or foreign verification record clears nothing: no price table id, another table, a model with no passing session, a transcript that does not re-derive (review of 2026-10-15)', () => {
+  // The record the review forged: two sessions that say recorded === final, no table, no model, no transcript. It used to pass.
+  const forged = { schema: 'need-meter-verification/1', sessions: [{ method: 'per-message', recorded: 100, final: 100 }, { method: 'per-message', recorded: 1, final: 1 }] };
+  assert.equal(G.verificationPasses(forged), false, 'wrong schema and no price band evidence');
+  assert.equal(G.verificationPasses({ ...forged, schema: G.VERIFICATION_SCHEMA }), false, 'per-message needs the reported and priced dollars: a forged recorded === final is not a verification');
+  const dec = (v, extra = {}) => G.meterGateDecision({ gate: BLOCK, verification: v, arms: [AGENT_O], priceTableId: P.id, rederive: REDERIVED, ...extra });
+  assert.equal(dec({ ...forged, schema: G.VERIFICATION_SCHEMA }).allow, false);
+  // The price table: a record made under one table cannot clear a stage run under another, and one without a table clears nothing.
+  assert.equal(dec(REC()).allow, true);
+  assert.equal(dec(REC({ priceTable: { id: 'need-v0-prices@2026-01-01' } })).allow, false); assert.match(dec(REC({ priceTable: { id: 'other' } })).why, /made under price table "other", the stage prices with "need-v1-prices@2026-10-14"/);
+  assert.equal(dec(REC({ priceTable: undefined })).allow, false); assert.equal(dec(REC({ priceTable: { id: null } }), { priceTableId: null }).allow, false, 'no table id on either side is not a match');
+  // The models: Haiku transcripts cannot clear an Opus arm.
+  const haikuOnly = REC({ models: [HAIKU], sessions: [sess(HAIKU), sess(HAIKU)] });
+  assert.equal(dec(haikuOnly).allow, false); assert.match(dec(haikuOnly).why, /no verifying session for model claude-opus-5-5/);
+  const both = G.meterGateDecision({ gate: BLOCK, verification: REC({ sessions: [sess(HAIKU), sess(OPUS)] }), arms: [AGENT_O, { factory: 'b0Agent', model: HAIKU }, { build: { factory: 'construct', builderModel: HAIKU }, run: { factory: 'b1Script' } }], priceTableId: P.id, rederive: REDERIVED });
+  assert.equal(both.allow, true, 'one passing session per model is enough');
+  const missingOne = G.meterGateDecision({ gate: BLOCK, verification: REC(), arms: [AGENT_O, { factory: 'b0Agent', model: HAIKU }], priceTableId: P.id, rederive: REDERIVED });
+  assert.equal(missingOne.allow, false); assert.match(missingOne.why, /no verifying session for model claude-haiku-5-5/);
+  assert.equal(G.meterGateDecision({ gate: BLOCK, verification: REC(), arms: [{ factory: 'b0Agent' }], priceTableId: P.id, rederive: REDERIVED }).allow, false, 'an agent arm that names no model cannot be covered');
+  // Re-derivation: the record is a claim until its transcripts say the same.
+  assert.equal(G.meterGateDecision({ gate: BLOCK, verification: REC(), arms: [AGENT_O], priceTableId: P.id }).allow, false, 'without a re-derivation hook nothing is cleared');
+  const bad = dec(REC(), { rederive: () => ({ ok: false, problems: ['session 1 (s.jsonl): transcript /x/s.jsonl is missing'] }) });
+  assert.equal(bad.allow, false); assert.match(bad.why, /transcript \/x\/s\.jsonl is missing/);
+  assert.equal(dec(REC(), { rederive: () => ({ ok: false }) }).allow, false);
 });
 
 test('outputTokenCheck: a start-of-message snapshot fails, matching totals pass, nothing to compare with is a failed verification', () => {
@@ -125,10 +155,12 @@ test('priceSession with the meter: an under-priced session is booked at the repo
   // No final usage on the record: cannot be verified, also booked at the reported figure.
   const nf = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: msgs, reportedUsd: reported, meter: { tolerance: 0.05 } });
   assert.equal(nf.meterUnverified, true); approx(nf.measured + nf.imputed, reported, 1e-9);
-  // Per-message lines that agree with the final usage: a plain re-price, no flag.
+  // Per-message lines that agree with the final usage AND a re-price that is the CLI figure within the band: a plain re-price, no flag.
   const good = [[10, 12000, 50000, 8000, 'claude-opus-5-5'], [3, 14553, 60000, 0, 'claude-opus-5-5']];
-  const v = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: good, reportedUsd: 99, finalUsage: { output_tokens: 26553 }, meter: { tolerance: 0.05 } });
-  assert.equal(v.meterUnverified, undefined); assert.equal(v.imputed, 0); assert.equal(v.meterCheck.ok, true);
+  const goodUsd = (10 * 4 + 12000 * 20 + 50000 * 0.2 + 8000 * 5 + 3 * 4 + 14553 * 20 + 60000 * 0.2) / 1e6;
+  const v = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: good, reportedUsd: 0.60, finalUsage: { output_tokens: 26553 }, meter: { tolerance: 0.05 } });
+  assert.equal(v.meterUnverified, undefined); assert.equal(v.imputed, 0); assert.equal(v.meterCheck.ok, true); assert.equal(v.meterCheck.priceBandOk, true);
+  approx(v.measured, goodUsd, 1e-9); assert.ok(v.meterCheck.relErr < 0.05);
   // A re-price already above the reported figure imputes nothing (the cap meter takes the larger anyway).
   const hi = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: msgs, reportedUsd: 0.01, meter: { tolerance: 0.05 } });
   assert.equal(hi.imputed, 0); assert.equal(hi.meterUnverified, true);
@@ -146,6 +178,37 @@ test('priceSession with the meter: an under-priced session is booked at the repo
   approx(killed.measured + killed.imputed, 4, 1e-9);
 });
 
+test('guardMeter: matching output tokens do not clear a session whose price the CLI figure does not corroborate (1-hour cache writes against the table\'s 5-minute rate)', () => {
+  // The review's case: the CLI writes accurate per-message output tokens, the session was billed with 1-hour cache writes (launch-env.json: 336 of 336), the pinned table
+  // prices them at 5 minutes. The output check passes; the re-price lands 15-17% under the reported figure. It used to be accepted as `measured` with nothing imputed.
+  const lines = [[10, 12000, 50000, 30000, 'claude-opus-5-5'], [3, 14553, 60000, 27000, 'claude-opus-5-5']];
+  const priced = (10 * 4 + 12000 * 20 + 50000 * 0.2 + 30000 * 5 + 3 * 4 + 14553 * 20 + 60000 * 0.2 + 27000 * 5) / 1e6;     // the table: 5-minute writes at 1.25 x input
+  const billed = priced + 57000 * (8 - 5) / 1e6;                                                                               // the CLI: 1-hour writes at 2 x input
+  assert.ok(priced / billed > 0.80 && priced / billed < 0.86, `the planted session sits at ${priced / billed} of the CLI figure`);
+  const s = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: lines, reportedUsd: billed, finalUsage: { output_tokens: 26553, cache_creation: { ephemeral_1h_input_tokens: 700000, ephemeral_5m_input_tokens: 0 } }, meter: { tolerance: G.OUTPUT_TOLERANCE } });
+  assert.equal(s.meterCheck.ok, true, 'the output tokens match the final usage');
+  assert.equal(s.meterUnverified, true); assert.equal(s.meterCheck.priceBandOk, false); assert.match(s.meterCheck.reason, /cache-write rate/);
+  approx(s.measured, priced, 1e-9); approx(s.measured + s.imputed, billed, 1e-9); approx(s.meterGapUsd, billed - priced, 1e-9);
+  assert.ok(s.imputed > 0.1 * billed, 'the 17% shortfall is now imputed, so the 30%-imputed rule and the utility see it');
+  // The same session at the rate the table prices (5-minute writes) is a plain measured re-price.
+  const five = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: lines, reportedUsd: priced * 1.04, finalUsage: { output_tokens: 26553 }, meter: { tolerance: G.OUTPUT_TOLERANCE } });
+  assert.equal(five.meterUnverified, undefined); assert.equal(five.imputed, 0); assert.equal(five.meterCheck.priceBandOk, true);
+  // Above the band too (a re-price over the CLI figure is not corroborated either); the booking never drops below the re-price.
+  const over = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: lines, reportedUsd: priced * 0.8, finalUsage: { output_tokens: 26553 }, meter: { tolerance: G.OUTPUT_TOLERANCE } });
+  assert.equal(over.meterUnverified, true); assert.equal(over.imputed, 0); approx(over.measured, priced, 1e-9);
+  // The edge of the band: 10% inside, 11% outside.
+  assert.equal(LR.priceSession(P, 'claude-opus-5-5', { messageUsage: lines, reportedUsd: priced / 0.91, finalUsage: { output_tokens: 26553 }, meter: { tolerance: G.OUTPUT_TOLERANCE } }).meterUnverified, undefined);
+  assert.equal(LR.priceSession(P, 'claude-opus-5-5', { messageUsage: lines, reportedUsd: priced / 0.88, finalUsage: { output_tokens: 26553 }, meter: { tolerance: G.OUTPUT_TOLERANCE } }).meterUnverified, true);
+  // No reported figure: nothing to corroborate the re-price with, so it is flagged (the numbers stay).
+  const none = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: lines, reportedUsd: 0, finalUsage: { output_tokens: 26553 }, meter: { tolerance: G.OUTPUT_TOLERANCE } });
+  assert.equal(none.meterUnverified, true); assert.equal(none.imputed, 0); assert.match(none.meterCheck.reason, /no CLI-reported cost/);
+  // A killed session keeps its bound whatever its lines say.
+  const killed = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: lines, costUnknown: true, boundUsd: 9, reportedUsd: 0, finalUsage: { output_tokens: 26553 }, meter: { tolerance: G.OUTPUT_TOLERANCE } });
+  assert.equal(killed.meterUnverified, undefined); approx(killed.measured + killed.imputed, 9, 1e-9);
+  // Without a meter (dry runs) nothing changes.
+  assert.equal(LR.priceSession(P, 'claude-opus-5-5', { messageUsage: lines, reportedUsd: billed, finalUsage: { output_tokens: 26553 } }).meterUnverified, undefined);
+});
+
 test('the 30% imputed rule sees the gap: a guarded agent mode is unlabelled where the unguarded re-price would have been trusted', async () => {
   const { needTable, needLabels, makeCell } = await import('../metrics.mjs');
   const mk = (guarded) => {
@@ -153,7 +216,7 @@ test('the 30% imputed rule sees the gap: a guarded agent mode is unlabelled wher
     for (let t = 0; t < 6; t++) {
       for (const mode of ['agent-H', 'agent-O']) {
         const o = mode === 'agent-O';
-        const c = LR.priceSession(P, o ? 'claude-opus-5-5' : 'claude-haiku-5-5', { messageUsage: [[10, o ? 40 : 300, 30000, 0, null]], reportedUsd: o ? 0.90 : 0.02, finalUsage: { output_tokens: o ? 26000 : 310 }, meter: guarded ? { tolerance: 0.05 } : null });
+        const c = LR.priceSession(P, o ? 'claude-opus-5-5' : 'claude-haiku-5-5', { messageUsage: [[10, o ? 40 : 300, 30000, 0, null]], reportedUsd: o ? 0.90 : 0.000451, finalUsage: { output_tokens: o ? 26000 : 310 }, meter: guarded ? { tolerance: 0.05 } : null });
         rows.push({ job: 'j', mode, task: `t${t}`, rep: 0, pass: true, delivered: true, schemaValid: true, seed: 700 + t, usdRepriced: c.measured, usdImputed: c.imputed, repriced: true });
       }
     }
@@ -175,7 +238,7 @@ test('matrixRow flags a session the meter check could not verify and keeps its t
   approx(bad.usdRepriced + bad.usdImputed, 0.7, 1e-5);
   const off = LR.matrixRow(rec, { stage: 'NL0', job, armDef, priceTable: P, book: null, taskInfo: { seed: 610, difficulty: 3 } });
   assert.ok(!('meterUnverified' in off) && off.usdImputed === 0 && off.usdRepriced < 0.3, 'without a meter (dry runs) the row is as before');
-  const ok = LR.matrixRow({ ...rec, meta: { ...rec.meta, messageUsage: [[10, 19800, 50000, 8000, 'claude-opus-5-5']] } }, { stage: 'NL0', job, armDef, priceTable: P, book: null, taskInfo: { seed: 610, difficulty: 3 }, meter: { tolerance: 0.05 } });
+  const ok = LR.matrixRow({ ...rec, costUsd: 0.446, meta: { ...rec.meta, messageUsage: [[10, 19800, 50000, 8000, 'claude-opus-5-5']] } }, { stage: 'NL0', job, armDef, priceTable: P, book: null, taskInfo: { seed: 610, difficulty: 3 }, meter: { tolerance: 0.05 } });
   assert.ok(!('meterUnverified' in ok) && ok.usdImputed === 0);
 });
 
@@ -188,9 +251,17 @@ test('paidRunChecks refuses a paid stage with an agent arm while the gate blocks
   assert.equal(blocked.length, 1); assert.match(blocked[0], /block-until-verified/); assert.match(blocked[0], /meter-gate-cli\.mjs --verify/);
   assert.deepEqual(run(['direct-H'], { meterGate: () => BLOCK, meterVerification: () => null }), [], 'a stage of single calls does not need the agent meter');
   assert.deepEqual(run(['agent-O'], { meterGate: () => CLEAR, meterVerification: () => null }), []);
-  const good = { schema: G.VERIFICATION_SCHEMA, sessions: [{ method: 'per-message', recorded: 99, final: 100 }, { method: 'final-output', final: 5000, reportedUsd: 1, pricedUsd: 1.05 }] };
-  assert.deepEqual(run(['construct-H'], { meterGate: () => BLOCK, meterVerification: () => good }), []);
+  const good = REC({ models: [OPUS, HAIKU], sessions: [sess(HAIKU), sess(OPUS, { method: 'final-output', final: 5000 })] });
+  assert.deepEqual(run(['construct-H'], { meterGate: () => BLOCK, meterVerification: () => good, meterRederive: REDERIVED }), []);
   assert.equal(run(['construct-H', 'agent-H+proc', 'build-O'], { meterGate: () => BLOCK, meterVerification: () => null }).length, 1);
+  // The default re-derivation reads the record's transcripts: these sessions point at a file that is not there, so the record clears nothing.
+  const unchecked = run(['construct-H'], { meterGate: () => BLOCK, meterVerification: () => good });
+  assert.equal(unchecked.length, 1); assert.match(unchecked[0], /transcript \/x\/s\.jsonl is missing/);
+  // Opus-only transcripts cannot clear a stage whose construct-H builds with Haiku, and a record under another table clears nothing.
+  const opusOnly = run(['construct-H', 'build-O'], { meterGate: () => BLOCK, meterVerification: () => REC(), meterRederive: REDERIVED });
+  assert.equal(opusOnly.length, 1); assert.match(opusOnly[0], /no verifying session for model claude-haiku-5-5/);
+  const otherTable = run(['agent-O'], { meterGate: () => BLOCK, meterVerification: () => REC({ priceTable: { id: 'need-v0-prices' } }), meterRederive: REDERIVED });
+  assert.equal(otherTable.length, 1); assert.match(otherTable[0], /made under price table "need-v0-prices"/);
 });
 
 test('transcriptUsage and verifyTranscripts: lines that match the final usage verify per-message, snapshot lines verify only when the final-usage re-price is the CLI figure, nothing else does', () => {
@@ -217,7 +288,8 @@ test('transcriptUsage and verifyTranscripts: lines that match the final usage ve
   const verify = (...fs) => G.verifyTranscripts(fs, { priceSession: LR.priceSession, table: P });
   const rec = verify(exact, exact2);
   assert.deepEqual(rec.sessions.map(s => s.method), ['per-message', 'per-message']); assert.equal(rec.passed, true); assert.equal(rec.schema, G.VERIFICATION_SCHEMA);
-  assert.ok(rec.sessions.every(s => s.ok && /^[0-9a-f]{16}$/.test(s.sha256) && s.relGap <= 0.05));
+  assert.ok(rec.sessions.every(s => s.ok && /^[0-9a-f]{64}$/.test(s.sha256) && path.isAbsolute(s.path) && s.relGap <= 0.05), 'full sha256 and the transcript path, so label-run can re-derive the session');
+  assert.deepEqual([rec.priceTable, rec.models], [{ id: P.id }, ['claude-opus-5-5']]);
   const snaps = verify(snapA, snapB);
   assert.deepEqual(snaps.sessions.map(s => s.method), ['final-output', 'final-output']); assert.equal(snaps.passed, true, 'snapshot lines verify through the final-usage re-price when it is the CLI figure');
   assert.ok(snaps.sessions.every(s => Math.abs(s.pricedUsd - s.reportedUsd) / s.reportedUsd <= G.PRICE_BAND));
@@ -238,7 +310,7 @@ test('transcriptUsage and verifyTranscripts: lines that match the final usage ve
   const oneHour = write('onehour.jsonl', [
     line({ type: 'assistant', message: { id: 'a', model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: 400000 } } }),
     line({ type: 'assistant', message: { id: 'b', model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: 300000 } } }),
-    line({ type: 'result', total_cost_usd: (10 * 4 + 20000 * 20 + 700000 * 8) / 1e6, usage: { output_tokens: 20000, cache_creation: { ephemeral_1h_input_tokens: 700000, ephemeral_5m_input_tokens: 0 } } })].join('\n'));
+    line({ type: 'result', total_cost_usd: (10 * 4 + 20000 * 20 + 700000 * 8) / 1e6, usage: { output_tokens: 20000, cache_creation: { ephemeral_1h_input_tokens: 57000, ephemeral_5m_input_tokens: 0 } } })].join('\n'));
   const oh = verify(exact, oneHour);
   assert.equal(oh.passed, false); assert.equal(oh.sessions[1].method, 'unverified'); assert.equal(oh.sessions[1].cacheWrite1hShare, 1);
   assert.match(oh.sessions[1].hint, /FORCE_PROMPT_CACHING_5M=1/); assert.ok(!('hint' in oh.sessions[0]));
@@ -282,7 +354,9 @@ test('meter-gate-cli: --verify writes a record label-run accepts, exits 1 for a 
   const rec = JSON.parse(readFileSync(out, 'utf8'));
   assert.equal(rec.passed, true); assert.deepEqual(rec.sessions.map(s => s.method), ['per-message', 'per-message']);
   assert.equal(G.verificationPasses(rec), true);
-  assert.equal(G.meterGateDecision({ gate: BLOCK, verification: G.readVerification(out), arms: [{ factory: 'b0Agent' }] }).allow, true);
+  const rederive = r => G.rederiveVerification(r, { priceSession: LR.priceSession, table: P });
+  assert.equal(G.meterGateDecision({ gate: BLOCK, verification: G.readVerification(out), arms: [AGENT_O], priceTableId: P.id, rederive }).allow, true, 'the record the CLI wrote re-derives from its transcripts and clears the gate');
+  assert.equal(G.meterGateDecision({ gate: BLOCK, verification: G.readVerification(out), arms: [AGENT_O], priceTableId: 'need-v0-prices', rederive }).allow, false, 'under another table it does not');
   const no = spawnSync(process.execPath, [cli, '--verify', good1, snap], { encoding: 'utf8' });
   assert.equal(no.status, 1); assert.equal(JSON.parse(no.stdout).passed, false);
   const status = spawnSync(process.execPath, [cli], { encoding: 'utf8' });
@@ -290,6 +364,130 @@ test('meter-gate-cli: --verify writes a record label-run accepts, exits 1 for a 
   const rep = JSON.parse(status.stdout);
   if (rep.gate) assert.equal(rep.gate.status, 'block-until-verified'); else assert.match(rep.problem, /not committed at HEAD|no d6|does not parse/i);
   assert.equal(rep.agentStage.allow, false);
+});
+
+test('verifyTranscripts: a session whose output tokens match but whose cache writes were billed at the 1-hour rate is unverified, per-message included (review of 2026-10-15)', () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), 'meter-1h-')), line = o => JSON.stringify(o);
+  const write = (name, text) => { const f = path.join(tmp, name); writeFileSync(f, text); return f; };
+  const usage = (out, cw, cc) => ({ input_tokens: 5, output_tokens: out, cache_read_input_tokens: 1000, cache_creation_input_tokens: cw, ...(cc ? { cache_creation: cc } : {}) });
+  // Per-message lines carry the full output (3000 + 2000 = the final 5000), so the output check passes; the CLI billed 1-hour writes (2 x input).
+  const mk = (billedHour, cost) => write(billedHour ? 'hour.jsonl' : 'five.jsonl', [
+    line({ type: 'assistant', message: { id: 'a', model: 'claude-opus-5-5', usage: usage(3000, 40000) } }),
+    line({ type: 'assistant', message: { id: 'b', model: 'claude-opus-5-5', usage: usage(2000, 30000) } }),
+    line({ type: 'result', total_cost_usd: cost, usage: { ...usage(5000, 70000, billedHour ? { ephemeral_1h_input_tokens: 70000, ephemeral_5m_input_tokens: 0 } : { ephemeral_1h_input_tokens: 0, ephemeral_5m_input_tokens: 70000 }) } })].join('\n'));
+  const base = (10 * 4 + 5000 * 20 + 2000 * 0.2) / 1e6;
+  const hour = mk(true, base + 70000 * 8 / 1e6), five = mk(false, base + 70000 * 5 / 1e6);
+  const verify = (...fs) => G.verifyTranscripts(fs, { priceSession: LR.priceSession, table: P });
+  const r1 = verify(five, five), r2 = verify(hour, five);
+  assert.deepEqual(r1.sessions.map(s => s.method), ['per-message', 'per-message']); assert.equal(r1.passed, true);
+  assert.equal(r2.sessions[0].method, 'unverified', 'lines match the final usage, the price is 14% under the CLI figure: not a verification');
+  assert.equal(r2.sessions[0].recorded, r2.sessions[0].final); assert.equal(r2.sessions[0].cacheWrite1hShare, 1); assert.match(r2.sessions[0].hint, /FORCE_PROMPT_CACHING_5M=1/);
+  assert.equal(r2.passed, false);
+  // verificationPasses re-derives from the stored numbers: the same session recorded as per-message with its recorded === final but a priced figure the band rejects fails,
+  // and so does one with no priced or reported dollars at all (the forged shape of the review).
+  const m = { file: 'h.jsonl', method: 'per-message', recorded: 5000, final: 5000, model: 'claude-opus-5-5' };
+  const rec = sessions => ({ schema: G.VERIFICATION_SCHEMA, sessions });
+  assert.equal(G.verificationPasses(rec([{ ...m, reportedUsd: 1, pricedUsd: 0.86 }, { ...m, reportedUsd: 1, pricedUsd: 1 }])), false);
+  assert.equal(G.verificationPasses(rec([m, m])), false);
+  assert.equal(G.verificationPasses(rec([{ ...m, reportedUsd: 1, pricedUsd: 0.91 }, { ...m, reportedUsd: 1, pricedUsd: 1.09 }])), true, 'inside the 10% band on both sides');
+  assert.equal(G.verificationPasses(rec([{ ...m, reportedUsd: 1, pricedUsd: 0.89 }, { ...m, reportedUsd: 1, pricedUsd: 1 }])), false);
+  assert.equal(G.verificationPasses(rec([{ ...m, reportedUsd: 1, pricedUsd: 1.11 }, { ...m, reportedUsd: 1, pricedUsd: 1 }])), false);
+});
+
+test('rederiveVerification: a record is re-derived from its transcripts at launch; a missing or changed transcript, an edited number or another price table refuses', () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), 'meter-rederive-')), line = o => JSON.stringify(o);
+  const write = (name, text) => { const f = path.join(tmp, name); writeFileSync(f, text); return f; };
+  const tr = (model, out, cost) => [line({ type: 'assistant', message: { id: 'a', model, usage: { input_tokens: 10, output_tokens: out } } }), line({ type: 'result', total_cost_usd: cost, usage: { output_tokens: out } })].join('\n');
+  const opusCost = out => (10 * 4 + out * 20) / 1e6, haikuCost = out => (10 * 0.1 + out * 0.5) / 1e6;
+  const a = write('opus-a.jsonl', tr('claude-opus-5-5', 1000, opusCost(1000))), b = write('opus-b.jsonl', tr('claude-opus-5-5', 2000, opusCost(2000))), h = write('haiku.jsonl', tr('claude-haiku-5-5', 4000, haikuCost(4000)));
+  const rederive = (r, extra = {}) => G.rederiveVerification(r, { priceSession: LR.priceSession, table: P, ...extra });
+  const rec = G.verifyTranscripts([a, b, h], { priceSession: LR.priceSession, table: P });
+  assert.equal(rec.passed, true); assert.deepEqual(rec.models, ['claude-haiku-5-5', 'claude-opus-5-5']);
+  const ok = rederive(rec);
+  assert.equal(ok.ok, true, ok.problems.join('; ')); assert.deepEqual(ok.problems, []); assert.equal(ok.record.sessions.length, 3);
+  // Survives the round trip through JSON, as a committed file does.
+  assert.equal(rederive(JSON.parse(JSON.stringify(rec))).ok, true);
+  // A changed transcript (one more byte), a deleted one.
+  const original = readFileSync(a, 'utf8');
+  writeFileSync(a, original + '\n');
+  const changed = rederive(rec); assert.equal(changed.ok, false); assert.match(changed.problems[0], /session 1 \(opus-a\.jsonl\): transcript .*opus-a\.jsonl changed since the record was made/);
+  writeFileSync(a, original);
+  assert.equal(rederive(rec).ok, true, 'restored');
+  const gone = rederive({ ...rec, sessions: [...rec.sessions.slice(0, 2), { ...rec.sessions[2], path: path.join(tmp, 'deleted.jsonl') }] });
+  assert.equal(gone.ok, false); assert.match(gone.problems[0], /session 3 \(haiku\.jsonl\): transcript .*deleted\.jsonl is missing/);
+  // A record without a path or a full sha256 cannot be re-derived (the shape of a hand-written record, and of the old /1 records).
+  for (const strip of [{ path: undefined }, { sha256: undefined }, { sha256: 'abcd1234abcd1234' }]) {
+    const r = rederive({ ...rec, sessions: rec.sessions.map(s => ({ ...s, ...strip })) }); assert.equal(r.ok, false); assert.match(r.problems[0], /records no transcript path and full sha256/);
+  }
+  // An edited number: the stored pricedUsd or model no longer matches what the transcript gives.
+  const edited = rederive({ ...rec, sessions: rec.sessions.map((s, i) => (i === 0 ? { ...s, pricedUsd: s.pricedUsd * 0.5, reportedUsd: s.reportedUsd * 0.5 } : s)) });
+  assert.equal(edited.ok, false); assert.match(edited.problems.join(' '), /re-derived pricedUsd/);
+  const wrongModel = rederive({ ...rec, sessions: rec.sessions.map((s, i) => (i === 2 ? { ...s, model: 'claude-opus-5-5' } : s)) });
+  assert.equal(wrongModel.ok, false); assert.match(wrongModel.problems.join(' '), /the transcript is a claude-haiku-5-5 session, the record says claude-opus-5-5/);
+  // Another price table: the session priced under it differs from the record's, and a table that prices Opus at twice the output rate does not re-derive.
+  const dearer = { ...P, id: 'dearer', models: { ...P.models, 'claude-opus-5-5': { ...P.models['claude-opus-5-5'], tiers: P.models['claude-opus-5-5'].tiers.map(t => ({ ...t, output: t.output * 2 })) } } };
+  const other = rederive(rec, { table: dearer });
+  assert.equal(other.ok, false); assert.match(other.problems.join(' '), /re-derived (pricedUsd|method)|does not verify when re-derived/);
+  // Not a record at all.
+  assert.equal(rederive(null).ok, false); assert.equal(rederive({ schema: 'need-meter-verification/1', sessions: [] }).ok, false);
+  // The default path resolves a relative record path against the repository and reads real files (an injected reader stands in here).
+  const rel = rederive({ ...rec, sessions: rec.sessions.map(s => ({ ...s, path: 'rel/' + s.file })) }, { read: f => readFileSync(path.join(tmp, path.basename(f)), 'utf8'), exists: f => f.startsWith(REPO) && f.includes(path.join('rel', '')) });
+  assert.equal(rel.ok, true, rel.problems.join('; '));
+});
+
+test('readCommittedVerification reads the HEAD blob, not the working tree: an uncommitted or hand-edited record clears nothing', () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), 'mv-head-')), file = path.join(tmp, 'meter-verification.json');
+  const committed = JSON.stringify(REC());
+  writeFileSync(file, JSON.stringify(REC({ sessions: [sess(OPUS, { method: 'unverified' }), sess(OPUS)] })));   // the working tree is edited after the commit
+  const same = G.readCommittedVerification({ file, show: () => Buffer.from(committed) });
+  assert.equal(same.source, 'HEAD'); assert.deepEqual(same.record, REC()); assert.match(same.dirty, /differs from its HEAD blob/);
+  writeFileSync(file, committed);
+  assert.equal(G.readCommittedVerification({ file, show: () => Buffer.from(committed) }).dirty, null);
+  // In the working tree but never committed: no record, and the reason names the commit.
+  const untracked = G.readCommittedVerification({ file, show: () => null });
+  assert.equal(untracked.record, null); assert.match(untracked.problem, /in the working tree but not committed at HEAD: commit it/);
+  assert.match(G.readCommittedVerification({ file: path.join(tmp, 'absent.json'), show: () => null }).problem, /no absent\.json is committed at HEAD/);
+  assert.match(G.readCommittedVerification({ file, show: () => Buffer.from('{ no') }).problem, /does not parse/);
+  assert.match(G.readCommittedVerification({ file: path.join(tmp, 'gone.json'), show: () => Buffer.from(committed) }).dirty, /deleted/);
+  // The decision: a passing record in the working tree only is "not committed", so the stage is refused with that reason.
+  const d = G.meterGateDecision({ gate: BLOCK, verification: untracked.record, verificationProblem: untracked.problem, arms: [AGENT_O], priceTableId: P.id, rederive: REDERIVED });
+  assert.equal(d.allow, false); assert.match(d.why, /not committed at HEAD: commit it/);
+  // And the real reader on this checkout finds no committed record today (the path is outside nothing; git is asked for HEAD:...).
+  const real = G.readCommittedVerification();
+  assert.ok(real.record === null ? typeof real.problem === 'string' : real.record.schema === G.VERIFICATION_SCHEMA);
+});
+
+test('gateStaleness: a committed gate computed under another price table, other rule constants or without a model the stage uses is not current; label-run refuses it (review of 2026-10-15)', () => {
+  const models = [HAIKU, OPUS];
+  assert.deepEqual(G.gateStaleness(CLEAR, { priceTableId: P.id, models }), []);
+  assert.match(G.gateStaleness(CLEAR, { priceTableId: 'need-v2-prices@2026-11-01', models })[0], /computed under price table "need-v1-prices@2026-10-14", the stage prices with "need-v2-prices@2026-11-01"/);
+  assert.match(G.gateStaleness({ ...CLEAR, priceTable: undefined }, { priceTableId: P.id, models })[0], /price table null/);
+  assert.match(G.gateStaleness(CLEAR, { priceTableId: null, models })[0], /no price table id/);
+  const oldRule = { ...CLEAR, rule: { ...CLEAR.rule, priceBand: 0.25, minBuilderSessions: undefined } };
+  const st = G.gateStaleness(oldRule, { priceTableId: P.id, models });
+  assert.equal(st.length, 1); assert.match(st[0], /another rule \(priceBand 0\.25 against 0\.1 in force, minBuilderSessions absent against 4 in force\)/);
+  assert.match(G.gateStaleness({ ...CLEAR, requiredModels: [OPUS] }, { priceTableId: P.id, models })[0], /built for claude-opus-5-5, not for claude-haiku-5-5/);
+  assert.equal(G.gateStaleness({ schema: G.METER_GATE_SCHEMA, status: 'clear' }, { priceTableId: P.id, models }).length, 3, 'a gate from before the review (no table, no rule, no models) is stale on all counts');
+  // The decision refuses a stale gate even when it says clear, and names the way to refresh it.
+  const d = G.meterGateDecision({ gate: oldRule, arms: [AGENT_O], stale: st });
+  assert.equal(d.allow, false); assert.match(d.why, /not current for this stage: the gate was computed under another rule/); assert.match(d.why, /run\.mjs --report/);
+  assert.equal(G.meterGateDecision({ gate: CLEAR, arms: [AGENT_O], stale: [] }).allow, true);
+  assert.equal(G.meterGateDecision({ gate: oldRule, arms: [{ factory: 'b0Call' }], stale: st }).allow, true, 'a stage without an agent arm never reads the gate');
+  // paidRunChecks computes it from the committed gate (the default path): a clear gate computed under another table refuses the stage; an injected gate skips the check.
+  const stages = JSON.parse(readFileSync(path.join(REPO, 'research/need-router-20261014/prereg/stages.json'), 'utf8'));
+  const plan = { stages, stage: stages.stages.find(x => x.id === 'M1'), file: 'x', planSha256: 'x' };
+  const run = (arms, deps) => LR.paidRunChecks({ plan, units: [{ job: {}, arms, probeArms: [] }], prereg: null, deps: { stampOf: () => null, checkStagesFn: () => ({ errors: [] }), meterVerification: () => null, ...deps } }).errors.filter(e => e.startsWith('meter gate:'));
+  const src = gate => ({ meterGateSource: () => ({ gate, problem: null, dirty: null, source: 'HEAD' }) });
+  assert.deepEqual(run(['agent-O', 'agent-H'], src(CLEAR)), [], 'current: computed under the stage table with Haiku and Opus covered');
+  const stale = run(['agent-O'], src({ ...CLEAR, priceTable: 'need-v0-prices' }));
+  assert.equal(stale.length, 1); assert.match(stale[0], /not current for this stage.*price table "need-v0-prices"/);
+  assert.equal(run(['agent-O'], src({ ...CLEAR, rule: { ...CLEAR.rule, outputTolerance: 0.5 } })).length, 1);
+  assert.deepEqual(run(['agent-O', 'build-O'], src({ ...CLEAR, requiredModels: [OPUS] })), [], 'build-O builds with Opus: an Opus-only gate covers it');
+  assert.equal(run(['construct-H'], src({ ...CLEAR, requiredModels: [OPUS] })).length, 1, 'construct-H builds with Haiku');
+  assert.equal(run(['agent-H'], src({ ...CLEAR, requiredModels: [OPUS] })).length, 1);
+  assert.deepEqual(run(['agent-O'], { meterGate: () => ({ ...CLEAR, priceTable: undefined }) }), [], 'an injected gate (tests) skips the staleness check unless meterGateStale is injected');
+  assert.equal(run(['agent-O'], { meterGate: () => CLEAR, meterGateStale: () => ['injected'] }).length, 1);
+  assert.deepEqual(run(['direct-H'], src({ ...CLEAR, priceTable: 'x' })), [], 'a stage of single calls never reads the gate');
 });
 
 // ------------------------------------------------------------------------------------------------------------------------------------

@@ -12,7 +12,10 @@
 //             any       one of those four. (Triggers by webhook, event or poll are reported as `trigger`, outside "any": they are a declared N,
 //                       not a hard requirement.) No graph marker exists for compensation or audit, so those cues cannot be scored here.
 //   Part B  E8 and runbook: (1) the typed fields in each bed's machine-readable declarations that evidence each candidate requirement
-//           (PREREG-NEED-V1 §3.2: runbook = effects with authority, human approval; e8 = durable wait, schedule, effects with authority);
+//           (PREREG-NEED-V1 §3.2: runbook = effects with authority, human approval; e8 = durable wait, schedule, effects with authority).
+//           A typed field is either a DECLARED requirement (the bed types the requirement itself: a human-task schema, a clock horizon in days, a money effect,
+//           a deadline field) or a typed PROXY (a field that merely correlates with it: a `timedOut` outcome in a status enum, an action op named `page_human`
+//           or `wait`). Strict typed recall counts declared requirements only; the proxies are listed beside it (review of 2026-10-15: both proxies used to count);
 //           (2) whether the word cues fire on the text a user would hand over (E8: SPEC-E; runbook: the generated prompt, and prompt with ticket
 //           and runbook), per declared requirement. Tiny n by construction.
 // Cue map (code-defined words only, none added here): human = human-gate cue or shape humanWords (approve, ask, confirm, review);
@@ -24,7 +27,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { REQUIREMENT_LIBRARY } from '../../../src/construction-objective.mjs';
 import { shapeOf } from '../../library/index.mjs';
-import { REPO, wilson, round, sourceOf } from './common.mjs';
+import { REPO, wilson, round, sha256, rel, assertExampleSeeds } from './common.mjs';
 import { bedStamp } from './anchors.mjs';
 
 export const CORPUS_DIR = path.join(REPO, 'research/corpus-20261006');
@@ -79,13 +82,24 @@ export function scoreCorpus(items) {
   return { classes: out, byPlatform: Object.fromEntries(Object.entries(byPlatform).sort((a, b) => b[1].items - a[1].items).map(([k, v]) => [k, { ...v, recallAny: v.any ? round(v.hit / v.any, 3) : null }])), askRate: round(rows.filter(r => r.cues.any).length / rows.length, 4) };
 }
 
-/** Load the corpus overlay: the original-provenance items. Prefers items.jsonl, falls back to the committed gzip. */
+/**
+ * Load the corpus overlay: the original-provenance items. Always reads the COMMITTED items.jsonl.gz (the plain items.jsonl is git-ignored and rebuilt from it by
+ * scripts/unpack.mjs): `source.path` is the gz, `source.sha256` and `bytes` are of the decompressed text (the hash of the plain file too), `source.compressed` of the
+ * gz bytes. A run on a clean checkout and one beside an unpacked file therefore record the same provenance (review of 2026-10-15: the record named the ignored file, so
+ * `run.mjs --check` read "inputs moved" on every clean checkout). Only when there is no gz is the plain file read, and then `source.ignoredLocalFile` says so.
+ */
 export function loadOverlay(dir = CORPUS_DIR) {
   const plain = path.join(dir, 'items.jsonl'), gz = path.join(dir, 'items.jsonl.gz');
-  let text, file;
-  if (existsSync(plain)) { file = plain; text = readFileSync(plain, 'utf8'); }
-  else if (existsSync(gz)) { file = gz; text = gunzipSync(readFileSync(gz)).toString('utf8'); }
-  else return null;
+  let text, source;
+  if (existsSync(gz)) {
+    const zipped = readFileSync(gz), buf = gunzipSync(zipped);
+    text = buf.toString('utf8');
+    source = { path: rel(gz), sha256: sha256(buf), bytes: buf.length, compressed: { sha256: sha256(zipped), bytes: zipped.length } };
+  } else if (existsSync(plain)) {
+    const buf = readFileSync(plain);
+    text = buf.toString('utf8');
+    source = { path: rel(plain), sha256: sha256(buf), bytes: buf.length, ignoredLocalFile: true };
+  } else return null;
   const counts = {}, items = [];
   for (const line of text.split('\n')) {
     if (!line.trim()) continue;
@@ -93,7 +107,7 @@ export function loadOverlay(dir = CORPUS_DIR) {
     counts[prov] = (counts[prov] ?? 0) + 1;
     if (prov === 'original') items.push({ id: o.id, platform: o.source?.platform ?? 'unknown', text: o.description.text, truth: graphTruth(o) });
   }
-  return { items, counts, source: sourceOf(file) };
+  return { items, counts, source };
 }
 
 // ------------------------------------------------------------------------------------------------ Part B: E8 and runbook
@@ -125,31 +139,40 @@ export function timeDeclarations(root, label, { limit = 8, re = SCHEDULE_RE } = 
   return out;
 }
 
+/** Typed evidence of one class: `declared` (the bed types the requirement itself), `proxy` (a typed field that only correlates with it), `evidence` both. */
+const typedEvidence = (declared, proxy = [], extra = {}) => ({ evidence: [...declared, ...proxy], declared, proxy, ...extra });
+/** Split timeDeclarations hits: a key named for a timer or deadline declares one; an enum or const VALUE that names one (` = "timedOut"`) is an outcome, a proxy. */
+const splitTimeHits = hits => ({ declared: hits.filter(h => !h.includes(' = ')), proxy: hits.filter(h => h.includes(' = ')) });
+
 /** Typed evidence per requirement class from E8's machine-readable declarations. */
 export function typedFieldsE8(mod) {
   const eff = Object.entries(mod.schemas.effects ?? {});
   const horizon = mod.family.clock?.horizon;
   const searched = ['family', 'schemas', 'systems'];
+  const sched = splitTimeHits([...timeDeclarations(mod.schemas, 'schemas'), ...timeDeclarations(mod.systems, 'systems'), ...timeDeclarations(mod.family, 'family')].slice(0, 8));
+  const waits = horizon && /day/.test(horizon.unit) && horizon.length >= 1;
   return {
-    human: { evidence: Object.keys(mod.schemas.humanTasks ?? {}).map(k => `schemas.humanTasks.${k}`) },
-    wait: { evidence: horizon && /day/.test(horizon.unit) && horizon.length >= 1 ? [`family.clock.horizon = ${horizon.length} ${horizon.unit}`, `family.profile = ${mod.family.profile}`] : [] },
-    // The customer deadline race and the 14-day clock are typed as a `timedOut` order status (schemas.sor and systems); searched, not assumed.
-    schedule: { evidence: [...timeDeclarations(mod.schemas, 'schemas'), ...timeDeclarations(mod.systems, 'systems'), ...timeDeclarations(mod.family, 'family')].slice(0, 8), searched,
-      note: 'the host-side typed fields name the deadline race only as a timeout outcome (the timedOut order status); the deadline itself (dueAt, onTimeout) sits in the analyst-side oracleItem and in the spec text' },
-    effects: { evidence: eff.filter(([, e]) => e.money && !e.readOnly).map(([k]) => `schemas.effects.${k}.money`) },
-    compensation: { evidence: eff.filter(([, e]) => e.reverses).map(([k, e]) => `schemas.effects.${k}.reverses = ${e.reverses}`) },
+    human: typedEvidence(Object.keys(mod.schemas.humanTasks ?? {}).map(k => `schemas.humanTasks.${k}`)),
+    wait: typedEvidence(waits ? [`family.clock.horizon = ${horizon.length} ${horizon.unit}`] : [], waits ? [`family.profile = ${mod.family.profile}`] : []),
+    // The customer deadline race and the 14-day clock are typed as a `timedOut` order status (schemas.sor and systems): an outcome value, a proxy. Searched, not assumed.
+    schedule: typedEvidence(sched.declared, sched.proxy, { searched,
+      note: 'the host-side typed fields name the deadline race only as a timeout outcome (the timedOut order status); the deadline itself (dueAt, onTimeout) sits in the analyst-side oracleItem and in the spec text' }),
+    effects: typedEvidence(eff.filter(([, e]) => e.money && !e.readOnly).map(([k]) => `schemas.effects.${k}.money`)),
+    compensation: typedEvidence(eff.filter(([, e]) => e.reverses).map(([k, e]) => `schemas.effects.${k}.reverses = ${e.reverses}`)),
   };
 }
 /** Typed evidence per class from the runbook's output schema (its action vocabulary). */
 export function typedFieldsRunbook(mod) {
   const ops = mod.outputSchema?.properties?.actions?.items?.properties?.op?.enum ?? [];
   const mutating = ['drain', 'undrain', 'restart', 'set_flag', 'apply_config', 'rollback_config'].filter(o => ops.includes(o));
+  const sched = splitTimeHits(timeDeclarations(mod.outputSchema, 'outputSchema').concat(timeDeclarations(mod.family, 'family')));
   return {
-    human: { evidence: ops.includes('page_human') ? ['outputSchema op page_human (an escalation: approval semantics are not typed)'] : [] },
-    wait: { evidence: ops.includes('wait') ? ['outputSchema op wait'] : [] },
-    schedule: { evidence: timeDeclarations(mod.outputSchema, 'outputSchema').concat(timeDeclarations(mod.family, 'family')), searched: ['outputSchema', 'family'] },
-    effects: { evidence: mutating.map(o => `outputSchema op ${o}`) },
-    compensation: { evidence: ops.includes('rollback_config') ? ['outputSchema op rollback_config'] : [] },
+    // `page_human` is an escalation action, not an approval gate; `wait` is an action op, not a durable wait. Both are action vocabulary, so both are proxies.
+    human: typedEvidence([], ops.includes('page_human') ? ['outputSchema op page_human (an escalation: approval semantics are not typed)'] : []),
+    wait: typedEvidence([], ops.includes('wait') ? ['outputSchema op wait (an action op named wait: no durable-wait semantics are typed)'] : []),
+    schedule: typedEvidence(sched.declared, sched.proxy, { searched: ['outputSchema', 'family'] }),
+    effects: typedEvidence(mutating.map(o => `outputSchema op ${o}`)),
+    compensation: typedEvidence(ops.includes('rollback_config') ? ['outputSchema op rollback_config'] : []),
   };
 }
 
@@ -157,6 +180,7 @@ const stringsOf = v => (typeof v === 'string' ? [v] : v && typeof v === 'object'
 
 /** Run Part B. Modules are imported lazily and failures are reported, never hidden. */
 export async function runPartB({ root = REPO, seed = 601, difficulty = 3 } = {}) {
+  assertExampleSeeds({ bed: 'runbook', seeds: [seed] });   // before anything is loaded or generated: a refused seed throws SEED_REFUSED, it is not reported as a bed error
   const out = {};
   const load = async rel => { try { return { mod: await import(pathToFileURL(path.join(root, rel)).href) }; } catch (e) { return { error: String(e?.message ?? e).slice(0, 200) }; } };
   const e8 = await load('beds/ebed/e8/index.mjs');
@@ -179,11 +203,16 @@ export async function runPartB({ root = REPO, seed = 601, difficulty = 3 } = {})
   for (const [id, key] of [['e8', 'cues'], ['runbook', 'cuesPromptAndInputs']]) {
     const b = out[id];
     if (!b.declared || b.error) continue;
-    b.perClass = Object.fromEntries(b.declared.map(c => [c, { typed: (b.typed?.[c]?.evidence ?? []).length > 0, cueOnPromptOrSpec: !!(b.cuesPrompt ?? b.cues)[c], cueOnFullText: !!b[key][c] }]));
+    // Strict typed recall counts DECLARED requirements; a typed proxy (a timedOut outcome, an action op named wait) is listed beside it, not counted as found.
+    const declared = c => (b.typed?.[c]?.declared ?? []).length > 0, proxyOnly = c => !declared(c) && (b.typed?.[c]?.proxy ?? []).length > 0;
+    b.perClass = Object.fromEntries(b.declared.map(c => [c, { typed: declared(c), typedProxyOnly: proxyOnly(c), cueOnPromptOrSpec: !!(b.cuesPrompt ?? b.cues)[c], cueOnFullText: !!b[key][c] }]));
     const n = b.declared.length;
-    // Typed evidence the preregistered candidate list does not name (a candidate list that is too short is itself a finding).
-    b.typedNotDeclared = Object.entries(b.typed ?? {}).filter(([c, v]) => v.evidence.length && !b.declared.includes(c)).map(([c, v]) => ({ class: c, evidence: v.evidence.slice(0, 3) }));
-    b.recall = { typed: round(Object.values(b.perClass).filter(x => x.typed).length / n, 3), cuePromptOrSpec: round(Object.values(b.perClass).filter(x => x.cueOnPromptOrSpec).length / n, 3), cueFullText: round(Object.values(b.perClass).filter(x => x.cueOnFullText).length / n, 3), declared: n };
+    // Typed evidence the preregistered candidate list does not name (a candidate list that is too short is itself a finding): declared requirements, and proxies apart.
+    b.typedNotDeclared = Object.entries(b.typed ?? {}).filter(([c, v]) => v.declared.length && !b.declared.includes(c)).map(([c, v]) => ({ class: c, evidence: v.declared.slice(0, 3) }));
+    b.proxyNotDeclared = Object.entries(b.typed ?? {}).filter(([c, v]) => v.proxy.length && !v.declared.length && !b.declared.includes(c)).map(([c, v]) => ({ class: c, evidence: v.proxy.slice(0, 3) }));
+    const share = f => round(Object.values(b.perClass).filter(f).length / n, 3);
+    b.recall = { typed: share(x => x.typed), typedWithProxies: share(x => x.typed || x.typedProxyOnly), typedProxyOnlyClasses: b.declared.filter(c => b.perClass[c].typedProxyOnly), cuePromptOrSpec: share(x => x.cueOnPromptOrSpec), cueFullText: share(x => x.cueOnFullText), declared: n,
+      declaredFound: Object.values(b.perClass).filter(x => x.typed).length };
   }
   return out;
 }
@@ -195,12 +224,13 @@ export async function runD5({ overlay = loadOverlay(), partB = null } = {}) {
   return {
     id: 'D5', grade: 'dev', question: 'Guard recall: do word cues find the hard requirements that are really there? (RX6-lite)',
     cueMap: { human: 'human-gate cue | shape humanWords', wait: 'durable-wait cue | timeWords after/until/when', schedule: 'timeWords every/daily/cron', effects: 'shape effectVerbs | high-risk cue | compensation cue' },
-    corpus: corpus ?? { missing: 'research/corpus-20261006/items.jsonl and items.jsonl.gz not found: Part A skipped' },
+    corpus: corpus ?? { missing: 'research/corpus-20261006/items.jsonl.gz (and the unpacked items.jsonl) not found: Part A skipped' },
     e8AndRunbook: b,
     summary: {
       corpusItems: corpus?.items ?? null, recallAny: any?.recall.rate ?? null, recallAnyLower: any?.recall.wilson?.[0] ?? null, precisionAny: any?.precision.rate ?? null, askRate: corpus?.askRate ?? null,
       recallByClass: corpus ? Object.fromEntries(CLASSES.map(c => [c, corpus.classes[c].recall.rate])) : null, guardAsksInsteadOfInferring: corpus ? CLASSES.filter(c => corpus.classes[c].recall.rate < 0.9) : null,
-      e8TypedRecall: b.e8?.recall?.typed ?? null, e8CueRecall: b.e8?.recall?.cueFullText ?? null, runbookTypedRecall: b.runbook?.recall?.typed ?? null, runbookCueRecall: b.runbook?.recall?.cueFullText ?? null,
+      e8TypedRecall: b.e8?.recall?.typed ?? null, e8TypedRecallWithProxies: b.e8?.recall?.typedWithProxies ?? null, e8CueRecall: b.e8?.recall?.cueFullText ?? null,
+      runbookTypedRecall: b.runbook?.recall?.typed ?? null, runbookTypedRecallWithProxies: b.runbook?.recall?.typedWithProxies ?? null, runbookCueRecall: b.runbook?.recall?.cueFullText ?? null,
     },
   };
 }

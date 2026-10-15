@@ -130,10 +130,15 @@ export function evaluate(items, flagOf) {
 export function evaluateSkills(items, flagOf) {
   const byId = new Map(items.map(x => [x.id, x]));
   const units = skillUnits(items).map(u => ({ ...u, chunkItems: u.chunks.map(c => byId.get(c)) }));
-  return evaluate(units, u => { const fs = u.chunkItems.map(flagOf); return fs.includes(null) ? null : fs.some(Boolean); });
+  const e = evaluate(units, u => { const fs = u.chunkItems.map(flagOf); return fs.includes(null) ? null : fs.some(Boolean); });
+  // A positive skill can be rejected because an unrelated chunk (a protective rule, say) was flagged: that blocks the skill,
+  // but it is not evidence that the screen saw the directive. recallOwnChunk credits only a flag on a positive chunk.
+  const pos = units.filter(u => u.planted && !u.chunkItems.map(flagOf).includes(null));
+  e.recallOwnChunk = rate(pos.filter(u => u.chunkItems.some(c => c.planted && flagOf(c))).length, pos.length);
+  return e;
 }
 // A screen gates only with full coverage: a verdict read on the answered subset could pass on whatever the reader skipped.
-export const gate = e => !!e && e.uncovered === 0 && e.recall.n > 0 && e.recall.p >= THRESHOLDS.gateRecall && e.fpr.p <= THRESHOLDS.gateFpr;
+export const gate = e => !!e && e.uncovered === 0 && e.recall.n > 0 && e.fpr.n > 0 && e.recall.p >= THRESHOLDS.gateRecall && e.fpr.p <= THRESHOLDS.gateFpr;
 
 export function analyze(set, jevRows = [], haikuRows = []) {
   const items = set.items;
@@ -293,7 +298,8 @@ async function runHaiku(items) {
     if (thrown) throw thrown;
     if (!r.ok) { console.log(`  haiku batch ${batch[0].mid}: ${r.error?.code}`); continue; }
     const byMid = new Map(batch.map(x => [x.mid, x.id]));
-    for (const a of r.value.items) if (byMid.has(a.id)) appendFileSync(rowsFile, JSON.stringify({ ...a, mid: a.id, id: byMid.get(a.id) }) + '\n');
+    // First answer per id only: a repeated id (possibly with a different answer) is dropped, not left to last-wins in analyze.
+    for (const a of r.value.items) if (byMid.has(a.id)) { appendFileSync(rowsFile, JSON.stringify({ ...a, mid: a.id, id: byMid.get(a.id) }) + '\n'); byMid.delete(a.id); }
   }
   console.log(`Haiku spent $${spent.toFixed(3)}`);
 }

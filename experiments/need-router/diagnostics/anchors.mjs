@@ -10,7 +10,7 @@ import path from 'node:path';
 import { familyFeatures } from '../features.mjs';
 import { loadFamily } from '../../lib/beds.mjs';
 import { ANCHOR_BEDS } from './d1-shortcut.mjs';
-import { REPO } from './common.mjs';
+import { REPO, assertExampleSeeds } from './common.mjs';
 
 const sha = x => createHash('sha256').update(x).digest('hex');
 const IMPORT_RE = /(?:\bfrom\s*|\bimport\s*\(\s*|^\s*import\s+)['"](\.{1,2}\/[^'"]+)['"]/gm;
@@ -51,6 +51,9 @@ export function bedStamp(bed, { repo = REPO, version = null } = {}) {
 }
 
 export async function computeAnchorFeatures({ beds = [...new Set(Object.values(ANCHOR_BEDS))], difficulties = [3, 5], seeds = [601, 602, 603], repo = REPO } = {}) {
+  // L4 (PREREG §3.3): the seed gate runs for every bed before any task is generated, outside the per-bed try below so that a refusal throws and is not reported as a bed
+  // error. need-constraint is a held-out FAMILY: only its example seeds (601-609, purpose need-example) may be generated here, never a label or held-out seed.
+  for (const bed of beds) assertExampleSeeds({ bed, seeds });
   const features = {}, errors = [], stamps = {};
   for (const bed of beds) {
     for (const d of difficulties) {

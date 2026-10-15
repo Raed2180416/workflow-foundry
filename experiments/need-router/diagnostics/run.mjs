@@ -81,9 +81,10 @@ export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
   if (want.has('d4')) out.d4 = runD4(legacy.jobs);
   if (want.has('d5')) out.d5 = await runD5();
   if (want.has('d6')) {
-    out.d6 = runD6(legacy.jobs, { constructions: cons.builds });
     // The launch-environment measurement (launch-env.mjs, the only reader of CLI transcripts) is a committed input: read from its JSON, never from the transcripts.
+    // D6 joins each archived session to its transcript in it and prices the session at the cache-write rate that transcript shows was billed.
     const le = readLaunchEnv();
+    out.d6 = runD6(legacy.jobs, { constructions: cons.builds, launchEnv: le });
     out.d6.launchEnv = le ? { source: sourceOf(LAUNCH_ENV_FILE), measuredAt: le.measuredAt, after: le.after, priceTable: le.priceTable, summary: le.summary } : null;
   }
   return out;

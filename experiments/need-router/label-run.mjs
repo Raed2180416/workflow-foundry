@@ -83,6 +83,7 @@ import { needTable, needLabels, HEADLINE, DELTA, MODES, ENV_FAULT_LIMIT } from '
 import { guardMeter, readCommittedMeterGate, readCommittedWaiver, readCommittedVerification, rederiveVerification, gateStaleness, agentModelsOf, meterGateDecision, OUTPUT_TOLERANCE } from './meter-gate.mjs';
 import { perArm, cacheShareCell } from '../memory/cache-share.mjs';
 import { taskFeatures, WHITELIST } from './features.mjs';
+import { gitHeadBlob } from './meter-gate.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const LIVE_ROOT = '/var/tmp/foundry-work/need';
@@ -663,7 +664,7 @@ export function livePorts({ live, models }) {
  * sessions), the script runner and the self-check answer from a table of the planned tasks: a correct answer
  * (referenceSolve), a wrong one (a bed bad control), none, a timeout or a killed session, chosen by a hash of the call's
  * own key (run id, workdir tail), never by call order. The outcomes are fake; only the harness around them is real.
- * `force` overrides an outcome by key substring (tests): { builder: {labelPart: 'fail'|'nested'|'hidden'|'ok'|'killed'|'envfault'|'nocheck'},
+ * `force` overrides an outcome by key substring (tests): { builder: {labelPart: 'fail'|'nested'|'hidden'|'ok'|'killed'|'envfault'|'nocheck'|'unpriced'},
  * call: {runIdPart: 'right'|'wrong'|'schema'|'timeout'|'ratelimit'}, writer: {runIdPart: 'envfault'|'timeout'}, agent: {workdirPart: 'right'|'wrong'|
  * 'none'|'killed'|'nested'|'hidden'|'mention'|'envfault'}, script: {...}, selfcheck: {workdirPart: 'sandbox'|'launch'} }.
  */
@@ -739,6 +740,9 @@ export function stubPorts({ tasks, models, force = {} }) {
         writeFileSync(path.join(workdir, 'BUILD-NOTES.md'), 'stub build (label-run --dry)\n');
       }
       const tr = transcript(workdir, mdl, 6, h, toolUses), killed = pick === 'killed';   // killed: a session cut at its timeout (solver left behind)
+      // unpriced: the session left no transcript and no usage, only the CLI's own figure (the meter cannot re-price it).
+      if (pick === 'unpriced') return { ok: true, error: null, costUsd: list(entry, tr.usage), costUnknown: false, costUpperUsd: list(entry, tr.usage), streamUsage: null, turns: 6, usage: null, toolUses,
+        sessionId: `stub-${h}`, durationMs: 60000 + (h % 60000), transcript: null };
       return { ok: !killed, error: killed ? { code: 'EXECUTOR_TIMEOUT' } : null, costUsd: killed ? null : list(entry, tr.usage), costUnknown: killed, costUpperUsd: killed ? budgetUsd : list(entry, tr.usage),
         streamUsage: tr.usage, turns: killed ? null : 6, usage: null, toolUses, sessionId: `stub-${h}`, durationMs: 60000 + (h % 60000), transcript: tr.file };
     }
@@ -925,7 +929,9 @@ function buildCost(stages, b, rec, book, label, meter = null) {
     boundUsd: b.builderBudgetUsd, reportedUsd: rec.builderCostReportedUsd ?? 0, finalUsage: rec.builderUsage ?? null, meter });
   const gw = priceCalls(stages.priceTable, book.latest(`construct:${label}:`));
   const reported = rec.constructionCostUsd ?? 0, measured = builder.measured + gw.measured, imputed = builder.imputed + gw.imputed;
-  return { reported, measured, imputed, meterGap: builder.meterUnverified ? builder.meterGapUsd ?? 0 : 0, tokens: addUsage(addUsage(zeroUsage(), builder.tokens), gw.tokens), charged: Math.max(reported, measured + imputed) };
+  // repriced: the builder session priced from its recorded usage (not the CLI's figure) and every gateway call from the table.
+  return { reported, measured, imputed, repriced: builder.repriced !== false && !gw.fallback, meterGap: builder.meterUnverified ? builder.meterGapUsd ?? 0 : 0,
+    tokens: addUsage(addUsage(zeroUsage(), builder.tokens), gw.tokens), charged: Math.max(reported, measured + imputed) };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -954,6 +960,16 @@ function runArmsFor({ ctx, unit, fam, schemaTest, mode, k = null, build = null }
 }
 
 const replicatesOf = def => def.replicates ?? def.replicatesPerLineage ?? 1;
+
+/** A lineage mode's racing top-up: count = its build rows (the per-mode maximum counts them), next = the lowest lineage
+ *  number with no build row. A lineage set aside as an environment fault (construction-faults.jsonl) left no row, so with
+ *  builds {1, 3} the top-up builds lineage 2 again, never "lineage 3" (counted as built while it already was). */
+export function lineageTopUp(builds, mode) {
+  const ks = new Set(builds.filter(b => b.mode === mode).map(b => b.lineage));
+  let next = 1;
+  while (ks.has(next)) next += 1;
+  return { count: ks.size, next };
+}
 
 async function runGroups({ ctx, unit, plan, groups }) {
   // groups: [{ arms: [arm objects], trials, tasks? }]
@@ -1073,12 +1089,15 @@ function tableOf(rows, builds) {
 }
 
 /** Racing top-ups (PREREG §4.3) for one job at the headline cell; returns {pBest, acceptable, draws: {mode: n}, lineages: {mode: K}, agentOTasks}. */
-export function racingPlan({ table, job, stages, current, labelModes }) {
+// current: per mode, the replicates (draw modes) or build rows (lineage modes) on record, which the per-mode maximum counts.
+// next: per lineage mode, the lineage number a top-up builds (lineageTopUp: the lowest with no build row); a draw mode's
+// top-up is its draw count current + 1.
+export function racingPlan({ table, job, stages, current, labelModes, next = {} }) {
   const conf = stages.grid?.confident ?? 0.8, maxPer = stages.grid?.racingMaxPerMode ?? 4, delta = stages.grid?.delta ?? DELTA;
   const labels = needLabels(table, { cells: [HEADLINE], reps: stages.reps?.labelBootstrap ?? 2000, seed: stages.rng?.labelBootstrap ?? 1, modes: labelModes, delta });
   const e = labels.at(job, HEADLINE), p = e.pBest ? Math.max(e.pBest.workflow, e.pBest['no-workflow']) : 0;
   const plan = { pBest: e.pBest, label: e.label, acceptable: e.acceptable, add: {}, agentOTasks: [] };
-  if (p < conf) for (const m of e.acceptable) if ((current[m] ?? 0) < maxPer) plan.add[m] = (current[m] ?? 0) + 1;
+  if (p < conf) for (const m of e.acceptable) if ((current[m] ?? 0) < maxPer) plan.add[m] = next[m] ?? (current[m] ?? 0) + 1;
   // agent-O: a second draw where it is in the draw-1 per-task acceptable set (draw modes on rep 0, lineage modes averaged).
   if (table.has(job, 'agent-O') && (current['agent-O'] ?? 0) < 2) {
     const c = HEADLINE, ms = table.modesOf(job).filter(m => labelModes.includes(m));
@@ -1293,11 +1312,97 @@ export function armFaultTable({ stageId, results, faults, builds, constructionFa
 // Family-handed deployable tests the DESIGN names (§2 deployableVerdict) that a bed may not export yet as deployableCheck.
 export const FAMILY_HANDED_TESTS = Object.freeze({ codefix: 'visible tests', ownerci: 'visible tests', 'ebed-e8': 'smoke host' });
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Run kinds and stage directories: a --dry run's stub outcomes never become paid labels; a stage is paid for once
+
+const readJsonIf = f => { if (!existsSync(f)) return null; try { return JSON.parse(readFileSync(f, 'utf8')); } catch { return null; } };
+const isInside = (p, root) => { const r = path.relative(path.resolve(root), path.resolve(p)); return r === '' || (!r.startsWith('..') && !path.isAbsolute(r)); };
+/** The ports a run uses: 'stub' (--dry; tests) or 'live'. A ports override names its own kind. */
+export const portKindOf = ({ dry = false, ports = undefined } = {}) => (ports === 'stub' ? 'stub' : ports?.kind ?? (dry ? 'stub' : 'live'));
+/** The records of a stage in one directory (a work root or an --out): trials, faulted trials, builds, construction faults, probe rows, racing rounds, rows. */
+export function stageRecords(dir, stageId) {
+  const ofStage = r => r.experiment?.startsWith(`${stageId}.`);
+  return readJsonl(path.join(dir, 'results.jsonl')).filter(ofStage).length + readJsonl(path.join(dir, 'results.faults.jsonl')).filter(ofStage).length
+    + ['builds.jsonl', 'construction-faults.jsonl', 'probes.jsonl', 'racing.jsonl', 'rows.jsonl'].reduce((a, f) => a + readJsonl(path.join(dir, f)).filter(r => r.stage === stageId).length, 0);
+}
+/**
+ * Why a run of this kind ({ dry, ports }) may not use these directories (its work root and --out): they hold files of
+ * another kind of run of the stage. A paid run never adopts a --dry run's files: a --dry report.json, spend-ledger entries
+ * a --dry run wrote or that record no kind, a --dry plan.json, records with no STAMP.json beside them (a paid run writes it
+ * before its first call). A --dry run never writes into a paid run's directory (STAMP.json, LAUNCH.json, its report, plan
+ * or spend). Files of a run on other ports (stub against live) refuse either. [] when the directories are clean.
+ */
+export function runKindProblems({ dirs, stageId, dry, ports }) {
+  const problems = [], what = dry ? 'a --dry run' : 'a paid run';
+  for (const d of [...new Set(dirs.map(x => path.resolve(x)))]) {
+    if (!existsSync(d)) continue;
+    const r = readJsonIf(path.join(d, 'report.json')), rep = r?.schema === REPORT_SCHEMA && r.stage === stageId ? r : null;
+    const p = readJsonIf(path.join(d, PLAN_FILE)), plan = p?.schema === PLAN_SCHEMA && p.stage === stageId ? p : null;
+    const spend = readJsonl(path.join(d, SPEND_FILE)).filter(e => e.stage === stageId);
+    if (rep && !!rep.dry !== !!dry) problems.push(`${d}/report.json is a ${rep.dry ? '--dry' : 'paid'} run's report`);
+    if (rep?.ports && rep.ports !== ports) problems.push(`${d}/report.json was written on ${rep.ports} ports`);
+    if (plan && plan.dry !== undefined && plan.dry !== !!dry) problems.push(`${d}/${PLAN_FILE} is a ${plan.dry ? '--dry' : 'paid'} run's plan`);
+    if (plan?.ports && plan.ports !== ports) problems.push(`${d}/${PLAN_FILE} was written on ${plan.ports} ports`);
+    const otherRun = spend.filter(e => (dry ? e.dry === false : e.dry !== false)), otherPorts = spend.filter(e => e.ports != null && e.ports !== ports);
+    if (otherRun.length) problems.push(`${d}/${SPEND_FILE} holds ${otherRun.length} entr${otherRun.length === 1 ? 'y' : 'ies'} of ${dry ? 'a paid run' : 'a --dry run (or of a run that recorded no kind)'}`);
+    if (otherPorts.length) problems.push(`${d}/${SPEND_FILE} holds ${otherPorts.length} entr${otherPorts.length === 1 ? 'y' : 'ies'} written on ${[...new Set(otherPorts.map(e => e.ports))].join(', ')} ports`);
+    if (dry) {
+      const paidFiles = [STAMP_FILE, LAUNCH_FILE].filter(f => existsSync(path.join(d, f)));
+      if (paidFiles.length) problems.push(`${d} holds a paid run's ${paidFiles.join(' and ')}`);
+    } else {
+      const n = stageRecords(d, stageId);
+      if (n && !existsSync(path.join(d, STAMP_FILE))) problems.push(`${d} holds ${n} record(s) of stage ${stageId} and no ${STAMP_FILE} (a paid run writes it before its first call): a --dry run's or an unstamped run's records`);
+    }
+  }
+  return problems.length ? [`${what} on ${ports} ports may not use these directories: ${problems.join('; ')}`] : [];
+}
+/** Evidence in one directory that a stage ran there as a paid (non --dry) run: its LAUNCH.json or STAMP.json, a report,
+ *  plan or spend-ledger entries not marked --dry (a directory whose report, plan or every spend entry says --dry is a dry one). */
+export function paidStageEvidence(dir, stageId) {
+  const ev = [];
+  if (readJsonIf(path.join(dir, LAUNCH_FILE))?.stage === stageId) ev.push(LAUNCH_FILE);
+  if (readJsonIf(path.join(dir, STAMP_FILE))?.labelEngine?.stage === stageId) ev.push(STAMP_FILE);
+  const r = readJsonIf(path.join(dir, 'report.json')), rep = r?.schema === REPORT_SCHEMA && r.stage === stageId ? r : null;
+  const p = readJsonIf(path.join(dir, PLAN_FILE)), plan = p?.schema === PLAN_SCHEMA && p.stage === stageId ? p : null;
+  const spend = readJsonl(path.join(dir, SPEND_FILE)).filter(e => e.stage === stageId);
+  const dryDir = rep?.dry === true || plan?.dry === true || (spend.length > 0 && spend.every(e => e.dry === true));
+  if (rep && rep.dry !== true) ev.push('report.json');
+  if (plan && plan.dry !== true && !dryDir) ev.push(PLAN_FILE);
+  const paid = spend.filter(e => e.dry === false || (e.dry === undefined && !dryDir));
+  if (paid.length) ev.push(`${SPEND_FILE} (${paid.length} entr${paid.length === 1 ? 'y' : 'ies'})`);
+  return ev;
+}
+/**
+ * K5, no reruns (DESIGN §7: "a stage stops at its cap and is analysed as it stands"): the directories under `roots` (one
+ * level), other than this run's work root and --out, that hold evidence of a paid run of the stage. A second paid run with a
+ * fresh --out and work root would start its cap meter at $0 and spend the cap again.
+ */
+export function stageRunElsewhere({ roots, stageId, here = [] }) {
+  const skip = new Set(here.map(x => path.resolve(x))), found = [], seen = new Set();
+  for (const root of [...new Set(roots.filter(Boolean).map(r => path.resolve(r)))]) {
+    let subs = [];
+    try { subs = readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => path.join(root, d.name)).sort(); } catch { continue; }
+    for (const d of subs) {
+      if (skip.has(d) || seen.has(d)) continue;
+      seen.add(d);
+      const ev = paidStageEvidence(d, stageId);
+      if (ev.length) found.push({ dir: d, evidence: ev });
+    }
+  }
+  return found;
+}
+/** The committed text of the preregistration (its HEAD blob), or null: the --dry held-out guard reads the Freeze from it, never from a working-tree edit or another file. */
+export function committedPrereg(file = PREREG_FILE, { show = gitHeadBlob } = {}) {
+  const blob = show(file);
+  return blob ? blob.toString('utf8') : null;
+}
+
 /**
  * Run one stage. Returns the report object (also written as report.json and report.txt to the live dir and --out).
  * opts: { stageId, stagesFile, specFile, prereg, workRoot, out, dry, jobs, arms, concurrency, racing, withConditional,
  *         allowDraft, deviation, enforceGates (default: live runs only), ports (override: tests; 'stub' = stub ports built from
- *         the plan), stubForce (stub outcome overrides), paidDeps (paidRunChecks deps: tests), log }
+ *         the plan), stubForce (stub outcome overrides), paidDeps (paidRunChecks deps: tests), stageRoots (the directories whose
+ *         subdirectories a paid run scans for an earlier run of the stage, STAGE_ALREADY_RUN; tests), log }
  */
 export async function labelRun(opts) {
   const { stageId, stagesFile = STAGES_FILE, specFile = null, prereg = null, dry = false, jobs = null, arms = null, concurrency = 4, racing = true,
@@ -1315,9 +1420,10 @@ export async function labelRun(opts) {
     if (deviation) deviations.push({ kind: 'note', text: deviation });
     // PREREG §3.3: before Freeze the only use of held-out (test-split) seeds is the --hashes child. A --dry plan on a
     // test-split evaluation role would generate those tasks here and score stub outputs with the bed oracles: refused
-    // until the Freeze addendum is in the preregistration, unless --allow-heldout-dry names a §13 deviation.
-    const pf = prereg ? path.resolve(prereg) : PREREG_FILE, allowHeldoutDry = opts.allowHeldoutDry ?? null;
-    const why = heldoutDryRefusal({ units: planned, preregText: existsSync(pf) ? readFileSync(pf, 'utf8') : null, allow: allowHeldoutDry });
+    // until the Freeze addendum is in the preregistration, unless --allow-heldout-dry names a §13 deviation. Both are read
+    // from the COMMITTED preregistration (its HEAD blob): a --prereg file or an uncommitted edit with an A-Freeze row does not open it.
+    const allowHeldoutDry = opts.allowHeldoutDry ?? null;
+    const why = heldoutDryRefusal({ units: planned, preregText: committedPrereg(), allow: allowHeldoutDry });
     if (why) throw Object.assign(new Error(why), { code: 'HELDOUT_DRY_REFUSED' });
     if (allowHeldoutDry != null) deviations.push({ kind: 'heldout-dry', text: `--allow-heldout-dry ${allowHeldoutDry}: held-out tasks generated in-process by a --dry run (PREREG §13 ${allowHeldoutDry})` });
   }
@@ -1325,6 +1431,15 @@ export async function labelRun(opts) {
   const live = path.resolve(opts.workRoot ?? path.join(LIVE_ROOT, dry ? `${id}-dry` : id));
   if (live === REPO || live.startsWith(REPO + path.sep)) throw new Error(`the work root must be outside the repository: ${live}`);
   const out = path.resolve(opts.out ?? (dry ? path.join(live, 'dry-out') : path.join(OUT_ROOT, id)));
+  // The run's kind. A --dry run's stub outcomes never become paid labels: a --dry run never writes under the repository's runs
+  // directory or into the paid default work root, and neither kind of run uses directories that hold the other's files.
+  const portKind = portKindOf({ dry, ports: opts.ports }), runKind = { dry, ports: portKind };
+  if (dry && isInside(out, OUT_ROOT)) throw Object.assign(new Error(`--dry may not write under ${path.relative(REPO, OUT_ROOT)} (--out ${out}): that directory holds paid stages' labels; use an --out outside it (the default is <work root>/dry-out)`), { code: 'DRY_OUT_IN_RUNS' });
+  if (dry && live === path.resolve(LIVE_ROOT, id)) throw Object.assign(new Error(`--dry may not use the paid work root of stage ${stage.id} (${live}); use another --work-root (the default is ${path.join(LIVE_ROOT, `${id}-dry`)})`), { code: 'DRY_ON_PAID_WORK_ROOT' });
+  {
+    const kp = runKindProblems({ dirs: [live, out], stageId: stage.id, dry, ports: portKind });
+    if (kp.length) throw Object.assign(new Error(`${kp.join('; ')}: use a fresh work root and --out`), { code: 'RUN_KIND_MIXED', problems: kp });
+  }
   // The spend ledger lives in the work root and in --out. A new work root over an --out that holds this stage's spend
   // would restart the meter from $0: refused.
   const liveSpendFile = path.join(live, SPEND_FILE), outSpendFile = path.join(out, SPEND_FILE);
@@ -1332,6 +1447,14 @@ export async function labelRun(opts) {
     const ls = loadSpend([liveSpendFile], stage.id), os = loadSpend([outSpendFile], stage.id);
     const foreign = [...os.ids].filter(x => !ls.ids.has(x));
     if (foreign.length) throw Object.assign(new Error(`--out ${out} already holds $${os.totalUsd.toFixed(2)} of stage ${stage.id} spend (${foreign.length} spend-ledger entr${foreign.length === 1 ? 'y' : 'ies'}) that the work root ${live} does not hold: resume with the work root that spent it, or use another --out`), { code: 'SPEND_ELSEWHERE' });
+  }
+  // K5, no reruns: the cap meter lives in this run's work root and --out, so a paid run of a stage that already ran in another
+  // directory (a fresh --out and work root) would spend the cap again. Refused; the stage resumes in the directories it ran in.
+  // Roots: the parents of --out and the work root; on live ports also the runs directory and the work-root directory (stageRoots: tests).
+  if (!dry) {
+    const roots = opts.stageRoots ?? [path.dirname(out), path.dirname(live), ...(portKind === 'live' ? [OUT_ROOT, LIVE_ROOT] : [])];
+    const found = stageRunElsewhere({ roots, stageId: stage.id, here: [live, out] });
+    if (found.length) throw Object.assign(new Error(`stage ${stage.id} already ran in ${found.map(f => `${f.dir} (${f.evidence.join(', ')})`).join('; ')}: a stage is paid for once and analysed as it stands, with no reruns (DESIGN §7, K5); resume it with the --work-root and --out it ran in`), { code: 'STAGE_ALREADY_RUN', found });
   }
   mkdirSync(live, { recursive: true }); mkdirSync(out, { recursive: true });
   // The label-engine stamp of a paid run: written before the first paid call; a resume on another engine is refused.
@@ -1364,7 +1487,13 @@ export async function labelRun(opts) {
   }
   // The jobs' replacement seeds, on record before anything is spent (plan.json in the work root and --out): another stage
   // reads them even when this one never writes a report, and a resume that would hand out other replacements is refused.
-  writePlanRecord({ files: [path.join(live, PLAN_FILE), path.join(out, PLAN_FILE)], stage, jobs: units.map(u => ({ job: u.job.id, plan: plans.get(u.job.id) })) });
+  writePlanRecord({ files: [path.join(live, PLAN_FILE), path.join(out, PLAN_FILE)], stage, jobs: units.map(u => ({ job: u.job.id, plan: plans.get(u.job.id) })), kind: runKind });
+  // jobs.json (evaluate.mjs reads only stage directories that hold it): the jobs' label-free descriptions, before any label.
+  {
+    const entries = [];
+    for (const u of units) entries.push([u.job.id, jobsEntry(u.job, plans.get(u.job.id), await loadFamily(u.job.family))]);
+    writeJobsRecord({ files: [path.join(live, JOBS_FILE), path.join(out, JOBS_FILE)], entries });
+  }
   const gatewayModels = [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]).flatMap(a => {
     const d = stages.arms[a]; return d.factory === 'b0Call' ? [d.model] : d.build?.factory === 'procedureWriter' ? [d.build.model] : d.build?.factory === 'construct' ? d.build.models : [];
   }))].sort();
@@ -1386,7 +1515,7 @@ export async function labelRun(opts) {
   const decided = new Map(readJsonl(racingFile).filter(e => e.stage === stage.id).map(e => [`${e.round}|${e.job}`, e]));
   // Resume never mixes versions: every build, probe, racing and trial record of this stage must carry the current stamp (a
   // trial with no meta threw or was capped before it ran: nothing of its version was recorded).
-  const vctx = { stages, stageSha: stageSha(stages, stage), prompts: promptShas() };
+  const vctx = { stages, stageSha: stageSha(stages, stage), prompts: promptShas(), portKind };
   const mixed = [
     ...[...builds.values()].filter(b => !sameStamp(b.stamp, recordStamp(vctx, b.mode))).map(b => `build ${b.job}/${b.mode}#${b.lineage}`),
     ...[...probes.values()].filter(p => !sameStamp(p.stamp, recordStamp(vctx, p.mode))).map(p => `probe ${p.job}/${p.mode}/${p.draw}`),
@@ -1399,7 +1528,7 @@ export async function labelRun(opts) {
   // The meter at start: the spend ledger (work root and --out); a work root from before the ledger carries its files' spend.
   const spendFiles = [liveSpendFile, outSpendFile];
   let spend0 = loadSpend(spendFiles, stage.id);
-  const budget = new StageBudget(stage.capUsd ?? 0, 0, { stage: stage.id, files: spendFiles, attempts: spend0.attempts });
+  const budget = new StageBudget(stage.capUsd ?? 0, 0, { stage: stage.id, files: spendFiles, attempts: spend0.attempts, kind: runKind });
   // Entries the work root holds and --out does not (a changed --out) are copied, so --out holds the whole ledger.
   { const os = loadSpend([outSpendFile], stage.id); for (const e of readJsonl(liveSpendFile)) if (e.stage === stage.id && !os.ids.has(e.id) && path.resolve(outSpendFile) !== path.resolve(liveSpendFile)) appendFileSync(outSpendFile, JSON.stringify(e) + '\n'); }
   if (!spend0.ids.size) {
@@ -1407,7 +1536,7 @@ export async function labelRun(opts) {
     if (legacy.usd > 0) { budget.write({ op: 'carry', id: `carry-${randomUUID()}`, charged: legacy.usd, parts: legacy.parts, why: 'spend recorded before the spend ledger, rebuilt from the work root files' }); spend0 = loadSpend(spendFiles, stage.id); }
   }
   budget.spentUsd = spend0.totalUsd;
-  const ctx = { stages, stage, live, resultsFile, buildsFile, probesFile, book, builds, probes, budget, ports, ledger, concurrency, log, notRun: [], stageSha: vctx.stageSha, prompts: vctx.prompts,
+  const ctx = { stages, stage, live, resultsFile, buildsFile, probesFile, book, builds, probes, budget, ports, ledger, concurrency, log, notRun: [], stageSha: vctx.stageSha, prompts: vctx.prompts, portKind,
     // Cost-meter gate (meter-gate.mjs): live runs check every priced agent session's output tokens against the CLI's final usage; --dry stubs carry no such usage.
     meter: dry ? null : { tolerance: OUTPUT_TOLERANCE },
     metered: ({ timeoutMs = null } = {}) => meteredPort(ports.model, { book, timeoutMs }) };
@@ -1456,23 +1585,28 @@ export async function labelRun(opts) {
           const t = tableOf(rows, withRunVoids(bs, runVoids(ctx, u), u.job.id));
           if (t.error) { racingLog.set(key, { stage: stage.id, round, job: u.job.id, skipped: t.error }); continue; }
           const labelModes = u.arms.filter(m => MODES[m] && !MODES[m].ceiling);
-          const current = Object.fromEntries(u.arms.map(m => [m, lineageOf(stages.arms[m]) ? bs.filter(b => b.mode === m).length : Math.max(0, ...rows.filter(r => r.mode === m).map(r => r.rep + 1))]));
+          // Lineage modes: the count of build rows (the per-mode maximum) and the next lineage number to build (the lowest with no row).
+          const lin = Object.fromEntries(u.arms.filter(m => lineageOf(stages.arms[m])).map(m => [m, lineageTopUp(bs, m)]));
+          const current = Object.fromEntries(u.arms.map(m => [m, lin[m] ? lin[m].count : Math.max(0, ...rows.filter(r => r.mode === m).map(r => r.rep + 1))]));
+          const next = Object.fromEntries(Object.entries(lin).map(([m, x]) => [m, x.next]));
           let p;
-          try { p = racingPlan({ table: t.table, job: u.job.id, stages, current, labelModes }); }
+          try { p = racingPlan({ table: t.table, job: u.job.id, stages, current, labelModes, next }); }
           catch (e) { racingLog.set(key, { stage: stage.id, round, job: u.job.id, skipped: String(e.message).slice(0, 200) }); continue; }
           rp = { stage: stage.id, round, job: u.job.id, pBest: p.pBest ? { workflow: r6(p.pBest.workflow), 'no-workflow': r6(p.pBest['no-workflow']) } : null, label: p.label,
             acceptable: p.acceptable, add: p.add, agentOTasks: p.agentOTasks, stamp: recordStamp(ctx) };
           appendFileSync(racingFile, JSON.stringify(rp) + '\n'); decided.set(key, rp);
         }
-        racingLog.set(key, rp);
-        const groups = [];
+        const groups = [], unbuilt = [];
         for (const [m, n] of Object.entries(rp.add)) {
           if (lineageOf(stages.arms[m])) {
             const nb = await ensureBuilds({ ctx, unit: u, plan, want: [{ mode: m, k: n }] });
+            // A lineage top-up that left no build row (an environment fault set aside, or the cap) added nothing: logged as unbuilt, not counted.
+            if (!nb.length) { unbuilt.push(runArmId(m, n)); continue; }
             for (const b of nb.filter(x => !x.failed && !buildVoided(x))) groups.push({ arms: [runArmsFor({ ctx, unit: u, fam, schemaTest, mode: m, k: b.lineage, build: b })], trials: 1 });
             added += 1;
           } else { groups.push({ arms: [runArmsFor({ ctx, unit: u, fam, schemaTest, mode: m })], trials: n }); added += 1; }
         }
+        racingLog.set(key, unbuilt.length ? { ...rp, unbuilt } : rp);
         // agent-O's per-task second draw, unless this round already gives agent-O a draw on every task.
         if (rp.agentOTasks.length && !rp.add['agent-O']) {
           const tasks = plan.evalTasks.filter(x => rp.agentOTasks.includes(x.taskKey));
@@ -1522,7 +1656,7 @@ export async function labelRun(opts) {
       seedChecks: plan.seedChecks, replacements: plan.replacements, arms: [...u.arms].sort(), probeArms: [...u.probeArms].sort(), modes,
       builds: voidedBuilds.map(b => ({ mode: b.mode, lineage: b.lineage, exampleSet: b.exampleSet, failed: b.failed, error: b.error ?? null,
         void: b.void ?? ((b.hiddenPathAttempts > 0 || b.nestedModelAttempts > 0) ? `hiddenPathAttempts=${b.hiddenPathAttempts}, nestedModelAttempts=${b.nestedModelAttempts}` : null),
-        usdReported: b.usdReported, usdRepriced: b.usdRepriced, usdImputed: b.usdImputed, runSolverCalls: b.runSolverCalls ?? null, selfCheck: b.factory === 'construct' ? !!b.checkPath : null,
+        usdReported: b.usdReported, usdRepriced: b.usdRepriced, usdImputed: b.usdImputed, repriced: b.repriced ?? null, runSolverCalls: b.runSolverCalls ?? null, selfCheck: b.factory === 'construct' ? !!b.checkPath : null,
         pathMentions: b.pathMentions ?? null, artifactSha: b.artifactSha ?? null })),
       probes: jp.sort((a, b) => (a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : a.draw - b.draw))
         .map(p => ({ mode: p.mode, draw: p.draw, delivered: p.delivered, schemaValid: p.schemaValid, outputHash: p.outputHash, usdRepriced: p.usdRepriced, usdImputed: p.usdImputed, error: p.error })),
@@ -1545,7 +1679,7 @@ export async function labelRun(opts) {
   const cacheByArm = perArm([...allRows, ...allBuilds, ...allProbes]);
   for (const u of units) famDeployable.set(u.job.family, typeof (await loadFamily(u.job.family)).deployableCheck === 'function');
   const report = {
-    schema: REPORT_SCHEMA, stage: stage.id, grade: stage.grade ?? null, dry, ports: ports?.kind ?? null, source, planSha, stageSha: vctx.stageSha, planStatus: stages.status, approved: stage.approved ?? null,
+    schema: REPORT_SCHEMA, stage: stage.id, grade: stage.grade ?? null, dry, ports: ports?.kind ?? portKind, source, planSha, stageSha: vctx.stageSha, planStatus: stages.status, approved: stage.approved ?? null,
     preregSha: prereg && existsSync(prereg) ? sha16(readFileSync(prereg, 'utf8')) : null, capUsd: stage.capUsd ?? null, priceTable: stages.priceTable?.id ?? null,
     prompts: promptShas(), concurrency, racing, engine: stampRec ? { stampSha: sha16(canonicalJson(stampRec)), commit: stampRec.labelEngine?.commit ?? null } : null,
     arms: Object.fromEntries([...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => [a, { settingsSha: stages.arms[a].settingsSha ?? null, computedSha: armSha(stages.arms[a]),
@@ -1559,6 +1693,9 @@ export async function labelRun(opts) {
       selfCheckErrors: allRows.filter(r => r.selfCheckError).length,
       deployableGaps: units.filter(u => FAMILY_HANDED_TESTS[u.job.family] && !famDeployable.get(u.job.family)).map(u => ({ job: u.job.id, family: u.job.family, named: FAMILY_HANDED_TESTS[u.job.family], used: 'schema validity only' })),
       pathMentionsBuilds: allBuilds.filter(b => (b.pathMentions ?? 0) > (b.hiddenPathAttempts ?? 0)).length,
+      // Builds priced at a figure the table did not re-price (a builder session with no recorded usage, a call to an unpriced
+      // model): metrics leaves their jobs unlabelled (notRepriced), as for task rows.
+      notRepricedBuilds: allBuilds.filter(b => b.repriced === false).map(b => `${b.job}/${b.mode}#${b.lineage}`).sort(),
     },
     k7: { limit: k7Limit, perJobUsd: r6(jobsOut.length ? sum(jobsOut.map(j => j.usdCharged)) / jobsOut.length : 0), over: jobsOut.filter(j => j.k7Ratio != null && j.k7Ratio > k7Limit).map(j => j.job) },
     totals: { rows: allRows.length, builds: allBuilds.length, probes: allProbes.length, ...parts, usdMeasured: r6(measured), usdImputed: r6(imputed), usdCharged: r6(measured + imputed),
@@ -1632,13 +1769,14 @@ export function renderReport(rep) {
     L.push('', `environment faults per arm (K4, limit ${rep.validity.envFaultLimit}): ${bad.length ? '' : 'none'}`, ...bad.map(x => `  ${x.job}/${x.mode}: trials ${x.trialFaults}/${x.trialAttempts} (${x.share}), builds ${x.buildFaults}/${x.buildAttempts} (${x.buildShare})${x.invalid ? ' INVALID' : ''}`));
   }
   const V = rep.validity;
-  if (V && (V.invalidArms.length || V.noSelfCheck.length || V.selfCheckErrors || V.deployableGaps.length))
+  if (V && (V.invalidArms.length || V.noSelfCheck.length || V.selfCheckErrors || V.deployableGaps.length || V.notRepricedBuilds?.length))
     L.push('', 'validity:', ...(V.invalidArms.length ? [`  invalid arms (K4): ${V.invalidArms.join(', ')}`] : []), ...(V.noSelfCheck.length ? [`  construct-H lineages without check.mjs: ${V.noSelfCheck.join(', ')}`] : []),
-      ...(V.selfCheckErrors ? [`  rows whose self-check could not run: ${V.selfCheckErrors}`] : []), ...V.deployableGaps.map(g => `  ${g.job}: deployableVerdict is ${g.used}; DESIGN names ${g.named} (${g.family} exports no deployableCheck)`));
+      ...(V.selfCheckErrors ? [`  rows whose self-check could not run: ${V.selfCheckErrors}`] : []), ...V.deployableGaps.map(g => `  ${g.job}: deployableVerdict is ${g.used}; DESIGN names ${g.named} (${g.family} exports no deployableCheck)`),
+      ...(V.notRepricedBuilds?.length ? [`  builds not re-priced from tokens (their jobs stay unlabelled): ${V.notRepricedBuilds.join(', ')}`] : []));
   const arms = Object.entries(rep.arms ?? {});
   if (arms.length) L.push('', 'prompt-cache read share per arm (MEM-0):', ...arms.map(([a, x]) => `  ${a.padEnd(14)} ${x.usage ? cacheShareCell(x.usage) : '–'}`));
   if (rep.racing.length) L.push('', 'racing:', ...rep.racing.map(r => `  round ${r.round} ${r.job}: ${r.skipped ? `skipped (${r.skipped})`
-    : `P(best) ${JSON.stringify(r.pBest)} label ${r.label} A=[${r.acceptable.join(', ')}] add ${JSON.stringify(r.add)} agent-O tasks ${r.agentOTasks.length}`}`));
+    : `P(best) ${JSON.stringify(r.pBest)} label ${r.label} A=[${r.acceptable.join(', ')}] add ${JSON.stringify(r.add)} agent-O tasks ${r.agentOTasks.length}${r.unbuilt?.length ? `; not built (no row: fault or cap): ${r.unbuilt.join(', ')}` : ''}`}`));
   if (rep.skipped.length) L.push('', 'skipped:', ...rep.skipped.map(s => `  ${s.where}: ${s.reason}`));
   const t = rep.totals, f = t.usdFaultedTrials, c = t.usdConstructionFaults;
   L.push('', `totals: ${t.rows} rows, ${t.builds} builds, ${t.probes} probe rows; measured ${usd(t.usdMeasured)} + imputed ${usd(t.usdImputed)} = ${usd(t.usdCharged)} `

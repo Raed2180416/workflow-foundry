@@ -367,14 +367,17 @@ test('end to end (A1-C, scripted): a failing hard check triggers a repair round 
     runner: stubSessionRunner({ skipLast: true, seen }), nodeRunner: stubNodeRunner({ replies: { ledger: two } }) });
   const f = a.results[0].forks[0];
   const names = f.session.nodes.map(n => n.name);
-  if (f.pipeline.ledger.hardChecks >= 2) {
-    assert.deepEqual(names, ['inventory', 'ledger-1', 'ledger-2', 'ledger-3', 'act', 'check-0', 'repair-1', 'check-1']);
-    assert.deepEqual(f.pipeline.checks.map(c => c.hardFail), [1, 0]);
-    assert.equal(f.pipeline.termination.reason, 'all checks pass');
-    assert.match(seen[1].system, /repair round 1/);
-    assert.equal(seen[1].prompt, seen[0].prompt);                          // the official user message again, verbatim
-    assert.deepEqual(f.session.violations, []);
-  }
+  assert.equal(f.pipeline.ledger.hardChecks, 2);
+  assert.deepEqual(names, ['inventory', 'ledger-1', 'ledger-2', 'ledger-3', 'act', 'check-0', 'repair-1', 'check-1']);
+  assert.deepEqual(f.pipeline.checks.map(c => c.hardFail), [1, 0]);
+  assert.equal(f.pipeline.termination.reason, 'all checks pass');
+  assert.match(seen[1].system, /repair round 1/);
+  assert.match(seen[1].system, /FAILED/);
+  assert.doesNotMatch(seen[1].system, /### Requirements/);                 // only the failing items, not the whole brief
+  assert.equal(seen[1].prompt, seen[0].prompt);                            // the official user message again, verbatim
+  assert.ok(seen[1].system.startsWith(seen[0].system.slice(0, seen[0].system.indexOf('## Work brief'))));
+  assert.deepEqual(f.session.violations, []);
+  assert.equal(a.results[0].final.task_completed_correctly, 1);
   // Act cap: with maxSteps 14 and 3 ledger responses, the act session may use at most 14 - 3 - 8 = 3 responses.
   const capSeen = [];
   const b = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'codeowned', det: 'record', maxSteps: 14, liveRoot: tmp('cap'), outDir: null, log: quiet,

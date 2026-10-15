@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { wilson } from '../../lib/stats.mjs';
 import { rng } from '../metrics.mjs';
+import { assertSeedsAllowed, loadLedger, rangesOf } from '../../jit/seeds.mjs';
 
 export { wilson, rng };
 export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -32,6 +33,28 @@ export function sourceOf(file, extra = {}) {
   return { path: rel(f), sha256: sha256File(f), bytes: statSync(f).size, ...extra };
 }
 export const listDir = d => (existsSync(d) ? readdirSync(d) : []);
+
+/**
+ * The seed gate of a diagnostic that generates tasks in-process (PREREG §3.3: "every runner calls assertSeedsAllowed for every task", L4). A diagnostic generates the
+ * worked EXAMPLES a router may see (purpose need-example, dev split) and nothing else, so on top of the ledger's own refusals (assertSeedsAllowed) a seed must lie in a
+ * range whose allow list names the purpose, and never at or above the held-out floor: the ledger models the held-out seeds as a test-split range, so a dev call with
+ * seed 8801 would otherwise pass it (no dev range covers 8801). Throws SEED_REFUSED with one detail per refused seed; returns { bed, split, purpose, seeds }.
+ */
+export function assertExampleSeeds({ bed, seeds, purpose = 'need-example', split = 'dev', ledger = null }) {
+  const L = ledger ?? loadLedger();
+  assertSeedsAllowed({ bed, split, seeds, purpose, ledger: L });
+  const refused = seeds.map(seed => {
+    const reasons = [];
+    if (seed >= L.rules.heldoutMinSeed) reasons.push(`seed ${seed} is in the held-out range (>= ${L.rules.heldoutMinSeed}): a dev diagnostic never generates it`);
+    else if (!rangesOf(L, { bed, split, seed }).some(r => r.allow?.includes(purpose))) reasons.push(`seed ${seed} is in no ${split} ledger range that allows ${purpose}`);
+    return { seed, reasons };
+  }).filter(x => x.reasons.length);
+  if (refused.length) {
+    const e = new Error(`SEED_REFUSED: ${refused.length} ${bed}:${split} seed(s) refused for ${purpose}: ${refused.slice(0, 4).map(x => `s${x.seed} (${x.reasons.join('; ')})`).join(', ')}`);
+    e.code = 'SEED_REFUSED'; e.details = refused; throw e;
+  }
+  return { bed, split, purpose, seeds: seeds.length };
+}
 
 // ---------------------------------------------------------------------------------------------------- statistics
 export const sum = xs => xs.reduce((a, x) => a + x, 0);

@@ -126,3 +126,47 @@ Discord, newsletter and sign-up:
 - One rater.
 - Negatives were checked on candidate lines, not read line by line in full.
 - A directive phrased with none of the candidate words could be missed.
+
+## Erratum and reviewer check (adversarial review, 2026-10-15, $0)
+
+**Erratum: `hardKind` precedence.** The Precedence list above says `hardKind` takes the first matching stratum in the order
+regex-hit, effect, directive. The code does the reverse: `kdense.mjs` takes the first stratum in `labelChunk`'s push order,
+which is directive, then effect, then regex-hit. The frozen set sha binds the code's order, so the code stands and this note
+corrects the prose.
+- **Effect.** Three negatives carry both `directive` and `effect` and are filed as `directive`: `fictiv:c1`, `matlab:c3` and
+  `what-if-oracle:c1`. Under the prose rule the effect stratum would hold 12 chunks, not 9.
+- **No label changes.** Only the per-stratum report moves.
+- **What run.mjs now reports.** `byStratum` gives non-exclusive membership (directive 170, effect 12, regex-hit 13,
+  reference 12) beside the exclusive `byHardKind`. It also reports `plainNegativeFpr` (468 negatives in no stratum), which
+  P5 reads.
+
+**Reference chunks are selected on the baseline.** Reference chunks enter the set only when the frozen regex flags them.
+- So on the primary `chunk` population, b1 and both unions carry 12 false positives by construction.
+- The composites carry one: `modal:ref:secrets.md:c0`, through the credential rule.
+- The typed readers never see the reference chunks that the regex passes.
+- `result.json` therefore also reports a `skillChunk` population (the 644 SKILL.md negatives). Compare b1 with the typed
+  screens there.
+
+**Reviewer hand check.**
+- **Rater.** Claude Opus 5.5 in a reviewer role. That is the same model family as the builder, so the check is not
+  independent.
+- **Sample.** 20 chunks drawn with mulberry32 seed 7700, none of them in the builder's 47:
+  - 2 self-promotion: `scientific-schematics:c5` and `ontology-term-resolution:c4`;
+  - 6 directive negatives;
+  - 12 plain negatives.
+- **Method.**
+  - For every chunk, headings and candidate lines were read: imperatives, and user, agent, vendor, send, fetch, cite,
+    header, order and pay words.
+  - Five negatives were read in full: `alphagenome:c0`, `pylabrobot:c1`, `citation-management:c2`, `cantera:c1` and
+    `matchms:c1`.
+- **Result.** 20/20 agree with the code labels.
+- **Closest calls (all negative).**
+  - Cross-skill routing tables (`alphagenome:c0` routes to `genomic-intelligence`, a hosted provider).
+  - "Integration with Other Skills" sections (`citation-management:c2`).
+  - These widen use of the vendor's own library, but they stay within the user's goal, the same reasoning as for
+    `selection-widening`.
+- **Sweeps.**
+  - A whole-corpus sweep for tracking or attribution language, sign-up, affiliate, telemetry and "powered by" found no
+    vendor-serving directive outside `exa-search:120`.
+  - The citation heading and directive phrases occur in the same 137 files, one chunk each. `primer-design:c4` carries the
+    heading and an arXiv link but no directive phrase, so the code labels it ambiguous (soft).
