@@ -30,10 +30,11 @@ import { REQUIREMENT_LIBRARY } from '../../src/construction-objective.mjs';
 import { loadLedger, seedRefusals } from '../jit/seeds.mjs';
 import { WHITELIST } from './features.mjs';
 import {
-  rng, hashString, MODES, CASCADES, GRID, HEADLINE, SLIDER_CELLS, V_GRID, DELTA, makeCell, cellKey, classOf, modeInfo, labelSetModes,
+  rng, hashString, MODES, CASCADES, GRID, HEADLINE, SLIDER_CELLS, V_GRID, DELTA, FIRST_PASS, makeCell, cellKey, classOf, modeInfo, labelSetModes,
   withCascades, withoutSelfCheckCredit, needLabels, rankModes, bestOf, sbsGlobal, coverage, fragility, selfTestRates, envFaults,
-  signFlipTest, clusterBootstrapDelta,
+  signFlipTest, clusterBootstrapDelta, firstPassShort,
 } from './metrics.mjs';
+import { balancedAccuracyInterval, c7aReading, thetaFitStatus, missingDataRule } from './prereg-rules.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
@@ -50,27 +51,33 @@ export const MATRIX_FORMAT = `A labels root holds one directory per stage (or is
 jobs.json      { "<job>": { cluster, split: train|heldout|sealed|e2e, family, kind?, band?, forced?, near?, features: {<8 trusted keys>, <prose keys>?},
                  requirements?: [typed hard requirements], verifier?, modes?|masked?, text?, paraphrases?, exampleSeeds?, exampleHashes?,
                  tolerance?: { scoreThreshold }, metamorph?: { of: <job>, expect: same|different } } }   (label-free; written before labels)
-matrix.jsonl   (or label-run's rows.jsonl) one row per job x mode x task x replicate: { job, mode, task, rep, seed, taskHash, pass, delivered, schemaValid, selfVerdict,
-                 deployableVerdict, score?, passAt?, usdRepriced, usdReported, usdImputed, ms, tokens, error, at? }   (metrics.mjs needTable)
+matrix.jsonl   (or label-run's rows.jsonl; never both) one row per job x mode x task x replicate: { job, mode, task, rep, seed, taskHash, pass, delivered, schemaValid,
+                 selfVerdict, deployableVerdict, score?, passAt?, usdRepriced (required: one meter), usdReported, usdImputed, repriced, armHash, void?, ms, tokens,
+                 error, at? }   (metrics.mjs needTable: LEGACY rows refused, one armHash per (job, mode), repriced: false leaves the job unlabelled)
 builds.jsonl   (builds.final.jsonl preferred) one row per job x built/guided mode x lineage: { job, mode, rep, usd, usdImputed?, failed, minutes, artifactSha, runSolverCalls,
                  hiddenPathAttempts, nestedModelAttempts, scoreChecks, probeSeeds }
-decisions.jsonl recorded policies: { policy: judge-H|NR-probe|NR-probe-oracle, job, cell: <cell key>|null, mode, routingUsd, pred?: {p, usd}, needsWorkflow? }`;
+decisions.jsonl recorded policies: { policy: judge-H|NR-probe|NR-probe-oracle, job, cell: <cell key>|null, mode, routingUsd (required), pred?: {p, usd}, needsWorkflow?,
+                 probe?: { ran, modes, k, costUsd } }   (an NR-probe decision is charged at least the dollars of the job's probe rows it used)
+probes.jsonl   label-run's NR-probe rows: { job, mode, draw, usdRepriced, usdImputed, ... } (deployable signals only)
+report.json    label-run's stage report (its priceTable id: one meter across every stage); STAMP.json the stage's engine stamp (PREREG §4.4)`;
 
 const avg = xs => (xs.length ? xs.reduce((a, x) => a + x, 0) / xs.length : null);
 const opaque = id => `j${createHash('sha256').update(String(id)).digest('hex').slice(0, 12)}`;
-const firstAvailable = (prefs, available) => { const m = prefs.find(x => available.includes(x)); if (!m) throw new Error(`none of ${prefs.join(', ')} is available (${available.join(', ')})`); return m; };
 
 // ----------------------------------------------------------------------------------------------------------- loading
 const readJsonl = file => (existsSync(file) ? readFileSync(file, 'utf8').split('\n').filter(l => l.trim()).map((l, i) => { try { return JSON.parse(l); } catch { throw new Error(`${file}:${i + 1}: not JSON`); } }) : []);
 
 /**
- * Read a labels root. trainOnly (the sealed envelope, L6): matrix and build rows of non-TRAIN jobs are never kept, and a
- * stage directory without a TRAIN job is not opened beyond its jobs.json and decisions.jsonl (label-free files).
+ * Read a labels root. trainOnly (the sealed envelope, L6, and the development split): matrix, build and probe rows of
+ * non-TRAIN jobs are never kept, and a stage directory without a TRAIN job is not opened beyond its jobs.json and
+ * decisions.jsonl (label-free files). Each stage's price-table id (label-run report.json) and engine stamp (STAMP.json) are
+ * returned in `stageInfo`. A stage holding both matrix.jsonl and rows.jsonl is refused.
  */
 export function loadLabels(root, { trainOnly = false } = {}) {
   const dirs = existsSync(path.join(root, 'jobs.json')) ? [root]
     : readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => path.join(root, d.name)).filter(d => existsSync(path.join(d, 'jobs.json'))).sort();
-  const meta = {}, rows = [], builds = [], decisions = [], skipped = { stages: [], rows: 0 }, stages = [];
+  const meta = {}, rows = [], builds = [], decisions = [], probes = [], stageInfo = [], skipped = { stages: [], rows: 0 }, stages = [];
+  const readJsonIf = f => (existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null);
   for (const dir of dirs) {
     const J = JSON.parse(readFileSync(path.join(dir, 'jobs.json'), 'utf8'));
     for (const [id, m] of Object.entries(J)) {
@@ -82,13 +89,18 @@ export function loadLabels(root, { trainOnly = false } = {}) {
     if (trainOnly && !hasTrain) { skipped.stages.push(path.relative(ROOT, dir)); continue; }
     stages.push(path.relative(ROOT, dir));
     // label-run.mjs --out names: rows.jsonl (matrix rows) and builds.final.jsonl (its builds.jsonl is the append log).
+    const twoMatrices = ['matrix.jsonl', 'rows.jsonl'].filter(n => existsSync(path.join(dir, n)));
+    if (twoMatrices.length > 1) throw new Error(`${path.relative(ROOT, dir)}: both matrix.jsonl and rows.jsonl exist; keep one (which file holds the labels must not be a silent choice)`);
     const pick = names => names.map(n => path.join(dir, n)).find(f => existsSync(f)) ?? path.join(dir, names[0]);
-    for (const [file, out] of [[pick(['matrix.jsonl', 'rows.jsonl']), rows], [pick(['builds.final.jsonl', 'builds.jsonl']), builds]]) for (const r of readJsonl(file)) {
+    for (const [file, out] of [[pick(['matrix.jsonl', 'rows.jsonl']), rows], [pick(['builds.final.jsonl', 'builds.jsonl']), builds], [path.join(dir, 'probes.jsonl'), probes]]) for (const r of readJsonl(file)) {
       if (trainOnly && meta[r.job]?.split !== 'train') { skipped.rows += 1; continue; }
       out.push(r);
     }
+    const rep = readJsonIf(path.join(dir, 'report.json')), stamp = readJsonIf(path.join(dir, 'STAMP.json'));
+    stageInfo.push({ stage: path.basename(dir), splits: [...new Set(Object.values(J).map(m => m.split))].sort(), priceTable: rep?.priceTable ?? null,
+      stamp: stamp ? sha256(canonical(stamp)) : null });
   }
-  return { meta, rows, builds, decisions, stages, skipped };
+  return { meta, rows, builds, decisions, probes, stageInfo, stages, skipped };
 }
 
 // ------------------------------------------------------------------------------------------------------------- views
@@ -107,7 +119,40 @@ export function shortcutView(job, meta, modes) {
     prose: Object.freeze(Object.fromEntries(PROSE_FEATURES.filter(k => Number.isFinite(f[k])).map(k => [k, f[k]]))) });
 }
 const isForced = m => !!m?.forced || (m?.requirements?.length ?? 0) > 0;
-const jobModes = (m, defaults) => (m?.modes ? defaults.filter(x => m.modes.includes(x)) : defaults.filter(x => !(m?.masked ?? []).includes(x)));
+
+// ------------------------------------------------------------------------------------------------ menus (PREREG §5, §7)
+/** A job's declared menu: jobs.json `modes`, else every non-ceiling base mode of the registry; minus `masked`. */
+export function declaredMenu(m, registry = MODES) {
+  const base = Object.keys(registry).filter(k => !registry[k].ceiling);
+  return (Array.isArray(m?.modes) ? m.modes : base).filter(x => !(m?.masked ?? []).includes(x));
+}
+/** The modes a job may be routed to, in `modes` order: a base mode on its menu, or a cascade whose two modes both are. */
+export function menuOf(m, modes, registry = MODES) {
+  const menu = declaredMenu(m, registry);
+  return modes.filter(x => { const i = x.indexOf('->'); return i > 0 ? menu.includes(x.slice(0, i)) && menu.includes(x.slice(i + 2)) : menu.includes(x); });
+}
+/**
+ * The missing-data rule (PREREG §5; prereg-rules.mjs missingDataRule) over the declared jobs of a population: a job with
+ * no rows, or missing any non-ceiling mode of its declared menu (no rows for it, or short of its first-pass replicates or
+ * lineages), leaves the population and is listed with its missing modes and the reason. A job with rows for a non-ceiling
+ * mode its menu does not declare (a masked mode, say) throws: that is a data error, not missing data.
+ */
+export function missingData(table, jobs, meta, { registry = MODES, firstPass = FIRST_PASS } = {}) {
+  const items = [], why = new Map();
+  for (const j of jobs) {
+    const menu = declaredMenu(meta[j], registry), required = menu.filter(m => !modeInfo(m, registry).ceiling);
+    if (!table.jobs.includes(j)) { items.push({ id: j, cluster: meta[j]?.cluster ?? null, required, present: [] }); why.set(j, 'no rows'); continue; }
+    const present = table.modesOf(j).filter(m => !modeInfo(m, registry).cascade);
+    const undeclared = present.filter(m => !modeInfo(m, registry).ceiling && !menu.includes(m));
+    if (undeclared.length) throw new Error(`job ${j}: rows for ${undeclared.join(', ')}, which its jobs.json menu does not declare (modes/masked)`);
+    const short = Object.fromEntries(required.map(m => [m, present.includes(m) ? firstPassShort(table, j, m, firstPass) : 'no rows']).filter(([, r]) => r));
+    items.push({ id: j, cluster: meta[j]?.cluster ?? null, required, present: required.filter(m => !short[m]) });
+    if (Object.keys(short).length) why.set(j, Object.entries(short).map(([m, r]) => `${m}: ${r}`).join('; '));
+  }
+  const r = missingDataRule(items);
+  const dropped = r.dropped.map(d => ({ ...d, reason: why.get(d.job) }));
+  return { kept: r.kept, dropped, line: `dropped ${dropped.length}: ${dropped.map(d => `${d.job} (${d.reason})`).join('; ') || 'none'}` };
+}
 
 // ------------------------------------------------------------------------------------------------- fitting helpers
 /** The fitting context of a fold: TRAIN jobs only (optionally with their labels permuted, L2). */
@@ -121,7 +166,30 @@ export function makeContext(labels, trainJobs, meta, { modes, registry = MODES, 
       label: cell => labels.at(src(j), cell),
     };
   });
-  return { train, modes, registry, classOf: m => classOf(m, registry), peek: evalPeek };
+  // SBS-train's ranking per cell (modes present in every TRAIN job, ties to the cheaper): the pre-registered substitute when a
+  // policy's mode is masked on a job (PREREG §7 "Masked modes": the next mode of the TRAIN ranking for that cell).
+  const ranks = new Map();
+  const sbsRank = cell => {
+    const k = cellKey(cell);
+    if (!ranks.has(k)) {
+      const ms = modes.filter(m => train.every(it => it.modes.includes(m)));
+      ranks.set(k, rankModes(ms.map(m => ({ mode: m, u: avg(train.map(it => it.u(cell, m))), usd: avg(train.map(it => it.usd(cell, m))) }))));
+    }
+    return ranks.get(k);
+  };
+  return { train, modes, registry, classOf: m => classOf(m, registry), peek: evalPeek, sbsRank };
+}
+
+/**
+ * The first of `prefs` that the job can run; else the pre-registered substitute (PREREG §7): the first available mode of
+ * SBS-train's ranking for the cell, marked `fallback` so every substitution is counted and printed per policy.
+ */
+export function pickOrSubstitute(prefs, view, cell, ctx) {
+  const m = prefs.find(x => view.modes.includes(x));
+  if (m) return { mode: m };
+  const sub = (ctx?.sbsRank?.(cell) ?? []).find(x => view.modes.includes(x)) ?? (ctx?.modes ?? []).find(x => view.modes.includes(x));
+  if (!sub) throw new Error(`none of ${prefs.join(', ')} is available (${view.modes.join(', ')}) and no substitute is`);
+  return { mode: sub, fallback: { from: prefs[0], to: sub, rule: 'SBS-train ranking (PREREG §7 masked modes)' } };
 }
 
 /**
@@ -148,7 +216,8 @@ export function leafChooser(ctx, leafOf, { cls = null, complete = false } = {}) 
     const mode = r.rank.find(m => available.includes(m));
     if (!mode) throw new Error(`no available mode in leaf ${String(leaf)} (${available.join(', ')})`);
     const e = r.by.get(mode);
-    return { mode, pred: { p: e.p, usd: e.usd }, leafSize: r.size };
+    // A masked top mode: the next mode of the leaf's own ranking (PREREG §7), marked so the fallback is counted.
+    return { mode, pred: { p: e.p, usd: e.usd }, leafSize: r.size, ...(mode !== r.rank[0] ? { fallback: { from: r.rank[0], to: mode, rule: 'next mode of the leaf ranking (PREREG §7 masked modes)' } } : {}) };
   };
 }
 
@@ -213,10 +282,10 @@ export function nrStatic({ keys = ['logInputTokens', 'maxListLength'], name = 'N
       const choose = (view, cell) => {
         if (guard && view.requirements.length) {
           const r = wf('all', cell, view.modes);
-          return { mode: r.mode, pred: r.pred, needsWorkflow: true, guard: { forced: true, requirement: view.requirements[0] } };
+          return { mode: r.mode, pred: r.pred, needsWorkflow: true, guard: { forced: true, requirement: view.requirements[0] }, ...(r.fallback ? { fallback: r.fallback } : {}) };
         }
         const k = intrinsic(view) ? 'intrinsic' : 'not', r = leaf(k, cell, view.modes);
-        return { mode: r.mode, pred: r.pred, needsWorkflow: k === 'intrinsic', structure: { intrinsic: k === 'intrinsic' } };
+        return { mode: r.mode, pred: r.pred, needsWorkflow: k === 'intrinsic', structure: { intrinsic: k === 'intrinsic' }, ...(r.fallback ? { fallback: r.fallback } : {}) };
       };
       choose.fitted = rule;
       return choose;
@@ -228,17 +297,17 @@ export const tunedSizeRule = () => nrStatic({ keys: ['logInputTokens'], name: 't
 const tokensOf = v => 10 ** (v.features.logInputTokens ?? 0) - 1;
 /** The fixed size rule: under 2K tokens direct-H, 2-30K agent-H, over 30K construct-H. */
 export const fixedSizeRule = () => ({
-  name: 'fixed-size-rule', role: 'baseline', fit: () => view => {
+  name: 'fixed-size-rule', role: 'baseline', fit: ctx => (view, cell) => {
     const t = tokensOf(view);
-    return { mode: firstAvailable(t < 2000 ? ['direct-H', 'agent-H'] : t <= 30000 ? ['agent-H'] : ['construct-H', 'agent-H'], view.modes) };
+    return pickOrSubstitute(t < 2000 ? ['direct-H', 'agent-H'] : t <= 30000 ? ['agent-H'] : ['construct-H', 'agent-H'], view, cell, ctx);
   },
 });
 /** experiments/library/construct.mjs NONE_RULE: one call when size band S (< 2K tokens), lists <= 3, one source, no effect verb; else a workflow. */
 export const noneRule = () => ({
-  name: 'NONE_RULE', role: 'baseline', shortcut: true, fit: () => (view, cell, sv) => {
+  name: 'NONE_RULE', role: 'baseline', shortcut: true, fit: ctx => (view, cell, sv) => {
     const lists = Math.round(10 ** (view.features.maxListLength ?? 0) - 1);
     const none = tokensOf(view) < 2000 && lists <= NONE_RULE.maxListLength && !(view.features.multiSource > 0) && !(sv?.prose?.effectVerbs > 0);
-    return { mode: firstAvailable(none ? ['direct-H', 'agent-H'] : ['construct-H', 'agent-H+proc', 'agent-H'], view.modes) };
+    return pickOrSubstitute(none ? ['direct-H', 'agent-H'] : ['construct-H', 'agent-H+proc', 'agent-H'], view, cell, ctx);
   },
 });
 const CUES = REQUIREMENT_LIBRARY.filter(r => r.id !== 'verification');   // extractRequirements adds `verification` to every objective
@@ -249,9 +318,9 @@ export const keywordRouter = () => ({
     return (view, cell, sv) => {
       const hits = sv?.text ? CUES.filter(r => r.cue.test(sv.text)).map(r => r.id) : [];
       const prose = sv?.text ? 0 : (sv?.prose?.effectVerbs ?? 0) + (sv?.prose?.timeWords ?? 0) + (sv?.prose?.humanWords ?? 0);
-      if (hits.length || prose > 0) return { mode: firstAvailable(['construct-H', 'agent-H+proc'], view.modes), cues: hits };
+      if (hits.length || prose > 0) return { ...pickOrSubstitute(['construct-H', 'agent-H+proc'], view, cell, ctx), cues: hits };
       const r = nw('all', cell, view.modes);
-      return { mode: r.mode, pred: r.pred };
+      return { mode: r.mode, pred: r.pred, ...(r.fallback ? { fallback: r.fallback } : {}) };
     };
   },
 });
@@ -259,14 +328,18 @@ export const keywordRouter = () => ({
 export const kindRouter = () => ({
   name: 'kind-only', role: 'shortcut', shortcut: true, fit(ctx) {
     const leaf = leafChooser(ctx, it => it.sview.kind ?? '?');
-    return (view, cell, sv) => { const r = leaf(sv?.kind ?? '?', cell, view.modes); return { mode: r.mode, pred: r.pred }; };
+    return (view, cell, sv) => { const r = leaf(sv?.kind ?? '?', cell, view.modes); return { mode: r.mode, pred: r.pred, ...(r.fallback ? { fallback: r.fallback } : {}) }; };
   },
 });
-/** Family identity (L3): the TRAIN best mode of the job's family; an unseen family gets the SBS. */
+/** Family identity (L3): the TRAIN best mode of the job's family; an unseen family gets SBS-train itself (complete pool, like SBS-train). */
 export const familyIdentityRouter = () => ({
   name: 'family-identity', role: 'shortcut', shortcut: true, fit(ctx) {
-    const leaf = leafChooser(ctx, it => it.sview.family ?? '?');
-    return (view, cell, sv) => { const r = leaf(sv?.family ?? '\u0000unseen', cell, view.modes); return { mode: r.mode, pred: r.pred }; };
+    const leaf = leafChooser(ctx, it => it.sview.family ?? '?'), all = leafChooser(ctx, () => 'all', { complete: true });
+    const seen = new Set(ctx.train.map(it => it.sview.family ?? '?'));
+    return (view, cell, sv) => {
+      const r = seen.has(sv?.family ?? '\u0000unseen') ? leaf(sv.family, cell, view.modes) : all('all', cell, view.modes);
+      return { mode: r.mode, pred: r.pred, ...(r.fallback ? { fallback: r.fallback } : {}) };
+    };
   },
 });
 /** Family-majority by nearest TRAIN cluster: the majority best mode of the cluster of the nearest TRAIN job (ties by that cluster's mean utility). */
@@ -315,22 +388,22 @@ export function nrKnn({ ks = [3, 5], name = 'NR-knn' } = {}) {
     },
   };
 }
-/** Fixed mode (always-m). */
-export const fixedPolicy = mode => ({ name: `always-${mode}`, role: 'baseline', fixed: mode, fit: () => view => ({ mode: firstAvailable([mode], view.modes) }) });
+/** Fixed mode (always-m). On a job where m is masked: the pre-registered substitute (SBS-train's ranking), marked `fallback`. */
+export const fixedPolicy = mode => ({ name: `always-${mode}`, role: 'baseline', fixed: mode, fit: ctx => (view, cell) => pickOrSubstitute([mode], view, cell, ctx) });
 /** SBS-train: the single best fixed mode on the fold's TRAIN jobs, per cell (the yardstick of Δ). */
-export const sbsTrain = () => ({ name: 'SBS-train', role: 'yardstick', fit(ctx) { const all = leafChooser(ctx, () => 'all', { complete: true }); return (view, cell) => { const r = all('all', cell, view.modes); return { mode: r.mode, pred: r.pred }; }; } });
+export const sbsTrain = () => ({ name: 'SBS-train', role: 'yardstick', fit(ctx) { const all = leafChooser(ctx, () => 'all', { complete: true }); return (view, cell) => { const r = all('all', cell, view.modes); return { mode: r.mode, pred: r.pred, ...(r.fallback ? { fallback: r.fallback } : {}) }; }; } });
 /** SBS-global: one fixed mode for every cell (best mean over the V x N slider grid at W = V). */
 export const sbsGlobalPolicy = () => ({
   name: 'SBS-global', role: 'baseline', fit(ctx) {
     const ms = ctx.modes.filter(m => ctx.train.every(it => it.modes.includes(m)));
     const rank = rankModes(ms.map(m => ({ mode: m, u: avg(SLIDER_CELLS.map(c => avg(ctx.train.map(it => it.u(c, m))))), usd: avg(SLIDER_CELLS.map(c => avg(ctx.train.map(it => it.usd(c, m))))) })));
-    return view => ({ mode: firstAvailable(rank, view.modes) });
+    return (view, cell) => pickOrSubstitute(rank, view, cell, ctx);
   },
 });
 /** L1 positive control: reads the evaluation labels. Never a router. */
 export const peekRouter = () => ({ name: 'peek', role: 'control', peek: true, fit: ctx => (view, cell) => ({ mode: ctx.peek(view, cell).top }) });
 /** SBS chosen on the evaluation jobs: an optimistic reference only. */
-export const sbsTest = () => ({ name: 'SBS-test', role: 'optimistic', peek: true, fit: ctx => (view, cell) => ({ mode: firstAvailable(ctx.peek(view, cell).sbsTest, view.modes) }) });
+export const sbsTest = () => ({ name: 'SBS-test', role: 'optimistic', peek: true, fit: ctx => (view, cell) => pickOrSubstitute(ctx.peek(view, cell).sbsTest, view, cell, ctx) });
 
 /** The default policy set; `--router <module>` may replace any of them by name (its `policies` export). */
 export function defaultPolicies(modes = Object.keys(MODES).filter(m => !MODES[m].ceiling)) {
@@ -339,12 +412,19 @@ export function defaultPolicies(modes = Object.keys(MODES).filter(m => !MODES[m]
 }
 
 // ------------------------------------------------------------------------------------------------------- deciding
-function asDecision(d, avail, who) {
+const predOf = p => (p && Number.isFinite(p.p) && Number.isFinite(p.usd) ? { p: p.p, usd: p.usd } : null);
+/**
+ * A policy's (or a recorded) decision, validated: its mode must be one the job can run. Routing dollars must be finite and
+ * >= 0; a recorded decision (requireRouting) must state them (a probe or judge call is never charged $0 by omission).
+ */
+function asDecision(d, avail, who, { requireRouting = false } = {}) {
   const x = typeof d === 'string' ? { mode: d } : d;
   if (!x || typeof x.mode !== 'string') throw new Error(`${who}: a decision needs a mode`);
   if (!avail.includes(x.mode)) throw new Error(`${who}: chose ${x.mode}, which this job cannot run (${avail.join(', ')})`);
+  if (requireRouting && x.routingUsd == null) throw new Error(`${who}: a recorded decision needs routingUsd (its probe or judge dollars; 0 only when it spent nothing)`);
   if (x.routingUsd != null && !(Number.isFinite(x.routingUsd) && x.routingUsd >= 0)) throw new Error(`${who}: bad routingUsd`);
-  return { mode: x.mode, routingUsd: x.routingUsd ?? 0, needsWorkflow: typeof x.needsWorkflow === 'boolean' ? x.needsWorkflow : null, pred: x.pred ?? null, ...(x.guard ? { guard: x.guard } : {}) };
+  return { mode: x.mode, routingUsd: x.routingUsd ?? 0, needsWorkflow: typeof x.needsWorkflow === 'boolean' ? x.needsWorkflow : null, pred: x.pred ?? null,
+    ...(x.guard ? { guard: x.guard } : {}), ...(x.fallback ? { fallback: x.fallback } : {}), ...(x.probe ? { probe: x.probe } : {}) };
 }
 
 /** Recorded decisions of one policy: job -> cell -> decision (an exact cell key wins over a null, every-cell, row). */
@@ -362,13 +442,19 @@ function recordedLookup(rows, name) {
 /**
  * Decide every evaluation job of every fold at every cell. Returns { decisions: Map(policy -> Map(job -> Map(cellKey ->
  * decision))), fitted: Map(policy -> [choose per fold]), missing: Map(policy -> [jobs without a recorded decision]) }.
+ * `labels` scores (peek controls read it); `fitOf(fold)` gives the labels and modes a fold is FITTED on (evaluate.mjs:
+ * TRAIN rows of the fold's training jobs only, the same build commitDecisions makes); `availOf(job, fitModes)` the modes a
+ * job may be routed to (evaluate.mjs: its declared menu). Defaults: fit on `labels`, route to the job's labelled modes.
  */
-export function decideFolds({ labels, meta, folds, policies, modes, cells, registry = MODES, recorded = [] }) {
+export function decideFolds({ labels, meta, folds, policies, modes, cells, registry = MODES, recorded = [], fitOf = null, availOf = null, requireRouting = false }) {
   const decisions = new Map(), fitted = new Map(), missing = new Map();
   const recNames = [...new Set(recorded.map(r => r.policy))];
   for (const p of policies) { decisions.set(p.name, new Map()); fitted.set(p.name, []); }
   for (const n of recNames) { decisions.set(n, new Map()); missing.set(n, []); }
   for (const fold of folds) {
+    const fit = fitOf ? fitOf(fold) : { labels, modes };
+    const avOf = j => (availOf ? availOf(j, fit.modes) : labels.modesOf(j).filter(m => fit.modes.includes(m)));
+    const scored = j => labels.modesOf(j);
     const byId = new Map(fold.eval.map(j => [opaque(j), j]));
     const evalPeek = (view, cell) => {
       const j = byId.get(view.id);
@@ -376,20 +462,20 @@ export function decideFolds({ labels, meta, folds, policies, modes, cells, regis
       const e = labels.at(j, cell);
       return { top: e.top, sbsTest: rankModes(modes.filter(m => fold.eval.every(x => labels.modesOf(x).includes(m))).map(m => ({ mode: m, u: avg(fold.eval.map(x => labels.u(x, cell, m))), usd: avg(fold.eval.map(x => labels.usd(x, cell, m))) }))) };
     };
-    const ctx = makeContext(labels, fold.train, meta, { modes, registry, evalPeek });
+    const ctx = makeContext(fit.labels, fold.train, meta, { modes: fit.modes, registry, evalPeek });
     for (const p of policies) {
       const choose = p.fit(p.peek ? ctx : { ...ctx, peek: null });
       fitted.get(p.name).push(choose);
       for (const j of fold.eval) {
-        const avail = labels.modesOf(j).filter(m => modes.includes(m)), view = publicView(j, meta[j], avail), sv = p.shortcut ? shortcutView(j, meta[j], avail) : undefined;
-        decisions.get(p.name).set(j, new Map(cells.map(c => [c.key, asDecision(choose(view, c, sv), avail, `${p.name}/${j}`)])));
+        const avail = avOf(j), view = publicView(j, meta[j], avail), sv = p.shortcut ? shortcutView(j, meta[j], avail) : undefined;
+        decisions.get(p.name).set(j, new Map(cells.map(c => [c.key, asDecision(asDecision(choose(view, c, sv), avail, `${p.name}/${j}`), scored(j), `${p.name}/${j} (scored)`)])));
       }
     }
     for (const n of recNames) {
       const L = recordedLookup(recorded, n);
       for (const j of fold.eval) {
-        const avail = labels.modesOf(j).filter(m => modes.includes(m)), m = new Map();
-        for (const c of cells) { const r = L.get(j, c); if (r) m.set(c.key, asDecision(r, avail, `${n}/${j}`)); }
+        const avail = avOf(j), m = new Map();
+        for (const c of cells) { const r = L.get(j, c); if (r) m.set(c.key, asDecision(asDecision(r, avail, `${n}/${j}`, { requireRouting }), scored(j), `${n}/${j} (scored)`)); }
         if (m.size === cells.length) decisions.get(n).set(j, m); else missing.get(n).push(j);
       }
     }
@@ -470,10 +556,10 @@ export function hullAt(hull, x) {
 
 /**
  * Slider calibration at N = 10, W = V: predicted against realised success (±0.10) and $ per task (±30%); realised success
- * and $ per task non-decreasing in V. A fall in realised success smaller than the program's noise floor (δ = 0.03,
- * FLOOR_POINTS) is not counted as a decrease (`monotoneTolP`; 0 restores the literal rule); dollars are strict.
+ * and $ per task non-decreasing in V (DESIGN §5, PREREG §8: the literal rule, monotoneTolP = 0; a tolerance for a small
+ * fall in realised success is a sensitivity only, never the reading, unless the preregistration records it). Dollars are strict.
  */
-export function sliderCalibration(labels, decP, jobs, { N = 10, wOverV = 1, Vs = V_GRID, tolP = 0.10, tolUsd = 0.30, monotoneTolP = DELTA } = {}) {
+export function sliderCalibration(labels, decP, jobs, { N = 10, wOverV = 1, Vs = V_GRID, tolP = 0.10, tolUsd = 0.30, monotoneTolP = 0 } = {}) {
   const positions = Vs.map(V => {
     const c = makeCell(V, N, wOverV), ds = jobs.map(j => [j, decP.get(j).get(c.key)]);
     const real = { p: avg(ds.map(([j, d]) => labels.stats(j, d.mode).s)), usd: avg(ds.map(([j, d]) => labels.usd(j, c, d.mode) + d.routingUsd / N)) };
@@ -485,20 +571,25 @@ export function sliderCalibration(labels, decP, jobs, { N = 10, wOverV = 1, Vs =
   const sorted = [...positions].sort((a, b) => a.V - b.V);
   const monotone = sorted.every((x, i) => !i || (x.real.p >= sorted[i - 1].real.p - monotoneTolP - 1e-9 && x.real.usd >= sorted[i - 1].real.usd - 1e-9));
   const misses = positions.filter(x => x.miss).length, predicted = positions.every(x => x.pred);
-  return { positions, misses, monotone, predicted, calibrated: predicted && misses <= 1 && monotone };
+  return { positions, misses, monotone, monotoneTolP, predicted, calibrated: predicted && misses <= 1 && monotone };
 }
 
-/** C7a at a cell: the need call against confident, non-fragile labels; balanced accuracy, precision, recall, coverage. */
+/**
+ * C7a at a cell: the need call against confident, non-fragile labels; balanced accuracy, precision, recall, coverage.
+ * The balanced-accuracy interval is PREREG §7's one joint exact interval (prereg-rules.mjs balancedAccuracyInterval:
+ * two-sided 95%, the exact unconditional test inverted), not the mean of two marginal Wilson bounds, which has no
+ * coverage guarantee. Recall and specificity keep their own Wilson intervals (descriptive).
+ */
 export function needDetection(labels, decP, jobs, cell, { fragile = [], registry = MODES, baseRates = [0.5, 0.8, 0.95] } = {}) {
   const call = d => (cell.N === 1 && typeof d.needsWorkflow === 'boolean' ? d.needsWorkflow : classOf(d.mode, registry) === 'workflow');
   let tp = 0, fn = 0, tn = 0, fp = 0;
   const used = jobs.filter(j => labels.at(j, cell).confident && !fragile.includes(j));
   for (const j of used) { const y = labels.at(j, cell).label === 'workflow', c = call(decP.get(j).get(cell.key)); if (y) { if (c) tp += 1; else fn += 1; } else if (c) fp += 1; else tn += 1; }
   const tpr = tp + fn ? wilson(tp, tp + fn) : null, tnr = tn + fp ? wilson(tn, tn + fp) : null;
-  const ba = tpr && tnr ? { point: (tpr.p + tnr.p) / 2, lo: (tpr.lo + tnr.lo) / 2, hi: (tpr.hi + tnr.hi) / 2 } : null;
+  const ba = balancedAccuracyInterval({ tp, fn, tn, fp });
   const fpr = tnr ? 1 - tnr.p : null;
   return {
-    cell: cell.key, used: used.length, tp, fn, tn, fp, balancedAccuracy: ba, recall: tpr, specificity: tnr, precision: tp + fp ? tp / (tp + fp) : null,
+    cell: cell.key, used: used.length, tp, fn, tn, fp, counts: { tp, fn, tn, fp }, balancedAccuracy: ba, recall: tpr, specificity: tnr, precision: tp + fp ? tp / (tp + fp) : null,
     precisionAtBaseRate: Object.fromEntries(baseRates.map(b => [b, tpr && fpr !== null && tpr.p * (1 - b) + fpr * b > 0 ? (tpr.p * (1 - b)) / (tpr.p * (1 - b) + fpr * b) : null])),
     coverage: coverage(labels, jobs, cell), fragileExcluded: jobs.filter(j => fragile.includes(j)).length,
   };
@@ -528,27 +619,61 @@ export function gateG1(labels, trainJobs, clusterOf, { cells = SLIDER_CELLS, alp
 }
 
 /**
- * The preregistered reading of one co-primary policy (DESIGN §5). headline and perV carry {mean, lo, hi} at the
- * policy's Holm level; vsTuned / vsJudge are paired comparisons (lo > 0 needed); slider is sliderCalibration.
+ * Holm over the co-primaries, step-down, one-sided (PREREG §7): the policy with the smaller p is tested at α/m, the next at
+ * α/(m − 1) only if every earlier step rejected, and so on. reject[i] iff p_(k) <= α/(m − k + 1) for every step up to its
+ * own (equivalently the Holm-adjusted p <= α; `<=` as the sign-flip bound uses it: lo > 0 iff p <= the level). level[i]
+ * is the level of the policy's own step; a policy whose step is never reached gets the level of the step that failed, so
+ * its test-inversion bound cannot exclude 0 either (its p is at least the failed one). Ties keep input order.
  */
-export function readingOf({ headline, perV, vsTuned = null, vsJudge = null, slider = null, withoutNear = null, g1 = null }) {
+export function coPrimaryHolm(ps, alpha = 0.05) {
+  const m = ps.length, order = ps.map((_, i) => i).sort((a, b) => ps[a] - ps[b] || a - b);
+  const reject = new Array(m).fill(false), level = new Array(m), adjusted = holm(ps, { alpha }).adjusted;
+  let failedAt = null;
+  order.forEach((i, k) => {
+    const lv = alpha / (m - k);
+    if (failedAt === null && ps[i] <= lv) { reject[i] = true; level[i] = lv; } else { if (failedAt === null) failedAt = lv; level[i] = failedAt; }
+  });
+  return { alpha, order, level, reject, adjusted };
+}
+
+/**
+ * The preregistered reading of one co-primary policy (DESIGN §5). headline and perV carry {mean, lo, hi} at the
+ * policy's Holm level; holmReject is coPrimaryHolm's decision for the policy (SUPPORTED and SUPERIOR need it: a lower
+ * bound above 0 at a level Holm never reached is not a rejection); vsTuned / vsJudge are paired comparisons (lo > 0
+ * needed); slider is sliderCalibration; vsNull is L2 (the real router must exceed the shuffled-label null's 95th
+ * percentile; undefined when L2 does not apply, e.g. a recorded policy or leak tests off).
+ */
+export function readingOf({ headline, perV, vsTuned = null, vsJudge = null, slider = null, withoutNear = null, g1 = null, holmReject = undefined, vsNull = undefined }) {
   const harmful = perV.filter(x => x.hi < 0).map(x => x.V);
   const unmet = [];
+  if (holmReject !== true) unmet.push(holmReject === false ? 'Holm over the two co-primaries does not reject this policy' : 'no Holm decision supplied');
   if (!(headline.lo > 0)) unmet.push('lower bound of Δ not > 0');
   if (!(headline.mean >= MIN_USEFUL)) unmet.push(`point Δ < ${MIN_USEFUL}`);
   if (!(vsTuned?.lo > 0)) unmet.push(vsTuned?.complete === false || !vsTuned ? 'no paired comparison with the tuned size rule' : 'does not beat the tuned size rule');
   if (!(vsJudge?.lo > 0)) unmet.push(vsJudge?.complete === false || !vsJudge ? 'no judge-H decisions' : 'does not beat judge-H');
   if (!slider?.calibrated) unmet.push(slider?.predicted === false ? 'slider uncalibrated: no predictions' : 'slider uncalibrated or not monotone');
   if (withoutNear && !(withoutNear.mean > 0)) unmet.push('sign of Δ does not hold with the near cluster dropped');
+  const nullBeaten = vsNull === undefined || vsNull?.realExceeds95 === true;
+  if (!nullBeaten) unmet.push(vsNull?.assessed === false ? 'L2 shuffled-label null not assessed' : 'does not beat the shuffled-label null (L2: real Δ not above its 95th percentile)');
   if (harmful.length) unmet.push(`harmful at V = ${harmful.join(', ')}`);
   let reading;
   if (g1 === 'REFUTED-PREMISE') reading = 'REFUTED';
   else if (!unmet.length) reading = 'SUPPORTED';
-  else if (headline.lo > 0 && headline.mean < MIN_USEFUL) reading = 'SUPERIOR, BELOW USEFUL EFFECT';
+  else if (holmReject === true && nullBeaten && headline.lo > 0 && headline.mean < MIN_USEFUL) reading = 'SUPERIOR, BELOW USEFUL EFFECT';
   else if (harmful.length) reading = 'HARMFUL';
   else if (perV.every(x => x.hi < MIN_USEFUL)) reading = 'REFUTED';
   else reading = 'INCONCLUSIVE';
   return { reading, usefulSizeShown: reading === 'SUPPORTED' && headline.lo >= MIN_USEFUL, disabledPositions: harmful, unmet: reading === 'SUPPORTED' ? [] : unmet };
+}
+
+/**
+ * C7a's reading (PREREG §8; prereg-rules.mjs c7aReading): INCONCLUSIVE when H0 is not fitted (thetaFitStatus on the
+ * confident N = 1 TRAIN labels), a class is empty or the counts are not powered; else SUPPORTED-DIAGNOSTIC, REFUTED (F12)
+ * or INCONCLUSIVE on the exact joint interval, the same without the near cluster.
+ */
+export function readC7a({ h0, tunedPoint = null, coverage = null, withoutNear = undefined, fit = null }) {
+  if (fit && !fit.fit) return { reading: 'INCONCLUSIVE', why: fit.why, f12: false, interval: null, power: null, notFitted: true };
+  return c7aReading({ h0, tunedPoint, coverage, withoutNear });
 }
 
 // ------------------------------------------------------------------------------------------------------ leak tests
@@ -571,7 +696,9 @@ export function seedChecks(table, meta, { ledger = null, ranges = SEED_RANGES } 
       if (!range || s < range[0] || s > range[1]) problems.push(`${job}/${t}: seed ${s} outside the ${split} range ${range?.join('-') ?? '(none)'}`);
       else for (const why of seedRefusals(L, { bed: m.family ?? '*', split: ledgerSplit, seed: s, purpose })) problems.push(`${job}/${t}: seed ${s}: ${why}`);
     }
-    const ex = m.exampleSeeds ?? [ranges.example[0], ranges.example[0] + 1, ranges.example[0] + 2];
+    // Unrecorded example seeds are a problem, never assumed: disjointness cannot be checked without them.
+    if (!Array.isArray(m.exampleSeeds) || !m.exampleSeeds.length) problems.push(`${job}: example seeds not recorded (jobs.json exampleSeeds): example/evaluation disjointness cannot be checked`);
+    const ex = Array.isArray(m.exampleSeeds) ? m.exampleSeeds : [];
     for (const s of ex) { if (s < ranges.example[0] || s > ranges.example[1]) problems.push(`${job}: example seed ${s} outside ${ranges.example.join('-')}`); if (seeds.has(s)) problems.push(`${job}: example seed ${s} is also an evaluation seed`); }
     for (const h of m.exampleHashes ?? []) if (hashes.has(h)) problems.push(`${job}: an example task hash equals an evaluation task hash`);
   }
@@ -633,23 +760,45 @@ export function nearestClusterTest(knnChoose, views, { threshold = 0.8 } = {}) {
   return { ok: true, assessed: true, k: knnChoose.k, singleClusterShare: single, demote: single >= threshold, per };
 }
 
-/** L6: the committed held-out decisions match the decisions recomputed now, and the envelope's hash is intact. */
-export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null } = {}) {
+/**
+ * L6: the sealed envelope. Checks (each failure is a problem): the payload matches its sha256; the payload's frozen inputs
+ * equal the ones recomputed now (router file shas, the TRAIN row and build digests, the meter: price tables, engine stamps
+ * and per-arm hashes of the TRAIN rows, label set, reps, seed, cells); every recomputed decision is sealed and unchanged
+ * (mode, routingUsd, needsWorkflow); every decision actually SCORED (`scored`) equals its sealed one; every sealed target
+ * of the evaluated split is either scored or listed as dropped (`accounted`); and the envelope predates the first
+ * held-out row.
+ */
+export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null, scored = null, accounted = null, split = null, meta = null } = {}) {
   if (!committed) return { ok: false, problems: ['no committed decisions (evaluate.mjs --commit-decisions before the held-out matrix is joined)'] };
   const problems = [];
-  if (sha256(canonical(committed.payload)) !== committed.sha256) problems.push('committed payload does not match its sha256');
-  const want = new Map(recomputed.payload.decisions.map(d => [`${d.policy}|${d.job}|${d.cell}`, d.mode]));
+  const P = committed.payload ?? {}, Q = recomputed.payload;
+  if (sha256(canonical(P)) !== committed.sha256) problems.push('committed payload does not match its sha256');
+  for (const f of Object.keys({ ...(P.routerShas ?? {}), ...(Q.routerShas ?? {}) }).sort()) if ((P.routerShas ?? {})[f] !== (Q.routerShas ?? {})[f]) problems.push(`frozen file ${f} changed after commit`);
+  for (const k of ['trainRows', 'trainBuilds', 'labelSet', 'reps', 'seed']) if (canonical(P[k] ?? null) !== canonical(Q[k] ?? null)) problems.push(`${k} changed after commit`);
+  if (canonical(P.cells ?? null) !== canonical(Q.cells ?? null)) problems.push('cells changed after commit');
+  if (canonical(P.meter ?? null) !== canonical(Q.meter ?? null)) problems.push('meter (price tables, engine stamps or per-arm hashes of the TRAIN rows) changed after commit');
+  const fields = d => ({ mode: d.mode, routingUsd: d.routingUsd ?? 0, needsWorkflow: typeof d.needsWorkflow === 'boolean' ? d.needsWorkflow : null });
+  const same = (a, b) => a.mode === b.mode && Math.abs(a.routingUsd - b.routingUsd) <= 1e-12 && a.needsWorkflow === b.needsWorkflow;
+  const show = d => `${d.mode} $${d.routingUsd} needsWorkflow=${d.needsWorkflow}`;
+  const sealed = new Map((P.decisions ?? []).map(d => [`${d.policy}|${d.job}|${d.cell}`, fields(d)]));
+  const lookup = (policy, job, cell) => sealed.get(`${policy}|${job}|${cell}`) ?? sealed.get(`${policy}|${job}|*`);
   let compared = 0;
-  for (const d of committed.payload.decisions) {
-    const k = `${d.policy}|${d.job}|${d.cell}`;
-    if (!want.has(k)) continue;
+  for (const d of Q.decisions) {
+    const k = `${d.policy}|${d.job}|${d.cell}`, a = sealed.get(k);
+    if (!a) { problems.push(`decision not in the envelope: ${k}`); continue; }
     compared += 1;
-    if (want.get(k) !== d.mode) problems.push(`decision changed after commit: ${k} ${d.mode} -> ${want.get(k)}`);
+    if (!same(a, fields(d))) problems.push(`decision changed after commit: ${k} ${show(a)} -> ${show(fields(d))}`);
   }
-  const sealed = new Set(committed.payload.decisions.map(d => `${d.policy}|${d.job}|${d.cell}`));
-  for (const k of want.keys()) if (!sealed.has(k)) problems.push(`decision not in the envelope: ${k}`);
+  let scoredCompared = 0;
+  for (const d of scored ?? []) {
+    const a = lookup(d.policy, d.job, d.cell);
+    if (!a) { problems.push(`scored decision not in the envelope: ${d.policy}|${d.job}|${d.cell}`); continue; }
+    scoredCompared += 1;
+    if (!same(a, fields(d))) problems.push(`scored decision differs from the envelope: ${d.policy}|${d.job}|${d.cell} ${show(a)} -> ${show(fields(d))}`);
+  }
+  if (accounted && split) for (const j of P.targets ?? []) if (meta?.[j]?.split === split && !isForced(meta[j]) && !accounted.has(j)) problems.push(`sealed target ${j} was neither scored nor listed as dropped`);
   if (firstHeldoutRowAt && committed.createdAt && !(committed.createdAt < firstHeldoutRowAt)) problems.push(`envelope created ${committed.createdAt}, not before the first held-out row ${firstHeldoutRowAt}`);
-  return { ok: !problems.length, compared, problems: problems.slice(0, 50), more: Math.max(0, problems.length - 50) };
+  return { ok: !problems.length, compared, scoredCompared, problems: problems.slice(0, 50), more: Math.max(0, problems.length - 50) };
 }
 
 // ---------------------------------------------------------------------------------------------------- metamorphic

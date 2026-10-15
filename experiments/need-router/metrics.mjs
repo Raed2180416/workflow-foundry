@@ -662,8 +662,8 @@ export function crossFitJob(table, job, modes, cells, { scheme = 'primary' } = {
  * (`workflow` / `no-workflow` when every member of A is in one class, else `either`), the three-way kind of A, VBS and
  * cross-fitted VBS*, and the confidence P(best class) from a seeded hierarchical bootstrap (task -> replicate or
  * lineage; the cluster level enters in clusterBootstrapDelta). Confident = a binary label whose class wins >= 0.8 of the
- * draws, in a job whose modes are each at most 30% imputed dollars. reps = 0 skips the bootstrap (nothing confident).
- * `modes` restricts the label set (labelSetModes).
+ * draws, at a (job, cell) that is not unlabelled (the imputed-dollar and re-pricing rule, per cell: see pointEntry).
+ * reps = 0 skips the bootstrap (nothing confident). `modes` restricts the label set (labelSetModes).
  */
 export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta = DELTA, confident = CONFIDENT, imputedLimit = IMPUTED_LIMIT, modes = null, crossFit = 'primary' } = {}) {
   const per = new Map(), reg = table.registry;
@@ -671,7 +671,8 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
     const ms = table.modesOf(job).filter(m => !modes || modes.includes(m));
     if (!ms.length) throw new Error(`job ${job} has no mode in the label set`);
     const st = new Map(ms.map(m => [m, cellStats(table, job, m)]));
-    const over = ms.filter(m => st.get(m).imputedShare > imputedLimit);
+    const over = ms.filter(m => st.get(m).imputedShare > imputedLimit);       // job level, reported; the rule itself is per cell
+    const notRep = ms.filter(m => (table.cell(job, m).notRepriced ?? 0) > 0);
     const vx = crossFitJob(table, job, ms, cells, { scheme: crossFit });
     const counts = cells.map(() => ({ workflow: 0, 'no-workflow': 0 }));
     if (reps > 0) {
@@ -684,22 +685,34 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
     const byCell = new Map();
     cells.forEach((c, i) => {
       const pBest = reps > 0 ? { workflow: counts[i].workflow / reps, 'no-workflow': counts[i]['no-workflow'] / reps } : null;
-      const e = pointEntry(ms, st, c, over);
-      byCell.set(c.key, { ...e, pBest, confident: !over.length && e.label !== 'either' && pBest !== null && pBest[e.label] >= confident,
+      const e = pointEntry(ms, st, c, notRep);
+      byCell.set(c.key, { ...e, pBest, confident: !e.unlabelled && e.label !== 'either' && pBest !== null && pBest[e.label] >= confident,
         vbsStar: vx.get(c.key).vbsStar, folds: vx.get(c.key).folds });
     });
-    per.set(job, { modes: ms, stats: st, over, cells: byCell, offGrid: new Map() });
+    per.set(job, { modes: ms, stats: st, over, notRepriced: notRep, cells: byCell, offGrid: new Map() });
   }
   // A cell's point entry: utilities, acceptable set, NEED label, VBS. Off the label grid it carries no confidence and no VBS*.
-  function pointEntry(ms, st, c, over) {
+  // Unlabelled (DESIGN §2, one cost meter), per (job, cell):
+  //  - a mode whose per-task dollars at this cell (c + B/N) are more than `imputedLimit` imputed, and whose utility with
+  //    those imputed dollars removed (imputed dollars are bounds, so the true cost lies between) could reach the acceptable
+  //    set: the label could rest on imputed dollars. A mode over the limit that stays out of reach either way cannot
+  //    change the label and does not unlabel it;
+  //  - any mode with a row that label-run could not re-price (`repriced: false`): its dollars are off the one meter, in
+  //    either direction, so every cell of the job is unlabelled.
+  function pointEntry(ms, st, c, notRep) {
     const entries = ms.map(m => ({ mode: m, u: needUtility(st.get(m), c), usd: perTaskUsd(st.get(m), c) }));
     const top = bestOf(entries);
     const acceptable = rankModes(entries.filter(e => e.u >= top.u - delta - 1e-12));
     const classes = new Set(acceptable.map(m => classOf(m, reg))), kinds = new Set(acceptable.map(m => modeInfo(m, reg).kind));
     const label = classes.size === 1 ? [...classes][0] : 'either';
+    const imputedOver = ms.filter(m => {
+      const x = st.get(m);
+      return imputedShareAt(x, c) > imputedLimit && needUtility(x, c) + ((x.cImp ?? 0) + (x.BImp ?? 0) / c.N) / c.V >= top.u - delta - 1e-12;
+    });
+    const why = [...(imputedOver.length ? [`imputed dollars over ${imputedLimit} in ${imputedOver.join(', ')}`] : []), ...(notRep.length ? [`rows not re-priced in ${notRep.join(', ')}`] : [])];
     return { cell: c, u: new Map(entries.map(e => [e.mode, e.u])), usd: new Map(entries.map(e => [e.mode, e.usd])), top: top.mode, acceptable, label,
       kind: kinds.size === 1 ? [...kinds][0] : 'mixed', pBest: null, confident: false, vbs: top.u, vbsMode: top.mode, vbsStar: null, folds: null,
-      unlabelled: over.length ? `imputed dollars over ${imputedLimit} in ${over.join(', ')}` : null };
+      unlabelled: why.length ? why.join('; ') : null, imputedOver };
   }
   const pointOf = (job, cell, mode, k, f) => {
     const p = per.get(job); if (!p) throw new Error(`no labels for job ${job}`);
@@ -711,7 +724,7 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
     const p = per.get(job); if (!p) throw new Error(`no labels for job ${job}`);
     const k = cellKey(cell), e = p.cells.get(k);
     if (e) return e;
-    if (!p.offGrid.has(k)) p.offGrid.set(k, { ...pointEntry(p.modes, p.stats, cell.key ? cell : makeCell(cell.V, cell.N, cell.wOverV ?? 1), p.over), offGrid: true });
+    if (!p.offGrid.has(k)) p.offGrid.set(k, { ...pointEntry(p.modes, p.stats, cell.key ? cell : makeCell(cell.V, cell.N, cell.wOverV ?? 1), p.notRepriced), offGrid: true });
     return p.offGrid.get(k);
   };
   return {
@@ -755,23 +768,31 @@ export function coverage(labels, jobs, cell) {
  * Fragility (DESIGN §2): labels recomputed with each oracle tolerance halved and doubled. A row's pass at a factor is
  * `passAt[factor]` when label-run recorded it (the bed oracle at that tolerance), else, for a job whose tolerance spec
  * is { scoreThreshold } (pass = score >= threshold), score >= 1 − (1 − threshold)·factor. Jobs whose NEED label flips
- * at any factor and cell are fragile: excluded from need accuracy, kept in utility. $0.
+ * at any factor and cell are fragile: excluded from need accuracy, kept in utility. A delivered row of a job with a tolerance
+ * spec but neither passAt nor a score keeps its nominal verdict and is reported (`unscored`, `untested` jobs). $0.
  */
 export function fragility(rows, builds, { tolerance = () => null, cells = [HEADLINE], factors = [0.5, 2], modes = null, makeTable = needTable, tableOpts = {} } = {}) {
+  // A delivered row of a job with a tolerance spec, with neither passAt[factor] nor a numeric score, cannot be recomputed:
+  // it keeps its nominal verdict and is listed (`unscored`), so a job that was never really tested is never passed silently.
+  const unscored = [];
   const passAt = (r, f) => {
     if (r.passAt && typeof r.passAt[String(f)] === 'boolean') return r.passAt[String(f)];
     const spec = tolerance(r.job);
     if (spec?.scoreThreshold != null && typeof r.score === 'number') return r.delivered === true && r.score >= 1 - (1 - spec.scoreThreshold) * f;
+    if (spec?.scoreThreshold != null && r.delivered === true) unscored.push({ job: r.job, mode: r.mode ?? r.arm, task: r.task ?? r.taskKey, rep: r.rep ?? r.replicate ?? r.lineage ?? r.trial ?? 0, factor: f });
     return r.pass;
   };
   const lab = rs => needLabels(makeTable(rs, builds, tableOpts), { cells, reps: 0, modes });
   const nominal = lab(rows);
   const variants = factors.map(f => [f, lab(rows.map(r => ({ ...r, pass: passAt(r, f) })))]);
+  const unscoredBy = new Map();
+  for (const u of unscored) if (u.factor === factors[0]) unscoredBy.set(u.job, (unscoredBy.get(u.job) ?? 0) + 1);
   const jobs = nominal.jobs.map(job => {
     const byCell = cells.map(c => ({ cell: c.key, nominal: nominal.at(job, c).label, at: Object.fromEntries(variants.map(([f, L]) => [f, L.at(job, c).label])) }));
-    return { job, cells: byCell, fragile: byCell.some(x => Object.values(x.at).some(l => l !== x.nominal)) };
+    return { job, cells: byCell, fragile: byCell.some(x => Object.values(x.at).some(l => l !== x.nominal)), unscored: unscoredBy.get(job) ?? 0 };
   });
-  return { factors, jobs, fragile: jobs.filter(j => j.fragile).map(j => j.job) };
+  return { factors, jobs, fragile: jobs.filter(j => j.fragile).map(j => j.job), untested: jobs.filter(j => j.unscored > 0).map(j => j.job),
+    unscored: unscored.filter(u => u.factor === factors[0]).map(({ factor, ...u }) => u) };
 }
 
 /**

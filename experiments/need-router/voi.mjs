@@ -4,11 +4,14 @@
 // expected improvement of the decision exceeds what the probe costs.
 //
 // Model. Mode m has an unknown per-task success rate p_m ~ Beta(a_m, b_m) (from the predictor's evidence, e.g. kNN counts
-// plus a Beta(1,1) prior), a per-task cost c_m and a one-off cost F_m (build/compile). Over a horizon of H tasks at value V
-// per verified success: U_m = H * (V * p_m - c_m) - F_m, so E[U_m] uses the posterior mean of p_m.
+// plus a Beta(1,1) prior), a per-task cost c_m, an optional per-task silent-miss charge wq_m = W * q_m in dollars (the
+// expected cost of delivered wrong answers; default 0) and a one-off cost F_m (build/compile). Over a horizon of H tasks
+// at value V per verified success: U_m = H * (V * p_m - c_m - wq_m) - F_m, so E[U_m] uses the posterior mean of p_m.
 // A probe (j, k) runs k tasks of mode j and observes s successes ~ BetaBinomial(k, a_j, b_j). It costs k * (c_j + cVerify)
-// plus F_j once (a built artifact is kept if j is then chosen). If the probe's tasks are real tasks of the family
-// (`deliverable`), their successes earn V each and the decision covers the remaining H - k tasks.
+// plus F_j once (a built artifact is kept if j is then chosen): dollars only, because a probe that is not delivered
+// cannot deliver a wrong answer (review 2026-10-15: folding W * q into c priced every example probe k * W * q too high).
+// If the probe's tasks are real tasks of the family (`deliverable`), each earns V * p_j - wq_j in expectation and the
+// decision covers the remaining H - k tasks.
 // EVSI(j, k) = E_s[ max_m E[U_m | s] ] - max_m E[U_m]; the net value subtracts the probe cost (and adds delivered value).
 // Exact enumeration over s (k is small), so tests can check it against brute-force simulation.
 
@@ -33,9 +36,9 @@ export function betaBinomial(k, a, b) {
   return out;
 }
 
-/** Expected utility of each mode over `H` tasks given Beta parameters. modes: [{ id, a, b, c, F }]. */
+/** Expected utility of each mode over `H` tasks given Beta parameters. modes: [{ id, a, b, c, F, wq? }]. */
 export function expectedUtilities(modes, { V, H }) {
-  return new Map(modes.map(m => [m.id, H * (V * (m.a / (m.a + m.b)) - m.c) - m.F]));
+  return new Map(modes.map(m => [m.id, H * (V * (m.a / (m.a + m.b)) - m.c - (m.wq ?? 0)) - m.F]));
 }
 
 const best = U => [...U].reduce((x, y) => (y[1] > x[1] ? y : x));
@@ -59,8 +62,8 @@ export function probeValue(modes, j, k, { V, H, cVerify = 0, deliverable = false
     eMax += pmf[s] * u;
     after.push({ s, prob: pmf[s], choose });
   }
-  const cost = k * (mj.c + cVerify) + mj.F;
-  const delivered = deliverable ? k * V * (mj.a / (mj.a + mj.b)) : 0;
+  const cost = k * (mj.c + cVerify) + mj.F;                                   // dollars; no silent-miss charge (nothing delivered)
+  const delivered = deliverable ? k * (V * (mj.a / (mj.a + mj.b)) - (mj.wq ?? 0)) : 0;
   // Without the probe: max_m E[U_m] over H. With it: delivered value of the probe tasks + E[max over the rest] - cost.
   // (When j is chosen afterwards its F was paid by the probe, which is why post-probe utilities use F_j = 0.)
   const net = delivered + eMax - cost - prior[1];
