@@ -36,6 +36,7 @@ export function createModelPort({ journalFile, mode = 'live', salt = null, concu
   // timeoutMs: the per-call wall limit (the provider's default, 300 s, when omitted; M1-R re-runs timeouts at 600 s).
   if (policy.providers['claude-cli']) providers['claude-cli'] = new ClaudeCliProvider({ policy, maxBudgetUsd: maxBudgetUsdPerCall, ...(timeoutMs ? { timeoutMs } : {}) });
   if (policy.providers['llama-server']) providers['llama-server'] = new LlamaServerProvider({ policy });
-  const port = new ModelPort({ policy, providers, journal, mode, salt, concurrency });
+  // The port enforces its own deadline (300 s default) and passes it to the provider, so the wall limit is set here too.
+  const port = new ModelPort({ policy, providers, journal, mode, salt, concurrency, ...(timeoutMs ? { timeoutMs } : {}) });
   return { port, policy, policyHash: hash, ownerPolicyHash: owner.hash, journal, db };
 }
