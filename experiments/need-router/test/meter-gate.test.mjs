@@ -48,9 +48,10 @@ test('meterGateDecision: refuses an agent stage while blocked, allows without an
   assert.equal(G.meterGateDecision({ gate: BLOCK, arms: [call] }).allow, true, 'a calls-only stage (M1) does not need the agent meter');
   assert.equal(G.meterGateDecision({ gate: CLEAR, arms: [agent] }).allow, true);
   assert.equal(G.meterGateDecision({ gate: null, arms: [agent] }).allow, true, 'no gate on file: reported, and the per-session check still applies');
-  const good = { schema: G.VERIFICATION_SCHEMA, sessions: [{ recorded: 990, final: 1000 }, { recorded: 5000, final: 5100 }] };
+  const good = { schema: G.VERIFICATION_SCHEMA, sessions: [{ method: 'per-message', recorded: 990, final: 1000 }, { method: 'per-message', recorded: 5000, final: 5100 }] };
   assert.equal(G.meterGateDecision({ gate: BLOCK, verification: good, arms: [agent] }).allow, true);
-  for (const bad of [null, { ...good, passed: true, sessions: [good.sessions[0]] }, { ...good, passed: true, sessions: [...good.sessions, { recorded: 100, final: 1000 }] }, { schema: 'x', sessions: good.sessions }]) {
+  for (const bad of [null, { ...good, passed: true, sessions: [good.sessions[0]] }, { ...good, passed: true, sessions: [...good.sessions, { method: 'per-message', recorded: 100, final: 1000 }] },
+    { ...good, passed: true, sessions: [...good.sessions, { method: 'unverified', recorded: 100, final: 100 }] }, { schema: 'x', sessions: good.sessions }]) {
     assert.equal(G.meterGateDecision({ gate: BLOCK, verification: bad, arms: [agent] }).allow, false, JSON.stringify(bad)?.slice(0, 60));
   }
 });
@@ -91,6 +92,15 @@ test('priceSession with the meter: an under-priced session is booked at the repo
   // A re-price already above the reported figure imputes nothing (the cap meter takes the larger anyway).
   const hi = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: msgs, reportedUsd: 0.01, meter: { tolerance: 0.05 } });
   assert.equal(hi.imputed, 0); assert.equal(hi.meterUnverified, true);
+  // The lines are snapshots but the final usage is complete and the corrected price is the CLI's own figure within the band: accepted as measured, flagged.
+  const fixed = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: msgs, reportedUsd: 0.60, finalUsage: { output_tokens: 26553 }, meter: { tolerance: 0.05 } });
+  assert.equal(fixed.outputFromFinal, true); assert.equal(fixed.meterUnverified, undefined); assert.equal(fixed.imputed, 0);
+  approx(fixed.measured, plain.measured + (26553 - 65) * 20 / 1e6, 1e-9); assert.ok(Math.abs(fixed.measured - 0.60) / 0.60 <= G.PRICE_BAND);
+  assert.equal(fixed.tokens.outputTokens, 26553, 'the row carries the complete output count');
+  assert.equal(fixed.meterCheck.ok, false); assert.ok(fixed.meterCheck.relErr < 0.05);
+  // ... and not accepted when the reported figure does not corroborate it (here 0.80 against a corrected 0.59): booked at the reported figure instead.
+  const unc = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: msgs, reportedUsd: 0.80, finalUsage: { output_tokens: 26553 }, meter: { tolerance: 0.05 } });
+  assert.equal(unc.outputFromFinal, undefined); assert.equal(unc.meterUnverified, true); approx(unc.measured + unc.imputed, 0.80, 1e-9);
   // A killed session keeps its bound: the gap rule never lowers an existing imputation.
   const killed = LR.priceSession(P, 'claude-opus-5-5', { messageUsage: msgs, costUnknown: true, boundUsd: 4, reportedUsd: 0, meter: { tolerance: 0.05 } });
   approx(killed.measured + killed.imputed, 4, 1e-9);
@@ -103,7 +113,7 @@ test('the 30% imputed rule sees the gap: a guarded agent mode is unlabelled wher
     for (let t = 0; t < 6; t++) {
       for (const mode of ['agent-H', 'agent-O']) {
         const o = mode === 'agent-O';
-        const c = LR.priceSession(P, o ? 'claude-opus-5-5' : 'claude-haiku-5-5', { messageUsage: [[10, o ? 40 : 300, 30000, 0, null]], reportedUsd: o ? 0.60 : 0.02, finalUsage: { output_tokens: o ? 26000 : 310 }, meter: guarded ? { tolerance: 0.05 } : null });
+        const c = LR.priceSession(P, o ? 'claude-opus-5-5' : 'claude-haiku-5-5', { messageUsage: [[10, o ? 40 : 300, 30000, 0, null]], reportedUsd: o ? 0.90 : 0.02, finalUsage: { output_tokens: o ? 26000 : 310 }, meter: guarded ? { tolerance: 0.05 } : null });
         rows.push({ job: 'j', mode, task: `t${t}`, rep: 0, pass: true, delivered: true, schemaValid: true, seed: 700 + t, usdRepriced: c.measured, usdImputed: c.imputed, repriced: true });
       }
     }
@@ -113,7 +123,7 @@ test('the 30% imputed rule sees the gap: a guarded agent mode is unlabelled wher
   assert.equal(raw.unlabelled, null, 'unguarded, the under-priced re-price is booked as measured and the label is trusted');
   assert.ok(raw.u.get('agent-O') > 0.95, 'the unguarded Opus agent looks as cheap as the Haiku agent');
   assert.match(guarded.unlabelled, /imputed dollars over 0\.3 in agent-O/, 'guarded, the gap is imputed and the cell is left unlabelled');
-  assert.ok(guarded.u.get('agent-O') < 0.5, 'and its utility charges the reported $0.60 a task');
+  assert.ok(guarded.u.get('agent-O') < 0.2, 'and its utility charges the reported $0.90 a task');
 });
 
 test('matrixRow flags a session the meter check could not verify and keeps its total at the reported figure', () => {
@@ -138,29 +148,64 @@ test('paidRunChecks refuses a paid stage with an agent arm while the gate blocks
   assert.equal(blocked.length, 1); assert.match(blocked[0], /block-until-verified/); assert.match(blocked[0], /meter-gate\.mjs --verify/);
   assert.deepEqual(run(['direct-H'], { meterGate: () => BLOCK, meterVerification: () => null }), [], 'a stage of single calls does not need the agent meter');
   assert.deepEqual(run(['agent-O'], { meterGate: () => CLEAR, meterVerification: () => null }), []);
-  const good = { schema: G.VERIFICATION_SCHEMA, sessions: [{ recorded: 99, final: 100 }, { recorded: 200, final: 200 }] };
+  const good = { schema: G.VERIFICATION_SCHEMA, sessions: [{ method: 'per-message', recorded: 99, final: 100 }, { method: 'final-output', final: 5000, reportedUsd: 1, pricedUsd: 1.05 }] };
   assert.deepEqual(run(['construct-H'], { meterGate: () => BLOCK, meterVerification: () => good }), []);
   assert.equal(run(['construct-H', 'agent-H+proc', 'build-O'], { meterGate: () => BLOCK, meterVerification: () => null }).length, 1);
 });
 
-test('transcriptUsage and verifyTranscripts read the last usage per message id and the result event; the CLI record round-trips', () => {
+test('transcriptUsage and verifyTranscripts: lines that match the final usage verify per-message, snapshot lines verify only when the final-usage re-price is the CLI figure, nothing else does', () => {
   const line = o => JSON.stringify(o);
-  const transcript = (outs, final) => [
+  const transcript = (msgs, final, { cost = 0.5, model = 'claude-opus-5-5' } = {}) => [
     line({ type: 'system', subtype: 'init' }),
-    ...outs.flatMap((o, i) => [line({ type: 'assistant', message: { id: `m${i}`, usage: { output_tokens: 3 } } }), line({ type: 'assistant', message: { id: `m${i}`, usage: { output_tokens: o } } })]),
-    line({ type: 'result', total_cost_usd: 0.5, usage: { output_tokens: final } }),
+    ...msgs.flatMap(([out, cr], i) => [line({ type: 'assistant', message: { id: `m${i}`, model, usage: { input_tokens: 5, output_tokens: 3, cache_read_input_tokens: cr } } }),
+      line({ type: 'assistant', message: { id: `m${i}`, model, usage: { input_tokens: 5, output_tokens: out, cache_read_input_tokens: cr } } })]),
+    ...(final === null ? [] : [line({ type: 'result', total_cost_usd: cost, usage: { output_tokens: final } })]),
   ].join('\n');
-  const u = G.transcriptUsage(transcript([100, 200], 300));
-  assert.deepEqual([u.messages, u.recorded, u.final, u.hasResult], [2, 300, 300, true], 'a message repeated per content block counts once, at its last usage');
-  assert.equal(G.transcriptUsage(transcript([10], 300)).hasResult, true);
+  const u = G.transcriptUsage(transcript([[100, 1000], [200, 2000]], 300));
+  assert.deepEqual([u.messages, u.recorded, u.final, u.hasResult, u.model, u.reportedUsd], [2, 300, 300, true, 'claude-opus-5-5', 0.5], 'a message repeated per content block counts once, at its last usage');
+  assert.deepEqual(u.messageUsage, [[5, 100, 1000, 0, 'claude-opus-5-5'], [5, 200, 2000, 0, 'claude-opus-5-5']]);
   const tmp = mkdtempSync(path.join(os.tmpdir(), 'meter-'));
-  const files = [transcript([100, 200], 300), transcript([50, 50], 100), transcript([10, 10], 5000)].map((t, i) => { const f = path.join(tmp, `t${i}.jsonl`); writeFileSync(f, t); return f; });
-  const rec = G.verifyTranscripts(files.slice(0, 2));
-  assert.equal(rec.passed, true); assert.equal(rec.schema, G.VERIFICATION_SCHEMA); assert.ok(rec.sessions.every(s => s.ok && /^[0-9a-f]{16}$/.test(s.sha256)));
-  assert.equal(G.verificationPasses(rec), true);
-  const snap = G.verifyTranscripts([files[0], files[2]]);
-  assert.equal(snap.passed, false, 'one snapshot-style transcript fails the record');
-  assert.equal(G.verifyTranscripts([files[0]]).passed, false, 'one transcript is not enough');
-  const noResult = path.join(tmp, 'killed.jsonl'); writeFileSync(noResult, line({ type: 'assistant', message: { id: 'm', usage: { output_tokens: 9 } } }));
-  assert.equal(G.verifyTranscripts([files[0], noResult]).passed, false, 'a killed session has no final usage to verify against');
+  const write = (name, text) => { const f = path.join(tmp, name); writeFileSync(f, text); return f; };
+  const opusUsd = (inp, out, cr) => (inp * 4 + out * 20 + cr * 0.2) / 1e6;
+  // exact lines: cost = priced lines; snapshot lines: small recorded output, large final, reported = the price of the full output
+  const exact = write('exact.jsonl', transcript([[10000, 1000], [16000, 2000]], 26000, { cost: opusUsd(10, 26000, 3000) }));
+  const exact2 = write('exact2.jsonl', transcript([[500, 100], [500, 200]], 1000, { cost: opusUsd(10, 1000, 300) }));
+  const snapA = write('snapA.jsonl', transcript([[20, 50000], [30, 60000]], 26000, { cost: opusUsd(10, 26000, 110000) }));
+  const snapB = write('snapB.jsonl', transcript([[10, 40000], [10, 40000]], 9000, { cost: opusUsd(10, 9000, 80000) }));
+  const wrong = write('wrong.jsonl', transcript([[20, 50000], [30, 60000]], 26000, { cost: 5 }));    // the CLI says $5: the corrected price does not corroborate it
+  const killed = write('killed.jsonl', transcript([[9, 100]], null));
+  const verify = (...fs) => G.verifyTranscripts(fs, { priceSession: LR.priceSession, table: P });
+  const rec = verify(exact, exact2);
+  assert.deepEqual(rec.sessions.map(s => s.method), ['per-message', 'per-message']); assert.equal(rec.passed, true); assert.equal(rec.schema, G.VERIFICATION_SCHEMA);
+  assert.ok(rec.sessions.every(s => s.ok && /^[0-9a-f]{16}$/.test(s.sha256) && s.relGap <= 0.05));
+  const snaps = verify(snapA, snapB);
+  assert.deepEqual(snaps.sessions.map(s => s.method), ['final-output', 'final-output']); assert.equal(snaps.passed, true, 'snapshot lines verify through the final-usage re-price when it is the CLI figure');
+  assert.ok(snaps.sessions.every(s => Math.abs(s.pricedUsd - s.reportedUsd) / s.reportedUsd <= G.PRICE_BAND));
+  assert.equal(G.verificationPasses(snaps), true);
+  const mixed = verify(exact, snapA); assert.equal(mixed.passed, true);
+  const bad = verify(exact, wrong);
+  assert.deepEqual(bad.sessions.map(s => s.method), ['per-message', 'unverified']); assert.equal(bad.passed, false, 'a re-price the reported cost does not corroborate fails the record');
+  assert.equal(verify(exact).passed, false, 'one transcript is not enough');
+  assert.equal(verify(exact, killed).passed, false, 'a killed session has no final usage to verify against');
+  assert.equal(verify(exact, killed).sessions[1].method, 'unverified');
+  // The record is re-derived, never trusted: a hand-edited ok or passed flag does not pass.
+  const forged = { ...bad, passed: true, sessions: bad.sessions.map(s => ({ ...s, ok: true })) };
+  assert.equal(G.verificationPasses(forged), false);
+  assert.equal(G.verificationPasses({ ...snaps, sessions: snaps.sessions.map(s => ({ ...s, reportedUsd: s.pricedUsd * 2 })) }), false);
+  assert.throws(() => G.verifyTranscripts([exact, exact2]), /priceSession/);
+});
+
+test('missingOutputUsd spreads the missing output tokens over the lines at their own tiers; an unpriced line makes the correction impossible', () => {
+  const lines = [[10, 0, 1000, 0, 'm'], [10, 99, 1000, 0, 'm']];       // weights 1 and 100
+  const rate = ([i]) => (i === 10 ? 0.00002 : 0.00001);
+  approx(G.missingOutputUsd(lines, 1000, rate), 1000 * 0.00002, 1e-12);
+  const mixedRate = l => (l === lines[0] ? 0.00004 : 0.00001);
+  approx(G.missingOutputUsd(lines, 101, mixedRate), 1 * 0.00004 + 100 * 0.00001, 1e-12);
+  assert.equal(G.missingOutputUsd(lines, 5, () => null), null);
+  assert.equal(G.missingOutputUsd(lines, 0, rate), 0); assert.equal(G.missingOutputUsd([], 5, rate), 0);
+  // label-run's outputRateOf: a Haiku request over 100K prompt tokens is priced at the upper tier's output rate.
+  approx(LR.outputRateOf(P, 'claude-haiku-5-5', [200000, 0, 0, 0, null]), 2.5 / 1e6, 1e-15);
+  approx(LR.outputRateOf(P, 'claude-haiku-5-5', [1000, 0, 0, 0, 'claude-haiku-5-5']), 0.5 / 1e6, 1e-15);
+  approx(LR.outputRateOf(P, 'claude-opus-5-5', [1000, 0, 0, 0, 'unpriced-model']), 20 / 1e6, 1e-15, 'an unpriced line model falls back to the session model');
+  assert.equal(LR.outputRateOf(P, 'unpriced-session', [1, 0, 0, 0, null]), null);
 });

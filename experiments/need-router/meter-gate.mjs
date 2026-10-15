@@ -14,8 +14,12 @@
 //      (meterGateDecision). A verification record is made at $0 from saved CLI transcripts: `node experiments/need-router/meter-gate.mjs --verify
 //      <transcript.jsonl>... --write research/need-router-20261014/analysis/m0/meter-verification.json`.
 //   3. label-run checks EVERY priced agent session (outputTokenCheck): per-message output tokens within `OUTPUT_TOLERANCE` of the final result usage.
-//      A session that fails, or has no final usage to compare with, is booked at the reported figure: the shortfall of the re-price against it is
-//      imputed (guardMeter), flagged `meterUnverified`, and counts toward the 30% rule. Nothing is repaired silently.
+//      A session that fails is repaired from the one complete count there is, when that can be shown to work: the output tokens the lines miss (final
+//      usage minus the lines' sum) are priced at their own tiers' output rates and added to the re-price, and the session is accepted as `measured`
+//      (flagged `outputFromFinal`) only if the result lands within `PRICE_BAND` of the CLI-reported cost. Otherwise, or with no final usage to compare
+//      with, it is booked at the reported figure: the shortfall of the re-price against it is imputed (guardMeter), flagged `meterUnverified`, and counts
+//      toward the 30% rule. Nothing is repaired silently, and nothing is accepted that the CLI's own figure does not corroborate.
+//      The same logic decides a verification record, so the gate can clear on real CLI transcripts whether their lines are accurate or snapshots.
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -65,7 +69,7 @@ export function buildMeterGate({ outputRatios = [], eraRatios = [] } = {}) {
     rule: { outputTolerance: OUTPUT_TOLERANCE, priceBand: PRICE_BAND, minEraSessions: MIN_ERA_SESSIONS, minVerifySessions: MIN_VERIFY_SESSIONS },
     reasons,
     blocks: reasons.length ? 'a paid stage with an agent arm (agent-H, agent-O, agent-H+proc, construct-H, build-O): label-run.mjs refuses to start it' : null,
-    clearedBy: reasons.length ? `a passing meter-verification record: node experiments/need-router/meter-gate.mjs --verify <transcript>... --write ${path.relative(REPO, VERIFICATION_FILE)}, on at least ${MIN_VERIFY_SESSIONS} saved CLI transcripts (per-message output tokens within ${OUTPUT_TOLERANCE * 100}% of the final result usage); until then every agent session label-run prices is checked individually and a session that fails is booked at the reported figure` : null,
+    clearedBy: reasons.length ? `a passing meter-verification record: node experiments/need-router/meter-gate.mjs --verify <transcript>... --write ${path.relative(REPO, VERIFICATION_FILE)}, on at least ${MIN_VERIFY_SESSIONS} saved CLI transcripts, each either with per-message output tokens within ${OUTPUT_TOLERANCE * 100}% of the final result usage or with a re-price that takes its output tokens from the final usage and lands within ${PRICE_BAND * 100}% of the CLI-reported cost; until then every agent session label-run prices is checked individually and a session that passes neither test is booked at the reported figure` : null,
   };
 }
 function median(xs) { const s = xs.filter(Number.isFinite).sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : NaN; }
@@ -80,12 +84,6 @@ export function readVerification(file = VERIFICATION_FILE) {
   if (!existsSync(file)) return null;
   try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return null; }
 }
-/** A record passes when it has the schema, at least MIN_VERIFY_SESSIONS transcripts and every one inside its tolerance (re-derived here, not trusted from `passed`). */
-export function verificationPasses(v, { tolerance = OUTPUT_TOLERANCE } = {}) {
-  return !!v && v.schema === VERIFICATION_SCHEMA && Array.isArray(v.sessions) && v.sessions.length >= MIN_VERIFY_SESSIONS
-    && v.sessions.every(s => num(s.recorded) !== null && num(s.final) > 0 && Math.abs(s.final - s.recorded) / s.final <= tolerance);
-}
-
 /** True for an arm definition (stages.json arms[...]) that runs an agent session: b0Agent, a construct-H or build-O builder session, or an agent-H+proc run. */
 export const isAgentArmDef = def => !!def && (def.factory === 'b0Agent' || def.run?.factory === 'b0Agent' || def.build?.factory === 'construct');
 
@@ -117,43 +115,93 @@ export function outputTokenCheck({ messageUsage = null, streamUsage = null, fina
 }
 
 /**
- * Apply the per-session check to a priced session ({ measured, imputed, ... } as label-run.priceSession returns it). A session that fails (or cannot
- * be checked) is booked at the reported figure: the part of it that the re-price missed is imputed, never measured, and the result is flagged
- * `meterUnverified` with the check. Total charged = measured + imputed >= reportedUsd.
+ * USD of `missing` output tokens, spread over the per-message lines [input, output, cacheRead, cacheWrite, model] in proportion to (output + 1), each at
+ * its own request's output rate (outputRateOf(line) -> USD per output token, or null when the model is not priced). null when a rate is unknown.
  */
-export function guardMeter(cost, input, { reportedUsd = 0, tolerance = OUTPUT_TOLERANCE } = {}) {
+export function missingOutputUsd(messageUsage, missing, outputRateOf) {
+  if (!Array.isArray(messageUsage) || !messageUsage.length || !(missing > 0)) return 0;
+  const w = messageUsage.map(m => (num(m[1]) ?? 0) + 1), tot = w.reduce((a, x) => a + x, 0);
+  let usd = 0;
+  for (let i = 0; i < messageUsage.length; i++) {
+    const r = outputRateOf(messageUsage[i]);
+    if (num(r) === null) return null;
+    usd += (missing * w[i] / tot) * r;
+  }
+  return usd;
+}
+
+/**
+ * Apply the per-session check to a priced session ({ measured, imputed, ... } as label-run.priceSession returns it):
+ *   - lines within tolerance of the final usage: unchanged (meterCheck attached);
+ *   - lines short of the final usage and outputRateOf given: the missing output tokens are priced and added; if the corrected re-price is within `band`
+ *     of the reported figure it is accepted as measured, flagged `outputFromFinal`;
+ *   - anything else (no final usage, a correction the reported figure does not corroborate): booked at the reported figure, the re-price's shortfall
+ *     imputed, flagged `meterUnverified` with the check.
+ * Total charged = measured + imputed is never below the reported figure on the unverified path.
+ */
+export function guardMeter(cost, input, { reportedUsd = 0, tolerance = OUTPUT_TOLERANCE, band = PRICE_BAND, outputRateOf = null } = {}) {
   const check = outputTokenCheck(input, { tolerance });
   if (check.ok) return { ...cost, meterCheck: check };
+  const reported = num(reportedUsd) ?? 0;
+  if (outputRateOf && check.checked && check.final > check.recorded && Array.isArray(input.messageUsage) && reported > 0 && cost.imputed === 0) {
+    const extra = missingOutputUsd(input.messageUsage, check.final - check.recorded, outputRateOf);
+    if (extra !== null) {
+      const corrected = cost.measured + extra, relErr = Math.abs(corrected - reported) / reported;
+      if (relErr <= band) return { ...cost, measured: corrected, ...(cost.tokens ? { tokens: { ...cost.tokens, outputTokens: check.final } } : {}), outputFromFinal: true, meterCheck: { ...check, correctedUsd: round(corrected, 6), reportedUsd: round(reported, 6), relErr: round(relErr, 4) } };
+    }
+  }
   const total = cost.measured + cost.imputed;
-  const gap = Math.max(0, (num(reportedUsd) ?? 0) - total);
+  const gap = Math.max(0, reported - total);
   return { ...cost, imputed: cost.imputed + gap, meterUnverified: true, meterGapUsd: gap, meterCheck: check };
 }
 
 // ------------------------------------------------------------------------------------------------ saved transcripts
-/** Usage of a stream-json transcript: last usage per assistant message id, summed, and the final result event's usage. */
+/** A stream-json transcript: the last usage per assistant message id as [input, output, cacheRead, cacheWrite, model] lines (the shape of messageUsageOf),
+ *  the final result event's usage and reported cost, and the model. */
 export function transcriptUsage(text) {
   const byMsg = new Map();
-  let result = null;
+  let result = null, model = null;
   for (const line of String(text).split('\n')) {
     if (!line.trim()) continue;
     let e; try { e = JSON.parse(line); } catch { continue; }
-    if (e?.type === 'assistant' && e.message?.id && e.message.usage) byMsg.set(e.message.id, e.message.usage);
+    if (e?.type === 'assistant' && e.message?.id && e.message.usage) { byMsg.set(e.message.id, { model: e.message.model ?? null, u: e.message.usage }); model ??= e.message.model ?? null; }
     else if (e?.type === 'result') result = e;
   }
-  const messages = [...byMsg.values()];
+  const messageUsage = [...byMsg.values()].map(({ model: m, u }) => [u.input_tokens ?? 0, u.output_tokens ?? 0, u.cache_read_input_tokens ?? 0, u.cache_creation_input_tokens ?? 0, m]);
   return {
-    messages: messages.length, recorded: messages.reduce((a, u) => a + (num(u.output_tokens) ?? 0), 0),
-    final: num(result?.usage?.output_tokens), reportedUsd: num(result?.total_cost_usd), hasResult: !!result,
+    messages: messageUsage.length, messageUsage, recorded: messageUsage.reduce((a, m) => a + (num(m[1]) ?? 0), 0),
+    final: num(result?.usage?.output_tokens), finalUsage: result?.usage ?? null, reportedUsd: num(result?.total_cost_usd), hasResult: !!result, model,
   };
 }
-/** The verification record for some saved transcripts ($0). */
-export function verifyTranscripts(files, { tolerance = OUTPUT_TOLERANCE, read = f => readFileSync(f, 'utf8') } = {}) {
+/** A record passes when it has the schema, at least MIN_VERIFY_SESSIONS transcripts, and every session is re-derived as accepted here (not trusted from `ok`):
+ *  per-message output tokens within `tolerance` of the final usage, or (method final-output) the corrected re-price within `band` of the reported cost. */
+export function verificationPasses(v, { tolerance = OUTPUT_TOLERANCE, band = PRICE_BAND } = {}) {
+  if (!v || v.schema !== VERIFICATION_SCHEMA || !Array.isArray(v.sessions) || v.sessions.length < MIN_VERIFY_SESSIONS) return false;
+  return v.sessions.every(s => {
+    if (s.method === 'per-message') return num(s.recorded) !== null && num(s.final) > 0 && Math.abs(s.final - s.recorded) / s.final <= tolerance;
+    if (s.method === 'final-output') return num(s.reportedUsd) > 0 && num(s.pricedUsd) !== null && Math.abs(s.pricedUsd - s.reportedUsd) / s.reportedUsd <= band && num(s.final) > 0;
+    return false;
+  });
+}
+/**
+ * The verification record for some saved transcripts ($0). Each is priced by the very code label-run uses (priceSession(table, model, input), injected so this
+ * module needs no label-run import): accepted as `per-message` when its lines match the final usage, as `final-output` when the missing output tokens
+ * priced from the final usage land within the price band of the reported cost, otherwise `unverified`.
+ */
+export function verifyTranscripts(files, { priceSession, table, tolerance = OUTPUT_TOLERANCE, read = f => readFileSync(f, 'utf8') } = {}) {
+  if (typeof priceSession !== 'function') throw new Error('verifyTranscripts needs label-run\'s priceSession and the pinned price table');
   const sessions = files.map(f => {
     const text = read(f), u = transcriptUsage(text);
-    const c = outputTokenCheck({ streamUsage: { outputTokens: u.recorded }, finalUsage: { output_tokens: u.final } }, { tolerance });
-    return { file: path.basename(f), sha256: createHash('sha256').update(text).digest('hex').slice(0, 16), messages: u.messages, recorded: u.recorded, final: u.final, relGap: c.relGap ?? null, ok: c.ok };
+    const cost = u.hasResult && u.model ? priceSession(table, u.model, { messageUsage: u.messageUsage, reportedUsd: u.reportedUsd ?? 0, finalUsage: u.finalUsage, meter: { tolerance } }) : null;
+    const method = !cost ? 'unverified' : cost.meterUnverified ? 'unverified' : cost.outputFromFinal ? 'final-output' : 'per-message';
+    const pricedUsd = cost ? cost.measured + cost.imputed : null;
+    return {
+      file: path.basename(f), sha256: createHash('sha256').update(text).digest('hex').slice(0, 16), model: u.model, messages: u.messages, recorded: u.recorded, final: u.final,
+      reportedUsd: u.reportedUsd === null ? null : round(u.reportedUsd, 6), pricedUsd: pricedUsd === null ? null : round(pricedUsd, 6), method,
+      relGap: cost?.meterCheck?.relGap ?? null, ok: method !== 'unverified',
+    };
   });
-  const record = { schema: VERIFICATION_SCHEMA, tolerance, sessions };
+  const record = { schema: VERIFICATION_SCHEMA, tolerance, priceBand: PRICE_BAND, sessions };
   return { ...record, passed: verificationPasses(record, { tolerance }) };
 }
 
@@ -161,7 +209,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = process.argv.slice(2), arg = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
   if (args.includes('--verify')) {
     const files = args.slice(args.indexOf('--verify') + 1).filter(a => !a.startsWith('--') && a !== arg('--write'));
-    const rec = verifyTranscripts(files);
+    const { priceSession } = await import('./label-run.mjs');
+    const table = JSON.parse(readFileSync(path.join(REPO, 'research/need-router-20261014/prereg/stages.json'), 'utf8')).priceTable;
+    const rec = verifyTranscripts(files, { priceSession, table });
     console.log(JSON.stringify(rec, null, 1));
     if (arg('--write')) { mkdirSync(path.dirname(path.resolve(arg('--write'))), { recursive: true }); writeFileSync(path.resolve(arg('--write')), JSON.stringify(rec, null, 1) + '\n'); }
     process.exit(rec.passed ? 0 : 1);

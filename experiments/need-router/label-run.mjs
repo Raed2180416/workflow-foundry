@@ -280,6 +280,15 @@ export function priceCalls(priceTable, calls, { boundUsd = null } = {}) {
   return { measured, imputed, tokens, fallback };
 }
 
+/** USD per output token of one per-message usage line [input, output, cacheRead, cacheWrite, model], at the tier its own request falls in (the session
+ *  model when the line names none or one the table does not price); null when neither is priced. */
+export function outputRateOf(priceTable, model, [i, , cr, cw, m]) {
+  const u = { inputTokens: i, cacheReadTokens: cr, cacheWriteTokens: cw };
+  const id = m && priceUsage(priceTable, m, u) !== null ? m : model;
+  const hi = priceUsage(priceTable, id, { ...u, outputTokens: 1e6 });
+  return hi === null ? null : (hi - priceUsage(priceTable, id, { ...u, outputTokens: 0 })) / 1e6;
+}
+
 /** An agent session: per-message usage priced at each message's own tier and model (the session model when the message
  *  names none or one the table does not price); a killed session (costUnknown) is charged at its budget bound. */
 export function priceSession(priceTable, model, { messageUsage = null, streamUsage = null, costUnknown = false, boundUsd = 0, reportedUsd = 0, finalUsage = null, meter = null } = {}) {
@@ -298,9 +307,11 @@ export function priceSession(priceTable, model, { messageUsage = null, streamUsa
   } else { measured = costUnknown ? 0 : reportedUsd; repriced = false; }
   const imputed = costUnknown ? Math.max(0, boundUsd - measured) : 0;
   const cost = { measured, imputed, tokens, approx, repriced, modelFallback };
-  // Cost-meter gate (meter-gate.mjs, D6): with `meter` set (live runs) a session whose recorded output tokens are not within the tolerance of the CLI's
-  // final result usage, or that has no final usage to compare with, is booked at the reported figure: the re-price's shortfall is imputed and flagged.
-  return meter ? guardMeter(cost, { messageUsage, streamUsage, finalUsage }, { reportedUsd, tolerance: meter.tolerance }) : cost;
+  // Cost-meter gate (meter-gate.mjs, D6): with `meter` set (live runs) a session whose per-message output tokens are not within the tolerance of the CLI's
+  // final result usage has the missing output tokens priced from that usage and is accepted only if the result lands within the price band of the
+  // reported figure (`outputFromFinal`); any other such session, or one with no final usage, is booked at the reported figure: the re-price's shortfall
+  // is imputed and flagged `meterUnverified`.
+  return meter ? guardMeter(cost, { messageUsage, streamUsage, finalUsage }, { reportedUsd, tolerance: meter.tolerance, outputRateOf: line => outputRateOf(priceTable, model, line) }) : cost;
 }
 
 /** Metered gateway calls of a run, persisted (calls.jsonl) so a resume re-prices rows recorded by an earlier process. */
@@ -716,7 +727,7 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo,
     schemaValid: meta.schemaValid ?? null, selfVerdict: meta.selfVerdict ?? null, deployableVerdict: meta.deployableVerdict ?? null,
     ...(meta.selfCheck?.error ? { selfCheckError: meta.selfCheck.error } : {}),
     usdReported: r6((rec.costUsd ?? 0) + (rec.imputedUsd ?? 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), repriced: cost.repriced !== false && !cost.fallback,
-    ...(cost.meterUnverified ? { meterUnverified: true } : {}),
+    ...(cost.meterUnverified ? { meterUnverified: true } : {}), ...(cost.outputFromFinal ? { outputFromFinal: true } : {}),
     ms: rec.latencyMs ?? null, tokens: cost.tokens, turns: meta.turns ?? null, error: voided ? 'VOIDED' : rec.error?.code ?? null, rawError: rec.error?.code ?? null,
     void: voided ? voidReasons.join('; ') : null,
   };
