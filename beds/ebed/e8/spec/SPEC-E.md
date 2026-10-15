@@ -288,7 +288,7 @@ Send each required notification exactly once.
   with the same time as the cancel reached you first (§1, S4): a `delivered` report that ends the order's last open
   fulfilment means the order has already ended (R6.3: the cancel changes nothing, `cancel-refused` is allowed); a
   `collectionFailed` report fails its fulfilment before the cancel (R5.2), and the cancel applies to the order's other
-  fulfilments (R6.2). A declined charge or a permanent carrier error reaches you with its result, one minute after the
+  open fulfilments (R6.2); if there are none, the order has already ended, as for the delivery. A declined charge or a permanent carrier error reaches you with its result, one minute after the
   attempt: one attempted in the cancel's instant did not come before the cancel, so the cancel counts and that
   fulfilment is compensated and set `cancelled` (R6.2), not `failed`.
 - S14 **A step committing after its fulfilment failed.** A step of a failing fulfilment that commits after the failure

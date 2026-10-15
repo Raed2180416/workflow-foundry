@@ -264,6 +264,13 @@ export function leakTest(table, makeRouter, Vs) {
 //   `pass` is the oracle verdict on the answer the mode produced; `delivered` says an answer was produced at all, BEFORE
 //   the self-check gate: the gate is applied here from `selfVerdict`, so that F11 can withdraw its credit (K9).
 //   A delivered answer with no `schemaValid` field is read as schema-valid, so a wrong one is charged as a silent miss.
+//   Versions and meters (DESIGN §2 "one cost meter", "LEGACY"; ROADMAP §6 rule 13): a row tagged LEGACY (`legacy: true`
+//   or `evidence: 'LEGACY'`, harvest.mjs LEGACY_TAG) is refused; the rows of one (job, mode) (of one lineage, for a
+//   lineage mode) must carry one `armHash` (a row without one counts as its own version); a row with `repriced: false`
+//   (label-run: the cost fell back to the CLI figure or $0) is counted and leaves its job unlabelled; `requireRepriced`
+//   (evaluate.mjs sets it) refuses a row without a finite `usdRepriced` instead of falling back to usdReported/costUsd.
+//   A voided agent draw (label-run: `void` set, `error: 'VOIDED'`, pass and delivered false; an agent draw is its own
+//   lineage of one) scores as a failure and is listed in `table.voidedDraws` (lineage voids stay in `table.voided`).
 // Build rows (one per job x mode x lineage, for built or guided modes):
 //   { job, mode, rep, usd, usdImputed?, failed?, hiddenPathAttempts?, nestedModelAttempts?, void?, scoreChecks?, ... }
 //   A mode with build rows is a LINEAGE mode: `rep` on its task rows names the lineage, every lineage runs every task,
@@ -273,7 +280,9 @@ export function leakTest(table, makeRouter, Vs) {
 
 export const DELTA = FLOOR_POINTS / 100;            // acceptable-set width: 0.03 success-equivalents (jit/stats.mjs:39)
 export const CONFIDENT = 0.8;                       // a label is confident when P(best class) >= 0.8
-export const IMPUTED_LIMIT = 0.3;                   // a job with a mode over 30% imputed dollars is left unlabelled
+export const IMPUTED_LIMIT = 0.3;                   // a (job, cell) whose label rests on a mode over 30% imputed dollars is left unlabelled
+/** First-pass replicates (draw modes) and lineages (lineage modes) per task, DESIGN §1 table; racing only adds to them. */
+export const FIRST_PASS = Object.freeze({ 'direct-H': 2, 'agent-H': 2, 'agent-O': 1, 'agent-H+proc': 2, 'construct-H': 3, 'build-O': 1, 'ref-R1': 1, 'ref-R3': 1 });
 export { ENV_FAULT_LIMIT };
 export const V_GRID = Object.freeze([0.1, 1, 10]);  // slider positions: Frugal, Balanced (headline), Careful
 export const N_GRID = Object.freeze([1, 10, 100]);  // declared volume; 10 is the headline, 100 is extrapolated
@@ -329,22 +338,33 @@ const KEY = (...xs) => xs.join('\u0000');
 const mean = xs => xs.reduce((a, x) => a + x, 0) / xs.length;
 const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 
-function normRow(r) {
+/** A LEGACY-tagged row or build (harvest.mjs LEGACY_TAG; the same predicate as harvest.isLegacy, inlined to keep this module pure). */
+export const isLegacyRow = x => x?.legacy === true || x?.evidence === 'LEGACY';
+
+function normRow(r, { requireRepriced = false } = {}) {
   const job = r.job, mode = r.mode ?? r.arm, task = r.task ?? r.taskKey;
   const at = `${job}/${mode}/${task}`;
   if (typeof job !== 'string' || typeof mode !== 'string' || typeof task !== 'string') throw new Error(`matrix row needs job, mode and task: ${JSON.stringify(r).slice(0, 200)}`);
+  if (isLegacyRow(r)) throw new Error(`matrix row ${at}: a LEGACY row is never pooled with new labels (DESIGN §2)`);
   if (typeof r.pass !== 'boolean') throw new Error(`matrix row ${at}: pass must be a boolean`);
   if (typeof r.delivered !== 'boolean') throw new Error(`matrix row ${at}: delivered must be a boolean (a silent miss cannot be charged without it)`);
   if (r.pass && !r.delivered) throw new Error(`matrix row ${at}: a pass with no delivered answer`);
-  const usd = fin(r.usdRepriced, r.usdReported, r.costUsd), imputed = fin(r.usdImputed, r.imputedUsd) ?? 0;
+  if (requireRepriced && fin(r.usdRepriced) === undefined) throw new Error(`matrix row ${at}: no finite usdRepriced (one meter: utility uses the re-priced figure, never a fallback to usdReported or costUsd)`);
+  const usd = requireRepriced ? fin(r.usdRepriced) : fin(r.usdRepriced, r.usdReported, r.costUsd), imputed = fin(r.usdImputed, r.imputedUsd) ?? 0;
   if (usd === undefined || usd < 0 || imputed < 0) throw new Error(`matrix row ${at}: dollars must be finite and >= 0`);
   const rep = r.rep ?? r.replicate ?? r.lineage ?? r.trial ?? 0;
   if (!Number.isInteger(rep) || rep < 0) throw new Error(`matrix row ${at}: rep must be an integer >= 0`);
   if (r.selfVerdict != null && r.selfVerdict !== 'pass' && r.selfVerdict !== 'fail') throw new Error(`matrix row ${at}: selfVerdict must be pass, fail or null`);
-  return { job, mode, task, rep, pass: r.pass, delivered: r.delivered, schemaValid: r.schemaValid ?? true, selfVerdict: r.selfVerdict ?? null,
+  if (r.armHash != null && typeof r.armHash !== 'string') throw new Error(`matrix row ${at}: armHash must be a string`);
+  const error = typeof r.error === 'string' ? r.error : r.error?.code ?? null;
+  // An explicit void reason, or label-run's VOIDED error code (whether it marks a draw or a lineage is settled in needTable).
+  const voidReason = r.void ? (typeof r.void === 'string' ? r.void : 'void') : null;
+  const voided = !!voidReason;
+  return { job, mode, task, rep, pass: voided ? false : r.pass, delivered: voided ? false : r.delivered, schemaValid: r.schemaValid ?? true, selfVerdict: r.selfVerdict ?? null,
     deployableVerdict: r.deployableVerdict ?? null, score: typeof r.score === 'number' ? r.score : null, passAt: r.passAt ?? null,
     seed: Number.isInteger(r.seed) ? r.seed : null, taskHash: r.taskHash ?? null, usd, imputed,
-    error: typeof r.error === 'string' ? r.error : r.error?.code ?? null };
+    error: voided ? 'VOIDED' : error, voidReason: voidReason ?? (error === 'VOIDED' ? 'VOIDED' : null), explicitVoid: voided,
+    armHash: r.armHash ?? null, notRepriced: r.repriced === false };
 }
 
 // Per-row values with (1) and without (0) self-check credit: credit lets a failed self-check withhold the answer.
@@ -358,16 +378,19 @@ function rowValues(x) {
 
 /**
  * The v1 label matrix. Validates and pairs: every mode of a job covers the job's tasks (lineage modes: every lineage
- * covers every task), one seed and one taskHash per (job, task) across modes, no duplicates, unknown modes refused.
- * A gap throws; nothing is dropped silently. Modes may differ between jobs (direct-H is masked on interactive families).
+ * covers every task), one seed and one taskHash per (job, task) across modes, no duplicates, unknown modes refused,
+ * LEGACY rows refused, one armHash per (job, mode) (per lineage), and (requireRepriced) the re-priced meter only.
+ * A gap throws; nothing is dropped silently. Modes may differ between jobs (direct-H is masked on interactive families);
+ * whether a job's modes match its declared menu is checked by the caller (evaluate.mjs missingData, PREREG §5).
  */
-export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'fail' } = {}) {
+export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'fail', requireRepriced = false } = {}) {
   if (voidPolicy !== 'fail' && voidPolicy !== 'drop') throw new Error(`voidPolicy must be fail or drop, got ${voidPolicy}`);
-  const cells = new Map(), jobs = [], modes = [], voided = [], lineages = new Map();
+  const cells = new Map(), jobs = [], modes = [], voided = [], voidedDraws = [], lineages = new Map();
   const add = (list, x) => { if (!list.includes(x)) list.push(x); };
   for (const b of builds) {
     const job = b.job, mode = b.mode ?? b.arm, rep = b.rep ?? b.lineage ?? 0;
     if (typeof job !== 'string' || typeof mode !== 'string' || !Number.isInteger(rep) || rep < 0) throw new Error(`build row needs job, mode and an integer rep: ${JSON.stringify(b).slice(0, 200)}`);
+    if (isLegacyRow(b)) throw new Error(`build row ${job}/${mode}/${rep}: a LEGACY build is never pooled with new labels (DESIGN §2)`);
     modeInfo(mode, registry);
     const usd = fin(b.usd, b.usdRepriced, b.usdReported, b.costUsd), imputed = fin(b.usdImputed, b.imputedUsd) ?? 0;
     if (usd === undefined || usd < 0 || imputed < 0) throw new Error(`build row ${job}/${mode}/${rep}: dollars must be finite and >= 0`);
@@ -381,7 +404,7 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
     lineages.set(k, L);
   }
   for (const r0 of rows) {
-    const r = normRow(r0);
+    const r = normRow(r0, { requireRepriced });
     modeInfo(r.mode, registry);
     add(jobs, r.job); add(modes, r.mode);
     const k = KEY(r.job, r.mode), c = cells.get(k) ?? { job: r.job, mode: r.mode, byTask: new Map() };
@@ -427,16 +450,28 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
       } else {
         for (const t of ids) if (!c.byTask.get(t)?.size) throw new Error(`unpaired: ${job}/${m} has no row for task ${t}`);
       }
+      const versions = new Map();
+      c.notRepriced = 0;
       for (const [t, reps] of c.byTask) for (const x of reps.values()) {
         if (x.seed !== null) { const s = seeds.get(KEY(job, t)); if (s !== undefined && s !== x.seed) throw new Error(`seed pairing broken: ${job}/${t} has seeds ${s} and ${x.seed}`); seeds.set(KEY(job, t), x.seed); }
         if (x.taskHash) { const h = hashes.get(KEY(job, t)); if (h !== undefined && h !== x.taskHash) throw new Error(`taskHash pairing broken: ${job}/${t} (${m})`); hashes.set(KEY(job, t), x.taskHash); }
+        if (!x.synthetic && x.notRepriced) c.notRepriced += 1;
+        if (!x.synthetic && !info.cascade) {
+          // One arm version per (job, mode), per lineage for a lineage mode (a lineage's arm id carries its number).
+          const vk = c.lineage ? x.rep : '*', v = versions.get(vk) ?? new Set();
+          v.add(x.armHash ?? '(no armHash)'); versions.set(vk, v);
+          // A voided draw: an explicit void reason on any row, or the VOIDED code on a draw mode (on a lineage mode the
+          // code comes from the build row's void, already listed in `voided`).
+          if (x.voidReason && (x.explicitVoid || !c.lineage)) voidedDraws.push({ job, mode: m, task: t, rep: x.rep, reasons: [x.voidReason], lineage: c.lineage });
+        }
         rowValues(x);
       }
+      for (const [vk, v] of versions) if (v.size > 1) throw new Error(`${job}/${m}${vk === '*' ? '' : ` lineage ${vk}`}: rows from ${v.size} arm versions (armHash ${[...v].sort().join(', ')}) are never pooled`);
       c.reps = new Map([...c.byTask].map(([t, reps]) => [t, [...reps.keys()].sort((a, b) => a - b)]));
     }
   }
   return {
-    jobs, modes, registry, voided, noCredit: new Set(),
+    jobs, modes, registry, voided, voidedDraws, noCredit: new Set(),
     cell(job, mode) { const c = cells.get(KEY(job, mode)); if (!c) throw new Error(`no cell ${job}/${mode}`); return c; },
     has: (job, mode) => cells.has(KEY(job, mode)),
     modesOf: job => modes.filter(m => cells.has(KEY(job, m))),
@@ -460,7 +495,8 @@ export function withCascades(rows, builds = [], specs = CASCADES, opts = {}) {
   const base = needTable(rows, builds, opts);
   const outRows = [], outBuilds = [];
   const raw = x => ({ pass: x.pass, delivered: x.delivered, schemaValid: x.schemaValid, selfVerdict: x.selfVerdict, deployableVerdict: x.deployableVerdict,
-    score: x.score, passAt: x.passAt, error: x.error, ...(x.seed !== null ? { seed: x.seed } : {}), ...(x.taskHash ? { taskHash: x.taskHash } : {}) });
+    score: x.score, passAt: x.passAt, error: x.error, ...(x.seed !== null ? { seed: x.seed } : {}), ...(x.taskHash ? { taskHash: x.taskHash } : {}),
+    ...(x.notRepriced ? { repriced: false } : {}) });
   for (const s of specs) for (const job of base.jobs) {
     if (!base.has(job, s.primary) || !base.has(job, s.fallback)) continue;
     const P = base.cell(job, s.primary), F = base.cell(job, s.fallback);
@@ -506,18 +542,32 @@ export function cellStats(table, job, mode, { tasks = null, lineages = null, rep
       for (const t of T) { const x = c.byTask.get(t).get(l); s += cr ? x.succ1 : x.succ0; q += cr ? x.wrong1 : x.wrong0; usd += x.cost; rawImp += x.imputed; }
     }
     const n = Ls.length * T.length;
-    return { s: s / n, q: q / n, c: usd / n, B: B / Ls.length, imputedShare: (rawImp + bImp) / ((usd + B) || 1), n, lineages: Ls.length };
+    // cImp and BImp: the imputed parts of c and B (the imputed-dollar rule is applied per cell, where B/N weighs in).
+    return { s: s / n, q: q / n, c: usd / n, B: B / Ls.length, imputedShare: (rawImp + bImp) / ((usd + B) || 1), n, lineages: Ls.length, cImp: rawImp / n, BImp: bImp / Ls.length };
   }
-  let w = 0;
+  let w = 0, imp = 0;
   for (let i = 0; i < T.length; i++) {
     const t = T[i], reps = repsOf ? repsOf(t, i) : c.reps.get(t), m = c.byTask.get(t);
     if (!reps.length) continue;
-    let ss = 0, qq = 0, uu = 0;
-    for (const rep of reps) { const x = m.get(rep), cr = credit(rep); ss += cr ? x.succ1 : x.succ0; qq += cr ? x.wrong1 : x.wrong0; uu += x.cost; rawImp += x.imputed; rawUsd += x.cost; }
-    s += ss / reps.length; q += qq / reps.length; usd += uu / reps.length; w += 1;
+    let ss = 0, qq = 0, uu = 0, ii = 0;
+    for (const rep of reps) { const x = m.get(rep), cr = credit(rep); ss += cr ? x.succ1 : x.succ0; qq += cr ? x.wrong1 : x.wrong0; uu += x.cost; ii += x.imputed; rawImp += x.imputed; rawUsd += x.cost; }
+    s += ss / reps.length; q += qq / reps.length; usd += uu / reps.length; imp += ii / reps.length; w += 1;
   }
   if (!w) return null;
-  return { s: s / w, q: q / w, c: usd / w, B: 0, imputedShare: rawImp / (rawUsd || 1), n: w, lineages: 0 };
+  return { s: s / w, q: q / w, c: usd / w, B: 0, imputedShare: rawImp / (rawUsd || 1), n: w, lineages: 0, cImp: imp / w, BImp: 0 };
+}
+
+/** The share of a mode's per-task dollars (c + B/N) that is imputed, at a cell (the imputed-dollar rule, DESIGN §2). */
+export const imputedShareAt = (st, cell) => { const tot = st.c + st.B / cell.N; return tot > 0 ? ((st.cImp ?? 0) + (st.BImp ?? 0) / cell.N) / tot : 0; };
+
+/** First-pass shortfall of one (job, mode): null when complete, else the reason (PREREG §5 missing data). */
+export function firstPassShort(table, job, mode, firstPass = FIRST_PASS) {
+  const k = firstPass?.[mode];
+  if (!k || !table.has(job, mode)) return null;
+  const c = table.cell(job, mode);
+  if (c.lineage) return c.lineageList.length < k ? `${c.lineageList.length} of ${k} first-pass lineages` : null;
+  const few = table.taskIds(job).filter(t => (c.reps.get(t)?.length ?? 0) < k);
+  return few.length ? `${few.length} task(s) with fewer than ${k} first-pass draws` : null;
 }
 
 /** u = s − c/V − B/(N·V) − (W/V)·q − r/(N·V), success-equivalents per task. */

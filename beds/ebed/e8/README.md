@@ -6,9 +6,11 @@ generic oracle it introduced (`beds/ebed/oracle/`) is shared by every later item
 **Status: built, not admitted.** The K1 checks that exist pass (below), including specificity: three independently
 written solvers (`specificity/`, written blind to the oracle from SPEC-E and the contract) each pass **1,749/1,749**
 completed cases on 16 dev worlds (seeds 1241–1244 × d2–d5; 5,247 graded, 0 false rejects, 0 critical, 0 arm errors;
-`tools/specificity-run.mjs`). Still missing before admission: the oracle mutation score (≥ 0.95), the metamorphic suite
-(MR1–MR13), mined latent defects (step 6), the paid triviality attack (P1) and the arm (c) reference (P2). Nothing here
-is evidence about any arm.
+`tools/specificity-run.mjs`; after the 2026-10-15 oracle changes, the short set 1241–1242 × d3, d5 gives 1,701/1,701).
+Expected oracle mutation score under one differential standard (`ledger/MUTANTS.md`, not yet a `mutate.mjs`
+measurement): 240/301 = 0.797 raw, 1.000 with the 61 grader-equivalent mutants excluded. Still missing before admission:
+a measured oracle mutation score (≥ 0.95), the metamorphic suite (MR1–MR13), mined latent defects (step 6), the paid
+triviality attack (P1) and the arm (c) reference (P2). Nothing here is evidence about any arm.
 
 ```sh
 node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (15 tests, ~30 s)
