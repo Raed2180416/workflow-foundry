@@ -23,6 +23,7 @@ is the same verdict without it (reported beside the headline).
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 
 SUBJECT_PREFIX = "Follow up on missed call - "
@@ -95,6 +96,13 @@ def _norm(s) -> str:
     return " ".join(str(s or "").split())
 
 
+def has_token(text, token: str) -> bool:
+    """`token` occurs in `text` (whitespace-normalized, ignoring case) and is not the prefix of a longer number or
+    id: 'No-shows this week: 1' does not match '... week: 12', 'Account pipeline: $1,250' does not match '$1,250,000',
+    and 's610/t01' does not match 's610/t012'."""
+    return re.search(re.escape(_norm(token).lower()) + r"(?!\w|,\d)", _norm(text).lower()) is not None
+
+
 def _task_matches(t: dict, contact_id: str, subject: str, sched: str) -> bool:
     return (t.get("contact_id") == contact_id and _norm(t.get("subject")) == subject
             and sched in (t.get("description") or ""))
@@ -160,7 +168,7 @@ class Grader:
             check("task.status", t.get("status") == tc["status"], f"status {t.get('status')!r} != {tc['status']!r}")
             check("task.priority", t.get("priority") == tc["priority"], f"priority {t.get('priority')!r} != {tc['priority']!r}")
             check("task.scheduled", tc["scheduled"] in desc, f"description lacks {tc['scheduled']!r}: {desc!r}")
-            check("task.pipeline", f"Account pipeline: {tc['pipeline']}" in desc,
+            check("task.pipeline", has_token(desc, f"Account pipeline: {tc['pipeline']}"),
                   f"description lacks 'Account pipeline: {tc['pipeline']}': {desc!r}")
             check("task.repeat", ("repeat no-show" in desc.lower()) == tc["repeat"],
                   f"repeat marker {'missing' if tc['repeat'] else 'present but not a repeat'}: {desc!r}")
@@ -190,14 +198,14 @@ class Grader:
         for sp in exp["slack_post"]:
             cid = _chan_id(after, sp["channel"])
             cands = [i for i in new_msgs if i not in used and L[i]["after"].get("channel_id") == cid
-                     and sp["text"].lower() in _norm(L[i]["after"].get("text")).lower()]
+                     and has_token(L[i]["after"].get("text"), sp["text"])]
             if cands:
                 used.add(cands[0])
             check(f"post #{sp['channel']}", bool(cands), f"no new message in #{sp['channel']} containing {sp['text']!r}")
         if exp["escalate"]:
             cid = _chan_id(after, REVIEW)
             cands = [i for i in new_msgs if i not in used and L[i]["after"].get("channel_id") == cid
-                     and truth["trigger"] in (L[i]["after"].get("text") or "")]
+                     and has_token(L[i]["after"].get("text"), truth["trigger"])]
             if cands:
                 used.add(cands[0])
             check("escalate", bool(cands), f"no #{REVIEW} post naming {truth['trigger']}")

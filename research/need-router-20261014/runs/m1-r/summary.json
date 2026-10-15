@@ -1,7 +1,7 @@
 {
  "reran": 54,
- "pass": 2,
+ "pass": 4,
  "stillTimeout": 10,
- "otherError": 10,
- "spentUsd": 6.6317641300000005
+ "otherError": 6,
+ "spentUsd": 1.2615965
 }

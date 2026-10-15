@@ -18,6 +18,8 @@ Caveat: the rule as written scores the head, not the increment; the Jev incremen
 |---|---|---|---|---|---|---|---|
 | m1 | d3 | 0.673 | [0.26, 0.99] | 0.604 | NR-knn | 0.145 | [-0.20, 0.50] |
 | m1 | d3+d5 | 0.707 | [0.46, 0.98] | 0.722 | NR-knn | 0.202 | [-0.00, 0.49] |
+| m1r | d3 | 0.676 | [0.31, 0.97] | 0.604 | NR-knn | 0.116 | [-0.18, 0.45] |
+| m1r | d3+d5 | 0.697 | [0.48, 0.97] | 0.611 | NR-knn | 0.134 | [-0.01, 0.36] |
 
 ## Heads (pooled out-of-fold, leave-one-family-out)
 
@@ -37,6 +39,18 @@ L2 logistic regression (λ = 1, intercept free, IRLS), features standardized on 
 | m1 | d3+d5 | 144 (61) | code+haiku | 144 | 0.573 | [0.31, 0.94] | 0.486 | [0.33, 0.87] | no | no | 0.068 | [-0.06, 0.25] |
 | m1 | d3+d5 | 144 (61) | jev (diag.) | 144 | 0.502 | [0.24, 0.84] | 0.458 | [0.27, 0.82] | no | no | -0.003 | [-0.43, 0.38] |
 | m1 | d3+d5 | 144 (61) | haiku (diag.) | 144 | 0.736 | [0.44, 0.95] | 0.708 | [0.53, 0.88] | yes | no | 0.231 | [-0.12, 0.57] |
+| m1r | d3 | 96 (49) | size-rule (no fit) | 96 | 0.712 | [0.37, 1.00] | 0.625 | [0.42, 0.96] | no | no | – | – |
+| m1r | d3 | 96 (49) | code | 96 | 0.560 | [0.15, 0.95] | 0.521 | [0.25, 0.90] | no | no | – | – |
+| m1r | d3 | 96 (49) | code+jev | 96 | 0.676 | [0.31, 0.97] | 0.604 | [0.35, 0.94] | no | no | 0.116 | [-0.18, 0.45] |
+| m1r | d3 | 96 (49) | code+haiku | 96 | 0.573 | [0.19, 0.93] | 0.417 | [0.25, 0.88] | no | no | 0.013 | [-0.33, 0.35] |
+| m1r | d3 | 96 (49) | jev (diag.) | 96 | 0.425 | [0.08, 0.77] | 0.458 | [0.23, 0.79] | no | no | -0.135 | [-0.62, 0.31] |
+| m1r | d3 | 96 (49) | haiku (diag.) | 96 | 0.637 | [0.29, 0.92] | 0.521 | [0.32, 0.88] | no | no | 0.077 | [-0.35, 0.54] |
+| m1r | d3+d5 | 144 (65) | size-rule (no fit) | 144 | 0.631 | [0.37, 0.94] | 0.611 | [0.41, 0.88] | no | no | – | – |
+| m1r | d3+d5 | 144 (65) | code | 144 | 0.563 | [0.31, 0.91] | 0.458 | [0.31, 0.83] | no | no | – | – |
+| m1r | d3+d5 | 144 (65) | code+jev | 144 | 0.697 | [0.48, 0.97] | 0.611 | [0.46, 0.92] | no | no | 0.134 | [-0.01, 0.36] |
+| m1r | d3+d5 | 144 (65) | code+haiku | 144 | 0.605 | [0.35, 0.93] | 0.486 | [0.33, 0.87] | no | no | 0.042 | [-0.07, 0.18] |
+| m1r | d3+d5 | 144 (65) | jev (diag.) | 144 | 0.370 | [0.14, 0.66] | 0.306 | [0.19, 0.76] | no | no | -0.193 | [-0.68, 0.19] |
+| m1r | d3+d5 | 144 (65) | haiku (diag.) | 144 | 0.697 | [0.39, 0.89] | 0.681 | [0.50, 0.84] | yes | no | 0.134 | [-0.22, 0.45] |
 
 ## Property accuracy against the family truth table
 
@@ -84,6 +98,6 @@ Under labels `m1`.
 ## Provenance
 
 Jev: 144 task rows; requested jev-1.13.0; served jev-1.13.0 x864; usage 1172766 input / 200722 output tokens. Haiku arm: 144 rows, $0.0731, engines claude-code 2.1.299.
-Labels: m1 61/144 one-call solvable (54 timed-out trials); m1r absent.
+Labels: m1 61/144 one-call solvable (54 timed-out trials); m1r 65/144 one-call solvable (10 timed-out trials).
 
 Caveats: families stand in for clusters, but the rungs nest: R4 packs are complete R1 and R3 tasks and R5 is R4 plus a legacy dump, so a fold that holds out R4 or R5 still trains on its parts (the folds are optimistic); Jev and Haiku see only the prompt and size facts (stateOf), while the code features and the truth table read the inputs, notes and bed source, so a cannot_tell can be the correct reading of what was shown; the outcome is mostly constant within a family, so a head is close to a family classifier fitted on 7 points; the bootstrap holds the out-of-fold scores fixed; the truth table is authored per family, not per task or difficulty.
