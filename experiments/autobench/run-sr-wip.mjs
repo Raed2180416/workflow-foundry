@@ -2,9 +2,10 @@
 // WIP COPY (2026-10-15): experiments/autobench/run.mjs at sha256 e035f589c91bbfc21f307532e13741499d6e0086c8db430f6b780a1c3202e889 plus
 // the pipeline-harness registry (PIPELINE_HARNESSES / PIPELINE_STUBS: codeowned + secondreader, arm A0+SR). Kept apart from
 // run.mjs while paid runs launched with it are active or resumable (launch.json pins the runner hash). Merge in a quiet
-// window: if run.mjs still has the hash above, move this file onto it and delete these six lines; otherwise re-apply the
+// window: if run.mjs still has the hash above, move this file onto it and delete these seven lines; otherwise re-apply the
 // registry hunks (`diff run.mjs run-sr-wip.mjs`). Then run `node --test experiments/autobench/test/*.test.mjs`.
-// Until then, A0+SR runs use this file.
+// Until then, A0+SR runs use this file. Also carried here (review 2026-10-15): AM-4, a scripted run is never exempt from the
+// test-split guard, even with a matching --harness-hash; after the merge, harness.test.mjs's last guard assertion expects /not dev-split/.
 // AutomationBench runner (experiments/autobench; notes: research/automationbench-20261014/NOTES.md).
 //
 // Per task: bridge.py prepares the task exactly as the official eval loads it; per fork, a bridge process serves the
@@ -205,7 +206,7 @@ export async function runTasks(o) {
     manifest = co ? (co.pipelineManifest ?? co.codeownedManifest)((co.pipelineConfig ?? co.codeownedConfig)({ ...opt, cli })) : harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli }));
     if (opt.harnessHash && opt.harnessHash !== manifest.sha256) throw new Error(`harness hash mismatch: given ${opt.harnessHash}, recomputed ${manifest.sha256} (files or settings changed)`);
   }
-  const testRunAuthorized = !opt.dryRun && (harness ? Boolean(opt.harnessHash) : !scripted && opt.testRun === TEST_RUN_TOKEN);
+  const testRunAuthorized = !opt.dryRun && !scripted && (harness ? Boolean(opt.harnessHash) : opt.testRun === TEST_RUN_TOKEN); // AM-4: a scripted run is never exempt
   if (!testRunAuthorized) assertDevOnly(tasks);
   // Resume: a live directory that already holds a run continues only with --resume and the launch settings unchanged.
   const resultsFile = path.join(live, 'results.jsonl'), faultsFile = path.join(live, 'results.faults.jsonl'), launchFile = path.join(live, 'launch.json');
