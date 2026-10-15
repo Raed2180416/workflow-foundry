@@ -290,6 +290,7 @@ class Gen:
         self.msgs0: list[dict] = []             # world0 Slack messages
         self.bot_replies: list[dict] = []       # this week's expected bot replies {thread_ts, text}
         self.reviews: list[str] = []            # this week's escalated trigger ids
+        self.reserved: set = set()              # (email, expense date) of the daily-cap scenarios
         self.file_no = 0
 
     # -- ids, times ---------------------------------------------------------------------------------------------------
@@ -378,9 +379,12 @@ class Gen:
             s["slack_name"] = s["name"]
             s["email"] = f"{m['first'].lower()}.{s['last'].lower()}@{ORG}"
             s["namesake_of"] = m["email"]
-        # display names: the three nickname staff, plus one manager with a probability
+        # display names: the three nickname staff, and (half the seeds) one manager shown with an initial
         for s in staff[:3]:
             s["slack_name"] = f"{NICK[s['first']]} {s['last']}"
+        if r.random() < 0.5:
+            m = managers[r.choice(DEPTS)]
+            m["slack_name"] = f"{m['first']} {m['last'][0]}."
         people += staff
         assert len({p["name"] for p in people}) == len(people) and len({p["email"] for p in people}) == len(people)
         for p in people:
@@ -898,16 +902,21 @@ class Gen:
             later = [i for i in free_idx if i > i0]
             j, k = sorted(r.sample(later, 2))
             exp_d = times[i0].date() - timedelta(days=r.choice([0, 0, 1]))
-            if kind == "cap-reject":
-                a1, a2 = self.amt(26, 48), self.amt(26, 48)
-                a3 = self.amt(float(max(Decimal("26"), LIMITS["cap"] - a1 - a2 + 1)), 50)
-            else:
-                a1, a2 = self.amt(20, 40), self.amt(20, 35)
-                a3 = LIMITS["cap"] - a1 - a2 if self.r.random() < 0.5 else self.amt(8, float(LIMITS["cap"] - a1 - a2))
-                a3 = min(a3, LIMITS["individual"])
+            while True:
+                if kind == "cap-reject":
+                    a1, a2 = self.amt(26, 48), self.amt(26, 48)
+                    a3 = self.amt(float(max(Decimal("26"), LIMITS["cap"] - a1 - a2 + 1)), 50)
+                else:
+                    a1, a2 = self.amt(20, 40), self.amt(20, 35)
+                    target = r.choice([Decimal("100"), Decimal("100"), Decimal("95.50"), Decimal("90")])
+                    a3 = min(target - a1 - a2, LIMITS["individual"])
+                if len({a1, a2, a3}) == 3:
+                    break
             for pos, (intent, a) in zip((i0, j, k), (("cap-setup", a1), ("cap-setup", a2), (kind, a3))):
                 slots[pos] = {"intent": intent, "emp": emp, "fixed": {"date": exp_d, "amount": a}}
+            self.reserved.add((emp["email"], exp_d))
         if self.cap_hist:
+            self.reserved.add((self.cap_hist["emp"]["email"], self.cap_hist["date"]))
             pos = take([i for i in idx if times[i] < self.monday + timedelta(days=2)])
             slots[pos] = {"intent": "cap-history", "emp": self.cap_hist["emp"],
                           "fixed": {"date": self.cap_hist["date"], "amount": self.cap_hist["final"]}}
@@ -918,6 +927,8 @@ class Gen:
             elif intent == "near-dup":
                 pos = take([i for i in idx if i >= int(n_post * 0.25)])
             else:
+                pos = take(idx)
+            if pos is None:
                 pos = take(idx)
             slots[pos] = {"intent": intent}
         for intent in free:
@@ -937,7 +948,10 @@ class Gen:
 
         def after(t0, lo_min=12, hi=None):
             hi = min(hi or end, t0 + timedelta(days=2), end)
-            return self.minute_slot(t0 + timedelta(minutes=lo_min), max(hi, t0 + timedelta(minutes=lo_min + 30)))
+            try:
+                return self.minute_slot(t0 + timedelta(minutes=lo_min), max(hi, t0 + timedelta(minutes=lo_min + 30)))
+            except RuntimeError:
+                return self.minute_slot(t0 + timedelta(minutes=lo_min), end)
         by_intent = lambda name: [s for s in slots if s["intent"] == name]  # noqa: E731
         used_targets: set[str] = set()
 
@@ -956,7 +970,8 @@ class Gen:
             else:
                 t = pick_target(by_intent("fixable-ok"))
             plans.append({"kind": "receipt.corrected", "sub": c, "target": t["key"], "at": after(t["at"])})
-        pend = [s for s in slots if s["intent"].startswith("pending") or s["intent"] == "flight-long"]
+        pend = [s for s in slots if (s["intent"].startswith("pending") or s["intent"] == "flight-long")
+                and s["at"] < self.friday + timedelta(hours=9)]
         hist_pend = [ts for ts in self.hist if self.receipts[ts]["status"] == PENDING]
         approvals = []
         for a in appr:
@@ -1104,17 +1119,15 @@ class Gen:
             return self.near_dup(p, at, labels)
         mapped = {"fixable-ok": r.choice(["ok-supplies", "ok-software", "ok-ride", "ok-train", "ok-consulting"]),
                   "fixable-cat": r.choice(["fix-cat-supplies", "fix-cat-software"])}.get(intent, intent)
-        for _ in range(50):
+        for _ in range(60):
             if mapped == "ok-meal-ind":
                 d = fixed.get("date") or self.expense_date(post)
                 left = LIMITS["cap"] - self.cap_other(emp["name"], d, None)
-                if left < 12 or (emp is (self.cap_hist or {}).get("emp") and d == self.cap_hist["date"]):
+                if left < 12 or (emp["email"], d) in self.reserved:
                     continue
                 f, spec = self.facts(mapped, post, {"date": d, "cap_left": left})
             else:
                 f, spec = self.facts(mapped, post, fixed)
-            if intent == "fixable-ok" and f["amount"] > LIMITS["receipt"] and not f["receipt"]:
-                continue
             if intent == "fixable-ok" and f["amount"] <= LIMITS["receipt"]:
                 f["receipt"] = True
             if intent in ("cap-setup", "cap-reject", "cap-under", "cap-history"):
@@ -1126,16 +1139,23 @@ class Gen:
         if self.is_repost(emp["email"], f["date"], f["amount"]):
             raise RuntimeError(f"planned receipt {intent} collides with an earlier receipt")
         traps = {k: r.random() < v for k, v in FORMAT_RATE[self.d].items()}
-        if intent in ("cap-setup",):
+        if intent == "cap-setup":
             traps = {k: False for k in traps}
         st = self.choose_style(f, spec, post, traps)
         if intent == "fixable-cat":
-            st["cat_field"] = "Office Supplies" if f["category"] == "Software" else "Software"
-            f["category"] = st["cat_field"]
-            spec["true_category"] = "Software" if f["category"] == "Office Supplies" else "Office Supplies"
+            # declared with the other category: the category field decides until the poster corrects it
+            declared = "Office Supplies" if f["category"] == "Software" else "Software"
+            spec["true_category"] = f["category"]
+            f["category"] = declared
+            st["cat_field"] = declared
             st["template"] = "A"
+            labels.append("declared-category")
+        try:
             text, files = self.render(f, spec, st, post)
-        else:
+        except AssertionError:
+            if st["cat_field"] is not None:
+                raise
+            st["cat_field"] = f["category"]           # the words alone are ambiguous: write the category
             text, files = self.render(f, spec, st, post)
         spec["style"] = st
         self.format_labels(st, f, spec, labels)
@@ -1285,7 +1305,8 @@ class Gen:
                 poster = emp
                 text = r.choice(["Pre-approved by my manager on our call", "pre-approved (verbally, by my manager)"])
             elif sub == "wrong-finance":
-                poster = self.finance if self.finance is not emp else self.director
+                poster = self.finance if self.finance is not emp and self.finance is not mgr else \
+                    r.choice([s for s in self.staff if s is not emp])
                 text = "Pre-approved from the finance side"
             elif sub == "wrong-namesake":
                 poster = next((s for s in self.people if s.get("namesake_of") == mgr["email"]), None)
@@ -1352,7 +1373,7 @@ class Gen:
                           ("flight-long" if f["flight"]["hours"] > LIMITS["flight_hours"] else "rule-flight"))
         if reason == "Over daily meal cap":
             labels.append("meal-cap")
-        elif individual(f) and status and other > 0 and other + f["amount"] > Decimal("60"):
+        elif individual(f) and status and other > 0 and other + f["amount"] >= Decimal("75"):
             labels.append("cap-under")
         if reason == "Over daily meal cap" or (individual(f) and other > 0):
             hist_rows = [row for row in self.rows if row["cells"]["Employee"] == emp["name"]
@@ -1414,7 +1435,7 @@ class Gen:
         else:
             ex["no_row"].append(rc["ts"])
         rc["status"], rc["reason"] = status, reason
-        if status and emp["slack_name"] != emp["name"] and rc["row"] is not None and not ex["set_rows"]:
+        if ex["new_rows"] and emp["slack_name"] != emp["name"]:
             labels.append("display-name")
         self.reply(tr, rc["ts"], reply_text(status, reason, cur))
         tr["outcome"] = "act"
@@ -1502,8 +1523,11 @@ class Gen:
         self.cap_hist = None
         if self.d == "d3" or (self.d == "d2" and r.random() < 0.5):
             emp = r.choice(self.staff)
-            a1, a2 = self.amt(30, 47), self.amt(30, 47)
-            final = self.amt(float(max(Decimal("26"), LIMITS["cap"] - a1 - a2 + 1)), 50)
+            while True:
+                a1, a2 = self.amt(30, 47), self.amt(30, 47)
+                final = self.amt(float(max(Decimal("26"), LIMITS["cap"] - a1 - a2 + 1)), 50)
+                if len({a1, a2, final}) == 3:
+                    break
             self.cap_hist = {"emp": emp, "date": (self.monday - timedelta(days=r.choice([3, 4]))).date(),
                              "setup": [a1, a2], "final": final}
         self.build_history()
@@ -1541,7 +1565,7 @@ def serve_input(seed: int, trigger: dict) -> dict:
 
 TRAP_KIND = {"synonym": "T-format", "words-amount": "T-format", "currency-format": "T-format",
              "date-format": "T-format", "drinks": "T-format", "hotel-intl": "T-format", "flight-long": "T-format",
-             "flight-six": "T-format",
+             "flight-six": "T-format", "declared-category": "T-format",
              "wrong-corrector": "T-authority", "wrong-approver": "T-authority", "unknown-poster": "T-authority",
              "namesake": "T-lookalike", "display-name": "T-lookalike", "manager-display-name": "T-lookalike",
              "approval-negated": "T-note",
