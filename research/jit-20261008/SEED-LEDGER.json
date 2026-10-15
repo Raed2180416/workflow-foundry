@@ -1015,7 +1015,7 @@
    "allow": [
     "ebed-rehearsal"
    ],
-   "use": "E7 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned)",
+   "use": "E7 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned). 1241 touched 2026-10-14 at d3 by the part-A walker discrimination check only (no solver, no model; the check now runs on dev seeds, beds/ebed/e7/tools/walker-grade.mjs; recorded 2026-10-15)",
    "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
   },
   {

@@ -475,22 +475,66 @@ test('host: approval tasks route past the caller (SoD) and answer by plan; a wal
   assert.equal(res.ok, true, JSON.stringify(res.divergence ?? null).slice(0, 300));
 });
 
-test('leak: no truth-only label, plan field or case id reaches an arm (inputs, files, query results)', async () => {
+test('leak: no truth-only label, plan field or case id reaches an arm, and nothing is visible before its instant (inputs, files, query results)', async () => {
+  // Extended after review 2026-10-15: every non-legit class label (also the short ones: slow, storm, bounce), every case
+  // id, the truth-only keys, and future knowledge: an event id or a docs/<eventId>.txt before the event's delivery
+  // instant, a rulebook edition's files before its `published` instant.
   const w = generateWorld({ seed: 1014, difficulty: 5, size: 60 });
+  // Labels that are also legitimate words of the arm's world: an intent (withdraw), a resolver action (reassign), and two
+  // plain words; every other class label must never be quoted in what an arm sees.
   const legit = new Set(['straight', 'withdraw', 'reassign', 'invalid']);
-  const forbidden = [...new Set(cases(w).map(([, t]) => t.class))].filter(c => c.length > 6 && !legit.has(c));
-  const seen = [];
+  const labels = [...new Set(cases(w).map(([, t]) => t.class))].filter(c => !legit.has(c));
+  assert.ok(labels.some(c => c.length <= 6), 'the world has short class labels to check');
+  const ticks = [];
   const inner = walkerArm();
   const spy = { id: 'spy', tick(input, ctx) {
-    seen.push(JSON.stringify(input));
-    seen.push(JSON.stringify(Object.fromEntries(Object.entries(ctx.files).filter(([p]) => !p.startsWith('spec/')))));
-    for (const t of ['itsm.incidents', 'sla.slas', 'sla.escalations', 'notify.notifications']) seen.push(JSON.stringify(ctx.query(t, {})));
+    const parts = [JSON.stringify(input), JSON.stringify(Object.fromEntries(Object.entries(ctx.files).filter(([p]) => !p.startsWith('spec/'))))];
+    for (const t of ['itsm.incidents', 'sla.slas', 'sla.escalations', 'notify.notifications']) parts.push(JSON.stringify(ctx.query(t, {})));
+    ticks.push({ now: msOf(input.now), text: parts.join('\n'), paths: Object.keys(ctx.files) });
     return inner.tick(input, ctx);
   } };
   await createHost({ item: binding, world: w, arm: spy }).run();
-  const all = seen.join('\n');
-  for (const s of forbidden) assert.ok(!all.includes(`"${s}"`), `class label ${s} leaked`);
-  for (const [c] of cases(w).slice(0, 40)) assert.ok(!all.includes(`"${c}"`), `case id ${c} leaked`);
+  assert.ok(ticks.length > 100, `${ticks.length} ticks`);
+  const all = ticks.map(t => t.text).join('\n');
+  for (const s of labels) assert.ok(!all.includes(`"${s}"`), `class label ${s} leaked`);
+  for (const [c] of cases(w)) assert.ok(!all.includes(`"${c}"`), `case id ${c} leaked`);
+  const truthKeys = ['steps', 'plannedEnd', 'holdAt', 'instants', 'deadlines', 'epoch', 'class', 'truth', 'noise', 'faults', 'ties', 'approval', 'recurOf',
+    'fallbacks', 'preSteps', 'tail', 'replyDeadline', 'confirmDeadline', 'guard', 'eventCase', 'plan', 'controlFlags'];
+  for (const k of truthKeys) assert.ok(!all.includes(`"${k}":`), `truth key ${k} leaked`);
   for (const s of ['"plannedEnd"', '"replyDeadline"', '"confirmDeadline"', '"ties"', '"guard"', '"approval"', '"recurOf"', '"fallbacks"', 'controlFlags', '"tail"', w.id]) assert.ok(!all.includes(s), `${s} leaked`);
   assert.ok(all.includes(w.publicId), 'the arm sees the opaque world id');
+  // Future knowledge. An event id is visible from its delivery instant (an arrival's `at`; an event of the go-live export
+  // travels in the migration delivered at t0); a doc file is its event's; an edition's files appear at `published`.
+  const visibleFrom = new Map(w.arrivals.map(e => [e.id, msOf(e.at)]));
+  for (const b of w.backlog) for (const e of b.export.events) visibleFrom.set(e.id, msOf(w.t0));
+  const published = new Map(w.rulebook.editions.map(e => [e.id, msOf(e.published)]));
+  assert.ok([...visibleFrom.values(), ...published.values()].every(Number.isFinite), 'every visibility instant parses');
+  const problems = [];
+  let docs = 0, ids = 0, onTime = 0;
+  const firstSeen = new Map();
+  const ed2 = w.rulebook.editions.find(e => e.id !== w.rulebook.editions[0].id);
+  assert.ok(ed2 && published.get(ed2.id) > msOf(w.t0), 'd5 publishes a second edition inside the horizon');
+  let ed2Seen = false;
+  for (const t of ticks) {
+    for (const id of new Set(t.text.match(/ev-[0-9a-f]{12}/g) ?? [])) {
+      ids++;
+      if (!firstSeen.has(id)) firstSeen.set(id, t.now);
+      const v = visibleFrom.get(id);
+      if (v === undefined) problems.push(`${new Date(t.now).toISOString()}: unknown event id ${id}`);
+      else if (v > t.now) problems.push(`${new Date(t.now).toISOString()}: event id ${id} before its delivery ${new Date(v).toISOString()}`);
+    }
+    for (const p of t.paths) {
+      const d = /^docs\/(.+)\.txt$/.exec(p);
+      if (d) { docs++; const v = visibleFrom.get(d[1]); if (v === undefined || v > t.now) problems.push(`${new Date(t.now).toISOString()}: ${p} before its event`); }
+      const r = /^rulebook\/([^/]+)\//.exec(p);
+      if (r) {
+        if (!(published.get(r[1]) <= t.now)) problems.push(`${new Date(t.now).toISOString()}: ${p} before its edition is published`);
+        if (r[1] === ed2.id) ed2Seen = true;
+      }
+    }
+  }
+  assert.deepEqual(problems.slice(0, 10), [], `${problems.length} future-knowledge problems`);
+  for (const [id, at] of firstSeen) if (at === visibleFrom.get(id)) onTime++;
+  // Not vacuous: ids, docs and the second edition were seen, and most event ids first appear exactly at their delivery.
+  assert.ok(ids > 0 && docs > 0 && ed2Seen && onTime >= firstSeen.size / 2, `the checks saw ${ids} event ids (${onTime}/${firstSeen.size} first seen at delivery), ${docs} doc files, edition 2 seen ${ed2Seen}`);
 });

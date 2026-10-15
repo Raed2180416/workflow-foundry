@@ -413,7 +413,8 @@ values. Times are local unless marked Z.
 | G9 auto-close | hold Fri 2026-03-13 16:00+01:00, 3 business days | D Wed 03-18 16:00; reply at D counts; close window (D, D + 60 min] with `at: D`; reply at D + 1 min changes nothing | R6.1–R6.3, S1, S10 | timer-first (close at D) |
 | G9b auto-close, Easter | hold Thu 2026-04-02 10:00+02:00 | D Thu 04-09 10:00+02:00 | R6.1 | no-holiday → Tue 04-07 10:00 |
 | G10 resolved close | resolved Fri 2026-03-06 12:00+01:00, 2 business days | D2 Tue 03-10 12:00; confirm before D2 closes at its time; none → close `at: D2` | R6.4, R6.5 | timer-first |
-| G11 retroactive start + pause | opened Mon 2026-03-16 09:00 at P4; hold awaitingCaller 13:00–15:00; reclassify to P3 Tue 03-17 13:00 | RES-P4 cancelled `start-failed` at Tue 13:00; RES-P3 gen 1 startAt Mon 09:00, retro pause/resume 13:00/15:00, business at attach 600; planned Thu 03-19 11:00 | R4.2, R4.3 | no-retroactive-start → Fri 03-20 13:00 |
+| G11 retroactive start + pause | opened Mon 2026-03-16 09:00 at P4; hold awaitingCaller 13:00–15:00; reclassify to P3 Tue 03-17 13:00 | RES-P4 cancelled `start-failed` at Tue 13:00; RES-P3 gen 1 startAt Mon 09:00, retro pause/resume 13:00/15:00, business at attach 600; the past resume plans Thu 03-19 11:00, the start record Wed 03-18 17:00 (planned as of startAt, SPEC S13; corrected in part B) | R4.2, R4.3, S13 | no-retroactive-start → Fri 03-20 13:00 |
+| G11b attaches paused (added 2026-10-15) | as G11, but held awaitingCaller Mon 14:00 and reclassified to P3 Tue 03-17 10:00 during the hold; reply Tue 15:00 | RES-P3 gen 1 attaches paused: start record plans Wed 03-18 17:00 (S13, not null), pause at Mon 14:00 due from the attach (S14), no resume, breach or escalation while paused; resume Tue 15:00 plans Fri 03-20 10:00; 50% Wed 14:00, 75% Thu 03-19 12:00 | R4.3, R4.5, S13, S14 | – |
 | G12 reset / re-attach | P3 incident; bounce (reassign before acceptance) Fri 2026-03-06 21:00+01:00 to a New York group | RSP-STD gen 1 cancelled `reset`; gen 2 startAt 21:00+01:00 on SCH-US-STD, planned Mon 03-09 10:00−04:00; after acceptance a later reassign attaches gen 3 (start holds, none active) | R4.2 reset, attach | no-reset |
 | G13 edition at attach | d4: opened Fri 2026-03-20 10:00+01:00 at P4; reclassified to P3 Mon 03-23 10:00 | RES-P3 uses ed-2 target 960: business at attach 480 = **50% reached exactly at attach**; 75% Mon 14:00; planned Tue 03-24 10:00 | R0, R4.3, S6, S12 | edition-at-start → 1440, planned Wed 03-25 10:00 |
 | G14 major approval | P1 at creation 10:00; task created 10:05 | deadline 10:35; answer at 10:35 counts; none → `setMajor at 10:35` in (10:35, 10:50]; resolved at 10:20 before an answer → moot; caller u-im1 must be excluded | R7, S1, S11 | timer-first, no-sod |
@@ -492,7 +493,9 @@ node beds/ebed/e7/tools/timeline.mjs --seed 1001 --difficulty 3 --case i0042   #
 Dev `ebed-dev` **1001–1199** (bed health, suites, goldens, controls, dev streams); rehearsal `ebed-e7-rehearsal`
 **1201–1249** (author fixtures 1201–1206, attacks 1211–1222, reference validation 1231, dev rehearsals 1232–1234,
 specificity and Track C rehearsals 1241–1249); fuzz bases 1301–1310; held-out 9101–9104, sealed 9201–9204 and scale
-9301–9302 are reserved and untouched by the build.
+9301–9302 are reserved and untouched by the build. **Touched:** 1241 at d3 by the part-A walker discrimination check on
+2026-10-14 (walker only: no solver, no model); recorded in SEED-LEDGER on 2026-10-15, when the check moved to dev seed
+1101 (`tools/walker-grade.mjs`, which refuses the rehearsal block).
 
 ## 14. Semantics ledger (draft for `ledger/SEMANTICS.md`)
 

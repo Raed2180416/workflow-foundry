@@ -285,6 +285,21 @@ test('spec states the readings the oracle grades: S13-S15 and the warning rule (
   assert.ok(n >= 1, 'no warning on an open incident in dev world 1012 d3');
 });
 
+test('seed discipline: the walker check runs on dev seeds only and the touch of rehearsal seed 1241 is recorded (review 2026-10-15)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(process.execPath, [new URL('../tools/walker-grade.mjs', import.meta.url).pathname, '--seed', '1241'], { encoding: 'utf8', timeout: 60_000 });
+  assert.notEqual(r.status, 0, 'walker-grade ran on a rehearsal seed');
+  assert.match(r.stderr, /single-use rehearsal block 1201-1249/);
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  const m = /\*\*Discrimination sanity check:\*\*[^]*?seed (\d+) d3/.exec(readme);
+  assert.ok(m, 'README states the discrimination check and its seed');
+  assert.ok(Number(m[1]) >= 1001 && Number(m[1]) <= 1199, `README discrimination check on seed ${m[1]}, not a dev seed`);
+  const ledger = JSON.parse(readFileSync(new URL('../../../../research/jit-20261008/SEED-LEDGER.json', import.meta.url), 'utf8'));
+  const e7 = ledger.ranges.find(x => x.id === 'ebed-e7-rehearsal');
+  assert.match(e7.use, /1241 touched 2026-10-14 at d3 by the part-A walker discrimination check only/);
+});
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Goldens (DESIGN §9): hand-derived, rule-cited; the same module an oracle mutation tool would run per mutant
 
