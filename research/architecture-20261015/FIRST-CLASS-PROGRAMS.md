@@ -390,8 +390,8 @@ where a workflow advantage was measured.
 - **Bed.** Sized world 1232 d2 size 12, the identical 14 cases (10/14 for agent-H, 14/14 for the workflows); 1233 is added
   if the cap allows.
 - **Reading.**
-  - If agent-H + validator reaches ≥ 13/14, E8's workflow advantage is a contract-reading advantage, not a structure
-    advantage. F1, F3 and F7 then use this arm as their agent baseline.
+  - If agent-H + validator reaches 13/14 or 14/14, F1, F3, F4 and F7 use this arm as their agent baseline. E8's advantage
+    is then read as mostly a contract-reading advantage, not a structure advantage. That is a reading, not a claim.
   - If it stays ≤ 11/14, the advantage survives the strongest simple agent.
   - Either way, its wall time and dollars enter LAT-0.
 - **Resolution.** The MDE at 14 paired cases is large: about 4–5 discordant cases. Against the workflows' 14/14, the
