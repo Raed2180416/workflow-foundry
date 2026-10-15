@@ -2500,7 +2500,7 @@
    "inTotals": true,
    "core": false,
    "approved": false,
-   "gate": "owner gate (decision 14): NL0's approved $140 cap covers its three jobs only; the owner tasks run under this stage's own cap once the owner approves it",
+   "gate": "owner gate (decision 14): this stage's $40 cap is new money beside NL0's approved $140, so the owner tasks run under it once the owner approves it",
    "what": "up to 5 owner tasks as development jobs (owner-dev): every L_today mode once per task (one draw each of direct-H, agent-H and agent-O; one lineage each of agent-H+proc and construct-H, whose procedure writer and builder read the task itself, never its acceptance check); no racing top-ups; K7 per owner task",
    "runs": [
     {

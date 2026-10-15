@@ -252,7 +252,12 @@ test('the CLI: --commit-decisions seals TRAIN-only decisions, --split heldout ve
   assert.equal(readFileSync(path.join(root, 'a', 'report.json'), 'utf8'), readFileSync(path.join(root, 'b', 'report.json'), 'utf8'));
   assert.equal(readFileSync(path.join(root, 'a', 'report.txt'), 'utf8'), readFileSync(path.join(root, 'b', 'report.txt'), 'utf8'));
   const rep = JSON.parse(readFileSync(path.join(root, 'a', 'report.json'), 'utf8'));
-  assert.equal(rep.leaks.L6.ok, true, JSON.stringify(rep.leaks.L6)); assert.equal(rep.split, 'heldout');
+  // A held-out reading through the CLI always checks the envelope's provenance (PREREG §12, D9). This envelope sits in a
+  // temp directory (in no commit), the A-Freeze row is TBD-FREEZE and no stage wrote LAUNCH.json, so L6 fails on
+  // provenance alone; every sealed and scored decision still matches.
+  assert.equal(rep.leaks.L6.provenance, 'checked'); assert.equal(rep.leaks.L6.ok, false); assert.equal(rep.split, 'heldout');
+  assert.ok(rep.leaks.L6.compared > 0 && rep.leaks.L6.scoredCompared > 0);
+  assert.deepEqual(rep.leaks.L6.problems.map(p => (/no git commit time/.test(p) ? 'commit' : /TBD-FREEZE/.test(p) ? 'a-freeze' : /no launch time/.test(p) ? 'launch' : p)), ['commit', 'a-freeze', 'launch']);
   const dev = run(['--labels', labels, '--split', 'train', '--reps', '150', '--boot', '0', '--perms', '0']);
   assert.equal(dev.status, 0, dev.stderr); assert.match(dev.stdout, /development \(leave-one-cluster-out on TRAIN\)/);
   const pw = run(['--power', '--sims', '200']);

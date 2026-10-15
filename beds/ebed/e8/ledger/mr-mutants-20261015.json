@@ -1,0 +1,2771 @@
+{
+ "what": "E8 metamorphic relations (beds/ebed/e8/metamorphic.mjs) against the 304 oracle mutants of tools/mutate.mjs; development evidence, $0",
+ "computedOn": {
+  "transition.mjs": "86f211c1a441",
+  "tools/mutate.mjs": "cf03dda42361",
+  "metamorphic.mjs": "c02600ad7154",
+  "tools/mr-mutants.mjs": "16359fb4c79a"
+ },
+ "protocol": {
+  "equivalents": "the 64 ledger equivalents: every mutCase of every relation, oracle flavour (7 arms) and reference flavour (both timings, every mutCase) - node beds/ebed/e8/tools/mr-mutants.mjs --equivalents",
+  "others": "the other 240: oracle flavour on the first mutCase of each relation (7 arms), reference flavour (earliest timing, same case) only where the oracle flavour did not kill - --non-equivalents --quick (run in three parts: k0-k57, k58-k180, k181-k303)",
+  "columns": "oracle = killed by the oracle flavour; referenceOnly = killed by the reference flavour where the oracle flavour did not; killed = either",
+  "note": "The equivalents run used metamorphic.mjs before two later edits (run guards on wake-ups and journal rows for runaway mutated references; the oracle flavour stopping at its first violation): neither changes a verdict on a run that completes, and no equivalent run hit a guard."
+ },
+ "summary": {
+  "mutants": 304,
+  "killedByAnyRelation": 77,
+  "importErrors": [
+   74,
+   202
+  ],
+  "equivalentsRun": 64,
+  "equivalentsKilled": [],
+  "killedOutsideLedgerKilledSet": [],
+  "killedByExactlyOneRelation": {
+   "MR3": 2,
+   "MR5": 1,
+   "MR6": 1,
+   "MR7": 6,
+   "MR11": 53,
+   "MR13": 2
+  },
+  "killsOnlyThroughExceptions": [
+   25,
+   46,
+   48,
+   71,
+   72,
+   73,
+   179,
+   285
+  ]
+ },
+ "perRelation": {
+  "MR1": {
+   "oracle": 3,
+   "referenceOnly": 0,
+   "killed": 3,
+   "mutants": [
+    3,
+    5,
+    6
+   ],
+   "equivalentsKilled": []
+  },
+  "MR2": {
+   "oracle": 0,
+   "referenceOnly": 0,
+   "killed": 0,
+   "mutants": [],
+   "equivalentsKilled": []
+  },
+  "MR3": {
+   "oracle": 6,
+   "referenceOnly": 0,
+   "killed": 6,
+   "mutants": [
+    186,
+    188,
+    198,
+    199,
+    228,
+    253
+   ],
+   "equivalentsKilled": []
+  },
+  "MR4": {
+   "oracle": 0,
+   "referenceOnly": 0,
+   "killed": 0,
+   "mutants": [],
+   "equivalentsKilled": []
+  },
+  "MR5": {
+   "oracle": 2,
+   "referenceOnly": 1,
+   "killed": 3,
+   "mutants": [
+    82,
+    141,
+    143
+   ],
+   "equivalentsKilled": []
+  },
+  "MR6": {
+   "oracle": 0,
+   "referenceOnly": 1,
+   "killed": 1,
+   "mutants": [
+    117
+   ],
+   "equivalentsKilled": []
+  },
+  "MR7": {
+   "oracle": 0,
+   "referenceOnly": 6,
+   "killed": 6,
+   "mutants": [
+    275,
+    276,
+    281,
+    282,
+    283,
+    284
+   ],
+   "equivalentsKilled": []
+  },
+  "MR8": {
+   "oracle": 0,
+   "referenceOnly": 0,
+   "killed": 0,
+   "mutants": [],
+   "equivalentsKilled": []
+  },
+  "MR9": {
+   "oracle": 1,
+   "referenceOnly": 0,
+   "killed": 1,
+   "mutants": [
+    10
+   ],
+   "equivalentsKilled": []
+  },
+  "MR10": {
+   "oracle": 1,
+   "referenceOnly": 0,
+   "killed": 1,
+   "mutants": [
+    34
+   ],
+   "equivalentsKilled": []
+  },
+  "MR11": {
+   "oracle": 47,
+   "referenceOnly": 18,
+   "killed": 65,
+   "mutants": [
+    3,
+    5,
+    6,
+    10,
+    12,
+    18,
+    19,
+    20,
+    23,
+    25,
+    26,
+    27,
+    34,
+    46,
+    48,
+    52,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    63,
+    71,
+    72,
+    73,
+    82,
+    141,
+    142,
+    154,
+    155,
+    156,
+    162,
+    163,
+    164,
+    165,
+    171,
+    173,
+    178,
+    179,
+    180,
+    186,
+    187,
+    188,
+    189,
+    197,
+    199,
+    204,
+    219,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    234,
+    235,
+    236,
+    262,
+    285,
+    286,
+    289,
+    290,
+    291,
+    292
+   ],
+   "equivalentsKilled": []
+  },
+  "MR12": {
+   "oracle": 0,
+   "referenceOnly": 0,
+   "killed": 0,
+   "mutants": [],
+   "equivalentsKilled": []
+  },
+  "MR13": {
+   "oracle": 0,
+   "referenceOnly": 4,
+   "killed": 4,
+   "mutants": [
+    10,
+    12,
+    205,
+    206
+   ],
+   "equivalentsKilled": []
+  }
+ },
+ "mutants": [
+  {
+   "k": 0,
+   "line": 15,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 1,
+   "line": 16,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 2,
+   "line": 16,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 3,
+   "line": 21,
+   "ledger": "killed",
+   "killedBy": {
+    "MR1": {
+     "at": "MR1 1122:d3:12:tail",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0008"
+    },
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "run error",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 4,
+   "line": 21,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 5,
+   "line": 22,
+   "ledger": "killed",
+   "killedBy": {
+    "MR1": {
+     "at": "MR1 1122:d3:12:tail",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0008"
+    },
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "run error",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 6,
+   "line": 22,
+   "ledger": "killed",
+   "killedBy": {
+    "MR1": {
+     "at": "MR1 1122:d3:12:tail",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0008"
+    },
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "run error",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 7,
+   "line": 22,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 8,
+   "line": 34,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 9,
+   "line": 34,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 10,
+   "line": 34,
+   "ledger": "killed",
+   "killedBy": {
+    "MR9": {
+     "at": "MR9 1122:d3:12:tail",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0001"
+    },
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "transition threw",
+     "case": "o0006"
+    },
+    "MR13": {
+     "at": "MR13 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "journal",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 11,
+   "line": 34,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 12,
+   "line": 34,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "transition threw",
+     "case": "o0006"
+    },
+    "MR13": {
+     "at": "MR13 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "journal",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 13,
+   "line": 34,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 14,
+   "line": 41,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 15,
+   "line": 41,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 16,
+   "line": 45,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 17,
+   "line": 47,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 18,
+   "line": 52,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-07T12:30:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0012"
+    }
+   }
+  },
+  {
+   "k": 19,
+   "line": 52,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-07T12:30:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0012"
+    }
+   }
+  },
+  {
+   "k": 20,
+   "line": 52,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-07T12:30:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0012"
+    }
+   }
+  },
+  {
+   "k": 21,
+   "line": 52,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 22,
+   "line": 55,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 23,
+   "line": 55,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 24,
+   "line": 55,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 25,
+   "line": 55,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "transition threw",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 26,
+   "line": 55,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 27,
+   "line": 64,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 28,
+   "line": 78,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 29,
+   "line": 78,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 30,
+   "line": 79,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 31,
+   "line": 79,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 32,
+   "line": 80,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 33,
+   "line": 80,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 34,
+   "line": 81,
+   "ledger": "killed",
+   "killedBy": {
+    "MR10": {
+     "at": "MR10 1122:d3:12:tail",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict of an order that never reads the limit",
+     "case": "o0001"
+    },
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 35,
+   "line": 81,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 36,
+   "line": 85,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 37,
+   "line": 85,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 38,
+   "line": 85,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 39,
+   "line": 85,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 40,
+   "line": 86,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 41,
+   "line": 86,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 42,
+   "line": 86,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 43,
+   "line": 86,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 44,
+   "line": 86,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 45,
+   "line": 86,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 46,
+   "line": 90,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "transition threw",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 47,
+   "line": 90,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 48,
+   "line": 90,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "transition threw",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 49,
+   "line": 91,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 50,
+   "line": 93,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 51,
+   "line": 98,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 52,
+   "line": 101,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 53,
+   "line": 102,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 54,
+   "line": 106,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 55,
+   "line": 118,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 56,
+   "line": 121,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 57,
+   "line": 121,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 58,
+   "line": 121,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 59,
+   "line": 121,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 60,
+   "line": 121,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 61,
+   "line": 123,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 62,
+   "line": 123,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 63,
+   "line": 124,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-07T12:30:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0012"
+    }
+   }
+  },
+  {
+   "k": 64,
+   "line": 125,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 65,
+   "line": 126,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 66,
+   "line": 126,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 67,
+   "line": 127,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 68,
+   "line": 133,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 69,
+   "line": 134,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 70,
+   "line": 140,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 71,
+   "line": 140,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "run error",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 72,
+   "line": 140,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "run error",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 73,
+   "line": 140,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "run error",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 74,
+   "line": 143,
+   "ledger": "killed",
+   "importError": "Unexpected token ':'",
+   "killedBy": {}
+  },
+  {
+   "k": 75,
+   "line": 144,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 76,
+   "line": 144,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 77,
+   "line": 144,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 78,
+   "line": 144,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 79,
+   "line": 145,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 80,
+   "line": 151,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 81,
+   "line": 151,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 82,
+   "line": 152,
+   "ledger": "killed",
+   "killedBy": {
+    "MR5": {
+     "at": "MR5 1122:d3:12:tail same",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "ledger",
+     "case": "o0006"
+    },
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 83,
+   "line": 153,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 84,
+   "line": 153,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 85,
+   "line": 155,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 86,
+   "line": 155,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 87,
+   "line": 156,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 88,
+   "line": 156,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 89,
+   "line": 157,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 90,
+   "line": 159,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 91,
+   "line": 159,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 92,
+   "line": 160,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 93,
+   "line": 163,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 94,
+   "line": 166,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 95,
+   "line": 166,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 96,
+   "line": 167,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 97,
+   "line": 167,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 98,
+   "line": 167,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 99,
+   "line": 167,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 100,
+   "line": 168,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 101,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 102,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 103,
+   "line": 169,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 104,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 105,
+   "line": 169,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 106,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 107,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 108,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 109,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 110,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 111,
+   "line": 169,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 112,
+   "line": 170,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 113,
+   "line": 171,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 114,
+   "line": 171,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 115,
+   "line": 172,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 116,
+   "line": 172,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 117,
+   "line": 180,
+   "ledger": "killed",
+   "killedBy": {
+    "MR6": {
+     "at": "MR6 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "ledger",
+     "case": "o0008"
+    }
+   }
+  },
+  {
+   "k": 118,
+   "line": 181,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 119,
+   "line": 181,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 120,
+   "line": 181,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 121,
+   "line": 184,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 122,
+   "line": 185,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 123,
+   "line": 188,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 124,
+   "line": 188,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 125,
+   "line": 188,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 126,
+   "line": 188,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 127,
+   "line": 188,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 128,
+   "line": 191,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 129,
+   "line": 191,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 130,
+   "line": 192,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 131,
+   "line": 192,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 132,
+   "line": 192,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 133,
+   "line": 193,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 134,
+   "line": 193,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 135,
+   "line": 193,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 136,
+   "line": 198,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 137,
+   "line": 198,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 138,
+   "line": 199,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 139,
+   "line": 200,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 140,
+   "line": 209,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 141,
+   "line": 209,
+   "ledger": "killed",
+   "killedBy": {
+    "MR5": {
+     "at": "MR5 1122:d3:12:tail same",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0005"
+    },
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 142,
+   "line": 209,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 143,
+   "line": 209,
+   "ledger": "killed",
+   "killedBy": {
+    "MR5": {
+     "at": "MR5 1122:d3:12:tail same",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0005"
+    }
+   }
+  },
+  {
+   "k": 144,
+   "line": 209,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 145,
+   "line": 212,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 146,
+   "line": 212,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 147,
+   "line": 212,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 148,
+   "line": 212,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 149,
+   "line": 212,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 150,
+   "line": 212,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 151,
+   "line": 212,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 152,
+   "line": 212,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 153,
+   "line": 212,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 154,
+   "line": 217,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 155,
+   "line": 219,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-05T05:09:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0007"
+    }
+   }
+  },
+  {
+   "k": 156,
+   "line": 219,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-05T05:09:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0007"
+    }
+   }
+  },
+  {
+   "k": 157,
+   "line": 219,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 158,
+   "line": 222,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 159,
+   "line": 223,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 160,
+   "line": 224,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 161,
+   "line": 225,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 162,
+   "line": 226,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 163,
+   "line": 226,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-12T22:23:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0018"
+    }
+   }
+  },
+  {
+   "k": 164,
+   "line": 226,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-12T22:23:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0018"
+    }
+   }
+  },
+  {
+   "k": 165,
+   "line": 227,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-07T12:30:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0012"
+    }
+   }
+  },
+  {
+   "k": 166,
+   "line": 227,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 167,
+   "line": 228,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 168,
+   "line": 228,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 169,
+   "line": 229,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 170,
+   "line": 229,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 171,
+   "line": 230,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-07T12:30:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0012"
+    }
+   }
+  },
+  {
+   "k": 172,
+   "line": 230,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 173,
+   "line": 231,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 174,
+   "line": 231,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 175,
+   "line": 231,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 176,
+   "line": 240,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 177,
+   "line": 240,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 178,
+   "line": 240,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 179,
+   "line": 240,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "transition threw",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 180,
+   "line": 240,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 181,
+   "line": 240,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 182,
+   "line": 242,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 183,
+   "line": 248,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 184,
+   "line": 249,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 185,
+   "line": 256,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 186,
+   "line": 256,
+   "ledger": "killed",
+   "killedBy": {
+    "MR3": {
+     "at": "MR3 1122:d3:12:tail 1",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0001"
+    },
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 187,
+   "line": 256,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 188,
+   "line": 256,
+   "ledger": "killed",
+   "killedBy": {
+    "MR3": {
+     "at": "MR3 1122:d3:12:tail 1",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0001"
+    },
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "run error",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 189,
+   "line": 256,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 190,
+   "line": 258,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 191,
+   "line": 258,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 192,
+   "line": 258,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 193,
+   "line": 260,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 194,
+   "line": 262,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 195,
+   "line": 262,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 196,
+   "line": 263,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 197,
+   "line": 267,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensation order",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 198,
+   "line": 267,
+   "ledger": "killed",
+   "killedBy": {
+    "MR3": {
+     "at": "MR3 1122:d3:12:tail 1",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0001"
+    }
+   }
+  },
+  {
+   "k": 199,
+   "line": 267,
+   "ledger": "killed",
+   "killedBy": {
+    "MR3": {
+     "at": "MR3 1122:d3:12:tail 1",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0001"
+    },
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "run error",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 200,
+   "line": 267,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 201,
+   "line": 268,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 202,
+   "line": 268,
+   "ledger": "killed",
+   "importError": "Unexpected token ':'",
+   "killedBy": {}
+  },
+  {
+   "k": 203,
+   "line": 272,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 204,
+   "line": 273,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensation order",
+     "case": "o0017"
+    }
+   }
+  },
+  {
+   "k": 205,
+   "line": 273,
+   "ledger": "killed",
+   "killedBy": {
+    "MR13": {
+     "at": "MR13 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "journal",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 206,
+   "line": 273,
+   "ledger": "killed",
+   "killedBy": {
+    "MR13": {
+     "at": "MR13 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "journal",
+     "case": null
+    }
+   }
+  },
+  {
+   "k": 207,
+   "line": 273,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 208,
+   "line": 273,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 209,
+   "line": 274,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 210,
+   "line": 274,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 211,
+   "line": 276,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 212,
+   "line": 276,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 213,
+   "line": 276,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 214,
+   "line": 280,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 215,
+   "line": 280,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 216,
+   "line": 280,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 217,
+   "line": 280,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 218,
+   "line": 281,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 219,
+   "line": 283,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-09T20:28:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 220,
+   "line": 283,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 221,
+   "line": 284,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 222,
+   "line": 284,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 223,
+   "line": 284,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-12T22:23:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0018"
+    }
+   }
+  },
+  {
+   "k": 224,
+   "line": 288,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-12T22:23:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0018"
+    }
+   }
+  },
+  {
+   "k": 225,
+   "line": 288,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-11T17:43:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0017"
+    }
+   }
+  },
+  {
+   "k": 226,
+   "line": 291,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-11T17:43:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0017"
+    }
+   }
+  },
+  {
+   "k": 227,
+   "line": 292,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensated a fulfilment that ends processing",
+     "case": "o0016"
+    }
+   }
+  },
+  {
+   "k": 228,
+   "line": 297,
+   "ledger": "killed",
+   "killedBy": {
+    "MR3": {
+     "at": "MR3 1122:d3:12:tail 1",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0001"
+    },
+    "MR11": {
+     "at": "2026-03-02T00:47:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 229,
+   "line": 300,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 230,
+   "line": 300,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 231,
+   "line": 300,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 232,
+   "line": 300,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 233,
+   "line": 301,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 234,
+   "line": 304,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-05T10:34:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0009"
+    }
+   }
+  },
+  {
+   "k": 235,
+   "line": 307,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "2026-03-05T10:34:00.000Z",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "expectation compensation groups",
+     "case": "o0009"
+    }
+   }
+  },
+  {
+   "k": 236,
+   "line": 308,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensated a fulfilment that ends processing",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 237,
+   "line": 309,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 238,
+   "line": 312,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 239,
+   "line": 316,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 240,
+   "line": 319,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 241,
+   "line": 319,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 242,
+   "line": 320,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 243,
+   "line": 320,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 244,
+   "line": 320,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 245,
+   "line": 320,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 246,
+   "line": 323,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 247,
+   "line": 323,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 248,
+   "line": 325,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 249,
+   "line": 327,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 250,
+   "line": 327,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 251,
+   "line": 327,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 252,
+   "line": 327,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 253,
+   "line": 332,
+   "ledger": "killed",
+   "killedBy": {
+    "MR3": {
+     "at": "MR3 1122:d3:12:tail 1",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "verdict",
+     "case": "o0001"
+    }
+   }
+  },
+  {
+   "k": 254,
+   "line": 333,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 255,
+   "line": 333,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 256,
+   "line": 334,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 257,
+   "line": 334,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 258,
+   "line": 340,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 259,
+   "line": 340,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 260,
+   "line": 342,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 261,
+   "line": 342,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 262,
+   "line": 355,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensated a fulfilment that ends null",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 263,
+   "line": 355,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 264,
+   "line": 357,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 265,
+   "line": 357,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 266,
+   "line": 360,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 267,
+   "line": 360,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 268,
+   "line": 362,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 269,
+   "line": 362,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 270,
+   "line": 362,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 271,
+   "line": 363,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 272,
+   "line": 364,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 273,
+   "line": 365,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 274,
+   "line": 366,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 275,
+   "line": 370,
+   "ledger": "killed",
+   "killedBy": {
+    "MR7": {
+     "at": "MR7 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "records",
+     "case": "o0001"
+    }
+   }
+  },
+  {
+   "k": 276,
+   "line": 370,
+   "ledger": "killed",
+   "killedBy": {
+    "MR7": {
+     "at": "MR7 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "records",
+     "case": "o0001"
+    }
+   }
+  },
+  {
+   "k": 277,
+   "line": 370,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 278,
+   "line": 371,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 279,
+   "line": 371,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 280,
+   "line": 371,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 281,
+   "line": 371,
+   "ledger": "killed",
+   "killedBy": {
+    "MR7": {
+     "at": "MR7 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "records",
+     "case": "o0001"
+    }
+   }
+  },
+  {
+   "k": 282,
+   "line": 371,
+   "ledger": "killed",
+   "killedBy": {
+    "MR7": {
+     "at": "MR7 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "records",
+     "case": "o0001"
+    }
+   }
+  },
+  {
+   "k": 283,
+   "line": 371,
+   "ledger": "killed",
+   "killedBy": {
+    "MR7": {
+     "at": "MR7 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "records",
+     "case": "o0001"
+    }
+   }
+  },
+  {
+   "k": 284,
+   "line": 371,
+   "ledger": "killed",
+   "killedBy": {
+    "MR7": {
+     "at": "MR7 1122:d3:12:tail",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "records",
+     "case": "o0001"
+    }
+   }
+  },
+  {
+   "k": 285,
+   "line": 374,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "oracle",
+     "arm": "ref-earliest",
+     "what": "recordsOf threw",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 286,
+   "line": 377,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensated a fulfilment that ends null",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 287,
+   "line": 377,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 288,
+   "line": 377,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 289,
+   "line": 377,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensated a fulfilment that ends pending",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 290,
+   "line": 378,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensated a fulfilment that ends null",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 291,
+   "line": 378,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensated a fulfilment that ends pending",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 292,
+   "line": 378,
+   "ledger": "killed",
+   "killedBy": {
+    "MR11": {
+     "at": "MR11 1132:d3:14:natural",
+     "flavour": "reference",
+     "arm": "ref-earliest",
+     "what": "compensated a fulfilment that ends pending",
+     "case": "o0006"
+    }
+   }
+  },
+  {
+   "k": 293,
+   "line": 378,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 294,
+   "line": 379,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 295,
+   "line": 380,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 296,
+   "line": 381,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 297,
+   "line": 382,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 298,
+   "line": 382,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 299,
+   "line": 383,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 300,
+   "line": 384,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 301,
+   "line": 398,
+   "ledger": "equivalent",
+   "killedBy": {}
+  },
+  {
+   "k": 302,
+   "line": 404,
+   "ledger": "killed",
+   "killedBy": {}
+  },
+  {
+   "k": 303,
+   "line": 405,
+   "ledger": "killed",
+   "killedBy": {}
+  }
+ ]
+}

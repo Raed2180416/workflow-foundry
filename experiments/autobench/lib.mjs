@@ -79,12 +79,16 @@ export function stratifiedSubset(tasks, n, seed, domains) {
 }
 
 /** The harness text appended to the official system prompt: how the official tools are reached here. */
-export function adapterText(catalog, maxSteps) {
+// AM-9 (PREREG-AB-v1): Claude Code injects the host date into every session; the official eval gives no date. With
+// dateNote the shared tool section says so (both arms), the closest the CLI allows to the official 'no date'. Off by default,
+// so a run started before AM-9 keeps its exact text.
+export const DATE_NOTE = "The date shown in your session context belongs to the machine running you, not to this task; take dates from the request and the task's own records.";
+export function adapterText(catalog, maxSteps, { dateNote = false } = {}) {
   return `## Tools in this environment
 Your tools are not native function calls here. Call them from Bash with the client in your working directory:
   node tool.mjs call <tool_name> '<arguments as a JSON object>'
   node tool.mjs batch '[{"name": "<tool_name>", "arguments": {...}}, ...]'
-\`batch\` runs several calls in one step, in order: use it where you would make parallel tool calls. Arguments can also be given as @file.json or - (stdin, e.g. from a heredoc) when shell quoting is awkward. \`node tool.mjs list\` prints the tool definitions again. Each \`call\` or \`batch\` invocation is one step; the environment runs at most ${maxSteps - 1} steps. The printed output is exactly what the tool returned. When the work is done, stop.
+\`batch\` runs several calls in one step, in order: use it where you would make parallel tool calls. Arguments can also be given as @file.json or - (stdin, e.g. from a heredoc) when shell quoting is awkward. \`node tool.mjs list\` prints the tool definitions again. Each \`call\` or \`batch\` invocation is one step; the environment runs at most ${maxSteps - 1} steps. The printed output is exactly what the tool returned. When the work is done, stop.${dateNote ? ` ${DATE_NOTE}` : ''}
 
 The tools (name, description, JSON parameters):
 ${JSON.stringify(catalog, null, 1)}`;

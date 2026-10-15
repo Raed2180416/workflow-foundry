@@ -56,9 +56,9 @@ ${SECTION_END}`;
 }
 
 /** A1's system prompt: official system prompt verbatim + A0's tool section + the harness section. */
-export function harnessSystemPrompt(officialSystem, catalog, maxSteps) {
+export function harnessSystemPrompt(officialSystem, catalog, maxSteps, { dateNote = false } = {}) {
   if (typeof officialSystem !== 'string' || !officialSystem) throw new Error('the official system prompt is required');
-  return `${officialSystem}\n\n${adapterText(catalog, maxSteps)}\n\n${harnessSection({ maxSteps })}`;
+  return `${officialSystem}\n\n${adapterText(catalog, maxSteps, { dateNote })}\n\n${harnessSection({ maxSteps })}`;
 }
 
 /** The step guard: a host-written wrapper (directory kept read-only in the sandbox, outside the workdir) that runs the
@@ -177,7 +177,7 @@ export function cliVersion(binary = 'claude') {
  * policy entries, the CLI child environment and version, the corpus pin, the declared knowledge). */
 export function harnessConfig(o) {
   return { harness: HARNESS_ID, version: HARNESS_VERSION, model: o.model ?? null, effort: o.effort ?? null, budgetUsd: o.budgetUsd, timeoutMin: o.timeoutMin,
-    maxSteps: o.maxSteps, cliMaxTurns: o.cliMaxTurns, tools: o.tools, det: o.det, k: o.k, concurrency: o.concurrency,
+    maxSteps: o.maxSteps, cliMaxTurns: o.cliMaxTurns, tools: o.tools, det: o.det, k: o.k, concurrency: o.concurrency, dateNote: Boolean(o.dateNote),
     executor: 'src/executors/claude-code.mjs runClaudeCode, DEFAULT_HIDDEN, DEFAULT_KEEP_RO + the step-guard directory', cli: o.cli ?? null,
     childEnv: o.childEnv ?? Object.fromEntries(CHILD_ENV_ALLOWED.map(k => [k, typeof process.env[k] === 'string' ? process.env[k] : null])),
     policy: o.policy ?? policyEntries(o.model ?? null), corpus: o.corpus ?? corpusPin(), knowledge: o.knowledge ?? [...KNOWLEDGE] };

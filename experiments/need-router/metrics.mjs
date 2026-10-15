@@ -348,17 +348,18 @@ const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 /** A LEGACY-tagged row or build (harvest.mjs LEGACY_TAG; the same predicate as harvest.isLegacy, inlined to keep this module pure). */
 export const isLegacyRow = x => x?.legacy === true || x?.evidence === 'LEGACY';
 
-/** The meter gate's gap (usdMeterGap, PREREG §5) moved from imputed to observed dollars; the total is unchanged. */
-function meterGapSplit(usd, imputed, gapField, at) {
+/** The meter gate's gap (usdMeterGap, PREREG §5) moved from imputed to observed dollars; the total is unchanged. With
+ *  meterGapAs 'imputed' (the not-primary sensitivity) the gap stays imputed and the 30% rule reads it. */
+function meterGapSplit(usd, imputed, gapField, at, meterGapAs = 'observed') {
   if (gapField == null) return { usd, imputed, meterGap: 0 };
   const gap = fin(gapField);
   if (gap === undefined || gap < 0) throw new Error(`${at}: usdMeterGap must be finite and >= 0`);
   if (gap > imputed + 1e-9) throw new Error(`${at}: usdMeterGap ${gap} exceeds usdImputed ${imputed} (the gap is part of the imputed dollars label-run books)`);
   const g = Math.min(gap, imputed);
-  return { usd: usd + g, imputed: imputed - g, meterGap: g };
+  return meterGapAs === 'imputed' ? { usd, imputed, meterGap: g } : { usd: usd + g, imputed: imputed - g, meterGap: g };
 }
 
-function normRow(r, { requireRepriced = false } = {}) {
+function normRow(r, { requireRepriced = false, meterGapAs = 'observed' } = {}) {
   const job = r.job, mode = r.mode ?? r.arm, task = r.task ?? r.taskKey;
   const at = `${job}/${mode}/${task}`;
   if (typeof job !== 'string' || typeof mode !== 'string' || typeof task !== 'string') throw new Error(`matrix row needs job, mode and task: ${JSON.stringify(r).slice(0, 200)}`);
@@ -369,7 +370,7 @@ function normRow(r, { requireRepriced = false } = {}) {
   if (requireRepriced && fin(r.usdRepriced) === undefined) throw new Error(`matrix row ${at}: no finite usdRepriced (one meter: utility uses the re-priced figure, never a fallback to usdReported or costUsd)`);
   const usd0 = requireRepriced ? fin(r.usdRepriced) : fin(r.usdRepriced, r.usdReported, r.costUsd), imputed0 = fin(r.usdImputed, r.imputedUsd) ?? 0;
   if (usd0 === undefined || usd0 < 0 || imputed0 < 0) throw new Error(`matrix row ${at}: dollars must be finite and >= 0`);
-  const { usd, imputed, meterGap } = meterGapSplit(usd0, imputed0, r.usdMeterGap, `matrix row ${at}`);
+  const { usd, imputed, meterGap } = meterGapSplit(usd0, imputed0, r.usdMeterGap, `matrix row ${at}`, meterGapAs);
   const rep = r.rep ?? r.replicate ?? r.lineage ?? r.trial ?? 0;
   if (!Number.isInteger(rep) || rep < 0) throw new Error(`matrix row ${at}: rep must be an integer >= 0`);
   if (r.selfVerdict != null && r.selfVerdict !== 'pass' && r.selfVerdict !== 'fail') throw new Error(`matrix row ${at}: selfVerdict must be pass, fail or null`);
@@ -411,7 +412,8 @@ function rowValues(x) {
  * A gap throws; nothing is dropped silently. Modes may differ between jobs (direct-H is masked on interactive families);
  * whether a job's modes match its declared menu is checked by the caller (evaluate.mjs missingData, PREREG §5).
  */
-export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'fail', requireRepriced = false } = {}) {
+export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'fail', requireRepriced = false, meterGapAs = 'observed' } = {}) {
+  if (meterGapAs !== 'observed' && meterGapAs !== 'imputed') throw new Error(`meterGapAs must be observed or imputed, got ${meterGapAs}`);
   if (voidPolicy !== 'fail' && voidPolicy !== 'drop') throw new Error(`voidPolicy must be fail or drop, got ${voidPolicy}`);
   const cells = new Map(), jobs = [], modes = [], voided = [], voidedDraws = [], lineages = new Map();
   const add = (list, x) => { if (!list.includes(x)) list.push(x); };
@@ -428,7 +430,7 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
     }
     const usd0 = requireRepriced ? fin(b.usdRepriced, b.usd) : fin(b.usd, b.usdRepriced, b.usdReported, b.costUsd), imputed0 = fin(b.usdImputed, b.imputedUsd) ?? 0;
     if (usd0 === undefined || usd0 < 0 || imputed0 < 0) throw new Error(`build row ${job}/${mode}/${rep}: dollars must be finite and >= 0`);
-    const { usd, imputed } = meterGapSplit(usd0, imputed0, b.usdMeterGap, `build row ${job}/${mode}/${rep}`);
+    const { usd, imputed } = meterGapSplit(usd0, imputed0, b.usdMeterGap, `build row ${job}/${mode}/${rep}`, meterGapAs);
     const k = KEY(job, mode), L = lineages.get(k) ?? new Map();
     if (L.has(rep)) throw new Error(`duplicate build row ${job}/${mode}/lineage ${rep}`);
     const reasons = [];
@@ -440,7 +442,7 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
     lineages.set(k, L);
   }
   for (const r0 of rows) {
-    const r = normRow(r0, { requireRepriced });
+    const r = normRow(r0, { requireRepriced, meterGapAs });
     modeInfo(r.mode, registry);
     add(jobs, r.job); add(modes, r.mode);
     const k = KEY(r.job, r.mode), c = cells.get(k) ?? { job: r.job, mode: r.mode, byTask: new Map() };

@@ -1467,7 +1467,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     process.exit(0);
   }
   const root = arg('--labels', null);
-  if (!root) { console.error(`usage: evaluate.mjs --labels <dir> --split <train|heldout> --report <dir> | --labels <dir> --commit-decisions <out.json> | --power\n\n${MATRIX_FORMAT}`); process.exit(2); }
+  if (!root) { console.error(`usage: evaluate.mjs --labels <dir> --split <train|heldout> --report <dir> [--decisions <committed envelope> --prereg <PREREG file>] | --labels <dir> --commit-decisions <out.json> | --power\n\n${MATRIX_FORMAT}`); process.exit(2); }
   const policies = await loadRouterPolicies(arg('--router', null));
   const commitOut = arg('--commit-decisions', null);
   if (commitOut) {

@@ -711,3 +711,28 @@ and the Stop phase now says the final reply stays in the conversation, never in 
 *Disclosures.*
 - The subset60 baseline (21.7%) ran with the leaked host date. It is reported as such and superseded by A0 runs under AM-9.
 - The published disclosure list gains this item.
+
+**AM-10 (2026-10-15) Owner direction: use whichever model works best.**
+The owner asked to try the harness "with haiku or opus whatever works the best". The model therefore becomes a free choice per arm, chosen on dev only.
+
+*New arms.* Each runs on the same devTrain tasks as its Haiku counterpart, with `--date-note` (AM-9):
+
+| Arm | Model and setup | Session budget |
+|---|---|---|
+| A0-O | raw `claude-opus-5-5`, effort high | $2 |
+| A1-O | Opus with the harness | $2 |
+| A0-S / A1-S | `claude-sonnet-5-5`, same pattern; optional | – |
+
+*Selection rule, fixed now.*
+- The headline configuration is the arm with the highest devTrain strict pass rate.
+- A tie within 2 points goes to the lower cost per verified success.
+- It is chosen before any devCheck look.
+- The test run then runs the chosen configuration once, plus A0-Haiku (the preregistered comparator) and A0 with the same model as the chosen arm.
+- Every arm is reported with its model, and with cost per task and per verified success.
+
+*Budgets.* Owner envelope, decision D1:
+- Dev rises from $60 to $150, and the Opus arms run only after a 6-task cost probe.
+- Test rises from $40 to $150 when the chosen arm uses Opus.
+- Caps per run stay enforced in code by `--cap`.
+
+*Model naming in any published claim.* The model and harness are named exactly, for example "claude-opus-5-5 + Foundry harness a1-vN". No headline says "Haiku" unless the chosen arm is Haiku.

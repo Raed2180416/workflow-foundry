@@ -48,9 +48,10 @@ test('defects: the unmutated reference is E0-silent and fails no later case (gra
 });
 
 test('defects: an E0-visible mutant is rejected by the executed check, at the recorded first E0 failure', { skip: !fresh && 'ledger/latent-defects is stale or missing' }, async () => {
-  const rejected = index.mutants.filter(m => m.status === 'e0-visible' && /-d2-/.test(m.e0First.world));
+  const rejected = index.mutants.filter(m => m.status === 'e0-visible' && m.e0First && m.id.startsWith('ref-'))
+    .sort((a, b) => parseWorld(a.e0First.world).difficulty - parseWorld(b.e0First.world).difficulty);
   assert.ok(rejected.length > 0);
-  const pick = rejected.find(m => m.id.startsWith('ref-')) ?? rejected[0];
+  const pick = rejected[0];
   const mutant = allMutants().find(m => m.id === pick.id);
   const p = await prepareWorld(parseWorld(pick.e0First.world));
   const dir = scratchDir();
@@ -72,7 +73,9 @@ test('defects: every manifest is complete; true and false revealing events are p
     assert.equal(m.e0Silence.failed, 0);
     assert.ok(m.members.includes(m.mutant.id));
     assert.ok(m.contradicts.length > 0, `${m.id}: a latent defect contradicts a rule (E-BED §2.5)`);
-    assert.ok(m.worlds.length >= 8, `${m.id}: every mining world is checked`);
+    assert.ok(m.band.length > 0 && m.band.every(d => d >= 2 && d <= 5));
+    for (const d of m.band) assert.equal(m.worlds.filter(w => w.difficulty === d).length, 2, `${m.id}: two seeds at d${d}, both E0-silent`);
+    assert.ok(m.worlds.every(w => m.band.includes(w.difficulty)));
     let revealed = 0;
     for (const w of m.worlds) {
       assert.ok(w.seed >= 1001 && w.seed <= 1199, 'dev block only');

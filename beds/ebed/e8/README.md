@@ -9,16 +9,21 @@ completed cases on 16 dev worlds (seeds 1241–1244 × d2–d5; 5,247 graded, 0 
 `tools/specificity-run.mjs`; after the 2026-10-15 oracle changes, the short set 1241–1242 × d3, d5 gives 1,701/1,701,
 0 critical, 0 arm errors). Oracle mutation score under one differential standard (`ledger/MUTANTS.md`, evidence in
 `ledger/mutants-20261015/`): 240/304 = 0.789 raw, 1.000 with the 64 grader-equivalent mutants excluded; `tools/mutate.mjs`
-now measures the same standard: measured 240/304, and its 64 survivors are exactly the ledger's equivalents. Still missing before admission: K1's mutation score (≥ 0.95 raw needs the
-owner's call on equivalents in the denominator), the metamorphic suite (MR1–MR13), mined latent defects (step 6), the
-paid triviality attack (P1) and the arm (c) reference (P2). Nothing here is evidence about any arm.
+now measures the same standard: measured 240/304, and its 64 survivors are exactly the ledger's equivalents. Metamorphic relations MR1–MR13 (`metamorphic.mjs`, below) hold on the
+unmutated oracle except two MR5 variants that need the owner (a same-instant duplicate placement of a review order: a
+contract gap; a repeated refused cancel: an R6.3 reading); against the 304 mutants they kill 77, all inside the ledger's
+240, and none of the 64 equivalents, so the raw score stays 240/304. Still missing before admission: K1's mutation score
+(≥ 0.95 raw needs the owner's call on equivalents in the denominator), mined latent defects (step 6), the paid
+triviality attack (P1) and the arm (c) reference (P2). Nothing here is evidence about any arm.
 
 ```sh
-node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (16 tests, ~50 s)
+node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (includes the metamorphic file)
+node --test --test-concurrency=1 beds/ebed/e8/test/metamorphic.test.mjs  # MR1-MR13 alone (21 tests, ~100 s, one core)
 node beds/ebed/e8/tools/health.mjs --seeds 1001-1030                      # bed health: reference runs, pools, censoring
 node beds/ebed/e8/tools/controls-run.mjs --seeds 1211-1214                # controls on attack worlds
 node beds/ebed/e8/tools/arm-smoke.mjs <solver.mjs> --seed 1241 --difficulty 3   # run a solver; shows no grading
 node beds/ebed/e8/tools/mutate.mjs                                        # oracle mutation score (K1 >= 0.95)
+node beds/ebed/e8/tools/mr-mutants.mjs --equivalents                     # the relations against mutate.mjs's mutants
 ```
 
 ## What the item is
@@ -56,6 +61,8 @@ The spec every arm gets is `spec/SPEC-E.md` (about 6K tokens); what is in and ou
 | `test/e8.test.mjs` | the item suite |
 | `test/unit-checks.mjs` | transition unit checks the grader cannot see (not goldens; `mutate.mjs` never runs them) |
 | `ledger/MUTANTS.md`, `ledger/mutants-20261015/` | the oracle mutants under one standard, and the harness and data behind every verdict |
+| `metamorphic.mjs`, `test/metamorphic.test.mjs` | E-BED §9.3 MR1–MR13 on the oracle and the reference policy: transformations, arm wrappers (MR6, MR13), the saga-planner check (MR11) |
+| `tools/mr-mutants.mjs`, `ledger/mr-mutants-20261015.json` | the relations against `mutate.mjs`'s 304 mutants (its operator set read from its text; its scoring untouched) |
 | `../oracle/view.mjs`, `grade.mjs`, `policy.mjs` | item-independent: journal index and case views, the grading machine (contract §5.3), the reference policy (§5.6) |
 
 ## Measurements ($0, dev seeds)
@@ -88,6 +95,56 @@ collection; the deadline race), each checked against the independent saga planne
 With the survivor goldens of the oracle mutation work, `golden.mjs` holds 48 rule-cited goldens, each asserting only
 outcomes the grader can see; 14 transition checks the grader cannot see are unit checks (`test/unit-checks.mjs`). Which
 golden kills which mutant, with a witness journal, is in `ledger/MUTANTS.md`.
+
+**Metamorphic relations** (E-BED §9.3; `metamorphic.mjs`, `test/metamorphic.test.mjs`; dev seeds 1024–1133, d2–d5,
+12–20 orders). Each relation runs in two flavours on a source world W and its follow-up T(W): *oracle* (both reference
+runs and five controls, driven by the original transition, run on W and T(W); the transition under test grades both;
+per-case verdicts, first divergences with layer, code, lid and time, ends, critical violations and open lids must agree
+modulo T) and *reference* (the reference policy driven by the transition under test; per-case ledger rows and final
+records must agree). The carriers are carried through T (`adaptActors`), because `actors.mjs` is not itself invariant
+(below). Suite: 21 tests, 17 pass, 4 todo (the findings below), about 100 s on one core.
+
+| MR | E8 | what is checked |
+|---|---|---|
+| MR1 | implemented | order, fulfilment and event ids renamed order-preserving (SPEC-E §1 orders deliveries by id); customers, e-mails, SKUs, locations, carriers, analysts order-reversing |
+| MR2 | implemented | amounts ×10 and ×1000; E8 has no amount tolerances, so that half is N/A |
+| MR3 | implemented | every time and date shifted ±1 and +52 weeks (no DST crossing; the world writes fixed +01:00); 24×7 calendar, so business-elapsed = elapsed |
+| MR4 | implemented | each (instant, source) group of world arrivals with several cases delivered in reverse case order (worlds 1024, 1032, 1044, 1053 have such groups); within a case the order is spec (S4, S12, S13) |
+| MR5 | implemented | every world arrival and carrier report delivered twice in its instant; placed orders and carrier reports repeated 7 min later; customer actions repeated 7 min later |
+| MR6 | implemented | the arm asks for extra wake-ups halfway to its own next one |
+| MR7 | implemented | two copies of existing orders added at the same instants; every original case unchanged |
+| MR8 | degenerate | windows are calendar minutes on a 24×7 calendar (SPEC-E §1): the E-BED form (deadline + 1 business day) is N/A; only "a holiday changes nothing" |
+| MR9 | implemented | an edition taking effect after the last placement (every table changed), published inside the horizon |
+| MR10 | analog | no tolerances, limits or holds in E8; analog: halving `customerActionHours` grows the timedOut set monotonically and leaves orders without an unavailable fulfilment unchanged |
+| MR11 | implemented | F6 on reserve, charge and booking, a collection failure, cancels 1, 2, 3 and 45 min after placement: committed compensations against `lib/saga.mjs` (ledger), and the expectation just before the first compensation (oracle) |
+| MR12 | implemented | an instruction line in every order document (E8's only free text), world identity kept |
+| MR13 | emulated | the host has no world-level mode (a change to frozen `beds/ebed/host`); `worldLevelArm` decides every instance of a round in one pass over the round-start journal: identical journal |
+
+Fails on the unmutated oracle (todo tests carrying the finding; for the owner):
+
+- **MR5, a placement and its duplicate in one instant, review order** (contract gap, not an oracle bug). Both start an
+  instance in one round; neither has declared its subject at the round start, so neither can merge; keyed effects are
+  deduplicated by the platform, human tasks are not, so the order gets two fraud-review tasks, which R2.2's re-ask
+  window permits (`transition.mjs:164`, no reason checked) and the analyst answers at different times. The generator
+  never delivers a duplicate in the original's instant. Options: exclude it from the world contract, or key tasks.
+- **MR5, a repeated cancel that does not count** (R6.3 reading; probable oracle leniency). Every refused cancel
+  re-declares `ntf:O:cancel-refused` (`transition.mjs:242`) and `lid()` keeps the last window (`:101`), so a repeat 7
+  minutes later moves the window: an answer up to 7 minutes late for the first cancel passes, a missing one is
+  reported later. Under "repeats change nothing" (R3.2) and "each notification exactly once" (§4.8) the first
+  refused cancel's window should hold. Witness: 1124:d5:12, o0010.
+
+Diagnostics (world code, not the oracle): `world.mjs:335` — a line comment swallows `item, seed, split, difficulty,
+schedule, mix, scale, track` of the world object (since d0237bf), so `twins()` throws; a working twin would still get its
+own `world.id`, which keys the actors' and noise draws (MR12 uses `injectDocs` instead). `actors.mjs` keys carrier draws
+by fulfilment id, looks codes up in the constant `CARRIER_CODES` by carrier name and places reports with `world.mjs`'s
+`iso()`/`collectionRuns()` anchored to the constant T0, so only generator-made worlds are consistent.
+
+Against `tools/mutate.mjs`'s 304 mutants (`tools/mr-mutants.mjs`, `ledger/mr-mutants-20261015.json`; the 64
+equivalents with every case, both flavours and both timings; the other 240 with the first case of each relation): the
+relations kill **77**, all within the ledger's 240 killed, **none of the 64 equivalents**; k74 and k202 do not load.
+Per relation: MR11 65, MR3 6, MR7 6, MR13 4 (exceptions only: world-level mode correlates failures), MR1 3, MR5 3,
+MR6 1, MR9 1, MR10 1, and MR2, MR4, MR8, MR12 none (MR8 and MR12 cannot: the transition reads neither calendars nor
+documents). 53 kills are MR11's alone; 8 of the 77 come only through exceptions.
 
 ## Decisions and readings (for review)
 

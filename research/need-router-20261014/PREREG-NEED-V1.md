@@ -498,7 +498,8 @@ produced.
   usdReported, usdRepriced, usdImputed, ms, tokens, error}`; build rows as §4.2. [D]
 - **Utility per task, in success-equivalents** [D]:
   `u_m = p_m − c_m/V − B_m/(N·V) − (W/V)·q_m − r/(N·V)`. p = oracle pass rate (mean over tasks of the mean over
-  replicates or lineages); c = mean per-task cost (re-priced); B = mean build cost per lineage, failed builds included;
+  replicates or lineages); c = mean per-task cost (re-priced; for a meterUnverified session the reported figure, below);
+  B = mean build cost per lineage, failed builds included;
   q = rate of delivered, schema-valid, wrong answers; r = routing cost per job (probe and judge calls), charged to router
   policies only. An abstention (null, or a self-check failure that is not delivered) costs nothing beyond its dollars.
 - **Grid:** V ∈ {0.10, 1, 10}; N ∈ {1, 10, 100} (100 labelled "extrapolated, stationarity assumed"); W ∈ {V (headline), 0,
@@ -524,7 +525,8 @@ produced.
   - *The 30%-imputed rule does not count the gap.* The gap is the CLI's observed figure, not a bound charged for an
     unobserved cost, so `metrics.mjs` reads `usdMeterGap` as observed dollars. Gap dollars are counted and printed per cell.
     A sensitivity marked "not primary" applies the 30% rule with the gap counted as imputed. Without this rule, an Opus
-    session's gap (about two thirds of its figure) would leave agent-O cells unlabelled across the board.
+    session's gap (53% to 66% of its figure at D6's ratios of 2.11 and 2.96) would leave agent-O cells unlabelled across
+    the board.
   - *The cache-write rate billed.* The table prices cache writes at the 5-minute rate (1.25 × input). The CLI bills the
     rate the launch environment sets. D6 found the cache writes it could check billed at the 1-hour rate (2 × input). The 4
     Opus builder sessions reproduce the CLI figure exactly at that rate. Its launch-environment check (`analysis/m0/
@@ -534,7 +536,8 @@ produced.
     - The meter-verification record that clears the gate (`meter-gate-cli.mjs --verify`) must come from at least 2
       transcripts of that launch shape. It reports `cacheWrite1hShare`.
     - If those transcripts still show 1-hour writes, the table gains the 1-hour rate by a §13 deviation before the stage
-      starts. Otherwise every agent session would miss the 10% band and be booked meterUnverified.
+      starts. Otherwise most agent sessions would miss the 10% band and be booked meterUnverified (D6: a 5-minute
+      re-price lands at a median 0.83 to 0.85 of the CLI figure).
   - *The waiver.* The gate fails closed. A paid agent stage launched under the owner's meter-gate waiver
     (`analysis/m0/meter-gate-waiver.json`, recorded in the run's `report.deviations`) is a §13 deviation, recorded before
     any of its labels is used.
@@ -937,7 +940,7 @@ NL0 (decision 14); later stages at their gates, each under the $500 pause. [A]
 | M1-R | ran 10-15, outside the totals below | development | re-ran M1's 54 `MODEL_TIMEOUT` trials at a 600 s wall (`m1-rerun.mjs`, tag `m1-r`); results in §0.1. Its budget is held by `research/architecture-20261014/MEMORY-ROUTING-RECURSION.md` §5 row 4, whose totals add this program's. On the meter: $25.89 with its set-aside attempts (D7) | 15 | 25 | plan item (D7) | none: unregistered (D7) |
 | M1e | when #58 commits | diagnostic | read the in-flight E8 runs (agent-H paired with B1L-H lineages 1–3, B1-H, B1-O; same 9 dev worlds) | 0 | 0 | yes | – |
 | NL0 | 10-18/19 | development | `records-hi`, `wbed-r0`, `wbed-r3-hi` × five modes; build-O and (if stamped) ref-R3 on `wbed-r3-hi` (the owner tasks moved to NL0-owner, D9) | 110 | 140 | yes | freeze of this file; stamp L-NL0; K2 |
-| NL0-owner | with NL0 if the owner's tasks have arrived, else when they arrive and before Freeze (later ones go to `owner-sealed`) | development | up to 5 owner tasks (`owner-dev`): every L_today mode once per task, i.e. one draw each of direct-H, agent-H and agent-O, and one lineage each of agent-H+proc and construct-H (K = 1, DESIGN's "one replicate"), whose procedure writer and builder read the task itself, never its acceptance check; no racing top-ups. $3 per task (§3.2), bound $19.50 per task | 15 | 40 | at gate | owner (decision 14 approved NL0's $140 for its three jobs only); stamp L-NL0-owner |
+| NL0-owner | with NL0 if the owner's tasks have arrived, else when they arrive and before Freeze (later ones go to `owner-sealed`) | development | up to 5 owner tasks (`owner-dev`): every L_today mode once per task, i.e. one draw each of direct-H, agent-H and agent-O, and one lineage each of agent-H+proc and construct-H (K = 1, DESIGN's "one replicate"), whose procedure writer and builder read the task itself, never its acceptance check; no racing top-ups. $3 per task (§3.2), bound $19.50 per task | 15 | 40 | at gate | owner: the $40 is new money beside NL0's approved $140 (decision 14), so it needs the owner's gate; stamp L-NL0-owner |
 | NL1 | 10-20 → 10-23 | development | the other 12 TRAIN jobs; build-O on `wbed-r1-hi` and `kinetics-hi`; ref-R1 if stamped; NR-probe rows on all 15 TRAIN jobs; then G1, the power gate, LOCO dev numbers | 272 | 340 | at gate | K7; owner; stamp L-NL1 compared with L-NL0 |
 | judge-H | with NL1 | development | the "just ask a model" baseline on TRAIN: 3 draws × 3 V on each of the 15 TRAIN jobs (about 135 typed calls); its held-out calls run in NL2p | 3 | 6 | at gate | NL1 owner gate |
 | Freeze | 10-24 | development | fit θ (§6 rules), leaf modes, k, probe mapping; hash the router (stamp A-Freeze); addendum | 0 | 0 | yes | K1 |
@@ -969,9 +972,10 @@ name the stage.
   externally budgeted stage at the same max (M1-R, $25.89): $1,372.81 against $1,500. A recorded run that pushes the sum
   over the soft cap is refused.
 - *Across plans.* `research/architecture-20261014/MEMORY-ROUTING-RECURSION.md` §5 states its own totals with this
-  program's: about $1,260 estimated, and about $1,680 if every cap of both plans is hit, over the soft cap. That plan names
-  what to drop first. This file's check covers its own stages and the stage it shares (M1-R). The other plan's items are
-  checked there.
+  program's: about $1,260 estimated, and about $1,680 if every cap of both plans is hit, over the soft cap. Those figures
+  use this program's earlier $1,235 at caps; D9's figures are higher. That plan names what to drop first. This file's
+  check covers its own stages and the stage it shares (M1-R). The other plan's own items are outside it: the cross-plan
+  total is that plan's to keep, and at caps it is already over the soft cap.
 - *Owner tasks* left NL0 for their own stage, NL0-owner (est. $15, cap $40), which adds $15 and $40 to the totals:
   $966 estimated, $1,275 at caps. The core totals do not change.
 

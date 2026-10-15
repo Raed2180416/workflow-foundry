@@ -21,6 +21,7 @@
 //   --pool dev|devTrain|devCheck|test|testRef (select from SPLIT-v1.json; with --subset N: N stratified, seeded)
 //   --harness foundry --harness-hash H --cli-max-turns N|off (A1 step guard, default max-steps - 1)
 //   --test-run AB-v1 (A0 only: the preregistered test run may hold test-split tasks)
+//   --date-note (AM-9: both arms say the session date is the host's, not the task's; recorded in the summary)
 // Every fork is audited host-side after its session (accounting.mjs): model responses as the official loop counts them,
 // world usage, the H3 rule (more than max-steps responses, or a world step issued by response >= max-steps) and L5
 // (other models, network or package commands, benchmark references, no host transcript); a violation scores as a fail
@@ -180,7 +181,7 @@ export async function runTasks(o) {
   // 2. prepare (one official dataset build)
   const prep = path.join(live, 'prep');
   await bridgeJson(['prepare', '--domains', taskDomains.join(','), '--tasks', tasks.join(','), '--out', prep, '--det', opt.det, '--max-steps', String(opt.maxSteps)], { liveDir: live });
-  const systemPromptFor = (p, cat) => (harness ? harnessSystemPrompt(p.system, cat, opt.maxSteps) : `${p.system}\n\n${adapterText(cat, opt.maxSteps)}`);
+  const systemPromptFor = (p, cat) => (harness ? harnessSystemPrompt(p.system, cat, opt.maxSteps, { dateNote: opt.dateNote }) : `${p.system}\n\n${adapterText(cat, opt.maxSteps, { dateNote: opt.dateNote })}`);
   if (opt.dryRun) {
     const p = readJson(path.join(prep, tasks[0], 'prompt.json')), cat = readJson(path.join(prep, tasks[0], 'catalog.json'));
     return { summary: { runId, dryRun: true, tasks, live, harness, systemPrompt: systemPromptFor(p, cat), user: p.user }, results: [] };
@@ -293,7 +294,7 @@ export async function runTasks(o) {
     arm: harness ? 'A1 (harness)' : 'A0 (no harness)', sealed, testSplitTasks: tasks.filter(t => split.test.includes(t)).length,
     harness: harness ? { id: HARNESS_ID, version: HARNESS_VERSION, manifestSha256: manifest.sha256, frozenHashGiven: Boolean(opt.harnessHash), cliMaxTurns, stepGuard: Boolean(guard), extraModelCalls: 0 } : null,
     selection: opt.tasks?.length ? { tasks: opt.tasks } : opt.pool ? { pool: opt.pool, subset: opt.subset ?? null, seed: opt.subset ? opt.seed : null, domains } : { subset: opt.subset ?? 12, seed: opt.seed, domains }, tasks,
-    k: opt.k, det: opt.det, maxSteps: opt.maxSteps, budgetUsdPerSession: opt.budgetUsd, capUsd: scripted ? null : opt.capUsd, tools: opt.tools, effort: opt.effort ?? null,
+    dateNote: Boolean(opt.dateNote), k: opt.k, det: opt.det, maxSteps: opt.maxSteps, budgetUsdPerSession: opt.budgetUsd, capUsd: scripted ? null : opt.capUsd, tools: opt.tools, effort: opt.effort ?? null,
     n: results.length, n_graded: results.filter(r => r.final).length,
     pass_rate: mean(results.map(pass)), mean_partial_credit: mean(results.map(pc)), by_domain: byDomain,
     // The live grades before the H3 step-cap override (equal to the headline when no task-run exceeded the cap).
@@ -326,7 +327,7 @@ export async function runTasks(o) {
 }
 
 function parseArgs(argv) {
-  const a = {}, flags = new Set(['keep', 'dry-run', 'no-copy']);
+  const a = {}, flags = new Set(['keep', 'dry-run', 'no-copy', 'date-note']);
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (!k.startsWith('--')) throw new Error(`unexpected argument ${k}`);
@@ -352,7 +353,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     concurrency: num(a.concurrency, DEFAULTS.concurrency), maxSteps: num(a['max-steps'], DEFAULTS.maxSteps), timeoutMin: num(a['timeout-min'], DEFAULTS.timeoutMin),
     det: a.det ?? DEFAULTS.det, effort: a.effort, tools: a.tools ? a.tools.split(',') : DEFAULTS.tools, runId: a['run-id'], liveRoot: a.live,
     outDir: a['no-copy'] ? null : a.out, keep: Boolean(a.keep), dryRun: Boolean(a['dry-run']), runner, pool: a.pool,
-    harness: a.harness ?? null, harnessHash: a['harness-hash'], testRun: a['test-run'], cliMaxTurns: a['cli-max-turns'] === undefined ? undefined : a['cli-max-turns'] === 'off' ? 0 : Number(a['cli-max-turns']),
+    dateNote: Boolean(a['date-note']), harness: a.harness ?? null, harnessHash: a['harness-hash'], testRun: a['test-run'], cliMaxTurns: a['cli-max-turns'] === undefined ? undefined : a['cli-max-turns'] === 'off' ? 0 : Number(a['cli-max-turns']),
   });
   process.stdout.write(JSON.stringify(summary, null, 1) + '\n');
 }
