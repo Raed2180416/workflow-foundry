@@ -210,6 +210,17 @@ export const CUE_HINTS = Object.freeze({
 });
 /** Declared verifiers (prereg/stages.json values, normalised) that can arbitrate between two different answers without our oracle; a schema cannot. */
 export const DEPLOYABLE_VERIFIERS = Object.freeze(['tests', 'executable-tests', 'acceptance-check', 'owner-acceptance-check']);
+/** NR-probe's probeable modes (DESIGN §3, PREREG §6). A probe on any other mode is refused. */
+export const PROBEABLE = Object.freeze(['direct-H', 'agent-H']);
+/**
+ * The preregistered probe (DESIGN §3, PREREG §6 "kMax 2 (two direct-H draws, one agent-H run)"): the one bundle
+ * label-run.mjs runProbes draws on the probe example. It is priced, and charged, as one probe.
+ */
+export const PROBE_BUNDLE = Object.freeze({ id: 'prereg-bundle', draws: Object.freeze({ 'direct-H': 2, 'agent-H': 1 }) });
+/** NR-probe priors: 'empirical-bayes' (default, review E5) or 'pooled-tasks' (the PREREG §6 text, Beta(1 + s·T, 1 + (1 − s)·T)). */
+export const PROBE_PRIORS = Object.freeze(['empirical-bayes', 'pooled-tasks']);
+/** Default cap on the empirical-Bayes prior's concentration, in TRAIN jobs' worth of tasks (κ <= priorJobsCap × tasksPerJob). */
+export const PRIOR_JOBS_CAP = 2;
 
 /**
  * H0's fitting minimum (PREREG-NEED-V1 §6, prereg-rules.mjs thetaFitStatus): θ is fitted only with at least 2 confident
