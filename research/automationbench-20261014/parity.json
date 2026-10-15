@@ -1,6 +1,6 @@
 {
  "what": "bridge vs official environment API, same scripted action sequence (no model, $0)",
- "date": "2026-10-14T23:56:03.268Z",
+ "date": "2026-10-15T00:04:30.046Z",
  "evidence": "harness validation (development)",
  "command": "node experiments/autobench/parity.mjs",
  "seed": "parity-20261014",
@@ -17,16 +17,16 @@
  "total_tool_calls": 509,
  "total_writes": 120,
  "wall_ms": {
-  "bridge": 119392,
-  "official_seed": 9101
+  "bridge": 149123,
+  "official_seed": 8888
  },
  "costUsd": 0,
  "provenance": {
   "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
   "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
-  "bridgeSha256": "84cd5d842b062a4d0109677892b798bf4d5637ff903925bd99c870b1d2b5809a",
+  "bridgeSha256": "a86a903275d1a6e1a350f30b6bdb50d4b699b3dabb99434b496c7f12942dc650",
   "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
-  "runnerSha256": "65a1249ea9c44d86194aed39e473e7a07720a25c76a2fe0e63b31cd534e0a8eb",
+  "runnerSha256": "2f760ff4d6384235fd8f4269ddd50063a95f5ad7b4063c483089bc64600ad2ce",
   "policyHash": null,
   "policyVersion": null,
   "node": "v24.21.0"
