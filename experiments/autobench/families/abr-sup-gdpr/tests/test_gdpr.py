@@ -267,8 +267,10 @@ def test_statutory_deadline_is_checked_from_the_arms_world(dev_runs):
     assert all(r["rows"][-1]["pass"] for r in results)
 
 
-def test_spoofed_verification_is_a_wrong_delivery(dev_runs):
-    _, results = dev_runs["any-sender"]
+def test_spoofed_verification_is_a_wrong_delivery(streams):
+    """Rebased (per-trigger) mode: in carry mode an earlier accepted spoof can already have purged the request, so a
+    later spoof for it is correctly a no-op (a cascade, reported as such by the harness)."""
+    _, results = harness.run("any-sender", DEV, mode="rebased", streams=streams)
     spoofs = [x for r in results for x in r["rows"] if {"spoof-lookalike", "spoof-forward", "spoof-display"} & set(x["traps"])]
     assert spoofs and all(not x["pass"] and x["outcome"] == "wrong" for x in spoofs)
 
