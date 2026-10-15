@@ -21,7 +21,7 @@ import { compareCurrency, describeCurrency } from './currency.mjs';
 import { loadLegacyJobs, loadConstructions, P1_HAND_AUTHORING, ceilingRule } from './legacy.mjs';
 import { runD0 } from './d0-knn.mjs';
 import { runD1 } from './d1-shortcut.mjs';
-import { computeAnchorFeatures } from './anchors.mjs';
+import { computeAnchorFeatures, computeExampleFeatures } from './anchors.mjs';
 import { runD2 } from './d2-cofailure.mjs';
 import { runD3 } from './d3-signals.mjs';
 import { runD4 } from './d4-fragility.mjs';
@@ -33,7 +33,7 @@ export const ALL = Object.freeze(['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6']);
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const MODULES = Object.freeze(['common', 'census', 'currency', 'legacy', 'anchors', 'd0-knn', 'd1-shortcut', 'd2-cofailure', 'd3-signals', 'd4-fragility', 'd5-guard', 'd6-cost', 'launch-env', 'rescue'].map(m => `${m}.mjs`));
 // Modules outside this directory whose logic the numbers depend on (their fingerprints are recorded too, so a change there reads as "code moved").
-export const EXTERNAL_MODULES = Object.freeze(['metrics', 'harvest', 'features', 'meter-gate'].map(m => `../${m}.mjs`));
+export const EXTERNAL_MODULES = Object.freeze(['metrics', 'harvest', 'features', 'meter-gate', 'prereg-check'].map(m => `../${m}.mjs`));
 
 /**
  * Which diagnostics a run covers and where it may write (pure). errors: unknown names; a subset aimed at the committed analysis/m0 (it would rewrite
@@ -58,6 +58,8 @@ export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
     code: Object.fromEntries([...MODULES, ...EXTERNAL_MODULES].map(m => [path.basename(m), sha256(readFileSync(path.join(here, m))).slice(0, 16)])),
     inputs: {
       legacySources: legacy.sources, notes: legacy.notes,
+      // Rows read from each archived file and rows dropped for an arm with no mode mapping (legacy.mjs); rescued JSONL that no diagnostic reads.
+      rowAccounting: legacy.accounting, rescuedNotUsed: legacy.rescuedNotUsed,
       // Stream experiments under research/jit-20261008/runs/ that no LEGACY job definition names: never opened (legacy.mjs loadJitJobs).
       skippedStreams: legacy.skipped,
       // Which model wrote each workflow mode's workflow, and so which modes are ceiling arms (L_ceiling only): legacy.mjs LEGACY_REGISTRY.
@@ -75,7 +77,8 @@ export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
   // The anchor beds' features are computed once, for D0's anchor sensitivity and D1's second table.
   const anchors = want.has('d0') || want.has('d1') ? await computeAnchorFeatures() : null;
   if (want.has('d0')) out.d0 = runD0({ anchors });
-  if (want.has('d1')) { const a = anchors; out.d1 = runD1({ anchors: a.features }); out.d1.anchorBeds = { seeds: a.seeds, difficulties: a.difficulties, errors: a.errors, features: a.features, beds: a.beds }; }
+  // D1's router measure is the one the router computes (PREREG §3.3: example set 1 at per-seed difficulty), generated from the beds with the seed gate applied.
+  if (want.has('d1')) { const a = anchors, exampleFeatures = await computeExampleFeatures(); out.d1 = runD1({ anchors: a.features, exampleFeatures }); out.d1.anchorBeds = { seeds: a.seeds, difficulties: a.difficulties, errors: a.errors, features: a.features, beds: a.beds }; }
   if (want.has('d2')) out.d2 = runD2(legacy.jobs);
   if (want.has('d3')) out.d3 = await runD3(legacy.jobs);
   if (want.has('d4')) out.d4 = runD4(legacy.jobs);

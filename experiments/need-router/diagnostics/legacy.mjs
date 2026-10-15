@@ -142,23 +142,44 @@ export function normaliseRunRow(r, { modes, source }) {
   };
 }
 
+/** Count of rows per arm in `unmapped`, and the total, for an arm that is in no mode table (review of 2026-10-15: they used to vanish without a trace). */
+const countBy = (items, keyOf) => items.reduce((a, x) => { const k = keyOf(x); a[k] = (a[k] ?? 0) + 1; return a; }, {});
 export function loadRunFile(name, modes, opts = {}) {
   const { file, rescued, exists } = archivePath(name, opts);
-  if (rescued === false && !exists) return { rows: [], source: null, rescued: false, missing: name };
-  const source = rel(file);
-  const rows = readJsonl(file).map(r => normaliseRunRow(r, { modes, source })).filter(Boolean);
-  return { rows, source: sourceOf(file), rescued };
+  if (rescued === false && !exists) return { rows: [], source: null, rescued: false, missing: name, read: 0, unmapped: {} };
+  const source = rel(file), raw = readJsonl(file);
+  const rows = raw.map(r => normaliseRunRow(r, { modes, source })).filter(Boolean);
+  // A row of an arm with no mode mapping is dropped by normaliseRunRow; the loader counts what it dropped, per arm, so the next archive cannot lose rows silently.
+  return { rows, source: sourceOf(file), rescued, read: raw.length, unmapped: countBy(raw.filter(r => !modes[r.arm]), r => String(r.arm)) };
 }
 
 /** C0 construction costs per (family, mode): the build of the workflow or solver (constructions.jsonl, one row each). */
 export function loadConstructions(opts = {}) {
   const { file, rescued, exists } = archivePath('c0-dev/constructions.jsonl', opts);
-  if (rescued === false && !exists) return { builds: [], source: null, rescued: false };
-  const builds = readJsonl(file).map(c => ({
+  if (rescued === false && !exists) return { builds: [], source: null, rescued: false, read: 0, unmapped: {} };
+  const raw = readJsonl(file);
+  const builds = raw.map(c => ({
     family: c.familyId, mode: C0_MODES[c.armId], armId: c.armId, usd: c.constructionCostUsd, builderCostUsd: c.builderCostUsd, gatewayCostUsd: c.gatewayCostUsd,
     builderUsage: c.builderUsage ?? null, builderStreamUsage: c.builderStreamUsage ?? null, builderModel: c.builderModel, label: c.label,
   })).filter(b => b.mode);
-  return { builds, source: sourceOf(file), rescued };
+  return { builds, source: sourceOf(file), rescued, read: raw.length, unmapped: countBy(raw.filter(c => !C0_MODES[c.armId]), c => String(c.armId)) };
+}
+
+/** The archive files some loader reads (relative to the archive directory); any other JSONL in the archive is rescued but not used. */
+export const ARCHIVE_READS = Object.freeze(['p1/results.jsonl', 'c0-dev/results.jsonl', 'c0-dev/constructions.jsonl']);
+/** JSONL files in the rescued archive that no diagnostic reads: [{ path (relative to the archive), lines }] (c0-dev/probes.jsonl today). */
+export function rescuedNotUsed(archiveDir = ARCHIVE_DIR) {
+  const out = [];
+  const walk = d => {
+    for (const n of listDir(d).sort()) {
+      const f = path.join(d, n);
+      let st; try { st = statSync(f); } catch { continue; }
+      if (st.isDirectory()) walk(f);
+      else if (n.endsWith('.jsonl')) { const p = path.relative(archiveDir, f).split(path.sep).join('/'); if (!ARCHIVE_READS.includes(p)) out.push({ path: p, lines: readFileSync(f, 'utf8').split('\n').filter(l => l.trim()).length }); }
+    }
+  };
+  walk(archiveDir);
+  return out;
 }
 
 /** The arm definition a stream arm ran with (arm.json `def`: perTaskUsd, agentBudgetUsd, ... plus the arm's `kind`), or null. */
@@ -262,6 +283,14 @@ export function loadLegacyJobs({ archiveDir = ARCHIVE_DIR, jitRoot = JIT_RUNS_DI
     if (!x.source) notes.push(`${label}: not in this container (neither the rescued archive nor experiments/runs/): its diagnostics are skipped`);
     else { sources.push({ ...x.source, rescued: x.rescued }); if (!x.rescued) notes.push(`${label}: read from the git-ignored experiments/runs/ copy; run rescue.mjs to commit it`); }
   }
+  // Rows of an arm with no mode mapping are dropped by the loaders; each file's count is a note, and the report prints the accounting (read, dropped) either way.
+  const accounting = [['p1/results.jsonl', p1, 'P1_MODES'], ['c0-dev/results.jsonl', c0, 'C0_MODES'], ['c0-dev/constructions.jsonl', cons, 'C0_MODES']].map(([label, x, table]) => {
+    const dropped = Object.values(x.unmapped ?? {}).reduce((a, n) => a + n, 0);
+    if (dropped) notes.push(`${label}: ${dropped} of ${x.read} rows are from arm(s) with no mode mapping (${Object.entries(x.unmapped).sort().map(([a, n]) => `${a} ${n}`).join(', ')}; legacy.mjs ${table}) and are dropped from every diagnostic`);
+    return { file: label, read: x.read ?? 0, dropped, byArm: x.unmapped ?? {} };
+  });
+  const unused = rescuedNotUsed(archiveDir);
+  for (const f of unused) notes.push(`${f.path}: rescued (${f.lines} lines) into the archive but no diagnostic reads it`);
   const jit = loadJitJobs(jitRoot);
   for (const k of jit.skipped) notes.push(`${k.experiment}: skipped, ${k.reason}`);
   for (const def of LEGACY_JOB_DEFS) {
@@ -286,7 +315,7 @@ export function loadLegacyJobs({ archiveDir = ARCHIVE_DIR, jitRoot = JIT_RUNS_DI
     jobs.push({ ...def, rows: paired.rows, allRows: allRows ?? rows, builds: builds.filter(b => kept.has(b.mode)), pairing: paired.report, harvest: harvestReport, sources: jobSources });
   }
   if (jit.sources.length) sources.push(...jit.sources.map(p => sourceOf(p, { rescued: true })));
-  return { jobs, sources, notes, skipped: jit.skipped };
+  return { jobs, sources, notes, skipped: jit.skipped, accounting, rescuedNotUsed: unused };
 }
 
 /** The matrix rows and build rows metrics.needTable takes for one LEGACY job (single lineage 0 per built mode; every unit is its own task). */

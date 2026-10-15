@@ -78,7 +78,7 @@ const median = xs => { const s = [...xs].sort((a, b) => a - b); return s.length 
  * takes them. $0, code only: no oracle, no reference, no label. A job whose bed fails to load is listed in `errors` and keeps its census row in D1.
  * Returns { seeds, jobs: { <jobId>: { bed, perSeed: [{ seed, difficulty, stage?, tokens, logInputTokens, maxListLength }], logInputTokens, maxListLength } }, errors }.
  */
-export async function computeExampleFeatures({ stagesInfo = loadStages(), jobs = hypothesisJobs(stagesInfo.stages), seeds = [601, 602, 603], bedOf = f => ANCHOR_BEDS[f] ?? f, ledger = null, generate = null } = {}) {
+export async function computeExampleFeatures({ stagesInfo = loadStages(), jobs = hypothesisJobs(stagesInfo.stages), seeds = [601, 602, 603], bedOf = f => ANCHOR_BEDS[f] ?? f, ledger = null, generate = null } = {}) {   // generate(bed, plannedTask) -> { task, outputSchema }: a test seam
   const out = {}, errors = [];
   for (const j of jobs) {
     const bed = bedOf(j.family);
@@ -89,8 +89,8 @@ export async function computeExampleFeatures({ stagesInfo = loadStages(), jobs =
     try {
       const fam = generate ? null : await loadFamily(bed);
       const perSeed = planned.map(t => {
-        const task = generate ? generate(bed, t) : fam.generate({ seed: t.seed, split: t.split, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}) });
-        const f = taskFeatures(task, generate ? (generate.outputSchema ?? null) : fam.outputSchema);
+        const g = generate ? generate(bed, t) : { task: fam.generate({ seed: t.seed, split: t.split, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}) }), outputSchema: fam.outputSchema };
+        const f = taskFeatures(g.task, g.outputSchema);
         return { seed: t.seed, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}), tokens: Math.round(10 ** f.logInputTokens - 1), logInputTokens: +f.logInputTokens.toFixed(4), maxListLength: +f.maxListLength.toFixed(4) };
       });
       out[j.id] = { bed, perSeed, logInputTokens: +median(perSeed.map(p => p.logInputTokens)).toFixed(4), maxListLength: +median(perSeed.map(p => p.maxListLength)).toFixed(4) };
