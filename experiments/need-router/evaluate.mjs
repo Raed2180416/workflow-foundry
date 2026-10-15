@@ -722,8 +722,9 @@ export function readingOf({ headline, perV, vsTuned = null, vsJudge = null, slid
 
 /**
  * C7a's reading (PREREG §8; prereg-rules.mjs c7aReading): INCONCLUSIVE when H0 is not fitted (thetaFitStatus on the
- * confident N = 1 TRAIN labels), a class is empty or the counts are not powered; else SUPPORTED-DIAGNOSTIC, REFUTED (F12)
- * or INCONCLUSIVE on the exact joint interval, the same without the near cluster.
+ * confident N = 1 TRAIN labels), a class is empty or the counts are not powered (the chance-based precondition, D9);
+ * else REFUTED (F12: upper bound below 0.7 and lower bound <= 0.5), ABOVE-CHANCE-BELOW-USEFUL, SUPPORTED-DIAGNOSTIC or
+ * INCONCLUSIVE on the exact joint interval, the same without the near cluster.
  */
 export function readC7a({ h0, tunedPoint = null, coverage = null, withoutNear = undefined, fit = null }) {
   if (fit && !fit.fit) return { reading: 'INCONCLUSIVE', why: fit.why, f12: false, interval: null, power: null, notFitted: true };
