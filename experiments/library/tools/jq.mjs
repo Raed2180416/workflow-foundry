@@ -88,6 +88,8 @@ async function runJev(items) {
       try { body = await served.ask(req); } catch (e) { err = e.code ?? String(e.message); if (!['MODEL_QUOTA', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT'].includes(err)) break; await new Promise(r => setTimeout(r, 2000 * 2 ** attempt)); }
     }
     appendFileSync(path.join(LIVE, 'jev-raw.jsonl'), JSON.stringify({ id: it.id, order, body, err }) + '\n');
+    // A refused credential will not fix itself: stop at the first one instead of walking the whole set (2026-10-15 run: 1,200 refusals).
+    if (err === 'MODEL_AUTH') throw Object.assign(new Error('Jev refused the credential (MODEL_AUTH); stopping. Provision a working key in FOUNDRY_SYSTEMONE_API_KEY.'), { code: 'MODEL_AUTH' });
     if (!body) { console.log(`  ${it.id} ${order}: ${err}`); continue; }
     const row = { id: it.id, order, model: body.model ?? null, usage: body.usage ?? null };
     for (const q of FLAG_QS) row[q] = body.answers?.[q]?.probabilities ?? null;
