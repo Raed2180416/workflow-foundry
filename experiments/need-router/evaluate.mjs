@@ -577,6 +577,10 @@ export function sliderCalibration(labels, decP, jobs, { N = 10, wOverV = 1, Vs =
   return { positions, misses, monotone, monotoneTolP, predicted, calibrated: predicted && misses <= 1 && monotone };
 }
 
+// The exact joint interval is a nested numerical search; it depends on the four counts only, so it is memoised.
+const BA_CACHE = new Map();
+const baInterval = c => { const k = `${c.tp},${c.fn},${c.tn},${c.fp}`; if (!BA_CACHE.has(k)) BA_CACHE.set(k, balancedAccuracyInterval(c)); const v = BA_CACHE.get(k); return v && { ...v }; };
+
 /**
  * C7a at a cell: the need call against confident, non-fragile labels; balanced accuracy, precision, recall, coverage.
  * The balanced-accuracy interval is PREREG §7's one joint exact interval (prereg-rules.mjs balancedAccuracyInterval:
@@ -589,13 +593,16 @@ export function needDetection(labels, decP, jobs, cell, { fragile = [], registry
   const used = jobs.filter(j => labels.at(j, cell).confident && !fragile.includes(j));
   for (const j of used) { const y = labels.at(j, cell).label === 'workflow', c = call(decP.get(j).get(cell.key)); if (y) { if (c) tp += 1; else fn += 1; } else if (c) fp += 1; else tn += 1; }
   const tpr = tp + fn ? wilson(tp, tp + fn) : null, tnr = tn + fp ? wilson(tn, tn + fp) : null;
-  const ba = balancedAccuracyInterval({ tp, fn, tn, fp });
   const fpr = tnr ? 1 - tnr.p : null;
-  return {
-    cell: cell.key, used: used.length, tp, fn, tn, fp, counts: { tp, fn, tn, fp }, balancedAccuracy: ba, recall: tpr, specificity: tnr, precision: tp + fp ? tp / (tp + fp) : null,
+  const out = {
+    cell: cell.key, used: used.length, tp, fn, tn, fp, counts: { tp, fn, tn, fp }, balancedAccuracy: null, recall: tpr, specificity: tnr, precision: tp + fp ? tp / (tp + fp) : null,
     precisionAtBaseRate: Object.fromEntries(baseRates.map(b => [b, tpr && fpr !== null && tpr.p * (1 - b) + fpr * b > 0 ? (tpr.p * (1 - b)) / (tpr.p * (1 - b) + fpr * b) : null])),
     coverage: coverage(labels, jobs, cell), fragileExcluded: jobs.filter(j => fragile.includes(j)).length,
   };
+  // Computed on first read (the search is costly and most rows of a report never read it); enumerable, so reports carry it.
+  let ba;
+  Object.defineProperty(out, 'balancedAccuracy', { enumerable: true, configurable: true, get: () => (ba === undefined ? (ba = baInterval({ tp, fn, tn, fp })) : ba) });
+  return out;
 }
 
 /**

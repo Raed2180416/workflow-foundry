@@ -233,6 +233,36 @@ golden('G11 retroactive start with a retroactive pause', 'R4.2, R4.3, R4.5', tr 
     expect(E, `esc:${S}:50`, { earliest: '2026-03-17T15:00:00+01:00' }));
 });
 
+// G11b R4.3, S13, S14: opened Mon 2026-03-16 09:00+01:00 at P4, accepted 10:00, on hold awaiting the caller Mon 14:00;
+// reclassified to P3 Tue 03-17 10:00 during the hold (x); the caller replies Tue 15:00. RES-P4 is cancelled
+// `start-failed` at x; RES-P3 gen 1 attaches paused at x (S14), its pause starting Mon 14:00 where the current pause
+// interval began. The start record plans from startAt as if never paused (S13): Mon 480 + Tue 480 + Wed 480 = Wed 03-18
+// 17:00 (a close, S4), not null. Business at x: Mon 09:00-14:00 = 300; while paused no breach and no threshold is due.
+// The resume Tue 15:00 plans with 1140 left: Tue 120, Wed 480, Thu 480, Fri 03-20 09:00 + 60 = 10:00. 50% (720) Wed
+// 03-18 14:00 (Tue 17:00 at 420, Wed 09:00 + 300); 75% (1080) Thu 03-19 12:00.
+golden('G11b retroactive start that attaches paused', 'R4.3, R4.5, S13, S14', tr => {
+  const B = builder(), N = 'INC-RPT-G11-0002', S = `${N}/RES-P3/1`, x = '2026-03-17T10:00:00+01:00', h = '2026-03-16T14:00:00+01:00';
+  const evs = [B.report('2026-03-16T09:00:00+01:00', 'RPT-G11-0002', EU.userId, 'CI-LT-EU', 'hardware', 2), B.upd('2026-03-16T10:00:00+01:00', N, 'accept'),
+    B.upd(h, N, 'hold', { holdReason: 'awaitingCaller' }), B.upd(x, N, 'reclassify', { urgency: 1 })];
+  const E = tr(W3, B.view('2026-03-17T10:01:00+01:00', N, evs));
+  const r = all(
+    expect(E, `sla:${N}/RES-P4/1:cancel`, { match: { reason: 'start-failed', at: Z(x) } }),
+    expect(E, `sla:${S}:start`, { match: { startAt: Z('2026-03-16T09:00:00+01:00'), plannedBreachAt: Z('2026-03-18T17:00:00+01:00') }, earliest: x, latest: '2026-03-17T10:15:00+01:00' }),
+    expect(E, `sla:${S}:pause:${Z(h)}`, { earliest: x, latest: '2026-03-17T10:15:00+01:00' }),
+    findBy(E, e => e.lid.startsWith(`sla:${S}:resume:`) || e.lid === `sla:${S}:breach` || e.lid.startsWith(`esc:${S}:`)) ? `paused at the attach, yet ${lids(E).filter(l => l.includes(S)).join(' ')}` : true);
+  if (r !== true) return `at the attach: ${r}`;
+  const B2 = builder();
+  const evs2 = [B2.report('2026-03-16T09:00:00+01:00', 'RPT-G11-0002', EU.userId, 'CI-LT-EU', 'hardware', 2), B2.upd('2026-03-16T10:00:00+01:00', N, 'accept'),
+    B2.upd(h, N, 'hold', { holdReason: 'awaitingCaller' }), B2.upd(x, N, 'reclassify', { urgency: 1 }), B2.caller('2026-03-17T15:00:00+01:00', N, 'reply')];
+  const E2 = tr(W3, B2.view('2026-03-17T15:01:00+01:00', N, evs2));
+  return all(
+    expect(E2, `sla:${S}:start`, { match: { plannedBreachAt: Z('2026-03-18T17:00:00+01:00') } }),
+    expect(E2, `sla:${S}:resume:${Z('2026-03-17T15:00:00+01:00')}`, { match: { plannedBreachAt: Z('2026-03-20T10:00:00+01:00') }, earliest: '2026-03-17T15:00:00+01:00' }),
+    expect(E2, `esc:${S}:50`, { earliest: '2026-03-18T14:00:00+01:00' }),
+    expect(E2, `esc:${S}:75`, { earliest: '2026-03-19T12:00:00+01:00' }),
+    lids(E2).filter(l => l.startsWith(`sla:${S}:resume:`)).length === 1 ? true : `resumes ${lids(E2).filter(l => l.startsWith(`sla:${S}:resume:`))}`);
+});
+
 // G12 R4.2 reset and re-attach: a P3 incident (RSP-STD on the group's schedule) opened Fri 2026-03-06 16:00+01:00,
 // bounced to New York Fri 21:00+01:00 before acceptance: gen 1 cancelled `reset`, gen 2 starts 21:00+01:00 on SCH-US-STD
 // (Fri 15:00-17:00 EST 120; Mon 03-09 08:00 EDT + 120 = 10:00-04:00). Accepted Mon 09:00-04:00 (gen 2 stops); reassigned

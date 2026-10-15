@@ -3,11 +3,11 @@
 // The end-to-end tests need the AutomationBench venv (uv sync inside corpus/AutomationBench) and skip without it.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, writeFileSync, cpSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, symlinkSync, writeFileSync, cpSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { VENV_PY, TOOL_CLIENT, adapterText, materializeWorkdir, readJson, scriptedRunner, stratifiedSubset } from '../lib.mjs';
+import { VENV_PY, TOOL_CLIENT, adapterText, bridgeJson, materializeWorkdir, readJson, scriptedRunner, startServe, stratifiedSubset, writeJson } from '../lib.mjs';
 import { makeLedger, runTasks } from '../run.mjs';
 import { runClaudeCode, sandboxAvailable } from '../../../src/executors/claude-code.mjs';
 import { parity } from '../parity.mjs';
@@ -43,7 +43,7 @@ test('tool.mjs: call/batch go through the mailbox with the raw argument string; 
   const dir = tmp('tool');
   materializeWorkdir(dir, [{ name: 'api_search', description: 'd', parameters: {} }]);
   const reqs = [];
-  const srv = fakeServer(dir, (req, n) => { reqs.push(req); return { step: n, stepsLeft: 10, results: req.calls.map(c => ({ name: c.name, content: `echo:${c.arguments}` })) }; });
+  const srv = fakeServer(dir, req => { reqs.push(req); return { results: req.calls.map(c => ({ name: c.name, content: `echo:${c.arguments}` })) }; });
   try {
     const one = await run(['tool.mjs', 'call', 'api_search', '{"query": "x"}'], { cwd: dir });
     assert.equal(one.code, 0, one.stderr);
@@ -216,4 +216,100 @@ test('sandboxed: a stand-in CLI inside the executor sandbox reaches the bridge v
   assert.equal(results[0].forks[0].sessionError, null);
   assert.equal(results[0].forks[0].steps, 2);
   assert.equal(results[0].final.task_completed_correctly, 1);
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// Adversarial review 2026-10-15: the mailbox is agent-writable and the bridge runs OUTSIDE the sandbox with the host's
+// rights, so it must never follow anything the agent planted there (confused deputy). Exercised on the bridge directly:
+// the host test plants exactly what an agent could plant in its workdir.
+
+const waitFile = async (p, ms = 30_000) => { const t0 = Date.now(); while (!existsSync(p)) { if (Date.now() - t0 > ms) throw new Error(`no ${p}`); await new Promise(r => setTimeout(r, 50)); } await new Promise(r => setTimeout(r, 50)); return p; };
+const putReq = (box, n, calls) => { writeFileSync(path.join(box, `req-${n}.json.tmp`), JSON.stringify({ v: 1, calls })); renameSync(path.join(box, `req-${n}.json.tmp`), path.join(box, `req-${n}.json`)); };
+
+test('mailbox: planted symlinks, FIFOs, directories and hard links are refused uniformly; answers never write through a link; a swapped mailbox directory is not followed', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 180_000 }, async () => {
+  const live = tmp('mbox');
+  const prep = path.join(live, 'prep');
+  await bridgeJson(['prepare', '--domains', 'simple', '--tasks', PHONE_TASK, '--out', prep], { liveDir: live });
+  const canary = path.join(live, 'canary.txt'), probeDir = path.join(live, 'host-probe');
+  writeFileSync(canary, 'ORIGINAL');
+  mkdirSync(probeDir);
+  const box = path.join(live, 'w', '.tools');
+  mkdirSync(box, { recursive: true });
+  const b = startServe({ liveDir: live, input: path.join(prep, PHONE_TASK, 'input.json'), world: path.join(prep, PHONE_TASK, 'world0.json'), mailbox: box, hostDir: path.join(live, 'host') });
+  try {
+    await b.ready;
+    // 1. write-through: the answer's temp name and the answer itself pre-planted as links to a host file
+    symlinkSync(canary, path.join(box, 'res-1.json.tmp'));
+    putReq(box, 1, [read()]);
+    const r1 = JSON.parse(readFileSync(await waitFile(path.join(box, 'res-1.json')), 'utf8'));
+    assert.equal(readFileSync(canary, 'utf8'), 'ORIGINAL');
+    assert.ok(lstatSync(path.join(box, 'res-1.json')).isFile());
+    assert.deepEqual(Object.keys(r1), ['results']); // no step count in what the agent can read
+    assert.match(r1.results[0].content, /msg_3001|Jordan|phone/i);
+    // 2. requests that are not plain files: same refusal whatever they point at (no existence oracle for host paths)
+    symlinkSync(canary, path.join(box, 'req-2.json'));
+    symlinkSync(canary + '.missing', path.join(box, 'req-3.json'));
+    assert.equal(spawnSync('mkfifo', [path.join(box, 'req-4.json')]).status, 0);
+    mkdirSync(path.join(box, 'req-5.json'));
+    linkSync(canary, path.join(box, 'req-6.json'));
+    const refusals = [];
+    for (const n of [2, 3, 4, 5, 6]) refusals.push(readFileSync(await waitFile(path.join(box, `res-${n}.json`)), 'utf8'));
+    assert.deepEqual(new Set(refusals), new Set(['{"error": "ValueError: request refused: not a regular file"}']));
+    // 3. the mailbox directory swapped for a link to a host directory: the bridge keeps serving the original one
+    renameSync(box, box + '-moved');
+    symlinkSync(probeDir, box);
+    putReq(box + '-moved', 7, [read()]);
+    await waitFile(path.join(box + '-moved', 'res-7.json'));
+    writeFileSync(path.join(probeDir, 'req-8.json'), JSON.stringify({ v: 1, calls: [read()] }));
+    await new Promise(r => setTimeout(r, 500));
+    assert.deepEqual(readdirSync(probeDir), ['req-8.json']); // never answered there
+    const done = await b.stop();
+    assert.equal(done.steps, 2); // only the two real requests ran
+    assert.equal(readFileSync(canary, 'utf8'), 'ORIGINAL');
+  } finally { b.kill(); }
+});
+
+// Synthetic worlds for the vote: a fork's signature must keep the text around a fresh id (else different decisions
+// merge) and must mask ids that were generated from non-uuid draws (else identical work splits).
+const u32 = c => c.repeat(32).slice(0, 32);
+const dashed = u => `${u.slice(0, 8)}-${u.slice(8, 12)}-${u.slice(12, 16)}-${u.slice(16, 20)}-${u.slice(20)}`;
+const gen = (uuid = []) => ({ mode: 'record', seed: 0, uuid, rand: [], clock: [], wall0: 0, wall1: 0 });
+async function voteOn(base, forks) {
+  const dir = tmp('votesyn');
+  writeJson(path.join(dir, 'world0.json'), { task: 'synthetic', world: base });
+  const hosts = forks.map(([world, g], i) => { const h = path.join(dir, `fork-${i}`); writeJson(path.join(h, 'final-world.json'), world); writeJson(path.join(h, 'generated.json'), g); return h; });
+  await bridgeJson(['vote', '--base', path.join(dir, 'world0.json'), '--forks', hosts.join(','), '--out', path.join(dir, 'vote.json')], { liveDir: dir });
+  return readJson(path.join(dir, 'vote.json'));
+}
+
+test('vote: text around a fresh id is compared (different decisions do not merge); hex-randint ids and <x>_id record keys are matched', { skip: !HAVE_VENV && 'AutomationBench venv missing' }, async () => {
+  const msg = (u, prio) => ({ slack: { messages: [{ id: `m_${u.slice(0, 12)}`, text: `Ticket ${dashed(u)} created: priority ${prio}` }] } });
+  const [a, b, c] = ['a1', 'b2', 'c3'].map(u32);
+  const v1 = await voteOn({ slack: { messages: [] } }, [[msg(a, 'High'), gen([a])], [msg(b, 'Low'), gen([b])], [msg(c, 'High'), gen([c])]]);
+  assert.deepEqual(v1.groups.map(g => g.forks), [[0, 2], [1]]);
+  const old = { contact_id: '11111111-2222-3333-4444-555555555555', name: 'Old' };
+  const xero = list => ({ xero: { contacts: list } });
+  const v2 = await voteOn(xero([old]), [
+    [xero([old, { contact_id: '05f5e100-03e8-04d2-0b9a-00174876e800', name: 'Acme' }, { contact_id: '05f5e1aa-03e8-04d2-0b9a-00174876e801', name: 'Beta' }]), gen()],
+    [xero([{ contact_id: '0a0a0a0a-0fff-0eee-0ddd-001748760000', name: 'Beta' }, old, { contact_id: '0b0b0b0b-0fff-0eee-0ddd-001748760001', name: 'Acme' }]), gen()],
+    [xero([{ ...old, name: 'Renamed' }, { contact_id: '0c0c0c0c-0fff-0eee-0ddd-001748760002', name: 'Acme' }, { contact_id: '0d0d0d0d-0fff-0eee-0ddd-001748760003', name: 'Beta' }]), gen()],
+  ]);
+  assert.deepEqual(v2.groups.map(g => g.forks), [[0, 1], [2]]);
+  assert.equal(v2.majority, true);
+});
+
+test('cost: a runner that throws after it started is counted at its budget (unknown), not at $0; a nested model use voids the run', { skip: !HAVE_VENV && 'AutomationBench venv missing' }, async () => {
+  const { summary, results } = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], runner: async () => { throw new Error('boom after start'); }, budgetUsd: 0.5,
+    det: 'record', liveRoot: tmp('cost'), outDir: null, log: () => {} });
+  assert.match(results[0].forks[0].harnessError, /boom after start/);
+  assert.equal(results[0].forks[0].costUnknown, true);
+  assert.equal(results[0].costUsd, 0.5);
+  assert.deepEqual([summary.cost.spentUsd, summary.cost.knownUsd, summary.cost.unknownUpperUsd, summary.cost.unknownCostSessions], [0.5, 0, 0.5, 1]);
+  assert.equal(summary.void, null);
+  const inner = scriptedRunner(() => [{ calls: [read()] }]);
+  const nested = async args => ({ ...(await inner(args)), costUsd: 0.01, toolUses: [{ name: 'Bash', input: { command: 'claude -p "do it for me"' } }] });
+  const s2 = (await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], runner: nested, det: 'record', liveRoot: tmp('void'), outDir: null, log: () => {} })).summary;
+  assert.equal(s2.nestedModelUses, 1);
+  assert.match(s2.void, /nested model use/);
+  assert.equal(s2.cost.knownUsd, 0.01);
 });

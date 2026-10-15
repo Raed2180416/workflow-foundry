@@ -227,6 +227,64 @@ test('critical violations: separation of duties and a setMajor without approval 
   assert.deepEqual(oracleItem.critical(w, idx, c).map(x => x.code), ['major-without-approval']);
 });
 
+test('critical major-without-approval: only a counted approve or the fail-safe excuses a setMajor (review 2026-10-15)', () => {
+  // A P1 report (CI-PAY-APP1, urgency 1) opened Mon 2026-03-09 10:00+01:00; the first approval task 10:05, so the deadline
+  // is 10:35 (majorApprovalMinutes 30). Before the fix every setMajor after the deadline was skipped, whatever the answer.
+  const base = generateWorld({ seed: 1001, difficulty: 3 });
+  const caller = base.master.users.find(u => u.region === 'EU' && u.roles.length === 1 && u.roles[0] === 'caller');
+  const N = 'INC-RPT-CRIT-0001', c = 'crit';
+  const w = { ...base, truth: { ...base.truth, cases: { ...base.truth.cases, [c]: { subject: N, start: '2026-03-09T09:00:00Z', class: 'golden', callerId: caller.userId } } } };
+  const T = s => Date.parse(`2026-03-09T${s}:00+01:00`);
+  assert.equal(JSON.parse(w.rulebook.editions[0].files['policy.json']).majorApprovalMinutes, 30);
+  const run = ({ answers = [], resolveAt = null, setMajorAt, tasks = [['10:05', 'mia#1']] }) => {
+    let seq = 0;
+    const deliveries = [{ seq: ++seq, at: T('10:00'), instance: 'g', round: 1, event: { id: 'ev-crit-1', type: 'incident.reported', source: 'portal',
+      payload: { reportId: 'RPT-CRIT-0001', callerId: caller.userId, ci: 'CI-PAY-APP1', category: 'software', urgency: 1, summary: 'x' } } }];
+    if (resolveAt) deliveries.push({ seq: ++seq, at: T(resolveAt), instance: 'g2', round: 1, event: { id: 'ev-crit-2', type: 'resolver.update', source: 'workspace',
+      payload: { number: N, group: 'x', user: 'u-r', action: 'resolve', closeCode: 'fixed' } } });
+    const tk = tasks.map(([at, id]) => ({ seq: ++seq, at: T(at), instance: 'g', task: { id, kind: 'majorIncidentApproval', role: 'incidentManager', excludeUsers: [caller.userId], subject: N } }));
+    const ev = answers.map(([at, decision, taskId = 'mia#1']) => ({ seq: ++seq, at: T(at), type: 'humanTask.answered', instance: 'g', payload: { taskId, user: 'u-im2', answer: decision ? { decision } : { text: 'not sure' } } }));
+    const ledger = [{ seq: ++seq, at: T(setMajorAt), system: 'itsm', op: 'setMajor', args: { number: N, at: 'x' }, committed: true }];
+    const all = [...deliveries, ...tk, ...ev, ...ledger].sort((a, b) => a.at - b.at || a.seq - b.seq);
+    all.forEach((x, i) => { x.seq = i + 1; });
+    return oracleItem.critical(w, { bucket: () => ({ deliveries, ledger, tasks: tk, taskEvents: ev, calls: [] }), horizonMs: Date.parse(w.horizonEnd) }, c).map(x => x.code);
+  };
+  const MWA = ['major-without-approval'];
+  assert.deepEqual(run({ answers: [['10:30', 'reject']], setMajorAt: '10:40' }), MWA, 'setMajor after a counted reject (the reviewer\'s case)');
+  assert.deepEqual(run({ answers: [['10:30', 'approve']], resolveAt: '10:20', setMajorAt: '10:40' }), MWA, 'setMajor after the approval became moot');
+  assert.deepEqual(run({ answers: [['10:20', 'reject'], ['10:30', 'approve', 'mia#2']], tasks: [['10:05', 'mia#1'], ['10:25', 'mia#2']], setMajorAt: '10:31' }), MWA, 'an approve after a counted reject does not count');
+  assert.deepEqual(run({ setMajorAt: '10:35' }), MWA, 'the fail-safe is due strictly after the deadline');
+  assert.deepEqual(run({ answers: [['10:40', 'approve']], setMajorAt: '10:30' }), MWA, 'setMajor before any answer');
+  assert.deepEqual(run({ setMajorAt: '10:36' }), [], 'the fail-safe: no answer by the deadline');
+  assert.deepEqual(run({ answers: [['10:20', null]], setMajorAt: '10:40' }), [], 'an unusable answer is no answer: fail-safe');
+  assert.deepEqual(run({ answers: [['10:30', 'approve']], setMajorAt: '10:31' }), [], 'a counted approve');
+  assert.deepEqual(run({ answers: [['10:35', 'approve']], setMajorAt: '10:45' }), [], 'an approve at the deadline counts (S1)');
+});
+
+test('spec states the readings the oracle grades: S13-S15 and the warning rule (review 2026-10-15)', () => {
+  for (const r of ['S13', 'S14', 'S15']) assert.ok(specE.text.includes(`- ${r} `), `${r} missing from the spec`);
+  assert.match(specE.text, /`plannedBreachAt` as of `startAt`, S13/);
+  assert.match(specE.text, /\(`warning`\) changes nothing and\s+belongs to no incident \(`decisions\.subject` is `null`\), even when it names the CI and check of an open incident/);
+  // The warning reading on a generated world: a warning on the CI and check of an open alert incident is graded subject
+  // null (warnings land on such a pair by chance: 4 of 185 on dev seeds 1001-1030 d2-d5; seed 1012 d3 has i0067 on i0061).
+  let n = 0;
+  for (const seed of [1012]) {
+    const w = generateWorld({ seed, difficulty: 3 });
+    const open = cases(w).filter(([, t]) => t.subject && t.source?.kind === 'alert');
+    for (const [c, t] of cases(w).filter(([, x]) => x.class === 'alert-warning')) {
+      const a = w.arrivals.find(e => w.truth.eventCase[e.id] === c);
+      const at = Date.parse(a.at);
+      const hit = open.find(([, o]) => o.ci === a.payload.ci && o.check === a.payload.check && Date.parse(o.openedAt) <= at && (!o.resolvedAt || Date.parse(o.resolvedAt) > at));
+      if (!hit) continue;
+      const E = referenceTransition(w, plannedView(w, c));
+      assert.deepEqual(E.decisions.graded, { subject: null, priority: null }, `${c}: warning on open ${hit[1].subject}`);
+      assert.equal(E.effects.required.length, 0);
+      n++;
+    }
+  }
+  assert.ok(n >= 1, 'no warning on an open incident in dev world 1012 d3');
+});
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Goldens (DESIGN §9): hand-derived, rule-cited; the same module an oracle mutation tool would run per mutant
 

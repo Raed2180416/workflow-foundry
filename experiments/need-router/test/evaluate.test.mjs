@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   evaluate, commitDecisions, verifyEnvelope, loadLabels, publicView, shortcutView, TRUSTED_FEATURES, PROSE_FEATURES, N1, defaultPolicies, nrStatic,
-  readingOf, powerSimulation, metamorphic, importPurity, seedChecks, buildIsolation, nearestClusterTest, upperHull, hullAt, sliderCalibration, gateG1,
+  readingOf as readingOf0, powerSimulation, metamorphic, importPurity, seedChecks, buildIsolation, nearestClusterTest, upperHull, hullAt, sliderCalibration, gateG1,
   randomMatched, decideFolds, makeContext, fitRule, syntheticWorld,
 } from '../evaluate.mjs';
 import { HEADLINE, makeCell, needTable, needLabels, withCascades, GRID } from '../metrics.mjs';
@@ -138,6 +138,8 @@ test('false SUPPORTED stays at or under 5% under null simulations', () => {
 });
 
 test('readings follow the preregistered table', () => {
+  // holmReject: the co-primary's Holm decision is an input of the reading (review 2026-10-15; see evaluate-review.test.mjs).
+  const readingOf = x => readingOf0({ holmReject: true, ...x });
   const ok = { complete: true, lo: 0.01 }, cal = { calibrated: true, predicted: true };
   const perV = [{ V: 0.1, lo: 0.01, hi: 0.2 }, { V: 1, lo: 0.01, hi: 0.2 }, { V: 10, lo: 0.01, hi: 0.2 }];
   assert.equal(readingOf({ headline: { mean: 0.08, lo: 0.04, hi: 0.12 }, perV, vsTuned: ok, vsJudge: ok, slider: cal }).reading, 'SUPPORTED');
@@ -198,7 +200,9 @@ test('slider calibration, convex hull of fixed modes, gate G1', () => {
     const d = new Map([['j', new Map([0.1, 1, 10].map((V, i) => [makeCell(V, 10).key, { mode: modes[i], routingUsd: 0, pred: { p: ps[i], usd: us[i] } }]))]]);
     return sliderCalibration(stub, d, ['j'], opts);
   };
-  assert.equal(slider([0.95, 0.96, 0.956], [0.1, 0.2, 0.3]).calibrated, true, 'a 0.4-point fall is under the noise floor');
+  // The preregistered rule is literal (non-decreasing; review 2026-10-15): a 0.4-point fall is a decrease. A tolerance is a sensitivity only.
+  assert.equal(slider([0.95, 0.96, 0.956], [0.1, 0.2, 0.3]).monotone, false, 'the literal rule is the default');
+  assert.equal(slider([0.95, 0.96, 0.956], [0.1, 0.2, 0.3], { monotoneTolP: 0.03 }).calibrated, true, 'a 0.03 tolerance, as a sensitivity, absorbs it');
   assert.equal(slider([0.95, 0.96, 0.956], [0.1, 0.2, 0.3], { monotoneTolP: 0 }).monotone, false, 'the literal rule');
   assert.equal(slider([0.95, 0.96, 0.92], [0.1, 0.2, 0.3]).monotone, false);
   assert.equal(slider([0.9, 0.95, 0.97], [0.1, 0.3, 0.2]).monotone, false, 'dollars are strict');

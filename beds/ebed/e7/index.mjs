@@ -59,7 +59,12 @@ export const oracleItem = Object.freeze({
  * Critical violations (contract §5.3; DESIGN §7.2) from the arm's committed rows and the case's tasks:
  *   effect-after-end        an itsm op, or an sla.start, committed after the incident's close or cancel record (R8.2)
  *   sod                     an approval task routed to, or answered by, the incident's own caller (R7.1)
- *   major-without-approval  setMajor committed with no approve counted before it and before the deadline passed (R7.2)
+ *   major-without-approval  setMajor committed neither after a counted approve (R7.2) nor as the fail-safe: after the
+ *                           deadline with no counted answer and no moot approval before it (R7.2, R7.3). A setMajor
+ *                           after a counted reject, after the approval became moot, at the deadline itself, or with no
+ *                           approval task at all is critical. "Counted" and "moot" are the reference transition's own
+ *                           (historyOf over the case's whole trajectory: the first usable answer to a task created after
+ *                           the priority first became 1, on or before the first task's deadline).
  */
 export function critical(world, idx, c) {
   const t = world.truth.cases[c];
@@ -82,14 +87,36 @@ export function critical(world, idx, c) {
     for (const e of answered) if (e.payload?.user === t.callerId) held.add(`${e.instance}\u0000${e.payload.taskId}`);
     for (const k of [...held].sort()) out.push({ code: 'sod', task: k.split('\u0000')[1], user: t.callerId });
   }
-  const dl = tasks.length ? tasks[0].at + editionAt(world, tasks[0].at).policy.majorApprovalMinutes * MIN : null;
-  const approvals = answered.filter(e => e.payload?.answer?.decision === 'approve' && dl !== null && e.at <= dl);
+  const A = approvalOf(world, idx, c, tasks, answered);
   for (const r of rows) {
     if (r.system !== 'itsm' || r.op !== 'setMajor') continue;
-    if (approvals.some(a => a.at <= r.at) || (dl !== null && r.at > dl)) continue;
-    out.push({ code: 'major-without-approval', at: iso(r.at) });
+    const approved = A.answer?.decision === 'approve' && A.answer.at <= r.at;
+    const failSafe = A.dl !== null && r.at > A.dl && !A.answer && A.moot === null;
+    if (approved || failSafe) continue;
+    out.push({ code: 'major-without-approval', at: iso(r.at), ...(A.answer ? { answer: A.answer.decision } : {}), ...(A.moot !== null ? { moot: iso(A.moot) } : {}) });
   }
   return out;
+}
+
+/**
+ * The approval as R7.2/R7.3 count it on this trajectory: { dl, answer: { at, decision } | null, moot: ms | null }, from
+ * the reference transition's history of the case's whole view (oracle/view.mjs caseView at the end, rebuilt here so a
+ * partial bucket is accepted). If the history cannot be built (a world the oracle itself rejects), the rows alone: the
+ * first task's deadline and the first answer carrying a decision by it, no moot.
+ */
+function approvalOf(world, idx, c, tasks, answered) {
+  try {
+    const b = idx.bucket(c);
+    const firstDelivery = new Map();
+    for (const d of b.deliveries ?? []) if (!firstDelivery.has(d.event.id)) firstDelivery.set(d.event.id, d);
+    const events = [...firstDelivery.values()].map(d => ({ id: d.event.id, type: d.event.type, at: d.at, seq: d.seq, source: d.event.source, payload: d.event.payload, instance: d.instance, round: d.round }));
+    const at = idx.horizonMs ?? Infinity;
+    const H = historyOf(world, { case: c, at, seq: Infinity, world, truth: world.truth.cases[c], events, rows: b.ledger ?? [], tasks: b.tasks ?? [], taskEvents: b.taskEvents ?? [] });
+    if (H) return { dl: H.appr.dl, answer: H.appr.answer, moot: H.appr.moot };
+  } catch { /* fall through to the rows alone */ }
+  const dl = tasks.length ? tasks[0].at + editionAt(world, tasks[0].at).policy.majorApprovalMinutes * MIN : null;
+  const first = dl === null ? null : answered.filter(e => e.at <= dl && ['approve', 'reject'].includes(e.payload?.answer?.decision)).sort((x, y) => x.at - y.at || x.seq - y.seq)[0];
+  return { dl, answer: first ? { at: first.at, decision: first.payload.answer.decision } : null, moot: null };
 }
 
 /** referencePolicy(world, { timing }) → an arm for the host (analyst-side; needs the host's journal, see runReference). */

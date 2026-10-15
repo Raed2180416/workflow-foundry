@@ -7,7 +7,7 @@
 // A second check runs the official path with no patches (--det off) against the recording shim (--det record) to
 // show that the shim changes nothing but generator draws.
 //
-//   node experiments/autobench/parity.mjs [--per-domain 2] [--seed parity-20261014] [--out research/automationbench-20261014/parity.json]
+//   node experiments/autobench/parity.mjs [--per-domain 2] [--seed parity-20261014] [--tasks a,b] [--wrong 1] [--out FILE|none]
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -23,14 +23,14 @@ function sortKeys(v) {
   return v;
 }
 
-export async function parity({ perDomain = 2, seed = 'parity-20261014', out = path.join(REPO, 'research/automationbench-20261014/parity.json'), live, tasks: given, log = m => process.stderr.write(m + '\n') } = {}) {
+export async function parity({ perDomain = 2, seed = 'parity-20261014', out = path.join(REPO, 'research/automationbench-20261014/parity.json'), live, tasks: given, wrong = false, log = m => process.stderr.write(m + '\n') } = {}) {
   live ??= path.join(WORK_ROOT, 'autobench', `parity-${Date.now()}`);
   mkdirSync(live, { recursive: true });
   const domains = [...PUBLIC_DOMAINS, 'simple'];
   const tasks = given ?? stratifiedSubset(await listTasks(domains, { liveDir: live }), perDomain * domains.length, seed, domains);
   const bridgeLive = path.join(live, 'bridge');
   const scripts = {};
-  const stepsFor = ({ name }) => (scripts[name] ??= scriptFor(path.join(bridgeLive, 'prep', name), { violate: tasks.indexOf(name) % 2 === 1 }));
+  const stepsFor = ({ name }) => (scripts[name] ??= scriptFor(path.join(bridgeLive, 'prep', name), { violate: tasks.indexOf(name) % 2 === 1, wrong }));
   // (A) bridge path: run.mjs with the scripted runner (no model), seeded generators, one fork per task.
   log(`[parity] ${tasks.length} tasks: bridge path`);
   const t0 = Date.now();
@@ -74,8 +74,8 @@ export async function parity({ perDomain = 2, seed = 'parity-20261014', out = pa
   });
   const resolved = rows;
   const report = {
-    what: 'bridge vs official environment API, same scripted action sequence (no model, $0)', date: new Date().toISOString(), evidence: 'harness validation (development)',
-    command: 'node experiments/autobench/parity.mjs', seed, det: 'seed (both paths)', tasks: resolved.length,
+    what: `bridge vs official environment API, same scripted action sequence${wrong ? ' (deliberately wrong writes)' : ''} (no model, $0)`, date: new Date().toISOString(), evidence: 'harness validation (development)',
+    command: 'node experiments/autobench/parity.mjs', seed, wrong, det: 'seed (both paths)', tasks: resolved.length,
     exact: resolved.filter(r => r.exact).length, all_exact: resolved.every(r => r.exact),
     shim_neutrality: { ok: resolved.every(r => r.neutral?.ok), compared: 'official --det off vs official --det record, same scripts' },
     nonzero_scores: resolved.filter(r => r.partial_credit > 0).length, full_passes: resolved.filter(r => r.task_completed_correctly === 1).length,
@@ -88,7 +88,7 @@ export async function parity({ perDomain = 2, seed = 'parity-20261014', out = pa
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const a = Object.fromEntries(process.argv.slice(2).reduce((acc, x, i, arr) => (x.startsWith('--') ? [...acc, [x.slice(2), arr[i + 1]]] : acc), []));
-  const r = await parity({ perDomain: a['per-domain'] ? Number(a['per-domain']) : 2, seed: a.seed ?? 'parity-20261014', out: a.out ?? undefined, tasks: a.tasks ? a.tasks.split(',') : undefined });
+  const r = await parity({ perDomain: a['per-domain'] ? Number(a['per-domain']) : 2, seed: a.seed ?? 'parity-20261014', out: a.out === 'none' ? null : (a.out ?? undefined), tasks: a.tasks ? a.tasks.split(',') : undefined, wrong: a.wrong === '1' || a.wrong === 'true' });
   process.stdout.write(JSON.stringify({ ...r, rows: r.rows.map(x => ({ task: x.task, exact: x.exact, pc: x.partial_credit, pass: x.task_completed_correctly, calls: x.toolCalls, writes: x.writes, neutral: x.neutral?.ok, failed: Object.entries(x.checks).filter(([, v]) => !v).map(([k]) => k) })) }, null, 1) + '\n');
   process.exit(r.all_exact && r.shim_neutrality.ok ? 0 : 1);
 }

@@ -153,7 +153,8 @@ R1.1 **Reports.** A report whose incident is not yet recorded is recorded **in t
 `service` (the CI's `service`), `category`, `impact`, `urgency` and `priority` (R2), `openedAt` (the report's time),
 and a free `summary`.
 
-R1.2 **Alerts.** An alert whose `severity` maps to no urgency in `alert-urgency.json` (`warning`) changes nothing. Any
+R1.2 **Alerts.** An alert whose `severity` maps to no urgency in `alert-urgency.json` (`warning`) changes nothing and
+belongs to no incident (`decisions.subject` is `null`), even when it names the CI and check of an open incident. Any
 other alert either joins an incident or opens one:
 - it **joins** the open incident of its CI and check: the incident opened by an alert with the same `ci` and `check`
   that is not resolved, closed or cancelled at the alert's time (R1.3);
@@ -234,14 +235,14 @@ instant that is in progress or paused, the first of these that applies:
    (`reason: 'cancelled'` or `'start-failed'`);
 2. **stop** if the stop condition holds;
 3. **reset** if the `reset` field changed at this instant: cancel it (`reason: 'reset'`) and attach a new generation
-   now (R4.3);
+   now (R4.3) if the definition's start condition holds and its stop condition does not (S15);
 4. **pause** if it is in progress and the pause condition holds; **resume** if it is paused and the pause condition no
    longer holds.
 
 Then **attach** (R4.3) every definition whose start condition holds now but did not hold just before this instant (or
 that holds at creation), that has no SLA in progress or paused on the incident, and whose stop condition does not hold
-now. A change of the `reset` field also attaches a new generation of a definition whose start condition holds and
-which has no SLA in progress or paused.
+now. A change of the `reset` field also attaches a new generation of a definition whose start condition holds, whose
+stop condition does not hold and which has no SLA in progress or paused. A list with no condition never holds.
 
 R4.3 **Attaching** an SLA at instant x:
 - `generation` is 1 + the number of earlier SLAs of the same definition on the incident;
@@ -254,7 +255,8 @@ R4.3 **Attaching** an SLA at instant x:
 - the definition's edition is the one in force at x (R0), whatever `startAt` is;
 - with a retroactive start and `retroactivePause`, the SLA counts the incident's history since `startAt`: it was
   paused in every interval of [startAt, x) in which the pause condition held, and it attaches paused if the pause
-  condition holds at x.
+  condition holds at x;
+- any SLA whose pause condition holds at x attaches paused, retroactive or not (S14).
 
 R4.4 **Time.** An SLA is **running** from `startAt` except while paused, until it stops or is cancelled. Its
 **business time** is the part of its running time inside the schedule's open intervals: a calendar is `{ id, tz,
@@ -264,16 +266,17 @@ local wall-clock times in the schedule's time zone, start included, end excluded
 interval runs from the instant the local clock first reads its start to the instant it first reads its end: a skipped
 hour is not business time, a repeated hour inside an interval counts once. For 24×7 every running minute is business
 time. The **target** is `target.minutes` of business time. The SLA's **breach instant** D is the instant its business
-time reaches the target. Its **planned breach** is D computed as if it is not paused again; while it is paused D is
-not known (`null`) unless it was reached before the pause.
+time reaches the target. Its **planned breach** at an instant is D computed from the running time up to that instant
+as if it is not paused again; while it is paused D is not known unless it was reached before the pause. A record's
+`plannedBreachAt` is the planned breach at the instant that record carries (S13).
 
 R4.5 **SLA records.** Within **15 min** of the instant each describes, unless stated otherwise:
 - attach at x: `sla.start({ number, definition, generation, startAt, schedule, timezone, plannedBreachAt })` (window
-  from x); with a retroactive pause, also `sla.pause({ ..., at })` and `sla.resume({ ..., at, plannedBreachAt })` for
-  each past pause interval and, if it attaches paused, `sla.pause` at the start of the current one (all within 15 min
-  of x);
+  from x; `plannedBreachAt` as of `startAt`, S13); with a retroactive pause, also `sla.pause({ ..., at })` and
+  `sla.resume({ ..., at, plannedBreachAt })` for each past pause interval; if it attaches paused, `sla.pause` at the
+  start of the current one (S14); all within 15 min of x;
 - pause at t: `sla.pause({ number, definition, generation, at: t })`;
-- resume at t: `sla.resume({ number, definition, generation, at: t, plannedBreachAt })`;
+- resume at t: `sla.resume({ number, definition, generation, at: t, plannedBreachAt })` (`plannedBreachAt` as of t);
 - **breach**: `sla.breach({ number, definition, generation, at: D })` within 15 min of D, or of x if D is before the
   attach;
 - stop at t: `sla.stop({ number, definition, generation, at: t, elapsedMinutes, businessElapsedMinutes, breached })`
@@ -405,6 +408,17 @@ Send each required notification exactly once per occasion. Escalations are not n
 - S11 A step that becomes moot before it was due is no longer required (R7.3). Taking it anyway before it became moot
   is allowed.
 - S12 Escalations already reached when an SLA attaches (a retroactive start) are all sent, each once, from the attach.
+- S13 Each SLA record carries the planned breach as of its own instant (R4.4, R4.5). `sla.start` carries D counted
+  from `startAt` as if the SLA were never paused: also for a retroactive SLA with past pauses, and also for one that
+  attaches paused. Each `sla.resume`, including the past ones of a retroactive pause, carries D as of its `at`: the
+  business time of the running intervals before it, then counted on from `at` as if not paused again.
+- S14 An SLA whose pause condition holds at the instant x it attaches attaches paused, whether its start is retroactive
+  or not: `sla.start`, then `sla.pause` at the start of the current pause interval. For a retroactive start with
+  `retroactivePause` that is where the interval began (x if it begins at x); otherwise it is x.
+- S15 A reset (R4.2 step 3) attaches the new generation only if, at that instant and in the edition then in force, the
+  definition's start condition holds and its stop condition does not; otherwise the SLA is only cancelled (`reset`).
+  The same test applies to the attach that a change of the reset field causes. A condition list with no condition
+  never holds.
 
 ## 6. Orientation (for orientation only)
 
