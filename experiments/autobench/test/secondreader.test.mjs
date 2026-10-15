@@ -15,7 +15,7 @@ import { ARM, HARNESS_ID, READER_SYSTEM, REVIEW_BEGIN, appsOfUrl, diffReads, hid
 import { stubNodeRunner, stubSessionRunner, stubReview, sendEmail } from '../harness/secondreader-stubs.mjs';
 
 // The runner with the pipeline registry: run.mjs once it is merged, the wired copy run-sr-wip.mjs until then.
-const { runTasks } = mainRunner.PIPELINE_HARNESSES?.secondreader ? mainRunner : await import('../run-sr-wip.mjs');
+const { runTasks, DEFAULTS: RUN_DEFAULTS } = mainRunner.PIPELINE_HARNESSES?.secondreader ? mainRunner : await import('../run-sr-wip.mjs');
 const tmp = p => mkdtempSync(path.join(os.tmpdir(), `autobench-sr-${p}-`));
 const HAVE_VENV = existsSync(VENV_PY);
 const quiet = () => {};
@@ -302,4 +302,8 @@ test('A0+SR\'s act call is A0\'s runner call: same model, prompts, workdir, budg
   await assert.rejects(runTasks({ harness: 'secondreader', tasks: [testTask], runner: never, nodeRunner: never, liveRoot: tmp('guards'), outDir: null, log: quiet }), /not dev-split tasks/);
   await assert.rejects(runTasks({ harness: 'secondreader', tasks: [PHONE_TASK], k: 2, runner: never, nodeRunner: never, liveRoot: tmp('guards2'), outDir: null, log: quiet }), /forked rehearsal/);
   await assert.rejects(runTasks({ harness: 'secondreader', tasks: [PHONE_TASK], nodeModels: { checker: 'x' }, runner: never, nodeRunner: never, liveRoot: tmp('guards3'), outDir: null, log: quiet }), /unknown node role/);
+  // AM-4: a scripted run is never exempt, even given the hash it recomputes (the hash check runs first, so /not dev-split/
+  // also proves the hash matched; shown on an unknown name, so no test task could be touched).
+  const hash = pipelineManifest(pipelineConfig({ ...RUN_DEFAULTS, cli: null })).sha256;
+  await assert.rejects(runTasks({ harness: 'secondreader', tasks: ['sales.__not_a_task__'], harnessHash: hash, runner: never, nodeRunner: never, liveRoot: tmp('guards4'), outDir: null, log: quiet }), /not dev-split tasks/);
 });

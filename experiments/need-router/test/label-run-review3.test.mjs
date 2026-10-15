@@ -4,7 +4,9 @@
 // disjoint from the evaluation tasks; no two jobs of a stage share an evaluation task; the per-mode summary counts failed
 // and voided lineages as needTable scores them; a start settled above its bound is an overrun that stops the stage; racing
 // gives no mode top-up to a job whose headline cell is unlabelled. (The second review's STAGE_ALREADY_RUN test and the
-// prereg-review2 meter-gate fixture were fixed in place.) $0: stub ports only; work roots are temporary directories.
+// prereg-review2 meter-gate fixture were fixed in place.) The "(re-check)" tests come from a second pass over these fixes: the
+// repository-root scan read each input's JSON text and so missed the root at the start of a line (behind a `\n` escape), and a
+// b1Script gateway overshoot is charged and recorded above its bound. $0: stub ports only; work roots are temporary directories.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync, mkdirSync, utimesSync } from 'node:fs';
@@ -137,6 +139,21 @@ test('minor: a start settled above its bound is an overrun on the ledger; a mete
   assert.ok(rep.totals.spend.meterUsd > 0.0005);
   assert.ok(readJsonl(path.join(out, LR.SPEND_FILE)).some(x => x.op === 'settle' && x.overBoundUsd > 0), 'the overrun is on the ledger in --out');
   assert.match(readFileSync(path.join(out, 'report.txt'), 'utf8'), /over their bound by \$[\d.]+; OVER THE CAP by/);
+});
+
+test('minor (re-check): a b1Script gateway overshoot (its own overshootUsd) is charged above the per-task bound and recorded as an overrun', t => {
+  // b1-script.mjs reports costUsd = the gateway ledger's spend, which may pass perTaskUsd (meta.overshootUsd); the meter charges
+  // it as reported or re-priced, never clipped to the bound, so the settle records the excess.
+  const P = STAGES.priceTable, dir = tmp(t), f = path.join(dir, LR.SPEND_FILE);
+  const calls = [{ runId: 'construct-H#1:k:t0:x', modelId: 'claude-haiku-5-5', usage: { inputTokens: 2_000_000, outputTokens: 1_000_000, cacheReadTokens: 0, cacheWriteTokens: 0 }, costUsd: 0.7 }];
+  const r = { output: {}, costUsd: 1.3, imputedUsd: 0, costUnknown: false, meta: { overshootUsd: 0.3 } };
+  const m = LR.meterOf({ kind: 'script', priceTable: P, bound: 1, r, calls });
+  assert.equal(m.charged, Math.max(1.3, m.measured)); assert.ok(m.charged > 1);
+  const B = new LR.StageBudget(1.2, 0, { stage: 'S', files: [f] }), tok = B.reserve(1, { kind: 'trial', key: 'k' });
+  B.settle(tok, m.charged);
+  const e = readJsonl(f).find(x => x.op === 'settle');
+  assert.ok(Math.abs(e.overBoundUsd - (m.charged - 1)) < 1e-6); assert.equal(B.overCap, true);
+  assert.equal(B.reserve(0.01, { key: 'k2' }), null, 'nothing more starts once the meter is over the cap');
 });
 
 // --------------------------------------------------------------------------------- minor: hidden-path void scan gaps

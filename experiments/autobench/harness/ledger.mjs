@@ -184,13 +184,14 @@ export function sameEffect(a, b) {
   return jaccard(words(a.target), words(b.target)) >= 0.5 || (norm(a.target) && norm(a.target) === norm(b.target));
 }
 
+const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 /**
- * mergeLedgers(ledgers, { sources }) -> { items, conflicts, today, dropped }.
+ * mergeLedgers(ledgers, { sources, hostDate }) -> { items, conflicts, today, dropped }.
  * Union for recall: every effect any reader found is kept, with its support (readers that found it). Single-valued
  * fields that disagree across readers, eligibility that disagrees, and a positive/negative pair on the same effect become
  * conflicts. Multi-valued fields (body text) are unioned.
  */
-export function mergeLedgers(ledgers, { sources = new Map() } = {}) {
+export function mergeLedgers(ledgers, { sources = new Map(), hostDate = null } = {}) {
   const items = [];
   const K = ledgers.length;
   for (const L of ledgers) for (const r of L.requirements) {
@@ -224,7 +225,11 @@ export function mergeLedgers(ledgers, { sources = new Map() } = {}) {
   for (const p of merged.filter(x => x.polarity === 'positive')) for (const n of merged.filter(x => x.polarity === 'negative')) {
     if (sameEffect({ ...p, polarity: 'x' }, { ...n, polarity: 'x' })) conflicts.push({ kind: 'polarity', item: p.id, other: n.id, about: `"${p.statement}" vs the rule "${n.rule?.quote ?? n.statement}"`, options: [{ label: `do it: ${p.statement}`, value: p.id, source: p.source, support: p.support }, { label: `do not: ${n.rule?.quote ?? n.statement}`, value: n.id, source: n.rule?.source ?? n.source, support: n.support }] });
   }
-  const todays = ledgers.map(L => L.today).filter(t => t?.value);
+  // "today" counts only when its quote was found in a source, and a value equal to the machine's own date (the CLI injects
+  // it, AM-9) only when a source shows that date: an anchored reader must not set the task's date with the brief's authority.
+  const hostDates = new Set([hostDate ?? new Date().toISOString().slice(0, 10), localDate()]);
+  const shown = d => [...sources.values()].some(s => String(s.text ?? '').includes(d));
+  const todays = ledgers.map(L => L.today).filter(t => t?.value && t.verified && !(hostDates.has(t.value.slice(0, 10)) && !shown(t.value.slice(0, 10))));
   const todayVotes = new Map();
   for (const t of todays) { const k = t.value.slice(0, 10); const e = todayVotes.get(k) ?? { ...t, value: k, votes: 0 }; e.votes += 1; todayVotes.set(k, e); }
   const today = [...todayVotes.values()].sort((a, b) => b.votes - a.votes || Number(Boolean(b.verified)) - Number(Boolean(a.verified)))[0] ?? null;

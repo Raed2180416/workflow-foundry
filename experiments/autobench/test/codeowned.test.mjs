@@ -18,6 +18,7 @@ import { terminationDecision, briefSection } from '../harness/checker.mjs';
 import { auditPipeline, codeownedConfig, codeownedManifest, manifestFiles, nodeModels, parseNodeModels, HARNESS_ID } from '../harness/codeowned.mjs';
 import { entityTerms, listOf, renderInventory, ENUM_PLAN } from '../harness/inventory.mjs';
 import { stubNodeRunner, stubSessionRunner } from '../harness/codeowned-stubs.mjs';
+import { bridgeClient, toolCall } from '../harness/bridge-client.mjs';
 
 const tmp = p => mkdtempSync(path.join(os.tmpdir(), `autobench-c-${p}-`));
 const HAVE_VENV = existsSync(VENV_PY);
@@ -84,6 +85,23 @@ test('union / dedup / support: the same effect from K readers is one item with s
   const pcs = postconditionsFromLedger(m, INV);
   assert.deepEqual(pcs.map(p => [p.type, p.hard]), [['gmail_sent', true], ['slack_posted', false]]);
   assert.deepEqual(pcs[0].params, { to: ['ops-team@corp.example'], cc: [], subject: ['Weekly Ops Digest'], body: [] });
+});
+
+test('today: only a quoted date counts, and the machine\'s own date only when a source shows it (AM-9 anchoring)', () => {
+  const withToday = (reader, today) => normalizeLedger({ today, requirements: [send('ops-team@corp.example', 'gmail:message:m2')] }, SRC, { reader });
+  const host = '2031-01-02';
+  // Three readers anchored on the machine date, each citing a span that exists: not taken (no source shows that date).
+  let m = mergeLedgers([1, 2, 3].map(k => withToday(k, { value: host, source: 'request', quote: 'Please send' })), { sources: SRC, hostDate: host });
+  assert.equal(m.today, null);
+  // An unquoted date is not taken either.
+  m = mergeLedgers([1, 2, 3].map(k => withToday(k, { value: '2026-03-05', source: 'gmail:message:m2', quote: 'no such words anywhere' })), { sources: SRC, hostDate: host });
+  assert.equal(m.today, null);
+  // A quoted world date is taken; the machine date is taken when a source shows it.
+  m = mergeLedgers([1, 2, 3].map(k => withToday(k, { value: '2026-03-05', source: 'gmail:message:m2', quote: 'Routing policy (update)' })), { sources: SRC, hostDate: host });
+  assert.equal(m.today.value, '2026-03-05');
+  const src2 = new Map([...SRC, ['gmail:message:m9', { text: `Sent ${host}`, date: host }]]);
+  m = mergeLedgers([1, 2, 3].map(k => normalizeLedger({ today: { value: host, source: 'gmail:message:m9', quote: `Sent ${host}` }, requirements: [] }, src2, { reader: k })), { sources: src2, hostDate: host });
+  assert.equal(m.today.value, host);
 });
 
 test('conflicts: disagreeing single-valued fields, eligibility and polarity become conflicts; code settles by verified source, the request, then the newer source; adjudication only for the rest', () => {
@@ -192,6 +210,25 @@ function writeTranscript(dir, name, { responses, model = 'claude-haiku-5-5', t0,
   writeFileSync(path.join(dir, 'nodes', `${name}.jsonl`), ev.map(e => JSON.stringify(e)).join('\n') + '\n');
   return `nodes/${name}.jsonl`;
 }
+
+test('bridge client: no code-issued world step once the pipeline has used the official response budget (refused before the mailbox; the audit stays clean)', async () => {
+  const box = path.join(tmp('box'), '.tools');
+  let used = 50;
+  const client = bridgeClient({ mailbox: box, responsesSoFar: () => used, maxResponses: 50, waitMs: 60, pollMs: 10 });
+  const r = await client.batch([toolCall('api_search', { query: 'messages', top_k: 1 })], { node: 'check-2' });
+  assert.match(r.error, /not issued/);
+  assert.deepEqual(readdirSync(box), []);                              // nothing claimed or written: the bridge never saw it
+  assert.equal(client.log.length, 1);
+  assert.equal(client.log[0].refused, true);
+  assert.equal(client.steps, 0);
+  assert.deepEqual(auditPipeline({ nodes: [{ name: 'check-2', kind: 'code', started: 0, ended: 0 }], clientLog: client.log, calls: [], maxSteps: 50, hostDir: tmp('audit2') }).violations, []);
+  // Below the budget the step is issued as before (no bridge here: it times out, but the request is in the mailbox).
+  used = 49;
+  const r2 = await client.batch([toolCall('api_search', { query: 'messages', top_k: 1 })], { node: 'check-2' });
+  assert.match(r2.error, /did not answer/);
+  assert.ok(readdirSync(box).some(f => /^req-1\.json$/.test(f)));
+  assert.equal(client.log[1].responsesAtIssue, 49);
+});
 
 test('auditPipeline: responses summed over every model call in order; the cap applies to the sum; code steps and session steps checked; L5 per node', () => {
   const dir = tmp('audit'), T = 1_800_000_000_000;
