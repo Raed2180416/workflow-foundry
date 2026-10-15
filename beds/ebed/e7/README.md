@@ -107,27 +107,52 @@ ep4 holds no cases (arrivals stop at business day 24, DESIGN §4.8). The censore
 past the horizon (`slow`, `reply-at-deadline`, `vendor-ola`, `holiday-span`). Every go-live case completes and passes,
 so the oracle's SLA engine reproduces every SLA record, escalation and notice the generator's independent engine exported.
 
-**Controls** (`tools/controls-run.mjs`, attack seeds 1211–1214, d2–d5; 16 worlds, 2,370 completed cases). `noop`, `echo`,
-`declare-every-obligation`, `escalate-everything` and `pause-everything` fail every world (bad controls fail 96–99% of
-completed cases; the passes are messages that name no incident). Necessity controls on their target cases, summed over
-d2–d5:
+**Controls** (`tools/controls-run.mjs`, attack seeds 1211–1214, d2–d5; 16 worlds, 2,370 completed cases; rerun
+2026-10-15 after the review fixes, same failure counts as the 2026-10-14 run). Every bad and gaming control fails every
+world: `noop` 2,297/2,370 completed cases (96.9%), `echo` and `declare-every-obligation` 2,345/2,370 (98.9%; the passes
+are messages that name no incident), `escalate-everything` 2,297/2,370 (96.9%; 20 `sod` critical: its extra approval
+task has no exclusions), `pause-everything` 2,130/2,370 (89.9%; d2 87.7%).
 
-| control (construct removed) | target cases failed |
-|---|---|
-| 24x7-no-pause (every schedule 24×7, no pause) | 2,073/2,073 (100%) |
-| never-escalate | 1,749/1,749 (100%) |
-| timer-first (closure and fail-safe taken at the deadline) | 1,386/1,386 (100%); 59 `major-without-approval` critical (d3–d5) |
-| wrong-timezone (every schedule in the system zone) | 1,072/1,072 (100%) |
-| no-holiday | 403/403 (100%) |
-| no-dedupe (every alert or report opens an incident) | 378/378 (100%) |
-| pause-ignored | 351/351 (100%) |
-| no-retroactive-start | 306/306 (100%) |
-| no-reset | 165/165 (100%) |
-| first-match-priority (first row in file order) | 154/154 (100%) |
-| breach-at-start-of-pause | 124/124 (100%) |
-| edition-at-start (d4–d5) | 35/35 (100%) |
-| no-sod (d3–d5) | 20/20 (100%); `sod` critical on every major-sod case |
-| no-correlation (caller messages not merged) | 1,004/1,055 (95%; the passes are messages that change nothing: late replies and confirmations, a reply after a reassignment) |
+Necessity controls, summed over d2–d5. *Target share* is the target cases' share of the completed cases (how much of
+the stream the construct touches); *failed outside* counts failures among the completed cases that are not targets.
+**How to read the 100% column:** for the controls marked *oracle* the target cases are defined from the oracle's own
+expectation: the cases whose required effects on the world's planned timeline (`controls.mjs` `plannedView`) change
+when the same `referenceTransition` runs on the control's variant world (`targetCases`, `shape(a) !== shape(b)`), or,
+for never-escalate, the cases whose planned expectation holds an escalation. Such a target case fails almost by
+construction, so 100% there says only that the oracle grades what it expects; the informative numbers are the target
+share and the failures outside. Only the *truth predicate* targets (timer-first, no-dedupe, no-correlation, no-sod) are
+defined from the world's truth, independently of the oracle.
+
+| control (construct removed) | targets | target share | target cases failed | failed outside | critical |
+|---|---|---|---|---|---|
+| 24x7-no-pause (every schedule 24×7, no pause) | oracle | 2,073/2,370 (87.5%) | 2,073/2,073 (100%) | 0/297 | 0 |
+| never-escalate | oracle (planned escalations) | 1,749/2,370 (73.8%) | 1,749/1,749 (100%) | 3/621 | 0 |
+| timer-first (closure and fail-safe taken at the deadline) | truth predicate | 1,386/2,370 (58.5%) | 1,386/1,386 (100%) | 14/984 | 59 `major-without-approval` (d3–d5) |
+| wrong-timezone (every schedule in the system zone) | oracle | 1,072/2,370 (45.2%) | 1,072/1,072 (100%) | 0/1,298 | 0 |
+| no-correlation (caller messages not merged) | truth predicate | 1,055/2,370 (44.5%) | 1,004/1,055 (95.2%; the passes are messages that change nothing: late replies and confirmations, a reply after a reassignment) | 0/1,315 | 0 |
+| no-holiday | oracle | 403/2,370 (17.0%) | 403/403 (100%) | 0/1,967 | 0 |
+| no-dedupe (every alert or report opens an incident) | truth predicate | 378/2,370 (15.9%) | 378/378 (100%) | 0/1,992 | 0 |
+| pause-ignored | oracle | 351/2,370 (14.8%) | 351/351 (100%) | 0/2,019 | 0 |
+| no-retroactive-start | oracle | 306/2,370 (12.9%) | 306/306 (100%) | 32/2,064 | 0 |
+| no-reset | oracle | 165/2,370 (7.0%) | 165/165 (100%) | 0/2,205 | 0 |
+| first-match-priority (first row in file order) | oracle | 154/2,370 (6.5%) | 154/154 (100%) | 0/2,216 | 46 `major-without-approval` (new with the 2026-10-15 critical fix) |
+| breach-at-start-of-pause | oracle | 124/2,370 (5.2%) | 124/124 (100%) | 28/2,246 | 0 |
+| edition-at-start (d4–d5) | oracle | 35/1,668 (2.1%) | 35/35 (100%) | 0/1,633 | 0 |
+| no-sod (d3–d5) | truth predicate | 20/2,110 (0.9%) | 20/20 (100%) | 106/2,090 | 20 `sod` (every major-sod case) |
+
+The failures outside the targets show where the planned-timeline target definition is blind (checked on attack worlds
+1211–1214): the planned view creates no approval task, so it never declares a major incident and never attaches
+RES-MAJOR (edition 2, d4–d5): no-retroactive-start (32, d4–d5 only) and never-escalate (3) fail on RES-MAJOR's start
+and escalations after a declaration. The target diff compares the expectations at the horizon only, so a variant's
+mid-trajectory projection is invisible to it: breach-at-start-of-pause (28) commits a breach during a pause on SLAs that
+breach anyway after the resume (same final breach, different instant committed). timer-first (14, d3–d5) fails major
+cases outside its truth predicate where actor noise on the approval (d3+) leaves no counted answer, so the fail-safe
+becomes due and is taken at the deadline. no-sod (106) is over-escalation (layer 1) on every approval task it creates
+without the caller excluded; only the major-sod cases also make it critical.
+The 46 first-match-priority criticals are fail-safe declarations after approval tasks the rules never asked for: on
+override services the first row in file order gives P1 where the lowest `order` gives P2, the arm asks for approval,
+nobody answers, and it declares the incident major at its own deadline. Before the critical fix every `setMajor` after
+the arm's first task deadline was excused.
 
 **Goldens** (`golden.mjs`): 24 hand-derived, rule-cited goldens (G1–G18 of DESIGN §9 with G4 in three zones, G11b, plus a
 duplicate-delivery/stray golden and a records golden) pass the reference transition. Every SLA-engine control (world edit

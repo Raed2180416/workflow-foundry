@@ -1,0 +1,76 @@
+{
+ "runId": "raw-haiku-simple-sanity",
+ "label": "model claude-haiku-5-5",
+ "model": "claude-haiku-5-5",
+ "scripted": false,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "selection": {
+  "tasks": [
+   "simple.email_sf_contact_phone_update",
+   "simple.email_sf_contact_email_update",
+   "simple.email_sf_contact_title_update",
+   "simple.email_sf_contact_city_update",
+   "simple.email_sf_contact_account_update",
+   "simple.email_sf_lead_description_update",
+   "simple.email_sf_contact_mobile_update",
+   "simple.email_sf_contact_fax_update",
+   "simple.email_sf_contact_department_update",
+   "simple.email_sf_contact_assistant_update"
+  ]
+ },
+ "tasks": [
+  "simple.email_sf_contact_phone_update",
+  "simple.email_sf_contact_email_update",
+  "simple.email_sf_contact_title_update",
+  "simple.email_sf_contact_city_update",
+  "simple.email_sf_contact_account_update",
+  "simple.email_sf_lead_description_update",
+  "simple.email_sf_contact_mobile_update",
+  "simple.email_sf_contact_fax_update",
+  "simple.email_sf_contact_department_update",
+  "simple.email_sf_contact_assistant_update"
+ ],
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 0.3,
+ "capUsd": 3,
+ "tools": [
+  "Bash"
+ ],
+ "effort": "high",
+ "n": 10,
+ "n_graded": 10,
+ "pass_rate": 1,
+ "mean_partial_credit": 1,
+ "by_domain": {
+  "simple": {
+   "n": 10,
+   "pass_rate": 1,
+   "mean_partial_credit": 1
+  }
+ },
+ "cost": {
+  "spentUsd": 0.03565065,
+  "knownUsd": 0.03565065,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 10,
+  "skipped": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "14d3577af7dc90bd4c23915f13cadd9678d906c58ece278c174383d8b24091ff",
+  "policyHash": "cfe79728f185334b3f352cd77daa4ad6f732cfb810af9bde91a50369456bc297",
+  "policyVersion": "2026-10-09.1",
+  "node": "v24.21.0"
+ },
+ "live": "/var/tmp/foundry-work/autobench/raw-haiku-simple-sanity",
+ "finishedAt": "2026-10-15T00:42:01.874Z"
+}

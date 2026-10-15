@@ -9,18 +9,23 @@ import { createHash } from 'node:crypto';
 import { runClaudeCode, readJsonFile, nestedModelUses } from '../../../src/executors/claude-code.mjs';
 import { solverView, loadFamily } from '../beds.mjs';
 import { startServices, Ledger } from '../services.mjs';
-import { messageUsageOf } from '../../c0/construct.mjs';
+import { messageUsageOf, accessedOutsidePaths, taskHostPaths, HOST_ROOTS } from '../../c0/construct.mjs';
 
 // The one prompt line of agent-H+proc (PREREG-NEED-V1 §4.1); its sha256 is part of the engine stamp.
 export const PROCEDURE_FILE = 'PROCEDURE.md', CHECKS_FILE = 'checks.json';
 export const PROCEDURE_LINE = 'Follow the procedure in ./PROCEDURE.md. Before you finish, write ./checks.json: a JSON array with one {"check": "<the check as written>", "pass": true or false} entry for each check listed in PROCEDURE.md, judged against your final answer.';
 const sha16 = text => createHash('sha256').update(text).digest('hex').slice(0, 16);
-// Hidden-path scan of an agent session (need router v1: a draw that reaches outside its workdir is voided). The same
-// host roots as construct()'s builder scan (experiments/c0/construct.mjs, its `outside` closure, which other code reads
-// as text and is therefore left as it is); /tmp is private to the sandbox, so it is not listed.
-const HOST_ROOTS = ['home', 'root', 'opt', 'mnt', 'var', 'run', 'srv', 'media', 'etc', 'proc'];
+// Hidden-path scan of an agent session (need router v1: a draw that reaches outside its workdir is voided). It counts only
+// paths a tool use accesses (experiments/c0/construct.mjs accessedOutsidePaths: file-tool path arguments and Bash commands
+// without heredoc bodies; never Write or Edit content or Grep patterns), and a path the task itself states is not an
+// attempt (`ignore`, from taskHostPaths). mentionedPaths is the older scan of every string of a tool input (the same host
+// roots as construct()'s `outside` closure, which other code reads as text and is therefore left as it is): its hits are
+// recorded for review by hand and never void anything. /tmp is private to the sandbox, so it is not listed.
 const HOST_PATH = new RegExp(`/(?:${HOST_ROOTS.join('|')})/[\\w./-]*`, 'g');
-export function outsidePaths(toolUses = [], allowedRoots = []) {
+export function outsidePaths(toolUses = [], allowedRoots = [], { ignore = new Set() } = {}) {
+  return accessedOutsidePaths(toolUses, allowedRoots, { ignore });
+}
+export function mentionedPaths(toolUses = [], allowedRoots = []) {
   const outside = u => (JSON.stringify(u?.input ?? '').match(HOST_PATH) ?? []).filter(p => !allowedRoots.some(r => r && p.startsWith(r)));
   return { attempts: toolUses.filter(u => outside(u).length).length, paths: [...new Set(toolUses.flatMap(outside))] };
 }
@@ -85,7 +90,7 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
       let r;
       try { r = await executor({ model, prompt, workdir, files, budgetUsd, timeoutMs, effort, binary }); }
       finally { await svc?.close(); }
-      const outside = outsidePaths(r.toolUses, [workdir]);
+      const outside = outsidePaths(r.toolUses, [workdir], { ignore: taskHostPaths([view.prompt, view.files]) }), mentioned = mentionedPaths(r.toolUses, [workdir]);
       const checks = procedure !== null ? readJsonFile(workdir, CHECKS_FILE) : undefined;
       // A killed session (no result event) is charged at its budget bound, never $0; costUnknown marks it.
       return { output: readJsonFile(workdir, 'answer.json'), costUsd: r.costUsd ?? r.costUpperUsd, costUnknown: r.costUnknown, latencyMs: r.durationMs, error: r.error,
@@ -93,6 +98,7 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
           nestedModelAttempts: nestedModelUses(r.toolUses), sessionId: r.sessionId,
           // Need router v1 additions: per-message usage for the one re-priced cost meter, and the hidden-path scan.
           messageUsage: r.transcript ? messageUsageOf(r.transcript) : null, hiddenPathAttempts: outside.attempts, outsidePaths: outside.paths.slice(0, 20),
+          taskPathsIgnored: outside.ignored.length, pathMentions: mentioned.attempts, mentionedPaths: mentioned.paths.slice(0, 20),
           ...(procedure !== null ? { selfVerdict: checksVerdict(checks), checks: Array.isArray(checks) ? checks.length : checks && typeof checks === 'object' ? Object.keys(checks).length : 0 } : {}) } };
     },
     // B0+N: after the oracle, the same model appends lessons given only the outcome bit.

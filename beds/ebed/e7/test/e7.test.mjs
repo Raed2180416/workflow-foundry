@@ -292,7 +292,7 @@ test('seed discipline: the walker check runs on dev seeds only and the touch of 
   assert.notEqual(r.status, 0, 'walker-grade ran on a rehearsal seed');
   assert.match(r.stderr, /single-use rehearsal block 1201-1249/);
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-  const m = /\*\*Discrimination sanity check:\*\*[^]*?seed (\d+) d3/.exec(readme);
+  const m = /\*\*Discrimination sanity check\*\*[^]*?seed (\d+) d3/.exec(readme);
   assert.ok(m, 'README states the discrimination check and its seed');
   assert.ok(Number(m[1]) >= 1001 && Number(m[1]) <= 1199, `README discrimination check on seed ${m[1]}, not a dev seed`);
   const ledger = JSON.parse(readFileSync(new URL('../../../../research/jit-20261008/SEED-LEDGER.json', import.meta.url), 'utf8'));

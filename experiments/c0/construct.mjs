@@ -123,7 +123,8 @@ export const runSolverCallsOf = (toolUses = []) => toolUses.filter(u => u?.name 
 // heredoc bodies removed (data written to a file). Write and Edit content and Grep patterns are never scanned. A path that
 // the task itself states (its prompt, inputs or files: `ignore`) is not an attempt. /tmp is private to the sandbox.
 export const HOST_ROOTS = Object.freeze(['home', 'root', 'opt', 'mnt', 'var', 'run', 'srv', 'media', 'etc', 'proc']);
-const hostPathRe = () => new RegExp(`/(?:${HOST_ROOTS.join('|')})/[\\w./-]*`, 'g');
+// A host path starts a token: not inside a relative path (files/var/x), a URL (https://h/var/x) or a home path (~/etc/x).
+const hostPathRe = () => new RegExp(`(?<![\\w.~-])/(?:${HOST_ROOTS.join('|')})/[\\w./-]*`, 'g');
 const PATH_KEYS = Object.freeze(['file_path', 'path', 'notebook_path', 'directory', 'dir', 'cwd']);
 /** A path as compared by the scan: `..` resolved, trailing slashes and dots dropped. */
 export const normalizeHostPath = p => path.posix.normalize(String(p)).replace(/[/.]+$/, '') || '/';
@@ -150,7 +151,7 @@ export function taskHostPaths(tasks = []) {
     else if (Array.isArray(v)) v.forEach(visit);
     else if (v && typeof v === 'object') Object.values(v).forEach(visit);
   };
-  for (const t of tasks) visit(t?.task ?? t);
+  for (const t of tasks) visit(t);
   return out;
 }
 /** The accessed-path scan: {attempts (tool uses with at least one hit), paths, ignored (task-stated paths seen)}. */
@@ -247,6 +248,7 @@ export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2
   // (/tmp is private to the sandbox, so it is not listed.)
   const outside = u => (JSON.stringify(u.input ?? '').match(/\/(?:home|root|opt|mnt|var|run|srv|media|etc|proc)\/[\w.\/-]*/g) ?? [])
     .filter(p => !p.startsWith(workdir) && !p.startsWith(kit.dir));
+  const accessed = accessedOutsidePaths(r.toolUses, [workdir, kit.dir], { ignore: taskHostPaths(probes.map(p => [p.prompt, p.inputs ?? {}, p.files ?? {}])) });
   const checkPath = path.join(workdir, SELF_CHECK_FILE), check = selfCheck && existsSync(checkPath) ? SELF_CHECK_FILE : null;
   const record = {
     arm, armId, familyId, label, difficulty: perSeed ? null : difficulty, probeSeeds, builderModel, builderEffort, kitHash: kit.hash, kitDir: kit.dir, policyHash: modelPort.policyHash, models, runId: svc.runId,
@@ -261,6 +263,9 @@ export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2
     // Transcript scans: nestedModelAttempts > 0 voids the construction (pre-registered); outsidePaths is reviewed by hand.
     hiddenPathAttempts: r.toolUses.filter(u => outside(u).length).length, outsidePaths: [...new Set(r.toolUses.flatMap(outside))].slice(0, 100),
     nestedModelAttempts: nestedModelUses(r.toolUses),
+    // Need router v1 (additive): the accessed-path scan (accessedOutsidePaths above), the one whose hits void a lineage;
+    // paths the probe tasks state are not attempts.
+    hiddenPathAccesses: accessed.attempts, accessedOutsidePaths: accessed.paths.slice(0, 100), taskPathsIgnored: accessed.ignored.length,
     // Need router v1 additions (additive; selfCheck is false and check null for C0 callers).
     runSolverCalls: runSolverCallsOf(r.toolUses), builderMessageUsage: r.transcript ? messageUsageOf(r.transcript) : null,
     selfCheck: !!selfCheck, check, checkSha256: check ? sha(readFileSync(checkPath)) : null,

@@ -4,8 +4,8 @@
 // (experiments/c0/construct.mjs); it never edits the seed ledger, the policy or stages.json.
 //
 //   node experiments/need-router/label-run.mjs --stage <ID> [--stages FILE | --stage-spec FILE] [--prereg FILE]
-//        [--work-root DIR] [--out DIR] [--dry] [--jobs a,b] [--arms a,b] [--concurrency 4] [--no-racing]
-//        [--with-conditional] [--allow-draft]
+//        [--work-root DIR] [--out DIR] [--dry] [--jobs a,b] [--arms a,b] [--concurrency 1-4] [--no-racing]
+//        [--with-conditional] [--allow-draft] [--deviation TEXT]
 //
 // What it does, per stage:
 //   plan      reads prereg/stages.json (or, when that file is absent or --stage-spec is given, a spec file of the same
@@ -25,29 +25,47 @@
 //             killed sessions and timeouts charged at their bound; measured and imputed dollars kept apart;
 //   void      a lineage (or an agent draw) with hiddenPathAttempts > 0 or nestedModelAttempts > 0 is voided; ownerci
 //             construct-H solvers holding example module text are voided (AUDIT F10);
-//   cap       a trial or build starts only if its bound fits under the stage cap next to spend and work in flight (K5);
+//   cap       a trial or build starts only if its bound fits under the stage cap next to spend and work in flight (K5).
+//             The cap meter (PREREG §12) charges each start max(reported, re-priced), its bound when its spend was not
+//             observed (timeout, killed, costUnknown); every reservation and settlement is appended to spend.jsonl in the
+//             work root AND in --out, so a resume starts from what was spent (faulted attempts, builds, probes included),
+//             a start in flight when a process died counts at its bound, and a new work root over an --out that already
+//             holds this stage's spend is refused;
+//   faults    per (job, mode): attempts and environment faults of trials (results + results.faults) and builds
+//             (builds + construction-faults); an arm over the 25% limit is invalid (K4): report.validity.invalidArms and
+//             arm-faults.jsonl, which evaluate.mjs reads;
+//   resume    build, probe and racing records carry a stamp (stageSha: the plan restricted to what this stage reads; the
+//             arm's computed settings hash; the prompt shas; the price-table id); a resume over records with another
+//             stamp is refused, as runExperiment's strictResume refuses trials of another arm version;
+//   paid      a run without --dry checks its plan first (paidRunChecks): the canonical stages.json or a spec whose sha256
+//             the preregistration lists, prereg-check's checkStages with no error, every arm's settingsSha = armSha, the
+//             preregistration equal to its frozen (committed) text, a clean label-engine stamp (written to STAMP.json
+//             before the first paid call and compared on resume), approval, and --jobs/--arms or --allow-draft only with a
+//             recorded deviation (report.deviations);
 //   files     live files stay outside the repository (/var/tmp/foundry-work/need/<stage>); results, rows, builds,
 //             probes, calls, the report and small build artefacts are copied to --out at the end (also after a stop).
 // --dry swaps every port for a deterministic stub ($0: no model, no claude binary, no sandbox) and gives a byte-identical
 // report on rerun. Row fields follow metrics.mjs needTable: total charged = usdRepriced (measured) + usdImputed.
 import path from 'node:path';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, copyFileSync, rmSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, copyFileSync, rmSync, readdirSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { runExperiment } from '../lib/runner.mjs';
+import { runExperiment, armHash, metEnvFault, ENV_FAULTS, faultsFileOf } from '../lib/runner.mjs';
 import { loadFamily, inlineRender } from '../lib/beds.mjs';
 import { canonical, sha256 } from '../../beds/lib/canonical.mjs';
 import { b0Call } from '../lib/arms/b0-call.mjs';
 import { b0Agent, PROCEDURE_LINE } from '../lib/arms/b0-agent.mjs';
 import { b1Script } from '../lib/arms/b1-script.mjs';
 import { construct, runSelfCheck, SELF_CHECK_PARAGRAPH, SELF_CHECK_FILE, BUILD_ENV_FAULTS, taskFiles } from '../c0/construct.mjs';
+import { builderPrompt } from '../c0/prompts.mjs';
 import { createModelPort, subsetPolicy } from '../lib/models.mjs';
 import { loadPolicy, policyHash } from '../../src/models/policy.mjs';
 import { materialize } from '../../src/executors/claude-code.mjs';
 import { compileDataSchema } from '../../src/validate.mjs';
 import { assertSeedsAllowed, loadLedger } from '../jit/seeds.mjs';
-import { STAGES_FILE, ROLES, planTasks, exampleSet, span } from './prereg-check.mjs';
-import { needTable, needLabels, HEADLINE, DELTA, MODES } from './metrics.mjs';
+import { STAGES_FILE, PREREG_FILE, ROLES, planTasks, exampleSet, span, checkStages, armSha, canonicalJson, stamp as engineStamp, stampDiff } from './prereg-check.mjs';
+import { needTable, needLabels, HEADLINE, DELTA, MODES, ENV_FAULT_LIMIT } from './metrics.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const LIVE_ROOT = '/var/tmp/foundry-work/need';
@@ -87,7 +105,28 @@ export function loadPlan({ stageId, stagesFile = STAGES_FILE, specFile = null })
   if (stages?.schema !== 'need-prereg-stages/1') throw new Error(`${file}: schema must be need-prereg-stages/1`);
   const stage = (stages.stages ?? []).find(s => s.id === stageId);
   if (!stage) throw new Error(`${file}: no stage ${stageId} (stages: ${(stages.stages ?? []).map(s => s.id).join(', ')})`);
-  return { stages, stage, source: specFile ? 'spec' : 'stages.json', file, planSha: sha16(text) };
+  return { stages, stage, source: specFile ? 'spec' : 'stages.json', file, planSha: sha16(text), planSha256: createHash('sha256').update(text).digest('hex') };
+}
+
+/** The arms and jobs a stage names (unfiltered: a filtered run and the full run of one stage share one stageSha). */
+function stageNames(stages, stage) {
+  const runs = stage.runs ?? [];
+  return { arms: [...new Set(runs.flatMap(r => r.arms ?? []).filter(a => stages.arms?.[a]))].sort(), jobs: [...new Set(runs.map(r => r.job).filter(Boolean))].sort() };
+}
+// The job fields a label depends on (hypotheses, notes and observations may be revised without changing a label).
+const JOB_LABEL_FIELDS = ['id', 'family', 'ledgerBed', 'band', 'stageKinds', 'split', 'cluster', 'agentOBudgetUsd', 'modes', 'ceiling', 'bedStatus', 'interactive'];
+/**
+ * The stage sha: sha256 (16 hex) of the plan restricted to what this stage reads: its id, runs and cap; the definitions of
+ * the arms it names; the label fields of its jobs; seeds, grid, derived cascades, the price table, the bootstrap reps and
+ * seed racing uses. Approval flags, descriptions and other stages do not enter it. Build, probe and racing records carry
+ * it; a resume over records with another stageSha is refused.
+ */
+export function stageSha(stages, stage) {
+  const { arms, jobs } = stageNames(stages, stage);
+  const job = id => { const j = (stages.jobs ?? []).find(x => x.id === id) ?? {}; return Object.fromEntries(JOB_LABEL_FIELDS.filter(k => j[k] !== undefined).map(k => [k, j[k]])); };
+  return sha16(canonicalJson({ stage: { id: stage.id, runs: stage.runs ?? [], capUsd: stage.capUsd ?? null }, arms: Object.fromEntries(arms.map(a => [a, stages.arms[a]])),
+    jobs: jobs.map(job), seeds: stages.seeds ?? null, grid: stages.grid ?? null, derived: stages.derived ?? null, priceTable: stages.priceTable ?? null,
+    racing: { reps: stages.reps?.labelBootstrap ?? null, seed: stages.rng?.labelBootstrap ?? null } }));
 }
 
 const lineageOf = arm => !!arm?.build;
@@ -99,7 +138,7 @@ export function stageUnits(stages, stage, { jobs = null, arms = null, withCondit
   for (const [ri, run] of (stage.runs ?? []).entries()) {
     const where = `${stage.id}.runs[${ri}]${run.job ? ` (${run.job})` : run.bed ? ` (${run.bed})` : ''}`;
     if (!run.job) { skipped.push({ where, reason: run.eligible ? NOT_HERE['router-choice'] : 'explicit-seed runs (M1) have their own runner (m1-run.mjs)' }); continue; }
-    if (jobs && !jobs.includes(run.job)) continue;
+    if (jobs && !jobs.includes(run.job)) { skipped.push({ where, reason: 'filtered by --jobs/--arms', filtered: 'job' }); continue; }
     const job = stages.jobs.find(j => j.id === run.job);
     if (!job) throw new Error(`${where}: unknown job ${run.job}`);
     if (run.condition && !withConditional) { skipped.push({ where, reason: `conditional run (${run.condition}); pass --with-conditional once it holds` }); continue; }
@@ -111,7 +150,7 @@ export function stageUnits(stages, stage, { jobs = null, arms = null, withCondit
     u.runs.push(where);
     const roles = run.seedRoles ?? [];
     for (const a of run.arms ?? []) {
-      if (arms && !arms.includes(a)) continue;
+      if (arms && !arms.includes(a)) { skipped.push({ where, reason: `${a}: filtered by --jobs/--arms`, filtered: 'arm' }); continue; }
       if (NOT_HERE[a]) { skipped.push({ where, reason: `${a}: ${NOT_HERE[a]}` }); continue; }
       const def = stages.arms[a];
       if (!def) throw new Error(`${where}: unknown arm ${a}`);
@@ -140,7 +179,7 @@ async function makeTask(family, t) {
  * against the ledger (assertSeedsAllowed, one call per task); example and evaluation tasks must differ by taskHash and no
  * evaluation task repeats within the job; a collided evaluation seed is replaced from the reserve range.
  */
-export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe = false }) {
+export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe = false, taken = null }) {
   const job = unit.job, bed = job.ledgerBed ?? job.family, purposes = stages.seeds.purposes;
   let seedChecks = 0;
   const check = (role, seed) => {
@@ -165,7 +204,10 @@ export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe
     const reserveRole = RESERVE_OF[unit.evalRole];
     const planned = planTasks(stages, job.id, unit.evalRole);
     const reserve = reserveRole && stages.seeds[reserveRole] ? span(stages.seeds[reserveRole]) : [];
-    const used = new Set(planned.map(t => t.seed)), seen = new Set();
+    // Reserve seeds already taken as replacements of this family (other jobs of this stage, other stages' reports: `taken`,
+    // family -> Set) are never handed out again, so no task of a family is evaluated twice across roles or stages.
+    const prior = taken?.get(bed) ?? new Set();
+    const used = new Set([...planned.map(t => t.seed), ...prior]), seen = new Set();
     for (const t0 of planned) {
       let t = t0, made;
       for (;;) {
@@ -175,6 +217,7 @@ export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe
         const next = reserve.find(s => !used.has(s));
         if (next === undefined) throw new Error(`${job.id}: task ${made.taskKey} collides and the reserve range is exhausted`);
         used.add(next);
+        if (taken) taken.set(bed, new Set([...(taken.get(bed) ?? []), next]));
         replacements.push({ from: t.seed, to: next, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}), why: exampleHashes.has(made.taskHash) ? 'example collision' : 'repeated evaluation task' });
         t = { ...t0, seed: next, split: ROLES[reserveRole].split };
       }
@@ -182,6 +225,29 @@ export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe
     }
   }
   return { evalTasks, examples, probeTask, replacements, seedChecks, bed };
+}
+
+/**
+ * Reserve seeds earlier stages took as replacements, per family (ledger bed): read from the report.json of every other
+ * stage directory under `root` (the parent of --out: research/need-router-20261014/runs). The held-out evaluation, E2E and
+ * DRIFT roles share one reserve range (8813-8824); "lowest unused" is then computed over every stage, not one process.
+ */
+export function priorReplacementSeeds(root, stageId) {
+  const out = new Map();
+  let dirs = [];
+  try { dirs = readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => path.join(root, d.name)); } catch { return out; }
+  for (const d of dirs.sort()) {
+    const f = path.join(d, 'report.json');
+    if (!existsSync(f)) continue;
+    let rep; try { rep = JSON.parse(readFileSync(f, 'utf8')); } catch { continue; }
+    if (rep?.schema !== REPORT_SCHEMA || rep.stage === stageId) continue;
+    for (const j of rep.jobs ?? []) for (const r of j.replacements ?? []) {
+      const fam = j.bed ?? j.family;
+      if (!fam || !Number.isInteger(r.to)) continue;
+      out.set(fam, new Set([...(out.get(fam) ?? []), r.to]));
+    }
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -238,6 +304,12 @@ export class CallBook {
   constructor(file) { this.file = file; this.calls = readJsonl(file); this.seq = this.calls.length; }
   add(c) { const rec = { seq: this.seq++, ...c }; this.calls.push(rec); appendFileSync(this.file, JSON.stringify(rec) + '\n'); }
   exact(runId) { return this.calls.filter(c => c.runId === runId); }
+  /** Calls of one attempt: an exact run id (b0Call, the procedure writer) or a run-id prefix (b1Script, construct: a fresh
+   *  uuid per attempt), recorded while the attempt ran (seq in [from, to)). A retried b0Call reuses its run id, so without
+   *  the seq range a row would also be charged the calls of its faulted attempts. */
+  attempt({ exact = null, prefix = null, seq = null }) {
+    return this.calls.filter(c => (exact != null ? c.runId === exact : String(c.runId ?? '').startsWith(prefix)) && (!seq || (c.seq >= seq[0] && c.seq < seq[1])));
+  }
   /** Calls of the last attempt under a run-id prefix (b1Script and construct add a fresh uuid per attempt). */
   latest(prefix) {
     const mine = this.calls.filter(c => c.runId?.startsWith(prefix));
@@ -324,39 +396,132 @@ export function copiedExampleLines(source, exampleTasks, { minLineChars = COPY_S
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Stage budget (K5): a trial or a build starts only when its bound fits under the cap beside spend and work in flight.
+// The one cap meter (PREREG §12, stages.json spendMeter): each settled start at max(reported, re-priced), at least its bound
+// when its spend was not observed; each start in flight at its bound. Every reservation and settlement is appended to the
+// stage's spend ledger (spend.jsonl, in the work root and in --out), so the meter survives the process: a resume starts
+// from the ledger, and a reservation that was never settled (the process died with the start in flight) counts at its bound.
+export const SPEND_FILE = 'spend.jsonl', ARM_FAULTS_FILE = 'arm-faults.jsonl', STAMP_FILE = 'STAMP.json';
 export class StageBudget {
-  constructor(capUsd, spentUsd = 0) { Object.assign(this, { capUsd, spentUsd, reservedUsd: 0, refused: 0 }); }
-  reserve(bound) { if (this.spentUsd + this.reservedUsd + bound > this.capUsd + 1e-9) { this.refused += 1; return false; } this.reservedUsd += bound; return true; }
-  settle(bound, charged) { this.reservedUsd = Math.max(0, this.reservedUsd - bound); this.spentUsd += charged; }
+  constructor(capUsd, spentUsd = 0, { stage = null, files = [], attempts = new Map() } = {}) {
+    Object.assign(this, { capUsd, spentUsd, reservedUsd: 0, refused: 0, stage, files: [...new Set(files)], attempts: new Map(attempts) });
+  }
+  write(e) { const line = JSON.stringify({ stage: this.stage, ...e }) + '\n'; for (const f of this.files) appendFileSync(f, line); }
+  /** Reserve a start's bound; null (refused, counted) when it does not fit. info: { kind, key, ...detail }. */
+  reserve(bound, { kind = 'start', key = null, ...detail } = {}) {
+    if (this.spentUsd + this.reservedUsd + bound > this.capUsd + 1e-9) { this.refused += 1; return null; }
+    this.reservedUsd += bound;
+    const n = key == null ? null : (this.attempts.get(key) ?? 0) + 1;
+    if (key != null) this.attempts.set(key, n);
+    const tok = { id: randomUUID(), bound, kind, key, n };
+    this.write({ op: 'reserve', id: tok.id, kind, key, n, bound, ...detail });
+    return tok;
+  }
+  /** Settle a reservation at what the start was charged on the meter (detail: reported, repriced, imputed, error, ...). */
+  settle(tok, charged, detail = {}) {
+    this.reservedUsd = Math.max(0, this.reservedUsd - tok.bound); this.spentUsd += charged;
+    this.write({ op: 'settle', id: tok.id, kind: tok.kind, key: tok.key, n: tok.n, bound: tok.bound, charged, ...detail });
+  }
 }
+const sortedSum = xs => sum([...xs].sort((a, b) => a - b));
+/** A stage's spend ledger read from one or more files (entries joined by id): settled charges, reservations never settled
+ *  (at their bound), carried figures (a legacy work root's spend rebuilt from its files), and per-key attempt counts. */
+export function loadSpend(files, stageId) {
+  const byId = new Map();
+  for (const f of [...new Set(files)]) for (const e of readJsonl(f)) {
+    if (e.stage !== stageId || !e.id) continue;
+    const x = byId.get(e.id) ?? {};
+    x[e.op === 'reserve' ? 'reserve' : e.op === 'settle' ? 'settle' : 'carry'] = e;
+    byId.set(e.id, x);
+  }
+  const settled = [], open = [], carried = [], attempts = new Map(), entries = [];
+  for (const [id, x] of byId) {
+    const e = x.settle ?? x.reserve ?? x.carry;
+    if (x.carry) carried.push(x.carry.charged ?? 0);
+    else if (x.settle) settled.push(x.settle.charged ?? 0);
+    else open.push(x.reserve.bound ?? 0);
+    if (e.key != null && Number.isInteger(e.n)) attempts.set(e.key, Math.max(attempts.get(e.key) ?? 0, e.n));
+    entries.push({ id, ...e, settled: !!x.settle, carried: !!x.carry });
+  }
+  const settledUsd = sortedSum(settled), openUsd = sortedSum(open), carriedUsd = sortedSum(carried);
+  return { ids: new Set(byId.keys()), entries, attempts, settledUsd, openUsd, carriedUsd, totalUsd: settledUsd + openUsd + carriedUsd };
+}
+const capError = budget => Object.assign(new Error(`stage cap $${budget.capUsd} reached (spent $${budget.spentUsd.toFixed(2)}, in flight $${budget.reservedUsd.toFixed(2)})`), { code: 'STAGE_CAP' });
+
+/**
+ * One start on the meter. measured = re-priced tokens (an agent session from its per-message usage, gateway calls from
+ * calls.jsonl), imputed = the bound's excess over them when the spend was not observed, reported = the arm's own figure.
+ * charged (the cap meter) = max(reported, measured + imputed), and at least the bound when the spend was not observed
+ * (a timeout, a killed session, costUnknown on the result or on any of its calls). kind: 'call' (b0Call, the procedure
+ * writer: bound per call), 'script' (b1Script: each call's own upper bound, the per-task bound on the attempt), 'session'.
+ */
+export function meterOf({ kind, priceTable, model = null, bound = 0, r = null, calls = [] }) {
+  const reported = (r?.costUsd ?? 0) + (r?.imputedUsd ?? 0);
+  let measured, imputed, unknown;
+  if (kind === 'session') {
+    const p = priceSession(priceTable, model, { messageUsage: r?.meta?.messageUsage, streamUsage: r?.meta?.streamUsage, costUnknown: !!r?.costUnknown, boundUsd: bound, reportedUsd: r?.costUsd ?? 0 });
+    measured = p.measured; imputed = p.imputed; unknown = !!r?.costUnknown;
+  } else {
+    const p = priceCalls(priceTable, calls, { boundUsd: kind === 'call' ? bound : null });
+    measured = p.measured; imputed = p.imputed;
+    unknown = !!r?.costUnknown || r?.error?.code === 'MODEL_TIMEOUT' || calls.some(c => c.costUnknown || c.errorCode === 'MODEL_TIMEOUT');
+  }
+  return { reported, measured, imputed, unknown, charged: Math.max(reported, measured + imputed, unknown ? bound : 0) };
+}
+/** The probe-row and legacy figure: what a result reported, at least its bound when the spend was not observed. */
 const chargeOf = (r, bound) => {
   const c = (r?.costUsd ?? 0) + (r?.imputedUsd ?? 0);
   return r?.costUnknown || r?.error?.code === 'MODEL_TIMEOUT' ? Math.max(c, bound) : c;
 };
-const capError = budget => Object.assign(new Error(`stage cap $${budget.capUsd} reached (spent $${budget.spentUsd.toFixed(2)}, in flight $${budget.reservedUsd.toFixed(2)})`), { code: 'STAGE_CAP' });
 
-// Every arm's run goes through this: the cap, then the deployable signals of its answer (delivered, schema validity,
-// the family-handed check when a bed exports deployableCheck), then the post-run self-check of a construct-H lineage.
-function withSignals(arm, { bound, budget, schemaTest, fam, selfCheck = null }) {
+// Self-check infrastructure failures (no sandbox, the check could not launch) are environment faults, not verdicts: their
+// code goes into meta.errors, so the runner keeps a failed trial aside and a resume retries it (a passing trial is
+// recorded with selfVerdict null and selfCheckError set; it is counted in the report).
+const SELF_CHECK_ENV = code => (ENV_FAULTS.has(code) ? code : 'EXECUTOR_LAUNCH');
+
+// Every arm's run goes through this: the cap (reserve, then settle on the meter, with the attempt in the spend ledger), then
+// the deployable signals of its answer (delivered, schema validity, the family-handed check when a bed exports
+// deployableCheck), then the post-run self-check of a construct-H lineage. attemptOf(a): which calls.jsonl entries belong
+// to the attempt (b0Call: exact run id; b1Script: run-id prefix); the seq range is recorded in meta.callSeq.
+function withSignals(arm, { ctx, job, kind, model = null, bound, schemaTest, fam, selfCheck = null, attemptOf = null, ledgerKind = 'trial' }) {
+  const { budget, book, stages } = ctx;
   return {
     ...arm, def: selfCheck ? { ...arm.def, selfCheckSha: selfCheck.sha } : arm.def,
     async run(a) {
-      if (!budget.reserve(bound)) throw capError(budget);
-      let r, charged = 0;
-      try { r = await arm.run(a); charged = chargeOf(r, bound); } finally { budget.settle(bound, charged); }
-      const out = r.output, delivered = out != null;
-      let schemaValid = null;
-      if (delivered && schemaTest) { try { schemaValid = schemaTest(out) === true; } catch { schemaValid = false; } }
-      let deployableVerdict = delivered ? (schemaValid === false ? 'fail' : 'pass') : null;
-      if (delivered && typeof fam.deployableCheck === 'function') { try { if ((await fam.deployableCheck(a.task, out)) === false) deployableVerdict = 'fail'; } catch { deployableVerdict = 'fail'; } }
-      const meta = { ...(r.meta ?? {}), delivered, schemaValid, deployableVerdict };
-      if (selfCheck) {
-        const sc = delivered ? await selfCheck.run({ checkPath: selfCheck.checkPath, task: a.task, output: out, workdir: a.workdir }) : null;
-        // A crashing or timed-out check did not say "pass": it withholds the answer like a failing one (detail kept).
-        meta.selfVerdict = !sc ? null : sc.selfVerdict === 'error' ? 'fail' : sc.selfVerdict ?? null;
-        meta.selfCheck = sc ? { verdict: sc.selfVerdict ?? null, exitCode: sc.exitCode ?? null, error: sc.error?.code ?? null } : null;
+      const key = `${job}|${arm.id}|${a.taskKey}|t${a.trial}`;
+      const tok = budget.reserve(bound, { kind: ledgerKind, key, job, arm: arm.id, task: a.taskKey, trial: a.trial });
+      if (!tok) throw capError(budget);
+      const seq0 = book.seq;
+      let r, thrown = null, m = null, envFault = false;
+      try {
+        try { r = await arm.run(a); } catch (e) { thrown = e; }
+        const seq = [seq0, book.seq], calls = kind === 'session' || !attemptOf ? [] : book.attempt({ ...attemptOf(a), seq });
+        // A thrown session (runClaudeCode throws only before the CLI starts) spent nothing; thrown calls are priced from the book.
+        m = meterOf({ kind, priceTable: stages.priceTable, model, bound, r: r ?? null, calls });
+        if (thrown) throw thrown;
+        const out = r.output, delivered = out != null;
+        let schemaValid = null;
+        if (delivered && schemaTest) { try { schemaValid = schemaTest(out) === true; } catch { schemaValid = false; } }
+        let deployableVerdict = delivered ? (schemaValid === false ? 'fail' : 'pass') : null;
+        if (delivered && typeof fam.deployableCheck === 'function') { try { if ((await fam.deployableCheck(a.task, out)) === false) deployableVerdict = 'fail'; } catch { deployableVerdict = 'fail'; } }
+        const meta = { ...(r.meta ?? {}), delivered, schemaValid, deployableVerdict, ...(kind !== 'session' && attemptOf ? { callSeq: seq } : {}) };
+        if (selfCheck) {
+          const sc = delivered ? await selfCheck.run({ checkPath: selfCheck.checkPath, task: a.task, output: out, workdir: a.workdir }) : null;
+          // A crashing or timed-out check did not say "pass": it withholds the answer like a failing one (detail kept).
+          meta.selfVerdict = !sc ? null : sc.selfVerdict === 'error' ? 'fail' : sc.selfVerdict ?? null;
+          meta.selfCheck = sc ? { verdict: sc.selfVerdict ?? null, exitCode: sc.exitCode ?? null, error: sc.error?.code ?? null } : null;
+          if (sc && sc.selfVerdict == null && sc.error) {
+            const code = SELF_CHECK_ENV(sc.error.code);
+            meta.errors = { ...(meta.errors ?? {}), [code]: (meta.errors?.[code] ?? 0) + 1 };
+          }
+        }
+        r = { ...r, meta };
+        envFault = metEnvFault(r);
+        return r;
+      } finally {
+        m ??= meterOf({ kind, priceTable: stages.priceTable, model, bound, r: null, calls: [] });
+        budget.settle(tok, m.charged, { job, arm: arm.id, task: a.taskKey, trial: a.trial, reported: m.reported, repriced: m.measured, imputed: m.imputed,
+          unknown: m.unknown, error: thrown ? (thrown.code ?? 'ARM_ERROR') : r?.error?.code ?? null, envFault });
       }
-      return { ...r, meta };
     },
   };
 }
@@ -496,8 +661,15 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo 
   const { mode, lineage } = parseArmId(rec.arm), meta = rec.meta ?? {};
   const factory = armDef.run?.factory ?? armDef.factory;
   let cost;
-  if (factory === 'b0Call') cost = priceCalls(priceTable, book.exact(`${rec.arm}:${rec.taskKey}:t${rec.trial}`), { boundUsd: armDef.timeoutChargeUsd ?? 1 });
-  else if (factory === 'b1Script') cost = priceCalls(priceTable, book.latest(`${rec.arm}:${rec.taskKey}:t${rec.trial}:`));
+  // The recorded attempt's own calls (meta.callSeq); rows written before callSeq existed fall back to every call of the run id.
+  const seq = Array.isArray(meta.callSeq) ? meta.callSeq : null;
+  if (factory === 'b0Call') {
+    const exact = `${rec.arm}:${rec.taskKey}:t${rec.trial}`;
+    cost = priceCalls(priceTable, seq ? book.attempt({ exact, seq }) : book.exact(exact), { boundUsd: armDef.timeoutChargeUsd ?? 1 });
+  } else if (factory === 'b1Script') {
+    const prefix = `${rec.arm}:${rec.taskKey}:t${rec.trial}:`;
+    cost = priceCalls(priceTable, seq ? book.attempt({ prefix, seq }) : book.latest(prefix));
+  }
   else {
     const model = armDef.run?.model ?? armDef.model;
     cost = priceSession(priceTable, model, { messageUsage: meta.messageUsage, streamUsage: meta.streamUsage, costUnknown: !!rec.costUnknown, boundUsd: meta.costUpperUsd ?? rec.costUsd ?? 0, reportedUsd: rec.costUsd });
@@ -514,6 +686,7 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo 
     ...(taskInfo?.stage ? { kind: taskInfo.stage } : {}), taskHash: rec.taskHash ?? null,
     pass: voided ? false : !!rec.pass, rawPass: !!rec.pass, score: rec.score ?? null, delivered: voided ? false : delivered,
     schemaValid: meta.schemaValid ?? null, selfVerdict: meta.selfVerdict ?? null, deployableVerdict: meta.deployableVerdict ?? null,
+    ...(meta.selfCheck?.error ? { selfCheckError: meta.selfCheck.error } : {}),
     usdReported: r6((rec.costUsd ?? 0) + (rec.imputedUsd ?? 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), repriced: cost.repriced !== false && !cost.fallback,
     ms: rec.latencyMs ?? null, tokens: cost.tokens, turns: meta.turns ?? null, error: voided ? 'VOIDED' : rec.error?.code ?? null, rawError: rec.error?.code ?? null,
     void: voided ? voidReasons.join('; ') : null,
@@ -526,50 +699,84 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo 
 const buildKey = (job, mode, k) => `${job}|${mode}|${k}`;
 const buildVoided = b => !!b.void || (b.hiddenPathAttempts ?? 0) > 0 || (b.nestedModelAttempts ?? 0) > 0;
 
+/** The version stamp of a build, probe or racing record (mode null: racing). A resume over a record whose stamp differs
+ *  is refused: it was made under other arm settings, prompts, prices or plan. */
+export function recordStamp(ctx, mode = null) {
+  const def = mode ? ctx.stages.arms?.[mode] : null;
+  return { stageSha: ctx.stageSha, settingsSha: mode ? (def ? armSha(def) : null) : null, prompts: ctx.prompts, priceTable: ctx.stages.priceTable?.id ?? null };
+}
+const sameStamp = (a, b) => canonicalJson(a ?? null) === canonicalJson(b ?? null);
+
 async function buildLineage({ ctx, unit, mode, k, examples }) {
   const { stages, stage, live, book, budget, ports } = ctx, job = unit.job, def = stages.arms[mode], b = def.build;
   const label = `${stage.id}.${job.id}.${mode}-L${k}`, dir = path.join(live, 'builds', label);
   const setNo = Number(Object.entries(stages.seeds.exampleSets).find(([, s]) => String(s) === String(exampleSet(stages, k)))?.[0] ?? 0);
   const probeSeeds = examples.map(t => ({ seed: t.seed, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}) }));
-  const head = { schema: 'need-build-row/1', stage: stage.id, job: job.id, mode, rep: k - 1, lineage: k, exampleSet: setNo, probeSeeds };
+  const head = { schema: 'need-build-row/1', stage: stage.id, job: job.id, mode, rep: k - 1, lineage: k, exampleSet: setNo, probeSeeds, stamp: recordStamp(ctx, mode) };
+  const key = buildKey(job.id, mode, k);
   if (b.factory === 'procedureWriter') {
-    const bound = 1;
-    if (!budget.reserve(bound)) return { capped: true };
-    const fam = await loadFamily(job.family), runId = `procedure:${label}`;
-    let w, charged = 0;
-    try { w = await writeProcedure({ port: ctx.metered(), model: b.model, reasoning: b.reasoning, examples, outputSchema: fam.outputSchema, runId, file: path.join(dir, 'PROCEDURE.md') }); charged = w.costUsd ?? 0; }
-    finally { budget.settle(bound, charged); }
-    const cost = priceCalls(stages.priceTable, book.exact(runId), { boundUsd: 1 });
-    return { row: { ...head, factory: 'procedureWriter', model: b.model, usdReported: r6(w.costUsd ?? 0), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), usd: r6(cost.measured),
+    const bound = 1, runId = `procedure:${label}`;
+    const tok = budget.reserve(bound, { kind: 'build', key, job: job.id, mode, lineage: k });
+    if (!tok) return { capped: true };
+    const fam = await loadFamily(job.family), seq0 = book.seq;
+    let w, m = null;
+    try { w = await writeProcedure({ port: ctx.metered(), model: b.model, reasoning: b.reasoning, examples, outputSchema: fam.outputSchema, runId, file: path.join(dir, 'PROCEDURE.md') }); }
+    finally {
+      // One gateway call on the meter: a timed-out or unobserved writer call costs its $1 bound, never $0.
+      m = meterOf({ kind: 'call', priceTable: stages.priceTable, bound, r: w ? { costUsd: w.costUsd ?? 0, error: w.ok ? null : { code: w.error } } : null, calls: book.attempt({ exact: runId, seq: [seq0, book.seq] }) });
+      budget.settle(tok, m.charged, { job: job.id, mode, lineage: k, reported: m.reported, repriced: m.measured, imputed: m.imputed, unknown: m.unknown, error: w?.ok ? null : w?.error ?? 'ARM_ERROR',
+        envFault: !!w && !w.ok && BUILD_ENV_FAULTS.has(w.error) });
+    }
+    // An environment fault on the writer call is not an outcome (as for a construction): kept aside, retried on resume, K4.
+    if (!w.ok && BUILD_ENV_FAULTS.has(w.error)) return { fault: { stage: stage.id, job: job.id, mode, lineage: k, factory: 'procedureWriter', error: { code: w.error }, costUsd: w.costUsd ?? 0,
+      usdReported: r6(m.reported), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), stamp: head.stamp } };
+    return { row: { ...head, factory: 'procedureWriter', model: b.model, usdReported: r6(w.costUsd ?? 0), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), usd: r6(m.measured),
       minutes: null, artifactSha: w.ok ? w.sha : null, artifactPath: w.ok ? w.file : null, failed: !w.ok, error: w.ok ? null : w.error, runSolverCalls: null,
       hiddenPathAttempts: 0, nestedModelAttempts: 0, words: w.words ?? null, truncatedWords: w.truncatedWords ?? null, checks: w.checks ?? null, promptSha: w.promptSha, void: null } };
   }
   if (b.factory !== 'construct') throw new Error(`${mode}: unknown build factory ${b.factory}`);
   const bound = b.builderBudgetUsd + b.constructionModelUsd;
-  if (!budget.reserve(bound)) return { capped: true };
-  let res, charged = 0;
+  const tok = budget.reserve(bound, { kind: 'build', key, job: job.id, mode, lineage: k });
+  if (!tok) return { capped: true };
+  let res, cost = null;
   try {
     res = await construct({ arm: b.arm, armId: runArmId(mode, k), familyId: job.family, probeSeeds, builderModel: b.builderModel, builderEffort: b.builderEffort,
       builderBudgetUsd: b.builderBudgetUsd, constructionModelUsd: b.constructionModelUsd, perTaskUsd: b.perTaskUsd, minutes: b.minutes, scoreChecks: b.scoreChecks,
       modelPort: ctx.metered(), workRoot: path.dirname(dir), label, models: b.models, selfCheck: !!b.selfCheck, executor: ports.executor, kitBase: ports.kitBase ?? undefined });
-    charged = res.record.constructionCostUsd;
-  } finally { budget.settle(bound, charged); }
+    cost = buildCost(stages, b, res.record, book, label);
+  } finally {
+    const charged = cost ? cost.charged : bound;   // construct() threw after the builder may have started: its bound
+    budget.settle(tok, charged, { job: job.id, mode, lineage: k, reported: cost?.reported ?? null, repriced: cost?.measured ?? 0, imputed: cost ? cost.imputed : bound,
+      unknown: !cost, error: res?.record?.builderError?.code ?? (res ? null : 'ARM_ERROR'), envFault: !!res && BUILD_ENV_FAULTS.has(res.record.builderError?.code) });
+  }
   const rec = res.record;
-  if (rec.builderError && BUILD_ENV_FAULTS.has(rec.builderError.code)) return { fault: { stage: stage.id, job: job.id, mode, lineage: k, error: rec.builderError, costUsd: rec.constructionCostUsd } };
-  const builder = priceSession(stages.priceTable, b.builderModel, { messageUsage: rec.builderMessageUsage, streamUsage: rec.builderStreamUsage, costUnknown: rec.builderCostUnknown,
-    boundUsd: b.builderBudgetUsd, reportedUsd: rec.builderCostReportedUsd ?? 0 });
-  const gw = priceCalls(stages.priceTable, book.latest(`construct:${label}:`));
+  if (rec.builderError && BUILD_ENV_FAULTS.has(rec.builderError.code)) return { fault: { stage: stage.id, job: job.id, mode, lineage: k, factory: 'construct', error: rec.builderError, costUsd: rec.constructionCostUsd,
+    usdReported: r6(cost.reported), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), stamp: head.stamp } };
   const reasons = [];
   let copied = null;
   if (job.family === 'ownerci' && res.artifactPath) {
     copied = copiedExampleLines(readFileSync(res.artifactPath, 'utf8'), examples);
     if (copied > COPY_SCAN.maxLines) reasons.push(`ownerci copy scan: ${copied} example lines in solve.mjs (AUDIT F10)`);
   }
-  return { row: { ...head, factory: 'construct', model: b.builderModel, usdReported: r6(rec.constructionCostUsd), usdRepriced: r6(builder.measured + gw.measured), usdImputed: r6(builder.imputed + gw.imputed),
-    usd: r6(builder.measured + gw.measured), minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
-    error: rec.builderError?.code ?? null, runSolverCalls: rec.runSolverCalls, hiddenPathAttempts: rec.hiddenPathAttempts, nestedModelAttempts: rec.nestedModelAttempts,
-    outsidePaths: (rec.outsidePaths ?? []).slice(0, 10), selfCheck: rec.selfCheck, checkPath: res.checkPath, checkSha256: rec.checkSha256, copiedExampleLines: copied,
+  // hiddenPathAttempts is construct()'s accessed-path scan (hiddenPathAccesses; probe-stated paths ignored): it voids. Its
+  // text scan of every tool-input string (hiddenPathAttempts there) is kept for review by hand as pathMentions.
+  const hidden = rec.hiddenPathAccesses ?? rec.hiddenPathAttempts;
+  return { row: { ...head, factory: 'construct', model: b.builderModel, usdReported: r6(rec.constructionCostUsd), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed),
+    usd: r6(cost.measured), minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
+    error: rec.builderError?.code ?? null, runSolverCalls: rec.runSolverCalls, hiddenPathAttempts: hidden, nestedModelAttempts: rec.nestedModelAttempts,
+    outsidePaths: (rec.accessedOutsidePaths ?? rec.outsidePaths ?? []).slice(0, 10), pathMentions: rec.hiddenPathAttempts ?? null, mentionedPaths: (rec.outsidePaths ?? []).slice(0, 10),
+    selfCheck: rec.selfCheck, checkPath: res.checkPath, checkSha256: rec.checkSha256, builderPromptSha256: rec.promptSha256 ?? null, copiedExampleLines: copied,
     constructionJson: path.join(dir, 'construction.json'), void: reasons.length ? reasons.join('; ') : null } };
+}
+
+/** A construction on the meter: the builder session re-priced from its messages (its budget bound when killed) plus its
+ *  gateway calls; reported = construct()'s own constructionCostUsd. */
+function buildCost(stages, b, rec, book, label) {
+  const builder = priceSession(stages.priceTable, b.builderModel, { messageUsage: rec.builderMessageUsage, streamUsage: rec.builderStreamUsage, costUnknown: rec.builderCostUnknown,
+    boundUsd: b.builderBudgetUsd, reportedUsd: rec.builderCostReportedUsd ?? 0 });
+  const gw = priceCalls(stages.priceTable, book.latest(`construct:${label}:`));
+  const reported = rec.constructionCostUsd ?? 0, measured = builder.measured + gw.measured, imputed = builder.imputed + gw.imputed;
+  return { reported, measured, imputed, charged: Math.max(reported, measured + imputed) };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
