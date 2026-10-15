@@ -33,7 +33,7 @@ function mutants(src) {
     [/\.find\(/g, '.findLast('], [/\[0\]/g, '.at(-1)'],
     [/\{ after: \[\.\.\.after\], money: true \}/g, '{ money: true }'], [/\{ after: \[\.\.\.after\] \}/g, '{}'],
     [/'collected', 'inTransit', 'delivered'/g, "'collected'"], [/!s\.failedMsg/g, 'true'], [/!prePatched/g, 'true'],
-    [/forwardOk\(([a-zA-Z.]+)\)/g, 'true'], [/before\(row, cut\)/g, 'row.at < cut'],
+    [/forwardOk\(([a-zA-Z.]+)\)/g, 'true'], [/before\(row, cut(?:, cutEv)?\)/g, 'row.at < cut'],
   ];
   lines.forEach((ln, i) => {
     const t = ln.trim();

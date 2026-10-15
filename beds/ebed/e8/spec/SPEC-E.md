@@ -80,9 +80,12 @@ of an action is the time of its event.
 Payload `{ ref?, carrier, code, shipmentId, fulfilmentRef, reportedAt }`. `fulfilmentRef` is the fulfilment id you
 gave the carrier. `code` is the carrier's own code; translate it with `rulebook/<edition>/carrier-codes.json` into one
 meaning: `collected`, `inTransit`, `delivered`, `collectionFailed` or `info` (no action); a code the table does not list
-is treated as `info`. The time of a report is its `reportedAt`. Carriers repeat messages and
-deliver them out of order (a delivery report can reach you before the collection report). Messages about a shipment
-you cancelled, or about a fulfilment that is already completed or failed, change nothing.
+is treated as `info`. The time of a report is its `reportedAt`; it reaches you when it is delivered, at that time or
+later. Carriers repeat messages and hold some up, delivering them out of order (a delivery report can reach you before
+the collection report). They never hold up the reports of an order that the customer cancels while it is processing:
+when a customer's `cancel` of a processing order reaches you, every collection of its shipments at or before the
+cancel's time has already been reported to you (S7). Messages about a shipment you cancelled, or about a fulfilment that
+is already completed or failed, change nothing.
 
 ### 3.4 Human-task events
 
@@ -257,8 +260,9 @@ Send each required notification exactly once.
   inclusive for the party who must act by them and exclusive for the timeout that follows them (R2.2, R3.2).
 - S2 "Committed" for compensation is the system's truth as `status(key)` reports it, not what you last saw.
 - S3 One review deadline per order, from the first review task.
-- S4 A collection and a cancel in the same instant: the collection wins (R6.2). This is the delivery order (§1): a carrier
-  report with the same time as a customer action always reaches you before it.
+- S4 A collection report and a cancel delivered in the same instant: the collection wins (R6.2, "a collection report in
+  the same instant as the cancel"). This is the delivery order (§1): within one instant a carrier report reaches you
+  before a customer action. "The same instant" is the instant the report is delivered, not its `reportedAt`.
 - S5 An amend for an order with no unavailable fulfilment, or any action after D for an order that is no longer
   waiting, changes nothing.
 - S6 Collection of one fulfilment ends the customer's right to cancel the whole order (R6.2), including fulfilments not
@@ -268,9 +272,11 @@ Send each required notification exactly once.
 - S9 A step that a counted customer cancel or action makes moot before you took it is no longer required: the R3.1
   status and notice when the customer acts first, the R4.1 `processing` statuses when a counted cancel stops the order
   first. Taking such a step anyway (before stopping the order) is allowed.
-- S7 Whether a shipment "has been reported collected" before a cancel is judged by the report's `reportedAt` (a
-  `collected`, `inTransit` or `delivered` report all prove collection), as far as reports had reached you when the cancel
-  did; a report with the same time as the cancel has reached you (S4).
+- S7 Whether a shipment "has been reported `collected` at or before the time of the cancel" (R6.2) is judged on the
+  reports that reached you before the cancel: those delivered at an earlier instant, and those delivered in the cancel's
+  instant (S4). Such a report proves collection if it means `collected`, `inTransit` or `delivered` and its `reportedAt`
+  is at or before the time of the cancel. A report delivered after the cancel does not count, whatever its `reportedAt`
+  (a repeat, for example: for a processing order every collection before the cancel was reported before it, §3.3).
 - S10 **Same-instant knowledge.** A step counts as taken before a message about the order if you took it at an earlier
   instant, or in the same instant in a call that had not been given that message (§1: a call can react only to what it
   was given). A step taken in a call that had been given the message, or at a later instant, was taken after it. This
@@ -279,22 +285,32 @@ Send each required notification exactly once.
 - S11 **The ready instant.** An order is processing from the instant it is ready (R4.1, R6.2), inclusive: a `cancel` with
   the same time as the `approve` (R2.2) or the counted `amend` (R3.2) that made the order ready, delivered after it, is a
   cancel during processing (R6.2). A customer action that reaches you before the order it names was placed (customer
-  actions are delivered before placed orders, §1) names no order yet (§3.2): it changes nothing for that order; answer it
-  with nothing.
+  actions are delivered before placed orders, §1) names no order yet (§3.2): it changes nothing for that order. Answer it
+  with nothing (no effect, task or wake-up; close the instance it started), and do not send `unknown-order` for it: §3.2
+  allows that notice only for a reference that names no order at all, and this one names an order placed in the same
+  instant.
 - S12 **A review answer and a cancel in one instant.** The answer reaches you first (§1). After an `approve` the order is
-  cleared and ready, so the `cancel` is a cancel during processing (S11, R6.2). After a `reject` the order is cancelled for
-  fraud (R2.2) and the `cancel` changes nothing.
+  cleared. If it has no unavailable fulfilment it is ready, so the `cancel` is a cancel during processing (S11, R6.2); if
+  it has one, the `cancel` is a customer action on the unavailable items (R3.2: the first `amend` or `cancel` at or
+  before D counts). After a `reject` the order is cancelled for fraud (R2.2): the `cancel` changes nothing, and you may
+  send `cancel-refused` (R6.3, S15).
 - S13 **Endings and failures in a cancel's instant.** What reached you before a `cancel` came before it. A carrier report
-  with the same time as the cancel reached you first (§1, S4): a `delivered` report that ends the order's last open
+  delivered in the cancel's instant reached you first (§1, S4): a `delivered` report that ends the order's last open
   fulfilment means the order has already ended (R6.3: the cancel changes nothing, `cancel-refused` is allowed); a
   `collectionFailed` report fails its fulfilment before the cancel (R5.2), and the cancel applies to the order's other
-  open fulfilments (R6.2); if there are none, the order has already ended, as for the delivery. A declined charge or a permanent carrier error reaches you with its result, one minute after the
-  attempt: one attempted in the cancel's instant did not come before the cancel, so the cancel counts and that
-  fulfilment is compensated and set `cancelled` (R6.2), not `failed`.
+  open fulfilments (R6.2); if there are none, the order has already ended, as for the delivery. A declined charge or a
+  permanent carrier error reaches you with its result, one minute after the attempt: one attempted in the cancel's
+  instant did not come before the cancel, so the cancel counts and that fulfilment is compensated and set `cancelled`
+  (R6.2), not `failed`.
 - S14 **A step committing after its fulfilment failed.** A step of a failing fulfilment that commits after the failure
   (one already in flight) is compensated within 120 min of its commit; the fulfilment's compensation, its `failed` status
   and its `fulfilment-failed` notice are then due within 120 min of the later of the failure and that commit (as R6.2
   does for a cancel).
+- S15 **A cancel after the order's cancellation is decided.** An order counts as cancelled (R6.3) from the moment a rule
+  decides it, not from when you set its status: the fraud verdict `reject` (R2.1), a `reject` answer or the review
+  deadline passing without a usable answer (R2.2), a `cancel` that counts (R3.2, R6.2, R6.4), or an `amend` that leaves
+  nothing available (R3.2). Every later `cancel` of the order, including one in the same instant delivered after the
+  deciding event, changes nothing; you may send `cancel-refused` for it.
 
 ## 6. Reference: the shop as originally written (for orientation only)
 

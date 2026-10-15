@@ -5,7 +5,9 @@
 // Logical effect ids (lids) are functions of rule and business keys only:
 //   create:O  ost:O:<status>  fst:F:<status>  rsv:F:<sku>  chg:F  shp:F  csh:F  rf:F  rel:F:<sku>  ntf:<about>:<template>
 // A step was taken before a message (S10) when its call was at an earlier instant, or in the same instant had not been given
-// that message (it could not react); with no message (a failure) the call must have been given no event of this case.
+// that message (it could not react); with no message (a failed attempt) the call must have been given no event of this case.
+// The helpers added in the 2026-10-15 re-review (`cutCause`, `refuseLater`) sit at the end of the module, so that
+// tools/mutate.mjs numbers their mutants after k300 and the earlier mutant indices stay stable (ledger/MUTANTS.md).
 
 const MIN = 60_000;
 const SEC = 1_000;
@@ -80,7 +82,7 @@ function orderExpectation(world, view, t) {
   const amount = f => f.items.reduce((s, i) => s + i.qty * price(i.sku), 0) + (f.location ? fee(f.location) : 0);
   const avail = alloc.filter(f => f.available), unavail = alloc.filter(f => !f.available);
   const stage = t.class.startsWith('gl-') ? t.class : null;
-  const evAt = new Map(), before = (row, a, ev = evAt.get(a)) => row.callAt < a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));
+  const before = (row, a, ev) => row.callAt < a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)
   const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));
   /** S9: a step superseded by `ev` (a counted cancel or customer action) before the arm took it (S10) is no longer required; taking it anyway is permitted. */
   const maybe = (ev, emit) => {
@@ -126,11 +128,11 @@ function orderExpectation(world, view, t) {
   }
 
   /** R6.1: cancel an order whose steps have not committed (fraud, review, customer while waiting, nothing available). */
-  const cancelOrder = (rule, e, l, endAt = e) => {
+  const cancelOrder = (rule, e, l, endAt = e, counted = null) => {
     for (const f of alloc) { fst(f.fulfilmentId, 'cancelled', rule, e, l); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }
     ost('cancelled', rule, e, l);
     ntf(O, 'order-cancelled', rule, e, l);
-    done('cancelled', endAt);
+    done('cancelled', endAt); refuseLater(permitted, custActions, counted, O);   // S15: a later cancel changes nothing
     return out();
   };
 
@@ -155,7 +157,7 @@ function orderExpectation(world, view, t) {
     const first = reviews[0];
     if (!first) {
       const cancel = custActions.find(a => a.payload.action === 'cancel');
-      if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 60 * MIN);
+      if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 60 * MIN, cancel.at, cancel);
       return out();
     }
     const deadline = first.at + RV * 60 * MIN;
@@ -165,7 +167,7 @@ function orderExpectation(world, view, t) {
       && ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);
     const ans = answers[0] ?? null;
     const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);
-    if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 60 * MIN);
+    if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 60 * MIN, cancel.at, cancel);
     if (!ans) return cancelOrder('R2.2', deadline + SEC, deadline + 120 * MIN, deadline);         // after the deadline (S1)
     if (ans.payload.answer.decision === 'reject') return cancelOrder('R2.2', ans.at, ans.at + 120 * MIN);
     cleared = ans.at;
@@ -193,9 +195,9 @@ function orderExpectation(world, view, t) {
       return out();
     }
     const a = countedAction.at;
-    if (countedAction.payload.action === 'cancel') return cancelOrder('R3.2', a, a + 60 * MIN);
+    if (countedAction.payload.action === 'cancel') return cancelOrder('R3.2', a, a + 60 * MIN, a, countedAction);
     for (const f of unavail) { fst(f.fulfilmentId, 'cancelled', 'R3.2', a, a + 60 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }
-    if (!avail.length) return cancelOrder('R3.2', a, a + 60 * MIN);
+    if (!avail.length) return cancelOrder('R3.2', a, a + 60 * MIN, a, countedAction);
     ready = a;
   }
 
@@ -233,18 +235,18 @@ function orderExpectation(world, view, t) {
     return { f, F, items, rF, chargeRow, shipRow, fails, collectedMsg, deliveredMsg, failedMsg, failAt, failSeen, R, location: f.location, amount: amount(f) };
   });
 
-  let abortAt = null;
+  let abortAt = null, abortEv = null;
   for (const a of procCancels) {
     const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13
     if (endedBefore) { permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } }); continue; }
     if (collectedBy(a)) { ntf(O, 'cancel-refused', 'R6.3', a.at, a.at + 60 * MIN); continue; }
-    abortAt = a.at; evAt.set(a.at, a);
+    abortAt = a.at; abortEv = a;
     break;
   }
   if (!pre.processing) {
     // S9: a counted cancel that comes first supersedes the R4.1 statuses not yet set.
-    maybe(evAt.get(abortAt), () => ost('processing', 'R4.1', tr, tr + 60 * MIN));
-    for (const f of avail) maybe(evAt.get(abortAt), () => fst(f.fulfilmentId, 'processing', 'R4.1', tr, tr + 60 * MIN));
+    maybe(abortEv, () => ost('processing', 'R4.1', tr, tr + 60 * MIN));
+    for (const f of avail) maybe(abortEv, () => fst(f.fulfilmentId, 'processing', 'R4.1', tr, tr + 60 * MIN));
   }
 
   let lastEnd = tr;
@@ -252,8 +254,8 @@ function orderExpectation(world, view, t) {
   for (const s of saga) {
     const { F } = s;
     const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13
-    const cut = aborted ? abortAt : s.failAt;          // forward steps are required only before this instant
-    const forwardOk = row => cut === null || before(row, cut);
+    const cut = aborted ? abortAt : s.failAt, cutEv = cutCause(s, aborted, abortEv);   // forward steps: required only before the cut (S10: its message)
+    const forwardOk = row => cut === null || before(row, cut, cutEv);
     // Forward steps (R4.2) and their records.
     if (!s.items[0].pre) {
       for (const i of s.items) {
@@ -331,7 +333,7 @@ function orderExpectation(world, view, t) {
     ost('cancelled', 'R6.2', abortAt, abortAt + 60 * MIN);
     ntf(O, 'order-cancelled', 'R6.2', abortAt, abortAt + 60 * MIN);
     for (const f of unavail) rec.fulfilments[f.fulfilmentId] = 'cancelled';
-    done('cancelled', abortAt);
+    done('cancelled', abortAt); refuseLater(permitted, procCancels, abortEv, O);   // S15: a later cancel changes nothing
     return out();
   }
   // R4.5 order outcome once every fulfilment ended.
@@ -382,4 +384,24 @@ export function recordsOf(world, idx, c) {
     else if (k === 'carrier.cancel') rec.shipments[args.fulfilmentId] = 'cancelled';
   }
   return rec;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Added in the 2026-10-15 re-review. Kept at the end of the module so that tools/mutate.mjs numbers their mutants after
+// k300: the 301 mutants of the 2026-10-14 run keep their operator and expression (ledger/MUTANTS.md).
+
+/** S10, S13: the message that cut a fulfilment's forward steps: the counted cancel when the cancel aborted it, its
+ * collectionFailed report when that report is the failure; none (null: the call's knowledge of the case) for a failed
+ * attempt, whose result is not a message the arm had at the attempt's instant. */
+function cutCause(s, aborted, abortEv) {
+  if (aborted) return abortEv;
+  return s.failedMsg?.at === s.failAt ? s.failedMsg : null;
+}
+
+/** R6.3, S12, S15: once a rule has decided that the order is cancelled, every later customer `cancel` changes nothing and
+ * `cancel-refused` is allowed for it, not required. `counted` is the action that decided it (null: no customer action). */
+function refuseLater(permitted, actions, counted, O) {
+  for (const a of actions.slice(actions.indexOf(counted) + 1)) if (a.payload.action === 'cancel') {
+    permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });
+  }
 }

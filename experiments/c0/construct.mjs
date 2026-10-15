@@ -114,6 +114,59 @@ export function messageUsageOf(transcriptFile) {
 // Bash tool uses that ran the build-time test loop (./tools/run-solver): how much the builder tested without an oracle.
 export const runSolverCallsOf = (toolUses = []) => toolUses.filter(u => u?.name === 'Bash' && /run-solver/.test(String(u.input?.command ?? ''))).length;
 
+// Need router v1: the hidden-path scan whose hits void work (DESIGN §2 validity gates). The `outside` closure in construct()
+// below scans every string of a tool input (Write content, Grep patterns included) and is kept as it is for the C0 record
+// and the kev-data C7 baseline, which reads it as text; its hits are for review by hand. Task data often holds host-style
+// paths (incident: /var/log, /var/lib/postgresql/data, /srv/objects; ownerci: /home/runner/work/..., /opt/hostedtoolcache),
+// so that scan voids honest answers. This one counts only paths a tool use accesses: the path arguments of file tools
+// (Read, Write, Edit, Glob, Grep's path, LS, notebooks), a Glob pattern that is absolute, and a Bash command with its
+// heredoc bodies removed (data written to a file). Write and Edit content and Grep patterns are never scanned. A path that
+// the task itself states (its prompt, inputs or files: `ignore`) is not an attempt. /tmp is private to the sandbox.
+export const HOST_ROOTS = Object.freeze(['home', 'root', 'opt', 'mnt', 'var', 'run', 'srv', 'media', 'etc', 'proc']);
+const hostPathRe = () => new RegExp(`/(?:${HOST_ROOTS.join('|')})/[\\w./-]*`, 'g');
+const PATH_KEYS = Object.freeze(['file_path', 'path', 'notebook_path', 'directory', 'dir', 'cwd']);
+/** A path as compared by the scan: `..` resolved, trailing slashes and dots dropped. */
+export const normalizeHostPath = p => path.posix.normalize(String(p)).replace(/[/.]+$/, '') || '/';
+/** A Bash command without its heredoc bodies (`<<EOF ... EOF`, `<<-'EOF'`): the text a command writes, not paths it opens. */
+export function withoutHeredocs(command) {
+  return String(command).replace(/<<-?[ \t]*(['"]?)([A-Za-z_][\w-]*)\1[^\n]*\n[\s\S]*?\n[ \t]*\2[ \t]*(?=\n|$)/g, '<<$2');
+}
+/** The strings of one tool use that name paths it accesses (see above). */
+export function accessedStrings(u) {
+  const input = u?.input;
+  if (typeof input === 'string') return [withoutHeredocs(input)];
+  if (!input || typeof input !== 'object') return [];
+  const out = [];
+  if (typeof input.command === 'string') out.push(withoutHeredocs(input.command));
+  for (const k of PATH_KEYS) if (typeof input[k] === 'string') out.push(input[k]);
+  if (u?.name !== 'Grep' && typeof input.pattern === 'string' && input.pattern.startsWith('/')) out.push(input.pattern);   // Glob
+  return out;
+}
+/** Host paths stated by tasks (prompt, inputs, files, or any string inside them), normalized: the scan's `ignore` set. */
+export function taskHostPaths(tasks = []) {
+  const out = new Set();
+  const visit = v => {
+    if (typeof v === 'string') { for (const m of v.match(hostPathRe()) ?? []) out.add(normalizeHostPath(m)); }
+    else if (Array.isArray(v)) v.forEach(visit);
+    else if (v && typeof v === 'object') Object.values(v).forEach(visit);
+  };
+  for (const t of tasks) visit(t?.task ?? t);
+  return out;
+}
+/** The accessed-path scan: {attempts (tool uses with at least one hit), paths, ignored (task-stated paths seen)}. */
+export function accessedOutsidePaths(toolUses = [], allowedRoots = [], { ignore = new Set() } = {}) {
+  const roots = allowedRoots.filter(Boolean).map(normalizeHostPath);
+  const ignored = new Set();
+  const hits = u => accessedStrings(u).flatMap(s => s.match(hostPathRe()) ?? []).filter(p => {
+    const n = normalizeHostPath(p);
+    if (roots.some(r => n === r || n.startsWith(r.endsWith('/') ? r : `${r}/`))) return false;
+    if (ignore.has(n)) { ignored.add(n); return false; }
+    return true;
+  });
+  const per = toolUses.map(hits);
+  return { attempts: per.filter(x => x.length).length, paths: [...new Set(per.flat())], ignored: [...ignored] };
+}
+
 // Post-run self-check: node check.mjs task.json answer.json in a fresh directory beside the trial (task files, the
 // answer, check.mjs only), sandboxed with no network and no gateway, so it cannot call a model. Exit 0 = pass, 1 = fail,
 // anything else (crash, timeout) = error. No answer: nothing to check (selfVerdict null). runner: tests substitute one.
