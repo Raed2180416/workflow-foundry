@@ -108,27 +108,32 @@ try {
     const item = { ...oracleItem, referenceTransition: mod.referenceTransition, recordsOf: mod.recordsOf };
     const sigCache = new Map(), srcCache = new Map();
     rec.mr = {};
+    rec.ms = { oracle: 0, reference: 0 };
     for (const mr of MRS) {
+      let t = Date.now();
       const r = { oracle: null, reference: null };
       for (const fx of fixtures.get(mr.id)) {
         const v = (mr.kind === 'mr11' ? mr11OracleCheck(fx, item) : oracleCheck(fx, item, { sigCache }))[0];
         if (v) { r.oracle = { at: caseLabel(mr, fx), ...v }; if (rec.equivalent) r.oracle.witness = oracleWitness(fx, item, v); break; }
       }
-      // The reference flavour: on the first case only once the oracle flavour has killed (or always for an equivalent).
+      rec.ms.oracle += Date.now() - t; t = Date.now();
+      // The reference flavour (the expensive one: host runs of the mutant reference): every case of an equivalent; for
+      // the others the first case, earliest timing, and only where the oracle flavour did not already kill.
       if (withReference) {
         const list = r.oracle && !rec.equivalent ? [] : rec.equivalent ? fixtures.get(mr.id) : fixtures.get(mr.id).slice(0, 1);
         for (const fx of list) {
           const journals = {};
-          const v = (await referenceCheck(fx, item, { srcCache, journals }))[0];
+          const v = (await referenceCheck(fx, item, { srcCache, journals, timings: rec.equivalent ? ['ref-earliest', 'ref-latest'] : ['ref-earliest'] }))[0];
           if (v) { r.reference = { at: caseLabel(mr, fx), ...v }; if (rec.equivalent) r.reference.witness = referenceWitness(fx, item, journals); break; }
         }
       }
+      rec.ms.reference += Date.now() - t;
       for (const x of [r.oracle, r.reference]) if (x) for (const f of ['source', 'followUp']) if (typeof x[f] === 'string') x[f] = x[f].slice(0, 600);
       rec.mr[mr.id] = r;
     }
     const by = Object.entries(rec.mr).filter(([, x]) => x.oracle || x.reference).map(([id, x]) => `${id}${x.oracle ? 'o' : ''}${x.reference ? 'r' : ''}`);
     results.push(rec);
-    log(`k${k} [${rec.ledger}] ${by.length ? by.join(' ') : '-'}`);
+    log(`k${k} [${rec.ledger}] ${by.length ? by.join(' ') : '-'} (oracle ${(rec.ms.oracle / 1000).toFixed(1)} s, reference ${(rec.ms.reference / 1000).toFixed(1)} s)`);
     if (results.length % 10 === 0) save();
   }
 } finally {

@@ -588,8 +588,15 @@ function htFields(p0) {
   return { taskId: taskId == null ? null : String(taskId), decision };
 }
 
-// Compact history record of one business event.
+// Compact history record of one business event (null fields dropped to keep the carry small).
 function compact(ev, cls, k, now) {
+  const h = compactFull(ev, cls, k, now);
+  if (h) for (const key of Object.keys(h)) if (h[key] == null || h[key] === '') delete h[key];
+  if (h && h.s == null) h.s = '';
+  if (h && h.i == null) h.i = '';
+  return h;
+}
+function compactFull(ev, cls, k, now) {
   const p = cls.p || {};
   const t = parseT(ev.at) ?? now;
   const b = { y: cls.kind, t, k, s: String(ev.source ?? ''), i: String(ev.id ?? '') };
