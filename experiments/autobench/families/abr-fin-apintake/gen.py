@@ -883,16 +883,16 @@ class Gen:
             kinds.append("ap-lead")
         kinds = kinds[:n]
         used = set()
-        cand = [q for q in self.invoices if q["story"] in ("normal", "fine-lookalike") and q["at"] < self.day(3) + timedelta(hours=8)
-                and not q.get("resent")]
+        cand = [q for q in self.invoices if q["story"] in ("normal", "fine-lookalike", "same-amount-old", "amend-unauth", "band-edge")
+                and q["at"] < self.day(3) + timedelta(hours=8) and not q.get("resent")]
         for k in kinds:
             pool = [q for q in cand if id(q) not in used]
             if k == "ap-lead":
                 pool = sorted(pool, key=lambda q: (q["outcome"] != "review", q["at"]))
                 pool = pool[:3]
             elif k == "early":
-                pool = [q for q in pool if q["at"] > self.day(0) + timedelta(hours=12) and q["outcome"] == "matched"
-                        and q["recv"] not in ("partial", "short")]
+                pool = [q for q in pool if q["at"] > self.day(0) + timedelta(hours=9) and q["outcome"] == "matched"
+                        and q["recv"] not in ("partial", "short") and q["story"] in ("normal", "fine-lookalike", "same-amount-old")]
             if not pool:
                 raise PlanError(f"no target for correction {k}")
             q = r.choice(pool)
@@ -924,9 +924,17 @@ class Gen:
         if n == 0:
             return
         # block a vendor whose invoice should be payable on Thursday, after its last invoice of the week
-        cand = [q for q in self.invoices if q["story"] == "normal" and q["outcome"] == "matched" and q.get("recv_at") is not None
-                and max(q["at"], q["recv_at"]) < self.run_at - timedelta(hours=2) and self.planned_approver(q) == "none"
-                and not q.get("corrections") and not q.get("resent") and q["vendor"]["role"] in ("regular", "pair")]
+        def ok(q):
+            return (q["story"] in ("normal", "same-amount-old") and q["outcome"] == "matched" and self.planned_approver(q) == "none"
+                    and not q.get("corrections") and not q.get("resent") and q["vendor"]["role"] in ("regular", "pair")
+                    and q["recv"] not in ("partial", "short"))
+        cand = [q for q in self.invoices if ok(q) and q.get("recv_at") is not None and max(q["at"], q["recv_at"]) < self.run_at - timedelta(hours=2)]
+        if not cand:          # goods received last week for one of them (a world0 Receiving row; no trigger count changes)
+            spare = [q for q in self.invoices if ok(q) and q["recv"] == "none" and q["at"] < self.run_at - timedelta(hours=3)]
+            if spare:
+                q = r.choice(spare)
+                q["recv"], q["recv_at"] = "world0", self.monday
+                cand = [q]
         r.shuffle(cand)
         movable = ("normal", "var-edge", "band-edge", "amend-auth", "amend-unauth")
         for q in cand:

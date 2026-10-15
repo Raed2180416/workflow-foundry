@@ -718,7 +718,7 @@ class Gen:
         else:
             on = (f" on {dtext}" if st["date"] not in ("today", "yesterday") else f" {dtext}") if dtext else ""
             text = f"{desc}, {amount}{on}" + ex
-        text = prefix + text
+        text = prefix + text + "".join(f" [file: {x['name']}]" for x in files)
         self.self_check(text, f, st)
         return text, files
 
@@ -1231,7 +1231,7 @@ class Gen:
         text, files = self.render(f, spec, st, post, prefix=prefix)
         if sub == "repost-fixed" and not files:
             files = [self.new_file()]
-            text = text.replace(", receipt: yes", "")
+            text = text.replace(", receipt: yes", "") + f" [file: {files[0]['name']}]"
         return text, files
 
     def render_reply(self, p: dict, rc: dict, at: datetime, labels: list[str]):
@@ -1281,7 +1281,8 @@ class Gen:
                 p["new"] = {"receipt": True}
                 if r.random() < 0.75:
                     files = [self.new_file()]
-                    text = r.choice(["Correction: receipt attached", "Correction: here is the receipt"])
+                    text = r.choice(["Correction: receipt attached", "Correction: here is the receipt"]) + \
+                        f" [file: {files[0]['name']}]"
                 else:
                     text = "Correction: receipt: yes (paper copy dropped at the finance desk)"
             else:

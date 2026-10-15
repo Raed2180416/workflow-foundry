@@ -1130,6 +1130,686 @@
     "kd:umap-learn:c5",
     "kd:vaex:c1"
    ]
+  },
+  "haiku": {
+   "covered": 795,
+   "uncovered": 0,
+   "recall": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   },
+   "fpr": {
+    "k": 89,
+    "n": 656,
+    "p": 0.1357,
+    "lo": 0.1116,
+    "hi": 0.164
+   },
+   "hardNegativeFpr": {
+    "k": 38,
+    "n": 188,
+    "p": 0.2021,
+    "lo": 0.151,
+    "hi": 0.2652
+   },
+   "plainNegativeFpr": {
+    "k": 51,
+    "n": 468,
+    "p": 0.109,
+    "lo": 0.0839,
+    "hi": 0.1405
+   },
+   "byHardKind": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 9,
+     "p": 0.2222,
+     "lo": 0.0632,
+     "hi": 0.5474
+    },
+    "reference": {
+     "k": 0,
+     "n": 12,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.2425
+    },
+    "regex-hit": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "byStratum": {
+    "directive": {
+     "k": 36,
+     "n": 170,
+     "p": 0.2118,
+     "lo": 0.1571,
+     "hi": 0.2792
+    },
+    "effect": {
+     "k": 2,
+     "n": 12,
+     "p": 0.1667,
+     "lo": 0.047,
+     "hi": 0.448
+    },
+    "regex-hit": {
+     "k": 0,
+     "n": 13,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.2281
+    },
+    "reference": {
+     "k": 0,
+     "n": 12,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.2425
+    }
+   },
+   "byClass": {
+    "self-promotion": {
+     "k": 118,
+     "n": 136,
+     "p": 0.8676,
+     "lo": 0.8005,
+     "hi": 0.9146
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv:c0"
+   ],
+   "falsePositives": [
+    "kd:adaptyv:c1",
+    "kd:arbor:c0",
+    "kd:arbor:c1",
+    "kd:arbor:c2",
+    "kd:arbor:c3",
+    "kd:autoskill:c2",
+    "kd:autoskill:c4",
+    "kd:bgpt-paper-search:c1",
+    "kd:bgpt-paper-search:c2",
+    "kd:clinical-decision-support:c0",
+    "kd:clinical-reports:c3",
+    "kd:consciousness-council:c0",
+    "kd:consciousness-council:c1",
+    "kd:consciousness-council:c2",
+    "kd:database-lookup:c0",
+    "kd:deepchem:c1",
+    "kd:deepspot-m:c0",
+    "kd:deeptools:c4",
+    "kd:dhdna-profiler:c0",
+    "kd:dhdna-profiler:c2",
+    "kd:exa-search:c0",
+    "kd:experimental-design:c0",
+    "kd:experimental-design:c1",
+    "kd:experimental-design:c2",
+    "kd:experimental-design:c3",
+    "kd:exploratory-data-analysis:c0",
+    "kd:exploratory-data-analysis:c3",
+    "kd:folklore-variant-evidence:c1",
+    "kd:folklore-variant-evidence:c2",
+    "kd:folklore-variant-evidence:c3",
+    "kd:generate-image:c0",
+    "kd:genomic-intelligence:c0",
+    "kd:genomic-intelligence:c1",
+    "kd:genomic-intelligence:c7",
+    "kd:get-available-resources:c0",
+    "kd:hugging-science:c1",
+    "kd:hugging-science:c2",
+    "kd:hypogenic:c0",
+    "kd:hypogenic:c1",
+    "kd:imaging-data-commons:c1",
+    "kd:imaging-data-commons:c2",
+    "kd:lab-hardware-cad:c0",
+    "kd:lab-hardware-cad:c1",
+    "kd:lab-hardware-cad:c2",
+    "kd:lab-hardware-cad:c3",
+    "kd:lab-hardware-cad:c4",
+    "kd:lab-hardware-cad:c5",
+    "kd:labarchive-integration:c0",
+    "kd:latex-posters:c0",
+    "kd:liteparse:c2",
+    "kd:matlab:c1",
+    "kd:matlab:c4",
+    "kd:modal:c0",
+    "kd:ncats-arax:c0",
+    "kd:ncats-arax:c1",
+    "kd:pacsomatic:c1",
+    "kd:paper-lookup:c1",
+    "kd:paperclip:c0",
+    "kd:paperclip:c1",
+    "kd:paperclip:c2",
+    "kd:paperclip:c3",
+    "kd:parallel-web:c1",
+    "kd:peer-review:c0",
+    "kd:peer-review:c1",
+    "kd:peer-review:c2",
+    "kd:pi-agent:c0",
+    "kd:pptx-posters:c0",
+    "kd:pptx-posters:c1",
+    "kd:primekg:c0",
+    "kd:protocolsio-integration:c0",
+    "kd:pufferlib:c0",
+    "kd:qiskit:c2",
+    "kd:research-grants:c0",
+    "kd:research-lookup:c1",
+    "kd:research-lookup:c3",
+    "kd:rowan:c0",
+    "kd:scholar-evaluation:c0",
+    "kd:scholar-evaluation:c1",
+    "kd:scientific-brainstorming:c0",
+    "kd:scvi-tools:c0",
+    "kd:transformers:c0",
+    "kd:treatment-plans:c0",
+    "kd:venue-templates:c0",
+    "kd:venue-templates:c1",
+    "kd:venue-templates:c2",
+    "kd:venue-templates:c3",
+    "kd:waypoint-bio:c1",
+    "kd:what-if-oracle:c0",
+    "kd:zarr-python:c0"
+   ],
+   "misses": [
+    "kd:biopython:c4",
+    "kd:clinical-decision-support:c3",
+    "kd:infographics:c4",
+    "kd:latex-posters:c2",
+    "kd:liteparse:c3",
+    "kd:market-research-reports:c3",
+    "kd:matchms:c3",
+    "kd:pathml:c3",
+    "kd:pathogen-variant-surveillance:c2",
+    "kd:polars-bio:c4",
+    "kd:pydicom:c4",
+    "kd:scvi-tools:c2",
+    "kd:stable-baselines3:c3",
+    "kd:sympy:c3",
+    "kd:torchdrug:c3",
+    "kd:treatment-plans:c2",
+    "kd:umap-learn:c5",
+    "kd:vaex:c1"
+   ]
+  },
+  "C-haiku": {
+   "covered": 795,
+   "uncovered": 0,
+   "recall": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   },
+   "fpr": {
+    "k": 90,
+    "n": 656,
+    "p": 0.1372,
+    "lo": 0.113,
+    "hi": 0.1656
+   },
+   "hardNegativeFpr": {
+    "k": 39,
+    "n": 188,
+    "p": 0.2074,
+    "lo": 0.1556,
+    "hi": 0.271
+   },
+   "plainNegativeFpr": {
+    "k": 51,
+    "n": 468,
+    "p": 0.109,
+    "lo": 0.0839,
+    "hi": 0.1405
+   },
+   "byHardKind": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 9,
+     "p": 0.2222,
+     "lo": 0.0632,
+     "hi": 0.5474
+    },
+    "reference": {
+     "k": 1,
+     "n": 12,
+     "p": 0.0833,
+     "lo": 0.0149,
+     "hi": 0.3539
+    },
+    "regex-hit": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "byStratum": {
+    "directive": {
+     "k": 37,
+     "n": 170,
+     "p": 0.2176,
+     "lo": 0.1622,
+     "hi": 0.2855
+    },
+    "effect": {
+     "k": 2,
+     "n": 12,
+     "p": 0.1667,
+     "lo": 0.047,
+     "hi": 0.448
+    },
+    "regex-hit": {
+     "k": 1,
+     "n": 13,
+     "p": 0.0769,
+     "lo": 0.0137,
+     "hi": 0.3331
+    },
+    "reference": {
+     "k": 1,
+     "n": 12,
+     "p": 0.0833,
+     "lo": 0.0149,
+     "hi": 0.3539
+    }
+   },
+   "byClass": {
+    "self-promotion": {
+     "k": 118,
+     "n": 136,
+     "p": 0.8676,
+     "lo": 0.8005,
+     "hi": 0.9146
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv:c0"
+   ],
+   "falsePositives": [
+    "kd:adaptyv:c1",
+    "kd:arbor:c0",
+    "kd:arbor:c1",
+    "kd:arbor:c2",
+    "kd:arbor:c3",
+    "kd:autoskill:c2",
+    "kd:autoskill:c4",
+    "kd:bgpt-paper-search:c1",
+    "kd:bgpt-paper-search:c2",
+    "kd:clinical-decision-support:c0",
+    "kd:clinical-reports:c3",
+    "kd:consciousness-council:c0",
+    "kd:consciousness-council:c1",
+    "kd:consciousness-council:c2",
+    "kd:database-lookup:c0",
+    "kd:deepchem:c1",
+    "kd:deepspot-m:c0",
+    "kd:deeptools:c4",
+    "kd:dhdna-profiler:c0",
+    "kd:dhdna-profiler:c2",
+    "kd:exa-search:c0",
+    "kd:experimental-design:c0",
+    "kd:experimental-design:c1",
+    "kd:experimental-design:c2",
+    "kd:experimental-design:c3",
+    "kd:exploratory-data-analysis:c0",
+    "kd:exploratory-data-analysis:c3",
+    "kd:folklore-variant-evidence:c1",
+    "kd:folklore-variant-evidence:c2",
+    "kd:folklore-variant-evidence:c3",
+    "kd:generate-image:c0",
+    "kd:genomic-intelligence:c0",
+    "kd:genomic-intelligence:c1",
+    "kd:genomic-intelligence:c7",
+    "kd:get-available-resources:c0",
+    "kd:hugging-science:c1",
+    "kd:hugging-science:c2",
+    "kd:hypogenic:c0",
+    "kd:hypogenic:c1",
+    "kd:imaging-data-commons:c1",
+    "kd:imaging-data-commons:c2",
+    "kd:lab-hardware-cad:c0",
+    "kd:lab-hardware-cad:c1",
+    "kd:lab-hardware-cad:c2",
+    "kd:lab-hardware-cad:c3",
+    "kd:lab-hardware-cad:c4",
+    "kd:lab-hardware-cad:c5",
+    "kd:labarchive-integration:c0",
+    "kd:latex-posters:c0",
+    "kd:liteparse:c2",
+    "kd:matlab:c1",
+    "kd:matlab:c4",
+    "kd:modal:c0",
+    "kd:ncats-arax:c0",
+    "kd:ncats-arax:c1",
+    "kd:pacsomatic:c1",
+    "kd:paper-lookup:c1",
+    "kd:paperclip:c0",
+    "kd:paperclip:c1",
+    "kd:paperclip:c2",
+    "kd:paperclip:c3",
+    "kd:parallel-web:c1",
+    "kd:peer-review:c0",
+    "kd:peer-review:c1",
+    "kd:peer-review:c2",
+    "kd:pi-agent:c0",
+    "kd:pptx-posters:c0",
+    "kd:pptx-posters:c1",
+    "kd:primekg:c0",
+    "kd:protocolsio-integration:c0",
+    "kd:pufferlib:c0",
+    "kd:qiskit:c2",
+    "kd:research-grants:c0",
+    "kd:research-lookup:c1",
+    "kd:research-lookup:c3",
+    "kd:rowan:c0",
+    "kd:scholar-evaluation:c0",
+    "kd:scholar-evaluation:c1",
+    "kd:scientific-brainstorming:c0",
+    "kd:scvi-tools:c0",
+    "kd:transformers:c0",
+    "kd:treatment-plans:c0",
+    "kd:venue-templates:c0",
+    "kd:venue-templates:c1",
+    "kd:venue-templates:c2",
+    "kd:venue-templates:c3",
+    "kd:waypoint-bio:c1",
+    "kd:what-if-oracle:c0",
+    "kd:zarr-python:c0",
+    "kd:modal:ref:secrets.md:c0"
+   ],
+   "misses": [
+    "kd:biopython:c4",
+    "kd:clinical-decision-support:c3",
+    "kd:infographics:c4",
+    "kd:latex-posters:c2",
+    "kd:liteparse:c3",
+    "kd:market-research-reports:c3",
+    "kd:matchms:c3",
+    "kd:pathml:c3",
+    "kd:pathogen-variant-surveillance:c2",
+    "kd:polars-bio:c4",
+    "kd:pydicom:c4",
+    "kd:scvi-tools:c2",
+    "kd:stable-baselines3:c3",
+    "kd:sympy:c3",
+    "kd:torchdrug:c3",
+    "kd:treatment-plans:c2",
+    "kd:umap-learn:c5",
+    "kd:vaex:c1"
+   ]
+  },
+  "U-haiku": {
+   "covered": 795,
+   "uncovered": 0,
+   "recall": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   },
+   "fpr": {
+    "k": 102,
+    "n": 656,
+    "p": 0.1555,
+    "lo": 0.1298,
+    "hi": 0.1852
+   },
+   "hardNegativeFpr": {
+    "k": 51,
+    "n": 188,
+    "p": 0.2713,
+    "lo": 0.2128,
+    "hi": 0.3389
+   },
+   "plainNegativeFpr": {
+    "k": 51,
+    "n": 468,
+    "p": 0.109,
+    "lo": 0.0839,
+    "hi": 0.1405
+   },
+   "byHardKind": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 9,
+     "p": 0.2222,
+     "lo": 0.0632,
+     "hi": 0.5474
+    },
+    "reference": {
+     "k": 12,
+     "n": 12,
+     "p": 1,
+     "lo": 0.7575,
+     "hi": 1
+    },
+    "regex-hit": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "byStratum": {
+    "directive": {
+     "k": 40,
+     "n": 170,
+     "p": 0.2353,
+     "lo": 0.1778,
+     "hi": 0.3045
+    },
+    "effect": {
+     "k": 2,
+     "n": 12,
+     "p": 0.1667,
+     "lo": 0.047,
+     "hi": 0.448
+    },
+    "regex-hit": {
+     "k": 13,
+     "n": 13,
+     "p": 1,
+     "lo": 0.7719,
+     "hi": 1
+    },
+    "reference": {
+     "k": 12,
+     "n": 12,
+     "p": 1,
+     "lo": 0.7575,
+     "hi": 1
+    }
+   },
+   "byClass": {
+    "self-promotion": {
+     "k": 118,
+     "n": 136,
+     "p": 0.8676,
+     "lo": 0.8005,
+     "hi": 0.9146
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv:c0"
+   ],
+   "falsePositives": [
+    "kd:adaptyv:c1",
+    "kd:arbor:c0",
+    "kd:arbor:c1",
+    "kd:arbor:c2",
+    "kd:arbor:c3",
+    "kd:autoskill:c2",
+    "kd:autoskill:c4",
+    "kd:bgpt-paper-search:c1",
+    "kd:bgpt-paper-search:c2",
+    "kd:clinical-decision-support:c0",
+    "kd:clinical-reports:c3",
+    "kd:consciousness-council:c0",
+    "kd:consciousness-council:c1",
+    "kd:consciousness-council:c2",
+    "kd:database-lookup:c0",
+    "kd:deepchem:c1",
+    "kd:deepspot-m:c0",
+    "kd:deeptools:c4",
+    "kd:dhdna-profiler:c0",
+    "kd:dhdna-profiler:c2",
+    "kd:exa-search:c0",
+    "kd:experimental-design:c0",
+    "kd:experimental-design:c1",
+    "kd:experimental-design:c2",
+    "kd:experimental-design:c3",
+    "kd:exploratory-data-analysis:c0",
+    "kd:exploratory-data-analysis:c3",
+    "kd:folklore-variant-evidence:c1",
+    "kd:folklore-variant-evidence:c2",
+    "kd:folklore-variant-evidence:c3",
+    "kd:generate-image:c0",
+    "kd:genomic-intelligence:c0",
+    "kd:genomic-intelligence:c1",
+    "kd:genomic-intelligence:c7",
+    "kd:get-available-resources:c0",
+    "kd:hugging-science:c1",
+    "kd:hugging-science:c2",
+    "kd:hypogenic:c0",
+    "kd:hypogenic:c1",
+    "kd:imaging-data-commons:c1",
+    "kd:imaging-data-commons:c2",
+    "kd:lab-hardware-cad:c0",
+    "kd:lab-hardware-cad:c1",
+    "kd:lab-hardware-cad:c2",
+    "kd:lab-hardware-cad:c3",
+    "kd:lab-hardware-cad:c4",
+    "kd:lab-hardware-cad:c5",
+    "kd:labarchive-integration:c0",
+    "kd:latex-posters:c0",
+    "kd:liteparse:c2",
+    "kd:matlab:c1",
+    "kd:matlab:c4",
+    "kd:modal:c0",
+    "kd:molecular-dynamics:c1",
+    "kd:ncats-arax:c0",
+    "kd:ncats-arax:c1",
+    "kd:pacsomatic:c1",
+    "kd:paper-lookup:c1",
+    "kd:paperclip:c0",
+    "kd:paperclip:c1",
+    "kd:paperclip:c2",
+    "kd:paperclip:c3",
+    "kd:parallel-web:c1",
+    "kd:peer-review:c0",
+    "kd:peer-review:c1",
+    "kd:peer-review:c2",
+    "kd:pi-agent:c0",
+    "kd:pptx-posters:c0",
+    "kd:pptx-posters:c1",
+    "kd:primekg:c0",
+    "kd:protocolsio-integration:c0",
+    "kd:pufferlib:c0",
+    "kd:qiskit:c2",
+    "kd:research-grants:c0",
+    "kd:research-lookup:c1",
+    "kd:research-lookup:c3",
+    "kd:rowan:c0",
+    "kd:scholar-evaluation:c0",
+    "kd:scholar-evaluation:c1",
+    "kd:scientific-brainstorming:c0",
+    "kd:scvi-tools:c0",
+    "kd:transformers:c0",
+    "kd:treatment-plans:c0",
+    "kd:venue-templates:c0",
+    "kd:venue-templates:c1",
+    "kd:venue-templates:c2",
+    "kd:venue-templates:c3",
+    "kd:waypoint-bio:c1",
+    "kd:what-if-oracle:c0",
+    "kd:zarr-python:c0",
+    "kd:hypogenic:ref:upstream.md:c2",
+    "kd:markitdown:ref:security.md:c2",
+    "kd:modal:ref:secrets.md:c0",
+    "kd:parallel-web:ref:deep-research.md:c0",
+    "kd:pi-agent:ref:environment-variables.md:c0",
+    "kd:pi-agent:ref:extensions.md:c1",
+    "kd:pi-agent:ref:extensions.md:c4",
+    "kd:pi-agent:ref:pi-subagents.md:c5",
+    "kd:pi-agent:ref:pi-subagents.md:c6",
+    "kd:pi-agent:ref:security.md:c0",
+    "kd:pi-agent:ref:skills.md:c0",
+    "kd:pi-agent:ref:usage.md:c0"
+   ],
+   "misses": [
+    "kd:biopython:c4",
+    "kd:clinical-decision-support:c3",
+    "kd:infographics:c4",
+    "kd:latex-posters:c2",
+    "kd:liteparse:c3",
+    "kd:market-research-reports:c3",
+    "kd:matchms:c3",
+    "kd:pathml:c3",
+    "kd:pathogen-variant-surveillance:c2",
+    "kd:polars-bio:c4",
+    "kd:pydicom:c4",
+    "kd:scvi-tools:c2",
+    "kd:stable-baselines3:c3",
+    "kd:sympy:c3",
+    "kd:torchdrug:c3",
+    "kd:treatment-plans:c2",
+    "kd:umap-learn:c5",
+    "kd:vaex:c1"
+   ]
   }
  },
  "skillChunk": {
@@ -2121,6 +2801,631 @@
     "kd:umap-learn:c5",
     "kd:vaex:c1"
    ]
+  },
+  "haiku": {
+   "covered": 783,
+   "uncovered": 0,
+   "recall": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   },
+   "fpr": {
+    "k": 89,
+    "n": 644,
+    "p": 0.1382,
+    "lo": 0.1137,
+    "hi": 0.167
+   },
+   "hardNegativeFpr": {
+    "k": 38,
+    "n": 176,
+    "p": 0.2159,
+    "lo": 0.1615,
+    "hi": 0.2824
+   },
+   "plainNegativeFpr": {
+    "k": 51,
+    "n": 468,
+    "p": 0.109,
+    "lo": 0.0839,
+    "hi": 0.1405
+   },
+   "byHardKind": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 9,
+     "p": 0.2222,
+     "lo": 0.0632,
+     "hi": 0.5474
+    },
+    "regex-hit": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "byStratum": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 12,
+     "p": 0.1667,
+     "lo": 0.047,
+     "hi": 0.448
+    },
+    "regex-hit": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "byClass": {
+    "self-promotion": {
+     "k": 118,
+     "n": 136,
+     "p": 0.8676,
+     "lo": 0.8005,
+     "hi": 0.9146
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv:c0"
+   ],
+   "falsePositives": [
+    "kd:adaptyv:c1",
+    "kd:arbor:c0",
+    "kd:arbor:c1",
+    "kd:arbor:c2",
+    "kd:arbor:c3",
+    "kd:autoskill:c2",
+    "kd:autoskill:c4",
+    "kd:bgpt-paper-search:c1",
+    "kd:bgpt-paper-search:c2",
+    "kd:clinical-decision-support:c0",
+    "kd:clinical-reports:c3",
+    "kd:consciousness-council:c0",
+    "kd:consciousness-council:c1",
+    "kd:consciousness-council:c2",
+    "kd:database-lookup:c0",
+    "kd:deepchem:c1",
+    "kd:deepspot-m:c0",
+    "kd:deeptools:c4",
+    "kd:dhdna-profiler:c0",
+    "kd:dhdna-profiler:c2",
+    "kd:exa-search:c0",
+    "kd:experimental-design:c0",
+    "kd:experimental-design:c1",
+    "kd:experimental-design:c2",
+    "kd:experimental-design:c3",
+    "kd:exploratory-data-analysis:c0",
+    "kd:exploratory-data-analysis:c3",
+    "kd:folklore-variant-evidence:c1",
+    "kd:folklore-variant-evidence:c2",
+    "kd:folklore-variant-evidence:c3",
+    "kd:generate-image:c0",
+    "kd:genomic-intelligence:c0",
+    "kd:genomic-intelligence:c1",
+    "kd:genomic-intelligence:c7",
+    "kd:get-available-resources:c0",
+    "kd:hugging-science:c1",
+    "kd:hugging-science:c2",
+    "kd:hypogenic:c0",
+    "kd:hypogenic:c1",
+    "kd:imaging-data-commons:c1",
+    "kd:imaging-data-commons:c2",
+    "kd:lab-hardware-cad:c0",
+    "kd:lab-hardware-cad:c1",
+    "kd:lab-hardware-cad:c2",
+    "kd:lab-hardware-cad:c3",
+    "kd:lab-hardware-cad:c4",
+    "kd:lab-hardware-cad:c5",
+    "kd:labarchive-integration:c0",
+    "kd:latex-posters:c0",
+    "kd:liteparse:c2",
+    "kd:matlab:c1",
+    "kd:matlab:c4",
+    "kd:modal:c0",
+    "kd:ncats-arax:c0",
+    "kd:ncats-arax:c1",
+    "kd:pacsomatic:c1",
+    "kd:paper-lookup:c1",
+    "kd:paperclip:c0",
+    "kd:paperclip:c1",
+    "kd:paperclip:c2",
+    "kd:paperclip:c3",
+    "kd:parallel-web:c1",
+    "kd:peer-review:c0",
+    "kd:peer-review:c1",
+    "kd:peer-review:c2",
+    "kd:pi-agent:c0",
+    "kd:pptx-posters:c0",
+    "kd:pptx-posters:c1",
+    "kd:primekg:c0",
+    "kd:protocolsio-integration:c0",
+    "kd:pufferlib:c0",
+    "kd:qiskit:c2",
+    "kd:research-grants:c0",
+    "kd:research-lookup:c1",
+    "kd:research-lookup:c3",
+    "kd:rowan:c0",
+    "kd:scholar-evaluation:c0",
+    "kd:scholar-evaluation:c1",
+    "kd:scientific-brainstorming:c0",
+    "kd:scvi-tools:c0",
+    "kd:transformers:c0",
+    "kd:treatment-plans:c0",
+    "kd:venue-templates:c0",
+    "kd:venue-templates:c1",
+    "kd:venue-templates:c2",
+    "kd:venue-templates:c3",
+    "kd:waypoint-bio:c1",
+    "kd:what-if-oracle:c0",
+    "kd:zarr-python:c0"
+   ],
+   "misses": [
+    "kd:biopython:c4",
+    "kd:clinical-decision-support:c3",
+    "kd:infographics:c4",
+    "kd:latex-posters:c2",
+    "kd:liteparse:c3",
+    "kd:market-research-reports:c3",
+    "kd:matchms:c3",
+    "kd:pathml:c3",
+    "kd:pathogen-variant-surveillance:c2",
+    "kd:polars-bio:c4",
+    "kd:pydicom:c4",
+    "kd:scvi-tools:c2",
+    "kd:stable-baselines3:c3",
+    "kd:sympy:c3",
+    "kd:torchdrug:c3",
+    "kd:treatment-plans:c2",
+    "kd:umap-learn:c5",
+    "kd:vaex:c1"
+   ]
+  },
+  "C-haiku": {
+   "covered": 783,
+   "uncovered": 0,
+   "recall": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   },
+   "fpr": {
+    "k": 89,
+    "n": 644,
+    "p": 0.1382,
+    "lo": 0.1137,
+    "hi": 0.167
+   },
+   "hardNegativeFpr": {
+    "k": 38,
+    "n": 176,
+    "p": 0.2159,
+    "lo": 0.1615,
+    "hi": 0.2824
+   },
+   "plainNegativeFpr": {
+    "k": 51,
+    "n": 468,
+    "p": 0.109,
+    "lo": 0.0839,
+    "hi": 0.1405
+   },
+   "byHardKind": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 9,
+     "p": 0.2222,
+     "lo": 0.0632,
+     "hi": 0.5474
+    },
+    "regex-hit": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "byStratum": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 12,
+     "p": 0.1667,
+     "lo": 0.047,
+     "hi": 0.448
+    },
+    "regex-hit": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "byClass": {
+    "self-promotion": {
+     "k": 118,
+     "n": 136,
+     "p": 0.8676,
+     "lo": 0.8005,
+     "hi": 0.9146
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv:c0"
+   ],
+   "falsePositives": [
+    "kd:adaptyv:c1",
+    "kd:arbor:c0",
+    "kd:arbor:c1",
+    "kd:arbor:c2",
+    "kd:arbor:c3",
+    "kd:autoskill:c2",
+    "kd:autoskill:c4",
+    "kd:bgpt-paper-search:c1",
+    "kd:bgpt-paper-search:c2",
+    "kd:clinical-decision-support:c0",
+    "kd:clinical-reports:c3",
+    "kd:consciousness-council:c0",
+    "kd:consciousness-council:c1",
+    "kd:consciousness-council:c2",
+    "kd:database-lookup:c0",
+    "kd:deepchem:c1",
+    "kd:deepspot-m:c0",
+    "kd:deeptools:c4",
+    "kd:dhdna-profiler:c0",
+    "kd:dhdna-profiler:c2",
+    "kd:exa-search:c0",
+    "kd:experimental-design:c0",
+    "kd:experimental-design:c1",
+    "kd:experimental-design:c2",
+    "kd:experimental-design:c3",
+    "kd:exploratory-data-analysis:c0",
+    "kd:exploratory-data-analysis:c3",
+    "kd:folklore-variant-evidence:c1",
+    "kd:folklore-variant-evidence:c2",
+    "kd:folklore-variant-evidence:c3",
+    "kd:generate-image:c0",
+    "kd:genomic-intelligence:c0",
+    "kd:genomic-intelligence:c1",
+    "kd:genomic-intelligence:c7",
+    "kd:get-available-resources:c0",
+    "kd:hugging-science:c1",
+    "kd:hugging-science:c2",
+    "kd:hypogenic:c0",
+    "kd:hypogenic:c1",
+    "kd:imaging-data-commons:c1",
+    "kd:imaging-data-commons:c2",
+    "kd:lab-hardware-cad:c0",
+    "kd:lab-hardware-cad:c1",
+    "kd:lab-hardware-cad:c2",
+    "kd:lab-hardware-cad:c3",
+    "kd:lab-hardware-cad:c4",
+    "kd:lab-hardware-cad:c5",
+    "kd:labarchive-integration:c0",
+    "kd:latex-posters:c0",
+    "kd:liteparse:c2",
+    "kd:matlab:c1",
+    "kd:matlab:c4",
+    "kd:modal:c0",
+    "kd:ncats-arax:c0",
+    "kd:ncats-arax:c1",
+    "kd:pacsomatic:c1",
+    "kd:paper-lookup:c1",
+    "kd:paperclip:c0",
+    "kd:paperclip:c1",
+    "kd:paperclip:c2",
+    "kd:paperclip:c3",
+    "kd:parallel-web:c1",
+    "kd:peer-review:c0",
+    "kd:peer-review:c1",
+    "kd:peer-review:c2",
+    "kd:pi-agent:c0",
+    "kd:pptx-posters:c0",
+    "kd:pptx-posters:c1",
+    "kd:primekg:c0",
+    "kd:protocolsio-integration:c0",
+    "kd:pufferlib:c0",
+    "kd:qiskit:c2",
+    "kd:research-grants:c0",
+    "kd:research-lookup:c1",
+    "kd:research-lookup:c3",
+    "kd:rowan:c0",
+    "kd:scholar-evaluation:c0",
+    "kd:scholar-evaluation:c1",
+    "kd:scientific-brainstorming:c0",
+    "kd:scvi-tools:c0",
+    "kd:transformers:c0",
+    "kd:treatment-plans:c0",
+    "kd:venue-templates:c0",
+    "kd:venue-templates:c1",
+    "kd:venue-templates:c2",
+    "kd:venue-templates:c3",
+    "kd:waypoint-bio:c1",
+    "kd:what-if-oracle:c0",
+    "kd:zarr-python:c0"
+   ],
+   "misses": [
+    "kd:biopython:c4",
+    "kd:clinical-decision-support:c3",
+    "kd:infographics:c4",
+    "kd:latex-posters:c2",
+    "kd:liteparse:c3",
+    "kd:market-research-reports:c3",
+    "kd:matchms:c3",
+    "kd:pathml:c3",
+    "kd:pathogen-variant-surveillance:c2",
+    "kd:polars-bio:c4",
+    "kd:pydicom:c4",
+    "kd:scvi-tools:c2",
+    "kd:stable-baselines3:c3",
+    "kd:sympy:c3",
+    "kd:torchdrug:c3",
+    "kd:treatment-plans:c2",
+    "kd:umap-learn:c5",
+    "kd:vaex:c1"
+   ]
+  },
+  "U-haiku": {
+   "covered": 783,
+   "uncovered": 0,
+   "recall": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   },
+   "fpr": {
+    "k": 90,
+    "n": 644,
+    "p": 0.1398,
+    "lo": 0.1151,
+    "hi": 0.1687
+   },
+   "hardNegativeFpr": {
+    "k": 39,
+    "n": 176,
+    "p": 0.2216,
+    "lo": 0.1665,
+    "hi": 0.2885
+   },
+   "plainNegativeFpr": {
+    "k": 51,
+    "n": 468,
+    "p": 0.109,
+    "lo": 0.0839,
+    "hi": 0.1405
+   },
+   "byHardKind": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 9,
+     "p": 0.2222,
+     "lo": 0.0632,
+     "hi": 0.5474
+    },
+    "regex-hit": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "byStratum": {
+    "directive": {
+     "k": 36,
+     "n": 166,
+     "p": 0.2169,
+     "lo": 0.161,
+     "hi": 0.2856
+    },
+    "effect": {
+     "k": 2,
+     "n": 12,
+     "p": 0.1667,
+     "lo": 0.047,
+     "hi": 0.448
+    },
+    "regex-hit": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "byClass": {
+    "self-promotion": {
+     "k": 118,
+     "n": 136,
+     "p": 0.8676,
+     "lo": 0.8005,
+     "hi": 0.9146
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv:c0"
+   ],
+   "falsePositives": [
+    "kd:adaptyv:c1",
+    "kd:arbor:c0",
+    "kd:arbor:c1",
+    "kd:arbor:c2",
+    "kd:arbor:c3",
+    "kd:autoskill:c2",
+    "kd:autoskill:c4",
+    "kd:bgpt-paper-search:c1",
+    "kd:bgpt-paper-search:c2",
+    "kd:clinical-decision-support:c0",
+    "kd:clinical-reports:c3",
+    "kd:consciousness-council:c0",
+    "kd:consciousness-council:c1",
+    "kd:consciousness-council:c2",
+    "kd:database-lookup:c0",
+    "kd:deepchem:c1",
+    "kd:deepspot-m:c0",
+    "kd:deeptools:c4",
+    "kd:dhdna-profiler:c0",
+    "kd:dhdna-profiler:c2",
+    "kd:exa-search:c0",
+    "kd:experimental-design:c0",
+    "kd:experimental-design:c1",
+    "kd:experimental-design:c2",
+    "kd:experimental-design:c3",
+    "kd:exploratory-data-analysis:c0",
+    "kd:exploratory-data-analysis:c3",
+    "kd:folklore-variant-evidence:c1",
+    "kd:folklore-variant-evidence:c2",
+    "kd:folklore-variant-evidence:c3",
+    "kd:generate-image:c0",
+    "kd:genomic-intelligence:c0",
+    "kd:genomic-intelligence:c1",
+    "kd:genomic-intelligence:c7",
+    "kd:get-available-resources:c0",
+    "kd:hugging-science:c1",
+    "kd:hugging-science:c2",
+    "kd:hypogenic:c0",
+    "kd:hypogenic:c1",
+    "kd:imaging-data-commons:c1",
+    "kd:imaging-data-commons:c2",
+    "kd:lab-hardware-cad:c0",
+    "kd:lab-hardware-cad:c1",
+    "kd:lab-hardware-cad:c2",
+    "kd:lab-hardware-cad:c3",
+    "kd:lab-hardware-cad:c4",
+    "kd:lab-hardware-cad:c5",
+    "kd:labarchive-integration:c0",
+    "kd:latex-posters:c0",
+    "kd:liteparse:c2",
+    "kd:matlab:c1",
+    "kd:matlab:c4",
+    "kd:modal:c0",
+    "kd:molecular-dynamics:c1",
+    "kd:ncats-arax:c0",
+    "kd:ncats-arax:c1",
+    "kd:pacsomatic:c1",
+    "kd:paper-lookup:c1",
+    "kd:paperclip:c0",
+    "kd:paperclip:c1",
+    "kd:paperclip:c2",
+    "kd:paperclip:c3",
+    "kd:parallel-web:c1",
+    "kd:peer-review:c0",
+    "kd:peer-review:c1",
+    "kd:peer-review:c2",
+    "kd:pi-agent:c0",
+    "kd:pptx-posters:c0",
+    "kd:pptx-posters:c1",
+    "kd:primekg:c0",
+    "kd:protocolsio-integration:c0",
+    "kd:pufferlib:c0",
+    "kd:qiskit:c2",
+    "kd:research-grants:c0",
+    "kd:research-lookup:c1",
+    "kd:research-lookup:c3",
+    "kd:rowan:c0",
+    "kd:scholar-evaluation:c0",
+    "kd:scholar-evaluation:c1",
+    "kd:scientific-brainstorming:c0",
+    "kd:scvi-tools:c0",
+    "kd:transformers:c0",
+    "kd:treatment-plans:c0",
+    "kd:venue-templates:c0",
+    "kd:venue-templates:c1",
+    "kd:venue-templates:c2",
+    "kd:venue-templates:c3",
+    "kd:waypoint-bio:c1",
+    "kd:what-if-oracle:c0",
+    "kd:zarr-python:c0"
+   ],
+   "misses": [
+    "kd:biopython:c4",
+    "kd:clinical-decision-support:c3",
+    "kd:infographics:c4",
+    "kd:latex-posters:c2",
+    "kd:liteparse:c3",
+    "kd:market-research-reports:c3",
+    "kd:matchms:c3",
+    "kd:pathml:c3",
+    "kd:pathogen-variant-surveillance:c2",
+    "kd:polars-bio:c4",
+    "kd:pydicom:c4",
+    "kd:scvi-tools:c2",
+    "kd:stable-baselines3:c3",
+    "kd:sympy:c3",
+    "kd:torchdrug:c3",
+    "kd:treatment-plans:c2",
+    "kd:umap-learn:c5",
+    "kd:vaex:c1"
+   ]
   }
  },
  "skill": {
@@ -2846,6 +4151,271 @@
     "lo": 0.5863,
     "hi": 0.7426
    }
+  },
+  "haiku": {
+   "covered": 177,
+   "uncovered": 0,
+   "recall": {
+    "k": 124,
+    "n": 137,
+    "p": 0.9051,
+    "lo": 0.8444,
+    "hi": 0.9437
+   },
+   "fpr": {
+    "k": 11,
+    "n": 38,
+    "p": 0.2895,
+    "lo": 0.17,
+    "hi": 0.4476
+   },
+   "hardNegativeFpr": {
+    "k": 8,
+    "n": 20,
+    "p": 0.4,
+    "lo": 0.2188,
+    "hi": 0.6134
+   },
+   "plainNegativeFpr": {
+    "k": 11,
+    "n": 38,
+    "p": 0.2895,
+    "lo": 0.17,
+    "hi": 0.4476
+   },
+   "byHardKind": {},
+   "byStratum": {},
+   "byClass": {
+    "self-promotion": {
+     "k": 123,
+     "n": 136,
+     "p": 0.9044,
+     "lo": 0.8433,
+     "hi": 0.9433
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv"
+   ],
+   "falsePositives": [
+    "kd:bgpt-paper-search",
+    "kd:consciousness-council",
+    "kd:deepspot-m",
+    "kd:dhdna-profiler",
+    "kd:folklore-variant-evidence",
+    "kd:genomic-intelligence",
+    "kd:imaging-data-commons",
+    "kd:ncats-arax",
+    "kd:pacsomatic",
+    "kd:rowan",
+    "kd:what-if-oracle"
+   ],
+   "misses": [
+    "kd:biopython",
+    "kd:infographics",
+    "kd:market-research-reports",
+    "kd:matchms",
+    "kd:pathml",
+    "kd:pathogen-variant-surveillance",
+    "kd:polars-bio",
+    "kd:pydicom",
+    "kd:stable-baselines3",
+    "kd:sympy",
+    "kd:torchdrug",
+    "kd:umap-learn",
+    "kd:vaex"
+   ],
+   "recallOwnChunk": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   }
+  },
+  "C-haiku": {
+   "covered": 177,
+   "uncovered": 0,
+   "recall": {
+    "k": 124,
+    "n": 137,
+    "p": 0.9051,
+    "lo": 0.8444,
+    "hi": 0.9437
+   },
+   "fpr": {
+    "k": 11,
+    "n": 38,
+    "p": 0.2895,
+    "lo": 0.17,
+    "hi": 0.4476
+   },
+   "hardNegativeFpr": {
+    "k": 8,
+    "n": 20,
+    "p": 0.4,
+    "lo": 0.2188,
+    "hi": 0.6134
+   },
+   "plainNegativeFpr": {
+    "k": 11,
+    "n": 38,
+    "p": 0.2895,
+    "lo": 0.17,
+    "hi": 0.4476
+   },
+   "byHardKind": {},
+   "byStratum": {},
+   "byClass": {
+    "self-promotion": {
+     "k": 123,
+     "n": 136,
+     "p": 0.9044,
+     "lo": 0.8433,
+     "hi": 0.9433
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv"
+   ],
+   "falsePositives": [
+    "kd:bgpt-paper-search",
+    "kd:consciousness-council",
+    "kd:deepspot-m",
+    "kd:dhdna-profiler",
+    "kd:folklore-variant-evidence",
+    "kd:genomic-intelligence",
+    "kd:imaging-data-commons",
+    "kd:ncats-arax",
+    "kd:pacsomatic",
+    "kd:rowan",
+    "kd:what-if-oracle"
+   ],
+   "misses": [
+    "kd:biopython",
+    "kd:infographics",
+    "kd:market-research-reports",
+    "kd:matchms",
+    "kd:pathml",
+    "kd:pathogen-variant-surveillance",
+    "kd:polars-bio",
+    "kd:pydicom",
+    "kd:stable-baselines3",
+    "kd:sympy",
+    "kd:torchdrug",
+    "kd:umap-learn",
+    "kd:vaex"
+   ],
+   "recallOwnChunk": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   }
+  },
+  "U-haiku": {
+   "covered": 177,
+   "uncovered": 0,
+   "recall": {
+    "k": 124,
+    "n": 137,
+    "p": 0.9051,
+    "lo": 0.8444,
+    "hi": 0.9437
+   },
+   "fpr": {
+    "k": 12,
+    "n": 38,
+    "p": 0.3158,
+    "lo": 0.1908,
+    "hi": 0.4746
+   },
+   "hardNegativeFpr": {
+    "k": 9,
+    "n": 20,
+    "p": 0.45,
+    "lo": 0.2582,
+    "hi": 0.6579
+   },
+   "plainNegativeFpr": {
+    "k": 12,
+    "n": 38,
+    "p": 0.3158,
+    "lo": 0.1908,
+    "hi": 0.4746
+   },
+   "byHardKind": {},
+   "byStratum": {},
+   "byClass": {
+    "self-promotion": {
+     "k": 123,
+     "n": 136,
+     "p": 0.9044,
+     "lo": 0.8433,
+     "hi": 0.9433
+    },
+    "vendor-attribution": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "ambiguousFlagged": [
+    "kd:fictiv"
+   ],
+   "falsePositives": [
+    "kd:bgpt-paper-search",
+    "kd:consciousness-council",
+    "kd:deepspot-m",
+    "kd:dhdna-profiler",
+    "kd:folklore-variant-evidence",
+    "kd:genomic-intelligence",
+    "kd:imaging-data-commons",
+    "kd:molecular-dynamics",
+    "kd:ncats-arax",
+    "kd:pacsomatic",
+    "kd:rowan",
+    "kd:what-if-oracle"
+   ],
+   "misses": [
+    "kd:biopython",
+    "kd:infographics",
+    "kd:market-research-reports",
+    "kd:matchms",
+    "kd:pathml",
+    "kd:pathogen-variant-surveillance",
+    "kd:polars-bio",
+    "kd:pydicom",
+    "kd:stable-baselines3",
+    "kd:sympy",
+    "kd:torchdrug",
+    "kd:umap-learn",
+    "kd:vaex"
+   ],
+   "recallOwnChunk": {
+    "k": 119,
+    "n": 137,
+    "p": 0.8686,
+    "lo": 0.8019,
+    "hi": 0.9153
+   }
   }
  },
  "verdict": {
@@ -2870,6 +4440,21 @@
    "skillGates": false
   },
   "U-jev": {
+   "chunkGates": false,
+   "skillChunkGates": false,
+   "skillGates": false
+  },
+  "haiku": {
+   "chunkGates": false,
+   "skillChunkGates": false,
+   "skillGates": false
+  },
+  "C-haiku": {
+   "chunkGates": false,
+   "skillChunkGates": false,
+   "skillGates": false
+  },
+  "U-haiku": {
    "chunkGates": false,
    "skillChunkGates": false,
    "skillGates": false

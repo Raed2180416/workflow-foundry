@@ -277,7 +277,8 @@ class Receipts:
         return got[0]
 
     def has_receipt(self, text: str, attachments) -> bool:
-        return bool(attachments) or re.search(r"\breceipt:\s*yes\b", text, re.I) is not None
+        return (bool(attachments) or re.search(r"\[file:[^\]]+\]", text, re.I) is not None
+                or re.search(r"\breceipt:\s*yes\b", text, re.I) is not None)
 
     def is_alcohol(self, text: str) -> bool:
         return has_word(text, ALCOHOL)
@@ -408,7 +409,7 @@ class Receipts:
 
     def is_repost(self, d: dict, f: dict) -> bool:
         for m in self.history():
-            if float(m["ts"]) >= float(d["ts"]) or m.get("user_id") != d["user"] or m.get("is_bot"):
+            if float(m["ts"]) >= float(d["ts"]) or m.get("user") != d["user"] or m.get("bot_id"):
                 continue
             a = parse_amount(m.get("text") or "")
             if a is None:
@@ -441,7 +442,7 @@ class Receipts:
     def thread_reply(self, d: dict):
         text = (d.get("text") or "").strip()
         parent = self.parent(d["thread_ts"])
-        if parent is None or parent.get("is_bot"):
+        if parent is None or parent.get("bot_id"):
             return None
         if re.match(r"correction\b", text, re.I):
             return self.correction(d, parent)
@@ -478,9 +479,9 @@ class Receipts:
         return f
 
     def correction(self, d: dict, parent: dict):
-        if d["user"] != parent.get("user_id"):
+        if d["user"] != parent.get("user"):
             return None                                      # 5.1: only the receipt's own poster corrects it
-        emp = self.poster(parent["user_id"])
+        emp = self.poster(parent["user"])
         if emp is None:
             raise Undecidable("a correction on a receipt whose poster is not in Employees")
         f = self.read(parent.get("text") or "", parent.get("attachments") or [], ts_date(parent["ts"]))
@@ -492,9 +493,9 @@ class Receipts:
             if float(m["ts"]) > float(d["ts"]):
                 break
             body = (m.get("text") or "").strip()
-            if m.get("user_id") == parent.get("user_id") and re.match(r"correction\b", body, re.I):
-                f = self.apply_correction(f, body, m.get("attachments") or [], ts_date(m["ts"]))
-            elif re.match(r"pre-approved\b", body, re.I) and self.is_manager(m.get("user_id"), emp):
+            if m.get("user") == parent.get("user") and re.match(r"correction\b", body, re.I):
+                f = self.apply_correction(f, body, d.get("attachments") if m["ts"] == d["ts"] else [], ts_date(m["ts"]))
+            elif re.match(r"pre-approved\b", body, re.I) and self.is_manager(m.get("user"), emp):
                 preapproved = True
         rows = self.sheet(SUBMISSIONS)
         mine = next(((n, c) for n, c in rows if c.get("Message TS", "").strip() == parent["ts"]), None)
@@ -520,7 +521,7 @@ class Receipts:
         return bool(email) and email == norm(emp.get("Manager Email"))
 
     def preapproval(self, d: dict, parent: dict):
-        emp = self.poster(parent["user_id"])
+        emp = self.poster(parent["user"])
         if emp is None or not self.is_manager(d["user"], emp):
             return None
         rows = self.sheet(SUBMISSIONS)

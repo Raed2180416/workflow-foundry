@@ -130,7 +130,7 @@ At `week_close`, send one email to finance@company.example.com, and to nobody el
 | Expense date | `2026-03-04`, `Mar 4`, `March 4` or `4 March` (the year of the message), `today` or `yesterday` (relative to the UTC date of the message). A message without a date: the UTC date on which it was posted |
 | Category | If the message has `category: <X>`, X decides: find X among the category names and words below. Otherwise the message's own words decide. Words match whole words, letter case ignored |
 | Attendees | `<N> attendees`, `<N> people`, `<N> guests`, `attendees: <N>`, `team of <N>`, `party of <N>`. None given: no attendee count |
-| Receipt | The message has a file attached, or says `receipt: yes`. Otherwise (`receipt: no`, `no receipt`, nothing said) there is no receipt |
+| Receipt | The message has a file attached (Slack shows each file at the end of the text as `[file: <name>]`), or says `receipt: yes`. Otherwise (`receipt: no`, `no receipt`, nothing said) there is no receipt |
 | Alcohol | The message mentions drinks, wine, beer, cocktails, a bar tab or a happy hour |
 | Client name | `client: <name>` |
 | Hotel | A Travel receipt that mentions a hotel or lodging. Nights: `<N> nights`, `<N>-night` (`one night`, `two nights`, ... in words too); none given: 1. International when the message says `international` or names a country other than the United States (`Toronto, Canada`); otherwise domestic |
