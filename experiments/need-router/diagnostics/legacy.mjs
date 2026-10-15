@@ -61,6 +61,12 @@ export const LEGACY_REGISTRY = Object.freeze({
   'script-H': WF('built', 'haiku'), 'script-O': WF('built', 'opus'), 'static-b1h': WF('built', 'haiku'),
   'jit-HH': WF('jit', 'haiku'), 'jit-OH': WF('jit', 'opus'), 'jit-SH': WF('jit', 'sonnet'),
 });
+/** The workflow modes of a registry grouped by the model that wrote their workflow (the field the ceiling rule reads): { cheapBuilder, byBuilder: { haiku: [...], opus: [...], sonnet: [...] } }. */
+export function ceilingRule(registry = LEGACY_REGISTRY) {
+  const byBuilder = {};
+  for (const [mode, info] of Object.entries(registry)) if (info.cls === 'workflow') (byBuilder[info.builder] ??= []).push(mode);
+  return { cheapBuilder: CHEAP_BUILDER, ceilingBuilders: Object.keys(byBuilder).filter(b => b !== CHEAP_BUILDER).sort(), byBuilder: Object.fromEntries(Object.entries(byBuilder).sort()) };
+}
 /** The label-set views of a LEGACY job's modes (DESIGN §2): L_today leaves out the ceiling arms (workflows written by a frontier model or a person),
  *  L_ceiling keeps everything. `vacuous`: L_today has no workflow-class mode, so its label can only be `no-workflow` and says nothing about need. */
 export function labelSetsOf(modes, registry = LEGACY_REGISTRY) {

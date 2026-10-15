@@ -16,7 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { OUT_DIR, ARCHIVE_DIR, REPO, rel, sha256, sourceOf } from './common.mjs';
 import { compareCurrency, describeCurrency } from './currency.mjs';
-import { loadLegacyJobs, loadConstructions, P1_HAND_AUTHORING } from './legacy.mjs';
+import { loadLegacyJobs, loadConstructions, P1_HAND_AUTHORING, ceilingRule } from './legacy.mjs';
 import { runD0 } from './d0-knn.mjs';
 import { runD1 } from './d1-shortcut.mjs';
 import { computeAnchorFeatures } from './anchors.mjs';
@@ -58,6 +58,8 @@ export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
       legacySources: legacy.sources, notes: legacy.notes,
       // Stream experiments under research/jit-20261008/runs/ that no LEGACY job definition names: never opened (legacy.mjs loadJitJobs).
       skippedStreams: legacy.skipped,
+      // Which model wrote each workflow mode's workflow, and so which modes are ceiling arms (L_ceiling only): legacy.mjs LEGACY_REGISTRY.
+      ceilingRule: ceilingRule(),
       // The P1 hand workflow's authoring cost, charged in full as a build row to each hand mode (legacy.mjs P1_HAND_AUTHORING).
       p1Authoring: { usd: P1_HAND_AUTHORING.usd, lowerBound: P1_HAND_AUTHORING.lowerBound, calls: P1_HAND_AUTHORING.calls, modes: P1_HAND_AUTHORING.modes, source: P1_HAND_AUTHORING.source },
       // pairing: what the diagnostics' own pairing dropped; harvest: what the stream harvest dropped before it (tasks a mode ran outside the paired set,
