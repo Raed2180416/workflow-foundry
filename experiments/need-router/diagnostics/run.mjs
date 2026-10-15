@@ -4,7 +4,9 @@
 // No model call, no network. Inputs: the rescued archive (research/need-router-20261014/archive/, see rescue.mjs), the committed JIT stream
 // exports (research/jit-20261008/runs/), the feature census, prereg/stages.json, the corpus overlay and the E8 and runbook beds.
 //   node experiments/need-router/diagnostics/rescue.mjs                      once: copy the git-ignored P1 and C0-dev JSONL into the archive
-//   node experiments/need-router/diagnostics/run.mjs [--only d0,d3] [--report] [--out DIR] [--check]
+//   node experiments/need-router/diagnostics/run.mjs [--only d0,d3 --out DIR] [--report] [--out DIR] [--check]
+// A run that skips a diagnostic (--only) may not write analysis/m0/diagnostics.json: label-run reads D6's cost-meter gate from that file, and a copy without
+// D6 would switch the gate off. A subset needs an --out directory other than analysis/m0 (its diagnostics.json then carries `partial`); --check takes no --only.
 // --check recomputes everything and compares it with the committed diagnostics.json through currency.mjs, which separates the results (every number
 // and label) from the provenance (the sha256 of each input file, the code fingerprints, each anchor bed's module-graph hash): exit 0 when current;
 // exit 2 with "inputs moved, re-run run.mjs --report" when an input or the code moved (whether or not the numbers changed); exit 1 when results
@@ -12,7 +14,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { OUT_DIR, ARCHIVE_DIR, REPO, rel, sha256 } from './common.mjs';
+import { OUT_DIR, ARCHIVE_DIR, REPO, rel, sha256, sourceOf } from './common.mjs';
 import { compareCurrency, describeCurrency } from './currency.mjs';
 import { loadLegacyJobs, loadConstructions, P1_HAND_AUTHORING } from './legacy.mjs';
 import { runD0 } from './d0-knn.mjs';
@@ -23,12 +25,26 @@ import { runD3 } from './d3-signals.mjs';
 import { runD4 } from './d4-fragility.mjs';
 import { runD5 } from './d5-guard.mjs';
 import { runD6 } from './d6-cost.mjs';
+import { readLaunchEnv, LAUNCH_ENV_FILE } from './launch-env.mjs';
 
 export const ALL = Object.freeze(['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6']);
 const here = path.dirname(fileURLToPath(import.meta.url));
-export const MODULES = Object.freeze(['common', 'census', 'currency', 'legacy', 'anchors', 'd0-knn', 'd1-shortcut', 'd2-cofailure', 'd3-signals', 'd4-fragility', 'd5-guard', 'd6-cost', 'rescue'].map(m => `${m}.mjs`));
+export const MODULES = Object.freeze(['common', 'census', 'currency', 'legacy', 'anchors', 'd0-knn', 'd1-shortcut', 'd2-cofailure', 'd3-signals', 'd4-fragility', 'd5-guard', 'd6-cost', 'launch-env', 'rescue'].map(m => `${m}.mjs`));
 // Modules outside this directory whose logic the numbers depend on (their fingerprints are recorded too, so a change there reads as "code moved").
 export const EXTERNAL_MODULES = Object.freeze(['metrics', 'harvest', 'features', 'meter-gate'].map(m => `../${m}.mjs`));
+
+/**
+ * Which diagnostics a run covers and where it may write (pure). errors: unknown names; a subset aimed at the committed analysis/m0 (it would rewrite
+ * diagnostics.json without the other sections, D6's meter gate among them); --check with a subset (it compares a full run with the committed file).
+ */
+export function planRun({ only = ALL, outDir = OUT_DIR, check = false } = {}) {
+  const errors = [], want = new Set(only), unknown = [...want].filter(k => !ALL.includes(k));
+  if (unknown.length) errors.push(`unknown diagnostic(s) ${unknown.join(', ')} (known: ${ALL.join(', ')})`);
+  const missing = ALL.filter(k => !want.has(k)), full = !missing.length && !unknown.length, committed = path.resolve(outDir) === path.resolve(OUT_DIR);
+  if (missing.length && committed) errors.push(`--only ${[...want].join(',')} would rewrite the committed ${rel(path.join(OUT_DIR, 'diagnostics.json'))} without ${missing.join(', ')}: label-run reads the D6 cost-meter gate from it and a copy without D6 switches the gate off. Run every diagnostic, or give --out a directory other than analysis/m0`);
+  if (missing.length && check) errors.push('--check compares a full run with the committed diagnostics.json: it cannot take --only');
+  return { errors, full, only: ALL.filter(k => want.has(k)), missing, committed };
+}
 
 export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
   const want = new Set(only);
@@ -40,6 +56,8 @@ export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
     code: Object.fromEntries([...MODULES, ...EXTERNAL_MODULES].map(m => [path.basename(m), sha256(readFileSync(path.join(here, m))).slice(0, 16)])),
     inputs: {
       legacySources: legacy.sources, notes: legacy.notes,
+      // Stream experiments under research/jit-20261008/runs/ that no LEGACY job definition names: never opened (legacy.mjs loadJitJobs).
+      skippedStreams: legacy.skipped,
       // The P1 hand workflow's authoring cost, charged in full as a build row to each hand mode (legacy.mjs P1_HAND_AUTHORING).
       p1Authoring: { usd: P1_HAND_AUTHORING.usd, lowerBound: P1_HAND_AUTHORING.lowerBound, calls: P1_HAND_AUTHORING.calls, modes: P1_HAND_AUTHORING.modes, source: P1_HAND_AUTHORING.source },
       // pairing: what the diagnostics' own pairing dropped; harvest: what the stream harvest dropped before it (tasks a mode ran outside the paired set,
@@ -48,6 +66,8 @@ export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
         builds: j.builds.map(b => ({ mode: b.mode, usd: Math.round(b.usd * 1e4) / 1e4, ...(b.lowerBound ? { lowerBound: true } : {}) })), harvest: j.harvest ?? null, sources: j.sources })),
     },
   };
+  // A subset run says so in its own file, so that nothing reads it as the full set (meter-gate.mjs parseMeterGate names it when it finds no gate).
+  if (ALL.some(k => !want.has(k))) out.partial = { ran: ALL.filter(k => want.has(k)), notRun: ALL.filter(k => !want.has(k)) };
   // The anchor beds' features are computed once, for D0's anchor sensitivity and D1's second table.
   const anchors = want.has('d0') || want.has('d1') ? await computeAnchorFeatures() : null;
   if (want.has('d0')) out.d0 = runD0({ anchors });
@@ -56,14 +76,24 @@ export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
   if (want.has('d3')) out.d3 = await runD3(legacy.jobs);
   if (want.has('d4')) out.d4 = runD4(legacy.jobs);
   if (want.has('d5')) out.d5 = await runD5();
-  if (want.has('d6')) out.d6 = runD6(legacy.jobs, { constructions: cons.builds });
+  if (want.has('d6')) {
+    out.d6 = runD6(legacy.jobs, { constructions: cons.builds });
+    // The launch-environment measurement (launch-env.mjs, the only reader of CLI transcripts) is a committed input: read from its JSON, never from the transcripts.
+    const le = readLaunchEnv();
+    out.d6.launchEnv = le ? { source: sourceOf(LAUNCH_ENV_FILE), measuredAt: le.measuredAt, after: le.after, priceTable: le.priceTable, summary: le.summary } : null;
+  }
   return out;
 }
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const outDir = path.resolve(REPO, arg('--out', rel(OUT_DIR)));
-  const only = arg('--only') ? arg('--only').split(',') : ALL;
+  const only = arg('--only') ? [...new Set(arg('--only').split(',').map(x => x.trim()).filter(Boolean))] : ALL;
+  const plan = planRun({ only, outDir, check: process.argv.includes('--check') });
+  if (plan.errors.length) { for (const e of plan.errors) console.error(`run.mjs: refused: ${e}`); process.exitCode = 2; }
+  else await main(only, outDir);
+}
+async function main(only, outDir) {
   const results = await runAll({ only });
   const text = JSON.stringify(results, null, 1) + '\n';
   const file = path.join(outDir, 'diagnostics.json');

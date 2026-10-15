@@ -8,11 +8,16 @@
 //             at factor f: TOL f (0.05 and 0.20); the evaluator-health check (reference fit within TOL) is scaled too
 // The nominal recompute (f = 1) must reproduce every archived pass flag; any mismatch is reported and blocks the claim.
 // Rows without recorded oracle details keep their nominal flag at every factor (counted as `unrecomputable`).
-// Labels are L_today (the headline fields: cheap-builder workflows only) with L_ceiling beside it (DESIGN §2; LEGACY_REGISTRY marks the hand-written and
-// Opus-built workflows `ceiling`). A job whose L_today has no workflow-class mode is `vacuous`: its label can only be no-workflow.
+// Labels are L_today (the headline fields: cheap-builder workflows only) with L_ceiling beside it (DESIGN §2; LEGACY_REGISTRY marks every workflow not
+// written by the cheap builder `ceiling`: the hand-written, Opus-built, Opus-compiled and Sonnet-compiled ones). A job whose L_today has no workflow-class
+// mode is `vacuous`: its label can only be no-workflow.
 // Build costs are charged (legacy.mjs: the P1 hand workflow's >= $24.91 authoring included).
+// UNLABELLED cells (DESIGN §2 "One cost meter": a cell where a contending mode has more than 30% of its dollars imputed is left unlabelled; metrics.needLabels
+// sets `unlabelled`, a reason string) have no NEED label and no best mode to compare: they are reported as `unlabelled` with the reason, counted per job, and
+// left out of the label counts, the workflow cells, the flip counts, the best-mode-change counts and fragility. A cell labelled at x1 that is unlabelled at
+// another factor is not a flip either (nothing to compare); it is counted apart as `lostLabelCells`.
 // Evidence grade: LEGACY/dev.
-import { needTable, needLabels, fragility, GRID, HEADLINE } from '../metrics.mjs';
+import { needTable, needLabels, GRID, HEADLINE } from '../metrics.mjs';
 import { toMatrix, labelSetsOf, LEGACY_REGISTRY } from './legacy.mjs';
 import { mean, round } from './common.mjs';
 
@@ -55,25 +60,37 @@ export function fragilityOfJob(job, { cells = GRID } = {}) {
   const { rows, builds } = toMatrix(job, { passAt });
   const opts = { registry: LEGACY_REGISTRY };
   const sets = labelSetsOf(job.pairing.modes);
-  // One label set over the whole grid: the labels at x0.5, x1 and x2 (metrics.fragility for the flip count, needLabels for the cells).
+  // One label set over the whole grid: the labels at x0.5, x1 and x2 (needLabels over the table recomputed at each factor).
   const viewOf = modes => {
-    const frag = fragility(rows, builds, { cells, factors: FACTORS, modes, tableOpts: opts });
-    const jf = frag.jobs.find(j => j.job === job.id);
     const labelsAt = f => needLabels(needTable(rows.map(r => ({ ...r, pass: f === 1 ? r.pass : r.passAt[String(f)] })), builds, opts), { cells, reps: 0, modes });
     const L = Object.fromEntries([1, ...FACTORS].map(f => [String(f), labelsAt(f)]));
-    const head = f => { const e = L[String(f)].at(job.id, HEADLINE); return { label: e.label, top: e.top, acceptable: e.acceptable, u: Object.fromEntries([...e.u].map(([m, u]) => [m, round(u, 4)])) }; };
+    const E = (f, c) => L[String(f)].at(job.id, c);
+    const head = f => {
+      const e = E(f, HEADLINE);
+      return { label: e.unlabelled ? 'unlabelled' : e.label, unlabelled: e.unlabelled ?? null, top: e.unlabelled ? null : e.top, acceptable: e.unlabelled ? null : e.acceptable, u: Object.fromEntries([...e.u].map(([m, u]) => [m, round(u, 4)])) };
+    };
     const headline = Object.fromEntries([1, ...FACTORS].map(f => [String(f), head(f)]));
-    const topChanged = cells.filter(c => FACTORS.some(f => L[String(f)].at(job.id, c).top !== L['1'].at(job.id, c).top)).map(c => c.key);
-    const flippedCells = jf.cells.filter(c => Object.values(c.at).some(l => l !== c.nominal));
-    // The nominal label over the grid: how many cells say workflow, no-workflow or either, and which cells say workflow (where a break-even V or N is read from).
-    const nominal = cells.map(c => ({ ...L['1'].at(job.id, c), cell: c.key }));
-    const labelCounts = { workflow: 0, 'no-workflow': 0, either: 0 };
-    for (const e of nominal) labelCounts[e.label] += 1;
+    const comparable = f => !headline['1'].unlabelled && !headline[String(f)].unlabelled;
+    // Per cell: nominal label (or its absence) and the label at each factor. Only a cell labelled at x1 and at the factor can flip or change its best mode.
+    const flippedCells = [], lostLabelCells = [], topChanged = [], nominal = cells.map(c => ({ ...E(1, c), cell: c.key }));
+    for (const c of cells) {
+      const n = E(1, c);
+      if (n.unlabelled) continue;
+      const atF = Object.fromEntries(FACTORS.map(f => [String(f), E(f, c)]));
+      if (FACTORS.some(f => atF[String(f)].unlabelled)) lostLabelCells.push(c.key);
+      const live = FACTORS.filter(f => !atF[String(f)].unlabelled);
+      if (live.some(f => atF[String(f)].label !== n.label)) flippedCells.push({ cell: c.key, nominal: n.label, ...Object.fromEntries(FACTORS.map(f => [String(f), atF[String(f)].unlabelled ? 'unlabelled' : atF[String(f)].label])) });
+      if (live.some(f => atF[String(f)].top !== n.top)) topChanged.push(c.key);
+    }
+    // The nominal label over the grid: how many cells say workflow, no-workflow or either (and how many are unlabelled, with why), and which cells say workflow (where a break-even V or N is read from).
+    const labelCounts = { workflow: 0, 'no-workflow': 0, either: 0 }, reasons = {};
+    for (const e of nominal) { if (e.unlabelled) reasons[e.unlabelled] = (reasons[e.unlabelled] ?? 0) + 1; else labelCounts[e.label] += 1; }
+    const unlabelledCells = nominal.filter(e => e.unlabelled).length;
     return {
-      modes, headline, labelCounts, workflowCells: nominal.filter(e => e.label === 'workflow').map(e => e.cell),
-      headlineFlips: { half: headline['0.5'].label !== headline['1'].label, double: headline['2'].label !== headline['1'].label },
-      headlineTopChanges: { half: headline['0.5'].top !== headline['1'].top, double: headline['2'].top !== headline['1'].top },
-      grid: { cells: cells.length, flipped: flippedCells.length, fragile: jf.fragile, flippedCells: flippedCells.map(c => ({ cell: c.cell, nominal: c.nominal, ...c.at })), topChangedCells: topChanged.length },
+      modes, headline, labelCounts, workflowCells: nominal.filter(e => !e.unlabelled && e.label === 'workflow').map(e => e.cell),
+      headlineFlips: { half: comparable(0.5) && headline['0.5'].label !== headline['1'].label, double: comparable(2) && headline['2'].label !== headline['1'].label },
+      headlineTopChanges: { half: comparable(0.5) && headline['0.5'].top !== headline['1'].top, double: comparable(2) && headline['2'].top !== headline['1'].top },
+      grid: { cells: cells.length, labelled: cells.length - unlabelledCells, unlabelled: unlabelledCells, unlabelledReasons: reasons, flipped: flippedCells.length, fragile: flippedCells.length > 0, flippedCells, lostLabelCells: lostLabelCells.length, topChangedCells: topChanged.length },
     };
   };
   const today = viewOf(sets.today.modes), ceiling = sets.ceiling ? viewOf(sets.ceiling.modes) : null;
@@ -122,6 +139,7 @@ export function runD4(jobs) {
       ceilingFragileJobs: per.filter(p => p.ceiling?.grid.fragile).map(p => p.job), ceilingFragileAtHeadline: per.filter(p => p.ceiling && (p.ceiling.headlineFlips.half || p.ceiling.headlineFlips.double)).map(p => p.job),
       rowsTotal: per.reduce((s, p) => s + p.rows, 0), lostAtHalf: per.reduce((s, p) => s + p.rowFlips.lostAtHalf, 0), gainedAtDouble: per.reduce((s, p) => s + p.rowFlips.gainedAtDouble, 0),
       nominalReproduced: reproduced, flippedCells: per.reduce((s, p) => s + p.grid.flipped, 0), cells: per.reduce((s, p) => s + p.grid.cells, 0),
+      labelledCells: per.reduce((s, p) => s + p.grid.labelled, 0), unlabelledCells: per.reduce((s, p) => s + p.grid.unlabelled, 0), unlabelledByJob: Object.fromEntries(per.map(p => [p.job, { today: p.grid.unlabelled, ceiling: p.ceiling ? p.ceiling.grid.unlabelled : null }])),
       topChangedCells: per.reduce((s, p) => s + p.grid.topChangedCells, 0), jobsWithTopChange: per.filter(p => p.grid.topChangedCells > 0).map(p => p.job),
     },
   };

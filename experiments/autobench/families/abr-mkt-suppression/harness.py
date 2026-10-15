@@ -302,7 +302,7 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
         mut("wrong-recipient", lambda a: a["gmail"]["messages"][em[0]].__setitem__(
             "to", [re.sub(r"@", "+x@", a["gmail"]["messages"][em[0]]["to"][0], count=1)]))
         mut("email-subject", lambda a: a["gmail"]["messages"][em[0]].__setitem__("subject", "You have been unsubscribed"))
-        mut("email-body", lambda a: a["gmail"]["messages"][em[0]].__setitem__("body_plain", "Done."))
+        mut("email-body", lambda a: a["gmail"]["messages"][em[0]].update(body_plain="Done.", body_html="<p>Done.</p>"))
     if sl:
         mut("drop-slack", lambda a: a["slack"]["messages"].pop(sl[-1]))
         mut("dup-slack", lambda a: a["slack"]["messages"].append(dict(a["slack"]["messages"][sl[0]], ts="1999999999.000001")))

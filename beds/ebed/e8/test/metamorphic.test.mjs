@@ -100,6 +100,22 @@ test('MR11 covers every injection kind and checks compensated fulfilments of bot
   assert.ok(compensated >= 20, `only ${compensated} compensated fulfilments checked`);
 });
 
+// The relations can fail: each detects, at the arm level, the defect its transformation targets (the controls are
+// the reference minus one construct, controls.mjs).
+test('the relations detect their target defects in controls (MR11 compensation, MR9 edition by publication, MR5 no dedupe)', async () => {
+  const mr11 = MR('MR11');
+  const fx11 = await fixture(mr11, mr11.cases[0], { cache, arms: ['no-compensation', 'forward-order-compensation'] });
+  const whats = arm => new Set(compensationCheck(oracleItem, fx11.Wt, fx11.dst[arm], { expectation: false }).violations.map(v => v.what));
+  assert.ok(whats('no-compensation').has('compensation set'), 'MR11 misses a control that never compensates');
+  assert.ok(whats('forward-order-compensation').has('compensation order'), 'MR11 misses a control that compensates in forward order');
+  const mr9 = MR('MR9');
+  const fx9 = await fixture(mr9, { spec: { seed: 1123, difficulty: 4, size: 14 } }, { cache, arms: ['edition-by-publication'] });
+  assert.ok(oracleCheck(fx9).length > 0, 'MR9 misses an arm that applies an edition from its publication');
+  const mr5 = MR('MR5');
+  const fx5 = await fixture(mr5, { spec: { seed: 1122, difficulty: 3, size: 12 }, variant: 'delayed' }, { cache, arms: ['no-dedupe'] });
+  assert.ok(oracleCheck(fx5).length > 0, 'MR5 misses an arm that records a duplicate placement again');
+});
+
 // Diagnostics: the world's own couplings that the relations work around (reported, not oracle findings).
 test('W5 twins(): the injection twin differs from its world only in the documents', { todo: 'world.mjs:335: a line comment swallows `item, seed, split, difficulty, schedule, mix, scale, track` of the world object (since d0237bf), so twins(world) throws "seed must be an integer"; and the twin has its own world.id, which keys the actors\' and the noise draws, so even a working twin changes more than the documents. MR12 uses injectDocs (world identity kept) instead' }, async () => {
   const d = await twinDiagnostic({ seed: 1122, difficulty: 3, size: 12 });

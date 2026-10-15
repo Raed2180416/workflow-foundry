@@ -53,6 +53,7 @@ async function mineAll(list, prepared, stageName) {
         st.status = /wake-ups/.test(msg) ? 'runaway' : 'run-error'; st.stage = stageName; st.error = `${p.world.id}: ${msg.slice(0, 120)}`; break;
       }
       if (r.e0.failed.length) { st.status = `e0-visible`; st.stage = stageName; st.e0First = { world: p.world.id, ...r.e0.failed[0] }; break; }
+      if (r.aborted) { st.status = 'runaway'; st.stage = stageName; st.error = `${p.world.id}: ${r.aborted.slice(0, 80)}; E0 silent up to the stop at ${r.stoppedAt}`; break; }
       st.worlds.push({ world: p.world.id, digest: r.digest, inert: r.inert, affected: r.affected.length, oracleErrors: r.affected.filter(a => a.oracleError).length });
     }
     if (st.status === 'pending' || st.status === 'candidate') {

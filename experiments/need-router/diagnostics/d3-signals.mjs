@@ -29,10 +29,14 @@ import { clopperPearson } from '../../lib/stats-ebed.mjs';
 
 export const POSTHOC_NAMES = Object.freeze(['schemaInvalid', 'logTurns', 'logTools', 'logCost', 'logTokensOut', 'logCalls', 'escalations', 'verdictFail']);
 const L = x => (Number.isFinite(x) ? Math.log10(1 + Math.max(0, x)) : null);
-/** The deployable post-hoc signals of a row (null = not recorded for this arm). Reads no oracle field. */
+/**
+ * The deployable post-hoc signals of a row (null = not recorded for this row). Reads no oracle field. `schemaInvalid` is the one signal that is
+ * reconstructed rather than stored: legacy.mjs schemaValidOf reads it back from the oracle's own schema check, and a row without oracle details has
+ * none (null), which is "not recorded", not "valid".
+ */
 export function postHocSignals(r) {
   return {
-    schemaInvalid: r.schemaValid === false ? 1 : 0, logTurns: L(r.turns), logTools: L(r.tools), logCost: L(r.usdReported),
+    schemaInvalid: r.schemaValid == null ? null : r.schemaValid === false ? 1 : 0, logTurns: L(r.turns), logTools: L(r.tools), logCost: L(r.usdReported),
     logTokensOut: L(r.tokensOut), logCalls: L(r.calls), escalations: Number.isFinite(r.escalations) ? r.escalations : null,
     verdictFail: r.verdict == null ? null : r.verdict === 'pass' ? 0 : 1,
   };
@@ -105,9 +109,17 @@ export function evaluateGroup(rows, structure, { boot = 1000, seed = 20261014, m
   const varies = v => new Set(v.map(x => round(x ?? 0, 9))).size > 1;
   const tasks = [...new Set(rows.map(r => r.taskKey))], byTask = new Map(tasks.map(t => [t, rows.map((r, i) => (r.taskKey === t ? i : -1)).filter(i => i >= 0)]));
   // Scores with the direction fixed in advance: a bigger value predicts a failure, so the score is the negative.
-  const exScores = {}, postScores = {};
+  const exScores = {}, postScores = {}, partlyRecorded = {};
   TRUSTED8.forEach((k, j) => { const v = rows.map(r => structure.get(r.taskKey).vector[j]); if (varies(v)) exScores[k] = v.map(x => -x); });
-  for (const n of POSTHOC_NAMES) { const v = sig.map(x => x[n]); if (v.some(x => x !== null) && varies(v)) postScores[n] = v.map(x => -(x ?? 0)); }
+  // A signal is scored only where EVERY row of the arm records it. A missing value is not a zero (mixing "not recorded" with a real 0 would invent
+  // a difference between the two groups of rows), so a partly recorded signal is left out and listed in `postHocPartlyRecorded`; a signal no row
+  // records (turns of a direct call) is simply not one of this arm's signals.
+  for (const n of POSTHOC_NAMES) {
+    const v = sig.map(x => x[n]), absent = v.filter(x => x === null).length;
+    if (absent === v.length) continue;
+    if (absent > 0) { partlyRecorded[n] = { missing: absent, of: v.length }; continue; }
+    if (varies(v)) postScores[n] = v.map(x => -x);
+  }
   const auces = sc => Object.fromEntries(Object.entries(sc).map(([n, v]) => [n, round(A(v), 3)]));
   const boots = (a, b) => {
     const r = rng(seed), ds = [];
@@ -124,7 +136,7 @@ export function evaluateGroup(rows, structure, { boot = 1000, seed = 20261014, m
   return {
     rows: rows.length, tasks: tasks.length, passes, fails, difficulties: [...new Set(strata)].sort(),
     byDifficulty: Object.fromEntries([...new Set(strata)].sort().map(d => [d, { rows: strata.filter(x => x === d).length, passes: rows.filter((r, i) => strata[i] === d && r.pass).length, meanLogInputTokens: round(rows.reduce((a, r, i) => a + (strata[i] === d ? structure.get(r.taskKey).vector[TRUSTED8.indexOf('logInputTokens')] : 0), 0) / strata.filter(x => x === d).length, 4) }])),
-    structureKeysThatVary: Object.keys(exScores), exAnteAuc: auces(exScores), postHocAuc: auces(postScores),
+    structureKeysThatVary: Object.keys(exScores), exAnteAuc: auces(exScores), postHocAuc: auces(postScores), postHocPartlyRecorded: partlyRecorded,
     primary: { exAnte: exA === null ? null : round(exA, 3), postHoc: postA === null ? null : round(postA, 3), delta: exA === null || postA === null ? null : round(postA - exA, 3), ci, excludesZero: ci ? ci[0] > 0 || ci[1] < 0 : null },
   };
 }
@@ -179,6 +191,8 @@ export async function runD3(jobs, { structure = null, boot = 1000, ledger = unde
         postHocBetterCIExcludesZero: scored.filter(p => p.primary.ci && p.primary.ci[0] > 0).length, exAnteBetterCIExcludesZero: scored.filter(p => p.primary.ci && p.primary.ci[1] < 0).length,
       },
       exAnteBySignal: roll(exBy), postHocBySignal: roll(bySignal),
+      // Signals a group records for some rows only: not scored (see evaluateGroup), listed so that nothing is dropped silently.
+      postHocPartlyRecorded: per.filter(p => p.postHocPartlyRecorded && Object.keys(p.postHocPartlyRecorded).length).flatMap(p => Object.entries(p.postHocPartlyRecorded).map(([signal, v]) => ({ job: p.job, mode: p.mode, signal, ...v }))),
       selfVerdict: { arms: verdictRows.length, oracleFailures: fail, falsePass: fp, falsePassRate: fail ? round(fp / fail, 3) : null, lowerBound95: fail ? round(clopperPearson(fp, fail, 'lower').lower, 3) : null },
     },
   };

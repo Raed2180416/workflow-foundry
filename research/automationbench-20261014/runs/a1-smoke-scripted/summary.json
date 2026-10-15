@@ -1,0 +1,154 @@
+{
+ "runId": "a1-smoke-scripted-a1-smoke-1",
+ "label": "scripted (no model)",
+ "model": null,
+ "scripted": true,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "arm": "A1 (harness)",
+ "harness": {
+  "id": "foundry",
+  "version": "a1-v1",
+  "manifestSha256": "1857429d47eec9acfed61d0286c6278e06c361f2cf8f13ab74d7db56f7012d3d",
+  "frozenHashGiven": false,
+  "cliMaxTurns": 49,
+  "stepGuard": true,
+  "extraModelCalls": 0
+ },
+ "selection": {
+  "tasks": [
+   "sales.linkedin_content_engagement",
+   "marketing.voice_of_customer",
+   "operations.overtime_threshold_monitoring",
+   "support.zendesk_freshdesk_sync",
+   "finance.commission_calculation",
+   "hr.background_check_followup"
+  ]
+ },
+ "tasks": [
+  "sales.linkedin_content_engagement",
+  "marketing.voice_of_customer",
+  "operations.overtime_threshold_monitoring",
+  "support.zendesk_freshdesk_sync",
+  "finance.commission_calculation",
+  "hr.background_check_followup"
+ ],
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 0.75,
+ "capUsd": null,
+ "tools": [
+  "Bash"
+ ],
+ "effort": null,
+ "n": 6,
+ "n_graded": 6,
+ "pass_rate": 0,
+ "mean_partial_credit": 0,
+ "by_domain": {
+  "sales": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "marketing": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "operations": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "support": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "finance": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "hr": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  }
+ },
+ "live_pass_rate": 0,
+ "mean_cost_per_task_usd": 0,
+ "accounting": {
+  "modelResponses": {
+   "mean": 6,
+   "max": 6
+  },
+  "toolResponses": {
+   "mean": 5,
+   "max": 5
+  },
+  "numTurnsCli": {
+   "mean": 6,
+   "max": 6
+  },
+  "worldSteps": {
+   "mean": 3,
+   "max": 3
+  },
+  "worldCalls": {
+   "mean": 5,
+   "max": 5
+  },
+  "reads": {
+   "mean": 2,
+   "max": 2
+  },
+  "searches": {
+   "mean": 3,
+   "max": 3
+  },
+  "writes": {
+   "mean": 0,
+   "max": 0
+  },
+  "stoppedByStepGuard": 0,
+  "extraModelCalls": 0,
+  "capViolations": 0,
+  "ledger": {
+   "collected": 6,
+   "of": 6,
+   "items": {
+    "mean": 2.3333333333333335,
+    "max": 4
+   },
+   "withPlan": 6,
+   "withVerification": 6
+  }
+ },
+ "cost": {
+  "spentUsd": 0,
+  "knownUsd": 0,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 6,
+  "skipped": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "749ec64e237857dc491b8ebcbc94b54f908f0a40a76857bf31026c4dd554fc33",
+  "policyHash": null,
+  "policyVersion": null,
+  "node": "v24.21.0",
+  "accountingSha256": "d850855ae1ddebebad7c33e12ff04bdb129dffc3cd7305617787661b7b89f07c",
+  "harnessManifestSha256": "1857429d47eec9acfed61d0286c6278e06c361f2cf8f13ab74d7db56f7012d3d"
+ },
+ "live": "/var/tmp/foundry-work/autobench/a1-smoke-scripted-a1-smoke-1",
+ "finishedAt": "2026-10-15T07:18:50.094Z"
+}

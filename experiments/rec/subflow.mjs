@@ -39,23 +39,36 @@
 // concurrency, its record stays on the host behind a handle, and it is mutant-checked: on the first unit it delivers, the host
 // plants a type-preserving single mutant of that unit's answer (mutantOf) and runs the request's check on it in a fresh
 // process; only if the check rejects it are the child's delivered units `verified`, else they count as the agent's own work
-// (design change 4a). Per check structure the host tallies planted and caught mutants: a structure whose false-pass rate
-// exceeds its share of the run budget (runFalsePassBudget / maxPerRun) is not deployable (change 4c).
+// (design change 4a). The mutant never lands on a leaf the answer echoes from its unit (a value equal to the unit's id or to
+// a scalar of its input, or a string found in one of the input's strings): a check that compares an echoed field with the
+// unit catches that mutant without checking the work. An answer with only echo leaves gets no mutant ('no non-echo leaf').
+// The check runner's kind is recorded with the credit: `verified` is claim-bearing only when the check ran in the sandbox
+// (check-runner.mjs sandboxCheckRunner; processCheckRunner is for tests and $0 replays).
+// Per check structure the run (the object its hosts share, beside `executed`) tallies planted and caught mutants (change 4c).
+// A structure is deployable only when the one-sided 95% exact upper bound of its mutant miss rate q is within its share of
+// the run budget (runFalsePassBudget / maxPerRun) and every mutant ran in the sandbox; q bounds the change's e x q from
+// above, since the node's error rate e (<= 1) is unknown here. It is not deployable when the lower bound exceeds the share,
+// and undetermined (null) otherwise: one planted mutant shows neither.
 // Deopt back to the agent: the child is dropped (none of its units is delivered; the agent continues with the reason) when
-// 50% or more of its first k units fall back, or when more than 25% of its budget is spent before its first delivered unit
-// (checked before each of the first k units).
+// 50% or more of its first k units fall back, or when a unit would take the spend before its first delivered unit over 25%
+// of its budget: until a unit is delivered, a unit is launched only if spent + reserved + its reservation fits that 25%.
+// Budgets assume a unit's reservation (services.mjs reserveFor) bounds its cost, as the stamped gateway does. A unit that
+// costs more can take the call past its budget: no unit is launched after that, and the event and record carry `overrun`.
 //
 // The answer carries typed per-unit results, the fallback units (cause, plus a labelled detail), credit, the probe, the
 // handle and the cost; never a prompt, a raw model output, a check's own output or anything else of the child's transcript
 // (rule R2). Taint (R8): a request is tainted when its node is (the node's text label is not 'synthetic', or the node already
 // received a tainted answer: taint is sticky), when it says so, or when one of its units is marked untrusted; its answer then
-// carries label 'untrusted'. Detail text a check or a model wrote is always labelled DETAIL_LABEL.
+// carries label 'untrusted'. Detail text a check or a model wrote is always labelled DETAIL_LABEL. A failed model call gives
+// the answer only its error code and the port's own feedback (fixed text and the schema, src/models/port.mjs); a returns
+// failure gives schema paths. The provider's message and instance paths, which can quote model output, stay in the record.
 import path from 'node:path';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { canonicalJson } from '../jit/run-compiled.mjs';
 import { TEXT_LABELS } from '../jit/agent-node.mjs';
 import { reserveFor, Ledger } from '../lib/services.mjs';
+import { exactBinomialBounds } from '../lib/stats.mjs';
 import { compileDataSchema, validateData } from '../../src/validate.mjs';
 import { FoundryError } from '../../src/data.mjs';
 
@@ -72,7 +85,9 @@ export const MAX_UNITS = 2000, MAX_ID_CHARS = 200, MAX_CHECK_BYTES = 64 * 1024, 
 export const DETAIL_LABEL = 'untrusted:subflow-detail';
 // Fallback causes that are failures of the work (S2's probe, S3's history, the deopt share), as opposed to budget, time or a drop.
 export const WORK_FAILURES = Object.freeze(['error', 'returns', 'check']);
-const S0_FIELDS = ['wait', 'approval'];
+const S0_FIELDS = ['effects', 'wait', 'approval'];
+// The confidence of the false-pass bounds (one-sided, exact).
+export const FALSE_PASS_LEVEL = 0.95;
 
 const sha256 = s => createHash('sha256').update(s).digest('hex');
 const usd = x => Math.round(x * 1e6) / 1e6;
@@ -143,14 +158,25 @@ function leavesOf(v, p = [], out = []) {
 const setAt = (v, p, x) => { if (!p.length) return x; const c = Array.isArray(v) ? v.slice() : { ...v }; c[p[0]] = setAt(v[p[0]], p.slice(1), x); return c; };
 const getAt = (v, p) => p.reduce((o, k) => o?.[k], v);
 const validAgainst = (schema, v) => { try { validateData(schema, v, 'mutant'); return true; } catch { return false; } };
+/** Whether an answer's leaf value echoes `unit` ({id, input}): it equals the unit's id or a scalar of its input, or it is a
+ * string found in one of the input's strings. No unit: nothing is an echo. */
+export function echoOf(unit) {
+  if (!unit) return () => false;
+  const scalars = new Set(), strings = [];
+  for (const p of leavesOf(unit.input)) { const v = getAt(unit.input, p); scalars.add(`${typeof v}:${v}`); if (typeof v === 'string') strings.push(v); }
+  return v => v === unit.id || scalars.has(`${typeof v}:${v}`) || (typeof v === 'string' && strings.some(s => s.includes(v)));
+}
 /**
  * A single type-preserving mutant of `value` that still satisfies `schema` and differs from it, or null. Deterministic in
  * seed: the scalar leaves are taken in a rotation that starts at a seeded index; per leaf, the first candidate edit (a number
  * +-1, x2, negated, 0 or 1; a string with one character bumped, one appended or removed; a boolean flipped; another enum
- * member) that validates wins; with no scalar leaf, an array loses one element. Returns {value, path, from, to}.
+ * member) that validates wins; with no scalar leaf, an array loses one element. Given the answer's unit, a leaf that echoes
+ * it (echoOf) is never edited, and an answer whose scalar leaves are all echoes has no mutant. Returns {value, path, from, to}.
  */
-export function mutantOf(value, schema, seed = '') {
-  const leaves = leavesOf(value), start = leaves.length ? parseInt(sha256(String(seed)).slice(0, 8), 16) % leaves.length : 0;
+export function mutantOf(value, schema, seed = '', unit = null) {
+  const echo = echoOf(unit), all = leavesOf(value), leaves = all.filter(p => !echo(getAt(value, p)));
+  if (all.length && !leaves.length) return null;
+  const start = leaves.length ? parseInt(sha256(String(seed)).slice(0, 8), 16) % leaves.length : 0;
   for (let j = 0; j < leaves.length; j++) {
     const p = leaves[(start + j) % leaves.length], from = getAt(value, p);
     for (const to of candidatesFor(from, subSchemaAt(schema, p))) {
@@ -200,10 +226,12 @@ function parseRequest(raw, models) {
   return { request: { v: SUBFLOW_PROTOCOL, name: raw.name.trim(), units, worker, returns: raw.returns, ...(raw.checkSource != null ? { checkSource: raw.checkSource } : {}),
     ...(raw.budgetUsd != null ? { budgetUsd: raw.budgetUsd } : {}), ...(raw.timeoutMs != null ? { timeoutMs: raw.timeoutMs } : {}), ...(raw.tainted ? { tainted: true } : {}) } };
 }
-// S0: an effect, a durable wait or an approval (the request's own words; the host has no primitive for any of them).
+// S0: an effect, a durable wait or an approval (the request's own words; the host has no primitive for any of them). A field
+// that states no request is not an ask: absent, null, false, 0, '', 'none', an empty list or an empty object.
+const noAsk = v => v == null || v === false || v === 0 || v === '' || v === 'none' || (Array.isArray(v) ? !v.length : typeof v === 'object' && !Object.keys(v).length);
 const s0Of = raw => {
   if (!raw || typeof raw !== 'object') return null;
-  const asks = [...(raw.effects != null && raw.effects !== 'none' ? [`effects: ${short(JSON.stringify(raw.effects), 60)}`] : []), ...S0_FIELDS.filter(k => raw[k] != null && raw[k] !== false)];
+  const asks = S0_FIELDS.filter(k => !noAsk(raw[k])).map(k => (k === 'effects' ? `effects: ${short(JSON.stringify(raw.effects), 60)}` : k));
   return asks.length ? asks : null;
 };
 
@@ -212,10 +240,23 @@ const renderPrompt = (template, unit) => {
   const body = template.includes('{{unit}}') ? template.replaceAll('{{unit}}', text) : `${template}\n\n${text}`;
   return body.replaceAll('{{id}}', unit.id);
 };
+// A returns failure: {detail} for the answer (schema paths and the validator's schema-derived messages, as the port's
+// feedback), {hostDetail} for the record (instance paths, which can quote model-chosen keys).
 const returnsErrors = (schema, value) => {
   try { validateData(schema, value, 'answer'); return null; }
-  catch (e) { return (e.details ?? [{ message: short(e) }]).slice(0, 3).map(x => `${x.instancePath ?? ''} ${x.message ?? ''}`.trim()).join('; '); }
+  catch (e) {
+    const list = (e.details ?? [{ message: 'does not satisfy returns' }]).slice(0, 3), join = f => [...new Set(list.map(f))].join('; ');
+    return { detail: join(x => `${x.schemaPath ?? ''} ${x.message ?? ''}`.trim()), hostDetail: join(x => `${x.instancePath ?? ''} ${x.message ?? ''}`.trim()) };
+  }
 };
+/** The false-pass verdict of one structure's tally {planted, caught, sandboxed} against its share of the run budget. */
+export function falsePassOf(t = {}, share, { level = FALSE_PASS_LEVEL } = {}) {
+  const planted = t.planted ?? 0, caught = t.caught ?? 0, sandboxed = t.sandboxed ?? 0, missed = planted - caught;
+  const b = planted ? exactBinomialBounds(missed, planted, { level }) : null;
+  const r6 = x => Math.round(x * 1e6) / 1e6;
+  const deployable = !b ? null : b.lo > share ? false : b.hi <= share && sandboxed === planted ? true : null;
+  return { planted, caught, sandboxed, rate: planted ? missed / planted : null, lower: b ? r6(b.lo) : null, upper: b ? r6(b.hi) : null, level, share, deployable };
+}
 async function pool(items, n, fn) {
   const out = new Array(items.length); let next = 0;
   await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (next < items.length) { const i = next++; out[i] = await fn(items[i], i); } }));
@@ -231,9 +272,11 @@ async function pool(items, n, fn) {
  *                closed, so a node is tainted unless declared 'synthetic'), failures?: [{units: [ids], source?}] (S3 evidence
  *                the harness holds, e.g. the parent's verify reasons)}.
  *   ledger       the node's gateway Ledger (experiments/lib/services.mjs), whose cap is the node's reservation; or budgetUsd.
- *   checkRunner  check-runner.mjs processCheckRunner() / sandboxCheckRunner(), or anything with run({source, cases, timeoutMs}).
+ *   checkRunner  check-runner.mjs processCheckRunner() / sandboxCheckRunner(), or anything with run({source, cases, timeoutMs})
+ *                (its `kind` is recorded; only 'sandbox' makes credit claim-bearing).
  *   journal      earlier journalOut rows (a resumed run): served at $0 for the same task and node only.
- *   run          a counter shared by the hosts of one run ({executed: 0}); default: this host's own.
+ *   run          the object the hosts of one run share ({executed: 0}): the call count and the false-pass tally
+ *                (run.falsePass, per check structure); default: this host's own.
  * Returns {port(inner?), request(raw), handle(raw), events, journalOut, records, totals(), state}.
  */
 export function createSubflowHost({ modelPort = null, node, ledger = null, budgetUsd = null, checkRunner = null, workRoot = null, journal = [], run = null, limits: over = {},
@@ -250,20 +293,18 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
     ledger = new Ledger({ capUsd: budgetUsd, label: `subflow:${node.id}` });
   }
   if (checkRunner != null && typeof checkRunner.run !== 'function') throw new Error('createSubflowHost: checkRunner must have run({source, cases, timeoutMs})');
+  const runnerKind = checkRunner ? String(checkRunner.kind ?? 'unknown') : null;
   const models = [...new Set([node.model, ...(Array.isArray(node.models) ? node.models : [])])];
   const state = { tainted: textLabel !== 'synthetic', failures: (node.failures ?? []).map(f => ({ units: [...(f.units ?? [])], source: f.source ?? 'harness' })),
-    structures: new Map(), falsePass: new Map(), calls: 0 };
+    structures: new Map(), calls: 0 };
   const counter = run ?? { executed: 0 };
+  counter.falsePass ??= {};
   const events = [], journalOut = [], records = new Map(), memo = new Map();
   for (const row of journal ?? []) if (row?.key && row.taskKey === (node.taskKey ?? null) && row.nodeId === node.id && row.value?.status === 'ok') memo.set(row.key, { value: row.value, source: 'journal' });
 
   const keyOf = (req, tainted) => sha256(canonicalJson({ taskKey: node.taskKey ?? null, node: node.id, units: req.units, worker: req.worker, returns: req.returns, checkSource: req.checkSource ?? null, tainted }));
   const structureOf = req => sha256(canonicalJson({ worker: req.worker, returns: req.returns, checkSource: req.checkSource ?? null })).slice(0, 16);
-  const falsePassOf = structure => {
-    const t = state.falsePass.get(structure) ?? { planted: 0, caught: 0 }, share = limits.runFalsePassBudget / limits.maxPerRun;
-    const rate = t.planted ? (t.planted - t.caught) / t.planted : null;
-    return { ...t, rate, share, deployable: rate !== null && rate <= share };
-  };
+  const share = limits.runFalsePassBudget / limits.maxPerRun;
   const event = e => { const row = { at: new Date().toISOString(), node: node.id, taskKey: node.taskKey ?? null, ...e }; events.push(row); log(`${row.kind} ${row.name ?? ''} ${row.executedAs ?? row.refused ?? ''}`); return row; };
   const refuse = (refused, detail, name = null, t0 = Date.now()) => {
     const value = { v: SUBFLOW_PROTOCOL, status: 'refused', refused, detail, ...(name ? { name } : {}), costUsd: 0 };
@@ -280,13 +321,14 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
     } catch (e) { return { error: { code: e.code ?? 'CHECK_RUNNER', message: short(e) } }; }
   };
 
-  // One unit: one model call under acct ({budgetUsd, spentUsd, reservedUsd}). Returns {output} | {cause, detail}, with cost and ms.
-  async function runUnit(unit, req, acct, signal, nodeKey) {
+  // One unit: one model call under acct ({budgetUsd, spentUsd, reservedUsd}), launched only if its reservation fits
+  // min(capUsd, acct.budgetUsd). Returns {output} | {cause, detail, hostDetail?}, with cost and ms ({reserve} on a budget refusal).
+  async function runUnit(unit, req, acct, signal, nodeKey, capUsd = Infinity) {
     if (signal.aborted) return { cause: 'timeout', cost: 0, ms: 0 };
     const model = req.worker.model ?? node.model, system = req.worker.system ?? '', prompt = renderPrompt(req.worker.prompt, unit), schema = req.returns;
     const entry = modelPort?.policy?.models?.find(m => m.id === model);
     const reserve = reserveFor(modelPort?.policy, { model, system, prompt, schema }, modelPort?.providers?.[entry?.provider]?.maxBudgetUsd ?? 1);
-    if (acct.spentUsd + acct.reservedUsd + reserve > acct.budgetUsd + 1e-9) return { cause: 'budget', cost: 0, ms: 0 };
+    if (acct.spentUsd + acct.reservedUsd + reserve > Math.min(capUsd, acct.budgetUsd) + 1e-9) return { cause: 'budget', reserve, cost: 0, ms: 0 };
     if (!modelPort) return { cause: 'error', detail: 'no model port in this host', cost: 0, ms: 0 };
     acct.reservedUsd += reserve;
     const t = Date.now();
@@ -297,9 +339,14 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
     const cost = r?.costUnknown ? Math.max(r.costUsd ?? 0, r.costUpperUsd ?? reserve) : (r?.costUsd ?? 0);
     acct.spentUsd += cost; if (r?.costUnknown) acct.costUnknown = true;
     const ms = Number.isFinite(r?.latencyMs) ? r.latencyMs : Date.now() - t;
-    if (!r?.ok) return { cause: signal.aborted ? 'timeout' : 'error', detail: [r?.error?.code, r?.error?.message].filter(Boolean).join(': ') || 'model call failed', cost, ms };
+    if (!r?.ok) {
+      // The answer gets the code and the port's own feedback only; the provider's message stays in the record.
+      const code = r?.error?.code, feedback = typeof r?.error?.feedback === 'string' ? r.error.feedback : null;
+      return { cause: signal.aborted ? 'timeout' : 'error', detail: [code, feedback].filter(Boolean).join(': ') || 'model call failed',
+        ...(r?.error?.message ? { hostDetail: short(r.error.message, 1000) } : {}), cost, ms };
+    }
     const errs = returnsErrors(schema, r.value);
-    if (errs) return { cause: 'returns', detail: errs, cost, ms };
+    if (errs) return { cause: 'returns', ...errs, cost, ms };
     return { output: r.value, cost, ms };
   }
 
@@ -316,7 +363,7 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
     outer?.addEventListener?.('abort', onOuter, { once: true });
     const signal = ac.signal;
     let n = 0;
-    const call = (u, a, mode) => runUnit(u, req, a, signal, `subflow/${key.slice(0, 12)}/${mode}/${n++}`);
+    const call = (u, a, mode, capUsd) => runUnit(u, req, a, signal, `subflow/${key.slice(0, 12)}/${mode}/${n++}`, capUsd);
     // Settle units: check the ones with an answer (one isolated check run for the batch), then record each.
     const settle = async (list, mode) => {
       const withOut = list.filter(([, r]) => r.output !== undefined);
@@ -329,7 +376,7 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
       let j = 0;
       for (const [u, r] of list) {
         unitCost.set(u.id, { usd: usd(r.cost ?? 0), ms: r.ms ?? 0, mode });
-        if (r.output === undefined) { results.set(u.id, { cause: r.cause, detail: r.detail, mode }); if (WORK_FAILURES.includes(r.cause)) workFailed.add(u.id); continue; }
+        if (r.output === undefined) { results.set(u.id, { cause: r.cause, detail: r.detail, ...(r.hostDetail ? { hostDetail: r.hostDetail } : {}), mode }); if (WORK_FAILURES.includes(r.cause)) workFailed.add(u.id); continue; }
         const v = req.checkSource ? verdicts[j++] : { ok: true };
         if (v.ok) results.set(u.id, { output: r.output, mode });
         else if (v.runnerError) results.set(u.id, { cause: 'check-error', detail: v.problem, mode });
@@ -361,18 +408,25 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
         const wave = pending.slice(0, limits.probeUnits), rest = pending.slice(limits.probeUnits);
         let delivered = 0, fellBack = 0, mutant = null, drop = null;
         for (const u of wave) {
-          if (delivered === 0 && cacct.spentUsd > limits.firstUnitShare * cacct.budgetUsd) { drop = { cause: 'budget-before-first-unit', spentUsd: usd(cacct.spentUsd), budgetUsd: usd(cacct.budgetUsd), share: limits.firstUnitShare }; break; }
-          await settle([[u, await call(u, cacct, 'child')]], 'child');
+          // Until a unit is delivered, a unit is launched only if its reservation fits 25% of the child's budget.
+          const capUsd = delivered === 0 ? limits.firstUnitShare * cacct.budgetUsd : Infinity;
+          const r = await call(u, cacct, 'child', capUsd);
+          if (delivered === 0 && r.cause === 'budget') {
+            drop = { cause: 'budget-before-first-unit', spentUsd: usd(cacct.spentUsd), reserveUsd: usd(r.reserve ?? 0), capUsd: usd(capUsd), budgetUsd: usd(cacct.budgetUsd), share: limits.firstUnitShare };
+            break;
+          }
+          await settle([[u, r]], 'child');
           const res = results.get(u.id);
           if (res.output === undefined) { fellBack++; continue; }
           delivered++;
           if (!mutant) {
+            const unit = { id: u.id, input: u.input };
             if (!req.checkSource) mutant = { planted: false, reason: 'no-check' };
             else {
-              const m = mutantOf(res.output, req.returns, key);
-              if (!m) mutant = { planted: false, reason: 'no type-preserving edit', unit: u.id };
+              const m = mutantOf(res.output, req.returns, key, unit);
+              if (!m) mutant = { planted: false, reason: mutantOf(res.output, req.returns, key) ? 'no non-echo leaf' : 'no type-preserving edit', unit: u.id };
               else {
-                const v = await runCheck(req.checkSource, [{ output: m.value, unit: { id: u.id, input: u.input } }]);
+                const v = await runCheck(req.checkSource, [{ output: m.value, unit }]);
                 mutant = { planted: true, unit: u.id, path: m.path, caught: !v.error && v.verdicts[0].ok === false, ...(v.error ? { error: v.error.code } : {}) };
               }
             }
@@ -402,8 +456,13 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
     const credit = delivered && verifiedUnits.length === delivered ? 'verified' : 'agent';
     const status = child?.drop ? 'deopt' : 'ok';
     const mutantOut = child ? { planted: child.mutant.planted, ...(child.mutant.planted ? { unit: child.mutant.unit, caught: child.mutant.caught } : { reason: child.mutant.reason }) } : null;
-    if (child?.mutant?.planted) { const t = state.falsePass.get(structure) ?? { planted: 0, caught: 0 }; t.planted++; if (child.mutant.caught) t.caught++; state.falsePass.set(structure, t); }
-    const fp = child ? falsePassOf(structure) : null;
+    if (child?.mutant?.planted) {
+      const t = (counter.falsePass[structure] ??= { planted: 0, caught: 0, sandboxed: 0 });
+      t.planted++; if (child.mutant.caught) t.caught++; if (runnerKind === 'sandbox') t.sandboxed++;
+    }
+    const fp = child ? falsePassOf(counter.falsePass[structure], share) : null;
+    // A unit that cost more than its reservation took the call past its budget (no unit was launched after that).
+    const overrun = acct.spentUsd > budget + 1e-9 ? { spentUsd: usd(acct.spentUsd), budgetUsd: usd(budget) } : null;
     const value = { v: SUBFLOW_PROTOCOL, status, name: req.name, handle, executedAs: decision.executedAs, reason: decision.reason, units, fallback, credit, verifiedUnits,
       ...(mutantOut ? { mutant: mutantOut } : {}), ...(probe ? { probe } : {}), ...(child?.drop ? { deopt: child.drop } : {}),
       tainted, ...(tainted ? { label: 'untrusted' } : {}), budgetUsd: usd(budget), costUsd: usd(acct.spentUsd), ...(acct.costUnknown ? { costUnknown: true } : {}) };
@@ -411,8 +470,9 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
     if (workFailed.size) state.failures.push({ units: [...workFailed], source: handle });
     const st = state.structures.get(structure) ?? { calls: 0, costUsd: 0 }; st.calls++; st.costUsd = usd(st.costUsd + acct.spentUsd); state.structures.set(structure, st);
     if (tainted) state.tainted = true;
-    const record = { handle, key, structure, name: req.name, size, big, measure, decision, probe, s3Failures, evUsd, child, units: Object.fromEntries(req.units.map(u => [u.id, { ...results.get(u.id), ...unitCost.get(u.id) }])),
-      tainted, budgetUsd: usd(budget), costUsd: usd(acct.spentUsd), ms: Date.now() - t0 };
+    const record = { handle, key, structure, name: req.name, size, big, measure, decision, probe, s3Failures, evUsd, child, checkRunner: runnerKind,
+      units: Object.fromEntries(req.units.map(u => [u.id, { ...results.get(u.id), ...unitCost.get(u.id) }])),
+      tainted, budgetUsd: usd(budget), costUsd: usd(acct.spentUsd), overrun, ms: Date.now() - t0 };
     return { value, record, falsePass: fp };
   }
 
@@ -457,8 +517,9 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
     if (value.status === 'ok' && value.executedAs === 'child') { memo.set(key, { value: structuredClone(value), source: 'run' }); journalOut.push({ key, taskKey: node.taskKey ?? null, nodeId: node.id, value: structuredClone(value), at: new Date().toISOString() }); }
     event({ kind: value.status === 'deopt' ? 'subflow-deopt' : 'subflow-end', name: req.name, key, handle: handleId, structure: record.structure, executedAs: value.executedAs, reason: value.reason,
       measure: measure.measure, size: record.size, probe: value.probe ?? null, units: req.units.length, delivered: Object.keys(value.units).length, fallback: value.fallback.length,
-      verified: value.verifiedUnits.length, credit: value.credit, mutant: record.child?.mutant ?? null, ...(falsePass ? { falsePass } : {}), deopt: value.deopt ?? null, tainted: value.tainted,
-      harvestEligible: value.status === 'ok' && value.executedAs === 'child', budgetUsd: value.budgetUsd, costUsd: value.costUsd, ms: Date.now() - t0 });
+      verified: value.verifiedUnits.length, credit: value.credit, checkRunner: record.checkRunner, claimBearing: value.credit === 'verified' && record.checkRunner === 'sandbox',
+      mutant: record.child?.mutant ?? null, ...(falsePass ? { falsePass } : {}), deopt: value.deopt ?? null, tainted: value.tainted,
+      harvestEligible: value.status === 'ok' && value.executedAs === 'child', budgetUsd: value.budgetUsd, costUsd: value.costUsd, overrun: record.overrun, ms: Date.now() - t0 });
     return value;
   }
 
@@ -490,9 +551,11 @@ export function createSubflowHost({ modelPort = null, node, ledger = null, budge
     const ended = [...by('subflow-end'), ...by('subflow-deopt')];
     const refusals = {}; for (const e of by('subflow-refused')) refusals[e.refused] = (refusals[e.refused] ?? 0) + 1;
     return { requests: state.calls, executed: ended.length, child: ended.filter(e => e.executedAs === 'child').length, inline: ended.filter(e => e.executedAs === 'inline').length,
-      deopts: by('subflow-deopt').length, verified: ended.filter(e => e.credit === 'verified').length, memo: by('subflow-memo').length, refusals,
+      deopts: by('subflow-deopt').length, verified: ended.filter(e => e.credit === 'verified').length, claimBearing: ended.filter(e => e.claimBearing).length,
+      memo: by('subflow-memo').length, refusals, overruns: ended.filter(e => e.overrun).length,
       costUsd: usd(ended.reduce((s, e) => s + (e.costUsd ?? 0), 0)), tainted: state.tainted,
-      falsePass: Object.fromEntries([...state.falsePass.keys()].map(s => [s, falsePassOf(s)])) };
+      // run-level: every structure the run's hosts tallied
+      falsePass: Object.fromEntries(Object.entries(counter.falsePass).map(([s, t]) => [s, falsePassOf(t, share)])) };
   }
   return { node, limits, ledger, port, request, handle, events, journalOut, records, totals, state, run: counter };
 }

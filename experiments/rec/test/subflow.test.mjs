@@ -3,10 +3,11 @@
 // process (check-runner.mjs processCheckRunner).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSubflowHost, mutantOf, sizeOf, sizeChange, isBig, chooseExecution, SUBFLOW_MODEL, REFUSALS, LIMITS, DETAIL_LABEL } from '../subflow.mjs';
-import { processCheckRunner } from '../check-runner.mjs';
+import { createSubflowHost, mutantOf, echoOf, falsePassOf, sizeOf, sizeChange, isBig, chooseExecution, SUBFLOW_MODEL, REFUSALS, LIMITS, DETAIL_LABEL } from '../subflow.mjs';
+import { processCheckRunner, sandboxCheckRunner } from '../check-runner.mjs';
+import { sandboxAvailable } from '../../../src/executors/claude-code.mjs';
 import path from 'node:path';
-import { mkdtempSync, rmSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, readdirSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { Ledger } from '../../lib/services.mjs';
 
@@ -22,15 +23,17 @@ function scripted(answer, { costUsd = 0.01, latencyMs = 10, policy = FREE } = {}
       const id = /UNIT=(\S+)/.exec(req.prompt)?.[1] ?? null;
       calls.push({ id, nodeKey: req.nodeKey, modelId: req.modelId });
       const a = (await answer(id, req)) ?? {};
-      return { ok: !a.error, value: a.value, error: a.error ? { code: a.error } : null, costUsd: a.costUsd ?? costUsd, latencyMs: a.latencyMs ?? latencyMs, modelId: req.modelId };
+      const error = a.error ? { code: a.error, ...(a.message ? { message: a.message } : {}), ...(a.feedback ? { feedback: a.feedback } : {}) } : null;
+      return { ok: !a.error, value: a.value, error, costUsd: a.costUsd ?? costUsd, latencyMs: a.latencyMs ?? latencyMs, modelId: req.modelId };
     },
   };
 }
 const RETURNS = { type: 'object', required: ['total'], properties: { total: { type: 'number' } }, additionalProperties: false };
 const CHECK = "export default (a, u) => a.total === u.input.reduce((s, x) => s + x, 0) ? null : 'total ' + a.total + ' is not the sum';";
 const LAX = 'export default () => null;';
-const units = (n, from = 0, prefix = 'u') => Array.from({ length: n }, (_, i) => ({ id: `${prefix}${from + i}`, input: [from + i, 1] }));
-const sumOf = id => Number(String(id).replace(/^\D+/, '')) + 1;
+// Unit n sums [n + 1, 1]: no total equals a value of its input, so the planted mutant never lands on an echo leaf (mutantOf).
+const units = (n, from = 0, prefix = 'u') => Array.from({ length: n }, (_, i) => ({ id: `${prefix}${from + i}`, input: [from + i + 1, 1] }));
+const sumOf = id => Number(String(id).replace(/^\D+/, '')) + 2;
 const correct = id => ({ value: { total: sumOf(id) } });
 const wrongOn = bad => id => (bad.includes(id) ? { value: { total: -1 } } : correct(id));
 const req = (o = {}) => ({ v: 1, name: o.name ?? 'sum', units: o.units ?? units(3), worker: { prompt: 'UNIT={{id}} Sum the numbers: {{unit}}', ...(o.worker ?? {}) }, returns: RETURNS,
@@ -80,7 +83,7 @@ test('hard refusals come back as values with the reason; they cost nothing, run 
     const v = await refused(req({ extra }), 'S0'); assert.match(v.detail.rule, /engine structure/);
   }
   // taint: the same asks from a tainted request
-  await refused(req({ units: [{ id: 'u0', input: [0, 1], untrusted: true }], extra: { effects: 'send-mail' } }), 'taint');
+  await refused(req({ units: [{ id: 'u0', input: [1, 1], untrusted: true }], extra: { effects: 'send-mail' } }), 'taint');
   await refused(req({ extra: { tainted: true, effects: 'write' } }), 'taint');
   // size-change: neither a strict subset of the node's units nor fewer input tokens (a node of 10 input tokens)
   const small = hostOf({ node: { inputTokens: 10 } });
@@ -201,7 +204,8 @@ test('mutant credit: only a check that rejects the planted mutant earns verified
   assert.deepEqual(v.mutant, { planted: true, unit: 'u0', caught: true });
   assert.equal(v.credit, 'verified'); assert.deepEqual(v.verifiedUnits, ['u0', 'u1', 'u2']);
   const st = good.host.events.at(-1).structure;
-  assert.deepEqual(good.host.totals().falsePass[st], { planted: 1, caught: 1, rate: 0, share: 0.0125, deployable: true });
+  assert.deepEqual(good.host.totals().falsePass[st], { planted: 1, caught: 1, sandboxed: 0, rate: 0, lower: 0, upper: 0.95, level: 0.95, share: 0.0125, deployable: null },
+    'one caught mutant shows nothing yet: the exact upper bound of the miss rate is 0.95');
   const rec = good.host.records.get(v.handle);
   assert.equal(rec.child.mutant.path, 'total');
   assert.equal(good.host.events.at(-1).harvestEligible, true);
@@ -262,12 +266,23 @@ test('deopt back to the agent: half or more of the first k child units fall back
   const half = hostOf({ node: FORCE_CHILD, limits: { probeUnits: 4 }, port: scripted(wrongOn(['u0'])) });
   const h = await half.host.request(req({ units: units(4) }));
   assert.equal(h.status, 'ok'); assert.deepEqual(Object.keys(h.units), ['u1', 'u2', 'u3']);
-  // more than 25% of the child's budget spent before its first delivered unit
-  const dear = hostOf({ node: FORCE_CHILD, limits: { probeUnits: 4 }, port: scripted(wrongOn(['u0', 'u1']), { costUsd: 0.06 }) });
+  // at most 25% of the child's budget before its first delivered unit: until a unit is delivered, a unit is launched only if
+  // spent + reserved + its reservation fits (PRICED: about $0.04 reserved per unit; each call costs $0.03, within it)
+  const dear = hostOf({ node: FORCE_CHILD, limits: { probeUnits: 4 }, port: scripted(wrongOn(['u0', 'u1', 'u2', 'u3']), { costUsd: 0.03, policy: PRICED }) });
   const d = await dear.host.request(req({ units: units(4), extra: { budgetUsd: 0.2 } }));
-  assert.equal(d.status, 'deopt'); assert.equal(d.deopt.cause, 'budget-before-first-unit'); assert.equal(d.deopt.spentUsd, 0.06);
-  assert.deepEqual(dear.port.calls.map(c => c.id), ['u0']);
-  assert.equal(d.costUsd, 0.06, 'what the dropped child spent is still charged');
+  assert.equal(d.status, 'deopt'); assert.equal(d.deopt.cause, 'budget-before-first-unit');
+  assert.deepEqual(dear.port.calls.map(c => c.id), ['u0'], 'u1 would take the spend over 25%: it is never launched');
+  assert.ok(d.costUsd <= LIMITS.firstUnitShare * 0.2, `spent ${d.costUsd} of 0.2 before a delivered unit`);
+  assert.equal(d.costUsd, 0.03, 'what the dropped child spent is still charged');
+  assert.equal(d.deopt.spentUsd, 0.03); assert.equal(d.deopt.capUsd, 0.05); assert.ok(d.deopt.spentUsd + d.deopt.reserveUsd > d.deopt.capUsd);
+  // a first unit whose reservation alone is over 25% of the child's budget is never launched
+  const tight = hostOf({ node: FORCE_CHILD, port: scripted(correct, { costUsd: 0.03, policy: PRICED }) });
+  const tt = await tight.host.request(req({ extra: { budgetUsd: 0.12 } }));
+  assert.equal(tt.status, 'deopt'); assert.equal(tt.deopt.cause, 'budget-before-first-unit'); assert.equal(tight.port.calls.length, 0); assert.equal(tt.costUsd, 0);
+  // once a unit is delivered, the 25% no longer binds
+  const fine = hostOf({ node: FORCE_CHILD, port: scripted(correct, { costUsd: 0.03, policy: PRICED }) });
+  const fv0 = await fine.host.request(req({ units: units(4), extra: { budgetUsd: 0.2 } }));
+  assert.equal(fv0.status, 'ok'); assert.equal(Object.keys(fv0.units).length, 4); assert.equal(fv0.costUsd, 0.12);
   // a check runner that cannot run: every unit falls back check-error (not a work failure) and the child is dropped
   const broken = hostOf({ node: FORCE_CHILD, limits, checkRunner: { run: async () => ({ error: { code: 'SANDBOX_UNAVAILABLE' } }) } });
   const bv = await broken.host.request(req({ units: units(4) }));
@@ -309,7 +324,7 @@ test('taint: a node not declared synthetic is tainted and its answers are labell
   const syn = hostOf({ port: scripted(wrongOn(['u1'])), limits: { childOverheadUsd: 1 } });   // keep S4 out: every call here runs inline
   const clean = await syn.host.request(req({ units: units(1, 5) }));
   assert.equal(clean.tainted, false); assert.equal(clean.label, undefined);
-  const dirty = await syn.host.request(req({ units: [{ id: 'u0', input: [0, 1], untrusted: true }, { id: 'u1', input: [1, 1] }] }));
+  const dirty = await syn.host.request(req({ units: [{ id: 'u0', input: [1, 1], untrusted: true }, { id: 'u1', input: [2, 1] }] }));
   assert.equal(dirty.tainted, true); assert.equal(dirty.label, 'untrusted');
   assert.deepEqual(dirty.fallback[0].detail, { label: DETAIL_LABEL, value: 'total -1 is not the sum' }, 'a check\'s words reach the agent labelled');
   const after = await syn.host.request(req({ units: units(1, 7) }));
@@ -348,7 +363,150 @@ test('port(): flow:subflow requests are the host\'s; every other model id goes t
   const garbage = await p.call({ modelId: SUBFLOW_MODEL, prompt: 'not json' });
   assert.equal(garbage.value.refused, 'bad-request');
   const inner = await p.call({ modelId: MODEL, prompt: 'UNIT=u4 plain call' });
-  assert.equal(inner.value.total, 5);
+  assert.equal(inner.value.total, 6);
   assert.ok(port.calls.slice(0, 3).every(c => c.modelId === MODEL && c.nodeKey.startsWith('subflow/')));
   assert.equal(p.policy, port.policy);
+});
+
+// ---- regressions from the Z0Z1 review ----
+
+test('echo leaves: the mutant never lands on a value the answer copies from its unit; an answer of echoes only gets no mutant', () => {
+  const R = { type: 'object', required: ['id', 'total'], properties: { id: { type: 'string' }, total: { type: 'number' } } };
+  for (let i = 0; i < 40; i++) assert.equal(mutantOf({ id: 'r1', total: 999 }, R, `seed-${i}`, { id: 'r1', input: [1, 1] }).path, 'total', 'the id is an echo');
+  assert.equal(mutantOf({ id: 'r1' }, { type: 'object', properties: { id: { type: 'string' } } }, 'x', { id: 'r1', input: null }), null, 'only an echo leaf: no mutant');
+  // a scalar of the input, and a string found in one of the input's strings, are echoes too
+  for (let i = 0; i < 20; i++) {
+    assert.equal(mutantOf({ qty: 3, label: 'x' }, { type: 'object' }, `s${i}`, { id: 'r1', input: { qty: 3 } }).path, 'label');
+    assert.equal(mutantOf({ name: 'Acme Corp', label: 'retail' }, { type: 'object' }, `s${i}`, { id: 'r1', input: 'Order from Acme Corp, 3 items' }).path, 'label');
+  }
+  const echo = echoOf({ id: 'u7', input: { a: [5, 'Text with Beta'], b: true } });
+  assert.deepEqual(['u7', 5, 'Beta', true, 'Text with Beta', 6, 'Gamma', false, '5'].map(echo), [true, true, true, true, true, false, false, false, false]);
+  assert.equal(echoOf(null)('anything'), false, 'no unit: nothing is an echo');
+});
+
+test('echo-only check: a check that verifies only the copied id earns no credit when every substantive answer is wrong', async () => {
+  const R = { type: 'object', required: ['id', 'total'], properties: { id: { type: 'string' }, total: { type: 'number' } }, additionalProperties: false };
+  const ECHO = "export default (a, u) => a.id === u.id ? null : 'id mismatch';";
+  let onId = 0;
+  for (let i = 0; i < 8; i++) {   // prompt whitespace changes the request key, and so the mutant's seed
+    const { host } = hostOf({ node: FORCE_CHILD, port: scripted(id => ({ value: { id, total: 999 } })) });
+    const r = { ...req({ check: ECHO }), returns: R }; r.worker.prompt += ' '.repeat(i);
+    const v = await host.request(r);
+    assert.equal(v.executedAs, 'child'); assert.equal(v.credit, 'agent', `variant ${i}: all totals are wrong`);
+    assert.deepEqual(v.mutant, { planted: true, unit: 'u0', caught: false }); assert.equal(host.records.get(v.handle).child.mutant.path, 'total');
+    if (mutantOf({ id: 'u0', total: 999 }, R, host.records.get(v.handle).key).path === 'id') onId++;
+  }
+  assert.ok(onId > 0, 'without the unit, some of these seeds put the mutant on the id (the defect)');
+  // only echo leaves: no mutant, no credit
+  const ID = { type: 'object', required: ['id'], properties: { id: { type: 'string' } }, additionalProperties: false };
+  const only = hostOf({ node: FORCE_CHILD, port: scripted(id => ({ value: { id } })) });
+  const o = await only.host.request({ ...req({ check: ECHO }), returns: ID });
+  assert.deepEqual(o.mutant, { planted: false, reason: 'no non-echo leaf' }); assert.equal(o.credit, 'agent');
+  // control: a check of the substantive field still earns credit
+  const SUM = "export default (a, u) => a.id === u.id && a.total === u.input[0] + u.input[1] ? null : 'wrong';";
+  const real = hostOf({ node: FORCE_CHILD, port: scripted(id => ({ value: { id, total: sumOf(id) } })) });
+  const rv = await real.host.request({ ...req({ check: SUM }), returns: R });
+  assert.deepEqual(rv.mutant, { planted: true, unit: 'u0', caught: true }); assert.equal(rv.credit, 'verified');
+});
+
+test('check runner kind: recorded on the record and the event; verified is claim-bearing only when the check ran in the sandbox', async () => {
+  const proc = hostOf({ node: FORCE_CHILD });
+  const p = await proc.host.request(req());
+  assert.equal(p.credit, 'verified');
+  const pe = proc.host.events.at(-1);
+  assert.equal(pe.checkRunner, 'process'); assert.equal(pe.claimBearing, false); assert.equal(proc.host.records.get(p.handle).checkRunner, 'process');
+  assert.deepEqual([proc.host.totals().verified, proc.host.totals().claimBearing], [1, 0]);
+  const sbx = hostOf({ node: FORCE_CHILD, checkRunner: { kind: 'sandbox', run: a => runner.run(a) } });
+  const s = await sbx.host.request(req());
+  assert.equal(sbx.host.events.at(-1).claimBearing, true); assert.equal(sbx.host.totals().claimBearing, 1);
+  assert.equal(Object.values(sbx.host.totals().falsePass)[0].sandboxed, 1);
+  assert.equal(s.credit, 'verified');
+  const anon = hostOf({ node: FORCE_CHILD, checkRunner: { run: a => runner.run(a) } });
+  await anon.host.request(req());
+  assert.equal(anon.host.events.at(-1).checkRunner, 'unknown'); assert.equal(anon.host.events.at(-1).claimBearing, false);
+  const none = hostOf({ node: FORCE_CHILD, checkRunner: null });
+  await none.host.request(req({ check: false }));
+  assert.equal(none.host.events.at(-1).checkRunner, null);
+});
+
+test('a check that keeps state between runs: verified under the process runner but never claim-bearing; the sandbox gives no credit', { skip: !sandboxAvailable() && 'no user/mount namespaces here' }, async t => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'rec-state-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  // passes a unit's first sighting, rejects any later one: so it rejects the mutant, whatever the answer
+  const STATE = `import { existsSync, writeFileSync, mkdirSync } from 'node:fs'; const d = ${JSON.stringify(path.join(dir, 'seen'))}; mkdirSync(d, { recursive: true });
+export default (a, u) => { const f = d + '/' + u.id; if (existsSync(f)) return 'seen'; writeFileSync(f, '1'); return null; };`;
+  const wrong = () => ({ value: { total: 999 } });
+  const proc = hostOf({ node: FORCE_CHILD, port: scripted(wrong) });
+  const p = await proc.host.request(req({ check: STATE, units: units(2) }));
+  assert.equal(p.credit, 'verified', 'the process runner lets the check keep state');
+  assert.equal(proc.host.events.at(-1).claimBearing, false);
+  assert.ok(existsSync(path.join(dir, 'seen', 'u0')));
+  rmSync(path.join(dir, 'seen'), { recursive: true, force: true });
+  const sbx = hostOf({ node: FORCE_CHILD, port: scripted(wrong), checkRunner: sandboxCheckRunner() });
+  const s = await sbx.host.request(req({ check: STATE, units: units(2) }));
+  assert.equal(s.credit, 'agent'); assert.deepEqual(s.mutant, { planted: true, unit: 'u0', caught: false });
+  assert.equal(sbx.host.events.at(-1).checkRunner, 'sandbox'); assert.equal(sbx.host.events.at(-1).claimBearing, false);
+});
+
+test('a failed model call gives the parent its code and the port\'s own feedback only; provider text and instance paths stay in the record', async () => {
+  const R = { type: 'object', required: ['total'], properties: { total: { type: 'number' } }, additionalProperties: { type: 'number' } };
+  const port = scripted(id => ({
+    u0: { error: 'MODEL_PROTOCOL', message: 'provider said: <raw model output SECRET-CHILD-TEXT>' },
+    u1: { error: 'MODEL_SCHEMA', message: 'Model output does not satisfy its schema: /SECRET-KEY must be number', feedback: 'Model output does not satisfy its schema: #/additionalProperties/type must be number' },
+    u2: { value: { total: 4, 'SECRET-KEY': 'x' } },
+  })[id]);
+  const { host } = hostOf({ port });
+  const v = await host.request({ ...req({ check: false }), returns: R });
+  assert.equal(v.executedAs, 'inline');
+  assert.equal(JSON.stringify(v).includes('SECRET'), false, JSON.stringify(v.fallback));
+  assert.deepEqual(v.fallback, [
+    { id: 'u0', cause: 'error', detail: { label: DETAIL_LABEL, value: 'MODEL_PROTOCOL' } },
+    { id: 'u1', cause: 'error', detail: { label: DETAIL_LABEL, value: 'MODEL_SCHEMA: Model output does not satisfy its schema: #/additionalProperties/type must be number' } },
+    { id: 'u2', cause: 'returns', detail: { label: DETAIL_LABEL, value: '#/additionalProperties/type must be number' } },
+  ]);
+  const rec = host.records.get(v.handle);
+  assert.match(rec.units.u0.hostDetail, /SECRET-CHILD-TEXT/); assert.match(rec.units.u1.hostDetail, /SECRET-KEY/); assert.equal(rec.units.u2.hostDetail, '/SECRET-KEY must be number');
+});
+
+test('S0: a field that states no effect, wait or approval runs; any real ask is still refused', async () => {
+  const { host } = hostOf({ limits: { maxPerRun: 100 } });
+  const none = [{ effects: [] }, { effects: false }, { effects: {} }, { effects: 'none' }, { effects: 0 }, { effects: null }, { wait: '' }, { wait: false }, { wait: {} }, { approval: 0 }, { approval: null }, { approval: [] }];
+  for (const [i, extra] of none.entries()) assert.equal((await host.request(req({ units: units(1, i), extra }))).status, 'ok', JSON.stringify(extra));
+  for (const extra of [{ effects: ['send-mail'] }, { effects: { write: true } }, { effects: 'write' }, { wait: 'customer' }, { approval: 1 }, { approval: true }]) {
+    const v = await host.request(req({ extra })); assert.equal(v.refused, 'S0', JSON.stringify(extra)); assert.equal(v.detail.asks.length, 1);
+  }
+});
+
+test('overrun: a unit that costs more than its reservation takes the call past its budget; no unit is launched after it, and the event, record and totals say so', async () => {
+  const port = scripted(correct, { costUsd: 0.3, policy: PRICED });   // reserved about $0.04, charged $0.30
+  const { host } = hostOf({ port });
+  const v = await host.request(req({ extra: { budgetUsd: 0.12 } }));
+  assert.equal(v.executedAs, 'inline'); assert.equal(port.calls.length, 1);
+  assert.deepEqual(v.fallback, [{ id: 'u1', cause: 'budget' }, { id: 'u2', cause: 'budget' }]);
+  const e = host.events.at(-1);
+  assert.deepEqual(e.overrun, { spentUsd: 0.3, budgetUsd: 0.12 }); assert.deepEqual(host.records.get(v.handle).overrun, e.overrun);
+  assert.equal(host.totals().overruns, 1);
+  const within = hostOf({ port: scripted(correct, { costUsd: 0.03, policy: PRICED }) });
+  await within.host.request(req({ extra: { budgetUsd: 0.12 } }));
+  assert.equal(within.host.events.at(-1).overrun, null); assert.equal(within.host.totals().overruns, 0);
+});
+
+test('false-pass budget: deployable only when the exact upper bound of the miss rate fits the share and every mutant ran in the sandbox; the tally is the run\'s', async () => {
+  const share = LIMITS.runFalsePassBudget / LIMITS.maxPerRun;
+  assert.deepEqual(falsePassOf({}, share), { planted: 0, caught: 0, sandboxed: 0, rate: null, lower: null, upper: null, level: 0.95, share, deployable: null });
+  assert.equal(falsePassOf({ planted: 1, caught: 1, sandboxed: 1 }, share).deployable, null, 'n = 1 cannot show q <= 0.0125');
+  assert.equal(falsePassOf({ planted: 1, caught: 0, sandboxed: 1 }, share).deployable, false, 'one miss in one: the lower bound 0.05 exceeds the share');
+  assert.equal(falsePassOf({ planted: 1, caught: 0 }, share).lower, 0.05);
+  // 0 misses: the upper bound 1 - 0.05^(1/n) first fits 0.0125 at n = 239
+  assert.equal(falsePassOf({ planted: 239, caught: 239, sandboxed: 239 }, share).deployable, true);
+  assert.equal(falsePassOf({ planted: 238, caught: 238, sandboxed: 238 }, share).deployable, null);
+  assert.equal(falsePassOf({ planted: 239, caught: 239, sandboxed: 238 }, share).deployable, null, 'a mutant outside the sandbox shows nothing');
+  // run-level: two nodes of one run, one structure, one tally
+  const run = { executed: 0 };
+  const a = hostOf({ run, node: FORCE_CHILD }), b = hostOf({ run, node: { ...FORCE_CHILD, id: 'agent:other#0' } });
+  await a.host.request(req()); await b.host.request(req());
+  const st = a.host.events.at(-1).structure;
+  assert.equal(b.host.events.at(-1).structure, st);
+  assert.deepEqual([run.falsePass[st].planted, run.falsePass[st].caught], [2, 2]);
+  assert.equal(a.host.totals().falsePass[st].planted, 2); assert.equal(b.host.events.at(-1).falsePass.planted, 2);
 });

@@ -15,7 +15,8 @@ import { processCheckRunner, sandboxCheckRunner, verdictsOf, RUN_CHECK_SOURCE } 
 const MODEL = 'claude-haiku-5-5';
 const POLICY = { models: [{ id: MODEL, provider: 'stub', class: 'M', price: { inputPerMTok: 0, outputPerMTok: 0 } }] };
 const port = { policy: POLICY, providers: {}, policyHash: 'stub', calls: 0,
-  async call(req) { this.calls++; const id = /UNIT=(\S+)/.exec(req.prompt)?.[1]; return { ok: true, value: { total: Number(id.slice(1)) + 1 }, costUsd: 0.02, latencyMs: 5, modelId: req.modelId }; } };
+  // unit n sums [n + 1, 1]: no total equals a value of its input (an echo leaf never carries the mutant: subflow.mjs mutantOf)
+  async call(req) { this.calls++; const id = /UNIT=(\S+)/.exec(req.prompt)?.[1]; return { ok: true, value: { total: Number(id.slice(1)) + 2 }, costUsd: 0.02, latencyMs: 5, modelId: req.modelId }; } };
 const RETURNS = { type: 'object', required: ['total'], properties: { total: { type: 'number' } }, additionalProperties: false };
 const tmp = t => { const d = mkdtempSync(path.join(tmpdir(), 'rec-tool-')); t.after(() => rmSync(d, { recursive: true, force: true })); return d; };
 const runTool = (cwd, file) => new Promise(resolve => {
@@ -33,14 +34,14 @@ test('end to end: the agent runs node tools/subflow.mjs; the stock gateway hands
   t.after(() => svc.close({ graceMs: 1000 }));
   assert.ok(existsSync(path.join(workdir, 'tools/subflow.mjs'))); assert.deepEqual(JSON.parse(readFileSync(path.join(workdir, 'tools/gateway.json'), 'utf8')), { url: svc.url, token: svc.token });
   writeFileSync(path.join(workdir, 'check.mjs'), "export default (a, u) => a.total === u.input[0] + u.input[1] ? null : 'wrong total';");
-  writeFileSync(path.join(workdir, 'request.json'), JSON.stringify({ name: 'sum', units: [0, 1, 2].map(i => ({ id: `u${i}`, input: [i, 1] })), worker: { prompt: 'UNIT={{id}} add {{unit}}' }, returns: RETURNS, check: 'check.mjs' }));
+  writeFileSync(path.join(workdir, 'request.json'), JSON.stringify({ name: 'sum', units: [0, 1, 2].map(i => ({ id: `u${i}`, input: [i + 1, 1] })), worker: { prompt: 'UNIT={{id}} add {{unit}}' }, returns: RETURNS, check: 'check.mjs' }));
   const r = await runTool(workdir, 'request.json');
   assert.equal(r.code, 0, r.err);
   const v = JSON.parse(r.out);
-  assert.equal(v.status, 'ok'); assert.equal(v.executedAs, 'child'); assert.equal(v.credit, 'verified'); assert.deepEqual(v.units, { u0: { total: 1 }, u1: { total: 2 }, u2: { total: 3 } });
+  assert.equal(v.status, 'ok'); assert.equal(v.executedAs, 'child'); assert.equal(v.credit, 'verified'); assert.deepEqual(v.units, { u0: { total: 2 }, u1: { total: 3 }, u2: { total: 4 } });
   assert.equal(ledger.calls, 1); assert.equal(Math.round(ledger.spentUsd * 1e6) / 1e6, v.costUsd); assert.equal(v.costUsd, 0.06); assert.equal(ledger.reservedUsd, 0);
   // a refusal reaches the agent as an answer (exit 0), costs nothing
-  writeFileSync(path.join(workdir, 'big.json'), JSON.stringify({ name: 'sum', units: [{ id: 'u3', input: [3, 1] }], worker: { prompt: 'UNIT={{id}} add {{unit}}' }, returns: RETURNS, budgetUsd: 5 }));
+  writeFileSync(path.join(workdir, 'big.json'), JSON.stringify({ name: 'sum', units: [{ id: 'u3', input: [4, 1] }], worker: { prompt: 'UNIT={{id}} add {{unit}}' }, returns: RETURNS, budgetUsd: 5 }));
   const b = await runTool(workdir, 'big.json');
   assert.equal(b.code, 0, b.err); const bv = JSON.parse(b.out);
   assert.equal(bv.refused, 'budget'); assert.equal(Math.round(ledger.spentUsd * 1e6) / 1e6, 0.06);

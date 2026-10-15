@@ -11,7 +11,7 @@
 // verdicts agree across the pair); for reference kills, the mutant reference's journals graded by both, else
 // 'reference-only' (the policy differs, no graded verdict does).
 //   node beds/ebed/e8/tools/mr-mutants.mjs [--only 3,17 | --from K --limit N] [--equivalents | --non-equivalents]
-//          [--arms ref-earliest,ref-latest,...] [--no-reference] [--json out.json]
+//          [--quick] [--arms ref-earliest,ref-latest,...] [--no-reference] [--json out.json]
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -36,6 +36,7 @@ const withReference = !process.argv.includes('--no-reference');
 const jsonOut = arg('--json', null);
 const ARMS = arg('--arms', null)?.split(',') ?? null;        // a subset of each relation's arms (both flavours)
 const EQUIV_ONLY = process.argv.includes('--equivalents'), SKIP_EQUIV = process.argv.includes('--non-equivalents');
+const QUICK = process.argv.includes('--quick');                 // the first mutCase of each relation only
 if (EQUIV_ONLY) ks = ks.filter(k => EQUIV.has(k));
 if (SKIP_EQUIV) ks = ks.filter(k => !EQUIV.has(k));
 const t0 = Date.now();
@@ -46,7 +47,7 @@ const cache = new Map();
 const fixtures = new Map();
 for (const mr of MRS) {
   const list = [];
-  for (const c of mr.mutCases) {
+  for (const c of QUICK ? mr.mutCases.slice(0, 1) : mr.mutCases) {
     const fx = await fixture(mr, c, { cache, arms: ARMS ? mr.arms.filter(a => ARMS.includes(a)) : mr.arms });
     const o = mr.kind === 'mr11' ? mr11OracleCheck(fx) : oracleCheck(fx);
     const r = await referenceCheck(fx);
@@ -118,7 +119,7 @@ try {
       let t = Date.now();
       const r = { oracle: null, reference: null };
       for (const fx of fixtures.get(mr.id)) {
-        const v = (mr.kind === 'mr11' ? mr11OracleCheck(fx, item) : oracleCheck(fx, item, { sigCache }))[0];
+        const v = (mr.kind === 'mr11' ? mr11OracleCheck(fx, item) : oracleCheck(fx, item, { sigCache, first: true }))[0];
         if (v) { r.oracle = { at: caseLabel(mr, fx), ...v }; if (rec.equivalent) r.oracle.witness = oracleWitness(fx, item, v); break; }
       }
       rec.ms.oracle += Date.now() - t; t = Date.now();

@@ -9,7 +9,7 @@
 // diffs (generator outputs masked). Live files stay outside the repo; results are copied in at the end.
 //
 //   node experiments/autobench/run.mjs --model claude-haiku-5-5 --subset 30 --seed 1 --cap 10 [--k 3] [--concurrency 4]
-//   node experiments/autobench/run.mjs --model claude-haiku-5-5 --tasks sales.multi_hop_lookup,hr.x --cap 2
+//   node experiments/autobench/run.mjs --model claude-haiku-5-5 --tasks <domain>.<task>,<domain>.<task> --cap 2
 //   node experiments/autobench/run.mjs --scripted steps.json --tasks ...     ($0: no model; steps.json = {task: [{calls}]})
 //   node experiments/autobench/run.mjs --dry-run --subset 12                 (select + prepare + print one prompt; $0)
 //   node experiments/autobench/run.mjs --harness foundry --pool devTrain --subset 6 --model claude-haiku-5-5 --cap 1
@@ -197,7 +197,7 @@ export async function runTasks(o) {
     }
     results.push(rec);
     appendFileSync(resultsFile, JSON.stringify(rec) + '\n');
-    log(`[autobench] ${task}: ${rec.final ? `pc=${rec.final.partial_credit.toFixed(3)} pass=${rec.final.task_completed_correctly}` : 'no grade'}${vote?.agreement !== undefined ? ` vote=${vote.agreement}` : ''} $${rec.costUsd.toFixed(4)}`);
+    log(`[autobench] ${task}: ${rec.final ? `pc=${rec.final.partial_credit.toFixed(3)} pass=${rec.final.task_completed_correctly}` : 'no grade'}${rec.headlineOverride ? ` [${rec.headlineOverride}; live pass=${rec.liveFinal.task_completed_correctly}]` : ''}${vote?.agreement !== undefined ? ` vote=${vote.agreement}` : ''} $${rec.costUsd.toFixed(4)}`);
   };
   const remaining = new Map(tasks.map(t => [t, opt.k]));
 

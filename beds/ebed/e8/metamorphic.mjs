@@ -146,8 +146,13 @@ export const REF_ARMS = Object.freeze(['ref-earliest', 'ref-latest']);
 
 const noopArm = () => ({ id: 'noop', tick: () => ({ decisions: { subject: null }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], carry: null }) });
 
-/** Run one arm through the host. `item` drives the reference (and the controls built on it). Returns content rows. */
-export async function runArm({ item = oracleItem, B = binding, world, arm, wrap = null, maxWakeups = 60_000 }) {
+/**
+ * Run one arm through the host. `item` drives the reference (and the controls built on it). Returns content rows.
+ * Guards for mutated transitions (a dev-world run here has fewer than 600 wake-ups and 4,000 rows): more than
+ * `maxWakeups` wake-ups or `maxRows` journal rows stops the run (the latter as a quota stop, so the host freezes
+ * cleanly) and throws.
+ */
+export async function runArm({ item = oracleItem, B = binding, world, arm, wrap = null, maxWakeups = 5_000, maxRows = 100_000 }) {
   const holder = {};
   let a;
   if (arm === 'noop') a = noopArm();
@@ -159,8 +164,14 @@ export async function runArm({ item = oracleItem, B = binding, world, arm, wrap 
       journal: () => ({ committed: holder.host.journal.rows, staged: holder.host.journal.staged }) });
   }
   if (wrap) a = wrap(a, { item, world, holder, arm });
-  holder.host = createHost({ item: B, world, arm: a, maxWakeups });
-  await holder.host.run();
+  const inner = a;
+  const guarded = { id: inner.id, tick(input, ctx) {
+    if (holder.host.journal.rows.length > maxRows) { const e = new Error(`more than ${maxRows} journal rows`); e.quota = true; throw e; }
+    return inner.tick(input, ctx);
+  } };
+  holder.host = createHost({ item: B, world, arm: guarded, maxWakeups });
+  const res = await holder.host.run();
+  if (res.status !== 'complete') throw new Error(`run stopped: ${res.status} (more than ${maxRows} journal rows)`);
   return holder.host.journal.contentRows();
 }
 
@@ -637,7 +648,7 @@ const attempt = fn => { try { return fn(); } catch (e) { return { thrown: String
 const threw = x => !!x && typeof x === 'object' && 'thrown' in x;
 
 /** The oracle flavour on a fixture under `item`: every arm's per-case verdicts on W and T(W) agree (MR10: the monotone relation). */
-export function oracleCheck(fx, item = oracleItem, { sigCache = null } = {}) {
+export function oracleCheck(fx, item = oracleItem, { sigCache = null, first = false } = {}) {
   const cases = fx.only ?? Object.keys(fx.W.truth.cases);
   const out = [];
   for (const arm of Object.keys(fx.src)) {
@@ -649,9 +660,9 @@ export function oracleCheck(fx, item = oracleItem, { sigCache = null } = {}) {
       if (!(threw(a) && threw(b) && a.thrown === b.thrown)) out.push({ flavour: 'oracle', arm, what: 'grading threw', source: a.thrown ?? 'ok', followUp: b.thrown ?? 'ok' });
       continue;
     }
-    if (fx.mr === 'MR10') { out.push(...mr10Check(fx, a, b, arm)); continue; }
-    const d = firstDiff(a, b, cases, 'verdict');
-    if (d) out.push({ flavour: 'oracle', arm, ...d });
+    if (fx.mr === 'MR10') out.push(...mr10Check(fx, a, b, arm));
+    else { const d = firstDiff(a, b, cases, 'verdict'); if (d) out.push({ flavour: 'oracle', arm, ...d }); }
+    if (first && out.length) break;
   }
   return out;
 }

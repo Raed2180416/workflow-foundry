@@ -35,7 +35,7 @@ test('harness section: delimited, identical for every task, no grading vocabular
   for (const phase of ['Discover (read only)', 'Requirement ledger', 'Plan', 'Act', 'Verify', 'Stop']) assert.ok(s.includes(phase), phase);
   // Nothing about grading, and nothing domain-, app- or task-specific.
   assert.doesNotMatch(s, /assert|rubric|grade|grading|score|partial.credit|task_name|oracle|benchmark|automationbench/i);
-  assert.doesNotMatch(s, /\b(sales|marketing|operations|finance|hr|crm|gmail|slack|salesforce|hubspot|zendesk|jira|quickbooks|xero|stripe|notion|confluence|calendar|invoice|ticket|deal|lead|currency|EUR|USD)\b/i);
+  assert.doesNotMatch(s, /\b(sales|marketing|operations|finance|hr|crm|contacts?|gmail|slack|salesforce|hubspot|zendesk|jira|quickbooks|xero|stripe|notion|confluence|calendar|invoice|ticket|deal|lead|currency|EUR|USD)\b/i);
   // Only the step limit (a protocol constant) varies.
   assert.equal(harnessSection({ maxSteps: 50 }), s);
   assert.equal(harnessSection({ maxSteps: 4 }).replace('At most 3 such', 'At most 49 such'), s);

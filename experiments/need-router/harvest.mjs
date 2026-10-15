@@ -41,9 +41,14 @@ const MODE = slug => slug
 /** Stream arm slug -> mode name (agent-haiku, jit-OH, static-b1h, ...), for callers that join harvested rows with raw stream rows. */
 export const modeOf = slug => MODE(slug);
 
-export function readStreams(root) {
+/**
+ * Every stream under root/<experiment>/<arm>/results.jsonl. `only` (an array of experiment ids) restricts the read to those experiments: a directory
+ * outside it is never opened, so a caller that has a fixed list of experiments (the M0 diagnostics' LEGACY job definitions) cannot load, hash or
+ * report an experiment it did not name (for example a held-out stream committed under the same root later).
+ */
+export function readStreams(root, { only = null } = {}) {
   const out = [];
-  for (const exp of readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).sort()) {
+  for (const exp of readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).filter(n => !only || only.includes(n)).sort()) {
     for (const arm of readdirSync(path.join(root, exp), { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).sort()) {
       const f = path.join(root, exp, arm, 'results.jsonl');
       if (!existsSync(f)) continue;

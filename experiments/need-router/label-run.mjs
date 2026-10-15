@@ -68,7 +68,7 @@ import { compileDataSchema } from '../../src/validate.mjs';
 import { assertSeedsAllowed, loadLedger } from '../jit/seeds.mjs';
 import { STAGES_FILE, PREREG_FILE, ROLES, planTasks, exampleSet, span, checkStages, armSha, canonicalJson, stamp as engineStamp, stampDiff } from './prereg-check.mjs';
 import { needTable, needLabels, HEADLINE, DELTA, MODES, ENV_FAULT_LIMIT } from './metrics.mjs';
-import { guardMeter, readMeterGate, readVerification, meterGateDecision, OUTPUT_TOLERANCE } from './meter-gate.mjs';
+import { guardMeter, readCommittedMeterGate, readCommittedWaiver, readVerification, meterGateDecision, OUTPUT_TOLERANCE } from './meter-gate.mjs';
 import { perArm, cacheShareCell } from '../memory/cache-share.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -1035,8 +1035,10 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
 /**
  * What a paid run (no --dry) must pass before anything is spent. Returns { errors, deviations, stamp }; the run is refused
  * on any error. deps (tests): { canonicalFile, preregFile, checkStagesFn, stampOf, frozenSha (file -> sha256 hex of its
- * frozen text, default: its committed HEAD blob), ledger, policy, meterGate (() -> D6's summary.meterGate or null), meterVerification (() -> the
- * verification record or null) }.
+ * frozen text, default: its committed HEAD blob), ledger, policy, meterGate (() -> D6's summary.meterGate or null; default: read from the committed
+ * HEAD blob of diagnostics.json), meterGateWaiver (() -> the owner's logged waiver or null), meterGateDirty (() -> why the working-tree diagnostics.json
+ * differs from HEAD, or null; default: compared with the HEAD blob, and null when `meterGate` is injected), meterVerification (() -> the verification record
+ * or null) }.
  *  - approval: the stage's approved flag (the owner's gate);
  *  - status: a frozen plan, or --allow-draft, which is recorded in report.deviations;
  *  - the plan: the canonical stages.json (same bytes), or a spec whose sha256 the preregistration text names (an addendum
@@ -1047,13 +1049,14 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
  *  - the preregistration: the canonical file, equal to its frozen text (stages.json preregSha256 when the freeze records
  *    it, else the committed HEAD blob: no uncommitted edit);
  *  - the label-engine stamp (prereg-check stamp): a commit and no uncommitted change in the label engine;
- *  - the cost-meter gate (meter-gate.mjs; D6 of the M0 diagnostics): no stage with an agent arm while analysis/m0/diagnostics.json says
- *    block-until-verified and no passing meter-verification record is on file;
+ *  - the cost-meter gate (meter-gate.mjs; D6 of the M0 diagnostics), read from the COMMITTED diagnostics.json (HEAD blob): no stage with an agent arm while it
+ *    says block-until-verified and no passing meter-verification record is on file; none either when there is no gate to read (a missing, unparseable or
+ *    partial file) unless the owner's waiver is logged (recorded in report.deviations), nor while the working-tree file differs from the HEAD blob;
  *  - --jobs/--arms only with --deviation TEXT (both recorded in report.deviations).
  */
 export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters = null, deviation = null, deps = {} }) {
   const { canonicalFile = STAGES_FILE, preregFile = PREREG_FILE, checkStagesFn = checkStages, stampOf = engineStamp, frozenSha = gitBlobSha256, ledger = undefined, policy = undefined,
-    meterGate = readMeterGate, meterVerification = readVerification } = deps;
+    meterGate = null, meterGateWaiver = null, meterGateDirty = null, meterVerification = readVerification } = deps;
   const { stages, stage } = plan, errors = [], deviations = [];
   if (stage.approved !== true) errors.push(`stage ${stage.id} is not approved (stages.json approved: ${stage.approved}); paid runs need the owner's gate`);
   if (stages.status !== 'frozen') {
@@ -1081,8 +1084,14 @@ export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters
   }
   // The cost-meter gate (D6, meter-gate.mjs): a stage with an agent arm does not start while the committed gate is block-until-verified and no
   // passing meter-verification record is on file.
-  const mg = meterGateDecision({ gate: meterGate(), verification: meterVerification(), arms: [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => stages.arms[a]) });
+  // Fail closed: no gate on file refuses the stage unless the owner's waiver is logged; the gate is the committed one, and a working tree that differs refuses it.
+  const committed = meterGate ? null : readCommittedMeterGate();
+  const mg = meterGateDecision({
+    gate: meterGate ? meterGate() : committed.gate, verification: meterVerification(), arms: [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => stages.arms[a]),
+    waiver: meterGateWaiver ? meterGateWaiver() : meterGate ? null : readCommittedWaiver(), problem: committed?.problem ?? null, dirty: meterGateDirty ? meterGateDirty() : committed?.dirty ?? null,
+  });
   if (!mg.allow) errors.push(`meter gate: ${mg.why}`);
+  else if (mg.waived) deviations.push({ kind: 'meter-gate-waiver', text: `meter gate: ${mg.why}`, waiver: mg.waiver });
   let st = null;
   try { st = stampOf(stages, { stage: stage.id }); } catch (e) { errors.push(`engine stamp: ${e.message}`); }
   if (st) {

@@ -18,6 +18,7 @@ INBOX = f"marketing@{ORG}"
 SUMMARY_TO = f"app-reviews@{ORG}"
 PRODUCT = f"product@{ORG}"
 DEV = f"dev@{ORG}"
+MKT = f"jordan.ames@{ORG}"            # a marketing teammate: not an amendment owner
 INTERN = f"intern@{ORG}"
 STORE_SENDERS = ("reviews@appstore.example.com", "review-noreply@appstore.example.com")
 APP_NAME = "Fernleaf Planner"

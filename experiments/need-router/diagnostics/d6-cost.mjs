@@ -119,8 +119,9 @@ export function directCallCheck(jobs, table, models = { 'direct-H': 'claude-haik
 /**
  * Check 4: replace the cost of every agent mode whose rows all have streamUsage by its re-priced value (per row), recompute the NEED
  * labels over the whole grid and count the cells where the label or the best mode changes against the reported meter. Labels are L_today (the
- * fields at the top of each entry) with L_ceiling beside it for jobs that have ceiling arms (hand-written or Opus-built workflows, whose authoring
- * or build cost is charged: legacy.mjs).
+ * fields at the top of each entry) with L_ceiling beside it for jobs that have ceiling arms (workflows not written by the cheap builder: hand-written,
+ * Opus-built, Opus- or Sonnet-compiled, whose authoring or build cost is charged: legacy.mjs). Cells the label factory leaves unlabelled (more than 30% of
+ * a contending mode's dollars imputed, DESIGN §2) are reported as such and never counted as a label flip or a best-mode change.
  */
 export function meterImpact(jobs, table) {
   const out = [];
@@ -143,13 +144,26 @@ export function meterImpact(jobs, table) {
       const tbl = needTable(mr, builds, { registry: LEGACY_REGISTRY });
       variants[meter] = { today: needLabels(tbl, { cells: GRID, reps: 0, modes: sets.today.modes }), ceiling: sets.ceiling ? needLabels(tbl, { cells: GRID, reps: 0, modes: sets.ceiling.modes }) : null };
     }
+    // A cell the label factory leaves unlabelled (DESIGN §2: more than 30% of a contending mode's dollars imputed; metrics.needLabels sets `unlabelled`) has no
+    // NEED label and no best mode under that meter. It is reported as unlabelled with its reason and counted per meter; a label flip or a best-mode change is
+    // counted only on cells labelled under BOTH meters, so a cell whose label rests on imputed dollars never reads as a finding.
+    const headOf = e => ({ headlineLabel: e.unlabelled ? 'unlabelled' : e.label, headlineTop: e.unlabelled ? null : e.top, headlineUnlabelled: e.unlabelled ?? null });
     const view = which => {
+      const L = meter => variants[meter][which];
       const cmp = meter => {
-        const flips = [], tops = [];
-        for (const c of GRID) { const a = variants.reported[which].at(job.id, c), b = variants[meter][which].at(job.id, c); if (a.label !== b.label) flips.push(c.key); if (a.top !== b.top) tops.push(c.key); }
-        return { labelFlips: flips.length, topChanges: tops.length, headlineTop: variants[meter][which].at(job.id, HEADLINE).top, headlineLabel: variants[meter][which].at(job.id, HEADLINE).label };
+        const flips = [], tops = []; let comparable = 0, unlabelled = 0;
+        for (const c of GRID) {
+          const a = L('reported').at(job.id, c), b = L(meter).at(job.id, c);
+          if (b.unlabelled) unlabelled += 1;
+          if (a.unlabelled || b.unlabelled) continue;
+          comparable += 1;
+          if (a.label !== b.label) flips.push(c.key);
+          if (a.top !== b.top) tops.push(c.key);
+        }
+        return { labelFlips: flips.length, topChanges: tops.length, comparableCells: comparable, unlabelledCells: unlabelled, ...headOf(L(meter).at(job.id, HEADLINE)) };
       };
-      return { reported: { headlineTop: variants.reported[which].at(job.id, HEADLINE).top, headlineLabel: variants.reported[which].at(job.id, HEADLINE).label }, p5: cmp('p5'), p1h: cmp('p1h') };
+      const rep = L('reported'), reportedUnlabelled = GRID.filter(c => rep.at(job.id, c).unlabelled).length;
+      return { reported: { unlabelledCells: reportedUnlabelled, ...headOf(rep.at(job.id, HEADLINE)) }, p5: cmp('p5'), p1h: cmp('p1h') };
     };
     out.push({ job: job.id, repricedModes: [...repriced.keys()], cells: GRID.length, ...view('today'), labelSets: { today: sets.today, ceiling: sets.ceiling }, ceiling: sets.ceiling ? view('ceiling') : null });
   }

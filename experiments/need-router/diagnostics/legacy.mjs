@@ -6,7 +6,7 @@
 // (a container without it) the loader falls back to the git-ignored experiments/runs/ copy and says so in `sources`.
 // A unit is one task run: `${taskKey}#t${trial}` for P1 and C0 (trials share a task, hence a seed and a taskHash), the
 // taskKey for the single-draw JIT streams. A LEGACY job is one archived experiment with its modes paired on its units.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { readJsonl, ARCHIVE_DIR, REPO, rel, abs, sourceOf, listDir } from './common.mjs';
 import { readStreams, harvest, modeOf, LEGACY_TAG, FIXED_COMPONENTS } from '../harvest.mjs';
@@ -32,10 +32,23 @@ export const JIT_MODES = Object.freeze({
   'jit-HH': 'jit-HH', 'jit-OH': 'jit-OH', 'jit-SH': 'jit-SH', 'static-b1h': 'static-b1h',
 });
 /**
+ * The ceiling rule (DESIGN §2): L_today keeps the workflow modes whose workflow was written by the cheap builder, the one the router deploys today
+ * (Haiku 5.5: construct-H, agent-H+proc); L_ceiling also admits what a frontier model or a person wrote (build-O, the references). Applied to every
+ * LEGACY workflow mode by the one field that decides it, the AUTHOR of the workflow (not the model that executes it):
+ *   haiku    the cheap builder: L_today
+ *   opus     a frontier model (the analogue of build-O): ceiling. wf-O and script-O (C0 Opus builder), jit-OH (Opus compiler), hand-H and hand-S
+ *            (the P1 workflow an Opus agent hand-wrote; the executor, Haiku or Sonnet, is not its author)
+ *   sonnet   a mid-tier model that is not the cheap builder and that no v1 mode builds with: ceiling, by the same rule (jit-SH, Sonnet compiler).
+ *            This is a decision, not a measurement: DESIGN §2 names Haiku as today's builder and admits only build-O and the references beyond it.
+ * `ceiling` is derived from `builder`, so no workflow mode can be added without saying who wrote its workflow (a test asserts it).
+ */
+export const CHEAP_BUILDER = 'haiku';
+const WF = (kind, builder) => ({ cls: 'workflow', kind, builder, ...(builder === CHEAP_BUILDER ? {} : { ceiling: true }) });
+/**
  * Mode registry in the shape metrics.needTable takes. cls is the binary need class; JIT is counted as workflow (an assumption, stated in the report).
- * `ceiling: true` marks an arm that DESIGN §2 admits to L_ceiling only: a workflow written by a frontier model or a person (hand-H and hand-S
- * run the workflow an Opus agent hand-wrote after studying the family, P1_HAND_AUTHORING; wf-O and script-O are built by an Opus builder, the
- * analogue of build-O). L_today uses the cheap-builder workflow modes only (labelSetModes drops the ceiling arms). No LEGACY mode carries
+ * `ceiling: true` marks an arm that DESIGN §2 admits to L_ceiling only, derived from `builder` by the rule above (hand-H and hand-S run the workflow an
+ * Opus agent hand-wrote after studying the family, P1_HAND_AUTHORING; wf-O and script-O are built by an Opus builder, jit-OH compiled by Opus, jit-SH by
+ * Sonnet). L_today uses the cheap-builder workflow modes only (labelSetModes drops the ceiling arms). No LEGACY mode carries
  * `prebuilt`: that flag switches off metrics.needTable's guard against a built or guided mode with no build row, so a mode whose build was paid
  * for must be charged (the guard is what caught the missing P1 authoring cost).
  */
@@ -43,10 +56,10 @@ export const LEGACY_REGISTRY = Object.freeze({
   'direct-H': { cls: 'no-workflow', kind: 'none' }, 'direct-H-med': { cls: 'no-workflow', kind: 'none' }, 'direct-H-notes': { cls: 'no-workflow', kind: 'none' },
   'direct-H45': { cls: 'no-workflow', kind: 'none' }, 'direct-S': { cls: 'no-workflow', kind: 'none' },
   'agent-H': { cls: 'no-workflow', kind: 'none' }, 'agent-S': { cls: 'no-workflow', kind: 'none' }, 'agent-O': { cls: 'no-workflow', kind: 'none' },
-  'hand-H': { cls: 'workflow', kind: 'guided', ceiling: true }, 'hand-S': { cls: 'workflow', kind: 'guided', ceiling: true },
-  'wf-H': { cls: 'workflow', kind: 'built' }, 'wf-O': { cls: 'workflow', kind: 'built', ceiling: true },
-  'script-H': { cls: 'workflow', kind: 'built' }, 'script-O': { cls: 'workflow', kind: 'built', ceiling: true }, 'static-b1h': { cls: 'workflow', kind: 'built' },
-  'jit-HH': { cls: 'workflow', kind: 'jit' }, 'jit-OH': { cls: 'workflow', kind: 'jit' }, 'jit-SH': { cls: 'workflow', kind: 'jit' },
+  'hand-H': WF('guided', 'opus'), 'hand-S': WF('guided', 'opus'),
+  'wf-H': WF('built', 'haiku'), 'wf-O': WF('built', 'opus'),
+  'script-H': WF('built', 'haiku'), 'script-O': WF('built', 'opus'), 'static-b1h': WF('built', 'haiku'),
+  'jit-HH': WF('jit', 'haiku'), 'jit-OH': WF('jit', 'opus'), 'jit-SH': WF('jit', 'sonnet'),
 });
 /** The label-set views of a LEGACY job's modes (DESIGN §2): L_today leaves out the ceiling arms (workflows written by a frontier model or a person),
  *  L_ceiling keeps everything. `vacuous`: L_today has no workflow-class mode, so its label can only be `no-workflow` and says nothing about need. */
@@ -77,7 +90,16 @@ export const LEGACY_JOB_DEFS = Object.freeze([
   { id: 'jit-dev-kinetics-1', kind: 'jit', family: 'kinetics', oracle: 'kinetics' },
   { id: 'jit-r0-kinetics', kind: 'jit', family: 'kinetics', oracle: 'kinetics' },
 ]);
+/** The JIT stream experiments the diagnostics read: the job ids of the `jit` definitions (each job id is its experiment directory under runs/). */
+export const JIT_EXPERIMENTS = Object.freeze(LEGACY_JOB_DEFS.filter(d => d.kind === 'jit').map(d => d.id));
 
+/**
+ * Schema validity of an archived answer, RECONSTRUCTED from the oracle's own record: the oracle details say `reason: 'schema-invalid'` when its schema check
+ * failed. Schema validity is a deployable signal in principle (a user can run a schema check), but no archived row stored one, so this is read back from
+ * the oracle record and is only as good as it. A row without oracle details has no such record: null (not recorded), never "valid". D3 skips a post-hoc
+ * signal that any row of a group lacks; the label matrix reads null as schema-valid, which is what a row with no schema field has always meant there.
+ */
+export const schemaValidOf = details => (details && typeof details === 'object' ? details.reason !== 'schema-invalid' : null);
 const parseDetails = s => { if (s && typeof s === 'object') return s; try { return s ? JSON.parse(s) : null; } catch { return null; } };
 const errCode = e => (e == null ? null : typeof e === 'string' ? e : e.code ?? 'ERROR');
 const seedOf = taskKey => Number(String(taskKey).match(/:s(\d+)$/)?.[1] ?? NaN);
@@ -106,7 +128,7 @@ export function normaliseRunRow(r, { modes, source }) {
     experiment: r.experiment, arm: r.arm, mode, model: AGENT_MODEL[r.arm] ?? null, family: r.family, taskKey: r.taskKey, taskHash: r.taskHash, trial: r.trial ?? 0,
     unit: `${r.taskKey}#t${r.trial ?? 0}`, seed: seedOf(r.taskKey), difficulty: diffOf(r.taskKey),
     pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null,
-    delivered: code === null, schemaValid: details?.reason !== 'schema-invalid', error: code,
+    delivered: code === null, schemaValid: schemaValidOf(details), error: code,
     usdReported, usdImputed: imputed, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? null, at: r.at ?? null,
     turns: r.meta?.turns ?? null, tools: r.meta?.tools ?? null, calls: r.meta?.calls ?? null, escalations: r.meta?.escalations ?? null,
     verdict: r.meta?.verdict ?? null, tokensOut: r.meta?.tokensOut ?? null, streamUsage: r.meta?.streamUsage ?? null,
@@ -153,9 +175,14 @@ export function jitRowBound(def, row) {
  *  tables use); `allRows` are every stream row, with the committed agent trace joined by traceId (turns, tools, stream usage, model).
  *  A row flagged costUnknown is imputed up to its arm's per-task bound exactly as normaliseRunRow does for P1 and C0 rows
  *  (usdImputed = bound - recorded, floored at 0); `job.costNotes` lists each such row. */
-export function loadJitJobs(root = JIT_RUNS_DIR) {
-  if (!existsSync(root)) return { jobs: new Map(), sources: [] };
-  const streams = readStreams(root);
+export function loadJitJobs(root = JIT_RUNS_DIR, { experiments = JIT_EXPERIMENTS } = {}) {
+  if (!existsSync(root)) return { jobs: new Map(), sources: [], skipped: [] };
+  // Only the experiments the LEGACY job definitions name are opened. Any other directory under the runs root (a held-out stream committed there later, a
+  // new dev experiment) is listed in `skipped` and never read, hashed or fed to a diagnostic: the allow-list is the seed gate for the loader, and D3's
+  // assertArchivedSeeds still refuses a task whose seed the ledger reserves for another purpose.
+  const present = listDir(root).filter(n => { try { return statSync(path.join(root, n)).isDirectory(); } catch { return false; } }).sort();
+  const skipped = present.filter(n => !experiments.includes(n)).map(experiment => ({ experiment, reason: 'not a LEGACY job definition (legacy.mjs LEGACY_JOB_DEFS): not read' }));
+  const streams = readStreams(root, { only: experiments });
   const h = harvest(streams);
   const pairedKeys = new Set(h.rows.map(x => `${x.family}\u0000${x.mode}\u0000${x.task}`));
   const jobs = new Map();
@@ -174,7 +201,7 @@ export function loadJitJobs(root = JIT_RUNS_DIR) {
       const row = {
         ...LEGACY_TAG, source: s.source, experiment: s.family, arm: armDir, mode: JIT_MODES[s.mode] ?? s.mode, model: trace?.model ?? null,
         family: String(r.taskKey).split(':')[0], taskKey: r.taskKey, taskHash: r.taskHash, trial: 0, unit: r.taskKey, seed: r.seed ?? seedOf(r.taskKey), difficulty: r.difficulty ?? diffOf(r.taskKey),
-        pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null, delivered: errCode(r.error) === null, schemaValid: details?.reason !== 'schema-invalid',
+        pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null, delivered: errCode(r.error) === null, schemaValid: schemaValidOf(details),
         error: errCode(r.error), usdReported, usdImputed, costUnknown: !!r.costUnknown, ...(bound ? { boundUsd: bound.usd } : {}), latencyMs: r.latencyMs ?? null, at: r.at ?? null,
         turns: trace?.turns ?? null, tools: trace?.tools ?? null, calls: null, escalations: null, verdict: null, tokensOut: null, streamUsage: trace?.streamUsage ?? null, details,
         traceId: r.traceId ?? null, deliveredBy: r.delivered ?? null, traceCostUsd: trace?.costUsd ?? null,
@@ -192,7 +219,7 @@ export function loadJitJobs(root = JIT_RUNS_DIR) {
   for (const f of h.fixed) if (f.fixedUsd > 0) jobs.get(f.family).builds.push({ mode: JIT_MODES[f.mode] ?? f.mode, usd: f.fixedUsd, source: f.streamSource });
   for (const rep of h.report) jobs.get(rep.family).report = rep;
   for (const j of jobs.values()) { j.sources = [...j.sources].sort(); j.costNotes.sort(); }
-  return { jobs, sources: [...new Set(h.report.flatMap(r => r.sources))].sort() };
+  return { jobs, sources: [...new Set(h.report.flatMap(r => r.sources))].sort(), skipped };
 }
 
 /**
@@ -230,6 +257,7 @@ export function loadLegacyJobs({ archiveDir = ARCHIVE_DIR, jitRoot = JIT_RUNS_DI
     else { sources.push({ ...x.source, rescued: x.rescued }); if (!x.rescued) notes.push(`${label}: read from the git-ignored experiments/runs/ copy; run rescue.mjs to commit it`); }
   }
   const jit = loadJitJobs(jitRoot);
+  for (const k of jit.skipped) notes.push(`${k.experiment}: skipped, ${k.reason}`);
   for (const def of LEGACY_JOB_DEFS) {
     let rows = [], allRows = null, builds = [], jobSources = [], harvestReport = null, costNotes = [];
     if (def.kind === 'p1') {
@@ -252,7 +280,7 @@ export function loadLegacyJobs({ archiveDir = ARCHIVE_DIR, jitRoot = JIT_RUNS_DI
     jobs.push({ ...def, rows: paired.rows, allRows: allRows ?? rows, builds: builds.filter(b => kept.has(b.mode)), pairing: paired.report, harvest: harvestReport, sources: jobSources });
   }
   if (jit.sources.length) sources.push(...jit.sources.map(p => sourceOf(p, { rescued: true })));
-  return { jobs, sources, notes };
+  return { jobs, sources, notes, skipped: jit.skipped };
 }
 
 /** The matrix rows and build rows metrics.needTable takes for one LEGACY job (single lineage 0 per built mode; every unit is its own task). */

@@ -210,13 +210,16 @@ def body_of(m: dict) -> str:
 
 # ---------------------------------------------------------------------------------------------- per trigger
 def attribution_view(after: dict, led: dict):
-    v = copy.deepcopy(after)
-    v["gmail"]["messages"] = copy.deepcopy(led["emails"])
-    v["slack"]["messages"] = copy.deepcopy(led["slack"])
+    """world_after restricted to this trigger's messages and rows; only this family's apps (the handlers read no other)."""
     rows = [copy.deepcopy(r) for r in led["rows_new"]] + [copy.deepcopy(r) for _, r in led["rows_changed"]]
     for r in rows:
         r["spreadsheet_id"], r["worksheet_id"] = ss_resolve(after, r["spreadsheet_id"], r["worksheet_id"])
-    v["google_sheets"]["rows"] = rows
+    v = {"meta": copy.deepcopy(after["meta"]),
+         "mailchimp": copy.deepcopy(after["mailchimp"]),
+         "gmail": dict(copy.deepcopy({k: x for k, x in after["gmail"].items() if k != "messages"}), messages=copy.deepcopy(led["emails"])),
+         "slack": dict(copy.deepcopy({k: x for k, x in after["slack"].items() if k != "messages"}), messages=copy.deepcopy(led["slack"])),
+         "google_sheets": {"spreadsheets": copy.deepcopy(after["google_sheets"]["spreadsheets"]),
+                           "worksheets": copy.deepcopy(after["google_sheets"]["worksheets"]), "rows": rows}}
     return _ab()["World"](**v)
 
 

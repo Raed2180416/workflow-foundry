@@ -621,17 +621,17 @@ reported benchmark lead is not established by the evidence in the repo (§7.1) [
 | Before-finish deliverables/format checks | acceptance grading (`gating`, `existence-only`, `no-oracle`, `unassessed`) and a strict construction lint; requirement tracker that extracts user conditions with verbatim quotes and runs model-written checks in a sandbox | `src/acceptance.mjs:21,175-223`; `src/lint.mjs:1-8`; `experiments/tracker/README.md:1-10`; `experiments/tracker/checks.mjs:1-14` | **Partial**: Foundry grades acceptance strength; it lacks OpenScience's cheap file-format checks |
 | Request-stated verifier commands run before finish | `verify` nodes with `independence` labels; `code` nodes in namespaces | `schemas/workflow.schema.json:189,209`; `src/sandbox.mjs:6-8` | **Yes** (declared in the workflow, not regex-extracted) |
 | Fresh-context report reviewer | `verify` with `different-model`/`same-model` labels; measured that Jev and Haiku are correlated; planted-mutant rule for child verification | `schemas/workflow.schema.json:189`; `research/architecture-20261014/MEMORY-ROUTING-RECURSION.md:266,449-452,536-538` | **Yes, with independence semantics OpenScience lacks** |
-| Skill library (372, prose) | 14 portable skills; 17 L1 library cards with typed slots, fragments, `when` judgments and support counts | `skills/*/SKILL.md`; `experiments/library/cards/catalog.json`; `experiments/library/card-types.mjs:1-40` | **Partial**: far fewer, but typed; no science domain breadth |
-| Skill retrieval | card retrieval and assembly experiments | `experiments/library/retrieve.mjs` | **Partial** |
-| Hill-climbing study loop | no equivalent loop pattern; C1 assignment search and heal replay are adjacent | `research/distill-20261007/DESIGN.md`; `experiments/heal/` | **No** |
-| Digest-bound paid-compute approval | hash-bound workflows and proposals; ambiguous effects become `uncertain`, never retried; EffectPort | `README.md` Boundaries; `src/verdict.mjs:7-26` | **Partial** (no remote compute effect yet) |
+| Skill library (372, prose) | 14 portable skills; 17 L1 library cards with typed slots, fragments, `when` judgments and support counts | `skills/*/SKILL.md` (14 files, 1,068 lines); `experiments/library/cards/catalog.json`; `experiments/library/card-types.mjs:1-40` | **Partial**: far fewer, but typed; no science domain breadth |
+| Skill retrieval | code-first BM25 candidate generation over cards, no model, no embedding | `experiments/library/retrieve.mjs:1-5` | **Yes (same class of method)** |
+| Hill-climbing study loop | no equivalent loop pattern; C1 assignment search and heal replay are adjacent | `research/distill-20261007/DESIGN.md:1-60`; `experiments/heal/` | **No** |
+| Digest-bound paid-compute approval | hash-bound workflows and proposals; ambiguous effects become `uncertain`, never retried; EffectPort | `README.md:488-490`; `src/verdict.mjs:7-26` | **Partial** (no remote compute effect yet) |
 | OS sandbox | bubblewrap user+net+mount+pid namespaces, PATH-only env, never falls back | `src/sandbox.mjs:6-8` | **Yes, stricter** (no "full access" mode) |
 | Permission modes / shell-risk classifier | label policy and control-flow taint (`UNTRUSTED_CONTROL`) | `src/validate.mjs:239-245` | **Different**: Foundry gates by data labels, OpenScience by command risk |
 | Session memory, compaction, `recall` | 7-memory model; free inside a node; typed outputs across edges; no transcripts across runs | `research/architecture-20261014/MEMORY-ROUTING-RECURSION.md:290-357` | **Partial**: Foundry has no in-node compaction or recall (delegated to executors) |
 | Project instructions (AGENTS.md) | not Foundry's job (AMP) | `docs/THESIS.md:128-130` | **No (intentional)** |
-| Preregistration | committed template; prereg checks in the need-router experiments; sealed families | `research/PREREGISTRATION-TEMPLATE.md:1-40`; `experiments/need-router/prereg-check.mjs`; `README.md:95` | **Yes, stronger** (OpenScience's is dormant) |
-| External benchmarks via Harbor | none run; Tier B/C need Modal/Harbor credentials | `README.md:118` (evaluation validity), owner decisions table "Remote compute" | **No** |
-| Release suite with held-out split and hash lock | sealed families, frozen manifests, burned-seed accounting | `README.md:95,184-186`; `research/freeze.mjs` | **Yes, stronger** |
+| Preregistration | committed template; prereg checks in the need-router experiments; sealed families | `research/PREREGISTRATION-TEMPLATE.md:1-40`; `experiments/need-router/prereg-check.mjs:1-4`; `README.md:95` | **Yes, stronger** (OpenScience's is dormant) |
+| External benchmarks via Harbor | none run; Tier B/C need Modal/Harbor credentials | `README.md:118,340` | **No** |
+| Release suite with held-out split and hash lock | sealed families, frozen manifests, burned-seed accounting | `README.md:95,184-186`; `research/freeze.mjs:1-3` | **Yes, stronger** |
 | Model routing | policy file as the only source of ids; need router (mode choice) as a $0 research artefact; precedence design with pins | `policy/models.json:12`; `experiments/need-router/router.mjs:1-40`; `research/architecture-20261014/MEMORY-ROUTING-RECURSION.md:486-540` | **Partial, ahead in design**; OpenScience has manual choice only |
 | Science connectors, BioNeMo, kernels | not in scope ("not a connector catalog") | `docs/THESIS.md:127` | **No (intentional)**; reachable through MCP or executors |
 | Harness manifests | context compiler receipts; hash chain binds journal rows and decisions | `src/context.mjs:5-8`; `src/verify-run.mjs:1-3` | **Yes** |
@@ -654,8 +654,10 @@ reported benchmark lead is not established by the evidence in the repo (§7.1) [
 5. **Compute-effect rules from ADR 0001** for Foundry's EffectPort when remote compute arrives:
    `OS/docs/adr/0001-modal-compute-control-plane.md:17-35` (digest-bound approval, credentials resolved only after
    approval, never rerun a paid command, delivery recovery separate from execution).
-6. **Lexical IDF skill/card search as the $0 baseline** any learned card retrieval must beat:
-   `SRC/skill/search.ts:43-87`.
+6. **Field-weighted lexical search as one more $0 retrieval arm.** Foundry already ranks cards by BM25 in code
+   (`experiments/library/retrieve.mjs:1-5`); OpenScience adds per-field weights (name ×8, tags and capability ×5,
+   description ×3, category ×2) and exact-name/alias precedence (`SRC/skill/search.ts:43-87`). Worth one arm in the
+   library retrieval tests, nothing more.
 7. **Skill-load receipts**: sha256 of the delivered body plus "already loaded" receipts
    (`SRC/tool/skill.ts:261-292`), for Foundry's skills when installed into executors.
 8. **`recall` inside agent nodes** (regex over the node's own history and saved outputs, `SRC/tool/recall.ts:1-121`):

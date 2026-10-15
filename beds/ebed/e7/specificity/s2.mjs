@@ -432,6 +432,11 @@ class Files {
           walk(s, '');
         }
       } else if (typeof s === 'function' && typeof s.list === 'function') keys = [...(s.list() || [])];
+      if (!keys.some((k) => /rulebook\//.test(k))) {
+        // a listing that leaves out the rulebook: look for a rulebook directory object
+        const rb = this.raw('rulebook');
+        if (rb && typeof rb === 'object') for (const [ed, v] of Object.entries(rb)) if (v && typeof v === 'object') for (const f of Object.keys(v)) keys.push(`rulebook/${ed}/${f}`);
+      }
     } catch { keys = []; }
     this.listing = keys.map(String);
     return this.listing;
@@ -706,6 +711,8 @@ function holds(conds, v) {
   return true;
 }
 
+function isAwaitingCaller(r) { return lc(r).replace(/[^a-z]/g, '') === 'awaitingcaller'; }
+
 function normalWin(t) { return { ws: t, we: t + 15 * MIN }; }
 function afterWin(t, minutes) { return { ws: afterInstant(t), we: t + minutes * MIN }; }
 
@@ -804,7 +811,7 @@ class Replay {
   nextDerived() {
     const S = this.S;
     const cands = [];
-    if (S.state === 'onHold' && S.holdReason === 'awaitingCaller' && S.callerDl && S.callerDl.D != null) cands.push(S.callerDl.D);
+    if (S.state === 'onHold' && isAwaitingCaller(S.holdReason) && S.callerDl && S.callerDl.D != null) cands.push(S.callerDl.D);
     if (S.state === 'resolved' && S.d2 != null) cands.push(S.d2);
     const ap = this.ap;
     if (ap && !ap.moot && !ap.counted && ap.deadline != null) cands.push(ap.deadline);
@@ -839,7 +846,7 @@ class Replay {
     }
     // wake-ups for deadlines not yet passed
     const S = this.S;
-    if (S.state === 'onHold' && S.holdReason === 'awaitingCaller' && S.callerDl?.D != null && S.callerDl.D >= this.now) this.wakes.push(afterInstant(S.callerDl.D));
+    if (S.state === 'onHold' && isAwaitingCaller(S.holdReason) && S.callerDl?.D != null && S.callerDl.D >= this.now) this.wakes.push(afterInstant(S.callerDl.D));
     if (S.state === 'resolved' && S.d2 != null && S.d2 >= this.now) this.wakes.push(afterInstant(S.d2));
     const ap = this.ap;
     if (ap && !ap.moot && !ap.counted && ap.deadline != null && ap.deadline >= this.now) this.wakes.push(afterInstant(ap.deadline));
@@ -905,7 +912,7 @@ class Replay {
         const reason = f.hr ? String(f.hr) : 'other';
         S.state = 'onHold'; S.holdReason = reason;
         this.itsm('hold', { reason, at: fmt(t) }, t, win);
-        if (reason === 'awaitingCaller') {
+        if (isAwaitingCaller(reason)) {
           this.notify('awaiting-caller', this.callerEmail(), t, win, `Incident ${this.N} is waiting for your reply.`);
           S.callerDl = { h: t, D: this.deskDeadline(t, 'callerReplyDays') };
         }
@@ -921,6 +928,7 @@ class Replay {
         if (!['assigned', 'inProgress', 'onHold'].includes(S.state)) return false;
         const g = this.canonGroup(f.tg);
         if (!g) return false;
+        if (S.state === 'assigned' && sameValue(S.group, g)) return false; // nothing would change (a repeated update)
         this.assign(g, t, win);
         return true;
       }
@@ -966,7 +974,7 @@ class Replay {
     const S = this.S, t = f.t, win = normalWin(t);
     const intent = lc(f.i);
     if (intent === 'reply') {
-      if (S.state === 'onHold' && S.holdReason === 'awaitingCaller' && (S.callerDl?.D == null || t <= S.callerDl.D)) {
+      if (S.state === 'onHold' && isAwaitingCaller(S.holdReason) && (S.callerDl?.D == null || t <= S.callerDl.D)) {
         S.state = 'inProgress'; S.holdReason = null; S.callerDl = null;
         this.itsm('resume', { at: fmt(t) }, t, win);
         return true;
@@ -1007,7 +1015,7 @@ class Replay {
   derivedAt(t) {
     const S = this.S;
     let changed = false, win = null;
-    if (S.state === 'onHold' && S.holdReason === 'awaitingCaller' && S.callerDl && S.callerDl.D === t) {
+    if (S.state === 'onHold' && isAwaitingCaller(S.holdReason) && S.callerDl && S.callerDl.D === t) {
       win = afterWin(t, 60);
       S.state = 'closed'; S.callerDl = null;
       this.itsm('close', { reason: 'no-caller-response', at: fmt(t) }, t, win);
@@ -1051,7 +1059,7 @@ class Replay {
     if (tasks.length) {
       const c1 = tasks[0].c;
       const mins = Number(this.env.policy(c1).majorApprovalMinutes);
-      this.ap.deadline = Number.isFinite(mins) ? c1 + mins * MIN : null;
+      this.ap.deadline = c1 + (Number.isFinite(mins) ? mins : 60) * MIN;
     }
   }
 
@@ -1077,11 +1085,20 @@ class Replay {
         if (d === 'approve') { this.declareMajor(f.t, normalWin(f.t)); return true; }
         return false;
       }
-      ap.allowance++;
+      this.grant(f.id);
       return false;
     }
-    if (f.e === 'answerRejected' || f.e === 'withdrawn') ap.allowance++;
+    if (f.e === 'answerRejected' || f.e === 'withdrawn') this.grant(f.id);
     return false;
+  }
+
+  // R7.2: one further task for each counted task whose answer was unusable, withdrawn or rejected by the schema.
+  grant(taskId) {
+    const ap = this.ap;
+    ap.granted = ap.granted || new Set();
+    if (ap.granted.has(taskId)) return;
+    ap.granted.add(taskId);
+    ap.allowance++;
   }
 
   approvalWants() {
@@ -1324,7 +1341,7 @@ Object.assign(Replay.prototype, {
       if (f.t >= t0 || f.k === 'ht') continue;
       if (this.applyFact(f)) this.pushSegment(f.t);
     }
-    const shadowHold = this.S.state === 'onHold' && this.S.holdReason === 'awaitingCaller' ? this.S.callerDl?.h ?? null : null;
+    const shadowHold = this.S.state === 'onHold' && isAwaitingCaller(this.S.holdReason) ? this.S.callerDl?.h ?? null : null;
     const everP1 = !!this.ap;
     this.records = []; this.keyUse = new Map(); this.ap = null; this.seq = 0; this.migDone = new Set();
 
@@ -1373,7 +1390,7 @@ Object.assign(Replay.prototype, {
 
     // Deadlines already running at go-live.
     const S = this.S;
-    if (S.state === 'onHold' && S.holdReason === 'awaitingCaller') {
+    if (S.state === 'onHold' && isAwaitingCaller(S.holdReason)) {
       let h = shadowHold;
       if (h == null) {
         const opens = this.slas.flatMap((s) => s.pauses.filter((p) => p[1] == null).map((p) => p[0])).filter((x) => x < t0);
@@ -1503,10 +1520,11 @@ function toFact(env, ev, kind, t, seq) {
 }
 
 function pickArray(p, names) {
-  const scopes = [p, p?.records, p?.sor, p?.export, p?.data, p?.state].filter((x) => x && typeof x === 'object');
+  const scopes = [p, p?.records, p?.sor, p?.export, p?.data, p?.state, p?.snapshot].filter((x) => x && typeof x === 'object');
   for (const s of scopes) {
     for (const n of names) {
-      const v = s[n];
+      let v = s[n];
+      if (v == null && n.includes('.')) { const [a, b] = n.split('.'); v = s[a]?.[b]; }
       if (v == null) continue;
       if (Array.isArray(v)) return v;
       if (typeof v === 'object') return 'number' in v || 'slaId' in v || 'notificationId' in v || 'escalationId' in v ? [v] : Object.values(v);
@@ -1608,7 +1626,7 @@ class Solver {
       summary: String(b.summary ?? '').slice(0, 400), group: env.assignmentGroup(t, category, region, ci),
     };
     const carry = { v: 2, role: 'incident', number, inc, mig: null, facts: [], tasks: [], fx: {}, q: 0, wake: null };
-    return this.incidentTick(env, ctx, input, now, carry, input.events.filter((e) => e !== ev));
+    return this.incidentTick(env, ctx, input, now, carry, (Array.isArray(input.events) ? input.events : []).filter((e) => e !== ev));
   }
 
   intakeAlert(env, ctx, input, now, ev, b, t) {
@@ -1661,7 +1679,7 @@ class Solver {
       group: env.assignmentGroup(t, 'monitoring', ci?.region ?? null, ci),
     };
     const carry = { v: 2, role: 'incident', number: own, inc, mig: null, facts: [], tasks: [], fx: {}, q: 0, wake: null };
-    return this.incidentTick(env, ctx, input, now, carry, input.events.filter((e) => e !== ev));
+    return this.incidentTick(env, ctx, input, now, carry, (Array.isArray(input.events) ? input.events : []).filter((e) => e !== ev));
   }
 
   fromMigration(env, ev, now) {
@@ -1673,7 +1691,7 @@ class Solver {
     const slas = pickArray(p, ['sla.slas', 'slas']).filter((s) => !s.number || normIncident(s.number) === number);
     const escs = pickArray(p, ['sla.escalations', 'escalations']).filter((s) => !s.number || normIncident(s.number) === number);
     const notes = pickArray(p, ['notify.notifications', 'notifications']).filter((s) => !s.about || normIncident(s.about) === number);
-    const msgs = pickArray(p, ['messages', 'events', 'inbound', 'received', 'history']);
+    const msgs = pickArray(p, ['messages', 'events', 'inbound', 'received', 'history', 'messagesReceived', 'receivedMessages']);
     const srcKind = rec.source?.kind ?? (/^INC-ALR/i.test(number) ? 'alert' : 'report');
     const ci = env.ci(rec.ci) || env.resolveCi(rec.ci);
     const caller = env.user(rec.callerId);
@@ -1717,8 +1735,14 @@ class Solver {
   }
 
   ingest(env, now, c, events) {
+    c.seen = Array.isArray(c.seen) ? c.seen : [];
     for (const ev of events) {
       const kind = classify(ev);
+      if (ev?.id != null && ['task', 'resolver', 'caller', 'alert', 'report'].includes(kind)) {
+        if (c.seen.includes(String(ev.id))) continue; // the very same event delivered again
+        c.seen.push(String(ev.id));
+        if (c.seen.length > 300) c.seen.splice(0, c.seen.length - 300);
+      }
       const t = evTime(ev, now);
       if (kind === 'result') { this.onResult(c, ev.payload || {}, t, now); continue; }
       if (kind === 'timer') {

@@ -29,7 +29,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { generateWorld, referenceRuns, oracleItem, binding, referenceTransition } from './index.mjs';
 import { VARIANTS } from './controls.mjs';
-import { runReference } from '../oracle/policy.mjs';
+import { referenceArm } from '../oracle/policy.mjs';
+import { createHost } from '../host/host.mjs';
 import { indexJournal, caseView, caseIds } from '../oracle/view.mjs';
 import { gradeCase } from '../oracle/grade.mjs';
 import { createHash } from 'node:crypto';
@@ -46,7 +47,7 @@ export const PARAMS = Object.freeze({
   revealEpochs: Object.freeze(['ep2', 'ep3']),   // §2.10: revealed in E2 or E3 (window [start ep2, start ep4))
   lagMinutes: 24 * 60,                           // a claim arrives one day after its failure became observable
   timing: 'earliest',                            // the reference policy's timing for every mutant run
-  runawayFactor: 5,                              // a mutant waking more than 5x as often as the reference (+500) is stopped: runaway
+  runawayFactor: 3,                              // a mutant waking more than 3x as often as the reference (+500) is stopped: runaway
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -120,11 +121,16 @@ export async function armItemOf(mutant, dir) {
 export const scratchDir = () => mkdtempSync(path.join(tmpdir(), 'e8-defects-'));
 export const removeDir = dir => rmSync(dir, { recursive: true, force: true });
 
-/** Run a mutant (as the arm) over a world through the real host; returns the journal content rows. */
+/** Run a mutant (as the arm) over a world through the real host (runReference's wiring, keeping the host so that a run
+ * the host stops, a runaway, still yields its journal). Returns { rows, aborted: null | message }. */
 export async function runMutant(mutant, world, { item, timing = PARAMS.timing, maxWakeups } = {}) {
   const variant = mutant.kind === 'policy' ? mutant.variant(world) : undefined;
-  const r = await runReference({ item: item ?? oracleItem, binding, world, timing, variant, id: `defect-${mutant.id}`, ...(maxWakeups ? { maxWakeups } : {}) });
-  return r.rows;
+  const holder = {};
+  const arm = referenceArm({ item: item ?? oracleItem, world, timing, variant, id: `defect-${mutant.id}`,
+    journal: () => ({ committed: holder.host.journal.rows, staged: holder.host.journal.staged }) });
+  holder.host = createHost({ item: binding, world, arm, ...(maxWakeups ? { maxWakeups } : {}) });
+  try { await holder.host.run(); return { rows: holder.host.journal.contentRows(), aborted: null }; }
+  catch (e) { return { rows: holder.host.journal.contentRows(), aborted: String(e?.message ?? e).slice(0, 200) }; }
 }
 
 /** The journal's behaviour, independent of the arm's name (run.start names it; run.end digests ledger rows that carry
@@ -171,10 +177,18 @@ const brief = v => ({ case: v.case, epoch: v.epoch, class: v.class, pool: v.pool
  */
 export async function mineOnWorld({ mutant, item, prepared, keep = false }) {
   const { world, pools, refDigest } = prepared;
-  const rows = await runMutant(mutant, world, { item, maxWakeups: prepared.maxWakeups });
+  const { rows, aborted } = await runMutant(mutant, world, { item, maxWakeups: prepared.maxWakeups });
   const digest = behaviourDigest(rows);
   const meta = { ...worldMeta(world), journal: digest };
   const checked = e0Cases(world);
+  if (aborted) {
+    // A runaway: grade the E0 cases on the journal up to the stop; only divergences strictly before it are real.
+    const stop = Math.max(...rows.filter(r => r.type === 'wakeup').map(r => Date.parse(r.at)));
+    const idx = indexJournal(world, rows, { canonicalArgs: oracleItem.canonicalArgs });
+    const failed = checked.map(c => gradeCase({ item: oracleItem, world, idx, c, pool: pools[c] ?? null }))
+      .filter(v => v.firstDivergence?.at && Date.parse(v.firstDivergence.at) < stop).map(brief);
+    return { meta, digest, inert: false, aborted, stoppedAt: iso(stop), e0: { checked, failed, graded: true, partial: true }, affected: [] };
+  }
   // A run identical to the reference run passes every case (contract §5.6 self-consistency); manifests re-grade it.
   if (digest === refDigest) return { meta, digest, inert: true, e0: { checked, failed: [], graded: false }, affected: [] };
   const idx = indexJournal(world, rows, { canonicalArgs: oracleItem.canonicalArgs });

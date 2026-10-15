@@ -489,3 +489,13 @@ test('reserve seeds: plan.json is written before anything is spent; another stag
   const a2 = await LR.labelRun({ stageId: 'NL-T', specFile: file, workRoot: path.join(dir, 'live-a'), out: path.join(runsDir, 'a'), dry: true, racing: false, log: quiet });
   assert.deepEqual(a2.jobs[0].replacements.map(r => r.to), [622, 623, 624, 625], 'the unchanged plan resumes');
 });
+
+test('hidden-path scan: the node install the sandbox runs (run-solver\'s PATH) is not outside; a bare /opt runtime root is never used', async () => {
+  const { RUNTIME_ROOTS } = await import('../../c0/construct.mjs');
+  const bin = path.join(RUNTIME_ROOTS[0], 'bin');
+  const uses = [{ name: 'Bash', input: { command: `cd probes/probe-0 && env -i PATH=${bin}:/usr/local/bin:/usr/bin:/bin HOME=$PWD ${bin}/node ../../solve.mjs task.json` } }];
+  assert.equal(accessedOutsidePaths(uses, ['/w']).attempts, 0);
+  assert.equal(accessedOutsidePaths([{ name: 'Bash', input: { command: 'ls /opt/node24/bin' } }], ['/w'], { runtimeRoots: ['/opt/node24'] }).attempts, 0);
+  assert.equal(accessedOutsidePaths([{ name: 'Bash', input: { command: 'ls /opt/corpus' } }], ['/w'], { runtimeRoots: ['/opt/node24'] }).attempts, 1);
+  assert.equal(accessedOutsidePaths([{ name: 'Bash', input: { command: 'ls /opt/corpus' } }], ['/w'], { runtimeRoots: ['/opt', '/'] }).attempts, 1, 'a runtime root one segment deep (or /) is ignored');
+});

@@ -60,8 +60,9 @@
 //      smaller θ_fan and more workflow calls, against DESIGN §3's "ties go to the larger threshold (fewer workflow calls)".
 //      On the planted world of test/router-fixtures.mjs it gives θ = (4.705, 0.886), 9 TRAIN workflow calls and 4 of 24
 //      held-out jobs misrouted, where the fewest-calls tie gives (4.207, 1.956), 8 calls and none (pinned in router-v1).
-//   E10 PART: ruleLoco and chooseK count what they skip; balancedAccuracyOf is null over one class (tested in router-v1).
-//      OPEN: the kNN stage's decide still imputes the TRAIN mean for a missing trusted feature instead of abstaining.
+//   E10 PART: ruleLoco counts the held-out items it skips (tested, router-review D7) and balancedAccuracyOf is null over one
+//      class (tested, router-v1 "structural rule"); chooseK counts its skips (untested). OPEN: the kNN stage's decide still
+//      imputes the TRAIN mean for a missing trusted feature instead of abstaining.
 //   E9 PART: withProbe refuses an observation on a mode the prediction lacks. OPEN: PROBEABLE is exported, not enforced.
 //   E5 PART: leafPrior (empirical-Bayes Beta) and withProbe's `priors` option exist. OPEN: decide and card.mjs probePlan
 //      still use the pooled-tasks prior Beta(1 + s·T, 1 + (1 − s)·T); wiring the empirical-Bayes prior in needs a PREREG

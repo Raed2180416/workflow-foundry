@@ -18,6 +18,7 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
   substring-crash    the reference, but high priority is a substring test ("freezer" counts)
   old-dates          the reference, but older reviews are handled like today's
   any-sender-amend   the reference, but an amendment-shaped email from anyone changes the parameters
+  no-amendments      the reference, but Product's amendments are neither acknowledged nor applied
   stale-code         the reference, but the code is the one in the newest summary email (the intern's advice)
   count-all          the reference, but the daily count includes every ticket created today (other teams' too)
 """
@@ -27,7 +28,8 @@ import json
 import re
 from datetime import timedelta
 
-from reference import (EMAIL, GMAIL, HUB, SLACK, STAR, THANKS, ReviewWorkflow, bare, norm, parse_dt, raw_email)
+from reference import (DEFAULTS, EMAIL, GMAIL, HUB, SLACK, STAR, THANKS, ReviewWorkflow, bare, norm, parse_dt,
+                       raw_email)
 
 NAIVE_LINES = 0          # set below from the source of `naive`
 
@@ -58,7 +60,8 @@ def naive(trigger, ctx):
         tickets = ctx.fetch_json("GET", HUB + "tickets")["results"]
         n = sum(1 for t in tickets if parse_dt(t["createdAt"]).date() == at.date())
         ids = ctx.fetch_json("GET", GMAIL + "messages", params={"q": "label:SENT", "maxResults": 500})["messages"]
-        sent = [ctx.fetch_json("GET", GMAIL + f"messages/{m['id']}") for m in ids]
+        sent = [json.loads(x) for x in ctx.batch([{"name": "api_fetch", "arguments": ctx.fetch_args(
+            "GET", GMAIL + f"messages/{m['id']}")} for m in ids])]
         m = sum(1 for x in sent if parse_dt(x["date"]).date() == at.date() and "thank" in (x.get("subject") or "").lower())
         body = f"{code}: tickets {n}, thank-yous {m}"
         return ctx.fetch("POST", GMAIL + "messages/send", body={"raw": raw_email(
@@ -135,6 +138,24 @@ class AnySenderAmend(ReviewWorkflow):
     def is_amendment(self, msg):
         return norm(msg.get("subject")).lower().startswith("review policy amendment")
 
+    def params(self):
+        out, when = dict(DEFAULTS), {}
+        for m in self.messages("subject:review policy amendment"):
+            if not self.is_amendment(m) or parse_dt(m.get("date")) >= self.at:
+                continue
+            pv = self.amendment_value(m)
+            if pv and (pv[0] not in when or parse_dt(m["date"]) > when[pv[0]]):
+                out[pv[0]], when[pv[0]] = pv[1], parse_dt(m["date"])
+        return out
+
+
+class NoAmendments(ReviewWorkflow):
+    def is_amendment(self, msg):
+        return False
+
+    def params(self):
+        return dict(DEFAULTS)
+
 
 class StaleCode(ReviewWorkflow):
     def code(self):
@@ -176,6 +197,7 @@ CONTROLS = {
     "substring-crash": _wrap(SubstringCrash),
     "old-dates": _wrap(OldDates),
     "any-sender-amend": _wrap(AnySenderAmend),
+    "no-amendments": _wrap(NoAmendments),
     "stale-code": _wrap(StaleCode),
     "count-all": _wrap(CountAll),
 }

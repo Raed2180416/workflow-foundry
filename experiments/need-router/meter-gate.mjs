@@ -20,7 +20,14 @@
 //      with, it is booked at the reported figure: the shortfall of the re-price against it is imputed (guardMeter), flagged `meterUnverified`, and counts
 //      toward the 30% rule. Nothing is repaired silently, and nothing is accepted that the CLI's own figure does not corroborate.
 //      The same logic decides a verification record, so the gate can clear on real CLI transcripts whether their lines are accurate or snapshots.
+//
+// The gate fails CLOSED (review of 2026-10-15). A stage with an agent arm is refused when there is no gate to read: a diagnostics.json that is missing, does
+// not parse, is a partial run without D6 (run.mjs --only) or carries no recognised gate; a gate whose status is anything but `clear` or `block-until-verified`
+// is refused too. The only way past a missing gate is the owner's logged waiver (meter-gate-waiver.json, schema need-meter-gate-waiver/1, by `owner`, with a
+// reason and a date), which label-run records in report.deviations. label-run reads the gate from the committed HEAD blob, as it reads the preregistration, and
+// refuses an agent stage while the working-tree diagnostics.json differs from that blob, so an uncommitted regeneration cannot change whether a paid stage starts.
 import { readFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +36,8 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 export const M0_DIR = path.join(REPO, 'research/need-router-20261014/analysis/m0');
 export const DIAGNOSTICS_FILE = path.join(M0_DIR, 'diagnostics.json');
 export const VERIFICATION_FILE = path.join(M0_DIR, 'meter-verification.json');
+export const WAIVER_FILE = path.join(M0_DIR, 'meter-gate-waiver.json');
+export const WAIVER_SCHEMA = 'need-meter-gate-waiver/1';
 export const METER_GATE_SCHEMA = 'need-meter-gate/1';
 export const VERIFICATION_SCHEMA = 'need-meter-verification/1';
 export const OUTPUT_TOLERANCE = 0.05;     // per-message output tokens within 5% of the CLI's final result usage
@@ -74,10 +83,54 @@ export function buildMeterGate({ outputRatios = [], eraRatios = [] } = {}) {
 }
 function median(xs) { const s = xs.filter(Number.isFinite).sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : NaN; }
 
-/** The committed gate (D6's summary.meterGate), or null when the diagnostics file is absent or has no D6. */
-export function readMeterGate(file = DIAGNOSTICS_FILE) {
-  if (!existsSync(file)) return null;
-  try { return JSON.parse(readFileSync(file, 'utf8')).d6?.summary?.meterGate ?? null; } catch { return null; }
+/**
+ * The gate in the text of a diagnostics.json: { gate, problem }. `gate` is D6's summary.meterGate when it carries the gate schema and a status; otherwise null
+ * and `problem` says why there is none (it does not parse, it is a partial run, it has no D6 section, the gate is malformed).
+ */
+export function parseMeterGate(text) {
+  let doc;
+  try { doc = JSON.parse(text); } catch (e) { return { gate: null, problem: `diagnostics.json does not parse (${String(e.message).slice(0, 80)})` }; }
+  const gate = doc?.d6?.summary?.meterGate ?? null;
+  if (gate && typeof gate === 'object' && gate.schema === METER_GATE_SCHEMA && typeof gate.status === 'string') return { gate, problem: null };
+  if (gate) return { gate: null, problem: 'diagnostics.json carries a d6.summary.meterGate that is not a need-meter-gate/1 record with a status' };
+  if (doc?.partial) return { gate: null, problem: `diagnostics.json is a partial run (${(doc.partial.ran ?? []).join(', ')} only) with no D6 section` };
+  return { gate: null, problem: 'diagnostics.json has no d6.summary.meterGate' };
+}
+/** { gate, problem } of the working-tree diagnostics file (or `file`). */
+export function readMeterGateFile(file = DIAGNOSTICS_FILE) {
+  if (!existsSync(file)) return { gate: null, problem: 'diagnostics.json is missing' };
+  return parseMeterGate(readFileSync(file, 'utf8'));
+}
+/** The working-tree gate (D6's summary.meterGate), or null when the diagnostics file is absent, unparseable or has no D6. For display: label-run does not trust this (see readCommittedMeterGate). */
+export function readMeterGate(file = DIAGNOSTICS_FILE) { return readMeterGateFile(file).gate; }
+
+/** The blob of `file` at HEAD (a Buffer), or null when git or the committed file is not there. */
+export function gitHeadBlob(file, { repo = REPO } = {}) {
+  try {
+    const rel = path.relative(repo, path.resolve(file));
+    if (rel.startsWith('..')) return null;
+    return execFileSync('git', ['show', `HEAD:${rel.split(path.sep).join('/')}`], { cwd: repo, stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 28 });
+  } catch { return null; }
+}
+/**
+ * The gate label-run trusts: read from the committed HEAD blob of diagnostics.json, the way label-run reads the preregistration. { gate, problem, dirty, source }:
+ * `dirty` is a reason when the working-tree file is missing or differs from that blob (an uncommitted regeneration), else null. `file` and `show` (the HEAD reader) are injected by tests.
+ */
+export function readCommittedMeterGate({ file = DIAGNOSTICS_FILE, repo = REPO, show = gitHeadBlob } = {}) {
+  const blob = show(file, { repo });
+  if (!blob) return { gate: null, problem: 'diagnostics.json is not committed at HEAD', dirty: null, source: 'HEAD' };
+  const { gate, problem } = parseMeterGate(blob.toString('utf8'));
+  const work = existsSync(file) ? readFileSync(file) : null;
+  const dirty = work === null ? 'the working-tree diagnostics.json is missing (deleted since HEAD)' : Buffer.compare(Buffer.from(blob), work) !== 0 ? 'the working-tree diagnostics.json differs from its committed HEAD blob (an uncommitted regeneration): commit or restore it before a paid stage with an agent arm' : null;
+  return { gate, problem, dirty, source: 'HEAD' };
+}
+/** The owner's waiver for a missing gate: valid only with the schema, `by: 'owner'`, a reason of at least 10 characters and a date. */
+export const waiverValid = w => !!w && w.schema === WAIVER_SCHEMA && w.by === 'owner' && typeof w.reason === 'string' && w.reason.trim().length >= 10 && Number.isFinite(Date.parse(w.at));
+/** The waiver at HEAD (committed: it is a decision the repository records), or null. */
+export function readCommittedWaiver({ file = WAIVER_FILE, repo = REPO, show = gitHeadBlob } = {}) {
+  const blob = show(file, { repo });
+  if (!blob) return null;
+  try { return JSON.parse(blob.toString('utf8')); } catch { return null; }
 }
 /** The verification record on file (or at `file`), or null. */
 export function readVerification(file = VERIFICATION_FILE) {
@@ -89,16 +142,23 @@ export const isAgentArmDef = def => !!def && (def.factory === 'b0Agent' || def.r
 
 /**
  * May a paid stage with these arms start? arms: arm definitions (or ids resolved by the caller). Returns { allow, why, gate }.
- * Allowed when no arm is an agent arm, when there is no gate on file (reported, the per-session check still applies), when the gate is clear, or
- * when the gate blocks and a passing verification record is on file.
+ * Allowed when no arm is an agent arm, when the gate is clear, or when the gate blocks and a passing verification record is on file. Refused when the
+ * working-tree diagnostics.json differs from its committed blob (`dirty`), when there is no gate to read (`problem` says why) unless the owner's logged
+ * `waiver` is valid (the result is then `waived: true` and carries the waiver, which label-run records as a deviation), and for any other gate status.
  */
-export function meterGateDecision({ gate, verification = null, arms = [] }) {
+export function meterGateDecision({ gate, verification = null, arms = [], waiver = null, problem = null, dirty = null }) {
   const agent = arms.filter(isAgentArmDef);
   if (!agent.length) return { allow: true, why: 'no agent arm in this stage', gate: gate?.status ?? null };
-  if (!gate) return { allow: true, why: 'no D6 meter gate on file (diagnostics.json has no d6.summary.meterGate): agent sessions are still checked one by one', gate: null };
-  if (gate.status !== 'block-until-verified') return { allow: true, why: `meter gate ${gate.status}`, gate: gate.status };
+  if (dirty) return { allow: false, gate: gate?.status ?? null, why: `the cost-meter gate is read from the committed HEAD blob and ${dirty}` };
+  if (!gate) {
+    const what = `no D6 meter gate on file (${problem ?? 'diagnostics.json has no d6.summary.meterGate'})`;
+    if (waiverValid(waiver)) return { allow: true, waived: true, waiver, gate: null, why: `${what}; the owner's waiver of ${waiver.at} is logged: ${waiver.reason}` };
+    return { allow: false, gate: null, why: `${what}: a stage with an agent arm is refused without a gate. Run node experiments/need-router/diagnostics/run.mjs --report in full and commit it, or log the owner's waiver (${path.relative(REPO, WAIVER_FILE)}, schema ${WAIVER_SCHEMA}, by owner, with a reason and a date)` };
+  }
+  if (gate.status === 'clear') return { allow: true, why: `meter gate ${gate.status}`, gate: gate.status };
+  if (gate.status !== 'block-until-verified') return { allow: false, gate: gate.status, why: `the cost-meter gate has an unrecognised status ${JSON.stringify(gate.status)} (expected clear or block-until-verified): refused` };
   if (verificationPasses(verification)) return { allow: true, why: `meter gate block-until-verified, cleared by a passing verification record (${verification.sessions.length} transcripts)`, gate: gate.status };
-  return { allow: false, gate: gate.status, why: `the cost-meter gate is block-until-verified (${gate.reasons.map(r => r.code).join(', ')}) and no passing meter-verification record is on file: ${gate.clearedBy}` };
+  return { allow: false, gate: gate.status, why: `the cost-meter gate is block-until-verified (${(gate.reasons ?? []).map(r => r.code).join(', ')}) and no passing meter-verification record is on file: ${gate.clearedBy}` };
 }
 
 /**

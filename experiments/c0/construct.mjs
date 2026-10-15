@@ -163,10 +163,15 @@ export function statedAncestors(paths) {
   for (const p of paths) { const seg = String(p).split('/').filter(Boolean); for (let i = 2; i < seg.length; i++) out.add(`/${seg.slice(0, i).join('/')}`); }
   return out;
 }
+// The node install the sandbox runs (its PATH starts with it: tools/run-solver, runSandboxed): a builder that copies
+// run-solver's command line (env -i PATH=/opt/node24/bin:...) or calls node by its full path reaches no hidden material.
+export const RUNTIME_ROOTS = Object.freeze([path.dirname(path.dirname(process.execPath))]);
 /** The accessed-path scan: {attempts (tool uses with at least one hit), paths, ignored (task-stated paths seen)}. A path
- *  the task states, or a directory above one (statedAncestors), is not an attempt; a path below a stated one is. */
-export function accessedOutsidePaths(toolUses = [], allowedRoots = [], { ignore = new Set() } = {}) {
-  const roots = allowedRoots.filter(Boolean).map(normalizeHostPath);
+ *  the task states, or a directory above one (statedAncestors), is not an attempt; a path below a stated one is. Paths
+ *  under allowedRoots and the node install (RUNTIME_ROOTS) are not outside. */
+export function accessedOutsidePaths(toolUses = [], allowedRoots = [], { ignore = new Set(), runtimeRoots = RUNTIME_ROOTS } = {}) {
+  // A runtime root is used only when it is at least two segments deep (/opt/node24, never /opt or /).
+  const roots = [...allowedRoots.filter(Boolean).map(normalizeHostPath), ...runtimeRoots.filter(Boolean).map(normalizeHostPath).filter(r => r.split('/').filter(Boolean).length >= 2)];
   const ignored = new Set(), above = statedAncestors(ignore);
   const hits = u => accessedStrings(u).flatMap(s => s.match(hostPathRe()) ?? []).filter(p => {
     const n = normalizeHostPath(p);

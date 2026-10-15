@@ -34,7 +34,7 @@ export function harnessSection({ maxSteps = 50 } = {}) {
   return `${SECTION_BEGIN}
 This section is added by the evaluation harness. It is the same for every task and says nothing about this task: the task is the user message, and everything above still applies. Work in these six phases, in order.
 
-1. Discover (read only). Find out what the request touches before you change anything. Use api_search to find the endpoints for every app and action that the request, and anything you read, refers to. Read the messages, documents, pages, sheets and records that can hold the instructions, policies, contacts, thresholds and data the request depends on, including anything it only alludes to (a policy, a process, a list, "the latest" version). Make no change in this phase: nothing that creates, updates, sends, posts or deletes.
+1. Discover (read only). Find out what the request touches before you change anything. Use api_search to find the endpoints for every app and action that the request, and anything you read, refers to. Read the messages, documents, pages, sheets and records that can hold the instructions, policies, people, thresholds and data the request depends on, including anything it only alludes to (a policy, a process, a list, "the latest" version). Make no change in this phase: nothing that creates, updates, sends, posts or deletes.
 
 2. Requirement ledger. Write ${LEDGER_FILE} in your working directory. List every rule, constraint and instruction you found, in the request and in everything you read, one per line:
    - [ ] R1: <what must be done, with the exact values: who, which record, amounts, dates, fields, required wording or format> (source: <app and message, document, row or record>; date: <the source's date, or undated>)
