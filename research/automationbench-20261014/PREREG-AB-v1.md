@@ -689,3 +689,25 @@ and the Stop phase now says the final reply stays in the conversation, never in 
    - (b) dev pools only, each run capped within the remaining dev budget; devCheck sealed, with at most 3 looks;
    - (c) the first paid run is tiny and checks the CLI step guard and the L5 audit on real A1 transcripts;
    - (d) `RECURRING-DESIGN.md` and `families/` are never A1 knowledge.
+
+**AM-9 (2026-10-15) Host date injected by the CLI: a fidelity defect in both arms.**
+
+*The defect.*
+- Claude Code 2.1.300 always injects "Today's date is <host date>." into the session context, as the `currentDate` block.
+- The official eval gives the model no date at all.
+- The worlds fix their own date (HR and finance in 100 of 100 tasks, NOTES §2). A session therefore sees a wrong "today" (2026-10-15) that conflicts with the world's date, for example 2026-03-20.
+- Evidence: A0 rejected the right roster ("Today is 2026-10-15, so this is not this month's cohort"), and A1's ledgers were anchored on the host date (a1-dev-first6 diagnosis).
+- `CLAUDE_CODE_OVERRIDE_DATE` has no effect in `-p` mode. This was tested 2026-10-15 at about $0.01, and the line still shows the host date. The CLI exposes no way to drop the line.
+
+*The decision.* Both arms get one neutral sentence in the shared tool section:
+
+> The date shown in your session context belongs to the machine running you, not to this task; take dates from the request and the task's own records.
+
+- It gives no date and no task information. It is the closest the CLI allows to the official "no date".
+- It changes A0's execution setup, so A0 is re-run on dev under it, and the shared-file hashes in §2 are re-recorded when the change lands.
+- The change lands only after the running `a0-dev60` and `a1-dev60` runs finish, so each run stays on one setup.
+- Those two runs, together with an A0 re-run on the same 60 tasks after the fix, measure the date-leak effect itself.
+
+*Disclosures.*
+- The subset60 baseline (21.7%) ran with the leaked host date. It is reported as such and superseded by A0 runs under AM-9.
+- The published disclosure list gains this item.
