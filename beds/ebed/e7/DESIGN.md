@@ -497,7 +497,8 @@ grading worlds), B1 build-loop practice worlds 1235–1237 (assigned 2026-10-15,
 specificity and Track C rehearsals 1241–1249 (`tools/specificity-run.mjs` defaults to 1242–1244)); fuzz bases 1301–1310; held-out 9101–9104, sealed 9201–9204 and scale
 9301–9302 are reserved and untouched by the build. **Touched:** 1241 at d3 by the part-A walker discrimination check on
 2026-10-14 (walker only: no solver, no model); recorded in SEED-LEDGER on 2026-10-15, when the check moved to dev seed
-1101 (`tools/walker-grade.mjs`, which refuses the rehearsal block).
+1101 (`tools/walker-grade.mjs`, which refuses the rehearsal block). **Used:** 1242–1245 at d2–d5 by the specificity run
+of the three blind solvers on 2026-10-15 (README E7-B11, `ledger/specificity-20261015.json`).
 
 ## 14. Semantics ledger (draft for `ledger/SEMANTICS.md`)
 

@@ -1015,7 +1015,7 @@
    "allow": [
     "ebed-rehearsal"
    ],
-   "use": "E7 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234 (the B1 grading worlds, experiments/ebed/build.mjs --item e7), B1 build-loop practice worlds 1235-1237 (experiments/ebed/smoke-service.mjs PRACTICE_BY_ITEM; assigned 2026-10-15), specificity-solver and Track C rehearsals 1241-1249 (beds/ebed/e7/tools/specificity-run.mjs; default 1242-1244) (1207-1210, 1223-1230, 1238-1240 unassigned). 1241 touched 2026-10-14 at d3 by the part-A walker discrimination check only (no solver, no model; the check now runs on dev seeds, beds/ebed/e7/tools/walker-grade.mjs; recorded 2026-10-15)",
+   "use": "E7 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234 (the B1 grading worlds, experiments/ebed/build.mjs --item e7), B1 build-loop practice worlds 1235-1237 (experiments/ebed/smoke-service.mjs PRACTICE_BY_ITEM; assigned 2026-10-15), specificity-solver and Track C rehearsals 1241-1249 (beds/ebed/e7/tools/specificity-run.mjs; default 1242-1244) (1207-1210, 1223-1230, 1238-1240 unassigned). 1241 touched 2026-10-14 at d3 by the part-A walker discrimination check only (no solver, no model; the check now runs on dev seeds, beds/ebed/e7/tools/walker-grade.mjs; recorded 2026-10-15). 1242-1245 used 2026-10-15 at d2-d5 by the specificity run of the three blind solvers beds/ebed/e7/specificity/s1-s3 (as written and with the diagnostic --shim master-ids; no model, $0; beds/ebed/e7/ledger/specificity-20261015.json)",
    "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
   },
   {
