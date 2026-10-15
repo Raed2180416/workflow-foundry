@@ -77,7 +77,7 @@ COUNTS = {
 # Planted share of referral.submitted / candidate.hired triggers with a trap; payout runs, holds, broadcasts and most
 # departures carry traps by construction. These put the share of trap-bearing TRIGGERS near the design's 45% (d2) and
 # 70% (d3); meta reports the measured share per stream.
-TRAP_RATE = {"d1": 0.0, "d2": 0.12, "d3": 0.55}
+TRAP_RATE = {"d1": 0.0, "d2": 0.12, "d3": 0.45}
 FORMAT_RATE = {"d1": 0.0, "d2": 0.3, "d3": 0.5}       # share of Hire Dates written in a non-ISO format
 SUB_WEIGHTS = {"dup-second": 2.0, "dup-case": 1.0, "resubmit": 1.0, "namesake": 1.5, "dup-week": 1.0}
 HIRE_WEIGHTS = {"rehire": 1.5, "rehire-old": 1.0, "rehire-namesake": 1.0}
@@ -587,16 +587,20 @@ class Gen:
             if self.d == "d1":
                 kinds = ["left-other"]
         self.left_plan = []
+        used = []
         for k in kinds:
+            free = [x for x in self.later if x not in used]
             if k == "left-early":
-                row = r.choice([x for x in self.later if x["prob"] == "No"] or self.later)
+                row = r.choice([x for x in free if x["prob"] == "No"] or free)
+                used.append(row)
                 self.left_plan.append({"kind": k, "emp": row["emp"], "row": row})
             elif k == "left-day89":
                 ev_day = r.randint(0, 3)
                 row = self.hired_row(r.choice(self.referrers[8:]), "left-day89", self.day(ev_day + 1))
                 self.left_plan.append({"kind": k, "emp": row["emp"], "row": row, "day": ev_day})
             elif k == "left-namesake":
-                row = r.choice(self.later)
+                row = r.choice(free)
+                used.append(row)
                 twin = self.add_emp(row["cand"]["name"], self.M - timedelta(days=r.randint(300, 1500)), role="namesake")
                 self.left_plan.append({"kind": k, "emp": twin, "row": row})
             elif k == "left-paid":
@@ -871,8 +875,6 @@ class Gen:
                     payload = {"app": "google_sheets", "event": "new_row", "data": copy.deepcopy(src["payload_data"])}
                     row = next(x for x in log if x["row_id"] == src["payload_data"]["row_id"])
                     labels.append("retry")
-                    asserts.append({"type": "google_sheets_row_exists", "spreadsheet_id": SS, "worksheet_id": WS_LOG,
-                                    "cells": {"Referral ID": row["cells"]["Referral ID"], "Status": row["cells"]["Status"]}})
                 else:
                     cells = self.submission_cells(ev, log, submissions, today)
                     row = {"id": self.hexid(), "row_id": max(x["row_id"] for x in log) + 1, "cells": cells, "x": None}
@@ -931,6 +933,7 @@ class Gen:
                     same_email = [x["cells"] for x in emps if norm(x["cells"]["Personal Email"]) == norm(cand["email"])
                                   and norm(x["cells"]["Employee ID"]) != norm(eid) and norm(x["cells"]["Status"]) == "left"]
                     recent = [c for c in same_email if parse_date(c["Left Date"]) and parse_date(c["Left Date"]) >= year_before(hire)]
+                    n_before = len(ex["cells"])
                     set_cells(row, {"Status": REHIRE if recent else PNYE})
                     if recent:
                         labels.append("rehire")
@@ -938,12 +941,13 @@ class Gen:
                         labels.append("rehire-old")
                     if any(norm(x["cells"]["Name"]) == norm(cand["name"]) and norm(x["cells"]["Status"]) == "left"
                            and norm(x["cells"]["Personal Email"]) != norm(cand["email"])
-                           and parse_date(x["cells"]["Left Date"]) >= year_before(hire) for x in emps):
+                           and (parse_date(x["cells"]["Left Date"]) or date.min) >= year_before(hire) for x in emps):
                         labels.append("rehire-namesake")
                     if same_email and h["fmt"] != "iso":
                         labels.append("date-format")
-                    asserts.append({"type": "google_sheets_row_exists", "spreadsheet_id": SS, "worksheet_id": WS_LOG,
-                                    "cells": {"Referral ID": row["cells"]["Referral ID"], "Status": row["cells"]["Status"]}})
+                    if len(ex["cells"]) > n_before:
+                        asserts.append({"type": "google_sheets_row_exists", "spreadsheet_id": SS, "worksheet_id": WS_LOG,
+                                        "cells": {"Referral ID": row["cells"]["Referral ID"], "Status": row["cells"]["Status"]}})
                 if h["case"] != "clean" and h["case"] not in labels:
                     raise PlanError(f"{tid}: planned {h['case']}, derived {labels}")
                 guard()
@@ -1039,12 +1043,16 @@ class Gen:
                 cells_emp = [x["cells"] for x in emps]
                 dec = payout_decisions(cells_log, cells_emp, today)
                 base = sorted((log[i]["cells"]["Referral ID"], a) for i, a, _ in dec)
+                alt_pay = []                                  # Referral IDs a broken rule would pay at this run
                 for label, alts in PAYOUT_ALTS.items():
+                    hit = False
                     for alt in (alts if isinstance(alts, list) else [alts]):
-                        other = sorted((log[i]["cells"]["Referral ID"], a) for i, a, _ in payout_decisions(cells_log, cells_emp, today, **alt))
-                        if other != base:
-                            labels.append(label)
-                            break
+                        got = payout_decisions(cells_log, cells_emp, today, **alt)
+                        alt_pay += [log[i]["cells"]["Referral ID"] for i, a, _ in got if a == "pay"]
+                        if sorted((log[i]["cells"]["Referral ID"], a) for i, a, _ in got) != base:
+                            hit = True
+                    if hit:
+                        labels.append(label)
                 touched = set()
                 for i, action, amount in dec:
                     row = log[i]
@@ -1079,14 +1087,8 @@ class Gen:
                     asserts.append({"type": "google_sheets_row_exists", "spreadsheet_id": SS, "worksheet_id": WS_LOG,
                                     "cells": {"Referral ID": rid, "Status": PAID, "Paid On": today.isoformat()}})
                 # rows a broken rule would pay at this run: nothing may reach payroll for them
-                for label, alts in PAYOUT_ALTS.items():
-                    for alt in (alts if isinstance(alts, list) else [alts]):
-                        for i, a, _ in payout_decisions(cells_log, cells_emp, today, **alt):
-                            rid = log[i]["cells"]["Referral ID"]
-                            if a == "pay" and rid not in touched:
-                                touched.add(rid)
-                                asserts.append({"type": "gmail_message_not_sent_to_with_body_contains", "to": PAYROLL,
-                                                "body_contains": rid})
+                for rid in sorted(set(alt_pay) - touched):
+                    asserts.append({"type": "gmail_message_not_sent_to_with_body_contains", "to": PAYROLL, "body_contains": rid})
                 guard()
             tr["traps"] = sorted(set(labels))
             if ex["cells"] or ex["emails"]:
