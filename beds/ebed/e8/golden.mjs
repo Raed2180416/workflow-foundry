@@ -620,6 +620,32 @@ G('cancel-shortly-before-collection (R6.2, R4.3)', 'R6.2, R4.3', tr => {
   return w && w.earliest === a && w.latest >= R - MIN && w.latest <= R ? true : `shipment cancel window ${JSON.stringify(w)}, expected [cancel, collection] (R6.2, R4.3)`;
 });
 
+// R4.3, R6.2: each shipment is collected at its own location's collection run. A cancel 30 min before another
+// location's run, with the order's own run hours later: the shipment cancel is due within 60 min of the cancel (R6.2),
+// not before the other location's run.
+{
+  const own = f => W.master.locations.find(l => l.location === f.location);
+  let fx = null;
+  for (const [c, t] of casesOf(W, t => t.class === 'straight' && t.subject && allocOf(W, t.subject).length === 1)) {
+    const f = allocOf(W, t.subject)[0], p = Date.parse(t.placedAt);
+    for (const l of W.master.locations.filter(x => x.location !== f.location)) {
+      const Ro = runOf(p + 4 * MIN, l), b = Ro - 40 * MIN;
+      if (b >= p + 4 * MIN && b <= p + 123 * MIN && runOf(b, own(f)) >= Ro + 31 * MIN) { fx = { c, t, f, p, b, a: Ro - 30 * MIN }; break; }
+    }
+    if (fx) break;
+  }
+  G('shipment-cancel-window-at-its-own-location (R4.3, R6.2)', 'R4.3, R6.2', tr => {
+    if (!fx) return 'fixture: no order whose own collection run is after another location\'s';
+    const { c, t, f, p, b, a } = fx, Bz = builder(c), Oz = t.subject, Fz = f.fulfilmentId;
+    const amt = f.items.reduce((s, i) => s + i.qty * price(W, i.sku), 0) + fee0(W, f.location);
+    const rows = [Bz.row(p + MIN, 'orders', 'create', { orderId: Oz }), ...f.items.map(i => Bz.row(p + 2 * MIN, 'inventory', 'reserve', { orderId: Oz, fulfilmentId: Fz, location: f.location, sku: i.sku, qty: i.qty })),
+      Bz.row(p + 3 * MIN, 'billing', 'charge', { orderId: Oz, fulfilmentId: Fz, customerId: t.customerId, amountMinor: amt, currency: 'EUR' }),
+      Bz.row(b, 'carrier', 'create', { orderId: Oz, fulfilmentId: Fz, location: f.location, ref: null })];
+    const E = tr(W, Bz.view(a + MIN, t, rows, [Bz.ev(p, 'order.placed', { orderId: Oz }), act(Bz, a, Oz, 'cancel')]));
+    return span(E, `csh:${Fz}`, a, a + 60 * MIN);
+  });
+}
+
 // S13, S4, S7, R6.3, R4.5: a delivery report that ends the order's last open fulfilment and a cancel with the same time.
 // The report is delivered first (S4), so the order has already ended when the cancel reaches the arm (S13): the cancel
 // changes nothing and `cancel-refused` is allowed, not required (R6.3); the order completes (R4.5).

@@ -34,8 +34,11 @@
 // (FOUNDRY_BRIDGE_URL or discovery) and signs every request. Exit 0 = valid run, 3 = invalid, 2 = usage.
 //
 // --jev (2026-10-09, owner direction: Jev replaces Kev for the judge program) scores against TypeSafe's hosted Jev instead:
-//   node experiments/kev-data/score-served.mjs --data <kev.jsonl> --out <rows.jsonl> --jev [--jev-model jev-latest] \
+//   node experiments/kev-data/score-served.mjs --data <kev.jsonl> --out <rows.jsonl> --jev [--jev-model <id>] \
 //        [--concurrency 2] [--reread 20] [--resume] [--request-cap 1400 --request-ledger <requests.jsonl>]
+// The request names the pinned version JEV_MODEL (jev-1.13.0, the policy's judgment model since 2026-10-15), never the
+// moving alias. --jev-model is the explicit override for a deliberate re-read on another version; that id must be listed
+// in policy judgmentModels too (jevConfig refuses any other).
 // The model id and the base URL come from policy/models.json (judgmentModels, provider kind systemone-http); the bearer is
 // whatever the environment variable the policy names holds (SystemOneClient reads FOUNDRY_SYSTEMONE_API_KEY), never a file.
 // Jev documents no /v1/models, so the served version is read from every response's `model` field and written on every row;
@@ -59,7 +62,7 @@ export const PROB_DECIMALS = 4;                 // kev.api.round_prob
 export const STABLE_DP = 0.01;                  // §7.5 stability test and the 20-record raw re-read
 export const STABLE_FLIP_RATE = 0.005;          // §7.5: at most 0.5% argmax flips
 export const SERVED_MODEL = 'kev-latest';       // kev.serve MODEL_NAMES: kev-latest and jev-latest serve the same checkpoint
-export const JEV_MODEL = 'jev-latest';          // hosted Jev: a policy judgment model (policy/models.json judgmentModels), checked there
+export const JEV_MODEL = 'jev-1.13.0';          // hosted Jev, pinned: a policy judgment model (policy/models.json judgmentModels), checked there
 export const JEV_RETRY = Object.freeze({ max: 6, baseMs: 2000, capMs: 60_000 });   // 2, 4, 8, 16, 32, 60 s: rate limits are undocumented
 export const JEV_CONCURRENCY = 2;
 const JEV_CREDENTIAL_ENV = 'FOUNDRY_SYSTEMONE_API_KEY';   // the variable SystemOneClient reads (src/judgment.mjs); the policy must name it

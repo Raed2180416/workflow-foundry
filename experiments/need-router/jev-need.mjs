@@ -9,12 +9,14 @@
 // and it will not beat the size heuristic (log input tokens) by more than noise.
 // METERED (pennies): one request per task, request ledger with a hard cap. The key comes only from the environment
 // variable FOUNDRY_SYSTEMONE_API_KEY, mapped per command; it is never printed, logged or written.
-//   FOUNDRY_SYSTEMONE_API_KEY=... node experiments/need-router/jev-need.mjs --runs m1,m1-d5 [--cap 200] [--dry]
+//   FOUNDRY_SYSTEMONE_API_KEY=... node experiments/need-router/jev-need.mjs --runs m1,m1-d5 [--cap 200] [--jev-model <id>] [--dry]
+// Requests name the pinned version (score-served.mjs JEV_MODEL, jev-1.13.0 since 2026-10-15). --jev-model is the explicit
+// override for a deliberate re-read on another version; the id must be listed in policy/models.json judgmentModels.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeTasks, loadFamily } from '../lib/beds.mjs';
-import { jevClient, requestLedger } from '../kev-data/score-served.mjs';
+import { JEV_MODEL, jevClient, requestLedger } from '../kev-data/score-served.mjs';
 import { toSystemOneQuestion, fromSystemOneAnswer } from '../../src/judgment.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -86,7 +88,7 @@ async function main() {
   }
   console.log(`${tasks.length} tasks; ${tasks.filter(t => label.get(t.taskKey).pass).length} solved by one call`);
   if (process.argv.includes('--dry')) { console.log(stateOf(tasks[0].task).slice(0, 800)); return; }
-  const { served, config } = jevClient({});
+  const { served, config } = jevClient({ model: arg('--jev-model', JEV_MODEL) });
   const ledger = requestLedger({ file: path.join('/var/tmp/foundry-work/need/jev-need', 'requests.jsonl'), cap: Number(arg('--cap', '200')) });
   const rows = [];
   for (const t of tasks) {

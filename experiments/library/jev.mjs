@@ -22,7 +22,7 @@ import { describeProfile } from '../jit/profile.mjs';
 import { countTokens } from './tokens.mjs';
 import { inputFields } from './construct.mjs';
 
-export const JEV_MODEL = 'jev-latest';
+export const JEV_MODEL = 'jev-1.13.0';   // the pinned served version (policy/models.json judgmentModels, 2026-10-15), never the moving alias
 export const PORTS = Object.freeze(['applicability', 'pattern-choice-a', 'pattern-choice-b', 'slot-completeness', 'risk-class', 'quarantined-read', 'failure-class']);
 export const NO_MATCH = /^(none|none-matches|none-of-these|no-match|cannot-tell|other|unsure|undecidable|unknown)$/i;
 const sha = s => createHash('sha256').update(s).digest('hex');

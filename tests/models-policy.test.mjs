@@ -52,6 +52,13 @@ test('policy validation rejects structural defects', () => {
   assert.doesNotThrow(() => validatePolicy(mutable()));
 });
 
+// 2026-10-15 (P0, MEMORY-ROUTING-RECURSION.md §2 change 1): the hosted classes' input budget is 100,000 tokens (class M was
+// 8,000, a 7-14B-era cap); S stays 4,000. defaultsByRole is gone: no automatic role default sits beside the node's own model.
+test('class budgets: M, L and F take 100,000 input tokens, S 4,000; the policy carries no role defaults', () => {
+  assert.deepEqual(Object.fromEntries(policy.classOrder.map(c => [c, policy.inputBudgetTokensByClass[c]])), { S: 4000, M: 100000, L: 100000, F: 100000 });
+  assert.equal(Object.hasOwn(policy, 'defaultsByRole'), false);
+});
+
 test('loadPolicy reports unreadable or invalid files as MODEL_POLICY_INVALID', t => {
   const dir = mkdtempSync(path.join(tmpdir(), 'foundry-policy-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
@@ -121,17 +128,21 @@ test('no model id outside this file: runtime source names only policy ids', () =
 
 // 2026-10-09 (owner direction: Jev replaces Kev for the judge program). Jev is a judgment model on a systemone-http provider:
 // listed apart from models[], so no generative route reaches it, and the provider names its credential variable, never a value.
+// 2026-10-15 (P0, research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §5 row 1): Jev is pinned to its served version;
+// the moving alias jev-latest is no longer a policy id, so a caller that asks for it is refused.
 test('judgment models: Jev is listed on a systemone-http provider, apart from the generative models, with no credential value', () => {
-  const { entry, provider } = judgmentModelById(policy, 'jev-latest');
+  const { entry, provider } = judgmentModelById(policy, 'jev-1.13.0');
+  assert.deepEqual((policy.judgmentModels ?? []).map(m => m.id), ['jev-1.13.0'], 'the pinned served version, not an alias');
+  assert.throws(() => judgmentModelById(policy, 'jev-latest'), { code: 'MODEL_NOT_IN_POLICY' }, 'the moving alias is refused');
   assert.equal(entry.provider, 'typesafe-systemone');
   assert.equal(provider.kind, JUDGMENT_KIND);
   assert.match(provider.baseUrl, /^https:\/\//);
   assert.equal(provider.credentialEnv, 'FOUNDRY_SYSTEMONE_API_KEY', 'the variable SystemOneClient reads');
   assert.ok(!policy.models.some(m => policy.providers[m.provider].kind === JUDGMENT_KIND), 'no generative model on a judgment provider');
-  assert.throws(() => modelById(policy, 'jev-latest'), { code: 'MODEL_NOT_IN_POLICY' }, 'ModelPort never resolves a judgment model');
+  assert.throws(() => modelById(policy, 'jev-1.13.0'), { code: 'MODEL_NOT_IN_POLICY' }, 'ModelPort never resolves a judgment model');
   assert.throws(() => judgmentModelById(policy, 'claude-haiku-5-5'), { code: 'MODEL_NOT_IN_POLICY' });
   assert.throws(() => judgmentModelById(policy, 'jev-1.0.0'), { code: 'MODEL_NOT_IN_POLICY' });
-  for (const cls of policy.classOrder) assert.ok(!modelsForClass(policy, cls).some(m => m.id === 'jev-latest'));
+  for (const cls of policy.classOrder) assert.ok(!modelsForClass(policy, cls).some(m => m.id === 'jev-1.13.0'));
   // nothing in the policy text looks like a bearer value
   assert.doesNotMatch(readFileSync(DEFAULT_POLICY_PATH, 'utf8'), /Bearer [A-Za-z0-9._-]{16,}|sk-[A-Za-z0-9]{16,}/);
 });

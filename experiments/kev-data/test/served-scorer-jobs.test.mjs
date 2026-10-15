@@ -296,12 +296,14 @@ function fakeJev(respond = () => ({ status: 200 })) {
   };
   return { calls, fetchImpl, client: (opts = {}) => SS.jevClient({ policy: jevPolicy(), fetchImpl, env: { FOUNDRY_SYSTEMONE_API_KEY: TEST_KEY }, ...opts }) };
 }
-const jevRun = (served, opts) => SS.scoreServed({ served, identityFrom: 'response', model: 'jev-latest', url: 'https://api.typesafe.ai', retry: { max: 6, baseMs: 1, capMs: 2 }, ...opts });
+const jevRun = (served, opts) => SS.scoreServed({ served, identityFrom: 'response', model: SS.JEV_MODEL, url: 'https://api.typesafe.ai', retry: { max: 6, baseMs: 1, capMs: 2 }, ...opts });
 const noKeyIn = (files) => { for (const f of files) if (existsSync(f)) assert.ok(!readFileSync(f, 'utf8').includes(TEST_KEY), `${path.basename(f)} holds no credential`); };
 
 test('unit: jev: the policy names the model, the URL and the credential variable; a missing credential is refused before any request', () => {
   const cfg = SS.jevConfig(jevPolicy());
-  assert.deepEqual(cfg, { model: 'jev-latest', provider: 'typesafe-systemone', url: 'https://api.typesafe.ai', credentialEnv: 'FOUNDRY_SYSTEMONE_API_KEY' });
+  assert.deepEqual(cfg, { model: 'jev-1.13.0', provider: 'typesafe-systemone', url: 'https://api.typesafe.ai', credentialEnv: 'FOUNDRY_SYSTEMONE_API_KEY' });
+  assert.equal(SS.JEV_MODEL, 'jev-1.13.0', 'the pinned served version (2026-10-15), never the moving alias');
+  assert.throws(() => SS.jevConfig(jevPolicy(), 'jev-latest'), e => e.code === 'MODEL_NOT_IN_POLICY', 'the alias is not a policy id');
   assert.throws(() => SS.jevConfig(jevPolicy(), 'jev-9.9.9'), e => e.code === 'MODEL_NOT_IN_POLICY', 'a model id the policy does not list');
   const other = structuredClone(jevPolicy()); other.providers['typesafe-systemone'].credentialEnv = 'TYPESAFE_API_KEY';
   assert.throws(() => SS.jevConfig(other), e => e.code === 'JEV_POLICY', 'SystemOneClient reads one variable only');
@@ -319,7 +321,7 @@ test('unit: jev: the request carries the state and typed questions only, with th
   for (const c of fake.calls) {
     assert.equal(c.url, 'https://api.typesafe.ai/v1/systemone'); assert.equal(c.method, 'POST');
     assert.equal(c.headers.authorization, `Bearer ${TEST_KEY}`); assert.equal(c.headers['content-type'], 'application/json');
-    assert.deepEqual(Object.keys(c.body).sort(), ['model', 'questions', 'state']); assert.equal(c.body.model, 'jev-latest');
+    assert.deepEqual(Object.keys(c.body).sort(), ['model', 'questions', 'state']); assert.equal(c.body.model, 'jev-1.13.0');
     for (const q of Object.values(c.body.questions)) assert.deepEqual(Object.keys(q).sort(), ['criteria', 'instructions', 'type']);
     assert.ok(!/"(label|src|target)"/.test(JSON.stringify(c.body.questions)), 'no label, src or soft target leaves the machine');
     assert.deepEqual(c.body.state, records.find(r => r.state.action.target === c.body.state.action.target).state, 'the state as the file holds it (its own keys only), never _meta');
@@ -329,7 +331,7 @@ test('unit: jev: the request carries the state and typed questions only, with th
   assert.deepEqual(report.usage, { requests: 5, input_tokens: 755, output_tokens: 15, missing_usage: 0, scope: report.usage.scope });
   assert.equal(rows.length, 5);
   for (const r of rows) {
-    assert.equal(r.model, 'jev-1.4.2'); assert.equal(r.run, 'jev-1.4.2'); assert.equal(r.requested_model, 'jev-latest'); assert.equal(r.path, 'jev');
+    assert.equal(r.model, 'jev-1.4.2'); assert.equal(r.run, 'jev-1.4.2'); assert.equal(r.requested_model, 'jev-1.13.0'); assert.equal(r.path, 'jev');
     assert.deepEqual(r.usage, { input_tokens: 151, output_tokens: 3 }); assert.equal(r.attempts, 1);
     assert.ok(Math.abs(r.p.reduce((a, b) => a + b, 0) - 1) < 1e-3); assert.equal(r.choice, r.keys[r.p.indexOf(Math.max(...r.p))]); assert.equal(typeof r.confidence, 'number');
   }

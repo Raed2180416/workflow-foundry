@@ -9,6 +9,7 @@ import { loadCard, loadL1 } from '../cards.mjs';
 import { shapeOf } from '../index.mjs';
 import { openLibrary } from '../store.mjs';
 import { calibrationReport } from '../../../src/judgment.mjs';
+import { judgmentModelById, loadPolicy } from '../../../src/models/policy.mjs';
 import { learnProfile } from '../../jit/profile.mjs';
 import { tmp, clock, registerSum, makeKept, sampleTasks } from './helpers.mjs';
 
@@ -36,6 +37,7 @@ test('step 7: every port builds {model, state, questions}; questions carry only 
   const e = registerSum(lib, { preconditions: [{ text: 'the rows carry integer amounts in minor units', kind: 'semantic' }, { text: 'rows have an id', kind: 'shape' }] });
   const built = allBuilt(lib, e);
   assert.deepEqual(built.map(b => b.port), J.PORTS);
+  assert.equal(judgmentModelById(loadPolicy().policy, J.JEV_MODEL).entry.id, 'jev-1.13.0', 'the request names the policy\'s pinned Jev version (2026-10-15)');
   for (const b of built) {
     assert.deepEqual(Object.keys(b.request).sort(), ['model', 'questions', 'state']);
     assert.equal(b.request.model, J.JEV_MODEL);

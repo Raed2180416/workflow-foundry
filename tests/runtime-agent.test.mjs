@@ -13,7 +13,7 @@ import { loadPolicy } from '../src/models/policy.mjs';
 import { ModelPort } from '../src/models/port.mjs';
 import { Journal } from '../src/journal.mjs';
 import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
-import { UNTRUSTED_PREAMBLE } from '../src/context.mjs';
+import { UNTRUSTED_PREAMBLE, compileContext } from '../src/context.mjs';
 
 const S = 'qwen3.5-2b-q4km', S2 = 'granite-4.2-3b-q4km', M = loadPolicy().policy.models.find(m => m.class === 'M').id, L = 'claude-sonnet-5-5', F = 'claude-opus-5-5';
 const loaded = loadPolicy();
@@ -299,4 +299,31 @@ test('agent: Foundry validates against the committed owner policy and never wire
   const run = await foundry.startRun(created.id);
   assert.equal(run.error.code, 'MODEL_PORT_REQUIRED');
   assert.equal(run.verdict.verdict, 'harness_fault');
+});
+
+// P0 (research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §2 change 1, §5 row 1): the hosted classes' input budget is
+// 100,000 tokens, so a Haiku agent node given a 60K-token input compiles it whole, under either overflow policy: not refused
+// (CONTEXT_OVERFLOW), not truncated. The class-M budget before 2026-10-15 (8,000) refused the same node before any call.
+test('agent: a Haiku node with a 60K-token input is neither refused nor truncated under the committed policy', async t => {
+  const haiku = 'claude-haiku-5-5';
+  let raw = '';
+  for (let i = 0; Buffer.byteLength(raw) < 60000 * 4; i++) raw += `row ${String(i).padStart(6, '0')}: amount 5 USD, reference ${'x'.repeat(40)}\n`;
+  const haikuAgent = onOverflow => agent('norm', { model: { id: haiku },
+    context: { inputs: [{ name: 'raw', ref: 'input.raw', render: 'text' }], ...(onOverflow ? { budget: { onOverflow } } : {}) } });
+  for (const onOverflow of [undefined, 'truncate']) await t.test(`onOverflow ${onOverflow ?? 'fail (default)'}`, async t => {
+    const h = harness(t, base([haikuAgent(onOverflow)], accept('norm')), { input: { raw }, script: { [haiku]: [{ value: { amount: 5 } }] } });
+    const run = await h.runtime.execute(h.run.id);
+    assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
+    assert.deepEqual(h.provider.calls.map(c => c.modelId), [haiku], 'one call, on Haiku');
+    assert.ok(h.provider.calls[0].prompt.includes(raw), 'the whole input reaches the model');
+    const compiled = h.of('context.compiled');
+    assert.equal(compiled.length, 1);
+    assert.equal(compiled[0].receipt.budget.maxInputTokens, 100000);
+    assert.ok(compiled[0].receipt.totalTokens > 60000 && compiled[0].receipt.totalTokens < 100000, `totalTokens ${compiled[0].receipt.totalTokens}`);
+    assert.deepEqual(compiled[0].receipt.inputs.map(i => [i.name, i.truncated]), [['raw', false]]);
+    assert.equal(h.of('model.escalated').length, 0);
+  });
+  // Control: the same node and input under the old class-M budget is refused.
+  assert.throws(() => compileContext({ node: haikuAgent(), inputs: [{ name: 'raw', value: raw, label: 'trusted' }], classBudget: 8000 }),
+    e => e.code === 'CONTEXT_OVERFLOW' && /budget is 8000/.test(e.message));
 });

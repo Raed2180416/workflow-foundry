@@ -17,8 +17,11 @@ test('T2: the cap table is LIBRARY §5.2 and agrees with policy/models.json clas
   const policy = JSON.parse(readFileSync(new URL('../../../policy/models.json', import.meta.url), 'utf8')).inputBudgetTokensByClass;
   assert.deepEqual(CLASS_BUDGETS, policy);
   assert.deepEqual(Object.fromEntries(Object.entries(CAP_TABLE).map(([k, r]) => [k, [r.class, r.cap]])), { S1: ['S', 4000], S5: ['S', 4000], S6: ['M', 8000], S8: ['S', 4000] });
+  // Since 2026-10-15 class M's budget is 100,000 (MEMORY-ROUTING-RECURSION.md §2 change 1); S6's 8,000 stays as a deliberate
+  // per-step cap below it, to revisit when the library is unpaused. The effective cap is the smaller of the two.
   for (const [call, row] of Object.entries(CAP_TABLE)) {
-    assert.equal(capOf(call), policy[row.class], `${call}: the table cap is the class budget`);
+    assert.equal(capOf(call), row.cap, `${call}: the table cap applies`);
+    assert.ok(row.cap <= policy[row.class], `${call}: the table cap is within the class budget`);
     assert.ok(Object.values(row.parts).reduce((a, b) => a + b, 0) <= row.cap, `${call}: allocations sum within the cap`);
   }
   assert.deepEqual(CAP_TABLE.S6.parts, { l0: 3000, index: 600, expanded: 1200, task: 2500, other: 500 });
