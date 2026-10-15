@@ -132,7 +132,8 @@ test('no model id outside this file: runtime source names only policy ids', () =
 // the moving alias jev-latest is no longer a policy id, so a caller that asks for it is refused.
 test('judgment models: Jev is listed on a systemone-http provider, apart from the generative models, with no credential value', () => {
   const { entry, provider } = judgmentModelById(policy, 'jev-1.13.0');
-  assert.deepEqual((policy.judgmentModels ?? []).map(m => m.id), ['jev-1.13.0'], 'the pinned served version, not an alias');
+  assert.deepEqual((policy.judgmentModels ?? []).map(m => m.id), ['jev-1.13.0', 'jev-1.14.0'], 'served versions only, never an alias; the first is the default pin');
+  assert.ok((policy.judgmentModels ?? []).every(m => /^jev-\d+\.\d+\.\d+$/.test(m.id)), 'every Jev id is a served version');
   assert.throws(() => judgmentModelById(policy, 'jev-latest'), { code: 'MODEL_NOT_IN_POLICY' }, 'the moving alias is refused');
   assert.equal(entry.provider, 'typesafe-systemone');
   assert.equal(provider.kind, JUDGMENT_KIND);

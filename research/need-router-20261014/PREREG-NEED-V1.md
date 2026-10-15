@@ -968,7 +968,13 @@ label exists):
   it is now sha256 `9a5a467a3782d98beaa50c4e869d566d6a2ee3cbb6dfd699128971902200f0bc` (version `2026-10-15.1`, policy
   hash `a52ac399…`). Tags `m1` and `m1-d5` ran under `2026-10-09.1`. M1-R (`m1-rerun.mjs`, launched 00:49 UTC on 10-15,
   before this change) loaded `2026-10-09.1` when it started and holds it in memory. NL0 and every later stage run under
-  `2026-10-15.1`. No other label-engine file or tree changed in this batch. The files and why:
+  `2026-10-15.2` (below).
+  - **Addendum, policy `2026-10-15.2` (same deviation, before the NL0 stamp).**
+    - The change: `judgmentModels[1]` lists `jev-1.14.0` beside the pinned `jev-1.13.0`, so that the planned J0 re-read (design §5 row 3) can name it explicitly. The first entry stays the default pin, so nothing selects 1.14.0 unless a caller names it.
+    - Nothing else changed.
+    - The file is now sha256 `3364011cae3741fb4409386d16cfa2439aaa340181382ce1694a8f7778fd3793`, policy hash `3618a12c…`.
+    - `tests/models-policy.test.mjs` now expects the two served ids, and every Jev id must be a served version, never an alias.
+    - Tests: core suite 1,145 pass, 0 fail; heal 32 pass, 66 skipped (the recorded D6 skip; the gate does not block on `judgmentModels`). No other label-engine file or tree changed in this batch. The files and why:
   - `policy/models.json` (stamped):
     - `judgmentModels[0].id` is `jev-1.13.0`, was `jev-latest`. J1 and jev-need were served `jev-1.13.0`; the alias
       moves (`jev-1.14.0` shipped on 10-14 behind `jev-preview`), and `jev-latest` is now refused as an id.

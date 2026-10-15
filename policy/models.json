@@ -1,5 +1,5 @@
 {
-  "policyVersion": "2026-10-15.1",
+  "policyVersion": "2026-10-15.2",
   "owner": "Raed2180416 (decision D1, granted 2026-10-06: free choice of Haiku 4.5 / Sonnet 5.5 / Opus 5.5 plus open-weight models for any role)",
   "notes": [
     "This file is the ONLY source of model ids for the Foundry runtime. Any id not listed here is rejected (tests/model-policy.test.mjs).",
@@ -9,7 +9,8 @@
     "2026-10-07: Claude Haiku 5.5 (claude-haiku-5-5) added as the first class-M model (owner notice: Anthropic replaced Haiku 4.5 with Haiku 5.5). Class M resolves to it; Haiku 4.5 stays listed by id for earlier pilots and tests only. Local S-class models are parked (owner decision 2026-10-07) but stay listed.",
     "2026-10-08: claude-cli.childEnv sets CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 and FORCE_PROMPT_CACHING_5M=1 for every claude -p child (research/review-20261007/04-efficiency-rust.md change 1; re-measured in research/review-20261007/cli-flags-20261008/). Closed list of transport/telemetry/cache-pricing variables, validated in src/models/policy.mjs; each journal request records the closed-list variables the child saw (providerRequest.env). Excluded from replay keys because neither changes the decoding; the first does shorten the prompt the CLI builds (about 165 tokens; the CLI's telemetry plugin is not loaded), as a CLI version change can. The flags lower the reported cost per call, so cost per success before and after 2026-10-08 is not comparable (synthesis rule R3). A value is \"1\" (set) or null (removed from the child); \"0\" is refused because the CLI reads CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 as set (zero-probe.json). Version 2026-10-08.2 corrects this note only; the measurements in that directory ran under 2026-10-08.1.",
     "2026-10-09: owner direction, Jev replaces Kev for the judge program; billed to the owner's TypeSafe account. Jev (TypeSafe's hosted System One judgment model) is listed under judgmentModels on the systemone-http provider typesafe-systemone: typed questions in, a probability per option out. It is not a generative model: ModelPort and class resolution read models[] only, and validatePolicy refuses a models[] entry on a systemone-http provider. The provider names its credential variable (credentialEnv), never a value; the owner maps his own key into that variable per command. jev-latest is a moving alias, so every judgment records the version the response names (its model field); TypeSafe documents no /v1/models.",
-    "2026-10-15 (P0 policy batch: research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §2 changes 1 and 6, §5 row 1; recorded as deviation D6 in research/need-router-20261014/PREREG-NEED-V1.md §13). (1) Jev is pinned: the judgment model id is the served version jev-1.13.0, not the moving alias jev-latest (which serves jev-1.13.0 today; jev-1.14.0 shipped on 2026-10-14 behind jev-preview). Callers request the pinned id; a deliberate re-read on another version names that id explicitly (score-served.mjs and jev-need.mjs --jev-model), and the id must be listed here. Every judgment still records the version its response names. (2) inputBudgetTokensByClass M, L and F are 100000 (were 8000, 16000, 32000). The 8000 class-M budget dates from class M meaning a 7-14B open model; M1 (research/need-router-20261014/runs/m1) measured one Haiku 5.5 call solving 45-64K-token tasks. 100000 is the Haiku price-tier boundary in its price source; L and F get the same budget so an escalation never lands in a smaller one. S stays 4000 (parked). (3) defaultsByRole is removed: no code read it, and wiring a role-based automatic assignment is on the design's do-not-build list (§4)."
+    "2026-10-15 (P0 policy batch: research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §2 changes 1 and 6, §5 row 1; recorded as deviation D6 in research/need-router-20261014/PREREG-NEED-V1.md §13). (1) Jev is pinned: the judgment model id is the served version jev-1.13.0, not the moving alias jev-latest (which serves jev-1.13.0 today; jev-1.14.0 shipped on 2026-10-14 behind jev-preview). Callers request the pinned id; a deliberate re-read on another version names that id explicitly (score-served.mjs and jev-need.mjs --jev-model), and the id must be listed here. Every judgment still records the version its response names. (2) inputBudgetTokensByClass M, L and F are 100000 (were 8000, 16000, 32000). The 8000 class-M budget dates from class M meaning a 7-14B open model; M1 (research/need-router-20261014/runs/m1) measured one Haiku 5.5 call solving 45-64K-token tasks. 100000 is the Haiku price-tier boundary in its price source; L and F get the same budget so an escalation never lands in a smaller one. S stays 4000 (parked). (3) defaultsByRole is removed: no code read it, and wiring a role-based automatic assignment is on the design's do-not-build list (§4).",
+    "2026-10-15.2 (same deviation D6, before the NL0 stamp): jev-1.14.0 is listed beside the pinned jev-1.13.0 so the planned J0 re-read can name it explicitly; the default pinned id is unchanged (the first judgment entry)."
   ],
   "classOrder": [
     "S",
@@ -200,6 +201,23 @@
         "source": "second-hand, unverified: Kev's author records USD 0.042 per M input tokens for Jev (kev:kev/predictors.py:210, cited in research/kev-20261007/01-kev-dossier.md \u00a75.3); TypeSafe's docs give no pricing; output price unknown (null)"
       },
       "note": "2026-10-09: owner direction, Jev replaces Kev for the judge program; billed to the owner's TypeSafe account."
+    },
+    {
+      "id": "jev-1.14.0",
+      "provider": "typesafe-systemone",
+      "family": "typesafe-jev",
+      "engine": "systemone",
+      "questionTypes": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "price": {
+        "inputPerMTok": 0.042,
+        "outputPerMTok": null,
+        "source": "assumed equal to jev-1.13.0 (same second-hand source); TypeSafe's docs give no pricing"
+      },
+      "note": "2026-10-15 (policy 2026-10-15.2, deviation D6): listed only for deliberate re-reads on the newer version (J0: the J1 re-read, MEMORY-ROUTING-RECURSION.md section 5 row 3). The default pinned id stays jev-1.13.0, the first entry; nothing selects jev-1.14.0 unless a caller names it."
     }
   ]
 }
