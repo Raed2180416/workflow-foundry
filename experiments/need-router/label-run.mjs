@@ -1241,9 +1241,17 @@ export async function labelRun(opts) {
     metered: ({ timeoutMs = null } = {}) => meteredPort(ports.model, { book, timeoutMs }) };
   let stopped = null;
   const racingLog = new Map(decided);
+  // K2 on the control's draws: a draw that cannot reach 10/12 even if its missing tasks passed stops the stage (fix the anchor
+  // or the harness); a draw that is incomplete (faulted or capped tasks) stops it too, as not evaluable, before any other
+  // mode is paid for (a resume completes the control first).
   const k2 = (u, plan) => {
-    const gate = r0Gate(jobRows(ctx, u, plan).rows, u.job.id);
-    return gate && !gate.ok && enforceGates ? `K2: direct-H on ${u.job.id} ${gate.perDraw.join(', ')} (needs >= ${R0_CONTROL.minPass}/${R0_CONTROL.of} per draw): fix the anchor or the harness` : null;
+    if (!enforceGates || u.job.id !== R0_CONTROL.job || !u.arms.includes(R0_CONTROL.mode)) return null;
+    const rows = jobRows(ctx, u, plan).rows.filter(r => r.mode === R0_CONTROL.mode), draws = replicatesOf(stages.arms[R0_CONTROL.mode]);
+    const per = Array.from({ length: draws }, (_, d) => { const x = rows.filter(r => r.rep === d); return { n: x.length, pass: x.filter(r => r.pass).length }; });
+    const perDraw = per.map(x => `${x.pass}/${x.n}`).join(', ');
+    if (per.some(x => x.pass + Math.max(0, R0_CONTROL.of - x.n) < R0_CONTROL.minPass)) return `K2: direct-H on ${u.job.id} ${perDraw} (needs >= ${R0_CONTROL.minPass}/${R0_CONTROL.of} per draw): fix the anchor or the harness`;
+    if (per.some(x => x.n < R0_CONTROL.of)) return `K2 not evaluable: the direct-H control on ${u.job.id} is incomplete (${perDraw}; faulted or capped tasks): no other mode starts; resume to complete it`;
+    return null;
   };
   try {
     for (const u of units) {

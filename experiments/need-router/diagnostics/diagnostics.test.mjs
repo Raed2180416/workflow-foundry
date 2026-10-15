@@ -10,19 +10,23 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as C from './common.mjs';
 import { rescue, scanSecrets, RESCUE_FILES } from './rescue.mjs';
-import { loadLegacyJobs, loadConstructions, toMatrix, LEGACY_REGISTRY, pairJob } from './legacy.mjs';
+import { loadLegacyJobs, loadConstructions, loadJitJobs, loadArmDef, jitRowBound, toMatrix, labelSetsOf, LEGACY_REGISTRY, LEGACY_JOB_DEFS, P1_HAND_AUTHORING, pairJob } from './legacy.mjs';
 import { nearest, TRUSTED8, loadCensus, loadStages } from './census.mjs';
-import { chanceShare, runD0, collapseFamilies } from './d0-knn.mjs';
+import { chanceShare, runD0, collapseFamilies, anchorEntries } from './d0-knn.mjs';
 import { bestThreshold, bestOrRule, hypothesisJobs, runD1, jobFeatureRow, featureIndex } from './d1-shortcut.mjs';
 import { coFailure, failureShares, runD2 } from './d2-cofailure.mjs';
-import { postHocSignals, evaluateGroup, selfVerdictRates, runD3, POSTHOC_NAMES } from './d3-signals.mjs';
+import { postHocSignals, evaluateGroup, selfVerdictRates, runD3, structureOf, archivedSeedRefusals, assertArchivedSeeds, EXCLUSION_REASON, POSTHOC_NAMES } from './d3-signals.mjs';
 import { recordsPassAt, kineticsPassAt, fragilityOfJob, runD4 } from './d4-fragility.mjs';
-import { guardCues, graphTruth, scoreCorpus, loadOverlay, runPartB } from './d5-guard.mjs';
+import { guardCues, graphTruth, scoreCorpus, loadOverlay, runPartB, timeDeclarations, typedFieldsE8, typedFieldsRunbook } from './d5-guard.mjs';
+import { bedStamp, bedGeneratorFiles } from './anchors.mjs';
+import { splitProvenance, compareCurrency, describeCurrency } from './currency.mjs';
+import { loadLedger } from '../../jit/seeds.mjs';
+import { buildMeterGate } from '../meter-gate.mjs';
 import { priceTokens, priceTable, builderCheck, repriceSession, eraOf, runD6 } from './d6-cost.mjs';
 import { runAll } from './run.mjs';
 import { renderReport } from './report.mjs';
 import { harvest, readStreams, assertNotLegacy, isLegacy, LEGACY_TAG } from '../harvest.mjs';
-import { labelTable } from '../metrics.mjs';
+import { labelTable, labelSetModes, needTable, needLabels, makeCell, HEADLINE } from '../metrics.mjs';
 import { knnPredictor } from '../router.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -116,7 +120,10 @@ test('loadLegacyJobs: seven paired jobs, every row tagged, P1 timeouts charged a
   const L = legacy();
   assert.deepEqual(L.jobs.map(j => [j.id, j.pairing.paired]), [['p1-records', 36], ['c0-dev-records', 8], ['c0-dev-codefix', 8], ['jit-dev-records-1', 24], ['jit-r0-records', 12], ['jit-dev-kinetics-1', 12], ['jit-r0-kinetics', 14]]);
   assert.ok(L.jobs.every(j => j.allRows.every(r => r.legacy === true && r.evidence === 'LEGACY' && r.source)));
-  assert.deepEqual(L.notes, []);
+  assert.deepEqual(L.notes.map(n => n.replace(/ \$[\d.]+/g, ' $')), [
+    'jit-dev-records-1 jit-HH records:dev:d4:s223: costUnknown, recorded $; already at or above the $ per-task bound (arm.json agentBudgetUsd), nothing to impute',
+    'jit-r0-kinetics jit-OH kinetics:dev:d4:s228: costUnknown, recorded $; imputed $ up to the $ per-task bound (arm.json agentBudgetUsd)',
+  ], 'the only notes are the two unobserved-cost stream rows: every input loaded and every LEGACY job has rows');
   const p1 = L.jobs[0];
   const timeouts = p1.rows.filter(r => r.error === 'MODEL_TIMEOUT');
   assert.equal(timeouts.length, 30, 'the P1 report counts 30 timed-out single calls');
@@ -349,8 +356,8 @@ test('kineticsPassAt scales the tolerance, the evaluator check and respects the 
 test('fragilityOfJob flags a label that flips with the tolerance (synthetic job)', () => {
   const mk = (mode, i, details, cost) => ({ mode, unit: `t${i}`, taskKey: `t${i}`, seed: 100 + i, taskHash: `h${i}`, pass: recordsPassAt(details, 1), score: null, delivered: true, schemaValid: true, error: null, usdReported: cost, usdImputed: 0, details });
   const near = { entities: 40, extra: 0, missing: 0, fieldAccuracy: 0.96, pairF1: 1 }, good = { entities: 40, extra: 0, missing: 0, fieldAccuracy: 0.99, pairF1: 1 };
-  const rows = Array.from({ length: 10 }, (_, i) => [mk('agent-H', i, near, 0.03), mk('hand-H', i, good, 0.01)]).flat();
-  const job = { id: 'syn', oracle: 'records', family: 'records', rows, builds: [], pairing: { modes: ['agent-H', 'hand-H'], paired: 10 }, sources: [] };
+  const rows = Array.from({ length: 10 }, (_, i) => [mk('agent-H', i, near, 0.03), mk('script-H', i, good, 0.01)]).flat();
+  const job = { id: 'syn', oracle: 'records', family: 'records', rows, builds: [{ mode: 'script-H', usd: 0.01 }], pairing: { modes: ['agent-H', 'script-H'], paired: 10 }, sources: [] };
   const f = fragilityOfJob(job);
   assert.equal(f.reproduction.mismatches, 0);
   assert.equal(f.headline['1'].label, 'workflow');
@@ -359,11 +366,12 @@ test('fragilityOfJob flags a label that flips with the tolerance (synthetic job)
   assert.equal(f.rowFlips.gainedAtDouble, 10);
 });
 
-test('D4 on the archive: nominal flags reproduce for all 616 rows; one job has a flipping label', () => {
+test('D4 on the archive: nominal flags reproduce for all 616 rows; two jobs have a flipping L_today label', () => {
   const d = runD4(legacy().jobs);
   assert.equal(d.summary.nominalReproduced, true);
   assert.equal(d.summary.rowsTotal, 616);
-  assert.deepEqual(d.summary.fragileJobs, ['jit-r0-records']);
+  assert.deepEqual(d.summary.fragileJobs, ['jit-r0-records', 'jit-r0-kinetics'], 'jit-r0-kinetics flips once its unobserved-cost row is imputed to the bound');
+  assert.deepEqual(d.summary.vacuousJobs, ['p1-records']); assert.deepEqual(d.summary.ceilingJobs, ['p1-records', 'c0-dev-records']);
   assert.deepEqual([d.summary.lostAtHalf, d.summary.gainedAtDouble], [17, 45]);
   assert.equal(d.jobs.find(j => j.job === 'jit-dev-kinetics-1').failuresWithWrongExclusion, 16);
   assert.ok(d.jobs.every(j => j.reproduction.mismatches === 0));
@@ -414,7 +422,10 @@ test('D5 Part B: typed fields evidence the declared requirements of E8 and runbo
   if (b.e8.error || b.runbook.error) return;   // a bed that does not load in this checkout
   assert.ok(b.e8.typed.human.evidence.some(e => /fraudReview/.test(e)));
   assert.ok(b.e8.typed.effects.evidence.some(e => /billing\.charge/.test(e)));
-  assert.equal(b.e8.typed.schedule.evidence.length, 0);
+  // E8's schedule is searched for in its typed declarations (the timedOut order status: the customer deadline race), not assumed absent.
+  assert.ok(b.e8.typed.schedule.evidence.some(e => /timedOut/.test(e)) && b.e8.typed.schedule.searched.includes('schemas'));
+  assert.equal(b.e8.recall.typed, 1);
+  assert.deepEqual(b.runbook.typed.schedule.evidence, []); assert.deepEqual(b.runbook.typed.schedule.searched, ['outputSchema', 'family']);
   assert.ok(b.runbook.typed.wait.evidence.length > 0 && b.runbook.typed.effects.evidence.length > 0);
   assert.ok(b.e8.typedNotDeclared.some(x => x.class === 'human'));
   assert.ok(b.runbook.typedNotDeclared.some(x => x.class === 'wait'));
@@ -501,16 +512,18 @@ test('renderReport: a pure function of the results; every section, grade and sou
   assert.ok(!/undefined|NaN|\[object/.test(md), 'no template leaks');
 });
 
-test('the committed diagnostics.json and REPORT.md are current', async () => {
+test('the committed REPORT.md renders the committed diagnostics.json, and its numbers reproduce (results compared apart from input hashes)', async t => {
   const dir = path.join(REPO, 'research/need-router-20261014/analysis/m0');
   const jf = path.join(dir, 'diagnostics.json'), rf = path.join(dir, 'REPORT.md');
   if (!existsSync(jf) || !existsSync(rf)) return;   // before the first run
   const committed = JSON.parse(readFileSync(jf, 'utf8'));
   assert.equal(readFileSync(rf, 'utf8'), renderReport(committed), 'REPORT.md is exactly the rendering of diagnostics.json');
-  // The diagnostics that read only committed files must match a fresh run; D1 (anchor beds) and D5 (E8 and runbook beds, the unpacked corpus) read files still in flux.
-  const fresh = await everything();
-  for (const k of ['d0', 'd2', 'd3', 'd4', 'd6']) assert.equal(JSON.stringify(fresh[k]), JSON.stringify(committed[k]), `${k} differs from the committed diagnostics.json: re-run run.mjs --report`);
-  assert.equal(JSON.stringify(fresh.inputs), JSON.stringify(committed.inputs));
+  const cur = compareCurrency(committed, await everything());
+  // A real mismatch: a section whose numbers differ although none of its inputs moved (not reproducible, or the file predates a change of code).
+  assert.deepEqual(cur.resultsDiffer, [], `${describeCurrency(cur)}: re-run run.mjs --report`);
+  // Inputs that moved (a cap added to stages.json, a line edited in SPEC-E.md, an anchor bed revised) make the file out of date whether or not its numbers
+  // changed; that is a re-run, not a failed mismatch, so it is reported as a TODO and does not break the suite.
+  if (cur.status !== 'current') t.todo(describeCurrency(cur));
 });
 
 test('the diagnostics make no model call and no network request, and read no sealed or credential file', () => {
@@ -521,4 +534,302 @@ test('the diagnostics make no model call and no network request, and read no sea
     assert.equal(text.match(base), null, `${f} mentions ${text.match(base)?.[0]}`);
     if (f !== 'rescue.mjs') assert.equal(text.match(secrets), null, `${f} mentions ${text.match(secrets)?.[0]}`);
   }
+});
+
+// =====================================================================================================================================
+// Regressions for the adversarial review of the diagnostics (one block per defect).
+// =====================================================================================================================================
+
+// ------------------------------------------------------------------------------------------------ P1 hand workflows carry their authoring cost
+test('P1 hand workflows: ceiling arms charged the >= $24.91 authoring cost; free of it they would make P1 a workflow job at hand-H', () => {
+  const p1 = legacy().jobs.find(j => j.id === 'p1-records');
+  assert.deepEqual(p1.builds.map(b => [b.mode, b.usd, b.lowerBound]), [['hand-H', 24.91, true], ['hand-S', 24.91, true]]);
+  assert.equal(P1_HAND_AUTHORING.usd, 24.91); assert.equal(P1_HAND_AUTHORING.lowerBound, true);
+  assert.match(P1_HAND_AUTHORING.source, /README\.md:307/, 'the figure is in the README cost ledger; research/core-20261006/REPORT.md does not contain it');
+  assert.ok(!/core-20261006\/REPORT\.md/.test(P1_HAND_AUTHORING.source));
+  assert.ok(Object.entries(LEGACY_REGISTRY).every(([, r]) => !r.prebuilt), 'no LEGACY mode switches off metrics.needTable\'s build-row guard');
+  assert.deepEqual(['hand-H', 'hand-S', 'wf-O', 'script-O'].map(m => LEGACY_REGISTRY[m].ceiling), [true, true, true, true]);
+  assert.ok(['agent-H', 'wf-H', 'script-H', 'static-b1h', 'jit-HH'].every(m => !LEGACY_REGISTRY[m].ceiling));
+  const { rows, builds } = toMatrix(p1);
+  assert.throws(() => needTable(rows, [], { registry: LEGACY_REGISTRY }), /guided mode with no build row/, 'the guard is live: the missing P1 build row is refused');
+  const label = bs => needLabels(needTable(rows, bs, { registry: LEGACY_REGISTRY }), { reps: 0, cells: [HEADLINE] }).at('p1-records', HEADLINE);
+  const free = label(builds.map(b => ({ ...b, usd: 0 })));   // what the report said before: no authoring cost
+  assert.deepEqual([free.label, free.top], ['workflow', 'hand-H']);
+  approx(free.u.get('hand-H'), 0.929, 5e-4);
+  const full = label(builds);
+  assert.deepEqual([full.label, full.top], ['no-workflow', 'agent-H']);
+  approx(full.u.get('hand-H'), -1.562, 5e-4); approx(full.u.get('agent-H'), 0.5, 5e-4);
+  approx(free.u.get('hand-H') - full.u.get('hand-H'), 24.91 / 10, 1e-9);   // exactly B / (N V)
+  const half = label(builds.map(b => ({ ...b, usd: 24.91 / 2 })));
+  assert.deepEqual([half.label, half.top], ['no-workflow', 'agent-H'], 'even half the authoring cost flips the label to agent-H');
+  approx(half.u.get('hand-H'), -0.317, 5e-4);
+  // L_today leaves the ceiling arms out, so P1 has no workflow arm there; L_ceiling keeps them.
+  const sets = labelSetsOf(p1.pairing.modes);
+  assert.ok(!sets.today.modes.some(m => m.startsWith('hand')) && sets.today.vacuous && sets.today.workflowModes.length === 0);
+  assert.deepEqual([...sets.ceiling.extra].sort(), ['hand-H', 'hand-S']);
+  assert.equal(labelSetsOf(['agent-H', 'wf-H']).ceiling, null);
+  assert.ok(labelSetModes(p1.pairing.modes, 'today', LEGACY_REGISTRY).every(m => !m.startsWith('hand')));
+});
+
+test('D4 reports P1 under both label sets: vacuous in L_today, no-workflow at the headline in L_ceiling and workflow only at large N or V', () => {
+  const p1 = runD4(legacy().jobs).jobs.find(j => j.job === 'p1-records');
+  assert.deepEqual(['0.5', '1', '2'].map(f => p1.headline[f].label), ['no-workflow', 'no-workflow', 'no-workflow']);
+  assert.equal(p1.labelSets.today.vacuous, true); assert.equal(p1.labelCounts.workflow, 0);
+  assert.deepEqual(p1.builds.map(b => [b.mode, b.usd]), [['hand-H', 24.91], ['hand-S', 24.91]]);
+  assert.deepEqual([p1.ceiling.headline['1'].label, p1.ceiling.headline['1'].top], ['no-workflow', 'agent-H']);
+  approx(p1.ceiling.headline['1'].u['hand-H'], -1.5623, 5e-4);
+  assert.ok(p1.ceiling.workflowCells.includes('V=1 N=100 W=1V') && !p1.ceiling.workflowCells.includes('V=1 N=10 W=1V'), 'the hand workflow pays back between N = 10 and N = 100 at V = $1');
+  assert.equal(p1.ceiling.grid.flipped, 3, 'and the ceiling label is itself fragile');
+  assert.equal(runD4(legacy().jobs).jobs.find(j => j.job === 'jit-dev-records-1').ceiling, null);
+});
+
+test('D4 on a synthetic job: a charged ceiling workflow stays out of L_today, and a build that costs more than the gain cannot win the ceiling label', () => {
+  const mk = (mode, i, pass, cost) => ({ mode, unit: `t${i}`, taskKey: `t${i}`, seed: 100 + i, taskHash: `h${i}`, pass, score: null, delivered: true, schemaValid: true, error: null, usdReported: cost, usdImputed: 0, details: { entities: 40, extra: 0, missing: 0, fieldAccuracy: pass ? 0.99 : 0.9, pairF1: 1 } });
+  const rows = Array.from({ length: 10 }, (_, i) => [mk('agent-H', i, i < 6, 0.05), mk('hand-H', i, true, 0.01)]).flat();
+  const job = { id: 'syn', oracle: 'records', family: 'records', rows, builds: [{ mode: 'hand-H', usd: 10 }], pairing: { modes: ['agent-H', 'hand-H'], paired: 10 }, sources: [] };
+  const f = fragilityOfJob(job);
+  assert.deepEqual([f.headline['1'].label, f.headline['1'].top], ['no-workflow', 'agent-H']);   // L_today: only agent-H
+  assert.equal(f.labelSets.today.vacuous, true);
+  assert.deepEqual([f.ceiling.headline['1'].label, f.ceiling.headline['1'].top], ['no-workflow', 'agent-H'], 'a $10 build at N = 10 and V = $1 costs 1.0 success-equivalents a task, more than the 0.85 hand-H gains over agent-H');
+  const cheap = fragilityOfJob({ ...job, builds: [{ mode: 'hand-H', usd: 1 }] });
+  assert.deepEqual([cheap.ceiling.headline['1'].label, cheap.ceiling.headline['1'].top], ['workflow', 'hand-H'], 'with a small build the ceiling label is workflow');
+  assert.equal(cheap.headline['1'].label, 'no-workflow', 'and L_today still cannot say workflow');
+});
+
+// ------------------------------------------------------------------------------------------------ unobserved stream costs are imputed to the arm bound
+function streamTree(rowsByArm) {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'jit-runs-'));
+  for (const [arm, { kind, def, rows }] of Object.entries(rowsByArm)) {
+    const dir = path.join(root, 'exp1', arm);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, 'arm.json'), JSON.stringify({ kind, def }));
+    writeFileSync(path.join(dir, 'results.jsonl'), rows.map(r => JSON.stringify({ costBreakdown: {}, orphanUsd: 0, pass: true, error: null, ...r })).join('\n') + '\n');
+  }
+  return root;
+}
+test('loadJitJobs imputes a costUnknown stream row up to the arm\'s per-task bound, as normaliseRunRow does for P1 and C0, and lists it', () => {
+  const def = { perTaskUsd: 1, agentBudgetUsd: 2 }, interpret = [{ kind: 'interpret', role: 'interpreter' }], tk = n => `records:dev:d3:s${n}`;
+  const root = streamTree({
+    'agent-claude-haiku-5-5': { kind: 'agent', def, rows: [1, 2, 3, 4].map(n => ({ taskKey: tk(n), costUsd: 0.1, taskHash: `h${n}` })) },
+    'jit-claude-opus-5-5--claude-haiku-5-5': { kind: 'jit', def, rows: [
+      { taskKey: tk(1), costUsd: 0.66, costUnknown: true, taskHash: 'h1', events: interpret },                  // an agent session of unknown cost: bound 2
+      { taskKey: tk(2), costUsd: 2.5, costUnknown: true, taskHash: 'h2', events: interpret },                   // already above the bound: nothing to impute
+      { taskKey: tk(3), costUsd: 0.2, costUnknown: true, taskHash: 'h3', events: [{ kind: 'compiled' }] },     // gateway only: the per-task bound 1
+      { taskKey: tk(4), costUsd: 0.3, taskHash: 'h4', events: interpret }] },                                    // observed: untouched
+  });
+  const j = loadJitJobs(root).jobs.get('exp1');
+  const by = n => j.rows.find(r => r.mode === 'jit-OH' && r.taskKey === tk(n));
+  approx(by(1).usdImputed, 1.34, 1e-9); approx(by(1).usdReported + by(1).usdImputed, 2, 1e-9);
+  assert.equal(by(2).usdImputed, 0); approx(by(3).usdImputed, 0.8, 1e-9); assert.equal(by(4).usdImputed, 0);
+  assert.equal(by(1).boundUsd, 2); assert.equal(by(3).boundUsd, 1);
+  assert.deepEqual(j.costNotes.map(n => n.replace(/\$[\d.]+/g, '$')), [
+    'exp1 jit-OH records:dev:d3:s1: costUnknown, recorded $; imputed $ up to the $ per-task bound (arm.json agentBudgetUsd)',
+    'exp1 jit-OH records:dev:d3:s2: costUnknown, recorded $; already at or above the $ per-task bound (arm.json agentBudgetUsd), nothing to impute',
+    'exp1 jit-OH records:dev:d3:s3: costUnknown, recorded $; imputed $ up to the $ per-task bound (arm.json perTaskUsd)',
+  ]);
+  assert.deepEqual(jitRowBound(null, {}), null); assert.deepEqual(jitRowBound({ kind: 'agent', perTaskUsd: 1, agentBudgetUsd: 2 }, {}), { usd: 2, field: 'agentBudgetUsd' });
+  assert.equal(loadArmDef(root, 'exp1', 'agent-claude-haiku-5-5').kind, 'agent');
+  // The committed archive: the two unobserved rows of the paired label rows are now imputed (or already at the bound).
+  const kin = legacy().jobs.find(j => j.id === 'jit-r0-kinetics').rows.find(r => r.costUnknown);
+  approx(kin.usdReported + kin.usdImputed, 2, 1e-9);
+  const rec = legacy().jobs.find(j => j.id === 'jit-dev-records-1').rows.find(r => r.costUnknown);
+  assert.ok(rec.usdReported >= 2 && rec.usdImputed === 0);
+});
+
+// ------------------------------------------------------------------------------------------------ rows, modes and jobs dropped are reported
+test('what pairing, the harvest and the job table drop is carried into the results and the report', async () => {
+  const all = await everything();
+  const kin = all.inputs.jobs.find(j => j.id === 'jit-dev-kinetics-1');
+  assert.deepEqual(kin.harvest.notes.map(n => n.replace(/^(\S+): (\d+) .*$/, '$1 $2')), ['agent-haiku 12', 'agent-sonnet 12', 'jit-OH 7', 'jit-SH 1'], 'the harvest notes the reviewer found lost');
+  assert.deepEqual(all.inputs.jobs.find(j => j.id === 'jit-r0-kinetics').harvest.notes.map(n => n.split(':')[0]), ['agent-haiku']);
+  assert.deepEqual(all.inputs.jobs.find(j => j.id === 'jit-r0-records').harvest.notes.length, 1);
+  assert.ok(all.inputs.jobs.find(j => j.id === 'jit-dev-records-1').harvest.notes.some(n => /static-b1h: \+\$1\.372 build/.test(n)));
+  assert.ok(!all.inputs.jobs.some(j => (j.harvest?.notes ?? []).some(n => /booked as recorded/.test(n))), 'superseded by the imputation notes');
+  assert.equal(all.inputs.p1Authoring.usd, 24.91);
+  const md = renderReport(all);
+  assert.ok(md.includes('Pairing and harvest notes') && md.includes('agent-sonnet: 12 task(s) outside the paired set') && md.includes('jit-OH: 7 task(s) outside the paired set'));
+  assert.ok(md.includes('imputed $1.340 up to the $2 per-task bound'));
+  assert.ok(md.includes('hand-H $24.91+'));
+  // A job that yields no rows leaves a note instead of disappearing.
+  const empty = mkdtempSync(path.join(os.tmpdir(), 'jit-empty-'));
+  const L = loadLegacyJobs({ jitRoot: empty });
+  const jitDefs = LEGACY_JOB_DEFS.filter(d => d.kind === 'jit').map(d => d.id);
+  assert.deepEqual(L.jobs.map(j => j.id).filter(id => jitDefs.includes(id)), []);
+  for (const id of jitDefs) assert.ok(L.notes.some(n => n.startsWith(`${id} (jit): no rows`)), `a note for ${id}`);
+});
+
+test('D3 lists the modes it does not score instead of dropping them, and counts every group', async () => {
+  const d = (await everything()).d3;
+  assert.equal(d.summary.groupsExcluded, 9); assert.equal(d.summary.groupsTotal, d.summary.groups + 9);
+  assert.deepEqual(d.summary.excludedModes, ['jit-HH', 'jit-OH', 'jit-SH', 'static-b1h']);
+  assert.ok(d.excluded.every(x => x.rows > 0 && x.reason.length > 20 && !d.groups.some(g => g.job === x.job && g.mode === x.mode)));
+  assert.match(EXCLUSION_REASON('jit-OH'), /several paths/); assert.match(EXCLUSION_REASON('static-b1h'), /static solver/);
+  assert.ok(renderReport(await everything()).includes('**Not scored:** 9 further groups'));
+});
+
+// ------------------------------------------------------------------------------------------------ D3 never regenerates a reserved or held-out seed
+test('D3 seed gate: spent test seeds and archive-purpose dev seeds pass; held-out, reserved, unspent and unledgered seeds are refused before any task is generated', async () => {
+  const led = loadLedger(), why = (bed, split, seed) => archivedSeedRefusals(led, { bed, split, seed });
+  assert.deepEqual([why('records', 'test', 5003), why('codefix', 'test', 6002), why('records', 'dev', 210), why('kinetics', 'dev', 230)], [[], [], [], []]);
+  for (const seed of [8801, 8812, 8848]) assert.ok(why('records', 'test', seed).some(r => /held-out range/.test(r)) && why('records', 'test', seed).some(r => /need-heldout/.test(r)), `s${seed}`);
+  assert.ok(why('records', 'test', 8101).some(r => /held-out range/.test(r)), 'the other held-out ranges');
+  assert.ok(why('records', 'dev', 605).some(r => /need-example/.test(r)) && why('records', 'dev', 640).some(r => /need-label/.test(r)));
+  assert.ok(why('records', 'test', 7300).some(r => /clean, not a spent/.test(r)), 'an unspent clean test range');
+  assert.ok(why('records', 'test', 4242).some(r => /no ledger range/.test(r)));
+  assert.ok(why('records', 'dev', 1.5).length && why('records', 'oos', 1).length);
+  await assert.rejects(structureOf([{ taskKey: 'records:test:d3:s8803', taskHash: 'x' }]), e => e.code === 'SEED_REFUSED' && e.details[0].taskKey === 'records:test:d3:s8803' && /need-heldout/.test(e.message));
+  assert.throws(() => assertArchivedSeeds(['records:test:d3:s5001', 'kinetics:dev:d3:s601']), e => e.code === 'SEED_REFUSED' && e.details.length === 1 && e.details[0].taskKey === 'kinetics:dev:d3:s601');
+  await assert.rejects(runD3([{ id: 'x', allRows: [{ mode: 'agent-H', delivered: true, taskKey: 'records:test:d4:s8830', taskHash: null, pass: true }], rows: [], sources: [] }], { boot: 1 }), e => e.code === 'SEED_REFUSED');
+  const keys = [...new Set(legacy().jobs.flatMap(j => j.allRows.map(r => r.taskKey)))];
+  assert.ok(assertArchivedSeeds(keys) === keys.length && keys.length > 100, 'every archived task key passes today');
+});
+
+// ------------------------------------------------------------------------------------------------ D0 anchors, D1 bed versions and hashes
+test('D0 anchor sensitivity: anchors join their clusters, need-qa is a fourth TRAIN cluster and need-constraint a held-out query; the census-only primary does not move', async () => {
+  const { ANCHOR_BEDS } = await import('./d1-shortcut.mjs');
+  const { KEYS12 } = await import('./census.mjs');
+  const beds = [...new Set(Object.values(ANCHOR_BEDS))];
+  const anchors = { features: Object.fromEntries(beds.map((b, bi) => [b, Object.fromEntries([3, 5].map(d => [d, Object.fromEntries(KEYS12.map((k, i) => [k, (bi + 1) * 0.37 + d * 0.11 + i * 0.013]))]))])), errors: [] };
+  const info = loadStages();
+  const ae = anchorEntries(anchors, info);
+  assert.equal(ae.entries.length, 12); assert.ok(ae.entries.every(e => e.anchor === true && /@d[35]$/.test(e.id)));
+  assert.deepEqual(ae.skipped, []);
+  assert.deepEqual(new Set(ae.entries.map(e => info.familyCluster.get(e.family))), new Set(['W', 'codefix', 'need-qa', 'need-constraint']));
+  assert.deepEqual(anchorEntries({ features: { 'need-qa': anchors.features['need-qa'] } }, info).skipped.map(x => x.jobFamily).sort(), ['codefix-notests', 'need-constraint', 'need-r0pad', 'need-r3mini', 'need-stage']);
+  const base = runD0(), withA = runD0({ anchors });
+  assert.equal(JSON.stringify(withA.primary), JSON.stringify(base.primary), 'the census-only primary result is untouched');
+  assert.equal(base.anchorSensitivity, null);
+  const s = withA.anchorSensitivity;
+  assert.deepEqual(s.pool.clusterSizes, { W: 18, kinetics: 2, codefix: 4, 'need-qa': 2 });
+  assert.equal(s.pool.trainEntries, 26); assert.ok(s.pool.queries.includes('need-constraint@d3') && s.pool.queries.length === 10);
+  assert.deepEqual(s.primary.map(p => p.k), [3, 5]);
+  assert.ok(s.primary.every(p => p.design.queries === 10 && p.loco.queries === 36));
+  assert.ok(withA.sensitivities.length > base.sensitivities.length && withA.sensitivities.some(v => v.level === 'entries+anchors'));
+  const real = (await everything()).d0.anchorSensitivity;
+  assert.equal(real.pool.trainEntries, 26); assert.equal(real.anchors.length, 12); assert.equal(real.primary[0].design.queries, 10);
+});
+
+test('bedStamp hashes the module graph a bed loads: edits to the bed or what it imports move it; tests, READMEs, unimported files and beds/sealed do not', () => {
+  const repo = mkdtempSync(path.join(os.tmpdir(), 'beds-'));
+  const w = (f, t) => { mkdirSync(path.dirname(path.join(repo, f)), { recursive: true }); writeFileSync(path.join(repo, f), t); };
+  w('beds/x/index.mjs', "import { u } from './util.mjs';\nimport '../lib/c.mjs';\nimport s from '../sealed/secret.mjs';\nexport const family = { version: '1.2.3' };\n");
+  w('beds/x/util.mjs', 'export const u = 1;\n'); w('beds/lib/c.mjs', 'export const c = 1;\n'); w('beds/sealed/secret.mjs', 'export default 1;\n');
+  w('beds/x/x.test.mjs', 'test\n'); w('beds/x/README.md', 'readme\n'); w('beds/x/unused.mjs', 'export const z = 1;\n');
+  assert.deepEqual(bedGeneratorFiles('x', { repo }), ['beds/lib/c.mjs', 'beds/x/index.mjs', 'beds/x/util.mjs']);
+  const a = bedStamp('x', { repo, version: '1.2.3' });
+  assert.deepEqual([a.bed, a.version, a.files, Object.keys(a.dirs)], ['x', '1.2.3', 3, ['lib', 'x']]);
+  assert.match(a.sha256, /^[0-9a-f]{16}$/);
+  w('beds/x/unused.mjs', 'export const z = 2;\n'); w('beds/x/README.md', 'changed\n'); w('beds/x/x.test.mjs', 'changed\n'); w('beds/sealed/secret.mjs', 'export default 2;\n');
+  assert.deepEqual(bedStamp('x', { repo, version: '1.2.3' }), a, 'files nothing imports, tests, READMEs and sealed beds are not part of the stamp');
+  w('beds/x/util.mjs', 'export const u = 2;\n');
+  const b = bedStamp('x', { repo, version: '1.2.3' });
+  assert.notEqual(b.sha256, a.sha256); assert.notEqual(b.dirs.x.sha256, a.dirs.x.sha256); assert.equal(b.dirs.lib.sha256, a.dirs.lib.sha256);
+  w('beds/lib/c.mjs', 'export const c = 2;\n');
+  const c = bedStamp('x', { repo, version: '1.2.3' });
+  assert.notEqual(c.dirs.lib.sha256, b.dirs.lib.sha256); assert.equal(c.dirs.x.sha256, b.dirs.x.sha256);
+});
+
+test('D1 records each anchor bed\'s version and module-graph hash; a changed hash reads as "inputs moved", explicitly', async () => {
+  const all = await everything();
+  const beds = all.d1.anchorBeds.beds;
+  assert.deepEqual(Object.keys(beds).sort(), ['need-codefix-noverifier', 'need-constraint', 'need-qa', 'need-r0pad', 'need-r3mini', 'need-stage']);
+  for (const b of Object.values(beds)) { assert.match(b.sha256, /^[0-9a-f]{16}$/); assert.match(b.version, /^\d+\.\d+\.\d+$/); assert.ok(b.files > 0 && Object.keys(b.dirs).length > 0); }
+  assert.equal(all.d1.anchorBeds.errors.length, 0);
+  const moved = JSON.parse(JSON.stringify(all));
+  moved.d1.anchorBeds.beds['need-qa'].sha256 = '0'.repeat(16);
+  const r = compareCurrency(all, moved);
+  assert.equal(r.status, 'inputs-moved'); assert.deepEqual(r.inputsMoved.map(m => m.at), ['d1.anchorBeds.beds.need-qa']); assert.deepEqual(r.resultsDiffer, []);
+  assert.match(describeCurrency(r), /^inputs moved, re-run run\.mjs --report: inputs moved: d1\.anchorBeds\.beds\.need-qa/);
+  // D5 records the module graph of the E8 and runbook beds beside the SPEC-E.md hash.
+  assert.match(all.d5.e8AndRunbook.e8.bed.sha256, /^[0-9a-f]{16}$/); assert.match(all.d5.e8AndRunbook.runbook.bed.sha256, /^[0-9a-f]{16}$/);
+});
+
+// ------------------------------------------------------------------------------------------------ currency: results apart from input hashes
+test('compareCurrency: moved input hashes say "inputs moved, re-run"; only numbers that differ with nothing of theirs moved are a mismatch', () => {
+  const doc = {
+    schema: 's', code: { 'd0-knn.mjs': 'aaaa', 'report.mjs': 'bbbb' },
+    inputs: { legacySources: [{ path: 'archive/p1.jsonl', sha256: '11', bytes: 5, rescued: true }], notes: [] },
+    d0: { id: 'D0', sources: [{ path: 'census.json', sha256: '22', bytes: 7 }, { path: 'stages.json', sha256: '33', bytes: 9 }], summary: { x: 1 } },
+    d4: { id: 'D4', summary: { y: 2 } },
+    d5: { id: 'D5', e8AndRunbook: { e8: { text: { what: 'spec', sha256: '44', chars: 100 }, bed: { bed: 'ebed/e8', version: '1.0.0', files: 3, dirs: { ebed: { files: 3, sha256: '55' } }, sha256: '66' }, recall: 1 } } },
+  };
+  const edit = f => { const c = JSON.parse(JSON.stringify(doc)); f(c); return c; };
+  const sp = splitProvenance(doc);
+  assert.ok(!JSON.stringify(sp.results).includes('"sha256"') && !('code' in sp.results) && sp.hashes['d0.sources[1]'].sha256 === '33' && sp.hashes.code['d0-knn.mjs'] === 'aaaa');
+  assert.equal(sp.results.d0.sources[1].path, 'stages.json', 'the path stays in the results: a file added or removed is a result difference');
+  assert.equal(sp.hashes['d5.e8AndRunbook.e8.bed'].version, '1.0.0');
+  assert.equal(compareCurrency(doc, doc).status, 'current');
+  // stages.json edited (a stage cap): the numbers are unchanged, the file is out of date. Not a mismatch.
+  const caps = compareCurrency(doc, edit(c => { c.d0.sources[1].sha256 = '99'; c.d0.sources[1].bytes = 10; }));
+  assert.equal(caps.status, 'inputs-moved'); assert.deepEqual(caps.resultsDiffer, []); assert.deepEqual(caps.inputsMoved.map(m => m.at), ['d0.sources[1]']);
+  assert.match(describeCurrency(caps), /^inputs moved, re-run run\.mjs --report/);
+  // numbers differ with no input moved: a real mismatch.
+  const bad = compareCurrency(doc, edit(c => { c.d0.summary.x = 2; }));
+  assert.equal(bad.status, 'results-differ'); assert.deepEqual(bad.resultsDiffer, ['d0']); assert.match(describeCurrency(bad), /^MISMATCH/);
+  // numbers differ because the section's own input moved (SPEC-E.md edited, E8 cues change): stale, not a mismatch.
+  const stale = compareCurrency(doc, edit(c => { c.d5.e8AndRunbook.e8.text.sha256 = '77'; c.d5.e8AndRunbook.e8.recall = 0.67; }));
+  assert.equal(stale.status, 'inputs-moved'); assert.deepEqual(stale.staleBecauseInputsMoved, ['d5']); assert.deepEqual(stale.resultsDiffer, []);
+  // an archive hash moved: the sections that read the archive are stale with it; D0 (census) is not.
+  const arch = compareCurrency(doc, edit(c => { c.inputs.legacySources[0].sha256 = '88'; c.d4.summary.y = 3; }));
+  assert.deepEqual([arch.status, arch.staleBecauseInputsMoved, arch.resultsDiffer], ['inputs-moved', ['d4'], []]);
+  const d0only = compareCurrency(doc, edit(c => { c.inputs.legacySources[0].sha256 = '88'; c.d0.summary.x = 3; }));
+  assert.deepEqual([d0only.status, d0only.resultsDiffer], ['results-differ', ['d0']]);
+  // code moved with equal numbers: re-run; code moved with different numbers and nothing else moved: a mismatch (the file predates the change).
+  assert.deepEqual([compareCurrency(doc, edit(c => { c.code['d0-knn.mjs'] = 'cccc'; })).status, compareCurrency(doc, edit(c => { c.code['d0-knn.mjs'] = 'cccc'; })).codeMoved], ['inputs-moved', true]);
+  assert.equal(compareCurrency(doc, edit(c => { c.code['d0-knn.mjs'] = 'cccc'; c.d0.summary.x = 5; })).status, 'results-differ');
+});
+
+test('an edit to stages.json no longer breaks the currency check: the committed diagnostics.json against itself with a moved stages.json hash is "inputs moved"', () => {
+  const jf = path.join(REPO, 'research/need-router-20261014/analysis/m0/diagnostics.json');
+  if (!existsSync(jf)) return;
+  const committed = JSON.parse(readFileSync(jf, 'utf8'));
+  const edited = JSON.parse(JSON.stringify(committed));
+  let n = 0;
+  for (const sec of ['d0', 'd1', 'd6']) for (const src of edited[sec].sources ?? []) if (/prereg\/stages\.json$/.test(src.path)) { src.sha256 = 'f'.repeat(64); src.bytes += 1234; n += 1; }
+  assert.ok(n >= 3, 'stages.json is a recorded input of D0, D1 and D6');
+  const r = compareCurrency(committed, edited);
+  assert.deepEqual([r.status, r.resultsDiffer], ['inputs-moved', []]);
+  assert.equal(r.inputsMoved.length, n);
+});
+
+// ------------------------------------------------------------------------------------------------ D5: E8 schedule is searched, not hard-coded
+test('timeDeclarations finds typed timer, deadline and schedule declarations (keys and enum values), never prose', () => {
+  const tree = { a: { description: 'a deadline in prose', deadlineAt: { type: 'string' }, status: { enum: ['open', 'timedOut'] }, kind: 'timer', note: 'every day' }, b: [{ cronSpec: 1 }] };
+  assert.deepEqual(timeDeclarations(tree, 'x'), ['x.a.deadlineAt', 'x.a.status.enum[1] = "timedOut"', 'x.b[0].cronSpec']);
+  assert.deepEqual(timeDeclarations({ a: { description: 'deadline', text: 'schedule' } }, 'x'), []);
+  assert.equal(timeDeclarations(tree, 'x', { limit: 1 }).length, 1);
+  const none = typedFieldsE8({ schemas: { humanTasks: {}, effects: {}, sor: {} }, systems: [], family: { clock: { horizon: { length: 14, unit: 'calendar-day' } }, profile: 'p' } });
+  assert.deepEqual(none.schedule, { evidence: [], searched: ['family', 'schemas', 'systems'], note: none.schedule.note }, 'a bed with no typed time field is searched and reports none');
+  const some = typedFieldsE8({ schemas: { humanTasks: {}, effects: { 'x.y': { args: { properties: { dueAt: {} } } } }, sor: {} }, systems: [], family: { clock: {}, profile: 'p' } });
+  assert.deepEqual(some.schedule.evidence, ['schemas.effects.x.y.args.properties.dueAt']);
+  const rb = typedFieldsRunbook({ outputSchema: { properties: { actions: { items: { properties: { op: { enum: ['wait', 'restart'] }, runAt: {} } } } } }, family: {} });
+  assert.deepEqual(rb.schedule.evidence, [], 'a runAt field is not a timer, a deadline or a schedule by name');
+  assert.deepEqual(rb.schedule.searched, ['outputSchema', 'family']);
+  const rb2 = typedFieldsRunbook({ outputSchema: { properties: { schedule: { type: 'string' } } }, family: {} });
+  assert.deepEqual(rb2.schedule.evidence, ['outputSchema.properties.schedule']);
+  assert.ok(!/461/.test(readFileSync(path.join(here, 'd5-guard.mjs'), 'utf8')), 'the header no longer says 461 written descriptions (the corpus has 1,046)');
+});
+
+// ------------------------------------------------------------------------------------------------ D6: the cost-meter gate
+test('D6 emits a machine-readable cost-meter gate: block-until-verified on the archived evidence, with its reasons and the way to clear it', async () => {
+  const d = (await everything()).d6, g = d.summary.meterGate;
+  assert.equal(g.schema, 'need-meter-gate/1'); assert.equal(g.status, 'block-until-verified');
+  assert.deepEqual(g.reasons.map(r => r.code), ['OUTPUT_TOKENS_UNDER_RECORDED', 'REPRICE_OFF_REPORTED']);
+  assert.equal(g.reasons[0].of, 8); assert.equal(g.reasons[0].sessions, 8); assert.ok(g.reasons[0].medianRecordedOverFinal < 0.01);
+  const off = Object.fromEntries(g.reasons[1].groups.map(x => [x.key, x.ratioReportedOverReprice]));
+  assert.ok(off['claude-opus-5-5 | post-flag'] > 2.9 && off['claude-opus-5-5 | pre-flag'] > 2.1 && off['claude-sonnet-5-5 | post-flag'] > 2.6);
+  assert.match(g.clearedBy, /meter-gate\.mjs --verify/); assert.equal(g.rule.outputTolerance, 0.05);
+  assert.equal(JSON.stringify(d.summary.meterGate), JSON.stringify(buildMeterGate({ outputRatios: d.builderSessions.sessions.map(r => ({ label: r.label, model: r.model, recorded: r.outputTokensStreamUsage, final: r.outputTokensFinal })), eraRatios: d.agentSessions.byModelEra.map(m => ({ key: m.key, sessions: m.sessions, ratio: m.ratioReportedOverEra })) })), 'derived from D6\'s own checks');
+  const md = renderReport(await everything());
+  assert.ok(md.includes('The meter is now a gate, not a recommendation') && md.includes('**block-until-verified**') && md.includes('refuses to start a paid stage with an agent arm'));
+  assert.ok(!md.includes('a flag, not a finding'));
+});
+
+test('D6 label impact is reported for L_today and L_ceiling; the gate is clear when the recorded output matches the final usage', async () => {
+  const d = (await everything()).d6;
+  const p1 = d.meterImpact.find(i => i.job === 'p1-records');
+  assert.deepEqual([p1.reported.headlineLabel, p1.reported.headlineTop], ['no-workflow', 'agent-H']);
+  assert.deepEqual([p1.ceiling.reported.headlineLabel, p1.ceiling.reported.headlineTop], ['no-workflow', 'agent-H'], 'the charged hand workflow does not win in either label set');
+  assert.equal(d.meterImpact.find(i => i.job === 'jit-dev-records-1').ceiling, null);
+  assert.equal(buildMeterGate({ outputRatios: [{ recorded: 970, final: 1000 }], eraRatios: [{ key: 'k', sessions: 9, ratio: 1.03 }] }).status, 'clear');
 });

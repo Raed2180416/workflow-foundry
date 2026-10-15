@@ -54,6 +54,7 @@ export const DEPLOYABLE_PROBE = 0.625;            // need-router design: deploya
 export const ORACLE_PROBE = 0.827;                // need-router design: oracle-checked probe accuracy
 export const LAMBDA = 1;                          // L2 penalty on standardized weights (intercept free); fixed, never tuned
 export const RETRYABLE = Object.freeze(['MODEL_QUOTA', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT']);
+export const JEV_ATTEMPTS = 4;                     // per option order: the first try and three retries, each a ledger line
 export const ABSTAIN_P = 0.6;                     // Kotte note: share of answers whose max probability is below this
 export const KOTTE_ALPHA = 0.05;
 
@@ -377,14 +378,19 @@ export function decide({ auroc: a, matchedAccuracy: m }, { probe = DEPLOYABLE_PR
 // ---- property accuracy against the family truth table ---------------------------------------------------------------------
 
 /** truth.json: { families: { <family>: { S1: 'yes'|'no', ... } } } or { <family>: {...} }; a cell may be { answer }.
- *  Keys starting with '_' are notes. Returns Map(family -> {S: 'yes'|'no'}). */
-export function parseTruth(json) {
+ *  Keys starting with '_' are notes. Returns Map(family -> {S: 'yes'|'no'}). The labeller's cells are the truth; with
+ *  { reviewer: true } (a sensitivity reading only) each reviewerDisagreements entry whose reviewerReading is exactly
+ *  'yes' or 'no' replaces its cell; entries with a mixed reading (for example per difficulty) are left as labelled. */
+export function parseTruth(json, { reviewer = false } = {}) {
   const fams = json?.families ?? json ?? {}, m = new Map();
   for (const [f, cells] of Object.entries(fams)) {
-    if (f.startsWith('_') || !cells || typeof cells !== 'object') continue;
+    if (f.startsWith('_') || f === 'reviewerDisagreements' || !cells || typeof cells !== 'object' || Array.isArray(cells)) continue;
     const row = {};
     for (const id of QUESTION_IDS) { const v = typeof cells[id] === 'object' && cells[id] !== null ? cells[id].answer : cells[id]; if (v === 'yes' || v === 'no') row[id] = v; }
     m.set(f, row);
+  }
+  if (reviewer) for (const d of json?.reviewerDisagreements ?? []) {
+    if (m.get(d.family)?.[d.q] && (d.reviewerReading === 'yes' || d.reviewerReading === 'no')) m.get(d.family)[d.q] = d.reviewerReading;
   }
   return m;
 }
@@ -412,6 +418,16 @@ export function propertyAccuracy(items, truth, src = 'jev') {
   const correct = cells.filter(c => c.correct).length;
   return { cells, perQuestion, pooled: { correct, n: cells.length, accuracy: cells.length ? correct / cells.length : null },
     taskLevel: { correct: taskCorrect, n: taskN, accuracy: taskN ? taskCorrect / taskN : null }, misses: cells.filter(c => !c.correct).map(c => `${c.family}/${c.q}`) };
+}
+
+/** Sensitivity only (the labeller's table stays the truth for P-a): pooled property accuracy with the reviewer's clean
+ *  yes/no readings applied, and the cells they change. */
+export function reviewerSensitivity(items, truthJson) {
+  const base = parseTruth(truthJson), alt = parseTruth(truthJson, { reviewer: true }), changed = [];
+  for (const [f, row] of alt) for (const id of QUESTION_IDS) if (row[id] && row[id] !== base.get(f)?.[id]) changed.push(`${f}/${id}: ${base.get(f)[id]} -> ${row[id]}`);
+  const pooled = src => propertyAccuracy(items, alt, src).pooled;
+  return { changed, jev: pooled('jev'), haiku: pooled('haiku'),
+    notApplied: (truthJson.reviewerDisagreements ?? []).filter(d => d.reviewerReading !== 'yes' && d.reviewerReading !== 'no').map(d => `${d.family}/${d.q}: ${d.reviewerReading}`) };
 }
 
 /** Kotte's abstention floor (F22): the abstention share forced at risk alpha by an error rate err: max(0, (err - alpha)/(1 - alpha)). */
@@ -481,7 +497,8 @@ export function analyze({ items, labelSets, primaryLabels = 'm1', truth = null, 
       usage: jevRows.reduce((u, r) => ({ input_tokens: u.input_tokens + (r.usage?.input_tokens ?? 0), output_tokens: u.output_tokens + (r.usage?.output_tokens ?? 0) }), { input_tokens: 0, output_tokens: 0 }) },
     haiku: { rows: haikuRows.length, spentUsd: haikuRows.reduce((s, r) => s + (r.costUsd ?? 0) + (r.imputedUsd ?? 0), 0), engines: [...new Set(haikuRows.map(r => r.engineVersion))] },
     labels: Object.fromEntries(Object.entries(labelSets).map(([k, m]) => [k, m ? { tasks: m.size, pass: [...m.values()].filter(x => x.pass).length, timeouts: [...m.values()].reduce((s, x) => s + x.timeouts, 0) } : null])),
-    primary: { labels: primaryLabels, set: 'd3+d5', rule: 'LOFO AUROC >= 0.75 and matched accuracy > 0.625 -> NR-static; 0.60-0.75 -> NR-knn only; < 0.60 -> out', decision: primary },
+    primary: { labels: primaryLabels, set: 'd3+d5', rule: 'LOFO AUROC >= 0.75 and matched accuracy > 0.625 -> NR-static; 0.60-0.75 -> NR-knn only; < 0.60 -> out',
+      readings: 'where the spec is silent: the head is code + Jev p(yes); "matched threshold" is the base-rate-matched threshold; an AUROC >= 0.75 that does not beat the probe falls to NR-knn; the rule scores the head, not the increment over code-only (reported beside it)', decision: primary },
     decisions, heads,
     properties, truthCells: truth ? [...truth.values()].reduce((s, r) => s + Object.keys(r).length, 0) : 0,
     abstention: { ...abstention, kotteFloor: floor === null ? null : { alpha: KOTTE_ALPHA, taskLevelAccuracy: floor, floor: kotteFloor(floor) } },
@@ -499,9 +516,13 @@ export function checkPredictions(res, labels = 'm1') {
   const H = s => res.heads?.[labels]?.[s]?.heads ?? {};
   const d3 = H('d3'), all = H('d3+d5'), ok = h => h && !h.skipped;
   const pa = res.properties?.jev?.pooled?.n ? res.properties.jev : null;
+  // P-a has three parts: pooled cell accuracy >= 0.75; the misses fall on S4 and S6 only; and there ARE misses on S4 and on S6
+  // ("misses on S4 and S6" is a claim about where Jev fails, so a perfect table does not confirm it). Parts are reported.
+  const missOn = q => !!pa?.misses.some(m => m.endsWith(`/${q}`));
+  const paParts = pa ? { accuracyAtLeast075: pa.pooled.accuracy >= 0.75, missesOnlyOnS4S6: pa.misses.every(m => /\/S[46]$/.test(m)), missOnS4: missOn('S4'), missOnS6: missOn('S6') } : null;
   return {
     labels,
-    'P-a': pa ? { held: pa.pooled.accuracy >= 0.75 && pa.misses.every(m => /\/S[46]$/.test(m)), pooled: pa.pooled.accuracy, misses: pa.misses } : { held: null, why: 'no truth table or no Jev rows' },
+    'P-a': pa ? { held: Object.values(paParts).every(Boolean), ...paParts, pooled: pa.pooled.accuracy, misses: pa.misses } : { held: null, why: 'no truth table or no Jev rows' },
     'P-b': ok(d3.code) && ok(d3['code+jev']) ? { held: within(d3.code.auroc, 0.40, 0.60) && within(d3['code+jev'].auroc, 0.45, 0.65) && d3.code.auroc < 0.70 && d3['code+jev'].auroc < 0.70, code: d3.code.auroc, codeJev: d3['code+jev'].auroc }
       : { held: null, why: 'd3 heads not evaluable', code: ok(d3.code) ? d3.code.auroc : null },
     'P-c': ok(all.code) && ok(all['code+jev']) ? { held: !all.code.beatsDeployableBeyondNoise && !all['code+jev'].beatsDeployableBeyondNoise, code: all.code.matchedCi, codeJev: all['code+jev'].matchedCi }
@@ -523,7 +544,7 @@ export function renderReport(res, { date = new Date().toISOString().slice(0, 10)
   L.push('## Prediction (quoted verbatim from the spec)', '', `> ${res.prediction}`, '');
   const d = res.primary.decision;
   L.push('## Decision', '');
-  L.push(`Rule (pre-registered): ${res.primary.rule}. Primary: labels \`${res.primary.labels}\`, all tasks (d3+d5), head code + Jev p(yes).`, '');
+  L.push(`Rule (pre-registered): ${res.primary.rule}. Primary: labels \`${res.primary.labels}\`, all tasks (d3+d5), head code + Jev p(yes).${res.primary.readings ? ` Readings ${res.primary.readings}.` : ''}`, '');
   if (d) {
     L.push(`**Branch: ${d.branch}.** code+Jev LOFO AUROC ${f3(d.auroc)} ${iv(d.ci)} (family bootstrap); accuracy at the base-rate-matched threshold ${f3(d.matchedAccuracy)} vs deployable probe ${DEPLOYABLE_PROBE} and oracle-checked probe ${ORACLE_PROBE}. Increment over code-only on the same tasks: ${f3(d.deltaVsCode)} ${iv(d.deltaCi)} (code-only ${f3(d.codeAuroc)}).`);
     if (d.branch !== 'out' && !d.incrementPositiveBeyondNoise) L.push('', `Caveat: the rule as written scores the head, not the increment; the Jev increment over code-only is not above noise (its interval includes 0), so the branch is carried by the code features, not by Jev.`);
@@ -548,6 +569,8 @@ export function renderReport(res, { date = new Date().toISOString().slice(0, 10)
     L.push(`| task-level answers | ${j.taskLevel.correct}/${j.taskLevel.n} (${f2(j.taskLevel.accuracy)}) | ${h.taskLevel.correct}/${h.taskLevel.n} (${f2(h.taskLevel.accuracy)}) |`, '');
     const missText = x => (x.pooled.n ? x.misses.join(', ') || 'none' : 'not scored (no rows)');
     L.push(`Jev misses: ${missText(j)}. Haiku misses: ${missText(h)}.`);
+    const rv = res.propertiesReviewer;
+    if (rv) L.push('', `Sensitivity (not the truth; P-a uses the labeller's table): with the reviewer's readings in truth.json reviewerDisagreements applied (${rv.changed.join('; ') || 'no clean yes/no change'}${rv.notApplied.length ? `; not applied, mixed reading: ${rv.notApplied.join('; ')}` : ''}), pooled cells Jev ${rv.jev.n ? `${rv.jev.correct}/${rv.jev.n} (${f2(rv.jev.accuracy)})` : '–'}, Haiku ${rv.haiku.n ? `${rv.haiku.correct}/${rv.haiku.n} (${f2(rv.haiku.accuracy)})` : '–'}.`);
   }
   const a = res.abstention;
   L.push('', "## Kotte's abstention floor (F22)", '');
@@ -560,7 +583,7 @@ export function renderReport(res, { date = new Date().toISOString().slice(0, 10)
   L.push('', '## Provenance', '');
   L.push(`Jev: ${res.jev.rows} task rows; requested ${res.jev.requested.join(', ') || '–'}; served ${Object.entries(res.jev.served.versions).map(([v, n]) => `${v} x${n}`).join(', ') || '–'}${res.jev.served.single ? '' : ' (**more than one served version**)'}; usage ${res.jev.usage.input_tokens} input / ${res.jev.usage.output_tokens} output tokens. Haiku arm: ${res.haiku.rows} rows, $${res.haiku.spentUsd.toFixed(4)}, engines ${res.haiku.engines.join(', ') || '–'}.`);
   L.push(`Labels: ${Object.entries(res.labels).map(([k, v]) => (v ? `${k} ${v.pass}/${v.tasks} one-call solvable (${v.timeouts} timed-out trials)` : `${k} absent`)).join('; ')}.`);
-  L.push('', 'Caveats: families stand in for clusters (if two families share a world, as R3 and R3′ may, the folds are optimistic); the outcome is mostly constant within a family, so a head is close to a family classifier fitted on 7 points; the bootstrap holds the out-of-fold scores fixed; the truth table is authored per family, not per task or difficulty.');
+  L.push('', 'Caveats: families stand in for clusters, but the rungs nest: R4 packs are complete R1 and R3 tasks and R5 is R4 plus a legacy dump, so a fold that holds out R4 or R5 still trains on its parts (the folds are optimistic); Jev and Haiku see only the prompt and size facts (stateOf), while the code features and the truth table read the inputs, notes and bed source, so a cannot_tell can be the correct reading of what was shown; the outcome is mostly constant within a family, so a head is close to a family classifier fitted on 7 points; the bootstrap holds the out-of-fold scores fixed; the truth table is authored per family, not per task or difficulty.');
   return L.join('\n') + '\n';
 }
 
@@ -605,7 +628,7 @@ export async function runJev({ tasks, live, cap, concurrency = 2, jevModel, clie
     for (const order of PERMUTATIONS) {
       const req = buildJevRequest(t.task, order), hash = sha(JSON.stringify(req));
       let body = null, err = null;
-      for (let attempt = 0; attempt < 4; attempt++) {
+      for (let attempt = 0; attempt < JEV_ATTEMPTS; attempt++) {
         ledger.take({ tag: 'jev-need2', id: `${t.taskKey}|${order.join(',')}`, attempt, requestHash: hash });
         try { body = await served.ask(req); appendFileSync(rawFile, JSON.stringify({ taskKey: t.taskKey, order, attempt, at: new Date().toISOString(), requestHash: hash, ok: true, body }) + '\n'); break; }
         catch (e) {
@@ -613,7 +636,7 @@ export async function runJev({ tasks, live, cap, concurrency = 2, jevModel, clie
           appendFileSync(rawFile, JSON.stringify({ taskKey: t.taskKey, order, attempt, at: new Date().toISOString(), requestHash: hash, ok: false, error: { code: err, status: e.details?.status ?? e.status ?? null, message: String(e.message ?? e).slice(0, 300) } }) + '\n');
           if (err === 'REQUEST_CAP') throw e;
           if (!RETRYABLE.includes(err)) break;
-          await sleep(backoffMs * 2 ** attempt);
+          if (attempt + 1 < JEV_ATTEMPTS) await sleep(backoffMs * 2 ** attempt);     // no wait after the last attempt
         }
       }
       let probs = null;
@@ -682,9 +705,11 @@ async function runAnalysis({ out, truthFile, primaryLabels, reps }) {
   const items = tasks.map(t => ({ taskKey: t.taskKey, family: t.family, difficulty: t.difficulty, code: t.code, jev: jev.get(t.taskKey) ?? null, haiku: haiku.get(t.taskKey) ?? null }));
   const labelSets = { m1: loadLabels('m1'), m1r: loadLabels('m1r') };
   if (!labelSets[primaryLabels]) throw new Error(`labelling ${primaryLabels} is not available`);
-  const truth = existsSync(truthFile) ? parseTruth(JSON.parse(readFileSync(truthFile, 'utf8'))) : null;
+  const truthJson = existsSync(truthFile) ? JSON.parse(readFileSync(truthFile, 'utf8')) : null;
+  const truth = truthJson ? parseTruth(truthJson) : null;
   const res = analyze({ items, labelSets, primaryLabels, truth, jevRows, haikuRows, reps });
   res.truthFile = truth ? path.relative(ROOT, truthFile) : null;
+  if (truthJson?.reviewerDisagreements?.length) res.propertiesReviewer = reviewerSensitivity(items, truthJson);
   mkdirSync(out, { recursive: true });
   writeFileSync(path.join(out, 'result.json'), JSON.stringify(res, null, 1) + '\n');
   writeFileSync(path.join(out, 'REPORT.md'), renderReport(res));
@@ -729,6 +754,8 @@ async function main() {
   const limit = Number(arg('--limit', '0')); if (limit > 0) keys = keys.slice(0, limit);
   const tasks = await loadTasks(keys);
   const jevModel = arg('--jev-model', await defaultJevModel());
+  // MEMORY-ROUTING-RECURSION §3.1 asks every Jev test to use the pinned id (jev-1.13.0); policy/models.json lists only the alias.
+  if (!has('--haiku') && !/^jev-\d+\.\d+\.\d+$/.test(jevModel)) console.log(`WARNING: Jev id ${jevModel} is a moving alias, not a pinned version (design §3.1: pin jev-1.13.0 in policy/models.json); every row records the served version`);
   if (has('--dry')) {
     const { loadPolicy } = await import('../../src/models/policy.mjs');
     const price = loadPolicy().policy.models.find(m => m.id === HAIKU_MODEL)?.price?.inputPerMTok ?? null;

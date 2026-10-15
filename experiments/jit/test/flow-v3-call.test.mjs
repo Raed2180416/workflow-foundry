@@ -116,7 +116,7 @@ flow.done({ total, why: r.deopt?.name ?? null, status: r.status ?? null });` });
   assert.equal(fb.code, 0, fb.stderr); assert.deepEqual(fb.output, { total: 15, why: 'known-dialects', status: 'deopt' });
   const d = calls(fb.trace).at(-1);
   assert.equal(d.kind, 'call-deopt'); assert.equal(d.ok, false); assert.equal(d.status, 'deopt'); assert.deepEqual(d.deopt, { kind: 'guard', name: 'known-dialects' });
-  assert.deepEqual(d.detail, { unseen: ['VENDEX'] }); assert.equal(d.spentUsd, 0.02);
+  assert.deepEqual(d.detail, { label: 'untrusted:child-deopt', value: { unseen: ['VENDEX'] } }, 'the child\'s detail is labelled untrusted (MEM-0 M6)'); assert.equal(d.spentUsd, 0.02);
   assert.equal(fb.trace.at(-1).spentUsd, 0.02, 'a deopted child is still paid for');
   const bad = await runRoot(t, { registry: lib.registry, source: `const flow = createFlow({ budgetUsd: 1 });
 const r = await flow.call('${lib.wrongType.hash}', {}, { name: 'typed', budgetUsd: 0.2 });
@@ -211,7 +211,7 @@ test('sandboxed: a guard deopt (exit 75) in B surfaces in A as call-deopt and A 
   assert.deepEqual(deopt.host.events.map(e => [e.kind, e.childStatus ?? null, e.deopt?.kind ?? null]), [['call-deopt', 'deopt', 'guard'], ['call-end', null, null]]);
   const aTrace = lines(path.join(deopt.workRoot, deopt.r.trace.find(e => e.kind === 'call-end').childTrace));
   const d = aTrace.find(e => e.kind === 'call-deopt');
-  assert.deepEqual([d.status, d.deopt], ['deopt', { kind: 'guard', name: 'few-rows' }]); assert.deepEqual(d.detail, { n: 6 });
+  assert.deepEqual([d.status, d.deopt], ['deopt', { kind: 'guard', name: 'few-rows' }]); assert.deepEqual(d.detail, { label: 'untrusted:child-deopt', value: { n: 6 } }, 'labelled untrusted (MEM-0 M6)');
   const shallow = await nested(t, { maxDepth: 1 });
   // A's call to B (depth 2) is refused; A's onRefuse is the default, so A deopts with kind call; the root falls back.
   assert.deepEqual(shallow.r.output, { total: -2, note: 'root fallback: call' });

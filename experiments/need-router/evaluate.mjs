@@ -74,12 +74,14 @@ const readJsonl = file => (existsSync(file) ? readFileSync(file, 'utf8').split('
  * Read a labels root. trainOnly (the sealed envelope, L6, and the development split): matrix, build and probe rows of
  * non-TRAIN jobs are never kept, and a stage directory without a TRAIN job is not opened beyond its jobs.json and
  * decisions.jsonl (label-free files). Each stage's price-table id (label-run report.json) and engine stamp (STAMP.json) are
- * returned in `stageInfo`. A stage holding both matrix.jsonl and rows.jsonl is refused.
+ * returned in `stageInfo`. A stage holding both matrix.jsonl and rows.jsonl is refused. label-run's per-arm environment-fault
+ * table (arm-faults.jsonl: trial and build attempts and faults per job and mode, K4) is returned in `armFaults`: rows.jsonl
+ * never holds a faulted attempt, so the table is the only place an arm over the 25% limit shows.
  */
 export function loadLabels(root, { trainOnly = false } = {}) {
   const dirs = existsSync(path.join(root, 'jobs.json')) ? [root]
     : readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => path.join(root, d.name)).filter(d => existsSync(path.join(d, 'jobs.json'))).sort();
-  const meta = {}, rows = [], builds = [], decisions = [], probes = [], stageInfo = [], skipped = { stages: [], rows: 0 }, stages = [];
+  const meta = {}, rows = [], builds = [], decisions = [], probes = [], stageInfo = [], skipped = { stages: [], rows: 0 }, stages = [], armFaults = [];
   const readJsonIf = f => (existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null);
   for (const dir of dirs) {
     const J = JSON.parse(readFileSync(path.join(dir, 'jobs.json'), 'utf8'));
@@ -99,11 +101,12 @@ export function loadLabels(root, { trainOnly = false } = {}) {
       if (trainOnly && meta[r.job]?.split !== 'train') { skipped.rows += 1; continue; }
       out.push(r);
     }
+    armFaults.push(...readJsonl(path.join(dir, 'arm-faults.jsonl')).filter(r => !trainOnly || meta[r.job]?.split === 'train'));
     const rep = readJsonIf(path.join(dir, 'report.json')), stamp = readJsonIf(path.join(dir, 'STAMP.json'));
     stageInfo.push({ stage: path.basename(dir), splits: [...new Set(Object.values(J).map(m => m.split))].sort(), priceTable: rep?.priceTable ?? null,
       stamp: stamp ? sha256(canonical(stamp)) : null });
   }
-  return { meta, rows, builds, decisions, probes, stageInfo, stages, skipped };
+  return { meta, rows, builds, decisions, probes, stageInfo, stages, skipped, armFaults };
 }
 
 // ------------------------------------------------------------------------------------------------------------- views
@@ -1113,7 +1116,7 @@ function buildLabels({ rows, builds, registry, cascades, labelSet, cells, reps, 
  * and listed, never lost silently. `probes` (label-run probes.jsonl) reconcile NR-probe's routing dollars; `stageInfo`
  * (loadLabels) carries each stage's price table and engine stamp.
  */
-export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], stageInfo = [], split = 'heldout', policies = defaultPolicies(), cells = GRID, reps = 2000, seed = 1, bootReps = 10000,
+export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], stageInfo = [], armFaults = [], split = 'heldout', policies = defaultPolicies(), cells = GRID, reps = 2000, seed = 1, bootReps = 10000,
   l2Perms = 1000, alpha = 0.05, labelSet = 'today', registry = MODES, cascades = CASCADES, committed = null, ledger = null, leak = true, attacks = true, randomDraws = 1000, firstPass = FIRST_PASS }) {
   if (!['train', 'heldout', 'sealed', 'e2e'].includes(split)) throw new Error(`--split must be train, heldout, sealed or e2e, got ${split}`);
   if (!cells.some(c => c.key === HEADLINE.key) || !cells.some(c => c.key === N1.key)) throw new Error('cells must include the headline and the N = 1 cell');
@@ -1255,7 +1258,10 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   // coverage, dropped jobs, substitutes, routing dollars, the meter; forced stratum; L_ceiling builder gap.
   const tables = split === 'train' ? [fit.table] : [fit.table, table];
   const notCascade = v => !modeInfo(v.mode, registry).cascade;
-  const ef = tables.flatMap(t => envFaults(t));
+  // K4: env-fault codes on rows (envFaults), plus label-run's fault table (armFaults: faulted attempts never reach rows).
+  const tableJobs = new Set(tables.flatMap(t => t.jobs));
+  const ef = [...tables.flatMap(t => envFaults(t)), ...armFaults.filter(x => tableJobs.has(x.job) && x.invalid)
+    .map(x => ({ job: x.job, mode: x.mode, rows: x.trialAttempts, faulted: x.trialFaults, share: x.share, buildAttempts: x.buildAttempts, buildFaults: x.buildFaults, buildShare: x.buildShare, invalid: true, source: 'arm-faults' }))];
   const voidedLineages = tables.flatMap(t => t.voided).filter(notCascade), voidedDraws = tables.flatMap(t => t.voidedDraws ?? []).filter(notCascade);
   const routing = routingChecks(recorded, probes, { jobs: new Set(EVAL) });
   const usedStages = (stageInfo ?? []).filter(x => (x.splits ?? []).some(sp => sp === 'train' || sp === split));
@@ -1437,7 +1443,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (split !== 'train' && !decFile) { console.error(`--split ${split} joins non-TRAIN labels: it needs --decisions <the committed envelope> (L6); refusing`); process.exit(2); }
   const L = loadLabels(root, { trainOnly: split === 'train' });
   const committed = decFile ? JSON.parse(readFileSync(decFile, 'utf8')) : null;
-  const R = evaluate({ rows: L.rows, builds: L.builds, meta: L.meta, recorded: L.decisions, probes: L.probes, stageInfo: L.stageInfo, split, policies, committed,
+  const R = evaluate({ rows: L.rows, builds: L.builds, meta: L.meta, recorded: L.decisions, probes: L.probes, stageInfo: L.stageInfo, armFaults: L.armFaults, split, policies, committed,
     reps: num('--reps', 2000), bootReps: num('--boot', 10000), l2Perms: num('--perms', 1000), seed: num('--seed', 1), labelSet: arg('--label-set', 'today') });
   const text = renderReport(R), out = arg('--report', null);
   if (out) {

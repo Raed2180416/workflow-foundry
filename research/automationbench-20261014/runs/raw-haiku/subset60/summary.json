@@ -1,0 +1,149 @@
+{
+ "runId": "raw-haiku-60",
+ "label": "model claude-haiku-5-5",
+ "model": "claude-haiku-5-5",
+ "scripted": false,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "selection": {
+  "subset": 60,
+  "seed": "1",
+  "domains": [
+   "sales",
+   "marketing",
+   "operations",
+   "support",
+   "finance",
+   "hr"
+  ]
+ },
+ "tasks": [
+  "sales.zoom_calendar_conflict",
+  "sales.apply_project_label",
+  "sales.full_sales_cycle_orchestrator",
+  "sales.zoom_regional_webinar_coordinator",
+  "sales.linkedin_content_engagement",
+  "sales.chatgpt_lead_summary_generator",
+  "sales.advance_opportunity_stage",
+  "sales.five_level_conditional",
+  "sales.event_to_opportunity_pipeline",
+  "sales.qualify_lead",
+  "marketing.engagement_optimization",
+  "marketing.seo_audit",
+  "marketing.customer_story_intake",
+  "marketing.featured_snippet",
+  "marketing.google_ads_high_intent_list_from_hubspot",
+  "marketing.contact_data_cleanup",
+  "marketing.analyst_briefing",
+  "marketing.webinar_cancellation_workflow",
+  "marketing.keyword_cannibalization",
+  "marketing.social_contest",
+  "operations.compressed_gas_cylinder_tracking",
+  "operations.docusign_contractor_offboard",
+  "operations.docusign_lease_renewal",
+  "operations.equipment_lease_processing",
+  "operations.sla_breach_early_warning",
+  "operations.zoom_change_advisory",
+  "operations.overtime_threshold_monitoring",
+  "operations.training_compliance_check",
+  "operations.loading_dock_scheduling",
+  "operations.drive_slack_dock_schedule",
+  "support.zoho_risk_scoring",
+  "support.hiver_csat_analysis",
+  "support.freshdesk_sla_monitoring",
+  "support.zendesk_freshdesk_sync",
+  "support.intercom_multi_product_routing",
+  "support.zoho_desk_ticket_categorization",
+  "support.intercom_reactivation_campaign",
+  "support.intercom_winback",
+  "support.intercom_feature_request",
+  "support.helpscout_auto_categorization",
+  "finance.vendor_payment_approval",
+  "finance.bad_debt_writeoff",
+  "finance.revenue_recognition",
+  "finance.quarterly_tax_estimate",
+  "finance.fiscal_year_rollover",
+  "finance.wave_freelance_invoice",
+  "finance.duplicate_payment_detection",
+  "finance.project_profitability",
+  "finance.escrow_tracking",
+  "finance.qb_invoice_from_orders",
+  "hr.disciplinary_action_tracking",
+  "hr.visa_expiration_monitoring",
+  "hr.job_board_monitoring",
+  "hr.slack_benefits_inquiry",
+  "hr.promotion_announcement",
+  "hr.grievance_routing",
+  "hr.referral_bonus_processing",
+  "hr.zoom_orientation_sessions",
+  "hr.jira_security_access_review",
+  "hr.performance_review_kickoff"
+ ],
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 0.75,
+ "capUsd": 12,
+ "tools": [
+  "Bash"
+ ],
+ "effort": "high",
+ "n": 60,
+ "n_graded": 60,
+ "pass_rate": 0.21666666666666667,
+ "mean_partial_credit": 0.6315207514888889,
+ "by_domain": {
+  "sales": {
+   "n": 10,
+   "pass_rate": 0.2,
+   "mean_partial_credit": 0.6169444444444444
+  },
+  "marketing": {
+   "n": 10,
+   "pass_rate": 0.1,
+   "mean_partial_credit": 0.5568201058201059
+  },
+  "operations": {
+   "n": 10,
+   "pass_rate": 0.5,
+   "mean_partial_credit": 0.7842857142857143
+  },
+  "support": {
+   "n": 10,
+   "pass_rate": 0.1,
+   "mean_partial_credit": 0.6507279240367476
+  },
+  "finance": {
+   "n": 10,
+   "pass_rate": 0.2,
+   "mean_partial_credit": 0.5047619047619049
+  },
+  "hr": {
+   "n": 10,
+   "pass_rate": 0.2,
+   "mean_partial_credit": 0.6755844155844156
+  }
+ },
+ "cost": {
+  "spentUsd": 0.92157577,
+  "knownUsd": 0.92157577,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 60,
+  "skipped": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "14d3577af7dc90bd4c23915f13cadd9678d906c58ece278c174383d8b24091ff",
+  "policyHash": "cfe79728f185334b3f352cd77daa4ad6f732cfb810af9bde91a50369456bc297",
+  "policyVersion": "2026-10-09.1",
+  "node": "v24.21.0"
+ },
+ "live": "/var/tmp/foundry-work/autobench/raw-haiku-60",
+ "finishedAt": "2026-10-15T01:02:52.756Z"
+}

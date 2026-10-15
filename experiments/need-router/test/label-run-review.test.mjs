@@ -222,11 +222,14 @@ test('agent-H+proc: an environment fault on the writer call is kept aside and re
 });
 
 // ---------------------------------------------------------------------------------------- major: paid-run checks
+// The D6 cost-meter gate (meter-gate.mjs) is another check of paidRunChecks; these tests pin it open so they do not read the
+// diagnostics file on disk.
+const NO_METER_GATE = { meterGate: () => null, meterVerification: () => null };
 const cleanStamp = (files = {}) => ({ labelEngine: { stage: 'NL0', commit: 'c0ffee', dirty: 0, files, trees: {}, beds: {}, prereg: {}, ledgerNeed: null, node: process.version }, analysis: { files: {} }, documents: {} });
 test('paid runs: the plan, checkStages, arm hashes, the frozen preregistration and a clean engine stamp are checked before anything is spent', async t => {
   const dir = tmp(t);
   const preregText = readFileSync(PREREG_FILE, 'utf8');
-  const deps = { stampOf: () => cleanStamp(), frozenSha: () => sha256(preregText) };
+  const deps = { stampOf: () => cleanStamp(), frozenSha: () => sha256(preregText), ...NO_METER_GATE };
   const plan = LR.loadPlan({ stageId: 'NL0', stagesFile: STAGES_FILE });
   const { units } = LR.stageUnits(plan.stages, plan.stage);
   const ok = LR.paidRunChecks({ plan, units, prereg: PREREG_FILE, allowDraft: true, deps });
@@ -255,7 +258,7 @@ test('paid runs: the plan, checkStages, arm hashes, the frozen preregistration a
 test('paid runs: --allow-draft and --jobs/--arms are recorded in report.deviations; STAMP.json is written before the first call and a changed engine refuses the resume', async t => {
   const dir = tmp(t), out = path.join(dir, 'out'), live = path.join(dir, 'live');
   const preregText = readFileSync(PREREG_FILE, 'utf8');
-  const deps = { stampOf: () => cleanStamp({ 'experiments/need-router/label-run.mjs': 'a' }), frozenSha: () => sha256(preregText) };
+  const deps = { stampOf: () => cleanStamp({ 'experiments/need-router/label-run.mjs': 'a' }), frozenSha: () => sha256(preregText), ...NO_METER_GATE };
   const opts = { stageId: 'NL0', stagesFile: STAGES_FILE, prereg: PREREG_FILE, workRoot: live, out, ports: 'stub', allowDraft: true, jobs: ['wbed-r0'], arms: ['direct-H'], racing: false,
     enforceGates: false, log: quiet, paidDeps: deps };
   await assert.rejects(LR.labelRun(opts), e => e.code === 'PAID_RUN_REFUSED' && /--deviation/.test(e.message), 'filters on a paid run need a recorded deviation');
@@ -299,6 +302,11 @@ test('K2: on wbed-r0 direct-H (both draws) runs alone first; below 10/12 no buil
   assert.equal(readJsonl(path.join(out, 'results.jsonl')).length, 24);
   assert.equal(readJsonl(path.join(dir, 'live', 'builds.jsonl')).length, 0, 'no build was paid for');
   assert.equal(readJsonl(path.join(dir, 'live', 'spend.jsonl')).filter(e => e.op === 'reserve' && e.kind !== 'trial').length, 0);
+  // An incomplete control (environment faults on its last task) is not evaluable: nothing else starts either.
+  const d2 = tmp(t);
+  const r2 = await dry(d2, runs, { enforceGates: true, stubForce: { call: { 'direct-H:wbed-r0:dev:d5:s621:': 'ratelimit', 'direct-H:wbed-r0:': 'right' } } });
+  assert.match(r2.stopped, /^K2 not evaluable: .*incomplete \(11\/11, 11\/11/);
+  assert.deepEqual([...new Set(readJsonl(path.join(d2, 'out', 'results.jsonl')).map(r => r.arm))], ['direct-H']);
 });
 
 // ------------------------------------------------------------------------------- minor: self-check infrastructure
@@ -367,4 +375,24 @@ test('--concurrency must be an integer from 1 to 4', async t => {
   assert.equal(existsSync(path.join(dir, 'w')), false);
   const r = spawnSync(process.execPath, [SCRIPT, '--stage-spec', file, '--stage', 'NL-T', '--dry', '--work-root', path.join(dir, 'w'), '--concurrency', 'abc'], { encoding: 'utf8', cwd: REPO });
   assert.equal(r.status, 2); assert.match(r.stderr, /--concurrency must be an integer from 1 to 4, got abc/);
+});
+
+// ------------------------------------------------------------------------ major: evaluate.mjs reads the K4 fault table
+test('evaluate.mjs: an arm that label-run\'s fault table marks invalid is an invalid arm of the reading (loadLabels reads arm-faults.jsonl)', async t => {
+  const { evaluate, loadLabels } = await import('../evaluate.mjs');
+  const { plantedWorld } = await import('./worlds.mjs');
+  const W = plantedWorld({ near: 7 });
+  const fault = { schema: 'need-arm-faults/1', stage: 'NL-T', job: 'T0-j0', mode: 'agent-H', trialAttempts: 34, trialFaults: 10, buildAttempts: 0, buildFaults: 0, share: 0.294118, buildShare: 0, limit: 0.25, invalid: true };
+  const clean = { ...fault, job: 'T0-j1', trialFaults: 1, share: 0.029412, invalid: false };
+  const FAST = { reps: 200, bootReps: 0, l2Perms: 0, randomDraws: 100, attacks: false, leak: false };
+  const D = evaluate({ ...W, split: 'train', ...FAST, armFaults: [fault, clean, { ...fault, job: 'no-such-job' }] });
+  assert.deepEqual(D.validity.invalidArms.filter(x => x.source === 'arm-faults').map(x => `${x.job}/${x.mode}`), ['T0-j0/agent-H'], 'only invalid arms of jobs in the reading');
+  // loadLabels: the stage directory's arm-faults.jsonl (the trainOnly read keeps TRAIN jobs only).
+  const dir = tmp(t), st = path.join(dir, 'nl-t');
+  mkdirSync(st, { recursive: true });
+  writeFileSync(path.join(st, 'jobs.json'), JSON.stringify({ 'T0-j0': W.meta['T0-j0'], 'H0-j0': W.meta['H0-j0'] }));
+  writeFileSync(path.join(st, 'rows.jsonl'), W.rows.filter(r => r.job === 'T0-j0').map(r => JSON.stringify(r)).join('\n') + '\n');
+  writeFileSync(path.join(st, 'arm-faults.jsonl'), [fault, { ...fault, job: 'H0-j0' }].map(x => JSON.stringify(x)).join('\n') + '\n');
+  assert.deepEqual(loadLabels(dir).armFaults.map(x => x.job), ['T0-j0', 'H0-j0']);
+  assert.deepEqual(loadLabels(dir, { trainOnly: true }).armFaults.map(x => x.job), ['T0-j0']);
 });

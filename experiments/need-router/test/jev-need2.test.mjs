@@ -239,7 +239,11 @@ test('analysis end to end on synthetic rows: heads, decision, predictions and a 
   assert.equal(res.primary.decision.labels, 'm1');
   assert.equal(res.primary.decision.branch, decide(all['code+jev']));
   assert.equal(res.properties.jev.pooled.accuracy, 1);
-  assert.equal(res.predictions['P-a'].held, true);
+  // a perfect table meets the accuracy part but not "misses on S4 and S6"
+  assert.equal(res.predictions['P-a'].accuracyAtLeast075, true);
+  assert.equal(res.predictions['P-a'].missesOnlyOnS4S6, true);
+  assert.equal(res.predictions['P-a'].missOnS4, false);
+  assert.equal(res.predictions['P-a'].held, false);
   assert.ok(['NR-static', 'NR-knn', 'out'].includes(res.primary.decision.branch));
   const md = renderReport(res, { date: '2026-10-15' });
   assert.ok(md.includes(`> ${PREDICTION}`));
@@ -386,5 +390,50 @@ test('Haiku arm offline: one typed call per task through the port, rows, resume 
     assert.equal(await runHaiku({ tasks: fakeTasks(5), live, capUsd: 1, concurrency: 1, port, log: quiet }), 0);
     assert.equal(calls.length, 2);
     assert.equal(lines(pathMod.join(live, 'haiku-rows.jsonl')).length, 5);
+  } finally { rmSync(live, { recursive: true, force: true }); }
+});
+
+// ---- review fixes (2026-10-15) --------------------------------------------------------------------------------------------
+
+import { checkPredictions, reviewerSensitivity, TRUTH_FILE, JEV_ATTEMPTS } from '../jev-need2.mjs';
+
+test('P-a holds only with accuracy >= 0.75 and misses on S4 and on S6 and nowhere else', () => {
+  const at = misses => checkPredictions({ properties: { jev: { pooled: { n: 48, correct: 48 - misses.length, accuracy: (48 - misses.length) / 48 }, misses } } })['P-a'];
+  assert.equal(at(['wbed-r1/S4', 'wbed-r2/S6']).held, true);
+  assert.equal(at(['wbed-r1/S4']).held, false, 'no miss on S6');
+  assert.equal(at(['wbed-r1/S4', 'wbed-r2/S6', 'wbed-r3/S1']).held, false, 'a miss outside S4/S6');
+  assert.equal(at(Array.from({ length: 13 }, (_, k) => `f${k}/${k % 2 ? 'S4' : 'S6'}`)).held, false, 'accuracy below 0.75');
+  assert.equal(checkPredictions({})['P-a'].held, null);
+});
+
+test('truth table: the labeller\'s cells are the truth; reviewer readings apply only in the sensitivity view', () => {
+  const json = JSON.parse(readF(TRUTH_FILE, 'utf8'));
+  const base = parseTruth(json), alt = parseTruth(json, { reviewer: true });
+  assert.equal([...base.values()].reduce((s, r) => s + Object.keys(r).length, 0), 48);
+  assert.ok(!base.has('reviewerDisagreements'));
+  for (const d of json.reviewerDisagreements ?? []) {
+    assert.ok(QUESTION_IDS.includes(d.q) && base.get(d.family)?.[d.q] === d.label, `${d.family}/${d.q} records the labeller's label`);
+    assert.equal(alt.get(d.family)[d.q], d.reviewerReading === 'yes' || d.reviewerReading === 'no' ? d.reviewerReading : d.label);
+  }
+  // without the families wrapper, a top-level reviewerDisagreements list is never read as a family
+  assert.deepEqual([...parseTruth({ A: { S1: 'yes' }, reviewerDisagreements: [{ family: 'A', q: 'S1', reviewerReading: 'no' }] }).keys()], ['A']);
+  const items = [{ family: 'wbed-r3', jev: Object.fromEntries(QUESTION_IDS.map(id => [id, dist(0.8, 0.1, 0.1)])) }];
+  const s = reviewerSensitivity(items, json);
+  assert.ok(s.changed.every(c => / -> (yes|no)$/.test(c)));
+  assert.equal(s.jev.n, 6);
+});
+
+test('Jev pass offline: an order that fails every attempt costs JEV_ATTEMPTS ledger lines and no wait after the last', async () => {
+  const live = mkdtempSync(pathMod.join(tmpdir(), 'jn2-'));
+  try {
+    const calls = [];
+    const client = { config: { model: 'jev-latest' }, served: { async ask(req) { calls.push(req); const e = new Error('rate limited'); e.code = 'MODEL_QUOTA'; throw e; } } };
+    const t0 = Date.now();
+    assert.equal(await runJev({ tasks: fakeTasks(1), live, cap: 10, concurrency: 1, client, backoffMs: 150, log: () => {} }), 3);
+    const ms = Date.now() - t0;
+    assert.equal(calls.length, JEV_ATTEMPTS);
+    assert.equal(lines(pathMod.join(live, 'requests.jsonl')).length, JEV_ATTEMPTS);
+    assert.equal(lines(pathMod.join(live, 'rows.faults.jsonl'))[0].error, 'MODEL_QUOTA');
+    assert.ok(ms < 150 * (2 ** (JEV_ATTEMPTS - 1) - 1) + 600, `waited ${ms} ms: a backoff ran after the last attempt`);
   } finally { rmSync(live, { recursive: true, force: true }); }
 });

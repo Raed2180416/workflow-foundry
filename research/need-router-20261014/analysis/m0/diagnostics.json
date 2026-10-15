@@ -5,16 +5,21 @@
  "code": {
   "common.mjs": "a09ac46a0d78ad7c",
   "census.mjs": "babf4d67b76c6153",
-  "legacy.mjs": "4d21ae2a98736679",
-  "anchors.mjs": "ee37efea7572e26e",
-  "d0-knn.mjs": "5496befafc90fb94",
+  "currency.mjs": "c41883e76159772f",
+  "legacy.mjs": "0a8fd2f4ce41bcdd",
+  "anchors.mjs": "dcef53df6eaa3f87",
+  "d0-knn.mjs": "f1b435699327e5e0",
   "d1-shortcut.mjs": "fd377e498af87c99",
   "d2-cofailure.mjs": "694710c793e39674",
-  "d3-signals.mjs": "2655e677d84fade4",
-  "d4-fragility.mjs": "2227b37c27f692af",
-  "d5-guard.mjs": "23d0b5af20d66c0f",
-  "d6-cost.mjs": "2f13ea07086e6a2b",
-  "rescue.mjs": "69a0f77b8e7596e0"
+  "d3-signals.mjs": "5307ba9da4580394",
+  "d4-fragility.mjs": "acfe793690df2a55",
+  "d5-guard.mjs": "4f6d8ac26f1bc14a",
+  "d6-cost.mjs": "982967954b24aa20",
+  "rescue.mjs": "69a0f77b8e7596e0",
+  "metrics.mjs": "65b310661d8670ec",
+  "harvest.mjs": "19a41592faad7bd8",
+  "features.mjs": "748d34eb086a3d58",
+  "meter-gate.mjs": "44882c6f5cbfb851"
  },
  "inputs": {
   "legacySources": [
@@ -133,7 +138,20 @@
     "rescued": true
    }
   ],
-  "notes": [],
+  "notes": [
+   "jit-dev-records-1 jit-HH records:dev:d4:s223: costUnknown, recorded $2.273; already at or above the $2 per-task bound (arm.json agentBudgetUsd), nothing to impute",
+   "jit-r0-kinetics jit-OH kinetics:dev:d4:s228: costUnknown, recorded $0.660; imputed $1.340 up to the $2 per-task bound (arm.json agentBudgetUsd)"
+  ],
+  "p1Authoring": {
+   "usd": 24.91,
+   "lowerBound": true,
+   "calls": 6752,
+   "modes": [
+    "hand-H",
+    "hand-S"
+   ],
+   "source": "README.md:307 (cost ledger, 2026-10-07: records-v3 hand-workflow development for P1; also research/jit-20261008/handoff/workflows/wf_59e7734e-82b.md:98)"
+  },
   "jobs": [
    {
     "id": "p1-records",
@@ -154,7 +172,19 @@
     "dropped": [],
     "rows": 288,
     "allRows": 288,
-    "builds": [],
+    "builds": [
+     {
+      "mode": "hand-H",
+      "usd": 24.91,
+      "lowerBound": true
+     },
+     {
+      "mode": "hand-S",
+      "usd": 24.91,
+      "lowerBound": true
+     }
+    ],
+    "harvest": null,
     "sources": [
      "research/need-router-20261014/archive/p1/results.jsonl"
     ]
@@ -194,6 +224,7 @@
       "usd": 1.3716
      }
     ],
+    "harvest": null,
     "sources": [
      "research/need-router-20261014/archive/c0-dev/results.jsonl",
      "research/need-router-20261014/archive/c0-dev/constructions.jsonl"
@@ -234,6 +265,7 @@
       "usd": 0.8357
      }
     ],
+    "harvest": null,
     "sources": [
      "research/need-router-20261014/archive/c0-dev/results.jsonl",
      "research/need-router-20261014/archive/c0-dev/constructions.jsonl"
@@ -275,6 +307,23 @@
       "usd": 1.372
      }
     ],
+    "harvest": {
+     "tasks": 24,
+     "paired": 24,
+     "modes": [
+      "agent-haiku",
+      "agent-opus",
+      "agent-sonnet",
+      "jit-HH",
+      "jit-OH",
+      "jit-SH",
+      "static-b1h"
+     ],
+     "dropped": [],
+     "notes": [
+      "static-b1h: +$1.372 build (research/construction-20261006/REPORT-dev.md (C0 dev, records B1-Haiku build; constructions.jsonl $1.372))"
+     ]
+    },
     "sources": [
      "research/jit-20261008/runs/jit-dev-records-1/agent-claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-dev-records-1/agent-claude-opus-5-5/results.jsonl",
@@ -304,6 +353,18 @@
       "usd": 5.4133
      }
     ],
+    "harvest": {
+     "tasks": 24,
+     "paired": 12,
+     "modes": [
+      "agent-haiku",
+      "jit-HH"
+     ],
+     "dropped": [],
+     "notes": [
+      "agent-haiku: 12 task(s) outside the paired set dropped from per-task labels"
+     ]
+    },
     "sources": [
      "research/jit-20261008/runs/jit-r0-records/agent-claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-r0-records/jit-claude-haiku-5-5--claude-haiku-5-5/results.jsonl"
@@ -339,6 +400,24 @@
       "usd": 17.1007
      }
     ],
+    "harvest": {
+     "tasks": 24,
+     "paired": 12,
+     "modes": [
+      "agent-haiku",
+      "agent-sonnet",
+      "jit-HH",
+      "jit-OH",
+      "jit-SH"
+     ],
+     "dropped": [],
+     "notes": [
+      "agent-haiku: 12 task(s) outside the paired set dropped from per-task labels",
+      "agent-sonnet: 12 task(s) outside the paired set dropped from per-task labels",
+      "jit-OH: 7 task(s) outside the paired set dropped from per-task labels",
+      "jit-SH: 1 task(s) outside the paired set dropped from per-task labels"
+     ]
+    },
     "sources": [
      "research/jit-20261008/runs/jit-dev-kinetics-1/agent-claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-dev-kinetics-1/agent-claude-sonnet-5-5/results.jsonl",
@@ -366,6 +445,18 @@
       "usd": 24.9569
      }
     ],
+    "harvest": {
+     "tasks": 24,
+     "paired": 14,
+     "modes": [
+      "agent-haiku",
+      "jit-OH"
+     ],
+     "dropped": [],
+     "notes": [
+      "agent-haiku: 10 task(s) outside the paired set dropped from per-task labels"
+     ]
+    },
     "sources": [
      "research/jit-20261008/runs/jit-r0-kinetics/agent-claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-r0-kinetics/jit-claude-opus-5-5--claude-haiku-5-5/results.jsonl"
@@ -412,12 +503,957 @@
     "wbed-r5"
    ],
    "noCensus": [
-    "need-qa",
+    "codefix-notests",
     "need-constraint",
-    "r0-pad",
-    "r3-mini",
-    "wbed-stage",
-    "codefix-notests"
+    "need-qa",
+    "need-r0pad",
+    "need-r3mini",
+    "need-stage"
+   ]
+  },
+  "anchorSensitivity": {
+   "anchors": [
+    "need-r0pad@d3",
+    "need-r0pad@d5",
+    "need-r3mini@d3",
+    "need-r3mini@d5",
+    "need-stage@d3",
+    "need-stage@d5",
+    "codefix-notests@d3",
+    "codefix-notests@d5",
+    "need-qa@d3",
+    "need-qa@d5",
+    "need-constraint@d3",
+    "need-constraint@d5"
+   ],
+   "skipped": [],
+   "pool": {
+    "trainEntries": 26,
+    "clusterSizes": {
+     "W": 18,
+     "kinetics": 2,
+     "codefix": 4,
+     "need-qa": 2
+    },
+    "queries": [
+     "incident@d3",
+     "synth@d3",
+     "ownerci@d3",
+     "wbed-r3p@d3",
+     "incident@d5",
+     "synth@d5",
+     "ownerci@d5",
+     "wbed-r3p@d5",
+     "need-constraint@d3",
+     "need-constraint@d5"
+    ]
+   },
+   "primary": [
+    {
+     "k": 3,
+     "design": {
+      "queries": 10,
+      "meanModalShare": 0.8,
+      "dominant": 4,
+      "single": 4,
+      "dominantShare": 0.4,
+      "singleShare": 0.4,
+      "chanceMeanShare": 0.724,
+      "chanceDominantShare": 0.315,
+      "chanceSingleShare": 0.315,
+      "modalClusterCounts": {
+       "W": 5,
+       "kinetics": 2,
+       "codefix": 1,
+       "need-qa": 2
+      },
+      "l8Trips": false
+     },
+     "designJobs": [
+      {
+       "query": "incident@d3",
+       "cluster": "incident",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "records@d5",
+         "cluster": "W",
+         "d": 0.947
+        },
+        {
+         "id": "records@d3",
+         "cluster": "W",
+         "d": 1.137
+        },
+        {
+         "id": "wbed-r2@d3",
+         "cluster": "W",
+         "d": 2.493
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 1,
+       "clusters": {
+        "W": 3
+       },
+       "single": true,
+       "dominant": true,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "synth@d3",
+       "cluster": "synth",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "kinetics@d3",
+         "cluster": "kinetics",
+         "d": 2.466
+        },
+        {
+         "id": "kinetics@d5",
+         "cluster": "kinetics",
+         "d": 2.634
+        },
+        {
+         "id": "wbed-r2@d5",
+         "cluster": "W",
+         "d": 2.836
+        }
+       ],
+       "modalCluster": "kinetics",
+       "modalShare": 0.667,
+       "clusters": {
+        "kinetics": 2,
+        "W": 1
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "ownerci@d3",
+       "cluster": "ownerci",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "codefix-notests@d3",
+         "cluster": "codefix",
+         "d": 0.044
+        },
+        {
+         "id": "codefix@d3",
+         "cluster": "codefix",
+         "d": 0.11
+        },
+        {
+         "id": "codefix-notests@d5",
+         "cluster": "codefix",
+         "d": 0.281
+        }
+       ],
+       "modalCluster": "codefix",
+       "modalShare": 1,
+       "clusters": {
+        "codefix": 3
+       },
+       "single": true,
+       "dominant": true,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "wbed-r3p@d3",
+       "cluster": "r3p",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "wbed-r2@d5",
+         "cluster": "W",
+         "d": 1.253
+        },
+        {
+         "id": "wbed-r2@d3",
+         "cluster": "W",
+         "d": 1.286
+        },
+        {
+         "id": "wbed-r1@d3",
+         "cluster": "W",
+         "d": 1.35
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 1,
+       "clusters": {
+        "W": 3
+       },
+       "single": true,
+       "dominant": true,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "incident@d5",
+       "cluster": "incident",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "records@d5",
+         "cluster": "W",
+         "d": 2.165
+        },
+        {
+         "id": "records@d3",
+         "cluster": "W",
+         "d": 2.38
+        },
+        {
+         "id": "codefix@d5",
+         "cluster": "codefix",
+         "d": 3.053
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 0.667,
+       "clusters": {
+        "W": 2,
+        "codefix": 1
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "synth@d5",
+       "cluster": "synth",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "kinetics@d3",
+         "cluster": "kinetics",
+         "d": 2.482
+        },
+        {
+         "id": "kinetics@d5",
+         "cluster": "kinetics",
+         "d": 2.641
+        },
+        {
+         "id": "wbed-r2@d5",
+         "cluster": "W",
+         "d": 2.845
+        }
+       ],
+       "modalCluster": "kinetics",
+       "modalShare": 0.667,
+       "clusters": {
+        "kinetics": 2,
+        "W": 1
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "ownerci@d5",
+       "cluster": "ownerci",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "records@d5",
+         "cluster": "W",
+         "d": 2.012
+        },
+        {
+         "id": "records@d3",
+         "cluster": "W",
+         "d": 2.084
+        },
+        {
+         "id": "codefix@d5",
+         "cluster": "codefix",
+         "d": 2.13
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 0.667,
+       "clusters": {
+        "W": 2,
+        "codefix": 1
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "wbed-r3p@d5",
+       "cluster": "r3p",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "wbed-r1@d5",
+         "cluster": "W",
+         "d": 1.633
+        },
+        {
+         "id": "wbed-r6@d3",
+         "cluster": "W",
+         "d": 1.733
+        },
+        {
+         "id": "wbed-r1@d3",
+         "cluster": "W",
+         "d": 1.763
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 1,
+       "clusters": {
+        "W": 3
+       },
+       "single": true,
+       "dominant": true,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "need-constraint@d3",
+       "cluster": "need-constraint",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "need-qa@d3",
+         "cluster": "need-qa",
+         "d": 1.614
+        },
+        {
+         "id": "need-qa@d5",
+         "cluster": "need-qa",
+         "d": 1.743
+        },
+        {
+         "id": "kinetics@d3",
+         "cluster": "kinetics",
+         "d": 2.166
+        }
+       ],
+       "modalCluster": "need-qa",
+       "modalShare": 0.667,
+       "clusters": {
+        "need-qa": 2,
+        "kinetics": 1
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      },
+      {
+       "query": "need-constraint@d5",
+       "cluster": "need-constraint",
+       "poolSize": 26,
+       "k": 3,
+       "neighbours": [
+        {
+         "id": "need-qa@d3",
+         "cluster": "need-qa",
+         "d": 1.617
+        },
+        {
+         "id": "need-qa@d5",
+         "cluster": "need-qa",
+         "d": 1.649
+        },
+        {
+         "id": "kinetics@d3",
+         "cluster": "kinetics",
+         "d": 1.955
+        }
+       ],
+       "modalCluster": "need-qa",
+       "modalShare": 0.667,
+       "clusters": {
+        "need-qa": 2,
+        "kinetics": 1
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.7235897435897551,
+        "dominant": 0.3153846153846154,
+        "single": 0.3153846153846154
+       }
+      }
+     ],
+     "loco": {
+      "queries": 36,
+      "meanModalShare": 0.639,
+      "dominant": 3,
+      "single": 3,
+      "dominantShare": 0.083,
+      "singleShare": 0.083,
+      "chanceMeanShare": 0.501,
+      "chanceDominantShare": 0.074,
+      "chanceSingleShare": 0.074,
+      "modalClusterCounts": {
+       "incident": 8,
+       "need-constraint": 4,
+       "W": 4,
+       "kinetics": 4,
+       "ownerci": 4,
+       "codefix": 1,
+       "synth": 9,
+       "need-qa": 2
+      },
+      "l8Trips": false
+     }
+    },
+    {
+     "k": 5,
+     "design": {
+      "queries": 10,
+      "meanModalShare": 0.68,
+      "dominant": 4,
+      "single": 2,
+      "dominantShare": 0.4,
+      "singleShare": 0.2,
+      "chanceMeanShare": 0.699,
+      "chanceDominantShare": 0.503,
+      "chanceSingleShare": 0.13,
+      "modalClusterCounts": {
+       "W": 6,
+       "codefix": 2,
+       "kinetics": 2
+      },
+      "l8Trips": false
+     },
+     "designJobs": [
+      {
+       "query": "incident@d3",
+       "cluster": "incident",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "records@d5",
+         "cluster": "W",
+         "d": 0.947
+        },
+        {
+         "id": "records@d3",
+         "cluster": "W",
+         "d": 1.137
+        },
+        {
+         "id": "wbed-r2@d3",
+         "cluster": "W",
+         "d": 2.493
+        },
+        {
+         "id": "wbed-r2@d5",
+         "cluster": "W",
+         "d": 2.502
+        },
+        {
+         "id": "codefix@d5",
+         "cluster": "codefix",
+         "d": 2.577
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 0.8,
+       "clusters": {
+        "W": 4,
+        "codefix": 1
+       },
+       "single": false,
+       "dominant": true,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "synth@d3",
+       "cluster": "synth",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "kinetics@d3",
+         "cluster": "kinetics",
+         "d": 2.466
+        },
+        {
+         "id": "kinetics@d5",
+         "cluster": "kinetics",
+         "d": 2.634
+        },
+        {
+         "id": "wbed-r2@d5",
+         "cluster": "W",
+         "d": 2.836
+        },
+        {
+         "id": "wbed-r2@d3",
+         "cluster": "W",
+         "d": 2.856
+        },
+        {
+         "id": "wbed-r1@d3",
+         "cluster": "W",
+         "d": 2.894
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 0.6,
+       "clusters": {
+        "kinetics": 2,
+        "W": 3
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "ownerci@d3",
+       "cluster": "ownerci",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "codefix-notests@d3",
+         "cluster": "codefix",
+         "d": 0.044
+        },
+        {
+         "id": "codefix@d3",
+         "cluster": "codefix",
+         "d": 0.11
+        },
+        {
+         "id": "codefix-notests@d5",
+         "cluster": "codefix",
+         "d": 0.281
+        },
+        {
+         "id": "codefix@d5",
+         "cluster": "codefix",
+         "d": 0.351
+        },
+        {
+         "id": "records@d5",
+         "cluster": "W",
+         "d": 2.872
+        }
+       ],
+       "modalCluster": "codefix",
+       "modalShare": 0.8,
+       "clusters": {
+        "codefix": 4,
+        "W": 1
+       },
+       "single": false,
+       "dominant": true,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "wbed-r3p@d3",
+       "cluster": "r3p",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "wbed-r2@d5",
+         "cluster": "W",
+         "d": 1.253
+        },
+        {
+         "id": "wbed-r2@d3",
+         "cluster": "W",
+         "d": 1.286
+        },
+        {
+         "id": "wbed-r1@d3",
+         "cluster": "W",
+         "d": 1.35
+        },
+        {
+         "id": "wbed-r1@d5",
+         "cluster": "W",
+         "d": 1.513
+        },
+        {
+         "id": "records@d5",
+         "cluster": "W",
+         "d": 1.535
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 1,
+       "clusters": {
+        "W": 5
+       },
+       "single": true,
+       "dominant": true,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "incident@d5",
+       "cluster": "incident",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "records@d5",
+         "cluster": "W",
+         "d": 2.165
+        },
+        {
+         "id": "records@d3",
+         "cluster": "W",
+         "d": 2.38
+        },
+        {
+         "id": "codefix@d5",
+         "cluster": "codefix",
+         "d": 3.053
+        },
+        {
+         "id": "codefix-notests@d5",
+         "cluster": "codefix",
+         "d": 3.088
+        },
+        {
+         "id": "wbed-r2@d5",
+         "cluster": "W",
+         "d": 3.202
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 0.6,
+       "clusters": {
+        "W": 3,
+        "codefix": 2
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "synth@d5",
+       "cluster": "synth",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "kinetics@d3",
+         "cluster": "kinetics",
+         "d": 2.482
+        },
+        {
+         "id": "kinetics@d5",
+         "cluster": "kinetics",
+         "d": 2.641
+        },
+        {
+         "id": "wbed-r2@d5",
+         "cluster": "W",
+         "d": 2.845
+        },
+        {
+         "id": "wbed-r2@d3",
+         "cluster": "W",
+         "d": 2.87
+        },
+        {
+         "id": "wbed-r1@d3",
+         "cluster": "W",
+         "d": 2.893
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 0.6,
+       "clusters": {
+        "kinetics": 2,
+        "W": 3
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "ownerci@d5",
+       "cluster": "ownerci",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "records@d5",
+         "cluster": "W",
+         "d": 2.012
+        },
+        {
+         "id": "records@d3",
+         "cluster": "W",
+         "d": 2.084
+        },
+        {
+         "id": "codefix@d5",
+         "cluster": "codefix",
+         "d": 2.13
+        },
+        {
+         "id": "codefix-notests@d5",
+         "cluster": "codefix",
+         "d": 2.134
+        },
+        {
+         "id": "codefix@d3",
+         "cluster": "codefix",
+         "d": 2.164
+        }
+       ],
+       "modalCluster": "codefix",
+       "modalShare": 0.6,
+       "clusters": {
+        "W": 2,
+        "codefix": 3
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "wbed-r3p@d5",
+       "cluster": "r3p",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "wbed-r1@d5",
+         "cluster": "W",
+         "d": 1.633
+        },
+        {
+         "id": "wbed-r6@d3",
+         "cluster": "W",
+         "d": 1.733
+        },
+        {
+         "id": "wbed-r1@d3",
+         "cluster": "W",
+         "d": 1.763
+        },
+        {
+         "id": "need-r0pad@d5",
+         "cluster": "W",
+         "d": 1.825
+        },
+        {
+         "id": "need-r0pad@d3",
+         "cluster": "W",
+         "d": 1.826
+        }
+       ],
+       "modalCluster": "W",
+       "modalShare": 1,
+       "clusters": {
+        "W": 5
+       },
+       "single": true,
+       "dominant": true,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "need-constraint@d3",
+       "cluster": "need-constraint",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "need-qa@d3",
+         "cluster": "need-qa",
+         "d": 1.614
+        },
+        {
+         "id": "need-qa@d5",
+         "cluster": "need-qa",
+         "d": 1.743
+        },
+        {
+         "id": "kinetics@d3",
+         "cluster": "kinetics",
+         "d": 2.166
+        },
+        {
+         "id": "kinetics@d5",
+         "cluster": "kinetics",
+         "d": 2.659
+        },
+        {
+         "id": "wbed-r0@d5",
+         "cluster": "W",
+         "d": 3.68
+        }
+       ],
+       "modalCluster": "kinetics",
+       "modalShare": 0.4,
+       "clusters": {
+        "need-qa": 2,
+        "kinetics": 2,
+        "W": 1
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      },
+      {
+       "query": "need-constraint@d5",
+       "cluster": "need-constraint",
+       "poolSize": 26,
+       "k": 5,
+       "neighbours": [
+        {
+         "id": "need-qa@d3",
+         "cluster": "need-qa",
+         "d": 1.617
+        },
+        {
+         "id": "need-qa@d5",
+         "cluster": "need-qa",
+         "d": 1.649
+        },
+        {
+         "id": "kinetics@d3",
+         "cluster": "kinetics",
+         "d": 1.955
+        },
+        {
+         "id": "kinetics@d5",
+         "cluster": "kinetics",
+         "d": 2.465
+        },
+        {
+         "id": "need-stage@d3",
+         "cluster": "W",
+         "d": 3.68
+        }
+       ],
+       "modalCluster": "kinetics",
+       "modalShare": 0.4,
+       "clusters": {
+        "need-qa": 2,
+        "kinetics": 2,
+        "W": 1
+       },
+       "single": false,
+       "dominant": false,
+       "chance": {
+        "meanShare": 0.6994223168136143,
+        "dominant": 0.5027363940407419,
+        "single": 0.13025235633931287
+       }
+      }
+     ],
+     "loco": {
+      "queries": 36,
+      "meanModalShare": 0.444,
+      "dominant": 3,
+      "single": 1,
+      "dominantShare": 0.083,
+      "singleShare": 0.028,
+      "chanceMeanShare": 0.448,
+      "chanceDominantShare": 0.11,
+      "chanceSingleShare": 0.017,
+      "modalClusterCounts": {
+       "incident": 4,
+       "need-constraint": 4,
+       "W": 6,
+       "need-qa": 2,
+       "codefix": 2,
+       "synth": 7,
+       "kinetics": 6,
+       "r3p": 5
+      },
+      "l8Trips": false
+     }
+    }
    ]
   },
   "primary": [
@@ -3401,6 +4437,343 @@
      },
      "l8Trips": false
     }
+   },
+   {
+    "level": "entries+anchors",
+    "keys": "trusted8",
+    "k": 3,
+    "design": {
+     "queries": 10,
+     "meanModalShare": 0.8,
+     "dominant": 4,
+     "single": 4,
+     "dominantShare": 0.4,
+     "singleShare": 0.4,
+     "chanceMeanShare": 0.724,
+     "chanceDominantShare": 0.315,
+     "chanceSingleShare": 0.315,
+     "modalClusterCounts": {
+      "W": 5,
+      "kinetics": 2,
+      "codefix": 1,
+      "need-qa": 2
+     },
+     "l8Trips": false
+    },
+    "loco": {
+     "queries": 36,
+     "meanModalShare": 0.639,
+     "dominant": 3,
+     "single": 3,
+     "dominantShare": 0.083,
+     "singleShare": 0.083,
+     "chanceMeanShare": 0.501,
+     "chanceDominantShare": 0.074,
+     "chanceSingleShare": 0.074,
+     "modalClusterCounts": {
+      "incident": 8,
+      "need-constraint": 4,
+      "W": 4,
+      "kinetics": 4,
+      "ownerci": 4,
+      "codefix": 1,
+      "synth": 9,
+      "need-qa": 2
+     },
+     "l8Trips": false
+    }
+   },
+   {
+    "level": "entries+anchors",
+    "keys": "trusted8",
+    "k": 5,
+    "design": {
+     "queries": 10,
+     "meanModalShare": 0.68,
+     "dominant": 4,
+     "single": 2,
+     "dominantShare": 0.4,
+     "singleShare": 0.2,
+     "chanceMeanShare": 0.699,
+     "chanceDominantShare": 0.503,
+     "chanceSingleShare": 0.13,
+     "modalClusterCounts": {
+      "W": 6,
+      "codefix": 2,
+      "kinetics": 2
+     },
+     "l8Trips": false
+    },
+    "loco": {
+     "queries": 36,
+     "meanModalShare": 0.444,
+     "dominant": 3,
+     "single": 1,
+     "dominantShare": 0.083,
+     "singleShare": 0.028,
+     "chanceMeanShare": 0.448,
+     "chanceDominantShare": 0.11,
+     "chanceSingleShare": 0.017,
+     "modalClusterCounts": {
+      "incident": 4,
+      "need-constraint": 4,
+      "W": 6,
+      "need-qa": 2,
+      "codefix": 2,
+      "synth": 7,
+      "kinetics": 6,
+      "r3p": 5
+     },
+     "l8Trips": false
+    }
+   },
+   {
+    "level": "entries+anchors",
+    "keys": "keys12",
+    "k": 3,
+    "design": {
+     "queries": 10,
+     "meanModalShare": 0.833,
+     "dominant": 5,
+     "single": 5,
+     "dominantShare": 0.5,
+     "singleShare": 0.5,
+     "chanceMeanShare": 0.724,
+     "chanceDominantShare": 0.315,
+     "chanceSingleShare": 0.315,
+     "modalClusterCounts": {
+      "W": 5,
+      "kinetics": 3,
+      "codefix": 1,
+      "need-qa": 1
+     },
+     "l8Trips": false
+    },
+    "loco": {
+     "queries": 36,
+     "meanModalShare": 0.676,
+     "dominant": 3,
+     "single": 3,
+     "dominantShare": 0.083,
+     "singleShare": 0.083,
+     "chanceMeanShare": 0.501,
+     "chanceDominantShare": 0.074,
+     "chanceSingleShare": 0.074,
+     "modalClusterCounts": {
+      "ownerci": 6,
+      "need-constraint": 13,
+      "synth": 3,
+      "kinetics": 3,
+      "codefix": 1,
+      "W": 4,
+      "incident": 1,
+      "r3p": 3,
+      "need-qa": 2
+     },
+     "l8Trips": false
+    }
+   },
+   {
+    "level": "entries+anchors",
+    "keys": "keys12",
+    "k": 5,
+    "design": {
+     "queries": 10,
+     "meanModalShare": 0.7,
+     "dominant": 5,
+     "single": 2,
+     "dominantShare": 0.5,
+     "singleShare": 0.2,
+     "chanceMeanShare": 0.699,
+     "chanceDominantShare": 0.503,
+     "chanceSingleShare": 0.13,
+     "modalClusterCounts": {
+      "W": 6,
+      "codefix": 2,
+      "kinetics": 2
+     },
+     "l8Trips": false
+    },
+    "loco": {
+     "queries": 36,
+     "meanModalShare": 0.444,
+     "dominant": 3,
+     "single": 2,
+     "dominantShare": 0.083,
+     "singleShare": 0.056,
+     "chanceMeanShare": 0.448,
+     "chanceDominantShare": 0.11,
+     "chanceSingleShare": 0.017,
+     "modalClusterCounts": {
+      "need-constraint": 11,
+      "synth": 2,
+      "kinetics": 10,
+      "need-qa": 2,
+      "codefix": 3,
+      "W": 2,
+      "r3p": 2,
+      "ownerci": 3,
+      "incident": 1
+     },
+     "l8Trips": false
+    }
+   },
+   {
+    "level": "families+anchors",
+    "keys": "trusted8",
+    "k": 3,
+    "design": {
+     "queries": 5,
+     "meanModalShare": 0.667,
+     "dominant": 1,
+     "single": 1,
+     "dominantShare": 0.2,
+     "singleShare": 0.2,
+     "chanceMeanShare": 0.71,
+     "chanceDominantShare": 0.294,
+     "chanceSingleShare": 0.294,
+     "modalClusterCounts": {
+      "codefix": 2,
+      "W": 3
+     },
+     "l8Trips": false
+    },
+    "loco": {
+     "queries": 18,
+     "meanModalShare": 0.389,
+     "dominant": 1,
+     "single": 1,
+     "dominantShare": 0.056,
+     "singleShare": 0.056,
+     "chanceMeanShare": 0.465,
+     "chanceDominantShare": 0.065,
+     "chanceSingleShare": 0.065,
+     "modalClusterCounts": {
+      "codefix": 3,
+      "need-constraint": 1,
+      "W": 3,
+      "incident": 8,
+      "kinetics": 3
+     },
+     "l8Trips": false
+    }
+   },
+   {
+    "level": "families+anchors",
+    "keys": "trusted8",
+    "k": 5,
+    "design": {
+     "queries": 5,
+     "meanModalShare": 0.72,
+     "dominant": 2,
+     "single": 1,
+     "dominantShare": 0.4,
+     "singleShare": 0.2,
+     "chanceMeanShare": 0.694,
+     "chanceDominantShare": 0.49,
+     "chanceSingleShare": 0.098,
+     "modalClusterCounts": {
+      "W": 5
+     },
+     "l8Trips": false
+    },
+    "loco": {
+     "queries": 18,
+     "meanModalShare": 0.333,
+     "dominant": 1,
+     "single": 0,
+     "dominantShare": 0.056,
+     "singleShare": 0,
+     "chanceMeanShare": 0.399,
+     "chanceDominantShare": 0.097,
+     "chanceSingleShare": 0.011,
+     "modalClusterCounts": {
+      "codefix": 6,
+      "W": 6,
+      "incident": 5,
+      "kinetics": 1
+     },
+     "l8Trips": false
+    }
+   },
+   {
+    "level": "families+anchors",
+    "keys": "keys12",
+    "k": 3,
+    "design": {
+     "queries": 5,
+     "meanModalShare": 0.667,
+     "dominant": 1,
+     "single": 1,
+     "dominantShare": 0.2,
+     "singleShare": 0.2,
+     "chanceMeanShare": 0.71,
+     "chanceDominantShare": 0.294,
+     "chanceSingleShare": 0.294,
+     "modalClusterCounts": {
+      "W": 4,
+      "codefix": 1
+     },
+     "l8Trips": false
+    },
+    "loco": {
+     "queries": 18,
+     "meanModalShare": 0.37,
+     "dominant": 1,
+     "single": 1,
+     "dominantShare": 0.056,
+     "singleShare": 0.056,
+     "chanceMeanShare": 0.465,
+     "chanceDominantShare": 0.065,
+     "chanceSingleShare": 0.065,
+     "modalClusterCounts": {
+      "need-constraint": 5,
+      "ownerci": 1,
+      "incident": 2,
+      "W": 5,
+      "codefix": 3,
+      "kinetics": 2
+     },
+     "l8Trips": false
+    }
+   },
+   {
+    "level": "families+anchors",
+    "keys": "keys12",
+    "k": 5,
+    "design": {
+     "queries": 5,
+     "meanModalShare": 0.68,
+     "dominant": 2,
+     "single": 1,
+     "dominantShare": 0.4,
+     "singleShare": 0.2,
+     "chanceMeanShare": 0.694,
+     "chanceDominantShare": 0.49,
+     "chanceSingleShare": 0.098,
+     "modalClusterCounts": {
+      "W": 5
+     },
+     "l8Trips": false
+    },
+    "loco": {
+     "queries": 18,
+     "meanModalShare": 0.322,
+     "dominant": 1,
+     "single": 1,
+     "dominantShare": 0.056,
+     "singleShare": 0.056,
+     "chanceMeanShare": 0.399,
+     "chanceDominantShare": 0.097,
+     "chanceSingleShare": 0.011,
+     "modalClusterCounts": {
+      "codefix": 5,
+      "W": 8,
+      "kinetics": 3,
+      "need-constraint": 2
+     },
+     "l8Trips": false
+    }
    }
   ],
   "summary": {
@@ -3431,8 +4804,8 @@
   "sources": [
    {
     "path": "research/need-router-20261014/prereg/stages.json",
-    "sha256": "60f657012313565cd617ffb1688200d93001a8955747aac28422fd4c6508392f",
-    "bytes": 61158
+    "sha256": "1584a69d758943983d3b2f21a3fd14203479bc43edf325d87156d87aef6d9c5f",
+    "bytes": 76283
    },
    {
     "path": "research/need-router-20261014/features-census.json",
@@ -4681,6 +6054,132 @@
       "verifiable": 0,
       "promptWords": 2.3444
      }
+    }
+   },
+   "beds": {
+    "need-r0pad": {
+     "bed": "need-r0pad",
+     "version": "1.0.0",
+     "files": 16,
+     "dirs": {
+      "lib": {
+       "files": 2,
+       "sha256": "c570f384bc3caa74"
+      },
+      "need-r0pad": {
+       "files": 5,
+       "sha256": "6fbfe9b36c2c191e"
+      },
+      "records": {
+       "files": 4,
+       "sha256": "3b0fbe72fe378f16"
+      },
+      "wbed": {
+       "files": 5,
+       "sha256": "8393a86a0d03563f"
+      }
+     },
+     "sha256": "92c6ea53017fb7a5"
+    },
+    "need-r3mini": {
+     "bed": "need-r3mini",
+     "version": "1.0.0",
+     "files": 26,
+     "dirs": {
+      "lib": {
+       "files": 3,
+       "sha256": "95168e08ac54a138"
+      },
+      "need-r3mini": {
+       "files": 2,
+       "sha256": "4745b1a6d9dded57"
+      },
+      "records": {
+       "files": 4,
+       "sha256": "3b0fbe72fe378f16"
+      },
+      "wbed": {
+       "files": 17,
+       "sha256": "f089f8ad2603c60b"
+      }
+     },
+     "sha256": "8d32c351d7911b94"
+    },
+    "need-stage": {
+     "bed": "need-stage",
+     "version": "1.0.0",
+     "files": 60,
+     "dirs": {
+      "lib": {
+       "files": 3,
+       "sha256": "95168e08ac54a138"
+      },
+      "need-stage": {
+       "files": 6,
+       "sha256": "bbb3d59b842a4609"
+      },
+      "records": {
+       "files": 4,
+       "sha256": "3b0fbe72fe378f16"
+      },
+      "wbed": {
+       "files": 47,
+       "sha256": "134ee36611e2c72d"
+      }
+     },
+     "sha256": "5fd4c2556fed5348"
+    },
+    "need-codefix-noverifier": {
+     "bed": "need-codefix-noverifier",
+     "version": "1.0.0",
+     "files": 15,
+     "dirs": {
+      "codefix": {
+       "files": 12,
+       "sha256": "1ea19f9839ab4406"
+      },
+      "lib": {
+       "files": 2,
+       "sha256": "c570f384bc3caa74"
+      },
+      "need-codefix-noverifier": {
+       "files": 1,
+       "sha256": "ca14444662d8d8c0"
+      }
+     },
+     "sha256": "37cf4cce88f3dbf7"
+    },
+    "need-qa": {
+     "bed": "need-qa",
+     "version": "1.0.0",
+     "files": 7,
+     "dirs": {
+      "lib": {
+       "files": 1,
+       "sha256": "249d33cc048187ff"
+      },
+      "need-qa": {
+       "files": 6,
+       "sha256": "50f08441200e2c38"
+      }
+     },
+     "sha256": "63ad674badab37d4"
+    },
+    "need-constraint": {
+     "bed": "need-constraint",
+     "version": "1.0.0",
+     "files": 7,
+     "dirs": {
+      "lib": {
+       "files": 2,
+       "sha256": "c570f384bc3caa74"
+      },
+      "need-constraint": {
+       "files": 5,
+       "sha256": "2f81225af51ef649"
+      }
+     },
+     "sha256": "827c9398ce5714a6"
     }
    }
   }
@@ -6871,10 +8370,83 @@
     "selfVerdict": null
    }
   ],
+  "excluded": [
+   {
+    "job": "jit-dev-records-1",
+    "mode": "jit-HH",
+    "rows": 24,
+    "delivered": 24,
+    "reason": "a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery"
+   },
+   {
+    "job": "jit-dev-records-1",
+    "mode": "jit-OH",
+    "rows": 24,
+    "delivered": 24,
+    "reason": "a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery"
+   },
+   {
+    "job": "jit-dev-records-1",
+    "mode": "jit-SH",
+    "rows": 24,
+    "delivered": 24,
+    "reason": "a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery"
+   },
+   {
+    "job": "jit-dev-records-1",
+    "mode": "static-b1h",
+    "rows": 24,
+    "delivered": 24,
+    "reason": "a static solver run has no turns, tools or per-delivery verdict recorded, and its cost is a script run; no post-hoc signal varies"
+   },
+   {
+    "job": "jit-r0-records",
+    "mode": "jit-HH",
+    "rows": 12,
+    "delivered": 12,
+    "reason": "a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery"
+   },
+   {
+    "job": "jit-dev-kinetics-1",
+    "mode": "jit-HH",
+    "rows": 12,
+    "delivered": 12,
+    "reason": "a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery"
+   },
+   {
+    "job": "jit-dev-kinetics-1",
+    "mode": "jit-OH",
+    "rows": 19,
+    "delivered": 19,
+    "reason": "a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery"
+   },
+   {
+    "job": "jit-dev-kinetics-1",
+    "mode": "jit-SH",
+    "rows": 13,
+    "delivered": 13,
+    "reason": "a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery"
+   },
+   {
+    "job": "jit-r0-kinetics",
+    "mode": "jit-OH",
+    "rows": 14,
+    "delivered": 14,
+    "reason": "a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery"
+   }
+  ],
   "summary": {
    "groups": 27,
    "groupsScored": 12,
    "groupsSkipped": 15,
+   "groupsExcluded": 9,
+   "groupsTotal": 36,
+   "excludedModes": [
+    "jit-HH",
+    "jit-OH",
+    "jit-SH",
+    "static-b1h"
+   ],
    "primary": {
     "medianAucExAnte": 0.429,
     "medianAucPostHoc": 0.498,
@@ -6991,6 +8563,18 @@
     "sources": [
      "research/need-router-20261014/archive/p1/results.jsonl"
     ],
+    "builds": [
+     {
+      "mode": "hand-H",
+      "usd": 24.91,
+      "lowerBound": true
+     },
+     {
+      "mode": "hand-S",
+      "usd": 24.91,
+      "lowerBound": true
+     }
+    ],
     "reproduction": {
      "rows": 288,
      "mismatches": 0,
@@ -7048,18 +8632,50 @@
       "double": 0.8333
      }
     },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "direct-H45",
+       "direct-S",
+       "direct-H",
+       "direct-H-med",
+       "direct-H-notes",
+       "agent-H"
+      ],
+      "workflowModes": [],
+      "vacuous": true
+     },
+     "ceiling": {
+      "modes": [
+       "direct-H45",
+       "direct-S",
+       "hand-H",
+       "hand-S",
+       "direct-H",
+       "direct-H-med",
+       "direct-H-notes",
+       "agent-H"
+      ],
+      "workflowModes": [
+       "hand-H",
+       "hand-S"
+      ],
+      "extra": [
+       "hand-H",
+       "hand-S"
+      ]
+     }
+    },
     "headline": {
      "1": {
-      "label": "workflow",
-      "top": "hand-H",
+      "label": "no-workflow",
+      "top": "agent-H",
       "acceptable": [
-       "hand-H"
+       "agent-H"
       ],
       "u": {
        "direct-H45": -1.0551,
        "direct-S": 0.3086,
-       "hand-H": 0.9287,
-       "hand-S": 0.7868,
        "direct-H": 0.3586,
        "direct-H-med": 0.2521,
        "direct-H-notes": -0.0803,
@@ -7067,16 +8683,14 @@
       }
      },
      "2": {
-      "label": "workflow",
-      "top": "hand-H",
+      "label": "no-workflow",
+      "top": "direct-H",
       "acceptable": [
-       "hand-H"
+       "direct-H"
       ],
       "u": {
        "direct-H45": -1.0551,
        "direct-S": 0.642,
-       "hand-H": 0.9287,
-       "hand-S": 0.7868,
        "direct-H": 0.6919,
        "direct-H-med": 0.3076,
        "direct-H-notes": 0.0309,
@@ -7084,16 +8698,14 @@
       }
      },
      "0.5": {
-      "label": "workflow",
-      "top": "hand-H",
+      "label": "no-workflow",
+      "top": "agent-H",
       "acceptable": [
-       "hand-H"
+       "agent-H"
       ],
       "u": {
        "direct-H45": -1.0551,
        "direct-S": 0.1975,
-       "hand-H": 0.9287,
-       "hand-S": 0.7868,
        "direct-H": 0.303,
        "direct-H-med": 0.0854,
        "direct-H-notes": -0.1358,
@@ -7101,20 +8713,130 @@
       }
      }
     },
+    "labelCounts": {
+     "workflow": 0,
+     "no-workflow": 27,
+     "either": 0
+    },
+    "workflowCells": [],
     "headlineFlips": {
      "half": false,
      "double": false
     },
     "headlineTopChanges": {
      "half": false,
-     "double": false
+     "double": true
     },
     "grid": {
      "cells": 27,
      "flipped": 0,
      "fragile": false,
      "flippedCells": [],
-     "topChangedCells": 0
+     "topChangedCells": 18
+    },
+    "ceiling": {
+     "headline": {
+      "1": {
+       "label": "no-workflow",
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "direct-H45": -1.0551,
+        "direct-S": 0.3086,
+        "hand-H": -1.5623,
+        "hand-S": -1.7042,
+        "direct-H": 0.3586,
+        "direct-H-med": 0.2521,
+        "direct-H-notes": -0.0803,
+        "agent-H": 0.5003
+       }
+      },
+      "2": {
+       "label": "no-workflow",
+       "top": "direct-H",
+       "acceptable": [
+        "direct-H"
+       ],
+       "u": {
+        "direct-H45": -1.0551,
+        "direct-S": 0.642,
+        "hand-H": -1.5623,
+        "hand-S": -1.7042,
+        "direct-H": 0.6919,
+        "direct-H-med": 0.3076,
+        "direct-H-notes": 0.0309,
+        "agent-H": 0.5558
+       }
+      },
+      "0.5": {
+       "label": "no-workflow",
+       "top": "agent-H",
+       "acceptable": [
+        "agent-H"
+       ],
+       "u": {
+        "direct-H45": -1.0551,
+        "direct-S": 0.1975,
+        "hand-H": -1.5623,
+        "hand-S": -1.7042,
+        "direct-H": 0.303,
+        "direct-H-med": 0.0854,
+        "direct-H-notes": -0.1358,
+        "agent-H": 0.5003
+       }
+      }
+     },
+     "labelCounts": {
+      "workflow": 8,
+      "no-workflow": 18,
+      "either": 1
+     },
+     "workflowCells": [
+      "V=10 N=10 W=1V",
+      "V=1 N=100 W=1V",
+      "V=0.1 N=100 W=10V",
+      "V=1 N=100 W=10V",
+      "V=10 N=10 W=10V",
+      "V=10 N=100 W=1V",
+      "V=10 N=100 W=0V",
+      "V=10 N=100 W=10V"
+     ],
+     "headlineFlips": {
+      "half": false,
+      "double": false
+     },
+     "headlineTopChanges": {
+      "half": false,
+      "double": true
+     },
+     "grid": {
+      "cells": 27,
+      "flipped": 3,
+      "fragile": true,
+      "flippedCells": [
+       {
+        "2": "no-workflow",
+        "cell": "V=10 N=10 W=1V",
+        "nominal": "workflow",
+        "0.5": "workflow"
+       },
+       {
+        "2": "either",
+        "cell": "V=1 N=100 W=1V",
+        "nominal": "workflow",
+        "0.5": "workflow"
+       },
+       {
+        "2": "no-workflow",
+        "cell": "V=0.1 N=100 W=10V",
+        "nominal": "workflow",
+        "0.5": "workflow"
+       }
+      ],
+      "topChangedCells": 14
+     }
     }
    },
    {
@@ -7140,6 +8862,24 @@
     "sources": [
      "research/need-router-20261014/archive/c0-dev/results.jsonl",
      "research/need-router-20261014/archive/c0-dev/constructions.jsonl"
+    ],
+    "builds": [
+     {
+      "mode": "wf-O",
+      "usd": 2.4726
+     },
+     {
+      "mode": "script-O",
+      "usd": 3.4587
+     },
+     {
+      "mode": "wf-H",
+      "usd": 1.0115
+     },
+     {
+      "mode": "script-H",
+      "usd": 1.3716
+     }
     ],
     "reproduction": {
      "rows": 48,
@@ -7188,6 +8928,41 @@
       "double": 0.75
      }
     },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "wf-H",
+       "script-H",
+       "agent-O",
+       "agent-H"
+      ],
+      "workflowModes": [
+       "wf-H",
+       "script-H"
+      ],
+      "vacuous": false
+     },
+     "ceiling": {
+      "modes": [
+       "wf-O",
+       "script-O",
+       "wf-H",
+       "script-H",
+       "agent-O",
+       "agent-H"
+      ],
+      "workflowModes": [
+       "wf-O",
+       "script-O",
+       "wf-H",
+       "script-H"
+      ],
+      "extra": [
+       "wf-O",
+       "script-O"
+      ]
+     }
+    },
     "headline": {
      "1": {
       "label": "workflow",
@@ -7196,8 +8971,6 @@
        "script-H"
       ],
       "u": {
-       "wf-O": 0.7065,
-       "script-O": 0.4858,
        "wf-H": 0.3599,
        "script-H": 0.8049,
        "agent-O": 0.3051,
@@ -7211,8 +8984,6 @@
        "script-H"
       ],
       "u": {
-       "wf-O": 0.7065,
-       "script-O": 0.4858,
        "wf-H": 0.3599,
        "script-H": 0.8049,
        "agent-O": 0.3051,
@@ -7226,8 +8997,6 @@
        "script-H"
       ],
       "u": {
-       "wf-O": 0.7065,
-       "script-O": 0.4858,
        "wf-H": 0.3599,
        "script-H": 0.8049,
        "agent-O": 0.3051,
@@ -7235,6 +9004,31 @@
       }
      }
     },
+    "labelCounts": {
+     "workflow": 18,
+     "no-workflow": 9,
+     "either": 0
+    },
+    "workflowCells": [
+     "V=1 N=10 W=1V",
+     "V=0.1 N=10 W=1V",
+     "V=10 N=10 W=1V",
+     "V=1 N=10 W=0V",
+     "V=1 N=10 W=10V",
+     "V=1 N=100 W=1V",
+     "V=0.1 N=10 W=0V",
+     "V=0.1 N=10 W=10V",
+     "V=0.1 N=100 W=1V",
+     "V=0.1 N=100 W=0V",
+     "V=0.1 N=100 W=10V",
+     "V=1 N=100 W=0V",
+     "V=1 N=100 W=10V",
+     "V=10 N=10 W=0V",
+     "V=10 N=10 W=10V",
+     "V=10 N=100 W=1V",
+     "V=10 N=100 W=0V",
+     "V=10 N=100 W=10V"
+    ],
     "headlineFlips": {
      "half": false,
      "double": false
@@ -7249,6 +9043,95 @@
      "fragile": false,
      "flippedCells": [],
      "topChangedCells": 2
+    },
+    "ceiling": {
+     "headline": {
+      "1": {
+       "label": "workflow",
+       "top": "script-H",
+       "acceptable": [
+        "script-H"
+       ],
+       "u": {
+        "wf-O": 0.7065,
+        "script-O": 0.4858,
+        "wf-H": 0.3599,
+        "script-H": 0.8049,
+        "agent-O": 0.3051,
+        "agent-H": -0.203
+       }
+      },
+      "2": {
+       "label": "workflow",
+       "top": "script-H",
+       "acceptable": [
+        "script-H"
+       ],
+       "u": {
+        "wf-O": 0.7065,
+        "script-O": 0.4858,
+        "wf-H": 0.3599,
+        "script-H": 0.8049,
+        "agent-O": 0.3051,
+        "agent-H": 0.297
+       }
+      },
+      "0.5": {
+       "label": "workflow",
+       "top": "script-H",
+       "acceptable": [
+        "script-H"
+       ],
+       "u": {
+        "wf-O": 0.7065,
+        "script-O": 0.4858,
+        "wf-H": 0.3599,
+        "script-H": 0.8049,
+        "agent-O": 0.3051,
+        "agent-H": -0.203
+       }
+      }
+     },
+     "labelCounts": {
+      "workflow": 18,
+      "no-workflow": 9,
+      "either": 0
+     },
+     "workflowCells": [
+      "V=1 N=10 W=1V",
+      "V=0.1 N=10 W=1V",
+      "V=10 N=10 W=1V",
+      "V=1 N=10 W=0V",
+      "V=1 N=10 W=10V",
+      "V=1 N=100 W=1V",
+      "V=0.1 N=10 W=0V",
+      "V=0.1 N=10 W=10V",
+      "V=0.1 N=100 W=1V",
+      "V=0.1 N=100 W=0V",
+      "V=0.1 N=100 W=10V",
+      "V=1 N=100 W=0V",
+      "V=1 N=100 W=10V",
+      "V=10 N=10 W=0V",
+      "V=10 N=10 W=10V",
+      "V=10 N=100 W=1V",
+      "V=10 N=100 W=0V",
+      "V=10 N=100 W=10V"
+     ],
+     "headlineFlips": {
+      "half": false,
+      "double": false
+     },
+     "headlineTopChanges": {
+      "half": false,
+      "double": false
+     },
+     "grid": {
+      "cells": 27,
+      "flipped": 0,
+      "fragile": false,
+      "flippedCells": [],
+      "topChangedCells": 2
+     }
     }
    },
    {
@@ -7280,6 +9163,24 @@
      "research/jit-20261008/runs/jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-dev-records-1/static-B1-haiku-records-k1-solve/results.jsonl"
+    ],
+    "builds": [
+     {
+      "mode": "jit-HH",
+      "usd": 4.3437
+     },
+     {
+      "mode": "jit-OH",
+      "usd": 2.0648
+     },
+     {
+      "mode": "jit-SH",
+      "usd": 4.8273
+     },
+     {
+      "mode": "static-b1h",
+      "usd": 1.372
+     }
     ],
     "reproduction": {
      "rows": 168,
@@ -7333,6 +9234,27 @@
       "double": 0.7917
      }
     },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "agent-H",
+       "agent-O",
+       "agent-S",
+       "jit-HH",
+       "jit-OH",
+       "jit-SH",
+       "static-b1h"
+      ],
+      "workflowModes": [
+       "jit-HH",
+       "jit-OH",
+       "jit-SH",
+       "static-b1h"
+      ],
+      "vacuous": false
+     },
+     "ceiling": null
+    },
     "headline": {
      "1": {
       "label": "no-workflow",
@@ -7383,6 +9305,18 @@
       }
      }
     },
+    "labelCounts": {
+     "workflow": 5,
+     "no-workflow": 22,
+     "either": 0
+    },
+    "workflowCells": [
+     "V=1 N=100 W=1V",
+     "V=0.1 N=100 W=1V",
+     "V=0.1 N=100 W=0V",
+     "V=0.1 N=100 W=10V",
+     "V=1 N=100 W=0V"
+    ],
     "headlineFlips": {
      "half": false,
      "double": false
@@ -7397,7 +9331,8 @@
      "fragile": false,
      "flippedCells": [],
      "topChangedCells": 4
-    }
+    },
+    "ceiling": null
    },
    {
     "job": "jit-r0-records",
@@ -7418,6 +9353,12 @@
     "sources": [
      "research/jit-20261008/runs/jit-r0-records/agent-claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-r0-records/jit-claude-haiku-5-5--claude-haiku-5-5/results.jsonl"
+    ],
+    "builds": [
+     {
+      "mode": "jit-HH",
+      "usd": 5.4133
+     }
     ],
     "reproduction": {
      "rows": 24,
@@ -7445,6 +9386,19 @@
       "half": 0.75,
       "double": 0.8333
      }
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "agent-H",
+       "jit-HH"
+      ],
+      "workflowModes": [
+       "jit-HH"
+      ],
+      "vacuous": false
+     },
+     "ceiling": null
     },
     "headline": {
      "1": {
@@ -7481,6 +9435,27 @@
       }
      }
     },
+    "labelCounts": {
+     "workflow": 14,
+     "no-workflow": 13,
+     "either": 0
+    },
+    "workflowCells": [
+     "V=1 N=10 W=1V",
+     "V=10 N=10 W=1V",
+     "V=1 N=10 W=10V",
+     "V=1 N=100 W=1V",
+     "V=0.1 N=100 W=10V",
+     "V=1 N=100 W=0V",
+     "V=1 N=100 W=10V",
+     "V=10 N=1 W=1V",
+     "V=10 N=1 W=10V",
+     "V=10 N=10 W=0V",
+     "V=10 N=10 W=10V",
+     "V=10 N=100 W=1V",
+     "V=10 N=100 W=0V",
+     "V=10 N=100 W=10V"
+    ],
     "headlineFlips": {
      "half": false,
      "double": true
@@ -7508,7 +9483,8 @@
       }
      ],
      "topChangedCells": 2
-    }
+    },
+    "ceiling": null
    },
    {
     "job": "jit-dev-kinetics-1",
@@ -7533,6 +9509,20 @@
      "research/jit-20261008/runs/jit-dev-kinetics-1/jit-claude-haiku-5-5--claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-dev-kinetics-1/jit-claude-sonnet-5-5--claude-haiku-5-5/results.jsonl"
+    ],
+    "builds": [
+     {
+      "mode": "jit-HH",
+      "usd": 9.626
+     },
+     {
+      "mode": "jit-OH",
+      "usd": 13.4473
+     },
+     {
+      "mode": "jit-SH",
+      "usd": 17.1007
+     }
     ],
     "reproduction": {
      "rows": 60,
@@ -7575,6 +9565,24 @@
       "half": 0.5833,
       "double": 0.5833
      }
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "agent-H",
+       "agent-S",
+       "jit-HH",
+       "jit-OH",
+       "jit-SH"
+      ],
+      "workflowModes": [
+       "jit-HH",
+       "jit-OH",
+       "jit-SH"
+      ],
+      "vacuous": false
+     },
+     "ceiling": null
     },
     "headline": {
      "1": {
@@ -7620,6 +9628,21 @@
       }
      }
     },
+    "labelCounts": {
+     "workflow": 8,
+     "no-workflow": 18,
+     "either": 1
+    },
+    "workflowCells": [
+     "V=10 N=10 W=1V",
+     "V=1 N=10 W=10V",
+     "V=1 N=100 W=10V",
+     "V=10 N=1 W=10V",
+     "V=10 N=10 W=10V",
+     "V=10 N=100 W=1V",
+     "V=10 N=100 W=0V",
+     "V=10 N=100 W=10V"
+    ],
     "headlineFlips": {
      "half": false,
      "double": false
@@ -7634,7 +9657,8 @@
      "fragile": false,
      "flippedCells": [],
      "topChangedCells": 0
-    }
+    },
+    "ceiling": null
    },
    {
     "job": "jit-r0-kinetics",
@@ -7653,6 +9677,12 @@
     "sources": [
      "research/jit-20261008/runs/jit-r0-kinetics/agent-claude-haiku-5-5/results.jsonl",
      "research/jit-20261008/runs/jit-r0-kinetics/jit-claude-opus-5-5--claude-haiku-5-5/results.jsonl"
+    ],
+    "builds": [
+     {
+      "mode": "jit-OH",
+      "usd": 24.9569
+     }
     ],
     "reproduction": {
      "rows": 28,
@@ -7681,6 +9711,19 @@
       "double": 1
      }
     },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "agent-H",
+       "jit-OH"
+      ],
+      "workflowModes": [
+       "jit-OH"
+      ],
+      "vacuous": false
+     },
+     "ceiling": null
+    },
     "headline": {
      "1": {
       "label": "no-workflow",
@@ -7690,7 +9733,7 @@
       ],
       "u": {
        "agent-H": -0.0606,
-       "jit-OH": -2.2255
+       "jit-OH": -2.3212
       }
      },
      "2": {
@@ -7701,7 +9744,7 @@
       ],
       "u": {
        "agent-H": -0.0606,
-       "jit-OH": -2.0827
+       "jit-OH": -2.1784
       }
      },
      "0.5": {
@@ -7712,10 +9755,26 @@
       ],
       "u": {
        "agent-H": -0.0606,
-       "jit-OH": -2.2255
+       "jit-OH": -2.3212
       }
      }
     },
+    "labelCounts": {
+     "workflow": 9,
+     "no-workflow": 17,
+     "either": 1
+    },
+    "workflowCells": [
+     "V=10 N=10 W=1V",
+     "V=1 N=10 W=10V",
+     "V=1 N=100 W=10V",
+     "V=10 N=1 W=10V",
+     "V=10 N=10 W=0V",
+     "V=10 N=10 W=10V",
+     "V=10 N=100 W=1V",
+     "V=10 N=100 W=0V",
+     "V=10 N=100 W=10V"
+    ],
     "headlineFlips": {
      "half": false,
      "double": false
@@ -7726,11 +9785,19 @@
     },
     "grid": {
      "cells": 27,
-     "flipped": 0,
-     "fragile": false,
-     "flippedCells": [],
-     "topChangedCells": 0
-    }
+     "flipped": 1,
+     "fragile": true,
+     "flippedCells": [
+      {
+       "2": "workflow",
+       "cell": "V=1 N=100 W=1V",
+       "nominal": "either",
+       "0.5": "either"
+      }
+     ],
+     "topChangedCells": 1
+    },
+    "ceiling": null
    }
   ],
   "recordsMismatches": {
@@ -7751,22 +9818,36 @@
   "summary": {
    "jobs": 6,
    "fragileJobs": [
-    "jit-r0-records"
+    "jit-r0-records",
+    "jit-r0-kinetics"
    ],
    "fragileAtHeadline": [
     "jit-r0-records"
    ],
+   "vacuousJobs": [
+    "p1-records"
+   ],
+   "ceilingJobs": [
+    "p1-records",
+    "c0-dev-records"
+   ],
+   "ceilingFragileJobs": [
+    "p1-records"
+   ],
+   "ceilingFragileAtHeadline": [],
    "rowsTotal": 616,
    "lostAtHalf": 17,
    "gainedAtDouble": 45,
    "nominalReproduced": true,
-   "flippedCells": 2,
+   "flippedCells": 3,
    "cells": 162,
-   "topChangedCells": 8,
+   "topChangedCells": 27,
    "jobsWithTopChange": [
+    "p1-records",
     "c0-dev-records",
     "jit-dev-records-1",
-    "jit-r0-records"
+    "jit-r0-records",
+    "jit-r0-kinetics"
    ]
   }
  },
@@ -8059,8 +10140,24 @@
    "e8": {
     "text": {
      "what": "spec/SPEC-E.md (the arm-facing rulebook)",
-     "sha256": "c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1",
-     "chars": 20057
+     "sha256": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+     "chars": 25007
+    },
+    "bed": {
+     "bed": "ebed/e8",
+     "version": "1.0.0",
+     "files": 22,
+     "dirs": {
+      "ebed": {
+       "files": 20,
+       "sha256": "9e644cbbc29922bc"
+      },
+      "lib": {
+       "files": 2,
+       "sha256": "c570f384bc3caa74"
+      }
+     },
+     "sha256": "f370287d0b89bfc9"
     },
     "typed": {
      "human": {
@@ -8075,7 +10172,16 @@
       ]
      },
      "schedule": {
-      "evidence": []
+      "evidence": [
+       "schemas.sor.orders.orders.fields.status.enum[6] = \"timedOut\"",
+       "systems[0].tables.orders.fields.status.enum[6] = \"timedOut\""
+      ],
+      "searched": [
+       "family",
+       "schemas",
+       "systems"
+      ],
+      "note": "the host-side typed fields name the deadline race only as a timeout outcome (the timedOut order status); the deadline itself (dueAt, onTimeout) sits in the analyst-side oracleItem and in the spec text"
      },
      "effects": {
       "evidence": [
@@ -8110,7 +10216,7 @@
       "cueOnFullText": true
      },
      "schedule": {
-      "typed": false,
+      "typed": true,
       "cueOnPromptOrSpec": true,
       "cueOnFullText": true
      },
@@ -8137,7 +10243,7 @@
      }
     ],
     "recall": {
-     "typed": 0.667,
+     "typed": 1,
      "cuePromptOrSpec": 1,
      "cueFullText": 1,
      "declared": 3
@@ -8148,6 +10254,22 @@
      "what": "generate({seed: 601, split: 'dev', difficulty: 3}): prompt, then prompt + ticket + runbook + inventory",
      "promptChars": 2150,
      "inputChars": 26585
+    },
+    "bed": {
+     "bed": "runbook",
+     "version": "2.0.0",
+     "files": 7,
+     "dirs": {
+      "lib": {
+       "files": 1,
+       "sha256": "249d33cc048187ff"
+      },
+      "runbook": {
+       "files": 6,
+       "sha256": "20cd751cde7c7cfa"
+      }
+     },
+     "sha256": "4d4ec58ffe0cb7bb"
     },
     "typed": {
      "human": {
@@ -8161,7 +10283,11 @@
       ]
      },
      "schedule": {
-      "evidence": []
+      "evidence": [],
+      "searched": [
+       "outputSchema",
+       "family"
+      ]
      },
      "effects": {
       "evidence": [
@@ -8249,7 +10375,7 @@
     "schedule",
     "effects"
    ],
-   "e8TypedRecall": 0.667,
+   "e8TypedRecall": 1,
    "e8CueRecall": 1,
    "runbookTypedRecall": 1,
    "runbookCueRecall": 1
@@ -8924,20 +11050,72 @@
     ],
     "cells": 27,
     "reported": {
-     "headlineTop": "hand-H",
-     "headlineLabel": "workflow"
+     "headlineTop": "agent-H",
+     "headlineLabel": "no-workflow"
     },
     "p5": {
      "labelFlips": 0,
      "topChanges": 0,
-     "headlineTop": "hand-H",
-     "headlineLabel": "workflow"
+     "headlineTop": "agent-H",
+     "headlineLabel": "no-workflow"
     },
     "p1h": {
      "labelFlips": 0,
      "topChanges": 0,
-     "headlineTop": "hand-H",
-     "headlineLabel": "workflow"
+     "headlineTop": "agent-H",
+     "headlineLabel": "no-workflow"
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "direct-H45",
+       "direct-S",
+       "direct-H",
+       "direct-H-med",
+       "direct-H-notes",
+       "agent-H"
+      ],
+      "workflowModes": [],
+      "vacuous": true
+     },
+     "ceiling": {
+      "modes": [
+       "direct-H45",
+       "direct-S",
+       "hand-H",
+       "hand-S",
+       "direct-H",
+       "direct-H-med",
+       "direct-H-notes",
+       "agent-H"
+      ],
+      "workflowModes": [
+       "hand-H",
+       "hand-S"
+      ],
+      "extra": [
+       "hand-H",
+       "hand-S"
+      ]
+     }
+    },
+    "ceiling": {
+     "reported": {
+      "headlineTop": "agent-H",
+      "headlineLabel": "no-workflow"
+     },
+     "p5": {
+      "labelFlips": 1,
+      "topChanges": 2,
+      "headlineTop": "agent-H",
+      "headlineLabel": "no-workflow"
+     },
+     "p1h": {
+      "labelFlips": 0,
+      "topChanges": 0,
+      "headlineTop": "agent-H",
+      "headlineLabel": "no-workflow"
+     }
     }
    },
    {
@@ -8962,6 +11140,59 @@
      "topChanges": 0,
      "headlineTop": "script-H",
      "headlineLabel": "workflow"
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "wf-H",
+       "script-H",
+       "agent-O",
+       "agent-H"
+      ],
+      "workflowModes": [
+       "wf-H",
+       "script-H"
+      ],
+      "vacuous": false
+     },
+     "ceiling": {
+      "modes": [
+       "wf-O",
+       "script-O",
+       "wf-H",
+       "script-H",
+       "agent-O",
+       "agent-H"
+      ],
+      "workflowModes": [
+       "wf-O",
+       "script-O",
+       "wf-H",
+       "script-H"
+      ],
+      "extra": [
+       "wf-O",
+       "script-O"
+      ]
+     }
+    },
+    "ceiling": {
+     "reported": {
+      "headlineTop": "script-H",
+      "headlineLabel": "workflow"
+     },
+     "p5": {
+      "labelFlips": 12,
+      "topChanges": 10,
+      "headlineTop": "agent-O",
+      "headlineLabel": "either"
+     },
+     "p1h": {
+      "labelFlips": 6,
+      "topChanges": 0,
+      "headlineTop": "script-H",
+      "headlineLabel": "workflow"
+     }
     }
    },
    {
@@ -8986,6 +11217,59 @@
      "topChanges": 0,
      "headlineTop": "agent-H",
      "headlineLabel": "no-workflow"
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "script-H",
+       "agent-O",
+       "wf-H",
+       "agent-H"
+      ],
+      "workflowModes": [
+       "script-H",
+       "wf-H"
+      ],
+      "vacuous": false
+     },
+     "ceiling": {
+      "modes": [
+       "wf-O",
+       "script-H",
+       "agent-O",
+       "wf-H",
+       "script-O",
+       "agent-H"
+      ],
+      "workflowModes": [
+       "wf-O",
+       "script-H",
+       "wf-H",
+       "script-O"
+      ],
+      "extra": [
+       "wf-O",
+       "script-O"
+      ]
+     }
+    },
+    "ceiling": {
+     "reported": {
+      "headlineTop": "agent-H",
+      "headlineLabel": "no-workflow"
+     },
+     "p5": {
+      "labelFlips": 0,
+      "topChanges": 0,
+      "headlineTop": "agent-H",
+      "headlineLabel": "no-workflow"
+     },
+     "p1h": {
+      "labelFlips": 3,
+      "topChanges": 0,
+      "headlineTop": "agent-H",
+      "headlineLabel": "no-workflow"
+     }
     }
    },
    {
@@ -9011,7 +11295,29 @@
      "topChanges": 7,
      "headlineTop": "agent-O",
      "headlineLabel": "no-workflow"
-    }
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "agent-H",
+       "agent-O",
+       "agent-S",
+       "jit-HH",
+       "jit-OH",
+       "jit-SH",
+       "static-b1h"
+      ],
+      "workflowModes": [
+       "jit-HH",
+       "jit-OH",
+       "jit-SH",
+       "static-b1h"
+      ],
+      "vacuous": false
+     },
+     "ceiling": null
+    },
+    "ceiling": null
    },
    {
     "job": "jit-r0-records",
@@ -9034,7 +11340,21 @@
      "topChanges": 0,
      "headlineTop": "jit-HH",
      "headlineLabel": "workflow"
-    }
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "agent-H",
+       "jit-HH"
+      ],
+      "workflowModes": [
+       "jit-HH"
+      ],
+      "vacuous": false
+     },
+     "ceiling": null
+    },
+    "ceiling": null
    },
    {
     "job": "jit-dev-kinetics-1",
@@ -9058,7 +11378,26 @@
      "topChanges": 0,
      "headlineTop": "agent-H",
      "headlineLabel": "no-workflow"
-    }
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "agent-H",
+       "agent-S",
+       "jit-HH",
+       "jit-OH",
+       "jit-SH"
+      ],
+      "workflowModes": [
+       "jit-HH",
+       "jit-OH",
+       "jit-SH"
+      ],
+      "vacuous": false
+     },
+     "ceiling": null
+    },
+    "ceiling": null
    },
    {
     "job": "jit-r0-kinetics",
@@ -9072,16 +11411,30 @@
     },
     "p5": {
      "labelFlips": 0,
-     "topChanges": 0,
+     "topChanges": 1,
      "headlineTop": "agent-H",
      "headlineLabel": "no-workflow"
     },
     "p1h": {
-     "labelFlips": 0,
-     "topChanges": 0,
+     "labelFlips": 1,
+     "topChanges": 1,
      "headlineTop": "agent-H",
      "headlineLabel": "no-workflow"
-    }
+    },
+    "labelSets": {
+     "today": {
+      "modes": [
+       "agent-H",
+       "jit-OH"
+      ],
+      "workflowModes": [
+       "jit-OH"
+      ],
+      "vacuous": false
+     },
+     "ceiling": null
+    },
+    "ceiling": null
    }
   ],
   "summary": {
@@ -9157,8 +11510,61 @@
    "meterChangesLabels": true,
    "jobsAffected": [
     "c0-dev-records",
-    "jit-dev-records-1"
-   ]
+    "jit-dev-records-1",
+    "jit-r0-kinetics"
+   ],
+   "meterChangesCeilingLabels": true,
+   "ceilingJobsAffected": [
+    "p1-records",
+    "c0-dev-records"
+   ],
+   "meterGate": {
+    "schema": "need-meter-gate/1",
+    "status": "block-until-verified",
+    "rule": {
+     "outputTolerance": 0.05,
+     "priceBand": 0.1,
+     "minEraSessions": 3,
+     "minVerifySessions": 2
+    },
+    "reasons": [
+     {
+      "code": "OUTPUT_TOKENS_UNDER_RECORDED",
+      "detail": "8 of 8 sessions with a final usage record output tokens in the stream or per-message lines more than 5% away from the CLI's final result usage (median recorded/final 0.0046)",
+      "sessions": 8,
+      "of": 8,
+      "medianRecordedOverFinal": 0.0046
+     },
+     {
+      "code": "REPRICE_OFF_REPORTED",
+      "detail": "4 model-era groups re-price outside 10% of the CLI-reported total: claude-haiku-5-5 | post-flag 1.14x, claude-opus-5-5 | post-flag 2.96x, claude-opus-5-5 | pre-flag 2.11x, claude-sonnet-5-5 | post-flag 2.67x",
+      "groups": [
+       {
+        "key": "claude-haiku-5-5 | post-flag",
+        "sessions": 113,
+        "ratioReportedOverReprice": 1.144
+       },
+       {
+        "key": "claude-opus-5-5 | post-flag",
+        "sessions": 47,
+        "ratioReportedOverReprice": 2.964
+       },
+       {
+        "key": "claude-opus-5-5 | pre-flag",
+        "sessions": 16,
+        "ratioReportedOverReprice": 2.11
+       },
+       {
+        "key": "claude-sonnet-5-5 | post-flag",
+        "sessions": 62,
+        "ratioReportedOverReprice": 2.671
+       }
+      ]
+     }
+    ],
+    "blocks": "a paid stage with an agent arm (agent-H, agent-O, agent-H+proc, construct-H, build-O): label-run.mjs refuses to start it",
+    "clearedBy": "a passing meter-verification record: node experiments/need-router/meter-gate.mjs --verify <transcript>... --write research/need-router-20261014/analysis/m0/meter-verification.json, on at least 2 saved CLI transcripts (per-message output tokens within 5% of the final result usage); until then every agent session label-run prices is checked individually and a session that fails is booked at the reported figure"
+   }
   }
  }
 }

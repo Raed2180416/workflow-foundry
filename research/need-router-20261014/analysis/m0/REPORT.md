@@ -11,10 +11,10 @@
 | D0 | NR-knn neighbours, L8 | L8 does not trip: 4/8 (k=3) and 4/8 (k=5) held-out entries have one-cluster neighbours (39% and 64% at chance); the plurality cluster is W for 8/8 at k=5 |
 | D1 | tokens alone reproduce the table? | No. Best threshold on the router feature: balanced accuracy 0.947 at N=1 (errors wbed-r6, incident) and 0.941 at N=10 (errors r0-pad, incident); on max-example tokens 0.947 and 0.941 (errors incident, ownerci at N=10). A size rule is a strong baseline |
 | D2 | co-failure, agent-H and static-b1h (records dev, n=24) | lift 1.00 [0.00, 1.96], p 0.67: no excess co-failure, low power; the compiled solvers of the N-version probe do fail together |
-| D3 | post-hoc against ex-ante signals | No reliable instance-level signal of either kind (median AUC 0.50 post-hoc, 0.43 ex-ante); workflows' own verdict passed 6 of 6 oracle failures |
-| D4 | tolerance fragility | 45 failing rows pass at x2 tolerance and 17 passes fail at x0.5; 1 of 6 jobs have a flipping label (jit-r0-records); the best mode changes in 8 of 162 cells |
-| D5 | guard recall (RX6-lite) | Word cues recall 12.3% of graph-declared requirements on 449 corpus descriptions (every class under 0.9: the guard asks, it does not infer); typed fields evidence 0.67 of E8's and 1.00 of runbook's declared requirements |
-| D6 | CLI-reported against re-priced | Opus agent sessions: reported is 2.11x (before the 5-minute cache flag) and 2.96x (after) the pinned-table re-price from stream usage, because output tokens are not recorded; builder sessions with full usage reproduce exactly at the 1-hour cache-write rate; the meter moves the best mode in 2 of 7 jobs |
+| D3 | post-hoc against ex-ante signals | No reliable instance-level signal of either kind (median AUC 0.50 post-hoc, 0.43 ex-ante); workflows' own verdict passed 6 of 6 oracle failures (12 of 27 scoreable groups; 9 JIT and static groups not scored) |
+| D4 | tolerance fragility | 45 failing rows pass at x2 tolerance and 17 passes fail at x0.5; 2 of 6 jobs have a flipping L_today label (jit-r0-records, jit-r0-kinetics); the best mode changes in 27 of 162 cells. P1's hand workflow is a ceiling arm with its $24.91+ authoring charged: L_ceiling says no-workflow at the headline (agent-H best), workflow in 8 of 27 cells, and L_today has no workflow arm for P1 |
+| D5 | guard recall (RX6-lite) | Word cues recall 12.3% of graph-declared requirements on 449 corpus descriptions (every class under 0.9: the guard asks, it does not infer); typed fields evidence 1.00 of E8's and 1.00 of runbook's declared requirements |
+| D6 | CLI-reported against re-priced | Opus agent sessions: reported is 2.11x (before the 5-minute cache flag) and 2.96x (after) the pinned-table re-price from stream usage, because output tokens are not recorded; builder sessions with full usage reproduce exactly at the 1-hour cache-write rate; the meter moves the best mode in 3 of 7 jobs; the cost-meter gate is block-until-verified (label-run refuses a paid agent stage until a verification record exists) |
 
 ## What these numbers change in the plan
 
@@ -23,9 +23,9 @@ Recommendations are mine ([I]); each is backed by the section named.
 1. **Check r0-pad's margin before NL0 (D1).** On the router's feature it sits at 21,719 tokens against 19,021 for wbed-r1-hi, the smallest N = 10 workflow job (1.14 times), so it breaks a token threshold, but on the max-example measure it is below that job. The margin is thin and rests on the example seeds; confirm it when the generator is final, and expect incident to carry the large-no-workflow test either way.
 2. **Keep NR-knn secondary and run L8 on the real TRAIN jobs (D0).** It does not trip on the census, but neighbours lean on cluster W and eight queries decide little.
 3. **Do not use disagreement as a verifier on faith (D2) and keep self-check credit off until F11 data exist (D3).** One pair shows no excess co-failure, compiled solvers do fail together, and workflow self-verdicts passed 6 of 6 oracle failures.
-4. **Run the tolerance recompute on every job with a numeric oracle (D4).** In the records jobs 17% to 48% of failures pass at double tolerance; the class label held in 5 of 6 jobs; the best mode changed in 3.
+4. **Run the tolerance recompute on every job with a numeric oracle (D4), and charge every build.** In the records jobs 17% to 48% of failures pass at double tolerance; the L_today class label held in 4 of 6 jobs; the best mode changed in 5. A hand-written or frontier-built workflow is a ceiling arm and its authoring is a build cost (P1: $24.91+): left out, it made P1 look like a workflow job.
 5. **Treat word cues as "ask" only, and extend the typed candidate lists (D5).** Add human approval (and compensation) to e8 and durable wait to runbook where the beds already type them.
-6. **Fix the cost meter before NL0 (D6).** Take output tokens from the final result usage, check `messageUsageOf` against it on the first agent row, price Haiku per request, and never mix dollars from before and after the 5-minute cache flag.
+6. **Clear the cost-meter gate before NL0 (D6).** It is block-until-verified: `label-run.mjs` will not start a stage with an agent arm (NL0 has five) until `meter-gate.mjs --verify` has passed on saved CLI transcripts, and meanwhile books any agent session whose per-message output tokens differ from the final usage at the reported figure. Take output tokens from the final result usage when fixing the price path, price Haiku per request, and never mix dollars from before and after the 5-minute cache flag.
 
 ## Inputs
 
@@ -33,13 +33,27 @@ The rescued archive (`research/need-router-20261014/archive/`, see its `MANIFEST
 
 | job | kind | family | paired units | modes | rows (all) | build costs |
 |---|---|---|---|---|---|---|
-| `p1-records` | p1 | records | 36 | direct-H45, direct-S, hand-H, hand-S, direct-H, direct-H-med, direct-H-notes, agent-H | 288 (288) | none |
+| `p1-records` | p1 | records | 36 | direct-H45, direct-S, hand-H, hand-S, direct-H, direct-H-med, direct-H-notes, agent-H | 288 (288) | hand-H $24.91+, hand-S $24.91+ |
 | `c0-dev-records` | c0 | records | 8 | wf-O, script-O, wf-H, script-H, agent-O, agent-H | 48 (48) | wf-O $2.47, script-O $3.46, wf-H $1.01, script-H $1.37 |
 | `c0-dev-codefix` | c0 | codefix | 8 | wf-O, script-H, agent-O, wf-H, script-O, agent-H | 48 (48) | wf-O $2.04, wf-H $0.90, script-O $2.78, script-H $0.84 |
 | `jit-dev-records-1` | jit | records | 24 | agent-H, agent-O, agent-S, jit-HH, jit-OH, jit-SH, static-b1h | 168 (168) | jit-HH $4.34, jit-OH $2.06, jit-SH $4.83, static-b1h $1.37 |
 | `jit-r0-records` | jit | records | 12 | agent-H, jit-HH | 24 (36) | jit-HH $5.41 |
 | `jit-dev-kinetics-1` | jit | kinetics | 12 | agent-H, agent-S, jit-HH, jit-OH, jit-SH | 60 (92) | jit-HH $9.63, jit-OH $13.45, jit-SH $17.10 |
 | `jit-r0-kinetics` | jit | kinetics | 14 | agent-H, jit-OH | 28 (38) | jit-OH $24.96 |
+
+Pairing and harvest notes (what the stream harvest dropped before this loader paired the modes again, and the builds it charged outside the stream; the table counts paired rows, with every row in brackets):
+
+- `jit-dev-records-1`: static-b1h: +$1.372 build (research/construction-20261006/REPORT-dev.md (C0 dev, records B1-Haiku build; constructions.jsonl $1.372))
+- `jit-r0-records`: agent-haiku: 12 task(s) outside the paired set dropped from per-task labels
+- `jit-dev-kinetics-1`: agent-haiku: 12 task(s) outside the paired set dropped from per-task labels
+- `jit-dev-kinetics-1`: agent-sonnet: 12 task(s) outside the paired set dropped from per-task labels
+- `jit-dev-kinetics-1`: jit-OH: 7 task(s) outside the paired set dropped from per-task labels
+- `jit-dev-kinetics-1`: jit-SH: 1 task(s) outside the paired set dropped from per-task labels
+- `jit-r0-kinetics`: agent-haiku: 10 task(s) outside the paired set dropped from per-task labels
+
+Notes (inputs that could not be loaded, jobs that yielded no rows, rows whose unobserved cost was imputed):
+- jit-dev-records-1 jit-HH records:dev:d4:s223: costUnknown, recorded $2.273; already at or above the $2 per-task bound (arm.json agentBudgetUsd), nothing to impute
+- jit-r0-kinetics jit-OH kinetics:dev:d4:s228: costUnknown, recorded $0.660; imputed $1.340 up to the $2 per-task bound (arm.json agentBudgetUsd)
 
 | file | sha256 (16) | bytes |
 |---|---|---|
@@ -49,13 +63,13 @@ The rescued archive (`research/need-router-20261014/archive/`, see its `MANIFEST
 
 Plus 16 JIT stream result files under `research/jit-20261008/runs/` (each with its sha256 in `diagnostics.json`, `inputs.legacySources`).
 
-P1 hand-workflow authoring (at least $24.91, `research/core-20261006/REPORT.md`) is excluded from the P1 labels exactly as that report excluded it; C0 construction costs and JIT compile and external build costs are charged as build rows.
+P1 hand-workflow authoring is charged: $24.91 at least (the Opus agent time that wrote the workflow is unpriced), the records-v3 development calls (6,752 of them), to each of hand-H and hand-S in full. Source: README.md:307 (cost ledger, 2026-10-07: records-v3 hand-workflow development for P1; also research/jit-20261008/handoff/workflows/wf_59e7734e-82b.md:98). `research/core-20261006/REPORT.md` does not contain the figure; it calls the workflow a hand-written ceiling. C0 construction costs and JIT compile and external build costs are charged as build rows too. The hand-written workflow and the Opus-built C0 workflows are ceiling arms (L_ceiling only, DESIGN §2).
 
 ## D0. NR-knn neighbours under leave-one-cluster-out, and the L8 share
 
 **Grade: dev.** Census of 2026-10-14 (14 families at difficulty 3 and 5, example seeds 601-603), no archived rows. **Question:** do the k nearest TRAIN neighbours of a held-out job come from one TRAIN cluster (L8, DESIGN §6)? If they do for 80% or more of held-out jobs, NR-knn is the family-majority baseline under another name and is demoted (§3).
 
-**Method.** Standardised euclidean distance over the 8 trusted keys (the metric of `router.knnPredictor`), one point per census entry (family at d3 or d5, a proxy for a job), r4 and r5 left out (cut from v1). *Design split:* queries are the 8 held-out entries (incident, synth, ownerci, r3p at d3 and d5); the pool is the 16 TRAIN entries (W 12, kinetics 2, codefix 2); need-qa and the anchor jobs have no census entry. *Leave-one-cluster-out:* every non-cut entry is a query against the entries of all other clusters. A query is **dominant** when at least 80% of its k neighbours share a cluster, **single** when all do. **Chance** is the same statistic for k entries drawn uniformly from the same pool, enumerated exactly: a pool that is 12/16 one cluster makes high shares unremarkable.
+**Method.** Standardised euclidean distance over the 8 trusted keys (the metric of `router.knnPredictor`), one point per census entry (family at d3 or d5, a proxy for a job), r4 and r5 left out (cut from v1). *Design split:* queries are the 8 held-out entries (incident, synth, ownerci, r3p at d3 and d5); the pool is the 16 TRAIN entries (W 12, kinetics 2, codefix 2); need-qa and the anchor jobs have no census entry (they enter the anchor sensitivity below). *Leave-one-cluster-out:* every non-cut entry is a query against the entries of all other clusters. A query is **dominant** when at least 80% of its k neighbours share a cluster, **single** when all do. **Chance** is the same statistic for k entries drawn uniformly from the same pool, enumerated exactly: a pool that is 12/16 one cluster makes high shares unremarkable.
 
 | k | split | queries | dominant | single | chance dominant | mean modal share | chance mean share | L8 |
 |---|---|---|---|---|---|---|---|---|
@@ -77,12 +91,14 @@ Design split at k = 3, neighbours nearest first (cluster in brackets):
 | `ownerci@d5` | codefix@d5 (codefix), codefix@d3 (codefix), records@d5 (W) | codefix (0.67) |
 | `wbed-r3p@d5` | wbed-r6@d3 (W), wbed-r1@d5 (W), wbed-r1@d3 (W) | W (1.00) |
 
+**With the six anchor jobs.** They have no census entry, so their beds are generated here with the census's own recipe (example seeds 601-603, difficulty 3 and 5; `anchors.mjs`) and added as 12 entries: r0-pad, r3-mini and wbed-stage join W, codefix-notests joins codefix, need-qa is a fourth TRAIN cluster and need-constraint a held-out query. The pool is then 26 TRAIN entries (W 18, kinetics 2, codefix 4, need-qa 2) and the queries 10. L8 still does not trip: 4 of 10 queries have one-cluster neighbours at k = 3 (40%; 32% at chance) and 4 of 10 at k = 5 (40%; 50% at chance); the plurality cluster is W for 5 queries at k = 3 and need-qa, the new cluster, for 2. Leave-one-cluster-out over all 36 entries: dominance 8.3% at k = 3 and 8.3% at k = 5. The anchor beds' versions and module-graph hashes are in the D1 section.
+
 **Reading.**
-- L8 does not trip on the census in the primary setting (8 trusted keys, census entries): 4 of 8 held-out entries have one-cluster neighbours at k = 3 (50%; 39% at chance) and 4 of 8 at k = 5 (50%; 64% at chance). The line is 80%. It does trip in 1 of the 6 sensitivity variants: families, 8 keys, k = 5 (4 of 4 queries).
+- L8 does not trip on the census in the primary setting (8 trusted keys, census entries): 4 of 8 held-out entries have one-cluster neighbours at k = 3 (50%; 39% at chance) and 4 of 8 at k = 5 (50%; 64% at chance). The line is 80%. It does trip in 1 of the 14 sensitivity variants: families, 8 keys, k = 5 (4 of 4 queries).
 - The plurality cluster is W for 8 of 8 held-out entries at k = 5 and for 4 of 8 at k = 3. Where the share is not dominant the neighbours still lean on W, the largest TRAIN cluster, so NR-knn would mostly pool W's labels. The kinetics and codefix neighbours of synth and ownerci are the d3 and d5 entries of one family each.
 - Across the whole census (leave one cluster out) dominance is 8.3% at k = 3 and 8.3% at k = 5 against 7.1% and 10.9% at chance: neighbours are no more cluster-pure than a random draw, so the 8 trusted keys do not pull a family's entries together strongly.
 
-**Limits.** Eight held-out entries; census entries stand in for jobs; the TRAIN pool has 3 clusters and no need-qa, where the real pool will have 15 TRAIN jobs. The census says which TRAIN cluster is nearest, not whether its labels transfer. L8 stays a test to run on the real TRAIN jobs before NL2.
+**Limits.** Eight held-out entries in the census (ten with the anchors); census entries stand in for jobs; the census pool has 3 clusters and no need-qa (4 clusters with the anchors), where the real pool will have 15 TRAIN jobs. The census says which TRAIN cluster is nearest, not whether its labels transfer. L8 stays a test to run on the real TRAIN jobs before NL2.
 
 Sources:
 - `research/need-router-20261014/features-census.json` (sha256 `f5a00d12e79fcf89`)
@@ -130,7 +146,18 @@ Jobs in token order on the router feature, largest ten (W = hypothesised workflo
 - **Fan-out alone is worse** (balanced accuracy 0.750 at N = 1, 0.765 at N = 10). The OR rule fitted in sample reaches 0.971 at N = 10 and 0.947 at N = 1 (where it uses no fan-out at all), but leave-one-cluster-out it falls to 0.721 and 0.697: two thresholds fitted on a handful of clusters do not transfer. This is the F12 risk in miniature.
 - The anchor beds change the fan-out arm: `need-r0pad` has maxListLength 1.99 (log10) against 0.00 for wbed-r0, because the padding documents form a list, so under H0 the fan-out arm can fire on r0-pad as well as the token arm.
 
-**Limits.** Expectations, not labels; 21 jobs of which 2 (N = 1) or 4 (N = 10) are in the workflow class; bands without a census point (d1-2 and d4) use the nearest census difficulty or the log-mean of d3 and d5; the anchor beds were still being written, so their features are of the files as they stood on this run.
+**Limits.** Expectations, not labels; 21 jobs of which 2 (N = 1) or 4 (N = 10) are in the workflow class; bands without a census point (d1-2 and d4) use the nearest census difficulty or the log-mean of d3 and d5; the anchor beds were still being written when this was first run, so their features are of the files as they stood: each bed's version and the hash of the module graph that produced them are recorded (below), and a later run that finds another hash reports "inputs moved, re-run" rather than drifting silently.
+
+Anchor beds behind the second table (version, files in the module graph, sha256 of the graph, first 16 hex):
+
+| bed | version | files | graph sha256 |
+|---|---|---|---|
+| `need-r0pad` | 1.0.0 | 16 | `92c6ea53017fb7a5` |
+| `need-r3mini` | 1.0.0 | 26 | `8d32c351d7911b94` |
+| `need-stage` | 1.0.0 | 60 | `5fd4c2556fed5348` |
+| `need-codefix-noverifier` | 1.0.0 | 15 | `37cf4cce88f3dbf7` |
+| `need-qa` | 1.0.0 | 7 | `63ad674badab37d4` |
+| `need-constraint` | 1.0.0 | 7 | `827c9398ce5714a6` |
 
 Sources:
 - `research/need-router-20261014/features-census.json` (sha256 `f5a00d12e79fcf89`)
@@ -196,7 +223,7 @@ Sources:
 
 ## D3. Ex-ante against post-hoc signals
 
-**Grade: LEGACY/dev.** **Question** (Dekoninck, Baader and Vechev): do deployable post-hoc signals (schema validity, turns, cost) predict the oracle better than the structure features? **Method.** One delivered answer per row (timeouts and crashes are free post-hoc signals and are left out); target = oracle pass. Ex-ante: the 8 trusted features of the regenerated task (task hashes checked against the archive: yes, 116 tasks). Post-hoc: schema validity, turns, tool uses, run cost, output tokens, workflow node calls and escalations, the workflow's own verdict; never score, oracle details or the pass flag. Wall time is excluded (confounded by concurrency, DESIGN §2). Scores are parameter-free with the direction fixed in advance (more input, a longer list, a costlier run, more turns, an invalid schema or a failed verdict predicts a failure); AUC is computed **within difficulty**, because the d3 and d4 mixes differ in size and in pass rate. Primary pair per arm: AUC of -logInputTokens against AUC of -logCost, with a seeded task bootstrap of the difference. An arm needs at least 4 passes and 4 failures among delivered answers: 12 of 27 arm-by-job groups qualify.
+**Grade: LEGACY/dev.** **Question** (Dekoninck, Baader and Vechev): do deployable post-hoc signals (schema validity, turns, cost) predict the oracle better than the structure features? **Method.** One delivered answer per row (timeouts and crashes are free post-hoc signals and are left out); target = oracle pass. Ex-ante: the 8 trusted features of the regenerated task (task hashes checked against the archive: yes, 116 tasks). Post-hoc: schema validity, turns, tool uses, run cost, output tokens, workflow node calls and escalations, the workflow's own verdict; never score, oracle details or the pass flag. Wall time is excluded (confounded by concurrency, DESIGN §2). Scores are parameter-free with the direction fixed in advance (more input, a longer list, a costlier run, more turns, an invalid schema or a failed verdict predicts a failure); AUC is computed **within difficulty**, because the d3 and d4 mixes differ in size and in pass rate. Primary pair per arm: AUC of -logInputTokens against AUC of -logCost, with a seeded task bootstrap of the difference. An arm needs at least 4 passes and 4 failures among delivered answers: 12 of 27 scoreable arm-by-job groups qualify. **Not scored:** 9 further groups (`jit-HH`, `jit-OH`, `jit-SH`, `static-b1h`, 36 groups in all): a JIT row is delivered by one of several paths (compiled solver, interpreter, adjudicated) and its cost mixes compile, shadow and adjudicator sessions, so its turns, cost and verdict are not one deployable post-hoc signal per delivery; a static solver run has no turns, tools or per-delivery verdict recorded, and its cost is a script run; no post-hoc signal varies.
 
 | job | arm | rows | pass/fail | ex-ante AUC (tokens) | post-hoc AUC (cost) | difference | 95% interval | structure keys that vary |
 |---|---|---|---|---|---|---|---|---|
@@ -247,7 +274,7 @@ The workflows' own verdict against the oracle (a first F11-style count; F11 need
 - **The one clear post-hoc finding is a negative one:** across 3 workflow arms the workflow's own verdict was "pass" on 6 of 6 oracle failures (100%; one-sided 95% lower bound 0.61 on the false-pass rate). That includes the five C0-dev failures whose run verdict was "pass" (`research/construction-20261006/REPORT-dev.md`) and one P1 hand-workflow failure. It is why DESIGN §2 withholds self-check credit until a lineage's false-pass rate is measured (F11).
 - A cascade needs post-hoc estimates much better than ex-ante ones (Dekoninck et al.). Nothing here shows that for deployable signals; the only trustworthy post-hoc signal would be an executable check independent of the workflow itself, and the archive has none.
 
-**Limits.** 8 to 36 rows per arm, dev seeds, two difficulty levels, one draw per task in the JIT streams; intervals are wide and not corrected for the number of arms.
+**Limits.** 8 to 36 rows per arm, dev seeds, two difficulty levels, one draw per task in the JIT streams; intervals are wide and not corrected for the number of arms. The JIT and static arms (9 groups) are not scored at all, so the answer holds for direct calls, agents and hand-written, Foundry and script workflows only. Every task is regenerated from its task key only after the seed ledger allows it (`assertArchivedSeeds`: a seed reserved for another purpose, in an unspent test range or in the held-out range is refused).
 
 Sources:
 - `research/need-router-20261014/archive/c0-dev/constructions.jsonl` (sha256 `61e4bffc7367e348`)
@@ -260,16 +287,16 @@ Sources:
 
 ## D4. Tolerance fragility on archived records and kinetics rows
 
-**Grade: LEGACY/dev.** **Question:** an oracle's numeric tolerance is a hidden slider. Halve it, double it: how many pass flags move, and does the NEED label move? **Method.** Each row's pass flag is recomputed from the oracle's own recorded details at tolerance x 0.5 and x 2 (records: field accuracy >= 0.97, pair F1 >= 0.95 and entity slack 2% become 0.985 / 0.975 / 1% and 0.94 / 0.90 / 4%; kinetics: relative error <= 0.10 on Vmax and Km becomes 0.05 and 0.20, with the evaluator-health check scaled too). The nominal recompute must reproduce every archived flag: it does, all 616 rows. Labels come from `metrics.fragility` over the whole 27-cell grid (V in {0.1, 1, 10}, N in {1, 10, 100}, W in {V, 0, 10V}): point labels with the 0.03 acceptable set, LEGACY mode classes (hand and Foundry workflows, static solvers and JIT count as workflow; direct calls and agents as no-workflow).
+**Grade: LEGACY/dev.** **Question:** an oracle's numeric tolerance is a hidden slider. Halve it, double it: how many pass flags move, and does the NEED label move? **Method.** Each row's pass flag is recomputed from the oracle's own recorded details at tolerance x 0.5 and x 2 (records: field accuracy >= 0.97, pair F1 >= 0.95 and entity slack 2% become 0.985 / 0.975 / 1% and 0.94 / 0.90 / 4%; kinetics: relative error <= 0.10 on Vmax and Km becomes 0.05 and 0.20, with the evaluator-health check scaled too). The nominal recompute must reproduce every archived flag: it does, all 616 rows. Labels come from `metrics.fragility` over the whole 27-cell grid (V in {0.1, 1, 10}, N in {1, 10, 100}, W in {V, 0, 10V}): point labels with the 0.03 acceptable set and LEGACY mode classes (hand and Foundry workflows, static solvers and JIT count as workflow; direct calls and agents as no-workflow). **Two label sets** (DESIGN §2): **L_today** (the table's label columns) leaves out the ceiling arms, the workflows written by a frontier model or a person, and **L_ceiling** keeps them. The ceiling arms here are the P1 hand workflow (hand-H and hand-S: an Opus agent wrote it after studying the family) and the Opus-built C0 workflows (wf-O, script-O, the analogue of build-O). Every build is charged as a build row, the hand workflow's authoring included ($24.91 at least, to each hand mode in full). A job whose L_today has no workflow-class mode is **vacuous**: its label can only be no-workflow.
 
-| job | oracle | rows | passes lost at x0.5 | failures gained at x2 | headline label x0.5 / x1 / x2 | headline best mode x0.5 / x1 / x2 | label-flip cells | best-mode-change cells | fragile |
-|---|---|---|---|---|---|---|---|---|---|
-| `p1-records` | records | 288 | 7 of 193 (3.6%) | 16 of 95 (16.8%) | workflow / workflow / workflow | hand-H / hand-H / hand-H | 0 of 27 | 0 of 27 | no |
-| `c0-dev-records` | records | 48 | 0 of 42 (0.0%) | 2 of 6 (33.3%) | workflow / workflow / workflow | script-H / script-H / script-H | 0 of 27 | 2 of 27 | no |
-| `jit-dev-records-1` | records | 168 | 7 of 122 (5.7%) | 22 of 46 (47.8%) | no-workflow / no-workflow / no-workflow | agent-O / agent-O / agent-H | 0 of 27 | 4 of 27 | no |
-| `jit-r0-records` | records | 24 | 1 of 14 (7.1%) | 4 of 10 (40.0%) | workflow / workflow / no-workflow | jit-HH / jit-HH / agent-H | 2 of 27 | 2 of 27 | yes |
-| `jit-dev-kinetics-1` | kinetics | 60 | 2 of 44 (4.5%) | 0 of 16 (0.0%) | no-workflow / no-workflow / no-workflow | agent-H / agent-H / agent-H | 0 of 27 | 0 of 27 | no |
-| `jit-r0-kinetics` | kinetics | 28 | 0 of 20 (0.0%) | 1 of 8 (12.5%) | no-workflow / no-workflow / no-workflow | agent-H / agent-H / agent-H | 0 of 27 | 0 of 27 | no |
+| job | oracle | rows | passes lost at x0.5 | failures gained at x2 | L_today label x0.5 / x1 / x2 | L_today best mode x0.5 / x1 / x2 | label-flip cells | best-mode-change cells | fragile | L_ceiling label / best mode (x1); flip cells |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `p1-records` | records | 288 | 7 of 193 (3.6%) | 16 of 95 (16.8%) | no-workflow / no-workflow / no-workflow (vacuous) | agent-H / agent-H / direct-H | 0 of 27 | 18 of 27 | no | no-workflow / agent-H; 3 of 27 |
+| `c0-dev-records` | records | 48 | 0 of 42 (0.0%) | 2 of 6 (33.3%) | workflow / workflow / workflow | script-H / script-H / script-H | 0 of 27 | 2 of 27 | no | workflow / script-H; 0 of 27 |
+| `jit-dev-records-1` | records | 168 | 7 of 122 (5.7%) | 22 of 46 (47.8%) | no-workflow / no-workflow / no-workflow | agent-O / agent-O / agent-H | 0 of 27 | 4 of 27 | no | same as L_today |
+| `jit-r0-records` | records | 24 | 1 of 14 (7.1%) | 4 of 10 (40.0%) | workflow / workflow / no-workflow | jit-HH / jit-HH / agent-H | 2 of 27 | 2 of 27 | yes | same as L_today |
+| `jit-dev-kinetics-1` | kinetics | 60 | 2 of 44 (4.5%) | 0 of 16 (0.0%) | no-workflow / no-workflow / no-workflow | agent-H / agent-H / agent-H | 0 of 27 | 0 of 27 | no | same as L_today |
+| `jit-r0-kinetics` | kinetics | 28 | 0 of 20 (0.0%) | 1 of 8 (12.5%) | no-workflow / no-workflow / no-workflow | agent-H / agent-H / agent-H | 1 of 27 | 1 of 27 | yes | same as L_today |
 
 Pass rate per mode at x0.5 / x1 (archived) / x2, for the two jobs with the largest movement:
 
@@ -288,13 +315,29 @@ Pass rate per mode at x0.5 / x1 (archived) / x2, for the two jobs with the large
 | jit-r0-records: agent-H | 0.33 | 0.42 | 0.67 |
 | jit-r0-records: jit-HH | 0.75 | 0.75 | 0.83 |
 
+The P1 hand workflow, authoring charged (utility in success-equivalents per task at the headline cell V = $1, W = V, N = 10, and the cells where L_ceiling says workflow):
+
+| mode | utility | note |
+|---|---|---|
+| agent-H | 0.500 |  |
+| direct-H | 0.359 |  |
+| direct-S | 0.309 |  |
+| direct-H-med | 0.252 |  |
+| direct-H-notes | -0.080 |  |
+| direct-H45 | -1.055 |  |
+| hand-H | -1.562 | build $24.91 / N = 10 charged |
+| hand-S | -1.704 | build $24.91 / N = 10 charged |
+
+L_ceiling says workflow in 8 of 27 cells (V = $10, N = 10, W = 1V; V = $1, N = 100, W = 1V; V = $0.1, N = 100, W = 10V; V = $1, N = 100, W = 10V; V = $10, N = 10, W = 10V; V = $10, N = 100, W = 1V; V = $10, N = 100, W = 0V; V = $10, N = 100, W = 10V); it says no-workflow in 18 and either in 1.
+
 **Reading.**
 - **The pass rates move a lot; the labels mostly do not.** Doubling the tolerance turns 45 failing rows into passes (17% to 48% of all failures in the records jobs, 48% in `jit-dev-records-1`); halving it costs 17 passes. Records failures are near misses by field accuracy: the 105 failing answers with recorded details carry 748 recorded field mismatches (at most 12 per answer), 46% of them in `amount_usd`, not wholesale errors. Kinetics barely moves: 22 of its 24 failures are a wrong exclusion set, which no tolerance repairs.
-- 1 of 6 jobs are fragile by the preregistered definition (a NEED label flips at some factor and cell): jit-r0-records. Its modes (agent-H and jit-HH) are close in utility, so a doubled tolerance moves the label in 2 of 27 cells.
-- The best **mode** changes more often than the class: in 8 of 162 job-by-cell combinations (c0-dev-records, jit-dev-records-1, jit-r0-records), because several modes sit within a few points of each other. Mode accuracy is the weaker metric for this reason; the class label and the utilities are the primary ones.
-- Where the gap between the best mode and the next is large (P1: the hand workflow against every single call), tolerance does not matter. The recompute is cheap and deterministic; it belongs on every job whose oracle has a numeric tolerance before its label is used.
+- 2 of 6 jobs are fragile in L_today by the preregistered definition (a NEED label flips at some factor and cell): jit-r0-records, jit-r0-kinetics. `jit-r0-records` (agent-H, jit-HH) flips in 2 of 27 cells; `jit-r0-kinetics` (agent-H, jit-OH) flips in 1 of 27 cells: its modes are close in utility, so a changed tolerance moves the label. In L_ceiling `p1-records` is fragile too.
+- The best **mode** changes more often than the class: in 27 of 162 job-by-cell combinations (p1-records, c0-dev-records, jit-dev-records-1, jit-r0-records, jit-r0-kinetics), because several modes sit within a few points of each other. Mode accuracy is the weaker metric for this reason; the class label and the utilities are the primary ones.
+- **P1 needs its build cost, and it is not a tolerance-free case.** With the authoring cost left out (as an earlier version of this report had it), the hand workflow looked like a clear win: it passed 97% of its trials, and at the headline cell its utility would be 0.93 against 0.50 for agent-H, a workflow label with hand-H best (an earlier version of this report said so, because the legacy registry marked the hand modes `prebuilt`, which switches off the guard against a built mode with no build row). Charged the $24.91 (a lower bound) it took to write, the hand workflow costs 2.49 success-equivalents per task at N = 10: L_ceiling's headline label is **no-workflow** with agent-H best (hand-H utility -1.56), and the workflow wins only where the volume or the value is large (the cells above). That label is also fragile (3 label-flip cells under a changed tolerance), and in L_today the job has no workflow arm, so P1 contributes no workflow label to anything built on L_today.
+- The recompute is cheap and deterministic; it belongs on every job whose oracle has a numeric tolerance before its label is used.
 
-**Limits.** Records and kinetics only (the other families have exact oracles); 30 P1 rows (timeouts, no oracle details) keep their nominal flag; the class assigned to JIT modes is an assumption.
+**Limits.** Records and kinetics only (the other families have exact oracles); 30 P1 rows (timeouts, no oracle details) keep their nominal flag; the class assigned to JIT modes is an assumption; the P1 authoring cost is a lower bound (the Opus agent's own time is unpriced) and is charged in full to each hand mode, which assumes a user deploys one of them; wf-O and script-O are marked ceiling as the analogue of build-O (DESIGN §2 admits build-O to L_ceiling only), which the archived C0 report did not do. Stream rows whose cost was not observed are imputed to the arm's per-task bound (inputs notes).
 
 Sources:
 - `research/need-router-20261014/archive/c0-dev/constructions.jsonl` (sha256 `61e4bffc7367e348`)
@@ -326,12 +369,12 @@ The cues fire on 13.1% of the items. Triggers by webhook, event or poll (66 item
 | bed | declared requirement | typed field found | word cue fires on the bed text | typed evidence |
 |---|---|---|---|---|
 | e8 | wait | yes | yes | `family.clock.horizon = 14 calendar-day`; `family.profile = temporal-like` |
-| e8 | schedule | no | yes | none |
+| e8 | schedule | yes | yes | `schemas.sor.orders.orders.fields.status.enum[6] = "timedOut"`; `systems[0].tables.orders.fields.status.enum[6] = "timedOut"` |
 | e8 | effects | yes | yes | `schemas.effects.billing.charge.money`; `schemas.effects.billing.refund.money` |
 | runbook | effects | yes | yes | `outputSchema op drain`; `outputSchema op undrain` |
 | runbook | human | yes | yes | `outputSchema op page_human (an escalation: approval semantics are not typed)` |
 
-E8's text is `spec/SPEC-E.md` (20,057 characters); runbook's is the generated prompt plus ticket, runbook and inventory of dev seed 601 at d3 (2,150 + 26,585 characters). Recall of the declared requirements: E8 typed 0.67, cues 1.00; runbook typed 1.00, cues 1.00. The cues also fire on every class not declared (all four fire on both beds), so on a long specification the cue guard asks about everything.
+E8's text is `spec/SPEC-E.md` (25,007 characters); runbook's is the generated prompt plus ticket, runbook and inventory of dev seed 601 at d3 (2,150 + 26,585 characters). Recall of the declared requirements: E8 typed 1.00, cues 1.00; runbook typed 1.00, cues 1.00. The cues also fire on every class not declared (all four fire on both beds), so on a long specification the cue guard asks about everything.
 
 Typed fields that evidence a requirement the preregistered candidate list does not name:
 
@@ -345,7 +388,7 @@ Typed fields that evidence a requirement the preregistered candidate list does n
 **Reading.**
 - **The word cues cannot be the guard.** On corpus descriptions their recall of "any hard requirement" is 12.3% (95% interval [0.093, 0.160]); by class: human 75%, wait 15%, schedule 0%, effects 2.8%. Every class is under the 0.9 line (and under RX6's original 0.95), so by the preregistered rule the guard asks instead of inferring. Where a cue does fire it is mostly right for effects (precision 83%) and poor for human and wait (36% and 21%).
 - The truth side matters: 80% of these automations write or call something external, so "effects with authority" read from the graph is nearly universal and says little about which jobs need a workflow. A typed field declared by the owner is the only usable guard input, and the declared set has to be right.
-- **Typed fields are better evidence than prose, and they show the candidate lists are incomplete.** E8's typed declarations evidence human, compensation beyond the requirements PREREG lists for it, and runbook's evidence wait, compensation beyond its two. E8 has no typed field for "schedule", so that declared requirement rests on the spec text alone. [I] Add human approval to e8 and durable wait to runbook before D5 is used as a guard test, and decide whether compensation is a fifth class (the engine-support flag already names it).
+- **Typed fields are better evidence than prose, and they show the candidate lists are incomplete.** E8's typed declarations evidence human, compensation beyond the requirements PREREG lists for it, and runbook's evidence wait, compensation beyond its two. E8's declared "schedule" is found by that search (family, schemas, systems) as `schemas.sor.orders.orders.fields.status.enum[6] = "timedOut"` and `systems[0].tables.orders.fields.status.enum[6] = "timedOut"`: the host-side typed fields name the deadline race only as a timeout outcome (the timedOut order status); the deadline itself (dueAt, onTimeout) sits in the analyst-side oracleItem and in the spec text. [I] Add human approval to e8 and durable wait to runbook before D5 is used as a guard test, and decide whether compensation is a fifth class (the engine-support flag already names it).
 - Corpus descriptions are one sentence and the guard will read job specifications, so Part A is a lower bound for real specifications; Part B shows the opposite failure (cues fire on everything in a 20K-character spec). Neither supports inferring requirements from text.
 
 **Limits.** Corpus truth is graph structure, not what the author meant; the 449 originals are automations people chose to build; the cue-to-class mapping uses only words already in code; Part B has 5 declared requirements in total.
@@ -391,24 +434,24 @@ Sources:
 
 **Check 4: does the meter move the labels?** Agent modes re-priced row by row under each variant (p5, p1h), labels recomputed over the 27-cell grid and compared with the reported meter:
 
-| job | re-priced modes | headline best mode (reported) | p5: label flips / best-mode changes | p5 headline | p1h: label flips / best-mode changes | p1h headline |
-|---|---|---|---|---|---|---|
-| `p1-records` | agent-H | hand-H (workflow) | 0 / 0 | hand-H (workflow) | 0 / 0 | hand-H (workflow) |
-| `c0-dev-records` | agent-O, agent-H | script-H (workflow) | 12 / 10 | agent-O (either) | 6 / 0 | script-H (workflow) |
-| `c0-dev-codefix` | agent-O, agent-H | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) | 3 / 0 | agent-H (no-workflow) |
-| `jit-dev-records-1` | agent-H, agent-O, agent-S | agent-O (no-workflow) | 3 / 7 | agent-O (no-workflow) | 3 / 7 | agent-O (no-workflow) |
-| `jit-r0-records` | agent-H | jit-HH (workflow) | 0 / 0 | jit-HH (workflow) | 1 / 0 | jit-HH (workflow) |
-| `jit-dev-kinetics-1` | agent-H, agent-S | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) |
-| `jit-r0-kinetics` | agent-H | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) |
+| job | re-priced modes | L_today: headline best mode (reported) | p5: label flips / best-mode changes | p5 headline | p1h: label flips / best-mode changes | p1h headline | L_ceiling (reported / p5 / p1h headline) |
+|---|---|---|---|---|---|---|---|
+| `p1-records` | agent-H | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) | agent-H (no-workflow) / agent-H (no-workflow) / agent-H (no-workflow) |
+| `c0-dev-records` | agent-O, agent-H | script-H (workflow) | 12 / 10 | agent-O (either) | 6 / 0 | script-H (workflow) | script-H (workflow) / agent-O (either) / script-H (workflow) |
+| `c0-dev-codefix` | agent-O, agent-H | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) | 3 / 0 | agent-H (no-workflow) | agent-H (no-workflow) / agent-H (no-workflow) / agent-H (no-workflow) |
+| `jit-dev-records-1` | agent-H, agent-O, agent-S | agent-O (no-workflow) | 3 / 7 | agent-O (no-workflow) | 3 / 7 | agent-O (no-workflow) | same |
+| `jit-r0-records` | agent-H | jit-HH (workflow) | 0 / 0 | jit-HH (workflow) | 1 / 0 | jit-HH (workflow) | same |
+| `jit-dev-kinetics-1` | agent-H, agent-S | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) | 0 / 0 | agent-H (no-workflow) | same |
+| `jit-r0-kinetics` | agent-H | agent-H (no-workflow) | 0 / 1 | agent-H (no-workflow) | 1 / 1 | agent-H (no-workflow) | same |
 
 **Reading.**
 - **The price formula is right; before the flag the CLI billed cache writes at the 1-hour rate.** For the 4 Opus builder sessions the pinned table with 1-hour writes reproduces the CLI figure to the cent (reported / billed rate = 1.000); with the 5-minute rate the table is 14% too low. Every cache write in these sessions was a 1-hour write. Archived dollars from before the flag and new ones are therefore not comparable (the policy says so too): one more reason LEGACY rows are never pooled.
 - **Haiku needs per-request tiers.** The aggregate convention prices a whole session at the >100K prompt tier because its tokens add up past 100K, but each request is far smaller. For the 4 Haiku builder sessions the reported figure falls inside [lowest tier, aggregate tier] in 4 and equals the lowest-tier price exactly in 1 (a session whose requests all stayed under 100K); the aggregate-tier price is up to 5.00 times the reported figure. For Haiku agent sessions the reported total is 1.00 times the era-rate re-price before the flag and 1.14 times after it: the overstatement from aggregate tiering and the missing output tokens (next bullet) roughly cancel, so the Haiku totals look right for the wrong reasons.
 - **Stream usage cannot see output tokens.** The builder records show 26,553 to 132,425 output tokens in the CLI's final usage against 142 to 376 in `streamUsage`; agent task sessions record 62 to 284 on average. Re-pricing an Opus agent session from its stream usage therefore lands 2.11 times (before the flag, at the 1-hour rate) or 2.96 times (after it, at the 5-minute rate) below the reported figure, and Sonnet 2.67 times after it. The gaps imply about 14,926 (Opus before), 16,213 (Opus after) and 16,848 (Sonnet after) unrecorded output tokens per session [I]: stable across eras and of the order of the 8K to 24K thinking tokens the Opus builder sessions report.
-- **The meter decides some labels.** Re-pricing the agent modes moves the best mode in 2 of 7 jobs (c0-dev-records, jit-dev-records-1) and flips a NEED label in some cell of 4 (c0-dev-records, c0-dev-codefix, jit-dev-records-1, jit-r0-records). Agent-O costs 2.11 to 2.96 times less under the era-rate re-price, which is what moves its cells. A mode comparison on two meters is an accounting comparison.
-- **A check to add before the first paid agent row (a flag, not a finding):** `messageUsageOf` (`experiments/c0/construct.mjs`) reads per-message `assistant.message.usage` lines from the session transcript, the same kind of line that produced the archived `streamUsage`. If its output tokens carry the same start-of-message snapshot, `priceSession` will under-price output exactly as above. The first stage should assert that the sum of per-message output tokens is within a few percent of the final result usage, or take output tokens from the final result.
+- **The meter decides some labels.** Re-pricing the agent modes moves the best mode in 3 of 7 jobs (c0-dev-records, jit-dev-records-1, jit-r0-kinetics) and flips a NEED label in some cell of 5 (c0-dev-records, c0-dev-codefix, jit-dev-records-1, jit-r0-records, jit-r0-kinetics); at the headline cell it changes the L_today headline label of c0-dev-records (script-H, workflow to agent-O, either under p5). Agent-O costs 2.11 to 2.96 times less under the era-rate re-price, which is what moves its cells. A mode comparison on two meters is an accounting comparison.
+- **The meter is now a gate, not a recommendation.** `summary.meterGate` in `diagnostics.json` is **block-until-verified** (`OUTPUT_TOKENS_UNDER_RECORDED`, `REPRICE_OFF_REPORTED`): 8 of 8 sessions with a final usage record output tokens in the stream or per-message lines more than 5% away from the CLI's final result usage (median recorded/final 0.0046); 4 model-era groups re-price outside 10% of the CLI-reported total: claude-haiku-5-5 | post-flag 1.14x, claude-opus-5-5 | post-flag 2.96x, claude-opus-5-5 | pre-flag 2.11x, claude-sonnet-5-5 | post-flag 2.67x. `messageUsageOf` (`experiments/c0/construct.mjs`) reads per-message `assistant.message.usage` lines from the session transcript, the same kind of line that produced the archived `streamUsage`, so `label-run.priceSession` would book the same under-priced output as `measured`: the stage cap is safe (it meters max(reported, re-priced)), but utility would use the low figure and the 30%-imputed rule would never see the shortfall. `label-run.mjs` therefore (1) refuses to start a paid stage with an agent arm while the gate is set and no passing verification record is on file (clear it with `node experiments/need-router/meter-gate.mjs --verify <transcript>... --write research/need-router-20261014/analysis/m0/meter-verification.json` on at least 2 saved CLI transcripts), and (2) checks every agent session it prices: per-message output tokens within 5% of the CLI's final result usage, else the session is booked at the reported figure with the shortfall imputed and flagged `meterUnverified`.
 
-**Limits.** Stream aggregates cannot say which requests crossed 100K; "implied output" is an inference that assumes each era's cache rate held for every session; the cache rate of the post-flag sessions is the policy's account, not something these rows show; the JIT interpreter traces can hold several sessions per task. The direct-call rows cannot be re-priced at all.
+**Limits.** The gate is built from archived evidence (the 8 C0 builder sessions and the per-model-era ratios); the verification tool has run only on synthetic transcripts in the tests, so the first real transcript will be a paid agent smoke row. Stream aggregates cannot say which requests crossed 100K; "implied output" is an inference that assumes each era's cache rate held for every session; the cache rate of the post-flag sessions is the policy's account, not something these rows show; the JIT interpreter traces can hold several sessions per task. The direct-call rows cannot be re-priced at all.
 
 Sources:
 - `policy/models.json`
@@ -425,12 +468,13 @@ Sources:
 
 - **No new label and no router.** D0 to D6 are checks on the benchmark and its inputs; none scores a router.
 - **JSONL only was rescued.** The SQLite model journals of P1 and C0-dev (17 to 22 MB each, raw prompts and outputs) and the logs stay under the git-ignored `experiments/runs/`. Per-request usage that may sit in the P1 journal (it would settle D6's tier question for P1) was not read.
-- **Class assignment of LEGACY modes is an assumption** (hand and Foundry workflows, static solvers and JIT count as workflow). JIT interprets first and compiles later, which is not the v1 workflow mode.
-- **D1's anchor-bed features are computed live** from `beds/need-*`, which were still being written; D1's other numbers use the committed census and job table. Re-run when those beds are frozen.
+- **Class assignment of LEGACY modes is an assumption** (hand and Foundry workflows, static solvers and JIT count as workflow). JIT interprets first and compiles later, which is not the v1 workflow mode. The hand-written P1 workflow and the Opus-built C0 workflows are ceiling arms (L_ceiling only); the other workflow modes, built by Haiku or Sonnet, are L_today.
+- **D1's anchor-bed features (and D0's anchor sensitivity) are computed live** from `beds/need-*`, which were still being written; each bed's version and the hash of its module graph are recorded in `diagnostics.json` (`d1.anchorBeds.beds`) and `--check` reports a changed hash as "inputs moved". D1's other numbers use the committed census and job table. Re-run when those beds are frozen.
+- **D3 does not score the JIT and static arms** (`jit-HH`, `jit-OH`, `jit-SH`, `static-b1h`: their rows mix compile, shadow and adjudicator sessions); D6's gate is built from the C0 builder sessions and the per-model-era ratios, and its clearing path (`meter-gate.mjs --verify` on saved CLI transcripts) has not met a real transcript yet.
 - **RX6's hand-checked subsample was not done** (100 descriptions checked by an annotator against their graphs, owner decision O5 of the 2026-10-07 review): D5 Part A takes the graph as truth.
 - **`replay-archived.json` and `.txt` were not regenerated.** `harvest.mjs` now tags its rows, fixed costs and report entries LEGACY with their source path; the committed replay outputs predate the tag until `replay.mjs --json` is re-run (that file is not part of this piece).
 - **D2 and D3 are small samples** (8 to 36 rows per arm; 24 tasks for the primary co-failure pair). Absence of a significant result is not evidence of absence.
 - **D5 Part B** has 5 declared requirements in total; the cue-to-class mapping is mine and uses only words already in code.
-- **Reproduce:** `node experiments/need-router/diagnostics/run.mjs --report` (about 10 s); `--check` compares a fresh run with the committed `diagnostics.json` byte for byte.
+- **Reproduce:** `node experiments/need-router/diagnostics/run.mjs --report` (about 40 s); `--check` compares a fresh run with the committed `diagnostics.json` and says whether it is current (exit 0), whether an input or the code moved so the file should be re-run (exit 2, the numbers may or may not have changed), or whether results differ with nothing of theirs moved (exit 1). D1 and D5 read files that are still changing (the anchor beds, `SPEC-E.md`, the E8 bed), so exit 2 is expected after their edits.
 
-Code fingerprints (first 16 hex of sha256): common.mjs a09ac46a0d78ad7c; census.mjs babf4d67b76c6153; legacy.mjs 4d21ae2a98736679; anchors.mjs ee37efea7572e26e; d0-knn.mjs 5496befafc90fb94; d1-shortcut.mjs fd377e498af87c99; d2-cofailure.mjs 694710c793e39674; d3-signals.mjs 2655e677d84fade4; d4-fragility.mjs 2227b37c27f692af; d5-guard.mjs 23d0b5af20d66c0f; d6-cost.mjs 2f13ea07086e6a2b; rescue.mjs 69a0f77b8e7596e0.
+Code fingerprints (first 16 hex of sha256): common.mjs a09ac46a0d78ad7c; census.mjs babf4d67b76c6153; currency.mjs c41883e76159772f; legacy.mjs 0a8fd2f4ce41bcdd; anchors.mjs dcef53df6eaa3f87; d0-knn.mjs f1b435699327e5e0; d1-shortcut.mjs fd377e498af87c99; d2-cofailure.mjs 694710c793e39674; d3-signals.mjs 5307ba9da4580394; d4-fragility.mjs acfe793690df2a55; d5-guard.mjs 4f6d8ac26f1bc14a; d6-cost.mjs 982967954b24aa20; rescue.mjs 69a0f77b8e7596e0; metrics.mjs 65b310661d8670ec; harvest.mjs 19a41592faad7bd8; features.mjs 748d34eb086a3d58; meter-gate.mjs 44882c6f5cbfb851.

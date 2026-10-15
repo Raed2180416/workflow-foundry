@@ -75,5 +75,24 @@
       "S6": "yes",
       "evidence": "Wide research table over a 200-400 document corpus (beds/wbed/r6/index.mjs:32-43). S1 yes: scope and claims depend on what sentences mean (quoted values, predictions and planned tests are not tests; a test is dated by when it was measured); judgedBranchPoints 1 (r6/index.mjs:35-37, 246; r6/render.mjs:193, 197). S2 yes: the entity list is found across documents; lab aliases come from notices; later versions and retractions void other documents; errata replace values; a ranking policy picks one winner per cell (r6/render.mjs:192-197, 200). S3 yes: one row per cell, value exact at the stated precision, source id exact, excluded set exact (r6/score.mjs:4-7, 51-85). S4 no: only the document count is stated (r6/render.mjs:187); nothing gives the number of compounds or cells. S5 no: prose documents from a closed template grammar, not a legacy encoding (r6/index.mjs:32-34, 42). S6 yes: nine prose rules (labs, tests, voids, errata, claims, units, ranking) govern every document and cell (r6/render.mjs:191-201)."
     }
-  }
+  },
+  "reviewerDisagreements": [
+    {
+      "family": "wbed-r3",
+      "q": "S5",
+      "label": "no",
+      "reviewerReading": "yes",
+      "scope": "d3 and d5",
+      "evidence": "The S5 question names 'mixed date or number formats' as an example of a format that must be decoded. At d3 the 16 statements come from four billing systems with different layouts, date orders and number formats (BRIGHTDESK CSV with MM/DD/YYYY and quoted amounts; LEDGR semicolon fields with DD.MM.YYYY and German numbers; VERITAS JSON lines; ATLAS with a per-task date order) (beds/wbed/r3/world.mjs:29; beds/wbed/r3/vocab.mjs:63-71; beds/wbed/r3/render.mjs:64-66). At d5 (12 of the 24 M1 tasks) TALLY DD-MM-YY, KOBO yen with Japanese type words and VENDEX statements written as sentences with dates in words are added (beds/wbed/r3/world.mjs:31; beds/wbed/r3/index.mjs:33-36; beds/wbed/r3/vocab.mjs:68-70). The labeller gave wbed-r1 S5 yes on the same grounds (VENDEX free text, KOBO, 4-7 invoice dialects; r1/render.mjs:48-75), so the two labels are inconsistent. 'Documented' does not separate them: R1's dialects are documented in its ledger notes too (r1/render.mjs:101-129)."
+    },
+    {
+      "family": "wbed-r2",
+      "q": "S5",
+      "label": "no",
+      "reviewerReading": "yes at d5, no at d3 (the family label is mixed)",
+      "scope": "d5 only",
+      "evidence": "From d4, 40-50% of suppliers write invoices and credit notes in German, French or Spanish (beds/wbed/r2/world.mjs:26-29, 129, 372), and their amounts use local number formats: '1.234,56 EUR' (de, es) and '1 234,56 EUR' (fr) beside English 'EUR 1,234.56' (beds/wbed/r2/vocab.mjs:35-40). The 12 r2 tasks at d5 therefore mix number formats, which the S5 question names as an example; the 12 at d3 do not. The labeller's 'prose e-mails, no legacy encoding' holds for d3. A weak disagreement: one family label cannot fit both difficulties."
+    }
+  ],
+  "reviewer": "adversarial reviewer (workflow j-need-2-build, review stage), 2026-10-15. The labels above are the independent labeller's pre-registered truth and are unchanged; these entries record a second reading only. Cells spot-checked against the cited spans (41 of 48): all six of wbed-r0, wbed-r1, wbed-r2, wbed-r3, wbed-r3p and wbed-r6; S4 and S5 of wbed-r4; S1, S4 and S5 of wbed-r5; agreed with 39 (the two entries above are the exceptions, the second a partial one). Noted ambiguity without disagreement: S4 for wbed-r1, wbed-r2, wbed-r3p and wbed-r6 is 'no' although the prompt states row, document or file counts; the labeller applied this consistently (counts that check parsing, not the answer)."
 }

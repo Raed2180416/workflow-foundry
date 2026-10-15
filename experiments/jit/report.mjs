@@ -44,6 +44,7 @@ export function armUsage(dir) {
   else if (existsSync(sqlite)) {
     const db = new DatabaseSync(sqlite, { readOnly: true });
     try {
+      db.exec('PRAGMA busy_timeout=5000;');   // a live stream may be writing it
       const has = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='model_calls'").get();
       if (has) for (const r of db.prepare('SELECT input_tokens, output_tokens, cache_read_tokens, cache_write_tokens FROM model_calls').all())
         addUsage(u, { inputTokens: r.input_tokens, outputTokens: r.output_tokens, cacheReadTokens: r.cache_read_tokens, cacheWriteTokens: r.cache_write_tokens });
