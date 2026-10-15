@@ -8,12 +8,14 @@ import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync
 import os from 'node:os';
 import path from 'node:path';
 import { REPO, VENV_PY, readJson } from '../lib.mjs';
-import { runTasks } from '../run.mjs';
+import * as mainRunner from '../run.mjs';
 import { loadSplit } from '../split.mjs';
 import { ARM, HARNESS_ID, READER_SYSTEM, REVIEW_BEGIN, appsOfUrl, diffReads, hideCodeSteps, manifestFiles, maskClock, nodeModels, pipelineConfig, pipelineManifest, readMailboxFile,
   readReview, readerPrompt, reviewSection, sessionCalls } from '../harness/secondreader.mjs';
 import { stubNodeRunner, stubSessionRunner, stubReview, sendEmail } from '../harness/secondreader-stubs.mjs';
 
+// The runner with the pipeline registry: run.mjs once it is merged, the wired copy run-sr-wip.mjs until then.
+const { runTasks } = mainRunner.PIPELINE_HARNESSES?.secondreader ? mainRunner : await import('../run-sr-wip.mjs');
 const tmp = p => mkdtempSync(path.join(os.tmpdir(), `autobench-sr-${p}-`));
 const HAVE_VENV = existsSync(VENV_PY);
 const quiet = () => {};
@@ -140,7 +142,8 @@ test('config and isolation: roles act/reader/repair; manifest pins the files and
   assert.equal(a.version, 'sr-v1');
   assert.notEqual(pipelineManifest(a).sha256, pipelineManifest(pipelineConfig({ ...base, nodeModels: { reader: 'claude-sonnet-5-5' } })).sha256);
   const files = manifestFiles();
-  for (const f of ['experiments/autobench/run.mjs', 'experiments/autobench/harness/secondreader.mjs', 'experiments/autobench/harness/inventory.mjs', 'experiments/autobench/harness/codeowned.mjs',
+  assert.ok(files.some(f => /^experiments\/autobench\/run(-sr-wip)?\.mjs$/.test(f)));            // the runner in use
+  for (const f of ['experiments/autobench/harness/secondreader.mjs', 'experiments/autobench/harness/inventory.mjs', 'experiments/autobench/harness/codeowned.mjs',
     'experiments/autobench/accounting.mjs', 'experiments/autobench/bridge.py', 'experiments/autobench/tool.mjs']) assert.ok(files.includes(f), f);
   assert.ok(!files.includes('experiments/autobench/harness/secondreader-stubs.mjs'));
   const src = readFileSync(path.join(REPO, 'experiments/autobench/harness/secondreader.mjs'), 'utf8').replace(/^\s*\/\/.*$/gm, '').replace(/\/\*\*[\s\S]*?\*\//g, '');

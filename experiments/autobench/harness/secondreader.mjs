@@ -63,7 +63,10 @@ export const KNOWLEDGE = Object.freeze([
 ]);
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const RUNNER = path.resolve(HERE, '../run.mjs');
+// The runner that loads this harness: run.mjs once the pipeline registry (PIPELINE_HARNESSES) is merged into it; until then
+// the wired copy run-sr-wip.mjs (kept apart so that runs launched with the current run.mjs can still --resume).
+const MAIN_RUNNER = path.resolve(HERE, '../run.mjs'), WIP_RUNNER = path.resolve(HERE, '../run-sr-wip.mjs');
+const RUNNER = !readFileSync(MAIN_RUNNER, 'utf8').includes("secondreader: './harness/secondreader.mjs'") && existsSync(WIP_RUNNER) ? WIP_RUNNER : MAIN_RUNNER;
 
 // ---------------------------------------------------------------------------------------------------------------
 // Manifest and configuration (the same shape as A1-C's, so run.mjs pins and records it the same way)

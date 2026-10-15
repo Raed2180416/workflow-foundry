@@ -34,7 +34,7 @@ import random
 import re
 import sys
 from datetime import date, datetime, time, timedelta, timezone
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from pathlib import Path
 
 FAMILY = "abr-fin-receipts"
@@ -1030,7 +1030,6 @@ class Gen:
 
     # -- simulation ---------------------------------------------------------------------------------------------------
     def simulate(self):
-        r = self.r
         self.truth, self.triggers, self.payloads = [], [], []
         key_ts: dict[str, str] = {}
         corrected: set[str] = set()

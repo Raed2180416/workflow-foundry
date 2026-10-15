@@ -7,13 +7,15 @@ E8: it reuses only the shared host, oracle and libraries (`beds/ebed/host/`, `or
 **Status: built, not admitted.** The reference transition, its SLA engine, both reference runs, the controls and the
 goldens are in place and pass (measurements below). The oracle mutation score is measured (2026-10-15,
 [`ledger/MUTANTS.md`](ledger/MUTANTS.md): 679 mutants of `transition.mjs` and `sla.mjs`, 551 killed, 126 grader-equivalent, 2 uncertain: 551/553 = 0.996 excluding equivalents, 0.811 raw). Still
-missing before admission, as for E8: the three blind specificity solvers (`specificity/`, a separate session, DESIGN
-§18 step 5; drafts s1-s3 are in the mutation corpus), the metamorphic suite beyond its first relation (retroactive history = live history, review round 2), an Intl
+missing before admission, as for E8: K1 specificity (the three blind solvers of `specificity/` were run on 2026-10-15
+and none passes as written: all three guessed the id field of master records, which SPEC-E did not state until S17,
+E7-B11; with only that guess bridged by a diagnostic shim, s2 and s3 pass 2,337/2,337 completed cases each and s1
+2,270/2,337, its own go-live bug, with 0 oracle false rejects; **Specificity** below), the metamorphic suite beyond its first relation (retroactive history = live history, review round 2), an Intl
 minute-stepper N-version check (the clock N-version checks built here compare clocks that all use pinned zone tables;
 the R4.2 evaluator of round 2 uses the generator's clock), the paid triviality attack and the arm (c) reference. Not built from the design's module
 plan: `ledger/SEMANTICS.md` (DESIGN §14 is its draft) and the tools `arm-smoke`, `nversion` and `timeline`
 (part A's `world-health --case` prints a planned timeline; `historyOf` gives the oracle's). `tools/specificity-run.mjs`
-is built (2026-10-15, mirroring E8's) and waits for the blind solvers; E7 also runs through the item-generic B1 wiring
+is built (2026-10-15, mirroring E8's; its `--shim master-ids` is a diagnostic wrapper, never evidence); E7 also runs through the item-generic B1 wiring
 (`experiments/ebed/build.mjs --item e7`: grading worlds 1232–1234, build-loop practice worlds 1235–1237). Nothing here
 is evidence about any arm.
 
@@ -23,7 +25,8 @@ node beds/ebed/e7/tools/health.mjs --seeds 1001-1030                       # bed
 node beds/ebed/e7/tools/controls-run.mjs --seeds 1211-1214                 # controls on attack worlds
 node beds/ebed/e7/tools/world-health.mjs --seeds 1001-1030 --walk          # the world alone (part A)
 node beds/ebed/e7/tools/world-health.mjs --seed 1001 --difficulty 3 --case i0042   # one case's planned timeline
-node beds/ebed/e7/tools/specificity-run.mjs [--dir <solvers>] --seeds 1242-1244   # blind solvers on 1241-1249, 0 false rejects
+node beds/ebed/e7/tools/specificity-run.mjs [--dir <solvers>] --seeds 1242-1245   # blind solvers on 1241-1249, 0 false rejects
+node beds/ebed/e7/tools/specificity-run.mjs --shim master-ids --seeds 1242-1245    # diagnostic only (E7-B11), not evidence
 node beds/ebed/e7/tools/mutate.mjs --json out.json                         # oracle mutation score (ledger/MUTANTS.md; ~1 h, 1 core)
 ```
 
@@ -39,8 +42,8 @@ schedules from the definition, the service or the group; floating schedules boun
 three DST changes; breach at target; escalations at 50/75/100%), callers who reply or not (awaiting-caller pause,
 auto-closure after 3 business days; resolved incidents closed on confirmation or after 2), withdrawals, and a
 major-incident approval by an incident manager (a human task with a 30-minute deadline, separation of duties, a
-fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (R0–R8, readings S1–S16, about 10K
-tokens: 34,122 characters, at the 3.5 characters per token of the earlier 9K estimate for 31,451).
+fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (R0–R8, readings S1–S17, about 10K
+tokens: 34,872 bytes since S17, 34,122 before it, at the 3.5 characters per token of the earlier 9K estimate for 31,451).
 
 | difficulty | adds |
 |---|---|
@@ -63,7 +66,9 @@ tokens: 34,122 characters, at the 3.5 characters per token of the earlier 9K est
 | `golden.mjs` | 55 hand-derived, rule-cited goldens + `runGoldens` (27 added by the mutation review, 2026-10-15) |
 | `tools/` | `health`, `controls-run`, `walker-grade`, `specificity-run`, `mutate` (part B); `world-health`, `walker` (part A) |
 | `ledger/MUTANTS.md` | the oracle mutation ledger: standard, result, every survivor triaged; `ledger/mutation-20261015.json` the measured run; `ledger/mutants-20261015/witness.mjs` the witness journals of §5 |
-| `test/` | `world.test.mjs` (part A, 22 tests), `e7.test.mjs` (part B, 76 tests: 47 + 27 goldens and 2 unit checks of the 2026-10-15 mutation review), `sla-independent.mjs` (an independent R4.2–R5 evaluator and the history fuzzer for the N-version check; a fixture, not a suite) |
+| `specificity/` | the three blind solvers `s1`–`s3` and their `NOTES.md` (written 2026-10-15 from the B1 arm files alone; evidence, never edited) |
+| `ledger/specificity-20261015.json` | the specificity run: every (solver, world) row as written and with the diagnostic shim, failing cases by first divergence, the cross-check of the two |
+| `test/` | `world.test.mjs` (part A, 22 tests), `e7.test.mjs` (part B, 76 tests: 47 + 27 goldens and 2 unit checks of the 2026-10-15 mutation review), `sla-independent.mjs` (an independent R4.2–R5 evaluator and the history fuzzer for the N-version check; a fixture, not a suite), `specificity.test.mjs` (3 tests of the 2026-10-15 adjudication: S17's record shapes against the world at d1–d5, the diagnostic shim, the seed guard) |
 | `../../ebed-e7/index.mjs` | the registration shim (as for E8) |
 
 ## How the oracle works (E7 specifics)
@@ -203,8 +208,38 @@ confirmation; one go-live incident whose SLAs ended before t0, closed on confirm
 specificity solvers and Track C rehearsals; that touch (walker only) is recorded in SEED-LEDGER and DESIGN §13, and the
 tool now refuses the rehearsal block 1201–1249.
 
+**Specificity** (K1; `tools/specificity-run.mjs`, rehearsal seeds 1242–1245 × d2–d5, 16 worlds, tail mix, 2,337 completed
+cases per solver; 2026-10-15, $0; `ledger/specificity-20261015.json`). The three blind solvers of `specificity/` were
+written from the B1 arm files alone (TASK, SPEC-E before S17, CONTRACT, the API schemas; no world, oracle or other
+solver): s1 replays each incident rule by rule, s2 is event-sourced, s3 diffs an obligations table against an effect
+ledger. Each runs out of process through the real host and is graded by the oracle on the reference runs' completed pool.
+
+| solver | as written: pass | with `--shim master-ids` (diagnostic): pass | critical | arm errors | oracle errors |
+|---|---|---|---|---|---|
+| s1 | 67/2,337 (2.9%) | 2,270/2,337 (97.1%) | 0 | 0 | 0 |
+| s2 | 87/2,337 (3.7%) | 2,337/2,337 (100%) | 0 | 0 | 0 |
+| s3 | 509/2,337 (21.8%) | 2,337/2,337 (100%) | 0 | 0 | 0 |
+
+Every failing completed case was adjudicated against SPEC-E and the solver's NOTES (the oracle was read for this):
+exactly two causes explain all of them, and no case fails only with the shim. **0 oracle false rejects (class b).**
+
+| # | disagreement | solvers, cases | class | resolution |
+|---|---|---|---|---|
+| A1 | The id field of master records. SPEC-E named every other master field literally (`supportGroup`, `mailbox`, `owner`, …) but called a CI's id "its id" and a caller "a user of `master/users.json`"; the arm files hold no world. s1 and s2 keyed every master file on `id`: no CI resolves, so `itsm.create` goes out with `service: "unknown"` (refused 422 `unknown-service`) and every priority is computed without the service (first divergence: `decisions.priority` 1,730, `create` outside-allowed 436 per solver). s3 found `ci`, `service` and `group` but keyed users on `user`, not `userId`, and wrote a CI named by its name or alias with `c.id` (undefined): no caller email or region, so caller notices are missed (`resolved` 1,161, `awaiting-caller` 234, `incident-cancelled` 38, `closed-no-response` 7), groups and floating-schedule zones come from the CI, and 303 creates name the CI by its name | s1 2,203, s2 2,250, s3 1,828 (the cases that fail as written and pass with the shim) | (c) spec ambiguity | **E7-B11 / S17**: SPEC-E §4 *Files* states each master record's fields with its id first, and S17 that the id is `ci`, `service`, `group`, `userId`, never `id`; `alert-urgency.json`'s severity map is stated too. World, oracle and reference unchanged. Under the amended spec the residue is a solver bug, and the solvers stay as written: K1 needs solvers written against S17 or the owner's call on the shim evidence |
+| A2 | s1's go-live reader files every `sla.escalations` row of the export as an SLA (escalation rows carry `slaId`, which its walker tests first), so each escalation already sent becomes a phantom 24×7 SLA under its SLA's id, and its list of sent escalations stays empty. It then stops completed migrated SLAs again (`sla` refuses 409 `wrong-stage`; graded outside-allowed: the first divergence of 32 cases), misses the breach (19) and escalations (15) of running ones (the phantom's 24×7 instants fall before t0 under the same keys), and once records a stop before its breach (`order`, 1) | s1 67, all go-live (`gl-inprogress` 21, `gl-resolved` 20, `gl-assigned` 19, `gl-awaiting` 7); they fail as written and with the shim | (a) solver bug | none in the bed: §3.6 ("its SLAs keep running from their records"), R4.2 (only an SLA in progress or paused is evaluated), R4.5 and R5.1 are unambiguous. s1 is left as written (evidence) |
+
+The readings the three NOTES flag as likely divergence points all agree with the oracle on these worlds: a resolver
+`resume` during an `awaitingCaller` hold is applied (all three and the oracle), resolver actions outside R8.2 are ignored
+by all three (the oracle checks no transition, yet no case disagrees: these worlds send no update the two treatments
+record differently), deadline consequences come after the events of their instant, and
+the interface shapes the arm files do not fix (obligations, `onTimeout`, the migration payload) were guessed differently
+by each solver and accepted by the host (0 arm errors). Limits of this evidence: 4 worlds per difficulty, not the 16+
+of DESIGN §18 step 5 (4 seeds of the specificity block are left, 1246–1249; more would come from dev 1001–1199); no solver acts
+late in its windows (the design's +7 and +12 min solvers were not written); and the shim numbers grade the solvers'
+behaviour past one interface guess, not solvers as written.
+
 **Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 69 tests (22 part A, 47 part B; 98 since the mutation review: 76 part B), about
-70 s with other jobs on the machine (2026-10-15, after review round 2).
+70 s with other jobs on the machine (2026-10-15, after review round 2); `specificity.test.mjs` adds 3 (about 1 s).
 
 ## Readings and decisions added in part B (for review)
 
@@ -219,6 +254,7 @@ tool now refuses the rehearsal block 1201–1249.
 | E7-B7 | Necessity controls give up an effect the systems refused (4xx) instead of re-issuing it every minute | a control whose records diverged from the systems re-emitted refused effects for weeks of simulated time (hours of wall time); the reference itself never meets a refusal |
 | E7-B9 | The W5 twin test runs at d2 | from d3 the host draws approval noise from the world id (`host/actors.mjs` `noiseDraw`), which the injection twin does not share, so the twin's approval answers differ (seen at seed 1008 d3); `twins()` also regenerates without a `size` override. Both are outside this item's files (shared host; part A) |
 | E7-B8 | Necessity target cases are the cases whose required effects on the world's planned timeline change when the construct is removed (`plannedView`), or the classes the design names for hook controls | a definition independent of any arm's run, but not of the oracle: the 'planned' targets come from the oracle's own expectation diff (see Controls) |
+| E7-B11 | S17 and §4 *Files*: a master record's id is the field named after its kind (`ci`, `service`, `group`, `userId`), never `id`; §4 *Files* lists each record's fields and states `alert-urgency.json` as a severity → urgency-or-`null` map (2026-10-15) | found by specificity (A1 under **Specificity**): all three blind solvers guessed the id field wrong because the spec said "its id" and the B1 arm files hold no world; an arm that never sees the files at authoring time (plain B1) faces the same guess. Text only: world, oracle and reference unchanged (the rerun after S17 gives the same counts in every row); `test/specificity.test.mjs` checks the stated shapes against the world at d1–d5 |
 | E7-B10 | Same-instant knowledge in the shared grader is per message (E8-16, 2026-10-15): a row emitted at instant t is exempt from a withdrawal at t that a delivered event caused when its call was not given that event; for other causes the old rule stays (the call was given no event of the case at t). E7 adopts it as a grading rule; SPEC-E (E7) states no same-instant reading, and none is needed: the rule only exempts more rows than E8-5 did (a superset of exemptions), so no arm that passed under E8-5 fails under it | `oracle/grade.mjs` `exemptFrom` is shared by every E-bed item; the E7 suite passed with it (54/54 when E8-16 landed, 58/58 when this row was added, both 2026-10-15). Re-review of E8, 2026-10-15 |
 
 ## Review fixes (2026-10-15, $0)

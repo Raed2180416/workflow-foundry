@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+// WIP COPY (2026-10-15): experiments/autobench/run.mjs at sha256 e46bf1d89692f50568410903c7e5a4f1f009fa910637ed84c5f1a8e608d0057b plus
+// the pipeline-harness registry (PIPELINE_HARNESSES / PIPELINE_STUBS: codeowned + secondreader, arm A0+SR). Kept apart from
+// run.mjs so that runs launched with the current run.mjs can still --resume (launch.json pins the runner hash). Merge in a
+// window with no autobench run active or resumable: if run.mjs still has the hash above, `git mv`/`mv` this file onto it and
+// delete these six lines; otherwise re-apply the registry hunks (`diff run.mjs run-sr-wip.mjs`). Then run
+// `node --test experiments/autobench/test/*.test.mjs`. Until then, A0+SR runs use this file.
 // AutomationBench runner (experiments/autobench; notes: research/automationbench-20261014/NOTES.md).
 //
 // Per task: bridge.py prepares the task exactly as the official eval loads it; per fork, a bridge process serves the

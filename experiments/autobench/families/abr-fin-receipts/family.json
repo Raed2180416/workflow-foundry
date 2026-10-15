@@ -38,9 +38,9 @@
   "week.close": {"perWeek": [1, 1], "d1": [1, 1], "d2": [1, 1], "d3": [1, 1], "event": "schedule/week_close", "at": "Friday 16:00 UTC; the last trigger, it carries the end-of-week grading"}
  },
  "triggersPerWeek": {"d1": [30, 32], "d2": [31, 38], "d3": [42, 48], "measuredOn": "seeds 601-650 (d1: 601-610)"},
- "trapRates": {"d1": 0.0, "d2": 0.32, "d3": 0.63,
+ "trapRates": {"d1": 0.0, "d2": 0.32, "d3": 0.62,
                "unit": "measured share of receipt.posted triggers carrying a trap label (context labels such as plain rule rejections excluded); corrections, reposts, pre-approvals and the week close carry state traps by construction",
-               "measuredTriggerShare": {"d2": 0.46, "d3": 0.71, "design": {"d2": 0.35, "d3": 0.60}, "on": "seeds 601-650"}},
+               "measuredTriggerShare": {"d2": 0.47, "d3": 0.70, "design": {"d2": 0.35, "d3": 0.60}, "on": "seeds 601-650"}},
  "trapCatalogue": {
   "T-format": ["synonym (category written as a word of the table, 'Rideshare', 'Lodging', 'Team building', or not written at all: the table decides)", "declared-category (a category written explicitly that the description contradicts: the written one decides until the poster corrects it)", "words-amount (forty-two dollars and fifty cents)", "currency-format (45.00 USD, USD 45.00)", "date-format (Mar 4, March 4, 4 March, today, yesterday, no date)", "drinks (alcohol words: rejected without a client name, accepted with one)", "hotel-intl (international nightly limit $350)", "flight-long (business over 6 hours: allowed, then pending over $500)", "flight-six (business at exactly 6 hours: rejected)", "approval-negated ('Not pre-approved yet' from the manager: nothing)"],
   "T-authority": ["wrong-corrector (a 'Correction' from someone other than the poster: nothing)", "wrong-approver ('pre-approved' from the employee, another manager, a namesake, Finance: nothing)", "unknown-poster (a contractor not in Employees: escalate)"],

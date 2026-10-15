@@ -66,12 +66,12 @@
   "payment.run": {"perWeek": [1, 1], "event": "schedule/payment_run", "at": "Thursday 10:00 UTC"},
   "week.close": {"perWeek": [1, 1], "event": "schedule/week_close", "at": "Friday 17:00 UTC; the last trigger; carries the end-of-week grading"}
  },
- "triggersPerWeek": {"d1": [33, 33], "d2": [34, 41], "d3": [44, 49], "spec": [30, 50], "measuredOn": "seeds 601-650 (d1: 631-640 forced)"},
- "paidAtRun": {"d2": [2, 6], "d3": [2, 6], "measuredOn": "seeds 601-650"},
+ "triggersPerWeek": {"d1": [33, 33], "d2": [34, 40], "d3": [44, 49], "spec": [30, 50], "measuredOn": "seeds 601-650 (d1: 631-640 forced)"},
+ "paidAtRun": {"d2": [3, 5], "d3": [2, 5], "measuredOn": "seeds 601-650"},
  "trapRates": {"design": {"d2": 0.5, "d3": 0.8},
                "unit": "share of all triggers carrying at least one exposed trap label",
-               "measuredTriggerShare": {"d1": 0.451, "d2": 0.727, "d3": 0.893, "on": "seeds 601-650 (d1: 631-640 forced)"},
-               "measuredMisleadingShare": {"d1": 0.27, "d2": 0.574, "d3": 0.786, "on": "seeds 601-650; labels of kind T-state (cross-trigger bookkeeping such as a receipt before its invoice) excluded"},
+               "measuredTriggerShare": {"d1": 0.451, "d2": 0.72, "d3": 0.879, "on": "seeds 601-650 (d1: 631-640 forced)"},
+               "measuredMisleadingShare": {"d1": 0.27, "d2": 0.559, "d3": 0.779, "on": "seeds 601-650; labels of kind T-state (cross-trigger bookkeeping such as a receipt before its invoice) excluded"},
                "note": "the misleading-only share is the one comparable to the spec's 50% / 80%; T-state labels are structural (every week has a carried-over row, receipts before invoices, a week close over history)"},
  "trapCatalogue": {
   "T-lookalike": ["lookalike-blocked (an invoice from the look-alike of a blocked vendor: logged normally)",

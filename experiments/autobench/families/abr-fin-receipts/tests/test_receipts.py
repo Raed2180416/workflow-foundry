@@ -259,8 +259,8 @@ def test_reference_is_observable_only():
     g = gates.gate_leakage([610])
     assert set(g["reference_imports"]) <= {"__future__", "base64", "json", "re", "datetime", "decimal", "urllib"}
     src = (FAMILY_DIR / "reference.py").read_text()
-    for host in ("import gen", "import oracle", "truth", "world0", "delta"):
-        assert host not in src
+    for host in (r"import gen\b", r"import oracle\b", r"\btruth\b", r"\bworld0\b", r"\bdelta\b"):
+        assert not re.search(host, src), host
 
 
 # -- controls ------------------------------------------------------------------------------------------------------------

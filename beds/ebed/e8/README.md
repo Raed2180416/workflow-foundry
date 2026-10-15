@@ -13,8 +13,9 @@ now measures the same standard: measured 240/304, and its 64 survivors are exact
 unmutated oracle except two MR5 variants that need the owner (a same-instant duplicate placement of a review order: a
 contract gap; a repeated refused cancel: an R6.3 reading); against the 304 mutants they kill 77, all inside the ledger's
 240, and none of the 64 equivalents, so the raw score stays 240/304. Still missing before admission: K1's mutation score
-(≥ 0.95 raw needs the owner's call on equivalents in the denominator), mined latent defects (step 6), the paid
-triviality attack (P1) and the arm (c) reference (P2). Nothing here is evidence about any arm.
+(≥ 0.95 raw needs the owner's call on equivalents in the denominator), the rest of step 6 (latent defects are mined,
+below, but their revealing events are planned, not yet delivered by the world; the sealed families need a separate
+session), the paid triviality attack (P1) and the arm (c) reference (P2). Nothing here is evidence about any arm.
 
 ```sh
 node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (includes the metamorphic file)
@@ -150,6 +151,56 @@ Per relation: MR11 65, MR3 6, MR7 6, MR13 4 (exceptions only: world-level mode c
 MR6 1, MR9 1, MR10 1, and MR2, MR4, MR8, MR12 none (MR8 and MR12 cannot: the transition reads neither calendars nor
 documents). 53 kills are MR11's alone; 8 of the 77 come only through exceptions.
 
+**Latent defects** (E-BED §2.10, §9.5 "reference mutants are the source of latent defects"; `defects.mjs`,
+`tools/defects-mine.mjs`, `ledger/latent-defects/`; dev worlds 1101–1102 × d2–d5, tail mix; 3,752 s on one core under
+load). A reference mutant is the reference policy (`oracle/policy.mjs` `referenceArm`, earliest timing) driven by one
+edit of `mutate.mjs`'s operator set to a copy of `transition.mjs` (`ref-k<k>` is the same edit as oracle mutant k), or
+the policy with one of §3's hand candidates; it runs as the arm through the real host and the original oracle grades it.
+E0 is the go-live backlog plus epoch ep0. Stage 1 runs each mutant on 1101 at d5, d4, d3, d2 and stops at the first world
+with a failing E0 case; the difficulties before it are the mutant's band. Stage 2 re-executes the E0-silence check on
+1102 at every band difficulty. A mutant is latent where both seeds are E0-silent (every E0 case graded, none fails) and
+some later case fails; it is admitted when a failure becomes observable early enough for a planted revealing event,
+one day after it, to fall in [start of ep2, start of ep4). Mutants with the same journals on their band worlds are one
+defect.
+
+| | count |
+|---|---|
+| reference mutants | 310 (304 transition edits, 6 policy mutants: §3's four hand candidates, two edition operators) |
+| inert (journal identical to the reference run on every world mined) | 186 |
+| E0-visible (no difficulty where both seeds are E0-silent and a later case fails) | 103, incl. 5 of the 6 policy mutants; 8 of them were latent on 1101-d5 and rejected only by 1102-d5's E0 cases |
+| E0-silent, no later failure on these worlds | 9 (k3, k5, k6, k53, k55, k224, k226, k235, `hc-refund-no-key`) |
+| do not load (`void 0;` inside an object literal) | 2 (k74, k202) |
+| **E0-silent and fail later (latent)** | **10 mutants, 7 behaviours** |
+| admitted (revealed in E2/E3) | **6 defects** (9 mutants); 1 self-revealing (an arm error) |
+| not admitted | `ld-k145` (k145, k148, `:212` `reportedMs(m) < a.at` and `m.at !== a.at`: a runaway the host stops on 1101-d4; on 1101-d5 its one failure, a cancel at the collection instant leaving an orphaned charge (critical), is an ep4 case, after the reveal window) |
+| revealing events | 16 true, 16 false (one invalid twin per true event), 15 in ep2 and 1 in ep3; all `customer.complaint`, all `hardness: rulebook` |
+
+| defect | edit (`transition.mjs`) | what goes wrong | band (revealed at) | affected cases per revealing world |
+|---|---|---|---|---|
+| `ld-k0` | `:15` local date taken at UTC+2 | orders placed in the last hour before midnight get the next day's edition: the 2026-03-08 edition switch an hour early (R1.1) | d2–d5 (d4, d5) | 6, 2, 2, 2 |
+| `ld-k8` | `:34` `effectiveFrom < date` | no edition is in force on a switch day, so the policy throws; self-revealing at the first order of 03-08 | d2–d5 (d4, d5) | 18, 10, 27, 12 |
+| `ld-k9` | `:34` `date <= effectiveTo` | the old edition still applies on the switch day: wrong fees on the order record and the charge (critical) | d2–d5 (d4, d5) | 13, 7, 23, 11 |
+| `ld-k11` (+k10 at d4–d5) | `:34` `\|\|` for `&&` | the first edition always applies; the new edition is never used | d2–d5 (d4, d5) | 98, 47, 96, 51 |
+| `ld-k118` | `:181` `a.at < D` | a customer action exactly at the deadline does not count (S1) | d5 only (d5) | 3, 4 |
+| `ld-k149` (+k151) | `:212` `\|\|` for `&&` | a processing cancel is refused as if the order were collected (R6.2) | d5 only (d5) | 5, 3 |
+
+The d5-only bands are sample luck: k118 and k149 fail an E0 case on 1101-d4, whose ep0 has an action at the deadline
+(o0018) and a cancel while processing (o0009). The second seed matters: the eight mutants that skip part of a processing
+cancel's compensation (k187, k189, k223, k225, k227, k255, k257, `hc-cancel-keeps-shipment`; R6.2) were E0-silent and
+failed later on 1101-d5, and 1102-d5's E0 cases rejected them. Four of the six defects are edition defects. No mined
+defect is a compensation, key or signal-ordering defect: the hand candidates for those fail an E0 case
+(`hc-cancel-keeps-shipment`, `hc-late-signal-regresses`, `hc-timer-first`, and the edition operators
+`op-edition-by-publication`, `op-latest-edition-always`), `hc-refund-no-key` is silent (billing refuses an over-refund),
+and the three dropped-ordering edits (k224, k226, k235) are silent on these worlds.
+
+Each manifest carries the edit (file, line, from, to, source sha256) or the policy variant, the band and the first E0
+failure outside it, every world (seed, difficulty, journal digest, the E0 cases checked, every affected case with its
+first divergence), and per revealing world the true event (case, class, divergence, the event's type, time and payload,
+its rule), the false event (a case the oracle passes on the same trajectory; same claim form and channel), the sweep
+manifest (`before`: failures observable by the claim, the exact remediation set; `after`: later failures a heal must
+prevent) and non-injected refusals on affected cases. `index.json` has every mutant's status and the git blob ids of the
+files the run rests on; `test/defects.test.mjs` re-executes one E0 rejection and one manifest (about 25 s).
+
 ## Decisions and readings (for review)
 
 | id | decision | why |
@@ -183,5 +234,6 @@ documents). 53 kills are MR11's alone; 8 of the 77 come only through exceptions.
 | E8-27 | The forward steps of a fulfilment are judged against the message that cut them (S10 with S13): the counted cancel when it aborted the fulfilment, its collectionFailed report when that is the failure, the call's case knowledge for a failed attempt (`cutCause`); `evAt` (instant → cancel) is gone | re-review: in a cancel's instant a non-aborted fulfilment's steps were judged against the cancel. Unreachable on graded trajectories; unit check `forward-step-cut-judged-against-its-own-message` |
 | E8-28 | Goldens assert only spec-stated outcomes the grader can see; the 14 transition checks it cannot see (a lid named twice, whether a taken step stays named, windows only a second commit or a step after a stop can move, records never compared, an input outside the world contract) are unit checks. A mutant is killed when (a golden fails it and a reachable witness journal shows a verdict difference) or (the corpus differential shows one); witnesses must pass the host's carrier and system refusals | re-review: `mutate.mjs` counted 25 grader-equivalent mutants (k17 included) through unit checks, and "killed" was defined as two conditions that both hold while 42 kills rested on the corpus alone. The stricter witness check demoted k221 (its witness committed a shipment cancel at the collection run, which the carrier refuses); four goldens now use real collection runs |
 | E8-29 | The evidence for `ledger/MUTANTS.md` is in the repository (`ledger/mutants-20261015/`: harness, matrices, witnesses, corpus differential, classification, corpus digest) and `tools/mutate.mjs` was run on the final files | re-review: the classifications existed only in a session scratchpad and the score was expected, not measured |
+| E8-30 | Latent defects come from reference mutants run as the arm against the original oracle: `mutate.mjs`'s transition edits driving the reference policy, plus §3's hand candidates as policy variants (`defects.mjs`). E0 = go-live backlog + ep0; the E0-silence check grades every E0 case on the mutant's own journal on two seeds per difficulty; a defect is latent per difficulty (its band); revealing events are planned one day after the first failure observable in [ep2, ep4) and carried in the manifest, each with one false twin about a case the oracle passes | §2.10 needs an executed check and exact manifests; E8's later epochs differ by difficulty (the edition switch from d4), so one defect can be latent at d4–d5 and visible at d2–d3. SPEC-E has no complaint vocabulary, so delivering the events into the world (and the arm's spec) is a separate change |
 
 Deviations from E-BED §3 E8 are listed in `ledger/SEMANTICS.md`.

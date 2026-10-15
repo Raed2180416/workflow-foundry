@@ -89,7 +89,7 @@ Apply the **first** rule that matches.
 
    Then append `Duplicate: <this email's Invoice #>` to that row's Notes (items are separated by `; `) and do nothing
    else: no new row, no bill, and the row's other cells stay as they are, even when the duplicate states another amount.
-   If several rows match, use the lowest one.
+   If several rows match, use the one nearest the top of the sheet.
 3. **Unknown purchase order.** The PO # is not in Purchase Orders, or that PO's Vendor is another vendor: escalate
    (section 11).
 4. **Log it.** Append one Pending Invoices row:

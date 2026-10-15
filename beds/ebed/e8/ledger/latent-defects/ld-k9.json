@@ -11,48 +11,17 @@
   "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
   "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date <= e.effectiveTo));",
   "sourceSha256": "1ce514b9d979c6745e5df27be5b40c0f3a25d13698f0216510c8d6fb0eeafa08",
-  "asOracleMutant": {
-   "verdict": "killed",
-   "ledger": "ledger/MUTANTS.md"
-  }
+  "asOracleMutant": {"verdict":"killed","ledger":"ledger/MUTANTS.md"}
  },
- "members": [
-  "ref-k9"
- ],
- "band": [
-  5,
-  4,
-  3,
-  2
- ],
+ "members": ["ref-k9"],
+ "band": [5,4,3,2],
  "outsideBand": null,
- "solver": {
-  "policy": "beds/ebed/oracle/policy.mjs referenceArm",
-  "timing": "earliest",
-  "oracle": "original transition.mjs"
- },
- "contradicts": [
-  "R1.1",
-  "R3.2"
- ],
+ "solver": {"policy":"beds/ebed/oracle/policy.mjs referenceArm","timing":"earliest","oracle":"original transition.mjs"},
+ "contradicts": ["R1.1","R3.2"],
  "revealedBy": "in-world event (planted)",
- "params": {
-  "e0Epochs": [
-   "gl",
-   "ep0"
-  ],
-  "revealEpochs": [
-   "ep2",
-   "ep3"
-  ],
-  "lagMinutes": 1440
- },
- "e0Silence": {
-  "executed": true,
-  "worlds": 8,
-  "casesChecked": 259,
-  "failed": 0
- },
+ "revealedOn": ["ebed-e8-dev-1101-d5-tail","ebed-e8-dev-1101-d4-tail","ebed-e8-dev-1102-d5-tail","ebed-e8-dev-1102-d4-tail"],
+ "params": {"e0Epochs":["gl","ep0"],"revealEpochs":["ep2","ep3"],"lagMinutes":1440},
+ "e0Silence": {"executed":true,"worlds":8,"casesChecked":259,"failed":0},
  "worlds": [
   {
    "world": "ebed-e8-dev-1101-d5-tail",
@@ -63,234 +32,21 @@
    "generator": "1.0.0",
    "journal": "8468a2b2062dddce92e0b41731050f71123d6e9d7817ab86e7d7b5e95251fa2e",
    "inert": false,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0020",
-     "o0022",
-     "o0023",
-     "o0024",
-     "o0025",
-     "o0026",
-     "o0027",
-     "o0028",
-     "o0029",
-     "o0030",
-     "o0031",
-     "o0034",
-     "o0037",
-     "o0039",
-     "o0041",
-     "o0042",
-     "o0043",
-     "o0044",
-     "o0045",
-     "o0047",
-     "o0048",
-     "o0049",
-     "o0050",
-     "o0051",
-     "o0052",
-     "o0053",
-     "o0054",
-     "o0055",
-     "o0056",
-     "o0057",
-     "o0058",
-     "o0059",
-     "o0060",
-     "o0061",
-     "o0062",
-     "o0063",
-     "x0211",
-     "x0212",
-     "x0213"
-    ],
-    "failed": 0,
-    "graded": true
-   },
+   "e0": {"checked":["o0001","o0002","o0003","o0004","o0005","o0006","o0007","o0008","o0009","o0011","o0012","o0013","o0014","o0015","o0016","o0017","o0018","o0020","o0022","o0023","o0024","o0025","o0026","o0027","o0028","o0029","o0030","o0031","o0034","o0037","o0039","o0041","o0042","o0043","o0044","o0045","o0047","o0048","o0049","o0050","o0051","o0052","o0053","o0054","o0055","o0056","o0057","o0058","o0059","o0060","o0061","o0062","o0063","x0211","x0212","x0213"],"failed":0,"graded":true},
    "affected": [
-    {
-     "case": "o0040",
-     "epoch": "ep2",
-     "class": "cancel-wait",
-     "pool": "completed",
-     "at": "2026-03-08T01:14:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0046",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T01:58:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0101",
-     "epoch": "ep2",
-     "class": "f3-refund",
-     "pool": "completed",
-     "at": "2026-03-07T23:29:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0102",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T00:51:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0104",
-     "epoch": "ep2",
-     "class": "action-late",
-     "pool": "completed",
-     "at": "2026-03-08T13:32:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.setStatus"
-    },
-    {
-     "case": "o0105",
-     "epoch": "ep2",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-08T11:09:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0106",
-     "epoch": "ep2",
-     "class": "f3-refund",
-     "pool": "completed",
-     "at": "2026-03-08T11:16:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0107",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T12:16:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0108",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T12:47:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0109",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T14:56:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0111",
-     "epoch": "ep2",
-     "class": "f3-charge",
-     "pool": "completed",
-     "at": "2026-03-08T17:01:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0113",
-     "epoch": "ep2",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-08T18:30:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0182",
-     "epoch": "ep2",
-     "class": "amend",
-     "pool": "completed",
-     "at": "2026-03-08T01:08:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    }
+    {"case":"o0040","epoch":"ep2","class":"cancel-wait","pool":"completed","at":"2026-03-08T02:14:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0046","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T02:58:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0101","epoch":"ep2","class":"f3-refund","pool":"completed","at":"2026-03-08T00:29:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0102","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T01:51:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0104","epoch":"ep2","class":"action-late","pool":"completed","at":"2026-03-08T14:32:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.setStatus"},
+    {"case":"o0105","epoch":"ep2","class":"cancel-processing","pool":"completed","at":"2026-03-08T12:09:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0106","epoch":"ep2","class":"f3-refund","pool":"completed","at":"2026-03-08T12:16:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0107","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T13:16:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0108","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T13:47:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0109","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T15:56:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]},
+    {"case":"o0111","epoch":"ep2","class":"f3-charge","pool":"completed","at":"2026-03-08T18:01:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0113","epoch":"ep2","class":"decline","pool":"completed","at":"2026-03-08T19:30:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0182","epoch":"ep2","class":"amend","pool":"completed","at":"2026-03-08T02:08:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]}
    ],
    "reveal": {
     "case": "o0101",
@@ -298,45 +54,15 @@
     "epoch": "ep2",
     "observableAt": "2026-03-08T00:29:00+01:00",
     "eventEpoch": "ep2",
-    "divergence": {
-     "case": "o0101",
-     "epoch": "ep2",
-     "class": "f3-refund",
-     "pool": "completed",
-     "at": "2026-03-07T23:29:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
+    "divergence": {"case":"o0101","epoch":"ep2","class":"f3-refund","pool":"completed","at":"2026-03-08T00:29:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
     "event": {
      "id": "rev-ld-k9-1101-d5",
      "type": "customer.complaint",
      "at": "2026-03-09T00:29:00+01:00",
      "source": "customer-service",
-     "payload": {
-      "claimId": "rev-ld-k9-1101-d5",
-      "orderRef": "ORD-1101-0101",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0010@hollin-shop.example",
-      "text": "The order record for order ORD-1101-0101 is wrong (fulfilments, totalMinor)."
-     }
+     "payload": {"claimId":"rev-ld-k9-1101-d5","orderRef":"ORD-1101-0101","assert":"wrong","subject":"order record","fields":["fulfilments","totalMinor"],"from":"c0010@hollin-shop.example","text":"The order record for order ORD-1101-0101 is wrong (fulfilments, totalMinor)."}
     },
-    "truth": {
-     "valid": true,
-     "defect": "ld-k9",
-     "rule": "R1.1",
-     "hardness": "rulebook",
-     "reason": "the oracle fails o0101 at 2026-03-07T23:29:00.000Z (outside-allowed) on the defect's trajectory"
-    }
+    "truth": {"valid":true,"defect":"ld-k9","rule":"R1.1","hardness":"rulebook","reason":"the oracle fails o0101 at 2026-03-08T00:29:00+01:00 (outside-allowed) on the defect's trajectory"}
    },
    "falseReveal": {
     "case": "o0068",
@@ -348,44 +74,11 @@
      "type": "customer.complaint",
      "at": "2026-03-09T18:49:00+01:00",
      "source": "customer-service",
-     "payload": {
-      "claimId": "inv-ld-k9-1101-d5",
-      "orderRef": "ORD-1101-0068",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0034@hollin-shop.example",
-      "text": "The order record for order ORD-1101-0068 is wrong (fulfilments, totalMinor)."
-     }
+     "payload": {"claimId":"inv-ld-k9-1101-d5","orderRef":"ORD-1101-0068","assert":"wrong","subject":"order record","fields":["fulfilments","totalMinor"],"from":"c0034@hollin-shop.example","text":"The order record for order ORD-1101-0068 is wrong (fulfilments, totalMinor)."}
     },
-    "truth": {
-     "valid": false,
-     "defect": "ld-k9",
-     "hardness": "rulebook",
-     "reason": "the oracle passes o0068 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
-    }
+    "truth": {"valid":false,"defect":"ld-k9","hardness":"rulebook","reason":"the oracle passes o0068 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"}
    },
-   "sweep": {
-    "before": [
-     "o0101",
-     "o0102",
-     "o0182",
-     "o0040",
-     "o0046",
-     "o0105",
-     "o0106",
-     "o0107",
-     "o0108",
-     "o0104",
-     "o0109",
-     "o0111",
-     "o0113"
-    ],
-    "after": []
-   },
+   "sweep": {"before":["o0101","o0102","o0182","o0040","o0046","o0105","o0106","o0107","o0108","o0104","o0109","o0111","o0113"],"after":[]},
    "natural": []
   },
   {
@@ -397,140 +90,15 @@
    "generator": "1.0.0",
    "journal": "9b8fd69ac5b525c333ea2168c1ec884c7f1dce3c35815f473cf1ef55d32a0daf",
    "inert": false,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0012",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0023",
-     "o0024",
-     "o0025",
-     "o0026",
-     "o0027",
-     "o0028",
-     "o0029",
-     "o0030",
-     "o0031",
-     "o0032",
-     "o0033",
-     "o0034",
-     "o0035",
-     "x0108",
-     "x0109"
-    ],
-    "failed": 0,
-    "graded": true
-   },
+   "e0": {"checked":["o0001","o0002","o0003","o0004","o0005","o0006","o0007","o0008","o0009","o0010","o0012","o0014","o0015","o0016","o0017","o0018","o0019","o0020","o0021","o0023","o0024","o0025","o0026","o0027","o0028","o0029","o0030","o0031","o0032","o0033","o0034","o0035","x0108","x0109"],"failed":0,"graded":true},
    "affected": [
-    {
-     "case": "o0011",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-07T23:32:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0054",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-07T23:38:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0055",
-     "epoch": "ep2",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-08T07:44:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0056",
-     "epoch": "ep2",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-08T14:04:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0057",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T15:06:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0058",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T17:41:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0059",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T19:53:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    }
+    {"case":"o0011","epoch":"ep2","class":"action-at-deadline","pool":"completed","at":"2026-03-08T00:32:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0054","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T00:38:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]},
+    {"case":"o0055","epoch":"ep2","class":"decline","pool":"completed","at":"2026-03-08T08:44:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0056","epoch":"ep2","class":"cancel-processing","pool":"completed","at":"2026-03-08T15:04:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed","money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0057","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T16:06:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0058","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T18:41:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0059","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T20:53:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]}
    ],
    "reveal": {
     "case": "o0011",
@@ -538,41 +106,15 @@
     "epoch": "ep2",
     "observableAt": "2026-03-08T00:32:00+01:00",
     "eventEpoch": "ep2",
-    "divergence": {
-     "case": "o0011",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-07T23:32:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
+    "divergence": {"case":"o0011","epoch":"ep2","class":"action-at-deadline","pool":"completed","at":"2026-03-08T00:32:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
     "event": {
      "id": "rev-ld-k9-1101-d4",
      "type": "customer.complaint",
      "at": "2026-03-09T00:32:00+01:00",
      "source": "customer-service",
-     "payload": {
-      "claimId": "rev-ld-k9-1101-d4",
-      "orderRef": "ORD-1101-0011",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0005@hollin-shop.example",
-      "text": "The order record for order ORD-1101-0011 is wrong (fulfilments, totalMinor)."
-     }
+     "payload": {"claimId":"rev-ld-k9-1101-d4","orderRef":"ORD-1101-0011","assert":"wrong","subject":"order record","fields":["fulfilments","totalMinor"],"from":"c0005@hollin-shop.example","text":"The order record for order ORD-1101-0011 is wrong (fulfilments, totalMinor)."}
     },
-    "truth": {
-     "valid": true,
-     "defect": "ld-k9",
-     "rule": "R1.1",
-     "hardness": "rulebook",
-     "reason": "the oracle fails o0011 at 2026-03-07T23:32:00.000Z (outside-allowed) on the defect's trajectory"
-    }
+    "truth": {"valid":true,"defect":"ld-k9","rule":"R1.1","hardness":"rulebook","reason":"the oracle fails o0011 at 2026-03-08T00:32:00+01:00 (outside-allowed) on the defect's trajectory"}
    },
    "falseReveal": {
     "case": "o0092",
@@ -584,38 +126,11 @@
      "type": "customer.complaint",
      "at": "2026-03-09T03:58:00+01:00",
      "source": "customer-service",
-     "payload": {
-      "claimId": "inv-ld-k9-1101-d4",
-      "orderRef": "ORD-1101-0092",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0027@hollin-shop.example",
-      "text": "The order record for order ORD-1101-0092 is wrong (fulfilments, totalMinor)."
-     }
+     "payload": {"claimId":"inv-ld-k9-1101-d4","orderRef":"ORD-1101-0092","assert":"wrong","subject":"order record","fields":["fulfilments","totalMinor"],"from":"c0027@hollin-shop.example","text":"The order record for order ORD-1101-0092 is wrong (fulfilments, totalMinor)."}
     },
-    "truth": {
-     "valid": false,
-     "defect": "ld-k9",
-     "hardness": "rulebook",
-     "reason": "the oracle passes o0092 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
-    }
+    "truth": {"valid":false,"defect":"ld-k9","hardness":"rulebook","reason":"the oracle passes o0092 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"}
    },
-   "sweep": {
-    "before": [
-     "o0011",
-     "o0054",
-     "o0055",
-     "o0056",
-     "o0057",
-     "o0058",
-     "o0059"
-    ],
-    "after": []
-   },
+   "sweep": {"before":["o0011","o0054","o0055","o0056","o0057","o0058","o0059"],"after":[]},
    "natural": []
   },
   {
@@ -627,38 +142,7 @@
    "generator": "1.0.0",
    "journal": "de1c3dd35d8da621acc0afac384a41a12ab372d4588237020b48a02876eb132b",
    "inert": true,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0022",
-     "o0023",
-     "o0024",
-     "x0086",
-     "x0087"
-    ],
-    "failed": 0,
-    "graded": true
-   },
+   "e0": {"checked":["o0001","o0002","o0003","o0004","o0005","o0006","o0007","o0008","o0009","o0010","o0011","o0012","o0013","o0014","o0015","o0016","o0017","o0018","o0019","o0020","o0021","o0022","o0023","o0024","x0086","x0087"],"failed":0,"graded":true},
    "affected": []
   },
   {
@@ -670,31 +154,7 @@
    "generator": "1.0.0",
    "journal": "cf2e994e65bada279cfe9969a891d08a63d2a890d38ecb97d620b99d46639924",
    "inert": true,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019"
-    ],
-    "failed": 0,
-    "graded": true
-   },
+   "e0": {"checked":["o0001","o0002","o0003","o0004","o0005","o0006","o0007","o0008","o0009","o0010","o0011","o0012","o0013","o0014","o0015","o0016","o0017","o0018","o0019"],"failed":0,"graded":true},
    "affected": []
   },
   {
@@ -706,369 +166,31 @@
    "generator": "1.0.0",
    "journal": "d5be32a213a40d24fe11adad05d33b9c5ff584251a5689c5d19ab7183ad8aeac",
    "inert": false,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0022",
-     "o0023",
-     "o0024",
-     "o0025",
-     "o0026",
-     "o0027",
-     "o0028",
-     "o0029",
-     "o0030",
-     "o0031",
-     "o0032",
-     "o0033",
-     "o0034",
-     "o0035",
-     "o0036",
-     "o0038",
-     "o0039",
-     "o0040",
-     "o0041",
-     "o0042",
-     "o0043",
-     "o0044",
-     "o0045",
-     "o0046",
-     "o0047",
-     "o0048",
-     "o0049",
-     "o0051",
-     "o0052",
-     "o0053",
-     "o0054",
-     "o0055",
-     "o0056",
-     "o0057",
-     "o0058",
-     "o0059",
-     "o0060",
-     "x0213"
-    ],
-    "failed": 0,
-    "graded": true
-   },
+   "e0": {"checked":["o0001","o0002","o0003","o0004","o0005","o0006","o0007","o0008","o0009","o0010","o0011","o0012","o0013","o0014","o0015","o0017","o0018","o0019","o0020","o0021","o0022","o0023","o0024","o0025","o0026","o0027","o0028","o0029","o0030","o0031","o0032","o0033","o0034","o0035","o0036","o0038","o0039","o0040","o0041","o0042","o0043","o0044","o0045","o0046","o0047","o0048","o0049","o0051","o0052","o0053","o0054","o0055","o0056","o0057","o0058","o0059","o0060","x0213"],"failed":0,"graded":true},
    "affected": [
-    {
-     "case": "o0050",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-08T03:10:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0069",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-08T00:12:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0104",
-     "epoch": "ep2",
-     "class": "review-reject",
-     "pool": "completed",
-     "at": "2026-03-08T00:23:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0105",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T03:02:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0106",
-     "epoch": "ep2",
-     "class": "cancel-after-collection",
-     "pool": "completed",
-     "at": "2026-03-08T03:55:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0107",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T04:47:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0108",
-     "epoch": "ep2",
-     "class": "decline",
-     "pool": "completed",
-     "at": "2026-03-08T06:24:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0109",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T07:06:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0110",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T07:31:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0111",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T07:59:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0112",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-08T08:04:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0113",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T08:28:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0114",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T12:41:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0116",
-     "epoch": "ep2",
-     "class": "f3-refund",
-     "pool": "completed",
-     "at": "2026-03-08T13:27:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0117",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T13:31:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0118",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T14:44:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0119",
-     "epoch": "ep2",
-     "class": "f4-reserve",
-     "pool": "completed",
-     "at": "2026-03-08T16:54:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0120",
-     "epoch": "ep2",
-     "class": "action-late",
-     "pool": "completed",
-     "at": "2026-03-08T20:42:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0121",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-08T20:51:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0122",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T21:23:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0164",
-     "epoch": "ep2",
-     "class": "amend",
-     "pool": "completed",
-     "at": "2026-03-07T23:48:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0174",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T03:51:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0190",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T02:55:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    }
+    {"case":"o0050","epoch":"ep2","class":"action-at-deadline","pool":"completed","at":"2026-03-08T04:10:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0069","epoch":"ep2","class":"action-at-deadline","pool":"completed","at":"2026-03-08T01:12:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]},
+    {"case":"o0104","epoch":"ep2","class":"review-reject","pool":"completed","at":"2026-03-08T01:23:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0105","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T04:02:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0106","epoch":"ep2","class":"cancel-after-collection","pool":"completed","at":"2026-03-08T04:55:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0107","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T05:47:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]},
+    {"case":"o0108","epoch":"ep2","class":"decline","pool":"completed","at":"2026-03-08T07:24:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0109","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T08:06:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0110","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T08:31:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0111","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T08:59:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0112","epoch":"ep2","class":"collection-failed","pool":"completed","at":"2026-03-08T09:04:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0113","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T09:28:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0114","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T13:41:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0116","epoch":"ep2","class":"f3-refund","pool":"completed","at":"2026-03-08T14:27:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0117","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T14:31:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0118","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T15:44:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]},
+    {"case":"o0119","epoch":"ep2","class":"f4-reserve","pool":"completed","at":"2026-03-08T17:54:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0120","epoch":"ep2","class":"action-late","pool":"completed","at":"2026-03-08T21:42:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0121","epoch":"ep2","class":"collection-failed","pool":"completed","at":"2026-03-08T21:51:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0122","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T22:23:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0164","epoch":"ep2","class":"amend","pool":"completed","at":"2026-03-08T00:48:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]},
+    {"case":"o0174","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T04:51:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0190","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T03:55:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"}
    ],
    "reveal": {
     "case": "o0164",
@@ -1076,44 +198,15 @@
     "epoch": "ep2",
     "observableAt": "2026-03-08T00:48:00+01:00",
     "eventEpoch": "ep2",
-    "divergence": {
-     "case": "o0164",
-     "epoch": "ep2",
-     "class": "amend",
-     "pool": "completed",
-     "at": "2026-03-07T23:48:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed"
-     ]
-    },
+    "divergence": {"case":"o0164","epoch":"ep2","class":"amend","pool":"completed","at":"2026-03-08T00:48:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed"]},
     "event": {
      "id": "rev-ld-k9-1102-d5",
      "type": "customer.complaint",
      "at": "2026-03-09T00:48:00+01:00",
      "source": "customer-service",
-     "payload": {
-      "claimId": "rev-ld-k9-1102-d5",
-      "orderRef": "ORD-1102-0164",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0022@hollin-shop.example",
-      "text": "The order record for order ORD-1102-0164 is wrong (fulfilments, totalMinor)."
-     }
+     "payload": {"claimId":"rev-ld-k9-1102-d5","orderRef":"ORD-1102-0164","assert":"wrong","subject":"order record","fields":["fulfilments","totalMinor"],"from":"c0022@hollin-shop.example","text":"The order record for order ORD-1102-0164 is wrong (fulfilments, totalMinor)."}
     },
-    "truth": {
-     "valid": true,
-     "defect": "ld-k9",
-     "rule": "R1.1",
-     "hardness": "rulebook",
-     "reason": "the oracle fails o0164 at 2026-03-07T23:48:00.000Z (outside-allowed) on the defect's trajectory"
-    }
+    "truth": {"valid":true,"defect":"ld-k9","rule":"R1.1","hardness":"rulebook","reason":"the oracle fails o0164 at 2026-03-08T00:48:00+01:00 (outside-allowed) on the defect's trajectory"}
    },
    "falseReveal": {
     "case": "o0016",
@@ -1125,54 +218,11 @@
      "type": "customer.complaint",
      "at": "2026-03-09T01:38:00+01:00",
      "source": "customer-service",
-     "payload": {
-      "claimId": "inv-ld-k9-1102-d5",
-      "orderRef": "ORD-1102-0016",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0010@hollin-shop.example",
-      "text": "The order record for order ORD-1102-0016 is wrong (fulfilments, totalMinor)."
-     }
+     "payload": {"claimId":"inv-ld-k9-1102-d5","orderRef":"ORD-1102-0016","assert":"wrong","subject":"order record","fields":["fulfilments","totalMinor"],"from":"c0010@hollin-shop.example","text":"The order record for order ORD-1102-0016 is wrong (fulfilments, totalMinor)."}
     },
-    "truth": {
-     "valid": false,
-     "defect": "ld-k9",
-     "hardness": "rulebook",
-     "reason": "the oracle passes o0016 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
-    }
+    "truth": {"valid":false,"defect":"ld-k9","hardness":"rulebook","reason":"the oracle passes o0016 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"}
    },
-   "sweep": {
-    "before": [
-     "o0164",
-     "o0069",
-     "o0104",
-     "o0190",
-     "o0105",
-     "o0050",
-     "o0174",
-     "o0106",
-     "o0107",
-     "o0108",
-     "o0109",
-     "o0110",
-     "o0111",
-     "o0112",
-     "o0113",
-     "o0114",
-     "o0116",
-     "o0117",
-     "o0118",
-     "o0119",
-     "o0120",
-     "o0121",
-     "o0122"
-    ],
-    "after": []
-   },
+   "sweep": {"before":["o0164","o0069","o0104","o0190","o0105","o0050","o0174","o0106","o0107","o0108","o0109","o0110","o0111","o0112","o0113","o0114","o0116","o0117","o0118","o0119","o0120","o0121","o0122"],"after":[]},
    "natural": []
   },
   {
@@ -1184,188 +234,19 @@
    "generator": "1.0.0",
    "journal": "df43b5e7206f2e3f3ca85d08a6e08d8519c21af27e249ae279a249ee9818c682",
    "inert": false,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0022",
-     "o0023",
-     "x0107",
-     "x0108"
-    ],
-    "failed": 0,
-    "graded": true
-   },
+   "e0": {"checked":["o0001","o0002","o0003","o0004","o0005","o0006","o0007","o0008","o0009","o0010","o0011","o0012","o0013","o0014","o0015","o0016","o0017","o0018","o0019","o0020","o0021","o0022","o0023","x0107","x0108"],"failed":0,"graded":true},
    "affected": [
-    {
-     "case": "o0046",
-     "epoch": "ep2",
-     "class": "action-at-deadline",
-     "pool": "completed",
-     "at": "2026-03-08T03:32:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0047",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-08T05:24:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0048",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T08:31:00.000Z",
-     "layer": 3,
-     "code": "missed",
-     "lid": "fst:ORD-1102-0048-F1:cancelled",
-     "rule": "R3.2"
-    },
-    {
-     "case": "o0049",
-     "epoch": "ep2",
-     "class": "review-approve",
-     "pool": "completed",
-     "at": "2026-03-08T07:11:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0050",
-     "epoch": "ep2",
-     "class": "collection-failed",
-     "pool": "completed",
-     "at": "2026-03-08T08:16:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0051",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T10:04:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0052",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T12:40:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0053",
-     "epoch": "ep2",
-     "class": "cancel-processing",
-     "pool": "completed",
-     "at": "2026-03-08T22:11:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0054",
-     "epoch": "ep2",
-     "class": "straight",
-     "pool": "completed",
-     "at": "2026-03-08T22:42:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create",
-     "critical": [
-      "money-outside-allowed",
-      "money-outside-allowed"
-     ]
-    },
-    {
-     "case": "o0058",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-08T03:31:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
-    {
-     "case": "o0071",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-07T23:48:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    }
+    {"case":"o0046","epoch":"ep2","class":"action-at-deadline","pool":"completed","at":"2026-03-08T04:32:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0047","epoch":"ep2","class":"collection-failed","pool":"completed","at":"2026-03-08T06:24:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0048","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T09:31:00+01:00","layer":3,"code":"missed","lid":"fst:ORD-1102-0048-F1:cancelled","rule":"R3.2"},
+    {"case":"o0049","epoch":"ep2","class":"review-approve","pool":"completed","at":"2026-03-08T08:11:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0050","epoch":"ep2","class":"collection-failed","pool":"completed","at":"2026-03-08T09:16:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0051","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T11:04:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0052","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T13:40:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0053","epoch":"ep2","class":"cancel-processing","pool":"completed","at":"2026-03-08T23:11:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed","money-outside-allowed","money-outside-allowed","money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0054","epoch":"ep2","class":"straight","pool":"completed","at":"2026-03-08T23:42:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create","critical":["money-outside-allowed","money-outside-allowed"]},
+    {"case":"o0058","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T04:31:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
+    {"case":"o0071","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T00:48:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"}
    ],
    "reveal": {
     "case": "o0071",
@@ -1373,41 +254,15 @@
     "epoch": "ep2",
     "observableAt": "2026-03-08T00:48:00+01:00",
     "eventEpoch": "ep2",
-    "divergence": {
-     "case": "o0071",
-     "epoch": "ep2",
-     "class": "timeout",
-     "pool": "completed",
-     "at": "2026-03-07T23:48:00.000Z",
-     "layer": 2,
-     "code": "outside-allowed",
-     "effect": "orders.create"
-    },
+    "divergence": {"case":"o0071","epoch":"ep2","class":"timeout","pool":"completed","at":"2026-03-08T00:48:00+01:00","layer":2,"code":"outside-allowed","effect":"orders.create"},
     "event": {
      "id": "rev-ld-k9-1102-d4",
      "type": "customer.complaint",
      "at": "2026-03-09T00:48:00+01:00",
      "source": "customer-service",
-     "payload": {
-      "claimId": "rev-ld-k9-1102-d4",
-      "orderRef": "ORD-1102-0071",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0025@hollin-shop.example",
-      "text": "The order record for order ORD-1102-0071 is wrong (fulfilments, totalMinor)."
-     }
+     "payload": {"claimId":"rev-ld-k9-1102-d4","orderRef":"ORD-1102-0071","assert":"wrong","subject":"order record","fields":["fulfilments","totalMinor"],"from":"c0025@hollin-shop.example","text":"The order record for order ORD-1102-0071 is wrong (fulfilments, totalMinor)."}
     },
-    "truth": {
-     "valid": true,
-     "defect": "ld-k9",
-     "rule": "R1.1",
-     "hardness": "rulebook",
-     "reason": "the oracle fails o0071 at 2026-03-07T23:48:00.000Z (outside-allowed) on the defect's trajectory"
-    }
+    "truth": {"valid":true,"defect":"ld-k9","rule":"R1.1","hardness":"rulebook","reason":"the oracle fails o0071 at 2026-03-08T00:48:00+01:00 (outside-allowed) on the defect's trajectory"}
    },
    "falseReveal": {
     "case": "o0100",
@@ -1419,42 +274,11 @@
      "type": "customer.complaint",
      "at": "2026-03-09T03:33:00+01:00",
      "source": "customer-service",
-     "payload": {
-      "claimId": "inv-ld-k9-1102-d4",
-      "orderRef": "ORD-1102-0100",
-      "assert": "wrong",
-      "subject": "order record",
-      "fields": [
-       "fulfilments",
-       "totalMinor"
-      ],
-      "from": "c0036@hollin-shop.example",
-      "text": "The order record for order ORD-1102-0100 is wrong (fulfilments, totalMinor)."
-     }
+     "payload": {"claimId":"inv-ld-k9-1102-d4","orderRef":"ORD-1102-0100","assert":"wrong","subject":"order record","fields":["fulfilments","totalMinor"],"from":"c0036@hollin-shop.example","text":"The order record for order ORD-1102-0100 is wrong (fulfilments, totalMinor)."}
     },
-    "truth": {
-     "valid": false,
-     "defect": "ld-k9",
-     "hardness": "rulebook",
-     "reason": "the oracle passes o0100 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"
-    }
+    "truth": {"valid":false,"defect":"ld-k9","hardness":"rulebook","reason":"the oracle passes o0100 on this trajectory, so the claim (wrong order record) is invalid under the rulebook; the journal agrees with its facts, only the rules refute it"}
    },
-   "sweep": {
-    "before": [
-     "o0071",
-     "o0058",
-     "o0046",
-     "o0047",
-     "o0049",
-     "o0050",
-     "o0048",
-     "o0051",
-     "o0052",
-     "o0053",
-     "o0054"
-    ],
-    "after": []
-   },
+   "sweep": {"before":["o0071","o0058","o0046","o0047","o0049","o0050","o0048","o0051","o0052","o0053","o0054"],"after":[]},
    "natural": []
   },
   {
@@ -1466,37 +290,7 @@
    "generator": "1.0.0",
    "journal": "fd40713377a7c6c26678bf8fefe3297121172aa6f21ccfee9a88ca2de4459b4d",
    "inert": true,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016",
-     "o0017",
-     "o0018",
-     "o0019",
-     "o0020",
-     "o0021",
-     "o0022",
-     "o0023",
-     "o0024",
-     "x0087"
-    ],
-    "failed": 0,
-    "graded": true
-   },
+   "e0": {"checked":["o0001","o0002","o0003","o0004","o0005","o0006","o0007","o0008","o0009","o0010","o0011","o0012","o0013","o0014","o0015","o0016","o0017","o0018","o0019","o0020","o0021","o0022","o0023","o0024","x0087"],"failed":0,"graded":true},
    "affected": []
   },
   {
@@ -1508,28 +302,7 @@
    "generator": "1.0.0",
    "journal": "f6087dcd855a5f3d104bfd89bda004319deb24cf270b032db4f29c71b3dbde0e",
    "inert": true,
-   "e0": {
-    "checked": [
-     "o0001",
-     "o0002",
-     "o0003",
-     "o0004",
-     "o0005",
-     "o0006",
-     "o0007",
-     "o0008",
-     "o0009",
-     "o0010",
-     "o0011",
-     "o0012",
-     "o0013",
-     "o0014",
-     "o0015",
-     "o0016"
-    ],
-    "failed": 0,
-    "graded": true
-   },
+   "e0": {"checked":["o0001","o0002","o0003","o0004","o0005","o0006","o0007","o0008","o0009","o0010","o0011","o0012","o0013","o0014","o0015","o0016"],"failed":0,"graded":true},
    "affected": []
   }
  ]

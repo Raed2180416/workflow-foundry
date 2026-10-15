@@ -10,7 +10,7 @@
  "harness": {
   "id": "secondreader",
   "version": "sr-v1",
-  "manifestSha256": "3e6c50cb72bbcb7c3d4a671fac80053fa0c0c1236167ef5479295f448d270a51",
+  "manifestSha256": "6fa1f12cd9cbe6f11e3c33065fb9737358e2e4dce8ac4ccaa697ac79bc714383",
   "frozenHashGiven": false,
   "nodeModels": {
    "act": null,
@@ -170,7 +170,7 @@
   "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
   "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
   "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
-  "runnerSha256": "784d8db00824109604d8e2139f71226dbfe55298d647e9ee7f9f916076c6e9d3",
+  "runnerSha256": "b58c028878d595e89edc406c92d5f30faa42faa0c5357d8deb79d877d6468a44",
   "policyHash": null,
   "policyVersion": null,
   "policyFileSha256": "3364011cae3741fb4409386d16cfa2439aaa340181382ce1694a8f7778fd3793",
@@ -184,8 +184,8 @@
    "DISABLE_AUTOUPDATER": "1"
   },
   "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
-  "harnessManifestSha256": "3e6c50cb72bbcb7c3d4a671fac80053fa0c0c1236167ef5479295f448d270a51"
+  "harnessManifestSha256": "6fa1f12cd9cbe6f11e3c33065fb9737358e2e4dce8ac4ccaa697ac79bc714383"
  },
  "live": "/var/tmp/foundry-work/autobench/sr-smoke-scripted",
- "finishedAt": "2026-10-15T12:00:13.109Z"
+ "finishedAt": "2026-10-15T12:30:48.627Z"
 }

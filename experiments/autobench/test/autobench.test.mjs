@@ -314,7 +314,7 @@ test('environment fault: the run stops without a headline, the faulted task is k
   const faults = readFileSync(path.join(live, 'results.faults.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
   assert.deepEqual(faults.map(r => [r.task, r.forks[0].sessionError]), [[TASKS[1], 'MODEL_RATE_LIMIT']]);
   await assert.rejects(runTasks({ ...base, runner: limited }), /already holds a run: pass --resume/);
-  await assert.rejects(runTasks({ ...base, runner: limited, resume: true, maxSteps: 40 }), /resume refused: the settings or the runner differ/);
+  await assert.rejects(runTasks({ ...base, runner: limited, resume: true, maxSteps: 40 }), /resume refused: the settings differ/);
   calls.length = 0;
   const ok = async args => { calls.push(args.task.name); return { ...(await inner(args)), costUsd: 0.01 }; };
   const second = await runTasks({ ...base, runner: ok, resume: true });
@@ -326,6 +326,49 @@ test('environment fault: the run stops without a headline, the faulted task is k
   assert.ok(Math.abs(second.summary.cost.spentUsd - 0.03) < 1e-9); // earlier spend stays on the cap
   assert.equal(second.summary.cost.sessions, 3);
   assert.ok(existsSync(path.join(live, 'out', 'results.faults.jsonl')));
+});
+
+test('not an outcome: a disk-full host error stops the run; the cap stops it (no headline); a resume reruns old fault and cap-skip records, may raise the cap, and accepts a runner change only when asked', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 300_000 }, async () => {
+  const TASKS = [PHONE_TASK, 'simple.email_sf_contact_email_update', 'simple.slack_office_closure'];
+  const inner = scriptedRunner(() => [{ calls: [read()] }]);
+  const calls = [];
+  const paid = async args => { calls.push(args.task.name); return { ...(await inner(args)), costUsd: 0.4 }; };
+  const base = { tasks: TASKS, domains: ['simple'], det: 'record', concurrency: 1, budgetUsd: 0.5, outDir: null, log: () => {} };
+  // 1. A host-side ENOSPC is an environment fault, not a fail.
+  const live1 = tmp('enospc');
+  const full = async args => { if (args.task.name === TASKS[1]) throw new Error('ENOSPC: no space left on device, write'); return paid(args); };
+  const r1 = await runTasks({ ...base, liveRoot: live1, runner: full });
+  assert.match(r1.stopped, /^ENOSPC: no space left on device/);
+  assert.equal(r1.stopKind, 'environment');
+  assert.deepEqual(r1.results.map(r => r.task), [PHONE_TASK]);
+  // 2. The cap: the second session cannot fit (0.4 spent + 0.5 > 0.8), so the run stops with no headline.
+  const live2 = tmp('capstop');
+  calls.length = 0;
+  const r2 = await runTasks({ ...base, liveRoot: live2, runner: paid, capUsd: 0.8 });
+  assert.match(r2.stopped, /^the cap/);
+  assert.equal(r2.stopKind, 'cap');
+  assert.deepEqual(calls, [PHONE_TASK]);
+  assert.equal(r2.summary.pass_rate, undefined);
+  assert.ok(!existsSync(path.join(live2, 'results.faults.jsonl'))); // a cap skip is not a fault: nothing kept aside
+  await assert.rejects(runTasks({ ...base, liveRoot: live2, runner: paid, capUsd: 0.7, resume: true }), /the cap can only be raised/);
+  // 3. A record written before these rules (an ENOSPC fail kept as an outcome) is reclassified and rerun on resume.
+  const rows = readFileSync(path.join(live2, 'results.jsonl'), 'utf8');
+  const old = { ...JSON.parse(rows), task: TASKS[1], final: null, costUsd: 0, forks: [{ fork: 0, harnessError: 'ENOSPC: no space left on device, write', costUsd: null, costUnknown: false }] };
+  writeFileSync(path.join(live2, 'results.jsonl'), rows + JSON.stringify(old) + '\n');
+  // 4. A changed runner is refused unless accepted; the accepted change and the raised cap are recorded.
+  const launch = JSON.parse(readFileSync(path.join(live2, 'launch.json'), 'utf8'));
+  writeFileSync(path.join(live2, 'launch.json'), JSON.stringify({ ...launch, runnerSha256: 'f'.repeat(64) }));
+  await assert.rejects(runTasks({ ...base, liveRoot: live2, runner: paid, capUsd: 3, resume: true }), /the runner changed since launch/);
+  calls.length = 0;
+  const r3 = await runTasks({ ...base, liveRoot: live2, runner: paid, capUsd: 3, resume: true, acceptRunnerChange: true });
+  assert.equal(r3.stopped, undefined);
+  assert.deepEqual(calls, TASKS.slice(1)); // the reclassified record and the never-started task
+  assert.deepEqual(r3.results.map(r => r.task), TASKS);
+  assert.ok(r3.results.every(r => r.final));
+  assert.deepEqual(r3.summary.envFaults, { records: 1, tasks: 1, sessions: 1, spentUsd: 0 });
+  assert.deepEqual(r3.summary.launchHistory.map(h => Object.keys(h).sort()), [['at', 'capUsd', 'runnerSha256']]);
+  assert.deepEqual(r3.summary.launchHistory[0].capUsd, [0.8, 3]);
+  assert.ok(Math.abs(r3.summary.cost.spentUsd - 1.2) < 1e-9);
 });
 
 test('cost: a runner that throws after it started is counted at its budget (unknown), not at $0; a nested model use voids the run', { skip: !HAVE_VENV && 'AutomationBench venv missing' }, async () => {
