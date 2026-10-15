@@ -33,14 +33,14 @@ A dataset row (`automationbench/domains/<domain>/tasks.py`, built by `get_<domai
 
 - `example_id`, `prompt` = `[system, user]` messages, `answer` (empty), and `info` (a JSON string) with
   - `task_name` (e.g. `sales.multi_hop_lookup`),
-  - `initial_state`: a `WorldState` dict (`automationbench/schema/world.py:73-133`: 48 app states plus `meta`),
+  - `initial_state`: a `WorldState` dict (`automationbench/schema/world.py:75-133`: 48 app states plus `meta`),
   - `assertions`: typed checks resolved by `AssertionRegistry` (`automationbench/rubric/registry.py`),
   - `zapier_tools`: tool names for the `limited_zapier` toolset (also used to decide which apps are "connected", below).
 - Noise: every domain adds distractor records to transactional data, seeded by `example_id` and therefore deterministic
   (`automationbench/domains/finance/_noise.py:145-147`; `automationbench/domains/_noise_util.py` keeps it out of
   lookup/policy worksheets).
 
-Example (`automationbench/domains/sales/tasks.py:40-354`, `sales.multi_hop_lookup`): the user says the "Meridian Corp
+Example (`automationbench/domains/sales/tasks.py:40-356`, `sales.multi_hop_lookup`): the user says the "Meridian Corp
 Platform Deal" closed and must be routed "per our routing policy". The policy is an email in the seeded inbox (tier →
 mailbox, plus "also notify support-escalation if the account has open Critical/High cases", subject line, money
 format). The tier must come from the newest of two conflicting rows in the "Account Hierarchy" sheet, the amount is in
@@ -88,18 +88,18 @@ must be found with the tools. [code, from the tasks read; [inference] for "mostl
 
 ## 4. How state works [code]
 
-- `AutomationBenchEnv.setup_state` (`automationbench/runner.py:199-264`) builds `WorldState(**initial_state)` after
+- `AutomationBenchEnv.setup_state` (`automationbench/runner.py:199-273`) builds `WorldState(**initial_state)` after
   stripping Hugging Face's `None` fills, records a task-contract sha256 (`automationbench/task_contract.py`), and sets
   `meta.allowed_services` = apps seeded, asserted on, or granted by `zapier_tools` (`runner.py:56-80`).
-- `api_fetch` maps the URL host/prefix to an app router (`fetch.py:146-290`), then to the same Python functions the
+- `api_fetch` maps the URL host/prefix to an app router (`fetch.py:88-290`), then to the same Python functions the
   Zapier toolset uses. Calls to an app outside `allowed_services` return a 401 "No ... account is connected"; unknown
   URLs a 404; schema-invalid values a 422 (`fetch.py:331-360`). Other exceptions surface as the exception text through
   verifiers' `error_formatter` (`verifiers/envs/stateful_tool_env.py:47`, `:138-176`), as do malformed JSON arguments
   and unknown tool names.
 - `update_tool_args` drops any argument whose value is `{}` before the call (`runner.py:173-197`).
 - **Nondeterminism.** New ids come from `uuid4` and `random`, timestamps from the wall clock: 152 pydantic default
-  factories bound to `datetime.now`, about 40 lambdas and helpers, and function-local `datetime` imports in the
-  QuickBooks/Xero/Wave/Salesforce tools. Tasks without `meta.current_time` (60 sales, 72 marketing, 96 operations,
+  factories bound to `datetime.now`, 74 lambda factories, over 100 factories that call id helpers built on `uuid4` or
+  `random`, and function-local `datetime` imports in the QuickBooks/Xero/Wave/Salesforce tools. Tasks without `meta.current_time` (60 sales, 72 marketing, 96 operations,
   75 support) get the wall-clock time as "now" (`automationbench/schema/world.py:66`). Two official runs of one action
   sequence therefore differ: in our neutrality check, 2,382 leaves across 35 tasks, every one a generator draw
   [measured, parity.json `rows[].neutral`].
@@ -112,7 +112,7 @@ must be found with the tools. [code, from the tasks read; [inference] for "mostl
   or after `max_turns` model responses (`verifiers/envs/multiturn_env.py:75`); `eval.py` passes `--max-steps`, default
   50 (`eval.py:546`). Tool calls run after the next loop check, so the calls in response 50 never run: at most 49
   tool-calling turns take effect. Parallel calls in one response run sequentially, in order.
-- `eval.py` runs up to 100 rollouts concurrently in one process, one rollout per task (`eval.py:418-428`), and re-runs
+- `eval.py` runs up to 100 rollouts concurrently in one process, one rollout per task (`eval.py:420-431`), and re-runs
   aborted tasks (`--ensure-complete`). No module-level counters or caches in the simulated apps, so rollouts do not
   interact. [code, grep]
 
@@ -168,17 +168,18 @@ neutrality check shows `record` changes nothing but the draws (35/35).
 **Voting** (`bridge.py vote`): each fork's final world is diffed against the shared initial world; values the fork's
 generators produced (fresh ids, timestamps) are masked; records in id-keyed lists are matched by id and new records
 compared as a masked multiset, so creation order does not matter. The largest group of identical diffs wins (ties: the
-lowest fork); its fork's live grade is the result. `agreement` and `majority` are recorded per task.
+lowest fork); its fork's live grade is the result. `agreement` and `majority` are recorded per task. A fork whose
+session ended in an error (timeout, budget) still votes with the world it left; a fork with no final world does not.
 
 **Deviations from the official eval** [inference unless marked]:
 
 | | Official `auto-bench` | Bridge + `run.mjs` |
 |---|---|---|
-| Model access | Provider API with native tool calling; Anthropic models via the Messages API, thinking only with `--reasoning-effort` (`eval.py:259-290`) | Claude Code headless (`claude -p`, policy model id) with only the Bash tool; tools reached via `node tool.mjs`; Claude Code's own system prompt replaced by the official one plus the harness section; thinking per the CLI's defaults (`--effort` optional) |
+| Model access | Provider API with native tool calling; Anthropic models via the Messages API, thinking only with `--reasoning-effort` (`eval.py:246-280`) | Claude Code headless (`claude -p`, policy model id) with only the Bash tool; tools reached via `node tool.mjs`; Claude Code's own system prompt replaced by the official one plus the harness section; thinking per the CLI's defaults (`--effort` optional) |
 | Turn limit | 50 model responses; calls of the 50th dropped | 49 tool steps served (a `call`/`batch` is a step), later steps refused; Claude Code turns without a tool step are not counted, but the session has a USD budget and a timeout |
 | Tool results | Tool messages | The same strings on stdout (`batch`: each under a `### result i: name` header) |
 | Process model | Up to 100 rollouts in one process | One bridge process per rollout (no shared state in the apps, §5) |
-| Aborts | Re-run until none (`--ensure-complete`) | Recorded per fork as `sessionError`/`bridgeError`, counted as a fail in `pass_rate` |
+| Aborts | Re-run until none (`--ensure-complete`) | Recorded per fork as `sessionError`/`harnessError`, counted as a fail in `pass_rate` |
 | Hash seed | Random per process | Random per process (`-I`); parity across processes was exact, so no set-ordering effect showed |
 
 ## 10. Parity and tests [measured, $0, no model]

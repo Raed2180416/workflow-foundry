@@ -86,7 +86,7 @@ Design split at k = 3, neighbours nearest first (cluster in brackets):
 
 Sources:
 - `research/need-router-20261014/features-census.json` (sha256 `f5a00d12e79fcf89`)
-- `research/need-router-20261014/prereg/stages.json` (sha256 `60f657012313565c`)
+- `research/need-router-20261014/prereg/stages.json` (sha256 `1584a69d75894398`)
 
 ## D1. Shortcut audit: does logInputTokens alone reproduce the hypotheses table?
 
@@ -134,7 +134,7 @@ Jobs in token order on the router feature, largest ten (W = hypothesised workflo
 
 Sources:
 - `research/need-router-20261014/features-census.json` (sha256 `f5a00d12e79fcf89`)
-- `research/need-router-20261014/prereg/stages.json` (sha256 `60f657012313565c`)
+- `research/need-router-20261014/prereg/stages.json` (sha256 `1584a69d75894398`)
 
 ## D2. Co-failure on the records dev stream
 
@@ -415,7 +415,7 @@ Sources:
 - `research/need-router-20261014/archive/c0-dev/constructions.jsonl` (sha256 `61e4bffc7367e348`)
 - `research/need-router-20261014/archive/c0-dev/results.jsonl` (sha256 `4c4a9dabe80d0617`)
 - `research/need-router-20261014/archive/p1/results.jsonl` (sha256 `1adcf7d0aefd3edf`)
-- `research/need-router-20261014/prereg/stages.json` (sha256 `60f657012313565c`)
+- `research/need-router-20261014/prereg/stages.json` (sha256 `1584a69d75894398`)
 - `research/jit-20261008/runs/jit-dev-kinetics-1/<arm>/results.jsonl` for 5 arms (agent-haiku, agent-sonnet, jit-claude-haiku--claude-haiku, jit-claude-opus--claude-haiku, jit-claude-sonnet--claude-haiku)
 - `research/jit-20261008/runs/jit-dev-records-1/<arm>/results.jsonl` for 7 arms (agent-haiku, agent-opus, agent-sonnet, jit-claude-haiku--claude-haiku, jit-claude-opus--claude-haiku, jit-claude-sonnet--claude-haiku, static-B1-haiku-records-k1-solve)
 - `research/jit-20261008/runs/jit-r0-kinetics/<arm>/results.jsonl` for 2 arms (agent-haiku, jit-claude-opus--claude-haiku)

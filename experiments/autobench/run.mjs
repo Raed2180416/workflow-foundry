@@ -117,7 +117,7 @@ export async function runTasks(o) {
     }
     const rec = { task, domain: meta.domain, example_id: meta.example_id, contract_sha256: meta.contract_sha256, k: opt.k,
       forks: fs.map(f => ({ fork: f.fork, ...summarizeGrade(f.grade), steps: f.steps ?? null, costUsd: f.costUsd ?? null, costUnknown: f.costUnknown ?? false,
-        turns: f.turns ?? null, durationMs: f.durationMs ?? null, sessionError: f.sessionError ?? null, bridgeError: f.bridgeError ?? null, skipped: f.skipped ?? null, nestedModelUses: f.nestedModelUses ?? 0 })),
+        turns: f.turns ?? null, durationMs: f.durationMs ?? null, sessionError: f.sessionError ?? null, harnessError: f.harnessError ?? null, skipped: f.skipped ?? null, nestedModelUses: f.nestedModelUses ?? 0 })),
       vote, final: final ? summarizeGrade(final) : null, costUsd: fs.reduce((s, f) => s + (f.costUsd ?? f.costUpperUsd ?? 0), 0) };
     results.push(rec);
     appendFileSync(resultsFile, JSON.stringify(rec) + '\n');
@@ -150,7 +150,7 @@ export async function runTasks(o) {
         rec.steps = done.steps;
         rec.grade = readJson(path.join(hostDir, 'grade.json'));
       } catch (e) {
-        rec.bridgeError = String(e?.message ?? e).slice(0, 800);
+        rec.harnessError = String(e?.message ?? e).slice(0, 800);
         bridge?.kill();
       } finally {
         ledger.settle(opt.budgetUsd, r ?? { costUsd: 0 });
@@ -178,7 +178,7 @@ export async function runTasks(o) {
     ...(opt.k > 1 ? { fork0_pass_rate: mean(fork0.map(f => f.task_completed_correctly ?? 0)), any_fork_pass_rate_diagnostic: mean(results.map(r => (r.forks.some(f => f.task_completed_correctly === 1) ? 1 : 0))),
       majority_rate: mean(results.map(r => (r.vote?.majority ? 1 : 0))) } : {}),
     cost: { spentUsd: ledger.spent, unknownCostSessions: ledger.unknown, sessions: jobs.length, skipped: results.flatMap(r => r.forks).filter(f => f.skipped).length },
-    errors: results.flatMap(r => r.forks.filter(f => f.sessionError || f.bridgeError).map(f => ({ task: r.task, fork: f.fork, sessionError: f.sessionError, bridgeError: f.bridgeError }))),
+    errors: results.flatMap(r => r.forks.filter(f => f.sessionError || f.harnessError).map(f => ({ task: r.task, fork: f.fork, sessionError: f.sessionError, harnessError: f.harnessError }))),
     provenance: provenance(policy), live, finishedAt: new Date().toISOString(),
   };
   writeJson(path.join(live, 'summary.json'), summary);
