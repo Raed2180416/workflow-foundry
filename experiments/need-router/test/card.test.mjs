@@ -10,7 +10,7 @@ import { fitNeedRouter, N1, TRUSTED_FEATURES } from '../router.mjs';
 import { INJECTIONS } from '../evaluate.mjs';
 import { HEADLINE, makeCell, CASCADES, DELTA } from '../metrics.mjs';
 import { needsWorkflow as plantedNeed } from './worlds.mjs';
-import { plantedRouter, V1_MODES } from './router-fixtures.mjs';
+import { plantedRouter, V1_MODES, probeFor } from './router-fixtures.mjs';
 
 const ajvCheck = new Ajv({ allErrors: true, strictSchema: true, strictTypes: false, strictTuples: false, strictRequired: false, allowUnionTypes: true }).compile(CARD_SCHEMA);
 const both = card => { const own = validateCard(card), ajv = ajvCheck(card); return { own: own.ok, ajv, problems: own.problems, ajvErrors: ajvCheck.errors }; };
@@ -30,7 +30,7 @@ function allCards() {
   out.push(decisionCard(r, job(SMALL, { modes: ['agent-H', 'mystery-mode'] }), HEADLINE));
   out.push(decisionCard(r, job(BIG), makeCell(0.1, 1, 1)));
   out.push(decisionCard(r, job(SMALL), HEADLINE, { text: 'Wait 30 days, then ask a reviewer to approve and send the refund.' }));
-  out.push(decisionCard(r, job(SMALL), HEADLINE, { probe: { observations: { 'direct-H': { passes: 1, n: 2 }, 'agent-H': { passes: 1, n: 1 } }, costUsd: 0.16, signals: { schemaValid: [true, true], agree: false }, disagree: true } }));
+  out.push(decisionCard(r, job(SMALL), HEADLINE, { probe: probeFor(job(SMALL).id, { 'direct-H': [1, 2], 'agent-H': [1, 1] }, 0.16, { signals: { schemaValid: [true, true], agree: false }, disagree: true }) }));
   return out;
 }
 const CARDS = allCards();
@@ -77,7 +77,7 @@ test('card schema rejects malformed cards under both validators; the cross-field
   ]) { const b = both(bad); assert.equal(b.ajv, true, `${what}: schema-valid`); assert.equal(b.own, false, what); }
 });
 
-test('card content: per-mode p, c, F, EU; the choice with its cascade fallback; needsWorkflow; routing cost; routerSha', () => {
+test('card content: per-mode p, c, F, EU; the choice (a pure mode runs pure: no cascade); needsWorkflow; routing cost; routerSha', () => {
   for (const [j, want] of [[BIG, 'construct-H'], [SMALL, 'direct-H']]) {
     const card = decisionCard(R.leaf, job(j), HEADLINE);
     assert.equal(card.choice.mode, want); assert.equal(card.needsWorkflow, want === 'construct-H'); assert.equal(card.class, want === 'construct-H' ? 'workflow' : 'no-workflow');
@@ -87,17 +87,19 @@ test('card content: per-mode p, c, F, EU; the choice with its cascade fallback; 
       assert.ok(Math.abs(x.EU - (x.p - x.c / c.V - x.F / (c.N * c.V) - c.wOverV * x.q)) < 1e-12, m);
       assert.ok(Math.abs(x.usdPerTask - (x.c + x.F / c.N)) < 1e-12, m);
     }
-    const spec = CASCADES.find(s => s.primary === want);
-    assert.deepEqual(card.choice.cascade, { id: spec.id, primary: spec.primary, fallback: spec.fallback, on: [...spec.on] });
-    assert.deepEqual(card.choice.checkpoint, want === 'construct-H' ? { afterTask: 4, switchTo: 'agent-H', when: 'at least half of the tasks so far fell back' } : null);
+    // The prediction is for what runs (third review R1): the pure mode was priced, so no cascade or checkpoint rides it
+    // (cascade choices: test/router-review3.test.mjs R1).
+    assert.ok(CASCADES.some(s => s.primary === want));
+    assert.equal(card.choice.cascade, null); assert.equal(card.choice.checkpoint, null);
     assert.equal(card.routingCostUsd, 0); assert.equal(card.policy, 'NR-static');
   }
   // No runnable fallback, no cascade.
   const lone = decisionCard(R.leaf, job(BIG, { modes: ['direct-H', 'construct-H'] }), HEADLINE);
   assert.equal(lone.choice.mode, 'construct-H'); assert.equal(lone.choice.cascade, null); assert.equal(lone.choice.checkpoint, null);
   // A probe's dollars are routing dollars, charged in U as r/(N·V).
-  const pr = decisionCard(R.leaf, job(SMALL), HEADLINE, { probe: { observations: { 'direct-H': { passes: 2, n: 2 } }, costUsd: 0.16 } });
-  assert.equal(pr.policy, 'NR-probe'); assert.equal(pr.routingCostUsd, 0.16); assert.deepEqual(pr.probe, { ran: true, modes: ['direct-H'], k: 2, signals: null, costUsd: 0.16, disagree: false });
+  const pr = decisionCard(R.leaf, job(SMALL), HEADLINE, { probe: probeFor(job(SMALL).id, { 'direct-H': [2, 2] }, 0.16) });
+  assert.equal(pr.policy, 'NR-probe'); assert.equal(pr.routingCostUsd, 0.16);
+  assert.deepEqual(pr.probe, { ran: true, bundle: 'prereg-bundle', modes: ['direct-H'], k: 2, observations: { 'direct-H': { passes: 2, n: 2, signal: 'schemaValid', rows: [`${job(SMALL).id}|direct-H|0`, `${job(SMALL).id}|direct-H|1`] } }, signals: null, costUsd: 0.16, disagree: false });
   // routerSha: stable for identical fits; moves with the TRAIN labels, δ or the stage; its code part hashes the module sources.
   const s0 = routerSha(R.leaf), again = routerSha(fitNeedRouter([...P.items].reverse(), { modes: V1_MODES }));
   assert.equal(again.sha, s0.sha); assert.match(s0.sha, /^[0-9a-f]{64}$/);
@@ -135,7 +137,7 @@ test('canonical JSON: key order free; non-finite numbers and non-plain values re
   assert.equal(card.structure.thresholds.logInputTokens, R.leaf.rule.thresholds.logInputTokens);
 });
 
-test('NR-probe plan (voi.mjs bestProbe on the router\'s predictions): no probe when a mode dominates; k capped at H when N = 1', () => {
+test('NR-probe plan (voi.mjs bundleValue on the router\'s predictions): no probe when a mode dominates; the preregistered bundle is the gate', () => {
   // Confident TRAIN predictions (12 tasks per job, several jobs): nothing worth buying.
   assert.equal(probePlan(R.leaf, job(SMALL), HEADLINE).probe, null);
   // One thin TRAIN job per leaf with close rates: probing direct-H can pay at a large N.
@@ -143,9 +145,11 @@ test('NR-probe plan (voi.mjs bestProbe on the router\'s predictions): no probe w
     { id: 'a', cluster: 'A', features: { logInputTokens: 2, maxListLength: 0 }, stats: { 'direct-H': { s: 0.55, q: 0.1, c: 0.02, B: 0 }, 'agent-H': { s: 0.7, q: 0.05, c: 0.12, B: 0 } }, labels: {} },
   ], { modes: ['direct-H', 'agent-H'], tasksPerJob: 2 });
   const plan = probePlan(thin, { id: 'x', features: { logInputTokens: 2, maxListLength: 0 } }, makeCell(1, 100, 1));
-  assert.ok(plan.probe && ['direct-H', 'agent-H'].includes(plan.probe.j) && plan.probe.k <= 2, JSON.stringify(plan.probe));
-  assert.ok(plan.net > 0);
-  // voi.mjs bounds k by the horizon even for example-only probes: at N = 1 only k = 1 is priced (review finding V2).
+  assert.deepEqual(plan.probe, { id: 'prereg-bundle', draws: { 'direct-H': 2, 'agent-H': 1 } }, JSON.stringify(plan.probe));
+  assert.ok(plan.net > 0); assert.ok(Math.abs(plan.cost - (2 * 0.02 + 0.12)) < 1e-12);
+  // An example-only probe is not bounded by the horizon (third review R2, finding V2): at N = 1 the two-draw plans are
+  // priced. There a single direct-H draw would pay (net > 0), but the bundle label-run actually draws does not: no probe.
   const one = probePlan(thin, { id: 'x', features: { logInputTokens: 2, maxListLength: 0 } }, makeCell(1, 1, 1));
-  assert.ok(one.plans.every(p => p.k === 1));
+  assert.deepEqual([...new Set(one.plans.map(p => p.k))].sort(), [1, 2]);
+  assert.ok(one.plans.some(p => p.net > 0)); assert.equal(one.probe, null);
 });

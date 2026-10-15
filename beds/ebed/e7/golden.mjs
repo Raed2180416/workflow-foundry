@@ -33,7 +33,9 @@ function builder(w = W3) {
       payload: { taskId, user: 'u-im2', answer: decision === null ? { text: 'not sure' } : { decision } } }),
     /** A task event other than an answer: `humanTask.answerRejected`, `humanTask.withdrawn`, `humanTask.timeout`. */
     taskEvent: (at, type, taskId = 'mia#1') => ({ seq: ++seq, at: ms(at), type, instance: 'g', case: 'golden', payload: { taskId, user: 'u-im2' } }),
-    view: (at, subject, events, { tasks = [], taskEvents = [] } = {}) => ({ case: 'golden', at: ms(at), seq: Infinity, world: w,
+    // One case id per incident: the transition memoises SLA timelines per (case, field history), so two goldens with the
+    // same history for different incidents must not share a case (in grading a case is one incident).
+    view: (at, subject, events, { tasks = [], taskEvents = [] } = {}) => ({ case: `golden:${subject}`, at: ms(at), seq: Infinity, world: w,
       truth: { subject, start: events[0] ? new Date(events[0].at).toISOString() : null, class: 'golden', tail: true }, events, rows: [], tasks, taskEvents }),
   };
   return b;
@@ -573,6 +575,355 @@ golden('instants compared as instants, whatever their offset', 'SPEC §1 (Time),
     same(canonicalArgs('itsm', 'close', { number: 'N', reason: 'auto', at: '2026-03-10T10:00:00' }), { number: 'N', reason: 'auto', at: '2026-03-10T10:00:00' }, 'an `at` without an offset'),
     same(canonicalArgs('itsm', 'close', { number: 'N', reason: 'auto', at: '2026-03-10 10:00' }), { number: 'N', reason: 'auto', at: '2026-03-10 10:00' }, 'an `at` that is not ISO 8601'),
     same(canonicalArgs('itsm', 'close', { number: 'N', reason: 'auto', at: '2026-13-10T10:00:00Z' }), { number: 'N', reason: 'auto', at: '2026-13-10T10:00:00Z' }, 'an `at` that is no date'));
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Goldens added by the oracle mutation review (ledger/MUTANTS.md, 2026-10-15): each asserts a spec-stated outcome the
+// grader sees (a required effect, its match, window or order; a human task; a decision; a record), for a mutant of
+// transition.mjs or sla.mjs that the earlier goldens and the dev corpus did not kill. Hand values as above.
+// G22 R7.1, R2.3: the approval is anchored where the priority first became 1. A P1 report on CI-PAY-APP1 (SVC-PAYROLL,
+// impact 2, urgency 1: the override row gives 1) opened Mon 2026-03-09 10:00+01:00; at 10:05 a resolver raises impact to 1
+// (urgency 1: priority 1 by the matrix). The priority changes nothing (R2.3 still records the impact); the task stays due
+// in [10:00, 10:15].
+golden('G22 approval anchored where the priority first became 1', 'R7.1, R2.3', tr => {
+  const B = builder(), N = 'INC-RPT-G22-0001';
+  const E = tr(W3, B.view('2026-03-09T10:06:00+01:00', N, [B.report('2026-03-09T10:00:00+01:00', 'RPT-G22-0001', EU.userId, 'CI-PAY-APP1', 'software', 1),
+    B.upd('2026-03-09T10:05:00+01:00', N, 'reclassify', { impact: 1 })]));
+  const tk = E.humanTasks.required.find(t => t.lid === `mia:${N}`);
+  return all(expect(E, `rcl:${N}:${Z('2026-03-09T10:05:00+01:00')}`, { match: { impact: 1, urgency: 1, priority: 1 } }),
+    tk && tk.window.earliest === ms('2026-03-09T10:00:00+01:00') && tk.window.latest === ms('2026-03-09T10:15:00+01:00') ? true : `task ${JSON.stringify(tk?.window)}`);
+});
+
+// G14d R7.3, S11: the approval becomes moot once, at the first instant it is moot; later changes do not move it. A P1
+// report (CI-PAY-APP1, urgency 1) opened Mon 2026-03-09 10:00+01:00 is resolved at 10:05, before any task, and the caller
+// confirms at 10:08 (closed). A task is no longer required and is allowed only in [10:00, 10:05] (S11).
+golden('G14d an approval is moot from the first instant it is moot', 'R7.3, S11', tr => {
+  const B = builder(), N = 'INC-RPT-G14-0004';
+  const E = tr(W3, B.view('2026-03-09T10:10:00+01:00', N, [B.report('2026-03-09T10:00:00+01:00', 'RPT-G14-0004', EU.userId, 'CI-PAY-APP1', 'software', 1),
+    B.upd('2026-03-09T10:05:00+01:00', N, 'resolve', { closeCode: 'fixed' }), B.caller('2026-03-09T10:08:00+01:00', N, 'confirm')]));
+  if (E.humanTasks.required.length) return `a task still required: ${JSON.stringify(E.humanTasks.required[0].window)}`;
+  const p = E.humanTasks.permitted.find(x => x.kind === 'majorIncidentApproval');
+  return p && p.window.earliest === ms('2026-03-09T10:00:00+01:00') && p.window.latest === ms('2026-03-09T10:05:00+01:00') ? true : `permitted ${JSON.stringify(p?.window)}`;
+});
+
+// G16b R1.3, R1.4: a joining alert delivered again changes nothing: one link, due within 15 min of its first delivery.
+golden('G16b a joining alert delivered again changes nothing', 'R1.3, R1.4', tr => {
+  const B = builder(), N = 'INC-ALR-G16-0101';
+  const join = B.alert('2026-03-10T10:10:00+01:00', 'ALR-G16-0102', 'CI-CRM-APP1', 'http', 'minor');
+  const E = tr(W3, B.view('2026-03-10T10:14:00+01:00', N, [B.alert('2026-03-10T10:00:00+01:00', 'ALR-G16-0101', 'CI-CRM-APP1', 'http', 'major'), join,
+    { ...join, id: 'g-again', seq: 99, at: ms('2026-03-10T10:13:00+01:00') }]));
+  return all(expect(E, `lnk:${N}:ALR-G16-0102`, { earliest: '2026-03-10T10:10:00+01:00', latest: '2026-03-10T10:25:00+01:00' }),
+    lids(E).filter(l => l.startsWith(`lnk:${N}:`)).length === 1 ? true : `links ${lids(E).filter(l => l.startsWith('lnk:'))}`);
+});
+
+// A P4 report (CI-LT-EU, SVC-LAPTOP impact 3, urgency 2) opened Tue 2026-03-10 10:00+01:00 and accepted at 10:30.
+const p4 = (B, N) => [B.report('2026-03-10T10:00:00+01:00', N.slice(4), EU.userId, 'CI-LT-EU', 'hardware', 2), B.upd('2026-03-10T10:30:00+01:00', N, 'accept', { user: 'u-a' })];
+
+// G25 R3.3: updates about a resolved incident change nothing: resolved at 11:00, then an accept at 11:30 and a
+// reassignment at 11:40 record nothing, and the auto-closure stays due at D2.
+golden('G25 updates about a resolved incident change nothing', 'R3.3, R6.5', tr => {
+  const B = builder(), N = 'INC-RPT-G25-0001';
+  const E = tr(W3, B.view('2026-03-10T11:45:00+01:00', N, [...p4(B, N), B.upd('2026-03-10T11:00:00+01:00', N, 'resolve', { closeCode: 'fixed' }),
+    B.upd('2026-03-10T11:30:00+01:00', N, 'accept', { user: 'u-b' }), B.upd('2026-03-10T11:40:00+01:00', N, 'reassign', { toGroup: 'GRP-APP-US' })]));
+  return all(has(E, `acc:${N}:${Z('2026-03-10T11:30:00+01:00')}`) ? 'an accept after the resolution was recorded' : true,
+    has(E, `asg:${N}:2`) ? 'a reassignment after the resolution was recorded' : true, expect(E, `cls:${N}:auto`, { match: { at: Z('2026-03-12T11:00:00+01:00') } }));
+});
+
+// G26 R3.2, R8.1: a reassignment clears the assignee: accepted by u-a at 10:30, reassigned to New York at 11:00, withdrawn
+// at 11:30 before anyone accepts it: the record has no assignee and the new group.
+golden('G26 a reassignment clears the assignee', 'R3.2, R6.6, R8.1', tr => {
+  const B = builder(), N = 'INC-RPT-G26-0001';
+  const E = tr(W3, B.view('2026-03-10T11:31:00+01:00', N, [...p4(B, N), B.upd('2026-03-10T11:00:00+01:00', N, 'reassign', { toGroup: 'GRP-APP-US' }),
+    B.caller('2026-03-10T11:30:00+01:00', N, 'withdraw')]));
+  const r = E.records?.incident;
+  return E.terminal && r && r.assignee === null && r.group === 'GRP-APP-US' && r.state === 'cancelled' ? true : `records ${JSON.stringify(r)}`;
+});
+
+// G27 R2.3, R0: a reclassification records a change of any of impact, urgency and priority, and nothing otherwise.
+//   (a) SVC-INTRANET (impact 1) urgency 2 -> 1: priority 2 both times (the override row gives 2): recorded.
+//   (b) the same values again: nothing.
+//   (c) d4: SVC-MAIL (impact 2) urgency 2 is P3 in edition 1; on Mon 03-23 (edition 2, its override row gives 2) a
+//       reclassification with the same impact and urgency changes the priority: recorded with priority 2.
+golden('G27 a reclassification records any change and nothing else', 'R2.3, R2.2, R0', tr => {
+  let B = builder();
+  const N = 'INC-RPT-G27-0001';
+  const E = tr(W3, B.view('2026-03-10T10:21:00+01:00', N, [B.report('2026-03-10T10:00:00+01:00', 'RPT-G27-0001', EU.userId, 'CI-INTRA-WEB1', 'software', 2),
+    B.upd('2026-03-10T10:10:00+01:00', N, 'reclassify', { urgency: 1 }), B.upd('2026-03-10T10:20:00+01:00', N, 'reclassify', { urgency: 1, impact: 1 })]));
+  const r1 = all(expect(E, `rcl:${N}:${Z('2026-03-10T10:10:00+01:00')}`, { match: { impact: 1, urgency: 1, priority: 2 } }),
+    has(E, `rcl:${N}:${Z('2026-03-10T10:20:00+01:00')}`) ? 'a reclassification that changes nothing was recorded' : true);
+  if (r1 !== true) return r1;
+  B = builder(W4);
+  const M = 'INC-RPT-G27-0002';
+  const E2 = tr(W4, B.view('2026-03-23T10:01:00+01:00', M, [B.report('2026-03-20T10:00:00+01:00', 'RPT-G27-0002', EU.userId, 'CI-MX-AMS01', 'software', 2),
+    B.upd('2026-03-23T10:00:00+01:00', M, 'reclassify', { urgency: 2 })]));
+  return all(expect(E2, `create:${M}`, { match: { priority: 3 } }), expect(E2, `rcl:${M}:${Z('2026-03-23T10:00:00+01:00')}`, { match: { impact: 2, urgency: 2, priority: 2 } }),
+    E2.decisions.graded.priority === 2 ? true : `decision priority ${E2.decisions.graded.priority}`);
+});
+
+// G28 R6.2: a caller's reply counts only while the incident is on hold awaiting the caller: on hold awaitingVendor at
+// 11:00, a reply at 12:00 changes nothing.
+golden('G28 a reply during a hold for another reason changes nothing', 'R6.2', tr => {
+  const B = builder(), N = 'INC-RPT-G28-0001';
+  const E = tr(W3, B.view('2026-03-10T12:01:00+01:00', N, [...p4(B, N), B.upd('2026-03-10T11:00:00+01:00', N, 'hold', { holdReason: 'awaitingVendor' }),
+    B.caller('2026-03-10T12:00:00+01:00', N, 'reply')]));
+  return all(expect(E, `hold:${N}:${Z('2026-03-10T11:00:00+01:00')}`), findBy(E, e => e.lid.startsWith(`res:${N}:`)) ? 'the reply resumed the incident' : true);
+});
+
+// G10b R6.5, S1: resolved Fri 2026-03-06 12:00+01:00, D2 Tue 03-10 12:00: a confirmation exactly at D2 counts (closed
+// `confirmed` at D2, no auto-closure); a confirmation before the resolution changes nothing.
+golden('G10b a confirmation at D2 counts; one before the resolution changes nothing', 'R6.5, S1', tr => {
+  const N = 'INC-RPT-G10-0002', D2 = '2026-03-10T12:00:00+01:00';
+  const base = B => [B.report('2026-03-06T10:00:00+01:00', 'RPT-G10-0002', EU.userId, 'CI-LT-EU', 'hardware', 2), B.upd('2026-03-06T10:30:00+01:00', N, 'accept')];
+  let B = builder();
+  const E = tr(W3, B.view('2026-03-10T12:01:00+01:00', N, [...base(B), B.upd('2026-03-06T12:00:00+01:00', N, 'resolve', { closeCode: 'fixed' }), B.caller(D2, N, 'confirm')]));
+  const r = all(expect(E, `cls:${N}:confirmed`, { match: { at: Z(D2) } }), has(E, `cls:${N}:auto`) ? 'auto-closure still due after a confirmation at D2' : true);
+  if (r !== true) return `confirmation at D2: ${r}`;
+  B = builder();
+  const E2 = tr(W3, B.view('2026-03-06T12:01:00+01:00', N, [...base(B), B.caller('2026-03-06T11:00:00+01:00', N, 'confirm'), B.upd('2026-03-06T12:00:00+01:00', N, 'resolve', { closeCode: 'fixed' })]));
+  return all(has(E2, `cls:${N}:confirmed`) ? 'a confirmation before the resolution closed the incident' : true, expect(E2, `cls:${N}:auto`, { match: { at: Z(D2) } }));
+});
+
+// G18b R6.6: a withdrawal after the resolution changes nothing: resolved 11:00, withdrawn 11:30: no cancellation, the
+// auto-closure stays due.
+golden('G18b a withdrawal after the resolution changes nothing', 'R6.6, R6.5', tr => {
+  const B = builder(), N = 'INC-RPT-G18-0003';
+  const E = tr(W3, B.view('2026-03-10T11:31:00+01:00', N, [...p4(B, N), B.upd('2026-03-10T11:00:00+01:00', N, 'resolve', { closeCode: 'fixed' }),
+    B.caller('2026-03-10T11:30:00+01:00', N, 'withdraw')]));
+  return all(has(E, `cnc:${N}`) || has(E, `ntf:${N}:incident-cancelled`) ? 'cancelled after the resolution' : true, expect(E, `cls:${N}:auto`));
+});
+
+// G14e R7.2: a re-ask is allowed up to and including the deadline: first task 10:05 (deadline 10:35), an unusable answer
+// at 10:20, the re-ask at 10:35 and its approve at 10:35 count: setMajor at 10:35, no declaration.
+golden('G14e a re-ask at the deadline counts', 'R7.2, S1', tr => {
+  const B = builder(), N = 'INC-RPT-G14-0005', dl = '2026-03-09T10:35:00+01:00';
+  const ev = [B.report('2026-03-09T10:00:00+01:00', 'RPT-G14-0005', EU.userId, 'CI-PAY-APP1', 'software', 1)];
+  const t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]), u = B.answer('2026-03-09T10:20:00+01:00', null);
+  const t2 = B.task(dl, N, [EU.userId], 'mia#2');
+  const E = tr(W3, B.view('2026-03-09T10:36:00+01:00', N, ev, { tasks: [t1, t2], taskEvents: [u, B.answer(dl, 'approve', 'mia#2')] }));
+  return all(expect(E, `maj:${N}:approved`, { match: { at: Z(dl) } }), has(E, `maj:${N}:declared`) ? 'declared although the re-ask at the deadline was approved' : true);
+});
+
+// G14f R6.3, R7.3: a closure at the caller deadline makes a pending approval moot. A P3 report (CI-SW-AMS1, impact 1,
+// urgency 3) opened Mon 2026-03-09 10:00+01:00, accepted 10:30, on hold awaiting the caller 11:00 (D = Thu 03-12 11:00);
+// reclassified to urgency 1 (P1) Thu 10:50 during the hold; the approval task is created 10:55 (deadline 11:25). No reply
+// and no answer: the incident is closed at D (11:00), before the approval deadline, so the approval is moot: no
+// declaration at 11:25.
+golden('G14f a closure at the caller deadline makes a pending approval moot', 'R6.3, R7.3, S10', tr => {
+  const B = builder(), N = 'INC-RPT-G14-0006', D = '2026-03-12T11:00:00+01:00';
+  const E = tr(W3, B.view('2026-03-12T11:30:00+01:00', N, [B.report('2026-03-09T10:00:00+01:00', 'RPT-G14-0006', EU.userId, 'CI-SW-AMS1', 'software', 3),
+    B.upd('2026-03-09T10:30:00+01:00', N, 'accept'), B.upd('2026-03-09T11:00:00+01:00', N, 'hold', { holdReason: 'awaitingCaller' }),
+    B.upd('2026-03-12T10:50:00+01:00', N, 'reclassify', { urgency: 1 })], { tasks: [B.task('2026-03-12T10:55:00+01:00', N, [EU.userId])] }));
+  return all(expect(E, `cls:${N}:no-caller-response`, { match: { at: Z(D) } }),
+    findBy(E, e => e.lid.startsWith(`maj:${N}`)) ? `declared after the closure made the approval moot: ${lids(E).filter(l => l.startsWith('maj:'))}` : true);
+});
+
+// G14g R7.2, R6.3, R4.2, R4.3, R4.5, S14 (d4, edition 2 with RES-MAJOR): deadlines are taken in time order, before any
+// later event. A P1 report (CI-PAY-APP1, urgency 1) opened Mon 2026-03-23 10:00+01:00, accepted 10:02, on hold awaiting
+// the caller 10:04 (D = Thu 03-26 10:04: Mon 416 + Tue 480 + Wed 480 + Thu 64 business minutes); task 10:05 (deadline
+// 10:35), no answer. The fail-safe declaration at 10:35 attaches RES-MAJOR (retroactive, paused since 10:04: S14); its
+// records are due after the deadline, in (10:35, 10:50] (R4.5).
+//   (a) the caller replies at 11:00: RES-MAJOR resumes at 11:00 and nothing is closed;
+//   (b) no reply: the closure at D comes after the declaration, so RES-MAJOR, attached at 10:35, stops at D.
+golden('G14g a declaration at the deadline comes before later events and deadlines', 'R7.2, R6.3, R4.2, R4.3, R4.5, S14', tr => {
+  const N = 'INC-RPT-G14-0007', S = `${N}/RES-MAJOR/1`, after = new Date(ms('2026-03-23T10:35:00+01:00') + 1000).toISOString();
+  const run = (at, reply) => {
+    const B = builder(W4);
+    const ev = [B.report('2026-03-23T10:00:00+01:00', 'RPT-G14-0007', EU.userId, 'CI-PAY-APP1', 'software', 1), B.upd('2026-03-23T10:02:00+01:00', N, 'accept'),
+      B.upd('2026-03-23T10:04:00+01:00', N, 'hold', { holdReason: 'awaitingCaller' })];
+    if (reply) ev.push(B.caller('2026-03-23T11:00:00+01:00', N, 'reply'));
+    return tr(W4, B.view(at, N, ev, { tasks: [B.task('2026-03-23T10:05:00+01:00', N, [EU.userId])] }));
+  };
+  const E = run('2026-03-23T11:01:00+01:00', true);
+  const ra = all(expect(E, `maj:${N}:declared`, { match: { at: Z('2026-03-23T10:35:00+01:00') } }),
+    expect(E, `sla:${S}:start`, { earliest: after, latest: '2026-03-23T10:50:00+01:00' }), expect(E, `sla:${S}:pause:${Z('2026-03-23T10:04:00+01:00')}`, { earliest: after }),
+    expect(E, `sla:${S}:resume:${Z('2026-03-23T11:00:00+01:00')}`, { earliest: '2026-03-23T11:00:00+01:00' }),
+    has(E, `cls:${N}:no-caller-response`) ? 'closed although the caller replied' : true);
+  if (ra !== true) return `reply: ${ra}`;
+  const E2 = run('2026-03-26T11:05:00+01:00', false);
+  return all(expect(E2, `sla:${S}:start`, { earliest: after }), expect(E2, `cls:${N}:no-caller-response`, { match: { at: Z('2026-03-26T10:04:00+01:00') } }),
+    expect(E2, `sla:${S}:stop`, { match: { at: Z('2026-03-26T10:04:00+01:00') } }));
+});
+
+// G9c R6.3, S1, R4.5: at the caller deadline itself the closure has not happened (a reply at D still counts): at D the
+// closure is due in (D, D + 60 min], and the SLA records it causes are not yet due (they come with it).
+golden('G9c nothing is closed at the deadline instant itself', 'R6.3, S1, R4.5', tr => {
+  const B = builder(), N = 'INC-RPT-G9-0003', D = '2026-03-18T16:00:00+01:00';
+  const E = tr(W3, B.view(D, N, [B.report('2026-03-13T10:00:00+01:00', 'RPT-G9-0003', EU.userId, 'CI-LT-EU', 'hardware', 2), B.upd('2026-03-13T10:30:00+01:00', N, 'accept'),
+    B.upd('2026-03-13T16:00:00+01:00', N, 'hold', { holdReason: 'awaitingCaller' })]));
+  return all(expect(E, `cls:${N}:no-caller-response`, { earliest: new Date(ms(D) + 1000).toISOString(), latest: '2026-03-18T17:00:00+01:00' }),
+    has(E, `sla:${N}/RES-P4/1:stop`) ? 'an SLA record of the closure is due at the deadline itself' : true);
+});
+
+// G9d R4.5, R6.3, S10: an event and the caller deadline in one instant. A P2 report (CI-INTRA-WEB1, SVC-INTRANET impact
+// 1, urgency 2) opened Mon 2026-03-09 10:00+01:00, accepted 10:30, on hold awaiting the caller Tue 03-10 10:00 (D = Fri
+// 03-13 10:00); a resolver reclassifies urgency to 1 at D (priority stays 2: recorded, R2.3). No reply: the closure is
+// due in (D, D + 60 min] and the SLA records it causes (RES-P2 stops at D) are due in its window, to D + 60 min.
+golden('G9d an event and the caller deadline in one instant', 'R4.5, R6.3, S10', tr => {
+  const B = builder(), N = 'INC-RPT-G9-0004', D = '2026-03-13T10:00:00+01:00';
+  const E = tr(W3, B.view('2026-03-13T10:01:00+01:00', N, [B.report('2026-03-09T10:00:00+01:00', 'RPT-G9-0004', EU.userId, 'CI-INTRA-WEB1', 'software', 2),
+    B.upd('2026-03-09T10:30:00+01:00', N, 'accept'), B.upd('2026-03-10T10:00:00+01:00', N, 'hold', { holdReason: 'awaitingCaller' }), B.upd(D, N, 'reclassify', { urgency: 1 })]));
+  return all(expect(E, `rcl:${N}:${Z(D)}`, { match: { urgency: 1, priority: 2 }, latest: '2026-03-13T10:15:00+01:00' }),
+    expect(E, `cls:${N}:no-caller-response`, { match: { at: Z(D) }, latest: '2026-03-13T11:00:00+01:00' }),
+    expect(E, `sla:${N}/RES-P2/1:stop`, { match: { at: Z(D) }, latest: '2026-03-13T11:00:00+01:00' }));
+});
+
+// G29 R8.2, R4.5, R8.1: records come in order: nothing about an incident before its create, and an SLA's records in
+// lifecycle order (start, then each pause before its resume), also for the past pauses of a retroactive SLA (G11's history).
+golden('G29 records after the create, an SLA\'s records in lifecycle order', 'R8.2, R4.5, R8.1', tr => {
+  const B = builder(), N = 'INC-RPT-G29-0001', S = `${N}/RES-P3/1`, x = '2026-03-17T13:00:00+01:00';
+  const E = tr(W3, B.view('2026-03-17T13:01:00+01:00', N, [B.report('2026-03-16T09:00:00+01:00', 'RPT-G29-0001', EU.userId, 'CI-LT-EU', 'hardware', 2),
+    B.upd('2026-03-16T10:00:00+01:00', N, 'accept'), B.upd('2026-03-16T13:00:00+01:00', N, 'hold', { holdReason: 'awaitingCaller' }),
+    B.caller('2026-03-16T15:00:00+01:00', N, 'reply'), B.upd(x, N, 'reclassify', { urgency: 1 })]));
+  const after = (id, pred) => { const e = find(E, id); return e && (e.after ?? []).includes(pred) ? true : `${id} not after ${pred} (${JSON.stringify(e?.after ?? null)})`; };
+  const p = `sla:${S}:pause:${Z('2026-03-16T13:00:00+01:00')}`, r = `sla:${S}:resume:${Z('2026-03-16T15:00:00+01:00')}`;
+  return all(after(`asg:${N}:1`, `create:${N}`), after(`ntf:${N}:assignment:1`, `create:${N}`), after(`rcl:${N}:${Z(x)}`, `create:${N}`),
+    after(`sla:${S}:start`, `create:${N}`), after(p, `sla:${S}:start`), after(r, p));
+});
+
+// G30 R5.2, S5: an escalation's recipient is read after every change of the instant it becomes due. A critical alert on
+// CI-SW-AMS1 (P1; RES-P1 240 min 24x7) opened Tue 2026-03-10 10:00+01:00 and reassigned to New York at 12:00, the very
+// instant 50% is reached: the 50% notice goes to the new group's mailbox, 75% (13:00) to its manager.
+golden('G30 an escalation due at a reassignment goes to the new group', 'R5.1, R5.2, S5', tr => {
+  const B = builder(), N = 'INC-ALR-G30-0001', S = `${N}/RES-P1/1`;
+  const E = tr(W3, B.view('2026-03-10T12:01:00+01:00', N, [B.alert('2026-03-10T10:00:00+01:00', 'ALR-G30-0001', 'CI-SW-AMS1', 'ping', 'critical'),
+    B.upd('2026-03-10T12:00:00+01:00', N, 'reassign', { toGroup: 'GRP-APP-US' })]));
+  return all(expect(E, `esc:${S}:50`, { match: { to: G('GRP-APP-US').mailbox }, earliest: '2026-03-10T12:00:00+01:00' }),
+    expect(E, `esc:${S}:75`, { match: { to: G('GRP-APP-US').managerEmail }, earliest: '2026-03-10T13:00:00+01:00' }));
+});
+
+// G14h R7.2, R7.3, S11: approval tasks around moot and re-ask causes (P1 report on CI-PAY-APP1 opened Mon 2026-03-09
+// 10:00+01:00, first task 10:05, deadline 10:35).
+//   (a) a task created in the instant the incident is resolved, before the resolution, was taken before the approval
+//       became moot: it stays the required task (S11), and a second task is not permitted;
+//   (b) an unusable answer exactly at the deadline still allows a re-ask at the deadline;
+//   (c) once an answer counts, no re-ask is permitted, even with a cause left over;
+//   (d) with two unused causes the re-ask window opens at the first.
+golden('G14h approval tasks at the moot instant, re-ask windows and leftover causes', 'R7.2, R7.3, S11', tr => {
+  const N = 'INC-RPT-G14-0008', open = B => [B.report('2026-03-09T10:00:00+01:00', 'RPT-G14-0008', EU.userId, 'CI-PAY-APP1', 'software', 1)];
+  const reask = E => E.humanTasks.permitted.filter(p => p.rule === 'R7.2');
+  let B = builder();
+  const t0 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+  let E = tr(W3, B.view('2026-03-09T10:06:00+01:00', N, [...open(B), B.upd('2026-03-09T10:05:00+01:00', N, 'resolve', { closeCode: 'fixed' })], { tasks: [t0] }));
+  const tk = E.humanTasks.required.find(t => t.lid === `mia:${N}`);
+  if (!tk || E.humanTasks.permitted.some(p => p.kind === 'majorIncidentApproval')) return `(a) required ${JSON.stringify(tk?.window)}, permitted ${JSON.stringify(E.humanTasks.permitted)}`;
+  B = builder();
+  let t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+  E = tr(W3, { ...B.view('2026-03-09T10:35:00+01:00', N, open(B), { tasks: [t1], taskEvents: [B.answer('2026-03-09T10:35:00+01:00', null)] }) });
+  let P = reask(E);
+  if (P.length !== 1 || P[0].window.earliest !== ms('2026-03-09T10:35:00+01:00') || P[0].window.latest !== ms('2026-03-09T10:35:00+01:00')) return `(b) ${JSON.stringify(P)}`;
+  B = builder();
+  t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+  const rj = B.taskEvent('2026-03-09T10:15:00+01:00', 'humanTask.answerRejected'), un = B.answer('2026-03-09T10:20:00+01:00', null);
+  const t2 = B.task('2026-03-09T10:22:00+01:00', N, [EU.userId], 'mia#2');
+  E = tr(W3, B.view('2026-03-09T10:30:00+01:00', N, open(B), { tasks: [t1, t2], taskEvents: [rj, un, B.answer('2026-03-09T10:25:00+01:00', 'approve', 'mia#2')] }));
+  if (!has(E, `maj:${N}:approved`) || reask(E).length) return `(c) approved ${has(E, `maj:${N}:approved`)}, re-ask ${JSON.stringify(reask(E))}`;
+  B = builder();
+  t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+  E = tr(W3, B.view('2026-03-09T10:21:00+01:00', N, open(B), { tasks: [t1], taskEvents: [B.taskEvent('2026-03-09T10:15:00+01:00', 'humanTask.answerRejected'), B.answer('2026-03-09T10:20:00+01:00', null)] }));
+  P = reask(E);
+  return P.length === 1 && P[0].window.earliest === ms('2026-03-09T10:15:00+01:00') && P[0].window.latest === ms('2026-03-09T10:35:00+01:00') ? true : `(d) ${JSON.stringify(P)}`;
+});
+
+// G14i R4.5, R5.1, S10, S12 (d4, edition 2): an SLA that the fail-safe declaration attaches, with its target reached
+// exactly at the attach. A P3 report (CI-SW-AMS1, impact 1, urgency 3) opened Mon 2026-03-23 10:00+01:00 is reclassified
+// to urgency 1 (P1) at 11:25; task 11:30, deadline 12:00, no answer: declared at 12:00. RES-MAJOR (120 min, 24x7,
+// retroactive from 10:00) attaches at 12:00 with D = 12:00: its breach and its 100% notice are records of the
+// declaration, due in (12:00, 12:15]; the 50% notice (reached 11:00, before the attach) too.
+golden('G14i an SLA attached by the fail-safe declaration, breached at its attach', 'R4.5, R5.1, R7.2, S10, S12', tr => {
+  const B = builder(W4), N = 'INC-RPT-G14-0009', S = `${N}/RES-MAJOR/1`, after = new Date(ms('2026-03-23T12:00:00+01:00') + 1000).toISOString();
+  const E = tr(W4, B.view('2026-03-23T12:01:00+01:00', N, [B.report('2026-03-23T10:00:00+01:00', 'RPT-G14-0009', EU.userId, 'CI-SW-AMS1', 'software', 3),
+    B.upd('2026-03-23T11:25:00+01:00', N, 'reclassify', { urgency: 1 })], { tasks: [B.task('2026-03-23T11:30:00+01:00', N, [EU.userId])] }));
+  return all(expect(E, `maj:${N}:declared`, { match: { at: Z('2026-03-23T12:00:00+01:00') } }),
+    expect(E, `sla:${S}:breach`, { match: { at: Z('2026-03-23T12:00:00+01:00') }, earliest: after, latest: '2026-03-23T12:15:00+01:00' }),
+    expect(E, `esc:${S}:100`, { earliest: after, latest: '2026-03-23T12:15:00+01:00' }), expect(E, `esc:${S}:50`, { earliest: after }));
+});
+
+// G30b R5.2, S12: a notice for a threshold reached before the SLA attached goes to the group at the attach, when it
+// becomes due. A P3 report (CI-SW-AMS1, urgency 3) opened Tue 2026-03-10 10:00+01:00 (group GRP-NET-EU); 50% of RES-P1
+// (240 min, 24x7, retroactive) falls at 12:00; reassigned to New York at 12:15; reclassified to P1 at 12:30 (attach):
+// the 50% notice is due from 12:30, to the New York mailbox.
+golden('G30b a notice reached before the attach goes to the group at the attach', 'R5.1, R5.2, S12', tr => {
+  const B = builder(), N = 'INC-RPT-G30-0002', S = `${N}/RES-P1/1`;
+  const E = tr(W3, B.view('2026-03-10T12:31:00+01:00', N, [B.report('2026-03-10T10:00:00+01:00', 'RPT-G30-0002', EU.userId, 'CI-SW-AMS1', 'software', 3),
+    B.upd('2026-03-10T12:15:00+01:00', N, 'reassign', { toGroup: 'GRP-APP-US' }), B.upd('2026-03-10T12:30:00+01:00', N, 'reclassify', { urgency: 1 })]));
+  return expect(E, `esc:${S}:50`, { match: { to: G('GRP-APP-US').mailbox }, earliest: '2026-03-10T12:30:00+01:00' });
+});
+
+// G31 R8.1, R4.5: the record of an SLA paused twice lists both pauses, each closed by its resume. A P4 report (CI-LT-EU)
+// opened Tue 2026-03-10 10:00+01:00, accepted 10:30, on hold awaiting the caller 11:00-12:00 and 13:00-14:00 (replies),
+// resolved 15:00, confirmed 15:30.
+golden('G31 the record of an SLA paused twice', 'R8.1, R4.5, R6.2', tr => {
+  const B = builder(), N = 'INC-RPT-G31-0001';
+  const E = tr(W3, B.view('2026-03-10T15:31:00+01:00', N, [B.report('2026-03-10T10:00:00+01:00', 'RPT-G31-0001', EU.userId, 'CI-LT-EU', 'hardware', 2),
+    B.upd('2026-03-10T10:30:00+01:00', N, 'accept'), B.upd('2026-03-10T11:00:00+01:00', N, 'hold', { holdReason: 'awaitingCaller' }), B.caller('2026-03-10T12:00:00+01:00', N, 'reply'),
+    B.upd('2026-03-10T13:00:00+01:00', N, 'hold', { holdReason: 'awaitingCaller' }), B.caller('2026-03-10T14:00:00+01:00', N, 'reply'),
+    B.upd('2026-03-10T15:00:00+01:00', N, 'resolve', { closeCode: 'fixed' }), B.caller('2026-03-10T15:30:00+01:00', N, 'confirm')]));
+  const s = E.records?.slas?.[`${N}/RES-P4/1`];
+  const want = [{ from: '2026-03-10T10:00:00Z', to: '2026-03-10T11:00:00Z' }, { from: '2026-03-10T12:00:00Z', to: '2026-03-10T13:00:00Z' }];
+  return E.terminal && s && JSON.stringify(s.pauses) === JSON.stringify(want) && s.stage === 'completed' ? true : `record ${JSON.stringify(s)}`;
+});
+
+// G20b S5, R4.2: the changes of one instant are applied together before the SLAs are evaluated (G20's history: a reply
+// and a reclassification to P1 at 11:30): RES-P3, paused since 10:30, is cancelled `start-failed` at 11:30 and is not
+// resumed first.
+golden('G20b the changes of one instant are applied together', 'R4.2, S5', tr => {
+  const B = builder(), N = 'INC-RPT-G20-0002', x = '2026-03-10T11:30:00+01:00', h = '2026-03-10T10:30:00+01:00';
+  const E = tr(W3, B.view('2026-03-10T11:31:00+01:00', N, [B.report('2026-03-10T10:00:00+01:00', 'RPT-G20-0002', EU.userId, 'CI-SW-AMS1', 'software', 3),
+    B.upd('2026-03-10T10:10:00+01:00', N, 'accept'), B.upd(h, N, 'hold', { holdReason: 'awaitingCaller' }), B.caller(x, N, 'reply'), B.upd(x, N, 'reclassify', { urgency: 1 })]));
+  return all(expect(E, `sla:${N}/RES-P3/1:cancel`, { match: { reason: 'start-failed', at: Z(x) } }),
+    has(E, `sla:${N}/RES-P3/1:resume:${Z(x)}`) ? 'RES-P3 resumed before the reclassification in the same instant' : true);
+});
+
+// G31b R8.1 (layer 5): the arm's own SLA record, replayed from its rows, closes each pause at its resume: an SLA paused
+// twice ends with both pauses closed (the expectation of G31 for the same history).
+golden('G31b the record replayed from an SLA paused twice', 'R8.1, R4.5', (tr, recordsOf) => {
+  if (typeof recordsOf !== 'function') return 'recordsOf not supplied';
+  const [c, t] = Object.entries(W3.truth.cases).find(([, x]) => x.class === 'straight' && x.subject);
+  const N = t.subject, K = { number: N, definition: 'RES-P4', generation: 1 };
+  let seq = 0;
+  const row = (system, op, args) => ({ seq: ++seq, at: 0, system, op, key: `k${seq}`, args, committed: true, case: c });
+  const ledger = [row('itsm', 'create', { number: N, priority: 4, impact: 3, urgency: 2, openedAt: '2026-03-10T09:00:00Z' }),
+    row('sla', 'start', { ...K, startAt: '2026-03-10T09:00:00Z', schedule: 'SCH-EU-STD', timezone: 'Europe/Amsterdam', plannedBreachAt: null }),
+    row('sla', 'pause', { ...K, at: '2026-03-10T10:00:00Z' }), row('sla', 'resume', { ...K, at: '2026-03-10T11:00:00Z', plannedBreachAt: null }),
+    row('sla', 'pause', { ...K, at: '2026-03-10T12:00:00Z' }), row('sla', 'resume', { ...K, at: '2026-03-10T13:00:00Z', plannedBreachAt: null }),
+    row('sla', 'stop', { ...K, at: '2026-03-10T14:00:00Z', elapsedMinutes: 180, businessElapsedMinutes: 180, breached: false })];
+  const r = recordsOf(W3, { bucket: () => ({ ledger, deliveries: [], tasks: [], taskEvents: [], calls: [] }) }, c);
+  const s = r.slas[`${N}/RES-P4/1`];
+  const want = [{ from: '2026-03-10T10:00:00Z', to: '2026-03-10T11:00:00Z' }, { from: '2026-03-10T12:00:00Z', to: '2026-03-10T13:00:00Z' }];
+  return s && JSON.stringify(s.pauses) === JSON.stringify(want) && s.stage === 'completed' ? true : `record ${JSON.stringify(s)}`;
+});
+
+
+// G20c S5, R4.2: at one instant each SLA is evaluated in the order cancel, stop, reset, pause/resume. A P3 report
+// (CI-LT-EU, impact 3, urgency 1) opened Tue 2026-03-10 10:00+01:00 is accepted and reclassified to urgency 3 (P5) in one
+// instant, 10:30: RSP-STD's start condition fails (whenStartFails) and its stop condition holds; the cancel comes first.
+golden('G20c cancel before stop in one instant', 'R4.2, S5', tr => {
+  const B = builder(), N = 'INC-RPT-G20-0003', x = '2026-03-10T10:30:00+01:00';
+  const E = tr(W3, B.view('2026-03-10T10:31:00+01:00', N, [B.report('2026-03-10T10:00:00+01:00', 'RPT-G20-0003', EU.userId, 'CI-LT-EU', 'hardware', 1),
+    B.upd(x, N, 'accept'), B.upd(x, N, 'reclassify', { urgency: 3 })]));
+  return all(expect(E, `sla:${N}/RSP-STD/1:cancel`, { match: { reason: 'start-failed', at: Z(x) } }), has(E, `sla:${N}/RSP-STD/1:stop`) ? 'stopped instead of cancelled' : true);
+});
+
+// G12b R4.2, R4.3: a reset re-attaches the same definition, and only it: a P1 alert (CI-SW-AMS1 critical) opened Tue
+// 2026-03-10 10:00+01:00 and reassigned to New York at 10:20, before acceptance: RSP-HI gen 1 is cancelled `reset` and
+// gen 2 starts at 10:20; RES-P1 (no reset) keeps its one generation.
+golden('G12b a reset re-attaches its own definition only', 'R4.2, R4.3', tr => {
+  const B = builder(), N = 'INC-ALR-G12-0002', x = '2026-03-10T10:20:00+01:00';
+  const E = tr(W3, B.view('2026-03-10T10:21:00+01:00', N, [B.alert('2026-03-10T10:00:00+01:00', 'ALR-G12-0002', 'CI-SW-AMS1', 'ping', 'critical'),
+    B.upd(x, N, 'reassign', { toGroup: 'GRP-APP-US' })]));
+  return all(expect(E, `sla:${N}/RSP-HI/1:cancel`, { match: { reason: 'reset', at: Z(x) } }), expect(E, `sla:${N}/RSP-HI/2:start`, { match: { startAt: Z(x) } }),
+    findBy(E, e => /\/RES-P1\/2:/.test(e.lid)) ? 'a second RES-P1 attached at the reset' : true);
+});
+
+// G12c R4.2, S15, R0 (d4): a reset re-attaches in the edition in force at the reset. A P3 report (CI-LT-EU, urgency 1) of
+// Fri 2026-03-20 10:00+01:00 (edition 1, RSP-STD 240 min) is reassigned to New York on Mon 03-23 10:00+01:00 (edition 2,
+// RSP-STD 120 min): gen 2 starts at 05:00 New York on SCH-US-STD and plans its breach 120 business minutes after 08:00,
+// 10:00 New York (14:00Z).
+golden('G12c a reset re-attaches in the edition of the reset', 'R4.2, R4.3, S15, R0', tr => {
+  const B = builder(W4), N = 'INC-RPT-G12-0003', x = '2026-03-23T10:00:00+01:00';
+  const E = tr(W4, B.view('2026-03-23T10:01:00+01:00', N, [B.report('2026-03-20T10:00:00+01:00', 'RPT-G12-0003', EU.userId, 'CI-LT-EU', 'hardware', 1),
+    B.upd(x, N, 'reassign', { toGroup: 'GRP-APP-US' })]));
+  return expect(E, `sla:${N}/RSP-STD/2:start`, { match: { startAt: Z(x), schedule: 'SCH-US-STD', timezone: 'America/New_York', plannedBreachAt: '2026-03-23T14:00:00Z' } });
 });
 
 /**

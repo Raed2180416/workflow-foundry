@@ -71,5 +71,8 @@ test('bestProbe returns the plan with the highest positive net value and reports
   if (top.net > 0) assert.deepEqual(r.probe, { j: top.j, k: top.k }); else assert.equal(r.probe, null);
   assert.ok(['agent', 'build'].includes(r.priorChoice));
   assert.throws(() => probeValue(modes, 'nope', 1, { V: 1, H: 5 }), /unknown mode/);
-  assert.throws(() => probeValue(modes, 'agent', 9, { V: 1, H: 5 }), /k must be/);
+  // A deliverable probe runs on the job's tasks, so k <= H; one on examples is bounded by kMax only (third review R2).
+  assert.throws(() => probeValue(modes, 'agent', 9, { V: 1, H: 5, deliverable: true }), /k must be/);
+  assert.throws(() => probeValue(modes, 'agent', 0, { V: 1, H: 5 }), /k must be/);
+  assert.equal(probeValue(modes, 'agent', 9, { V: 1, H: 5 }).k, 9);
 });

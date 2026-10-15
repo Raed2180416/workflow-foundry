@@ -361,8 +361,13 @@ test('minor 12: imputed dollars per (job, cell); untested tolerances reported; e
   for (let t = 0; t < 20; t++) { rows.push(row('direct-H', t, t < 17, 0.01)); rows.push(row('construct-H', t, true, 0.05)); rows.push(row('agent-O', t, t < 10, 0.1, { usdImputed: 0.4 })); }
   const L = needLabels(needTable(rows, [{ job: 'j', mode: 'construct-H', rep: 0, usd: 0.1, usdImputed: 0.9 }]), { cells: [makeCell(1, 1), makeCell(1, 100)], reps: 100 });
   assert.match(L.at('j', makeCell(1, 1)).unlabelled, /imputed dollars over 0.3 in construct-H/);
-  assert.equal(L.at('j', makeCell(1, 100)).unlabelled, null, 'at N = 100 the build is a small share, and agent-O (80% imputed) cannot reach A');
-  assert.equal(L.at('j', makeCell(1, 100)).label, 'workflow');
+  // Review 2026-10-15 (minor): the preregistered rule is literal (DESIGN §2, PREREG §5): agent-O (80% imputed) unlabels the cell
+  // even out of reach of A. The narrower "reachable" rule this test first pinned is a sensitivity (needLabels imputedRule).
+  assert.match(L.at('j', makeCell(1, 100)).unlabelled, /imputed dollars over 0.3 in agent-O/, 'literal: at N = 100 the build is a small share, but agent-O is 80% imputed');
+  assert.doesNotMatch(L.at('j', makeCell(1, 100)).unlabelled, /construct-H/, 'per cell: at N = 100 the build is a small share');
+  const R2 = needLabels(needTable(rows, [{ job: 'j', mode: 'construct-H', rep: 0, usd: 0.1, usdImputed: 0.9 }]), { cells: [makeCell(1, 1), makeCell(1, 100)], reps: 100, imputedRule: 'reachable' });
+  assert.equal(R2.at('j', makeCell(1, 100)).unlabelled, null, 'reachable (sensitivity): agent-O cannot reach A, so it does not unlabel');
+  assert.equal(R2.at('j', makeCell(1, 100)).label, 'workflow');
   // (b) A delivered row of a job with a tolerance spec but no score is reported, not passed silently.
   const fr = [0, 1, 2].flatMap(t => [{ job: 'k', mode: 'direct-H', task: `t${t}`, rep: 0, seed: 610 + t, pass: true, delivered: true, score: t === 1 ? undefined : 0.99, usdRepriced: 0.01 },
     { job: 'k', mode: 'agent-H', task: `t${t}`, rep: 0, seed: 610 + t, pass: true, delivered: true, score: 0.99, usdRepriced: 0.1 }]);

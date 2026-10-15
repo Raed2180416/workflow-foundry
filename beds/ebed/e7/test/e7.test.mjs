@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { generateWorld, twins, referenceRuns, oracle, binding, referenceTransition, recordsOf, canonicalArgs, specE, family, oracleItem, schemas } from '../index.mjs';
 import { runControl, CONTROLS, VARIANTS, targetCases, plannedView } from '../controls.mjs';
 import { runGoldens, goldens } from '../golden.mjs';
+import { mutantsOf } from '../tools/mutate.mjs';
 import { slaTimeline, reachAt, boundCalendar } from '../sla.mjs';
 import { editionAt } from '../transition.mjs';
 import { independentSlas, comparable, fuzzHistory } from './sla-independent.mjs';
@@ -526,6 +527,16 @@ test('unit check: recordsOf gives no records for a case with no incident', () =>
   const stray = Object.entries(w.truth.cases).find(([, x]) => x.subject === null)[0];
   assert.equal(recordsOf(w, { bucket: () => ({ ledger: [] }) }, stray), null);
   assert.equal(referenceTransition(w, { case: stray, at: Date.parse(w.horizonEnd), seq: Infinity, world: w, truth: w.truth.cases[stray], events: [], rows: [], tasks: [], taskEvents: [] }).records, null);
+});
+
+test('mutation operators (tools/mutate.mjs): every named operator applies, ids are unique, every mutant is a distinct module', () => {
+  const set = mutantsOf();
+  assert.deepEqual(set.notApplied, [], `named operators that no longer apply: ${set.notApplied.join('; ')}`);
+  assert.ok(set.length > 600, `${set.length} mutants`);
+  assert.equal(new Set(set.map(m => m.id)).size, set.length);
+  assert.equal(new Set(set.map(m => `${m.file}:${m.sha}`)).size, set.length);
+  for (const op of ['breach boundary inclusive (R4.6, S2)', 'holidays dropped (R4.4)', 'edition by publication (R0)', 'first-match precedence: priority (R2.2)', 'SoD exclusion dropped (R7.1)', 'recipient fixed at attach (R5.2)'])
+    assert.ok(set.some(m => m.op === op || m.aliases.includes(op)), op);
 });
 
 test('goldens discriminate: each SLA-engine control changes at least one golden (the goldens see the constructs)', () => {

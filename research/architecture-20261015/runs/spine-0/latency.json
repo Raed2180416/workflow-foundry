@@ -1,0 +1,1272 @@
+{
+ "e8": {
+  "matched": {
+   "world": "ebed-e8:w1232:d2:s12:tail",
+   "built": [
+    {
+     "arm": "B1L-H",
+     "run": "grade-s12-b1lh-e8-1",
+     "solver": "b1lh-e8-1",
+     "successes": 14,
+     "total": 14,
+     "successCi": {
+      "lo": 0.7683642383498834,
+      "hi": 1
+     },
+     "buildWallMs": 1126796,
+     "runWallMs": null,
+     "runWallWhy": "not recorded by build.mjs grade()",
+     "smokeMsPerRun": 5523.4,
+     "perSuccessBuildChargedHere": {
+      "point": 1126796,
+      "pointLo": 80485.42857142857,
+      "pointHi": 80485.42857142857,
+      "lo": 80485.42857142857,
+      "hi": 104749.05592206729
+     },
+     "perSuccessAmortised": {
+      "worlds": 10,
+      "cases": 1036,
+      "successes": 1036,
+      "point": 1126796,
+      "pointLo": 1087.6409266409266,
+      "pointHi": 1087.6409266409266,
+      "lo": 1087.6409266409266,
+      "hi": 1091.5205866991082
+     },
+     "buildUsd": 0.38794675000000006
+    },
+    {
+     "arm": "B1N-H",
+     "run": "grade-s12-b1nh-e8-2",
+     "solver": "b1nh-e8-2 <- b1lh-e8-2",
+     "successes": 14,
+     "total": 14,
+     "successCi": {
+      "lo": 0.7683642383498834,
+      "hi": 1
+     },
+     "buildWallMs": 1751842,
+     "runWallMs": null,
+     "runWallWhy": "not recorded by build.mjs grade()",
+     "smokeMsPerRun": 8311.666666666666,
+     "perSuccessBuildChargedHere": {
+      "point": 1751842,
+      "pointLo": 125131.57142857143,
+      "pointHi": 125131.57142857143,
+      "lo": 125131.57142857143,
+      "hi": 162854.49684293004
+     },
+     "perSuccessAmortised": {
+      "worlds": 10,
+      "cases": 1036,
+      "successes": 1036,
+      "point": 1751842,
+      "pointLo": 1690.9671814671815,
+      "pointHi": 1690.9671814671815,
+      "lo": 1690.9671814671815,
+      "hi": 1696.9989311677882
+     },
+     "buildUsd": 0.7211257400000002
+    },
+    {
+     "arm": "B1N-H",
+     "run": "grade-s12-b1nh-e8-3",
+     "solver": "b1nh-e8-3 <- b1lh-e8-3",
+     "successes": 14,
+     "total": 14,
+     "successCi": {
+      "lo": 0.7683642383498834,
+      "hi": 1
+     },
+     "buildWallMs": 1430654,
+     "runWallMs": null,
+     "runWallWhy": "not recorded by build.mjs grade()",
+     "smokeMsPerRun": 7533.7,
+     "perSuccessBuildChargedHere": {
+      "point": 1430654,
+      "pointLo": 102189.57142857143,
+      "pointHi": 102189.57142857143,
+      "lo": 102189.57142857143,
+      "hi": 132996.26183544248
+     },
+     "perSuccessAmortised": {
+      "worlds": 10,
+      "cases": 1036,
+      "successes": 1036,
+      "point": 1430654,
+      "pointLo": 1380.9401544401544,
+      "pointHi": 1380.9401544401544,
+      "lo": 1380.9401544401544,
+      "hi": 1385.8660249445559
+     },
+     "buildUsd": 0.58042442
+    },
+    {
+     "arm": "B1-O",
+     "run": "grade-s12-b1o-e8-1",
+     "solver": "b1o-e8-1",
+     "successes": 5,
+     "total": 14,
+     "successCi": {
+      "lo": 0.12759842985915937,
+      "hi": 0.6486198893840083
+     },
+     "buildWallMs": 1973713,
+     "runWallMs": null,
+     "runWallWhy": "not recorded by build.mjs grade()",
+     "smokeMsPerRun": null,
+     "perSuccessBuildChargedHere": {
+      "point": 1973713,
+      "pointLo": 394742.6,
+      "pointHi": 394742.6,
+      "lo": 217353.03265813767,
+      "hi": 1104868.6112800164
+     },
+     "perSuccessAmortised": {
+      "worlds": 10,
+      "cases": 1036,
+      "successes": 286,
+      "point": 1973713,
+      "pointLo": 6901.0944055944055,
+      "pointHi": 6901.0944055944055,
+      "lo": 6259.108006317759,
+      "hi": 7650.3443085169365
+     },
+     "buildUsd": 7.633058999999999
+    }
+   ],
+   "agent": [
+    {
+     "arm": "agent-H",
+     "run": "agenth-e8-s12",
+     "successes": 10,
+     "total": 14,
+     "successCi": {
+      "lo": 0.41896474281633855,
+      "hi": 0.9161106816928724
+     },
+     "wallMs": null,
+     "wallMsBounds": {
+      "lo": 2525184,
+      "hi": 6104879
+     },
+     "perSuccess": {
+      "point": null,
+      "pointLo": 252518.4,
+      "pointHi": 610487.9,
+      "lo": 196887.00210435397,
+      "hi": 1040810.2189769282
+     },
+     "usd": 1.45477258,
+     "starts": 143,
+     "businessMs": 1180980000
+    }
+   ]
+  },
+  "full": [
+   {
+    "arm": "B1-H",
+    "solver": "b1h-e8-1",
+    "gradings": [
+     "b1h-e8-1"
+    ],
+    "worlds": 9,
+    "successes": 21,
+    "total": 1022,
+    "successCi": {
+     "lo": 0.012763402554268697,
+     "hi": 0.03123892390695865
+    },
+    "buildWallMs": 1114104,
+    "runWallMs": null,
+    "perSuccessBuildOnly": {
+     "point": 1114104,
+     "pointLo": 53052.57142857143,
+     "pointHi": 53052.57142857143,
+     "lo": 34896.25103511455,
+     "hi": 85409.93094035739
+    },
+    "key": "B1-H|46433a0b268191e81334"
+   },
+   {
+    "arm": "B1-O",
+    "solver": "b1o-e8-1",
+    "gradings": [
+     "b1o-e8-1"
+    ],
+    "worlds": 9,
+    "successes": 281,
+    "total": 1022,
+    "successCi": {
+     "lo": 0.2477688611099409,
+     "hi": 0.30343605421457476
+    },
+    "buildWallMs": 1973713,
+    "runWallMs": null,
+    "perSuccessBuildOnly": {
+     "point": 1973713,
+     "pointLo": 7023.889679715303,
+     "pointHi": 7023.889679715303,
+     "lo": 6364.523927112479,
+     "hi": 7794.4662567598825
+    },
+    "key": "B1-O|5111ae6e223495f6e2bf"
+   },
+   {
+    "arm": "B1L-H",
+    "solver": "b1lh-e8-1",
+    "gradings": [
+     "regrade-oracle2-b1lh-e8-1"
+    ],
+    "worlds": 9,
+    "successes": 1022,
+    "total": 1022,
+    "successCi": {
+     "lo": 0.9963970352201768,
+     "hi": 1
+    },
+    "buildWallMs": 1126796,
+    "runWallMs": null,
+    "perSuccessBuildOnly": {
+     "point": 1126796,
+     "pointLo": 1102.5401174168298,
+     "pointHi": 1102.5401174168298,
+     "lo": 1102.5401174168298,
+     "hi": 1106.5268948468904
+    },
+    "key": "B1L-H|281885b88befff334bf9"
+   },
+   {
+    "arm": "B1L-H",
+    "solver": "b1lh-e8-2",
+    "gradings": [
+     "regrade-oracle2-b1lh-e8-2"
+    ],
+    "worlds": 9,
+    "successes": 974,
+    "total": 1022,
+    "successCi": {
+     "lo": 0.9382084460865014,
+     "hi": 0.965170552495453
+    },
+    "buildWallMs": 1457950,
+    "runWallMs": null,
+    "perSuccessBuildOnly": {
+     "point": 1457950,
+     "pointLo": 1496.8685831622176,
+     "pointHi": 1496.8685831622176,
+     "lo": 1478.0450502157876,
+     "hi": 1520.5209073532621
+    },
+    "key": "B1L-H|1e1cc5930b497fad64de"
+   },
+   {
+    "arm": "B1L-H",
+    "solver": "b1lh-e8-3",
+    "gradings": [
+     "regrade-oracle2-b1lh-e8-3"
+    ],
+    "worlds": 9,
+    "successes": 1015,
+    "total": 1022,
+    "successCi": {
+     "lo": 0.9859389968372991,
+     "hi": 0.9972419161353991
+    },
+    "buildWallMs": 1213868,
+    "runWallMs": null,
+    "perSuccessBuildOnly": {
+     "point": 1213868,
+     "pointLo": 1195.9290640394088,
+     "pointHi": 1195.9290640394088,
+     "lo": 1191.02270959795,
+     "hi": 1204.6767324248935
+    },
+    "key": "B1L-H|e99ef1b594eda163a425"
+   },
+   {
+    "arm": "B1N-H",
+    "solver": "b1nh-e8-2 <- b1lh-e8-2",
+    "gradings": [
+     "regrade-oracle2-b1nh-e8-2"
+    ],
+    "worlds": 9,
+    "successes": 1022,
+    "total": 1022,
+    "successCi": {
+     "lo": 0.9963970352201768,
+     "hi": 1
+    },
+    "buildWallMs": 1751842,
+    "runWallMs": null,
+    "perSuccessBuildOnly": {
+     "point": 1751842,
+     "pointLo": 1714.1311154598825,
+     "pointHi": 1714.1311154598825,
+     "lo": 1714.1311154598825,
+     "hi": 1720.3294017039161
+    },
+    "key": "B1N-H|bf91e7e8dc7ecad88ac7"
+   },
+   {
+    "arm": "B1N-H",
+    "solver": "b1nh-e8-3 <- b1lh-e8-3",
+    "gradings": [
+     "regrade-oracle2-b1nh-e8-3"
+    ],
+    "worlds": 9,
+    "successes": 1022,
+    "total": 1022,
+    "successCi": {
+     "lo": 0.9963970352201768,
+     "hi": 1
+    },
+    "buildWallMs": 1430654,
+    "runWallMs": null,
+    "perSuccessBuildOnly": {
+     "point": 1430654,
+     "pointLo": 1399.857142857143,
+     "pointHi": 1399.857142857143,
+     "lo": 1399.857142857143,
+     "hi": 1404.9190165924292
+    },
+    "key": "B1N-H|f399896782bee6829353"
+   }
+  ]
+ },
+ "arms": [
+  {
+   "bed": "automationbench",
+   "run": "a0-dev-first6",
+   "arm": "AB-A0:claude-haiku-5-5",
+   "origin": "third-party",
+   "evidence": "development",
+   "rows": 6,
+   "successes": 0,
+   "total": 6,
+   "successRate": 0,
+   "successCi": {
+    "lo": 0,
+    "hi": 0.45925812643990016
+   },
+   "wall": {
+    "rows": 6,
+    "p50": 52734,
+    "p90": 81203,
+    "p99": 81203,
+    "sum": 344774
+   },
+   "wallPerSuccess": null,
+   "timeToFirstEffect": {
+    "rows": 5,
+    "p50": 29733.919677734375,
+    "p90": 53596.4482421875,
+    "shareOfWallP50": 0.43293791162326867
+   },
+   "modelShareP50": 0.8537299317736596,
+   "modelShareRows": 6,
+   "concurrency": {
+    "configured": [],
+    "observedMax": 2
+   },
+   "chargedUsd": 0.08512726000000001,
+   "reportedUsd": 0.08512726000000001
+  },
+  {
+   "bed": "automationbench",
+   "run": "a0-dev60",
+   "arm": "AB-A0:claude-haiku-5-5",
+   "origin": "third-party",
+   "evidence": "development",
+   "rows": 60,
+   "successes": 12,
+   "total": 60,
+   "successRate": 0.2,
+   "successCi": {
+    "lo": 0.10784112252436162,
+    "hi": 0.32330042380128965
+   },
+   "wall": {
+    "rows": 60,
+    "p50": 60226,
+    "p90": 99447,
+    "p99": 182825,
+    "sum": 3987557
+   },
+   "wallPerSuccess": {
+    "point": 3987557,
+    "pointLo": 332296.4166666667,
+    "pointHi": 332296.4166666667,
+    "lo": 205565.09809644186,
+    "hi": 616270.3222819291
+   },
+   "timeToFirstEffect": {
+    "rows": 54,
+    "p50": 44744.591796875,
+    "p90": 82092.41674804688,
+    "shareOfWallP50": 0.6953950969108874
+   },
+   "modelShareP50": 0.9114498487316732,
+   "modelShareRows": 60,
+   "concurrency": {
+    "configured": [],
+    "observedMax": 3
+   },
+   "chargedUsd": 0.9825328900000003,
+   "reportedUsd": 0.9825328900000003
+  },
+  {
+   "bed": "automationbench",
+   "run": "a0s-dev-first6",
+   "arm": "AB-A0:claude-sonnet-5-5",
+   "origin": "third-party",
+   "evidence": "development",
+   "rows": 6,
+   "successes": 0,
+   "total": 6,
+   "successRate": 0,
+   "successCi": {
+    "lo": 0,
+    "hi": 0.45925812643990016
+   },
+   "wall": {
+    "rows": 6,
+    "p50": 29667,
+    "p90": 51452,
+    "p99": 51452,
+    "sum": 224301
+   },
+   "wallPerSuccess": null,
+   "timeToFirstEffect": {
+    "rows": 6,
+    "p50": 15886.611572265625,
+    "p90": 36460.838623046875,
+    "shareOfWallP50": 0.5354977440343016
+   },
+   "modelShareP50": 0.8090807968449792,
+   "modelShareRows": 6,
+   "concurrency": {
+    "configured": [],
+    "observedMax": 3
+   },
+   "chargedUsd": 0.8480117,
+   "reportedUsd": 0.8480117
+  },
+  {
+   "bed": "automationbench",
+   "run": "a1-dev-first6",
+   "arm": "AB-A1:claude-haiku-5-5",
+   "origin": "third-party",
+   "evidence": "development",
+   "rows": 6,
+   "successes": 0,
+   "total": 6,
+   "successRate": 0,
+   "successCi": {
+    "lo": 0,
+    "hi": 0.45925812643990016
+   },
+   "wall": {
+    "rows": 6,
+    "p50": 70802,
+    "p90": 98451,
+    "p99": 98451,
+    "sum": 427169
+   },
+   "wallPerSuccess": null,
+   "timeToFirstEffect": {
+    "rows": 6,
+    "p50": 39417.009033203125,
+    "p90": 70807.17724609375,
+    "shareOfWallP50": 0.6984620801857591
+   },
+   "modelShareP50": 0.9142538346374396,
+   "modelShareRows": 6,
+   "concurrency": {
+    "configured": [],
+    "observedMax": 2
+   },
+   "chargedUsd": 0.10050809000000002,
+   "reportedUsd": 0.10050809000000002
+  },
+  {
+   "bed": "automationbench",
+   "run": "a1-smoke-scripted-a1-smoke-1",
+   "arm": "AB-A1-scripted",
+   "origin": "third-party",
+   "evidence": "diagnostic",
+   "rows": 6,
+   "successes": 0,
+   "total": 6,
+   "successRate": 0,
+   "successCi": {
+    "lo": 0,
+    "hi": 0.45925812643990016
+   },
+   "wall": {
+    "rows": 6,
+    "p50": 1113,
+    "p90": 1242,
+    "p99": 1242,
+    "sum": 6101
+   },
+   "wallPerSuccess": null,
+   "timeToFirstEffect": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "shareOfWallP50": null
+   },
+   "modelShareP50": null,
+   "modelShareRows": 0,
+   "concurrency": {
+    "configured": [],
+    "observedMax": null
+   },
+   "chargedUsd": 0,
+   "reportedUsd": 0
+  },
+  {
+   "bed": "automationbench",
+   "run": "a1s-dev-first6",
+   "arm": "AB-A1:claude-sonnet-5-5",
+   "origin": "third-party",
+   "evidence": "development",
+   "rows": 6,
+   "successes": 1,
+   "total": 6,
+   "successRate": 0.16666666666666666,
+   "successCi": {
+    "lo": 0.0042107445144894725,
+    "hi": 0.6412345789976748
+   },
+   "wall": {
+    "rows": 6,
+    "p50": 33154,
+    "p90": 58092,
+    "p99": 58092,
+    "sum": 250529
+   },
+   "wallPerSuccess": {
+    "point": 250529,
+    "pointLo": 250529,
+    "pointHi": 250529,
+    "lo": 65116.31577729488,
+    "hi": 9916259.034394505
+   },
+   "timeToFirstEffect": {
+    "rows": 6,
+    "p50": 25583.78564453125,
+    "p90": 35513.145751953125,
+    "shareOfWallP50": 0.6113259270115183
+   },
+   "modelShareP50": 0.8699101164263738,
+   "modelShareRows": 6,
+   "concurrency": {
+    "configured": [],
+    "observedMax": 3
+   },
+   "chargedUsd": 0.9520865000000001,
+   "reportedUsd": 0.9520865000000001
+  },
+  {
+   "bed": "automationbench",
+   "run": "raw-haiku-60",
+   "arm": "AB-raw:claude-haiku-5-5",
+   "origin": "third-party",
+   "evidence": "development",
+   "rows": 60,
+   "successes": 13,
+   "total": 60,
+   "successRate": 0.21666666666666667,
+   "successCi": {
+    "lo": 0.12071602446269722,
+    "hi": 0.3419561787346522
+   },
+   "wall": {
+    "rows": 60,
+    "p50": 58268,
+    "p90": 87644,
+    "p99": 747543,
+    "sum": 4359051
+   },
+   "wallPerSuccess": {
+    "point": 4359051,
+    "pointLo": 335311.6153846154,
+    "pointHi": 335311.6153846154,
+    "lo": 212456.60853045995,
+    "hi": 601832.6922491556
+   },
+   "timeToFirstEffect": {
+    "rows": 57,
+    "p50": 34987.925537109375,
+    "p90": 64000.523681640625,
+    "shareOfWallP50": 0.6601155145487844
+   },
+   "modelShareP50": 0.9075095078425637,
+   "modelShareRows": 60,
+   "concurrency": {
+    "configured": [],
+    "observedMax": 6
+   },
+   "chargedUsd": 0.92157577,
+   "reportedUsd": 0.92157577
+  },
+  {
+   "bed": "automationbench",
+   "run": "raw-haiku-simple-sanity",
+   "arm": "AB-raw:claude-haiku-5-5",
+   "origin": "third-party",
+   "evidence": "diagnostic",
+   "rows": 10,
+   "successes": 10,
+   "total": 10,
+   "successRate": 1,
+   "successCi": {
+    "lo": 0.6915028921812394,
+    "hi": 1
+   },
+   "wall": {
+    "rows": 10,
+    "p50": 19537,
+    "p90": 27879,
+    "p99": 35928,
+    "sum": 223212
+   },
+   "wallPerSuccess": {
+    "point": 223212,
+    "pointLo": 22321.2,
+    "pointHi": 22321.2,
+    "lo": 22321.2,
+    "hi": 32279.257617551262
+   },
+   "timeToFirstEffect": {
+    "rows": 10,
+    "p50": 14527.016357421875,
+    "p90": 19202.39892578125,
+    "shareOfWallP50": 0.6887764599082195
+   },
+   "modelShareP50": 0.8003922820781827,
+   "modelShareRows": 10,
+   "concurrency": {
+    "configured": [],
+    "observedMax": 5
+   },
+   "chargedUsd": 0.03565065,
+   "reportedUsd": 0.03565065
+  },
+  {
+   "bed": "jneed2-properties",
+   "run": "jev-need2",
+   "arm": "jneed2-haiku",
+   "origin": "our-bed",
+   "evidence": "diagnostic",
+   "rows": 144,
+   "successes": 474,
+   "total": 864,
+   "successRate": 0.5486111111111112,
+   "successCi": {
+    "lo": 0.5147325269820666,
+    "hi": 0.5821571035759838
+   },
+   "wall": {
+    "rows": 144,
+    "p50": 4299,
+    "p90": 5487,
+    "p99": 20847,
+    "sum": 624430
+   },
+   "wallPerSuccess": {
+    "point": 624430,
+    "pointLo": 1317.3628691983122,
+    "pointHi": 1317.3628691983122,
+    "lo": 1241.4516682318163,
+    "hi": 1404.068850369324
+   },
+   "timeToFirstEffect": {
+    "rows": 144,
+    "p50": 4299,
+    "p90": 5487,
+    "shareOfWallP50": 1
+   },
+   "modelShareP50": 1,
+   "modelShareRows": 144,
+   "concurrency": {
+    "configured": [],
+    "observedMax": null
+   },
+   "chargedUsd": 0.07307925000000003,
+   "reportedUsd": 0.07307925000000003
+  },
+  {
+   "bed": "jneed2-properties",
+   "run": "jev-need2",
+   "arm": "jneed2-jev",
+   "origin": "our-bed",
+   "evidence": "diagnostic",
+   "rows": 144,
+   "successes": 612,
+   "total": 864,
+   "successRate": 0.7083333333333334,
+   "successCi": {
+    "lo": 0.6767722909853346,
+    "hi": 0.7384659941211593
+   },
+   "wall": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "sum": null
+   },
+   "wallPerSuccess": null,
+   "timeToFirstEffect": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "shareOfWallP50": null
+   },
+   "modelShareP50": null,
+   "modelShareRows": 0,
+   "concurrency": {
+    "configured": [],
+    "observedMax": null
+   },
+   "chargedUsd": 0.04925617200000006,
+   "reportedUsd": 0
+  },
+  {
+   "bed": "jq-t7",
+   "run": "jq-20261015",
+   "arm": "jq-b1-regex",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 200,
+   "successes": 132,
+   "total": 200,
+   "successRate": 0.66,
+   "successCi": {
+    "lo": 0.5898440609112827,
+    "hi": 0.7253317241692465
+   },
+   "wall": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "sum": null
+   },
+   "wallPerSuccess": null,
+   "timeToFirstEffect": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "shareOfWallP50": null
+   },
+   "modelShareP50": null,
+   "modelShareRows": 0,
+   "concurrency": {
+    "configured": [],
+    "observedMax": null
+   },
+   "chargedUsd": 0,
+   "reportedUsd": 0
+  },
+  {
+   "bed": "jq-t7",
+   "run": "jq-20261015",
+   "arm": "jq-haiku",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 200,
+   "successes": 187,
+   "total": 200,
+   "successRate": 0.935,
+   "successCi": {
+    "lo": 0.8914127634961839,
+    "hi": 0.9649392913430213
+   },
+   "wall": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "sum": null
+   },
+   "wallPerSuccess": null,
+   "timeToFirstEffect": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "shareOfWallP50": null
+   },
+   "modelShareP50": null,
+   "modelShareRows": 0,
+   "concurrency": {
+    "configured": [],
+    "observedMax": null
+   },
+   "chargedUsd": 0.014054090000000005,
+   "reportedUsd": 0.014054090000000005
+  },
+  {
+   "bed": "jq-t7",
+   "run": "jq-20261015",
+   "arm": "jq-jev@0.5",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 200,
+   "successes": 187,
+   "total": 200,
+   "successRate": 0.935,
+   "successCi": {
+    "lo": 0.8914127634961839,
+    "hi": 0.9649392913430213
+   },
+   "wall": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "sum": null
+   },
+   "wallPerSuccess": null,
+   "timeToFirstEffect": {
+    "rows": 0,
+    "p50": null,
+    "p90": null,
+    "shareOfWallP50": null
+   },
+   "modelShareP50": null,
+   "modelShareRows": 0,
+   "concurrency": {
+    "configured": [],
+    "observedMax": null
+   },
+   "chargedUsd": 0.027431460000000008,
+   "reportedUsd": 0
+  },
+  {
+   "bed": "wbed",
+   "run": "m1-d5",
+   "arm": "b0-call-haiku-medium",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 48,
+   "successes": 13,
+   "total": 48,
+   "successRate": 0.2708333333333333,
+   "successCi": {
+    "lo": 0.15278186860821735,
+    "hi": 0.41845636532618713
+   },
+   "wall": {
+    "rows": 48,
+    "p50": 87113,
+    "p90": 300064,
+    "p99": 300127,
+    "sum": 8686620
+   },
+   "wallPerSuccess": {
+    "point": 8686620,
+    "pointLo": 668201.5384615385,
+    "pointHi": 668201.5384615385,
+    "lo": 432473.407015646,
+    "hi": 1184507.3741313468
+   },
+   "timeToFirstEffect": {
+    "rows": 28,
+    "p50": 64908,
+    "p90": 288087,
+    "shareOfWallP50": 1
+   },
+   "modelShareP50": 1,
+   "modelShareRows": 48,
+   "concurrency": {
+    "configured": [
+     4
+    ],
+    "observedMax": 4
+   },
+   "chargedUsd": 22.326076110000002,
+   "reportedUsd": 2.32607611
+  },
+  {
+   "bed": "wbed",
+   "run": "m1-d5",
+   "arm": "b0-call-haiku-none",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 48,
+   "successes": 12,
+   "total": 48,
+   "successRate": 0.25,
+   "successCi": {
+    "lo": 0.1363722774206012,
+    "hi": 0.3959593100271165
+   },
+   "wall": {
+    "rows": 48,
+    "p50": 52931,
+    "p90": 300070,
+    "p99": 300134,
+    "sum": 6019039
+   },
+   "wallPerSuccess": {
+    "point": 6019039,
+    "pointLo": 501586.5833333333,
+    "pointHi": 501586.5833333333,
+    "lo": 316690.7373001175,
+    "hi": 919517.1350448546
+   },
+   "timeToFirstEffect": {
+    "rows": 40,
+    "p50": 49683,
+    "p90": 257606,
+    "shareOfWallP50": 1
+   },
+   "modelShareP50": 1,
+   "modelShareRows": 48,
+   "concurrency": {
+    "configured": [
+     4
+    ],
+    "observedMax": 4
+   },
+   "chargedUsd": 11.593859174999997,
+   "reportedUsd": 3.5938591750000004
+  },
+  {
+   "bed": "wbed",
+   "run": "m1-r",
+   "arm": "b0-call-haiku-medium",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 39,
+   "successes": 2,
+   "total": 39,
+   "successRate": 0.05128205128205128,
+   "successCi": {
+    "lo": 0.006271972095690356,
+    "hi": 0.17324478137360605
+   },
+   "wall": {
+    "rows": 39,
+    "p50": 386519,
+    "p90": 600135,
+    "p99": 600165,
+    "sum": 16021485
+   },
+   "wallPerSuccess": {
+    "point": 16021485,
+    "pointLo": 8010742.5,
+    "pointHi": 8010742.5,
+    "lo": 2371253.5779441055,
+    "hi": 65498905.51563274
+   },
+   "timeToFirstEffect": {
+    "rows": 29,
+    "p50": 360739,
+    "p90": 472126,
+    "shareOfWallP50": 1
+   },
+   "modelShareP50": 1,
+   "modelShareRows": 39,
+   "concurrency": {
+    "configured": [
+     4
+    ],
+    "observedMax": 4
+   },
+   "chargedUsd": 15.466700105000001,
+   "reportedUsd": 5.466700105
+  },
+  {
+   "bed": "wbed",
+   "run": "m1-r",
+   "arm": "b0-call-haiku-none",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 15,
+   "successes": 2,
+   "total": 15,
+   "successRate": 0.13333333333333333,
+   "successCi": {
+    "lo": 0.016575913440083655,
+    "hi": 0.4046026966033719
+   },
+   "wall": {
+    "rows": 15,
+    "p50": 282275,
+    "p90": 341961,
+    "p99": 398191,
+    "sum": 3729938
+   },
+   "wallPerSuccess": {
+    "point": 3729938,
+    "pointLo": 1864969,
+    "pointHi": 1864969,
+    "lo": 614584.4687167145,
+    "hi": 15001437.73265737
+   },
+   "timeToFirstEffect": {
+    "rows": 15,
+    "p50": 282275,
+    "p90": 341961,
+    "shareOfWallP50": 1
+   },
+   "modelShareP50": 1,
+   "modelShareRows": 15,
+   "concurrency": {
+    "configured": [
+     4
+    ],
+    "observedMax": 4
+   },
+   "chargedUsd": 2.426660525,
+   "reportedUsd": 2.426660525
+  },
+  {
+   "bed": "wbed",
+   "run": "m1",
+   "arm": "b0-call-haiku-medium",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 96,
+   "successes": 41,
+   "total": 96,
+   "successRate": 0.4270833333333333,
+   "successCi": {
+    "lo": 0.32661423963983116,
+    "hi": 0.5321749311977726
+   },
+   "wall": {
+    "rows": 96,
+    "p50": 48509,
+    "p90": 300041,
+    "p99": 300221,
+    "sum": 12046399
+   },
+   "wallPerSuccess": {
+    "point": 12046399,
+    "pointLo": 293814.60975609755,
+    "pointHi": 293814.60975609755,
+    "lo": 235793.3746225885,
+    "hi": 384194.28085879376
+   },
+   "timeToFirstEffect": {
+    "rows": 77,
+    "p50": 39316,
+    "p90": 212836,
+    "shareOfWallP50": 1
+   },
+   "modelShareP50": 1,
+   "modelShareRows": 96,
+   "concurrency": {
+    "configured": [
+     4
+    ],
+    "observedMax": 4
+   },
+   "chargedUsd": 20.40631996499999,
+   "reportedUsd": 1.406319965
+  },
+  {
+   "bed": "wbed",
+   "run": "m1",
+   "arm": "b0-call-haiku-none",
+   "origin": "our-bed",
+   "evidence": "development",
+   "rows": 96,
+   "successes": 38,
+   "total": 96,
+   "successRate": 0.3958333333333333,
+   "successCi": {
+    "lo": 0.29745323362628584,
+    "hi": 0.5008215710756421
+   },
+   "wall": {
+    "rows": 96,
+    "p50": 34821,
+    "p90": 283551,
+    "p99": 300089,
+    "sum": 9088498
+   },
+   "wallPerSuccess": {
+    "point": 9088498,
+    "pointLo": 239171,
+    "pointHi": 239171,
+    "lo": 189033.10007860625,
+    "hi": 318274.7520089509
+   },
+   "timeToFirstEffect": {
+    "rows": 89,
+    "p50": 34543,
+    "p90": 188350,
+    "shareOfWallP50": 1
+   },
+   "modelShareP50": 1,
+   "modelShareRows": 96,
+   "concurrency": {
+    "configured": [
+     4
+    ],
+    "observedMax": 4
+   },
+   "chargedUsd": 8.589427290000003,
+   "reportedUsd": 1.5894272899999997
+  }
+ ],
+ "faults": [
+  {
+   "bed": "ebed-e8",
+   "run": "agenth-e8-s12-run1-refused",
+   "arm": "agent-H",
+   "rowKind": "set-aside",
+   "censored": false,
+   "excluded": true,
+   "envFaults": [
+    {
+     "code": "MODEL_RATE_LIMIT",
+     "n": 13
+    }
+   ],
+   "wallMs": null,
+   "wallProv": "missing",
+   "chargedUsd": 4.80918383,
+   "reportedUsd": 0.00918383,
+   "starts": 13,
+   "concurrency": {
+    "configured": null,
+    "observedMax": null
+   },
+   "businessMs": 367080000
+  },
+  {
+   "bed": "ebed-e8",
+   "run": "agenth-e8-1-run1",
+   "arm": "agent-H",
+   "rowKind": "task",
+   "censored": true,
+   "excluded": false,
+   "envFaults": [
+    {
+     "code": "JOB_TIME_LIMIT",
+     "n": 1
+    }
+   ],
+   "wallMs": 7200000,
+   "wallProv": "doc",
+   "chargedUsd": 1.8760919700000007,
+   "reportedUsd": 1.8760919700000007,
+   "starts": 197,
+   "concurrency": {
+    "configured": null,
+    "observedMax": null
+   },
+   "businessMs": 696660000
+  },
+  {
+   "bed": "ebed-e8",
+   "run": "agenth-e8-1-run2",
+   "arm": "agent-H",
+   "rowKind": "task",
+   "censored": true,
+   "excluded": false,
+   "envFaults": [
+    {
+     "code": "JOB_TIME_LIMIT",
+     "n": 1
+    }
+   ],
+   "wallMs": 7200000,
+   "wallProv": "doc",
+   "chargedUsd": 1.6305736700000006,
+   "reportedUsd": 1.6305736700000006,
+   "starts": 171,
+   "concurrency": {
+    "configured": null,
+    "observedMax": null
+   },
+   "businessMs": 511200000
+  }
+ ],
+ "untimed": [
+  {
+   "key": "ebed-e8|b1h-e8-1|B1-H",
+   "rows": 9,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|b1o-e8-1|B1-O",
+   "rows": 9,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|regrade-oracle2-b1lh-e8-1|B1L-H",
+   "rows": 9,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|regrade-oracle2-b1lh-e8-2|B1L-H",
+   "rows": 9,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|regrade-oracle2-b1lh-e8-3|B1L-H",
+   "rows": 9,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|regrade-oracle2-b1nh-e8-2|B1N-H",
+   "rows": 9,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|regrade-oracle2-b1nh-e8-3|B1N-H",
+   "rows": 9,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|grade-s12-b1lh-e8-1|B1L-H",
+   "rows": 1,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|grade-s12-b1nh-e8-2|B1N-H",
+   "rows": 1,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|grade-s12-b1nh-e8-3|B1N-H",
+   "rows": 1,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "ebed-e8|grade-s12-b1o-e8-1|B1-O",
+   "rows": 1,
+   "why": "build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+  },
+  {
+   "key": "jq-t7|jq-20261015|jq-b1-regex",
+   "rows": 200,
+   "why": "the regex screen was not timed"
+  },
+  {
+   "key": "jq-t7|jq-20261015|jq-jev@0.5",
+   "rows": 200,
+   "why": "requests.jsonl records dispatch times only; no response time per request"
+  },
+  {
+   "key": "jq-t7|jq-20261015|jq-haiku",
+   "rows": 200,
+   "why": "haiku-calls.jsonl records no latency"
+  },
+  {
+   "key": "jneed2-properties|jev-need2|jneed2-jev",
+   "rows": 144,
+   "why": "requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+  }
+ ]
+}

@@ -1,0 +1,101 @@
+{
+ "P1": {
+  "reading": "inconclusive",
+  "thirdPartyVerdictRowShare": 0.10966415352981494,
+  "thirdPartyChargedUsdShare": 0.037467972051504844,
+  "realLogRows": 0
+ },
+ "P2": {
+  "reading": "supported",
+  "reportedUsd": 35.89260317999999,
+  "chargedUsd": 104.76929081200007,
+  "ratio": 2.9189660690417525,
+  "m1ShareOfDifference": 0.929196832779537,
+  "notInRepo": [
+   {
+    "tag": "m1-r",
+    "attempts": 8,
+    "codes": {
+     "MODEL_TIMEOUT (attempt 1, invalid: the port's 300 s deadline overrode the 600 s wall)": 4,
+     "MODEL_RATE_LIMIT": 4
+    },
+    "meterUsd": 8,
+    "from": "research/need-router-20261014/PREREG-NEED-V1.md §13 D7: attempt 1's 4 rows \"are kept outside the repository\"; at 02:09 \"four trials hit MODEL_RATE_LIMIT ... set aside outside the repository\"; §12: \"Counting the 8 set-aside attempts at their bound as well (§12): $25.8934\""
+   }
+  ],
+  "chargedWithNotInRepoUsd": 112.76929081200007
+ },
+ "P3": {
+  "reading": "inconclusive",
+  "p99OverP50": {
+   "b0-call-haiku-medium": 6.188975241707724,
+   "b0-call-haiku-none": 8.618046581086126
+  },
+  "note": "p99 at n = 96 is the maximum"
+ },
+ "P4": {
+  "reading": "supported",
+  "medianShare": 0.67548263555296,
+  "rows": 144,
+  "rowsWithNoWrite": 10
+ },
+ "P5": {
+  "reading": "supported",
+  "agentPerSuccessMs": {
+   "lowerWall": 252518.4,
+   "upperWall": 610487.9,
+   "lowerWallCi": {
+    "lo": 196887.00210435397,
+    "hi": 430514.2349253827
+   }
+  },
+  "built": [
+   {
+    "run": "grade-s12-b1lh-e8-1",
+    "perSuccessMs": 80485.42857142857,
+    "ciMs": {
+     "lo": 80485.42857142857,
+     "hi": 104749.05592206729
+    },
+    "ahead": true,
+    "separated": true
+   },
+   {
+    "run": "grade-s12-b1nh-e8-2",
+    "perSuccessMs": 125131.57142857143,
+    "ciMs": {
+     "lo": 125131.57142857143,
+     "hi": 162854.49684293004
+    },
+    "ahead": true,
+    "separated": true
+   },
+   {
+    "run": "grade-s12-b1nh-e8-3",
+    "perSuccessMs": 102189.57142857143,
+    "ciMs": {
+     "lo": 102189.57142857143,
+     "hi": 132996.26183544248
+    },
+    "ahead": true,
+    "separated": true
+   }
+  ],
+  "note": "built arms carry build (and repair) wall only: their run wall on the world was not recorded (smoke runs on practice worlds take seconds)"
+ },
+ "P6": {
+  "reading": "inconclusive",
+  "timeToFirstEffectShare": 0.37384412153236457,
+  "modelSplitShare": 0.4273447820343461,
+  "waitsShare": 0,
+  "applicableOnly": {
+   "timeToFirstEffect": 0.39497557571528263,
+   "modelSplit": 0.4273447820343461,
+   "waits": 0
+  },
+  "nonDegenerate": {
+   "timeToFirstEffect": 0.095112285336856,
+   "modelSplit": 0.10634081902245707
+  }
+ }
+}

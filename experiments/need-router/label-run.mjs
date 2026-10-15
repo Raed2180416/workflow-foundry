@@ -760,7 +760,8 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo,
     // usdMeterGap: the part of usdImputed that is the CLI's own figure above the re-price (PREREG §5 meter-gate rule: observed
     // dollars, read by metrics.mjs as such, never counted toward the 30%-imputed rule).
     ...(cost.meterUnverified ? { meterUnverified: true, usdMeterGap: r6(cost.meterGapUsd ?? 0) } : {}), ...(cost.outputFromFinal ? { outputFromFinal: true } : {}),
-    ms: rec.latencyMs ?? null, tokens: cost.tokens, turns: meta.turns ?? null, error: voided ? 'VOIDED' : rec.error?.code ?? null, rawError: rec.error?.code ?? null,
+    // at: the trial record's time (Results.append), which evaluate.mjs L6 orders the sealed envelope before.
+    ms: rec.latencyMs ?? null, at: rec.at ?? null, tokens: cost.tokens, turns: meta.turns ?? null, error: voided ? 'VOIDED' : rec.error?.code ?? null, rawError: rec.error?.code ?? null,
     void: voided ? voidReasons.join('; ') : null, ...(meta.stamp ? { stamp: meta.stamp } : {}),
   };
 }
@@ -784,7 +785,7 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
   const label = `${stage.id}.${job.id}.${mode}-L${k}`, dir = path.join(live, 'builds', label);
   const setNo = Number(Object.entries(stages.seeds.exampleSets).find(([, s]) => String(s) === String(exampleSet(stages, k)))?.[0] ?? 0);
   const probeSeeds = examples.map(t => ({ seed: t.seed, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}) }));
-  const head = { schema: 'need-build-row/1', stage: stage.id, job: job.id, mode, rep: k - 1, lineage: k, exampleSet: setNo, probeSeeds, stamp: recordStamp(ctx, mode) };
+  const head = { schema: 'need-build-row/1', stage: stage.id, job: job.id, mode, rep: k - 1, lineage: k, exampleSet: setNo, probeSeeds, stamp: recordStamp(ctx, mode), at: new Date().toISOString() };
   const key = buildKey(job.id, mode, k);
   if (b.factory === 'procedureWriter') {
     const bound = 1, runId = `procedure:${label}`;
@@ -934,7 +935,7 @@ async function runProbes({ ctx, unit, plan }) {
       const seq = r.meta?.callSeq;
       const cost = call ? priceCalls(ctx.stages.priceTable, seq ? ctx.book.attempt({ exact: `${id}:${t.taskKey}:t${d}`, seq }) : ctx.book.exact(`${id}:${t.taskKey}:t${d}`), { boundUsd: def.timeoutChargeUsd ?? 1 })
         : priceSession(ctx.stages.priceTable, def.model, { messageUsage: r.meta?.messageUsage, streamUsage: r.meta?.streamUsage, costUnknown: !!r.costUnknown, boundUsd: def.budgetUsd, reportedUsd: r.costUsd ?? 0, finalUsage: r.meta?.finalUsage ?? null, meter: ctx.meter ?? null });
-      const row = { schema: 'need-probe-row/1', stage: ctx.stage.id, job: job.id, mode, draw: d, seed: t.seed, difficulty: t.difficulty, task: t.taskKey, taskHash: t.taskHash,
+      const row = { schema: 'need-probe-row/1', stage: ctx.stage.id, job: job.id, mode, draw: d, at: new Date().toISOString(), seed: t.seed, difficulty: t.difficulty, task: t.taskKey, taskHash: t.taskHash,
         delivered: !!r.meta?.delivered, schemaValid: r.meta?.schemaValid ?? null, deployableVerdict: r.meta?.deployableVerdict ?? null,
         outputHash: r.output != null ? sha16(canonical(r.output)) : null, turns: r.meta?.turns ?? null, usdReported: r6(chargeOf(rec, 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed),
         tokens: cost.tokens, error: r.error?.code ?? null, nestedModelAttempts: r.meta?.nestedModelAttempts ?? 0, hiddenPathAttempts: r.meta?.hiddenPathAttempts ?? 0,

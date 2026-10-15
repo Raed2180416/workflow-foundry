@@ -287,7 +287,7 @@ export function leakTest(table, makeRouter, Vs) {
 
 export const DELTA = FLOOR_POINTS / 100;            // acceptable-set width: 0.03 success-equivalents (jit/stats.mjs:39)
 export const CONFIDENT = 0.8;                       // a label is confident when P(best class) >= 0.8
-export const IMPUTED_LIMIT = 0.3;                   // a (job, cell) whose label rests on a mode over 30% imputed dollars is left unlabelled
+export const IMPUTED_LIMIT = 0.3;                   // a (job, cell) where a mode of the label set is over 30% imputed dollars is left unlabelled (needLabels imputedRule)
 /** First-pass replicates (draw modes) and lineages (lineage modes) per task, DESIGN §1 table; racing only adds to them. */
 export const FIRST_PASS = Object.freeze({ 'direct-H': 2, 'agent-H': 2, 'agent-O': 1, 'agent-H+proc': 2, 'construct-H': 3, 'build-O': 1, 'ref-R1': 1, 'ref-R3': 1 });
 export { ENV_FAULT_LIMIT };
@@ -379,8 +379,10 @@ function normRow(r, { requireRepriced = false, meterGapAs = 'observed' } = {}) {
   // An explicit void reason, or label-run's VOIDED error code (whether it marks a draw or a lineage is settled in needTable).
   const voidReason = r.void ? (typeof r.void === 'string' ? r.void : 'void') : null;
   const voided = !!voidReason;
+  // ms (latency, reported per mode as a median, DESIGN §2) and at (label-run's record time, L6) are carried, never scored.
   return { job, mode, task, rep, pass: voided ? false : r.pass, delivered: voided ? false : r.delivered, schemaValid: r.schemaValid ?? true, selfVerdict: r.selfVerdict ?? null,
     deployableVerdict: r.deployableVerdict ?? null, score: typeof r.score === 'number' ? r.score : null, passAt: r.passAt ?? null,
+    ms: fin(r.ms) ?? null, at: typeof r.at === 'string' ? r.at : null,
     seed: Number.isInteger(r.seed) ? r.seed : null, taskHash: r.taskHash ?? null, usd, imputed, ...(meterGap > 0 ? { meterGap } : {}),
     error: voided ? 'VOIDED' : error, voidReason: voidReason ?? (error === 'VOIDED' ? 'VOIDED' : null), explicitVoid: voided,
     armHash: r.armHash ?? null, notRepriced: r.repriced === false, ...stampOf(r, at) };
@@ -411,6 +413,22 @@ function rowValues(x) {
  * builds, one stamp.priceTable per table, and (requireRepriced) the re-priced meter only, for rows and builds alike.
  * A gap throws; nothing is dropped silently. Modes may differ between jobs (direct-H is masked on interactive families);
  * whether a job's modes match its declared menu is checked by the caller (evaluate.mjs missingData, PREREG §5).
+ *
+ * Arm versions across jobs (review 2026-10-15, major): label-run's stamp.settingsSha is the hash of the mode's frozen arm
+ * definition, the same for every job, so one mode has ONE settingsSha across the whole table (cascades excluded): the same
+ * mode run under edited settings on another job (agent-H edited between NL1 and NL2, say) is never pooled. Under
+ * requireRepriced (the evaluator's strict meter) a table is either fully stamped or not at all: a row or build without a
+ * stamp among stamped ones throws; a table with no stamp at all is returned with `unstamped` set (its arm versions cannot
+ * be checked, so evaluate.mjs blocks claims on it). `settingsByMode` maps each stamped mode to its one settingsSha.
+ *
+ * Per-task top-ups (review 2026-10-15, major: racing bias). PREREG §4.3 gives agent-O a second draw only on the tasks where
+ * its first draw put it in the per-task acceptable set, so which tasks hold a second draw depends on the first draw's
+ * outcome: averaging each task's draws pulls the tasks where it looked good back toward the mean and keeps the bad first
+ * draws, biasing p downward. So a draw mode's SCORED replicates are the replicate indices present on every task of the job
+ * (`scoredReps`; a job-level top-up runs every task and stays in); a replicate index present on some tasks only is an
+ * outcome-dependent per-task top-up and is set aside from point utilities, the label bootstrap, the cross-fit and the
+ * cascades' pairing. It is counted (`extraDraws` per cell, `topUps` per table), never dropped silently. With no index
+ * shared by every task, each task's first (lowest-index) draw is scored. `reps` keeps every replicate (first-pass counts).
  */
 export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'fail', requireRepriced = false, meterGapAs = 'observed' } = {}) {
   if (meterGapAs !== 'observed' && meterGapAs !== 'imputed') throw new Error(`meterGapAs must be observed or imputed, got ${meterGapAs}`);
@@ -451,7 +469,7 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
     t.set(r.rep, r); c.byTask.set(r.task, t); cells.set(k, c);
   }
   for (const k of lineages.keys()) if (!cells.has(k)) { const [job, mode] = k.split('\u0000'); add(jobs, job); add(modes, mode); cells.set(k, { job, mode, byTask: new Map() }); }
-  const taskIds = new Map(), seeds = new Map(), hashes = new Map(), priceTables = new Set();
+  const taskIds = new Map(), seeds = new Map(), hashes = new Map(), priceTables = new Set(), modeSettings = new Map(), topUps = [], stampCount = { stamped: 0, unstamped: 0, missing: [] };
   for (const job of jobs) {
     const all = new Set();
     for (const m of modes) for (const t of cells.get(KEY(job, m))?.byTask.keys() ?? []) all.add(t);
@@ -516,13 +534,37 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
       }
       for (const [vk, v] of versions) if (v.size > 1) throw new Error(`${job}/${m}${vk === '*' ? '' : ` lineage ${vk}`}: rows from ${v.size} arm versions (armHash ${[...v].sort().join(', ')}) are never pooled`);
       if (settings.size > 1) throw new Error(`${job}/${m}: rows or builds under ${settings.size} arm settings (stamp.settingsSha ${[...settings].sort().join(', ')}) are never pooled`);
+      if (!info.cascade) {
+        const ms = modeSettings.get(m) ?? new Map();
+        for (const s of settings) ms.set(s, [...(ms.get(s) ?? []), job]);
+        modeSettings.set(m, ms);
+        // Stamp coverage for the strict meter: non-synthetic rows and every build (a cascade's rows are derived, its builds copied).
+        if (L) for (const l of L.values()) { if (l.settingsSha != null) stampCount.stamped += 1; else { stampCount.unstamped += 1; stampCount.missing.push(`build ${job}/${m}/${l.rep}`); } }
+        for (const [t, reps] of c.byTask) for (const x of reps.values()) {
+          if (x.synthetic) continue;
+          if (x.settingsSha != null) stampCount.stamped += 1; else { stampCount.unstamped += 1; stampCount.missing.push(`row ${job}/${m}/${t}/${x.rep}`); }
+        }
+      }
       c.reps = new Map([...c.byTask].map(([t, reps]) => [t, [...reps.keys()].sort((a, b) => a - b)]));
+      if (c.lineage) c.scoredReps = c.reps;
+      else {
+        // Scored replicates: the indices every task holds (per-task top-ups set aside; see the doc comment above).
+        const shared = c.reps.get(ids[0]).filter(r => ids.every(t => c.reps.get(t).includes(r)));
+        c.scoredReps = new Map(ids.map(t => [t, shared.length ? shared : c.reps.get(t).slice(0, 1)]));
+        c.extraDraws = ids.reduce((a, t) => a + c.reps.get(t).length - c.scoredReps.get(t).length, 0);
+        if (c.extraDraws) topUps.push({ job, mode: m, draws: c.extraDraws, tasks: ids.filter(t => c.reps.get(t).length > c.scoredReps.get(t).length).length, scoredReps: shared.length ? shared : 'first draw per task' });
+      }
     }
   }
   // One meter (DESIGN §2): every stamped row and build of the table priced with one price table.
   if (priceTables.size > 1) throw new Error(`rows or builds priced with ${priceTables.size} price tables (stamp.priceTable ${[...priceTables].sort().join(', ')}): one meter is required`);
+  // One arm setting per mode across every job of the table (settingsSha does not depend on the job; cascades excluded).
+  for (const [m, ms] of modeSettings) if (ms.size > 1) throw new Error(`${m}: rows or builds under ${ms.size} arm settings across jobs (${[...ms].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([s, js]) => `stamp.settingsSha ${s} on ${[...new Set(js)].join(', ')}`).join('; ')}): one mode is never pooled across arm versions`);
+  if (requireRepriced && stampCount.stamped && stampCount.unstamped) throw new Error(`${stampCount.unstamped} row(s) or build(s) without a label-run stamp (stamp.settingsSha) among ${stampCount.stamped} stamped ones, e.g. ${stampCount.missing.slice(0, 3).join(', ')}: their arm version cannot be checked (one meter, one arm version per mode)`);
+  const settingsByMode = Object.fromEntries([...modeSettings].filter(([, ms]) => ms.size === 1).map(([m, ms]) => [m, [...ms.keys()][0]]).sort((a, b) => (a[0] < b[0] ? -1 : 1)));
   return {
-    jobs, modes, registry, voided, voidedDraws, noCredit: new Set(), priceTables: [...priceTables].sort(),
+    jobs, modes, registry, voided, voidedDraws, noCredit: new Set(), priceTables: [...priceTables].sort(), settingsByMode, topUps,
+    unstamped: !stampCount.stamped && stampCount.unstamped ? { count: stampCount.unstamped } : null,
     cell(job, mode) { const c = cells.get(KEY(job, mode)); if (!c) throw new Error(`no cell ${job}/${mode}`); return c; },
     has: (job, mode) => cells.has(KEY(job, mode)),
     modesOf: job => modes.filter(m => cells.has(KEY(job, m))),
@@ -555,7 +597,9 @@ export function withCascades(rows, builds = [], specs = CASCADES, opts = {}) {
     const trig = x => (s.on.includes('null') && !x.delivered) || (s.on.includes('crash') && x.error != null) || (s.on.includes('schema') && x.delivered && !x.schemaValid)
       || (s.on.includes('self') && x.selfVerdict === 'fail');
     for (const t of base.taskIds(job)) {
-      const preps = P.reps.get(t), freps = F.reps.get(t);
+      // The fallback pairs over its SCORED replicates: a per-task top-up of the fallback (agent-O's racing draw) is never
+      // substituted for its first draw, which would carry the top-up's outcome-dependent selection into the cascade.
+      const preps = P.reps.get(t), freps = F.scoredReps.get(t);
       preps.forEach((rep, i) => {
         const x = P.byTask.get(t).get(rep);
         const row = { job, mode: s.id, task: t, rep, ...raw(x), usdRepriced: x.usd, usdImputed: x.imputed };
@@ -576,7 +620,8 @@ export function withCascades(rows, builds = [], specs = CASCADES, opts = {}) {
 /**
  * Aggregate one (job, mode) cell: { s: success rate, q: silent-miss rate, c: $ per task, B: build $ per lineage }.
  * `tasks` may repeat (bootstrap); `lineages` picks lineages (lineage modes); `repsOf(task, i)` picks replicates (draw
- * modes). Each task weighs 1 and its replicates are averaged (racing top-ups add replicates to some tasks only).
+ * modes). Each task weighs 1 and its SCORED replicates are averaged (needTable scoredReps: per-task racing top-ups, which
+ * depend on the first draw's outcome, are set aside; job-level top-ups run every task and are averaged).
  * Returns null when the selection is empty (a cross-fit half with no data).
  */
 export function cellStats(table, job, mode, { tasks = null, lineages = null, repsOf = null } = {}) {
@@ -598,7 +643,7 @@ export function cellStats(table, job, mode, { tasks = null, lineages = null, rep
   }
   let w = 0, imp = 0;
   for (let i = 0; i < T.length; i++) {
-    const t = T[i], reps = repsOf ? repsOf(t, i) : c.reps.get(t), m = c.byTask.get(t);
+    const t = T[i], reps = repsOf ? repsOf(t, i) : c.scoredReps.get(t), m = c.byTask.get(t);
     if (!reps.length) continue;
     let ss = 0, qq = 0, uu = 0, ii = 0;
     for (const rep of reps) { const x = m.get(rep), cr = credit(rep); ss += cr ? x.succ1 : x.succ0; qq += cr ? x.wrong1 : x.wrong0; uu += x.cost; ii += x.imputed; rawImp += x.imputed; rawUsd += x.cost; }
@@ -651,7 +696,7 @@ export function drawView(table, job, rand) {
     const c = table.cell(job, mode);
     const st = c.lineage
       ? cellStats(table, job, mode, { tasks, lineages: c.lineageList.map(() => c.lineageList[Math.floor(rand() * c.lineageList.length)].rep) })
-      : cellStats(table, job, mode, { tasks, repsOf: t => { const r = c.reps.get(t); return r.length === 1 ? r : r.map(() => r[Math.floor(rand() * r.length)]); } });
+      : cellStats(table, job, mode, { tasks, repsOf: t => { const r = c.scoredReps.get(t); return r.length === 1 ? r : r.map(() => r[Math.floor(rand() * r.length)]); } });
     cache.set(mode, st);
     return st;
   };
@@ -679,7 +724,7 @@ function foldsOf(table, job, mode, scheme) {
     const L = [c.lineageList[0].rep];
     a = { sel: { tasks: ids.filter(t => even.has(t)), lineages: L }, ev: { tasks: ids.filter(t => !even.has(t)), lineages: L } };
   } else {
-    const pick = (t, first) => { const r = c.reps.get(t); return r.length >= 2 ? r.filter((_, i) => i % 2 === (first ? 0 : 1)) : (even.has(t) === first ? r : []); };
+    const pick = (t, first) => { const r = c.scoredReps.get(t); return r.length >= 2 ? r.filter((_, i) => i % 2 === (first ? 0 : 1)) : (even.has(t) === first ? r : []); };
     a = { sel: { tasks: ids, repsOf: t => pick(t, true) }, ev: { tasks: ids, repsOf: t => pick(t, false) } };
   }
   return scheme === 'two-way' ? [a, { sel: a.ev, ev: a.sel }] : [a];
@@ -715,8 +760,14 @@ export function crossFitJob(table, job, modes, cells, { scheme = 'primary' } = {
  * lineage; the cluster level enters in clusterBootstrapDelta). Confident = a binary label whose class wins >= 0.8 of the
  * draws, at a (job, cell) that is not unlabelled (the imputed-dollar and re-pricing rule, per cell: see pointEntry).
  * reps = 0 skips the bootstrap (nothing confident). `modes` restricts the label set (labelSetModes).
+ * imputedRule: 'literal' (the preregistered rule, DESIGN §2 and PREREG §5: any mode of the label set with more than 30% of
+ * its dollars at the cell imputed leaves the (job, cell) unlabelled) or 'reachable' (a sensitivity, not primary: only such a
+ * mode whose utility with its imputed dollars removed could reach the acceptable set unlabels it; imputed dollars are bounds,
+ * so a mode out of reach either way cannot change the label).
  */
-export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta = DELTA, confident = CONFIDENT, imputedLimit = IMPUTED_LIMIT, modes = null, crossFit = 'primary' } = {}) {
+export const IMPUTED_RULES = Object.freeze(['literal', 'reachable']);
+export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta = DELTA, confident = CONFIDENT, imputedLimit = IMPUTED_LIMIT, modes = null, crossFit = 'primary', imputedRule = 'literal' } = {}) {
+  if (!IMPUTED_RULES.includes(imputedRule)) throw new Error(`imputedRule must be ${IMPUTED_RULES.join(' or ')}, got ${imputedRule}`);
   const per = new Map(), reg = table.registry;
   for (const job of table.jobs) {
     const ms = table.modesOf(job).filter(m => !modes || modes.includes(m));
@@ -744,10 +795,9 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
   }
   // A cell's point entry: utilities, acceptable set, NEED label, VBS. Off the label grid it carries no confidence and no VBS*.
   // Unlabelled (DESIGN §2, one cost meter), per (job, cell):
-  //  - a mode whose per-task dollars at this cell (c + B/N) are more than `imputedLimit` imputed, and whose utility with
-  //    those imputed dollars removed (imputed dollars are bounds, so the true cost lies between) could reach the acceptable
-  //    set: the label could rest on imputed dollars. A mode over the limit that stays out of reach either way cannot
-  //    change the label and does not unlabel it;
+  //  - imputedRule 'literal' (primary, as preregistered): a mode whose per-task dollars at this cell (c + B/N) are more than
+  //    `imputedLimit` imputed. 'reachable' (sensitivity): only such a mode whose utility with those imputed dollars removed
+  //    (imputed dollars are bounds, so the true cost lies between) could reach the acceptable set;
   //  - any mode with a row that label-run could not re-price (`repriced: false`): its dollars are off the one meter, in
   //    either direction, so every cell of the job is unlabelled.
   function pointEntry(ms, st, c, notRep) {
@@ -758,7 +808,8 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
     const label = classes.size === 1 ? [...classes][0] : 'either';
     const imputedOver = ms.filter(m => {
       const x = st.get(m);
-      return imputedShareAt(x, c) > imputedLimit && needUtility(x, c) + ((x.cImp ?? 0) + (x.BImp ?? 0) / c.N) / c.V >= top.u - delta - 1e-12;
+      if (!(imputedShareAt(x, c) > imputedLimit)) return false;
+      return imputedRule === 'literal' || needUtility(x, c) + ((x.cImp ?? 0) + (x.BImp ?? 0) / c.N) / c.V >= top.u - delta - 1e-12;
     });
     const why = [...(imputedOver.length ? [`imputed dollars over ${imputedLimit} in ${imputedOver.join(', ')}`] : []), ...(notRep.length ? [`rows not re-priced in ${notRep.join(', ')}`] : [])];
     return { cell: c, u: new Map(entries.map(e => [e.mode, e.u])), usd: new Map(entries.map(e => [e.mode, e.usd])), top: top.mode, acceptable, label,
@@ -779,7 +830,7 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
     return p.offGrid.get(k);
   };
   return {
-    table, cells, delta, jobs: table.jobs, at,
+    table, cells, delta, imputedRule, jobs: table.jobs, at,
     modesOf: job => per.get(job).modes,
     stats: (job, mode) => per.get(job).stats.get(mode),
     // Utility and $ per task at any cell: precomputed on the grid, else from the point statistics (no labels there).
@@ -888,15 +939,45 @@ export function envFaults(table, { limit = ENV_FAULT_LIMIT, codes = ENV_FAULT_CO
 }
 
 /**
+ * Dollars per mode over a table (DESIGN §2: every report splits measured from imputed dollars): task rows (scored and
+ * set-aside top-ups alike: every dollar spent) and builds, measured (re-priced, with the meter-gate gap counted as observed,
+ * reported apart as meterGap) and imputed (bounds charged for unobserved costs). Cascades are derived and left out.
+ */
+export function dollarsByMode(table) {
+  const out = {};
+  for (const job of table.jobs) for (const mode of table.modesOf(job)) {
+    if (modeInfo(mode, table.registry).cascade) continue;
+    const c = table.cell(job, mode), o = out[mode] ?? (out[mode] = { measured: 0, imputed: 0, meterGap: 0, rows: 0, builds: 0 });
+    for (const reps of c.byTask.values()) for (const x of reps.values()) { if (x.synthetic) continue; o.measured += x.usd; o.imputed += x.imputed; o.meterGap += x.meterGap ?? 0; o.rows += 1; }
+    for (const l of c.lineageList ?? []) { o.measured += l.usd; o.imputed += l.imputed; o.builds += 1; }
+  }
+  for (const o of Object.values(out)) o.imputedShare = o.measured + o.imputed > 0 ? o.imputed / (o.measured + o.imputed) : 0;
+  return Object.fromEntries(Object.entries(out).sort((a, b) => (a[0] < b[0] ? -1 : 1)));
+}
+
+/** Median wall time (ms) per mode over its recorded rows (DESIGN §2: reported per mode, never in the utility). */
+export function medianLatencyByMode(table) {
+  const by = {};
+  for (const job of table.jobs) for (const mode of table.modesOf(job)) {
+    if (modeInfo(mode, table.registry).cascade) continue;
+    for (const reps of table.cell(job, mode).byTask.values()) for (const x of reps.values()) if (!x.synthetic && Number.isFinite(x.ms)) (by[mode] ??= []).push(x.ms);
+  }
+  const med = xs => { const s = [...xs].sort((a, b) => a - b), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+  return Object.fromEntries(Object.entries(by).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([m, xs]) => [m, { medianMs: med(xs), rows: xs.length }]));
+}
+
+/**
  * Exact one-sided sign-flip permutation test over cluster-level differences d (statistic: the mean), with bounds by
  * test inversion. Under H0 (Δ = θ, symmetric) every sign pattern of d − θ is equally likely, and a pattern flipping
  * the set F scores at least the observed mean iff mean_F(d) <= θ, so
  *   p(θ) = (1 + #{F ≠ ∅ : mean_F(d) <= θ}) / 2^n           (H1: Δ > θ; `p`)
  * The one-sided lower bound at level 1 − α is the (K+1)-th smallest subset mean, K = floor(α·2^n − 1) (−∞ when K < 0,
  * e.g. n = 5 at α = 0.025: 1/32 > 0.025, so no reading can exclude 0); the upper bound mirrors it. lo > 0 iff p(0) <= α.
- * Exact for n <= exactMax (2^n subsets); a seeded Monte Carlo over sign patterns above.
+ * Exact for n <= exactMax (2^n subsets); a seeded Monte Carlo over sign patterns above, at PREREG §7's preregistered
+ * draw count and seed (100,000 patterns, seed 20261020; stages.json reps.permutationMonteCarlo, rng.permutationMonteCarlo).
  */
-export function signFlipTest(d, { theta = 0, alpha = 0.05, exactMax = 20, draws = 200000, seed = 29, eps = 1e-12 } = {}) {
+export const SIGN_FLIP_MC = Object.freeze({ draws: 100000, seed: 20261020 });
+export function signFlipTest(d, { theta = 0, alpha = 0.05, exactMax = 20, draws = SIGN_FLIP_MC.draws, seed = SIGN_FLIP_MC.seed, eps = 1e-12 } = {}) {
   const n = d.length;
   if (!n) return { n, mean: null, p: 1, pLess: 1, lo: -Infinity, hi: Infinity, alpha, exact: true, minP: 1 };
   if (!d.every(Number.isFinite)) throw new Error('signFlipTest needs finite differences');
@@ -932,7 +1013,7 @@ export function signFlipTest(d, { theta = 0, alpha = 0.05, exactMax = 20, draws 
  * (cluster -> task -> replicate or lineage; the a and b modes of a job share its task draw). items: [{ job, cluster, a,
  * b, routingUsd? }] (routing dollars are charged to a). The sensitivity beside the exact sign-flip test (DESIGN §5).
  */
-export function clusterBootstrapDelta(table, items, cell, { reps = 10000, seed = 5, alpha = 0.05 } = {}) {
+export function clusterBootstrapDelta(table, items, cell, { reps = 10000, seed = 20261015, alpha = 0.05 } = {}) {
   const clusters = [...new Set(items.map(x => x.cluster))];
   if (!clusters.length) return { lo: null, hi: null, reps: 0, seed };
   const by = new Map(clusters.map(c => [c, items.filter(x => x.cluster === c)]));

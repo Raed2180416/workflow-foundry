@@ -15,7 +15,7 @@ import { WHITELIST } from '../features.mjs';
 import { TRUSTED_FEATURES as EVAL_TRUSTED, PROSE_FEATURES, INJECTIONS, fitRule, nrStatic, nrKnn, decideFolds, defaultPolicies, evaluate, importPurity, metamorphic } from '../evaluate.mjs';
 import { GRID, HEADLINE, DELTA, makeCell, classOf, needUtility, perTaskUsd, rankModes } from '../metrics.mjs';
 import { needsWorkflow as plantedNeed, judgeAlwaysAgent } from './worlds.mjs';
-import { plantedRouter, realisticModes, generalModes, rng, NON_MONOTONE_N, V1_MODES } from './router-fixtures.mjs';
+import { plantedRouter, realisticModes, generalModes, rng, NON_MONOTONE_N, V1_MODES, probeFor } from './router-fixtures.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const NR = path.resolve(here, '..'), ROOT = path.resolve(NR, '../..');
@@ -75,7 +75,9 @@ test('import-graph purity: router.mjs and card.mjs never reach a bed, an oracle,
   assert.doesNotMatch(r, /readFileSync|writeFileSync|process\.env|Math\.random|Date\.now|new Date\(/);
   assert.doesNotMatch(c, /writeFileSync|process\.env|Math\.random|Date\.now|new Date\(/);
   assert.equal([...c.matchAll(/readFileSync\(/g)].length, 1);
-  assert.ok(c.includes('readFileSync(new URL(`./${f}`, import.meta.url))') && c.includes("CODE_FILES = Object.freeze(['router.mjs', 'card.mjs', 'voi.mjs', 'metrics.mjs', 'prereg-rules.mjs'])"));
+  // card.mjs hashes router.mjs FROZEN_FILES, the PREREG §6 seven (third review R4).
+  assert.ok(c.includes('readFileSync(new URL(`./${f}`, import.meta.url))') && c.includes('export const CODE_FILES = FROZEN_FILES;'));
+  assert.ok(r.includes("FROZEN_FILES = Object.freeze(['features.mjs', 'router.mjs', 'voi.mjs', 'metrics.mjs', 'evaluate.mjs', 'card.mjs', 'prereg-rules.mjs'])"));
   // evaluate.mjs's own L5 agrees.
   const L5 = importPurity({ files: [path.join(NR, 'router.mjs'), path.join(NR, 'card.mjs')] });
   assert.equal(L5.ok, true, L5.problems.join('; '));
@@ -425,12 +427,14 @@ test('NR-probe pieces: the Beta update moves p, the probe cost is charged as rou
   assert.ok(withProbe(pred, { observations: { 'direct-H': { passes: 0, n: 2 } } }).get('direct-H').s < 0.5);
   assert.throws(() => withProbe(pred, { observations: { 'direct-H': { passes: 3, n: 2 } } }), /passes <= n/);
   const P = plantedRouter(), R = fitNeedRouter(P.items, { modes: V1_MODES }), v = P.view(P.EVAL[0]);
-  const base = R.decide(v, HEADLINE), probed = R.decide(v, HEADLINE, { probe: { observations: { 'direct-H': { passes: 1, n: 2 } }, costUsd: 0.16, disagree: true } });
+  const base = R.decide(v, HEADLINE), probed = R.decide(v, HEADLINE, { probe: probeFor(v.id, { 'direct-H': [1, 2] }, 0.16, { disagree: true }) });
   assert.equal(probed.routingCostUsd, 0.16);
   assert.ok(Math.abs((base.U['agent-H'] - probed.U['agent-H']) - 0.16 / (HEADLINE.N * HEADLINE.V)) < 1e-12);
   assert.equal(probed.askFlag, true); assert.match(probed.ask.at(-1), /cannot arbitrate/);
-  for (const verifier of ['tests', 'owner acceptance check']) assert.equal(R.decide({ ...v, verifier }, HEADLINE, { probe: { observations: {}, costUsd: 0.16, disagree: true } }).askFlag, false, verifier);
-  assert.equal(R.decide({ ...v, verifier: 'schema' }, HEADLINE, { probe: { observations: {}, costUsd: 0.16, disagree: true } }).askFlag, true);
+  // (An empty probe is refused since third review R11; the disagreement case reads the two direct-H draws.)
+  const two = probeFor(v.id, { 'direct-H': [0, 1, 'agreement'] }, 0.16, { disagree: true });
+  for (const verifier of ['tests', 'owner acceptance check']) assert.equal(R.decide({ ...v, verifier }, HEADLINE, { probe: two }).askFlag, false, verifier);
+  assert.equal(R.decide({ ...v, verifier: 'schema' }, HEADLINE, { probe: two }).askFlag, true);
 });
 
 // ---------------------------------------------------------------------------------------- evaluate.mjs integration

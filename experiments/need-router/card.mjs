@@ -3,10 +3,12 @@
 // reading this router's own module sources to hash them (routerSha).
 //
 // A card records, for one job at one (V, N, W) cell: the trusted features and their hash; the guard block (typed
-// requirements, engine support, "ask the user" reasons); the structural rule's reading; the probe, if one ran; per mode
+// requirements, engine support, "ask the user" reasons); the structural rule's reading; the probe, if one ran (its bundle,
+// and per observed mode its passes, trials, deployable signal kind and the probe rows it read); per mode
 // the predicted p (verified success), q (delivered wrong), abstain share (1 − p − q, charged nothing beyond dollars),
 // c ($ per task), F (build $), $ per task at N and the expected utility EU in success-equivalents per task; the δ
-// acceptable set; the choice with its run-time cascade fallback and the task-4 checkpoint; needsWorkflow (the C7a call:
+// acceptable set; the choice (a cascade only when the chosen mode is that cascade, priced as such; the task-4 checkpoint
+// only on the construct-H cascade); needsWorkflow (the C7a call:
 // guard or structure, not economics; cell-independent); the class and kind of the chosen mode; askFlag; any abstention;
 // the routing cost (a probe's dollars included; a probe without a stated cost is refused, never booked at $0); and
 // routerSha = sha256 over the code shas and the fitted parameters (which include the cascades, the checkpoint and every
@@ -20,18 +22,19 @@ import { readFileSync } from 'node:fs';
 import { REQUIREMENT_LIBRARY } from '../../src/construction-objective.mjs';
 import { shapeOf } from '../library/index.mjs';
 import { HEADLINE } from './metrics.mjs';
-import { bestProbe } from './voi.mjs';
-import { TRUSTED_FEATURES, CUE_HINTS, REQUIREMENT_TYPES, ENGINE_CONSTRUCTS, resolveCell } from './router.mjs';
+import { bestProbe, bundleValue } from './voi.mjs';
+import { TRUSTED_FEATURES, CUE_HINTS, REQUIREMENT_TYPES, ENGINE_CONSTRUCTS, PROBEABLE, PROBE_BUNDLE, PROBE_SIGNALS, FROZEN_FILES, resolveCell, probeProblems } from './router.mjs';
 
 export const CARD_SCHEMA_ID = 'need-decision/1';
 /**
- * The module sources whose shas enter routerSha: every experiments/need-router module in this card's and router.mjs's
- * static import graph (the frozen artefact's code, DESIGN §3, PREREG §6 "Shas"). prereg-rules.mjs is one: router.mjs fits
- * θ with its thetaFitStatus, fitOrRule and locoFolds, so an edit there changes decisions (test/router-review.test.mjs D4
- * walks the import graph and fails when a need-router module is missing here). features.mjs computes the inputs and is
- * hashed by the addendum; the word-cue sources (REQUIREMENT_LIBRARY, shapeOf) change only "ask", which is logged, not scored.
+ * The module sources whose shas enter routerSha: router.mjs FROZEN_FILES, the PREREG §6 "Shas" seven (the A-Freeze
+ * analysis stamp), the same array evaluate.mjs seals in the envelope as ROUTER_FILES (third review R4). It holds every
+ * experiments/need-router module in this card's and router.mjs's static import graph (test/router-review.test.mjs D4 walks
+ * the graph) and also features.mjs, which computes the inputs, and evaluate.mjs, which fits the policies and seals the
+ * decisions (third review R7). The word-cue sources (REQUIREMENT_LIBRARY, shapeOf) change only "ask", which is logged,
+ * not scored.
  */
-export const CODE_FILES = Object.freeze(['router.mjs', 'card.mjs', 'voi.mjs', 'metrics.mjs', 'prereg-rules.mjs']);
+export const CODE_FILES = FROZEN_FILES;
 const PROSE_CUES = Object.freeze(['humanWords', 'timeWords', 'effectVerbs']);
 const HINT_CUES = REQUIREMENT_LIBRARY.filter(r => Object.hasOwn(CUE_HINTS, r.id));
 const finite = Number.isFinite;
@@ -53,6 +56,7 @@ export function canonicalJson(x) {
 const hashCodeFiles = () => Object.freeze(Object.fromEntries(CODE_FILES.map(f => [f, sha256(readFileSync(new URL(`./${f}`, import.meta.url)))])));
 // Taken when this module loads, right after its static imports (router, voi, metrics, prereg-rules) were evaluated: the
 // shas name the code that runs. A lazy first-card read could hash a file edited after import while the old code ran.
+// features.mjs and evaluate.mjs are not imported here; their shas name the sources on disk at load.
 const CODE_SHAS = hashCodeFiles();
 /** sha256 of each CODE_FILES source, as loaded. */
 export const codeShas = () => CODE_SHAS;
@@ -118,7 +122,11 @@ export function decisionCard(router, job = {}, cell = HEADLINE, { policy = null,
       intrinsic: d.structure.intrinsic, reason: d.structure.reason, thresholds: thresholdsOut(router.rule.thresholds), stage: d.stage,
       leaf: d.source.leaf ?? null, leafJobs: d.source.jobs ?? null, neighbours: d.source.neighbours ?? null,
     },
-    probe: d.probe ? { ran: true, modes: [...d.probe.modes], k: d.probe.k, signals: d.probe.signals, costUsd: d.probe.costUsd, disagree: d.probe.disagree } : null,
+    probe: d.probe ? {
+      ran: true, bundle: d.probe.bundle, modes: [...d.probe.modes], k: d.probe.k,
+      observations: Object.fromEntries(Object.entries(d.probe.observations).map(([m, o]) => [m, { passes: o.passes, n: o.n, signal: o.signal, rows: [...o.rows] }])),
+      signals: d.probe.signals, costUsd: d.probe.costUsd, disagree: d.probe.disagree,
+    } : null,
     pred,
     U: { ...d.U },
     acceptable: [...d.acceptable],
@@ -168,7 +176,12 @@ export const CARD_SCHEMA = Object.freeze({
       leaf: nullOr({ enum: ['intrinsic', 'not', 'pooled'] }), leafJobs: nullOr({ type: 'integer', minimum: 0 }),
       neighbours: nullOr({ type: 'array', items: obj({ id: str, cluster: str, d: { type: 'number', minimum: 0 } }) }),
     }),
-    probe: nullOr(obj({ ran: { const: true }, modes: strs, k: { type: 'integer', minimum: 0 }, signals: {}, costUsd: usd, disagree: bool })),
+    probe: nullOr(obj({
+      ran: { const: true }, bundle: { const: PROBE_BUNDLE.id }, modes: { type: 'array', items: { enum: [...PROBEABLE] }, minItems: 1 }, k: { type: 'integer', minimum: 1 },
+      observations: { type: 'object', additionalProperties: obj({ passes: { type: 'integer', minimum: 0 }, n: { type: 'integer', minimum: 1 }, signal: { enum: Object.keys(PROBE_SIGNALS) },
+        rows: { type: 'array', items: { type: 'string', minLength: 1 }, minItems: 1 } }) },
+      signals: {}, costUsd: usd, disagree: bool,
+    })),
     pred: { type: 'object', additionalProperties: obj({ p: prob, q: prob, abstain: prob, c: usd, F: usd, usdPerTask: usd, n: { type: 'integer', minimum: 1 }, EU: num }) },
     U: { type: 'object', additionalProperties: num },
     acceptable: strs,
@@ -249,6 +262,12 @@ export function validateCard(card) {
   if (card.routerSha !== sha256(canonicalJson({ code: card.routerShaParts.code, fitted: card.routerShaParts.fitted }))) problems.push('routerSha does not match its parts');
   if (card.probe && card.routingCostUsd + 1e-12 < card.probe.costUsd) problems.push('the probe cost is not charged as routing dollars');
   if (card.probe && (card.probe.k > 0 || card.probe.modes.length > 0) && !(card.probe.costUsd > 0)) problems.push('a probe that drew or observed anything must carry its cost (costUsd > 0)');
+  if (card.probe) {
+    // The probe's provenance (third review R3): probeable modes, the preregistered bundle's draws, a signal kind and the
+    // probe rows per observation, one job; the same rules router.probeRecord applies (probeProblems).
+    for (const x of probeProblems(card.probe.observations, { k: card.probe.k })) problems.push(`probe: ${x}`);
+    if (canonicalJson([...card.probe.modes].sort()) !== canonicalJson(Object.keys(card.probe.observations).sort())) problems.push('probe.modes and probe.observations name different modes');
+  }
   const pm = policyMismatch(card.policy, card.structure.stage, card.probe !== null);
   if (pm) problems.push(pm);
   if (card.job.V !== card.cell.V || card.job.N !== card.cell.N || card.job.W !== card.cell.W) problems.push('job and cell disagree on V, N or W');
@@ -261,29 +280,42 @@ export function validateCard(card) {
 //      direct-H draw with q 0.55 at W = V), biasing NR-probe toward never probing. Fixed: voi.mjs takes a per-mode `wq`
 //      ($ of silent misses per task) that its utilities subtract and its probe price leaves out unless the probe is
 //      delivered; probePlan passes c and W·q separately. The routing term is common to every mode: it moves no choice.
-//   V2 probeValue requires k <= H and bestProbe caps k at H even when the probe is not deliverable (examples, not the
-//      job's tasks), so at N = 1 the preregistered two-draw direct-H probe (kMax 2) is never priced; only k = 1 is.
+//   V2 FIXED (third review R2): a probe that is not delivered (examples, not the job's tasks) caps k by kMax, never by H,
+//      so at N = 1 the two-draw direct-H probe is priced.
 //   V3 an observed probe success is treated as a true success; DESIGN observes deployable signals only (schema validity,
-//      agreement of two draws, turns, family tests), and the signal-to-success mapping is TBD-FREEZE. The EVSI is
-//      optimistic by however far that mapping is from the oracle.
+//      agreement of two draws, turns, family tests), and the signal-to-success mapping is TBD-FREEZE (router.mjs
+//      PROBE_MAPPING, in routerSha). The EVSI is optimistic by however far that mapping is from the oracle.
 //   V4 `best` keeps the first mode on an exact utility tie (array order), not the cheaper one (DESIGN §2 tie rule), and
 //      has no δ acceptable set; the router's own decision after a probe uses decideModes, so this only affects EVSI.
 //   V5 sound as written: Beta-Binomial pmf, exact enumeration over s, the build cost F sunk once a probed build is kept,
 //      the deliverable variant, and net > 0 as the run condition.
+//   V6 FIXED (third review R2): the gate priced single-mode plans (it could recommend two agent-H runs, which label-run
+//      never draws) and never the preregistered bundle; probePlan now prices PROBE_BUNDLE jointly (voi.mjs bundleValue).
 /**
- * NR-probe's plan (DESIGN §3): voi.mjs bestProbe over the router's predictions for this job, priors Beta(1 + s·T,
- * 1 + (1 − s)·T) with T = support jobs × the router's tasksPerJob (the same prior decide's probe update uses),
- * probeable {direct-H, agent-H}, kMax 2, examples only (not deliverable). Each mode carries its dollars c and its
- * silent-miss charge wq = W·q separately: the decision after the probe charges both, the probe's own price only c (plus
- * cVerify, plus F for a build). Leaf stage only. Returns bestProbe's result plus the modes it priced.
+ * NR-probe's plan (DESIGN §3, PREREG §6 "kMax 2 (two direct-H draws, one agent-H run) ... probe iff net EVSI > 0"): the
+ * ONE plan label-run.mjs runProbes draws, router.mjs PROBE_BUNDLE, priced jointly by voi.mjs bundleValue over the
+ * router's predictions for this job: EVSI over the joint posterior update, cost the sum of its draws, examples only (not
+ * deliverable, so k is not bounded by N). The bundle is restricted to the probeable modes the router prices for this job
+ * (a masked or unsupported mode is not drawn). Priors are the router's own (decide's `priors`, router.mjs probePriors: the
+ * same prior the probe update starts from). Each mode carries its dollars c and its silent-miss charge wq = W·q
+ * separately: the decision after the probe charges both, the probe's own price only c (plus cVerify, plus F for a build).
+ * `probe` is { id, draws } when the bundle's net value is > 0, else null: the gate. `plans` are the single-mode plans
+ * (k = 1..kMax), a sensitivity only, never the gate. Leaf stage only.
  */
-export function probePlan(router, job, cell = HEADLINE, { probeable = ['direct-H', 'agent-H'], kMax = 2, cVerify = 0, tasksPerJob = router.tasksPerJob } = {}) {
+export function probePlan(router, job, cell = HEADLINE, { kMax = 2, cVerify = 0, tasksPerJob = router.tasksPerJob, probeable = PROBEABLE } = {}) {
   if (router.stage !== 'leaf') throw new Error('probePlan: NR-probe plans over the leaf calculator; the kNN stage takes no probe');
   if (tasksPerJob !== router.tasksPerJob) throw new Error(`probePlan: tasksPerJob ${tasksPerJob} differs from the router's ${router.tasksPerJob} (the prior must match the update)`);
+  for (const m of probeable) if (!PROBEABLE.includes(m)) throw new Error(`probePlan: ${m} is not a probeable mode (${PROBEABLE.join(', ')})`);
   const c = resolveCell(cell);
   const d = router.decide(job, c);
-  const modes = Object.entries(d.pred).map(([id, x]) => { const T = x.n * tasksPerJob; return { id, a: 1 + x.p * T, b: 1 + (1 - x.p) * T, c: x.c, wq: c.W * x.q, F: x.F }; });
-  if (!modes.length) return { probe: null, net: 0, priorChoice: null, plans: [], modes };
-  const plan = bestProbe(modes, { V: c.V, H: c.N, kMax, cVerify, deliverable: false, probeable: probeable.filter(m => Object.hasOwn(d.pred, m)) });
-  return { ...plan, modes };
+  const modes = Object.entries(d.pred).map(([id, x]) => {
+    const pr = d.priors?.[id];
+    if (!pr) throw new Error(`probePlan: the router has no probe prior for ${id}`);
+    return { id, a: pr.a, b: pr.b, c: x.c, wq: c.W * x.q, F: x.F };
+  });
+  const draws = Object.fromEntries(Object.entries(PROBE_BUNDLE.draws).filter(([m]) => probeable.includes(m) && Object.hasOwn(d.pred, m)));
+  if (!modes.length || !Object.keys(draws).length) return { probe: null, net: 0, evsi: 0, cost: 0, priorChoice: null, bundle: null, plans: [], modes };
+  const B = bundleValue(modes, draws, { V: c.V, H: c.N, cVerify, deliverable: false });
+  const plans = bestProbe(modes, { V: c.V, H: c.N, kMax, cVerify, deliverable: false, probeable: probeable.filter(m => Object.hasOwn(d.pred, m)) }).plans;
+  return { probe: B.net > 1e-12 ? { id: PROBE_BUNDLE.id, draws } : null, net: Math.max(0, B.net), evsi: B.evsi, cost: B.cost, priorChoice: B.priorChoice, bundle: B, plans, modes };
 }

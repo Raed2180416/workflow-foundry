@@ -25,6 +25,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { canonical, sha256 } from '../../beds/lib/canonical.mjs';
 import { holm, clopperPearson } from '../lib/stats-ebed.mjs';
 import { wilson } from '../lib/stats.mjs';
@@ -35,7 +36,7 @@ import { WHITELIST } from './features.mjs';
 import {
   rng, hashString, MODES, CASCADES, GRID, HEADLINE, SLIDER_CELLS, V_GRID, FIRST_PASS, makeCell, cellKey, classOf, modeInfo, labelSetModes,
   withCascades, withoutSelfCheckCredit, needLabels, rankModes, bestOf, sbsGlobal, coverage, fragility, selfTestRates, envFaults,
-  signFlipTest, clusterBootstrapDelta, firstPassShort,
+  signFlipTest, clusterBootstrapDelta, firstPassShort, crossFitJob, dollarsByMode, medianLatencyByMode,
 } from './metrics.mjs';
 import { balancedAccuracyInterval, c7aReading, thetaFitStatus, missingDataRule } from './prereg-rules.mjs';
 import { aFreezeShas, gitHistory, PREREG_FILE } from './prereg-check.mjs';
@@ -49,6 +50,15 @@ export const TRUSTED_FEATURES = Object.freeze(['logInputTokens', 'logSchemaLeave
 export const PROSE_FEATURES = Object.freeze(['effectVerbs', 'timeWords', 'humanWords', 'promptWords']);
 export const MIN_USEFUL = 0.03;                     // minimum useful effect, success-equivalents per task (decision 1)
 export const CO_PRIMARY = Object.freeze(['NR-static', 'NR-probe']);
+/** The only policies that may read the evaluation labels (`peek`), each with its one fixed role (DESIGN §6 L1: a peek router
+ *  is a positive control, never a router; SBS chosen on the test set is an optimistic reference only). validatePolicies. */
+export const CONTROL_POLICIES = Object.freeze({ peek: 'control', 'SBS-test': 'optimistic' });
+/** Preregistered seeds and draw counts (PREREG §5, §7, §8, §10, §11; stages.json rng and reps; a test checks they agree). */
+export const PREREG_RNG = Object.freeze({ labelBootstrap: 20261014, clusterBootstrap: 20261015, randomRouting: 20261016, shuffledLabelNull: 20261017, nullSimulation: 20261018,
+  permutationMonteCarlo: 20261020, g1Bootstrap: 20261021 });
+export const PREREG_REPS = Object.freeze({ labelBootstrap: 2000, g1Bootstrap: 2000, clusterBootstrap: 10000, randomRouting: 1000, shuffledLabelNull: 1000, permutationMonteCarlo: 100000 });
+/** Paired comparisons with the tuned size rule and judge-H, and REFUTED's per-V upper bounds: one-sided 95% (PREREG §7). */
+export const PAIRED_ALPHA = 0.05;
 export const N1 = makeCell(1, 1, 1);                // the intrinsic-need reading (C7a): V = $1, W = V, N = 1
 export const SEED_RANGES = Object.freeze({ example: [601, 609], train: [610, 650], heldout: [8801, 8824], e2e: [8825, 8836], drift: [8837, 8848], sealed: null });
 export const MATRIX_FORMAT = `A labels root holds one directory per stage (or is one): jobs.json, matrix.jsonl, builds.jsonl, decisions.jsonl.
@@ -57,16 +67,21 @@ jobs.json      { "<job>": { cluster, split: train|heldout|sealed|e2e, family, ki
                  tolerance?: { scoreThreshold }, metamorph?: { of: <job>, expect: same|different } } }   (label-free; written before labels)
 matrix.jsonl   (or label-run's rows.jsonl; never both) one row per job x mode x task x replicate: { job, mode, task, rep, seed, taskHash, pass, delivered, schemaValid,
                  selfVerdict, deployableVerdict, score?, passAt?, usdRepriced (required: one meter), usdReported, usdImputed, repriced, armHash, void?, ms, tokens,
-                 error, at?, stamp? }   (metrics.mjs needTable: LEGACY rows refused, one armHash per (job, mode), repriced: false leaves the job unlabelled,
-                 one stamp.settingsSha per (job, mode) and one stamp.priceTable per table)
+                 error, at, stamp }   (metrics.mjs needTable: LEGACY rows refused, one armHash per (job, mode), repriced: false leaves the job unlabelled,
+                 one stamp.settingsSha per mode across the table and one stamp.priceTable per table; stamped all or none (none: claims blocked); a held-out
+                 reading needs label-run's record time \`at\` on every held-out row (L6))
 builds.jsonl   (builds.final.jsonl preferred) one row per job x built/guided mode x lineage: { job, mode, rep, usdRepriced (or usd, equal; required: one meter), usdImputed?,
                  repriced?, failed, minutes, artifactSha, runSolverCalls, hiddenPathAttempts, nestedModelAttempts, scoreChecks, probeSeeds, stamp? }
 decisions.jsonl recorded policies: { policy: judge-H|NR-probe|NR-probe-oracle, job, cell: <cell key>|null, mode, routingUsd (required), pred?: {p, usd}, needsWorkflow?,
                  probe?: { ran, modes, k, costUsd } }   (an NR-probe decision is charged at least the dollars of the job's probe rows it used)
-probes.jsonl   label-run's NR-probe rows: { job, mode, draw, usdRepriced, usdImputed, ... } (deployable signals only)
+probes.jsonl   label-run's NR-probe rows: { job, mode, draw, usdRepriced (required: one meter), usdImputed, ... } (deployable signals only)
+judge.jsonl    judge-H call rows: { job, cell?, draw, usdRepriced (required), usdImputed? } (a judge-H decision is charged at least its job's judge rows,
+                 those of its cell when the rows name one)
 report.json    label-run's stage report (its priceTable id: one meter across every stage); STAMP.json the stage's engine stamp (PREREG §4.4)`;
 
 const avg = xs => (xs.length ? xs.reduce((a, x) => a + x, 0) / xs.length : null);
+/** A path relative to the repository root when it lies inside it, else absolute (envelope and stage records). */
+const relOf = f => { const r = path.relative(ROOT, path.resolve(f)); return r.startsWith('..') || path.isAbsolute(r) ? path.resolve(f) : r; };
 const opaque = id => `j${createHash('sha256').update(String(id)).digest('hex').slice(0, 12)}`;
 
 // ----------------------------------------------------------------------------------------------------------- loading
@@ -83,7 +98,7 @@ const readJsonl = file => (existsSync(file) ? readFileSync(file, 'utf8').split('
 export function loadLabels(root, { trainOnly = false } = {}) {
   const dirs = existsSync(path.join(root, 'jobs.json')) ? [root]
     : readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => path.join(root, d.name)).filter(d => existsSync(path.join(d, 'jobs.json'))).sort();
-  const meta = {}, rows = [], builds = [], decisions = [], probes = [], stageInfo = [], skipped = { stages: [], rows: 0 }, stages = [], armFaults = [];
+  const meta = {}, rows = [], builds = [], decisions = [], probes = [], judges = [], stageInfo = [], skipped = { stages: [], rows: 0 }, stages = [], armFaults = [];
   const readJsonIf = f => (existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null);
   for (const dir of dirs) {
     const J = JSON.parse(readFileSync(path.join(dir, 'jobs.json'), 'utf8'));
@@ -99,17 +114,20 @@ export function loadLabels(root, { trainOnly = false } = {}) {
     const twoMatrices = ['matrix.jsonl', 'rows.jsonl'].filter(n => existsSync(path.join(dir, n)));
     if (twoMatrices.length > 1) throw new Error(`${path.relative(ROOT, dir)}: both matrix.jsonl and rows.jsonl exist; keep one (which file holds the labels must not be a silent choice)`);
     const pick = names => names.map(n => path.join(dir, n)).find(f => existsSync(f)) ?? path.join(dir, names[0]);
-    for (const [file, out] of [[pick(['matrix.jsonl', 'rows.jsonl']), rows], [pick(['builds.final.jsonl', 'builds.jsonl']), builds], [path.join(dir, 'probes.jsonl'), probes]]) for (const r of readJsonl(file)) {
+    for (const [file, out] of [[pick(['matrix.jsonl', 'rows.jsonl']), rows], [pick(['builds.final.jsonl', 'builds.jsonl']), builds], [path.join(dir, 'probes.jsonl'), probes],
+      [path.join(dir, 'judge.jsonl'), judges]]) for (const r of readJsonl(file)) {
       if (trainOnly && meta[r.job]?.split !== 'train') { skipped.rows += 1; continue; }
       out.push(r);
     }
     armFaults.push(...readJsonl(path.join(dir, 'arm-faults.jsonl')).filter(r => !trainOnly || meta[r.job]?.split === 'train'));
     const rep = readJsonIf(path.join(dir, 'report.json')), stamp = readJsonIf(path.join(dir, 'STAMP.json')), launch = readJsonIf(path.join(dir, 'LAUNCH.json'));
     // LAUNCH.json (label-run, written before the first paid call): the launch time and the envelopes the stage launched against (L6).
+    // dir and rowsFile (repo-relative when inside the repository): L6 checks in git that the envelope's commit precedes the commit that adds the rows.
+    const rowsFile = ['matrix.jsonl', 'rows.jsonl'].map(n => path.join(dir, n)).find(f => existsSync(f)) ?? null;
     stageInfo.push({ stage: path.basename(dir), splits: [...new Set(Object.values(J).map(m => m.split))].sort(), priceTable: rep?.priceTable ?? null,
-      stamp: stamp ? sha256(canonical(stamp)) : null, launchedAt: launch?.launchedAt ?? null, launchEnvelopes: launch?.envelopes ?? [] });
+      stamp: stamp ? sha256(canonical(stamp)) : null, launchedAt: launch?.launchedAt ?? null, launchEnvelopes: launch?.envelopes ?? [], dir: relOf(dir), rowsFile: rowsFile ? relOf(rowsFile) : null });
   }
-  return { meta, rows, builds, decisions, probes, stageInfo, stages, skipped, armFaults };
+  return { meta, rows, builds, decisions, probes, judges, stageInfo, stages, skipped, armFaults };
 }
 
 // ------------------------------------------------------------------------------------------------------------- views
@@ -458,6 +476,38 @@ export function defaultPolicies(modes = Object.keys(MODES).filter(m => !MODES[m]
     sbsTrain(), sbsGlobalPolicy(), sbsTest(), peekRouter(), ...modes.map(fixedPolicy)];
 }
 
+/** A policy that may read the evaluation labels: one of the fixed controls, under its own role, declaring peek. */
+export const isPeekControl = p => p?.peek === true && CONTROL_POLICIES[p.name] === p.role;
+
+/**
+ * The policy set's contract (review 2026-10-15, major: a --router module could ship { name: 'NR-static', peek: true } and be
+ * scored as a co-primary on held-out labels, outside the envelope). Throws when:
+ *  - a policy declares `peek` (it would be handed the evaluation labels) and is not one of the fixed controls under its
+ *    role (CONTROL_POLICIES: peek as control, SBS-test as optimistic);
+ *  - a policy takes the role control or optimistic under any other name (those roles are left out of the envelope);
+ *  - a co-primary (CO_PRIMARY) is not role 'primary', or a primary or secondary policy is a declared shortcut (the
+ *    shortcut view carries the family id, kind and task text, which only shortcut baselines may read);
+ *  - two policies share a name, or a recorded policy (decisions.jsonl) has a fitted policy's or a control's name.
+ */
+export function validatePolicies(policies, { recordedNames = [] } = {}) {
+  const names = new Set();
+  for (const p of policies) {
+    if (!p || typeof p.name !== 'string' || typeof p.fit !== 'function') throw new Error(`a policy needs a name and fit(): ${JSON.stringify(p)?.slice(0, 120)}`);
+    if (names.has(p.name)) throw new Error(`two policies are named ${p.name}`);
+    names.add(p.name);
+    const ctl = CONTROL_POLICIES[p.name];
+    if (p.peek && p.role !== ctl) throw new Error(`policy ${p.name} (role ${p.role}) declares peek: only the fixed controls ${Object.entries(CONTROL_POLICIES).map(([n, r]) => `${n} (${r})`).join(' and ')} may read the evaluation labels (DESIGN §6 L1: a peek router is a positive control, never a router)`);
+    if ((p.role === 'control' || p.role === 'optimistic') && p.role !== ctl) throw new Error(`policy ${p.name}: the role ${p.role} is reserved for the fixed controls (${Object.keys(CONTROL_POLICIES).join(', ')}), which the envelope leaves out`);
+    if (CO_PRIMARY.includes(p.name) && p.role !== 'primary') throw new Error(`policy ${p.name} is a co-primary: its role must be primary, got ${p.role}`);
+    if (p.shortcut && (p.role === 'primary' || p.role === 'secondary')) throw new Error(`policy ${p.name} (role ${p.role}) is a declared shortcut: only shortcut baselines may read the family id, kind and task text`);
+  }
+  for (const n of new Set(recordedNames)) {
+    if (names.has(n)) throw new Error(`recorded decisions of ${n} (decisions.jsonl) collide with a fitted policy of that name`);
+    if (CONTROL_POLICIES[n]) throw new Error(`recorded decisions may not use the control name ${n}`);
+  }
+  return policies;
+}
+
 // ------------------------------------------------------------------------------------------------------- deciding
 const predOf = p => (p && Number.isFinite(p.p) && Number.isFinite(p.usd) ? { p: p.p, usd: p.usd } : null);
 /**
@@ -496,6 +546,7 @@ function recordedLookup(rows, name) {
 export function decideFolds({ labels, meta, folds, policies, modes, cells, registry = MODES, recorded = [], fitOf = null, availOf = null, requireRouting = false }) {
   const decisions = new Map(), fitted = new Map(), missing = new Map();
   const recNames = [...new Set(recorded.map(r => r.policy))];
+  validatePolicies(policies, { recordedNames: recNames });
   for (const p of policies) { decisions.set(p.name, new Map()); fitted.set(p.name, []); }
   for (const n of recNames) { decisions.set(n, new Map()); missing.set(n, []); }
   for (const fold of folds) {
@@ -511,7 +562,8 @@ export function decideFolds({ labels, meta, folds, policies, modes, cells, regis
     };
     const ctx = makeContext(fit.labels, fold.train, meta, { modes: fit.modes, registry, evalPeek });
     for (const p of policies) {
-      const choose = p.fit(p.peek ? ctx : { ...ctx, peek: null });
+      // Only the fixed controls are handed the evaluation labels (validatePolicies refuses any other peek).
+      const choose = p.fit(isPeekControl(p) ? ctx : { ...ctx, peek: null });
       fitted.get(p.name).push(choose);
       for (const j of fold.eval) {
         const avail = avOf(j), view = publicView(j, meta[j], avail), sv = p.shortcut ? shortcutView(j, meta[j], avail) : undefined;
@@ -695,9 +747,10 @@ export function coPrimaryHolm(ps, alpha = 0.05) {
  * policy's Holm level; holmReject is coPrimaryHolm's decision for the policy (SUPPORTED and SUPERIOR need it: a lower
  * bound above 0 at a level Holm never reached is not a rejection); vsTuned / vsJudge are paired comparisons (lo > 0
  * needed); slider is sliderCalibration; vsNull is L2 (the real router must exceed the shuffled-label null's 95th
- * percentile; undefined when L2 does not apply, e.g. a recorded policy or leak tests off).
+ * percentile; undefined when L2 does not apply, e.g. a recorded policy or leak tests off). perVRefute: the per-V bounds
+ * REFUTED reads, one-sided 95% (PREREG §7; evaluate passes them at PAIRED_ALPHA); without it, perV's are used.
  */
-export function readingOf({ headline, perV, vsTuned = null, vsJudge = null, slider = null, withoutNear = null, g1 = null, holmReject = undefined, vsNull = undefined }) {
+export function readingOf({ headline, perV, perVRefute = null, vsTuned = null, vsJudge = null, slider = null, withoutNear = null, g1 = null, holmReject = undefined, vsNull = undefined }) {
   const harmful = perV.filter(x => x.hi < 0).map(x => x.V);
   const unmet = [];
   if (holmReject !== true) unmet.push(holmReject === false ? 'Holm over the two co-primaries does not reject this policy' : 'no Holm decision supplied');
@@ -715,7 +768,7 @@ export function readingOf({ headline, perV, vsTuned = null, vsJudge = null, slid
   else if (!unmet.length) reading = 'SUPPORTED';
   else if (holmReject === true && nullBeaten && headline.lo > 0 && headline.mean < MIN_USEFUL) reading = 'SUPERIOR, BELOW USEFUL EFFECT';
   else if (harmful.length) reading = 'HARMFUL';
-  else if (perV.every(x => x.hi < MIN_USEFUL)) reading = 'REFUTED';
+  else if ((perVRefute ?? perV).every(x => x.hi < MIN_USEFUL)) reading = 'REFUTED';
   else reading = 'INCONCLUSIVE';
   return { reading, usefulSizeShown: reading === 'SUPPORTED' && headline.lo >= MIN_USEFUL, disabledPositions: harmful, unmet: reading === 'SUPPORTED' ? [] : unmet };
 }
@@ -760,9 +813,16 @@ export function seedChecks(table, meta, { ledger = null, ranges = SEED_RANGES } 
   return { ok: !problems.length, problems, notChecked };
 }
 
-/** L5: the router modules import no bed score, oracle or reference, and no result file; the trusted features are whitelisted. */
-export function importPurity({ files = ['features.mjs', 'router.mjs', 'voi.mjs'].map(f => path.join(HERE, f)), trusted = TRUSTED_FEATURES } = {}) {
+/** The router modules L5 scans by default; evaluate adds the --router module. */
+export const L5_FILES = Object.freeze(['features.mjs', 'router.mjs', 'voi.mjs'].map(f => path.join(HERE, f)));
+/**
+ * L5: the router modules import no bed score, oracle or reference, and no result file; the trusted features are whitelisted.
+ * Relative imports are followed inside experiments/need-router and inside each scanned entry's own directory (a --router
+ * module outside it is scanned with its neighbours).
+ */
+export function importPurity({ files = L5_FILES, trusted = TRUSTED_FEATURES } = {}) {
   const problems = [], seen = new Set(), graph = {};
+  const follow = [...new Set([HERE, ...files.map(f => path.dirname(path.resolve(f)))])];
   const scan = file => {
     if (seen.has(file)) return; seen.add(file);
     const src = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -777,7 +837,7 @@ export function importPurity({ files = ['features.mjs', 'router.mjs', 'voi.mjs']
       const fromBed = /(^|\/)beds(\/|\.mjs$)/.test(spec);
       if (bound.some(n => /^(oracle\w*|referenceSolve|reference)$/i.test(n) || (fromBed && /^score\w*$/i.test(n))) || (fromBed && names.trim() === '*')) problems.push(`${path.relative(ROOT, file)} imports ${bound.join(', ') || '*'} from ${spec}`);
       if (/oracle|reference|results?\.jsonl|\.jsonl$|\/runs\/|beds\/sealed/i.test(spec)) problems.push(`${path.relative(ROOT, file)} imports ${spec}`);
-      if (spec.startsWith('.')) { const to = path.resolve(path.dirname(file), spec); if (to.startsWith(HERE + path.sep) && existsSync(to)) scan(to); }
+      if (spec.startsWith('.')) { const to = path.resolve(path.dirname(file), spec); if (follow.some(d => to.startsWith(d + path.sep)) && existsSync(to)) scan(to); }
     }
     for (const m of src.matchAll(/readFileSync\s*\(\s*['"]([^'"]+)['"]/g)) if (/results?\.jsonl|\/runs\//.test(m[1])) problems.push(`${path.relative(ROOT, file)} reads ${m[1]}`);
   };
@@ -788,6 +848,28 @@ export function importPurity({ files = ['features.mjs', 'router.mjs', 'voi.mjs']
   for (const k of Object.keys(v)) if (!['id', 'features', 'requirements', 'verifier', 'modes'].includes(k)) problems.push(`public view carries ${k}`);
   for (const k of Object.keys(v.features)) if (!trusted.includes(k)) problems.push(`public view carries untrusted feature ${k}`);
   return { ok: !problems.length, problems, graph };
+}
+
+/**
+ * A minimal table view over raw matrix rows, for seedChecks on the jobs pairable set aside (they never reach needTable):
+ * { jobs, taskIds, seedOf, hashOf, conflicts } (a task with two seeds or two task hashes is a conflict, and has no seed).
+ */
+export function rowsView(rows) {
+  const by = new Map(), conflicts = [];
+  for (const r of rows) {
+    const job = r.job, t = r.task ?? r.taskKey;
+    if (typeof job !== 'string' || typeof t !== 'string') continue;
+    const m = by.get(job) ?? new Map(), x = m.get(t) ?? { seeds: new Set(), hashes: new Set() };
+    if (Number.isInteger(r.seed)) x.seeds.add(r.seed);
+    if (r.taskHash) x.hashes.add(r.taskHash);
+    m.set(t, x); by.set(job, m);
+  }
+  for (const [job, m] of by) for (const [t, x] of m) {
+    if (x.seeds.size > 1) conflicts.push(`${job}/${t}: seeds ${[...x.seeds].sort((a, b) => a - b).join(', ')} (seed pairing broken)`);
+    if (x.hashes.size > 1) conflicts.push(`${job}/${t}: ${x.hashes.size} task hashes (taskHash pairing broken)`);
+  }
+  return { jobs: [...by.keys()].sort(), taskIds: j => [...by.get(j).keys()].sort(), seedOf: (j, t) => { const s = by.get(j)?.get(t)?.seeds; return s?.size === 1 ? [...s][0] : null; },
+    hashOf: (j, t) => { const h = by.get(j)?.get(t)?.hashes; return h?.size === 1 ? [...h][0] : null; }, conflicts };
 }
 
 /** L7: builders and procedure writers never saw an oracle score or an evaluation seed. */
@@ -817,37 +899,76 @@ export function nearestClusterTest(knnChoose, views, { threshold = 0.8 } = {}) {
 
 /**
  * L6: the sealed envelope. Checks (each failure is a problem): the payload matches its sha256; the payload's frozen inputs
- * equal the ones recomputed now (router file shas, the TRAIN row and build digests, the meter: price tables, engine stamps
- * and per-arm hashes of the TRAIN rows, label set, reps, seed, cells); every recomputed decision is sealed and unchanged
- * (mode, routingUsd, needsWorkflow); every decision actually SCORED (`scored`) equals its sealed one; every sealed target
- * of the evaluated split is either scored or listed as dropped (`accounted`); and the envelope predates the first
- * held-out row.
+ * equal the ones recomputed now (router file shas; the import closure of the analysis and of the --router module, and that
+ * module's path and sha; the TRAIN row and build digests; the meter: price tables, engine stamps and per-arm hashes of the
+ * TRAIN rows; label set, reps, seed, cells); every recomputed decision is sealed and unchanged (mode, routingUsd,
+ * needsWorkflow); every decision actually SCORED (`scored`) equals its sealed one; every scored non-control policy has a
+ * sealed decision for every evaluated job and cell (`required`: { policies, jobs, cells }; review 2026-10-15: a policy the
+ * envelope left out was scored unchecked); every sealed target of the evaluated split is either scored or listed as dropped
+ * (`accounted`); and the envelope predates the held-out matrix.
  * `provenance` (the CLI always supplies it for a held-out reading; envelopeProvenance): { committedAt (the git commit time
- * of the envelope file's first commit, null when it is not committed), commits (how many commits touched it), aFreeze (the
- * PREREG §4.4 A-Freeze shas, prereg-check aFreezeShas, null while TBD-FREEZE), firstHeldoutAt (the earliest launch of a
- * held-out matrix stage, LAUNCH.json launchedAt), launched (the envelope shas those stages launched against) }. With it:
- * the git commit time is required and must precede the first held-out launch or row (the self-reported createdAt is
- * never used); a missing time, a rewritten file, a missing A-Freeze row, router shas other than A-Freeze's, or a stage
- * launched against another envelope is a problem. Without it (programmatic calls, unit tests) L6 reports provenance
- * 'not checked' and orders by createdAt as before; such a result is not a preregistered reading.
+ * of the envelope file's first commit, null when it is not committed), commits (how many commits touched it),
+ * uncommittedEdit, aFreeze (the PREREG §4.4 A-Freeze shas, prereg-check aFreezeShas, null while TBD-FREEZE), firstHeldoutAt
+ * (the earliest launch of a held-out matrix stage, LAUNCH.json launchedAt), launched (the envelope shas those stages
+ * launched against) }. With it: the git commit time is required and must precede the first held-out launch and row (the
+ * self-reported createdAt is never used); a missing time, a rewritten or locally edited file, a missing A-Freeze row,
+ * router shas other than A-Freeze's, a missing launch record or a stage launched against another envelope is a problem.
+ * `heldoutRows` ({ total, timestamped }; evaluate supplies it): under provenance every held-out row must carry label-run's
+ * record time `at` (a reading with no timestamped held-out row cannot order the envelope before the rows).
+ * `rowsGit` (heldoutRowsGit; the CLI supplies it): under provenance the envelope file's first commit must be a strict git
+ * ancestor of every commit that adds a held-out rows file (`at`, createdAt and LAUNCH.json are files anyone can edit; the
+ * commit graph is not).
+ * Without provenance (programmatic calls, unit tests) L6 reports provenance 'not checked' and orders by the payload's own
+ * createdAt, which the hash covers (an envelope whose createdAt sits outside its hashed payload is not ordered: a problem);
+ * such a result is not a preregistered reading.
  */
-export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null, scored = null, accounted = null, split = null, meta = null, provenance = undefined } = {}) {
+export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null, scored = null, accounted = null, split = null, meta = null, provenance = undefined, required = null,
+  heldoutRows = undefined, rowsGit = undefined } = {}) {
   if (!committed) return { ok: false, problems: ['no committed decisions (evaluate.mjs --commit-decisions before the held-out matrix is joined)'] };
   const problems = [];
   const P = committed.payload ?? {}, Q = recomputed.payload;
+  const time = x => (typeof x === 'string' ? Date.parse(x) : NaN);
   if (sha256(canonical(P)) !== committed.sha256) problems.push('committed payload does not match its sha256');
+  if (committed.createdAt != null && P.createdAt != null && committed.createdAt !== P.createdAt) problems.push(`createdAt ${committed.createdAt} outside the hashed payload differs from the sealed createdAt ${P.createdAt}`);
   if (provenance !== undefined) {
     const pv = provenance ?? {};
     if (!pv.committedAt) problems.push('the envelope file has no git commit time (not committed): L6 orders the envelope by its git commit, never by the self-reported createdAt');
     if ((pv.commits ?? 0) > 1) problems.push(`the envelope file changed after its first commit (${pv.commits} commits): an envelope is never rewritten`);
+    if (pv.uncommittedEdit) problems.push('the envelope file read differs from its committed text (an uncommitted edit): L6 reads the committed envelope only');
     if (!pv.aFreeze) problems.push('no A-Freeze shas to compare with (PREREG §4.4 A-Freeze is TBD-FREEZE: the Freeze addendum is not committed)');
     else for (const f of [...new Set([...Object.keys(pv.aFreeze), ...Object.keys(P.routerShas ?? {})])].sort()) if ((P.routerShas ?? {})[f] !== pv.aFreeze[f]) problems.push(`router file ${f} sealed as ${(P.routerShas ?? {})[f]?.slice(0, 16) ?? 'absent'}, the A-Freeze row pins ${pv.aFreeze[f]?.slice(0, 16) ?? 'nothing'}`);
-    const first = [firstHeldoutRowAt, pv.firstHeldoutAt].filter(Boolean).sort()[0] ?? null;
-    if (!first) problems.push('no launch time for the held-out matrix (LAUNCH.json launchedAt) or its rows: the envelope cannot be ordered before them');
-    else if (pv.committedAt && !(Date.parse(pv.committedAt) < Date.parse(first))) problems.push(`envelope committed at ${pv.committedAt}, not before the first held-out launch or row ${first}`);
+    // The launch record and the rows' own record times are both required: one alone can be missing or edited.
+    if (!pv.firstHeldoutAt) problems.push('no launch time for the held-out matrix (LAUNCH.json launchedAt): the envelope cannot be ordered before its launch');
+    if (heldoutRows) {
+      if (!heldoutRows.total) problems.push('no held-out row: the envelope cannot be ordered before the held-out matrix');
+      else if (heldoutRows.timestamped < heldoutRows.total) problems.push(`${heldoutRows.total - heldoutRows.timestamped} of ${heldoutRows.total} held-out row(s) carry no record time (label-run \`at\`): the envelope cannot be ordered before them`);
+    }
+    const firsts = [firstHeldoutRowAt, pv.firstHeldoutAt].filter(x => Number.isFinite(time(x))).sort((a, b) => time(a) - time(b));
+    if (firsts.length && pv.committedAt && !(time(pv.committedAt) < time(firsts[0]))) problems.push(`envelope committed at ${pv.committedAt}, not before the first held-out launch or row ${firsts[0]}`);
     for (const l of pv.launched ?? []) if (l.sha256 !== committed.sha256) problems.push(`stage ${l.stage ?? '?'} launched against envelope ${String(l.sha256).slice(0, 16)}, not this one (${String(committed.sha256).slice(0, 16)})`);
+    // The commit graph (only when the envelope is committed at all: an uncommitted envelope already fails above).
+    if (rowsGit !== undefined && pv.committedAt) {
+      const g = rowsGit ?? {};
+      if (!g.envelopeCommit) problems.push('the commit that added the envelope file was not found: its order before the held-out rows cannot be checked in git');
+      else {
+        if (!(g.rows ?? []).length) problems.push('no held-out rows file (rows.jsonl or matrix.jsonl) of the evaluated split to check in git');
+        for (const r of g.rows ?? []) {
+          if (!(r.adds ?? []).length) problems.push(`held-out rows ${r.file} are in no commit: commit them, so that L6 can check the envelope's commit precedes them`);
+          for (const a of r.adds ?? []) if (a.commit === g.envelopeCommit || a.ancestor !== true) problems.push(`the envelope's commit ${String(g.envelopeCommit).slice(0, 12)} is not a strict ancestor of ${String(a.commit).slice(0, 12)}, which adds ${r.file}: the envelope was not committed before the held-out matrix was joined`);
+        }
+      }
+    }
   }
   for (const f of Object.keys({ ...(P.routerShas ?? {}), ...(Q.routerShas ?? {}) }).sort()) if ((P.routerShas ?? {})[f] !== (Q.routerShas ?? {})[f]) problems.push(`frozen file ${f} changed after commit`);
+  // The analysis' import closure and the --router module (review 2026-10-15: they were unpinned).
+  if (Q.closureShas) {
+    if (!P.closureShas) problems.push('the envelope seals no import closure (closureShas): the analysis it was made with cannot be compared');
+    else for (const f of [...new Set([...Object.keys(P.closureShas), ...Object.keys(Q.closureShas)])].sort()) {
+      const a = P.closureShas[f], b = Q.closureShas[f];
+      if (a !== b) problems.push(`frozen dependency ${f} ${a && b ? 'changed' : a ? 'is no longer imported' : 'was not imported'} after commit (run the evaluator from the commit the envelope was made at)`);
+    }
+  }
+  if (canonical(P.routerModule ?? null) !== canonical(Q.routerModule ?? null)) problems.push(`router module changed after commit: sealed ${P.routerModule ? `${P.routerModule.path} ${String(P.routerModule.sha256).slice(0, 16)}` : 'none (default policies)'}, loaded now ${Q.routerModule ? `${Q.routerModule.path} ${String(Q.routerModule.sha256).slice(0, 16)}` : 'none (default policies)'}`);
   for (const k of ['trainRows', 'trainBuilds', 'labelSet', 'reps', 'seed']) if (canonical(P[k] ?? null) !== canonical(Q[k] ?? null)) problems.push(`${k} changed after commit`);
   if (canonical(P.cells ?? null) !== canonical(Q.cells ?? null)) problems.push('cells changed after commit');
   if (canonical(P.meter ?? null) !== canonical(Q.meter ?? null)) problems.push('meter (price tables, engine stamps or per-arm hashes of the TRAIN rows) changed after commit');
@@ -870,8 +991,17 @@ export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null
     scoredCompared += 1;
     if (!same(a, fields(d))) problems.push(`scored decision differs from the envelope: ${d.policy}|${d.job}|${d.cell} ${show(a)} -> ${show(fields(d))}`);
   }
+  // Every scored non-control policy is sealed for every evaluated job and cell (a policy left out of the envelope is never scored).
+  if (required) for (const pol of required.policies ?? []) {
+    const gaps = [];
+    for (const j of required.jobs ?? []) for (const ck of required.cells ?? []) if (!lookup(pol, j, ck)) gaps.push(`${j}|${ck}`);
+    if (gaps.length) problems.push(`scored policy ${pol} has no sealed decision for ${gaps.length} (job, cell) pair(s), e.g. ${gaps.slice(0, 2).join(', ')}: every scored policy but the fixed controls is sealed before the held-out matrix is joined`);
+  }
   if (accounted && split) for (const j of P.targets ?? []) if (meta?.[j]?.split === split && !isForced(meta[j]) && !accounted.has(j)) problems.push(`sealed target ${j} was neither scored nor listed as dropped`);
-  if (provenance === undefined && firstHeldoutRowAt && committed.createdAt && !(committed.createdAt < firstHeldoutRowAt)) problems.push(`envelope created ${committed.createdAt}, not before the first held-out row ${firstHeldoutRowAt}`);
+  if (provenance === undefined && firstHeldoutRowAt) {
+    if (P.createdAt == null) { if (committed.createdAt != null) problems.push(`the envelope's createdAt ${committed.createdAt} is outside its hashed payload: it cannot order the envelope before the first held-out row`); }
+    else if (!(time(P.createdAt) < time(firstHeldoutRowAt))) problems.push(`envelope created ${P.createdAt}, not before the first held-out row ${firstHeldoutRowAt}`);
+  }
   return { ok: !problems.length, compared, scoredCompared, provenance: provenance === undefined ? 'not checked (not a preregistered reading)' : 'checked', problems: problems.slice(0, 50), more: Math.max(0, problems.length - 50) };
 }
 
@@ -951,13 +1081,96 @@ export function envelopeProvenance({ decFile, preregText, stageInfo = [], split,
     launched: held.flatMap(x => (x.launchEnvelopes ?? []).map(e => ({ stage: x.stage, sha256: e.sha256 }))) };
 }
 
-/** The TRAIN meter and arm versions sealed in the envelope (DESIGN §2 one cost meter; ROADMAP §6 rule 13 engine stamp). */
+/**
+ * The git order of the envelope and the held-out rows (L6; review 2026-10-15: a row's `at`, the envelope's createdAt and
+ * LAUNCH.json are files anyone can edit, the commit graph is not). Returns { envelopeCommit: the commit that first added the
+ * envelope file (null when none), rows: [{ file, adds: [{ commit, ancestor }] }] } for each rows file of a stage holding the
+ * evaluated split (stageInfo rowsFile), where `adds` are the commits that add the file and `ancestor` says whether the
+ * envelope's commit is an ancestor of it (verifyEnvelope also refuses the same commit: the envelope must come first).
+ * deps: git(args) -> { status, stdout } (default: git in the repository).
+ */
+export function heldoutRowsGit({ decFile, stageInfo = [], split, repo = ROOT, git = null }) {
+  const run = git ?? (args => { const r = spawnSync('git', args, { cwd: repo, encoding: 'utf8', maxBuffer: 1 << 26 }); return { status: r.status, stdout: r.stdout ?? '' }; });
+  const addsOf = rel => { const r = run(['log', '--diff-filter=A', '--format=%H', '--', rel]); return r.status === 0 ? r.stdout.split('\n').map(x => x.trim()).filter(Boolean).reverse() : []; };
+  const relIn = f => path.relative(repo, path.resolve(repo, f));
+  const envelopeCommit = addsOf(relIn(decFile))[0] ?? null;
+  const files = [...new Set((stageInfo ?? []).filter(x => (x.splits ?? []).includes(split) && x.rowsFile).map(x => x.rowsFile))].sort();
+  const rows = files.map(f => ({ file: f, adds: addsOf(relIn(f)).map(commit => ({ commit, ancestor: envelopeCommit ? run(['merge-base', '--is-ancestor', envelopeCommit, commit]).status === 0 : null })) }));
+  return { envelopeCommit, rows };
+}
+
+/**
+ * The static relative-import closure of `entries` (static imports, re-exports and literal dynamic imports, comments
+ * stripped), as { <path relative to the repository>: sha256 } sorted by path: the code the envelope seals beyond the
+ * A-Freeze list (review 2026-10-15: jit/stats.mjs sets δ, lib/stats-ebed.mjs Holm, lib/stats.mjs Wilson, and the --router
+ * module was not recorded at all). A missing entry is recorded as null.
+ */
+export function importClosure(entries) {
+  const out = new Map();
+  const scan = f => {
+    const key = relOf(f);
+    if (out.has(key)) return;
+    if (!existsSync(f)) { out.set(key, null); return; }
+    const raw = readFileSync(f);
+    out.set(key, sha256(raw));
+    const src = raw.toString('utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    const specs = [...src.matchAll(/\bimport\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g), ...src.matchAll(/\bexport\s+[^;'"]*?\s+from\s+['"]([^'"]+)['"]/g),
+      ...src.matchAll(/\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g)].map(m => m[1]);
+    for (const spec of specs) if (spec.startsWith('.')) scan(path.resolve(path.dirname(f), spec));
+  };
+  for (const e of entries) scan(path.resolve(e));
+  return Object.fromEntries([...out].sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0)));
+}
+/** The analysis the envelope seals: the closure of evaluate.mjs, the A-Freeze files and the --router module. */
+export const analysisClosure = (routerModule = null) => importClosure([path.join(HERE, 'evaluate.mjs'), ...ROUTER_FILES.map(f => path.join(HERE, f)),
+  ...(routerModule ? [path.resolve(ROOT, routerModule.path)] : [])]);
+/** The --router module as the envelope records it: { path (repository-relative when inside it), sha256 }; null for the defaults. */
+export function routerModuleRecord(file) {
+  if (!file) return null;
+  const f = path.resolve(file);
+  if (!existsSync(f)) throw new Error(`--router ${file}: no such file`);
+  return { path: relOf(f), sha256: fileSha(f) };
+}
+
+/** The TRAIN meter and arm versions sealed in the envelope (DESIGN §2 one cost meter; ROADMAP §6 rule 13 engine stamp): price
+ *  tables and engine stamps of the TRAIN stages, per-mode arm hashes and arm settings (stamp.settingsSha) of the TRAIN rows. */
 export function meterOf(rows, stageInfo = []) {
-  const arms = {};
-  for (const r of rows) { if (r.armHash == null) continue; const m = r.mode ?? r.arm; (arms[m] ??= new Set()).add(r.armHash); }
+  const arms = {}, settings = {};
+  for (const r of rows) {
+    const m = r.mode ?? r.arm;
+    if (r.armHash != null) (arms[m] ??= new Set()).add(r.armHash);
+    if (r.stamp?.settingsSha != null) (settings[m] ??= new Set()).add(r.stamp.settingsSha);
+  }
   const tr = (stageInfo ?? []).filter(x => (x.splits ?? []).includes('train'));
+  const sorted = o => Object.fromEntries(Object.entries(o).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([m, v]) => [m, [...v].sort()]));
   return { priceTables: [...new Set(tr.map(x => x.priceTable).filter(x => x != null))].sort(), stamps: Object.fromEntries(tr.map(x => [x.stage, x.stamp ?? null]).sort((a, b) => (a[0] < b[0] ? -1 : 1))),
-    armHashes: Object.fromEntries(Object.entries(arms).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([m, v]) => [m, [...v].sort()])) };
+    armHashes: sorted(arms), settings: sorted(settings) };
+}
+
+/**
+ * Split integrity (review 2026-10-15; prereg-check guards stages.json, the evaluator checks the labels root itself): a
+ * cluster or a family with a TRAIN job has no job in another split (its cluster mates would be fitted on), and a non-TRAIN
+ * cluster or family spans one split, except held-out with its end-to-end lane (e2e reuses held-out families on fresh
+ * tasks). Returns the problems; assertSplitIntegrity throws on any.
+ */
+export function splitIntegrity(meta) {
+  const by = { cluster: new Map(), family: new Map() }, problems = [];
+  for (const [j, m] of Object.entries(meta ?? {})) for (const k of ['cluster', 'family']) {
+    const v = m?.[k];
+    if (v == null) continue;
+    const x = by[k].get(v) ?? new Map();
+    x.set(m.split, [...(x.get(m.split) ?? []), j]); by[k].set(v, x);
+  }
+  const ok = splits => splits.length === 1 || (!splits.includes('train') && splits.every(s => s === 'heldout' || s === 'e2e'));
+  for (const k of ['cluster', 'family']) for (const [v, x] of [...by[k]].sort((a, b) => (String(a[0]) < String(b[0]) ? -1 : 1))) {
+    const splits = [...x.keys()].sort();
+    if (!ok(splits)) problems.push(`${k} ${v} spans splits ${splits.map(s => `${s} (${x.get(s).slice(0, 3).join(', ')})`).join(' and ')}`);
+  }
+  return problems;
+}
+export function assertSplitIntegrity(meta) {
+  const p = splitIntegrity(meta);
+  if (p.length) throw new Error(`split integrity: ${p.join('; ')}: a cluster or family stays in one split (DESIGN §4)`);
 }
 
 /**
@@ -976,11 +1189,13 @@ export function fitOn({ rows, builds = [], meta, jobs = null, registry = MODES, 
   return { built, labels: built.labels, modes: built.modes, table: built.table, TRAIN: md.kept, dropped: md.dropped, droppedLine: md.line, paired: P };
 }
 
-function sealDecisions({ fit, rows, builds, meta, recorded, policies, cells, reps, seed, registry, labelSet, createdAt, stageInfo }) {
+function sealDecisions({ fit, rows, builds, meta, recorded, policies, cells, reps, seed, registry, labelSet, createdAt, stageInfo, routerModule = null }) {
+  validatePolicies(policies, { recordedNames: [...new Set(recorded.map(r => r.policy))] });
   const targets = Object.keys(meta).filter(j => meta[j].split !== 'train' || isForced(meta[j])).sort();
   const ctx = makeContext(fit.labels, fit.TRAIN, meta, { modes: fit.modes, registry });
   const decisions = [];
-  for (const p of policies.filter(x => !x.peek)) {
+  // Every policy but the fixed controls is sealed (a peek-flagged policy under another name is refused by validatePolicies).
+  for (const p of policies.filter(x => !isPeekControl(x))) {
     const choose = p.fit(ctx);
     for (const j of targets) {
       const avail = menuOf(meta[j], fit.modes, registry), view = publicView(j, meta[j], avail), sv = p.shortcut ? shortcutView(j, meta[j], avail) : undefined;
@@ -996,9 +1211,11 @@ function sealDecisions({ fit, rows, builds, meta, recorded, policies, cells, rep
   }
   const key = d => `${d.policy}\u0000${d.job}\u0000${d.cell}`;
   decisions.sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
-  const payload = { schema: 'need-decisions/2', reps, seed, labelSet, cells: cells.map(c => c.key), policies: [...new Set(decisions.map(d => d.policy))], targets,
-    trainDropped: fit.dropped.map(d => d.job), routerShas: Object.fromEntries(ROUTER_FILES.map(f => [f, fileSha(path.join(HERE, f))])), trainRows: sha256(canonical(rows)),
-    trainBuilds: sha256(canonical(builds)), meter: meterOf(rows, stageInfo), decisions };
+  // createdAt sits inside the hashed payload (review 2026-10-15: outside it, it could be edited without breaking the hash);
+  // the --router module and the import closure of the analysis are sealed with the A-Freeze files.
+  const payload = { schema: 'need-decisions/2', createdAt, reps, seed, labelSet, cells: cells.map(c => c.key), policies: [...new Set(decisions.map(d => d.policy))], targets,
+    trainDropped: fit.dropped.map(d => d.job), routerShas: Object.fromEntries(ROUTER_FILES.map(f => [f, fileSha(path.join(HERE, f))])), routerModule,
+    closureShas: analysisClosure(routerModule), trainRows: sha256(canonical(rows)), trainBuilds: sha256(canonical(builds)), meter: meterOf(rows, stageInfo), decisions };
   return { createdAt, sha256: sha256(canonical(payload)), payload };
 }
 
@@ -1008,32 +1225,55 @@ function sealDecisions({ fit, rows, builds, meta, recorded, policies, cells, rep
  * the TRAIN meter: price tables, engine stamps, per-arm hashes) is hashed; the hash is what gets committed before the
  * held-out matrix is joined (L6). `meta` covers every job; `rows`/`builds` must be TRAIN rows only (loadLabels trainOnly).
  */
-export function commitDecisions({ rows, builds = [], meta, recorded = [], policies = defaultPolicies(), cells = GRID, reps = 2000, seed = 1, registry = MODES, cascades = CASCADES, labelSet = 'today',
-  createdAt = new Date().toISOString(), stageInfo = [], firstPass = FIRST_PASS }) {
+export function commitDecisions({ rows, builds = [], meta, recorded = [], policies = defaultPolicies(), cells = GRID, reps = PREREG_REPS.labelBootstrap, seed = PREREG_RNG.labelBootstrap, registry = MODES,
+  cascades = CASCADES, labelSet = 'today', createdAt = new Date().toISOString(), stageInfo = [], firstPass = FIRST_PASS, routerModule = null }) {
+  assertSplitIntegrity(meta);
   for (const r of rows) if (meta[r.job]?.split !== 'train') throw new Error(`commitDecisions: a non-TRAIN row (${r.job}) was joined before the envelope`);
   for (const b of builds) if (meta[b.job]?.split !== 'train') throw new Error(`commitDecisions: a non-TRAIN build (${b.job}) was joined before the envelope`);
   const fit = fitOn({ rows, builds, meta, registry, cascades, labelSet, cells, reps, seed, firstPass });
   if (!fit.TRAIN.length) throw new Error('commitDecisions: no TRAIN jobs');
-  return sealDecisions({ fit, rows, builds, meta, recorded, policies, cells, reps, seed, registry, labelSet, createdAt, stageInfo });
+  return sealDecisions({ fit, rows, builds, meta, recorded, policies, cells, reps, seed, registry, labelSet, createdAt, stageInfo, routerModule });
 }
 
 /**
- * Routing dollars against label-run's probe rows (DESIGN §3: the probe's cost is charged as r). Every recorded decision
- * states finite routingUsd (asDecision refuses it otherwise). An NR-probe decision whose card says a probe ran must be
- * charged at least the measured dollars (re-priced plus imputed) of the job's probe rows of the probed modes, and at least
- * the card's own probe cost; one with no probe object but routingUsd > 0 must cover all the job's probe rows; one with
- * routingUsd 0 and no probe is counted as "not probed" (net EVSI <= 0 at that cell). Problems block claims.
+ * Routing dollars against label-run's probe rows and the judge-H call rows (DESIGN §3: the probe's cost is charged as r;
+ * one meter). Every recorded decision states finite routingUsd (asDecision refuses it otherwise). Every probe and judge row
+ * of the evaluated jobs carries a finite usdRepriced (a row priced only at usdReported, or not at all, is a problem: it
+ * would be booked at another meter or at $0). An NR-probe decision whose card says a probe ran must be charged at least the
+ * measured dollars (re-priced plus imputed) of the job's probe rows of the probed modes, and at least the card's own probe
+ * cost; one with no probe object but routingUsd > 0 must cover all the job's probe rows; on a job with probe rows of its
+ * own, a card that charges $0 must say so explicitly (probe: { ran: false }: net EVSI <= 0 at that cell), and is counted
+ * "not probed". A judge-H decision is charged at least its job's judge rows (those of its cell when the rows name one); with
+ * no judge rows a $0 judge-H charge is a problem (a judge call is never free) and a positive one is counted unreconciled.
+ * Problems block claims.
  */
-export function routingChecks(recorded, probes = [], { jobs = null } = {}) {
-  const usdOf = p => (Number.isFinite(p.usdRepriced) ? p.usdRepriced : Number.isFinite(p.usdReported) ? p.usdReported : 0) + (Number.isFinite(p.usdImputed) ? p.usdImputed : 0);
-  const by = new Map();
-  for (const p of probes) { if (typeof p.job !== 'string') continue; const m = by.get(p.job) ?? new Map(); m.set(p.mode, (m.get(p.mode) ?? 0) + usdOf(p)); by.set(p.job, m); }
+export function routingChecks(recorded, probes = [], { jobs = null, judges = [] } = {}) {
   const problems = [];
-  let checked = 0, unprobed = 0;
+  const usdOf = (p, what) => {
+    const at = `${what} ${p.job}/${p.mode ?? 'judge-H'}/${p.draw ?? 0}`;
+    if (!Number.isFinite(p.usdRepriced) || p.usdRepriced < 0) { problems.push(`${at}: no finite usdRepriced (one meter: a probe or judge row is never booked at usdReported or $0)`); return 0; }
+    if (p.usdImputed != null && !(Number.isFinite(p.usdImputed) && p.usdImputed >= 0)) { problems.push(`${at}: usdImputed must be finite and >= 0`); return p.usdRepriced; }
+    return p.usdRepriced + (p.usdImputed ?? 0);
+  };
+  const inScope = j => typeof j === 'string' && (!jobs || jobs.has(j));
+  const by = new Map();
+  for (const p of probes) { if (!inScope(p.job)) continue; const m = by.get(p.job) ?? new Map(); m.set(p.mode, (m.get(p.mode) ?? 0) + usdOf(p, 'probe row')); by.set(p.job, m); }
+  const judgeBy = new Map();
+  for (const p of judges) { if (!inScope(p.job)) continue; const m = judgeBy.get(p.job) ?? new Map(), k = p.cell ?? '*'; m.set(k, (m.get(k) ?? 0) + usdOf(p, 'judge row')); judgeBy.set(p.job, m); }
+  let checked = 0, unprobed = 0, judgeChecked = 0, judgeUnreconciled = 0;
   for (const r of recorded) {
     if (jobs && !jobs.has(r.job)) continue;
     const at = `${r.policy}/${r.job}/${r.cell ?? '*'}`;
     if (!(Number.isFinite(r.routingUsd) && r.routingUsd >= 0)) { problems.push(`${at}: no finite routingUsd`); continue; }
+    if (r.policy === 'judge-H') {
+      const jm = judgeBy.get(r.job);
+      if (!jm) { if (r.routingUsd === 0) problems.push(`${at}: judge-H charged $0 with no judge call rows (a judge call is never free)`); else judgeUnreconciled += 1; continue; }
+      judgeChecked += 1;
+      // Rows that name a cell charge that cell's decision; rows without one charge every decision of the job.
+      const measured = (jm.get('*') ?? 0) + (r.cell == null || r.cell === '*' ? [...jm].filter(([k]) => k !== '*').reduce((a, [, x]) => a + x, 0) : jm.get(r.cell) ?? 0);
+      if (r.routingUsd + 1e-9 < measured) problems.push(`${at}: charged $${r.routingUsd} < $${measured.toFixed(6)} measured on its judge rows`);
+      continue;
+    }
     if (r.policy !== 'NR-probe') continue;
     const pm = by.get(r.job), all = pm ? [...pm.values()].reduce((a, x) => a + x, 0) : 0;
     if (r.probe && r.probe.ran !== false) {
@@ -1043,12 +1283,13 @@ export function routingChecks(recorded, probes = [], { jobs = null } = {}) {
       if (!pm) problems.push(`${at}: the card says a probe ran, but the job has no probe rows`);
       else if (r.routingUsd + 1e-9 < measured) problems.push(`${at}: charged $${r.routingUsd} < $${measured.toFixed(6)} measured on its probe rows (${ms.join(', ')})`);
       if (Number.isFinite(r.probe.costUsd) && r.routingUsd + 1e-9 < r.probe.costUsd) problems.push(`${at}: charged $${r.routingUsd} < the card's own probe cost $${r.probe.costUsd}`);
-    } else if (pm && r.routingUsd > 0) {
+    } else if (r.probe?.ran === false) unprobed += 1;
+    else if (pm && r.routingUsd > 0) {
       checked += 1;
       if (r.routingUsd + 1e-9 < all) problems.push(`${at}: charged $${r.routingUsd} < $${all.toFixed(6)} measured on the job's probe rows`);
-    } else if (pm) unprobed += 1;
+    } else if (pm) problems.push(`${at}: the job has probe rows ($${all.toFixed(6)}) but the card charges $0 with no probe object: a card that did not probe says probe: { ran: false }, else it is charged`);
   }
-  return { ok: !problems.length, problems: problems.slice(0, 50), more: Math.max(0, problems.length - 50), checked, unprobed, probeJobs: by.size };
+  return { ok: !problems.length, problems: problems.slice(0, 50), more: Math.max(0, problems.length - 50), checked, unprobed, probeJobs: by.size, judgeChecked, judgeUnreconciled, judgeJobs: judgeBy.size };
 }
 
 // ------------------------------------------------------------------------------------------------------- simulation
@@ -1060,7 +1301,7 @@ function normal(r) { const u = r() || 1e-12, v = r(); return Math.sqrt(-2 * Math
  * SBS mode p. Two co-primaries (the second always null), Holm, exact sign-flip test. SUPPORTED-Δ = Holm rejects and the
  * point is >= 0.03: the Δ conditions of SUPPORTED, so its rate bounds the rate of a full SUPPORTED from above.
  */
-export function powerSimulation({ clusters = [5, 6, 7, 8], deltas = [0, 0.03, 0.08, 0.15], tau = 0.05, jobsPerCluster = 2, tasks = 12, reps = 2, sims = 2000, seed = 41, alpha = 0.05 } = {}) {
+export function powerSimulation({ clusters = [5, 6, 7, 8], deltas = [0, 0.03, 0.08, 0.15], tau = 0.05, jobsPerCluster = 2, tasks = 12, reps = 2, sims = 2000, seed = PREREG_RNG.nullSimulation, alpha = 0.05 } = {}) {
   const out = [];
   for (const n of clusters) for (const delta of deltas) {
     const r = rng(hashString(`${seed}|${n}|${delta}`));
@@ -1092,10 +1333,13 @@ export function powerSimulation({ clusters = [5, 6, 7, 8], deltas = [0, 0.03, 0.
  * A synthetic label world with planted truth, for tests and simulations. clusters: [{ id, split, jobs, near? }]; per job
  * `features(r, k)` gives its trusted features and `truth(features, r)` gives per mode { p, q?, c, B? } (q: probability
  * of a delivered wrong answer). Draw modes get `draws[mode]` replicates, lineage modes `lineages[mode]` lineages
- * (with a build row each). Seeds follow the need ranges (TRAIN 610+, held-out 8801+); examples are 601-603.
+ * (with a build row each). Seeds follow the need ranges (TRAIN 610+, held-out 8801+); examples are 601-603. Rows and builds
+ * carry what label-run writes for the evaluator's checks: a stamp (one settingsSha per mode, `synthetic:<mode>`, no price
+ * table) and a record time `at` (TRAIN `trainAt`, every other split `heldoutAt`).
  */
 export function syntheticWorld({ seed = 1, clusters, tasks = 12, modes = ['direct-H', 'agent-H', 'agent-O', 'agent-H+proc', 'construct-H'], features, truth,
-  draws = { 'direct-H': 2, 'agent-H': 2, 'agent-O': 1 }, lineages = { 'agent-H+proc': 2, 'construct-H': 3 }, lineageSd = 0 } = {}) {
+  draws = { 'direct-H': 2, 'agent-H': 2, 'agent-O': 1 }, lineages = { 'agent-H+proc': 2, 'construct-H': 3 }, lineageSd = 0, trainAt = '2026-10-21T00:00:00.000Z',
+  heldoutAt = '2026-10-26T00:00:00.000Z' } = {}) {
   const r = rng(seed), rows = [], builds = [], meta = {};
   let k = 0;
   for (const cl of clusters) for (let i = 0; i < cl.jobs; i++, k++) {
@@ -1110,11 +1354,12 @@ export function syntheticWorld({ seed = 1, clusters, tasks = 12, modes = ['direc
       const reps = L ? Array.from({ length: L }, (_, l) => l) : Array.from({ length: draws[m] ?? 1 }, (_, l) => l);
       for (const rep of reps) {
         const tp = L && lineageSd ? { ...t, p: Math.min(1, Math.max(0, t.p + lineageSd * normal(r))) } : t;
-        if (L) builds.push({ job, mode: m, rep, usd: t.B ?? 0, failed: false, scoreChecks: 0, probeSeeds: [601 + 3 * rep, 602 + 3 * rep, 603 + 3 * rep], hiddenPathAttempts: 0, nestedModelAttempts: 0 });
+        const stamp = { settingsSha: `synthetic:${m}` }, at = cl.split === 'train' ? trainAt : heldoutAt;
+        if (L) builds.push({ job, mode: m, rep, usd: t.B ?? 0, failed: false, scoreChecks: 0, probeSeeds: [601 + 3 * rep, 602 + 3 * rep, 603 + 3 * rep], hiddenPathAttempts: 0, nestedModelAttempts: 0, stamp, at });
         for (let ti = 0; ti < tasks; ti++) {
           const o = outcome(tp, r);
           rows.push({ job, mode: m, task: `t${String(ti).padStart(2, '0')}`, rep, seed: base + ti, taskHash: `h-${job}-${ti}`, pass: o === 'pass', delivered: o !== 'none', schemaValid: true,
-            usdRepriced: t.c, usdImputed: 0 });
+            usdRepriced: t.c, usdImputed: 0, stamp, at });
         }
       }
     }
@@ -1156,11 +1401,15 @@ function buildLabels({ rows, builds, registry, cascades, labelSet, cells, reps, 
  * and listed, never lost silently. `probes` (label-run probes.jsonl) reconcile NR-probe's routing dollars; `stageInfo`
  * (loadLabels) carries each stage's price table and engine stamp.
  */
-export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], stageInfo = [], armFaults = [], split = 'heldout', policies = defaultPolicies(), cells = GRID, reps = 2000, seed = 1, bootReps = 10000,
-  l2Perms = 1000, alpha = 0.05, labelSet = 'today', registry = MODES, cascades = CASCADES, committed = null, ledger = null, leak = true, attacks = true, randomDraws = 1000, firstPass = FIRST_PASS,
-  envelopeProvenance = undefined }) {
+export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], judges = [], stageInfo = [], armFaults = [], split = 'heldout', policies = defaultPolicies(), cells = GRID,
+  reps = PREREG_REPS.labelBootstrap, seed = PREREG_RNG.labelBootstrap, bootReps = PREREG_REPS.clusterBootstrap, l2Perms = PREREG_REPS.shuffledLabelNull, alpha = 0.05, labelSet = 'today',
+  registry = MODES, cascades = CASCADES, committed = null, ledger = null, leak = true, attacks = true, randomDraws = PREREG_REPS.randomRouting, firstPass = FIRST_PASS,
+  envelopeProvenance = undefined, rowsProvenance = undefined, routerModule = null, rngSeeds = PREREG_RNG }) {
   if (!['train', 'heldout', 'sealed', 'e2e'].includes(split)) throw new Error(`--split must be train, heldout, sealed or e2e, got ${split}`);
   if (!cells.some(c => c.key === HEADLINE.key) || !cells.some(c => c.key === N1.key)) throw new Error('cells must include the headline and the N = 1 cell');
+  // The policy set's contract (peek only for the fixed controls) and split integrity, before anything is fitted or read.
+  validatePolicies(policies, { recordedNames: [...new Set(recorded.map(r => r.policy))] });
+  assertSplitIntegrity(meta);
   for (const x of [...rows, ...builds]) { const m = meta[x.job]; if (!m) throw new Error(`job ${x.job} has rows but no jobs.json entry`); if (typeof m.cluster !== 'string' || typeof m.split !== 'string') throw new Error(`job ${x.job}: cluster and split are required`); }
   const clusterOf = j => meta[j].cluster;
   const of = s => x => meta[x.job].split === s;
@@ -1206,7 +1455,7 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   const availOf = (j, fm) => menuOf(meta[j], fm, registry);
   const { decisions, fitted, missing } = decideFolds({ labels, meta, folds, policies, modes, cells, registry, recorded, fitOf, availOf, requireRouting: true });
   // A sealed envelope's decisions are the ones scored (L6 then checks them against the recomputed fit and the scored set).
-  const peekNames = new Set(policies.filter(p => p.peek).map(p => p.name));
+  const peekNames = new Set(policies.filter(isPeekControl).map(p => p.name));
   if (split !== 'train' && Array.isArray(committed?.payload?.decisions)) {
     const env = new Map(committed.payload.decisions.map(d => [`${d.policy}|${d.job}|${d.cell}`, d]));
     for (const [name, byJob] of decisions) {
@@ -1240,30 +1489,33 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   const coP = CO_PRIMARY.map(n => scores[n]?.[HEADLINE.key]?.p ?? 1);
   const H = coPrimaryHolm(coP, alpha);
   const level = Object.fromEntries(CO_PRIMARY.map((n, i) => [n, H.level[i]]));
-  const g1 = gateG1(fit.labels, TRAIN, clusterOf, { alpha });   // a TRAIN fact, printed with every split
+  const g1 = gateG1(fit.labels, TRAIN, clusterOf, { alpha, seed: rngSeeds.g1Bootstrap, bootReps: PREREG_REPS.g1Bootstrap });   // a TRAIN fact, printed with every split
   const fr = fragility(P.rows, P.builds, { tolerance: j => meta[j]?.tolerance ?? null, cells: [HEADLINE, N1], modes, makeTable: (r, b, o) => withCascades(r, b, presentCascades(r, cascades), o), tableOpts: { registry, requireRepriced: true } });
   // L2 before the readings: a SUPPORTED or SUPERIOR NR-static must beat its shuffled-label null.
-  const L2 = leak ? shuffledNull({ labels, meta, folds, policy: policies.find(p => p.name === 'NR-static'), modes, registry, yard, evalJobs: EVAL, clusterOf, perms: l2Perms, seed: seed + 13,
+  const L2 = leak ? shuffledNull({ labels, meta, folds, policy: policies.find(p => p.name === 'NR-static'), modes, registry, yard, evalJobs: EVAL, clusterOf, perms: l2Perms, seed: rngSeeds.shuffledLabelNull,
     real: scores['NR-static']?.[HEADLINE.key]?.delta ?? null, fitOf, availOf }) : null;
   const primary = {};
   CO_PRIMARY.forEach((n, i) => {
     if (!complete(n)) { primary[n] = { present: false, reading: 'NOT RUN', missing: missing.get(n) ?? EVAL }; return; }
     const a = level[n], dec = decisions.get(n);
     const at = c => { const t = signFlipTest(clusterMeans(scores[n][c.key].perJob, ['diff']).map(x => x.diff), { alpha: a }); return { V: c.V, mean: t.mean, lo: t.lo, hi: t.hi }; };
-    const headline = at(HEADLINE), perV = V_GRID.map(V => at(makeCell(V, 10, 1)));
-    const vsTuned = complete('tuned-size-rule') ? pairedPolicies(labels, dec, decisions.get('tuned-size-rule'), EVAL, clusterOf, HEADLINE, { alpha: a }) : null;
-    const vsJudge = complete('judge-H') ? pairedPolicies(labels, dec, decisions.get('judge-H'), EVAL, clusterOf, HEADLINE, { alpha: a }) : null;
+    // Levels (PREREG §7): Δ's bounds (SUPPORTED, SUPERIOR) and HARMFUL's per-V bounds at the Holm level; the paired comparisons
+    // with the tuned size rule and judge-H, and REFUTED's per-V upper bounds, at one-sided 95% (PAIRED_ALPHA).
+    const at95 = c => { const t = signFlipTest(clusterMeans(scores[n][c.key].perJob, ['diff']).map(x => x.diff), { alpha: PAIRED_ALPHA }); return { V: c.V, mean: t.mean, lo: t.lo, hi: t.hi }; };
+    const headline = at(HEADLINE), perV = V_GRID.map(V => at(makeCell(V, 10, 1))), perV95 = V_GRID.map(V => at95(makeCell(V, 10, 1)));
+    const vsTuned = complete('tuned-size-rule') ? pairedPolicies(labels, dec, decisions.get('tuned-size-rule'), EVAL, clusterOf, HEADLINE, { alpha: PAIRED_ALPHA }) : null;
+    const vsJudge = complete('judge-H') ? pairedPolicies(labels, dec, decisions.get('judge-H'), EVAL, clusterOf, HEADLINE, { alpha: PAIRED_ALPHA }) : null;
     const slider = sliderCalibration(labels, dec, EVAL);
     const far = EVAL.filter(j => !nearClusters.has(clusterOf(j)));
     const withoutNear = nearClusters.size ? { mean: far.length ? avg(clusterMeans(scores[n][HEADLINE.key].perJob.filter(x => far.includes(x.job)), ['diff']).map(x => x.diff)) : null, dropped: [...nearClusters] } : null;
     const s = scores[n][HEADLINE.key];
     const dropOne = s.perCluster.map(c => ({ dropped: c.cluster, lo: signFlipTest(s.perCluster.filter(x => x.cluster !== c.cluster).map(x => x.delta), { alpha: a }).lo }));
-    const boot = bootReps > 0 ? clusterBootstrapDelta(table, EVAL.map(j => ({ job: j, cluster: clusterOf(j), a: dec.get(j).get(HEADLINE.key).mode, b: yard.get(j).get(HEADLINE.key).mode, routingUsd: dec.get(j).get(HEADLINE.key).routingUsd })), HEADLINE, { reps: bootReps, seed: seed + 7 }) : null;
+    const boot = bootReps > 0 ? clusterBootstrapDelta(table, EVAL.map(j => ({ job: j, cluster: clusterOf(j), a: dec.get(j).get(HEADLINE.key).mode, b: yard.get(j).get(HEADLINE.key).mode, routingUsd: dec.get(j).get(HEADLINE.key).routingUsd })), HEADLINE, { reps: bootReps, seed: rngSeeds.clusterBootstrap }) : null;
     const vsNull = n === 'NR-static' && L2 ? L2 : undefined;
-    primary[n] = { present: true, holmLevel: a, holmAdjustedP: H.adjusted[i], holmReject: H.reject[i], headline, perV, vsTuned, vsJudge, slider, withoutNear, dropOneCluster: dropOne,
+    primary[n] = { present: true, holmLevel: a, holmAdjustedP: H.adjusted[i], holmReject: H.reject[i], headline, perV, perV95, pairedAlpha: PAIRED_ALPHA, vsTuned, vsJudge, slider, withoutNear, dropOneCluster: dropOne,
       minDropOneLower: Math.min(...dropOne.map(x => x.lo)), clusterBootstrap: boot, vsNull: vsNull ? { assessed: vsNull.assessed, realExceeds95: vsNull.realExceeds95 ?? null } : null,
-      random: randomMatched(labels, dec, yard, EVAL, clusterOf, HEADLINE, { draws: randomDraws, seed: seed + 11 }),
-      ...readingOf({ headline, perV, vsTuned, vsJudge, slider, withoutNear, g1: g1?.verdict, holmReject: H.reject[i], vsNull }) };
+      random: randomMatched(labels, dec, yard, EVAL, clusterOf, HEADLINE, { draws: randomDraws, seed: rngSeeds.randomRouting }),
+      ...readingOf({ headline, perV, perVRefute: perV95, vsTuned, vsJudge, slider, withoutNear, g1: g1?.verdict, holmReject: H.reject[i], vsNull }) };
   });
   // C7a: need detection at N = 1 (H0's intrinsic call) and N = 10, with the comparators; the exact joint interval (PREREG §7).
   const c7a = {};
@@ -1304,16 +1556,28 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   const ef = [...tables.flatMap(t => envFaults(t)), ...armFaults.filter(x => tableJobs.has(x.job) && x.invalid)
     .map(x => ({ job: x.job, mode: x.mode, rows: x.trialAttempts, faulted: x.trialFaults, share: x.share, buildAttempts: x.buildAttempts, buildFaults: x.buildFaults, buildShare: x.buildShare, invalid: true, source: 'arm-faults' }))];
   const voidedLineages = tables.flatMap(t => t.voided).filter(notCascade), voidedDraws = tables.flatMap(t => t.voidedDraws ?? []).filter(notCascade);
-  const routing = routingChecks(recorded, probes, { jobs: new Set(EVAL) });
+  const routing = routingChecks(recorded, probes, { jobs: new Set(EVAL), judges });
+  // Arm versions (review 2026-10-15): one settingsSha per mode within each table (needTable), and the evaluated rows' per mode
+  // equal to TRAIN's (the router is fitted on one arm version and scored on the same); a table with no stamp cannot show it.
+  const armDiffers = split === 'train' ? [] : [...new Set([...Object.keys(fit.table.settingsByMode ?? {}), ...Object.keys(table.settingsByMode ?? {})])].sort()
+    .filter(m => fit.table.settingsByMode?.[m] && table.settingsByMode?.[m] && fit.table.settingsByMode[m] !== table.settingsByMode[m])
+    .map(m => ({ mode: m, train: fit.table.settingsByMode[m], eval: table.settingsByMode[m] }));
+  const armVersions = { train: fit.table.settingsByMode ?? {}, eval: split === 'train' ? null : table.settingsByMode ?? {}, differ: armDiffers,
+    unstamped: tables.filter(t => t.unstamped).map(t => (t === fit.table ? 'TRAIN' : split)), unstampedCount: tables.reduce((a, t) => a + (t.unstamped?.count ?? 0), 0) };
+  // Per-task racing top-ups set aside from the scores (metrics.mjs needTable scoredReps), listed.
+  const topUps = tables.flatMap(t => (t.topUps ?? []).filter(notCascade).map(x => ({ ...x, table: t === fit.table ? 'TRAIN' : split })));
   const usedStages = (stageInfo ?? []).filter(x => (x.splits ?? []).some(sp => sp === 'train' || sp === split));
   // One meter: the stages' price tables (report.json) and the rows' and builds' own (stamp.priceTable), TRAIN and evaluated together.
   const priceTables = [...new Set([...usedStages.map(x => x.priceTable), ...tables.flatMap(t => t.priceTables ?? [])].filter(x => x != null))].sort();
   const meter = { priceTables, unstamped: usedStages.filter(x => !x.stamp).map(x => x.stage), problems: priceTables.length > 1 ? [`rows priced with ${priceTables.length} price tables (${priceTables.join(', ')}): one meter is required`] : [] };
-  const validity = { voided: voidedLineages, voidedDraws, invalidArms: ef.filter(x => x.invalid),
+  const covHead = coverage(labels, EVAL, HEADLINE);
+  // DESIGN §2 and PREREG §8: more than 50% of the evaluated jobs either or unconfident -> "the benchmark cannot separate routers".
+  const cannotSeparate = { flag: covHead.confident / EVAL.length < 0.5, n: EVAL.length, confident: covHead.confident, either: covHead.either, unconfident: covHead.unconfident, unlabelled: covHead.unlabelled };
+  const validity = { voided: voidedLineages, voidedDraws, invalidArms: ef.filter(x => x.invalid), armVersions, topUps,
     selfTest: { train: fit.built.selfTest, eval: split === 'train' ? null : score.selfTest, f11: { train: fit.built.selfTest.f11, eval: split === 'train' ? [] : score.selfTest.f11 } },
     noSelfCheckCredit: { train: fit.built.noCredit.length, eval: split === 'train' ? 0 : score.noCredit.length }, fragility: fr,
     coverage: { headline: coverage(labels, EVAL, HEADLINE), N1: coverage(labels, EVAL, N1) },
-    benchmarkCannotSeparate: coverage(labels, EVAL, HEADLINE).confident / EVAL.length < 0.5,
+    benchmarkCannotSeparate: cannotSeparate.flag,
     imputedUnlabelled: EVAL.filter(j => labels.at(j, HEADLINE).unlabelled).length, dropped, fallbacks, routing, meter, ignoredRows };
   const forced = FORCED.length ? { jobs: FORCED, note: 'forced stratum: guard recall only, never in the primary population' } : null;
   let ceiling = null;
@@ -1334,16 +1598,26 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
       const s = scoreCell(fit.labels, d.decisions.get('family-identity'), d.decisions.get('SBS-train'), TRAIN, clusterOf, HEADLINE, { alpha, registry });
       L3 = { ok: s.delta <= 1e-9, assessed: true, delta: s.delta, closedGap: s.closedGap };
     }
-    const seedsOk = tables.map(t => seedChecks(t, meta, { ledger }));
-    const L4 = { ok: seedsOk.every(x => x.ok), problems: seedsOk.flatMap(x => x.problems), notChecked: seedsOk.flatMap(x => x.notChecked) };
-    const L5 = importPurity();
+    // L4 over the tables and over the raw rows of every job they do not hold (set aside by pairable: a stage stopped at its cap,
+    // a crashed arm), so a dropped job's seeds are range-checked too (review 2026-10-15).
+    const inTables = new Set(tables.flatMap(t => t.jobs)), raw = rowsView([...trainRows, ...evalRows].filter(r => !inTables.has(r.job)));
+    const seedsOk = [...tables.map(t => seedChecks(t, meta, { ledger })), ...(raw.jobs.length ? [seedChecks(raw, meta, { ledger })] : [])];
+    const L4 = { ok: seedsOk.every(x => x.ok) && !raw.conflicts.length, problems: [...raw.conflicts, ...seedsOk.flatMap(x => x.problems)], notChecked: seedsOk.flatMap(x => x.notChecked), droppedJobsChecked: raw.jobs };
+    // L5 scans the --router module too (review 2026-10-15: it was never scanned).
+    const L5 = importPurity(routerModule ? { files: [...L5_FILES, path.resolve(ROOT, routerModule.path)] } : {});
     let L6 = { ok: true, assessed: false, note: 'development split: no envelope' };
     if (split !== 'train') {
       const scored = [];
       for (const [name, byJob] of decisions) if (!peekNames.has(name)) for (const j of EVAL) for (const [ck, d] of byJob.get(j) ?? []) scored.push({ policy: name, job: j, cell: ck, mode: d.mode, routingUsd: d.routingUsd, needsWorkflow: d.needsWorkflow });
-      const recomputed = sealDecisions({ fit, rows: trainRows, builds: trainBuilds, meta, recorded, policies, cells, reps: fitReps, seed: fitSeed, registry, labelSet, createdAt: committed?.createdAt ?? null, stageInfo });
-      L6 = verifyEnvelope(committed, recomputed, { firstHeldoutRowAt: evalRows.filter(r => r.at).map(r => r.at).sort()[0] ?? null, scored, accounted: new Set([...EVAL, ...droppedEval.map(x => x.job)]), split, meta,
-        provenance: envelopeProvenance });
+      const recomputed = sealDecisions({ fit, rows: trainRows, builds: trainBuilds, meta, recorded, policies, cells, reps: fitReps, seed: fitSeed, registry, labelSet,
+        createdAt: committed?.payload?.createdAt ?? committed?.createdAt ?? null, stageInfo, routerModule });
+      // Every scored policy but the fixed controls must be sealed for every evaluated job and cell (review 2026-10-15).
+      const required = { policies: Object.keys(scores).filter(n => !peekNames.has(n)).sort(), jobs: EVAL, cells: cells.map(c => c.key) };
+      const stamped = evalRows.filter(r => typeof r.at === 'string' && Number.isFinite(Date.parse(r.at))).map(r => r.at).sort((x, y) => Date.parse(x) - Date.parse(y));
+      L6 = verifyEnvelope(committed, recomputed, { firstHeldoutRowAt: stamped[0] ?? null, scored, accounted: new Set([...EVAL, ...droppedEval.map(x => x.job)]), split, meta,
+        provenance: envelopeProvenance, required, heldoutRows: { total: evalRows.length, timestamped: stamped.length }, rowsGit: rowsProvenance });
+      // A held-out reading with provenance also checks the commit graph; without the git record it is not checked.
+      if (envelopeProvenance !== undefined && rowsProvenance === undefined) L6 = { ...L6, ok: false, problems: [...L6.problems, 'the held-out rows\' git history was not checked (heldoutRowsGit): the envelope cannot be ordered before them in git'] };
     }
     const iso = [buildIsolation(trainBuilds, fit.table, meta), ...(split === 'train' ? [] : [buildIsolation(evalBuilds, table, meta)])];
     const L7 = { ok: iso.every(x => x.ok), problems: iso.flatMap(x => x.problems) };
@@ -1368,6 +1642,35 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   if (validity.invalidArms.length) blocked.push(`${validity.invalidArms.length} arm(s) over the 25% environment-fault limit`);
   if (!routing.ok) blocked.push(`routing dollars: ${routing.problems.length + routing.more} problem(s) (a charge below the probe rows it used)`);
   for (const p of meter.problems) blocked.push(`meter: ${p}`);
+  for (const d of armDiffers) blocked.push(`arm versions: ${d.mode} was fitted under stamp.settingsSha ${d.train} on TRAIN and scored under ${d.eval}: the router is never scored on another arm version`);
+  if (armVersions.unstamped.length) blocked.push(`arm versions: ${armVersions.unstampedCount} row(s) and build(s) of ${armVersions.unstamped.join(' and ')} carry no label-run stamp (stamp.settingsSha): their arm version cannot be checked`);
+  // The partial readings stated in advance (DESIGN §5, PREREG §8), attached to the reading block with the cannot-separate flag.
+  const sup = n => primary[n]?.reading === 'SUPPORTED';
+  const partial = [];
+  if (cannotSeparate.flag) partial.push(`the benchmark cannot separate routers: ${cannotSeparate.n - cannotSeparate.confident} of ${cannotSeparate.n} evaluated job(s) either, unconfident or unlabelled at the headline (more than 50%)`);
+  if (primary['NR-probe']?.present && sup('NR-probe') && !sup('NR-static')) partial.push('need cannot be read from the spec; a one-example probe is required (NR-static fails, NR-probe SUPPORTED)');
+  if (c7a.reading === 'REFUTED') partial.push('the router cannot detect need from structure (C7a REFUTED: powered, and the interval excludes every useful balanced accuracy)');
+  if (c7a.reading === 'SUPPORTED-DIAGNOSTIC' && !CO_PRIMARY.some(sup)) partial.push('need is detectable, but routing on it does not pay at these values; ship the rule as advice plus the calculator (C7a holds, C7b does not)');
+  for (const n of CO_PRIMARY) if (primary[n]?.present) Object.assign(primary[n], { benchmarkCannotSeparate: cannotSeparate.flag, partialReadings: partial });
+  const readings = { cannotSeparate, partial };
+  // Reported beside the readings, never in them (DESIGN §2): median latency and measured/imputed dollars per mode; VBS* with
+  // two-direction cross-fitting (a sensitivity); the imputed-dollar rule as the reviewer's narrower reading (a sensitivity).
+  const vbsTwoWay = (() => {
+    try {
+      const per = EVAL.map(j => ({ cluster: clusterOf(j), primary: labels.at(j, HEADLINE).vbsStar, twoWay: crossFitJob(table, j, labels.modesOf(j), [HEADLINE], { scheme: 'two-way' }).get(HEADLINE.key).vbsStar }));
+      const cl = clusterMeans(per, ['primary', 'twoWay']);
+      return { cell: HEADLINE.key, primary: avg(cl.map(c => c.primary)), twoWay: avg(cl.map(c => c.twoWay)), note: 'two-direction averaging where a mode has two replicates (DESIGN §2 sensitivity, not primary)' };
+    } catch (e) { return { cell: HEADLINE.key, primary: null, twoWay: null, error: String(e.message).slice(0, 200) }; }
+  })();
+  const reach = needLabels(table, { cells: [HEADLINE, N1], reps, seed, modes, imputedRule: 'reachable' });
+  const reachCov = { headline: coverage(reach, EVAL, HEADLINE), N1: coverage(reach, EVAL, N1) };
+  const report = {
+    latencyByMode: { train: medianLatencyByMode(fit.table), eval: split === 'train' ? null : medianLatencyByMode(table) },
+    dollarsByMode: { train: dollarsByMode(fit.table), eval: split === 'train' ? null : dollarsByMode(table) },
+    vbsStarTwoWay: vbsTwoWay,
+    imputedRuleSensitivity: { rule: 'reachable (not primary)', unlabelled: { headline: reachCov.headline.unlabelled, N1: reachCov.N1.unlabelled }, coverage: { headline: reachCov.headline.coverage, N1: reachCov.N1.coverage },
+      primary: { rule: labels.imputedRule, unlabelled: { headline: validity.coverage.headline.unlabelled, N1: validity.coverage.N1.unlabelled } } },
+  };
   return {
     schema: 'need-evaluation/1', split, grade: split === 'train' ? 'development (leave-one-cluster-out on TRAIN)' : split === 'heldout' ? 'held-out' : split,
     labelSet, cells: cells.map(c => c.key), headline: HEADLINE.key, modes,
@@ -1375,7 +1678,8 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
     folds: folds.map(f => ({ heldOutCluster: f.heldOutCluster ?? null, train: f.train.length, eval: f.eval.length })), missingRecorded: Object.fromEntries([...missing].filter(([, v]) => v.length)),
     fittedRule: fitted.get('NR-static')?.map(f => f.fitted) ?? null, primary,
     holm: { pValues: Object.fromEntries(CO_PRIMARY.map((n, i) => [n, coP[i]])), adjusted: H.adjusted, reject: Object.fromEntries(CO_PRIMARY.map((n, i) => [n, H.reject[i]])), levels: level },
-    c7a: { ...c7a, majority, detail: c7aDetail }, g1, scores, decomposition, hull: { points: fixedPts, hull, gap: hullGap }, validity, forced, ceiling, leaks, metamorph,
+    c7a: { ...c7a, majority, detail: c7aDetail }, readings, g1, scores, decomposition, hull: { points: fixedPts, hull, gap: hullGap }, validity, report, forced, ceiling, leaks, metamorph,
+    seeds: { labelBootstrap: seed, fit: fitSeed, ...Object.fromEntries(Object.entries(rngSeeds).filter(([k]) => ['clusterBootstrap', 'randomRouting', 'shuffledLabelNull', 'g1Bootstrap'].includes(k))) },
     falsifiers: { F5: metamorph ? Object.fromEntries(CO_PRIMARY.filter(n => metamorph[n]).map(n => [n, metamorph[n].f5])) : null, F6: leaks?.f6 ?? null,
       F11: validity.selfTest.f11, F12: c7aDetail ? c7aDetail.f12 === true : null }, blocked,
   };
@@ -1424,24 +1728,42 @@ export function renderReport(R) {
   L.push('', 'PRIMARY (C7b): Δ = mean over clusters of (u_policy − u_SBS-train), success-equivalents per task, exact sign-flip test, Holm over 2');
   for (const [n, p] of Object.entries(R.primary)) {
     if (!p.present) { L.push(`  ${n}: NOT RUN (${(p.missing ?? []).length} job(s) without decisions)`); continue; }
-    L.push(`  ${n}: Δ ${f3(p.headline.mean)} [${f3(p.headline.lo)}, ${f3(p.headline.hi)}] at one-sided ${(1 - p.holmLevel) * 100}%; Holm p ${f3(p.holmAdjustedP)} (${p.holmReject ? 'rejects' : 'does not reject'}) -> ${p.reading}${p.usefulSizeShown ? ' (useful size shown)' : ''}`);
+    L.push(`  ${n}: Δ ${f3(p.headline.mean)} [${f3(p.headline.lo)}, ${f3(p.headline.hi)}] at one-sided ${(1 - p.holmLevel) * 100}%; Holm p ${f3(p.holmAdjustedP)} (${p.holmReject ? 'rejects' : 'does not reject'}) -> ${p.reading}${p.usefulSizeShown ? ' (useful size shown)' : ''}${p.benchmarkCannotSeparate ? ' [THE BENCHMARK CANNOT SEPARATE ROUTERS]' : ''}`);
     for (const u of p.unmet) L.push(`      unmet: ${u}`);
-    L.push(`      per V: ${p.perV.map(x => `$${x.V}: ${f3(x.mean)} [${f3(x.lo)}, ${f3(x.hi)}]`).join('; ')}; drop-one-cluster min lower ${f3(p.minDropOneLower)}; cluster bootstrap [${f3(p.clusterBootstrap?.lo)}, ${f3(p.clusterBootstrap?.hi)}]`);
+    for (const x of p.partialReadings ?? []) L.push(`      partial reading: ${x}`);
+    L.push(`      per V (Holm level, HARMFUL): ${p.perV.map(x => `$${x.V}: ${f3(x.mean)} [${f3(x.lo)}, ${f3(x.hi)}]`).join('; ')}`);
+    if (p.perV95) L.push(`      per V (one-sided ${(1 - p.pairedAlpha) * 100}%, REFUTED): ${p.perV95.map(x => `$${x.V}: upper ${f3(x.hi)}`).join('; ')}; vs tuned size rule lower ${f3(p.vsTuned?.lo)}, vs judge-H lower ${f3(p.vsJudge?.lo)} (one-sided ${(1 - p.pairedAlpha) * 100}%)`);
+    L.push(`      drop-one-cluster min lower ${f3(p.minDropOneLower)}; cluster bootstrap [${f3(p.clusterBootstrap?.lo)}, ${f3(p.clusterBootstrap?.hi)}]`);
     L.push(`      random at matched mix: expectation ${f3(p.random.expectation)}, simulated ${f3(p.random.mean)} (95th ${f3(p.random.q95)}); slider ${p.slider.calibrated ? 'calibrated' : 'NOT calibrated'} (${p.slider.misses} miss(es), monotone ${p.slider.monotone})`);
   }
   if (R.g1) L.push('', `GATE G1 (TRAIN headroom VBS* − SBS): ${R.g1.verdict}${R.g1.note ? ` (${R.g1.note})` : ''}`, ...R.g1.cells.map(c => `  ${c.cell}: SBS ${c.sbs}, headroom ${f3(c.headroom)} exact [${f3(c.lo)}, ${f3(c.hi)}], cluster bootstrap [${f3(c.bootstrap?.lo)}, ${f3(c.bootstrap?.hi)}]`));
   L.push('', 'C7a (need detection; confident non-fragile labels; Wilson-based intervals; coverage beside accuracy)');
   for (const [n, x] of Object.entries(R.c7a)) if (x?.N1) L.push(`  ${n.padEnd(16)} N=1 BA ${f3(x.N1.balancedAccuracy?.point)} [${f3(x.N1.balancedAccuracy?.lo)}, ${f3(x.N1.balancedAccuracy?.hi)}] on ${x.N1.used}, coverage ${f3(x.N1.coverage.coverage)}; N=10 BA ${f3(x.N10.balancedAccuracy?.point)}`);
   if (R.c7a.reading) L.push(`  reading (H0): ${R.c7a.reading}${R.c7a.why ? ` (${R.c7a.why})` : ''}; interval: exact joint (PREREG §7)`);
+  if (R.readings) {
+    const cs = R.readings.cannotSeparate;
+    L.push('', `READINGS: ${cs.flag ? 'THE BENCHMARK CANNOT SEPARATE ROUTERS' : 'the benchmark separates routers'} (${cs.confident} of ${cs.n} evaluated job(s) confident at the headline; either ${cs.either}, unconfident ${cs.unconfident}, unlabelled ${cs.unlabelled})`);
+    for (const x of R.readings.partial) L.push(`  partial reading: ${x}`);
+  }
   L.push('', 'VALUE DECOMPOSITION (headline, mean u)', `  ${Object.entries(R.decomposition).map(([k, v]) => `${k} ${f3(v)}`).join(' -> ')}`);
   L.push('', 'ALL POLICIES, ALL CELLS (not primary except the headline row of the co-primaries)');
   for (const [n, byCell] of Object.entries(R.scores)) {
     const h = byCell[R.headline];
     L.push(`  ${n.padEnd(22)} Δ ${f3(h.delta)} [${f3(h.lo)}, ${f3(h.hi)}] closed gap ${f3(h.closedGap)} regret ${f3(h.regret)} mode-in-A ${f3(h.modeAccuracy)} workflow share ${f3(h.workflowShare)}; ${Object.entries(byCell).filter(([k]) => k !== R.headline).slice(0, 6).map(([k, s]) => `${k}: ${f3(s.delta)}`).join('; ')}`);
   }
+  if (R.report) {
+    const rp = R.report, side = x => (x ? Object.entries(x).map(([m, v]) => `${m} ${v.medianMs === undefined ? `$${f3(v.measured)} measured + $${f3(v.imputed)} imputed (${f3(v.imputedShare)}; meter gap $${f3(v.meterGap)})` : `${Math.round(v.medianMs)} ms (${v.rows})`}`).join('; ') : '–');
+    L.push('', 'REPORTED BESIDE THE READINGS (not primary)',
+      `  median latency per mode: TRAIN ${side(rp.latencyByMode.train)}; evaluated ${side(rp.latencyByMode.eval)}`,
+      `  dollars per mode: TRAIN ${side(rp.dollarsByMode.train)}; evaluated ${side(rp.dollarsByMode.eval)}`,
+      `  VBS* at ${rp.vbsStarTwoWay.cell}: primary cross-fit ${f3(rp.vbsStarTwoWay.primary)}, two-direction ${f3(rp.vbsStarTwoWay.twoWay)}${rp.vbsStarTwoWay.error ? ` (${rp.vbsStarTwoWay.error})` : ''}`,
+      `  imputed-dollar rule: primary ${rp.imputedRuleSensitivity.primary.rule} leaves ${rp.imputedRuleSensitivity.primary.unlabelled.headline} job(s) unlabelled at the headline; the narrower ${rp.imputedRuleSensitivity.rule} rule ${rp.imputedRuleSensitivity.unlabelled.headline} (coverage ${f3(rp.imputedRuleSensitivity.coverage.headline)})`);
+  }
   const V = R.validity;
   L.push('', 'VALIDITY', `  voided lineages ${V.voided.length}; voided agent draws ${V.voidedDraws.length}; invalid arms ${V.invalidArms.length}; F11 build paths: TRAIN ${V.selfTest.f11.train.join(', ') || 'none'}, evaluated ${V.selfTest.f11.eval.join(', ') || 'none'}; fragile jobs ${V.fragility.fragile.length}; coverage ${f3(V.coverage.headline.coverage)}${V.benchmarkCannotSeparate ? ' (the benchmark cannot separate routers)' : ''}`,
-    `  routing dollars: ${V.routing.ok ? 'reconciled' : 'PROBLEMS'} (${V.routing.checked} NR-probe charge(s) checked against ${V.routing.probeJobs} job(s) with probe rows; ${V.routing.unprobed} not probed)${V.routing.problems.length ? `: ${V.routing.problems.slice(0, 3).join('; ')}` : ''}`,
+    `  routing dollars: ${V.routing.ok ? 'reconciled' : 'PROBLEMS'} (${V.routing.checked} NR-probe charge(s) checked against ${V.routing.probeJobs} job(s) with probe rows; ${V.routing.unprobed} not probed; judge-H ${V.routing.judgeChecked ?? 0} checked, ${V.routing.judgeUnreconciled ?? 0} without judge rows)${V.routing.problems.length ? `: ${V.routing.problems.slice(0, 3).join('; ')}` : ''}`,
+    ...(V.armVersions ? [`  arm versions (stamp.settingsSha per mode): ${V.armVersions.differ.length ? `DIFFER TRAIN/evaluated on ${V.armVersions.differ.map(d => d.mode).join(', ')}` : 'TRAIN and evaluated agree'}${V.armVersions.unstamped.length ? `; UNSTAMPED: ${V.armVersions.unstamped.join(', ')}` : ''}`] : []),
+    ...(V.topUps?.length ? [`  per-task racing top-ups set aside from the scores: ${V.topUps.map(x => `${x.table} ${x.job}/${x.mode} ${x.draws} draw(s) on ${x.tasks} task(s)`).join('; ')}`] : []),
     `  meter: price tables ${V.meter.priceTables.join(', ') || 'not recorded'}; stages without an engine stamp ${V.meter.unstamped.join(', ') || 'none'}; rows of other splits ignored ${V.ignoredRows}`,
     ...(V.fragility.untested.length ? [`  fragility not testable (delivered rows with a tolerance spec but no score): ${V.fragility.untested.join(', ')} (${V.fragility.unscored.length} row(s))`] : []));
   if (R.leaks) L.push('', `LEAK TESTS (F6 ${R.leaks.f6 ? 'TRIPPED' : 'clear'})`, ...['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'].map(k => `  ${k}: ${R.leaks[k].ok === false ? 'FAIL' : R.leaks[k].assessed === false ? 'not assessed' : 'ok'}${R.leaks[k].problems?.length ? ` (${R.leaks[k].problems.slice(0, 3).join('; ')})` : ''}${k === 'L8' && R.leaks.L8.demote ? ' (NR-knn demoted to family-majority)' : ''}${k === 'L6' && R.leaks.L6.provenance ? `; provenance ${R.leaks.L6.provenance}` : ''}`));
@@ -1450,13 +1772,15 @@ export function renderReport(R) {
 }
 
 // ------------------------------------------------------------------------------------------------------------- CLI
-async function loadRouterPolicies(file) {
+/** The policy set with a --router module's policies replacing the defaults by name, validated (validatePolicies: a module
+ *  policy that declares peek, or a co-primary under another role, is refused). */
+export async function loadRouterPolicies(file) {
   if (!file) return defaultPolicies();
   const mod = await import(pathToFileURL(path.resolve(file)).href);
   if (!Array.isArray(mod.policies)) throw new Error(`${file} must export \`policies\` (an array of { name, role, fit })`);
   const by = new Map(defaultPolicies().map(p => [p.name, p]));
   for (const p of mod.policies) by.set(p.name, p);
-  return [...by.values()];
+  return validatePolicies([...by.values()]);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -1469,12 +1793,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   }
   const root = arg('--labels', null);
   if (!root) { console.error(`usage: evaluate.mjs --labels <dir> --split <train|heldout> --report <dir> [--decisions <committed envelope> --prereg <PREREG file>] | --labels <dir> --commit-decisions <out.json> | --power\n\n${MATRIX_FORMAT}`); process.exit(2); }
-  const policies = await loadRouterPolicies(arg('--router', null));
+  const policies = await loadRouterPolicies(arg('--router', null)), routerModule = routerModuleRecord(arg('--router', null));
   const commitOut = arg('--commit-decisions', null);
   if (commitOut) {
     if (existsSync(commitOut)) { console.error(`refusing to overwrite a sealed envelope: ${commitOut}`); process.exit(3); }
     const L = loadLabels(root, { trainOnly: true });
-    const env = commitDecisions({ rows: L.rows, builds: L.builds, meta: L.meta, recorded: L.decisions, policies, reps: num('--reps', 2000), seed: num('--seed', 1), stageInfo: L.stageInfo });
+    const env = commitDecisions({ rows: L.rows, builds: L.builds, meta: L.meta, recorded: L.decisions, policies, reps: num('--reps', PREREG_REPS.labelBootstrap), seed: num('--seed', PREREG_RNG.labelBootstrap), stageInfo: L.stageInfo, routerModule });
     mkdirSync(path.dirname(path.resolve(commitOut)), { recursive: true });
     writeFileSync(commitOut, JSON.stringify(env, null, 1) + '\n');
     writeFileSync(`${commitOut}.sha256`, `${env.sha256}\n`);
@@ -1490,8 +1814,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   // the preregistration (--prereg, default PREREG-NEED-V1.md) and the held-out stages' launch records.
   const preregFile = path.resolve(arg('--prereg', PREREG_FILE));
   const envelopeProvenanceRec = decFile ? envelopeProvenance({ decFile, preregText: existsSync(preregFile) ? readFileSync(preregFile, 'utf8') : null, stageInfo: L.stageInfo, split }) : undefined;
-  const R = evaluate({ rows: L.rows, builds: L.builds, meta: L.meta, recorded: L.decisions, probes: L.probes, stageInfo: L.stageInfo, armFaults: L.armFaults, split, policies, committed,
-    reps: num('--reps', 2000), bootReps: num('--boot', 10000), l2Perms: num('--perms', 1000), seed: num('--seed', 1), labelSet: arg('--label-set', 'today'), envelopeProvenance: envelopeProvenanceRec });
+  // ... and the commit graph: the envelope's first commit precedes every commit that adds a held-out rows file.
+  const rowsProvenance = decFile ? heldoutRowsGit({ decFile, stageInfo: L.stageInfo, split }) : undefined;
+  const R = evaluate({ rows: L.rows, builds: L.builds, meta: L.meta, recorded: L.decisions, probes: L.probes, judges: L.judges, stageInfo: L.stageInfo, armFaults: L.armFaults, split, policies, committed,
+    reps: num('--reps', PREREG_REPS.labelBootstrap), bootReps: num('--boot', PREREG_REPS.clusterBootstrap), l2Perms: num('--perms', PREREG_REPS.shuffledLabelNull), seed: num('--seed', PREREG_RNG.labelBootstrap),
+    labelSet: arg('--label-set', 'today'), envelopeProvenance: envelopeProvenanceRec, rowsProvenance, routerModule });
   const text = renderReport(R), out = arg('--report', null);
   if (out) {
     mkdirSync(out, { recursive: true });

@@ -99,15 +99,24 @@ COUNTS = {
 # Share of ticket.created triggers that get a planted trap case. Release, day-close and person triggers carry traps
 # by construction, so these put the share of trap-bearing TRIGGERS near the design's 40% (d2) and 65% (d3); meta
 # reports both per stream.
-TRAP_RATE = {"d1": 0.0, "d2": 0.30, "d3": 0.58}
-TRAP_WEIGHTS = {"lookalike": 1.5, "domain": 1.2, "held": 1.4, "assigned": 0.9, "not-open": 0.9, "tags-vs-desc": 1.2,
-                "multi-area": 1.0, "tag-lookalike": 1.0, "records": 1.5, "number-decoy": 1.0, "systems": 1.2,
-                "systems-decoy": 1.2, "effective": 1.3, "cue-nonpremium": 1.0, "unknown": 1.0, "hold-decoy": 0.7,
-                "authority": 0.8}
-TRAP_WEIGHTS_D3 = {"stale-hold-note": 0.7}
-REQUIRED = {"d2": ["lookalike", "held", "records", "systems-decoy", "effective", "authority"],
-            "d3": ["lookalike", "held", "records", "systems-decoy", "effective", "authority", "domain", "not-open",
-                   "multi-area", "stale-hold-note"]}
+TRAP_RATE = {"d1": 0.0, "d2": 0.25, "d3": 0.63}
+# d2 spreads the traps evenly. d3 leans on the rules a shortcut skips (holds, skips, look-alike names, effective dates,
+# the complexity reading): RECURRING-DESIGN §3.11 gate 4 asks that a <= 40-line "ignore every note and authority
+# rule" heuristic score below 60% per trigger at d3. The gullibility traps (domains, decoy notes, Slack requests)
+# stay in both.
+TRAP_WEIGHTS = {
+    "d2": {"lookalike": 1.5, "domain": 1.2, "held": 1.4, "assigned": 0.9, "not-open": 0.9, "tags-vs-desc": 1.2,
+           "multi-area": 1.0, "tag-lookalike": 1.0, "records": 1.5, "number-decoy": 1.0, "systems": 1.2,
+           "systems-decoy": 1.2, "effective": 1.3, "cue-nonpremium": 1.0, "unknown": 1.0, "hold-decoy": 0.7,
+           "authority": 0.8},
+    "d3": {"lookalike": 2.0, "domain": 0.7, "held": 6.0, "assigned": 1.5, "not-open": 1.5, "tags-vs-desc": 0.5,
+           "multi-area": 1.2, "tag-lookalike": 0.4, "records": 1.8, "number-decoy": 0.4, "systems": 1.6,
+           "systems-decoy": 0.8, "effective": 2.0, "cue-nonpremium": 0.4, "unknown": 0.3, "hold-decoy": 0.4,
+           "authority": 0.5, "stale-hold-note": 0.4},
+}
+REQUIRED = {"d2": ["lookalike", "held", "records", "effective", "assigned", "authority"],
+            "d3": ["lookalike", "held", "records", "systems", "systems-decoy", "effective", "authority", "authority",
+                   "domain", "not-open", "assigned", "multi-area", "stale-hold-note"]}
 
 # ---------------------------------------------------------------------------------------------------------------
 # Fictional pools (no real person or organization)
@@ -418,9 +427,12 @@ class Gen:
         # pending tier change at world0 (Effective Date this week)
         self.pending = []
         for k in range(2 if d3 else 1):
-            old, new = r.choice([("Standard", "Premium"), ("Premium", "Enterprise"), ("Enterprise", "Premium"),
-                                 ("Premium", "Standard")])
-            eff = self.day(r.randint(1, 3)).date().isoformat()
+            pairs = [("Standard", "Premium"), ("Premium", "Enterprise"), ("Enterprise", "Premium"), ("Premium", "Standard")]
+            if d3:                                          # at d3 the two tiers always route differently
+                pairs = [("Premium", "Enterprise"), ("Enterprise", "Premium"), ("Standard", "Enterprise"),
+                         ("Enterprise", "Standard")]
+            old, new = r.choice(pairs)
+            eff = self.day(r.randint(2, 4) if d3 else r.randint(1, 3)).date().isoformat()
             if d3 and k == 1:
                 old, new = "", r.choice(["Premium", "Enterprise"])        # onboarding: no tier before that date
             self.pending.append(company(name1(), new, "pending", eff=eff, prev=old))
@@ -552,7 +564,8 @@ class Gen:
         clean = [c for c in self.companies if c["role"] == "clean"]
         extra = []
         if d3:
-            extra = ["hold-added", "still-held"] + (["tier-change"] if r.random() < 0.6 else [])
+            # a hold placed this week, and the extra edit is either a tier change or the lifting of that same hold
+            extra = ["hold-added", "still-held"] + [r.choice(["tier-change", "release-added", "release-added"])]
         else:
             extra = [r.choice(["hold-added", "tier-change"])] + ([r.choice(["hold-added", "tier-change"])] if r.random() < 0.4 else [])
             extra = sorted(set(extra))
@@ -563,6 +576,11 @@ class Gen:
                 t = self.slot([0, 1, 2], 9.0, 15.0)
                 self.plans.append({"kind": "tier.changed", "sub": sub, "at": t, "company": c,
                                    "cells": {"Notes": r.choice(HOLD_NOTES)}})
+            elif sub == "release-added":
+                add = next(p for p in self.plans if p["kind"] == "tier.changed" and p["sub"] == "hold-added")
+                t = self.slot([2, 3, 4], 9.0, 15.5, after=add["at"] + timedelta(hours=20))
+                self.plans.append({"kind": "tier.changed", "sub": "release", "at": t, "company": add["company"],
+                                   "cells": {"Notes": r.choice(LIFTED).format(d=t.date().isoformat())}})
             elif sub == "still-held":
                 c = self.held0[1]
                 t = self.slot([1, 2, 3], 9.0, 16.0)
@@ -596,7 +614,7 @@ class Gen:
         times = sorted(self.slot([0, 1, 2, 3, 4], 8.0 + 5 / 60, 16.75) for _ in range(self.cnt["created"]))
         n_trap = round(TRAP_RATE[self.d] * len(times))
         req = list(REQUIRED.get(self.d, []))[:n_trap]
-        weights = dict(TRAP_WEIGHTS, **(TRAP_WEIGHTS_D3 if d3 else {}))
+        weights = TRAP_WEIGHTS.get(self.d, TRAP_WEIGHTS["d2"])
         kinds = sorted(weights)
         cases = req + r.choices(kinds, weights=[weights[k] for k in kinds], k=max(0, n_trap - len(req)))
         r.shuffle(cases)
@@ -638,11 +656,18 @@ class Gen:
         d = Desc()
         want_complex = None           # Premium judgment cases: records / systems / decoys
         if case == "lookalike":
-            co = r.choice([c for c in self.companies if c["role"] == "lookalike" and (c["row"] is None or ok(c))])
+            # the short name (a prefix of another customer's name) is the confusable one: twice as often
+            look = [c for c in self.companies if c["role"] == "lookalike" and (c["row"] is None or ok(c))]
+            look += [c for c in look if any(norm(x["name"]).startswith(norm(c["name"]) + " ") for x in self.companies)] * (
+                2 if self.d == "d3" else 1)
+            co = r.choice(look)
         elif case == "domain":
             contact = r.choice([c for c in self.contacts if c["role"] in ("consultant", "no-company-domain")])
         elif case == "held":
             held = [c for c in self.companies if c["row"] is not None and self.held_at(c, t)]
+            released = {p["company"]["id"] for p in self.plans if p["kind"] == "tier.changed" and p["sub"] == "release"
+                        and p["at"] > t}
+            held += [c for c in held if c["id"] in released]  # a customer whose hold is lifted later: twice as often
             if held:
                 co = r.choice(held)
             else:
@@ -659,7 +684,10 @@ class Gen:
             tags = r.sample(list(AREAS), 2)
             if topic not in tags:
                 tags[1] = topic
-            r.shuffle(tags)
+            if self.d == "d3":                              # the area listed first is not the one the table picks
+                tags.sort(key=lambda a: -AREAS.index(a))
+            else:
+                r.shuffle(tags)
         elif case == "tag-lookalike":
             if r.random() < 0.35:
                 tags = [r.choice(["API", "Billing", "Integration", " api"]).strip() if r.random() < 0.8 else "BILLING"]
@@ -671,12 +699,18 @@ class Gen:
             priority = r.choice([1, 2])
             want_complex = case
         elif case == "effective":
-            eff = [c for c in self.companies if c["role"] in ("pending", "history") and ok(c)]
+            # in-week changes (pending at world0, or edited this week before t) three times as often as old history;
+            # at d3 a pending change that is not yet in effect at t (its Previous Tier applies) three times again
+            eff = [c for c in self.companies if c["role"] == "pending" and ok(c)] * 3
+            if self.d == "d3":
+                eff += [c for c in self.companies if c["role"] == "pending" and ok(c) and c["row"]["Effective Date"] > day] * 9
             eff += [p["company"] for p in self.plans if p["kind"] == "tier.changed" and p["sub"] == "tier-change"
-                    and p["at"] < t and ok(p["company"])]
+                    and p["at"] < t and ok(p["company"])] * 3
+            if self.d != "d3":
+                eff += [c for c in self.companies if c["role"] == "history" and ok(c)]
             co = r.choice(eff) if eff else None
             if co is not None and "Premium" in (co["row"]["Tier"], co["row"]["Previous Tier"]):
-                priority = r.choice([1, 2, 2, 3])
+                priority = r.choice([1, 2] if self.d == "d3" else [1, 2, 2, 3])
         elif case == "cue-nonpremium":
             co = r.choice([c for c in clean if c["row"]["Tier"] != "Premium"])
             cue = r.choice(["priority", "records", "systems"])
@@ -701,7 +735,7 @@ class Gen:
             contact = r.choice(self.contacts_of(co))
         subject = self.problem(topic, d)
         if want_complex in ("records",):
-            self.add_records(d, big=r.random() < 0.55)
+            self.add_records(d, big=r.random() < (0.8 if self.d == "d3" else 0.55))
         elif want_complex == "number-decoy":
             self.add_number_decoy(d)
             if r.random() < 0.4:
@@ -866,8 +900,8 @@ class Gen:
                     {"type": "freshdesk_ticket_exists", "ticket_id": tk["id"], "group_id": g},
                     {"type": "freshdesk_ticket_has_note", "ticket_id": tk["id"], "body_contains": f"routed to {g}"},
                     {"type": "freshdesk_ticket_has_note", "ticket_id": tk["id"], "body_contains": rule}])
-                if "senior" not in g:
-                    tr["assertions"].append({"type": "freshdesk_ticket_not_has_note", "ticket_id": tk["id"], "body_contains": "senior"})
+                if "senior" not in g:          # the rule names "Non-senior ..." contain "senior": test the queue id
+                    tr["assertions"].append({"type": "freshdesk_ticket_not_has_note", "ticket_id": tk["id"], "body_contains": "grp_senior"})
                 # labels from the situation
                 if row is not None:
                     c = row["cells"]
@@ -916,6 +950,8 @@ class Gen:
                         why.append("domain")
                     if co is self.authority:
                         why.append("authority")
+                    if row is None:
+                        why.append("unknown")
                 else:
                     ct = contacts.get(tk["requester_id"])
                     if ct and any(ct["email"].endswith("@" + x["domain"]) for x in self.companies):

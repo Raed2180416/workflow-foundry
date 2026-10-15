@@ -54,23 +54,34 @@
 //   E1 DONE, tested (test/router-v1.test.mjs "structural rule", test/router-review.test.mjs D7): H0's fit and its LOCO
 //      estimate are the preregistered rule (PREREG §6; prereg-rules.mjs thetaFitStatus, fitOrRule, locoFolds): candidates
 //      from the confident items only, midpoints only (never a job's own value), ties to the larger thresholds key by key
-//      (θ_tok first); a LOCO fold is undefined only when its training part lacks a confident class. evaluate.mjs's
-//      reference NR-static (fitRule) still uses the first draft's rule, so the two can disagree (PREREG §14, evaluate owner).
+//      (θ_tok first); a LOCO fold is undefined only when its training part lacks a confident class.
 //      FINDING for the PREREG owner: the key-by-key tie is lexicographic, so a larger θ_tok can be bought with a much
 //      smaller θ_fan and more workflow calls, against DESIGN §3's "ties go to the larger threshold (fewer workflow calls)".
 //      On the planted world of test/router-fixtures.mjs it gives θ = (4.705, 0.886), 9 TRAIN workflow calls and 4 of 24
-//      held-out jobs misrouted, where the fewest-calls tie gives (4.207, 1.956), 8 calls and none (pinned in router-v1).
-//   E10 PART: ruleLoco counts the held-out items it skips (tested, router-review D7) and balancedAccuracyOf is null over one
-//      class (tested, router-v1 "structural rule"); chooseK counts its skips (untested). OPEN: the kNN stage's decide still
-//      imputes the TRAIN mean for a missing trusted feature instead of abstaining.
-//   E9 PART: withProbe refuses an observation on a mode the prediction lacks. OPEN: PROBEABLE is exported, not enforced.
-//   E5 PART: leafPrior (empirical-Bayes Beta) and withProbe's `priors` option exist. OPEN: decide and card.mjs probePlan
-//      still use the pooled-tasks prior Beta(1 + s·T, 1 + (1 − s)·T); wiring the empirical-Bayes prior in needs a PREREG
-//      §13 addendum (owner decision), since PREREG §6 states Beta(1 + s, 1 + n − s).
-//   OPEN, not implemented: E2 (attach a cascade only when the chosen mode is the cascade mode: cascadeOf still attaches
-//      the cascade spec to its pure primary), E3 (probePlan pricing the preregistered bundle PROBE_BUNDLE), E4 (a probe
-//      record's drawn modes and draws apart from its observations), E7 (masked top mode returned as `masked`), E8 (a
-//      probe record needs k >= 1). E6 (sealed cards) belongs to evaluate.mjs.
+//      held-out jobs misrouted. `thetaTie: 'fewest-calls'` (THETA_TIES) implements DESIGN's rule on the same midpoint
+//      candidates (fewest TRAIN workflow calls, then the larger thresholds key by key); both outcomes are pinned in
+//      test/router-review3.test.mjs R5. The default stays PREREG §6's rule until a §13 addendum changes it.
+// Third review (2026-10-15), each fixed here or in card.mjs/voi.mjs with a test in test/router-review3.test.mjs:
+//   R1 (E2) a run-time cascade is attached only when the chosen mode IS the cascade mode (priced from its derived rows,
+//      evaluated as that mode); a pure choice carries cascade null, and the task-4 checkpoint only rides the construct-H
+//      cascade (only there can tasks "fall back").
+//   R2 (E3) card.mjs probePlan prices the preregistered bundle PROBE_BUNDLE (two direct-H draws, one agent-H run) jointly
+//      (voi.mjs bundleValue): EVSI over the joint update, cost the sum of its draws; the gate is that plan. A probe that
+//      is not delivered caps k by kMax, never by H (voi.mjs).
+//   R3 (E4, E9) probeRecord refuses modes outside PROBEABLE, draws beyond PROBE_BUNDLE, and observations that do not name
+//      their probe rows (label-run's `<job>|<mode>|<draw>`) and their deployable signal kind (PROBE_SIGNALS); the card
+//      carries both; probeFromRows builds a probe from need-probe-row/1 rows and verifyProbeRows checks a card against
+//      probes.jsonl. The pass-to-success mapping (PROBE_MAPPING, TBD-FREEZE) is in `fitted`, so routerSha names it.
+//   R4 FROZEN_FILES is the one list of frozen sources (PREREG §6 "Shas", seven files): card.mjs CODE_FILES and evaluate.mjs
+//      ROUTER_FILES are this array.
+//   R6 (E10) the kNN stage abstains (structure-unknown, pooled stats) when a trusted feature its distance reads is missing.
+//   R7 `fitted.probe` names the prior kind, the mapping, the bundle and the signals; features.mjs is a frozen file.
+//   R9 (E5) one function, probePriors, gives the probe prior to both decide's update and probePlan's EVSI; the kind is a
+//      fitted option (`probePrior`, default 'pooled-tasks', the PREREG §6 text as read so far; owner decision pending).
+//   R10 itemsFromContext refuses a negative derived q, c or B (an accounting error), clamping only float noise.
+//   R11 (E8) a probe that is not null must observe at least one mode with k >= 1.
+//   Not code: R5 (θ tie) and R8 (the exact-best leaf choice, δ ties a sensitivity only) need a PREREG §13 addendum.
+//   E7 (masked top mode returned as `masked`) stays open; E6 (sealed cards) belongs to evaluate.mjs.
 import {
   labelTable, utilities, score, singleBest,
   MODES, CASCADES, DELTA, HEADLINE, makeCell, cellKey, classOf as registryClassOf, modeInfo, needUtility, perTaskUsd, bestOf, rankModes,
@@ -220,8 +231,35 @@ export const PROBEABLE = Object.freeze(['direct-H', 'agent-H']);
  * label-run.mjs runProbes draws on the probe example. It is priced, and charged, as one probe.
  */
 export const PROBE_BUNDLE = Object.freeze({ id: 'prereg-bundle', draws: Object.freeze({ 'direct-H': 2, 'agent-H': 1 }) });
+/**
+ * Deployable probe signals (DESIGN §3, PREREG §6: never the bed oracle) and how one trial of each reads label-run's
+ * need-probe-row/1 rows. An observation names its signal kind and its rows; verifyProbeRows recomputes its passes.
+ */
+export const PROBE_SIGNALS = Object.freeze({
+  schemaValid: Object.freeze({ rowsPerTrial: 1, modes: Object.freeze(['direct-H', 'agent-H']), rule: 'the draw delivered a schema-valid answer (row.schemaValid === true)' }),
+  deployableVerdict: Object.freeze({ rowsPerTrial: 1, modes: Object.freeze(['direct-H', 'agent-H']), rule: "the family-handed deployable check passed (row.deployableVerdict === 'pass')" }),
+  agreement: Object.freeze({ rowsPerTrial: 2, modes: Object.freeze(['direct-H']), rule: 'two direct-H answers were delivered and agree (equal, non-null outputHash)' }),
+});
+/** Fields a probe row must never carry (an oracle reading would make the probe a label peek). */
+export const ORACLE_FIELDS = Object.freeze(['pass', 'score', 'passAt', 'oracle', 'oracleVerdict', 'reference']);
+/**
+ * How a deployable pass enters NR-probe's Beta update (PREREG §6: TBD-FREEZE). The id is in `fitted.probe.mapping`, so
+ * routerSha names it; the Freeze addendum replaces it with the frozen mapping.
+ */
+export const PROBE_MAPPING = Object.freeze({ id: 'pass-as-success/unfrozen', frozen: false, rule: 'each deployable pass counts as one verified success in the Beta update (TBD-FREEZE, PREREG §6)' });
 /** NR-probe priors: 'empirical-bayes' (default, review E5) or 'pooled-tasks' (the PREREG §6 text, Beta(1 + s·T, 1 + (1 − s)·T)). */
 export const PROBE_PRIORS = Object.freeze(['empirical-bayes', 'pooled-tasks']);
+/**
+ * H0's tie rules among equally accurate θ pairs: 'prereg' (PREREG §6 as written: the larger thresholds key by key,
+ * θ_tok first; prereg-rules.mjs fitOrRule) or 'fewest-calls' (DESIGN §3: fewest TRAIN workflow calls, then the larger
+ * thresholds key by key). Same midpoint candidates either way. The default is 'prereg' until a §13 addendum says otherwise.
+ */
+export const THETA_TIES = Object.freeze(['prereg', 'fewest-calls']);
+/**
+ * The frozen artefact's sources (PREREG §6 "Shas", the A-Freeze analysis stamp; DESIGN §3): the one list card.mjs hashes
+ * into routerSha (CODE_FILES) and evaluate.mjs seals in the envelope (ROUTER_FILES).
+ */
+export const FROZEN_FILES = Object.freeze(['features.mjs', 'router.mjs', 'voi.mjs', 'metrics.mjs', 'evaluate.mjs', 'card.mjs', 'prereg-rules.mjs']);
 /** Default cap on the empirical-Bayes prior's concentration, in TRAIN jobs' worth of tasks (κ <= priorJobsCap × tasksPerJob). */
 export const PRIOR_JOBS_CAP = 2;
 
@@ -320,6 +358,36 @@ export function ruleFitStatus(conf, minimum = RULE_MINIMUM) {
 }
 
 const RULE_METHOD = 'PREREG §6: prereg-rules.mjs thetaFitStatus (minimum), fitOrRule on the confident items (midpoints, ties to the larger θ key by key)';
+const RULE_METHOD_FEWEST = 'PREREG §6 minimum and midpoint candidates (thetaFitStatus); ties to the fewest TRAIN workflow calls, then the larger θ key by key (DESIGN §3; thetaTie fewest-calls)';
+const callsOf = (pool, keys, th) => pool.filter(f => keys.some((k, j) => (finite(f[k]) ? f[k] : -Infinity) >= th[j])).length;
+
+/**
+ * H0's θ on confident items ({ features, workflow }) under a tie rule (THETA_TIES). 'prereg' is prereg-rules.mjs
+ * fitOrRule itself. 'fewest-calls' visits the same candidates (per key +∞ and the midpoints between adjacent distinct
+ * confident values, largest first) and keeps, among the pairs of highest balanced accuracy, the one that fires on the
+ * fewest of `pool` (the features of every TRAIN item of the fit, confident or not), then the larger thresholds key by key.
+ */
+function fitTheta(conf, keys, { tie = 'prereg', pool = null } = {}) {
+  if (tie === 'prereg') return fitOrRule(conf, keys);
+  const pos = conf.filter(x => x.workflow).length, neg = conf.length - pos;
+  if (!pos || !neg) throw new Error('fitTheta needs confident items of both classes (check thetaFitStatus first)');
+  const cands = keys.map(k => { const v = [...new Set(conf.map(x => x.features[k]).filter(finite))].sort((a, b) => a - b); return [Infinity, ...v.slice(1).map((x, i) => (x + v[i]) / 2).reverse()]; });
+  const P = (pool ?? conf.map(x => x.features));
+  let best = null;
+  const visit = (i, th) => {
+    if (i === keys.length) {
+      let tp = 0, tn = 0;
+      for (const x of conf) { const call = keys.some((k, j) => (finite(x.features[k]) ? x.features[k] : -Infinity) >= th[j]); if (x.workflow) tp += call ? 1 : 0; else tn += call ? 0 : 1; }
+      const ba = (tp / pos + tn / neg) / 2, calls = callsOf(P, keys, th);
+      if (!best || ba > best.ba + 1e-12 || (Math.abs(ba - best.ba) <= 1e-12 && calls < best.calls)) best = { ba, th: [...th], calls };
+      return;
+    }
+    for (const t of cands[i]) visit(i + 1, [...th, t]);
+  };
+  visit(0, []);
+  return { thresholds: Object.fromEntries(keys.map((k, i) => [k, best.th[i]])), balancedAccuracy: best.ba };
+}
+const checkTie = tie => { if (!THETA_TIES.includes(tie)) throw new Error(`thetaTie must be one of ${THETA_TIES.join(', ')}, got ${tie}`); return tie; };
 
 /**
  * Fit H0's thresholds by the preregistered rule (PREREG §6): thetaFitStatus is the gate (at least 2 confident N = 1
@@ -328,17 +396,20 @@ const RULE_METHOD = 'PREREG §6: prereg-rules.mjs thetaFitStatus (minimum), fitO
  * value), the highest in-sample balanced accuracy wins, ties go to the larger thresholds key by key (θ_tok first). LOCO
  * (ruleLoco) is the reported estimate. Below the minimum the rule is not fitted: `fitted: false`, `why`, every θ = +∞ and
  * no balanced accuracy; decide then reads the structure as unknown and abstains (`rule-unfitted`) rather than calling
- * every job "no workflow". `workflowCalls` counts the TRAIN items the fitted rule fires on (reported, not a tie-break).
+ * every job "no workflow". `workflowCalls` counts the TRAIN items the fitted rule fires on. `tie: 'fewest-calls'` breaks
+ * ties by that count instead (DESIGN §3; THETA_TIES), pending a PREREG §13 addendum.
  */
-export function fitStructuralRule(items, { keys = RULE_KEYS, cell = N1, minimum = RULE_MINIMUM } = {}) {
+export function fitStructuralRule(items, { keys = RULE_KEYS, cell = N1, minimum = RULE_MINIMUM, tie = 'prereg' } = {}) {
+  checkTie(tie);
   const val = (it, k) => (finite(it.features[k]) ? it.features[k] : -Infinity);
   const conf = items.filter(it => it.label(cell)?.confident), y = conf.map(it => it.label(cell).label === 'workflow');
   const status = ruleFitStatus(conf.map((it, i) => ({ cluster: it.cluster, workflow: y[i] })), minimum);
   const counts = { confident: conf.length, pos: status.pos, neg: status.neg, posClusters: status.posClusters, negClusters: status.negClusters };
-  if (!status.fit) return { keys: [...keys], thresholds: Object.fromEntries(keys.map(k => [k, Infinity])), trainBalancedAccuracy: null, ...counts, workflowCalls: 0, fitted: false, why: status.why, method: RULE_METHOD };
-  const fit = fitOrRule(conf.map((it, i) => ({ features: it.features, workflow: y[i] })), [...keys]);
+  const method = tie === 'prereg' ? RULE_METHOD : RULE_METHOD_FEWEST;
+  if (!status.fit) return { keys: [...keys], thresholds: Object.fromEntries(keys.map(k => [k, Infinity])), trainBalancedAccuracy: null, ...counts, workflowCalls: 0, fitted: false, why: status.why, tie, method };
+  const fit = fitTheta(conf.map((it, i) => ({ features: it.features, workflow: y[i] })), [...keys], { tie, pool: items.map(it => it.features) });
   const fires = it => keys.some(k => val(it, k) >= fit.thresholds[k]);
-  return { keys: [...keys], thresholds: { ...fit.thresholds }, trainBalancedAccuracy: fit.balancedAccuracy, ...counts, workflowCalls: items.filter(fires).length, fitted: true, why: null, method: RULE_METHOD };
+  return { keys: [...keys], thresholds: { ...fit.thresholds }, trainBalancedAccuracy: fit.balancedAccuracy, ...counts, workflowCalls: items.filter(fires).length, fitted: true, why: null, tie, method };
 }
 
 /**
@@ -347,9 +418,10 @@ export function fitStructuralRule(items, { keys = RULE_KEYS, cell = N1, minimum 
  * part has no confident positive or no confident negative (locoFolds): it is listed with its reason and excluded from the
  * estimate, never scored as θ = +∞. A held-out confident item whose structure cannot be read (a rule key missing and
  * nothing fired, where decide would abstain) is skipped and counted, never scored as "no workflow". The pooled estimate
- * is null, with `why`, when the scored items hold one class only.
+ * is null, with `why`, when the scored items hold one class only. `tie` is the fit's tie rule (THETA_TIES), applied per fold.
  */
-export function ruleLoco(items, { keys = RULE_KEYS, cell = N1 } = {}) {
+export function ruleLoco(items, { keys = RULE_KEYS, cell = N1, tie = 'prereg' } = {}) {
+  checkTie(tie);
   const clusters = [...new Set(items.map(it => it.cluster))].sort();
   if (clusters.length < 2) return null;
   const conf = items.filter(it => it.label(cell)?.confident).map(it => ({ it, cluster: it.cluster, workflow: it.label(cell).label === 'workflow' }));
@@ -358,7 +430,7 @@ export function ruleLoco(items, { keys = RULE_KEYS, cell = N1 } = {}) {
     const fold = { heldOutCluster: f.held, defined: f.defined, trainPos: f.trainPos, trainNeg: f.trainNeg, thresholds: null, scored: 0, skipped: 0,
       why: f.defined ? null : `undefined (PREREG §6): the training part has ${f.trainPos} confident positive(s) and ${f.trainNeg} confident negative(s)` };
     if (f.defined) {
-      const r = fitOrRule(conf.filter(x => x.cluster !== f.held).map(x => ({ features: x.it.features, workflow: x.workflow })), [...keys]);
+      const r = fitTheta(conf.filter(x => x.cluster !== f.held).map(x => ({ features: x.it.features, workflow: x.workflow })), [...keys], { tie, pool: items.filter(it => it.cluster !== f.held).map(it => it.features) });
       fold.thresholds = Object.fromEntries(Object.entries(r.thresholds).map(([k, t]) => [k, enc(t)]));
       for (const x of conf.filter(z => z.cluster === f.held)) {
         const call = intrinsicOf(x.it.features, r.thresholds).intrinsic;
@@ -370,7 +442,7 @@ export function ruleLoco(items, { keys = RULE_KEYS, cell = N1 } = {}) {
   }
   const ba = balancedAccuracyOf(pred, y);
   return { balancedAccuracy: ba.value, why: ba.why, confident: pred.length, counts: { tp: ba.tp, fn: ba.fn, tn: ba.tn, fp: ba.fp }, skipped: skipped.length, skippedItems: skipped,
-    defined: lf.defined, undefined: lf.undefined, folds, method: 'PREREG §6: prereg-rules.mjs locoFolds and fitOrRule' };
+    defined: lf.defined, undefined: lf.undefined, folds, tie, method: tie === 'prereg' ? 'PREREG §6: prereg-rules.mjs locoFolds and fitOrRule' : 'PREREG §6: prereg-rules.mjs locoFolds; θ per fold under thetaTie fewest-calls' };
 }
 
 function checkStats(st, where) {
@@ -548,27 +620,161 @@ function chooseK(items, { ks, order, delta }) {
 }
 
 /**
- * A probe as `decide` and the card accept it (DESIGN §3: "its cost is charged as r"). `probe` = { observations:
- * { <mode>: { passes, n } }, costUsd, k?, signals?, disagree?, tasksPerJob? }. Refused, never booked at $0: a missing,
- * non-finite or negative costUsd; a probe that drew or observed anything (any observation, or k > 0) at costUsd 0; k below
- * the observed draws; a tasksPerJob other than the router's (the prior's weight is a fitted parameter). Returns
- * { observations, costUsd, k, modes, signals, disagree } or null for no probe.
+ * NR-probe's prior per mode in one leaf: the ONE function both decide's probe update (withProbe) and card.mjs probePlan's
+ * EVSI read (review E5, third review R9), from the per-job verified-success rates of the leaf's TRAIN items. `kind` is
+ * leafPrior's ('pooled-tasks': Beta(1 + s·T, 1 + (1 − s)·T), T = support jobs × tasksPerJob, the PREREG §6 text as read so
+ * far; 'empirical-bayes': the method-of-moments Beta). Returns { <mode>: { a, b, kappa, mu, jobs, kind } }.
  */
-export function probeRecord(probe, { tasksPerJob = 12 } = {}) {
+export function probePriors(leafItems, modes, { kind = 'pooled-tasks', tasksPerJob = 12 } = {}) {
+  return Object.fromEntries(modes.map(m => {
+    const rates = leafItems.map(it => it.statsMap.get(m)?.s).filter(finite);
+    if (rates.length !== leafItems.length) throw new Error(`probePriors: mode ${m} is missing from some TRAIN job of the leaf (leaf stats compare modes on the same jobs)`);
+    const { a, b, kappa, mu, jobs } = leafPrior(rates, { kind, tasksPerJob });
+    return [m, Object.freeze({ a, b, kappa, mu, jobs, kind })];
+  }));
+}
+
+const BUNDLE_TOTAL = Object.values(PROBE_BUNDLE.draws).reduce((a, k) => a + k, 0);
+/** label-run's probe-row id (its ctx.probes key): `<job>|<mode>|<draw>`. */
+export const probeRowId = row => `${row.job}|${row.mode}|${row.draw}`;
+function parseRowId(id) {
+  if (typeof id !== 'string') return null;
+  const i = id.lastIndexOf('|'), j = id.lastIndexOf('|', i - 1);
+  if (j <= 0 || i <= j + 1 || !/^\d+$/.test(id.slice(i + 1))) return null;
+  return { job: id.slice(0, j), mode: id.slice(j + 1, i), draw: Number(id.slice(i + 1)) };
+}
+
+/**
+ * The provenance rules a probe's observations must meet (DESIGN §3, PREREG §6; third review R3, R11), as a list of
+ * problems (empty = valid). probeRecord throws on them and card.mjs validateCard reports them, so both apply one rule set:
+ * at least one observed mode; only PROBEABLE modes; each observation { passes, n >= 1, signal (PROBE_SIGNALS, allowed for
+ * its mode), rows } names exactly n × rowsPerTrial distinct probe rows of its own mode, each a draw of the preregistered
+ * bundle (PROBE_BUNDLE: draw < its draws for the mode); every row names one job (`jobId` when given); k (when given) is
+ * at least the rows drawn and at most the bundle's draws.
+ */
+export function probeProblems(observations, { k = null, jobId = null } = {}) {
+  const out = [];
+  if (!observations || typeof observations !== 'object' || Array.isArray(observations)) return ['probe.observations must be an object { <mode>: { passes, n, signal, rows } }'];
+  const entries = Object.entries(observations);
+  if (!entries.length) out.push('a probe that ran must observe at least one probeable mode (no observation is no probe: pass probe null)');
+  const jobs = new Set();
+  let drawn = 0;
+  for (const [m, o] of entries) {
+    if (!PROBEABLE.includes(m)) { out.push(`observation on ${m}: not a probeable mode (${PROBEABLE.join(', ')}); refused, never used`); continue; }
+    if (!(Number.isInteger(o?.n) && o.n >= 1 && Number.isInteger(o.passes) && o.passes >= 0 && o.passes <= o.n)) { out.push(`observation on ${m} needs integers 0 <= passes <= n, n >= 1`); continue; }
+    const sig = PROBE_SIGNALS[o.signal];
+    if (!sig) { out.push(`observation on ${m} must name its deployable signal kind (${Object.keys(PROBE_SIGNALS).join(', ')}), got ${JSON.stringify(o.signal ?? null)}`); continue; }
+    if (!sig.modes.includes(m)) { out.push(`observation on ${m}: signal ${o.signal} reads ${sig.modes.join(', ')} only`); continue; }
+    if (!Array.isArray(o.rows) || !o.rows.length) { out.push(`observation on ${m} must name its probe rows (label-run probe-row ids <job>|<mode>|<draw>)`); continue; }
+    if (new Set(o.rows).size !== o.rows.length) out.push(`observation on ${m} names a probe row twice`);
+    if (o.rows.length !== o.n * sig.rowsPerTrial) out.push(`observation on ${m}: ${o.n} ${o.signal} trial(s) read ${o.n * sig.rowsPerTrial} row(s), it names ${o.rows.length}`);
+    const cap = PROBE_BUNDLE.draws[m];
+    if (o.rows.length > cap) out.push(`observation on ${m}: ${o.rows.length} draws exceed the preregistered bundle's ${cap} (${PROBE_BUNDLE.id})`);
+    for (const id of o.rows) {
+      const r = parseRowId(id);
+      if (!r) { out.push(`observation on ${m}: ${JSON.stringify(id)} is not a probe-row id <job>|<mode>|<draw>`); continue; }
+      if (r.mode !== m) out.push(`observation on ${m} names a ${r.mode} row (${id})`);
+      if (!(r.draw < cap)) out.push(`observation on ${m}: row ${id} is draw ${r.draw}, outside the bundle's ${cap} draw(s)`);
+      jobs.add(r.job);
+    }
+    drawn += o.rows.length;
+  }
+  if (jobs.size > 1) out.push(`probe rows name ${jobs.size} jobs (${[...jobs].sort().join(', ')}): a probe reads one job's rows`);
+  if (jobId !== null && jobs.size === 1 && !jobs.has(String(jobId))) out.push(`probe rows are job ${[...jobs][0]}'s, not ${jobId}'s`);
+  if (k !== null && !(Number.isInteger(k) && k >= Math.max(1, drawn) && k <= BUNDLE_TOTAL)) out.push(`probe.k must be an integer in [max(1, rows drawn ${drawn}), ${BUNDLE_TOTAL}] (the bundle's draws), got ${k}`);
+  return out;
+}
+
+/**
+ * A probe as `decide` and the card accept it (DESIGN §3: "its cost is charged as r"). `probe` = { observations:
+ * { <mode>: { passes, n, signal, rows } }, costUsd, k?, signals?, disagree?, tasksPerJob? }. Refused, never booked at $0: a
+ * missing, non-finite or negative costUsd; a probe that drew or observed anything at costUsd 0; k below the observed
+ * draws; a tasksPerJob other than the router's (the prior's weight is a fitted parameter). Refused as a leakage path
+ * (third review R3, R11; probeProblems): an empty probe, a mode outside PROBEABLE, draws beyond PROBE_BUNDLE, an
+ * observation without its signal kind and probe rows, rows of another job (`jobId`). A pass is counted from deployable
+ * signals by whoever read the rows (probeFromRows); evaluate checks it against probes.jsonl (verifyProbeRows). Returns
+ * { bundle, observations, costUsd, k, modes, signals, disagree } or null for no probe.
+ */
+export function probeRecord(probe, { tasksPerJob = 12, jobId = null } = {}) {
   if (probe === null || probe === undefined) return null;
   if (typeof probe !== 'object' || Array.isArray(probe)) throw new Error('a probe must be an object { observations, costUsd, ... }');
   const obs = probe.observations ?? {};
-  if (!obs || typeof obs !== 'object' || Array.isArray(obs)) throw new Error('probe.observations must be an object { <mode>: { passes, n } }');
+  if (!obs || typeof obs !== 'object' || Array.isArray(obs)) throw new Error('probe.observations must be an object { <mode>: { passes, n, signal, rows } }');
   for (const [m, o] of Object.entries(obs)) if (!(Number.isInteger(o?.n) && o.n >= 0 && Number.isInteger(o.passes) && o.passes >= 0 && o.passes <= o.n)) throw new Error(`probe observation for ${m} needs integers 0 <= passes <= n`);
-  const drawn = Object.values(obs).reduce((a, o) => a + o.n, 0), k = probe.k ?? drawn;
+  const drawn = Object.values(obs).reduce((a, o) => a + (Array.isArray(o.rows) ? o.rows.length : o.n), 0), k = probe.k ?? drawn;
   if (!(Number.isInteger(k) && k >= drawn)) throw new Error(`probe.k must be an integer >= the observed draws (${drawn}), got ${probe.k}`);
   if (typeof probe.costUsd !== 'number' || !finite(probe.costUsd) || probe.costUsd < 0) throw new Error(`a probe's costUsd must be a finite number >= 0 (got ${probe.costUsd}): its cost is charged as routing dollars (DESIGN §3)`);
   if ((k > 0 || Object.keys(obs).length > 0) && !(probe.costUsd > 0)) throw new Error(`a probe that drew or observed anything (k = ${k}, ${Object.keys(obs).length} mode(s)) cannot cost $0: state its costUsd (DESIGN §3 charges it as routing dollars)`);
   if (probe.tasksPerJob !== undefined && probe.tasksPerJob !== tasksPerJob) throw new Error(`probe.tasksPerJob ${probe.tasksPerJob} differs from the router's ${tasksPerJob}`);
+  const problems = probeProblems(obs, { k, jobId });
+  if (problems.length) throw new Error(`probe refused: ${problems.join('; ')}`);
   return Object.freeze({
-    observations: Object.freeze(Object.fromEntries(Object.entries(obs).map(([m, o]) => [m, Object.freeze({ passes: o.passes, n: o.n })]))),
+    bundle: PROBE_BUNDLE.id,
+    observations: Object.freeze(Object.fromEntries(Object.entries(obs).sort(([a], [b]) => (a < b ? -1 : 1)).map(([m, o]) => [m, Object.freeze({ passes: o.passes, n: o.n, signal: o.signal, rows: Object.freeze([...o.rows].sort()) })]))),
     costUsd: probe.costUsd, k, modes: Object.keys(obs).sort(), signals: probe.signals ?? null, disagree: probe.disagree === true,
   });
+}
+
+const rowCost = r => Math.max(finite(r.usdReported) ? r.usdReported : 0, (finite(r.usdRepriced) ? r.usdRepriced : 0) + (finite(r.usdImputed) ? r.usdImputed : 0));
+const oracleFieldsOf = r => ORACLE_FIELDS.filter(f => Object.hasOwn(r, f));
+/** Passes per trial of one observation, recomputed from its rows (rows sorted by draw; agreement reads them in pairs). */
+function trialPasses(signal, rows) {
+  if (signal === 'schemaValid') return rows.map(r => r.schemaValid === true);
+  if (signal === 'deployableVerdict') return rows.map(r => r.deployableVerdict === 'pass');
+  const out = [];
+  for (let i = 0; i + 1 < rows.length; i += 2) { const [x, y] = [rows[i], rows[i + 1]]; out.push(!!(x.delivered && y.delivered && x.outputHash != null && x.outputHash === y.outputHash)); }
+  return out;
+}
+
+/**
+ * NR-probe's observations from label-run's need-probe-row/1 rows of one job (DESIGN §3: deployable signals only). `signals`
+ * names the signal kind per probeable mode. Rows of another job, of a mode outside PROBEABLE, beyond the bundle's draws or
+ * carrying an oracle field (ORACLE_FIELDS) are refused. The cost is the §12 meter of the rows (max of reported and
+ * re-priced plus imputed), so it covers what evaluate.routingChecks measures. `disagree`: two delivered direct-H answers
+ * differ. Returns the probe object decide and decisionCard take.
+ */
+export function probeFromRows(rows, { job, signals = { 'direct-H': 'schemaValid', 'agent-H': 'schemaValid' } } = {}) {
+  if (typeof job !== 'string' || !job) throw new Error('probeFromRows needs the job id the rows belong to');
+  const mine = (rows ?? []).filter(r => r && r.job === job);
+  if (!mine.length) throw new Error(`probeFromRows: no probe row of job ${job}`);
+  const observations = {}, used = [];
+  for (const m of PROBEABLE) {
+    const rs = mine.filter(r => r.mode === m).sort((a, b) => a.draw - b.draw);
+    if (!rs.length) continue;
+    const signal = signals[m];
+    if (!PROBE_SIGNALS[signal]?.modes.includes(m)) throw new Error(`probeFromRows: no deployable signal kind for ${m} (got ${JSON.stringify(signal ?? null)})`);
+    for (const r of rs) { const bad = oracleFieldsOf(r); if (bad.length) throw new Error(`probe row ${probeRowId(r)} carries oracle field(s) ${bad.join(', ')}: a probe never reads the oracle`); }
+    const per = PROBE_SIGNALS[signal].rowsPerTrial, take = rs.slice(0, Math.floor(rs.length / per) * per), t = trialPasses(signal, take);
+    if (!t.length) continue;
+    observations[m] = { passes: t.filter(Boolean).length, n: t.length, signal, rows: take.map(probeRowId) };
+    used.push(...take);
+  }
+  const other = mine.filter(r => !PROBEABLE.includes(r.mode));
+  if (other.length) throw new Error(`probeFromRows: rows on ${[...new Set(other.map(r => r.mode))].join(', ')}, not a probeable mode`);
+  const dh = mine.filter(r => r.mode === 'direct-H' && r.delivered && r.outputHash != null);
+  return { observations, costUsd: used.reduce((a, r) => a + rowCost(r), 0), k: used.length, disagree: dh.length >= 2 && new Set(dh.map(r => r.outputHash)).size > 1 };
+}
+
+/**
+ * A card's (or a probe record's) probe checked against label-run's probes.jsonl rows (for evaluate.mjs, L6/routing): every
+ * named row exists, carries no oracle field, and the observation's passes are what its signal kind reads from those rows;
+ * the probe's cost covers the rows' dollars. Returns { ok, problems }.
+ */
+export function verifyProbeRows(probe, rows) {
+  const problems = [...probeProblems(probe?.observations, { k: probe?.k ?? null })];
+  const byId = new Map((rows ?? []).map(r => [probeRowId(r), r]));
+  let usd = 0;
+  for (const [m, o] of Object.entries(probe?.observations ?? {})) {
+    if (!Array.isArray(o?.rows) || !PROBE_SIGNALS[o.signal]) continue;
+    const rs = o.rows.map(id => byId.get(id));
+    const missing = o.rows.filter((id, i) => !rs[i]);
+    if (missing.length) { problems.push(`${m}: probe row(s) ${missing.join(', ')} not in probes.jsonl`); continue; }
+    for (const r of rs) { const bad = oracleFieldsOf(r); if (bad.length) problems.push(`${m}: row ${probeRowId(r)} carries oracle field(s) ${bad.join(', ')}`); usd += rowCost(r); }
+    const passes = trialPasses(o.signal, [...rs].sort((a, b) => a.draw - b.draw)).filter(Boolean).length;
+    if (passes !== o.passes) problems.push(`${m}: ${o.signal} reads ${passes} pass(es) from its rows, the probe says ${o.passes}`);
+  }
+  if (finite(probe?.costUsd) && probe.costUsd + 1e-9 < usd) problems.push(`probe cost $${probe.costUsd} < $${usd.toFixed(6)} metered on its rows`);
+  return { ok: !problems.length, problems };
 }
 
 const CLASSES = Object.freeze(['workflow', 'no-workflow']), KINDS = Object.freeze(['none', 'guided', 'built']);
@@ -586,20 +792,27 @@ const CLASSES = Object.freeze(['workflow', 'no-workflow']), KINDS = Object.freez
  *   ruleMinimum  H0's fitting minimum (PREREG §6; RULE_MINIMUM); below it H0 is not fitted and NR-static has one leaf
  *   minLeafJobs  a leaf with fewer TRAIN jobs falls back to the pooled stats (an abstention)
  *   engine, guardRecall  the guard's engine constructs and measured recall (null: not declared / not measured)
- *   cascades, checkpointAfter  the run-time cascade specs and the re-route checkpoint (both enter routerSha)
+ *   cascades, checkpointAfter  the run-time cascade specs and the re-route checkpoint (both enter routerSha). A cascade
+ *                is chosen as its own mode (its id in `modes`, priced from its derived rows); a pure choice runs pure
  *   tasksPerJob  TRAIN tasks per job, the weight of NR-probe's Beta prior (12, DESIGN §2)
+ *   thetaTie     H0's tie rule (THETA_TIES; 'prereg' default, PREREG §6 as written)
+ *   probePrior   NR-probe's prior kind (PROBE_PRIORS; 'pooled-tasks' default), read by decide and probePlan alike
+ *   probeMapping the pass-to-success mapping's { id, frozen } (PROBE_MAPPING until the Freeze addendum)
  * Returns { decide(job, cell, { routingUsd, probe }), leafTable(cells), neighbours(features), fitted, ... }.
  */
 export function fitNeedRouter(train, opts = {}) {
   const { modes = null, classOf = m => registryClassOf(m), kindOf = m => modeInfo(m).kind, stage = 'leaf', ruleKeys = RULE_KEYS, ruleCell: ruleCellIn = N1, delta = 0,
     acceptDelta = DELTA, ks = [3, 5], k = null, ruleMinimum = RULE_MINIMUM, minLeafJobs = 1, engine = null, guardRecall = null, defaultMode = DEFAULT_MODE,
-    cascades = CASCADES, checkpointAfter = 4, tasksPerJob = 12 } = opts;
+    cascades = CASCADES, checkpointAfter = 4, tasksPerJob = 12, thetaTie = 'prereg', probePrior = 'pooled-tasks', probeMapping = PROBE_MAPPING } = opts;
   if (!['leaf', 'knn'].includes(stage)) throw new Error(`stage must be leaf or knn, got ${stage}`);
   if (!(finite(delta) && delta >= 0)) throw new Error(`delta must be >= 0, got ${delta}`);
   if (!(finite(acceptDelta) && acceptDelta >= 0)) throw new Error(`acceptDelta must be >= 0, got ${acceptDelta}`);
   if (!(Number.isInteger(checkpointAfter) && checkpointAfter >= 1)) throw new Error(`checkpointAfter must be an integer >= 1, got ${checkpointAfter}`);
   if (!(Number.isInteger(tasksPerJob) && tasksPerJob >= 1)) throw new Error(`tasksPerJob must be an integer >= 1, got ${tasksPerJob}`);
   if (!Array.isArray(cascades) || !cascades.every(x => x && ['id', 'primary', 'fallback'].every(f => typeof x[f] === 'string') && Array.isArray(x.on) && x.on.every(o => typeof o === 'string'))) throw new Error('cascades must be [{ id, primary, fallback, on: [string] }]');
+  checkTie(thetaTie);
+  if (!PROBE_PRIORS.includes(probePrior)) throw new Error(`probePrior must be one of ${PROBE_PRIORS.join(', ')}, got ${probePrior}`);
+  if (!(probeMapping && typeof probeMapping.id === 'string' && probeMapping.id && typeof probeMapping.frozen === 'boolean')) throw new Error('probeMapping must be { id: string, frozen: boolean }');
   for (const key of ruleKeys) if (!TRUSTED_FEATURES.includes(key)) throw new Error(`rule key ${key} is not a trusted feature`);
   const ruleCell = resolveCell(ruleCellIn);
   const items = train.map(trainItem).sort(byId);
@@ -616,27 +829,31 @@ export function fitNeedRouter(train, opts = {}) {
     if (!KINDS.includes(kd)) throw new Error(`kindOf(${m}) must be none, guided or built, got ${kd}`);
     CLASS.set(m, cl); KIND.set(m, kd);
   }
-  const rule = fitStructuralRule(items, { keys: ruleKeys, cell: ruleCell, minimum: ruleMinimum });
-  const loco = ruleLoco(items, { keys: ruleKeys, cell: ruleCell, minimum: ruleMinimum });
+  const rule = fitStructuralRule(items, { keys: ruleKeys, cell: ruleCell, minimum: ruleMinimum, tie: thetaTie });
+  const loco = ruleLoco(items, { keys: ruleKeys, cell: ruleCell, tie: thetaTie });
   const leafOf = it => { if (!rule.fitted) return null; const x = intrinsicOf(it.features, rule.thresholds).intrinsic; return x === null ? null : x ? 'intrinsic' : 'not'; };
   // Leaf stats compare modes on the same jobs (DESIGN §3 stage 2: "among TRAIN jobs in that leaf"): a mode missing from
   // any job of the leaf is dropped there (listed), as in the kNN stage and SBS-train.
   const leaves = {};
   for (const [leaf, xs] of [['intrinsic', items.filter(it => leafOf(it) === 'intrinsic')], ['not', items.filter(it => leafOf(it) === 'not')], ['pooled', items]]) {
     const stats = poolStats(xs, null, { complete: true });
-    leaves[leaf] = { jobs: xs.length, stats, dropped: [...new Set(xs.flatMap(it => [...it.statsMap.keys()]))].filter(m => !stats.has(m)).sort() };
+    // NR-probe's prior per mode (probePriors, the one function the probe update and probePlan share): leaf stage only.
+    const priors = stage === 'leaf' && xs.length ? probePriors(xs, [...stats.keys()], { kind: probePrior, tasksPerJob }) : {};
+    leaves[leaf] = { jobs: xs.length, items: xs, stats, priors, dropped: [...new Set(xs.flatMap(it => [...it.statsMap.keys()]))].filter(m => !stats.has(m)).sort() };
   }
   const kn = stage === 'knn' ? (() => { const ch = k === null ? chooseK(items, { ks, order, delta }) : { k, scores: null }; return { ...ch, std: standardizer(items) }; })() : null;
   const nearest = features => nearestOf(items, kn.std, trustedFeatures(features), kn.k);
 
-  const cascadeOf = (mode, available) => {
-    const s = cascades.find(x => x.id === mode) ?? cascades.find(x => x.primary === mode && available.includes(x.fallback));
+  // A run-time cascade rides a choice only when the chosen mode IS the cascade (third review R1): its pred is then the
+  // cascade's derived rows, and evaluate scores that same mode. A pure choice runs pure: no cascade is attached to it.
+  const cascadeOf = mode => {
+    const s = cascades.find(x => x.id === mode);
     return s ? { id: s.id, primary: s.primary, fallback: s.fallback, on: [...s.on] } : null;
   };
 
   function decide(job = {}, cell = HEADLINE, { routingUsd = 0, probe = null } = {}) {
     const c = resolveCell(cell);
-    const pr = probeRecord(probe, { tasksPerJob });
+    const pr = probeRecord(probe, { tasksPerJob, jobId: typeof job.id === 'string' ? job.id : null });
     if (pr && stage !== 'leaf') throw new Error('a probe updates the leaf calculator (NR-probe = stages 0-1, the probe, stage 2); the kNN stage takes no probe');
     if (typeof routingUsd !== 'number' || !finite(routingUsd) || routingUsd < 0) throw new Error(`routingUsd must be a finite number >= 0, got ${routingUsd}`);
     const features = trustedFeatures(job.features);
@@ -645,18 +862,27 @@ export function fitNeedRouter(train, opts = {}) {
     const guard = guardStage(job, { engine: job.engine ?? engine, recall: guardRecall });
     const structure = rule.fitted ? intrinsicOf(features, rule.thresholds) : { intrinsic: null, reason: `rule-unfitted: ${rule.why}`, missing: [] };
     const reasons = [];
-    let pred, source, fallback = null;
+    let pred, source, fallback = null, priors = null, knnBlind = false;
     if (stage === 'leaf') {
       let leaf = structure.intrinsic === null ? null : structure.intrinsic ? 'intrinsic' : 'not';
       if (leaf === null) { reasons.push(`${rule.fitted ? `structure-unknown: ${structure.reason}` : structure.reason}; pooled TRAIN stats used`); leaf = 'pooled'; fallback = 'pooled'; }
       else if (leaves[leaf].jobs < minLeafJobs) { reasons.push(`thin-leaf: ${leaves[leaf].jobs} TRAIN job(s) in leaf ${leaf} (< ${minLeafJobs}); pooled TRAIN stats used`); leaf = 'pooled'; fallback = 'pooled'; }
-      pred = leaves[leaf].stats; source = { stage, leaf, jobs: leaves[leaf].jobs };
+      pred = leaves[leaf].stats; priors = leaves[leaf].priors; source = { stage, leaf, jobs: leaves[leaf].jobs };
     } else {
-      const nb = nearest(features);
-      pred = knnPred(nb); source = { stage, k: kn.k, neighbours: nb.map(x => ({ id: x.it.id, cluster: x.it.cluster, d: x.d })) };
+      // A trusted feature the distance reads is missing: the job's structure cannot be placed among its neighbours, so
+      // the kNN stage abstains to the pooled TRAIN stats, as the leaf stage does (third review R6; chooseK skips such
+      // items the same way). Imputing the TRAIN mean would route it silently.
+      const missing = kn.std.missingOf(features);
+      if (missing.length) {
+        reasons.push(`structure-unknown: kNN feature(s) ${missing.join(', ')} missing; pooled TRAIN stats used`); fallback = 'pooled'; knnBlind = true;
+        pred = leaves.pooled.stats; source = { stage, k: kn.k, neighbours: null, leaf: 'pooled', jobs: leaves.pooled.jobs };
+      } else {
+        const nb = nearest(features);
+        pred = knnPred(nb); source = { stage, k: kn.k, neighbours: nb.map(x => ({ id: x.it.id, cluster: x.it.cluster, d: x.d })) };
+      }
     }
     const routing = routingUsd + (pr?.costUsd ?? 0);
-    if (pr) pred = withProbe(pred, { observations: pr.observations, tasksPerJob });
+    if (pr) pred = withProbe(pred, { observations: pr.observations, tasksPerJob, priors });
     const supported = available.filter(m => pred.has(m)), unsupported = [...available.filter(m => !pred.has(m)), ...notInRouter];
     let candidates = supported;
     if (guard.forced) {
@@ -679,12 +905,15 @@ export function fitNeedRouter(train, opts = {}) {
     let needsWorkflow;
     if (guard.forced) needsWorkflow = true;
     else if (stage === 'leaf') needsWorkflow = structure.intrinsic;
+    else if (knnBlind) needsWorkflow = null;
     else needsWorkflow = r ? CLASS.get(decideModes(new Map(candidates.map(m => [m, pred.get(m)])), ruleCell, { delta, acceptDelta, order }).mode) === 'workflow' : null;
     const verifier = job.verifier == null ? 'none' : String(job.verifier).trim().toLowerCase().replace(/[\s_]+/g, '-');
     const askReasons = [...guard.ask.reasons];
     if (pr?.disagree && !DEPLOYABLE_VERIFIERS.includes(verifier)) askReasons.push(`the probe disagreed with itself and the verifier (${verifier}) cannot arbitrate`);
-    const cascade = cascadeOf(mode, available);
-    const checkpoint = (mode === 'construct-H' || cascade?.primary === 'construct-H') && available.includes('agent-H')
+    const cascade = cascadeOf(mode);
+    // The task-4 re-route checkpoint (a $0 secondary, DESIGN §3 item 4) reads "tasks that fell back": only the construct-H
+    // cascade has a fallback, so a pure construct-H choice carries none (third review R1).
+    const checkpoint = cascade?.primary === 'construct-H' && available.includes('agent-H')
       ? { afterTask: checkpointAfter, switchTo: 'agent-H', when: 'at least half of the tasks so far fell back' } : null;
     const P = r ? candidates : [];
     return {
@@ -693,6 +922,8 @@ export function fitNeedRouter(train, opts = {}) {
       U: Object.fromEntries(P.map(m => [m, r.U.get(m)])), unsupported, needsWorkflow, class: CLASS.get(mode), kind: KIND.get(mode),
       cascade, checkpoint, askFlag: askReasons.length > 0, ask: askReasons, abstain: reasons.length ? { reasons, fallback } : null,
       probe: pr, routingCostUsd: routing, cell: c,
+      // NR-probe's prior for each priced mode (leaf stage): what probePlan's EVSI reads and what a probe update starts from.
+      priors: priors ? Object.fromEntries(P.filter(m => priors[m]).map(m => [m, priors[m]])) : null,
     };
   }
 
@@ -702,20 +933,24 @@ export function fitNeedRouter(train, opts = {}) {
   const statsJson = m => Object.fromEntries([...m].map(([mode, st]) => [mode, { s: st.s, q: st.q, c: st.c, B: st.B, n: st.n }]));
   const fitted = Object.freeze({
     version: 'need-router/1', stage, delta, acceptDelta, ruleKeys: [...ruleKeys], ruleCell: ruleCell.key, minLeafJobs, defaultMode, modes: order, tasksPerJob,
+    // NR-probe's frozen parts (third review R3, R7, R9): the prior kind, the pass-to-success mapping, the bundle and the
+    // signal kinds, so cards from another prior or mapping carry another routerSha.
+    probe: { prior: probePrior, mapping: { id: probeMapping.id, frozen: probeMapping.frozen }, bundle: { id: PROBE_BUNDLE.id, draws: { ...PROBE_BUNDLE.draws } }, probeable: [...PROBEABLE], signals: Object.keys(PROBE_SIGNALS) },
     classes: Object.fromEntries(order.map(m => [m, { class: CLASS.get(m), kind: KIND.get(m) }])),
     cascades: cascades.map(x => ({ id: x.id, primary: x.primary, fallback: x.fallback, on: [...x.on] })),
     checkpoint: { afterTask: checkpointAfter, from: 'construct-H', switchTo: 'agent-H' },
     rule: {
       thresholds: Object.fromEntries(Object.entries(rule.thresholds).map(([key, t]) => [key, enc(t)])), trainBalancedAccuracy: rule.trainBalancedAccuracy, confident: rule.confident,
-      workflowCalls: rule.workflowCalls, fitted: rule.fitted, why: rule.why, minimum: { ...RULE_MINIMUM, ...ruleMinimum },
+      workflowCalls: rule.workflowCalls, fitted: rule.fitted, why: rule.why, minimum: { ...RULE_MINIMUM, ...ruleMinimum }, tie: thetaTie,
     },
-    loco, leaves: Object.fromEntries(Object.entries(leaves).map(([l, L]) => [l, { jobs: L.jobs, stats: statsJson(L.stats), dropped: [...L.dropped] }])),
+    loco, leaves: Object.fromEntries(Object.entries(leaves).map(([l, L]) => [l, { jobs: L.jobs, stats: statsJson(L.stats), dropped: [...L.dropped],
+      priors: Object.fromEntries(Object.entries(L.priors).map(([m, x]) => [m, { a: x.a, b: x.b }])) }])),
     knn: kn ? { k: kn.k, ks: [...ks], scores: kn.scores, mu: kn.std.mu, sd: kn.std.sd, items: items.map(it => ({ id: it.id, cluster: it.cluster, features: it.features, stats: statsJson(it.statsMap) })) } : null,
     guard: { engine: engine === null ? null : [...(Array.isArray(engine) ? engine : engine.constructs ?? [])].sort(), recall: guardRecall },
     train: { jobs: items.length, clusters: [...new Set(items.map(it => it.cluster))].sort() },
   });
   return {
-    stage, delta, acceptDelta, tasksPerJob, order, rule, loco, decide, leafTable, fitted, ruleCell,
+    stage, delta, acceptDelta, tasksPerJob, probePrior, order, rule, loco, decide, leafTable, fitted, ruleCell,
     k: kn?.k ?? null,
     neighbours: features => (kn ? nearest(features).map(x => x.it.cluster) : null),
   };
@@ -725,8 +960,9 @@ export function fitNeedRouter(train, opts = {}) {
 
 /**
  * TRAIN items from evaluate.mjs's fitting context. The context exposes s(m), u(cell, m) and usd(cell, m) per job; q, c
- * and B follow from u = s − c/V − B/(N·V) − (W/V)·q and usd = c + B/N at three cells (checked against s). Label
- * permutations (L2) pass through, since every read goes through the context.
+ * and B follow from u = s − c/V − B/(N·V) − (W/V)·q and usd = c + B/N at three cells (checked against s; a negative q, c
+ * or B is refused). Label permutations (L2) pass through, since every read goes through the context. Cascade modes in the
+ * context (evaluate.mjs derives them from the paired rows) become items' stats like any mode.
  */
 export function itemsFromContext(ctx) {
   const a = makeCell(1, 1, 0), b = makeCell(1, 1, 1), h = makeCell(1, 2, 0);
@@ -735,6 +971,9 @@ export function itemsFromContext(ctx) {
     for (const m of it.modes) {
       const s = it.s(m), u0 = it.u(a, m), q = u0 - it.u(b, m), usd1 = it.usd(a, m), B = 2 * (usd1 - it.usd(h, m)), c = usd1 - B;
       if (Math.abs(u0 - (s - c - B)) > 1e-9) throw new Error(`itemsFromContext: ${it.view.id}/${m} utility does not decompose as s − c/V − B/(N·V) − (W/V)·q`);
+      // A negative q (u at W = 0 below u at W = V), c or B can only come from an accounting error: refused, never clamped
+      // to 0 (third review R10). Only float noise (> −1e-9) is clamped.
+      for (const [k, x] of [['q', q], ['c', c], ['B', B]]) if (x < -1e-9) throw new Error(`itemsFromContext: ${it.view.id}/${m} derives ${k} = ${x} < 0 (an accounting error in the label context)`);
       stats[m] = { s, q: Math.max(0, q), c: Math.max(0, c), B: Math.max(0, B) };
     }
     return { id: it.view.id, cluster: it.cluster, features: it.view.features, stats, label: cell => it.label(cell) };

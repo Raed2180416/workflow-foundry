@@ -547,6 +547,7 @@ async function main() {
   const resultsFile = path.join(work, `results-${runId}.jsonl`);
   const done = new Map();
   if (flag('--resume') && existsSync(resultsFile)) for (const l of readFileSync(resultsFile, 'utf8').split('\n').filter(Boolean)) { const r = JSON.parse(l); done.set(r.id, r); }
+  else writeFileSync(resultsFile, '');
   const queue = [{ id: 'identity', file: null }, ...set.filter(m => !done.has(m.id))];
   const modDir = path.join(work, 'modules');
   rmSync(modDir, { recursive: true, force: true });
@@ -570,7 +571,7 @@ async function main() {
   const classify = (m, r) => {
     if (r.timeout) return { killed: true, by: 'timeout' };
     if (r.error) return { killed: true, by: `error:${r.error.split('\n')[0].slice(0, 80)}` };
-    if (r.goldenFails.length) return { killed: true, by: `golden:${r.goldenFails[0].name}` };
+    if (r.goldenFails.length) return { killed: true, by: `golden:${r.goldenFails[0].name ?? r.goldenFails[0]}` };
     if (r.corpus?.first) return { killed: true, by: `corpus:${r.corpus.first.journals[0]}/${r.corpus.first.case}` };
     return { killed: false, by: null };
   };
@@ -627,7 +628,7 @@ async function main() {
         console.log(`identity: goldens pass, corpus ${r.corpus ? `${r.corpus.diffs} differences in ${r.corpus.graded} (${Math.round(r.corpus.ms / 1000)} s)` : 'skipped'}`);
       } else {
         const rec = { id: m.id, file: FILES[m.file], line: m.line, op: m.op, aliases: m.aliases, from: m.from.trim(), to: m.to.trim(), ...classify(m, r),
-          goldenFails: r.goldenFails, corpus: r.corpus, error: r.error, ms: r.ms };
+          goldenFails: r.goldenFails.map(g => g.name), corpus: r.corpus, error: r.error, ms: r.ms };
         results.set(m.id, rec);
         appendFileSync(resultsFile, `${JSON.stringify(rec)}\n`);
         finished += 1;

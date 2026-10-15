@@ -14,6 +14,10 @@
 // decision covers the remaining H - k tasks.
 // EVSI(j, k) = E_s[ max_m E[U_m | s] ] - max_m E[U_m]; the net value subtracts the probe cost (and adds delivered value).
 // Exact enumeration over s (k is small), so tests can check it against brute-force simulation.
+// A probe that is not delivered runs on examples, not on the job's tasks, so its k is bounded by kMax, never by H (review
+// 2026-10-15, V2: at N = 1 the preregistered two-draw probe was never priced). A deliverable probe still needs k <= H.
+// A bundle (bundleValue) draws several modes at once, e.g. NR-probe's preregistered two direct-H draws and one agent-H run:
+// its EVSI enumerates the joint outcome (the modes' Beta priors are independent), and it costs the sum of its draws.
 
 /** log Beta function via lgamma (Lanczos). */
 function lgamma(x) {
@@ -50,7 +54,7 @@ const best = U => [...U].reduce((x, y) => (y[1] > x[1] ? y : x));
 export function probeValue(modes, j, k, { V, H, cVerify = 0, deliverable = false }) {
   const mj = modes.find(m => m.id === j);
   if (!mj) throw new Error(`unknown mode ${j}`);
-  if (!(k >= 1 && k <= H)) throw new Error(`k must be in 1..H (${k})`);
+  if (!(Number.isInteger(k) && k >= 1 && (!deliverable || k <= H))) throw new Error(`k must be an integer >= 1, and <= H for a deliverable probe (${k})`);
   const Hrest = deliverable ? H - k : H;
   const prior = best(expectedUtilities(modes, { V, H }));
   const pmf = betaBinomial(k, mj.a, mj.b);
@@ -72,13 +76,54 @@ export function probeValue(modes, j, k, { V, H, cVerify = 0, deliverable = false
   return { j, k, evsi, cost, delivered, net, priorChoice: prior[0], after };
 }
 
-/** The best probe plan over modes and k = 1..kMax (or none). Returns { probe: { j, k } | null, net, priorChoice, plans }. */
+/**
+ * The best single-mode probe plan over modes and k = 1..kMax (or none); a deliverable probe also needs k <= H. Returns
+ * { probe: { j, k } | null, net, priorChoice, plans }.
+ */
 export function bestProbe(modes, { V, H, kMax = 5, cVerify = 0, deliverable = false, probeable = modes.map(m => m.id) }) {
   const plans = [];
-  for (const j of probeable) for (let k = 1; k <= Math.min(kMax, H); k++) plans.push(probeValue(modes, j, k, { V, H, cVerify, deliverable }));
+  for (const j of probeable) for (let k = 1; k <= (deliverable ? Math.min(kMax, H) : kMax); k++) plans.push(probeValue(modes, j, k, { V, H, cVerify, deliverable }));
   const top = plans.reduce((x, y) => (y.net > x.net ? y : x), { net: 0, j: null, k: 0 });
   const priorChoice = best(expectedUtilities(modes, { V, H }))[0];
   return { probe: top.j === null || top.net <= 1e-12 ? null : { j: top.j, k: top.k }, net: top.j === null ? 0 : Math.max(0, top.net), priorChoice, plans };
+}
+
+/**
+ * Value of a probe BUNDLE: k_m draws of each mode m in `draws` ({ <mode>: k_m }, k_m >= 1), observed jointly. The modes'
+ * Beta priors are independent, so the joint outcome s = (s_m) has probability prod_m BetaBinomial(k_m, a_m, b_m)(s_m),
+ * enumerated exactly. Each drawn mode's posterior is Beta(a_m + s_m, b_m + k_m - s_m), and a drawn build mode's F is sunk
+ * in the bundle (as in probeValue). It costs sum_m k_m * (c_m + cVerify) + sum_m F_m: dollars only when not delivered. A
+ * deliverable bundle earns sum_m k_m * (V * p_m - wq_m) and leaves H - sum_m k_m tasks to decide. With one mode it is
+ * probeValue exactly. Returns { draws, k, evsi, cost, delivered, net, priorChoice, after: [{ s: { <mode>: s_m }, prob, choose }] }.
+ */
+export function bundleValue(modes, draws, { V, H, cVerify = 0, deliverable = false }) {
+  const ids = Object.keys(draws ?? {}).sort();
+  if (!ids.length) throw new Error('a probe bundle needs at least one drawn mode');
+  const ms = ids.map(id => { const m = modes.find(x => x.id === id); if (!m) throw new Error(`unknown mode ${id}`); return m; });
+  const ks = ids.map(id => draws[id]);
+  if (!ks.every(k => Number.isInteger(k) && k >= 1)) throw new Error(`bundle draws must be integers >= 1 (${JSON.stringify(draws)})`);
+  const K = ks.reduce((a, k) => a + k, 0);
+  if (deliverable && K > H) throw new Error(`a deliverable bundle needs sum k <= H (${K} > ${H})`);
+  const Hrest = deliverable ? H - K : H;
+  const prior = best(expectedUtilities(modes, { V, H }));
+  const pmfs = ms.map((m, i) => betaBinomial(ks[i], m.a, m.b));
+  let eMax = 0, eTextbook = 0;
+  const after = [];
+  const visit = (i, s, prob) => {
+    if (i === ids.length) {
+      const post = modes.map(m => { const x = ids.indexOf(m.id); return x < 0 ? m : { ...m, a: m.a + s[x], b: m.b + ks[x] - s[x] }; });
+      const [choose, u] = best(expectedUtilities(post.map(m => (ids.includes(m.id) ? { ...m, F: 0 } : m)), { V, H: Hrest }));
+      eMax += prob * u;
+      eTextbook += prob * best(expectedUtilities(post, { V, H }))[1];
+      after.push({ s: Object.fromEntries(ids.map((id, x) => [id, s[x]])), prob, choose });
+      return;
+    }
+    for (let v = 0; v <= ks[i]; v++) visit(i + 1, [...s, v], prob * pmfs[i][v]);
+  };
+  visit(0, [], 1);
+  const cost = ms.reduce((a, m, i) => a + ks[i] * (m.c + cVerify) + m.F, 0);
+  const delivered = deliverable ? ms.reduce((a, m, i) => a + ks[i] * (V * (m.a / (m.a + m.b)) - (m.wq ?? 0)), 0) : 0;
+  return { draws: Object.fromEntries(ids.map((id, i) => [id, ks[i]])), k: K, evsi: eTextbook - prior[1], cost, delivered, net: delivered + eMax - cost - prior[1], priorChoice: prior[0], after };
 }
 
 /** Monte Carlo check of probeValue.evsi (for tests): sample p_j, then s, then decide on the posterior. */

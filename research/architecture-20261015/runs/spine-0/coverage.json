@@ -1,0 +1,2678 @@
+{
+ "overall": {
+  "models": {
+   "rows": 1514,
+   "supplied": 1514,
+   "share": 1,
+   "byKind": {
+    "copied": 660,
+    "computed": 312,
+    "code": 542,
+    "doc": 0,
+    "missing": 0,
+    "n/a": 0
+   }
+  },
+  "harness.hashes": {
+   "rows": 1514,
+   "supplied": 1492,
+   "share": 0.9854689564068693,
+   "byKind": {
+    "copied": 1204,
+    "computed": 288,
+    "code": 0,
+    "doc": 0,
+    "missing": 22,
+    "n/a": 0
+   }
+  },
+  "task.key": {
+   "rows": 1514,
+   "supplied": 1514,
+   "share": 1,
+   "byKind": {
+    "copied": 790,
+    "computed": 722,
+    "code": 0,
+    "doc": 2,
+    "missing": 0,
+    "n/a": 0
+   }
+  },
+  "origin.class": {
+   "rows": 1514,
+   "supplied": 1514,
+   "share": 1,
+   "byKind": {
+    "copied": 0,
+    "computed": 1514,
+    "code": 0,
+    "doc": 0,
+    "missing": 0,
+    "n/a": 0
+   }
+  },
+  "fidelity": {
+   "rows": 1514,
+   "supplied": 1514,
+   "share": 1,
+   "byKind": {
+    "copied": 0,
+    "computed": 1514,
+    "code": 0,
+    "doc": 0,
+    "missing": 0,
+    "n/a": 0
+   }
+  },
+  "evidence.class": {
+   "rows": 1514,
+   "supplied": 1514,
+   "share": 1,
+   "byKind": {
+    "copied": 448,
+    "computed": 0,
+    "code": 0,
+    "doc": 1066,
+    "missing": 0,
+    "n/a": 0
+   }
+  },
+  "verdict": {
+   "rows": 1514,
+   "supplied": 1507,
+   "share": 0.9953764861294584,
+   "byKind": {
+    "copied": 617,
+    "computed": 888,
+    "code": 0,
+    "doc": 2,
+    "missing": 0,
+    "n/a": 7
+   }
+  },
+  "verdict.oracle.id": {
+   "rows": 1514,
+   "supplied": 1504,
+   "share": 0.9933949801849405,
+   "byKind": {
+    "copied": 0,
+    "computed": 1504,
+    "code": 0,
+    "doc": 0,
+    "missing": 0,
+    "n/a": 10
+   }
+  },
+  "usd.reported": {
+   "rows": 1514,
+   "supplied": 1170,
+   "share": 0.7727873183619551,
+   "byKind": {
+    "copied": 653,
+    "computed": 517,
+    "code": 0,
+    "doc": 0,
+    "missing": 344,
+    "n/a": 0
+   }
+  },
+  "usd.repriced": {
+   "rows": 1514,
+   "supplied": 344,
+   "share": 0.22721268163804492,
+   "byKind": {
+    "copied": 0,
+    "computed": 344,
+    "code": 0,
+    "doc": 0,
+    "missing": 858,
+    "n/a": 312
+   }
+  },
+  "usd.bound": {
+   "rows": 1514,
+   "supplied": 1168,
+   "share": 0.7714663143989432,
+   "byKind": {
+    "copied": 163,
+    "computed": 318,
+    "code": 686,
+    "doc": 1,
+    "missing": 346,
+    "n/a": 0
+   }
+  },
+  "usd.charged": {
+   "rows": 1514,
+   "supplied": 1514,
+   "share": 1,
+   "byKind": {
+    "copied": 0,
+    "computed": 1514,
+    "code": 0,
+    "doc": 0,
+    "missing": 0,
+    "n/a": 0
+   }
+  },
+  "usd.build": {
+   "rows": 1514,
+   "supplied": 7,
+   "share": 0.004623513870541612,
+   "byKind": {
+    "copied": 7,
+    "computed": 0,
+    "code": 0,
+    "doc": 0,
+    "missing": 0,
+    "n/a": 1507
+   }
+  },
+  "usd.world": {
+   "rows": 1514,
+   "supplied": 160,
+   "share": 0.10568031704095113,
+   "byKind": {
+    "copied": 0,
+    "computed": 160,
+    "code": 0,
+    "doc": 0,
+    "missing": 1066,
+    "n/a": 288
+   }
+  },
+  "timing.wallMs": {
+   "rows": 1514,
+   "supplied": 656,
+   "share": 0.4332892998678996,
+   "byKind": {
+    "copied": 654,
+    "computed": 0,
+    "code": 0,
+    "doc": 2,
+    "missing": 858,
+    "n/a": 0
+   }
+  },
+  "timing.timeToFirstEffectMs": {
+   "rows": 1514,
+   "supplied": 566,
+   "share": 0.37384412153236457,
+   "byKind": {
+    "copied": 0,
+    "computed": 566,
+    "code": 0,
+    "doc": 0,
+    "missing": 867,
+    "n/a": 81
+   }
+  },
+  "timing.timeToDoneMs": {
+   "rows": 1514,
+   "supplied": 654,
+   "share": 0.4319682959048877,
+   "byKind": {
+    "copied": 0,
+    "computed": 654,
+    "code": 0,
+    "doc": 0,
+    "missing": 857,
+    "n/a": 3
+   }
+  },
+  "timing.stages": {
+   "rows": 1514,
+   "supplied": 655,
+   "share": 0.43262879788639363,
+   "byKind": {
+    "copied": 162,
+    "computed": 493,
+    "code": 0,
+    "doc": 0,
+    "missing": 859,
+    "n/a": 0
+   }
+  },
+  "timing.components.modelMs": {
+   "rows": 1514,
+   "supplied": 647,
+   "share": 0.4273447820343461,
+   "byKind": {
+    "copied": 161,
+    "computed": 486,
+    "code": 0,
+    "doc": 0,
+    "missing": 867,
+    "n/a": 0
+   }
+  },
+  "timing.components.nonModelMs": {
+   "rows": 1514,
+   "supplied": 647,
+   "share": 0.4273447820343461,
+   "byKind": {
+    "copied": 0,
+    "computed": 647,
+    "code": 0,
+    "doc": 0,
+    "missing": 867,
+    "n/a": 0
+   }
+  },
+  "timing.components.toolMs": {
+   "rows": 1514,
+   "supplied": 486,
+   "share": 0.32100396301188905,
+   "byKind": {
+    "copied": 0,
+    "computed": 486,
+    "code": 0,
+    "doc": 0,
+    "missing": 1028,
+    "n/a": 0
+   }
+  },
+  "timing.components.mockMs": {
+   "rows": 1514,
+   "supplied": 493,
+   "share": 0.32562747688243066,
+   "byKind": {
+    "copied": 0,
+    "computed": 493,
+    "code": 0,
+    "doc": 0,
+    "missing": 1021,
+    "n/a": 0
+   }
+  },
+  "timing.components.waits": {
+   "rows": 1514,
+   "supplied": 0,
+   "share": 0,
+   "byKind": {
+    "copied": 0,
+    "computed": 0,
+    "code": 0,
+    "doc": 0,
+    "missing": 1402,
+    "n/a": 112
+   }
+  },
+  "timing.concurrency.configured": {
+   "rows": 1514,
+   "supplied": 349,
+   "share": 0.23051519154557465,
+   "byKind": {
+    "copied": 0,
+    "computed": 7,
+    "code": 342,
+    "doc": 0,
+    "missing": 1165,
+    "n/a": 0
+   }
+  },
+  "timing.concurrency.observedMax": {
+   "rows": 1514,
+   "supplied": 496,
+   "share": 0.3276089828269485,
+   "byKind": {
+    "copied": 0,
+    "computed": 496,
+    "code": 0,
+    "doc": 0,
+    "missing": 1011,
+    "n/a": 7
+   }
+  },
+  "timing.businessTime.simulatedMs": {
+   "rows": 1514,
+   "supplied": 5,
+   "share": 0.0033025099075297227,
+   "byKind": {
+    "copied": 0,
+    "computed": 5,
+    "code": 0,
+    "doc": 0,
+    "missing": 112,
+    "n/a": 1397
+   }
+  },
+  "envFaults": {
+   "rows": 1514,
+   "supplied": 1514,
+   "share": 1,
+   "byKind": {
+    "copied": 0,
+    "computed": 1512,
+    "code": 0,
+    "doc": 2,
+    "missing": 0,
+    "n/a": 0
+   }
+  }
+ },
+ "byAdapter": {
+  "e8@0": {
+   "rows": 124,
+   "fields": {
+    "models": {
+     "rows": 124,
+     "supplied": 124,
+     "share": 1,
+     "byKind": {
+      "copied": 12,
+      "computed": 112,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "harness.hashes": {
+     "rows": 124,
+     "supplied": 102,
+     "share": 0.8225806451612904,
+     "byKind": {
+      "copied": 102,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 22,
+      "n/a": 0
+     }
+    },
+    "task.key": {
+     "rows": 124,
+     "supplied": 124,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 122,
+      "code": 0,
+      "doc": 2,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "origin.class": {
+     "rows": 124,
+     "supplied": 124,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 124,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "fidelity": {
+     "rows": 124,
+     "supplied": 124,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 124,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "evidence.class": {
+     "rows": 124,
+     "supplied": 124,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 124,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict": {
+     "rows": 124,
+     "supplied": 117,
+     "share": 0.9435483870967742,
+     "byKind": {
+      "copied": 115,
+      "computed": 0,
+      "code": 0,
+      "doc": 2,
+      "missing": 0,
+      "n/a": 7
+     }
+    },
+    "verdict.oracle.id": {
+     "rows": 124,
+     "supplied": 114,
+     "share": 0.9193548387096774,
+     "byKind": {
+      "copied": 0,
+      "computed": 114,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 10
+     }
+    },
+    "usd.reported": {
+     "rows": 124,
+     "supplied": 124,
+     "share": 1,
+     "byKind": {
+      "copied": 7,
+      "computed": 117,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.repriced": {
+     "rows": 124,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 12,
+      "n/a": 112
+     }
+    },
+    "usd.bound": {
+     "rows": 124,
+     "supplied": 122,
+     "share": 0.9838709677419355,
+     "byKind": {
+      "copied": 9,
+      "computed": 112,
+      "code": 0,
+      "doc": 1,
+      "missing": 2,
+      "n/a": 0
+     }
+    },
+    "usd.charged": {
+     "rows": 124,
+     "supplied": 124,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 124,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.build": {
+     "rows": 124,
+     "supplied": 7,
+     "share": 0.056451612903225805,
+     "byKind": {
+      "copied": 7,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 117
+     }
+    },
+    "usd.world": {
+     "rows": 124,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 124,
+      "n/a": 0
+     }
+    },
+    "timing.wallMs": {
+     "rows": 124,
+     "supplied": 10,
+     "share": 0.08064516129032258,
+     "byKind": {
+      "copied": 8,
+      "computed": 0,
+      "code": 0,
+      "doc": 2,
+      "missing": 114,
+      "n/a": 0
+     }
+    },
+    "timing.timeToFirstEffectMs": {
+     "rows": 124,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 117,
+      "n/a": 7
+     }
+    },
+    "timing.timeToDoneMs": {
+     "rows": 124,
+     "supplied": 8,
+     "share": 0.06451612903225806,
+     "byKind": {
+      "copied": 0,
+      "computed": 8,
+      "code": 0,
+      "doc": 0,
+      "missing": 113,
+      "n/a": 3
+     }
+    },
+    "timing.stages": {
+     "rows": 124,
+     "supplied": 9,
+     "share": 0.07258064516129033,
+     "byKind": {
+      "copied": 2,
+      "computed": 7,
+      "code": 0,
+      "doc": 0,
+      "missing": 115,
+      "n/a": 0
+     }
+    },
+    "timing.components.modelMs": {
+     "rows": 124,
+     "supplied": 7,
+     "share": 0.056451612903225805,
+     "byKind": {
+      "copied": 7,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 117,
+      "n/a": 0
+     }
+    },
+    "timing.components.nonModelMs": {
+     "rows": 124,
+     "supplied": 7,
+     "share": 0.056451612903225805,
+     "byKind": {
+      "copied": 0,
+      "computed": 7,
+      "code": 0,
+      "doc": 0,
+      "missing": 117,
+      "n/a": 0
+     }
+    },
+    "timing.components.toolMs": {
+     "rows": 124,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 124,
+      "n/a": 0
+     }
+    },
+    "timing.components.mockMs": {
+     "rows": 124,
+     "supplied": 7,
+     "share": 0.056451612903225805,
+     "byKind": {
+      "copied": 0,
+      "computed": 7,
+      "code": 0,
+      "doc": 0,
+      "missing": 117,
+      "n/a": 0
+     }
+    },
+    "timing.components.waits": {
+     "rows": 124,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 12,
+      "n/a": 112
+     }
+    },
+    "timing.concurrency.configured": {
+     "rows": 124,
+     "supplied": 7,
+     "share": 0.056451612903225805,
+     "byKind": {
+      "copied": 0,
+      "computed": 7,
+      "code": 0,
+      "doc": 0,
+      "missing": 117,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.observedMax": {
+     "rows": 124,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 117,
+      "n/a": 7
+     }
+    },
+    "timing.businessTime.simulatedMs": {
+     "rows": 124,
+     "supplied": 5,
+     "share": 0.04032258064516129,
+     "byKind": {
+      "copied": 0,
+      "computed": 5,
+      "code": 0,
+      "doc": 0,
+      "missing": 112,
+      "n/a": 7
+     }
+    },
+    "envFaults": {
+     "rows": 124,
+     "supplied": 124,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 122,
+      "code": 0,
+      "doc": 2,
+      "missing": 0,
+      "n/a": 0
+     }
+    }
+   }
+  },
+  "need-router@0": {
+   "rows": 342,
+   "fields": {
+    "models": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 342,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "harness.hashes": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 342,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "task.key": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 342,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "origin.class": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "fidelity": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "evidence.class": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 342,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 342,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict.oracle.id": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.reported": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 342,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.repriced": {
+     "rows": 342,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 342,
+      "n/a": 0
+     }
+    },
+    "usd.bound": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 342,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.charged": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.build": {
+     "rows": 342,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 342
+     }
+    },
+    "usd.world": {
+     "rows": 342,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 342,
+      "n/a": 0
+     }
+    },
+    "timing.wallMs": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 342,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.timeToFirstEffectMs": {
+     "rows": 342,
+     "supplied": 278,
+     "share": 0.8128654970760234,
+     "byKind": {
+      "copied": 0,
+      "computed": 278,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 64
+     }
+    },
+    "timing.timeToDoneMs": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.stages": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.components.modelMs": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.components.nonModelMs": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.components.toolMs": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.components.mockMs": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.components.waits": {
+     "rows": 342,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 342,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.configured": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 342,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.observedMax": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.businessTime.simulatedMs": {
+     "rows": 342,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 342
+     }
+    },
+    "envFaults": {
+     "rows": 342,
+     "supplied": 342,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 342,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    }
+   }
+  },
+  "automationbench@0": {
+   "rows": 160,
+   "fields": {
+    "models": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 160,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "harness.hashes": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 160,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "task.key": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 160,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "origin.class": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 160,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "fidelity": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 160,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "evidence.class": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 160,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 160,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict.oracle.id": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 160,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.reported": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 160,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.repriced": {
+     "rows": 160,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 160,
+      "n/a": 0
+     }
+    },
+    "usd.bound": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 154,
+      "computed": 6,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.charged": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 160,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.build": {
+     "rows": 160,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 160
+     }
+    },
+    "usd.world": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 160,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.wallMs": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 160,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.timeToFirstEffectMs": {
+     "rows": 160,
+     "supplied": 144,
+     "share": 0.9,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 6,
+      "n/a": 10
+     }
+    },
+    "timing.timeToDoneMs": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 160,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.stages": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 160,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "timing.components.modelMs": {
+     "rows": 160,
+     "supplied": 154,
+     "share": 0.9625,
+     "byKind": {
+      "copied": 154,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 6,
+      "n/a": 0
+     }
+    },
+    "timing.components.nonModelMs": {
+     "rows": 160,
+     "supplied": 154,
+     "share": 0.9625,
+     "byKind": {
+      "copied": 0,
+      "computed": 154,
+      "code": 0,
+      "doc": 0,
+      "missing": 6,
+      "n/a": 0
+     }
+    },
+    "timing.components.toolMs": {
+     "rows": 160,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 160,
+      "n/a": 0
+     }
+    },
+    "timing.components.mockMs": {
+     "rows": 160,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 160,
+      "n/a": 0
+     }
+    },
+    "timing.components.waits": {
+     "rows": 160,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 160,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.configured": {
+     "rows": 160,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 160,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.observedMax": {
+     "rows": 160,
+     "supplied": 154,
+     "share": 0.9625,
+     "byKind": {
+      "copied": 0,
+      "computed": 154,
+      "code": 0,
+      "doc": 0,
+      "missing": 6,
+      "n/a": 0
+     }
+    },
+    "timing.businessTime.simulatedMs": {
+     "rows": 160,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 160
+     }
+    },
+    "envFaults": {
+     "rows": 160,
+     "supplied": 160,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 160,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    }
+   }
+  },
+  "jq@0": {
+   "rows": 600,
+   "fields": {
+    "models": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 200,
+      "computed": 200,
+      "code": 200,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "harness.hashes": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 600,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "task.key": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 600,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "origin.class": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 600,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "fidelity": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 600,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "evidence.class": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 600,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 600,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict.oracle.id": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 600,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.reported": {
+     "rows": 600,
+     "supplied": 400,
+     "share": 0.6666666666666666,
+     "byKind": {
+      "copied": 0,
+      "computed": 400,
+      "code": 0,
+      "doc": 0,
+      "missing": 200,
+      "n/a": 0
+     }
+    },
+    "usd.repriced": {
+     "rows": 600,
+     "supplied": 200,
+     "share": 0.3333333333333333,
+     "byKind": {
+      "copied": 0,
+      "computed": 200,
+      "code": 0,
+      "doc": 0,
+      "missing": 200,
+      "n/a": 200
+     }
+    },
+    "usd.bound": {
+     "rows": 600,
+     "supplied": 400,
+     "share": 0.6666666666666666,
+     "byKind": {
+      "copied": 0,
+      "computed": 200,
+      "code": 200,
+      "doc": 0,
+      "missing": 200,
+      "n/a": 0
+     }
+    },
+    "usd.charged": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 600,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.build": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 600
+     }
+    },
+    "usd.world": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.wallMs": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.timeToFirstEffectMs": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.timeToDoneMs": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.stages": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.components.modelMs": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.components.nonModelMs": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.components.toolMs": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.components.mockMs": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.components.waits": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.configured": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.observedMax": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 600,
+      "n/a": 0
+     }
+    },
+    "timing.businessTime.simulatedMs": {
+     "rows": 600,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 600
+     }
+    },
+    "envFaults": {
+     "rows": 600,
+     "supplied": 600,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 600,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    }
+   }
+  },
+  "jneed2@0": {
+   "rows": 288,
+   "fields": {
+    "models": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 288,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "harness.hashes": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 288,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "task.key": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 288,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "origin.class": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 288,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "fidelity": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 288,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "evidence.class": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 288,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 288,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "verdict.oracle.id": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 288,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.reported": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 144,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "usd.repriced": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "usd.bound": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 144,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "usd.charged": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 288,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    },
+    "usd.build": {
+     "rows": 288,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 288
+     }
+    },
+    "usd.world": {
+     "rows": 288,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 288
+     }
+    },
+    "timing.wallMs": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 144,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "timing.timeToFirstEffectMs": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "timing.timeToDoneMs": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "timing.stages": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "timing.components.modelMs": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "timing.components.nonModelMs": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "timing.components.toolMs": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "timing.components.mockMs": {
+     "rows": 288,
+     "supplied": 144,
+     "share": 0.5,
+     "byKind": {
+      "copied": 0,
+      "computed": 144,
+      "code": 0,
+      "doc": 0,
+      "missing": 144,
+      "n/a": 0
+     }
+    },
+    "timing.components.waits": {
+     "rows": 288,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 288,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.configured": {
+     "rows": 288,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 288,
+      "n/a": 0
+     }
+    },
+    "timing.concurrency.observedMax": {
+     "rows": 288,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 288,
+      "n/a": 0
+     }
+    },
+    "timing.businessTime.simulatedMs": {
+     "rows": 288,
+     "supplied": 0,
+     "share": 0,
+     "byKind": {
+      "copied": 0,
+      "computed": 0,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 288
+     }
+    },
+    "envFaults": {
+     "rows": 288,
+     "supplied": 288,
+     "share": 1,
+     "byKind": {
+      "copied": 0,
+      "computed": 288,
+      "code": 0,
+      "doc": 0,
+      "missing": 0,
+      "n/a": 0
+     }
+    }
+   }
+  }
+ },
+ "notSupplied": {
+  "models": [],
+  "harness.hashes": [
+   {
+    "n": 18,
+    "reason": "e8@0 | missing | this result.json carries no spec hash"
+   },
+   {
+    "n": 2,
+    "reason": "e8@0 | missing | result.json of a repair carries no spec or runner hash"
+   },
+   {
+    "n": 2,
+    "reason": "e8@0 | missing | no result.json for this run"
+   }
+  ],
+  "task.key": [],
+  "origin.class": [],
+  "fidelity": [],
+  "evidence.class": [],
+  "verdict": [
+   {
+    "n": 7,
+    "reason": "e8@0 | n/a | a build session has no verdict of its own; its solver is graded on the grading rows (refs.build)"
+   }
+  ],
+  "verdict.oracle.id": [
+   {
+    "n": 7,
+    "reason": "e8@0 | n/a | no verdict on a build row"
+   },
+   {
+    "n": 2,
+    "reason": "e8@0 | n/a | never graded"
+   },
+   {
+    "n": 1,
+    "reason": "e8@0 | n/a | excluded: an environment fault carries no verdict"
+   }
+  ],
+  "usd.reported": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | Jev responses report tokens, not dollars"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | Jev responses report tokens, not dollars"
+   }
+  ],
+  "usd.repriced": [
+   {
+    "n": 342,
+    "reason": "need-router@0 | missing | meta.tokensIn excludes cache tokens, so the row cannot be re-priced"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | n/a | no model"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | no token counts per call in haiku-calls.jsonl"
+   },
+   {
+    "n": 160,
+    "reason": "automationbench@0 | missing | session tokens are in the live transcript only; not re-priced in the back-fill"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | not re-priced in the back-fill"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | n/a | no model call to re-price"
+   },
+   {
+    "n": 7,
+    "reason": "e8@0 | missing | the per-request token split needed to re-price a session is in the transcript, but the price tier per request was not re-derived for back-fill"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | per-request prompt sizes (the price tier) are not in the tick log"
+   }
+  ],
+  "usd.bound": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | jq.mjs caps Jev by request count (--cap 1300), not by a dollar bound per request"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | Jev requests carry no dollar bound (the cap is a request count)"
+   },
+   {
+    "n": 2,
+    "reason": "e8@0 | missing | repair.mjs --budget was not recorded in result.json (default $1.5 at HEAD)"
+   }
+  ],
+  "usd.charged": [],
+  "usd.build": [
+   {
+    "n": 600,
+    "reason": "jq@0 | n/a | nothing is built"
+   },
+   {
+    "n": 342,
+    "reason": "need-router@0 | n/a | a one-call arm builds nothing"
+   },
+   {
+    "n": 288,
+    "reason": "jneed2@0 | n/a | nothing is built"
+   },
+   {
+    "n": 142,
+    "reason": "automationbench@0 | n/a | no build in this arm"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | n/a | the build cost is on the build row (refs.build), not repeated per world"
+   },
+   {
+    "n": 18,
+    "reason": "automationbench@0 | n/a | the A1 harness is hand-written, not built per task; its authoring cost is not a per-row cost"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | n/a | the agent arm builds nothing"
+   }
+  ],
+  "usd.world": [
+   {
+    "n": 600,
+    "reason": "jq@0 | missing | the T7 set's authoring cost was not recorded"
+   },
+   {
+    "n": 342,
+    "reason": "need-router@0 | missing | the W-bed rungs were authored by frontier sessions whose cost was never attached to the bed"
+   },
+   {
+    "n": 288,
+    "reason": "jneed2@0 | n/a | no world: the tasks are W-bed documents (their authoring cost is on the M1 rows as missing)"
+   },
+   {
+    "n": 124,
+    "reason": "e8@0 | missing | the E8 world and systems were hand-built with frontier effort; that cost was never recorded (OWNER-DECISIONS F5)"
+   }
+  ],
+  "timing.wallMs": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+   },
+   {
+    "n": 1,
+    "reason": "e8@0 | missing | run 1's clean 84 ticks cannot be timed apart from its 13 refused ticks; bounds [2525184, 6104879] ms are in timing.wallMsBounds (resume alone; resume + all of run 1); research/enterprise-20261014/B1-E8-DEV.md says \"about 1.5 h\""
+   },
+   {
+    "n": 1,
+    "reason": "e8@0 | missing | the refused segment is inside run 1's wallMs and cannot be separated"
+   }
+  ],
+  "timing.timeToFirstEffectMs": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | the host journal (first committed effect) was not kept with the result"
+   },
+   {
+    "n": 64,
+    "reason": "need-router@0 | n/a | MODEL_TIMEOUT: no answer was delivered, so no effect"
+   },
+   {
+    "n": 10,
+    "reason": "automationbench@0 | n/a | the session made no mutating world call (no effect)"
+   },
+   {
+    "n": 7,
+    "reason": "e8@0 | n/a | a build session makes no external effect"
+   },
+   {
+    "n": 6,
+    "reason": "automationbench@0 | missing | the live transcript has no result event with duration_ms (a scripted session writes none), so the session start cannot be placed"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | ticks carry the simulated clock only; no wall timestamp per tick or effect"
+   }
+  ],
+  "timing.timeToDoneMs": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+   },
+   {
+    "n": 2,
+    "reason": "e8@0 | n/a | killed before done"
+   },
+   {
+    "n": 1,
+    "reason": "e8@0 | missing | same as wallMs: only bounds are known"
+   },
+   {
+    "n": 1,
+    "reason": "e8@0 | n/a | excluded segment"
+   }
+  ],
+  "timing.stages": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+   },
+   {
+    "n": 2,
+    "reason": "e8@0 | missing | no stage timing in the tick log"
+   },
+   {
+    "n": 1,
+    "reason": "e8@0 | missing | not separable from run 1"
+   }
+  ],
+  "timing.components.modelMs": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+   },
+   {
+    "n": 6,
+    "reason": "automationbench@0 | missing | the live transcript has no result event with duration_ms (a scripted session writes none), so the session start cannot be placed"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | tick sessions are not timed"
+   }
+  ],
+  "timing.components.nonModelMs": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+   },
+   {
+    "n": 6,
+    "reason": "automationbench@0 | missing | the live transcript has no result event with duration_ms (a scripted session writes none), so the session start cannot be placed"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | tick sessions are not timed"
+   }
+  ],
+  "timing.components.toolMs": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 160,
+    "reason": "automationbench@0 | missing | tool (Bash) time is not separated from bridge and CLI time"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+   },
+   {
+    "n": 7,
+    "reason": "e8@0 | missing | the transcript does not time tool calls separately from CLI overhead"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | tick sessions are not timed"
+   }
+  ],
+  "timing.components.mockMs": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 160,
+    "reason": "automationbench@0 | missing | the bridge does not time its world calls (calls.jsonl has one timestamp per step, no duration)"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | build.mjs grade() records no time per world (B1-E8-DEV says \"seconds per world\"; smoke.jsonl ms on practice worlds is the nearest measurement)"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | host and system time is not separated from session time"
+   }
+  ],
+  "timing.components.waits": [
+   {
+    "n": 342,
+    "reason": "need-router@0 | missing | provider queueing and rate-limit waits inside the call are not separated from latencyMs"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 160,
+    "reason": "automationbench@0 | missing | rate-limit and queue waits are not timed (the transcript has rate_limit_info status events, not durations)"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | waits inside the call are not separated from latencyMs"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | n/a | no model call, no external wait"
+   },
+   {
+    "n": 7,
+    "reason": "e8@0 | missing | rate-limit, Retry-After and queue waits are not separated in the transcript"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | rate-limit and queue waits are not timed (rate-limit refusals are counted as env faults)"
+   }
+  ],
+  "timing.concurrency.configured": [
+   {
+    "n": 600,
+    "reason": "jq@0 | missing | not recorded"
+   },
+   {
+    "n": 160,
+    "reason": "automationbench@0 | missing | run.mjs --concurrency is not recorded in summary.json (default 4 at HEAD)"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | experiments/need-router/jev-need2.mjs --concurrency (default 2) was not recorded"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | experiments/need-router/jev-need2.mjs --concurrency (default 4 for Haiku) was not recorded"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | the host concurrency of the grading run is not recorded"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | run-agent.mjs --concurrency was not recorded in result.json (default 4 at HEAD)"
+   }
+  ],
+  "timing.concurrency.observedMax": [
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | the regex screen was not timed"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | requests.jsonl records dispatch times only; no response time per request"
+   },
+   {
+    "n": 200,
+    "reason": "jq@0 | missing | haiku-calls.jsonl records no latency"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | requests.jsonl records dispatch times only; rows.jsonl records one completion time per task, no duration"
+   },
+   {
+    "n": 144,
+    "reason": "jneed2@0 | missing | one completion time per row, but the runner's queueing makes start = at - latency unreliable across a shared pool; not derived"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | no per-call times"
+   },
+   {
+    "n": 7,
+    "reason": "e8@0 | n/a | one session"
+   },
+   {
+    "n": 6,
+    "reason": "automationbench@0 | missing | the live transcript has no result event with duration_ms (a scripted session writes none), so the session start cannot be placed"
+   },
+   {
+    "n": 5,
+    "reason": "e8@0 | missing | no per-tick wall times"
+   }
+  ],
+  "timing.businessTime.simulatedMs": [
+   {
+    "n": 600,
+    "reason": "jq@0 | n/a | no simulated clock"
+   },
+   {
+    "n": 342,
+    "reason": "need-router@0 | n/a | no simulated clock"
+   },
+   {
+    "n": 288,
+    "reason": "jneed2@0 | n/a | no simulated clock"
+   },
+   {
+    "n": 160,
+    "reason": "automationbench@0 | n/a | AutomationBench has no simulated business clock"
+   },
+   {
+    "n": 112,
+    "reason": "e8@0 | missing | the world's simulated horizon is not in the result"
+   },
+   {
+    "n": 7,
+    "reason": "e8@0 | n/a | a build has no simulated business clock"
+   }
+  ],
+  "envFaults": []
+ }
+}

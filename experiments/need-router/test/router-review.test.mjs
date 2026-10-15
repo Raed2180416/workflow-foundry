@@ -16,7 +16,7 @@ import { expectedUtilities, probeValue, bestProbe } from '../voi.mjs';
 import { thetaFitStatus } from '../prereg-rules.mjs';
 import { HEADLINE, DELTA, CASCADES, makeCell, cellKey, classOf, modeInfo, rankModes, needUtility, perTaskUsd } from '../metrics.mjs';
 import { needsWorkflow as plantedNeed } from './worlds.mjs';
-import { plantedRouter, realisticModes, generalModes, rng, NON_MONOTONE_N, V1_MODES } from './router-fixtures.mjs';
+import { plantedRouter, realisticModes, generalModes, rng, NON_MONOTONE_N, V1_MODES, probeFor } from './router-fixtures.mjs';
 
 const P = plantedRouter();
 const job = (j, over = {}) => { const v = P.view(j); return { id: v.id, features: v.features, requirements: v.requirements, verifier: v.verifier, modes: v.modes, ...over }; };
@@ -28,7 +28,8 @@ const st = (s, q, c, B = 0) => ({ s, q, c, B });
 
 // ------------------------------------------------------------------------------------------------------------- D1
 test('D1 a probe\'s cost is never booked as $0: no cost, a $0 cost after drawing, or a negative cost is refused; a forged card fails validation', () => {
-  const R = fitNeedRouter(P.items, { modes: V1_MODES }), j = job(SMALL), obs = { 'agent-H': { passes: 2, n: 2 } };
+  // Observations carry their provenance (third review R3: signal kind and probe rows, the preregistered bundle's draws).
+  const R = fitNeedRouter(P.items, { modes: V1_MODES }), j = job(SMALL), obs = probeFor(j.id, { 'direct-H': [2, 2] }).observations;
   // The reviewer's probe1: observations moved p, no costUsd, and the card validated with routingCostUsd 0 as NR-probe.
   assert.throws(() => decisionCard(R, j, HEADLINE, { probe: { observations: obs } }), /costUsd must be a finite number/);
   assert.throws(() => R.decide(j, HEADLINE, { probe: { observations: obs } }), /costUsd must be a finite number/);
@@ -42,7 +43,7 @@ test('D1 a probe\'s cost is never booked as $0: no cost, a $0 cost after drawing
   // A priced probe is charged in full: routing = routingUsd + costUsd, every U lowered by r/(N·V).
   const base = R.decide(j, HEADLINE), card = decisionCard(R, j, HEADLINE, { probe: { observations: obs, costUsd: 0.16 } });
   assert.equal(card.policy, 'NR-probe'); assert.equal(card.routingCostUsd, 0.16); assert.equal(card.probe.costUsd, 0.16); assert.equal(card.probe.k, 2);
-  close(base.U['direct-H'] - card.U['direct-H'], 0.16 / (HEADLINE.N * HEADLINE.V));
+  close(base.U['agent-O'] - card.U['agent-O'], 0.16 / (HEADLINE.N * HEADLINE.V));   // an unobserved mode moves by r/(N·V) only
   assert.equal(R.decide(j, HEADLINE, { routingUsd: 0.04, probe: { observations: obs, costUsd: 0.16 } }).routingCostUsd, 0.2);
   assert.deepEqual(validateCard(card), { ok: true, problems: [] });
   // A card forged to book the probe at $0 is schema-valid but fails the cross-field check.
@@ -51,7 +52,7 @@ test('D1 a probe\'s cost is never booked as $0: no cost, a $0 cost after drawing
   assert.equal(v.ok, false); assert.ok(v.problems.some(p => /must carry its cost/.test(p)), v.problems.join('; '));
   // probeRecord is the one gate both entry points use.
   assert.equal(probeRecord(null), null);
-  assert.deepEqual(probeRecord({ observations: obs, costUsd: 0.16, signals: { agree: true } }), { observations: obs, costUsd: 0.16, k: 2, modes: ['agent-H'], signals: { agree: true }, disagree: false });
+  assert.deepEqual(probeRecord({ observations: obs, costUsd: 0.16, signals: { agree: true } }), { bundle: 'prereg-bundle', observations: obs, costUsd: 0.16, k: 2, modes: ['direct-H'], signals: { agree: true }, disagree: false });
 });
 
 // ------------------------------------------------------------------------------------------------------------- D2
@@ -74,11 +75,15 @@ test('D2 a non-deliverable probe is priced at its dollars, k·(c + cVerify), nev
     const a = probeValue(modes, 'direct-H', k, { V: 1, H: 100 }), b = probeValue(folded, 'direct-H', k, { V: 1, H: 100 });
     close(a.net - b.net, k * 0.55, 1e-9); close(a.evsi, b.evsi, 1e-9); assert.deepEqual(a.after.map(s => s.choose), b.after.map(s => s.choose));
   }
-  // The bias flipped decisions: here the corrected price probes direct-H twice, the fold never probed (net 0).
+  // The bias flipped decisions: here the corrected price's best single plan probes direct-H twice, the fold never probed
+  // (net 0). The gate itself is now the preregistered bundle (third review R2: test/router-review3.test.mjs R2), priced
+  // at its dollars too: 2 × 0.03 + 0.12, and it probes here.
   const R2 = thin({ 'direct-H': st(0.3, 0.2, 0.03), 'agent-H': st(0.4, 0.05, 0.12) }), c10 = makeCell(1, 10, 1);
   const now = probePlan(R2, x, c10), old = bestProbe(now.modes.map(m => ({ ...m, c: m.c + m.wq, wq: 0 })), { V: 1, H: 10, kMax: 2, probeable: ['direct-H', 'agent-H'] });
-  assert.deepEqual(now.probe, { j: 'direct-H', k: 2 }); assert.ok(now.net > 0.2, String(now.net));
+  const single = bestProbe(now.modes, { V: 1, H: 10, kMax: 2, probeable: ['direct-H', 'agent-H'] });
+  assert.deepEqual(single.probe, { j: 'direct-H', k: 2 }); assert.ok(single.net > 0.2, String(single.net));
   assert.equal(old.probe, null);
+  assert.deepEqual(now.probe, { id: 'prereg-bundle', draws: { 'direct-H': 2, 'agent-H': 1 } }); close(now.cost, 2 * 0.03 + 0.12); assert.ok(now.net > 0.2, String(now.net));
   // voi's wq: utilities subtract H·wq; a deliverable probe's delivered value is k·(V·p̂ − wq); wq defaults to 0.
   const m1 = [{ id: 'a', a: 3, b: 1, c: 0.2, wq: 0.1, F: 1 }];
   close(expectedUtilities(m1, { V: 2, H: 10 }).get('a'), 10 * (2 * 0.75 - 0.2 - 0.1) - 1);
@@ -129,8 +134,9 @@ test('D4 routerSha names the whole decision procedure (classes, kinds, cascades,
   // The reviewer's probe2: classOf -> workflow, no cascades, checkpoint after 9 gave the same sha and different cards.
   const odd = fitNeedRouter(P.items, { modes: V1_MODES, classOf: () => 'workflow', cascades: [], checkpointAfter: 9 });
   assert.notEqual(routerSha(odd).sha, s0);
-  const a = decisionCard(base, job(BIG), HEADLINE), b = decisionCard(odd, job(BIG), HEADLINE);
-  assert.notDeepEqual(a.choice.cascade, b.choice.cascade); assert.notEqual(a.routerSha, b.routerSha);
+  // (A pure choice carries no cascade since third review R1, so the cards differ in their class here.)
+  const a = decisionCard(base, job(SMALL), HEADLINE), b = decisionCard(odd, job(SMALL), HEADLINE);
+  assert.notEqual(a.class, b.class); assert.notEqual(a.routerSha, b.routerSha);
   for (const [what, opts] of [['classOf', { classOf: m => (m === 'agent-O' ? 'workflow' : classOf(m)) }], ['kindOf', { kindOf: m => (m === 'agent-H+proc' ? 'built' : modeInfo(m).kind) }],
     ['cascades', { cascades: CASCADES.slice(1) }], ['no cascades', { cascades: [] }], ['checkpointAfter', { checkpointAfter: 9 }], ['acceptDelta', { acceptDelta: 0.05 }], ['tasksPerJob', { tasksPerJob: 6 }]]) {
     assert.notEqual(routerSha(fitNeedRouter(P.items, { modes: V1_MODES, ...opts })).sha, s0, what);
@@ -177,6 +183,8 @@ test('D4 routerSha names the whole decision procedure (classes, kinds, cascades,
   }
   // Every experiments/need-router module in card.mjs's static import graph (router.mjs's included) is in CODE_FILES, so a
   // new decision-relevant import cannot leave routerSha incomplete (review E1 added prereg-rules.mjs; it was missing).
+  // CODE_FILES also holds features.mjs and evaluate.mjs, which card.mjs does not import (third review R4, R7: the PREREG
+  // §6 seven, router.mjs FROZEN_FILES).
   const nrDir = path.dirname(fileURLToPath(new URL('../card.mjs', import.meta.url))), seen = new Set();
   const walk = file => {
     if (seen.has(file)) return; seen.add(file);
@@ -188,7 +196,8 @@ test('D4 routerSha names the whole decision procedure (classes, kinds, cascades,
   };
   walk(path.join(nrDir, 'card.mjs'));
   const reached = [...seen].map(f => path.basename(f)).sort();
-  assert.deepEqual(reached, [...CODE_FILES].sort(), `need-router modules in the import graph: ${reached.join(', ')}`);
+  assert.deepEqual(reached.filter(f => !CODE_FILES.includes(f)), [], `need-router modules in the import graph: ${reached.join(', ')}`);
+  assert.deepEqual([...CODE_FILES].filter(f => !reached.includes(f)).sort(), ['evaluate.mjs', 'features.mjs']);
   assert.deepEqual(Object.keys(codeShas()).sort(), [...CODE_FILES].sort());
   // In this process nothing changed: cards are written and their code part is the load-time shas.
   assert.deepEqual(decisionCard(base, job(SMALL), HEADLINE).routerShaParts.code, { ...codeShas() });
@@ -355,7 +364,7 @@ test('D9 kNN needsWorkflow is read at the intrinsic-need cell whatever the slide
   assert.ok(moved >= 3, `${moved} jobs whose N = 1 class moves with V`);
   assert.equal(K.fitted.ruleCell, N1.key);
   // A probe on the kNN stage is refused (decide, card); the card label follows the probe and the stage.
-  const probe = { observations: { 'direct-H': { passes: 1, n: 2 } }, costUsd: 0.05 };
+  const probe = probeFor(job(SMALL).id, { 'direct-H': [1, 2] }, 0.05);
   assert.throws(() => K.decide(P.view(SMALL), HEADLINE, { probe }), /kNN stage takes no probe/);
   assert.throws(() => decisionCard(K, job(SMALL), HEADLINE, { probe }), /kNN stage takes no probe/);
   assert.equal(decisionCard(K, job(SMALL), HEADLINE).policy, 'NR-knn');

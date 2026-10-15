@@ -45,6 +45,18 @@ export function generalModes(r) {
 export { rng };
 
 /**
+ * A probe with its provenance (router.mjs probeProblems): spec { <mode>: [passes, n, signal = 'schemaValid'] }; the rows
+ * are label-run probe-row ids `<job>|<mode>|<draw>`, n draws per mode (2n for 'agreement').
+ */
+export function probeFor(job, spec, costUsd, extra = {}) {
+  const observations = Object.fromEntries(Object.entries(spec).map(([m, [passes, n, signal = 'schemaValid']]) => {
+    const per = signal === 'agreement' ? 2 : 1;
+    return [m, { passes, n, signal, rows: Array.from({ length: n * per }, (_, d) => `${job}|${m}|${d}`) }];
+  }));
+  return { observations, costUsd, ...extra };
+}
+
+/**
  * A pinned case where δ ties are not monotone in N (V = $1, W = 0, δ = 0.03). At N = 1 agent-O (u 0.35) is best and
  * agent-H+proc (u 0.33) is within δ and cheaper, so the guided workflow is chosen. At N = 2 construct-H's build halves
  * (u 0.378): agent-H+proc (u 0.345) falls out of δ, agent-O (u 0.35) stays in, and agent-O ($0.60) is cheaper than

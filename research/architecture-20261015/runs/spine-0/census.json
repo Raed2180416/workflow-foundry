@@ -1,0 +1,161 @@
+{
+ "byGroup": {
+  "our-bed": {
+   "rows": 1354,
+   "verdictRows": 1299,
+   "successes": 7118,
+   "chargedUsd": 100.843797952,
+   "reportedUsd": 31.96711031999995,
+   "beds": [
+    "ebed-e8",
+    "jneed2-properties",
+    "jq-t7",
+    "wbed"
+   ],
+   "runs": 26
+  },
+  "third-party": {
+   "rows": 160,
+   "verdictRows": 160,
+   "successes": 36,
+   "chargedUsd": 3.92549286,
+   "reportedUsd": 3.92549286,
+   "beds": [
+    "automationbench"
+   ],
+   "runs": 8
+  },
+  "real-log": {
+   "rows": 0,
+   "verdictRows": 0,
+   "successes": 0,
+   "chargedUsd": 0,
+   "reportedUsd": 0,
+   "beds": [],
+   "runs": 0
+  }
+ },
+ "byClass": {
+  "ours": {
+   "rows": 1354,
+   "verdictRows": 1299,
+   "successes": 7118,
+   "chargedUsd": 100.843797952,
+   "reportedUsd": 31.96711031999995,
+   "beds": [
+    "ebed-e8",
+    "jneed2-properties",
+    "jq-t7",
+    "wbed"
+   ],
+   "runs": 26
+  },
+  "ours-grounded": {
+   "rows": 0,
+   "verdictRows": 0,
+   "successes": 0,
+   "chargedUsd": 0,
+   "reportedUsd": 0,
+   "beds": [],
+   "runs": 0
+  },
+  "outside-world-our-grader": {
+   "rows": 0,
+   "verdictRows": 0,
+   "successes": 0,
+   "chargedUsd": 0,
+   "reportedUsd": 0,
+   "beds": [],
+   "runs": 0
+  },
+  "outside-world-outside-grader": {
+   "rows": 160,
+   "verdictRows": 160,
+   "successes": 36,
+   "chargedUsd": 3.92549286,
+   "reportedUsd": 3.92549286,
+   "beds": [
+    "automationbench"
+   ],
+   "runs": 8
+  },
+  "real-process": {
+   "rows": 0,
+   "verdictRows": 0,
+   "successes": 0,
+   "chargedUsd": 0,
+   "reportedUsd": 0,
+   "beds": [],
+   "runs": 0
+  }
+ },
+ "byBed": {
+  "ebed-e8": {
+   "rows": 124,
+   "verdictRows": 69,
+   "successes": 5418,
+   "chargedUsd": 19.870933810000004,
+   "reportedUsd": 15.070933810000001,
+   "beds": [
+    "ebed-e8"
+   ],
+   "runs": 21
+  },
+  "wbed": {
+   "rows": 342,
+   "verdictRows": 342,
+   "successes": 108,
+   "chargedUsd": 80.80904316999994,
+   "reportedUsd": 16.809043169999992,
+   "beds": [
+    "wbed"
+   ],
+   "runs": 3
+  },
+  "automationbench": {
+   "rows": 160,
+   "verdictRows": 160,
+   "successes": 36,
+   "chargedUsd": 3.92549286,
+   "reportedUsd": 3.92549286,
+   "beds": [
+    "automationbench"
+   ],
+   "runs": 8
+  },
+  "jq-t7": {
+   "rows": 600,
+   "verdictRows": 600,
+   "successes": 506,
+   "chargedUsd": 0.04148554999999994,
+   "reportedUsd": 0.014054090000000005,
+   "beds": [
+    "jq-t7"
+   ],
+   "runs": 1
+  },
+  "jneed2-properties": {
+   "rows": 288,
+   "verdictRows": 288,
+   "successes": 1086,
+   "chargedUsd": 0.12233542200000004,
+   "reportedUsd": 0.07307925000000003,
+   "beds": [
+    "jneed2-properties"
+   ],
+   "runs": 1
+  }
+ },
+ "shares": {
+  "thirdPartyRows": 0.10568031704095113,
+  "thirdPartyVerdictRows": 0.10966415352981494,
+  "thirdPartyChargedUsd": 0.037467972051504844,
+  "realLogRows": 0
+ },
+ "totals": {
+  "rows": 1514,
+  "verdictRows": 1459,
+  "chargedUsd": 104.76929081200001,
+  "reportedUsd": 35.89260317999995
+ }
+}
