@@ -1,0 +1,395 @@
+{
+ "n": 304,
+ "killed": 240,
+ "killedBy": {
+  "golden": 184,
+  "corpus": 53,
+  "error": 3
+ },
+ "survivors": [
+  {
+   "k": 1,
+   "line": 16,
+   "from": "const sortBy = k => (a, b) => (a[k] < b[k] ? -1 : a[k] > b[k] ? 1 : 0);",
+   "to": "const sortBy = k => (a, b) => (a[k] <= b[k] ? -1 : a[k] > b[k] ? 1 : 0);"
+  },
+  {
+   "k": 2,
+   "line": 16,
+   "from": "const sortBy = k => (a, b) => (a[k] < b[k] ? -1 : a[k] > b[k] ? 1 : 0);",
+   "to": "const sortBy = k => (a, b) => (a[k] < b[k] ? -1 : a[k] >= b[k] ? 1 : 0);"
+  },
+  {
+   "k": 4,
+   "line": 21,
+   "from": "if (!args || typeof args !== 'object') return args;",
+   "to": "if (!args && typeof args !== 'object') return args;"
+  },
+  {
+   "k": 7,
+   "line": 22,
+   "from": "if (system === 'orders' && op === 'create') {",
+   "to": "if (system === 'orders' || op === 'create') {"
+  },
+  {
+   "k": 13,
+   "line": 34,
+   "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+   "to": "const ed = world.rulebook.editions.findLast(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));"
+  },
+  {
+   "k": 15,
+   "line": 41,
+   "from": "const loc = world.master.locations.find(l => l.location === location);",
+   "to": "const loc = world.master.locations.findLast(l => l.location === location);"
+  },
+  {
+   "k": 16,
+   "line": 45,
+   "from": "for (let day = -1; day < 40; day++) {",
+   "to": "for (let day = -1; day <= 40; day++) {"
+  },
+  {
+   "k": 17,
+   "line": 47,
+   "from": "if (run >= bookedMs + cutoffMinutes * MIN) return run;",
+   "to": "if (run > bookedMs + cutoffMinutes * MIN) return run;"
+  },
+  {
+   "k": 21,
+   "line": 52,
+   "from": "const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier === carrier && c.code === code)?.meaning ?? null;",
+   "to": "const meaningOf = (codes, carrier, code) => codes.findLast(c => c.carrier === carrier && c.code === code)?.meaning ?? null;"
+  },
+  {
+   "k": 29,
+   "line": 78,
+   "from": "const fee = loc => ed.fees.find(f => f.location === loc)?.feeMinor ?? 0;",
+   "to": "const fee = loc => ed.fees.findLast(f => f.location === loc)?.feeMinor ?? 0;"
+  },
+  {
+   "k": 31,
+   "line": 79,
+   "from": "const price = sku => world.master.catalog.find(x => x.sku === sku).unitPriceMinor;",
+   "to": "const price = sku => world.master.catalog.findLast(x => x.sku === sku).unitPriceMinor;"
+  },
+  {
+   "k": 33,
+   "line": 80,
+   "from": "const email = world.master.customers.find(x => x.customerId === t.customerId).email;",
+   "to": "const email = world.master.customers.findLast(x => x.customerId === t.customerId).email;"
+  },
+  {
+   "k": 35,
+   "line": 81,
+   "from": "const alloc = world.sor['inventory.allocations'].find(a => a.orderId === O).fulfilments;",
+   "to": "const alloc = world.sor['inventory.allocations'].findLast(a => a.orderId === O).fulfilments;"
+  },
+  {
+   "k": 39,
+   "line": 85,
+   "from": "const before = (row, a, ev) => row.callAt < a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)",
+   "to": "const before = (row, a, ev) => row.callAt < a && (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)"
+  },
+  {
+   "k": 40,
+   "line": 86,
+   "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+   "to": "const matches = (e, r) => r.system !== e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));"
+  },
+  {
+   "k": 41,
+   "line": 86,
+   "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+   "to": "const matches = (e, r) => r.system === e.system && r.op !== e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));"
+  },
+  {
+   "k": 42,
+   "line": 86,
+   "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+   "to": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) !== JSON.stringify(e.match[k]));"
+  },
+  {
+   "k": 53,
+   "line": 102,
+   "from": "if (prior >= 0) required.splice(prior, 1);",
+   "to": "if (prior > 0) required.splice(prior, 1);"
+  },
+  {
+   "k": 62,
+   "line": 123,
+   "from": "const custActions = events.slice(placedIdx + 1).filter(e => e.type === 'customer.action').sort((a, b) => a.at - b.at || a.seq - b.seq);   // S11: none before its order",
+   "to": "const custActions = events.slice(placedIdx + 1).filter(e => e.type === 'customer.action').sort((a, b) => a.at - b.at && a.seq - b.seq);   // S11: none before its order"
+  },
+  {
+   "k": 66,
+   "line": 126,
+   "from": "const mig = events.find(e => e.type === 'migration');",
+   "to": "const mig = events.findLast(e => e.type === 'migration');"
+  },
+  {
+   "k": 78,
+   "line": 144,
+   "from": "items: t.class === 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),",
+   "to": "items: t.class === 'gl-dispatched' ? alloc.at(-1).items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),"
+  },
+  {
+   "k": 88,
+   "line": 156,
+   "from": "const reviews = view.tasks.filter(x => x.task.kind === 'fraudReview').sort((a, b) => a.at - b.at || a.seq - b.seq);",
+   "to": "const reviews = view.tasks.filter(x => x.task.kind === 'fraudReview').sort((a, b) => a.at - b.at && a.seq - b.seq);"
+  },
+  {
+   "k": 99,
+   "line": 167,
+   "from": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+   "to": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at && a.seq - b.seq);"
+  },
+  {
+   "k": 103,
+   "line": 169,
+   "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+   "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq <= ans.seq)) && a.at <= deadline);"
+  },
+  {
+   "k": 105,
+   "line": 169,
+   "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+   "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at !== ans.at && a.seq < ans.seq)) && a.at <= deadline);"
+  },
+  {
+   "k": 146,
+   "line": 212,
+   "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+   "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at <= a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);"
+  },
+  {
+   "k": 147,
+   "line": 212,
+   "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+   "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq <= a.seq)) && reportedMs(m) <= a.at);"
+  },
+  {
+   "k": 150,
+   "line": 212,
+   "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+   "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at || m.seq < a.seq)) && reportedMs(m) <= a.at);"
+  },
+  {
+   "k": 153,
+   "line": 212,
+   "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+   "to": "const collectedBy = a => msgs.some(m => ['collected'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);"
+  },
+  {
+   "k": 157,
+   "line": 219,
+   "from": "const row = committed('inventory', 'reserve', a => mine(a) && a.sku === i.sku)[0] ?? null;",
+   "to": "const row = committed('inventory', 'reserve', a => mine(a) && a.sku === i.sku).at(-1) ?? null;"
+  },
+  {
+   "k": 160,
+   "line": 224,
+   "from": "const chargeRow = committed('billing', 'charge', mine)[0] ?? null;",
+   "to": "const chargeRow = committed('billing', 'charge', mine).at(-1) ?? null;"
+  },
+  {
+   "k": 161,
+   "line": 225,
+   "from": "const shipRow = committed('carrier', 'create', mine)[0] ?? null;",
+   "to": "const shipRow = committed('carrier', 'create', mine).at(-1) ?? null;"
+  },
+  {
+   "k": 166,
+   "line": 227,
+   "from": "const myMsgs = msgs.filter(m => m.F === F).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+   "to": "const myMsgs = msgs.filter(m => m.F === F).sort((a, b) => a.at - b.at && a.seq - b.seq);"
+  },
+  {
+   "k": 174,
+   "line": 231,
+   "from": "const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0] ?? null;",
+   "to": "const failAt = [fails.at(-1)?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0] ?? null;"
+  },
+  {
+   "k": 175,
+   "line": 231,
+   "from": "const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0] ?? null;",
+   "to": "const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b).at(-1) ?? null;"
+  },
+  {
+   "k": 190,
+   "line": 258,
+   "from": "const forwardOk = row => cut === null || before(row, cut, cutEv);",
+   "to": "const forwardOk = row => cut !== null || before(row, cut, cutEv);"
+  },
+  {
+   "k": 191,
+   "line": 258,
+   "from": "const forwardOk = row => cut === null || before(row, cut, cutEv);",
+   "to": "const forwardOk = row => cut === null && before(row, cut, cutEv);"
+  },
+  {
+   "k": 192,
+   "line": 258,
+   "from": "const forwardOk = row => cut === null || before(row, cut, cutEv);",
+   "to": "const forwardOk = row => cut === null || row.at < cut;"
+  },
+  {
+   "k": 193,
+   "line": 260,
+   "from": "if (!s.items[0].pre) {",
+   "to": "if (!s.items.at(-1).pre) {"
+  },
+  {
+   "k": 195,
+   "line": 262,
+   "from": "const keep = i.row ? forwardOk(i.row) : cut === null;",
+   "to": "const keep = i.row ? true : cut === null;"
+  },
+  {
+   "k": 200,
+   "line": 267,
+   "from": "if (s.rF !== null && (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {",
+   "to": "if (s.rF !== null && (s.chargeRow ? true : cut === null)) {"
+  },
+  {
+   "k": 203,
+   "line": 272,
+   "from": "if (s.items[0].pre) rec.charges[F] = { amountMinor: s.amount, refundedMinor: 0 };",
+   "to": "if (s.items.at(-1).pre) rec.charges[F] = { amountMinor: s.amount, refundedMinor: 0 };"
+  },
+  {
+   "k": 207,
+   "line": 273,
+   "from": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+   "to": "if (s.chargeRow && !s.items.at(-1).pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {"
+  },
+  {
+   "k": 208,
+   "line": 273,
+   "from": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+   "to": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? true : cut === null)) {"
+  },
+  {
+   "k": 211,
+   "line": 276,
+   "from": "if (s.shipRow || s.items[0].pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';",
+   "to": "if (s.shipRow && s.items[0].pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';"
+  },
+  {
+   "k": 212,
+   "line": 276,
+   "from": "if (s.shipRow || s.items[0].pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';",
+   "to": "if (s.shipRow || s.items.at(-1).pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';"
+  },
+  {
+   "k": 213,
+   "line": 276,
+   "from": "if (s.shipRow || s.items[0].pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';",
+   "to": "if (s.shipRow || s.items[0].pre) rec.shipments[F] = s.items.at(-1).pre ? 'collected' : 'created';"
+  },
+  {
+   "k": 220,
+   "line": 283,
+   "from": "if (s.shipRow && !s.failedMsg) {",
+   "to": "if (s.shipRow && true) {"
+  },
+  {
+   "k": 221,
+   "line": 284,
+   "from": "lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.min(L, (s.R ?? Infinity) - MIN));",
+   "to": "lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.min(L, (s.R ?? Infinity)));"
+  },
+  {
+   "k": 230,
+   "line": 300,
+   "from": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined && v !== null));",
+   "to": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined && v === null));"
+  },
+  {
+   "k": 239,
+   "line": 316,
+   "from": "const prePatched = s.items[0].pre;",
+   "to": "const prePatched = s.items.at(-1).pre;"
+  },
+  {
+   "k": 249,
+   "line": 327,
+   "from": "const later = msgs.find(m => m.F === F && m.meaning === 'inTransit');",
+   "to": "const later = msgs.find(m => m.F !== F && m.meaning === 'inTransit');"
+  },
+  {
+   "k": 250,
+   "line": 327,
+   "from": "const later = msgs.find(m => m.F === F && m.meaning === 'inTransit');",
+   "to": "const later = msgs.find(m => m.F === F && m.meaning !== 'inTransit');"
+  },
+  {
+   "k": 251,
+   "line": 327,
+   "from": "const later = msgs.find(m => m.F === F && m.meaning === 'inTransit');",
+   "to": "const later = msgs.find(m => m.F === F || m.meaning === 'inTransit');"
+  },
+  {
+   "k": 252,
+   "line": 327,
+   "from": "const later = msgs.find(m => m.F === F && m.meaning === 'inTransit');",
+   "to": "const later = msgs.findLast(m => m.F === F && m.meaning === 'inTransit');"
+  },
+  {
+   "k": 263,
+   "line": 355,
+   "from": "if (!t || t.subject === null) return null;",
+   "to": "if (!t && t.subject === null) return null;"
+  },
+  {
+   "k": 265,
+   "line": 357,
+   "from": "const alloc = world.sor['inventory.allocations'].find(a => a.orderId === O).fulfilments;",
+   "to": "const alloc = world.sor['inventory.allocations'].findLast(a => a.orderId === O).fulfilments;"
+  },
+  {
+   "k": 267,
+   "line": 360,
+   "from": "const b = world.backlog.find(x => x.case === c);",
+   "to": "const b = world.backlog.findLast(x => x.case === c);"
+  },
+  {
+   "k": 268,
+   "line": 362,
+   "from": "if (qual === 'orders.orders' && r.orderId === O) rec.order = r.status;",
+   "to": "if (qual !== 'orders.orders' && r.orderId === O) rec.order = r.status;"
+  },
+  {
+   "k": 269,
+   "line": 362,
+   "from": "if (qual === 'orders.orders' && r.orderId === O) rec.order = r.status;",
+   "to": "if (qual === 'orders.orders' && r.orderId !== O) rec.order = r.status;"
+  },
+  {
+   "k": 270,
+   "line": 362,
+   "from": "if (qual === 'orders.orders' && r.orderId === O) rec.order = r.status;",
+   "to": "if (qual === 'orders.orders' || r.orderId === O) rec.order = r.status;"
+  },
+  {
+   "k": 287,
+   "line": 377,
+   "from": "if (k === 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }",
+   "to": "if (k === 'orders.create' && args.orderId !== O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }"
+  },
+  {
+   "k": 288,
+   "line": 377,
+   "from": "if (k === 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }",
+   "to": "if (k === 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location !== null ? 'unavailable' : 'pending'; }"
+  },
+  {
+   "k": 301,
+   "line": 398,
+   "from": "return s.failedMsg?.at === s.failAt ? s.failedMsg : null;",
+   "to": "return s.failedMsg?.at !== s.failAt ? s.failedMsg : null;"
+  }
+ ]
+}

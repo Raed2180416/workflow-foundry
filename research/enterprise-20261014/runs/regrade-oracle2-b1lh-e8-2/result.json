@@ -1,0 +1,848 @@
+{
+ "label": "regrade-oracle2-b1lh-e8-2",
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "build": null,
+ "seeds": [
+  1232,
+  1233,
+  1234
+ ],
+ "difficulties": [
+  2,
+  3,
+  5
+ ],
+ "size": null,
+ "summary": {
+  "completed": 1022,
+  "passed": 974,
+  "tail": 651,
+  "tailPassed": 603,
+  "critical": 0,
+  "armErrors": 0
+ },
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "completed": 52,
+   "passed": 49,
+   "tail": 38,
+   "tailPassed": 35,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 1,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 1,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 0
+    },
+    "straight": {
+     "n": 14,
+     "pass": 14
+    },
+    "amend": {
+     "n": 10,
+     "pass": 10
+    },
+    "collection-failed": {
+     "n": 2,
+     "pass": 2
+    },
+    "cancel-wait": {
+     "n": 4,
+     "pass": 4
+    },
+    "timeout": {
+     "n": 4,
+     "pass": 4
+    },
+    "decline": {
+     "n": 4,
+     "pass": 4
+    },
+    "fraud-reject": {
+     "n": 6,
+     "pass": 6
+    },
+    "cancel-after-collection": {
+     "n": 2,
+     "pass": 2
+    },
+    "cancel-processing": {
+     "n": 3,
+     "pass": 3
+    }
+   },
+   "codes": {
+    "L3:missed": 3
+   }
+  },
+  {
+   "seed": 1233,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "completed": 51,
+   "passed": 48,
+   "tail": 31,
+   "tailPassed": 28,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 1,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 1,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 0
+    },
+    "cancel-wait": {
+     "n": 2,
+     "pass": 2
+    },
+    "amend": {
+     "n": 4,
+     "pass": 4
+    },
+    "straight": {
+     "n": 20,
+     "pass": 20
+    },
+    "collection-failed": {
+     "n": 6,
+     "pass": 6
+    },
+    "decline": {
+     "n": 4,
+     "pass": 4
+    },
+    "timeout": {
+     "n": 2,
+     "pass": 2
+    },
+    "fraud-reject": {
+     "n": 2,
+     "pass": 2
+    },
+    "cancel-processing": {
+     "n": 4,
+     "pass": 4
+    },
+    "cancel-after-collection": {
+     "n": 4,
+     "pass": 4
+    }
+   },
+   "codes": {
+    "L3:missed": 3
+   }
+  },
+  {
+   "seed": 1234,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "completed": 52,
+   "passed": 49,
+   "tail": 36,
+   "tailPassed": 33,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 1,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 1,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 0
+    },
+    "fraud-reject": {
+     "n": 7,
+     "pass": 7
+    },
+    "decline": {
+     "n": 4,
+     "pass": 4
+    },
+    "cancel-processing": {
+     "n": 4,
+     "pass": 4
+    },
+    "timeout": {
+     "n": 3,
+     "pass": 3
+    },
+    "straight": {
+     "n": 16,
+     "pass": 16
+    },
+    "collection-failed": {
+     "n": 5,
+     "pass": 5
+    },
+    "cancel-after-collection": {
+     "n": 3,
+     "pass": 3
+    },
+    "cancel-wait": {
+     "n": 4,
+     "pass": 4
+    },
+    "amend": {
+     "n": 3,
+     "pass": 3
+    }
+   },
+   "codes": {
+    "L3:missed": 3
+   }
+  },
+  {
+   "seed": 1232,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "completed": 85,
+   "passed": 80,
+   "tail": 53,
+   "tailPassed": 48,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 2,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 2,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 0
+    },
+    "straight": {
+     "n": 32,
+     "pass": 32
+    },
+    "cancel-processing": {
+     "n": 5,
+     "pass": 5
+    },
+    "action-late": {
+     "n": 3,
+     "pass": 3
+    },
+    "decline": {
+     "n": 5,
+     "pass": 5
+    },
+    "cancel-wait": {
+     "n": 3,
+     "pass": 3
+    },
+    "amend": {
+     "n": 5,
+     "pass": 5
+    },
+    "review-reject": {
+     "n": 3,
+     "pass": 3
+    },
+    "amend-then-cancel": {
+     "n": 1,
+     "pass": 1
+    },
+    "collection-failed": {
+     "n": 4,
+     "pass": 4
+    },
+    "fraud-reject": {
+     "n": 5,
+     "pass": 5
+    },
+    "review-timeout": {
+     "n": 3,
+     "pass": 3
+    },
+    "cancel-after-collection": {
+     "n": 3,
+     "pass": 3
+    },
+    "cancel-at-collection": {
+     "n": 2,
+     "pass": 2
+    },
+    "timeout": {
+     "n": 2,
+     "pass": 2
+    },
+    "review-approve": {
+     "n": 1,
+     "pass": 1
+    },
+    "action-at-deadline": {
+     "n": 1,
+     "pass": 1
+    },
+    "invalid": {
+     "n": 2,
+     "pass": 2
+    }
+   },
+   "codes": {
+    "L3:missed": 5
+   }
+  },
+  {
+   "seed": 1233,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "completed": 81,
+   "passed": 76,
+   "tail": 53,
+   "tailPassed": 48,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 2,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 2,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 0
+    },
+    "decline": {
+     "n": 6,
+     "pass": 6
+    },
+    "cancel-wait": {
+     "n": 7,
+     "pass": 7
+    },
+    "action-at-deadline": {
+     "n": 2,
+     "pass": 2
+    },
+    "fraud-reject": {
+     "n": 6,
+     "pass": 6
+    },
+    "timeout": {
+     "n": 6,
+     "pass": 6
+    },
+    "amend": {
+     "n": 4,
+     "pass": 4
+    },
+    "cancel-at-collection": {
+     "n": 3,
+     "pass": 3
+    },
+    "review-approve": {
+     "n": 1,
+     "pass": 1
+    },
+    "straight": {
+     "n": 28,
+     "pass": 28
+    },
+    "cancel-after-collection": {
+     "n": 1,
+     "pass": 1
+    },
+    "collection-failed": {
+     "n": 2,
+     "pass": 2
+    },
+    "review-reject": {
+     "n": 2,
+     "pass": 2
+    },
+    "action-late": {
+     "n": 3,
+     "pass": 3
+    },
+    "cancel-processing": {
+     "n": 3,
+     "pass": 3
+    },
+    "invalid": {
+     "n": 2,
+     "pass": 2
+    }
+   },
+   "codes": {
+    "L3:missed": 5
+   }
+  },
+  {
+   "seed": 1234,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "completed": 86,
+   "passed": 81,
+   "tail": 50,
+   "tailPassed": 45,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 2,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 2,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 0
+    },
+    "amend": {
+     "n": 7,
+     "pass": 7
+    },
+    "straight": {
+     "n": 36,
+     "pass": 36
+    },
+    "timeout": {
+     "n": 6,
+     "pass": 6
+    },
+    "fraud-reject": {
+     "n": 5,
+     "pass": 5
+    },
+    "action-at-deadline": {
+     "n": 3,
+     "pass": 3
+    },
+    "cancel-processing": {
+     "n": 4,
+     "pass": 4
+    },
+    "cancel-after-collection": {
+     "n": 4,
+     "pass": 4
+    },
+    "action-late": {
+     "n": 4,
+     "pass": 4
+    },
+    "cancel-wait": {
+     "n": 2,
+     "pass": 2
+    },
+    "review-approve": {
+     "n": 2,
+     "pass": 2
+    },
+    "cancel-at-collection": {
+     "n": 1,
+     "pass": 1
+    },
+    "collection-failed": {
+     "n": 1,
+     "pass": 1
+    },
+    "decline": {
+     "n": 2,
+     "pass": 2
+    },
+    "review-timeout": {
+     "n": 2,
+     "pass": 2
+    },
+    "invalid": {
+     "n": 2,
+     "pass": 2
+    }
+   },
+   "codes": {
+    "L3:missed": 5
+   }
+  },
+  {
+   "seed": 1232,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "completed": 202,
+   "passed": 194,
+   "tail": 130,
+   "tailPassed": 122,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 3,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 3,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 2,
+     "pass": 0
+    },
+    "straight": {
+     "n": 72,
+     "pass": 72
+    },
+    "cancel-after-collection": {
+     "n": 8,
+     "pass": 8
+    },
+    "cancel-at-collection": {
+     "n": 3,
+     "pass": 3
+    },
+    "f6-carrier": {
+     "n": 6,
+     "pass": 6
+    },
+    "cancel-processing": {
+     "n": 7,
+     "pass": 7
+    },
+    "action-late": {
+     "n": 7,
+     "pass": 7
+    },
+    "amend": {
+     "n": 9,
+     "pass": 9
+    },
+    "review-timeout": {
+     "n": 2,
+     "pass": 2
+    },
+    "collection-failed": {
+     "n": 7,
+     "pass": 7
+    },
+    "decline": {
+     "n": 12,
+     "pass": 12
+    },
+    "cancel-wait": {
+     "n": 9,
+     "pass": 9
+    },
+    "f1-charge": {
+     "n": 3,
+     "pass": 3
+    },
+    "timeout": {
+     "n": 3,
+     "pass": 3
+    },
+    "review-reject": {
+     "n": 2,
+     "pass": 2
+    },
+    "review-approve": {
+     "n": 3,
+     "pass": 3
+    },
+    "f3-charge": {
+     "n": 9,
+     "pass": 9
+    },
+    "f3-refund": {
+     "n": 8,
+     "pass": 8
+    },
+    "fraud-reject": {
+     "n": 8,
+     "pass": 8
+    },
+    "f4-reserve": {
+     "n": 6,
+     "pass": 6
+    },
+    "action-at-deadline": {
+     "n": 1,
+     "pass": 1
+    },
+    "amend-then-cancel": {
+     "n": 4,
+     "pass": 4
+    },
+    "invalid": {
+     "n": 5,
+     "pass": 5
+    }
+   },
+   "codes": {
+    "L3:missed": 8
+   }
+  },
+  {
+   "seed": 1233,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "completed": 208,
+   "passed": 200,
+   "tail": 122,
+   "tailPassed": 114,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 3,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 3,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 2,
+     "pass": 0
+    },
+    "straight": {
+     "n": 86,
+     "pass": 86
+    },
+    "f3-charge": {
+     "n": 8,
+     "pass": 8
+    },
+    "decline": {
+     "n": 12,
+     "pass": 12
+    },
+    "action-late": {
+     "n": 5,
+     "pass": 5
+    },
+    "cancel-after-collection": {
+     "n": 10,
+     "pass": 10
+    },
+    "fraud-reject": {
+     "n": 14,
+     "pass": 14
+    },
+    "cancel-processing": {
+     "n": 5,
+     "pass": 5
+    },
+    "timeout": {
+     "n": 6,
+     "pass": 6
+    },
+    "collection-failed": {
+     "n": 5,
+     "pass": 5
+    },
+    "f3-refund": {
+     "n": 3,
+     "pass": 3
+    },
+    "amend": {
+     "n": 10,
+     "pass": 10
+    },
+    "review-reject": {
+     "n": 3,
+     "pass": 3
+    },
+    "f6-carrier": {
+     "n": 3,
+     "pass": 3
+    },
+    "review-approve": {
+     "n": 4,
+     "pass": 4
+    },
+    "review-timeout": {
+     "n": 2,
+     "pass": 2
+    },
+    "amend-then-cancel": {
+     "n": 2,
+     "pass": 2
+    },
+    "f1-charge": {
+     "n": 4,
+     "pass": 4
+    },
+    "action-at-deadline": {
+     "n": 3,
+     "pass": 3
+    },
+    "cancel-wait": {
+     "n": 4,
+     "pass": 4
+    },
+    "cancel-at-collection": {
+     "n": 3,
+     "pass": 3
+    },
+    "f4-reserve": {
+     "n": 3,
+     "pass": 3
+    },
+    "invalid": {
+     "n": 5,
+     "pass": 5
+    }
+   },
+   "codes": {
+    "L3:missed": 8
+   }
+  },
+  {
+   "seed": 1234,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "completed": 205,
+   "passed": 197,
+   "tail": 138,
+   "tailPassed": 130,
+   "critical": 0,
+   "armErrors": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 3,
+     "pass": 0
+    },
+    "gl-awaiting": {
+     "n": 3,
+     "pass": 0
+    },
+    "gl-dispatched": {
+     "n": 2,
+     "pass": 0
+    },
+    "action-late": {
+     "n": 13,
+     "pass": 13
+    },
+    "straight": {
+     "n": 67,
+     "pass": 67
+    },
+    "cancel-after-collection": {
+     "n": 14,
+     "pass": 14
+    },
+    "collection-failed": {
+     "n": 8,
+     "pass": 8
+    },
+    "review-approve": {
+     "n": 6,
+     "pass": 6
+    },
+    "f4-reserve": {
+     "n": 9,
+     "pass": 9
+    },
+    "amend-then-cancel": {
+     "n": 4,
+     "pass": 4
+    },
+    "decline": {
+     "n": 12,
+     "pass": 12
+    },
+    "review-reject": {
+     "n": 5,
+     "pass": 5
+    },
+    "f1-charge": {
+     "n": 3,
+     "pass": 3
+    },
+    "action-at-deadline": {
+     "n": 5,
+     "pass": 5
+    },
+    "timeout": {
+     "n": 8,
+     "pass": 8
+    },
+    "f6-carrier": {
+     "n": 2,
+     "pass": 2
+    },
+    "amend": {
+     "n": 4,
+     "pass": 4
+    },
+    "cancel-wait": {
+     "n": 7,
+     "pass": 7
+    },
+    "cancel-processing": {
+     "n": 12,
+     "pass": 12
+    },
+    "cancel-at-collection": {
+     "n": 1,
+     "pass": 1
+    },
+    "review-timeout": {
+     "n": 4,
+     "pass": 4
+    },
+    "f3-refund": {
+     "n": 4,
+     "pass": 4
+    },
+    "f3-charge": {
+     "n": 1,
+     "pass": 1
+    },
+    "fraud-reject": {
+     "n": 3,
+     "pass": 3
+    },
+    "invalid": {
+     "n": 5,
+     "pass": 5
+    }
+   },
+   "codes": {
+    "L3:missed": 8
+   }
+  }
+ ]
+}

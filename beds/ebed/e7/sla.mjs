@@ -123,7 +123,11 @@ export function slaTimeline(ctx, incident, snaps, { flags = {} } = {}) {
           else if (!h && from !== null) { s.ops.push({ op: 'pause', at: from, x }, { op: 'resume', at: sn.at, x }); from = null; }
         }
       }
-      if (holds(def.pause.when, F)) { s.ops.push({ op: 'pause', at: from ?? x, x }); s.stage = 'paused'; }
+      const pausedAtX = holds(def.pause.when, F);
+      // A past pause interval that the changes at x itself ended ([from, x), e.g. a reply merged with the reclassification
+      // that attaches the SLA): paused over it, running from x (R4.3; review 2026-10-15 round 2).
+      if (from !== null && !pausedAtX) { s.ops.push({ op: 'pause', at: from, x }, { op: 'resume', at: x, x }); from = null; }
+      if (pausedAtX) { s.ops.push({ op: 'pause', at: from ?? x, x }); s.stage = 'paused'; }
     }
     slas.push(s);
     return s;

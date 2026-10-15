@@ -1,0 +1,700 @@
+{
+ "built": "2026-10-14 (harness/corpus.mjs, transition at the 2026-10-15 first revision; the journals do not depend on the oracle except the two reference runs, whose required lids this revision does not change)",
+ "files": [
+  {
+   "file": "1009-3-60.json",
+   "sha256": "076eed3a1616063583d7a72e46fea04a60ae30a8e2f48fbea8d8190d1b13cb65",
+   "bytes": 53069114,
+   "world": {
+    "seed": 1009,
+    "d": 3,
+    "size": 60
+   },
+   "journals": [
+    {
+     "name": "ref-earliest",
+     "rows": 7282
+    },
+    {
+     "name": "ref-latest",
+     "rows": 9380
+    },
+    {
+     "name": "noop",
+     "rows": 788
+    },
+    {
+     "name": "echo",
+     "rows": 788
+    },
+    {
+     "name": "declare-every-obligation",
+     "rows": 21386
+    },
+    {
+     "name": "hold-everything",
+     "rows": 2425
+    },
+    {
+     "name": "escalate-everything",
+     "rows": 7752
+    },
+    {
+     "name": "charge-twice",
+     "rows": 7638
+    },
+    {
+     "name": "no-compensation",
+     "rows": 7222
+    },
+    {
+     "name": "forward-order-compensation",
+     "rows": 7282
+    },
+    {
+     "name": "last-signal-wins",
+     "rows": 7330
+    },
+    {
+     "name": "timer-first",
+     "rows": 7273
+    },
+    {
+     "name": "no-dedupe",
+     "rows": 7290
+    },
+    {
+     "name": "no-correlation",
+     "rows": 7036
+    },
+    {
+     "name": "c-oss",
+     "rows": 7557
+    },
+    {
+     "name": "s1-state-machine.mjs",
+     "rows": 8237
+    },
+    {
+     "name": "s2-reconciler.mjs",
+     "rows": 11488
+    },
+    {
+     "name": "s3-saga-engine.mjs",
+     "rows": 8255
+    },
+    {
+     "name": "b1lh-e8-1",
+     "rows": 8178
+    },
+    {
+     "name": "b1lh-e8-2",
+     "rows": 8199
+    },
+    {
+     "name": "b1lh-e8-3",
+     "rows": 8365
+    }
+   ],
+   "completedCases": 64
+  },
+  {
+   "file": "1010-5-60.json",
+   "sha256": "9377e58e539f730a92f0816e5657b46f553c0b4555c357ced289ab2de48fe8f7",
+   "bytes": 64411539,
+   "world": {
+    "seed": 1010,
+    "d": 5,
+    "size": 60
+   },
+   "journals": [
+    {
+     "name": "ref-earliest",
+     "rows": 8141
+    },
+    {
+     "name": "ref-latest",
+     "rows": 10543
+    },
+    {
+     "name": "noop",
+     "rows": 879
+    },
+    {
+     "name": "echo",
+     "rows": 879
+    },
+    {
+     "name": "declare-every-obligation",
+     "rows": 23937
+    },
+    {
+     "name": "hold-everything",
+     "rows": 2784
+    },
+    {
+     "name": "escalate-everything",
+     "rows": 8520
+    },
+    {
+     "name": "charge-twice",
+     "rows": 8549
+    },
+    {
+     "name": "no-compensation",
+     "rows": 8050
+    },
+    {
+     "name": "forward-order-compensation",
+     "rows": 8140
+    },
+    {
+     "name": "no-keys",
+     "rows": 8140
+    },
+    {
+     "name": "last-signal-wins",
+     "rows": 8253
+    },
+    {
+     "name": "timer-first",
+     "rows": 8133
+    },
+    {
+     "name": "edition-by-publication",
+     "rows": 8020
+    },
+    {
+     "name": "no-dedupe",
+     "rows": 8150
+    },
+    {
+     "name": "no-correlation",
+     "rows": 7587
+    },
+    {
+     "name": "c-oss",
+     "rows": 8084
+    },
+    {
+     "name": "s1-state-machine.mjs",
+     "rows": 9079
+    },
+    {
+     "name": "s2-reconciler.mjs",
+     "rows": 12880
+    },
+    {
+     "name": "s3-saga-engine.mjs",
+     "rows": 9065
+    },
+    {
+     "name": "b1lh-e8-1",
+     "rows": 9056
+    },
+    {
+     "name": "b1lh-e8-2",
+     "rows": 8713
+    },
+    {
+     "name": "b1lh-e8-3",
+     "rows": 9162
+    }
+   ],
+   "completedCases": 66
+  },
+  {
+   "file": "1011-4-60.json",
+   "sha256": "f816c53e4aa2a14e808a3cacca969fac4eebe3286f2ab2b8cf4302b43eff18ff",
+   "bytes": 56949787,
+   "world": {
+    "seed": 1011,
+    "d": 4,
+    "size": 60
+   },
+   "journals": [
+    {
+     "name": "ref-earliest",
+     "rows": 7475
+    },
+    {
+     "name": "ref-latest",
+     "rows": 9543
+    },
+    {
+     "name": "noop",
+     "rows": 895
+    },
+    {
+     "name": "echo",
+     "rows": 895
+    },
+    {
+     "name": "declare-every-obligation",
+     "rows": 24281
+    },
+    {
+     "name": "hold-everything",
+     "rows": 2652
+    },
+    {
+     "name": "escalate-everything",
+     "rows": 7887
+    },
+    {
+     "name": "charge-twice",
+     "rows": 7803
+    },
+    {
+     "name": "no-compensation",
+     "rows": 7470
+    },
+    {
+     "name": "forward-order-compensation",
+     "rows": 7475
+    },
+    {
+     "name": "last-signal-wins",
+     "rows": 7571
+    },
+    {
+     "name": "timer-first",
+     "rows": 7460
+    },
+    {
+     "name": "edition-by-publication",
+     "rows": 7183
+    },
+    {
+     "name": "no-dedupe",
+     "rows": 7492
+    },
+    {
+     "name": "no-correlation",
+     "rows": 6711
+    },
+    {
+     "name": "c-oss",
+     "rows": 8005
+    },
+    {
+     "name": "s1-state-machine.mjs",
+     "rows": 8381
+    },
+    {
+     "name": "s2-reconciler.mjs",
+     "rows": 11414
+    },
+    {
+     "name": "s3-saga-engine.mjs",
+     "rows": 8381
+    },
+    {
+     "name": "b1lh-e8-1",
+     "rows": 8355
+    },
+    {
+     "name": "b1lh-e8-2",
+     "rows": 8149
+    },
+    {
+     "name": "b1lh-e8-3",
+     "rows": 8502
+    }
+   ],
+   "completedCases": 64
+  },
+  {
+   "file": "1012-2-60.json",
+   "sha256": "026472bd15efd728dcef1a36cf7a8842c81e4e28b59dfc79f66075f4e3f69ad7",
+   "bytes": 41330775,
+   "world": {
+    "seed": 1012,
+    "d": 2,
+    "size": 60
+   },
+   "journals": [
+    {
+     "name": "ref-earliest",
+     "rows": 6188
+    },
+    {
+     "name": "ref-latest",
+     "rows": 8356
+    },
+    {
+     "name": "noop",
+     "rows": 704
+    },
+    {
+     "name": "echo",
+     "rows": 704
+    },
+    {
+     "name": "declare-every-obligation",
+     "rows": 19760
+    },
+    {
+     "name": "hold-everything",
+     "rows": 2250
+    },
+    {
+     "name": "escalate-everything",
+     "rows": 6517
+    },
+    {
+     "name": "charge-twice",
+     "rows": 6476
+    },
+    {
+     "name": "no-compensation",
+     "rows": 6132
+    },
+    {
+     "name": "forward-order-compensation",
+     "rows": 6188
+    },
+    {
+     "name": "timer-first",
+     "rows": 6188
+    },
+    {
+     "name": "no-correlation",
+     "rows": 5940
+    },
+    {
+     "name": "c-oss",
+     "rows": 6252
+    },
+    {
+     "name": "s1-state-machine.mjs",
+     "rows": 7148
+    },
+    {
+     "name": "s2-reconciler.mjs",
+     "rows": 10479
+    },
+    {
+     "name": "s3-saga-engine.mjs",
+     "rows": 7102
+    },
+    {
+     "name": "b1lh-e8-1",
+     "rows": 7111
+    },
+    {
+     "name": "b1lh-e8-2",
+     "rows": 7229
+    },
+    {
+     "name": "b1lh-e8-3",
+     "rows": 7285
+    }
+   ],
+   "completedCases": 60
+  },
+  {
+   "file": "1013-5-60.json",
+   "sha256": "1ff084308bda57c1f73618a4ebb570d273c1442812414d264c057e992cc0eac6",
+   "bytes": 57296053,
+   "world": {
+    "seed": 1013,
+    "d": 5,
+    "size": 60
+   },
+   "journals": [
+    {
+     "name": "ref-earliest",
+     "rows": 7226
+    },
+    {
+     "name": "ref-latest",
+     "rows": 9694
+    },
+    {
+     "name": "noop",
+     "rows": 830
+    },
+    {
+     "name": "echo",
+     "rows": 830
+    },
+    {
+     "name": "declare-every-obligation",
+     "rows": 22588
+    },
+    {
+     "name": "hold-everything",
+     "rows": 2491
+    },
+    {
+     "name": "escalate-everything",
+     "rows": 7725
+    },
+    {
+     "name": "charge-twice",
+     "rows": 7566
+    },
+    {
+     "name": "no-compensation",
+     "rows": 7145
+    },
+    {
+     "name": "forward-order-compensation",
+     "rows": 7226
+    },
+    {
+     "name": "no-keys",
+     "rows": 7226
+    },
+    {
+     "name": "last-signal-wins",
+     "rows": 7314
+    },
+    {
+     "name": "timer-first",
+     "rows": 7206
+    },
+    {
+     "name": "edition-by-publication",
+     "rows": 7056
+    },
+    {
+     "name": "no-dedupe",
+     "rows": 7237
+    },
+    {
+     "name": "no-correlation",
+     "rows": 7087
+    },
+    {
+     "name": "c-oss",
+     "rows": 7455
+    },
+    {
+     "name": "s1-state-machine.mjs",
+     "rows": 8202
+    },
+    {
+     "name": "s2-reconciler.mjs",
+     "rows": 11704
+    },
+    {
+     "name": "s3-saga-engine.mjs",
+     "rows": 8197
+    },
+    {
+     "name": "b1lh-e8-1",
+     "rows": 8174
+    },
+    {
+     "name": "b1lh-e8-2",
+     "rows": 8018
+    },
+    {
+     "name": "b1lh-e8-3",
+     "rows": 8253
+    }
+   ],
+   "completedCases": 65
+  },
+  {
+   "file": "1015-3-80.json",
+   "sha256": "9229da305a308ccfd9034a23a38e15f2d758c311d1cc15ae30e48b6bacec3855",
+   "bytes": 72388817,
+   "world": {
+    "seed": 1015,
+    "d": 3,
+    "size": 80
+   },
+   "journals": [
+    {
+     "name": "ref-earliest",
+     "rows": 9804
+    },
+    {
+     "name": "ref-latest",
+     "rows": 12714
+    },
+    {
+     "name": "noop",
+     "rows": 987
+    },
+    {
+     "name": "echo",
+     "rows": 987
+    },
+    {
+     "name": "declare-every-obligation",
+     "rows": 28209
+    },
+    {
+     "name": "hold-everything",
+     "rows": 3144
+    },
+    {
+     "name": "escalate-everything",
+     "rows": 10579
+    },
+    {
+     "name": "charge-twice",
+     "rows": 10276
+    },
+    {
+     "name": "no-compensation",
+     "rows": 9769
+    },
+    {
+     "name": "forward-order-compensation",
+     "rows": 9804
+    },
+    {
+     "name": "last-signal-wins",
+     "rows": 9928
+    },
+    {
+     "name": "timer-first",
+     "rows": 9771
+    },
+    {
+     "name": "no-dedupe",
+     "rows": 9810
+    },
+    {
+     "name": "no-correlation",
+     "rows": 9505
+    },
+    {
+     "name": "c-oss",
+     "rows": 10393
+    },
+    {
+     "name": "s1-state-machine.mjs",
+     "rows": 11059
+    },
+    {
+     "name": "s2-reconciler.mjs",
+     "rows": 15167
+    },
+    {
+     "name": "s3-saga-engine.mjs",
+     "rows": 11019
+    },
+    {
+     "name": "b1lh-e8-1",
+     "rows": 10989
+    },
+    {
+     "name": "b1lh-e8-2",
+     "rows": 11156
+    },
+    {
+     "name": "b1lh-e8-3",
+     "rows": 11172
+    }
+   ],
+   "completedCases": 83
+  },
+  {
+   "file": "2002-4-80.json",
+   "sha256": "ad33db9fa3875c0fd7d11188718daccaabc6dbad6e770f9c918a66e439aceb57",
+   "bytes": 71427837,
+   "world": {
+    "seed": 2002,
+    "d": 4,
+    "size": 80
+   },
+   "journals": [
+    {
+     "name": "ref-earliest",
+     "rows": 9414
+    },
+    {
+     "name": "ref-latest",
+     "rows": 12151
+    },
+    {
+     "name": "noop",
+     "rows": 1041
+    },
+    {
+     "name": "echo",
+     "rows": 1041
+    },
+    {
+     "name": "declare-every-obligation",
+     "rows": 29595
+    },
+    {
+     "name": "hold-everything",
+     "rows": 3117
+    },
+    {
+     "name": "escalate-everything",
+     "rows": 10209
+    },
+    {
+     "name": "charge-twice",
+     "rows": 9858
+    },
+    {
+     "name": "no-compensation",
+     "rows": 9378
+    },
+    {
+     "name": "forward-order-compensation",
+     "rows": 9414
+    },
+    {
+     "name": "last-signal-wins",
+     "rows": 9522
+    },
+    {
+     "name": "timer-first",
+     "rows": 9384
+    },
+    {
+     "name": "edition-by-publication",
+     "rows": 9241
+    },
+    {
+     "name": "no-dedupe",
+     "rows": 9429
+    },
+    {
+     "name": "no-correlation",
+     "rows": 9104
+    },
+    {
+     "name": "c-oss",
+     "rows": 9800
+    },
+    {
+     "name": "s1-state-machine.mjs",
+     "rows": 10622
+    },
+    {
+     "name": "s2-reconciler.mjs",
+     "rows": 15015
+    },
+    {
+     "name": "s3-saga-engine.mjs",
+     "rows": 10598
+    },
+    {
+     "name": "b1lh-e8-1",
+     "rows": 10569
+    },
+    {
+     "name": "b1lh-e8-2",
+     "rows": 10566
+    },
+    {
+     "name": "b1lh-e8-3",
+     "rows": 10785
+    }
+   ],
+   "completedCases": 81
+  }
+ ]
+}

@@ -30,6 +30,8 @@ const ENDED = new Set(['resolved', 'closed', 'cancelled']);
 const norm = s => (typeof s === 'string' ? s.trim().replace(/^#/, '').trim().toUpperCase() : null);
 const cmp = (a, b) => a.at - b.at || a.seq - b.seq;
 const KIND = 'majorIncidentApproval', ROLE = 'incidentManager';
+/** Task events that count as an answer (R7.2) or allow a re-ask: answered (with or without `decision`), schema-rejected, withdrawn. */
+const REASK_CAUSES = new Set(['humanTask.answered', 'humanTask.answerRejected', 'humanTask.withdrawn']);
 
 /** The item's argument normaliser: every instant-valued argument in canonical UTC; nothing else (DESIGN §7.1). */
 export function canonicalArgs(system, op, args) {
@@ -144,7 +146,10 @@ function simulate(world, view, t) {
   const seen = new Set();      // report and alert ids already received (R1.4)
   let priorityChangeAt = null;
   const pend = { caller: null, resolved: null, approval: null };
-  const appr = { x: null, first: null, dl: null, taskKeys: new Set(), answer: null, moot: null, declared: null };
+  // Approval (R7): x = when the priority first became 1; first = the first task (sets dl); taskKeys = the sanctioned tasks
+  // (the first, and one re-ask per cause); causes = instants of unusable, withdrawn or schema-rejected answers on
+  // sanctioned tasks not yet used by a re-ask (R7.2); answer = the first counted answer; moot (R7.3, S16); declared.
+  const appr = { x: null, first: null, dl: null, taskKeys: new Set(), causes: [], answer: null, moot: null, declared: null };
 
   const fields = () => ({ priority: inc.priority, impact: inc.impact, urgency: inc.urgency, state: inc.state, holdReason: inc.holdReason,
     source: inc.source?.kind ?? null, service: inc.service, assignmentGroup: inc.group, major: inc.major });
@@ -164,7 +169,10 @@ function simulate(world, view, t) {
   };
   const checkMoot = (at) => {
     if (appr.x === null || appr.answer || appr.moot !== null || appr.declared !== null) return;
-    if (appr.dl !== null && at >= appr.dl) return;
+    if (appr.dl !== null && at > appr.dl) return;
+    // S16: at the deadline itself only a closure or cancellation makes it moot (nothing is recorded after one, R8.2); a
+    // resolution or a priority change at the deadline does not (R7.3 says before it).
+    if (appr.dl !== null && at === appr.dl) { if (inc.state === 'closed' || inc.state === 'cancelled') appr.moot = at; return; }
     if (ENDED.has(inc.state) || inc.priority !== 1) appr.moot = at;
   };
 
@@ -307,18 +315,29 @@ function simulate(world, view, t) {
   }
 
   // ---- approvals (R7): tasks and answers as they happened on this trajectory -----------------------------------------
+  // A task counts (is sanctioned) when it is the first once the priority first became 1, or a re-ask (R7.2): by the
+  // deadline, before an answer counts, and only after an answer on a sanctioned task was unusable, withdrawn or rejected
+  // by the arm's schema, one re-ask per such answer. Any other task is an extra task (over-escalation in the grader), and
+  // an answer to it never counts (review 2026-10-15 round 2).
   function task(x) {
     if (appr.x === null || x.at < appr.x || appr.moot !== null) return;
-    appr.taskKeys.add(`${x.instance}\u0000${x.task.id}`);
-    if (appr.first) return;
-    appr.first = x;
-    appr.dl = x.at + policy(x.at).majorApprovalMinutes * MIN;
+    const k = `${x.instance}\u0000${x.task.id}`;
+    if (!appr.first) {
+      appr.taskKeys.add(k);
+      appr.first = x;
+      appr.dl = x.at + policy(x.at).majorApprovalMinutes * MIN;
+      return;
+    }
+    if (appr.answer || appr.declared !== null || x.at > appr.dl || !appr.causes.length) return;
+    appr.causes.shift();
+    appr.taskKeys.add(k);
   }
   function answer(a) {
     if (!appr.first || appr.answer || appr.moot !== null || appr.declared !== null) return;
     if (!appr.taskKeys.has(`${a.instance}\u0000${a.payload?.taskId}`) || a.at > appr.dl) return;
-    const d = a.payload?.answer?.decision;
-    if (d !== 'approve' && d !== 'reject') return;                               // R7.2: only an answer with `decision` counts
+    const d = a.type === 'humanTask.answered' ? a.payload?.answer?.decision : undefined;
+    // R7.2: only an answer with `decision` counts; an unusable, withdrawn or schema-rejected one allows one re-ask.
+    if (d !== 'approve' && d !== 'reject') { appr.causes.push(a.at); return; }
     appr.answer = { at: a.at, decision: d };
     if (d === 'approve') {
       inc.major = true; inc.majorAt = a.at;
@@ -362,7 +381,7 @@ function simulate(world, view, t) {
   const occ = [
     ...view.events.map(e => ({ kind: 'event', at: e.at, seq: e.seq, e })),
     ...tasks.map(x => ({ kind: 'task', at: x.at, seq: x.seq, x })),
-    ...view.taskEvents.filter(e => e.type === 'humanTask.answered').map(a => ({ kind: 'answer', at: a.at, seq: a.seq, a })),
+    ...view.taskEvents.filter(e => REASK_CAUSES.has(e.type)).map(a => ({ kind: 'answer', at: a.at, seq: a.seq, a })),
   ].sort(cmp);
   for (const o of occ) {
     fireBefore(o.at);
@@ -440,7 +459,8 @@ function incidentExpectation(world, view, t, flags) {
     }
   }
 
-  // R7.1 the approval task; S11: no longer required once moot before it was created; re-asks allowed until the deadline.
+  // R7.1 the approval task; S11: no longer required once moot before it was created; R7.2: a re-ask is permitted from an
+  // unusable, withdrawn or schema-rejected answer on a sanctioned task (one per such answer) until the deadline.
   const A = H.appr;
   if (A.x !== null) {
     if (A.moot !== null && (!A.first || A.first.at > A.moot)) {
@@ -448,7 +468,9 @@ function incidentExpectation(world, view, t, flags) {
     } else if (!pre(A.x)) {
       tasksReq.push({ lid: `mia:${N}`, rule: 'R7.1', kind: KIND, role: ROLE, mustExclude: inc.callerId ? [inc.callerId] : [], window: { earliest: A.x, latest: A.x + 15 * MIN } });
     }
-    if (A.first && !A.answer && A.moot === null && A.declared === null) tasksPerm.push({ rule: 'R7.2', kind: KIND, role: ROLE, window: { earliest: A.first.at, latest: A.dl } });
+    if (A.first && !A.answer && A.moot === null && A.declared === null && A.causes.length && A.causes[0] <= A.dl) {
+      tasksPerm.push({ rule: 'R7.2', kind: KIND, role: ROLE, window: { earliest: A.causes[0], latest: A.dl } });
+    }
   }
 
   // R4-R5 the SLA engine.

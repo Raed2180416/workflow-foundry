@@ -1,0 +1,780 @@
+{
+ "schema": "rec-z1/1",
+ "evidence": "development",
+ "costUsd": 0,
+ "at": "2026-10-15T01:43:21.299Z",
+ "inputs": [
+  {
+   "path": "research/need-router-20261014/runs/m1/results.jsonl",
+   "sha256": "cb2c1ede427f17760ed1d4b2c61eee3326d536d68f5672083b8bbd56cab59d53",
+   "rows": 192
+  },
+  {
+   "path": "research/need-router-20261014/runs/m1-d5/results.jsonl",
+   "sha256": "a4e31672a2d0fd631ab67493d555096f711b11f6895849b2a35d548e0f01e77a",
+   "rows": 96
+  }
+ ],
+ "limits": {
+  "bigTokens": 30000,
+  "bigUnits": 32
+ },
+ "cells": [
+  {
+   "cell": "wbed-r0@d3",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 0,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 0,
+    "failed": 0
+   },
+   "tokens": [
+    353,
+    375
+   ],
+   "units": [
+    0,
+    0
+   ]
+  },
+  {
+   "cell": "wbed-r0@d3",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 0,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 0,
+    "failed": 0
+   },
+   "tokens": [
+    353,
+    375
+   ],
+   "units": [
+    0,
+    0
+   ]
+  },
+  {
+   "cell": "wbed-r1@d3",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 12,
+    "failed": 0,
+    "slow": 12
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    13513,
+    15238
+   ],
+   "units": [
+    104,
+    141
+   ]
+  },
+  {
+   "cell": "wbed-r1@d3",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 6,
+    "failed": 0,
+    "slow": 6
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    13513,
+    15238
+   ],
+   "units": [
+    104,
+    141
+   ]
+  },
+  {
+   "cell": "wbed-r2@d3",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 9,
+    "failed": 9
+   },
+   "tokens": [
+    6500,
+    6722
+   ],
+   "units": [
+    54,
+    63
+   ]
+  },
+  {
+   "cell": "wbed-r2@d3",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 8,
+    "failed": 8
+   },
+   "tokens": [
+    6500,
+    6722
+   ],
+   "units": [
+    54,
+    63
+   ]
+  },
+  {
+   "cell": "wbed-r2@d5",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 10,
+    "failed": 10
+   },
+   "tokens": [
+    8751,
+    8984
+   ],
+   "units": [
+    69,
+    83
+   ]
+  },
+  {
+   "cell": "wbed-r2@d5",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 10,
+    "failed": 10
+   },
+   "tokens": [
+    8751,
+    8984
+   ],
+   "units": [
+    69,
+    83
+   ]
+  },
+  {
+   "cell": "wbed-r3@d3",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 3,
+    "failed": 3
+   },
+   "tokens": [
+    11948,
+    13512
+   ],
+   "units": [
+    235,
+    289
+   ]
+  },
+  {
+   "cell": "wbed-r3@d3",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 4,
+    "failed": 4
+   },
+   "tokens": [
+    11948,
+    13512
+   ],
+   "units": [
+    235,
+    289
+   ]
+  },
+  {
+   "cell": "wbed-r3@d5",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 12,
+    "failed": 0,
+    "slow": 12
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    60812,
+    64553
+   ],
+   "units": [
+    1481,
+    1572
+   ]
+  },
+  {
+   "cell": "wbed-r3@d5",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 9,
+    "failed": 4,
+    "slow": 5
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    60812,
+    64553
+   ],
+   "units": [
+    1481,
+    1572
+   ]
+  },
+  {
+   "cell": "wbed-r3p@d3",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 1,
+    "failed": 1
+   },
+   "tokens": [
+    16577,
+    18621
+   ],
+   "units": [
+    33,
+    35
+   ]
+  },
+  {
+   "cell": "wbed-r3p@d3",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 0,
+    "failed": 0
+   },
+   "tokens": [
+    16577,
+    18621
+   ],
+   "units": [
+    33,
+    35
+   ]
+  },
+  {
+   "cell": "wbed-r3p@d5",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 1,
+    "failed": 1
+   },
+   "tokens": [
+    60941,
+    64369
+   ],
+   "units": [
+    98,
+    99
+   ]
+  },
+  {
+   "cell": "wbed-r3p@d5",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 2,
+    "failed": 2
+   },
+   "tokens": [
+    60941,
+    64369
+   ],
+   "units": [
+    98,
+    99
+   ]
+  },
+  {
+   "cell": "wbed-r4@d3",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 7,
+    "failed": 0,
+    "slow": 7
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    42306,
+    44909
+   ],
+   "units": [
+    255,
+    286
+   ]
+  },
+  {
+   "cell": "wbed-r4@d3",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 5,
+    "failed": 4,
+    "slow": 1
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    42306,
+    44909
+   ],
+   "units": [
+    255,
+    286
+   ]
+  },
+  {
+   "cell": "wbed-r5@d3",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 2,
+    "failed": 2,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    42752,
+    48722
+   ],
+   "units": [
+    255,
+    286
+   ]
+  },
+  {
+   "cell": "wbed-r5@d3",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 2,
+    "failed": 2,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    42752,
+    48722
+   ],
+   "units": [
+    255,
+    286
+   ]
+  },
+  {
+   "cell": "wbed-r6@d3",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 6,
+    "failed": 6
+   },
+   "tokens": [
+    60298,
+    62975
+   ],
+   "units": [
+    260,
+    260
+   ]
+  },
+  {
+   "cell": "wbed-r6@d3",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 0,
+    "failed": 0,
+    "slow": 0
+   },
+   "oracle": {
+    "child": 10,
+    "failed": 10
+   },
+   "tokens": [
+    60298,
+    62975
+   ],
+   "units": [
+    260,
+    260
+   ]
+  },
+  {
+   "cell": "wbed-r6@d5",
+   "arm": "b0-call-haiku-medium",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 8,
+    "failed": 0,
+    "slow": 8
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    98590,
+    100716
+   ],
+   "units": [
+    400,
+    400
+   ]
+  },
+  {
+   "cell": "wbed-r6@d5",
+   "arm": "b0-call-haiku-none",
+   "n": 12,
+   "big": 12,
+   "deployable": {
+    "child": 3,
+    "failed": 0,
+    "slow": 3
+   },
+   "oracle": {
+    "child": 12,
+    "failed": 12
+   },
+   "tokens": [
+    98590,
+    100716
+   ],
+   "units": [
+    400,
+    400
+   ]
+  }
+ ],
+ "tasks": [
+  {
+   "cell": "wbed-r0@d3",
+   "tasks": 12,
+   "big": 0,
+   "deployableChild": 0,
+   "oracleChild": 0
+  },
+  {
+   "cell": "wbed-r1@d3",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 12,
+   "oracleChild": 12
+  },
+  {
+   "cell": "wbed-r2@d3",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 0,
+   "oracleChild": 9
+  },
+  {
+   "cell": "wbed-r2@d5",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 0,
+   "oracleChild": 10
+  },
+  {
+   "cell": "wbed-r3@d3",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 0,
+   "oracleChild": 7
+  },
+  {
+   "cell": "wbed-r3@d5",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 12,
+   "oracleChild": 12
+  },
+  {
+   "cell": "wbed-r3p@d3",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 0,
+   "oracleChild": 1
+  },
+  {
+   "cell": "wbed-r3p@d5",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 0,
+   "oracleChild": 3
+  },
+  {
+   "cell": "wbed-r4@d3",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 9,
+   "oracleChild": 12
+  },
+  {
+   "cell": "wbed-r5@d3",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 3,
+   "oracleChild": 12
+  },
+  {
+   "cell": "wbed-r6@d3",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 0,
+   "oracleChild": 11
+  },
+  {
+   "cell": "wbed-r6@d5",
+   "tasks": 12,
+   "big": 12,
+   "deployableChild": 8,
+   "oracleChild": 12
+  }
+ ],
+ "sizeOnly": [
+  {
+   "cell": "need-r0pad@d2",
+   "seeds": [
+    601,
+    602,
+    603
+   ],
+   "tasks": 3,
+   "big": 0,
+   "tokens": [
+    17629,
+    22682
+   ],
+   "units": [
+    17,
+    20
+   ]
+  },
+  {
+   "cell": "need-r0pad@d3",
+   "seeds": [
+    601,
+    602,
+    603
+   ],
+   "tasks": 3,
+   "big": 0,
+   "tokens": [
+    17656,
+    22705
+   ],
+   "units": [
+    17,
+    20
+   ]
+  },
+  {
+   "cell": "need-r0pad@d4",
+   "seeds": [
+    601,
+    602,
+    603
+   ],
+   "tasks": 3,
+   "big": 0,
+   "tokens": [
+    17728,
+    22759
+   ],
+   "units": [
+    17,
+    20
+   ]
+  },
+  {
+   "cell": "need-r0pad@d5",
+   "seeds": [
+    601,
+    602,
+    603
+   ],
+   "tasks": 3,
+   "big": 0,
+   "tokens": [
+    17713,
+    22741
+   ],
+   "units": [
+    17,
+    20
+   ]
+  }
+ ],
+ "h5": {
+  "limit": 0.1,
+  "rows": 24,
+  "cells": [
+   "wbed-r0@d3",
+   "wbed-r0@d3"
+  ],
+  "deployableChild": 0,
+  "oracleChild": 0,
+  "deployableShare": 0,
+  "oracleShare": 0,
+  "sizeOnly": [
+   {
+    "cell": "need-r0pad@d2",
+    "tasks": 3,
+    "big": 0,
+    "s2Possible": false
+   },
+   {
+    "cell": "need-r0pad@d3",
+    "tasks": 3,
+    "big": 0,
+    "s2Possible": false
+   },
+   {
+    "cell": "need-r0pad@d4",
+    "tasks": 3,
+    "big": 0,
+    "s2Possible": false
+   },
+   {
+    "cell": "need-r0pad@d5",
+    "tasks": 3,
+    "big": 0,
+    "s2Possible": false
+   }
+  ],
+  "verdict": "pass"
+ },
+ "notReplayable": [
+  "S3: needs per-unit failures named by a deployable check inside one run; the rows carry one whole-task attempt and only oracle verdicts name units",
+  "S4: needs repeats of one sub-workflow structure inside one run",
+  "the agent's own propensity to call subflow: needs agent transcripts, none committed (archived agent rows hold only cost and turns)"
+ ]
+}

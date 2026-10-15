@@ -31,6 +31,8 @@ function builder(w = W3) {
       task: { id, kind: 'majorIncidentApproval', role: 'incidentManager', excludeUsers, subject: number } }),
     answer: (at, decision, taskId = 'mia#1') => ({ seq: ++seq, at: ms(at), type: 'humanTask.answered', instance: 'g', case: 'golden',
       payload: { taskId, user: 'u-im2', answer: decision === null ? { text: 'not sure' } : { decision } } }),
+    /** A task event other than an answer: `humanTask.answerRejected`, `humanTask.withdrawn`, `humanTask.timeout`. */
+    taskEvent: (at, type, taskId = 'mia#1') => ({ seq: ++seq, at: ms(at), type, instance: 'g', case: 'golden', payload: { taskId, user: 'u-im2' } }),
     view: (at, subject, events, { tasks = [], taskEvents = [] } = {}) => ({ case: 'golden', at: ms(at), seq: Infinity, world: w,
       truth: { subject, start: events[0] ? new Date(events[0].at).toISOString() : null, class: 'golden', tail: true }, events, rows: [], tasks, taskEvents }),
   };
@@ -142,6 +144,31 @@ golden('G7 floating schedule bound by caller, then CI', 'R4.3', tr => {
     expect(E1, 'sla:INC-RPT-G7-0001/RES-P2/1:start', { match: { schedule: 'SCH-EXT', timezone: 'America/New_York', plannedBreachAt: Z('2026-03-07T15:00:00-05:00') } }),
     expect(E2, 'sla:INC-ALR-G7-0002/RES-P2/1:start', { match: { schedule: 'SCH-EXT', timezone: 'Australia/Sydney', plannedBreachAt: Z('2026-04-04T16:00:00+11:00') } }));
 });
+
+// G21 R4.4 (review 2026-10-15 round 2): an interval that contains a clock change counts each real instant once. No slice-1
+// schedule has one, so the golden binds RES-P2 (600, floating SCH-EXT, the caller's zone Europe/Amsterdam) to a world copy
+// whose SCH-EXT is a night shift, every day 01:30-03:30 local, no holidays.
+//   Spring, opened Sat 2026-03-28 04:00+01:00: Sun 03-29 01:30 CET (00:30Z) to the first 03:30 CEST (01:30Z) = 60; Mon-Thu
+//   120 each (cum 540); Fri 04-03 01:30 CEST + 60 = 02:30 CEST (00:30Z). 50% (300) Tue 03-31 03:30 CEST (01:30Z), at a
+//   close (S4); 75% (450) Thu 04-02 02:00 CEST (00:00Z).
+//   Autumn, opened Sat 2026-10-24 04:00+02:00: Sun 10-25 01:30 CEST (23:30Z the day before) to the first 03:30, which is
+//   03:30 CET (02:30Z) = 180; Mon-Wed 120 each (cum 540); Thu 10-29 01:30 CET + 60 = 02:30 CET (01:30Z). Counting the
+//   repeated hour once would give 120 on Sunday and D at Thu 03:30 CET (02:30Z). 50% (300) Mon 10-26 03:30 CET (02:30Z).
+{
+  const night = { ...structuredClone(W3.calendars['SCH-EXT']), businessHours: { days: [1, 2, 3, 4, 5, 6, 7], hours: [['01:30', '03:30']] }, holidays: [] };
+  const WN = { ...W3, calendars: { ...W3.calendars, 'SCH-EXT': night } };
+  golden('G21 an interval across a clock change counts real time (60 min in spring, 180 in autumn)', 'R4.3, R4.4, R5.1, S4', tr => {
+    const out = [];
+    for (const [N, at, D, p50, p75] of [['INC-RPT-G21-0001', '2026-03-28T04:00:00+01:00', '2026-04-03T00:30:00Z', '2026-03-31T01:30:00Z', '2026-04-02T00:00:00Z'],
+      ['INC-RPT-G21-0002', '2026-10-24T04:00:00+02:00', '2026-10-29T01:30:00Z', '2026-10-26T02:30:00Z', '2026-10-28T01:00:00Z']]) {
+      const B = builder(WN), S = `${N}/RES-P2/1`;
+      const E = tr(WN, B.view(new Date(ms(at) + MIN).toISOString(), N, [B.report(at, N.slice(4), EU.userId, 'CI-SW-AMS1', 'software', 2)]));
+      out.push(expect(E, `sla:${S}:start`, { match: { schedule: 'SCH-EXT', timezone: 'Europe/Amsterdam', plannedBreachAt: D } }),
+        expect(E, `sla:${S}:breach`, { match: { at: D }, earliest: D }), expect(E, `esc:${S}:50`, { earliest: p50 }), expect(E, `esc:${S}:75`, { earliest: p75 }));
+    }
+    return all(...out);
+  });
+}
 
 // G8 R4.4-R4.6, R5, S3: RES-P3 (1440) opened Mon 2026-03-09 10:00+01:00; hold awaitingCaller Tue 14:00; reply Thu 11:00;
 // resolved Fri 12:00. Planned at start Thu 10:00 (Mon 420, Tue 480, Wed 480, Thu 60). Business at the hold: 420 + 300 =
@@ -263,6 +290,27 @@ golden('G11b retroactive start that attaches paused', 'R4.3, R4.5, S13, S14', tr
     lids(E2).filter(l => l.startsWith(`sla:${S}:resume:`)).length === 1 ? true : `resumes ${lids(E2).filter(l => l.startsWith(`sla:${S}:resume:`))}`);
 });
 
+// G20 R4.3 (review 2026-10-15 round 2): a retroactive pause that ends at the very instant the SLA attaches. A P3 report on
+// CI-SW-AMS1 (impact 1, urgency 3) opened Tue 2026-03-10 10:00+01:00, accepted 10:10, on hold awaiting the caller 10:30;
+// at 11:30 the caller replies and a resolver raises urgency to 1 in the same instant (one merged change: inProgress, P1).
+// RES-P1 (240, 24x7, retroactive with retroactivePause) attaches at 11:30 with startAt 10:00 and the past pause
+// [10:30, 11:30): start (planned 14:00, S13), pause 10:30, resume 11:30 (planned 30 + 210 = 15:00), all due from 11:30.
+// Running 10:00-10:30 (30) and from 11:30: 50% (120) at 13:00, 75% (180) at 14:00, breach at 15:00. RES-P3, paused
+// since 10:30, is cancelled `start-failed` at 11:30. Before the fix the pause was dropped: D 14:00, 50% at 12:00.
+golden('G20 retroactive pause ending at the attach instant (a reply merged with the reclassification)', 'R4.2, R4.3, R4.5, R5.1, S13', tr => {
+  const B = builder(), N = 'INC-RPT-G20-0001', S = `${N}/RES-P1/1`, x = '2026-03-10T11:30:00+01:00', h = '2026-03-10T10:30:00+01:00';
+  const E = tr(W3, B.view('2026-03-10T11:31:00+01:00', N, [B.report('2026-03-10T10:00:00+01:00', 'RPT-G20-0001', EU.userId, 'CI-SW-AMS1', 'software', 3),
+    B.upd('2026-03-10T10:10:00+01:00', N, 'accept'), B.upd(h, N, 'hold', { holdReason: 'awaitingCaller' }), B.caller(x, N, 'reply'), B.upd(x, N, 'reclassify', { urgency: 1 })]));
+  return all(
+    expect(E, `sla:${N}/RES-P3/1:cancel`, { match: { reason: 'start-failed', at: Z(x) } }),
+    expect(E, `sla:${S}:start`, { match: { startAt: Z('2026-03-10T10:00:00+01:00'), plannedBreachAt: Z('2026-03-10T14:00:00+01:00') }, earliest: x, latest: '2026-03-10T11:45:00+01:00' }),
+    expect(E, `sla:${S}:pause:${Z(h)}`, { earliest: x, latest: '2026-03-10T11:45:00+01:00' }),
+    expect(E, `sla:${S}:resume:${Z(x)}`, { match: { at: Z(x), plannedBreachAt: Z('2026-03-10T15:00:00+01:00') }, earliest: x, latest: '2026-03-10T11:45:00+01:00' }),
+    expect(E, `esc:${S}:50`, { earliest: '2026-03-10T13:00:00+01:00' }),
+    expect(E, `esc:${S}:75`, { earliest: '2026-03-10T14:00:00+01:00' }),
+    expect(E, `sla:${S}:breach`, { match: { at: Z('2026-03-10T15:00:00+01:00') } }));
+});
+
 // G12 R4.2 reset and re-attach: a P3 incident (RSP-STD on the group's schedule) opened Fri 2026-03-06 16:00+01:00,
 // bounced to New York Fri 21:00+01:00 before acceptance: gen 1 cancelled `reset`, gen 2 starts 21:00+01:00 on SCH-US-STD
 // (Fri 15:00-17:00 EST 120; Mon 03-09 08:00 EDT + 120 = 10:00-04:00). Accepted Mon 09:00-04:00 (gen 2 stops); reassigned
@@ -326,6 +374,75 @@ golden('G13 definition edition at the attach instant', 'R0, R4.3, S6, S12', tr =
     const E5 = tr(W3, B.view('2026-03-09T10:31:00+01:00', N, ev, { tasks: [t], taskEvents: [B.answer('2026-03-09T10:30:00+01:00', null)] }));
     if (!E5.humanTasks.permitted.some(p => p.kind === 'majorIncidentApproval')) return 're-ask not permitted after an unusable answer';
     return true;
+  });
+}
+
+// G14b R7.2 (review 2026-10-15 round 2): a new approval task is allowed only after an answer on a counted task was
+// unusable, withdrawn or rejected by the schema, one per such answer, by the deadline; any other task is an extra task
+// (not permitted) and its answer never counts. A P1 report (CI-PAY-APP1, urgency 1) opened Mon 2026-03-09 10:00+01:00,
+// first task 10:05, deadline 10:35.
+{
+  const N = 'INC-RPT-G14-0002';
+  const open = B => [B.report('2026-03-09T10:00:00+01:00', 'RPT-G14-0002', EU.userId, 'CI-PAY-APP1', 'software', 1)];
+  const reask = E => E.humanTasks.permitted.find(p => p.rule === 'R7.2') ?? null;
+  golden('G14b re-ask only after an unusable, withdrawn or schema-rejected answer', 'R7.2', tr => {
+    // No cause: a second task is not permitted, and an approve on it does not count (the fail-safe stays due).
+    let B = builder();
+    let ev = open(B), t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+    if (reask(tr(W3, B.view('2026-03-09T10:10:00+01:00', N, ev, { tasks: [t1] })))) return 'a re-ask permitted with no unusable answer';
+    let t2 = B.task('2026-03-09T10:10:00+01:00', N, [EU.userId], 'mia#2');
+    let E = tr(W3, B.view('2026-03-09T10:36:00+01:00', N, ev, { tasks: [t1, t2], taskEvents: [B.answer('2026-03-09T10:20:00+01:00', 'approve', 'mia#2')] }));
+    if (has(E, `maj:${N}:approved`)) return 'an answer to an extra task counted';
+    let r = expect(E, `maj:${N}:declared`, { match: { at: Z('2026-03-09T10:35:00+01:00') } });
+    if (r !== true) return `extra task: ${r}`;
+    // Each cause allows one re-ask from its instant to the deadline; the re-ask's answer counts.
+    for (const cause of ['unusable', 'humanTask.answerRejected', 'humanTask.withdrawn']) {
+      B = builder(); ev = open(B); t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+      const c = cause === 'unusable' ? B.answer('2026-03-09T10:20:00+01:00', null) : B.taskEvent('2026-03-09T10:20:00+01:00', cause);
+      const P = reask(tr(W3, B.view('2026-03-09T10:21:00+01:00', N, ev, { tasks: [t1], taskEvents: [c] })));
+      if (!P || P.window.earliest !== ms('2026-03-09T10:20:00+01:00') || P.window.latest !== ms('2026-03-09T10:35:00+01:00')) return `${cause}: re-ask window ${JSON.stringify(P?.window)}`;
+      t2 = B.task('2026-03-09T10:25:00+01:00', N, [EU.userId], 'mia#2');
+      E = tr(W3, B.view('2026-03-09T10:31:00+01:00', N, ev, { tasks: [t1, t2], taskEvents: [c, B.answer('2026-03-09T10:30:00+01:00', 'approve', 'mia#2')] }));
+      r = all(expect(E, `maj:${N}:approved`, { match: { at: Z('2026-03-09T10:30:00+01:00') } }), has(E, `maj:${N}:declared`) ? 'declared after a counted approve' : true);
+      if (r !== true) return `${cause}: ${r}`;
+    }
+    // One cause, one re-ask: a third task after it is extra, and its answer does not count.
+    B = builder(); ev = open(B); t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+    const u = B.answer('2026-03-09T10:20:00+01:00', null);
+    t2 = B.task('2026-03-09T10:22:00+01:00', N, [EU.userId], 'mia#2');
+    if (reask(tr(W3, B.view('2026-03-09T10:24:00+01:00', N, ev, { tasks: [t1, t2], taskEvents: [u] })))) return 'a second re-ask permitted on one unusable answer';
+    const t3 = B.task('2026-03-09T10:24:00+01:00', N, [EU.userId], 'mia#3');
+    E = tr(W3, B.view('2026-03-09T10:36:00+01:00', N, ev, { tasks: [t1, t2, t3], taskEvents: [u, B.answer('2026-03-09T10:30:00+01:00', 'approve', 'mia#3')] }));
+    if (has(E, `maj:${N}:approved`) || !has(E, `maj:${N}:declared`)) return 'the answer to a re-ask beyond the causes counted';
+    // A timeout of the arm's own dueAt is no cause.
+    B = builder(); ev = open(B); t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+    return reask(tr(W3, B.view('2026-03-09T10:21:00+01:00', N, ev, { tasks: [t1], taskEvents: [B.taskEvent('2026-03-09T10:20:00+01:00', 'humanTask.timeout')] }))) ? 'a timeout allowed a re-ask' : true;
+  });
+
+  // G14c R7.3, S16, R8.2 (review 2026-10-15 round 2): the same incident withdrawn exactly at the deadline (10:35) before any
+  // answer: moot, no declaration (it would be recorded after the cancellation); resolved at the deadline: still declared;
+  // an approve that counted earlier in the same instant still counts, and one after the withdrawal does not.
+  golden('G14c closed or cancelled at the approval deadline: no declaration', 'R7.2, R7.3, R8.2, S16', tr => {
+    const dl = '2026-03-09T10:35:00+01:00';
+    let B = builder();
+    let ev = open(B), t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+    let E = tr(W3, B.view('2026-03-09T10:51:00+01:00', N, [...ev, B.caller(dl, N, 'withdraw')], { tasks: [t1] }));
+    let r = all(expect(E, `cnc:${N}`, { match: { at: Z(dl) } }), findBy(E, e => e.lid.startsWith(`maj:${N}`) || e.lid === `ntf:${N}:major-incident`) ? 'declared after a withdrawal at the deadline' : true,
+      E.terminal && E.records?.incident.major === false ? true : 'not cancelled without major');
+    if (r !== true) return `withdraw at the deadline: ${r}`;
+    B = builder(); ev = open(B); t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+    E = tr(W3, B.view('2026-03-09T10:51:00+01:00', N, [...ev, B.upd(dl, N, 'resolve', { closeCode: 'fixed' })], { tasks: [t1] }));
+    r = expect(E, `maj:${N}:declared`, { match: { at: Z(dl) }, earliest: new Date(ms(dl) + 1000).toISOString(), latest: '2026-03-09T10:50:00+01:00' });
+    if (r !== true) return `resolved at the deadline: ${r}`;
+    B = builder(); ev = open(B); t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+    const ans = B.answer(dl, 'approve');
+    E = tr(W3, B.view('2026-03-09T10:51:00+01:00', N, [...ev, B.caller(dl, N, 'withdraw')], { tasks: [t1], taskEvents: [ans] }));
+    r = all(expect(E, `maj:${N}:approved`, { match: { at: Z(dl) } }), expect(E, `cnc:${N}`));
+    if (r !== true) return `approve then withdraw in one instant: ${r}`;
+    B = builder(); ev = open(B); t1 = B.task('2026-03-09T10:05:00+01:00', N, [EU.userId]);
+    const w = B.caller(dl, N, 'withdraw');
+    E = tr(W3, B.view('2026-03-09T10:51:00+01:00', N, [...ev, w], { tasks: [t1], taskEvents: [B.answer(dl, 'approve')] }));
+    return findBy(E, e => e.lid.startsWith(`maj:${N}`)) ? 'an approve after the withdrawal in the same instant counted' : true;
   });
 }
 

@@ -818,7 +818,7 @@ test('D6 emits a machine-readable cost-meter gate: block-until-verified on the a
   assert.equal(g.reasons[0].of, 8); assert.equal(g.reasons[0].sessions, 8); assert.ok(g.reasons[0].medianRecordedOverFinal < 0.01);
   const off = Object.fromEntries(g.reasons[1].groups.map(x => [x.key, x.ratioReportedOverReprice]));
   assert.ok(off['claude-opus-5-5 | post-flag'] > 2.9 && off['claude-opus-5-5 | pre-flag'] > 2.1 && off['claude-sonnet-5-5 | post-flag'] > 2.6);
-  assert.match(g.clearedBy, /meter-gate\.mjs --verify/); assert.equal(g.rule.outputTolerance, 0.05);
+  assert.match(g.clearedBy, /meter-gate-cli\.mjs --verify/); assert.equal(g.rule.outputTolerance, 0.05);
   assert.equal(JSON.stringify(d.summary.meterGate), JSON.stringify(buildMeterGate({ outputRatios: d.builderSessions.sessions.map(r => ({ label: r.label, model: r.model, recorded: r.outputTokensStreamUsage, final: r.outputTokensFinal })), eraRatios: d.agentSessions.byModelEra.map(m => ({ key: m.key, sessions: m.sessions, ratio: m.ratioReportedOverEra })) })), 'derived from D6\'s own checks');
   const md = renderReport(await everything());
   assert.ok(md.includes('The meter is now a gate, not a recommendation') && md.includes('**block-until-verified**') && md.includes('refuses to start a paid stage with an agent arm'));

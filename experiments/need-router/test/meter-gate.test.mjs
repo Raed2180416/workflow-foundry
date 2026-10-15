@@ -9,6 +9,7 @@ import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import * as G from '../meter-gate.mjs';
 import * as LR from '../label-run.mjs';
 
@@ -23,7 +24,7 @@ test('buildMeterGate: block-until-verified on output tokens far from the final u
   assert.equal(BLOCK.status, 'block-until-verified');
   assert.deepEqual(BLOCK.reasons.map(r => r.code), ['OUTPUT_TOKENS_UNDER_RECORDED', 'REPRICE_OFF_REPORTED']);
   assert.match(BLOCK.blocks, /agent arm/);
-  assert.match(BLOCK.clearedBy, /meter-gate\.mjs --verify/);
+  assert.match(BLOCK.clearedBy, /meter-gate-cli\.mjs --verify/);
   assert.equal(CLEAR.status, 'clear'); assert.deepEqual(CLEAR.reasons, []); assert.equal(CLEAR.blocks, null);
   // Only the output rule, only the price rule; a thin model-era (under 3 sessions) does not trip the price band; no evidence is clear.
   assert.deepEqual(G.buildMeterGate({ outputRatios: [{ recorded: 10, final: 1000 }] }).reasons.map(r => r.code), ['OUTPUT_TOKENS_UNDER_RECORDED']);
@@ -145,7 +146,7 @@ test('paidRunChecks refuses a paid stage with an agent arm while the gate blocks
   const unitsOf = arms => [{ job: {}, arms, probeArms: [] }];
   const run = (arms, deps) => LR.paidRunChecks({ plan, units: unitsOf(arms), prereg: null, deps: { stampOf: () => null, checkStagesFn: () => ({ errors: [] }), ...deps } }).errors.filter(e => e.startsWith('meter gate:'));
   const blocked = run(['agent-H', 'direct-H'], { meterGate: () => BLOCK, meterVerification: () => null });
-  assert.equal(blocked.length, 1); assert.match(blocked[0], /block-until-verified/); assert.match(blocked[0], /meter-gate\.mjs --verify/);
+  assert.equal(blocked.length, 1); assert.match(blocked[0], /block-until-verified/); assert.match(blocked[0], /meter-gate-cli\.mjs --verify/);
   assert.deepEqual(run(['direct-H'], { meterGate: () => BLOCK, meterVerification: () => null }), [], 'a stage of single calls does not need the agent meter');
   assert.deepEqual(run(['agent-O'], { meterGate: () => CLEAR, meterVerification: () => null }), []);
   const good = { schema: G.VERIFICATION_SCHEMA, sessions: [{ method: 'per-message', recorded: 99, final: 100 }, { method: 'final-output', final: 5000, reportedUsd: 1, pricedUsd: 1.05 }] };
@@ -193,6 +194,24 @@ test('transcriptUsage and verifyTranscripts: lines that match the final usage ve
   assert.equal(G.verificationPasses(forged), false);
   assert.equal(G.verificationPasses({ ...snaps, sessions: snaps.sessions.map(s => ({ ...s, reportedUsd: s.pricedUsd * 2 })) }), false);
   assert.throws(() => G.verifyTranscripts([exact, exact2]), /priceSession/);
+  // A session billed with 1-hour cache writes (the CLI's default; an executor session keeps only what the launching shell sets) is not corroborated by the
+  // pinned table's 5-minute writes, and the record says why.
+  const oneHour = write('onehour.jsonl', [
+    line({ type: 'assistant', message: { id: 'a', model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: 400000 } } }),
+    line({ type: 'assistant', message: { id: 'b', model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: 300000 } } }),
+    line({ type: 'result', total_cost_usd: (10 * 4 + 20000 * 20 + 700000 * 8) / 1e6, usage: { output_tokens: 20000, cache_creation: { ephemeral_1h_input_tokens: 700000, ephemeral_5m_input_tokens: 0 } } })].join('\n'));
+  const oh = verify(exact, oneHour);
+  assert.equal(oh.passed, false); assert.equal(oh.sessions[1].method, 'unverified'); assert.equal(oh.sessions[1].cacheWrite1hShare, 1);
+  assert.match(oh.sessions[1].hint, /FORCE_PROMPT_CACHING_5M=1/); assert.ok(!('hint' in oh.sessions[0]));
+  assert.equal(G.cacheWrite1hShare({ cache_creation: { ephemeral_1h_input_tokens: 1, ephemeral_5m_input_tokens: 3 } }), 0.25);
+  assert.equal(G.cacheWrite1hShare({}), null); assert.equal(G.cacheWrite1hShare({ cache_creation: {} }), null);
+  // The same session billed at the 5-minute rate verifies.
+  const fiveMin = write('fivemin.jsonl', [
+    line({ type: 'assistant', message: { id: 'a', model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: 400000 } } }),
+    line({ type: 'assistant', message: { id: 'b', model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: 300000 } } }),
+    line({ type: 'result', total_cost_usd: (10 * 4 + 20000 * 20 + 700000 * 5) / 1e6, usage: { output_tokens: 20000, cache_creation: { ephemeral_1h_input_tokens: 0, ephemeral_5m_input_tokens: 700000 } } })].join('\n'));
+  const fm = verify(exact, fiveMin);
+  assert.equal(fm.sessions[1].method, 'final-output'); assert.equal(fm.passed, true);
 });
 
 test('missingOutputUsd spreads the missing output tokens over the lines at their own tiers; an unpriced line makes the correction impossible', () => {
@@ -208,4 +227,26 @@ test('missingOutputUsd spreads the missing output tokens over the lines at their
   approx(LR.outputRateOf(P, 'claude-haiku-5-5', [1000, 0, 0, 0, 'claude-haiku-5-5']), 0.5 / 1e6, 1e-15);
   approx(LR.outputRateOf(P, 'claude-opus-5-5', [1000, 0, 0, 0, 'unpriced-model']), 20 / 1e6, 1e-15, 'an unpriced line model falls back to the session model');
   assert.equal(LR.outputRateOf(P, 'unpriced-session', [1, 0, 0, 0, null]), null);
+});
+
+test('meter-gate-cli: --verify writes a record label-run accepts, exits 1 for a record that does not pass, and the bare command reports the gate', () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), 'meter-cli-'));
+  const line = o => JSON.stringify(o);
+  const tr = (out, final, cost) => [line({ type: 'assistant', message: { id: 'a', model: 'claude-opus-5-5', usage: { input_tokens: 10, output_tokens: out } } }),
+    line({ type: 'result', total_cost_usd: cost, usage: { output_tokens: final } })].join('\n');
+  const f = (name, text) => { const p = path.join(tmp, name); writeFileSync(p, text); return p; };
+  const good1 = f('g1.jsonl', tr(1000, 1000, (10 * 4 + 1000 * 20) / 1e6)), good2 = f('g2.jsonl', tr(2000, 2000, (10 * 4 + 2000 * 20) / 1e6)), snap = f('s.jsonl', tr(5, 9000, 9));
+  const cli = path.join(REPO, 'experiments/need-router/meter-gate-cli.mjs');
+  const out = path.join(tmp, 'rec.json');
+  const ok = spawnSync(process.execPath, [cli, '--verify', good1, good2, '--write', out], { encoding: 'utf8' });
+  assert.equal(ok.status, 0, ok.stderr);
+  const rec = JSON.parse(readFileSync(out, 'utf8'));
+  assert.equal(rec.passed, true); assert.deepEqual(rec.sessions.map(s => s.method), ['per-message', 'per-message']);
+  assert.equal(G.verificationPasses(rec), true);
+  assert.equal(G.meterGateDecision({ gate: BLOCK, verification: G.readVerification(out), arms: [{ factory: 'b0Agent' }] }).allow, true);
+  const no = spawnSync(process.execPath, [cli, '--verify', good1, snap], { encoding: 'utf8' });
+  assert.equal(no.status, 1); assert.equal(JSON.parse(no.stdout).passed, false);
+  const status = spawnSync(process.execPath, [cli], { encoding: 'utf8' });
+  assert.equal(status.status, 1, 'the committed gate blocks and no record is on file');
+  assert.equal(JSON.parse(status.stdout).gate.status, 'block-until-verified');
 });

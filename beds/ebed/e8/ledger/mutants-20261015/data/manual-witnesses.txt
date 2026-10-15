@@ -1,0 +1,4 @@
+k77 witness (duplicate placement with other items before the create): OPEN vs D:2/outside-allowed/
+k123 required at D: fst:ORD-1001-0009-F3:cancelled fst:ORD-1001-0009-F1:cancelled fst:ORD-1001-0009-F2:cancelled ost:ORD-1001-0009:cancelled ntf:ORD-1001-0009:order-cancelled
+k123 witness (amend and cancel at D, plus a cancel-refused): D:2/outside-allowed/ vs PASS
+k241 W2 witness, no status set by T2+120: D:3/missed/fst:ORD-1001-0007-F1:dispatched vs D:3/missed/fst:ORD-1001-0007-F1:completed

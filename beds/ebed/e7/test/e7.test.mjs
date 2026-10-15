@@ -9,6 +9,9 @@ import { generateWorld, twins, referenceRuns, oracle, binding, referenceTransiti
 import { runControl, CONTROLS, VARIANTS, targetCases, plannedView } from '../controls.mjs';
 import { runGoldens, goldens } from '../golden.mjs';
 import { slaTimeline, reachAt, boundCalendar } from '../sla.mjs';
+import { editionAt } from '../transition.mjs';
+import { independentSlas, comparable, fuzzHistory } from './sla-independent.mjs';
+import { runReference } from '../../oracle/policy.mjs';
 import { addBiz, bizBetween, CLASSES } from '../world.mjs';
 import { createHost } from '../../host/host.mjs';
 import { replayRun } from '../../host/replay.mjs';
@@ -111,6 +114,95 @@ test('SLA engine N-version: sla.mjs = lib/clock = the generator clock on fuzzed 
   const a = Date.parse('2026-03-09T09:00:00+01:00');
   assert.equal(reachAt(cal, [[a, a + 60 * MIN]], 61 * MIN), null);
   assert.equal(reachAt(cal, [[a, a + 60 * MIN]], 60 * MIN), a + 60 * MIN);
+});
+
+test('SLA engine N-version, R4.2-R4.3 (review 2026-10-15 round 2): sla.mjs = an independent evaluator on fuzzed histories; retroactive history = live history; a pause ending at the attach is seen', async () => {
+  // The independent evaluator (test/sla-independent.mjs) is written from the spec with its own structure, R0 and clock.
+  // Fuzzed histories on the d5 rulebook (12 definitions, edition 2 from 03-23): same-instant merged changes, resets on
+  // reassignment, edition switches, holds of three kinds, retroactive attaches during or at the end of a pause.
+  const w = generateWorld({ seed: 1002, difficulty: 5 });
+  const ctx = { world: w, defsAt: x => editionAt(w, x).defs, scheduleOf: { service: id => w.master.services.find(s => s.service === id).supportSchedule, group: id => w.master.groups.find(g => g.group === id).schedule } };
+  const byId = (a, b) => (a.id < b.id ? -1 : 1);
+  const ED2 = Date.parse('2026-03-23T00:00:00+01:00');
+  const check = engine => {
+    const out = { histories: 0, diffs: [], meta: [], cov: { pauseEndsAtX: 0, retroPause: 0, reset: 0, reattach: 0, crossEdition: 0, attachPaused: 0, merged: 0, metaChecked: 0 } };
+    for (let i = 0; i < 600; i++) {
+      const h = fuzzHistory(w, rng('ebed-fuzz', 'e7', 'sla-independent', 1301, i));
+      const mine = engine(ctx, h.incident, h.snaps);
+      const a = mine.map(comparable).sort(byId), b = independentSlas(w, h.incident, h.snaps).map(comparable).sort(byId);
+      out.histories++;
+      if (JSON.stringify(a) !== JSON.stringify(b)) out.diffs.push(i);
+      if (h.merged) out.cov.merged++;
+      for (const s of b) {
+        // The records an attach writes besides the start: past pauses and resumes, and the pause it attaches in (S14).
+        const atAttach = s.ops.filter(o => /^(pause|resume)@/.test(o) && o.split('/')[1] === String(s.attachAt));
+        if (s.startAt < s.attachAt && atAttach.includes(`resume@${s.attachAt}/${s.attachAt}`)) out.cov.pauseEndsAtX++;
+        if (s.startAt < s.attachAt && atAttach.length) out.cov.retroPause++;
+        if (atAttach.length && atAttach.at(-1).startsWith('pause@')) out.cov.attachPaused++;
+        if (s.startAt < ED2 && s.attachAt >= ED2) out.cov.crossEdition++;
+        const reset = s.ops.find(o => o.endsWith('/reset'));
+        if (reset) {
+          out.cov.reset++;
+          const at = Number(reset.split('@')[1].split('/')[0]);
+          const [num, def, gen] = s.id.split('/');
+          if (b.some(t => t.id === `${num}/${def}/${Number(gen) + 1}` && t.attachAt === at)) out.cov.reattach++;
+        }
+      }
+      // Metamorphic: a retroactive SLA's past pauses (R4.3) are the pauses a live SLA with the same pause condition,
+      // attached at openedAt and never ended, records up to the attach instant (including a resume at that instant).
+      for (const s of mine) {
+        if (s.def.start.from !== 'openedAt' || !s.def.start.retroactivePause || !s.def.pause || s.attachAt <= s.startAt) continue;
+        const shadow = { id: 'SHADOW', target: s.def.target, start: { when: [{ field: 'source', in: ['report', 'alert'] }], from: 'openedAt', retroactivePause: false }, pause: s.def.pause,
+          stop: { when: [] }, cancel: { whenStartFails: false, when: [] }, reset: null, schedule: { source: 'none' }, timezone: { sources: ['definition'], definition: 'Europe/Amsterdam' }, escalations: [] };
+        const [live] = engine({ ...ctx, defsAt: () => [shadow] }, h.incident, h.snaps.filter(x => x.at <= s.attachAt));
+        const retro = s.ops.filter(o => (o.op === 'pause' || o.op === 'resume') && o.x === s.attachAt).map(o => `${o.op}@${o.at}`);
+        const want = live.ops.filter(o => (o.op === 'pause' || o.op === 'resume') && o.at <= s.attachAt).map(o => `${o.op}@${o.at}`);
+        out.cov.metaChecked++;
+        if (retro.join() !== want.join()) out.meta.push(`${i} ${s.id}`);
+      }
+    }
+    return out;
+  };
+  const r = check(slaTimeline);
+  assert.deepEqual(r.diffs.slice(0, 5), [], `${r.diffs.length}/${r.histories} histories where sla.mjs and the independent evaluator differ`);
+  assert.deepEqual(r.meta.slice(0, 5), [], `${r.meta.length} retroactive SLAs whose past pauses differ from the live history`);
+  // Not vacuous: the fuzz reaches every construct the review named.
+  const c = r.cov;
+  assert.ok(c.pauseEndsAtX >= 5 && c.retroPause >= 10 && c.reset >= 20 && c.reattach >= 10 && c.crossEdition >= 3 && c.attachPaused >= 5 && c.merged >= 100 && c.metaChecked >= 100, JSON.stringify(c));
+
+  // The reviewer's hand case (RES-P1, 240 min 24x7, retroactive with retroactivePause): opened at P3 08:00Z, on hold
+  // awaiting the caller 08:30Z, one merged change at 09:30Z (inProgress, P1). R4.3: pause 08:30Z, resume 09:30Z, D 13:00Z.
+  const F = (state, priority) => ({ priority, impact: 1, urgency: 3, state, holdReason: state === 'onHold' ? 'awaitingCaller' : null, source: 'report', service: 'SVC-NET-EU', assignmentGroup: 'GRP-NET-EU', major: false });
+  const t = s => Date.parse(`2026-03-02T${s}:00Z`);
+  const snaps = [{ at: t('08:00'), fields: F('assigned', 3) }, { at: t('08:30'), fields: F('onHold', 3) }, { at: t('09:30'), fields: F('inProgress', 1) }];
+  const inc = { number: 'INC-H', openedAt: t('08:00'), callerTz: 'Europe/Amsterdam', ciTz: 'Europe/Amsterdam' };
+  const hand = engine => {
+    const s = engine(ctx, inc, snaps).find(x => x.definition === 'RES-P1');
+    return { ops: s.ops.map(o => `${o.op}@${new Date(o.at).toISOString()}`), D: new Date(s.D).toISOString() };
+  };
+  const want = { ops: ['start@2026-03-02T08:00:00.000Z', 'pause@2026-03-02T08:30:00.000Z', 'resume@2026-03-02T09:30:00.000Z'], D: '2026-03-02T13:00:00.000Z' };
+  assert.deepEqual(hand(slaTimeline), want);
+  assert.deepEqual(hand((cx, i, sn) => independentSlas(w, i, sn)), want);
+
+  // Mutation: sla.mjs without the round-2 fix (the pause interval ending at the attach dropped) is caught by the
+  // N-version check, by the metamorphic relation and by the hand case.
+  const { mkdtempSync, readFileSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { pathToFileURL } = await import('node:url');
+  const src = readFileSync(new URL('../sla.mjs', import.meta.url), 'utf8');
+  const fix = "      if (from !== null && !pausedAtX) { s.ops.push({ op: 'pause', at: from, x }, { op: 'resume', at: x, x }); from = null; }\n";
+  assert.ok(src.includes(fix), 'the fix line is where the mutation expects it');
+  const dir = mkdtempSync(join(tmpdir(), 'e7-sla-mutant-'));
+  try {
+    const file = join(dir, 'sla-mutant.mjs');
+    writeFileSync(file, src.replace(fix, '').replace("from '../lib/calendar.mjs'", `from '${new URL('../../lib/calendar.mjs', import.meta.url).href}'`));
+    const { slaTimeline: mutant } = await import(pathToFileURL(file).href);
+    const m = check(mutant);
+    assert.ok(m.diffs.length >= 3, `the N-version check misses the mutant (${m.diffs.length} diffs)`);
+    assert.ok(m.meta.length >= 3, `the metamorphic relation misses the mutant (${m.meta.length})`);
+    assert.notDeepEqual(hand(mutant), want, 'the hand case misses the mutant');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -261,8 +353,124 @@ test('critical major-without-approval: only a counted approve or the fail-safe e
   assert.deepEqual(run({ answers: [['10:35', 'approve']], setMajorAt: '10:45' }), [], 'an approve at the deadline counts (S1)');
 });
 
-test('spec states the readings the oracle grades: S13-S15 and the warning rule (review 2026-10-15)', () => {
-  for (const r of ['S13', 'S14', 'S15']) assert.ok(specE.text.includes(`- ${r} `), `${r} missing from the spec`);
+test('critical (round 2): only an answer to a counted task excuses a setMajor; a cancellation at the deadline leaves no fail-safe (R7.2, S16)', () => {
+  // The P1 report of the previous test: opened 10:00, first task 10:05, deadline 10:35.
+  const base = generateWorld({ seed: 1001, difficulty: 3 });
+  const caller = base.master.users.find(u => u.region === 'EU' && u.roles.length === 1 && u.roles[0] === 'caller');
+  const N = 'INC-RPT-CRIT-0002', c = 'crit2';
+  const w = { ...base, truth: { ...base.truth, cases: { ...base.truth.cases, [c]: { subject: N, start: '2026-03-09T09:00:00Z', class: 'golden', callerId: caller.userId } } } };
+  const T = s => Date.parse(`2026-03-09T${s}:00+01:00`);
+  const run = ({ tasks = [['10:05', 'mia#1']], taskEvents = [], extra = [], rows = [] }) => {
+    const deliveries = [{ at: T('10:00'), instance: 'g', round: 1, event: { id: 'ev-c2-0', type: 'incident.reported', source: 'portal',
+      payload: { reportId: 'RPT-CRIT-0002', callerId: caller.userId, ci: 'CI-PAY-APP1', category: 'software', urgency: 1, summary: 'x' } } }];
+    extra.forEach(([at, type, payload], i) => deliveries.push({ at: T(at), instance: `g${i + 2}`, round: 1, event: { id: `ev-c2-${i + 1}`, type, source: type === 'caller.message' ? 'mail' : 'workspace', payload } }));
+    const tk = tasks.map(([at, id]) => ({ at: T(at), instance: 'g', task: { id, kind: 'majorIncidentApproval', role: 'incidentManager', excludeUsers: [caller.userId], subject: N } }));
+    const ev = taskEvents.map(([at, type, taskId, decision]) => ({ at: T(at), type, instance: 'g',
+      payload: { taskId, user: 'u-im2', ...(type === 'humanTask.answered' ? { answer: decision ? { decision } : { text: 'not sure' } } : {}) } }));
+    const ledger = rows.map(([at, op]) => ({ at: T(at), system: 'itsm', op, args: { number: N, at: 'x' }, committed: true }));
+    const all = [...deliveries, ...tk, ...ev, ...ledger].sort((a, b) => a.at - b.at);
+    all.forEach((x, i) => { x.seq = i + 1; });
+    return oracleItem.critical(w, { bucket: () => ({ deliveries, ledger, tasks: tk, taskEvents: ev, calls: [] }), horizonMs: Date.parse(w.horizonEnd) }, c).map(x => x.code).sort();
+  };
+  const MWA = 'major-without-approval', ANS = 'humanTask.answered';
+  const withdraw = at => [at, 'caller.message', { from: caller.email, incidentRef: N, intent: 'withdraw', text: 'x' }];
+  // R7.2: a re-ask nobody sanctioned is an extra task; an approve on it excuses nothing.
+  assert.deepEqual(run({ tasks: [['10:05', 'mia#1'], ['10:10', 'mia#2']], taskEvents: [['10:20', ANS, 'mia#2', 'approve']], rows: [['10:21', 'setMajor']] }), [MWA], 'approve on an unsanctioned re-ask');
+  assert.deepEqual(run({ tasks: [['10:05', 'mia#1'], ['10:10', 'mia#2']], taskEvents: [['10:20', ANS, 'mia#2', 'reject']], rows: [['10:36', 'setMajor']] }), [], 'a reject on an extra task does not count: the fail-safe is still due');
+  for (const cause of [[ANS, null], ['humanTask.answerRejected'], ['humanTask.withdrawn']]) {
+    assert.deepEqual(run({ tasks: [['10:05', 'mia#1'], ['10:22', 'mia#2']], taskEvents: [['10:20', cause[0], 'mia#1', cause[1]], ['10:30', ANS, 'mia#2', 'approve']], rows: [['10:31', 'setMajor']] }), [],
+      `a re-ask after ${cause[0]}${cause[1] === null ? ' (no decision)' : ''} counts`);
+  }
+  assert.deepEqual(run({ tasks: [['10:05', 'mia#1'], ['10:22', 'mia#2'], ['10:24', 'mia#3']], taskEvents: [['10:20', ANS, 'mia#1', null], ['10:30', ANS, 'mia#3', 'approve']], rows: [['10:31', 'setMajor']] }), [MWA],
+    'one unusable answer sanctions one re-ask');
+  // S16: withdrawn at the deadline before an answer: no fail-safe; one taken anyway is critical twice (after the cancel).
+  assert.deepEqual(run({ extra: [withdraw('10:35')], rows: [['10:35', 'cancel']] }), []);
+  assert.deepEqual(run({ extra: [withdraw('10:35')], rows: [['10:35', 'cancel'], ['10:36', 'setMajor']] }), ['effect-after-end', MWA]);
+  // Resolved at the deadline: R7.3 says before, so the fail-safe is still due and excused.
+  assert.deepEqual(run({ extra: [['10:35', 'resolver.update', { number: N, group: 'x', user: 'u-r', action: 'resolve', closeCode: 'fixed' }]], rows: [['10:35', 'resolve'], ['10:36', 'setMajor']] }), []);
+});
+
+test('escalate after the end: spec, mock and oracle agree (SPEC §2, R5.1, S3; review 2026-10-15 round 2)', () => {
+  // G15's history: RES-P1 (240, 24x7) on an alert opened 10:00, resolved 14:00 (= D). The 100% notice is due from 14:00 and
+  // ordered after the SLA's start only, so it may follow the stop record, which the mock accepts (world.test.mjs).
+  const w = generateWorld({ seed: 1001, difficulty: 3, mix: 'tail' });
+  const N = 'INC-ALR-RND2-0001', S = `${N}/RES-P1/1`;
+  const at = s => Date.parse(`2026-03-09T${s}:00+01:00`);
+  const ev = (seq, t, type, source, payload) => ({ id: `ev-r2-${seq}`, type, at: at(t), seq, source, instance: 'g', round: 1, payload });
+  const events = [ev(1, '10:00', 'alert.raised', 'monitor', { alertId: 'ALR-RND2-0001', ci: 'CI-SW-AMS1', check: 'ping', severity: 'critical', raisedAt: 'x' }),
+    ev(2, '10:20', 'resolver.update', 'workspace', { number: N, group: 'x', user: 'u', action: 'accept' }), ev(3, '14:00', 'resolver.update', 'workspace', { number: N, group: 'x', user: 'u', action: 'resolve', closeCode: 'fixed' })];
+  const E = referenceTransition(w, { case: 'golden', at: at('14:01'), seq: Infinity, world: w, truth: { subject: N, start: '2026-03-09T09:00:00Z', class: 'golden' }, events, rows: [], tasks: [], taskEvents: [] });
+  const esc = E.effects.required.find(e => e.lid === `esc:${S}:100`), stop = E.effects.required.find(e => e.lid === `sla:${S}:stop`);
+  assert.ok(esc && stop, 'the 100% notice and the stop are both required');
+  assert.deepEqual(esc.after, [`sla:${S}:start`], 'an escalation is ordered after the start only, never after or before the stop');
+  assert.equal(esc.window.earliest, stop.window.earliest, 'both due from the stop instant (S3)');
+  assert.ok(specE.text.replace(/\s+/g, ' ').includes('`escalate` is the exception: it is accepted for a recorded SLA at any stage, also after its `stop` or `cancel`'));
+});
+
+test('F5 (SPEC §1 API changes): a create written with the retired name is refused 400 and re-issued under the same key: no 409, no key-split, and it misses its [t, t] window (review 2026-10-15 round 2)', async () => {
+  const w = generateWorld({ seed: 1015, difficulty: 5, size: 40 });
+  const f5 = w.faults.find(f => f.kind === 'F5');
+  assert.deepEqual([f5.system, f5.op, f5.params.from, f5.params.to], ['itsm', 'create', 'ci', 'configurationItem']);
+  // The reference writes the names the API file shows at t. This variant writes the retired `ci` on its first attempt of
+  // every create after the rename (an arm working from an old copy of the schema), then follows the reference: on the
+  // 400 it re-issues the create, corrected, under the same key when the result arrives.
+  const stale = new Set();
+  const post = o => ({ ...o, effects: o.effects.map(e => {
+    if (e.system !== 'itsm' || e.op !== 'create' || !('configurationItem' in (e.args ?? {})) || stale.has(e.key)) return e;
+    stale.add(e.key);
+    const { configurationItem, ...rest } = e.args;
+    return { ...e, args: { ...rest, ci: configurationItem } };
+  }) });
+  const run = await runReference({ item: oracleItem, binding, world: w, timing: 'earliest', variant: { post } });
+  const ledger = run.rows.filter(r => r.type === 'ledger');
+  const creates = ledger.filter(r => r.system === 'itsm' && r.op === 'create');
+  const refused = creates.filter(r => !r.committed);
+  assert.ok(stale.size >= 3 && refused.length === stale.size, `${stale.size} stale creates, ${refused.length} refused`);
+  for (const r of refused) {
+    assert.deepEqual([r.error?.code, r.error?.reason], [400, 'field-renamed']);
+    const again = creates.find(x => x.committed && x.key === r.key);
+    assert.ok(again && Date.parse(again.at) > Date.parse(r.at), `${r.key}: re-issued later under the same key and committed`);
+  }
+  assert.deepEqual(ledger.filter(r => r.error?.code === 409).map(r => `${r.system}.${r.op} ${r.error.reason}`), [], 'no key conflict');
+  const v = oracle(w, run.rows);
+  const staleCases = new Set(refused.map(r => r.subjectCase));
+  assert.equal(staleCases.size, refused.length);
+  for (const cv of v.cases) {
+    assert.ok(!['key-split', 'key-reuse'].includes(cv.firstDivergence?.code), `${cv.case}: ${cv.firstDivergence?.code}`);
+    if (staleCases.has(cv.case)) {
+      assert.equal(cv.pass, false, `${cv.case} passed with a late create`);
+      assert.deepEqual([cv.firstDivergence.layer, cv.firstDivergence.lid], [3, `create:${cv.subject}`], `${cv.case}: ${JSON.stringify(cv.firstDivergence)}`);
+      assert.ok(['missed', 'late'].includes(cv.firstDivergence.code));
+    } else if (cv.complete) assert.ok(cv.pass, `${cv.case} ${JSON.stringify(cv.firstDivergence)}`);
+  }
+  assert.equal(v.critical.length, 0);
+});
+
+test('spec states the readings the oracle grades: S13-S16, the warning rule, API changes, escalate after the end, DST and re-asks (reviews 2026-10-15)', () => {
+  for (const r of ['S13', 'S14', 'S15', 'S16']) assert.ok(specE.text.includes(`- ${r} `), `${r} missing from the spec`);
+  // Round 2: what the oracle and the host already did, now said where an arm reads it.
+  const flat = specE.text.replace(/\s+/g, ' ');
+  for (const phrase of [
+    '**API changes.** `api/<system>.schema.json` always shows the current argument names of every op, and a system can rename an argument during the stream',
+    'Read the file on every call and write each effect with the names it shows at the instant you emit it.',
+    'An error `400` (`invalid-args`, `field-renamed`) means your request was wrong',
+    "correct it and re-issue it, with the same key, inside the rule's window; it is not a `409`, since the refused request committed nothing and keys are compared under the system's own names",
+    '(`itsm.create`, R1.1, window [t, t]) leaves no time for a second attempt',
+    "Arguments are compared under each system's own field names",
+    '`escalate` is the exception: it is accepted for a recorded SLA at any stage, also after its `stop` or `cancel`',
+    'each real instant in between counts once',
+    'holds 60 minutes on 2026-03-29 (02:00 jumps to 03:00) and 180 minutes on 2026-10-25 (03:00 falls back to 02:00)',
+    'No schedule of this service desk has an interval that contains a clock change.',
+    'once for each answer to one of your counted tasks (the first, or an earlier re-ask) that was unusable, was withdrawn',
+    'Any other further approval task is an error',
+    'An incident closed or cancelled **at** the deadline, before an answer counts, is moot too (S16).',
+  ]) assert.ok(flat.includes(phrase), `spec lacks: ${phrase}`);
+  // No generated schedule has a business interval across a clock change (R4.4 says so): every interval is in daytime.
+  const w5 = generateWorld({ seed: 1001, difficulty: 5 });
+  for (const cal of Object.values(w5.calendars)) {
+    if (cal.businessHours === '24x7') continue;
+    for (const [a, b] of cal.businessHours.hours) assert.ok(a >= '04:00' && b <= '23:00', `${cal.id} ${a}-${b} may contain a clock change`);
+  }
   assert.match(specE.text, /`plannedBreachAt` as of `startAt`, S13/);
   assert.match(specE.text, /\(`warning`\) changes nothing and\s+belongs to no incident \(`decisions\.subject` is `null`\), even when it names the CI and check of an open incident/);
   // The warning reading on a generated world: a warning on the CI and check of an open alert incident is graded subject

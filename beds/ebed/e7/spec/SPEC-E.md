@@ -20,9 +20,19 @@ escalations and deadlines are yours, and the records you write are graded.
   Nothing is retried for you.
 - **Keys.** Every op marked `keyed` in `api/<system>.schema.json` takes an idempotency key. A committed key returns the
   original result and is not applied again; the same key with different arguments is rejected (`409 key-conflict`).
+  Arguments are compared under each system's own field names: the same values written under a field's current name
+  (see API changes) are the same arguments. A request refused with an error was not applied and commits no key.
   Use one key per logical effect (one incident change, one SLA record event, one escalation, one notification) and
   reuse it for every attempt of that effect. Never reuse a key for a different effect. `status(key)` (`committed |
   not-found | pending`) can be read at any time with `ctx.status(system, key)`.
+- **API changes.** `api/<system>.schema.json` always shows the current argument names of every op, and a system can
+  rename an argument during the stream (from the instant the file shows the new name, the old name is refused). Read
+  the file on every call and write each effect with the names it shows at the instant you emit it. An error `400`
+  (`invalid-args`, `field-renamed`) means your request was wrong, for example a field a system has renamed: correct it
+  and re-issue it, with the same key, inside the rule's window; it is not a `409`, since the refused request committed
+  nothing and keys are compared under the system's own names. A record due in the same instant as its cause
+  (`itsm.create`, R1.1, window [t, t]) leaves no time for a second attempt (a result arrives one minute after the
+  request): write it with the names the file shows at t.
 - **Results** come back as `effect.result` events one minute after you emit the effect. An effect is applied at the
   instant you emit it. `after: <key>` on an effect makes it wait for that effect of the same output; it is applied
   only if that effect's outcome is `ok`.
@@ -68,9 +78,13 @@ escalations and deadlines are yours, and the records you write are graded.
 | `notify` | `send` | yes | sends a notification; `about` is the incident number, `template` its kind (§4.9) |
 
 The `itsm` system does not check transitions: that is your job (R8). The `sla` system refuses an operation that does
-not fit the SLA's stage (`409`: a pause of an SLA that is not in progress, a resume of one that is not paused, anything
-after `stop` or `cancel`, a second `start` of the same SLA). An SLA is identified by `number`, `definition` and
-`generation`; its record id is `<number>/<definition>/<generation>`.
+not fit the SLA's stage (`409`: a pause of an SLA that is not in progress, a resume of one that is not paused, a pause,
+resume, breach, stop or cancel after `stop` or `cancel`, a second `start` of the same SLA, a second `breach`).
+`escalate` is the exception: it is accepted for a recorded SLA at any stage, also after its `stop` or `cancel`, because
+a notice for a threshold reached at or before the end (R5.1, S3) may be sent after the record that ends the SLA; which
+notices are due is R5's business, not the system's. A second escalation of the same SLA and `percent` is refused
+(`409`). An SLA is identified by `number`, `definition` and `generation`; its record id is
+`<number>/<definition>/<generation>`.
 
 Business records you can query: `itsm.incidents`, `sla.slas`, `sla.escalations`, `notify.notifications`.
 
@@ -263,12 +277,15 @@ R4.4 **Time.** An SLA is **running** from `startAt` except while paused, until i
 businessHours, holidays }` where `businessHours` is `"24x7"` or `{ days: [ISO weekdays, 1 = Monday], hours: [["HH:MM",
 "HH:MM"], ...] }` and each holiday `{ date, from?, to? }` closes that local date (or `[from, to)` of it). Intervals are
 local wall-clock times in the schedule's time zone, start included, end excluded. On a day the clocks change, an
-interval runs from the instant the local clock first reads its start to the instant it first reads its end: a skipped
-hour is not business time, a repeated hour inside an interval counts once. For 24×7 every running minute is business
-time. The **target** is `target.minutes` of business time. The SLA's **breach instant** D is the instant its business
-time reaches the target. Its **planned breach** at an instant is D computed from the running time up to that instant
-as if it is not paused again; while it is paused D is not known unless it was reached before the pause. A record's
-`plannedBreachAt` is the planned breach at the instant that record carries (S13).
+interval runs from the instant the local clock first reads its start to the instant it first reads its end, and each
+real instant in between counts once: a skipped hour is not business time, and a repeated hour counts for the real time
+it lasts. In `Europe/Amsterdam` an interval `["01:30", "03:30"]` holds 60 minutes on 2026-03-29 (02:00 jumps to 03:00)
+and 180 minutes on 2026-10-25 (03:00 falls back to 02:00). No schedule of this service desk has an interval that
+contains a clock change. For 24×7 every running minute is business time. The **target** is `target.minutes` of
+business time. The SLA's **breach instant** D is the instant its business time reaches the target. Its **planned
+breach** at an instant is D computed from the running time up to that instant as if it is not paused again; while it
+is paused D is not known unless it was reached before the pause. A record's `plannedBreachAt` is the planned breach at
+the instant that record carries (S13).
 
 R4.5 **SLA records.** Within **15 min** of the instant each describes, unless stated otherwise:
 - attach at x: `sla.start({ number, definition, generation, startAt, schedule, timezone, plannedBreachAt })` (window
@@ -341,9 +358,12 @@ create one human task: `kind: majorIncidentApproval`, `role: incidentManager`, `
 that accepts `{ decision: "approve" | "reject" }`.
 
 R7.2 The incident manager has **`majorApprovalMinutes`** (`policy.json`, edition at the first task's creation) from the
-creation of the **first** approval task for the incident. You may ask again (a new task id) if an answer was unusable,
-was withdrawn or was rejected by your schema; the deadline does not move. An answer counts only if it carries
-`decision`; free text is unusable.
+creation of the **first** approval task for the incident. You may ask again (a new task id), by the deadline and before
+an answer counts, once for each answer to one of your counted tasks (the first, or an earlier re-ask) that was
+unusable, was withdrawn (`humanTask.withdrawn`) or was rejected by your schema (`humanTask.answerRejected`); the
+deadline does not move. Any other further approval task is an error (a task that timed out at your `dueAt` is no
+reason to ask again), and an answer to it never counts. An answer counts only if it carries `decision`; free text is
+unusable.
 - `approve` at or before the deadline: within **15 min** of the answer, `itsm.setMajor({ number, at: <answer time>
   })` and send `major-incident` to the owner of the incident's service (`master/services.json` `owner`).
 - `reject` at or before the deadline: nothing more.
@@ -353,7 +373,8 @@ was withdrawn or was rejected by your schema; the deadline does not move. An ans
 
 R7.3 If, before an answer counts and before the deadline, the incident is resolved, closed or cancelled or its priority
 is no longer 1, the approval is moot: nothing more is required for it (an approval task not yet created is no longer
-required), and later answers and the deadline change nothing.
+required), and later answers and the deadline change nothing. An incident closed or cancelled **at** the deadline,
+before an answer counts, is moot too (S16).
 
 ### 4.8 R8 Records
 
@@ -419,6 +440,10 @@ Send each required notification exactly once per occasion. Escalations are not n
   definition's start condition holds and its stop condition does not; otherwise the SLA is only cancelled (`reset`).
   The same test applies to the attach that a change of the reset field causes. A condition list with no condition
   never holds.
+- S16 At the approval deadline itself (R7.2, R7.3): an incident closed or cancelled at the deadline before an answer
+  counts needs no declaration, because nothing is recorded after a closure or cancellation (R8.2); an incident resolved
+  at the deadline, or whose priority stops being 1 there, still gets the declaration after the deadline. Within one
+  instant, what happened first decides: an answer that counted before the withdrawal still counts.
 
 ## 6. Orientation (for orientation only)
 

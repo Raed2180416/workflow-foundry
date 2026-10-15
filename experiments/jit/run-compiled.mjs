@@ -103,11 +103,12 @@ export function readMemoJournal(source) {
 // createMemoPort({journal, live, strict, policy, reuse}): a model port (the .call(req) the gateway uses) that answers from
 // a journal JSONL (or an array of rows) by requestDigestOf(req), else by looseDigestOf(req) for rows without a digest.
 // The k-th identical request in this port's life gets the k-th journaled answer for its key (reset() rewinds); past the
-// last one it is served again only with reuse (default: on unless strict). A miss throws REPLAY_MISS when strict (the
+// last one it is served again only with reuse (default off, MEM-0 M3: serving the last answer again lets a samples > 1 vote
+// come out unanimous from one recorded answer; a caller that wants it passes reuse: true). A miss throws REPLAY_MISS when strict (the
 // default when there is no live port), else goes to live.call(req) and is counted. Served answers cost $0 and carry
 // replayed: true, memo: {digest, index, loose?}. stats(): {requests, hits, looseHits (of hits), reused, misses, live,
 // coverage = (hits + reused) / requests or null, journalRows, skippedRows, missed: the first 50 misses}.
-export function createMemoPort({ journal, live = null, strict = live == null, policy = live?.policy ?? null, reuse = !strict } = {}) {
+export function createMemoPort({ journal, live = null, strict = live == null, policy = live?.policy ?? null, reuse = false } = {}) {
   if (!strict && !live) throw new Error('createMemoPort: a non-strict memo port needs a live port for its misses');
   const memo = readMemoJournal(journal), cursor = new Map();
   let requests = 0, hits = 0, looseHits = 0, reused = 0, misses = 0, liveCalls = 0;

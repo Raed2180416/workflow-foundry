@@ -65,7 +65,9 @@ export const oracleItem = Object.freeze({
  *                           approval task, or on an incident the rules never asked an approval for (its priority never
  *                           1) is critical. "Counted", "moot" and the deadline are the reference transition's own
  *                           (historyOf over the case's whole trajectory: the first task created once the priority first
- *                           became 1 sets the deadline; the first usable answer by it counts) (review 2026-10-15).
+ *                           became 1 sets the deadline; the first usable answer by it on a counted task counts: the first
+ *                           task, or a re-ask after an unusable, withdrawn or schema-rejected answer, one per such answer;
+ *                           an incident closed or cancelled at the deadline is moot, S16) (reviews 2026-10-15).
  */
 export function critical(world, idx, c) {
   const t = world.truth.cases[c];

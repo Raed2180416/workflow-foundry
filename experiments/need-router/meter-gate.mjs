@@ -11,7 +11,7 @@
 // What this module adds, in three layers:
 //   1. D6 builds `summary.meterGate` here (buildMeterGate): status `block-until-verified` while the archived evidence shows the mismatch.
 //   2. label-run refuses to START a paid stage that has an agent arm while the committed gate blocks and no passing verification record is on file
-//      (meterGateDecision). A verification record is made at $0 from saved CLI transcripts: `node experiments/need-router/meter-gate.mjs --verify
+//      (meterGateDecision). A verification record is made at $0 from saved CLI transcripts: `node experiments/need-router/meter-gate-cli.mjs --verify
 //      <transcript.jsonl>... --write research/need-router-20261014/analysis/m0/meter-verification.json`.
 //   3. label-run checks EVERY priced agent session (outputTokenCheck): per-message output tokens within `OUTPUT_TOLERANCE` of the final result usage.
 //      A session that fails is repaired from the one complete count there is, when that can be shown to work: the output tokens the lines miss (final
@@ -20,7 +20,7 @@
 //      with, it is booked at the reported figure: the shortfall of the re-price against it is imputed (guardMeter), flagged `meterUnverified`, and counts
 //      toward the 30% rule. Nothing is repaired silently, and nothing is accepted that the CLI's own figure does not corroborate.
 //      The same logic decides a verification record, so the gate can clear on real CLI transcripts whether their lines are accurate or snapshots.
-import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -69,7 +69,7 @@ export function buildMeterGate({ outputRatios = [], eraRatios = [] } = {}) {
     rule: { outputTolerance: OUTPUT_TOLERANCE, priceBand: PRICE_BAND, minEraSessions: MIN_ERA_SESSIONS, minVerifySessions: MIN_VERIFY_SESSIONS },
     reasons,
     blocks: reasons.length ? 'a paid stage with an agent arm (agent-H, agent-O, agent-H+proc, construct-H, build-O): label-run.mjs refuses to start it' : null,
-    clearedBy: reasons.length ? `a passing meter-verification record: node experiments/need-router/meter-gate.mjs --verify <transcript>... --write ${path.relative(REPO, VERIFICATION_FILE)}, on at least ${MIN_VERIFY_SESSIONS} saved CLI transcripts, each either with per-message output tokens within ${OUTPUT_TOLERANCE * 100}% of the final result usage or with a re-price that takes its output tokens from the final usage and lands within ${PRICE_BAND * 100}% of the CLI-reported cost; until then every agent session label-run prices is checked individually and a session that passes neither test is booked at the reported figure` : null,
+    clearedBy: reasons.length ? `a passing meter-verification record: node experiments/need-router/meter-gate-cli.mjs --verify <transcript>... --write ${path.relative(REPO, VERIFICATION_FILE)}, on at least ${MIN_VERIFY_SESSIONS} saved CLI transcripts, each either with per-message output tokens within ${OUTPUT_TOLERANCE * 100}% of the final result usage or with a re-price that takes its output tokens from the final usage and lands within ${PRICE_BAND * 100}% of the CLI-reported cost; until then every agent session label-run prices is checked individually and a session that passes neither test is booked at the reported figure` : null,
   };
 }
 function median(xs) { const s = xs.filter(Number.isFinite).sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : NaN; }
@@ -171,7 +171,15 @@ export function transcriptUsage(text) {
   return {
     messages: messageUsage.length, messageUsage, recorded: messageUsage.reduce((a, m) => a + (num(m[1]) ?? 0), 0),
     final: num(result?.usage?.output_tokens), finalUsage: result?.usage ?? null, reportedUsd: num(result?.total_cost_usd), hasResult: !!result, model,
+    cacheWrite1hShare: cacheWrite1hShare(result?.usage),
   };
+}
+/** The share of cache-write tokens the CLI's final usage records as 1-hour writes (billed at 2 x input, against 1.25 x for 5-minute writes), or null. */
+export function cacheWrite1hShare(usage) {
+  const cc = usage?.cache_creation;
+  if (!cc) return null;
+  const w1 = num(cc.ephemeral_1h_input_tokens) ?? 0, w5 = num(cc.ephemeral_5m_input_tokens) ?? 0;
+  return w1 + w5 > 0 ? round(w1 / (w1 + w5), 3) : null;
 }
 /** A record passes when it has the schema, at least MIN_VERIFY_SESSIONS transcripts, and every session is re-derived as accepted here (not trusted from `ok`):
  *  per-message output tokens within `tolerance` of the final usage, or (method final-output) the corrected re-price within `band` of the reported cost. */
@@ -198,25 +206,11 @@ export function verifyTranscripts(files, { priceSession, table, tolerance = OUTP
     return {
       file: path.basename(f), sha256: createHash('sha256').update(text).digest('hex').slice(0, 16), model: u.model, messages: u.messages, recorded: u.recorded, final: u.final,
       reportedUsd: u.reportedUsd === null ? null : round(u.reportedUsd, 6), pricedUsd: pricedUsd === null ? null : round(pricedUsd, 6), method,
-      relGap: cost?.meterCheck?.relGap ?? null, ok: method !== 'unverified',
+      relGap: cost?.meterCheck?.relGap ?? null, cacheWrite1hShare: u.cacheWrite1hShare, ok: method !== 'unverified',
+      // Why a session whose output tokens were repaired still missed the CLI's figure: the pinned table prices cache writes at the 5-minute rate.
+      ...(method === 'unverified' && (u.cacheWrite1hShare ?? 0) >= 0.5 ? { hint: 'the CLI billed the cache writes at the 1-hour rate (2 x input), the pinned table prices them at the 5-minute rate (1.25 x): set FORCE_PROMPT_CACHING_5M=1 in the shell that launches the stage (an executor session keeps only what the shell sets), or revise the table by a recorded deviation' } : {}),
     };
   });
   const record = { schema: VERIFICATION_SCHEMA, tolerance, priceBand: PRICE_BAND, sessions };
   return { ...record, passed: verificationPasses(record, { tolerance }) };
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2), arg = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-  if (args.includes('--verify')) {
-    const files = args.slice(args.indexOf('--verify') + 1).filter(a => !a.startsWith('--') && a !== arg('--write'));
-    const { priceSession } = await import('./label-run.mjs');
-    const table = JSON.parse(readFileSync(path.join(REPO, 'research/need-router-20261014/prereg/stages.json'), 'utf8')).priceTable;
-    const rec = verifyTranscripts(files, { priceSession, table });
-    console.log(JSON.stringify(rec, null, 1));
-    if (arg('--write')) { mkdirSync(path.dirname(path.resolve(arg('--write'))), { recursive: true }); writeFileSync(path.resolve(arg('--write')), JSON.stringify(rec, null, 1) + '\n'); }
-    process.exit(rec.passed ? 0 : 1);
-  }
-  const gate = readMeterGate(), v = readVerification();
-  console.log(JSON.stringify({ gate, verification: v ? { passed: verificationPasses(v), sessions: v.sessions?.length ?? 0 } : null }, null, 1));
-  process.exit(gate?.status === 'block-until-verified' && !verificationPasses(v) ? 1 : 0);
 }

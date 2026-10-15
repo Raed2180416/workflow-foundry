@@ -177,13 +177,15 @@ test('typed return: an output outside contract.output is a child deopt of kind o
   host.port({ budgetUsd: 1 });
   const a = await host.request(req(bad.hash, {}, { name: 'bad' }));
   assert.equal(a.status, 'deopt'); assert.equal(a.childStatus, 'invalid'); assert.equal(a.deopt.kind, 'output-schema'); assert.match(JSON.stringify(a.deopt.detail), /total/);
+  assert.equal(a.deopt.detail.label, 'untrusted:child-deopt', 'schema errors name the child\'s own keys: labelled (MEM-0 M6 review fix)');
   assert.equal(a.spentUsd, 0.01, 'a deopted child is still charged');
   await host.request(req(bad.hash, {}, { name: 'bad' }));
   assert.equal(runs, 2, 'a failed call is not memoised');
   const g = await host.request(req(guard.hash, {}, { name: 'g' }));
   assert.deepEqual([g.status, g.childStatus, g.deopt], ['deopt', 'deopt', { kind: 'guard', name: 'known-dialects', detail: { label: 'untrusted:child-deopt', value: { unseen: ['x'] } } }], 'the child\'s detail crosses labelled untrusted (MEM-0 M6)');
   const c = await host.request(req(boom.hash, {}, { name: 'boom' }));
-  assert.deepEqual([c.status, c.childStatus, c.deopt.kind], ['deopt', 'crash', 'crash']); assert.match(c.deopt.detail.message, /boom/);
+  assert.deepEqual([c.status, c.childStatus, c.deopt.kind], ['deopt', 'crash', 'crash']); assert.match(c.deopt.detail.value.message, /boom/);
+  assert.equal(c.deopt.detail.label, 'untrusted:child-deopt', 'a crash carries the child\'s own message: labelled (MEM-0 M6 review fix)');
   assert.deepEqual(host.events.map(e => e.kind), ['call-deopt', 'call-deopt', 'call-deopt', 'call-deopt']);
   assert.equal(host.spans()[0].spentUsd, 0.04);
 });

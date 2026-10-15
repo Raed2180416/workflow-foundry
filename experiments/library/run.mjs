@@ -7,15 +7,20 @@
 // (tools/flow-override.mjs + tools/flow-override.json): a table {judgeName: [{when?, ordinal?, tier?, value | error}]},
 // first matching rule wins, `when` is a substring of the judge prompt. The override never returns "call the model"; and the
 // stub gateway's model port refuses every model request, so a judge without a stub answer deopts instead of spending.
-// This is flow-v3-call.test.mjs part 1's arrangement (plain process, not the B1 sandbox; the sandboxed path is
-// runCompiled, which this runner does not need for $0 fixtures).
+// MEM-0 M2 review fix: the solver runs in the executor sandbox (src/executors/sandboxed-command.mjs runSandboxed, as
+// runCompiled runs a B1 script): no network, the gateway's unix socket in tools/ as the only way out, the host filesystem
+// read-only with /tmp, the repository and every other workdir hidden, and the library directory hidden by name as well.
+// Before, it ran as a plain process with cwd and HOME = its workdir, and one readdir('..') from /tmp/lib-run-* reached
+// the library (its evidence.jsonl holds oracle verdicts) in /tmp/lib-store-*. Without namespaces runSolver throws
+// SANDBOX_UNAVAILABLE: it never falls back to an unsandboxed process.
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { MODEL_TOOL } from '../c0/construct.mjs';
 import { startServices, Ledger } from '../lib/services.mjs';
+import { runSandboxed } from '../../src/executors/sandboxed-command.mjs';
+import { DEFAULT_HIDDEN } from '../../src/executors/claude-code.mjs';
 import { createCallHost, FLOW_V3 } from '../jit/call-host.mjs';
 import { canonicalJson } from '../jit/run-compiled.mjs';
 import { learnProfile } from '../jit/profile.mjs';
@@ -103,9 +108,9 @@ export function registerChildren(lib, children = []) {
 }
 
 // MEM-0 M2 (research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §3.2, rule R9): the library holds evidence (oracle
-// verdicts) and judgment labels, the truth domain; the solver runs with cwd and HOME = its workdir and no sandbox. So the
-// library never lives inside a workdir, nor a workdir inside it: the solver reaches it only through the host handle (the
-// call host over the gateway).
+// verdicts) and judgment labels, the truth domain. So the library never lives inside a workdir, nor a workdir inside it,
+// and the sandbox hides it (runSolver below): the solver reaches it only through the host handle (the call host over the
+// gateway).
 const within = (child, parent) => { const r = path.relative(path.resolve(parent), path.resolve(child)); return r === '' || (!r.startsWith('..') && !path.isAbsolute(r)); };
 export function assertLibraryOutside(libraryDir, workdir) {
   if (within(libraryDir, workdir) || within(workdir, libraryDir)) throw new Error(`runSolver: the library (${libraryDir}) must be outside the solver's workdir (${workdir}) and not contain it: it holds truth-domain rows`);
@@ -124,12 +129,13 @@ export async function runSolver({ source, task, answers = {}, library = null, bu
   try { assertLibraryOutside(lib.dir, dir); } catch (e) { if (!workdir) rmSync(dir, { recursive: true, force: true }); throw e; }
   const host = createCallHost({ registry: lib.registry, mode: 'stub', modelPort });
   const ledger = new Ledger({ capUsd: budgetUsd, label: 'library-fixture' });
-  const svc = await startServices({ modelPort: host.port({ budgetUsd, ledger }), ledger });
+  mkdirSync(path.join(dir, 'tools'), { recursive: true });
+  // M2: the gateway on a unix socket in tools/ (the sandbox has no network), as runCompiled serves a B1 script.
+  const svc = await startServices({ modelPort: host.port({ budgetUsd, ledger }), ledger, socketDir: path.join(dir, 'tools') });
   try {
-    mkdirSync(path.join(dir, 'tools'), { recursive: true });
     for (const stale of ['trace.jsonl', 'deopt.json', 'tools/overrides.jsonl', 'tools/calls.jsonl', 'tools/flow-journal.json']) rmSync(path.join(dir, stale), { force: true });
     writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(FLOW_V3, path.join(dir, 'tools/flow.mjs'));
-    writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ url: svc.url, token: svc.token }));
+    writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ socket: 'gw.sock', token: svc.token }));
     if (replay) {
       writeFileSync(path.join(dir, 'tools/flow-override.mjs'), JOURNAL_OVERRIDE_SOURCE);
       writeFileSync(path.join(dir, 'tools/flow-journal.json'), JSON.stringify({ journal: replay.journal ?? {}, fallback: replay.fallback ?? null }));
@@ -139,12 +145,11 @@ export async function runSolver({ source, task, answers = {}, library = null, bu
     }
     writeFileSync(path.join(dir, 'task.json'), JSON.stringify({ prompt: task.prompt ?? '', inputs: task.inputs ?? {}, ...(task.files ? { files: task.files } : {}) }));
     writeFileSync(path.join(dir, 'solve.mjs'), source);
-    const child = spawn(process.execPath, ['--max-old-space-size=256', 'solve.mjs', 'task.json'], { cwd: dir, env: { PATH: process.env.PATH, HOME: dir }, stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '', stderr = '', timedOut = false;
-    child.stdout.on('data', d => { stdout += d; }); child.stderr.on('data', d => { stderr += d; });
-    const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, timeoutMs);
-    const exitCode = await new Promise(resolve => child.on('close', resolve));
-    clearTimeout(timer);
+    // M2: sandboxed (no network; /tmp, the repository and the library directory hidden). Throws SANDBOX_UNAVAILABLE
+    // without namespaces; a sandbox that could not be set up is a crash with that code, never an unsandboxed rerun.
+    const sb = await runSandboxed({ command: 'node', args: ['--max-old-space-size=256', 'solve.mjs', 'task.json'], workdir: dir, timeoutMs, network: false, hidden: [...DEFAULT_HIDDEN, lib.dir] });
+    const { stdout, timedOut } = sb, exitCode = sb.code;
+    const stderr = sb.sandboxReady || timedOut ? sb.stderr : `SANDBOX_UNAVAILABLE: ${sb.stderr}`;
     const trace = lines(path.join(dir, 'trace.jsonl'));
     const deopt = existsSync(path.join(dir, 'deopt.json')) ? JSON.parse(readFileSync(path.join(dir, 'deopt.json'), 'utf8')) : null;
     const last = stdout.trim().split('\n').filter(Boolean).at(-1);

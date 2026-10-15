@@ -19,7 +19,7 @@
   "metrics.mjs": "65b310661d8670ec",
   "harvest.mjs": "19a41592faad7bd8",
   "features.mjs": "748d34eb086a3d58",
-  "meter-gate.mjs": "44882c6f5cbfb851"
+  "meter-gate.mjs": "51383b8c89298bd5"
  },
  "inputs": {
   "legacySources": [
@@ -11563,7 +11563,7 @@
      }
     ],
     "blocks": "a paid stage with an agent arm (agent-H, agent-O, agent-H+proc, construct-H, build-O): label-run.mjs refuses to start it",
-    "clearedBy": "a passing meter-verification record: node experiments/need-router/meter-gate.mjs --verify <transcript>... --write research/need-router-20261014/analysis/m0/meter-verification.json, on at least 2 saved CLI transcripts (per-message output tokens within 5% of the final result usage); until then every agent session label-run prices is checked individually and a session that fails is booked at the reported figure"
+    "clearedBy": "a passing meter-verification record: node experiments/need-router/meter-gate-cli.mjs --verify <transcript>... --write research/need-router-20261014/analysis/m0/meter-verification.json, on at least 2 saved CLI transcripts, each either with per-message output tokens within 5% of the final result usage or with a re-price that takes its output tokens from the final usage and lands within 10% of the CLI-reported cost; until then every agent session label-run prices is checked individually and a session that passes neither test is booked at the reported figure"
    }
   }
  }

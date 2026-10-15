@@ -47,15 +47,24 @@ test('memo port: answers in journal order per digest, $0; strict misses throw RE
   assert.equal(s.ok, false); assert.equal(s.error.code, 'MODEL_SCHEMA');
   assert.deepEqual({ ...strict.memo.stats(), missed: strict.memo.stats().missed.length }, { requests: 5, hits: 3, looseHits: 0, reused: 0, misses: 2, live: 0, coverage: 0.6, journalRows: 7, skippedRows: 3, missed: 2 });
   strict.reset(); assert.deepEqual((await strict.call(req('p'))).value, { label: 'one' }, 'reset rewinds');
-  // Fallthrough: misses go to the live port; past the last answer the memo reuses it.
+  // Fallthrough: misses go to the live port. MEM-0 M3 (review fix): reuse is off by default for a non-strict port too, so
+  // past the last answer a repeated request goes live (a samples > 1 vote cannot come out unanimous from one recorded answer).
   const calls = [];
   const live = { policy, providers: {}, policyHash: 'h', call: async r => { calls.push(r.prompt); return { ok: true, value: { label: 'live' }, costUsd: 0.01, modelId: r.modelId }; } };
   const fall = createMemoPort({ journal, live });
-  assert.equal(fall.policy, policy); assert.equal(fall.policyHash, 'h'); assert.equal(fall.memo.reuse, true);
+  assert.equal(fall.policy, policy); assert.equal(fall.policyHash, 'h'); assert.equal(fall.memo.reuse, false, 'reuse is off unless asked for (M3)');
   for (const p of ['p', 'p', 'p', 'zz']) await fall.call(req(p));
-  assert.deepEqual(calls, ['zz']);
+  assert.deepEqual(calls, ['p', 'zz'], 'the third p is past the journal: it goes live, not the last answer again');
   const st = fall.memo.stats();
-  assert.deepEqual([st.requests, st.hits, st.reused, st.misses, st.live, st.coverage], [4, 2, 1, 1, 1, 0.75]);
+  assert.deepEqual([st.requests, st.hits, st.reused, st.misses, st.live, st.coverage], [4, 2, 0, 2, 2, 0.5]);
+  // reuse: true (explicit only) serves the last answer again past the end, counted as reused.
+  calls.length = 0;
+  const again = createMemoPort({ journal, live, reuse: true });
+  assert.equal(again.memo.reuse, true);
+  for (const p of ['p', 'p', 'p', 'zz']) await again.call(req(p));
+  assert.deepEqual(calls, ['zz']);
+  const st2 = again.memo.stats();
+  assert.deepEqual([st2.requests, st2.hits, st2.reused, st2.misses, st2.live, st2.coverage], [4, 2, 1, 1, 1, 0.75]);
   assert.throws(() => createMemoPort({ journal, strict: false }), /needs a live port/);
 });
 

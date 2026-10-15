@@ -1,0 +1,2434 @@
+[
+ {
+  "k": 0,
+  "line": 15,
+  "cut": "6",
+  "put": "12",
+  "from": "const isoOf = (m, off = '+01:00') => { const d = new Date(m + 60 * MIN); return `${d.toISOString().slice(0, 19)}${off}`; };",
+  "to": "const isoOf = (m, off = '+01:00') => { const d = new Date(m + 120 * MIN); return `${d.toISOString().slice(0, 19)}${off}`; };"
+ },
+ {
+  "k": 1,
+  "line": 16,
+  "cut": "",
+  "put": "=",
+  "from": "const sortBy = k => (a, b) => (a[k] < b[k] ? -1 : a[k] > b[k] ? 1 : 0);",
+  "to": "const sortBy = k => (a, b) => (a[k] <= b[k] ? -1 : a[k] > b[k] ? 1 : 0);"
+ },
+ {
+  "k": 2,
+  "line": 16,
+  "cut": "",
+  "put": "=",
+  "from": "const sortBy = k => (a, b) => (a[k] < b[k] ? -1 : a[k] > b[k] ? 1 : 0);",
+  "to": "const sortBy = k => (a, b) => (a[k] < b[k] ? -1 : a[k] >= b[k] ? 1 : 0);"
+ },
+ {
+  "k": 3,
+  "line": 21,
+  "cut": "!",
+  "put": "=",
+  "from": "if (!args || typeof args !== 'object') return args;",
+  "to": "if (!args || typeof args === 'object') return args;"
+ },
+ {
+  "k": 4,
+  "line": 21,
+  "cut": "||",
+  "put": "&&",
+  "from": "if (!args || typeof args !== 'object') return args;",
+  "to": "if (!args && typeof args !== 'object') return args;"
+ },
+ {
+  "k": 5,
+  "line": 22,
+  "cut": "=",
+  "put": "!",
+  "from": "if (system === 'orders' && op === 'create') {",
+  "to": "if (system !== 'orders' && op === 'create') {"
+ },
+ {
+  "k": 6,
+  "line": 22,
+  "cut": "=",
+  "put": "!",
+  "from": "if (system === 'orders' && op === 'create') {",
+  "to": "if (system === 'orders' && op !== 'create') {"
+ },
+ {
+  "k": 7,
+  "line": 22,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (system === 'orders' && op === 'create') {",
+  "to": "if (system === 'orders' || op === 'create') {"
+ },
+ {
+  "k": 8,
+  "line": 34,
+  "cut": "=",
+  "put": "",
+  "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+  "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom < date && (e.effectiveTo === null || date < e.effectiveTo));"
+ },
+ {
+  "k": 9,
+  "line": 34,
+  "cut": "",
+  "put": "=",
+  "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+  "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date <= e.effectiveTo));"
+ },
+ {
+  "k": 10,
+  "line": 34,
+  "cut": "=",
+  "put": "!",
+  "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+  "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo !== null || date < e.effectiveTo));"
+ },
+ {
+  "k": 11,
+  "line": 34,
+  "cut": "&&",
+  "put": "||",
+  "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+  "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date || (e.effectiveTo === null || date < e.effectiveTo));"
+ },
+ {
+  "k": 12,
+  "line": 34,
+  "cut": "||",
+  "put": "&&",
+  "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+  "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null && date < e.effectiveTo));"
+ },
+ {
+  "k": 13,
+  "line": 34,
+  "cut": "",
+  "put": "Last",
+  "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+  "to": "const ed = world.rulebook.editions.findLast(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));"
+ },
+ {
+  "k": 14,
+  "line": 41,
+  "cut": "=",
+  "put": "!",
+  "from": "const loc = world.master.locations.find(l => l.location === location);",
+  "to": "const loc = world.master.locations.find(l => l.location !== location);"
+ },
+ {
+  "k": 15,
+  "line": 41,
+  "cut": "",
+  "put": "Last",
+  "from": "const loc = world.master.locations.find(l => l.location === location);",
+  "to": "const loc = world.master.locations.findLast(l => l.location === location);"
+ },
+ {
+  "k": 16,
+  "line": 45,
+  "cut": "",
+  "put": "=",
+  "from": "for (let day = -1; day < 40; day++) {",
+  "to": "for (let day = -1; day <= 40; day++) {"
+ },
+ {
+  "k": 17,
+  "line": 47,
+  "cut": "=",
+  "put": "",
+  "from": "if (run >= bookedMs + cutoffMinutes * MIN) return run;",
+  "to": "if (run > bookedMs + cutoffMinutes * MIN) return run;"
+ },
+ {
+  "k": 18,
+  "line": 52,
+  "cut": "=",
+  "put": "!",
+  "from": "const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier === carrier && c.code === code)?.meaning ?? null;",
+  "to": "const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier !== carrier && c.code === code)?.meaning ?? null;"
+ },
+ {
+  "k": 19,
+  "line": 52,
+  "cut": "=",
+  "put": "!",
+  "from": "const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier === carrier && c.code === code)?.meaning ?? null;",
+  "to": "const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier === carrier && c.code !== code)?.meaning ?? null;"
+ },
+ {
+  "k": 20,
+  "line": 52,
+  "cut": "&&",
+  "put": "||",
+  "from": "const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier === carrier && c.code === code)?.meaning ?? null;",
+  "to": "const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier === carrier || c.code === code)?.meaning ?? null;"
+ },
+ {
+  "k": 21,
+  "line": 52,
+  "cut": "",
+  "put": "Last",
+  "from": "const meaningOf = (codes, carrier, code) => codes.find(c => c.carrier === carrier && c.code === code)?.meaning ?? null;",
+  "to": "const meaningOf = (codes, carrier, code) => codes.findLast(c => c.carrier === carrier && c.code === code)?.meaning ?? null;"
+ },
+ {
+  "k": 22,
+  "line": 55,
+  "cut": "=",
+  "put": "!",
+  "from": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code === 'permanent');",
+  "to": "const permanent = row => !row.committed && !!row.error && (row.error.code !== 402 || row.error.code === 'permanent');"
+ },
+ {
+  "k": 23,
+  "line": 55,
+  "cut": "=",
+  "put": "!",
+  "from": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code === 'permanent');",
+  "to": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code !== 'permanent');"
+ },
+ {
+  "k": 24,
+  "line": 55,
+  "cut": "&&",
+  "put": "||",
+  "from": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code === 'permanent');",
+  "to": "const permanent = row => !row.committed || !!row.error && (row.error.code === 402 || row.error.code === 'permanent');"
+ },
+ {
+  "k": 25,
+  "line": 55,
+  "cut": "&&",
+  "put": "||",
+  "from": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code === 'permanent');",
+  "to": "const permanent = row => !row.committed && !!row.error || (row.error.code === 402 || row.error.code === 'permanent');"
+ },
+ {
+  "k": 26,
+  "line": 55,
+  "cut": "||",
+  "put": "&&",
+  "from": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code === 'permanent');",
+  "to": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 && row.error.code === 'permanent');"
+ },
+ {
+  "k": 27,
+  "line": 64,
+  "cut": "=",
+  "put": "!",
+  "from": "if (t.subject === null) {",
+  "to": "if (t.subject !== null) {"
+ },
+ {
+  "k": 28,
+  "line": 78,
+  "cut": "=",
+  "put": "!",
+  "from": "const fee = loc => ed.fees.find(f => f.location === loc)?.feeMinor ?? 0;",
+  "to": "const fee = loc => ed.fees.find(f => f.location !== loc)?.feeMinor ?? 0;"
+ },
+ {
+  "k": 29,
+  "line": 78,
+  "cut": "",
+  "put": "Last",
+  "from": "const fee = loc => ed.fees.find(f => f.location === loc)?.feeMinor ?? 0;",
+  "to": "const fee = loc => ed.fees.findLast(f => f.location === loc)?.feeMinor ?? 0;"
+ },
+ {
+  "k": 30,
+  "line": 79,
+  "cut": "=",
+  "put": "!",
+  "from": "const price = sku => world.master.catalog.find(x => x.sku === sku).unitPriceMinor;",
+  "to": "const price = sku => world.master.catalog.find(x => x.sku !== sku).unitPriceMinor;"
+ },
+ {
+  "k": 31,
+  "line": 79,
+  "cut": "",
+  "put": "Last",
+  "from": "const price = sku => world.master.catalog.find(x => x.sku === sku).unitPriceMinor;",
+  "to": "const price = sku => world.master.catalog.findLast(x => x.sku === sku).unitPriceMinor;"
+ },
+ {
+  "k": 32,
+  "line": 80,
+  "cut": "=",
+  "put": "!",
+  "from": "const email = world.master.customers.find(x => x.customerId === t.customerId).email;",
+  "to": "const email = world.master.customers.find(x => x.customerId !== t.customerId).email;"
+ },
+ {
+  "k": 33,
+  "line": 80,
+  "cut": "",
+  "put": "Last",
+  "from": "const email = world.master.customers.find(x => x.customerId === t.customerId).email;",
+  "to": "const email = world.master.customers.findLast(x => x.customerId === t.customerId).email;"
+ },
+ {
+  "k": 34,
+  "line": 81,
+  "cut": "=",
+  "put": "!",
+  "from": "const alloc = world.sor['inventory.allocations'].find(a => a.orderId === O).fulfilments;",
+  "to": "const alloc = world.sor['inventory.allocations'].find(a => a.orderId !== O).fulfilments;"
+ },
+ {
+  "k": 35,
+  "line": 81,
+  "cut": "",
+  "put": "Last",
+  "from": "const alloc = world.sor['inventory.allocations'].find(a => a.orderId === O).fulfilments;",
+  "to": "const alloc = world.sor['inventory.allocations'].findLast(a => a.orderId === O).fulfilments;"
+ },
+ {
+  "k": 36,
+  "line": 85,
+  "cut": "",
+  "put": "=",
+  "from": "const before = (row, a, ev) => row.callAt < a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)",
+  "to": "const before = (row, a, ev) => row.callAt <= a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)"
+ },
+ {
+  "k": 37,
+  "line": 85,
+  "cut": "=",
+  "put": "!",
+  "from": "const before = (row, a, ev) => row.callAt < a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)",
+  "to": "const before = (row, a, ev) => row.callAt < a || (row.callAt !== a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)"
+ },
+ {
+  "k": 38,
+  "line": 85,
+  "cut": "&&",
+  "put": "||",
+  "from": "const before = (row, a, ev) => row.callAt < a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)",
+  "to": "const before = (row, a, ev) => row.callAt < a || (row.callAt === a || !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)"
+ },
+ {
+  "k": 39,
+  "line": 85,
+  "cut": "||",
+  "put": "&&",
+  "from": "const before = (row, a, ev) => row.callAt < a || (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)",
+  "to": "const before = (row, a, ev) => row.callAt < a && (row.callAt === a && !((ev ? row.given?.has(ev.id) : undefined) ?? row.knows.has(c)));   // ev: the message (S10)"
+ },
+ {
+  "k": 40,
+  "line": 86,
+  "cut": "=",
+  "put": "!",
+  "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+  "to": "const matches = (e, r) => r.system !== e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));"
+ },
+ {
+  "k": 41,
+  "line": 86,
+  "cut": "=",
+  "put": "!",
+  "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+  "to": "const matches = (e, r) => r.system === e.system && r.op !== e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));"
+ },
+ {
+  "k": 42,
+  "line": 86,
+  "cut": "=",
+  "put": "!",
+  "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+  "to": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) !== JSON.stringify(e.match[k]));"
+ },
+ {
+  "k": 43,
+  "line": 86,
+  "cut": "&&",
+  "put": "||",
+  "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+  "to": "const matches = (e, r) => r.system === e.system || r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));"
+ },
+ {
+  "k": 44,
+  "line": 86,
+  "cut": "&&",
+  "put": "||",
+  "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+  "to": "const matches = (e, r) => r.system === e.system && r.op === e.op || r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));"
+ },
+ {
+  "k": 45,
+  "line": 86,
+  "cut": "&&",
+  "put": "||",
+  "from": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed && Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));",
+  "to": "const matches = (e, r) => r.system === e.system && r.op === e.op && r.committed || Object.keys(e.match).every(k => JSON.stringify(r.args?.[k] ?? null) === JSON.stringify(e.match[k]));"
+ },
+ {
+  "k": 46,
+  "line": 90,
+  "cut": "=",
+  "put": "!",
+  "from": "if (ev === null || ev === undefined) return;",
+  "to": "if (ev !== null || ev === undefined) return;"
+ },
+ {
+  "k": 47,
+  "line": 90,
+  "cut": "=",
+  "put": "!",
+  "from": "if (ev === null || ev === undefined) return;",
+  "to": "if (ev === null || ev !== undefined) return;"
+ },
+ {
+  "k": 48,
+  "line": 90,
+  "cut": "||",
+  "put": "&&",
+  "from": "if (ev === null || ev === undefined) return;",
+  "to": "if (ev === null && ev === undefined) return;"
+ },
+ {
+  "k": 49,
+  "line": 91,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (view.rows.some(r => matches(e, r) && before(r, ev.at, ev))) return;",
+  "to": "if (view.rows.some(r => matches(e, r) || before(r, ev.at, ev))) return;"
+ },
+ {
+  "k": 50,
+  "line": 93,
+  "cut": "permitted.push({ rule: 'S9', system: e.system, op: e.op, match: e.match })",
+  "put": "void 0",
+  "from": "permitted.push({ rule: 'S9', system: e.system, op: e.op, match: e.match });",
+  "to": "void 0;"
+ },
+ {
+  "k": 51,
+  "line": 98,
+  "cut": "ax",
+  "put": "in",
+  "from": "const e = { lid: id, rule, system, op, match, args: { ...match, ...(extra.args ?? {}) }, window: { earliest, latest: Math.max(earliest, latest) } };",
+  "to": "const e = { lid: id, rule, system, op, match, args: { ...match, ...(extra.args ?? {}) }, window: { earliest, latest: Math.min(earliest, latest) } };"
+ },
+ {
+  "k": 52,
+  "line": 101,
+  "cut": "=",
+  "put": "!",
+  "from": "const prior = required.findIndex(x => x.lid === id);",
+  "to": "const prior = required.findIndex(x => x.lid !== id);"
+ },
+ {
+  "k": 53,
+  "line": 102,
+  "cut": "=",
+  "put": "",
+  "from": "if (prior >= 0) required.splice(prior, 1);",
+  "to": "if (prior > 0) required.splice(prior, 1);"
+ },
+ {
+  "k": 54,
+  "line": 106,
+  "cut": "=",
+  "put": "!",
+  "from": "const named = id => required.some(x => x.lid === id);",
+  "to": "const named = id => required.some(x => x.lid !== id);"
+ },
+ {
+  "k": 55,
+  "line": 118,
+  "cut": "!",
+  "put": "=",
+  "from": "terminal: end !== null, end, records: end ? rec : null });",
+  "to": "terminal: end === null, end, records: end ? rec : null });"
+ },
+ {
+  "k": 56,
+  "line": 121,
+  "cut": "=",
+  "put": "!",
+  "from": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op && r.committed && pred(r.args ?? {}));",
+  "to": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system !== system && r.op === op && r.committed && pred(r.args ?? {}));"
+ },
+ {
+  "k": 57,
+  "line": 121,
+  "cut": "=",
+  "put": "!",
+  "from": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op && r.committed && pred(r.args ?? {}));",
+  "to": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op !== op && r.committed && pred(r.args ?? {}));"
+ },
+ {
+  "k": 58,
+  "line": 121,
+  "cut": "&&",
+  "put": "||",
+  "from": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op && r.committed && pred(r.args ?? {}));",
+  "to": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system || r.op === op && r.committed && pred(r.args ?? {}));"
+ },
+ {
+  "k": 59,
+  "line": 121,
+  "cut": "&&",
+  "put": "||",
+  "from": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op && r.committed && pred(r.args ?? {}));",
+  "to": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op || r.committed && pred(r.args ?? {}));"
+ },
+ {
+  "k": 60,
+  "line": 121,
+  "cut": "&&",
+  "put": "||",
+  "from": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op && r.committed && pred(r.args ?? {}));",
+  "to": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op && r.committed || pred(r.args ?? {}));"
+ },
+ {
+  "k": 61,
+  "line": 123,
+  "cut": "=",
+  "put": "!",
+  "from": "const custActions = events.slice(placedIdx + 1).filter(e => e.type === 'customer.action').sort((a, b) => a.at - b.at || a.seq - b.seq);   // S11: none before its order",
+  "to": "const custActions = events.slice(placedIdx + 1).filter(e => e.type !== 'customer.action').sort((a, b) => a.at - b.at || a.seq - b.seq);   // S11: none before its order"
+ },
+ {
+  "k": 62,
+  "line": 123,
+  "cut": "||",
+  "put": "&&",
+  "from": "const custActions = events.slice(placedIdx + 1).filter(e => e.type === 'customer.action').sort((a, b) => a.at - b.at || a.seq - b.seq);   // S11: none before its order",
+  "to": "const custActions = events.slice(placedIdx + 1).filter(e => e.type === 'customer.action').sort((a, b) => a.at - b.at && a.seq - b.seq);   // S11: none before its order"
+ },
+ {
+  "k": 63,
+  "line": 124,
+  "cut": "=",
+  "put": "!",
+  "from": "const msgs = events.filter(e => e.type === 'carrier.status').map(e => ({ ...e, meaning: meaningOf(ed.codes, e.payload.carrier, e.payload.code), F: e.payload.fulfilmentRef }));",
+  "to": "const msgs = events.filter(e => e.type !== 'carrier.status').map(e => ({ ...e, meaning: meaningOf(ed.codes, e.payload.carrier, e.payload.code), F: e.payload.fulfilmentRef }));"
+ },
+ {
+  "k": 64,
+  "line": 125,
+  "cut": "=",
+  "put": "!",
+  "from": "if (stage === 'gl-dispatched') {",
+  "to": "if (stage !== 'gl-dispatched') {"
+ },
+ {
+  "k": 65,
+  "line": 126,
+  "cut": "=",
+  "put": "!",
+  "from": "const mig = events.find(e => e.type === 'migration');",
+  "to": "const mig = events.find(e => e.type !== 'migration');"
+ },
+ {
+  "k": 66,
+  "line": 126,
+  "cut": "",
+  "put": "Last",
+  "from": "const mig = events.find(e => e.type === 'migration');",
+  "to": "const mig = events.findLast(e => e.type === 'migration');"
+ },
+ {
+  "k": 67,
+  "line": 127,
+  "cut": "=",
+  "put": "!",
+  "from": "for (const m of mig?.payload?.events ?? []) if (m.type === 'carrier.status') msgs.push({ id: m.id, at: ms(m.at), seq: -1, payload: m.payload, meaning: meaningOf(ed.codes, m.payload.carrier, m.payload.code), F: m.payload.fulfilmentRef });",
+  "to": "for (const m of mig?.payload?.events ?? []) if (m.type !== 'carrier.status') msgs.push({ id: m.id, at: ms(m.at), seq: -1, payload: m.payload, meaning: meaningOf(ed.codes, m.payload.carrier, m.payload.code), F: m.payload.fulfilmentRef });"
+ },
+ {
+  "k": 68,
+  "line": 133,
+  "cut": "ost('cancelled', rule, e, l)",
+  "put": "void 0",
+  "from": "ost('cancelled', rule, e, l);",
+  "to": "void 0;"
+ },
+ {
+  "k": 69,
+  "line": 134,
+  "cut": "ntf(O, 'order-cancelled', rule, e, l)",
+  "put": "void 0",
+  "from": "ntf(O, 'order-cancelled', rule, e, l);",
+  "to": "void 0;"
+ },
+ {
+  "k": 70,
+  "line": 140,
+  "cut": "=",
+  "put": "!",
+  "from": "const pre = { created: !!stage && stage !== 'gl-intake', actionRequired: stage === 'gl-awaiting', processing: stage === 'gl-dispatched' };",
+  "to": "const pre = { created: !!stage && stage !== 'gl-intake', actionRequired: stage !== 'gl-awaiting', processing: stage === 'gl-dispatched' };"
+ },
+ {
+  "k": 71,
+  "line": 140,
+  "cut": "=",
+  "put": "!",
+  "from": "const pre = { created: !!stage && stage !== 'gl-intake', actionRequired: stage === 'gl-awaiting', processing: stage === 'gl-dispatched' };",
+  "to": "const pre = { created: !!stage && stage !== 'gl-intake', actionRequired: stage === 'gl-awaiting', processing: stage !== 'gl-dispatched' };"
+ },
+ {
+  "k": 72,
+  "line": 140,
+  "cut": "!",
+  "put": "=",
+  "from": "const pre = { created: !!stage && stage !== 'gl-intake', actionRequired: stage === 'gl-awaiting', processing: stage === 'gl-dispatched' };",
+  "to": "const pre = { created: !!stage && stage === 'gl-intake', actionRequired: stage === 'gl-awaiting', processing: stage === 'gl-dispatched' };"
+ },
+ {
+  "k": 73,
+  "line": 140,
+  "cut": "&&",
+  "put": "||",
+  "from": "const pre = { created: !!stage && stage !== 'gl-intake', actionRequired: stage === 'gl-awaiting', processing: stage === 'gl-dispatched' };",
+  "to": "const pre = { created: !!stage || stage !== 'gl-intake', actionRequired: stage === 'gl-awaiting', processing: stage === 'gl-dispatched' };"
+ },
+ {
+  "k": 74,
+  "line": 143,
+  "cut": "lid(`create:${O}`, 'R1.1', 'orders', 'create', canonicalArgs('orders', 'create', { orderId: O, customerId: t.customerId, placedAt: t.placedAt, currency: 'EUR',",
+  "put": "void 0;",
+  "from": "lid(`create:${O}`, 'R1.1', 'orders', 'create', canonicalArgs('orders', 'create', { orderId: O, customerId: t.customerId, placedAt: t.placedAt, currency: 'EUR',",
+  "to": "void 0;"
+ },
+ {
+  "k": 75,
+  "line": 144,
+  "cut": "=",
+  "put": "!",
+  "from": "items: t.class === 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),",
+  "to": "items: t.class !== 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),"
+ },
+ {
+  "k": 76,
+  "line": 144,
+  "cut": "=",
+  "put": "!",
+  "from": "items: t.class === 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),",
+  "to": "items: t.class === 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type !== 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),"
+ },
+ {
+  "k": 77,
+  "line": 144,
+  "cut": "",
+  "put": "Last",
+  "from": "items: t.class === 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),",
+  "to": "items: t.class === 'gl-dispatched' ? alloc[0].items : (events.findLast(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),"
+ },
+ {
+  "k": 78,
+  "line": 144,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "items: t.class === 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),",
+  "to": "items: t.class === 'gl-dispatched' ? alloc.at(-1).items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),"
+ },
+ {
+  "k": 79,
+  "line": 145,
+  "cut": "6",
+  "put": "12",
+  "from": "fulfilments: fuls, totalMinor: fuls.reduce((s, f) => s + f.amountMinor, 0) }), p, p + 60 * MIN);",
+  "to": "fulfilments: fuls, totalMinor: fuls.reduce((s, f) => s + f.amountMinor, 0) }), p, p + 120 * MIN);"
+ },
+ {
+  "k": 80,
+  "line": 151,
+  "cut": "!",
+  "put": "=",
+  "from": "if (stage && stage !== 'gl-intake') cleared = p;",
+  "to": "if (stage && stage === 'gl-intake') cleared = p;"
+ },
+ {
+  "k": 81,
+  "line": 151,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (stage && stage !== 'gl-intake') cleared = p;",
+  "to": "if (stage || stage !== 'gl-intake') cleared = p;"
+ },
+ {
+  "k": 82,
+  "line": 152,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (t.verdict === 'pass') cleared = p;",
+  "to": "else if (t.verdict !== 'pass') cleared = p;"
+ },
+ {
+  "k": 83,
+  "line": 153,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (t.verdict === 'reject') return cancelOrder('R2.1', p, p + 120 * MIN);",
+  "to": "else if (t.verdict !== 'reject') return cancelOrder('R2.1', p, p + 120 * MIN);"
+ },
+ {
+  "k": 84,
+  "line": 153,
+  "cut": "12",
+  "put": "6",
+  "from": "else if (t.verdict === 'reject') return cancelOrder('R2.1', p, p + 120 * MIN);",
+  "to": "else if (t.verdict === 'reject') return cancelOrder('R2.1', p, p + 60 * MIN);"
+ },
+ {
+  "k": 85,
+  "line": 155,
+  "cut": "12",
+  "put": "6",
+  "from": "tasksReq.push({ lid: `review:${O}`, rule: 'R2.1', kind: 'fraudReview', role: 'fraudAnalyst', mustExclude: [], window: { earliest: p, latest: p + 120 * MIN } });",
+  "to": "tasksReq.push({ lid: `review:${O}`, rule: 'R2.1', kind: 'fraudReview', role: 'fraudAnalyst', mustExclude: [], window: { earliest: p, latest: p + 60 * MIN } });"
+ },
+ {
+  "k": 86,
+  "line": 155,
+  "cut": "tasksReq.push({ lid: `review:${O}`, rule: 'R2.1', kind: 'fraudReview', role: 'fraudAnalyst', mustExclude: [], window: { earliest: p, latest: p + 120 * MIN } })",
+  "put": "void 0",
+  "from": "tasksReq.push({ lid: `review:${O}`, rule: 'R2.1', kind: 'fraudReview', role: 'fraudAnalyst', mustExclude: [], window: { earliest: p, latest: p + 120 * MIN } });",
+  "to": "void 0;"
+ },
+ {
+  "k": 87,
+  "line": 156,
+  "cut": "=",
+  "put": "!",
+  "from": "const reviews = view.tasks.filter(x => x.task.kind === 'fraudReview').sort((a, b) => a.at - b.at || a.seq - b.seq);",
+  "to": "const reviews = view.tasks.filter(x => x.task.kind !== 'fraudReview').sort((a, b) => a.at - b.at || a.seq - b.seq);"
+ },
+ {
+  "k": 88,
+  "line": 156,
+  "cut": "||",
+  "put": "&&",
+  "from": "const reviews = view.tasks.filter(x => x.task.kind === 'fraudReview').sort((a, b) => a.at - b.at || a.seq - b.seq);",
+  "to": "const reviews = view.tasks.filter(x => x.task.kind === 'fraudReview').sort((a, b) => a.at - b.at && a.seq - b.seq);"
+ },
+ {
+  "k": 89,
+  "line": 157,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const first = reviews[0];",
+  "to": "const first = reviews.at(-1);"
+ },
+ {
+  "k": 90,
+  "line": 159,
+  "cut": "=",
+  "put": "!",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel');",
+  "to": "const cancel = custActions.find(a => a.payload.action !== 'cancel');"
+ },
+ {
+  "k": 91,
+  "line": 159,
+  "cut": "",
+  "put": "Last",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel');",
+  "to": "const cancel = custActions.findLast(a => a.payload.action === 'cancel');"
+ },
+ {
+  "k": 92,
+  "line": 160,
+  "cut": "6",
+  "put": "12",
+  "from": "if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 60 * MIN, cancel.at, cancel);",
+  "to": "if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 120 * MIN, cancel.at, cancel);"
+ },
+ {
+  "k": 93,
+  "line": 163,
+  "cut": "6",
+  "put": "12",
+  "from": "const deadline = first.at + RV * 60 * MIN;",
+  "to": "const deadline = first.at + RV * 120 * MIN;"
+ },
+ {
+  "k": 94,
+  "line": 166,
+  "cut": "=",
+  "put": "!",
+  "from": "const answers = view.taskEvents.filter(e => e.type === 'humanTask.answered' && ids.has(`${e.instance}\\u0000${e.payload.taskId}`)",
+  "to": "const answers = view.taskEvents.filter(e => e.type !== 'humanTask.answered' && ids.has(`${e.instance}\\u0000${e.payload.taskId}`)"
+ },
+ {
+  "k": 95,
+  "line": 166,
+  "cut": "&&",
+  "put": "||",
+  "from": "const answers = view.taskEvents.filter(e => e.type === 'humanTask.answered' && ids.has(`${e.instance}\\u0000${e.payload.taskId}`)",
+  "to": "const answers = view.taskEvents.filter(e => e.type === 'humanTask.answered' || ids.has(`${e.instance}\\u0000${e.payload.taskId}`)"
+ },
+ {
+  "k": 96,
+  "line": 167,
+  "cut": "=",
+  "put": "",
+  "from": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+  "to": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at < deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);"
+ },
+ {
+  "k": 97,
+  "line": 167,
+  "cut": "&&",
+  "put": "||",
+  "from": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+  "to": "|| ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);"
+ },
+ {
+  "k": 98,
+  "line": 167,
+  "cut": "&&",
+  "put": "||",
+  "from": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+  "to": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) || e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);"
+ },
+ {
+  "k": 99,
+  "line": 167,
+  "cut": "||",
+  "put": "&&",
+  "from": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+  "to": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at && a.seq - b.seq);"
+ },
+ {
+  "k": 100,
+  "line": 168,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const ans = answers[0] ?? null;",
+  "to": "const ans = answers.at(-1) ?? null;"
+ },
+ {
+  "k": 101,
+  "line": 169,
+  "cut": "=",
+  "put": "",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at < deadline);"
+ },
+ {
+  "k": 102,
+  "line": 169,
+  "cut": "",
+  "put": "=",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at <= ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 103,
+  "line": 169,
+  "cut": "",
+  "put": "=",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq <= ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 104,
+  "line": 169,
+  "cut": "=",
+  "put": "!",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action !== 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 105,
+  "line": 169,
+  "cut": "=",
+  "put": "!",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at !== ans.at && a.seq < ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 106,
+  "line": 169,
+  "cut": "&&",
+  "put": "||",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' || (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 107,
+  "line": 169,
+  "cut": "&&",
+  "put": "||",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at || a.seq < ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 108,
+  "line": 169,
+  "cut": "&&",
+  "put": "||",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) || a.at <= deadline);"
+ },
+ {
+  "k": 109,
+  "line": 169,
+  "cut": "||",
+  "put": "&&",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans && a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 110,
+  "line": 169,
+  "cut": "||",
+  "put": "&&",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at && (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 111,
+  "line": 169,
+  "cut": "",
+  "put": "Last",
+  "from": "const cancel = custActions.find(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);",
+  "to": "const cancel = custActions.findLast(a => a.payload.action === 'cancel' && (!ans || a.at < ans.at || (a.at === ans.at && a.seq < ans.seq)) && a.at <= deadline);"
+ },
+ {
+  "k": 112,
+  "line": 170,
+  "cut": "6",
+  "put": "12",
+  "from": "if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 60 * MIN, cancel.at, cancel);",
+  "to": "if (cancel) return cancelOrder('R6.4', cancel.at, cancel.at + 120 * MIN, cancel.at, cancel);"
+ },
+ {
+  "k": 113,
+  "line": 171,
+  "cut": "12",
+  "put": "6",
+  "from": "if (!ans) return cancelOrder('R2.2', deadline + SEC, deadline + 120 * MIN, deadline);         // after the deadline (S1)",
+  "to": "if (!ans) return cancelOrder('R2.2', deadline + SEC, deadline + 60 * MIN, deadline);         // after the deadline (S1)"
+ },
+ {
+  "k": 114,
+  "line": 171,
+  "cut": " + SEC",
+  "put": "",
+  "from": "if (!ans) return cancelOrder('R2.2', deadline + SEC, deadline + 120 * MIN, deadline);         // after the deadline (S1)",
+  "to": "if (!ans) return cancelOrder('R2.2', deadline, deadline + 120 * MIN, deadline);         // after the deadline (S1)"
+ },
+ {
+  "k": 115,
+  "line": 172,
+  "cut": "=",
+  "put": "!",
+  "from": "if (ans.payload.answer.decision === 'reject') return cancelOrder('R2.2', ans.at, ans.at + 120 * MIN);",
+  "to": "if (ans.payload.answer.decision !== 'reject') return cancelOrder('R2.2', ans.at, ans.at + 120 * MIN);"
+ },
+ {
+  "k": 116,
+  "line": 172,
+  "cut": "12",
+  "put": "6",
+  "from": "if (ans.payload.answer.decision === 'reject') return cancelOrder('R2.2', ans.at, ans.at + 120 * MIN);",
+  "to": "if (ans.payload.answer.decision === 'reject') return cancelOrder('R2.2', ans.at, ans.at + 60 * MIN);"
+ },
+ {
+  "k": 117,
+  "line": 180,
+  "cut": "6",
+  "put": "12",
+  "from": "const D = p + H * 60 * MIN;",
+  "to": "const D = p + H * 120 * MIN;"
+ },
+ {
+  "k": 118,
+  "line": 181,
+  "cut": "=",
+  "put": "",
+  "from": "countedAction = custActions.find(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;",
+  "to": "countedAction = custActions.find(a => a.at < D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;"
+ },
+ {
+  "k": 119,
+  "line": 181,
+  "cut": "&&",
+  "put": "||",
+  "from": "countedAction = custActions.find(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;",
+  "to": "countedAction = custActions.find(a => a.at <= D || ['amend', 'cancel'].includes(a.payload.action)) ?? null;"
+ },
+ {
+  "k": 120,
+  "line": 181,
+  "cut": "",
+  "put": "Last",
+  "from": "countedAction = custActions.find(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;",
+  "to": "countedAction = custActions.findLast(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;"
+ },
+ {
+  "k": 121,
+  "line": 184,
+  "cut": "12",
+  "put": "6",
+  "from": "maybe(countedAction, () => ost('customerActionRequired', 'R3.1', cleared, cleared + 120 * MIN));",
+  "to": "maybe(countedAction, () => ost('customerActionRequired', 'R3.1', cleared, cleared + 60 * MIN));"
+ },
+ {
+  "k": 122,
+  "line": 185,
+  "cut": "12",
+  "put": "6",
+  "from": "maybe(countedAction, () => ntf(O, 'action-required', 'R3.1', cleared, cleared + 120 * MIN));",
+  "to": "maybe(countedAction, () => ntf(O, 'action-required', 'R3.1', cleared, cleared + 60 * MIN));"
+ },
+ {
+  "k": 123,
+  "line": 188,
+  "cut": "",
+  "put": "=",
+  "from": "for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });",
+  "to": "for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at >= D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });"
+ },
+ {
+  "k": 124,
+  "line": 188,
+  "cut": "=",
+  "put": "!",
+  "from": "for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });",
+  "to": "for (const a of custActions) if (a !== countedAction && a.payload.action !== 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });"
+ },
+ {
+  "k": 125,
+  "line": 188,
+  "cut": "!",
+  "put": "=",
+  "from": "for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });",
+  "to": "for (const a of custActions) if (a === countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });"
+ },
+ {
+  "k": 126,
+  "line": 188,
+  "cut": "&&",
+  "put": "||",
+  "from": "for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });",
+  "to": "for (const a of custActions) if (a !== countedAction || a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });"
+ },
+ {
+  "k": 127,
+  "line": 188,
+  "cut": "&&",
+  "put": "||",
+  "from": "for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' && a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });",
+  "to": "for (const a of custActions) if (a !== countedAction && a.payload.action === 'cancel' || a.at > D) permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });"
+ },
+ {
+  "k": 128,
+  "line": 191,
+  "cut": "6",
+  "put": "12",
+  "from": "for (const f of alloc) { fst(f.fulfilmentId, 'cancelled', 'R3.2', D + SEC, D + 60 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }",
+  "to": "for (const f of alloc) { fst(f.fulfilmentId, 'cancelled', 'R3.2', D + SEC, D + 120 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }"
+ },
+ {
+  "k": 129,
+  "line": 191,
+  "cut": " + SEC",
+  "put": "",
+  "from": "for (const f of alloc) { fst(f.fulfilmentId, 'cancelled', 'R3.2', D + SEC, D + 60 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }",
+  "to": "for (const f of alloc) { fst(f.fulfilmentId, 'cancelled', 'R3.2', D, D + 60 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }"
+ },
+ {
+  "k": 130,
+  "line": 192,
+  "cut": "6",
+  "put": "12",
+  "from": "ost('timedOut', 'R3.2', D + SEC, D + 60 * MIN);",
+  "to": "ost('timedOut', 'R3.2', D + SEC, D + 120 * MIN);"
+ },
+ {
+  "k": 131,
+  "line": 192,
+  "cut": " + SEC",
+  "put": "",
+  "from": "ost('timedOut', 'R3.2', D + SEC, D + 60 * MIN);",
+  "to": "ost('timedOut', 'R3.2', D, D + 60 * MIN);"
+ },
+ {
+  "k": 132,
+  "line": 192,
+  "cut": "ost('timedOut', 'R3.2', D + SEC, D + 60 * MIN)",
+  "put": "void 0",
+  "from": "ost('timedOut', 'R3.2', D + SEC, D + 60 * MIN);",
+  "to": "void 0;"
+ },
+ {
+  "k": 133,
+  "line": 193,
+  "cut": "6",
+  "put": "12",
+  "from": "ntf(O, 'order-timed-out', 'R3.2', D + SEC, D + 60 * MIN);",
+  "to": "ntf(O, 'order-timed-out', 'R3.2', D + SEC, D + 120 * MIN);"
+ },
+ {
+  "k": 134,
+  "line": 193,
+  "cut": " + SEC",
+  "put": "",
+  "from": "ntf(O, 'order-timed-out', 'R3.2', D + SEC, D + 60 * MIN);",
+  "to": "ntf(O, 'order-timed-out', 'R3.2', D, D + 60 * MIN);"
+ },
+ {
+  "k": 135,
+  "line": 193,
+  "cut": "ntf(O, 'order-timed-out', 'R3.2', D + SEC, D + 60 * MIN)",
+  "put": "void 0",
+  "from": "ntf(O, 'order-timed-out', 'R3.2', D + SEC, D + 60 * MIN);",
+  "to": "void 0;"
+ },
+ {
+  "k": 136,
+  "line": 198,
+  "cut": "=",
+  "put": "!",
+  "from": "if (countedAction.payload.action === 'cancel') return cancelOrder('R3.2', a, a + 60 * MIN, a, countedAction);",
+  "to": "if (countedAction.payload.action !== 'cancel') return cancelOrder('R3.2', a, a + 60 * MIN, a, countedAction);"
+ },
+ {
+  "k": 137,
+  "line": 198,
+  "cut": "6",
+  "put": "12",
+  "from": "if (countedAction.payload.action === 'cancel') return cancelOrder('R3.2', a, a + 60 * MIN, a, countedAction);",
+  "to": "if (countedAction.payload.action === 'cancel') return cancelOrder('R3.2', a, a + 120 * MIN, a, countedAction);"
+ },
+ {
+  "k": 138,
+  "line": 199,
+  "cut": "6",
+  "put": "12",
+  "from": "for (const f of unavail) { fst(f.fulfilmentId, 'cancelled', 'R3.2', a, a + 60 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }",
+  "to": "for (const f of unavail) { fst(f.fulfilmentId, 'cancelled', 'R3.2', a, a + 120 * MIN); rec.fulfilments[f.fulfilmentId] = 'cancelled'; }"
+ },
+ {
+  "k": 139,
+  "line": 200,
+  "cut": "6",
+  "put": "12",
+  "from": "if (!avail.length) return cancelOrder('R3.2', a, a + 60 * MIN, a, countedAction);",
+  "to": "if (!avail.length) return cancelOrder('R3.2', a, a + 120 * MIN, a, countedAction);"
+ },
+ {
+  "k": 140,
+  "line": 209,
+  "cut": "=",
+  "put": "",
+  "from": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' && a.at >= tr);",
+  "to": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' && a.at > tr);"
+ },
+ {
+  "k": 141,
+  "line": 209,
+  "cut": "=",
+  "put": "!",
+  "from": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' && a.at >= tr);",
+  "to": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action !== 'cancel' && a.at >= tr);"
+ },
+ {
+  "k": 142,
+  "line": 209,
+  "cut": "!",
+  "put": "=",
+  "from": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' && a.at >= tr);",
+  "to": "const procCancels = custActions.filter(a => a === countedAction && a.payload.action === 'cancel' && a.at >= tr);"
+ },
+ {
+  "k": 143,
+  "line": 209,
+  "cut": "&&",
+  "put": "||",
+  "from": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' && a.at >= tr);",
+  "to": "const procCancels = custActions.filter(a => a !== countedAction || a.payload.action === 'cancel' && a.at >= tr);"
+ },
+ {
+  "k": 144,
+  "line": 209,
+  "cut": "&&",
+  "put": "||",
+  "from": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' && a.at >= tr);",
+  "to": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' || a.at >= tr);"
+ },
+ {
+  "k": 145,
+  "line": 212,
+  "cut": "=",
+  "put": "",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) < a.at);"
+ },
+ {
+  "k": 146,
+  "line": 212,
+  "cut": "",
+  "put": "=",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at <= a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);"
+ },
+ {
+  "k": 147,
+  "line": 212,
+  "cut": "",
+  "put": "=",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq <= a.seq)) && reportedMs(m) <= a.at);"
+ },
+ {
+  "k": 148,
+  "line": 212,
+  "cut": "=",
+  "put": "!",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at !== a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);"
+ },
+ {
+  "k": 149,
+  "line": 212,
+  "cut": "&&",
+  "put": "||",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) || (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);"
+ },
+ {
+  "k": 150,
+  "line": 212,
+  "cut": "&&",
+  "put": "||",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at || m.seq < a.seq)) && reportedMs(m) <= a.at);"
+ },
+ {
+  "k": 151,
+  "line": 212,
+  "cut": "&&",
+  "put": "||",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) || reportedMs(m) <= a.at);"
+ },
+ {
+  "k": 152,
+  "line": 212,
+  "cut": "||",
+  "put": "&&",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at && (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);"
+ },
+ {
+  "k": 153,
+  "line": 212,
+  "cut": ", 'inTransit', 'deliver",
+  "put": "",
+  "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+  "to": "const collectedBy = a => msgs.some(m => ['collected'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);"
+ },
+ {
+  "k": 154,
+  "line": 217,
+  "cut": "=",
+  "put": "!",
+  "from": "const mine = r => r.fulfilmentId === F;",
+  "to": "const mine = r => r.fulfilmentId !== F;"
+ },
+ {
+  "k": 155,
+  "line": 219,
+  "cut": "=",
+  "put": "!",
+  "from": "const row = committed('inventory', 'reserve', a => mine(a) && a.sku === i.sku)[0] ?? null;",
+  "to": "const row = committed('inventory', 'reserve', a => mine(a) && a.sku !== i.sku)[0] ?? null;"
+ },
+ {
+  "k": 156,
+  "line": 219,
+  "cut": "&&",
+  "put": "||",
+  "from": "const row = committed('inventory', 'reserve', a => mine(a) && a.sku === i.sku)[0] ?? null;",
+  "to": "const row = committed('inventory', 'reserve', a => mine(a) || a.sku === i.sku)[0] ?? null;"
+ },
+ {
+  "k": 157,
+  "line": 219,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const row = committed('inventory', 'reserve', a => mine(a) && a.sku === i.sku)[0] ?? null;",
+  "to": "const row = committed('inventory', 'reserve', a => mine(a) && a.sku === i.sku).at(-1) ?? null;"
+ },
+ {
+  "k": 158,
+  "line": 222,
+  "cut": "||",
+  "put": "&&",
+  "from": "const allReserved = items.every(i => i.row || i.pre);",
+  "to": "const allReserved = items.every(i => i.row && i.pre);"
+ },
+ {
+  "k": 159,
+  "line": 223,
+  "cut": "ax",
+  "put": "in",
+  "from": "const rF = pre.processing ? null : allReserved ? Math.max(...items.map(i => i.row.at)) : null;",
+  "to": "const rF = pre.processing ? null : allReserved ? Math.min(...items.map(i => i.row.at)) : null;"
+ },
+ {
+  "k": 160,
+  "line": 224,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const chargeRow = committed('billing', 'charge', mine)[0] ?? null;",
+  "to": "const chargeRow = committed('billing', 'charge', mine).at(-1) ?? null;"
+ },
+ {
+  "k": 161,
+  "line": 225,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const shipRow = committed('carrier', 'create', mine)[0] ?? null;",
+  "to": "const shipRow = committed('carrier', 'create', mine).at(-1) ?? null;"
+ },
+ {
+  "k": 162,
+  "line": 226,
+  "cut": "=",
+  "put": "!",
+  "from": "const fails = rows.filter(r => r.args?.fulfilmentId === F && permanent(r) && ['inventory.reserve', 'billing.charge', 'carrier.create'].includes(`${r.system}.${r.op}`));",
+  "to": "const fails = rows.filter(r => r.args?.fulfilmentId !== F && permanent(r) && ['inventory.reserve', 'billing.charge', 'carrier.create'].includes(`${r.system}.${r.op}`));"
+ },
+ {
+  "k": 163,
+  "line": 226,
+  "cut": "&&",
+  "put": "||",
+  "from": "const fails = rows.filter(r => r.args?.fulfilmentId === F && permanent(r) && ['inventory.reserve', 'billing.charge', 'carrier.create'].includes(`${r.system}.${r.op}`));",
+  "to": "const fails = rows.filter(r => r.args?.fulfilmentId === F || permanent(r) && ['inventory.reserve', 'billing.charge', 'carrier.create'].includes(`${r.system}.${r.op}`));"
+ },
+ {
+  "k": 164,
+  "line": 226,
+  "cut": "&&",
+  "put": "||",
+  "from": "const fails = rows.filter(r => r.args?.fulfilmentId === F && permanent(r) && ['inventory.reserve', 'billing.charge', 'carrier.create'].includes(`${r.system}.${r.op}`));",
+  "to": "const fails = rows.filter(r => r.args?.fulfilmentId === F && permanent(r) || ['inventory.reserve', 'billing.charge', 'carrier.create'].includes(`${r.system}.${r.op}`));"
+ },
+ {
+  "k": 165,
+  "line": 227,
+  "cut": "=",
+  "put": "!",
+  "from": "const myMsgs = msgs.filter(m => m.F === F).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+  "to": "const myMsgs = msgs.filter(m => m.F !== F).sort((a, b) => a.at - b.at || a.seq - b.seq);"
+ },
+ {
+  "k": 166,
+  "line": 227,
+  "cut": "||",
+  "put": "&&",
+  "from": "const myMsgs = msgs.filter(m => m.F === F).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+  "to": "const myMsgs = msgs.filter(m => m.F === F).sort((a, b) => a.at - b.at && a.seq - b.seq);"
+ },
+ {
+  "k": 167,
+  "line": 228,
+  "cut": "=",
+  "put": "!",
+  "from": "const collectedMsg = myMsgs.find(m => m.meaning === 'collected') ?? null;",
+  "to": "const collectedMsg = myMsgs.find(m => m.meaning !== 'collected') ?? null;"
+ },
+ {
+  "k": 168,
+  "line": 228,
+  "cut": "",
+  "put": "Last",
+  "from": "const collectedMsg = myMsgs.find(m => m.meaning === 'collected') ?? null;",
+  "to": "const collectedMsg = myMsgs.findLast(m => m.meaning === 'collected') ?? null;"
+ },
+ {
+  "k": 169,
+  "line": 229,
+  "cut": "=",
+  "put": "!",
+  "from": "const deliveredMsg = myMsgs.find(m => m.meaning === 'delivered') ?? null;",
+  "to": "const deliveredMsg = myMsgs.find(m => m.meaning !== 'delivered') ?? null;"
+ },
+ {
+  "k": 170,
+  "line": 229,
+  "cut": "",
+  "put": "Last",
+  "from": "const deliveredMsg = myMsgs.find(m => m.meaning === 'delivered') ?? null;",
+  "to": "const deliveredMsg = myMsgs.findLast(m => m.meaning === 'delivered') ?? null;"
+ },
+ {
+  "k": 171,
+  "line": 230,
+  "cut": "=",
+  "put": "!",
+  "from": "const failedMsg = myMsgs.find(m => m.meaning === 'collectionFailed') ?? null;",
+  "to": "const failedMsg = myMsgs.find(m => m.meaning !== 'collectionFailed') ?? null;"
+ },
+ {
+  "k": 172,
+  "line": 230,
+  "cut": "",
+  "put": "Last",
+  "from": "const failedMsg = myMsgs.find(m => m.meaning === 'collectionFailed') ?? null;",
+  "to": "const failedMsg = myMsgs.findLast(m => m.meaning === 'collectionFailed') ?? null;"
+ },
+ {
+  "k": 173,
+  "line": 231,
+  "cut": "!",
+  "put": "=",
+  "from": "const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0] ?? null;",
+  "to": "const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x === undefined).sort((a, b) => a - b)[0] ?? null;"
+ },
+ {
+  "k": 174,
+  "line": 231,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0] ?? null;",
+  "to": "const failAt = [fails.at(-1)?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0] ?? null;"
+ },
+ {
+  "k": 175,
+  "line": 231,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0] ?? null;",
+  "to": "const failAt = [fails[0]?.at, failedMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b).at(-1) ?? null;"
+ },
+ {
+  "k": 176,
+  "line": 240,
+  "cut": "=",
+  "put": "",
+  "from": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13",
+  "to": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at < a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13"
+ },
+ {
+  "k": 177,
+  "line": 240,
+  "cut": "=",
+  "put": "",
+  "from": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13",
+  "to": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen < a.at));   // S13"
+ },
+ {
+  "k": 178,
+  "line": 240,
+  "cut": "!",
+  "put": "=",
+  "from": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13",
+  "to": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt === null && s.failSeen <= a.at));   // S13"
+ },
+ {
+  "k": 179,
+  "line": 240,
+  "cut": "&&",
+  "put": "||",
+  "from": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13",
+  "to": "const endedBefore = saga.every(s => (s.deliveredMsg || s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13"
+ },
+ {
+  "k": 180,
+  "line": 240,
+  "cut": "&&",
+  "put": "||",
+  "from": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13",
+  "to": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null || s.failSeen <= a.at));   // S13"
+ },
+ {
+  "k": 181,
+  "line": 240,
+  "cut": "||",
+  "put": "&&",
+  "from": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13",
+  "to": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) && (s.failAt !== null && s.failSeen <= a.at));   // S13"
+ },
+ {
+  "k": 182,
+  "line": 242,
+  "cut": "6",
+  "put": "12",
+  "from": "if (collectedBy(a)) { ntf(O, 'cancel-refused', 'R6.3', a.at, a.at + 60 * MIN); continue; }",
+  "to": "if (collectedBy(a)) { ntf(O, 'cancel-refused', 'R6.3', a.at, a.at + 120 * MIN); continue; }"
+ },
+ {
+  "k": 183,
+  "line": 248,
+  "cut": "6",
+  "put": "12",
+  "from": "maybe(abortEv, () => ost('processing', 'R4.1', tr, tr + 60 * MIN));",
+  "to": "maybe(abortEv, () => ost('processing', 'R4.1', tr, tr + 120 * MIN));"
+ },
+ {
+  "k": 184,
+  "line": 249,
+  "cut": "6",
+  "put": "12",
+  "from": "for (const f of avail) maybe(abortEv, () => fst(f.fulfilmentId, 'processing', 'R4.1', tr, tr + 60 * MIN));",
+  "to": "for (const f of avail) maybe(abortEv, () => fst(f.fulfilmentId, 'processing', 'R4.1', tr, tr + 120 * MIN));"
+ },
+ {
+  "k": 185,
+  "line": 256,
+  "cut": "=",
+  "put": "",
+  "from": "const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13",
+  "to": "const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen < abortAt);   // S13"
+ },
+ {
+  "k": 186,
+  "line": 256,
+  "cut": "!",
+  "put": "=",
+  "from": "const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13",
+  "to": "const aborted = abortAt === null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13"
+ },
+ {
+  "k": 187,
+  "line": 256,
+  "cut": "!",
+  "put": "=",
+  "from": "const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13",
+  "to": "const aborted = abortAt !== null && !(s.failAt === null && s.failSeen <= abortAt);   // S13"
+ },
+ {
+  "k": 188,
+  "line": 256,
+  "cut": "&&",
+  "put": "||",
+  "from": "const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13",
+  "to": "const aborted = abortAt !== null || !(s.failAt !== null && s.failSeen <= abortAt);   // S13"
+ },
+ {
+  "k": 189,
+  "line": 256,
+  "cut": "&&",
+  "put": "||",
+  "from": "const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13",
+  "to": "const aborted = abortAt !== null && !(s.failAt !== null || s.failSeen <= abortAt);   // S13"
+ },
+ {
+  "k": 190,
+  "line": 258,
+  "cut": "=",
+  "put": "!",
+  "from": "const forwardOk = row => cut === null || before(row, cut, cutEv);",
+  "to": "const forwardOk = row => cut !== null || before(row, cut, cutEv);"
+ },
+ {
+  "k": 191,
+  "line": 258,
+  "cut": "||",
+  "put": "&&",
+  "from": "const forwardOk = row => cut === null || before(row, cut, cutEv);",
+  "to": "const forwardOk = row => cut === null && before(row, cut, cutEv);"
+ },
+ {
+  "k": 192,
+  "line": 258,
+  "cut": "before(row, cut, cutEv)",
+  "put": "row.at < cut",
+  "from": "const forwardOk = row => cut === null || before(row, cut, cutEv);",
+  "to": "const forwardOk = row => cut === null || row.at < cut;"
+ },
+ {
+  "k": 193,
+  "line": 260,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "if (!s.items[0].pre) {",
+  "to": "if (!s.items.at(-1).pre) {"
+ },
+ {
+  "k": 194,
+  "line": 262,
+  "cut": "=",
+  "put": "!",
+  "from": "const keep = i.row ? forwardOk(i.row) : cut === null;",
+  "to": "const keep = i.row ? forwardOk(i.row) : cut !== null;"
+ },
+ {
+  "k": 195,
+  "line": 262,
+  "cut": "forwardOk(i.row)",
+  "put": "true",
+  "from": "const keep = i.row ? forwardOk(i.row) : cut === null;",
+  "to": "const keep = i.row ? true : cut === null;"
+ },
+ {
+  "k": 196,
+  "line": 263,
+  "cut": "12",
+  "put": "6",
+  "from": "if (keep) lid(`rsv:${F}:${i.sku}`, 'R4.2', 'inventory', 'reserve', { orderId: O, fulfilmentId: F, location: s.location, sku: i.sku, qty: i.qty }, tr, tr + 120 * MIN, afterCreate());",
+  "to": "if (keep) lid(`rsv:${F}:${i.sku}`, 'R4.2', 'inventory', 'reserve', { orderId: O, fulfilmentId: F, location: s.location, sku: i.sku, qty: i.qty }, tr, tr + 60 * MIN, afterCreate());"
+ },
+ {
+  "k": 197,
+  "line": 267,
+  "cut": "=",
+  "put": "!",
+  "from": "if (s.rF !== null && (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {",
+  "to": "if (s.rF !== null && (s.chargeRow ? forwardOk(s.chargeRow) : cut !== null)) {"
+ },
+ {
+  "k": 198,
+  "line": 267,
+  "cut": "!",
+  "put": "=",
+  "from": "if (s.rF !== null && (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {",
+  "to": "if (s.rF === null && (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {"
+ },
+ {
+  "k": 199,
+  "line": 267,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (s.rF !== null && (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {",
+  "to": "if (s.rF !== null || (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {"
+ },
+ {
+  "k": 200,
+  "line": 267,
+  "cut": "forwardOk(s.chargeRow)",
+  "put": "true",
+  "from": "if (s.rF !== null && (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {",
+  "to": "if (s.rF !== null && (s.chargeRow ? true : cut === null)) {"
+ },
+ {
+  "k": 201,
+  "line": 268,
+  "cut": "12",
+  "put": "6",
+  "from": "lid(`chg:${F}`, 'R4.2', 'billing', 'charge', { orderId: O, fulfilmentId: F, customerId: t.customerId, amountMinor: s.amount, currency: 'EUR' }, s.rF, s.rF + 120 * MIN,",
+  "to": "lid(`chg:${F}`, 'R4.2', 'billing', 'charge', { orderId: O, fulfilmentId: F, customerId: t.customerId, amountMinor: s.amount, currency: 'EUR' }, s.rF, s.rF + 60 * MIN,"
+ },
+ {
+  "k": 202,
+  "line": 268,
+  "cut": "lid(`chg:${F}`, 'R4.2', 'billing', 'charge', { orderId: O, fulfilmentId: F, customerId: t.customerId, amountMinor: s.amount, currency: 'EUR' }, s.rF, s.rF + 120 * MIN,",
+  "put": "void 0;",
+  "from": "lid(`chg:${F}`, 'R4.2', 'billing', 'charge', { orderId: O, fulfilmentId: F, customerId: t.customerId, amountMinor: s.amount, currency: 'EUR' }, s.rF, s.rF + 120 * MIN,",
+  "to": "void 0;"
+ },
+ {
+  "k": 203,
+  "line": 272,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "if (s.items[0].pre) rec.charges[F] = { amountMinor: s.amount, refundedMinor: 0 };",
+  "to": "if (s.items.at(-1).pre) rec.charges[F] = { amountMinor: s.amount, refundedMinor: 0 };"
+ },
+ {
+  "k": 204,
+  "line": 273,
+  "cut": "=",
+  "put": "!",
+  "from": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+  "to": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut !== null)) {"
+ },
+ {
+  "k": 205,
+  "line": 273,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+  "to": "if (s.chargeRow || !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {"
+ },
+ {
+  "k": 206,
+  "line": 273,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+  "to": "if (s.chargeRow && !s.items[0].pre || (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {"
+ },
+ {
+  "k": 207,
+  "line": 273,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+  "to": "if (s.chargeRow && !s.items.at(-1).pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {"
+ },
+ {
+  "k": 208,
+  "line": 273,
+  "cut": "forwardOk(s.shipRow)",
+  "put": "true",
+  "from": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+  "to": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? true : cut === null)) {"
+ },
+ {
+  "k": 209,
+  "line": 274,
+  "cut": "12",
+  "put": "6",
+  "from": "lid(`shp:${F}`, 'R4.2', 'carrier', 'create', { orderId: O, fulfilmentId: F, location: s.location }, s.chargeRow.at, s.chargeRow.at + 120 * MIN, { after: named(`chg:${F}`) ? [`chg:${F}`] : [] });",
+  "to": "lid(`shp:${F}`, 'R4.2', 'carrier', 'create', { orderId: O, fulfilmentId: F, location: s.location }, s.chargeRow.at, s.chargeRow.at + 60 * MIN, { after: named(`chg:${F}`) ? [`chg:${F}`] : [] });"
+ },
+ {
+  "k": 210,
+  "line": 274,
+  "cut": "lid(`shp:${F}`, 'R4.2', 'carrier', 'create', { orderId: O, fulfilmentId: F, location: s.location }, s.chargeRow.at, s.chargeRow.at + 120 * MIN, { after: named(`chg:${F}`) ? [`chg:${F}`] : [] })",
+  "put": "void 0",
+  "from": "lid(`shp:${F}`, 'R4.2', 'carrier', 'create', { orderId: O, fulfilmentId: F, location: s.location }, s.chargeRow.at, s.chargeRow.at + 120 * MIN, { after: named(`chg:${F}`) ? [`chg:${F}`] : [] });",
+  "to": "void 0;"
+ },
+ {
+  "k": 211,
+  "line": 276,
+  "cut": "||",
+  "put": "&&",
+  "from": "if (s.shipRow || s.items[0].pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';",
+  "to": "if (s.shipRow && s.items[0].pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';"
+ },
+ {
+  "k": 212,
+  "line": 276,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "if (s.shipRow || s.items[0].pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';",
+  "to": "if (s.shipRow || s.items.at(-1).pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';"
+ },
+ {
+  "k": 213,
+  "line": 276,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "if (s.shipRow || s.items[0].pre) rec.shipments[F] = s.items[0].pre ? 'collected' : 'created';",
+  "to": "if (s.shipRow || s.items[0].pre) rec.shipments[F] = s.items.at(-1).pre ? 'collected' : 'created';"
+ },
+ {
+  "k": 214,
+  "line": 280,
+  "cut": "!",
+  "put": "=",
+  "from": "const last = Math.max(abortAt, ...[s.shipRow?.at, s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(x => x !== undefined && x !== null));",
+  "to": "const last = Math.max(abortAt, ...[s.shipRow?.at, s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(x => x === undefined && x !== null));"
+ },
+ {
+  "k": 215,
+  "line": 280,
+  "cut": "!",
+  "put": "=",
+  "from": "const last = Math.max(abortAt, ...[s.shipRow?.at, s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(x => x !== undefined && x !== null));",
+  "to": "const last = Math.max(abortAt, ...[s.shipRow?.at, s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(x => x !== undefined && x === null));"
+ },
+ {
+  "k": 216,
+  "line": 280,
+  "cut": "&&",
+  "put": "||",
+  "from": "const last = Math.max(abortAt, ...[s.shipRow?.at, s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(x => x !== undefined && x !== null));",
+  "to": "const last = Math.max(abortAt, ...[s.shipRow?.at, s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(x => x !== undefined || x !== null));"
+ },
+ {
+  "k": 217,
+  "line": 280,
+  "cut": "ax",
+  "put": "in",
+  "from": "const last = Math.max(abortAt, ...[s.shipRow?.at, s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(x => x !== undefined && x !== null));",
+  "to": "const last = Math.min(abortAt, ...[s.shipRow?.at, s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(x => x !== undefined && x !== null));"
+ },
+ {
+  "k": 218,
+  "line": 281,
+  "cut": "6",
+  "put": "12",
+  "from": "const L = last + 60 * MIN;",
+  "to": "const L = last + 120 * MIN;"
+ },
+ {
+  "k": 219,
+  "line": 283,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (s.shipRow && !s.failedMsg) {",
+  "to": "if (s.shipRow || !s.failedMsg) {"
+ },
+ {
+  "k": 220,
+  "line": 283,
+  "cut": "!s.failedMsg",
+  "put": "true",
+  "from": "if (s.shipRow && !s.failedMsg) {",
+  "to": "if (s.shipRow && true) {"
+ },
+ {
+  "k": 221,
+  "line": 284,
+  "cut": " - MIN",
+  "put": "",
+  "from": "lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.min(L, (s.R ?? Infinity) - MIN));",
+  "to": "lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.min(L, (s.R ?? Infinity)));"
+ },
+ {
+  "k": 222,
+  "line": 284,
+  "cut": "in",
+  "put": "ax",
+  "from": "lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.min(L, (s.R ?? Infinity) - MIN));",
+  "to": "lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.max(L, (s.R ?? Infinity) - MIN));"
+ },
+ {
+  "k": 223,
+  "line": 284,
+  "cut": "lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.min(L, (s.R ?? Infinity) - MIN))",
+  "put": "void 0",
+  "from": "lid(`csh:${F}`, 'R6.2', 'carrier', 'cancel', { orderId: O, fulfilmentId: F }, abortAt, Math.min(L, (s.R ?? Infinity) - MIN));",
+  "to": "void 0;"
+ },
+ {
+  "k": 224,
+  "line": 288,
+  "cut": "after: [...after],",
+  "put": "",
+  "from": "lid(`rf:${F}`, 'R6.2', 'billing', 'refund', { orderId: O, fulfilmentId: F, amountMinor: s.chargeRow.args.amountMinor }, abortAt, L, { after: [...after], money: true });",
+  "to": "lid(`rf:${F}`, 'R6.2', 'billing', 'refund', { orderId: O, fulfilmentId: F, amountMinor: s.chargeRow.args.amountMinor }, abortAt, L, { money: true });"
+ },
+ {
+  "k": 225,
+  "line": 288,
+  "cut": "lid(`rf:${F}`, 'R6.2', 'billing', 'refund', { orderId: O, fulfilmentId: F, amountMinor: s.chargeRow.args.amountMinor }, abortAt, L, { after: [...after], money: true })",
+  "put": "void 0",
+  "from": "lid(`rf:${F}`, 'R6.2', 'billing', 'refund', { orderId: O, fulfilmentId: F, amountMinor: s.chargeRow.args.amountMinor }, abortAt, L, { after: [...after], money: true });",
+  "to": "void 0;"
+ },
+ {
+  "k": 226,
+  "line": 291,
+  "cut": " after: [...after] ",
+  "put": "",
+  "from": "for (const i of s.items) if (i.row) { lid(`rel:${F}:${i.sku}`, 'R6.2', 'inventory', 'release', { orderId: O, fulfilmentId: F, sku: i.sku }, abortAt, L, { after: [...after] }); rec.reservations[`${F}/${i.sku}`] = 'released'; }",
+  "to": "for (const i of s.items) if (i.row) { lid(`rel:${F}:${i.sku}`, 'R6.2', 'inventory', 'release', { orderId: O, fulfilmentId: F, sku: i.sku }, abortAt, L, {}); rec.reservations[`${F}/${i.sku}`] = 'released'; }"
+ },
+ {
+  "k": 227,
+  "line": 292,
+  "cut": "fst(F, 'cancelled', 'R6.2', abortAt, L)",
+  "put": "void 0",
+  "from": "fst(F, 'cancelled', 'R6.2', abortAt, L);",
+  "to": "void 0;"
+ },
+ {
+  "k": 228,
+  "line": 297,
+  "cut": "!",
+  "put": "=",
+  "from": "if (s.failAt !== null) {",
+  "to": "if (s.failAt === null) {"
+ },
+ {
+  "k": 229,
+  "line": 300,
+  "cut": "!",
+  "put": "=",
+  "from": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined && v !== null));",
+  "to": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v === undefined && v !== null));"
+ },
+ {
+  "k": 230,
+  "line": 300,
+  "cut": "!",
+  "put": "=",
+  "from": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined && v !== null));",
+  "to": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined && v === null));"
+ },
+ {
+  "k": 231,
+  "line": 300,
+  "cut": "&&",
+  "put": "||",
+  "from": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined && v !== null));",
+  "to": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined || v !== null));"
+ },
+ {
+  "k": 232,
+  "line": 300,
+  "cut": "ax",
+  "put": "in",
+  "from": "const last = Math.max(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined && v !== null));",
+  "to": "const last = Math.min(x, ...[s.chargeRow?.at, ...s.items.map(i => i.row?.at)].filter(v => v !== undefined && v !== null));"
+ },
+ {
+  "k": 233,
+  "line": 301,
+  "cut": "12",
+  "put": "6",
+  "from": "const L = last + 120 * MIN;",
+  "to": "const L = last + 60 * MIN;"
+ },
+ {
+  "k": 234,
+  "line": 304,
+  "cut": "lid(`rf:${F}`, 'R5.1', 'billing', 'refund', { orderId: O, fulfilmentId: F, amountMinor: s.chargeRow.args.amountMinor }, x, L, { money: true })",
+  "put": "void 0",
+  "from": "lid(`rf:${F}`, 'R5.1', 'billing', 'refund', { orderId: O, fulfilmentId: F, amountMinor: s.chargeRow.args.amountMinor }, x, L, { money: true });",
+  "to": "void 0;"
+ },
+ {
+  "k": 235,
+  "line": 307,
+  "cut": " after: [...after] ",
+  "put": "",
+  "from": "for (const i of s.items) if (i.row) { lid(`rel:${F}:${i.sku}`, 'R5.1', 'inventory', 'release', { orderId: O, fulfilmentId: F, sku: i.sku }, x, L, { after: [...after] }); rec.reservations[`${F}/${i.sku}`] = 'released'; }",
+  "to": "for (const i of s.items) if (i.row) { lid(`rel:${F}:${i.sku}`, 'R5.1', 'inventory', 'release', { orderId: O, fulfilmentId: F, sku: i.sku }, x, L, {}); rec.reservations[`${F}/${i.sku}`] = 'released'; }"
+ },
+ {
+  "k": 236,
+  "line": 308,
+  "cut": "fst(F, 'failed', 'R5.2', x, L)",
+  "put": "void 0",
+  "from": "fst(F, 'failed', 'R5.2', x, L);",
+  "to": "void 0;"
+ },
+ {
+  "k": 237,
+  "line": 309,
+  "cut": "ntf(F, 'fulfilment-failed', 'R5.2', x, L)",
+  "put": "void 0",
+  "from": "ntf(F, 'fulfilment-failed', 'R5.2', x, L);",
+  "to": "void 0;"
+ },
+ {
+  "k": 238,
+  "line": 312,
+  "cut": "ax",
+  "put": "in",
+  "from": "ends.push('failed'); lastEnd = Math.max(lastEnd, x);",
+  "to": "ends.push('failed'); lastEnd = Math.min(lastEnd, x);"
+ },
+ {
+  "k": 239,
+  "line": 316,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const prePatched = s.items[0].pre;",
+  "to": "const prePatched = s.items.at(-1).pre;"
+ },
+ {
+  "k": 240,
+  "line": 319,
+  "cut": "!",
+  "put": "=",
+  "from": "const firstCol = [s.collectedMsg?.at, s.deliveredMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0];",
+  "to": "const firstCol = [s.collectedMsg?.at, s.deliveredMsg?.at].filter(x => x === undefined).sort((a, b) => a - b)[0];"
+ },
+ {
+  "k": 241,
+  "line": 319,
+  "cut": "[0]",
+  "put": ".at(-1)",
+  "from": "const firstCol = [s.collectedMsg?.at, s.deliveredMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b)[0];",
+  "to": "const firstCol = [s.collectedMsg?.at, s.deliveredMsg?.at].filter(x => x !== undefined).sort((a, b) => a - b).at(-1);"
+ },
+ {
+  "k": 242,
+  "line": 320,
+  "cut": "!",
+  "put": "=",
+  "from": "if (firstCol !== undefined && !prePatched) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 120 * MIN);",
+  "to": "if (firstCol === undefined && !prePatched) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 120 * MIN);"
+ },
+ {
+  "k": 243,
+  "line": 320,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (firstCol !== undefined && !prePatched) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 120 * MIN);",
+  "to": "if (firstCol !== undefined || !prePatched) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 120 * MIN);"
+ },
+ {
+  "k": 244,
+  "line": 320,
+  "cut": "12",
+  "put": "6",
+  "from": "if (firstCol !== undefined && !prePatched) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 120 * MIN);",
+  "to": "if (firstCol !== undefined && !prePatched) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 60 * MIN);"
+ },
+ {
+  "k": 245,
+  "line": 320,
+  "cut": "!prePatched",
+  "put": "true",
+  "from": "if (firstCol !== undefined && !prePatched) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 120 * MIN);",
+  "to": "if (firstCol !== undefined && true) fst(F, 'dispatched', 'R4.4', firstCol, firstCol + 120 * MIN);"
+ },
+ {
+  "k": 246,
+  "line": 323,
+  "cut": "12",
+  "put": "6",
+  "from": "fst(F, 'completed', 'R4.4', s.deliveredMsg.at, s.deliveredMsg.at + 120 * MIN, { after: prePatched ? [] : [`fst:${F}:dispatched`] });",
+  "to": "fst(F, 'completed', 'R4.4', s.deliveredMsg.at, s.deliveredMsg.at + 60 * MIN, { after: prePatched ? [] : [`fst:${F}:dispatched`] });"
+ },
+ {
+  "k": 247,
+  "line": 323,
+  "cut": "fst(F, 'completed', 'R4.4', s.deliveredMsg.at, s.deliveredMsg.at + 120 * MIN, { after: prePatched ? [] : [`fst:${F}:dispatched`] })",
+  "put": "void 0",
+  "from": "fst(F, 'completed', 'R4.4', s.deliveredMsg.at, s.deliveredMsg.at + 120 * MIN, { after: prePatched ? [] : [`fst:${F}:dispatched`] });",
+  "to": "void 0;"
+ },
+ {
+  "k": 248,
+  "line": 325,
+  "cut": "ax",
+  "put": "in",
+  "from": "ends.push('completed'); lastEnd = Math.max(lastEnd, s.deliveredMsg.at);",
+  "to": "ends.push('completed'); lastEnd = Math.min(lastEnd, s.deliveredMsg.at);"
+ },
+ {
+  "k": 249,
+  "line": 327,
+  "cut": "=",
+  "put": "!",
+  "from": "const later = msgs.find(m => m.F === F && m.meaning === 'inTransit');",
+  "to": "const later = msgs.find(m => m.F !== F && m.meaning === 'inTransit');"
+ },
+ {
+  "k": 250,
+  "line": 327,
+  "cut": "=",
+  "put": "!",
+  "from": "const later = msgs.find(m => m.F === F && m.meaning === 'inTransit');",
+  "to": "const later = msgs.find(m => m.F === F && m.meaning !== 'inTransit');"
+ },
+ {
+  "k": 251,
+  "line": 327,
+  "cut": "&&",
+  "put": "||",
+  "from": "const later = msgs.find(m => m.F === F && m.meaning === 'inTransit');",
+  "to": "const later = msgs.find(m => m.F === F || m.meaning === 'inTransit');"
+ },
+ {
+  "k": 252,
+  "line": 327,
+  "cut": "",
+  "put": "Last",
+  "from": "const later = msgs.find(m => m.F === F && m.meaning === 'inTransit');",
+  "to": "const later = msgs.findLast(m => m.F === F && m.meaning === 'inTransit');"
+ },
+ {
+  "k": 253,
+  "line": 332,
+  "cut": "!",
+  "put": "=",
+  "from": "if (abortAt !== null) {",
+  "to": "if (abortAt === null) {"
+ },
+ {
+  "k": 254,
+  "line": 333,
+  "cut": "6",
+  "put": "12",
+  "from": "ost('cancelled', 'R6.2', abortAt, abortAt + 60 * MIN);",
+  "to": "ost('cancelled', 'R6.2', abortAt, abortAt + 120 * MIN);"
+ },
+ {
+  "k": 255,
+  "line": 333,
+  "cut": "ost('cancelled', 'R6.2', abortAt, abortAt + 60 * MIN)",
+  "put": "void 0",
+  "from": "ost('cancelled', 'R6.2', abortAt, abortAt + 60 * MIN);",
+  "to": "void 0;"
+ },
+ {
+  "k": 256,
+  "line": 334,
+  "cut": "6",
+  "put": "12",
+  "from": "ntf(O, 'order-cancelled', 'R6.2', abortAt, abortAt + 60 * MIN);",
+  "to": "ntf(O, 'order-cancelled', 'R6.2', abortAt, abortAt + 120 * MIN);"
+ },
+ {
+  "k": 257,
+  "line": 334,
+  "cut": "ntf(O, 'order-cancelled', 'R6.2', abortAt, abortAt + 60 * MIN)",
+  "put": "void 0",
+  "from": "ntf(O, 'order-cancelled', 'R6.2', abortAt, abortAt + 60 * MIN);",
+  "to": "void 0;"
+ },
+ {
+  "k": 258,
+  "line": 340,
+  "cut": "=",
+  "put": "!",
+  "from": "if (saga.length && ends.length === saga.length) {",
+  "to": "if (saga.length && ends.length !== saga.length) {"
+ },
+ {
+  "k": 259,
+  "line": 340,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (saga.length && ends.length === saga.length) {",
+  "to": "if (saga.length || ends.length === saga.length) {"
+ },
+ {
+  "k": 260,
+  "line": 342,
+  "cut": "12",
+  "put": "6",
+  "from": "ost(final, 'R4.5', lastEnd, lastEnd + 120 * MIN);",
+  "to": "ost(final, 'R4.5', lastEnd, lastEnd + 60 * MIN);"
+ },
+ {
+  "k": 261,
+  "line": 342,
+  "cut": "ost(final, 'R4.5', lastEnd, lastEnd + 120 * MIN)",
+  "put": "void 0",
+  "from": "ost(final, 'R4.5', lastEnd, lastEnd + 120 * MIN);",
+  "to": "void 0;"
+ },
+ {
+  "k": 262,
+  "line": 355,
+  "cut": "=",
+  "put": "!",
+  "from": "if (!t || t.subject === null) return null;",
+  "to": "if (!t || t.subject !== null) return null;"
+ },
+ {
+  "k": 263,
+  "line": 355,
+  "cut": "||",
+  "put": "&&",
+  "from": "if (!t || t.subject === null) return null;",
+  "to": "if (!t && t.subject === null) return null;"
+ },
+ {
+  "k": 264,
+  "line": 357,
+  "cut": "=",
+  "put": "!",
+  "from": "const alloc = world.sor['inventory.allocations'].find(a => a.orderId === O).fulfilments;",
+  "to": "const alloc = world.sor['inventory.allocations'].find(a => a.orderId !== O).fulfilments;"
+ },
+ {
+  "k": 265,
+  "line": 357,
+  "cut": "",
+  "put": "Last",
+  "from": "const alloc = world.sor['inventory.allocations'].find(a => a.orderId === O).fulfilments;",
+  "to": "const alloc = world.sor['inventory.allocations'].findLast(a => a.orderId === O).fulfilments;"
+ },
+ {
+  "k": 266,
+  "line": 360,
+  "cut": "=",
+  "put": "!",
+  "from": "const b = world.backlog.find(x => x.case === c);",
+  "to": "const b = world.backlog.find(x => x.case !== c);"
+ },
+ {
+  "k": 267,
+  "line": 360,
+  "cut": "",
+  "put": "Last",
+  "from": "const b = world.backlog.find(x => x.case === c);",
+  "to": "const b = world.backlog.findLast(x => x.case === c);"
+ },
+ {
+  "k": 268,
+  "line": 362,
+  "cut": "=",
+  "put": "!",
+  "from": "if (qual === 'orders.orders' && r.orderId === O) rec.order = r.status;",
+  "to": "if (qual !== 'orders.orders' && r.orderId === O) rec.order = r.status;"
+ },
+ {
+  "k": 269,
+  "line": 362,
+  "cut": "=",
+  "put": "!",
+  "from": "if (qual === 'orders.orders' && r.orderId === O) rec.order = r.status;",
+  "to": "if (qual === 'orders.orders' && r.orderId !== O) rec.order = r.status;"
+ },
+ {
+  "k": 270,
+  "line": 362,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (qual === 'orders.orders' && r.orderId === O) rec.order = r.status;",
+  "to": "if (qual === 'orders.orders' || r.orderId === O) rec.order = r.status;"
+ },
+ {
+  "k": 271,
+  "line": 363,
+  "cut": "=",
+  "put": "!",
+  "from": "if (qual === 'orders.fulfilments') rec.fulfilments[r.fulfilmentId] = r.status;",
+  "to": "if (qual !== 'orders.fulfilments') rec.fulfilments[r.fulfilmentId] = r.status;"
+ },
+ {
+  "k": 272,
+  "line": 364,
+  "cut": "=",
+  "put": "!",
+  "from": "if (qual === 'inventory.reservations') rec.reservations[`${r.fulfilmentId}/${r.sku}`] = r.status;",
+  "to": "if (qual !== 'inventory.reservations') rec.reservations[`${r.fulfilmentId}/${r.sku}`] = r.status;"
+ },
+ {
+  "k": 273,
+  "line": 365,
+  "cut": "=",
+  "put": "!",
+  "from": "if (qual === 'billing.charges') rec.charges[r.fulfilmentId] = { amountMinor: r.amountMinor, refundedMinor: r.refundedMinor };",
+  "to": "if (qual !== 'billing.charges') rec.charges[r.fulfilmentId] = { amountMinor: r.amountMinor, refundedMinor: r.refundedMinor };"
+ },
+ {
+  "k": 274,
+  "line": 366,
+  "cut": "=",
+  "put": "!",
+  "from": "if (qual === 'carrier.shipments') { rec.shipments[r.fulfilmentId] = r.status; shipFul.set(r.shipmentId, r.fulfilmentId); }",
+  "to": "if (qual !== 'carrier.shipments') { rec.shipments[r.fulfilmentId] = r.status; shipFul.set(r.shipmentId, r.fulfilmentId); }"
+ },
+ {
+  "k": 275,
+  "line": 370,
+  "cut": "=",
+  "put": "!",
+  "from": "...idx.ledger.filter(r => r.committed && (r.case === c || fids.has(r.args?.fulfilmentId))).map(r => ({ seq: r.seq, kind: 'row', r })),",
+  "to": "...idx.ledger.filter(r => r.committed && (r.case !== c || fids.has(r.args?.fulfilmentId))).map(r => ({ seq: r.seq, kind: 'row', r })),"
+ },
+ {
+  "k": 276,
+  "line": 370,
+  "cut": "&&",
+  "put": "||",
+  "from": "...idx.ledger.filter(r => r.committed && (r.case === c || fids.has(r.args?.fulfilmentId))).map(r => ({ seq: r.seq, kind: 'row', r })),",
+  "to": "...idx.ledger.filter(r => r.committed || (r.case === c || fids.has(r.args?.fulfilmentId))).map(r => ({ seq: r.seq, kind: 'row', r })),"
+ },
+ {
+  "k": 277,
+  "line": 370,
+  "cut": "||",
+  "put": "&&",
+  "from": "...idx.ledger.filter(r => r.committed && (r.case === c || fids.has(r.args?.fulfilmentId))).map(r => ({ seq: r.seq, kind: 'row', r })),",
+  "to": "...idx.ledger.filter(r => r.committed && (r.case === c && fids.has(r.args?.fulfilmentId))).map(r => ({ seq: r.seq, kind: 'row', r })),"
+ },
+ {
+  "k": 278,
+  "line": 371,
+  "cut": "=",
+  "put": "!",
+  "from": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),",
+  "to": "...idx.writes.filter(w => w.system !== 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),"
+ },
+ {
+  "k": 279,
+  "line": 371,
+  "cut": "=",
+  "put": "!",
+  "from": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),",
+  "to": "...idx.writes.filter(w => w.system === 'carrier' && w.table !== 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),"
+ },
+ {
+  "k": 280,
+  "line": 371,
+  "cut": "!",
+  "put": "=",
+  "from": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),",
+  "to": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source === 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),"
+ },
+ {
+  "k": 281,
+  "line": 371,
+  "cut": "&&",
+  "put": "||",
+  "from": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),",
+  "to": "...idx.writes.filter(w => w.system === 'carrier' || w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),"
+ },
+ {
+  "k": 282,
+  "line": 371,
+  "cut": "&&",
+  "put": "||",
+  "from": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),",
+  "to": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' || fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),"
+ },
+ {
+  "k": 283,
+  "line": 371,
+  "cut": "&&",
+  "put": "||",
+  "from": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),",
+  "to": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) || w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),"
+ },
+ {
+  "k": 284,
+  "line": 371,
+  "cut": "&&",
+  "put": "||",
+  "from": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' && !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),",
+  "to": "...idx.writes.filter(w => w.system === 'carrier' && w.table === 'shipments' && fids.has(w.row?.fulfilmentId) && w.source !== 'initial' || !String(w.source).startsWith('backlog:')).map(w => ({ seq: w.seq, kind: 'write', w })),"
+ },
+ {
+  "k": 285,
+  "line": 374,
+  "cut": "=",
+  "put": "!",
+  "from": "if (e.kind === 'write') { rec.shipments[e.w.row.fulfilmentId] = e.w.row.status; continue; }",
+  "to": "if (e.kind !== 'write') { rec.shipments[e.w.row.fulfilmentId] = e.w.row.status; continue; }"
+ },
+ {
+  "k": 286,
+  "line": 377,
+  "cut": "=",
+  "put": "!",
+  "from": "if (k === 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }",
+  "to": "if (k !== 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }"
+ },
+ {
+  "k": 287,
+  "line": 377,
+  "cut": "=",
+  "put": "!",
+  "from": "if (k === 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }",
+  "to": "if (k === 'orders.create' && args.orderId !== O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }"
+ },
+ {
+  "k": 288,
+  "line": 377,
+  "cut": "=",
+  "put": "!",
+  "from": "if (k === 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }",
+  "to": "if (k === 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location !== null ? 'unavailable' : 'pending'; }"
+ },
+ {
+  "k": 289,
+  "line": 377,
+  "cut": "&&",
+  "put": "||",
+  "from": "if (k === 'orders.create' && args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }",
+  "to": "if (k === 'orders.create' || args.orderId === O) { rec.order = 'pending'; for (const f of args.fulfilments ?? []) rec.fulfilments[f.fulfilmentId] = f.location === null ? 'unavailable' : 'pending'; }"
+ },
+ {
+  "k": 290,
+  "line": 378,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'orders.setStatus' && args.orderId === O) { if (args.fulfilmentId === null) rec.order = args.status; else rec.fulfilments[args.fulfilmentId] = args.status; }",
+  "to": "else if (k !== 'orders.setStatus' && args.orderId === O) { if (args.fulfilmentId === null) rec.order = args.status; else rec.fulfilments[args.fulfilmentId] = args.status; }"
+ },
+ {
+  "k": 291,
+  "line": 378,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'orders.setStatus' && args.orderId === O) { if (args.fulfilmentId === null) rec.order = args.status; else rec.fulfilments[args.fulfilmentId] = args.status; }",
+  "to": "else if (k === 'orders.setStatus' && args.orderId !== O) { if (args.fulfilmentId === null) rec.order = args.status; else rec.fulfilments[args.fulfilmentId] = args.status; }"
+ },
+ {
+  "k": 292,
+  "line": 378,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'orders.setStatus' && args.orderId === O) { if (args.fulfilmentId === null) rec.order = args.status; else rec.fulfilments[args.fulfilmentId] = args.status; }",
+  "to": "else if (k === 'orders.setStatus' && args.orderId === O) { if (args.fulfilmentId !== null) rec.order = args.status; else rec.fulfilments[args.fulfilmentId] = args.status; }"
+ },
+ {
+  "k": 293,
+  "line": 378,
+  "cut": "&&",
+  "put": "||",
+  "from": "else if (k === 'orders.setStatus' && args.orderId === O) { if (args.fulfilmentId === null) rec.order = args.status; else rec.fulfilments[args.fulfilmentId] = args.status; }",
+  "to": "else if (k === 'orders.setStatus' || args.orderId === O) { if (args.fulfilmentId === null) rec.order = args.status; else rec.fulfilments[args.fulfilmentId] = args.status; }"
+ },
+ {
+  "k": 294,
+  "line": 379,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'inventory.reserve') rec.reservations[`${args.fulfilmentId}/${args.sku}`] = 'active';",
+  "to": "else if (k !== 'inventory.reserve') rec.reservations[`${args.fulfilmentId}/${args.sku}`] = 'active';"
+ },
+ {
+  "k": 295,
+  "line": 380,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'inventory.release') rec.reservations[`${args.fulfilmentId}/${args.sku}`] = 'released';",
+  "to": "else if (k !== 'inventory.release') rec.reservations[`${args.fulfilmentId}/${args.sku}`] = 'released';"
+ },
+ {
+  "k": 296,
+  "line": 381,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'billing.charge') rec.charges[args.fulfilmentId] = { amountMinor: args.amountMinor, refundedMinor: rec.charges[args.fulfilmentId]?.refundedMinor ?? 0 };",
+  "to": "else if (k !== 'billing.charge') rec.charges[args.fulfilmentId] = { amountMinor: args.amountMinor, refundedMinor: rec.charges[args.fulfilmentId]?.refundedMinor ?? 0 };"
+ },
+ {
+  "k": 297,
+  "line": 382,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'billing.refund' && rec.charges[args.fulfilmentId]) rec.charges[args.fulfilmentId].refundedMinor += args.amountMinor;",
+  "to": "else if (k !== 'billing.refund' && rec.charges[args.fulfilmentId]) rec.charges[args.fulfilmentId].refundedMinor += args.amountMinor;"
+ },
+ {
+  "k": 298,
+  "line": 382,
+  "cut": "&&",
+  "put": "||",
+  "from": "else if (k === 'billing.refund' && rec.charges[args.fulfilmentId]) rec.charges[args.fulfilmentId].refundedMinor += args.amountMinor;",
+  "to": "else if (k === 'billing.refund' || rec.charges[args.fulfilmentId]) rec.charges[args.fulfilmentId].refundedMinor += args.amountMinor;"
+ },
+ {
+  "k": 299,
+  "line": 383,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'carrier.create') rec.shipments[args.fulfilmentId] = 'created';",
+  "to": "else if (k !== 'carrier.create') rec.shipments[args.fulfilmentId] = 'created';"
+ },
+ {
+  "k": 300,
+  "line": 384,
+  "cut": "=",
+  "put": "!",
+  "from": "else if (k === 'carrier.cancel') rec.shipments[args.fulfilmentId] = 'cancelled';",
+  "to": "else if (k !== 'carrier.cancel') rec.shipments[args.fulfilmentId] = 'cancelled';"
+ },
+ {
+  "k": 301,
+  "line": 398,
+  "cut": "=",
+  "put": "!",
+  "from": "return s.failedMsg?.at === s.failAt ? s.failedMsg : null;",
+  "to": "return s.failedMsg?.at !== s.failAt ? s.failedMsg : null;"
+ },
+ {
+  "k": 302,
+  "line": 404,
+  "cut": "=",
+  "put": "!",
+  "from": "for (const a of actions.slice(actions.indexOf(counted) + 1)) if (a.payload.action === 'cancel') {",
+  "to": "for (const a of actions.slice(actions.indexOf(counted) + 1)) if (a.payload.action !== 'cancel') {"
+ },
+ {
+  "k": 303,
+  "line": 405,
+  "cut": "permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } })",
+  "put": "void 0",
+  "from": "permitted.push({ rule: 'R6.3', system: 'notify', op: 'send', match: { about: O, template: 'cancel-refused' } });",
+  "to": "void 0;"
+ }
+]

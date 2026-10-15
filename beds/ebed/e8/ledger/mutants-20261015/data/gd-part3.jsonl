@@ -1,0 +1,39 @@
+{"k":4,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":9,"diffs":3,"completedDiffs":3,"cases":1473,"ex":["1010:5 ref-earliest o0041 [completed] orig PASS | mut D:2/outside-allowed/","1010:5 ref-earliest o0056 [completed] orig PASS | mut D:2/outside-allowed/","1010:5 ref-earliest o0066 [completed] orig PASS | mut D:2/outside-allowed/"]}
+{"k":15,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":21,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":32,"diffs":3,"completedDiffs":3,"cases":7,"ex":["1009:3 ref-earliest o0002 [completed] orig PASS | mut D:2/outside-allowed/","1009:3 ref-earliest o0005 [completed] orig PASS | mut D:2/outside-allowed/","1009:3 ref-earliest o0007 [completed] orig PASS | mut D:2/outside-allowed/"]}
+{"k":39,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":42,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":53,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":62,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":78,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":86,"diffs":3,"completedDiffs":3,"cases":89,"ex":["1009:3 ref-earliest o0022 [completed] orig PASS | mut D:1/over-escalation/","1009:3 ref-earliest o0064 [completed] orig PASS | mut D:1/over-escalation/","1009:3 ref-latest o0022 [completed] orig PASS | mut D:1/over-escalation/"]}
+{"k":103,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":122,"diffs":3,"completedDiffs":3,"cases":79,"ex":["1009:3 ref-latest o0007 [completed] orig PASS | mut D:3/missed/ntf:ORD-1009-0007:action-required","1009:3 ref-latest o0009 [completed] orig PASS | mut D:3/missed/ntf:ORD-1009-0009:action-required","1009:3 ref-latest o0012 [completed] orig PASS | mut D:3/missed/ntf:ORD-1009-0012:action-required"]}
+{"k":146,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":153,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":160,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":174,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":191,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":195,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":203,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":209,"diffs":3,"completedDiffs":3,"cases":73,"ex":["1009:3 ref-latest o0001 [completed] orig PASS | mut D:3/missed/shp:ORD-1009-0001-F1","1009:3 ref-latest o0004 [completed] orig PASS | mut D:3/missed/shp:ORD-1009-0004-F1","1009:3 ref-latest o0006 [completed] orig PASS | mut D:3/missed/shp:ORD-1009-0006-F1"]}
+{"k":212,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":229,"diffs":3,"completedDiffs":3,"cases":31,"ex":["1009:3 ref-earliest o0020 [completed] orig PASS | mut OPEN","1009:3 ref-earliest o0026 [completed] orig PASS | mut OPEN","1009:3 ref-earliest o0031 [completed] orig PASS | mut OPEN"]}
+{"k":238,"diffs":3,"completedDiffs":3,"cases":93,"ex":["1009:3 ref-earliest o0033 [completed] orig PASS | mut D:3/missed/ost:ORD-1009-0033:failed","1009:3 ref-latest o0020 [completed] orig PASS | mut D:3/missed/ost:ORD-1009-0020:failed","1009:3 ref-latest o0026 [completed] orig PASS | mut D:3/missed/ost:ORD-1009-0026:failed"]}
+{"k":250,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":262,"diffs":3,"completedDiffs":3,"cases":3,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/"]}
+{"k":265,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":268,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}
+{"k":271,"diffs":3,"completedDiffs":3,"cases":5,"ex":["1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0005 [completed] orig PASS | mut D:5/records/"]}
+{"k":274,"diffs":3,"completedDiffs":3,"cases":5,"ex":["1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0005 [completed] orig PASS | mut D:5/records/"]}
+{"k":277,"diffs":3,"completedDiffs":3,"cases":3,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/"]}
+{"k":280,"diffs":3,"completedDiffs":3,"cases":4,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0004 [completed] orig PASS | mut D:5/records/"]}
+{"k":283,"diffs":3,"completedDiffs":3,"cases":3,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/"]}
+{"k":286,"diffs":3,"completedDiffs":3,"cases":3,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/"]}
+{"k":289,"diffs":3,"completedDiffs":3,"cases":3,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/"]}
+{"k":292,"diffs":3,"completedDiffs":3,"cases":3,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0003 [completed] orig PASS | mut D:5/records/"]}
+{"k":295,"diffs":3,"completedDiffs":3,"cases":4,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0002 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0004 [completed] orig PASS | mut D:5/records/"]}
+{"k":298,"diffs":3,"completedDiffs":3,"cases":6,"ex":["1009:3 ref-earliest o0001 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0004 [completed] orig PASS | mut D:5/records/","1009:3 ref-earliest o0006 [completed] orig PASS | mut D:5/records/"]}
+{"k":301,"diffs":0,"completedDiffs":0,"cases":11083,"ex":[]}

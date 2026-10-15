@@ -12,6 +12,8 @@ import { systems, itsm, sla, slaIdOf } from '../systems.mjs';
 import { generateWorld, twins, timingProblems, addBiz, bizBetween, zoneOffset, CALENDARS, CLASSES, EPOCHS, HORIZON_END, T0, iso, msOf } from '../world.mjs';
 import { actors } from '../actors.mjs';
 import { walkerArm } from '../tools/walker.mjs';
+import { binding as itemBinding, oracleItem } from '../index.mjs';
+import { referenceArm } from '../../oracle/policy.mjs';
 import { MockSystem } from '../../host/mocks.mjs';
 import { validate } from '../../host/schema.mjs';
 import { createHost } from '../../host/host.mjs';
@@ -91,6 +93,38 @@ test('itsm: the d5 F5 rename of create.ci -> configurationItem (old name refused
   const { ci, ...rest } = CREATE;
   assert.equal(s.apply('create', { ...rest, number: 'INC-3', configurationItem: ci }, 'k3', at, { ctx: NOW }).status, 'ok');
   assert.equal(s.get('incidents', 'INC-3').ci, 'CI-A', 'stored under the internal name');
+});
+
+test('itsm: a create refused for a renamed field is re-issued under the same key, not a 409 (SPEC §1 API changes; review 2026-10-15 round 2)', () => {
+  const s = withRefs();
+  const at = Date.parse('2026-03-25T17:00:00+01:00');
+  s.addRename({ atMs: at, system: 'itsm', op: 'create', from: 'ci', to: 'configurationItem' });
+  const { ci, ...rest } = CREATE;
+  const stale = { ...CREATE, number: 'INC-R' }, fixed = { ...rest, number: 'INC-R', configurationItem: ci };
+  const r1 = s.apply('create', stale, 'kR', at, { ctx: NOW });
+  assert.deepEqual([r1.committed, r1.error.code, r1.error.reason], [false, 400, 'field-renamed'], 'the retired name is refused and nothing commits');
+  assert.equal(s.keyStatus('kR'), 'not-found', 'a refused request commits no key');
+  const r2 = s.apply('create', fixed, 'kR', at + MIN, { ctx: NOW });
+  assert.equal(r2.status, 'ok', 'the corrected request under the same key commits (keys compare internal names)');
+  const r3 = s.apply('create', fixed, 'kR', at + 2 * MIN, { ctx: NOW });
+  assert.equal(r3.deduped, true, 'a repeat of the corrected request is deduplicated, not a key conflict');
+  assert.equal(s.apply('create', stale, 'kR', at + 3 * MIN, { ctx: NOW }).error.code, 400, 'the retired name stays refused, also under a committed key');
+  assert.equal(s.apply('create', { ...fixed, summary: 'other' }, 'kR', at + 4 * MIN, { ctx: NOW }).error.reason, 'key-conflict', 'different arguments under the key are a 409');
+  assert.match(SPEC.replace(/\s+/g, ' '), /correct it and re-issue it, with the same key, inside the rule's window; it is not a `409`/);
+});
+
+test('sla: escalate is accepted after the stop or cancel, once per SLA and percent; the other ops are refused (SPEC §2; review 2026-10-15 round 2)', () => {
+  const s = new MockSystem(sla);
+  const t = Date.parse('2026-03-02T10:00:00+01:00');
+  for (const [def, end, args] of [['RES-P1', 'stop', { at: 'b', elapsedMinutes: 1, businessElapsedMinutes: 1, breached: true }], ['RES-P2', 'cancel', { at: 'b', reason: 'cancelled' }]]) {
+    const K = { number: 'INC-E', definition: def, generation: 1 };
+    s.apply('start', { ...K, startAt: 'a', schedule: null, timezone: null, plannedBreachAt: null }, `s-${def}`, t);
+    assert.equal(s.apply(end, { ...K, ...args }, `e-${def}`, t).status, 'ok');
+    assert.equal(s.apply('escalate', { ...K, percent: 100, to: 'g@x' }, `x-${def}`, t, { ctx: NOW }).status, 'ok', `escalate after the ${end}`);
+    assert.equal(s.apply('escalate', { ...K, percent: 100, to: 'g@x' }, `y-${def}`, t, { ctx: NOW }).error.code, 409, 'one notice per SLA and percent');
+    assert.equal(s.apply('breach', { ...K, at: 'c' }, `b-${def}`, t).error.reason, 'wrong-stage', `breach after the ${end}`);
+  }
+  assert.match(SPEC.replace(/\s+/g, ' '), /`escalate` is the exception: it is accepted for a recorded SLA at any stage, also after its `stop` or `cancel`/);
 });
 
 test('sla: stage-checked records holding only the values the arm wrote (SPEC §2, R4.5)', () => {
@@ -475,34 +509,44 @@ test('host: approval tasks route past the caller (SoD) and answer by plan; a wal
   assert.equal(res.ok, true, JSON.stringify(res.divergence ?? null).slice(0, 300));
 });
 
-test('leak: no truth-only label, plan field or case id reaches an arm, and nothing is visible before its instant (inputs, files, query results)', async () => {
-  // Extended after review 2026-10-15: every non-legit class label (also the short ones: slow, storm, bounce), every case
-  // id, the truth-only keys, and future knowledge: an event id or a docs/<eventId>.txt before the event's delivery
-  // instant, a rulebook edition's files before its `published` instant.
-  const w = generateWorld({ seed: 1014, difficulty: 5, size: 60 });
+/**
+ * A spy around an arm: every tick's input, files (spec excluded) and query results as text, the paths, and the types of
+ * the events delivered (an arm sees results, timers and task events only on the instance that caused them). A file
+ * (path and content) or a query row already seen at an earlier tick is kept once: it holds nothing the checks have not
+ * seen at an earlier instant (what is visible stays visible), and the text stays small enough to search.
+ */
+function spyOn(inner) {
+  const ticks = [], types = new Map(), seenFiles = new Map(), seenRows = new Set();
+  const arm = { id: `spy-${inner.id}`, tick(input, ctx) {
+    const files = {};
+    for (const [p, c] of Object.entries(ctx.files)) if (!p.startsWith('spec/') && seenFiles.get(p) !== c) { files[p] = c; seenFiles.set(p, c); }
+    const parts = [JSON.stringify(input), JSON.stringify(files)];
+    for (const t of ['itsm.incidents', 'sla.slas', 'sla.escalations', 'notify.notifications']) {
+      for (const row of ctx.query(t, {})) { const j = JSON.stringify(row); if (!seenRows.has(j)) { seenRows.add(j); parts.push(j); } }
+    }
+    ticks.push({ now: msOf(input.now), text: parts.join('\n'), paths: Object.keys(ctx.files) });
+    for (const e of input.events ?? []) types.set(e.type, (types.get(e.type) ?? 0) + 1);
+    return inner.tick(input, ctx);
+  } };
+  return { arm, ticks, types };
+}
+
+/** The leak checks of one spy run (review 2026-10-15): labels, case ids, truth keys, the world id, future knowledge. */
+function assertNoLeak(w, ticks, who) {
   // Labels that are also legitimate words of the arm's world: an intent (withdraw), a resolver action (reassign), and two
   // plain words; every other class label must never be quoted in what an arm sees.
   const legit = new Set(['straight', 'withdraw', 'reassign', 'invalid']);
   const labels = [...new Set(cases(w).map(([, t]) => t.class))].filter(c => !legit.has(c));
   assert.ok(labels.some(c => c.length <= 6), 'the world has short class labels to check');
-  const ticks = [];
-  const inner = walkerArm();
-  const spy = { id: 'spy', tick(input, ctx) {
-    const parts = [JSON.stringify(input), JSON.stringify(Object.fromEntries(Object.entries(ctx.files).filter(([p]) => !p.startsWith('spec/'))))];
-    for (const t of ['itsm.incidents', 'sla.slas', 'sla.escalations', 'notify.notifications']) parts.push(JSON.stringify(ctx.query(t, {})));
-    ticks.push({ now: msOf(input.now), text: parts.join('\n'), paths: Object.keys(ctx.files) });
-    return inner.tick(input, ctx);
-  } };
-  await createHost({ item: binding, world: w, arm: spy }).run();
-  assert.ok(ticks.length > 100, `${ticks.length} ticks`);
+  assert.ok(ticks.length > 100, `${who}: ${ticks.length} ticks`);
   const all = ticks.map(t => t.text).join('\n');
-  for (const s of labels) assert.ok(!all.includes(`"${s}"`), `class label ${s} leaked`);
-  for (const [c] of cases(w)) assert.ok(!all.includes(`"${c}"`), `case id ${c} leaked`);
+  for (const s of labels) assert.ok(!all.includes(`"${s}"`), `${who}: class label ${s} leaked`);
+  for (const [c] of cases(w)) assert.ok(!all.includes(`"${c}"`), `${who}: case id ${c} leaked`);
   const truthKeys = ['steps', 'plannedEnd', 'holdAt', 'instants', 'deadlines', 'epoch', 'class', 'truth', 'noise', 'faults', 'ties', 'approval', 'recurOf',
     'fallbacks', 'preSteps', 'tail', 'replyDeadline', 'confirmDeadline', 'guard', 'eventCase', 'plan', 'controlFlags'];
-  for (const k of truthKeys) assert.ok(!all.includes(`"${k}":`), `truth key ${k} leaked`);
-  for (const s of ['"plannedEnd"', '"replyDeadline"', '"confirmDeadline"', '"ties"', '"guard"', '"approval"', '"recurOf"', '"fallbacks"', 'controlFlags', '"tail"', w.id]) assert.ok(!all.includes(s), `${s} leaked`);
-  assert.ok(all.includes(w.publicId), 'the arm sees the opaque world id');
+  for (const k of truthKeys) assert.ok(!all.includes(`"${k}":`), `${who}: truth key ${k} leaked`);
+  for (const s of ['"plannedEnd"', '"replyDeadline"', '"confirmDeadline"', '"ties"', '"guard"', '"approval"', '"recurOf"', '"fallbacks"', 'controlFlags', '"tail"', w.id]) assert.ok(!all.includes(s), `${who}: ${s} leaked`);
+  assert.ok(all.includes(w.publicId), `${who}: the arm sees the opaque world id`);
   // Future knowledge. An event id is visible from its delivery instant (an arrival's `at`; an event of the go-live export
   // travels in the migration delivered at t0); a doc file is its event's; an edition's files appear at `published`.
   const visibleFrom = new Map(w.arrivals.map(e => [e.id, msOf(e.at)]));
@@ -533,8 +577,38 @@ test('leak: no truth-only label, plan field or case id reaches an arm, and nothi
       }
     }
   }
-  assert.deepEqual(problems.slice(0, 10), [], `${problems.length} future-knowledge problems`);
+  assert.deepEqual(problems.slice(0, 10), [], `${who}: ${problems.length} future-knowledge problems`);
   for (const [id, at] of firstSeen) if (at === visibleFrom.get(id)) onTime++;
   // Not vacuous: ids, docs and the second edition were seen, and most event ids first appear exactly at their delivery.
-  assert.ok(ids > 0 && docs > 0 && ed2Seen && onTime >= firstSeen.size / 2, `the checks saw ${ids} event ids (${onTime}/${firstSeen.size} first seen at delivery), ${docs} doc files, edition 2 seen ${ed2Seen}`);
+  assert.ok(ids > 0 && docs > 0 && ed2Seen && onTime >= firstSeen.size / 2, `${who}: the checks saw ${ids} event ids (${onTime}/${firstSeen.size} first seen at delivery), ${docs} doc files, edition 2 seen ${ed2Seen}`);
+}
+
+test('leak: no truth-only label, plan field or case id reaches an arm, and nothing is visible before its instant (inputs, files, query results)', async () => {
+  // Extended after review 2026-10-15: every non-legit class label (also the short ones: slow, storm, bounce), every case
+  // id, the truth-only keys, and future knowledge: an event id or a docs/<eventId>.txt before the event's delivery
+  // instant, a rulebook edition's files before its `published` instant.
+  const w = generateWorld({ seed: 1014, difficulty: 5, size: 60 });
+  const { arm, ticks } = spyOn(walkerArm());
+  await createHost({ item: binding, world: w, arm }).run();
+  assertNoLeak(w, ticks, 'walker');
+});
+
+test('leak: the events routed back to an instance (results, timers, human-task events) carry nothing truth-only either (review 2026-10-15 round 2)', async () => {
+  // The walker closes its instance on every tick, so it never receives an effect.result, a timer.fired or a humanTask.*
+  // event. The same checks around the analyst-side reference arm, which keeps instances open, wakes on timers and creates
+  // the approval tasks, on the same world.
+  const w = generateWorld({ seed: 1014, difficulty: 5, size: 60 });
+  const holder = {};
+  const ref = referenceArm({ item: oracleItem, world: w, timing: 'earliest', journal: () => ({ committed: holder.host.journal.rows, staged: holder.host.journal.staged }) });
+  const { arm, ticks, types } = spyOn(ref);
+  holder.host = createHost({ item: itemBinding, world: w, arm });
+  const result = await holder.host.run();
+  assert.equal(result.status, 'complete');
+  assertNoLeak(w, ticks, 'reference');
+  // Not vacuous: results, timers and task events were delivered to the spied arm and inspected.
+  const seen = Object.fromEntries(types);
+  assert.ok((seen['effect.result'] ?? 0) > 100, `effect.result events seen: ${seen['effect.result'] ?? 0}`);
+  assert.ok((seen['timer.fired'] ?? 0) > 10, `timer.fired events seen: ${seen['timer.fired'] ?? 0}`);
+  const taskTypes = Object.keys(seen).filter(k => k.startsWith('humanTask.'));
+  assert.ok(taskTypes.length >= 1 && taskTypes.reduce((n, k) => n + seen[k], 0) >= 2, `humanTask.* events seen: ${JSON.stringify(taskTypes.map(k => [k, seen[k]]))}`);
 });

@@ -150,6 +150,8 @@ export const itsm = defineSystem({
 // is the last value the arm wrote: `plannedBreachAt` from start/resume, `breached`/`breachAt` from breach (and `breached`
 // from stop, as given), elapsed values from stop. Lifecycle only: a pause appends { from, to: null }, a resume closes it,
 // and a stop or cancel closes a pause still open at its own `at` (the SLA stops or is cancelled while paused).
+// `escalate` has no stage guard (SPEC §2): a notice for a threshold reached at or before the end may follow the stop or
+// cancel record, and the oracle orders an escalation after the SLA's start only (review 2026-10-15 round 2).
 const SLA_KEY = { number: ID, definition: ID, generation: GEN };
 const stageGuard = (db, a, stages, what) => {
   const id = slaIdOf(a.number, a.definition, a.generation);
@@ -235,7 +237,7 @@ export const sla = defineSystem({
       },
     },
     escalate: {
-      description: 'Record and send one escalation notice (`percent`, `to`) of an SLA.',
+      description: 'Record and send one escalation notice (`percent`, `to`) of a recorded SLA, at any stage (also after its stop or cancel: R5 says which notices are due). One per SLA and percent.',
       args: S.obj({ ...SLA_KEY, percent: S.int({ minimum: 1, maximum: 1000 }), to: S.str(120, { minLength: 1 }) }),
       keyed: true, subjectArgs: ['number'],
       apply(db, a, ctx) {

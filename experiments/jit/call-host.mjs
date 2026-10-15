@@ -109,6 +109,10 @@ const short = (v, n = 300) => String(v?.message ?? v).slice(0, n);
 // 'skip'), the parent's trace and the parent's deopt.json (which a recompile's builder reads). The host labels it at the
 // boundary: { label: 'untrusted:child-deopt', value }. The value is cut so the labelled object stays within the 1,000
 // JSON characters flow-v3 keeps of a child detail (a longer one would lose the label to flow-v3's own clip).
+// Every child-derived detail is labelled, not only a deopt's (review fix): a crash or timeout (the child's error: its own
+// thrown message or stderr), an invalid output (schema errors, whose paths name the child's own keys) and a failed local
+// interpretation (the interpreter's error over a model's answer). A refusal's detail is not: the host's own checks write
+// it before any child code runs (budget figures, profile reasons, the ancestor chain, the registry's revoke reason).
 export const CHILD_DEOPT_LABEL = 'untrusted:child-deopt', CHILD_DETAIL_MAX = 1000;
 export function labelChildDetail(detail, max = CHILD_DETAIL_MAX) {
   if (detail === null || detail === undefined) return null;
@@ -481,7 +485,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       const interpreted = { ok: r.ok, by: 'interpreter', traceId: r.traceId, costUsd: r.costUsd, ...(r.ok ? {} : { error: r.error }) };
       if (r.ok) return finish({ status: 'interpreted', output: r.output, refused, detail, interpreted }, { costUsd: r.costUsd, costUnknown: r.costUnknown });
       const envFault = envFaultOf({ error: r.error });
-      return finish({ status: 'deopt', childStatus: 'interpret-failed', refused, detail, interpreted, deopt: { kind: 'interpret-child', name: refused, detail: r.error ?? null }, ...(envFault ? { envFault } : {}) },
+      return finish({ status: 'deopt', childStatus: 'interpret-failed', refused, detail, interpreted, deopt: { kind: 'interpret-child', name: refused, detail: labelChildDetail(r.error) }, ...(envFault ? { envFault } : {}) },
         { costUsd: r.costUsd, costUnknown: r.costUnknown });
     };
 
@@ -548,11 +552,11 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
         memo.set(key, { result: { status: 'ok', output: r.output, ...trace }, replayed: false });
         journalOut.push({ key, callee, calleeVersion: entry.version, inputDigest, ...(promptDigest ? { promptDigest } : {}), ...(itemAttempt ? { itemAttempt } : {}), parentPath: scope.path, result: { status: 'ok', output: r.output, ...trace } });
       } else if (r.status === 'invalid') {
-        result = { status: 'deopt', childStatus: 'invalid', deopt: { kind: 'output-schema', name: 'contract.output', detail: { errors: r.meta?.schemaErrors ?? r.error?.message ?? null } }, ...trace };
+        result = { status: 'deopt', childStatus: 'invalid', deopt: { kind: 'output-schema', name: 'contract.output', detail: labelChildDetail({ errors: r.meta?.schemaErrors ?? r.error?.message ?? null }) }, ...trace };
       } else if (r.status === 'deopt') {
         result = { status: 'deopt', childStatus: 'deopt', deopt: { kind: r.deopt?.kind ?? 'unknown', name: r.deopt?.name ?? null, detail: labelChildDetail(r.deopt?.detail) }, ...trace };
       } else {
-        result = { status: 'deopt', childStatus: r.status, deopt: { kind: r.status === 'timeout' ? 'timeout' : 'crash', name: null, detail: r.error ?? null }, ...trace };
+        result = { status: 'deopt', childStatus: r.status, deopt: { kind: r.status === 'timeout' ? 'timeout' : 'crash', name: null, detail: labelChildDetail(r.error) }, ...trace };
       }
       if (interp) {
         const interpreted = { ok: interp.ok, by: 'interpreter', traceId: interp.traceId, costUsd: interp.costUsd, ...(interp.ok ? {} : { error: interp.error }) };

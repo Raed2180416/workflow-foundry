@@ -6,14 +6,15 @@ generic oracle it introduced (`beds/ebed/oracle/`) is shared by every later item
 **Status: built, not admitted.** The K1 checks that exist pass (below), including specificity: three independently
 written solvers (`specificity/`, written blind to the oracle from SPEC-E and the contract) each pass **1,749/1,749**
 completed cases on 16 dev worlds (seeds 1241–1244 × d2–d5; 5,247 graded, 0 false rejects, 0 critical, 0 arm errors;
-`tools/specificity-run.mjs`; after the 2026-10-15 oracle changes, the short set 1241–1242 × d3, d5 gives 1,701/1,701).
-Expected oracle mutation score under one differential standard (`ledger/MUTANTS.md`, not yet a `mutate.mjs`
-measurement): 240/301 = 0.797 raw, 1.000 with the 61 grader-equivalent mutants excluded. Still missing before admission:
-a measured oracle mutation score (≥ 0.95), the metamorphic suite (MR1–MR13), mined latent defects (step 6), the paid
-triviality attack (P1) and the arm (c) reference (P2). Nothing here is evidence about any arm.
+`tools/specificity-run.mjs`; after the 2026-10-15 oracle changes, the short set 1241–1242 × d3, d5 gives 1,701/1,701,
+0 critical, 0 arm errors). Oracle mutation score under one differential standard (`ledger/MUTANTS.md`, evidence in
+`ledger/mutants-20261015/`): 240/304 = 0.789 raw, 1.000 with the 64 grader-equivalent mutants excluded; `tools/mutate.mjs`
+now measures the same standard: measured 240/304, and its 64 survivors are exactly the ledger's equivalents. Still missing before admission: K1's mutation score (≥ 0.95 raw needs the
+owner's call on equivalents in the denominator), the metamorphic suite (MR1–MR13), mined latent defects (step 6), the
+paid triviality attack (P1) and the arm (c) reference (P2). Nothing here is evidence about any arm.
 
 ```sh
-node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (15 tests, ~30 s)
+node --test --test-concurrency=2 'beds/ebed/e8/test/*.test.mjs'          # item suite (16 tests, ~50 s)
 node beds/ebed/e8/tools/health.mjs --seeds 1001-1030                      # bed health: reference runs, pools, censoring
 node beds/ebed/e8/tools/controls-run.mjs --seeds 1211-1214                # controls on attack worlds
 node beds/ebed/e8/tools/arm-smoke.mjs <solver.mjs> --seed 1241 --difficulty 3   # run a solver; shows no grading
@@ -43,7 +44,7 @@ The spec every arm gets is `spec/SPEC-E.md` (about 6K tokens); what is in and ou
 
 | file | what |
 |---|---|
-| `spec/SPEC-E.md` | the arm-facing rulebook (R1–R7, readings S1–S14) |
+| `spec/SPEC-E.md` | the arm-facing rulebook (R1–R7, readings S1–S15) |
 | `ledger/SEMANTICS.md` | features in/out with source lines; deviations from E-BED |
 | `systems.mjs` | the pinned systems (orders, inventory, billing, carrier, fraud, notify) |
 | `world.mjs` | `generateWorld`, `twins` (W5 injection twin) |
@@ -53,6 +54,8 @@ The spec every arm gets is `spec/SPEC-E.md` (about 6K tokens); what is in and ou
 | `index.mjs` | the module interface (contract §2), `binding` for the host, `oracle`, `referenceRuns` |
 | `tools/` | health, controls, arm smoke, mutation |
 | `test/e8.test.mjs` | the item suite |
+| `test/unit-checks.mjs` | transition unit checks the grader cannot see (not goldens; `mutate.mjs` never runs them) |
+| `ledger/MUTANTS.md`, `ledger/mutants-20261015/` | the oracle mutants under one standard, and the harness and data behind every verdict |
 | `../oracle/view.mjs`, `grade.mjs`, `policy.mjs` | item-independent: journal index and case views, the grading machine (contract §5.3), the reference policy (§5.6) |
 
 ## Measurements ($0, dev seeds)
@@ -82,8 +85,9 @@ races the customer at the deadline), fails 52–59% of completed cases and leave
 **Goldens**: hand-derived failure points of the saga (cancel after 0–3 committed steps; collection failure; declined
 charge; unknown charge outcome committed or not; cancel after and at the collection instant; delivery before
 collection; the deadline race), each checked against the independent saga planner `beds/ebed/lib/saga.mjs` (MR11).
-With the survivor goldens of the oracle mutation work, `golden.mjs` holds 52 rule-cited goldens; which of them kill a
-mutant in a way the grader can see is in `ledger/MUTANTS.md`.
+With the survivor goldens of the oracle mutation work, `golden.mjs` holds 48 rule-cited goldens, each asserting only
+outcomes the grader can see; 14 transition checks the grader cannot see are unit checks (`test/unit-checks.mjs`). Which
+golden kills which mutant, with a witness journal, is in `ledger/MUTANTS.md`.
 
 ## Decisions and readings (for review)
 
@@ -111,5 +115,12 @@ mutant in a way the grader can see is in `ledger/MUTANTS.md`.
 | E8-20 | S14: a step of a failing fulfilment that commits after the failure is compensated within 120 min of its commit, and the fulfilment's compensation, status and notice within 120 min of the later of failure and commit | former A4 (k230); matches the transition (as R6.2 for a cancel); unreachable on graded trajectories (R4.2 sequencing) |
 | E8-21 | Oracle defect D1 fixed: after a counted cancel, a shipment the carrier reports `collectionFailed` has the record `failed` (was `created`) | R7.1; reachable only after a missed shipment cancel, so the grader never compared it; golden `cancel-before-a-collection-failure (R6.2, R7.1)` |
 | E8-22 | Goldens pin "after the deadline" (S1) as a window opening in (D, D + 1 min] with an effect exactly at D outside it, not the 1-second encoding | review: two goldens pinned `D + 1000 ms` |
+| E8-23 | S4, S7 and S13 are stated in delivery terms: "the same instant" is the instant a report is delivered; S7 judges collection on the reports delivered before the cancel, using `reportedAt` only for "collected at or before the time of the cancel" | re-review: §3.3 calls `reportedAt` a report's time, so "a report with the same time as the cancel always reaches you first" was false for a held-up or repeated report. The transition already judged by delivery |
+| E8-24 | SPEC-E §3.3 states the world contract of E8-8 to the arm: carriers never hold up the reports of an order the customer cancels while it is processing, so every collection before such a cancel has been reported. `ledger/MUTANTS.md` §0 and `SEMANTICS.md` use the same contract; k153 is equivalent (contract) and the S7 golden on a held-up report is a unit check | re-review: on a held-up collection with a cancel the transition required a shipment cancel the carrier refuses (409 already-collected) and a `cancelled` shipment record the carrier never writes, while §0 called that input reachable. The alternative (a reading for a refused shipment cancel) would change every counting cancel's sequencing for an input the generator never produces |
+| E8-25 | S15 (S12 amended): an order counts as cancelled from the moment a rule decides it (R2.1 reject, R2.2 reject or review deadline, a counted cancel under R3.2, R6.2 or R6.4, an amend that leaves nothing available); every later cancel changes nothing and `cancel-refused` is allowed. Grader fix: the transition (`refuseLater`) permits it; golden `a-cancel-after-the-cancellation-is-decided (S15)` and the reject half of the S12 golden | re-review: after a fraud reject an arm following R6.3 was graded outside-allowed, while S13 allowed `cancel-refused` in its parallel case. Also closes N3 (a repeat cancel after a counted cancel while waiting) |
+| E8-26 | S12: after an approve the order is ready only without an unavailable fulfilment; otherwise the cancel is a customer action under R3.2. S11: a customer action delivered before its order's placement is answered with nothing (close the instance) and no `unknown-order` | re-review; both state what the transition already does. Known limit N6: such a call is graded against the order's subject, so a wake-up or an effect in it diverges (unreachable in generated worlds) |
+| E8-27 | The forward steps of a fulfilment are judged against the message that cut them (S10 with S13): the counted cancel when it aborted the fulfilment, its collectionFailed report when that is the failure, the call's case knowledge for a failed attempt (`cutCause`); `evAt` (instant → cancel) is gone | re-review: in a cancel's instant a non-aborted fulfilment's steps were judged against the cancel. Unreachable on graded trajectories; unit check `forward-step-cut-judged-against-its-own-message` |
+| E8-28 | Goldens assert only spec-stated outcomes the grader can see; the 14 transition checks it cannot see (a lid named twice, whether a taken step stays named, windows only a second commit or a step after a stop can move, records never compared, an input outside the world contract) are unit checks. A mutant is killed when (a golden fails it and a reachable witness journal shows a verdict difference) or (the corpus differential shows one); witnesses must pass the host's carrier and system refusals | re-review: `mutate.mjs` counted 25 grader-equivalent mutants (k17 included) through unit checks, and "killed" was defined as two conditions that both hold while 42 kills rested on the corpus alone. The stricter witness check demoted k221 (its witness committed a shipment cancel at the collection run, which the carrier refuses); four goldens now use real collection runs |
+| E8-29 | The evidence for `ledger/MUTANTS.md` is in the repository (`ledger/mutants-20261015/`: harness, matrices, witnesses, corpus differential, classification, corpus digest) and `tools/mutate.mjs` was run on the final files | re-review: the classifications existed only in a session scratchpad and the score was expected, not measured |
 
 Deviations from E-BED §3 E8 are listed in `ledger/SEMANTICS.md`.

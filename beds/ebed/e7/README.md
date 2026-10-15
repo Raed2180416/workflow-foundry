@@ -7,8 +7,9 @@ E8: it reuses only the shared host, oracle and libraries (`beds/ebed/host/`, `or
 **Status: built, not admitted.** The reference transition, its SLA engine, both reference runs, the controls and the
 goldens are in place and pass (measurements below). Still missing before admission, as for E8: the three blind
 specificity solvers (`specificity/`, a separate session, DESIGN §18 step 5), the oracle mutation score (≥ 0.95), the
-metamorphic suite, an Intl minute-stepper N-version check (the N-version check built here compares three clocks that
-all use pinned zone tables), the paid triviality attack and the arm (c) reference. Not built from the design's module
+metamorphic suite beyond its first relation (retroactive history = live history, review round 2), an Intl
+minute-stepper N-version check (the clock N-version checks built here compare clocks that all use pinned zone tables;
+the R4.2 evaluator of round 2 uses the generator's clock), the paid triviality attack and the arm (c) reference. Not built from the design's module
 plan: `ledger/SEMANTICS.md` (DESIGN §14 is its draft) and the tools `arm-smoke`, `mutate`, `specificity-run`, `nversion`
 and `timeline` (part A's `world-health --case` prints a planned timeline; `historyOf` gives the oracle's). Nothing here
 is evidence about any arm.
@@ -33,7 +34,8 @@ schedules from the definition, the service or the group; floating schedules boun
 three DST changes; breach at target; escalations at 50/75/100%), callers who reply or not (awaiting-caller pause,
 auto-closure after 3 business days; resolved incidents closed on confirmation or after 2), withdrawals, and a
 major-incident approval by an incident manager (a human task with a 30-minute deadline, separation of duties, a
-fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (R0–R8, readings S1–S12, about 9K tokens).
+fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (R0–R8, readings S1–S16, about 10K
+tokens: 34,122 characters, at the 3.5 characters per token of the earlier 9K estimate for 31,451).
 
 | difficulty | adds |
 |---|---|
@@ -53,9 +55,9 @@ fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (
 | `transition.mjs` | `referenceTransition` (the oracle core), `recordsOf`, `canonicalArgs`, `historyOf`, `editionAt`, `priorityAt` |
 | `index.mjs` | the module interface: `family`, `specE`, `schemas`, `binding`, `oracleItem` hooks, `critical`, `referencePolicy`, `referenceRuns`, `oracle` |
 | `controls.mjs` | bad, gaming and necessity controls; `targetCases`, `plannedView` |
-| `golden.mjs` | 24 hand-derived, rule-cited goldens + `runGoldens` |
+| `golden.mjs` | 28 hand-derived, rule-cited goldens + `runGoldens` |
 | `tools/` | `health`, `controls-run`, `walker-grade` (part B); `world-health`, `walker` (part A) |
-| `test/` | `world.test.mjs` (part A, 19 tests), `e7.test.mjs` (part B) |
+| `test/` | `world.test.mjs` (part A, 22 tests), `e7.test.mjs` (part B, 47 tests), `sla-independent.mjs` (an independent R4.2–R5 evaluator and the history fuzzer for the N-version check; a fixture, not a suite) |
 | `../../ebed-e7/index.mjs` | the registration shim (as for E8) |
 
 ## How the oracle works (E7 specifics)
@@ -87,6 +89,10 @@ fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (
   cancel record), `sod` (an approval task routed to, or answered by, the incident's caller), `major-without-approval`
   (a `setMajor` that neither follows a counted `approve` nor is the fail-safe: after the deadline, with no counted
   answer and no moot approval before it; "counted" and "moot" are the reference transition's own, R7.2–R7.3).
+- **Approval tasks** (R7.2, review round 2): the first task once the priority first became 1 is required; a further
+  task is permitted only from an unusable, withdrawn or schema-rejected answer on a counted task, one per such answer,
+  until the deadline. Any other task is over-escalation (layer 1) and its answer never counts. An incident closed or
+  cancelled at the deadline itself before an answer counts is moot (S16).
 
 ## Measurements ($0)
 
@@ -96,7 +102,8 @@ times were taken with other jobs sharing the 4-core machine.
 **Bed health** (`tools/health.mjs`, dev seeds 1001–1030, tail mix): 17,600 cases over 120 worlds at d2–d5. Both
 reference runs (earliest and latest timing) pass every case they complete: **0 divergences, 0 oracle errors, 0 critical
 violations**. Rerun 2026-10-15 with the amended critical check: the same counts in every cell below (s/world 1.70,
-2.90, 3.94 and 13.42).
+2.90, 3.94 and 13.42); rerun again after review round 2 (engine fix, re-ask and deadline readings): the same counts in
+every cell (s/world 2.35, 4.88, 7.03 and 15.30, with other jobs on the machine).
 
 | d | cases | completed | ep0–ep2 | ep3 | go-live | s/world (2 runs + 2 gradings) |
 |---|---|---|---|---|---|---|
@@ -110,7 +117,8 @@ past the horizon (`slow`, `reply-at-deadline`, `vendor-ola`, `holiday-span`). Ev
 so the oracle's SLA engine reproduces every SLA record, escalation and notice the generator's independent engine exported.
 
 **Controls** (`tools/controls-run.mjs`, attack seeds 1211–1214, d2–d5; 16 worlds, 2,370 completed cases; rerun
-2026-10-15 after the review fixes, same failure counts as the 2026-10-14 run). Every bad and gaming control fails every
+2026-10-15 after the review fixes and again after review round 2, both times with the same failure counts as the
+2026-10-14 run). Every bad and gaming control fails every
 world: `noop` 2,297/2,370 completed cases (96.9%), `echo` and `declare-every-obligation` 2,345/2,370 (98.9%; the passes
 are messages that name no incident), `escalate-everything` 2,297/2,370 (96.9%; 20 `sod` critical: its extra approval
 task has no exclusions), `pause-everything` 2,130/2,370 (89.9%; d2 87.7%).
@@ -156,8 +164,10 @@ override services the first row in file order gives P1 where the lowest `order` 
 nobody answers, and it declares the incident major at its own deadline. Before the critical fix every `setMajor` after
 the arm's first task deadline was excused.
 
-**Goldens** (`golden.mjs`): 24 hand-derived, rule-cited goldens (G1–G18 of DESIGN §9 with G4 in three zones, G11b, plus a
-duplicate-delivery/stray golden and a records golden) pass the reference transition. Every SLA-engine control (world edit
+**Goldens** (`golden.mjs`): 28 hand-derived, rule-cited goldens (G1–G18 of DESIGN §9 with G4 in three zones, G11b, plus a
+duplicate-delivery/stray golden and a records golden; G14b, G14c, G20 and G21 from review round 2) pass the reference
+transition. G21 binds RES-P2 to a world copy whose floating schedule is a 01:30–03:30 night shift, the only way to
+grade R4.4's in-interval DST clause, since no slice-1 schedule has an interval across a clock change. Every SLA-engine control (world edit
 or engine switch) fails at least one golden, so the goldens see each construct. One hand value of DESIGN §9 was wrong
 and is corrected in the golden: G11's start record plans Wed 03-18 17:00 (1,440 business minutes from Mon 09:00 end at a
 close), not Thu 03-19 09:00.
@@ -166,6 +176,17 @@ close), not Thu 03-19 09:00.
 pauses) `sla.mjs` gives the same D, thresholds, elapsed and business-elapsed values and breach as `lib/clock.mjs`
 (exclusive boundary) and, for D, as the generator's own clock (`world.mjs`, its own zone table); one more pause never
 moves D earlier.
+
+**N-version R4.2–R4.3** (review round 2, `test/sla-independent.mjs`): an independent evaluator written from the spec
+(field timeline with pause runs as intervals, its own R0 from the rulebook files, the generator's clock for business
+time, records derived at the end) agrees with `sla.mjs` on every SLA of 600 fuzzed histories on the d5 rulebook
+(2,065 SLAs: ids, attach and start instants, schedule, zone, every record with its instant and cause, stage, D, breach,
+thresholds, elapsed values, planned breaches). The fuzz reaches 444 histories with same-instant merged changes, 68
+resets (all re-attached), 8 retroactive attaches across the edition switch, 36 retroactive attaches with past pauses,
+14 of them with a pause that ends at the attach instant, and 26 attaches in a pause. A metamorphic relation checks the
+same histories: a retroactive SLA's past pauses equal those of a live SLA with the same pause condition attached at
+`openedAt`. A mutant of `sla.mjs` without the round-2 fix is caught by both (13/600 histories differ) and by the hand
+case.
 
 **Discrimination sanity check** (`tools/walker-grade.mjs`, dev seed 1101 d3, rerun 2026-10-15): the part-A walker
 (keeps every incident record of R1–R3, R6 and R7.1 but has no SLA engine and no deadline closures) passes 8/109 completed
@@ -176,8 +197,8 @@ confirmation; one go-live incident whose SLAs ended before t0, closed on confirm
 specificity solvers and Track C rehearsals; that touch (walker only) is recorded in SEED-LEDGER and DESIGN §13, and the
 tool now refuses the rehearsal block 1201–1249.
 
-**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 58 tests (19 part A, 39 part B), about
-75 s with other jobs on the machine.
+**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 69 tests (22 part A, 47 part B), about
+70 s with other jobs on the machine (2026-10-15, after review round 2).
 
 ## Readings and decisions added in part B (for review)
 
@@ -192,7 +213,7 @@ tool now refuses the rehearsal block 1201–1249.
 | E7-B7 | Necessity controls give up an effect the systems refused (4xx) instead of re-issuing it every minute | a control whose records diverged from the systems re-emitted refused effects for weeks of simulated time (hours of wall time); the reference itself never meets a refusal |
 | E7-B9 | The W5 twin test runs at d2 | from d3 the host draws approval noise from the world id (`host/actors.mjs` `noiseDraw`), which the injection twin does not share, so the twin's approval answers differ (seen at seed 1008 d3); `twins()` also regenerates without a `size` override. Both are outside this item's files (shared host; part A) |
 | E7-B8 | Necessity target cases are the cases whose required effects on the world's planned timeline change when the construct is removed (`plannedView`), or the classes the design names for hook controls | a definition independent of any arm's run, but not of the oracle: the 'planned' targets come from the oracle's own expectation diff (see Controls) |
-| E7-B10 | Same-instant knowledge in the shared grader is per message (E8-16, 2026-10-15): a row emitted at instant t is exempt from a withdrawal at t that a delivered event caused when its call was not given that event; for other causes the old rule stays (the call was given no event of the case at t). E7 adopts it as a grading rule; SPEC-E (E7) states no same-instant reading, and none is needed: the rule only exempts more rows than E8-5 did (a superset of exemptions), so no arm that passed under E8-5 fails under it | `oracle/grade.mjs` `exemptFrom` is shared by every E-bed item; the E7 suite passes unchanged (54/54 on 2026-10-15) |
+| E7-B10 | Same-instant knowledge in the shared grader is per message (E8-16, 2026-10-15): a row emitted at instant t is exempt from a withdrawal at t that a delivered event caused when its call was not given that event; for other causes the old rule stays (the call was given no event of the case at t). E7 adopts it as a grading rule; SPEC-E (E7) states no same-instant reading, and none is needed: the rule only exempts more rows than E8-5 did (a superset of exemptions), so no arm that passed under E8-5 fails under it | `oracle/grade.mjs` `exemptFrom` is shared by every E-bed item; the E7 suite passed with it (54/54 when E8-16 landed, 58/58 when this row was added, both 2026-10-15). Re-review of E8, 2026-10-15 |
 
 ## Review fixes (2026-10-15, $0)
 
@@ -204,3 +225,22 @@ tool now refuses the rehearsal block 1201–1249.
 | minor: the necessity table's "100% of target cases" said little alone | the table gives each control's target share and failures outside the targets, and says which targets are oracle-derived; `controls-run.mjs` prints both and a summary | (reporting; the numbers above) |
 | minor: the leak test skipped short class labels, checked 40 case ids and no future knowledge | every non-legit class label, every case id, the truth-only keys, no event id or `docs/<eventId>.txt` before its delivery, no edition file before `published` (non-vacuity asserted; a planted future event id fails it) | `leak: ... nothing is visible before its instant` (world.test.mjs) |
 | minor: the walker discrimination check used rehearsal seed 1241 | rerun on dev seed 1101 with `tools/walker-grade.mjs` (refuses 1201–1249); the touch of 1241 recorded in SEED-LEDGER and DESIGN §13 | `seed discipline: ...` |
+
+## Review fixes, round 2 (2026-10-15, $0)
+
+| finding | fix | regression test |
+|---|---|---|
+| major: SPEC-E never said that an API schema can change during the stream or what a `400 field-renamed` means, although d5 renames `itsm.create` `ci` → `configurationItem` from ep3 and `create` has the window [t, t]; §1's "same key with different arguments is rejected (409)" told an arm not to re-issue a corrected request under the same key | SPEC §1: an **API changes** paragraph with E8's rule (the file always shows the current names; read it on every call; on a 400 correct the request and re-issue it with the same key inside the rule's window; it is not a 409, since nothing committed and keys are compared under the system's own names), the Keys bullet amended to match, and the consequence for `create` stated: a record due in the same instant as its cause leaves no time for a second attempt, so it is written with the names the file shows at t. The window stays [t, t] (R1.1 "in the same instant"); host, oracle and reference are unchanged | `spec states the readings ...` (the new phrases); `itsm: a create refused for a renamed field is re-issued under the same key, not a 409` (mock: 400, no key committed, same-key re-issue commits, repeat dedupes, different arguments 409); `F5 (SPEC §1 API changes): ...` (real host and grader on dev world 1015 d5 size 40: a reference variant that writes `ci` after the rename gets 15 creates refused 400, each re-issued and committed under the same key one minute later; no 409, no key-split; each of the 15 cases fails at layer 3 on `create:N` (missed), every other completed case passes, 0 critical) |
+| minor (latent): `sla.mjs` `attach()` dropped a retroactive pause that ends exactly at the attach instant (a reply merged with the reclassification that attaches the SLA), so D came out early | `attach()` closes such a run: pause at its start, resume at x (R4.3). No generated history hits it (the reviewer's scan: 0 of 488 retroactive attaches on dev seeds 1001-1006) | golden G20 (P3 report, hold 10:30, reply + reclassification to P1 at 11:30: RES-P1 pause 10:30, resume 11:30 planned 15:00, D 15:00, 50% 13:00, 75% 14:00; fails on the old engine); the reviewer's hand case in the N-version test |
+| minor: no independent check of the R4.2/R4.3 state machine (reset re-attach, retroactive start and pause, attach after reclassification, edition at attach) | `test/sla-independent.mjs`, an evaluator written from the spec with its own structure, R0 and clock; an N-version test against `sla.mjs` on 600 fuzzed histories, a metamorphic relation (retroactive history = live history) and a mutation of the fix (see **N-version R4.2–R4.3** above) | `SLA engine N-version, R4.2-R4.3 (review 2026-10-15 round 2) ...` (0 differences; coverage asserted; the mutant differs on 13/600 histories, breaks the relation and the hand case) |
+| minor: the leak test spied on the walker, which closes every tick, so `effect.result`, `timer.fired` and `humanTask.*` payloads were never inspected | the checks moved into one helper and run twice: around the walker and around the reference arm, which keeps instances open (same world, seed 1014 d5 size 60). The spy keeps each file and query row once (what was visible stays visible), which keeps both passes fast | `leak: the events routed back to an instance ...` (non-vacuity asserted: 1,417 `effect.result`, 257 `timer.fired`, `humanTask.timeout` and `humanTask.answered` inspected; no leak) |
+| minor: spec, mock and oracle disagreed on `sla.escalate` after an SLA ends | SPEC §2: `escalate` is accepted for a recorded SLA at any stage, also after its stop or cancel (R5 says which notices are due; a threshold reached at the stop, S3, may be notified after the stop record); one per SLA and percent. The mock already behaved so (its description and a comment now say it); the oracle orders an escalation after the SLA's start only | `sla: escalate is accepted after the stop or cancel ...` (mock); `escalate after the end: spec, mock and oracle agree` |
+| minor: R7.3 and R8.2 conflicted at the approval deadline: a withdrawal at the deadline still required the fail-safe `setMajor`, which an arm that recorded the cancel at the deadline could only write after it (`effect-after-end`) | S16 and a sentence in R7.3: an incident closed or cancelled at the deadline, before an answer counts, is moot (no declaration); one resolved, or whose priority changes, at the deadline still gets it (R7.3 says before). `checkMoot` implements it; `deadlines()` follows from the moot flag | golden G14c (withdraw at the deadline: no declaration, cancelled with `major: false`; resolved at the deadline: declaration due; an approve before the withdrawal in the same instant counts, one after it does not); `critical (round 2)` (cancel at the deadline alone is clean; a fail-safe after it is `effect-after-end` and `major-without-approval`) |
+| minor: the oracle permitted any further approval task while no answer counted, and counted its answer (an arm could turn a timeout into an approval by re-asking) | R7.2 reworded: a re-ask is allowed, by the deadline and before an answer counts, once per answer on a counted task that was unusable, withdrawn or rejected by the schema; any other task is an error and its answer never counts (a timeout is no cause). The transition keeps the counted tasks and the unused causes; the R7.2 permitted window opens at the first unused cause; `critical()` follows (answers count only on counted tasks). The reference never re-asks, so its runs are unchanged | golden G14b (no cause: not permitted, its approve does not count, the fail-safe stays due; unusable, schema-rejected and withdrawn answers each open one re-ask whose approve counts; one cause, one re-ask; a timeout opens none); `critical (round 2)` (approve on an unsanctioned re-ask is `major-without-approval`) |
+| minor: R4.4's in-interval DST clause could be read as "a repeated hour counts once" (120 min) where `lib/calendar` counts real time (180) | R4.4 reworded: each real instant between the first reading of the start and the first reading of the end counts once, with the 60/180-minute example, and the spec says no schedule of this desk has an interval across a clock change | golden G21 (RES-P2 on a world copy whose floating schedule is a 01:30–03:30 night shift: D Fri 04-03 00:30Z in spring, Thu 10-29 01:30Z in autumn, where the 120-minute reading gives 02:30Z); the spec test asserts every generated business interval lies between 04:00 and 23:00 |
+| minor: README said readings S1–S12 | S1–S16 and the size recounted (about 10K tokens) | (reporting) |
+
+After round 2: bed health (dev seeds 1001–1030) and the controls (1211–1214) give the same counts in every cell as
+before it; the walker check (seed 1101 d3) still passes 8/109; the E7 suites pass 69/69 and the E8 suite 16/16. No file
+of `beds/ebed/e8/`, `host/`, `oracle/` or `lib/` was changed for round 2.
+
