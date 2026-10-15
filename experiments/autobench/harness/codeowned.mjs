@@ -31,13 +31,13 @@ import { bridgeClient } from './bridge-client.mjs';
 import { buildInventory, renderInventory } from './inventory.mjs';
 import { ADJUDICATE_SYSTEM, LEDGER_SYSTEM, adjudicatePrompt, applyDecisions, conflictSpans, ledgerPrompt, mergeLedgers, normalizeLedger, parseJsonReply, readDecisions, settleByCode, sourceMap } from './ledger.mjs';
 import { CHECKER_SYSTEM, PCMAP_SYSTEM, checkerPrompt, evaluate, pcmapPrompt, postconditionsFromLedger, validateMapped } from './postconditions.mjs';
-import { BRIEF_FILES, briefSection, renderChecks, repairSection, runChecks, terminationDecision } from './checker.mjs';
+import { BRIEF_END, BRIEF_FILES, briefSection, renderChecks, repairSection, runChecks, terminationDecision } from './checker.mjs';
 
 export const HARNESS_ID = 'codeowned';
 export const HARNESS_VERSION = 'a1c-v1';
 export const ROLES = Object.freeze(['ledger', 'adjudicate', 'pcmap', 'checker', 'act', 'repair']);
 export const PIPELINE_DEFAULTS = Object.freeze({ K: 3, inventorySteps: 16, checkSteps: 3, maxRounds: 2, actReserveResponses: 8, minRepairResponses: 4, nodeTimeoutMs: 240_000,
-  inlineInventoryChars: 60_000, ledgerInventoryChars: 150_000, nodeBudgetShare: 0.1, reserveShare: 0.25, pcmap: true });
+  inlineInventoryChars: 40_000, ledgerInventoryChars: 150_000, systemMaxBytes: 90_000, nodeBudgetShare: 0.1, reserveShare: 0.25, pcmap: true, parallelLedgers: true });
 
 /** H8: every knowledge source compiled into A1-C. Update with every harness version. */
 export const KNOWLEDGE = Object.freeze([
@@ -142,13 +142,18 @@ export async function runPipeline(o) {
     return known ? r.costUsd : null;
   };
   const guardOne = writeCliGuard(path.join(o.guardDir, 'node'), { maxTurns: 1, target: o.cliTarget ?? 'claude' });
-  const nodeDir = name => { const d = path.join(o.nodeRoot, `${String(nodes.length).padStart(2, '0')}-${name}`); rmSync(d, { recursive: true, force: true }); mkdirSync(d, { recursive: true }); return d; };
-  const transcriptPath = name => path.join(pdir, 'nodes', `${String(nodes.length).padStart(2, '0')}-${name}.jsonl`);
+  // Every node reserves its slot when it starts, so the node order is the start order even when ledger readers run in
+  // parallel (their responses are independent of each other and issue no world step).
+  const slot = () => { nodes.push(null); return nodes.length - 1; };
+  const tag = idx => String(idx).padStart(2, '0');
+  const nodeDir = (idx, name) => { const d = path.join(o.nodeRoot, `${tag(idx)}-${name}`); rmSync(d, { recursive: true, force: true }); mkdirSync(d, { recursive: true }); return d; };
+  const transcriptPath = (idx, name) => path.join(pdir, 'nodes', `${tag(idx)}-${name}.jsonl`);
 
   async function modelNode(name, role, system, prompt) {
     const model = models[role];
     const budget = Math.max(0.005, Math.min(P.nodeBudgetShare * B, usdLeft()));
-    const dir = nodeDir(name), tfile = transcriptPath(name);
+    const idx = slot();
+    const dir = nodeDir(idx, name), tfile = transcriptPath(idx, name);
     const started = Date.now() / 1000;
     let r;
     try {
@@ -164,17 +169,30 @@ export async function runPipeline(o) {
     const cost = settle(r, budget);
     const text = typeof r?.result === 'string' ? r.result : lastText(events);
     const json = parseJsonReply(text);
-    nodes.push({ idx: nodes.length, name, kind: 'model', role, model, responses: resp, costUsd: cost, costUpperUsd: r?.costUpperUsd ?? budget, started, ended, transcript: copied ? path.relative(o.hostDir, tfile) : null,
-      parsed: Boolean(json), error: r?.error?.code ?? null });
-    hostWrite(`${String(nodes.length - 1).padStart(2, '0')}-${name}.reply.txt`, String(text ?? ''));
+    nodes[idx] = { idx, name, kind: 'model', role, model, responses: resp, costUsd: cost, costUpperUsd: r?.costUpperUsd ?? budget, started, ended, transcript: copied ? path.relative(o.hostDir, tfile) : null,
+      parsed: Boolean(json), error: r?.error?.code ?? null };
+    hostWrite(`${tag(idx)}-${name}.reply.txt`, String(text ?? ''));
     return json;
   }
+
+  // The CLI receives the system prompt as one command-line argument inside the sandbox script (Linux caps one argument at
+  // 128 KiB), so a brief that would not fit is shortened: the records move to the file, then the brief is cut (the
+  // working-directory files keep everything).
+  const sys = brief => actSystemPrompt(o.official.system, o.catalog, maxSteps, { dateNote: o.dateNote, brief });
+  const fit = (...briefs) => {
+    for (const b of briefs) if (Buffer.byteLength(sys(b)) <= P.systemMaxBytes) return b;
+    const b = briefs.at(-1), room = P.systemMaxBytes - Buffer.byteLength(sys('')) - 400;
+    let cut = b.slice(0, Math.max(0, room));
+    while (Buffer.byteLength(cut) > room) cut = cut.slice(0, Math.floor(cut.length * 0.95));
+    return `${cut}\n…(brief cut for size: ${BRIEF_FILES.ledger}, ${BRIEF_FILES.checks} and ${BRIEF_FILES.inventory} in your working directory hold all of it)\n${BRIEF_END}`;
+  };
 
   async function sessionNode(name, role, brief, cap, budget) {
     const model = models[role];
     const guard = writeCliGuard(path.join(o.guardDir, name), { maxTurns: cap, target: o.cliTarget ?? 'claude' });
-    const systemPrompt = actSystemPrompt(o.official.system, o.catalog, maxSteps, { dateNote: o.dateNote, brief });
-    const tfile = transcriptPath(name), live = path.join(o.workdir, '.executor-transcript.jsonl');
+    const systemPrompt = sys(brief);
+    const idx = slot();
+    const tfile = transcriptPath(idx, name), live = path.join(o.workdir, '.executor-transcript.jsonl');
     rmSync(live, { force: true });
     const started = Date.now() / 1000;
     let r;
@@ -191,16 +209,18 @@ export async function runPipeline(o) {
     responses += resp;
     const cost = settle(r, budget);
     toolUses.push(...(r?.toolUses ?? []));
-    hostWrite(`${String(nodes.length).padStart(2, '0')}-${name}.system.txt`, systemPrompt);
-    nodes.push({ idx: nodes.length, name, kind: 'session', role, model, cap, responses: resp, costUsd: cost, costUpperUsd: r?.costUpperUsd ?? budget, started, ended, transcript: copied ? path.relative(o.hostDir, tfile) : null,
-      stopReason: audit.stopReason, error: r?.error?.code ?? null });
+    hostWrite(`${tag(idx)}-${name}.system.txt`, systemPrompt);
+    nodes[idx] = { idx, name, kind: 'session', role, model, cap, responses: resp, costUsd: cost, costUpperUsd: r?.costUpperUsd ?? budget, started, ended, transcript: copied ? path.relative(o.hostDir, tfile) : null,
+      stopReason: audit.stopReason, error: r?.error?.code ?? null };
     return r;
   }
 
   const codeNode = async (name, fn) => {
-    const started = Date.now() / 1000, before = client.log.length;
+    const idx = slot(), started = Date.now() / 1000;
+    nodes[idx] = { idx, name, kind: 'code', responses: 0, steps: 0, started, ended: null };
     const out = await fn();
-    nodes.push({ idx: nodes.length, name, kind: 'code', responses: 0, steps: client.log.slice(before).filter(e => !e.refused).length, started, ended: Date.now() / 1000 });
+    nodes[idx].steps = client.log.filter(e => e.node === name && !e.refused).length;
+    nodes[idx].ended = Date.now() / 1000;
     return out;
   };
 
@@ -218,12 +238,14 @@ export async function runPipeline(o) {
     // 2. LEDGERS (K clean contexts; independent readers see the inventory in a different app order)
     const sources = sourceMap(o.official.user, inv);
     const dateNote = o.dateNote ? DATE_NOTE : null;
-    const ledgers = [];
-    for (let k = 0; k < P.K; k++) {
+    const reader = async k => {
       const text = renderInventory(inv, { maxChars: P.ledgerInventoryChars, order: k === 0 ? null : k });
       const json = await modelNode(`ledger-${k + 1}`, 'ledger', LEDGER_SYSTEM, ledgerPrompt({ request: o.official.user, inventoryText: text, precedents: inv.precedents, dateNote }));
-      ledgers.push(normalizeLedger(json, sources, { reader: k + 1 }));
-    }
+      return normalizeLedger(json, sources, { reader: k + 1 });
+    };
+    const ledgers = [];
+    if (P.parallelLedgers) ledgers.push(...await Promise.all(Array.from({ length: P.K }, (_, k) => reader(k))));
+    else for (let k = 0; k < P.K; k++) ledgers.push(await reader(k));
     const merged = mergeLedgers(ledgers, { sources });
     const { settled, open } = settleByCode(merged.conflicts, sources);
     const decisions = settled.map(s => ({ conflict: s.conflict, choice: s.choice, by: 'code', rule: s.rule }));
@@ -265,13 +287,16 @@ export async function runPipeline(o) {
     const inlineText = renderInventory(inv, { maxChars: P.inlineInventoryChars });
     const inline = !inlineText.includes('left out of this listing');
     const actCap = Math.max(3, Math.min(maxSteps - 1, maxSteps - responses - P.actReserveResponses));
-    const brief = briefSection({ inv, merged, pcs, stepsLeft: maxWorldSteps - servedSteps(mailbox) - P.checkSteps, responseCap: actCap, inventoryText: inlineText, inline });
+    const briefArgs = { inv, merged, pcs, stepsLeft: maxWorldSteps - servedSteps(mailbox) - P.checkSteps, responseCap: actCap, inventoryText: inlineText };
+    const brief = fit(...(inline ? [briefSection({ ...briefArgs, inline: true })] : []), briefSection({ ...briefArgs, inline: false }));
     const actBudget = Math.max(0.02, usdLeft() - P.reserveShare * B);
     const act = await sessionNode('act', 'act', brief, actCap, actBudget);
     actError = act?.error?.code ?? null;
 
     // 5-6. CHECK, then code-owned TERMINATION with repair rounds
-    const judge = async its => (responses + 1 <= maxSteps ? modelNode(`checker-${stats.rounds}`, 'checker', CHECKER_SYSTEM, checkerPrompt({ items: its, dateNote })) : null);
+    // The checker decides only what code cannot; after round 0 only when a hard check depends on it (advisory verdicts
+    // never change termination).
+    const judge = async its => (responses + 1 <= maxSteps && (stats.rounds === 0 || its.some(x => x.hard)) ? modelNode(`checker-${stats.rounds}`, 'checker', CHECKER_SYSTEM, checkerPrompt({ items: its, dateNote })) : null);
     for (;;) {
       const chk = await codeNode(`check-${stats.rounds}`, () => runChecks({ client, inv, pcs, maxSteps: P.checkSteps, judge, sources, node: `check-${stats.rounds}` }));
       const row = { round: stats.rounds, checks: chk.results.length, pass: chk.results.filter(r => r.pass === true).length, fail: chk.results.filter(r => r.pass === false).length, undecided: chk.results.filter(r => r.pass === null).length,
@@ -285,7 +310,7 @@ export async function runPipeline(o) {
       const failing = chk.results.filter(r => r.pc.hard && r.pass === false).map(r => ({ pc: r.pc, evidence: r.evidence, sourceText: r.pc.source && r.pc.source !== 'request' ? String(sources.get(r.pc.source)?.text ?? '').replace(/\s+/g, ' ').slice(0, 800) : '' }));
       const passing = chk.results.filter(r => r.pass === true);
       const cap = Math.max(2, maxSteps - responses - 1);
-      const rb = repairSection({ failing, passing, stepsLeft: maxWorldSteps - servedSteps(mailbox) - P.checkSteps, responseCap: cap, round: stats.rounds });
+      const rb = fit(repairSection({ failing, passing, stepsLeft: maxWorldSteps - servedSteps(mailbox) - P.checkSteps, responseCap: cap, round: stats.rounds }));
       writeFileSync(path.join(o.workdir, BRIEF_FILES.repair), `${renderChecks(failing.map(f => f.pc))}\n\n${failing.map(f => `${f.pc.id}: ${f.evidence}`).join('\n')}\n`);
       await sessionNode(`repair-${stats.rounds}`, 'repair', rb, cap, Math.max(0.01, usdLeft() - P.nodeBudgetShare * B));
     }
@@ -295,6 +320,7 @@ export async function runPipeline(o) {
     log(`[codeowned] pipeline error: ${String(e?.message ?? e).slice(0, 300)}`);
   }
   hostWrite('client-log.json', client.log);
+  for (let i = 0; i < nodes.length; i++) if (!nodes[i]) nodes[i] = { idx: i, name: 'unfinished', kind: 'code', responses: 0, steps: 0, started: 0, ended: 0 };
   hostWrite('nodes.json', nodes);
   return { ok: !actError, error: actError ? { code: actError } : null, costUsd: unknown ? null : spent, costUnknown: unknown, costUpperUsd: upper, turns: responses, durationMs: Date.now() - t0, toolUses,
     nodes, clientLog: client.log, pipeline: { ...stats, responses, nodes: nodes.map(n => ({ name: n.name, kind: n.kind, model: n.model ?? null, responses: n.responses, steps: n.steps ?? null, cap: n.cap ?? null, costUsd: n.costUsd ?? null, error: n.error ?? null, parsed: n.parsed ?? null })) }, label: `pipeline:${HARNESS_ID}` };
@@ -317,18 +343,25 @@ export function auditPipeline({ nodes = [], clientLog = [], calls = [], maxSteps
   const agg = { toolResponses: 0, textOnlyResponses: 0, compactions: 0, l5Flags: 0, numTurns: 0, sessionToolUses: 0, parallelToolResponses: 0, subagentResponses: 0, worldCommandResponses: 0, resultEvents: 0 };
   const models = new Set();
   let stopReason = null, resultSubtype = null;
+  // Code-issued steps are the bridge log entries completed inside a client request's [issue, answer] interval; a session
+  // owns the remaining entries inside its own window.
   const used = new Set();
+  const codeOwned = new Map();
+  for (const e of clientLog) {
+    if (e.refused || typeof e.t0 !== 'number') continue;
+    const i = calls.findIndex((c, k) => !used.has(k) && typeof c.t === 'number' && c.t >= e.t0 - 0.05 && c.t <= (e.t1 ?? e.t0) + 0.05);
+    if (i >= 0) { used.add(i); codeOwned.set(e.node, (codeOwned.get(e.node) ?? 0) + 1); }
+  }
   for (const n of nodes) {
     if (n.kind === 'code') {
-      const mine = clientLog.filter(e => e.node === n.name || e.node.startsWith(`${n.name}`));
+      const mine = clientLog.filter(e => e.node === n.name);
       const late = mine.filter(e => !e.refused && e.responsesAtIssue >= maxSteps).length;
       if (late) violations.push(`${late} code-issued world step(s) after ${maxSteps} model responses (${n.name})`);
-      calls.forEach((c, i) => { if (typeof c.t === 'number' && c.t >= n.started - 1 && c.t <= n.ended + 1) used.add(i); });
-      rows.push({ name: n.name, kind: 'code', responses: 0, steps: mine.filter(e => !e.refused).length });
+      rows.push({ name: n.name, kind: 'code', responses: 0, steps: mine.filter(e => !e.refused).length, logged: codeOwned.get(n.name) ?? 0 });
       continue;
     }
     const events = n.transcript ? readStream(path.join(hostDir, n.transcript)) : [];
-    const windowCalls = n.kind === 'session' ? calls.filter((c, i) => { const hit = typeof c.t === 'number' && c.t >= n.started - 1 && c.t <= n.ended + 1; if (hit) used.add(i); return hit; }) : [];
+    const windowCalls = n.kind === 'session' ? calls.filter((c, i) => { const hit = !used.has(i) && typeof c.t === 'number' && c.t >= n.started - 1 && c.t <= n.ended + 1; if (hit) used.add(i); return hit; }) : [];
     const a = auditSession({ events, calls: windowCalls, maxSteps: Infinity, fallbackTurns: n.responses ?? null, expectModel: scripted ? null : n.model });
     if (!scripted && !events.length) violations.push(`L5: no host transcript for ${n.name} (step and model accounting unavailable)`);
     for (const v of a.violations) if (v.startsWith('L5')) violations.push(`${v} (${n.name})`);

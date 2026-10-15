@@ -297,13 +297,18 @@ test('minor 8: the imputed-dollar rule is the literal preregistered one; the nar
   // agent-O is 80% imputed but far out of reach of the acceptable set (direct-H leads).
   for (let t = 0; t < 12; t++) { rows.push(row('direct-H', t, true, 0.01)); rows.push(row('agent-O', t, t < 3, 0.1, { usdImputed: 0.4 })); }
   const T = needTable(rows), c = makeCell(1, 10);
-  assert.match(needLabels(T, { cells: [c], reps: 0 }).at('j', c).unlabelled, /imputed dollars over 0\.3 in agent-O/, 'literal (PREREG §5)');
+  assert.match(needLabels(T, { cells: [c], reps: 0, imputedRule: 'literal' }).at('j', c).unlabelled, /imputed dollars over 0\.3 in agent-O/, 'literal (PREREG §5)');
   assert.equal(needLabels(T, { cells: [c], reps: 0, imputedRule: 'reachable' }).at('j', c).unlabelled, null, 'reachable: a sensitivity');
+  assert.equal(needLabels(T, { cells: [c], reps: 0 }).imputedRule, 'reachable', 'the v1 API default is kept (label-run racing, the committed M0 diagnostics)');
   assert.throws(() => needLabels(T, { cells: [c], reps: 0, imputedRule: 'loose' }), /imputedRule must be literal or reachable/);
+  // The evaluator reads every preregistered label with the literal rule: agent-O 80% imputed (and out of reach of A on every
+  // planted job) unlabels every evaluated job; the narrower rule, printed as a sensitivity, would unlabel none.
   const W = plantedWorld({ train: 3, heldout: 3, jobs: 1, seed: 38 });
-  const R = evaluate({ ...W, split: 'heldout', ...FAST });
+  const rows2 = W.rows.map(r => (r.mode === 'agent-O' ? { ...r, usdImputed: 4 * r.usdRepriced } : r));
+  const R = evaluate({ ...W, rows: rows2, split: 'heldout', ...FAST });
   assert.equal(R.report.imputedRuleSensitivity.primary.rule, 'literal');
-  assert.match(renderReport(R), /imputed-dollar rule: primary literal leaves 0 job\(s\) unlabelled at the headline; the narrower reachable \(not primary\) rule 0/);
+  assert.equal(R.validity.coverage.headline.unlabelled, 3); assert.equal(R.report.imputedRuleSensitivity.unlabelled.headline, 0);
+  assert.match(renderReport(R), /imputed-dollar rule: primary literal leaves 3 job\(s\) unlabelled at the headline; the narrower reachable \(not primary\) rule 0/);
 });
 
 // ------------------------------------------------------------------------------------- minor 9: the report

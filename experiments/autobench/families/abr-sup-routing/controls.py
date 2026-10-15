@@ -139,8 +139,10 @@ class PriorityOnly(Router):
 
 
 class AnyNumber(Router):
+    """The records rule, plus any other number of 10,000 or more (error codes, order numbers, amounts, API calls)."""
     def records_complex(self, desc):
-        return any(int(x.replace(",", "")) >= 10000 for x in re.findall(r"\d[\d,]*", desc or "") if x.replace(",", ""))
+        return super().records_complex(desc) or any(
+            int(x.replace(",", "")) >= 10000 for x in re.findall(r"\d[\d,]*", desc or "") if x.replace(",", ""))
 
 
 class CountMentions(Router):

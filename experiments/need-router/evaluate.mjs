@@ -1386,7 +1386,8 @@ function buildLabels({ rows, builds, registry, cascades, labelSet, cells, reps, 
     ...table.jobs.flatMap(j => paths.filter(m => table.has(j, m)).flatMap(m => { const c = table.cell(j, m); return c.lineage ? c.lineageList.map(l => `${j}|${m}|${l.rep}`) : [...new Set([...c.reps.values()].flat())].map(r => `${j}|${m}|${r}`); }))] : [];
   if (keys.length) table = withoutSelfCheckCredit(table, keys);
   const modes = labelSetModes(table.modes, labelSet, registry);
-  return { table, modes, selfTest: st, noCredit: [...new Set(keys)], labels: needLabels(table, { cells, reps, seed, modes }) };
+  // The preregistered imputed-dollar rule is literal (PREREG §5); the narrower 'reachable' rule is a printed sensitivity.
+  return { table, modes, selfTest: st, noCredit: [...new Set(keys)], labels: needLabels(table, { cells, reps, seed, modes, imputedRule: 'literal' }) };
 }
 
 /**
@@ -1582,7 +1583,7 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   const forced = FORCED.length ? { jobs: FORCED, note: 'forced stratum: guard recall only, never in the primary population' } : null;
   let ceiling = null;
   if (labelSet === 'today' && table.modes.some(m => modeInfo(m, registry).ceiling)) {
-    const L2c = needLabels(table, { cells: [HEADLINE, N1], reps: Math.min(reps, 500), seed, modes: labelSetModes(table.modes, 'ceiling', registry) });
+    const L2c = needLabels(table, { cells: [HEADLINE, N1], reps: Math.min(reps, 500), seed, modes: labelSetModes(table.modes, 'ceiling', registry), imputedRule: 'literal' });
     ceiling = EVAL.map(j => ({ job: j, today: labels.at(j, N1).label, ceiling: L2c.at(j, N1).label, routerSaysWorkflow: decisions.get('NR-static')?.get(j)?.get(N1.key)?.needsWorkflow ?? null }))
       .map(x => ({ ...x, builderGap: x.routerSaysWorkflow === true && x.today !== 'workflow' && x.ceiling === 'workflow' }));
   }

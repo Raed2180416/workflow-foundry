@@ -8,7 +8,9 @@
 //   L2  grandchildren (worksheet values, thread replies, table records, ...).
 //   L3  entity look-ups: one term per call for each entity the trigger names, on the apps whose enumeration was cut by a
 //       cap or that can only be searched; spreadsheets opened by a title the request or a record names.
-//   L4  precedents: existing records of the kinds the request asks to create or change, when L0-L2 did not hold them.
+//   then precedents: the k most recent existing records of each kind the request asks to create or change (sent emails,
+//       channel posts, sheet rows, CRM tasks, notes, cases, tickets, invoices, ...), selected by code from L0-L2, which
+//       enumerate every such kind (no extra step).
 // Every level is optional and the whole inventory stops at a step budget (default 16 of the 49 world steps).
 //
 // The enumeration plan (ENUM_PLAN) is architect-written from the API schemas shipped with the environment (the index
@@ -229,7 +231,7 @@ export function entityTerms(text, max = DEFAULT_CAPS.terms) {
   const out = [];
   const add = s => { const v = String(s).trim().replace(/[.,;:]+$/, ''); if (v.length >= 3 && v.length <= 80 && !out.some(x => x.toLowerCase() === v.toLowerCase())) out.push(v); };
   for (const m of t.matchAll(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g)) add(m[0]);
-  for (const m of t.matchAll(/\b[A-Z]{2,}[-_]?\d[\w-]*\b|\b\d{3,}[-/]\d+[\w-]*\b/g)) add(m[0]);
+  for (const m of t.matchAll(/\b(?=[A-Z0-9_-]*\d)[A-Z][A-Z0-9]*(?:[-_][A-Z0-9]+)+\b|\b[A-Z]{2,}\d+\b|\b\d{3,}[-/]\d+[\w-]*\b/g)) if (!/^\d{4}-\d{2}-\d{2}$/.test(m[0])) add(m[0]);
   for (const m of t.matchAll(/["“']([^"”'\n]{3,60})["”']/g)) add(m[1]);
   for (const m of t.matchAll(/\b\d{4}-\d{2}-\d{2}\b/g)) add(m[0]);
   for (const m of t.matchAll(/\b(?:[A-Z][a-zA-Z&'-]+)(?:\s+(?:[A-Z][a-zA-Z&'-]+|of|and|&)){1,4}/g)) {

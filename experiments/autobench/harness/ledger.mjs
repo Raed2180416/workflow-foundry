@@ -136,9 +136,12 @@ export function normalizeLedger(raw, sources, { reader = 0 } = {}) {
       if (f.derived && typeof f.derived === 'object') {
         const inputs = (Array.isArray(f.derived.inputs) ? f.derived.inputs : []).map(x => ({ ...copyLiteral(x?.quote, str(x?.source), sources) }));
         item.fields.push({ name, value: str(f.derived.value).slice(0, 2000), derived: true, method: str(f.derived.method).slice(0, 300), inputs, verified: inputs.length > 0 && inputs.every(x => x.verified) ? 'derived' : false, source: inputs[0]?.source ?? null });
-      } else if (f.quote !== undefined && f.quote !== null && str(f.quote).trim()) {
-        const lit = copyLiteral(f.quote, str(f.source) || item.source, sources);
-        item.fields.push({ name, value: lit.value.slice(0, 2000), verified: lit.verified, source: lit.source, modelText: lit.verified ? undefined : str(f.quote).slice(0, 2000) });
+      } else {
+        // A reader that wrote "value" (or "text") instead of "quote" is read the same way: code still copies the span.
+        const q = [f.quote, f.value, f.text].find(x => x !== undefined && x !== null && typeof x !== 'object' && str(x).trim());
+        if (q === undefined) continue;
+        const lit = copyLiteral(q, str(f.source) || item.source, sources);
+        item.fields.push({ name, value: lit.value.slice(0, 2000), verified: lit.verified, source: lit.source, modelText: lit.verified ? undefined : str(q).slice(0, 2000) });
       }
     }
     for (const c of Array.isArray(r.candidates) ? r.candidates : []) {

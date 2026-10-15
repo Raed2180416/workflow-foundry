@@ -1,0 +1,263 @@
+{
+ "schema": "lp-0b-dry/1",
+ "commit": "a1043ef544e3a100c28e70a736b6cf32554d0677",
+ "labelVersion": "kd-label/1",
+ "chunkMax": 1800,
+ "setSha": "1cdae8110ee58b7b1634b5e1f4637e74765b636b4d368ef2f80f61b2672e8ea2",
+ "n": {
+  "chunks": {
+   "positive": 137,
+   "negative": 656,
+   "ambiguous": 2,
+   "hardNegative": 188
+  },
+  "skillChunks": {
+   "positive": 137,
+   "negative": 644,
+   "ambiguous": 2,
+   "hardNegative": 176
+  },
+  "referenceChunks": {
+   "positive": 0,
+   "negative": 12,
+   "ambiguous": 0,
+   "hardNegative": 12
+  },
+  "skills": {
+   "positive": 137,
+   "negative": 38,
+   "ambiguous": 2,
+   "hardNegative": 20
+  }
+ },
+ "mde": {
+  "note": "one-sample, one-sided alpha 0.05, power 0.8, against the fixed gate bar; a true rate within the MDE of the bar reads inconclusive",
+  "chunkRecallBelow095": 0.053,
+  "chunkFprAbove005": 0.023,
+  "skillRecallBelow095": 0.053,
+  "skillFprAbove005": 0.108,
+  "effectiveDistinctPositiveTexts": "the 136 self-promotion chunks carry 2 near-identical directive texts (http vs https in one URL) in 136 different contexts; read recall on them as stability across contexts, not as 136 independent directives"
+ },
+ "thresholds": {
+  "jev": 0.5,
+  "gateRecall": 0.95,
+  "gateFpr": 0.05
+ },
+ "estimate": {
+  "jevRequests": 4770,
+  "jevInputTokens": 6086276,
+  "jevUsd": 0.2556,
+  "haikuCalls": 149,
+  "haikuInputTokens": 1141364,
+  "haikuUsd": 0.2194,
+  "totalUsd": 0.4751,
+  "suggestedCaps": {
+   "jevRequests": 5247,
+   "haikuUsd": 0.44,
+   "stageUsd": 1
+  }
+ },
+ "b1": {
+  "chunk": {
+   "recall": {
+    "k": 0,
+    "n": 137,
+    "p": 0,
+    "lo": 0,
+    "hi": 0.0273
+   },
+   "fpr": {
+    "k": 13,
+    "n": 656,
+    "p": 0.0198,
+    "lo": 0.0116,
+    "hi": 0.0336
+   },
+   "hardNegativeFpr": {
+    "k": 13,
+    "n": 188,
+    "p": 0.0691,
+    "lo": 0.0409,
+    "hi": 0.1147
+   },
+   "byHardKind": {
+    "directive": {
+     "k": 0,
+     "n": 166,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.0226
+    },
+    "effect": {
+     "k": 0,
+     "n": 9,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.2992
+    },
+    "reference": {
+     "k": 12,
+     "n": 12,
+     "p": 1,
+     "lo": 0.7575,
+     "hi": 1
+    },
+    "regex-hit": {
+     "k": 1,
+     "n": 1,
+     "p": 1,
+     "lo": 0.2065,
+     "hi": 1
+    }
+   },
+   "byClass": {
+    "self-promotion": {
+     "k": 0,
+     "n": 136,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.0275
+    },
+    "vendor-attribution": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "falsePositives": [
+    "kd:molecular-dynamics:c1",
+    "kd:hypogenic:ref:upstream.md:c2",
+    "kd:markitdown:ref:security.md:c2",
+    "kd:modal:ref:secrets.md:c0",
+    "kd:parallel-web:ref:deep-research.md:c0",
+    "kd:pi-agent:ref:environment-variables.md:c0",
+    "kd:pi-agent:ref:extensions.md:c1",
+    "kd:pi-agent:ref:extensions.md:c4",
+    "kd:pi-agent:ref:pi-subagents.md:c5",
+    "kd:pi-agent:ref:pi-subagents.md:c6",
+    "kd:pi-agent:ref:security.md:c0",
+    "kd:pi-agent:ref:skills.md:c0",
+    "kd:pi-agent:ref:usage.md:c0"
+   ]
+  },
+  "skill": {
+   "recall": {
+    "k": 0,
+    "n": 137,
+    "p": 0,
+    "lo": 0,
+    "hi": 0.0273
+   },
+   "fpr": {
+    "k": 1,
+    "n": 38,
+    "p": 0.0263,
+    "lo": 0.0047,
+    "hi": 0.135
+   },
+   "hardNegativeFpr": {
+    "k": 1,
+    "n": 20,
+    "p": 0.05,
+    "lo": 0.0089,
+    "hi": 0.2361
+   },
+   "byHardKind": {},
+   "byClass": {
+    "self-promotion": {
+     "k": 0,
+     "n": 136,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.0275
+    },
+    "vendor-attribution": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "falsePositives": [
+    "kd:molecular-dynamics"
+   ]
+  }
+ },
+ "cred": {
+  "chunk": {
+   "recall": {
+    "k": 0,
+    "n": 137,
+    "p": 0,
+    "lo": 0,
+    "hi": 0.0273
+   },
+   "fpr": {
+    "k": 1,
+    "n": 656,
+    "p": 0.0015,
+    "lo": 0.0003,
+    "hi": 0.0086
+   },
+   "hardNegativeFpr": {
+    "k": 1,
+    "n": 188,
+    "p": 0.0053,
+    "lo": 0.0009,
+    "hi": 0.0295
+   },
+   "byHardKind": {
+    "directive": {
+     "k": 0,
+     "n": 166,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.0226
+    },
+    "effect": {
+     "k": 0,
+     "n": 9,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.2992
+    },
+    "reference": {
+     "k": 1,
+     "n": 12,
+     "p": 0.0833,
+     "lo": 0.0149,
+     "hi": 0.3539
+    },
+    "regex-hit": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "byClass": {
+    "self-promotion": {
+     "k": 0,
+     "n": 136,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.0275
+    },
+    "vendor-attribution": {
+     "k": 0,
+     "n": 1,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.7935
+    }
+   },
+   "falsePositives": [
+    "kd:modal:ref:secrets.md:c0"
+   ]
+  }
+ }
+}

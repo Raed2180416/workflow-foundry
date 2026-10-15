@@ -75,7 +75,7 @@ export function postconditionsFromLedger(merged, inv, { majority = Math.ceil((me
     }
     const recFields = item.fields.filter(x => !META_FIELDS.has(x.name));
     const ptr = [item.target, ...item.fields.map(x => x.value)].map(s => /\b[a-z_]+:[A-Za-z_]+:[^\s,;)\]]+/.exec(String(s ?? ''))?.[0]).find(p => p && inv?.records?.some(r => r.ptr === p)) ?? null;
-    if (item.polarity === 'negative') { add(item, 'judged', {}, { hard, why: 'negative effect on records' }); continue; }
+    if (item.polarity === 'negative') { add(item, 'judged', {}, { hard: false, why: 'negative effect on records (advisory: a repair never undoes work on a checker verdict)' }); continue; }
     if ((item.action === 'update_record' || item.action === 'update_row') && ptr && recFields.length) {
       for (const x of recFields) {
         if (usable(x) || (x.verified === false && String(x.value).length <= 40 && (x.support ?? 1) >= majority)) add(item, 'record_field', { ptr, field: x.name, value: x.value }, { hard: hard && usable(x) });

@@ -761,12 +761,14 @@ export function crossFitJob(table, job, modes, cells, { scheme = 'primary' } = {
  * draws, at a (job, cell) that is not unlabelled (the imputed-dollar and re-pricing rule, per cell: see pointEntry).
  * reps = 0 skips the bootstrap (nothing confident). `modes` restricts the label set (labelSetModes).
  * imputedRule: 'literal' (the preregistered rule, DESIGN §2 and PREREG §5: any mode of the label set with more than 30% of
- * its dollars at the cell imputed leaves the (job, cell) unlabelled) or 'reachable' (a sensitivity, not primary: only such a
- * mode whose utility with its imputed dollars removed could reach the acceptable set unlabels it; imputed dollars are bounds,
- * so a mode out of reach either way cannot change the label).
+ * its dollars at the cell imputed leaves the (job, cell) unlabelled; evaluate.mjs reads every preregistered label with it)
+ * or 'reachable' (only such a mode whose utility with its imputed dollars removed could reach the acceptable set unlabels
+ * it; imputed dollars are bounds, so a mode out of reach either way cannot change the label). 'reachable' is the default,
+ * kept for the callers of the v1 API that predate the review (label-run's racing, the M0 diagnostics D4 and D6, which were
+ * computed and committed under it); in the evaluator it is a printed sensitivity, never the reading (review 2026-10-15).
  */
 export const IMPUTED_RULES = Object.freeze(['literal', 'reachable']);
-export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta = DELTA, confident = CONFIDENT, imputedLimit = IMPUTED_LIMIT, modes = null, crossFit = 'primary', imputedRule = 'literal' } = {}) {
+export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta = DELTA, confident = CONFIDENT, imputedLimit = IMPUTED_LIMIT, modes = null, crossFit = 'primary', imputedRule = 'reachable' } = {}) {
   if (!IMPUTED_RULES.includes(imputedRule)) throw new Error(`imputedRule must be ${IMPUTED_RULES.join(' or ')}, got ${imputedRule}`);
   const per = new Map(), reg = table.registry;
   for (const job of table.jobs) {
@@ -795,9 +797,10 @@ export function needLabels(table, { cells = GRID, reps = 2000, seed = 1, delta =
   }
   // A cell's point entry: utilities, acceptable set, NEED label, VBS. Off the label grid it carries no confidence and no VBS*.
   // Unlabelled (DESIGN §2, one cost meter), per (job, cell):
-  //  - imputedRule 'literal' (primary, as preregistered): a mode whose per-task dollars at this cell (c + B/N) are more than
-  //    `imputedLimit` imputed. 'reachable' (sensitivity): only such a mode whose utility with those imputed dollars removed
-  //    (imputed dollars are bounds, so the true cost lies between) could reach the acceptable set;
+  //  - imputedRule 'literal' (the preregistered rule; evaluate.mjs): a mode whose per-task dollars at this cell (c + B/N) are
+  //    more than `imputedLimit` imputed. 'reachable' (the default; the evaluator's sensitivity): only such a mode whose
+  //    utility with those imputed dollars removed (imputed dollars are bounds, so the true cost lies between) could reach the
+  //    acceptable set;
   //  - any mode with a row that label-run could not re-price (`repriced: false`): its dollars are off the one meter, in
   //    either direction, so every cell of the job is unlabelled.
   function pointEntry(ms, st, c, notRep) {

@@ -74,7 +74,7 @@ export async function runChecks({ client, inv, pcs, maxSteps = 3, judge = null, 
   const pending = results.filter(r => r.pass === null);
   let judgeCall = null;
   if (pending.length && judge) {
-    const items = pending.map(r => ({ id: r.pc.id, statement: r.pc.statement, source: r.pc.source, sourceText: r.pc.source === 'request' ? '' : String(sources.get(r.pc.source)?.text ?? '').replace(/\s+/g, ' ').slice(0, 2500), apps: r.pc.app ? [r.pc.app] : apps, changes: changesText(inv, after, r.pc.app ? [r.pc.app] : null) }));
+    const items = pending.map(r => ({ id: r.pc.id, hard: r.pc.hard, statement: r.pc.statement, source: r.pc.source, sourceText: r.pc.source === 'request' ? '' : String(sources.get(r.pc.source)?.text ?? '').replace(/\s+/g, ' ').slice(0, 2500), apps: r.pc.app ? [r.pc.app] : apps, changes: changesText(inv, after, r.pc.app ? [r.pc.app] : null) }));
     judgeCall = await judge(items);
     for (const r of pending) {
       const v = judgeCall?.verdicts?.find(x => String(x?.id) === r.pc.id);

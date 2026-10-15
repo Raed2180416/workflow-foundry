@@ -114,7 +114,7 @@ TRAP_WEIGHTS = {
            "systems-decoy": 0.8, "effective": 2.0, "cue-nonpremium": 0.4, "unknown": 0.3, "hold-decoy": 0.4,
            "authority": 0.5, "stale-hold-note": 0.4},
 }
-REQUIRED = {"d2": ["lookalike", "held", "records", "effective", "assigned", "authority"],
+REQUIRED = {"d2": ["lookalike", "held", "records", "effective", "assigned", "authority", "number-decoy"],
             "d3": ["lookalike", "held", "records", "systems", "systems-decoy", "effective", "authority", "authority",
                    "domain", "not-open", "assigned", "multi-area", "stale-hold-note"]}
 

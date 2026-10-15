@@ -1,0 +1,82 @@
+{
+ "id": "abr-sup-routing",
+ "version": "1.0.0",
+ "domain": "support",
+ "title": "Support queue routing",
+ "status": "dev: generator, oracle, observable-only reference, controls and gates built; no arm has run (no model, $0)",
+ "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.7",
+ "grounding": [
+  {"task": "support.freshdesk_multi_queue_routing", "span": "automationbench/domains/support/tasks.py:43455-44180",
+   "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "a Customer Tiers sheet (Company, Tier, Notes) and a Queue Routing Config sheet (Rule, Condition, Queue_Group_ID, Notes) over tier x area x complexity; Enterprise always senior; Premium complex (priority >= 3 or large data / multi-system) vs simple; billing; general fallback; unknown tier to general; HOLD and SUSPENDED companies (NexaGen Solutions, BrightEdge Analytics) not routed; assigned and closed tickets skipped; an internal note naming the queue; a routing summary with the routed count in #support-routing"},
+  {"task": "support.intercom_multi_product_routing", "span": "automationbench/domains/support/tasks.py:44183-45061",
+   "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "the customer from the contact's company record (not the email); a description that mentions a word (billing) that is not the product area; one product vs two or more products mentioned (multi-product triage); recently changed entitlements (a timestamp that changes the handling); closed and snoozed conversations skipped; only approved overrides count. Raw Haiku 15/16 [measured, raw-haiku subset60]"}
+ ],
+ "apps": ["freshdesk", "google_sheets", "slack"],
+ "tools": ["api_search", "api_fetch", "base64_encode"],
+ "zapierTools": [],
+ "allowedServices": ["freshdesk", "google_sheets", "slack"],
+ "sink": {"app": "slack", "channel": "automation-review"},
+ "stateOfRecord": "Freshdesk tickets (group_id and the internal routing notes, with their times), the Customer Tiers sheet (Tier, Effective Date, Previous Tier, Notes with HOLD / SUSPENDED) and the Queue Routing Config sheet; all in the world, visible to every arm. The held queue is the set of Open tickets with no group whose customer is on hold",
+ "envelope": [
+  "freshdesk.ticket.update group_id (the ticket of the trigger, or the waiting tickets of a customer whose hold is lifted)",
+  "freshdesk.ticket.note.create one private note 'routed to <Queue_Group_ID> (<Rule>)' per routed ticket",
+  "slack.message.post in #support-routing ('<YYYY-MM-DD>: routed <N>, held <M>' at day close)",
+  "slack.message.post in #automation-review (escalation only)"
+ ],
+ "harmless": ["freshdesk ticket updated_at (set by the API on every write)"],
+ "triggerKinds": {
+  "ticket.created": {"perWeek": [25, 40], "d1": [25, 26], "d2": [25, 31], "d3": [32, 37], "event": "freshdesk/ticket_created"},
+  "tier.changed": {"perWeek": [2, 4], "d1": [2, 3], "d2": [2, 3], "d3": [4, 4], "event": "google_sheets/row_updated (Customer Tiers)",
+                   "note": "always one lifted hold (with waiting tickets); d2: plus a hold placed or a tier change with an effective date; d3: plus a hold placed, an edit that keeps a hold, and either a tier change or the lifting of the hold placed that week"},
+  "ticket.assigned": {"perWeek": [1, 2], "d1": [1, 1], "d2": [1, 2], "d3": [1, 2], "event": "freshdesk/ticket_updated (a person set the group)",
+                      "note": "a person assigns a held ticket before its hold is lifted, or moves a routed ticket to another group (with a note of their own)"},
+  "day.close": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "event": "schedule/day_close", "at": "17:00 UTC Monday-Friday; Friday's is the last trigger and carries the end-of-week grading"}
+ },
+ "triggersPerWeek": {"d2": [33, 41], "d3": [42, 48], "measuredOn": "seeds 601-650"},
+ "trapRates": {"d1": 0.0, "d2": 0.25, "d3": 0.63,
+               "unit": "planted share of ticket.created triggers; lifted holds, person changes and day closes carry traps by construction",
+               "measuredTriggerShare": {"d2": 0.41, "d3": 0.68, "design": {"d2": 0.40, "d3": 0.65}, "on": "seeds 601-650"}},
+ "trapCatalogue": {
+  "T-lookalike": ["lookalike (NexaGen vs NexaGen Solutions; a short name that prefixes another customer's)", "domain (the requester's email domain belongs to another company, or a requester with no company writes from a customer's domain)", "release-lookalike (a lifted hold must not release the waiting tickets of a similarly named customer that is still on hold)"],
+  "T-note": ["held (the customer's Notes start with HOLD or SUSPENDED: nothing)", "hold-decoy (Notes mention a hold elsewhere: route)", "stale-hold-note (a Freshdesk company note says HOLD: route)", "still-held (an edit that keeps the hold: nothing)", "hold-added", "status-on-hold (ticket status 6 On Hold is not the customer's hold)", "unknown (no company, or a company not in Customer Tiers: grp_general)"],
+  "T-format": ["tags-vs-desc (area from tags, not the description)", "multi-area (two area tags: the table's row order decides)", "tag-lookalike (api-docs, billing-address: no area)", "tag-case (API, Billing: an area)", "records-complex (10,000+ records in comma, plain or k form)", "records-small", "number-decoy (error codes, order numbers, amounts, API calls)", "systems-complex (two affected external systems)", "systems-decoy (unaffected, no longer used, or one system named twice)", "cue-nonpremium (complexity cues on Standard or Enterprise change nothing)"],
+  "T-repeat": ["assigned (created with a group: never touch)", "not-open", "person-assigned", "assigned-held (a held ticket a person assigned is not released)", "held-not-open (a pending held ticket is not released)"],
+  "T-stale": ["effective-future (Previous Tier applies before the Effective Date)", "effective-today", "effective-past (an old Previous Tier no longer applies)", "no-tier-yet (an onboarding customer before its Effective Date: unknown tier)", "tier-change"],
+  "T-authority": ["authority (a #support-routing message asks to hold a customer: it is not a hold)"],
+  "T-state": ["release (route the waiting tickets when a hold is lifted)", "count-noise (people's notes that day are not routings)", "count-release (released tickets count in that day's total)", "held-count (context: the held queue is not empty at the close)"]
+ },
+ "judgment": {
+  "what": "Premium 'complex' (POLICY.md section 3.7): priority >= 3, or the description reports 10,000 or more records, or names two or more different external systems as affected",
+  "narrow": "one boolean per Premium ticket from its priority and description; the reference reads it with a regex and a sentence filter, a workflow arm would use one typed Haiku call",
+  "share": "about one Premium ticket in three carries a records or systems sentence"
+ },
+ "amendable": [],
+ "hardRequirements": [],
+ "needJob": {
+  "unit": "trigger",
+  "V": 1,
+  "W": 1,
+  "N": 160,
+  "alsoReported": [1, 40, {"N": 520, "label": "extrapolated, stationarity assumed"}],
+  "verifier": "none"
+ },
+ "hypothesis": {
+  "label": "either: workflow at N = 160 if agent-H is below about 0.85, otherwise either",
+  "agentH": [0.75, 0.9],
+  "workflow": "a workflow with one typed Haiku judgment (Premium complexity) about 0.9 or better",
+  "why": "Most tickets are four lookups (ticket, contact, company, tier row) and a 14-row first-match table, then two exact writes; the failures should concentrate on the held queue (holds placed and lifted, the daily held count), effective dates, look-alike names and the complexity reading. Raw Haiku passed the intercom grounding task 15/16, so one-off routing is within reach; the recurring state is what a per-trigger agent must rebuild every time.",
+  "tag": "[I] written before any label"
+ },
+ "split": "TRAIN, proposed",
+ "seeds": {
+  "practice": {"range": [601, 609], "purpose": "need-example", "split": "dev"},
+  "devLabels": {"range": [610, 613], "purpose": "need-label", "split": "dev", "difficulty": {"610": "d2", "611": "d3", "612": "d2", "613": "d3"}},
+  "devTopUps": {"range": [614, 621], "purpose": "need-label", "split": "dev"},
+  "rehearsal": {"range": [622, 630], "purpose": "need-label", "split": "dev"},
+  "heldout": {"range": [8801, 8804], "purpose": "need-heldout", "split": "test", "note": "never generated or inspected by the family author; gen.py and harness.py refuse seeds outside 601-650"},
+  "difficultyRule": "within each seed block the first seed is d2, then d2/d3 alternate (gen.default_difficulty); --difficulty overrides",
+  "referenceGate": [610, 611, 612, 613, 614]
+ }
+}

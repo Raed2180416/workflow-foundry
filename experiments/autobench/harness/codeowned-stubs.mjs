@@ -48,6 +48,9 @@ export function stubLedger(prompt) {
     fields: [{ name: 'to', quote: a, source: 'request' }, ...quotes.slice(0, 1).map(q => ({ name: 'body', quote: q, source: 'request' }))] }));
   // Reader variation: one reader misses the last item (union restores it); one proposes a negative with no cited rule
   // (code must drop it).
+  // A channel post when the request speaks of one and the records list a channel (exercises the channel checks).
+  const ch = /slack|channel|post\b|announce/i.test(request) ? /\[slack:channel_list:([^\]]+)\][^\n]*"name":"([^"]+)"/.exec(prompt) : null;
+  if (ch) reqs.push({ id: `R${reqs.length + 1}`, polarity: 'positive', action: 'post_message', app: 'slack', target: `#${ch[2]}`, statement: `post an update in #${ch[2]}`, source: 'request', fields: quotes.slice(0, 1).map(q => ({ name: 'text', quote: q, source: 'request' })) });
   if (reader === 1 && reqs.length > 1) reqs.pop();
   if (reader === 2) reqs.push({ id: 'RX', polarity: 'negative', action: 'send_email', app: 'gmail', target: 'anyone else', statement: 'do not email anyone else', source: 'request', fields: [], rule_quote: null });
   const date = /\b(20\d\d-\d\d-\d\d)\b/.exec(request)?.[1] ?? null;

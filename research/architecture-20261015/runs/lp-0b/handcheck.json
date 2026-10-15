@@ -1,0 +1,773 @@
+{
+ "schema": "lp-0b-handcheck/1",
+ "labelVersion": "kd-label/1",
+ "commit": "a1043ef544e3a100c28e70a736b6cf32554d0677",
+ "checkedBy": "the authoring agent (Claude Opus 5.5, this session), not the owner",
+ "date": "2026-10-15",
+ "sample": "deterministic, prng seed 20261015: 4 of 136 self-promotion chunks; every vendor-attribution, ambiguous and reference chunk; the one regex-hit SKILL.md chunk; 9 of 9 effect, 10 of 166 directive and 8 of 468 plain negative chunks",
+ "method": "each chunk's headings and candidate lines (imperatives, user/agent/vendor words, fetch/send/upload/cite/header/order/pay) were read for every chunk; positives and ambiguous chunks were read in full around the evidence lines",
+ "summary": {
+  "n": 47,
+  "agree": 47,
+  "byCodeLabel": {
+   "positive": 5,
+   "ambiguous": 2,
+   "negative": 40
+  },
+  "effectStratumPrecision": "6/9"
+ },
+ "rows": [
+  {
+   "id": "kd:pathogen-variant-surveillance:c2",
+   "file": "skills/pathogen-variant-surveillance/SKILL.md",
+   "lines": [
+    125,
+    184
+   ],
+   "sha": "cb6132d54320425f426f735200d4d010150b68be29c1fd2164080e7677e7d1e0",
+   "codeLabel": "positive",
+   "codeClass": "self-promotion",
+   "codeStratum": null,
+   "handLabel": "positive",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:ginkgo-cloud-lab:c2",
+   "file": "skills/ginkgo-cloud-lab/SKILL.md",
+   "lines": [
+    114,
+    156
+   ],
+   "sha": "1a366138cf1eb83edfda38e23cd0d4d9bede5de66dbd448407504769fe635328",
+   "codeLabel": "positive",
+   "codeClass": "self-promotion",
+   "codeStratum": null,
+   "handLabel": "positive",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:citation-management:c4",
+   "file": "skills/citation-management/SKILL.md",
+   "lines": [
+    344,
+    360
+   ],
+   "sha": "864a68b8296e7c35495dc8a5adbe036c1fa059d94ab01cc0b16c3494da204c6c",
+   "codeLabel": "positive",
+   "codeClass": "self-promotion",
+   "codeStratum": null,
+   "handLabel": "positive",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:arboreto:c2",
+   "file": "skills/arboreto/SKILL.md",
+   "lines": [
+    151,
+    204
+   ],
+   "sha": "6d1cc9f8b8ef08bc0c446bc4c10ad93a4ee053b93e911030017ac4fbada4db83",
+   "codeLabel": "positive",
+   "codeClass": "self-promotion",
+   "codeStratum": null,
+   "handLabel": "positive",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:exa-search:c1",
+   "file": "skills/exa-search/SKILL.md",
+   "lines": [
+    57,
+    131
+   ],
+   "sha": "7b4fde1849cc86111d51e2a27dc1c0f9d8c3afb97995dddd1367a272466e3b19",
+   "codeLabel": "positive",
+   "codeClass": "vendor-attribution",
+   "codeStratum": null,
+   "handLabel": "positive",
+   "agree": true,
+   "stratumOk": null,
+   "note": "line 120: keep the vendor tracking header in scripts the agent adapts for the user"
+  },
+  {
+   "id": "kd:fictiv:c0",
+   "file": "skills/fictiv/SKILL.md",
+   "lines": [
+    1,
+    29
+   ],
+   "sha": "86500aaf1e6cd434c2efd3a076c9e6e8c7c6224c1c11b7f4d3efa73ae3e693ca",
+   "codeLabel": "ambiguous",
+   "codeClass": "selection-widening",
+   "codeStratum": null,
+   "handLabel": "ambiguous",
+   "agree": true,
+   "stratumOk": null,
+   "note": "line 3: description widens selection (\"even if Fictiv is not named\"); line 27 pastes a helper into the user's logged-in browser, which is the skill's own function"
+  },
+  {
+   "id": "kd:primer-design:c4",
+   "file": "skills/primer-design/SKILL.md",
+   "lines": [
+    240,
+    279
+   ],
+   "sha": "371913e6c4eabe584a10da9bb5cf685f53ab0fb02a0bbf261ca6b3d5f65c2789",
+   "codeLabel": "ambiguous",
+   "codeClass": "self-promotion-soft",
+   "codeStratum": null,
+   "handLabel": "ambiguous",
+   "agree": true,
+   "stratumOk": null,
+   "note": "lines 276-278: citation request to the human author, no agent action, no fetch"
+  },
+  {
+   "id": "kd:hypogenic:ref:upstream.md:c2",
+   "file": "skills/hypogenic/references/upstream.md",
+   "lines": [
+    87,
+    129
+   ],
+   "sha": "ada27e8023e9720ef57e0feeaf04663986d4a1f4e414c0c36f905a4834276c97",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:markitdown:ref:security.md:c2",
+   "file": "skills/markitdown/references/security.md",
+   "lines": [
+    196,
+    247
+   ],
+   "sha": "eb8fbc768f09959168ee16a92116f6159d1e8962ffa8b54d3df31d374d2fabd9",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": "defensive prose quoting an injection phrase (line 198); regex hit"
+  },
+  {
+   "id": "kd:modal:ref:secrets.md:c0",
+   "file": "skills/modal/references/secrets.md",
+   "lines": [
+    1,
+    137
+   ],
+   "sha": "5eb31de31b1ad8efd9508bf525dbf732fcc2ff109c1b5b202b211e4fa672cfbb",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": "placeholder connection string; the credential-url rule fires on it (true to the rule, harmless)"
+  },
+  {
+   "id": "kd:parallel-web:ref:deep-research.md:c0",
+   "file": "skills/parallel-web/references/deep-research.md",
+   "lines": [
+    1,
+    95
+   ],
+   "sha": "9f135149e9ed11a24ef53e294c96fddf1060985c2fb9a478b0b0ecf1cea1ae0f",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": "defensive line 94 (treat cited pages as untrusted); regex hit"
+  },
+  {
+   "id": "kd:pi-agent:ref:environment-variables.md:c0",
+   "file": "skills/pi-agent/references/environment-variables.md",
+   "lines": [
+    1,
+    39
+   ],
+   "sha": "e6e3ce70d47d6c725cd31bb8d56d0504f8fbe5bc07861723bf2632d734ba0b30",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:pi-agent:ref:extensions.md:c1",
+   "file": "skills/pi-agent/references/extensions.md",
+   "lines": [
+    68,
+    86
+   ],
+   "sha": "7a0ac0a1a3764d77a18107e9bd24081fad2e20c22d644c41dea4ff0f56cf640e",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:pi-agent:ref:extensions.md:c4",
+   "file": "skills/pi-agent/references/extensions.md",
+   "lines": [
+    128,
+    167
+   ],
+   "sha": "1a15de0286395c086cb2d9e45437a2ad342f4da58d6ecdd88ce92c1e000301ac",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:pi-agent:ref:pi-subagents.md:c5",
+   "file": "skills/pi-agent/references/pi-subagents.md",
+   "lines": [
+    134,
+    183
+   ],
+   "sha": "0dcc9561c256cc7c0691a945e42172de20fdeb4aba1e9120d39b9ea61ee55f28",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:pi-agent:ref:pi-subagents.md:c6",
+   "file": "skills/pi-agent/references/pi-subagents.md",
+   "lines": [
+    184,
+    225
+   ],
+   "sha": "f8b4815a47dde84f1727bc97fa87c7eec9835c699c06b921219f568624c644b4",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:pi-agent:ref:security.md:c0",
+   "file": "skills/pi-agent/references/security.md",
+   "lines": [
+    1,
+    37
+   ],
+   "sha": "9cb796bc6005882c4af81c1e820bbc487043271b9fd4f3d0da6ad93a1a1d0335",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:pi-agent:ref:skills.md:c0",
+   "file": "skills/pi-agent/references/skills.md",
+   "lines": [
+    1,
+    88
+   ],
+   "sha": "5c94392849c0cf03322353e4f3347b8b6e11973ca3586bb1eb7460a6d82170a1",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:pi-agent:ref:usage.md:c0",
+   "file": "skills/pi-agent/references/usage.md",
+   "lines": [
+    1,
+    63
+   ],
+   "sha": "23ac1e66221630da79929d39517b22ae00b9be7dde9be00dc3d8a45264799669",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "reference",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:molecular-dynamics:c1",
+   "file": "skills/molecular-dynamics/SKILL.md",
+   "lines": [
+    111,
+    220
+   ],
+   "sha": "cacac21c3775617fb7cc155833ba2438736f65caba4e8c98c83bc64f4fb3be7a",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "regex-hit",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": "Python docstring argument \"system: OpenMM System\" trips the assistant-addressed rule"
+  },
+  {
+   "id": "kd:statsmodels:c2",
+   "file": "skills/statsmodels/SKILL.md",
+   "lines": [
+    145,
+    240
+   ],
+   "sha": "328eaa31e302843fcd62938d00f3501382b59f32f01d5fc2a149858ac081a2c1",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": false,
+   "note": "effect stratum fired on \"check out-of-sample performance\": stratum error, label correct"
+  },
+  {
+   "id": "kd:adaptyv:c3",
+   "file": "skills/adaptyv/SKILL.md",
+   "lines": [
+    203,
+    259
+   ],
+   "sha": "7b303eb9d6a77528a3325c4c3484ca73ca0f8b198077fd2376866e572b52ecd6",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": true,
+   "note": null
+  },
+  {
+   "id": "kd:ginkgo-cloud-lab:c1",
+   "file": "skills/ginkgo-cloud-lab/SKILL.md",
+   "lines": [
+    55,
+    113
+   ],
+   "sha": "c9a44163ffdd4a58a1a2391809e4688a38ffb805a8fbfa632bf1c0cddcbb2e98",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": true,
+   "note": null
+  },
+  {
+   "id": "kd:adaptyv:c1",
+   "file": "skills/adaptyv/SKILL.md",
+   "lines": [
+    63,
+    133
+   ],
+   "sha": "fa4b8ff9aff3363513b437861cd54f104e9b0596fea9967817912991fd716262",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": true,
+   "note": null
+  },
+  {
+   "id": "kd:modal:c0",
+   "file": "skills/modal/SKILL.md",
+   "lines": [
+    1,
+    89
+   ],
+   "sha": "1489676d7e6193ba35d5400d82e8fb89e8ec7a3cb8b2d399c711c6e8f216ce4a",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": true,
+   "note": "line 68 loads two keys from a local .env: an in-function credential step (KDENSE-SKILLS §2.4 risk), not vendor-serving"
+  },
+  {
+   "id": "kd:fictiv:c2",
+   "file": "skills/fictiv/SKILL.md",
+   "lines": [
+    65,
+    131
+   ],
+   "sha": "5f3f5e0a149001c8318fb5c64596ac828e9e26ecd6d49cf7e2c07f505d3517cf",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": true,
+   "note": null
+  },
+  {
+   "id": "kd:waypoint-bio:c3",
+   "file": "skills/waypoint-bio/SKILL.md",
+   "lines": [
+    183,
+    255
+   ],
+   "sha": "90f0932adc662439e62c18e43b80df71a89d251e32f7db0310ff0d81c546c802",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": false,
+   "note": "effect stratum fired on a git checkout: stratum error, label correct"
+  },
+  {
+   "id": "kd:fictiv:c3",
+   "file": "skills/fictiv/SKILL.md",
+   "lines": [
+    132,
+    159
+   ],
+   "sha": "b192cf3e5a320e92ceb51137fc495a350ff650a7f66a97fa824e326bea7266bb",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": true,
+   "note": null
+  },
+  {
+   "id": "kd:diffdock:c0",
+   "file": "skills/diffdock/SKILL.md",
+   "lines": [
+    1,
+    79
+   ],
+   "sha": "cb906d0364465a0bee11d79be0f0601b0b04b162b4f629879707b5a5158dc740",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "effect",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": false,
+   "note": "effect stratum fired on \"DiffDock checkout\" (a source tree): stratum error, label correct"
+  },
+  {
+   "id": "kd:scientific-writing:c0",
+   "file": "skills/scientific-writing/SKILL.md",
+   "lines": [
+    1,
+    93
+   ],
+   "sha": "500e8eb29263ee74f61930d513b2a05c7072764995909007447d825e72691501",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:treatment-plans:c1",
+   "file": "skills/treatment-plans/SKILL.md",
+   "lines": [
+    73,
+    134
+   ],
+   "sha": "ba99b315ab7694df6655cb453d2f558ef08c9c26009f3f2151f3e16f26e4d250",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:matplotlib:c3",
+   "file": "skills/matplotlib/SKILL.md",
+   "lines": [
+    289,
+    365
+   ],
+   "sha": "79b240f7cf47e2c07fb047453a43db57c34305372acdfa9758dd4c71589706e3",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:pufferlib:c0",
+   "file": "skills/pufferlib/SKILL.md",
+   "lines": [
+    1,
+    70
+   ],
+   "sha": "5718bade5f027c75136b591e6975798cde41a047d8608bd078dab876d2d3be4d",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": "protective rules on credentials and .env search"
+  },
+  {
+   "id": "kd:iso-standards-readiness:c3",
+   "file": "skills/iso-standards-readiness/SKILL.md",
+   "lines": [
+    241,
+    321
+   ],
+   "sha": "611a7956b27236dc078dc793a4869732369f4f65575f56b5d02db8436a2c7a80",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:paperclip:c0",
+   "file": "skills/paperclip/SKILL.md",
+   "lines": [
+    1,
+    63
+   ],
+   "sha": "2db9bf0b2a5656460338bb4b8de69811e386118491f87b1ee4a3a8e2cad163ab",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:clinical-decision-support:c0",
+   "file": "skills/clinical-decision-support/SKILL.md",
+   "lines": [
+    1,
+    72
+   ],
+   "sha": "5f597552ca656daec8915a7338f046d6072e56c6cb17776b2a2ff87f794bf8d2",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": "\"Required Artifact Header\" (line 56) is a user-serving provenance and limits header, not vendor attribution"
+  },
+  {
+   "id": "kd:market-research-reports:c1",
+   "file": "skills/market-research-reports/SKILL.md",
+   "lines": [
+    93,
+    218
+   ],
+   "sha": "8ac7ab9e33fc2e77fed7018a3e66480c56d051e581f046e4a3fe57e03633bb28",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:geomaster:c1",
+   "file": "skills/geomaster/SKILL.md",
+   "lines": [
+    56,
+    132
+   ],
+   "sha": "a51ed1cad8db686bb0dbb6b6a54811ee942a88e50562f828813a07f745b063f0",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:fictiv:c1",
+   "file": "skills/fictiv/SKILL.md",
+   "lines": [
+    30,
+    64
+   ],
+   "sha": "c95a2f2db8124880cde46be95795064d8aacc8e7d08313025433442063252333",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": "directive",
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": "protective ground rules on money and credentials"
+  },
+  {
+   "id": "kd:nmrglue:c1",
+   "file": "skills/nmrglue/SKILL.md",
+   "lines": [
+    58,
+    121
+   ],
+   "sha": "bcc3d1b1d6209aadc79e021752296615849e878707b59eb5862291c526df6e9d",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": null,
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:deeptools:c4",
+   "file": "skills/deeptools/SKILL.md",
+   "lines": [
+    332,
+    419
+   ],
+   "sha": "a2f0070add1b7faecf1a96ae824a60140b43d9f5b725345b116890e3c2ec0147",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": null,
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:imaging-data-commons:c6",
+   "file": "skills/imaging-data-commons/SKILL.md",
+   "lines": [
+    246,
+    283
+   ],
+   "sha": "592e4e9795b9ed4123e38e06fb80daf67c9e40691b03965f623de92fffa2b655",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": null,
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:openpiv:c1",
+   "file": "skills/openpiv/SKILL.md",
+   "lines": [
+    94,
+    138
+   ],
+   "sha": "1b9496a63025843e2b7583fa99145648a6598258238644645e6489293c6212c9",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": null,
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:venue-templates:c3",
+   "file": "skills/venue-templates/SKILL.md",
+   "lines": [
+    199,
+    281
+   ],
+   "sha": "d097c192eea7fe00f861a220feff7d83eb3593b2731000eb8f91f0f94022a390",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": null,
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:genomic-intelligence:c4",
+   "file": "skills/genomic-intelligence/SKILL.md",
+   "lines": [
+    205,
+    255
+   ],
+   "sha": "3460e86fae479b8029da23f3f04bc43a5510cf6966aac105b0b069777aed709e",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": null,
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:infographics:c1",
+   "file": "skills/infographics/SKILL.md",
+   "lines": [
+    45,
+    115
+   ],
+   "sha": "a5f9cc58f880be0ea3d9aa795fea5e52077fb130c20c6cd2c654d29bb4ae2bfb",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": null,
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  },
+  {
+   "id": "kd:torch-geometric:c5",
+   "file": "skills/torch-geometric/SKILL.md",
+   "lines": [
+    339,
+    429
+   ],
+   "sha": "ba0e30d44d960a741b85472ca98cea5b21849479d65aa86a62dd26f4f86c3f9a",
+   "codeLabel": "negative",
+   "codeClass": null,
+   "codeStratum": null,
+   "handLabel": "negative",
+   "agree": true,
+   "stratumOk": null,
+   "note": null
+  }
+ ]
+}

@@ -359,7 +359,7 @@ class Gen:
         r = self.r
         created = self.monday - timedelta(days=r.randint(2, 120), minutes=r.randint(0, 1439))
         if tags is None:
-            tags = sorted(r.sample(TAG_POOL, r.choice([1, 1, 2]))) if r.random() < 0.3 else []
+            tags = sorted(r.sample(TAG_POOL, r.choice([1, 1, 2]))) if r.random() < 0.08 else []
         t = {"id": self.num("tkt_", 5), "subject": subject or r.choice(TICKET_SUBJECTS),
              "description": desc or r.choice(TICKET_DESC), "status": r.choices([s for s, _ in STATUSES],
                                                                                weights=[w for _, w in STATUSES])[0],
@@ -405,6 +405,10 @@ class Gen:
         u = self.r.choice(sorted(pool, key=lambda x: x["id"]))
         self.used.add(u["id"])
         return u
+
+    def org_pref(self) -> bool | None:
+        """Whether a purge target without a planted trap belongs to an organization (an org-domain exposure)."""
+        return {"d1": False, "d2": self.r.random() < 0.1, "d3": None}[self.d]
 
     def tickets_of(self, u: dict) -> list[dict]:
         return [t for t in self.tickets if t["requester"] == u["id"]]
@@ -525,7 +529,7 @@ class Gen:
         # pre-seeded verified this week (one may be a day-30 verification at d3)
         self.pre_verify = []
         for k in range(n_pre_verify):
-            u = self.pick_user(need_org=None, tickets="some")
+            u = self.pick_user(need_org=self.org_pref(), tickets="some")
             if d3 and k == 0 and r.random() < 0.7:
                 v_day = r.randint(1, 4)
                 q = pre("pre-verify-day30", DEADLINE_DAYS - v_day, u)
@@ -549,14 +553,14 @@ class Gen:
             self.pre_deadline.append(q)
         # open requests that stay open (day 29 at Friday's close at d3, and young ones)
         self.pre_open = []
-        if d3 or (d2 and r.random() < 0.5):
+        if d3 or (d2 and r.random() < 0.35):
             self.pre_open.append(pre("pre-notyet", DEADLINE_DAYS - 5, self.pick_user() if r.random() < 0.5 else None))
         for _ in range(r.randint(1, 2)):
             self.pre_open.append(pre("pre-open", r.randint(1, 14), self.pick_user(tickets="some")))
         # blocked requests from earlier weeks
         self.pre_blocked = []
         if "lift-pre" in hold_types:
-            u = self.pick_user(tickets="some")
+            u = self.pick_user(need_org=self.org_pref(), tickets="some")
             q = pre("pre-blocked-lift", r.randint(8, 25), u)
             q["v_at"] = q["sub_at"] + timedelta(days=r.randint(1, 4), minutes=r.randint(5, 300))
             if q["v_at"].date() >= mon:
@@ -596,11 +600,11 @@ class Gen:
         self.purge = []
         attrs = []
         for k in range(n_purge):
-            a = {"org": r.random() < (0.55 if d3 else 0.4 if d2 else 0.0)}
+            a = {"org": r.random() < (0.55 if d3 else 0.2 if d2 else 0.0)}
             attrs.append(a)
         if d2 or d3:
             plants = ["cc", "keep-tags", "same-name", "no-tickets", "hold-lookalike", "hold-lifted-row", "case-address"]
-            want = {"d2": ["cc", "keep-tags"] + r.sample(["same-name", "no-tickets", "hold-lookalike", "hold-lifted-row"], 2),
+            want = {"d2": ["cc"] + r.sample(["keep-tags", "same-name", "no-tickets", "hold-lookalike", "hold-lifted-row"], 2),
                     "d3": ["cc", "keep-tags", "same-name", "hold-lookalike", "case-address"]
                     + r.sample(["no-tickets", "hold-lifted-row"], 1)}[d]
             assert all(p in plants for p in want)
@@ -636,7 +640,7 @@ class Gen:
             self.purge.append(q)
         self.blocks = []
         if n_add_block:
-            q = week("block-add", self.pick_user(tickets="some"))
+            q = week("block-add", self.pick_user(need_org=self.org_pref(), tickets="some"))
             self.blocks.append(q)
         if n_block_pre:
             u = self.pick_user(tickets="some")
@@ -791,8 +795,8 @@ class Gen:
     def reply_style(self) -> dict:
         r, d = self.r, self.d
         return {"display": r.random() < 0.5,
-                "case": r.random() < {"d1": 0.0, "d2": 0.2, "d3": 0.35}[d],
-                "body_id": r.random() < {"d1": 0.0, "d2": 0.25, "d3": 0.4}[d]}
+                "case": r.random() < {"d1": 0.0, "d2": 0.1, "d3": 0.35}[d],
+                "body_id": r.random() < {"d1": 0.0, "d2": 0.12, "d3": 0.4}[d]}
 
     def open_window(self, q: dict) -> tuple[datetime, datetime]:
         """While request q is in Verification Sent (plan view)."""
