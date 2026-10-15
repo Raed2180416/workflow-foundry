@@ -850,7 +850,8 @@ const buildVoided = b => !!b.void || (b.hiddenPathAttempts ?? 0) > 0 || (b.neste
  *  is refused: it was made under other arm settings, prompts, prices or plan. */
 export function recordStamp(ctx, mode = null) {
   const def = mode ? ctx.stages.arms?.[mode] : null;
-  return { stageSha: ctx.stageSha, settingsSha: mode ? (def ? armSha(def) : null) : null, prompts: ctx.prompts, priceTable: ctx.stages.priceTable?.id ?? null };
+  // ports: the kind of ports the record was made on ('stub': --dry and tests, 'live'); a paid resume over stub records is refused.
+  return { stageSha: ctx.stageSha, settingsSha: mode ? (def ? armSha(def) : null) : null, prompts: ctx.prompts, priceTable: ctx.stages.priceTable?.id ?? null, ports: ctx.portKind ?? null };
 }
 const sameStamp = (a, b) => canonicalJson(a ?? null) === canonicalJson(b ?? null);
 

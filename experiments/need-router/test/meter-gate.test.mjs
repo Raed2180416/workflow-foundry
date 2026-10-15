@@ -16,21 +16,59 @@ import * as LR from '../label-run.mjs';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const P = JSON.parse(readFileSync(path.join(REPO, 'research/need-router-20261014/prereg/stages.json'), 'utf8')).priceTable;
 const approx = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
-const BLOCK = G.buildMeterGate({ outputRatios: [{ label: 'a', recorded: 150, final: 40000 }, { label: 'b', recorded: 300, final: 60000 }], eraRatios: [{ key: 'opus | post', sessions: 47, ratio: 2.96 }] });
-const CLEAR = G.buildMeterGate({ outputRatios: [{ label: 'a', recorded: 39000, final: 40000 }], eraRatios: [{ key: 'opus | post', sessions: 47, ratio: 1.02 }] });
+const OPUS = 'claude-opus-5-5', HAIKU = 'claude-haiku-5-5';
+const OK_OUT = ['a', 'b', 'c', 'd'].map(label => ({ label, recorded: 39000, final: 40000 }));      // four builder sessions inside the tolerance
+const era = (opus, haiku = 1.0, n = 47) => [{ key: `${OPUS} | post-flag`, sessions: n, ratio: opus }, { key: `${HAIKU} | post-flag`, sessions: n, ratio: haiku }];
+const EV = { requiredModels: [OPUS, HAIKU], priceTable: P.id };
+const BLOCK = G.buildMeterGate({ outputRatios: [{ label: 'a', recorded: 150, final: 40000 }, { label: 'b', recorded: 300, final: 60000 }], eraRatios: era(2.96), ...EV });
+const CLEAR = G.buildMeterGate({ outputRatios: OK_OUT, eraRatios: era(1.02), ...EV });
+const AGENT_O = { factory: 'b0Agent', model: OPUS };
+// A verification record as meter-gate-cli --verify writes it (schema /2): two verifying sessions of the one model, under the stage's table.
+const sess = (model, extra = {}) => ({ file: 's.jsonl', path: '/x/s.jsonl', sha256: 'a'.repeat(64), model, recorded: 990, final: 1000, reportedUsd: 1, pricedUsd: 1.02, method: 'per-message', ok: true, ...extra });
+const REC = (extra = {}) => ({ schema: G.VERIFICATION_SCHEMA, priceTable: { id: P.id }, models: [OPUS], sessions: [sess(OPUS), sess(OPUS, { recorded: 5000, final: 5100 })], ...extra });
+const REDERIVED = () => ({ ok: true, problems: [] });
 
-test('buildMeterGate: block-until-verified on output tokens far from the final usage or a re-price off the reported total; clear inside both bands', () => {
+test('buildMeterGate: block-until-verified on output tokens far from the final usage or a re-price off the reported total; clear only inside both bands and with enough evidence', () => {
   assert.equal(BLOCK.schema, G.METER_GATE_SCHEMA);
   assert.equal(BLOCK.status, 'block-until-verified');
   assert.deepEqual(BLOCK.reasons.map(r => r.code), ['OUTPUT_TOKENS_UNDER_RECORDED', 'REPRICE_OFF_REPORTED']);
   assert.match(BLOCK.blocks, /agent arm/);
   assert.match(BLOCK.clearedBy, /meter-gate-cli\.mjs --verify/);
-  assert.equal(CLEAR.status, 'clear'); assert.deepEqual(CLEAR.reasons, []); assert.equal(CLEAR.blocks, null);
-  // Only the output rule, only the price rule; a thin model-era (under 3 sessions) does not trip the price band; no evidence is clear.
+  assert.equal(CLEAR.status, 'clear'); assert.deepEqual(CLEAR.reasons, []); assert.deepEqual(CLEAR.gaps, []); assert.equal(CLEAR.blocks, null);
+  assert.deepEqual([CLEAR.priceTable, CLEAR.requiredModels, CLEAR.rule], [P.id, [HAIKU, OPUS], G.currentRule()]);
+  // Only the output rule, only the price rule: a mismatch is a block whatever else is missing.
   assert.deepEqual(G.buildMeterGate({ outputRatios: [{ recorded: 10, final: 1000 }] }).reasons.map(r => r.code), ['OUTPUT_TOKENS_UNDER_RECORDED']);
   assert.deepEqual(G.buildMeterGate({ eraRatios: [{ key: 'k', sessions: 5, ratio: 0.8 }] }).reasons.map(r => r.code), ['REPRICE_OFF_REPORTED']);
-  assert.equal(G.buildMeterGate({ eraRatios: [{ key: 'k', sessions: 2, ratio: 3 }] }).status, 'clear');
-  assert.equal(G.buildMeterGate().status, 'clear');
+  assert.equal(G.buildMeterGate({ outputRatios: OK_OUT, eraRatios: era(3), ...EV }).status, 'block-until-verified');
+});
+
+test('buildMeterGate fails closed on no evidence: nothing, a thin model-era, too few builder sessions or a model with no era group is insufficient-evidence, never clear (review of 2026-10-15)', () => {
+  // The two cases the old tests locked in as `clear`.
+  assert.equal(G.buildMeterGate().status, 'insufficient-evidence');
+  const thin = G.buildMeterGate({ eraRatios: [{ key: 'k', sessions: 2, ratio: 3 }] });
+  assert.equal(thin.status, 'insufficient-evidence'); assert.deepEqual(thin.reasons, [], 'a model-era under 3 sessions still cannot trip the price band');
+  assert.deepEqual(thin.gaps.map(g => g.code), ['TOO_FEW_BUILDER_SESSIONS', 'NO_REQUIRED_MODELS']);
+  const status = (x = {}) => G.buildMeterGate({ outputRatios: OK_OUT, eraRatios: era(1.02), ...EV, ...x });
+  assert.equal(status().status, 'clear');
+  // Each condition on its own.
+  const few = status({ outputRatios: OK_OUT.slice(0, G.MIN_BUILDER_SESSIONS - 1) });
+  assert.equal(few.status, 'insufficient-evidence'); assert.deepEqual(few.gaps.map(g => g.code), ['TOO_FEW_BUILDER_SESSIONS']); assert.equal(few.gaps[0].have, G.MIN_BUILDER_SESSIONS - 1);
+  const unscored = status({ outputRatios: [...OK_OUT.slice(0, 3), { label: 'x', recorded: null, final: 40000 }, { label: 'y', recorded: 5, final: 0 }] });
+  assert.equal(unscored.status, 'insufficient-evidence', 'a session with no recorded or no final output is not a scored session');
+  const noHaiku = status({ eraRatios: [{ key: `${OPUS} | post-flag`, sessions: 47, ratio: 1.0 }] });
+  assert.equal(noHaiku.status, 'insufficient-evidence'); assert.deepEqual(noHaiku.gaps.map(g => [g.code, g.model]), [['NO_ERA_GROUP_FOR_MODEL', HAIKU]]);
+  const thinHaiku = status({ eraRatios: era(1.0).map(e => (e.key.startsWith(HAIKU) ? { ...e, sessions: G.MIN_ERA_SESSIONS - 1 } : e)) });
+  assert.deepEqual(thinHaiku.gaps.map(g => [g.code, g.model, g.largest]), [['NO_ERA_GROUP_FOR_MODEL', HAIKU, G.MIN_ERA_SESSIONS - 1]]);
+  assert.equal(status({ requiredModels: [] }).status, 'insufficient-evidence', 'without the list of models the gate cannot say each is covered');
+  assert.equal(status({ eraRatios: [...era(1.0), { key: `${HAIKU} | pre-flag`, sessions: 1, ratio: 1 }] }).status, 'clear', 'any one era group of enough sessions covers the model');
+  // An insufficient gate blocks like a blocking one, and says how it is cleared.
+  assert.match(few.blocks, /agent arm/); assert.match(few.clearedBy, /meter-gate-cli\.mjs --verify/);
+  // The decision refuses it, with the gap named, and a verification record clears it exactly as it clears block-until-verified.
+  const d = G.meterGateDecision({ gate: few, arms: [AGENT_O], priceTableId: P.id });
+  assert.equal(d.allow, false); assert.match(d.why, /insufficient-evidence \(TOO_FEW_BUILDER_SESSIONS\)/);
+  assert.equal(G.meterGateDecision({ gate: few, verification: REC(), arms: [AGENT_O], priceTableId: P.id, rederive: REDERIVED }).allow, true);
+  // And the D6 default (no archive, no constructions) writes this gate, not a clear one.
+  assert.equal(G.parseMeterGate(JSON.stringify({ d6: { summary: { meterGate: G.buildMeterGate() } } })).gate.status, 'insufficient-evidence');
 });
 
 test('the committed diagnostics.json carries the gate D6 emitted, blocking until verified', () => {
