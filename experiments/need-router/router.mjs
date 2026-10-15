@@ -48,10 +48,31 @@
 // and is listed in `unsupported` (the kNN stage already pooled this way).
 // Inputs: the job's 8 trusted features, its typed requirements, its declared verifier and runnable modes, word-cue ids
 // (ask only), and TRAIN jobs' per-mode stats. Never a family id, bed version, kind, oracle, reference or result file.
+//
+// Second review (2026-10-15), each fixed below with a regression test in test/router-review2.test.mjs:
+//   E1 H0's fit and its LOCO estimate now ARE the preregistered rule (PREREG §6; prereg-rules.mjs thetaFitStatus, fitOrRule,
+//      locoFolds): candidates from the confident items only, midpoints only (never a job's own value), ties to the larger
+//      thresholds key by key; a LOCO fold is undefined only when its training part lacks a confident class.
+//   E2 a cascade is attached to the choice only when the chosen mode IS the cascade mode; a pure mode deploys pure.
+//   E3 NR-probe's options (card.mjs probePlan) price the preregistered bundle (2 direct-H draws + 1 agent-H run), k not
+//      capped at N for a probe on examples.
+//   E4 a probe record carries the modes drawn and their draws (from the probe rows) apart from its observations.
+//   E5 NR-probe's prior is an empirical-Bayes Beta over the per-job rates of the leaf (between-job dispersion), its
+//      concentration capped at `priorJobsCap` jobs' worth of tasks; the PREREG text's Beta(1 + s, 1 + n − s) over pooled
+//      tasks is kept as the option probePrior: 'pooled-tasks' (PREREG §13 addendum needed; owner decision).
+//   E6 decision cards are sealed (evaluate.mjs sealDecisions) and every code file that changes a decision is hashed.
+//   E7 a masked top mode is substituted with the next mode of the router's own ranking and the substitution is returned
+//      (`masked`, evaluate's `fallback`), so it is counted (PREREG §7).
+//   E8 a probe record needs k >= 1 draws (no probe is probe: null).
+//   E9 probe modes outside the preregistered probeable set {direct-H, agent-H}, or outside the router's predictions, are
+//      refused, never ignored.
+//   E10 the kNN stage abstains (structure-unknown, pooled TRAIN stats) when a trusted feature is missing instead of
+//      imputing the TRAIN mean; chooseK and ruleLoco count what they skip; a balanced accuracy over one class is null.
 import {
   labelTable, utilities, score, singleBest,
   MODES, CASCADES, DELTA, HEADLINE, makeCell, cellKey, classOf as registryClassOf, modeInfo, needUtility, perTaskUsd, bestOf, rankModes,
 } from './metrics.mjs';
+import { thetaFitStatus, locoFolds, fitOrRule } from './prereg-rules.mjs';
 
 /** Per-mode label summary of one family: { p, perTaskUsd, fixedUsd, n }. */
 export function cellSummary(table, f) {
