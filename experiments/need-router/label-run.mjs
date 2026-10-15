@@ -1774,11 +1774,15 @@ async function runStage(opts, held) {
     // still copied out (failures are kept), then it is raised.
     if (/^STALL/.test(e.message)) stopped = e.message; else { copyOut(live, out, [...ctx.builds.values()]); throw e; }
   } finally { ports?.close?.(); }
-  if (!stopped && budget.refused) stopped = `STAGE_CAP: $${budget.capUsd} reached; ${budget.refused} start(s) refused (K5: analysed as it stands, no reruns)`;
 
   // Rows, builds, probes, faults, spend, report.
   const results = readJsonl(resultsFile), runFaultRecs = readJsonl(faultsFileOf(resultsFile)), cfaults = readJsonl(path.join(live, 'construction-faults.jsonl')).filter(f => f.stage === stage.id);
   const spend = loadSpend(spendFiles, stage.id), unrec = unrecordedSpend({ spend, stageId: stage.id, results });
+  // K5 on the whole ledger (this run and earlier ones): a start settled above its bound can carry the meter past the cap, which
+  // no reservation check prevents; the stage then stops (STAGE_CAP_OVERRUN) and the overrun is reported (totals.spend).
+  const over = overBound(spend), capUsd = stage.capUsd ?? 0, overCapUsd = Math.max(0, spend.totalUsd - capUsd);
+  if (!stopped && overCapUsd > 1e-9) stopped = `STAGE_CAP_OVERRUN: the meter holds $${spend.totalUsd.toFixed(4)}, $${overCapUsd.toFixed(4)} over the $${capUsd} cap; ${over.starts} start(s) settled above their bound by $${over.usd.toFixed(4)} (K5: analysed as it stands, no reruns; record the overrun in PREREG §13)`;
+  if (!stopped && budget.refused) stopped = `STAGE_CAP: $${budget.capUsd} reached; ${budget.refused} start(s) refused (K5: analysed as it stands, no reruns)`;
   const allRows = [], allBuilds = [], jobsOut = [];
   const zero = () => ({ usdReported: 0, usdRepriced: 0, usdImputed: 0 });
   const tot = rs => ({ usdReported: r6(sum(rs.map(r => r.usdReported ?? 0))), usdRepriced: r6(sum(rs.map(r => r.usdRepriced ?? 0))), usdImputed: r6(sum(rs.map(r => r.usdImputed ?? 0))) });
@@ -1839,6 +1843,10 @@ async function runStage(opts, held) {
       selfCheckErrors: allRows.filter(r => r.selfCheckError).length,
       deployableGaps: units.filter(u => FAMILY_HANDED_TESTS[u.job.family] && !famDeployable.get(u.job.family)).map(u => ({ job: u.job.id, family: u.job.family, named: FAMILY_HANDED_TESTS[u.job.family], used: 'schema validity only' })),
       pathMentionsBuilds: allBuilds.filter(b => (b.pathMentions ?? 0) > (b.hiddenPathAttempts ?? 0)).length,
+      // Agent draws (and agent-H+proc sessions) whose text-scan path mentions exceed their accessed paths, per job and mode: for
+      // review by hand (the sandbox is the main guard; a repository-root mention voids: repoPathMentions).
+      pathMentionsDraws: jobsOut.flatMap(j => Object.entries(j.modes).filter(([, x]) => x.pathMentionRows > 0).map(([m, x]) => ({ job: j.job, mode: m, rows: x.pathMentionRows }))),
+      repoPathMentionVoids: allRows.filter(r => (r.repoPathMentions ?? 0) > 0).length + allBuilds.filter(b => (b.repoPathMentions ?? 0) > 0).length,
       // Builds priced at a figure the table did not re-price (a builder session with no recorded usage, a call to an unpriced
       // model): metrics leaves their jobs unlabelled (notRepriced), as for task rows.
       notRepricedBuilds: allBuilds.filter(b => b.repriced === false).map(b => `${b.job}/${b.mode}#${b.lineage}`).sort(),
@@ -1847,7 +1855,8 @@ async function runStage(opts, held) {
     totals: { rows: allRows.length, builds: allBuilds.length, probes: allProbes.length, ...parts, usdMeasured: r6(measured), usdImputed: r6(imputed), usdCharged: r6(measured + imputed),
       imputedShare: measured + imputed > 0 ? r6(imputed / (measured + imputed)) : 0, notRun: ctx.notRun.length + jobsOut.reduce((a, j) => a + j.notRunCap, 0),
       constructionFaults: cfaults.length, envFaultedTrials: runFaultRecs.filter(f => f.experiment?.startsWith(`${stage.id}.`)).length,
-      spend: { meterUsd: r6(spend.totalUsd), settledUsd: r6(spend.settledUsd), inFlightUsd: r6(spend.openUsd), carriedUsd: r6(spend.carriedUsd), capUsd: stage.capUsd ?? null } },
+      spend: { meterUsd: r6(spend.totalUsd), settledUsd: r6(spend.settledUsd), inFlightUsd: r6(spend.openUsd), carriedUsd: r6(spend.carriedUsd), capUsd: stage.capUsd ?? null,
+        overBoundStarts: over.starts, overBoundUsd: r6(over.usd), overCapUsd: r6(overCapUsd) } },
     stopped,
     rules: { rowCost: 'usdRepriced = measured tokens at the pinned table; usdImputed = bound minus measured for killed sessions and timeouts; total = sum',
       voids: 'lineage: build row hiddenPathAttempts or nestedModelAttempts > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept). hiddenPathAttempts counts paths a tool use accesses (file-tool paths, Bash without heredoc bodies), never Write/Edit content or Grep patterns, and never a path the task (or the lineage\'s PROCEDURE.md) states or a directory above one; pathMentions (every string scanned) is for review by hand',
