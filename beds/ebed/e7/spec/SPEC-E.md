@@ -151,7 +151,10 @@ happened, or an effect after its window are all errors. Records carry the instan
 
 **Files.** `rulebook/<edition>/` holds `edition.json`, `priority.json`, `assignment.json`, `alert-urgency.json`,
 `sla-definitions.json` and `policy.json`; `master/` holds `cis.json`, `services.json`, `groups.json`, `users.json`;
-`calendar/<id>.json` holds the schedules (§4.4).
+`calendar/<id>.json` holds the schedules (§4.4). Each master file is a list of records whose id is the field named
+after the record's kind (S17): a CI `{ ci, name, aliases, service, region, timezone, supportGroup }`, a service
+`{ service, name, impact, supportSchedule, owner }`, a group `{ group, name, mailbox, managerEmail, schedule }`, a user
+`{ userId, name, email, region, timezone, roles }`. `alert-urgency.json` maps each `severity` to an urgency or `null`.
 
 **Editions (R0).** Each `edition.json` is `{ id, effectiveFrom }` (a date). The edition in force at an instant is the
 published edition with the latest `effectiveFrom` on or before the date of that instant in the system time zone. Each
@@ -444,6 +447,9 @@ Send each required notification exactly once per occasion. Escalations are not n
   counts needs no declaration, because nothing is recorded after a closure or cancellation (R8.2); an incident resolved
   at the deadline, or whose priority stops being 1 there, still gets the declaration after the deadline. Within one
   instant, what happened first decides: an answer that counted before the withdrawal still counts.
+- S17 A master record's id is the field named after its kind, never a field `id`: `ci` in `cis.json` (a CI's id in
+  §3.1), `service` in `services.json`, `group` in `groups.json` (a resolver update's `group` and `toGroup`, an
+  `assignment.json` `group`, a CI's `supportGroup`) and `userId` in `users.json` (a report's `callerId`).
 
 ## 6. Orientation (for orientation only)
 

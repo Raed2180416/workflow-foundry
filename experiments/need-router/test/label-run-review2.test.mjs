@@ -140,12 +140,16 @@ test('major: --dry on a held-out stage reads the Freeze from the committed prere
 // -------------------------------------------------------------------------------------- major: a stage is paid for once
 test('major: a paid stage that ran to its cap cannot run again with a fresh --out and work root (STAGE_ALREADY_RUN); a --dry run beside it does not count', async t => {
   const dir = tmp(t), runsDir = path.join(dir, 'runs'), workDir = path.join(dir, 'work');
-  const { file, prereg, paidDeps } = paidSpec(dir, { runs: R0_DIRECT, capUsd: 0.05 });
+  // The cap admits exactly one start: every direct-H call times out, so each start is charged its $1 bound; the second does not
+  // fit under $1.50. (A cap below the $1 bound would admit none and leave no spend-ledger evidence.)
+  const { file, prereg, paidDeps } = paidSpec(dir, { runs: R0_DIRECT, capUsd: 1.5 });
   // A --dry run of the same stage beside it (its own work root and --out): no paid evidence.
   await LR.labelRun({ stageId: 'NL-T', specFile: file, workRoot: path.join(workDir, 'nl-t-dry'), out: path.join(runsDir, 'nl-t-dry'), dry: true, racing: false, log: quiet });
-  const A = { stageId: 'NL-T', specFile: file, prereg, ports: 'stub', paidDeps, racing: false, enforceGates: false, log: quiet };
+  const A = { stageId: 'NL-T', specFile: file, prereg, ports: 'stub', paidDeps, racing: false, enforceGates: false, log: quiet, stubForce: { call: { 'direct-H': 'timeout' } } };
   const a = await LR.labelRun({ ...A, workRoot: path.join(workDir, 'nl-t'), out: path.join(runsDir, 'nl-t') });
-  assert.match(a.stopped, /^STAGE_CAP/); assert.ok(a.totals.spend.meterUsd <= 0.05 + 1e-9);
+  assert.match(a.stopped, /^STAGE_CAP/); assert.equal(a.totals.spend.meterUsd, 1, 'one start, charged at its $1 bound');
+  const paidEntries = readJsonl(path.join(runsDir, 'nl-t', LR.SPEND_FILE)).filter(e => e.op === 'settle' && e.dry === false);
+  assert.equal(paidEntries.length, 1, 'the ledger holds the paid start');
   // B: a fresh --out and a fresh work root, the same stage: its meter would start at $0.
   const B = { ...A, workRoot: path.join(workDir, 'nl-t-again'), out: path.join(runsDir, 'nl-t-again') };
   await assert.rejects(LR.labelRun(B), e => e.code === 'STAGE_ALREADY_RUN' && e.found.length === 2

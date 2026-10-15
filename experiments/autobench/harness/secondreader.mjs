@@ -203,10 +203,9 @@ function decodeBody(body) {
 // The diff between the two reads, masked
 
 const ISO = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/;
-/** Replace clock values written during the run (ISO strings, epoch s/ms/us as numbers or digit strings within [lo, hi]
- * epoch seconds) by '<now>'. Dates alone are masked only when they equal a day of the window. */
+/** Replace clock values written during the run (timestamps as ISO strings with a time, or epoch s/ms/us as numbers or digit
+ * strings, within [lo, hi] epoch seconds) by '<now>'. A date without a time is kept: it may be a value the worker chose. */
 export function maskClock(v, lo, hi) {
-  const days = new Set([new Date(lo * 1000).toISOString().slice(0, 10), new Date(hi * 1000).toISOString().slice(0, 10)]);
   const inWin = x => [1, 1e3, 1e6].some(s => x / s >= lo && x / s <= hi);
   const walk = x => {
     if (Array.isArray(x)) return x.map(walk);
@@ -215,8 +214,7 @@ export function maskClock(v, lo, hi) {
     if (typeof x === 'string') {
       const s = x.trim();
       if (/^\d{9,17}(\.\d+)?$/.test(s)) return inWin(Number(s)) ? '<now>' : x;
-      if (ISO.test(s)) {
-        if (s.length === 10) return days.has(s) ? '<now>' : x;
+      if (ISO.test(s) && s.length > 10) {
         const t = Date.parse(/[zZ]|[+-]\d{2}:?\d{2}$/.test(s) ? s : `${s.replace(' ', 'T')}Z`);
         return Number.isFinite(t) && t / 1000 >= lo && t / 1000 <= hi ? '<now>' : x;
       }
@@ -234,26 +232,29 @@ function leafChanges(a, b, p = '', out = []) {
   if (JSON.stringify(a) !== JSON.stringify(b)) out.push([p || '(value)', a, b]);
   return out;
 }
-const short = (v, n = 300) => { const s = typeof v === 'string' ? v : JSON.stringify(v ?? null); return s.length > n ? `${s.slice(0, n)}…` : s; };
+const short = (v, n = 300) => { const s = JSON.stringify(v ?? null); return s.length > n ? `${s.slice(0, n)}…` : s; };
 
 /**
- * The world diff between the pre-read and the post-read, as text and counts. Removals are reported only for apps whose
- * listings were complete in both reads (a record beyond a cap, or found by a look-up, is not "removed").
+ * The world diff between the pre-read and the post-read, as text and counts. A removal is reported only when it is certain:
+ * the app's listings were complete in both reads, the record was not found by a look-up, the post-read still lists records
+ * of its kind, and (a sheet row) its spreadsheet was read again. A false "removed" could make a repair re-create a record.
  */
 export function diffReads(before, after, { lo, hi, maxChars = 15_000 } = {}) {
   const apps = [...new Set(after.records.map(r => r.app).concat(Object.keys(after.apps ?? {}).filter(a => after.apps[a].status === 'connected')))];
   const d = worldDiff(before, after, apps);
   const truncated = new Set([...(before.truncated ?? []), ...(after.truncated ?? [])].map(t => t.split(':')[0]));
   const sheetsAfter = new Set(after.records.filter(r => r.app === 'google_sheets').map(r => r.data?.spreadsheetId).filter(Boolean));
-  const removed = d.removed.filter(r => !truncated.has(r.app) && (r.app !== 'google_sheets' || sheetsAfter.has(r.data?.spreadsheetId)));
+  const kinds = new Set(after.records.map(r => `${r.app}:${r.kind}`));
+  const removed = d.removed.filter(r => !truncated.has(r.app) && r.data?.term === undefined && kinds.has(`${r.app}:${r.kind}`) && (r.app !== 'google_sheets' || sheetsAfter.has(r.data?.spreadsheetId)));
+  const changed = d.changed.map(c => ({ ptr: c.after.ptr, leaves: leafChanges(maskClock(c.before.data, lo, hi), maskClock(c.after.data, lo, hi)).slice(0, 20) })).filter(c => c.leaves.length);
   const lines = [
     ...d.added.map(r => `+ [${r.ptr}] ${compactRecord(maskClock(r.data, lo, hi), 2500)}`),
-    ...d.changed.map(c => `~ [${c.after.ptr}] ${leafChanges(c.before.data, maskClock(c.after.data, lo, hi)).filter(([, x, y]) => JSON.stringify(x) !== JSON.stringify(y)).slice(0, 20).map(([k, x, y]) => `${k}: ${short(x, 200)} -> ${short(y, 400)}`).join('; ')}`),
+    ...changed.map(c => `~ [${c.ptr}] ${c.leaves.map(([k, x, y]) => `${k}: ${short(x, 200)} -> ${short(y, 400)}`).join('; ')}`),
     ...removed.map(r => `- [${r.ptr}] removed (was ${compactRecord(r.data, 300)})`),
   ];
   let text = lines.join('\n');
   if (text.length > maxChars) text = `${text.slice(0, maxChars)}\n…(more changes cut for size)`;
-  return { text, added: d.added.length, changed: d.changed.length, removed: removed.length, apps };
+  return { text, added: d.added.length, changed: changed.length, removed: removed.length, apps };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -493,6 +494,7 @@ export async function runPipeline(o) {
     // 3. READ (clean context): only if the reader still fits the responses (a repair needs more; checked below).
     reading: {
       if (responses + 1 > maxSteps - 1) { stats.skipped = 'no response left for the reader'; break reading; }
+      if (usdLeft() < 0.005) { stats.skipped = 'no money left for the reader'; break reading; }
       const recordsText = renderInventory(inv, { maxChars: P.readerInventoryChars });
       const prompt = readerPrompt({ request: o.official.user, recordsText, changesText: diff.text, writes: writesText, neverCalled, postRead: Boolean(after), dateNote: o.dateNote ? DATE_NOTE : null });
       const reply = await modelNode('reader', 'reader', READER_SYSTEM, prompt);

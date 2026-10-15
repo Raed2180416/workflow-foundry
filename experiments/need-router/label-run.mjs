@@ -10,8 +10,9 @@
 // What it does, per stage:
 //   plan      reads prereg/stages.json (or, when that file is absent or --stage-spec is given, a spec file of the same
 //             schema); per job: the preregistered tasks (prereg-check.mjs planTasks: per-seed difficulty, stage kinds),
-//             assertSeedsAllowed for EVERY task (L4), example and evaluation tasks disjoint by taskHash (a collided
-//             evaluation seed is replaced by the lowest unused reserve seed at the same difficulty and kind);
+//             assertSeedsAllowed for EVERY task (L4), example (and probe) and evaluation tasks disjoint by taskHash (a collided
+//             evaluation seed is replaced by the lowest unused reserve seed at the same difficulty and kind); no two jobs of a
+//             stage share an evaluation task (TASK_SHARED: one results file keys trials by arm, task and trial);
 //   build     lineage modes: construct-H and build-O through construct({selfCheck:true}), agent-H+proc through one
 //             procedure-writer call; each lineage is a build row (a fixed cost B, never folded into per-task cost);
 //   run       every mode on the job's evaluation tasks through runExperiment (envFaultRule, strictResume); construct-H
@@ -19,18 +20,25 @@
 //   probe     NR-probe rows on the probe example (two direct-H draws, one agent-H run): deployable signals only, the
 //             oracle is never called on them;
 //   racing    after the first pass, jobs with P(best class) < 0.8 at the headline cell get one more draw or lineage
-//             for each mode in their acceptable set (up to 4 per mode); agent-O gets a second draw on every task where
-//             it is in the draw-1 per-task acceptable set (PREREG §4.3);
+//             for each mode in their acceptable set (up to 4 per mode), unless that cell is unlabelled (logged); agent-O gets
+//             a second draw on every task where it is in the draw-1 per-task acceptable set (PREREG §4.3);
 //   price     every row and build re-priced from recorded tokens with the pinned price table (stages.json priceTable);
 //             killed sessions and timeouts charged at their bound; measured and imputed dollars kept apart;
-//   void      a lineage (or an agent draw) with hiddenPathAttempts > 0 or nestedModelAttempts > 0 is voided; ownerci
-//             construct-H solvers holding example module text are voided (AUDIT F10);
+//   void      a lineage (or an agent draw) with hiddenPathAttempts > 0, nestedModelAttempts > 0 or repoPathMentions > 0 (the
+//             repository root named in a heredoc body, written content, a ~ path or an encoding) is voided; ownerci
+//             construct-H solvers holding example module text are voided (AUDIT F10); text-scan path mentions over the
+//             accessed paths are counted per mode for review by hand;
+//   lock      one process per work root and per --out: an exclusive lock file (.label-run.lock, O_EXCL, holding pid, host and
+//             start time) in both, taken before anything is written and released at the end; a second run is refused while the
+//             first lives (RUN_LOCKED), and a lock whose pid is gone on this host is taken over;
 //   cap       a trial or build starts only if its bound fits under the stage cap next to spend and work in flight (K5).
 //             The cap meter (PREREG §12) charges each start max(reported, re-priced), its bound when its spend was not
 //             observed (timeout, killed, costUnknown); every reservation and settlement is appended to spend.jsonl in the
 //             work root AND in --out, so a resume starts from what was spent (faulted attempts, builds, probes included),
 //             a start in flight when a process died counts at its bound, and a new work root over an --out that already
-//             holds this stage's spend is refused;
+//             holds this stage's spend is refused; the ledger is re-read before each start when another writer grew it; a
+//             start settled above its bound is an overrun (overBoundUsd), and a meter over the cap stops the stage
+//             (STAGE_CAP_OVERRUN);
 //   faults    per (job, mode): attempts and environment faults of trials (results + results.faults) and builds
 //             (builds + construction-faults); an arm over the 25% limit is invalid (K4): report.validity.invalidArms and
 //             arm-faults.jsonl, which evaluate.mjs reads;
@@ -711,7 +719,8 @@ export function livePorts({ live, models }) {
  * own key (run id, workdir tail), never by call order. The outcomes are fake; only the harness around them is real.
  * `force` overrides an outcome by key substring (tests): { builder: {labelPart: 'fail'|'nested'|'hidden'|'ok'|'killed'|'envfault'|'nocheck'|'unpriced'},
  * call: {runIdPart: 'right'|'wrong'|'schema'|'timeout'|'ratelimit'}, writer: {runIdPart: 'envfault'|'timeout'}, agent: {workdirPart: 'right'|'wrong'|
- * 'none'|'killed'|'nested'|'hidden'|'mention'|'envfault'}, script: {...}, selfcheck: {workdirPart: 'sandbox'|'launch'} }.
+ * 'none'|'killed'|'nested'|'hidden'|'mention'|'heredoc'|'envfault'}, script: {...}, selfcheck: {workdirPart: 'sandbox'|'launch'} } (builder also 'repo': a
+ * script naming the repository written and run).
  */
 export function stubPorts({ tasks, models, force = {} }) {
   const owner = loadPolicy(), policy = subsetPolicy(owner.policy, models), hash = policyHash(policy);
@@ -779,6 +788,8 @@ export function stubPorts({ tasks, models, force = {} }) {
       const toolUses = [{ name: 'Bash', input: { command: './tools/run-solver probes/probe-0 > a.json' } }, { name: 'Bash', input: { command: './tools/run-solver probes/probe-1' } }];
       if (pick === 'nested') toolUses.push({ name: 'Bash', input: { command: 'claude -p "solve it"' } });
       if (pick === 'hidden') toolUses.push({ name: 'Bash', input: { command: 'ls /home/user/workflow-foundry/beds' } });
+      if (pick === 'repo') toolUses.push({ name: 'Write', input: { file_path: 'peek.mjs', content: `import { readFileSync } from 'node:fs';\nreadFileSync('${REPO}/beds/records/oracle.mjs');\n` } },
+        { name: 'Bash', input: { command: 'node peek.mjs' } });
       if (pick !== 'fail') {
         writeFileSync(path.join(workdir, 'solve.mjs'), `// stub solver (label-run --dry) for ${key}\nprocess.stdout.write('null\\n');\n`);
         if (prompt.includes(SELF_CHECK_FILE) && pick !== 'nocheck') writeFileSync(path.join(workdir, SELF_CHECK_FILE), '// stub self-check (label-run --dry)\nprocess.exit(0);\n');
@@ -796,6 +807,8 @@ export function stubPorts({ tasks, models, force = {} }) {
     const toolUses = [{ name: 'Read', input: { file_path: 'inputs.json' } }];
     if (pick === 'nested') toolUses.push({ name: 'Bash', input: { command: 'claude -p "help"' } });
     if (pick === 'hidden') toolUses.push({ name: 'Read', input: { file_path: '/home/user/workflow-foundry/beds/records/score.mjs' } });
+    // heredoc: the repository root in a heredoc body run by node (the accessed scan skips heredoc bodies; repoPathMentions does not).
+    if (pick === 'heredoc') toolUses.push({ name: 'Bash', input: { command: `node <<'EOF'\nconsole.log(require('fs').readFileSync('${REPO}/beds/records/oracle.mjs', 'utf8'))\nEOF` } });
     // mention: host paths in data only (answer content, a Grep pattern, a heredoc body), as incident and ownerci answers have.
     if (pick === 'mention') toolUses.push({ name: 'Write', input: { file_path: 'answer.json', content: '{"root_cause_volume":"/var/lib/postgresql/data"}' } },
       { name: 'Grep', input: { pattern: '/var/log', path: 'files' } }, { name: 'Bash', input: { command: "cat > notes.txt <<'EOF'\nbackups go to /var/lib/backup and /srv/objects\nEOF" } });
@@ -804,7 +817,7 @@ export function stubPorts({ tasks, models, force = {} }) {
       return { ok: false, error: { code: 'EXECUTOR_PROTOCOL' }, costUsd: list(entry, tr.usage), costUnknown: false, costUpperUsd: list(entry, tr.usage), streamUsage: tr.usage, turns: null, usage: null,
         toolUses, sessionId: `stub-${h}`, durationMs: 1000, transcript: tr.file };
     }
-    const out = t && pick !== 'killed' && pick !== 'none' ? await answer(t, ['nested', 'hidden', 'mention'].includes(pick) ? 'right' : pick) : null;
+    const out = t && pick !== 'killed' && pick !== 'none' ? await answer(t, ['nested', 'hidden', 'mention', 'heredoc'].includes(pick) ? 'right' : pick) : null;
     if (out != null) writeFileSync(path.join(workdir, 'answer.json'), JSON.stringify(out));
     if (files['PROCEDURE.md'] != null && out != null) {
       const right = await isRight(t, out);
@@ -1153,11 +1166,12 @@ function withRunVoids(builds, voids, jobId) {
  */
 export function modeSummary({ rows: rs, builds: bsm = [], tasks }) {
   const dead = new Set(bsm.filter(b => b.failed || buildVoided(b)).map(b => b.lineage));
-  const scored = rs.filter(r => r.lineage == null || !dead.has(r.lineage)), synth = bsm.filter(b => dead.has(b.lineage)).length * tasks;
+  const scored = rs.filter(r => r.lineage == null || !dead.has(r.lineage)), deadSlots = bsm.filter(b => dead.has(b.lineage)).length * tasks;
+  const synth = deadSlots - rs.filter(r => r.lineage != null && dead.has(r.lineage)).length;
   const usd = sum(rs.map(r => r.usdRepriced)) + sum(bsm.map(b => b.usdRepriced)), imp = sum(rs.map(r => r.usdImputed)) + sum(bsm.map(b => b.usdImputed));
   const errors = {};
   for (const r of rs) if (r.error) errors[r.error] = (errors[r.error] ?? 0) + 1;
-  return { rows: scored.length + synth, pass: scored.filter(r => r.pass).length, rowsRecorded: rs.length, synthesizedFailures: synth,
+  return { rows: scored.length + deadSlots, pass: scored.filter(r => r.pass).length, rowsRecorded: rs.length, synthesizedFailures: synth,
     failedLineages: bsm.filter(b => b.failed).length, voidedLineages: bsm.filter(b => !b.failed && buildVoided(b)).length,
     delivered: rs.filter(r => r.delivered).length, schemaInvalid: rs.filter(r => r.delivered && r.schemaValid === false).length,
     selfPass: rs.filter(r => r.selfVerdict === 'pass').length, selfFail: rs.filter(r => r.selfVerdict === 'fail').length, selfCheckErrors: rs.filter(r => r.selfCheckError).length,
@@ -1181,8 +1195,14 @@ export function racingPlan({ table, job, stages, current, labelModes, next = {} 
   const conf = stages.grid?.confident ?? 0.8, maxPer = stages.grid?.racingMaxPerMode ?? 4, delta = stages.grid?.delta ?? DELTA;
   const labels = needLabels(table, { cells: [HEADLINE], reps: stages.reps?.labelBootstrap ?? 2000, seed: stages.rng?.labelBootstrap ?? 1, modes: labelModes, delta });
   const e = labels.at(job, HEADLINE), p = e.pBest ? Math.max(e.pBest.workflow, e.pBest['no-workflow']) : 0;
-  const plan = { pBest: e.pBest, label: e.label, acceptable: e.acceptable, add: {}, agentOTasks: [] };
-  if (p < conf) for (const m of e.acceptable) if ((current[m] ?? 0) < maxPer) plan.add[m] = next[m] ?? (current[m] ?? 0) + 1;
+  // unlabelled: the headline cell is left unlabelled (over 30% imputed dollars in a mode, or a row not re-priced). Such a job
+  // gets no mode top-up, whatever its P(best class): §4.3 races a label's confidence, and buying draws for a cell that has no
+  // label would spend to dilute imputed dollars, which the preregistration does not provide for. stages.grid.racingUnlabelled
+  // 'top-up' restores the top-up (only with a PREREG §4.3 sentence saying racing may dilute imputed dollars). agent-O's
+  // per-task second draw (below) is a separate §4.3 rule and stands.
+  const skipUnlabelled = (stages.grid?.racingUnlabelled ?? 'skip') !== 'top-up';
+  const plan = { pBest: e.pBest, label: e.label, acceptable: e.acceptable, unlabelled: e.unlabelled ?? null, add: {}, agentOTasks: [] };
+  if (p < conf && !(e.unlabelled && skipUnlabelled)) for (const m of e.acceptable) if ((current[m] ?? 0) < maxPer) plan.add[m] = next[m] ?? (current[m] ?? 0) + 1;
   // agent-O: a second draw where it is in the draw-1 per-task acceptable set (draw modes on rep 0, lineage modes averaged).
   if (table.has(job, 'agent-O') && (current['agent-O'] ?? 0) < 2) {
     const c = HEADLINE, ms = table.modesOf(job).filter(m => labelModes.includes(m));
@@ -1746,7 +1766,7 @@ async function runStage(opts, held) {
           try { p = racingPlan({ table: t.table, job: u.job.id, stages, current, labelModes, next }); }
           catch (e) { racingLog.set(key, { stage: stage.id, round, job: u.job.id, skipped: String(e.message).slice(0, 200) }); continue; }
           rp = { stage: stage.id, round, job: u.job.id, pBest: p.pBest ? { workflow: r6(p.pBest.workflow), 'no-workflow': r6(p.pBest['no-workflow']) } : null, label: p.label,
-            acceptable: p.acceptable, add: p.add, agentOTasks: p.agentOTasks, stamp: recordStamp(ctx) };
+            acceptable: p.acceptable, unlabelled: p.unlabelled, add: p.add, agentOTasks: p.agentOTasks, stamp: recordStamp(ctx) };
           appendFileSync(racingFile, JSON.stringify(rp) + '\n'); decided.set(key, rp);
         }
         const groups = [], unbuilt = [];
@@ -1859,10 +1879,10 @@ async function runStage(opts, held) {
         overBoundStarts: over.starts, overBoundUsd: r6(over.usd), overCapUsd: r6(overCapUsd) } },
     stopped,
     rules: { rowCost: 'usdRepriced = measured tokens at the pinned table; usdImputed = bound minus measured for killed sessions and timeouts; total = sum',
-      voids: 'lineage: build row hiddenPathAttempts or nestedModelAttempts > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept). hiddenPathAttempts counts paths a tool use accesses (file-tool paths, Bash without heredoc bodies), never Write/Edit content or Grep patterns, and never a path the task (or the lineage\'s PROCEDURE.md) states or a directory above one; pathMentions (every string scanned) is for review by hand',
+      voids: 'lineage: build row hiddenPathAttempts, nestedModelAttempts or repoPathMentions > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept). hiddenPathAttempts counts paths a tool use accesses (file-tool paths, Bash without heredoc bodies), never Write/Edit content or Grep patterns, and never a path the task (or the lineage\'s PROCEDURE.md) states or a directory above one; repoPathMentions counts tool uses that name the repository root anywhere else (heredoc bodies, written content, ~ and $HOME forms, base64 and hex); pathMentions (every string scanned) is for review by hand (validity.pathMentionsDraws, pathMentionsBuilds)',
       copyScan: `ownerci: more than ${COPY_SCAN.maxLines} distinct example lines of >= ${COPY_SCAN.minLineChars} characters in solve.mjs voids the lineage`,
-      racing: 'headline cell; P(best class) < confident adds one draw or lineage per acceptable mode (max racingMaxPerMode); agent-O second draw on draw-1 per-task acceptable tasks',
-      cap: 'the cap meter (PREREG §12): each start at max(reported, re-priced), at least its bound when unobserved (call $1, agent budget, script perTaskUsd, build builder + gateway budget), every start in flight at its bound; persisted in spend.jsonl (work root and --out); totals.spend.meterUsd',
+      racing: 'headline cell; P(best class) < confident adds one draw or lineage per acceptable mode (max racingMaxPerMode), except on a job whose headline cell is unlabelled (logged: racing[].unlabelled); agent-O second draw on draw-1 per-task acceptable tasks',
+      cap: 'the cap meter (PREREG §12): each start at max(reported, re-priced), at least its bound when unobserved (call $1, agent budget, script perTaskUsd, build builder + gateway budget), every start in flight at its bound; persisted in spend.jsonl (work root and --out), re-read before each start; one process per work root and --out (.label-run.lock); a start settled above its bound is an overrun (overBoundUsd), and a meter over the cap stops the stage (STAGE_CAP_OVERRUN); totals.spend.meterUsd',
       charged: 'totals.usdCharged = measured + imputed over task rows, builds, probes, faulted trial attempts, construction faults and attempts that left no record (the K7 figure per job: jobs[].usdCharged)',
       faults: `K4: an arm whose trial or build attempts are more than ${limit * 100}% environment faults is invalid (validity.invalidArms; arm-faults.jsonl)`,
       gates: `K2 stops the stage when direct-H on wbed-r0 is below 10/12 on a draw, before any other mode of the stage starts (${enforceGates ? 'enforced' : 'reported only'})`,
@@ -1909,8 +1929,11 @@ export function renderReport(rep) {
       + `${j.replacements.length} replacement(s); pairing ${j.pairing}${k2}; charged ${usd(j.usdCharged)}${j.estUsd ? ` (estimate $${j.estUsd}, ${j.k7Ratio}x)` : ''}`);
     for (const [m, s] of Object.entries(j.modes)) {
       const errors = Object.entries(s.errors).map(([k, v]) => `${k}:${v}`).join(' ');
+      // rows/pass as needTable scores them: failed and voided lineages fail every task (synthesised where no row exists).
+      const dead = s.failedLineages || s.voidedLineages ? `  (recorded ${s.rowsRecorded ?? s.rows}; lineages failed ${s.failedLineages ?? 0}, voided ${s.voidedLineages ?? 0}: ${s.synthesizedFailures ?? 0} failures synthesised)` : '';
       L.push(`  ${m.padEnd(14)} ${String(s.pass).padStart(3)}/${String(s.rows).padEnd(3)} pass  delivered ${s.delivered}  self ${s.selfPass}/${s.selfFail}  void ${s.voidedRows}  `
-        + `${usd(s.usdRepriced)} + imputed ${usd(s.usdImputed)} (reported ${usd(s.usdReported)})${errors ? `  ${errors}` : ''}${s.selfCheckErrors ? `  self-check errors ${s.selfCheckErrors}` : ''}`);
+        + `${usd(s.usdRepriced)} + imputed ${usd(s.usdImputed)} (reported ${usd(s.usdReported)})${errors ? `  ${errors}` : ''}${s.selfCheckErrors ? `  self-check errors ${s.selfCheckErrors}` : ''}${dead}`
+        + `${s.pathMentionRows ? `  path mentions over accesses ${s.pathMentionRows} (review by hand)` : ''}`);
     }
     for (const b of j.builds) {
       const extra = `${b.runSolverCalls != null ? `, run-solver ${b.runSolverCalls}` : ''}${b.selfCheck != null ? `, check.mjs ${b.selfCheck ? 'yes' : 'no'}` : ''}`;
@@ -1924,19 +1947,23 @@ export function renderReport(rep) {
     L.push('', `environment faults per arm (K4, limit ${rep.validity.envFaultLimit}): ${bad.length ? '' : 'none'}`, ...bad.map(x => `  ${x.job}/${x.mode}: trials ${x.trialFaults}/${x.trialAttempts} (${x.share}), builds ${x.buildFaults}/${x.buildAttempts} (${x.buildShare})${x.invalid ? ' INVALID' : ''}`));
   }
   const V = rep.validity;
-  if (V && (V.invalidArms.length || V.noSelfCheck.length || V.selfCheckErrors || V.deployableGaps.length || V.notRepricedBuilds?.length))
+  if (V && (V.invalidArms.length || V.noSelfCheck.length || V.selfCheckErrors || V.deployableGaps.length || V.notRepricedBuilds?.length || V.pathMentionsDraws?.length || V.pathMentionsBuilds || V.repoPathMentionVoids))
     L.push('', 'validity:', ...(V.invalidArms.length ? [`  invalid arms (K4): ${V.invalidArms.join(', ')}`] : []), ...(V.noSelfCheck.length ? [`  construct-H lineages without check.mjs: ${V.noSelfCheck.join(', ')}`] : []),
       ...(V.selfCheckErrors ? [`  rows whose self-check could not run: ${V.selfCheckErrors}`] : []), ...V.deployableGaps.map(g => `  ${g.job}: deployableVerdict is ${g.used}; DESIGN names ${g.named} (${g.family} exports no deployableCheck)`),
-      ...(V.notRepricedBuilds?.length ? [`  builds not re-priced from tokens (their jobs stay unlabelled): ${V.notRepricedBuilds.join(', ')}`] : []));
+      ...(V.notRepricedBuilds?.length ? [`  builds not re-priced from tokens (their jobs stay unlabelled): ${V.notRepricedBuilds.join(', ')}`] : []),
+      ...(V.pathMentionsDraws?.length ? [`  agent rows whose path mentions exceed their accessed paths (review by hand): ${V.pathMentionsDraws.map(x => `${x.job}/${x.mode} ${x.rows}`).join(', ')}`] : []),
+      ...(V.pathMentionsBuilds ? [`  builds whose path mentions exceed their accessed paths (review by hand): ${V.pathMentionsBuilds}`] : []),
+      ...(V.repoPathMentionVoids ? [`  rows and builds that named the repository root outside an accessed path (voided): ${V.repoPathMentionVoids}`] : []));
   const arms = Object.entries(rep.arms ?? {});
   if (arms.length) L.push('', 'prompt-cache read share per arm (MEM-0):', ...arms.map(([a, x]) => `  ${a.padEnd(14)} ${x.usage ? cacheShareCell(x.usage) : '–'}`));
   if (rep.racing.length) L.push('', 'racing:', ...rep.racing.map(r => `  round ${r.round} ${r.job}: ${r.skipped ? `skipped (${r.skipped})`
-    : `P(best) ${JSON.stringify(r.pBest)} label ${r.label} A=[${r.acceptable.join(', ')}] add ${JSON.stringify(r.add)} agent-O tasks ${r.agentOTasks.length}${r.unbuilt?.length ? `; not built (no row: fault or cap): ${r.unbuilt.join(', ')}` : ''}`}`));
+    : `P(best) ${JSON.stringify(r.pBest)} label ${r.label} A=[${r.acceptable.join(', ')}]${r.unlabelled ? ` UNLABELLED (${r.unlabelled}): no mode top-up` : ''} add ${JSON.stringify(r.add)} agent-O tasks ${r.agentOTasks.length}${r.unbuilt?.length ? `; not built (no row: fault or cap): ${r.unbuilt.join(', ')}` : ''}`}`));
   if (rep.skipped.length) L.push('', 'skipped:', ...rep.skipped.map(s => `  ${s.where}: ${s.reason}`));
   const t = rep.totals, f = t.usdFaultedTrials, c = t.usdConstructionFaults;
   L.push('', `totals: ${t.rows} rows, ${t.builds} builds, ${t.probes} probe rows; measured ${usd(t.usdMeasured)} + imputed ${usd(t.usdImputed)} = ${usd(t.usdCharged)} `
     + `(imputed share ${t.imputedShare}); not run ${t.notRun}; construction faults ${t.constructionFaults} (${usd(c.usdRepriced + c.usdImputed)}); env-faulted trials ${t.envFaultedTrials} (${usd(f.usdRepriced + f.usdImputed)})`);
-  L.push(`cap meter (K5): ${usd(t.spend.meterUsd)} of $${t.spend.capUsd}${t.spend.carriedUsd ? ` (carried from files ${usd(t.spend.carriedUsd)})` : ''}${t.spend.inFlightUsd ? `; never settled ${usd(t.spend.inFlightUsd)}` : ''}; K7 cost per job ${usd(rep.k7.perJobUsd)}${rep.k7.over.length ? `; over ${rep.k7.limit}x estimate: ${rep.k7.over.join(', ')}` : ''}`);
+  L.push(`cap meter (K5): ${usd(t.spend.meterUsd)} of $${t.spend.capUsd}${t.spend.carriedUsd ? ` (carried from files ${usd(t.spend.carriedUsd)})` : ''}${t.spend.inFlightUsd ? `; never settled ${usd(t.spend.inFlightUsd)}` : ''}`
+    + `${t.spend.overBoundStarts ? `; ${t.spend.overBoundStarts} start(s) over their bound by ${usd(t.spend.overBoundUsd)}` : ''}${t.spend.overCapUsd ? `; OVER THE CAP by ${usd(t.spend.overCapUsd)}` : ''}; K7 cost per job ${usd(rep.k7.perJobUsd)}${rep.k7.over.length ? `; over ${rep.k7.limit}x estimate: ${rep.k7.over.join(', ')}` : ''}`);
   return L.join('\n') + '\n';
 }
 

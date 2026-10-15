@@ -9,8 +9,12 @@
 // is 1242-1244: 1241 was touched at d3 by the part-A walker check (2026-10-14). Dev seeds 1001-1199 are accepted for
 // developer checks. The rest of the rehearsal block (author fixtures, attacks, reference validation, the B1 grading
 // worlds 1232-1234, the build-loop practice worlds 1235-1237) and every other seed are refused.
+// `--shim master-ids` (adjudication 2026-10-15, README E7-B11) is DIAGNOSTIC ONLY, never specificity evidence: it wraps
+// each solver (its code untouched) so every master record it reads also carries `id` = the record's S17 id field, to see
+// past the one interface guess the three blind solvers got wrong (they keyed master records on `id`, which SPEC-E did
+// not state before S17) and grade the rest of their behaviour.
 //   node beds/ebed/e7/tools/specificity-run.mjs [--dir <solvers dir>] [--solvers s1.mjs,...] [--seeds 1242-1244]
-//        [--difficulties 2,3,4,5] [--size n] [--show 6] [--json out.json]
+//        [--difficulties 2,3,4,5] [--size n] [--show 6] [--json out.json] [--shim master-ids]
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +28,40 @@ const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? proces
 /** Seeds this tool may run on: the specificity block of the rehearsal range, or the dev block. */
 export function specificitySeedAllowed(seed) {
   return Number.isInteger(seed) && ((seed >= 1241 && seed <= 1249) || (seed >= 1001 && seed <= 1199));
+}
+
+/** S17: the id field of each master file's records. */
+export const MASTER_ID_FIELDS = Object.freeze({ 'master/cis.json': 'ci', 'master/services.json': 'service', 'master/groups.json': 'group', 'master/users.json': 'userId' });
+
+const SHIM_TAIL = `
+// ---- appended by beds/ebed/e7/tools/specificity-run.mjs --shim master-ids (DIAGNOSTIC ONLY; not specificity evidence)
+const __SHIM_ID_FIELDS = ${JSON.stringify(MASTER_ID_FIELDS)};
+function __shimFiles(files) {
+  if (!files || typeof files !== 'object') return files;
+  const out = { ...files };
+  for (const [p, k] of Object.entries(__SHIM_ID_FIELDS)) {
+    if (typeof out[p] !== 'string') continue;
+    try {
+      const rows = JSON.parse(out[p]);
+      if (Array.isArray(rows)) out[p] = JSON.stringify(rows.map(r => (r && typeof r === 'object' && r.id === undefined && r[k] !== undefined ? { id: r[k], ...r } : r)), null, 1);
+    } catch { /* leave the file as served */ }
+  }
+  return out;
+}
+export function createSolver() {
+  const s = __shimmedCreateSolver();
+  return { id: s.id, tick(input, ctx) { return s.tick(input, { ...ctx, files: __shimFiles(ctx.files) }); } };
+}
+export default createSolver;
+`;
+
+/**
+ * Diagnostic shim (never specificity evidence): the solver source with its `createSolver` wrapped so that `ctx.files`
+ * serves every master record with an extra `id` equal to its S17 id field. The solver's own code is not changed.
+ */
+export function masterIdShim(source) {
+  if (!source.includes('export function createSolver()')) throw new Error('--shim master-ids: the solver must declare `export function createSolver()`');
+  return source.replace('export function createSolver()', 'function __shimmedCreateSolver()').replace(/^export default createSolver;[ \t]*$/m, '') + SHIM_TAIL;
 }
 
 /** Run one solver source on one world; returns the row this tool prints and stores. */
@@ -56,14 +94,18 @@ async function main() {
   const diffs = arg('--difficulties', '2,3,4,5').split(',').map(Number);
   const size = arg('--size', null) === null ? null : Number(arg('--size'));
   const show = Number(arg('--show', '6'));
+  const shim = arg('--shim', null);
+  if (shim !== null && shim !== 'master-ids') throw new Error(`unknown --shim ${shim} (only master-ids)`);
+  if (shim) console.log('DIAGNOSTIC RUN (--shim master-ids): master records carry an extra `id`; these numbers are not specificity evidence');
   const out = [];
   for (const d of diffs) for (const seed of seeds) {
     const w = generateWorld({ seed, difficulty: d, mix: 'tail', ...(size ? { size } : {}) });
     const { pools } = await referenceRuns(w);
     for (const f of solvers) {
-      const r = await runSolver({ world: w, pools, id: f, solverSource: readFileSync(path.join(dir, f), 'utf8') });
-      out.push({ solver: f, seed, d, size, ...r });
-      console.log(`${f.padEnd(24)} d${d} seed ${seed}${size ? ` size ${size}` : ''}: ${r.passed}/${r.completed} pass, critical ${r.critical}, arm errors ${r.armErrors}, oracle errors ${r.oracleErrors}${r.status === 'complete' ? '' : `, ${r.status}`}`);
+      const src = readFileSync(path.join(dir, f), 'utf8');
+      const r = await runSolver({ world: w, pools, id: f, solverSource: shim ? masterIdShim(src) : src });
+      out.push({ solver: f, seed, d, size, ...(shim ? { shim } : {}), ...r });
+      console.log(`${f.padEnd(24)} d${d} seed ${seed}${size ? ` size ${size}` : ''}${shim ? ` [shim ${shim}]` : ''}: ${r.passed}/${r.completed} pass, critical ${r.critical}, arm errors ${r.armErrors}, oracle errors ${r.oracleErrors}${r.status === 'complete' ? '' : `, ${r.status}`}`);
       for (const c of r.criticals.slice(0, show)) console.log(`     CRITICAL ${JSON.stringify(c).slice(0, 300)}`);
       for (const e of r.armErrorSample.slice(0, Math.min(show, 3))) console.log(`     ARM ERROR ${e.instance ?? ''} ${e.code ?? ''} ${e.detail}`);
       for (const c of r.fails.slice(0, show)) console.log(`     ${c.case} ${c.class}${c.armCensored ? ' (open at horizon)' : ''} ${JSON.stringify(c.first ?? { openLids: c.openLids.slice(0, 3) }).slice(0, 300)}`);

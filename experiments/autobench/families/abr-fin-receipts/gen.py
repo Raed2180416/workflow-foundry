@@ -426,7 +426,7 @@ class Gen:
         if intent == "ok-ride":
             f = self.blank("Travel", self.amt(9, 68), d)
             spec.update(desc=r.choice(["Uber to the airport", "Lyft from the client office", "Taxi to the train station",
-                                       "Uber back to the hotel", "Lyft to the offsite"]),
+                                       "Uber back to the office", "Lyft to the offsite"]),
                         syn=["Rideshare", "Uber", "Taxi"], sub="ride")
         elif intent == "ok-parking":
             f = self.blank("Travel", self.amt(8, 42), d)
@@ -735,6 +735,9 @@ class Gen:
             raise AssertionError(f"category not decidable from {text!r} (cat field {st['cat_field']!r}): {got}")
         if words_in(text, ALCOHOL_WORDS) != f["alcohol"]:
             raise AssertionError(f"alcohol words disagree with the facts: {text!r}")
+        if f["category"] == "Travel" and (words_in(text, ["hotel", "lodging"]) != (f["hotel"] is not None)
+                                          or words_in(text, ["flight", "airfare"]) != (f["flight"] is not None)):
+            raise AssertionError(f"hotel or flight words disagree with the facts: {text!r}")
 
     # -- canonical state helpers ----------------------------------------------------------------------------------------
     def cap_other(self, name: str, d: date, exclude_ts: str | None) -> Decimal:
@@ -1108,7 +1111,7 @@ class Gen:
                                    for row in self.rows]}
 
     def week_labels(self) -> list[str]:
-        out = []
+        out = ["week-total"]
         if any(row["cells"]["Status"] == PENDING for row in self.rows):
             out.append("pending-at-close")
         wk = self.monday.date().isoformat()
@@ -1395,6 +1398,8 @@ class Gen:
             labels.append("display-name")
         if status == PENDING:
             labels.append("pending")
+        if status and f["category"] == "Meals" and not individual(f) and f["amount"] > LIMITS["cap"]:
+            labels.append("team-meal")
         if reason and reason.endswith("needs VP pre-approval"):
             labels.append("rule-category")
         elif reason == "Receipt required":
@@ -1406,7 +1411,9 @@ class Gen:
 
     def reply(self, tr: dict, thread_ts: str, text: str):
         tr["expect"]["replies"].append({"thread_ts": thread_ts, "text": text})
-        tr["assertions"].append({"type": "slack_message_exists", "channel_name": CHAN, "text_contains": text})
+        head, rest = text.split(": ", 1)
+        parts = [head + ":"] + ([rest] if head == "Rejected" else rest.split(" ", 1))
+        tr["assertions"].append({"type": "slack_message_exists", "channel_name": CHAN, "text_contains": parts})
         self.bot_replies.append({"thread_ts": thread_ts, "text": text})
 
     def handle_correction(self, tr: dict, rc: dict, poster: dict, p: dict, at: datetime, labels: list[str]):
@@ -1584,7 +1591,7 @@ TRAP_KIND = {"synonym": "T-format", "words-amount": "T-format", "currency-format
              "meal-cap": "T-state", "cap-history": "T-state", "cap-under": "T-state", "correction": "T-state",
              "correction-fix": "T-state", "approval": "T-state", "approval-history": "T-state",
              "pending-at-close": "T-state", "approved-last-week": "T-state", "corrected-total": "T-state",
-             "pending": "context", "rule-category": "context", "rule-receipt": "context", "rule-meal": "context",
+             "pending": "context", "team-meal": "context", "week-total": "context", "rule-category": "context", "rule-receipt": "context", "rule-meal": "context",
              "rule-hotel": "context", "rule-flight": "context"}
 # Labels that are context rather than a trap the trigger must resolve (they do not count toward the trap share).
 CONTEXT_LABELS = {k for k, v in TRAP_KIND.items() if v == "context"}

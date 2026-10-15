@@ -27,3 +27,7 @@ research/corpus-20261006/parts/*.jsonl
 !research/*/runs/
 !research/*/runs/**
 beds/ebed/e8/.mutants/
+
+# need-router label-run directory locks (experiments/need-router/label-run.mjs): live-process state, never committed
+**/.label-run.lock
+**/.label-run.lock.stale-*

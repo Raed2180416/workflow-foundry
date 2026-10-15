@@ -1,0 +1,191 @@
+{
+ "runId": "sr-smoke-scripted",
+ "label": "scripted (no model)",
+ "model": null,
+ "scripted": true,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "arm": "A0+SR (A0 + second reader)",
+ "sealed": false,
+ "testSplitTasks": 0,
+ "harness": {
+  "id": "secondreader",
+  "version": "sr-v1",
+  "manifestSha256": "3e6c50cb72bbcb7c3d4a671fac80053fa0c0c1236167ef5479295f448d270a51",
+  "frozenHashGiven": false,
+  "nodeModels": {
+   "act": null,
+   "reader": null,
+   "repair": null
+  },
+  "pipeline": {
+   "preSteps": 6,
+   "postSteps": 4,
+   "repairMinSteps": 2,
+   "minRepairResponses": 3,
+   "maxItems": 8,
+   "readerBudgetShare": 0.1,
+   "readerInventoryChars": 60000,
+   "changesChars": 15000,
+   "writesChars": 10000,
+   "repairChangesChars": 8000,
+   "systemMaxBytes": 90000,
+   "actReserveMs": 300000,
+   "nodeTimeoutMs": 240000,
+   "minRepairMs": 90000,
+   "minRepairUsd": 0.01
+  },
+  "extraModelCalls": 7
+ },
+ "selection": {
+  "pool": "devTrain",
+  "subset": 6,
+  "seed": "1",
+  "domains": [
+   "sales",
+   "marketing",
+   "operations",
+   "support",
+   "finance",
+   "hr"
+  ]
+ },
+ "tasks": [
+  "sales.calendly_capacity_management",
+  "marketing.social_benchmark",
+  "operations.buffer_engagement_optimization",
+  "support.intercom_conversation_quality",
+  "finance.payroll_variance_check",
+  "hr.i9_verification_tracking"
+ ],
+ "dateNote": true,
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 0.75,
+ "capUsd": null,
+ "tools": [
+  "Bash"
+ ],
+ "effort": null,
+ "n": 6,
+ "n_graded": 6,
+ "pass_rate": 0,
+ "mean_partial_credit": 0.1111111111111111,
+ "by_domain": {
+  "sales": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "marketing": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "operations": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "support": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  },
+  "finance": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.6666666666666666
+  },
+  "hr": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0
+  }
+ },
+ "live_pass_rate": 0,
+ "mean_cost_per_task_usd": 0,
+ "accounting": {
+  "modelResponses": {
+   "mean": 3.3333333333333335,
+   "max": 5
+  },
+  "toolResponses": {
+   "mean": 1.1666666666666667,
+   "max": 2
+  },
+  "numTurnsCli": {
+   "mean": 3.3333333333333335,
+   "max": 5
+  },
+  "worldSteps": {
+   "mean": 7.166666666666667,
+   "max": 8
+  },
+  "worldCalls": {
+   "mean": 174.33333333333334,
+   "max": 324
+  },
+  "reads": {
+   "mean": 173,
+   "max": 323
+  },
+  "searches": {
+   "mean": 0,
+   "max": 0
+  },
+  "writes": {
+   "mean": 1.3333333333333333,
+   "max": 3
+  },
+  "stoppedByStepGuard": 0,
+  "extraModelCalls": 7,
+  "compactions": 0,
+  "capViolations": 0,
+  "l5Violations": 0,
+  "models": [
+   "stub"
+  ],
+  "ledger": null
+ },
+ "cost": {
+  "spentUsd": 0,
+  "knownUsd": 0,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 6,
+  "skipped": 0
+ },
+ "envFaults": {
+  "records": 0,
+  "tasks": 0,
+  "sessions": 0,
+  "spentUsd": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "784d8db00824109604d8e2139f71226dbfe55298d647e9ee7f9f916076c6e9d3",
+  "policyHash": null,
+  "policyVersion": null,
+  "policyFileSha256": "3364011cae3741fb4409386d16cfa2439aaa340181382ce1694a8f7778fd3793",
+  "node": "v24.21.0",
+  "cli": null,
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  },
+  "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "harnessManifestSha256": "3e6c50cb72bbcb7c3d4a671fac80053fa0c0c1236167ef5479295f448d270a51"
+ },
+ "live": "/var/tmp/foundry-work/autobench/sr-smoke-scripted",
+ "finishedAt": "2026-10-15T12:00:13.109Z"
+}

@@ -74,6 +74,8 @@ export function resolvePath(world, p) {
   }
   return v;
 }
+const sortKeys = v => (Array.isArray(v) ? v.map(sortKeys) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, sortKeys(v[k])])) : v);
+const canonical = v => JSON.stringify(sortKeys(v));
 const show = (v, n) => { const s = typeof v === 'string' ? JSON.stringify(v) : compact(v, n); return s.length > n ? `${s.slice(0, n)}…` : s; };
 const pretty = p => String(p).replace(/^\$\./, '');
 
@@ -90,7 +92,16 @@ export function renderDiff(diff, world0, { maxChars = DEFAULTS.diffChars, record
     if (/^\$\.meta(\.|\[|$)/.test(p)) { metaDropped += 1; continue; }
     if (op === 'add-records') for (const r of e[2]) { records += 1; let o; try { o = JSON.parse(r); } catch { o = r; } lines.push(`+ new record in ${pretty(p)}: ${compact(o, recordChars)}`); }
     else if (op === 'del-record') { const key = e[2]; const was = Array.isArray(resolvePath(world0, p)) ? resolvePath(world0, p).find(x => x && Object.values(x).some(v => String(v) === String(key))) : undefined; lines.push(`- record ${key} removed from ${pretty(p)}${was ? ` (was ${compact(was, 400)})` : ''}`); }
-    else if (op === 'set') { const before = resolvePath(world0, p); lines.push(`~ ${pretty(p)}: ${before === undefined ? '(unset)' : show(before, 300)} -> ${show(e[2], 600)}`); }
+    else if (op === 'set') {
+      const before = resolvePath(world0, p), after = e[2];
+      if (Array.isArray(before) && Array.isArray(after)) {
+        // A list whose records carry no unique key (e.g. chat messages): the multiset of items added and removed.
+        const left = new Map();
+        for (const x of before) { const k = canonical(x); left.set(k, (left.get(k) ?? 0) + 1); }
+        for (const x of after) { const k = canonical(x); if (left.get(k)) left.set(k, left.get(k) - 1); else { records += 1; lines.push(`+ new item in ${pretty(p)}: ${compact(x, recordChars)}`); } }
+        for (const [k, n] of left) for (let i = 0; i < n; i++) lines.push(`- item removed from ${pretty(p)}: ${compact(JSON.parse(k), 400)}`);
+      } else lines.push(`~ ${pretty(p)}: ${before === undefined ? '(unset)' : show(before, 300)} -> ${show(after, 600)}`);
+    }
     else if (op === 'add') lines.push(`+ ${pretty(p)} = ${show(e[2], recordChars)}`);
     else if (op === 'del') { const before = resolvePath(world0, p); lines.push(`- ${pretty(p)} removed${before === undefined ? '' : ` (was ${show(before, 300)})`}`); }
   }
@@ -276,8 +287,9 @@ export function estimateUsd(prompt, { inPerM = 0.1, outPerM = 0.5, overheadToken
   return ((est(RT_SYSTEM) + est(prompt) + overheadTokens) * inPerM + outTokens * outPerM) / 1e6 * 1.25; // 1.25: cache-write premium
 }
 
-/** A $0 code stand-in for the reader: the reconstruction is the diff's own string values (pipeline check, not evidence). */
-export const scriptedPort = () => ({ call: async req => { const changes = req.prompt.split('<changes>')[1]?.split('</changes>')[0] ?? ''; const vals = [...changes.matchAll(/"([^"]{3,200})"/g)].map(m => m[1]).filter(v => v !== '<gen>'); return { ok: true, value: { request: vals.join('; ').slice(0, 4000), effects: [] }, costUsd: 0 }; } });
+/** A $0 code stand-in for the reader: the reconstruction is the diff text itself, punctuation removed (so its score is B0's
+ * up to tokenisation). It checks the plumbing; it is not evidence. */
+export const scriptedPort = () => ({ call: async req => { const changes = req.prompt.split('<changes>')[1]?.split('</changes>')[0] ?? ''; const text = /\(no change at all\)/.test(changes) ? '' : changes.replace(/[{}"[\]]/g, ' ').replace(/<gen>/g, ''); return { ok: true, value: { request: text.slice(0, 8000), effects: [] }, costUsd: 0 }; } });
 
 async function pool(items, n, fn) { let i = 0; await Promise.all(Array.from({ length: Math.max(1, Math.min(n, items.length)) }, async () => { while (i < items.length) { const k = i++; await fn(items[k], k); } })); }
 

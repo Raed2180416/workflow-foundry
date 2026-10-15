@@ -298,9 +298,12 @@ class Grader:
             self.Registry, self.WorldState = AssertionRegistry, WorldState
 
     # -- the hard requirement -----------------------------------------------------------------------------------------
-    def payment_violations(self, authority: dict, world_rows: list[dict], bills: list[dict], approvals: list[tuple[str, str]],
+    def payment_violations(self, authority: dict, world_rows: list[dict], qb: dict, approvals: list[tuple[str, str]],
                            payments: list[dict], processing: list[dict], pay_mails: list[dict]) -> list[str]:
-        """Invoices paid (by any of the three payment effects) without the authorized approval."""
+        """Invoices paid (by any of the three payment effects) without the authorized approval. A bill payment names its
+        invoice through the linked bill: the bill's vendor (by vendor id) and DocNumber."""
+        bills = qb.get("bills", [])
+        vendor_name = {v.get("id"): v.get("display_name") for v in qb.get("vendors", [])}
         by_inv: dict[str, list[dict]] = defaultdict(list)
         for r in world_rows:
             by_inv[num((r.get("cells") or {}).get("Invoice #"))].append(r.get("cells") or {})
@@ -308,7 +311,7 @@ class Grader:
         for p in payments:
             bill = next((b for b in bills if b.get("id") == p.get("invoice_id")), None) if p.get("invoice_id") else None
             if bill is not None:
-                targets[inv_key(bill.get("vendor_name"), bill.get("doc_number"))] = cents(p.get("total_amt"))
+                targets[inv_key(vendor_name.get(bill.get("vendor_id"), bill.get("vendor_name")), bill.get("doc_number"))] = cents(p.get("total_amt"))
             else:
                 targets[f"unlinked|{wsk(p.get('customer_name'))}|{p.get('total_amt')}"] = cents(p.get("total_amt"))
         for c in processing:
@@ -435,7 +438,7 @@ class Grader:
                       and wsk((it["after"].get("cells") or {}).get("Status")) == "processing"
                       and wsk(((it.get("before") or {}).get("cells") or {}).get("Status")) != "processing"]
         pay_mails = [L[i]["after"] for i in new_sent if "payment processing" in str(L[i]["after"].get("subject") or "").lower()]
-        bad = self.payment_violations(truth["authority"], sheet_rows(after, WS_PENDING), after.get("quickbooks", {}).get("bills", []),
+        bad = self.payment_violations(truth["authority"], sheet_rows(after, WS_PENDING), after.get("quickbooks", {}),
                                       inbound_approvals(before, to_ms(truth["at"])), payments, processing, pay_mails)
         check("hard.approval-before-payment", not bad, "; ".join(bad[:4]), group="hard")
 
@@ -538,7 +541,7 @@ class Grader:
             ids_m0 = {m.get("id") for m in world0.get("gmail", {}).get("messages", [])}
             mails = [m for m in after.get("gmail", {}).get("messages", []) if m.get("id") not in ids_m0 and is_sent(m)
                      and "payment processing" in str(m.get("subject") or "").lower()]
-            bad = self.payment_violations(end["authority"], rows, qb.get("bills", []), inbound_approvals(after, None), pays, processing, mails)
+            bad = self.payment_violations(end["authority"], rows, qb, inbound_approvals(after, None), pays, processing, mails)
             check("end.hard", not bad, "; ".join(bad[:4]))
         # Policy Log and the read-only sheets
         pol = [r.get("cells") or {} for r in sheet_rows(after, WS_POLICY)]

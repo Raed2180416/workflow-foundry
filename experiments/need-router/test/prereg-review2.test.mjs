@@ -181,7 +181,10 @@ test('minor 12: E2E needs NL2bp only when gameqa is drawn, in stages.json and at
 test('major 4: a meterUnverified session enters utility at the reported figure, and its gap is not an imputed bound', () => {
   const P = STAGES.priceTable, job = { id: 'j', cluster: 'W', split: 'train', family: 'records' };
   const rows = [];
-  for (let t = 0; t < 6; t++) for (const [mode, model, usage, out, usd] of [['agent-H', 'claude-haiku-5-5', [10, 300, 30000, 0], 310, 0.02], ['agent-O', 'claude-opus-5-5', [10, 40, 50000, 8000], 20000, 0.7]]) {
+  // agent-H reports what the pinned table re-prices its usage at ((10*0.1 + 300*0.5 + 30000*0.01)/1e6 = $0.000451), so only agent-O
+  // is meterUnverified (guardMeter's price band flags any re-price far from the reported figure; a $0.02 report would flag agent-H too).
+  close(LR.priceSession(P, 'claude-haiku-5-5', { messageUsage: [[10, 300, 30000, 0, 'claude-haiku-5-5']] }).measured, 0.000451, 1e-12, 'the fixture\'s agent-H figure is its re-price');
+  for (let t = 0; t < 6; t++) for (const [mode, model, usage, out, usd] of [['agent-H', 'claude-haiku-5-5', [10, 300, 30000, 0], 310, 0.000451], ['agent-O', 'claude-opus-5-5', [10, 40, 50000, 8000], 20000, 0.7]]) {
     // agent-H passes 4 of 6, so agent-O would lead if its gap were dropped: the 30% rule bites only in the sensitivity.
     const rec = { arm: mode, taskKey: `records:dev:d3:s${610 + t}`, trial: 0, costUsd: usd, taskHash: `h${t}`, pass: mode === 'agent-O' || t < 4, error: null,
       meta: { delivered: true, schemaValid: true, messageUsage: [[...usage, model]], finalUsage: { output_tokens: out }, costUpperUsd: 4 } };
@@ -189,6 +192,7 @@ test('major 4: a meterUnverified session enters utility at the reported figure, 
   }
   const o = rows.find(r => r.mode === 'agent-O');
   assert.equal(o.meterUnverified, true);
+  assert.ok(rows.filter(r => r.mode === 'agent-H').every(r => !r.meterUnverified && r.usdImputed === 0), 'agent-H is verified: its report equals its re-price');
   close(o.usdMeterGap, o.usdImputed, 1e-9, 'label-run records the gap');
   close(o.usdRepriced + o.usdImputed, 0.7, 1e-5, 'the reported figure');
   const cell = makeCell(1, 10, 1);

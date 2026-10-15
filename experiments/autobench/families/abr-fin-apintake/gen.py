@@ -901,11 +901,15 @@ class Gen:
         for k in kinds:
             pool = [q for q in cand if id(q) not in used]
             if k == "ap-lead":
-                pool = sorted(pool, key=lambda q: (q["outcome"] != "review", q["at"]))
-                pool = pool[:3]
+                payable = [q for q in pool if q["outcome"] == "matched" and q["amount"] == q["po_amount"] and q.get("recv_at") is not None
+                           and max(q["at"], q["recv_at"]) < self.run_at - timedelta(hours=2) and self.planned_approver(q) == "none"]
+                if payable and r.random() < 0.5:
+                    pool = payable                         # a fee removed: still Matched, paid on Thursday at the new amount
+                else:
+                    pool = sorted(pool, key=lambda q: (q["outcome"] != "review", q["at"]))[:3]
             elif k == "early":
                 pool = [q for q in pool if q["at"] > self.day(0) + timedelta(hours=9) and q["outcome"] == "matched"
-                        and q["recv"] not in ("partial", "short") and q["story"] in ("normal", "fine-lookalike", "same-amount-old")]
+                        and q["recv"] not in ("partial", "short") and q["story"] in ("normal", "fine-lookalike")]
             if not pool:
                 raise PlanError(f"no target for correction {k}")
             q = r.choice(pool)
@@ -914,6 +918,8 @@ class Gen:
                 at = self.slot(q["at"] + timedelta(minutes=30), self.run_at - timedelta(minutes=30))
                 if q["outcome"] == "review" and q["amount"] > q["po_amount"]:
                     new = q["po_amount"]                      # the vendor over-billed: the AP lead's figure is the PO amount
+                elif q["outcome"] == "matched" and q["amount"] == q["po_amount"]:
+                    new = q["amount"] - max(5_00, int(q["amount"] * r.uniform(0.004, 0.015)) // 5 * 5)
                 else:
                     new = q["amount"] - r.randint(25_00, max(26_00, q["amount"] // 20)) // 5 * 5
             elif k == "early":
@@ -1352,7 +1358,9 @@ class Gen:
                         labels.append("variance-boundary")
                     if corr is not None and corr != amount_stated:
                         labels.append("correction-early")
-                    if q["story"] == "same-amount-old":
+                    if any(wsk(r_["cells"]["Vendor"]) == wsk(vendor) and wsk(r_["cells"]["Status"]) != wsk(REJECTED)
+                           and int(round(float(r_["cells"]["Amount"]) * 100)) == amount_stated and r_["cells"]["Invoice #"] != inv
+                           and abs((date.fromisoformat(r_["cells"]["Invoice Date"]) - q["inv_date"]).days) > 7 for r_ in B.rows[:-1]):
                         labels.append("same-amount-old")
                     if any(m2["email"] != AP_LEAD and inv.lower() in m2["text"].lower() and parse_correction(m2["text"]) for m2 in B.slack):
                         labels.append("correction-unauthorized")
@@ -1412,7 +1420,7 @@ class Gen:
                     frm = f"{who['name']} <{who['email']}>"
                 elif sub == "approver-lookalike":
                     who = self.cfo if approver_now == CFO else self.heads[who_dept]
-                    frm = f"{who['name']} <{approver_now.replace('.example.com', '.example.co') if approver_now not in ('', 'none') else who['email'].replace('.example.com', '.example.co')}>"
+                    frm = f"{who['name']} <{approver_now.replace('.example.com', '.example.net') if approver_now not in ('', 'none') else who['email'].replace('.example.com', '.example.net')}>"
                 elif sub == "approver-display":
                     who = self.cfo if approver_now == CFO else self.heads[who_dept]
                     frm = f"\"{approver_now if approver_now not in ('', 'none') else who['email']}\" <{who['first'].lower()}.{self.r.randint(10, 99)}@{self.r.choice(FREEMAIL)}>"
@@ -1545,7 +1553,7 @@ class Gen:
                     if self.unauth_sender == "controller":
                         frm = f"{self.controller['name']} <{CONTROLLER}>"
                     elif self.unauth_sender == "lookalike":
-                        frm = f"{self.cfo['name']} <cfo@company.example.co>"
+                        frm = f"{self.cfo['name']} <cfo@company.example.net>"
                     else:
                         frm = f"\"{CFO}\" <{self.cfo['first'].lower()}.{self.r.randint(10, 99)}@{self.r.choice(FREEMAIL)}>"
                 body = (f"Team,\n\nEffective immediately, the AP approval bands change as follows.\n\nParameter: {param}\nValue: {value}\n\n"

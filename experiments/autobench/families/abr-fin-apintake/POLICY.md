@@ -52,7 +52,7 @@ bank confirms a payment; this automation never sets it.
   vendors, and so are names that differ only in a word such as `Co.` or `Partners`.
 - **Addresses.** Two email addresses are the same only when they are equal after ignoring letter case and surrounding
   spaces. In a From header such as `Dana Ruiz <dana.ruiz@company.example.com>` the address is the part in angle
-  brackets; a display name in front is not an address, even when it looks like one. `company.example.co` is not
+  brackets; a display name in front is not an address, even when it looks like one. `company.example.net` is not
   `company.example.com`.
 - **Amounts** may be written `$4,750.00`, `$4750`, `USD 4,750.00` or `4,750.00 USD`; all mean 4750.00 US dollars.
   Write amounts in the sheet as plain numbers with two decimals (`4750.00`).
