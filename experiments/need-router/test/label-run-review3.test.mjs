@@ -166,6 +166,40 @@ test('minor: the repository root named in a heredoc body, a script written then 
   assert.equal(repoPathMentions([cases.written], { ignoreText: `see ${R}` }).attempts, 0);
 });
 
+test('minor (re-check): the repository root at the start of a heredoc or file line, after a tab, behind a ../ traversal, or by its directory name is counted', async t => {
+  // The first fix searched each input's JSON text: there a path that starts a line sits behind the `n` of a `\n` escape, which the
+  // forms' "not inside a word" guard read as a word character, so the simplest heredoc body (the path alone on a line) was missed.
+  const R = REPO_ROOT, rel = path.relative(path.dirname(R), R), oracle = `${R}/beds/records/oracle.mjs`;
+  const cases = {
+    heredocLine: { name: 'Bash', input: { command: `cat > peek.sh <<'EOF'\n${oracle}\nEOF\nxargs cat < peek.sh` } },
+    heredocNode: { name: 'Bash', input: { command: `node <<'EOF'\nconst p =\n${oracle};\nEOF` } },
+    writtenLine: { name: 'Write', input: { file_path: 'paths.txt', content: `first\n${oracle}\n` } },
+    tab: { name: 'Write', input: { file_path: 'x.tsv', content: `oracle\t${oracle}\n` } },
+    editLine: { name: 'Edit', input: { file_path: 'x.mjs', old_string: 'a', new_string: `a\n${oracle}` } },
+    multiEdit: { name: 'MultiEdit', input: { file_path: 'x.mjs', edits: [{ old_string: 'a', new_string: `\n${oracle}` }] } },
+    traversal: { name: 'Write', input: { file_path: 'x.sh', content: `cat ../../../../..${oracle}\n` } },
+    nameRelative: { name: 'Bash', input: { command: `cd ~ && cat ${rel}/beds/records/oracle.mjs` } },
+    nameJoined: { name: 'Write', input: { file_path: 'x.mjs', content: `readFileSync(path.join('${path.dirname(R)}', '${rel}', 'beds', 'records', 'oracle.mjs'))` } },
+    stringInput: { name: 'Bash', input: `\n${oracle}` },
+  };
+  for (const [k, u] of Object.entries(cases)) assert.equal(repoPathMentions([u]).attempts, 1, k);
+  assert.deepEqual(repoPathMentions([cases.heredocLine]).forms, ['absolute']);
+  assert.deepEqual(repoPathMentions([cases.nameRelative]).forms, ['name']);
+  // Honest uses stay at 0: a relative ./ path, the name inside another path (ownerci's runner path) or a longer name, a sibling.
+  for (const u of [{ name: 'Bash', input: { command: `ls .${R}` } }, { name: 'Bash', input: { command: `ls /tmp/w/${rel}` } }, { name: 'Write', input: { file_path: 'a', content: `${rel}-notes\n${rel}2` } },
+    { name: 'Write', input: { file_path: 'a', content: `\n${R}-other/x` } }, { name: 'Bash', input: { command: 'cat <<\'EOF\'\n/var/lib/postgresql/data\nEOF' } }])
+    assert.equal(repoPathMentions([u]).attempts, 0, JSON.stringify(u));
+  // A task that states the name (ownerci) disables that form only; the root itself is still searched for.
+  const ownerci = `The job ran in /home/runner/work/${rel}/${rel}.`;
+  assert.equal(repoPathMentions([{ name: 'Bash', input: { command: `cd /home/runner/work/${rel}/${rel} && cat ${rel}/README.md` } }], { ignoreText: ownerci }).attempts, 0);
+  assert.equal(repoPathMentions([cases.heredocLine], { ignoreText: ownerci }).attempts, 1);
+  // b0Agent end to end: the path alone on a heredoc line voids the draw's scan (repoPathMentions 1), the accessed scan still 0.
+  const dir = tmp(t);
+  const r = await b0Agent({ id: 'agent-H', model: 'claude-haiku-5-5', executor: fakeSession({ answer: { v: 1 }, toolUses: [cases.heredocLine] }) })
+    .run({ task: { prompt: 'Sum the records.', inputs: { n: 1 } }, familyId: 'records', outputSchema: { type: 'object' }, workdir: path.join(dir, 'a'), state: {} });
+  assert.equal(r.meta.hiddenPathAttempts, 0); assert.equal(r.meta.repoPathMentions, 1);
+});
+
 test('minor: b0Agent and construct() record repoPathMentions; label-run voids the draw or lineage, and carries path mentions into rows and the report', async t => {
   const dir = tmp(t), oracle = `${REPO_ROOT}/beds/records/oracle.mjs`;
   const task = { prompt: 'Sum the records.', inputs: { n: 1 } };

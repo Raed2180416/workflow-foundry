@@ -186,7 +186,7 @@ Most sit inside the hypothesis band for `agent-H`: one misread rule costs a few 
 - **Trap coverage** (labels from the truth, label streams 610–613): T-stale 58, T-format 42, T-state 40,
   T-lookalike 14, T-repeat 12, T-note 10, T-authority 8; every kind ≥ 5.
 
-**Tests:** `pytest` (see the end of this file for the run).
+**Tests:** `pytest` (68 tests): 68 passed in 215 s.
 
 ## Fixed while building (2026-10-15)
 
@@ -201,6 +201,9 @@ Most sit inside the hypothesis band for `agent-H`: one misread rule costs a few 
 - **Submission traps clustered early in the week.** The planted cases were not shuffled before being given times, so
   traps came first and clean submissions last; they are shuffled now (a duplicate of this week's submission still
   follows its source).
+- **Three test assertions were wrong, not the family:** an Employees payload legitimately carries the employee's
+  Status (an HR column, not one the automation writes); the word check for host names matched `timedelta`; and the
+  `null` control's one `wrong` is the no-op Friday above.
 - **No paid referral ever left in the dev streams,** so `void-paid` passed every trigger. Departures are now planned
   as one that voids and (d2: sometimes; d3: one of two) one that must change nothing, including a paid referral's
   employee leaving.
