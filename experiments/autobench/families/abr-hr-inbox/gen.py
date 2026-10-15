@@ -115,9 +115,9 @@ RATES = {
     "d1": dict(cc_legal=0.0, resolve=0.0, signoff=0.0, quoted=0.0, id_fmt=0.0, nickname=0.0, sender_case=0.0, sev_case=0.0,
                override=0.0, future=0.0, unapproved=0.0, notes_auth=0.0, about_note=0.0, stale_mgr=0.0, unknown_sev=0.0),
     "d2": dict(cc_legal=0.03, resolve=0.03, signoff=0.03, quoted=0.03, id_fmt=0.03, nickname=0.03, sender_case=0.02, sev_case=0.0,
-               override=0.3, future=0.2, unapproved=0.15, notes_auth=0.1, about_note=0.5, stale_mgr=0.3, unknown_sev=0.35),
-    "d3": dict(cc_legal=0.07, resolve=0.05, signoff=0.07, quoted=0.05, id_fmt=0.06, nickname=0.04, sender_case=0.04, sev_case=0.15,
-               override=0.45, future=0.35, unapproved=0.35, notes_auth=0.25, about_note=0.2, stale_mgr=1.0, unknown_sev=1.0),
+               override=0.25, future=0.15, unapproved=0.1, notes_auth=0.1, about_note=0.5, stale_mgr=0.3, unknown_sev=0.35),
+    "d3": dict(cc_legal=0.06, resolve=0.04, signoff=0.06, quoted=0.04, id_fmt=0.05, nickname=0.04, sender_case=0.04, sev_case=0.15,
+               override=0.4, future=0.25, unapproved=0.25, notes_auth=0.25, about_note=0.2, stale_mgr=1.0, unknown_sev=1.0),
 }
 
 # ---------------------------------------------------------------------------------------------------------------

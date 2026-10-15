@@ -40,7 +40,8 @@
  "triggersPerWeek": {"d2": [21, 26], "d3": [29, 31], "measuredOn": "seeds 601-650"},
  "trapRates": {"d1": 0.0, "d2": 0.12, "d3": 0.5, "format": {"d1": 0.0, "d2": 0.3, "d3": 0.5},
                "unit": "planted share of referral.submitted and candidate.hired triggers (format: share of Hire Dates not written YYYY-MM-DD); payout runs carry traps by construction (stale labels, held, paid-out notes, cap boundaries), as do holds, broadcasts and most departures",
-               "measuredTriggerShare": {"design": {"d2": 0.45, "d3": 0.70}, "note": "measured per stream in gen meta.trigger_trap_share; see README"}},
+               "measuredTriggerShare": {"d2": 0.484, "d3": 0.714, "range": {"d2": [0.435, 0.565], "d3": [0.70, 0.733]}, "design": {"d2": 0.45, "d3": 0.70}, "on": "seeds 601-650"},
+               "measuredEventShare": {"d2": 0.151, "d3": 0.524, "unit": "planted share of referral.submitted + candidate.hired", "on": "seeds 601-650"}},
  "trapCatalogue": {
   "T-stale": ["probation-stale (Probation Complete disagrees with Hire Date + 90 and would change the run)", "status-stale (Status Eligible from the old process before day 90)", "paid-note (Status Eligible, Notes record a payout)", "cap-prior-year (last year's payouts would cap a payout)", "rehire-old (the candidate left more than 12 months before the Hire Date: eligible)"],
   "T-lookalike": ["namesake (a former employee with the referred employee's name: Employees must be read by Employee ID)", "cap-namesake (two referrers with one name: the cap goes by Referrer Email)", "candidate-namesake (a new candidate with an earlier candidate's name and another email: not a duplicate)", "rehire-namesake (a recent leaver with the candidate's name and another personal email: not a rehire)", "left-namesake (someone with a referred employee's name leaves: nothing)"],

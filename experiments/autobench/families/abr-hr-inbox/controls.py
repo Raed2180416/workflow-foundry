@@ -56,7 +56,7 @@ def naive(trigger, ctx):  # <= 40 lines: the shortcut a careless automation take
     w, d, ev = Inbox(trigger, ctx), trigger.get("data") or {}, trigger.get("event")
     s = w.read(WS_RULES, WS_DIR, WS_GRIEV)
     if ev == "week_close":
-        sent = [w.call("GET", GMAIL + f"messages/{m['id']}") for m in w.call("GET", GMAIL + "messages", {"labelIds": "SENT", "maxResults": 500})["messages"]]
+        sent = w.calls([("GET", GMAIL + f"messages/{m['id']}") for m in w.call("GET", GMAIL + "messages", {"labelIds": "SENT", "maxResults": 500})["messages"]])
         n = {k: sum(1 for m in sent if str(m.get("subject", "")).endswith(": " + k)) for k in SUMMARY_LABELS}
         n["Fraud reports"] = sum(1 for m in sent if str(m.get("subject", "")).startswith("Possible fraud"))
         n["Grievances"] = sum(1 for _, c in s[WS_GRIEV] if c["Status"].startswith("Routed to"))
@@ -84,7 +84,7 @@ def naive(trigger, ctx):  # <= 40 lines: the shortcut a careless automation take
              w.send_spec([address(m.get("from"))], f"Re: {subj}", f"Your request has been routed to {row['Category']}.")])
 
 
-NAIVE_LINES = 34
+NAIVE_LINES = 30
 
 
 # -- one-defect variants -------------------------------------------------------------------------------------------------

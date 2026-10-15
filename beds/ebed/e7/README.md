@@ -11,7 +11,7 @@ review of 2026-10-15 ($0; **Final review** below):
 | K1 item | status | evidence |
 |---|---|---|
 | goldens (incl. discriminating) | **met** | 55/55 pass on the oracle; every SLA-engine control fails at least one; each cites its rule |
-| mutation ≥ 0.95 (E-BED §9.5: each survivor equivalent or killed by a new golden) | **met under §9.5's formula** | 551/553 = **0.996** (679 mutants, 126 grader-equivalent, 2 uncertain: t185, t188 need the owner's reading of a hold during a hold); raw 551/679 = 0.811 cannot reach 0.95 while equivalents stay in the denominator (owner's call, as for E8). Reviewer caveats (3 mutants, below) leave it ≥ 0.991 |
+| mutation ≥ 0.95 (E-BED §9.5: each survivor equivalent or killed by a new golden) | **met under §9.5's formula** | 551/553 = **0.996** (679 mutants, 126 grader-equivalent, 2 uncertain: t185, t188 need the owner's reading of a hold during a hold); raw 551/679 = 0.811 cannot reach 0.95 while equivalents stay in the denominator (owner's call, as for E8). Reviewer caveats (3 mutants, below) leave it ≥ 0.991. Under the defaults of **Default readings pending owner** t185 and t188 are killable and need two goldens, and the caveats fall away |
 | specificity: ≥ 3 correct solvers, 0 false rejects | **not met** | 0 oracle false rejects in 3 × 2,337 completed cases (met); but 0 of 3 solvers pass as written (all guessed the master-record id field, E7-B11/S17); with the diagnostic shim s2 and s3 pass 2,337/2,337, s1 2,270/2,337 (its own go-live bug). Also 4 worlds per difficulty, where DESIGN §18 asks 16+ per difficulty and E-BED §9.1 20 dev worlds |
 | controls (bad, gaming, necessity) | **met, at reduced scale** | every bad and gaming control fails every world; every necessity control fails its targets; on 16 attack worlds (4 per difficulty), where E-BED §9.4 asks ≥ 20 per difficulty |
 | N-version | partly | clock vs `lib/clock` and the generator's clock (300 fuzzed lifecycles) and an independent R4.2–R4.3 evaluator (600 histories): 0 differences; no Intl minute-stepper (every clock compared uses pinned zone tables) and no 10⁴-world differential fuzz |
@@ -292,7 +292,91 @@ A final review of the mutation report and the specificity adjudication. Nothing 
   t16 is killed by the "no date" clause and would also be killed by a throw (`utc(NaN)`) on an arm-writable `TIME`.
   Counting t14, t15 and t178 as not killed the score is 549/554 = 0.991, still ≥ 0.95.
 - **Housekeeping.** `/var/tmp/foundry-work/e7-blind/arm-files/SPEC-E.md` is the pre-S17 copy (34,122 bytes against
-  34,872): regenerate it before any new blind round.
+  34,872): regenerate it before any new blind round. *Done the same day (see the next section): it now equals the
+  current SPEC-E with S18.*
+
+## Default readings pending owner (2026-10-15, $0)
+
+The three owner questions above, each given a default under one rule: **the spec text decides; where it is silent, the
+oracle's current behaviour stays and the reading goes into SPEC-E so arms are told** (only where an arm can meet the
+input). Each is tagged DEFAULT and the owner may overturn it. Oracle, world, reference, goldens and `ledger/MUTANTS.md`
+are unchanged. The oracle behaviour quoted below was confirmed on hand histories by a scratchpad probe (the original
+transition against mutants t178, t185 and t188 built with `tools/mutate.mjs` `writeModuleSet`; nothing was written to the
+repository).
+
+**D1, hold during a hold (t185, t188). DEFAULT: R3.2 decides; no SPEC-E reading.**
+- *For recording it.* R3.2: "For an update at time t about an incident that is not resolved, closed or cancelled,
+  within 15 min of t: … `hold`: `itsm.hold({ number, reason: <holdReason>, at: t })`". R3.3 is the only rule under
+  which a resolver update changes nothing ("Updates about an incident that is resolved, closed or cancelled change
+  nothing"); for caller messages R6.2, R6.5 and R6.6 say "changes nothing" explicitly.
+- *Against.* R8.2: "An incident moves only along these transitions: … `inProgress` ⇄ `onHold` (hold, resume) …" lists
+  no `onHold` → `onHold`, and §2 says `itsm` "does not check transitions: that is your job (R8)".
+- *Reading.* R8.2 lists moves between states. A hold on an incident already on hold moves no state; it changes the hold
+  reason (R4.1: `holdReason` is the incident's current value), and R8.2's "Record each change once" covers that. So the
+  hold is recorded with the new reason, which replaces the old one, and R4.2 runs at t. R6.1–R6.3 read the current
+  reason. A hold to `awaitingCaller` sends `awaiting-caller` and counts D from that hold. A hold to any other reason
+  ends the wait for the caller: a later reply changes nothing (R6.2, "while the incident is on hold awaiting the
+  caller"), and no closure is due at D (R6.3, "still on hold awaiting the caller at D").
+- *Current oracle.* It does exactly this (`transition.mjs` 252–258, 296, 352). Probe 1 (P4, d3): hold `awaitingCaller`
+  11:00, hold `awaitingVendor` 11:30, reply 12:00 gives both holds and no resume, and no `no-caller-response` closure a
+  month later. Probe 2 (d5): hold `awaitingVendor` 11:00, hold `awaitingCaller` 11:30, reply 12:00 gives `awaiting-caller`,
+  the resume at 12:00 and VND-HOLD's stop at 12:00.
+- *SPEC-E.* No reading: the text decides, and no generator class produces a hold during a hold, so no arm meets one.
+- *Mutation classification: changes.* The input is spec-stated, and it lies within "resolvers act along R8.2" because
+  it moves no state. So t185 and t188 move from uncertain to killable but not yet killed. t185 is killed by probe 1 (the
+  mutant requires `itsm.resume` at 12:00). t188 is killed by probe 2 (the mutant requires VND-HOLD's breach and its 75%
+  and 100% escalations instead of its stop at 12:00). §9.5 stays 551/553 = 0.996 until the two probes are written as
+  goldens, then 553/553.
+
+**D2, a caller `withdraw` in the report's own minute, delivered before the report (t178). DEFAULT: it changes nothing
+(the oracle's reading); no SPEC-E reading.**
+- *For cancelling.* R6.6: "A caller `withdraw` at time w for an incident that is not resolved, closed or cancelled:
+  `itsm.cancel({ number, at: w })` …". R1.1 records the incident "in the same instant it arrives", with `openedAt` the
+  report's time, so at w the incident exists and is open.
+- *For nothing.* §3.3: "A message whose `incidentRef` names no incident is answered with nothing". §1 *Routing*: a
+  caller's message starts a new instance and merges only into "an incident you already run". The arm interface
+  (CONTRACT.md): "Every read is as of the round start", so the message's tick sees no record and no instance of the
+  incident. S16: "Within one instant, what happened first decides".
+- *Silent.* The spec states no order between a report and a message about it in the same minute. The host delivers by
+  (source, id), `mail` < `monitor` < `portal`, and the arm files do not say so.
+- *Current oracle.* It handles events in delivery order and ignores a caller message that comes before its incident
+  opens (`transition.mjs` 292, `if (!inc.opened) return;`). Probe: a withdraw at 10:00 delivered before the 10:00 report
+  gives the create and no cancel; the mutant requires `cnc:<N>`. The default keeps this.
+- *SPEC-E.* No reading, because no arm meets the input. Every generated caller message comes at least 30 min after the
+  step it answers or follows (`world.mjs` 532–538, 589–590), never in its incident's opening minute. If the owner makes
+  the input reachable, draft text: "A caller message delivered before the report or alert that opens the incident it
+  names, in the same minute, names no recorded incident (§3.3): it changes nothing."
+- *Mutation classification: none.* t178 stays equivalent (contract) under the world-contract line "a caller's message
+  about an incident comes after its report"; the ledger's "a withdrawal at any time (R6.6)" is read as any time after
+  the incident's opening event. There are two other outcomes. If the owner keeps the reading but makes the input
+  reachable, the draft goes into SPEC-E and the probe, written as a golden, kills t178. If the owner overturns D2
+  towards the mutant, the oracle must change.
+
+**D3, instants written without an offset or not in ISO form (t14, t15, t16; the instants golden). DEFAULT: the oracle's
+reading, stated in SPEC-E as S18.**
+- *Spec text.* §1: "Every time the platform gives you … is an ISO 8601 instant written at offset `+01:00` … You may
+  write instants with any offset: they are compared as instants." The API types every instant argument as a string of
+  1–40 characters. Nothing says what a time without an offset, or in another form, means: it could be a local time in
+  the system zone, or no instant at all. On this point the text is silent.
+- *Current oracle.* `canonicalArgs` (`transition.mjs` 27, 37–49) canonicalises `YYYY-MM-DDTHH:MM[:SS[.s{1,3}]]`
+  followed by `Z` or `±HH:MM`. It compares anything else as written, so such a value matches no expected instant (the
+  instants golden's clauses for no offset, a space for `T`, and month 13). The probe shows that `+0100`, `+01`, a
+  lower-case `z` and four fraction digits are compared as written as well.
+- *SPEC-E.* Added S18, with a pointer from §1 *Time*. Every record an arm writes carries an instant, and nothing had told
+  an arm that `+0100`, or a local time without an offset, names no instant. S18 says nothing about a string of the right
+  form that is no calendar date. The oracle reads `2026-13-10T10:00:00Z` as no instant but `2026-02-30T10:00:00Z` as
+  03-02 (`Date.parse` rolls over); an arm that writes computed instants produces neither.
+- *Mutation classification: no verdict changes.* t14, t15 and t16 stay killed. What changes is the caveat. The clauses
+  that kill t14 and t15 now assert a spec-stated outcome (S18), not just the oracle's reading. t16 stays killed by the
+  "no date" clause and, whatever the reading, by its throw (`utc(NaN)`) on an arm-writable `TIME`.
+
+**Net, if the owner keeps all three defaults.** 551 killed, 126 equivalent (t178 still among them), and 2 killable but
+not yet killed (t185 and t188, previously uncertain). That gives 551/553 = 0.996, and 553/553 once the two probes are
+goldens. The final review's caveat (549/554 = 0.991) no longer applies. SPEC-E went from sha256 `8b57fbc8…` (34,872
+bytes, with S17) to `18d5b7d5…` (35,341 bytes, with S18) = `e7.specE.sha256`. The arm-file copy in
+`/var/tmp/foundry-work/e7-blind/arm-files/` was regenerated twice with `buildFiles(e7)`: first to the S17 text, which
+replaced the pre-S17 `68f64dfe…`, then to the S18 text. The other five arm files came out byte-identical and were not
+rewritten. Its `README.txt` lists the new hashes. The blind solvers s1–s3 were written from the pre-S17 copy.
 
 ## Readings and decisions added in part B (for review)
 
