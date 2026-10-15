@@ -15,7 +15,7 @@
 // Options: --domains sales,hr (default: the six scored domains; 'simple' is allowed) --budget 0.75 (USD per session)
 //   --max-steps 50 --timeout-min 20 --det record|seed|off --effort low|medium|high --tools Bash --keep (workdirs)
 //   --run-id ID --live DIR --out DIR (default research/automationbench-20261014/runs/<run-id>) --no-copy
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, appendFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, appendFileSync, writeFileSync, constants as fsc } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { runClaudeCode, WORK_ROOT, nestedModelUses } from '../../src/executors/claude-code.mjs';
@@ -34,7 +34,7 @@ function provenance(policy) {
 
 /** A hard USD cap over reserved session budgets: a session starts only if spent + reserved + its budget <= cap. */
 export function makeLedger(capUsd) {
-  const l = { capUsd, spent: 0, reserved: 0, unknown: 0 };
+  const l = { capUsd, spent: 0, reserved: 0, unknown: 0, knownUsd: 0, unknownUpperUsd: 0 };
   l.tryReserve = b => { if (l.spent + l.reserved + b <= capUsd + 1e-9) { l.reserved += b; return true; } return false; };
   // Wait while in-flight sessions may still settle below their budgets; give up only when the budget cannot fit even
   // with nothing in flight.
@@ -42,8 +42,9 @@ export function makeLedger(capUsd) {
   l.settle = (b, r) => {
     l.reserved -= b;
     const known = typeof r?.costUsd === 'number' && Number.isFinite(r.costUsd);
-    l.spent += known ? r.costUsd : (r?.costUpperUsd ?? b);
-    if (!known && r) l.unknown += 1;
+    const c = known ? r.costUsd : (r?.costUpperUsd ?? b);
+    l.spent += c;
+    if (known) l.knownUsd += c; else { l.unknownUpperUsd += c; if (r) l.unknown += 1; }
   };
   return l;
 }
@@ -52,6 +53,14 @@ async function pool(items, n, fn) {
   let i = 0;
   const workers = Array.from({ length: Math.max(1, Math.min(n, items.length)) }, async () => { while (i < items.length) { const k = i++; await fn(items[k], k); } });
   await Promise.all(workers);
+}
+
+/** The session transcript into the host directory, only if it is a regular file: the workdir is agent-writable, so a
+ * planted symlink must not make the host copy (or later read) a file the sandbox hid. */
+function copyTranscript(workdir, hostDir) {
+  const src = path.join(workdir, '.executor-transcript.jsonl');
+  try { if (!lstatSync(src).isFile()) return; } catch { return; }
+  try { copyFileSync(src, path.join(hostDir, 'transcript.jsonl'), fsc.COPYFILE_EXCL); } catch {}
 }
 
 const summarizeGrade = g => g && ({ partial_credit: g.partial_credit, task_completed_correctly: g.task_completed_correctly, n_scored: g.n_scored, n_passed: g.n_passed,
@@ -134,7 +143,7 @@ export async function runTasks(o) {
     if (!(await ledger.reserve(opt.budgetUsd))) {
       rec.skipped = `cap: spent ${ledger.spent.toFixed(4)} + reserved ${ledger.reserved.toFixed(4)} + ${opt.budgetUsd} > ${opt.capUsd}`;
     } else {
-      let r = null, bridge = null;
+      let r = null, bridge = null, started = false;
       try {
         rmSync(workdir, { recursive: true, force: true });
         const catalog = readJson(path.join(pdir, 'catalog.json')), prompt = readJson(path.join(pdir, 'prompt.json'));
@@ -142,6 +151,7 @@ export async function runTasks(o) {
         bridge = startServe({ liveDir: live, input: path.join(pdir, 'input.json'), world: path.join(pdir, 'world0.json'), mailbox: path.join(workdir, '.tools'),
           hostDir, det: opt.det, maxSteps: opt.maxSteps, fork, expectContract: meta.contract_sha256 });
         await bridge.ready;
+        started = true;
         r = await runner({ model: opt.model, prompt: prompt.user, systemPrompt: `${prompt.system}\n\n${adapterText(catalog, opt.maxSteps)}`, workdir, files: {},
           budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, effort: opt.effort ?? null, tools: opt.tools, task: { name: task, fork } });
         Object.assign(rec, { costUsd: r.costUsd ?? null, costUnknown: Boolean(r.costUnknown), costUpperUsd: r.costUpperUsd ?? opt.budgetUsd, turns: r.turns ?? null,
@@ -153,8 +163,10 @@ export async function runTasks(o) {
         rec.harnessError = String(e?.message ?? e).slice(0, 800);
         bridge?.kill();
       } finally {
-        ledger.settle(opt.budgetUsd, r ?? { costUsd: 0 });
-        if (existsSync(path.join(workdir, '.executor-transcript.jsonl'))) cpSync(path.join(workdir, '.executor-transcript.jsonl'), path.join(hostDir, 'transcript.jsonl'));
+        // A runner that threw after it started may have spent: count it at its budget (an upper bound), never at 0.
+        if (!r && started) Object.assign(rec, { costUsd: null, costUnknown: true, costUpperUsd: opt.budgetUsd });
+        ledger.settle(opt.budgetUsd, r ?? (started ? { costUsd: null, costUpperUsd: opt.budgetUsd } : { costUsd: 0 }));
+        copyTranscript(workdir, hostDir);
         if (!opt.keep) rmSync(workdir, { recursive: true, force: true });
       }
     }
@@ -177,7 +189,12 @@ export async function runTasks(o) {
     pass_rate: mean(results.map(pass)), mean_partial_credit: mean(results.map(pc)), by_domain: byDomain,
     ...(opt.k > 1 ? { fork0_pass_rate: mean(fork0.map(f => f.task_completed_correctly ?? 0)), any_fork_pass_rate_diagnostic: mean(results.map(r => (r.forks.some(f => f.task_completed_correctly === 1) ? 1 : 0))),
       majority_rate: mean(results.map(r => (r.vote?.majority ? 1 : 0))) } : {}),
-    cost: { spentUsd: ledger.spent, unknownCostSessions: ledger.unknown, sessions: jobs.length, skipped: results.flatMap(r => r.forks).filter(f => f.skipped).length },
+    // spentUsd is an upper bound: CLI-reported costs plus every session whose cost is unknown counted at its budget.
+    cost: { spentUsd: ledger.spent, knownUsd: ledger.knownUsd, unknownUpperUsd: ledger.unknownUpperUsd, unknownCostSessions: ledger.unknown, sessions: jobs.length,
+      skipped: results.flatMap(r => r.forks).filter(f => f.skipped).length },
+    // Pre-registered: a tool use that starts a nested model (CLI or API) spends outside every ledger and voids the run.
+    nestedModelUses: results.reduce((s, r) => s + r.forks.reduce((t, f) => t + (f.nestedModelUses ?? 0), 0), 0),
+    void: results.some(r => r.forks.some(f => (f.nestedModelUses ?? 0) > 0)) ? 'nested model use in a session transcript' : null,
     errors: results.flatMap(r => r.forks.filter(f => f.sessionError || f.harnessError).map(f => ({ task: r.task, fork: f.fork, sessionError: f.sessionError, harnessError: f.harnessError }))),
     provenance: provenance(policy), live, finishedAt: new Date().toISOString(),
   };

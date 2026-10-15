@@ -8,7 +8,7 @@ import Ajv from 'ajv';
 import { decisionCard, validateCard, CARD_SCHEMA, CARD_SCHEMA_ID, canonicalJson, sha256, routerSha, codeShas, CODE_FILES, textCues, proseCues, probePlan } from '../card.mjs';
 import { fitNeedRouter, N1, TRUSTED_FEATURES } from '../router.mjs';
 import { INJECTIONS } from '../evaluate.mjs';
-import { HEADLINE, makeCell, CASCADES } from '../metrics.mjs';
+import { HEADLINE, makeCell, CASCADES, DELTA } from '../metrics.mjs';
 import { needsWorkflow as plantedNeed } from './worlds.mjs';
 import { plantedRouter, V1_MODES } from './router-fixtures.mjs';
 
@@ -101,7 +101,7 @@ test('card content: per-mode p, c, F, EU; the choice with its cascade fallback; 
   // routerSha: stable for identical fits; moves with the TRAIN labels, δ or the stage; its code part hashes the module sources.
   const s0 = routerSha(R.leaf), again = routerSha(fitNeedRouter([...P.items].reverse(), { modes: V1_MODES }));
   assert.equal(again.sha, s0.sha); assert.match(s0.sha, /^[0-9a-f]{64}$/);
-  for (const other of [fitNeedRouter(P.items.slice(1), { modes: V1_MODES }), fitNeedRouter(P.items, { modes: V1_MODES, delta: 0 }), R.knn]) assert.notEqual(routerSha(other).sha, s0.sha);
+  for (const other of [fitNeedRouter(P.items.slice(1), { modes: V1_MODES }), fitNeedRouter(P.items, { modes: V1_MODES, delta: DELTA }), R.knn]) assert.notEqual(routerSha(other).sha, s0.sha);
   assert.deepEqual(Object.keys(codeShas()), [...CODE_FILES]);
   for (const f of CODE_FILES) assert.equal(codeShas()[f], sha256(readFileSync(new URL(`../${f}`, import.meta.url))));
   assert.equal(decisionCard(R.leaf, job(BIG), HEADLINE).routerSha, s0.sha);
@@ -141,11 +141,11 @@ test('NR-probe plan (voi.mjs bestProbe on the router\'s predictions): no probe w
   // One thin TRAIN job per leaf with close rates: probing direct-H can pay at a large N.
   const thin = fitNeedRouter([
     { id: 'a', cluster: 'A', features: { logInputTokens: 2, maxListLength: 0 }, stats: { 'direct-H': { s: 0.55, q: 0.1, c: 0.02, B: 0 }, 'agent-H': { s: 0.7, q: 0.05, c: 0.12, B: 0 } }, labels: {} },
-  ], { modes: ['direct-H', 'agent-H'] });
-  const plan = probePlan(thin, { id: 'x', features: { logInputTokens: 2, maxListLength: 0 } }, makeCell(1, 100, 1), { tasksPerJob: 2 });
+  ], { modes: ['direct-H', 'agent-H'], tasksPerJob: 2 });
+  const plan = probePlan(thin, { id: 'x', features: { logInputTokens: 2, maxListLength: 0 } }, makeCell(1, 100, 1));
   assert.ok(plan.probe && ['direct-H', 'agent-H'].includes(plan.probe.j) && plan.probe.k <= 2, JSON.stringify(plan.probe));
   assert.ok(plan.net > 0);
   // voi.mjs bounds k by the horizon even for example-only probes: at N = 1 only k = 1 is priced (review finding V2).
-  const one = probePlan(thin, { id: 'x', features: { logInputTokens: 2, maxListLength: 0 } }, makeCell(1, 1, 1), { tasksPerJob: 2 });
+  const one = probePlan(thin, { id: 'x', features: { logInputTokens: 2, maxListLength: 0 } }, makeCell(1, 1, 1));
   assert.ok(one.plans.every(p => p.k === 1));
 });

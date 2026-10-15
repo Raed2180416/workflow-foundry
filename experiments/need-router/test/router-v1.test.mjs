@@ -12,7 +12,7 @@ import {
 } from '../router.mjs';
 import { WHITELIST } from '../features.mjs';
 import { TRUSTED_FEATURES as EVAL_TRUSTED, PROSE_FEATURES, INJECTIONS, fitRule, nrStatic, nrKnn, decideFolds, defaultPolicies, evaluate, importPurity, metamorphic } from '../evaluate.mjs';
-import { GRID, HEADLINE, makeCell, classOf, needUtility, perTaskUsd } from '../metrics.mjs';
+import { GRID, HEADLINE, DELTA, makeCell, classOf, needUtility, perTaskUsd, rankModes } from '../metrics.mjs';
 import { needsWorkflow as plantedNeed, judgeAlwaysAgent } from './worlds.mjs';
 import { plantedRouter, realisticModes, generalModes, rng, NON_MONOTONE_N, V1_MODES } from './router-fixtures.mjs';
 
@@ -282,17 +282,19 @@ test('structural rule: parity with evaluate.fitRule, ties to fewer workflow call
 
 // --------------------------------------------------------------------------------- leaf calculator and δ ties
 test('leaf calculator: recovers the planted modes per leaf over the grid, sends every held-out job to its planted class', () => {
-  const P = plantedRouter(), R = fitNeedRouter(P.items, { modes: V1_MODES });
-  const T = R.leafTable(GRID);
+  const P = plantedRouter(), R = fitNeedRouter(P.items, { modes: V1_MODES }), Rd = fitNeedRouter(P.items, { modes: V1_MODES, delta: DELTA });
+  const T = R.leafTable(GRID), Td = Rd.leafTable(GRID);
   // Recomputed independently from evaluate.mjs's context: per leaf and cell, the mean TRAIN utility of each mode over the
-  // leaf's jobs, the δ acceptable set, and its cheapest member in mean $ per task.
+  // leaf's jobs; the router's default takes the exact best (SBS-train's rule, rankModes), the δ-tie option the cheapest
+  // member of the δ acceptable set in mean $ per task.
   for (const leaf of ['intrinsic', 'not']) {
     const its = P.ctx.train.filter(it => (intrinsicOf(it.view.features, R.rule.thresholds).intrinsic ? 'intrinsic' : 'not') === leaf);
     assert.ok(its.length > 0);
     for (const c of GRID) {
-      const e = V1_MODES.map(m => ({ m, u: its.reduce((a, it) => a + it.u(c, m), 0) / its.length, usd: its.reduce((a, it) => a + it.usd(c, m), 0) / its.length }));
-      const top = Math.max(...e.map(x => x.u)), pick = e.filter(x => x.u >= top - 0.03 - 1e-12).sort((a, b) => a.usd - b.usd)[0].m;
-      assert.equal(T[leaf][c.key].mode, pick, `${leaf} ${c.key}`);
+      const e = V1_MODES.map(m => ({ mode: m, u: its.reduce((a, it) => a + it.u(c, m), 0) / its.length, usd: its.reduce((a, it) => a + it.usd(c, m), 0) / its.length }));
+      const top = Math.max(...e.map(x => x.u)), pick = e.filter(x => x.u >= top - 0.03 - 1e-12).sort((a, b) => a.usd - b.usd)[0].mode;
+      assert.equal(T[leaf][c.key].mode, rankModes(e)[0], `exact ${leaf} ${c.key}`);
+      assert.equal(Td[leaf][c.key].mode, pick, `δ ties ${leaf} ${c.key}`);
     }
   }
   assert.equal(T.intrinsic[HEADLINE.key].mode, 'construct-H'); assert.equal(T.not[HEADLINE.key].mode, 'direct-H');

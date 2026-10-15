@@ -461,7 +461,7 @@ function chooseK(items, { ks, order, delta }) {
 /**
  * A probe as `decide` and the card accept it (DESIGN §3: "its cost is charged as r"). `probe` = { observations:
  * { <mode>: { passes, n } }, costUsd, k?, signals?, disagree?, tasksPerJob? }. Refused, never booked at $0: a missing,
- * non-finite or negative costUsd; a probe that drew anything (an observation with n > 0, or k > 0) at costUsd 0; k below
+ * non-finite or negative costUsd; a probe that drew or observed anything (any observation, or k > 0) at costUsd 0; k below
  * the observed draws; a tasksPerJob other than the router's (the prior's weight is a fitted parameter). Returns
  * { observations, costUsd, k, modes, signals, disagree } or null for no probe.
  */
@@ -474,7 +474,7 @@ export function probeRecord(probe, { tasksPerJob = 12 } = {}) {
   const drawn = Object.values(obs).reduce((a, o) => a + o.n, 0), k = probe.k ?? drawn;
   if (!(Number.isInteger(k) && k >= drawn)) throw new Error(`probe.k must be an integer >= the observed draws (${drawn}), got ${probe.k}`);
   if (typeof probe.costUsd !== 'number' || !finite(probe.costUsd) || probe.costUsd < 0) throw new Error(`a probe's costUsd must be a finite number >= 0 (got ${probe.costUsd}): its cost is charged as routing dollars (DESIGN §3)`);
-  if (k > 0 && !(probe.costUsd > 0)) throw new Error(`a probe that drew ${k} time(s) cannot cost $0: state its costUsd (DESIGN §3 charges it as routing dollars)`);
+  if ((k > 0 || Object.keys(obs).length > 0) && !(probe.costUsd > 0)) throw new Error(`a probe that drew or observed anything (k = ${k}, ${Object.keys(obs).length} mode(s)) cannot cost $0: state its costUsd (DESIGN §3 charges it as routing dollars)`);
   if (probe.tasksPerJob !== undefined && probe.tasksPerJob !== tasksPerJob) throw new Error(`probe.tasksPerJob ${probe.tasksPerJob} differs from the router's ${tasksPerJob}`);
   return Object.freeze({
     observations: Object.freeze(Object.fromEntries(Object.entries(obs).map(([m, o]) => [m, Object.freeze({ passes: o.passes, n: o.n })]))),

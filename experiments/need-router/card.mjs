@@ -7,8 +7,11 @@
 // the predicted p (verified success), q (delivered wrong), abstain share (1 − p − q, charged nothing beyond dollars),
 // c ($ per task), F (build $), $ per task at N and the expected utility EU in success-equivalents per task; the δ
 // acceptable set; the choice with its run-time cascade fallback and the task-4 checkpoint; needsWorkflow (the C7a call:
-// guard or structure, not economics); the class and kind of the chosen mode; askFlag; any abstention; the routing cost;
-// and routerSha = sha256 over the code shas and the fitted parameters, so a card names exactly the router that wrote it.
+// guard or structure, not economics; cell-independent); the class and kind of the chosen mode; askFlag; any abstention;
+// the routing cost (a probe's dollars included; a probe without a stated cost is refused, never booked at $0); and
+// routerSha = sha256 over the code shas and the fitted parameters (which include the cascades, the checkpoint and every
+// mode's class and kind), so a card names exactly the router that wrote it. The code shas are taken when this module
+// loads, and every card first checks that the sources on disk still match them.
 //
 // Untrusted text (the task prompt) is read for word cues only (REQUIREMENT_LIBRARY ids and shapeOf word classes); cues
 // can raise "ask", never force or change a mode, and the text itself never enters the card.
@@ -16,9 +19,9 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { REQUIREMENT_LIBRARY } from '../../src/construction-objective.mjs';
 import { shapeOf } from '../library/index.mjs';
-import { HEADLINE, makeCell } from './metrics.mjs';
+import { HEADLINE } from './metrics.mjs';
 import { bestProbe } from './voi.mjs';
-import { TRUSTED_FEATURES, CUE_HINTS, REQUIREMENT_TYPES, ENGINE_CONSTRUCTS } from './router.mjs';
+import { TRUSTED_FEATURES, CUE_HINTS, REQUIREMENT_TYPES, ENGINE_CONSTRUCTS, resolveCell } from './router.mjs';
 
 export const CARD_SCHEMA_ID = 'need-decision/1';
 /** The module sources whose shas enter routerSha (the frozen artefact's code, DESIGN §3; features.mjs is hashed by the addendum). */
@@ -41,16 +44,30 @@ export function canonicalJson(x) {
   throw new Error(`canonicalJson: unsupported value ${Object.prototype.toString.call(x)}`);
 }
 
-let codeCache = null;
-/** sha256 of each CODE_FILES source (read once per process). */
-export function codeShas() {
-  if (!codeCache) codeCache = Object.freeze(Object.fromEntries(CODE_FILES.map(f => [f, sha256(readFileSync(new URL(`./${f}`, import.meta.url)))])));
-  return codeCache;
+const hashCodeFiles = () => Object.freeze(Object.fromEntries(CODE_FILES.map(f => [f, sha256(readFileSync(new URL(`./${f}`, import.meta.url)))])));
+// Taken when this module loads, right after its static imports (router, voi, metrics) were evaluated: the shas name the
+// code that runs. A lazy first-card read could hash a file edited after import while the old code kept running.
+const CODE_SHAS = hashCodeFiles();
+/** sha256 of each CODE_FILES source, as loaded. */
+export const codeShas = () => CODE_SHAS;
+/** Throws when a CODE_FILES source on disk no longer matches the loaded code (a card would name code not in the tree). */
+export function assertCodeUnchanged() {
+  const now = hashCodeFiles(), changed = CODE_FILES.filter(f => now[f] !== CODE_SHAS[f]);
+  if (changed.length) throw new Error(`router sources changed on disk since they were loaded (${changed.join(', ')}): reload before writing decision cards`);
 }
 /** routerSha = sha256(canonical { code shas, sha of the fitted parameters }). */
 export function routerSha(router) {
   const code = codeShas(), fitted = sha256(canonicalJson(router.fitted));
   return { sha: sha256(canonicalJson({ code, fitted })), code, fitted };
+}
+
+/** Policy labels a card may carry: NR-probe iff a probe ran; NR-probe and NR-static on the leaf stage, NR-knn on kNN. */
+function policyMismatch(policy, stage, probed) {
+  if ((policy === 'NR-probe') !== probed) return probed ? `a probed card must be labelled NR-probe, not ${policy}` : 'an NR-probe card needs the probe it ran';
+  if (probed && stage !== 'leaf') return 'a probe updates the leaf calculator; the kNN stage takes no probe';
+  if ((policy === 'NR-static' || policy === 'NR-probe') && stage !== 'leaf') return `${policy} is the leaf stage, but the router's stage is ${stage}`;
+  if (policy === 'NR-knn' && stage !== 'knn') return `NR-knn is the kNN stage, but the router's stage is ${stage}`;
+  return null;
 }
 
 /** Word-cue ids in untrusted text: REQUIREMENT_LIBRARY cues with a hard-requirement reading, and shapeOf word classes. */
@@ -66,20 +83,26 @@ export const proseCues = features => PROSE_CUES.filter(k => finite(features?.[k]
 const thresholdsOut = th => Object.fromEntries(Object.entries(th).map(([k, t]) => [k, t === Infinity ? '+inf' : t]));
 
 /**
- * The card for one job at one cell. `router` is fitNeedRouter's result; `job` = { id, features, requirements, verifier,
- * modes, cues?, text?, engine? } (text is read for cues only). `probe` = { observations: {<mode>: {passes, n}}, costUsd,
- * k?, signals?, disagree? } as recorded by whoever ran it; the card charges its cost as routing dollars.
+ * The card for one job at one cell (a makeCell result or a plain { V, N, W? | wOverV? }, router.resolveCell). `router`
+ * is fitNeedRouter's result; `job` = { id, features, requirements, verifier, modes, cues?, text?, engine? } (text is
+ * read for cues only). `probe` = { observations: {<mode>: {passes, n}}, costUsd, k?, signals?, disagree? } as recorded by
+ * whoever ran it; the card charges its cost as routing dollars, and a probe without a finite cost (> 0 once it drew or
+ * observed anything) is refused (router.probeRecord). A probe belongs to NR-probe on the leaf stage only.
  */
 export function decisionCard(router, job = {}, cell = HEADLINE, { policy = null, text = null, probe = null } = {}) {
-  const c = cell.key ? cell : makeCell(cell.V, cell.N, cell.wOverV ?? 1);
+  assertCodeUnchanged();
+  const c = resolveCell(cell);
   const { text: jobText, ...rest } = job;
   const cues = [...new Set([...(job.cues ?? []), ...textCues(text ?? jobText ?? null), ...proseCues(job.features)])].sort();
   const d = router.decide({ ...rest, cues }, c, { probe });
+  const name = policy ?? (d.probe ? 'NR-probe' : d.stage === 'knn' ? 'NR-knn' : 'NR-static');
+  const policyProblem = policyMismatch(name, d.stage, d.probe !== null);
+  if (policyProblem) throw new Error(`decisionCard: ${policyProblem}`);
   const sha = routerSha(router);
   const pred = Object.fromEntries(Object.entries(d.pred).map(([m, x]) => [m, { ...x, EU: d.U[m] }]));
   return {
     schema: CARD_SCHEMA_ID,
-    policy: policy ?? (probe ? 'NR-probe' : d.stage === 'knn' ? 'NR-knn' : 'NR-static'),
+    policy: name,
     job: { id: String(job.id ?? 'job'), N: c.N, V: c.V, W: c.W, verifier: d.verifier, requirements: [...d.guard.requirements], modes: job.modes ? [...job.modes] : [...router.order] },
     cell: { key: c.key, V: c.V, N: c.N, W: c.W, wOverV: c.wOverV },
     features: { ...d.features },
@@ -89,14 +112,14 @@ export function decisionCard(router, job = {}, cell = HEADLINE, { policy = null,
       intrinsic: d.structure.intrinsic, reason: d.structure.reason, thresholds: thresholdsOut(router.rule.thresholds), stage: d.stage,
       leaf: d.source.leaf ?? null, leafJobs: d.source.jobs ?? null, neighbours: d.source.neighbours ?? null,
     },
-    probe: probe ? {
-      ran: true, modes: Object.keys(probe.observations ?? {}).sort(), k: probe.k ?? Object.values(probe.observations ?? {}).reduce((a, o) => a + (o?.n ?? 0), 0),
-      signals: probe.signals ?? null, costUsd: probe.costUsd ?? 0, disagree: probe.disagree === true,
-    } : null,
+    probe: d.probe ? { ran: true, modes: [...d.probe.modes], k: d.probe.k, signals: d.probe.signals, costUsd: d.probe.costUsd, disagree: d.probe.disagree } : null,
     pred,
     U: { ...d.U },
     acceptable: [...d.acceptable],
-    choice: { mode: d.mode, best: d.best, tie: d.tie, rule: router.delta > 0 ? `δ ties: the cheapest mode within ${router.delta} of the best predicted utility` : 'exact: the best predicted utility, ties to the cheaper', delta: router.delta, cascade: d.cascade, checkpoint: d.checkpoint },
+    choice: {
+      mode: d.mode, best: d.best, tie: d.tie, rule: router.delta > 0 ? `δ ties: the cheapest mode within ${router.delta} of the best predicted utility` : 'exact: the best predicted utility, ties to the cheaper',
+      delta: router.delta, acceptDelta: router.acceptDelta, cascade: d.cascade, checkpoint: d.checkpoint,
+    },
     unsupported: [...d.unsupported],
     needsWorkflow: d.needsWorkflow,
     class: d.class,
@@ -144,7 +167,7 @@ export const CARD_SCHEMA = Object.freeze({
     U: { type: 'object', additionalProperties: num },
     acceptable: strs,
     choice: obj({
-      mode: { type: 'string', minLength: 1 }, best: { type: ['string', 'null'] }, tie: bool, rule: str, delta: { type: 'number', minimum: 0 },
+      mode: { type: 'string', minLength: 1 }, best: { type: ['string', 'null'] }, tie: bool, rule: str, delta: { type: 'number', minimum: 0 }, acceptDelta: { type: 'number', minimum: 0 },
       cascade: nullOr(obj({ id: str, primary: str, fallback: str, on: strs })),
       checkpoint: nullOr(obj({ afterTask: { type: 'integer', minimum: 1 }, switchTo: str, when: str })),
     }),
@@ -219,12 +242,19 @@ export function validateCard(card) {
   if (card.featuresHash !== sha256(canonicalJson(card.features))) problems.push('featuresHash does not match the features');
   if (card.routerSha !== sha256(canonicalJson({ code: card.routerShaParts.code, fitted: card.routerShaParts.fitted }))) problems.push('routerSha does not match its parts');
   if (card.probe && card.routingCostUsd + 1e-12 < card.probe.costUsd) problems.push('the probe cost is not charged as routing dollars');
+  if (card.probe && (card.probe.k > 0 || card.probe.modes.length > 0) && !(card.probe.costUsd > 0)) problems.push('a probe that drew or observed anything must carry its cost (costUsd > 0)');
+  const pm = policyMismatch(card.policy, card.structure.stage, card.probe !== null);
+  if (pm) problems.push(pm);
   if (card.job.V !== card.cell.V || card.job.N !== card.cell.N || card.job.W !== card.cell.W) problems.push('job and cell disagree on V, N or W');
   return { ok: !problems.length, problems };
 }
 
-// Review of voi.mjs against DESIGN §3 (2026-10-14; voi.mjs is not edited here):
-//   V1 its utility U = H·(V·p − c) − F has no silent-miss term (W/V)·q and no routing term; probePlan folds W·q into c.
+// Review of voi.mjs against DESIGN §3 (2026-10-14):
+//   V1 its utility U = H·(V·p − c) − F had no silent-miss term (W/V)·q and no routing term, and probePlan folded W·q into
+//      c, so every non-deliverable probe was priced k·W·q too high (review 2026-10-15: 12 times the true $0.05 for a
+//      direct-H draw with q 0.55 at W = V), biasing NR-probe toward never probing. Fixed: voi.mjs takes a per-mode `wq`
+//      ($ of silent misses per task) that its utilities subtract and its probe price leaves out unless the probe is
+//      delivered; probePlan passes c and W·q separately. The routing term is common to every mode: it moves no choice.
 //   V2 probeValue requires k <= H and bestProbe caps k at H even when the probe is not deliverable (examples, not the
 //      job's tasks), so at N = 1 the preregistered two-draw direct-H probe (kMax 2) is never priced; only k = 1 is.
 //   V3 an observed probe success is treated as a true success; DESIGN observes deployable signals only (schema validity,
@@ -236,14 +266,17 @@ export function validateCard(card) {
 //      the deliverable variant, and net > 0 as the run condition.
 /**
  * NR-probe's plan (DESIGN §3): voi.mjs bestProbe over the router's predictions for this job, priors Beta(1 + s·T,
- * 1 + (1 − s)·T) with T = support jobs × tasksPerJob, probeable {direct-H, agent-H}, kMax 2, examples only (not
- * deliverable). voi's utility has no silent-miss term, so W·q is folded into the per-task cost (exact for the decision,
- * since q is not updated by the probe). Returns bestProbe's result plus the modes it priced.
+ * 1 + (1 − s)·T) with T = support jobs × the router's tasksPerJob (the same prior decide's probe update uses),
+ * probeable {direct-H, agent-H}, kMax 2, examples only (not deliverable). Each mode carries its dollars c and its
+ * silent-miss charge wq = W·q separately: the decision after the probe charges both, the probe's own price only c (plus
+ * cVerify, plus F for a build). Leaf stage only. Returns bestProbe's result plus the modes it priced.
  */
-export function probePlan(router, job, cell = HEADLINE, { probeable = ['direct-H', 'agent-H'], kMax = 2, cVerify = 0, tasksPerJob = 12 } = {}) {
-  const c = cell.key ? cell : makeCell(cell.V, cell.N, cell.wOverV ?? 1);
+export function probePlan(router, job, cell = HEADLINE, { probeable = ['direct-H', 'agent-H'], kMax = 2, cVerify = 0, tasksPerJob = router.tasksPerJob } = {}) {
+  if (router.stage !== 'leaf') throw new Error('probePlan: NR-probe plans over the leaf calculator; the kNN stage takes no probe');
+  if (tasksPerJob !== router.tasksPerJob) throw new Error(`probePlan: tasksPerJob ${tasksPerJob} differs from the router's ${router.tasksPerJob} (the prior must match the update)`);
+  const c = resolveCell(cell);
   const d = router.decide(job, c);
-  const modes = Object.entries(d.pred).map(([id, x]) => { const T = x.n * tasksPerJob; return { id, a: 1 + x.p * T, b: 1 + (1 - x.p) * T, c: x.c + c.W * x.q, F: x.F }; });
+  const modes = Object.entries(d.pred).map(([id, x]) => { const T = x.n * tasksPerJob; return { id, a: 1 + x.p * T, b: 1 + (1 - x.p) * T, c: x.c, wq: c.W * x.q, F: x.F }; });
   if (!modes.length) return { probe: null, net: 0, priorChoice: null, plans: [], modes };
   const plan = bestProbe(modes, { V: c.V, H: c.N, kMax, cVerify, deliverable: false, probeable: probeable.filter(m => Object.hasOwn(d.pred, m)) });
   return { ...plan, modes };

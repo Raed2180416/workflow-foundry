@@ -42,7 +42,9 @@ import os
 import pkgutil
 import random as _random_mod
 import re
+import secrets
 import select
+import stat as _stat
 import sys
 import time as _time_mod
 import traceback
@@ -584,28 +586,85 @@ def cmd_prepare(a):
     print(canon({"prepared": names, "out": str(out)}))
 
 
-def _serve_loop(r: Rollout, box: Path, poll: float):
+class Mailbox:
+    """The agent-writable mailbox, seen from the host. The bridge runs OUTSIDE the executor sandbox with the host's
+    rights, and the agent controls every name in this directory, so nothing here may follow a link: the directory is
+    opened once (before the session starts) and every later access is relative to that descriptor; requests are opened
+    O_NOFOLLOW|O_NONBLOCK and must be regular files with one link; answers are written to a fresh exclusive temp name
+    and renamed into place. A planted symlink, FIFO, directory or hard link gets the same refusal whatever it points at,
+    so the mailbox is neither a write-anywhere primitive nor an existence oracle for host paths."""
+
+    REQ = re.compile(r"req-(\d+)\.json")
+
+    def __init__(self, box: Path):
+        box.mkdir(parents=True, exist_ok=True)
+        self.fd = os.open(box, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+
+    def requests(self):
+        return sorted(int(m.group(1)) for f in os.listdir(self.fd) if (m := self.REQ.fullmatch(f)))
+
+    def answered(self, n: int) -> bool:
+        try:
+            os.stat(f"res-{n}.json", dir_fd=self.fd, follow_symlinks=False)
+            return True
+        except FileNotFoundError:
+            return False
+
+    def read(self, n: int) -> bytes:
+        try:
+            fd = os.open(f"req-{n}.json", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | getattr(os, "O_CLOEXEC", 0), dir_fd=self.fd)
+        except OSError:
+            raise ValueError("request refused: not a regular file") from None
+        try:
+            st = os.fstat(fd)
+            if not _stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
+                raise ValueError("request refused: not a regular file")
+            if st.st_size > MAX_REQUEST_BYTES:
+                raise ValueError(f"request larger than {MAX_REQUEST_BYTES} bytes")
+            chunks, size = [], 0
+            while (b := os.read(fd, 65536)):
+                chunks.append(b)
+                size += len(b)
+                if size > MAX_REQUEST_BYTES:
+                    raise ValueError(f"request larger than {MAX_REQUEST_BYTES} bytes")
+            return b"".join(chunks)
+        finally:
+            os.close(fd)
+
+    def answer(self, n: int, obj):
+        tmp = f".bridge-res-{n}-{secrets.token_hex(8)}.tmp"
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0), 0o644, dir_fd=self.fd)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(json.dumps(obj, ensure_ascii=False))
+            os.replace(tmp, f"res-{n}.json", src_dir_fd=self.fd, dst_dir_fd=self.fd)  # replaces a planted link itself
+        except OSError:
+            try:
+                os.unlink(tmp, dir_fd=self.fd)
+            except OSError:
+                pass
+
+
+def _serve_loop(r: Rollout, box: Mailbox, poll: float):
     """Serve req-<n>.json files (complete, atomically renamed by tool.mjs) in numeric order; answer res-<n>.json.
-    The host ends the rollout by writing 'stop' to stdin (or closing it)."""
-    box.mkdir(parents=True, exist_ok=True)
+    The host ends the rollout by writing 'stop' to stdin (or closing it). An answer carries only the tool results (the
+    official loop does not tell the model its step count either); step accounting stays in the host-only call log."""
     served, stop = set(), False
     while True:
-        reqs = sorted((int(m.group(1)), p) for p in box.iterdir() if (m := re.fullmatch(r"req-(\d+)\.json", p.name)))
-        for n, p in reqs:
-            if n in served or (box / f"res-{n}.json").exists():
+        for n in box.requests():
+            if n in served or box.answered(n):
                 continue
             served.add(n)
             try:
-                if p.stat().st_size > MAX_REQUEST_BYTES:
-                    raise ValueError(f"request larger than {MAX_REQUEST_BYTES} bytes")
-                req = json.loads(p.read_text())
-                calls = req.get("calls")
+                req = json.loads(box.read(n).decode("utf-8"))
+                calls = req.get("calls") if isinstance(req, dict) else None
                 if not isinstance(calls, list) or not calls or not all(isinstance(c, dict) for c in calls):
                     raise ValueError("a request is {\"calls\": [{\"name\": ..., \"arguments\": \"<json>\"}, ...]}")
-                res = asyncio.run(r.batch(calls))
+                out = asyncio.run(r.batch(calls))
+                res = {"error": out["error"]} if "error" in out else {"results": out["results"]}
             except Exception as e:  # noqa: BLE001
                 res = {"error": f"{type(e).__name__}: {e}"}
-            write_json(box / f"res-{n}.json", res)
+            box.answer(n, res)
         if stop:
             return
         ready, _, _ = select.select([sys.stdin], [], [], poll)
@@ -631,8 +690,9 @@ def cmd_serve(a):
         emit("error", error=f"task contract drift: {r.contract} != {a.expect_contract}")
         sys.exit(3)
     host = Path(a.host)
+    box = Mailbox(Path(a.mailbox))  # opened before 'ready', i.e. before the session can touch the workdir
     emit("ready", contract=r.contract, pid=os.getpid())
-    _serve_loop(r, Path(a.mailbox), a.poll)
+    _serve_loop(r, box, a.poll)
     grade = asyncio.run(r.grade())
     r.finish(host, grade)
     emit("done", steps=r.steps, partial_credit=grade["partial_credit"], task_completed_correctly=grade["task_completed_correctly"])
@@ -687,103 +747,192 @@ def cmd_official(a):
 _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?)?(Z|[+-]\d{2}:?\d{2})?$")
 
 
-def volatile_matcher(gen: dict):
-    """True for a leaf value that AutomationBench's generators produced in this rollout: a uuid4 (or a slice of its hex,
-    8+ chars), a random draw, or a clock read (ISO string, date, epoch s/ms/us) within the rollout's clock window."""
-    win8 = {h[i:i + 8] for h in gen.get("uuid", []) for i in range(len(h) - 7)}
-    ints, strs = set(), set()
-    for v in gen.get("rand", []):
-        if isinstance(v, bool) or v is None:
-            continue
-        if isinstance(v, int):
-            ints.add(v)
-        elif isinstance(v, str) and len(v) >= 4:
-            strs.add(v)
-        elif isinstance(v, list) and v and all(isinstance(x, str) for x in v):
-            j = "".join(v)
-            if len(j) >= 4:
-                strs.add(j)
-    clock = gen.get("clock", [])
-    lo = min(clock + [gen.get("wall0", 0)]) - 2
-    hi = max(clock + [gen.get("wall1", 0)]) + 2
-    if gen.get("mode") == "seed" and clock:
-        lo, hi = min(clock) - 0.002, max(clock) + 0.002
-    days = set()
-    if clock:
-        for t in (lo, hi):
-            for tz in (_dt_mod.timezone.utc, None):
-                days.add(REAL_DT.fromtimestamp(t, tz).date().isoformat())
+_UUIDISH = re.compile(r"[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}")
+_HEXRUN = re.compile(r"[0-9A-Fa-f](?:[0-9A-Fa-f-]*[0-9A-Fa-f])?")
+_DIGITS5 = re.compile(r"(?<![0-9])[0-9]{5,}(?![0-9])")
 
-    def in_window(x: float) -> bool:
-        return any(lo <= x / s <= hi for s in (1, 1e3, 1e6)) if clock else False
 
-    def is_vol(v) -> bool:
+class Volatile:
+    """What AutomationBench's generators produced in one rollout, for masking a fork's final world before voting.
+
+    Whole leaves (is_vol): a random int draw, a clock read (ISO string, date, epoch s/ms/us) within the rollout's clock
+    window, a numeric string equal to an int draw. Fragments inside strings (sub): a hex run containing an 8-char window
+    of a uuid4 drawn in the rollout, a uuid-shaped token that is not in the base world (ids built from other draws, e.g.
+    Xero's hex-formatted randints), a joined random string draw, the id of a record the rollout created (new_ids), and
+    a 5+ digit run equal to an int draw. A fragment is replaced by '<gen>' and the rest of the string is kept, so two
+    forks that wrote different text around a fresh id do NOT agree (whole-leaf masking would have merged them)."""
+
+    def __init__(self, gen: dict, base_tokens: set | None = None, new_ids: set | None = None):
+        self.win8 = {h[i:i + 8] for h in gen.get("uuid", []) for i in range(len(h) - 7)}
+        ints, strs = set(), set()
+        for v in gen.get("rand", []):
+            if isinstance(v, bool) or v is None:
+                continue
+            if isinstance(v, int):
+                ints.add(v)
+            elif isinstance(v, str) and len(v) >= 4:
+                strs.add(v)
+            elif isinstance(v, list) and v and all(isinstance(x, str) for x in v):
+                j = "".join(v)
+                if len(j) >= 4:
+                    strs.add(j)
+        # Only id-like new ids (no whitespace, a digit): an id an app derives from agent-written content (a title)
+        # must not mask that content.
+        strs |= {i for i in (new_ids or ()) if isinstance(i, str) and re.fullmatch(r"[\w.:-]{4,}", i) and re.search(r"\d", i)}
+        self.ints = ints
+        self.strs = sorted(strs, key=len, reverse=True)
+        self.base_tokens = base_tokens or set()
+        clock = gen.get("clock", [])
+        self.clock = bool(clock)
+        self.lo = min(clock + [gen.get("wall0", 0)]) - 2
+        self.hi = max(clock + [gen.get("wall1", 0)]) + 2
+        if gen.get("mode") == "seed" and clock:
+            self.lo, self.hi = min(clock) - 0.002, max(clock) + 0.002
+        self.days = set()
+        if clock:
+            for t in (self.lo, self.hi):
+                for tz in (_dt_mod.timezone.utc, None):
+                    self.days.add(REAL_DT.fromtimestamp(t, tz).date().isoformat())
+
+    def in_window(self, x: float) -> bool:
+        return any(self.lo <= x / s <= self.hi for s in (1, 1e3, 1e6)) if self.clock else False
+
+    def is_vol(self, v) -> bool:
         if isinstance(v, bool) or v is None:
             return False
         if isinstance(v, (int, float)):
-            return (isinstance(v, int) and v in ints) or in_window(float(v))
+            return (isinstance(v, int) and v in self.ints) or self.in_window(float(v))
         if not isinstance(v, str):
             return False
-        flat = v.replace("-", "")
-        if win8 and any(flat[i:i + 8] in win8 for i in range(len(flat) - 7)):
-            return True
-        if any(s in v for s in strs):
-            return True
         s = v.strip()
-        if re.fullmatch(r"-?\d+", s) and int(s) in ints:
+        if re.fullmatch(r"-?\d+", s) and int(s) in self.ints:
             return True
         if re.fullmatch(r"\d{9,17}(\.\d+)?", s):
-            return in_window(float(s))
+            return self.in_window(float(s))
         if _ISO.match(s):
             if len(s) == 10:
-                return s in days
+                return s in self.days
             try:
                 t = REAL_DT.fromisoformat(s.replace("Z", "+00:00"))
                 t = t if t.tzinfo else t.replace(tzinfo=_dt_mod.timezone.utc)
-                return in_window(t.timestamp())
+                return self.in_window(t.timestamp())
             except ValueError:
                 return False
         return False
-    return is_vol
+
+    def _hex(self, m):
+        run = m.group(0)
+        flat = run.replace("-", "").lower()
+        if len(flat) >= 8 and self.win8 and any(flat[i:i + 8] in self.win8 for i in range(len(flat) - 7)):
+            return "<gen>"
+        return _UUIDISH.sub(lambda u: u.group(0) if u.group(0).lower() in self.base_tokens else "<gen>", run)
+
+    def sub(self, v: str) -> str:
+        out = _HEXRUN.sub(self._hex, v)
+        for s in self.strs:
+            if s in out:
+                out = out.replace(s, "<gen>")
+        if self.ints:
+            out = _DIGITS5.sub(lambda m: "<gen>" if int(m.group(0)) in self.ints else m.group(0), out)
+        return out
+
+    def touches(self, v) -> bool:
+        """The value is, or contains, a generator output (shim neutrality: a difference it explains)."""
+        return self.is_vol(v) or (isinstance(v, str) and self.sub(v) != v)
 
 
-def mask(v, is_vol):
+def volatile_matcher(gen: dict, base_tokens: set | None = None, new_ids: set | None = None) -> Volatile:
+    return Volatile(gen, base_tokens, new_ids)
+
+
+def mask(v, vol: Volatile):
     if isinstance(v, dict):
-        return {k: mask(x, is_vol) for k, x in v.items()}
+        return {k: mask(x, vol) for k, x in v.items()}
     if isinstance(v, list):
-        return [mask(x, is_vol) for x in v]
-    return "<gen>" if is_vol(v) else v
+        return [mask(x, vol) for x in v]
+    if vol.is_vol(v):
+        return "<gen>"
+    return vol.sub(v) if isinstance(v, str) else v
 
 
-def state_diff(a, b, is_vol, path="$"):
-    """Canonical diff of world b against base a: changed leaves (masked), added/removed keys, and id-keyed record
-    lists matched by id (added records as a masked multiset, so creation order and fresh ids do not matter)."""
+def _record_key(a: list, b: list):
+    """The key that identifies records in a list of dicts: 'id', else the record's own first field when it is named
+    like an id (contact_id, invoice_id, ...). Every record must carry it and its values must be unique in a and in b."""
+    if not isinstance(a, list) or not isinstance(b, list) or not (a or b):
+        return None
+    if not all(isinstance(i, dict) for i in a + b):
+        return None
+    first = next(iter((b or a)[0]), None)
+    for k in ["id"] + ([first] if first and first != "id" and (first.endswith("_id") or first.endswith("Id")) else []):
+        if all(k in i for i in a + b) and len({str(i[k]) for i in a}) == len(a) and len({str(i[k]) for i in b}) == len(b):
+            return k
+    return None
+
+
+def new_record_ids(a, b, out=None) -> set:
+    """Ids of records that exist in world b and not in base a (their values were assigned by the apps)."""
+    out = set() if out is None else out
+    if isinstance(a, dict) and isinstance(b, dict):
+        for k in b:
+            if k in a:
+                new_record_ids(a[k], b[k], out)
+            elif isinstance(b[k], (dict, list)):
+                new_record_ids({} if isinstance(b[k], dict) else [], b[k], out)
+        return out
+    key = _record_key(a, b) if isinstance(a, list) and isinstance(b, list) else None
+    if key:
+        ia = {str(i[key]): i for i in a}
+        for i in b:
+            k = str(i[key])
+            if k in ia:
+                new_record_ids(ia[k], i, out)
+            else:
+                out.add(k)
+                new_record_ids({}, i, out)
+    return out
+
+
+def uuid_tokens(obj) -> set:
+    return {t.lower() for t in _UUIDISH.findall(canon(obj))}
+
+
+def state_diff(a, b, vol: Volatile, path="$"):
+    """Canonical diff of world b against base a: changed leaves (masked), added/removed keys, and record lists matched
+    by their key ('id' or an <x>_id first field; added records as a masked multiset, so creation order and fresh ids do
+    not matter)."""
     out = []
     if isinstance(a, dict) and isinstance(b, dict):
         for k in sorted(set(a) | set(b)):
             if k not in b:
                 out.append(["del", f"{path}.{k}"])
             elif k not in a:
-                out.append(["add", f"{path}.{k}", mask(b[k], is_vol)])
+                out.append(["add", f"{path}.{k}", mask(b[k], vol)])
             else:
-                out += state_diff(a[k], b[k], is_vol, f"{path}.{k}")
+                out += state_diff(a[k], b[k], vol, f"{path}.{k}")
         return out
-    keyed = lambda x: isinstance(x, list) and all(isinstance(i, dict) and "id" in i for i in x)  # noqa: E731
-    if keyed(a) and keyed(b) and (a or b):
-        ia, ib = {str(i["id"]): i for i in a}, {str(i["id"]): i for i in b}
-        if len(ia) == len(a) and len(ib) == len(b):
-            added = sorted(canon(mask(ib[k], is_vol)) for k in ib if k not in ia)
-            if added:
-                out.append(["add-records", path, added])
-            for k in sorted(ia):
-                if k not in ib:
-                    out.append(["del-record", path, k])
-                else:
-                    out += state_diff(ia[k], ib[k], is_vol, f"{path}[id={k}]")
-            return out
+    key = _record_key(a, b)
+    if key:
+        ia, ib = {str(i[key]): i for i in a}, {str(i[key]): i for i in b}
+        added = sorted(canon(mask(ib[k], vol)) for k in ib if k not in ia)
+        if added:
+            out.append(["add-records", path, added])
+        for k in sorted(ia):
+            if k not in ib:
+                out.append(["del-record", path, k])
+            else:
+                out += state_diff(ia[k], ib[k], vol, f"{path}[{key}={k}]")
+        return out
     if a != b:
-        out.append(["set", path, mask(b, is_vol)])
+        out.append(["set", path, mask(b, vol)])
     return out
+
+
+def fork_signature(base: dict, final: dict, gen: dict):
+    """(sha, diff) of one fork's effects: the masked diff of its final world against the shared initial world. Inputs
+    are the fork's own world and generator log only: no assertion, grade or other fork's data."""
+    vol = Volatile(gen, uuid_tokens(base), new_record_ids(base, final))
+    d = state_diff(base, final, vol)
+    return sha(d), d
 
 
 def cmd_vote(a):
@@ -795,8 +944,8 @@ def cmd_vote(a):
         if not fw.exists():
             forks.append({"host": h, "sig": None, "error": "no final world"})
             continue
-        d = state_diff(base, load_json(fw), volatile_matcher(load_json(gen)))
-        forks.append({"host": h, "sig": sha(d), "n_changes": len(d), "diff": d})
+        sig, d = fork_signature(base, load_json(fw), load_json(gen))
+        forks.append({"host": h, "sig": sig, "n_changes": len(d), "diff": d})
     groups = {}
     for i, f in enumerate(forks):
         if f["sig"] is not None:
@@ -845,11 +994,11 @@ def cmd_neutral(a):
         if x is None or y is None:
             report[name] = {"ok": False, "why": "missing"}
             continue
-        is_vol = volatile_matcher(y.get("generated") or {})
+        vol = volatile_matcher(y.get("generated") or {})
         diffs = _leaf_diffs(x["final_world"], y["final_world"])
         tr = [d for u, v in zip(x["tool_results"], y["tool_results"]) for d in _leaf_diffs(_maybe_json(u), _maybe_json(v))]
         alld = diffs + tr
-        unexplained = [d for d in alld if d[0] != "value" or not is_vol(d[3])]
+        unexplained = [d for d in alld if d[0] != "value" or not vol.touches(d[3])]
         verdicts = lambda r: [(q["type"], q["passed"], q["excluded"]) for q in (r.get("assertion_results") or [])]  # noqa: E731
         same_scores = (x["partial_credit"], x["task_completed_correctly"]) == (y["partial_credit"], y["task_completed_correctly"])
         report[name] = {"ok": not unexplained and same_scores and verdicts(x) == verdicts(y) and len(x["tool_results"]) == len(y["tool_results"]),
