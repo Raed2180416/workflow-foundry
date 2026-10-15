@@ -19,3 +19,19 @@ Programs are designed and scheduled in [FIRST-CLASS-PROGRAMS.md](FIRST-CLASS-PRO
 | F8 | **Speed and latency are a first-class metric** beside accuracy and cost, in every comparison. | E8: seconds vs hours per world. |
 
 These decisions sit alongside the earlier adopted decisions (research/need-router-20261014/DECISIONS-ADOPTED.md) and do not reopen them. Decision 12 (Jev is never the mode picker) stands. F1 reframes the router's question; the M0/NL0 preregistration is not reopened. Any change to a preregistered stage goes through a recorded amendment.
+
+## Addendum, 2026-10-15: FIRST-CLASS-PROGRAMS §12 decisions adopted at their defaults
+
+These were adopted by the orchestrating session under the owner's standing authorization ("work relentlessly end to end, don't ask me for perms, you are allowed to do anything necessary"). The owner was told the same turn, and any of them can be revised.
+
+| § 12 | Decision | Adopted |
+|---|---|---|
+| 1 | Budget | The project soft cap rises from $1,500 to **$2,700, counted on the cap basis** (each stage at the larger of its cap and its metered spend). Paid F rows run in the plan's order. The $500 per-stage pause and every per-run `--cap` stay enforced. The cut alternative (smaller AB-R S3/S4 stages) is held in reserve. |
+| 2 | Latency value λ_t | None. Latency is reported beside utility, never inside it. |
+| 3 | A real process for F6 | No recording. OUT-2 uses the public BPI logs meanwhile. The owner rung is reported missing until owner tasks arrive. |
+| 4 | F5 real systems | OSS twins within D5, after FID-1. No vendor accounts. |
+| 5 | WorkBench | Acquire it as a shallow, inert clone with an acquisition record, licence checked. Then EARN-W's preregistration. |
+| 6 | LP-1B injections | AB-H only, through a world pre-processor. `bridge.py` is never edited. |
+| 7 | LP-1A query set author | A decision-11 far-family author; otherwise the owner. |
+| 8 | Heal-kit drift choice | Unchanged. F3 and F7 use the `repair.mjs` path. |
+| 9 | AB-R TRAIN/held-out split | TRAIN = dealdesk, reviews, slawatch, routing, receipts, referral. Held-out near = noshow, suppression, mailroom, gdpr, apintake, hr-inbox. EARN-1 uses TRAIN only. |
