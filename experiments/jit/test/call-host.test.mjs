@@ -181,7 +181,7 @@ test('typed return: an output outside contract.output is a child deopt of kind o
   await host.request(req(bad.hash, {}, { name: 'bad' }));
   assert.equal(runs, 2, 'a failed call is not memoised');
   const g = await host.request(req(guard.hash, {}, { name: 'g' }));
-  assert.deepEqual([g.status, g.childStatus, g.deopt], ['deopt', 'deopt', { kind: 'guard', name: 'known-dialects', detail: { unseen: ['x'] } }]);
+  assert.deepEqual([g.status, g.childStatus, g.deopt], ['deopt', 'deopt', { kind: 'guard', name: 'known-dialects', detail: { label: 'untrusted:child-deopt', value: { unseen: ['x'] } } }], 'the child\'s detail crosses labelled untrusted (MEM-0 M6)');
   const c = await host.request(req(boom.hash, {}, { name: 'boom' }));
   assert.deepEqual([c.status, c.childStatus, c.deopt.kind], ['deopt', 'crash', 'crash']); assert.match(c.deopt.detail.message, /boom/);
   assert.deepEqual(host.events.map(e => e.kind), ['call-deopt', 'call-deopt', 'call-deopt', 'call-deopt']);

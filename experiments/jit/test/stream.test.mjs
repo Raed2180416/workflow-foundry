@@ -986,7 +986,7 @@ test('S0-6 adoption rule: default adopts a usable version that was not accepted 
 
 // ---------------------------------------------------------------------------------------------- step-0 integration
 import { looseDigestOf, requestDigestOf } from '../run-compiled.mjs';
-import { replayJournalPath, shadowDrawOf } from '../stream.mjs';
+import { replayJournalPath, shadowDrawOf, REPLAY_MEMO_OPTIONS } from '../stream.mjs';
 const loadConfig = name => JSON.parse(readFileSync(new URL(`../configs/${name}.json`, import.meta.url), 'utf8'));
 const jitArmOf = want => Object.keys(want).find(a => a.startsWith('jit:'));
 
@@ -1125,6 +1125,32 @@ test('_blocked and null tolerances are refused; the R0 configs: records validate
   assert.equal(k.spendStopUsd, 30);
 });
 
+// MEM-0 M3 (MEMORY-ROUTING-RECURSION §3.2): a replay arm's memo served the last journaled answer again past the end (reuse
+// on by default with a live port), so a flow.judge vote (samples > 1: identical requests) over a journal holding one
+// answer came out unanimous at $0. The arm's own memo port now sends every sample past the journal to the live port.
+test('M3: a replay arm cannot fake a unanimous vote: past a key\'s last journaled answer a repeated request goes live', async t => {
+  const root = tmp(t);
+  const req = { modelId: 'claude-haiku-5-5', system: '', prompt: 'Is row 7 void? Answer {void}.', schema: { type: 'object' }, decoding: {} };
+  const jdir = path.join(root, 'exp', SLUG); mkdirSync(jdir, { recursive: true });
+  writeFileSync(path.join(jdir, 'journal.jsonl'), JSON.stringify({ requestDigest: requestDigestOf(req), model: req.modelId, response: { ok: true, value: { void: true } } }) + '\n');
+  const { deps } = fakeDeps({ compiled: () => ({ status: 'ok' }), checks: (n, a) => perCase(a, () => 'exact') });
+  let liveCalls = 0;
+  deps.createModelPort = () => ({ port: { fake: true, async call() { liveCalls++; return { ok: true, value: { void: false }, costUsd: 0.001, modelId: req.modelId }; } } });
+  const ports = [], inner = deps.runCompiled;
+  deps.runCompiled = async a => { ports.push(a.modelPort); return inner(a); };
+  await runStream({ config: { ...CONFIG, experiment: 'm3-vote', segments: [{ difficulty: 3, seeds: [1, 2, 3] }], jit: { ...CONFIG.jit, shadowEvery: 0, replayJournal: path.join(root, 'exp/{slug}/journal.jsonl') } },
+    deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const port = ports.find(p => p.memo);
+  assert.ok(port, 'the replay arm ran a compiled task through its memo port');
+  // A samples: 3 vote: three identical requests, as flow.judge sends them.
+  const votes = await Promise.all([0, 1, 2].map(() => port.call({ ...req })));
+  assert.deepEqual(votes.map(v => v.value.void), [true, false, false], 'one journaled answer, then live answers: not a 3/3 vote from one recorded answer');
+  assert.deepEqual([votes[0].replayed, votes[1].replayed ?? false], [true, false]);
+  const st = port.memo.stats();
+  assert.deepEqual([st.hits, st.reused, st.live, liveCalls], [1, 0, 2, 2]);
+  assert.equal(REPLAY_MEMO_OPTIONS.reuse, false);
+});
+
 test('jit.replayJournal: JIT arms get a memo port over the exported journal (live port for misses); compiled events carry memo counts; unset changes nothing; a missing file is an arm error', async t => {
   const root = tmp(t);
   const jdir = path.join(root, 'exp', SLUG); mkdirSync(jdir, { recursive: true });
@@ -1141,7 +1167,7 @@ test('jit.replayJournal: JIT arms get a memo port over the exported journal (liv
   assert.equal(replayJournalPath(tpl, SLUG), path.join(jdir, 'journal.jsonl'));
   const memo = await run({ replayJournal: tpl }, 'replay-on');
   assert.deepEqual(memo.res.arms.map(a => a.errors), [[]]);
-  assert.ok(memo.ports.length && memo.ports.every(p => p.memo && p.memo.strict === false && p.memo.reuse === true), 'a fall-through memo port');
+  assert.ok(memo.ports.length && memo.ports.every(p => p.memo && p.memo.strict === false && p.memo.reuse === false), 'a fall-through memo port that never reuses (MEM-0 M3)');
   assert.deepEqual(memo.ports[0].memo.stats().journalRows, 1);
   const ev = memo.res.rows.flatMap(r => r.events).find(e => e.kind === 'compiled');
   assert.deepEqual(ev.memo, { requests: 2, hits: 2, reused: 0, live: 0 });

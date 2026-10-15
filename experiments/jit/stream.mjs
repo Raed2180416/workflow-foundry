@@ -92,7 +92,8 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //     (which reads verdicts.json for 'structured'); 'structured' also gives the builder the verdicts.json instructions
 //     (prompts.mjs). A version's verdicts.json is kept beside its BUILD-NOTES.md. Set, they define a new JIT arm.
 //   jit.replayJournal (default unset): an exported journal.jsonl ('{slug}' = the arm slug) that JIT arms' gateway calls
-//     are answered from first, at $0, with live calls for misses (replayPort below). Set, it defines a new JIT arm.
+//     are answered from first, at $0, with live calls for misses and past a key's last journaled answer (never a repeat
+//     of it: MEM-0 M3, replayPort below). Set, it defines a new JIT arm.
 //   armSpendStopUsd (default unset; not hashed): {<arm spec>: dollars}, a per-arm spend stop beside spendStopUsd.
 //   _blocked (any value): the config is refused until it is removed; an explicit null tolerance is refused too.
 //   library (default unset: no library; FLOW-V3-SLICE2 §3–§4, slice 2a): {mode: 'cur' | 'iso', childBudgetUsd, concurrency,
@@ -1373,11 +1374,18 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
 // a relative path is taken from the repository), served by run-compiled.mjs createMemoPort with the arm's live port for
 // misses. Memo hits cost $0; misses are live calls and are journaled as usual. The builder sessions are not replayed.
 export function replayJournalPath(template, slug) { return path.resolve(REPO, template.replaceAll('{slug}', slug)); }
+// MEM-0 M3 (research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §3.2): the memo gives the k-th identical request
+// the k-th journaled answer and, with reuse, the last one again past the end. A solver's vote (flow.judge samples > 1)
+// sends identical requests, so over a journal with fewer answers per key reuse made the vote unanimous. A replay arm
+// cannot rule out samples > 1 (compiled solvers pick their own; the dev solvers use 3) and a test-split stream is
+// claim-bearing, so it never reuses: past a key's last journaled answer the request goes live. Compiled events carry
+// memo.reused and report.mjs prints it per arm.
+export const REPLAY_MEMO_OPTIONS = Object.freeze({ reuse: false });
 async function replayPort(template, slug, live, deps) {
   const file = replayJournalPath(template, slug);
   if (!existsSync(file)) throw new Error(`jit.replayJournal: ${file} does not exist`);
   const create = deps.createMemoPort ?? (await import('./run-compiled.mjs')).createMemoPort;
-  return create({ journal: file, live });
+  return create({ journal: file, live, ...REPLAY_MEMO_OPTIONS });
 }
 
 // Worst-case dollars per arm at the configured caps (planning only; real spend is measured).

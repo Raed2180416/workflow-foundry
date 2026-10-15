@@ -39,6 +39,7 @@ import { createHash } from 'node:crypto';
 import { makeTasks, loadFamily } from '../lib/beds.mjs';
 import { toSystemOneQuestion, fromSystemOneAnswer } from '../../src/judgment.mjs';
 import { stateOf } from './jev-need.mjs';
+import { readRows } from '../kev-data/score-served.mjs';
 import { taskFeatures, WHITELIST } from './features.mjs';
 import { rng } from './metrics.mjs';
 
@@ -585,7 +586,7 @@ async function pool(items, n, fn) {
 async function runJev({ tasks, live, cap, concurrency, jevModel }) {
   const { jevClient, requestLedger } = await import('../kev-data/score-served.mjs');
   const rowsFile = path.join(live, 'rows.jsonl'), rawFile = path.join(live, 'rows.raw.jsonl'), faultsFile = path.join(live, 'rows.faults.jsonl');
-  const done = latestRows(readJsonl(rowsFile), completeJevRow);
+  const done = latestRows(readRows(rowsFile, { repair: true }), completeJevRow);
   const todo = tasks.filter(t => !done.has(t.taskKey));
   const ledger = requestLedger({ file: path.join(live, 'requests.jsonl'), cap });
   const planned = todo.length * PERMUTATIONS.length;
@@ -629,8 +630,8 @@ async function runJev({ tasks, live, cap, concurrency, jevModel }) {
 async function runHaiku({ tasks, live, capUsd, concurrency }) {
   const { createModelPort } = await import('../lib/models.mjs');
   const rowsFile = path.join(live, 'haiku-rows.jsonl'), faultsFile = path.join(live, 'haiku-rows.faults.jsonl');
-  const prior = readJsonl(rowsFile), done = latestRows(prior, r => r.ok);
-  let spent = prior.reduce((s, r) => s + (r.costUsd ?? 0) + (r.imputedUsd ?? 0), 0) + readJsonl(faultsFile).reduce((s, r) => s + (r.costUsd ?? 0) + (r.imputedUsd ?? 0), 0);
+  const prior = readRows(rowsFile, { repair: true }), done = latestRows(prior, r => r.ok);
+  let spent = prior.reduce((s, r) => s + (r.costUsd ?? 0) + (r.imputedUsd ?? 0), 0) + readRows(faultsFile, { repair: true }).reduce((s, r) => s + (r.costUsd ?? 0) + (r.imputedUsd ?? 0), 0);
   const todo = tasks.filter(t => !done.has(t.taskKey));
   const maxPerCall = 0.2;
   console.log(`Haiku: ${tasks.length} tasks, ${done.size} done, ${todo.length} to ask; spent $${spent.toFixed(4)} of cap $${capUsd} (<= $${maxPerCall} per call)`);
@@ -646,6 +647,8 @@ async function runHaiku({ tasks, live, capUsd, concurrency }) {
       const req = buildHaikuRequest(t.task);
       r = await port.call({ runId: `jev-need2-haiku:${t.taskKey}`, nodeKey: 'properties', modelId: HAIKU_MODEL, system: req.system, prompt: req.prompt, schema: req.schema,
         decoding: { maxTokens: 2000, reasoning: 'none' }, salt: 'jev-need2-haiku' });
+    } catch (e) {     // a port refusal or cancellation is a fault row (its journaled spend, if any, still counts)
+      r = { ok: false, modelId: HAIKU_MODEL, error: { code: e.code ?? 'ERROR', message: String(e.message ?? e).slice(0, 300) }, costUsd: e.details?.costUsd ?? 0, imputedUsd: e.details?.imputedUsd ?? 0, latencyMs: e.details?.latencyMs ?? null };
     } finally { inflight--; }
     spent += (r.costUsd ?? 0) + (r.imputedUsd ?? 0);
     const row = { taskKey: t.taskKey, family: t.family, difficulty: t.difficulty, ok: !!r.ok, modelId: r.modelId, engineVersion: r.engineVersion ?? null, answers: r.ok ? r.value : null,

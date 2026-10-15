@@ -4,11 +4,12 @@
 // workdir; a library inside the workdir (or containing it) is refused. $0: plain solver processes, no model.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { runSolver, runParts, assertLibraryOutside } from '../run.mjs';
 import { openLibrary } from '../store.mjs';
+import { loadCard } from '../cards.mjs';
 
 const tmp = (t, p) => { const d = mkdtempSync(path.join(tmpdir(), p)); t.after(() => rmSync(d, { recursive: true, force: true })); return d; };
 // A solver that looks for library files in its workdir (= cwd = HOME) and beside it.
@@ -18,31 +19,32 @@ const NAMES = new Set(['registry.jsonl', 'evidence.jsonl', 'judgments.jsonl', 'r
 const found = [];
 const walk = d => { let es = []; try { es = readdirSync(d, { withFileTypes: true }); } catch {} for (const e of es) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (NAMES.has(e.name)) found.push(path.relative(process.cwd(), p)); } };
 walk(process.cwd()); if (process.env.HOME !== process.cwd()) walk(process.env.HOME);
-console.log(JSON.stringify({ libraryHere: existsSync('library'), libraryBeside: existsSync('../library'), found }));`;
+console.log(JSON.stringify({ libraryHere: existsSync('library'), found }));`;
 const TASK = { prompt: 'probe', inputs: {} };
+const PROVENANCE = { source: 'maintainer', ref: 'fixture', licence: 'internal', redistributable: false };
 
-test('M2: without a library the solver finds no library in its workdir; a planted-truth library passed by the caller stays outside', async t => {
+test('M2: without a library the solver finds none in its workdir; a library holding truth rows, passed by the caller, stays outside it', async t => {
   const own = await runSolver({ source: PROBE, task: TASK });
   assert.equal(own.status, 'ok', own.stderr);
-  assert.deepEqual(own.output, { libraryHere: false, libraryBeside: false, found: [] });
-  // A library with truth-domain rows (an oracle verdict, a judgment label), opened by the caller outside the workdir.
+  assert.deepEqual(own.output, { libraryHere: false, found: [] });
+  // Truth-domain rows: an oracle verdict (evidence) and a judgment label.
   const lib = openLibrary(tmp(t, 'lib-m2-store-'));
-  const e = lib.register({ layer: 'L2', name: 'x', contract: { output: { type: 'object' }, taskTemplate: 't' }, tags: ['compose'], provenance: { source: 'maintainer', ref: 'fixture', licence: 'internal', redistributable: false } });
+  const e = lib.register({ layer: 'L2', name: 'x', contract: { output: { type: 'object' }, taskTemplate: 't' }, stub: async () => ({ output: {} }), tags: ['compose'], provenance: PROVENANCE });
   lib.addEvidence(e.hash, { kind: 'run', ok: true, oracle: 'pass' });
-  const work = tmp(t, 'lib-m2-work-');
-  const r = await runSolver({ source: PROBE, task: TASK, library: lib, workdir: work });
+  assert.ok(existsSync(lib.files.evidence));
+  const r = await runSolver({ source: PROBE, task: TASK, library: lib, workdir: tmp(t, 'lib-m2-work-') });
   assert.equal(r.status, 'ok', r.stderr);
-  assert.deepEqual(r.output, { libraryHere: false, libraryBeside: false, found: [] });
+  assert.deepEqual(r.output, { libraryHere: false, found: [] });
 });
 
-test('M2: runParts keeps the library out of the run directory and its parent', async t => {
-  const card = { id: 'P00', fragment: null };
-  // runParts assembles cards; here we only need the directory layout, so run the probe through runSolver as runParts
-  // does (its own library, workdir <tmp>/run) by calling runParts with no parts is not possible: check the layout directly.
-  const r = await runParts({ parts: [], task: TASK, keep: false }).catch(e => e);
-  // assemble() refuses an empty plan; the layout is what matters, so exercise it with the probe solver instead.
-  assert.ok(r instanceof Error || r.status, 'runParts ran or refused');
-  void card;
+test('M2: runParts keeps its library out of the run directory and out of the run directory\'s parent', async t => {
+  const p08 = loadCard('P08'), fx = p08.fixtures.find(f => f.name === 'positive');
+  const r = await runParts({ parts: [{ card: p08, slots: { ...p08.example.slots, ...(fx.slots ?? {}) } }], task: fx.task, answers: fx.answers, keep: true });
+  t.after(() => { rmSync(path.dirname(r.dir), { recursive: true, force: true }); rmSync(r.libraryDir, { recursive: true, force: true }); });
+  assert.equal(r.status, 'ok', r.stderr);
+  assert.equal(existsSync(path.join(r.dir, 'library')), false);
+  assert.equal(existsSync(path.join(path.dirname(r.dir), 'library')), false, 'no ../library beside the solver');
+  assert.equal(path.relative(path.dirname(r.dir), r.libraryDir).startsWith('..'), true, 'the library is in its own directory');
 });
 
 test('M2: a library inside the solver\'s workdir, or one that contains it, is refused before the solver starts', async t => {

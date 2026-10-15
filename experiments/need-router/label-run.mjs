@@ -66,6 +66,7 @@ import { compileDataSchema } from '../../src/validate.mjs';
 import { assertSeedsAllowed, loadLedger } from '../jit/seeds.mjs';
 import { STAGES_FILE, PREREG_FILE, ROLES, planTasks, exampleSet, span, checkStages, armSha, canonicalJson, stamp as engineStamp, stampDiff } from './prereg-check.mjs';
 import { needTable, needLabels, HEADLINE, DELTA, MODES, ENV_FAULT_LIMIT } from './metrics.mjs';
+import { guardMeter, readMeterGate, readVerification, meterGateDecision, OUTPUT_TOLERANCE } from './meter-gate.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const LIVE_ROOT = '/var/tmp/foundry-work/need';
@@ -547,7 +548,9 @@ export function livePorts({ live, models }) {
  * sessions), the script runner and the self-check answer from a table of the planned tasks: a correct answer
  * (referenceSolve), a wrong one (a bed bad control), none, a timeout or a killed session, chosen by a hash of the call's
  * own key (run id, workdir tail), never by call order. The outcomes are fake; only the harness around them is real.
- * `force` overrides an outcome by key substring (tests): { builder: {labelPart: 'fail'|'nested'|'hidden'|'ok'}, ... }.
+ * `force` overrides an outcome by key substring (tests): { builder: {labelPart: 'fail'|'nested'|'hidden'|'ok'|'killed'|'envfault'|'nocheck'},
+ * call: {runIdPart: 'right'|'wrong'|'schema'|'timeout'|'ratelimit'}, writer: {runIdPart: 'envfault'|'timeout'}, agent: {workdirPart: 'right'|'wrong'|
+ * 'none'|'killed'|'nested'|'hidden'|'mention'|'envfault'}, script: {...}, selfcheck: {workdirPart: 'sandbox'|'launch'} }.
  */
 export function stubPorts({ tasks, models, force = {} }) {
   const owner = loadPolicy(), policy = subsetPolicy(owner.policy, models), hash = policyHash(policy);
@@ -571,12 +574,16 @@ export function stubPorts({ tasks, models, force = {} }) {
       const usage = { inputTokens: Math.ceil((req.system.length + req.prompt.length) / CHARS_PER_TOKEN), outputTokens: 150 + (h % 400), cacheReadTokens: 0, cacheWriteTokens: 0 };
       const base = { usage, costUsd: list(entry, usage), imputedUsd: 0, latencyMs: 800 + (h % 700), modelId: entry.id, provider: 'stub' };
       if (req.nodeKey === 'procedure-writer') {
+        const w = forced('writer', req.runId);
+        if (w === 'envfault') return { ...base, usage: zeroUsage(), costUsd: 0, ok: false, error: { code: 'MODEL_RATE_LIMIT', message: 'stub rate limit' } };
+        if (w === 'timeout') return { ...base, usage: zeroUsage(), costUsd: 0, ok: false, error: { code: 'MODEL_TIMEOUT', message: 'stub timeout' }, costUnknown: true, costUpperUsd: 1 };
         return { ...base, ok: true, value: { procedure: `Stub procedure (label-run --dry, ${h % 97}). Read the task text, follow its rules step by step, and assemble the answer to match the schema.`,
           checks: ['The answer matches the output schema.', 'Every rule stated in the task text is applied.'] } };
       }
       const t = byPrompt.get(sha16(req.prompt));
       const pick = forced('call', req.runId) ?? (h % 40 === 0 ? 'timeout' : h % 20 < 3 ? 'schema' : h % 20 < 7 ? 'wrong' : 'right');
       if (pick === 'timeout') return { ...base, usage: zeroUsage(), costUsd: 0, ok: false, error: { code: 'MODEL_TIMEOUT', message: 'stub timeout' }, costUnknown: true, costUpperUsd: 1 };
+      if (pick === 'ratelimit') return { ...base, ok: false, error: { code: 'MODEL_RATE_LIMIT', message: 'stub rate limit' } };   // billed: the tokens of the attempt
       if (!t) return { ...base, ok: true, value: {} };   // a script's own gateway call
       if (pick === 'schema') return { ...base, ok: false, error: { code: 'MODEL_SCHEMA', message: 'stub schema-invalid output' } };
       return { ...base, ok: true, value: await answer(t, pick) };
@@ -603,14 +610,17 @@ export function stubPorts({ tasks, models, force = {} }) {
     const key = builder ? path.basename(workdir) : workdir.split(path.sep).slice(-3).join('/'), h = fnv(`${mdl}|${key}`);
     if (builder) {
       const pick = forced('builder', key) ?? (h % 9 === 0 ? 'fail' : h % 9 === 1 ? 'nested' : 'ok');
-      if (pick === 'envfault') return { ok: false, error: { code: 'MODEL_RATE_LIMIT' }, costUsd: 0, costUnknown: false, costUpperUsd: 0, streamUsage: zeroUsage(), turns: null, usage: null,
-        toolUses: [], sessionId: null, durationMs: 1000 };
+      if (pick === 'envfault') {   // rate-limited after it had spent: the session's tokens are real dollars
+        const tr = transcript(workdir, mdl, 3, h, []);
+        return { ok: false, error: { code: 'MODEL_RATE_LIMIT' }, costUsd: list(entry, tr.usage), costUnknown: false, costUpperUsd: list(entry, tr.usage), streamUsage: tr.usage, turns: null, usage: null,
+          toolUses: [], sessionId: null, durationMs: 1000, transcript: tr.file };
+      }
       const toolUses = [{ name: 'Bash', input: { command: './tools/run-solver probes/probe-0 > a.json' } }, { name: 'Bash', input: { command: './tools/run-solver probes/probe-1' } }];
       if (pick === 'nested') toolUses.push({ name: 'Bash', input: { command: 'claude -p "solve it"' } });
       if (pick === 'hidden') toolUses.push({ name: 'Bash', input: { command: 'ls /home/user/workflow-foundry/beds' } });
       if (pick !== 'fail') {
         writeFileSync(path.join(workdir, 'solve.mjs'), `// stub solver (label-run --dry) for ${key}\nprocess.stdout.write('null\\n');\n`);
-        if (prompt.includes(SELF_CHECK_FILE)) writeFileSync(path.join(workdir, SELF_CHECK_FILE), '// stub self-check (label-run --dry)\nprocess.exit(0);\n');
+        if (prompt.includes(SELF_CHECK_FILE) && pick !== 'nocheck') writeFileSync(path.join(workdir, SELF_CHECK_FILE), '// stub self-check (label-run --dry)\nprocess.exit(0);\n');
         writeFileSync(path.join(workdir, 'BUILD-NOTES.md'), 'stub build (label-run --dry)\n');
       }
       const tr = transcript(workdir, mdl, 6, h, toolUses), killed = pick === 'killed';   // killed: a session cut at its timeout (solver left behind)
@@ -621,7 +631,16 @@ export function stubPorts({ tasks, models, force = {} }) {
     const pick = forced('agent', key) ?? (h % 40 === 0 ? 'killed' : h % 40 === 1 ? 'nested' : h % 20 < 6 ? 'wrong' : h % 20 === 6 ? 'none' : 'right');
     const toolUses = [{ name: 'Read', input: { file_path: 'inputs.json' } }];
     if (pick === 'nested') toolUses.push({ name: 'Bash', input: { command: 'claude -p "help"' } });
-    const out = t && pick !== 'killed' && pick !== 'none' ? await answer(t, pick === 'nested' ? 'right' : pick) : null;
+    if (pick === 'hidden') toolUses.push({ name: 'Read', input: { file_path: '/home/user/workflow-foundry/beds/records/score.mjs' } });
+    // mention: host paths in data only (answer content, a Grep pattern, a heredoc body), as incident and ownerci answers have.
+    if (pick === 'mention') toolUses.push({ name: 'Write', input: { file_path: 'answer.json', content: '{"root_cause_volume":"/var/lib/postgresql/data"}' } },
+      { name: 'Grep', input: { pattern: '/var/log', path: 'files' } }, { name: 'Bash', input: { command: "cat > notes.txt <<'EOF'\nbackups go to /var/lib/backup and /srv/objects\nEOF" } });
+    if (pick === 'envfault') {   // the session died on an environment fault after it had spent
+      const tr = transcript(workdir, mdl, 3, h, toolUses);
+      return { ok: false, error: { code: 'EXECUTOR_PROTOCOL' }, costUsd: list(entry, tr.usage), costUnknown: false, costUpperUsd: list(entry, tr.usage), streamUsage: tr.usage, turns: null, usage: null,
+        toolUses, sessionId: `stub-${h}`, durationMs: 1000, transcript: tr.file };
+    }
+    const out = t && pick !== 'killed' && pick !== 'none' ? await answer(t, ['nested', 'hidden', 'mention'].includes(pick) ? 'right' : pick) : null;
     if (out != null) writeFileSync(path.join(workdir, 'answer.json'), JSON.stringify(out));
     if (files['PROCEDURE.md'] != null && out != null) {
       const right = await isRight(t, out);
@@ -646,7 +665,9 @@ export function stubPorts({ tasks, models, force = {} }) {
   });
   const selfCheck = async ({ task, output, workdir }) => {
     if (output == null) return { selfVerdict: null };
-    const h = fnv(workdir.split(path.sep).slice(-2).join('/'));
+    const key = workdir.split(path.sep).slice(-2).join('/'), h = fnv(key), sc = forced('selfcheck', key);
+    if (sc === 'sandbox') return { selfVerdict: null, error: { code: 'SANDBOX_UNAVAILABLE', message: 'stub: no user namespaces' } };
+    if (sc === 'launch') return { selfVerdict: null, error: { code: 'SELF_CHECK_LAUNCH', message: 'stub: launch failed' } };
     const t = byTask.get(sha16(canonical(task)));
     if (!t) return { selfVerdict: 'error', exitCode: null };
     const right = await isRight(t, output);
@@ -663,7 +684,7 @@ export const runArmId = (mode, k = null) => (k == null ? mode : `${mode}#${k}`);
 export function parseArmId(id) { const m = /^(.*)#(\d+)$/.exec(id); return m ? { mode: m[1], lineage: Number(m[2]) } : { mode: id, lineage: null }; }
 
 /** A runner record as a needTable matrix row (one meter: usdRepriced measured + usdImputed). */
-export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo }) {
+export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo, meter = null }) {
   const { mode, lineage } = parseArmId(rec.arm), meta = rec.meta ?? {};
   const factory = armDef.run?.factory ?? armDef.factory;
   let cost;
@@ -678,7 +699,8 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo 
   }
   else {
     const model = armDef.run?.model ?? armDef.model;
-    cost = priceSession(priceTable, model, { messageUsage: meta.messageUsage, streamUsage: meta.streamUsage, costUnknown: !!rec.costUnknown, boundUsd: meta.costUpperUsd ?? rec.costUsd ?? 0, reportedUsd: rec.costUsd });
+    cost = priceSession(priceTable, model, { messageUsage: meta.messageUsage, streamUsage: meta.streamUsage, costUnknown: !!rec.costUnknown, boundUsd: meta.costUpperUsd ?? rec.costUsd ?? 0, reportedUsd: rec.costUsd,
+      finalUsage: meta.finalUsage ?? null, meter });
   }
   const delivered = typeof meta.delivered === 'boolean' ? meta.delivered : rec.oracleDetails !== '{"noOutput":true}';
   const voidReasons = [];
@@ -694,6 +716,7 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo 
     schemaValid: meta.schemaValid ?? null, selfVerdict: meta.selfVerdict ?? null, deployableVerdict: meta.deployableVerdict ?? null,
     ...(meta.selfCheck?.error ? { selfCheckError: meta.selfCheck.error } : {}),
     usdReported: r6((rec.costUsd ?? 0) + (rec.imputedUsd ?? 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed), repriced: cost.repriced !== false && !cost.fallback,
+    ...(cost.meterUnverified ? { meterUnverified: true } : {}),
     ms: rec.latencyMs ?? null, tokens: cost.tokens, turns: meta.turns ?? null, error: voided ? 'VOIDED' : rec.error?.code ?? null, rawError: rec.error?.code ?? null,
     void: voided ? voidReasons.join('; ') : null,
   };
@@ -749,7 +772,7 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
     res = await construct({ arm: b.arm, armId: runArmId(mode, k), familyId: job.family, probeSeeds, builderModel: b.builderModel, builderEffort: b.builderEffort,
       builderBudgetUsd: b.builderBudgetUsd, constructionModelUsd: b.constructionModelUsd, perTaskUsd: b.perTaskUsd, minutes: b.minutes, scoreChecks: b.scoreChecks,
       modelPort: ctx.metered(), workRoot: path.dirname(dir), label, models: b.models, selfCheck: !!b.selfCheck, executor: ports.executor, kitBase: ports.kitBase ?? undefined });
-    cost = buildCost(stages, b, res.record, book, label);
+    cost = buildCost(stages, b, res.record, book, label, ctx.meter ?? null);
   } finally {
     const charged = cost ? cost.charged : bound;   // construct() threw after the builder may have started: its bound
     budget.settle(tok, charged, { job: job.id, mode, lineage: k, reported: cost?.reported ?? null, repriced: cost?.measured ?? 0, imputed: cost ? cost.imputed : bound,
@@ -777,9 +800,9 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
 
 /** A construction on the meter: the builder session re-priced from its messages (its budget bound when killed) plus its
  *  gateway calls; reported = construct()'s own constructionCostUsd. */
-function buildCost(stages, b, rec, book, label) {
+function buildCost(stages, b, rec, book, label, meter = null) {
   const builder = priceSession(stages.priceTable, b.builderModel, { messageUsage: rec.builderMessageUsage, streamUsage: rec.builderStreamUsage, costUnknown: rec.builderCostUnknown,
-    boundUsd: b.builderBudgetUsd, reportedUsd: rec.builderCostReportedUsd ?? 0 });
+    boundUsd: b.builderBudgetUsd, reportedUsd: rec.builderCostReportedUsd ?? 0, finalUsage: rec.builderUsage ?? null, meter });
   const gw = priceCalls(stages.priceTable, book.latest(`construct:${label}:`));
   const reported = rec.constructionCostUsd ?? 0, measured = builder.measured + gw.measured, imputed = builder.imputed + gw.imputed;
   return { reported, measured, imputed, charged: Math.max(reported, measured + imputed) };
@@ -867,7 +890,7 @@ async function runProbes({ ctx, unit, plan }) {
       const rec = { arm: id, taskKey: t.taskKey, trial: d, costUsd: r.costUsd ?? 0, imputedUsd: r.imputedUsd ?? 0, costUnknown: !!r.costUnknown, meta: r.meta, error: r.error };
       const seq = r.meta?.callSeq;
       const cost = call ? priceCalls(ctx.stages.priceTable, seq ? ctx.book.attempt({ exact: `${id}:${t.taskKey}:t${d}`, seq }) : ctx.book.exact(`${id}:${t.taskKey}:t${d}`), { boundUsd: def.timeoutChargeUsd ?? 1 })
-        : priceSession(ctx.stages.priceTable, def.model, { messageUsage: r.meta?.messageUsage, streamUsage: r.meta?.streamUsage, costUnknown: !!r.costUnknown, boundUsd: def.budgetUsd, reportedUsd: r.costUsd ?? 0 });
+        : priceSession(ctx.stages.priceTable, def.model, { messageUsage: r.meta?.messageUsage, streamUsage: r.meta?.streamUsage, costUnknown: !!r.costUnknown, boundUsd: def.budgetUsd, reportedUsd: r.costUsd ?? 0, finalUsage: r.meta?.finalUsage ?? null, meter: ctx.meter ?? null });
       const row = { schema: 'need-probe-row/1', stage: ctx.stage.id, job: job.id, mode, draw: d, seed: t.seed, difficulty: t.difficulty, task: t.taskKey, taskHash: t.taskHash,
         delivered: !!r.meta?.delivered, schemaValid: r.meta?.schemaValid ?? null, deployableVerdict: r.meta?.deployableVerdict ?? null,
         outputHash: r.output != null ? sha16(canonical(r.output)) : null, turns: r.meta?.turns ?? null, usdReported: r6(chargeOf(rec, 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed),
@@ -897,7 +920,7 @@ function jobRows(ctx, unit, plan) {
   for (const rec of recs) {
     const { mode } = parseArmId(rec.arm);
     if (rec.error?.code === 'STAGE_CAP') { capped.push(rec); continue; }
-    rows.push(matrixRow(rec, { stage: ctx.stage.id, job: unit.job, armDef: ctx.stages.arms[mode], priceTable: ctx.stages.priceTable, book: ctx.book, taskInfo: info.get(rec.taskKey) }));
+    rows.push(matrixRow(rec, { stage: ctx.stage.id, job: unit.job, armDef: ctx.stages.arms[mode], priceTable: ctx.stages.priceTable, book: ctx.book, taskInfo: info.get(rec.taskKey), meter: ctx.meter ?? null }));
   }
   rows.sort((a, b) => (a.task < b.task ? -1 : a.task > b.task ? 1 : a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : a.rep - b.rep));
   const builds = [...ctx.builds.values()].filter(b => b.job === unit.job.id).sort((a, b) => (a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : a.lineage - b.lineage));
@@ -971,7 +994,8 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
 /**
  * What a paid run (no --dry) must pass before anything is spent. Returns { errors, deviations, stamp }; the run is refused
  * on any error. deps (tests): { canonicalFile, preregFile, checkStagesFn, stampOf, frozenSha (file -> sha256 hex of its
- * frozen text, default: its committed HEAD blob), ledger, policy }.
+ * frozen text, default: its committed HEAD blob), ledger, policy, meterGate (() -> D6's summary.meterGate or null), meterVerification (() -> the
+ * verification record or null) }.
  *  - approval: the stage's approved flag (the owner's gate);
  *  - status: a frozen plan, or --allow-draft, which is recorded in report.deviations;
  *  - the plan: the canonical stages.json (same bytes), or a spec whose sha256 the preregistration text names (an addendum
@@ -982,10 +1006,13 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
  *  - the preregistration: the canonical file, equal to its frozen text (stages.json preregSha256 when the freeze records
  *    it, else the committed HEAD blob: no uncommitted edit);
  *  - the label-engine stamp (prereg-check stamp): a commit and no uncommitted change in the label engine;
+ *  - the cost-meter gate (meter-gate.mjs; D6 of the M0 diagnostics): no stage with an agent arm while analysis/m0/diagnostics.json says
+ *    block-until-verified and no passing meter-verification record is on file;
  *  - --jobs/--arms only with --deviation TEXT (both recorded in report.deviations).
  */
 export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters = null, deviation = null, deps = {} }) {
-  const { canonicalFile = STAGES_FILE, preregFile = PREREG_FILE, checkStagesFn = checkStages, stampOf = engineStamp, frozenSha = gitBlobSha256, ledger = undefined, policy = undefined } = deps;
+  const { canonicalFile = STAGES_FILE, preregFile = PREREG_FILE, checkStagesFn = checkStages, stampOf = engineStamp, frozenSha = gitBlobSha256, ledger = undefined, policy = undefined,
+    meterGate = readMeterGate, meterVerification = readVerification } = deps;
   const { stages, stage } = plan, errors = [], deviations = [];
   if (stage.approved !== true) errors.push(`stage ${stage.id} is not approved (stages.json approved: ${stage.approved}); paid runs need the owner's gate`);
   if (stages.status !== 'frozen') {
@@ -1011,6 +1038,10 @@ export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters
     const def = stages.arms[a], h = armSha(def);
     if (def.settingsSha !== h) errors.push(`arm ${a}: settingsSha ${def.settingsSha} != armSha ${h} (the arm was edited after its hash was preregistered)`);
   }
+  // The cost-meter gate (D6, meter-gate.mjs): a stage with an agent arm does not start while the committed gate is block-until-verified and no
+  // passing meter-verification record is on file.
+  const mg = meterGateDecision({ gate: meterGate(), verification: meterVerification(), arms: [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => stages.arms[a]) });
+  if (!mg.allow) errors.push(`meter gate: ${mg.why}`);
   let st = null;
   try { st = stampOf(stages, { stage: stage.id }); } catch (e) { errors.push(`engine stamp: ${e.message}`); }
   if (st) {
@@ -1205,6 +1236,8 @@ export async function labelRun(opts) {
   }
   budget.spentUsd = spend0.totalUsd;
   const ctx = { stages, stage, live, resultsFile, buildsFile, probesFile, book, builds, probes, budget, ports, ledger, concurrency, log, notRun: [], stageSha: vctx.stageSha, prompts: vctx.prompts,
+    // Cost-meter gate (meter-gate.mjs): live runs check every priced agent session's output tokens against the CLI's final usage; --dry stubs carry no such usage.
+    meter: dry ? null : { tolerance: OUTPUT_TOLERANCE },
     metered: ({ timeoutMs = null } = {}) => meteredPort(ports.model, { book, timeoutMs }) };
   let stopped = null;
   const racingLog = new Map(decided);

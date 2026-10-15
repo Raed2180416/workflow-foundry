@@ -123,8 +123,9 @@ export const runSolverCallsOf = (toolUses = []) => toolUses.filter(u => u?.name 
 // heredoc bodies removed (data written to a file). Write and Edit content and Grep patterns are never scanned. A path that
 // the task itself states (its prompt, inputs or files: `ignore`) is not an attempt. /tmp is private to the sandbox.
 export const HOST_ROOTS = Object.freeze(['home', 'root', 'opt', 'mnt', 'var', 'run', 'srv', 'media', 'etc', 'proc']);
-// A host path starts a token: not inside a relative path (files/var/x), a URL (https://h/var/x) or a home path (~/etc/x).
-const hostPathRe = () => new RegExp(`(?<![\\w.~-])/(?:${HOST_ROOTS.join('|')})/[\\w./-]*`, 'g');
+// A host path starts a token (not inside a relative path files/var/x, a URL https://h/var/x or a home path ~/etc/x; a
+// traversal ../../etc/x does count) and names a host root itself (/etc, /home/u), not a longer word (/variable).
+const hostPathRe = () => new RegExp(`(?<![\\w~-])/(?:${HOST_ROOTS.join('|')})(?![\\w])[\\w./-]*`, 'g');
 const PATH_KEYS = Object.freeze(['file_path', 'path', 'notebook_path', 'directory', 'dir', 'cwd']);
 /** A path as compared by the scan: `..` resolved, trailing slashes and dots dropped. */
 export const normalizeHostPath = p => path.posix.normalize(String(p)).replace(/[/.]+$/, '') || '/';

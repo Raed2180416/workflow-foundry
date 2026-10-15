@@ -97,7 +97,8 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
         meta: { turns: r.turns, tools: r.toolUses.length, costUnknown: r.costUnknown, costUpperUsd: r.costUpperUsd, streamUsage: r.streamUsage,
           nestedModelAttempts: nestedModelUses(r.toolUses), sessionId: r.sessionId,
           // Need router v1 additions: per-message usage for the one re-priced cost meter, and the hidden-path scan.
-          messageUsage: r.transcript ? messageUsageOf(r.transcript) : null, hiddenPathAttempts: outside.attempts, outsidePaths: outside.paths.slice(0, 20),
+          // finalUsage: the CLI's final result usage (complete output tokens), the figure label-run's meter check compares the per-message lines with.
+          messageUsage: r.transcript ? messageUsageOf(r.transcript) : null, finalUsage: r.usage ?? null, hiddenPathAttempts: outside.attempts, outsidePaths: outside.paths.slice(0, 20),
           taskPathsIgnored: outside.ignored.length, pathMentions: mentioned.attempts, mentionedPaths: mentioned.paths.slice(0, 20),
           ...(procedure !== null ? { selfVerdict: checksVerdict(checks), checks: Array.isArray(checks) ? checks.length : checks && typeof checks === 'object' ? Object.keys(checks).length : 0 } : {}) } };
     },

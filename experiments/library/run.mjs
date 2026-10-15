@@ -185,7 +185,7 @@ export async function runParts({ parts, task, answers = {}, children = [], budge
     const resolved = parts.map(p => ({ card: p.card, slots: resolveRefs(p.slots ?? {}, refs) }));
     const { source } = assemble({ parts: resolved, budgetUsd });
     const r = await runSolver({ source, task, answers, library: lib, budgetUsd, outputSchema, timeoutMs, workdir: path.join(dir, 'run') });
-    return { ...r, source, refs };
+    return { ...r, source, refs, ...(keep ? { libraryDir: libDir } : {}) };
   } finally { if (!keep) { rmSync(dir, { recursive: true, force: true }); rmSync(libDir, { recursive: true, force: true }); } }
 }
 

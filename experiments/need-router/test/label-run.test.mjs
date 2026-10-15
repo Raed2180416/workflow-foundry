@@ -195,7 +195,10 @@ test('the stage cap: nothing starts unless its bound fits beside spend and work 
   const rep = await LR.labelRun({ stageId: 'NL-T', specFile: spec(dir, { runs, capUsd: 3.5 }), workRoot: path.join(dir, 'live'), out, dry: true, racing: false, concurrency: 2, log: quiet });
   assert.match(rep.stopped, /^STAGE_CAP/);
   const j = rep.jobs[0];
-  assert.ok(j.notRunCap > 0); assert.match(j.pairing, /^incomplete/);
+  // (Pairing may be complete or not: since the K2 fix direct-H on wbed-r0 runs first, so which starts the cap refuses depends
+  // on the order; the stop, the refusals and the spend under the cap are the point.)
+  assert.ok(j.notRunCap > 0); assert.match(j.pairing, /^(incomplete|ok)/);
+  assert.ok(rep.totals.spend.meterUsd <= 3.5 + 1e-9, 'the cap meter stays under the cap');
   const results = readJsonl(path.join(out, 'results.jsonl')).filter(r => r.error?.code !== 'STAGE_CAP');
   assert.ok(results.length > 0 && results.length < 48);
   assert.ok(results.reduce((a, r) => a + (r.costUsd ?? 0), 0) <= 3.5 + 1e-9, 'reported spend stays under the cap');

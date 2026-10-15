@@ -104,6 +104,20 @@ export const ON_REFUSE = Object.freeze(['deopt', 'interpret', 'skip', 'value']),
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 const usd = x => Math.round(x * 1e6) / 1e6;
 const short = (v, n = 300) => String(v?.message ?? v).slice(0, n);
+// MEM-0 M6 (research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §3.2, rules R2 and R8): a child's deopt detail is
+// written by the child's code, which may have read untrusted input, and flow-v3.mjs hands it to the parent's code (onDeopt
+// 'skip'), the parent's trace and the parent's deopt.json (which a recompile's builder reads). The host labels it at the
+// boundary: { label: 'untrusted:child-deopt', value }. The value is cut so the labelled object stays within the 1,000
+// JSON characters flow-v3 keeps of a child detail (a longer one would lose the label to flow-v3's own clip).
+export const CHILD_DEOPT_LABEL = 'untrusted:child-deopt', CHILD_DETAIL_MAX = 1000;
+export function labelChildDetail(detail, max = CHILD_DETAIL_MAX) {
+  if (detail === null || detail === undefined) return null;
+  const s = JSON.stringify(detail) ?? 'null', wrap = value => ({ label: CHILD_DEOPT_LABEL, value });
+  if (JSON.stringify(wrap(detail)).length <= max) return wrap(JSON.parse(s));
+  let n = max;
+  while (n > 0 && JSON.stringify(wrap({ truncated: true, head: s.slice(0, n) })).length > max) n -= 50;
+  return wrap({ truncated: true, head: s.slice(0, Math.max(0, n)) });
+}
 // The same digests flow-v3.mjs computes (canonical JSON is run-compiled's canonicalJson, which equals flow-v2's canonical).
 export const inputDigestOf = input => sha256(canonicalJson(input));
 export const outDigestOf = v => (v === undefined ? null : sha256(canonicalJson(v)).slice(0, 16));
@@ -536,7 +550,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       } else if (r.status === 'invalid') {
         result = { status: 'deopt', childStatus: 'invalid', deopt: { kind: 'output-schema', name: 'contract.output', detail: { errors: r.meta?.schemaErrors ?? r.error?.message ?? null } }, ...trace };
       } else if (r.status === 'deopt') {
-        result = { status: 'deopt', childStatus: 'deopt', deopt: { kind: r.deopt?.kind ?? 'unknown', name: r.deopt?.name ?? null, detail: r.deopt?.detail ?? null }, ...trace };
+        result = { status: 'deopt', childStatus: 'deopt', deopt: { kind: r.deopt?.kind ?? 'unknown', name: r.deopt?.name ?? null, detail: labelChildDetail(r.deopt?.detail) }, ...trace };
       } else {
         result = { status: 'deopt', childStatus: r.status, deopt: { kind: r.status === 'timeout' ? 'timeout' : 'crash', name: null, detail: r.error ?? null }, ...trace };
       }

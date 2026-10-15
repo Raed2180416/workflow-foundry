@@ -10,6 +10,7 @@ import { replayRun } from '../../host/replay.mjs';
 import { hashOf } from '../../../lib/canonical.mjs';
 import { planSaga } from '../../lib/saga.mjs';
 import { runGoldens, goldens } from '../golden.mjs';
+import { runUnitChecks, unitChecks } from './unit-checks.mjs';
 
 const MIN = 60_000;
 
@@ -266,6 +267,11 @@ test('grader: same-instant knowledge is per message (S10): a step by a call that
 test('golden module: every exported golden passes the reference transition (the same set the mutation tool runs per mutant)', () => {
   assert.ok(goldens.length >= 20, `only ${goldens.length} goldens`);
   for (const r of runGoldens(referenceTransition, recordsOf)) assert.ok(r.pass, `${r.name} (${r.source}): ${r.detail}`);
+});
+
+test('transition unit checks pass: regressions the grader cannot see, kept out of the goldens (test/unit-checks.mjs; MUTANTS.md §0)', () => {
+  assert.ok(unitChecks.length >= 10, `only ${unitChecks.length} unit checks`);
+  for (const r of runUnitChecks(referenceTransition, recordsOf)) assert.ok(r.pass, `${r.name} (${r.source}): ${r.detail}`);
 });
 
 test('spec-E is the module\'s spec and names every rule the oracle cites', () => {

@@ -30,7 +30,7 @@ Compared systems: the Temporal order reference application `temporalio/reference
 | 18 | customer cancel until collection; collection is the pivot | R6.2, R4.3, S4, S6 | bar ("cancel-vs-timeout race" and pivot reading, BAR-SET §E8) |
 | 19 | fraud screening with reject and analyst review | R2 | bar (E-BED §3 E8 "fraud holds") |
 | 20 | carriers with their own status vocabularies | §3.3 | bar (E-BED §3 E8 d3 drift "new carrier with a different status vocabulary") |
-| 21 | repeated and out-of-order carrier reports; statuses never regress | §3.3, R7.2 | bar (E-BED §2.7 W1, W2; candidate defect "late in-transit signal regressing a delivered status") |
+| 21 | repeated and out-of-order carrier reports; statuses never regress; never held up for an order the customer cancels while it is processing (E8-8, E8-24) | §3.3, R7.2, S7 | bar (E-BED §2.7 W1, W2; candidate defect "late in-transit signal regressing a delivered status") |
 | 22 | effective-dated rulebook editions (customer-action window, shipping fees) chosen by placement date | R1.3 | bar (E-BED §2.6 d4) |
 | 23 | go-live backlog: orders in flight at t0 | §3.5 | contract §3.5 |
 | 24 | daily collection runs with a booking cut-off | R4.3 | bar (makes the pivot time a rule, not a hidden timer) |
@@ -56,3 +56,8 @@ Compared systems: the Temporal order reference application `temporalio/reference
 - Horizon 14 days at minute resolution (E-BED: 14 days at hour granularity); collection runs and the cut-off need minutes.
 - The carrier is a guarded counterparty (host H-29): it collects only a shipment that is still booked at the collection
   run, so a cancellation before collection is honoured by the world for every arm.
+- Held-up carrier reports (W2) never meet a customer cancel of a processing order (`world.mjs`: `ooo` is off for the four
+  cancel-race classes; the other classes with a cancel end the order before any booking). SPEC-E §3.3 states it to the
+  arm (E8-24): when such a cancel arrives, every collection at or before it has been reported, so S7's "reports that
+  reached you" is the truth. Without it a physically collected parcel whose report is late would make a counting cancel
+  unexecutable (`carrier.cancel` answers `409 already-collected`; review 2026-10-15).
