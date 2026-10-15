@@ -973,7 +973,7 @@ export function verifyEnvelope(committed, recomputed, { firstHeldoutRowAt = null
     if (!P.closureShas) problems.push('the envelope seals no import closure (closureShas): the analysis it was made with cannot be compared');
     else for (const f of [...new Set([...Object.keys(P.closureShas), ...Object.keys(Q.closureShas)])].sort()) {
       const a = P.closureShas[f], b = Q.closureShas[f];
-      if (a !== b) problems.push(`frozen dependency ${f} ${a && b ? 'changed' : a ? 'is no longer imported' : 'was not imported'} after commit (run the evaluator from the commit the envelope was made at)`);
+      if (a !== b) problems.push(`frozen dependency ${f} ${a && b ? 'changed' : a ? 'is no longer imported' : 'was not imported'} after commit (run the evaluator from a worktree at the envelope's commit, with the labels checked out into it: heldoutRowsGit reads every ref)`);
     }
   }
   if (canonical(P.routerModule ?? null) !== canonical(Q.routerModule ?? null)) problems.push(`router module changed after commit: sealed ${P.routerModule ? `${P.routerModule.path} ${String(P.routerModule.sha256).slice(0, 16)}` : 'none (default policies)'}, loaded now ${Q.routerModule ? `${Q.routerModule.path} ${String(Q.routerModule.sha256).slice(0, 16)}` : 'none (default policies)'}`);
@@ -1099,11 +1099,14 @@ export function envelopeProvenance({ decFile, preregText, stageInfo = [], split,
  */
 export function heldoutRowsGit({ decFile, stageInfo = [], split, repo = ROOT, git = null }) {
   const run = git ?? (args => { const r = spawnSync('git', args, { cwd: repo, encoding: 'utf8', maxBuffer: 1 << 26 }); return { status: r.status, stdout: r.stdout ?? '' }; });
-  const addsOf = rel => { const r = run(['log', '--diff-filter=A', '--format=%H', '--', rel]); return r.status === 0 ? r.stdout.split('\n').map(x => x.trim()).filter(Boolean).reverse() : []; };
+  // The envelope's add is read on HEAD's history (the reading's own line); the rows' adds on every ref, so that a reading run
+  // from a worktree at the envelope's commit (the remedy when a pinned dependency moved after it) still sees the later
+  // commits that add the held-out rows (review 2026-10-15).
+  const addsOf = (rel, all = false) => { const r = run(['log', ...(all ? ['--all'] : []), '--diff-filter=A', '--format=%H', '--', rel]); return r.status === 0 ? r.stdout.split('\n').map(x => x.trim()).filter(Boolean).reverse() : []; };
   const relIn = f => path.relative(repo, path.resolve(repo, f));
   const envelopeCommit = addsOf(relIn(decFile))[0] ?? null;
   const files = [...new Set((stageInfo ?? []).filter(x => (x.splits ?? []).includes(split) && x.rowsFile).map(x => x.rowsFile))].sort();
-  const rows = files.map(f => ({ file: f, adds: addsOf(relIn(f)).map(commit => ({ commit, ancestor: envelopeCommit ? run(['merge-base', '--is-ancestor', envelopeCommit, commit]).status === 0 : null })) }));
+  const rows = files.map(f => ({ file: f, adds: addsOf(relIn(f), true).map(commit => ({ commit, ancestor: envelopeCommit ? run(['merge-base', '--is-ancestor', envelopeCommit, commit]).status === 0 : null })) }));
   return { envelopeCommit, rows };
 }
 

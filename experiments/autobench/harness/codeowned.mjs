@@ -40,7 +40,8 @@ export const HARNESS_ID = 'codeowned';
 export const HARNESS_VERSION = 'a1c-v1';
 export const ROLES = Object.freeze(['ledger', 'adjudicate', 'pcmap', 'checker', 'act', 'repair']);
 export const PIPELINE_DEFAULTS = Object.freeze({ K: 3, inventorySteps: 16, checkSteps: 3, maxRounds: 2, actReserveResponses: 8, minRepairResponses: 4, nodeTimeoutMs: 240_000,
-  inlineInventoryChars: 70_000, ledgerInventoryChars: 150_000, systemMaxBytes: 90_000, nodeBudgetShare: 0.1, reserveShare: 0.25, pcmap: true, parallelLedgers: true });
+  inlineInventoryChars: 70_000, ledgerInventoryChars: 150_000, systemMaxBytes: 90_000, nodeBudgetShare: 0.1, reserveShare: 0.25, pcmap: true, parallelLedgers: true,
+  minCheckerMs: 45_000 });
 
 /** H8: every knowledge source compiled into A1-C. Update with every harness version. */
 export const KNOWLEDGE = Object.freeze([
@@ -142,7 +143,8 @@ export async function runPipeline(o) {
   const halt = () => { if (envFault) throw HALT; };
   const noteFault = code => { if (ENV_FAULTS.has(code)) envFault ??= code; };
   const toolUses = [];
-  const client = bridgeClient({ mailbox, responsesSoFar: () => responses });
+  // No code-issued world step once the pipeline has used the official 50 responses (H3; the audit would fail the task-run).
+  const client = bridgeClient({ mailbox, responsesSoFar: () => responses, maxResponses: maxSteps });
   const msLeft = () => o.timeoutMs - (Date.now() - t0);
   const usdLeft = () => B - upper;
   const settle = (r, budget) => {
@@ -311,7 +313,8 @@ export async function runPipeline(o) {
     // 5-6. CHECK, then code-owned TERMINATION with repair rounds
     // The checker decides only what code cannot; after round 0 only when a hard check depends on it (advisory verdicts
     // never change termination).
-    const judge = async its => (responses + 1 <= maxSteps && (stats.rounds === 0 || its.some(x => x.hard)) ? modelNode(`checker-${stats.rounds}`, 'checker', CHECKER_SYSTEM, checkerPrompt({ items: its, dateNote })) : null);
+    // ... and only while the 20-minute task wall still holds one (a node's own timeout has a 30 s floor).
+    const judge = async its => (responses + 1 <= maxSteps && msLeft() >= P.minCheckerMs && (stats.rounds === 0 || its.some(x => x.hard)) ? modelNode(`checker-${stats.rounds}`, 'checker', CHECKER_SYSTEM, checkerPrompt({ items: its, dateNote })) : null);
     for (;;) {
       const chk = await codeNode(`check-${stats.rounds}`, () => runChecks({ client, inv, pcs, maxSteps: P.checkSteps, judge, sources, node: `check-${stats.rounds}` }));
       halt();

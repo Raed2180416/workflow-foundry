@@ -416,7 +416,8 @@ export function renderInventory(inv, { maxChars = 150_000, order = null } = {}) 
       lines.push(l); used += l.length + 1;
     }
   }
-  if (cut) lines.push(`\n(${cut} record(s) left out of this listing for size; they are in INVENTORY.json)`);
+  // No file is named: model nodes have none, and each session's brief names its own (INVENTORY.md, RECORDS.md).
+  if (cut) lines.push(`\n(${cut} record(s) left out of this listing for size)`);
   return lines.join('\n');
 }
 

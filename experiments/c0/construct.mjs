@@ -188,8 +188,9 @@ export function accessedOutsidePaths(toolUses = [], allowedRoots = [], { ignore 
 // The accessed-path scan above skips heredoc bodies, Write/Edit content, ~ and $HOME paths and encoded strings, so a session
 // can name the repository there (a `node <<'EOF'` script that reads an oracle, a script it writes and then runs, `ls
 // ~/workflow-foundry/beds`, a base64-decoded path) without an attempt being counted. repoPathMentions closes that for the
-// repository itself: every string of a tool input is searched for the root in plain, ~/$HOME and base64/hex forms. No task
-// states this path (a form the task text contains is skipped), so an honest session has no reason to write it.
+// repository itself: every string of a tool input is searched for the root in plain (a ../ traversal included), ~/$HOME,
+// base64/hex forms, and for the repository's directory name as a word of its own. No task states this path (a form the task
+// text contains is skipped: ownerci states the name), so an honest session has no reason to write it.
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const reEscape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** The forms of a repository root a tool input may name it in: { form, text, re }. */

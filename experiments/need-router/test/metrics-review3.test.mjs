@@ -390,3 +390,35 @@ test('majors 1 and 3 (residual): a --router module supplies routers only, and a 
   const pinnedOther = { ...pvOf(frozen), aFreeze: { ...frozen.payload.routerShas, 'router.mjs': '0'.repeat(64) } };
   assert.ok(verifyEnvelope(frozen, frozen, { provenance: pinnedOther }).problems.some(p => /the --router module experiments\/need-router\/router\.mjs sealed as .*, the A-Freeze row pins 0000/.test(p)));
 });
+
+test('major 4 (residual): the git order holds when the reading runs from a worktree at the envelope\'s commit; rows on any ref are checked', () => {
+  // The closure pin's remedy (a dependency moved after the envelope: read from the envelope's commit) must not lose the
+  // later commits that add the held-out rows: HEAD's history at the envelope's commit does not hold them.
+  const repo = mkdtempSync(path.join(tmpdir(), 'nr-git2-'));
+  const git = (...a) => { const r = spawnSync('git', ['-c', 'user.email=t@example.invalid', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { cwd: repo, encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); return r.stdout.trim(); };
+  git('init', '-q'); git('checkout', '-q', '-b', 'main');
+  mkdirSync(path.join(repo, 'env')); mkdirSync(path.join(repo, 'runs', 'nl2'), { recursive: true });
+  writeFileSync(path.join(repo, 'README'), 'x\n'); git('add', '.'); git('commit', '-q', '-m', 'base');
+  const base = git('rev-parse', 'HEAD');
+  writeFileSync(path.join(repo, 'env', 'NL2p.json'), '{}\n'); git('add', '.'); git('commit', '-q', '-m', 'envelope');
+  const envCommit = git('rev-parse', 'HEAD');
+  writeFileSync(path.join(repo, 'runs', 'nl2', 'rows.jsonl'), '{}\n'); git('add', '.'); git('commit', '-q', '-m', 'held-out rows');
+  const rowsCommit = git('rev-parse', 'HEAD');
+  const stageInfo = [{ stage: 'nl2', splits: ['heldout'], rowsFile: 'runs/nl2/rows.jsonl' }];
+  // Detached at the envelope's commit, with the rows checked out into the working tree (untracked there).
+  git('checkout', '-q', '--detach', envCommit);
+  mkdirSync(path.join(repo, 'runs', 'nl2'), { recursive: true }); writeFileSync(path.join(repo, 'runs', 'nl2', 'rows.jsonl'), '{}\n');
+  const g = heldoutRowsGit({ decFile: path.join(repo, 'env', 'NL2p.json'), stageInfo, split: 'heldout', repo });
+  assert.equal(g.envelopeCommit, envCommit);
+  assert.deepEqual(g.rows, [{ file: 'runs/nl2/rows.jsonl', adds: [{ commit: rowsCommit, ancestor: true }] }], 'before the fix: adds [] ("in no commit")');
+  const pv = { committedAt: '2026-10-25T08:00:00Z', commits: 1, aFreeze: {}, firstHeldoutAt: '2026-10-25T10:00:00Z' };
+  const env0 = { sha256: sha256(canonical({ decisions: [] })), payload: { decisions: [] } };
+  assert.deepEqual(verifyEnvelope(env0, { payload: { decisions: [] } }, { provenance: pv, rowsGit: g }).problems.filter(p => /rows|ancestor/.test(p)), []);
+  // Rows added on another line that does not descend from the envelope (a side branch forked before it) are caught.
+  git('checkout', '-q', '-b', 'side', base);
+  mkdirSync(path.join(repo, 'runs', 'nl2'), { recursive: true }); writeFileSync(path.join(repo, 'runs', 'nl2', 'rows.jsonl'), '{"side":1}\n'); git('add', '.'); git('commit', '-q', '-m', 'rows on a side line');
+  git('checkout', '-q', 'main');
+  const g2 = heldoutRowsGit({ decFile: path.join(repo, 'env', 'NL2p.json'), stageInfo, split: 'heldout', repo });
+  assert.deepEqual(g2.rows[0].adds.map(a => a.ancestor).sort(), [false, true]);
+  assert.ok(verifyEnvelope(env0, { payload: { decisions: [] } }, { provenance: pv, rowsGit: g2 }).problems.some(p => /not a strict ancestor/.test(p)));
+});

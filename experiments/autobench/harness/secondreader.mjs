@@ -9,7 +9,10 @@
 //                 session's working directory holds what A0's holds (only empty request-claim markers remain in .tools/).
 //   1. ACT        the A0 session: the official system prompt + A0's tool section (with the AM-9 note when on), the official
 //                 user message, A0's budget and tools, no step guard. Identical to A0's runner call except the wall
-//                 timeout (it keeps a reserve for the steps after it) and the task label (the executor ignores it).
+//                 timeout (it keeps a reserve for the steps after it) and the task label (the executor ignores it). Not
+//                 identical in its world: the pre-read's steps count toward the bridge's 49 (about 3 on dev worlds, at
+//                 most preSteps), so the session has that many fewer steps than an A0 session although its prompt says
+//                 49 (disclose; A0's text is kept byte for byte), and empty claim markers of those steps stay in .tools/.
 //   2. POST-READ  code: the same enumeration over the connected apps (no look-ups), <= postSteps world steps. Code builds
 //                 the diff between the two reads (new, changed, removed records), masks clock values written during the
 //                 run (shown as <now>: the host clock is not the task's), lists the session's own write calls with the
@@ -385,7 +388,8 @@ export async function runPipeline(o) {
   const halt = () => { if (envFault) throw HALT; };
   const noteFault = code => { if (ENV_FAULTS.has(code)) envFault ??= code; };
   const toolUses = [];
-  const client = bridgeClient({ mailbox, responsesSoFar: () => responses });
+  // No code-issued world step once the pipeline has used the official 50 responses (H3; the audit would fail the task-run).
+  const client = bridgeClient({ mailbox, responsesSoFar: () => responses, maxResponses: maxSteps });
   const msLeft = () => o.timeoutMs - (Date.now() - t0);
   const usdLeft = () => B - upper;
   const stepsUsed = () => servedSteps(mailbox) + hiddenSteps;
@@ -463,7 +467,7 @@ export async function runPipeline(o) {
   try {
     // 0. PRE-READ (code), then hide its mailbox files from the session.
     const inv = await codeNode('pre-read', () => buildInventory({ request: o.official.user, client, maxSteps: P.preSteps, node: 'pre-read' }));
-    const codeReqs = new Set(client.log.map(e => e.req));
+    const codeReqs = new Set(client.log.map(e => e.req).filter(n => n !== null));
     hiddenSteps = hideCodeSteps(mailbox, codeReqs);
     hostWrite('inventory.json', inv);
     stats.preRead = { steps: inv.steps, calls: inv.calls, connected: inv.connected.length, outOfScope: inv.outOfScope.length, records: inv.records.length, truncated: inv.truncated.length, errors: inv.errors.length };
@@ -483,8 +487,10 @@ export async function runPipeline(o) {
     const neverCalled = holding.filter(a => !mine.apps.includes(a) && !(a === 'google_drive' && mine.apps.includes('google_sheets')) && !(a === 'google_sheets' && mine.apps.includes('google_drive')));
     const readable = [...new Set(inv.connected.filter(a => ENUM_PLAN.some(e => e.app === a && !e.probe)).concat(inv.connected.includes('google_drive') ? ['google_drive'] : []))];
     const postBudget = Math.min(P.postSteps, maxWorldSteps - stepsUsed() - P.repairMinSteps);
+    // The post-read serves only the reader: skipped when the reader cannot run (no world step after the response budget).
+    const readerFits = () => responses + 1 <= maxSteps - 1 && usdLeft() >= 0.005;
     let after = null;
-    if (postBudget >= 1 && readable.length) after = await codeNode('post-read', () => rereadWorld({ client, apps: readable, maxSteps: postBudget, node: 'post-read' }));
+    if (readerFits() && postBudget >= 1 && readable.length) after = await codeNode('post-read', () => rereadWorld({ client, apps: readable, maxSteps: postBudget, node: 'post-read' }));
     const diff = after ? diffReads(inv, after, { ...actWindow, maxChars: P.changesChars }) : { text: '', added: 0, changed: 0, removed: 0, apps: [] };
     if (after) hostWrite('post-read.json', after);
     let writesText = mine.writes.map((w, i) => `${i + 1}. ${w.method} ${w.url}${w.body ? ` body ${w.body}` : ''} -> ${w.status === 'ok' ? 'ok' : `error ${w.status}`}: ${w.answer}`).join('\n');

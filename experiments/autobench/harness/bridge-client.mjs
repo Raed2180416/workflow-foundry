@@ -38,10 +38,13 @@ export function resultStatus(content) {
 }
 
 /**
- * bridgeClient({ mailbox, waitMs, responsesSoFar }) -> { batch(calls, {node}) -> {results|error}, log, steps }.
+ * bridgeClient({ mailbox, waitMs, responsesSoFar, maxResponses }) -> { batch(calls, {node}) -> {results|error}, log, steps }.
  * responsesSoFar() returns the pipeline's model-response count at the moment a step is issued (for the H3 audit).
+ * maxResponses (the official 50): once the pipeline has used that many model responses, no code-issued step is sent (the
+ * official loop runs no world step from response 50 on, and the audit fails a task-run that issues one); the batch
+ * returns an error and is logged as refused.
  */
-export function bridgeClient({ mailbox, waitMs = 180_000, responsesSoFar = () => 0, pollMs = 25 } = {}) {
+export function bridgeClient({ mailbox, waitMs = 180_000, responsesSoFar = () => 0, maxResponses = Infinity, pollMs = 25 } = {}) {
   mkdirSync(mailbox, { recursive: true });
   const log = [];
   const claim = () => {
@@ -54,11 +57,16 @@ export function bridgeClient({ mailbox, waitMs = 180_000, responsesSoFar = () =>
   };
   async function batch(calls, { node = 'code' } = {}) {
     if (!Array.isArray(calls) || !calls.length) throw new Error('batch: at least one call');
+    const atIssue = responsesSoFar();
+    if (atIssue >= maxResponses) {
+      log.push({ req: null, node, calls: calls.length, responsesAtIssue: atIssue, t0: Date.now() / 1000, refused: true, notIssued: 'response budget spent' });
+      return { error: `not issued: the pipeline has used ${atIssue} of ${maxResponses} model responses (no world step after the last one)` };
+    }
     const n = claim();
     const tmp = path.join(mailbox, `req-${n}.json.tmp`);
     writeFileSync(tmp, JSON.stringify({ v: 1, calls: calls.map(c => ({ name: c.name, arguments: typeof c.arguments === 'string' ? c.arguments : JSON.stringify(c.arguments ?? {}) })) }));
     renameSync(tmp, path.join(mailbox, `req-${n}.json`));
-    const entry = { req: n, node, calls: calls.length, responsesAtIssue: responsesSoFar(), t0: Date.now() / 1000 };
+    const entry = { req: n, node, calls: calls.length, responsesAtIssue: atIssue, t0: Date.now() / 1000 };
     log.push(entry);
     const res = path.join(mailbox, `res-${n}.json`);
     const t0 = Date.now();

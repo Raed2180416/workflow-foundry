@@ -25,9 +25,9 @@
 //   price     every row and build re-priced from recorded tokens with the pinned price table (stages.json priceTable);
 //             killed sessions and timeouts charged at their bound; measured and imputed dollars kept apart;
 //   void      a lineage (or an agent draw) with hiddenPathAttempts > 0, nestedModelAttempts > 0 or repoPathMentions > 0 (the
-//             repository root named in a heredoc body, written content, a ~ path or an encoding) is voided; ownerci
-//             construct-H solvers holding example module text are voided (AUDIT F10); text-scan path mentions over the
-//             accessed paths are counted per mode for review by hand;
+//             repository root named in a heredoc body, written content, a traversal, a ~ path, an encoding or by its directory
+//             name) is voided; ownerci construct-H solvers holding example module text are voided (AUDIT F10); text-scan
+//             path mentions over the accessed paths are counted per mode for review by hand;
 //   lock      one process per work root and per --out: an exclusive lock file (.label-run.lock, O_EXCL, holding pid, host and
 //             start time) in both, taken before anything is written and released at the end; a second run is refused while the
 //             first lives (RUN_LOCKED), and a lock whose pid is gone on this host is taken over;
@@ -1879,7 +1879,7 @@ async function runStage(opts, held) {
         overBoundStarts: over.starts, overBoundUsd: r6(over.usd), overCapUsd: r6(overCapUsd) } },
     stopped,
     rules: { rowCost: 'usdRepriced = measured tokens at the pinned table; usdImputed = bound minus measured for killed sessions and timeouts; total = sum',
-      voids: 'lineage: build row hiddenPathAttempts, nestedModelAttempts or repoPathMentions > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept). hiddenPathAttempts counts paths a tool use accesses (file-tool paths, Bash without heredoc bodies), never Write/Edit content or Grep patterns, and never a path the task (or the lineage\'s PROCEDURE.md) states or a directory above one; repoPathMentions counts tool uses that name the repository root anywhere else (heredoc bodies, written content, ~ and $HOME forms, base64 and hex); pathMentions (every string scanned) is for review by hand (validity.pathMentionsDraws, pathMentionsBuilds)',
+      voids: 'lineage: build row hiddenPathAttempts, nestedModelAttempts or repoPathMentions > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept). hiddenPathAttempts counts paths a tool use accesses (file-tool paths, Bash without heredoc bodies), never Write/Edit content or Grep patterns, and never a path the task (or the lineage\'s PROCEDURE.md) states or a directory above one; repoPathMentions counts tool uses that name the repository root anywhere else (heredoc bodies, written content, ../ traversals, ~ and $HOME forms, base64 and hex, the directory name as a word of its own); pathMentions (every string scanned) is for review by hand (validity.pathMentionsDraws, pathMentionsBuilds)',
       copyScan: `ownerci: more than ${COPY_SCAN.maxLines} distinct example lines of >= ${COPY_SCAN.minLineChars} characters in solve.mjs voids the lineage`,
       racing: 'headline cell; P(best class) < confident adds one draw or lineage per acceptable mode (max racingMaxPerMode), except on a job whose headline cell is unlabelled (logged: racing[].unlabelled); agent-O second draw on draw-1 per-task acceptable tasks',
       cap: 'the cap meter (PREREG §12): each start at max(reported, re-priced), at least its bound when unobserved (call $1, agent budget, script perTaskUsd, build builder + gateway budget), every start in flight at its bound; persisted in spend.jsonl (work root and --out), re-read before each start; one process per work root and --out (.label-run.lock); a start settled above its bound is an overrun (overBoundUsd), and a meter over the cap stops the stage (STAGE_CAP_OVERRUN); totals.spend.meterUsd',

@@ -248,7 +248,7 @@ export function oracleEqual(W, Wt, tf, { cases = null, mapCase = c => c, pre = n
     const ts = new Set(sweepInstants(W, c));
     if (sweepFollowUp) for (const t of sweepInstants(Wt, c2)) ts.add(t - tf.dt);
     const src = [...ts].sort((a, b) => a - b).map(t => ({ t, E: expectAt(W, c, t) }));
-    if (pre) { const why = pre(c, src); if (why) { out.excluded[why] = (out.excluded[why] ?? 0) + 1; continue; } }
+    if (pre) { const why = pre(c, src, fullPlan(W, c)); if (why) { out.excluded[why] = (out.excluded[why] ?? 0) + 1; continue; } }
     out.cases++;
     for (const { t, E } of src) {
       out.views++;
@@ -284,18 +284,21 @@ function zonesOf(W, E) {
   for (const s of Object.values(E.records?.slas ?? {})) if (s.timezone) z.add(s.timezone);
   return [...z];
 }
-/** The span of a case's sweep: its first event to the last instant any of its expectations names. */
-function spanOf(src) {
-  let lo = Infinity, hi = -Infinity;
-  for (const { t, E } of src) { lo = Math.min(lo, t); hi = Math.max(hi, t, ...instantsOf(E)); }
-  return [lo, hi];
+/**
+ * The span of a case: from the earliest to the latest of its planned events, tasks and answers and of every instant any of
+ * its swept expectations names (view instants themselves are not anchors: a view at the horizon reads nothing there).
+ */
+function spanOf(src, plan) {
+  const all = [...plan.events, ...plan.tasks, ...plan.taskEvents].map(e => e.at);
+  for (const { E } of src) all.push(...instantsOf(E));
+  return [Math.min(...all), Math.max(...all)];
 }
 
 /** MR3 precondition for a shift that moves clock changes: no change in the span or its image, the same offset in both. */
 const CHANGES = new Map();
 const changesOf = tz => { if (!CHANGES.has(tz)) CHANGES.set(tz, clockChanges(tz, Date.UTC(2025, 11, 1), Date.UTC(2027, 0, 1))); return CHANGES.get(tz); };
-export const dstClear = (W, dt) => (c, src) => {
-  const [lo, hi] = spanOf(src);
+export const dstClear = (W, dt) => (c, src, plan) => {
+  const [lo, hi] = spanOf(src, plan);
   const E = src.at(-1).E;
   for (const tz of zonesOf(W, E)) {
     const ch = changesOf(tz);
@@ -438,8 +441,8 @@ export function businessDayHolidays(W, dates = MR8_DATES) {
   return Wt;
 }
 /** MR8 precondition: the case's span, in the local dates of every zone it reads, stays a day away from each added holiday. */
-const holidayClear = (W, dates) => (c, src) => {
-  const [lo, hi] = spanOf(src);
+const holidayClear = (W, dates) => (c, src, plan) => {
+  const [lo, hi] = spanOf(src, plan);
   const E = src.at(-1).E;
   for (const tz of zonesOf(W, E)) {
     const a = localDateOf(tz, lo - DAY), b = localDateOf(tz, hi + DAY);
@@ -472,8 +475,8 @@ export function addLateEdition(W, from) {
   return { Wt, from, published };
 }
 /** MR9 precondition: every instant any expectation of the case names lies before the new edition's first day (system zone). */
-const beforeEdition = (W, from) => (c, src) => {
-  const [, hi] = spanOf(src);
+const beforeEdition = (W, from) => (c, src, plan) => {
+  const [, hi] = spanOf(src, plan);
   return localDateOf(JSON.parse(W.rulebook.editions[0].files['policy.json']).systemTimeZone, hi) < from ? null : 'an instant on or after the edition';
 };
 
@@ -656,10 +659,10 @@ export function holdAdditivity(W, Wt, inserted, { maxViolations = 10 } = {}) {
  * same way; SLAs that do not reach d are unchanged. Only SLAs whose records keep their instants are compared (an SLA whose
  * history moved with a deadline is counted, not compared).
  */
-export function holidayShift(W, Wt, dates = MR8_DATES, { maxViolations = 10 } = {}) {
-  const out = { deadlines: 0, deadlinesMoved: 0, slas: 0, spanning: 0, moved: 0, partial: 0, historyMoved: 0, violations: [] };
+export function holidayShift(W, Wt, dates = MR8_DATES, { maxViolations = 10, out = { holidays: 0, deadlines: 0, deadlinesMoved: 0, slas: 0, spanning: 0, moved: 0, partial: 0, historyMoved: 0, violations: [] } } = {}) {
+  out.holidays++;
   const st = stepper();
-  const bad = (c, what, extra = {}) => { if (out.violations.length < maxViolations) out.violations.push({ case: c, what, ...extra }); };
+  const bad = (c, what, extra = {}) => { if (out.violations.length < maxViolations) out.violations.push({ holiday: dates, case: c, what, ...extra }); };
   const H = ms(W.horizonEnd);
   /** d's first and last business instants and its business minutes on (calendar, zone). */
   const days = new Map();
@@ -690,7 +693,9 @@ export function holidayShift(W, Wt, dates = MR8_DATES, { maxViolations = 10 } = 
       const from = ms(e.match.at);
       const D = businessDaysAfter(W, from, field), D2 = businessDaysAfter(Wt, from, field);
       out.deadlines++;
-      const want = from >= sd.to || D <= sd.from ? D : st.reach(sd.cal, D, sd.B);
+      // B since `from` loses the part of d's business hours after `from`: the deadline moves on by that much (one
+      // business day when all of d lies between `from` and the old deadline).
+      const want = from >= sd.to || D <= sd.from ? D : st.reach(sd.cal, D, st.minutes(sd.cal, Math.max(from, sd.from), sd.to));
       if (want !== D) out.deadlinesMoved++;
       if (D2 !== want) bad(c, `R6 ${field} deadline from ${isoZ(from)}`, { source: isoZ(D), expected: isoZ(want), got: isoZ(D2) });
     }
@@ -756,7 +761,8 @@ export function targetMonotone(W, Wt, { maxViolations = 10 } = {}) {
   const bad = (c, what, extra = {}) => { if (out.violations.length < maxViolations) out.violations.push({ case: c, what, ...extra }); };
   const H = ms(W.horizonEnd);
   for (const [c, t] of Object.entries(W.truth.cases)) {
-    if (!t.subject) continue;
+    // Go-live incidents are left out: their export (world data) records the SLAs as the original targets left them at t0.
+    if (!t.subject || t.backlog) continue;
     out.cases++;
     const E = expectAt(W, c, H), Et = expectAt(Wt, c, H);
     const inc = x => canonical(x.effects.required.filter(e => !e.lid.startsWith('sla:') && !e.lid.startsWith('esc:')).map(e => [e.lid, e.match, e.window]).sort());
@@ -991,7 +997,17 @@ export const MRS = Object.freeze([
       const weekend = { ...oracleEqual(W, Wt, IDENTITY), added };
       const Wb = businessDayHolidays(W);
       const outside = oracleEqual(W, Wb, IDENTITY, { pre: holidayClear(W, MR8_DATES) });
-      const inside = holidayShift(W, Wb);
+      // Inside a window: one holiday at a time, on every second business day of each calendar from t0 to the horizon.
+      const inside = { holidays: 0, deadlines: 0, deadlinesMoved: 0, slas: 0, spanning: 0, moved: 0, partial: 0, historyMoved: 0, violations: [] };
+      for (const [id, cal] of Object.entries(W.calendars)) {
+        let k = 0;
+        for (let m = ms(W.t0); m < ms(W.horizonEnd); m += DAY) {
+          const date = new Date(m + 12 * HOUR).toISOString().slice(0, 10);
+          const wd = new Date(m + 12 * HOUR).getUTCDay() || 7;
+          if (!cal.businessHours.days.includes(wd) || (cal.holidays ?? []).some(h => h.date === date) || k++ % 2) continue;
+          holidayShift(W, businessDayHolidays(W, { [id]: date }), { [id]: date }, { out: inside });
+        }
+      }
       return { weekend, outside, inside, violations: [...weekend.violations.map(v => ({ variant: 'weekend', ...v })), ...outside.violations.map(v => ({ variant: 'outside', ...v })), ...inside.violations.map(v => ({ variant: 'inside', ...v }))] };
     },
     make(W) { return { Wt: weekendHolidays(W).Wt }; } },
