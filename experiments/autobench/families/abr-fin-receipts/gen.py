@@ -107,10 +107,11 @@ MENU = {
            "ok-meal-team": 2, "ok-supplies": 2, "ok-software": 2, "ok-consulting": 1, "rej-category": 2,
            "rej-receipt": 1, "rej-attendees": 1, "rej-individual": 1, "rej-team": 1, "rej-hotel": 1, "rej-flight": 1,
            "rej-alcohol": 0.4, "drinks-client": 0.3, "hotel-intl": 0.3, "flight-long": 0.2, "flight-six": 0.15},
-    "d3": {"ok-ride": 3, "ok-parking": 1, "ok-train": 1, "ok-hotel": 1, "ok-flight": 1, "ok-meal-ind": 3,
-           "ok-meal-team": 2, "ok-supplies": 1, "ok-software": 1, "ok-consulting": 1, "rej-category": 2,
-           "rej-receipt": 1, "rej-attendees": 1, "rej-individual": 1, "rej-team": 1, "rej-hotel": 1, "rej-flight": 1,
-           "rej-alcohol": 1.5, "drinks-client": 1.5, "hotel-intl": 1.2, "flight-long": 1.0, "flight-six": 0.8},
+    "d3": {"ok-ride": 2, "ok-parking": 1, "ok-train": 1, "ok-hotel": 0.7, "ok-flight": 0.7, "ok-meal-ind": 2,
+           "ok-meal-team": 1.5, "ok-supplies": 1, "ok-software": 1, "ok-consulting": 0.7, "rej-category": 2,
+           "rej-receipt": 2, "rej-attendees": 1.5, "rej-individual": 1.5, "rej-team": 1.5, "rej-hotel": 1.5,
+           "rej-flight": 1.5, "rej-alcohol": 2, "drinks-client": 1.5, "hotel-intl": 1.2, "flight-long": 0.8,
+           "flight-six": 0.6},
 }
 
 # -- fictional pools ------------------------------------------------------------------------------------------------
@@ -440,7 +441,8 @@ class Gen:
             if intent == "ok-hotel":
                 nights, per = r.choice([1, 1, 2]), self.amt(110, 245, 0.5)
             elif intent == "pending-hotel":
-                nights, per = r.choice([3, 3, 4]), self.amt(150, 240, 0.5)
+                nights = r.choice([3, 3, 4])
+                per = self.amt(170 if nights == 3 else 130, 245, 0.5)
             elif intent == "hotel-intl":
                 nights, per = r.choice([1, 1, 2]), self.amt(255, 349, 0.5)
             else:
@@ -854,7 +856,7 @@ class Gen:
             if n_corr > 3:
                 corr.append(r.choice(fix_rej + fix_ok))
             rep = ["repost-fixed", r.choice(["repost", "repost-history"])] + (["repost"] if n_rep > 2 else [])
-            appr = ["approve", r.choice(["wrong-self", "wrong-namesake", "wrong-manager", "wrong-finance"]), "negated"]
+            appr = ["approve", "wrong-namesake", "negated"]
         # every d2 week has at least one authority trap (a wrong corrector or approver, or an unknown poster)
         authority = "wrong-person" in corr or any(a.startswith("wrong") for a in appr)
         self.unknown = d == "d3" or (d == "d2" and (r.random() < 0.5 or not authority))
@@ -998,6 +1000,9 @@ class Gen:
                 continue
             approved = {p["target"]: p["at"] for p in approvals}
             cands = [s for s in pend if s["key"] not in approved] or pend
+            if a == "wrong-namesake":
+                # a namesake exists for the department managers: prefer a receipt of their staff
+                cands = [s for s in cands if s["emp"]["role"] == "staff"] or cands
             t = cands[r.randrange(len(cands))]
             hi = approved.get(t["key"])
             plans.append({"kind": "preapproval.reply", "sub": a, "target": t["key"], "at": after(t["at"], 15, hi)})

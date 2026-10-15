@@ -6,7 +6,7 @@ E8: it reuses only the shared host, oracle and libraries (`beds/ebed/host/`, `or
 
 **Status: built, not admitted.** The reference transition, its SLA engine, both reference runs, the controls and the
 goldens are in place and pass (measurements below). The oracle mutation score is measured (2026-10-15,
-[`ledger/MUTANTS.md`](ledger/MUTANTS.md): 679 mutants of `transition.mjs` and `sla.mjs`, MUTANTS_SCORE_LINE). Still
+[`ledger/MUTANTS.md`](ledger/MUTANTS.md): 679 mutants of `transition.mjs` and `sla.mjs`, 551 killed, 126 grader-equivalent, 2 uncertain: 551/553 = 0.996 excluding equivalents, 0.811 raw). Still
 missing before admission, as for E8: the three blind specificity solvers (`specificity/`, a separate session, DESIGN
 §18 step 5; drafts s1-s3 are in the mutation corpus), the metamorphic suite beyond its first relation (retroactive history = live history, review round 2), an Intl
 minute-stepper N-version check (the clock N-version checks built here compare clocks that all use pinned zone tables;
@@ -60,10 +60,10 @@ tokens: 34,122 characters, at the 3.5 characters per token of the earlier 9K est
 | `transition.mjs` | `referenceTransition` (the oracle core), `recordsOf`, `canonicalArgs`, `historyOf`, `editionAt`, `priorityAt` |
 | `index.mjs` | the module interface: `family`, `specE`, `schemas`, `binding`, `oracleItem` hooks, `critical`, `referencePolicy`, `referenceRuns`, `oracle` |
 | `controls.mjs` | bad, gaming and necessity controls; `targetCases`, `plannedView` |
-| `golden.mjs` | 54 hand-derived, rule-cited goldens + `runGoldens` (26 added by the mutation review, 2026-10-15) |
+| `golden.mjs` | 55 hand-derived, rule-cited goldens + `runGoldens` (27 added by the mutation review, 2026-10-15) |
 | `tools/` | `health`, `controls-run`, `walker-grade`, `specificity-run`, `mutate` (part B); `world-health`, `walker` (part A) |
-| `ledger/MUTANTS.md` | the oracle mutation ledger: standard, result, every survivor triaged; `ledger/mutation-20261015.json` the measured run |
-| `test/` | `world.test.mjs` (part A, 22 tests), `e7.test.mjs` (part B, 75 tests: 47 + 26 goldens and 2 unit checks of the 2026-10-15 mutation review), `sla-independent.mjs` (an independent R4.2–R5 evaluator and the history fuzzer for the N-version check; a fixture, not a suite) |
+| `ledger/MUTANTS.md` | the oracle mutation ledger: standard, result, every survivor triaged; `ledger/mutation-20261015.json` the measured run; `ledger/mutants-20261015/witness.mjs` the witness journals of §5 |
+| `test/` | `world.test.mjs` (part A, 22 tests), `e7.test.mjs` (part B, 76 tests: 47 + 27 goldens and 2 unit checks of the 2026-10-15 mutation review), `sla-independent.mjs` (an independent R4.2–R5 evaluator and the history fuzzer for the N-version check; a fixture, not a suite) |
 | `../../ebed-e7/index.mjs` | the registration shim (as for E8) |
 
 ## How the oracle works (E7 specifics)
@@ -170,7 +170,7 @@ override services the first row in file order gives P1 where the lowest `order` 
 nobody answers, and it declares the incident major at its own deadline. Before the critical fix every `setMajor` after
 the arm's first task deadline was excused.
 
-**Goldens** (`golden.mjs`; 26 more since the mutation review of 2026-10-15, listed in `ledger/MUTANTS.md` §5): 28 hand-derived, rule-cited goldens (G1–G18 of DESIGN §9 with G4 in three zones, G11b, plus a
+**Goldens** (`golden.mjs`; 27 more since the mutation review of 2026-10-15, listed in `ledger/MUTANTS.md` §5): 28 hand-derived, rule-cited goldens (G1–G18 of DESIGN §9 with G4 in three zones, G11b, plus a
 duplicate-delivery/stray golden and a records golden; G14b, G14c, G20 and G21 from review round 2) pass the reference
 transition. G21 binds RES-P2 to a world copy whose floating schedule is a 01:30–03:30 night shift, the only way to
 grade R4.4's in-interval DST clause, since no slice-1 schedule has an interval across a clock change. Every SLA-engine control (world edit
@@ -203,7 +203,7 @@ confirmation; one go-live incident whose SLAs ended before t0, closed on confirm
 specificity solvers and Track C rehearsals; that touch (walker only) is recorded in SEED-LEDGER and DESIGN §13, and the
 tool now refuses the rehearsal block 1201–1249.
 
-**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 69 tests (22 part A, 47 part B; 97 since the mutation review: 75 part B), about
+**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 69 tests (22 part A, 47 part B; 98 since the mutation review: 76 part B), about
 70 s with other jobs on the machine (2026-10-15, after review round 2).
 
 ## Readings and decisions added in part B (for review)

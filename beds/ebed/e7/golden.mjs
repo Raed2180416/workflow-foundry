@@ -767,6 +767,24 @@ golden('G9d an event and the caller deadline in one instant', 'R4.5, R6.3, S10',
     expect(E, `sla:${N}/RES-P2/1:stop`, { match: { at: Z(D) }, latest: '2026-03-13T11:00:00+01:00' }));
 });
 
+// G10c R6.5, S1: resolved Fri 2026-03-06 12:00+01:00, D2 Tue 03-10 12:00+01:00, no confirmation. Before the auto-closure
+// is taken (just after the resolution, and at D2 itself) it is already due in (D2, D2 + 60 min]. The grader sees the end of
+// that window: it is the processing point at which a closure still missing is reported `missed`; an arm that closes the
+// incident later, from an instance bound to another case, is otherwise first seen at its own row, as `late`
+// (ledger/MUTANTS.md §5).
+golden('G10c the pending auto-closure is due in (D2, D2 + 60 min]', 'R6.5, S1', tr => {
+  const N = 'INC-RPT-G10-0003', D2 = '2026-03-10T12:00:00+01:00';
+  const want = { match: { reason: 'auto', at: Z(D2) }, earliest: new Date(ms(D2) + 1000).toISOString(), latest: '2026-03-10T13:00:00+01:00' };
+  for (const at of ['2026-03-06T12:01:00+01:00', D2]) {
+    const B = builder();
+    const E = tr(W3, B.view(at, N, [B.report('2026-03-06T10:00:00+01:00', 'RPT-G10-0003', EU.userId, 'CI-LT-EU', 'hardware', 2), B.upd('2026-03-06T10:30:00+01:00', N, 'accept'),
+      B.upd('2026-03-06T12:00:00+01:00', N, 'resolve', { closeCode: 'fixed' })]));
+    const r = expect(E, `cls:${N}:auto`, want);
+    if (r !== true) return `view ${at}: ${r}`;
+  }
+  return true;
+});
+
 // G29 R8.2, R4.5, R8.1: records come in order: nothing about an incident before its create, and an SLA's records in
 // lifecycle order (start, then each pause before its resume), also for the past pauses of a retroactive SLA (G11's history).
 golden('G29 records after the create, an SLA\'s records in lifecycle order', 'R8.2, R4.5, R8.1', tr => {

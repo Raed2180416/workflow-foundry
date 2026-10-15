@@ -1,0 +1,10 @@
+t345  lateAuto    36/40 cases separate, e.g. 1009:i0001 original 0:3/missed/cls:INC-RPT-2958-6420:auto| vs mutant 0:3/late/cls:INC-RPT-2958-6420:auto|
+t288  lateAuto    40/40 cases separate, e.g. 1009:i0001 original 0:3/missed/cls:INC-RPT-2958-6420:auto| vs mutant 1:|
+t341  noCaller    35/40 cases separate, e.g. 1009:i0007 original 0:3/missed/cls:INC-ALR-2958-9285:no-caller-response| vs mutant 0:3/late/cls:INC-ALR-2958-9285:no-caller-response|
+t343  noCaller    0/40 cases separate
+t341  withCaller  0/14 cases separate
+t343  withCaller  0/14 cases separate
+t278  withCaller  14/14 cases separate, e.g. 1009:i0003 original 0:3/missed/cls:INC-RPT-2958-5516:no-caller-response| vs mutant 0:3/missed/ntf:INC-RPT-2958-5516:closed-no-response|
+t347  lateDeclare 0/15 cases separate
+t349  lateDeclare 0/15 cases separate
+t294  lateDeclare 10/15 cases separate, e.g. 1009:i0034 original 0:3/missed/maj:INC-RPT-2958-5017:declared| vs mutant 0:3/missed/ntf:INC-RPT-2958-5017:major-incident|

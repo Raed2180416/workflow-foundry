@@ -86,15 +86,15 @@ COUNTS = {
 }
 # Base rates of optional traps per difficulty (d1 plants none).
 RATES = {
-    "d1": dict(amount_fmt=0.0, date_fmt=0.0, sender_alt=0.0, weekend=0.0, trap_appr=(0, 0), unknown_po=0.0, lookalike_po=0.0,
+    "d1": dict(amount_fmt=0.0, date_fmt=0.0, po_fmt=0.0, sender_alt=0.0, weekend=0.0, stale_value=2500, trap_appr=(0, 0), unknown_po=0.0, lookalike_po=0.0,
                extra_blocked=0.0, future_row=0.0, inactive_head=0.0, band_edge=0.0, var_edge=0.0, same_amount_old=0.0,
                partial=0.0, short_other=0.0, qty_mismatch=0.0, review=0.10, hold=0.0, early_corr=0.0, unauth_corr=0.0,
                review_hist=0.0),
-    "d2": dict(amount_fmt=0.12, date_fmt=0.12, sender_alt=0.25, weekend=None, trap_appr=(1, 2), unknown_po=0.5, lookalike_po=0.0,
+    "d2": dict(amount_fmt=0.08, date_fmt=0.08, po_fmt=0.1, sender_alt=0.25, weekend=0.5, stale_value=4000, trap_appr=(1, 2), unknown_po=0.5, lookalike_po=0.0,
                extra_blocked=0.0, future_row=0.5, inactive_head=1.0, band_edge=0.5, var_edge=0.3, same_amount_old=0.5,
                partial=1.0, short_other=0.5, qty_mismatch=0.5, review=0.12, hold=0.05, early_corr=0.5, unauth_corr=0.5,
                review_hist=0.0),
-    "d3": dict(amount_fmt=0.30, date_fmt=0.30, sender_alt=0.35, weekend=None, trap_appr=(2, 3), unknown_po=1.0, lookalike_po=1.0,
+    "d3": dict(amount_fmt=0.40, date_fmt=0.40, po_fmt=0.5, sender_alt=0.35, weekend=1.0, stale_value=2500, trap_appr=(2, 3), unknown_po=1.0, lookalike_po=1.0,
                extra_blocked=0.5, future_row=1.0, inactive_head=1.0, band_edge=1.0, var_edge=1.0, same_amount_old=1.0,
                partial=1.0, short_other=1.0, qty_mismatch=1.0, review=0.14, hold=0.07, early_corr=1.0, unauth_corr=1.0,
                review_hist=1.0),
@@ -167,7 +167,7 @@ TRAP_KIND = {
     "second-notice": "T-repeat", "second-notice-amount": "T-repeat", "dup-paid": "T-repeat", "reissue-dup": "T-repeat",
     "dup-window-edge": "T-repeat", "same-amount-old": "T-repeat", "repeat-approval": "T-repeat",
     # formats
-    "amount-format": "T-format", "date-format": "T-format", "weekend-due": "T-format", "band-boundary": "T-format",
+    "amount-format": "T-format", "date-format": "T-format", "po-format": "T-format", "approval-format": "T-format", "weekend-due": "T-format", "band-boundary": "T-format",
     "variance-boundary": "T-format",
     # stale / versions
     "policy-log-old": "T-stale", "policy-log-future": "T-stale", "inactive-head": "T-stale", "block-lifted-row": "T-stale",
@@ -570,8 +570,8 @@ class Gen:
         inv_date = (at - timedelta(days=r.randint(0, 6))).date()
         terms = r.choice(TERMS)
         due = inv_date + timedelta(days=terms)
-        if self.d == "d1" and due.weekday() >= 5:      # d1 plants no traps: no weekend due dates
-            due = moved_due(due)
+        if due.weekday() >= 5 and r.random() >= self.rate["weekend"]:   # keep a weekend due date with this probability
+            due = due + timedelta(days=r.choice([-2, -1, 2, 3]) if due.weekday() == 5 else r.choice([-3, -2, 1, 2]))
         q = {"vendor": vendor, "inv": self.next_inv(vendor), "inv_date": inv_date, "due": due, "terms": terms,
              "po": self.new_po(), "qty": inv_qty, "amount": target, "dept": dept, "po_qty": po_qty,
              "po_amount": po_amount, "outcome": outcome, "at": at, "story": story,
@@ -615,6 +615,8 @@ class Gen:
         if r.random() < self.rate["var_edge"]:
             stories.append("var-edge")
         stories.append("fine-lookalike")
+        if self.future_row:
+            stories.append("future-band")
         while len(stories) < n_inv:
             stories.append("normal")
         stories = stories[:n_inv]
@@ -636,6 +638,8 @@ class Gen:
         if "lifted" in stories:
             self.lift_at = self.slot(self.day(0) + timedelta(hours=9), self.day(1) + timedelta(hours=16))
             constrained.append(("lifted", lambda t: t > self.lift_at + timedelta(hours=1)))
+        if "future-band" in stories and "amend-auth" in stories and self.amend_param == P_CFO:
+            constrained.append(("future-band", lambda t: t < self.amend_auth_at - timedelta(minutes=30)))
         placed = []
         for story, pred in constrained:
             ok = [t for t in times if pred(t)]
@@ -706,6 +710,9 @@ class Gen:
             q["po_amount"] = q["amount"]
         elif story == "var-edge":
             q = self.make_invoice(r.choice(self.active_vendors), at, band, "edge", story=story)
+        elif story == "future-band":
+            amt = r.randint(25_100_00, 29_900_00) // 5 * 5
+            q = self.make_invoice(r.choice(self.active_vendors), at, "high", "matched", amount=amt, story=story)
         elif story == "fine-lookalike":
             q = self.make_invoice(self.v_fine, at, "low", "matched", story=story)
         else:
@@ -811,8 +818,8 @@ class Gen:
         n = self.cnt["appr"]
         lo, hi = self.rate["trap_appr"]
         n_trap = min(r.randint(lo, hi), n - 1)
-        need = [self.h_appr] + [q for q in self.invoices if q["story"] in ("normal", "fine-lookalike", "band-edge", "var-edge", "amend-auth", "amend-unauth", "same-amount-old")
-                                and self.planned_approver(q) != "none"]
+        need = [self.h_appr] + [q for q in self.invoices if q["story"] in ("normal", "fine-lookalike", "band-edge", "var-edge", "amend-auth", "amend-unauth", "same-amount-old",
+                                                                   "future-band") and self.planned_approver(q) != "none"]
         r.shuffle(need)
         need.sort(key=lambda q: q is not self.h_appr)        # the carried-over row is always approved
         genuine = need[:max(0, n - n_trap)]
@@ -842,6 +849,10 @@ class Gen:
                 self.events.append({"kind": "approval.reply", "sub": t, "at": at, "q": q})
                 continue
             pool = [q for q in left if not q.get("hist")] or [q for q in need if not q.get("hist") and q.get("appr_at") is None]
+            payable = [q for q in pool if q["outcome"] == "matched" and q.get("recv_at") is not None
+                       and max(q["at"], q["recv_at"]) < self.run_at - timedelta(hours=2) and q.get("appr_at") is None]
+            if payable and r.random() < 0.7:
+                pool = payable
             if t == "approver-not-cfo":
                 pool = [q for q in need if self.planned_approver(q) == CFO and not q.get("hist")]
             if t == "approver-inactive":
@@ -850,6 +861,8 @@ class Gen:
                 raise PlanError(f"no target for {t}")
             q = r.choice(pool)
             hi_t = q.get("appr_at") or self.day(4) + timedelta(hours=16, minutes=30)
+            if q.get("appr_at") is None and q.get("recv_at") is not None and q["at"] < self.run_at - timedelta(hours=1):
+                hi_t = self.run_at - timedelta(minutes=10)       # before the run: believing it would release a payment
             at = self.slot(q["at"] + timedelta(minutes=20), hi_t)
             ev = {"kind": "approval.reply", "sub": t, "at": at, "q": q}
             if t == "other-invoice":
@@ -979,7 +992,7 @@ class Gen:
         self.unauth_value = r.choice([10000, 12000, 15000])
         self.unauth_sender = r.choice(["controller", "lookalike", "display"])
         self.policy0 = [
-            {"Effective": "2025-01-01T00:00:00Z", "Parameter": P_APPROVAL, "Value": "2500", "Approved by": CFO},
+            {"Effective": "2025-01-01T00:00:00Z", "Parameter": P_APPROVAL, "Value": str(self.rate["stale_value"]), "Approved by": CFO},
             {"Effective": "2025-01-01T00:00:00Z", "Parameter": P_CFO, "Value": "25000", "Approved by": CFO},
             {"Effective": "2025-07-01T00:00:00Z", "Parameter": P_APPROVAL, "Value": "5000", "Approved by": CFO},
         ]
@@ -1349,7 +1362,11 @@ class Gen:
                 rv = e["recv"]
                 q = rv["q"]
                 recv_row += 1
-                cells = {"PO #": q["po"], "Received Qty": str(rv["qty"]), "Received Date": today, "Note": rv["note"]}
+                po_cell = q["po"]
+                if self.r.random() < self.rate["po_fmt"]:          # the warehouse types the PO number its own way
+                    po_cell = self.r.choice([q["po"].lower(), " " + q["po"], q["po"].replace("PO-", "po-") + " "])
+                    labels.append("po-format")
+                cells = {"PO #": po_cell, "Received Qty": str(rv["qty"]), "Received Date": today, "Note": rv["note"]}
                 B.recv.append(dict(cells))
                 delta.append({"op": "insert", "app": "google_sheets", "collection": "rows",
                               "record": {"id": self.hexid(24), "spreadsheet_id": SS, "worksheet_id": WS_RECV, "row_id": recv_row, "cells": dict(cells)}})
@@ -1417,6 +1434,8 @@ class Gen:
                 else:
                     style = self.r.choice(["Approved {inv}.", "Approved: {inv} - ok to pay once it is matched.", "approved - {inv}",
                                            "Approved {inv}, thanks."])
+                    if not style.startswith("Approved {inv}"):
+                        labels.append("approval-format")
                     subject = self.r.choice([f"Re: invoice {inv}", f"Approval {inv}", f"{inv} approval"])
                     body = style.format(inv=inv) + f"\n\n{who['first']}"
                 payload = inbound(frm, subject, body)
@@ -1791,6 +1810,8 @@ def generate(seed: int, difficulty: str | None = None, validate: bool = True) ->
                    "outcomes": dict(sorted(outcomes.items())), "traps": dict(sorted(traps.items())),
                    "event_trap_share": round(sum(1 for t in ev if t["traps"]) / max(1, len(ev)), 3),
                    "trigger_trap_share": round(sum(1 for t in out["truth"] if t["traps"]) / len(out["truth"]), 3),
+                   "misleading_trigger_share": round(sum(1 for t in out["truth"] if any(TRAP_KIND[x] != "T-state" for x in t["traps"]))
+                                                     / len(out["truth"]), 3),
                    "rejected_plans": len(errors)}
     return out
 

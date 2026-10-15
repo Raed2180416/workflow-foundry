@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import { runClaudeCode, readJsonFile, nestedModelUses } from '../../../src/executors/claude-code.mjs';
 import { solverView, loadFamily } from '../beds.mjs';
 import { startServices, Ledger } from '../services.mjs';
-import { messageUsageOf, accessedOutsidePaths, taskHostPaths, HOST_ROOTS } from '../../c0/construct.mjs';
+import { messageUsageOf, accessedOutsidePaths, taskHostPaths, repoPathMentions, HOST_ROOTS } from '../../c0/construct.mjs';
 
 // The one prompt line of agent-H+proc (PREREG-NEED-V1 §4.1); its sha256 is part of the engine stamp.
 export const PROCEDURE_FILE = 'PROCEDURE.md', CHECKS_FILE = 'checks.json';
@@ -20,7 +20,8 @@ const sha16 = text => createHash('sha256').update(text).digest('hex').slice(0, 1
 // without heredoc bodies; never Write or Edit content or Grep patterns), and a path the task itself (or the lineage's
 // PROCEDURE.md) states, or a directory above one, is not an attempt (`ignore`, from taskHostPaths). mentionedPaths is the older scan of every string of a tool input (the same host
 // roots as construct()'s `outside` closure, which other code reads as text and is therefore left as it is): its hits are
-// recorded for review by hand and never void anything. /tmp is private to the sandbox, so it is not listed.
+// recorded for review by hand and never void anything. /tmp is private to the sandbox, so it is not listed. repoPathMentions
+// (construct.mjs) counts tool uses that name the repository root where the accessed scan does not look; it voids.
 const HOST_PATH = new RegExp(`/(?:${HOST_ROOTS.join('|')})/[\\w./-]*`, 'g');
 export function outsidePaths(toolUses = [], allowedRoots = [], { ignore = new Set() } = {}) {
   return accessedOutsidePaths(toolUses, allowedRoots, { ignore });
@@ -94,6 +95,11 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
       // notes.md, which the model writes itself.
       const stated = taskHostPaths([view.prompt, view.files, procedure ?? '']);
       const outside = outsidePaths(r.toolUses, [workdir], { ignore: stated }), mentioned = mentionedPaths(r.toolUses, [workdir]);
+      // The repository root named where the accessed scan does not look (a heredoc body, a script written and then run, ~/..., an
+      // encoded path): construct.mjs repoPathMentions. It voids the draw like hiddenPathAttempts (label-run); a tool use the
+      // accessed scan already counts is not counted again.
+      const repo = repoPathMentions(r.toolUses, { ignoreText: JSON.stringify([view.prompt, view.files, procedure ?? '']),
+        counted: u => outsidePaths([u], [workdir], { ignore: stated }).attempts > 0 });
       const checks = procedure !== null ? readJsonFile(workdir, CHECKS_FILE) : undefined;
       // A killed session (no result event) is charged at its budget bound, never $0; costUnknown marks it.
       return { output: readJsonFile(workdir, 'answer.json'), costUsd: r.costUsd ?? r.costUpperUsd, costUnknown: r.costUnknown, latencyMs: r.durationMs, error: r.error,
@@ -103,6 +109,7 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
           // finalUsage: the CLI's final result usage (complete output tokens), the figure label-run's meter check compares the per-message lines with.
           messageUsage: r.transcript ? messageUsageOf(r.transcript) : null, finalUsage: r.usage ?? null, hiddenPathAttempts: outside.attempts, outsidePaths: outside.paths.slice(0, 20),
           taskPathsIgnored: outside.ignored.length, pathMentions: mentioned.attempts, mentionedPaths: mentioned.paths.slice(0, 20),
+          repoPathMentions: repo.attempts, ...(repo.attempts ? { repoPathForms: repo.forms } : {}),
           ...(procedure !== null ? { selfVerdict: checksVerdict(checks), checks: Array.isArray(checks) ? checks.length : checks && typeof checks === 'object' ? Object.keys(checks).length : 0 } : {}) } };
     },
     // B0+N: after the oracle, the same model appends lessons given only the outcome bit.

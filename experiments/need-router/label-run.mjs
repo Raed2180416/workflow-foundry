@@ -61,7 +61,8 @@
 // --dry swaps every port for a deterministic stub ($0: no model, no claude binary, no sandbox) and gives a byte-identical
 // report on rerun. Row fields follow metrics.mjs needTable: total charged = usdRepriced (measured) + usdImputed.
 import path from 'node:path';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, copyFileSync, rmSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, copyFileSync, rmSync, readdirSync, openSync, writeSync, closeSync, renameSync, linkSync, unlinkSync, statSync } from 'node:fs';
+import { hostname } from 'node:os';
 import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -222,6 +223,9 @@ export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe
   const features = featureTasks.length ? medianFeatures(featureTasks.map(t => taskFeatures(t.task, fam.outputSchema))) : null;
   let probeTask = null;
   if (probe) { const [t] = planTasks(stages, job.id, 'probe'); check('probe', t.seed); probeTask = await makeTask(job.family, { ...t, role: 'probe' }); }
+  // The probe is an example too (DESIGN §2): its task is disjoint from the evaluation tasks like the example sets' (a collided
+  // evaluation seed is replaced), and its hash is in jobs.json's exampleHashes for evaluate.mjs's L4 check.
+  if (probeTask) exampleHashes.add(probeTask.taskHash);
   const evalTasks = [], replacements = [];
   if (unit.evalRole) {
     const reserveRole = RESERVE_OF[unit.evalRole];
@@ -241,7 +245,8 @@ export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe
         if (next === undefined) throw new Error(`${job.id}: task ${made.taskKey} collides and the reserve range is exhausted`);
         used.add(next);
         if (taken) taken.set(bed, new Set([...(taken.get(bed) ?? []), next]));
-        replacements.push({ from: t.seed, to: next, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}), why: exampleHashes.has(made.taskHash) ? 'example collision' : 'repeated evaluation task' });
+        const why = made.taskHash === probeTask?.taskHash ? 'probe collision' : exampleHashes.has(made.taskHash) ? 'example collision' : 'repeated evaluation task';
+        replacements.push({ from: t.seed, to: next, difficulty: t.difficulty, ...(t.stage ? { stage: t.stage } : {}), why });
         t = { ...t0, seed: next, split: ROLES[reserveRole].split };
       }
       seen.add(made.taskHash); evalTasks.push(made);
@@ -321,6 +326,12 @@ export function priorReplacementSeeds(root, stageId) {
 }
 
 export const PLAN_FILE = 'plan.json', PLAN_SCHEMA = 'need-label-plan/1';
+/** The evaluation tasks two or more jobs share: [{ taskKey, jobs }] from plan records ({ job, tasks: [taskKey] }). */
+export function sharedTaskKeys(jobs) {
+  const by = new Map();
+  for (const j of jobs) for (const k of new Set(j.tasks ?? [])) by.set(k, [...(by.get(k) ?? []), j.job]);
+  return [...by.entries()].filter(([, js]) => js.length > 1).map(([taskKey, js]) => ({ taskKey, jobs: js.sort() })).sort((a, b) => (a.taskKey < b.taskKey ? -1 : 1));
+}
 /**
  * Record the jobs' replacement seeds (plan.json, in every file given) before anything is spent. A job already on record
  * with other replacements (another stage took reserve seeds in between, or the plan changed) refuses the run: its recorded
@@ -339,6 +350,11 @@ export function writePlanRecord({ files, stage, jobs, kind = null }) {
     throw Object.assign(new Error(`resume would change the task set: replacement seeds of ${changed.map(j => j.job).join(', ')} differ from plan.json (${changed.map(j => `${j.job}: ${JSON.stringify((prev.get(j.job).replacements ?? []).map(r => r.to))} -> ${JSON.stringify(j.replacements.map(r => r.to))}`).join('; ')}); finish or analyse the stage as it stands`), { code: 'PLAN_CHANGED' });
   }
   for (const j of now) prev.set(j.job, j);
+  // Every job of a stage writes one results.jsonl, whose records the runner keys by arm|taskKey|trial (no experiment): two
+  // jobs evaluated on one task (a family on overlapping bands) would see each other's trials as done and lose rows silently.
+  // Refused before anything is spent, across the jobs run now and those an earlier run of the stage recorded (--jobs).
+  const shared = sharedTaskKeys([...prev.values()]);
+  if (shared.length) throw Object.assign(new Error(`stage ${stage.id}: ${shared.length} evaluation task(s) shared by two jobs (${shared.slice(0, 4).map(x => `${x.taskKey} in ${x.jobs.join(' and ')}`).join('; ')}${shared.length > 4 ? '; ...' : ''}): one results file keys trials by arm, task and trial, so the second job's rows would be lost; give the jobs disjoint bands or run them in separate stages`), { code: 'TASK_SHARED', shared });
   // kind: { dry, ports } of the run that wrote it (runKindProblems and paidStageEvidence read it).
   const rec = { schema: PLAN_SCHEMA, stage: stage.id, ...(kind ? { dry: !!kind.dry, ports: kind.ports } : {}), jobs: [...prev.values()].sort((a, b) => (a.job < b.job ? -1 : a.job > b.job ? 1 : 0)) };
   for (const f of files) { mkdirSync(path.dirname(f), { recursive: true }); writeFileSync(f, stableJson(rec)); }
@@ -516,15 +532,32 @@ export const SPEND_FILE = 'spend.jsonl', ARM_FAULTS_FILE = 'arm-faults.jsonl', S
 export class StageBudget {
   // kind: { dry, ports } of the run; every ledger entry carries it, so a paid run never takes a --dry run's spend as its own.
   constructor(capUsd, spentUsd = 0, { stage = null, files = [], attempts = new Map(), kind = null } = {}) {
-    Object.assign(this, { capUsd, spentUsd, reservedUsd: 0, refused: 0, stage, kind, files: [...new Set(files)], attempts: new Map(attempts) });
+    Object.assign(this, { capUsd, spentUsd, reservedUsd: 0, refused: 0, stage, kind, files: [...new Set(files)], attempts: new Map(attempts), overruns: [], seen: null });
   }
   write(e) {
     const line = JSON.stringify({ stage: this.stage, ...(this.kind ? { dry: !!this.kind.dry, ports: this.kind.ports } : {}), ...e }) + '\n';
-    for (const f of this.files) appendFileSync(f, line);
+    for (const f of this.files) { appendFileSync(f, line); if (this.seen) this.seen.set(f, (this.seen.get(f) ?? 0) + Buffer.byteLength(line)); }
+  }
+  /**
+   * What the cap meter holds now: this process's spend and work in flight, or the ledger on disk when it holds more (a start
+   * another writer reserved or settled: another process on these files, which the directory locks exclude, still counts). The
+   * files are re-read only when they grew by more than this process wrote; per-key attempt counts are merged from them too.
+   */
+  committedUsd() {
+    let usd = this.spentUsd + this.reservedUsd;
+    if (!this.files.length || this.stage == null) return usd;
+    const size = f => { try { return statSync(f).size; } catch { return 0; } };
+    if (!this.seen || this.files.some(f => size(f) !== this.seen.get(f))) {
+      const led = loadSpend(this.files, this.stage);
+      this.seen = new Map(this.files.map(f => [f, size(f)]));
+      this.ledgerUsd = led.totalUsd;
+      for (const [k, n] of led.attempts) if (n > (this.attempts.get(k) ?? 0)) this.attempts.set(k, n);
+    }
+    return Math.max(usd, this.ledgerUsd ?? 0);
   }
   /** Reserve a start's bound; null (refused, counted) when it does not fit. info: { kind, key, ...detail }. */
   reserve(bound, { kind = 'start', key = null, ...detail } = {}) {
-    if (this.spentUsd + this.reservedUsd + bound > this.capUsd + 1e-9) { this.refused += 1; return null; }
+    if (this.committedUsd() + bound > this.capUsd + 1e-9) { this.refused += 1; return null; }
     this.reservedUsd += bound;
     const n = key == null ? null : (this.attempts.get(key) ?? 0) + 1;
     if (key != null) this.attempts.set(key, n);
@@ -532,11 +565,23 @@ export class StageBudget {
     this.write({ op: 'reserve', id: tok.id, kind, key, n, bound, ...detail });
     return tok;
   }
-  /** Settle a reservation at what the start was charged on the meter (detail: reported, repriced, imputed, error, ...). */
+  /** Settle a reservation at what the start was charged on the meter (detail: reported, repriced, imputed, error, ...). A start
+   *  charged above its bound (an agent CLI's budget overshoot, a script's gateway overshoot) is an overrun: recorded on the
+   *  entry (overBoundUsd) and in `overruns`; the cap check of the next reserve sees it, and labelRun stops a stage whose meter
+   *  is over its cap (STAGE_CAP_OVERRUN). */
   settle(tok, charged, detail = {}) {
     this.reservedUsd = Math.max(0, this.reservedUsd - tok.bound); this.spentUsd += charged;
-    this.write({ op: 'settle', id: tok.id, kind: tok.kind, key: tok.key, n: tok.n, bound: tok.bound, charged, ...detail });
+    const over = charged - tok.bound;
+    if (over > 1e-9) this.overruns.push({ key: tok.key, kind: tok.kind, bound: tok.bound, charged, overBoundUsd: over });
+    this.write({ op: 'settle', id: tok.id, kind: tok.kind, key: tok.key, n: tok.n, bound: tok.bound, charged, ...(over > 1e-9 ? { overBoundUsd: r6(over) } : {}), ...detail });
   }
+  /** The meter is over the cap (settled spend alone). */
+  get overCap() { return this.spentUsd > this.capUsd + 1e-9; }
+}
+/** The settled starts of a ledger (loadSpend) charged above their bound: { starts, usd } (the excess over the bounds). */
+export function overBound(spend) {
+  const xs = spend.entries.filter(e => e.settled && Number.isFinite(e.charged) && Number.isFinite(e.bound) && e.charged > e.bound + 1e-9);
+  return { starts: xs.length, usd: sortedSum(xs.map(e => e.charged - e.bound)) };
 }
 const sortedSum = xs => sum([...xs].sort((a, b) => a - b));
 /** A stage's spend ledger read from one or more files (entries joined by id): settled charges, reservations never settled
@@ -826,6 +871,7 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo,
   // An agent draw is its own lineage of one: the lineage void rule applies to it (lineage modes are voided by build row).
   if (lineage == null && (meta.nestedModelAttempts ?? 0) > 0) voidReasons.push(`nestedModelAttempts=${meta.nestedModelAttempts}`);
   if (lineage == null && (meta.hiddenPathAttempts ?? 0) > 0) voidReasons.push(`hiddenPathAttempts=${meta.hiddenPathAttempts}`);
+  if (lineage == null && (meta.repoPathMentions ?? 0) > 0) voidReasons.push(`repoPathMentions=${meta.repoPathMentions}`);
   const voided = voidReasons.length > 0;
   return {
     schema: ROW_SCHEMA, stage, job: job.id, cluster: job.cluster, split: job.split, family: job.family, mode, arm: rec.arm, armHash: rec.armHash,
@@ -841,14 +887,21 @@ export function matrixRow(rec, { stage, job, armDef, priceTable, book, taskInfo,
     // at: the trial record's time (Results.append), which evaluate.mjs L6 orders the sealed envelope before.
     ms: rec.latencyMs ?? null, at: rec.at ?? null, tokens: cost.tokens, turns: meta.turns ?? null, error: voided ? 'VOIDED' : rec.error?.code ?? null, rawError: rec.error?.code ?? null,
     void: voided ? voidReasons.join('; ') : null, ...(meta.stamp ? { stamp: meta.stamp } : {}),
+    // Agent sessions: the path scans, for review by hand (pathMentions: every string of a tool input; hiddenPathAttempts: the
+    // accessed paths, which void; repoPathMentions: the repository root named where the accessed scan does not look, which voids).
+    ...(meta.pathMentions != null ? { hiddenPathAttempts: meta.hiddenPathAttempts ?? 0, pathMentions: meta.pathMentions, mentionedPaths: (meta.mentionedPaths ?? []).slice(0, 10) } : {}),
+    ...((meta.repoPathMentions ?? 0) > 0 ? { repoPathMentions: meta.repoPathMentions, repoPathForms: meta.repoPathForms ?? [] } : {}),
   };
 }
+/** Agent rows (sessions) whose path mentions exceed their accessed paths: kept for review by hand (DESIGN §2: the sandbox is the
+ *  main guard; the text scan is too noisy to void on, since task data holds host-style paths). */
+export const mentionsOverAccess = r => r.pathMentions != null && r.pathMentions > (r.hiddenPathAttempts ?? 0);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Builds
 
 const buildKey = (job, mode, k) => `${job}|${mode}|${k}`;
-const buildVoided = b => !!b.void || (b.hiddenPathAttempts ?? 0) > 0 || (b.nestedModelAttempts ?? 0) > 0;
+const buildVoided = b => !!b.void || (b.hiddenPathAttempts ?? 0) > 0 || (b.nestedModelAttempts ?? 0) > 0 || (b.repoPathMentions ?? 0) > 0;
 
 /** The version stamp of a build, probe or racing record (mode null: racing). A resume over a record whose stamp differs
  *  is refused: it was made under other arm settings, prompts, prices or plan. */
@@ -911,6 +964,8 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
     copied = copiedExampleLines(readFileSync(res.artifactPath, 'utf8'), examples);
     if (copied > COPY_SCAN.maxLines) reasons.push(`ownerci copy scan: ${copied} example lines in solve.mjs (AUDIT F10)`);
   }
+  // The repository root named where the accessed scan does not look (construct.mjs repoPathMentions): voids the lineage.
+  if ((rec.repoPathMentions ?? 0) > 0) reasons.push(`repoPathMentions=${rec.repoPathMentions} (${(rec.repoPathForms ?? []).join(', ')})`);
   // hiddenPathAttempts is construct()'s accessed-path scan (hiddenPathAccesses; probe-stated paths ignored): it voids. Its
   // text scan of every tool-input string (hiddenPathAttempts there) is kept for review by hand as pathMentions.
   const hidden = rec.hiddenPathAccesses ?? rec.hiddenPathAttempts;
@@ -918,6 +973,7 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
     repriced: cost.repriced, ...(cost.meterGap > 0 ? { usdMeterGap: r6(cost.meterGap) } : {}), usd: r6(cost.measured), tokens: cost.tokens, minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
     error: rec.builderError?.code ?? null, runSolverCalls: rec.runSolverCalls, hiddenPathAttempts: hidden, nestedModelAttempts: rec.nestedModelAttempts,
     outsidePaths: (rec.accessedOutsidePaths ?? rec.outsidePaths ?? []).slice(0, 10), pathMentions: rec.hiddenPathAttempts ?? null, mentionedPaths: (rec.outsidePaths ?? []).slice(0, 10),
+    repoPathMentions: rec.repoPathMentions ?? 0,
     selfCheck: rec.selfCheck, checkPath: res.checkPath, checkSha256: rec.checkSha256, builderPromptSha256: rec.promptSha256 ?? null, copiedExampleLines: copied,
     constructionJson: path.join(dir, 'construction.json'), void: reasons.length ? reasons.join('; ') : null } };
 }
@@ -976,6 +1032,11 @@ async function runGroups({ ctx, unit, plan, groups }) {
   for (const g of groups) {
     if (!g.arms.length) continue;
     const tasks = (g.tasks ?? plan.evalTasks).map(t => ({ familyId: t.familyId, task: t.task, taskKey: t.taskKey, taskHash: t.taskHash }));
+    // The runner skips a recorded arm|taskKey|trial whatever its experiment: a record of another job (or stage) on this file
+    // would be taken as done and its row then dropped by jobRows. Refused (writePlanRecord refuses the planned case earlier).
+    const exp = `${ctx.stage.id}.${unit.job.id}`, want = new Set(g.arms.flatMap(a => tasks.flatMap(t => Array.from({ length: g.trials }, (_, i) => `${a.id}|${t.taskKey}|${i}`))));
+    const clash = readJsonl(ctx.resultsFile).filter(r => r.experiment !== exp && want.has(`${r.arm}|${r.taskKey}|${r.trial}`));
+    if (clash.length) throw Object.assign(new Error(`${exp}: ${clash.length} trial(s) already recorded in ${ctx.resultsFile} by ${[...new Set(clash.map(r => r.experiment))].join(', ')} under the same arm, task and trial (${clash[0].arm} ${clash[0].taskKey} t${clash[0].trial}): the runner would skip them and the rows would be lost; use a work root of this stage alone`), { code: 'TASK_SHARED' });
     await runExperiment({ experiment: `${ctx.stage.id}.${unit.job.id}`, arms: g.arms, tasks, trials: g.trials, workRoot: path.join(ctx.live, 'work'), resultsFile: ctx.resultsFile,
       concurrency: ctx.concurrency, log: ctx.log, envFaultRule: true, strictResume: true });
   }
@@ -1031,6 +1092,7 @@ async function runProbes({ ctx, unit, plan }) {
         delivered: !!r.meta?.delivered, schemaValid: r.meta?.schemaValid ?? null, deployableVerdict: r.meta?.deployableVerdict ?? null,
         outputHash: r.output != null ? sha16(canonical(r.output)) : null, turns: r.meta?.turns ?? null, usdReported: r6(chargeOf(rec, 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed),
         tokens: cost.tokens, error: r.error?.code ?? null, nestedModelAttempts: r.meta?.nestedModelAttempts ?? 0, hiddenPathAttempts: r.meta?.hiddenPathAttempts ?? 0,
+        ...(r.meta?.pathMentions != null ? { pathMentions: r.meta.pathMentions } : {}), ...((r.meta?.repoPathMentions ?? 0) > 0 ? { repoPathMentions: r.meta.repoPathMentions } : {}),
         armHash: armHash(inner), stamp: recordStamp(ctx, mode) };
       ctx.probes.set(key, row); appendFileSync(ctx.probesFile, JSON.stringify(row) + '\n');
     }
@@ -1069,8 +1131,8 @@ function runVoids(ctx, unit) {
   for (const rec of readJsonl(ctx.resultsFile).filter(r => r.experiment === exp)) {
     const { mode, lineage } = parseArmId(rec.arm);
     if (lineage == null) continue;
-    const n = rec.meta?.nestedModelAttempts ?? 0, hp = rec.meta?.hiddenPathAttempts ?? 0;
-    if (n > 0 || hp > 0) { const k = buildKey(unit.job.id, mode, lineage), v = out.get(k) ?? { nested: 0, hidden: 0 }; v.nested += n; v.hidden += hp; out.set(k, v); }
+    const n = rec.meta?.nestedModelAttempts ?? 0, hp = rec.meta?.hiddenPathAttempts ?? 0, rp = rec.meta?.repoPathMentions ?? 0;
+    if (n > 0 || hp > 0 || rp > 0) { const k = buildKey(unit.job.id, mode, lineage), v = out.get(k) ?? { nested: 0, hidden: 0, repo: 0 }; v.nested += n; v.hidden += hp; v.repo += rp; out.set(k, v); }
   }
   return out;
 }
@@ -1078,9 +1140,32 @@ function withRunVoids(builds, voids, jobId) {
   return builds.map(b => {
     const v = voids.get(buildKey(jobId, b.mode, b.lineage));
     if (!v) return b;
-    const why = `run sessions: nestedModelAttempts=${v.nested}, hiddenPathAttempts=${v.hidden}`;
+    const why = `run sessions: nestedModelAttempts=${v.nested}, hiddenPathAttempts=${v.hidden}${v.repo ? `, repoPathMentions=${v.repo}` : ''}`;
     return { ...b, void: b.void ? `${b.void}; ${why}` : why };
   });
+}
+
+/**
+ * The report's summary of one (job, mode), counted as needTable scores it: a lineage whose build failed or was voided (at build
+ * time, or by its run sessions) fails every task of the job (`tasks`), its own rows included, so `rows` and `pass` are the
+ * scored counts; `rowsRecorded` is the task rows on file, `synthesizedFailures` the failures needTable adds for lineages with
+ * no row. Dollars are every recorded row's and build's (a voided lineage's rows were paid for).
+ */
+export function modeSummary({ rows: rs, builds: bsm = [], tasks }) {
+  const dead = new Set(bsm.filter(b => b.failed || buildVoided(b)).map(b => b.lineage));
+  const scored = rs.filter(r => r.lineage == null || !dead.has(r.lineage)), synth = bsm.filter(b => dead.has(b.lineage)).length * tasks;
+  const usd = sum(rs.map(r => r.usdRepriced)) + sum(bsm.map(b => b.usdRepriced)), imp = sum(rs.map(r => r.usdImputed)) + sum(bsm.map(b => b.usdImputed));
+  const errors = {};
+  for (const r of rs) if (r.error) errors[r.error] = (errors[r.error] ?? 0) + 1;
+  return { rows: scored.length + synth, pass: scored.filter(r => r.pass).length, rowsRecorded: rs.length, synthesizedFailures: synth,
+    failedLineages: bsm.filter(b => b.failed).length, voidedLineages: bsm.filter(b => !b.failed && buildVoided(b)).length,
+    delivered: rs.filter(r => r.delivered).length, schemaInvalid: rs.filter(r => r.delivered && r.schemaValid === false).length,
+    selfPass: rs.filter(r => r.selfVerdict === 'pass').length, selfFail: rs.filter(r => r.selfVerdict === 'fail').length, selfCheckErrors: rs.filter(r => r.selfCheckError).length,
+    voidedRows: rs.filter(r => r.void || (r.lineage != null && dead.has(r.lineage))).length,
+    reps: bsm.length ? bsm.length : [...new Set(rs.map(r => r.rep))].length, usdReported: r6(sum(rs.map(r => r.usdReported)) + sum(bsm.map(b => b.usdReported))),
+    usdRepriced: r6(usd), usdImputed: r6(imp), imputedShare: usd + imp > 0 ? r6(imp / (usd + imp)) : 0, notRepriced: rs.filter(r => !r.repriced).length,
+    // Agent rows whose path mentions exceed their accessed paths (for review by hand; never a void).
+    pathMentionRows: rs.filter(mentionsOverAccess).length, errors };
 }
 
 /** The table for one job (needTable), or the reason it cannot be built yet (unpaired: env faults, cap). */
@@ -1391,6 +1476,65 @@ export function stageRunElsewhere({ roots, stageId, here = [] }) {
   }
   return found;
 }
+// ---------------------------------------------------------------------------------------------------------------------
+// One process per directory: the cap meter, the attempt counts and the runner's resume all live in the work root and --out,
+// so two processes on one of them would each spend up to the cap and run the same trials twice (a scheduled resume that starts
+// while the old process still runs). Each run holds an exclusive lock file in both before it writes anything.
+
+export const LOCK_FILE = '.label-run.lock', LOCK_SCHEMA = 'need-label-lock/1';
+const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+const lockedError = (file, why, held = null) => Object.assign(new Error(`${file} is held${held ? ` by pid ${held.pid} on ${held.host} since ${held.startedAt} (stage ${held.stage})` : ''}: ${why}; `
+  + 'another label-run is using this directory: wait for it to finish (or stop it), or remove the lock file by hand once no label-run runs there'), { code: 'RUN_LOCKED', file, held });
+/** Release a lock: the file is removed only while it still holds this run's token (never another run's lock). */
+export function releaseRunLock(file, token) {
+  try { if (JSON.parse(readFileSync(file, 'utf8'))?.token === token) unlinkSync(file); } catch { /* gone or not ours */ }
+}
+/**
+ * Take the lock of one directory: LOCK_FILE created with O_EXCL ('wx'), holding { pid, host, startedAt, stage, token }. A lock
+ * already there refuses the run (RUN_LOCKED) unless it is stale: it names this host and its pid is gone, or it is unreadable
+ * (a writer that died between create and write) and older than `unreadableStaleMs`. A stale lock is renamed aside (atomic: of
+ * two processes that both found it stale, one moves it), checked to be the lock that was read, removed, and the lock is
+ * created again. A lock of another host is never taken over (its pid cannot be checked). Returns { file, token, release }.
+ * deps (tests): host, pid, alive (pid -> boolean), unreadableStaleMs.
+ */
+export function acquireRunLock(dir, { stage = null, host = hostname(), pid = process.pid, alive = pidAlive, unreadableStaleMs = 10000 } = {}) {
+  mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, LOCK_FILE), token = randomUUID();
+  const body = JSON.stringify({ schema: LOCK_SCHEMA, pid, host, startedAt: new Date().toISOString(), stage, token }) + '\n';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let fd = null;
+    try { fd = openSync(file, 'wx'); } catch (e) { if (e.code !== 'EEXIST') throw e; }
+    if (fd !== null) {
+      try { writeSync(fd, body); } finally { closeSync(fd); }
+      return { file, token, release: () => releaseRunLock(file, token) };
+    }
+    let text, held = null, ageMs = 0;
+    try { text = readFileSync(file, 'utf8'); ageMs = Date.now() - statSync(file).mtimeMs; } catch (e) { if (e.code === 'ENOENT') continue; throw e; }
+    try { held = JSON.parse(text); } catch { held = null; }
+    const stale = held && Number.isInteger(held.pid) ? held.host === host && !alive(held.pid) : ageMs > unreadableStaleMs;
+    if (!stale) throw lockedError(file, held ? (held.host === host ? 'that process is running' : `another host's lock (its pid cannot be checked from ${host})`) : 'the lock is being written or unreadable', held);
+    const aside = `${file}.stale-${token}`;
+    try { renameSync(file, aside); } catch (e) { if (e.code === 'ENOENT') continue; throw e; }
+    let moved = null;
+    try { moved = readFileSync(aside, 'utf8'); } catch { /* removed under us */ }
+    if (moved !== text) {
+      // Another process took the stale lock over first and this run moved its fresh lock aside: put it back, and refuse.
+      try { linkSync(aside, file); } catch { /* a third run holds it now */ }
+      try { unlinkSync(aside); } catch { /* gone */ }
+      throw lockedError(file, 'another run took the stale lock over first');
+    }
+    unlinkSync(aside);
+  }
+  throw lockedError(file, 'the lock changed hands while it was being taken');
+}
+/** The locks of a run: every directory given (deduplicated, in sorted order); none is held when one is refused. */
+export function acquireRunLocks(dirs, opts = {}) {
+  const held = [];
+  try { for (const d of [...new Set(dirs.map(x => path.resolve(x)))].sort()) held.push(acquireRunLock(d, opts)); }
+  catch (e) { for (const l of held) l.release(); throw e; }
+  return { files: held.map(l => l.file), release: () => { for (const l of held.splice(0)) l.release(); } };
+}
+
 /** The committed text of the preregistration (its HEAD blob), or null: the --dry held-out guard reads the Freeze from it, never from a working-tree edit or another file. */
 export function committedPrereg(file = PREREG_FILE, { show = gitHeadBlob } = {}) {
   const blob = show(file);
@@ -1405,6 +1549,11 @@ export function committedPrereg(file = PREREG_FILE, { show = gitHeadBlob } = {})
  *         subdirectories a paid run scans for an earlier run of the stage, STAGE_ALREADY_RUN; tests), log }
  */
 export async function labelRun(opts) {
+  // The directory locks (acquireRunLocks) are taken inside, once the run's directories are known, and released here.
+  const held = { release: null };
+  try { return await runStage(opts, held); } finally { held.release?.(); }
+}
+async function runStage(opts, held) {
   const { stageId, stagesFile = STAGES_FILE, specFile = null, prereg = null, dry = false, jobs = null, arms = null, concurrency = 4, racing = true,
     withConditional = false, allowDraft = false, deviation = null, stubForce = {}, log = console.log, enforceGates = !dry, paidDeps = {} } = opts;
   if (!(Number.isInteger(concurrency) && concurrency >= 1 && concurrency <= 4)) throw new Error(`--concurrency must be an integer from 1 to 4 (agent concurrency at most 4, DESIGN §7), got ${concurrency}`);
@@ -1436,18 +1585,18 @@ export async function labelRun(opts) {
   const portKind = portKindOf({ dry, ports: opts.ports }), runKind = { dry, ports: portKind };
   if (dry && isInside(out, OUT_ROOT)) throw Object.assign(new Error(`--dry may not write under ${path.relative(REPO, OUT_ROOT)} (--out ${out}): that directory holds paid stages' labels; use an --out outside it (the default is <work root>/dry-out)`), { code: 'DRY_OUT_IN_RUNS' });
   if (dry && live === path.resolve(LIVE_ROOT, id)) throw Object.assign(new Error(`--dry may not use the paid work root of stage ${stage.id} (${live}); use another --work-root (the default is ${path.join(LIVE_ROOT, `${id}-dry`)})`), { code: 'DRY_ON_PAID_WORK_ROOT' });
-  {
-    const kp = runKindProblems({ dirs: [live, out], stageId: stage.id, dry, ports: portKind });
-    if (kp.length) throw Object.assign(new Error(`${kp.join('; ')}: use a fresh work root and --out`), { code: 'RUN_KIND_MIXED', problems: kp });
-  }
   // The spend ledger lives in the work root and in --out. A new work root over an --out that holds this stage's spend
   // would restart the meter from $0: refused.
   const liveSpendFile = path.join(live, SPEND_FILE), outSpendFile = path.join(out, SPEND_FILE);
-  {
+  // The directory checks run before anything is created, and again under the locks (another process may have written in between).
+  const dirChecks = () => {
+    const kp = runKindProblems({ dirs: [live, out], stageId: stage.id, dry, ports: portKind });
+    if (kp.length) throw Object.assign(new Error(`${kp.join('; ')}: use a fresh work root and --out`), { code: 'RUN_KIND_MIXED', problems: kp });
     const ls = loadSpend([liveSpendFile], stage.id), os = loadSpend([outSpendFile], stage.id);
     const foreign = [...os.ids].filter(x => !ls.ids.has(x));
     if (foreign.length) throw Object.assign(new Error(`--out ${out} already holds $${os.totalUsd.toFixed(2)} of stage ${stage.id} spend (${foreign.length} spend-ledger entr${foreign.length === 1 ? 'y' : 'ies'}) that the work root ${live} does not hold: resume with the work root that spent it, or use another --out`), { code: 'SPEND_ELSEWHERE' });
-  }
+  };
+  dirChecks();
   // K5, no reruns: the cap meter lives in this run's work root and --out, so a paid run of a stage that already ran in another
   // directory (a fresh --out and work root) would spend the cap again. Refused; the stage resumes in the directories it ran in.
   // Roots: the parents of --out and the work root; on live ports also the runs directory and the work-root directory (stageRoots: tests).
@@ -1456,6 +1605,10 @@ export async function labelRun(opts) {
     const found = stageRunElsewhere({ roots, stageId: stage.id, here: [live, out] });
     if (found.length) throw Object.assign(new Error(`stage ${stage.id} already ran in ${found.map(f => `${f.dir} (${f.evidence.join(', ')})`).join('; ')}: a stage is paid for once and analysed as it stands, with no reruns (DESIGN §7, K5); resume it with the --work-root and --out it ran in`), { code: 'STAGE_ALREADY_RUN', found });
   }
+  // One process per work root and per --out (RUN_LOCKED otherwise): taken before anything is written, released by labelRun.
+  // No await precedes this point, so two calls in one process cannot both pass it either.
+  held.release = acquireRunLocks([live, out], { stage: stage.id }).release;
+  dirChecks();
   mkdirSync(live, { recursive: true }); mkdirSync(out, { recursive: true });
   // The label-engine stamp of a paid run: written before the first paid call; a resume on another engine is refused.
   if (stampRec) {
@@ -1637,16 +1790,9 @@ export async function labelRun(opts) {
     allRows.push(...rows); allBuilds.push(...voidedBuilds);
     const t = rows.length ? tableOf(rows, voidedBuilds) : { error: 'no rows' };
     const modes = {};
-    for (const m of [...new Set(rows.map(r => r.mode))].sort()) {
-      const rs = rows.filter(r => r.mode === m), bsm = voidedBuilds.filter(b => b.mode === m);
-      const usd = sum(rs.map(r => r.usdRepriced)) + sum(bsm.map(b => b.usdRepriced)), imp = sum(rs.map(r => r.usdImputed)) + sum(bsm.map(b => b.usdImputed));
-      const errors = {};
-      for (const r of rs) if (r.error) errors[r.error] = (errors[r.error] ?? 0) + 1;
-      modes[m] = { rows: rs.length, pass: rs.filter(r => r.pass).length, delivered: rs.filter(r => r.delivered).length, schemaInvalid: rs.filter(r => r.delivered && r.schemaValid === false).length,
-        selfPass: rs.filter(r => r.selfVerdict === 'pass').length, selfFail: rs.filter(r => r.selfVerdict === 'fail').length, selfCheckErrors: rs.filter(r => r.selfCheckError).length,
-        voidedRows: rs.filter(r => r.void).length, reps: [...new Set(rs.map(r => r.rep))].length, usdReported: r6(sum(rs.map(r => r.usdReported)) + sum(bsm.map(b => b.usdReported))),
-        usdRepriced: r6(usd), usdImputed: r6(imp), imputedShare: usd + imp > 0 ? r6(imp / (usd + imp)) : 0, notRepriced: rs.filter(r => !r.repriced).length, errors };
-    }
+    // Lineage modes with build rows but no task rows (every build failed or was voided at build time) are listed too.
+    for (const m of [...new Set([...rows.map(r => r.mode), ...voidedBuilds.map(b => b.mode)])].sort())
+      modes[m] = modeSummary({ rows: rows.filter(r => r.mode === m), builds: voidedBuilds.filter(b => b.mode === m), tasks: plan.evalTasks.length });
     const runFaults = runFaultRecs.filter(f => f.experiment === `${stage.id}.${u.job.id}`).length;
     const jp = [...ctx.probes.values()].filter(p => p.job === u.job.id), jcf = cfaults.filter(f => f.job === u.job.id).map(cfCost), ju = unrec.get(u.job.id);
     const jobCharged = sum([...rows, ...voidedBuilds, ...jp, ...jcf].map(r => (r.usdRepriced ?? 0) + (r.usdImputed ?? 0)))

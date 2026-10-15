@@ -5,6 +5,7 @@
 import path from 'node:path';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, chmodSync, rmSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { runClaudeCode, nestedModelUses } from '../../src/executors/claude-code.mjs';
 import { runSandboxed } from '../../src/executors/sandboxed-command.mjs';
 import { buildKit, SCRIPT_KIT_ALLOW } from '../lib/kit.mjs';
@@ -183,6 +184,60 @@ export function accessedOutsidePaths(toolUses = [], allowedRoots = [], { ignore 
   return { attempts: per.filter(x => x.length).length, paths: [...new Set(per.flat())], ignored: [...ignored] };
 }
 
+// The repository root: the hidden material (beds, oracles, references, results) every sandboxed session is kept away from.
+// The accessed-path scan above skips heredoc bodies, Write/Edit content, ~ and $HOME paths and encoded strings, so a session
+// can name the repository there (a `node <<'EOF'` script that reads an oracle, a script it writes and then runs, `ls
+// ~/workflow-foundry/beds`, a base64-decoded path) without an attempt being counted. repoPathMentions closes that for the
+// repository itself: every string of a tool input is searched for the root in plain, ~/$HOME and base64/hex forms. No task
+// states this path (a form the task text contains is skipped), so an honest session has no reason to write it.
+export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const reEscape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** The forms of a repository root a tool input may name it in: { form, text, re }. */
+export function repoPathForms(root = REPO_ROOT) {
+  const out = [], add = (form, text, re) => { if (text && !out.some(x => x.text === text)) out.push({ form, text, re }); };
+  const tail = '(?![\\w-])';
+  add('absolute', root, new RegExp(`(?<![\\w.~-])${reEscape(root)}${tail}`));
+  const m = /^\/(?:home\/([^/]+)|root)\/(.+)$/.exec(root);
+  if (m) {
+    const user = m[1] ?? 'root', rest = m[2];
+    for (const text of [`~/${rest}`, `~${user}/${rest}`]) add('home', text, new RegExp(`(?<![\\w./~-])${reEscape(text)}${tail}`));
+    for (const text of [`$HOME/${rest}`, `\${HOME}/${rest}`]) add('home', text, new RegExp(`${reEscape(text)}${tail}`));
+  }
+  // Encoded: the base64 characters fixed by the root's bytes alone at each of the three alignments (a string that contains the
+  // root encodes to one of them, whatever precedes it), their base64url spelling, and hex. The leading slash is left out, so a
+  // path written without it (home/user/...) is found too.
+  const bare = Buffer.from(root.replace(/^\/+/, ''));
+  for (let k = 0; k < 3; k++) {
+    const n = k + bare.length, enc = Buffer.concat([Buffer.alloc(k), bare]).toString('base64').slice(k ? 4 : 0, Math.floor(n / 3) * 4);
+    if (enc.length < 16) continue;
+    add('base64', enc, new RegExp(reEscape(enc)));
+    const url = enc.replace(/\+/g, '-').replace(/\//g, '_');
+    add('base64', url, new RegExp(reEscape(url)));
+  }
+  const hex = bare.toString('hex');
+  add('hex', hex, new RegExp(hex, 'i'));
+  return out;
+}
+/**
+ * Tool uses that name the repository root (repoPathForms) in any string of their input where the accessed-path scan does not
+ * count it: `counted(u)` says whether that scan already counts the tool use as an attempt (it is then not counted twice).
+ * ignoreText: the task's own text (prompt, inputs, files, PROCEDURE.md); a form it contains is not searched for.
+ * Returns { attempts, forms } (the forms found, for review by hand).
+ */
+export function repoPathMentions(toolUses = [], { root = REPO_ROOT, ignoreText = '', counted = () => false } = {}) {
+  const forms = repoPathForms(root).filter(f => !String(ignoreText).includes(f.text));
+  const found = new Set();
+  let attempts = 0;
+  for (const u of toolUses) {
+    const s = JSON.stringify(u?.input ?? '').replace(/\\\//g, '/');
+    const hits = forms.filter(f => f.re.test(s));
+    if (!hits.length || counted(u)) continue;
+    attempts += 1;
+    for (const h of hits) found.add(h.form);
+  }
+  return { attempts, forms: [...found].sort() };
+}
+
 // Post-run self-check: node check.mjs task.json answer.json in a fresh directory beside the trial (task files, the
 // answer, check.mjs only), sandboxed with no network and no gateway, so it cannot call a model. Exit 0 = pass, 1 = fail,
 // anything else (crash, timeout) = error. No answer: nothing to check (selfVerdict null). runner: tests substitute one.
@@ -263,7 +318,10 @@ export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2
   // (/tmp is private to the sandbox, so it is not listed.)
   const outside = u => (JSON.stringify(u.input ?? '').match(/\/(?:home|root|opt|mnt|var|run|srv|media|etc|proc)\/[\w.\/-]*/g) ?? [])
     .filter(p => !p.startsWith(workdir) && !p.startsWith(kit.dir));
-  const accessed = accessedOutsidePaths(r.toolUses, [workdir, kit.dir], { ignore: taskHostPaths(probes.map(p => [p.prompt, p.inputs ?? {}, p.files ?? {}])) });
+  const stated = taskHostPaths(probes.map(p => [p.prompt, p.inputs ?? {}, p.files ?? {}]));
+  const accessed = accessedOutsidePaths(r.toolUses, [workdir, kit.dir], { ignore: stated });
+  const repo = repoPathMentions(r.toolUses, { ignoreText: JSON.stringify(probes.map(p => [p.prompt, p.inputs ?? {}, p.files ?? {}])),
+    counted: u => accessedOutsidePaths([u], [workdir, kit.dir], { ignore: stated }).attempts > 0 });
   const checkPath = path.join(workdir, SELF_CHECK_FILE), check = selfCheck && existsSync(checkPath) ? SELF_CHECK_FILE : null;
   const record = {
     arm, armId, familyId, label, difficulty: perSeed ? null : difficulty, probeSeeds, builderModel, builderEffort, kitHash: kit.hash, kitDir: kit.dir, policyHash: modelPort.policyHash, models, runId: svc.runId,
@@ -281,6 +339,8 @@ export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2
     // Need router v1 (additive): the accessed-path scan (accessedOutsidePaths above), the one whose hits void a lineage;
     // paths the probe tasks state are not attempts.
     hiddenPathAccesses: accessed.attempts, accessedOutsidePaths: accessed.paths.slice(0, 100), taskPathsIgnored: accessed.ignored.length,
+    // The repository root named where the accessed scan does not look (heredoc bodies, written content, ~ forms, encodings): it voids too.
+    repoPathMentions: repo.attempts, repoPathForms: repo.forms,
     // Need router v1 additions (additive; selfCheck is false and check null for C0 callers).
     runSolverCalls: runSolverCallsOf(r.toolUses), builderMessageUsage: r.transcript ? messageUsageOf(r.transcript) : null,
     selfCheck: !!selfCheck, check, checkSha256: check ? sha(readFileSync(checkPath)) : null,
