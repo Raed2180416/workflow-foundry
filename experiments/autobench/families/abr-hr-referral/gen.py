@@ -77,7 +77,7 @@ COUNTS = {
 # Planted share of referral.submitted / candidate.hired triggers with a trap; payout runs, holds, broadcasts and most
 # departures carry traps by construction. These put the share of trap-bearing TRIGGERS near the design's 45% (d2) and
 # 70% (d3); meta reports the measured share per stream.
-TRAP_RATE = {"d1": 0.0, "d2": 0.12, "d3": 0.45}
+TRAP_RATE = {"d1": 0.0, "d2": 0.12, "d3": 0.5}
 FORMAT_RATE = {"d1": 0.0, "d2": 0.3, "d3": 0.5}       # share of Hire Dates written in a non-ISO format
 SUB_WEIGHTS = {"dup-second": 2.0, "dup-case": 1.0, "resubmit": 1.0, "namesake": 1.5, "dup-week": 1.0}
 HIRE_WEIGHTS = {"rehire": 1.5, "rehire-old": 1.0, "rehire-namesake": 1.0}
@@ -579,13 +579,12 @@ class Gen:
 
     def plan_left_people(self):
         r = self.r
-        if self.d == "d3":
-            kinds = [r.choice(["left-early", "left-day89"]), r.choice(["left-namesake", "left-paid"])]
+        if self.d == "d3":     # one departure that voids (sometimes on day 89), one that must change nothing
+            kinds = [r.choice(["left-early", "left-early", "left-day89"]), r.choice(["left-namesake", "left-paid"])]
+        elif self.d == "d2":
+            kinds = [r.choice(["left-early", "left-paid"])] + [r.choice(["left-namesake", "left-other"])] * (self.cnt["left"] - 1)
         else:
-            kinds = r.choices(["left-early", "left-namesake", "left-paid", "left-other"], weights=[3, 2, 1.5, 1],
-                              k=self.cnt["left"])
-            if self.d == "d1":
-                kinds = ["left-other"]
+            kinds = ["left-other"]
         self.left_plan = []
         used = []
         for k in kinds:

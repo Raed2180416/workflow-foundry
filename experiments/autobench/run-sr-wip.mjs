@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// WIP COPY (2026-10-15): experiments/autobench/run.mjs at sha256 e46bf1d89692f50568410903c7e5a4f1f009fa910637ed84c5f1a8e608d0057b plus
+// WIP COPY (2026-10-15): experiments/autobench/run.mjs at sha256 e035f589c91bbfc21f307532e13741499d6e0086c8db430f6b780a1c3202e889 plus
 // the pipeline-harness registry (PIPELINE_HARNESSES / PIPELINE_STUBS: codeowned + secondreader, arm A0+SR). Kept apart from
-// run.mjs so that runs launched with the current run.mjs can still --resume (launch.json pins the runner hash). Merge in a
-// window with no autobench run active or resumable: if run.mjs still has the hash above, `git mv`/`mv` this file onto it and
-// delete these six lines; otherwise re-apply the registry hunks (`diff run.mjs run-sr-wip.mjs`). Then run
-// `node --test experiments/autobench/test/*.test.mjs`. Until then, A0+SR runs use this file.
+// run.mjs while paid runs launched with it are active or resumable (launch.json pins the runner hash). Merge in a quiet
+// window: if run.mjs still has the hash above, move this file onto it and delete these six lines; otherwise re-apply the
+// registry hunks (`diff run.mjs run-sr-wip.mjs`). Then run `node --test experiments/autobench/test/*.test.mjs`.
+// Until then, A0+SR runs use this file.
 // AutomationBench runner (experiments/autobench; notes: research/automationbench-20261014/NOTES.md).
 //
 // Per task: bridge.py prepares the task exactly as the official eval loads it; per fork, a bridge process serves the
@@ -55,8 +55,14 @@ import { assertDevOnly, domainOf, loadSplit } from './split.mjs';
 import { HARNESS_ID, HARNESS_VERSION, cliVersion, collectLedger, harnessConfig, harnessManifest, harnessSystemPrompt, writeCliGuard } from './harness/foundry.mjs';
 import { ENV_FAULTS } from '../lib/runner.mjs';
 
-/** A fork whose session met an environment fault: not a task outcome (the run stops and the task reruns on --resume). */
-export const isEnvFault = f => ENV_FAULTS.has(f?.sessionError);
+/** Host infrastructure failures (disk full, no temporary directory, file-table exhaustion): environment faults too. */
+const INFRA_FAULT = /ENOSPC|EDQUOT|EMFILE|ENFILE|No usable temporary directory/;
+/** A fork whose session or host side met an environment fault: not a task outcome (the run stops and the task reruns on
+ * --resume). */
+export const isEnvFault = f => ENV_FAULTS.has(f?.sessionError) || INFRA_FAULT.test(f?.harnessError ?? '');
+const faultOf = f => f?.sessionError ?? String(f?.harnessError ?? '').slice(0, 80);
+/** A record that is not an outcome: an environment fault, a fork the cap skipped, or one deferred after a stop. */
+const notAnOutcome = r => r.forks.some(f => f.skipped || f.deferred || isEnvFault(f));
 
 export const DEFAULTS = Object.freeze({ k: 1, budgetUsd: 0.75, concurrency: 4, maxSteps: 50, timeoutMin: 20, det: 'record', tools: ['Bash'], seed: '1' });
 /** The A0 test-run acknowledgement (PREREG-AB-v1 §6): `--test-run AB-v1`. */
@@ -204,14 +210,38 @@ export async function runTasks(o) {
   // Resume: a live directory that already holds a run continues only with --resume and the launch settings unchanged.
   const resultsFile = path.join(live, 'results.jsonl'), faultsFile = path.join(live, 'results.faults.jsonl'), launchFile = path.join(live, 'launch.json');
   const launch = { tasks, model: scripted ? null : opt.model ?? null, scripted, harness: manifest?.sha256 ?? null, cliMaxTurns, k: opt.k, det: opt.det,
-    maxSteps: opt.maxSteps, budgetUsd: opt.budgetUsd, capUsd: scripted ? null : opt.capUsd, timeoutMin: opt.timeoutMin, effort: opt.effort ?? null,
+    maxSteps: opt.maxSteps, budgetUsd: opt.budgetUsd, capUsd: opt.capUsd ?? null, timeoutMin: opt.timeoutMin, effort: opt.effort ?? null,
     tools: opt.tools, dateNote: Boolean(opt.dateNote), runnerSha256: sha256(readFileSync(new URL(import.meta.url))) };
   const readRecords = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
   let kept = [];
   if (!opt.dryRun && (existsSync(resultsFile) || existsSync(launchFile))) {
     if (!opt.resume) throw new Error(`${live} already holds a run: pass --resume to continue it, or use a new --run-id`);
-    if (!existsSync(launchFile) || JSON.stringify(readJson(launchFile)) !== JSON.stringify(launch)) throw new Error(`resume refused: the settings or the runner differ from ${launchFile}`);
-    kept = readRecords(resultsFile);
+    if (!existsSync(launchFile)) throw new Error(`resume refused: ${launchFile} is missing`);
+    // Every setting must match. Two may change, each recorded in the launch history: the cap may be raised (it gates which
+    // sessions start, never how one runs), and the runner may change only with --accept-runner-change.
+    const prior = readJson(launchFile);
+    const settings = ({ capUsd, runnerSha256, history, ...rest }) => JSON.stringify(rest);
+    if (settings(prior) !== settings(launch)) throw new Error(`resume refused: the settings differ from ${launchFile}`);
+    const change = {};
+    if (prior.runnerSha256 !== launch.runnerSha256) {
+      if (!opt.acceptRunnerChange) throw new Error(`resume refused: the runner changed since launch (${prior.runnerSha256.slice(0, 12)} -> ${launch.runnerSha256.slice(0, 12)}); pass --accept-runner-change to accept and record it`);
+      change.runnerSha256 = [prior.runnerSha256, launch.runnerSha256];
+    }
+    if (prior.capUsd !== launch.capUsd) {
+      if (!(launch.capUsd >= prior.capUsd)) throw new Error(`resume refused: the cap can only be raised (${prior.capUsd} -> ${launch.capUsd})`);
+      change.capUsd = [prior.capUsd, launch.capUsd];
+    }
+    if (Object.keys(change).length) writeJson(launchFile, { ...prior, runnerSha256: launch.runnerSha256, capUsd: launch.capUsd, history: [...(prior.history ?? []), { at: new Date().toISOString(), ...change }] });
+    // A recorded task that is not an outcome (written before these rules, or by hand) reruns; a faulted one is kept aside.
+    const all = readRecords(resultsFile);
+    kept = all.filter(r => !notAnOutcome(r));
+    if (kept.length !== all.length) {
+      for (const r of all.filter(notAnOutcome)) {
+        if (r.forks.some(isEnvFault)) appendFileSync(faultsFile, JSON.stringify({ ...r, stoppedBy: 'reclassified on resume' }) + '\n');
+        log(`[autobench] ${r.task}: recorded record is not an outcome (${r.forks.map(f => (f.skipped ? 'cap skip' : f.deferred ? 'deferred' : faultOf(f)) || 'ok').join(', ')}); it reruns`);
+      }
+      writeFileSync(resultsFile, kept.map(r => JSON.stringify(r) + '\n').join(''));
+    }
   } else if (!opt.dryRun) writeJson(launchFile, launch);
   if (harness && cliMaxTurns > 0) guard = writeCliGuard(path.join(live, 'harness-bin'), { maxTurns: cliMaxTurns, target: opt.cliTarget ?? 'claude' });
   // Sealed run (devCheck go/no-go looks, the test run): per-task grades never reach the log or a plain repo file.
@@ -231,7 +261,8 @@ export async function runTasks(o) {
   }
 
   // 3. sessions
-  const ledger = makeLedger(scripted ? Infinity : opt.capUsd);
+  // A scripted run is uncapped unless a cap is given (tests of the cap stop).
+  const ledger = makeLedger(scripted ? opt.capUsd ?? Infinity : opt.capUsd);
   // A resumed run keeps its recorded tasks (each must still match its contract) and counts all earlier spend on the cap.
   const faulted = readRecords(faultsFile);
   for (const r of kept) if (readJson(path.join(prep, r.task, 'meta.json')).contract_sha256 !== r.contract_sha256) throw new Error(`resume refused: the contract of ${r.task} changed`);
@@ -263,10 +294,11 @@ export async function runTasks(o) {
         turns: f.turns ?? null, durationMs: f.durationMs ?? null, sessionError: f.sessionError ?? null, harnessError: f.harnessError ?? null, skipped: f.skipped ?? null, nestedModelUses: f.nestedModelUses ?? 0,
         session: f.session ?? null, usage: f.usage ?? null, ...(harness === HARNESS_ID ? { ledger: f.ledger ?? null } : {}), ...(co ? { pipeline: f.pipeline ?? null } : {}), accountingError: f.accountingError ?? null })),
       vote, final: final ? summarizeGrade(final) : null, costUsd: fs.reduce((s, f) => s + (f.costUsd ?? f.costUpperUsd ?? 0), 0) };
-    // An environment fault (or a fork not started after one) is not an outcome: kept as raw evidence, rerun on --resume.
-    if (fs.some(f => f.deferred || isEnvFault(f))) {
+    // An environment fault, a cap skip, or a fork not started after a stop is not an outcome: a fault is kept as raw
+    // evidence, and the task reruns on --resume.
+    if (notAnOutcome({ forks: fs })) { // the raw forks: the record's fork summaries do not carry `deferred`
       if (fs.some(isEnvFault)) appendFileSync(faultsFile, JSON.stringify({ ...rec, stoppedBy: stopped }) + '\n');
-      log(`[autobench] ${task}: deferred (${fs.find(isEnvFault)?.sessionError ?? 'not started after an environment fault'})`);
+      log(`[autobench] ${task}: deferred (${fs.some(isEnvFault) ? faultOf(fs.find(isEnvFault)) : fs.some(f => f.skipped) ? 'the cap' : 'not started after a stop'})`);
       return;
     }
     // H3 (host-side step cap) and L5 (PREREG §8): a single-rollout task-run whose session exceeded the official step
@@ -294,6 +326,7 @@ export async function runTasks(o) {
       rec.deferred = stopped;
     } else if (!(await ledger.reserve(opt.budgetUsd))) {
       rec.skipped = `cap: spent ${ledger.spent.toFixed(4)} + reserved ${ledger.reserved.toFixed(4)} + ${opt.budgetUsd} > ${opt.capUsd}`;
+      stopped ??= `the cap (${rec.skipped})`;
     } else {
       let r = null, bridge = null, started = false;
       try {
@@ -345,7 +378,7 @@ export async function runTasks(o) {
           if (!scripted && (co ? !r?.nodes?.length : !events.length)) rec.session.violations.push('L5: no host transcript (step and model accounting unavailable)');
         } catch (e) { rec.accountingError = String(e?.message ?? e).slice(0, 500); }
       }
-      if (isEnvFault(rec)) stopped ??= `${rec.sessionError} at ${task} fork ${fork}`;
+      if (isEnvFault(rec)) stopped ??= `${faultOf(rec)} at ${task} fork ${fork}`;
     }
     forks.get(task).push(rec);
     remaining.set(task, remaining.get(task) - 1);
@@ -355,8 +388,9 @@ export async function runTasks(o) {
   // 4. summary
   results.sort((a, b) => tasks.indexOf(a.task) - tasks.indexOf(b.task));
   if (stopped) {
-    log(`[autobench] STOPPED on an environment fault (${stopped}): ${results.length}/${tasks.length} tasks recorded, $${ledger.spent.toFixed(4)} spent of $${opt.capUsd}; no summary or headline. Re-run the same command with --resume after the reset.`);
-    return { summary: { runId, stopped, recorded: results.length, of: tasks.length, spentUsd: ledger.spent, live }, results, stopped };
+    const atCap = stopped.startsWith('the cap');
+    log(`[autobench] STOPPED at ${atCap ? '' : 'an environment fault: '}${stopped}. ${results.length}/${tasks.length} tasks recorded, $${ledger.spent.toFixed(4)} spent of $${opt.capUsd}; no summary or headline. ${atCap ? 'Re-run with --resume and a higher --cap.' : 'Re-run the same command with --resume after the reset.'}`);
+    return { summary: { runId, stopped, recorded: results.length, of: tasks.length, spentUsd: ledger.spent, live }, results, stopped, stopKind: atCap ? 'cap' : 'environment' };
   }
   const faultRecords = readRecords(faultsFile);
   const pass = r => (r.final ? r.final.task_completed_correctly : 0), pc = r => (r.final ? r.final.partial_credit : 0);
@@ -383,6 +417,7 @@ export async function runTasks(o) {
     cost: { spentUsd: ledger.spent, knownUsd: ledger.knownUsd, unknownUpperUsd: ledger.unknownUpperUsd, unknownCostSessions: ledger.unknown, sessions: results.reduce((s, r) => s + r.forks.length, 0),
       skipped: results.flatMap(r => r.forks).filter(f => f.skipped).length },
     // Tasks rerun after an environment fault (their fault records stay in results.faults.jsonl, live and repo copy).
+    launchHistory: readJson(launchFile).history ?? [],
     envFaults: { records: faultRecords.length, tasks: [...new Set(faultRecords.map(r => r.task))].length, sessions: faultRecords.reduce((s, r) => s + r.forks.filter(isEnvFault).length, 0), spentUsd: faultRecords.reduce((s, r) => s + r.costUsd, 0) },
     // Pre-registered: a tool use that starts a nested model (CLI or API) spends outside every ledger and voids the run.
     nestedModelUses: results.reduce((s, r) => s + r.forks.reduce((t, f) => t + (f.nestedModelUses ?? 0), 0), 0),
@@ -406,7 +441,7 @@ export async function runTasks(o) {
 }
 
 function parseArgs(argv) {
-  const a = {}, flags = new Set(['keep', 'dry-run', 'no-copy', 'date-note', 'resume']);
+  const a = {}, flags = new Set(['keep', 'dry-run', 'no-copy', 'date-note', 'resume', 'accept-runner-change']);
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (!k.startsWith('--')) throw new Error(`unexpected argument ${k}`);
@@ -430,15 +465,16 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const { scriptedHarnessRunner } = await import('./harness/scripted-session.mjs');
     runner = scriptedHarnessRunner(({ task }) => steps[task.name] ?? []);
   } else if (a.scripted) { const steps = readJson(a.scripted); runner = scriptedRunner(({ name }) => steps[name] ?? []); }
-  const { summary, stopped } = await runTasks({
+  const { summary, stopped, stopKind } = await runTasks({
     model: a.model, tasks: a.tasks ? a.tasks.split(',').filter(Boolean) : undefined, subset: num(a.subset, undefined), seed: a.seed ?? DEFAULTS.seed,
     domains: a.domains ? a.domains.split(',') : undefined, k: num(a.k, DEFAULTS.k), capUsd: num(a.cap, undefined), budgetUsd: num(a.budget, DEFAULTS.budgetUsd),
     concurrency: num(a.concurrency, DEFAULTS.concurrency), maxSteps: num(a['max-steps'], DEFAULTS.maxSteps), timeoutMin: num(a['timeout-min'], DEFAULTS.timeoutMin),
     det: a.det ?? DEFAULTS.det, effort: a.effort, tools: a.tools ? a.tools.split(',') : DEFAULTS.tools, runId: a['run-id'], liveRoot: a.live,
     outDir: a['no-copy'] ? null : a.out, keep: Boolean(a.keep), dryRun: Boolean(a['dry-run']), runner, pool: a.pool,
-    dateNote: Boolean(a['date-note']), resume: Boolean(a.resume), harness: a.harness ?? null, harnessHash: a['harness-hash'], testRun: a['test-run'], nodeRunner,
+    dateNote: Boolean(a['date-note']), resume: Boolean(a.resume), acceptRunnerChange: Boolean(a['accept-runner-change']), harness: a.harness ?? null, harnessHash: a['harness-hash'], testRun: a['test-run'], nodeRunner,
     nodeModels: a['node-models'] ? Object.fromEntries(a['node-models'].split(',').filter(Boolean).map(x => x.split('=').map(y => y.trim()))) : undefined, cliMaxTurns: a['cli-max-turns'] === undefined ? undefined : a['cli-max-turns'] === 'off' ? 0 : Number(a['cli-max-turns']),
   });
   process.stdout.write(JSON.stringify(summary, null, 1) + '\n');
-  if (stopped) process.exit(3);
+  // Exit 3: an environment fault (resume after the reset). Exit 4: the cap (resume with a higher --cap).
+  if (stopped) process.exit(stopKind === 'cap' ? 4 : 3);
 }
