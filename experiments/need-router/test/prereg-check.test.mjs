@@ -25,7 +25,8 @@ test('the committed stages.json and PREREG-NEED-V1.md pass every check (ledger, 
   assert.deepEqual(res.errors, []);
   assert.equal(res.summary.status, 'draft');
   assert.ok(res.summary.seedChecks > 900, `seed checks ${res.summary.seedChecks}`);
-  assert.deepEqual(res.summary.totals, { estUsd: 951, capUsd: 1235, coreEstUsd: 663, coreCapUsd: 855, recurringCapUsd: 24, softCapCheckUsd: 1259 });
+  // D9: NL0-owner adds $15 / $40; committedUsd counts M1 at its recorded $62.92; the soft-cap check adds M1-R ($25.89).
+  assert.deepEqual(res.summary.totals, { estUsd: 966, capUsd: 1275, coreEstUsd: 663, coreCapUsd: 855, committedUsd: 1322.92, recurringCapUsd: 24, externalCommittedUsd: 25.89, softCapCheckUsd: 1372.81 });
   assert.deepEqual(res.summary.clusters.train, ['W', 'kinetics', 'codefix', 'need-qa']);
   assert.match(TEXT, /Status: \*\*DRAFT/);
 });
@@ -243,7 +244,7 @@ test('review B2 and M7: M1 is recorded (both tags, one cap shared by tag); DRIFT
   // DRIFT recurs: its cumulative cap enters the soft-cap check; a stage outside the totals without a run limit is refused.
   assert.ok(hasError(check(mutate(s => { delete s.stages.find(x => x.id === 'DRIFT').recurring; })), /DRIFT is outside the totals with no recurring run limit/));
   assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'DRIFT').recurring.cumulativeCapUsd = 8; })), /DRIFT: recurring needs/));
-  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'DRIFT').recurring = { maxRuns: 40, cumulativeCapUsd: 320 }; })), /plus recurring caps \$320 is over the \$1500 session soft cap/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'DRIFT').recurring = { maxRuns: 40, cumulativeCapUsd: 320 }; })), /plus recurring caps \$320 plus externally budgeted stages \$25\.89 is over the \$1500 session soft cap/));
 });
 
 test('review B2: r3p is near and dev-observed; its original hypothesis row stays, the M1-informed revision is logged; a drop sensitivity is mandatory', () => {
@@ -286,9 +287,13 @@ test('review m6 (minor): --hashes checks every seed against the ledger and hashe
   assert.deepEqual(Object.keys(r).sort(), ['evalRepeats', 'exampleEval', 'refused', 'tasks']);
   assert.equal(r.tasks, 34);
   assert.doesNotMatch(out, /[0-9a-f]{64}/, 'no task hash leaves the child');
-  // The same counts in-process (child: false is for this test only).
-  const here2 = await hashCollisions(STAGES, { jobs: ['need-constraint'], child: false });
-  assert.equal(here2.tasks, r.tasks);
+  // The child's counts equal an in-process run of the same function on a TRAIN anchor (dev seeds only); child: false is
+  // refused for a held-out job (second review, D9: the suite no longer hashes held-out tasks in-process).
+  const outQa = execFileSync(process.execPath, [path.join(here, '..', 'prereg-check.mjs'), '--hash-child'], { input: JSON.stringify({ stages: STAGES, jobs: ['need-qa'] }), encoding: 'utf8' });
+  const here2 = await hashCollisions(STAGES, { jobs: ['need-qa'], child: false });
+  assert.equal(here2.heldoutJobs, 0);
+  assert.equal(here2.tasks, JSON.parse(outQa.trim()).tasks);
+  await assert.rejects(hashCollisions(STAGES, { jobs: ['need-constraint'], child: false }), e => e.code === 'HELDOUT_IN_PROCESS');
   // A seed the ledger refuses is reported and never generated (held-out evaluation moved onto the JIT reservation).
   const bad = mutate(s => { s.seeds.heldoutEval = { from: 8001, to: 8012 }; });
   const rb = await hashCollisions(bad, { jobs: ['need-constraint'] });
@@ -351,7 +356,8 @@ test('review M7 refresh: a stage outside the totals needs a recurring limit or a
   const m1r = STAGES.stages.find(s => s.id === 'M1-R');
   assert.equal(m1r.inTotals, false);
   assert.equal(m1r.externalBudget.capUsd, m1r.capUsd);
-  assert.deepEqual(check(STAGES).summary.totals, { estUsd: 951, capUsd: 1235, coreEstUsd: 663, coreCapUsd: 855, recurringCapUsd: 24, softCapCheckUsd: 1259 }, 'M1-R is not double-counted');
+  // M1-R is counted once, outside the stage totals, in the soft-cap check (externalCommittedUsd, D9).
+  assert.deepEqual(check(STAGES).summary.totals, { estUsd: 966, capUsd: 1275, coreEstUsd: 663, coreCapUsd: 855, committedUsd: 1322.92, recurringCapUsd: 24, externalCommittedUsd: 25.89, softCapCheckUsd: 1372.81 }, 'M1-R is not double-counted');
   const edit = f => check(mutate(s => f(s.stages.find(x => x.id === 'M1-R'))));
   assert.ok(hasError(edit(st => { delete st.externalBudget; }), /M1-R is outside the totals with no recurring run limit and cumulative cap, and no externalBudget/));
   assert.ok(hasError(edit(st => { st.externalBudget.plan = 'research/need-router-20261014/DESIGN.md'; }), /M1-R: externalBudget plan research\/need-router-20261014\/DESIGN\.md does not name the stage/));

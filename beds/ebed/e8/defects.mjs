@@ -7,11 +7,11 @@
 // as oracle mutant k), or the policy with one of E-BED §3 E8's hand-proposed candidate defects (a policy `variant`, as the
 // controls are built). The mutant runs as the ARM through the real host; the ORACLE stays the original transition.
 //
-// The miner keeps a mutant when, on every mining world:
+// The miner (tools/defects-mine.mjs) keeps a mutant at the difficulties (its band) where, on every mining world:
 //   1. it is **E0-silent, executed**: every case of the first epoch (epoch `ep0`, and the go-live backlog `gl`, which the
 //      first epoch processes) is graded by the oracle on the mutant's own journal and none fails (no divergence, oracle
 //      error, critical violation, or unfinished completed-pool case);
-// and on at least one world:
+// and on at least one world of the band:
 //   2. it **dies later**: some case of a later epoch fails, and
 //   3. it is **revealed in E2 or E3** (§2.10): the first failing case whose failure becomes observable inside
 //      [start of ep2, start of ep4) gets a planted revealing event (a customer complaint, carrier claim, warehouse
@@ -163,7 +163,7 @@ export async function prepareWorld({ seed, difficulty, mix = 'tail', size = null
   const ref = await referenceRuns(world);
   const rows = ref.runs[PARAMS.timing].rows;
   const wakeups = rows.filter(r => r.type === 'wakeup').length;
-  return { world, pools: ref.pools, refDigest: behaviourDigest(rows), maxWakeups: PARAMS.runawayFactor * wakeups + 500 };
+  return { world, difficulty, seed, pools: ref.pools, refDigest: behaviourDigest(rows), maxWakeups: PARAMS.runawayFactor * wakeups + 500 };
 }
 
 const epochIndex = (world, atMs) => world.epochBounds.map(Date.parse).reduce((k, s, i) => (atMs >= s ? i : k), 0);
@@ -517,7 +517,7 @@ export function baseDigests() {
  * One latent defect's manifest. `results` are the mined worlds of the representative mutant (mineOnWorld with keep), with
  * `plan` from planReveal on each; `members` the mutants with the same behaviour on every mining world.
  */
-export function defectManifest({ id, mutant, members, results, oracleVerdict = null }) {
+export function defectManifest({ id, mutant, members, results, oracleVerdict = null, band = null, outsideBand = null }) {
   const rules = new Set();
   for (const r of results) for (const a of r.affected) if (a.rule) rules.add(a.rule);
   for (const r of results) if (r.plan?.reveal?.truth?.rule) rules.add(r.plan.reveal.truth.rule);
@@ -531,6 +531,7 @@ export function defectManifest({ id, mutant, members, results, oracleVerdict = n
         : { file: 'beds/ebed/e8/defects.mjs', candidate: mutant.candidate, origin: mutant.origin }),
       ...(oracleVerdict ? { asOracleMutant: oracleVerdict } : {}) },
     members,
+    ...(band ? { band, outsideBand } : {}),
     solver: { policy: 'beds/ebed/oracle/policy.mjs referenceArm', timing: PARAMS.timing, oracle: 'original transition.mjs' },
     contradicts: [...rules].sort(),
     revealedBy: results.some(r => r.plan?.reveal?.event) ? 'in-world event (planted)' : 'self (arm error)',

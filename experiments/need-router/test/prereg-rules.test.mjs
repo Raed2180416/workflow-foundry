@@ -28,14 +28,17 @@ test('review B1: at the planned class counts a perfect H0 is not powered, so C7a
   assert.match(r.why, /not powered/);
   // (2, 8): sup of p1^2 (2b - p1)^8 is 0.16 * 1.6^8 b^10, so b = (0.025 / (0.16 * 1.6^8))^(1/10) = 0.570.
   close(c7aPower(2, 8).perfectLowerBound, (0.025 / (0.16 * 1.6 ** 8)) ** 0.1, 1e-4, 'analytic (2, 8)');
-  assert.equal(c7aPower(2, 8).powered, true);
-  // Minimum confident counts (stated in PREREG §7 and stages.json analysis.c7a).
-  assert.deepEqual(c7aMinimumCounts(), [{ pos: 1, minNeg: 15 }, { pos: 2, minNeg: 4 }, { pos: 3, minNeg: 3 }, { pos: 4, minNeg: 2 }]);
-  assert.deepEqual(STAGES.analysis.c7a.minimumConfidentCounts.slice(0, 4).map(x => [x.pos, x.neg]), [[1, 15], [2, 4], [3, 3], [4, 2]]);
-  // Powered and wrong: F12 trips (REFUTED); powered and right: SUPPORTED-DIAGNOSTIC.
-  assert.equal(c7aReading({ h0: { tp: 1, fn: 2, tn: 5, fp: 4 }, tunedPoint: 0.5, coverage: 1 }).reading, 'REFUTED');
-  assert.equal(c7aReading({ h0: { tp: 4, fn: 0, tn: 8, fp: 0 }, tunedPoint: 0.6, coverage: 0.8 }).reading, 'SUPPORTED-DIAGNOSTIC');
-  assert.equal(c7aReading({ h0: { tp: 4, fn: 0, tn: 8, fp: 0 }, tunedPoint: 0.6, coverage: 0.4 }).reading, 'INCONCLUSIVE', 'coverage under 50%');
+  // Second review (D9): the precondition is a chance, P(lower bound > 0.5) >= 0.8 for a TPR = TNR = 0.9 classifier, not a
+  // perfect classifier's bound; 2 + 8 is no longer powered (pExclude 0.659).
+  assert.equal(c7aPower(2, 8).powered, false);
+  close(c7aPower(2, 8).pExclude, 0.659, 0.001, 'pExclude (2, 8)');
+  // Minimum confident counts (stated in PREREG §7 and stages.json analysis.c7a), revised in D9.
+  assert.deepEqual(c7aMinimumCounts({ maxPos: 4 }), [{ pos: 1, minNeg: null }, { pos: 2, minNeg: null }, { pos: 3, minNeg: null }, { pos: 4, minNeg: 9 }]);
+  assert.deepEqual(STAGES.analysis.c7a.minimumConfidentCounts.slice(0, 3).map(x => [x.pos, x.neg]), [[4, 9], [5, 7], [6, 6]]);
+  // Powered and the upper bound below 0.7: F12 trips (REFUTED); powered and right: SUPPORTED-DIAGNOSTIC.
+  assert.equal(c7aReading({ h0: { tp: 2, fn: 4, tn: 5, fp: 5 }, tunedPoint: 0.5, coverage: 1 }).reading, 'REFUTED');
+  assert.equal(c7aReading({ h0: { tp: 6, fn: 0, tn: 10, fp: 0 }, tunedPoint: 0.6, coverage: 0.8 }).reading, 'SUPPORTED-DIAGNOSTIC');
+  assert.equal(c7aReading({ h0: { tp: 6, fn: 0, tn: 10, fp: 0 }, tunedPoint: 0.6, coverage: 0.4 }).reading, 'INCONCLUSIVE', 'coverage under 50%');
   assert.equal(c7aReading({ h0: { tp: 0, fn: 0, tn: 8, fp: 0 } }).reading, 'INCONCLUSIVE', 'one class only');
 });
 
@@ -59,10 +62,11 @@ test('review B1: the joint interval has exact coverage >= 1 - alpha per side (en
 });
 
 test('review B1 and B2: a C7a or C7b claim must survive dropping r3p (near and dev-observed)', () => {
-  // r3p the only positive: dropping it leaves one class, so a would-be SUPPORTED-DIAGNOSTIC reads INCONCLUSIVE.
-  const full = { h0: { tp: 2, fn: 0, tn: 8, fp: 0 }, tunedPoint: 0.5, coverage: 1 };
+  // r3p carries 3 of the 6 positives: dropping it leaves an unpowered set, so a would-be SUPPORTED-DIAGNOSTIC reads
+  // INCONCLUSIVE (D9: 6 + 10 is powered, 3 + 10 is not).
+  const full = { h0: { tp: 6, fn: 0, tn: 10, fp: 0 }, tunedPoint: 0.5, coverage: 1 };
   assert.equal(c7aReading(full).reading, 'SUPPORTED-DIAGNOSTIC');
-  const r = c7aReading({ ...full, withoutNear: { h0: { tp: 1, fn: 0, tn: 8, fp: 0 }, tunedPoint: 0.5, coverage: 1 } });
+  const r = c7aReading({ ...full, withoutNear: { h0: { tp: 3, fn: 0, tn: 10, fp: 0 }, tunedPoint: 0.5, coverage: 1 } });
   assert.equal(r.reading, 'INCONCLUSIVE');
   assert.equal(r.agrees, false);
   assert.equal(c7aReading({ ...full, withoutNear: null }).reading, 'INCONCLUSIVE', 'no valid set without r3p');

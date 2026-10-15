@@ -1,12 +1,16 @@
 // Mine E8 latent defects from reference mutants (E-BED §2.10, §9.5; defects.mjs). $0, one process, sequential.
-// Stage 1 runs every mutant (tools/mutate.mjs's transition mutants as the arm, plus E-BED §3 E8's hand candidates) on
-// one dev world per difficulty, stopping at the first failing E0 case; stage 2 re-executes the E0-silence check and the
-// mining on a second world per difficulty for the stage-1 survivors. Mutants with the same behaviour (journal digest) on
-// every mining world are one defect; a defect is admitted when some world reveals it inside E2/E3. Writes one manifest
-// per admitted defect and index.json under --out (default ledger/latent-defects/).
-//   node beds/ebed/e8/tools/defects-mine.mjs [--stage1 1101:2,1101:3,1101:4,1101:5] [--stage2 1102:2,1102:3,1102:4,1102:5]
+// Every mutant (tools/mutate.mjs's transition mutants as the arm, plus policy mutants: E-BED §3 E8's hand candidates and
+// two edition operators) runs on one dev world per difficulty, hardest first, and stops at the first world with a failing
+// E0 case. The difficulties before that world, where E0 was silent, are the mutant's **band** (d5 only, d4-d5, ... or all):
+// E8's later-epoch structure differs by difficulty (a second edition from d4, renames and faults at d5), so a defect can
+// be latent at d4-d5 and visible at d2-d3. A mutant that fails some later case inside its band goes to stage 2, which
+// re-executes the E0-silence check on a second seed at each band difficulty (hardest first; the band shrinks at a
+// failure). A defect is latent at the difficulties where both seeds are E0-silent and admitted when a world of its band
+// reveals it inside E2/E3. Mutants with the same behaviour (journal digest) on every band world are one defect. Writes
+// one manifest per admitted defect and index.json under --out (default ledger/latent-defects/).
+//   node beds/ebed/e8/tools/defects-mine.mjs [--stage1 1101:5,1101:4,1101:3,1101:2] [--stage2 1102:5,1102:4,1102:3,1102:2]
 //        [--only ref-k12,hc-timer-first] [--limit N] [--out DIR] [--no-write]
-// index.json `perWorld` is `<failed E0 cases>/<failed later cases>` per mining world (stage 1, then stage 2); `!` marks a
+// index.json `perWorld` is `<failed E0 cases>/<failed later cases>` per world mined (stage 1, then stage 2); `!` marks a
 // runaway stopped by the host (graded up to the stop).
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import path from 'node:path';
@@ -16,8 +20,8 @@ import { transitionMutants, HAND_CANDIDATES, armItemOf, mineOnWorld, prepareWorl
 const here = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const worldsOf = s => s.split(',').filter(Boolean).map(x => { const [seed, d] = x.split(':').map(Number); return { seed, difficulty: d }; });
-const stage1 = worldsOf(arg('--stage1', '1101:2,1101:3,1101:4,1101:5'));
-const stage2 = worldsOf(arg('--stage2', '1102:2,1102:3,1102:4,1102:5'));
+const stage1 = worldsOf(arg('--stage1', '1101:5,1101:4,1101:3,1101:2'));
+const stage2 = worldsOf(arg('--stage2', '1102:5,1102:4,1102:3,1102:2'));
 for (const w of [...stage1, ...stage2]) if (!(w.seed >= 1001 && w.seed <= 1199)) throw new Error(`seed ${w.seed} outside the E-bed dev block 1001-1199`);
 const only = arg('--only', null)?.split(',') ?? null;
 const out = path.resolve(arg('--out', path.join(here, '..', 'ledger', 'latent-defects')));
@@ -42,33 +46,37 @@ const dir = scratchDir();
 const prepare = async list => { const r = []; for (const w of list) { r.push(await prepareWorld(w)); console.log(`  world ${r.at(-1).world.id}: ${Object.keys(r.at(-1).world.truth.cases).length} cases (${secs()} s)`); } return r; };
 const status = new Map();        // id -> { status, e0First?, worlds: [{ world, digest, inert, affected }] }
 
-// Stage 1 mines every world (so world-latent mutants, E0-silent and failing later on some world but E0-visible on another,
-// are recorded); stage 2 stops at the first E0 failure.
-async function mineAll(list, prepared, stageName, { stopAtE0 }) {
+async function mineAll(list, prepared, stageName) {
   for (const [n, m] of list.entries()) {
     const st = status.get(m.id) ?? { status: 'pending', worlds: [] };
     status.set(m.id, st);
     let item;
     try { item = await armItemOf(m, dir); } catch (e) { st.status = 'load-error'; st.error = String(e?.message ?? e).slice(0, 120); console.log(`    ${m.id} load-error`); continue; }
-    for (const p of prepared) {
+    for (const p of prepared.filter(q => !st.band || st.band.includes(q.difficulty))) {
       let r;
       try { r = await mineOnWorld({ mutant: m, item, prepared: p }); } catch (e) {
         st.status = 'run-error'; st.stage = stageName; st.error = `${p.world.id}: ${String(e?.message ?? e).slice(0, 120)}`; break;
       }
-      const w = { world: p.world.id, digest: r.digest, inert: r.inert, e0Failed: r.e0.failed.length, affected: r.affected.length, oracleErrors: r.affected.filter(a => a.oracleError).length };
+      const w = { world: p.world.id, difficulty: p.difficulty, stage: stageName, digest: r.digest, inert: r.inert,
+        e0Failed: r.e0.failed.length, affected: r.affected.length, oracleErrors: r.affected.filter(a => a.oracleError).length };
       if (r.aborted) w.stopped = r.stoppedAt;
       st.worlds.push(w);
-      if (r.e0.failed.length && !st.e0First) { st.stage = stageName; st.e0First = { world: p.world.id, ...r.e0.failed[0] }; }
-      if (r.aborted && !st.stopped) st.stopped = `${p.world.id}: ${r.aborted.slice(0, 80)}; stopped at ${r.stoppedAt}`;
-      if (stopAtE0 && r.e0.failed.length) break;
+      if (r.e0.failed.length) { st.e0First ??= { world: p.world.id, stage: stageName, ...r.e0.failed[0] }; break; }
+      if (r.aborted) { st.stopped ??= `${p.world.id}: ${r.aborted.slice(0, 80)}; E0 silent up to the stop at ${r.stoppedAt}`; break; }
     }
-    if (st.status === 'pending' || st.status === 'candidate') {
-      const errs = st.worlds.reduce((s2, w) => s2 + w.oracleErrors, 0);
-      st.status = st.e0First ? 'e0-visible' : st.stopped ? 'runaway' : errs ? 'oracle-error'
-        : st.worlds.some(w => w.affected) ? 'candidate' : st.worlds.every(w => w.inert) ? 'inert' : 'silent';
-      st.worldLatent = st.worlds.filter(w => !w.e0Failed && !w.stopped && w.affected).map(w => w.world);
+    // The band: difficulties with an E0-silent, completed run on every seed mined so far.
+    const ok = d => st.worlds.filter(w => w.difficulty === d).every(w => !w.e0Failed && !w.stopped) && st.worlds.some(w => w.difficulty === d);
+    const ds = [...new Set(st.worlds.map(w => w.difficulty))].sort((x, y) => y - x);
+    const band = [];
+    for (const d of ds) { if (!ok(d)) break; band.push(d); }
+    st.band = band;
+    if (st.status !== 'load-error' && st.status !== 'run-error') {
+      const inBand = st.worlds.filter(w => band.includes(w.difficulty));
+      const errs = inBand.reduce((s2, w) => s2 + w.oracleErrors, 0);
+      st.status = errs ? 'oracle-error' : inBand.some(w => w.affected) ? 'candidate'
+        : st.e0First ? 'e0-visible' : st.stopped ? 'runaway' : inBand.every(w => w.inert) ? 'inert' : 'silent';
     }
-    console.log(`    ${m.id} ${st.status}${st.e0First ? ` (${st.e0First.world.replace('ebed-e8-dev-', '')} ${st.e0First.case} ${st.e0First.code ?? ''})` : ''} e0/affected ${st.worlds.map(w => `${w.e0Failed}/${w.affected}${w.stopped ? '!' : ''}`).join(' ')} (${secs()} s)`);
+    console.log(`    ${m.id} ${st.status}${band.length ? ` band d${band.join(',')}` : ''}${st.e0First ? ` (E0: ${st.e0First.world.replace('ebed-e8-dev-', '')} ${st.e0First.case} ${st.e0First.code ?? ''})` : ''} e0/affected ${st.worlds.map(w => `${w.e0Failed}/${w.affected}${w.stopped ? '!' : ''}`).join(' ')} (${secs()} s)`);
     if ((n + 1) % 10 === 0 || n + 1 === list.length) {
       const tally = {}; for (const x of list.slice(0, n + 1)) { const s2 = status.get(x.id).status; tally[s2] = (tally[s2] ?? 0) + 1; }
       console.log(`  ${stageName} ${n + 1}/${list.length} (${secs()} s) ${JSON.stringify(tally)}`);
@@ -79,19 +87,21 @@ async function mineAll(list, prepared, stageName, { stopAtE0 }) {
 console.log(`${mutants.length} reference mutants (${mutants.filter(m => m.kind === 'transition').length} transition, ${mutants.filter(m => m.kind === 'policy').length} policy mutants)`);
 console.log('stage 1 worlds');
 const p1 = await prepare(stage1);
-await mineAll(mutants, p1, 'stage1', { stopAtE0: false });
+await mineAll(mutants, p1, 'stage1');
 const cands1 = mutants.filter(m => status.get(m.id).status === 'candidate');
-console.log(`stage 2 worlds (${cands1.length} stage-1 candidates)`);
-const p2 = cands1.length ? await prepare(stage2) : [];
+const need2 = new Set(cands1.flatMap(m => status.get(m.id).band));
+console.log(`stage 2 worlds (${cands1.length} stage-1 candidates; difficulties ${[...need2].sort().join(',')})`);
+const p2 = await prepare(stage2.filter(w => need2.has(w.difficulty)));
 for (const m of cands1) status.get(m.id).status = 'pending';
-await mineAll(cands1, p2, 'stage2', { stopAtE0: true });
+await mineAll(cands1, p2, 'stage2');
 const allPrepared = [...p1, ...p2];
 const latent = mutants.filter(m => status.get(m.id).status === 'candidate');
 
 // One defect per behaviour: the same journal digest on every mining world.
 const groups = new Map();
 for (const m of latent) {
-  const sig = status.get(m.id).worlds.map(w => w.digest).join('|');
+  const st = status.get(m.id);
+  const sig = `${st.band.join(',')}#${st.worlds.filter(w => st.band.includes(w.difficulty)).map(w => w.digest).join('|')}`;
   if (!groups.has(sig)) groups.set(sig, []);
   groups.get(sig).push(m);
 }
@@ -103,18 +113,21 @@ for (const members of groups.values()) {
   const id = `ld-${rep.id.replace(/^ref-/, '')}`;
   const item = await armItemOf(rep, dir);
   const results = [];
-  for (const p of allPrepared) {
+  const band = status.get(rep.id).band;
+  for (const p of allPrepared.filter(q => band.includes(q.difficulty))) {
     const r = await mineOnWorld({ mutant: rep, item, prepared: { ...p, refDigest: null, refDigest0: p.refDigest }, keep: true });   // every E0 case graded, no digest short cut
     if (r.e0.failed.length) throw new Error(`${rep.id}: E0 failure on re-run (${p.world.id}): non-deterministic run`);
     const plan = r.affected.length ? planReveal({ world: p.world, mined: r, defectId: id }) : null;
     const { verdicts, idx, rows, ...keep } = r;
     results.push({ ...keep, plan });
   }
-  const man = defectManifest({ id, mutant: rep, members: members.map(m => m.id), results, oracleVerdict: oracleVerdicts[rep.id] ?? null });
+  const e0 = status.get(rep.id).e0First;
+  const man = defectManifest({ id, mutant: rep, members: members.map(m => m.id), results, oracleVerdict: oracleVerdicts[rep.id] ?? null,
+    band, outsideBand: e0 ? { world: e0.world, case: e0.case, epoch: e0.epoch, code: e0.code ?? null, ...(e0.lid ? { lid: e0.lid } : {}) } : null });
   if (results.some(r => r.plan?.reveal)) manifests.push(man);
   else unrevealed.push({ id, members: members.map(m => m.id), why: results.filter(r => r.plan).map(r => `${r.meta.world}: ${r.plan.why}`) });
   for (const m of members) status.get(m.id).status = results.some(r => r.plan?.reveal) ? 'latent' : 'latent-unrevealed';
-  console.log(`  ${id} (${members.length} mutant${members.length > 1 ? 's' : ''}, ${rep.operator}): ${results.filter(r => r.plan?.reveal).length}/${results.length} worlds reveal in E2/E3, affected ${results.map(r => r.affected.length).join('/')} (${secs()} s)`);
+  console.log(`  ${id} (${members.length} mutant${members.length > 1 ? 's' : ''}, ${rep.operator}, band d${band.join(',')}): ${results.filter(r => r.plan?.reveal).length}/${results.length} worlds reveal in E2/E3, affected ${results.map(r => r.affected.length).join('/')} (${secs()} s)`);
 }
 removeDir(dir);
 
@@ -133,11 +146,11 @@ const index = {
       stage2: p2.reduce((s, p) => s + Object.values(p.world.truth.cases).filter(t => PARAMS.e0Epochs.includes(t.epoch)).length, 0) } },
   counts: { mutants: mutants.length, transition: mutants.filter(m => m.kind === 'transition').length, policy: mutants.filter(m => m.kind === 'policy').length, ...tally,
     behaviours: groups.size, admitted: manifests.length, unrevealed: unrevealed.length, trueRevealingEvents: trueEvents, falseRevealingEvents: falseEvents,
-    worldLatentOnly: mutants.filter(m => ['e0-visible', 'runaway'].includes(status.get(m.id).status) && status.get(m.id).worldLatent?.length).length,
+    admittedAllDifficulties: manifests.filter(x => x.band.length === 4).length,
     selfRevealing: manifests.filter(x => x.worlds.every(w => !w.reveal || !w.reveal.event)).length },
   defects: manifests.map(x => {
     const first = x.worlds.find(w => w.reveal);
-    return { id: x.id, file: `${x.id}.json`, members: x.members, operator: x.mutant.operator, contradicts: x.contradicts,
+    return { id: x.id, file: `${x.id}.json`, members: x.members, operator: x.mutant.operator, band: x.band, revealedBy: x.revealedBy, contradicts: x.contradicts,
       worldsRevealing: x.worlds.filter(w => w.reveal).map(w => w.world), firstReveal: { world: first.world, case: first.reveal.case, class: first.reveal.class, at: first.reveal.event?.at ?? first.reveal.at, type: first.reveal.event?.type ?? first.reveal.selfRevealing } };
   }),
   unrevealed,
@@ -147,7 +160,7 @@ const index = {
       ...(st.e0First ? { e0First: { world: st.e0First.world, case: st.e0First.case, epoch: st.e0First.epoch, code: st.e0First.code ?? null, ...(st.e0First.lid ? { lid: st.e0First.lid } : {}) } } : {}),
       ...(st.error ? { error: st.error } : {}), ...(st.stopped ? { stopped: st.stopped } : {}),
       ...(st.worlds.length ? { perWorld: st.worlds.map(w => `${w.e0Failed}/${w.affected}${w.stopped ? '!' : ''}`) } : {}),
-      ...(st.worldLatent?.length && !['latent', 'latent-unrevealed'].includes(st.status) ? { worldLatent: st.worldLatent } : {}),
+      ...(st.band?.length ? { band: st.band } : {}),
       ...(oracleVerdicts[m.id] ? { asOracleMutant: oracleVerdicts[m.id].verdict } : {}) };
   }),
 };

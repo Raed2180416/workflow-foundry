@@ -22,6 +22,19 @@ the budget arithmetic and the owner decisions this raises.
 - **Repository state.** Written at HEAD `58cc47a` on `claude/intelligent-hamilton-vg1f9a`. The working tree held uncommitted
   edits by other running agents under `beds/ebed/e7/`, `beds/ebed/e8/` and `experiments/autobench/`. I neither touched nor
   relied on them.
+- **Revised the same day after an adversarial critique** (at HEAD `57cebba`, which adds the first paid A1 dev run on
+  AutomationBench: 0/6 strict, mean partial credit 0.28, $0.10 [code `research/automationbench-20261014/runs/a1-dev-first6/summary.json`]).
+  Thirty-one points were raised; 26 were accepted and changed the text below, 5 were rejected. Each one is listed, with its
+  reason, in the **Critique log** at the end. The main changes:
+  - EARN-1 runs only on AB-R **TRAIN** families, and the AB-R split is fixed before it.
+  - The strongest agent baseline (agent-H plus a validator) runs on E8 first.
+  - The freeze rules now cover the AB-v1 harness files.
+  - Every first experiment prints its minimum detectable effect, and readings are three-way.
+  - BPI logs and WorkBench templates enter F6 now.
+  - The owner simulator is truth-first.
+  - WF-heal pays for its own updated mock.
+  - The budget is restated on the cap basis that governs the soft cap.
+  - The spine is trimmed to what two programs need now.
 
 **Inputs read today:**
 - OWNER-DECISIONS.md (F1–F8);
@@ -57,6 +70,9 @@ BUMP) arrived cut off, so I re-checked both by search.
 1. **One spine, not eight subsystems.**
    - **Six shared records** carry all eight programs (§0.1): a claim row, an earn ledger, a capability grant, the requirement
      ledger, a world manifest and a timing record.
+   - **Only S1 is built as a shared record now**, with the S6 timing fields inside it. S4 already exists. S2, S3 and S5 start
+     as code local to their first experiment (EARN, LP and FID), and become shared only when a second program's
+     preregistration needs them (ROADMAP §6 rules 5 and 12).
    - **Most programs meet in two of them.** F1's "earn it, then build it" path is the same path as:
      - F3's fresh-builder request;
      - F2's skill creator;
@@ -68,41 +84,54 @@ BUMP) arrived cut off, so I re-checked both by search.
 
    | Program | Simple baselines in its first experiment |
    |---|---|
-   | F1 | always agent + verifier; always workflow |
-   | F2 | all tools |
+   | F1 | always agent + verifier, run first on E8 (AGENTV-E8) and then on AB-R; always workflow; decide once from text |
+   | F2 | all tools; the regex screen (for the skill screen) |
    | F3 | always inline; always request; rebuild from scratch |
-   | F4 | a perfect spec given; an agent with no spec |
+   | F4 | a perfect spec given; an agent with no spec (the better of agent-H and agent-H + validator) |
    | F5 | the hand-built mock; a schema-only mock |
-   | F7 | rebuild on every change; an agent that adapts |
-   | F8 | latency comes from every run, not from its own arms |
+   | F6 | the in-generator estimate of the same matched contrast |
+   | F7 | rebuild on every change; an agent that adapts (the better of agent-H and agent-H + validator) |
+   | F8 | the agent arm's wall time; latency comes from every run, not from its own arms |
+
+   **Resolution rule.** Every first experiment prints its minimum detectable effect (MDE) before it runs. Its reading is
+   *supported*, *refuted* or *inconclusive*, and a threshold below the MDE can only read inconclusive (§0.3).
 3. **$0 first.** Every program has a $0 stage that can start now, in new directories:
    - none of them touches `src/`, `policy/models.json`, `experiments/lib/`, `experiments/c0/`, `beds/lib/` or the need-router
      stamped files;
    - product schema changes wait for the engine bump after the matrix, on or after 11-04.
 4. **New paid spend.**
-   - **Total:** about $80–100 estimated and $158 at the caps, across six paid first experiments [arith, §11]. Each is far below
-     the $500 pause.
+   - **Total:** about $81–106 estimated and $164 at the caps, across eight paid first experiments plus the penny J-Q2
+     [arith, §11]. Each is far below the $500 pause.
    - **F6 and F8 add $0.** They ride on AB-v1, MA-0 and every other run.
-5. **Budget warning.** Existing commitments already exceed the $1,500 soft cap at estimates once AB-v1 and AutomationBench-R
-   (AB-R) are counted: about $1,860 before these programs, and about $1,950 with them [arith, §11]. The order in §10 runs the
-   most informative and cheapest work first. §11 lists what to drop first.
+5. **Budget warning.** The soft cap is checked on a **cap basis**: each stage counts at the larger of its cap and its
+   metered runs (`stages.json totals`, PREREG-NEED-V1 "Committed spend, not caps").
+   - On that basis, the need router ($1,372.81) plus the rest of the MRR plan (about $425) already reach about $1,800,
+     which is over the $1,500 soft cap before AB-v1, AB-R or these programs.
+   - With AB-v1 and AB-R added, the total is about $2,350–2,450, and about $2,510–2,610 with this plan. At estimates it is
+     about $1,920–2,050 with this plan [arith, §11].
+   - **Default changed:** every $0 stage runs. A paid F row starts only when the cap-basis meter stays under the soft cap,
+     or after you answer §12 decision 1.
 6. **What you see when.**
-   - **By about 10-25:**
-     - **FID-1:** does an automatically built mock rank the existing solvers the way the hand-built E8 mock does?
+   - **By about 10-19:** **AGENTV-E8.** Does agent-H plus a validator close E8's 14/14 vs 10/14 gap? This is the
+     strongest simple baseline, never run before.
+   - **By about 10-27:**
+     - **FID-1:** does an automatically built mock give the same verdicts on the existing solvers as the hand-built E8 mock?
      - **SPEC-1:** how much of the perfect-spec result survives a messy business?
      - **DRIFT-1a:** do the frozen E8 workflows fail silently on drift they never practised? This part costs $0.
+     - **OUT-2:** do real process logs (BPI) recur the way our stream generators assume? This costs $0.
    - **By about 11-02:**
-     - **EARN-1:** does earned structure beat both fixed policies on six AB-R families?
+     - **EARN-1:** does earned structure beat both fixed policies on the AB-R **TRAIN** families?
      - **LP-1:** does least privilege cost success, and does it shrink the blast radius?
      - **FIX-1:** inline fix or sub-workflow request?
      - **DRIFT-1b:** the upkeep comparison between workflows that heal and an agent that adapts.
    - **AB-v1:** its test run follows its own preregistration.
 7. **Decisions for you** (§12; each has a default):
    - the budget;
+   - the AB-R TRAIN/held-out split, which EARN-1 now needs first;
    - a latency value λ_t, if you want latency inside the utility (default: report it beside the utility);
    - a real process of yours for F6;
    - OSS twins, but no vendor accounts, for F5;
-   - acquiring WorkBench as a second outside world.
+   - acquiring WorkBench as a second outside world (its 69 task templates also make it an outside recurring bed).
 
 ---
 
@@ -113,6 +142,14 @@ BUMP) arrived cut off, so I re-checked both by search.
 **Admission rule [I].** A record exists only if at least two programs need it, or the owner asked for it by name. Each is
 justified by measured evidence.
 
+**Build rule (revised after the critique) [I].** Admission does not mean building now.
+- **S1 (with the S6 timing fields) is built in SPINE-0**, because every paid row needs it.
+- **S4 exists.**
+- **S2, S3 and S5 start as experiment-local code** inside EARN, LP and FID. Each becomes a shared module only when a second
+  program's preregistration needs it. This follows ROADMAP §6 rule 5 ("Don't build assurance machinery a phase doesn't
+  need") and rule 12 ("No new subsystem without a pre-registered experiment that needs it").
+- **Each $0 stage commits its PREDICTION.md before its code**, as J-Q did (`research/architecture-20261014/runs/jq/REPORT.md`).
+
 | # | Record | What it holds | Used by | Evidence it is needed | Where (new) |
 |---|---|---|---|---|---|
 | S1 | **Claim row** `claim-row/0` | Program, experiment and arm. The bed and its **origin**: our generator, ours grounded on outside tasks, an outside world with our grader, an outside world and grader, or real process data. **Fidelity tier** of every world or mock touched (S5). Evidence class (development or sealed) and K. **USD** split into run, build, world, upkeep, imputed, and reserved but unsettled. **Timing** (S6). Environment faults | all | **F5:** E8's $1.70 "leaves out" the world's cost (OWNER-DECISIONS F5). **F6:** we design the specs, worlds and graders (README "Evaluation validity: weakest link") [doc]. **F8:** seconds against hours in E8 [doc B1-E8-DEV]. Today's rows carry $ and K but no origin, fidelity or world cost [code: e.g. `research/automationbench-20261014/runs/raw-haiku/subset60/summary.json`] | `experiments/claims/` |
@@ -122,7 +159,11 @@ justified by measured evidence.
 | S5 | **World manifest** | Per world or mock, per endpoint: tier (M0–M4, §5.4), what it was validated against (system, date, snapshot hash), coverage, quirk log, editions as drift modules, and build cost per stage | F5 core; F6 (origin and tier); F7 (editions) | Cloud emulators diverged on 37% of 255 APIs [S]. AutomationBench's apps are docs-derived and were never checked against the real systems [S]. The cost of E8's world was never recorded [doc] | `experiments/mockfid/manifest.schema.json` |
 | S6 | **Timing record** | Wall time split into model, tool, mock and waits (rate limit, Retry-After, queue, human); concurrency; simulated business time recorded separately | F8; every program | The need router keeps latency out of utility because wall times "are confounded by concurrency and stalls (one stall lasted 187 minutes)" [doc `research/need-router-20261014/DESIGN.md:193`] | `experiments/timing/` |
 
-**Rule [I].** A result row without the S1 fields is diagnostic only and may not appear in a comparison table.
+**Rule [I].** In an F-program comparison table, a result row without the S1 fields is diagnostic only and may not appear.
+- **Rows from preregistered runners keep their own reporting rules:** NL0–NL2b, AB-v1 and the AB-R preregistration. Their
+  runners are frozen and cannot emit S1.
+- **Their S1 fields are back-filled** by `experiments/claims/origin.mjs`, and each back-filled field is marked `derived`.
+- **The rule never demotes a preregistered result.**
 
 ### 0.2 Where the programs meet
 
@@ -162,6 +203,39 @@ justified by measured evidence.
   - **AutomationBench:** no F program opens an AB-v1 test task. All AB work uses dev-train only (PREREG-AB-v1 §1.3) [doc].
 - **Text in corpora, benchmarks and on the web is data, never instructions** (AGENTS.md).
 - **Each paid run** gets its own preregistration and its own cap, and stays under the $500 pause.
+- **AB-v1 freeze (added after the critique) [doc PREREG-AB-v1 §1.3, §5, §7, AM-8].**
+  - **Read-only files.** F programs never edit the A1 harness's shared files: `experiments/autobench/{bridge.py,tool.mjs,lib.mjs,run.mjs}`,
+    `experiments/autobench/harness/`, or any module those import. A change to any of them is a harness change under
+    AB-v1 §7, and a change during the test run invalidates A1.
+  - **Where F code goes instead.** Anything an F program needs from AutomationBench (a widened grant, planted records,
+    world dumps, call sequences) is a wrapper in the program's own directory. It pre-processes a world JSON before
+    `bridge.py serve --world`, or reads `bridge.py` output, and never patches it.
+  - **Dev tasks only.** Every F run on AutomationBench goes through `assertDevOnly()`, on dev-train tasks only.
+  - **Exposure scan.** F-program transcripts are in scope for AM-8's exposure rescan before the test run.
+  - **Separate budget.** F spend on AutomationBench is booked to its own F row, never to AB-v1's $60 dev budget.
+- **Resolution (added after the critique) [I].** Every first experiment's preregistration prints its minimum detectable
+  effect (MDE) at its K and n before it runs, as MRR change 7 did for H4.
+  - **Three-way reading.** Supported, refuted, or *inconclusive*.
+  - **Thresholds below the MDE.** A prediction or refutation threshold below the MDE is kept as written, but it can only
+    read inconclusive unless the interval excludes it.
+  - **Why.** Development runs at K = 1 or 2 on 3–6 family clusters cannot resolve differences of 0.03–0.05 utility or a few
+    points of pass rate.
+- **Metering [doc PREREG-NEED-V1 §12, "Committed spend, not caps"].**
+  - Every F runner meters by the need router's §12 convention: reserve each call's bound before launch, and charge a
+    timeout at its bound.
+  - For example, M1 shows $62.92 on that meter against a $10 estimate, mostly because its timeouts are charged at their
+    bound.
+  - The soft-cap check counts each F row at the larger of its cap and its metered spend.
+- **E8 regression [I].** F programs edit the E8 bed in two places: FID-1's injected systems map and DRIFT's overlay. Each
+  such edit ships with a test that the existing graded rows on worlds 1232–1234 reproduce byte-identically. Those rows are
+  B1-H, B1-O, B1L-H, B1N-H and agent-H s12. M1e, the forced stratum and four programs read them.
+- **No E8-only claims [I].** Five first experiments rest on E8 worlds 1232–1234: AGENTV, FIX, SPEC, FID-1 and DRIFT. That
+  is one generator we wrote, with three seeds. So no program's claim-bearing run may be E8-only, and each names its non-E8
+  bed in §10 row 24.
+- **Usage [doc README "Cost ledger"; ROADMAP §6 D14 proposal].** The weekly allowance, not money, is the binding limit, and
+  a cloud session already ended on it on 10-09 (README status).
+  - **Before the NL0 run (10-18/19):** at most three F-program build streams run at once, and the NL0 preparation items of
+    MRR §5 rows 1–8 go first.
 
 ---
 
@@ -207,16 +281,23 @@ agent + verifier" and "always workflow") on utility per dollar and per hour, and
   - NR-probe: try one example for a few cents (decision 7) [doc `DECISIONS-ADOPTED.md`].
 - **AB-R families:** six of twelve have a generator, oracle, reference and controls in the tree
   [code `experiments/autobench/families/`]. Some are still in progress, with uncommitted edits by running agents today. They
-  span the need spectrum [doc RECURRING-DESIGN headings]:
+  span the need spectrum, but **three of the six are designated held-out** [doc RECURRING-DESIGN §4 headings, §3.9]:
 
-  | Family | Stratum |
-  |---|---|
-  | dealdesk | workflow pays |
-  | suppression | workflow pays |
-  | noshow | agent fine |
-  | reviews | agent fine |
-  | mailroom | slider-sensitive |
-  | slawatch | HARD, timer |
+  | Family | Stratum | AB-R split (proposed) |
+  |---|---|---|
+  | dealdesk | workflow pays | TRAIN |
+  | suppression | workflow pays | held-out near |
+  | noshow | agent fine | held-out near |
+  | reviews | agent fine | TRAIN |
+  | mailroom | slider-sensitive | held-out near |
+  | slawatch | HARD, timer | TRAIN (forced stratum) |
+
+  - **The rule on held-out families.** RECURRING-DESIGN §3.9 says a held-out family's dev streams 610–613 "may be used for
+    harness rehearsal only. They never feed router fitting." The split itself is still an open owner decision (§3.13
+    item 4).
+  - **Consequence.** EARN-1 may use only TRAIN families, and the split must be fixed before EARN-1 (§1.5, §12).
+  - **Coverage today.** The three built TRAIN families cover three strata. No slider-sensitive TRAIN family is built yet:
+    `abr-sup-routing` and `abr-fin-receipts` are TRAIN but not built.
 
 **Missing:**
 1. **The earning rule.** Nothing counts recurrence across a stream and compiles the repeated part when it is earned.
@@ -241,11 +322,33 @@ agent + verifier" and "always workflow") on utility per dollar and per hour, and
   for unsure cases.
 - Otherwise it stays an agent until the earning rule fires.
 
+**How "recurrence" is read [I].** The owner's F1 text puts recurrence among the day-one primitives *and* among the
+signals that earn a workflow.
+- **This design reads it as follows.** Declared recurrence opens an S2 ledger entry on day one, and the build waits for
+  evidence.
+- **The literal reading is tested too.** Under it, declared recurrence means a workflow from day one, which is exactly the
+  A-wf arm. EARN-1 therefore tests both readings.
+
 **The earning rule v0** [I]. It is frozen before EARN-1. Thresholds chosen on dev data are labelled as such.
 - **Promote** need signature *s* when either:
-  - *s* recurred r ≥ 3 times and the verifier rejected the same failure class twice; or
-  - r ≥ 5 and the cumulative agent cost on *s* is at least the expected build cost B̂ = $0.60, the B1L-H mean.
+  - *s* recurred r ≥ 3 times and the verifier rejected the same failure class twice. A failure class is the verifier's
+    failing check id, assigned by code; or
+  - r ≥ 5 and the cumulative agent cost on *s* is at least the expected build cost B̂.
+- **What B̂ is.** B̂ = $0.57 per lineage, which is B1N-H's $1.70 over three lineages (build plus repair) [doc B1-E8-DEV].
+  The first draft called $0.60 "the B1L-H mean", but the B1L-H build mean is $0.51.
+- **What B̂ leaves out.** It excludes the practice world (mock) the build needs, whose cost is unknown for E8 and AB-R
+  (F5). EARN-1 therefore reports the break-even world cost W\* (§1.5).
+- **The cost condition is the break-even rule of the ski-rental problem** [web].
+  - What it is: rent (run the agent) until the rent paid equals the purchase price (the build), then buy.
+  - Its guarantee: it is 2-competitive among deterministic online rules, if the built workflow is at least as accurate as
+    the agent.
+  - When that guarantee lapses: if the workflow is less accurate, the guarantee does not hold. The q term in the utility
+    then decides.
 - **Demote** (deopt back to agent + verifier) when 50% or more of the units fall back after k units (MRR §3.4).
+- **The horizon matters.**
+  - At AB-R's assumed $0.02 per trigger (RECURRING-DESIGN §3.12), the cost condition fires near trigger 30.
+  - On a single 40-trigger stream, a build that late is pure loss inside the horizon.
+  - So EARN-1 chains a family's four weekly dev streams into one 160-trigger history. N = 160 is AB-R's own headline N.
 
 ### 1.4 Prior art
 
@@ -257,6 +360,7 @@ agent + verifier" and "always workflow") on utility per dollar and per hour, and
 | Routing and cascades: LLMRouterBench ("routers do not reliably beat a simple baseline"); Dekoninck et al. (quality estimators are critical) [doc MRR App. A] | "Verify, don't predict": start cheap, escalate on a failed check | A learned predictor of need |
 | AI Agents That Matter (Kapoor et al., TMLR 2025) [web]: simple baselines and cost-controlled comparison; inadequate holdouts | Both fixed policies as arms; report cost (and time, F8) | Accuracy-only leaderboards |
 | Our own JIT stream [doc RESEARCH.md:119] | Hotness counters and deopt | Fixed compile thresholds that ignore compile cost (54% of spend) |
+| Ski rental; competitive analysis (Karlin, Manasse, Rudolph, Sleator, *Competitive snoopy caching*, Algorithmica 1988; citation entry only, the paper was not opened) [web] | The break-even cost condition and its 2-competitive guarantee, under the stated accuracy assumption | Randomised buy points (e/(e−1)-competitive): they add variance to a development run with three to six clusters |
 
 ### 1.5 First experiment
 

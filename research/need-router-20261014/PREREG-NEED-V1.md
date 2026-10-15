@@ -950,8 +950,8 @@ NL0 (decision 14); later stages at their gates, each under the $500 pause. [A]
 | **Total** | | | | **966** | **1,275** | | committed $1,322.92 (each stage at max(cap, recorded meter): M1 at $62.92); with DRIFT's $24 and M1-R's $25.89, $1,372.81 against the $1,500 session soft cap |
 | DRIFT (recurring, outside the stage totals) | monthly after NL2, at most 3 runs | diagnostic | agent-H on `incident` and direct-H on `synth-lo`, seeds 8837–8848, one draw (the same 24 tasks each run); drift flagged when the Wilson intervals of the NL2 and the re-check pass rates do not overlap | 5 per run | 8 per run, 24 in all | at each run | owner |
 
-Core (M1, NL0, NL1, judge-H, NL2p, NL2, E2E): est. $663, caps $855 [D]. The money moved between stages but the totals
-did not change:
+Core (M1, NL0, NL1, judge-H, NL2p, NL2, E2E): est. $663, caps $855 [D]. In the 2026-10-14 revision the money moved
+between stages but the totals did not change (D9 then added NL0-owner, below):
 - The first draft's NL2 ($206 est. / $270 cap) and judge-H ($5 / $10) are now three stages: judge-H on TRAIN ($3 / $6);
   NL2p ($4 / $8, made of NL2's $2 / $4 of probe rows plus judge-H's $2 / $4 of held-out calls); and NL2 ($204 / $266).
 - NL2b ($98 / $140) is now NL2bp ($1 / $2) plus NL2b ($97 / $138). NR-probe rows are charged to NL1 (TRAIN) and NL2p (held-out) [P].
@@ -1203,6 +1203,40 @@ label exists):
   drops d3 and d5 instead of d3 alone; it is still not a gate. The §12 meter counts set-aside attempts. The checker has
   new refusals for recorded runs, external budgets and the analysis' rule imports (§15). §14 is refreshed: `label-run.mjs` now meters by §12, and the `evaluate.mjs` wiring status is
   updated. No need-router label existed when any of this changed.
+- **D9. Edits after the second adversarial review** (2026-10-15, still before freeze). The M1, M1-d5 and M1-R rows had
+  been viewed; no NL0 or later label exists, and no held-out task was shown to a model or read. Each change has a
+  regression test (§14).
+  - *C7a reading* (§7, §8, F12). REFUTED needs the upper bound below 0.7. An interval with lower bound ≤ 0.5 < 0.7 ≤ upper
+    reads INCONCLUSIVE. The power precondition is P(lower bound > 0.5) ≥ 0.8 for a TPR = TNR = 0.9 classifier, no longer
+    a perfect classifier's bound. A new reading, ABOVE-CHANCE-BELOW-USEFUL, covers lower > 0.5 with upper < 0.7. The
+    minimum confident counts are now 4 + 9 to 9 + 4.
+  - *Power gate* (§11). It is computed with r3p dropped as well, and passes only when both sets pass.
+  - *L6* (§6, §12). It is a launch gate in code (`envelopeLaunchCheck` in `paidRunChecks`), with `envelopeFile` per
+    envelope stage and `LAUNCH.json` per paid stage. `verifyEnvelope` orders by git commit time, fails when the time is
+    missing, and compares with the A-Freeze row. The envelope seals all seven A-Freeze files (`ROUTER_FILES`). E2E needs
+    NL2bp only when `gameqa` is drawn.
+  - *Meter* (§5, §12). The meter-gate rule: utility uses the reported figure, and the gap (`usdMeterGap`, written by
+    `label-run.mjs`, read by `metrics.mjs`) is not imputed. Also the cache-write rate billed, `FORCE_PROMPT_CACHING_5M=1`
+    in the launch shape, and the waiver as a deviation. **Informed by D6** (`analysis/m0/REPORT.md` D6; its launch-env
+    check is a WIP autosave, not reviewed).
+  - *Overshoot* (§12). Measured at $0 on archived rows: 273 JIT agent and interpreter sessions with a known budget
+    (`research/jit-20261008/runs/*/<arm>/arm.json` `agentBudgetUsd` against each session's `costUsd`), none above 1.00×;
+    8 C0 builds at most 0.28× of their builder budget, gateway overshoot $0 (`archive/c0-dev/constructions.jsonl`). The
+    worst case is stated, with a 10% rule.
+  - *Spend* (§12). `totals.committedUsd` counts each stage at max(cap, recorded meter). The soft-cap check adds the
+    externally budgeted M1-R ($1,372.81 in all).
+  - *Owner tasks* (§3.2, §12, K5, K7). They moved from NL0 to NL0-owner (est. $15, cap $40, not yet approved), at $3 per
+    task with a $19.50 bound, K = 1 lineage per lineage mode, and K7 read per task. NL0's cap and approval are unchanged.
+  - *Held-out seeds before Freeze* (§3.3). `label-run --dry` refuses test-split roles until A-Freeze is filled.
+    `hashCollisions` refuses in-process hashing of held-out jobs, and the test no longer does it.
+  - *Jev features* (§6). The NR-knn decision reads J-NEED-2 recomputed without `wbed-r3p` (`analysis.jevFeatureDecision`,
+    checked).
+  - *Policy version* (§13 D6 update). Pinned to `2026-10-15.2`, with the price-table source note updated. A mismatch is
+    an error once frozen.
+  - *Voided lineages* (§5). They score as failures (`voidPolicy: 'fail'`) and are no longer a missing-data reason; 'drop'
+    is a sensitivity.
+  - *Probe purposes* (`stages.json` NL1). They name the probe task (§3.3) instead of example 601 (DESIGN §3 departure,
+    §14).
 
 ## 14. What this file resolved, what stays open
 
@@ -1250,6 +1284,30 @@ DRIFT jobs and $8 cap; K9 wording; the forced jobs' requirement candidates.
 - **Checker:** freeze guards for recorded runs (complete, named in §0.1, overruns named in §13); external budgets for
   stages outside the totals; the analysis' imports of the preregistered rules (§15).
 
+**Added by the second-review revision [P]** (2026-10-15, §13 D9; tests in `prereg-rules.test.mjs`,
+`prereg-check.test.mjs`, `prereg-review2.test.mjs`):
+- **C7a:** REFUTED only when the upper bound is below 0.7; ABOVE-CHANCE-BELOW-USEFUL; the chance-based power
+  precondition and the new minimum counts (§7, §8, F12).
+- **Power gate:** with r3p dropped as well (§11).
+- **L6:** the launch gate, envelope files, `LAUNCH.json`, ordering by git commit time, the A-Freeze comparison and the
+  conditional NL2bp (§6, §12).
+- **Meter:** the meter-gate rule, the cache-write rate billed, `FORCE_PROMPT_CACHING_5M=1`, the waiver as a deviation,
+  overshoot (§5, §12).
+- **Spend:** committed spend and externally budgeted stages in the soft-cap check (§12).
+- **Owner tasks:** NL0-owner, the per-task estimate and bound, K = 1, K7 per task (§3.2, §12).
+- **Held-out seeds:** `--dry` and the test suite never generate held-out tasks in-process before Freeze (§3.3).
+- **Jev features:** the decision excludes r3p (§6).
+- **Policy version:** pinned, and an error once frozen (§13 D6).
+- **Voids:** voided lineages score as failures; 'drop' is a sensitivity (§5).
+
+**Departures from DESIGN, recorded here** (each [P], D9):
+- **F12 (DESIGN §5)** reads "lower bound ≤ 0.5". Here F12 needs the upper bound below 0.7. The DESIGN wording turns an
+  uninformative interval into a refutation (§8).
+- **The probe task (DESIGN §3, "on example 601 only")** is seed 601 at the band's median level (§3.3, first changed in the
+  2026-10-14 revision without a pointer to DESIGN). `stages.json` NL1's probe rows now say so.
+- **Owner tasks (DESIGN §7, "up to 5 owner tasks" inside NL0)** run in their own stage, NL0-owner. They are costed, and
+  K = 1 (DESIGN's "one replicate").
+
 **Still open, with who resolves it and when:**
 
 | Open item | Resolved by | When |
@@ -1259,7 +1317,12 @@ DRIFT jobs and $8 cap; K9 wording; the forced jobs' requirement candidates.
 | **600 s per-call timeout for direct-H.** Since 29c6c48 `createModelPort` passes `timeoutMs` to the provider and to the ModelPort (M1-R's attempt 1 was cut at 300 s by the port's own deadline), and `label-run.mjs` passes direct-H's `providerTimeoutMs` per call. Still missing: a $0 test that a direct-H call through label-run's metered port is not cut at 300 s | label-run owner | before NL0 |
 | **Every paid runner meters by §12** (max of reported and re-priced; bounds for rows without an observed cost; set-aside attempts; reservation before launch). `label-run.mjs` does, at 71d3f4f: `meterOf` charges max(reported, re-priced + imputed) and at least the bound when the spend was not observed, and `StageBudget` reserves before launch. `m1-run.mjs` and `m1-rerun.mjs` do not (reported dollars, timeouts at $0, no reservation), and neither may run a paid stage again as it stands (D3, D7) | label-run owner (`prereg-rules.mjs capMeter, mayStart`) | before NL0 |
 | **The analysis reads the rules from `prereg-rules.mjs`** (`stages.json analysis.requiredRules`; the checker warns until the Freeze addendum pins the analysis, then refuses). At this revision `evaluate.mjs` imports `balancedAccuracyInterval`, `c7aReading`, `thetaFitStatus` and `missingDataRule`, and `router.mjs` imports `thetaFitStatus`, `locoFolds` and `fitOrRule`. Still missing: `g1Reading` (`gateG1` has no diagnostic CONTINUE path), `harmfulPositions` and `withDropAgreement` (`readingOf` flags HARMFUL without Holm, and with r3p dropped checks only the sign of Δ), `signFlipFloor` and `powerGate`. `evaluate.fitRule` still adds the smallest TRAIN value as a candidate and breaks ties by fewest workflow calls. `powerSimulation` plants no router = SBS agreement | evaluate owner | before freeze (the simulation) and before Freeze (the rest) |
-| **Whether Jev property features enter NR-knn.** J-NEED-2's own rule put code + Jev in the NR-knn branch, but Jev's increment over code features is not above noise (§0.1). If they enter, the §6 feature list for NR-knn names them, and the pinned Jev version (`jev-1.13.0`) joins the analysis stamp. Jev is never the mode picker (decision 12) | Freeze addendum | 10-24 |
+| **Whether Jev property features enter NR-knn.** J-NEED-2's own rule put code + Jev in the NR-knn branch, but Jev's increment over code features is not above noise (§0.1). The decision reads J-NEED-2 **recomputed without `wbed-r3p`** (§6, D9); `jev-need2.mjs` has no family filter yet, so the recompute is a $0 code item. If they enter, the §6 feature list for NR-knn names them, and the pinned Jev version (`jev-1.13.0`) joins the analysis stamp. Jev is never the mode picker (decision 12) | the recompute: jev-need2 owner; the decision: Freeze addendum | before 10-24 |
+| **A runner for NL0-owner.** `label-run.mjs` plans no `seedsFrom` run, so the owner tasks need a runner. It must meter by §12, take a stamp and a `LAUNCH.json`, and read each task's size for agent-O's budget at admission | label-run owner | before the owner tasks run |
+| **The E2E runner calls `envelopeLaunchCheck`** with the drawn set and writes `LAUNCH.json`; `label-run.mjs` does not run `router-choice` | E2E runner owner | before E2E |
+| **The meter-gap sensitivity and overshoot listing.** `evaluate.mjs` prints the not-primary sensitivity that counts `usdMeterGap` as imputed (§5), and `label-run.mjs`'s report lists starts charged above their bound (§12) | evaluate owner; label-run owner | before freeze |
+| **Voided lineages in `evaluate.mjs`.** Its validity block reads "voided lineage(s): claims blocked until rerun", but no stage is rerun (§12), and under §5 a voided lineage scores as a failure and keeps its job. The analysis must read voids as failures without blocking every claim, or this file must say why it blocks | evaluate owner | before Freeze |
+| **`powerGate` in the analysis.** `evaluate.mjs` must call it with `nearClusters` from `stages.json analysis.powerGate` (1, r3p) | evaluate owner | after NL1 |
 | `codefix-notests` generator and its example census. A generator is present as `beds/need-codefix-noverifier` (WIP autosave, unreviewed at this revision); the job's family id, `bedStatus` and census are updated, with a §13 note, when it is admitted | M0 item 8 | before NL1 |
 | Null-simulation numbers (§11), with planted router = SBS agreement | `evaluate.mjs` | before freeze |
 | σ, the agreement share and the power gate outcome | NL1 leave-one-cluster-out (defined folds only) | after NL1 |
@@ -1279,7 +1342,7 @@ node experiments/need-router/prereg-check.mjs                       # ledger, po
 node experiments/need-router/prereg-check.mjs --hashes              # also the $0 taskHash pre-check (about 40 s; held-out in a child process)
 node experiments/need-router/prereg-check.mjs --stamp --stage NL1   # print the label-engine, analysis and document stamps
 node --test experiments/need-router/test/prereg-check.test.mjs experiments/need-router/test/prereg-rules.test.mjs \
-  experiments/need-router/test/prereg-records.test.mjs
+  experiments/need-router/test/prereg-records.test.mjs experiments/need-router/test/prereg-review2.test.mjs
 ```
 
 The checker refuses the following.
@@ -1293,6 +1356,9 @@ The checker refuses the following.
 - **Envelopes:**
   - a held-out probe or judge row outside an envelope stage;
   - an envelope stage before Freeze or with evaluation seeds;
+  - an envelope stage without its own `envelopeFile` under `research/need-router-20261014/envelopes/` (D9);
+  - a `conditionalEnvelopes` entry that `requiresEnvelope` does not list, or that names a job its envelope does not decide
+    (D9);
   - a matrix stage whose held-out jobs no earlier envelope covers.
 - **Jobs and arms:**
   - a family in two clusters;
@@ -1306,8 +1372,14 @@ The checker refuses the following.
   - tagged runs without cap shares, or shares over the stage cap;
   - a stage outside the totals with neither a recurring run limit and cumulative cap nor an `externalBudget` whose plan
     file names the stage and whose cap equals the stage's;
-  - caps plus recurring cumulative caps over the $1,500 soft cap;
+  - committed spend (each stage at max(cap, its recorded runs on the meter)) plus recurring cumulative caps plus
+    externally budgeted stages over the $1,500 soft cap (D9; before D9, caps alone);
+  - a development owner-task run without its replicates and lineages, or an owner job without a per-task estimate,
+    bound and task limit, or a stage estimate below them (D9);
   - totals that differ from the stage sums.
+- **Policy:** once frozen, a policy version other than `stages.json policy.policyVersion` (a warning before; D9).
+- **Jev features:** a held-out family read by J-NEED-2 that `analysis.jevFeatureDecision.excludeFamilies` does not name
+  (D9).
 - **Recorded runs** (`observed`, 2026-10-15):
   - a record keyed by anything but a run tag of its stage, or with a status other than complete or in-flight;
   - a complete record without its calls, reported dollars, meter figure (never below the reported one) and runner sha;
@@ -1325,3 +1397,10 @@ The checker refuses the following.
   - **when frozen, any `TBD-M0` or "TBD at … launch" left in §4.4 or §11.**
 
 `--hashes` also refuses (as errors) any planned task seed the ledger refuses.
+
+At launch, `label-run.mjs` refuses (D9):
+- a paid stage with `requiresEnvelope` whose needed envelopes fail `envelopeLaunchCheck` (§12);
+- a `--dry` run on a test-split evaluation role before the A-Freeze row is filled, unless `--allow-heldout-dry` names a
+  §13 deviation (`heldoutDryRefusal`, §3.3).
+
+`hashCollisions` refuses `child: false` for any held-out, conditional or forced job.

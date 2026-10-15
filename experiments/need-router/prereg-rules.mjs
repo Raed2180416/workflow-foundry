@@ -77,11 +77,12 @@ function rejectsAtMost(x1, n1, x2, n2, b, alpha) {
   if (T === 0 || (x1 / n1 + x2 / n2) / 2 <= b) return false;
   return supTail(n1, n2, T, b) <= alpha;
 }
-// P(pred(x1, x2)) for X1 ~ Bin(n1, p1), X2 ~ Bin(n2, p2), by enumeration.
+// P(pred(x1, x2)) for X1 ~ Bin(n1, p1), X2 ~ Bin(n2, p2), by enumeration; outcomes below 1e-13 are skipped (their total
+// mass is under (n1 + 1)(n2 + 1) · 1e-13, negligible at these sizes).
 function outcomeProb(n1, n2, p1, p2, pred) {
   const a = binomPmf(n1, p1), b = binomPmf(n2, p2);
   let s = 0;
-  for (let x1 = 0; x1 <= n1; x1++) for (let x2 = 0; x2 <= n2; x2++) if (a[x1] * b[x2] > 0 && pred(x1, x2)) s += a[x1] * b[x2];
+  for (let x1 = 0; x1 <= n1; x1++) for (let x2 = 0; x2 <= n2; x2++) { const w = a[x1] * b[x2]; if (w > 1e-13 && pred(x1, x2)) s += w; }
   return Math.min(1, s);
 }
 

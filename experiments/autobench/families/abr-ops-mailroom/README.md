@@ -112,7 +112,57 @@ wrong-answer penalty), `miss` (no effects although some were expected) or `wrong
 
 ## Numbers [measured, $0, development evidence]
 
-NUMBERS_PLACEHOLDER
+These come from `gates.py` (dev seeds 610–614 unless stated; exit 0, every gate passes) and `harness.py`, on
+2026-10-15. Dev seeds: 610, 612, 614 at d2 and 611, 613 at d3; 243 triggers (45, 51, 47, 55, 45 per week).
+
+**Reference** (observable-only code):
+- **243/243 triggers and 5/5 clean weeks** on the five dev streams, carry mode; 243/243 rebased;
+- 2,426/2,426 triggers and 50/50 clean weeks on seeds 601–650 (practice, dev, top-up, rehearsal and reserve blocks);
+  678/678 rebased on 601–614;
+- 100% on seeds 631–640 forced to d1 (411), d2 (452) and d3 (536);
+- at most 10 tool steps per trigger (the official loop allows 49).
+
+**Bad controls** (all fail; carry mode, dev seeds 610–614):
+
+| Control | Triggers passed | Clean weeks | Outcomes |
+|---|---|---|---|
+| `null` (does nothing) | 19/243 (0.078 = exactly the no-op share) | 0/5 | 224 miss |
+| `echo` (payload into #mailroom) | 0/243 | 0/5 | 243 wrong |
+| `naive` (19 lines, ignores notes, holds and departments) | 151/243 (0.621); **0.528 at d3** (gate: < 0.60) | 0/5 | 74 wrong, 18 miss |
+| `case-notes` | 206/243 (0.848) | 0/5 | |
+| `no-release` | 210/243 (0.864) | 0/5 | 18 miss |
+| `returned-skip` | 223/243 (0.918) | 0/5 | |
+| `no-dock` | 224/243 (0.922) | 0/5 | |
+| `sms-floor` | 224/243 (0.922) | 0/5 | |
+| `name-only` | 225/243 (0.926) | 1/5 | |
+| `count-sheet` | 228/243 (0.938) | 0/5 | |
+| `leave-as-skip` | 229/243 (0.942) | 2/5 | |
+| `count-all` | 233/243 (0.959) | 0/5 | |
+| `no-recheck` | 235/243 (0.967) | 3/5 (needs the d3 requeue) | |
+| `customs-first` | 236/243 (0.971) | 3/5 (needs the d3 precedence trap) | |
+| `release-by-name` | 237/243 (0.975) | 3/5 (needs the d3 namesake on leave) | |
+
+Each one-defect control fails on at least one trigger carrying the trap its broken rule resolves (a test asserts it).
+Several are near the hypothesis band for `agent-H`: one misread rule costs a few triggers a week.
+
+**Other gates:**
+- **Determinism and round trip:** two generations give identical sha256 for world0, payloads, triggers, truth and end;
+  every `world_t` validates as `WorldState` and survives dump → load → dump.
+- **Leakage:** 0 problems on practice and dev streams. A new-package payload is exactly the inserted row; an update
+  payload holds only the row's key and changed cells (never a package Status); no truth vocabulary in payloads or
+  world0; serve-input rows hold only POLICY.md and the payload with `assertions: []`; the reference imports only
+  `json`, `re`, `datetime` and `urllib`.
+- **Oracle mutation score: 4,404/4,404 = 1.000** (28 operators on the reference's correct worlds: dropped, duplicated or
+  misrouted posts and SMS; wrong floor, dock, name, department, arrow, tracking number, number or count; wrong,
+  reverted or reformatted Status; other cells or row formatting edited; another package or the directory edited; an
+  appended row; extra #mailroom, SMS or #automation-review writes; a pre-existing message deleted).
+- **Specificity: 1,190/1,190** policy-neutral variants accepted (trailing period or newline, Status case, another From
+  number, SMS status, bot name), and an equivalent solver that writes the Status through A1 notation and names the
+  channel by id passes 243/243.
+- **Trap coverage** (labels from the truth, label streams 610–613): T-lookalike 20, T-note 68, T-format 12, T-repeat 9,
+  T-state 40; every kind ≥ 5.
+
+**Tests:** `pytest` (48 tests): 48 passed in 97 s.
 
 ## Fixed while building (2026-10-15)
 
