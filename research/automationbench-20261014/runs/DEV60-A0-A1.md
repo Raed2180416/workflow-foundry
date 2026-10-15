@@ -54,3 +54,43 @@ Strict pass by domain:
 2. Sonnet arms A0-S and A1-S on the same 60 (AM-10/11), at about $9 each.
 3. A1-C (code-owned) on the same 60, for Haiku and Sonnet, when its build passes review.
 4. The AM-10 selection rule picks the configuration that will be frozen for the test run.
+
+## Replication with `--date-note` (AM-9), 2026-10-15
+
+**Runs and settings.**
+- Same 60 devTrain tasks (seed 21), same model, budgets and harness, plus the neutral host-date note (AM-9).
+- `a0-dev60-dn`: the A0 arm.
+- `a1-dev60-dn` + `a1-dev60-dn-fill`: the A1 arm. Three of a1-dev60-dn's records were disk-full or cap-skip non-outcomes;
+  they were re-run as the fill. See `a1-dev60-dn/NOTE.md`.
+- An earlier partial A0 run was hit by the 11:0x UTC usage limit and set aside. Its rate-limited sessions had been
+  scored as fails, so it is not used. The runner now stops on such faults.
+
+| | strict pass | partial credit | cost |
+|---|---|---|---|
+| A0 (no harness), original | 12/60 (20.0%) | 0.559 | $0.98 |
+| A1 (harness), original | 22/60 (36.7%) | 0.690 | $1.21 |
+| **A0, date note** | **9/60 (15.0%)** | 0.491 | $0.79 |
+| **A1, date note** | **18/60 (30.0%)** | 0.642 | about $0.94 (57 outcome sessions plus the $0.064 fill) |
+
+**Paired A1 against A0.**
+- With the date note: A1 alone passes 12 tasks and A0 alone 3. Exact McNemar **p = 0.035**.
+- Original: 12 against 2, p = 0.013.
+
+**Run-to-run variation, same arm and task.**
+- A0 original vs A0 date note: 6 tasks pass only in the original and 3 only in the date-note run.
+- A1 original vs A1 date note: 5 against 1.
+
+**Reading.**
+- **The harness lift replicates.** On a second independent run per arm it is +15.0 points strict (+16.7 in the
+  original), with the same discordant split (12 tasks lifted, 2–3 lost). Both runs are significant on their own.
+  - Pooled over the two runs per arm: A0 21/120 (17.5%), A1 40/120 (33.3%).
+- **Both arms scored lower with the date note** (−3 and −4 tasks). That is within the run-to-run variation above (A0
+  differs on 9 tasks between two runs with nearly the same setup), so k = 1 cannot attribute it to the note.
+- **A single run per task moves about 10–15% of tasks.** Any configuration choice (AM-10) and the frozen test run should
+  use k ≥ 2 per task, or a pooled comparison like the one above, not a single run.
+- **Still development evidence:** these are devTrain tasks read during development.
+
+**Next.**
+- The Sonnet pair (`a0s-dev60-dn`, `a1s-dev60-dn`) is running.
+- Then A1-C on the same 60.
+- Then the AM-10 rule, read on pooled runs.
