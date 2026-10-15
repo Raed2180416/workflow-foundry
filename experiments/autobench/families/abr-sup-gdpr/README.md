@@ -79,8 +79,8 @@ expected failures are skipped or edited log rows and spoofed verifications accep
 deletion or an audit breach. A workflow built once should pay, and more so as the cost of a wrong action W rises above V
 (a W = 5V sensitivity is proposed). Proposed split: held-out (near, forced).
 
-What the controls show, and what they do not: each single-rule mistake costs 3–36% of triggers on the dev streams
-(79% for writing At as a date only, which spoils every log row). None of the 24 controls keeps all five weeks clean;
+What the controls show, and what they do not: each single-rule mistake costs 3–34% of triggers on the dev streams
+(78% for writing At as a date only, which spoils every log row). None of the 24 controls keeps all five weeks clean;
 the best keep 3 of 5. That fits the hypothesis but does not test
 it; only an agent-H run does.
 
@@ -151,19 +151,21 @@ From `gates.py` (default seeds: dev 610–614, practice 601–609) and `harness.
 | Triggers per week | 21 | 23–26 | 28–33 |
 | Purged per week | | 4–7 | 4–5 |
 | Blocked per week | | 0–1 | 1–2 |
-| Closed - Unverified per week | | 1–2 | 3 |
-| Share of triggers with an exposed trap (design) | 0.27 | **0.54** (0.45) | **0.77** (0.75) |
+| Closed - Unverified per week | | 1–2 | 4 |
+| Share of triggers with an exposed trap (design) | 0.27 | **0.56** (0.45) | **0.81** (0.75) |
 
-Each kind also appears within the spec's per-week range. d2 sits above the design rate. Duplicates, hold changes,
-non-verifying replies and deadline closes are traps by construction, and they already make up about a third of a d2
-week. The base rates (users in organizations, tagged tickets, capitalized and body-only replies) were lowered once to
-bring d2 from 0.58 to 0.54. That tuning used practice and dev seeds only, before any arm ran.
+Each kind also appears within the spec's per-week range. Every pre-seeded open request is at most 29 days old on
+Monday, as the spec says, and reaches day 30 during the week. Both difficulties sit above the design rates.
+Duplicates, hold changes, non-verifying replies and deadline closes are traps by construction, and they already make
+up about a third of a d2 week. The base rates (users in organizations, tagged tickets, capitalized and body-only
+replies) were lowered once, which brought d2 from 0.58 to about 0.55. That tuning used practice and dev seeds only,
+before any arm ran.
 
 **Reference** (observable-only code, no model):
 - 1,347/1,347 triggers and 50/50 clean weeks on seeds 601–650 (carry mode);
 - 809/809 on 601–630 in rebased mode;
 - 210/210 and 298/298 on 631–640 forced to d1 and to d3;
-- at most 14 tool steps per trigger.
+- at most 17 tool steps per trigger (14 on the default streams).
 
 The deliverable bar is ≥ 95% on 5 dev seeds. Result: **131/131 (100%) on 610–614** (23/23, 30/30, 24/24, 31/31,
 23/23), with 5/5 clean weeks. Generator and reference agree on every effect of every stream run.
@@ -174,33 +176,36 @@ The deliverable bar is ≥ 95% on 5 dev seeds. Result: **131/131 (100%) on 610�
 |---|---|---|---|---|---|
 | `null` | does nothing | 18 | 0.137 | 0/5 | 113 miss |
 | `echo` | posts every trigger's data in #privacy-ops | 0 | 0.000 | 0/5 | 131 wrong |
-| `naive` (25 lines) | verifies every request, purges on any reply quoting an ID (no sender, state or hold check), no holds, no deadline, first `Batch` setting | 48 | 0.366 (d3: 0.311) | 0/5 | 70 wrong, 13 miss |
-| `any-sender` | accepts a quoted ID from any address | 100 | 0.763 | 0/5 | 26 wrong, 5 miss |
-| `display-first` | takes the first address-like text in From | 124 | 0.947 | 3/5 | 7 wrong |
-| `fuzzy-address` | compares addresses by local part | 95 | 0.725 | 0/5 | 32 wrong, 3 miss, 1 abstained |
-| `case-sensitive` | compares addresses with letter case | 115 | 0.878 | 2/5 | 10 wrong, 6 miss |
-| `no-hold` | ignores the Legal Hold sheet | 121 | 0.924 | 2/5 | 10 wrong |
-| `any-hold-row` | counts Lifted rows as holds | 125 | 0.954 | 3/5 | 6 wrong |
-| `no-lift` | never purges at a hold lift | 117 | 0.893 | 0/5 | 9 wrong, 5 miss |
-| `text-search` | finds tickets by free-text search for the address | 121 | 0.924 | 0/5 | 10 wrong |
-| `org-purge` | purges the whole organization's tickets | 119 | 0.908 | 1/5 | 12 wrong |
-| `name-match` | purges every user with the requester's name | 125 | 0.954 | 2/5 | 6 wrong |
-| `replace-tags` | sets tags to `['gdpr-purged']` | 122 | 0.931 | 1/5 | 9 wrong |
-| `edit-log` | edits the request's latest log row instead of appending | 84 | 0.641 | 0/5 | 47 wrong |
+| `naive` (25 lines) | verifies every request, purges on any reply quoting an ID (no sender, state or hold check), no holds, no deadline, first `Batch` setting | 48 | 0.366 (d3: 0.311) | 0/5 | 67 wrong, 16 miss |
+| `any-sender` | accepts a quoted ID from any address | 105 | 0.801 | 0/5 | 22 wrong, 4 miss |
+| `display-first` | takes the first address-like text in From | 122 | 0.931 | 3/5 | 8 wrong, 1 miss |
+| `fuzzy-address` | compares addresses by local part | 103 | 0.786 | 0/5 | 24 wrong, 4 miss |
+| `case-sensitive` | compares addresses with letter case | 116 | 0.885 | 2/5 | 10 wrong, 5 miss |
+| `no-hold` | ignores the Legal Hold sheet | 123 | 0.939 | 2/5 | 8 wrong |
+| `any-hold-row` | counts Lifted rows as holds | 123 | 0.939 | 2/5 | 8 wrong |
+| `no-lift` | never purges at a hold lift | 116 | 0.885 | 0/5 | 10 wrong, 5 miss |
+| `text-search` | finds tickets by free-text search for the address | 120 | 0.916 | 0/5 | 11 wrong |
+| `org-purge` | purges the whole organization's tickets | 118 | 0.901 | 2/5 | 13 wrong |
+| `name-match` | purges every user with the requester's name | 123 | 0.939 | 1/5 | 8 wrong |
+| `replace-tags` | sets tags to `['gdpr-purged']` | 124 | 0.947 | 2/5 | 7 wrong |
+| `edit-log` | edits the request's latest log row instead of appending | 86 | 0.656 | 0/5 | 45 wrong |
 | `skip-verified` | does not log `Verified` | 100 | 0.763 | 0/5 | 31 wrong |
 | `no-dedupe` | a duplicate gets a second verification | 116 | 0.885 | 0/5 | 15 wrong |
-| `dedupe-any` | any earlier request makes a duplicate | 123 | 0.939 | 1/5 | 8 wrong |
+| `dedupe-any` | any earlier request makes a duplicate | 121 | 0.924 | 0/5 | 10 wrong |
 | `exact-deadline` | closes only at exactly day 30 | 127 | 0.970 | 3/5 | 4 wrong |
-| `late-deadline` | closes from day 31 | 113 | 0.863 | 0/5 | 18 wrong |
+| `late-deadline` | closes from day 31 | 114 | 0.870 | 0/5 | 17 wrong |
 | `count-all` | the summary counts every row in the log | 106 | 0.809 | 0/5 | 25 wrong |
 | `stale-batch` | first setting containing `Batch` | 121 | 0.924 | 3/5 (the d2 weeks) | 10 wrong |
-| `snippet-only` | looks for the ID in the payload subject and snippet only | 114 | 0.870 | 0/5 | 9 wrong, 8 miss |
-| `at-date` | writes At as the date only | 27 | 0.206 | 0/5 | 104 wrong |
+| `snippet-only` | looks for the ID in the payload subject and snippet only | 110 | 0.840 | 0/5 | 10 wrong, 11 miss |
+| `at-date` | writes At as the date only | 29 | 0.221 | 0/5 | 102 wrong |
 
-Every control fails: none passes every trigger or keeps every week clean. 21 of the 24 are below the 95% bar. The
+Every control fails: none passes every trigger or keeps every week clean. 23 of the 24 are below the 95% bar
+(`exact-deadline`, at 0.970, is the exception: it is wrong only on the late postal requests). The
 tests also check that each plausible control is rejected **on its own trap**: for example `any-sender` on the spoof
 triggers, `text-search` on `cc-user`, `exact-deadline` on `deadline-late` and `snippet-only` on `id-in-body`. They
 also check that `edit-log` trips `audit.append-only` itself, and that `late-deadline` trips `end.statutory-deadline`.
+In rebased mode every spoofed verification that `any-sender` accepts is a wrong delivery. In carry mode one is not
+(s613/t09): an earlier spoof had already purged that request, which is the cascade the carry mode reports.
 
 **Gates** (`gates.py`, all pass, exit 0):
 
@@ -210,11 +215,11 @@ also check that `edit-log` trips `audit.append-only` itself, and that `late-dead
 | leakage | 0 problems on 610–614. Payload keys are fixed per event. Sheet payloads equal the world's cells after the delta, and email payloads equal the inbound message. No trap id, trigger kind or plan word appears in payloads or world0. Request rows and inbound emails arrive with their trigger. Serve rows carry no assertions or records. The reference imports only the standard library |
 | solvability | 376/376 triggers, 14/14 clean weeks on 601–614; rebased 131/131 on 610–614 |
 | controls | As above. `null` passes exactly the 18 no-op triggers; `naive` scores 0.311 at d3 (below 60%) |
-| trap coverage (610–613) | lookalike 9, authority 10, note 21, repeat 13, format 20, stale 12, timing 24, state 9 (each ≥ 5) |
-| oracle mutation | 3,263/3,263 single-fault mutants killed on 610–614 (score 1.000, 43 operators). Examples: a dropped or duplicated log row, an edited or deleted earlier row, a log row's At moved or blanked, rows of one request swapped, an email with an extra CC or without the Request ID, a ticket with replaced tags or a comment, another user's ticket prefixed, a user left undeleted, a summary count off by one, a stale batch, a trashed inbound email |
-| oracle specificity | 837/837 policy-neutral variants accepted: an At with `+00:00` or without seconds, Transition and Email in other case, Reference ids reordered with `;`, a display name or upper case in To, a longer body, a padded subject, reordered tags, a trailing period on the post, the inbound email marked read. An equivalent solver (append by worksheet title, the tags endpoint, the channel id, lower-case transitions, offsets in At) passes 131/131 |
+| trap coverage (610–613) | lookalike 9, authority 10, note 21, repeat 13, format 24, stale 12, timing 23, state 9 (each ≥ 5) |
+| oracle mutation | 3,249/3,249 single-fault mutants killed on 610–614 (score 1.000, 43 operators). Examples: a dropped or duplicated log row, an edited or deleted earlier row, a log row's At moved or blanked, rows of one request swapped, an email with an extra CC or without the Request ID, a ticket with replaced tags or a comment, another user's ticket prefixed, a user left undeleted, a summary count off by one, a stale batch, a trashed inbound email |
+| oracle specificity | 838/838 policy-neutral variants accepted: an At with `+00:00` or without seconds, Transition and Email in other case, Reference ids reordered with `;`, a display name or upper case in To, a longer body, a padded subject, reordered tags, a trailing period on the post, the inbound email marked read. An equivalent solver (append by worksheet title, the tags endpoint, the channel id, lower-case transitions, offsets in At) passes 131/131 |
 
-**Tests:** 27 passed (pytest 9.0.2 in the AutomationBench venv, about 4 minutes).
+**Tests:** 27 passed (pytest 9.0.2 in the AutomationBench venv, 130 s).
 
 ## Limits and open items
 
@@ -252,6 +257,9 @@ also check that `edit-log` trips `audit.append-only` itself, and that `late-dead
   - the subject-spacing equivalent pads only the ends (see Limits);
   - the d2 base rates were lowered once (above);
   - the `text-search` control uses Zendesk search instead of fetching comments per ticket, because the per-ticket
-    fetch exceeded the 49-step budget.
+    fetch exceeded the 49-step budget;
+  - a d3 pre-seeded request at age 31–32 on Monday (day 30 on the weekend) broke the spec's "up to 29 days old". It was
+    replaced by a late-entered postal request (`deadline-late`), which keeps the `>= 30` vs `== 30` trap;
+  - the spoofed-verification test runs in rebased mode (see the controls note).
 
   The generator stays at version 1.0.0, because no stream from it has been used for any label.

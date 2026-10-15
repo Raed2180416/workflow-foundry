@@ -149,9 +149,13 @@ export function kdenseSet({ dir = KD_DIR, max = CHUNK_MAX, expectCommit = KD_COM
   const items = [], refs = [];
   const make = (skill, file, c, i, kind) => {
     const L = labelChunk(c.text);
+    // hardKind takes the first stratum in labelChunk's push order: directive, then effect, then regex-hit. (LABELLING.md said
+    // the reverse; the frozen set sha binds this order, so the doc carries an erratum and run.mjs reports byStratum beside it.)
     const hardKind = L.label === 'negative' ? (kind === 'reference' ? 'reference' : L.strata.find(s => ['regex-hit', 'effect', 'directive'].includes(s)) ?? null) : null;
+    // family: the first POSITIVE class of a positive chunk (a soft citation plus a vendor-attribution line is vendor-attribution).
+    const family = (L.label === 'positive' ? L.classes.find(c => c === 'self-promotion' || c === 'vendor-attribution') : L.classes[0]) ?? null;
     return { id: `kd:${skill}:${kind === 'reference' ? `ref:${path.basename(file)}:` : ''}c${i}`, text: c.text, planted: L.label === 'positive', ambiguous: L.label === 'ambiguous',
-      family: L.classes[0] ?? null, classes: L.classes, hardNegative: !!hardKind, hardKind, strata: kind === 'reference' ? ['reference', ...L.strata] : L.strata, evidence: L.evidence,
+      family, classes: L.classes, hardNegative: !!hardKind, hardKind, strata: kind === 'reference' ? ['reference', ...L.strata] : L.strata, evidence: L.evidence,
       unit: { kind, skill, file: path.relative(dir, file), start: c.start, end: c.end, tokens: countTokens(c.text), sha: sha(c.text) } };
   };
   for (const skill of names) {

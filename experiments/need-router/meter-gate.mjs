@@ -26,6 +26,17 @@
 // is refused too. The only way past a missing gate is the owner's logged waiver (meter-gate-waiver.json, schema need-meter-gate-waiver/1, by `owner`, with a
 // reason and a date), which label-run records in report.deviations. label-run reads the gate from the committed HEAD blob, as it reads the preregistration, and
 // refuses an agent stage while the working-tree diagnostics.json differs from that blob, so an uncommitted regeneration cannot change whether a paid stage starts.
+//
+// Review of 2026-10-15 (second pass), what changed:
+//   - A session whose per-message output tokens match the final usage is no longer accepted on that alone: its re-price must also land within PRICE_BAND of
+//     the CLI-reported cost (guardMeter, verificationProblems). Launch-env.json shows 0 of 336 real sessions billed at the 5-minute cache-write rate the
+//     pinned table uses, so a CLI that records its output tokens accurately would otherwise book every agent session 15-17% under its own figure as `measured`.
+//   - The gate no longer fails open on no evidence: without enough builder sessions, or without an era group of MIN_ERA_SESSIONS for every model the paid agent
+//     arms use, its status is `insufficient-evidence` and it is refused like `block-until-verified`.
+//   - The verification record is read from the HEAD blob, carries the transcript paths and full sha256 values, the price-table id and the models it covers, and
+//     label-run re-derives every session from those transcripts at launch (rederiveVerification); a missing or changed transcript refuses the stage, a record
+//     made under another table is refused, and every model the stage's agent arms use needs a passing session.
+//   - The committed gate must be current: computed under the stage's price table and under the rule constants in force (gateStaleness).
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -39,22 +50,34 @@ export const VERIFICATION_FILE = path.join(M0_DIR, 'meter-verification.json');
 export const WAIVER_FILE = path.join(M0_DIR, 'meter-gate-waiver.json');
 export const WAIVER_SCHEMA = 'need-meter-gate-waiver/1';
 export const METER_GATE_SCHEMA = 'need-meter-gate/1';
-export const VERIFICATION_SCHEMA = 'need-meter-verification/1';
+export const VERIFICATION_SCHEMA = 'need-meter-verification/2';   // /2: sessions carry path and full sha256, the record the price table id and the models (review of 2026-10-15)
 export const OUTPUT_TOLERANCE = 0.05;     // per-message output tokens within 5% of the CLI's final result usage
 export const PRICE_BAND = 0.10;           // a re-price within 10% of the CLI's own figure, per model and era
 export const MIN_ERA_SESSIONS = 3;        // a model-era with fewer sessions does not trip the price band
 export const MIN_VERIFY_SESSIONS = 2;     // a verification record needs this many transcripts, all within tolerance
+export const MIN_BUILDER_SESSIONS = 4;    // the gate scores output tokens on at least this many builder sessions (D6 check 1 has 8); fewer is `insufficient-evidence`
+/** The rule constants a gate is computed under (recorded in gate.rule; a gate whose rule differs from the one in force is stale: gateStaleness). */
+export const currentRule = () => ({ outputTolerance: OUTPUT_TOLERANCE, priceBand: PRICE_BAND, minEraSessions: MIN_ERA_SESSIONS, minVerifySessions: MIN_VERIFY_SESSIONS, minBuilderSessions: MIN_BUILDER_SESSIONS });
+/** Gate statuses that a passing verification record clears (anything but `clear` is refused without one). */
+export const NEEDS_VERIFICATION = Object.freeze(['block-until-verified', 'insufficient-evidence']);
 const num = x => (typeof x === 'number' && Number.isFinite(x) ? x : null);
 const round = (x, d = 4) => (num(x) === null ? x : Math.round(x * 10 ** d) / 10 ** d);
 
 /**
  * The gate from D6's evidence (pure). outputRatios: [{label, model, recorded, final}] (output tokens in the stream or per-message record against the
- * CLI's final result usage, where both are known); eraRatios: [{key, sessions, ratio}] (CLI-reported total over the token re-price, summed per model
- * and cache era). status `block-until-verified` when any session records output tokens outside OUTPUT_TOLERANCE of the final figure, or any model-era
- * with at least MIN_ERA_SESSIONS sessions re-prices outside PRICE_BAND of the reported figure.
+ * CLI's final result usage, where both are known); eraRatios: [{key, sessions, ratio}] (CLI-reported total over the token re-price at the cache-write rate
+ * each session was billed at, summed per model and era; key is `<model> | <era>`); requiredModels: the models the paid agent arms use (agentModelsOf);
+ * priceTable: the id of the table the evidence was priced with.
+ * status:
+ *   block-until-verified   any session records output tokens outside OUTPUT_TOLERANCE of the final figure, or any model-era with at least MIN_ERA_SESSIONS
+ *                          sessions re-prices outside PRICE_BAND of the reported figure;
+ *   insufficient-evidence  no such mismatch, but the evidence cannot say the meter is right (fewer than MIN_BUILDER_SESSIONS builder sessions scored, no list of
+ *                          models, or a model with no era group of MIN_ERA_SESSIONS sessions). The gate used to read `clear` here, so a D6 run without the archive
+ *                          or the constructions file wrote a clear gate (review of 2026-10-15). It is refused exactly like block-until-verified;
+ *   clear                  enough evidence, and none of it off.
  */
-export function buildMeterGate({ outputRatios = [], eraRatios = [] } = {}) {
-  const reasons = [];
+export function buildMeterGate({ outputRatios = [], eraRatios = [], requiredModels = [], priceTable = null } = {}) {
+  const reasons = [], gaps = [];
   const scored = outputRatios.filter(r => num(r.recorded) !== null && num(r.final) > 0).map(r => ({ ...r, gap: Math.abs(r.final - r.recorded) / r.final }));
   const under = scored.filter(r => r.gap > OUTPUT_TOLERANCE);
   if (under.length) {
@@ -72,13 +95,28 @@ export function buildMeterGate({ outputRatios = [], eraRatios = [] } = {}) {
       groups: off.map(e => ({ key: e.key, sessions: e.sessions, ratioReportedOverReprice: round(e.ratio, 3) })),
     });
   }
+  const models = [...new Set(requiredModels)].sort();
+  const modelOf = e => e.model ?? String(e.key).split(' | ')[0];
+  if (scored.length < MIN_BUILDER_SESSIONS) {
+    gaps.push({ code: 'TOO_FEW_BUILDER_SESSIONS', detail: `${scored.length} builder session(s) scored for output tokens against the CLI's final usage; the gate needs at least ${MIN_BUILDER_SESSIONS}`, have: scored.length, need: MIN_BUILDER_SESSIONS });
+  }
+  if (!models.length) gaps.push({ code: 'NO_REQUIRED_MODELS', detail: 'the gate was built without the list of models the paid agent arms use, so it cannot say that each of them is covered' });
+  for (const m of models) {
+    const have = Math.max(0, ...eraRatios.filter(e => modelOf(e) === m).map(e => e.sessions ?? 0));
+    if (have < MIN_ERA_SESSIONS) gaps.push({ code: 'NO_ERA_GROUP_FOR_MODEL', model: m, detail: `no model-era group of at least ${MIN_ERA_SESSIONS} sessions for ${m} (largest ${have}): the re-price of the paid agent arms that use it has not been compared with the CLI's figure`, largest: have, need: MIN_ERA_SESSIONS });
+  }
+  const status = reasons.length ? 'block-until-verified' : gaps.length ? 'insufficient-evidence' : 'clear';
   return {
     schema: METER_GATE_SCHEMA,
-    status: reasons.length ? 'block-until-verified' : 'clear',
-    rule: { outputTolerance: OUTPUT_TOLERANCE, priceBand: PRICE_BAND, minEraSessions: MIN_ERA_SESSIONS, minVerifySessions: MIN_VERIFY_SESSIONS },
+    status,
+    rule: currentRule(),
+    priceTable,
+    requiredModels: models,
+    evidence: { builderSessionsScored: scored.length, eraGroups: eraRatios.map(e => ({ key: e.key, sessions: e.sessions })) },
     reasons,
-    blocks: reasons.length ? 'a paid stage with an agent arm (agent-H, agent-O, agent-H+proc, construct-H, build-O): label-run.mjs refuses to start it' : null,
-    clearedBy: reasons.length ? `a passing meter-verification record: node experiments/need-router/meter-gate-cli.mjs --verify <transcript>... --write ${path.relative(REPO, VERIFICATION_FILE)}, on at least ${MIN_VERIFY_SESSIONS} saved CLI transcripts, each either with per-message output tokens within ${OUTPUT_TOLERANCE * 100}% of the final result usage or with a re-price that takes its output tokens from the final usage and lands within ${PRICE_BAND * 100}% of the CLI-reported cost; until then every agent session label-run prices is checked individually and a session that passes neither test is booked at the reported figure` : null,
+    gaps,
+    blocks: status !== 'clear' ? 'a paid stage with an agent arm (agent-H, agent-O, agent-H+proc, construct-H, build-O): label-run.mjs refuses to start it' : null,
+    clearedBy: status !== 'clear' ? `a passing meter-verification record committed at HEAD: node experiments/need-router/meter-gate-cli.mjs --verify <transcript>... --write ${path.relative(REPO, VERIFICATION_FILE)}, on at least ${MIN_VERIFY_SESSIONS} saved CLI transcripts of the launch shape (each either with per-message output tokens within ${OUTPUT_TOLERANCE * 100}% of the final result usage or with a re-price that takes its output tokens from the final usage, and in both cases with a re-price within ${PRICE_BAND * 100}% of the CLI-reported cost), covering every model the stage's agent arms use, under the stage's price table; label-run re-derives every session from the transcripts (path and sha256 in the record) at launch. Until then every agent session label-run prices is checked individually and a session that passes neither test is booked at the reported figure` : null,
   };
 }
 function median(xs) { const s = xs.filter(Number.isFinite).sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : NaN; }
@@ -132,21 +170,66 @@ export function readCommittedWaiver({ file = WAIVER_FILE, repo = REPO, show = gi
   if (!blob) return null;
   try { return JSON.parse(blob.toString('utf8')); } catch { return null; }
 }
-/** The verification record on file (or at `file`), or null. */
+/** The working-tree verification record (or the one at `file`), or null. For the CLI and for display: label-run does not trust it (see readCommittedVerification). */
 export function readVerification(file = VERIFICATION_FILE) {
   if (!existsSync(file)) return null;
   try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return null; }
 }
+/**
+ * The verification record label-run trusts: the HEAD blob of meter-verification.json, as the gate and the waiver are read (review of 2026-10-15: label-run read the
+ * working tree, so a hand-written record cleared a blocking gate). { record, problem, dirty, source }: `record` is the parsed blob or null; `problem` says why there
+ * is none (not committed, does not parse); `dirty` is a note when the working-tree file differs from the blob (the blob is what counts). `show` is the HEAD reader.
+ */
+export function readCommittedVerification({ file = VERIFICATION_FILE, repo = REPO, show = gitHeadBlob } = {}) {
+  const blob = show(file, { repo }), work = existsSync(file) ? readFileSync(file) : null;
+  if (!blob) return { record: null, problem: work ? `${path.basename(file)} is in the working tree but not committed at HEAD: commit it (label-run reads the HEAD blob, never the working tree)` : `no ${path.basename(file)} is committed at HEAD`, dirty: null, source: 'HEAD' };
+  const dirty = work === null ? 'the working-tree file was deleted since HEAD' : Buffer.compare(Buffer.from(blob), work) !== 0 ? 'the working-tree file differs from its HEAD blob (the blob is what is read)' : null;
+  try { return { record: JSON.parse(blob.toString('utf8')), problem: null, dirty, source: 'HEAD' }; }
+  catch (e) { return { record: null, problem: `the committed ${path.basename(file)} does not parse (${String(e.message).slice(0, 80)})`, dirty, source: 'HEAD' }; }
+}
 /** True for an arm definition (stages.json arms[...]) that runs an agent session: b0Agent, a construct-H or build-O builder session, or an agent-H+proc run. */
 export const isAgentArmDef = def => !!def && (def.factory === 'b0Agent' || def.run?.factory === 'b0Agent' || def.build?.factory === 'construct');
+/** The models whose CLI sessions the agent arms among `arms` run: a b0Agent arm's model, a run's b0Agent model, a construct arm's builder model. Sorted, unique. */
+export function agentModelsOf(arms = []) {
+  const out = new Set();
+  for (const def of arms) {
+    if (!isAgentArmDef(def)) continue;
+    if (def.factory === 'b0Agent' && def.model) out.add(def.model);
+    if (def.run?.factory === 'b0Agent' && def.run.model) out.add(def.run.model);
+    if (def.build?.factory === 'construct') { const m = def.build.builderModel ?? def.build.model; if (m) out.add(m); }
+  }
+  return [...out].sort();
+}
+
+/**
+ * Why a committed gate is not current for a stage (a list; empty when it is): computed under another price table than the stage prices with, under other rule
+ * constants than the ones in force, or from evidence that did not cover a model the stage's agent arms use. `models`: agentModelsOf(the stage's arms).
+ * label-run refuses an agent stage on a stale gate; the committed diagnostics.json can be stale at HEAD without anyone running run.mjs --check.
+ */
+export function gateStaleness(gate, { priceTableId = null, models = [] } = {}) {
+  const out = [];
+  if (priceTableId == null) out.push('the stage has no price table id to compare the gate with');
+  else if (gate?.priceTable !== priceTableId) out.push(`the gate was computed under price table ${JSON.stringify(gate?.priceTable ?? null)}, the stage prices with ${JSON.stringify(priceTableId)}`);
+  const now = currentRule(), had = gate?.rule ?? {};
+  const diff = [...new Set([...Object.keys(now), ...Object.keys(had)])].filter(k => had[k] !== now[k]);
+  if (diff.length) out.push(`the gate was computed under another rule (${diff.map(k => `${k} ${had[k] ?? 'absent'} against ${now[k] ?? 'absent'} in force`).join(', ')})`);
+  const covered = new Set(Array.isArray(gate?.requiredModels) ? gate.requiredModels : []);
+  const missing = models.filter(m => !covered.has(m));
+  if (missing.length) out.push(`the gate's evidence was built for ${[...covered].join(', ') || 'no model'}, not for ${missing.join(', ')}, which this stage's agent arms use`);
+  return out;
+}
 
 /**
  * May a paid stage with these arms start? arms: arm definitions (or ids resolved by the caller). Returns { allow, why, gate }.
- * Allowed when no arm is an agent arm, when the gate is clear, or when the gate blocks and a passing verification record is on file. Refused when the
- * working-tree diagnostics.json differs from its committed blob (`dirty`), when there is no gate to read (`problem` says why) unless the owner's logged
- * `waiver` is valid (the result is then `waived: true` and carries the waiver, which label-run records as a deviation), and for any other gate status.
+ * Allowed when no arm is an agent arm, when the gate is clear (and current), or when the gate does not clear (block-until-verified, insufficient-evidence) and a
+ * verification record clears it. Refused when the working-tree diagnostics.json differs from its committed blob (`dirty`), when there is no gate to read (`problem`
+ * says why) unless the owner's logged `waiver` is valid (the result is then `waived: true` and carries the waiver, which label-run records as a deviation), when
+ * the gate is stale (`stale`: gateStaleness), and for any other gate status.
+ * A verification record clears a gate only when it passes verificationProblems under the stage's `priceTableId` and for every model the stage's agent arms use, and
+ * `rederive` (a function record -> { ok, problems }; label-run supplies rederiveVerification over the stage's table) confirms it from the transcripts.
+ * Without `rederive` the record cannot clear anything: it would be a claim nobody checked.
  */
-export function meterGateDecision({ gate, verification = null, arms = [], waiver = null, problem = null, dirty = null }) {
+export function meterGateDecision({ gate, verification = null, verificationProblem = null, arms = [], waiver = null, problem = null, dirty = null, priceTableId = null, rederive = null, stale = null }) {
   const agent = arms.filter(isAgentArmDef);
   if (!agent.length) return { allow: true, why: 'no agent arm in this stage', gate: gate?.status ?? null };
   if (dirty) return { allow: false, gate: gate?.status ?? null, why: `the cost-meter gate is read from the committed HEAD blob and ${dirty}` };
@@ -155,10 +238,23 @@ export function meterGateDecision({ gate, verification = null, arms = [], waiver
     if (waiverValid(waiver)) return { allow: true, waived: true, waiver, gate: null, why: `${what}; the owner's waiver of ${waiver.at} is logged: ${waiver.reason}` };
     return { allow: false, gate: null, why: `${what}: a stage with an agent arm is refused without a gate. Run node experiments/need-router/diagnostics/run.mjs --report in full and commit it, or log the owner's waiver (${path.relative(REPO, WAIVER_FILE)}, schema ${WAIVER_SCHEMA}, by owner, with a reason and a date)` };
   }
+  if (Array.isArray(stale) && stale.length) return { allow: false, gate: gate.status, why: `the committed cost-meter gate is not current for this stage: ${stale.join('; ')}. Re-run node experiments/need-router/diagnostics/run.mjs --report and commit it` };
   if (gate.status === 'clear') return { allow: true, why: `meter gate ${gate.status}`, gate: gate.status };
-  if (gate.status !== 'block-until-verified') return { allow: false, gate: gate.status, why: `the cost-meter gate has an unrecognised status ${JSON.stringify(gate.status)} (expected clear or block-until-verified): refused` };
-  if (verificationPasses(verification)) return { allow: true, why: `meter gate block-until-verified, cleared by a passing verification record (${verification.sessions.length} transcripts)`, gate: gate.status };
-  return { allow: false, gate: gate.status, why: `the cost-meter gate is block-until-verified (${(gate.reasons ?? []).map(r => r.code).join(', ')}) and no passing meter-verification record is on file: ${gate.clearedBy}` };
+  if (!NEEDS_VERIFICATION.includes(gate.status)) return { allow: false, gate: gate.status, why: `the cost-meter gate has an unrecognised status ${JSON.stringify(gate.status)} (expected clear, block-until-verified or insufficient-evidence): refused` };
+  const models = agentModelsOf(agent), problems = [];
+  if (!verification) problems.push(verificationProblem ?? 'no meter-verification record is committed at HEAD');
+  else {
+    problems.push(...verificationProblems(verification, { priceTableId: priceTableId ?? null, models }));
+    const unnamed = agent.filter(d => !agentModelsOf([d]).length).length;
+    if (unnamed) problems.push(`${unnamed} agent arm(s) name no model, so per-model coverage cannot be checked`);
+    if (!problems.length) {
+      if (typeof rederive !== 'function') problems.push('the record was not re-derived from its transcripts (label-run does this at launch); an unchecked record clears nothing');
+      else { const r = rederive(verification); if (!r?.ok) problems.push(...(r?.problems?.length ? r.problems : ['the transcripts do not re-derive the record'])); }
+    }
+  }
+  if (!problems.length) return { allow: true, why: `meter gate ${gate.status}, cleared by a verification record re-derived from its ${verification.sessions.length} transcripts (models ${models.join(', ')}; price table ${priceTableId})`, gate: gate.status };
+  const codes = [...(gate.reasons ?? []), ...(gate.gaps ?? [])].map(r => r.code);
+  return { allow: false, gate: gate.status, why: `the cost-meter gate is ${gate.status} (${codes.join(', ')}) and no passing meter-verification record clears it: ${problems.slice(0, 4).join('; ')}${problems.length > 4 ? `; and ${problems.length - 4} more` : ''}. ${gate.clearedBy}` };
 }
 
 /**
@@ -192,17 +288,31 @@ export function missingOutputUsd(messageUsage, missing, outputRateOf) {
 
 /**
  * Apply the per-session check to a priced session ({ measured, imputed, ... } as label-run.priceSession returns it):
- *   - lines within tolerance of the final usage: unchanged (meterCheck attached);
+ *   - lines within tolerance of the final usage AND a re-price within `band` of the CLI-reported figure: unchanged (meterCheck attached);
+ *   - lines within tolerance but a re-price outside the band (or no reported figure to compare with): the output tokens are right and the price is not, which is
+ *     what a session billed at another cache-write rate than the table's looks like (launch-env.json: 0 of 336 real sessions were billed at the table's 5-minute
+ *     rate). It used to be accepted as measured, so every such agent session was booked 15-17% under the CLI figure without the 30%-imputed rule seeing it.
+ *     It is now booked like any unverified session: at the reported figure, the shortfall imputed, flagged `meterUnverified`;
  *   - lines short of the final usage and outputRateOf given: the missing output tokens are priced and added; if the corrected re-price is within `band`
  *     of the reported figure it is accepted as measured, flagged `outputFromFinal`;
  *   - anything else (no final usage, a correction the reported figure does not corroborate): booked at the reported figure, the re-price's shortfall
  *     imputed, flagged `meterUnverified` with the check.
+ * A session already booked at its bound (killed or timed out: imputed > 0 before the check) has no observed reported figure to compare with and keeps its booking.
  * Total charged = measured + imputed is never below the reported figure on the unverified path.
  */
 export function guardMeter(cost, input, { reportedUsd = 0, tolerance = OUTPUT_TOLERANCE, band = PRICE_BAND, outputRateOf = null } = {}) {
   const check = outputTokenCheck(input, { tolerance });
-  if (check.ok) return { ...cost, meterCheck: check };
   const reported = num(reportedUsd) ?? 0;
+  if (check.ok) {
+    if (cost.imputed > 0) return { ...cost, meterCheck: check };
+    const priced = cost.measured + cost.imputed, relErr = reported > 0 ? Math.abs(priced - reported) / reported : null;
+    if (relErr !== null && relErr <= band) return { ...cost, meterCheck: { ...check, priceBandOk: true, relErr: round(relErr, 4), reportedUsd: round(reported, 6) } };
+    const gap = Math.max(0, reported - priced);
+    return {
+      ...cost, imputed: cost.imputed + gap, meterUnverified: true, meterGapUsd: gap,
+      meterCheck: { ...check, priceBandOk: false, relErr: relErr === null ? null : round(relErr, 4), reportedUsd: round(reported, 6), pricedUsd: round(priced, 6), reason: relErr === null ? 'no CLI-reported cost to compare the re-price with' : `the re-price is ${round(100 * relErr, 1)}% from the CLI-reported cost (band ${100 * band}%): the table's cache-write rate is probably not the one billed` },
+    };
+  }
   if (outputRateOf && check.checked && check.final > check.recorded && Array.isArray(input.messageUsage) && reported > 0 && cost.imputed === 0) {
     const extra = missingOutputUsd(input.messageUsage, check.final - check.recorded, outputRateOf);
     if (extra !== null) {
@@ -241,20 +351,38 @@ export function cacheWrite1hShare(usage) {
   const w1 = num(cc.ephemeral_1h_input_tokens) ?? 0, w5 = num(cc.ephemeral_5m_input_tokens) ?? 0;
   return w1 + w5 > 0 ? round(w1 / (w1 + w5), 3) : null;
 }
-/** A record passes when it has the schema, at least MIN_VERIFY_SESSIONS transcripts, and every session is re-derived as accepted here (not trusted from `ok`):
- *  per-message output tokens within `tolerance` of the final usage, or (method final-output) the corrected re-price within `band` of the reported cost. */
-export function verificationPasses(v, { tolerance = OUTPUT_TOLERANCE, band = PRICE_BAND } = {}) {
-  if (!v || v.schema !== VERIFICATION_SCHEMA || !Array.isArray(v.sessions) || v.sessions.length < MIN_VERIFY_SESSIONS) return false;
-  return v.sessions.every(s => {
-    if (s.method === 'per-message') return num(s.recorded) !== null && num(s.final) > 0 && Math.abs(s.final - s.recorded) / s.final <= tolerance;
-    if (s.method === 'final-output') return num(s.reportedUsd) > 0 && num(s.pricedUsd) !== null && Math.abs(s.pricedUsd - s.reportedUsd) / s.reportedUsd <= band && num(s.final) > 0;
-    return false;
-  });
+/** Does one session of a verification record verify, re-derived from its own numbers (never from `ok`)? per-message: output tokens within `tolerance` of the final
+ *  usage AND a re-price within `band` of the CLI-reported cost; final-output: the corrected re-price within `band` of the reported cost. */
+export function sessionVerifies(s, { tolerance = OUTPUT_TOLERANCE, band = PRICE_BAND } = {}) {
+  const priced = num(s?.reportedUsd) > 0 && num(s?.pricedUsd) !== null && Math.abs(s.pricedUsd - s.reportedUsd) / s.reportedUsd <= band;
+  if (s?.method === 'per-message') return num(s.recorded) !== null && num(s.final) > 0 && Math.abs(s.final - s.recorded) / s.final <= tolerance && priced;
+  if (s?.method === 'final-output') return priced && num(s.final) > 0;
+  return false;
 }
 /**
+ * Why a verification record does not pass (a list; empty when it does). It needs the schema, at least MIN_VERIFY_SESSIONS sessions, and every session re-derived
+ * as verifying here (sessionVerifies). With `priceTableId` (a string, or null when the caller has none) the record must have been made under that table; with `models`
+ * every model in the list needs at least one verifying session. Without those options only the numbers of the sessions are checked (the CLI's --verify uses that).
+ */
+export function verificationProblems(v, { tolerance = OUTPUT_TOLERANCE, band = PRICE_BAND, priceTableId, models } = {}) {
+  if (!v || v.schema !== VERIFICATION_SCHEMA) return [`no verification record of schema ${VERIFICATION_SCHEMA}`];
+  const out = [];
+  if (!Array.isArray(v.sessions) || v.sessions.length < MIN_VERIFY_SESSIONS) { out.push(`a record needs at least ${MIN_VERIFY_SESSIONS} transcripts (has ${Array.isArray(v.sessions) ? v.sessions.length : 0})`); return out; }
+  v.sessions.forEach((s, i) => { if (!sessionVerifies(s, { tolerance, band })) out.push(`session ${i + 1} (${s?.file ?? s?.path ?? 'unnamed'}) does not verify (method ${JSON.stringify(s?.method ?? null)}${s?.cacheWrite1hShare >= 0.5 ? ', cache writes billed at the 1-hour rate the table does not price' : ''})`); });
+  if (priceTableId !== undefined && (priceTableId == null || v.priceTable?.id !== priceTableId)) out.push(`the record was made under price table ${JSON.stringify(v.priceTable?.id ?? null)}, the stage prices with ${JSON.stringify(priceTableId ?? null)}`);
+  if (models !== undefined) for (const m of models) if (!v.sessions.some(s => s?.model === m && sessionVerifies(s, { tolerance, band }))) out.push(`no verifying session for model ${m}, which the stage's agent arms use`);
+  return out;
+}
+/** A record passes when verificationProblems finds none (see there). */
+export const verificationPasses = (v, opts) => verificationProblems(v, opts).length === 0;
+
+const fullSha = text => createHash('sha256').update(text).digest('hex');
+/**
  * The verification record for some saved transcripts ($0). Each is priced by the very code label-run uses (priceSession(table, model, input), injected so this
- * module needs no label-run import): accepted as `per-message` when its lines match the final usage, as `final-output` when the missing output tokens
- * priced from the final usage land within the price band of the reported cost, otherwise `unverified`.
+ * module needs no label-run import): accepted as `per-message` when its lines match the final usage and the re-price is the CLI figure, as `final-output` when the
+ * missing output tokens priced from the final usage land within the price band of the reported cost, otherwise `unverified`. Each session carries the
+ * transcript's `path` (absolute) and its full `sha256`, so label-run can re-derive it at launch (rederiveVerification); the record carries the price table id and
+ * the models of its verifying sessions.
  */
 export function verifyTranscripts(files, { priceSession, table, tolerance = OUTPUT_TOLERANCE, read = f => readFileSync(f, 'utf8') } = {}) {
   if (typeof priceSession !== 'function') throw new Error('verifyTranscripts needs label-run\'s priceSession and the pinned price table');
@@ -264,13 +392,44 @@ export function verifyTranscripts(files, { priceSession, table, tolerance = OUTP
     const method = !cost ? 'unverified' : cost.meterUnverified ? 'unverified' : cost.outputFromFinal ? 'final-output' : 'per-message';
     const pricedUsd = cost ? cost.measured + cost.imputed : null;
     return {
-      file: path.basename(f), sha256: createHash('sha256').update(text).digest('hex').slice(0, 16), model: u.model, messages: u.messages, recorded: u.recorded, final: u.final,
+      file: path.basename(f), path: path.resolve(f), sha256: fullSha(text), model: u.model, messages: u.messages, recorded: u.recorded, final: u.final,
       reportedUsd: u.reportedUsd === null ? null : round(u.reportedUsd, 6), pricedUsd: pricedUsd === null ? null : round(pricedUsd, 6), method,
       relGap: cost?.meterCheck?.relGap ?? null, cacheWrite1hShare: u.cacheWrite1hShare, ok: method !== 'unverified',
-      // Why a session whose output tokens were repaired still missed the CLI's figure: the pinned table prices cache writes at the 5-minute rate.
+      // Why a session whose output tokens were right or repaired still missed the CLI's figure: the pinned table prices cache writes at the 5-minute rate.
       ...(method === 'unverified' && (u.cacheWrite1hShare ?? 0) >= 0.5 ? { hint: 'the CLI billed the cache writes at the 1-hour rate (2 x input), the pinned table prices them at the 5-minute rate (1.25 x): set FORCE_PROMPT_CACHING_5M=1 in the shell that launches the stage (an executor session keeps only what the shell sets), or revise the table by a recorded deviation' } : {}),
     };
   });
-  const record = { schema: VERIFICATION_SCHEMA, tolerance, priceBand: PRICE_BAND, sessions };
+  const record = { schema: VERIFICATION_SCHEMA, tolerance, priceBand: PRICE_BAND, priceTable: { id: table?.id ?? null }, models: [...new Set(sessions.filter(s => s.ok && s.model).map(s => s.model))].sort(), sessions };
   return { ...record, passed: verificationPasses(record, { tolerance }) };
+}
+
+/**
+ * Re-derive a verification record from its transcripts, as label-run does at launch: every session's file must be there with the recorded full sha256 (a missing
+ * or changed transcript refuses), and re-pricing it with `priceSession` under `table` (the STAGE's price table) must give the recorded model, method and dollars.
+ * Returns { ok, problems, record }: `record` is the fresh record over the transcripts that could be read. `read`, `exists` and `resolve` are injected by tests.
+ */
+export function rederiveVerification(v, { priceSession, table, tolerance = OUTPUT_TOLERANCE, band = PRICE_BAND, read = f => readFileSync(f, 'utf8'), exists = existsSync, resolve = p => path.resolve(REPO, p) } = {}) {
+  const problems = [];
+  if (!v || v.schema !== VERIFICATION_SCHEMA || !Array.isArray(v.sessions)) return { ok: false, problems: [`no verification record of schema ${VERIFICATION_SCHEMA}`], record: null };
+  const usable = [];
+  v.sessions.forEach((s, i) => {
+    const name = `session ${i + 1} (${s?.file ?? 'unnamed'})`;
+    if (typeof s?.path !== 'string' || !s.path || !/^[0-9a-f]{64}$/.test(String(s?.sha256 ?? ''))) { problems.push(`${name} records no transcript path and full sha256, so it cannot be re-derived`); return; }
+    const file = resolve(s.path);
+    if (!exists(file)) { problems.push(`${name}: transcript ${s.path} is missing`); return; }
+    if (fullSha(read(file)) !== s.sha256) { problems.push(`${name}: transcript ${s.path} changed since the record was made (sha256 differs)`); return; }
+    usable.push({ s, file, name });
+  });
+  let fresh = null;
+  if (usable.length) {
+    fresh = verifyTranscripts(usable.map(u => u.file), { priceSession, table, tolerance, read });
+    fresh.sessions.forEach((f, i) => {
+      const { s, name } = usable[i];
+      if (f.model !== s.model) problems.push(`${name}: the transcript is a ${f.model} session, the record says ${s.model}`);
+      if (f.method !== s.method) problems.push(`${name}: re-derived as ${f.method}, the record says ${s.method}`);
+      for (const k of ['reportedUsd', 'pricedUsd']) if (!(Math.abs((num(f[k]) ?? NaN) - (num(s[k]) ?? NaN)) <= 1e-6)) problems.push(`${name}: re-derived ${k} ${f[k]}, the record says ${s[k]} (another price table, or an edited record)`);
+      if (!sessionVerifies(f, { tolerance, band })) problems.push(`${name} does not verify when re-derived under the stage's price table (method ${f.method})`);
+    });
+  }
+  return { ok: problems.length === 0, problems, record: fresh };
 }

@@ -35,10 +35,22 @@
 //             (builds + construction-faults); an arm over the 25% limit is invalid (K4): report.validity.invalidArms and
 //             arm-faults.jsonl, which evaluate.mjs reads;
 //   resume    build, probe, racing and trial records (and so the rows) carry a stamp (stageSha: the plan restricted to
-//             what this stage reads; the arm's computed settings hash; the prompt shas; the price-table id); a resume over
-//             records with another stamp is refused, as runExperiment's strictResume refuses trials of another arm version;
-//             the jobs' replacement seeds are written to plan.json before anything is spent, and a resume whose
-//             replacements differ is refused;
+//             what this stage reads; the arm's computed settings hash; the prompt shas; the price-table id; the port kind,
+//             stub or live); a resume over records with another stamp is refused, as runExperiment's strictResume refuses
+//             trials of another arm version (stub arms carry ports: 'stub' in their definition, so their runtime armHash
+//             differs from a live arm's); the jobs' replacement seeds are written to plan.json before anything is spent,
+//             and a resume whose replacements differ is refused;
+//   kinds     a --dry run (stub ports) and a paid run never share a work root, an --out or a record: spend-ledger entries,
+//             plan.json and the report carry the run's kind (dry, ports); a paid run is refused over a --dry report, over
+//             spend entries a --dry run wrote (or that record no kind) and over records with no STAMP.json beside them; a
+//             --dry run is refused over a paid run's files, with an --out under the repository's runs directory, and on
+//             the paid default work root (RUN_KIND_MIXED, DRY_OUT_IN_RUNS, DRY_ON_PAID_WORK_ROOT);
+//   once      a stage is paid for once (DESIGN §7, K5: no reruns): a paid start is refused when another directory beside
+//             --out or the work root (and, on live ports, under the runs directory and the work-root directory) holds
+//             this stage's launch record, stamp, a paid report, plan or spend (STAGE_ALREADY_RUN);
+//   jobs      jobs.json (evaluate.mjs MATRIX_FORMAT, label-free) is written to the work root and --out before any label:
+//             per job its cluster, split, family, kind, band, declared menu, requirements, verifier, example seeds and
+//             hashes (L4) and the trusted structure features (features.mjs, median over example set 1);
 //   paid      a run without --dry checks its plan first (paidRunChecks): the canonical stages.json or a spec whose sha256
 //             the preregistration lists, prereg-check's checkStages with no error, every arm's settingsSha = armSha, the
 //             preregistration equal to its frozen (committed) text, a clean label-engine stamp (written to STAMP.json
@@ -68,8 +80,9 @@ import { compileDataSchema } from '../../src/validate.mjs';
 import { assertSeedsAllowed, loadLedger } from '../jit/seeds.mjs';
 import { STAGES_FILE, PREREG_FILE, ROLES, planTasks, exampleSet, span, checkStages, armSha, canonicalJson, stamp as engineStamp, stampDiff, envelopeLaunchCheck, launchJobsOf, heldoutDryRefusal } from './prereg-check.mjs';
 import { needTable, needLabels, HEADLINE, DELTA, MODES, ENV_FAULT_LIMIT } from './metrics.mjs';
-import { guardMeter, readCommittedMeterGate, readCommittedWaiver, readVerification, meterGateDecision, OUTPUT_TOLERANCE } from './meter-gate.mjs';
+import { guardMeter, readCommittedMeterGate, readCommittedWaiver, readCommittedVerification, rederiveVerification, gateStaleness, agentModelsOf, meterGateDecision, OUTPUT_TOLERANCE } from './meter-gate.mjs';
 import { perArm, cacheShareCell } from '../memory/cache-share.mjs';
+import { taskFeatures, WHITELIST } from './features.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const LIVE_ROOT = '/var/tmp/foundry-work/need';
@@ -200,7 +213,12 @@ export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe
   }
   const exampleHashes = new Set(Object.values(examples).flat().map(t => t.taskHash));
   // Every example of the job counts for disjointness, whether or not a builder in this stage reads it.
-  for (const t of allExamples) exampleHashes.add((await makeTask(job.family, t)).taskHash);
+  const exampleTasks = [];
+  for (const t of allExamples) { const m = await makeTask(job.family, t); exampleHashes.add(m.taskHash); exampleTasks.push(m); }
+  // The job's trusted structure features (jobs.json): features.mjs on example set 1, the median per key (DESIGN §2: set 1 feeds the features).
+  const set1 = exampleSet(stages, 1), fam = await loadFamily(job.family);
+  const featureTasks = exampleTasks.filter(t => set1.includes(t.seed));
+  const features = featureTasks.length ? medianFeatures(featureTasks.map(t => taskFeatures(t.task, fam.outputSchema))) : null;
   let probeTask = null;
   if (probe) { const [t] = planTasks(stages, job.id, 'probe'); check('probe', t.seed); probeTask = await makeTask(job.family, { ...t, role: 'probe' }); }
   const evalTasks = [], replacements = [];
@@ -228,7 +246,53 @@ export async function planJob(stages, unit, { ledger, examplesNeeded = [], probe
       seen.add(made.taskHash); evalTasks.push(made);
     }
   }
-  return { evalTasks, examples, probeTask, replacements, seedChecks, bed };
+  return { evalTasks, examples, probeTask, replacements, seedChecks, bed, exampleSeeds: [...new Set(allExamples.map(t => t.seed))].sort((a, b) => a - b),
+    exampleHashes: [...exampleHashes].sort(), features, featureSeeds: featureTasks.map(t => t.seed).sort((a, b) => a - b) };
+}
+
+/** The median of each whitelisted feature over a list of taskFeatures results, at 4 decimals (familyFeatures' rounding). */
+export function medianFeatures(rows) {
+  const med = xs => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
+  return Object.fromEntries(WHITELIST.map(k => [k, +med(rows.map(r => r[k])).toFixed(4)]));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// jobs.json: the job descriptions evaluate.mjs reads (MATRIX_FORMAT; label-free, written before any label)
+
+export const JOBS_FILE = 'jobs.json';
+// stages.json splits to evaluate.mjs splits: a conditional held-out job is held out; a forced job (runbook) runs on held-out
+// seeds and is marked forced (evaluate keeps it in its own stratum).
+const EVAL_SPLIT = { train: 'train', heldout: 'heldout', 'heldout-conditional': 'heldout', forced: 'heldout', sealed: 'sealed' };
+/** One job's jobs.json entry: its stages.json description (cluster, split, family, band, kinds, near, forced, requirements,
+ *  verifier, declared menu), the family's kind (shortcut baselines only), the example seeds and hashes (L4), the features. */
+export function jobsEntry(job, plan, fam = null) {
+  return {
+    cluster: job.cluster, split: EVAL_SPLIT[job.split] ?? job.split, family: job.family, ...(fam?.family?.kind ? { kind: fam.family.kind } : {}),
+    ...(Array.isArray(job.band) ? { band: [...job.band] } : {}), ...(Array.isArray(job.stageKinds) ? { stageKinds: [...job.stageKinds] } : {}),
+    ...(job.near ? { near: true } : {}), ...(job.split === 'forced' ? { forced: true } : {}), requirements: [...(job.requirements ?? [])],
+    ...(job.verifier != null ? { verifier: job.verifier } : {}), ...(Array.isArray(job.modes) ? { modes: [...job.modes] } : {}), ...(Array.isArray(job.masked) ? { masked: [...job.masked] } : {}),
+    ...(Number.isFinite(job.tolerance?.scoreThreshold) ? { tolerance: { scoreThreshold: job.tolerance.scoreThreshold } } : {}),
+    exampleSeeds: [...plan.exampleSeeds], exampleHashes: [...plan.exampleHashes], features: plan.features, featureSeeds: [...plan.featureSeeds],
+  };
+}
+/**
+ * Write jobs.json (every file given) before any label: the entries of the jobs run now, beside those of jobs an earlier run
+ * of this stage recorded (--jobs). A job already on record with another description refuses the run (JOBS_CHANGED): its
+ * recorded rows were labelled under the old one (another bed generator, example set or declared menu).
+ */
+export function writeJobsRecord({ files, entries }) {
+  const prev = new Map();
+  for (const f of files) {
+    if (!existsSync(f)) continue;
+    let rec; try { rec = JSON.parse(readFileSync(f, 'utf8')); } catch { continue; }
+    if (rec && typeof rec === 'object' && !Array.isArray(rec)) for (const [id, m] of Object.entries(rec)) if (!prev.has(id)) prev.set(id, m);
+  }
+  const changed = entries.filter(([id, m]) => prev.has(id) && canonicalJson(prev.get(id)) !== canonicalJson(m)).map(([id]) => id);
+  if (changed.length) throw Object.assign(new Error(`${JOBS_FILE}: ${changed.join(', ')} described differently than on record (bed generator, examples, menu or requirements changed): finish or analyse the stage as it stands`), { code: 'JOBS_CHANGED' });
+  for (const [id, m] of entries) prev.set(id, m);
+  const rec = Object.fromEntries([...prev.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  for (const f of files) { mkdirSync(path.dirname(f), { recursive: true }); writeFileSync(f, stableJson(rec)); }
+  return rec;
 }
 
 /**
@@ -261,7 +325,7 @@ export const PLAN_FILE = 'plan.json', PLAN_SCHEMA = 'need-label-plan/1';
  * with other replacements (another stage took reserve seeds in between, or the plan changed) refuses the run: its recorded
  * trials were drawn on the old task set. Jobs not run this time (--jobs) keep their record.
  */
-export function writePlanRecord({ files, stage, jobs }) {
+export function writePlanRecord({ files, stage, jobs, kind = null }) {
   const prev = new Map();
   for (const f of files) {
     if (!existsSync(f)) continue;
@@ -274,7 +338,8 @@ export function writePlanRecord({ files, stage, jobs }) {
     throw Object.assign(new Error(`resume would change the task set: replacement seeds of ${changed.map(j => j.job).join(', ')} differ from plan.json (${changed.map(j => `${j.job}: ${JSON.stringify((prev.get(j.job).replacements ?? []).map(r => r.to))} -> ${JSON.stringify(j.replacements.map(r => r.to))}`).join('; ')}); finish or analyse the stage as it stands`), { code: 'PLAN_CHANGED' });
   }
   for (const j of now) prev.set(j.job, j);
-  const rec = { schema: PLAN_SCHEMA, stage: stage.id, jobs: [...prev.values()].sort((a, b) => (a.job < b.job ? -1 : a.job > b.job ? 1 : 0)) };
+  // kind: { dry, ports } of the run that wrote it (runKindProblems and paidStageEvidence read it).
+  const rec = { schema: PLAN_SCHEMA, stage: stage.id, ...(kind ? { dry: !!kind.dry, ports: kind.ports } : {}), jobs: [...prev.values()].sort((a, b) => (a.job < b.job ? -1 : a.job > b.job ? 1 : 0)) };
   for (const f of files) { mkdirSync(path.dirname(f), { recursive: true }); writeFileSync(f, stableJson(rec)); }
   return rec;
 }
@@ -448,10 +513,14 @@ export function copiedExampleLines(source, exampleTasks, { minLineChars = COPY_S
 // from the ledger, and a reservation that was never settled (the process died with the start in flight) counts at its bound.
 export const SPEND_FILE = 'spend.jsonl', ARM_FAULTS_FILE = 'arm-faults.jsonl', STAMP_FILE = 'STAMP.json', LAUNCH_FILE = 'LAUNCH.json';
 export class StageBudget {
-  constructor(capUsd, spentUsd = 0, { stage = null, files = [], attempts = new Map() } = {}) {
-    Object.assign(this, { capUsd, spentUsd, reservedUsd: 0, refused: 0, stage, files: [...new Set(files)], attempts: new Map(attempts) });
+  // kind: { dry, ports } of the run; every ledger entry carries it, so a paid run never takes a --dry run's spend as its own.
+  constructor(capUsd, spentUsd = 0, { stage = null, files = [], attempts = new Map(), kind = null } = {}) {
+    Object.assign(this, { capUsd, spentUsd, reservedUsd: 0, refused: 0, stage, kind, files: [...new Set(files)], attempts: new Map(attempts) });
   }
-  write(e) { const line = JSON.stringify({ stage: this.stage, ...e }) + '\n'; for (const f of this.files) appendFileSync(f, line); }
+  write(e) {
+    const line = JSON.stringify({ stage: this.stage, ...(this.kind ? { dry: !!this.kind.dry, ports: this.kind.ports } : {}), ...e }) + '\n';
+    for (const f of this.files) appendFileSync(f, line);
+  }
   /** Reserve a start's bound; null (refused, counted) when it does not fit. info: { kind, key, ...detail }. */
   reserve(bound, { kind = 'start', key = null, ...detail } = {}) {
     if (this.spentUsd + this.reservedUsd + bound > this.capUsd + 1e-9) { this.refused += 1; return null; }
@@ -502,16 +571,18 @@ const capError = budget => Object.assign(new Error(`stage cap $${budget.capUsd} 
  */
 export function meterOf({ kind, priceTable, model = null, bound = 0, r = null, calls = [] }) {
   const reported = (r?.costUsd ?? 0) + (r?.imputedUsd ?? 0);
-  let measured, imputed, unknown, tokens;
+  let measured, imputed, unknown, tokens, repriced;
   if (kind === 'session') {
     const p = priceSession(priceTable, model, { messageUsage: r?.meta?.messageUsage, streamUsage: r?.meta?.streamUsage, costUnknown: !!r?.costUnknown, boundUsd: bound, reportedUsd: r?.costUsd ?? 0 });
-    measured = p.measured; imputed = p.imputed; unknown = !!r?.costUnknown; tokens = p.tokens;
+    measured = p.measured; imputed = p.imputed; unknown = !!r?.costUnknown; tokens = p.tokens; repriced = p.repriced !== false;
   } else {
     const p = priceCalls(priceTable, calls, { boundUsd: kind === 'call' ? bound : null });
     measured = p.measured; imputed = p.imputed; tokens = p.tokens;
     unknown = !!r?.costUnknown || r?.error?.code === 'MODEL_TIMEOUT' || calls.some(c => c.costUnknown || c.errorCode === 'MODEL_TIMEOUT');
+    // Re-priced: every recorded call priced from the pinned table (none at its own reported figure); with no recorded call, only a $0 report is.
+    repriced = calls.length ? !p.fallback : reported === 0;
   }
-  return { reported, measured, imputed, unknown, tokens, charged: Math.max(reported, measured + imputed, unknown ? bound : 0) };
+  return { reported, measured, imputed, unknown, tokens, repriced, charged: Math.max(reported, measured + imputed, unknown ? bound : 0) };
 }
 /** The probe-row and legacy figure: what a result reported, at least its bound when the spend was not observed. */
 const chargeOf = (r, bound) => {
@@ -532,8 +603,11 @@ const SELF_CHECK_ENV = code => (ENV_FAULTS.has(code) ? code : 'EXECUTOR_LAUNCH')
 // (the runtime armHash does not cover every arm setting, e.g. a b0Call's provider timeout or its per-call bound).
 function withSignals(arm, { ctx, job, kind, model = null, bound, schemaTest, fam, selfCheck = null, attemptOf = null, ledgerKind = 'trial', mode = parseArmId(arm.id).mode }) {
   const { budget, book, stages } = ctx, stamp = recordStamp(ctx, mode);
+  // A stub arm's definition says so (ports: 'stub'), so its runtime armHash differs from the live arm's and runExperiment's
+  // strictResume refuses a live run over stub trials (and back), including trials with no meta; live definitions are unchanged.
+  const def = { ...arm.def, ...(selfCheck ? { selfCheckSha: selfCheck.sha } : {}), ...(ctx.portKind === 'stub' ? { ports: 'stub' } : {}) };
   return {
-    ...arm, def: selfCheck ? { ...arm.def, selfCheckSha: selfCheck.sha } : arm.def,
+    ...arm, def,
     async run(a) {
       const key = `${job}|${arm.id}|${a.taskKey}|t${a.trial}`;
       const tok = budget.reserve(bound, { kind: ledgerKind, key, job, arm: arm.id, task: a.taskKey, trial: a.trial });
@@ -1040,8 +1114,10 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
  * on any error. deps (tests): { canonicalFile, preregFile, checkStagesFn, stampOf, frozenSha (file -> sha256 hex of its
  * frozen text, default: its committed HEAD blob), ledger, policy, meterGate (() -> D6's summary.meterGate or null; default: read from the committed
  * HEAD blob of diagnostics.json: meterGateSource () -> { gate, problem, dirty }), meterGateWaiver (() -> the owner's logged waiver or null), meterGateDirty (() -> why the working-tree diagnostics.json
- * differs from HEAD, or null; default: compared with the HEAD blob, and null when `meterGate` is injected), meterVerification (() -> the verification record
- * or null) }.
+ * differs from HEAD, or null; default: compared with the HEAD blob, and null when `meterGate` is injected), meterGateStale (() -> why the gate is not current
+ * for this stage, a list; default: gateStaleness of the committed gate, skipped when `meterGate` is injected), meterVerification (() -> the verification record
+ * or null; default: meterVerificationSource, the HEAD blob of meter-verification.json), meterRederive (record -> { ok, problems }; default: rederiveVerification
+ * of the record's transcripts under the stage's price table) }.
  *  - approval: the stage's approved flag (the owner's gate);
  *  - status: a frozen plan, or --allow-draft, which is recorded in report.deviations;
  *  - the plan: the canonical stages.json (same bytes), or a spec whose sha256 the preregistration text names (an addendum
@@ -1056,13 +1132,17 @@ const sha256Hex = text => createHash('sha256').update(text).digest('hex');
  *    (a conditionalEnvelopes entry only when one of its jobs is launched or drawn) is a committed file (git commit time before now, one commit), equal to
  *    its committed text, whose sealed routerShas are the PREREG §4.4 A-Freeze shas; the envelopes checked are returned (`envelopes`, for LAUNCH.json);
  *  - the cost-meter gate (meter-gate.mjs; D6 of the M0 diagnostics), read from the COMMITTED diagnostics.json (HEAD blob): no stage with an agent arm while it
- *    says block-until-verified and no passing meter-verification record is on file; none either when there is no gate to read (a missing, unparseable or
- *    partial file) unless the owner's waiver is logged (recorded in report.deviations), nor while the working-tree file differs from the HEAD blob;
+ *    says block-until-verified or insufficient-evidence and no passing meter-verification record clears it; none either when there is no gate to read (a missing,
+ *    unparseable or partial file) unless the owner's waiver is logged (recorded in report.deviations), nor while the working-tree file differs from the HEAD blob,
+ *    nor on a gate that is not current (another price table than the stage's, other rule constants, no evidence for a model the stage's agent arms use). The record
+ *    that clears a gate is the HEAD blob of meter-verification.json, re-derived from its transcripts (path and full sha256; a missing or changed file refuses)
+ *    under the stage's price table, with a passing session for every model the stage's agent arms use;
  *  - --jobs/--arms only with --deviation TEXT (both recorded in report.deviations).
  */
 export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters = null, deviation = null, deps = {} }) {
   const { canonicalFile = STAGES_FILE, preregFile = PREREG_FILE, checkStagesFn = checkStages, stampOf = engineStamp, frozenSha = gitBlobSha256, ledger = undefined, policy = undefined,
-    meterGate = null, meterGateSource = readCommittedMeterGate, meterGateWaiver = null, meterGateDirty = null, meterVerification = readVerification } = deps;
+    meterGate = null, meterGateSource = readCommittedMeterGate, meterGateWaiver = null, meterGateDirty = null, meterGateStale = null,
+    meterVerification = null, meterVerificationSource = readCommittedVerification, meterRederive = null } = deps;
   const { stages, stage } = plan, errors = [], deviations = [];
   if (stage.approved !== true) errors.push(`stage ${stage.id} is not approved (stages.json approved: ${stage.approved}); paid runs need the owner's gate`);
   if (stages.status !== 'frozen') {
@@ -1091,10 +1171,19 @@ export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters
   // The cost-meter gate (D6, meter-gate.mjs): a stage with an agent arm does not start while the committed gate is block-until-verified and no
   // passing meter-verification record is on file.
   // Fail closed: no gate on file refuses the stage unless the owner's waiver is logged; the gate is the committed one, and a working tree that differs refuses it.
+  // Review of 2026-10-15: the gate must be CURRENT (computed under this stage's price table and the rule constants in force, covering the models its agent arms use),
+  // and the verification record that clears a blocking gate is the HEAD blob, re-derived from its transcripts under this stage's price table (a missing or changed
+  // transcript, another table, or a model with no passing session refuses). `meterGate` / `meterVerification` injected by tests skip the staleness check and the
+  // committed reads unless meterGateStale / meterRederive are injected too.
   const committed = meterGate ? null : meterGateSource();
+  const armDefs = [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => stages.arms[a]);
+  const gateNow = meterGate ? meterGate() : committed.gate, priceTableId = stages.priceTable?.id ?? null;
+  const vSrc = meterVerification ? { record: meterVerification(), problem: null } : meterVerificationSource();
   const mg = meterGateDecision({
-    gate: meterGate ? meterGate() : committed.gate, verification: meterVerification(), arms: [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => stages.arms[a]),
+    gate: gateNow, verification: vSrc.record, verificationProblem: vSrc.problem, arms: armDefs,
     waiver: meterGateWaiver ? meterGateWaiver() : meterGate || deps.meterGateSource ? null : readCommittedWaiver(), problem: committed?.problem ?? null, dirty: meterGateDirty ? meterGateDirty() : committed?.dirty ?? null,
+    priceTableId, stale: meterGate ? (meterGateStale ? meterGateStale() : null) : gateNow ? gateStaleness(gateNow, { priceTableId, models: agentModelsOf(armDefs) }) : null,
+    rederive: meterRederive ?? (rec => rederiveVerification(rec, { priceSession, table: stages.priceTable })),
   });
   if (!mg.allow) errors.push(`meter gate: ${mg.why}`);
   else if (mg.waived) deviations.push({ kind: 'meter-gate-waiver', text: `meter gate: ${mg.why}`, waiver: mg.waiver });
