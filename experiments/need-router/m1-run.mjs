@@ -3,7 +3,7 @@
 // 379-390; R3' on its own rows 479-490), through the journaled ModelPort, scored by each bed's oracle. It is also the
 // W-bed's preregistered admission gate (R0 >= 10/12; every other rung <= 2/12 at each effort). METERED: ~192 calls,
 // estimate ~$10, hard stop at --cap (default $15). Live files stay outside the repository and are copied in at the end.
-//   node experiments/need-router/m1-run.mjs [--cap 15] [--rungs r0,r1,...] [--dry]
+//   node experiments/need-router/m1-run.mjs [--cap 15] [--rungs r0,r1,...] [--difficulty 3] [--tag m1] [--timeout-ms 300000] [--dry]
 import path from 'node:path';
 import { mkdirSync, copyFileSync, existsSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -35,7 +35,6 @@ console.log(`M1: ${tasks.length} tasks over ${rungs.length} rungs x 2 efforts = 
 if (process.argv.includes('--dry')) process.exit(0);
 
 const timeoutMs = Number(arg('--timeout-ms', '0')) || undefined;
-const only = arg('--only', null);   // a JSON file of [{ taskKey, arm }] to (re-)run; others are skipped
 const { port } = createModelPort({ journalFile: path.join(live, 'journal.sqlite'), allowedModels: ['claude-haiku-5-5'], maxBudgetUsdPerCall: 1, timeoutMs });
 let spent = 0;
 const capped = arm => ({
