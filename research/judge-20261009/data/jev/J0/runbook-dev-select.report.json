@@ -1,0 +1,119 @@
+{
+  "schema": "kev-data/served-rows@1",
+  "started_at": "2026-10-15T07:25:37.555Z",
+  "path": "jev",
+  "input": {
+    "file": "runbook-dev-select-e431400e7d8b.jsonl",
+    "sha256": "e431400e7d8b7502ba329b22e06ae505b0821da012cbed4587a69078a2160f53",
+    "records": 158,
+    "questions": 158
+  },
+  "rows": {
+    "file": "/var/tmp/foundry-work/kev/j0/runbook-dev-select.jsonl",
+    "sha256": "23ccd86aee5ccb8eb18ce09db14aac159e7f74da925fe21561a87b6f50b6dd88",
+    "n": 158,
+    "raw": "/var/tmp/foundry-work/kev/j0/runbook-dev-select.raw.jsonl",
+    "reread": "/var/tmp/foundry-work/kev/j0/runbook-dev-select.reread.jsonl"
+  },
+  "served": {
+    "endpoint": "https://api.typesafe.ai",
+    "requested_model": "jev-1.14.0",
+    "identity": {
+      "mode": "per-response",
+      "run": "jev-1.14.0",
+      "versions": {
+        "jev-1.14.0": 158
+      }
+    },
+    "identity_after": null,
+    "same_model": true,
+    "expected_run": null,
+    "identity_from": "response",
+    "versions": {
+      "jev-1.14.0": 158
+    },
+    "reread_versions": {
+      "jev-1.14.0": 20
+    },
+    "model_changed": false
+  },
+  "concurrency": 2,
+  "repeat": 1,
+  "retry": {
+    "max": 6,
+    "base_ms": 2000,
+    "cap_ms": 60000
+  },
+  "max_request_bytes": null,
+  "coverage": {
+    "requested_records": 158,
+    "requested_questions": 158,
+    "evaluated_records": 158,
+    "evaluated_questions": 158,
+    "rejected_records": 0,
+    "failed_records": 0,
+    "truncated_records": 0
+  },
+  "rejected": [],
+  "failed": [],
+  "truncated": [],
+  "faults": {
+    "n": 0,
+    "by_code": {},
+    "list": []
+  },
+  "usage": {
+    "requests": 158,
+    "input_tokens": 71126,
+    "output_tokens": 6155,
+    "missing_usage": 0,
+    "scope": "every scored record in the rows file, one request each; not the re-read or retried attempts (see requests and faults)"
+  },
+  "requests": {
+    "ledger": "/var/tmp/foundry-work/kev/j0/requests.jsonl",
+    "cap": 1400,
+    "count_after": 178
+  },
+  "reread": {
+    "records": 20,
+    "questions": 20,
+    "missing": 0,
+    "mismatched": 0,
+    "maxAbsDp": 0.1,
+    "meanAbsDp": 0.009565,
+    "meanMaxPA": 0.93,
+    "meanMaxPB": 0.9325,
+    "meanMaxPDiff": 0.0025,
+    "argmaxFlips": 0,
+    "flipRate": 0,
+    "agree": false,
+    "stable": true,
+    "versions": {
+      "jev-1.14.0": 20
+    }
+  },
+  "timing": {
+    "wall_seconds": 6.48,
+    "requests": 158,
+    "seconds_per_request": 0.041,
+    "requests_per_second": 24.398,
+    "wall_ms": {
+      "median": 75.694,
+      "p90": 97.172,
+      "p95": 103.136,
+      "mean": 81.048,
+      "max": 279.367
+    },
+    "server_latency_ms": null,
+    "overhead_ms": null,
+    "rtt_ms": null,
+    "input_tokens_per_request": {
+      "median": 447,
+      "p90": 530,
+      "p95": 536,
+      "mean": 450.165,
+      "max": 571
+    }
+  },
+  "valid": false
+}

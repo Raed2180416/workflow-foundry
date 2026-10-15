@@ -383,13 +383,13 @@ approval** (`SRC/permission/next.ts:107-116`; `OS/SECURITY.md:11`) [code, doc].
 | Memory | What persists | Shared with | Evidence |
 |---|---|---|---|
 | Session transcript | every message and tool part, on disk under the data root; the full record survives compaction | the session; a resumed worker via `task_id` | [code] `SRC/session/index.ts`, `SRC/storage/storage.ts`; [doc] `OS/ARCHITECTURE.md:121-123` |
-| Working context | old tool outputs pruned to one-line summaries at turn boundaries; when over budget, an LLM compaction writes a fixed handoff (Objective, Deliverables verbatim, Constraints & Decisions, Findings, Work State, Delegated evidence, Next Move, Key Files) and pins the first user message | the session | [code] `SRC/session/prompt.ts:986-992,1519-1631`, `SRC/session/compaction.ts:455-485`; `SRC/agent/prompt/compaction.txt:1-5`; [doc] `OS/CHANGELOG.md:1958-1960` |
+| Working context | old tool outputs pruned to one-line summaries at turn boundaries; when over budget, an LLM compaction writes a fixed handoff (Objective, Deliverables verbatim, Constraints & Decisions, Findings, Work State, Delegated evidence, Next Move, Key Files) and pins the first user message | the session | [code] `SRC/session/prompt.ts:986-992,1523-1631`, `SRC/session/compaction.ts:455-485`; `SRC/agent/prompt/compaction.txt:1-5`; [doc] `OS/CHANGELOG.md:1958-1960` |
 | `recall` tool | regex search over the session's own history, including compacted turns and saved full tool outputs | the session | [code] `SRC/tool/recall.ts:1-121`, `SRC/tool/recall.txt:1-3` |
 | Project instructions | `AGENTS.md`, `CLAUDE.md` (and `~/.claude/CLAUDE.md`) walked up from the project, ≤256 KB each, ≤1 MB total; `/init` writes a ~100-line `AGENTS.md` | every session in the project | [code] `SRC/session/instruction.ts:15-34`; `SRC/command/template/initialize.txt:1-12` |
 | Results (artifacts) | immutable, versioned files with sha256, execution metadata and capture quality; provenance nodes recorded automatically by kernels and the artifact tool | project-wide; workers' results reach the lead by artifact id | [code] `SRC/artifact/store.ts:1-40`, `SRC/tool/artifact.ts:83-161`, `SRC/science/kernel/registry.ts:636` |
 | Studies and runs | one SQLite file per project: runs, ideas, verdicts, lessons, directives; rendered to `study.md`, `ideas.md`, `results.tsv`, `lessons.md` | the study's session; survives restarts | [code] `SRC/experiments/index.ts:12-21,92-140`, `SRC/experiments/ledger.ts` |
 | Harness unit state | deliverables, acceptance contract, round counters, spend: an **in-memory** `Map` per session | the process only | [code] `SRC/harness/state.ts:1-10,72` |
-| Cross-session lessons | `SessionResearch.experience/learn/unlearn` per project, "independently supported only from verified observations across more than one session" | **no production caller** (§6.2) | [code] `SRC/session/research.ts:779-923`; [doc] `OS/docs/notes/harness-manifests.md:104-106` |
+| Cross-session lessons | `SessionResearch.experience/learn/unlearn` per project, "independently supported only from verified observations across more than one session" | **no production caller** (§6.2) | [code] `SRC/session/research.ts:779-923`; [doc] `OS/docs/notes/harness-manifests.md:110-111` |
 | Conversation references | a bounded, hashed snapshot of another session, labelled "reference material, not … new user instructions" | the target session | [code] `SRC/session/prompt.ts:2586-2630` |
 | Trace upload | full traces uploaded to the vendor when signed in, by default | vendor | [doc] `OS/ARCHITECTURE.md:80-82` |
 
@@ -418,8 +418,8 @@ session; only the cost unit re-seeds itself from the transcript (`SRC/harness/co
 | Plan mode is read-only | tool allowlist | hard refusal | [code] `SRC/tool/plan-mode.ts:1-20` |
 | One run per idea; no repeated configuration; concurrency; run budget; study state | `study` tool | hard refusals | [code] `SRC/tool/study.ts:337-357,375-399` |
 | Kill criteria; hours/runs/cost/target budgets | study driver every 3 s | kills runs, halts study, wakes the agent | [code] `SRC/experiments/driver.ts:14-44,213-344,422-441` |
-| Paid compute approval matches the plan | digest-bound approval | hard | [code] `SRC/tool/compute-job.ts:946-993`; [doc] ADR 0001 rule 4 |
-| Pipelines fail on any stage | `pipefail` in bash/zsh | hard | [doc] `OS/docs/notes/harness-manifests.md:78-79` |
+| Paid compute approval matches the plan | digest-bound approval | hard | [code] `SRC/tool/compute-job.ts:946-993`; [doc] `OS/docs/adr/0001-modal-compute-control-plane.md:25` |
+| Pipelines fail on any stage | `pipefail` in bash/zsh | hard | [doc] `OS/docs/notes/harness-manifests.md:79-80` |
 
 ### 6.2 Preregistration and research contracts: present, documented, unreachable
 
@@ -436,7 +436,7 @@ session; only the cost unit re-seeds itself from the transcript (`SRC/harness/co
   tool registry has no such tool (`SRC/tool/registry.ts:183-224`) [code]. Tests still exercise the module
   (`OS/backend/cli/test/session/research.test.ts`) [code].
 - The docs still describe "Research completion contracts" with fail-closed gates and session-tree ceilings as current
-  behaviour (`OS/docs/notes/harness-manifests.md:81-110`) [doc]. The user docs reduce preregistration to advice: "ask
+  behaviour (`OS/docs/notes/harness-manifests.md:82-115`) [doc]. The user docs reduce preregistration to advice: "ask
   OpenScience to save the empirical plan as a Result … A local preregistered plan … is not automatically a
   registration in an external scientific registry" (`OS/frontend/docs/src/content/openscience/experiment-tracking.mdx:19-23`)
   [doc].
@@ -457,7 +457,7 @@ session; only the cost unit re-seeds itself from the transcript (`SRC/harness/co
 - Study verdicts: `kept` is the model's own label on a self-reported metric logged by the run script through
   `openscience_track` (`SRC/tool/study.ts:495-530`; skill `:50-57`) [code]. Code computes the delta to baseline but
   does not refuse a `kept` that lost (`SRC/experiments/index.ts:673-702`) [code]. (The dormant contract module did
-  refuse direction contradictions, `OS/docs/notes/harness-manifests.md:102-104` [doc].)
+  refuse direction contradictions, `OS/docs/notes/harness-manifests.md:108-110` [doc].)
 - Citations: read before citing, verify every reference against Crossref/OpenAlex/arXiv/PubMed, a `.bib` validator
   script (`SRC/agent/prompt/science.txt:5`; `OS/backend/cli/skills/core/citations/scripts/validate_bib.py`); the
   `sources` skill audits each claim against its passage (`OS/backend/cli/skills/core/sources/SKILL.md:1-30`). Run on
@@ -542,8 +542,8 @@ and for the study's run bookkeeping; advisory for method, preregistration, evide
 
 - Nine flows (5 development, 4 held-out), a 14-dimension 0–2 rubric "written before runs", hard gates (no P0/P1, every
   artifact opens, no unapproved paid action, no boundary escape, no runaway fan-out, held-out non-regression, founder
-  approval), and a lock file with sha256 of suite and rubric (`OS/evals/launch/suite.json` `splitPolicy`/`flows`;
-  `OS/evals/launch/rubric.json`; `OS/evals/launch/lock.json:1-13`) [code]. The lock hashes match the files today [code:
+  approval), and a lock file with sha256 of suite and rubric (`OS/evals/launch/suite.json:5-17` and its `flows`;
+  `OS/evals/launch/rubric.json:3,95`; `OS/evals/launch/lock.json:1-13`) [code]. The lock hashes match the files today [code:
   `sha256sum`].
 - The validator checks split counts, the `heldOutVisibleDuringTuning: false` flag and the hashes
   (`OS/evals/launch/validate.ts:60-67,129-130`) [code]. The held-out prompts are in the same public file, so
@@ -664,13 +664,13 @@ reported benchmark lead is not established by the evidence in the repo (§7.1) [
    fits Foundry's rule R7 (no limits inside a node) without moving transcripts across edges.
 9. **Harbor adapter pattern** for the wild ladder: native tasks and graders, judge credentials to the verifier only,
    frozen identity, ATIF trajectories (`OS/evals/science-harness/README.md:56-79`;
-   `OS/tooling/harbor/openscience_harbor/agent.py`). Terminal-Bench Science would be an external rung Claude did not
+   `OS/tooling/harbor/openscience_harbor/agent.py:317`). Terminal-Bench Science would be an external rung Claude did not
    write, once Modal credentials exist.
 10. **Deterministic stress matrix on a fake provider** (`OS/evals/cadence-harness/stress-matrix.ts:1-75`) as a model
     for $0 conformance tests of Foundry's executor adapters.
 11. **Knowledge-cutoff line** in prompts that pin versions (`SRC/session/system.ts:284-302`). Trivial.
 
-Do **not** adopt: the reader's grader-shaped card (`SRC/agent/prompt/reader.txt`), which is tuning toward one
+Do **not** adopt: the reader's grader-shaped card (`SRC/agent/prompt/reader.txt:14-24`), which is tuning toward one
 benchmark's rubric; the fail-open reviewer; regex extraction of the contract from the first message as the only
 contract source.
 
@@ -678,15 +678,15 @@ contract source.
 
 | Foundry asset | OpenScience gap | Evidence |
 |---|---|---|
-| Typed contracts per step | outputs are files and free text; the worker handoff is a prose report | `schemas/workflow.schema.json`; vs `SRC/agent/prompt/specialist.txt:12-13` |
-| Executable verification with independence labels | the only model check uses the lead's own model and fails open; `/review` is same session, same model | `src/verdict.mjs`, schema `independence`; vs `SRC/harness/review.ts:217,247-250` |
+| Typed contracts per step | outputs are files and free text; the worker handoff is a prose report | `schemas/workflow.schema.json:138-209`; vs `SRC/agent/prompt/specialist.txt:12-13` |
+| Executable verification with independence labels | the only model check uses the lead's own model and fails open; `/review` is same session, same model | `src/verdict.mjs:7-26`, `schemas/workflow.schema.json:189`; vs `SRC/harness/review.ts:217,247-250` |
 | Honest verdict vocabulary | no run verdict; a session "completes" when the model stops | `src/verdict.mjs:7-26`; vs `OS/evals/cadence-harness/run.ts:137-172` |
 | Need router (whether to build structure at all) | none; the model decides how much to plan or delegate | `experiments/need-router/router.mjs:1-40`; vs `SRC/session/prompt.ts:2544-2565` |
 | Cheap-model construction and execution | frontier models run everything; no node-level model assignment | `README.md:130-162` (P1), `docs/THESIS.md:356`; vs `SRC/tool/task.ts:450` |
-| Journaled record/replay | durable transcripts and Task attempts, but no replay of model calls | `src/journal.mjs:1-10`; vs `SRC/tool/task-attempt.ts` |
+| Journaled record/replay | durable transcripts and Task attempts, but no replay of model calls | `src/journal.mjs:1-10`; vs `SRC/tool/task-attempt.ts:10-80` |
 | Untrusted-data labels and control taint | web, paper and MCP text enter the context unlabeled; one regex scrubs skills | `src/validate.mjs:239-245`, `src/context.mjs:8`; vs `SRC/tool/skill.ts:253-254` |
 | Compare-and-swap state, one writer per item | shared mutable working directory for lead and workers | `src/state.mjs:38-52`; vs `SRC/tool/task.ts:486-491` |
-| Held-out evaluation discipline | public benchmarks used for development; one counted trial vs 3–5; held-out launch prompts public | `research/PREREGISTRATION-TEMPLATE.md`; vs §7.1–§7.3 |
+| Held-out evaluation discipline | public benchmarks used for development; one counted trial vs 3–5; held-out launch prompts public | `research/PREREGISTRATION-TEMPLATE.md:1-40`; `README.md:95`; vs §7.1–§7.3 |
 | Reuse that must be earned | 372 skills admitted by provenance, not by measured lift | `docs/ROADMAP.md:578-616`; vs §3.5 |
 
 ### 10.4 Biggest risks of their design
@@ -722,7 +722,7 @@ contract source.
 |---|---|---|
 | "`--auto-approve` still disables delegation" | `OS/evals/science-harness/README.md:21`; `OS/docs/notes/scientific-harness-design.md:103-106` | "Headless runs keep delegation" `SRC/cli/cmd/run.ts:586-605`; landing reports worker models `OS/frontend/landing/src/pages/Benchmark.tsx:537-540` |
 | "Research already indexes the fifteen core skills" | `OS/evals/science-harness/README.md:15-16` | 22 core skills `OS/backend/cli/skills/core/` |
-| Research completion contracts with fail-closed gates | `OS/docs/notes/harness-manifests.md:81-110` | no `research_contract` tool; `SessionResearch` writers uncalled (§6.2) |
+| Research completion contracts with fail-closed gates | `OS/docs/notes/harness-manifests.md:82-115` | no `research_contract` tool; `SessionResearch` writers uncalled (§6.2) |
 | 3 trials per task to match leaderboards | `OS/evals/science-harness/README.md:58-61` | "one counted trial per task" `OS/frontend/landing/src/pages/Benchmark.tsx:540` |
 | Skill install "may need a configured model for review" | `OS/frontend/docs/src/content/openscience/skills.mdx:48` | regex layers only `SRC/skill/install/install.ts:46-142` |
 | 371 / ~340 / 372 skills; 42 / ~49 connectors | landing, docs | counts in §3.1 and §4.1 |

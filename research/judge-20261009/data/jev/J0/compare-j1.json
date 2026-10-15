@@ -1,0 +1,161 @@
+{
+ "groups": {
+  "runbook": {
+   "Q4": {
+    "n": 100,
+    "acc13": 0.97,
+    "acc14": 0.97,
+    "argmaxAgree": 1,
+    "meanTV": 0.011
+   },
+   "X1": {
+    "n": 27,
+    "acc13": 0.889,
+    "acc14": 0.889,
+    "argmaxAgree": 1,
+    "meanTV": 0.015
+   },
+   "X4": {
+    "n": 31,
+    "acc13": 0.516,
+    "acc14": 0.355,
+    "argmaxAgree": 0.71,
+    "meanTV": 0.123
+   },
+   "_served": [
+    "jev-1.14.0"
+   ]
+  },
+  "kinetics": {
+   "X3": {
+    "n": 200,
+    "acc13": 0.57,
+    "acc14": 0.57,
+    "argmaxAgree": 0.885,
+    "meanTV": 0.084
+   },
+   "X8": {
+    "n": 100,
+    "acc13": 0.78,
+    "acc14": 0.78,
+    "argmaxAgree": 0.86,
+    "meanTV": 0.073
+   },
+   "K1": {
+    "n": 97,
+    "acc13": 0.856,
+    "acc14": 0.856,
+    "argmaxAgree": 0.959,
+    "meanTV": 0.046
+   },
+   "X4": {
+    "n": 42,
+    "acc13": 0.714,
+    "acc14": 0.667,
+    "argmaxAgree": 0.952,
+    "meanTV": 0.078
+   },
+   "K2": {
+    "n": 10,
+    "acc13": 1,
+    "acc14": 1,
+    "argmaxAgree": 1,
+    "meanTV": 0
+   },
+   "K3": {
+    "n": 12,
+    "acc13": 1,
+    "acc14": 1,
+    "argmaxAgree": 1,
+    "meanTV": 0.006
+   },
+   "_served": [
+    "jev-1.14.0"
+   ]
+  },
+  "interactive": {
+   "Q4": {
+    "n": 102,
+    "acc13": 0.951,
+    "acc14": 0.951,
+    "argmaxAgree": 1,
+    "meanTV": 0.024
+   },
+   "X1": {
+    "n": 32,
+    "acc13": 0.75,
+    "acc14": 0.75,
+    "argmaxAgree": 0.938,
+    "meanTV": 0.038
+   },
+   "Q5": {
+    "n": 52,
+    "acc13": 0.692,
+    "acc14": 0.654,
+    "argmaxAgree": 0.885,
+    "meanTV": 0.092
+   },
+   "Q6": {
+    "n": 76,
+    "acc13": 0.947,
+    "acc14": 0.961,
+    "argmaxAgree": 0.961,
+    "meanTV": 0.033
+   },
+   "X6": {
+    "n": 100,
+    "acc13": 0.48,
+    "acc14": 0.48,
+    "argmaxAgree": 0.98,
+    "meanTV": 0.058
+   },
+   "Q1~north": {
+    "n": 25,
+    "acc13": 0.8,
+    "acc14": 0.84,
+    "argmaxAgree": 0.88,
+    "meanTV": 0.079
+   },
+   "Q1~east": {
+    "n": 25,
+    "acc13": 0.72,
+    "acc14": 0.72,
+    "argmaxAgree": 1,
+    "meanTV": 0.044
+   },
+   "Q1~south": {
+    "n": 25,
+    "acc13": 0.88,
+    "acc14": 0.92,
+    "argmaxAgree": 0.96,
+    "meanTV": 0.034
+   },
+   "Q1~west": {
+    "n": 25,
+    "acc13": 0.92,
+    "acc14": 0.96,
+    "argmaxAgree": 0.96,
+    "meanTV": 0.072
+   },
+   "Q2": {
+    "n": 100,
+    "acc13": 0.91,
+    "acc14": 0.91,
+    "argmaxAgree": 1,
+    "meanTV": 0.031
+   },
+   "_served": [
+    "jev-1.14.0"
+   ]
+  }
+ },
+ "pooled": {
+  "n": 1181,
+  "acc13": 0.7748,
+  "acc14": 0.7705,
+  "argmaxAgree": 0.9407,
+  "meanTV": 0.0533,
+  "inputTokens": 602735,
+  "usd": 0.0253
+ }
+}
