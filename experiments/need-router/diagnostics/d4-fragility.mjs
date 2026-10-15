@@ -12,8 +12,8 @@
 // Opus-built workflows `ceiling`). A job whose L_today has no workflow-class mode is `vacuous`: its label can only be no-workflow.
 // Build costs are charged (legacy.mjs: the P1 hand workflow's >= $24.91 authoring included).
 // Evidence grade: LEGACY/dev.
-import { needTable, needLabels, fragility, labelSetModes, classOf, GRID, HEADLINE } from '../metrics.mjs';
-import { toMatrix, LEGACY_REGISTRY } from './legacy.mjs';
+import { needTable, needLabels, fragility, GRID, HEADLINE } from '../metrics.mjs';
+import { toMatrix, labelSetsOf, LEGACY_REGISTRY } from './legacy.mjs';
 import { mean, round } from './common.mjs';
 
 export const RECORDS_RULE = Object.freeze({ fieldAccuracy: 0.97, pairF1: 0.95, entitySlack: 0.02, source: 'beds/records/score.mjs:82' });
@@ -43,14 +43,6 @@ export function kineticsPassAt(d, f) {
 export const PASS_AT = Object.freeze({ records: recordsPassAt, kinetics: kineticsPassAt });
 
 const passRate = (rows, mode, f) => { const r = rows.filter(x => x.mode === mode); return mean(r.map(x => (f(x) ? 1 : 0))); };
-
-/** The label-set views of a LEGACY job's modes (DESIGN §2): L_today leaves out the ceiling arms (workflows written by a frontier model or a person),
- *  L_ceiling keeps everything. `vacuous`: L_today has no workflow-class mode, so its label can only be `no-workflow` and says nothing about need. */
-export function labelSetsOf(modes, registry = LEGACY_REGISTRY) {
-  const today = labelSetModes(modes, 'today', registry), ceiling = labelSetModes(modes, 'ceiling', registry);
-  const wf = ms => ms.filter(m => classOf(m, registry) === 'workflow');
-  return { today: { modes: today, workflowModes: wf(today), vacuous: wf(today).length === 0 }, ceiling: ceiling.length > today.length ? { modes: ceiling, workflowModes: wf(ceiling), extra: ceiling.filter(m => !today.includes(m)) } : null };
-}
 
 /** D4 for one LEGACY job whose oracle has a numeric tolerance. Labels are L_today (headline fields) with L_ceiling beside it when the job has ceiling arms. */
 export function fragilityOfJob(job, { cells = GRID } = {}) {

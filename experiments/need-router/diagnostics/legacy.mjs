@@ -10,6 +10,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { readJsonl, ARCHIVE_DIR, REPO, rel, abs, sourceOf, listDir } from './common.mjs';
 import { readStreams, harvest, modeOf, LEGACY_TAG, FIXED_COMPONENTS } from '../harvest.mjs';
+import { labelSetModes, classOf } from '../metrics.mjs';
 
 export const JIT_RUNS_DIR = path.join(REPO, 'research/jit-20261008/runs');
 export const TIMEOUT_BOUND_USD = 1;   // DESIGN §1: a timed-out direct call is charged at the per-call bound, never $0
@@ -47,6 +48,14 @@ export const LEGACY_REGISTRY = Object.freeze({
   'script-H': { cls: 'workflow', kind: 'built' }, 'script-O': { cls: 'workflow', kind: 'built', ceiling: true }, 'static-b1h': { cls: 'workflow', kind: 'built' },
   'jit-HH': { cls: 'workflow', kind: 'jit' }, 'jit-OH': { cls: 'workflow', kind: 'jit' }, 'jit-SH': { cls: 'workflow', kind: 'jit' },
 });
+/** The label-set views of a LEGACY job's modes (DESIGN §2): L_today leaves out the ceiling arms (workflows written by a frontier model or a person),
+ *  L_ceiling keeps everything. `vacuous`: L_today has no workflow-class mode, so its label can only be `no-workflow` and says nothing about need. */
+export function labelSetsOf(modes, registry = LEGACY_REGISTRY) {
+  const today = labelSetModes(modes, 'today', registry), ceiling = labelSetModes(modes, 'ceiling', registry);
+  const wf = ms => ms.filter(m => classOf(m, registry) === 'workflow');
+  return { today: { modes: today, workflowModes: wf(today), vacuous: wf(today).length === 0 }, ceiling: ceiling.length > today.length ? { modes: ceiling, workflowModes: wf(ceiling), extra: ceiling.filter(m => !today.includes(m)) } : null };
+}
+
 /**
  * What the P1 hand workflow (hand-H on Haiku 5.5, hand-S on Sonnet 5.5) cost to write: the records-v3 development calls, 6,752 of them on
  * Haiku 4.5, Haiku 5.5 and Sonnet, at least $24.91 (a lower bound: the Opus agent time that wrote the workflow is unpriced). The figure is in the

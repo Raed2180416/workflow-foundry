@@ -281,7 +281,7 @@ export function priceCalls(priceTable, calls, { boundUsd = null } = {}) {
 
 /** An agent session: per-message usage priced at each message's own tier and model (the session model when the message
  *  names none or one the table does not price); a killed session (costUnknown) is charged at its budget bound. */
-export function priceSession(priceTable, model, { messageUsage = null, streamUsage = null, costUnknown = false, boundUsd = 0, reportedUsd = 0 } = {}) {
+export function priceSession(priceTable, model, { messageUsage = null, streamUsage = null, costUnknown = false, boundUsd = 0, reportedUsd = 0, finalUsage = null, meter = null } = {}) {
   const tokens = zeroUsage();
   let measured = 0, approx = false, repriced = true, modelFallback = 0;
   if (Array.isArray(messageUsage)) {
@@ -296,7 +296,10 @@ export function priceSession(priceTable, model, { messageUsage = null, streamUsa
     addUsage(tokens, streamUsage); measured = priceUsage(priceTable, model, streamUsage) ?? 0; approx = true;
   } else { measured = costUnknown ? 0 : reportedUsd; repriced = false; }
   const imputed = costUnknown ? Math.max(0, boundUsd - measured) : 0;
-  return { measured, imputed, tokens, approx, repriced, modelFallback };
+  const cost = { measured, imputed, tokens, approx, repriced, modelFallback };
+  // Cost-meter gate (meter-gate.mjs, D6): with `meter` set (live runs) a session whose recorded output tokens are not within the tolerance of the CLI's
+  // final result usage, or that has no final usage to compare with, is booked at the reported figure: the re-price's shortfall is imputed and flagged.
+  return meter ? guardMeter(cost, { messageUsage, streamUsage, finalUsage }, { reportedUsd, tolerance: meter.tolerance }) : cost;
 }
 
 /** Metered gateway calls of a run, persisted (calls.jsonl) so a resume re-prices rows recorded by an earlier process. */
@@ -1083,8 +1086,7 @@ export function unrecordedSpend({ spend, stageId, results }) {
       }
     } else for (const e of es) {
       // builds: faults are in construction-faults.jsonl (counted there); a build that raised or never settled left no record.
-      if (!e.settled || e.error === 'ARM_ERROR') add(job, 'unrecorded', e);
-      else if (e.kind === 'probe' && !e.settled) add(job, 'unrecorded', e);
+      if (!e.settled || (e.kind === 'build' && e.error === 'ARM_ERROR')) add(job, 'unrecorded', e);
     }
   }
   return perJob;
@@ -1322,7 +1324,8 @@ export async function labelRun(opts) {
   const measured = sum(Object.values(parts).map(x => x.usdRepriced)), imputed = sum(Object.values(parts).map(x => x.usdImputed));
   const limit = stages.grid?.envFaultLimit ?? ENV_FAULT_LIMIT;
   const armFaults = armFaultTable({ stageId: stage.id, results, faults: runFaultRecs, builds: allBuilds, constructionFaults: cfaults, limit });
-  const k7Limit = 1.5;
+  const k7Limit = 1.5, famDeployable = new Map();
+  for (const u of units) famDeployable.set(u.job.family, typeof (await loadFamily(u.job.family)).deployableCheck === 'function');
   const report = {
     schema: REPORT_SCHEMA, stage: stage.id, grade: stage.grade ?? null, dry, ports: ports?.kind ?? null, source, planSha, stageSha: vctx.stageSha, planStatus: stages.status, approved: stage.approved ?? null,
     preregSha: prereg && existsSync(prereg) ? sha16(readFileSync(prereg, 'utf8')) : null, capUsd: stage.capUsd ?? null, priceTable: stages.priceTable?.id ?? null,
@@ -1336,7 +1339,7 @@ export async function labelRun(opts) {
       envFaultLimit: limit, invalidArms: armFaults.filter(x => x.invalid).map(x => `${x.job}/${x.mode}`),
       noSelfCheck: allBuilds.filter(b => b.factory === 'construct' && b.selfCheck && !b.failed && !b.checkPath).map(b => `${b.job}/${b.mode}#${b.lineage}`).sort(),
       selfCheckErrors: allRows.filter(r => r.selfCheckError).length,
-      deployableGaps: units.filter(u => FAMILY_HANDED_TESTS[u.job.family] && !jobsDeployable(u.job.family)).map(u => ({ job: u.job.id, family: u.job.family, named: FAMILY_HANDED_TESTS[u.job.family], used: 'schema validity only' })),
+      deployableGaps: units.filter(u => FAMILY_HANDED_TESTS[u.job.family] && !famDeployable.get(u.job.family)).map(u => ({ job: u.job.id, family: u.job.family, named: FAMILY_HANDED_TESTS[u.job.family], used: 'schema validity only' })),
       pathMentionsBuilds: allBuilds.filter(b => (b.pathMentions ?? 0) > (b.hiddenPathAttempts ?? 0)).length,
     },
     k7: { limit: k7Limit, perJobUsd: r6(jobsOut.length ? sum(jobsOut.map(j => j.usdCharged)) / jobsOut.length : 0), over: jobsOut.filter(j => j.k7Ratio != null && j.k7Ratio > k7Limit).map(j => j.job) },
@@ -1362,8 +1365,6 @@ export async function labelRun(opts) {
   copyOut(live, out, allBuilds);
   return report;
 }
-const deployableOf = new Map();
-function jobsDeployable(family) { return deployableOf.get(family) === true; }
 
 /** Copy the stage's result files and small build artefacts into --out (the repository side). The spend ledger is written
  *  to --out as it grows, never copied over. */

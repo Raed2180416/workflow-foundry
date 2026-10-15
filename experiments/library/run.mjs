@@ -102,14 +102,26 @@ export function registerChildren(lib, children = []) {
   return refs;
 }
 
+// MEM-0 M2 (research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §3.2, rule R9): the library holds evidence (oracle
+// verdicts) and judgment labels, the truth domain; the solver runs with cwd and HOME = its workdir and no sandbox. So the
+// library never lives inside a workdir, nor a workdir inside it: the solver reaches it only through the host handle (the
+// call host over the gateway).
+const within = (child, parent) => { const r = path.relative(path.resolve(parent), path.resolve(child)); return r === '' || (!r.startsWith('..') && !path.isAbsolute(r)); };
+export function assertLibraryOutside(libraryDir, workdir) {
+  if (within(libraryDir, workdir) || within(workdir, libraryDir)) throw new Error(`runSolver: the library (${libraryDir}) must be outside the solver's workdir (${workdir}) and not contain it: it holds truth-domain rows`);
+}
+
 // Run solve.mjs source on a task. Returns {status: ok|deopt|crash|timeout|invalid, output, deopt, trace, flags, overrides,
 // events (call host), liveModelCalls, spentUsd, exitCode, stderr}.
 // replay: {journal, fallback} switches the override to the sweep's journal replay (JOURNAL_OVERRIDE_SOURCE).
+// Without a library, an empty one is opened in its own temporary directory (removed afterwards), never in the workdir.
 export async function runSolver({ source, task, answers = {}, library = null, budgetUsd = 1, timeoutMs = 30000, outputSchema = null, workdir = null, keep = false, replay = null }) {
   const dir = workdir ?? mkdtempSync(path.join(tmpdir(), 'lib-run-'));
   let liveModelCalls = 0;
   const modelPort = { policy: STUB_POLICY, providers: {}, policyHash: 'stub', async call(r) { liveModelCalls++; throw new FoundryError('NO_LIVE_MODEL', `$0 runner: model ${r.modelId} requested; every judge must be answered by the override`); } };
-  const lib = library ?? openLibrary(path.join(dir, 'library'));
+  const ownLibDir = library ? null : mkdtempSync(path.join(tmpdir(), 'lib-store-'));
+  const lib = library ?? openLibrary(ownLibDir);
+  try { assertLibraryOutside(lib.dir, dir); } catch (e) { if (!workdir) rmSync(dir, { recursive: true, force: true }); throw e; }
   const host = createCallHost({ registry: lib.registry, mode: 'stub', modelPort });
   const ledger = new Ledger({ capUsd: budgetUsd, label: 'library-fixture' });
   const svc = await startServices({ modelPort: host.port({ budgetUsd, ledger }), ledger });
@@ -146,6 +158,7 @@ export async function runSolver({ source, task, answers = {}, library = null, bu
   } finally {
     await svc.close({ graceMs: 1000 });
     if (!keep && !workdir) rmSync(dir, { recursive: true, force: true });
+    if (!keep && ownLibDir) rmSync(ownLibDir, { recursive: true, force: true });
   }
 }
 
@@ -164,15 +177,16 @@ export function solverStub(source, { answers = {}, taskTemplate = '', budgetUsd 
 
 // Register a fixture's children, resolve "@child:<name>" refs, assemble the parts, run. parts: [{card, slots}].
 export async function runParts({ parts, task, answers = {}, children = [], budgetUsd = 1, outputSchema = null, timeoutMs, keep = false }) {
-  const dir = mkdtempSync(path.join(tmpdir(), 'lib-fx-'));
+  // M2: the library in its own temporary directory, not beside the solver's run directory (no ../library).
+  const dir = mkdtempSync(path.join(tmpdir(), 'lib-fx-')), libDir = mkdtempSync(path.join(tmpdir(), 'lib-fx-store-'));
   try {
-    const lib = openLibrary(path.join(dir, 'library'));
+    const lib = openLibrary(libDir);
     const refs = registerChildren(lib, children);
     const resolved = parts.map(p => ({ card: p.card, slots: resolveRefs(p.slots ?? {}, refs) }));
     const { source } = assemble({ parts: resolved, budgetUsd });
     const r = await runSolver({ source, task, answers, library: lib, budgetUsd, outputSchema, timeoutMs, workdir: path.join(dir, 'run') });
     return { ...r, source, refs };
-  } finally { if (!keep) rmSync(dir, { recursive: true, force: true }); }
+  } finally { if (!keep) { rmSync(dir, { recursive: true, force: true }); rmSync(libDir, { recursive: true, force: true }); } }
 }
 
 // One card fixture: the card's example slots with the fixture's overrides, its task, stub answers and children.

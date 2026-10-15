@@ -14,11 +14,14 @@
 // FORCE_PROMPT_CACHING_5M=1 (commit 5f145ba, 2026-10-08 20:55 UTC): P1 and the C0 dev round ran before it, the JIT streams (from
 // 2026-10-08 23:36 UTC) after it. Check 1 shows which rate the CLI billed before the flag; `pEra` assumes the policy's own account of the
 // flag for each session's era (pre-flag 1h, post-flag 5m), which the archive cannot confirm for the post-flag sessions.
+//   Gate     summary.meterGate (meter-gate.mjs buildMeterGate) turns checks 1 and 2 into a machine-readable flag, `block-until-verified` while the
+//            archived usage lines record output tokens far from the CLI's final usage: label-run refuses a paid agent stage while it is set.
 // Evidence grade: LEGACY/dev.
 import { readJson, quantile, median, mean, sum, round, sourceOf } from './common.mjs';
 import { STAGES_FILE } from './census.mjs';
 import { needTable, needLabels, GRID, HEADLINE } from '../metrics.mjs';
-import { toMatrix, LEGACY_REGISTRY } from './legacy.mjs';
+import { toMatrix, labelSetsOf, LEGACY_REGISTRY } from './legacy.mjs';
+import { buildMeterGate } from '../meter-gate.mjs';
 
 export const priceTable = (file = STAGES_FILE) => readJson(file).priceTable;
 /** git log -S FORCE_PROMPT_CACHING_5M policy/models.json: the commit that introduced the 5-minute cache flag. */
@@ -115,7 +118,9 @@ export function directCallCheck(jobs, table, models = { 'direct-H': 'claude-haik
 
 /**
  * Check 4: replace the cost of every agent mode whose rows all have streamUsage by its re-priced value (per row), recompute the NEED
- * labels over the whole grid and count the cells where the label or the best mode changes against the reported meter.
+ * labels over the whole grid and count the cells where the label or the best mode changes against the reported meter. Labels are L_today (the
+ * fields at the top of each entry) with L_ceiling beside it for jobs that have ceiling arms (hand-written or Opus-built workflows, whose authoring
+ * or build cost is charged: legacy.mjs).
  */
 export function meterImpact(jobs, table) {
   const out = [];
@@ -126,6 +131,7 @@ export function meterImpact(jobs, table) {
       if (rs.length && rs.every(r => r.streamUsage && r.model)) repriced.set(mode, rs);
     }
     if (!repriced.size) continue;
+    const sets = labelSetsOf(job.pairing.modes);
     const variants = {};
     for (const meter of ['reported', 'p5', 'p1h']) {
       const rows = job.rows.map(r => {
@@ -134,16 +140,28 @@ export function meterImpact(jobs, table) {
         return { ...r, usdReported: meter === 'p5' ? x.p5 : x.p1h };
       });
       const { rows: mr, builds } = toMatrix({ ...job, rows });
-      variants[meter] = needLabels(needTable(mr, builds, { registry: LEGACY_REGISTRY }), { cells: GRID, reps: 0 });
+      const tbl = needTable(mr, builds, { registry: LEGACY_REGISTRY });
+      variants[meter] = { today: needLabels(tbl, { cells: GRID, reps: 0, modes: sets.today.modes }), ceiling: sets.ceiling ? needLabels(tbl, { cells: GRID, reps: 0, modes: sets.ceiling.modes }) : null };
     }
-    const cmp = meter => {
-      const flips = [], tops = [];
-      for (const c of GRID) { const a = variants.reported.at(job.id, c), b = variants[meter].at(job.id, c); if (a.label !== b.label) flips.push(c.key); if (a.top !== b.top) tops.push(c.key); }
-      return { labelFlips: flips.length, topChanges: tops.length, headlineTop: variants[meter].at(job.id, HEADLINE).top, headlineLabel: variants[meter].at(job.id, HEADLINE).label };
+    const view = which => {
+      const cmp = meter => {
+        const flips = [], tops = [];
+        for (const c of GRID) { const a = variants.reported[which].at(job.id, c), b = variants[meter][which].at(job.id, c); if (a.label !== b.label) flips.push(c.key); if (a.top !== b.top) tops.push(c.key); }
+        return { labelFlips: flips.length, topChanges: tops.length, headlineTop: variants[meter][which].at(job.id, HEADLINE).top, headlineLabel: variants[meter][which].at(job.id, HEADLINE).label };
+      };
+      return { reported: { headlineTop: variants.reported[which].at(job.id, HEADLINE).top, headlineLabel: variants.reported[which].at(job.id, HEADLINE).label }, p5: cmp('p5'), p1h: cmp('p1h') };
     };
-    out.push({ job: job.id, repricedModes: [...repriced.keys()], cells: GRID.length, reported: { headlineTop: variants.reported.at(job.id, HEADLINE).top, headlineLabel: variants.reported.at(job.id, HEADLINE).label }, p5: cmp('p5'), p1h: cmp('p1h') });
+    out.push({ job: job.id, repricedModes: [...repriced.keys()], cells: GRID.length, ...view('today'), labelSets: { today: sets.today, ceiling: sets.ceiling }, ceiling: sets.ceiling ? view('ceiling') : null });
   }
   return out;
+}
+
+/** The gate's evidence from D6's own checks: builder sessions (output tokens in the stream usage against the CLI's final usage) and the model-era re-price ratios. */
+export function gateEvidence(builder, byModelEra) {
+  return {
+    outputRatios: builder.sessions.filter(r => Number.isFinite(r.outputTokensStreamUsage) && r.outputTokensFinal > 0).map(r => ({ label: r.label, model: r.model, recorded: r.outputTokensStreamUsage, final: r.outputTokensFinal })),
+    eraRatios: byModelEra.map(m => ({ key: m.key, sessions: m.sessions, ratio: m.ratioReportedOverEra })),
+  };
 }
 
 export function runD6(jobs, { constructions = [], table = priceTable(), tableSource = sourceOf(STAGES_FILE) } = {}) {
@@ -153,6 +171,7 @@ export function runD6(jobs, { constructions = [], table = priceTable(), tableSou
   const byModelEra = summarise(sessions, s => `${s.model} | ${s.era}`);
   const groups = summarise(sessions, s => `${s.job} | ${s.mode} | ${s.model}`);
   const impact = meterImpact(jobs, table);
+  const meterGate = buildMeterGate(gateEvidence(builder, byModelEra));
   return {
     id: 'D6', grade: 'LEGACY/dev', question: 'CLI-reported cost against token re-priced cost on archived agent rows', priceTable: table.id, sources: [tableSource],
     builderSessions: builder, agentSessions: { count: sessions.length, byModel, byModelEra, groups }, cacheFlag: CACHE_FLAG, directCalls: directCallCheck(jobs, table), meterImpact: impact,
@@ -162,6 +181,9 @@ export function runD6(jobs, { constructions = [], table = priceTable(), tableSou
       builder: { sessions: builder.total, exactAtBilledRate: builder.exact, inBilledRateBracket: builder.inBracket },
       builderRatioOverP5: Object.fromEntries(Object.entries(builder.byModel).map(([m, a]) => [m, a.ratioReportedOverP5])), builderRatioOverBilledRate: Object.fromEntries(Object.entries(builder.byModel).map(([m, a]) => [m, a.ratioReportedOverBilledRate])),
       meterChangesLabels: impact.some(i => i.p5.labelFlips > 0 || i.p1h.labelFlips > 0), jobsAffected: impact.filter(i => i.p5.topChanges > 0 || i.p1h.topChanges > 0).map(i => i.job),
+      meterChangesCeilingLabels: impact.some(i => i.ceiling && (i.ceiling.p5.labelFlips > 0 || i.ceiling.p1h.labelFlips > 0)), ceilingJobsAffected: impact.filter(i => i.ceiling && (i.ceiling.p5.topChanges > 0 || i.ceiling.p1h.topChanges > 0)).map(i => i.job),
+      // Machine-readable gate (meter-gate.mjs): label-run.mjs refuses to start a paid stage with an agent arm while status is block-until-verified.
+      meterGate,
     },
   };
 }

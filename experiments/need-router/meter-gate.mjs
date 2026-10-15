@@ -1,0 +1,172 @@
+// The cost-meter gate (DESIGN §2 "One cost meter"; M0 diagnostic D6; research/need-router-20261014/analysis/m0/REPORT.md).
+// $0, pure functions plus two small file readers; no model call, no network.
+//
+// The problem D6 found. label-run prices an agent session from per-message usage lines (messageUsageOf) or, failing that, from the stream
+// aggregate. In every archived transcript those lines carry a start-of-message snapshot of the output tokens (a few dozen per session against
+// tens of thousands in the CLI's final result usage), so a re-price lands 2.1 to 3 times under the CLI's own figure for Opus agents. The stage
+// cap is safe (it meters max(reported, re-priced), prereg-rules.mjs capMeter), but utility uses the re-priced figure, so an under-priced agent-O
+// looks cheap and biases the label toward no-workflow; and because label-run books a re-price from message usage as `measured`, the shortfall
+// does not count as imputed either, so the 30%-imputed rule never catches it.
+//
+// What this module adds, in three layers:
+//   1. D6 builds `summary.meterGate` here (buildMeterGate): status `block-until-verified` while the archived evidence shows the mismatch.
+//   2. label-run refuses to START a paid stage that has an agent arm while the committed gate blocks and no passing verification record is on file
+//      (meterGateDecision). A verification record is made at $0 from saved CLI transcripts: `node experiments/need-router/meter-gate.mjs --verify
+//      <transcript.jsonl>... --write research/need-router-20261014/analysis/m0/meter-verification.json`.
+//   3. label-run checks EVERY priced agent session (outputTokenCheck): per-message output tokens within `OUTPUT_TOLERANCE` of the final result usage.
+//      A session that fails, or has no final usage to compare with, is booked at the reported figure: the shortfall of the re-price against it is
+//      imputed (guardMeter), flagged `meterUnverified`, and counts toward the 30% rule. Nothing is repaired silently.
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+export const M0_DIR = path.join(REPO, 'research/need-router-20261014/analysis/m0');
+export const DIAGNOSTICS_FILE = path.join(M0_DIR, 'diagnostics.json');
+export const VERIFICATION_FILE = path.join(M0_DIR, 'meter-verification.json');
+export const METER_GATE_SCHEMA = 'need-meter-gate/1';
+export const VERIFICATION_SCHEMA = 'need-meter-verification/1';
+export const OUTPUT_TOLERANCE = 0.05;     // per-message output tokens within 5% of the CLI's final result usage
+export const PRICE_BAND = 0.10;           // a re-price within 10% of the CLI's own figure, per model and era
+export const MIN_ERA_SESSIONS = 3;        // a model-era with fewer sessions does not trip the price band
+export const MIN_VERIFY_SESSIONS = 2;     // a verification record needs this many transcripts, all within tolerance
+const num = x => (typeof x === 'number' && Number.isFinite(x) ? x : null);
+const round = (x, d = 4) => (num(x) === null ? x : Math.round(x * 10 ** d) / 10 ** d);
+
+/**
+ * The gate from D6's evidence (pure). outputRatios: [{label, model, recorded, final}] (output tokens in the stream or per-message record against the
+ * CLI's final result usage, where both are known); eraRatios: [{key, sessions, ratio}] (CLI-reported total over the token re-price, summed per model
+ * and cache era). status `block-until-verified` when any session records output tokens outside OUTPUT_TOLERANCE of the final figure, or any model-era
+ * with at least MIN_ERA_SESSIONS sessions re-prices outside PRICE_BAND of the reported figure.
+ */
+export function buildMeterGate({ outputRatios = [], eraRatios = [] } = {}) {
+  const reasons = [];
+  const scored = outputRatios.filter(r => num(r.recorded) !== null && num(r.final) > 0).map(r => ({ ...r, gap: Math.abs(r.final - r.recorded) / r.final }));
+  const under = scored.filter(r => r.gap > OUTPUT_TOLERANCE);
+  if (under.length) {
+    reasons.push({
+      code: 'OUTPUT_TOKENS_UNDER_RECORDED',
+      detail: `${under.length} of ${scored.length} sessions with a final usage record output tokens in the stream or per-message lines more than ${OUTPUT_TOLERANCE * 100}% away from the CLI's final result usage (median recorded/final ${round(median(scored.map(r => r.recorded / r.final)), 4)})`,
+      sessions: under.length, of: scored.length, medianRecordedOverFinal: round(median(scored.map(r => r.recorded / r.final)), 4),
+    });
+  }
+  const off = eraRatios.filter(e => e.sessions >= MIN_ERA_SESSIONS && num(e.ratio) !== null && (e.ratio > 1 + PRICE_BAND || e.ratio < 1 - PRICE_BAND));
+  if (off.length) {
+    reasons.push({
+      code: 'REPRICE_OFF_REPORTED',
+      detail: `${off.length} model-era groups re-price outside ${PRICE_BAND * 100}% of the CLI-reported total: ${off.map(e => `${e.key} ${round(e.ratio, 2)}x`).join(', ')}`,
+      groups: off.map(e => ({ key: e.key, sessions: e.sessions, ratioReportedOverReprice: round(e.ratio, 3) })),
+    });
+  }
+  return {
+    schema: METER_GATE_SCHEMA,
+    status: reasons.length ? 'block-until-verified' : 'clear',
+    rule: { outputTolerance: OUTPUT_TOLERANCE, priceBand: PRICE_BAND, minEraSessions: MIN_ERA_SESSIONS, minVerifySessions: MIN_VERIFY_SESSIONS },
+    reasons,
+    blocks: reasons.length ? 'a paid stage with an agent arm (agent-H, agent-O, agent-H+proc, construct-H, build-O): label-run.mjs refuses to start it' : null,
+    clearedBy: reasons.length ? `a passing meter-verification record: node experiments/need-router/meter-gate.mjs --verify <transcript>... --write ${path.relative(REPO, VERIFICATION_FILE)}, on at least ${MIN_VERIFY_SESSIONS} saved CLI transcripts (per-message output tokens within ${OUTPUT_TOLERANCE * 100}% of the final result usage); until then every agent session label-run prices is checked individually and a session that fails is booked at the reported figure` : null,
+  };
+}
+function median(xs) { const s = xs.filter(Number.isFinite).sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : NaN; }
+
+/** The committed gate (D6's summary.meterGate), or null when the diagnostics file is absent or has no D6. */
+export function readMeterGate(file = DIAGNOSTICS_FILE) {
+  if (!existsSync(file)) return null;
+  try { return JSON.parse(readFileSync(file, 'utf8')).d6?.summary?.meterGate ?? null; } catch { return null; }
+}
+/** The verification record on file (or at `file`), or null. */
+export function readVerification(file = VERIFICATION_FILE) {
+  if (!existsSync(file)) return null;
+  try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return null; }
+}
+/** A record passes when it has the schema, at least MIN_VERIFY_SESSIONS transcripts and every one inside its tolerance (re-derived here, not trusted from `passed`). */
+export function verificationPasses(v, { tolerance = OUTPUT_TOLERANCE } = {}) {
+  return !!v && v.schema === VERIFICATION_SCHEMA && Array.isArray(v.sessions) && v.sessions.length >= MIN_VERIFY_SESSIONS
+    && v.sessions.every(s => num(s.recorded) !== null && num(s.final) > 0 && Math.abs(s.final - s.recorded) / s.final <= tolerance);
+}
+
+/** True for an arm definition (stages.json arms[...]) that runs an agent session: b0Agent, a construct-H or build-O builder session, or an agent-H+proc run. */
+export const isAgentArmDef = def => !!def && (def.factory === 'b0Agent' || def.run?.factory === 'b0Agent' || def.build?.factory === 'construct');
+
+/**
+ * May a paid stage with these arms start? arms: arm definitions (or ids resolved by the caller). Returns { allow, why, gate }.
+ * Allowed when no arm is an agent arm, when there is no gate on file (reported, the per-session check still applies), when the gate is clear, or
+ * when the gate blocks and a passing verification record is on file.
+ */
+export function meterGateDecision({ gate, verification = null, arms = [] }) {
+  const agent = arms.filter(isAgentArmDef);
+  if (!agent.length) return { allow: true, why: 'no agent arm in this stage', gate: gate?.status ?? null };
+  if (!gate) return { allow: true, why: 'no D6 meter gate on file (diagnostics.json has no d6.summary.meterGate): agent sessions are still checked one by one', gate: null };
+  if (gate.status !== 'block-until-verified') return { allow: true, why: `meter gate ${gate.status}`, gate: gate.status };
+  if (verificationPasses(verification)) return { allow: true, why: `meter gate block-until-verified, cleared by a passing verification record (${verification.sessions.length} transcripts)`, gate: gate.status };
+  return { allow: false, gate: gate.status, why: `the cost-meter gate is block-until-verified (${gate.reasons.map(r => r.code).join(', ')}) and no passing meter-verification record is on file: ${gate.clearedBy}` };
+}
+
+/**
+ * Per-session assertion: the output tokens a re-price would see (the sum over per-message usage lines [input, output, cacheRead, cacheWrite, model],
+ * else the stream aggregate) against the CLI's final result usage. checked is false when there is nothing to compare with; that is a failure of
+ * verification, not a pass.
+ */
+export function outputTokenCheck({ messageUsage = null, streamUsage = null, finalUsage = null } = {}, { tolerance = OUTPUT_TOLERANCE } = {}) {
+  const recorded = Array.isArray(messageUsage) ? messageUsage.reduce((a, m) => a + (num(m[1]) ?? 0), 0) : num(streamUsage?.outputTokens);
+  const final = num(finalUsage?.output_tokens) ?? num(finalUsage?.outputTokens);
+  if (recorded === null || final === null) return { checked: false, ok: false, recorded, final, reason: recorded === null ? 'no recorded usage' : 'no final result usage to compare with' };
+  const relGap = final === 0 ? (recorded === 0 ? 0 : 1) : Math.abs(final - recorded) / final;
+  return { checked: true, ok: relGap <= tolerance, recorded, final, relGap: round(relGap, 4) };
+}
+
+/**
+ * Apply the per-session check to a priced session ({ measured, imputed, ... } as label-run.priceSession returns it). A session that fails (or cannot
+ * be checked) is booked at the reported figure: the part of it that the re-price missed is imputed, never measured, and the result is flagged
+ * `meterUnverified` with the check. Total charged = measured + imputed >= reportedUsd.
+ */
+export function guardMeter(cost, input, { reportedUsd = 0, tolerance = OUTPUT_TOLERANCE } = {}) {
+  const check = outputTokenCheck(input, { tolerance });
+  if (check.ok) return { ...cost, meterCheck: check };
+  const total = cost.measured + cost.imputed;
+  const gap = Math.max(0, (num(reportedUsd) ?? 0) - total);
+  return { ...cost, imputed: cost.imputed + gap, meterUnverified: true, meterGapUsd: gap, meterCheck: check };
+}
+
+// ------------------------------------------------------------------------------------------------ saved transcripts
+/** Usage of a stream-json transcript: last usage per assistant message id, summed, and the final result event's usage. */
+export function transcriptUsage(text) {
+  const byMsg = new Map();
+  let result = null;
+  for (const line of String(text).split('\n')) {
+    if (!line.trim()) continue;
+    let e; try { e = JSON.parse(line); } catch { continue; }
+    if (e?.type === 'assistant' && e.message?.id && e.message.usage) byMsg.set(e.message.id, e.message.usage);
+    else if (e?.type === 'result') result = e;
+  }
+  const messages = [...byMsg.values()];
+  return {
+    messages: messages.length, recorded: messages.reduce((a, u) => a + (num(u.output_tokens) ?? 0), 0),
+    final: num(result?.usage?.output_tokens), reportedUsd: num(result?.total_cost_usd), hasResult: !!result,
+  };
+}
+/** The verification record for some saved transcripts ($0). */
+export function verifyTranscripts(files, { tolerance = OUTPUT_TOLERANCE, read = f => readFileSync(f, 'utf8') } = {}) {
+  const sessions = files.map(f => {
+    const text = read(f), u = transcriptUsage(text);
+    const c = outputTokenCheck({ streamUsage: { outputTokens: u.recorded }, finalUsage: { output_tokens: u.final } }, { tolerance });
+    return { file: path.basename(f), sha256: createHash('sha256').update(text).digest('hex').slice(0, 16), messages: u.messages, recorded: u.recorded, final: u.final, relGap: c.relGap ?? null, ok: c.ok };
+  });
+  const record = { schema: VERIFICATION_SCHEMA, tolerance, sessions };
+  return { ...record, passed: verificationPasses(record, { tolerance }) };
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2), arg = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
+  if (args.includes('--verify')) {
+    const files = args.slice(args.indexOf('--verify') + 1).filter(a => !a.startsWith('--') && a !== arg('--write'));
+    const rec = verifyTranscripts(files);
+    console.log(JSON.stringify(rec, null, 1));
+    if (arg('--write')) { mkdirSync(path.dirname(path.resolve(arg('--write'))), { recursive: true }); writeFileSync(path.resolve(arg('--write')), JSON.stringify(rec, null, 1) + '\n'); }
+    process.exit(rec.passed ? 0 : 1);
+  }
+  const gate = readMeterGate(), v = readVerification();
+  console.log(JSON.stringify({ gate, verification: v ? { passed: verificationPasses(v), sessions: v.sessions?.length ?? 0 } : null }, null, 1));
+  process.exit(gate?.status === 'block-until-verified' && !verificationPasses(v) ? 1 : 0);
+}

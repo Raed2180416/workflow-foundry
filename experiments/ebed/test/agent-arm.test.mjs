@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -51,6 +51,36 @@ test('agent arm: a session that writes no output.json is an arm crash, and its c
   assert.equal(costs.length, 1);
   assert.equal(costs[0].costUnknown, true);
   assert.equal(costs[0].costUpperUsd, 0.5);
+});
+
+// MEM-0 M1 (MEMORY-ROUTING-RECURSION §3.2): the workspace was copied in and out whole on every tick, so one case's notes
+// reached every other case. Default now: a workspace per instance; 'arm' (agent-H-ws) keeps the shared one on purpose.
+test('M1: by default a session sees only its own instance\'s workspace; workspaceScope arm (agent-H-ws) shares it across instances', async () => {
+  const { readdirSync } = await import('node:fs');
+  const tickWith = async (scope, instances) => {
+    const work = mkdtempSync(path.join(os.tmpdir(), 'agent-arm-ws-'));
+    const seen = [], prompts = [];
+    const runner = async ({ workdir, prompt }) => {
+      const input = JSON.parse(readFileSync(path.join(workdir, 'task.json'), 'utf8'));
+      const ws = path.join(workdir, 'ws');
+      seen.push({ instance: input.instance, files: existsSync(ws) ? readdirSync(ws).sort() : null }); prompts.push(prompt);
+      writeFileSync(path.join(ws, `note-${input.instance}.txt`), `notes on ${input.instance}`);
+      writeFileSync(path.join(workdir, 'output.json'), JSON.stringify({ decisions: { subject: input.instance }, effects: [], carry: null }));
+      return { costUsd: 0, turns: 1, error: null };
+    };
+    const arm = agentArm({ id: 'ws-test', model: 'claude-haiku-5-5', workRoot: path.join(work, 'w'), contract: 'c', runner, ...(scope ? { workspaceScope: scope } : {}) });
+    const workspace = path.join(work, 'ws'); mkdirSync(workspace, { recursive: true });
+    const ctx = { files: {}, workspace, recordCost() {}, query() { return []; }, status() { return 'not-found'; }, instances() { return []; } };
+    for (const instance of instances) await arm.tick({ kind: 'case', instance, now: 'x', events: [], carry: null }, ctx);
+    return { seen, prompts };
+  };
+  const own = await tickWith(null, ['A', 'B', 'A']);
+  assert.deepEqual(own.seen, [{ instance: 'A', files: [] }, { instance: 'B', files: [] }, { instance: 'A', files: ['note-A.txt'] }], 'B never sees A\'s notes; A keeps its own');
+  assert.match(own.prompts[0], /across this instance's ticks/);
+  const shared = await tickWith('arm', ['A', 'B', 'A']);
+  assert.deepEqual(shared.seen.map(s => s.files), [[], ['note-A.txt'], ['note-A.txt', 'note-B.txt']], 'agent-H-ws: one workspace across instances');
+  assert.match(shared.prompts[0], /across ticks and instances/);
+  assert.throws(() => agentArm({ id: 'x', model: 'claude-haiku-5-5', workRoot: os.tmpdir(), contract: 'c', workspaceScope: 'run' }), /workspaceScope/);
 });
 
 test('the arm cap freezes the stream (QuotaStop) and grading treats the open cases as censored', async () => {
