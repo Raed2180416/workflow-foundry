@@ -91,12 +91,12 @@ KINDS = ("receipt.posted", "receipt.corrected", "receipt.reposted", "preapproval
 COUNTS = {
     "d1": {"receipt.posted": (24, 26), "receipt.corrected": (2, 2), "receipt.reposted": (2, 2), "preapproval.reply": (1, 1)},
     "d2": {"receipt.posted": (24, 30), "receipt.corrected": (2, 3), "receipt.reposted": (2, 3), "preapproval.reply": (1, 2)},
-    "d3": {"receipt.posted": (32, 38), "receipt.corrected": (3, 4), "receipt.reposted": (2, 3), "preapproval.reply": (2, 3)},
+    "d3": {"receipt.posted": (32, 38), "receipt.corrected": (3, 4), "receipt.reposted": (2, 3), "preapproval.reply": (3, 3)},
 }
 # Share of receipts given each format trap (a receipt may get several).
 FORMAT_RATE = {"d1": {"synonym": 0.0, "words": 0.0, "currency": 0.0, "date": 0.0},
-               "d2": {"synonym": 0.06, "words": 0.03, "currency": 0.02, "date": 0.04},
-               "d3": {"synonym": 0.18, "words": 0.10, "currency": 0.07, "date": 0.14}}
+               "d2": {"synonym": 0.05, "words": 0.02, "currency": 0.02, "date": 0.03},
+               "d3": {"synonym": 0.16, "words": 0.09, "currency": 0.06, "date": 0.12}}
 # Employees whose Slack display name differs from their Employees name (nicknames), by difficulty.
 NICK_STAFF = {"d1": 0, "d2": 1, "d3": 2}
 MENU = {
@@ -847,17 +847,17 @@ class Gen:
         elif d == "d2":
             corr = [r.choice(fix_rej), r.choice(fix_ok)] + (["wrong-person"] if n_corr > 2 else [])
             rep = ["repost", "repost-history"] + (["repost"] if n_rep > 2 else [])
-            appr = ["approve"] + ([r.choice(["wrong-self", "wrong-namesake", "wrong-manager", "wrong-finance", "negated"])]
-                                  if n_appr > 1 else [])
+            appr = ["approve"] + ([r.choice(["wrong-self", "wrong-namesake", "wrong-manager", "wrong-finance", "negated",
+                                             "again"])] if n_appr > 1 else [])
         else:
             corr = [r.choice(fix_rej), r.choice(fix_ok), "wrong-person"]
             if n_corr > 3:
                 corr.append(r.choice(fix_rej + fix_ok))
             rep = ["repost-fixed", r.choice(["repost", "repost-history"])] + (["repost"] if n_rep > 2 else [])
-            appr = ["approve", r.choice(["wrong-self", "wrong-namesake", "wrong-manager", "wrong-finance"])]
-            if n_appr > 2:
-                appr.append(r.choice(["negated", "again", "wrong-namesake"]))
-        self.unknown = d == "d3" or (d == "d2" and r.random() < 0.5)
+            appr = ["approve", r.choice(["wrong-self", "wrong-namesake", "wrong-manager", "wrong-finance"]), "negated"]
+        # every d2 week has at least one authority trap (a wrong corrector or approver, or an unknown poster)
+        authority = "wrong-person" in corr or any(a.startswith("wrong") for a in appr)
+        self.unknown = d == "d3" or (d == "d2" and (r.random() < 0.5 or not authority))
         # posted intents
         pending_kinds = ["pending-flight", "pending-hotel", "pending-consulting", "pending-software", "pending-meal",
                          "flight-long"]
@@ -872,6 +872,8 @@ class Gen:
             fixed.append("unknown")
         n_near = {"d1": 0, "d2": 1, "d3": 2}[d]
         fixed += ["near-dup"] * n_near
+        if d == "d3":
+            fixed.append("flight-six")      # the 6-hour boundary appears every d3 week
         cap_in = d == "d3" or (d == "d2" and not self.cap_hist)
         cap_under = d == "d3"
         n_cap = (3 if cap_in else 0) + (3 if cap_under else 0) + (1 if self.cap_hist else 0)
@@ -1571,7 +1573,7 @@ TRAP_KIND = {"synonym": "T-format", "words-amount": "T-format", "currency-format
              "flight-six": "T-format", "declared-category": "T-format",
              "wrong-corrector": "T-authority", "wrong-approver": "T-authority", "unknown-poster": "T-authority",
              "namesake": "T-lookalike", "display-name": "T-lookalike", "manager-display-name": "T-lookalike",
-             "approval-negated": "T-note",
+             "approval-negated": "T-format",
              "repost": "T-repeat", "repost-history": "T-repeat", "repost-fixed": "T-repeat", "near-dup": "T-repeat",
              "approval-again": "T-repeat",
              "meal-cap": "T-state", "cap-history": "T-state", "cap-under": "T-state", "correction": "T-state",

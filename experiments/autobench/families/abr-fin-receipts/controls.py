@@ -93,22 +93,12 @@ class NoCap(Receipts):
 
 
 class CapAllMeals(Receipts):
-    def cap_other(self, rows, name, d, exclude_ts):
-        s = Decimal("0")
-        for _, c in rows:
-            if (norm(c.get("Employee")) == norm(name) and norm(c.get("Category")) == "meals" and c.get("Date") == d.isoformat()
-                    and c.get("Message TS") != (exclude_ts or "")):
-                s += Decimal(c["Amount"])
-        return s
-
+    """The cap counts every Meals row of the day and applies to team meals as well."""
     def individual(self, f):
         return f["category"] == "Meals"
 
-    def meal_rule(self, f, cap_other):
-        why = super().meal_rule(dict(f, attendees=f["attendees"] if f["attendees"] != 1 else None), Decimal("0"))
-        if why:
-            return why
-        return "Over daily meal cap" if cap_other + f["amount"] > 100 else None
+    def att_value(self, v):
+        return 1
 
 
 class CapWeekOnly(Receipts):
@@ -120,25 +110,8 @@ class CapWeekOnly(Receipts):
 
 
 class AnyCorrector(Receipts):
-    def correction(self, d, parent):
-        return super().correction(dict(d, user=parent.get("user")), dict(parent, _any=True))
-
-    def apply_correction(self, f, text, attachments, posted):
-        return super().apply_correction(f, text, attachments, posted)
-
-    def thread_reply(self, d):
-        text = (d.get("text") or "").strip()
-        parent = self.parent(d["thread_ts"])
-        if parent is not None and re.match(r"correction\b", text, re.I) and d["user"] != parent.get("user"):
-            # apply this reply as if the poster had written it
-            orig = self.replies
-
-            def replies(ts):
-                out = orig(ts)
-                return [dict(m, user=parent.get("user")) if m["ts"] == d["ts"] else m for m in out]
-            self.replies = replies
-            return Receipts.correction(self, dict(d, user=parent.get("user")), parent)
-        return super().thread_reply(d)
+    def is_corrector(self, user_id, parent):
+        return bool(user_id)
 
 
 class AnyApprover(Receipts):
@@ -171,15 +144,9 @@ class FieldCategory(Receipts):
 
 
 class DigitsOnly(Receipts):
-    def read(self, text, attachments, posted):
-        if R.words_money(text) is not None and not re.search(r"\$\s?\d|\d\s*USD|USD\s*\d", text):
-            return None
-        return super().read(text, attachments, posted)
-
-    def top_level(self, d):
-        if self.read(d.get("text") or "", [], ts_date(d["ts"])) is None:
-            return None
-        return super().top_level(d)
+    def amount(self, text):
+        a = parse_amount(text)
+        return a if a is not None and re.search(r"\$\s?\d|\d\s*USD|USD\s*\d", text) else None
 
 
 class DrinksOk(Receipts):
@@ -208,20 +175,8 @@ class TopLevelReply(Receipts):
 
 
 class LogRejected(Receipts):
-    def top_level(self, d):
-        text = d.get("text") or ""
-        f = None
-        if parse_amount(text) is not None and self.poster(d["user"]) is not None:
-            f = self.read(text, d.get("attachments") or [], ts_date(d["ts"]))
-        if f is not None and not self.is_repost(d, f):
-            rows = self.sheet(SUBMISSIONS)
-            emp = self.poster(d["user"])
-            other = self.cap_other(rows, emp["Employee"], f["date"], None) if self.individual(f) else Decimal("0")
-            status, reason = self.check(f, other)
-            if status is None:
-                self.append_row(self.row_for(d["ts"], ts_date(d["ts"]).isoformat(), emp["Employee"], f, R.REJECTED))
-                return self.post(self.outcome_text(None, reason, f["amount"], f["category"]), thread_ts=d["ts"])
-        return super().top_level(d)
+    def on_rejected(self, d, emp, f):
+        self.append_row(self.row_for(d["ts"], ts_date(d["ts"]).isoformat(), emp["Employee"], f, R.REJECTED))
 
 
 class TotalAllWeeks(Receipts):
@@ -253,10 +208,8 @@ class SixHoursOk(Receipts):
 
 
 class CorrectionAppend(Receipts):
-    def update_row(self, row_no, cells):
-        if self.t.get("data", {}).get("thread_ts") and re.match(r"correction\b", (self.t["data"].get("text") or "").strip(), re.I):
-            return self.append_row(cells)
-        return super().update_row(row_no, cells)
+    def correct_row(self, row_no, cells):
+        self.append_row(cells)
 
 
 class UnknownLogged(Receipts):

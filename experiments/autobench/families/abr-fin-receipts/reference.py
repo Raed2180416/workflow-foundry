@@ -312,8 +312,11 @@ class Receipts:
             hours = Decimal(m.group(1)) + (Decimal(m.group(2)) / 60 if m.group(2) else 0)
         return {"cabin": cabin, "hours": hours}
 
+    def amount(self, text: str) -> Decimal | None:
+        return parse_amount(text)
+
     def read(self, text: str, attachments, posted: date) -> dict | None:
-        amount = parse_amount(text)
+        amount = self.amount(text)
         if amount is None:
             return None
         cat = self.category(text)
@@ -353,7 +356,7 @@ class Receipts:
             return "Over individual meal limit"
         if n is not None and n >= 2 and a / n > LIMIT["team"]:
             return "Over team meal limit"
-        if (n is None or n == 1) and cap_other + a > LIMIT["cap"]:
+        if self.individual(f) and cap_other + a > LIMIT["cap"]:
             return "Over daily meal cap"
         return None
 
@@ -411,7 +414,7 @@ class Receipts:
         for m in self.history():
             if float(m["ts"]) >= float(d["ts"]) or m.get("user") != d["user"] or m.get("bot_id"):
                 continue
-            a = parse_amount(m.get("text") or "")
+            a = self.amount(m.get("text") or "")
             if a is None:
                 continue
             if a == f["amount"] and parse_date(m.get("text") or "", ts_date(m["ts"])) == f["date"]:
@@ -420,7 +423,7 @@ class Receipts:
 
     def top_level(self, d: dict):
         text = d.get("text") or ""
-        if parse_amount(text) is None:
+        if self.amount(text) is None:
             return None
         emp = self.poster(d["user"])
         if emp is None:
@@ -433,7 +436,13 @@ class Receipts:
         status, reason = self.check(f, other)
         if status:
             self.append_row(self.row_for(d["ts"], ts_date(d["ts"]).isoformat(), emp["Employee"], f, status))
+        else:
+            self.on_rejected(d, emp, f)
         self.post(self.outcome_text(status, reason, f["amount"], f["category"]), thread_ts=d["ts"])
+
+    def on_rejected(self, d: dict, emp: dict, f: dict):
+        """A rejected receipt gets no row (section 4.4)."""
+        return None
 
     # -- section 5: replies in a thread -------------------------------------------------------------------------------
     def parent(self, thread_ts: str) -> dict | None:
@@ -452,11 +461,9 @@ class Receipts:
 
     def apply_correction(self, f: dict, text: str, attachments, posted: date) -> dict:
         f = dict(f)
-        low = text.lower()
-        if "amount" in low or parse_amount(text) is not None:
-            a = parse_amount(text)
-            if a is not None:
-                f["amount"] = a
+        a = self.amount(text)
+        if a is not None:
+            f["amount"] = a
         nd = parse_date(text, posted, default=False)
         if nd is not None:
             f["date"] = nd
@@ -478,9 +485,13 @@ class Receipts:
         f["flight"] = f["flight"] if f["category"] == "Travel" else None
         return f
 
+    def is_corrector(self, user_id: str | None, parent: dict) -> bool:
+        """5.1: only the receipt's own poster corrects it."""
+        return bool(user_id) and user_id == parent.get("user")
+
     def correction(self, d: dict, parent: dict):
-        if d["user"] != parent.get("user"):
-            return None                                      # 5.1: only the receipt's own poster corrects it
+        if not self.is_corrector(d["user"], parent):
+            return None
         emp = self.poster(parent["user"])
         if emp is None:
             raise Undecidable("a correction on a receipt whose poster is not in Employees")
@@ -493,7 +504,7 @@ class Receipts:
             if float(m["ts"]) > float(d["ts"]):
                 break
             body = (m.get("text") or "").strip()
-            if m.get("user") == parent.get("user") and re.match(r"correction\b", body, re.I):
+            if self.is_corrector(m.get("user"), parent) and re.match(r"correction\b", body, re.I):
                 f = self.apply_correction(f, body, d.get("attachments") if m["ts"] == d["ts"] else [], ts_date(m["ts"]))
             elif re.match(r"pre-approved\b", body, re.I) and self.is_manager(m.get("user"), emp):
                 preapproved = True
@@ -509,10 +520,14 @@ class Receipts:
             new = dict(cells)
             for k in ("Date", "Amount", "Category", "Attendees", "Status"):
                 new[k] = fresh[k]
-            self.update_row(n, new)
+            self.correct_row(n, new)
         elif status:
             self.append_row(self.row_for(parent["ts"], ts_date(parent["ts"]).isoformat(), emp["Employee"], f, status))
         self.post(self.outcome_text(status, reason, f["amount"], f["category"]), thread_ts=parent["ts"])
+
+    def correct_row(self, row_no: int, cells: dict):
+        """5.1: a correction updates the receipt's own row in place."""
+        self.update_row(row_no, cells)
 
     def is_manager(self, user_id: str | None, emp: dict) -> bool:
         if not user_id:

@@ -1610,6 +1610,7 @@ class Gen:
             "pending0": world_rows0, "pending_final": [dict(r_["cells"]) for r_ in B.rows],
             "bills_week": week_bills, "payments_week": week_payments, "policy_week": week_policy,
             "emails": week_emails, "escalations": week_posts,
+            "slack_inbound": [op["record"]["ts"] for t in self.triggers for op in t["delta"] if op.get("app") == "slack"],
             "processing": sorted(f"{wsk(r_['cells']['Vendor'])}|{num_key(r_['cells']['Invoice #'])}" for r_ in B.rows
                                  if wsk(r_["cells"]["Status"]) == wsk(PROCESSING)),
             "totals": self.totals,
