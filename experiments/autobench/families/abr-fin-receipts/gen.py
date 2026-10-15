@@ -95,8 +95,10 @@ COUNTS = {
 }
 # Share of receipts given each format trap (a receipt may get several).
 FORMAT_RATE = {"d1": {"synonym": 0.0, "words": 0.0, "currency": 0.0, "date": 0.0},
-               "d2": {"synonym": 0.10, "words": 0.04, "currency": 0.03, "date": 0.07},
-               "d3": {"synonym": 0.24, "words": 0.13, "currency": 0.09, "date": 0.20}}
+               "d2": {"synonym": 0.06, "words": 0.03, "currency": 0.02, "date": 0.04},
+               "d3": {"synonym": 0.18, "words": 0.10, "currency": 0.07, "date": 0.14}}
+# Employees whose Slack display name differs from their Employees name (nicknames), by difficulty.
+NICK_STAFF = {"d1": 0, "d2": 1, "d3": 2}
 MENU = {
     "d1": {"ok-ride": 4, "ok-parking": 2, "ok-train": 1, "ok-hotel": 1, "ok-flight": 1, "ok-meal-ind": 4,
            "ok-meal-team": 2, "ok-supplies": 2, "ok-software": 2, "ok-consulting": 1, "rej-category": 2,
@@ -104,7 +106,7 @@ MENU = {
     "d2": {"ok-ride": 4, "ok-parking": 2, "ok-train": 1, "ok-hotel": 1, "ok-flight": 1, "ok-meal-ind": 4,
            "ok-meal-team": 2, "ok-supplies": 2, "ok-software": 2, "ok-consulting": 1, "rej-category": 2,
            "rej-receipt": 1, "rej-attendees": 1, "rej-individual": 1, "rej-team": 1, "rej-hotel": 1, "rej-flight": 1,
-           "rej-alcohol": 0.6, "drinks-client": 0.5, "hotel-intl": 0.4, "flight-long": 0.3, "flight-six": 0.2},
+           "rej-alcohol": 0.4, "drinks-client": 0.3, "hotel-intl": 0.3, "flight-long": 0.2, "flight-six": 0.15},
     "d3": {"ok-ride": 3, "ok-parking": 1, "ok-train": 1, "ok-hotel": 1, "ok-flight": 1, "ok-meal-ind": 3,
            "ok-meal-team": 2, "ok-supplies": 1, "ok-software": 1, "ok-consulting": 1, "rej-category": 2,
            "rej-receipt": 1, "rej-attendees": 1, "rej-individual": 1, "rej-team": 1, "rej-hotel": 1, "rej-flight": 1,
@@ -379,10 +381,10 @@ class Gen:
             s["slack_name"] = s["name"]
             s["email"] = f"{m['first'].lower()}.{s['last'].lower()}@{ORG}"
             s["namesake_of"] = m["email"]
-        # display names: the three nickname staff, and (half the seeds) one manager shown with an initial
-        for s in staff[:3]:
+        # display names: nickname staff (by difficulty), and (d2/d3, half the seeds) one manager shown with an initial
+        for s in staff[:NICK_STAFF[self.d]]:
             s["slack_name"] = f"{NICK[s['first']]} {s['last']}"
-        if r.random() < 0.5:
+        if self.d != "d1" and r.random() < 0.5:
             m = managers[r.choice(DEPTS)]
             m["slack_name"] = f"{m['first']} {m['last'][0]}."
         people += staff
@@ -549,7 +551,7 @@ class Gen:
         elif intent == "rej-category":
             cat = r.choice(NOT_ALLOWED)
             if cat == "Entertainment":
-                desc, a, syn = r.choice([("Team building escape room", (300, 900)), ("Concert seats for the team", (120, 600)),
+                desc, a = r.choice([("Team building escape room", (300, 900)), ("Concert seats for the team", (120, 600)),
                                          ("Bowling night with the team", (150, 400)), ("Karaoke night after the launch", (90, 300))])
                 syn = ["Team building", "Entertainment"]
             elif cat == "Personal":

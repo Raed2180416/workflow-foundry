@@ -754,6 +754,7 @@ class Gen:
             else:
                 at = self.slot(q["at"], self.day(4) + timedelta(hours=16, minutes=30))
                 q["recv"] = "after"
+            q["recv_at"] = at
             self.recv_events.append({"q": q, "qty": q["po_qty"], "note": r.choice(RECV_NOTES_FULL), "at": at,
                                      "sub": "before-invoice" if before else "after-invoice"})
         while len(self.recv_events) < n:          # a delivery for a PO whose invoice has not come in yet
@@ -770,6 +771,7 @@ class Gen:
         for q in [q for q in loggable if q["recv"] == "none"]:
             if r.random() < 0.35:
                 q["recv"] = "world0"
+                q["recv_at"] = self.monday
         for e in self.recv_events:
             self.events.append({"kind": "receiving.report", "sub": e["sub"], "at": e["at"], "recv": e})
 
@@ -897,7 +899,10 @@ class Gen:
             used.add(id(q))
             if k == "ap-lead":
                 at = self.slot(q["at"] + timedelta(minutes=30), self.run_at - timedelta(minutes=30))
-                new = q["po_amount"] if q["outcome"] == "review" else q["amount"] - r.randint(25_00, max(26_00, q["amount"] // 20)) // 5 * 5
+                if q["outcome"] == "review" and q["amount"] > q["po_amount"]:
+                    new = q["po_amount"]                      # the vendor over-billed: the AP lead's figure is the PO amount
+                else:
+                    new = q["amount"] - r.randint(25_00, max(26_00, q["amount"] // 20)) // 5 * 5
             elif k == "early":
                 at = self.slot(self.day(0) + timedelta(hours=8), q["at"] - timedelta(minutes=20))
                 # the vendor's email will carry an amount 3-4% above the PO; the AP lead's figure is the PO amount
@@ -918,22 +923,35 @@ class Gen:
         n = self.cnt["block"]
         if n == 0:
             return
-        # block a vendor whose invoice should be payable on Thursday
-        cand = [q for q in self.invoices if q["story"] == "normal" and q["outcome"] == "matched" and q["recv"] in ("before", "world0")
-                and self.planned_approver(q) == "none" and q["at"] < self.day(2) + timedelta(hours=12) and not q.get("corrections")
-                and q["vendor"]["role"] == "regular"]
-        if not cand:
+        # block a vendor whose invoice should be payable on Thursday, after its last invoice of the week
+        cand = [q for q in self.invoices if q["story"] == "normal" and q["outcome"] == "matched" and q.get("recv_at") is not None
+                and max(q["at"], q["recv_at"]) < self.run_at - timedelta(hours=2) and self.planned_approver(q) == "none"
+                and not q.get("corrections") and not q.get("resent") and q["vendor"]["role"] in ("regular", "pair")]
+        r.shuffle(cand)
+        movable = ("normal", "var-edge", "band-edge", "amend-auth", "amend-unauth")
+        for q in cand:
+            v = q["vendor"]
+            lo = max(q["at"], q["recv_at"]) + timedelta(minutes=10)
+            if any(e.get("q", {}).get("vendor") is v for e in self.events if e["kind"] == "invoice.resent") or lo > self.run_at - timedelta(minutes=40):
+                continue
+            at = self.slot(lo, self.run_at - timedelta(minutes=30))
+            later = [x for x in self.invoices if x["vendor"] is v and x["at"] >= at]
+            if any(x["story"] not in movable for x in later):
+                self.minutes.discard(int((at - self.monday).total_seconds() // 60))
+                continue
+            # the vendor's later invoices this week go to other vendors (a blocked vendor's invoice is its own story)
+            others = [x for x in self.v_regular if x is not v]
+            for x in later:
+                nv = r.choice(others)
+                x["vendor"], x["inv"] = nv, self.next_inv(nv)
+                x["po_row"]["Vendor"] = nv["name"]
+            break
+        else:
             raise PlanError("no vendor to block")
-        q = r.choice(cand)
-        q["vendor"]["blocked_midweek"] = True
-        at = self.slot(q["at"] + timedelta(minutes=30), self.run_at - timedelta(minutes=30))
-        self.events.append({"kind": "vendor.blocklist", "sub": "block-added", "at": at, "vendor": q["vendor"]})
+        v["blocked_midweek"] = True
+        self.events.append({"kind": "vendor.blocklist", "sub": "block-added", "at": at, "vendor": v})
         if self.lift_planned:
             self.events.append({"kind": "vendor.blocklist", "sub": "block-lifted", "at": self.lift_at, "vendor": self.v_lift})
-        # no later invoice from the newly blocked vendor (it would be a second rejection story)
-        for x in self.invoices:
-            if x["vendor"] is q["vendor"] and x["at"] > at:
-                raise PlanError("blocked vendor invoices again")
 
     def plan_other(self):
         for _ in range(self.cnt["other"]):
