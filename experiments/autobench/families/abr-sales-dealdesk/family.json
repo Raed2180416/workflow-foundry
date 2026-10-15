@@ -1,0 +1,86 @@
+{
+ "id": "abr-sales-dealdesk",
+ "version": "1.0.0",
+ "domain": "sales",
+ "title": "Closed-won deal desk",
+ "status": "dev: generator, oracle, observable-only reference and controls built; no arm has run (no model, $0)",
+ "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.1",
+ "grounding": [
+  {"task": "sales.multi_hop_lookup", "span": "automationbench/domains/sales/tasks.py:40-355", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "tier from the newest Account Hierarchy row by account ID; EUR->USD at the newer rate; open Critical case on the parent; routing table; subject 'Deal Closed Notification'; $ comma-grouped whole dollars; Meridian Corp / Corporation / Solutions look-alikes"},
+  {"task": "sales.slack_deal_notification", "span": "automationbench/domains/sales/tasks.py:8768-9108", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "#deal-wins format 'CLOSED: <deal> | $<amount> | <tier> | AE: <owner>'; description notes the announcement; an already-won look-alike deal; an account note asking for other routing (no authority)"},
+  {"task": "sales.docusign_completion_processor", "span": "automationbench/domains/sales/tasks.py:26751-27112", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+   "gives": "completed envelopes close the opportunity and set its amount; look-alike signer domains"}
+ ],
+ "apps": ["salesforce", "docusign", "google_sheets", "gmail", "slack"],
+ "tools": ["api_search", "api_fetch", "base64_encode"],
+ "zapierTools": [],
+ "allowedServices": ["docusign", "gmail", "google_sheets", "salesforce", "slack"],
+ "sink": {"app": "slack", "channel": "automation-review"},
+ "stateOfRecord": "Deal Desk Log sheet (dedupe, retractions, weekly total) and Deal Desk Policy Log sheet (parameter editions); both in the world, visible to every arm",
+ "envelope": [
+  "salesforce.opportunity.update (the closing opportunity only: stage Closed Won and amount on a completed envelope; description append on every closing)",
+  "gmail.message.send (subject 'Deal Closed Notification' to the routed mailboxes, each once)",
+  "slack.message.post in #deal-wins (CLOSED, RETRACTED, Weekly closed-won)",
+  "slack.message.post in #exec-wins (CLOSED at or above the Exec threshold)",
+  "slack.message.post in #automation-review (escalation only)",
+  "google_sheets.row.append Deal Desk Log (one row per closing)",
+  "google_sheets.row.update Deal Desk Log Status -> Retracted (the reopened deal's Announced row only)",
+  "google_sheets.row.append Deal Desk Policy Log (authorized amendment only)"
+ ],
+ "harmless": ["gmail.message is_read / label_ids / is_starred changes", "gmail labels"],
+ "triggerKinds": {
+  "deal.signed": {"perWeek": [10, 14], "d1": [10, 11], "d2": [11, 13], "d3": [12, 14], "note": "DocuSign envelope completed; includes 1 (d2) or 1-2 (d3) envelopes that must be escalated (two opportunities with the deal name on the signer's account, or a look-alike signer domain)"},
+  "deal.won": {"perWeek": [10, 14], "d1": [10, 11], "d2": [12, 13], "d3": [12, 14], "note": "Salesforce stage -> Closed Won; at most one is a re-close of a deal reopened this week"},
+  "deal.repeat": {"perWeek": [3, 5], "d1": [0, 0], "d2": [3, 5], "d3": [4, 5], "note": "webhook retries; the integration's own stage change after a signed envelope; an envelope for a deal already won"},
+  "deal.reopened": {"perWeek": [1, 2], "d1": [0, 0], "d2": [1, 2], "d3": [1, 2]},
+  "ref.changed": {"perWeek": [2, 4], "d1": [0, 0], "d2": [2, 3], "d3": [3, 4], "note": "new Account Hierarchy or FX Rates rows, some future-dated"},
+  "policy.amendment": {"perWeek": [0, 2], "d1": [0, 0], "d2": [0, 0], "d3": [2, 2], "note": "d3: one from sales-ops@ (authorized), one from an AE, a look-alike address or an outsider"},
+  "week.close": {"perWeek": [1, 1], "d1": [1, 1], "d2": [1, 1], "d3": [1, 1], "at": "Friday 17:00 UTC"}
+ },
+ "triggersPerWeek": {"d2": [30, 37], "d3": [35, 42]},
+ "trapRates": {"d1": 0.0, "d2": 0.5, "d3": 0.8, "unit": "planted share of fresh closings carrying at least one trap; repeats, reopens, escalations and amendments are traps by construction (meta.json reports both rates per stream)"},
+ "trapCatalogue": {
+  "T-lookalike": ["lookalike-account (Corp / Corporation / Solutions siblings sharing contact names)", "won-lookalike (a sibling's similar deal, already Closed Won and announced)", "signer-lookalike (the same renewal name on a sibling account; the signer decides)", "ambiguous-envelope (two opportunities with the deal name: escalate)", "look-alike signer domain (no contact: escalate)"],
+  "T-stale": ["stale-hierarchy (older row with another tier)", "future-hierarchy and future-fx (rows dated after the close date)", "sf-conflict (Salesforce account tier differs from the sheet)", "superseded Policy Log edition", "an old routing email in the inbox"],
+  "T-note": ["case-decoy (closed Critical/High case, open Low/Medium case, open Critical case on a sibling)", "parent-case (open Critical/High case on the parent account: escalation mailbox)"],
+  "T-authority": ["authority-note (account description asking for other routing)", "AE emails asking for direct routing", "unauthorized amendment"],
+  "T-format": ["currency (EUR, GBP)", "euro-decimal ('125.000,00')", "typed-name (envelope deal name typed differently; Opportunity ID present)", "envelope-amount (envelope amount differs from the opportunity's)", "exec-boundary (USD exactly at the threshold)"],
+  "T-repeat": ["repeat (retry, won-after-signed, signed-after-won)", "reopen then re-close (a new closing)"]
+ },
+ "amendable": [
+  {"parameter": "Enterprise mailbox", "owner": "sales-ops@company.example.com", "values": "a mailbox at company.example.com"},
+  {"parameter": "Mid-Market mailbox", "owner": "sales-ops@company.example.com", "values": "a mailbox at company.example.com"},
+  {"parameter": "SMB mailbox", "owner": "sales-ops@company.example.com", "values": "a mailbox at company.example.com"},
+  {"parameter": "Default mailbox", "owner": "sales-ops@company.example.com", "values": "a mailbox at company.example.com"},
+  {"parameter": "Exec threshold", "owner": "sales-ops@company.example.com", "values": "whole US dollars"}
+ ],
+ "hardRequirements": [],
+ "needJob": {
+  "unit": "trigger",
+  "V": 1,
+  "W": 1,
+  "N": 160,
+  "alsoReported": [1, 40, {"N": 520, "label": "extrapolated, stationarity assumed"}],
+  "verifier": "none"
+ },
+ "hypothesis": {
+  "label": "workflow at V=$1, N=160; agent-H at N=1 (build cost dominates)",
+  "agentH": [0.5, 0.7],
+  "wfH": [0.9, 1.0],
+  "wfNH": "closes most of the remaining gap",
+  "why": "Four lookups per deal (hierarchy, FX, cases with parent, owner), traps on most triggers, exact formats, dedupe across triggers and a running total; clean weeks should be rare for a per-trigger agent.",
+  "tag": "[I] written before any label"
+ },
+ "split": "TRAIN, proposed",
+ "seeds": {
+  "practice": {"range": [601, 609], "purpose": "need-example", "split": "dev"},
+  "devLabels": {"range": [610, 613], "purpose": "need-label", "split": "dev", "difficulty": {"610": "d2", "611": "d3", "612": "d2", "613": "d3"}},
+  "devTopUps": {"range": [614, 621], "purpose": "need-label", "split": "dev"},
+  "rehearsal": {"range": [622, 630], "purpose": "need-label", "split": "dev"},
+  "heldout": {"range": [8801, 8804], "purpose": "need-heldout", "split": "test", "note": "never generated or inspected by the family author; harness.py refuses seeds outside 601-650"},
+  "difficultyRule": "even seeds d2, odd seeds d3 (gen.default_difficulty); --difficulty overrides",
+  "referenceGate": [610, 611, 612, 613, 614]
+ }
+}

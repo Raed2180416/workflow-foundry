@@ -16,7 +16,7 @@ some were expected) | wrong (anything else).
 
 End of week (folded into the week-close verdict): the whole Deal Desk Log and Policy Log as multisets, every touched
 opportunity's stage, amount and announcement notes, the multiset of #deal-wins and #exec-wins posts made this week,
-one #automation-review post per expected escalation, notification counts per recipient, plus AutomationBench
+an #automation-review post for every expected escalation, notification counts per recipient, plus AutomationBench
 assertions (`slack_text_occurrence_count` per deal, `salesforce_field_equals` stage per touched opportunity).
 """
 from __future__ import annotations
@@ -361,7 +361,9 @@ def grade_end(world0: dict, final: dict, end: dict) -> dict:
         want = Counter(end["posts"][ch])
         check(f"end.{ch}", got == want, {"missing": list((want - got).elements())[:3], "extra": list((got - want).elements())[:3]})
     sink = [m.get("text") or "" for m in new if channel_name(final, m["channel_id"]) == L.SINK]
-    check("end.escalations", len(sink) == len(end["escalations"]) and all(any(t in s for s in sink) for t in end["escalations"]),
+    # every expected escalation was posted; extra #automation-review posts were already graded (as abstentions or
+    # wrong) at their own triggers, so they do not fail the week a second time
+    check("end.escalations", all(any(t in s for s in sink) for t in end["escalations"]),
           {"posts": len(sink), "want": end["escalations"]})
     ids0 = {m["id"] for m in world0["gmail"]["messages"]}
     per = Counter()

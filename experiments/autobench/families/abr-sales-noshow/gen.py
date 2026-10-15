@@ -121,6 +121,16 @@ ACT_TRAPS = ["T-repeat:cancelled-in-window", "T-repeat:older-event", "T-repeat:l
              "T-lookalike:colleague", "T-stale:threshold", "T-stale:closed-big", "T-boundary:50k", "T-format:offset",
              "T-format:email-case", "T-format:localtime", "T-history:repeat", "T-history:repeat-completed",
              "T-history:old", "T-history:retracted"]
+# Trap groups for the FIRST trap of a trapped report. Groups are dealt round-robin from a per-stream shuffled order,
+# so every group recurs in every few trapped reports (each trap kind >= 5 times across the four dev label streams,
+# RECURRING-DESIGN §3.11 gate 4) instead of a group with two members surfacing a third as often as one with four.
+TRAP_GROUPS = {
+    "T-repeat": ["T-repeat:cancelled-in-window", "T-repeat:older-event", "T-repeat:later-today"],
+    "T-lookalike": ["T-lookalike:surname", "T-lookalike:colleague"],
+    "T-stale": ["T-stale:threshold", "T-stale:closed-big", "T-boundary:50k"],
+    "T-format": ["T-format:offset", "T-format:email-case", "T-format:localtime"],
+    "T-history": ["T-history:repeat", "T-history:repeat-completed", "T-history:old", "T-history:retracted"],
+}
 OPP_TRAPS = {"T-stale:threshold", "T-stale:closed-big", "T-boundary:50k"}
 HISTORY_TRAPS = {"T-history:repeat", "T-history:repeat-completed", "T-history:old", "T-history:retracted"}
 TEXT_TRAPS = {"T-format:email-case", "T-format:localtime"}
@@ -191,6 +201,7 @@ class Gen:
         self.plans = []          # planned triggers (canonical model), sorted by time later
         self.prior = {}          # email -> [{"start", "event", "contact_id", "report_at", "retract_at"}] (history + week)
         self.target_contacts: set[str] = set()
+        self.group_order: list[str] = []      # round-robin deal of trap groups (TRAP_GROUPS)
 
     # -- ids and names ---------------------------------------------------------------------------------------------
     def _uid(self, alphabet: str, n: int, prefix: str = "") -> str:
@@ -414,7 +425,11 @@ class Gen:
             traps.append("T-repeat:in-week")
         elif r.random() < TRAP_RATE[self.d]:
             k = 1 if self.d == "d2" and r.random() < 0.75 else r.randint(1, 3 if self.d == "d3" else 2)
-            pool = list(ACT_TRAPS)
+            if not self.group_order:
+                self.group_order = sorted(TRAP_GROUPS)
+                r.shuffle(self.group_order)
+            traps.append(r.choice(TRAP_GROUPS[self.group_order.pop()]))
+            pool = [t for t in ACT_TRAPS if t not in traps]
             while len(traps) < k and pool:
                 t = r.choice(pool)
                 pool.remove(t)
