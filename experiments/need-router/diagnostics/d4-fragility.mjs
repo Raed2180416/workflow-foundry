@@ -65,8 +65,12 @@ export function fragilityOfJob(job, { cells = GRID } = {}) {
     const headline = Object.fromEntries([1, ...FACTORS].map(f => [String(f), head(f)]));
     const topChanged = cells.filter(c => FACTORS.some(f => L[String(f)].at(job.id, c).top !== L['1'].at(job.id, c).top)).map(c => c.key);
     const flippedCells = jf.cells.filter(c => Object.values(c.at).some(l => l !== c.nominal));
+    // The nominal label over the grid: how many cells say workflow, no-workflow or either, and which cells say workflow (where a break-even V or N is read from).
+    const nominal = cells.map(c => ({ ...L['1'].at(job.id, c), cell: c.key }));
+    const labelCounts = { workflow: 0, 'no-workflow': 0, either: 0 };
+    for (const e of nominal) labelCounts[e.label] += 1;
     return {
-      modes, headline,
+      modes, headline, labelCounts, workflowCells: nominal.filter(e => e.label === 'workflow').map(e => e.cell),
       headlineFlips: { half: headline['0.5'].label !== headline['1'].label, double: headline['2'].label !== headline['1'].label },
       headlineTopChanges: { half: headline['0.5'].top !== headline['1'].top, double: headline['2'].top !== headline['1'].top },
       grid: { cells: cells.length, flipped: flippedCells.length, fragile: jf.fragile, flippedCells: flippedCells.map(c => ({ cell: c.cell, nominal: c.nominal, ...c.at })), topChangedCells: topChanged.length },
@@ -87,8 +91,8 @@ export function fragilityOfJob(job, { cells = GRID } = {}) {
     passRates,
     labelSets: { today: sets.today, ceiling: sets.ceiling },
     // L_today: the headline fields below. L_ceiling (jobs with ceiling arms only): the same fields in `ceiling`.
-    headline: today.headline, headlineFlips: today.headlineFlips, headlineTopChanges: today.headlineTopChanges, grid: today.grid,
-    ceiling: ceiling ? { headline: ceiling.headline, headlineFlips: ceiling.headlineFlips, headlineTopChanges: ceiling.headlineTopChanges, grid: ceiling.grid } : null,
+    headline: today.headline, labelCounts: today.labelCounts, workflowCells: today.workflowCells, headlineFlips: today.headlineFlips, headlineTopChanges: today.headlineTopChanges, grid: today.grid,
+    ceiling: ceiling ? { headline: ceiling.headline, labelCounts: ceiling.labelCounts, workflowCells: ceiling.workflowCells, headlineFlips: ceiling.headlineFlips, headlineTopChanges: ceiling.headlineTopChanges, grid: ceiling.grid } : null,
   };
 }
 

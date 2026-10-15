@@ -2,9 +2,9 @@
 // The hard guard forces the workflow class when a TYPED hard requirement is declared (durable wait, schedule, human approval, effects
 // with authority). Word cues in the task text (REQUIREMENT_LIBRARY and shapeOf) only raise "ask the user" and never force a mode.
 // RX6-lite asks how well those word cues find the requirements that are really there; under 0.9 recall the guard asks instead of inferring.
-//   Part A  the 449 corpus items whose description is the platform's own (provenance "original"; the 461 "written" descriptions leak
-//           graph-derived phrasing and the 64 "recovered-by-model" ones are model-written: RX6 excludes both). Declared truth comes from the
-//           item's graph, never from the text:
+//   Part A  the 449 corpus items whose description is the platform's own (provenance "original"; the "written" descriptions (1,046 in the corpus
+//           of 2026-10-06) leak graph-derived phrasing and the 64 "recovered-by-model" ones are model-written: RX6 excludes both; the output's
+//           provenanceCounts carries the live counts). Declared truth comes from the item's graph, never from the text:
 //             human     features.humanSteps > 0 or a node of category human
 //             wait      a wait node, or features.async has wait (a durable wait)
 //             schedule  features.async has schedule
@@ -25,6 +25,7 @@ import { pathToFileURL } from 'node:url';
 import { REQUIREMENT_LIBRARY } from '../../../src/construction-objective.mjs';
 import { shapeOf } from '../../library/index.mjs';
 import { REPO, wilson, round, sourceOf } from './common.mjs';
+import { bedStamp } from './anchors.mjs';
 
 export const CORPUS_DIR = path.join(REPO, 'research/corpus-20261006');
 const lib = id => REQUIREMENT_LIBRARY.find(x => x.id === id).cue;
@@ -101,14 +102,40 @@ const PREREG_CANDIDATES = Object.freeze({
   e8: ['wait', 'schedule', 'effects'],  // durable wait, schedule, effects with authority (E-BED)
 });
 
+// A timer, deadline or schedule declared in a typed field: a key named for one, or an enum or const value that is one (a `timedOut` status). Prose
+// fields (descriptions, domains) are never searched: the point is what the bed TYPES, not what its text says.
+export const SCHEDULE_RE = /timer|deadline|schedul|cron|dueAt|dueDate|due_at|timedOut|timed_out|timeout|expir/i;
+const PROSE_KEYS = new Set(['description', 'about', 'text', 'domain', 'note', 'notes', 'question', 'title']);
+/** Paths (under `label`) of typed declarations in `root` that name a timer, deadline or schedule. Deterministic order; at most `limit`. */
+export function timeDeclarations(root, label, { limit = 8, re = SCHEDULE_RE } = {}) {
+  const out = [];
+  const walk = (v, p, inEnum, depth) => {
+    if (out.length >= limit || depth > 16) return;
+    if (typeof v === 'string') { if (inEnum && re.test(v)) out.push(`${p} = ${JSON.stringify(v)}`); return; }
+    if (Array.isArray(v)) { v.forEach((x, i) => walk(x, `${p}[${i}]`, inEnum, depth + 1)); return; }
+    if (v && typeof v === 'object') {
+      for (const [k, x] of Object.entries(v)) {
+        if (PROSE_KEYS.has(k)) continue;
+        if (re.test(k)) { out.push(`${p}.${k}`); if (out.length >= limit) return; }
+        walk(x, `${p}.${k}`, inEnum || k === 'enum' || k === 'const', depth + 1);
+      }
+    }
+  };
+  walk(root, label, false, 0);
+  return out;
+}
+
 /** Typed evidence per requirement class from E8's machine-readable declarations. */
 export function typedFieldsE8(mod) {
   const eff = Object.entries(mod.schemas.effects ?? {});
   const horizon = mod.family.clock?.horizon;
+  const searched = ['family', 'schemas', 'systems'];
   return {
     human: { evidence: Object.keys(mod.schemas.humanTasks ?? {}).map(k => `schemas.humanTasks.${k}`) },
     wait: { evidence: horizon && /day/.test(horizon.unit) && horizon.length >= 1 ? [`family.clock.horizon = ${horizon.length} ${horizon.unit}`, `family.profile = ${mod.family.profile}`] : [] },
-    schedule: { evidence: [] },
+    // The customer deadline race and the 14-day clock are typed as a `timedOut` order status (schemas.sor and systems); searched, not assumed.
+    schedule: { evidence: [...timeDeclarations(mod.schemas, 'schemas'), ...timeDeclarations(mod.systems, 'systems'), ...timeDeclarations(mod.family, 'family')].slice(0, 8), searched,
+      note: 'the host-side typed fields name the deadline race only as a timeout outcome (the timedOut order status); the deadline itself (dueAt, onTimeout) sits in the analyst-side oracleItem and in the spec text' },
     effects: { evidence: eff.filter(([, e]) => e.money && !e.readOnly).map(([k]) => `schemas.effects.${k}.money`) },
     compensation: { evidence: eff.filter(([, e]) => e.reverses).map(([k, e]) => `schemas.effects.${k}.reverses = ${e.reverses}`) },
   };
@@ -120,7 +147,7 @@ export function typedFieldsRunbook(mod) {
   return {
     human: { evidence: ops.includes('page_human') ? ['outputSchema op page_human (an escalation: approval semantics are not typed)'] : [] },
     wait: { evidence: ops.includes('wait') ? ['outputSchema op wait'] : [] },
-    schedule: { evidence: [] },
+    schedule: { evidence: timeDeclarations(mod.outputSchema, 'outputSchema').concat(timeDeclarations(mod.family, 'family')), searched: ['outputSchema', 'family'] },
     effects: { evidence: mutating.map(o => `outputSchema op ${o}`) },
     compensation: { evidence: ops.includes('rollback_config') ? ['outputSchema op rollback_config'] : [] },
   };
@@ -135,7 +162,8 @@ export async function runPartB({ root = REPO, seed = 601, difficulty = 3 } = {})
   const e8 = await load('beds/ebed/e8/index.mjs');
   if (e8.mod) {
     const typed = typedFieldsE8(e8.mod), text = e8.mod.specE.text;
-    out.e8 = { text: { what: 'spec/SPEC-E.md (the arm-facing rulebook)', sha256: e8.mod.specE.sha256, chars: text.length }, typed, cues: guardCues(text), declared: PREREG_CANDIDATES.e8 };
+    // bed: the module graph that produced the typed fields (bedStamp), beside the SPEC-E.md hash that produced the cues (currency.mjs reads both as inputs).
+    out.e8 = { text: { what: 'spec/SPEC-E.md (the arm-facing rulebook)', sha256: e8.mod.specE.sha256, chars: text.length }, bed: bedStamp('ebed/e8', { repo: root, version: e8.mod.family.version }), typed, cues: guardCues(text), declared: PREREG_CANDIDATES.e8 };
   } else out.e8 = { error: e8.error, declared: PREREG_CANDIDATES.e8 };
   const rb = await load('beds/runbook/index.mjs');
   if (rb.mod) {
@@ -143,6 +171,7 @@ export async function runPartB({ root = REPO, seed = 601, difficulty = 3 } = {})
     const inputsText = stringsOf(task.inputs ?? {}).join('\n');
     out.runbook = {
       text: { what: `generate({seed: ${seed}, split: 'dev', difficulty: ${difficulty}}): prompt, then prompt + ticket + runbook + inventory`, promptChars: task.prompt.length, inputChars: inputsText.length },
+      bed: bedStamp('runbook', { repo: root, version: rb.mod.family?.version ?? null }),
       typed: typedFieldsRunbook(rb.mod), cuesPrompt: guardCues(task.prompt), cuesPromptAndInputs: guardCues(`${task.prompt}\n${inputsText}`), declared: PREREG_CANDIDATES.runbook,
     };
   } else out.runbook = { error: rb.error, declared: PREREG_CANDIDATES.runbook };

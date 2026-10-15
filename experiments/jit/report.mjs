@@ -5,8 +5,10 @@
 import path from 'node:path';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { DatabaseSync } from 'node:sqlite';
 import { wilson } from '../lib/stats.mjs';
 import { pairRows, pairedComparison, envFaultCheck, DECISION_RULE, FLOOR_POINTS } from './stats.mjs';
+import { addUsage, cacheReadShare, cacheShareCell, zeroUsage } from '../memory/cache-share.mjs';
 
 export const NOISE_SUCCESSES = 3;   // SPEC §7: with K=1 per stream, any gap under 3 points is noise
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []);
@@ -25,9 +27,36 @@ export function loadRun(runDir) {
     const rows = readJsonl(path.join(dir, 'results.jsonl'));
     // A resumed row replaces nothing (finished rows are skipped), but keep the last one per idx defensively.
     const byIdx = new Map(rows.map(r => [r.idx, r]));
-    arms.push({ dir, meta, rows: [...byIdx.values()].sort((a, b) => a.idx - b.idx), events: readJsonl(path.join(dir, 'events.jsonl')), faults: readJsonl(path.join(dir, 'faults.jsonl')) });
+    arms.push({ dir, meta, rows: [...byIdx.values()].sort((a, b) => a.idx - b.idx), events: readJsonl(path.join(dir, 'events.jsonl')), faults: readJsonl(path.join(dir, 'faults.jsonl')),
+      usage: armUsage(dir) });
   }
   return arms.sort((a, b) => (a.meta.spec ?? a.meta.slug).localeCompare(b.meta.spec ?? b.meta.slug));
+}
+
+// MEM-0 (research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §3.2; critique F17): the prompt cache is an accidental
+// memory, so the report prints each arm's cache read share. Token usage of every model call of the arm that reported it:
+// the gateway journal (journal.jsonl in an export, else journal.sqlite), the interpreter, shadow and adjudicator sessions
+// (traces/*.json streamUsage) and the builder sessions (versions/ or solvers/ <v>/compile.json builderStreamUsage).
+export function armUsage(dir) {
+  const u = zeroUsage();
+  const jsonl = path.join(dir, 'journal.jsonl'), sqlite = path.join(dir, 'journal.sqlite');
+  if (existsSync(jsonl)) for (const r of readJsonl(jsonl)) addUsage(u, r);
+  else if (existsSync(sqlite)) {
+    const db = new DatabaseSync(sqlite, { readOnly: true });
+    try {
+      const has = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='model_calls'").get();
+      if (has) for (const r of db.prepare('SELECT input_tokens, output_tokens, cache_read_tokens, cache_write_tokens FROM model_calls').all())
+        addUsage(u, { inputTokens: r.input_tokens, outputTokens: r.output_tokens, cacheReadTokens: r.cache_read_tokens, cacheWriteTokens: r.cache_write_tokens });
+    } finally { db.close(); }
+  }
+  const jsonFiles = d => (existsSync(d) ? readdirSync(d).filter(f => f.endsWith('.json')).map(f => path.join(d, f)) : []);
+  const readJson = f => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { return null; } };
+  for (const f of jsonFiles(path.join(dir, 'traces'))) addUsage(u, readJson(f)?.streamUsage);
+  for (const v of ['versions', 'solvers']) {
+    const root = path.join(dir, v);
+    if (existsSync(root)) for (const d of readdirSync(root, { withFileTypes: true })) if (d.isDirectory()) addUsage(u, readJson(path.join(root, d.name, 'compile.json'))?.builderStreamUsage);
+  }
+  return u;
 }
 
 // Uncertainty flags (JIT v2, opt-in). Shadows are grouped by why they ran: row.shadowReason ('schedule' | 'flag' |
@@ -99,7 +128,7 @@ export function compileSettings({ meta, rows, events }) {
   };
 }
 
-export function summarizeArm({ meta, rows, events, faults }) {
+export function summarizeArm({ meta, rows, events, faults, usage = null }) {
   const spec = meta.spec ?? rows[0]?.arm ?? meta.slug, kind = meta.kind ?? rows[0]?.kind ?? spec.split(':')[0];
   const n = rows.length, successes = rows.filter(r => r.pass).length;
   const billed = new Set(rows.flatMap(r => r.spendIds ?? []));
@@ -141,6 +170,10 @@ export function summarizeArm({ meta, rows, events, faults }) {
     },
     versions: [...new Set(rows.map(r => r.version).filter(v => v != null))],
     curve,
+    // MEM-0: the prompt cache read share, and the replay memo's counts (compiled events of jit.replayJournal arms; reused
+    // must be 0 after M3, and is listed by task index if not).
+    usage: usage ?? zeroUsage(), cacheReadShare: cacheReadShare(usage),
+    memo: memoSummary(ev),
   };
   // A v2 arm (arm.json def: jit.shadowOnFlags or compile.promptVersion >= 2) always gets a summary, so one that never flags shows 0.
   const flags = flagSummary(rows, { enabled: !!(meta.def?.jit?.shadowOnFlags || (meta.def?.compile?.promptVersion ?? 1) >= 2) });
@@ -148,6 +181,14 @@ export function summarizeArm({ meta, rows, events, faults }) {
   const settings = compileSettings({ meta, rows, events });
   if (settings) out.compileSettings = settings;
   return out;
+}
+
+// The replay memo's counts summed over an arm's compiled events (stream.mjs puts memo on them), or null without any.
+export function memoSummary(ev) {
+  const m = ev.filter(e => e.kind === 'compiled' && e.memo);
+  if (!m.length) return null;
+  const sum = k => m.reduce((s, e) => s + (e.memo[k] ?? 0), 0);
+  return { requests: sum('requests'), hits: sum('hits'), reused: sum('reused'), live: sum('live'), reusedTasks: [...new Set(m.filter(e => e.memo.reused > 0).map(e => e.idx))].sort((a, b) => a - b) };
 }
 
 // Break-even against a reference arm: the first index from which this arm's cumulative cost stays at or below the
@@ -211,6 +252,9 @@ export function renderMarkdown(rep) {
   }
   L.push('', '## Cost breakdown ($)', '', '| arm | ' + 'components |', '|---|---|');
   for (const a of rep.arms) L.push(`| ${short(a.spec)} | ${Object.entries(a.costBreakdown).map(([k, v]) => `${k} ${usd(v)}`).join(', ') || '–'} |`);
+  L.push('', '## Prompt cache and replay memo', '', 'Accidental memory (MEMORY-ROUTING-RECURSION §3.2). Cache read share: prompt tokens read from the prompt cache over all prompt tokens, for every model call of the arm that reported usage (gateway journal, interpreter, shadow and adjudicator sessions, builder sessions). Replay memo (jit.replayJournal arms only): requests, hits, reused (a journaled answer served again; must be 0), live.', '',
+    '| arm | cache read share (of prompt tokens) | memo requests / hits / reused / live |', '|---|---|---|');
+  for (const a of rep.arms) L.push(`| ${short(a.spec)} | ${a.usage ? cacheShareCell(a.usage) : '–'} | ${a.memo ? `${a.memo.requests} / ${a.memo.hits} / ${a.memo.reused}${a.memo.reusedTasks.length ? ` (tasks ${a.memo.reusedTasks.join(', ')})` : ''} / ${a.memo.live}` : '–'} |`);
   const jit = rep.arms.filter(a => a.kind !== 'agent');
   if (jit.length) {
     L.push('', '## Compiled-path events', '', '| arm | compiles (recompiles) | attempts / Opus fallbacks | rejected | failed | deopts by kind | crashes | timeouts | invalid | shadows | disagreements | adjudicated | regressions | unresolved | faults |', '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');

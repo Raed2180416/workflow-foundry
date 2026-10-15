@@ -291,3 +291,100 @@ test('dry plan: six requests per task, priced at the Jev input rate', async () =
   close(p.jevUsd, p.jevTokens * 0.042 / 1e6, 1e-15);
   assert.ok(p.jevTokens > 12 * 300);
 });
+
+// ---- the metered paths, offline (injected client and port; no network, no key) --------------------------------------------
+
+import { mkdtempSync, readFileSync as readF, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import pathMod from 'node:path';
+import { runJev, runHaiku } from '../jev-need2.mjs';
+
+const lines = f => { try { return readF(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)); } catch { return []; } };
+const fakeTasks = n => Array.from({ length: n }, (_, k) => ({ taskKey: `fake-r${k % 2}:dev:d3:s${k}`, family: `fake-r${k % 2}`, difficulty: 3, task: { prompt: `Task ${k}: add the numbers.` } }));
+// A served stand-in: a named signal (yes 0.5 / no 0.3 / cannot_tell 0.2) plus a 0.3 bonus on whichever option is shown first.
+function fakeServed({ failFirst = null } = {}) {
+  const calls = [];
+  return { calls, served: { async ask(req) {
+    calls.push(req);
+    if (failFirst && calls.length === 1) { const e = new Error('rate limited'); e.code = failFirst; throw e; }
+    const answers = Object.fromEntries(Object.entries(req.questions).map(([id, q]) => {
+      const shown = Object.keys(q.criteria), base = { yes: 0.5, no: 0.3, cannot_tell: 0.2 };
+      return [id, { type: 'choice', probabilities: Object.fromEntries(shown.map((o, k) => [o, (0.7 * base[o] + (k === 0 ? 0.3 : 0))])) }];
+    }));
+    return { model: 'jev-1.13.0', usage: { input_tokens: 100, output_tokens: 6 }, answers };
+  } }, config: { model: 'jev-latest' } };
+}
+
+test('Jev pass offline: six orders per task, averaged by name, ledger per attempt, raw journal, resume and the cap', async () => {
+  const live = mkdtempSync(pathMod.join(tmpdir(), 'jn2-')), quiet = () => {};
+  try {
+    const f = fakeServed();
+    assert.equal(await runJev({ tasks: fakeTasks(3), live, cap: 100, concurrency: 2, client: f, log: quiet }), 0);
+    assert.equal(f.calls.length, 18);
+    for (const c of f.calls) assert.deepEqual(Object.keys(c).sort(), ['questions', 'state']);
+    const rows = lines(pathMod.join(live, 'rows.jsonl'));
+    assert.equal(rows.length, 3);
+    for (const r of rows) {
+      assert.equal(r.perms.length, 6); assert.deepEqual(r.models, ['jev-1.13.0']); assert.deepEqual(r.usage, { input_tokens: 600, output_tokens: 36 });
+      assert.equal(r.jevModel, 'jev-latest');
+      for (const id of QUESTION_IDS) { close(r.mean[id].yes, 0.7 * 0.5 + 0.1, 1e-9); close(r.mean[id].cannot_tell, 0.7 * 0.2 + 0.1, 1e-9); }
+      assert.ok(!('oneCallPass' in r) && !('pass' in r));
+      for (const pr of r.perms) close(pr.rawProbs.S1[pr.order[0]], 0.7 * { yes: 0.5, no: 0.3, cannot_tell: 0.2 }[pr.order[0]] + 0.3, 1e-12);
+    }
+    assert.equal(lines(pathMod.join(live, 'requests.jsonl')).length, 18);
+    assert.equal(lines(pathMod.join(live, 'rows.raw.jsonl')).filter(x => x.ok).length, 18);
+    assert.ok(!readF(pathMod.join(live, 'requests.jsonl'), 'utf8').includes('"state"'), 'the ledger holds no request body');
+    // resume: done tasks are skipped
+    const g = fakeServed();
+    assert.equal(await runJev({ tasks: fakeTasks(3), live, cap: 100, client: g, log: quiet }), 0);
+    assert.equal(g.calls.length, 0);
+    // a run that would pass the cap is refused before any request
+    const h = fakeServed();
+    assert.equal(await runJev({ tasks: fakeTasks(6), live, cap: 30, client: h, log: quiet }), 4);
+    assert.equal(h.calls.length, 0);
+  } finally { rmSync(live, { recursive: true, force: true }); }
+});
+
+test('Jev pass offline: a retryable error is retried and counted; a refused credential is a fault, never a row', async () => {
+  const quiet = () => {};
+  let live = mkdtempSync(pathMod.join(tmpdir(), 'jn2-'));
+  try {
+    const f = fakeServed({ failFirst: 'MODEL_QUOTA' });
+    assert.equal(await runJev({ tasks: fakeTasks(1), live, cap: 10, concurrency: 1, client: f, backoffMs: 1, log: quiet }), 0);
+    assert.equal(lines(pathMod.join(live, 'requests.jsonl')).length, 7);
+    assert.equal(lines(pathMod.join(live, 'rows.raw.jsonl')).filter(x => !x.ok).length, 1);
+    assert.equal(lines(pathMod.join(live, 'rows.jsonl')).length, 1);
+  } finally { rmSync(live, { recursive: true, force: true }); }
+  live = mkdtempSync(pathMod.join(tmpdir(), 'jn2-'));
+  try {
+    const f = fakeServed({ failFirst: 'MODEL_AUTH' });
+    assert.equal(await runJev({ tasks: fakeTasks(1), live, cap: 10, concurrency: 1, client: f, backoffMs: 1, log: quiet }), 3);
+    assert.equal(f.calls.length, 1);
+    assert.equal(lines(pathMod.join(live, 'rows.jsonl')).length, 0);
+    assert.equal(lines(pathMod.join(live, 'rows.faults.jsonl'))[0].error, 'MODEL_AUTH');
+  } finally { rmSync(live, { recursive: true, force: true }); }
+});
+
+test('Haiku arm offline: one typed call per task through the port, rows, resume and a hard $ cap', async () => {
+  const live = mkdtempSync(pathMod.join(tmpdir(), 'jn2-')), quiet = () => {}, calls = [];
+  const port = { async call(req) {
+    calls.push(req);
+    return { ok: true, value: Object.fromEntries(QUESTION_IDS.map(id => [id, 'no'])), costUsd: 0.05, imputedUsd: 0, latencyMs: 1, modelId: 'claude-haiku-5-5', engineVersion: 'cli-x', usage: { inputTokens: 10, outputTokens: 5 } };
+  } };
+  try {
+    // cap $0.3 with $0.2 reserved per call in flight: calls at spent 0, 0.05, 0.10 fit; at 0.15 the reserve passes the cap
+    assert.equal(await runHaiku({ tasks: fakeTasks(5), live, capUsd: 0.3, concurrency: 1, port, log: quiet }), 4);
+    assert.equal(calls.length, 3);
+    for (const c of calls) {
+      assert.equal(c.modelId, 'claude-haiku-5-5'); assert.equal(c.decoding.reasoning, 'none'); assert.deepEqual(c.schema, HAIKU_SCHEMA);
+      assert.ok(c.prompt.includes(PROPERTY_QUESTIONS.S4.question));
+    }
+    const rows = lines(pathMod.join(live, 'haiku-rows.jsonl'));
+    assert.equal(rows.length, 3); assert.equal(rows[0].answers.S1, 'no'); assert.equal(rows[0].engineVersion, 'cli-x');
+    // resume counts the earlier spend against the cap and skips done tasks
+    calls.length = 0;
+    assert.equal(await runHaiku({ tasks: fakeTasks(5), live, capUsd: 1, concurrency: 1, port, log: quiet }), 0);
+    assert.equal(calls.length, 2);
+    assert.equal(lines(pathMod.join(live, 'haiku-rows.jsonl')).length, 5);
+  } finally { rmSync(live, { recursive: true, force: true }); }
+});

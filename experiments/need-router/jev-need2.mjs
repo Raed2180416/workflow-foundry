@@ -337,8 +337,8 @@ export const HEADS = Object.freeze({
 export function evaluateHeads(items, { reps = 2000, seed = 1, lambda = LAMBDA } = {}) {
   const out = {};
   const sizeScores = items.map(i => -i.code.logInputTokens), y = items.map(i => i.label);
-  const sizeCi = clusterBootstrap(items.map((i, k) => ({ ...i, s: sizeScores[k] })), s => ({ auroc: auroc(s.map(i => i.s), s.map(i => i.label)) }), { reps, seed });
-  out['size-rule'] = { n: items.length, auroc: auroc(sizeScores, y), ci: sizeCi.auroc ?? null, matchedAccuracy: matchedAccuracy(sizeScores, y), fitted: false };
+  const sizeCi = clusterBootstrap(items.map((i, k) => ({ ...i, s: sizeScores[k] })), s => ({ auroc: auroc(s.map(i => i.s), s.map(i => i.label)), matchedAccuracy: matchedAccuracy(s.map(i => i.s), s.map(i => i.label)) }), { reps, seed });
+  out['size-rule'] = { n: items.length, auroc: auroc(sizeScores, y), ci: sizeCi.auroc ?? null, matchedAccuracy: matchedAccuracy(sizeScores, y), matchedCi: sizeCi.matchedAccuracy ?? null, fitted: false };
   for (const [name, h] of Object.entries(HEADS)) {
     const set = items.filter(i => h.needs.every(k => i[k]));
     const fams = new Set(set.map(i => i.family));
@@ -546,7 +546,8 @@ export function renderReport(res, { date = new Date().toISOString().slice(0, 10)
     const j = res.properties.jev, h = res.properties.haiku;
     L.push(`| pooled cells | ${j.pooled.correct}/${j.pooled.n} (${f2(j.pooled.accuracy)}) | ${h.pooled.correct}/${h.pooled.n} (${f2(h.pooled.accuracy)}) |`);
     L.push(`| task-level answers | ${j.taskLevel.correct}/${j.taskLevel.n} (${f2(j.taskLevel.accuracy)}) | ${h.taskLevel.correct}/${h.taskLevel.n} (${f2(h.taskLevel.accuracy)}) |`, '');
-    L.push(`Jev misses: ${j.misses.join(', ') || 'none'}. Haiku misses: ${h.misses.join(', ') || 'none'}.`);
+    const missText = x => (x.pooled.n ? x.misses.join(', ') || 'none' : 'not scored (no rows)');
+    L.push(`Jev misses: ${missText(j)}. Haiku misses: ${missText(h)}.`);
   }
   const a = res.abstention;
   L.push('', "## Kotte's abstention floor (F22)", '');
@@ -583,19 +584,22 @@ async function pool(items, n, fn) {
   if (stop) throw stop;
 }
 
-async function runJev({ tasks, live, cap, concurrency, jevModel }) {
+/** The metered Jev pass (resumable). `client` ({ served, config }) is injectable for $0 tests; by default jevClient builds it
+ *  from the policy and the environment variable it names. Returns an exit code: 0 done, 3 faults, 4 cap. */
+export async function runJev({ tasks, live, cap, concurrency = 2, jevModel, client = null, backoffMs = 2000, log = console.log }) {
   const { jevClient, requestLedger } = await import('../kev-data/score-served.mjs');
+  mkdirSync(live, { recursive: true });
   const rowsFile = path.join(live, 'rows.jsonl'), rawFile = path.join(live, 'rows.raw.jsonl'), faultsFile = path.join(live, 'rows.faults.jsonl');
   const done = latestRows(readRows(rowsFile, { repair: true }), completeJevRow);
   const todo = tasks.filter(t => !done.has(t.taskKey));
   const ledger = requestLedger({ file: path.join(live, 'requests.jsonl'), cap });
   const planned = todo.length * PERMUTATIONS.length;
-  console.log(`Jev: ${tasks.length} tasks, ${done.size} done, ${todo.length} to ask = ${planned} requests; ledger ${ledger.count} of cap ${cap}`);
-  if (!ledger.room(planned)) { console.log(`REFUSED: ${planned} requests would take the ledger past its cap of ${cap} (${ledger.count} used); raise --cap or use --limit`); return 4; }
+  log(`Jev: ${tasks.length} tasks, ${done.size} done, ${todo.length} to ask = ${planned} requests; ledger ${ledger.count} of cap ${cap}`);
+  if (!ledger.room(planned)) { log(`REFUSED: ${planned} requests would take the ledger past its cap of ${cap} (${ledger.count} used); raise --cap or use --limit`); return 4; }
   if (!todo.length) return 0;
-  const { served, config } = jevClient({ model: jevModel });
+  const { served, config } = client ?? jevClient({ model: jevModel });
   const seen = new Set();
-  let faults = 0;
+  let faults = 0, capped = false;
   await pool(todo, concurrency, async t => {
     const perms = [];
     for (const order of PERMUTATIONS) {
@@ -609,38 +613,41 @@ async function runJev({ tasks, live, cap, concurrency, jevModel }) {
           appendFileSync(rawFile, JSON.stringify({ taskKey: t.taskKey, order, attempt, at: new Date().toISOString(), requestHash: hash, ok: false, error: { code: err, status: e.details?.status ?? e.status ?? null, message: String(e.message ?? e).slice(0, 300) } }) + '\n');
           if (err === 'REQUEST_CAP') throw e;
           if (!RETRYABLE.includes(err)) break;
-          await sleep(2000 * 2 ** attempt);
+          await sleep(backoffMs * 2 ** attempt);
         }
       }
       let probs = null;
       if (body) { try { probs = readJevAnswers(body); } catch (e) { err = `PROTOCOL: ${String(e.message).slice(0, 200)}`; } }
       if (!probs) { faults++; appendFileSync(faultsFile, JSON.stringify({ taskKey: t.taskKey, order, error: err, at: new Date().toISOString() }) + '\n'); return; }
-      if (body.model && !seen.has(body.model)) { seen.add(body.model); if (seen.size > 1) console.log(`WARNING: responses name more than one version: ${[...seen].join(', ')}`); }
-      perms.push({ order: [...order], model: body.model ?? null, usage: body.usage ?? null, probs });
+      if (body.model && !seen.has(body.model)) { seen.add(body.model); if (seen.size > 1) log(`WARNING: responses name more than one version: ${[...seen].join(', ')}`); }
+      // probs: normalized and keyed by option name; rawProbs: the response's probabilities exactly as served
+      perms.push({ order: [...order], model: body.model ?? null, usage: body.usage ?? null, probs, rawProbs: Object.fromEntries(QUESTION_IDS.map(id => [id, body.answers[id].probabilities])) });
     }
     const usage = perms.reduce((u, p) => ({ input_tokens: u.input_tokens + (p.usage?.input_tokens ?? 0), output_tokens: u.output_tokens + (p.usage?.output_tokens ?? 0) }), { input_tokens: 0, output_tokens: 0 });
     const row = { taskKey: t.taskKey, family: t.family, difficulty: t.difficulty, jevModel: config.model, models: [...new Set(perms.map(p => p.model))], usage, perms, mean: averagePerms(perms.map(p => p.probs)), at: new Date().toISOString() };
     appendFileSync(rowsFile, JSON.stringify(row) + '\n');
-    process.stdout.write(`  ${t.taskKey.padEnd(26)} ${QUESTION_IDS.map(id => `${id} ${row.mean[id].yes.toFixed(2)}`).join(' ')}\n`);
-  }).catch(e => { if (e.code === 'REQUEST_CAP') { console.log(`CAP: ${e.message}`); return; } throw e; });
-  console.log(`Jev: done; ${faults} task(s) with a failed order (in rows.faults.jsonl; re-run to resume); served ${[...seen].join(', ') || '–'}`);
-  return faults ? 3 : 0;
+    log(`  ${t.taskKey.padEnd(26)} ${QUESTION_IDS.map(id => `${id} ${row.mean[id].yes.toFixed(2)}`).join(' ')}`);
+  }).catch(e => { if (e.code === 'REQUEST_CAP') { capped = true; log(`CAP: ${e.message}; complete tasks so far are kept`); return; } throw e; });
+  log(`Jev: ${capped ? 'stopped at the cap' : 'done'}; ${faults} task(s) with a failed order (in rows.faults.jsonl; re-run to resume); served ${[...seen].join(', ') || '–'}`);
+  return capped ? 4 : faults ? 3 : 0;
 }
 
-async function runHaiku({ tasks, live, capUsd, concurrency }) {
-  const { createModelPort } = await import('../lib/models.mjs');
+/** The metered Haiku typed arm (resumable, hard $ cap with the per-call budget reserved for calls in flight). `port` is
+ *  injectable for $0 tests; by default a journaled ModelPort restricted to Haiku. Returns 0 done, 3 faults, 4 cap. */
+export async function runHaiku({ tasks, live, capUsd = 2, concurrency = 4, port: injected = null, log = console.log }) {
+  mkdirSync(live, { recursive: true });
   const rowsFile = path.join(live, 'haiku-rows.jsonl'), faultsFile = path.join(live, 'haiku-rows.faults.jsonl');
   const prior = readRows(rowsFile, { repair: true }), done = latestRows(prior, r => r.ok);
   let spent = prior.reduce((s, r) => s + (r.costUsd ?? 0) + (r.imputedUsd ?? 0), 0) + readRows(faultsFile, { repair: true }).reduce((s, r) => s + (r.costUsd ?? 0) + (r.imputedUsd ?? 0), 0);
   const todo = tasks.filter(t => !done.has(t.taskKey));
   const maxPerCall = 0.2;
-  console.log(`Haiku: ${tasks.length} tasks, ${done.size} done, ${todo.length} to ask; spent $${spent.toFixed(4)} of cap $${capUsd} (<= $${maxPerCall} per call)`);
+  log(`Haiku: ${tasks.length} tasks, ${done.size} done, ${todo.length} to ask; spent $${spent.toFixed(4)} of cap $${capUsd} (<= $${maxPerCall} per call)`);
   if (!todo.length) return 0;
-  const { port } = createModelPort({ journalFile: path.join(live, 'haiku.sqlite'), allowedModels: [HAIKU_MODEL], maxBudgetUsdPerCall: maxPerCall });
+  const port = injected ?? (await import('../lib/models.mjs')).createModelPort({ journalFile: path.join(live, 'haiku.sqlite'), allowedModels: [HAIKU_MODEL], maxBudgetUsdPerCall: maxPerCall }).port;
   let inflight = 0, capped = false, faults = 0;
   await pool(todo, concurrency, async t => {
     if (capped) return;
-    if (spent + (inflight + 1) * maxPerCall > capUsd) { capped = true; console.log(`CAP: $${spent.toFixed(4)} spent + ${inflight + 1} x $${maxPerCall} reserved > $${capUsd}; stopping (rows so far are kept)`); return; }
+    if (spent + (inflight + 1) * maxPerCall > capUsd + 1e-9) { capped = true; log(`CAP: $${spent.toFixed(4)} spent + ${inflight + 1} x $${maxPerCall} reserved > $${capUsd}; stopping (rows so far are kept)`); return; }
     inflight++;
     let r;
     try {
@@ -654,9 +661,9 @@ async function runHaiku({ tasks, live, capUsd, concurrency }) {
     const row = { taskKey: t.taskKey, family: t.family, difficulty: t.difficulty, ok: !!r.ok, modelId: r.modelId, engineVersion: r.engineVersion ?? null, answers: r.ok ? r.value : null,
       usage: r.usage ?? null, costUsd: r.costUsd ?? 0, imputedUsd: r.imputedUsd ?? 0, latencyMs: r.latencyMs, error: r.ok ? null : r.error, journalId: r.journalId ?? null, at: new Date().toISOString() };
     if (r.ok) appendFileSync(rowsFile, JSON.stringify(row) + '\n'); else { faults++; appendFileSync(faultsFile, JSON.stringify(row) + '\n'); }
-    process.stdout.write(`  ${t.taskKey.padEnd(26)} ${r.ok ? QUESTION_IDS.map(id => `${id} ${r.value[id]}`).join(' ') : `ERROR ${r.error?.code}`}  $${(r.costUsd ?? 0).toFixed(4)}\n`);
+    log(`  ${t.taskKey.padEnd(26)} ${r.ok ? QUESTION_IDS.map(id => `${id} ${r.value[id]}`).join(' ') : `ERROR ${r.error?.code}`}  $${(r.costUsd ?? 0).toFixed(4)}`);
   });
-  console.log(`Haiku: spent $${spent.toFixed(4)} of $${capUsd}; ${faults} fault(s)`);
+  log(`Haiku: spent $${spent.toFixed(4)} of $${capUsd}; ${faults} fault(s)`);
   return capped ? 4 : faults ? 3 : 0;
 }
 

@@ -102,3 +102,27 @@ test('report.md and report.json from the CLI; the noise rule and evidence label 
   assert.match(md, /\| jit:claude-haiku-5-5\/claude-haiku-5-5 \| 8 \| 7\/8 \(87\.5%\)/);
   assert.equal(renderMarkdown(buildReport(runDir)).split('\n').filter(l => l.startsWith('| 7 |')).length, 1);
 });
+
+// MEM-0 (MEMORY-ROUTING-RECURSION §3.2, §5 row 2): every arm's prompt-cache read share, over the gateway journal, the
+// session traces and the builder sessions, and the replay memo's counts with reused listed by task.
+test('per-arm cache read share (journal, sessions, builders) and replay memo counts, in report.json and report.md', t => {
+  const runDir = fixture(t);
+  const dir = path.join(runDir, 'jit-claude-haiku-5-5--claude-haiku-5-5');
+  writeFileSync(path.join(dir, 'journal.jsonl'), [{ inputTokens: 100, outputTokens: 5, cacheReadTokens: 300, cacheWriteTokens: 100 }, { inputTokens: 50, outputTokens: 5, cacheReadTokens: 0, cacheWriteTokens: 0 }].map(r => JSON.stringify(r)).join('\n') + '\n');
+  mkdirSync(path.join(dir, 'traces')); writeFileSync(path.join(dir, 'traces', 'i000-interpreter-x.json'), JSON.stringify({ streamUsage: { inputTokens: 10, outputTokens: 1, cacheReadTokens: 390, cacheWriteTokens: 50 } }));
+  mkdirSync(path.join(dir, 'versions', 'v1'), { recursive: true }); writeFileSync(path.join(dir, 'versions', 'v1', 'compile.json'), JSON.stringify({ builderStreamUsage: { inputTokens: 0, outputTokens: 9, cacheReadTokens: 0, cacheWriteTokens: 0 } }));
+  const rows = readFileSync(path.join(dir, 'results.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  rows[3].events.push({ kind: 'compiled', memo: { requests: 4, hits: 3, reused: 0, live: 1 } });
+  rows[4].events.push({ kind: 'compiled', memo: { requests: 2, hits: 1, reused: 1, live: 0 } });
+  writeFileSync(path.join(dir, 'results.jsonl'), rows.map(r => JSON.stringify(r)).join('\n') + '\n');
+  const rep = buildReport(runDir);
+  const jit = rep.arms.find(a => a.kind === 'jit'), agent = rep.arms.find(a => a.spec === 'agent:claude-haiku-5-5');
+  assert.deepEqual(jit.usage, { inputTokens: 160, outputTokens: 20, cacheReadTokens: 690, cacheWriteTokens: 150 });
+  assert.equal(jit.cacheReadShare, 0.69, '690 cache reads of 1,000 prompt tokens');
+  assert.deepEqual(jit.memo, { requests: 6, hits: 4, reused: 1, live: 1, reusedTasks: [4] });
+  assert.equal(agent.cacheReadShare, null); assert.equal(agent.memo, null);
+  const md = renderMarkdown(rep);
+  assert.ok(md.includes('## Prompt cache and replay memo'));
+  assert.match(md, /\| jit:claude-haiku-5-5\/claude-haiku-5-5 \| 69\.0% of 1,000 \| 6 \/ 4 \/ 1 \(tasks 4\) \/ 1 \|/);
+  assert.match(md, /\| agent:claude-haiku-5-5 \| – \| – \|/);
+});

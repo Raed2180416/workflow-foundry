@@ -5,13 +5,16 @@
 // exports (research/jit-20261008/runs/), the feature census, prereg/stages.json, the corpus overlay and the E8 and runbook beds.
 //   node experiments/need-router/diagnostics/rescue.mjs                      once: copy the git-ignored P1 and C0-dev JSONL into the archive
 //   node experiments/need-router/diagnostics/run.mjs [--only d0,d3] [--report] [--out DIR] [--check]
-// --check recomputes everything and compares it with the committed diagnostics.json (exit 1 on a difference); D1's anchor-bed features are
-// computed from beds that were still being written, so a difference there is reported first.
+// --check recomputes everything and compares it with the committed diagnostics.json through currency.mjs, which separates the results (every number
+// and label) from the provenance (the sha256 of each input file, the code fingerprints, each anchor bed's module-graph hash): exit 0 when current;
+// exit 2 with "inputs moved, re-run run.mjs --report" when an input or the code moved (whether or not the numbers changed); exit 1 when results
+// differ with none of their inputs moved. D1's anchor-bed features and D5's E8 text come from files still being written, so those moves are expected.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { OUT_DIR, ARCHIVE_DIR, REPO, rel, sha256 } from './common.mjs';
-import { loadLegacyJobs, loadConstructions } from './legacy.mjs';
+import { compareCurrency, describeCurrency } from './currency.mjs';
+import { loadLegacyJobs, loadConstructions, P1_HAND_AUTHORING } from './legacy.mjs';
 import { runD0 } from './d0-knn.mjs';
 import { runD1 } from './d1-shortcut.mjs';
 import { computeAnchorFeatures } from './anchors.mjs';
@@ -23,7 +26,9 @@ import { runD6 } from './d6-cost.mjs';
 
 export const ALL = Object.freeze(['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6']);
 const here = path.dirname(fileURLToPath(import.meta.url));
-export const MODULES = Object.freeze(['common', 'census', 'legacy', 'anchors', 'd0-knn', 'd1-shortcut', 'd2-cofailure', 'd3-signals', 'd4-fragility', 'd5-guard', 'd6-cost', 'rescue'].map(m => `${m}.mjs`));
+export const MODULES = Object.freeze(['common', 'census', 'currency', 'legacy', 'anchors', 'd0-knn', 'd1-shortcut', 'd2-cofailure', 'd3-signals', 'd4-fragility', 'd5-guard', 'd6-cost', 'rescue'].map(m => `${m}.mjs`));
+// Modules outside this directory whose logic the numbers depend on (their fingerprints are recorded too, so a change there reads as "code moved").
+export const EXTERNAL_MODULES = Object.freeze(['metrics', 'harvest', 'features', 'meter-gate'].map(m => `../${m}.mjs`));
 
 export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
   const want = new Set(only);
@@ -32,14 +37,21 @@ export async function runAll({ only = ALL, archiveDir = ARCHIVE_DIR } = {}) {
   const out = {
     schema: 'need-router-m0-diagnostics/1', evidence: 'development (D0, D1, D5 on the census, the job table and the corpus) and LEGACY/development (D2, D3, D4, D6 on archived rows)',
     note: 'No model call. Every archived row is LEGACY: it predates the need-router protocol and is never pooled with new labels (DESIGN §2).',
-    code: Object.fromEntries(MODULES.map(m => [m, sha256(readFileSync(path.join(here, m))).slice(0, 16)])),
+    code: Object.fromEntries([...MODULES, ...EXTERNAL_MODULES].map(m => [path.basename(m), sha256(readFileSync(path.join(here, m))).slice(0, 16)])),
     inputs: {
       legacySources: legacy.sources, notes: legacy.notes,
-      jobs: legacy.jobs.map(j => ({ id: j.id, kind: j.kind, family: j.family, oracle: j.oracle, units: j.pairing.paired, modes: j.pairing.modes, dropped: j.pairing.dropped, rows: j.rows.length, allRows: j.allRows.length, builds: j.builds.map(b => ({ mode: b.mode, usd: Math.round(b.usd * 1e4) / 1e4 })), sources: j.sources })),
+      // The P1 hand workflow's authoring cost, charged in full as a build row to each hand mode (legacy.mjs P1_HAND_AUTHORING).
+      p1Authoring: { usd: P1_HAND_AUTHORING.usd, lowerBound: P1_HAND_AUTHORING.lowerBound, calls: P1_HAND_AUTHORING.calls, modes: P1_HAND_AUTHORING.modes, source: P1_HAND_AUTHORING.source },
+      // pairing: what the diagnostics' own pairing dropped; harvest: what the stream harvest dropped before it (tasks a mode ran outside the paired set,
+      // modes under half coverage, the external builds charged); builds: fixed costs charged, lower bounds marked.
+      jobs: legacy.jobs.map(j => ({ id: j.id, kind: j.kind, family: j.family, oracle: j.oracle, units: j.pairing.paired, modes: j.pairing.modes, dropped: j.pairing.dropped, rows: j.rows.length, allRows: j.allRows.length,
+        builds: j.builds.map(b => ({ mode: b.mode, usd: Math.round(b.usd * 1e4) / 1e4, ...(b.lowerBound ? { lowerBound: true } : {}) })), harvest: j.harvest ?? null, sources: j.sources })),
     },
   };
-  if (want.has('d0')) out.d0 = runD0();
-  if (want.has('d1')) { const a = await computeAnchorFeatures(); out.d1 = runD1({ anchors: a.features }); out.d1.anchorBeds = { seeds: a.seeds, difficulties: a.difficulties, errors: a.errors, features: a.features }; }
+  // The anchor beds' features are computed once, for D0's anchor sensitivity and D1's second table.
+  const anchors = want.has('d0') || want.has('d1') ? await computeAnchorFeatures() : null;
+  if (want.has('d0')) out.d0 = runD0({ anchors });
+  if (want.has('d1')) { const a = anchors; out.d1 = runD1({ anchors: a.features }); out.d1.anchorBeds = { seeds: a.seeds, difficulties: a.difficulties, errors: a.errors, features: a.features, beds: a.beds }; }
   if (want.has('d2')) out.d2 = runD2(legacy.jobs);
   if (want.has('d3')) out.d3 = await runD3(legacy.jobs);
   if (want.has('d4')) out.d4 = runD4(legacy.jobs);
@@ -57,9 +69,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const file = path.join(outDir, 'diagnostics.json');
   if (process.argv.includes('--check')) {
     const prev = existsSync(file) ? readFileSync(file, 'utf8') : null;
-    const ok = prev === text;
-    console.log(ok ? `diagnostics.json reproduced byte for byte (${text.length} bytes)` : `diagnostics.json differs from a fresh run (${prev?.length ?? 'missing'} against ${text.length} bytes)`);
-    process.exitCode = ok ? 0 : 1;
+    if (prev === text) { console.log(`diagnostics.json reproduced byte for byte (${text.length} bytes)`); process.exitCode = 0; }
+    else if (prev === null) { console.log('diagnostics.json is missing: run run.mjs --report'); process.exitCode = 1; }
+    else {
+      const r = compareCurrency(JSON.parse(prev), JSON.parse(text));
+      console.log(describeCurrency(r));
+      process.exitCode = r.status === 'results-differ' ? 1 : r.status === 'inputs-moved' ? 2 : 0;
+    }
   } else {
     mkdirSync(outDir, { recursive: true });
     writeFileSync(file, text);
