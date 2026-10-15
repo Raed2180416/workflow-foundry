@@ -67,6 +67,7 @@ import { assertSeedsAllowed, loadLedger } from '../jit/seeds.mjs';
 import { STAGES_FILE, PREREG_FILE, ROLES, planTasks, exampleSet, span, checkStages, armSha, canonicalJson, stamp as engineStamp, stampDiff } from './prereg-check.mjs';
 import { needTable, needLabels, HEADLINE, DELTA, MODES, ENV_FAULT_LIMIT } from './metrics.mjs';
 import { guardMeter, readMeterGate, readVerification, meterGateDecision, OUTPUT_TOLERANCE } from './meter-gate.mjs';
+import { perArm, cacheShareCell } from '../memory/cache-share.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const LIVE_ROOT = '/var/tmp/foundry-work/need';
@@ -474,16 +475,16 @@ const capError = budget => Object.assign(new Error(`stage cap $${budget.capUsd} 
  */
 export function meterOf({ kind, priceTable, model = null, bound = 0, r = null, calls = [] }) {
   const reported = (r?.costUsd ?? 0) + (r?.imputedUsd ?? 0);
-  let measured, imputed, unknown;
+  let measured, imputed, unknown, tokens;
   if (kind === 'session') {
     const p = priceSession(priceTable, model, { messageUsage: r?.meta?.messageUsage, streamUsage: r?.meta?.streamUsage, costUnknown: !!r?.costUnknown, boundUsd: bound, reportedUsd: r?.costUsd ?? 0 });
-    measured = p.measured; imputed = p.imputed; unknown = !!r?.costUnknown;
+    measured = p.measured; imputed = p.imputed; unknown = !!r?.costUnknown; tokens = p.tokens;
   } else {
     const p = priceCalls(priceTable, calls, { boundUsd: kind === 'call' ? bound : null });
-    measured = p.measured; imputed = p.imputed;
+    measured = p.measured; imputed = p.imputed; tokens = p.tokens;
     unknown = !!r?.costUnknown || r?.error?.code === 'MODEL_TIMEOUT' || calls.some(c => c.costUnknown || c.errorCode === 'MODEL_TIMEOUT');
   }
-  return { reported, measured, imputed, unknown, charged: Math.max(reported, measured + imputed, unknown ? bound : 0) };
+  return { reported, measured, imputed, unknown, tokens, charged: Math.max(reported, measured + imputed, unknown ? bound : 0) };
 }
 /** The probe-row and legacy figure: what a result reported, at least its bound when the spend was not observed. */
 const chargeOf = (r, bound) => {
@@ -770,7 +771,7 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
     // An environment fault on the writer call is not an outcome (as for a construction): kept aside, retried on resume, K4.
     if (!w.ok && BUILD_ENV_FAULTS.has(w.error)) return { fault: { stage: stage.id, job: job.id, mode, lineage: k, factory: 'procedureWriter', error: { code: w.error }, costUsd: w.costUsd ?? 0,
       usdReported: r6(m.reported), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), stamp: head.stamp } };
-    return { row: { ...head, factory: 'procedureWriter', model: b.model, usdReported: r6(w.costUsd ?? 0), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), usd: r6(m.measured),
+    return { row: { ...head, factory: 'procedureWriter', model: b.model, usdReported: r6(w.costUsd ?? 0), usdRepriced: r6(m.measured), usdImputed: r6(m.imputed), usd: r6(m.measured), tokens: m.tokens,
       minutes: null, artifactSha: w.ok ? w.sha : null, artifactPath: w.ok ? w.file : null, failed: !w.ok, error: w.ok ? null : w.error, runSolverCalls: null,
       hiddenPathAttempts: 0, nestedModelAttempts: 0, words: w.words ?? null, truncatedWords: w.truncatedWords ?? null, checks: w.checks ?? null, promptSha: w.promptSha, void: null } };
   }
@@ -802,7 +803,7 @@ async function buildLineage({ ctx, unit, mode, k, examples }) {
   // text scan of every tool-input string (hiddenPathAttempts there) is kept for review by hand as pathMentions.
   const hidden = rec.hiddenPathAccesses ?? rec.hiddenPathAttempts;
   return { row: { ...head, factory: 'construct', model: b.builderModel, usdReported: r6(rec.constructionCostUsd), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed),
-    usd: r6(cost.measured), minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
+    usd: r6(cost.measured), tokens: cost.tokens, minutes: r6(rec.durationMs / 60000), artifactSha: rec.artifactSha256, artifactPath: res.artifactPath, failed: !res.artifactPath,
     error: rec.builderError?.code ?? null, runSolverCalls: rec.runSolverCalls, hiddenPathAttempts: hidden, nestedModelAttempts: rec.nestedModelAttempts,
     outsidePaths: (rec.accessedOutsidePaths ?? rec.outsidePaths ?? []).slice(0, 10), pathMentions: rec.hiddenPathAttempts ?? null, mentionedPaths: (rec.outsidePaths ?? []).slice(0, 10),
     selfCheck: rec.selfCheck, checkPath: res.checkPath, checkSha256: rec.checkSha256, builderPromptSha256: rec.promptSha256 ?? null, copiedExampleLines: copied,
@@ -816,7 +817,7 @@ function buildCost(stages, b, rec, book, label, meter = null) {
     boundUsd: b.builderBudgetUsd, reportedUsd: rec.builderCostReportedUsd ?? 0, finalUsage: rec.builderUsage ?? null, meter });
   const gw = priceCalls(stages.priceTable, book.latest(`construct:${label}:`));
   const reported = rec.constructionCostUsd ?? 0, measured = builder.measured + gw.measured, imputed = builder.imputed + gw.imputed;
-  return { reported, measured, imputed, charged: Math.max(reported, measured + imputed) };
+  return { reported, measured, imputed, tokens: addUsage(addUsage(zeroUsage(), builder.tokens), gw.tokens), charged: Math.max(reported, measured + imputed) };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1379,13 +1380,16 @@ export async function labelRun(opts) {
   const limit = stages.grid?.envFaultLimit ?? ENV_FAULT_LIMIT;
   const armFaults = armFaultTable({ stageId: stage.id, results, faults: runFaultRecs, builds: allBuilds, constructionFaults: cfaults, limit });
   const k7Limit = 1.5, famDeployable = new Map();
+  // MEM-0 (MEMORY-ROUTING-RECURSION §3.2, §5 row 2): the prompt cache is an accidental memory; each arm's usage over its task
+  // rows, builds and probe rows, and the share of its prompt tokens read from the cache.
+  const cacheByArm = perArm([...allRows, ...allBuilds, ...allProbes]);
   for (const u of units) famDeployable.set(u.job.family, typeof (await loadFamily(u.job.family)).deployableCheck === 'function');
   const report = {
     schema: REPORT_SCHEMA, stage: stage.id, grade: stage.grade ?? null, dry, ports: ports?.kind ?? null, source, planSha, stageSha: vctx.stageSha, planStatus: stages.status, approved: stage.approved ?? null,
     preregSha: prereg && existsSync(prereg) ? sha16(readFileSync(prereg, 'utf8')) : null, capUsd: stage.capUsd ?? null, priceTable: stages.priceTable?.id ?? null,
     prompts: promptShas(), concurrency, racing, engine: stampRec ? { stampSha: sha16(canonicalJson(stampRec)), commit: stampRec.labelEngine?.commit ?? null } : null,
     arms: Object.fromEntries([...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => [a, { settingsSha: stages.arms[a].settingsSha ?? null, computedSha: armSha(stages.arms[a]),
-      runtimeArmHashes: [...new Set(allRows.filter(r => r.mode === a).map(r => r.armHash))].sort() }])),
+      runtimeArmHashes: [...new Set(allRows.filter(r => r.mode === a).map(r => r.armHash))].sort(), usage: cacheByArm[a]?.usage ?? zeroUsage(), cacheReadShare: cacheByArm[a]?.cacheReadShare ?? null }])),
     jobs: jobsOut.sort((a, b) => (a.job < b.job ? -1 : 1)), skipped, deviations,
     racing: [...racingLog.values()].sort((a, b) => a.round - b.round || (a.job < b.job ? -1 : a.job > b.job ? 1 : 0)).map(({ stage: _s, stamp: _t, ...e }) => e),
     armFaults: armFaults.map(({ schema: _s, stage: _t, ...x }) => x),
@@ -1409,7 +1413,8 @@ export async function labelRun(opts) {
       cap: 'the cap meter (PREREG §12): each start at max(reported, re-priced), at least its bound when unobserved (call $1, agent budget, script perTaskUsd, build builder + gateway budget), every start in flight at its bound; persisted in spend.jsonl (work root and --out); totals.spend.meterUsd',
       charged: 'totals.usdCharged = measured + imputed over task rows, builds, probes, faulted trial attempts, construction faults and attempts that left no record (the K7 figure per job: jobs[].usdCharged)',
       faults: `K4: an arm whose trial or build attempts are more than ${limit * 100}% environment faults is invalid (validity.invalidArms; arm-faults.jsonl)`,
-      gates: `K2 stops the stage when direct-H on wbed-r0 is below 10/12 on a draw, before any other mode of the stage starts (${enforceGates ? 'enforced' : 'reported only'})` },
+      gates: `K2 stops the stage when direct-H on wbed-r0 is below 10/12 on a draw, before any other mode of the stage starts (${enforceGates ? 'enforced' : 'reported only'})`,
+      cacheShare: 'arms[].cacheReadShare = cache read tokens / (input + cache read + cache write tokens) over the arm\'s task rows, builds and probe rows (MEM-0); null when none reported a prompt token' },
   };
   writeFileSync(path.join(live, 'rows.jsonl'), allRows.map(r => JSON.stringify(r)).join('\n') + (allRows.length ? '\n' : ''));
   writeFileSync(path.join(live, 'builds.final.jsonl'), allBuilds.map(b => JSON.stringify(b)).join('\n') + (allBuilds.length ? '\n' : ''));
@@ -1470,6 +1475,8 @@ export function renderReport(rep) {
   if (V && (V.invalidArms.length || V.noSelfCheck.length || V.selfCheckErrors || V.deployableGaps.length))
     L.push('', 'validity:', ...(V.invalidArms.length ? [`  invalid arms (K4): ${V.invalidArms.join(', ')}`] : []), ...(V.noSelfCheck.length ? [`  construct-H lineages without check.mjs: ${V.noSelfCheck.join(', ')}`] : []),
       ...(V.selfCheckErrors ? [`  rows whose self-check could not run: ${V.selfCheckErrors}`] : []), ...V.deployableGaps.map(g => `  ${g.job}: deployableVerdict is ${g.used}; DESIGN names ${g.named} (${g.family} exports no deployableCheck)`));
+  const arms = Object.entries(rep.arms ?? {});
+  if (arms.length) L.push('', 'prompt-cache read share per arm (MEM-0):', ...arms.map(([a, x]) => `  ${a.padEnd(14)} ${x.usage ? cacheShareCell(x.usage) : '–'}`));
   if (rep.racing.length) L.push('', 'racing:', ...rep.racing.map(r => `  round ${r.round} ${r.job}: ${r.skipped ? `skipped (${r.skipped})`
     : `P(best) ${JSON.stringify(r.pBest)} label ${r.label} A=[${r.acceptable.join(', ')}] add ${JSON.stringify(r.add)} agent-O tasks ${r.agentOTasks.length}`}`));
   if (rep.skipped.length) L.push('', 'skipped:', ...rep.skipped.map(s => `  ${s.where}: ${s.reason}`));

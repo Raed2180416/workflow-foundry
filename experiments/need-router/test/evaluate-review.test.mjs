@@ -389,3 +389,38 @@ test('minor 12: imputed dollars per (job, cell); untested tolerances reported; e
   const fi = familyIdentityRouter().fit(ctx)(view, HEADLINE, sv), sb = sbsTrain().fit(ctx)(view, HEADLINE);
   assert.equal(sb.mode, 'agent-H'); assert.equal(fi.mode, sb.mode, 'the old fallback ranked direct-H first on the one TRAIN job that has it');
 });
+
+// ------------------------------------------------------------------- major 7, second pass: builds, settings, price tables
+test('major 7 (second pass): builds stay on the one meter; one arm setting per (job, mode) across lineages; one price table', () => {
+  const stamp = (settingsSha, priceTable = 'need-v1-prices@2026-10-14') => ({ stageSha: 's', settingsSha, prompts: {}, priceTable });
+  const row = (mode, t, rep, extra = {}) => ({ job: 'j', mode, task: `t${t}`, rep, seed: 610 + t, pass: t === 0, delivered: true, schemaValid: true, usdRepriced: 0.01, usdImputed: 0, ...extra });
+  const rows = (st = {}) => [0, 1].flatMap(t => [row('direct-H', t, 0, { stamp: stamp('d1') }), ...[0, 1].map(rep => row('construct-H', t, rep, { armHash: `c${rep}`, stamp: st[rep] ?? stamp('c1') }))]);
+  const b = (rep, extra = {}) => ({ job: 'j', mode: 'construct-H', rep, usd: 0.5, usdRepriced: 0.5, stamp: stamp('c1'), ...extra });
+  assert.doesNotThrow(() => needTable(rows(), [b(0), b(1)], { requireRepriced: true }));
+  // (a) A build charged only at the CLI's figure: refused under the one meter (before: usdReported was used silently).
+  assert.throws(() => needTable(rows(), [b(0), { job: 'j', mode: 'construct-H', rep: 1, usdReported: 0.5, stamp: stamp('c1') }], { requireRepriced: true }), /build row j\/construct-H\/1: no finite usdRepriced/);
+  assert.doesNotThrow(() => needTable(rows(), [b(0), { job: 'j', mode: 'construct-H', rep: 1, usdReported: 0.5 }]), 'outside the strict meter the v0 fallback stays');
+  assert.throws(() => needTable(rows(), [b(0), b(1, { usd: 0.4 })], { requireRepriced: true }), /usd 0.4 and usdRepriced 0.5 disagree/);
+  assert.equal(needTable(rows(), [b(0), { ...b(1), usd: undefined }], { requireRepriced: true }).cell('j', 'construct-H').lineageMap.get(1).usd, 0.5, 'usdRepriced alone is enough');
+  const W = plantedWorld({ train: 3, heldout: 3, jobs: 1, seed: 28 });
+  const noRp = W.builds.map((x, i) => (i === 0 ? { ...x, usd: undefined, usdReported: x.usd } : x));
+  assert.throws(() => evaluate({ ...W, builds: noRp, split: 'heldout', ...FAST }), /no finite usdRepriced/);
+  // (b) A build label-run could not re-price leaves its job unlabelled at every cell, like such a row.
+  const L = needLabels(needTable(rows(), [b(0), b(1, { repriced: false })]), { cells: [HEADLINE], reps: 20 });
+  assert.match(L.at('j', HEADLINE).unlabelled, /rows not re-priced in construct-H/); assert.equal(L.at('j', HEADLINE).confident, false);
+  assert.equal(needLabels(needTable(rows(), [b(0), b(1)]), { cells: [HEADLINE], reps: 20 }).at('j', HEADLINE).unlabelled, null);
+  // (c) Lineage 1 built and run under edited arm settings (a top-up in a later stage): each lineage has its own armHash, so
+  // only the stamp shows it. Refused in the rows and in the builds.
+  assert.throws(() => needTable(rows({ 1: stamp('c2') }), [b(0), b(1)]), /j\/construct-H: rows or builds under 2 arm settings \(stamp.settingsSha c1, c2\)/);
+  assert.throws(() => needTable(rows(), [b(0), b(1, { stamp: stamp('c2') })]), /under 2 arm settings/);
+  assert.doesNotThrow(() => needTable(rows({ 1: stamp('c1') }), [b(0), b(1, { stamp: { ...stamp('c1'), stageSha: 'later' } })]), 'another stage, same settings: pooled');
+  // (d) One price table per table; across TRAIN and the evaluated split, evaluate blocks the claims.
+  assert.throws(() => needTable(rows({ 1: stamp('c1', 'other-prices') }), [b(0), b(1)]), /priced with 2 price tables \(stamp.priceTable need-v1-prices@2026-10-14, other-prices\)/);
+  const tag = (x, pt) => ({ ...x, stamp: stamp(`${x.mode}-s`, pt) });
+  const mixed = { rows: W.rows.map(r => tag(r, W.meta[r.job].split === 'train' ? 'p1' : 'p2')), builds: W.builds.map(x => tag(x, W.meta[x.job].split === 'train' ? 'p1' : 'p2')) };
+  const R = evaluate({ ...W, ...mixed, split: 'heldout', ...FAST });
+  assert.deepEqual(R.validity.meter.priceTables, ['p1', 'p2']);
+  assert.ok(R.blocked.some(x => /meter: rows priced with 2 price tables \(p1, p2\)/.test(x)), R.blocked.join('\n'));
+  const one = evaluate({ ...W, rows: W.rows.map(r => tag(r, 'p1')), builds: W.builds.map(x => tag(x, 'p1')), split: 'heldout', ...FAST });
+  assert.deepEqual(one.validity.meter.priceTables, ['p1']); assert.ok(!one.blocked.some(x => /meter/.test(x)));
+});

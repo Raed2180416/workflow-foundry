@@ -32,5 +32,8 @@ test('taskFeatures never carries identity: no family id, bed version or kind fie
 test('the router module imports no bed, oracle or result code (import-graph purity)', () => {
   const src = readFileSync(path.join(here, '..', 'router.mjs'), 'utf8');
   const imports = [...src.matchAll(/from '([^']+)'/g)].map(m => m[1]);
-  assert.deepEqual(imports, ['./metrics.mjs']);
+  // metrics.mjs, and prereg-rules.mjs for the preregistered θ fit (PREREG §6), which itself imports nothing.
+  assert.deepEqual(imports, ['./metrics.mjs', './prereg-rules.mjs']);
+  const rules = readFileSync(path.join(here, '..', 'prereg-rules.mjs'), 'utf8');
+  assert.equal([...rules.matchAll(/^\s*import\s/gm)].length, 0, 'prereg-rules.mjs must stay a leaf module');
 });

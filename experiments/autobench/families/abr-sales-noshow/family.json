@@ -3,7 +3,7 @@
  "version": "1.0.0",
  "domain": "sales",
  "title": "Demo no-show follow-up",
- "status": "dev: generator, oracle, reference and controls built; no arm has run (no model, $0)",
+ "status": "dev: generator, oracle, reference, 11 bad controls, $0 validity gates and tests built; reference 1014/1014 triggers on seeds 601-650; no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.2",
  "grounding": [
   {"task": "sales.calendly_no_show_followup", "span": "automationbench/domains/sales/tasks.py:9803-10104", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14"}
@@ -27,7 +27,15 @@
   "noshow.retracted": {"perWeek": [1, 3], "d1": [1, 1], "d2": [1, 2], "d3": [2, 3]},
   "week.close": {"perWeek": [1, 1], "at": "Friday 17:00 UTC"}
  },
- "trapRates": {"d1": 0.0, "d2": 0.4, "d3": 0.7, "unit": "share of handled (act) no-show reports carrying at least one planted trap; chatter, internal, duplicate and escalation reports are traps by construction"},
+ "trapRates": {
+  "d1": 0.0,
+  "d2": 0.4,
+  "d3": 0.7,
+  "unit": "share of triggers carrying at least one planted trap; chatter, internal, duplicate and escalation reports are traps by construction",
+  "perHandledReport": {"d2": 0.15, "d3": 0.6},
+  "perRetraction": {"d2": 0.5, "d3": 0.7},
+  "measured": {"seeds": "601-650", "d2": 0.43, "d3": 0.72}
+ },
  "amendable": [],
  "hardRequirements": [],
  "needJob": {
@@ -52,5 +60,17 @@
   "heldout": {"range": [8801, 8804], "purpose": "need-heldout", "split": "test", "note": "never generated or inspected by the family author"},
   "difficultyRule": "within each block, the first seed is d2 and difficulties alternate d2, d3 (gen.default_difficulty)",
   "referenceGate": [610, 611, 612, 613, 614]
+ },
+ "controls": ["null", "echo", "naive", "stale-threshold", "no-repeat", "latest-event", "all-opps", "chatter-as-report", "no-dedupe", "contact-by-surname", "retract-by-surname"],
+ "files": {
+  "policy": "POLICY.md",
+  "generator": "gen.py",
+  "oracle": "oracle.py",
+  "reference": "reference.py",
+  "controls": "controls.py",
+  "harness": "harness.py",
+  "gates": "gates.py",
+  "tests": "tests/test_noshow.py",
+  "readme": "README.md"
  }
 }

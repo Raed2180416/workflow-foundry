@@ -24,8 +24,14 @@ import { bestProbe } from './voi.mjs';
 import { TRUSTED_FEATURES, CUE_HINTS, REQUIREMENT_TYPES, ENGINE_CONSTRUCTS, resolveCell } from './router.mjs';
 
 export const CARD_SCHEMA_ID = 'need-decision/1';
-/** The module sources whose shas enter routerSha (the frozen artefact's code, DESIGN §3; features.mjs is hashed by the addendum). */
-export const CODE_FILES = Object.freeze(['router.mjs', 'card.mjs', 'voi.mjs', 'metrics.mjs']);
+/**
+ * The module sources whose shas enter routerSha: every experiments/need-router module in this card's and router.mjs's
+ * static import graph (the frozen artefact's code, DESIGN §3, PREREG §6 "Shas"). prereg-rules.mjs is one: router.mjs fits
+ * θ with its thetaFitStatus, fitOrRule and locoFolds, so an edit there changes decisions (test/router-review.test.mjs D4
+ * walks the import graph and fails when a need-router module is missing here). features.mjs computes the inputs and is
+ * hashed by the addendum; the word-cue sources (REQUIREMENT_LIBRARY, shapeOf) change only "ask", which is logged, not scored.
+ */
+export const CODE_FILES = Object.freeze(['router.mjs', 'card.mjs', 'voi.mjs', 'metrics.mjs', 'prereg-rules.mjs']);
 const PROSE_CUES = Object.freeze(['humanWords', 'timeWords', 'effectVerbs']);
 const HINT_CUES = REQUIREMENT_LIBRARY.filter(r => Object.hasOwn(CUE_HINTS, r.id));
 const finite = Number.isFinite;
@@ -45,8 +51,8 @@ export function canonicalJson(x) {
 }
 
 const hashCodeFiles = () => Object.freeze(Object.fromEntries(CODE_FILES.map(f => [f, sha256(readFileSync(new URL(`./${f}`, import.meta.url)))])));
-// Taken when this module loads, right after its static imports (router, voi, metrics) were evaluated: the shas name the
-// code that runs. A lazy first-card read could hash a file edited after import while the old code kept running.
+// Taken when this module loads, right after its static imports (router, voi, metrics, prereg-rules) were evaluated: the
+// shas name the code that runs. A lazy first-card read could hash a file edited after import while the old code ran.
 const CODE_SHAS = hashCodeFiles();
 /** sha256 of each CODE_FILES source, as loaded. */
 export const codeShas = () => CODE_SHAS;

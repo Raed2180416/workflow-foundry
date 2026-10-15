@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { REPO, HEAL_DIR, KIT_DIR, verifyKit, readPins, blobOf, policyDrift, kitSourceTexts } from '../kit.mjs';
+import { REPO, HEAL_DIR, KIT_DIR, verifyKit, readPins, blobOf, policyDrift, kitSourceTexts, loadKit } from '../kit.mjs';
 import { freezeSrc } from '../../kev-data/exec/frozen-src.mjs';
 import { verifyPinned } from '../pin-gate.mjs';
-import { world, skipReason } from './helpers.mjs';
+import { world, skipReason, dataSkip, D6_DRIFT, d6Pending, OWNER_DRIFT } from './helpers.mjs';
 
 test('the frozen kit has the blob ids of commit 880c6b9 and the owner policy is the kit policy', { skip: skipReason }, async () => {
   const { kit } = await world();
@@ -94,6 +94,37 @@ test('policy drift (Q6): a generative model, a models[] entry on the judgment pr
   assert.equal(withJev(l => { l.judgmentModels[0].price.inputPerMTok = 1; }).ok, true);
 });
 
+// D6 (PREREG-NEED-V1 §13; README "Heal-kit drift"): the P0 policy batch (2026-10-15.1, a245232) drifts from the kit's policy of record
+// in paths the Q6 exemptions do not cover. The heal tests that load the kit skip with that reason (helpers.mjs) until the owner chooses.
+const P0_COMMIT = 'a245232';
+test('policy drift (D6): the P0 policy blocks on exactly defaultsByRole and the F/L/M budgets; the kit reads the budgets and never names defaultsByRole', { skip: frozenSkip }, () => {
+  const kitSources = kitSourceTexts(frozenSrc.dir), p0 = atCommit(P0_COMMIT, 'policy/models.json');
+  assert.equal(p0.policyVersion, '2026-10-15.1');
+  const d = policyDrift(p0, frozenPolicy(), { kitSources });
+  assert.equal(d.ok, false);
+  assert.deepEqual(d.blocking, [...D6_DRIFT]);
+  assert.equal(d6Pending(d), true);
+  // the owner's choice (README): the budgets cannot take a proved exemption, defaultsByRole could
+  assert.ok(kitSources.some(t => t.includes('inputBudgetTokensByClass')), 'the frozen runtime reads the class budgets');
+  assert.ok(kitSources.every(t => !t.includes('defaultsByRole')), 'no frozen kit source names defaultsByRole');
+});
+
+test('policy drift (D6): the skip is narrow: only blocking drift within defaultsByRole and the F/L/M budgets skips; any other drift still fails', { skip: frozenSkip }, () => {
+  const kitSources = kitSourceTexts(frozenSrc.dir), frozen = frozenPolicy(), p0 = atCommit(P0_COMMIT, 'policy/models.json');
+  const withP0 = f => { const live = structuredClone(p0); f(live); return policyDrift(live, frozen, { kitSources }); };
+  assert.equal(d6Pending(policyDrift(frozen, frozen, { kitSources })), false, 'no drift: nothing to skip');
+  assert.equal(d6Pending(withP0(l => { l.inputBudgetTokensByClass = structuredClone(frozen.inputBudgetTokensByClass); })), true, 'defaultsByRole alone');
+  assert.equal(d6Pending(withP0(l => { l.models.find(m => m.id === 'claude-haiku-5-5').price.inputPerMTok += 1; })), false, 'a price change');
+  assert.equal(d6Pending(withP0(l => { l.inputBudgetTokensByClass.S = 8000; })), false, 'the S budget');
+  assert.equal(d6Pending(withP0(l => { l.classOrder = [...l.classOrder].reverse(); })), false, 'the class order');
+  assert.equal(d6Pending({ ok: false, blocking: ['(owner policy file missing)'], ignored: [] }), false);
+  assert.equal(d6Pending(null), false);
+});
+
+test('policy drift (D6): while the skip is in force, loadKit still refuses the live owner file with HEAL_POLICY_DRIFT', { skip: dataSkip || (!d6Pending(OWNER_DRIFT) && 'the live owner policy has no D6 drift') }, async () => {
+  await assert.rejects(loadKit(), e => e.code === 'HEAL_POLICY_DRIFT' && d6Pending(e.drift) && e.drift.blocking.join() === OWNER_DRIFT.blocking.join());
+});
+
 test('policy drift: loadKit runs under the policy of record and reports how the live owner file differs (the refusal rules are the unit tests above)', { skip: skipReason }, async () => {
   const { kit } = await world();
   // whatever the live file says today, the kit exposes how it differs from the policy of record
@@ -102,7 +133,7 @@ test('policy drift: loadKit runs under the policy of record and reports how the 
   assert.deepEqual(kit.ownerPolicy.providers['claude-cli'].childEnv, undefined);   // the run never carries a key the kit does not implement
 });
 
-test('a kit that differs from the pins is refused', { skip: skipReason }, () => {
+test('a kit that differs from the pins is refused', { skip: dataSkip }, () => {
   const pins = structuredClone(readPins());
   const file = Object.keys(pins.kit.files).find(f => f.endsWith('runtime.mjs'));
   pins.kit.files[file] = '0'.repeat(40);

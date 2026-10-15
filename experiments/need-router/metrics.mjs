@@ -268,7 +268,10 @@ export function leakTest(table, makeRouter, Vs) {
 //   or `evidence: 'LEGACY'`, harvest.mjs LEGACY_TAG) is refused; the rows of one (job, mode) (of one lineage, for a
 //   lineage mode) must carry one `armHash` (a row without one counts as its own version); a row with `repriced: false`
 //   (label-run: the cost fell back to the CLI figure or $0) is counted and leaves its job unlabelled; `requireRepriced`
-//   (evaluate.mjs sets it) refuses a row without a finite `usdRepriced` instead of falling back to usdReported/costUsd.
+//   (evaluate.mjs sets it) refuses a row without a finite `usdRepriced` instead of falling back to usdReported/costUsd,
+//   and a build without `usdRepriced` (or `usd`, label-run's equal copy); a build with `repriced: false` counts like such a
+//   row. label-run's `stamp` (recordStamp) is read where present: one `stamp.settingsSha` per (job, mode) across rows and
+//   every lineage's build (a later lineage under edited arm settings is refused), one `stamp.priceTable` per table.
 //   A voided agent draw (label-run: `void` set, `error: 'VOIDED'`, pass and delivered false; an agent draw is its own
 //   lineage of one) scores as a failure and is listed in `table.voidedDraws` (lineage voids stay in `table.voided`).
 // Build rows (one per job x mode x lineage, for built or guided modes):
@@ -364,7 +367,16 @@ function normRow(r, { requireRepriced = false } = {}) {
     deployableVerdict: r.deployableVerdict ?? null, score: typeof r.score === 'number' ? r.score : null, passAt: r.passAt ?? null,
     seed: Number.isInteger(r.seed) ? r.seed : null, taskHash: r.taskHash ?? null, usd, imputed,
     error: voided ? 'VOIDED' : error, voidReason: voidReason ?? (error === 'VOIDED' ? 'VOIDED' : null), explicitVoid: voided,
-    armHash: r.armHash ?? null, notRepriced: r.repriced === false };
+    armHash: r.armHash ?? null, notRepriced: r.repriced === false, ...stampOf(r, at) };
+}
+
+// label-run's per-row and per-build stamp (recordStamp: { stageSha, settingsSha, prompts, priceTable }): the arm's frozen
+// settings hash and the price table, the two parts that must not vary inside one (job, mode).
+function stampOf(x, at) {
+  const s = x.stamp;
+  if (s == null) return { settingsSha: null, priceTable: null };
+  if (typeof s !== 'object') throw new Error(`${at}: stamp must be an object`);
+  return { settingsSha: s.settingsSha ?? null, priceTable: s.priceTable ?? null };
 }
 
 // Per-row values with (1) and without (0) self-check credit: credit lets a failed self-check withhold the answer.
@@ -379,7 +391,8 @@ function rowValues(x) {
 /**
  * The v1 label matrix. Validates and pairs: every mode of a job covers the job's tasks (lineage modes: every lineage
  * covers every task), one seed and one taskHash per (job, task) across modes, no duplicates, unknown modes refused,
- * LEGACY rows refused, one armHash per (job, mode) (per lineage), and (requireRepriced) the re-priced meter only.
+ * LEGACY rows refused, one armHash per (job, mode) (per lineage), one stamp.settingsSha per (job, mode) across rows and
+ * builds, one stamp.priceTable per table, and (requireRepriced) the re-priced meter only, for rows and builds alike.
  * A gap throws; nothing is dropped silently. Modes may differ between jobs (direct-H is masked on interactive families);
  * whether a job's modes match its declared menu is checked by the caller (evaluate.mjs missingData, PREREG §5).
  */
@@ -392,7 +405,13 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
     if (typeof job !== 'string' || typeof mode !== 'string' || !Number.isInteger(rep) || rep < 0) throw new Error(`build row needs job, mode and an integer rep: ${JSON.stringify(b).slice(0, 200)}`);
     if (isLegacyRow(b)) throw new Error(`build row ${job}/${mode}/${rep}: a LEGACY build is never pooled with new labels (DESIGN §2)`);
     modeInfo(mode, registry);
-    const usd = fin(b.usd, b.usdRepriced, b.usdReported, b.costUsd), imputed = fin(b.usdImputed, b.imputedUsd) ?? 0;
+    // One meter for builds too: under requireRepriced the build's dollars are its re-priced figure (`usdRepriced`, or `usd`,
+    // which label-run writes equal to it), never a fallback to usdReported or costUsd; the two fields must agree.
+    if (requireRepriced) {
+      if (fin(b.usdRepriced, b.usd) === undefined) throw new Error(`build row ${job}/${mode}/${rep}: no finite usdRepriced (one meter: a build is never charged at usdReported or costUsd)`);
+      if (fin(b.usdRepriced) !== undefined && fin(b.usd) !== undefined && Math.abs(b.usdRepriced - b.usd) > 1e-9) throw new Error(`build row ${job}/${mode}/${rep}: usd ${b.usd} and usdRepriced ${b.usdRepriced} disagree (two meters)`);
+    }
+    const usd = requireRepriced ? fin(b.usdRepriced, b.usd) : fin(b.usd, b.usdRepriced, b.usdReported, b.costUsd), imputed = fin(b.usdImputed, b.imputedUsd) ?? 0;
     if (usd === undefined || usd < 0 || imputed < 0) throw new Error(`build row ${job}/${mode}/${rep}: dollars must be finite and >= 0`);
     const k = KEY(job, mode), L = lineages.get(k) ?? new Map();
     if (L.has(rep)) throw new Error(`duplicate build row ${job}/${mode}/lineage ${rep}`);
@@ -400,7 +419,8 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
     if (b.hiddenPathAttempts > 0) reasons.push(`hiddenPathAttempts=${b.hiddenPathAttempts}`);
     if (b.nestedModelAttempts > 0) reasons.push(`nestedModelAttempts=${b.nestedModelAttempts}`);
     if (b.void) reasons.push(typeof b.void === 'string' ? b.void : 'void');
-    L.set(rep, { rep, usd, imputed, failed: !!b.failed, voided: reasons.length > 0, reasons, build: b });
+    L.set(rep, { rep, usd, imputed, failed: !!b.failed, voided: reasons.length > 0, reasons, build: b, notRepriced: b.repriced === false,
+      ...stampOf(b, `build row ${job}/${mode}/${rep}`) });
     lineages.set(k, L);
   }
   for (const r0 of rows) {
@@ -413,7 +433,7 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
     t.set(r.rep, r); c.byTask.set(r.task, t); cells.set(k, c);
   }
   for (const k of lineages.keys()) if (!cells.has(k)) { const [job, mode] = k.split('\u0000'); add(jobs, job); add(modes, mode); cells.set(k, { job, mode, byTask: new Map() }); }
-  const taskIds = new Map(), seeds = new Map(), hashes = new Map();
+  const taskIds = new Map(), seeds = new Map(), hashes = new Map(), priceTables = new Set();
   for (const job of jobs) {
     const all = new Set();
     for (const m of modes) for (const t of cells.get(KEY(job, m))?.byTask.keys() ?? []) all.add(t);
@@ -450,8 +470,16 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
       } else {
         for (const t of ids) if (!c.byTask.get(t)?.size) throw new Error(`unpaired: ${job}/${m} has no row for task ${t}`);
       }
-      const versions = new Map();
+      const versions = new Map(), settings = new Set();
       c.notRepriced = 0;
+      // Builds are on the meter too: a build label-run could not re-price (`repriced: false`) counts like such a row. The
+      // arm settings (stamp.settingsSha) must be one per (job, mode) across every lineage's build and rows: a lineage's own
+      // armHash carries its number, so a lineage added later (a racing top-up in another stage) under edited settings
+      // would otherwise pool unnoticed. A row or build without a stamp is not compared (armHash covers row sources).
+      if (L) for (const l of L.values()) {
+        if (l.notRepriced) c.notRepriced += 1;
+        if (!info.cascade) { if (l.settingsSha != null) settings.add(l.settingsSha); if (l.priceTable != null) priceTables.add(l.priceTable); }
+      }
       for (const [t, reps] of c.byTask) for (const x of reps.values()) {
         if (x.seed !== null) { const s = seeds.get(KEY(job, t)); if (s !== undefined && s !== x.seed) throw new Error(`seed pairing broken: ${job}/${t} has seeds ${s} and ${x.seed}`); seeds.set(KEY(job, t), x.seed); }
         if (x.taskHash) { const h = hashes.get(KEY(job, t)); if (h !== undefined && h !== x.taskHash) throw new Error(`taskHash pairing broken: ${job}/${t} (${m})`); hashes.set(KEY(job, t), x.taskHash); }
@@ -460,6 +488,8 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
           // One arm version per (job, mode), per lineage for a lineage mode (a lineage's arm id carries its number).
           const vk = c.lineage ? x.rep : '*', v = versions.get(vk) ?? new Set();
           v.add(x.armHash ?? '(no armHash)'); versions.set(vk, v);
+          if (x.settingsSha != null) settings.add(x.settingsSha);
+          if (x.priceTable != null) priceTables.add(x.priceTable);
           // A voided draw: an explicit void reason on any row, or the VOIDED code on a draw mode (on a lineage mode the
           // code comes from the build row's void, already listed in `voided`).
           if (x.voidReason && (x.explicitVoid || !c.lineage)) voidedDraws.push({ job, mode: m, task: t, rep: x.rep, reasons: [x.voidReason], lineage: c.lineage });
@@ -467,11 +497,14 @@ export function needTable(rows, builds = [], { registry = MODES, voidPolicy = 'f
         rowValues(x);
       }
       for (const [vk, v] of versions) if (v.size > 1) throw new Error(`${job}/${m}${vk === '*' ? '' : ` lineage ${vk}`}: rows from ${v.size} arm versions (armHash ${[...v].sort().join(', ')}) are never pooled`);
+      if (settings.size > 1) throw new Error(`${job}/${m}: rows or builds under ${settings.size} arm settings (stamp.settingsSha ${[...settings].sort().join(', ')}) are never pooled`);
       c.reps = new Map([...c.byTask].map(([t, reps]) => [t, [...reps.keys()].sort((a, b) => a - b)]));
     }
   }
+  // One meter (DESIGN §2): every stamped row and build of the table priced with one price table.
+  if (priceTables.size > 1) throw new Error(`rows or builds priced with ${priceTables.size} price tables (stamp.priceTable ${[...priceTables].sort().join(', ')}): one meter is required`);
   return {
-    jobs, modes, registry, voided, voidedDraws, noCredit: new Set(),
+    jobs, modes, registry, voided, voidedDraws, noCredit: new Set(), priceTables: [...priceTables].sort(),
     cell(job, mode) { const c = cells.get(KEY(job, mode)); if (!c) throw new Error(`no cell ${job}/${mode}`); return c; },
     has: (job, mode) => cells.has(KEY(job, mode)),
     modesOf: job => modes.filter(m => cells.has(KEY(job, m))),

@@ -6,12 +6,12 @@ import path from 'node:path';
 import { draw, loadLedger, saveLedger, isUsed, INITIAL, POOLS } from '../seeds.mjs';
 import { bedsLib } from '../replay.mjs';
 import { STRATA } from '../verify.mjs';
-import { skipReason } from './helpers.mjs';
+import { skipReason, dataSkip } from './helpers.mjs';
 import { incidentFor, recordsFlip, proposalFrom, runVerify } from './fixtures.mjs';
 
 const makeTaskFor = family => async seed => (await (await bedsLib()).makeTasks(family, { split: 'dev', seeds: [seed], difficulty: 3 }))[0];
 
-test('seed ledger: the repository\'s consumed seeds are known, a drawn seed is consumed, an exhausted pool is an error', { skip: skipReason }, async () => {
+test('seed ledger: the repository\'s consumed seeds are known, a drawn seed is consumed, an exhausted pool is an error', { skip: dataSkip }, async () => {
   const ledger = { schema: 'x', entries: structuredClone(INITIAL), referenceHashes: {} };
   for (const s of [1, 2, 3, 101, 160]) assert.equal(isUsed(ledger, 'records', 'dev', 3, s), true, `records dev d3 s${s}`);
   assert.equal(isUsed(ledger, 'records', 'test', 3, 6001), true); assert.equal(isUsed(ledger, 'records', 'test', 3, 5006), true); assert.equal(isUsed(ledger, 'records', 'dev', 3, 1001), false);
@@ -27,7 +27,7 @@ test('seed ledger: the repository\'s consumed seeds are known, a drawn seed is c
   saveLedger(ledger, file); assert.deepEqual(loadLedger(file).entries.at(-1).seeds, [1004, 1005]);
 });
 
-test('seed ledger: codefix tasks are deduplicated by the hash of their reference solution', { skip: skipReason }, async () => {
+test('seed ledger: codefix tasks are deduplicated by the hash of their reference solution', { skip: dataSkip }, async () => {
   const ledger = { schema: 'x', entries: structuredClone(INITIAL), referenceHashes: {} };
   const seeds = await draw({ ledger, family: 'codefix', difficulty: 3, n: 4, by: 'test', makeTask: makeTaskFor('codefix') });
   assert.equal(seeds.length, 4);
@@ -35,7 +35,7 @@ test('seed ledger: codefix tasks are deduplicated by the hash of their reference
   assert.equal(new Set(Object.values(ledger.referenceHashes.codefix)).size, Object.keys(ledger.referenceHashes.codefix).length, 'no two drawn tasks share a reference');
 });
 
-test('records strata: BRIGHTDESK numeric order of a fresh task is read oracle-side, from the hidden world', { skip: skipReason }, async () => {
+test('records strata: BRIGHTDESK numeric order of a fresh task is read oracle-side, from the hidden world', { skip: dataSkip }, async () => {
   const seen = new Set();
   for (const seed of [1001, 1002, 1003, 1004, 1005, 1006]) { const t = await makeTaskFor('records')(seed); seen.add(await STRATA.records(t.task, { system: 'BRIGHTDESK' })); }
   assert.ok([...seen].every(x => x === 'mdy' || x === 'dmy') && seen.size === 2, `both strata exist among six seeds: ${[...seen]}`);

@@ -12,6 +12,12 @@ the review found broken: C7a's interval and its power precondition (§7, §8), t
 (§8), θ fitting (§6), stamps (§4.4), the cap meter (§12), the decisions envelope (§12) and the checker (§15). Every
 change was made before any need-router label exists.
 
+**Revised again 2026-10-15, still DRAFT.** M1-d5 ended at 00:02 on 10-15. M1-R, which re-ran M1's 54 timeouts at a 600 s
+wall, ran from 00:43 to 06:20. Both are recorded from their committed rows as development results (§0.1, §1.1, §3.2, §12,
+§13 D7–D8), with J-NEED-2. The checker now also refuses: a freeze while a recorded run is unfinished; a recorded run that
+§0.1 does not name; an overrun that §13 does not record; a stage outside the totals with no budget; and, once the Freeze
+addendum pins the analysis, an analysis that does not import the preregistered rules (§15). No need-router label exists.
+
 Machine-readable half: [prereg/stages.json](prereg/stages.json) (jobs, clusters, arms with settings hashes, seeds, price
 table, grid, RNG seeds, stages with caps, the reading rules under `analysis`, the cap meter, the engine-stamp lists).
 Checked by `node experiments/need-router/prereg-check.mjs` (§15). Where this text and `stages.json` differ, the run is
@@ -23,9 +29,9 @@ reading rules of §5–§8 and §11–§12 are also code: `experiments/need-rout
 Tags: [D] from DESIGN.md, [A] an adopted owner decision (DECISIONS-ADOPTED.md), [M] measured or read in a repository file
 today, [P] a choice made in this preregistration because DESIGN leaves it open (listed in §14 for review before freeze).
 
-Evaluation grades: **development** (TRAIN jobs, M0 diagnostics, M1 with its tags `m1` and `m1-d5`, M1e, NL0, NL1,
-judge-H on TRAIN, archived LEGACY rows; used to build and tune), **held-out** (NL2p, NL2, NL2bp, NL2b, E2E; families
-never used for tuning), **sealed** (NL3; run once by a session that tuned nothing). Tests used to improve the router or
+Evaluation grades: **development** (TRAIN jobs, M0 diagnostics, M1 with its tags `m1` and `m1-d5`, M1-R (tag `m1-r`),
+M1e, NL0, NL1, judge-H on TRAIN, archived LEGACY rows; used to build and tune), **held-out** (NL2p, NL2, NL2bp, NL2b,
+E2E; families never used for tuning), **sealed** (NL3; run once by a session that tuned nothing). Tests used to improve the router or
 the builders are development evidence, never held-out.
 
 ---
@@ -46,8 +52,11 @@ that commit, and the draft still listed M1 as a future stage.
 ### 0.1 Development results observed after the first draft (recorded before freeze)
 
 All of the following is **development evidence** (dev attack seeds, K = 1, one mode). None of it is a need-router label:
-no five-mode paired row exists. This revision's author read the M1 report, tallied its 192 rows ($0), read the Jev-need
-report, and recomputed the reviewer's set-1 feature medians at $0. The author did **not** read any M1-d5 row.
+no five-mode paired row exists. The 2026-10-14 revision's author read the M1 report, tallied its 192 rows ($0), read the
+Jev-need report, and recomputed the reviewer's set-1 feature medians at $0; that author did not read any M1-d5 row. The
+2026-10-15 revision's author tallied the M1-d5 and M1-R rows at $0, including M1-R's set-aside attempts in its live
+directory outside the repository, and read the M1, M1-R, Jev-need and J-NEED-2 reports. The band rule of §3.2 was fixed
+before either read.
 
 - **M1** (tag `m1`; DESIGN §7; decision 14). Ran from 21:31:36 to 22:59:47 (first and last row), committed in f1552d4.
   Command: `node experiments/need-router/m1-run.mjs --cap 15`; `m1-run.mjs` sha256 `478744664b95accf016fe7ea628ee856b3ab7bdb559081a0b7ac261d4c8a58e7` (commit
@@ -61,14 +70,46 @@ report, and recomputed the reviewer's set-1 feature medians at $0. The author di
   - Stamp. No launch stamp was taken; S-M1 was still "TBD at M1 launch". A record reconstructed after the fact from
     e5defed, the runner's commit at 21:32:46, is in `stages.json` (M1 `observed.m1.engine`). Whether the working tree
     differed at launch is unknown.
-- **M1-d5** (tag `m1-d5`; not in the first draft, so an unregistered run, deviation D2). Started at 23:00 and in flight
-  at this revision. Command: `node experiments/need-router/m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10`;
-  `m1-run.mjs` sha256 `7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692` (commit 56c0a82). Plan: 4 rungs × 12 seeds × 2 efforts = 96 calls at d5,
-  on the same dev attack seeds. It keeps its own spend counter (reported dollars, no reservation) and its own --cap 10.
-  Its results are added to this section when it ends, before Freeze. The band rule below was fixed before they are read.
+- **M1-d5** (tag `m1-d5`; not in the first draft, so an unregistered run, deviation D2). Ran from 23:01:42 to 00:02:45
+  (first and last row), committed in 5f75f17. Command: `node experiments/need-router/m1-run.mjs --rungs r2,r3,r3p,r6
+  --difficulty 5 --cap 10`; `m1-run.mjs` sha256 `7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692` (commit 56c0a82). 4 rungs × 12 seeds × 2 efforts = 96 calls
+  at d5, on the same dev attack seeds. It kept its own spend counter (reported dollars, no reservation) and its own
+  --cap 10.
+  - Results (pass per effort, none and medium). R2 2/12 and 2/12. R3 0/12 and 0/12 (17 of the 24 calls timed out, 4
+    were schema-invalid). R3′ (`r3p`) 10/12 and 11/12. R6 0/12 and 0/12 (11 timed out).
+  - Gates. At d5 the W-bed one-call admission gate passes for R2, R3 and R6 and fails for R3′.
+  - Spend. Reported: $5.9199. The runner booked 28 `MODEL_TIMEOUT` calls at $0. On the §12 meter the tag is
+    **$33.9199** against its $10 share. With tag `m1`, M1 is $62.9156 on the meter (reported $8.9156) against its $15
+    cap.
+  - Reading. The need flips with difficulty on R3 (8–9/12 at d3, 0/12 at d5) and R6 (2–6/12, then 0/12). One call
+    still solves R3′ at d5.
+- **M1-R** (stage M1-R, tag `m1-r`; an unregistered run after D2 had closed M1, deviation D7). It re-ran every
+  `MODEL_TIMEOUT` trial of tags `m1` (26) and `m1-d5` (28) at a 600 s wall, with the same arm definitions (the runner
+  checks the arm hashes against the source rows). It is a plan item of
+  `research/architecture-20261014/MEMORY-ROUTING-RECURSION.md` §5 row 4 (cap $25). Command:
+  `node experiments/need-router/m1-rerun.mjs`; `m1-rerun.mjs` sha256 `662ae4407990fc5a5178d28d64fe1a948a0a58dda63a4e7892bda1e2d7508a49` (commit 4e2e8fe).
+  - Attempts. Attempt 1 (about 00:38–00:43) is invalid: the ModelPort's own 300 s deadline overrode the 600 s wall
+    (fixed in 29c6c48). Its 4 rows, all timeouts at $0, are kept outside the repository. Attempt 2's first row is at
+    00:55:11. At 02:09 four trials hit `MODEL_RATE_LIMIT` (the subscription session limit, an environment fault). They
+    were set aside outside the repository and re-run by a resume that ended at 06:20:22. Committed in 8f72e17.
+  - Results (54 trials). 4 pass: R1 at d3, effort medium (s383, s390); R6 at d5, effort none (s383, s389). 34 fail
+    with an answer, 10 still time out at 600 s, 6 are schema-invalid. Merged into the M1 rows (`runs/m1-r/merged.jsonl`,
+    labelling `m1r`), the tasks one call solves at either effort go from 61/144 to 65/144. No `r3p` trial timed out, so
+    M1-R ran no `r3p` task. The W-bed gate readings do not change (R1 at d3 and R6 at d5 stay within 2/12).
+  - Spend. Reported: $7.8934 ($6.6318 in attempt 2, $1.2616 in its resume; attempt 1's rows were $0). On the §12
+    meter: $17.8934 over the 54 final rows, with the 10 timeouts at their $1 bound. Counting the 8 set-aside attempts
+    at their bound as well (§12): **$25.8934** against the $25 plan cap.
+  - Stamp. None taken. A record reconstructed from 29c6c48, the last engine change before attempt 2, is in
+    `stages.json` (M1-R `observed.m1-r.engine`). It ran on policy version `2026-10-09.1` (D6).
 - **Jev-need** (commit 8ef7fa2). Hosted Jev read the 96 M1 tasks, including the 12 `r3p` tasks, and predicted whether
   one call suffices. Task-level AUROC 0.53, against 0.71 for a one-line size rule. It cost a fraction of a cent.
-  Development evidence for decision 12 only.
+  Development evidence for decision 12 only. Its d3 + d5 update (144 tasks, including the 24 `r3p` tasks): AUROC 0.46
+  against 0.65 for the size rule under labels `m1`; 0.44 against 0.63 under `m1r` (M1-R report).
+- **J-NEED-2** (commit 93a0913; re-analysed under `m1r` in 8f72e17). Six property questions to hosted Jev and a Haiku
+  typed arm on all 144 M1 tasks, including `r3p`'s 24; leave-one-family-out heads over 8 families. Its own preregistered
+  rule put code features + Jev in the NR-knn branch (AUROC 0.707 [0.46, 0.98] under `m1`, 0.697 [0.48, 0.97] under
+  `m1r`). Jev's increment over code features alone is not above noise (0.202 [−0.00, 0.49]; 0.134 [−0.01, 0.36]).
+  Development evidence for decision 12 only. Whether those features enter NR-knn is open for the Freeze addendum (§14).
 - **The --hashes pre-check of the first draft** generated the held-out evaluation tasks (8801–8812) and E2E tasks
   (8825–8836) of six held-out jobs in-process, without a ledger check per task, to hash them. Their contents were not
   inspected. The pre-check now checks every seed against the ledger and hashes held-out families only in a child process
@@ -85,6 +126,14 @@ report, and recomputed the reviewer's set-1 feature medians at $0. The author di
 - Every other hypothesis row whose family ran in M1 (`wbed-r0`, `wbed-r1-hi`, `wbed-r2-hi`, `wbed-r3-hi`, `wbed-r6`) was
   checked against M1 and is unchanged.
 - M1's spend under the §12 meter, the missing stamp and the M1-d5 run are deviations D1–D3 (§13).
+
+**What M1-d5 and M1-R change** (2026-10-15; each logged as informed by them):
+- `r3p` gets a second logged hypothesis revision at N = 1 and N = 10 (§1.1). The earlier rows stay the record.
+- The `r3p` reading printed beside every C7a and C7b reading now drops both observed levels, d3 and d5, leaving d4
+  (§3.2, §8). It is still not a gate.
+- No band changes (the §3.2 rule). The rows of `wbed-r2-hi`, `wbed-r3-hi` and `wbed-r6` were checked against M1-d5 and
+  M1-R and are unchanged.
+- M1-R, its spend and its missing stamp are deviation D7 (§13). The §12 meter now says that set-aside attempts count.
 
 ## 1. Claims and hypotheses
 
@@ -150,6 +199,15 @@ before M1 was read, and they stay. One revision:
 The rows of `wbed-r0`, `wbed-r1-hi`, `wbed-r2-hi`, `wbed-r3-hi` (whose band excludes d3) and `wbed-r6` agree with M1 and
 are unchanged. M1-d5's results may add revisions before Freeze, logged the same way. They cannot change a band.
 
+A second revision, informed by M1-d5 (2026-10-15):
+
+| Job | Informed by | N = 1 (revised) | N = 10 (revised) | Note |
+|---|---|---|---|---|
+| `r3p` | M1 tag `m1-d5`: one call passed 10/12 and 11/12 at d5 (the same seeds) | no-workflow / direct-H | either / direct-H | One call solves both observed levels; d4 is untested. At N = 10 a built workflow could tie one call's ~0.9 only with a cheap build, so one call is expected to lead. The band is unchanged. |
+
+The rows of `wbed-r2-hi` (R2 2/12 at d5 at each effort), `wbed-r3-hi` (R3 0/12 at d5, still 0/12 after M1-R) and
+`wbed-r6` (d5 is outside its d3–4 band) were checked against M1-d5 and M1-R and are unchanged.
+
 Implied H0 expectations (for the record, not a test): the workflow class is expected only where inputs are large
 (`wbed-r3-hi` up to 65K tokens, `r3p` up to 64K, `wbed-r6` up to 75K) or fan-out is wide (`wbed-r1-hi`), and **not** on
 `r0-pad` (23K tokens of padding), `r3-mini` or `wbed-stage`. `incident` (up to 107K tokens at d4) is the planned
@@ -160,6 +218,8 @@ The set-1 medians (§0.1) make two consequences explicit:
   cluster W, which is below §6's fitting minimum (2 confident positives in 2 clusters).
 - **No fitted rule could call `r3p` intrinsic.** Even with a fit, its tokens (4.63) sit below a hypothesised TRAIN
   negative (`wbed-r6`, 4.78), and its fan-out (1.52) is far below `wbed-r3-hi`'s (2.98).
+- **No held-out positive is hypothesised** after the second `r3p` revision. Until `far-1`, `far-2`, `gameqa` or the
+  owner tasks get their rows, the confident held-out N = 1 labels are expected to hold one class.
 
 Under these hypotheses C7a is therefore expected to read INCONCLUSIVE (§8).
 
@@ -183,8 +243,9 @@ Families that share a world, generator or library (by import graph) form one clu
 cluster **W** = {records, wbed-r0, need-r0pad, wbed-r1, wbed-r2, wbed-r3, need-r3mini, need-stage, wbed-r6}, in TRAIN (r2
 imports `beds/records/pools.mjs`; r3 imports `r1/world.mjs`; r6 imports `wbed/lib/domain.mjs` and `parties.mjs`; the three
 anchors wrap R0, R3 and the rungs). r3p imports only `wbed/lib/{contracts,faults,prng}.mjs`: its own cluster, held out,
-flagged **near** [D]. It is also flagged **dev-observed** [M]: M1 ran one Haiku call on it at d3 (12/12 and 11/12), M1-d5
-is running it at d5, and Jev-need read its 12 M1 tasks (§0.1). Cut from v1: r4, r5, gridquest, the `ask` mode. [D]
+flagged **near** [D]. It is also flagged **dev-observed** [M]: M1 ran one Haiku call on it at d3 (12/12 and 11/12) and
+M1-d5 at d5 (10/12 and 11/12), and Jev-need and J-NEED-2 read its 24 M1 tasks (§0.1). Cut from v1: r4, r5, gridquest,
+the `ask` mode. [D]
 
 | Split | Cluster | Jobs |
 |---|---|---|
@@ -256,6 +317,11 @@ reasons:
 What M1 does change: labels are reported per difficulty for these three jobs. For `r3p`, which is held out, the reading
 with its d3 tasks dropped is printed beside every C7a and C7b reading. M1-d5's results cannot change any band (this rule
 was fixed before they were read).
+
+M1-d5, read after this rule was fixed (2026-10-15): at d5 the W-bed gate passes for R2 (2/12 and 2/12), R3 (0/12 and
+0/12) and R6 (0/12 and 0/12; 2/12 at effort none once M1-R re-ran its timeouts), and fails for R3′ (10/12 and 11/12). No
+band changes. Because `r3p`'s d5 third is now observed as well, the printed `r3p` reading drops both observed levels (d3
+and d5), leaving d4's 4 tasks.
 
 Typed hard requirements: none on every non-forced job. Candidates, confirmed before D5 uses them: `runbook` = effects
 with authority, human approval (bed README; confirmed by the NL2b audit); `e8` = durable wait, schedule, effects with
@@ -398,6 +464,7 @@ produced.
 | Item | Value |
 |---|---|
 | S-M1 (M1, tags `m1` and `m1-d5`) | not taken: M1 launched at 21:31, before this row was filled. Reconstructed after the fact (not a launch stamp) in `stages.json` M1 `observed.*.engine`. `m1` ran on `m1-run.mjs` sha256 `478744664b95accf016fe7ea628ee856b3ab7bdb559081a0b7ac261d4c8a58e7` (e5defed); `m1-d5` on `7916277c5cae0d70181228d582547ffec47fca54d5c353890f95b4a1980d5692` (56c0a82). Deviation D1. |
+| M1-R (tag `m1-r`) | not taken. Reconstructed from 29c6c48 in `stages.json` M1-R `observed.m1-r.engine`: `m1-rerun.mjs` sha256 `662ae4407990fc5a5178d28d64fe1a948a0a58dda63a4e7892bda1e2d7508a49` (4e2e8fe), policy `2026-10-09.1`. Deviation D7. |
 | L-NL0 (label engine at NL0 launch; pasted here at freeze) | TBD at NL0 launch |
 | L-NL1, L-judge-H, L-NL2p, L-NL2, L-NL2bp, L-E2E, L-NL2b, L-NL3, L-DRIFT | taken at each stage's launch into `runs/<id>/STAMP.json` and compared with the previous paid stage by `stampDiff` |
 | A-Freeze (analysis stamp) | TBD-FREEZE (the Freeze addendum, §6) |
@@ -572,16 +639,17 @@ confident labels hold one class only, balanced accuracy is undefined and C7a rea
 - **Power precondition** [P]. Before C7a is read, compute the lower bound a perfect classifier would reach at the
   realised confident class counts (`c7aPower`). If that bound is ≤ 0.5, C7a reads **INCONCLUSIVE (not powered)**, never
   REFUTED, and F12 is not evaluated. The planned counts show why this is needed:
-  - With one held-out positive (`r3p`) and 7 negatives, a perfect H0 reaches a lower bound of 0.460. Under the first
-    draft's Wilson mean it reached 0.426. Either way, a perfect H0 would have read REFUTED.
+  - With one held-out positive (`r3p`, as the first draft hypothesised) and 7 negatives, a perfect H0 reaches a lower
+    bound of 0.460. Under the first draft's Wilson mean it reached 0.426. Either way, a perfect H0 would have read
+    REFUTED.
   - With 2 positives and 8 negatives a perfect H0 reaches 0.570.
 - **Minimum confident counts** for C7a to be powered (positives + negatives; symmetric): 1 + 15, 2 + 4, 3 + 3, 4 + 2,
   15 + 1. In practice that means at least 2 confident jobs in each class and 6 in all (`c7aMinimumCounts`).
 
 **Secondaries, fixed order, all marked "not primary"** [D]:
 1. The same Δ at V = $0.10 and $10; at W = 0 and 10V; at N = 1 and 100; on L_ceiling. (The r3p-dropped reading and the
-   r3p-d3-dropped reading are no longer secondaries: they are printed beside every C7a and C7b reading, and the first
-   one decides whether a claim stands, §8.)
+   reading with r3p's observed levels dropped (d3 and d5) are no longer secondaries: they are printed beside every C7a
+   and C7b reading, and the first one decides whether a claim stands, §8.)
 2. Value decomposition: always-agent-H → SBS-global → SBS(V, N) → router → VBS\*.
 3. Closed gap and regret against VBS\*.
 4. C7a at N = 10; precision and recall of the workflow class; precision at assumed no-workflow base rates of 50, 80 and
@@ -637,7 +705,8 @@ and dev-observed (M1, Jev-need).
 - Every C7a and C7b reading is printed twice, with and without the `r3p` cluster.
 - SUPPORTED, SUPERIOR-BELOW-USEFUL, REFUTED, and C7a's SUPPORTED-DIAGNOSTIC stand only when the reading without `r3p` is
   the same. Otherwise the reading is INCONCLUSIVE, with both printed.
-- The reading with r3p's d3 tasks dropped is printed beside them; it is not a gate.
+- The reading with r3p's dev-observed levels dropped (d3 since M1, d5 since M1-d5; d4 remains) is printed beside them;
+  it is not a gate.
 - Dropping `r3p` removes one cluster, so the floor of §7 is recomputed for that reading.
 
 **C7a reading** [D, A; power precondition and r3p rule P; `prereg-rules.mjs c7aReading`]. The cases, in order:
@@ -671,9 +740,9 @@ or INCONCLUSIVE. The firm outputs are the label matrix, the self-test measuremen
 calculator.
 
 Two more expectations follow from M1 and the corrected rules [P]:
-- **C7a.** C7a is expected to read INCONCLUSIVE until more positives arrive. The held-out set has at most one
-  hypothesised N = 1 positive (`r3p`, now revised to either). `far-1`, `far-2`, `gameqa` and the owner tasks are
-  pending. H0 is expected not to be fitted (§6).
+- **C7a.** C7a is expected to read INCONCLUSIVE until more positives arrive. The held-out set has no hypothesised
+  N = 1 positive: `r3p`, the only one in the first draft, was revised to either after M1 and to no-workflow after M1-d5
+  (§1.1). `far-1`, `far-2`, `gameqa` and the owner tasks are pending. H0 is expected not to be fitted (§6).
 - **C7b.** NR-static is expected to share SBS-train's mode on many jobs, so fewer clusters than admitted will be
   informative (§7).
 
@@ -752,8 +821,8 @@ model ids and the monthly drift re-check (stage DRIFT); the live E2E lane.
   0.3, 0.5, 0.7}, the clusters where the router copies SBS having Δ_c = 0 exactly. Continuous Δ alone overstates the
   power. **TBD-M0**: `evaluate.mjs` produces it, and freezing this file requires its numbers in this section.
 - **C7a.** The exact joint interval needs at least 2 confident jobs per class and 6 in all (§7). At the planned held-out
-  counts (at most 1 hypothesised positive) C7a is not powered and reads INCONCLUSIVE. With 2 positives and 8 negatives, a
-  perfect H0 reaches a lower bound of 0.570. One error on a negative brings it to 0.505; one error on a positive brings
+  counts (no hypothesised positive since M1-d5; one in the first draft) C7a is not powered and reads INCONCLUSIVE. With
+  2 positives and 8 negatives, a perfect H0 reaches a lower bound of 0.570. One error on a negative brings it to 0.505; one error on a positive brings
   it to 0.320. C7a at this size is diagnostic at best.
 
 ## 12. Stages, caps, kill and stop rules
@@ -774,7 +843,8 @@ NL0 (decision 14); later stages at their gates, each under the $500 pause. [A]
 | Stage | When | Grade | What | Est. $ | Cap $ | Approved | Gate |
 |---|---|---|---|---|---|---|---|
 | M0 | 10-15 → 10-17 | development | code, this preregistration, tests, D0–D6 on LEGACY rows | 0 | 0 | yes | – |
-| M1 | ran 10-14 | development | one Haiku call per W-rung task, two efforts, one approved $15 cap shared by tag. Tag `m1` (share $5, done): `m1-run.mjs --cap 15`, 8 rungs (wbed-r0 … r6, wbed-r3p) × 12 seeds × 2 efforts = 192 calls at d3, also the W-bed one-call admission gate. Tag `m1-d5` (share $10, in flight): `m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10`, 96 calls at d5. Results in §0.1 | 10 | 15 | yes | ran without stamp S-M1 (D1); K2 passed |
+| M1 | ran 10-14 → 10-15; closed | development | one Haiku call per W-rung task, two efforts, one approved $15 cap shared by tag. Tag `m1` (share $5, done): `m1-run.mjs --cap 15`, 8 rungs (wbed-r0 … r6, wbed-r3p) × 12 seeds × 2 efforts = 192 calls at d3, also the W-bed one-call admission gate. Tag `m1-d5` (share $10, done): `m1-run.mjs --rungs r2,r3,r3p,r6 --difficulty 5 --cap 10`, 96 calls at d5. Results in §0.1. On the meter: $62.92 (D3) | 10 | 15 | yes | ran without stamp S-M1 (D1); K2 passed |
+| M1-R | ran 10-15, outside the totals below | development | re-ran M1's 54 `MODEL_TIMEOUT` trials at a 600 s wall (`m1-rerun.mjs`, tag `m1-r`); results in §0.1. Its budget is held by `research/architecture-20261014/MEMORY-ROUTING-RECURSION.md` §5 row 4, whose totals add this program's. On the meter: $25.89 with its set-aside attempts (D7) | 15 | 25 | plan item (D7) | none: unregistered (D7) |
 | M1e | when #58 commits | diagnostic | read the in-flight E8 runs (agent-H paired with B1L-H lineages 1–3, B1-H, B1-O; same 9 dev worlds) | 0 | 0 | yes | – |
 | NL0 | 10-18/19 | development | `records-hi`, `wbed-r0`, `wbed-r3-hi` × five modes; build-O and (if stamped) ref-R3 on `wbed-r3-hi`; up to 5 owner tasks (`owner-dev`, all modes, one replicate) | 110 | 140 | yes | freeze of this file; stamp L-NL0; K2 |
 | NL1 | 10-20 → 10-23 | development | the other 12 TRAIN jobs; build-O on `wbed-r1-hi` and `kinetics-hi`; ref-R1 if stamped; NR-probe rows on all 15 TRAIN jobs; then G1, the power gate, LOCO dev numbers | 272 | 340 | at gate | K7; owner; stamp L-NL1 compared with L-NL0 |
@@ -795,6 +865,8 @@ did not change:
   NL2p ($4 / $8, made of NL2's $2 / $4 of probe rows plus judge-H's $2 / $4 of held-out calls); and NL2 ($204 / $266).
 - NL2b ($98 / $140) is now NL2bp ($1 / $2) plus NL2b ($97 / $138). NR-probe rows are charged to NL1 (TRAIN) and NL2p (held-out) [P].
 DRIFT's jobs, its 3-run limit and its cumulative $24 cap are [P]. The checker adds the $24 to the soft-cap check.
+M1-R is outside these totals because another plan holds its $25 cap (`externalBudget`). That plan's totals add this
+program's, so the session soft cap is checked there; the checker requires that file to name the stage.
 
 **The split envelope stages** [P, review fix]. The first draft ran NR-probe rows and the five-mode matrix in one stage
 (NL2, and likewise NL2b) and said decisions are "committed before the matrix is joined". Nothing made the commit come
@@ -807,7 +879,7 @@ committed. Now:
   envelope covers.
 
 **The one cap meter** (K5) [P, review fix; `stages.json spendMeter`; `prereg-rules.mjs capMeter, mayStart`]. It applies
-to every paid runner: `label-run.mjs`, `m1-run.mjs`, judge-H, probes and DRIFT.
+to every paid runner: `label-run.mjs`, `m1-run.mjs`, `m1-rerun.mjs`, judge-H, probes and DRIFT.
 - **Meter.** Per stage, and per tag where a stage's cap is shared (M1), the meter is the sum of three parts:
   - every row with an observed cost, at max(reported, re-priced);
   - every row with no observed cost (a timeout or killed session, `costUnknown`, or no dollars and no tokens recorded),
@@ -816,8 +888,15 @@ to every paid runner: `label-run.mjs`, `m1-run.mjs`, judge-H, probes and DRIFT.
 - **Starts.** A start is refused when the meter plus its bound would exceed the cap.
 - **Timeouts.** A timed-out call is never $0 on the meter, whatever the provider later bills.
 - **Concurrency.** Up to 4 starts may be in flight; their reservations count.
-- **M1 under this meter.** M1's runner booked timeouts at $0 and reserved nothing, so on this meter tag `m1` is $28.9957
-  against its $5 share and M1's $15 cap (§13 D3).
+- **Set-aside attempts** (2026-10-15). An attempt kept out of the results counts like a row: an invalid attempt, or an
+  environment-fault row that is re-run later. It is charged at max(reported, re-priced) when its cost was observed, and
+  at its bound when it was not. M1-R had 8 such attempts.
+- **M1 under this meter.** M1's runner booked timeouts at $0 and reserved nothing (§13 D3):
+  - tag `m1` is $28.9957 against its $5 share;
+  - tag `m1-d5` is $33.9199 against its $10 share;
+  - together $62.9156 against M1's $15 cap (reported $8.9156).
+- **M1-R** used a copy of that runner. It is $17.8934 over its final rows and $25.8934 with its set-aside attempts,
+  against its $25 plan cap (reported $7.8934; §13 D7).
 
 **E2E draw** [P]: the eligible set is the admitted held-out non-forced jobs at E2E launch, sorted by id, shuffled by a
 seeded Fisher–Yates (mulberry32, seed 20261029; `prereg-check.mjs e2eDraw`), first 6 taken. Computed today for the
@@ -856,6 +935,8 @@ After freeze: none yet.
   and outside it. It is folded into M1's one approved $15 cap as tag `m1-d5` with a $10 share (tag `m1` $5). The tag is
   development evidence, and its results enter §0.1 when it ends. It changes no band; any hypothesis revision it informs
   is logged in §1.1. The M1 stage is closed when it ends: any further one-call run needs a new, approved stage.
+  *Update 2026-10-15:* it ended at 00:02:45 (96 rows, committed in 5f75f17); its results are in §0.1, and it informed
+  one hypothesis revision (`r3p`, §1.1). M1 is closed. M1-R ran after this (D7).
 - **D3. M1's spend, re-metered.** Tag `m1` reported $2.9957, with 26 `MODEL_TIMEOUT` calls booked at $0 and nothing
   reserved for calls in flight (concurrency 4).
   - On the §12 meter, tag `m1` is $28.9957 against its $5 share and M1's $15 cap: an overrun of an approved cap, recorded
@@ -863,6 +944,9 @@ After freeze: none yet.
     figures.
   - On this meter, M1 was over its cap before tag `m1-d5` started, so K5 would have stopped it. This revision does not
     stop a run in flight; the coordinator decides. Tag `m1-d5` is re-metered the same way when it ends.
+    *Update 2026-10-15:* tag `m1-d5` reported $5.9199, with 28 `MODEL_TIMEOUT` calls booked at $0. On the §12 meter it
+    is $33.9199 against its $10 share. M1 in all is $62.9156 against its $15 cap (reported $8.9156). Both are overruns of
+    an approved cap, recorded here and not re-approved.
   - From the next paid stage on, every runner meters by §12. `m1-run.mjs`'s own counter does not meet §12, so it may not
     be used again as it stands.
 - **D4. The first draft's --hashes pre-check generated held-out tasks before Freeze, outside the ledger.** That was 492
@@ -912,13 +996,53 @@ label exists):
     `judge-H`, `m1-call-*`) compiles a node through `compileContext`, the only reader of the class budget (design §1). No
     generative model id, price, class order or escalation rule changed. Jev rows still name the version each response
     reports.
-  - **A side effect this record does not resolve:** the heal kit's `policyDrift` gate (`experiments/heal/kit.mjs`,
-    frozen kit 880c6b9) now reports blocking drift on `defaultsByRole` and `inputBudgetTokensByClass.{F,L,M}`, because the
-    frozen kit's `src/runtime.mjs` reads the class budgets. `loadKit` therefore refuses with `HEAL_POLICY_DRIFT` until
-    the owner chooses, as in the README "Heal-kit drift" row. The e8d7a53 exemption covers the Jev pin only
-    (`judgmentModels`, which the kit never reads). Heal replays are not need-router labels.
+  - **Not changed on purpose: the construction skills.** `skills/micro-harness/SKILL.md:57` still advises "S ≤ 4K
+    tokens, M ≤ 8K" and `skills/script-harness/SKILL.md:55` "cheapest model ≤ 8K tokens". Both are in the construct kit
+    (`experiments/lib/kit.mjs` `KIT_ALLOW` includes `skills`; `experiments/c0/prompts.mjs`), so construct-H builders in
+    NL0 still read the old 8K cap as guidance, now stricter than the class-M budget. They are unchanged because the design
+    asks for no skill edit and they are part of the stamped kit. If the owner wants them aligned, the edit lands before
+    the 10-18 stamp and is listed here.
+  - **The budget is an estimate.** The 100,000 class budget is checked against `compileContext`'s estimate (bytes/4,
+    `src/context.mjs:115`), not provider tokens, and the claude-cli route adds its own system prompt. A node accepted near
+    the cap can therefore pass Haiku's real 100K-token price boundary and be billed at the higher tier ($0.50/$2.50
+    instead of $0.10/$0.50 per MTok, the price source at `policy/models.json:138`). This follows the design's choice of
+    that boundary as the budget; no code change.
+  - `experiments/need-router/jev-need2.mjs` (review fix): the dry-plan default and the fallback when the policy lists no
+    pinned id are `JEV_MODEL`, no longer `jev-latest`. No behaviour change under this policy.
+  - **A side effect this record does not resolve: the heal kit is blocked, and the heal suite went red.** The heal kit's
+    `policyDrift` gate (`experiments/heal/kit.mjs`, frozen kit 880c6b9) now reports blocking drift on `defaultsByRole` and
+    `inputBudgetTokensByClass.{F,L,M}`, so `loadKit` refuses with `HEAL_POLICY_DRIFT` and every heal replay is blocked.
+    The e8d7a53 exemption covers the Jev pin only (`judgmentModels`, which the kit never reads). The frozen kit and the
+    C0/P1 journals are on this machine, so the heal tests ran rather than skipped: 66 of 95 failed, 29 passed (a review
+    measured 86 pass, 0 fail on the same tree with the `2026-10-09.1` policy). Those 66 tests now skip with the reason
+    "HEAL_POLICY_DRIFT pending owner choice (D6)" (`experiments/heal/test/helpers.mjs`), only while every blocking path is
+    one of these four; any other drift still fails them, and `kit-gate.test.mjs` checks that `loadKit` still refuses.
+    The owner chooses (README "Heal-kit drift"): (a) re-freeze the kit's policy of record, which clears the budgets
+    (they cannot take a proved exemption, because the frozen `src/runtime.mjs` reads them); or (b) a proved exemption
+    for `defaultsByRole`, which no frozen-kit file names; that clears this path only. Heal replays are not need-router
+    labels.
   - `prereg-check.mjs` warns that the policy version differs from `stages.json` `policy.policyVersion`
     (`2026-10-09.1`). This item is the deviation that warning asks for; `stages.json` is not edited here.
+- **D7. M1-R, an unregistered one-call run after M1 was closed.** D2 said any further one-call run needs a new, approved
+  stage. M1-R re-ran M1's 54 timeouts (§0.1). It is a plan item of
+  `research/architecture-20261014/MEMORY-ROUTING-RECURSION.md` §5 row 4 (cap $25), run under the owner's standing
+  authority. No decision in DECISIONS-ADOPTED.md names it, and this file did not register it. It is now recorded as
+  stage M1-R (tag `m1-r`), development grade, outside this program's totals (§12).
+  - **Runner.** `m1-rerun.mjs` (sha256 `662ae440…`, 4e2e8fe) copies `m1-run.mjs`'s counter: reported dollars only,
+    timeouts at $0, no reservation. D3 said that counter may not be used again.
+  - **Attempts.** Attempt 1 is invalid (the port's 300 s deadline; fixed in 29c6c48). Attempt 2 had 4 `MODEL_RATE_LIMIT`
+    environment faults, which were re-run at 06:20. Both sets of rows are kept outside the repository.
+  - **Spend.** Reported $7.8934. On the §12 meter, $17.8934 over the 54 final rows, and $25.8934 with the 8 set-aside
+    attempts at their bound (§12): $0.89 over the $25 plan cap. The overrun is made entirely of bound charges for rows
+    with no observed cost (4 timeouts of the invalid attempt, 4 rate-limit refusals). The provider's billing for them is
+    unknown; a rate-limit refusal is probably not billed.
+  - **Stamp.** None. The record in `stages.json` is reconstructed from 29c6c48. It ran on policy `2026-10-09.1` (D6).
+  - **Effect.** The merged labelling `m1r` turns 4 one-call failures into passes (61 → 65 of 144 tasks). It ran no
+    `r3p` task. It changes no band and no hypothesis row. J-NEED-2 and Jev-need report both labellings (§0.1).
+- **D8. Edits of the 2026-10-15 revision.** `r3p`'s second hypothesis revision (§1.1). The printed `r3p` reading now
+  drops d3 and d5 instead of d3 alone; it is still not a gate. The §12 meter counts set-aside attempts. The checker has
+  new refusals for recorded runs, external budgets and the analysis' rule imports (§15). §14 is refreshed: `label-run.mjs` now meters by §12, and the `evaluate.mjs` wiring status is
+  updated. No need-router label existed when any of this changed.
 
 ## 14. What this file resolved, what stays open
 
@@ -957,16 +1081,25 @@ DRIFT jobs and $8 cap; K9 wording; the forced jobs' requirement candidates.
 - **Checker:** refusals for test seeds before Freeze for every role, forced jobs on TRAIN seeds, placeholders at freeze,
   and stage ids as whole tokens (§15).
 
+**Added by the 2026-10-15 revision [P]** (tests in `experiments/need-router/test/prereg-check.test.mjs` and
+`prereg-records.test.mjs`):
+- **Records:** M1-d5's results and M1-R as its own stage. Their figures are recomputed from the committed rows by a test
+  (§0.1, §12, §13 D7).
+- **r3p:** the second hypothesis revision; the printed reading drops d3 and d5 (§1.1, §3.2, §8).
+- **Meter:** set-aside attempts count (§12).
+- **Checker:** freeze guards for recorded runs (complete, named in §0.1, overruns named in §13); external budgets for
+  stages outside the totals; the analysis' imports of the preregistered rules (§15).
+
 **Still open, with who resolves it and when:**
 
 | Open item | Resolved by | When |
 |---|---|---|
 | Label-engine stamp L-NL0 (§4.4), incl. `static@v3:` reachability, the claude CLI version and prompt shas | coordinator, from the launch commit | at freeze, before NL0 |
 | selfCheck prompt paragraph; procedure-writer prompt; judge-H prompt (contracts fixed in §4.1) | M0 code, pinned in the label-engine stamp | before NL0 |
-| 600 s per-call timeout option for direct-H (createModelPort has none today; M1 used the 300 s default) | M0 code | before NL0 |
-| **Every paid runner meters by §12** (max of reported and re-priced; bounds for rows without an observed cost; reservation before launch). `label-run.mjs StageBudget` reserves bounds and charges timeouts at the bound, but meters reported dollars rather than max(reported, re-priced); `m1-run.mjs` reserves nothing and books timeouts at $0 | label-run owner (`prereg-rules.mjs capMeter, mayStart`) | before NL0 |
-| **`evaluate.mjs` reads the rules from `prereg-rules.mjs`.** Today it does not in five places: `needDetection` takes the mean of Wilson bounds (it must use `balancedAccuracyInterval` and `c7aReading`); `gateG1` has no diagnostic CONTINUE path; `fitRule` breaks ties by fewest TRAIN workflow calls, puts candidates at every TRAIN value and has no fitting minimum or undefined folds (it must use `thetaFitStatus`, `locoFolds` and `fitOrRule`); `readingOf` flags HARMFUL without Holm and has no r3p agreement (it must use `harmfulPositions` and `withDropAgreement`); `powerSimulation` plants no router = SBS agreement | evaluate owner | before freeze (the simulation) and before Freeze (the rest) |
-| M1-d5's results into §0.1, its spend on the §12 meter into D3, any hypothesis revision it informs into §1.1 | coordinator | when M1-d5 ends, before Freeze |
+| **600 s per-call timeout for direct-H.** Since 29c6c48 `createModelPort` passes `timeoutMs` to the provider and to the ModelPort (M1-R's attempt 1 was cut at 300 s by the port's own deadline), and `label-run.mjs` passes direct-H's `providerTimeoutMs` per call. Still missing: a $0 test that a direct-H call through label-run's metered port is not cut at 300 s | label-run owner | before NL0 |
+| **Every paid runner meters by §12** (max of reported and re-priced; bounds for rows without an observed cost; set-aside attempts; reservation before launch). `label-run.mjs` does, at 71d3f4f: `meterOf` charges max(reported, re-priced + imputed) and at least the bound when the spend was not observed, and `StageBudget` reserves before launch. `m1-run.mjs` and `m1-rerun.mjs` do not (reported dollars, timeouts at $0, no reservation), and neither may run a paid stage again as it stands (D3, D7) | label-run owner (`prereg-rules.mjs capMeter, mayStart`) | before NL0 |
+| **The analysis reads the rules from `prereg-rules.mjs`** (`stages.json analysis.requiredRules`; the checker warns until the Freeze addendum pins the analysis, then refuses). At this revision `evaluate.mjs` imports `balancedAccuracyInterval`, `c7aReading`, `thetaFitStatus` and `missingDataRule`, and `router.mjs` imports `thetaFitStatus`, `locoFolds` and `fitOrRule`. Still missing: `g1Reading` (`gateG1` has no diagnostic CONTINUE path), `harmfulPositions` and `withDropAgreement` (`readingOf` flags HARMFUL without Holm, and with r3p dropped checks only the sign of Δ), `signFlipFloor` and `powerGate`. `evaluate.fitRule` still adds the smallest TRAIN value as a candidate and breaks ties by fewest workflow calls. `powerSimulation` plants no router = SBS agreement | evaluate owner | before freeze (the simulation) and before Freeze (the rest) |
+| **Whether Jev property features enter NR-knn.** J-NEED-2's own rule put code + Jev in the NR-knn branch, but Jev's increment over code features is not above noise (§0.1). If they enter, the §6 feature list for NR-knn names them, and the pinned Jev version (`jev-1.13.0`) joins the analysis stamp. Jev is never the mode picker (decision 12) | Freeze addendum | 10-24 |
 | `codefix-notests` generator and its example census. A generator is present as `beds/need-codefix-noverifier` (WIP autosave, unreviewed at this revision); the job's family id, `bedStatus` and census are updated, with a §13 note, when it is admitted | M0 item 8 | before NL1 |
 | Null-simulation numbers (§11), with planted router = SBS agreement | `evaluate.mjs` | before freeze |
 | σ, the agreement share and the power gate outcome | NL1 leave-one-cluster-out (defined folds only) | after NL1 |
@@ -985,7 +1118,8 @@ DRIFT jobs and $8 cap; K9 wording; the forced jobs' requirement candidates.
 node experiments/need-router/prereg-check.mjs                       # ledger, policy, caps, seeds, envelopes, text; exit 0 = OK
 node experiments/need-router/prereg-check.mjs --hashes              # also the $0 taskHash pre-check (about 40 s; held-out in a child process)
 node experiments/need-router/prereg-check.mjs --stamp --stage NL1   # print the label-engine, analysis and document stamps
-node --test experiments/need-router/test/prereg-check.test.mjs experiments/need-router/test/prereg-rules.test.mjs
+node --test experiments/need-router/test/prereg-check.test.mjs experiments/need-router/test/prereg-rules.test.mjs \
+  experiments/need-router/test/prereg-records.test.mjs
 ```
 
 The checker refuses the following.
@@ -1010,9 +1144,20 @@ The checker refuses the following.
 - **Spend:**
   - a stage cap over the $500 pause;
   - tagged runs without cap shares, or shares over the stage cap;
-  - a stage outside the totals without a recurring run limit and cumulative cap;
+  - a stage outside the totals with neither a recurring run limit and cumulative cap nor an `externalBudget` whose plan
+    file names the stage and whose cap equals the stage's;
   - caps plus recurring cumulative caps over the $1,500 soft cap;
   - totals that differ from the stage sums.
+- **Recorded runs** (`observed`, 2026-10-15):
+  - a record keyed by anything but a run tag of its stage, or with a status other than complete or in-flight;
+  - a complete record without its calls, reported dollars, meter figure (never below the reported one) and runner sha;
+  - **when frozen, a record that is not complete** (its results go into §0.1 first);
+  - a recorded run, or its stage, that §0.1 does not name;
+  - a record over its cap share on the meter that §13 does not name.
+- **Analysis:**
+  - a rule in `analysis.requiredRules` that `prereg-rules.mjs` does not export;
+  - **once the §4.4 A-Freeze row is filled, a required rule that `evaluate.mjs` and `router.mjs` do not import** (a
+    warning before that).
 - **Text:**
   - a preregistration text that does not carry the status, every job id, every stage id **as a whole token** ("NL2"
     inside "NL2b" does not count) and every arm hash;

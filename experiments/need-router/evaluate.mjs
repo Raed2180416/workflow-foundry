@@ -56,9 +56,10 @@ jobs.json      { "<job>": { cluster, split: train|heldout|sealed|e2e, family, ki
                  tolerance?: { scoreThreshold }, metamorph?: { of: <job>, expect: same|different } } }   (label-free; written before labels)
 matrix.jsonl   (or label-run's rows.jsonl; never both) one row per job x mode x task x replicate: { job, mode, task, rep, seed, taskHash, pass, delivered, schemaValid,
                  selfVerdict, deployableVerdict, score?, passAt?, usdRepriced (required: one meter), usdReported, usdImputed, repriced, armHash, void?, ms, tokens,
-                 error, at? }   (metrics.mjs needTable: LEGACY rows refused, one armHash per (job, mode), repriced: false leaves the job unlabelled)
-builds.jsonl   (builds.final.jsonl preferred) one row per job x built/guided mode x lineage: { job, mode, rep, usd, usdImputed?, failed, minutes, artifactSha, runSolverCalls,
-                 hiddenPathAttempts, nestedModelAttempts, scoreChecks, probeSeeds }
+                 error, at?, stamp? }   (metrics.mjs needTable: LEGACY rows refused, one armHash per (job, mode), repriced: false leaves the job unlabelled,
+                 one stamp.settingsSha per (job, mode) and one stamp.priceTable per table)
+builds.jsonl   (builds.final.jsonl preferred) one row per job x built/guided mode x lineage: { job, mode, rep, usdRepriced (or usd, equal; required: one meter), usdImputed?,
+                 repriced?, failed, minutes, artifactSha, runSolverCalls, hiddenPathAttempts, nestedModelAttempts, scoreChecks, probeSeeds, stamp? }
 decisions.jsonl recorded policies: { policy: judge-H|NR-probe|NR-probe-oracle, job, cell: <cell key>|null, mode, routingUsd (required), pred?: {p, usd}, needsWorkflow?,
                  probe?: { ran, modes, k, costUsd } }   (an NR-probe decision is charged at least the dollars of the job's probe rows it used)
 probes.jsonl   label-run's NR-probe rows: { job, mode, draw, usdRepriced, usdImputed, ... } (deployable signals only)
@@ -1265,7 +1266,8 @@ export function evaluate({ rows, builds = [], meta, recorded = [], probes = [], 
   const voidedLineages = tables.flatMap(t => t.voided).filter(notCascade), voidedDraws = tables.flatMap(t => t.voidedDraws ?? []).filter(notCascade);
   const routing = routingChecks(recorded, probes, { jobs: new Set(EVAL) });
   const usedStages = (stageInfo ?? []).filter(x => (x.splits ?? []).some(sp => sp === 'train' || sp === split));
-  const priceTables = [...new Set(usedStages.map(x => x.priceTable).filter(x => x != null))].sort();
+  // One meter: the stages' price tables (report.json) and the rows' and builds' own (stamp.priceTable), TRAIN and evaluated together.
+  const priceTables = [...new Set([...usedStages.map(x => x.priceTable), ...tables.flatMap(t => t.priceTables ?? [])].filter(x => x != null))].sort();
   const meter = { priceTables, unstamped: usedStages.filter(x => !x.stamp).map(x => x.stage), problems: priceTables.length > 1 ? [`rows priced with ${priceTables.length} price tables (${priceTables.join(', ')}): one meter is required`] : [] };
   const validity = { voided: voidedLineages, voidedDraws, invalidArms: ef.filter(x => x.invalid),
     selfTest: { train: fit.built.selfTest, eval: split === 'train' ? null : score.selfTest, f11: { train: fit.built.selfTest.f11, eval: split === 'train' ? [] : score.selfTest.f11 } },

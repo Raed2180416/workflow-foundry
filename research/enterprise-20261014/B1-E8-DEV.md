@@ -156,3 +156,39 @@ simply copied the majority: each verified its fix on the practice worlds.
 What it does not show: K = 3 lineages on one item; the defects happened to be independent across lineages (a misreading shared by
 two builds would out-vote the right behaviour; the K = 4 run with B1-O shows 12 orders splitting 2–2 where B1-O repeats a
 lineage's mistake); dev worlds only.
+
+## Result: agent-H versus the built workflows on the same world (2026-10-15, dev evidence)
+
+agent-H is the no-workflow arm. Every case-tick is one fresh sandboxed Haiku 5.5 session (`experiments/ebed/run-agent.mjs`). It gets the same SPEC-E and contract text as the builders, and no memory beyond the carry.
+
+**The full world does not fit the job time limit.**
+- The full d2 world 1232 has 71 arrivals and 3 backlog orders over 14 days.
+- The agent handled about 85 ticks an hour. Each of two runs stopped at the 2-hour limit: one at 197 ticks ($1.88, with an in-memory journal that was lost), one at 171 ticks ($1.63). The second reached 41% of the horizon.
+- Finishing one world would take about 7 hours. The built workflows run the same world in seconds.
+- The partial tick logs are kept in `runs/agenth-e8-1/`.
+
+**So the comparison uses a sized world: 1232, d2, size 12 (21 orders, 14 completed cases).** The built solvers were graded on the identical world at $0 (`build.mjs --grade-only --size 12`):
+
+| arm | completed cases passed | cost | wall time |
+|---|---|---|---|
+| B1L-H lineage 1 (Haiku, smoke loop) | **14/14** | $0.39 to build once, then $0 per world | seconds per world |
+| B1N-H lineages 2 and 3 (after N-version repair) | **14/14** each | $0.62 + $0.11 and $0.53 + $0.05 to build | seconds per world |
+| B1-O (Opus, one shot) | 5/14 (11 arm errors) | $7.63 to build | seconds per world |
+| **agent-H** (Haiku, one session per tick) | **10/14** (27 invalid outputs) | **$1.45 for this world** (143 ticks; prompt-cache read share 0.84) | about 1.5 h |
+
+The agent arm's failures are one misreading, repeated:
+- 25 of its 27 invalid outputs violate "a batch op keys its items, not the batch". The other two put `close: false`, where the contract allows only `true` when present. B1-O's one-shot build made the same batch-key misreading.
+- A fresh session per tick cannot learn from the host's refusal, so it makes the mistake again on later ticks.
+- The build loop fixes it once: a smoke run shows the refusal, and the fix is kept in code.
+
+**Run integrity.** Run 1 of this sized world was hit by the subscription session limit from tick 85. From there, every session was refused with `MODEL_RATE_LIMIT`, and the arm could not act for the rest of the world. That run reported 4/14.
+- That figure is an environment fault, not an outcome. It is kept under `runs/agenth-e8-s12/contaminated-ratelimit-20261015/`.
+- The host journal was cut back to its last clean commit (seq 961, after tick 84), and the run resumed from there. The clean prefix replayed at $0; the 143 ticks above include it.
+
+**What it shows.** On identical cases, the built workflows pass everything the agent passes plus 4 more cases. The agent passes nothing the workflows miss. They also run in seconds instead of hours, and the build cost is paid once.
+
+**What it does not show:**
+- One small world with 14 cases. The 4 discordant cases all favour the workflows (two-sided exact McNemar p = 0.125), so this is not significant on its own.
+- One seed and one difficulty.
+- Dev evidence only.
+- The agent's errors are dominated by a single contract misreading, which a better contract text or a validating tool might remove. That is an agent-H-with-validator arm we have not run.

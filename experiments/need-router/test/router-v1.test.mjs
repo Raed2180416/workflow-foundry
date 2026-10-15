@@ -8,8 +8,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   TRUSTED_FEATURES, RULE_KEYS, N1, REQUIREMENT_TYPES, trustedFeatures, requirementType, guardStage, intrinsicOf, fitStructuralRule, decideModes,
-  fitNeedRouter, withProbe, nrStaticPolicy, nrKnnPolicy, policies, itemsFromContext,
+  fitNeedRouter, withProbe, nrStaticPolicy, nrKnnPolicy, policies, itemsFromContext, trainItem, balancedAccuracyOf,
 } from '../router.mjs';
+import { fitOrRule, locoFolds, thetaFitStatus } from '../prereg-rules.mjs';
 import { WHITELIST } from '../features.mjs';
 import { TRUSTED_FEATURES as EVAL_TRUSTED, PROSE_FEATURES, INJECTIONS, fitRule, nrStatic, nrKnn, decideFolds, defaultPolicies, evaluate, importPurity, metamorphic } from '../evaluate.mjs';
 import { GRID, HEADLINE, DELTA, makeCell, classOf, needUtility, perTaskUsd, rankModes } from '../metrics.mjs';
@@ -66,13 +67,15 @@ test('import-graph purity: router.mjs and card.mjs never reach a bed, an oracle,
     assert.equal([...src.matchAll(/^\s*import\s/gm)].length, 0, `${u} must be a leaf module`);
     assert.deepEqual([...src.matchAll(/^export\s+(?:function|const)\s+(\w+)/gm)].map(m => m[1]).sort(), ['hashSeed', 'rng']);
   }
-  // router.mjs imports metrics.mjs only (features.test.mjs pins the same); card.mjs reads files only to hash this router's sources.
+  // router.mjs imports metrics.mjs and the preregistered rules (prereg-rules.mjs, a leaf module: PREREG §6's θ fit);
+  // features.test.mjs pins the same. card.mjs reads files only to hash this router's sources.
   const r = readFileSync(path.join(NR, 'router.mjs'), 'utf8'), c = readFileSync(path.join(NR, 'card.mjs'), 'utf8');
-  assert.deepEqual([...r.matchAll(/from '([^']+)'/g)].map(m => m[1]), ['./metrics.mjs']);
+  assert.deepEqual([...r.matchAll(/from '([^']+)'/g)].map(m => m[1]), ['./metrics.mjs', './prereg-rules.mjs']);
+  assert.equal([...readFileSync(path.join(NR, 'prereg-rules.mjs'), 'utf8').matchAll(/^\s*import\s/gm)].length, 0);
   assert.doesNotMatch(r, /readFileSync|writeFileSync|process\.env|Math\.random|Date\.now|new Date\(/);
   assert.doesNotMatch(c, /writeFileSync|process\.env|Math\.random|Date\.now|new Date\(/);
   assert.equal([...c.matchAll(/readFileSync\(/g)].length, 1);
-  assert.ok(c.includes('readFileSync(new URL(`./${f}`, import.meta.url))') && c.includes("CODE_FILES = Object.freeze(['router.mjs', 'card.mjs', 'voi.mjs', 'metrics.mjs'])"));
+  assert.ok(c.includes('readFileSync(new URL(`./${f}`, import.meta.url))') && c.includes("CODE_FILES = Object.freeze(['router.mjs', 'card.mjs', 'voi.mjs', 'metrics.mjs', 'prereg-rules.mjs'])"));
   // evaluate.mjs's own L5 agrees.
   const L5 = importPurity({ files: [path.join(NR, 'router.mjs'), path.join(NR, 'card.mjs')] });
   assert.equal(L5.ok, true, L5.problems.join('; '));
@@ -257,22 +260,57 @@ test('word cues and a low guard recall only raise "ask"; they never force or cha
 });
 
 // ----------------------------------------------------------------------------------------------- structural rule
-test('structural rule: parity with evaluate.fitRule, ties to fewer workflow calls then larger thresholds, LOCO reported', () => {
-  const P = plantedRouter();
-  const mine = fitStructuralRule(P.items), ref = fitRule(P.ctx, ['logInputTokens', 'maxListLength']);
-  assert.deepEqual(mine.thresholds, ref.thresholds);
-  assert.equal(mine.trainBalancedAccuracy, ref.trainBalancedAccuracy);
-  assert.equal(mine.workflowCalls, ref.workflowCalls);
-  assert.ok(mine.thresholds.logInputTokens > 3.8 && mine.thresholds.logInputTokens <= 4.6);
-  assert.ok(mine.thresholds.maxListLength > 1.5 && mine.thresholds.maxListLength <= 2.6);
-  const R = fitNeedRouter(P.items, { modes: V1_MODES });
-  assert.ok(R.loco.folds.length === 4 && R.loco.balancedAccuracy >= 0.75, JSON.stringify(R.loco));
-  // Ties: two separable jobs leave a range of perfect thresholds; the larger one wins (fewer workflow calls first).
+test('structural rule: the preregistered fit (prereg-rules.mjs fitOrRule on the confident items: midpoints, ties to the larger θ key by key), LOCO by locoFolds', () => {
+  const P = plantedRouter(), items = P.items.map(trainItem), keys = [...RULE_KEYS];
+  const conf = items.filter(it => it.label(N1)?.confident).map(it => ({ id: it.id, cluster: it.cluster, features: it.features, workflow: it.label(N1).label === 'workflow' }));
+  const mine = fitStructuralRule(P.items), pre = fitOrRule(conf, keys);
+  // Parity with the preregistered rule itself (PREREG §6), on the confident items only.
+  assert.equal(mine.fitted, true); assert.equal(mine.why, null); assert.deepEqual(thetaFitStatus(conf).fit, true);
+  assert.deepEqual(mine.thresholds, pre.thresholds);
+  assert.equal(mine.trainBalancedAccuracy, pre.balancedAccuracy);
+  assert.equal(mine.confident, conf.length);
+  const fires = (f, th) => keys.some(k => (Number.isFinite(f[k]) ? f[k] : -Infinity) >= th[k]);
+  assert.equal(mine.workflowCalls, items.filter(it => fires(it.features, mine.thresholds)).length);
+  // Midpoints, not edges: every finite θ lies halfway between two adjacent distinct confident values, never on a job's own.
+  for (const k of keys) {
+    const t = mine.thresholds[k], vs = [...new Set(conf.map(x => x.features[k]))].sort((a, b) => a - b);
+    if (t === Infinity) continue;
+    assert.ok(!items.some(it => it.features[k] === t), `${k}: θ ${t} is a job's own value`);
+    assert.ok(vs.some((v, i) => i > 0 && Math.abs((vs[i - 1] + v) / 2 - t) < 1e-12), `${k}: θ ${t} is not a midpoint of confident values`);
+  }
+  // FINDING, pinned (router.mjs header E1; reported to the PREREG owner): the preregistered tie is lexicographic (θ_tok
+  // first), so on this world it buys θ_tok 4.705 with θ_fan 0.886: 9 TRAIN workflow calls against the 8 of the first
+  // draft's fewest-calls tie (evaluate.mjs fitRule, still the reference NR-static's: PREREG §14, evaluate owner), and 4 of
+  // the 24 held-out jobs land off their planted class against none. Both fits are perfect on the confident TRAIN items.
+  const ref = fitRule(P.ctx, keys);
+  assert.ok(Math.abs(mine.thresholds.logInputTokens - 4.7047) < 1e-3 && Math.abs(mine.thresholds.maxListLength - 0.8861) < 1e-3, JSON.stringify(mine.thresholds));
+  assert.ok(Math.abs(ref.thresholds.logInputTokens - 4.2074) < 1e-3 && Math.abs(ref.thresholds.maxListLength - 1.9564) < 1e-3, JSON.stringify(ref.thresholds));
+  assert.equal(mine.trainBalancedAccuracy, 1); assert.equal(ref.trainBalancedAccuracy, 1);
+  assert.equal(mine.workflowCalls, 9); assert.equal(ref.workflowCalls, 8);
+  const off = th => P.EVAL.filter(j => fires(P.view(j).features, th) !== plantedNeed(P.W.meta[j].features)).length;
+  assert.equal(off(mine.thresholds), 4); assert.equal(off(ref.thresholds), 0);
+  // LOCO is the preregistered estimate: locoFolds' defined folds, fitOrRule on each training part, recomputed here.
+  const R = fitNeedRouter(P.items, { modes: V1_MODES }), lf = locoFolds(conf, [...new Set(items.map(it => it.cluster))].sort());
+  let tp = 0, fn = 0, tn = 0, fp = 0;
+  for (const f of lf.folds.filter(x => x.defined)) {
+    const th = fitOrRule(conf.filter(x => x.cluster !== f.held), keys).thresholds;
+    for (const x of conf.filter(z => z.cluster === f.held)) { const call = fires(x.features, th); if (x.workflow) { if (call) tp += 1; else fn += 1; } else if (call) fp += 1; else tn += 1; }
+  }
+  assert.equal(R.loco.folds.length, 4); assert.equal(R.loco.defined, lf.defined); assert.equal(R.loco.undefined, lf.undefined);
+  assert.deepEqual(R.loco.counts, { tp, fn, tn, fp });
+  assert.equal(R.loco.balancedAccuracy, (tp / (tp + fn) + tn / (tn + fp)) / 2);
+  assert.equal(R.loco.skipped, 0); assert.match(R.loco.method, /locoFolds and fitOrRule/);
+  // A balanced accuracy over one class is undefined (null, with the reason), never a single recall under another name.
+  assert.deepEqual(balancedAccuracyOf([true, false], [true, false]), { value: 1, why: null, tp: 1, fn: 0, tn: 1, fp: 0 });
+  const one = balancedAccuracyOf([true, false], [true, true]);
+  assert.equal(one.value, null); assert.match(one.why, /2 positive and 0 negative/);
+  // Ties: two separable jobs leave a range of perfect thresholds; the larger one wins.
   const item = (id, x, label) => ({ id, cluster: id, features: { logInputTokens: x, maxListLength: 0 }, statsMap: new Map(), label: () => ({ label, confident: true }) });
   const r = fitStructuralRule([item('a', 2, 'no-workflow'), item('b', 3, 'no-workflow'), item('c', 4, 'workflow'), item('d', 5, 'workflow')]);
   assert.equal(r.thresholds.logInputTokens, 3.5); assert.equal(r.thresholds.maxListLength, Infinity); assert.equal(r.workflowCalls, 2);
-  // No confident label: nothing fires.
-  assert.deepEqual(fitStructuralRule([item('a', 2, 'either'), item('b', 9, 'either')].map(x => ({ ...x, label: () => ({ label: 'either', confident: false }) }))).thresholds, { logInputTokens: Infinity, maxListLength: Infinity });
+  // No confident label: not fitted, nothing fires.
+  const none = fitStructuralRule([item('a', 2, 'either'), item('b', 9, 'either')].map(x => ({ ...x, label: () => ({ label: 'either', confident: false }) })));
+  assert.equal(none.fitted, false); assert.deepEqual(none.thresholds, { logInputTokens: Infinity, maxListLength: Infinity });
   // intrinsicOf: OR of thresholds; a missing key with nothing fired is unreadable, not "no".
   assert.equal(intrinsicOf({ logInputTokens: 1, maxListLength: 3 }, { logInputTokens: 4, maxListLength: 2 }).intrinsic, true);
   assert.equal(intrinsicOf({ logInputTokens: 5 }, { logInputTokens: 4, maxListLength: 2 }).intrinsic, true);
@@ -299,12 +337,19 @@ test('leaf calculator: recovers the planted modes per leaf over the grid, sends 
   }
   assert.equal(T.intrinsic[HEADLINE.key].mode, 'construct-H'); assert.equal(T.not[HEADLINE.key].mode, 'direct-H');
   assert.equal(T.pooled[HEADLINE.key].mode, R.decide({ features: {} }, HEADLINE).mode);
+  // Every held-out job goes to its leaf's mode and class. The leaf follows the fitted θ, which misplaces 4 of the 24
+  // planted jobs under the preregistered tie (the E1 finding pinned in "structural rule"); where θ agrees with the plant,
+  // the job reaches its planted class and mode.
+  let agree = 0;
   for (const j of P.EVAL) {
-    const d = R.decide(P.view(j), HEADLINE), want = plantedNeed(P.W.meta[j].features);
-    assert.equal(d.needsWorkflow, want, j); assert.equal(d.class === 'workflow', want, j);
-    assert.equal(d.abstain, null);
-    assert.equal(d.mode, want ? 'construct-H' : 'direct-H');
+    const v = P.view(j), d = R.decide(v, HEADLINE), leaf = intrinsicOf(v.features, R.rule.thresholds).intrinsic ? 'intrinsic' : 'not';
+    assert.equal(d.abstain, null); assert.equal(d.source.leaf, leaf, j);
+    assert.equal(d.needsWorkflow, leaf === 'intrinsic', j); assert.equal(d.class === 'workflow', leaf === 'intrinsic', j);
+    assert.equal(d.mode, T[leaf][HEADLINE.key].mode, j);
+    const want = plantedNeed(P.W.meta[j].features);
+    if (d.needsWorkflow === want) { agree += 1; assert.equal(d.mode, want ? 'construct-H' : 'direct-H', j); }
   }
+  assert.equal(agree, P.EVAL.length - 4);
 });
 
 test('δ ties go to the cheaper mode; δ = 0 takes the exact best; the W·q term charges silent misses', () => {
@@ -389,15 +434,21 @@ test('NR-probe pieces: the Beta update moves p, the probe cost is charged as rou
 });
 
 // ---------------------------------------------------------------------------------------- evaluate.mjs integration
-test('the v1 policies run inside evaluate.mjs: δ = 0 matches the reference NR-static on every cell; the default reads SUPPORTED', () => {
+test('the v1 policies run inside evaluate.mjs: each decision is the leaf calculator\'s under the preregistered θ on every cell; the default reads SUPPORTED', () => {
   const P = plantedRouter();
   const fold = { train: P.TRAIN, eval: P.EVAL };
   const d = decideFolds({ labels: P.labels, meta: P.W.meta, folds: [fold], policies: [nrStatic(), nrStaticPolicy({ name: 'v1-exact', delta: 0 }), nrStaticPolicy({ name: 'v1' }), nrKnn(), nrKnnPolicy({ name: 'v1-knn' })], modes: V1_MODES, cells: GRID });
+  // Inside evaluate the policy fits θ by the preregistered rule (router.mjs fitStructuralRule = prereg-rules.mjs fitOrRule),
+  // and every (job, cell) decision is its leaf's mode in the leaf table (checked against evaluate's context in the leaf
+  // calculator test). evaluate.mjs's reference NR-static still fits θ by the first draft's rule (fitRule: fewest calls,
+  // smallest value as a candidate; PREREG §14, evaluate owner), so the two are no longer compared decision for decision.
+  const RL = fitNeedRouter(P.items, { modes: V1_MODES }), T = RL.leafTable(GRID);
+  assert.deepEqual(d.fitted.get('v1')[0].fitted.thresholds, RL.rule.thresholds);
+  assert.deepEqual(d.fitted.get('v1-exact')[0].fitted.thresholds, fitStructuralRule(P.items).thresholds);
   for (const j of P.EVAL) for (const c of GRID) {
-    const ref = d.decisions.get('NR-static').get(j).get(c.key), ex = d.decisions.get('v1-exact').get(j).get(c.key);
-    assert.equal(ex.mode, ref.mode, `${j} ${c.key}`); assert.equal(ex.needsWorkflow, ref.needsWorkflow);
+    const ex = d.decisions.get('v1-exact').get(j).get(c.key), leaf = intrinsicOf(P.view(j).features, RL.rule.thresholds).intrinsic ? 'intrinsic' : 'not';
+    assert.equal(ex.mode, T[leaf][c.key].mode, `${j} ${c.key}`); assert.equal(ex.needsWorkflow, leaf === 'intrinsic', `${j} ${c.key}`);
   }
-  assert.deepEqual(d.fitted.get('v1')[0].fitted.thresholds, d.fitted.get('NR-static')[0].fitted.thresholds);
   assert.ok([3, 5].includes(d.fitted.get('v1-knn')[0].k) && typeof d.fitted.get('v1-knn')[0].neighbours === 'function');
   // itemsFromContext recovers the stats the labels were built from.
   for (const it of itemsFromContext(P.ctx)) for (const [m, st] of Object.entries(it.stats)) {

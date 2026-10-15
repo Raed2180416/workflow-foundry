@@ -3,7 +3,12 @@
 //   - the seed ledger (experiments/jit/seeds.mjs seedRefusals, the same rule every runner applies through assertSeedsAllowed),
 //   - the model policy (policy/models.json: model ids and base prices),
 //   - the spend rules (each stage cap <= the $500 pause, M1's tag shares within its cap, the sum of caps plus every
-//     recurring stage's cumulative cap <= the $1,500 session soft cap),
+//     recurring stage's cumulative cap <= the $1,500 session soft cap; a stage outside the totals is recurring or names
+//     an external budget whose plan file names it),
+//   - the recorded runs (`observed`: keyed by run tags, complete records carry calls, dollars, meter and runner sha, none
+//     in flight at freeze, each named in PREREG §0.1, an overrun of its cap share named in §13),
+//   - the analysis' imports of the preregistered rules (`analysis.requiredRules`: a warning until the §4.4 A-Freeze row
+//     is filled, an error after),
 //   - the seed and freeze rules (no test-split seed of any role before Freeze; TRAIN jobs never on test seeds; held-out,
 //     forced and sealed jobs never on TRAIN evaluation seeds; held-out probe rows only in an envelope stage that
 //     commits its decisions before any matrix stage that needs them),
@@ -53,6 +58,8 @@ const E2E_SPLITS = new Set(['heldout', 'heldout-conditional']);
 /** Roles whose rows join the held-out matrix: decisions for their jobs must be committed first (L6). */
 const ENVELOPE_ROLES = new Set(['heldoutEval', 'e2e']);
 const HYPOTHESIS_CLASSES = ['no-workflow', 'workflow', 'either', 'pending'];
+/** Status of a recorded run (`stages[].observed[tag]`): a run still in flight blocks the freeze. */
+const OBSERVED_STATUS = ['complete', 'in-flight'];
 // Special arm tokens a run may name besides the arms table: the E2E lane runs the decision card's choice.
 const SPECIAL_ARMS = new Set(['router-choice']);
 
@@ -162,6 +169,18 @@ export function namesToken(text, id) {
   const esc = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`(^|[^A-Za-z0-9_-])${esc}($|[^A-Za-z0-9_-])`, 'm').test(text);
 }
+/** The names a module's source imports from a sibling module `base` (named imports, `x as y` keeps x; a namespace import
+ *  counts each `ns.name` it reads). Static text only: the module is not loaded. */
+export function importedNames(src, base) {
+  const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), out = new Set();
+  for (const m of src.matchAll(new RegExp(`import\\s*\\{([^}]*)\\}\\s*from\\s*['"](?:\\.{1,2}/)+(?:[\\w.-]+/)*${esc}['"]`, 'g'))) {
+    for (const part of m[1].split(',')) { const name = part.trim().split(/\s+as\s+/)[0].trim(); if (name) out.add(name); }
+  }
+  for (const m of src.matchAll(new RegExp(`import\\s*\\*\\s*as\\s+(\\w+)\\s*from\\s*['"](?:\\.{1,2}/)+(?:[\\w.-]+/)*${esc}['"]`, 'g'))) {
+    for (const u of src.matchAll(new RegExp(`\\b${m[1]}\\.(\\w+)`, 'g'))) out.add(u[1]);
+  }
+  return out;
+}
 /** The text of a Markdown section from its heading to the next heading of the same or a higher level (null if absent). */
 export function sectionOf(text, heading) {
   const m = heading.exec(text);
@@ -172,7 +191,7 @@ export function sectionOf(text, heading) {
 }
 
 /** All structural, ledger, policy, spend and text checks. Returns {errors, warnings, summary}; never throws on content. */
-export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse(readFileSync(POLICY_FILE, 'utf8')), preregText = null, repo = REPO } = {}) {
+export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse(readFileSync(POLICY_FILE, 'utf8')), preregText = null, repo = REPO, sources = null } = {}) {
   const errors = [], warnings = [];
   const err = m => errors.push(m), warn = m => warnings.push(m);
   if (stages?.schema !== SCHEMA) { err(`schema must be ${SCHEMA}`); return { errors, warnings, summary: null }; }
@@ -269,7 +288,9 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
   if (setSeeds.length !== new Set(setSeeds).size || setSeeds.sort((x, y) => x - y).join() !== span(S.examples).join()) err('exampleSets must partition seeds.examples');
   if (span(S.trainEval).length !== EVAL_TASKS || span(S.heldoutEval).length !== EVAL_TASKS) err(`trainEval and heldoutEval must hold ${EVAL_TASKS} seeds`);
 
-  // Stages: caps, order, runs, ledger refusals.
+  // Stages: caps, order, runs, ledger refusals, recorded runs.
+  const readText = rel => (sources && rel in sources ? sources[rel] : rel && existsSync(path.join(repo, rel)) ? readFileSync(path.join(repo, rel), 'utf8') : null);
+  const observedOverruns = [];
   const order = new Map((stages.stages ?? []).map((s, i) => [s.id, i]));
   const freezeAt = order.get('Freeze');
   if (freezeAt == null) err('a stage with id Freeze is required');
@@ -311,7 +332,32 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
       if (tot > st.capUsd + 1e-9) err(`stage ${st.id}: cap shares $${tot} exceed the stage cap $${st.capUsd}`);
     }
     if (st.recurring && !(Number.isInteger(st.recurring.maxRuns) && st.recurring.maxRuns >= 1 && round2(st.recurring.maxRuns * st.capUsd) === st.recurring.cumulativeCapUsd)) err(`stage ${st.id}: recurring needs an integer maxRuns >= 1 and cumulativeCapUsd = maxRuns x capUsd`);
-    if (!st.inTotals && !st.recurring && st.capUsd > 0) err(`stage ${st.id} is outside the totals with no recurring run limit and cumulative cap: its spend would escape the soft-cap check`);
+    // Outside the totals only with a recurring limit (its cumulative cap joins the soft-cap check) or a budget held by
+    // another plan file that names the stage (M1-R: MEMORY-ROUTING-RECURSION §5, whose totals add this program's).
+    if (!st.inTotals && !st.recurring && st.capUsd > 0) {
+      const eb = st.externalBudget;
+      if (!eb) err(`stage ${st.id} is outside the totals with no recurring run limit and cumulative cap, and no externalBudget: its spend would escape every soft-cap check`);
+      else {
+        const text = readText(eb.plan);
+        if (text == null) err(`stage ${st.id}: externalBudget plan ${eb.plan} does not exist`);
+        else if (!namesToken(text, st.id)) err(`stage ${st.id}: externalBudget plan ${eb.plan} does not name the stage`);
+        if (eb.capUsd !== st.capUsd) err(`stage ${st.id}: externalBudget capUsd ${eb.capUsd} differs from the stage cap ${st.capUsd}`);
+      }
+    }
+    // Recorded runs (observed): keyed by a run tag of the stage, complete records carry their figures, and a run in
+    // flight blocks the freeze (its results go into PREREG §0.1 first).
+    for (const [k, o] of Object.entries(st.observed ?? {})) {
+      const at = `stage ${st.id}: observed.${k}`;
+      if (!tags.includes(k)) err(`${at} names no run tag of the stage`);
+      if (!OBSERVED_STATUS.includes(o?.status)) { err(`${at}: status must be ${OBSERVED_STATUS.join(' or ')}`); continue; }
+      if (stages.status === 'frozen' && o.status !== 'complete') err(`frozen, but ${at} is ${o.status}: record its results in PREREG §0.1 first`);
+      if (o.status !== 'complete') continue;
+      for (const f of ['calls', 'reportedUsd', 'meterUsd']) if (!Number.isFinite(o[f])) err(`${at}: a complete record needs ${f}`);
+      if (Number.isFinite(o.meterUsd) && Number.isFinite(o.reportedUsd) && o.meterUsd + 1e-9 < o.reportedUsd) err(`${at}: meterUsd ${o.meterUsd} below reportedUsd ${o.reportedUsd} (the meter charges max(reported, re-priced))`);
+      if (!Object.entries(o).some(([f, v]) => /Sha256$/.test(f) && /^[0-9a-f]{64}$/.test(v))) err(`${at}: a complete record needs its runner's sha256`);
+      const share = st.capShares?.[k] ?? st.capUsd, metered = Math.max(o.meterUsd ?? 0, o.meterWithSetAsideUsd ?? 0);
+      if (metered > share + 1e-9) observedOverruns.push({ stage: st.id, tag: k, metered, share });
+    }
   }
 
   // Decisions envelopes (L6): held-out probe and judge rows run in an envelope stage that commits every held-out decision
@@ -386,6 +432,36 @@ export function checkStages(stages, { ledger = loadLedger(), policy = JSON.parse
         const m = sec.match(/TBD at [^|\n]*?launch/);
         if (m) err(`frozen, but PREREG ${name} still carries "${m[0]}"`);
       }
+    }
+    // Every recorded run is named in §0.1 (what the author had seen), and a recorded overrun of a cap is a §13 deviation.
+    const observedStages = stageList.filter(s => Object.keys(s.observed ?? {}).length);
+    if (observedStages.length) {
+      const s01 = sectionOf(preregText, /^### 0\.1\b/m), s13 = sectionOf(preregText, /^## 13\./m);
+      if (s01 == null) err('PREREG text has no §0.1 section for the recorded runs');
+      else for (const s of observedStages) for (const id of [s.id, ...Object.keys(s.observed)]) if (!namesToken(s01, id)) err(`PREREG §0.1 does not name the recorded run ${id} (stage ${s.id})`);
+      for (const o of observedOverruns) if (s13 == null || !namesToken(s13, o.tag)) err(`stage ${o.stage}: observed.${o.tag} is $${round2(o.metered)} on the meter against its $${o.share} cap, and PREREG §13 does not name ${o.tag}`);
+    }
+  }
+
+  // The analysis reads the preregistered rules from their module (PREREG §14): a warning while it may still change, an
+  // error once the Freeze addendum pins it (the §4.4 A-Freeze row no longer TBD-FREEZE).
+  const rr = stages.analysis?.requiredRules;
+  if (rr) {
+    const modText = readText(rr.module);
+    if (modText == null) err(`analysis.requiredRules: module ${rr.module} does not exist`);
+    else {
+      const exported = new Set([...modText.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+(\w+)/gm)].map(m => m[1]));
+      for (const n of rr.rules ?? []) if (!exported.has(n)) err(`analysis.requiredRules: ${n} is not exported by ${rr.module}`);
+      const imported = new Set(), base = path.posix.basename(rr.module);
+      for (const reader of rr.readers ?? []) {
+        const t = readText(reader);
+        if (t == null) { err(`analysis.requiredRules: reader ${reader} does not exist`); continue; }
+        for (const n of importedNames(t, base)) imported.add(n);
+      }
+      const missing = (rr.rules ?? []).filter(n => !imported.has(n));
+      const aFreeze = preregText == null ? null : (/^\|\s*A-Freeze\b[^\n]*/m.exec(preregText) ?? [null])[0];
+      const pinned = aFreeze != null && !/TBD-FREEZE/.test(aFreeze);
+      if (missing.length) (pinned ? err : warn)(`${pinned ? 'the Freeze addendum pins the analysis, but ' : ''}${(rr.readers ?? []).join(' and ')} do not import ${missing.join(', ')} from ${base} (PREREG §14: the analysis reads the preregistered rules from there before Freeze)`);
     }
   }
   const summary = { status: stages.status, jobs: jobIds.size, arms: Object.keys(arms).length, stages: stageIds.size, seedChecks, totals: tot,

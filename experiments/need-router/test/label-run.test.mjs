@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as LR from '../label-run.mjs';
 import { needTable } from '../metrics.mjs';
+import { perArm, cacheShareCell } from '../../memory/cache-share.mjs';
 import { STAGES_FILE } from '../prereg-check.mjs';
 import { b0Agent, PROCEDURE_LINE, checksVerdict, outsidePaths } from '../../lib/arms/b0-agent.mjs';
 import { construct, runSelfCheck, SELF_CHECK_PARAGRAPH, messageUsageOf } from '../../c0/construct.mjs';
@@ -139,6 +140,19 @@ test('--dry: every mode, builds as fixed costs, probe rows without the oracle, r
   assert.doesNotMatch(readFileSync(path.join(out, 'report.json'), 'utf8'), new RegExp(dir.replaceAll('/', '\\/')));
   assert.equal(rep.prompts.selfCheckParagraph.length, 16);
   assert.ok(rep.preregSha);
+  // MEM-0: every arm's usage and prompt-cache read share over its task rows, builds and probe rows, in report.json and report.txt.
+  for (const b of builds) assert.ok(b.tokens && Number.isFinite(b.tokens.cacheReadTokens), `build ${b.mode} L${b.lineage} carries its tokens`);
+  assert.ok(builds.some(b => b.factory === 'construct' && b.tokens.cacheReadTokens > 0), 'a builder session\'s cache reads count toward its arm');
+  const want = perArm([...rows, ...builds, ...probes]);
+  assert.deepEqual(Object.keys(rep.arms), Object.keys(want));
+  for (const [a, x] of Object.entries(rep.arms)) {
+    assert.deepEqual(x.usage, want[a].usage, a); assert.equal(x.cacheReadShare, want[a].cacheReadShare, a);
+    assert.ok(x.cacheReadShare === null || (x.cacheReadShare >= 0 && x.cacheReadShare <= 1), a);
+  }
+  assert.ok(Object.values(rep.arms).some(x => x.cacheReadShare > 0), 'the stub sessions read from the cache');
+  const txt = readFileSync(path.join(out, 'report.txt'), 'utf8');
+  assert.match(txt, /prompt-cache read share per arm \(MEM-0\):/);
+  for (const [a, x] of Object.entries(rep.arms)) assert.ok(txt.includes(`  ${a.padEnd(14)} ${cacheShareCell(x.usage)}`), a);
 });
 
 test('--dry gives a byte-identical report on rerun: a fresh work root, and a resume in the same one (CLI)', t => {

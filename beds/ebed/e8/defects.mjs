@@ -32,6 +32,7 @@ import { VARIANTS } from './controls.mjs';
 import { runReference } from '../oracle/policy.mjs';
 import { indexJournal, caseView, caseIds } from '../oracle/view.mjs';
 import { gradeCase } from '../oracle/grade.mjs';
+import { createHash } from 'node:crypto';
 import { canonical, hashSeq, sha256 } from '../../lib/canonical.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -59,23 +60,22 @@ export function mutateOperators(file = MUTATE_FILE) {
   return new Function(`${msrc.slice(a, b)}; return mutants;`)();
 }
 
-/** E-BED §9.5 operator name for one line edit of tools/mutate.mjs. */
+/** E-BED §9.5 operator name for one line edit of tools/mutate.mjs (from the edit, as harness/gen.mjs computes it). */
 export function operatorOf(from, to) {
+  if (to.trim() === 'void 0;') return 'dropped rule row';
   let i = 0; while (i < from.length && from[i] === to[i]) i++;
   let j = 0; while (j < from.length - i && j < to.length - i && from[from.length - 1 - j] === to[to.length - 1 - j]) j++;
-  const cut = from.slice(i, from.length - j), put = to.slice(i, to.length - j);
-  if (put === 'void 0;' || /void 0;$/.test(to.trim())) return 'dropped rule row';
-  const pair = `${cut}→${put}`;
-  if (/^(<=?→<=?|>=?→>=?|=?→=|→=)$/.test(pair) && /[<>]/.test(from.slice(Math.max(0, i - 2), i + 2))) return 'relational boundary';
-  if (/^[=!]→[=!]$/.test(pair)) return 'negated condition';
-  if (/^(&&→\|\||\|\|→&&|&→\||\|→&)$/.test(pair)) return 'connective swap';
-  if (/MIN/.test(from) && /^(12→6|6→12|120→60|60→120)$/.test(pair)) return 'window constant';
-  if (/ \+ SEC/.test(from) && !/ \+ SEC/.test(to)) return 'deadline boundary (exclusive to inclusive)';
-  if (/ - MIN\)/.test(from) && to.split(' - MIN)').length < from.split(' - MIN)').length) return 'window boundary';
-  if (/Math\.(max|min)/.test(from) && /^(ax→in|in→ax)$/.test(pair)) return 'arithmetic swap (max/min)';
-  if (/find/.test(pair) || /\.at\(-1\)/.test(put)) return 'precedence swap (first to last match)';
+  const cut = from.slice(i, from.length - j), put = to.slice(i, to.length - j), e = `${cut}\u2192${put}`;
+  if (e === '=\u2192' || e === '\u2192=') return 'relational boundary';
+  if (e === '=\u2192!' || e === '!\u2192=') return 'negated condition';
+  if (e === '&&\u2192||' || e === '||\u2192&&') return 'connective swap';
+  if (e === '12\u21926' || e === '6\u219212') return 'window constant';
+  if (e === ' + SEC\u2192') return 'deadline boundary';
+  if (e === ' - MIN\u2192') return 'window boundary';
+  if (e === 'ax\u2192in' || e === 'in\u2192ax') return 'arithmetic swap (max/min)';
+  if (e === '\u2192Last' || e === '[0]\u2192.at(-1)') return 'precedence swap (first to last match)';
   if (/after/.test(cut) && !/after/.test(put)) return 'ordering dependency dropped';
-  if (/'collected'/.test(from) && /inTransit/.test(cut)) return 'deleted condition';
+  if (/inTransit/.test(cut) && put === '') return 'deleted condition';
   if (/before\(row, cut/.test(from) && /row\.at < cut/.test(to)) return 'anchor swap (same-instant knowledge)';
   if (put === 'true') return 'deleted guard';
   return 'other';
@@ -93,7 +93,13 @@ export function transitionMutants({ src = readFileSync(TRANSITION_FILE, 'utf8'),
 /** E-BED §3 E8's hand-proposed candidate defects, as reference-policy variants: admitted only by the same executed check. */
 export const HAND_CANDIDATES = Object.freeze([
   { id: 'hc-refund-no-key', kind: 'policy', operator: 'missing key', candidate: 'refund retried without a key',
-    variant: () => ({ post: out => ({ ...out, effects: out.effects.map(e => (e.system === 'billing' && e.op === 'refund' ? (({ key, after, ...x }) => x)(e) : e)) }) }) },
+    variant: () => ({ post: out => {
+      // The refund goes out without a key; its dependants (releases) wait for it to commit (the next tick), since `after`
+      // can only name a key.
+      const bare = new Set(out.effects.filter(e => e.system === 'billing' && e.op === 'refund' && e.key).map(e => e.key));
+      if (!bare.size) return out;
+      return { ...out, effects: out.effects.filter(e => !bare.has(e.after)).map(e => (bare.has(e.key) ? (({ key, ...x }) => x)(e) : e)) };
+    } }) },
   { id: 'hc-cancel-keeps-shipment', kind: 'policy', operator: 'deleted compensation step', candidate: 'order cancel not cancelling a started child shipment',
     variant: () => ({ drop: e => e.lid.startsWith('csh:') && e.rule === 'R6.2' }) },
   { id: 'hc-late-signal-regresses', kind: 'policy', operator: 'deleted guard (monotone status)', candidate: 'late in-transit signal regressing a delivered status',
@@ -121,13 +127,19 @@ export async function runMutant(mutant, world, { item, timing = PARAMS.timing, m
   return r.rows;
 }
 
-/** The journal's behaviour, independent of the arm's name: equal digests mean the same run. */
-export const behaviourDigest = rows => hashSeq(rows.filter(r => r.type !== 'run.start').map(({ arm, ...r }) => r));
+/** The journal's behaviour, independent of the arm's name (run.start names it; run.end digests ledger rows that carry
+ * it): equal digests mean the same run. */
+export const behaviourDigest = rows => hashSeq(rows.filter(r => r.type !== 'run.start' && r.type !== 'run.end').map(({ arm, ...r }) => r));
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Worlds and grading
 
-export const worldMeta = w => ({ world: w.id, seed: w.seed, split: w.split, difficulty: w.difficulty, mix: w.mix, generator: w.generator });
+// The world object's own seed/difficulty fields are commented out in world.mjs's return (the `publicId` line comment),
+// so the analyst-side meta is read from the world id `ebed-e8-<split>-<seed>-d<d>-<mix>`.
+export function worldMeta(w) {
+  const m = /^ebed-e8-([a-z]+)-(\d+)-d(\d)-([a-z]+)/.exec(w.id) ?? [];
+  return { world: w.id, seed: Number(m[2]), split: m[1] ?? null, difficulty: Number(m[3]), mix: m[4] ?? null, generator: w.generator };
+}
 
 /** A mining world with its reference pools and the unmutated reference run's behaviour digest. */
 export async function prepareWorld({ seed, difficulty, mix = 'tail', size = null }) {
@@ -161,15 +173,16 @@ export async function mineOnWorld({ mutant, item, prepared, keep = false }) {
   const digest = behaviourDigest(rows);
   const meta = { ...worldMeta(world), journal: digest };
   const checked = e0Cases(world);
-  if (digest === refDigest) return { meta, digest, inert: true, e0: { checked, failed: [] }, affected: [] };
+  // A run identical to the reference run passes every case (contract §5.6 self-consistency); manifests re-grade it.
+  if (digest === refDigest) return { meta, digest, inert: true, e0: { checked, failed: [], graded: false }, affected: [] };
   const idx = indexJournal(world, rows, { canonicalArgs: oracleItem.canonicalArgs });
   const grade = c => gradeCase({ item: oracleItem, world, idx, c, pool: pools[c] ?? null });
   const e0v = checked.map(grade);
   const failed = e0v.filter(failing).map(brief);
-  if (failed.length) return { meta, digest, inert: false, e0: { checked, failed }, affected: [] };
+  if (failed.length) return { meta, digest, inert: false, e0: { checked, failed, graded: true }, affected: [] };
   const rest = caseIds(world).filter(c => !checked.includes(c)).map(grade);
   const affected = rest.filter(failing).map(brief);
-  return { meta, digest, inert: false, e0: { checked, failed }, affected, ...(keep ? { verdicts: [...e0v, ...rest], idx, rows } : {}) };
+  return { meta, digest, inert: digest === (prepared.refDigest0 ?? prepared.refDigest), e0: { checked, failed, graded: true }, affected, ...(keep ? { verdicts: [...e0v, ...rest], idx, rows } : {}) };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -229,7 +242,7 @@ const argsMatch = (match, args) => Object.keys(match).every(k => args && canonic
 const committedRows = (idx, c, eff, atMs) => (eff ? idx.bucket(c).ledger.filter(r => r.committed && r.system === eff.system && r.op === eff.op && r.at <= atMs && argsMatch(eff.match, r.args)) : []);
 const iso = m => `${new Date(m + 60 * MIN).toISOString().slice(0, 19)}+01:00`;   // E8 worlds: Europe/Amsterdam before 29 March, UTC+01:00
 
-function claimText(assert, p, O) {
+function claimText(assert, p, O, fields) {
   const subj = p.F ? `fulfilment ${p.F} of order ${O}` : p.about && p.about !== O ? `${p.about} (order ${O})` : `order ${O}`;
   const what = KIND_NAME[p.kind] ?? p.kind;
   const tag = p.status ? ` '${p.status}'` : p.template ? ` '${p.template}'` : '';
@@ -242,13 +255,14 @@ function claimText(assert, p, O) {
     duplicate: `The ${what}${tag}${item} for ${subj} happened twice.`,
     key: `The ${what}${tag}${item} for ${subj} was sent under two different idempotency keys.`,
     unwarranted: `An unexpected ${what}${tag}${item} was made for ${subj}.`,
+    wrong: `The ${what}${item} for ${subj} is wrong (${(fields ?? []).join(', ')}).`,
     records: `The records of ${subj} do not match what happened.`,
     decision: `The order record ${O} is attributed to the wrong order.`,
     escalation: `The fraud review of ${subj} was handled wrongly.`,
   }[assert];
 }
 
-function claimEvent({ world, c, p, assert, atMs, id }) {
+function claimEvent({ world, c, p, assert, fields = null, atMs, id }) {
   const t = world.truth.cases[c];
   const O = t.subject;
   const ch = CHANNEL[['records', 'decision', 'escalation', 'key'].includes(assert) ? 'audit' : (SOURCE[p.kind] ?? 'audit')];
@@ -256,10 +270,11 @@ function claimEvent({ world, c, p, assert, atMs, id }) {
   if (p.F) payload.fulfilmentRef = p.F;
   if (p.kind === 'ntf' && p.about && p.about !== O) payload.fulfilmentRef = p.about;
   if (p.sku) payload.sku = p.sku;
-  if (p.status) payload.status = p.status;
-  if (p.template) payload.template = p.template;
+  if (p.status && assert !== 'wrong') payload.status = p.status;
+  if (p.template && assert !== 'wrong') payload.template = p.template;
+  if (fields?.length) payload.fields = fields;
   payload.from = ch.type === 'customer.complaint' ? t.email : ch.source;
-  payload.text = claimText(assert, p, O);
+  payload.text = claimText(assert, p, O, fields);
   return { id, type: ch.type, at: iso(atMs), source: ch.source, payload };
 }
 
@@ -276,29 +291,58 @@ function observableAt(world, idx, v) {
   return Math.max(last, end ?? last);
 }
 
-/** The claim a failing case gives rise to (its first divergence, as an observer outside the arm would state it). */
+/** The claim a failing case gives rise to (its first divergence, as an observer outside the arm would state it). An effect
+ * outside the allowed set that has a required counterpart on the same subject (same order, fulfilment, item or notice
+ * recipient) is reported as `wrong` in the fields that differ (a wrong amount, status or template), else `unwarranted`. */
 function trueClaim(world, idx, v, atMs) {
   const d = v.firstDivergence;
   const O = world.truth.cases[v.case].subject;
   let assert = ASSERT_OF[d.code] ?? null;
   if (!assert || O === null) return null;
-  let p;
-  if (d.code === 'outside-allowed') p = partsOfEffect(d.system, d.op, d.args);
-  else if (d.code === 'records') p = { kind: 'records' };
+  let p, fields = null;
+  if (d.code === 'outside-allowed') {
+    p = partsOfEffect(d.system, d.op, d.args);
+    const row = idx.bucket(v.case).ledger.find(r => r.at === Date.parse(d.at) && r.system === d.system && r.op === d.op && canonical(r.args) === canonical(d.args));
+    let E = null;
+    try { if (row) E = referenceTransition(world, caseView(idx, v.case, row.at, row.seq)); } catch { /* past totality */ }
+    const subjectKeys = ['orderId', 'fulfilmentId', 'sku', 'about'];
+    const exp = (E?.effects.required ?? []).find(e => e.system === d.system && e.op === d.op
+      && subjectKeys.every(k => !(k in e.match) || !(k in (d.args ?? {})) || canonical(e.match[k]) === canonical(d.args[k])));
+    if (exp) {
+      const diff = Object.keys(exp.match).filter(k => canonical(exp.match[k]) !== canonical(d.args?.[k] ?? null));
+      if (diff.length) { assert = 'wrong'; p = parseLid(exp.lid); fields = diff.sort(); }
+    }
+  } else if (d.code === 'records') p = { kind: 'records' };
   else if (d.code === 'decision') p = { kind: 'decision' };
   else if (d.layer === 4 || d.code === 'over-escalation') p = { kind: 'review', O };
   else p = parseLid(d.lid);
+  const eff = effectFor(p, O, fields);
   // A missed effect that committed after its window but before the claim is reported as late.
-  if (assert === 'missing' && committedRows(idx, v.case, effectOf(p, O), atMs).length) assert = 'late';
+  if (assert === 'missing' && committedRows(idx, v.case, eff, atMs).length) assert = 'late';
   let rule = d.rule ?? null;
-  if (!rule && d.lid) {
-    try { rule = referenceTransition(world, caseView(idx, v.case, Date.parse(d.at), Infinity)).effects.required.find(e => e.lid === d.lid)?.rule ?? null; } catch { /* past totality */ }
+  if (!rule && (d.lid || assert === 'wrong')) {
+    const lid = d.lid ?? lidOf(p);
+    try { rule = referenceTransition(world, caseView(idx, v.case, Date.parse(d.at), Infinity)).effects.required.find(e => e.lid === lid)?.rule ?? null; } catch { /* past totality */ }
   }
   if (!rule && d.code === 'records') rule = 'R7.1';
   if (!rule && d.code === 'outside-allowed') rule = 'SPEC-E §4 (an effect the rules do not ask for)';
-  const factual = assert === 'missing' ? !committedRows(idx, v.case, effectOf(p, O), atMs).length
-    : assert === 'unwarranted' ? committedRows(idx, v.case, effectOf(p, O), atMs).length > 0 : null;
-  return { assert, p, rule, factual };
+  return { assert, p, fields, rule, hardness: hardnessOf(assert, committedRows(idx, v.case, eff, atMs).length > 0) };
+}
+
+/** The ledger pattern a claim is about; for `wrong`, the subject only (the claimed-wrong fields left out). */
+function effectFor(p, O, fields) {
+  const eff = effectOf(p, O);
+  if (!eff || !fields?.length) return eff;
+  return { ...eff, match: Object.fromEntries(Object.entries(eff.match).filter(([k]) => !fields.includes(k))) };
+}
+
+/** 'rulebook': the journal agrees with the claim's facts (the effect is absent for `missing`, present otherwise), so only
+ * the rules can refute it; 'journal': the journal alone contradicts it (or the claim is about counts, keys or order). */
+function hardnessOf(assert, done) {
+  if (assert === 'missing') return done ? 'journal' : 'rulebook';
+  if (['unwarranted', 'wrong', 'late', 'premature'].includes(assert)) return done ? 'rulebook' : 'journal';
+  if (['duplicate', 'key', 'out-of-order'].includes(assert)) return 'journal';
+  return 'rulebook';
 }
 
 // Near-miss classes for a false claim: cases where an observer would expect the claimed thing but the rulebook says no.
@@ -360,17 +404,14 @@ function falseClaim({ world, idx, verdicts, affected, claim, trueAt, trueClass, 
     const at = anchor + lag;
     if (!(at >= window[0] && at < window[1] && at <= idx.horizonMs)) continue;
     for (const p of retarget(world, claim.p, v.case)) {
-      const eff = effectOf(p, t.subject);
-      const done = committedRows(idx, v.case, eff, at).length;
-      let hardness;
+      const eff = effectFor(p, t.subject, claim.fields);
+      const done = committedRows(idx, v.case, eff, at).length > 0;
       if (claim.assert === 'missing') {
         let req = false;
         try { req = referenceTransition(world, caseView(idx, v.case, at, Infinity)).effects.required.some(e => e.lid === lidOf(p)); } catch { req = true; }
         if (req) continue;
-        hardness = done ? 'journal' : 'rulebook';
-      } else if (claim.assert === 'unwarranted') hardness = done ? 'rulebook' : 'journal';
-      else if (['late', 'premature', 'out-of-order', 'duplicate', 'key'].includes(claim.assert)) { if (!done) continue; hardness = 'journal'; }
-      else hardness = 'rulebook';
+      } else if (eff && !done) continue;        // a claim about an effect that never happened is not the same claim
+      const hardness = hardnessOf(claim.assert, done);
       cands.push({ c: v.case, cls: t.class, p, at, hardness, rank: [hardness === 'rulebook' ? 0 : 1, near.includes(t.class) ? 0 : 1, Math.abs(at - trueAt)] });
       break;
     }
@@ -409,15 +450,16 @@ export function planReveal({ world, mined, defectId, lag = PARAMS.lagMinutes * M
     }
     const claim = trueClaim(world, idx, v, T);
     if (!claim) continue;
-    const ev = claimEvent({ world, c: v.case, p: claim.p, assert: claim.assert, atMs: T, id: `rev-${defectId}-${world.seed}-d${world.difficulty}` });
-    const reveal = { case: v.case, class: v.class, epoch: v.epoch, observableAt: iso(at), eventEpoch: world.truth && `ep${epochIndex(world, T)}`, divergence: brief(v),
-      event: ev, truth: { valid: true, defect: defectId, rule: claim.rule, hardness: claim.factual === false ? 'journal' : 'rulebook',
+    const wm = worldMeta(world);
+    const ev = claimEvent({ world, c: v.case, p: claim.p, assert: claim.assert, fields: claim.fields, atMs: T, id: `rev-${defectId}-${wm.seed}-d${wm.difficulty}` });
+    const reveal = { case: v.case, class: v.class, epoch: v.epoch, observableAt: iso(at), eventEpoch: `ep${epochIndex(world, T)}`, divergence: brief(v),
+      event: ev, truth: { valid: true, defect: defectId, rule: claim.rule, hardness: claim.hardness,
         reason: `the oracle fails ${v.case} at ${v.firstDivergence.at} (${v.firstDivergence.code}${v.firstDivergence.lid ? ` ${v.firstDivergence.lid}` : ''}) on the defect's trajectory` } };
     const f = falseClaim({ world, idx, verdicts, affected: mined.affected, claim, trueAt: T, trueClass: v.class, window, lag });
     const falseReveal = f ? { case: f.c, class: f.cls, epoch: world.truth.cases[f.c].epoch, eventEpoch: `ep${epochIndex(world, f.at)}`,
-      event: claimEvent({ world, c: f.c, p: f.p, assert: claim.assert, atMs: f.at, id: `inv-${defectId}-${world.seed}-d${world.difficulty}` }),
+      event: claimEvent({ world, c: f.c, p: f.p, assert: claim.assert, fields: claim.fields, atMs: f.at, id: `inv-${defectId}-${wm.seed}-d${wm.difficulty}` }),
       truth: { valid: false, defect: defectId, hardness: f.hardness,
-        reason: `the oracle passes ${f.c} on this trajectory: no rule requires the claimed ${KIND_NAME[f.p.kind] ?? f.p.kind}${f.hardness === 'rulebook' ? ' (the journal agrees with the claim\'s facts; only the rulebook refutes it)' : ' (the journal contradicts the claim)'}` } } : null;
+        reason: `the oracle passes ${f.c} on this trajectory, so the claim (${claim.assert} ${KIND_NAME[f.p.kind] ?? f.p.kind}) is invalid under the rulebook${f.hardness === 'rulebook' ? '; the journal agrees with its facts, only the rules refute it' : '; the journal contradicts it'}` } } : null;
     return { reveal, falseReveal, ...(f ? {} : { falseWhy: 'no passing case of the world fits the claim form inside the window' }), sweep: sweepOf(obs, T), natural };
   }
   return { reveal: null, why: obs.length ? 'no failure observable inside the E2/E3 window' : 'no observable failure', sweep: null, natural };
@@ -432,10 +474,7 @@ function sweepOf(obs, T) {
 // ---------------------------------------------------------------------------------------------------------------------
 // Manifests
 
-const git = file => { try { return sha256(`blob ${Buffer.byteLength(readFileSync(file))}\0`).length && gitBlob(readFileSync(file)); } catch { return null; } };
-function gitBlob(buf) { return sha256Buf(Buffer.concat([Buffer.from(`blob ${buf.length}\0`), buf])); }
-import { createHash } from 'node:crypto';
-const sha256Buf = b => createHash('sha1').update(b).digest('hex');
+const git = file => { try { const b = readFileSync(file); return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex'); } catch { return null; } };
 
 /** Git blob ids of the files a manifest rests on (the mutant set, the arm, the oracle, the world). */
 export function baseDigests() {
@@ -467,7 +506,8 @@ export function defectManifest({ id, mutant, members, results, oracleVerdict = n
     e0Silence: { executed: true, worlds: results.length, casesChecked: results.reduce((s, r) => s + r.e0.checked.length, 0), failed: 0 },
     worlds: results.map(r => ({
       ...r.meta,
-      e0: { checked: r.e0.checked, failed: r.e0.failed.length },
+      inert: r.inert,
+      e0: { checked: r.e0.checked, failed: r.e0.failed.length, graded: r.e0.graded },
       affected: r.affected,
       ...(r.plan ? { reveal: r.plan.reveal, ...(r.plan.reveal ? { falseReveal: r.plan.falseReveal, ...(r.plan.falseWhy ? { falseWhy: r.plan.falseWhy } : {}), sweep: r.plan.sweep } : { why: r.plan.why }),
         natural: r.plan.natural } : {}),

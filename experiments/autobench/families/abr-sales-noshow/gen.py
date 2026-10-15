@@ -47,8 +47,11 @@ RETRACT_SUFFIX = " | Retracted: joined late"
 ALERTS, REVIEW = "sales-alerts", "automation-review"
 # Probability that a handled report gets planted traps. Chatter, internal, duplicate and escalation reports are traps
 # by construction, so these per-report rates put the share of trap-bearing TRIGGERS near the design's 40% (d2) and
-# 70% (d3); gen meta reports the measured share per stream.
-TRAP_RATE = {"d1": 0.0, "d2": 0.2, "d3": 0.7}
+# 70% (d3): measured over seeds 601-650, 0.43 (d2) and 0.72 (d3); gen meta reports the share per stream.
+TRAP_RATE = {"d1": 0.0, "d2": 0.15, "d3": 0.6}
+# Probability that a retraction names a person who has a same-surname look-alike at another account with an OPEN
+# follow-up task for an event of the same name (T-lookalike:retraction-surname): the first name decides.
+RETRACT_LOOKALIKE_RATE = {"d1": 0.0, "d2": 0.5, "d3": 0.7}
 
 # ---------------------------------------------------------------------------------------------------------------
 # Fictional pools (no real person or organization; every domain is *.example.com)
@@ -483,6 +486,7 @@ class Gen:
                 s = s.replace(minute=0 if s.minute < 30 else 30, second=0) + timedelta(minutes=30)
                 dec = self.add_event(r.choice(EVENT_NAMES), s, r.choice(self.reps), 30)
                 act["decoys"].append(self.add_invitee(dec, c)["id"])
+                act["later_start"] = s       # a duplicate report must come before it starts (plan_duplicate)
             elif t == "T-lookalike:surname":
                 busy = {x["account_id"] for x in self.contacts if x["id"] in self.target_contacts}
                 others = [a for a in self.accounts if a["id"] != acc["id"] and a["id"] not in busy] or \
@@ -587,6 +591,8 @@ class Gen:
             end = a["event"]["start"] + WINDOW - timedelta(minutes=2)
             if a["day"] == 4:
                 end = min(end, self.week_close - timedelta(minutes=3))
+            if a.get("later_start"):   # once the later meeting starts, two events are in the window (an escalation)
+                end = min(end, a["later_start"] - timedelta(minutes=2))
             return int((end - a["at"]).total_seconds() // 60)
         ok = [a for a in acts if room(a) >= 3]
         if not ok:
@@ -607,8 +613,33 @@ class Gen:
         c = act["contact"]
         text = r.choice(RETRACT_T).format(event=act["event"]["name"], name=c["name"], email=c["email"])
         act["retract_at"] = at
+        traps = []
+        if r.random() < RETRACT_LOOKALIKE_RATE[self.d] and self.plant_retraction_lookalike(act):
+            traps.append("T-lookalike:retraction-surname")
         self.plans.append({"kind": "noshow.retracted", "variant": "retraction", "at": at, "reporter": act["reporter"],
-                           "text": text, "of": act, "traps": [], "decoys": []})
+                           "text": text, "of": act, "traps": traps, "decoys": []})
+
+    def plant_retraction_lookalike(self, act) -> bool:
+        """A contact with the retracted person's surname at another account, whose no-show of an event with the same
+        name was handled in an earlier week and whose follow-up task is still open (Not Started). Only the first name
+        (or the email) in the retraction tells the two tasks apart."""
+        r, c, ev = self.r, act["contact"], act["event"]
+        oacc = r.choice([a for a in self.accounts if a["id"] != c["account_id"]])
+        look = None
+        for _ in range(50):
+            first, last = self.person(c["last"])
+            look = self.add_contact(oacc, first, last)
+            if look:
+                break
+        if look is None:
+            return False
+        self.target_contacts.add(look["id"])      # never a background invitee or history no-show elsewhere
+        # strictly before this week's Monday (a weekend landing moves earlier), so the week count never includes it
+        s = (ev["start"] - timedelta(days=r.randint(max(3, act["day"] + 1), 12))).replace(minute=r.choice([0, 30]))
+        if s.weekday() >= 5:
+            s -= timedelta(days=s.weekday() - 4)
+        self.add_history_noshow(look, s, event_name=ev["name"])
+        return True
 
     def plan_chatter(self):
         r = self.r

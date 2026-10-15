@@ -7,8 +7,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { fitNeedRouter, decideModes, resolveCell, ruleFitStatus, ruleLoco, trainItem, probeRecord, N1, RULE_MINIMUM } from '../router.mjs';
-import { decisionCard, validateCard, probePlan, routerSha, codeShas } from '../card.mjs';
+import { decisionCard, validateCard, probePlan, routerSha, codeShas, CODE_FILES } from '../card.mjs';
 import { expectedUtilities, probeValue, bestProbe } from '../voi.mjs';
 import { thetaFitStatus } from '../prereg-rules.mjs';
 import { HEADLINE, DELTA, CASCADES, makeCell, cellKey, classOf, modeInfo, rankModes, needUtility, perTaskUsd } from '../metrics.mjs';
@@ -149,24 +152,44 @@ test('D4 routerSha names the whole decision procedure (classes, kinds, cascades,
   assert.throws(() => fitNeedRouter(P.items, { modes: V1_MODES, cascades: [{ id: 'x' }] }), /cascades must be/);
   // Code shas: a child process edits router.mjs "on disk" (fs.readFileSync patched) after importing card.mjs and before
   // its first card. codeShas() still names the loaded code, and decisionCard refuses to write a card.
+  // The same for prereg-rules.mjs, whose fitOrRule fits θ (router.mjs imports it since review E1): an edit there changes
+  // decisions, so it is hashed and checked like router.mjs.
   const card = new URL('../card.mjs', import.meta.url).href, router = new URL('../router.mjs', import.meta.url).href;
-  const script = `
-    import fs from 'node:fs';
-    import { createHash } from 'node:crypto';
-    import { syncBuiltinESMExports } from 'node:module';
-    import { codeShas, decisionCard } from ${JSON.stringify(card)};
-    import { fitNeedRouter } from ${JSON.stringify(router)};
-    const real = fs.readFileSync, loaded = createHash('sha256').update(real(new URL(${JSON.stringify(router)}))).digest('hex');
-    fs.readFileSync = function (p, ...rest) { const x = real.call(this, p, ...rest); return String(p).endsWith('/router.mjs') ? Buffer.concat([Buffer.from(x), Buffer.from('\\n// edited after import\\n')]) : x; };
-    syncBuiltinESMExports();
-    const R = fitNeedRouter([{ id: 'a', cluster: 'A', features: { logInputTokens: 2, maxListLength: 0 }, stats: { 'agent-H': { s: 0.5, q: 0.1, c: 0.1, B: 0 } }, labels: {} }]);
-    let err = null; try { decisionCard(R, { id: 'x', features: { logInputTokens: 2, maxListLength: 0 } }); } catch (e) { err = e.message; }
-    process.stdout.write(JSON.stringify({ loadedSha: codeShas()['router.mjs'] === loaded, err }));`;
-  const out = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', timeout: 60000 });
-  assert.equal(out.status, 0, out.stderr);
-  const r = JSON.parse(out.stdout);
-  assert.equal(r.loadedSha, true, 'codeShas must be the shas of the code loaded, not of a later edit');
-  assert.match(r.err ?? '', /router sources changed on disk since they were loaded \(router\.mjs\)/);
+  for (const file of ['router.mjs', 'prereg-rules.mjs']) {
+    const src = new URL(`../${file}`, import.meta.url).href;
+    const script = `
+      import fs from 'node:fs';
+      import { createHash } from 'node:crypto';
+      import { syncBuiltinESMExports } from 'node:module';
+      import { codeShas, decisionCard } from ${JSON.stringify(card)};
+      import { fitNeedRouter } from ${JSON.stringify(router)};
+      const real = fs.readFileSync, loaded = createHash('sha256').update(real(new URL(${JSON.stringify(src)}))).digest('hex');
+      fs.readFileSync = function (p, ...rest) { const x = real.call(this, p, ...rest); return String(p).endsWith(${JSON.stringify(`/${file}`)}) ? Buffer.concat([Buffer.from(x), Buffer.from('\\n// edited after import\\n')]) : x; };
+      syncBuiltinESMExports();
+      const R = fitNeedRouter([{ id: 'a', cluster: 'A', features: { logInputTokens: 2, maxListLength: 0 }, stats: { 'agent-H': { s: 0.5, q: 0.1, c: 0.1, B: 0 } }, labels: {} }]);
+      let err = null; try { decisionCard(R, { id: 'x', features: { logInputTokens: 2, maxListLength: 0 } }); } catch (e) { err = e.message; }
+      process.stdout.write(JSON.stringify({ loadedSha: codeShas()[${JSON.stringify(file)}] === loaded, err }));`;
+    const out = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', timeout: 60000 });
+    assert.equal(out.status, 0, out.stderr);
+    const r = JSON.parse(out.stdout);
+    assert.equal(r.loadedSha, true, `${file}: codeShas must be the shas of the code loaded, not of a later edit`);
+    assert.match(r.err ?? '', new RegExp(`router sources changed on disk since they were loaded \\(${file.replace('.', '\\.')}\\)`), file);
+  }
+  // Every experiments/need-router module in card.mjs's static import graph (router.mjs's included) is in CODE_FILES, so a
+  // new decision-relevant import cannot leave routerSha incomplete (review E1 added prereg-rules.mjs; it was missing).
+  const nrDir = path.dirname(fileURLToPath(new URL('../card.mjs', import.meta.url))), seen = new Set();
+  const walk = file => {
+    if (seen.has(file)) return; seen.add(file);
+    const code = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    for (const m of code.matchAll(/(?:^|[;\s])(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"](\.[^'"]+)['"]/g)) {
+      const to = path.resolve(path.dirname(file), m[1]);
+      if (path.dirname(to) === nrDir) walk(to);
+    }
+  };
+  walk(path.join(nrDir, 'card.mjs'));
+  const reached = [...seen].map(f => path.basename(f)).sort();
+  assert.deepEqual(reached, [...CODE_FILES].sort(), `need-router modules in the import graph: ${reached.join(', ')}`);
+  assert.deepEqual(Object.keys(codeShas()).sort(), [...CODE_FILES].sort());
   // In this process nothing changed: cards are written and their code part is the load-time shas.
   assert.deepEqual(decisionCard(base, job(SMALL), HEADLINE).routerShaParts.code, { ...codeShas() });
   assert.equal(codeShas(), codeShas());
@@ -267,11 +290,22 @@ test('D7 H0 below the PREREG §6 fitting minimum is not fitted: structure unknow
   const ok = fitNeedRouter(mk([['a', 'A', 2, 'no-workflow'], ['b', 'B', 3, 'no-workflow'], ['c', 'C', 5, 'workflow'], ['d', 'D', 6, 'workflow']]));
   assert.equal(ok.rule.fitted, true); close(ok.rule.thresholds.logInputTokens, 4); assert.equal(ok.decide(x, HEADLINE).needsWorkflow, true);
   assert.equal(fitNeedRouter(P.items, { modes: V1_MODES }).rule.fitted, true);
-  // LOCO: a fold whose training part is below the minimum is undefined, listed and excluded (never scored at θ = +∞).
+  // LOCO (PREREG §6, prereg-rules.mjs locoFolds): a fold is undefined only when its training part has no confident
+  // positive or no confident negative; it is listed and excluded, never scored at θ = +∞. Here every fold keeps both
+  // classes in training (holding out C leaves D's positive), so all 5 are defined and every held-out call is right.
   const loco = ruleLoco(mk([['a', 'A', 2, 'no-workflow'], ['b', 'B', 3, 'no-workflow'], ['c', 'C', 5, 'workflow'], ['d', 'D', 6, 'workflow'], ['e', 'E', 2.5, 'no-workflow']]).map(trainItem));
-  assert.equal(loco.folds.length, 5); assert.equal(loco.undefined, 2); assert.equal(loco.defined, 3);
-  assert.deepEqual(loco.folds.filter(f => !f.defined).map(f => f.heldOutCluster), ['C', 'D']);
-  assert.equal(loco.confident, 3); assert.equal(loco.balancedAccuracy, 1);
+  assert.equal(loco.folds.length, 5); assert.equal(loco.undefined, 0); assert.equal(loco.defined, 5);
+  assert.equal(loco.confident, 5); assert.equal(loco.balancedAccuracy, 1); assert.deepEqual(loco.counts, { tp: 2, fn: 0, tn: 3, fp: 0 });
+  // Both positives in one cluster: holding it out leaves no positive to train on, so that fold is undefined; the
+  // defined folds score negatives only, and a one-class balanced accuracy is null with its reason (not 1, not 0).
+  const one = ruleLoco(mk([['a', 'A', 2, 'no-workflow'], ['b', 'B', 3, 'no-workflow'], ['c', 'C', 5, 'workflow'], ['d', 'C', 6, 'workflow'], ['e', 'E', 2.5, 'no-workflow']]).map(trainItem));
+  assert.equal(one.undefined, 1); assert.equal(one.defined, 3); assert.deepEqual(one.folds.filter(f => !f.defined).map(f => f.heldOutCluster), ['C']);
+  assert.match(one.folds.find(f => f.heldOutCluster === 'C').why, /0 confident positive\(s\)/); assert.equal(one.folds.find(f => f.heldOutCluster === 'C').thresholds, null);
+  assert.equal(one.confident, 3); assert.equal(one.balancedAccuracy, null); assert.match(one.why, /0 positive and 3 negative/);
+  // A held-out item whose structure cannot be read is skipped and counted, never scored as "no workflow".
+  const blind = ruleLoco([...mk([['a', 'A', 2, 'no-workflow'], ['b', 'B', 3, 'no-workflow'], ['c', 'C', 5, 'workflow'], ['d', 'D', 6, 'workflow']]),
+    { id: 'f', cluster: 'F', features: { maxListLength: 0 }, stats: S(5), label: () => ({ label: 'workflow', confident: true }) }].map(trainItem));
+  assert.equal(blind.skipped, 1); assert.equal(blind.skippedItems[0].id, 'f'); assert.equal(blind.confident, 4);
   // The minimum is prereg-rules.mjs thetaFitStatus, case for case.
   const r = rng(7);
   for (let t = 0; t < 2000; t++) {

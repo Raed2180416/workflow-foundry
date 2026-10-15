@@ -5,8 +5,9 @@ import {
   OPTIONS, QUESTION_IDS, PERMUTATIONS, PROPERTY_QUESTIONS, NO_MATCH, PREDICTION, permutations, jevQuestions, buildJevRequest, readJevAnswers, averagePerms,
   buildHaikuRequest, haikuDist, HAIKU_SCHEMA, auroc, matchedAccuracy, fitLogistic, predictLogistic, standardizer, lofoHead, clusterBootstrap,
   propertyAccuracy, parseTruth, decide, kotteFloor, abstentionNote, orderEffects, servedVersions, analyze, renderReport, labelsFromRows, taskKeysOf,
-  parseKey, dryPlan, completeJevRow, evaluateHeads, CODE_KEYS,
+  parseKey, dryPlan, completeJevRow, evaluateHeads, CODE_KEYS, defaultJevModel,
 } from '../jev-need2.mjs';
+import { JEV_MODEL } from '../../kev-data/score-served.mjs';
 import { auroc as aurocSlow, stateOf } from '../jev-need.mjs';
 import { rng } from '../metrics.mjs';
 import { makeTasks } from '../../lib/beds.mjs';
@@ -294,6 +295,14 @@ test('dry plan: six requests per task, priced at the Jev input rate', async () =
   assert.equal(p.tasks, 2); assert.equal(p.jevRequests, 12); assert.equal(p.haikuCalls, 2);
   close(p.jevUsd, p.jevTokens * 0.042 / 1e6, 1e-15);
   assert.ok(p.jevTokens > 12 * 300);
+});
+
+test('the default Jev id is the pinned version, never the moving alias (P0, policy 2026-10-15.1)', async () => {
+  assert.match(JEV_MODEL, /^jev-\d+\.\d+\.\d+$/);
+  assert.equal(await defaultJevModel(), JEV_MODEL, 'the committed policy pins the same id score-served.mjs requests');
+  assert.equal(await defaultJevModel({ judgmentModels: [{ id: 'jev-latest' }, { id: 'jev-1.14.0' }] }), 'jev-1.14.0');
+  assert.equal(await defaultJevModel({ judgmentModels: [{ id: 'jev-latest' }] }), JEV_MODEL, 'an alias-only policy does not fall back to the alias');
+  assert.equal(await defaultJevModel({}), JEV_MODEL);
 });
 
 // ---- the metered paths, offline (injected client and port; no network, no key) --------------------------------------------

@@ -2,8 +2,9 @@
 // MEM-0; critique F17): the prompt cache is an accidental memory, so every report prints, per arm, the share of prompt
 // tokens read from it. Same formula as experiments/lib/services.mjs Ledger.cacheReadShare (cache reads / all prompt tokens,
 // rounded to 1e-4, null before any prompt token); kept here so reports outside the stamped trees need not import it.
-// Used by experiments/jit/report.mjs and experiments/ebed/run-agent.mjs. The CLI prints it per arm (mode) for a need-router
-// label-run output directory (rows.jsonl and builds.final.jsonl carry each row's tokens and mode):
+// Used by experiments/jit/report.mjs, experiments/ebed/run-agent.mjs and experiments/need-router/label-run.mjs (report.arms,
+// report.txt). The CLI prints it per arm (mode) for a need-router label-run output directory (rows.jsonl, builds.final.jsonl
+// and probes.jsonl carry each row's tokens and mode; builds written before MEM-0's review carry none and count 0):
 //   node experiments/memory/cache-share.mjs <label-run --out dir>...
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -45,8 +46,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!dirs.length) { console.error('usage: node experiments/memory/cache-share.mjs <label-run --out dir>...'); process.exit(2); }
   const lines = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
   for (const d of dirs) {
-    const rows = [...lines(path.join(d, 'rows.jsonl')), ...lines(path.join(d, 'builds.final.jsonl'))];
-    console.log(`${d}: ${rows.length} rows and builds`);
+    const rows = [...lines(path.join(d, 'rows.jsonl')), ...lines(path.join(d, 'builds.final.jsonl')), ...lines(path.join(d, 'probes.jsonl'))];
+    console.log(`${d}: ${rows.length} rows, builds and probes`);
     for (const [arm, x] of Object.entries(perArm(rows))) console.log(`  ${arm.padEnd(16)} cache read share ${cacheShareCell(x.usage)}`);
   }
 }

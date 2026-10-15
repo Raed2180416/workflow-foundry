@@ -16,13 +16,13 @@ import { bedsLib, openCtx, replayRun, acceptedCalls, keepLiveRows } from '../rep
 import { compileOps } from '../ops.mjs';
 import { scanLeaks, buildLeakIndex } from '../scan.mjs';
 import { Budget } from '../budget.mjs';
-import { world, byKey, skipReason } from './helpers.mjs';
+import { world, byKey, skipReason, dataSkip } from './helpers.mjs';
 import { incidentFor, recordsFlip, proposalFrom, runVerify } from './fixtures.mjs';
 
 const makeTaskFor = family => async seed => (await (await bedsLib()).makeTasks(family, { split: 'dev', seeds: [seed], difficulty: 3 }))[0];
 const envOf = (kit, gate) => { const policy = kit.sessionPolicy(['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5']); return { classOrder: policy.classOrder, classOf: id => kit.policy.modelById(policy, id).class, isStrong: gate.isStrong }; };
 
-test('seeds: a codefix draw skips a fresh seed whose task equals an already-used (inspected) task, and a vetoed seed stays drawable', { skip: skipReason }, async () => {
+test('seeds: a codefix draw skips a fresh seed whose task equals an already-used (inspected) task, and a vetoed seed stays drawable', { skip: dataSkip }, async () => {
   const ledger = { schema: 'x', entries: structuredClone(INITIAL), referenceHashes: {} };
   assert.ok(usedTaskKeys(ledger, 'codefix').some(u => u.key === 'test:d3:s6001'), 'the inspected C0 test tasks are used tasks');
   // simulate the dev/test overlap (beds/codefix AUDIT F2): the inspected test task 6001 has the same reference as dev seed 1001

@@ -39,7 +39,7 @@ import { createHash } from 'node:crypto';
 import { makeTasks, loadFamily } from '../lib/beds.mjs';
 import { toSystemOneQuestion, fromSystemOneAnswer } from '../../src/judgment.mjs';
 import { stateOf } from './jev-need.mjs';
-import { readRows } from '../kev-data/score-served.mjs';
+import { readRows, JEV_MODEL } from '../kev-data/score-served.mjs';
 import { taskFeatures, WHITELIST } from './features.mjs';
 import { rng } from './metrics.mjs';
 
@@ -723,7 +723,7 @@ async function runAnalysis({ out, truthFile, primaryLabels, reps }) {
 }
 
 /** --dry: every request built, counted and priced; no network, no key. */
-export function dryPlan(tasks, { policyHaikuPrice = null, jevModel = 'jev-latest' } = {}) {
+export function dryPlan(tasks, { policyHaikuPrice = null, jevModel = JEV_MODEL } = {}) {
   let jevChars = 0, jevN = 0, haikuChars = 0;
   for (const t of tasks) {
     for (const order of PERMUTATIONS) { jevChars += JSON.stringify({ ...buildJevRequest(t.task, order), model: jevModel }).length; jevN++; }
@@ -734,11 +734,10 @@ export function dryPlan(tasks, { policyHaikuPrice = null, jevModel = 'jev-latest
     haikuInputUsdAtList: policyHaikuPrice ? haikuTokens * policyHaikuPrice / 1e6 : null };
 }
 
-function defaultJevModel() {
-  return import('../../src/models/policy.mjs').then(({ loadPolicy }) => {
-    const ids = (loadPolicy().policy.judgmentModels ?? []).map(m => m.id).filter(id => /^jev-/.test(id));
-    return ids.find(id => /^jev-\d+\.\d+\.\d+$/.test(id)) ?? (ids.includes('jev-latest') ? 'jev-latest' : ids[0]);
-  });
+// The policy's pinned Jev id; with none listed, JEV_MODEL (which jevClient then refuses as unlisted). Never a moving alias.
+export function defaultJevModel(policy = null) {
+  const pick = p => (p.judgmentModels ?? []).map(m => m.id).find(id => /^jev-\d+\.\d+\.\d+$/.test(id)) ?? JEV_MODEL;
+  return policy ? Promise.resolve(pick(policy)) : import('../../src/models/policy.mjs').then(({ loadPolicy }) => pick(loadPolicy().policy));
 }
 
 async function main() {
@@ -754,7 +753,8 @@ async function main() {
   const limit = Number(arg('--limit', '0')); if (limit > 0) keys = keys.slice(0, limit);
   const tasks = await loadTasks(keys);
   const jevModel = arg('--jev-model', await defaultJevModel());
-  // MEMORY-ROUTING-RECURSION §3.1 asks every Jev test to use the pinned id (jev-1.13.0); policy/models.json lists only the alias.
+  // MEMORY-ROUTING-RECURSION §3.1 asks every Jev test to use the pinned id; policy/models.json pins jev-1.13.0 since 2026-10-15.1,
+  // so this warns only when --jev-model names an alias.
   if (!has('--haiku') && !/^jev-\d+\.\d+\.\d+$/.test(jevModel)) console.log(`WARNING: Jev id ${jevModel} is a moving alias, not a pinned version (design §3.1: pin jev-1.13.0 in policy/models.json); every row records the served version`);
   if (has('--dry')) {
     const { loadPolicy } = await import('../../src/models/policy.mjs');

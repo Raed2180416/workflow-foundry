@@ -2,27 +2,59 @@
 // truth-domain bytes under any sandbox, workdir or prompt. Truth domain = oracle verdicts, labels and held-out material
 // (§3.2 "Who sees what"). The scan looks, under every root, for truth files by name (the library's evidence rows, which
 // carry oracle verdicts, and its judgment ledger, which carries labels) and, in every file and every prompt text, for
-// truth bytes (needles: a reference answer in its usual serialisations, a planted label). Symbolic links are listed, never
-// followed. It reports hits; it never fixes anything.
+// truth bytes (needles: every part of a truth value in its usual serialisations, a planted label). Symbolic links are
+// listed, never followed. It reports hits; it never fixes anything.
+// Needles reach into the truth (MEM-0 review): each object and array node (the whole answer, a field's value, one row) in
+// canonical, compact and indented JSON, and each string leaf (a patched_source) as itself and JSON-escaped. taskTruth()
+// adds a family's held-out oracle material to its reference answer (wbed: the per-stage reference trace; codefix: the
+// hidden test cases and their expected results). Not covered: a part re-indented inside a larger JSON document, and
+// other families' held-out material (ownerci's hidden suite, synth's hidden world).
 //   node experiments/memory/leak-scan.mjs <dir>... [--needles needles.json]   (needles.json: a JSON array of strings)
 // Exit 1 when anything is found.
 import { readdirSync, lstatSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonical } from '../../beds/lib/canonical.mjs';
+import { loadFamily } from '../lib/beds.mjs';
 
 export const TRUTH_FILE_NAMES = Object.freeze(['evidence.jsonl', 'judgments.jsonl']);
 export const MIN_NEEDLE = 32;   // shorter strings occur by chance in task text; a truth value that short cannot be scanned for
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
 
-/** The serialisations of each truth value a leak would carry (canonical, compact, indented JSON; a string as itself), at least `min` characters. */
-export function truthNeedles(values, { min = MIN_NEEDLE } = {}) {
+/**
+ * The bytes a leak of the truth values would carry: every object and array node of each value (the value itself, each
+ * field's value, each array element or row) in canonical, compact and indented (1, 2) JSON, and every string leaf as
+ * itself and JSON-escaped; at least `min` characters. A needle found in `publicTexts` (what the solver is shown anyway,
+ * e.g. a hidden test case whose title is also a visible test's) cannot tell a leak from the task and is dropped.
+ */
+export function truthNeedles(values, { min = MIN_NEEDLE, publicTexts = [] } = {}) {
   const out = new Set();
-  for (const v of values) {
-    if (typeof v === 'string') { out.add(v); continue; }
+  const visit = v => {
+    if (typeof v === 'string') { out.add(v); out.add(JSON.stringify(v).slice(1, -1)); return; }
+    if (!v || typeof v !== 'object') return;
     for (const s of [canonical(v), JSON.stringify(v), JSON.stringify(v, null, 1), JSON.stringify(v, null, 2)]) if (typeof s === 'string') out.add(s);
-  }
-  return [...out].filter(s => s.length >= min);
+    for (const x of Array.isArray(v) ? v : Object.values(v)) visit(x);
+  };
+  for (const v of values) visit(v);
+  return [...out].filter(s => s.length >= min && !publicTexts.some(p => String(p).includes(s)));
+}
+
+// Held-out oracle material beyond the reference answer and trace, per family (trusted host code builds it).
+const codefixHidden = async task => {
+  const { build } = await import('../../beds/codefix/build.mjs');
+  const b = build({ seed: task.seed, split: task.split, difficulty: task.difficulty });
+  return [b.hidden, b.refHidden];
+};
+export const HELD_OUT = Object.freeze({ codefix: codefixHidden, 'need-codefix-noverifier': codefixHidden });
+
+/** The truth domain of one bed task, as values for truthNeedles: the reference answer, the reference trace when the family
+ *  exports one, and the family's held-out material (HELD_OUT). */
+export async function taskTruth(familyId, task) {
+  const fam = await loadFamily(familyId);
+  const values = [await fam.referenceSolve(task)];
+  if (typeof fam.referenceTrace === 'function') values.push(await fam.referenceTrace(task));
+  if (HELD_OUT[familyId]) values.push(...await HELD_OUT[familyId](task));
+  return values;
 }
 
 /**

@@ -8,6 +8,7 @@ import { loadLedger, seedRefusals } from '../../jit/seeds.mjs';
 import {
   STAGES_FILE, PREREG_FILE, POLICY_FILE, EVAL_TASKS, checkStages, armSha, canonicalJson, evalDifficulty, exampleDifficulty, planTasks,
   exampleSet, e2eDraw, expandRuns, hashCollisions, span, probeDifficulty, namesToken, sectionOf, stamp, stampDiff, bedClosure,
+  importedNames,
 } from '../prereg-check.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -316,4 +317,94 @@ test('review M6: label-engine stamps per paid stage; a first-used bed is allowed
   // The analysis stamp lists the router and evaluation code that Freeze pins.
   const an = stamp(STAGES).analysis.files;
   for (const f of ['router.mjs', 'evaluate.mjs', 'card.mjs', 'prereg-rules.mjs']) assert.ok(`experiments/need-router/${f}` in an, f);
+});
+
+// ------------------------------------------------------------------------- review fixes, refreshed (2026-10-15)
+const s01 = sectionOf(TEXT, /^### 0\.1\b/m), s13 = sectionOf(TEXT, /^## 13\./m);
+const renameIn = (text, sec, ids, to) => text.replace(sec, sec.replace(new RegExp(`(^|[^A-Za-z0-9_-])(${ids.join('|')})(?=$|[^A-Za-z0-9_-])`, 'gm'), `$1${to}`));
+
+test('review B2 refresh: a recorded run still in flight blocks the freeze; every recorded run is named in §0.1; an overrun is named in §13', () => {
+  // M1-d5 was in flight at the first revision; the freeze must wait until its results are in §0.1.
+  const inflight = mutate(s => { s.stages.find(x => x.id === 'M1').observed['m1-d5'] = { status: 'in-flight' }; });
+  assert.ok(!hasError(check(inflight), /in-flight/), 'a draft may carry a run in flight');
+  assert.ok(hasError(frozen(inflight, FILLED), /frozen, but stage M1: observed\.m1-d5 is in-flight: record its results in PREREG §0\.1 first/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'M1').observed['m1-d5'].status = 'running'; })), /observed\.m1-d5: status must be complete or in-flight/));
+  // §0.1 must name every recorded run and its stage (the first draft's §0 did not mention M1 at all).
+  assert.ok(hasError(check(STAGES, renameIn(TEXT, s01, ['M1-R', 'm1-r'], 'the-rerun')), /PREREG §0\.1 does not name the recorded run M1-R \(stage M1-R\)/));
+  assert.ok(hasError(check(STAGES, renameIn(TEXT, s01, ['m1-d5', 'M1-d5'], 'the-d5-run')), /PREREG §0\.1 does not name the recorded run m1-d5 \(stage M1\)/));
+  // A recorded overrun of a cap share (on the §12 meter) must be a §13 deviation.
+  assert.ok(hasError(check(STAGES, renameIn(TEXT, s13, ['m1-r'], 'the-rerun')), /stage M1-R: observed\.m1-r is \$25\.89 on the meter against its \$25 cap, and PREREG §13 does not name m1-r/));
+  assert.ok(hasError(check(STAGES, renameIn(TEXT, s13, ['m1-d5'], 'the-d5-run')), /stage M1: observed\.m1-d5 is \$33\.92 on the meter against its \$10 cap/));
+  // A complete record carries its figures and its runner's sha, and keys a run tag of its stage.
+  assert.ok(hasError(check(mutate(s => { delete s.stages.find(x => x.id === 'M1').observed.m1.meterUsd; })), /observed\.m1: a complete record needs meterUsd/));
+  assert.ok(hasError(check(mutate(s => { s.stages.find(x => x.id === 'M1').observed['m1-d5'].meterUsd = 1; })), /observed\.m1-d5: meterUsd 1 below reportedUsd 5\.9199/));
+  assert.ok(hasError(check(mutate(s => { delete s.stages.find(x => x.id === 'M1-R').observed['m1-r'].m1RerunSha256; })), /observed\.m1-r: a complete record needs its runner's sha256/));
+  assert.ok(hasError(check(mutate(s => { const m = s.stages.find(x => x.id === 'M1'); m.observed['m1-d7'] = m.observed['m1-d5']; })), /stage M1: observed\.m1-d7 names no run tag of the stage/));
+  // The committed records: M1 closed with both tags complete, M1-R its own stage.
+  const m1 = STAGES.stages.find(s => s.id === 'M1'), m1r = STAGES.stages.find(s => s.id === 'M1-R');
+  assert.deepEqual(Object.values(m1.observed).map(o => o.status), ['complete', 'complete']);
+  assert.equal(m1r.observed['m1-r'].status, 'complete');
+  assert.deepEqual(frozen(structuredClone(STAGES), FILLED).errors, [], 'every recorded run is complete and named: the records do not block a freeze');
+});
+
+test('review M7 refresh: a stage outside the totals needs a recurring limit or an external budget whose plan names it', () => {
+  const m1r = STAGES.stages.find(s => s.id === 'M1-R');
+  assert.equal(m1r.inTotals, false);
+  assert.equal(m1r.externalBudget.capUsd, m1r.capUsd);
+  assert.deepEqual(check(STAGES).summary.totals, { estUsd: 951, capUsd: 1235, coreEstUsd: 663, coreCapUsd: 855, recurringCapUsd: 24, softCapCheckUsd: 1259 }, 'M1-R is not double-counted');
+  const edit = f => check(mutate(s => f(s.stages.find(x => x.id === 'M1-R'))));
+  assert.ok(hasError(edit(st => { delete st.externalBudget; }), /M1-R is outside the totals with no recurring run limit and cumulative cap, and no externalBudget/));
+  assert.ok(hasError(edit(st => { st.externalBudget.plan = 'research/need-router-20261014/DESIGN.md'; }), /M1-R: externalBudget plan research\/need-router-20261014\/DESIGN\.md does not name the stage/));
+  assert.ok(hasError(edit(st => { st.externalBudget.plan = 'research/nowhere.md'; }), /externalBudget plan research\/nowhere\.md does not exist/));
+  assert.ok(hasError(edit(st => { st.externalBudget.capUsd = 40; }), /M1-R: externalBudget capUsd 40 differs from the stage cap 25/));
+  // M1-R's runs are checked against the ledger like M1's (dev attack seeds under jit-dev), and before Freeze.
+  assert.ok(expandRuns(STAGES).filter(x => x.stage === 'M1-R').every(x => x.split === 'dev' && x.purpose === 'jit-dev'));
+  assert.ok(hasError(edit(st => { st.runs[0].split = 'test'; }), /M1-R\.runs\[0\]: test-split seeds before Freeze/));
+  // Its set-aside attempts (an invalid attempt, rate-limit rows re-run later) are on the meter like rows (§12).
+  assert.match(STAGES.spendMeter.setAside, /counts like a row/);
+  assert.match(sectionOf(TEXT, /^## 12\./m), /\*\*Set-aside attempts\*\* \(2026-10-15\)\. An attempt kept out of the results counts like a row/);
+});
+
+test('review §14 refresh: the analysis must import the preregistered rules from prereg-rules.mjs once the Freeze addendum pins it', () => {
+  const rr = STAGES.analysis.requiredRules;
+  assert.equal(rr.module, 'experiments/need-router/prereg-rules.mjs');
+  for (const n of ['balancedAccuracyInterval', 'c7aReading', 'g1Reading', 'harmfulPositions', 'withDropAgreement', 'signFlipFloor', 'thetaFitStatus', 'locoFolds', 'fitOrRule']) assert.ok(rr.rules.includes(n), n);
+  const [ev, ro] = rr.readers;
+  const src = (evText, roText = '') => ({ [ev]: evText, [ro]: roText });
+  const run = (sources, text = TEXT) => checkStages(STAGES, { ledger, policy, preregText: text, sources });
+  const partial = src(`import { balancedAccuracyInterval, c7aReading as readC7a,\n  thetaFitStatus } from './prereg-rules.mjs';`, "import { locoFolds, fitOrRule } from './prereg-rules.mjs';");
+  // While the A-Freeze row is TBD-FREEZE: a warning naming what is missing, no error.
+  const draft = run(partial);
+  assert.ok(!draft.errors.some(e => /do not import/.test(e)));
+  const w = draft.warnings.find(x => /do not import/.test(x));
+  assert.match(w, /g1Reading, harmfulPositions, withDropAgreement, signFlipFloor, missingDataRule, powerGate from prereg-rules\.mjs/);
+  assert.doesNotMatch(w, /c7aReading|locoFolds/, '`x as y` and the router\'s imports count');
+  // Once the Freeze addendum pins the analysis (A-Freeze filled), a missing rule is an error.
+  const pinned = TEXT.replace('| A-Freeze (analysis stamp) | TBD-FREEZE (the Freeze addendum, §6) |', '| A-Freeze (analysis stamp) | (shas pasted at Freeze) |');
+  assert.notEqual(pinned, TEXT);
+  assert.ok(hasError(run(partial, pinned), /the Freeze addendum pins the analysis, but .* do not import g1Reading/));
+  // Every rule imported (across the two readers, a namespace import included): neither a warning nor an error.
+  const full = src(`import { ${rr.rules.slice(0, 5).join(', ')} } from './prereg-rules.mjs';`, `import * as P from './prereg-rules.mjs';\n${rr.rules.slice(5).map(n => `P.${n}(x);`).join('\n')}`);
+  const ok = run(full, pinned);
+  assert.ok(!ok.errors.some(e => /do not import/.test(e)) && !ok.warnings.some(x => /do not import/.test(x)));
+  // A required rule the module does not export is refused (a typo in stages.json would otherwise pass silently).
+  assert.ok(hasError(checkStages(mutate(s => { s.analysis.requiredRules.rules.push('c7aReadingz'); }), { ledger, policy, preregText: TEXT }), /requiredRules: c7aReadingz is not exported by experiments\/need-router\/prereg-rules\.mjs/));
+  assert.deepEqual([...importedNames("import { a, b as c } from '../need-router/prereg-rules.mjs';\nimport { d } from './other.mjs';", 'prereg-rules.mjs')], ['a', 'b']);
+});
+
+test('review B2 refresh: M1-d5 informs a second logged r3p revision; the earlier rows stay; the printed r3p drop covers d3 and d5', () => {
+  const r3p = STAGES.jobs.find(j => j.id === 'r3p');
+  assert.equal(r3p.hypothesis.n1.class, 'workflow', 'the row written before M1 stays');
+  assert.equal(r3p.hypothesis.revisions[0].n1.class, 'either', 'the first revision stays');
+  const r2 = r3p.hypothesis.revisions[1];
+  assert.equal(r2.date, '2026-10-15');
+  assert.match(r2.informedBy, /m1-d5.*10\/12 and 11\/12/);
+  assert.deepEqual([r2.n1.class, r2.n10.class], ['no-workflow', 'either']);
+  assert.deepEqual(r3p.band, [3, 4, 5], 'the band rule was fixed before M1-d5 was read');
+  assert.ok(r3p.devObserved.some(x => /m1-d5.*10\/12/.test(x)) && r3p.devObserved.some(x => /J-NEED-2/.test(x)));
+  assert.ok(!r3p.devObserved.some(x => /in flight/.test(x)), 'no record still says in flight');
+  assert.deepEqual(STAGES.analysis.mandatorySensitivities.find(m => m.dropTasks).dropTasks, { r3p: ['d3', 'd5'] });
+  // The text carries the revision and the expectation it implies (no held-out N = 1 positive hypothesised).
+  assert.match(sectionOf(TEXT, /^### 1\.1\b/m), /M1 tag `m1-d5`: one call passed 10\/12 and 11\/12 at d5[^\n]*\| no-workflow \/ direct-H \| either \/ direct-H \|/);
+  assert.match(TEXT, /No held-out positive is hypothesised/);
 });

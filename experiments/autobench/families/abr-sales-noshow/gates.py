@@ -19,6 +19,8 @@ Prints one JSON object. No model is called. The gates:
   mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (drop, duplicate, wrong
                 recipient/record, wrong priority/status/subject/time/amount/format, extra write, decoy flag, edited or
                 removed pre-existing record, missing/unnamed escalation, wrong count).
+  specificity   the oracle accepts policy-neutral variants of the reference's effects (fields the policy leaves open,
+                punctuation and case around the prescribed strings): no false rejects.
 """
 from __future__ import annotations
 
@@ -45,7 +47,7 @@ PRACTICE = list(range(601, 610))
 PAYLOAD_KEYS = {"trigger", "at", "app", "event", "data"}
 DATA_KEYS = {"channel", "channel_id", "message_id", "ts", "user_id", "user_name", "text"}
 BAD_CONTROLS = ["null", "echo", "naive", "stale-threshold", "no-repeat", "latest-event", "all-opps",
-                "chatter-as-report", "no-dedupe"]
+                "chatter-as-report", "no-dedupe", "contact-by-surname", "retract-by-surname"]
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -234,7 +236,6 @@ def mutants(before: dict, after: dict, truth: dict):
     out = []
     new_tasks = _new_ids(before, after, "salesforce", "tasks")
     changed_tasks = _changed_ids(before, after, "salesforce", "tasks")
-    flagged = _changed_ids(before, after, "calendly", "invitees")
     review, alerts = _chan(after, "automation-review"), _chan(after, "sales-alerts")
     new_msgs = [x for x in after["slack"]["messages"] if (x["channel_id"], x["ts"]) not in
                 {(y["channel_id"], y["ts"]) for y in before["slack"]["messages"]}]
@@ -437,6 +438,62 @@ def truth_week(w) -> str:
     return monday.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def equivalents(before: dict, after: dict, truth: dict):
+    """Policy-neutral variants of a correct after-world that the oracle must still accept (no false rejects): fields
+    the policy leaves open, and punctuation around the exact strings it prescribes."""
+    v, out = truth["variant"], []
+    new_tasks = _new_ids(before, after, "salesforce", "tasks")
+    changed_tasks = _changed_ids(before, after, "salesforce", "tasks")
+    new_msgs = [x["ts"] for x in after["slack"]["messages"] if (x["channel_id"], x["ts"]) not in
+                {(y["channel_id"], y["ts"]) for y in before["slack"]["messages"]}]
+
+    def m(name, fn):
+        w = copy.deepcopy(after)
+        fn(w)
+        out.append((name, w))
+
+    def msg(w):
+        return next(x for x in w["slack"]["messages"] if x["ts"] == new_msgs[0])
+    if v == "act":
+        def task(w):
+            return _find(w, "salesforce", "tasks", new_tasks[0])
+
+        def what_id(w):
+            t = task(w)
+            t["related_to_id"] = _find(w, "salesforce", "contacts", t["contact_id"])["account_id"]
+        m("task-with-account-as-what-id", what_id)
+        m("task-with-due-date", lambda w: task(w).update(due_date=w["meta"]["current_time"]))
+        m("description-trailing-period", lambda w: task(w).update(description=task(w)["description"] + "."))
+    if v == "retraction":
+        m("retracted-task-closed", lambda w: _find(w, "salesforce", "tasks", changed_tasks[0]).update(is_closed=True))
+    if v.startswith("escalate:"):
+        m("escalation-other-wording", lambda w: msg(w).update(
+            text=f"Escalating {truth['trigger']} - I cannot decide this report under the policy."))
+    if v == "week_close":
+        m("week-post-trailing-period", lambda w: msg(w).update(text=msg(w)["text"] + "."))
+        m("week-post-lowercase", lambda w: msg(w).update(text=msg(w)["text"].lower()))
+    return out
+
+
+def gate_specificity(seeds: list[int]) -> dict:
+    grader = oracle.Grader()
+    import reference
+    total, rejected = 0, []
+    for s in seeds:
+        stream = gen.generate(s)
+        res = harness.run_stream(stream, reference.handle, grader=grader, keep_worlds=True)
+        for k, (truth, before, after) in enumerate(zip(stream["truth"], res["befores"], res["afters"])):
+            last = k == len(stream["truth"]) - 1
+            for name, w in equivalents(before, after, truth):
+                total += 1
+                v = grader.grade(truth, before, w, end=stream["end"] if last else None,
+                                 world0=stream["world0"] if last else None)
+                if not v["pass"]:
+                    rejected.append(f"{truth['trigger']} {name}: {[c['name'] for c in v['failed']]}")
+    return {"pass": total > 0 and not rejected, "seeds": seeds, "variants": total, "accepted": total - len(rejected),
+            "rejected": rejected[:20]}
+
+
 def gate_mutation(seeds: list[int]) -> dict:
     grader = oracle.Grader()
     import reference
@@ -468,7 +525,8 @@ def run_all(seeds: list[int], practice: list[int]) -> dict:
          "solvability": gate_solvability(practice + seeds),
          "controls": gate_controls(seeds, d3),
          "traps": gate_traps(LABEL),
-         "mutation": gate_mutation(seeds)}
+         "mutation": gate_mutation(seeds),
+         "specificity": gate_specificity(seeds)}
     return {"family": gen.FAMILY, "version": gen.VERSION, "pass": all(x["pass"] for x in g.values()), "gates": g}
 
 

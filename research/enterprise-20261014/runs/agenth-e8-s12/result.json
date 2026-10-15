@@ -1,0 +1,94 @@
+{
+ "label": "agenth-e8-s12",
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "model": "claude-haiku-5-5",
+ "effort": null,
+ "workspace": false,
+ "workspaceScope": null,
+ "tickBudgetUsd": 0.4,
+ "tickMinutes": 6,
+ "capUsd": 8,
+ "spentUsd": 1.45477258,
+ "usage": {
+  "inputTokens": 2048,
+  "outputTokens": 8376,
+  "cacheReadTokens": 21448668,
+  "cacheWriteTokens": 4021958
+ },
+ "cacheReadShare": 0.842,
+ "seeds": [
+  1232
+ ],
+ "difficulties": [
+  2
+ ],
+ "size": 12,
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "wallMs": 2525184,
+   "completed": 14,
+   "passed": 10,
+   "armCensored": 0,
+   "critical": 0,
+   "armErrors": 27,
+   "ticks": 143,
+   "costUsd": 1.45477258,
+   "costUnknown": 0,
+   "byClass": {
+    "gl-intake": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "gl-awaiting": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "gl-dispatched": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "straight": {
+     "n": 6,
+     "pass": 4,
+     "censored": 0
+    },
+    "collection-failed": {
+     "n": 1,
+     "pass": 0,
+     "censored": 0
+    },
+    "cancel-after-collection": {
+     "n": 1,
+     "pass": 0,
+     "censored": 0
+    },
+    "cancel-processing": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "fraud-reject": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    },
+    "amend": {
+     "n": 1,
+     "pass": 1,
+     "censored": 0
+    }
+   },
+   "codes": {
+    "L3:missed": 4
+   }
+  }
+ ]
+}

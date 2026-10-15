@@ -1,13 +1,25 @@
 // Shared fixtures for the heal tests: the recorded C0/P1 runs, the frozen kit and the pinned gate. No live calls anywhere:
 // every model node is served from a COPY of a recorded journal or by a scripted provider.
 import path from 'node:path';
-import { existsSync } from 'node:fs';
-import { REPO, KIT_DIR, loadKit } from '../kit.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { REPO, KIT_DIR, loadKit, policyDrift, kitSourceTexts } from '../kit.mjs';
 import { loadGate } from '../pin-gate.mjs';
 import { allTrials, loadWorkflow, p1Workflow } from '../replay.mjs';
 
 export const HAVE_DATA = existsSync(KIT_DIR) && existsSync(path.join(REPO, 'experiments/runs/c0-dev/journal.sqlite')) && existsSync(path.join(REPO, 'experiments/runs/p1/journal.sqlite'));
-export const skipReason = HAVE_DATA ? false : 'the frozen kit or the recorded C0/P1 journals are not present';
+// Tests that need the recorded data but not loadKit.
+export const dataSkip = HAVE_DATA ? false : 'the frozen kit or the recorded C0/P1 journals are not present';
+// D6 (research/need-router-20261014/PREREG-NEED-V1.md §13; README "Heal-kit drift"): the P0 policy batch (2026-10-15.1) deleted
+// defaultsByRole and raised the class budgets F, L and M, which the frozen kit's src/runtime.mjs reads, so loadKit refuses with
+// HEAL_POLICY_DRIFT until the owner chooses. Tests that load the kit skip with that reason only while every blocking path is one of
+// these four; any other blocking drift still fails them. The gate itself is unchanged (kit-gate.test.mjs checks it still refuses).
+export const D6_DRIFT = Object.freeze(['defaultsByRole', 'inputBudgetTokensByClass.F', 'inputBudgetTokensByClass.L', 'inputBudgetTokensByClass.M']);
+export const d6Pending = drift => !!drift && drift.ok === false && drift.blocking.length > 0 && drift.blocking.every(p => D6_DRIFT.includes(p));
+export const ownerDrift = (kitDir = KIT_DIR) => policyDrift(JSON.parse(readFileSync(path.join(REPO, 'policy/models.json'), 'utf8')),
+  JSON.parse(readFileSync(path.join(kitDir, 'policy/models.json'), 'utf8')), { kitSources: kitSourceTexts(kitDir) });
+export const OWNER_DRIFT = HAVE_DATA ? ownerDrift() : null;
+export const skipReason = dataSkip || (d6Pending(OWNER_DRIFT)
+  ? `HEAL_POLICY_DRIFT pending owner choice (D6): policy/models.json differs from the frozen kit policy in ${OWNER_DRIFT.blocking.join(', ')}` : false);
 export const artifact = name => loadWorkflow(path.join(REPO, 'research/construction-20261006/artifacts', name, 'workflow.json'));
 export const workflows = async () => ({ records: await artifact('F-haiku-records-k1'), codefix: await artifact('F-haiku-codefix-k1'), p1: await p1Workflow('M') });
 let cache;

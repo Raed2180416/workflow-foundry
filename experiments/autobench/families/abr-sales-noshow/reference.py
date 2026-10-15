@@ -99,8 +99,7 @@ class NoShowWorkflow:
         ev, inv = pairs[0]
         if inv.get("no_show"):
             return None                                           # already handled: duplicate report
-        contacts = soql(self.ctx, f"SELECT Id, AccountId, Email FROM Contact WHERE Email = '{q(email)}'")
-        contacts = [c for c in contacts if (c.get("Email") or "").lower() == email]
+        contacts = self.contacts_for(email, inv)
         if len(contacts) != 1:
             return self.escalate(f"{len(contacts)} Salesforce contacts with email {email}")
         contact = contacts[0]
@@ -113,6 +112,10 @@ class NoShowWorkflow:
             "Subject": PREFIX + ev["name"], "Status": "Not Started", "Priority": self.priority(big, repeat),
             "WhoId": contact["Id"], "Description": desc})
         return "handled"
+
+    def contacts_for(self, email: str, invitee: dict) -> list[dict]:
+        rows = soql(self.ctx, f"SELECT Id, AccountId, Email FROM Contact WHERE Email = '{q(email)}'")
+        return [c for c in rows if (c.get("Email") or "").lower() == email]
 
     def invitees(self, ev: dict, email: str) -> list[dict]:
         uuid = ev["uri"].rstrip("/").split("/")[-1]

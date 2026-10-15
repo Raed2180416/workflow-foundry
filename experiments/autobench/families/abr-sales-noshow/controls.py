@@ -13,6 +13,8 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
   all-opps             the reference, but closed opportunities count toward the pipeline and the threshold
   chatter-as-report    the reference, but every message naming an outside email is treated as a no-show report
   no-dedupe            the reference, but a second report of an already-marked no-show creates a second task
+  contact-by-surname   the reference, but the contact is the first Salesforce contact with the invitee's last name
+  retract-by-surname   the reference, but a retraction matches the person by last name only
 """
 from __future__ import annotations
 
@@ -123,6 +125,32 @@ class NoDedupe(NoShowWorkflow):
                                                           "WhoId": contacts[0]["Id"], "Description": desc})
 
 
+class ContactBySurname(NoShowWorkflow):
+    def contacts_for(self, email, invitee):
+        last = invitee.get("last_name") or (invitee.get("name") or "").split()[-1]
+        rows = soql(self.ctx, f"SELECT Id, AccountId, Email, LastName FROM Contact WHERE LastName = '{last}'")
+        return rows[:1]
+
+
+class RetractBySurname(NoShowWorkflow):
+    def retraction(self, text):
+        tasks = soql(self.ctx, "SELECT Id, Subject, Description, Status, WhoId, CreatedDate FROM Task "
+                               "WHERE Status = 'Not Started'")
+        tasks = [t for t in tasks if (t.get("Subject") or "").startswith(PREFIX)]
+        contacts = {c["Id"]: c for c in soql(self.ctx, "SELECT Id, FirstName, LastName, Email FROM Contact")}
+        low = text.lower()
+        hits = [t for t in tasks if t.get("WhoId") in contacts
+                and re.search(r"(?<![a-z])" + re.escape((contacts[t["WhoId"]].get("LastName") or "").lower())
+                              + r"(?![a-z])", low)
+                and t["Subject"][len(PREFIX):].strip().lower() in low]
+        if not hits:
+            return self.escalate("retraction: cannot identify the open follow-up task")
+        t = hits[0]                     # the first match in query order (several share the surname and the event)
+        self.ctx.fetch("PATCH", SF + f"sobjects/Task/{t['Id']}",
+                       body={"status": "Completed", "description": (t.get("Description") or "") + ref.RETRACT_SUFFIX})
+        return "retracted"
+
+
 def _wrap(cls):
     return lambda trigger, ctx: cls(trigger, ctx).run()
 
@@ -137,6 +165,8 @@ CONTROLS = {
     "all-opps": _wrap(AllOpps),
     "chatter-as-report": _wrap(ChatterAsReport),
     "no-dedupe": _wrap(NoDedupe),
+    "contact-by-surname": _wrap(ContactBySurname),
+    "retract-by-surname": _wrap(RetractBySurname),
 }
 
 NAIVE_LINES = len(re.findall(r"\n", __import__("inspect").getsource(naive)))

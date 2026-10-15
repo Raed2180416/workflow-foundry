@@ -33,7 +33,9 @@ test('cache share per arm (mode) from label-run rows and builds; the CLI prints 
   const dir = mkdtempSync(path.join(tmpdir(), 'cache-share-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
   writeFileSync(path.join(dir, 'rows.jsonl'), rows.slice(0, 2).map(r => JSON.stringify(r)).join('\n') + '\n');
   writeFileSync(path.join(dir, 'builds.final.jsonl'), JSON.stringify({ mode: 'construct-H', tokens: { inputTokens: 50, cacheReadTokens: 150, cacheWriteTokens: 0 } }) + '\n');
+  writeFileSync(path.join(dir, 'probes.jsonl'), JSON.stringify({ mode: 'direct-H', tokens: { inputTokens: 0, cacheReadTokens: 1000, cacheWriteTokens: 0 } }) + '\n');   // as label-run's report.arms
   const r = spawnSync(process.execPath, [path.join(HERE, '../cache-share.mjs'), dir], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /agent-H +cache read share 80\.0% of 1,000/); assert.match(r.stdout, /construct-H +cache read share 75\.0% of 200/); assert.match(r.stdout, /direct-H +cache read share 0\.0% of 1,000/);
+  assert.match(r.stdout, /agent-H +cache read share 80\.0% of 1,000/); assert.match(r.stdout, /construct-H +cache read share 75\.0% of 200/); assert.match(r.stdout, /direct-H +cache read share 50\.0% of 2,000/);
+  assert.match(r.stdout, /4 rows, builds and probes/);
 });
