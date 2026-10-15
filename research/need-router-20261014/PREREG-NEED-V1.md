@@ -876,6 +876,50 @@ After freeze: none yet.
   stages were restructured: judge-H is now TRAIN-only; NL2p and NL2bp are new; DRIFT is recurring. No label existed when
   any of this changed.
 
+**Recorded before freeze on 2026-10-15** (the M1 and M1-d5 labels had been viewed: §0.1 and `runs/jev-need`; no NL0
+label exists):
+- **D6. The P0 policy batch, landed before the NL0 stamp** (`research/architecture-20261014/MEMORY-ROUTING-RECURSION.md`
+  §2 changes 1 and 6, §5 row 1). One deviation against M1's reconstructed stamp (D1). There `policy/models.json` is sha256
+  `96d5586281a0e8e43c73db63118189aaf18e8da5a492bb0dddfd43ab676cb4cf` (version `2026-10-09.1`, policy hash `cfe79728…`);
+  it is now sha256 `9a5a467a3782d98beaa50c4e869d566d6a2ee3cbb6dfd699128971902200f0bc` (version `2026-10-15.1`, policy
+  hash `a52ac399…`). Tags `m1` and `m1-d5` ran under `2026-10-09.1`. M1-R (`m1-rerun.mjs`, launched 00:49 UTC on 10-15,
+  before this change) loaded `2026-10-09.1` when it started and holds it in memory. NL0 and every later stage run under
+  `2026-10-15.1`. No other label-engine file or tree changed in this batch. The files and why:
+  - `policy/models.json` (stamped):
+    - `judgmentModels[0].id` is `jev-1.13.0`, was `jev-latest`. J1 and jev-need were served `jev-1.13.0`; the alias
+      moves (`jev-1.14.0` shipped on 10-14 behind `jev-preview`), and `jev-latest` is now refused as an id.
+    - `inputBudgetTokensByClass` M, L and F are 100,000, were 8,000, 16,000 and 32,000. S stays 4,000; XL (not in
+      `classOrder`, read by nothing) is unchanged. The class-M budget reached `compileContext` (`src/runtime.mjs`) and
+      refused or truncated any Haiku node over 8,000 tokens; the design cites M1's one-call Haiku successes at 45–64K
+      tokens. 100,000 is the Haiku price-tier boundary in the policy's price source.
+    - `defaultsByRole` is deleted. No code read it (the whole repository searched, except `beds/sealed/`, `corpus/` and
+      `.foundry/`), and wiring a role-based automatic assignment is on the design's do-not-build list (§4).
+    - `policyVersion` and a dated note. `src/models/policy.mjs validatePolicy` needed no change: it accepts any positive
+      integer budget, and no rule names `defaultsByRole`.
+  - `experiments/kev-data/score-served.mjs`: `JEV_MODEL` is `jev-1.13.0`. `--jev-model <id>` stays as the explicit
+    override for a deliberate re-read; that id must be listed in the policy.
+  - `experiments/need-router/jev-need.mjs`: requests `JEV_MODEL` (it had inherited `jev-latest`), with a new
+    `--jev-model <id>` override.
+  - `experiments/library/jev.mjs`: the request builders name `jev-1.13.0`.
+  - Tests. `tests/runtime-agent.test.mjs` (new): a Haiku `agent` node with a 60K-token input succeeds under the
+    committed policy, with one call, the whole input in the prompt and `truncated: false`, under both `onOverflow`
+    values; the same node at 8,000 is refused with `CONTEXT_OVERFLOW`. `tests/models-policy.test.mjs`: Jev by the pinned
+    id, the alias refused, the class budgets, no `defaultsByRole`. `experiments/kev-data/test/served-scorer-jobs.test.mjs`
+    and `experiments/library/test/jev.test.mjs`: the pinned id in the config, request bodies and rows.
+    `experiments/library/test/context.test.mjs`: the library's S6 cap stays 8,000 as a deliberate per-step cap, now
+    within the class-M budget instead of equal to it.
+  - **Effect on labels: none expected.** No need-router arm (`direct-H`, `agent-H`, `agent-O`, `construct-H`, `build-O`,
+    `judge-H`, `m1-call-*`) compiles a node through `compileContext`, the only reader of the class budget (design §1). No
+    generative model id, price, class order or escalation rule changed. Jev rows still name the version each response
+    reports.
+  - **A side effect this record does not resolve:** the heal kit's `policyDrift` gate (`experiments/heal/kit.mjs`,
+    frozen kit 880c6b9) now reports blocking drift on `defaultsByRole` and `inputBudgetTokensByClass.{F,L,M}`, because the
+    frozen kit's `src/runtime.mjs` reads the class budgets. `loadKit` therefore refuses with `HEAL_POLICY_DRIFT` until
+    the owner chooses, as in the README "Heal-kit drift" row. The e8d7a53 exemption covers the Jev pin only
+    (`judgmentModels`, which the kit never reads). Heal replays are not need-router labels.
+  - `prereg-check.mjs` warns that the policy version differs from `stages.json` `policy.policyVersion`
+    (`2026-10-09.1`). This item is the deviation that warning asks for; `stages.json` is not edited here.
+
 ## 14. What this file resolved, what stays open
 
 **Resolved here from DESIGN and the adopted decisions:** hypotheses table (§1.1); jobs, clusters, splits and bands
