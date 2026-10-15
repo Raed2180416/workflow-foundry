@@ -30,15 +30,34 @@ export const JIT_MODES = Object.freeze({
   'agent-haiku': 'agent-H', 'agent-sonnet': 'agent-S', 'agent-opus': 'agent-O',
   'jit-HH': 'jit-HH', 'jit-OH': 'jit-OH', 'jit-SH': 'jit-SH', 'static-b1h': 'static-b1h',
 });
-/** Mode registry in the shape metrics.needTable takes. cls is the binary need class; JIT is counted as workflow (an assumption, stated in the report). */
+/**
+ * Mode registry in the shape metrics.needTable takes. cls is the binary need class; JIT is counted as workflow (an assumption, stated in the report).
+ * `ceiling: true` marks an arm that DESIGN §2 admits to L_ceiling only: a workflow written by a frontier model or a person (hand-H and hand-S
+ * run the workflow an Opus agent hand-wrote after studying the family, P1_HAND_AUTHORING; wf-O and script-O are built by an Opus builder, the
+ * analogue of build-O). L_today uses the cheap-builder workflow modes only (labelSetModes drops the ceiling arms). No LEGACY mode carries
+ * `prebuilt`: that flag switches off metrics.needTable's guard against a built or guided mode with no build row, so a mode whose build was paid
+ * for must be charged (the guard is what caught the missing P1 authoring cost).
+ */
 export const LEGACY_REGISTRY = Object.freeze({
   'direct-H': { cls: 'no-workflow', kind: 'none' }, 'direct-H-med': { cls: 'no-workflow', kind: 'none' }, 'direct-H-notes': { cls: 'no-workflow', kind: 'none' },
   'direct-H45': { cls: 'no-workflow', kind: 'none' }, 'direct-S': { cls: 'no-workflow', kind: 'none' },
   'agent-H': { cls: 'no-workflow', kind: 'none' }, 'agent-S': { cls: 'no-workflow', kind: 'none' }, 'agent-O': { cls: 'no-workflow', kind: 'none' },
-  'hand-H': { cls: 'workflow', kind: 'guided', prebuilt: true }, 'hand-S': { cls: 'workflow', kind: 'guided', prebuilt: true },
-  'wf-H': { cls: 'workflow', kind: 'built' }, 'wf-O': { cls: 'workflow', kind: 'built' },
-  'script-H': { cls: 'workflow', kind: 'built' }, 'script-O': { cls: 'workflow', kind: 'built' }, 'static-b1h': { cls: 'workflow', kind: 'built' },
+  'hand-H': { cls: 'workflow', kind: 'guided', ceiling: true }, 'hand-S': { cls: 'workflow', kind: 'guided', ceiling: true },
+  'wf-H': { cls: 'workflow', kind: 'built' }, 'wf-O': { cls: 'workflow', kind: 'built', ceiling: true },
+  'script-H': { cls: 'workflow', kind: 'built' }, 'script-O': { cls: 'workflow', kind: 'built', ceiling: true }, 'static-b1h': { cls: 'workflow', kind: 'built' },
   'jit-HH': { cls: 'workflow', kind: 'jit' }, 'jit-OH': { cls: 'workflow', kind: 'jit' }, 'jit-SH': { cls: 'workflow', kind: 'jit' },
+});
+/**
+ * What the P1 hand workflow (hand-H on Haiku 5.5, hand-S on Sonnet 5.5) cost to write: the records-v3 development calls, 6,752 of them on
+ * Haiku 4.5, Haiku 5.5 and Sonnet, at least $24.91 (a lower bound: the Opus agent time that wrote the workflow is unpriced). The figure is in the
+ * README cost ledger (README.md:307, "records-v3 hand-workflow development for P1") and is quoted in
+ * research/jit-20261008/handoff/workflows/wf_59e7734e-82b.md:98; research/core-20261006/REPORT.md does not contain it (it says only that an Opus
+ * agent hand-wrote the workflow, a ceiling). It is a fixed build cost B in DESIGN §2's utility (-B/(N V)): leaving it out made the P1 label
+ * `workflow` at every N. Each hand mode is charged the whole of it, because a user who deploys that mode alone pays for the workflow in full.
+ */
+export const P1_HAND_AUTHORING = Object.freeze({
+  usd: 24.91, lowerBound: true, calls: 6752, modes: Object.freeze(['hand-H', 'hand-S']),
+  source: 'README.md:307 (cost ledger, 2026-10-07: records-v3 hand-workflow development for P1; also research/jit-20261008/handoff/workflows/wf_59e7734e-82b.md:98)',
 });
 export const LEGACY_JOB_DEFS = Object.freeze([
   { id: 'p1-records', kind: 'p1', family: 'records', oracle: 'records' },
@@ -105,8 +124,26 @@ export function loadConstructions(opts = {}) {
   return { builds, source: sourceOf(file), rescued };
 }
 
+/** The arm definition a stream arm ran with (arm.json `def`: perTaskUsd, agentBudgetUsd, ... plus the arm's `kind`), or null. */
+export function loadArmDef(root, experiment, armDir) {
+  try { const a = JSON.parse(readFileSync(path.join(root, experiment, armDir, 'arm.json'), 'utf8')); return a.def ? { ...a.def, kind: a.kind ?? null } : null; } catch { return null; }
+}
+/**
+ * The per-task dollar bound of a stream row whose cost was not observed (DESIGN §2: killed sessions are charged at their bound). A row that ran an agent
+ * session (an `interpret` event, or any agent arm) is bounded by the arm's `agentBudgetUsd`; a row that only called the gateway by its `perTaskUsd`.
+ * Returns { usd, field } or null when the arm definition is missing.
+ */
+export function jitRowBound(def, row) {
+  if (!def) return null;
+  const agent = def.kind === 'agent' || (row.events ?? []).some(e => e?.kind === 'interpret');
+  const field = agent && Number.isFinite(def.agentBudgetUsd) ? 'agentBudgetUsd' : Number.isFinite(def.perTaskUsd) ? 'perTaskUsd' : null;
+  return field ? { usd: def[field], field } : null;
+}
+
 /** JIT streams as normalised rows, with the harvest's fixed costs and pairing report. `rows` are the paired rows (what the label
- *  tables use); `allRows` are every stream row, with the committed agent trace joined by traceId (turns, tools, stream usage, model). */
+ *  tables use); `allRows` are every stream row, with the committed agent trace joined by traceId (turns, tools, stream usage, model).
+ *  A row flagged costUnknown is imputed up to its arm's per-task bound exactly as normaliseRunRow does for P1 and C0 rows
+ *  (usdImputed = bound - recorded, floored at 0); `job.costNotes` lists each such row. */
 export function loadJitJobs(root = JIT_RUNS_DIR) {
   if (!existsSync(root)) return { jobs: new Map(), sources: [] };
   const streams = readStreams(root);
@@ -114,27 +151,38 @@ export function loadJitJobs(root = JIT_RUNS_DIR) {
   const pairedKeys = new Set(h.rows.map(x => `${x.family}\u0000${x.mode}\u0000${x.task}`));
   const jobs = new Map();
   for (const s of streams) {
-    const job = jobs.get(s.family) ?? jobs.set(s.family, { rows: [], allRows: [], builds: [], report: null, sources: new Set() }).get(s.family);
+    const job = jobs.get(s.family) ?? jobs.set(s.family, { rows: [], allRows: [], builds: [], report: null, sources: new Set(), costNotes: [] }).get(s.family);
     job.sources.add(s.source);
+    const armDir = path.basename(path.dirname(s.source)), def = loadArmDef(root, s.family, armDir);
     for (const r of s.rows) {
       const details = parseDetails(r.oracleDetails);
       const fixedUsd = Object.entries(r.costBreakdown ?? {}).filter(([k]) => FIXED_COMPONENTS.has(k)).reduce((a, [, v]) => a + v, 0);
-      const trace = r.traceId ? loadJitTrace(root, s.family, path.basename(path.dirname(s.source)), r.traceId) : null;
+      const trace = r.traceId ? loadJitTrace(root, s.family, armDir, r.traceId) : null;
+      const usdReported = Math.max(0, r.costUsd - fixedUsd) + (r.orphanUsd ?? 0);
+      const bound = r.costUnknown ? jitRowBound(def, r) : null;
+      const usdImputed = bound ? Math.max(0, bound.usd - usdReported) : 0;
+      const paired = pairedKeys.has(`${s.family}\u0000${s.mode}\u0000${r.taskKey}`);
       const row = {
-        ...LEGACY_TAG, source: s.source, experiment: s.family, arm: path.basename(path.dirname(s.source)), mode: JIT_MODES[s.mode] ?? s.mode, model: trace?.model ?? null,
+        ...LEGACY_TAG, source: s.source, experiment: s.family, arm: armDir, mode: JIT_MODES[s.mode] ?? s.mode, model: trace?.model ?? null,
         family: String(r.taskKey).split(':')[0], taskKey: r.taskKey, taskHash: r.taskHash, trial: 0, unit: r.taskKey, seed: r.seed ?? seedOf(r.taskKey), difficulty: r.difficulty ?? diffOf(r.taskKey),
         pass: r.pass === true, score: typeof r.score === 'number' ? r.score : null, delivered: errCode(r.error) === null, schemaValid: details?.reason !== 'schema-invalid',
-        error: errCode(r.error), usdReported: Math.max(0, r.costUsd - fixedUsd) + (r.orphanUsd ?? 0), usdImputed: 0, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? null, at: r.at ?? null,
+        error: errCode(r.error), usdReported, usdImputed, costUnknown: !!r.costUnknown, ...(bound ? { boundUsd: bound.usd } : {}), latencyMs: r.latencyMs ?? null, at: r.at ?? null,
         turns: trace?.turns ?? null, tools: trace?.tools ?? null, calls: null, escalations: null, verdict: null, tokensOut: null, streamUsage: trace?.streamUsage ?? null, details,
         traceId: r.traceId ?? null, deliveredBy: r.delivered ?? null, traceCostUsd: trace?.costUsd ?? null,
       };
       job.allRows.push(row);
-      if (pairedKeys.has(`${s.family}\u0000${s.mode}\u0000${r.taskKey}`)) job.rows.push(row);
+      if (paired) job.rows.push(row);
+      if (r.costUnknown) {
+        const why = !bound ? 'no arm.json definition, so no bound: booked as recorded'
+          : usdImputed > 0 ? `imputed $${usdImputed.toFixed(3)} up to the $${bound.usd} per-task bound (arm.json ${bound.field})`
+            : `already at or above the $${bound.usd} per-task bound (arm.json ${bound.field}), nothing to impute`;
+        job.costNotes.push(`${s.family} ${JIT_MODES[s.mode] ?? s.mode} ${r.taskKey}: costUnknown, recorded $${usdReported.toFixed(3)}; ${why}${paired ? '' : ' (outside the paired set)'}`);
+      }
     }
   }
   for (const f of h.fixed) if (f.fixedUsd > 0) jobs.get(f.family).builds.push({ mode: JIT_MODES[f.mode] ?? f.mode, usd: f.fixedUsd, source: f.streamSource });
   for (const rep of h.report) jobs.get(rep.family).report = rep;
-  for (const j of jobs.values()) j.sources = [...j.sources].sort();
+  for (const j of jobs.values()) { j.sources = [...j.sources].sort(); j.costNotes.sort(); }
   return { jobs, sources: [...new Set(h.report.flatMap(r => r.sources))].sort() };
 }
 
@@ -156,9 +204,11 @@ export function pairJob(rows, { minCoverage = 0.5 } = {}) {
 }
 
 /**
- * Every archived LEGACY job, paired. Returns { jobs: [{id, kind, family, oracle, rows, builds, pairing, sources}], sources, notes }.
- * Builds: JIT compile components and external builds from harvest; C0 constructions; none for P1 (hand authoring, >= $24.91
- * [core-20261006/REPORT.md], is excluded exactly as the archived report excluded it; the report says so).
+ * Every archived LEGACY job, paired. Returns { jobs: [{id, kind, family, oracle, rows, builds, pairing, harvest, sources}], sources, notes }.
+ * Builds: JIT compile components and external builds from harvest; C0 constructions; for P1 the hand-workflow authoring cost
+ * (P1_HAND_AUTHORING, at least $24.91), charged in full to each hand mode. `harvest` carries the stream harvest's pairing report (tasks, paired,
+ * dropped modes, notes such as the tasks a mode ran outside the paired set) so the report can show what pairing dropped. `notes` lists every
+ * input that could not be loaded, every job that yielded no rows, and every stream row whose unobserved cost was imputed.
  */
 export function loadLegacyJobs({ archiveDir = ARCHIVE_DIR, jitRoot = JIT_RUNS_DIR } = {}) {
   const jobs = [], sources = [], notes = [];
@@ -172,17 +222,25 @@ export function loadLegacyJobs({ archiveDir = ARCHIVE_DIR, jitRoot = JIT_RUNS_DI
   }
   const jit = loadJitJobs(jitRoot);
   for (const def of LEGACY_JOB_DEFS) {
-    let rows = [], allRows = null, builds = [], jobSources = [];
-    if (def.kind === 'p1') { rows = p1.rows; jobSources = p1.source ? [p1.source.path] : []; }
-    else if (def.kind === 'c0') {
+    let rows = [], allRows = null, builds = [], jobSources = [], harvestReport = null, costNotes = [];
+    if (def.kind === 'p1') {
+      rows = p1.rows; jobSources = p1.source ? [p1.source.path] : [];
+      builds = P1_HAND_AUTHORING.modes.map(mode => ({ mode, usd: P1_HAND_AUTHORING.usd, lowerBound: P1_HAND_AUTHORING.lowerBound, source: P1_HAND_AUTHORING.source }));
+    } else if (def.kind === 'c0') {
       rows = c0.rows.filter(r => r.experiment === def.experiment);
       builds = cons.builds.filter(b => b.family === def.family).map(b => ({ mode: b.mode, usd: b.usd, source: cons.source?.path }));
       jobSources = [c0.source?.path, cons.source?.path].filter(Boolean);
-    } else { const j = jit.jobs.get(def.id); if (j) { rows = j.rows; allRows = j.allRows; builds = j.builds; jobSources = j.sources; } }
-    if (!rows.length) continue;
+    } else {
+      const j = jit.jobs.get(def.id);
+      if (j) { rows = j.rows; allRows = j.allRows; builds = j.builds; jobSources = j.sources; costNotes = j.costNotes;
+        // harvest.mjs says "booked as recorded" of a costUnknown row; this loader imputes it to the arm bound (costNotes), so that line is replaced by the cost note.
+        harvestReport = j.report ? { tasks: j.report.tasks, paired: j.report.paired, modes: j.report.modes, dropped: j.report.dropped, notes: j.report.notes.filter(n => !/costUnknown \(booked as recorded\)/.test(n)) } : null; }
+    }
+    if (!rows.length) { notes.push(`${def.id} (${def.kind}): no rows in this container, so the job is skipped and no diagnostic reads it`); continue; }
     const paired = pairJob(rows);
     const kept = new Set(paired.report.modes);
-    jobs.push({ ...def, rows: paired.rows, allRows: allRows ?? rows, builds: builds.filter(b => kept.has(b.mode)), pairing: paired.report, sources: jobSources });
+    notes.push(...costNotes);
+    jobs.push({ ...def, rows: paired.rows, allRows: allRows ?? rows, builds: builds.filter(b => kept.has(b.mode)), pairing: paired.report, harvest: harvestReport, sources: jobSources });
   }
   if (jit.sources.length) sources.push(...jit.sources.map(p => sourceOf(p, { rescued: true })));
   return { jobs, sources, notes };

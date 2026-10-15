@@ -380,8 +380,11 @@ export async function writeProcedure({ port, model, reasoning = 'medium', exampl
   return { ok: true, file, sha: sha16(md.text), words: md.words, truncatedWords: md.truncatedWords, checks: md.checks, costUsd: r.costUsd ?? 0, promptSha: sha16(prompt) };
 }
 // The pinned prompt texts (engine stamp S1: "sha256 of the selfCheck prompt paragraph, the procedure-writer prompt").
+// builderB1Template: the B1 builder prompt at fixed arguments (a change to its text changes the sha; build rows carry the
+// prompt shas, and a resume over builds made under other prompts is refused).
 export const promptShas = () => ({ selfCheckParagraph: sha16(SELF_CHECK_PARAGRAPH), procedureWriterSystem: sha16(PROCEDURE_WRITER_SYSTEM),
-  procedureWriterTemplate: sha16(procedureWriterPrompt({ examples: [], outputSchema: {} })), procedureLine: sha16(PROCEDURE_LINE) });
+  procedureWriterTemplate: sha16(procedureWriterPrompt({ examples: [], outputSchema: {} })), procedureLine: sha16(PROCEDURE_LINE),
+  builderB1Template: sha16(builderPrompt('B1', { probes: 3, minutes: 30, constructionModelUsd: 1.5, perTaskUsd: 1, scoreChecks: 0, models: ['m'], classes: 'c = m', kitDir: '/kit' })) });
 
 // ---------------------------------------------------------------------------------------------------------------------
 // ownerci leak scan (AUDIT F10): a solver that carries module text from the example tasks can rebuild the original module
@@ -783,23 +786,23 @@ function buildCost(stages, b, rec, book, label) {
 // The run
 
 function runArmsFor({ ctx, unit, fam, schemaTest, mode, k = null, build = null }) {
-  const { stages, budget, ports } = ctx, def = stages.arms[mode], job = unit.job, id = runArmId(mode, k);
+  const { stages, ports } = ctx, def = stages.arms[mode], job = unit.job, id = runArmId(mode, k), sig = { ctx, job: job.id, schemaTest, fam };
   if (def.factory === 'b0Call') {
     return withSignals(b0Call({ id, model: def.model, modelPort: ctx.metered({ timeoutMs: def.providerTimeoutMs ?? null }), reasoning: def.reasoning, maxTokens: def.maxTokens }),
-      { bound: def.maxBudgetUsdPerCall ?? 1, budget, schemaTest, fam });
+      { ...sig, kind: 'call', bound: def.maxBudgetUsdPerCall ?? 1, attemptOf: a => ({ exact: `${id}:${a.taskKey}:t${a.trial}` }) });
   }
   if (def.factory === 'b0Agent') {
     const budgetUsd = mode === 'agent-O' ? job.agentOBudgetUsd ?? def.budgetUsd : def.budgetUsd;
-    return withSignals(b0Agent({ id, model: def.model, budgetUsd, timeoutMs: def.timeoutMs, ...(ports.executor ? { executor: ports.executor } : {}) }), { bound: budgetUsd, budget, schemaTest, fam });
+    return withSignals(b0Agent({ id, model: def.model, budgetUsd, timeoutMs: def.timeoutMs, ...(ports.executor ? { executor: ports.executor } : {}) }), { ...sig, kind: 'session', model: def.model, bound: budgetUsd });
   }
   if (def.build?.factory === 'procedureWriter') {
     return withSignals(b0Agent({ id, model: def.run.model, budgetUsd: def.run.budgetUsd, timeoutMs: def.run.timeoutMs, procedureFile: build.artifactPath, ...(ports.executor ? { executor: ports.executor } : {}) }),
-      { bound: def.run.budgetUsd, budget, schemaTest, fam });
+      { ...sig, kind: 'session', model: def.run.model, bound: def.run.budgetUsd });
   }
   if (def.build?.factory === 'construct') {
     const arm = ports.script({ id, scriptPath: build.artifactPath, modelPort: ctx.metered(), perTaskUsd: def.run.perTaskUsd });
     const selfCheck = build.checkPath ? { checkPath: build.checkPath, sha: sha16(readFileSync(build.checkPath, 'utf8')), run: ports.selfCheck } : null;
-    return withSignals(arm, { bound: def.run.perTaskUsd, budget, schemaTest, fam, selfCheck });
+    return withSignals(arm, { ...sig, kind: 'script', bound: def.run.perTaskUsd, selfCheck, attemptOf: a => ({ prefix: `${id}:${a.taskKey}:t${a.trial}:` }) });
   }
   throw new Error(`${mode}: no runner for factory ${def.factory ?? def.build?.factory}`);
 }
@@ -822,6 +825,7 @@ async function ensureBuilds({ ctx, unit, plan, want }) {
   for (const { mode, k } of want) {
     const key = buildKey(unit.job.id, mode, k);
     let row = ctx.builds.get(key);
+    if (row && !sameStamp(row.stamp, recordStamp(ctx, mode))) throw new Error(`resume would mix build versions: ${key} was built under another plan, arm settings, prompts or prices; use a new work root and --out`);
     if (!row) {
       if (!plan.examples[k]) plan.examples[k] = (await planJob(ctx.stages, { ...unit, evalRole: null }, { ledger: ctx.ledger, examplesNeeded: [k] })).examples[k];
       const r = await buildLineage({ ctx, unit, mode, k, examples: plan.examples[k] });
@@ -842,11 +846,13 @@ async function runProbes({ ctx, unit, plan }) {
     for (let d = 0; d < (draws[mode] ?? 1); d++) {
       const key = `${job.id}|${mode}|${d}`;
       if (ctx.probes.has(key)) continue;
-      const id = `probe/${mode}`;
-      const inner = def.factory === 'b0Call'
+      const id = `probe/${mode}`, call = def.factory === 'b0Call';
+      const inner = call
         ? b0Call({ id, model: def.model, modelPort: ctx.metered({ timeoutMs: def.providerTimeoutMs ?? null }), reasoning: def.reasoning, maxTokens: def.maxTokens })
         : b0Agent({ id, model: def.model, budgetUsd: def.budgetUsd, timeoutMs: def.timeoutMs, ...(ctx.ports.executor ? { executor: ctx.ports.executor } : {}) });
-      const arm = withSignals(inner, { bound: def.factory === 'b0Call' ? def.maxBudgetUsdPerCall ?? 1 : def.budgetUsd, budget: ctx.budget, schemaTest, fam });
+      const bound = call ? def.maxBudgetUsdPerCall ?? 1 : def.budgetUsd;
+      const arm = withSignals(inner, { ctx, job: job.id, kind: call ? 'call' : 'session', model: def.model, bound, schemaTest, fam, ledgerKind: 'probe',
+        attemptOf: call ? a => ({ exact: `${id}:${a.taskKey}:t${a.trial}` }) : null });
       const workdir = path.join(ctx.live, 'work', `${ctx.stage.id}.${job.id}.probe`, mode, `${t.taskKey.replaceAll(':', '_')}_t${d}`);
       rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
       let r;
@@ -856,12 +862,14 @@ async function runProbes({ ctx, unit, plan }) {
         r = { output: null, costUsd: 0, error: { code: e.code ?? 'ARM_ERROR', message: String(e.message).slice(0, 300) }, meta: { delivered: false } };
       }
       const rec = { arm: id, taskKey: t.taskKey, trial: d, costUsd: r.costUsd ?? 0, imputedUsd: r.imputedUsd ?? 0, costUnknown: !!r.costUnknown, meta: r.meta, error: r.error };
-      const cost = def.factory === 'b0Call' ? priceCalls(ctx.stages.priceTable, ctx.book.exact(`${id}:${t.taskKey}:t${d}`), { boundUsd: def.timeoutChargeUsd ?? 1 })
+      const seq = r.meta?.callSeq;
+      const cost = call ? priceCalls(ctx.stages.priceTable, seq ? ctx.book.attempt({ exact: `${id}:${t.taskKey}:t${d}`, seq }) : ctx.book.exact(`${id}:${t.taskKey}:t${d}`), { boundUsd: def.timeoutChargeUsd ?? 1 })
         : priceSession(ctx.stages.priceTable, def.model, { messageUsage: r.meta?.messageUsage, streamUsage: r.meta?.streamUsage, costUnknown: !!r.costUnknown, boundUsd: def.budgetUsd, reportedUsd: r.costUsd ?? 0 });
       const row = { schema: 'need-probe-row/1', stage: ctx.stage.id, job: job.id, mode, draw: d, seed: t.seed, difficulty: t.difficulty, task: t.taskKey, taskHash: t.taskHash,
         delivered: !!r.meta?.delivered, schemaValid: r.meta?.schemaValid ?? null, deployableVerdict: r.meta?.deployableVerdict ?? null,
         outputHash: r.output != null ? sha16(canonical(r.output)) : null, turns: r.meta?.turns ?? null, usdReported: r6(chargeOf(rec, 0)), usdRepriced: r6(cost.measured), usdImputed: r6(cost.imputed),
-        tokens: cost.tokens, error: r.error?.code ?? null, nestedModelAttempts: r.meta?.nestedModelAttempts ?? 0, hiddenPathAttempts: r.meta?.hiddenPathAttempts ?? 0 };
+        tokens: cost.tokens, error: r.error?.code ?? null, nestedModelAttempts: r.meta?.nestedModelAttempts ?? 0, hiddenPathAttempts: r.meta?.hiddenPathAttempts ?? 0,
+        armHash: armHash(inner), stamp: recordStamp(ctx, mode) };
       ctx.probes.set(key, row); appendFileSync(ctx.probesFile, JSON.stringify(row) + '\n');
     }
   }
@@ -945,36 +953,213 @@ export function racingPlan({ table, job, stages, current, labelModes }) {
   return plan;
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Paid-run checks (DESIGN §7 M0 items 1 and 12; PREREG §4.4, §12, §13; L4/L7 held-out isolation through checkStages)
+
+const gitBlobSha256 = file => {
+  try {
+    const rel = path.relative(REPO, path.resolve(file));
+    if (rel.startsWith('..')) return null;
+    return createHash('sha256').update(execFileSync('git', ['show', `HEAD:${rel}`], { cwd: REPO, stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 26 })).digest('hex');
+  } catch { return null; }
+};
+const sha256Hex = text => createHash('sha256').update(text).digest('hex');
+
+/**
+ * What a paid run (no --dry) must pass before anything is spent. Returns { errors, deviations, stamp }; the run is refused
+ * on any error. deps (tests): { canonicalFile, preregFile, checkStagesFn, stampOf, frozenSha (file -> sha256 hex of its
+ * frozen text, default: its committed HEAD blob), ledger, policy }.
+ *  - approval: the stage's approved flag (the owner's gate);
+ *  - status: a frozen plan, or --allow-draft, which is recorded in report.deviations;
+ *  - the plan: the canonical stages.json (same bytes), or a spec whose sha256 the preregistration text names (an addendum
+ *    or a §13 deviation that lists it); its own approved/status fields never suffice;
+ *  - prereg-check checkStages on the plan with the preregistration text: no error (held-out seeds before Freeze, TRAIN jobs
+ *    on held-out seeds, held-out jobs on TRAIN seeds, envelopes, caps, ledger refusals, arm hashes, status agreement);
+ *  - every arm the stage runs: settingsSha === armSha(definition);
+ *  - the preregistration: the canonical file, equal to its frozen text (stages.json preregSha256 when the freeze records
+ *    it, else the committed HEAD blob: no uncommitted edit);
+ *  - the label-engine stamp (prereg-check stamp): a commit and no uncommitted change in the label engine;
+ *  - --jobs/--arms only with --deviation TEXT (both recorded in report.deviations).
+ */
+export function paidRunChecks({ plan, units, prereg, allowDraft = false, filters = null, deviation = null, deps = {} }) {
+  const { canonicalFile = STAGES_FILE, preregFile = PREREG_FILE, checkStagesFn = checkStages, stampOf = engineStamp, frozenSha = gitBlobSha256, ledger = undefined, policy = undefined } = deps;
+  const { stages, stage } = plan, errors = [], deviations = [];
+  if (stage.approved !== true) errors.push(`stage ${stage.id} is not approved (stages.json approved: ${stage.approved}); paid runs need the owner's gate`);
+  if (stages.status !== 'frozen') {
+    if (allowDraft) deviations.push({ kind: 'allow-draft', text: `--allow-draft: stage ${stage.id} ran on a ${stages.status} plan (not frozen); record it in PREREG §13 before its labels are used` });
+    else errors.push(`the plan is ${stages.status}, not frozen: freeze the preregistration first (or pass --allow-draft, recorded as a deviation)`);
+  }
+  const preregPath = prereg ? path.resolve(prereg) : null;
+  const preregText = preregPath && existsSync(preregPath) ? readFileSync(preregPath, 'utf8') : null;
+  if (!preregText) errors.push('a paid run needs --prereg (the preregistration text)');
+  const canonical = existsSync(canonicalFile) ? sha256Hex(readFileSync(canonicalFile)) : null;
+  if (plan.planSha256 !== canonical && !(preregText && preregText.includes(plan.planSha256)))
+    errors.push(`the plan ${plan.file} is neither the canonical stages.json nor a spec whose sha256 (${plan.planSha256}) the preregistration lists`);
+  if (preregText) {
+    if (preregPath !== path.resolve(preregFile) && sha256Hex(preregText) !== (existsSync(preregFile) ? sha256Hex(readFileSync(preregFile)) : null))
+      errors.push(`--prereg ${prereg} is not the preregistration (${path.relative(REPO, preregFile)})`);
+    const want = stages.preregSha256 ?? frozenSha(preregFile);
+    if (!want) errors.push('the preregistration has no frozen hash (stages.json preregSha256, or a committed file)');
+    else if (sha256Hex(preregText) !== want) errors.push(`the preregistration differs from its frozen text (sha256 ${sha256Hex(preregText).slice(0, 16)} vs ${String(want).slice(0, 16)})`);
+  }
+  const cs = checkStagesFn(stages, { preregText, ...(ledger ? { ledger } : {}), ...(policy ? { policy } : {}) });
+  for (const e of cs.errors ?? []) errors.push(`prereg-check: ${e}`);
+  for (const a of [...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort()) {
+    const def = stages.arms[a], h = armSha(def);
+    if (def.settingsSha !== h) errors.push(`arm ${a}: settingsSha ${def.settingsSha} != armSha ${h} (the arm was edited after its hash was preregistered)`);
+  }
+  let st = null;
+  try { st = stampOf(stages, { stage: stage.id }); } catch (e) { errors.push(`engine stamp: ${e.message}`); }
+  if (st) {
+    if (!st.labelEngine?.commit) errors.push('engine stamp: no commit (the label engine must run from a commit)');
+    if (st.labelEngine?.dirty) errors.push(`engine stamp: ${st.labelEngine.dirty} uncommitted change(s) in the label engine (files, trees or beds of this stage): commit before a paid run`);
+  }
+  if (filters) {
+    const what = `${filters.jobs ? `--jobs ${filters.jobs.join(',')}` : ''}${filters.jobs && filters.arms ? ' ' : ''}${filters.arms ? `--arms ${filters.arms.join(',')}` : ''}`;
+    if (!deviation) errors.push(`${what} on a paid run drops preregistered jobs or modes (racing then reads a subset of the modes): pass --deviation TEXT to record it`);
+    else deviations.push({ kind: 'filter', jobs: filters.jobs ?? null, arms: filters.arms ?? null, text: deviation });
+  } else if (deviation) deviations.push({ kind: 'note', text: deviation });
+  return { errors, deviations, stamp: st };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Spend: a work root from before the spend ledger, and the attempts that left no row
+
+/** Spend a work root recorded before it had a spend ledger, rebuilt conservatively from its files (each with its bound
+ *  where the spend was not observed): runner records and faulted trials, builds and construction faults, probes. */
+export function rebuildSpend({ live, stage, stages, book }) {
+  const exp = `${stage.id}.`, jobs = new Map((stages.jobs ?? []).map(j => [j.id, j]));
+  const boundOf = (jobId, armId) => {
+    const { mode } = parseArmId(armId), def = stages.arms?.[mode];
+    if (!def) return 1;
+    if (def.factory === 'b0Call') return def.maxBudgetUsdPerCall ?? 1;
+    if (def.factory === 'b0Agent') return mode === 'agent-O' ? jobs.get(jobId)?.agentOBudgetUsd ?? def.budgetUsd : def.budgetUsd;
+    return def.run?.budgetUsd ?? def.run?.perTaskUsd ?? 1;
+  };
+  const jobOf = e => String(e).slice(exp.length);
+  let rows = 0, faults = 0;
+  for (const r of readJsonl(path.join(live, 'results.jsonl')).filter(x => x.experiment?.startsWith(exp) && x.error?.code !== 'STAGE_CAP')) {
+    const bound = boundOf(jobOf(r.experiment), r.arm), { mode } = parseArmId(r.arm);
+    let c = chargeOf(r, bound);
+    if (stages.arms?.[mode]?.factory === 'b0Call') { const p = priceCalls(stages.priceTable, book.exact(`${r.arm}:${r.taskKey}:t${r.trial}`), { boundUsd: bound }); c = Math.max(c, p.measured + p.imputed); }
+    rows += c;
+  }
+  for (const f of readJsonl(faultsFileOf(path.join(live, 'results.jsonl'))).filter(x => x.experiment?.startsWith(exp))) {
+    const bound = boundOf(jobOf(f.experiment), f.arm);
+    faults += f.costUsd == null || f.costUnknown ? Math.max(bound, f.costUsd ?? 0) : f.costUsd;
+  }
+  const builds = sum(readJsonl(path.join(live, 'builds.jsonl')).filter(b => b.stage === stage.id).map(b => Math.max(b.usdReported ?? 0, (b.usdRepriced ?? 0) + (b.usdImputed ?? 0))));
+  const cfaults = sum(readJsonl(path.join(live, 'construction-faults.jsonl')).filter(f => f.stage === stage.id).map(f => Math.max(f.costUsd ?? 0, (f.usdRepriced ?? 0) + (f.usdImputed ?? 0))));
+  const probes = sum(readJsonl(path.join(live, 'probes.jsonl')).filter(p => p.stage === stage.id).map(p => Math.max(p.usdReported ?? 0, (p.usdRepriced ?? 0) + (p.usdImputed ?? 0))));
+  const parts = { rows, faults, builds, constructionFaults: cfaults, probes };
+  return { usd: sum(Object.values(parts)), parts };
+}
+
+/**
+ * The attempts of this stage that left no row, from the spend ledger: a trial attempt the runner kept aside as an
+ * environment fault (every attempt of a key but its recorded one), a start in flight when a process died (never settled:
+ * its bound), a build that raised. Returns per-job dollar parts { faulted, unrecorded } as {usdReported, usdRepriced, usdImputed}.
+ */
+export function unrecordedSpend({ spend, stageId, results }) {
+  const recorded = new Map();
+  for (const r of results) if (r.experiment?.startsWith(`${stageId}.`)) recorded.set(`${r.experiment.slice(stageId.length + 1)}|${r.arm}|${r.taskKey}|t${r.trial}`, r);
+  const byKey = new Map();
+  for (const e of spend.entries) if (!e.carried && e.key != null && (e.kind === 'trial' || e.kind === 'build' || e.kind === 'probe')) byKey.set(e.key, [...(byKey.get(e.key) ?? []), e]);
+  const zero = () => ({ usdReported: 0, usdRepriced: 0, usdImputed: 0 }), perJob = new Map();
+  const add = (job, part, e) => {
+    const j = perJob.get(job) ?? { faulted: zero(), unrecorded: zero(), faultedAttempts: 0, unrecordedAttempts: 0 };
+    const x = j[part];
+    if (e.settled) { x.usdReported += e.reported ?? 0; x.usdRepriced += e.repriced ?? 0; x.usdImputed += e.imputed ?? 0; } else x.usdImputed += e.bound ?? 0;
+    j[`${part}Attempts`] += 1; perJob.set(job, j);
+  };
+  for (const [key, es] of byKey) {
+    const job = es[0].job ?? String(key).split('|')[0];
+    if (es[0].kind === 'trial') {
+      const rec = recorded.get(key), live = rec && rec.error?.code !== 'STAGE_CAP';
+      const lastN = live ? Math.max(...es.filter(e => e.settled).map(e => e.n ?? 0)) : null;
+      for (const e of es) {
+        if (live && e.settled && e.n === lastN) continue;
+        add(job, e.settled ? 'faulted' : 'unrecorded', e);
+      }
+    } else for (const e of es) {
+      // builds: faults are in construction-faults.jsonl (counted there); a build that raised or never settled left no record.
+      if (!e.settled || e.error === 'ARM_ERROR') add(job, 'unrecorded', e);
+      else if (e.kind === 'probe' && !e.settled) add(job, 'unrecorded', e);
+    }
+  }
+  return perJob;
+}
+
+/** K4 per (job, mode): trial attempts and environment faults (results + results.faults) and build attempts and faults
+ *  (builds + construction-faults); an arm over the limit on either is invalid for the stage. */
+export function armFaultTable({ stageId, results, faults, builds, constructionFaults, limit = ENV_FAULT_LIMIT }) {
+  const t = new Map(), at = (job, mode) => { const k = `${job}|${mode}`; if (!t.has(k)) t.set(k, { job, mode, trialAttempts: 0, trialFaults: 0, buildAttempts: 0, buildFaults: 0 }); return t.get(k); };
+  const jobOfExp = e => String(e).slice(stageId.length + 1);
+  for (const r of results) if (r.experiment?.startsWith(`${stageId}.`) && r.error?.code !== 'STAGE_CAP') at(jobOfExp(r.experiment), parseArmId(r.arm).mode).trialAttempts += 1;
+  for (const f of faults) if (f.experiment?.startsWith(`${stageId}.`)) { const x = at(jobOfExp(f.experiment), parseArmId(f.arm).mode); x.trialAttempts += 1; x.trialFaults += 1; }
+  for (const b of builds) if (b.stage === stageId) at(b.job, b.mode).buildAttempts += 1;
+  for (const f of constructionFaults) if (f.stage === stageId) { const x = at(f.job, f.mode); x.buildAttempts += 1; x.buildFaults += 1; }
+  return [...t.values()].sort((a, b) => (a.job < b.job ? -1 : a.job > b.job ? 1 : a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : 0)).map(x => {
+    const share = x.trialAttempts ? x.trialFaults / x.trialAttempts : 0, buildShare = x.buildAttempts ? x.buildFaults / x.buildAttempts : 0;
+    return { schema: 'need-arm-faults/1', stage: stageId, ...x, share: r6(share), buildShare: r6(buildShare), limit, invalid: share > limit || buildShare > limit };
+  });
+}
+
+// Family-handed deployable tests the DESIGN names (§2 deployableVerdict) that a bed may not export yet as deployableCheck.
+export const FAMILY_HANDED_TESTS = Object.freeze({ codefix: 'visible tests', ownerci: 'visible tests', 'ebed-e8': 'smoke host' });
+
 /**
  * Run one stage. Returns the report object (also written as report.json and report.txt to the live dir and --out).
  * opts: { stageId, stagesFile, specFile, prereg, workRoot, out, dry, jobs, arms, concurrency, racing, withConditional,
- *         allowDraft, enforceGates (default: live runs only), ports (override: tests), stubForce (stub outcome overrides), log }
+ *         allowDraft, deviation, enforceGates (default: live runs only), ports (override: tests; 'stub' = stub ports built from
+ *         the plan), stubForce (stub outcome overrides), paidDeps (paidRunChecks deps: tests), log }
  */
 export async function labelRun(opts) {
   const { stageId, stagesFile = STAGES_FILE, specFile = null, prereg = null, dry = false, jobs = null, arms = null, concurrency = 4, racing = true,
-    withConditional = false, allowDraft = false, stubForce = {}, log = console.log, enforceGates = !dry } = opts;
-  const { stages, stage, source, planSha } = loadPlan({ stageId, stagesFile, specFile });
+    withConditional = false, allowDraft = false, deviation = null, stubForce = {}, log = console.log, enforceGates = !dry, paidDeps = {} } = opts;
+  if (!(Number.isInteger(concurrency) && concurrency >= 1 && concurrency <= 4)) throw new Error(`--concurrency must be an integer from 1 to 4 (agent concurrency at most 4, DESIGN §7), got ${concurrency}`);
+  const plan0 = loadPlan({ stageId, stagesFile, specFile }), { stages, stage, source, planSha } = plan0;
+  const { units: planned, skipped } = stageUnits(stages, stage, { jobs, arms, withConditional });
+  const deviations = [];
+  let stampRec = null;
   if (!dry) {
-    if (stage.approved !== true) throw new Error(`stage ${stage.id} is not approved (stages.json approved: ${stage.approved}); paid runs need the owner's gate`);
-    if (stages.status !== 'frozen' && !allowDraft) throw new Error(`the plan is ${stages.status}, not frozen: freeze the preregistration first (or pass --allow-draft and record a deviation)`);
-  }
-  if (concurrency > 4) throw new Error('agent concurrency is at most 4 (DESIGN §7)');
+    const v = paidRunChecks({ plan: plan0, units: planned, prereg, allowDraft, filters: jobs || arms ? { jobs, arms } : null, deviation, deps: paidDeps });
+    if (v.errors.length) throw Object.assign(new Error(`paid run refused (${v.errors.length} problem(s)): ${v.errors.join('; ')}`), { code: 'PAID_RUN_REFUSED', errors: v.errors });
+    deviations.push(...v.deviations); stampRec = v.stamp;
+  } else if (deviation) deviations.push({ kind: 'note', text: deviation });
   const id = stage.id.toLowerCase();
   const live = path.resolve(opts.workRoot ?? path.join(LIVE_ROOT, dry ? `${id}-dry` : id));
   if (live === REPO || live.startsWith(REPO + path.sep)) throw new Error(`the work root must be outside the repository: ${live}`);
   const out = path.resolve(opts.out ?? (dry ? path.join(live, 'dry-out') : path.join(OUT_ROOT, id)));
+  // The spend ledger lives in the work root and in --out. A new work root over an --out that holds this stage's spend
+  // would restart the meter from $0: refused.
+  const liveSpendFile = path.join(live, SPEND_FILE), outSpendFile = path.join(out, SPEND_FILE);
+  {
+    const ls = loadSpend([liveSpendFile], stage.id), os = loadSpend([outSpendFile], stage.id);
+    const foreign = [...os.ids].filter(x => !ls.ids.has(x));
+    if (foreign.length) throw Object.assign(new Error(`--out ${out} already holds $${os.totalUsd.toFixed(2)} of stage ${stage.id} spend (${foreign.length} spend-ledger entr${foreign.length === 1 ? 'y' : 'ies'}) that the work root ${live} does not hold: resume with the work root that spent it, or use another --out`), { code: 'SPEND_ELSEWHERE' });
+  }
   mkdirSync(live, { recursive: true }); mkdirSync(out, { recursive: true });
+  // The label-engine stamp of a paid run: written before the first paid call; a resume on another engine is refused.
+  if (stampRec) {
+    const sf = path.join(out, STAMP_FILE);
+    if (existsSync(sf)) {
+      const prev = JSON.parse(readFileSync(sf, 'utf8')), d = stampDiff(prev.labelEngine, stampRec.labelEngine);
+      if (!d.ok) throw Object.assign(new Error(`resume on a changed label engine: ${d.deviations.slice(0, 5).map(x => x.key).join(', ')} differ from ${sf}; finish or analyse the stage as it stands`), { code: 'ENGINE_CHANGED' });
+    } else writeFileSync(sf, JSON.stringify(stampRec, null, 1) + '\n');
+    copyFileSync(sf, path.join(live, STAMP_FILE));
+  }
   const ledger = loadLedger();
-  const { units: planned, skipped } = stageUnits(stages, stage, { jobs, arms, withConditional });
   // The negative control (K2) runs first, then the stage's own order.
   const units = [...planned.filter(u => u.job.id === R0_CONTROL.job), ...planned.filter(u => u.job.id !== R0_CONTROL.job)];
 
-  // Plan every job first (seed refusals stop the stage before anything is spent).
-  const plans = new Map(), allTasks = [];
+  // Plan every job first (seed refusals stop the stage before anything is spent). Reserve seeds taken as replacements by
+  // other stages (their reports beside --out) or by an earlier job of this stage are not handed out again.
+  const plans = new Map(), allTasks = [], taken = priorReplacementSeeds(path.dirname(out), stage.id);
   for (const u of units) {
     const lineageModes = u.arms.filter(a => lineageOf(stages.arms[a]));
     const examplesNeeded = [...new Set(lineageModes.flatMap(a => Array.from({ length: stages.arms[a].lineages ?? 1 }, (_, i) => i + 1)))];
-    const p = await planJob(stages, u, { ledger, examplesNeeded, probe: u.probeArms.length > 0 });
+    const p = await planJob(stages, u, { ledger, examplesNeeded, probe: u.probeArms.length > 0, taken });
     plans.set(u.job.id, p);
     allTasks.push(...p.evalTasks, ...Object.values(p.examples).flat(), ...(p.probeTask ? [p.probeTask] : []));
   }
@@ -983,9 +1168,9 @@ export async function labelRun(opts) {
   }))].sort();
   const constructModels = [...new Set(units.flatMap(u => u.arms).filter(a => stages.arms[a].build?.factory === 'construct').flatMap(a => stages.arms[a].build.models))].sort();
   if (constructModels.length && gatewayModels.join() !== constructModels.join()) throw new Error(`the gateway models (${gatewayModels.join(', ')}) must equal the construction session models (${constructModels.join(', ')})`);
-  const ports = opts.ports ?? (gatewayModels.length || units.length
-    ? (dry ? stubPorts({ tasks: allTasks, models: gatewayModels.length ? gatewayModels : ['claude-haiku-5-5'], force: stubForce }) : livePorts({ live, models: gatewayModels.length ? gatewayModels : ['claude-haiku-5-5'] }))
-    : null);
+  const portModels = gatewayModels.length ? gatewayModels : ['claude-haiku-5-5'];
+  const ports = opts.ports === 'stub' ? stubPorts({ tasks: allTasks, models: portModels, force: stubForce })
+    : opts.ports ?? (gatewayModels.length || units.length ? (dry ? stubPorts({ tasks: allTasks, models: portModels, force: stubForce }) : livePorts({ live, models: portModels })) : null);
   if (dry && ports?.kind !== 'stub' && !opts.ports) throw new Error('--dry must run on stub ports');
   if (ports && ports.kitBase === null) ports.kitBase = path.join(live, 'kit');
 
@@ -993,21 +1178,47 @@ export async function labelRun(opts) {
   const book = new CallBook(path.join(live, 'calls.jsonl'));
   const builds = new Map(readJsonl(buildsFile).filter(b => b.stage === stage.id).map(b => [buildKey(b.job, b.mode, b.lineage), b]));
   const probes = new Map(readJsonl(probesFile).filter(p => p.stage === stage.id).map(p => [`${p.job}|${p.mode}|${p.draw}`, p]));
-  // Spend already booked by an earlier process of this stage (resume): runner records, builds and probes, as reported.
-  const prior = sum(readJsonl(resultsFile).filter(r => r.experiment?.startsWith(`${stage.id}.`)).map(r => (r.costUsd ?? 0) + (r.imputedUsd ?? 0)))
-    + sum([...builds.values()].map(b => (b.usdReported ?? 0) + (b.usdImputed ?? 0))) + sum([...probes.values()].map(p => p.usdReported ?? 0));
-  const budget = new StageBudget(stage.capUsd ?? 0, prior);
-  const ctx = { stages, stage, live, resultsFile, buildsFile, probesFile, book, builds, probes, budget, ports, ledger, concurrency, log, notRun: [],
-    metered: ({ timeoutMs = null } = {}) => meteredPort(ports.model, { book, timeoutMs }) };
-  let stopped = null;
   // Racing decisions are persisted (racing.jsonl): a resume replays the recorded rounds instead of re-deciding them on data
   // that already holds their top-ups, so a rerun reaches the same rows and the same report.
   const racingFile = path.join(live, 'racing.jsonl');
   const decided = new Map(readJsonl(racingFile).filter(e => e.stage === stage.id).map(e => [`${e.round}|${e.job}`, e]));
+  // Resume never mixes versions: every build, probe and racing record of this stage must carry the current stamp.
+  const vctx = { stages, stageSha: stageSha(stages, stage), prompts: promptShas() };
+  const mixed = [
+    ...[...builds.values()].filter(b => !sameStamp(b.stamp, recordStamp(vctx, b.mode))).map(b => `build ${b.job}/${b.mode}#${b.lineage}`),
+    ...[...probes.values()].filter(p => !sameStamp(p.stamp, recordStamp(vctx, p.mode))).map(p => `probe ${p.job}/${p.mode}/${p.draw}`),
+    ...[...decided.values()].filter(e => !sameStamp(e.stamp, recordStamp(vctx))).map(e => `racing round ${e.round} ${e.job}`),
+  ];
+  if (mixed.length) throw Object.assign(new Error(`resume would mix versions: ${mixed.length} record(s) of stage ${stage.id} were made under another plan, arm settings, prompts or prices (${mixed.slice(0, 4).join(', ')}${mixed.length > 4 ? ', ...' : ''}): use a new work root and --out`), { code: 'RESUME_MIXES_VERSIONS' });
+
+  // The meter at start: the spend ledger (work root and --out); a work root from before the ledger carries its files' spend.
+  const spendFiles = [liveSpendFile, outSpendFile];
+  let spend0 = loadSpend(spendFiles, stage.id);
+  const budget = new StageBudget(stage.capUsd ?? 0, 0, { stage: stage.id, files: spendFiles, attempts: spend0.attempts });
+  // Entries the work root holds and --out does not (a changed --out) are copied, so --out holds the whole ledger.
+  { const os = loadSpend([outSpendFile], stage.id); for (const e of readJsonl(liveSpendFile)) if (e.stage === stage.id && !os.ids.has(e.id) && path.resolve(outSpendFile) !== path.resolve(liveSpendFile)) appendFileSync(outSpendFile, JSON.stringify(e) + '\n'); }
+  if (!spend0.ids.size) {
+    const legacy = rebuildSpend({ live, stage, stages, book });
+    if (legacy.usd > 0) { budget.write({ op: 'carry', id: `carry-${randomUUID()}`, charged: legacy.usd, parts: legacy.parts, why: 'spend recorded before the spend ledger, rebuilt from the work root files' }); spend0 = loadSpend(spendFiles, stage.id); }
+  }
+  budget.spentUsd = spend0.totalUsd;
+  const ctx = { stages, stage, live, resultsFile, buildsFile, probesFile, book, builds, probes, budget, ports, ledger, concurrency, log, notRun: [], stageSha: vctx.stageSha, prompts: vctx.prompts,
+    metered: ({ timeoutMs = null } = {}) => meteredPort(ports.model, { book, timeoutMs }) };
+  let stopped = null;
   const racingLog = new Map(decided);
+  const k2 = (u, plan) => {
+    const gate = r0Gate(jobRows(ctx, u, plan).rows, u.job.id);
+    return gate && !gate.ok && enforceGates ? `K2: direct-H on ${u.job.id} ${gate.perDraw.join(', ')} (needs >= ${R0_CONTROL.minPass}/${R0_CONTROL.of} per draw): fix the anchor or the harness` : null;
+  };
   try {
     for (const u of units) {
       const plan = plans.get(u.job.id), fam = await loadFamily(u.job.family), schemaTest = schemaTestOf(fam);
+      // K2 before spend: on the negative control, direct-H (both draws) runs alone first; below 10/12 on a draw nothing
+      // else of the stage starts (no build, no other mode, no other job).
+      if (u.job.id === R0_CONTROL.job && u.arms.includes(R0_CONTROL.mode)) {
+        await runGroups({ ctx, unit: u, plan, groups: [{ arms: [runArmsFor({ ctx, unit: u, fam, schemaTest, mode: R0_CONTROL.mode })], trials: replicatesOf(stages.arms[R0_CONTROL.mode]) }] });
+        if ((stopped = k2(u, plan))) break;
+      }
       // Builds (lineage modes), then every mode on the evaluation tasks, grouped by replicate count.
       const want = u.arms.filter(a => lineageOf(stages.arms[a])).flatMap(a => Array.from({ length: stages.arms[a].lineages ?? 1 }, (_, i) => ({ mode: a, k: i + 1 })));
       const built = await ensureBuilds({ ctx, unit: u, plan, want });
@@ -1017,9 +1228,7 @@ export async function labelRun(opts) {
       const lineageArms = built.filter(b => !b.failed && !buildVoided(b)).map(b => runArmsFor({ ctx, unit: u, fam, schemaTest, mode: b.mode, k: b.lineage, build: b }));
       await runGroups({ ctx, unit: u, plan, groups: [...[...byTrials].map(([trials, a]) => ({ arms: a, trials })), { arms: lineageArms, trials: 1 }] });
       if (u.probeArms.length) await runProbes({ ctx, unit: u, plan });
-      // K2: the negative control runs first; below 10/12 on any direct-H draw the anchor or the harness is broken.
-      const gate = r0Gate(jobRows(ctx, u, plan).rows, u.job.id);
-      if (gate && !gate.ok && enforceGates) { stopped = `K2: direct-H on ${u.job.id} ${gate.perDraw.join(', ')} (needs >= ${R0_CONTROL.minPass}/${R0_CONTROL.of} per draw): fix the anchor or the harness`; break; }
+      if ((stopped = k2(u, plan))) break;
     }
     // Racing: re-label each complete job at the headline cell; top up where the best class is not yet confident.
     for (let round = 1; racing && !stopped && round <= (stages.grid?.racingMaxPerMode ?? 4); round++) {
@@ -1037,7 +1246,7 @@ export async function labelRun(opts) {
           try { p = racingPlan({ table: t.table, job: u.job.id, stages, current, labelModes }); }
           catch (e) { racingLog.set(key, { stage: stage.id, round, job: u.job.id, skipped: String(e.message).slice(0, 200) }); continue; }
           rp = { stage: stage.id, round, job: u.job.id, pBest: p.pBest ? { workflow: r6(p.pBest.workflow), 'no-workflow': r6(p.pBest['no-workflow']) } : null, label: p.label,
-            acceptable: p.acceptable, add: p.add, agentOTasks: p.agentOTasks };
+            acceptable: p.acceptable, add: p.add, agentOTasks: p.agentOTasks, stamp: recordStamp(ctx) };
           appendFileSync(racingFile, JSON.stringify(rp) + '\n'); decided.set(key, rp);
         }
         racingLog.set(key, rp);
@@ -1065,8 +1274,13 @@ export async function labelRun(opts) {
   } finally { ports?.close?.(); }
   if (!stopped && budget.refused) stopped = `STAGE_CAP: $${budget.capUsd} reached; ${budget.refused} start(s) refused (K5: analysed as it stands, no reruns)`;
 
-  // Rows, builds, probes, report.
+  // Rows, builds, probes, faults, spend, report.
+  const results = readJsonl(resultsFile), runFaultRecs = readJsonl(faultsFileOf(resultsFile)), cfaults = readJsonl(path.join(live, 'construction-faults.jsonl')).filter(f => f.stage === stage.id);
+  const spend = loadSpend(spendFiles, stage.id), unrec = unrecordedSpend({ spend, stageId: stage.id, results });
   const allRows = [], allBuilds = [], jobsOut = [];
+  const zero = () => ({ usdReported: 0, usdRepriced: 0, usdImputed: 0 });
+  const tot = rs => ({ usdReported: r6(sum(rs.map(r => r.usdReported ?? 0))), usdRepriced: r6(sum(rs.map(r => r.usdRepriced ?? 0))), usdImputed: r6(sum(rs.map(r => r.usdImputed ?? 0))) });
+  const cfCost = f => ({ usdReported: f.usdReported ?? f.costUsd ?? 0, usdRepriced: f.usdRepriced ?? 0, usdImputed: f.usdImputed ?? (f.usdRepriced == null ? f.costUsd ?? 0 : 0) });
   for (const u of units) {
     const plan = plans.get(u.job.id);
     const { rows, builds: bs, capped } = jobRows(ctx, u, plan);
@@ -1080,59 +1294,84 @@ export async function labelRun(opts) {
       const errors = {};
       for (const r of rs) if (r.error) errors[r.error] = (errors[r.error] ?? 0) + 1;
       modes[m] = { rows: rs.length, pass: rs.filter(r => r.pass).length, delivered: rs.filter(r => r.delivered).length, schemaInvalid: rs.filter(r => r.delivered && r.schemaValid === false).length,
-        selfPass: rs.filter(r => r.selfVerdict === 'pass').length, selfFail: rs.filter(r => r.selfVerdict === 'fail').length, voidedRows: rs.filter(r => r.void).length,
-        reps: [...new Set(rs.map(r => r.rep))].length, usdReported: r6(sum(rs.map(r => r.usdReported)) + sum(bsm.map(b => b.usdReported))), usdRepriced: r6(usd), usdImputed: r6(imp),
-        imputedShare: usd + imp > 0 ? r6(imp / (usd + imp)) : 0, notRepriced: rs.filter(r => !r.repriced).length, errors };
+        selfPass: rs.filter(r => r.selfVerdict === 'pass').length, selfFail: rs.filter(r => r.selfVerdict === 'fail').length, selfCheckErrors: rs.filter(r => r.selfCheckError).length,
+        voidedRows: rs.filter(r => r.void).length, reps: [...new Set(rs.map(r => r.rep))].length, usdReported: r6(sum(rs.map(r => r.usdReported)) + sum(bsm.map(b => b.usdReported))),
+        usdRepriced: r6(usd), usdImputed: r6(imp), imputedShare: usd + imp > 0 ? r6(imp / (usd + imp)) : 0, notRepriced: rs.filter(r => !r.repriced).length, errors };
     }
-    const runFaults = readJsonl(path.join(live, 'results.faults.jsonl')).filter(f => f.experiment === `${stage.id}.${u.job.id}`).length;
-    jobsOut.push({ job: u.job.id, cluster: u.job.cluster, split: u.job.split, family: u.job.family, evalRole: u.evalRole, tasks: plan.evalTasks.length,
+    const runFaults = runFaultRecs.filter(f => f.experiment === `${stage.id}.${u.job.id}`).length;
+    const jp = [...ctx.probes.values()].filter(p => p.job === u.job.id), jcf = cfaults.filter(f => f.job === u.job.id).map(cfCost), ju = unrec.get(u.job.id);
+    const jobCharged = sum([...rows, ...voidedBuilds, ...jp, ...jcf].map(r => (r.usdRepriced ?? 0) + (r.usdImputed ?? 0)))
+      + (ju ? ju.faulted.usdRepriced + ju.faulted.usdImputed + ju.unrecorded.usdRepriced + ju.unrecorded.usdImputed : 0);
+    const est = Number.isFinite(u.job.estUsd) && u.job.estUsd > 0 ? u.job.estUsd : null;
+    jobsOut.push({ job: u.job.id, cluster: u.job.cluster, split: u.job.split, family: u.job.family, bed: plan.bed, evalRole: u.evalRole, tasks: plan.evalTasks.length,
       seedChecks: plan.seedChecks, replacements: plan.replacements, arms: [...u.arms].sort(), probeArms: [...u.probeArms].sort(), modes,
       builds: voidedBuilds.map(b => ({ mode: b.mode, lineage: b.lineage, exampleSet: b.exampleSet, failed: b.failed, error: b.error ?? null,
         void: b.void ?? ((b.hiddenPathAttempts > 0 || b.nestedModelAttempts > 0) ? `hiddenPathAttempts=${b.hiddenPathAttempts}, nestedModelAttempts=${b.nestedModelAttempts}` : null),
         usdReported: b.usdReported, usdRepriced: b.usdRepriced, usdImputed: b.usdImputed, runSolverCalls: b.runSolverCalls ?? null, selfCheck: b.factory === 'construct' ? !!b.checkPath : null,
-        artifactSha: b.artifactSha ?? null })),
-      probes: [...ctx.probes.values()].filter(p => p.job === u.job.id).sort((a, b) => (a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : a.draw - b.draw))
+        pathMentions: b.pathMentions ?? null, artifactSha: b.artifactSha ?? null })),
+      probes: jp.sort((a, b) => (a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : a.draw - b.draw))
         .map(p => ({ mode: p.mode, draw: p.draw, delivered: p.delivered, schemaValid: p.schemaValid, outputHash: p.outputHash, usdRepriced: p.usdRepriced, usdImputed: p.usdImputed, error: p.error })),
-      notRunCap: capped.length, envFaultedTrials: runFaults, pairing: t.error ? `incomplete: ${t.error}` : 'ok',
+      notRunCap: capped.length, envFaultedTrials: runFaults, constructionFaults: jcf.length, faultedAttempts: ju?.faultedAttempts ?? 0, unrecordedAttempts: ju?.unrecordedAttempts ?? 0,
+      usdCharged: r6(jobCharged), estUsd: est, k7Ratio: est ? r6(jobCharged / est) : null, pairing: t.error ? `incomplete: ${t.error}` : 'ok',
       r0Control: r0Gate(rows, u.job.id) ?? undefined });
   }
   const allProbes = [...ctx.probes.values()].sort((a, b) => (a.job < b.job ? -1 : a.job > b.job ? 1 : a.mode < b.mode ? -1 : a.mode > b.mode ? 1 : a.draw - b.draw));
-  const tot = rs => ({ usdReported: r6(sum(rs.map(r => r.usdReported ?? 0))), usdRepriced: r6(sum(rs.map(r => r.usdRepriced ?? 0))), usdImputed: r6(sum(rs.map(r => r.usdImputed ?? 0))) });
-  const parts = { usdTaskRows: tot(allRows), usdBuilds: tot(allBuilds), usdProbes: tot(allProbes) };
+  const sumPart = (xs, k) => { const o = zero(); for (const x of xs) for (const f of Object.keys(o)) o[f] += x[k][f]; return Object.fromEntries(Object.entries(o).map(([f, v]) => [f, r6(v)])); };
+  const parts = { usdTaskRows: tot(allRows), usdBuilds: tot(allBuilds), usdProbes: tot(allProbes), usdFaultedTrials: sumPart([...unrec.values()], 'faulted'),
+    usdConstructionFaults: tot(cfaults.map(cfCost)), usdUnrecorded: sumPart([...unrec.values()], 'unrecorded') };
   const measured = sum(Object.values(parts).map(x => x.usdRepriced)), imputed = sum(Object.values(parts).map(x => x.usdImputed));
+  const limit = stages.grid?.envFaultLimit ?? ENV_FAULT_LIMIT;
+  const armFaults = armFaultTable({ stageId: stage.id, results, faults: runFaultRecs, builds: allBuilds, constructionFaults: cfaults, limit });
+  const k7Limit = 1.5;
   const report = {
-    schema: REPORT_SCHEMA, stage: stage.id, grade: stage.grade ?? null, dry, ports: ports?.kind ?? null, source, planSha, planStatus: stages.status, approved: stage.approved ?? null,
+    schema: REPORT_SCHEMA, stage: stage.id, grade: stage.grade ?? null, dry, ports: ports?.kind ?? null, source, planSha, stageSha: vctx.stageSha, planStatus: stages.status, approved: stage.approved ?? null,
     preregSha: prereg && existsSync(prereg) ? sha16(readFileSync(prereg, 'utf8')) : null, capUsd: stage.capUsd ?? null, priceTable: stages.priceTable?.id ?? null,
-    prompts: promptShas(), concurrency, racing,
-    arms: Object.fromEntries([...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => [a, { settingsSha: stages.arms[a].settingsSha ?? null,
+    prompts: promptShas(), concurrency, racing, engine: stampRec ? { stampSha: sha16(canonicalJson(stampRec)), commit: stampRec.labelEngine?.commit ?? null } : null,
+    arms: Object.fromEntries([...new Set(units.flatMap(u => [...u.arms, ...u.probeArms]))].sort().map(a => [a, { settingsSha: stages.arms[a].settingsSha ?? null, computedSha: armSha(stages.arms[a]),
       runtimeArmHashes: [...new Set(allRows.filter(r => r.mode === a).map(r => r.armHash))].sort() }])),
-    jobs: jobsOut.sort((a, b) => (a.job < b.job ? -1 : 1)), skipped,
-    racing: [...racingLog.values()].sort((a, b) => a.round - b.round || (a.job < b.job ? -1 : a.job > b.job ? 1 : 0)).map(({ stage: _s, ...e }) => e),
+    jobs: jobsOut.sort((a, b) => (a.job < b.job ? -1 : 1)), skipped, deviations,
+    racing: [...racingLog.values()].sort((a, b) => a.round - b.round || (a.job < b.job ? -1 : a.job > b.job ? 1 : 0)).map(({ stage: _s, stamp: _t, ...e }) => e),
+    armFaults: armFaults.map(({ schema: _s, stage: _t, ...x }) => x),
+    validity: {
+      envFaultLimit: limit, invalidArms: armFaults.filter(x => x.invalid).map(x => `${x.job}/${x.mode}`),
+      noSelfCheck: allBuilds.filter(b => b.factory === 'construct' && b.selfCheck && !b.failed && !b.checkPath).map(b => `${b.job}/${b.mode}#${b.lineage}`).sort(),
+      selfCheckErrors: allRows.filter(r => r.selfCheckError).length,
+      deployableGaps: units.filter(u => FAMILY_HANDED_TESTS[u.job.family] && !jobsDeployable(u.job.family)).map(u => ({ job: u.job.id, family: u.job.family, named: FAMILY_HANDED_TESTS[u.job.family], used: 'schema validity only' })),
+      pathMentionsBuilds: allBuilds.filter(b => (b.pathMentions ?? 0) > (b.hiddenPathAttempts ?? 0)).length,
+    },
+    k7: { limit: k7Limit, perJobUsd: r6(jobsOut.length ? sum(jobsOut.map(j => j.usdCharged)) / jobsOut.length : 0), over: jobsOut.filter(j => j.k7Ratio != null && j.k7Ratio > k7Limit).map(j => j.job) },
     totals: { rows: allRows.length, builds: allBuilds.length, probes: allProbes.length, ...parts, usdMeasured: r6(measured), usdImputed: r6(imputed), usdCharged: r6(measured + imputed),
       imputedShare: measured + imputed > 0 ? r6(imputed / (measured + imputed)) : 0, notRun: ctx.notRun.length + jobsOut.reduce((a, j) => a + j.notRunCap, 0),
-      constructionFaults: readJsonl(path.join(live, 'construction-faults.jsonl')).filter(f => f.stage === stage.id).length,
-      envFaultedTrials: readJsonl(path.join(live, 'results.faults.jsonl')).filter(f => f.experiment?.startsWith(`${stage.id}.`)).length },
+      constructionFaults: cfaults.length, envFaultedTrials: runFaultRecs.filter(f => f.experiment?.startsWith(`${stage.id}.`)).length,
+      spend: { meterUsd: r6(spend.totalUsd), settledUsd: r6(spend.settledUsd), inFlightUsd: r6(spend.openUsd), carriedUsd: r6(spend.carriedUsd), capUsd: stage.capUsd ?? null } },
     stopped,
     rules: { rowCost: 'usdRepriced = measured tokens at the pinned table; usdImputed = bound minus measured for killed sessions and timeouts; total = sum',
-      voids: 'lineage: build row hiddenPathAttempts or nestedModelAttempts > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept)',
+      voids: 'lineage: build row hiddenPathAttempts or nestedModelAttempts > 0, or any of its agent sessions; agent draw: the same on the row (pass and delivered set false, rawPass kept). hiddenPathAttempts counts paths a tool use accesses (file-tool paths, Bash without heredoc bodies), never Write/Edit content or Grep patterns, and never a path the task states; pathMentions (every string scanned) is for review by hand',
       copyScan: `ownerci: more than ${COPY_SCAN.maxLines} distinct example lines of >= ${COPY_SCAN.minLineChars} characters in solve.mjs voids the lineage`,
       racing: 'headline cell; P(best class) < confident adds one draw or lineage per acceptable mode (max racingMaxPerMode); agent-O second draw on draw-1 per-task acceptable tasks',
-      cap: 'a start needs its bound (call $1, agent budget, script perTaskUsd, build builder + gateway budget) to fit beside reported spend and work in flight',
-      gates: `K2 stops the stage when direct-H on wbed-r0 is below 10/12 on a draw (${enforceGates ? 'enforced' : 'reported only'})` },
+      cap: 'the cap meter (PREREG §12): each start at max(reported, re-priced), at least its bound when unobserved (call $1, agent budget, script perTaskUsd, build builder + gateway budget), every start in flight at its bound; persisted in spend.jsonl (work root and --out); totals.spend.meterUsd',
+      charged: 'totals.usdCharged = measured + imputed over task rows, builds, probes, faulted trial attempts, construction faults and attempts that left no record (the K7 figure per job: jobs[].usdCharged)',
+      faults: `K4: an arm whose trial or build attempts are more than ${limit * 100}% environment faults is invalid (validity.invalidArms; arm-faults.jsonl)`,
+      gates: `K2 stops the stage when direct-H on wbed-r0 is below 10/12 on a draw, before any other mode of the stage starts (${enforceGates ? 'enforced' : 'reported only'})` },
   };
   writeFileSync(path.join(live, 'rows.jsonl'), allRows.map(r => JSON.stringify(r)).join('\n') + (allRows.length ? '\n' : ''));
   writeFileSync(path.join(live, 'builds.final.jsonl'), allBuilds.map(b => JSON.stringify(b)).join('\n') + (allBuilds.length ? '\n' : ''));
+  writeFileSync(path.join(live, ARM_FAULTS_FILE), armFaults.map(x => JSON.stringify(x)).join('\n') + (armFaults.length ? '\n' : ''));
   writeFileSync(path.join(live, 'report.json'), stableJson(report));
   writeFileSync(path.join(live, 'report.txt'), renderReport(report));
   copyOut(live, out, allBuilds);
   return report;
 }
+const deployableOf = new Map();
+function jobsDeployable(family) { return deployableOf.get(family) === true; }
 
-/** Copy the stage's result files and small build artefacts into --out (the repository side). */
+/** Copy the stage's result files and small build artefacts into --out (the repository side). The spend ledger is written
+ *  to --out as it grows, never copied over. */
 export function copyOut(live, out, builds) {
   mkdirSync(out, { recursive: true });
-  for (const f of ['results.jsonl', 'results.faults.jsonl', 'calls.jsonl', 'builds.jsonl', 'builds.final.jsonl', 'construction-faults.jsonl', 'probes.jsonl', 'racing.jsonl', 'rows.jsonl', 'report.json', 'report.txt']) {
-    if (existsSync(path.join(live, f))) copyFileSync(path.join(live, f), path.join(out, f));
+  for (const f of ['results.jsonl', 'results.faults.jsonl', 'calls.jsonl', 'builds.jsonl', 'builds.final.jsonl', 'construction-faults.jsonl', 'probes.jsonl', 'racing.jsonl', 'rows.jsonl',
+    ARM_FAULTS_FILE, 'report.json', 'report.txt']) {
+    if (existsSync(path.join(live, f)) && path.resolve(live, f) !== path.resolve(out, f)) copyFileSync(path.join(live, f), path.join(out, f));
   }
   for (const b of builds) {
     const dir = b.artifactPath ? path.dirname(b.artifactPath) : null;
@@ -1147,31 +1386,42 @@ export function copyOut(live, out, builds) {
 export function renderReport(rep) {
   const usd = x => `$${x.toFixed(4)}`, L = [];
   L.push(`need label run ${rep.stage} (${rep.grade ?? '?'})${rep.dry ? ' DRY: stub ports, $0, outcomes are fake' : ''}`);
-  L.push(`plan ${rep.source} ${rep.planSha} (${rep.planStatus}, approved ${rep.approved}); cap $${rep.capUsd}; prices ${rep.priceTable}; racing ${rep.racing ? 'on' : 'off'}`);
+  L.push(`plan ${rep.source} ${rep.planSha} (${rep.planStatus}, approved ${rep.approved}); stage ${rep.stageSha}; cap $${rep.capUsd}; prices ${rep.priceTable}; racing ${rep.racing ? 'on' : 'off'}`);
   L.push(`prompts: ${Object.entries(rep.prompts).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+  if (rep.engine) L.push(`engine stamp ${rep.engine.stampSha} (commit ${rep.engine.commit})`);
+  for (const d of rep.deviations ?? []) L.push(`DEVIATION (${d.kind}): ${d.text}${d.jobs || d.arms ? ` [jobs ${d.jobs?.join(',') ?? 'all'}; arms ${d.arms?.join(',') ?? 'all'}]` : ''}`);
   if (rep.stopped) L.push(`STOPPED: ${rep.stopped}`);
   for (const j of rep.jobs) {
     const k2 = j.r0Control ? `; R0 control (K2) direct-H ${j.r0Control.perDraw.join(', ')}${j.r0Control.ok ? '' : ' BELOW 10/12'}` : '';
     L.push('', `${j.job} [${j.cluster}/${j.split}] ${j.family} ${j.evalRole ?? '-'}: ${j.tasks} tasks, ${j.seedChecks} seed checks, `
-      + `${j.replacements.length} replacement(s); pairing ${j.pairing}${k2}`);
+      + `${j.replacements.length} replacement(s); pairing ${j.pairing}${k2}; charged ${usd(j.usdCharged)}${j.estUsd ? ` (estimate $${j.estUsd}, ${j.k7Ratio}x)` : ''}`);
     for (const [m, s] of Object.entries(j.modes)) {
       const errors = Object.entries(s.errors).map(([k, v]) => `${k}:${v}`).join(' ');
       L.push(`  ${m.padEnd(14)} ${String(s.pass).padStart(3)}/${String(s.rows).padEnd(3)} pass  delivered ${s.delivered}  self ${s.selfPass}/${s.selfFail}  void ${s.voidedRows}  `
-        + `${usd(s.usdRepriced)} + imputed ${usd(s.usdImputed)} (reported ${usd(s.usdReported)})${errors ? `  ${errors}` : ''}`);
+        + `${usd(s.usdRepriced)} + imputed ${usd(s.usdImputed)} (reported ${usd(s.usdReported)})${errors ? `  ${errors}` : ''}${s.selfCheckErrors ? `  self-check errors ${s.selfCheckErrors}` : ''}`);
     }
     for (const b of j.builds) {
       const extra = `${b.runSolverCalls != null ? `, run-solver ${b.runSolverCalls}` : ''}${b.selfCheck != null ? `, check.mjs ${b.selfCheck ? 'yes' : 'no'}` : ''}`;
       L.push(`  build ${b.mode} L${b.lineage} (set ${b.exampleSet}): ${b.failed ? 'FAILED' : 'ok'}${b.void ? ` VOID (${b.void})` : ''} ${usd(b.usdRepriced)} + ${usd(b.usdImputed)}${extra}`);
     }
     for (const p of j.probes) L.push(`  probe ${p.mode} draw ${p.draw}: delivered ${p.delivered}, schema ${p.schemaValid}, ${usd(p.usdRepriced)} + ${usd(p.usdImputed)}${p.error ? ` ${p.error}` : ''}`);
-    if (j.notRunCap || j.envFaultedTrials) L.push(`  not run at cap: ${j.notRunCap}; env-faulted trials (resume retries): ${j.envFaultedTrials}`);
+    if (j.notRunCap || j.envFaultedTrials || j.constructionFaults || j.unrecordedAttempts) L.push(`  not run at cap: ${j.notRunCap}; env-faulted trials (resume retries): ${j.envFaultedTrials}; construction faults: ${j.constructionFaults}; attempts without a record: ${j.unrecordedAttempts}`);
   }
+  if (rep.armFaults?.length) {
+    const bad = rep.armFaults.filter(x => x.trialFaults || x.buildFaults);
+    L.push('', `environment faults per arm (K4, limit ${rep.validity.envFaultLimit}): ${bad.length ? '' : 'none'}`, ...bad.map(x => `  ${x.job}/${x.mode}: trials ${x.trialFaults}/${x.trialAttempts} (${x.share}), builds ${x.buildFaults}/${x.buildAttempts} (${x.buildShare})${x.invalid ? ' INVALID' : ''}`));
+  }
+  const V = rep.validity;
+  if (V && (V.invalidArms.length || V.noSelfCheck.length || V.selfCheckErrors || V.deployableGaps.length))
+    L.push('', 'validity:', ...(V.invalidArms.length ? [`  invalid arms (K4): ${V.invalidArms.join(', ')}`] : []), ...(V.noSelfCheck.length ? [`  construct-H lineages without check.mjs: ${V.noSelfCheck.join(', ')}`] : []),
+      ...(V.selfCheckErrors ? [`  rows whose self-check could not run: ${V.selfCheckErrors}`] : []), ...V.deployableGaps.map(g => `  ${g.job}: deployableVerdict is ${g.used}; DESIGN names ${g.named} (${g.family} exports no deployableCheck)`));
   if (rep.racing.length) L.push('', 'racing:', ...rep.racing.map(r => `  round ${r.round} ${r.job}: ${r.skipped ? `skipped (${r.skipped})`
     : `P(best) ${JSON.stringify(r.pBest)} label ${r.label} A=[${r.acceptable.join(', ')}] add ${JSON.stringify(r.add)} agent-O tasks ${r.agentOTasks.length}`}`));
   if (rep.skipped.length) L.push('', 'skipped:', ...rep.skipped.map(s => `  ${s.where}: ${s.reason}`));
-  const t = rep.totals;
+  const t = rep.totals, f = t.usdFaultedTrials, c = t.usdConstructionFaults;
   L.push('', `totals: ${t.rows} rows, ${t.builds} builds, ${t.probes} probe rows; measured ${usd(t.usdMeasured)} + imputed ${usd(t.usdImputed)} = ${usd(t.usdCharged)} `
-    + `(imputed share ${t.imputedShare}); not run ${t.notRun}; construction faults ${t.constructionFaults}; env-faulted trials ${t.envFaultedTrials}`);
+    + `(imputed share ${t.imputedShare}); not run ${t.notRun}; construction faults ${t.constructionFaults} (${usd(c.usdRepriced + c.usdImputed)}); env-faulted trials ${t.envFaultedTrials} (${usd(f.usdRepriced + f.usdImputed)})`);
+  L.push(`cap meter (K5): ${usd(t.spend.meterUsd)} of $${t.spend.capUsd}${t.spend.carriedUsd ? ` (carried from files ${usd(t.spend.carriedUsd)})` : ''}${t.spend.inFlightUsd ? `; never settled ${usd(t.spend.inFlightUsd)}` : ''}; K7 cost per job ${usd(rep.k7.perJobUsd)}${rep.k7.over.length ? `; over ${rep.k7.limit}x estimate: ${rep.k7.over.join(', ')}` : ''}`);
   return L.join('\n') + '\n';
 }
 
@@ -1184,13 +1434,15 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (stageId && /\.json$/.test(stageId) && existsSync(stageId)) { specFile = stageId; stageId = arg('--stage-id') ?? JSON.parse(readFileSync(stageId, 'utf8')).stages?.[0]?.id; }
   if (!stageId) {
     console.error('usage: label-run.mjs --stage <ID|spec.json> [--stages FILE] [--stage-spec FILE] [--prereg FILE] [--work-root DIR] [--out DIR] [--dry]\n'
-      + '         [--jobs a,b] [--arms a,b] [--concurrency N] [--no-racing] [--with-conditional] [--allow-draft] [--enforce-gates]');
+      + '         [--jobs a,b] [--arms a,b] [--concurrency 1-4] [--no-racing] [--with-conditional] [--allow-draft] [--deviation TEXT] [--enforce-gates]');
     process.exit(2);
   }
+  const conc = arg('--concurrency', '4');
   try {
+    if (!/^[1-4]$/.test(String(conc))) throw new Error(`--concurrency must be an integer from 1 to 4, got ${conc}`);
     const rep = await labelRun({ stageId, stagesFile: arg('--stages', STAGES_FILE), specFile, prereg: arg('--prereg'), workRoot: arg('--work-root'), out: arg('--out'), dry: has('--dry'),
-      jobs: arg('--jobs')?.split(',') ?? null, arms: arg('--arms')?.split(',') ?? null, concurrency: Number(arg('--concurrency', '4')), racing: !has('--no-racing'),
-      withConditional: has('--with-conditional'), allowDraft: has('--allow-draft'), ...(has('--enforce-gates') ? { enforceGates: true } : {}) });
+      jobs: arg('--jobs')?.split(',') ?? null, arms: arg('--arms')?.split(',') ?? null, concurrency: Number(conc), racing: !has('--no-racing'),
+      withConditional: has('--with-conditional'), allowDraft: has('--allow-draft'), deviation: arg('--deviation'), ...(has('--enforce-gates') ? { enforceGates: true } : {}) });
     process.stdout.write(renderReport(rep));
     process.exit(rep.stopped ? 3 : 0);
   } catch (e) { console.error(`label-run: ${e.code ? `${e.code}: ` : ''}${e.message}`); process.exit(2); }

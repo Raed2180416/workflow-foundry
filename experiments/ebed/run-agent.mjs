@@ -11,6 +11,7 @@ import { createHost, QuotaStop } from '../../beds/ebed/host/host.mjs';
 import { resumeRun } from '../../beds/ebed/host/replay.mjs';
 import { agentArm } from './agent-arm.mjs';
 import { contractText } from './build.mjs';
+import { addUsage, cacheReadShare, zeroUsage } from '../memory/cache-share.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '..', '..');
@@ -76,8 +77,10 @@ async function main() {
     const w = e8.generateWorld({ seed, difficulty: d, mix: 'tail', ...(size ? { size } : {}) });
     const { pools } = await e8.referenceRuns(w);
     const workRoot = path.join('/var/tmp/foundry-work/ebed-arms', label, `w${seed}-d${d}`);
+    // --workspace is agent-H-ws: one workspace shared across ticks and instances, the honest "learns on the job" baseline
+    // (MEM-0 M1); a Foundry arm built on agentArm keeps the default, a workspace per instance.
     const arm = capped(agentArm({ id: label, model, workRoot, contract: contractText(), effort: arg('--effort', null), budgetUsdPerTick: tickBudget,
-      minutesPerTick: tickMinutes, journal: liveTicks }), cap, spent);
+      minutesPerTick: tickMinutes, journal: liveTicks, ...(useWs ? { workspaceScope: 'arm' } : {}) }), cap, spent);
     // The host journal lives on disk so a stopped run (background time limit, crash, quota) resumes from its last commit:
     // the committed prefix is replayed at $0 (resumeRun) and live calls pick up at the interrupted wake-up.
     const journalFile = path.join(liveDir, `journal-w${seed}-d${d}.jsonl`), blobDir = path.join(liveDir, `blobs-w${seed}-d${d}`);
@@ -96,10 +99,13 @@ async function main() {
     writeFileSync(path.join(liveDir, 'result.partial.json'), JSON.stringify({ label, model, rows }, null, 1));
     if (spent.usd >= cap) break;
   }
+  // The arm's prompt-cache read share over every tick session that reported usage (MEM-0; F17).
+  const usage = existsSync(liveTicks) ? readFileSync(liveTicks, 'utf8').split('\n').filter(Boolean).reduce((u, l) => addUsage(u, JSON.parse(l).tokens), zeroUsage()) : zeroUsage();
   writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, item: e8.family.id, spec: e8.specE.sha256, model, effort: arg('--effort', null), workspace: useWs,
-    tickBudgetUsd: tickBudget, tickMinutes, capUsd: cap, spentUsd: spent.usd, seeds, difficulties, size: size ?? null, rows }, null, 1));
+    workspaceScope: useWs ? 'arm' : null, tickBudgetUsd: tickBudget, tickMinutes, capUsd: cap, spentUsd: spent.usd, usage, cacheReadShare: cacheReadShare(usage),
+    seeds, difficulties, size: size ?? null, rows }, null, 1));
   if (existsSync(liveTicks)) copyFileSync(liveTicks, path.join(out, 'ticks.jsonl'));
-  console.log(`spent $${spent.usd.toFixed(2)} of $${cap}`);
+  console.log(`spent $${spent.usd.toFixed(2)} of $${cap}; prompt-cache read share ${cacheReadShare(usage) ?? '–'}`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();

@@ -90,11 +90,13 @@ fail-safe declaration on timeout). The arm-facing rulebook is `spec/SPEC-E.md` (
 
 ## Measurements ($0)
 
-All numbers are from runs on 2026-10-14 at $0; wall times were taken with other jobs sharing the 4-core machine.
+All numbers are from runs on 2026-10-14 at $0, rerun on 2026-10-15 after the review fixes (below) where stated; wall
+times were taken with other jobs sharing the 4-core machine.
 
 **Bed health** (`tools/health.mjs`, dev seeds 1001–1030, tail mix): 17,600 cases over 120 worlds at d2–d5. Both
 reference runs (earliest and latest timing) pass every case they complete: **0 divergences, 0 oracle errors, 0 critical
-violations**.
+violations**. Rerun 2026-10-15 with the amended critical check: the same counts in every cell below (s/world 1.70,
+2.90, 3.94 and 13.42).
 
 | d | cases | completed | ep0–ep2 | ep3 | go-live | s/world (2 runs + 2 gradings) |
 |---|---|---|---|---|---|---|
@@ -174,8 +176,8 @@ confirmation; one go-live incident whose SLAs ended before t0, closed on confirm
 specificity solvers and Track C rehearsals; that touch (walker only) is recorded in SEED-LEDGER and DESIGN §13, and the
 tool now refuses the rehearsal block 1201–1249.
 
-**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 54 tests (19 part A, 35 part B), about
-70 s on an idle machine.
+**Suites:** `node --test --test-concurrency=2 'beds/ebed/e7/test/*.test.mjs'`: 58 tests (19 part A, 39 part B), about
+75 s with other jobs on the machine.
 
 ## Readings and decisions added in part B (for review)
 
@@ -189,4 +191,15 @@ tool now refuses the rehearsal block 1201–1249.
 | E7-B6 | `sod` is critical when the approval task is routed to the caller (also when they delegate it on), not only when the caller answers | with actor noise the caller may delegate, withdraw or answer in free text; the routing is the separation-of-duties failure |
 | E7-B7 | Necessity controls give up an effect the systems refused (4xx) instead of re-issuing it every minute | a control whose records diverged from the systems re-emitted refused effects for weeks of simulated time (hours of wall time); the reference itself never meets a refusal |
 | E7-B9 | The W5 twin test runs at d2 | from d3 the host draws approval noise from the world id (`host/actors.mjs` `noiseDraw`), which the injection twin does not share, so the twin's approval answers differ (seen at seed 1008 d3); `twins()` also regenerates without a `size` override. Both are outside this item's files (shared host; part A) |
-| E7-B8 | Necessity target cases are the cases whose required effects on the world's planned timeline change when the construct is removed (`plannedView`), or the classes the design names for hook controls | a definition independent of any arm's run |
+| E7-B8 | Necessity target cases are the cases whose required effects on the world's planned timeline change when the construct is removed (`plannedView`), or the classes the design names for hook controls | a definition independent of any arm's run, but not of the oracle: the 'planned' targets come from the oracle's own expectation diff (see Controls) |
+
+## Review fixes (2026-10-15, $0)
+
+| finding | fix | regression test |
+|---|---|---|
+| major: the `plannedBreachAt` of a retroactive SLA's start record (E7-B1) was a README/DESIGN reading only; R4.4's "while it is paused D is not known (`null`)" read against it | SPEC-E states the oracle's reading: S13 (start record planned from `startAt` as if never paused, also with past pauses and when it attaches paused; each resume as of its own `at`), with R4.4 and R4.5 amended to point at it; E7-B2 and E7-B3 stated as S14 (R4.3) and S15 (R4.2). The oracle is unchanged: health rerun, 0 divergences | golden G11b (attaches paused: start Wed 03-18 17:00, not null; pause from Mon 14:00; no resume, breach or escalation while paused); `spec states the readings the oracle grades` |
+| minor: the decision for a warning on the CI and check of an open incident was not stated | R1.2: a warning belongs to no incident (`decisions.subject` `null`), even on the CI and check of an open incident | the same spec test, on dev world 1012 d3 (warning i0067 on open incident i0061) |
+| minor: `major-without-approval` skipped every `setMajor` after the first task's deadline | only a counted `approve` or the fail-safe (after the deadline, no counted answer, no moot approval) excuses a `setMajor`; counted, moot and the deadline come from the reference transition's history | `critical major-without-approval: only a counted approve or the fail-safe excuses a setMajor` (9 cases: reject then setMajor, moot, approve after a counted reject, setMajor at the deadline, before any answer; fail-safe, unusable answer, counted approve, approve at the deadline) |
+| minor: the necessity table's "100% of target cases" said little alone | the table gives each control's target share and failures outside the targets, and says which targets are oracle-derived; `controls-run.mjs` prints both and a summary | (reporting; the numbers above) |
+| minor: the leak test skipped short class labels, checked 40 case ids and no future knowledge | every non-legit class label, every case id, the truth-only keys, no event id or `docs/<eventId>.txt` before its delivery, no edition file before `published` (non-vacuity asserted; a planted future event id fails it) | `leak: ... nothing is visible before its instant` (world.test.mjs) |
+| minor: the walker discrimination check used rehearsal seed 1241 | rerun on dev seed 1101 with `tools/walker-grade.mjs` (refuses 1201–1249); the touch of 1241 recorded in SEED-LEDGER and DESIGN §13 | `seed discipline: ...` |

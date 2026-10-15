@@ -1,0 +1,79 @@
+{
+  "schema": "jneed2/truth@1",
+  "labeller": "independent reader (workflow j-need-2-build, label stage)",
+  "writtenBefore": "any J-NEED-2 Jev or Haiku request",
+  "families": {
+    "wbed-r0": {
+      "S1": "no",
+      "S2": "no",
+      "S3": "yes",
+      "S4": "no",
+      "S5": "no",
+      "S6": "no",
+      "evidence": "One printed invoice with an exact field oracle (beds/wbed/r0/index.mjs:1-3, 12-15). S1 no: void is read from the explicit Status field whose meaning the notes state; no judged branch (index.mjs:33-37, 73-75, 123-126, 196-197). S2 no: one document, no join, dedup or consolidation across records (index.mjs:54-85). S3 yes: all 8 fields exact (index.mjs:139-154). S4 no: lines, discount and tax rate are printed, but no net/tax/gross totals or counts (index.mjs:106-118). S5 no: a plain printed layout whose date order and number format the notes state (index.mjs:119-122). S6 no: the notes govern one document of 2-6 lines (index.mjs:20-25, 120-129)."
+    },
+    "wbed-r1": {
+      "S1": "no",
+      "S2": "yes",
+      "S3": "yes",
+      "S4": "no",
+      "S5": "yes",
+      "S6": "yes",
+      "evidence": "Receivables close: records customer export + 4-7 invoice-list dialects + bank feed (beds/wbed/r1/index.mjs:23-29). S1 no: each per-item decision keys on an explicit field (status word, void marker, PAY/REMIT kind, row id) whose meaning the notes state; judgedBranchPoints 0 (r1/vocab.mjs:20-21; r1/render.mjs:123-127; beds/records/README.md:30-31; r1/index.mjs:125). S2 yes: rows clustered into customers, invoices joined by row id, payments by loose reference, REMIT/PAY deduplicated by bank reference (r1/render.mjs:144-148; r1/world.mjs:238-245). S3 yes: exact membership, ids, cents and totals (r1/score.mjs:4-5, 47-76). S4 no: the prompt gives only bare line counts (rows, invoices, bank lines), no control totals (r1/render.mjs:159-160); a literal reading of 'counts' would give yes. S5 yes: rows from legacy systems, including VENDEX free text with amounts in words and KOBO era dates at d3+ (r1/render.mjs:159; beds/records/README.md:6-15; beds/records/world.mjs:38), plus 4-7 invoice dialects (r1/render.mjs:48-75). S6 yes: date orders, status words, per-task status values and identity rules are stated once and govern hundreds of rows (r1/render.mjs:101-129; beds/records/README.md:22-33)."
+    },
+    "wbed-r2": {
+      "S1": "yes",
+      "S2": "yes",
+      "S3": "yes",
+      "S4": "no",
+      "S5": "no",
+      "S6": "yes",
+      "evidence": "Accounts inbox of 30-60 e-mails (beds/wbed/r2/index.mjs:24-30). S1 yes: the kind is never a field; the route is decided from what the document says, with decoys and undecidable review cases (r2/index.mjs:26; r2/render.mjs:24, 34; r2/world.mjs:16-19, 333-376). S2 yes (join): credit notes resolve to the supplier's bill in inputs.payables (typo or date+amount), and remittances allocate over the customer's open receivables, oldest first; documents are otherwise independent (r2/render.mjs:46-47; r2/world.mjs:42-95). S3 yes: routing exact, entries and holds multiset-exact, review queue set-exact (r2/score.mjs:3-6, 47-66). S4 no: only the document count is stated (r2/render.mjs:56); invoice net/tax/total are per-document values to copy, not control totals (r2/vocab.mjs:90-91). S5 no: prose e-mails; other languages from d4, but no legacy encoding (r2/render.mjs:37; r2/world.mjs:129). S6 yes: the route definitions, review criterion, reason codes and allocation rule are stated once and govern every document (r2/render.mjs:21-53)."
+    },
+    "wbed-r3": {
+      "S1": "yes",
+      "S2": "yes",
+      "S3": "yes",
+      "S4": "yes",
+      "S5": "no",
+      "S6": "yes",
+      "evidence": "Audit of 8-48 supplier statements against one AP ledger (beds/wbed/r3/index.mjs:22-29). S1 yes: PRICE, FX or MISSING_CREDIT versus UNEXPLAINED depends on whether a cover note or AP note explains that document's difference; noise notes name documents without explaining them (r3/index.mjs:26; r3/vocab.mjs:1-4, 75-101; r3/render.mjs:49-55; r3/world.mjs:39-51). S2 yes: statement lines are matched to a shared ledger by reference, with supplier aliases and duplicate counts, and fan in to per-reason totals (r3/render.mjs:45-47, 59; r3/world.mjs:237-241). S3 yes: balances, discrepancy multisets, by_reason and totals exact (r3/score.mjs:3-5, 40-69). S4 yes: each line prints a running balance and each statement a closing balance; the spec states that discrepancies sum to statement minus ledger balance (r3/render.mjs:17-18, 29, 47). S5 no: documented, regular R1 dialects (CSV, semicolon, JSON lines, ATLAS columns; KOBO and VENDEX sentences only at d5) (r3/vocab.mjs:62-72; r3/index.mjs:35). S6 yes: the reason rules, cut-off date, statement formats and AP clerk notes (shuffled across suppliers) are global (r3/render.mjs:39-40, 42-66)."
+    },
+    "wbed-r3p": {
+      "S1": "yes",
+      "S2": "yes",
+      "S3": "no",
+      "S4": "no",
+      "S5": "no",
+      "S6": "yes",
+      "evidence": "Planted-defect sweep of a fictional JavaScript library (beds/wbed/r3p/index.mjs:28-36). S1 yes: whether a function is a defect, and its class, is judged by comparing the code with its JSDoc contract; decoys are correct code that looks defective (r3p/index.mjs:31; r3p/render.mjs:163-165). S2 yes: the root-cause rule needs the call graph, because callers that only inherit a defective helper must not be reported (r3p/index.mjs:31-32; r3p/render.mjs:154, 166-167). S3 no: pass is thresholded (recall >= 0.80, precision >= 0.90, one false positive tolerated); line and witness are optional and never change the pass (r3p/score.mjs:16-17, 20-27, 53; r3p/render.mjs:169-171). S4 no: the prompt gives file and class counts only, no defect count, and the passing tests miss the bugs (r3p/render.mjs:162, 165, 168). S5 no: plain JavaScript source. S6 yes: docs/CONVENTIONS.md is drawn per task (rounding, band ends, page base) and applies to every module unless a contract overrides it (r3p/index.mjs:43-44; r3p/render.mjs:134-149)."
+    },
+    "wbed-r4": {
+      "S1": "yes",
+      "S2": "yes",
+      "S3": "yes",
+      "S4": "yes",
+      "S5": "yes",
+      "S6": "yes",
+      "evidence": "Consolidation of 2-6 subsidiaries whose packs are complete R1/R3 tasks (beds/wbed/r4/index.mjs:28-37). S1 yes: intercompany pairs need memos describing the same charge for the same period, and equal-amount decoys defeat amount matching; judgedBranchPoints 1 (r4/index.mjs:32-34, 141; r4/render.mjs:106). S2 yes: items are paired and eliminated across subsidiaries' schedules, and the packs are consolidated (r4/render.mjs:104-110). S3 yes: each pack by its own exact oracle; balances, eliminations and the consolidated block exact (r4/score.mjs:3-5, 42-74). S4 yes: d3/d5 tasks hold 1/2 statement-audit packs whose statements print running and closing balances (r4/world.mjs:36, 40; r3/render.mjs:17-18, 29); there is no group-level control total. S5 yes: R1 packs carry legacy customer exports, and planted packs print dates as mainframe Julian CYYDDD (r4/index.mjs:35-37; r4/children.mjs:46-55; lib/dialects.mjs:35-56). S6 yes: the group notes (schedule formats, closing rates), the spec and each pack's notes govern all items (r4/render.mjs:65-75, 87-111)."
+    },
+    "wbed-r5": {
+      "S1": "yes",
+      "S2": "yes",
+      "S3": "yes",
+      "S4": "yes",
+      "S5": "yes",
+      "S6": "yes",
+      "evidence": "R4 consolidation in which one subsidiary's invoices arrive as a legacy dump (beds/wbed/r5/index.mjs:1-4, 33-42). S1 yes: inherits R4's judged intercompany pairing; judgedBranchPoints 1 (r5/index.mjs:171-172). S2 yes: decoded rows feed the R1 close and the R4 consolidation (r5/index.mjs:74). S3 yes: decoded rows multiset-exact plus R4's exact oracle (r5/score.mjs:1-3, 28-33). S4 yes: the dump trailer gives the record count and control totals (row-id sum, amount per currency, four hash totals) (r5/index.mjs:73; r5/decode.mjs:24-29). S5 yes: one of 11 legacy encodings (fixed width with the layout in README prose, a code page, JSON lines with schema switches, CSVs with drifting headers, COBOL overpunch, a proprietary decoder) (r5/index.mjs:35-41). S6 yes: the README prose and each pack's ledger notes govern every record (r5/index.mjs:40, 72-74)."
+    },
+    "wbed-r6": {
+      "S1": "yes",
+      "S2": "yes",
+      "S3": "yes",
+      "S4": "no",
+      "S5": "no",
+      "S6": "yes",
+      "evidence": "Wide research table over a 200-400 document corpus (beds/wbed/r6/index.mjs:32-43). S1 yes: scope and claims depend on what sentences mean (quoted values, predictions and planned tests are not tests; a test is dated by when it was measured); judgedBranchPoints 1 (r6/index.mjs:35-37, 246; r6/render.mjs:193, 197). S2 yes: the entity list is found across documents; lab aliases come from notices; later versions and retractions void other documents; errata replace values; a ranking policy picks one winner per cell (r6/render.mjs:192-197, 200). S3 yes: one row per cell, value exact at the stated precision, source id exact, excluded set exact (r6/score.mjs:4-7, 51-85). S4 no: only the document count is stated (r6/render.mjs:187); nothing gives the number of compounds or cells. S5 no: prose documents from a closed template grammar, not a legacy encoding (r6/index.mjs:32-34, 42). S6 yes: nine prose rules (labs, tests, voids, errata, claims, units, ranking) govern every document and cell (r6/render.mjs:191-201)."
+    }
+  }
+}

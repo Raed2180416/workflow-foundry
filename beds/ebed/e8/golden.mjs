@@ -281,11 +281,16 @@ G('steps-before-vs-after-a-processing-cancel', 'S9, S10, R4.1, R4.2, R6.2, §1',
   const E4 = tr(W, B.view(a + 2 * MIN, T, [create, ...sts(a, gotCancel)], [placed, cancel]));
   if (has(E4, `ost:${O}:processing`) || has(E4, `fst:${F}:processing`)) return 'processing set by the call that was given the cancel is required (S10: it was taken after the cancel)';
   if (!E4.effects.permitted.some(p => p.op === 'setStatus' && p.match?.status === 'processing')) return 'processing set with the cancel not permitted (S9)';
+  // E6: `processing` set at a later instant than the cancel (by a call that was not given it): taken after it (S10), so
+  // not required, only permitted (S9).
+  const E6 = tr(W, B.view(a + 3 * MIN, T, [create, ...sts(a + 2 * MIN, { callAt: a + MIN })], [placed, cancel]));
+  if (has(E6, `ost:${O}:processing`) || has(E6, `fst:${F}:processing`)) return 'processing set at a later instant than the cancel is required (S10: it was taken after the cancel)';
+  if (!E6.effects.permitted.some(p => p.op === 'setStatus' && p.match?.status === 'processing')) return 'processing set after the cancel not permitted (S9)';
   // E5: in the cancel's instant, a call given a carrier report about the order but not the cancel reserves: before the
   // cancel (S10), one already in flight, released.
   const E5 = tr(W, B.view(a + 2 * MIN, T, [create, ...rsv(a, { callAt: a, knows: new Set([CASE]), given: new Set([info.id]) })], [placed, info, cancel]));
   if (FUL.items.some(i => !has(E5, `rel:${F}:${i.sku}`))) return 'a reservation by a call that was not given the cancel (S10) is not released';
-  return [E2, E3, E4, E5].every(E => has(E, `ost:${O}:cancelled`)) ? true : 'order not cancelled';
+  return [E2, E3, E4, E5, E6].every(E => has(E, `ost:${O}:cancelled`)) ? true : 'order not cancelled';
 });
 
 // R3.2, R6.1, R7.2, §4.8, §3.5: W4's go-live order already awaiting the customer, with nothing available, is amended: "If

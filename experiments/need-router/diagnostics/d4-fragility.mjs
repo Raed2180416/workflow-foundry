@@ -8,8 +8,11 @@
 //             at factor f: TOL f (0.05 and 0.20); the evaluator-health check (reference fit within TOL) is scaled too
 // The nominal recompute (f = 1) must reproduce every archived pass flag; any mismatch is reported and blocks the claim.
 // Rows without recorded oracle details keep their nominal flag at every factor (counted as `unrecomputable`).
+// Labels are L_today (the headline fields: cheap-builder workflows only) with L_ceiling beside it (DESIGN §2; LEGACY_REGISTRY marks the hand-written and
+// Opus-built workflows `ceiling`). A job whose L_today has no workflow-class mode is `vacuous`: its label can only be no-workflow.
+// Build costs are charged (legacy.mjs: the P1 hand workflow's >= $24.91 authoring included).
 // Evidence grade: LEGACY/dev.
-import { needTable, needLabels, fragility, GRID, HEADLINE } from '../metrics.mjs';
+import { needTable, needLabels, fragility, labelSetModes, classOf, GRID, HEADLINE } from '../metrics.mjs';
 import { toMatrix, LEGACY_REGISTRY } from './legacy.mjs';
 import { mean, round } from './common.mjs';
 
@@ -41,7 +44,15 @@ export const PASS_AT = Object.freeze({ records: recordsPassAt, kinetics: kinetic
 
 const passRate = (rows, mode, f) => { const r = rows.filter(x => x.mode === mode); return mean(r.map(x => (f(x) ? 1 : 0))); };
 
-/** D4 for one LEGACY job whose oracle has a numeric tolerance. */
+/** The label-set views of a LEGACY job's modes (DESIGN §2): L_today leaves out the ceiling arms (workflows written by a frontier model or a person),
+ *  L_ceiling keeps everything. `vacuous`: L_today has no workflow-class mode, so its label can only be `no-workflow` and says nothing about need. */
+export function labelSetsOf(modes, registry = LEGACY_REGISTRY) {
+  const today = labelSetModes(modes, 'today', registry), ceiling = labelSetModes(modes, 'ceiling', registry);
+  const wf = ms => ms.filter(m => classOf(m, registry) === 'workflow');
+  return { today: { modes: today, workflowModes: wf(today), vacuous: wf(today).length === 0 }, ceiling: ceiling.length > today.length ? { modes: ceiling, workflowModes: wf(ceiling), extra: ceiling.filter(m => !today.includes(m)) } : null };
+}
+
+/** D4 for one LEGACY job whose oracle has a numeric tolerance. Labels are L_today (headline fields) with L_ceiling beside it when the job has ceiling arms. */
 export function fragilityOfJob(job, { cells = GRID } = {}) {
   const recompute = PASS_AT[job.oracle];
   if (!recompute) return null;
@@ -51,29 +62,41 @@ export function fragilityOfJob(job, { cells = GRID } = {}) {
   const passAt = r => Object.fromEntries(FACTORS.map(f => [String(f), at(r, f)]));
   const { rows, builds } = toMatrix(job, { passAt });
   const opts = { registry: LEGACY_REGISTRY };
-  const frag = fragility(rows, builds, { cells, factors: FACTORS, tableOpts: opts });
-  const jf = frag.jobs.find(j => j.job === job.id);
-  // The same re-flagged rows at each factor over the whole grid: labels (class) and best modes.
-  const labelsAt = f => needLabels(needTable(rows.map(r => ({ ...r, pass: f === 1 ? r.pass : r.passAt[String(f)] })), builds, opts), { cells, reps: 0 });
-  const L = Object.fromEntries([1, ...FACTORS].map(f => [String(f), labelsAt(f)]));
-  const head = f => { const e = L[String(f)].at(job.id, HEADLINE); return { label: e.label, top: e.top, acceptable: e.acceptable, u: Object.fromEntries([...e.u].map(([m, u]) => [m, round(u, 4)])) }; };
-  const headline = Object.fromEntries([1, ...FACTORS].map(f => [String(f), head(f)]));
-  const topChanged = cells.filter(c => FACTORS.some(f => L[String(f)].at(job.id, c).top !== L['1'].at(job.id, c).top)).map(c => c.key);
+  const sets = labelSetsOf(job.pairing.modes);
+  // One label set over the whole grid: the labels at x0.5, x1 and x2 (metrics.fragility for the flip count, needLabels for the cells).
+  const viewOf = modes => {
+    const frag = fragility(rows, builds, { cells, factors: FACTORS, modes, tableOpts: opts });
+    const jf = frag.jobs.find(j => j.job === job.id);
+    const labelsAt = f => needLabels(needTable(rows.map(r => ({ ...r, pass: f === 1 ? r.pass : r.passAt[String(f)] })), builds, opts), { cells, reps: 0, modes });
+    const L = Object.fromEntries([1, ...FACTORS].map(f => [String(f), labelsAt(f)]));
+    const head = f => { const e = L[String(f)].at(job.id, HEADLINE); return { label: e.label, top: e.top, acceptable: e.acceptable, u: Object.fromEntries([...e.u].map(([m, u]) => [m, round(u, 4)])) }; };
+    const headline = Object.fromEntries([1, ...FACTORS].map(f => [String(f), head(f)]));
+    const topChanged = cells.filter(c => FACTORS.some(f => L[String(f)].at(job.id, c).top !== L['1'].at(job.id, c).top)).map(c => c.key);
+    const flippedCells = jf.cells.filter(c => Object.values(c.at).some(l => l !== c.nominal));
+    return {
+      modes, headline,
+      headlineFlips: { half: headline['0.5'].label !== headline['1'].label, double: headline['2'].label !== headline['1'].label },
+      headlineTopChanges: { half: headline['0.5'].top !== headline['1'].top, double: headline['2'].top !== headline['1'].top },
+      grid: { cells: cells.length, flipped: flippedCells.length, fragile: jf.fragile, flippedCells: flippedCells.map(c => ({ cell: c.cell, nominal: c.nominal, ...c.at })), topChangedCells: topChanged.length },
+    };
+  };
+  const today = viewOf(sets.today.modes), ceiling = sets.ceiling ? viewOf(sets.ceiling.modes) : null;
   const modes = job.pairing.modes;
   const passRates = Object.fromEntries(modes.map(m => [m, { nominal: round(passRate(job.rows, m, r => r.pass), 4), half: round(passRate(job.rows, m, r => at(r, 0.5)), 4), double: round(passRate(job.rows, m, r => at(r, 2)), 4) }]));
   const passes = job.rows.filter(r => r.pass).length, fails = job.rows.length - passes;
   const lostAtHalf = job.rows.filter(r => r.pass && !at(r, 0.5)).length, gainedAtDouble = job.rows.filter(r => !r.pass && at(r, 2)).length;
-  const flippedCells = jf.cells.filter(c => Object.values(c.at).some(l => l !== c.nominal));
   return {
     job: job.id, oracle: job.oracle, family: job.family, tolerance: job.oracle === 'records' ? RECORDS_RULE : { tol: KINETICS_TOL, source: KINETICS_SOURCE },
     units: job.pairing.paired, modes, rows: job.rows.length, sources: job.sources,
+    builds: job.builds.map(b => ({ mode: b.mode, usd: round(b.usd, 4), ...(b.lowerBound ? { lowerBound: true } : {}) })),
     reproduction: { rows: job.rows.length, mismatches: mismatch.length, unrecomputable, mismatchRows: mismatch.slice(0, 5).map(r => `${r.mode}/${r.unit}`) },
     failuresWithWrongExclusion: job.oracle === 'kinetics' ? job.rows.filter(r => !r.pass && r.details?.excluded?.exact === false).length : null,
     rowFlips: { passes, fails, lostAtHalf, gainedAtDouble, lostShare: passes ? round(lostAtHalf / passes, 4) : null, gainedShare: fails ? round(gainedAtDouble / fails, 4) : null },
-    passRates, headline,
-    headlineFlips: { half: headline['0.5'].label !== headline['1'].label, double: headline['2'].label !== headline['1'].label },
-    headlineTopChanges: { half: headline['0.5'].top !== headline['1'].top, double: headline['2'].top !== headline['1'].top },
-    grid: { cells: cells.length, flipped: flippedCells.length, fragile: jf.fragile, flippedCells: flippedCells.map(c => ({ cell: c.cell, nominal: c.nominal, ...c.at })), topChangedCells: topChanged.length },
+    passRates,
+    labelSets: { today: sets.today, ceiling: sets.ceiling },
+    // L_today: the headline fields below. L_ceiling (jobs with ceiling arms only): the same fields in `ceiling`.
+    headline: today.headline, headlineFlips: today.headlineFlips, headlineTopChanges: today.headlineTopChanges, grid: today.grid,
+    ceiling: ceiling ? { headline: ceiling.headline, headlineFlips: ceiling.headlineFlips, headlineTopChanges: ceiling.headlineTopChanges, grid: ceiling.grid } : null,
   };
 }
 
@@ -99,6 +122,8 @@ export function runD4(jobs) {
     jobs: per, recordsMismatches: recordsMismatchFields(jobs),
     summary: {
       jobs: per.length, fragileJobs: per.filter(p => p.grid.fragile).map(p => p.job), fragileAtHeadline: per.filter(p => p.headlineFlips.half || p.headlineFlips.double).map(p => p.job),
+      vacuousJobs: per.filter(p => p.labelSets.today.vacuous).map(p => p.job), ceilingJobs: per.filter(p => p.ceiling).map(p => p.job),
+      ceilingFragileJobs: per.filter(p => p.ceiling?.grid.fragile).map(p => p.job), ceilingFragileAtHeadline: per.filter(p => p.ceiling && (p.ceiling.headlineFlips.half || p.ceiling.headlineFlips.double)).map(p => p.job),
       rowsTotal: per.reduce((s, p) => s + p.rows, 0), lostAtHalf: per.reduce((s, p) => s + p.rowFlips.lostAtHalf, 0), gainedAtDouble: per.reduce((s, p) => s + p.rowFlips.gainedAtDouble, 0),
       nominalReproduced: reproduced, flippedCells: per.reduce((s, p) => s + p.grid.flipped, 0), cells: per.reduce((s, p) => s + p.grid.cells, 0),
       topChangedCells: per.reduce((s, p) => s + p.grid.topChangedCells, 0), jobsWithTopChange: per.filter(p => p.grid.topChangedCells > 0).map(p => p.job),
