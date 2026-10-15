@@ -4,10 +4,13 @@
 // sandbox-arm.mjs) on dev worlds and graded by the item's oracle with the reference pools. Model ids come from
 // policy/models.json only. METERED: the build session spends model budget (its own cap); grading is $0.
 //   node experiments/ebed/build.mjs --model claude-haiku-5-5 --effort high --budget 3 --minutes 40 --label b1h-1 \
-//        [--grade-only <solver.mjs>] [--seeds 1232-1234] [--difficulties 2,3,5] [--size N] [--loop none|smoke|graded]
-// --loop (default none = B1 as declared): the builder may run its solver on practice worlds 1235-1237 through a
-// host-side smoke service (smoke-service.mjs) and see arm errors and effect results (smoke) or also first divergences
-// on those practice worlds (graded). A different arm from B1; reported under its own label.
+//        [--item e8|e7] [--grade-only <solver.mjs>] [--seeds 1232-1234] [--difficulties 2,3,5] [--size N] [--loop none|smoke|graded]
+// --item (default e8): the E-bed item (ITEMS below). Default grading seeds 1232-1234 are each item's dev rehearsals
+// (SEED-LEDGER ebed-<item>-rehearsal; worlds are salted by item, so seed 1232 is a different world in E7 and E8).
+// --loop (default none = B1 as declared): the builder may run its solver on the item's practice worlds (1235-1237,
+// smoke-service.mjs practiceFor) through a host-side smoke service (smoke-service.mjs) and see arm errors and effect
+// results (smoke) or also first divergences on those practice worlds (graded). A different arm from B1; reported under
+// its own label.
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,13 +19,14 @@ import { MockSystem } from '../../beds/ebed/host/mocks.mjs';
 import { createHost } from '../../beds/ebed/host/host.mjs';
 import { sandboxArm } from '../../beds/ebed/host/sandbox-arm.mjs';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
-import { CLIENT, clientInstructions, serveMailbox, PRACTICE } from './smoke-service.mjs';
+import * as e7 from '../../beds/ebed/e7/index.mjs';
+import { CLIENT, clientInstructions, serveMailbox, practiceFor } from './smoke-service.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '..', '..');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const POLICY = JSON.parse(readFileSync(path.join(ROOT, 'policy', 'models.json'), 'utf8'));
-const ITEMS = { e8 };
+export const ITEMS = Object.freeze({ e8, e7 });
 
 /** The contract text an arm author gets: BED-CONTRACT v1.1 §3.1-§3.4 and the host's arm interface (README §2). */
 export function contractText() {
@@ -33,12 +37,12 @@ export function contractText() {
   return ['# The tick contract (excerpt of the bed contract)', '', ...c.slice(from, to), '', '# The arm interface (excerpt of the host README)', '', ...h.slice(a, b)].join('\n');
 }
 
-/** The builder's workspace: spec, API schemas, contract, task. Nothing else. */
-export function buildFiles(item, { loop = 'none' } = {}) {
-  const t0 = Date.parse('2026-03-02T00:00:00+01:00');
-  const files = { 'SPEC-E.md': item.specE.text, 'CONTRACT.md': contractText() };
-  for (const def of item.systems) files[`api/${def.id}.schema.json`] = JSON.stringify(new MockSystem(def).apiSchema(t0), null, 1);
-  files['TASK.md'] = `# Task
+/**
+ * TASK.md per item. The items differ only where the files of a call and the decisions differ (E8: one calendar, decisions
+ * grade `subject`; E7: several calendars, decisions grade `subject` and `priority`, SPEC-E §1); E8's text is unchanged.
+ */
+export function taskText(item) {
+  if (item.family.id === 'ebed-e8') return `# Task
 
 Write \`solver.mjs\` in this directory: an ES module (Node 24, no dependencies, no network) exporting
 
@@ -55,8 +59,36 @@ every output must be valid (decisions.subject is required on every tick: the nor
 run the real systems here; you may write and run your own tests with node. When you are done, \`solver.mjs\` must be the
 complete solver. Work carefully through every rule, race and reading in SPEC-E.md.
 `;
+  if (item.family.id === 'ebed-e7') return `# Task
+
+Write \`solver.mjs\` in this directory: an ES module (Node 24, no dependencies, no network) exporting
+
+    export function createSolver() { return { id: 'solver', tick(input, ctx) { ... return output; } }; }
+
+\`tick\` is called once per case-tick as CONTRACT.md describes (input: { kind: 'case', item, world, instance, now, events,
+carry }; ctx: { files, query(table, filter), status(system, key), instances({ subject }) }) and must return a TickOutput
+that implements every rule of SPEC-E.md exactly. The API of each system is in api/<system>.schema.json; at run time the
+same files appear in ctx.files under api/, with the rulebook (rulebook/<edition>/...), master data (master/*.json), the
+calendars (calendar/<id>.json), the spec, the instance's records (sor/<instance>.json) and documents
+(docs/<eventId>.txt).
+
+Constraints: deterministic (no Date.now, no Math.random; time is input.now); keep state in \`carry\` (JSON, at most 64 KB);
+every output must be valid (decisions.subject is required on every tick: the incident number or null; SPEC-E.md §1 says
+what decisions.priority must hold). You cannot run the real systems here; you may write and run your own tests with
+node. When you are done, \`solver.mjs\` must be the complete solver. Work carefully through every rule, race and reading
+in SPEC-E.md.
+`;
+  throw new Error(`no TASK.md for item ${item.family?.id}`);
+}
+
+/** The builder's workspace: spec, API schemas, contract, task. Nothing else. */
+export function buildFiles(item, { loop = 'none' } = {}) {
+  const t0 = Date.parse('2026-03-02T00:00:00+01:00');
+  const files = { 'SPEC-E.md': item.specE.text, 'CONTRACT.md': contractText() };
+  for (const def of item.systems) files[`api/${def.id}.schema.json`] = JSON.stringify(new MockSystem(def).apiSchema(t0), null, 1);
+  files['TASK.md'] = taskText(item);
   if (loop !== 'none') {
-    files['TASK.md'] = files['TASK.md'].replace('You cannot\nrun the real systems here; you may', 'You may').replace('You cannot run the real systems here; you may', 'You may') + clientInstructions(loop);
+    files['TASK.md'] = files['TASK.md'].replace(/You cannot\s+run the real systems here; you may/, 'You may') + clientInstructions(loop);
     files['smoke.mjs'] = CLIENT;
   }
   return files;
@@ -88,6 +120,8 @@ export async function grade(item, solverSource, { seeds, difficulties, label, si
 
 async function main() {
   const item = ITEMS[arg('--item', 'e8')];
+  if (!item) throw new Error(`--item must be one of ${Object.keys(ITEMS).join(', ')}: ${arg('--item')}`);
+  const practice = practiceFor(item);
   const label = arg('--label', `build-${Date.now()}`);
   const out = path.join(ROOT, 'research/enterprise-20261014/runs', label);
   mkdirSync(out, { recursive: true });
@@ -104,14 +138,14 @@ async function main() {
     if (existsSync(workdir)) throw new Error(`workdir exists: ${workdir}`);
     const loop = arg('--loop', 'none');
     if (!['none', 'smoke', 'graded'].includes(loop)) throw new Error(`--loop must be none, smoke or graded: ${loop}`);
-    if (loop !== 'none' && seeds.some(x => PRACTICE.seeds.includes(x))) throw new Error('grading seeds overlap the practice worlds');
+    if (loop !== 'none' && seeds.some(x => practice.seeds.includes(x))) throw new Error('grading seeds overlap the practice worlds');
     const files = buildFiles(item, { loop });
     const prompt = `${files['TASK.md']}\nRead SPEC-E.md, CONTRACT.md and api/*.schema.json first.`;
     const budgetUsd = Number(arg('--budget', '3')), minutes = Number(arg('--minutes', '40'));
     const t = Date.now();
     // The live smoke journal stays outside the repository while the build runs; it is copied in afterwards.
     const liveSmoke = path.join(path.dirname(workdir), `${label}.smoke.jsonl`);
-    const box = loop === 'none' ? null : serveMailbox({ item, workdir, mode: loop, journal: liveSmoke });
+    const box = loop === 'none' ? null : serveMailbox({ item, workdir, mode: loop, journal: liveSmoke, practice });
     let r;
     try { r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort: arg('--effort', 'high') }); }
     finally { if (box) { build = { smokeRuns: await box.stop() }; if (existsSync(liveSmoke)) copyFileSync(liveSmoke, path.join(out, 'smoke.jsonl')); } }

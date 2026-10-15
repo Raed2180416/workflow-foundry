@@ -60,7 +60,7 @@ AMEND_ADDR = {"Enterprise mailbox": "enterprise-wins", "Mid-Market mailbox": "mi
 
 COUNTS = {  # per difficulty: (lo, hi) per kind; escalations are part of deal.signed
     "d1": dict(signed=(10, 11), won=(10, 11), repeat=(0, 0), reopen=(0, 0), ref=(0, 0), amend=(0, 0), esc=(0, 0)),
-    "d2": dict(signed=(11, 13), won=(11, 13), repeat=(3, 5), reopen=(1, 2), ref=(2, 3), amend=(0, 0), esc=(1, 1)),
+    "d2": dict(signed=(11, 13), won=(12, 13), repeat=(3, 5), reopen=(1, 2), ref=(2, 3), amend=(0, 0), esc=(1, 1)),
     "d3": dict(signed=(12, 14), won=(12, 14), repeat=(4, 5), reopen=(1, 2), ref=(3, 4), amend=(2, 2), esc=(1, 2)),
 }
 TRAP_RATE = {"d1": 0.0, "d2": 0.5, "d3": 0.8}
@@ -196,13 +196,20 @@ class Gen:
         self.contacts[c["id"]] = c
         return c
 
-    def add_hier(self, acct: dict, tier: str, updated: date, added: datetime | None = None) -> dict:
+    def add_hier(self, acct: dict, tier: str, updated: date, added: datetime | None = None, step: int = 1) -> dict:
+        # one row per (Account ID, Updated): the policy's "newest row" never needs a tie-break
+        taken = {r["cells"]["Updated"] for r in self.hier if r["cells"]["Account ID"] == acct["id"]}
+        while ds(updated) in taken:
+            updated += timedelta(days=step)
         r = {"id": self.hexid("hr", 16), "cells": {"Account ID": acct["id"], "Account": acct["name"], "Tier": tier,
                                                     "Updated": ds(updated)}, "added": added}
         self.hier.append(r)
         return r
 
     def add_fx(self, cur: str, rate: Decimal, updated: date, added: datetime | None = None) -> dict:
+        taken = {r["cells"]["Updated"] for r in self.fx if r["cells"]["Currency"] == cur}  # one row per (currency, date)
+        while ds(updated) in taken:
+            updated += timedelta(days=1)
         r = {"id": self.hexid("fx", 16), "cells": {"Currency": cur, "USD Rate": f"{rate:.4f}", "Updated": ds(updated)},
              "added": added}
         self.fx.append(r)
@@ -347,8 +354,11 @@ class Gen:
 
     @staticmethod
     def param_as_of(p: str, d: str, policy: list[dict]) -> str:
-        cand = [r for r in policy if r["Parameter"] == p and r["Effective"] <= d]
-        return max(cand, key=lambda r: r["Effective"])["Value"]  # stable: max returns the first of equal keys
+        best = None
+        for r in policy:  # newest Effective on or before d; of equal dates the later row wins
+            if r["Parameter"] == p and r["Effective"] <= d and (best is None or r["Effective"] >= best["Effective"]):
+                best = r
+        return best["Value"]
 
     def escalates(self, acct: dict, cases: dict) -> tuple[bool, str]:
         ids = [acct["id"]] + ([acct["parent"]] if acct["parent"] else [])
@@ -420,7 +430,7 @@ class Gen:
             acct["tier"] = self.other_tier(cur_tier)
         if "stale-hierarchy" in kinds:
             older = date.fromisoformat(cur_row["cells"]["Updated"]) - timedelta(days=rng.randint(15, 120))
-            self.add_hier(acct, self.other_tier(cur_tier), older)
+            self.add_hier(acct, self.other_tier(cur_tier), older, step=-1)
         if "future-hierarchy" in kinds:
             self.add_hier(acct, self.other_tier(cur_tier), t.date() + timedelta(days=rng.randint(1, 9)))
         currency = rng.choice(["EUR", "EUR", "GBP"]) if "currency" in kinds else "USD"
@@ -810,7 +820,8 @@ class Gen:
         note = L.announce_note(close_date)
         row = {"Event ID": data["event_id"], "Opportunity ID": opp_id, "Opportunity": opp["name"], "Closed At": close_date,
                "USD": str(usd), "Tier": tier, "Routed To": ", ".join(recipients), "Status": "Announced"}
-        S["log"].append({"id": f"truth-{data['event_id']}", "cells": row, "date": close_date})
+        S["log"].append({"id": f"truth-{data['event_id']}", "cells": dict(row), "date": close_date})  # a copy: a later
+        # retraction changes the log, never this trigger's expected row
         opp["description"] = (opp["description"] + "\n" if opp["description"] else "") + note
         tr["outcome"] = "act"
         tr["traps"] = self.trap_labels(S, ev, opp, acct, env, close_date, tier, usd, threshold, how, why)

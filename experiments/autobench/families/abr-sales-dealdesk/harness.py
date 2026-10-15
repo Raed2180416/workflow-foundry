@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """abr-sales-dealdesk stream harness ($0, no model): runs a code solver over generated weeks and grades every trigger.
 
-    corpus/AutomationBench/.venv/bin/python -I harness.py <command> [--seeds 601-605] [--difficulty d2|d3] ...
+    corpus/AutomationBench/.venv/bin/python -I harness.py <command> [--seeds 610-614] [--difficulty d2|d3] ...
 
 Runs only inside AutomationBench's own venv (pinned by its uv.lock). Everything happens in one process: the
 generator's world0 is validated as AutomationBench's WorldState; for each trigger the host-only delta is applied
@@ -382,7 +382,7 @@ def gate_traps(gens: list[dict]) -> dict:
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["run", "controls", "gates", "mutation", "export"])
-    ap.add_argument("--seeds", default="601-605")
+    ap.add_argument("--seeds", default="610-614")
     ap.add_argument("--seed", type=int)
     ap.add_argument("--difficulty", choices=["d1", "d2", "d3"])
     ap.add_argument("--solver", default="ref", choices=sorted(SOLVERS))
@@ -403,10 +403,11 @@ def main():
             reb = run_stream("ref", s, g=g)["afters"] if a.mode == "rebased" else None
             r = run_stream(a.solver, s, g=g, mode=a.mode, rebase=reb)
             r.pop("afters", None)
-            if not a.rows:
-                r["rows"] = [x for x in r["rows"] if not x["pass"]]
             res.append(r)
-        out = {"solver": a.solver, "mode": a.mode, "summary": summarize(res), "streams": res}
+        out = {"solver": a.solver, "mode": a.mode, "summary": summarize(res), "streams": res}  # summary over every row
+        if not a.rows:
+            for r in res:
+                r["rows"] = [x for x in r["rows"] if not x["pass"]]
     elif a.command == "controls":
         out = {"controls": {}}
         gens = {s: G.generate(s, a.difficulty) for s in seeds}

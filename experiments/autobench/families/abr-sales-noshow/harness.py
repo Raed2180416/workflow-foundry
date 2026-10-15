@@ -141,7 +141,7 @@ def run_stream(stream: dict, solver, mode: str = "carry", ref_befores: list | No
     from automationbench.schema.world import WorldState
     grader = grader or oracle.Grader()
     seed = stream["meta"]["seed"]
-    row = gen.serve_input(seed)
+    row = gen.serve_input(seed, stream["triggers"][0])
     r = b.Rollout(row, MAX_STEPS, stream["world0"], 0)
     asyncio.run(r.setup())
     world = stream["world0"]

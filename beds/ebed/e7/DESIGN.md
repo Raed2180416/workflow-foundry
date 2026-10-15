@@ -492,8 +492,9 @@ node beds/ebed/e7/tools/timeline.mjs --seed 1001 --difficulty 3 --case i0042   #
 ## 13. Seeds (SEED-LEDGER, owner `ebed`)
 
 Dev `ebed-dev` **1001–1199** (bed health, suites, goldens, controls, dev streams); rehearsal `ebed-e7-rehearsal`
-**1201–1249** (author fixtures 1201–1206, attacks 1211–1222, reference validation 1231, dev rehearsals 1232–1234,
-specificity and Track C rehearsals 1241–1249); fuzz bases 1301–1310; held-out 9101–9104, sealed 9201–9204 and scale
+**1201–1249** (author fixtures 1201–1206, attacks 1211–1222, reference validation 1231, dev rehearsals 1232–1234 (the B1
+grading worlds), B1 build-loop practice worlds 1235–1237 (assigned 2026-10-15, `experiments/ebed/smoke-service.mjs`),
+specificity and Track C rehearsals 1241–1249 (`tools/specificity-run.mjs` defaults to 1242–1244)); fuzz bases 1301–1310; held-out 9101–9104, sealed 9201–9204 and scale
 9301–9302 are reserved and untouched by the build. **Touched:** 1241 at d3 by the part-A walker discrimination check on
 2026-10-14 (walker only: no solver, no model); recorded in SEED-LEDGER on 2026-10-15, when the check moved to dev seed
 1101 (`tools/walker-grade.mjs`, which refuses the rehearsal block).

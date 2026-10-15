@@ -1,8 +1,8 @@
 // Build-loop feedback for B1 builders (B1-E8-DEV "next lever": a build loop with the smoke runner). The builder stays in
 // its sandbox and sees no bed code: it writes solver.mjs and runs `node smoke.mjs`, which drops a request file into
 // .smoke/ in its own workdir and waits. This host-side service picks the request up, runs the CURRENT solver.mjs out of
-// process (beds/ebed/host/sandbox-arm.mjs) through the real host on PRACTICE worlds (seeds disjoint from every grading
-// world: SEED-LEDGER ebed-e8-rehearsal 1235-1237), and writes back a report:
+// process (beds/ebed/host/sandbox-arm.mjs) through the real host on the item's practice worlds (practiceFor: seeds
+// disjoint from every grading world, SEED-LEDGER ebed-e8-rehearsal and ebed-e7-rehearsal 1235-1237), and writes back a report:
 //   smoke   what an arm author may see (beds/ebed/e8/tools/arm-smoke.mjs): run status, wake-ups, ticks, instances,
 //           arm errors, and the effect results the solver received, by system.op, status and error code. No grading.
 //   graded  smoke plus the oracle's completed-case pass count and the first divergence (rule, lid, layer, code) of up to
@@ -13,7 +13,24 @@ import path from 'node:path';
 import { createHost } from '../../beds/ebed/host/host.mjs';
 import { sandboxArm } from '../../beds/ebed/host/sandbox-arm.mjs';
 
-export const PRACTICE = { seeds: [1235, 1236, 1237], difficulties: [2, 3, 5] };
+/**
+ * Practice worlds per item (family id), from each item's rehearsal block (SEED-LEDGER ebed-<item>-rehearsal 1201-1249):
+ * 1235-1237, disjoint from the B1 grading worlds (dev rehearsals 1232-1234) and the specificity block (1241-1249).
+ * Worlds are salted by item, so seed 1235 is a different world in each item. Dev only; never held-out or sealed seeds.
+ */
+export const PRACTICE_BY_ITEM = Object.freeze({
+  'ebed-e8': Object.freeze({ seeds: [1235, 1236, 1237], difficulties: [2, 3, 5] }),   // assigned 2026-10-14
+  'ebed-e7': Object.freeze({ seeds: [1235, 1236, 1237], difficulties: [2, 3, 5] }),   // assigned 2026-10-15
+});
+/** E8's practice worlds (the default before items were generic; kept for existing callers). */
+export const PRACTICE = PRACTICE_BY_ITEM['ebed-e8'];
+
+/** The practice worlds of an item (an index module with `family`). */
+export function practiceFor(item) {
+  const p = PRACTICE_BY_ITEM[item?.family?.id];
+  if (!p) throw new Error(`no practice worlds for item ${item?.family?.id}`);
+  return p;
+}
 
 /** The client the builder runs (inside its sandbox): file mailbox only, no network, no bed code. */
 export const CLIENT = `// Ask the platform to run ./solver.mjs on practice worlds and print what happened. Usage: node smoke.mjs
@@ -45,7 +62,7 @@ and the effect results your solver received, by system.op, status and error code
 const asText = x => (typeof x === 'string' ? x : JSON.stringify(x));
 
 /** Run one solver source on the practice worlds; returns the report text and a summary row. */
-export async function smokeReport(item, solverSource, { mode = 'smoke', practice = PRACTICE, show = 6, maxWakeups = 30_000, worldTimeoutMs = 240_000 } = {}) {
+export async function smokeReport(item, solverSource, { mode = 'smoke', practice = practiceFor(item), show = 6, maxWakeups = 30_000, worldTimeoutMs = 240_000 } = {}) {
   const lines = [], summary = { worlds: [] };
   for (const d of practice.difficulties) {
     const seed = practice.seeds[practice.difficulties.indexOf(d)] ?? practice.seeds[0];
@@ -102,7 +119,7 @@ export async function smokeReport(item, solverSource, { mode = 'smoke', practice
  * Serve smoke requests from a builder's workdir until stop() is called. Requests are handled one at a time, in order.
  * Returns { stop: async () => count }.
  */
-export function serveMailbox({ item, workdir, mode, journal, practice = PRACTICE, pollMs = 1000 }) {
+export function serveMailbox({ item, workdir, mode, journal, practice = practiceFor(item), pollMs = 1000 }) {
   const box = path.join(workdir, '.smoke');
   mkdirSync(box, { recursive: true });
   let busy = false, stopped = false, count = 0;

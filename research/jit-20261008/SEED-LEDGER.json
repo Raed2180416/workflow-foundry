@@ -1,6 +1,6 @@
 {
  "schema": "seed-ledger/1",
- "updated": "2026-10-14",
+ "updated": "2026-10-15",
  "about": "Per-(bed, split) seed ledger (BLOCKER-SYNTHESIS S0-5). Checked by experiments/jit/seeds.mjs assertSeedsAllowed (stream.mjs config validation) and by experiments/kev-data/lib/registry.mjs (the Kev factory refuses every range here that another owner holds as reserved or fresh). A seed range applies to every difficulty. beds ['*'] means every bed. allow: the purposes that may use the range (null: any purpose); a purpose with fresh: true also refuses ranges whose status is used or burned. Edit this file when a run consumes a range (status fresh -> used), in the same commit as the run's config.",
  "rules": {
   "heldoutMinSeed": 8001,
@@ -1015,7 +1015,7 @@
    "allow": [
     "ebed-rehearsal"
    ],
-   "use": "E7 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1235-1240 unassigned). 1241 touched 2026-10-14 at d3 by the part-A walker discrimination check only (no solver, no model; the check now runs on dev seeds, beds/ebed/e7/tools/walker-grade.mjs; recorded 2026-10-15)",
+   "use": "E7 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234 (the B1 grading worlds, experiments/ebed/build.mjs --item e7), B1 build-loop practice worlds 1235-1237 (experiments/ebed/smoke-service.mjs PRACTICE_BY_ITEM; assigned 2026-10-15), specificity-solver and Track C rehearsals 1241-1249 (beds/ebed/e7/tools/specificity-run.mjs; default 1242-1244) (1207-1210, 1223-1230, 1238-1240 unassigned). 1241 touched 2026-10-14 at d3 by the part-A walker discrimination check only (no solver, no model; the check now runs on dev seeds, beds/ebed/e7/tools/walker-grade.mjs; recorded 2026-10-15)",
    "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
   },
   {

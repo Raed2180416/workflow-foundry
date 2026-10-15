@@ -10,8 +10,10 @@ specificity solvers (`specificity/`, a separate session, DESIGN §18 step 5), th
 metamorphic suite beyond its first relation (retroactive history = live history, review round 2), an Intl
 minute-stepper N-version check (the clock N-version checks built here compare clocks that all use pinned zone tables;
 the R4.2 evaluator of round 2 uses the generator's clock), the paid triviality attack and the arm (c) reference. Not built from the design's module
-plan: `ledger/SEMANTICS.md` (DESIGN §14 is its draft) and the tools `arm-smoke`, `mutate`, `specificity-run`, `nversion`
-and `timeline` (part A's `world-health --case` prints a planned timeline; `historyOf` gives the oracle's). Nothing here
+plan: `ledger/SEMANTICS.md` (DESIGN §14 is its draft) and the tools `arm-smoke`, `mutate`, `nversion` and `timeline`
+(part A's `world-health --case` prints a planned timeline; `historyOf` gives the oracle's). `tools/specificity-run.mjs`
+is built (2026-10-15, mirroring E8's) and waits for the blind solvers; E7 also runs through the item-generic B1 wiring
+(`experiments/ebed/build.mjs --item e7`: grading worlds 1232–1234, build-loop practice worlds 1235–1237). Nothing here
 is evidence about any arm.
 
 ```sh
@@ -20,6 +22,7 @@ node beds/ebed/e7/tools/health.mjs --seeds 1001-1030                       # bed
 node beds/ebed/e7/tools/controls-run.mjs --seeds 1211-1214                 # controls on attack worlds
 node beds/ebed/e7/tools/world-health.mjs --seeds 1001-1030 --walk          # the world alone (part A)
 node beds/ebed/e7/tools/world-health.mjs --seed 1001 --difficulty 3 --case i0042   # one case's planned timeline
+node beds/ebed/e7/tools/specificity-run.mjs [--dir <solvers>] --seeds 1242-1244   # blind solvers on 1241-1249, 0 false rejects
 ```
 
 ## What the item is
