@@ -50,8 +50,8 @@ escalations and deadlines are yours, and the records you write are graded.
 - **Time.** Every time the platform gives you (event times, `now`, result times) is an ISO 8601 instant written at
   offset `+01:00` all year round; it is an instant, not a local time. The system time zone is `Europe/Amsterdam`
   (`policy.json` `systemTimeZone`). Every event time is a whole minute. You may write instants with any offset: they
-  are compared as instants. Business time is always computed in the time zone a rule names (§4.4), never in the offset
-  a time happens to be written in.
+  are compared as instants (S18). Business time is always computed in the time zone a rule names (§4.4), never in the
+  offset a time happens to be written in.
 
 ## 2. Systems (exact schemas in `api/<system>.schema.json`)
 
@@ -450,6 +450,10 @@ Send each required notification exactly once per occasion. Escalations are not n
 - S17 A master record's id is the field named after its kind, never a field `id`: `ci` in `cis.json` (a CI's id in
   §3.1), `service` in `services.json`, `group` in `groups.json` (a resolver update's `group` and `toGroup`, an
   `assignment.json` `group`, a CI's `supportGroup`) and `userId` in `users.json` (a report's `callerId`).
+- S18 An instant you write in an effect (`at`, `startAt`, `openedAt`, `plannedBreachAt`) is written `YYYY-MM-DDTHH:MM`,
+  `YYYY-MM-DDTHH:MM:SS` or `YYYY-MM-DDTHH:MM:SS.s` (one to three digits after the point), followed by its offset, `Z`
+  or `±HH:MM` (§1). A time without an offset, or in any other form (a space for `T`, a lower-case `z`, an offset
+  `+0100` or `+01`), names no instant, in whatever zone it might be read: it matches no instant a rule gives.
 
 ## 6. Orientation (for orientation only)
 

@@ -16,7 +16,8 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
                 reference imports no host module.
   solvability   the observable-only reference passes every trigger (and every week) of the practice and dev streams,
                 in carry mode and in rebased mode; generator and reference therefore agree on every effect (gate 3).
-  controls      every bad control fails; null passes exactly the no-op triggers; the <= 40-line naive heuristic
+  controls      every bad control fails; null passes exactly the no-op triggers (a no-op Friday run excepted: it
+                carries the end-of-week state); the <= 40-line naive heuristic
                 scores below 60% per trigger at d3.
   traps         each trap kind appears at least five times across the four dev label streams 610-613.
   mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects.
@@ -183,7 +184,8 @@ def gate_solvability(seeds: list[int], rebased: list[int] | None = None) -> dict
 def gate_controls(seeds: list[int], d3_seeds: list[int], streams: dict | None = None) -> dict:
     streams = streams or {s: gen.generate(s) for s in seeds}
     res, problems = {}, []
-    noop = sum(1 for s in seeds for t in streams[s]["truth"] if t["outcome"] == "no-op")
+    # a no-op Friday run still carries the end-of-week state, which a do-nothing run cannot satisfy
+    noop = sum(1 for s in seeds for t in streams[s]["truth"][:-1] if t["outcome"] == "no-op")
     for name in BAD_CONTROLS:
         summary, results = harness.run(name, seeds, streams=streams)
         failed_kinds = Counter(x["kind"] for r in results for x in r["rows"] if not x["pass"])
@@ -262,12 +264,17 @@ def mutants(before: dict, after: dict, truth: dict):
             out.append((name, w))
 
     def body_sub(i, pat, rep):
+        """The same fact changed in every body part (the simulated Gmail keeps a plain and an HTML copy)."""
         def f(w):
             rec = w["gmail"]["messages"][i]
-            new = re.sub(pat, rep, rec["body_plain"], count=1)
-            if new == rec["body_plain"]:
+            changed = False
+            for part in ("body_plain", "body_html", "snippet"):
+                if rec.get(part):
+                    new = re.sub(pat, rep, rec[part], count=1)
+                    changed = changed or new != rec[part]
+                    rec[part] = new
+            if not changed:
                 return False
-            rec["body_plain"] = new
         return f
 
     def bump_amount(mm):
@@ -357,12 +364,13 @@ def equivalents(before: dict, after: dict, truth: dict):
     if rows:
         i = rows[0]
         c = after["google_sheets"]["rows"][i]["cells"]
-        if c.get("Status"):
+        c0 = next(r for r in before["google_sheets"]["rows"] if r["id"] == after["google_sheets"]["rows"][i]["id"])["cells"]
+        if c.get("Status") and c.get("Status") != c0.get("Status"):
             m("status-lower-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Status", c["Status"].lower()))
             m("status-upper-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Status", c["Status"].upper()))
-        if c.get("Bonus"):
+        if c.get("Bonus") and c.get("Bonus") != c0.get("Bonus"):
             m("bonus-bare-number", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Bonus", re.sub(r"[^\d]", "", c["Bonus"])))
-        if c.get("Hold"):
+        if c.get("Hold") and c.get("Hold") != c0.get("Hold"):
             m("hold-lower-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Hold", "yes"))
     inbox = [i for i, x in enumerate(after["gmail"]["messages"]) if "INBOX" in x.get("label_ids", []) and not x.get("is_read")]
     if inbox:

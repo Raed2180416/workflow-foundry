@@ -193,7 +193,7 @@ def test_every_bad_control_fails(dev_runs, name):
 
 
 def test_gross_controls(dev_runs, streams):
-    noop = sum(1 for s in DEV for t in streams[s]["truth"] if t["outcome"] == "no-op")
+    noop = sum(1 for s in DEV for t in streams[s]["truth"][:-1] if t["outcome"] == "no-op")   # Friday carries the week
     null, _ = dev_runs["null"]
     assert null["passed"] == noop and set(null["outcomes"]) <= {"correct", "miss"}
     echo, _ = dev_runs["echo"]
