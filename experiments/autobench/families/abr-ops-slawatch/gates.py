@@ -51,7 +51,8 @@ PRACTICE = list(range(601, 610))
 PAYLOAD_KEYS = {"trigger", "at", "app", "event", "data"}
 DATA_KEYS = {"spreadsheet_id", "worksheet", "row", "changed", "message_id", "from", "subject", "snippet"}
 BAD_CONTROLS = ["null", "echo", "naive", "eager", "no-hold", "utc-naive", "status-blind", "no-reassign", "warn-once",
-                "strict-window", "slack-dedupe", "raw-phone", "any-amendment", "fixed-window"]
+                "strict-window", "slack-dedupe", "raw-phone", "any-amendment", "fixed-window", "late-warning",
+                "early-warning"]
 _STREAMS: dict = {}
 
 

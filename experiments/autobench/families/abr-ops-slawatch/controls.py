@@ -20,6 +20,8 @@ a do-nothing run, an echo, and plausible-but-wrong runs, and that every policy r
   raw-phone       the reference, but the SMS goes to the phone exactly as written in the tracker
   any-amendment   the reference, but an amendment from anyone is applied
   fixed-window    the reference with the warning window fixed at 120 minutes (Policy Log and amendments ignored)
+  late-warning    the reference, but a warning waits for the second check inside the window (one check late)
+  early-warning   the reference, but a warning goes out one check before the window opens (one check early)
 """
 from __future__ import annotations
 
@@ -145,6 +147,16 @@ class FixedWindow(SlaWatch):
         return 120
 
 
+class LateWarning(SlaWatch):
+    def in_window(self, D, W):
+        return 0 < (D - self.now).total_seconds() <= (W - 60) * 60
+
+
+class EarlyWarning(SlaWatch):
+    def in_window(self, D, W):
+        return 0 < (D - self.now).total_seconds() <= (W + 60) * 60
+
+
 def _wrap(cls):
     def run(trigger, ctx):
         cls(trigger, ctx).run()
@@ -167,4 +179,6 @@ CONTROLS = {
     "raw-phone": _wrap(RawPhone),
     "any-amendment": _wrap(AnyAmendment),
     "fixed-window": _wrap(FixedWindow),
+    "late-warning": _wrap(LateWarning),
+    "early-warning": _wrap(EarlyWarning),
 }
