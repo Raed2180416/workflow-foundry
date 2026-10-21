@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Group-sequential dev design for AutomationBench comparisons (register A4; research/compromises-20261021/FIXES.md §2
-// action 7; research/automationbench-20261014/PREREG-AB-v1-AMEND-1.md, DRAFT until the orchestrator freezes it). $0 here:
-// this file plans, prints run commands, analyses stored rows and simulates; only `look --exec` starts a paid run, and only
-// on a frozen plan whose hash is pinned below.
+// action 7; research/automationbench-20261014/PREREG-AB-v1-AMEND-1.md, FROZEN 2026-10-21 with the orchestrator's decision
+// D23). $0 here: this file plans, prints run commands, analyses stored rows and simulates; only `look --exec` starts a paid
+// run, and only on the frozen plan whose hash is pinned below.
 //
 // Design (FIXES A4 as amended by the skeptic and by the 2026-10-21 review):
 //   - New tasks at k = 1, paired, never repeats: look 1 is the dev60 task list (devTrain, --subset 60 --seed 21), later
@@ -15,10 +15,14 @@
 //     stored dev60 treatment rows are in-sample and are read only as an illustration (`analyze --illustration`).
 //   - Never devCheck: every selection is checked against SPLIT-v1's devCheck list, whose hash must be the one PREREG-AB-v1
 //     §1.1 records (74cf7615…25a7). Never test: loadSplit/assertDevOnly, always, whatever run.mjs flags are passed.
-//   - Co-primary metrics: strict pass (exact McNemar; stays the headline) and official partial credit (paired sign-flip
-//     permutation), each at two-sided alpha 0.025 with its own O'Brien-Fleming schedule (Bonferroni over the two metrics,
-//     so the family-wise type-I over both metrics and every look is at most 0.05). A crossing decides only with a gap of
-//     at least 3 points (0.03 partial credit; ROADMAP §4.3). A strict-pass claim needs the strict test to cross.
+//   - Two metrics in a fixed sequence (D23, research/decisions-20261021.md; AMEND-1 §2.5, §7): strict pass (exact McNemar;
+//     the headline) is tested first at the full two-sided alpha 0.05 with its own O'Brien-Fleming schedule; official
+//     partial credit (paired sign-flip permutation) is tested at 0.05 with its own O'Brien-Fleming schedule only at a look
+//     where strict pass is rejected (closed testing: the family-wise type-I over both metrics and every look stays at most
+//     0.05). The second metric needs a group-sequential boundary of its own, not the nominal 0.05 at the stopping look
+//     (Hung, Wang & O'Neill 2007; Glimm, Maurer & Bretz 2010; Tamhane, Mehta & Liu 2010). A rejection needs a gap of at
+//     least 3 points (0.03 partial credit; ROADMAP §4.3). The comparison stops only when strict pass is rejected (either
+//     direction): never on partial credit alone.
 //   - Reported beside every look, never deciding: the Beta-mixture e-value (anytime-valid, for an unplanned look), Wilson
 //     intervals per arm and paired Bayes intervals for both metrics (exact/Bayes intervals at n < 200).
 //   - run.mjs is NOT changed by this design: it is in the A1 and A1-C harness manifests (PREREG-AB-v1 §5, §6.1), so the
@@ -29,15 +33,17 @@
 //   node experiments/autobench/sequential.mjs look N --plan FILE --role control|treatment --arm NAME [--first-look F] [--exec] \
 //        -- --run-id ID <run.mjs options other than the task selection…>
 //   node experiments/autobench/sequential.mjs analyze --plan FILE --first-look F --control 1:a0-dev60-dn [--control 2:RUN] \
-//        --treatment 2:RUN [--treatment 3:RUN] [--stop-on either|strict] [--illustration] [--json]
+//        --treatment 2:RUN [--treatment 3:RUN] [--illustration] [--json]      (--stop-on accepts only strict: D23)
 //   node experiments/autobench/sequential.mjs simulate [--plan FILE --first-look F | --cumulative 60,120] [--reps 20000] \
 //        [--pc-test normal|permutation] [--h1 [--h1-scale s]] [--json]   (T2: type-I under H0; power under --h1)
+//   node experiments/autobench/sequential.mjs export-look N --plan FILE [--write FILE]   (a frozen look's task list + hash)
 //
 // The unexposed pool, from data on disk (names only, never grades): devTrain minus the forced set (SPLIT-v1, 103), minus
 // the dev tasks briefed by the families agent (EXPOSURE-20261015.json, AM-2), minus every task named by any recorded run
-// (summary.json, launch.json and sequential-look.json `tasks` under the main tree's runs, every worktree's runs and the
-// live root; an unparsable file stops the plan), minus look 1. FIXES assumed 137 unexposed tasks; it did not subtract
-// dev60's 37 non-forced tasks, so the feasible schedule is smaller (see `plan`).
+// (summary.json, launch.json and sequential-look.json `tasks`, and the task-named directories under prep/, w/ and host/,
+// under the main tree's runs, every git worktree's runs and the live root; an unparsable file stops the plan), minus
+// look 1. FIXES assumed 137 unexposed tasks; it did not subtract dev60's 37 non-forced tasks, so the feasible schedule is
+// smaller (see `plan`).
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -47,8 +53,9 @@ import { assertDevOnly, domainOf, listSha256, loadSplit } from './split.mjs';
 import { mcnemarExactCounts, mixtureEvalue, obrienFlemingBoundary, pairedBayesInterval, pairedPermutation, pairedSignFlipZ, twoSidedP, wilson } from '../lib/stats.mjs';
 import { rng } from '../../beds/lib/rng.mjs';
 
-export const SCHEMA = 'foundry.autobench.sequential-plan/v2';
-export const SIDECAR_SCHEMA = 'foundry.autobench.sequential-look/v1';
+export const SCHEMA = 'foundry.autobench.sequential-plan/v3';            // v3: D23's fixed sequence (v2: the DRAFT's Bonferroni split)
+export const SIDECAR_SCHEMA = 'foundry.autobench.sequential-look/v2';
+export const LOOK_TASKS_SCHEMA = 'foundry.autobench.sequential-look-tasks/v1';
 export const SIDECAR = 'sequential-look.json';
 export const RUNS_REL = 'research/automationbench-20261014/runs';
 export const RUNS = path.join(REPO, RUNS_REL);
@@ -58,12 +65,28 @@ export const RUNNER = path.join(REPO, 'experiments/autobench/run.mjs');
 export const LOOK1_RUN = 'a0-dev60';                  // the stored dev60 selection (devTrain, subset 60, seed 21)
 export const SALT = 'ab-seq-v1:';
 export const ALPHA_TOTAL = 0.05;
-export const ALPHA_PER_METRIC = 0.025;                // Bonferroni over the two co-primary metrics
+/**
+ * D23 (1): fixed-sequence testing. Each metric's own O'Brien-Fleming boundary spends the full two-sided alpha; partial
+ * credit is reached only through a strict-pass rejection, so the family-wise error stays at ALPHA_TOTAL. (The DRAFT split
+ * 0.025 per metric, Bonferroni; a plan with those boundaries is refused.)
+ */
+export const ALPHA = Object.freeze({ total: ALPHA_TOTAL, strict: 0.05, partialCredit: 0.05 });
+/** The DRAFT's per-metric alpha, kept only so the simulation can report what D23 changed. Never a decision level. */
+export const DRAFT_BONFERRONI_ALPHA = 0.025;
+/** D23 (1)-(2), written into the plan (and so into its hash) and checked by readPlan. */
+export const PROCEDURE = Object.freeze({
+  decision: 'D23 (research/decisions-20261021.md); PREREG-AB-v1-AMEND-1 §2.5-§2.6, §7',
+  order: Object.freeze(['strict', 'partialCredit']),
+  rule: 'fixed sequence: strict pass is tested first at the full alpha with its own O\'Brien-Fleming boundary; partial credit is tested at the full alpha with its own O\'Brien-Fleming boundary only at a look where strict pass is rejected (closed testing: family-wise error at most alpha)',
+  stopOn: 'strict',
+  stopRule: 'the comparison ends only when strict pass is rejected (effect or harm) or at the last look; never on partial credit alone',
+});
+export const STOP_ON = PROCEDURE.stopOn;
 export const FLOOR = 0.03;                            // ROADMAP §4.3: gaps under 3 points (0.03 partial credit) are noise
 /** PREREG-AB-v1 §1.1 records the devCheck list hash abbreviated as `74cf7615…25a7`. */
 export const PREREG_DEVCHECK = Object.freeze({ prefix: '74cf7615', suffix: '25a7' });
 /**
- * The frozen plan's sha256, pinned here at freeze (PREREG-AB-v1-AMEND-1 §8). null while the amendment is a DRAFT: then a
+ * The frozen plan's sha256, pinned here at freeze (PREREG-AB-v1-AMEND-1 §9). null while the amendment is a DRAFT: then a
  * plan reads only as DRAFT (analyses are labelled so) and `look --exec` refuses to start a paid run.
  */
 export const FROZEN_PLAN_SHA256 = null;
@@ -92,20 +115,34 @@ export function assertNoDevCheck(tasks, split = checkedSplit()) {
 // ------------------------------------------------------------------------------------------------ exposure
 /** The main tree (a worktree's REPO lives under <main>/.claude/worktrees/<name>). */
 export const mainTree = (repo = REPO) => (repo.includes(`${path.sep}.claude${path.sep}worktrees${path.sep}`) ? repo.slice(0, repo.indexOf(`${path.sep}.claude${path.sep}worktrees${path.sep}`)) : repo);
-/** Every run root whose task names count as exposure: the main tree's runs, every worktree's runs, the live root. */
-export function exposureRoots({ repo = REPO, liveRoot = LIVE_ROOT } = {}) {
+/** Paths of every git worktree of the main tree (`git worktree list --porcelain`); [] when git cannot list them. */
+export function gitWorktrees(main) {
+  const r = spawnSync('git', ['-C', main, 'worktree', 'list', '--porcelain'], { encoding: 'utf8' });
+  return r.status === 0 ? r.stdout.split('\n').filter(l => l.startsWith('worktree ')).map(l => l.slice('worktree '.length)) : [];
+}
+/**
+ * Every run root whose task names count as exposure: the main tree's runs, every worktree's runs (the directories under
+ * .claude/worktrees, and any other git worktree, e.g. one under /var/tmp), the live root.
+ */
+export function exposureRoots({ repo = REPO, liveRoot = LIVE_ROOT, worktrees } = {}) {
   const main = mainTree(repo), roots = [{ label: `main:${RUNS_REL}`, dir: path.join(main, RUNS_REL) }];
-  const wt = path.join(main, '.claude', 'worktrees');
-  if (existsSync(wt)) for (const d of readdirSync(wt, { withFileTypes: true }).filter(x => x.isDirectory()).map(x => x.name).sort()) roots.push({ label: `worktree:${d}:${RUNS_REL}`, dir: path.join(wt, d, RUNS_REL) });
+  const wt = path.join(main, '.claude', 'worktrees'), listed = new Set([path.resolve(main)]);
+  if (existsSync(wt)) for (const d of readdirSync(wt, { withFileTypes: true }).filter(x => x.isDirectory()).map(x => x.name).sort()) { roots.push({ label: `worktree:${d}:${RUNS_REL}`, dir: path.join(wt, d, RUNS_REL) }); listed.add(path.resolve(wt, d)); }
+  for (const w of [...(worktrees ?? gitWorktrees(main))].sort()) if (!listed.has(path.resolve(w))) { roots.push({ label: `worktree:${w}:${RUNS_REL}`, dir: path.join(w, RUNS_REL) }); listed.add(path.resolve(w)); }
   if (liveRoot) roots.push({ label: `live:${liveRoot}`, dir: liveRoot });
   return roots;
 }
+/** A task name as run directories carry it (domain.task). */
+const TASK_NAME = /^[a-z][a-z0-9_]*\.[a-z0-9_]+$/;
+/** Run subdirectories whose children are named by task (a run that died before its summary still left these). */
+const TASK_DIRS = ['prep', 'w', 'host'];
 const readJsonStrict = f => {
   try { return JSON.parse(readFileSync(f, 'utf8')); } catch (e) { throw new Error(`sequential: ${f} is unreadable or not JSON (${e.message}); the exposure record cannot be trusted, so nothing is planned (re-run once the file is whole)`); }
 };
 /**
- * Task names of every recorded run under the given roots (summary.json, launch.json and sequential-look.json `tasks`;
- * names only). An unparsable file throws: a run silently dropped would put its tasks back into the "unexposed" pool.
+ * Task names of every recorded run under the given roots (summary.json, launch.json and sequential-look.json `tasks`, and
+ * the task-named directories under a run's prep/, w/ and host/; names only). An unparsable file throws: a run silently
+ * dropped would put its tasks back into the "unexposed" pool.
  * roots: directories, or { label, dir }. Returns Map(task -> Set of "label/run"), with .scanned = [{ label, runs }].
  */
 export function seenTasks(roots) {
@@ -129,6 +166,16 @@ export function seenTasks(roots) {
         }
         any = true;
       }
+      for (const sub of TASK_DIRS) {
+        const sd = path.join(dir, d.name, sub);
+        if (!existsSync(sd)) continue;
+        for (const e of readdirSync(sd, { withFileTypes: true })) {
+          if (!e.isDirectory() || !TASK_NAME.test(e.name)) continue;
+          if (!seen.has(e.name)) seen.set(e.name, new Set());
+          seen.get(e.name).add(`${label}/${d.name}`);
+          any = true;
+        }
+      }
       runs += any;
     }
     scanned.push({ label, runs });
@@ -147,9 +194,10 @@ export function look1Tasks() {
 // ------------------------------------------------------------------------------------------------ plan
 const byKey = (a, b) => { const x = sha256(SALT + a), y = sha256(SALT + b); return x < y ? -1 : x > y ? 1 : 0; };
 const fractionsOf = cum => cum.map(n => n / cum[cum.length - 1]);
+/** D23: each metric's own O'Brien-Fleming boundary at the full alpha over the arm's looks (cumulative task counts). */
 export const boundariesFor = cumulative => ({
-  strict: obrienFlemingBoundary(cumulative.length, { alpha: ALPHA_PER_METRIC, fractions: cumulative }),
-  partialCredit: obrienFlemingBoundary(cumulative.length, { alpha: ALPHA_PER_METRIC, fractions: cumulative }),
+  strict: obrienFlemingBoundary(cumulative.length, { alpha: ALPHA.strict, fractions: cumulative }),
+  partialCredit: obrienFlemingBoundary(cumulative.length, { alpha: ALPHA.partialCredit, fractions: cumulative }),
 });
 /** One O'Brien-Fleming schedule per possible first look F: looks F..last, cumulative task counts from look F. */
 export function schedulesFor(counts) {
@@ -194,7 +242,7 @@ export function computePlan({ split = checkedSplit(), look1 = look1Tasks(), expo
     rule: `look 1 = the dev60 tasks; looks 2.. = ${perDomainQuota} per domain from the unexposed devTrain pool in sha256('${SALT}' + task) order; a remainder under ${minLook} is unused`,
     exposureRule: 'an arm developed, tuned or probed on any task of a look starts at the first look after it (firstLook); every arm with stored dev60 rows starts at look 2',
     batch, minLook, salt: SALT, looks, counts, schedules: schedulesFor(counts),
-    alpha: { total: ALPHA_TOTAL, perMetric: ALPHA_PER_METRIC }, floor: FLOOR,
+    alpha: { ...ALPHA }, procedure: PROCEDURE, floor: FLOOR,
     pool: { devTrain: devTrain.length, eligible: eligible.length, excluded, unused: unused.sort(), roots: exposure.roots ?? seen.scanned ?? null },
   };
   plan.planSha256 = planHash(plan);
@@ -225,7 +273,9 @@ export function readPlan(file, { frozen = FROZEN_PLAN_SHA256, look1 = look1Tasks
       throw new Error(`${file}: schedule from look ${w.firstLook} does not match the boundaries recomputed from its task counts`);
     }
   }
-  if (p.alpha?.perMetric !== ALPHA_PER_METRIC || p.alpha?.total !== ALPHA_TOTAL) throw new Error(`${file}: alpha ${JSON.stringify(p.alpha)} is not the amendment's`);
+  if (JSON.stringify(p.alpha) !== JSON.stringify(ALPHA)) throw new Error(`${file}: alpha ${JSON.stringify(p.alpha)} is not the amendment's ${JSON.stringify(ALPHA)} (D23)`);
+  if (JSON.stringify(p.procedure) !== JSON.stringify(PROCEDURE)) throw new Error(`${file}: its testing procedure is not D23's fixed sequence with stopping on strict pass`);
+  if (p.floor !== FLOOR) throw new Error(`${file}: floor ${p.floor} is not ${FLOOR}`);
   const isFrozen = frozen !== null && p.planSha256 === frozen;
   if (frozen !== null && !isFrozen) throw new Error(`${file}: plan ${p.planSha256.slice(0, 16)}… is not the frozen plan ${frozen.slice(0, 16)}…`);
   if (isFrozen && !/^FROZEN/.test(p.status)) throw new Error(`${file}: the pinned plan must carry a FROZEN status`);
@@ -264,7 +314,7 @@ export function lookSidecar(plan, n, { role, arm, firstLook = null, runId, live,
     schema: SIDECAR_SCHEMA, design: 'PREREG-AB-v1-AMEND-1 group-sequential (A4)', planStatus: plan.status, plan: plan.planSha256, look: n, looks: plan.looks.length,
     tasks, tasksSha256: listSha256(tasks), role, arm, ...(role === 'treatment' ? { firstLook } : {}),
     nominal: Object.fromEntries(plan.schedules.filter(s => s.looks.includes(n) && (role === 'control' || s.firstLook === firstLook)).map(s => [`from look ${s.firstLook}`, { strict: s.nominal.strict[s.looks.indexOf(n)], partialCredit: s.nominal.partialCredit[s.looks.indexOf(n)] }])),
-    alphaPerMetric: plan.alpha.perMetric, runId, live, out, runArgs: argv,
+    alpha: plan.alpha, procedure: plan.procedure.rule, stopOn: plan.procedure.stopOn, runId, live, out, runArgs: argv,
     runnerSha256: sha256(readFileSync(RUNNER)), sequentialSha256: sha256(readFileSync(fileURLToPath(import.meta.url))),
   };
 }
@@ -300,6 +350,24 @@ export function execLook(plan, n, { role, arm, firstLook = null, passthrough = [
     if (listSha256(s.tasks ?? []) !== sidecar.tasksSha256) throw new Error(`look: ${summary} holds tasks other than look ${n}'s`);
   }
   return { sidecar, args, live, out, status: r?.status ?? 1 };
+}
+
+/**
+ * A frozen look's task list for another workflow to adopt (task names only): the list, its hash (listSha256, the plan's
+ * definition), the plan it comes from and each schedule's nominal levels at that look. Deterministic (no timestamp), so
+ * the file's own hash reproduces. A DRAFT plan is refused.
+ */
+export function exportLook(plan, n) {
+  if (plan.draft) throw new Error('export-look: the plan is a DRAFT (not the plan pinned in FROZEN_PLAN_SHA256); only frozen look lists are exported');
+  const tasks = lookTasks(plan, n), L = plan.looks.find(x => x.look === n);
+  return {
+    schema: LOOK_TASKS_SCHEMA, design: 'PREREG-AB-v1-AMEND-1 group-sequential (A4), FROZEN; D23 fixed sequence', evidence: 'task names only (no task content, grade or sealed record read)',
+    plan: plan.planSha256, planFile: 'research/automationbench-20261014/SEQUENTIAL-PLAN-v1.json', planStatus: plan.status, look: n, source: L.source,
+    n: tasks.length, perDomain: L.perDomain, tasks, tasksSha256: L.sha256, sha256Definition: 'sha256 of JSON.stringify(the task names sorted by UTF-16 code unit) (experiments/autobench/split.mjs listSha256)',
+    nominal: Object.fromEntries(plan.schedules.filter(s => s.looks.includes(n)).map(s => [`from look ${s.firstLook}`, { cumulative: s.cumulative[s.looks.indexOf(n)], strict: s.nominal.strict[s.looks.indexOf(n)], partialCredit: s.nominal.partialCredit[s.looks.indexOf(n)] }])),
+    alpha: plan.alpha, procedure: plan.procedure.rule, stopOn: plan.procedure.stopOn,
+    launch: `node experiments/autobench/sequential.mjs look ${n} --plan research/automationbench-20261014/SEQUENTIAL-PLAN-v1.json --role control|treatment --arm NAME [--first-look F] --exec -- --run-id ID <run.mjs arm options>`,
+  };
 }
 
 // ------------------------------------------------------------------------------------------------ outcomes
@@ -360,17 +428,37 @@ export function verifyLookRuns(plan, n, dirs, { role, firstLook = null, illustra
 
 // ------------------------------------------------------------------------------------------------ analyze
 /**
- * Cumulative co-primary statistics from the arm's first look on, in order; stops at the first decision. control and
- * treatment: { [look]: Map(task -> { pass, pc, neverGraded? }) }. firstLook (required) picks the schedule. stopOn:
- * 'either' (the DRAFT rule: the first decisive crossing of either metric ends the comparison) or 'strict' (owner
- * alternative: a partial-credit effect is recorded and the comparison continues until strict pass decides, harm is
- * crossed, or the last look).
+ * D23's rule at one look, shared by the analysis and the simulation (so T2 certifies the rule the analysis applies).
+ * strict: { p, diff } (exact McNemar p; treatment − control pass rate); partialCredit: { p, diff } (sign-flip p; mean
+ * difference); nominal: this look's { strict, partialCredit } levels from the arm's schedule.
+ *   1. Strict pass is tested first: rejected when p < its nominal level and |diff| ≥ FLOOR.
+ *   2. Partial credit is tested only when strict pass is rejected at this look (fixed sequence; its own boundary at the
+ *      full alpha, never the nominal alpha): rejected when p < its nominal level and |diff| ≥ FLOOR.
+ *   3. The comparison stops when strict pass is rejected (effect or harm); never on partial credit alone.
+ * partialCredit.crossed reports the untested crossing (descriptive only, never a decision).
  */
-export function analyzeLooks(plan, control, treatment, { firstLook, permIterations = 100000, stopOn = 'either' } = {}) {
+export function lookRule({ strict, partialCredit, nominal }) {
+  const s = { crossed: strict.p < nominal.strict, dir: Math.sign(strict.diff) };
+  s.rejected = s.crossed && Math.abs(strict.diff) >= FLOOR && s.dir !== 0;
+  const pc = { crossed: partialCredit.p < nominal.partialCredit, tested: s.rejected, dir: Math.sign(partialCredit.diff) };
+  pc.rejected = pc.tested && pc.crossed && Math.abs(partialCredit.diff) >= FLOOR && pc.dir !== 0;
+  return { strict: s, partialCredit: pc, stop: s.rejected };
+}
+const checkStopOn = stopOn => {
+  if (stopOn !== undefined && stopOn !== STOP_ON) throw new Error(`stop-on ${stopOn} is refused: D23 (research/decisions-20261021.md; PREREG-AB-v1-AMEND-1 §2.6) stops on strict pass only; a comparison never ends on partial credit alone`);
+  return STOP_ON;
+};
+
+/**
+ * Cumulative statistics from the arm's first look on, in order; stops at the first strict-pass rejection (D23). control and
+ * treatment: { [look]: Map(task -> { pass, pc, neverGraded? }) }. firstLook (required) picks the schedule. stopOn, if
+ * passed, must be 'strict' (D23 refuses the DRAFT's 'either').
+ */
+export function analyzeLooks(plan, control, treatment, { firstLook, permIterations = 100000, stopOn } = {}) {
   const sched = scheduleOf(plan, firstLook);
-  if (stopOn !== 'either' && stopOn !== 'strict') throw new Error(`stopOn must be either or strict, got ${stopOn}`);
+  checkStopOn(stopOn);
   const rows = [], x = [], y = [];   // cumulative: treatment, control
-  let decided = null, pcEffect = null;
+  let decided = null;
   for (const [idx, n] of sched.looks.entries()) {
     const L = plan.looks[n - 1], C = control[n], T = treatment[n];
     if (!C || !T) break;
@@ -382,31 +470,35 @@ export function analyzeLooks(plan, control, treatment, { firstLook, permIteratio
     const strict = mcnemarExactCounts(b, c);
     const pc = pairedPermutation(x.map(o => o.pc), y.map(o => o.pc), { iterations: permIterations, seed: `ab-seq-look${n}` });
     const nom = { strict: sched.nominal.strict[idx], partialCredit: sched.nominal.partialCredit[idx] };
-    const crossed = { strict: strict.p < nom.strict, partialCredit: pc.p < nom.partialCredit };
-    const dir = { strict: Math.sign(b - c), partialCredit: Math.sign(pc.meanDiff) };
     const passT = x.filter(o => o.pass).length, passC = y.filter(o => o.pass).length, cn = x.length;
     const row = {
-      look: n, n: cn, status: 'complete', nominal: nom, crossed, neverGraded,
+      look: n, n: cn, status: 'complete', nominal: nom, neverGraded,
       strict: { treatment: passT, control: passC, b, c, p: strict.p, diff: (passT - passC) / cn, wilsonT: wilson(passT, cn), wilsonC: wilson(passC, cn),
         bayes: pairedBayesInterval(x.map(o => o.pass), y.map(o => o.pass), { seed: `ab-seq-strict-${n}` }), eValue: mixtureEvalue(b, c) },
       partialCredit: { meanDiff: pc.meanDiff, p: pc.p, method: pc.method, bayes: pairedBayesInterval(x.map(o => o.pc), y.map(o => o.pc), { seed: `ab-seq-pc-${n}` }) },
     };
-    // ROADMAP §4.3 floor: a crossing decides only with a gap of at least 3 points (strict) or 0.03 (mean partial credit).
-    const floor = { strict: Math.abs(row.strict.diff) >= FLOOR, partialCredit: Math.abs(pc.meanDiff) >= FLOOR };
-    row.decisive = { strict: crossed.strict && floor.strict, partialCredit: crossed.partialCredit && floor.partialCredit };
+    const rule = lookRule({ strict: { p: strict.p, diff: row.strict.diff }, partialCredit: { p: pc.p, diff: pc.meanDiff }, nominal: nom });
+    row.crossed = { strict: rule.strict.crossed, partialCredit: rule.partialCredit.crossed };
+    row.tested = { strict: true, partialCredit: rule.partialCredit.tested };
+    row.rejected = { strict: rule.strict.rejected, partialCredit: rule.partialCredit.rejected };
     rows.push(row);
-    const which = Object.keys(row.decisive).filter(k => row.decisive[k]);
-    if (!which.length) continue;
-    const harm = which.some(k => dir[k] < 0), strictClaim = row.decisive.strict && dir.strict > 0;
-    if (stopOn === 'strict' && !harm && !row.decisive.strict) { pcEffect ??= n; row.note = `partial-credit effect recorded at look ${n}; continuing for strict pass (stopOn strict)`; continue; }
-    decided = { look: n, label: `${harm ? 'harm' : 'effect'} at look ${n} (${which.join(' and ')})${!harm && !strictClaim ? '; strict pass not resolved' : ''}${pcEffect && pcEffect !== n ? `; partial-credit effect first at look ${pcEffect}` : ''}`, strictClaim };
+    if (!rule.stop) {
+      if (rule.partialCredit.crossed) row.note = `partial credit is beyond its boundary (p ${pc.p.toPrecision(3)} < ${nom.partialCredit.toPrecision(3)}, ${pc.meanDiff >= 0 ? 'treatment' : 'control'} ahead) but is not tested: strict pass is not rejected at this look (fixed sequence, D23); descriptive only, never a decision`;
+      continue;
+    }
+    const harm = rule.strict.dir < 0;
+    const pcText = rule.partialCredit.rejected
+      ? `partial credit rejected too (${rule.partialCredit.dir > 0 ? 'treatment' : 'control'} ahead)`
+      : 'partial credit tested, not rejected at its boundary';
+    decided = { look: n, label: `${harm ? 'harm' : 'effect'} on strict pass at look ${n}; ${pcText}`, strictClaim: !harm, partialCreditClaim: !harm && rule.partialCredit.rejected && rule.partialCredit.dir > 0, harm };
     break;
   }
   const last = rows.filter(r => r.status === 'complete').at(-1), lastLook = sched.looks.at(-1);
+  const none = { strictClaim: false, partialCreditClaim: false, harm: false };
   const decision = decided ?? (last && last.look === lastLook
-    ? { look: last.look, label: pcEffect ? `final look: effect on partial credit (look ${pcEffect}); strict pass not resolved` : 'final look: no resolvable difference', strictClaim: false }
-    : { look: last?.look ?? 0, label: last ? `continue: run look ${last.look + 1}` : `no complete look (the schedule starts at look ${sched.firstLook})`, strictClaim: false });
-  return { plan: plan.planSha256, draft: Boolean(plan.draft), firstLook: sched.firstLook, schedule: sched.cumulative, stopOn, rows, decision };
+    ? { look: last.look, label: 'final look: no resolvable difference on strict pass; partial credit not tested (fixed sequence, D23)', ...none }
+    : { look: last?.look ?? 0, label: last ? `continue: run look ${last.look + 1}` : `no complete look (the schedule starts at look ${sched.firstLook})`, ...none });
+  return { plan: plan.planSha256, draft: Boolean(plan.draft), firstLook: sched.firstLook, schedule: sched.cumulative, procedure: PROCEDURE.rule, stopOn: STOP_ON, rows, decision };
 }
 
 // ------------------------------------------------------------------------------------------------ simulate (T2)
@@ -436,40 +528,57 @@ export function signFlipPSequential(d, r, { h = 20, max = 20000 } = {}) {
 }
 
 /**
- * Type-I error (two-sided, both directions) of the co-primary schedule under H0: both arms draw each task's outcome from
- * the same pooled stored outcomes (an A/A comparison), tasks resampled from the stored population. Strict uses the exact
- * McNemar. Partial credit uses pcTest: 'normal' (the sign-flip test's large-sample form, fast) or 'permutation' (the
- * analysis' sign-flip permutation, Besag-Clifford stopped). The family-wise event (either metric crosses at some look) is
- * the same under stopOn either or strict. Also reports each metric alone at the full 0.05 schedule.
+ * Operating characteristics of D23's procedure (lookRule over the schedule `cumulative`), by resampling tasks from the
+ * stored population. Under H0 (alternative null) both arms draw each task's outcome from the same pooled stored outcomes
+ * (an A/A comparison); under H1 the treatment draws from alternative.treatment(outs), the control from alternative.control.
+ * Strict uses the exact McNemar. Partial credit uses pcTest: 'normal' (the sign-flip test's large-sample form, fast) or
+ * 'permutation' (the analysis' sign-flip permutation, Besag-Clifford stopped). Reported, each a share of reps:
+ *   familyWise              any hypothesis rejected (either direction): under H0 the procedure's type-I error
+ *   strictRejected          strict pass rejected at some look (either direction); strictBenefit with the treatment ahead
+ *   partialCreditRejected   partial credit rejected through the gate; bothBenefit: both rejected with the treatment ahead
+ *   partialCreditUngated    partial credit beyond its own boundary at some look, ignoring the gate and the stop: under H0
+ *                           this bounds the error when strict pass truly differs and partial credit does not (the other
+ *                           half of the closed-testing argument)
+ *   draftEither, draftStrict  the DRAFT's Bonferroni rule (either metric at 0.025 per metric) and strict alone at 0.025,
+ *                           for comparison only
+ *   meanTasks               tasks used, stopping at the first strict-pass rejection
  */
 export function simulateSchedule({ cumulative, reps = 20000, seed = 'ab-seq-sim', population = storedPopulation(), alternative = null, pcTest = 'normal' } = {}) {
+  if (pcTest !== 'normal' && pcTest !== 'permutation') throw new Error(`pcTest must be normal or permutation, got ${pcTest}`);
   const r = rng(seed, cumulative.join(','), reps, alternative ? 'h1' : 'h0', pcTest);
-  const half = boundariesFor(cumulative), full = obrienFlemingBoundary(cumulative.length, { alpha: ALPHA_TOTAL, fractions: cumulative });
+  const bnd = boundariesFor(cumulative), draft = obrienFlemingBoundary(cumulative.length, { alpha: DRAFT_BONFERRONI_ALPHA, fractions: cumulative });
   const draw = (arr) => arr[Math.floor(r.next() * arr.length)];
   const pcP = (x, y) => (pcTest === 'permutation' ? signFlipPSequential(x.map((o, i) => o.pc - y[i].pc), r) : twoSidedP(pairedSignFlipZ(x.map(o => o.pc), y.map(o => o.pc))));
-  let combined = 0, strictOnly = 0, pcOnly = 0, strictFull = 0, pcFull = 0, used = 0;
+  const k = { familyWise: 0, strictRejected: 0, strictBenefit: 0, partialCreditRejected: 0, bothBenefit: 0, partialCreditUngated: 0, draftEither: 0, draftStrict: 0 };
+  let used = 0;
   for (let i = 0; i < reps; i++) {
     const x = [], y = [];
-    let stop = { combined: false, strict: false, pc: false, strictFull: false, pcFull: false }, n = 0, stoppedAt = cumulative.at(-1);
-    for (let k = 0; k < cumulative.length; k++) {
-      for (; n < cumulative[k]; n++) {
+    let n = 0, stopped = null, pcUngated = false, dEither = false, dStrict = false;
+    for (let j = 0; j < cumulative.length; j++) {
+      for (; n < cumulative[j]; n++) {
         const outs = population[Math.floor(r.next() * population.length)];
         if (alternative) { x.push(draw(alternative.treatment(outs))); y.push(draw(alternative.control(outs))); } else { x.push(draw(outs)); y.push(draw(outs)); }
       }
-      const b = x.filter((o, j) => o.pass && !y[j].pass).length, c = x.filter((o, j) => !o.pass && y[j].pass).length;
-      const ps = mcnemarExactCounts(b, c).p, pp = pcP(x, y);
-      const cs = ps < half.strict.nominal[k], cp = pp < half.partialCredit.nominal[k];
-      if (!stop.combined && (cs || cp)) { stop.combined = true; stoppedAt = cumulative[k]; }
-      if (cs) stop.strict = true;
-      if (cp) stop.pc = true;
-      if (ps < full.nominal[k]) stop.strictFull = true;
-      if (pp < full.nominal[k]) stop.pcFull = true;
+      const b = x.filter((o, q) => o.pass && !y[q].pass).length, c = x.filter((o, q) => !o.pass && y[q].pass).length;
+      const strict = { p: mcnemarExactCounts(b, c).p, diff: (b - c) / x.length };
+      const partialCredit = { p: pcP(x, y), diff: x.reduce((s, o, q) => s + o.pc - y[q].pc, 0) / x.length };
+      const rule = lookRule({ strict, partialCredit, nominal: { strict: bnd.strict.nominal[j], partialCredit: bnd.partialCredit.nominal[j] } });
+      if (!stopped && rule.stop) stopped = { at: cumulative[j], rule };
+      if (rule.partialCredit.crossed && Math.abs(partialCredit.diff) >= FLOOR) pcUngated = true;
+      const ds = strict.p < draft.nominal[j] && Math.abs(strict.diff) >= FLOOR, dp = partialCredit.p < draft.nominal[j] && Math.abs(partialCredit.diff) >= FLOOR;
+      dStrict ||= ds; dEither ||= ds || dp;
     }
-    combined += stop.combined; strictOnly += stop.strict; pcOnly += stop.pc; strictFull += stop.strictFull; pcFull += stop.pcFull; used += stoppedAt;
+    if (stopped) {
+      const { strict: s, partialCredit: pc } = stopped.rule;
+      k.familyWise++; k.strictRejected++;   // a partial-credit rejection needs a strict-pass rejection first
+      if (s.dir > 0) k.strictBenefit++;
+      if (pc.rejected) { k.partialCreditRejected++; if (s.dir > 0 && pc.dir > 0) k.bothBenefit++; }
+    }
+    k.partialCreditUngated += pcUngated; k.draftEither += dEither; k.draftStrict += dStrict;
+    used += stopped ? stopped.at : cumulative.at(-1);
   }
-  const f = v => v / reps;
-  return { cumulative, reps, pcTest, hypothesis: alternative ? 'H1' : 'H0', combined: f(combined), strictAtHalfAlpha: f(strictOnly), partialCreditAtHalfAlpha: f(pcOnly),
-    strictAtFullAlpha: f(strictFull), partialCreditAtFullAlpha: f(pcFull), meanTasks: used / reps, mcSE: Math.sqrt(0.05 * 0.95 / reps) };
+  return { cumulative, reps, pcTest, hypothesis: alternative ? 'H1' : 'H0', nominal: { strict: bnd.strict.nominal, partialCredit: bnd.partialCredit.nominal },
+    ...Object.fromEntries(Object.entries(k).map(([key, v]) => [key, v / reps])), meanTasks: used / reps, mcSE: Math.sqrt(0.05 * 0.95 / reps) };
 }
 
 // ------------------------------------------------------------------------------------------------ CLI
@@ -518,6 +627,7 @@ async function main(argv) {
     return;
   }
   if (cmd === 'analyze') {
+    checkStopOn(a['stop-on']);   // before anything is read: D23 refuses --stop-on either
     const plan = readPlan(a.plan);
     const firstLook = intArg(a['first-look'], '--first-look (the arm\'s declared exposure: 2 for every arm with stored dev60 rows)');
     const illustration = Boolean(a.illustration);
@@ -531,21 +641,31 @@ async function main(argv) {
       return { outcomes, sources };
     };
     const C = side(a.control, 'control'), T = side(a.treatment, 'treatment');
-    const res = analyzeLooks(plan, C.outcomes, T.outcomes, { firstLook, stopOn: a['stop-on'] ?? 'either' });
+    const res = analyzeLooks(plan, C.outcomes, T.outcomes, { firstLook, stopOn: a['stop-on'] });
     res.sources = { control: C.sources, treatment: T.sources };
     res.illustration = illustration;
     if (a.json) { console.log(JSON.stringify(res, null, 1)); return; }
     const tag = `${illustration ? 'ILLUSTRATION, not a sequential look; ' : ''}${plan.draft ? 'DRAFT plan; ' : ''}`;
-    console.log(`${tag}from look ${res.firstLook} (cumulative ${res.schedule.join('/')}), stop on ${res.stopOn}`);
+    console.log(`${tag}from look ${res.firstLook} (cumulative ${res.schedule.join('/')}); ${res.procedure}; stop on ${res.stopOn}`);
+    const mark = (r, k) => (r.rejected[k] ? ' REJECTED' : r.crossed[k] ? (r.tested[k] ? ' crossed, under the floor' : ' beyond the boundary, NOT TESTED') : '');
     for (const r of res.rows) {
       if (r.status !== 'complete') { console.log(`look ${r.look}: ${r.status} (${r.missing} task(s) without an outcome in an arm)`); continue; }
-      console.log(`look ${r.look} (n ${r.n}): strict ${r.strict.treatment} vs ${r.strict.control}, ${r.strict.b}:${r.strict.c}, McNemar p ${r.strict.p.toFixed(4)} vs ${r.nominal.strict.toPrecision(3)}${r.crossed.strict ? ' CROSSED' : ''}; `
-        + `partial credit ${r.partialCredit.meanDiff.toFixed(3)} p ${r.partialCredit.p.toFixed(4)} vs ${r.nominal.partialCredit.toPrecision(3)}${r.crossed.partialCredit ? ' CROSSED' : ''}; e-value ${r.strict.eValue.toFixed(2)}; `
+      console.log(`look ${r.look} (n ${r.n}): strict ${r.strict.treatment} vs ${r.strict.control}, ${r.strict.b}:${r.strict.c}, McNemar p ${r.strict.p.toFixed(4)} vs ${r.nominal.strict.toPrecision(3)}${mark(r, 'strict')}; `
+        + `partial credit ${r.partialCredit.meanDiff.toFixed(3)} p ${r.partialCredit.p.toFixed(4)} vs ${r.nominal.partialCredit.toPrecision(3)}${r.tested.partialCredit ? '' : ' (gated: tested only after strict pass is rejected)'}${mark(r, 'partialCredit')}; e-value ${r.strict.eValue.toFixed(2)}; `
         + `Bayes strict [${r.strict.bayes.lo.toFixed(3)}, ${r.strict.bayes.hi.toFixed(3)}], partial credit [${r.partialCredit.bayes.lo.toFixed(3)}, ${r.partialCredit.bayes.hi.toFixed(3)}]`);
       for (const k of ['treatment', 'control']) if (r.neverGraded[k].length) console.log(`  ${k}: ${r.neverGraded[k].length} task-run(s) never completed, scored 0 (PREREG-AB-v1 §6.3): ${r.neverGraded[k].join(', ')}`);
       if (r.note) console.log(`  ${r.note}`);
     }
-    console.log(`decision: ${tag}${res.decision.label}${res.decision.strictClaim ? ' (a strict-pass claim is allowed)' : ''}`);
+    console.log(`decision: ${tag}${res.decision.label}${res.decision.strictClaim ? ' (a strict-pass claim is allowed)' : ''}${res.decision.partialCreditClaim ? ' (a partial-credit claim is allowed)' : ''}`);
+    return;
+  }
+  if (cmd === 'export-look') {
+    const n = intArg(a._[1], 'look N');
+    const out = exportLook(readPlan(a.plan), n);
+    const text = JSON.stringify(out, null, 1) + '\n';
+    if (a.write) writeFileSync(a.write, text);
+    if (a.json) { process.stdout.write(text); return; }
+    console.log(`look ${n}: ${out.n} tasks (${Object.entries(out.perDomain).map(([d, c]) => `${d} ${c}`).join(', ')}); list sha256 ${out.tasksSha256}; plan ${out.plan}${a.write ? `; wrote ${a.write} (file sha256 ${sha256(text)})` : ''}`);
     return;
   }
   if (cmd === 'simulate') {
@@ -553,14 +673,20 @@ async function main(argv) {
     // --h1: treatment outcomes from the stored A1 runs, control from the stored A0 runs (the in-sample dev60 effect, so the
     // power it prints is optimistic for the next, out-of-sample improvement).
     // --h1-scale s: the treatment draws from A1's outcomes with probability s and from A0's otherwise (s times the effect).
-    const s = Number(a['h1-scale'] ?? 1), pick = rng('h1-scale', s);
+    // s may be a fraction such as 2/3.
+    const sArg = String(a['h1-scale'] ?? 1), frac = /^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(sArg), s = frac ? Number(frac[1]) / Number(frac[2]) : Number(sArg);
+    if (!(s >= 0 && s <= 1)) throw new Error(`--h1-scale must be in [0, 1] (a number or a fraction such as 2/3), got ${sArg}`);
+    const pick = rng('h1-scale', s);
     const alternative = a.h1 ? { treatment: outs => (pick.next() < s ? outs.slice(2) : outs.slice(0, 2)), control: outs => outs.slice(0, 2) } : null;
     const r = simulateSchedule({ cumulative, reps: Number(a.reps ?? 20000), alternative, pcTest: a['pc-test'] ?? 'normal' });
     if (a.json) { console.log(JSON.stringify(r, null, 1)); return; }
-    console.log(`${a.h1 ? 'H1 (A1 vs A0, stored dev60 outcomes; in-sample, optimistic)' : 'H0 (A/A from stored dev60 outcomes)'}, looks at ${cumulative.join('/')}, partial credit by ${r.pcTest}, ${r.reps} reps: co-primary rule ${r.combined.toFixed(4)} (mean tasks ${r.meanTasks.toFixed(1)}); strict alone at 0.025 ${r.strictAtHalfAlpha.toFixed(4)}, at 0.05 ${r.strictAtFullAlpha.toFixed(4)}; partial credit alone at 0.025 ${r.partialCreditAtHalfAlpha.toFixed(4)}, at 0.05 ${r.partialCreditAtFullAlpha.toFixed(4)} (MC SE at 0.05: ${r.mcSE.toFixed(4)})`);
+    const f = v => v.toFixed(4);
+    console.log(`${a.h1 ? `H1 (A1 vs A0 at ${s} x the in-sample dev60 effect; optimistic)` : 'H0 (A/A from stored dev60 outcomes)'}, looks at ${cumulative.join('/')} (nominal strict ${r.nominal.strict.map(v => v.toPrecision(3)).join(' / ')}), partial credit by ${r.pcTest}, ${r.reps} reps (MC SE at 0.05: ${f(r.mcSE)}):`);
+    console.log(`  D23 fixed sequence: family-wise ${f(r.familyWise)}; strict rejected ${f(r.strictRejected)} (treatment ahead ${f(r.strictBenefit)}); partial credit rejected through the gate ${f(r.partialCreditRejected)} (both, treatment ahead ${f(r.bothBenefit)}); mean tasks ${r.meanTasks.toFixed(1)}`);
+    console.log(`  partial credit alone at its own 0.05 boundary, ungated: ${f(r.partialCreditUngated)}; DRAFT Bonferroni (0.025 per metric): either metric ${f(r.draftEither)}, strict ${f(r.draftStrict)}`);
     return;
   }
-  throw new Error('usage: sequential.mjs plan|look|analyze|simulate …');
+  throw new Error('usage: sequential.mjs plan|look|analyze|simulate|export-look …');
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
