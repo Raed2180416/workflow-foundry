@@ -408,7 +408,8 @@ the file has moved 7 lines before §4 since the freeze). It now reads the frozen
 sha256 is not the gold's. `test/eval-e8.test.mjs` fails if the frozen text's hash differs from `gold.json` and
 `freeze.json`, and it reproduces the §2 row for Haiku s0 exactly (23/30 ids, 12/15 U, 56/76 clauses, 37 uncovered,
 guard yield 0.50). The same drift had broken three tracker test files (ledger 1/4, extract 4/5, run 0/3 passing); they
-now read the frozen text too and pass 4/4, 5/5 and 3/3, with no assertion changed.
+now read the frozen text too and pass 4/4, 5/5 and 3/3, with no assertion changed. *[Amended in §10.1: the scorer now
+reads a committed copy of that text, checked against the same sha256, so a shallow clone can score.]*
 
 **What the second pass does** (`run.mjs gleanLedger`, prompt `tracker-glean/1`, `node experiments/tracker/run.mjs
 glean --ledger L --text T`, or `--glean` on `extract` / `all`):
@@ -418,6 +419,8 @@ glean --ledger L --text T`, or `--glean` on `extract` / `all`):
 - The model writes no quote. An entry's quote is the uncovered sentence its number points to, copied by code, so it is
   verbatim by construction (the R3.1 word drop of §2 cannot recur on this path).
 - Existing entries, ids and properties are untouched; new entries take the next ids and carry `gleaned: true`.
+- *[Amended in §10.1: `glean` now writes to `--out` and never in place, and contradictory answers are labelled
+  `invalid`.]*
 
 **Results** (`eval-e8.mjs score`, frozen SPEC-E and gold; all rows in [glean/scores.jsonl](glean/scores.jsonl)):
 
@@ -432,7 +435,10 @@ glean --ledger L --text T`, or `--glean` on `extract` / `all`):
 | Haiku s2 (raw failure), before | §2 | 1 (0) | 0 | 1 | 0 | 0/3 | 93 | 0 | none |
 | s2 + gleaning | X2 | 73 (72) | 25 = 0.833 | 9 | 57 = 0.750 | 3/3 | 21 | 0 | 0.0055 |
 
-**Acceptance (frozen, run P only): met.**
+**Acceptance (frozen, run P only): met.** *[Amended in §10.1: a $0 rule with no model call, which turns every
+coverage-list sentence into an entry, meets this acceptance too, with the same ids. The recall gain comes from the
+coverage list, not from the Haiku call. FIXES also asks for minimum recall across the repeats and a cost bar per run;
+both are reported there.]*
 - Id recall 0.767 → **0.933** (bar ≥ 0.90). The five ids that sat in the coverage list are now covered: R3.1 (line
   139), S1 (252), S3 (255), S9 (263) and S7 (266).
 - **Go-live:** all three normative sentences starting on frozen lines 91–93 are covered (Q-086 "Each one gets an instance
@@ -455,8 +461,9 @@ glean --ledger L --text T`, or `--glean` on `extract` / `all`):
   obligations of the workflow. The gold has no list of non-conditions, so precision is not scored beyond §6.
   Each extra entry costs a property at write time (about $0.0015 each at §1's rate, so +$0.03 to +$0.04 per ledger)
   and is a candidate for an `untested` row or a false alarm. Not measured here.
-- **The guard is now spent.** Guard yield on the clauses still missed drops from 0.50 to 0.00–0.09. What remains (run P)
-  is out of reach of a sentence-level second pass:
+- **The guard is now spent.** Guard yield on the clauses still missed drops from 0.50 to 0.00–0.09 *[amended in §10.1:
+  the 0.09 is R6.2a, counted by the line-level test; by offsets the yield is 0.00 on P, R1, R2 and X1]*. What remains
+  (run P) is out of reach of a sentence-level second pass:
   - S2 and S4 carry no cue word, so the guard never lists them;
   - R1.2a/b, R2.2b/f, R5.1a–c, R6.2a and S8a sit in sentences that an existing quote already overlaps, so they are
     "covered" for the guard while their clause is not.
@@ -464,8 +471,9 @@ glean --ledger L --text T`, or `--glean` on `extract` / `all`):
 - **Rescue of the raw failure (X2).** On the 1-entry sample, the pass gleans 72 entries from all 93 normative
   sentences: 25/30 ids for $0.0115 + $0.0055. That is a sentence-level extractor of its own, and it misses R1.4, S6
   and S9, which the full extractions s0 (R1.4, S6) and s1 (S9) covered. Its cost grows with the list ($0.0055 for 93 sentences, above the $0.005
-  per-run bar, which was set for s0's 37).
-- **Cheaper than a second sample.** Gleaning s0 gives the same 28/30 as the union of s0 and s1 (§2) for $0.0144
+  per-run bar, which was set for s0's 37). *[Amended in §10.1: FIXES Action 3 sets the bar per run, so X2 fails it.]*
+- *[Amended in §10.1: wrong as written. The $0 rule gives the same 28/30 on s0 for the extraction's $0.0116 alone.]*
+  **Cheaper than a second sample.** Gleaning s0 gives the same 28/30 as the union of s0 and s1 (§2) for $0.0144
   rather than $0.023, and gleaning s1 gives 29/30.
 
 **Spend.** Five gleaning calls, $0.0151 of the $0.05 cap, all `ok`; every call is in
@@ -479,3 +487,101 @@ glean --ledger L --text T`, or `--glean` on `extract` / `all`):
 - No other text was tried.
 - The hand-off to #69 (ch-e8-1's go-live failures) is the go-live entries Q-086 and Q-087 above; whether a builder
   given them avoids those failures is untested.
+
+### 10.1 Amendment after review (2026-10-21): the simple baseline and the full FIXES criteria
+
+*Added after the review of this action. $0 (no model call) and development evidence, like §10. It corrects how §10
+presents the result; no number in §10's table changes. Code: `eval-e8.mjs` at commit `de268e2`.*
+
+**The simple baseline that §10 left out.** AGENTS.md asks every phase for "a capability number against a simple
+baseline". The obvious baseline for a second pass over the coverage list needs no model: turn every sentence on
+`ledger.uncovered` into an entry (`node experiments/tracker/eval-e8.mjs baseline --ledger L --out B`). It uses gleaning's
+own merge, so each quote is the sentence, copied by pointer, and the old entries are untouched. Each kind is a
+placeholder, and kinds are not scored. Scored the same way as §10 (rows appended to
+[glean/scores.jsonl](glean/scores.jsonl); ledgers [glean/s0.baseline.json](glean/s0.baseline.json), `s1.baseline.json`,
+`s2.baseline.json`):
+
+| ledger | entries added | id recall /30 | U /15 | clauses /76 | go-live (normative) | non-normative entries | model $ |
+|---|---|---|---|---|---|---|---|
+| s0 + baseline | 37 | **28** | **14** | **65** | **3/3** | 2 | **0** |
+| s0 + Haiku gleaning, P / R1 / R2 | 22 / 26 / 23 | 28 / 28 / 28 | 13 / 14 / 13 | 65 / 65 / 65 | 3/3 each | 1 | 0.0028 / 0.0022 / 0.0024 |
+| s1 + baseline | 34 | 29 | 14 | 69 | 3/3 | 2 | 0 |
+| s1 + Haiku gleaning, X1 | 20 | 29 | 14 | 69 | 3/3 | 1 | 0.0022 |
+| s2 + baseline | 93 | 26 | 10 | 59 | 3/3 | 2 | 0 |
+| s2 + Haiku gleaning, X2 | 72 | 25 | 9 | 57 | 3/3 | 0 | 0.0055 |
+
+**The result, restated.**
+- **The coverage list carries the recall gain.** The $0 rule takes s0 from 23 to 28 of 30 ids and go-live from 1/3 to
+  3/3, which meets §10's frozen acceptance.
+- **The Haiku call adds no recall,** on any sample or metric. That follows from the design: the scorer only adds
+  coverage as entries are added, and every gleaned entry quotes a whole sentence of the list. So the baseline's entries
+  are a superset of any gleaning's, and no filter over the list can beat it on recall.
+- **The call's measured effect is filtering.** On P it kept 22 of the 37 sentences and cut 15 (R1 cut 11, R2 cut 14).
+- **Its "none" answers cost recall.** On s0 it cut U01 (line 5, "data, never an instruction") in P and R2. On s2 it cut
+  S9 (line 263) with S9a, R5.1e (line 193) and U05 (line 47, the B1-O key line).
+- **Precision is not scored:** the gold has no labelled non-conditions. A rough description of what P cut, which is not a
+  precision score:
+  - Of the 12 list sentences that hold a gold clause or U anchor, Haiku kept 11; it cut U01.
+  - Of the 25 that hold none, it kept 11 and cut 14.
+  - A sentence without a gold anchor can still be a condition. Line 91, "Each one gets an instance whose first event is
+    a `migration` …", holds no anchor, yet it is one of the go-live sentences.
+- **Non-normative entries:** the baseline makes 2 from §6 (lines 273 and 274), Haiku makes 1 (line 274).
+- **The case for the call is downstream cost, not recall.** Each entry gets a property at write time, about $0.0015
+  each (§6: $0.117 for 78 properties).
+  - [est] The 15 sentences cut on P would save about $0.02 of writing, against the call's $0.0028.
+  - [est] They would also remove 15 candidates for `untested` or false-alarm rows.
+  - None of this is measured. Claiming it needs labelled non-conditions to score precision against, or a property-writing
+    and check run on both ledgers.
+- **§10's "Cheaper than a second sample" is wrong as written.** The $0 rule gives the same 28/30 on s0 for the
+  extraction's $0.0116 alone.
+- **For the register and the hand-offs:**
+  - E1 Milestone A's recall and go-live gain can be had for $0.
+  - What goes to #69 and #64 as "gleaning" should be "every coverage-list sentence becomes an entry".
+  - The Haiku filter is an optional precision step whose value is unmeasured.
+  - Any future claim for the call should be about precision, judged against labelled non-conditions.
+  - REGISTER.md and FIXES.md are not edited here.
+
+**The FIXES criteria in full** (review m1). The freeze ([glean/freeze.json](glean/freeze.json)) made run P the only
+acceptance run, gave the repeats no threshold, and applied the cost bar to P only. FIXES asks for more:
+- **E1 row, "minimum recall ≥0.93 across 3 repeats; go-live lines 91–93 covered 3 of 3": met.** P, R1 and R2 each
+  score 28/30 = 0.933 and go-live 3/3. The margin is one id: 27/30 = 0.90 would fail.
+- **Action 3, "Cost ≤$0.005 per run": met for P, R1, R2 and X1** ($0.0022–0.0028). **Not met for X2** ($0.0055, 93
+  sentences). §10 framed X2 as outside the bar; by FIXES' wording it is a per-run miss.
+- **Cost grows about linearly with the list:**
+  - A least-squares fit over the five calls gives about $0.000055 per sentence plus $0.0004. That is about 100–125
+    output tokens per sentence, and output dominates the price.
+  - So the $0.005 bar holds for lists up to about 80 sentences. s0's list has 37, s1's 34 and s2's 93.
+- **The baseline meets both criteria at $0.** It is deterministic, so its three "repeats" are identical.
+
+**Guard yield** (review m10). The 0.09 that §10 reports for P and R2 is R6.2a, which §10 also lists as out of the
+guard's reach. PREREG §a's test is line-level: R6.2a's anchor is on line 208, which it shares with the uncovered
+sentence on lines 207–208, but the anchor lies outside that sentence.
+- `score` now also reports `guardYieldSentence`, which counts a clause as caught only when its anchor lies inside an
+  uncovered sentence, by offsets.
+- By offsets: 0.45 on s0 (§2's 0.50 less R6.2a), 0.00 on P, R1, R2 and X1, and 0.11 on X2. X2's two are R5.1e and S9a,
+  both in sentences Haiku answered "none".
+- §2's figures are unchanged; they were line-level all along.
+
+**The prompt uses SPEC-E's wording** (review m11). Prompt `tracker-glean/1` says conditions may be stated "in tables,
+lists, definitions and 'readings'". "Readings" is the title of SPEC-E §5, where S1–S9 sit, and S1, S3, S9 and S7 are
+four of the five ids the pass gained. The word came from reading SPEC-E: one more reason §10 is development evidence
+only. Before any held-out use, the prompt gets neutral wording under a new `GLEAN_PROMPT_ID`, frozen first. The baseline
+uses no prompt. Its reach is the coverage guard's cue list (`ledger.mjs` CUES: generic modal and temporal words, fixed in the
+2026-10-14 design with E8 as the first item). SPEC-E is still the only text tried, so neither number is held-out
+evidence.
+
+**Code changes since §10** (commits `9492373`, `5da6444`, `51fd314`, `de268e2`; the five paid answers were not re-run):
+- **Frozen text (m8, m2).** The frozen text is a committed copy,
+  [SPEC-E.48535bb.md](SPEC-E.48535bb.md), checked against the frozen sha256 on every read, and against `git show
+  48535bb` where the clone has that object. So the tracker tests also run in a shallow clone. A gold or ledger with no
+  source sha256 is refused.
+- **No overwriting (m4).** `glean` writes `<out>/ledger.json` and keeps a byte copy of its input as
+  `<out>/ledger.pre-glean.json`. `extract --glean` keeps each extraction as `<name>.pre-glean.json`. No command writes a
+  ledger to a git-tracked path, so the committed inputs hashed in the freeze cannot be overwritten.
+- **Merge (m5–m7).** mergeGleaned labels and counts contradictory or unusable answers as `invalid`, not `none`. It keeps
+  every condition's kind in `kinds`, and gleaned ids never take the user-added `U` prefix.
+- **Replay.** A $0 replay of the five paid answers through the fixed merge reproduces every committed gleaned ledger,
+  except the new `kinds` on R1 Q-104, R2 Q-101 and X1 Q-095. No paid answer was contradictory. The committed ledgers are
+  left as the paid run wrote them.
+- **CLI tests (m9).** New tests cover `extract --glean`, `all --glean` and a successful `glean` write, with a scripted
+  model.
