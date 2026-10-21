@@ -1,0 +1,123 @@
+{
+  "schema": "foundry-site-claims/1",
+  "note": "Every sentence on the site that states a fact about Foundry's results, behaviour or decisions is one of these claims. app/site/test/claims.test.mjs checks that each source file exists under research/ and that every number in a claim's text appears in that file. Status words: Works now, Preview, Planned, Not decided, Decided, Limit. Evidence words: development (our own tests, not sealed), design, decided, documentation, literature.",
+  "claims": {
+    "C01": {
+      "text": "Nothing runs, sends or changes until you say yes. The limit: a coding agent that can run commands as you on this computer could do what you can do, including say yes.",
+      "short": "Nothing happens until you say yes (with one honest limit)",
+      "status": "Works now",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§6.4 The honest security boundary; §8.3" }
+    },
+    "C02": {
+      "text": "In our tests, 10 of 10 attempts to get around your yes were refused.",
+      "short": "Ways around your yes are refused",
+      "status": "Works now",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§8.3 Bypass attempts refused" }
+    },
+    "C03": {
+      "text": "Tests use pretend data and pretend inboxes. Nothing real is sent during a test.",
+      "short": "Tests use pretend data",
+      "status": "Works now",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§2 lifecycle; §8.4" }
+    },
+    "C04": {
+      "text": "In our own tests, a low-cost AI that practised first built a 14-case order process with 14 of 14 right, for $0.39. A top AI that built it in one go got 5 of 14, for $7.63.",
+      "short": "Practising first: 14 of 14 versus 5 of 14",
+      "status": "Works now",
+      "evidence": "development",
+      "date": "2026-10-14",
+      "qualifier": "Development tests on one task family we wrote, not a promise about yours.",
+      "source": { "path": "research/enterprise-20261014/B1-E8-DEV.md", "anchor": "lines 174-176" }
+    },
+    "C05": {
+      "text": "On 60 public development tasks, a low-cost AI with Foundry's procedure passed 18 of 60 for $0.94; a stronger AI alone passed 20 of 60 for $6.03.",
+      "short": "A low-cost AI with a procedure, at about a sixth of the cost",
+      "status": "Works now",
+      "evidence": "development",
+      "date": "2026-10-14",
+      "qualifier": "One run each on development tasks; the frozen test run has not been done.",
+      "source": { "path": "research/automationbench-20261014/runs/DEV60-A0-A1.md", "anchor": "lines 109-110, 124" }
+    },
+    "C06": {
+      "text": "Of 10 sample n8n files, 2 came over exactly, 10 of 10 can be called as they are, and 0 were run.",
+      "short": "n8n import: honest about what comes over",
+      "status": "Preview",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "qualifier": "A small, skewed sample of open-licence files; nothing was executed.",
+      "source": { "path": "research/surface-20261021/n8n-import-results.json", "anchor": "summary" }
+    },
+    "C07": {
+      "text": "In a simulated company, builds that passed their process check still applied 57 of 57 large refunds without approval. With the rule layer, 0 did, and a scripted auditor could answer its questions from the records.",
+      "short": "Rules that hold at run time (test bed only)",
+      "status": "Planned",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "qualifier": "A test bed we built; this rule layer is not in the product yet.",
+      "source": { "path": "research/org-20261021/README.md", "anchor": "§2 results; P1" }
+    },
+    "C08": {
+      "text": "Free while one person decides, at any size, with single sign-on included. Paid only when a second person's yes or a rule owner has to count.",
+      "short": "Where the paid line is",
+      "status": "Decided",
+      "evidence": "decided",
+      "date": "2026-10-21",
+      "source": { "path": "research/decisions-20261021.md", "anchor": "D2" }
+    },
+    "C09": {
+      "text": "Foundry runs only on this computer. Nothing is published or hosted.",
+      "short": "Local only",
+      "status": "Decided",
+      "evidence": "decided",
+      "date": "2026-10-21",
+      "source": { "path": "research/decisions-20261021.md", "anchor": "D10, D13" }
+    },
+    "C10": {
+      "text": "Bringing your own AI key is free, and the key goes into your computer's keychain, never into files or logs.",
+      "short": "Your key, your keychain",
+      "status": "Preview",
+      "evidence": "decided",
+      "date": "2026-10-21",
+      "source": { "path": "research/decisions-20261021.md", "anchor": "D11" }
+    },
+    "C11": {
+      "text": "People approve almost every single prompt (97% in one vendor's data) but reject whole plans far more often (39% versus 3%).",
+      "short": "Why Foundry asks once, about the whole plan",
+      "status": "Works now",
+      "evidence": "literature",
+      "date": "2026-10-21",
+      "qualifier": "Vendor-published numbers, not a controlled study of Foundry.",
+      "source": { "path": "research/onboarding-20261021/sweeps/research-literature.md", "anchor": "§1 findings 3 and 4" }
+    },
+    "C12": {
+      "text": "The earlier prototype went from request to first live run in 3 person actions.",
+      "short": "Three actions in the earlier prototype",
+      "status": "Works now",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§8.3" }
+    },
+    "C13": {
+      "text": "Tested on Linux only. macOS and Windows are untested, and steps that run code are refused there.",
+      "short": "What has been tested",
+      "status": "Limit",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§6.3" }
+    },
+    "C14": {
+      "text": "Your decisions and the AI's transcripts are not yet part of the chained record, and its latest link is not stored outside this computer unless you ask for it.",
+      "short": "Known gaps in the record",
+      "status": "Limit",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/onboarding-20261021/sweeps/repo-surface.md", "anchor": "§6 item 9" }
+    }
+  }
+}
