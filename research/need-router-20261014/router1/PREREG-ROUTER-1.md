@@ -114,3 +114,16 @@ falls back to the code decision and the fallback is counted).
 ## 8. Deviations
 
 Recorded here, with date and reason, if any step above changes after this file is committed.
+
+- **D1 (2026-10-21T21:32Z, before any judge output was read): Jev not run in this session.** `FOUNDRY_SYSTEMONE_API_KEY` is
+  not set in this agent's environment, and the documented launch path (README D7: the owner's interactive shell maps his key
+  into that variable through `bash -ic`) was refused by this session's sandbox. No workaround was attempted. Consequences: the
+  `jev` system and `router+jev` are not measured; the step-4 choice is made among {haiku, mercury} x δ (δ = 0 = code only);
+  C3 is answered "Jev not measured, so not wired". The Jev pass stays runnable as frozen (`judges.mjs --judge jev`, 1,116
+  requests for both splits under the 1,200 cap); if it is run later, its rows are evaluated as an addendum outside the
+  frozen choice.
+- **D2 (same time): Mercury launched through `experiments/need-router/router1/with-inception.sh`** (the key file sourced
+  inside the command, as `m3-fill.sh` does), because this session's worktree guard refuses `.` in a command line. Same key,
+  same variable, nothing printed.
+- **Diagnostic added (no change to any rule):** a 5-fold dev cluster cross-validation of the fit and threshold rule
+  (`fit.mjs --cv`), reported as development evidence only.
