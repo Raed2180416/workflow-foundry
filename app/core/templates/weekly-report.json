@@ -1,0 +1,71 @@
+{
+  "template": {
+    "id": "weekly-report",
+    "title": "Weekly progress report from a tracker export",
+    "author": "claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1, adapted from the stub template in app/core/builder.mjs)",
+    "whenToUse": "Someone wants a regular summary of what a team finished (and optionally what is open or blocked), taken from their task tracker export, e-mailed to one person.",
+    "notFor": "Status pages, dashboards, reading Jira/Linear/Asana live, sending to a whole team list, or reports about money, sales or alerts.",
+    "sources": ["app/core/builder.mjs weeklyReportWorkflow (the stub's template)", "experiments/library/cards/catalog.json P01 linear pipeline, P04 draft -> check -> deliver"],
+    "idSlot": "team",
+    "slots": [
+      { "name": "team", "type": "string", "maxLength": 60, "default": "your team", "description": "Name of the team or project the report is about (used in the title and subject)." },
+      { "name": "recipient", "type": "email", "grounded": true, "ask": "wrong-target", "question": "Who should get the report? (one e-mail address)", "askWhy": "This is the only choice that sends your data somewhere. I will not guess it.", "description": "The one e-mail address that receives the report." },
+      { "name": "listOpen", "type": "boolean", "default": false, "description": "Also list the items that are still open, not only the finished ones." },
+      { "name": "listBlocked", "type": "boolean", "default": false, "description": "Also list the blocked items." }
+    ],
+    "capabilities": ["sheet.read", "rows.filter", "rows.lines", "core.aggregate", "core.template", "core.artifact", "outbox.send", "outbox.check"],
+    "data": { "tracker": "one row per work item: title, status (done | open | blocked), owner" },
+    "willDo": ["Read the tracker sheet and count the finished, open and blocked items", "List the finished items in the report",
+      { "if": "listOpen", "text": "List the items that are still open" }, { "if": "listBlocked", "text": "List the blocked items" },
+      "Save the report on this machine", "E-mail it to [[recipient]] only, after you approve each send", "Check that what was sent is exactly what was saved"],
+    "willNotDo": ["Send to anyone else, or more than one message per run", "Read Jira, Linear or Asana directly: it reads the tracker sheet you keep in the workspace",
+      "Run by itself on a schedule: there is no scheduler yet, so you (or your coding agent) start each run", "Use a model: this flow has no model step"],
+    "practice": {
+      "now": "2026-10-16T17:00:00Z",
+      "sheets": { "tracker": [
+        { "title": "Practice: ship the login fix", "status": "done", "owner": "Sam" },
+        { "title": "Practice: write release notes", "status": "done", "owner": "Ana" },
+        { "title": "Practice: migrate the billing table", "status": "open", "owner": "Lee" },
+        { "title": "Practice: vendor contract review", "status": "blocked", "owner": "Kim" } ] }
+    }
+  },
+  "workflow": {
+    "schemaVersion": "1.0", "id": "weekly-report", "version": 1,
+    "title": "Weekly report for [[team]]",
+    "goal": "Each run, count what [[team]] finished in the tracker sheet, write a short report, save it, and e-mail it to [[recipient]] after a person approves the send.",
+    "domain": "general",
+    "envelope": {
+      "assumptions": ["The tracker sheet in the workspace holds one row per item with a title, a status (done, open or blocked) and an owner", "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"],
+      "risks": ["Sending the report to the wrong person", "A report that silently drops items"],
+      "successCriteria": ["Every item has a status the report counts (done, open or blocked)", "The report is saved", "The report is delivered to the one recipient you named", "What was delivered is exactly the saved report (checked by re-reading the outbox)"],
+      "unsupported": ["Running on a schedule by itself", "Reading Jira, Linear or Asana directly", "Sending to anyone other than the named recipient"]
+    },
+    "inputSchema": { "type": "object", "additionalProperties": false, "required": ["now"], "properties": { "now": { "type": "string", "minLength": 10, "maxLength": 40 } } },
+    "budget": { "maxSteps": 60, "maxConcurrency": 2, "maxDurationMs": 120000, "maxCost": 0 },
+    "nodes": [
+      { "id": "read", "kind": "task", "needs": [], "description": "Read the tracker sheet", "tool": "sheet.read", "args": { "sheet": "tracker" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "done", "kind": "task", "needs": ["read"], "description": "Pick the finished items", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.read.rows" }, "where": [{ "field": "status", "op": "eq", "value": "done" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "open", "kind": "task", "needs": ["read"], "description": "Pick the open items", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.read.rows" }, "where": [{ "field": "status", "op": "eq", "value": "open" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "blocked", "kind": "task", "needs": ["read"], "description": "Pick the blocked items", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.read.rows" }, "where": [{ "field": "status", "op": "eq", "value": "blocked" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "unknown", "kind": "task", "needs": ["read"], "description": "Find items whose status the report would not count (used by a check)", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.read.rows" }, "where": [{ "field": "status", "op": "not_in", "value": ["done", "open", "blocked"] }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "count", "kind": "task", "needs": ["read"], "description": "Count every item a second, independent way", "tool": "core.aggregate", "args": { "operation": "count", "values": { "$ref": "nodes.read.rows" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "doneLines", "kind": "task", "needs": ["done"], "description": "List the finished items", "tool": "rows.lines", "args": { "rows": { "$ref": "nodes.done.rows" }, "line": "- {{title}} ({{owner}})", "empty": "- nothing marked done" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "openLines", "kind": "task", "needs": ["open"], "description": "List the open items", "tool": "rows.lines", "args": { "rows": { "$ref": "nodes.open.rows" }, "line": "- {{title}} ({{owner}})", "empty": "- nothing open" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "blockedLines", "kind": "task", "needs": ["blocked"], "description": "List the blocked items", "tool": "rows.lines", "args": { "rows": { "$ref": "nodes.blocked.rows" }, "line": "- {{title}} ({{owner}})", "empty": "- nothing blocked" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "compose", "kind": "task", "needs": ["count", "doneLines", "openLines", "blockedLines"], "description": "Write the report text", "tool": "core.template",
+        "args": { "text": { "$derive": "reportText" }, "variables": { "now": { "$ref": "input.now" }, "done": { "$ref": "nodes.doneLines.count" }, "total": { "$ref": "nodes.count.value" },
+          "open": { "$ref": "nodes.openLines.count" }, "blocked": { "$ref": "nodes.blockedLines.count" }, "doneLines": { "$ref": "nodes.doneLines.text" }, "openLines": { "$ref": "nodes.openLines.text" }, "blockedLines": { "$ref": "nodes.blockedLines.text" } } },
+        "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "save", "kind": "task", "needs": ["compose"], "description": "Save the report as weekly-report.md", "tool": "core.artifact", "args": { "name": "weekly-report.md", "content": { "$ref": "nodes.compose.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "send", "kind": "task", "needs": ["save"], "description": "Send the report to [[recipient]] (asks you first)", "tool": "outbox.send", "args": { "to": { "$slot": "recipient" }, "subject": "Weekly report: [[team]]", "body": { "$ref": "nodes.compose.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } },
+      { "id": "confirm", "kind": "verify", "needs": ["send"], "description": "Re-read what was delivered and compare it with the saved report", "method": "capability", "tool": "outbox.check",
+        "args": { "messageId": { "$ref": "nodes.send.messageId" }, "sha256": { "$ref": "nodes.save.sha256" } }, "subject": { "$ref": "nodes.send" }, "independence": "execution", "gate": true, "timeoutMs": 10000 }
+    ],
+    "acceptance": [
+      { "op": "eq", "left": { "$ref": "nodes.unknown.count" }, "right": 0 },
+      { "op": "exists", "value": { "$ref": "nodes.save.sha256" } },
+      { "op": "eq", "left": { "$ref": "nodes.send.delivered" }, "right": true },
+      { "op": "eq", "left": { "$ref": "nodes.confirm.pass" }, "right": true }
+    ]
+  }
+}

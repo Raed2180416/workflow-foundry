@@ -1,0 +1,88 @@
+{
+  "template": {
+    "id": "invoice-chase",
+    "title": "Chase unpaid invoices with a reminder cadence (dunning)",
+    "author": "claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)",
+    "whenToUse": "Someone wants customers with overdue unpaid invoices reminded by e-mail, politely first and firmer later, from their invoice sheet; optionally a summary to themselves.",
+    "notFor": "Sending invoices, taking payments, charging cards, paying suppliers or contractors, or chasing anything that is not an invoice in the invoices sheet.",
+    "sources": ["experiments/library/cards/catalog.json P04 draft -> check -> deliver", "research/business-20261021/OPEN-CORE-AND-INVARIANTS.md (dunning cadence as a clock obligation)", "research/intent-20261021/corpus-prior.md (idempotency 8% of business automations)"],
+    "slots": [
+      { "name": "firstAfterDays", "type": "integer", "min": 0, "max": 365, "default": 7, "description": "Days after the due date when the first, friendly reminder goes out." },
+      { "name": "secondAfterDays", "type": "integer", "min": 0, "max": 365, "default": 14, "description": "Days after the due date for a firmer second reminder; 0 means no second reminder." },
+      { "name": "finalAfterDays", "type": "integer", "min": 0, "max": 365, "default": 30, "description": "Days after the due date for a final notice; 0 means no final notice." },
+      { "name": "signature", "type": "string", "maxLength": 80, "default": "Accounts team", "description": "Who the reminders are signed by, e.g. a name and business name." },
+      { "name": "sendSummary", "type": "boolean", "default": false, "description": "Also e-mail the person a summary of the invoices that are due for a reminder." },
+      { "name": "summaryTo", "type": "email", "grounded": true, "default": "", "ask": "wrong-target", "askWhen": "sendSummary", "question": "Which e-mail address should get the summary?", "askWhy": "The summary lists your customers and what they owe; I will not guess where it goes.", "description": "The person's own e-mail address for the summary (only when sendSummary is true; empty otherwise)." }
+    ],
+    "constraints": [
+      { "op": "lt", "left": "firstAfterDays", "right": "secondAfterDays", "unlessZero": true, "message": "secondAfterDays must be later than firstAfterDays (or 0 for no second reminder)" },
+      { "op": "lt", "left": "firstAfterDays", "right": "finalAfterDays", "unlessZero": true, "message": "finalAfterDays must be later than firstAfterDays (or 0 for no final notice)" },
+      { "op": "lt", "left": "secondAfterDays", "right": "finalAfterDays", "unlessZero": true, "message": "finalAfterDays must be later than secondAfterDays (or 0)" }
+    ],
+    "capabilities": ["sheet.read", "rows.filter", "rows.age", "rows.route", "rows.lines", "core.identity", "core.template", "core.pluck", "outbox.send", "outbox.audit"],
+    "data": { "invoices": "one row per invoice: invoice (id), customer, email, amount, due (YYYY-MM-DD), status (open | paid | disputed)" },
+    "willDo": ["Read the invoices sheet and pick the open invoices (not paid, not disputed)", "Send [[cadenceText]]", "Send each invoice at most one reminder of each kind, ever: it remembers what it already sent",
+      { "if": "sendSummary", "text": "E-mail [[summaryTo]] a summary of the invoices due for a reminder" }, "Check, by re-reading the outbox, that exactly the planned reminders went out, each intact", "Ask you before every e-mail"],
+    "willNotDo": ["Remind customers whose invoice is paid or disputed", "Take payments, charge cards or change the invoices sheet", "Contact anyone except the e-mail address on each invoice", "Run by itself on a schedule: you (or your coding agent) start each run"],
+    "practice": {
+      "now": "2026-10-10T09:00:00Z",
+      "sheets": { "invoices": [
+        { "invoice": "PR-101", "customer": "Practice Cafe", "email": "practice-cafe@example.org", "amount": 120, "due": "2026-10-01", "status": "open" },
+        { "invoice": "PR-102", "customer": "Practice Gym", "email": "practice-gym@example.org", "amount": 480, "due": "2026-09-20", "status": "open" },
+        { "invoice": "PR-103", "customer": "Practice Florist", "email": "practice-florist@example.org", "amount": 75, "due": "2026-08-15", "status": "open" },
+        { "invoice": "PR-104", "customer": "Practice Bakery", "email": "practice-bakery@example.org", "amount": 300, "due": "2026-09-01", "status": "paid" },
+        { "invoice": "PR-105", "customer": "Practice Garage", "email": "practice-garage@example.org", "amount": 900, "due": "2026-09-01", "status": "disputed" },
+        { "invoice": "PR-106", "customer": "Practice Studio", "email": "practice-studio@example.org", "amount": 60, "due": "2026-10-08", "status": "open" } ] }
+    }
+  },
+  "workflow": {
+    "schemaVersion": "1.0", "id": "invoice-chase", "version": 1,
+    "title": "Invoice reminders",
+    "goal": "Each run, e-mail every customer whose open invoice is overdue the reminder its age calls for ([[cadenceText]]), never twice for the same stage, after a person approves each send.",
+    "domain": "general",
+    "envelope": {
+      "assumptions": ["The invoices sheet holds one row per invoice with invoice, customer, email, amount, due (YYYY-MM-DD) and status (open, paid or disputed)", "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"],
+      "risks": ["Chasing a customer who already paid or disputes the invoice", "Sending the same reminder twice", "Sending a reminder to the wrong address"],
+      "successCriteria": ["Every overdue open invoice got the reminder its age calls for", "This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox)"],
+      "unsupported": ["Payments", "Changing the invoices sheet", "Running on a schedule by itself"]
+    },
+    "inputSchema": { "type": "object", "additionalProperties": false, "required": ["now"], "properties": { "now": { "type": "string", "minLength": 10, "maxLength": 40 } } },
+    "budget": { "maxSteps": 4000, "maxConcurrency": 2, "maxDurationMs": 300000, "maxCost": 0 },
+    "state": { "reminded": { "type": "set", "writer": "mark", "maxItems": 100000, "ttlDays": 400, "description": "invoice|stage pairs already reminded" } },
+    "nodes": [
+      { "id": "read", "kind": "task", "needs": [], "description": "Read the invoices sheet", "tool": "sheet.read", "args": { "sheet": "invoices" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "open", "kind": "task", "needs": ["read"], "description": "Keep open invoices only (not paid, not disputed)", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.read.rows" }, "where": [{ "field": "status", "op": "eq", "value": "open" }, { "field": "email", "op": "exists" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "aged", "kind": "task", "needs": ["open"], "description": "Work out how many days late each open invoice is", "tool": "rows.age", "args": { "rows": { "$ref": "nodes.open.rows" }, "field": "due", "now": { "$ref": "input.now" }, "unit": "days", "as": "daysLate" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "staged", "kind": "task", "needs": ["aged"], "description": "Decide which reminder each invoice is due for", "tool": "rows.route", "args": { "rows": { "$ref": "nodes.aged.rows" }, "rules": { "$derive": "stageRules" }, "otherwise": { "stage": "none", "subjectPrefix": "", "opening": "" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "due", "kind": "task", "needs": ["staged"], "description": "Keep the invoices due for a reminder", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.staged.rows" }, "where": [{ "field": "stage", "op": "ne", "value": "none" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "remind", "kind": "map", "needs": ["due"], "description": "Remind each customer once per stage", "items": { "$ref": "nodes.due.rows" }, "maxItems": 500, "concurrency": 1,
+        "body": {
+          "nodes": [
+            { "id": "plan", "kind": "task", "needs": [], "description": "Note who this reminder is for", "tool": "core.identity", "args": { "to": { "$ref": "item.email" }, "invoice": { "$ref": "item.invoice" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+            { "id": "key", "kind": "task", "needs": [], "description": "Name this invoice and stage", "tool": "core.template", "args": { "text": "{{invoice}}|{{stage}}", "variables": { "invoice": { "$ref": "item.invoice" }, "stage": { "$ref": "item.stage" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+            { "id": "mark", "kind": "state", "needs": ["key"], "description": "Remember this reminder; skip it if it was sent before", "slot": "reminded", "op": "add", "key": { "$ref": "nodes.key.text" } },
+            { "id": "compose", "kind": "task", "needs": [], "description": "Write the reminder", "tool": "core.template",
+              "args": { "text": "Hello {{customer}},\n\n{{opening}} Invoice {{invoice}} for {{amount}} was due on {{due}} ({{days}} days ago) and we have not received payment yet.\n\nIf you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out.\n\nThank you,\n[[signature]]",
+                "variables": { "customer": { "$ref": "item.customer" }, "opening": { "$ref": "item.opening" }, "invoice": { "$ref": "item.invoice" }, "amount": { "$ref": "item.amount" }, "due": { "$ref": "item.due" }, "days": { "$ref": "item.daysLate" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+            { "id": "subject", "kind": "task", "needs": [], "description": "Write the subject line", "tool": "core.template", "args": { "text": "{{prefix}}: invoice {{invoice}}", "variables": { "prefix": { "$ref": "item.subjectPrefix" }, "invoice": { "$ref": "item.invoice" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+            { "id": "send", "kind": "task", "needs": ["mark", "compose", "subject", "plan"], "when": { "op": "eq", "left": { "$ref": "nodes.mark.added" }, "right": true }, "description": "E-mail the reminder to the customer (asks you first)", "tool": "outbox.send",
+              "args": { "to": { "$ref": "nodes.plan.to" }, "subject": { "$ref": "nodes.subject.text" }, "body": { "$ref": "nodes.compose.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } }
+          ],
+          "acceptance": [{ "op": "any", "conditions": [{ "op": "eq", "left": { "$ref": "nodes.mark.added" }, "right": false }, { "op": "eq", "left": { "$ref": "nodes.send.delivered", "default": false }, "right": true }] }]
+        } },
+      { "id": "fresh", "kind": "task", "needs": ["remind"], "description": "List the reminders this run actually sent", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.remind.items" }, "where": [{ "field": "mark.added", "op": "eq", "value": true }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "expected", "kind": "task", "needs": ["fresh"], "description": "Who should have received a reminder this run", "tool": "core.pluck", "args": { "items": { "$ref": "nodes.fresh.rows" }, "field": "plan.to" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "$includeIf": "sendSummary", "id": "sumLines", "kind": "task", "needs": ["due"], "description": "List the invoices due for a reminder", "tool": "rows.lines", "args": { "rows": { "$ref": "nodes.due.rows" }, "line": "- {{invoice}} {{customer}}: {{amount}}, {{daysLate}} days late ({{stage}})", "empty": "- none" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "$includeIf": "sendSummary", "id": "sumText", "kind": "task", "needs": ["sumLines", "expected"], "description": "Write the summary", "tool": "core.template",
+        "args": { "text": "Unpaid invoices due for a reminder ({{count}}):\n{{lines}}\n\nNew reminders sent this run: {{sent}}. Paid and disputed invoices were left alone.", "variables": { "count": { "$ref": "nodes.sumLines.count" }, "lines": { "$ref": "nodes.sumLines.text" }, "sent": { "$ref": "nodes.expected.count" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "$includeIf": "sendSummary", "id": "sendSummary", "kind": "task", "needs": ["sumText"], "description": "E-mail the summary to [[summaryTo]] (asks you first)", "tool": "outbox.send", "args": { "to": { "$slot": "summaryTo" }, "subject": "Invoice reminders: summary", "body": { "$ref": "nodes.sumText.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } },
+      { "id": "audit", "kind": "verify", "needs": { "$if": "sendSummary", "then": ["expected", "sendSummary"], "else": ["expected"] }, "description": "Re-read the outbox: exactly the planned e-mails went out this run, each intact", "method": "capability", "tool": "outbox.audit",
+        "args": { "to": [{ "$ref": "nodes.expected.items" }, { "$if": "sendSummary", "then": [{ "$slot": "summaryTo" }], "else": [] }] }, "subject": { "$ref": "nodes.remind" }, "independence": "execution", "gate": true, "timeoutMs": 10000 }
+    ],
+    "acceptance": [
+      { "op": "eq", "left": { "$ref": "nodes.remind.count" }, "right": { "$ref": "nodes.due.count" } },
+      { "op": "eq", "left": { "$ref": "nodes.audit.pass" }, "right": true },
+      { "$includeIf": "sendSummary", "op": "eq", "left": { "$ref": "nodes.sendSummary.delivered" }, "right": true }
+    ]
+  }
+}

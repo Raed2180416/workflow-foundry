@@ -373,14 +373,18 @@ _TIER_TALK = re.compile(r"(?i)(?<![A-Za-z])(?:tier\w*|segment\w*|classif\w*|sale
 _EMAIL_ADDR = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 
 
+def html_text(s: str) -> str:
+    """Text with HTML tags removed (block tags become line breaks) and entities decoded; text without tags is kept."""
+    if not re.search(r"<\s*/?\s*[A-Za-z][^>]*>", s or ""):
+        return s or ""
+    s = re.sub(r"(?i)<\s*/?\s*(?:br|p|div|li|tr|h[1-6]|table|ul|ol)\b[^>]*>", "\n", s)
+    return html.unescape(re.sub(r"<[^>]*>", " ", s))
+
+
 def email_text(m: dict) -> str:
-    """A sent email's text: the plain part, then the HTML part with its tags removed (block tags become line breaks)
-    and its entities decoded."""
-    h = m.get("body_html") or ""
-    if h:
-        h = re.sub(r"(?i)<\s*/?\s*(?:br|p|div|li|tr|h[1-6]|table|ul|ol)\b[^>]*>", "\n", h)
-        h = html.unescape(re.sub(r"<[^>]*>", " ", h))
-    return f"{m.get('body_plain') or ''}\n{h}"
+    """A sent email's text: the plain part, then the HTML part, each through html_text (AutomationBench stores an
+    HTML-only message's markup in body_plain too)."""
+    return f"{html_text(m.get('body_plain'))}\n{html_text(m.get('body_html'))}"
 
 
 def strip_names(text: str, names: list) -> str:
@@ -397,15 +401,15 @@ def strip_names(text: str, names: list) -> str:
 
 
 def email_problems(m: dict, c: dict, names: list) -> list[tuple]:
-    """Policy step 8 for one sent email of a closing. The subject is exactly `Deal Closed Notification`. The body names
-    the opportunity by its Salesforce name (case-sensitive; runs of whitespace may differ), the USD amount in the `$`
-    format, and the tier label (case-sensitive, whole word) outside the quoted record names. It names no other tier and
-    no other `$` amount (body_extras)."""
+    """Policy step 8 for one sent email of a closing. The subject is exactly `Deal Closed Notification` (surrounding
+    spaces aside). The body names the opportunity by its Salesforce name, verbatim; the USD amount in the `$` format;
+    and the tier label (case-sensitive, whole word) outside the quoted record names. It names no other tier and no
+    other `$` amount (body_extras)."""
     out = []
     if (m.get("subject") or "").strip() != L.SUBJECT:
         out.append(("subject", m.get("subject")))
     body = email_text(m)
-    if not re.search(r"\s+".join(re.escape(w) for w in c["name"].split()), body):
+    if c["name"] not in body:
         out.append(("body-name", body[:200]))
     if L.money(c["usd"]) not in body:
         out.append(("body-amount", body[:200]))

@@ -71,7 +71,10 @@ export function audit({ host, registry = null, sampleSize = 10 }) {
   for (const d of J.deliveries) {
     const e = d.event, p = e.payload ?? {};
     if (e.type === 'order.placed') { const O = norm(p.orderId); if (!placed.has(O)) placed.set(O, ms(p.placedAt)); }
-    else if (e.type === 'migration') { for (const r of p.records?.['orders.orders'] ?? []) if (!placed.has(norm(r.orderId))) placed.set(norm(r.orderId), ms(r.placedAt)); }
+    else if (e.type === 'migration') {                    // go-live orders: in the export's records, or (awaiting intake) only in its events
+      for (const r of p.records?.['orders.orders'] ?? []) if (!placed.has(norm(r.orderId))) placed.set(norm(r.orderId), ms(r.placedAt));
+      for (const x of p.events ?? []) if (x.type === 'order.placed' && !placed.has(norm(x.payload?.orderId))) placed.set(norm(x.payload.orderId), ms(x.payload.placedAt));
+    }
     else if (e.type === 'customer.action' && ['amend', 'cancel'].includes(p.action)) {
       const O = norm(p.orderRef); const s = entered.get(O) ?? new Map(); s.set(e.id, p.enteredBy ?? null); entered.set(O, s);
     }

@@ -16,6 +16,7 @@ import json
 import re
 import sys
 from collections import Counter
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -85,6 +86,25 @@ def test_trap_shares_match_the_spec(gens):
         target = {"d2": 0.5, "d3": 0.8}[m["difficulty"]]
         assert abs(m["trap_rate_planted"] - target) <= 0.03, (s, m["trap_rate_planted"])
         assert target <= m["trap_rate_deal_triggers"] <= target + 0.15, (s, m["trap_rate_deal_triggers"])
+
+
+def test_pending_envelope_copy_is_not_a_kind_cue():
+    """Review of v1.1.0: only fresh signed deals could have a 'sent' copy of their envelope in world0, so a completed
+    envelope without one was more likely an escalation or a repeat. Since v1.2.0 every envelope a trigger completes
+    gets one at the same rate (gen.PENDING_SHARE)."""
+    share = {}
+    for s in range(601, 631):  # practice, dev and rehearsal blocks
+        g = G.generate(s)
+        pending = {e["id"] for e in g["world0"]["docusign"]["envelopes"] if e["status"] == "sent"}
+        for t in g["triggers"]:
+            for op in t["delta"]:
+                if op["op"] == "upsert_envelope":
+                    k = share.setdefault("escalate" if t["sub"].startswith("escalate") else t["sub"], [0, 0])
+                    k[0] += op["envelope"]["id"] in pending
+                    k[1] += 1
+    assert set(share) == {"fresh", "escalate", "signed-after-won"}, share
+    for sub, (a, n) in share.items():
+        assert n >= 25 and abs(a / n - G.PENDING_SHARE) <= 0.12, (sub, a, n)
 
 
 def test_write_out_files_and_hashes(tmp_path):
@@ -222,6 +242,12 @@ def test_one_defect_variants_fail_on_their_trap(gens, refs, name, trap):
 def test_oracle_mutation_score():
     r = H.gate_mutation([610, 611], None)
     assert r["total"] > 500 and r["score"] >= 0.95, r
+    # review of v1.1.0: hedged tiers, a missing tier, case-folded subject and name, and mail moved out of the inbox were
+    # graded correct; each operator must now be applied and flagged every time
+    for name in ("email-other-tier-lower", "email-other-tier-far", "email-omit-tier", "email-subject-case", "email-name-case",
+                 "trash-mail", "archive-mail"):
+        flagged, total = map(int, r["by_mutation"][name].split("/"))
+        assert total > 0 and flagged == total, (name, r["by_mutation"][name], r["missed"])
 
 
 def _trigger_world(g, idx):
@@ -261,9 +287,11 @@ def test_oracle_escalation_and_abstention(gens):
 
 # ---------------------------------------------------------------------------------------------- helpers and docs
 def test_amount_parsing_and_formats_agree_between_the_two_implementations():
-    for text, want in (("125.000,00", 125000), ("125,000.00", 125000), ("125000", 125000), ("98,500", 98500),
-                       ("1.234.567,50", 1234567.5)):
-        assert L.parse_amount(text) == R.parse_amount(text) == type(L.parse_amount(text))(str(want))
+    # euro-decimal forms with one or two decimals: lib (the truth) read ',5' as thousands before v1.2.0 (review of v1.1.0)
+    for text, want in (("125.000,00", "125000"), ("125,000.00", "125000"), ("125000", "125000"), ("98,500", "98500"),
+                       ("1.234.567,50", "1234567.5"), ("125.000,5", "125000.5"), ("125000,5", "125000.5"), ("1.234,56", "1234.56"),
+                       ("98,5", "98.5"), (" 125.000,00 ", "125000"), ("1,234,567", "1234567")):
+        assert L.parse_amount(text) == R.parse_amount(text) == Decimal(want), text
     assert L.money(1234567) == R.money(1234567) == "$1,234,567"
     assert L.slack_closed("A - B", 156000, "SMB", "Jo Park") == "CLOSED: A - B | $156,000 | SMB | AE: Jo Park"
 

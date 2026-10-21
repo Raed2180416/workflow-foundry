@@ -234,6 +234,67 @@ graded.
 
   The generator stays at version 1.0.0, because no stream from it has been used for any label.
 
+- 2026-10-21, second pass: fixes for the ten defects a review found (seven medium or low in the policy and the oracle,
+  three in coverage; no blocker, $0, no model). The review's probe solvers, re-run on seeds 610–611 after the fix
+  (103 triggers; the probe script is not committed), and the change for each:
+  1. **Which events get a Compliance Log row** (POLICY.md section 6). The policy said every handled event appends a
+     row, but neither the generator nor the reference logs an authorized amendment or a daily close. It now says that
+     the rows of the two source sheets and unsubscribe emails get one, and that daily closes (beyond the holds they
+     release), amendments (Compliance's included) and undecidable events get none. `LogEveryHandled` (a row for the
+     authorized amendment) failed before too; now the policy says it is wrong: 101/103.
+  2. **Confirmation wording** and 4. **a body that contradicts it.** The oracle required the word `removed` anywhere:
+     a correct paraphrase failed (76/101) and "We have not removed ... from all our mailing lists" passed (101/101).
+     POLICY.md now fixes the sentence `<address> has been removed from all our mailing lists.` and says nothing in the
+     body may contradict it and no individual list is named. `oracle.confirmation_ok` checks it without a model: the
+     sentence (any case, any whitespace between words) ending there, no negation before it in its sentence, no list
+     name anywhere in the body. `UnsubscribedWording` 78/103 and `NotRemovedBody` 78/103: each now fails exactly the
+     confirmation triggers.
+  3. **A second recipient behind `;`.** `Subscriber <ann@x>; marketing-ops@...` is stored as one To entry, and the old
+     check kept only the first address (101/101). `oracle.parse_recipient` reads every address in every entry. The end
+     of the week also checks the vendor, the Q4 address and the marketing manager with this parser
+     (`end.never-recipients`), because AutomationBench's `gmail_message_not_sent_to` misses such entries.
+     `SemicolonCc` 77/103.
+  5. **A Slack post deleted again** within the trigger was invisible (101/101). It is now an envelope effect, and at the
+     week close too. `PostThenDelete` 0/103.
+  6. **The 30-day confirmation dedupe across triggers.** Every recent-confirmation case read a world0 row. At d3,
+     `plan_extras` now takes a plain request from Monday to Wednesday whose address no other event touches. On a later
+     day the address re-opts in to one list (a new host-side delta op, `set_member`) and asks again. The correct
+     handling is to archive without a confirmation, and only the Sent row this week's first request wrote shows why
+     (label `in-week-confirm`, T-repeat; one per d3 week on 601–650). New control `cachedlog` (the dedupe decided from
+     the Compliance Log as first read in the week) fails all 25 d3 weeks of 601–650, first at that trigger, and passes
+     the 25 d2 weeks.
+  7. **An undecidable row released at a daily close.** The truth expected both an escalation and the count post, and
+     the oracle accepted only one post, so no solver could pass. POLICY.md section 7 step 2 now says such a row gets one
+     #automation-review post and stays unhandled, and the close goes on. The truth lists it in `expect.sink`, and the
+     oracle requires that many sink posts naming the trigger next to the expected posts (`slack.sink`). The streams
+     never contain this case (0 on 601–650), so a test builds one: a held Premium-tier hard bounce with no manager,
+     escalated at all five closes. The reference passes it, and a solver that obeys section 9 alone and stops fails.
+  8. **`FW:` prefixes.** Both implementations stripped `FW:`, which the policy did not list, and no stream used it.
+     The policy now lists `Fw:`. Every d2 and d3 week now has one unsubscribe email with an `FW:`/`Fw:` subject
+     (label `fw-prefix`). It is a lone unsubscribe email, or, when the week has none, a plain web-form request that
+     arrives by email instead. `FwPrefixStrict` (strips only `Re:`/`Fwd:`) 98/103. For a non-exact subject, the
+     review suggested `Re: unsubscribe me`. Instead each d2 week has a `Re: Unsubscribe confirmation` reply from an
+     address confirmed earlier that week (`confirm-reply`, T-format, nothing to do). A plea like "unsubscribe me" whose
+     right answer is "do nothing" would set the subject rule against the policy's own first sentence ("anyone who asks
+     to stop hearing from us"). A reply to a confirmation asks for nothing. `naive` fails it.
+  9. **Case leniency against "exactly".** Subjects are now compared exactly (surrounding spaces aside), and addresses
+     written into sheets must be lower case, as section 3 says. The remaining leniencies are listed under
+     [What the oracle checks](#what-the-oracle-checks). `SubjectCase` 75/103. The specificity variant no longer
+     upper-cases the log Email (that is not policy-neutral). It now varies the confirmation's layout around the sentence.
+  10. **Repeated deliveries of an amendment or a daily close.** POLICY.md section 8 now says an amendment whose Policy
+      Log row (Effective, Parameter, Value) exists changes nothing. Section 7 step 1 says a close whose post for today
+      is already in #compliance does nothing. The generator's truth and the reference (which reads #compliance with
+      `conversations.history`) implement both. The streams contain no such retry: one more trigger would push d3 past
+      the design's 60 a week. A test builds one of each, and variants without either check fail on it.
+
+  Seven mutation operators were added: a `;`-joined recipient, an upper-case subject, a paraphrased, a negated and a
+  list-naming confirmation, an upper-case log Email, and a post deleted again. All 34 operators are flagged on every
+  application. The new plants draw from their own seeded stream (`...:extras`), as the future-dated Policy Log row
+  does, so every other draw is unchanged. Weeks now have 43–50 triggers at d2 (one `confirm-reply`) and 53–60 at d3
+  (one second request) on 601–650. `expect.sink` is new in `truth.jsonl`, and `set_member` is a new delta op that the
+  future `abr-apply` must implement (`harness.apply_delta` has it). The version stays 1.0.0: no stream has been used
+  for a label, and no arm has read the policy.
+
 ## Not done yet
 
 - The stream runner (`stream.mjs`), the bridge commands (`abr-gen`, `abr-apply`, `abr-grade`) and the arms (§3.7–3.8)
@@ -246,3 +307,8 @@ graded.
 - The ledger has no seed entries yet; no labelled stream was run.
 - Still not exercised: a d3 soft bounce between the authorized amendment's arrival and its later Effective date (a
   solver that applies an amendment from the moment it arrives is caught only when such a trigger happens to occur).
+- Exercised only by constructed streams in the tests, never by the generator: a repeated delivery of an amendment or a
+  daily close (section 7 step 1, section 8), and a released row the rule cannot decide at a daily close (section 7
+  step 2).
+- An email sent and then permanently deleted within one trigger is invisible to world-dump grading (see
+  [What the oracle checks](#what-the-oracle-checks)); catching it needs the bridge's call journal.

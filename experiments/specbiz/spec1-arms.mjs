@@ -51,7 +51,7 @@ There is no rulebook. What this shop (Hollin Retail) wants is in its own documen
 business/REQUEST.md (the owner's request), business/PLATFORM.md (the platform and its systems, exact), the wiki, the
 inbox and the records exports. Like any real business's documents they overlap, some are out of date, and not everything
 in them is the shop's policy. The business documents are not in ctx.files at run time: your solver must carry what it
-needs.
+needs. (CONTRACT.md lists spec/SPEC-E.md among the files a tick may get: this shop has no such file.)
 `;
 
 export const ASK_SECTION = `

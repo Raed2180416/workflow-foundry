@@ -75,3 +75,11 @@ test('a break-glass refund (C2-X1: three failed requests, then the controller) i
   const c = compare(a, groundTruth({ world: r.world, rows: r.rows, registry: reg, port: r.port, workflowHash: WF }));
   assert.deepEqual(c.pass, { Q1: true, Q2: true, Q3: true, Q4: true, Q5: true });
 });
+
+test('an order the solver never takes up (pre-repair lineage 2\'s go-live order) is a run without a pin: Q5 cannot be answered', async () => {
+  const src = readFileSync(solverPath('b1lh-e8-2'), 'utf8');
+  const r = await runArm({ spec: SIZED, arm: 'W-S', registry: reg, workflowHash: sha(src), make: () => sandboxArm({ id: 'L2pre', solverSource: src, timeoutMs: 20_000 }) });
+  const a = audit({ host: r.full, registry: reg.journal() });
+  assert.equal(a.queries.Q5.answerable, false);
+  assert.match(a.queries.Q5.why.join(), /1 of 15 runs journal no constitution hash/);
+});
