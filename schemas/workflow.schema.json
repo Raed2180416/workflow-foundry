@@ -38,6 +38,18 @@
     "acceptance": {"$ref": "#/definitions/checks"},
     "labels": {"type": "object", "maxProperties": 256, "propertyNames": {"maxLength": 512, "pattern": "^input(\\.[A-Za-z0-9_-]+)*$"}, "additionalProperties": {"$ref": "#/definitions/label"}},
     "discovery": {"type": "boolean"},
+    "segregation": {
+      "type": "array", "maxItems": 50,
+      "description": "Segregation of duties (2026-10-21, compromise D1; src/principals.mjs): the actors who answer the named human nodes of one run must be pairwise distinct. Each named node is one human node with a principal. Optional: a workflow without it, or without principals, behaves exactly as before.",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["nodes"],
+        "properties": {
+          "id": {"$ref": "#/definitions/id"},
+          "nodes": {"type": "array", "minItems": 2, "maxItems": 10, "uniqueItems": true, "items": {"$ref": "#/definitions/id"}},
+          "description": {"type": "string", "maxLength": 1000}
+        }
+      }
+    },
     "state": {"type": "object", "maxProperties": 32, "propertyNames": {"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"}, "additionalProperties": {"$ref": "#/definitions/stateSlot"},
       "description": "Cross-run keyed state shared by every run (and version) of this workflow id, one slot per name (src/state.mjs). Read and written only by state nodes; only the slot's declared writer writes it."},
     "defaultClass": {"type": "string", "minLength": 1, "maxLength": 16, "description": "The model class most nodes are expected to start on. A model node that starts above it needs model.justification (strict lint CLASS_ABOVE_DEFAULT_UNJUSTIFIED). Absent: the cheapest class any model node starts on."},
@@ -60,6 +72,22 @@
   },
   "definitions": {
     "id": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"},
+    "roleId": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,59}$"},
+    "principal": {
+      "type": "object", "additionalProperties": false, "required": ["role"],
+      "description": "Who may answer a human node (2026-10-21, compromise D1; src/principals.mjs). Roles are names from the host's role matrix (the OT-0 constitution's roles and principals), which the host supplies and the workflow never does. The answer must carry an actor that holds `role`; with `threshold`, an amount above `above` (or unreadable, or decided by untrusted data) also needs `threshold.role` (delegation of authority). Optional: a human node without it accepts any answer, as before.",
+      "properties": {
+        "role": {"$ref": "#/definitions/roleId"},
+        "threshold": {
+          "type": "object", "additionalProperties": false, "required": ["amount", "above", "role"],
+          "properties": {
+            "amount": {"anyOf": [{"type": "number"}, {"type": "object", "required": ["$ref"]}]},
+            "above": {"type": "number", "minimum": 0},
+            "role": {"$ref": "#/definitions/roleId"}
+          }
+        }
+      }
+    },
     "texts": {"type": "array", "maxItems": 200, "items": {"type": "string", "maxLength": 10000}},
     "nonemptyTexts": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"type": "string", "minLength": 1, "maxLength": 10000}},
     "label": {"type": "string", "maxLength": 512, "pattern": "^(?:trusted|untrusted:[A-Za-z0-9_.:-]+(?:\\+[A-Za-z0-9_.:-]+)*)$"},
@@ -158,6 +186,7 @@
         "checks": {"$ref": "#/definitions/checks"},
         "question": {"type": "string", "minLength": 1, "maxLength": 10000},
         "answerSchema": {"type": "object"},
+        "principal": {"$ref": "#/definitions/principal"},
         "body": {"$ref": "#/definitions/flow"},
         "input": {},
         "items": {},
@@ -201,6 +230,7 @@
         {"if": {"properties": {"kind": {"const": "task"}}}, "then": {"required": ["tool", "args", "timeoutMs", "retry"]}},
         {"if": {"properties": {"kind": {"const": "assert"}}}, "then": {"required": ["checks"]}},
         {"if": {"properties": {"kind": {"const": "human"}}}, "then": {"required": ["question", "answerSchema"]}},
+        {"if": {"required": ["principal"]}, "then": {"properties": {"kind": {"const": "human"}}}},
         {"if": {"properties": {"kind": {"const": "map"}}}, "then": {"required": ["items", "maxItems", "body"]}},
         {"if": {"properties": {"kind": {"const": "loop"}}}, "then": {"required": ["maxIterations", "body", "until", "initial"]}},
         {"if": {"properties": {"kind": {"const": "wait"}}}, "then": {"anyOf": [{"required": ["delayMs"]}, {"required": ["at"]}, {"required": ["signal"]}, {"required": ["race"]}]}},

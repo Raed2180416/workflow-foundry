@@ -14,6 +14,7 @@ import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from
 import { MODES } from './models/port.mjs';
 import { AUDIT, engineBinding, identityChanges, journalSeal } from './audit.mjs';
 import { MATERIALIZE, STATE_BYTES, STATE_ITEMS } from './run-rows.mjs';
+import { principalOf, requirementOf, roleMatrix } from './principals.mjs';
 import { isStateWrite, journalRequest, slotIdentity, slotOf, stateOpHash, stateReplayKey, stateRequest } from './state.mjs';
 import { cancelledBy, claimant, correlateTemplates, declaredSignals, isSignalWait, keyHashOf, matches, normalizeSignal, parseAt, pickSignal, routeOf, SIGNAL_LIMITS, signalCheckpointDrift, subscriptionsOf, timeoutMode } from './signals.mjs';
 
@@ -193,7 +194,9 @@ export class Runtime {
   // now: the clock of cross-run state (src/state.mjs: TTL expiry and the time journaled with each operation); tests pass a simulated one.
   // faultHooks: test-only fault injection (a run's `extra.crashAfterWaitDecision` kills the process at that point). Off unless the caller
   // constructing the runtime turns it on, so an edit of a run record (`extra` is not bound to the birth event) cannot make a host kill itself.
-  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now, faultHooks = false } = {}) {
+  // principals: the host's role matrix for human nodes that name a principal (src/principals.mjs; an OT-0 constitution document works as is).
+  // It is the host's, never the workflow's or a model's; without it, such a node's answer is refused (PRINCIPAL_MATRIX_REQUIRED).
+  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now, faultHooks = false, principals = null } = {}) {
     this.store = store; this.registry = registry; this.policy = { ...policyDefaults(registry), ...clone(policy) };
     for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes', 'maxTokens']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
     if (!Array.isArray(this.policy.allowedCapabilities) || this.policy.allowedCapabilities.some(x => !registry.get(x))) throw new FoundryError('POLICY', 'Allowed capabilities must be registered');
@@ -208,10 +211,12 @@ export class Runtime {
     if (!Number.isSafeInteger(cancelGraceMs) || cancelGraceMs < 1 || cancelGraceMs > 600000) throw new FoundryError('POLICY', 'cancelGraceMs must be an integer of 1 to 600000');
     if (typeof now !== 'function') throw new FoundryError('POLICY', 'now must be a function returning milliseconds');
     this.models = models; this.codeRunner = codeRunner; this.cancelPollMs = cancelPollMs; this.cancelGraceMs = cancelGraceMs; this.now = now; this.faultHooks = faultHooks === true;
+    this.principals = principals ? roleMatrix(principals) : null;
   }
   create(workflow, input = {}, options = {}) {
     const { modelMode = 'live', sampleSalt = null, assignment = null, identity = null, ...rest } = options;
-    const { hash } = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy });
+    // With a role matrix, a workflow whose segregation rules its principals can never satisfy is refused here (src/principals.mjs).
+    const { hash } = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy, principals: this.principals });
     if (workflow.inputSchema) validateData(workflow.inputSchema, input, 'workflow input'); else checkData(input);
     this.store.workflow(hash); // The exact immutable version must already be saved.
     if (!MODES.includes(modelMode)) throw new FoundryError('RUN_OPTIONS', `modelMode must be one of ${MODES.join('|')}`);
@@ -303,7 +308,11 @@ export class Runtime {
     // the same Store but must not share mutable in-flight fields.
     return new Invocation(this, runId, signal).execute();
   }
-  answer(runId, nodeKey, answer) {
+  // `actor` is who answers, as the host's channel identified them (the CLI's --actor, the HTTP surface); `channel` names the channel. A human
+  // node with a principal requirement (bound when its question was asked) takes an answer only from an actor the host's role matrix gives
+  // the required roles, and never from the actor who answered a node its segregation rules set apart in this run (compromise D1). The
+  // actor, the roles that authorised it and the matrix hash go on the chain. A node without a requirement takes any answer, as before.
+  answer(runId, nodeKey, answer, { actor = null, channel = null } = {}) {
     const run = this.store.rows.header(runId); // NOT_FOUND; the run's own fields are enough here
     if (finished.has(run.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
     const closed = closingSeal(this.store.events(runId));
@@ -311,15 +320,40 @@ export class Runtime {
     if (cancelRequested(run)) throw cancelRequested(run);
     const state = this.store.rows.nodeState(runId, ...splitKey(nodeKey));
     if (!state || state.status !== 'awaiting_human') throw new FoundryError('NO_QUESTION', 'No pending question exists at this node');
+    if (actor !== null && (typeof actor !== 'string' || !actor || actor.length > 200)) throw new FoundryError('PRINCIPAL_REQUIRED', 'An actor is a non-empty identity of at most 200 characters');
+    const authority = state.principal ? this.authorizeAnswer(runId, run.workflowHash, nodeKey, state.principal, actor) : null;
     validateData(state.answerSchema, answer, 'human answer');
     return this.store.updateRun(runId, r => {
       if (finished.has(r.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
       if (cancelRequested(r)) throw cancelRequested(r);
       const current = locateNode(r, nodeKey);
       if (current.state.status !== 'awaiting_human') throw new FoundryError('ANSWER_CONFLICT', 'This question was already answered');
+      // Segregation of duties, again inside the update (compare-and-swap with any answer committed since the check above).
+      if (authority) this.checkSegregation(runId, r.workflowHash, nodeKey, actor);
       current.state.status = 'completed'; current.state.completedAt = Date.now();
+      if (actor !== null) current.state.answeredBy = actor;
       current.frame.outputs[current.id] = { answer: clone(answer) }; r.status = 'ready';
-    }, { type: 'human.answered', nodeKey, answerHash: digest(answer) });
+    }, { type: 'human.answered', nodeKey, answerHash: digest(answer), ...(actor !== null ? { actor, actorVerified: !!authority } : {}), ...(channel ? { channel: String(channel).slice(0, 40) } : {}),
+      ...(authority ? { principal: authority } : {}) });
+  }
+  authorizeAnswer(runId, workflowHash, nodeKey, required, actor) {
+    if (!this.principals) throw new FoundryError('PRINCIPAL_MATRIX_REQUIRED', `${nodeKey} needs an answer from a principal holding ${required.roles.join(' + ')}; this host supplied no role matrix (Foundry/Runtime option principals, foundry --principals FILE)`);
+    if (actor === null) throw new FoundryError('PRINCIPAL_REQUIRED', `${nodeKey} needs an answer from a principal holding ${required.roles.join(' + ')}; the answer names no actor (foundry answer ... --actor ID)`);
+    const principal = principalOf(this.principals, actor);
+    if (!principal) throw new FoundryError('PRINCIPAL_UNKNOWN', `${actor} is not a principal in the host's role matrix`, { actor });
+    const missing = required.roles.filter(role => !principal.roles.includes(role));
+    if (missing.length) throw new FoundryError('PRINCIPAL_ROLE', `${actor} does not hold ${missing.join(' + ')}, which ${nodeKey} needs${required.threshold?.applied ? ` (${required.threshold.why}: delegation of authority above ${required.threshold.limit})` : ''}`, { actor, missing });
+    this.checkSegregation(runId, workflowHash, nodeKey, actor);
+    return { principal: principal.id, roles: required.roles, matrixHash: this.principals.hash };
+  }
+  // The other human nodes a segregation rule sets apart from this one must not have been answered by the same actor in this run. Who answered
+  // is read from the hash-chained human.answered events, not from the editable record.
+  checkSegregation(runId, workflowHash, nodeKey, actor) {
+    const workflow = this.store.workflow(workflowHash).workflow, id = splitKey(nodeKey)[1];
+    const apart = new Set((workflow.segregation ?? []).filter(rule => rule.nodes.includes(id)).flatMap(rule => rule.nodes).filter(other => other !== id));
+    if (!apart.size) return;
+    const clash = this.store.events(runId).find(e => e.type === 'human.answered' && e.actor === actor && apart.has(splitKey(e.nodeKey)[1]));
+    if (clash) throw new FoundryError('SOD_VIOLATION', `${actor} answered ${clash.nodeKey} in this run; segregation of duties forbids the same actor at ${nodeKey}`, { actor, other: clash.nodeKey });
   }
   approve(runId, approvalId, decision, actor = 'user') {
     if (typeof decision !== 'boolean' || actor !== 'user') throw new FoundryError('APPROVAL_AUTHORITY', 'An explicit user approval decision is required');
@@ -900,9 +934,18 @@ class Invocation {
       this.complete(frameKey, node, { passed: true }); return;
     }
     if (node.kind === 'human') {
+      // A principal requirement is bound when the question is asked (src/principals.mjs): the roles, and for a delegation-of-authority
+      // threshold the amount as it stands now. An amount that untrusted data decided counts as above the threshold.
+      let principal = null;
+      if (node.principal) {
+        const template = node.principal.threshold?.amount;
+        let amount;
+        try { amount = template === undefined ? undefined : resolve(template, ctx); } catch { amount = undefined; }
+        principal = requirementOf(node.principal, { amount, trusted: template === undefined || labelOf(template, this.labelScope(frameKey, template)) === 'trusted' });
+      }
       this.eventNode(frameKey, node.id, f => {
-        Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema), ...controlState(control) });
-      }, 'human.requested', { question: node.question }); return;
+        Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema), ...(principal ? { principal } : {}), ...controlState(control) });
+      }, 'human.requested', { question: node.question, ...(principal ? { principal } : {}) }); return;
     }
     if (node.kind === 'wait') return this.wait(node, frameKey, state);
     if (node.kind === 'map') return this.map(node, frameKey, ctx, input);
