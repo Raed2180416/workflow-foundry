@@ -4,21 +4,14 @@ import numpy as np
 
 def auroc(y, s):
     y, s = np.asarray(y), np.asarray(s, float)
-    pos, neg = s[y == 1], s[y == 0]
-    if not len(pos) or not len(neg):
+    npos, nneg = int((y == 1).sum()), int((y == 0).sum())
+    if not npos or not nneg:
         return None
-    order = np.argsort(s, kind='mergesort')
-    ranks = np.empty(len(s))
-    ss = s[order]
-    i = 0
-    while i < len(ss):
-        j = i
-        while j + 1 < len(ss) and ss[j + 1] == ss[i]:
-            j += 1
-        ranks[order[i:j + 1]] = (i + j) / 2 + 1
-        i = j + 1
-    rp = ranks[y == 1].sum()
-    return float((rp - len(pos) * (len(pos) + 1) / 2) / (len(pos) * len(neg)))
+    _, inv, counts = np.unique(s, return_inverse=True, return_counts=True)
+    first = np.concatenate([[0], np.cumsum(counts)[:-1]])
+    avg = first + (counts - 1) / 2 + 1  # average 1-based rank of each distinct value
+    rp = avg[inv][y == 1].sum()
+    return float((rp - npos * (npos + 1) / 2) / (npos * nneg))
 
 
 def prf(y, d):
