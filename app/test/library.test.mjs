@@ -82,6 +82,11 @@ test('slot resolution: unwritten addresses are asked, never guessed; defaults ar
   // A channel counts as written when its name appears, with or without the #.
   assert.deepEqual(resolveSlots(by('oncall-digest'), fillOf({ channel: 'ops', windowHours: 24, minSeverity: 'warning', page: false, pageTo: '' }), { text: 'post it in the ops channel' }).questions, []);
   assert.deepEqual(resolveSlots(by('oncall-digest'), fillOf({ channel: '#general', windowHours: 24, minSeverity: 'warning', page: false, pageTo: '' }), { text: 'post it in the ops channel' }).questions.map(q => q.slot), ['channel']);
+  assert.deepEqual(resolveSlots(by('oncall-digest'), fillOf({ channel: '#team', windowHours: 24, minSeverity: 'warning', page: false, pageTo: '' }), { text: 'send it to the team chat' }).questions.map(q => q.slot), ['channel'], 'a word is not a channel');
+  // A money limit the person never wrote is a guess: asked, not used. One they wrote (with $ or thousands commas) is used.
+  const exp = n => fillOf({ autoApproveUpTo: n, approver: 'f@x.example', requireReceipt: true, notifyEmployees: false });
+  assert.deepEqual(resolveSlots(by('expense-approval'), exp(50), { text: 'auto-approve the small ones, rest to f@x.example' }).questions.map(q => q.slot), ['autoApproveUpTo']);
+  assert.deepEqual(resolveSlots(by('expense-approval'), exp(1000), { text: 'up to $1,000 is fine, rest to f@x.example' }).questions, []);
 });
 
 test('what the templates never do: disputed and paid invoices, urgent tickets, unsubscribed contacts, spending over the limit', async () => {

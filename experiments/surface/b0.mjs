@@ -86,6 +86,9 @@ export class B0Builder {
   }
   async build({ request, answers = {}, runId = null }) {
     const state = { runId: runId ?? `${this.runPrefix}-${randomUUID()}`, calls: [], repairs: [], started: Date.now() };
+    try { return await this.#build(state, { request, answers }); } catch (error) { error.buildReport = this.#report(state); throw error; }
+  }
+  async #build(state, { request, answers }) {
     const prompt = b0Prompt({ request, answers });
     const out = await this.#call(state, 'build', prompt);
     if (out.decision === 'none') return { status: 'unsupported', builder: this.id, reply: out.reason, buildReport: this.#report(state) };

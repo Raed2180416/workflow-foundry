@@ -28,6 +28,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
 export const CASES_FILE = path.join(root, 'research/surface-20261021/eval/cases.json');
 export const MAX_QUESTION_ROUNDS = 3;
+// Environment faults (owner rule, 2026-10-21): a session that dies on a usage or rate limit, an unreachable provider or a provider timeout
+// is recorded (runs/<label>/faults/), never scored, and rerun with fresh run ids. Our own caps (MODEL_BUDGET) are not faults.
+export const ENVIRONMENT_FAULTS = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT']);
+const faultOf = built => { const code = built?.error?.details?.code ?? built?.error?.code; return ENVIRONMENT_FAULTS.includes(code) ? code : null; };
 const sha = file => createHash('sha256').update(readFileSync(file)).digest('hex');
 
 /** The reference "builder": the case's reference slots on the expected template, no model ($0). Used for oracle validity and as the ceiling. */
@@ -39,15 +43,15 @@ export function referenceBuilder(caseDef) {
   } };
 }
 
-export async function runCase(caseDef, { arm, builder, worldsRoot, onRecord = null }) {
+export async function runCase(caseDef, { arm, builder, worldsRoot, onRecord = null, attempt = 0 }) {
   const rec = { arm, case: caseDef.id, expected: caseDef.template, templateArm: arm !== 'B0-H', turns: [], questions: [], modelQuestions: [], answers: {},
     cost: { usd: 0, tokens: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 0, unknown: 0 }, callLog: [], builderWallMs: 0, repairs: 0, practiceRuns: 0 };
   let final = null;
   for (let turn = 0; turn <= MAX_QUESTION_ROUNDS; turn++) {
     const t0 = Date.now();
     let built;
-    try { built = await builder.build({ request: caseDef.request, answers: { ...rec.answers }, runId: `builder1-${arm}-${caseDef.id}-t${turn}` }); }
-    catch (error) { built = { status: 'error', error: { code: error.code ?? 'ERROR', message: String(error.message).slice(0, 500), details: error.details ?? null } }; }
+    try { built = await builder.build({ request: caseDef.request, answers: { ...rec.answers }, runId: `builder1-${arm}-${caseDef.id}-a${attempt}-t${turn}` }); }
+    catch (error) { built = { status: 'error', error: { code: error.code ?? 'ERROR', message: String(error.message).slice(0, 500), details: error.details ?? null }, buildReport: error.buildReport ?? null }; }
     rec.builderWallMs += Date.now() - t0;
     const r = built.buildReport;
     if (r) {
@@ -72,7 +76,9 @@ export async function runCase(caseDef, { arm, builder, worldsRoot, onRecord = nu
     final = built.status === 'needs_answers' ? { ...built, status: 'too_many_questions' } : built;
     break;
   }
-  rec.outcome = final.status; rec.error = final.error ?? null;
+  rec.outcome = final.status; rec.error = final.error ?? null; rec.attempt = attempt;
+  rec.environmentFault = faultOf(final);
+  if (rec.environmentFault) { rec.judgement = { kind: 'environment-fault', verified: null, correctRefusal: null, reasons: [`not scored: ${rec.environmentFault}`], trap: null }; onRecord?.(rec); return rec; }
   rec.template = final.template ?? null; rec.slots = final.understood?.slots ?? null;
   let run = null;
   if (final.status === 'ready') {
@@ -124,18 +130,29 @@ async function main() {
     makeBuilder = () => builder;
   } else makeBuilder = c => referenceBuilder(c);
   const started = new Date().toISOString();
-  let spent = 0; const skipped = [];
+  let spent = 0; const skipped = [], faults = [];
+  mkdirSync(path.join(outDir, 'faults'), { recursive: true });
   const manifestFile = path.join(root, 'research/surface-20261021/eval/MANIFEST.json');
   const records = (await pool(cases, concurrency, async c => {
     if (a.arm !== 'B-M' && spent >= capUsd) { skipped.push(c.id); return null; }
-    const rec = await runCase(c, { arm: a.arm, builder: makeBuilder(c), worldsRoot });
-    spent += rec.cost.usd;
+    let rec;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      rec = await runCase(c, { arm: a.arm, builder: makeBuilder(c), worldsRoot, attempt });
+      spent += rec.cost.usd;
+      if (!rec.environmentFault) break;
+      faults.push({ case: c.id, attempt, code: rec.environmentFault, usd: rec.cost.usd });
+      writeFileSync(path.join(outDir, 'faults', `${c.id}-a${attempt}.json`), `${JSON.stringify(rec, null, 1)}\n`);
+      process.stderr.write(`${a.arm} ${c.id}: environment fault ${rec.environmentFault} (attempt ${attempt}); not scored, rerunning\n`);
+      await new Promise(r => setTimeout(r, 30000 * (attempt + 1)));
+    }
+    if (rec.environmentFault) { skipped.push(c.id); return null; }
     writeFileSync(path.join(outDir, 'records', `${c.id}.json`), `${JSON.stringify(rec, null, 1)}\n`);
     process.stderr.write(`${a.arm} ${c.id}: ${rec.outcome}${rec.template ? ` ${rec.template}` : ''} verified=${rec.judgement.verified} refusal=${rec.judgement.correctRefusal} trap=${rec.judgement.trap?.violated ?? '-'} $${rec.cost.usd.toFixed(4)} tok=${rec.cost.tokens} ${Math.round(rec.builderWallMs / 1000)}s\n`);
     return rec;
   })).filter(Boolean);
   const summary = { arm: a.arm, label: a.label, started, finished: new Date().toISOString(), casesFile: path.relative(root, CASES_FILE), casesSha256: sha(CASES_FILE),
-    manifestSha256: existsSync(manifestFile) ? sha(manifestFile) : null, libraryHash: libraryHash(loadLibrary()), capUsd, skippedForCap: skipped,
+    manifestSha256: existsSync(manifestFile) ? sha(manifestFile) : null, libraryHash: libraryHash(loadLibrary()), capUsd, notScored: skipped, environmentFaults: faults,
+    spentUsdIncludingFaults: Math.round(spent * 1e6) / 1e6,
     tokenMeter: tokens(), ...summarize(records, doc.cases) };
   writeFileSync(path.join(outDir, 'summary.json'), `${JSON.stringify(summary, null, 1)}\n`);
   db?.close();

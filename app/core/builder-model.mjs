@@ -125,6 +125,10 @@ export class ModelBuilder {
     if (typeof request !== 'string' || !request.trim() || request.length > 30000) throw new FoundryError('REQUEST_TEXT', 'Describe what you want in 1-30000 characters');
     if (answers === null || typeof answers !== 'object' || Array.isArray(answers)) throw new FoundryError('ANSWERS', 'answers is an object of question id to text');
     const state = { runId: runId ?? `${this.runPrefix}-${randomUUID()}`, calls: [], repairs: [], practice: [], escalations: [], selection: null, started: Date.now() };
+    // A failure still carries what the build spent until then.
+    try { return await this.#build(state, { request, answers, base }); } catch (error) { error.buildReport = this.#report(state); throw error; }
+  }
+  async #build(state, { request, answers, base }) {
     let template = base?.template ? templateById(base.template, this.library) : null;
     if (!template) {
       const pick = await this.#call(state, 'select', SELECT_SYSTEM, selectPrompt({ request, answers, library: this.library }), selectSchema(this.library), SELECT_MAX_TOKENS);

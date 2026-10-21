@@ -190,7 +190,61 @@ different count means the oracle drifted, and no reading is made until that is e
 Engine files the in-progress engine bump may touch (`src/executors/claude-code.mjs`, `src/models/*`, `src/journal.mjs`,
 `beds/lib/canonical.mjs`) are not frozen here: every result records their sha256 at launch (`stamps`).
 
-<!-- FROZEN-TABLE -->
+Table as of this draft (regenerate at freeze; any file edited since then shows a new hash):
+
+```
+1b45d24898e7583666da0139dd230e9bcf476eff7776a2b062a7d037973716e4  experiments/specbiz/spec-units.mjs
+0ce4d784b83adcc79b22f4835b068d06426ac3849a72f2f8af8baf8d50eec18e  experiments/specbiz/content.mjs
+c9162203b2fb452d622fbb6b7d29ef67b9c2da30a69d5afa963b0c0ba1fd95e5  experiments/specbiz/carriers.mjs
+d0645486b66e2bc7eea696931f2d7edde37c26afbb7806951b79c720945ba3da  experiments/specbiz/precedent.mjs
+d051d0fc42d9e051b838059d800682470a20704e7b7e895d7399455b8c80282f  experiments/specbiz/render.mjs
+041a163ed9df81f9760178cb97748c470472f45479809acc4aa4119fe38b38fb  experiments/specbiz/owner-sim.mjs
+8562d37e8bd08f5a8bb494129340f53903dcf636ae7c063810482d69db9f468d  experiments/specbiz/truth-e8.mjs
+2d9cccf04cb60876b4a94385242899b2406b0051c792a0c66d885cf4092305de  experiments/specbiz/predicates.mjs
+d8f0afabd60ae710f2fef7e4b20996fd02106d94621d4eaeb18c7f49eeef988f  experiments/specbiz/attribute.mjs
+262aa1a9a20f7e6aeec669e688bcdcc2957a6c9121bfd79d87b41e9956571344  research/intent-20261021/specbiz-pack-seed1/pack-truth.json
+0647151f454492a81d8a6e6aad6a71446af832fc8279e99a4ee7d1ed1ae1e836  research/intent-20261021/truth-e8-seed1.json
+f68aa03c32a9889a84daba1c707122bf1ec067f92b861f8c487ab22f09e68e93  research/intent-20261021/rater2-labels.json
+48398f9e3ac43a41b7a3b8b135eb706f1ed05088d4b99d58e03d18345d6871cd  research/intent-20261021/corpus-prior.json
+77034dd7e5ad4815feb9d4864699ae3ec0d8e91f2bc39ca8ad5c1d4355059a43  research/need-router-20261014/tracker-e8/gold.json
+691b3da346e4f4804a24bfe1f726f2cba740f3db13ec772842b4dd1aeb6efac3  experiments/specbiz/spec1-arms.mjs
+a20d5fc0320ea2753d7e4a88de3daba05eef247996642f50cd6f5de53472cf12  experiments/specbiz/ask-service.mjs
+400a198b8fc9d84602eaf6533d575499e796b1bd6d6b5fd98b33668ced0469e4  experiments/specbiz/ledger-review.mjs
+8f60c847567a16315555238e689c71306a8443bee7b453aa6879fc1d4319ea91  experiments/specbiz/pack-agent.mjs
+b5183e3593d57431145a33c70a5a36eebe4d1466aae216d38250fdd0962a5d26  experiments/specbiz/spec1.mjs
+6967fe1abce608441901325f437b613e94161a91f3ee34fb321c3d26f935202c  experiments/specbiz/spec1-freeze.mjs
+a9c328291838ca6aa48f71cd10821329f92be27b20eb8f5e0a56f6f70876c347  experiments/specbiz/score.mjs
+8fc87692fc30ac9610d9b25f764976145a8a8872b4ce33b32da5b9b8107a8558  experiments/tracker/extract.mjs
+2d0a6483eba7d6ab755a1ebd8149b18b9eb2da4d821089dae8c7c9fce0b215da  experiments/tracker/ledger.mjs
+bf4a68d6443e4380690911807c11c3b68c9c38f8c6f96c6b31eb3fbac0f78941  experiments/ebed/build.mjs
+498bf143563e0cae9de5a40aa8e16ffe5d0eff0026432271f047520330e7e863  experiments/ebed/smoke-service.mjs
+124c4c3d86391dff805b978b5ba2c10f84ded5dae1dd8d735babb75236571ed5  experiments/ebed/agent-arm.mjs
+652ccd2cfc53fce58c9b395b0c63e363de7c9a8ee4eb8ea7cd4a7d18a1f6ad93  experiments/agentv/arm.mjs
+b36ba1fab8baf05ba4f4364ba51cbd9eab39a787883f709ed886452f55b0bcba  experiments/agentv/validator.mjs
+7862118046705d59f280c0b145abdb6adf137f627163f3c3b21ff77a21ff78f6  experiments/agentv/run.mjs
+45f12a8ace36139cb3492ce19500c1ce7e960e76e9f4c481e92821f83ad8e1c1  research/enterprise-20261014/BED-CONTRACT-v1.1.md
+e490fa376c5b325bfbc545f91d94989f1557ca8c02328a1839b6dc11368bac63  beds/ebed/host/README.md
+34815858b2514c1a24bd72e23cba09b6f8057d61fea8f1558f5a97a2e6a4d6a6  beds/ebed/e8/index.mjs
+57d7c3826d02c7301fe28efed7f726b12811eec5d730e7bae05b1509236fda38  beds/ebed/e8/world.mjs
+bd5e610ae60b63deec289f702da38205eeb12248c44352067c681277e6be0547  beds/ebed/e8/transition.mjs
+358ce211bfb436da83d38b4014dcfb744dadad3e7f29d2b4e33900ee2311d9a6  beds/ebed/e8/actors.mjs
+a3e9ac990dae30a50bded5c0871f50e468c00ad2245960f7dcce98fa2ec77783  beds/ebed/e8/systems.mjs
+9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787  beds/ebed/e8/spec/SPEC-E.md
+2c83d7d0a06dfa563d3af1a0ade7335e20ca13a003117f4a25dd968509313203  beds/ebed/host/host.mjs
+7b4a87ca14972ea23dafd8395b548c4b85c4d7ae28fea386428af8cf19a70ad3  beds/ebed/host/output.mjs
+5599b28b6b7a2c434b7d655ae6fa1fdac179d4b463bf9b1e083c3ef51ef56716  beds/ebed/host/mocks.mjs
+054f39d4f988d95d1cdcb8705afc91ed0b8b5c4c903cf6e2d15b00d0aa0c61b7  beds/ebed/host/sandbox-arm.mjs
+195d70cd43b3c03f7568db9d7826286004491c5aca0f22797261f095ac64f2ac  beds/ebed/oracle/grade.mjs
+d461f46266984e171598aee71eff6932a2c38c33d0f3622f67cbce9f64d94a5a  beds/ebed/oracle/view.mjs
+237a7fd42b9f018bc067c7b46c492cae6938dcc25fc6073b10be614a9bf2315c  beds/ebed/oracle/policy.mjs
+3520151f9dfc74d856c88c04d778fdf38604c95b6dea2445077961bc369ad975  research/enterprise-20261014/runs/regrade-oracle2-b1lh-e8-1/result.json
+9aa43ed9a83bcee50c7fb9e517a2ab554b9fc3c95c367740fa7ababa84d6b07d  research/enterprise-20261014/runs/regrade-oracle2-b1lh-e8-2/result.json
+5475e100604677346433fd332b66abf81f58edb72f9562329975d486727fcd9a  research/enterprise-20261014/runs/regrade-oracle2-b1lh-e8-3/result.json
+650f14237bc039c3ca5f81a683427713eb2bacf984c5b515f99139fa85df7a22  research/enterprise-20261014/runs/grade-s12-b1lh-e8-1/result.json
+6ec34c57c3ada4ed2a883e360505d58f234390694a3daed01f0a85bb0412a9e0  research/enterprise-20261014/runs/agentv-e8-s12/result.json
+cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69  policy/models.json
+13d56b4ad526d9b4cae4202e72900e6a0db61513fd477c30a30a5f3334bb368f  research/need-router-20261014/prereg/stages.json
+```
 
 ## 10. What this cannot show (DESIGN §8, plus what the runner adds)
 

@@ -115,8 +115,12 @@ export function slotSpecText(template) {
 
 // ---------------------------------------------------------------- slot resolution
 const has = (text, value) => typeof value === 'string' && value.length > 0 && text.includes(value.toLowerCase());
+const escape = s => s.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+// What counts as "the person wrote it": an address verbatim; a channel as #name, or as "name channel" / "channel name"; a money limit as
+// a number in their words (digits, optional $ and thousands commas). A word that merely appears ("the team chat") is not a channel.
 function grounded(slot, value, text) {
-  if (slot.type === 'channel') { const bare = value.slice(1); return text.includes(value) || new RegExp(`(^|[^a-z0-9_-])${bare.replace(/[-]/g, '\\-')}([^a-z0-9_-]|$)`).test(text); }
+  if (slot.type === 'channel') { const bare = escape(value.slice(1)); return text.includes(value) || new RegExp(`(^|[^a-z0-9_#-])${bare}\\s+channel\\b|\\bchannel\\s+(called\\s+|named\\s+)?${bare}([^a-z0-9_-]|$)`).test(text); }
+  if (slot.type === 'number' || slot.type === 'integer') return (text.match(/\d[\d,]*(\.\d+)?/g) ?? []).map(n => Number(n.replace(/,/g, ''))).includes(value);
   return has(text, value);
 }
 /** Normalise and check one value against its slot. Returns { value } or { problem }. */
@@ -179,7 +183,7 @@ export function resolveSlots(template, fill, { text = '', base = null } = {}) {
     const r = typed(slot, raw);
     if (r.problem) { problems.push(r.problem); unknown.add(slot.name); continue; }
     if (empty(slot, r.value)) { unknown.add(slot.name); continue; }
-    if (slot.grounded && STRINGY.has(slot.type) && !grounded(slot, r.value, lowered)) { ungrounded.push({ slot: slot.name, value: r.value }); unknown.add(slot.name); continue; }
+    if (slot.grounded && slot.type !== 'list' && !grounded(slot, r.value, lowered)) { ungrounded.push({ slot: slot.name, value: r.value }); unknown.add(slot.name); continue; }
     if (slot.type === 'list') {
       // A list entry whose address the person never wrote is incomplete: the list is asked about, never guessed.
       const bad = r.value.flatMap((item, i) => slot.fields.filter(f => f.grounded && (!item[f.name] || !grounded(f, item[f.name], lowered))).map(f => ({ slot: `${slot.name}[${i}].${f.name}`, value: item[f.name] })));

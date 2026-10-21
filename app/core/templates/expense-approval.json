@@ -7,7 +7,7 @@
     "notFor": "Paying people, reimbursing, payroll, invoices from suppliers, or approvals by more than one approver.",
     "sources": ["research/business-20261021/OPEN-CORE-AND-INVARIANTS.md (delegation-of-authority thresholds)", "experiments/library/cards/catalog.json P09 gate -> review queue"],
     "slots": [
-      { "name": "autoApproveUpTo", "type": "number", "min": 0, "max": 100000, "ask": "not-wanted", "question": "Up to what amount should I approve an expense without asking anyone?", "askWhy": "A wrong limit would approve spending you would refuse. I will not guess it.", "description": "Expenses up to and including this amount are approved automatically (0: none are)." },
+      { "name": "autoApproveUpTo", "type": "number", "min": 0, "max": 100000, "grounded": true, "ask": "not-wanted", "question": "Up to what amount should I approve an expense without asking anyone?", "askWhy": "A wrong limit would approve spending you would refuse. I will not guess it.", "description": "Expenses up to and including this amount are approved automatically (0: none are)." },
       { "name": "approver", "type": "email", "grounded": true, "ask": "wrong-target", "question": "Who approves the expenses over the limit? (one e-mail address)", "askWhy": "Expense details go to this person; I will not guess who it is.", "description": "E-mail address of the person who decides on the expenses over the limit." },
       { "name": "requireReceipt", "type": "boolean", "default": true, "description": "Only approve automatically when the expense has a receipt; without one it goes to the approver." },
       { "name": "notifyEmployees", "type": "boolean", "default": false, "description": "E-mail each employee when their expense is approved automatically." }
