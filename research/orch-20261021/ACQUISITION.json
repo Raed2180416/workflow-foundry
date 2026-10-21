@@ -1,0 +1,85 @@
+[
+ {
+  "repository": "temporalio/sdk-typescript",
+  "url": "https://github.com/temporalio/sdk-typescript.git",
+  "acquiredAt": "2026-10-21T12:56:14.940Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "packages/workflow/src",
+   "packages/common/src/retry-policy.ts",
+   "packages/common/src/activity-options.ts",
+   "packages/common/src/workflow-options.ts"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "6a188eea837b77db33e2254397dc25b6c726b5cc",
+  "commitDate": "2026-10-20T16:41:15-04:00",
+  "checkedOutFiles": 903,
+  "bytesOnDisk": 1159168,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "The MIT License"
+   }
+  ],
+  "deletedAt": "2026-10-21T12:56:33.763Z"
+ },
+ {
+  "repository": "restatedev/sdk-typescript",
+  "url": "https://github.com/restatedev/sdk-typescript.git",
+  "acquiredAt": "2026-10-21T12:56:43.026Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "packages/libs/restate-sdk/src"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "b1080a11984b35419e0e825a0e82bc17c656a22d",
+  "commitDate": "2026-10-20T20:30:52+02:00",
+  "checkedOutFiles": 437,
+  "bytesOnDisk": 4128768,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "MIT License"
+   }
+  ],
+  "deletedAt": "2026-10-21T12:57:00.772Z"
+ },
+ {
+  "repository": "dbos-inc/dbos-transact-ts",
+  "url": "https://github.com/dbos-inc/dbos-transact-ts.git",
+  "acquiredAt": "2026-10-21T12:57:04.344Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "src"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "69e4805fd8c8f246e6476e11e49e294056d07498",
+  "commitDate": "2026-10-20T13:09:34-07:00",
+  "checkedOutFiles": 339,
+  "bytesOnDisk": 1523712,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "MIT License"
+   }
+  ],
+  "deletedAt": "2026-10-21T12:57:22.837Z"
+ },
+ {
+  "repository": "inngest/inngest-js",
+  "url": "https://github.com/inngest/inngest-js.git",
+  "acquiredAt": "2026-10-21T12:57:26.304Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "packages/inngest/src/types.ts",
+   "packages/inngest/src/components/InngestStepTools.ts",
+   "packages/inngest/src/components/execution"
+  ],
+  "outcome": "cloned-sparse-source-not-executed",
+  "commit": "eceb780afb11e42c208a12b017602cc6fc068755",
+  "commitDate": "2026-10-21T00:42:00+01:00",
+  "checkedOutFiles": 1299,
+  "bytesOnDisk": 1572864,
+  "licenses": []
+ }
+]

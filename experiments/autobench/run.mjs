@@ -24,6 +24,8 @@
 //   --date-note (AM-9: both arms say the session date is the host's, not the task's; recorded in the summary)
 //   --token-cap N --session-tokens N (token meter: a hard cap on the run's input + output tokens, reserved per session at the
 //                                    session budget, default 400K; required for an executorModels model such as mercury-3)
+//   --call-tokens N (A1-C with --node-models role=mercury-3: the token budget of one remote model-node call, default 100K;
+//                    --session-tokens is then the task's pool for all its remote calls, the only tokens the meter books)
 //   --harness codeowned [--node-models role=model,...] (arm A1-C: harness/codeowned.mjs, the host-run pipeline; every model
 //                                                        call of the pipeline counts toward the 50 responses; --scripted stub = $0)
 //   --harness secondreader [--node-models role=model,...] (arm A0+SR: harness/secondreader.mjs, A0 unchanged + one clean-context
@@ -87,14 +89,42 @@ function provenance(policy, { cli = null } = {}) {
 // --- Mercury hook (research/mercury-20261021/) ---------------------------------------------------------------------------
 // A model listed under the policy's executorModels (provider kind openai-chat-https, e.g. mercury-3) runs its session through
 // src/executors/openai-chat.mjs: the same arguments, result and transcript shape as runClaudeCode, tools in the same sandbox.
-// Every claude-cli model keeps runClaudeCode, byte for byte as before. Only the plain session arms (A0, A1) are wired: the
-// pipeline arms' node models stay claude-cli only. Returns null for a claude-cli model, else the executor and the policy
-// entries the A1 manifest pins in place of the claude-cli ones.
+// Every claude-cli model keeps runClaudeCode, byte for byte as before. The plain session arms (A0, A1) take it as --model;
+// the codeowned pipeline (A1-C) also per role (--node-models role=mercury-3,...: pipelineDispatch below); other pipeline arms
+// stay claude-cli only. Returns null for a claude-cli model, else the executor and the policy entries the A1 manifest pins in
+// place of the claude-cli ones.
 export function remoteSessionExecutor(policy, model, { pipeline = false } = {}) {
   const ex = executorForModel(policy, model); // refuses ids the policy does not list, and kinds no session executor serves
   if (ex.kind === 'claude-code') return null;
   if (pipeline) throw new Error(`model ${model} (${ex.kind} executor) is not wired into the pipeline arms`);
   return { ...ex, manifestPolicy: { provider: ex.provider, model: ex.entry }, manifestExecutor: 'src/executors/openai-chat.mjs runOpenAIChat (tools in the claude-code executor sandbox: DEFAULT_HIDDEN, OPENAI_CHAT_KEEP_RO + the step-guard directory, no network); maxTurns enforced natively' };
+}
+
+/**
+ * A1-C with roles mapped to an executor model: every node call dispatches on its own model, the remote executor for an
+ * executorModels id and runClaudeCode otherwise (each node still writes the transcript codeowned audits, so every call
+ * counts toward the 50 responses). Remote calls draw on the task's token pool (its reservation on the run meter,
+ * --session-tokens): a model node (no tools) gets min(callTokens, what the task has left after its other remote calls in
+ * flight) as its session token budget, a session node what is left; a call left nothing is refused EXECUTOR_BUDGET without a
+ * request. A call settles at the tokens it reported (its budget when it reported none).
+ */
+export const DEFAULT_CALL_TOKENS = 100_000;
+export function pipelineDispatch({ policy, taskTokens, callTokens = DEFAULT_CALL_TOKENS, claude = runClaudeCode }) {
+  const pool = { budget: taskTokens, callTokens, spent: 0, reserved: 0, calls: 0, refused: 0 };
+  const run = async args => {
+    const ex = executorForModel(policy, args.model);
+    if (ex.kind === 'claude-code') return claude(args);
+    const want = Math.min(Array.isArray(args.tools) && args.tools.length === 0 ? callTokens : Infinity, pool.budget - pool.spent - pool.reserved);
+    if (!(want > 0)) {
+      pool.refused += 1;
+      return { ok: false, error: { code: 'EXECUTOR_BUDGET', exitCode: null, stderr: `the task's token pool (${pool.budget}) is used up` }, sandboxReady: true, result: null, costUsd: 0, costUnknown: false, costUpperUsd: 0,
+        turns: 0, toolUses: [], tokens: { input: 0, output: 0, cachedInput: 0, reasoning: 0, total: 0, budget: 0, usageMissing: false } };
+    }
+    pool.reserved += want; pool.calls += 1;
+    try { const r = await ex.run({ ...args, policy, tokenBudget: want }); pool.spent += r?.tokens && !r.tokens.usageMissing ? r.tokens.total : want; return r; }
+    finally { pool.reserved -= want; }
+  };
+  return { run, pool };
 }
 
 // --- Token meter (orchestrator requirement 2026-10-21, research/mercury-20261021/) ------------------------------------------
@@ -113,13 +143,21 @@ export function makeTokenMeter(cap) {
 /** A session's token spend: the remote executor's `tokens`, or the claude executor's stream usage (input = uncached + cache
  * reads + cache writes). null when the session reported none. */
 export function tokensOf(r) {
-  if (r?.tokens && Number.isFinite(r.tokens.total)) return { input: r.tokens.input, output: r.tokens.output, cachedInput: r.tokens.cachedInput ?? 0, total: r.tokens.total, ...(r.tokens.usageMissing ? { usageMissing: true } : {}) };
+  if (r?.tokens && Number.isFinite(r.tokens.total)) return { input: r.tokens.input, output: r.tokens.output, cachedInput: r.tokens.cachedInput ?? 0, total: r.tokens.total, ...(r.tokens.usageMissing ? { usageMissing: true } : {}),
+    ...(r.tokens.byModel ? { byModel: r.tokens.byModel } : {}) };
   const u = r?.streamUsage;
   if (!u) return null;
   const input = (u.inputTokens ?? 0) + (u.cacheReadTokens ?? 0) + (u.cacheWriteTokens ?? 0);
   return { input, output: u.outputTokens ?? 0, cachedInput: u.cacheReadTokens ?? 0, total: input + (u.outputTokens ?? 0) };
 }
-const tokenTotals = forks => { const t = forks.map(f => f.tokens).filter(Boolean); return { input: t.reduce((s, x) => s + x.input, 0), output: t.reduce((s, x) => s + x.output, 0), cachedInput: t.reduce((s, x) => s + x.cachedInput, 0), total: t.reduce((s, x) => s + x.total, 0), sessions: t.length }; };
+const tokenTotals = forks => {
+  const t = forks.map(f => f.tokens).filter(Boolean), byModel = {};
+  for (const x of t) for (const [m, b] of Object.entries(x.byModel ?? {})) { const a = (byModel[m] ??= { input: 0, output: 0, cachedInput: 0, total: 0 }); for (const k of Object.keys(a)) a[k] += b[k] ?? 0; }
+  return { input: t.reduce((s, x) => s + x.input, 0), output: t.reduce((s, x) => s + x.output, 0), cachedInput: t.reduce((s, x) => s + x.cachedInput, 0), total: t.reduce((s, x) => s + x.total, 0), sessions: t.length,
+    ...(Object.keys(byModel).length ? { byModel } : {}) };
+};
+/** The tokens the run meter books for one fork: with remote models named, only theirs (a pipeline's claude tokens are recorded, not metered). */
+const meteredTokens = (t, remoteIds) => (!t ? null : t.byModel && remoteIds.size ? Object.entries(t.byModel).filter(([m]) => remoteIds.has(m)).reduce((s, [, b]) => s + b.total, 0) : t.total);
 
 /** A hard USD cap over reserved session budgets: a session starts only if spent + reserved + its budget <= cap. */
 export function makeLedger(capUsd) {
@@ -196,6 +234,7 @@ export async function runTasks(o) {
   const log = opt.log ?? (m => process.stderr.write(m + '\n'));
   const scripted = Boolean(opt.runner);
   let runner = opt.runner ?? runClaudeCode, remote = null; // remote: the Mercury hook's executor (null: runClaudeCode)
+  let remoteRoles = []; // A1-C roles' executor models (pipelineDispatch)
   // Arm A1 (harness/foundry.mjs). A0 (no harness) keeps every byte of its prompt and runner arguments.
   const harness = opt.harness ?? null;
   if (harness !== null && harness !== HARNESS_ID && !Object.hasOwn(PIPELINE_HARNESSES, harness)) throw new Error(`unknown harness ${harness} (known: ${[HARNESS_ID, ...Object.keys(PIPELINE_HARNESSES)].join(', ')})`);
@@ -211,12 +250,14 @@ export async function runTasks(o) {
   let policy = null;
   if (!scripted && !opt.dryRun) {
     policy = loadPolicy();
-    remote = remoteSessionExecutor(policy.policy, opt.model, { pipeline: Boolean(co) }); // refuses ids the policy does not list
+    remote = remoteSessionExecutor(policy.policy, opt.model, { pipeline: Boolean(co) && harness !== CODEOWNED }); // refuses ids the policy does not list
     if (remote) runner = args => remote.run({ ...args, policy: policy.policy }); // the policy loaded (and hashed) at launch
     else if (modelById(policy.policy, opt.model).provider !== 'claude-cli') throw new Error(`model ${opt.model} is not served by the claude-cli provider`);
-    for (const m of new Set(Object.values(models ?? {}))) if (modelById(policy.policy, m).provider !== 'claude-cli') throw new Error(`model ${m} is not served by the claude-cli provider`);
+    remoteRoles = co ? [...new Set(Object.values(models).filter(m => m && executorForModel(policy.policy, m).kind !== 'claude-code'))].sort() : [];
+    if (remoteRoles.length && harness !== CODEOWNED) throw new Error(`${remoteRoles.join(', ')}: executor models are wired into the ${CODEOWNED} pipeline only`);
+    for (const m of new Set(Object.values(models ?? {}))) if (!remoteRoles.includes(m) && modelById(policy.policy, m).provider !== 'claude-cli') throw new Error(`model ${m} is not served by the claude-cli provider`);
     if (!(opt.capUsd > 0)) throw new Error('--cap (hard USD cap for the run) is required for model runs');
-    if (remote && !(opt.tokenCap > 0)) throw new Error(`--token-cap (hard cap on the run's input + output tokens) is required for ${opt.model}: its listed price is $${remote.entry.price.inputPerMTok}/$${remote.entry.price.outputPerMTok} per MTok, so the dollar cap may never stop it`);
+    if ((remote || remoteRoles.length) && !(opt.tokenCap > 0)) throw new Error(`--token-cap (hard cap on the run's input + output tokens) is required for ${remote ? opt.model : remoteRoles.join(', ')}: a model listed at $0 never meets the dollar cap`);
   }
   const sessionTokenBudget = opt.sessionTokens ?? DEFAULT_SESSION_TOKENS;
   if (opt.tokenCap != null && !(opt.tokenCap > 0 && Number.isInteger(sessionTokenBudget) && sessionTokenBudget > 0)) throw new Error('--token-cap and --session-tokens must be positive');
@@ -241,7 +282,7 @@ export async function runTasks(o) {
   const cli = scripted || remote ? null : cliVersion();
   let manifest = null, guard = null;
   if (harness) {
-    manifest = co ? (co.pipelineManifest ?? co.codeownedManifest)((co.pipelineConfig ?? co.codeownedConfig)({ ...opt, cli })) : harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli, ...(remote ? { policy: remote.manifestPolicy, executor: `${remote.manifestExecutor}; session token budget ${sessionTokenBudget}` } : {}) }));
+    manifest = co ? (co.pipelineManifest ?? co.codeownedManifest)((co.pipelineConfig ?? co.codeownedConfig)({ ...opt, cli, ...(remoteRoles.length ? { executor: `src/executors/claude-code.mjs runClaudeCode for claude-cli roles; src/executors/openai-chat.mjs runOpenAIChat for ${remoteRoles.join(', ')} roles (model nodes: one request, no tools, at most ${opt.callTokens ?? DEFAULT_CALL_TOKENS} tokens; per-task token pool ${sessionTokenBudget})` } : {}) })) : harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli, ...(remote ? { policy: remote.manifestPolicy, executor: `${remote.manifestExecutor}; session token budget ${sessionTokenBudget}` } : {}) }));
     if (opt.harnessHash && opt.harnessHash !== manifest.sha256) throw new Error(`harness hash mismatch: given ${opt.harnessHash}, recomputed ${manifest.sha256} (files or settings changed)`);
   }
   // AM-4: a scripted run is never exempt. A dev-only pipeline arm (A0+SR, a probe not declared in PREREG §3) never is either.
@@ -252,7 +293,8 @@ export async function runTasks(o) {
   const launch = { tasks, model: scripted ? null : opt.model ?? null, scripted, harness: manifest?.sha256 ?? null, cliMaxTurns, k: opt.k, det: opt.det,
     maxSteps: opt.maxSteps, budgetUsd: opt.budgetUsd, capUsd: opt.capUsd ?? null, timeoutMin: opt.timeoutMin, effort: opt.effort ?? null,
     tools: opt.tools, dateNote: Boolean(opt.dateNote), runnerSha256: sha256(readFileSync(new URL(import.meta.url))),
-    ...(opt.tokenCap != null || remote ? { tokenCap: opt.tokenCap ?? null, sessionTokens: sessionTokenBudget } : {}) };
+    ...(opt.tokenCap != null || remote || remoteRoles.length ? { tokenCap: opt.tokenCap ?? null, sessionTokens: sessionTokenBudget } : {}),
+    ...(remoteRoles.length ? { callTokens: opt.callTokens ?? DEFAULT_CALL_TOKENS } : {}) };
   const readRecords = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
   let kept = [];
   if (!opt.dryRun && (existsSync(resultsFile) || existsSync(launchFile))) {
@@ -316,7 +358,8 @@ export async function runTasks(o) {
     ledger.spent += r.costUsd; ledger.knownUsd += known; ledger.unknownUpperUsd += r.costUsd - known; ledger.unknown += r.forks.filter(f => f.costUnknown).length;
   }
   const meter = opt.tokenCap != null ? makeTokenMeter(opt.tokenCap) : null;
-  if (meter) for (const r of [...kept, ...faulted]) meter.spent += r.forks.reduce((s, f) => s + (f.tokens?.total ?? 0), 0);
+  const remoteIds = new Set([...(remote ? [opt.model] : []), ...remoteRoles]);
+  if (meter) for (const r of [...kept, ...faulted]) meter.spent += r.forks.reduce((s, f) => s + (meteredTokens(f.tokens, remoteIds) ?? 0), 0);
   const done = new Set(kept.map(r => r.task));
   if (kept.length) log(`[autobench] resuming ${runId}: ${kept.length}/${tasks.length} tasks kept, ${faulted.length} earlier fault records, $${ledger.spent.toFixed(4)} already spent`);
   const jobs = tasks.flatMap((task, ti) => (done.has(task) ? [] : Array.from({ length: opt.k }, (_, fork) => ({ task, ti, fork }))));
@@ -395,9 +438,11 @@ export async function runTasks(o) {
         // wrapper, kept read-only outside the workdir) and maxTurns for scripted stand-ins of the guard.
         // A1-C: the host-run pipeline is the "session"; it gets the official prompt, the catalog and the mailbox only.
         const slotId = `${String(ti).padStart(4, '0')}-${fork}`;
+        // A1-C with remote roles: per-node dispatch on this task's token pool (its reservation on the run meter).
+        const disp = co && remoteRoles.length && !scripted ? pipelineDispatch({ policy: policy.policy, taskTokens: sessionTokenBudget, callTokens: opt.callTokens ?? DEFAULT_CALL_TOKENS }) : null;
         r = co ? await co.runPipeline({ official: { system: prompt.system, user: prompt.user }, catalog, workdir, nodeRoot: path.join(live, 'nodes', slotId), hostDir, guardDir: path.join(live, 'harness-bin', slotId),
-          maxSteps: opt.maxSteps, budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, dateNote: opt.dateNote, models, effort: opt.effort ?? null, tools: opt.tools, runner,
-          nodeRunner: opt.nodeRunner ?? runner, cliTarget: opt.cliTarget ?? 'claude', scripted, pipeline: opt.pipeline, log })
+          maxSteps: opt.maxSteps, budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, dateNote: opt.dateNote, models, effort: opt.effort ?? null, tools: opt.tools, runner: disp?.run ?? runner,
+          nodeRunner: disp?.run ?? opt.nodeRunner ?? runner, cliTarget: opt.cliTarget ?? 'claude', scripted, pipeline: opt.pipeline, log })
           : await runner({ model: opt.model, prompt: prompt.user, systemPrompt: systemPromptFor(prompt, catalog), workdir, files: {},
           budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, effort: opt.effort ?? null, tools: opt.tools, task: { name: task, fork },
           ...(harness ? { maxTurns: cliMaxTurns || null } : {}), ...(guard ? { binary: guard.binary, keepRo: [...DEFAULT_KEEP_RO, guard.dir] } : {}), ...(remote ? { tokenBudget: sessionTokenBudget } : {}) });
@@ -414,7 +459,8 @@ export async function runTasks(o) {
         // A runner that threw after it started may have spent: count it at its budget (an upper bound), never at 0.
         if (!r && started) Object.assign(rec, { costUsd: null, costUnknown: true, costUpperUsd: opt.budgetUsd });
         ledger.settle(opt.budgetUsd, r ?? (started ? { costUsd: null, costUpperUsd: opt.budgetUsd } : { costUsd: 0 }));
-        if (meter) meter.settle(sessionTokenBudget, !started ? 0 : rec.tokens && !rec.tokens.usageMissing ? rec.tokens.total : rec.tokens ? Math.max(rec.tokens.total, sessionTokenBudget) : null);
+        const metered = meteredTokens(rec.tokens, remoteIds);
+        if (meter) meter.settle(sessionTokenBudget, !started ? 0 : rec.tokens && !rec.tokens.usageMissing ? metered : rec.tokens ? Math.max(metered, sessionTokenBudget) : null);
         copyTranscript(workdir, hostDir);
         if (harness === HARNESS_ID && started) { try { rec.ledger = collectLedger(workdir, hostDir); } catch (e) { rec.ledger = { present: false, reason: `error: ${String(e?.message ?? e).slice(0, 200)}` }; } }
         if (!opt.keep) rmSync(workdir, { recursive: true, force: true });
@@ -473,7 +519,8 @@ export async function runTasks(o) {
       skipped: results.flatMap(r => r.forks).filter(f => f.skipped).length },
     // Token spend as the sessions reported it (input includes cached input); the meter (--token-cap) when one ran.
     tokens: { ...tokenTotals(results.flatMap(r => r.forks)), meanPerTask: results.length ? tokenTotals(results.flatMap(r => r.forks)).total / results.length : null,
-      sessionBudget: remote ? sessionTokenBudget : null, cap: opt.tokenCap ?? null, meterSpent: meter?.spent ?? null, meterUnknownSessions: meter?.unknown ?? null,
+      sessionBudget: remote || remoteRoles.length ? sessionTokenBudget : null, cap: opt.tokenCap ?? null, meterSpent: meter?.spent ?? null, meterUnknownSessions: meter?.unknown ?? null,
+      ...(remoteRoles.length ? { metered: [...remoteIds], callTokens: opt.callTokens ?? DEFAULT_CALL_TOKENS } : {}),
       faultSessions: tokenTotals(readRecords(faultsFile).flatMap(r => r.forks)).total },
     // Tasks rerun after an environment fault (their fault records stay in results.faults.jsonl, live and repo copy).
     launchHistory: readJson(launchFile).history ?? [],
@@ -527,7 +574,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const { summary, stopped, stopKind } = await runTasks({
     model: a.model, tasks: a.tasks ? a.tasks.split(',').filter(Boolean) : undefined, subset: num(a.subset, undefined), seed: a.seed ?? DEFAULTS.seed,
     domains: a.domains ? a.domains.split(',') : undefined, k: num(a.k, DEFAULTS.k), capUsd: num(a.cap, undefined), budgetUsd: num(a.budget, DEFAULTS.budgetUsd),
-    tokenCap: num(a['token-cap'], undefined), sessionTokens: num(a['session-tokens'], undefined),
+    tokenCap: num(a['token-cap'], undefined), sessionTokens: num(a['session-tokens'], undefined), callTokens: num(a['call-tokens'], undefined),
     concurrency: num(a.concurrency, DEFAULTS.concurrency), maxSteps: num(a['max-steps'], DEFAULTS.maxSteps), timeoutMin: num(a['timeout-min'], DEFAULTS.timeoutMin),
     det: a.det ?? DEFAULTS.det, effort: a.effort, tools: a.tools ? a.tools.split(',') : DEFAULTS.tools, runId: a['run-id'], liveRoot: a.live,
     outDir: a['no-copy'] ? null : a.out, keep: Boolean(a.keep), dryRun: Boolean(a['dry-run']), runner, pool: a.pool,

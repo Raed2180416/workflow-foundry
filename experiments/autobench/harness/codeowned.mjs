@@ -72,13 +72,18 @@ export function nodeModels(model, overrides = {}) {
 export const parseNodeModels = s => Object.fromEntries(String(s ?? '').split(',').filter(Boolean).map(x => { const [k, v] = x.split('='); if (!k || !v) throw new Error(`--node-models expects role=model,...: ${x}`); return [k.trim(), v.trim()]; }));
 function policyFor(models, file = path.join(REPO, 'policy/models.json')) {
   const p = JSON.parse(readFileSync(file, 'utf8'));
-  return { provider: p.providers?.['claude-cli'] ?? null, models: Object.fromEntries([...new Set(Object.values(models).filter(Boolean))].sort().map(id => [id, (p.models ?? []).find(m => m.id === id) ?? null])) };
+  const ids = [...new Set(Object.values(models).filter(Boolean))].sort();
+  // Executor models (a remote chat endpoint, e.g. mercury-3) mapped to a role pin their entry and provider too; a pipeline of
+  // claude-cli models only keeps the config it had.
+  const execs = ids.map(id => (p.executorModels ?? []).find(m => m.id === id)).filter(Boolean);
+  return { provider: p.providers?.['claude-cli'] ?? null, models: Object.fromEntries(ids.map(id => [id, (p.models ?? []).find(m => m.id === id) ?? execs.find(m => m.id === id) ?? null])),
+    ...(execs.length ? { remoteProviders: Object.fromEntries([...new Set(execs.map(m => m.provider))].sort().map(n => [n, p.providers?.[n] ?? null])) } : {}) };
 }
 export function codeownedConfig(o) {
   const models = nodeModels(o.model, o.nodeModels);
   return { harness: HARNESS_ID, version: HARNESS_VERSION, model: o.model ?? null, nodeModels: models, effort: o.effort ?? null, budgetUsd: o.budgetUsd, timeoutMin: o.timeoutMin,
     maxSteps: o.maxSteps, tools: o.tools, det: o.det, k: o.k, concurrency: o.concurrency, dateNote: Boolean(o.dateNote), pipeline: { ...PIPELINE_DEFAULTS, ...(o.pipeline ?? {}) },
-    executor: 'src/executors/claude-code.mjs runClaudeCode, DEFAULT_HIDDEN, DEFAULT_KEEP_RO + per-node step-guard directories; model nodes with no tools and --max-turns 1', cli: o.cli ?? null,
+    executor: o.executor ?? 'src/executors/claude-code.mjs runClaudeCode, DEFAULT_HIDDEN, DEFAULT_KEEP_RO + per-node step-guard directories; model nodes with no tools and --max-turns 1', cli: o.cli ?? null,
     childEnv: o.childEnv ?? Object.fromEntries(CHILD_ENV_ALLOWED.map(k => [k, typeof process.env[k] === 'string' ? process.env[k] : null])),
     policy: o.policy ?? policyFor(models), corpus: o.corpus ?? corpusPin(), knowledge: o.knowledge ?? [...KNOWLEDGE] };
 }
@@ -115,6 +120,15 @@ export function servedSteps(mailbox) {
   return n;
 }
 const lastText = events => { const a = events.filter(e => e?.type === 'assistant').flatMap(e => (e.message?.content ?? []).filter(c => c?.type === 'text').map(c => c.text)); return a.at(-1) ?? null; };
+/** A node's token spend (research/mercury-20261021/): the remote executor's `tokens`, or the claude executor's stream usage
+ * (input = uncached + cache reads + cache writes). null when the node reported none. */
+export function nodeTokens(r) {
+  if (r?.tokens && Number.isFinite(r.tokens.total)) return { input: r.tokens.input, output: r.tokens.output, cachedInput: r.tokens.cachedInput ?? 0, total: r.tokens.total };
+  const u = r?.streamUsage;
+  if (!u) return null;
+  const input = (u.inputTokens ?? 0) + (u.cacheReadTokens ?? 0) + (u.cacheWriteTokens ?? 0);
+  return { input, output: u.outputTokens ?? 0, cachedInput: u.cacheReadTokens ?? 0, total: input + (u.outputTokens ?? 0) };
+}
 
 /** Host infrastructure failures (run.mjs INFRA_FAULT): disk full, no temporary directory, file-table exhaustion. */
 export const INFRA_FAULT = /ENOSPC|EDQUOT|EMFILE|ENFILE|No usable temporary directory/;
@@ -170,6 +184,13 @@ export async function runPipeline(o) {
   const hostWrite = (name, obj) => writeFileSync(path.join(pdir, name), typeof obj === 'string' ? obj : JSON.stringify(obj, null, 1));
   const nodes = [];
   let responses = 0, spent = 0, upper = 0, unknown = false, envFault = null;
+  const tokensBy = {};   // model -> { input, output, cachedInput, total, nodes }
+  const noteTokens = (model, r) => {
+    const t = nodeTokens(r); if (!t || !model) return t;
+    const b = (tokensBy[model] ??= { input: 0, output: 0, cachedInput: 0, total: 0, nodes: 0 });
+    for (const k of ['input', 'output', 'cachedInput', 'total']) b[k] += t[k]; b.nodes += 1;
+    return t;
+  };
   const HALT = Symbol('environment fault');
   /** Stop the pipeline after a node that met an environment fault (the task is not run, not failed). */
   const halt = () => { if (envFault) throw HALT; };
@@ -214,7 +235,7 @@ export async function runPipeline(o) {
     const text = typeof r?.result === 'string' ? r.result : lastText(events);
     const json = parseJsonReply(text);
     nodes[idx] = { idx, name, kind: 'model', role, model, responses: resp, costUsd: cost, costUpperUsd: r?.costUpperUsd ?? budget, started, ended, transcript: copied ? path.relative(o.hostDir, tfile) : null,
-      parsed: Boolean(json), error: r?.error?.code ?? null };
+      parsed: Boolean(json), error: r?.error?.code ?? null, tokens: noteTokens(model, r) };
     hostWrite(`${tag(idx)}-${name}.reply.txt`, String(text ?? ''));
     return json;
   }
@@ -256,7 +277,7 @@ export async function runPipeline(o) {
     toolUses.push(...(r?.toolUses ?? []));
     hostWrite(`${tag(idx)}-${name}.system.txt`, systemPrompt);
     nodes[idx] = { idx, name, kind: 'session', role, model, cap, responses: resp, costUsd: cost, costUpperUsd: r?.costUpperUsd ?? budget, started, ended, transcript: copied ? path.relative(o.hostDir, tfile) : null,
-      stopReason: audit.stopReason, error: r?.error?.code ?? null };
+      stopReason: audit.stopReason, error: r?.error?.code ?? null, tokens: noteTokens(model, r) };
     return r;
   }
 
@@ -376,8 +397,11 @@ export async function runPipeline(o) {
     hostWrite('nodes.json', nodes);
   } catch (e) { if (!rethrow) throw e; }
   if (rethrow) throw rethrow;
+  const tokenSum = k => Object.values(tokensBy).reduce((s, b) => s + b[k], 0);
   return { ok: !actError, error: actError ? { code: actError } : null, costUsd: unknown ? null : spent, costUnknown: unknown, costUpperUsd: upper, turns: responses, durationMs: Date.now() - t0, toolUses,
-    nodes, clientLog: client.log, pipeline: { ...stats, responses, nodes: nodes.map(n => ({ name: n.name, kind: n.kind, model: n.model ?? null, responses: n.responses, steps: n.steps ?? null, cap: n.cap ?? null, costUsd: n.costUsd ?? null, error: n.error ?? null, parsed: n.parsed ?? null })) }, label: `pipeline:${HARNESS_ID}` };
+    // Every node's tokens, by model (a pipeline may mix a $0 remote model with priced ones): run.mjs records and meters them.
+    tokens: Object.keys(tokensBy).length ? { input: tokenSum('input'), output: tokenSum('output'), cachedInput: tokenSum('cachedInput'), total: tokenSum('total'), byModel: tokensBy } : null,
+    nodes, clientLog: client.log, pipeline: { ...stats, responses, nodes: nodes.map(n => ({ name: n.name, kind: n.kind, model: n.model ?? null, responses: n.responses, steps: n.steps ?? null, cap: n.cap ?? null, costUsd: n.costUsd ?? null, error: n.error ?? null, parsed: n.parsed ?? null, ...(n.tokens ? { tokens: n.tokens.total } : {}) })) }, label: `pipeline:${HARNESS_ID}` };
 }
 
 // ---------------------------------------------------------------------------------------------------------------

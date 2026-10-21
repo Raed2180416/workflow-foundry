@@ -11,7 +11,10 @@
 import { readFileSync } from 'node:fs';
 
 const spec = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-if (spec.clockOffsetMs) { const real = Date.now.bind(Date); Date.now = () => real() + spec.clockOffsetMs; }
+// clockJump {afterMs, offsetMs}: the clock steps by offsetMs that long after start (an NTP step, a VM resume, a laptop lid).
+let jump = 0;
+if (spec.clockOffsetMs || spec.clockJump) { const real = Date.now.bind(Date); Date.now = () => real() + (spec.clockOffsetMs ?? 0) + jump; }
+if (spec.clockJump) setTimeout(() => { jump = spec.clockJump.offsetMs; process.stdout.write(JSON.stringify({ phase: 'clock-jumped', offsetMs: jump }) + '\n'); }, spec.clockJump.afterMs).unref();
 const say = row => process.stdout.write(JSON.stringify(row) + '\n');
 
 const { Foundry } = await import('../../../src/foundry.mjs');
@@ -28,15 +31,23 @@ function providerOf(spec) {
   if (spec.modelsLedger) { const complete = provider.complete.bind(provider); provider.complete = args => { appendDurable(spec.modelsLedger, { model: args.modelEntry.id, pid: process.pid, at: Date.now() }); return complete(args); }; }
   return provider;
 }
+// cliBinary: the real claude-cli provider (src/models/providers/claude-cli.mjs) with this binary (a fake one in the scenarios).
+const { ClaudeCliProvider } = await import('../../../src/models/providers/claude-cli.mjs');
+const { ModelPort } = await import('../../../src/models/port.mjs');
+const { Journal } = await import('../../../src/journal.mjs');
+const { POLICY } = await import('./harness.mjs');
+const cliPort = (store, binary) => new ModelPort({ policy: POLICY.policy, providers: { 'claude-cli': new ClaudeCliProvider({ policy: POLICY.policy, binary, timeoutMs: 120000 }) }, journal: new Journal(store) });
 const foundry = new Foundry(spec.workspace, {
   registry, policy: { allowedCapabilities: registry.list().map(c => c.name), maxConcurrency: 16, maxCost: 5, ...(spec.policy ?? {}) },
-  ...(spec.models ? { models: store => scriptedPort(store, providerOf(spec)).port } : {}), cancelPollMs: 50, cancelGraceMs: 300,
+  ...(spec.models ? { models: store => scriptedPort(store, providerOf(spec)).port } : {}),
+  ...(spec.cliBinary ? { models: store => cliPort(store, spec.cliBinary) } : {}), cancelPollMs: 50, cancelGraceMs: 300,
 });
 const summary = run => run && ({ status: run.status, error: run.error ? { code: run.error.code, message: String(run.error.message ?? '').slice(0, 300) } : null,
   verdict: run.verdict ? { verdict: run.verdict.verdict, code: run.verdict.code } : null, steps: run.steps, cost: run.cost, resumeCount: run.resumeCount,
   outputDigest: run.outputs ? digest(run.outputs) : null });
 try {
   let runId = spec.runId ?? null;
+  if (runId === 'only') runId = foundry.store.db.prepare('SELECT id FROM runs ORDER BY rowid DESC LIMIT 1').get()?.id ?? null;
   if (spec.action === 'create' || spec.action === 'create-execute') {
     foundry.save(spec.workflow);
     runId = foundry.createRun(spec.workflow.id, spec.input ?? {}).id;
@@ -65,6 +76,9 @@ try {
   } else if (spec.action === 'verify') {
     const report = verifyRun(foundry.store, runId);
     say({ phase: 'result', ok: report.ok, findings: (report.findings ?? []).filter(f => f.severity === 'error').slice(0, 10), run: summary(foundry.store.run(runId)) });
+  } else if (spec.action === 'stop-all') {
+    const r = await foundry.stopAll({ actor: 'orch', reason: 'chaos', graceMs: spec.cancel?.graceMs ?? 2000 });
+    say({ phase: 'result', stopAll: { outcome: r.outcome, stopped: r.stopped ?? null, message: String(r.message ?? '').slice(0, 300) } });
   } else if (spec.action === 'cancel') {
     const r = await foundry.cancel(runId, { actor: 'orch', reason: 'chaos', graceMs: spec.cancel?.graceMs ?? 2000, force: !!spec.cancel?.force });
     say({ phase: 'result', cancel: { outcome: r.outcome, message: r.message } });

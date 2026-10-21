@@ -364,11 +364,12 @@ export function parseArm(spec, config, { policyIds = null } = {}) {
   } else throw new Error(`unknown arm kind in ${spec} (agent:, static:, static@v3:, jit:)`);
   arm.spec = spec;
   // Model ids only from the owner policy file (SPEC §6.4); nothing falls back silently.
-  const ids = policyIds ?? loadPolicy().policy.models.map(m => m.id);
+  // Executor models (e.g. mercury-3) too, by id only, for gatewayModels a solver names; their runs need config.gatewayTokenCap.
+  const ids = policyIds ?? (p => [...p.models, ...(p.executorModels ?? [])].map(m => m.id))(loadPolicy().policy);
   for (const m of uniq([...arm.models, arm.model, arm.interpreter, arm.compiler, arm.fallback].filter(Boolean))) if (!ids.includes(m)) throw new Error(`${spec}: model ${m} is not in policy/models.json`);
   // The arm definition hash: a resume never mixes rows recorded under another definition (tasks are checked per row).
   const def = { spec, familyId: config.familyId, split: config.split, perTaskUsd: config.perTaskUsd, agentBudgetUsd: config.agentBudgetUsd, agentMinutes: config.agentMinutes,
-    agentEffort: config.agentEffort, models: arm.models,
+    agentEffort: config.agentEffort, models: arm.models, ...(config.gatewayTokenCap != null ? { gatewayTokenCap: config.gatewayTokenCap } : {}),
     ...(kind === 'static' ? { scriptSha: existsSync(arm.scriptPath) ? sha(readFileSync(arm.scriptPath)) : null, compiledMinutes: config.compiledMinutes, fallback: arm.fallback,
       ...(arm.sdk ? { sdk: arm.sdk } : {}) } : {}),
     ...(kind === 'jit' ? { jit: config.jit, compile: config.compile, compiledMinutes: config.compiledMinutes, ...(config.library ? { library: config.library } : {}) } : {}) };
@@ -881,7 +882,8 @@ class ArmRun {
       tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null,
         ...(rc.flags?.count ? { flags: rc.flags.count } : {}), ...(rc.meta?.memo ? { memo: { requests: rc.meta.memo.requests, hits: rc.meta.memo.hits, reused: rc.meta.memo.reused, live: rc.meta.memo.live } } : {}),
         ...(rc.calls ? { calls: rc.calls } : {}), ...(rc.meta?.resume?.stats?.served ? { resumed: rc.meta.resume.stats.served } : {}),
-        ...(variants && rc.meta?.variants ? { invariance: invarianceView(rc.meta.variants) } : {}) });
+        ...(variants && rc.meta?.variants ? { invariance: invarianceView(rc.meta.variants) } : {}),
+        ...(this.config.gatewayTokenCap != null && rc.meta?.usageByModel ? { tokens: rc.meta.usageByModel } : {}) });
       return rc;
     }, compiledFaultOf);
   }
@@ -1324,7 +1326,9 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
   for (const run of runs) {
     for (const [idx, r] of run.rows) if (tasks[idx] && r.taskHash !== tasks[idx].taskHash) throw new Error(`${run.arm.slug}: recorded task #${idx} (${r.taskKey}) differs from the config's: use a new experiment name`);
     // One journal per arm directory (SQLite contention between arm processes); agent arms need no gateway.
-    if (run.arm.kind !== 'agent') run.port = deps.createModelPort({ journalFile: run.p.journal, allowedModels: run.arm.models, concurrency: { 'claude-cli': 16 } }).port;
+    // gatewayTokenCap (opt-in): the per-arm token cap of a remote chat provider (an executor model such as mercury-3 in gatewayModels).
+    if (run.arm.kind !== 'agent') run.port = deps.createModelPort({ journalFile: run.p.journal, allowedModels: run.arm.models, concurrency: { 'claude-cli': 16 },
+      ...(config.gatewayTokenCap != null ? { tokenCap: config.gatewayTokenCap } : {}) }).port;
     // jit.replayJournal (opt-in): JIT arms answer gateway calls from that exported journal first, live only on a miss.
     if (run.arm.kind === 'jit' && config.jit.replayJournal) run.port = await replayPort(config.jit.replayJournal, run.arm.slug, run.port, deps);
   }

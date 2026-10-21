@@ -1,0 +1,121 @@
+{
+  "schema": "foundry-acquisition/1",
+  "topic": "surface-20261021 n8n importer sample",
+  "retrievedAt": "2026-10-21",
+  "why": "The 135 n8n items of research/corpus-20261006 are all redistributable:false (n8n.io template ToS, no open licence). The brief asks for redistributable items only, so a separate sample was acquired from repositories whose authors published their own n8n workflows under an open licence.",
+  "search": "Known first-party authors of open-licensed n8n workflow files: n8n-io/self-hosted-ai-starter-kit (Apache-2.0, 1 workflow), coleam00/local-ai-packaged (Apache-2.0, 8), coleam00/ottomator-agents (MIT, 28). Shallow clones (depth 1, no submodules, no LFS, blobs over 2 MB filtered), read as data, never built or installed.",
+  "candidates": 37,
+  "secretScan": "credential-shaped strings, private keys, JWTs and incoming-webhook URLs (the corpus check-items.mjs classes): 0 hits on 37 candidates; one placeholder bearer token (act.example12345...) in Web_Scraper_Multi_Page.json",
+  "selection": "sha256 of \"<repo dir>/<path>\" ascending, first 10 that pass the secret scan (all did). Deterministic; no file was chosen by content.",
+  "rawLocation": "/var/tmp/foundry-work/surface-20261021/n8n-acq (outside git; app/importers/acquire-n8n-sample.mjs re-fetches the exact bytes from rawUrl and checks sha256)",
+  "licenceNote": "MIT and Apache-2.0 allow redistribution with the licence notice; the raw files are nevertheless kept outside git (repo stays lean) and only derived verdicts are committed. LICENSE files are copied beside the raw files.",
+  "outcome": "acquired: 10 of 10 selected files, sha256 below",
+  "repos": {
+    "coleam00_local-ai-packaged": {
+      "url": "https://github.com/coleam00/local-ai-packaged",
+      "commit": "2c541913c0f97d7e2e4de3ee7e3f790fc63ce613",
+      "commitDate": "2026-02-26T10:28:45-06:00",
+      "license": "Apache-2.0",
+      "licenseEvidence": "LICENSE at the pinned commit: \"Apache License Version 2.0, January 2004\""
+    },
+    "coleam00_ottomator-agents": {
+      "url": "https://github.com/coleam00/ottomator-agents",
+      "commit": "2be20d5737fc49aa0f665a012f3ffde283d26d54",
+      "commitDate": "2025-11-09T15:46:45-06:00",
+      "license": "MIT",
+      "licenseEvidence": "LICENSE at the pinned commit: \"MIT License Copyright (c) 2024 Cole Medin\""
+    }
+  },
+  "files": [
+    {
+      "id": "n8n-permissive:coleam00/local-ai-packaged/n8n/backup/workflows/V3_Local_Agentic_RAG_AI_Agent.json",
+      "repo": "coleam00_local-ai-packaged",
+      "path": "n8n/backup/workflows/V3_Local_Agentic_RAG_AI_Agent.json",
+      "sha256": "514bfc682eefd18f8c65ce4b1c4ef8a537689485d3b176c23468198e11d7ecfc",
+      "bytes": 41019,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/local-ai-packaged/2c541913c0f97d7e2e4de3ee7e3f790fc63ce613/n8n/backup/workflows/V3_Local_Agentic_RAG_AI_Agent.json",
+      "pathHash": "035e7344fa7d31c7e1644f70debbee5f7d5fcadb53e80d141f82402bae69fab2"
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/multi-page-scraper-agent/Web_Scraper_Multi_Page.json",
+      "repo": "coleam00_ottomator-agents",
+      "path": "multi-page-scraper-agent/Web_Scraper_Multi_Page.json",
+      "sha256": "56d2c4dc8dc017f7feb10513865475e6107178b454bd9a278444e6e2029aa8fd",
+      "bytes": 106341,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/ottomator-agents/2be20d5737fc49aa0f665a012f3ffde283d26d54/multi-page-scraper-agent/Web_Scraper_Multi_Page.json",
+      "pathHash": "0c2e7c8693fbd5ecf96dd4e4f6c47ac435a91eab8d727f1dbfaa296c42ae1987"
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/local-ai-expert/Local_AI_Expert.json",
+      "repo": "coleam00_ottomator-agents",
+      "path": "local-ai-expert/Local_AI_Expert.json",
+      "sha256": "b5117e1f9bc9b61bb74f70b6fe4da578a76eb6b4a45d1ac58e643d7958ad5513",
+      "bytes": 16948,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/ottomator-agents/2be20d5737fc49aa0f665a012f3ffde283d26d54/local-ai-expert/Local_AI_Expert.json",
+      "pathHash": "0f5d54cbc9122f3e9f1885342cca007e58280876f955abebdd75253bd3b2a1af"
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/smart-select-multi-tool-agent/Smart_Select_Multi_Tool_Agent.json",
+      "repo": "coleam00_ottomator-agents",
+      "path": "smart-select-multi-tool-agent/Smart_Select_Multi_Tool_Agent.json",
+      "sha256": "d1eed79ffc718bed9237b9bfb69c5490495ec79ba824d146b45955731d7d3e6f",
+      "bytes": 18078,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/ottomator-agents/2be20d5737fc49aa0f665a012f3ffde283d26d54/smart-select-multi-tool-agent/Smart_Select_Multi_Tool_Agent.json",
+      "pathHash": "179d203e3a3edc93573ba71817ff244e1934588c6d4438328a3f17b9a5023781"
+    },
+    {
+      "id": "n8n-permissive:coleam00/local-ai-packaged/n8n-tool-workflows/Create_Google_Doc.json",
+      "repo": "coleam00_local-ai-packaged",
+      "path": "n8n-tool-workflows/Create_Google_Doc.json",
+      "sha256": "21edf338d6b6e1f08143659cd2e646e71b8323b30aecc45e538d96256e152387",
+      "bytes": 2689,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/local-ai-packaged/2c541913c0f97d7e2e4de3ee7e3f790fc63ce613/n8n-tool-workflows/Create_Google_Doc.json",
+      "pathHash": "22a2915a46267ac092bda71e467ab160eaaeeaca343d646aec9f2ee4cb0b8c2d"
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/n8n-github-assistant/GitHub_Assistant_Agent.json",
+      "repo": "coleam00_ottomator-agents",
+      "path": "n8n-github-assistant/GitHub_Assistant_Agent.json",
+      "sha256": "2734047738abca80f8e09f19f7848c9a0d83b8b356df74a9d3ee8d38eacab02b",
+      "bytes": 20299,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/ottomator-agents/2be20d5737fc49aa0f665a012f3ffde283d26d54/n8n-github-assistant/GitHub_Assistant_Agent.json",
+      "pathHash": "26b38d81be71705463d958af5df20a20b738c53c7103acb34d46c2e1ba4ddcb0"
+    },
+    {
+      "id": "n8n-permissive:coleam00/local-ai-packaged/n8n-tool-workflows/Summarize_Slack_Conversation.json",
+      "repo": "coleam00_local-ai-packaged",
+      "path": "n8n-tool-workflows/Summarize_Slack_Conversation.json",
+      "sha256": "5cd414859b89ebeb5f5e0f396d7c5d3fb078a59e42ce78239de8b52bcfe5be7e",
+      "bytes": 4281,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/local-ai-packaged/2c541913c0f97d7e2e4de3ee7e3f790fc63ce613/n8n-tool-workflows/Summarize_Slack_Conversation.json",
+      "pathHash": "2e53aee98a37f28b9127fe32db0e247d512e24ce74f1cd0b8077bed717accd25"
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/n8n-mcp-agent/MCP_Agent_Demo.json",
+      "repo": "coleam00_ottomator-agents",
+      "path": "n8n-mcp-agent/MCP_Agent_Demo.json",
+      "sha256": "38de069fe34e477e6f86ec520b4ec22279f48fa1019a6fe9256496a5ca61b9f3",
+      "bytes": 6686,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/ottomator-agents/2be20d5737fc49aa0f665a012f3ffde283d26d54/n8n-mcp-agent/MCP_Agent_Demo.json",
+      "pathHash": "34f28719b2e6d9d58c29904af4920bfde9c4bbdc67dc41bb46ddc919bfc2503f"
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/advanced-web-researcher/Advanced_Web_Researcher.json",
+      "repo": "coleam00_ottomator-agents",
+      "path": "advanced-web-researcher/Advanced_Web_Researcher.json",
+      "sha256": "96c345b52400e63f3e50ec352ba73c8d7b7466f09cb81179221e7b4d3a4b8d8e",
+      "bytes": 14740,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/ottomator-agents/2be20d5737fc49aa0f665a012f3ffde283d26d54/advanced-web-researcher/Advanced_Web_Researcher.json",
+      "pathHash": "35149747ac420ea0bb188268f8d45c9a8e335a103016bc6e777a5e15a65af169"
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/n8n_knowledge_graph_rag/RAG_AI_Agent_Template_V5.json",
+      "repo": "coleam00_ottomator-agents",
+      "path": "n8n_knowledge_graph_rag/RAG_AI_Agent_Template_V5.json",
+      "sha256": "5805ec9ffdd414c0994cd2c735fc612684c4a322944ab1b5fc346208c3aa83c1",
+      "bytes": 60285,
+      "rawUrl": "https://raw.githubusercontent.com/coleam00/ottomator-agents/2be20d5737fc49aa0f665a012f3ffde283d26d54/n8n_knowledge_graph_rag/RAG_AI_Agent_Template_V5.json",
+      "pathHash": "39c028ad3b0cc8a5b22d90fcb6b40988671fadf8d8c5d80cf3ea6e34aba89388"
+    }
+  ]
+}

@@ -80,8 +80,9 @@ export class FoundryApp {
     const practice = new Foundry(dir, { registry });
     try {
       let done, events = [];
-      practice.save(proposal.workflow);
-      try { done = await practice.startRun(practice.createRun(proposal.workflow.id, input ?? SAMPLE_INPUT).id); }
+      // Stage the exact proposed version (its hash and version number) without a head, as the trial store does for candidates.
+      practice.store.stageEvaluationWorkflow(proposal.workflow);
+      try { done = await practice.startRun(practice.createRun(proposal.workflowHash, input ?? SAMPLE_INPUT).id); }
       catch (error) { return problem(error, { practice: true, passed: false, next: 'Fix the practice input or ask for a changed flow.' }); }
       events = practice.store.events(done.id);
       const wouldDo = existsSync(outbox) ? readdirSync(outbox).filter(f => f.endsWith('.json')).map(f => {

@@ -6,7 +6,7 @@ import { compileDataSchema } from '../validate.mjs';
 import { portableSchemaViolations } from '../schema-subset.mjs';
 import { isReplayable } from '../journal.mjs';
 import { estimateTokens } from '../context.mjs';
-import { modelById, providerConfig } from './policy.mjs';
+import { portModelById, providerConfig } from './policy.mjs';
 
 export const MODEL_ERRORS = Object.freeze(['MODEL_SCHEMA', 'MODEL_TRUNCATED', 'MODEL_REFUSAL', 'MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'MODEL_PROTOCOL', 'MODEL_BUDGET']);
 export const MODES = Object.freeze(['live', 'replay', 'replay-or-live']);
@@ -41,7 +41,10 @@ export const modelDigestOf = (entry, config) => {
   // Excluded: accounting (price, imputed compute), routing (class, port, auth) and documentation (knownGaps) fields, and the
   // claude CLI child environment (childEnv: a closed list of transport/telemetry/cache-pricing variables that never change
   // the decoding, validated in policy.mjs; it is recorded in the journal request instead, like the CLI engine version).
-  const { price, class: _class, port: _port, ...model } = entry, { imputedComputeUsdPerHour, auth, knownGaps, childEnv, ...provider } = config ?? {};
+  // Executor-model documentation (note, contextTokens, maxOutputTokens) and a remote provider's docs and credential variable name
+  // change no decoding either (no models[] entry or ModelPort provider before 2026-10-21 carries them, so no earlier key moves).
+  const { price, class: _class, port: _port, note: _note, contextTokens: _ctx, maxOutputTokens: _maxOut, ...model } = entry,
+    { imputedComputeUsdPerHour, auth, knownGaps, childEnv, docs, credentialEnv, ...provider } = config ?? {};
   return digest({ model, provider });
 };
 export const replayKeyOf = ({ promptHash, modelId, modelDigest, decoding, sampleIndex, salt }) => digest({ promptHash, modelId, modelDigest, decoding, sampleIndex, salt });
@@ -61,6 +64,9 @@ export const DECODING_BY_KIND = Object.freeze({
     return { reasoning, effort: EFFORT[reasoning] ?? 'low', thinkingTokens: THINKING[reasoning] ?? 0, maxTokens: 'provider-default', temperature: 'provider-default' };
   },
   'openai-compatible-http': (d = {}, { defaultMaxTokens = 1024 } = {}) => ({ maxTokens: d.maxTokens ?? defaultMaxTokens, reasoning: d.reasoning ?? 'none', temperature: d.temperature ?? 0 }),
+  // Remote chat endpoints (providers/openai-chat.mjs openaiChatDecoding): defaults named, not resolved; the provider's
+  // requestDefaults are in the replay key through the provider config.
+  'openai-chat-https': (d = {}) => ({ maxTokens: d.maxTokens ?? 'provider-default', reasoning: d.reasoning ?? 'none', temperature: d.temperature ?? 'provider-default' }),
 });
 
 const RATE = /\b(429|529)\b|overloaded|rate.?limit|usage limit|hit your (usage )?limit|limit reached/i;
@@ -172,7 +178,8 @@ export class ModelPort {
   async call(input) {
     const req = this.#request(input);
     // Preconditions: none of these reach a provider or the journal.
-    const entry = modelById(this.policy, req.modelId), config = providerConfig(this.policy, entry);
+    // An executorModels id only when the call names it (portModelById): class routing never reaches one.
+    const entry = portModelById(this.policy, req.modelId), config = providerConfig(this.policy, entry);
     checkPortableSchema(req.schema);
     const validate = compileDataSchema(req.schema);
     const promptHash = promptHashOf(req), decoding = this.#decoding(entry, config, req.decoding);

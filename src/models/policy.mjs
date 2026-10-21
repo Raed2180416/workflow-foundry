@@ -22,6 +22,8 @@ const SECRET_FIELD = /^(api[-_]?key|key|token|secret|password|bearer|authorizati
 // executor sandbox. Their models are listed under executorModels, apart from models[], as judgmentModels are: ModelPort has
 // no provider for this kind, so class resolution and escalation never route a typed node to one (modelById reads models[]
 // only). The provider names its credential variable (credentialEnv), never a value, and carries no other field than these.
+// 2026-10-21.2: ModelPort serves an executor model too, when a call names its id (portModelById below; never by class), through
+// src/models/providers/openai-chat.mjs (one structured-output request, no tools, per-call and per-run token caps).
 export const REMOTE_CHAT_KIND = 'openai-chat-https';
 const REMOTE_CHAT_PROVIDER_KEYS = Object.freeze(['kind', 'baseUrl', 'credentialEnv', 'requestDefaults', 'auth', 'docs', 'knownGaps', 'features']);
 /** Request fields a remote-chat provider may fix for every call (sent as is; nothing else is configurable). */
@@ -204,6 +206,19 @@ export function sessionModelById(policy, id) {
   if (typeof id === 'string' && (policy.executorModels ?? []).some(m => m.id === id)) return { ...executorModelById(policy, id), kind: REMOTE_CHAT_KIND };
   const entry = modelById(policy, id), provider = providerConfig(policy, entry);
   return { entry, provider, kind: provider.kind };
+}
+
+/**
+ * The model a ModelPort call names (2026-10-21.2, research/mercury-20261021/): a models[] entry, or an executorModels entry
+ * when the caller names its id. Explicit only: class resolution (resolve by class, modelsForClass, nextClass), escalation
+ * targets and the verifier-independence check read models[] alone, so no node is ever moved to an executor model by class,
+ * and a call that names one is served by that model or fails (no fallback: an unregistered provider is
+ * MODEL_PROVIDER_MISSING, a different served model MODEL_PROTOCOL). Workflow IR nodes still resolve their model.id through
+ * modelById (models[] only): an IR node naming an executor model is refused until escalation from one is decided.
+ */
+export function portModelById(policy, id) {
+  const exec = typeof id === 'string' ? (policy.executorModels ?? []).find(m => m.id === id) : undefined;
+  return exec ?? modelById(policy, id);
 }
 
 export function classIndex(policy, cls) {

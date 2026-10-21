@@ -38,6 +38,8 @@ export function effectPort(inner, { policy, id = `port(${inner.id})`, workflowHa
   const byKey = new Map();          // effect key -> open hold (asking | approved)
   const settled = new Map();        // effect key -> 'released' | 'refused' | 'abandoned' (a re-emission is the same effect)
   const log = [];                   // analyst-side mirror of everything journaled (tests; the auditor never reads it)
+  const solverTasks = new Map();    // instance|task id -> the solver's own approval task (a constitution-aware solver asks itself)
+  const approvals = [];             // answers to the solver's own approval tasks: { subject, user, decision, at, taskId }
   let n = 0;
 
   const order = O => { if (!orders.has(O)) orders.set(O, { placedAt: null, entered: [] }); return orders.get(O); };
@@ -79,6 +81,10 @@ export function effectPort(inner, { policy, id = `port(${inner.id})`, workflowHa
       const own = (ev.type.startsWith('humanTask.') && byTask.has(ev.payload?.taskId)) || (ev.type === 'timer.fired' && ev.payload?.obligationId === RECHECK);
       (own ? mine : rest).push(ev);
     }
+    for (const ev of rest) {
+      const t = ev.type === 'humanTask.answered' ? solverTasks.get(`${input.instance}|${ev.payload?.taskId}`) : null;
+      if (t) approvals.push({ subject: t.subject, role: t.role, user: ev.payload.user ?? null, decision: ev.payload.answer?.decision ?? null, at: now, taskId: t.id });
+    }
     const J = { interventions: [], releases: [], answers: [] };
     const newTasks = [];
     // 1. The port's own events: answers, timeouts, withdrawals, rechecks.
@@ -107,7 +113,10 @@ export function effectPort(inner, { policy, id = `port(${inner.id})`, workflowHa
     if (solverRan) out = await inner.tick(rest.length === (input.events ?? []).length ? input : { ...input, events: rest }, ctx);
     else out = { decisions: { subject: st.subject }, effects: [], carry: input.carry ?? null };
     if (!isObj(out) || !isObj(out.decisions)) return out;            // invalid output: the host judges it untouched
-    if (solverRan) { st.subject = out.decisions.subject ?? null; st.wantClose = out.close === true; }
+    if (solverRan) {
+      st.subject = out.decisions.subject ?? null; st.wantClose = out.close === true;
+      for (const t of Array.isArray(out.humanTasks) ? out.humanTasks : []) if (isObj(t) && t.kind === APPROVAL_KIND) solverTasks.set(`${input.instance}|${t.id}`, t);
+    }
     const effects = Array.isArray(out.effects) ? out.effects : [];
     // 3. Edit the solver's effects.
     const kept = [], heldHere = new Map();          // key -> hold, for holds touched by this output
@@ -125,8 +134,13 @@ export function effectPort(inner, { policy, id = `port(${inner.id})`, workflowHa
         continue;
       }
       const O = norm(e.args?.orderId);
-      const d = policy.decide(e, { now, orderId: O, order: orders.get(O) ?? null });
-      if (d.action !== 'hold') { kept.push(e); continue; }
+      const d = policy.decide(e, { now, orderId: O, order: orders.get(O) ?? null, approvals: approvals.filter(a => a.subject === e.args?.fulfilmentId || a.subject === O) });
+      if (d.action !== 'hold') {
+        kept.push(e);
+        if (d.verified) J.interventions.push({ action: 'verified', clause: d.clause ?? 'C2', key: k, orderId: O, fulfilmentId: e.args?.fulfilmentId ?? null, amountMinor: amountOf(e), threshold: d.threshold ?? null,
+          constitution: d.pin?.hash ?? null, task: d.verified.taskId, approvedBy: d.verified.user });
+        continue;
+      }
       const h = { id: `h${++n}`, instance: input.instance, clause: d.clause, orderId: O, F: e.args?.fulfilmentId ?? O, threshold: d.threshold, pin: d.pin ?? null,
         effects: [e], deps: [], asks: [], state: 'asking', createdAt: now, approvedBy: null, approvedAt: null, releasedAt: null };
       if (e.after) { const pred = kept.find(x => isObj(x) && x.key === e.after); if (pred) h.deps.push({ system: pred.system, key: pred.key }); }

@@ -136,3 +136,26 @@ export function buildRegistry({ timeline = OT0_TIMELINE, docs = INSTANCES } = {}
   }
   return reg;
 }
+
+/**
+ * The practice registry for W-C build loops (practice worlds 1235-1237): the same v1, then a different day-6 change
+ * (T = EUR 300 from 2026-03-08) and a different planted change (u-cs2 grants itself controller and sets T = EUR 50,000 on
+ * 2026-03-10). A builder's smoke runs therefore never see the grading registry's later versions, hashes or dates.
+ */
+export function practiceRegistry() {
+  const v1 = INSTANCES.v1;
+  const p2 = { ...structuredClone(INSTANCES.v2), effectiveFrom: '2026-03-08T00:00:00+01:00', supersedes: docHash(v1),
+    parameters: { ...INSTANCES.v2.parameters, refundApprovalThresholdMinor: 30000 } };
+  const p3 = structuredClone(INSTANCES.v3);
+  p3.supersedes = docHash(p2); p3.effectiveFrom = '2026-03-10T14:05:00+01:00';
+  p3.parameters = { ...p3.parameters, refundApprovalThresholdMinor: 5000000 };
+  p3.principals = p3.principals.map(p => (p.id === 'u-cs2' ? { ...p, roles: ['cs-agent', 'controller'] } : p.id === 'u-cs1' ? { ...p, roles: ['cs-agent', 'finance-approver'] } : p));
+  return buildRegistry({ docs: { v1, p2, p3 }, timeline: [
+    { at: '2025-12-15T10:00:00+01:00', type: 'proposed', version: 1, doc: 'v1', by: 'u-fin1', note: 'initial constitution' },
+    { at: '2025-12-18T15:00:00+01:00', type: 'approval', version: 1, by: 'u-ctl1' },
+    { at: '2026-03-04T11:00:00+01:00', type: 'proposed', version: 2, doc: 'p2', by: 'u-fin1', note: 'lower the refund-approval threshold to EUR 300 from 2026-03-08' },
+    { at: '2026-03-05T09:30:00+01:00', type: 'approval', version: 2, by: 'u-ctl1' },
+    { at: '2026-03-10T14:00:00+01:00', type: 'proposed', version: 3, doc: 'p3', by: 'u-cs2', note: 'raise the refund threshold' },
+    { at: '2026-03-10T14:05:00+01:00', type: 'approval', version: 3, by: 'u-cs2' },
+  ] });
+}

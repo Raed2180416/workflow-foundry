@@ -323,13 +323,22 @@ export function c1VsOracle({ world, verdict, oracleVerdict, onlyCompleted = fals
   for (const cv of oracleVerdict.cases) {
     if (!world.truth.cases[cv.case]?.subject) continue;
     if (onlyCompleted && cv.pool !== 'completed') continue;
-    const oc = cv.critical.map(x => x.code);
+    // A money-outside-allowed critical after the case's first divergence comes from the grader's frozen expectation
+    // (grade.mjs stops computing expectations at the first divergence, so later money rows match no lid).
+    const first = cv.firstDivergence?.at ? Date.parse(cv.firstDivergence.at) : null;
+    const oc = cv.critical.map(x => (x.code === 'money-outside-allowed' && first !== null && Date.parse(x.at) > first ? 'money-outside-allowed:after-first-divergence' : x.code));
     const ob = c1.get(cv.case) ?? [];
-    rows.push({ case: cv.case, pool: cv.pool, oracle: oc, observer: ob, agree: (oc.length > 0) === (ob.length > 0) });
+    rows.push({ case: cv.case, pool: cv.pool, oracle: oc, observer: ob, firstDivergence: cv.firstDivergence ? `L${cv.firstDivergence.layer}:${cv.firstDivergence.code}` : null, agree: (oc.length > 0) === (ob.length > 0) });
   }
   const dis = rows.filter(r => !r.agree);
-  const kind = r => (r.oracle.length && !r.observer.length ? (r.oracle.every(c => c === 'orphan-reservation') ? 'oracle-only:stock (outside C1)' : r.oracle.every(c => ['orphan-reservation', 'money-outside-allowed'].includes(c)) ? 'oracle-only:money-outside-allowed' : `oracle-only:${[...new Set(r.oracle)].join('+')}`)
-    : `observer-only:${[...new Set(r.observer)].join('+')}`);
+  const kind = r => {
+    if (!r.oracle.length) return `observer-only:${[...new Set(r.observer)].join('+')}`;
+    const k = new Set(r.oracle);
+    if ([...k].every(c => c === 'orphan-reservation')) return 'oracle-only:stock (outside C1)';
+    if ([...k].every(c => ['orphan-reservation', 'money-outside-allowed:after-first-divergence'].includes(c))) return 'oracle-only:money-outside-allowed after the first divergence (frozen expectation)';
+    if ([...k].every(c => ['orphan-reservation', 'money-outside-allowed', 'money-outside-allowed:after-first-divergence'].includes(c))) return 'oracle-only:money-outside-allowed at or before the first divergence (money the rules did not allow, conserved)';
+    return `oracle-only:${[...k].join('+')}`;
+  };
   return { cases: rows.length, bothCritical: rows.filter(r => r.oracle.length && r.observer.length).length, bothClean: rows.filter(r => !r.oracle.length && !r.observer.length).length,
     disagreements: dis.map(r => ({ ...r, kind: kind(r) })), byKind: dis.reduce((m, r) => ({ ...m, [kind(r)]: (m[kind(r)] ?? 0) + 1 }), {}) };
 }

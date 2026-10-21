@@ -45,7 +45,7 @@ function say(tool, r) {
 
 /** Tool definitions bound to one FoundryApp. `context.server` is the MCP Server (for elicitation); `options.dashboardUrl()` names where a person approves. */
 export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
-  const where = () => dashboardUrl() ? `Approve it in the dashboard: ${dashboardUrl()} (the person opens it; you cannot approve).`
+  const where = () => dashboardUrl() ? `The person approves it in ${dashboardUrl()}; you cannot approve it.`
     : 'Ask the person to run `node app/cli.mjs start` in their own terminal and approve it in the page it opens. You cannot approve it.';
   async function approve({ proposalId }, context) {
     const request = app.requestApproval({ proposalId });

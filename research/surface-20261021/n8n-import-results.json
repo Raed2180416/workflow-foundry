@@ -1,0 +1,704 @@
+{
+  "schema": "foundry-import-results/1",
+  "importer": "app/importers/n8n.mjs",
+  "date": "2026-10-21",
+  "manifest": "research/surface-20261021/n8n-sample-manifest.json",
+  "summary": {
+    "items": 10,
+    "lowered": 2,
+    "unsupported": 8,
+    "wrappable": 10,
+    "declaredNative": 0,
+    "executed": 0,
+    "itemsByReason": {
+      "chat-session": 3,
+      "agent-tool-loop": 7,
+      "conversation-state": 7,
+      "n8n-expression": 7,
+      "condition-expression": 4,
+      "batch-loop": 3,
+      "error-branch": 2,
+      "subworkflow-call": 4,
+      "host-shell": 1,
+      "n8n-code": 3,
+      "unstructured-cycle": 1,
+      "community-node": 1
+    }
+  },
+  "caveat": "Compile-level verdicts on a 10-file deterministic sample of open-licensed n8n workflows (mostly AI-agent flows from two repositories by one author). Not representative of n8n usage; nothing was executed.",
+  "rows": [
+    {
+      "id": "n8n-permissive:coleam00/local-ai-packaged/n8n/backup/workflows/V3_Local_Agentic_RAG_AI_Agent.json",
+      "license": "Apache-2.0",
+      "sha256": "514bfc682eefd18f8c65ce4b1c4ef8a537689485d3b176c23468198e11d7ecfc",
+      "name": "V3 Local Agentic RAG AI Agent",
+      "nodes": 35,
+      "connectors": [
+        "ollama",
+        "open-ai",
+        "pgvector",
+        "postgres",
+        "postgres-chat"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger+event-trigger+chat-session+agent-tool-loop+conversation-state",
+      "compileVerdict": "unsupported",
+      "reasons": [
+        {
+          "code": "chat-session",
+          "steps": [
+            "When chat message received"
+          ]
+        },
+        {
+          "code": "agent-tool-loop",
+          "steps": [
+            "RAG AI Agent"
+          ]
+        },
+        {
+          "code": "conversation-state",
+          "steps": [
+            "Postgres Chat Memory"
+          ]
+        },
+        {
+          "code": "n8n-expression",
+          "steps": [
+            "Set File ID",
+            "Edit Fields",
+            "Set Schema",
+            "Insert Document Metadata",
+            "Insert Table Rows",
+            "Update Schema for Document Metadata",
+            "Read/Write Files from Disk",
+            "Delete Old Data Records"
+          ]
+        },
+        {
+          "code": "condition-expression",
+          "steps": [
+            "Switch"
+          ]
+        },
+        {
+          "code": "batch-loop",
+          "steps": [
+            "Loop Over Items"
+          ]
+        }
+      ],
+      "needsCapabilities": [
+        "n8n.extract-from-file.text (none)",
+        "n8n.extract-from-file.pdf (none)",
+        "n8n.aggregate (none)",
+        "n8n.summarize (none)",
+        "n8n.extract-from-file.xlsx (none)",
+        "n8n.extract-from-file (none)",
+        "n8n.postgres.execute-query (non-idempotent)",
+        "n8n.pgvector.mode-insert (non-idempotent)"
+      ],
+      "hostBindings": [
+        "chat",
+        "webhook",
+        "event"
+      ],
+      "sourceModels": [],
+      "loweredHash": null,
+      "loweredSteps": 0,
+      "validation": null,
+      "wrap": {
+        "via": "webhook",
+        "typedInput": true,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/multi-page-scraper-agent/Web_Scraper_Multi_Page.json",
+      "license": "MIT",
+      "sha256": "56d2c4dc8dc017f7feb10513865475e6107178b454bd9a278444e6e2029aa8fd",
+      "name": "Web Scraper Multi-Page",
+      "nodes": 18,
+      "connectors": [
+        "google-gemini",
+        "postgres-chat",
+        "supabase"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger+error-branch+retry-policy+subworkflow-call+agent-tool-loop+conversation-state",
+      "compileVerdict": "unsupported",
+      "reasons": [
+        {
+          "code": "error-branch",
+          "steps": [
+            "get_scraping_website"
+          ]
+        },
+        {
+          "code": "subworkflow-call",
+          "steps": [
+            "website_scraping"
+          ]
+        },
+        {
+          "code": "agent-tool-loop",
+          "steps": [
+            "AI Agent"
+          ]
+        },
+        {
+          "code": "conversation-state",
+          "steps": [
+            "Postgres Chat Memory"
+          ]
+        },
+        {
+          "code": "n8n-expression",
+          "steps": [
+            "Prep Output Fields1",
+            "Add User Message to DB1",
+            "normalization",
+            "get_scraping_website",
+            "Add User Message to DB2"
+          ]
+        },
+        {
+          "code": "condition-expression",
+          "steps": [
+            "Filter_website_scraping"
+          ]
+        },
+        {
+          "code": "batch-loop",
+          "steps": [
+            "Loop Over Items"
+          ]
+        }
+      ],
+      "needsCapabilities": [
+        "n8n.set (none)",
+        "n8n.split-out (none)",
+        "n8n.aggregate (none)"
+      ],
+      "hostBindings": [
+        "webhook",
+        "manual"
+      ],
+      "sourceModels": [],
+      "loweredHash": null,
+      "loweredSteps": 0,
+      "validation": null,
+      "wrap": {
+        "via": "webhook",
+        "typedInput": false,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/local-ai-expert/Local_AI_Expert.json",
+      "license": "MIT",
+      "sha256": "b5117e1f9bc9b61bb74f70b6fe4da578a76eb6b4a45d1ac58e643d7958ad5513",
+      "name": "Local AI Expert",
+      "nodes": 14,
+      "connectors": [
+        "anthropic",
+        "hacker-news",
+        "postgres-chat",
+        "supabase"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger+subworkflow-call+agent-tool-loop+conversation-state",
+      "compileVerdict": "unsupported",
+      "reasons": [
+        {
+          "code": "subworkflow-call",
+          "steps": [
+            "Call AI Model Research Tool"
+          ]
+        },
+        {
+          "code": "agent-tool-loop",
+          "steps": [
+            "AI Agent"
+          ]
+        },
+        {
+          "code": "conversation-state",
+          "steps": [
+            "Postgres Chat Memory"
+          ]
+        },
+        {
+          "code": "n8n-expression",
+          "steps": [
+            "Prep Output Fields",
+            "Add AI Research Message to DB",
+            "HTTP Request",
+            "Edit Fields"
+          ]
+        }
+      ],
+      "needsCapabilities": [
+        "n8n.set (none)",
+        "n8n.html.extract-html-content (none)"
+      ],
+      "hostBindings": [
+        "manual",
+        "webhook"
+      ],
+      "sourceModels": [],
+      "loweredHash": null,
+      "loweredSteps": 0,
+      "validation": null,
+      "wrap": {
+        "via": "webhook",
+        "typedInput": false,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/smart-select-multi-tool-agent/Smart_Select_Multi_Tool_Agent.json",
+      "license": "MIT",
+      "sha256": "d1eed79ffc718bed9237b9bfb69c5490495ec79ba824d146b45955731d7d3e6f",
+      "name": "Smart Select Multi Tool Agent",
+      "nodes": 18,
+      "connectors": [
+        "git",
+        "open-ai",
+        "supabase"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger+error-branch",
+      "compileVerdict": "unsupported",
+      "reasons": [
+        {
+          "code": "error-branch",
+          "steps": [
+            "Clone fabric git"
+          ]
+        },
+        {
+          "code": "host-shell",
+          "steps": [
+            "get available prompts",
+            "get_selected_pattern_system_prompt"
+          ]
+        },
+        {
+          "code": "n8n-code",
+          "steps": [
+            "transform pattern list to json",
+            "cut first 100 characters"
+          ]
+        },
+        {
+          "code": "n8n-expression",
+          "steps": [
+            "decide what pattern should be used",
+            "Run chatInput with specialized tool",
+            "set output",
+            "Add User Message to DB",
+            "Add AI Message to DB",
+            "Prep Output Fields"
+          ]
+        }
+      ],
+      "needsCapabilities": [
+        "n8n.git.clone (non-idempotent)",
+        "n8n.set (none)"
+      ],
+      "hostBindings": [
+        "webhook"
+      ],
+      "sourceModels": [],
+      "loweredHash": null,
+      "loweredSteps": 0,
+      "validation": null,
+      "wrap": {
+        "via": "webhook",
+        "typedInput": false,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/local-ai-packaged/n8n-tool-workflows/Create_Google_Doc.json",
+      "license": "Apache-2.0",
+      "sha256": "21edf338d6b6e1f08143659cd2e646e71b8323b30aecc45e538d96256e152387",
+      "name": "Create Google Doc",
+      "nodes": 3,
+      "connectors": [
+        "google-drive"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger",
+      "compileVerdict": "lowered",
+      "reasons": [],
+      "needsCapabilities": [
+        "n8n.google-drive.create-from-text (non-idempotent)"
+      ],
+      "hostBindings": [
+        "webhook"
+      ],
+      "sourceModels": [],
+      "loweredHash": "6ee7cdafafeb1b1009ffe45d1c401d2d5ab5d6c6fcbc99496f28eb72297e72f5",
+      "loweredSteps": 2,
+      "validation": {
+        "valid": true,
+        "warnings": []
+      },
+      "wrap": {
+        "via": "webhook",
+        "typedInput": false,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/n8n-github-assistant/GitHub_Assistant_Agent.json",
+      "license": "MIT",
+      "sha256": "2734047738abca80f8e09f19f7848c9a0d83b8b356df74a9d3ee8d38eacab02b",
+      "name": "GitHub Assistant Agent",
+      "nodes": 17,
+      "connectors": [
+        "google-gemini",
+        "postgres-chat",
+        "supabase"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger+subworkflow-call+agent-tool-loop+conversation-state",
+      "compileVerdict": "unsupported",
+      "reasons": [
+        {
+          "code": "subworkflow-call",
+          "steps": [
+            "Call Get Repo File Content Tool",
+            "Call Get Repo Structure Tool"
+          ]
+        },
+        {
+          "code": "agent-tool-loop",
+          "steps": [
+            "AI Agent"
+          ]
+        },
+        {
+          "code": "conversation-state",
+          "steps": [
+            "Postgres Chat Memory"
+          ]
+        },
+        {
+          "code": "n8n-expression",
+          "steps": [
+            "Prep Output Fields",
+            "HTTP Request",
+            "HTTP Request1",
+            "Add AI Message to DB",
+            "Add AI Message to DB1"
+          ]
+        },
+        {
+          "code": "n8n-code",
+          "steps": [
+            "Code",
+            "Code1"
+          ]
+        },
+        {
+          "code": "condition-expression",
+          "steps": [
+            "Switch"
+          ]
+        }
+      ],
+      "needsCapabilities": [
+        "n8n.set (none)"
+      ],
+      "hostBindings": [
+        "manual",
+        "webhook"
+      ],
+      "sourceModels": [],
+      "loweredHash": null,
+      "loweredSteps": 0,
+      "validation": null,
+      "wrap": {
+        "via": "webhook",
+        "typedInput": false,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/local-ai-packaged/n8n-tool-workflows/Summarize_Slack_Conversation.json",
+      "license": "Apache-2.0",
+      "sha256": "5cd414859b89ebeb5f5e0f396d7c5d3fb078a59e42ce78239de8b52bcfe5be7e",
+      "name": "Summarize Slack Conversation",
+      "nodes": 6,
+      "connectors": [
+        "open-ai",
+        "slack"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger",
+      "compileVerdict": "lowered",
+      "reasons": [],
+      "needsCapabilities": [
+        "n8n.slack.channel-history (non-idempotent)",
+        "n8n.aggregate (none)"
+      ],
+      "hostBindings": [
+        "webhook"
+      ],
+      "sourceModels": [
+        {
+          "step": "Basic LLM Chain",
+          "original": "@n8n/n8n-nodes-langchain.lmChatOpenAi \"gpt-4o-mini\"",
+          "mappedTo": "class M (owner policy)"
+        }
+      ],
+      "loweredHash": "fe38aba8e86ce4b23453370a8bbeffff5c8ca84769df8077bd541b0129398d07",
+      "loweredSteps": 4,
+      "validation": {
+        "valid": true,
+        "warnings": []
+      },
+      "wrap": {
+        "via": "webhook",
+        "typedInput": false,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/n8n-mcp-agent/MCP_Agent_Demo.json",
+      "license": "MIT",
+      "sha256": "38de069fe34e477e6f86ec520b4ec22279f48fa1019a6fe9256496a5ca61b9f3",
+      "name": "MCP Agent Demo",
+      "nodes": 8,
+      "connectors": [
+        "community:mcp",
+        "open-ai",
+        "postgres-chat"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger+chat-session+agent-tool-loop+conversation-state",
+      "compileVerdict": "unsupported",
+      "reasons": [
+        {
+          "code": "chat-session",
+          "steps": [
+            "When chat message received"
+          ]
+        },
+        {
+          "code": "agent-tool-loop",
+          "steps": [
+            "AI Agent"
+          ]
+        },
+        {
+          "code": "conversation-state",
+          "steps": [
+            "Postgres Chat Memory"
+          ]
+        }
+      ],
+      "needsCapabilities": [],
+      "hostBindings": [
+        "chat"
+      ],
+      "sourceModels": [],
+      "loweredHash": null,
+      "loweredSteps": 0,
+      "validation": null,
+      "wrap": {
+        "via": "n8n-chat-webhook",
+        "typedInput": true,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/advanced-web-researcher/Advanced_Web_Researcher.json",
+      "license": "MIT",
+      "sha256": "96c345b52400e63f3e50ec352ba73c8d7b7466f09cb81179221e7b4d3a4b8d8e",
+      "name": "Advanced Web Researcher",
+      "nodes": 13,
+      "connectors": [
+        "open-ai",
+        "postgres-chat",
+        "supabase"
+      ],
+      "declaredVerdict": "via-extension:webhook-trigger+subworkflow-call+agent-tool-loop+conversation-state",
+      "compileVerdict": "unsupported",
+      "reasons": [
+        {
+          "code": "subworkflow-call",
+          "steps": [
+            "Call n8n Workflow Tool"
+          ]
+        },
+        {
+          "code": "agent-tool-loop",
+          "steps": [
+            "AI Agent"
+          ]
+        },
+        {
+          "code": "conversation-state",
+          "steps": [
+            "Postgres Chat Memory"
+          ]
+        },
+        {
+          "code": "n8n-expression",
+          "steps": [
+            "Add AI Message to DB",
+            "HTTP Request",
+            "Add AI Message to DB1",
+            "HTTP Request1",
+            "Edit Fields1"
+          ]
+        }
+      ],
+      "needsCapabilities": [
+        "n8n.set (none)"
+      ],
+      "hostBindings": [
+        "manual",
+        "webhook"
+      ],
+      "sourceModels": [],
+      "loweredHash": null,
+      "loweredSteps": 0,
+      "validation": null,
+      "wrap": {
+        "via": "webhook",
+        "typedInput": false,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    },
+    {
+      "id": "n8n-permissive:coleam00/ottomator-agents/n8n_knowledge_graph_rag/RAG_AI_Agent_Template_V5.json",
+      "license": "MIT",
+      "sha256": "5805ec9ffdd414c0994cd2c735fc612684c4a322944ab1b5fc346208c3aa83c1",
+      "name": "RAG AI Agent Template V5",
+      "nodes": 50,
+      "connectors": [
+        "cohere",
+        "community:mcp",
+        "google-drive",
+        "open-ai",
+        "pgvector",
+        "postgres",
+        "postgres-chat"
+      ],
+      "declaredVerdict": "via-extension:schedule-trigger+webhook-trigger+event-trigger+chat-session+agent-tool-loop+conversation-state+unstructured-cycle",
+      "compileVerdict": "unsupported",
+      "reasons": [
+        {
+          "code": "chat-session",
+          "steps": [
+            "When chat message received"
+          ]
+        },
+        {
+          "code": "agent-tool-loop",
+          "steps": [
+            "RAG AI Agent"
+          ]
+        },
+        {
+          "code": "conversation-state",
+          "steps": [
+            "Postgres Chat Memory"
+          ]
+        },
+        {
+          "code": "unstructured-cycle",
+          "steps": [
+            "(cycle)"
+          ]
+        },
+        {
+          "code": "n8n-expression",
+          "steps": [
+            "Download File",
+            "Edit Fields",
+            "Set Schema",
+            "Insert Document Metadata",
+            "Insert Table Rows",
+            "Update Schema for Document Metadata",
+            "Delete Old Doc Rows",
+            "Delete Old Data Rows1",
+            "Delete Old Doc Rows1"
+          ]
+        },
+        {
+          "code": "condition-expression",
+          "steps": [
+            "Switch",
+            "Has Files to Delete?",
+            "Exists in DB?"
+          ]
+        },
+        {
+          "code": "batch-loop",
+          "steps": [
+            "Loop Over Items"
+          ]
+        },
+        {
+          "code": "n8n-code",
+          "steps": [
+            "Parse Trashed Files",
+            "LangChain Code"
+          ]
+        },
+        {
+          "code": "community-node",
+          "steps": [
+            "MCP Client - Add to Knowledge Graph"
+          ]
+        }
+      ],
+      "needsCapabilities": [
+        "n8n.extract-from-file.text (none)",
+        "n8n.set (none)",
+        "n8n.extract-from-file.pdf (none)",
+        "n8n.aggregate (none)",
+        "n8n.summarize (none)",
+        "n8n.extract-from-file.xlsx (none)",
+        "n8n.extract-from-file (none)",
+        "n8n.postgres.execute-query (non-idempotent)",
+        "n8n.pgvector.mode-insert (non-idempotent)",
+        "n8n.http-request.get (none)"
+      ],
+      "hostBindings": [
+        "event",
+        "event",
+        "chat",
+        "webhook",
+        "schedule"
+      ],
+      "sourceModels": [],
+      "loweredHash": null,
+      "loweredSteps": 0,
+      "validation": null,
+      "wrap": {
+        "via": "webhook",
+        "typedInput": true,
+        "effects": "non-idempotent",
+        "asksFirst": true
+      },
+      "executed": false
+    }
+  ]
+}

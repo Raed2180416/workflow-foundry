@@ -33,10 +33,9 @@
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { rmSync, writeFileSync } from 'node:fs';
-import http from 'node:http';
-import https from 'node:https';
 import path from 'node:path';
 import { FoundryError } from '../data.mjs';
+import { COOLDOWN, DEFAULT_REQUEST_TIMEOUT_MS, DEFAULT_RETRY, LIMITED, chatCompletion, chatEndpoint, classifyHttp, redact } from '../models/openai-chat-client.mjs';
 import { REMOTE_CHAT_KIND, executorModelById, loadPolicy, sessionModelById } from '../models/policy.mjs';
 import { CLOUD_LOGIN_FILE, DEFAULT_HIDDEN, DEFAULT_KEEP_RO, SANDBOX_READY, UNSHARE_ARGS, executorEnv, maskSteps, materialize, runClaudeCode, sandboxAvailable, sandboxScript } from './claude-code.mjs';
 
@@ -58,18 +57,10 @@ export const TOOL_OUTPUT_MAX_CHARS = 30_000;
 export const DEFAULT_TOKEN_BUDGET = 400_000;
 /** Characters per token for the pre-request projection: conservative (JSON and code run nearer 3 than 4). */
 export const CHARS_PER_TOKEN = 3;
-// Per-minute rate limits are the binding constraint on a free tier (measured 2026-10-21: HTTP 429 "too many requests per
-// minute" / "input token limit exceeded" with two sessions beside another run on the same key), so a session waits them out
-// for about four minutes (5, 10, 20, 40, 60, 60, 60 s) before it reports MODEL_RATE_LIMIT, which stops an AutomationBench run.
-export const DEFAULT_RETRY = Object.freeze({ attempts: 8, baseDelayMs: 5_000, maxDelayMs: 60_000 });
-// A rate-limited endpoint cools down for every session of this process, not only the one that saw the 429: concurrent sessions
-// wait out the same window instead of spending their retries on it. Keyed by endpoint origin; exported for tests.
-export const COOLDOWN = new Map();
-export const DEFAULT_REQUEST_TIMEOUT_MS = 300_000;
+// The HTTP client (retries, the process-wide rate-limit cooldown, redaction, error classes) is shared with the ModelPort
+// provider: src/models/openai-chat-client.mjs. Re-exported here for callers and tests that import them from the executor.
+export { COOLDOWN, DEFAULT_REQUEST_TIMEOUT_MS, DEFAULT_RETRY, classifyHttp, redact };
 const PROXY_VARS = ['HTTPS_PROXY', 'https_proxy', 'NO_PROXY', 'no_proxy'];
-const LIMITED = /rate.?limit|overloaded|usage limit|quota|limit reached|insufficient.?(?:credit|balance|funds)/i;
-const LOOPBACK = /^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d{1,5})?(\/[^\s?#]*)?$/;
-const HTTPS = /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/;
 
 // --- tools ---------------------------------------------------------------------------------------------------------------
 const str = description => ({ type: 'string', description });
@@ -273,46 +264,7 @@ export class SandboxSession {
 }
 
 // --- the endpoint ------------------------------------------------------------------------------------------------------
-/** Replace every occurrence of the credential (and any bearer token) in text that may reach a log or a result. */
-export const redact = (text, secret) => {
-  let s = String(text ?? '');
-  if (typeof secret === 'string' && secret.length >= 4) s = s.split(secret).join('[redacted]');
-  return s.replace(/(bearer\s+)[^\s"',;]+/gi, '$1[redacted]').replace(/("?authorization"?\s*[:=]\s*"?)[^"\n]+/gi, '$1[redacted]');
-};
-
-/** POST JSON; resolves { status, headers, text } or rejects with the transport error. https goes through the host's
- * HTTPS_PROXY when one is set (the cloud's egress), plain http only to loopback (tests). */
-function postJson(url, body, { headers, timeoutMs, signal, hostEnv }) {
-  const u = new URL(url);
-  const secure = u.protocol === 'https:';
-  const proxyEnv = Object.fromEntries(PROXY_VARS.filter(k => typeof hostEnv[k] === 'string').map(k => [k, hostEnv[k]]));
-  const agent = secure ? new https.Agent({ keepAlive: false, ...(Object.keys(proxyEnv).length ? { proxyEnv } : {}) }) : new http.Agent({ keepAlive: false });
-  const data = Buffer.from(JSON.stringify(body));
-  return new Promise((resolve, reject) => {
-    const req = (secure ? https : http).request(u, { method: 'POST', agent, signal, headers: { 'content-type': 'application/json', accept: 'application/json', 'content-length': data.length, ...headers } }, res => {
-      const chunks = [];
-      res.on('data', c => chunks.push(c));
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, text: Buffer.concat(chunks).toString('utf8') }));
-      res.on('error', reject);
-    });
-    req.setTimeout(timeoutMs, () => req.destroy(Object.assign(new Error(`no response within ${Math.round(timeoutMs / 1000)} s`), { code: 'ETIMEDOUT' })));
-    req.on('error', reject);
-    req.end(data);
-  });
-}
-
 class SessionStop extends Error { constructor(code, message, subtype = 'error_during_execution') { super(message); this.code = code; this.subtype = subtype; } }
-const sleep = (ms, signal) => new Promise(resolve => { const t = setTimeout(resolve, ms); signal?.addEventListener('abort', () => { clearTimeout(t); resolve(); }, { once: true }); });
-
-/** Classify one failed attempt: { code, retry }. */
-export function classifyHttp({ status = null, text = '', transportError = null }) {
-  if (transportError) return { code: 'MODEL_UNAVAILABLE', retry: true };
-  if (status === 429 || status === 529) return { code: 'MODEL_RATE_LIMIT', retry: true };
-  if (status >= 500 || status === 408) return { code: 'MODEL_UNAVAILABLE', retry: true };
-  if (LIMITED.test(text)) return { code: 'MODEL_RATE_LIMIT', retry: false };
-  if (status === 401 || status === 403) return { code: 'MODEL_UNAVAILABLE', retry: false };
-  return { code: 'EXECUTOR_ERROR', retry: false };
-}
 
 const usageOf = u => ({
   input: Number(u?.prompt_tokens ?? u?.input_tokens ?? 0) || 0, output: Number(u?.completion_tokens ?? u?.output_tokens ?? 0) || 0,
@@ -354,9 +306,7 @@ export async function runOpenAIChat({
   if (effort !== null && !EFFORTS.includes(effort)) throw new FoundryError('EXECUTOR_EFFORT', `effort ${effort} has no counterpart on this endpoint (reasoning_effort ${EFFORTS.join('|')})`);
   if (maxTurns !== null && !(Number.isInteger(maxTurns) && maxTurns >= 1)) throw new FoundryError('EXECUTOR_OPTION', 'maxTurns must be a positive integer or null');
   if (tokenBudget !== null && !(Number.isInteger(tokenBudget) && tokenBudget >= 1)) throw new FoundryError('EXECUTOR_OPTION', 'tokenBudget must be a positive integer or null');
-  if (baseUrl !== null && !LOOPBACK.test(baseUrl)) throw new FoundryError('EXECUTOR_OPTION', 'a baseUrl override must be plain http on loopback (tests only); remote endpoints come from the policy');
-  const endpoint = `${(baseUrl ?? provider.baseUrl).replace(/\/+$/, '')}/chat/completions`;
-  if (!(baseUrl ? LOOPBACK : HTTPS).test(endpoint)) throw new FoundryError('EXECUTOR_OPTION', `endpoint ${endpoint} is not https`);
+  const endpoint = chatEndpoint(provider, baseUrl);
   const toolList = [...new Set(tools ?? [])];
   const credentialEnv = provider.credentialEnv;
   // The sandbox environment: the claude executor's allow-list (and its extraEnv refusals), minus the CLI login and, without
@@ -392,39 +342,20 @@ export async function runOpenAIChat({
     p.then(v => { controller.signal.removeEventListener('abort', on); resolve(v); }, e => { controller.signal.removeEventListener('abort', on); reject(e); });
   });
 
-  // One chat.completions call with bounded retries. Returns the parsed body; throws SessionStop.
+  // One chat.completions call with bounded retries (openai-chat-client.mjs). Returns the parsed body; throws SessionStop.
   const complete = async messages => {
     const body = { model, messages, ...(toolList.length ? { tools: toolDefinitions(toolList), tool_choice: 'auto' } : {}), ...requestDefaults, ...(effort ? { reasoning_effort: effort } : {}) };
-    const origin = new URL(endpoint).origin;
-    for (let attempt = 1; ; attempt++) {
+    try {
+      const r = await chatCompletion({ endpoint, body, hostEnv, credentialEnv, retry, requestTimeoutMs, signal: controller.signal, deadline: started + timeoutMs,
+        onRequest: () => { requests += 1; inFlight = true; }, onResponse: () => { inFlight = false; },
+        onEvent: e => events.push({ ...e, session_id: sessionId, timestamp: ts() }) });
+      retries += r.retries;
+      return r.data;
+    } catch (e) {
       if (aborted()) throw aborted();
-      const cool = (COOLDOWN.get(origin) ?? 0) - Date.now();
-      if (cool > 0) {
-        if (cool >= started + timeoutMs - Date.now()) throw new SessionStop('MODEL_RATE_LIMIT', `the endpoint is cooling down for ${Math.round(cool / 1000)} s after a rate limit, past this session's time`);
-        events.push({ type: 'system', subtype: 'rate_limit_wait', session_id: sessionId, timestamp: ts(), waitMs: cool });
-        await sleep(cool, controller.signal);
-        if (aborted()) throw aborted();
-      }
-      const key = hostEnv[credentialEnv];   // read at call time, never cached
-      if (typeof key !== 'string' || !key) throw new SessionStop('MODEL_UNAVAILABLE', `no credential: the environment variable ${credentialEnv} is not set`);
-      let res = null, transportError = null;
-      requests += 1; inFlight = true;
-      try { res = await postJson(endpoint, body, { headers: { authorization: `Bearer ${key}` }, timeoutMs: requestTimeoutMs, signal: controller.signal, hostEnv }); }
-      catch (e) { if (aborted()) throw aborted(); transportError = e; }
-      inFlight = false;
-      if (res && res.status >= 200 && res.status < 300) {
-        try { return JSON.parse(res.text); } catch { throw new SessionStop('EXECUTOR_PROTOCOL', `the endpoint answered ${res.status} with a body that is not JSON: ${redact(res.text.slice(0, 300), key)}`); }
-      }
-      const { code, retry: again } = classifyHttp({ status: res?.status ?? null, text: res?.text ?? '', transportError });
-      const detail = res ? `HTTP ${res.status}: ${redact(res.text.slice(0, 500), key)}` : `${transportError?.code ?? 'transport error'}: ${redact(transportError?.message ?? transportError, key).slice(0, 300)}`;
-      const retryAfter = Number(res?.headers?.['retry-after']);
-      const delay = Math.round(Math.min(retry.maxDelayMs, Number.isFinite(retryAfter) && retryAfter >= 0 ? retryAfter * 1000 : retry.baseDelayMs * 2 ** (attempt - 1)) * (1 + Math.random() * 0.1));
-      if (code === 'MODEL_RATE_LIMIT' && again) COOLDOWN.set(origin, Math.max(COOLDOWN.get(origin) ?? 0, Date.now() + delay));
-      const room = started + timeoutMs - Date.now();
-      events.push({ type: 'system', subtype: 'api_error', session_id: sessionId, timestamp: ts(), attempt, status: res?.status ?? null, code, retry: again && attempt < retry.attempts && delay < room, delayMs: delay, detail });
-      if (!again || attempt >= retry.attempts || delay >= room) throw new SessionStop(code, `${detail} (attempt ${attempt} of ${retry.attempts})`);
-      retries += 1;
-      await sleep(delay, controller.signal);
+      if (e instanceof SessionStop) throw e;
+      retries += e.retries ?? 0;
+      throw new SessionStop(e.code ?? 'EXECUTOR_ERROR', String(e.message ?? e));
     }
   };
 

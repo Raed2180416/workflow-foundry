@@ -3,29 +3,36 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
-import { loadPolicy, validatePolicy, policyHash } from '../../src/models/policy.mjs';
+import { loadPolicy, validatePolicy, policyHash, REMOTE_CHAT_KIND } from '../../src/models/policy.mjs';
 import { ModelPort } from '../../src/models/port.mjs';
 import { Journal } from '../../src/journal.mjs';
 import { ClaudeCliProvider } from '../../src/models/providers/claude-cli.mjs';
 import { LlamaServerProvider } from '../../src/models/providers/llama-server.mjs';
+import { OpenAIChatProvider } from '../../src/models/providers/openai-chat.mjs';
 
 const freeze = v => { if (v && typeof v === 'object') { for (const child of Object.values(v)) freeze(child); Object.freeze(v); } return v; };
 // A subset of the owner policy: only the listed ids (each must be in the owner policy) and only their providers.
 // Classes keep the owner's order; a class left without a model fails validation with MODEL_CLASS_EMPTY.
 export function subsetPolicy(owner, ids) {
   if (!Array.isArray(ids) || !ids.length || ids.some(id => typeof id !== 'string')) throw new Error('subsetPolicy needs a non-empty list of model ids');
-  const missing = ids.filter(id => !owner.models.some(m => m.id === id));
+  const execs = (owner.executorModels ?? []).filter(m => ids.includes(m.id));
+  const missing = ids.filter(id => !owner.models.some(m => m.id === id) && !execs.some(m => m.id === id));
   if (missing.length) throw new Error(`model ids not in the owner policy: ${missing.join(', ')}`);
-  const models = owner.models.filter(m => ids.includes(m.id)), used = new Set(models.map(m => m.provider));
+  const models = owner.models.filter(m => ids.includes(m.id)), used = new Set([...models, ...execs].map(m => m.provider));
   // A session subset holds generative models only: judgment models (judgmentModels, System One; added 2026-10-09 for hosted Jev)
-  // never enter a ModelPort, and their providers are not kept, so they are left out with them. So are executor models
-  // (executorModels, remote chat endpoints driven as executor sessions; added 2026-10-21 for Mercury), for the same reason.
+  // never enter a ModelPort, and their providers are not kept, so they are left out with them. Executor models (executorModels,
+  // remote chat endpoints; added 2026-10-21 for Mercury) stay only when listed by id, with their provider: ModelPort serves
+  // one only when a call names it (policy.mjs portModelById). A subset that lists none is unchanged from before.
   const { judgmentModels: _judgment, executorModels: _executor, ...generative } = owner;
   return freeze(validatePolicy(structuredClone({ ...generative, policyVersion: `${owner.policyVersion}+only:${[...ids].sort().join(',')}`, models,
-    providers: Object.fromEntries(Object.entries(owner.providers).filter(([n]) => used.has(n))) })));
+    ...(execs.length ? { executorModels: execs } : {}), providers: Object.fromEntries(Object.entries(owner.providers).filter(([n]) => used.has(n))) })));
 }
 
-export function createModelPort({ journalFile, mode = 'live', salt = null, concurrency = {}, maxBudgetUsdPerCall = 1, allowedModels = null, timeoutMs = undefined } = {}) {
+// tokenCap / callTokens: the per-run and per-call token caps of a remote chat provider (providers/openai-chat.mjs). It is
+// registered only when allowedModels names one of its executor models, and then tokenCap is required (a $0 model has no
+// other spend bound); with no allowedModels (the owner policy) no remote provider is registered.
+export function createModelPort({ journalFile, mode = 'live', salt = null, concurrency = {}, maxBudgetUsdPerCall = 1, allowedModels = null, timeoutMs = undefined,
+  tokenCap = null, callTokens = undefined, hostEnv = process.env } = {}) {
   const owner = loadPolicy();
   const policy = allowedModels ? subsetPolicy(owner.policy, allowedModels) : owner.policy, hash = policyHash(policy);
   mkdirSync(path.dirname(journalFile), { recursive: true });
@@ -37,7 +44,14 @@ export function createModelPort({ journalFile, mode = 'live', salt = null, concu
   // timeoutMs: the per-call wall limit (the provider's default, 300 s, when omitted; M1-R re-runs timeouts at 600 s).
   if (policy.providers['claude-cli']) providers['claude-cli'] = new ClaudeCliProvider({ policy, maxBudgetUsd: maxBudgetUsdPerCall, ...(timeoutMs ? { timeoutMs } : {}) });
   if (policy.providers['llama-server']) providers['llama-server'] = new LlamaServerProvider({ policy });
+  for (const [name, config] of Object.entries(policy.providers)) {
+    if (config.kind !== REMOTE_CHAT_KIND || !allowedModels || !(policy.executorModels ?? []).some(m => m.provider === name)) continue;
+    if (!(Number.isInteger(tokenCap) && tokenCap > 0)) throw new Error(`createModelPort: ${(policy.executorModels ?? []).filter(m => m.provider === name).map(m => m.id).join(', ')} need tokenCap (a hard per-run token cap): a $0 model has no other spend bound`);
+    providers[name] = new OpenAIChatProvider({ policy, providerName: name, runTokenCap: tokenCap, hostEnv, ...(callTokens ? { callTokens } : {}) });
+  }
   // The port enforces its own deadline (300 s default) and passes it to the provider, so the wall limit is set here too.
   const port = new ModelPort({ policy, providers, journal, mode, salt, concurrency, ...(timeoutMs ? { timeoutMs } : {}) });
-  return { port, policy, policyHash: hash, ownerPolicyHash: owner.hash, journal, db };
+  // tokens(): each remote provider's token meter ({cap, callCap, spent, reserved, calls, refused, unknown}), for run summaries.
+  const tokens = () => Object.fromEntries(Object.entries(providers).filter(([, p]) => p instanceof OpenAIChatProvider).map(([n, p]) => [n, { ...p.tokens }]));
+  return { port, policy, policyHash: hash, ownerPolicyHash: owner.hash, journal, db, tokens };
 }

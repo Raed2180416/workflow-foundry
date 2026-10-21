@@ -55,6 +55,12 @@ export class Ledger {
       const u = (this.usage ??= { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 0 });
       for (const k of ['inputTokens', 'outputTokens', 'cacheReadTokens', 'cacheWriteTokens']) u[k] += Number.isFinite(r.usage[k]) ? r.usage[k] : 0;
       u.calls++;
+      // 2026-10-21 (research/mercury-20261021/): per model, so a run that mixes a $0 remote model with priced ones shows each one's tokens.
+      if (typeof r.modelId === 'string') {
+        const m = ((this.usageByModel ??= {})[r.modelId] ??= { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 0 });
+        for (const k of ['inputTokens', 'outputTokens', 'cacheReadTokens', 'cacheWriteTokens']) m[k] += Number.isFinite(r.usage[k]) ? r.usage[k] : 0;
+        m.calls++;
+      }
     }
     if (r.costUnknown === true) { this.unknownCalls++; this.unknownUpperUsd = this.unknownUpperUsd === null || typeof r.costUpperUsd !== 'number' ? null : this.unknownUpperUsd + r.costUpperUsd; }
   }

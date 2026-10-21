@@ -340,7 +340,7 @@ async function runOnce({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs =
       ...(typeof totals?.childCalls === 'number' ? { childCalls: totals.childCalls } : {}), ...(flowScope ? { flowScope } : {}),
       ...(resume ? { resume: { rows: port.rows(), stats: port.stats() } } : {}),
       // Slice 2b (6b): token usage and the prompt-cache read share, when the port reported usage (absent otherwise).
-      ...(ledger.usage ? { usage: { ...ledger.usage, cacheReadShare: ledger.cacheReadShare() } } : {}) },
+      ...(ledger.usage ? { usage: { ...ledger.usage, cacheReadShare: ledger.cacheReadShare() } } : {}), ...(ledger.usageByModel ? { usageByModel: ledger.usageByModel } : {}) },
   };
 }
 // This run's share of a (possibly shared) memo port's counters.
