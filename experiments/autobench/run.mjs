@@ -28,6 +28,7 @@
 //                    --session-tokens is then the task's pool for all its remote calls, the only tokens the meter books)
 //   --harness codeowned [--node-models role=model,...] (arm A1-C: harness/codeowned.mjs, the host-run pipeline; every model
 //                                                        call of the pipeline counts toward the 50 responses; --scripted stub = $0)
+//   --harness codeowned-v2 (arm A1-C v2, harness version a1c-v2: harness/v2/codeowned.mjs, single pass; --scripted stub = $0)
 //   --harness secondreader [--node-models role=model,...] (arm A0+SR: harness/secondreader.mjs, A0 unchanged + one clean-context
 //                                                        reader call + at most one repair session; same accounting; --scripted stub = $0)
 // Every fork is audited host-side after its session (accounting.mjs): model responses as the official loop counts them,
@@ -70,8 +71,8 @@ export const TEST_RUN_TOKEN = 'AB-v1';
 /** Arm A1-C's harness id (harness/codeowned.mjs, loaded only when selected). */
 export const CODEOWNED = 'codeowned';
 /** Host-run pipeline harnesses (every model call is a node; loaded only when selected) and their $0 stand-ins. */
-export const PIPELINE_HARNESSES = Object.freeze({ [CODEOWNED]: './harness/codeowned.mjs', secondreader: './harness/secondreader.mjs' });
-export const PIPELINE_STUBS = Object.freeze({ [CODEOWNED]: './harness/codeowned-stubs.mjs', secondreader: './harness/secondreader-stubs.mjs' });
+export const PIPELINE_HARNESSES = Object.freeze({ [CODEOWNED]: './harness/codeowned.mjs', 'codeowned-v2': './harness/v2/codeowned.mjs', secondreader: './harness/secondreader.mjs' });
+export const PIPELINE_STUBS = Object.freeze({ [CODEOWNED]: './harness/codeowned-stubs.mjs', 'codeowned-v2': './harness/v2/codeowned-stubs.mjs', secondreader: './harness/secondreader-stubs.mjs' });
 
 /** The cost- and prompt-relevant variables the CLI child inherits (the policy's closed childEnv list): name -> value or
  * null. The executor passes these through from the host shell, so they are recorded per run. */
