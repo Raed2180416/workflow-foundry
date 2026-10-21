@@ -1210,6 +1210,8 @@ class Gen:
                     emp, f, spec = rc["emp"], dict(rc["facts"]), rc["spec"]
                     text, files = self.render_repost(rc, at, p["sub"])
                     labels.append(p["sub"])
+                    if p["sub"] in ("repost-rel", "repost-rel-rev"):
+                        labels.append("repost-relative")   # each message read relative to its own posting date
                 msg = {"ts": ts, "channel_id": self.chan[CHAN], "user_id": emp["slack_id"], "text": text,
                        "attachments": files, "is_bot": False, "created_at": naive(at)}
                 delta.append({"op": "insert", "app": "slack", "collection": "messages", "record": msg})
@@ -1618,6 +1620,10 @@ class Gen:
             raise RuntimeError(f"{tid}: a planned repost is not one")
         other = self.cap_other(emp["name"], f["date"], None) if individual(f) else Decimal("0")
         status, reason, rule = decide(f, other)
+        want = {"fixable-meal": APPROVED, "cap-after": APPROVED, "fixable-big": APPROVED, "fixable-team": APPROVED,
+                "rel-base": APPROVED, "rev-base": APPROVED, "pending-fixable": PENDING}.get(p.get("intent"))
+        if want and status != want:
+            raise RuntimeError(f"{tid}: planned {p.get('intent')} came out {status} ({reason})")
         self.receipt_labels(f, spec, emp, status, reason, other, labels)
         text = reply_text(status, reason, f)
         row = None
@@ -1655,6 +1661,16 @@ class Gen:
                          and self.receipts.get(row["cells"]["Message TS"], {}).get("history")]
             if hist_rows:
                 labels.append("cap-history")
+        if individual(f) and status:
+            # a Rejected row of the same day (a correction rejected it): the cap must not count it
+            rej = sum((Decimal(row["cells"]["Amount"]) for row in self.rows
+                       if row["cells"]["Employee"] == emp["name"] and row["cells"]["Category"] == "Meals"
+                       and row["cells"]["Date"] == f["date"].isoformat() and row["cells"]["Attendees"] == "1"
+                       and row["cells"]["Status"] == REJECTED), Decimal("0"))
+            if rej and other + rej + f["amount"] > LIMITS["cap"]:
+                labels.append("cap-rejected-row")
+        if spec.get("biz") and f["flight"] is not None and f["flight"]["hours"] <= LIMITS["flight_hours"]:
+            labels.append("cabin-lookalike")
         if status and emp["slack_name"] != emp["name"]:
             labels.append("display-name")
         if status == PENDING:
@@ -1683,14 +1699,38 @@ class Gen:
             return
         cur = dict(rc["cur"])
         cur.update(p["new"])
-        if "category" in p["new"] and cur["category"] != "Meals":
-            cur["attendees"] = None
+        if "category" in p["new"]:
+            if cur["category"] != "Meals":
+                cur["attendees"] = None
+            # re-read as if posted with this category: hotel and flight facts exist for a Travel receipt only
+            travel = cur["category"] == "Travel"
+            cur["hotel"] = rc["spec"].get("true_hotel") if travel else None
+            cur["flight"] = rc["spec"].get("true_flight") if travel else None
         rc["cur"] = cur
         emp = rc["emp"]
         other = self.cap_other(emp["name"], cur["date"], rc["ts"]) if individual(cur) else Decimal("0")
         status, reason, rule = decide(cur, other)
+        raw = status
         if status == PENDING and rc["preapproved"]:
             status = APPROVED
+        # what this re-check depends on (labels for the trap catalogue and the one-defect controls)
+        if status != APPROVED:
+            labels.append("correction-recheck")         # blindly logging the corrected values would be wrong
+        if raw == PENDING and rc["preapproved"]:
+            labels.append("correction-preapproved")     # the earlier pre-approval still counts
+        if raw == PENDING and not rc["preapproved"] and rc.get("early_approval"):
+            labels.append("correction-early-approval")  # a 'pre-approved' given while the row was not pending
+        if rc.get("n_corr"):
+            labels.append("correction-multi")           # an earlier correction in the thread still applies
+        rc["n_corr"] = rc.get("n_corr", 0) + 1
+        own = rc["row"]["cells"] if rc["row"] is not None else None
+        if individual(cur) and own and own["Category"] == "Meals" and own["Attendees"] == "1" \
+                and own["Date"] == cur["date"].isoformat() and own["Status"] != REJECTED:
+            if decide(cur, other + Decimal(own["Amount"]))[0] != raw:
+                labels.append("correction-own-row")     # the cap counts the other rows, not this receipt's own
+        if "category" in p["new"] and (cur["hotel"] or cur["flight"]):
+            if decide(dict(cur, hotel=None, flight=None), other)[:2] != (raw, reason):
+                labels.append("correction-travel-facts")
         if rc["row"] is not None:
             row = rc["row"]
             new = dict(row["cells"])
@@ -1720,9 +1760,12 @@ class Gen:
 
     def handle_approval(self, tr: dict, rc: dict, poster: dict, p: dict, labels: list[str]):
         mgr = self.manager_of(rc["emp"])
-        ok_text = p["sub"] in ("approve", "again")
+        ok_text = p["sub"] in ("approve", "again", "not-pending")
         row = rc["row"]
-        if not (ok_text and poster is mgr and row is not None and row["cells"]["Status"] == PENDING):
+        pending = row is not None and row["cells"]["Status"] == PENDING
+        if ok_text and poster is mgr and not pending:
+            rc["early_approval"] = True      # the manager's 'pre-approved' on a row that is not pending: never counts
+        if not (ok_text and poster is mgr and pending):
             return
         new = dict(row["cells"], Status=APPROVED)
         row["cells"] = new
@@ -1852,6 +1895,12 @@ TRAP_KIND = {"synonym": "T-format", "words-amount": "T-format", "currency-format
              "meal-cap": "T-state", "cap-history": "T-state", "cap-under": "T-state", "correction": "T-state",
              "correction-fix": "T-state", "approval": "T-state", "approval-history": "T-state",
              "pending-at-close": "T-state", "approved-last-week": "T-state", "corrected-total": "T-state",
+             "repost-rel": "T-repeat", "repost-rel-rev": "T-repeat", "repost-terse": "T-repeat",
+             "repost-relative": "T-repeat", "near-dup-relative": "T-repeat", "approval-not-pending": "T-repeat",
+             "correction-recheck": "T-state", "correction-own-row": "T-state", "correction-preapproved": "T-state",
+             "correction-early-approval": "T-state", "correction-multi": "T-state",
+             "correction-travel-facts": "T-state", "cap-rejected-row": "T-state", "total-rejected-row": "T-state",
+             "correction-relative-date": "T-format", "cabin-lookalike": "T-format",
              "pending": "context", "team-meal": "context", "week-total": "context", "rule-category": "context", "rule-receipt": "context", "rule-meal": "context",
              "rule-hotel": "context", "rule-flight": "context"}
 # Labels that are context rather than a trap the trigger must resolve (they do not count toward the trap share).
