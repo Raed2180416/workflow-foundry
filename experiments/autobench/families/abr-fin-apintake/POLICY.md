@@ -181,7 +181,8 @@ whose invoice is not logged yet, or whose row's Match is no longer `Awaiting Rec
   1. create a QuickBooks bill payment to that vendor for the row's Amount, linked to the invoice's bill (the bill with
      that vendor and DocNumber = the Invoice #);
   2. email the vendor (its QuickBooks PrimaryEmailAddr, which need not be the address its invoices come from) with
-     subject `Payment processing for <Invoice #>` and a body naming the Invoice # and the amount (`$4,750.00`);
+     subject `Payment processing for <Invoice #>` and a body naming the Invoice # and the amount (`$4,750.00`), and
+     no other amount;
   3. set the row's Status to `Processing`.
 
   Nothing else is paid: not a row awaiting approval, not a row with any other Match, not a blocked vendor's row.
@@ -196,7 +197,9 @@ whose invoice is not logged yet, or whose row's Match is no longer `Awaiting Rec
 
 ## 11. Always
 
-- Do nothing this policy does not ask for: no other emails, posts, sheet edits, bills or payments.
+- Do nothing this policy does not ask for: no other emails, posts, sheet edits, bills or payments. Marking mail read
+  or adding a label to it is fine; never trash mail, mark it as spam, archive it, or add or remove its `SENT` or
+  `INBOX` label.
 - Never edit a Pending Invoices cell this policy does not name, and never delete or move a row.
 - When you cannot decide under this policy, post the trigger id and a reason in `#automation-review` and do nothing
   else.

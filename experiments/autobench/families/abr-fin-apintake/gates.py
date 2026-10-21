@@ -385,6 +385,9 @@ def mutants(before: dict, after: dict, truth: dict):
             wrong = _cents_str(amt.group(1), 5000)
             m("email-body-second-amount", lambda w, i=i, g=g, x=wrong: [w["gmail"]["messages"][i].__setitem__(
                 f, (g.get(f) or "") + f"\n\nAmount released: ${x}") for f in ("body_plain",)])
+            # a wrong amount in another form POLICY.md section 3 reads (USD 4800.00 for $4,750.00)
+            m("email-body-amount-usd-wrong", lambda w, i=i, g=g, a=amt.group(1), x=wrong: [w["gmail"]["messages"][i].__setitem__(
+                f, (g.get(f) or "").replace("$" + a, "USD " + x.replace(",", "")) or None) for f in ("body_plain", "body_html")])
         cnt = re.search(r"Awaiting approval: (\d+)", g.get("body_plain") or "")
         if cnt and "week close" in g["subject"]:
             # a wrong count that starts with the right one (Awaiting approval: 37 for 3)
@@ -394,6 +397,8 @@ def mutants(before: dict, after: dict, truth: dict):
             # the reply says the opposite of what POLICY.md section 5 rule 1 asks
             m("email-body-negated", lambda w, i=i, inv=inv.group(0): [w["gmail"]["messages"][i].__setitem__(f, v) for f, v in (
                 ("body_plain", f"Invoice {inv}: the vendor relationship is not suspended any more, we will process it."), ("body_html", None))])
+            m("email-body-reversed", lambda w, i=i, inv=inv.group(0): [w["gmail"]["messages"][i].__setitem__(f, v) for f, v in (
+                ("body_plain", f"Invoice {inv}: the vendor relationship is restored, previously suspended."), ("body_html", None))])
     if not mails:
         m("email-extra", lambda w: _sent(w, "ap-lead@company.example.com", "AP update", "nothing", k[0]))
     for i in posts:
@@ -461,6 +466,10 @@ def equivalents(before: dict, after: dict, truth: dict):
                 "body_plain", (g.get("body_plain") or "").replace(a, a.replace(",", "").replace("$", "USD "))))
             m("email-amount-twice", lambda w, i=i, g=g, a=amt.group(0): w["gmail"]["messages"][i].__setitem__(
                 "body_plain", (g.get("body_plain") or "") + f"\n\nAmount: {a} ({a.replace('$', '').replace(',', '')} USD)"))
+            if a_whole := re.fullmatch(r"(\$[\d,]+)\.00", amt.group(0)):
+                # whole dollars without cents ($4,750), a form POLICY.md section 3 reads
+                m("email-amount-whole-dollars", lambda w, i=i, g=g, a=amt.group(0), x=a_whole.group(1): [w["gmail"]["messages"][i].__setitem__(
+                    f, (g.get(f) or "").replace(a, x) or None) for f in ("body_plain", "body_html")])
         line = re.search(r"Logged total: .*Awaiting approval: \d+", g.get("body_plain") or "")
         if line and "week close" in g["subject"]:
             m("email-html-only-period", lambda w, i=i, ln=line.group(0): (w["gmail"]["messages"][i].__setitem__("body_plain", ""),
@@ -469,6 +478,10 @@ def equivalents(before: dict, after: dict, truth: dict):
         if "vendor relationship suspended" in g["subject"] and inv:
             m("email-suspended-reworded", lambda w, i=i, inv=inv.group(0): [w["gmail"]["messages"][i].__setitem__(f, v) for f, v in (
                 ("body_plain", f"Hello,\n\nWe have suspended the vendor relationship, so invoice {inv} will not be processed.\n\nAP"),
+                ("body_html", None))])
+            # a negation in an earlier clause does not negate `suspended`
+            m("email-suspended-after-clause", lambda w, i=i, inv=inv.group(0): [w["gmail"]["messages"][i].__setitem__(f, v) for f, v in (
+                ("body_plain", f"Invoice {inv} will not be paid; vendor relationship suspended until the block is lifted."),
                 ("body_html", None))])
     for i in bills:
         m("bill-vendor-name", lambda w, i=i: w["quickbooks"]["bills"][i].__setitem__("vendor_name", "Typed name"))

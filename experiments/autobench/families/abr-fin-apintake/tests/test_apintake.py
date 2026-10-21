@@ -344,6 +344,11 @@ def test_body_tokens_are_guarded_at_their_edges():
     assert not oracle.body_ok("Payment for X-1 ($1,500.00).", ["X-1", "500.00"])
     assert not oracle.body_ok(pay + "\nAmount released: $4,800.00", toks)                     # the right amount and a wrong one
     assert not oracle.body_ok(pay.replace("ACM-0412", "ACM-04123"), toks)
+    # any form POLICY.md section 3 reads names the amount; a bare number does not, and a wrong value in any form fails
+    for form in ("$4,750", "$4750", "USD 4,750.00", "4,750.00 USD", "$ 4,750.00"):
+        assert oracle.body_ok(pay.replace("$4,750.00", form), toks), form
+    for form in ("4750", "$14,750", "USD 14750.00", "$4,750.50", "4,750.01 USD"):
+        assert not oracle.body_ok(pay.replace("$4,750.00", form), toks), form
     assert oracle.money_mentions("Invoice Date: 2026-03-02, due March 2, 2026, Net 30, PO-2026-118, qty 12") == []
     line = "Logged total: $48,210.50; Processing total: $21,400.00; Awaiting approval: 3"
     assert oracle.body_ok(f"Hello\n{line}\nAP", [line]) and oracle.body_ok(f"<p>{line}.</p>", [line])
@@ -354,13 +359,20 @@ def test_body_tokens_are_guarded_at_their_edges():
     for neg in ("is not suspended any more, we will process it", "is no longer suspended", "is un-suspended", "isn’t suspended"):
         assert not oracle.body_ok(f"Invoice ACM-0412: the vendor relationship {neg}.", toks), neg
     assert not oracle.body_ok("Invoice ACM-0412: your account is suspended.", toks)          # POLICY.md section 5 rule 1
+    assert not oracle.body_ok("Invoice ACM-0412: the vendor relationship is restored, previously suspended.", toks)
+    # the negation window stays inside the clause of `suspended`, and only the claim token is negatable
+    assert oracle.body_ok("Invoice ACM-0412 will not be paid; vendor relationship suspended.", toks)
+    assert oracle.body_ok("Invoice ACM-0412: the vendor relationship is suspended until the block is lifted.", toks)
+    assert oracle.body_ok("No match for Acme Supplies LLC on PO-2026-118.", ["Acme Supplies LLC", "PO-2026-118"])
+    assert oracle.body_has("There is no record from Acme", "acme")
 
 
 def test_wrong_email_bodies_fail_the_oracles_own_effect_check(ref613):
     """The reviewer's probes W1-W3 as gate operators, graded WITHOUT AutomationBench's handlers: the family's own email
     check must reject them (it used to pass all of them, leaving only the ab layer)."""
     stream, befores, afters = ref613
-    ops = {"email-body-amount-prefix", "email-body-second-amount", "email-body-count-suffix", "email-body-negated"}
+    ops = {"email-body-amount-prefix", "email-body-second-amount", "email-body-count-suffix", "email-body-negated",
+           "email-body-amount-usd-wrong", "email-body-reversed"}
     seen = Counter()
     for k, (truth, before, after) in enumerate(zip(stream["truth"], befores, afters)):
         for name, w in gates.mutants(before, after, truth):

@@ -278,10 +278,13 @@ the oracle as it was before the review fixes (five of them) or pin the new host-
   case and spaces, amounts to the cent in any `$` / comma / `USD` form, dates as `YYYY-MM-DD`, Notes as a list);
   subjects exactly (whitespace collapsed); email body tokens are guarded at their edges (AutomationBench's
   `_contains_guarded` rule: `4,750.00` is not found in `$14,750.00`, nor `Awaiting approval: 3` in `...: 37`);
-  payment emails must name the amount (`4,750.00` or `4750.00`) and no other amount; the blocked-vendor reply must
-  name the invoice, say `vendor relationship` and say `suspended` without a negation in the three words before it
-  (`not`, `no longer`, `isn't`, `un-`). These rules are stated in POLICY.md §3–§10. The negation rule is a word window,
-  not a reading of the sentence: a reply that says `suspended` and then takes it back later in the body still passes.
+  payment emails must name the amount in a form POLICY.md §3 reads (`$4,750.00`, `$4,750`, `USD 4750.00`,
+  `4,750.00 USD`; a bare `4750` is not an amount) and no other amount; the blocked-vendor reply must name the invoice,
+  say `vendor relationship` and say `suspended` without a negation or reversal in the three words before it in the same
+  clause (`not`, `no longer`, `isn't`, `un-`, `restored`, `reinstated`, `lifted`; the window stops at `.`, `;`, `:`,
+  `!` and `?`). These rules are stated in POLICY.md §3, §5, §10 and §11 (§10 says "and no other amount", §11 that mail
+  is never trashed, archived or relabelled `SENT` / `INBOX`). The negation rule is a word window, not a reading of the
+  sentence: a reply that says `suspended` and then takes it back later in the body still passes.
 - **AutomationBench API facts an arm must get past** [code]:
   - Gmail `messages/send` takes `raw` (RFC 2822, base64url) or `payload` (headers and `body.data`); flat
     `to` / `subject` / `body` is rejected.
@@ -344,3 +347,13 @@ the oracle as it was before the review fixes (five of them) or pin the new host-
     its own checks, `hard.effects-with-authority` and `end.authority`, and a new control, `any-amendment`, exercises the
     amendment rule (27 controls). Pass rates of the 26 earlier controls and of the reference did not change; the `Hard`
     column now counts both requirements (`any-correction` 0 → 3).
+  - *Follow-up to the fixes (same day).* The fixes had added two rules to the oracle that the arm could not read in
+    POLICY.md. POLICY.md now states both: §10 says the payment email names the amount "and no other amount", and §11
+    says mail is never trashed, marked as spam, archived, or given or stripped the `SENT` or `INBOX` label. These
+    edits change the arm-visible serve-input rows; world0, payloads, triggers, truth and end stay byte-identical. Two
+    false rejects went with them. A payment email that wrote `$4,750`, a form §3 reads, used to be rejected; the
+    amount is now found in any marked form of the right value. The `suspended` negation window used to cross a clause
+    boundary and applied to any one-word token. It now stops at `.`, `;`, `:`, `!` and `?` and covers only that
+    claim, and it also catches reversals (`restored, previously suspended`). New mutant operators:
+    `email-body-amount-usd-wrong` and `email-body-reversed`. New variant operators: `email-amount-whole-dollars` and
+    `email-suspended-after-clause`.

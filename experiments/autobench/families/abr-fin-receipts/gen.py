@@ -93,7 +93,7 @@ KINDS = ("receipt.posted", "receipt.corrected", "receipt.reposted", "preapproval
 COUNTS = {
     "d1": {"receipt.posted": (24, 26), "receipt.corrected": (2, 2), "receipt.reposted": (2, 2), "preapproval.reply": (1, 1)},
     "d2": {"receipt.posted": (24, 30), "receipt.corrected": (2, 3), "receipt.reposted": (2, 3), "preapproval.reply": (1, 3)},
-    "d3": {"receipt.posted": (30, 35), "receipt.corrected": (8, 8), "receipt.reposted": (3, 4), "preapproval.reply": (5, 5)},
+    "d3": {"receipt.posted": (30, 35), "receipt.corrected": (9, 9), "receipt.reposted": (3, 4), "preapproval.reply": (5, 5)},
 }
 # Correction kinds (generator 1.1.0). fix-attendees / fix-receipt make a rejected receipt pass; fix-amount / fix-date /
 # fix-category change a logged one and it stays logged; the rest make the re-check decide (POLICY.md 5.1):
@@ -106,6 +106,8 @@ COUNTS = {
 #   fix-preapproved  a pre-approved receipt's amount changed: the pre-approval still counts
 #   fix-cap-own      the last individual meal of a capped day changed: the cap counts the other rows, not its own
 #   fix-second       a second correction in a thread, a relative date read on the correction's own day
+#   fix-date-cap     an individual meal logged on one day, its date corrected onto a day whose other individual meals
+#                    leave no room: Rejected, Over daily meal cap (the cap is checked again on the corrected date)
 FIX_REJ = ["fix-attendees", "fix-receipt"]
 FIX_OK = ["fix-amount", "fix-date", "fix-category"]
 RECHECK = ["fix-break-team", "fix-cat-travel", "fix-pending"]
@@ -497,11 +499,12 @@ class Gen:
             if cabin is None and intent in ("ok-flight", "pending-flight") and r.random() < LOOKALIKE[self.d]:
                 spec["biz"] = r.choice([" for a business meeting", " (business trip)", " for the business review"])
         elif intent in ("ok-meal-ind", "cap-setup", "cap-reject", "cap-under", "cap-history", "rej-individual",
-                        "fixable-meal", "cap-after"):
+                        "fixable-meal", "cap-after", "datefix-meal"):
             if intent == "ok-meal-ind":
                 cap_left = fixed.get("cap_left", LIMITS["cap"])
                 a = self.amt(8, float(min(LIMITS["individual"], cap_left)))
-            elif intent in ("cap-setup", "cap-reject", "cap-under", "cap-history", "fixable-meal", "cap-after"):
+            elif intent in ("cap-setup", "cap-reject", "cap-under", "cap-history", "fixable-meal", "cap-after",
+                            "datefix-meal"):
                 a = fixed["amount"]
             else:
                 a = self.amt(50.5, 75)
@@ -888,7 +891,7 @@ class Gen:
             # every d3 week: a re-check to Pending (fix-over) and one to Rejected (fix-break-meal), the cap's own-row
             # rule, two corrections in one thread, a pre-approval that survives a correction
             corr = [r.choice(FIX_REJ), r.choice(FIX_OK + RECHECK), "wrong-person", "fix-break-meal", "fix-cap-own",
-                    "fix-second", "fix-preapproved", "fix-over"]
+                    "fix-second", "fix-preapproved", "fix-over", "fix-date-cap"]
             rep = ["repost-fixed", "repost-rel", "repost-rel-rev"]
             if n_rep > 3:
                 rep.append(r.choice(["repost", "repost-history", "repost-terse"]))
@@ -918,7 +921,8 @@ class Gen:
         cap_in = d == "d3" or (d == "d2" and not self.cap_hist)
         cap_under = d == "d3"
         n_scen = ((3 if cap_in else 0) + (3 if cap_under else 0) + (1 if self.cap_hist else 0)
-                  + (2 if "fix-break-meal" in corr else 0) + (2 if "repost-rel" in rep else 0)
+                  + (2 if "fix-break-meal" in corr else 0) + (1 if "fix-date-cap" in corr else 0)
+                  + (2 if "repost-rel" in rep else 0)
                   + (1 if "repost-rel-rev" in rep else 0))
         n_free = n_post - len(fixed) - n_scen
         if n_free < 0:
@@ -953,7 +957,7 @@ class Gen:
         # cap scenarios (setup, setup, final), same employee and expense date
         cap_emps = [s for s in self.staff if s is not (self.cap_hist or {}).get("emp")]
         r.shuffle(cap_emps)
-        scen = []
+        scen, cap_day = [], None
         if cap_in:
             scen.append(("cap-reject", cap_emps.pop()))
         if cap_under:
@@ -977,6 +981,8 @@ class Gen:
             for pos, (intent, a) in zip((i0, j, k), (("cap-setup", a1), ("cap-setup", a2), (kind, a3))):
                 slots[pos] = {"intent": intent, "emp": emp, "fixed": {"date": exp_d, "amount": a}}
             self.reserved.add((emp["email"], exp_d))
+            if kind == "cap-reject":
+                cap_day = {"emp": emp, "date": exp_d, "setup": a1 + a2, "logged": times[j]}
         if self.cap_hist:
             self.reserved.add((self.cap_hist["emp"]["email"], self.cap_hist["date"]))
             pos = take([i for i in idx if times[i] < self.monday + timedelta(days=2)])
@@ -998,6 +1004,21 @@ class Gen:
             slots[i_l] = {"intent": "cap-after", "emp": emp, "fixed": {"date": exp_d, "amount": a_l}}
             self.reserved.add((emp["email"], exp_d))
             self.pre_at["fix-break-meal"] = (tc, new_a)
+        if "fix-date-cap" in corr:
+            # an individual meal D of the cap-reject employee, logged Approved on another expense date; once both
+            # setup meals of the capped day are logged, its date is corrected onto that day, where the cap (counting the
+            # other rows of the corrected date) rejects it
+            emp = cap_day["emp"]
+            i_d = pick("datefix-meal", [i for i in idx if times[i].weekday() <= 2 and i < int(n_post * 0.6)],
+                       [i for i in idx if times[i].weekday() <= 3])
+            days = [times[i_d].date() - timedelta(days=k) for k in (0, 1, 2)]
+            r.shuffle(days)
+            d0 = next(x for x in days if x != cap_day["date"] and (emp["email"], x) not in self.reserved
+                      and self.cap_other(emp["name"], x, None) == 0)
+            a_d = self.amt(float(max(Decimal("20"), LIMITS["cap"] - cap_day["setup"] + 1)), 50)
+            slots[i_d] = {"intent": "datefix-meal", "emp": emp, "fixed": {"date": d0, "amount": a_d}}
+            self.reserved.add((emp["email"], d0))
+            self.pre_at["fix-date-cap"] = (after(max(times[i_d], cap_day["logged"])), cap_day["date"])
         if "repost-rel" in rep:
             # a receipt dated 'today' or 'yesterday', a near-duplicate with the same words on a later day (another
             # expense date: processed), and (below) a repost with an explicit date on a later day
@@ -1101,10 +1122,14 @@ class Gen:
             if c == "fix-second":
                 continue
             new_amount = None
+            # fix-second follows the first correction on a later day than the receipt: prefer a receipt from Mon-Thu
+            soon = (lambda cs: [s for s in cs if s["at"].weekday() <= 3 and s["key"] not in used_targets] or cs) \
+                if c == corr[0] and "fix-second" in corr \
+                else (lambda cs: cs)
             if c == "fix-attendees":
-                t = pick_target(by_intent("rej-attendees"))
+                t = pick_target(soon(by_intent("rej-attendees")))
             elif c == "fix-receipt":
-                t = pick_target([s for s in by_intent("rej-receipt") if not s.get("for_repost")])
+                t = pick_target(soon([s for s in by_intent("rej-receipt") if not s.get("for_repost")]))
             elif c == "fix-category":
                 t = pick_target(by_intent("fixable-cat"))
             elif c in ("fix-amount", "fix-date", "wrong-person"):
@@ -1119,14 +1144,23 @@ class Gen:
                 t = use(by_intent("fixable-meal")[0])
             elif c == "fix-cap-own":
                 t = use(by_intent("cap-under")[0])
+            elif c == "fix-date-cap":
+                t = use(by_intent("datefix-meal")[0])
             elif c == "fix-pending":
                 t = pend_t
             elif c == "fix-preapproved":
                 t = pre_t
             else:
                 raise ValueError(c)
+            new_date = None
             if c == "fix-break-meal":
                 at, new_amount = self.pre_at[c]
+            elif c == "fix-date-cap":
+                at, new_date = self.pre_at[c]
+            elif c == corr[0] and "fix-second" in corr:
+                # fix-second follows in this thread on a later calendar day than the receipt (its relative date is read
+                # on its own day), so this first correction comes by noon of the day after the receipt
+                at = after(t["at"], 12, self.next_morning(t["at"]) + timedelta(hours=4))
             elif c == "fix-preapproved":
                 at = after(approvals[0]["at"], 15)
             elif c == "fix-over" and np_at is not None:
@@ -1136,6 +1170,8 @@ class Gen:
             corr_plans[c] = {"kind": "receipt.corrected", "sub": c, "target": t["key"], "at": at}
             if new_amount is not None:
                 corr_plans[c]["new_amount"] = new_amount
+            if new_date is not None:
+                corr_plans[c]["new_date"] = new_date
             plans.append(corr_plans[c])
         if "fix-second" in corr:
             # a second valid correction in the thread of the first one (the rejected receipt it fixed); on a later
@@ -1168,6 +1204,7 @@ class Gen:
             else:  # repost, repost-terse
                 cands = [s for s in slots if s["intent"] not in ("unknown", "cap-setup", "cap-reject", "cap-under",
                                                                   "fixable-meal", "cap-after", "rel-base", "rev-base",
+                                                                  "datefix-meal",
                                                                   "near-dup-rel")
                          and s["key"] not in used_targets and s["at"] < end - timedelta(hours=3)]
                 t = pick_target(cands)
@@ -1310,7 +1347,8 @@ class Gen:
             elif intent == "fixable-team":
                 n = r.randint(3, 6)
                 f["attendees"], f["amount"] = n, (self.amt(52, 75) * n).quantize(CENT)
-            if intent in ("cap-setup", "cap-reject", "cap-under", "cap-history", "fixable-meal", "cap-after"):
+            if intent in ("cap-setup", "cap-reject", "cap-under", "cap-history", "fixable-meal", "cap-after",
+                          "datefix-meal"):
                 break
             if not self.is_repost(emp["email"], f["date"], f["amount"]):
                 break
@@ -1319,7 +1357,7 @@ class Gen:
         if self.is_repost(emp["email"], f["date"], f["amount"]):
             raise RuntimeError(f"planned receipt {intent} collides with an earlier receipt")
         traps = {k: r.random() < v for k, v in FORMAT_RATE[self.d].items()}
-        if intent in ("cap-setup", "fixable-meal"):
+        if intent in ("cap-setup", "fixable-meal", "datefix-meal"):
             traps = {k: False for k in traps}
         if intent in ("rel-base", "rev-base"):
             traps["date"] = False
@@ -1510,6 +1548,11 @@ class Gen:
                 p["new"] = {"amount": a}
                 text = r.choice([f"Correction: amount should be {self.amount_text(a, r.choice(['dollar', 'dollar', 'words']))}",
                                  f"Correction: the amount was {money(a)} (typo)", f"correction - amount {money(a)}"])
+            elif sub == "fix-date-cap":
+                nd = p["new_date"]
+                text = r.choice([f"Correction: date {nd.isoformat()}", f"Correction: the date should be {MONTHS[nd.month - 1][:3]} {nd.day}",
+                                 f"Correction: date was {nd.day} {MONTHS[nd.month - 1]}"])
+                p["new"] = {"date": nd}
             elif sub in ("fix-date", "fix-second"):
                 c = at.date()
                 rel = [(w, nd) for w, nd in (("yesterday", c - timedelta(days=1)), ("today", c)) if nd != cur["date"]]
@@ -1621,6 +1664,7 @@ class Gen:
         other = self.cap_other(emp["name"], f["date"], None) if individual(f) else Decimal("0")
         status, reason, rule = decide(f, other)
         want = {"fixable-meal": APPROVED, "cap-after": APPROVED, "fixable-big": APPROVED, "fixable-team": APPROVED,
+                "datefix-meal": APPROVED,
                 "rel-base": APPROVED, "rev-base": APPROVED, "pending-fixable": PENDING}.get(p.get("intent"))
         if want and status != want:
             raise RuntimeError(f"{tid}: planned {p.get('intent')} came out {status} ({reason})")
@@ -1731,6 +1775,8 @@ class Gen:
         if "category" in p["new"] and (cur["hotel"] or cur["flight"]):
             if decide(dict(cur, hotel=None, flight=None), other)[:2] != (raw, reason):
                 labels.append("correction-travel-facts")
+        if individual(cur) and decide(cur, Decimal("0"))[:2] != (raw, reason):
+            labels.append("correction-cap")             # the cap, counted on the corrected date, decides the re-check
         if rc["row"] is not None:
             row = rc["row"]
             new = dict(row["cells"])
@@ -1900,6 +1946,7 @@ TRAP_KIND = {"synonym": "T-format", "words-amount": "T-format", "currency-format
              "correction-recheck": "T-state", "correction-own-row": "T-state", "correction-preapproved": "T-state",
              "correction-early-approval": "T-state", "correction-multi": "T-state",
              "correction-travel-facts": "T-state", "cap-rejected-row": "T-state", "total-rejected-row": "T-state",
+             "correction-cap": "T-state",
              "correction-relative-date": "T-format", "cabin-lookalike": "T-format",
              "pending": "context", "team-meal": "context", "week-total": "context", "rule-category": "context", "rule-receipt": "context", "rule-meal": "context",
              "rule-hotel": "context", "rule-flight": "context"}
