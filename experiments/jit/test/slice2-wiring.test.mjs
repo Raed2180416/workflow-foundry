@@ -27,7 +27,9 @@ const OPTS = { traces: 3, regressions: 1, minutes: 30, gatewayUsd: 1.5, perTaskU
 const FLOW_V3_FILE = new URL('../flow-v3.mjs', import.meta.url).pathname;
 // flow-v3.mjs as of the slice 2 review fixes (FLOW-V3-SLICE2 §17; slice 2b's was 161ac935…35f6, slice 2a's a67bcbb6…81c8): a
 // prompt-version-5 arm's SDK bytes. Update this pin, and the E2 freeze record, whenever flow-v3.mjs changes.
-const FLOW_V3_SHA256 = '15da5c24efd537afb30eb8754955583c735fb6f36e8c55ca3646c13aa848f06b';
+// The pin moved with orch-20261021 patch 07 (an outage stops flow-v3 with ENV_EXIT instead of escalating; engine bump 2026-10-21). The
+// earlier bytes, 15da5c24..., are the SOP-Bench phase-2 frozen SDK copy (experiments/sopbench/frozen/p2/sdk/flow.mjs), which is unchanged.
+const FLOW_V3_SHA256 = 'e198c9c239fa16a268e84523f2fbffdd7810e73e0265fcf71c4d883725a1b47c';
 
 test('prompt version 5: runs on flow-v3.mjs; without a library its text is version 4\'s byte for byte; with one it adds library/index.json, flow.call and method item 9 (inserted lines only)', () => {
   assert.deepEqual([...PROMPT_VERSIONS], [1, 2, 3, 4, 5]);
@@ -111,6 +113,9 @@ test('sandboxed: a prompt-version-5 compile with a library: the builder sees lib
   assert.equal(record.library.entries, 1); assert.equal(record.library.indexSha256, sha(JSON.stringify(library.list(), null, 1)));
   assert.equal(record.library.checkCalls.childCalls, 3, 'one library call per case in the host check'); assert.equal(record.library.checkCalls.ends, 3);
   assert.ok(record.library.builderCalls.childCalls >= 1);
-  assert.ok(Math.abs(record.checkCostUsd - 0.009) < 1e-9, `three leaf judges at $0.003, charged through the check ledger (${record.checkCostUsd})`);
+  // The three cases call the leaf with the same input ({n: 810}: the three prompts have one length), so the calls share one key. Since
+  // orch-20261021 patch 08 (single flight, chaos A9) an identical call in flight is joined: one leaf judge runs and is paid, the other two
+  // cases get its answer (before, each in-flight duplicate ran and was paid: $0.009).
+  assert.ok(Math.abs(record.checkCostUsd - 0.003) < 1e-9, `one leaf judge at $0.003 for one call key, charged through the check ledger (${record.checkCostUsd})`);
   assert.equal(leaf.version, 1);
 });

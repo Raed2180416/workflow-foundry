@@ -74,7 +74,7 @@
 // - Harvest (I8) drops a script that is byte-identical to a file the node was given (a shipped decoder copied out).
 import path from 'node:path';
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync, existsSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { runCompiled, canonicalJson, FLOW_V2 } from './run-compiled.mjs';
 import { validateOutput } from './interpret.mjs';
 import { AGENT_TOOLS, DEFAULT_AGENT_TOOLS, MAX_AGENT_TOOLS, DEFAULT_AGENT_FLOOR_USD, DEFAULT_AGENT_CONCURRENCY, DEFAULT_AGENTS_PER_RUN, DEFAULT_MAX_AGENT_DEPTH,
@@ -274,6 +274,12 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   const events = [], journalOut = [], spans = new Map(), memo = new Map(), inflightCalls = new Map();
   for (const row of journal ?? []) if (row?.key && row.result?.status === 'ok') memo.set(row.key, { result: row.result, replayed: true });   // call and agent rows (keys differ)
   const tree = { children: 0 };
+  // Child workdirs are unique by construction (orch-20261021 rank 12): one host serves several solver runs (each check case), whose
+  // child spans repeat (call:x#0 in every case), so a name from the span alone was shared by concurrent cases and their files clobbered
+  // each other. A host tag and a sequence number make every child's directory its own; the workdir lock stays as the guard.
+  const hostTag = randomUUID().slice(0, 8);
+  let workdirSeq = 0;
+  const uniqueDir = name => `${name}~${hostTag}-${++workdirSeq}`;
   const agentCfg = agentConfigOf(agent, { allowedModels, modelPort });
   const agentState = { admitted: 0, started: 0, nodePaths: new Set(), running: 0, queue: [], harvests: [], ordinals: new Map() };
   const envFaults = [];   // review fix C1/I5: {code, path, kind} per environment fault met anywhere in the tree
@@ -392,7 +398,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       }
       return out;
     }
-    const workdir = path.join(workRoot, 'calls', dirOf(child.path));
+    const workdir = path.join(workRoot, 'calls', uniqueDir(dirOf(child.path)));
     // runCompiled writes tools/flow-scope.json itself (after clearing a stale one), from flowScope.
     const r = await runCompiled({ solvePath: entry.solvePath, task, modelPort: wrapPort(child), perTaskUsd: child.budgetUsd, timeoutMs, workdir, outputSchema: entry.contract.output,
       allowedModels: withCallModel(allowedModels), flowPath: entry.flowVersion === 2 ? FLOW_V2 : FLOW_V3, label: `call:${entry.hash.slice(7, 19)}`,
@@ -404,7 +410,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   // FLOW-V3 §1.5 local deopt: the interpreter on the child task alone, under budgetUsd (already reserved by the caller).
   // Returns {ok, output?, error?, costUsd, costUnknown, traceId}; never throws.
   async function interpretChild({ entry, task, span, childPath, budgetUsd, timeoutMs, reason }) {
-    const workdir = workRoot ? path.join(workRoot, 'interpret', dirOf(childPath)) : null;
+    const workdir = workRoot ? path.join(workRoot, 'interpret', uniqueDir(dirOf(childPath))) : null;
     if (workdir) mkdirSync(workdir, { recursive: true });
     // One runner per workdir (orch-20261021 rank 12): another host sharing this workRoot is refused, nothing spent.
     const lock = workdir ? lockWorkdir(workdir, { label: `interpret:${childPath}` }) : null;
@@ -667,7 +673,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       agentState.admitted++;
       const timeoutMs = Math.min(agentCfg.maxTimeoutMs, Number.isInteger(req.timeoutMs) && req.timeoutMs > 0 ? req.timeoutMs : 10 * 60 * 1000);
       const stallMs = Number.isInteger(req.stallMs) && req.stallMs > 0 ? req.stallMs : agentCfg.stallMs;
-      const workdir = workRoot ? path.join(workRoot, 'agents', `${dirOf(nodePath)}-a${attempt}`) : null;
+      const workdir = workRoot ? path.join(workRoot, 'agents', uniqueDir(`${dirOf(nodePath)}-a${attempt}`)) : null;
       let run = null, spent = 0, restarts = 0, stalls = 0, costUnknown = false;
       // One runner per workdir (orch-20261021 rank 12): the agent's workdir (and its -rN restart dirs) belong to this host while it runs.
       const lock = workdir ? lockWorkdir(workdir, { label: `agent:${nodePath}` }) : null;
