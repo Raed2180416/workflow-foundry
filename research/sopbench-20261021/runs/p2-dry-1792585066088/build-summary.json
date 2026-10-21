@@ -1,0 +1,97 @@
+{
+ "runId": "p2-dry-1792585066088",
+ "evidence": "development: builds and repairs on SPLIT.json build/repair rows only; no sealed row was prepared, served or graded",
+ "stopped": null,
+ "builderModel": "claude-haiku-5-5",
+ "judgeModels": [
+  "claude-haiku-5-5"
+ ],
+ "budgets": {
+  "build": 3,
+  "repair": 1.5,
+  "buildMinutes": 30,
+  "repairMinutes": 20,
+  "rounds": 2,
+  "builderJudgeUsd": 0.5
+ },
+ "prompts": {
+  "buildTemplateSha256": "8c69d8b593015f86dbb2de1bbccf783bee097223bb20e5c620a363af4805f132",
+  "repairTemplateSha256": "f5ff28a3e56b5050c5857298c82d64418c07a1d25155361202f06585c4cf2aa5"
+ },
+ "spentUsd": 0,
+ "capUsd": 5,
+ "sops": {
+  "aircraft_inspection": {
+   "devPass": 19,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 14,
+   "bestRound": 1,
+   "artifactSha256": "2703fda8506ed6d8245364b85a82c253c8ff1d6af8fe4c2630de5f8452b49b88",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 1,
+     "minutes": 0,
+     "buildPass": 3,
+     "repairPass": 6,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 3,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "2ed86eea4a7408bfaa26aadef6045ec3b50b902dd26a51656d71f14b36ad3ea6"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 1,
+     "minutes": 0,
+     "buildPass": 5,
+     "repairPass": 14,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 3,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "2703fda8506ed6d8245364b85a82c253c8ff1d6af8fe4c2630de5f8452b49b88"
+    },
+    {
+     "round": 2,
+     "sessionError": null,
+     "costUsd": 0,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 1,
+     "minutes": 0,
+     "buildPass": 5,
+     "repairPass": 14,
+     "kept": false,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 3,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "2703fda8506ed6d8245364b85a82c253c8ff1d6af8fe4c2630de5f8452b49b88"
+    }
+   ]
+  }
+ },
+ "live": "/var/tmp/foundry-work/sopbench/p2-dry-1792585066088",
+ "finishedAt": "2026-10-21T12:18:39.125Z"
+}

@@ -47,6 +47,7 @@ ONE_DEFECT = {
     "dedupe-any": {"re-request"},
     "exact-deadline": {"deadline-late"},
     "late-deadline": {"deadline"},
+    "close-held": {"deadline-held"},
     "count-all": {"day.close"},
     "stale-batch": {"day.close"},
     "snippet-only": {"id-in-body"},

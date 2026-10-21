@@ -107,7 +107,8 @@ When an email verifies a request, log `Verified` with Reference = the email's me
 At each `day_close`, in this order:
 1. **Deadline.** Every request in state `Verification Sent` whose Requested Date is 30 or more days before `data.date`
    is closed: log `Closed - Unverified`, and email the address with subject
-   `Erasure request <Request ID>: closed unverified`.
+   `Erasure request <Request ID>: closed unverified`. Requests in any other state are not closed: a request in
+   `Blocked - Legal Hold` is verified and answered, and waits for its hold however old it is.
 2. **Summary.** Post in `#privacy-ops`, exactly: `<data.date>: <N> purged, <M> blocked, batch <Batch_Reference>`.
    `<N>` is the number of Compliance Log rows with Transition `Purged`, and `<M>` the number with Transition
    `Blocked - Legal Hold`, whose At falls on `data.date` (UTC). `<Batch_Reference>` is the current Value of the setting

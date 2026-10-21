@@ -170,6 +170,60 @@ export async function gradeAnswers(answers, { liveDir, split = SPLIT_FILE, seale
   });
 }
 
+/**
+ * One agent session on one row (the A-H arm; phase 1's per-row loop body, unchanged in behaviour): workdir with the tool
+ * client, a bridge on the row's world, the session, host-side accounting. Returns { rec, started }; the caller settles the
+ * cost and grades rec.answerText. o.tag names the workdir/host directories (default <sop>-<row>).
+ */
+export async function runAgentRow(o) {
+  const { sop, row, prepDir: pdir, live, runner } = o;
+  const tag = o.tag ?? `${sop}-${row}`;
+  const meta = readJson(path.join(pdir, 'meta.json'));
+  const task = readJson(path.join(pdir, 'rows', String(row), 'task.json'));
+  const catalog = readJson(path.join(pdir, 'catalog.json'));
+  const hostDir = o.hostDir ?? path.join(live, 'host', sop, String(row));
+  const workdir = path.join(live, 'w', tag);
+  const rec = { sop, row, contract_sha256: meta.contract_sha256, row_sha256: task.row_sha256 };
+  let r = null, bridge = null, started = false;
+  try {
+    rmSync(workdir, { recursive: true, force: true });
+    rmSync(hostDir, { recursive: true, force: true });
+    materializeWorkdir(workdir, catalog);
+    bridge = startServe({ liveDir: live, sop, row, mailbox: path.join(workdir, '.tools'), hostDir, maxSteps: o.maxSteps, sealed: o.sealed, freeze: o.freeze, upstream: o.upstream, split: o.split, dataDir: o.dataDir });
+    await bridge.ready;
+    started = true;
+    const sopText = readFileSync(path.join(pdir, 'sop.txt'), 'utf8');
+    r = await runner({ model: o.model, prompt: userPrompt(sopText, task.task_text, task.output_columns), systemPrompt: systemPrompt(catalog, o.maxSteps), workdir, files: {},
+      budgetUsd: o.budgetUsd, timeoutMs: o.timeoutMin * 60_000, effort: o.effort ?? null, tools: o.tools, task: { name: `${sop}:${row}` },
+      scripted: o.scripted ? { ...o.scripted, steps: scriptedSteps(task, catalog) } : undefined });
+    Object.assign(rec, { costUsd: r.costUsd ?? r.costUpperUsd ?? o.budgetUsd, costUnknown: Boolean(r.costUnknown), turns: r.turns ?? null, durationMs: r.durationMs ?? null,
+      sessionError: r.error?.code ?? null, nestedModelUses: nestedModelUses(r.toolUses ?? []), streamUsage: r.streamUsage ?? null });
+    const doneMsg = await bridge.stop();
+    rec.steps = doneMsg.steps;
+    rec.answerText = String(r.result ?? '');
+  } catch (e) {
+    rec.harnessError = String(e?.message ?? e).slice(0, 800);
+    bridge?.kill();
+  } finally {
+    if (!r && started) Object.assign(rec, { costUsd: o.budgetUsd, costUnknown: true });
+    rec.costUsd ??= 0;
+    copyTranscript(workdir, hostDir);
+    if (!o.keep) rmSync(workdir, { recursive: true, force: true });
+  }
+  if (started && existsSync(path.join(hostDir, 'serve.json'))) {
+    const sv = readJson(path.join(hostDir, 'serve.json'));
+    const calls = readRecords(path.join(hostDir, 'calls.jsonl'));
+    rec.world = { steps: sv.steps, calls: sv.calls, upstreamFatal: sv.upstreamFatal, toolErrors: calls.filter(c => c.error).length, unknownTool: calls.filter(c => c.error === 'unknown_tool').length,
+      stepLimitRefusals: calls.filter(c => c.refused).length, tools: [...new Set(calls.filter(c => c.name).map(c => c.name))].sort() };
+  }
+  if (started && o.audit) {
+    const events = readStream(path.join(hostDir, 'transcript.jsonl'));
+    rec.session = auditTranscript(events, o.model);
+    if (!events.length) rec.session.violations.push('L5: no host transcript');
+  }
+  return { rec, started };
+}
+
 // ---- the run -----------------------------------------------------------------------------------------------------------
 export async function runRows(o) {
   const opt = { ...DEFAULTS, ...o };
@@ -249,50 +303,10 @@ export async function runRows(o) {
   await pool(todo, opt.concurrency, async ({ sop, row }, k) => {
     if (stopped) return;
     if (!(await ledger.reserve(opt.budgetUsd))) { stopped ??= `the cap ($${ledger.spent.toFixed(4)} spent + ${opt.budgetUsd} > ${opt.capUsd})`; return; }
-    const pdir = path.join(prep, sop), meta = readJson(path.join(pdir, 'meta.json'));
-    const task = readJson(path.join(pdir, 'rows', String(row), 'task.json'));
-    const catalog = readJson(path.join(pdir, 'catalog.json'));
-    const hostDir = path.join(live, 'host', sop, String(row));
-    const workdir = path.join(live, 'w', `${sop}-${row}`);
-    const rec = { sop, row, contract_sha256: meta.contract_sha256, row_sha256: task.row_sha256 };
-    let r = null, bridge = null, started = false;
-    try {
-      rmSync(workdir, { recursive: true, force: true });
-      rmSync(hostDir, { recursive: true, force: true });
-      materializeWorkdir(workdir, catalog);
-      bridge = startServe({ liveDir: live, sop, row, mailbox: path.join(workdir, '.tools'), hostDir, maxSteps: opt.maxSteps, sealed: opt.sealed, freeze: opt.freeze, upstream, split: splitFile, dataDir });
-      await bridge.ready;
-      started = true;
-      const sopText = readFileSync(path.join(pdir, 'sop.txt'), 'utf8');
-      r = await runner({ model: opt.model, prompt: userPrompt(sopText, task.task_text, task.output_columns), systemPrompt: systemPrompt(catalog, opt.maxSteps), workdir, files: {},
-        budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, effort: opt.effort ?? null, tools: opt.tools, task: { name: `${sop}:${row}` },
-        scripted: scripted ? { steps: scriptedSteps(task, catalog), expected: expectedOf(sop, row), labels: labelsBy[sop] } : undefined });
-      Object.assign(rec, { costUsd: r.costUsd ?? r.costUpperUsd ?? opt.budgetUsd, costUnknown: Boolean(r.costUnknown), turns: r.turns ?? null, durationMs: r.durationMs ?? null,
-        sessionError: r.error?.code ?? null, nestedModelUses: nestedModelUses(r.toolUses ?? []), streamUsage: r.streamUsage ?? null });
-      const doneMsg = await bridge.stop();
-      rec.steps = doneMsg.steps;
-      rec.answerText = String(r.result ?? '');
-    } catch (e) {
-      rec.harnessError = String(e?.message ?? e).slice(0, 800);
-      bridge?.kill();
-    } finally {
-      if (!r && started) Object.assign(rec, { costUsd: opt.budgetUsd, costUnknown: true });
-      rec.costUsd ??= 0;
-      ledger.settle(opt.budgetUsd, rec.costUsd, rec.costUnknown);
-      copyTranscript(workdir, hostDir);
-      if (!opt.keep) rmSync(workdir, { recursive: true, force: true });
-    }
-    if (started && existsSync(path.join(hostDir, 'serve.json'))) {
-      const sv = readJson(path.join(hostDir, 'serve.json'));
-      const calls = readRecords(path.join(hostDir, 'calls.jsonl'));
-      rec.world = { steps: sv.steps, calls: sv.calls, upstreamFatal: sv.upstreamFatal, toolErrors: calls.filter(c => c.error).length, unknownTool: calls.filter(c => c.error === 'unknown_tool').length,
-        stepLimitRefusals: calls.filter(c => c.refused).length, tools: [...new Set(calls.filter(c => c.name).map(c => c.name))].sort() };
-    }
-    if (started && !scripted) {
-      const events = readStream(path.join(hostDir, 'transcript.jsonl'));
-      rec.session = auditTranscript(events, opt.model);
-      if (!events.length) rec.session.violations.push('L5: no host transcript');
-    }
+    const { rec, started } = await runAgentRow({ sop, row, prepDir: path.join(prep, sop), live, runner, model: opt.model, budgetUsd: opt.budgetUsd, maxSteps: opt.maxSteps,
+      timeoutMin: opt.timeoutMin, effort: opt.effort, tools: opt.tools, sealed: opt.sealed, freeze: opt.freeze, upstream, split: splitFile, dataDir, keep: opt.keep,
+      scripted: scripted ? { steps: null, expected: expectedOf(sop, row), labels: labelsBy[sop] } : undefined, audit: !scripted });
+    ledger.settle(opt.budgetUsd, rec.costUsd, rec.costUnknown);
     if (isEnvFault(rec)) {
       appendFileSync(faultsFile, JSON.stringify({ ...rec, stoppedBy: 'environment fault' }) + '\n');
       stopped ??= `${rec.sessionError ?? rec.harnessError} at ${sop}:${row}`;

@@ -74,3 +74,23 @@ test('end to end: the token cap stops a run like the dollar cap (no headline, ex
   const plain = await runTasks({ ...base, tasks: [PHONE_TASK], liveRoot: tmp('tokplain'), outDir: null });
   assert.equal(plain.summary.tokens.total, 300); assert.equal(plain.summary.tokens.cap, null); assert.equal(plain.summary.tokens.meterSpent, null);
 });
+
+test('a rerun after an environment fault audits its own transcript: the faulted session\'s copy is kept beside it, not reused', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 300_000 }, async () => {
+  const { writeFileSync, readdirSync } = await import('node:fs');
+  const live = tmp('stale');
+  const inner = scriptedRunner(() => [{ calls: [read()] }]);
+  const session = (id, fault) => async args => {
+    const r = await inner(args);
+    writeFileSync(path.join(args.workdir, '.executor-transcript.jsonl'), JSON.stringify({ type: 'assistant', message: { id, model: 'stand-in', content: [{ type: 'text', text: id }] } }) + '\n');
+    return { ...r, costUsd: 0, ...(fault ? { error: { code: 'MODEL_RATE_LIMIT' } } : {}) };
+  };
+  const base = { tasks: [PHONE_TASK], domains: ['simple'], det: 'record', concurrency: 1, liveRoot: live, outDir: null, log: () => {} };
+  const first = await runTasks({ ...base, runner: session('faulted-session', true) });
+  assert.match(first.stopped, /MODEL_RATE_LIMIT/);
+  const second = await runTasks({ ...base, runner: session('rerun-session', false), resume: true });
+  const host = path.join(live, 'host', PHONE_TASK, 'fork-0');
+  assert.match(readFileSync(path.join(host, 'transcript.jsonl'), 'utf8'), /rerun-session/);
+  const prior = readdirSync(host).filter(f => /^transcript\.prior-\d+\.jsonl$/.test(f));
+  assert.equal(prior.length, 1); assert.match(readFileSync(path.join(host, prior[0]), 'utf8'), /faulted-session/);
+  assert.equal(second.results[0].forks[0].session.modelResponses, 1);
+});

@@ -25,6 +25,8 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
     dedupe-any       treats any earlier request for the address as open (re-requests after Not Found / Closed)
     exact-deadline   closes only at exactly day 30 (misses a request already past day 30 at its first close)
     late-deadline    closes from day 31
+    close-held       at the daily close also closes requests Blocked - Legal Hold at day 30 or later, as if the deadline
+                     applied to every request that is not purged (a held request is verified and answered)
     count-all        the summary counts every Purged / Blocked row in the log, not today's
     stale-batch      takes the first setting whose name contains 'Batch' (the previous batch at d3)
     snippet-only     looks for the Request ID in the payload subject and snippet only (never reads the message)
@@ -35,8 +37,8 @@ from __future__ import annotations
 import json
 import re
 
-from reference import (GMAIL, PURGED, REQUEST_ID, SHEETS, SLACK, SS, TAG, VERIFIED, WS_CFG, WS_LOG, ZENDESK, Gdpr, address,
-                       norm, utc_date)
+from reference import (BLOCKED, CLOSED, GMAIL, PURGED, REQUEST_ID, SHEETS, SLACK, SS, TAG, VERIFIED, WS_CFG, WS_LOG,
+                       ZENDESK, Gdpr, address, norm, utc_date)
 
 
 def null(trigger, ctx):
@@ -199,6 +201,18 @@ class LateDeadline(Gdpr):
         return (date.fromisoformat(day) - date.fromisoformat(req["Requested Date"].strip())).days > 30
 
 
+class CloseHeld(Gdpr):
+    def day_close(self, day):
+        log = self.log()
+        for _, c in self.requests():
+            rid = c["Request ID"].strip()
+            if self.state(rid, log) == BLOCKED and self.overdue(c, day):
+                self.append_log(rid, c["Email"], CLOSED)
+                self.send(c["Email"], f"Erasure request {rid}: closed unverified", rid,
+                          "We did not receive a confirmation within 30 days, so this request is closed.")
+        return super().day_close(day)
+
+
 class CountAll(Gdpr):
     def count(self, log, transition, day):
         return sum(1 for c in log if c.get("Transition", "").strip() == transition)
@@ -239,5 +253,5 @@ CONTROLS = {"null": null, "echo": echo, "naive": naive,
             "text-search": variant(TextSearch), "org-purge": variant(OrgPurge), "name-match": variant(NameMatch),
             "replace-tags": variant(ReplaceTags), "edit-log": variant(EditLog), "skip-verified": variant(SkipVerified),
             "no-dedupe": variant(NoDedupe), "dedupe-any": variant(DedupeAny), "exact-deadline": variant(ExactDeadline),
-            "late-deadline": variant(LateDeadline), "count-all": variant(CountAll), "stale-batch": variant(StaleBatch),
+            "late-deadline": variant(LateDeadline), "close-held": variant(CloseHeld), "count-all": variant(CountAll), "stale-batch": variant(StaleBatch),
             "snippet-only": variant(SnippetOnly), "at-date": variant(AtDate)}

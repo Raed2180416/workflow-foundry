@@ -51,7 +51,7 @@ DATA_KEYS = {"new_row": {"spreadsheet_id", "worksheet", "row_id", "row"},
              "day_close": {"date"}}
 BAD_CONTROLS = ["null", "echo", "naive", "any-sender", "display-first", "fuzzy-address", "case-sensitive", "no-hold",
                 "any-hold-row", "no-lift", "text-search", "org-purge", "name-match", "replace-tags", "edit-log",
-                "skip-verified", "no-dedupe", "dedupe-any", "exact-deadline", "late-deadline", "count-all",
+                "skip-verified", "no-dedupe", "dedupe-any", "exact-deadline", "late-deadline", "close-held", "count-all",
                 "stale-batch", "snippet-only", "at-date"]
 DESIGN_TRAP_KINDS = ["T-lookalike", "T-authority", "T-note", "T-repeat"]
 TRUTH_WORDS = sorted(set([k for k in gen.TRAP_KIND if "-" in k] + list(set(gen.TRAP_KIND.values())) + [
