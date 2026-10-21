@@ -76,4 +76,6 @@ None remaining: `git status` of the clone is clean (the `__pycache__` directorie
 ## Redistribution
 
 Nothing from the clone is committed. Our notes quote short excerpts only (prompt template lines, tool-code lines, metadata
-field names), each with its source path, for the purpose of reproducing and criticising the evaluation.
+field names, label names), each with its source path, for the purpose of reproducing and criticising the evaluation.
+Per-row run records (agent answers, graded values) are written outside the repo, to
+`/var/tmp/foundry-work/sopbench-rows/<run-id>/`; `research/sopbench-20261021/` keeps aggregate summaries, row ids and hashes.

@@ -77,7 +77,8 @@ neutral directory). "Rows" are the labelled rows of `test_set_with_outputs.csv`,
   (`tools/manager.py:94-157`). Commands: stats, rows, prepare, serve, replay, grade, official, probe.
 - **World filter**: the tools module's `pd` is a proxy; `read_csv` of a known SOP file returns a copy of the host-cached frame
   filtered to the run's rows (dev world = the SOP's build + repair rows; full world only with `--sealed` and a freeze file).
-  The frame is parsed once with upstream's own call, so dtypes and values equal upstream's.
+  The frame is parsed once with upstream's own call, so dtypes and values equal upstream's. Measured invariance on all dev
+  rows: one row differs (email_intent row 126, a duplicated key; §5).
 - **Mailbox**: `tool.mjs` (byte-identical logic to experiments/autobench/tool.mjs) and the hardened `Mailbox` class copied
   verbatim from experiments/autobench/bridge.py (descriptor-relative, `O_NOFOLLOW`, regular single-link files only, exclusive
   temp answers). A step is one `call`/`batch`; at most 10 steps per row (upstream's function-calling agent makes at most 10
@@ -211,8 +212,9 @@ context, not a comparison.
     operations" as out of scope and TRUST-BENCHMARKS.md asked for owner approval for synthetic medical beds. It is in the
     split and the $0 parity, and **excluded from paid runs until the owner decides**.
 11. **Licence**: CC BY-NC 4.0 plus per-dataset terms ("No one should take steps to facilitate training AI models on this
-    data"): research use only; no training on it; nothing from the clone in git (ACQUISITION.md). Committed run records drop
-    the agents' answer texts (they restate row data) and keep their sha256 (`run.mjs redact`).
+    data"): research use only; no training on it; nothing from the clone in git (ACQUISITION.md). Per-row run records
+    (answers, graded values) live outside the repo under `/var/tmp/foundry-work/sopbench-rows/<run-id>/`; this directory
+    keeps aggregate summaries, row ids and hashes only (`run.mjs ROWS_ROOT`; parity.json without tool-result contents).
 
 No blocker on data access, tool dependencies (pure pandas) or LLM-dependent tools (none).
 
@@ -269,9 +271,15 @@ Claude Code 2.1.306, Bash only, 10 tool steps, $0.25 reserved per session, 10 mi
 
 ```
 node experiments/sopbench/split.mjs --check                       # SPLIT.json reproduces from the pinned clone
-node --test --test-concurrency=1 experiments/sopbench/test/sopbench.test.mjs
+node --test --test-concurrency=1 experiments/sopbench/test/sopbench.test.mjs     # 13 tests, toy fixture SOP, $0
 node experiments/sopbench/parity.mjs                               # $0; writes research/sopbench-20261021/parity.json
 node experiments/sopbench/run.mjs --scripted oracle                # $0, every dev row
 node experiments/sopbench/run.mjs --model claude-haiku-5-5 --cap 7.99 --rows-per-sop 20 --concurrency 3 --run-id raw-haiku-dev
-node experiments/sopbench/table.mjs research/sopbench-20261021/runs/raw-haiku-dev
+node experiments/sopbench/table.mjs raw-haiku-dev                  # the §8 table, from the out-of-repo per-row records
+node experiments/sopbench/majority.mjs <a dev run's live dir, e.g. /var/tmp/foundry-work/sopbench/<run>/oracle>
+# from a neutral directory (python -I; the bridge never runs from inside the clone):
+corpus/sop-bench-venv/bin/python -I experiments/sopbench/bridge.py stats --upstream corpus/sop-bench
+corpus/sop-bench-venv/bin/python -I experiments/sopbench/bridge.py worldcheck --upstream corpus/sop-bench --split research/sopbench-20261021/SPLIT.json
+corpus/sop-bench-venv/bin/python -I experiments/sopbench/bridge.py probe --upstream corpus/sop-bench --split research/sopbench-20261021/SPLIT.json
+corpus/sop-bench-venv/bin/python -I experiments/sopbench/cf_ceiling.py 40
 ```
