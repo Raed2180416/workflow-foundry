@@ -206,7 +206,8 @@ def run_stream(stream: dict, solver, mode: str = "carry", ref_befores: list | No
                      "kind": trig["kind"], "sub": trig["sub"], "difficulty": stream["meta"]["difficulty"],
                      "pass": v["pass"], "pass_core": v["pass_core"], "outcome": v["outcome"], "score": v["score"],
                      "expected": v["expected"], "steps": ctx.steps, "calls": ctx.calls, "ms": ms, "costUsd": 0.0,
-                     "error": err, "traps": trig["traps"], "failed": v["failed"]})
+                     "error": err, "traps": trig["traps"], "needs_state": truth.get("needs_state", False),
+                     "ab_disagree": v.get("ab_disagree", []), "failed": v["failed"]})
         if keep_worlds:
             befores.append(before)
             afters.append(after)
@@ -242,10 +243,15 @@ def summarize(results: list[dict]) -> dict:
             v = d.setdefault(key, [0, 0])
             v[0] += x["pass"]
             v[1] += 1
-    return {"triggers": len(rows), "passed": sum(x["pass"] for x in rows),
+    state = [x for x in rows if x.get("needs_state")]
+    return {"clean_weeks": sum(res["clean_week"] for res in results), "streams": len(results),
+            "triggers": len(rows), "passed": sum(x["pass"] for x in rows),
             "pass_rate": round(sum(x["pass"] for x in rows) / max(1, len(rows)), 4),
             "pass_core_rate": round(sum(x["pass_core"] for x in rows) / max(1, len(rows)), 4),
-            "clean_weeks": sum(res["clean_week"] for res in results), "streams": len(results),
+            # the triggers where a clock-only solver acts differently (gen.py's memoryless counterfactual)
+            "needs_state": f"{sum(x['pass'] for x in state)}/{len(state)}",
+            # passing verdicts that AutomationBench's own handlers would have rejected (cross-check, never gating)
+            "ab_disagree": sum(1 for x in rows if x.get("ab_disagree")),
             "outcomes": outcomes, "by_kind": {k: f"{a}/{n}" for k, (a, n) in sorted(by_kind.items())},
             "by_expected": {k: f"{a}/{n}" for k, (a, n) in sorted(by_sub.items())},
             "per_stream": {res["seed"]: f"{sum(x['pass'] for x in res['rows'])}/{len(res['rows'])} ({res['difficulty']})"

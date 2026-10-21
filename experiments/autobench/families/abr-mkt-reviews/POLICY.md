@@ -1,6 +1,6 @@
 # App review triage (standing automation)
 
-Owner: App Review Team, app-reviews@company.example.com. Policy version 1.0.
+Owner: App Review Team, app-reviews@company.example.com. Policy version 1.1.
 
 This automation runs on every new email that arrives in the marketing inbox (marketing@company.example.com), and every
 weekday (Monday to Friday) at 17:00 UTC. Each run receives one trigger (JSON). Handle that trigger, and only that
@@ -23,7 +23,7 @@ Apps: Gmail (the marketing inbox), HubSpot (tickets), Slack (#app-reviews, #auto
 Every review ticket and every daily summary carries this week's triage code, for example `TRIAGE-412-W10`. The App
 Review Team posts it in #app-reviews, from the Slack user named `App Review Team`, as
 `Triage code for the week of <YYYY-MM-DD>: <code>`. Use the newest such post by that user. A code anywhere else (an
-older email, a post by someone else) does not count.
+older email, a post by someone else) does not count. Copy the code exactly as posted, letter case included.
 
 ## 3. Handling a review
 
@@ -45,7 +45,10 @@ Read the notification email. Apply these steps in order.
    | Field | Value |
    |---|---|
    | Subject | `App review <rating>★ - <reviewer address> - <code>`, prefixed with `[HIGH PRIORITY] ` when the review is high priority. Example: `[HIGH PRIORITY] App review 4★ - ann.lee@post.example.com - TRIAGE-412-W10` |
-   | Content (the ticket description) | The comment text, verbatim |
+   | Content: the HubSpot ticket property `content` | The comment text, verbatim |
+
+   Write the subject exactly as shown, letter case included (`[HIGH PRIORITY]`, `App review`, the code). Only the
+   reviewer address may be in any case.
 
 6. **Thank-you.** Send one thank-you email when the rating is one of the *thank-you ratings* (section 5; by default 4
    and 5), the review is **not** high priority, and the notes contain none of `Escalated to Engineering`,
@@ -60,12 +63,17 @@ asks.
 ## 4. Daily summary
 
 Every weekday at 17:00 UTC, send one email to app-reviews@company.example.com with the subject
-`Review triage summary <YYYY-MM-DD>` and a body that contains the line `<code>: tickets <N>, thank-yous <M>`, where
+`Review triage summary <YYYY-MM-DD>` and a body that contains the line `<code>: tickets <N>, thank-yous <M>` on a line
+of its own (nothing else on that line), where
 
 - N is the number of review tickets created today (subject contains `App review` and this week's code), and
 - M is the number of thank-you emails sent today (subject `Thank you for your review`).
 
 Example: `TRIAGE-412-W10: tickets 3, thank-yous 5`.
+
+That line is the only place the summary gives ticket or thank-you figures: no other ticket or thank-you counts (for
+example no week-to-date figures), and nothing that qualifies them (no alternative, estimate, correction or recount).
+Other text, such as a greeting or a sign-off, is fine.
 
 ## 5. Policy amendments
 

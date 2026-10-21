@@ -7,24 +7,30 @@ end.json plus world0.
 
 Checks per trigger:
   1. effects   every expected effect is found in THIS trigger's ledger (attribution), each record used once:
-               warning = SMS (to the agent's E.164 phone, from +15550001111, text token `SLA warning <ID>: due HH:MM
-               UTC`) + #support-escalation post (the line `<ID> | <Subject> | due HH:MM UTC | <Agent>`) + one email to
-               the support manager only (subject `SLA warning <ID>`, body holding the line) + the tracker row's Warned
-               At / Warned Agent / Warned Deadline (and nothing else on that row); reassignment = SMS to the new phone +
-               Warned Agent only; breach = Jira create_issue (project SUPPORT, summary `SLA breach <ID>`) + `BREACHED
-               <ID>` post + Breached At only; authorized amendment = one Policy Log row.
+               warning = SMS (to the agent's E.164 phone, from +15550001111, text `SLA warning <ID>: due HH:MM UTC`)
+               + a top-level, undeleted #support-escalation post (the line `<ID> | <Subject> | due HH:MM UTC | <Agent>`)
+               + one email from the automation inbox to the support manager only (subject `SLA warning <ID>`, body
+               holding the line) + the tracker row's Warned At / Warned Agent / Warned Deadline (and nothing else on
+               that row); reassignment = SMS to the new phone + Warned Agent only; breach = Jira create_issue (project
+               SUPPORT, summary `SLA breach <ID>`) + a top-level, undeleted post exactly `BREACHED <ID>` (case,
+               whitespace and trailing punctuation ignored) + Breached At only; authorized amendment = one Policy Log
+               row (Value digits only); escalation = at least one top-level #automation-review post naming the trigger.
+               SMS and warning posts must carry the policy literal with at most a short greeting before it and no
+               negation or retraction words outside it (lib.alert_ok).
   2. envelope  every record created, changed or removed in this trigger is an expected effect (nothing else). Marking
                inbound email read / labelling it is harmless.
   3. timing    every record the trigger created carries the check's time (the determinism shim's clock starts at the
                trigger time): within [at, at + 10 min]; Warned At and Breached At equal the check time (any ISO form).
   4. ab        the truth's AutomationBench assertion dicts, checked with AutomationBench's own AssertionRegistry on
-               world_after (content cross-check with the upstream matching rules; guards for held / closed / waiting /
-               look-alike tickets in their decision zone).
+               world_after. A cross-check only: it is reported (`ab_disagree` on a passing verdict) and never decides a
+               trigger, because its matching rules (raw substrings, exact cells) differ from the policy's (case and
+               whitespace ignored), so it could reject a policy-equivalent value alone. Every effect it covers is also
+               covered by checks 1, 2 and 5.
   5. end       (week close only) per ticket, this week's SMS recipients, warning posts, emails, BREACHED posts and Jira
                issues equal the truth's exact counts; every tracker row's final cells (ticket columns untouched, state
                columns as the truth); the Policy Log rows; and no pre-existing record changed.
 
-Outcome: correct (all checks pass) | abstained (only #automation-review posts, truth is not an escalation) |
+Outcome: correct (all checks pass) | abstained (only #automation-review posts, truth expected no escalation) |
 miss (no effect at all, truth expected effects) | wrong (anything else). `pass` includes the envelope; `pass_core`
 is the same verdict without it (reported beside the headline).
 """
@@ -36,7 +42,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 
 import lib as L
-from lib import canon, has_token, norm, norm_ci, parse_instant
+from lib import alert_ok, canon, exact_text_ok, has_token, norm, norm_ci, parse_instant, visible_post
 
 GMAIL_HARMLESS = {"is_read", "label_ids", "is_starred"}
 TIMING_SLACK = timedelta(minutes=10)
@@ -219,7 +225,7 @@ class Grader:
 
         def sms_check(name, to, token):
             i = find(lambda r: r.get("to_number") == to and r.get("from_number") == L.SMS_FROM
-                     and has_token(r.get("body"), token), new_sms)
+                     and alert_ok(r.get("body"), token), new_sms)
             if i is None:
                 near = [(Lg[j]["after"].get("to_number"), Lg[j]["after"].get("body")) for j in new_sms if j not in used]
                 check(name, False, f"no new SMS from {L.SMS_FROM} to {to} with {token!r}" + (f" (new SMS: {near[:3]})" if near else ""))
@@ -250,19 +256,21 @@ class Grader:
         for w in exp["warn"]:
             tid = w["tid"]
             sms_check(f"warn.sms {tid}", w["to"], w["sms"])
-            i = find(lambda r: r.get("channel_id") == esc and has_token(r.get("text"), w["line"]), new_posts)
+            i = find(lambda r: r.get("channel_id") == esc and visible_post(r) and alert_ok(r.get("text"), w["line"]),
+                     new_posts)
             if i is not None:
                 used.add(i)
-            check(f"warn.post {tid}", i is not None, f"no new #{L.ESC} post with {w['line']!r}")
+            check(f"warn.post {tid}", i is not None, f"no new top-level #{L.ESC} post with {w['line']!r}")
             i = find(lambda r: "SENT" in (r.get("label_ids") or []) and _recipients(r) == {L.MANAGER}
-                     and norm_ci(r.get("subject")) == norm_ci(L.warn_subject(tid))
+                     and L.sender_ok(r) and norm_ci(r.get("subject")) == norm_ci(L.warn_subject(tid))
                      and has_token(r.get("body_plain") or r.get("body_html") or "", w["line"]), new_mail)
             if i is not None:
                 used.add(i)
             else:
                 near = [(Lg[j]["after"].get("to"), Lg[j]["after"].get("subject")) for j in new_mail if j not in used]
-                check(f"warn.email {tid}", False, f"no email to {L.MANAGER} only, subject {L.warn_subject(tid)!r}, body "
-                                                  f"with the line" + (f" (new mail: {near[:3]})" if near else ""))
+                check(f"warn.email {tid}", False, f"no email from the automation inbox to {L.MANAGER} only, subject "
+                                                  f"{L.warn_subject(tid)!r}, body with the line"
+                                                  + (f" (new mail: {near[:3]})" if near else ""))
             if i is not None:
                 check(f"warn.email {tid}", True)
             row_check(f"warn.row {tid}", w["rid"], {"Warned At", "Warned Agent", "Warned Deadline"},
@@ -278,10 +286,11 @@ class Grader:
             if i is not None:
                 used.add(i)
             check(f"breach.jira {tid}", i is not None, f"no new Jira issue in {L.JIRA_PROJECT} '{L.breach_summary(tid)}'")
-            i = find(lambda r: r.get("channel_id") == esc and has_token(r.get("text"), L.breach_post(tid)), new_posts)
+            i = find(lambda r: r.get("channel_id") == esc and visible_post(r) and exact_text_ok(r.get("text"), L.breach_post(tid)),
+                     new_posts)
             if i is not None:
                 used.add(i)
-            check(f"breach.post {tid}", i is not None, f"no new #{L.ESC} post '{L.breach_post(tid)}'")
+            check(f"breach.post {tid}", i is not None, f"no new top-level #{L.ESC} post exactly '{L.breach_post(tid)}'")
             row_check(f"breach.row {tid}", b["rid"], {"Breached At"}, {"Breached At": ("instant", truth["at"])})
         for p in exp["policy_rows"]:
             i = next((j for j in new_rows if j not in used and (Lg[j]["after"] or {}).get("worksheet_id") == L.WS_POLICY
@@ -290,10 +299,12 @@ class Grader:
                 used.add(i)
             check("policy.row", i is not None, f"no new Policy Log row {p}")
         if exp["escalate"]:
-            i = find(lambda r: r.get("channel_id") == sink and has_token(r.get("text"), truth["trigger"]), new_posts)
-            if i is not None:
-                used.add(i)
-            check("escalate", i is not None, f"no #{L.SINK} post naming {truth['trigger']}")
+            # one post per undecidable item or one combined post: every top-level #automation-review post naming the
+            # trigger counts, at least one is required
+            hits = [j for j in new_posts if j not in used and (Lg[j]["after"] or {}).get("channel_id") == sink
+                    and visible_post(Lg[j]["after"] or {}) and has_token((Lg[j]["after"] or {}).get("text"), truth["trigger"])]
+            used.update(hits)
+            check("escalate", bool(hits), f"no top-level #{L.SINK} post naming {truth['trigger']}")
 
         # 2. envelope ----------------------------------------------------------------------------------------------
         extra = [summarize(Lg[i]) for i in range(len(Lg)) if i not in used and not harmless(Lg[i])]
@@ -309,7 +320,10 @@ class Grader:
                 late.append(f"{summarize(Lg[i])} at {ts.isoformat()}")
         check("timing.records", not late, "; ".join(late[:4]), group="timing")
 
-        # 4. AutomationBench's own assertion handlers ------------------------------------------------------------
+        # 4. AutomationBench's own assertion handlers (cross-check, never gating) ---------------------------------
+        # One matching rule decides a trigger: the checks above (case and whitespace ignored where POLICY.md allows it).
+        # AutomationBench's handlers compare raw substrings / exact cells, so a policy-equivalent value (' Ravi Menon ',
+        # double spaces around '|') can fail them alone. They are run and reported (`ab_disagree`), never counted.
         failed = self.ab_failures(after, truth["assertions"])
         if truth["assertions"]:
             check("ab", not failed, f"{len(failed)} failed: {[a['type'] for a in failed][:6]}", group="ab")
@@ -318,8 +332,10 @@ class Grader:
         if end is not None:
             checks.extend(self.end_checks(end, after, world0))
 
-        ok_all = all(c["ok"] for c in checks)
-        ok_core = all(c["ok"] for c in checks if c["group"] != "envelope")
+        gating = [c for c in checks if c["group"] != "ab"]
+        ok_all = all(c["ok"] for c in gating)
+        ok_core = all(c["ok"] for c in gating if c["group"] != "envelope")
+        ab_bad = [c for c in checks if c["group"] == "ab" and not c["ok"]]
         meaningful = [it for it in Lg if not harmless(it)]
         only_review = bool(meaningful) and all(it["app"] == "slack" and it["coll"] == "messages" and it["op"] == "new"
                                                and (it["after"] or {}).get("channel_id") == sink for it in meaningful)
@@ -327,32 +343,34 @@ class Grader:
             outcome = "correct"
         elif not meaningful:
             outcome = "miss" if truth["outcome"] != "no-op" else "wrong"
-        elif only_review and truth["outcome"] != "escalate":
+        elif only_review and not exp["escalate"]:
             outcome = "abstained"
         else:
             outcome = "wrong"
         return {"trigger": truth["trigger"], "kind": truth["kind"], "expected": truth["outcome"], "outcome": outcome,
                 "pass": ok_all, "pass_core": ok_core,
-                "score": round(sum(c["ok"] for c in checks) / len(checks), 4) if checks else 1.0,
-                "n_effects": len(meaningful), "failed": [c for c in checks if not c["ok"]], "n_checks": len(checks)}
+                "score": round(sum(c["ok"] for c in gating) / len(gating), 4) if gating else 1.0,
+                "n_effects": len(meaningful), "failed": [c for c in gating if not c["ok"]], "n_checks": len(gating),
+                # AutomationBench's handlers disagree with a passing verdict (reported, not counted)
+                "ab_disagree": [c["name"] + ": " + c["detail"] for c in ab_bad] if ok_all else []}
 
     @staticmethod
     def policy_row_ok(cells: dict, p: dict) -> bool:
         return (norm(cells.get("Effective")) == p["Effective"] and norm_ci(cells.get("Parameter")) == norm_ci(p["Parameter"])
-                and re.sub(r"\D", "", str(cells.get("Value") or "")) == p["Value"]
+                and L.digits_value_ok(cells.get("Value"), p["Value"])
                 and norm_ci(cells.get("Approved by")) == norm_ci(p["Approved by"]))
 
     def end_checks(self, end: dict, after: dict, world0: dict | None) -> list[dict]:
         out = []
 
-        def check(name, ok, detail=""):
-            out.append({"name": name, "ok": bool(ok), "detail": detail, "group": "end"})
+        def check(name, ok, detail="", group="end"):
+            out.append({"name": name, "ok": bool(ok), "detail": detail, "group": group})
 
         week = parse_instant(end["week_start"])
         esc = _chan_id(after, L.ESC)
         sms = [m for m in after["twilio"]["sms_messages"] if (_sms_time(m) or week) >= week]
         posts = [m for m in after["slack"]["messages"] if m.get("channel_id") == esc and (_slack_time(m) or week) >= week
-                 and not m.get("is_deleted")]
+                 and visible_post(m)]
         mails = [m for m in after["gmail"]["messages"] if "SENT" in (m.get("label_ids") or []) and (_mail_time(m) or week) >= week]
         issues = [a for a in after["jira"]["actions"].get("create_issue", []) if (_jira_time(a) or week) >= week]
         problems = []
@@ -363,7 +381,7 @@ class Grader:
             n = sum(1 for m in posts if has_token(m.get("text"), f"{tid} |"))
             if n != c["warn_posts"]:
                 problems.append(f"{tid}: {n} warning posts != {c['warn_posts']}")
-            n = sum(1 for m in posts if has_token(m.get("text"), f"BREACHED {tid}"))
+            n = sum(1 for m in posts if exact_text_ok(m.get("text"), L.breach_post(tid)))
             if n != c["breach_posts"]:
                 problems.append(f"{tid}: {n} BREACHED posts != {c['breach_posts']}")
             n = sum(1 for m in mails if norm_ci(m.get("subject")) == norm_ci(L.warn_subject(tid)))
@@ -425,5 +443,6 @@ class Grader:
             check("end.preexisting-unchanged", not touched, "; ".join(touched[:6]))
 
         failed = self.ab_failures(after, end.get("assertions") or [])
-        check("end.ab", not failed, f"{len(failed)} failed: {[(a['type'], a.get('to_number') or a.get('params')) for a in failed][:4]}")
+        check("end.ab", not failed, f"{len(failed)} failed: {[(a['type'], a.get('to_number') or a.get('params')) for a in failed][:4]}",
+              group="ab")
         return out

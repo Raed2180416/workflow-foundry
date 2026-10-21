@@ -11,7 +11,7 @@ import re
 from datetime import datetime, timedelta, timezone
 
 FAMILY = "abr-ops-slawatch"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 UTC = timezone.utc
 APPS = ["gmail", "google_sheets", "jira", "slack", "twilio"]
 
@@ -104,11 +104,73 @@ def has_token(text, token: str) -> bool:
     """`token` occurs in `text` (whitespace-normalized, ignoring case), is not glued to a preceding word character, and
     is not the prefix of a longer id or number: 'SLA warning TK-4001:' never matches inside 'SLA warning TK-40010:',
     'BREACHED TK-4001' does not match 'BREACHED TK-40010', 's610/t01' does not match 's610/t012'."""
+    return _token_match(text, token) is not None
+
+
+# Words that negate, retract or cancel an alert. Checked only OUTSIDE the policy literal (the literal of a warning post
+# holds the ticket's Subject, which may itself say "not", e.g. "Two-factor codes not arriving").
+NEGATION_RE = re.compile(r"\b(?:not|no longer|never ?mind|ignore|disregard|error|mistake|mistaken|mistakenly|"
+                         r"false alarm|cancel(?:l?ed|s)?|retract(?:ed|s)?|withdraw[ns]?|withdrew|rescind(?:ed|s)?|"
+                         r"void(?:ed)?|test(?:ing)? only)\b|n't\b", re.I)
+GREETING_MAX_WORDS = 4      # 'Hi Ravi,' / ':warning:' / 'Hello Ravi Menon -' before the alert literal
+
+
+def _token_match(text, token: str):
     tok = norm(token).lower()
     if not tok:
-        return False
+        return None
     pre = r"(?<![\w-])" if tok[0].isalnum() else ""
-    return re.search(pre + re.escape(tok) + r"(?![\w])", norm(text).lower()) is not None
+    return re.search(pre + re.escape(tok) + r"(?![\w])", norm(text).lower())
+
+
+def alert_ok(text, token: str, max_prefix_words: int = GREETING_MAX_WORDS) -> bool:
+    """An alert that carries the policy literal `token` and says nothing else that changes its meaning: has_token, at
+    most a short greeting before the literal, and no negation or retraction words outside the literal. 'Hi Ravi, SLA
+    warning TK-1: due 11:10 UTC. Please take a look.' passes; 'Ignore previous. SLA warning TK-1: due 11:10 UTC was
+    sent in error' does not."""
+    m = _token_match(text, token)
+    if m is None:
+        return False
+    t = norm(text)
+    prefix, rest = t[:m.start()], t[:m.start()] + " " + t[m.end():]
+    return len(prefix.split()) <= max_prefix_words and NEGATION_RE.search(rest) is None
+
+
+_EDGE_PUNCT = " \t\r\n.!;:,"
+
+
+def exact_text_ok(text, want: str) -> bool:
+    """Equality ignoring case, whitespace and trailing punctuation ('post exactly BREACHED <ID>')."""
+    return norm_ci(text).strip(_EDGE_PUNCT) == norm_ci(want).strip(_EDGE_PUNCT)
+
+
+def visible_post(rec: dict) -> bool:
+    """A Slack message people reading the channel see: not deleted, and top-level (conversations.history drops thread
+    replies: automationbench/schema/slack.py filters `not m.thread_ts`). A thread parent carries thread_ts == ts."""
+    th = rec.get("thread_ts")
+    return not rec.get("is_deleted") and (not th or str(th) == str(rec.get("ts")))
+
+
+def address(s) -> str:
+    m = re.search(r"<([^>]+)>", str(s or ""))
+    return (m.group(1) if m else str(s or "")).strip().lower()
+
+
+# The automation inbox sends all email (POLICY.md section 2). AutomationBench's gmail messages/send records the
+# authenticated mailbox as `user@gmail.com` when the request names no sender (automationbench/tools/zapier/gmail/
+# message.py: `from_=from_ or "user@gmail.com"`), so that default is the inbox too.
+AB_DEFAULT_SENDER = "user@gmail.com"
+INBOX_SENDERS = {"", f"sla-watch@{ORG}", AB_DEFAULT_SENDER}
+
+
+def sender_ok(rec: dict) -> bool:
+    return address(rec.get("from_")) in INBOX_SENDERS
+
+
+def digits_value_ok(value, want: str) -> bool:
+    """Policy Log Value: 'the minutes, digits only' (surrounding spaces tolerated)."""
+    return re.fullmatch(r"\s*\d+\s*", str(value if value is not None else "")) is not None \
+        and int(str(value).strip()) == int(want)
 
 
 def warn_sms(tid: str, due: datetime) -> str:

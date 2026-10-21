@@ -34,7 +34,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 FAMILY = "abr-ops-mailroom"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 HERE = Path(__file__).resolve().parent
 UTC = timezone.utc
 
@@ -55,19 +55,25 @@ KW_RETURNED, KW_CUSTOMS, KW_OVERSIZED = "returned to sender", "customs hold", "o
 
 # Per difficulty: (lo, hi) per kind. pkg = package.received; lift = customs.cleared that lifts a hold; odd = d3's
 # customs.cleared look-alikes (notes still say customs hold; the package is not Held - Customs); ret =
-# employee.returned; chatter = human messages in #mailroom during the week (count-noise for the daily total).
+# employee.returned; upd = package.updated (a row change on a package that is not Held - Customs: a note on a Routed
+# package, a note on a Skipped package whose recipient is now Active, a Department or Package Type change; the truth is
+# always "nothing", and only the Status column says so); chatter = human messages in #mailroom during the week
+# (count-noise for the daily total).
 COUNTS = {
-    "d1": dict(pkg=(32, 34), lift=(2, 2), odd=(0, 0), ret=(1, 1), chatter=(0, 0)),
-    "d2": dict(pkg=(32, 38), lift=(2, 3), odd=(0, 0), ret=(1, 2), chatter=(1, 2)),
-    "d3": dict(pkg=(39, 45), lift=(1, 2), odd=(2, 2), ret=(1, 2), chatter=(2, 3)),
+    "d1": dict(pkg=(32, 34), lift=(2, 2), odd=(0, 0), ret=(1, 1), upd=(1, 1), chatter=(0, 0)),
+    "d2": dict(pkg=(32, 38), lift=(2, 3), odd=(0, 0), ret=(1, 2), upd=(2, 3), chatter=(1, 2)),
+    "d3": dict(pkg=(39, 45), lift=(1, 2), odd=(2, 2), ret=(1, 2), upd=(3, 4), chatter=(2, 3)),
 }
+# package.updated subs in the order they are planned (the first `upd` of the list).
+UPD_SUBS = {"d1": ["routed-note"], "d2": ["routed-note", "skipped-active", "other-change"],
+            "d3": ["routed-note", "other-change", "skipped-active", "routed-released"]}
 # Share of package.received triggers that get a planted trap. Release triggers are traps by construction, so these
 # put the share of trap-bearing TRIGGERS near the design's 35% (d2) and 60% (d3); meta reports both per stream.
 TRAP_RATE = {"d1": 0.0, "d2": 0.24, "d3": 0.55}
 TRAP_WEIGHTS = {"twin-active": 2.0, "wrong-dept": 1.0, "not-found": 1.0, "terminated": 1.5, "on-leave": 1.5,
                 "customs": 1.5, "returned": 1.0, "returned-rescan": 1.0, "oversized": 1.0, "oversized-sms": 1.0,
-                "decoy": 1.5, "back": 0.7}
-TRAP_WEIGHTS_D3 = {"precedence": 0.8}
+                "decoy": 1.5, "back": 0.7, "spelling": 1.0, "type-variant": 0.8}
+TRAP_WEIGHTS_D3 = {"precedence": 0.8, "ambiguous": 0.5}
 
 # ---------------------------------------------------------------------------------------------------------------
 # Fictional pools (no real person or organization)
@@ -100,6 +106,11 @@ STILL_HELD = ["customs hold - broker documents received, inspection {wd}", "CUST
 RETURNED = ["RETURNED TO SENDER - refused by recipient", "Returned to sender (address unknown)",
             "returned to sender - damaged in transit", "RETURNED TO SENDER", "Returned To Sender - recipient moved"]
 OVERSIZED = ["oversized - requires forklift", "OVERSIZED pallet", "Oversized: 2 crates", "oversized box, use the dock cart"]
+ROUTED_NOTES = ["picked up by recipient {d}", "delivered to desk {d}", "recipient signed for it on {d}",
+                "left at reception {d}, recipient informed"]
+AFTER_RELEASE_NOTES = ["broker confirms customs cleared {d}", "duty receipt filed {d}", "customs paperwork archived {d}"]
+OTHER_NOTES = ["front desk: recipient started {d}, holding at desk", "recipient now in the directory ({d})",
+               "new hire, badge issued {d}"]
 DECOYS = ["return label enclosed", "Return to sender if undeliverable", "cleared customs at port of entry",
           "customs paperwork attached", "large box, two-person lift", "sender requested a return receipt"]
 CHATTER = ["Heads up: the freight elevator is out until noon.", "Did anyone see a box from Harbor Office Supply?",
@@ -109,7 +120,7 @@ CHATTER = ["Heads up: the freight elevator is out until noon.", "Did anyone see 
            "Who ordered twelve cases of printer paper?"]
 POLICY_ROWS = [
     ("Customs Hold", "Packages with 'customs hold' in Notes are held (Held - Customs) until the note is cleared; then they "
-     "are routed. No SMS and no routing post while held.", "2025-08-15"),
+     "are decided again. No SMS and no routing post while held.", "2025-08-15"),
     ("Returned Packages", "Any package with 'returned to sender' in Notes has already been processed for return. Do not "
      "route, notify or change it.", "2025-09-01"),
     ("Directory Match", "Match the recipient on both Name and Department. Not in the directory, or Terminated: Skipped.",
@@ -118,8 +129,8 @@ POLICY_ROWS = [
      "floor. An SMS, when the type needs one, names Loading Dock B.", "2025-10-01"),
     ("On Leave Hold", "Packages for employees On Leave are held (Held - On Leave) until they return. These are not the "
      "same as terminated employees, whose packages are skipped.", "2025-11-01"),
-    ("Notifications", "Refrigerated and Hazardous packages get an SMS when routed. Other packages are only routed.",
-     "2025-11-01"),
+    ("Notifications", "Refrigerated and Hazardous packages (any letter case) get an SMS from the mailroom number when "
+     "routed. Other packages are only routed.", "2025-11-01"),
     ("Daily Total", "At 17:00 each weekday, post 'Routed today: N' in #mailroom.", "2026-01-05"),
 ]
 FRONT_DESK = [("U0FRONTDSK1", "Dana Whitfield", "dana.whitfield"), ("U0FACILIT01", "Marco Delgado", "marco.delgado"),
@@ -173,8 +184,8 @@ def decide(cells: dict, directory: list[dict]) -> dict:
         return {"status": None, "reason": "returned"}
     match = [e for e in directory if norm(e["Name"]) == norm(cells.get("Recipient Name"))
              and norm(e["Department"]) == norm(cells.get("Department"))]
-    if len(match) > 1:
-        raise ValueError(f"ambiguous directory match for {cells}")
+    if len(match) > 1:                                  # two directory rows are that person: section 6, escalate
+        return {"status": None, "reason": "ambiguous", "escalate": True}
     if not match or norm(match[0]["Status"]) == "terminated":
         return {"status": SKIPPED, "reason": "terminated" if match else "not-found"}
     e = match[0]
@@ -186,7 +197,7 @@ def decide(cells: dict, directory: list[dict]) -> dict:
     trk = cells["Tracking Number"]
     out = {"status": ROUTED, "reason": "route", "emp": e, "loc": loc,
            "post": routing_post(trk, loc, e["Name"], e["Department"])}
-    if cells.get("Package Type") in SMS_TYPES:
+    if norm(cells.get("Package Type")) in {norm(t) for t in SMS_TYPES}:
         out["sms"] = [e["Phone"], sms_body(trk, loc)]
     return out
 

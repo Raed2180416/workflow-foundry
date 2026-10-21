@@ -16,14 +16,18 @@ Prints one JSON object; exit 0 only when every gate passes. No model is called. 
                 generator and reference agree on every effect.
   controls      every bad control fails (below 100% of triggers and not every week clean); null passes exactly the
                 no-op triggers apart from week-close checks that end a week with expected effects; the <= 40-line
-                naive heuristic scores below 60% per trigger at d3.
+                naive heuristic scores below 60% per trigger at d3; the memoryless control (clock only, no state
+                read) keeps no week clean and stays below MEMORYLESS_BAR per trigger.
   traps         each trap kind appears at least five times across the four dev label streams 610-613.
   mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (drop, duplicate, wrong
                 recipient / number / sender / channel / due time / id / agent / project, timestamps an hour off, extra
-                writes, edited or removed pre-existing records, early or late effects, wrong Policy Log row).
+                writes, edited or removed pre-existing records, early or late effects, wrong Policy Log row, negated or
+                retracted alerts, deleted or thread-reply posts, a wrong email sender, a Value with a unit, a dropped
+                or misplaced escalation). AutomationBench's handlers never gate, so every kill is the oracle's own.
   specificity   the oracle accepts policy-neutral variants of the reference's effects (greetings around the SMS text,
                 extra email lines, subject case, other ISO forms of the written times, Jira issue type and
-                description, reading the inbound email): no false rejects.
+                description, reading the inbound email, whitespace and case variants of posts, cells and the Policy
+                Log Value, an explicit inbox sender, one escalation post per item): no false rejects.
 """
 from __future__ import annotations
 
@@ -52,7 +56,8 @@ PAYLOAD_KEYS = {"trigger", "at", "app", "event", "data"}
 DATA_KEYS = {"spreadsheet_id", "worksheet", "row", "changed", "message_id", "from", "subject", "snippet"}
 BAD_CONTROLS = ["null", "echo", "naive", "eager", "no-hold", "utc-naive", "status-blind", "no-reassign", "warn-once",
                 "strict-window", "slack-dedupe", "raw-phone", "any-amendment", "fixed-window", "late-warning",
-                "early-warning"]
+                "early-warning", "memoryless", "no-escalate"]
+MEMORYLESS_BAR = 0.90         # per-trigger pass rate the clock-only control must stay below on the dev streams
 _STREAMS: dict = {}
 
 
@@ -95,7 +100,8 @@ def gate_determinism(seeds: list[int]) -> dict:
 # leakage
 # ---------------------------------------------------------------------------------------------------------------------
 TRUTH_WORDS = ["traps", "expect", "guards", "outcome", "T-lookalike", "T-stale", "T-note", "T-authority", "T-format",
-               "T-repeat", "T-timing", "decoy", "story", "Warned At", "Warned Agent", "Warned Deadline", "Breached At"]
+               "T-repeat", "T-timing", "decoy", "story", "needs_state", "Warned At", "Warned Agent", "Warned Deadline",
+               "Breached At"]
 
 
 def gate_leakage(seeds: list[int]) -> dict:
@@ -158,9 +164,13 @@ def gate_leakage(seeds: list[int]) -> dict:
 # solvability, controls, traps
 # ---------------------------------------------------------------------------------------------------------------------
 def gate_solvability(seeds: list[int]) -> dict:
+    """The reference passes every trigger and week, and AutomationBench's handlers agree with every verdict (they are a
+    cross-check, never gating: a disagreement on the reference would mean the truth's assertion dicts are off)."""
     summary, _ = harness.run("reference", seeds, streams={s: stream(s) for s in seeds})
-    return {"pass": summary["passed"] == summary["triggers"] and summary["clean_weeks"] == summary["streams"],
-            **{k: summary[k] for k in ("triggers", "passed", "pass_rate", "clean_weeks", "streams", "per_stream", "by_kind")}}
+    return {"pass": summary["passed"] == summary["triggers"] and summary["clean_weeks"] == summary["streams"]
+            and summary["ab_disagree"] == 0,
+            **{k: summary[k] for k in ("triggers", "passed", "pass_rate", "clean_weeks", "streams", "ab_disagree",
+                                       "per_stream", "by_kind")}}
 
 
 def null_expected(seeds: list[int]) -> int:
@@ -183,6 +193,9 @@ def gate_controls(seeds: list[int], d3_seeds: list[int]) -> dict:
             problems.append(f"{name} does not fail")
     if res["null"]["passed"] != null_expected(seeds):
         problems.append(f"null passes {res['null']['passed']} triggers, expected {null_expected(seeds)}")
+    if res["memoryless"]["pass_rate"] >= MEMORYLESS_BAR or res["memoryless"]["clean_weeks"]:
+        problems.append(f"memoryless scores {res['memoryless']['pass_rate']} with {res['memoryless']['clean_weeks']} clean "
+                        f"weeks (bar: < {MEMORYLESS_BAR}, 0 clean weeks)")
     naive_d3, _ = harness.run("naive", d3_seeds, streams={s: stream(s) for s in d3_seeds})
     if naive_d3["pass_rate"] >= 0.6:
         problems.append(f"naive scores {naive_d3['pass_rate']} at d3")
@@ -289,7 +302,9 @@ def mutants(before: dict, after: dict, truth: dict, is_last: bool, k0: int = 0):
         w["twilio"]["sms_messages"].append(rec)
     m("extra-sms", extra_sms)
     m("extra-post", lambda w: _post(w, L.ESC, "Checking in on the queue this hour.", at, k[0]))
-    m("unwarranted-escalation", lambda w: _post(w, L.SINK, f"{truth['trigger']}: unsure about a ticket", at, k[0]))
+    old_ts = before["slack"]["messages"][0]["ts"] if before["slack"]["messages"] else "1.000100"
+    if not exp["escalate"]:
+        m("unwarranted-escalation", lambda w: _post(w, L.SINK, f"{truth['trigger']}: unsure about a ticket", at, k[0]))
     m("extra-email", lambda w: _mail(w, [L.MANAGER], "SLA summary", "All quiet.", at, k[0]))
 
     def extra_jira(w):
@@ -377,6 +392,14 @@ def mutants(before: dict, after: dict, truth: dict, is_last: bool, k0: int = 0):
         m("email-no-line", lambda w: find_mail(w).update(body_plain=f"Ticket {tid} is close to its deadline."))
         m("email-an-hour-late", lambda w: find_mail(w).update(date=_ms_shift(find_mail(w)["date"]),
                                                                internal_date=_ms_shift(find_mail(w)["internal_date"])))
+        m("email-wrong-sender", lambda w: find_mail(w).update(from_=L.FORMER_MANAGER))
+        m("sms-retracted", lambda w: find_sms(w).update(
+            body=f"Ignore previous. SLA warning {tid}: due {x['due']} UTC was sent in error"))
+        m("sms-long-preamble", lambda w: find_sms(w).update(
+            body=f"Status digest for the whole queue this afternoon, nothing urgent: SLA warning {tid}: due {x['due']} UTC"))
+        m("post-retracted", lambda w: find_post(w).update(text=x["line"] + " (sent by mistake, please disregard)"))
+        m("post-deleted", lambda w: find_post(w).update(is_deleted=True))
+        m("post-thread-reply", lambda w: find_post(w).update(thread_ts=old_ts))
         m("warned-at-wrong-hour", lambda w: _row(w, rid)["cells"].update({"Warned At": _shift(at)}))
         m("warned-at-is-deadline", lambda w: _row(w, rid)["cells"].update({"Warned At": x["deadline"]}))
         m("warned-agent-wrong", lambda w: _row(w, rid)["cells"].update({"Warned Agent": "Someone Else"}))
@@ -424,6 +447,10 @@ def mutants(before: dict, after: dict, truth: dict, is_last: bool, k0: int = 0):
         m("breach-lookalike-summary", lambda w: find_iss(w)["params"].update(summary=f"SLA breach {tid}0"))
         m("breach-lookalike-post", lambda w: find_bp(w).update(text=f"BREACHED {tid}0"))
         m("breach-post-wrong-channel", lambda w: find_bp(w).update(channel_id=L.CHANNELS[L.GENERAL]))
+        m("breach-post-negated", lambda w: find_bp(w).update(text=f"False alarm, NOT BREACHED {tid}"))
+        m("breach-post-extra-words", lambda w: find_bp(w).update(text=f"BREACHED {tid} (test only, ignore)"))
+        m("breach-post-deleted", lambda w: find_bp(w).update(is_deleted=True))
+        m("breach-post-thread-reply", lambda w: find_bp(w).update(thread_ts=old_ts))
         m("breach-jira-an-hour-late", lambda w: find_iss(w).update(created_at=_shift(find_iss(w)["created_at"])))
         m("breached-at-wrong-hour", lambda w: _row(w, rid)["cells"].update({"Breached At": _shift(at, -1)}))
 
@@ -444,6 +471,22 @@ def mutants(before: dict, after: dict, truth: dict, is_last: bool, k0: int = 0):
         m("policy-wrong-value", lambda w: prow(w)["cells"].update(Value=str(int(p["Value"]) + 15)))
         m("policy-wrong-approver", lambda w: prow(w)["cells"].update({"Approved by": "avery.cole@company.example.com"}))
         m("policy-wrong-effective", lambda w: prow(w)["cells"].update(Effective="2026-01-01"))
+        m("policy-value-with-unit", lambda w: prow(w)["cells"].update(Value=f"{p['Value']} minutes"))
+
+    # -- escalations -----------------------------------------------------------------------------------------------
+    if exp["escalate"]:
+        esc_ts = [r["ts"] for r in posts_new if r["channel_id"] == L.CHANNELS[L.SINK] and truth["trigger"] in r["text"]]
+
+        def drop_esc(w):
+            w["slack"]["messages"] = [r for r in w["slack"]["messages"] if r["ts"] not in esc_ts]
+        m("escalate-drop", drop_esc)
+
+        def move_esc(w):
+            for r in w["slack"]["messages"]:
+                if r["ts"] in esc_ts:
+                    r["channel_id"] = L.CHANNELS[L.ESC]
+        m("escalate-wrong-channel", move_esc)
+        m("escalate-thread-reply", lambda w: [r.update(thread_ts=old_ts) for r in w["slack"]["messages"] if r["ts"] in esc_ts])
 
     # -- end of week ---------------------------------------------------------------------------------------------------
     if is_last:
@@ -514,12 +557,37 @@ def variants(before: dict, after: dict, truth: dict):
             {"Warned At": L.parse_instant(at).strftime("%Y-%m-%d %H:%M UTC")}))
         v("warned-deadline-as-written", lambda w: _row(w, rid)["cells"].update(
             {"Warned Deadline": _row(w, rid)["cells"]["SLA Deadline"]}))
+        ts = next(r["ts"] for r in _new_posts(before, after) if r["text"].startswith(f"{tid} |"))
+        v("post-double-spaces", lambda w: next(r for r in w["slack"]["messages"] if r["ts"] == ts).update(
+            text=x["line"].replace(" | ", "  |  ")))
+        v("post-emoji-prefix", lambda w: next(r for r in w["slack"]["messages"] if r["ts"] == ts).update(
+            text=":warning: " + x["line"] + "\nPlease act."))
+        v("warned-agent-padded", lambda w: _row(w, rid)["cells"].update({"Warned Agent": "  " + x["agent"] + " "}))
+        v("warned-agent-upper", lambda w: _row(w, rid)["cells"].update({"Warned Agent": x["agent"].upper()}))
+        v("sms-trailing-dot", lambda w: next(r for r in w["twilio"]["sms_messages"] if r["sid"] == sid).update(
+            body=f"SLA warning {tid}: due {x['due']} UTC."))
+        v("email-explicit-sender", lambda w: next(r for r in w["gmail"]["messages"] if r["id"] == mid).update(
+            from_="SLA Watch <sla-watch@company.example.com>"))
     for x in exp["breach"]:
         iid = next(a["id"] for a in issues_new if a["params"].get("summary") == f"SLA breach {x['tid']}")
         v("jira-bug-type", lambda w: next(a for a in w["jira"]["actions"]["create_issue"] if a["id"] == iid)["params"].update(
             issuetype="Bug", description="Deadline passed during the hourly check."))
         v("breached-at-offset-form", lambda w: _row(w, x["rid"])["cells"].update(
             {"Breached At": L.parse_instant(at).strftime("%Y-%m-%dT%H:%M:%S+00:00")}))
+        bts = next(r["ts"] for r in _new_posts(before, after) if r["text"] == f"BREACHED {x['tid']}")
+        v("breach-post-case-punct", lambda w: next(r for r in w["slack"]["messages"] if r["ts"] == bts).update(
+            text=f"breached {x['tid']}."))
+        v("breach-post-spaces", lambda w: next(r for r in w["slack"]["messages"] if r["ts"] == bts).update(
+            text=f" BREACHED  {x['tid']} "))
+        v("jira-summary-case-spaces", lambda w: next(a for a in w["jira"]["actions"]["create_issue"] if a["id"] == iid)[
+            "params"].update(summary=f"sla breach  {x['tid']}"))
+    for p in exp["policy_rows"]:
+        old_ids = {x["id"] for x in before["google_sheets"]["rows"]}
+        v("policy-value-spaces", lambda w: next(r for r in w["google_sheets"]["rows"] if r["worksheet_id"] == L.WS_POLICY
+                                                and r["id"] not in old_ids)["cells"].update(Value=f" {p['Value']} "))
+    if exp["escalate"]:
+        v("escalation-two-posts", lambda w: _post(w, L.SINK, f"{truth['trigger']}: second item could not be decided",
+                                                  at, 99))
     if truth["kind"] == "policy.amendment":
         inbound = [m for m in after["gmail"]["messages"] if "INBOX" in (m.get("label_ids") or []) and not m.get("is_read")]
         if inbound:
@@ -531,7 +599,7 @@ def variants(before: dict, after: dict, truth: dict):
 def gate_specificity(seeds: list[int], grader=None) -> dict:
     grader = grader or oracle.Grader()
     import reference
-    accepted, total, rejects = 0, 0, []
+    accepted, total, rejects, ab_disagree = 0, 0, [], Counter()
     for s in seeds:
         out = stream(s)
         res = harness.run_stream(out, reference.handle, grader=grader, keep_worlds=True)
@@ -543,10 +611,14 @@ def gate_specificity(seeds: list[int], grader=None) -> dict:
                                   world0=out["world0"] if i == last else None)
                 if vv["pass"]:
                     accepted += 1
+                    if vv["ab_disagree"]:
+                        ab_disagree[name] += 1
                 else:
                     rejects.append(f"s{s}/{truth['trigger']}: {name}: {[c['name'] for c in vv['failed']][:3]}")
     return {"pass": accepted == total and total > 0, "seeds": seeds, "variants": total, "accepted": accepted,
-            "false_rejects": rejects[:20]}
+            "false_rejects": rejects[:20],
+            # accepted variants that AutomationBench's raw-substring / exact-cell handlers alone would have rejected
+            "ab_would_reject": dict(sorted(ab_disagree.items()))}
 
 
 # ---------------------------------------------------------------------------------------------------------------------

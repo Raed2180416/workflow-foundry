@@ -1,0 +1,1217 @@
+{
+ "version": 1,
+ "parent": {
+  "file": "parent.mjs",
+  "calls": [
+   "order-id",
+   "intake",
+   "fraud",
+   "customer-action",
+   "order-progress",
+   "fulfilment",
+   "cancellation",
+   "statuses",
+   "notices"
+  ],
+  "effects": [],
+  "humanTasks": []
+ },
+ "modules": {
+  "order-id": {
+   "file": "modules/order-id.mjs",
+   "purpose": "normalise an order id read anywhere (SPEC-E §3.1); pure, stateless",
+   "rules": [],
+   "input": {
+    "type": "object",
+    "required": [
+     "raw"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "raw": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 400
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "orderId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "orderId": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 400
+     }
+    }
+   },
+   "effects": [],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  },
+  "intake": {
+   "file": "modules/intake.mjs",
+   "purpose": "one order: duplicate check, allocation, edition, amounts, orders.create (R1)",
+   "rules": [
+    "R1.1",
+    "R1.2",
+    "R1.3",
+    "R1.4"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "op": {
+      "enum": [
+       "placed",
+       "resume"
+      ]
+     },
+     "order": {
+      "type": "object",
+      "required": [
+       "orderId",
+       "customerId",
+       "placedAt",
+       "currency",
+       "items"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "orderId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+       },
+       "customerId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+       },
+       "placedAt": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40,
+        "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+       },
+       "currency": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3
+       },
+       "items": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 50,
+        "items": {
+         "type": "object",
+         "required": [
+          "sku",
+          "qty"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "sku": {
+           "type": "string",
+           "minLength": 1,
+           "maxLength": 80
+          },
+          "qty": {
+           "type": "integer",
+           "minimum": 1
+          }
+         }
+        }
+       }
+      },
+      "description": "placed: the order.placed payload with the normalised orderId; placedAt is the event time (§3.1)"
+     },
+     "records": {
+      "type": "object",
+      "description": "resume (SPEC-E §3.5): the records and already-received messages of a migrated order that concern this module"
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "status",
+     "duplicate",
+     "busy"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "status": {
+      "enum": [
+       "new",
+       "allocating",
+       "recording",
+       "recorded"
+      ]
+     },
+     "duplicate": {
+      "type": "boolean",
+      "description": "true when this placed message is a duplicate (R1.4): no effect was emitted for it"
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "customerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "placedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+     },
+     "currency": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 3
+     },
+     "edition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "edition id in force at placedAt (R1.3), fixed for the life of the order"
+     },
+     "fulfilments": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "location",
+        "available",
+        "items",
+        "amountMinor"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "location": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "maxLength": 40
+        },
+        "available": {
+         "type": "boolean"
+        },
+        "items": {
+         "type": "array",
+         "minItems": 1,
+         "maxItems": 50,
+         "items": {
+          "type": "object",
+          "required": [
+           "sku",
+           "qty"
+          ],
+          "additionalProperties": false,
+          "properties": {
+           "sku": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+           },
+           "qty": {
+            "type": "integer",
+            "minimum": 1
+           }
+          }
+         }
+        },
+        "amountMinor": {
+         "type": "integer",
+         "minimum": 1
+        }
+       }
+      }
+     },
+     "totalMinor": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "busy": {
+      "type": "boolean",
+      "description": "an effect of this module awaits its result"
+     }
+    }
+   },
+   "effects": [
+    "inventory.allocate",
+    "orders.create"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [
+    "order-id"
+   ],
+   "reads": []
+  },
+  "fraud": {
+   "file": "modules/fraud.mjs",
+   "purpose": "one order: fraud.check, the review task and its deadline, the clearing (R2)",
+   "rules": [
+    "R2.1",
+    "R2.2",
+    "S3"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "stop",
+       "resume"
+      ]
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "placedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+     },
+     "edition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "edition id in force at placedAt (R1.3), fixed for the life of the order"
+     },
+     "records": {
+      "type": "object",
+      "description": "resume (SPEC-E §3.5): the records and already-received messages of a migrated order that concern this module"
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "state",
+     "busy"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "state": {
+      "enum": [
+       "idle",
+       "checking",
+       "review",
+       "cleared",
+       "cancel",
+       "stopped"
+      ]
+     },
+     "at": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40,
+      "description": "cleared: the clearing time (p for pass, the answer time for approve, the review deadline when no usable answer came); cancel: the time the cancel was decided"
+     },
+     "reason": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "enum": [
+       "fraud",
+       null
+      ]
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "fraud.check"
+   ],
+   "humanTasks": [
+    "fraudReview"
+   ],
+   "timers": true,
+   "calls": [],
+   "reads": []
+  },
+  "customer-action": {
+   "file": "modules/customer-action.mjs",
+   "purpose": "one order with unavailable items: action-required, the customer deadline D, amend / cancel / timeout (R3)",
+   "rules": [
+    "R3.1",
+    "R3.2",
+    "S1"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "advance",
+       "action",
+       "resume"
+      ]
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "placedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+     },
+     "clearedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+     },
+     "edition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "edition id in force at placedAt (R1.3), fixed for the life of the order"
+     },
+     "fulfilments": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "available"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "available": {
+         "type": "boolean"
+        }
+       }
+      }
+     },
+     "action": {
+      "enum": [
+       "amend",
+       "cancel"
+      ]
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "action: the time of the customer action event (§3.2)"
+     },
+     "records": {
+      "type": "object",
+      "description": "resume (SPEC-E §3.5): the records and already-received messages of a migrated order that concern this module"
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "state",
+     "busy"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "state": {
+      "enum": [
+       "idle",
+       "waiting",
+       "ready",
+       "cancel",
+       "timedOut"
+      ]
+     },
+     "at": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     },
+     "reason": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "enum": [
+       "customer",
+       "nothing-available",
+       null
+      ]
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [],
+   "humanTasks": [],
+   "timers": true,
+   "calls": [
+    "statuses",
+    "notices"
+   ],
+   "reads": []
+  },
+  "order-progress": {
+   "file": "modules/order-progress.mjs",
+   "purpose": "one order: processing statuses when ready (R4.1) and the order outcome (R4.5)",
+   "rules": [
+    "R4.1",
+    "R4.5"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "op": {
+      "enum": [
+       "ready",
+       "ended",
+       "stop",
+       "resume"
+      ]
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+     },
+     "fulfilments": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "available"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "available": {
+         "type": "boolean"
+        }
+       }
+      }
+     },
+     "fulfilmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "end": {
+      "enum": [
+       "completed",
+       "failed"
+      ]
+     },
+     "records": {
+      "type": "object",
+      "description": "resume (SPEC-E §3.5): the records and already-received messages of a migrated order that concern this module"
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "state"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "state": {
+      "enum": [
+       "idle",
+       "processing",
+       "ended",
+       "stopped"
+      ]
+     },
+     "outcome": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "enum": [
+       "completed",
+       "failed",
+       "cancelled",
+       null
+      ]
+     },
+     "at": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     }
+    }
+   },
+   "effects": [],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [
+    "statuses"
+   ],
+   "reads": []
+  },
+  "fulfilment": {
+   "file": "modules/fulfilment.mjs",
+   "purpose": "one fulfilment saga: reserve, charge, ship, carrier reports, failure and compensation (R4.2-R4.4, R5)",
+   "rules": [
+    "R4.2",
+    "R4.3",
+    "R4.4",
+    "R5.1",
+    "R5.2",
+    "S2",
+    "S14"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "advance",
+       "carrier",
+       "stop",
+       "get",
+       "resume"
+      ]
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "customerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "currency": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 3
+     },
+     "edition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "edition id in force at placedAt (R1.3), fixed for the life of the order"
+     },
+     "readyAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+     },
+     "fulfilment": {
+      "type": "object",
+      "required": [
+       "fulfilmentId",
+       "location",
+       "items",
+       "amountMinor"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "fulfilmentId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+       },
+       "location": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+       },
+       "items": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 50,
+        "items": {
+         "type": "object",
+         "required": [
+          "sku",
+          "qty"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "sku": {
+           "type": "string",
+           "minLength": 1,
+           "maxLength": 80
+          },
+          "qty": {
+           "type": "integer",
+           "minimum": 1
+          }
+         }
+        }
+       },
+       "amountMinor": {
+        "type": "integer",
+        "minimum": 1
+       }
+      }
+     },
+     "message": {
+      "type": "object",
+      "required": [
+       "code",
+       "reportedAt"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "code": {
+        "type": "string",
+        "maxLength": 80
+       },
+       "reportedAt": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40,
+        "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+       },
+       "carrier": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "maxLength": 80
+       },
+       "shipmentId": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "maxLength": 80
+       }
+      },
+      "description": "carrier: the carrier.status payload (§3.3)"
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "carrier: the delivery instant; stop: the time of the counted cancel"
+     },
+     "records": {
+      "type": "object",
+      "description": "resume (SPEC-E §3.5): the records and already-received messages of a migrated order that concern this module"
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "state",
+     "end",
+     "reports",
+     "busy"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "state": {
+      "enum": [
+       "idle",
+       "reserving",
+       "charging",
+       "shipping",
+       "booked",
+       "dispatched",
+       "completed",
+       "failed",
+       "stopped"
+      ]
+     },
+     "end": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "enum": [
+       "completed",
+       "failed",
+       "stopped",
+       null
+      ]
+     },
+     "endedAt": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     },
+     "reports": {
+      "type": "array",
+      "maxItems": 100,
+      "description": "carrier reports delivered so far, deduplicated (consumed by cancellation for S7)",
+      "items": {
+       "type": "object",
+       "required": [
+        "meaning",
+        "reportedAt"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "meaning": {
+         "enum": [
+          "collected",
+          "inTransit",
+          "delivered",
+          "collectionFailed",
+          "info"
+         ]
+        },
+        "reportedAt": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 40,
+         "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+        }
+       }
+      }
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "inventory.reserve",
+    "inventory.release",
+    "billing.charge",
+    "billing.refund",
+    "carrier.create",
+    "carrier.cancel"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [
+    "statuses",
+    "notices"
+   ],
+   "reads": []
+  },
+  "cancellation": {
+   "file": "modules/cancellation.mjs",
+   "purpose": "one order: judge a customer cancel and cancel the order (R6)",
+   "rules": [
+    "R6.1",
+    "R6.2",
+    "R6.3",
+    "R6.4",
+    "S4",
+    "S6",
+    "S7"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op",
+     "orderId",
+     "at"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "op": {
+      "enum": [
+       "customer-cancel",
+       "cancel-order"
+      ]
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "ISO 8601 time with offset (SPEC-E §1 Time)"
+     },
+     "eventId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "customer-cancel: the id of the cancel event"
+     },
+     "phase": {
+      "enum": [
+       "not-cleared",
+       "processing",
+       "ended"
+      ]
+     },
+     "reason": {
+      "enum": [
+       "fraud",
+       "customer",
+       "nothing-available"
+      ]
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "verdict"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "verdict": {
+      "enum": [
+       "counts",
+       "refused",
+       "nothing",
+       "done"
+      ]
+     }
+    }
+   },
+   "effects": [],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [
+    "fraud",
+    "order-progress",
+    "fulfilment",
+    "statuses",
+    "notices"
+   ],
+   "reads": []
+  },
+  "statuses": {
+   "file": "modules/statuses.mjs",
+   "purpose": "one order: the only writer of orders.setStatus; forward-only, each status at most once (R7.2)",
+   "rules": [
+    "R7.2"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "op": {
+      "enum": [
+       "init",
+       "set",
+       "get",
+       "resume"
+      ]
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "fulfilments": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "location"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "location": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "maxLength": 40
+        }
+       }
+      }
+     },
+     "fulfilmentId": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "set: null for the order itself"
+     },
+     "status": {
+      "enum": [
+       "pending",
+       "customerActionRequired",
+       "processing",
+       "completed",
+       "failed",
+       "cancelled",
+       "timedOut",
+       "unavailable",
+       "dispatched"
+      ]
+     },
+     "afterStatus": {
+      "enum": [
+       "pending",
+       "customerActionRequired",
+       "processing",
+       "completed",
+       "failed",
+       "cancelled",
+       "timedOut",
+       "unavailable",
+       "dispatched"
+      ],
+      "description": "set: emit with `after` on this earlier status change of the same target, when that was emitted in the same tick (R4.4 dispatched before completed)"
+     },
+     "records": {
+      "type": "object",
+      "description": "resume (SPEC-E §3.5): the records and already-received messages of a migrated order that concern this module"
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "applied",
+     "order",
+     "fulfilments",
+     "busy"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "applied": {
+      "type": "boolean",
+      "description": "set: true if a setStatus effect was emitted by this call"
+     },
+     "order": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "enum": [
+       "pending",
+       "customerActionRequired",
+       "processing",
+       "completed",
+       "failed",
+       "cancelled",
+       "timedOut",
+       null
+      ]
+     },
+     "fulfilments": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "status"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "status": {
+         "enum": [
+          "unavailable",
+          "pending",
+          "processing",
+          "dispatched",
+          "completed",
+          "cancelled",
+          "failed"
+         ]
+        }
+       }
+      }
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "orders.setStatus"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  },
+  "notices": {
+   "file": "modules/notices.mjs",
+   "purpose": "one order: the only sender of notify.send; each required notification exactly once (§4.8)",
+   "rules": [],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "op": {
+      "enum": [
+       "init",
+       "send",
+       "get",
+       "resume"
+      ]
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "customerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "template": {
+      "enum": [
+       "action-required",
+       "order-cancelled",
+       "order-timed-out",
+       "fulfilment-failed",
+       "cancel-refused"
+      ]
+     },
+     "about": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "occurrence": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "cancel-refused: the cancel event id (one notice per refused cancel, R6.3)"
+     },
+     "text": {
+      "type": "string",
+      "maxLength": 4000
+     },
+     "records": {
+      "type": "object",
+      "description": "resume (SPEC-E §3.5): the records and already-received messages of a migrated order that concern this module"
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "sent",
+     "busy"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "sent": {
+      "type": "boolean"
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "notify.send:action-required",
+    "notify.send:order-cancelled",
+    "notify.send:order-timed-out",
+    "notify.send:fulfilment-failed",
+    "notify.send:cancel-refused"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  }
+ }
+}

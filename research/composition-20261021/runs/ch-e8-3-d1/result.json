@@ -1,0 +1,163 @@
+{
+ "label": "ch-e8-3-d1",
+ "drift": "review-timeout-clears",
+ "rule": "R2.2",
+ "before": "research/composition-20261021/runs/ch-e8-3/program",
+ "session": {
+  "model": "claude-haiku-5-5",
+  "budgetUsd": 1,
+  "wallMs": 159611,
+  "costUsd": 0.03340128,
+  "turns": 15,
+  "error": null,
+  "smokeRuns": 1
+ },
+ "locality": {
+  "changedFiles": [
+   "modules/fraud.mjs",
+   "modules/orderflow.mjs"
+  ],
+  "changedModules": [
+   "fraud",
+   "orderflow"
+  ],
+  "owners": [
+   "fraud"
+  ],
+  "manifestChanged": false,
+  "local": false,
+  "localStrict": false,
+  "outside": [
+   "orderflow"
+  ]
+ },
+ "tests": {
+  "files": 4,
+  "modules": 4,
+  "modulesWithTests": 4,
+  "pass": 32,
+  "fail": 0,
+  "ok": true,
+  "ran": true
+ },
+ "patched": [
+  {
+   "seed": 1165,
+   "d": 2,
+   "converted": [
+    "o0009",
+    "o0010",
+    "o0017",
+    "o0019"
+   ],
+   "label": "program:/home/user/workflow-foundry/research/composition-20261021/runs/ch-e8-3-d1/program",
+   "oracle": "32/33",
+   "capabilities": {
+    "intake": "32/33",
+    "fraud": "33/33",
+    "capture": "33/33",
+    "refund": "33/33",
+    "reservation": "32/33",
+    "shipment": "33/33",
+    "compensation": "33/33",
+    "failure": "33/33",
+    "tracking": "32/33",
+    "customer-action": "33/33",
+    "cancellation": "33/33",
+    "notifications": "33/33",
+    "exactly-once": "33/33"
+   },
+   "changedCasesPass": 4,
+   "interface": 0
+  },
+  {
+   "seed": 1166,
+   "d": 3,
+   "converted": [
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0011"
+   ],
+   "label": "program:/home/user/workflow-foundry/research/composition-20261021/runs/ch-e8-3-d1/program",
+   "oracle": "32/34",
+   "capabilities": {
+    "intake": "31/33",
+    "fraud": "33/33",
+    "capture": "33/33",
+    "refund": "33/33",
+    "reservation": "31/33",
+    "shipment": "33/33",
+    "compensation": "33/33",
+    "failure": "33/33",
+    "tracking": "31/33",
+    "customer-action": "33/33",
+    "cancellation": "33/33",
+    "notifications": "33/33",
+    "exactly-once": "33/33"
+   },
+   "changedCasesPass": 4,
+   "interface": 0
+  }
+ ],
+ "unpatched": [
+  {
+   "seed": 1165,
+   "d": 2,
+   "converted": [
+    "o0009",
+    "o0010",
+    "o0017",
+    "o0019"
+   ],
+   "label": "program:/home/user/workflow-foundry/research/composition-20261021/runs/ch-e8-3/program",
+   "oracle": "28/33",
+   "capabilities": {
+    "intake": "32/33",
+    "fraud": "29/33",
+    "capture": "33/33",
+    "refund": "33/33",
+    "reservation": "28/33",
+    "shipment": "33/33",
+    "compensation": "33/33",
+    "failure": "33/33",
+    "tracking": "28/33",
+    "customer-action": "33/33",
+    "cancellation": "33/33",
+    "notifications": "33/33",
+    "exactly-once": "33/33"
+   },
+   "changedCasesPass": 0,
+   "interface": 0
+  },
+  {
+   "seed": 1166,
+   "d": 3,
+   "converted": [
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0011"
+   ],
+   "label": "program:/home/user/workflow-foundry/research/composition-20261021/runs/ch-e8-3/program",
+   "oracle": "28/34",
+   "capabilities": {
+    "intake": "31/33",
+    "fraud": "29/33",
+    "capture": "33/33",
+    "refund": "33/33",
+    "reservation": "27/33",
+    "shipment": "33/33",
+    "compensation": "33/33",
+    "failure": "33/33",
+    "tracking": "27/33",
+    "customer-action": "33/33",
+    "cancellation": "33/33",
+    "notifications": "33/33",
+    "exactly-once": "33/33"
+   },
+   "changedCasesPass": 0,
+   "interface": 0
+  }
+ ]
+}

@@ -59,6 +59,11 @@ QA_CODE_DECOY = {"d1": False, "d2": False, "d3": True}             # world0: som
 # d3 clause floor (2026-10-21): every d3 week carries at least one review that each of these note clauses decides, so
 # the hard weeks always test them (they were rare under the rotation: 0.04-0.46 per week). See plan_floor.
 FLOOR = {"d1": (), "d2": (), "d3": ("abuse", "bot", "crash-high-rating", "eng-high", "comp-high")}
+# week floor (review fixes 2026-10-21): rules that read the arm's own earlier writes, or escalation, decided on every such week. d2
+# and d3: one update from a reviewer ticketed earlier this week (one ticket per reviewer per week); d3: one malformed
+# notification (escalate). Before, 5 of 14 weeks on 601-614 had no repeat and both d3 dev weeks no malformed one.
+# Drawn after the clause floor from the same ...:floor stream (plan_week_floor).
+WEEK_FLOOR = {"d1": (), "d2": ("repeat",), "d3": ("repeat", "malformed")}
 # planted review traps a floor conversion may re-use (only while the week keeps another of the same id), so the
 # share of trapped triggers stays near the design rate
 FLOOR_DONORS = ("T-stale:old-date", "T-lookalike:freezer", "T-format:comment-stars", "T-format:subject-mismatch",
@@ -686,10 +691,11 @@ class Gen:
     def plan_floor(self):
         """d3 clause floor. For each clause in FLOOR[d] that no review of the week decides, convert one review: a
         donor (a planted review trap of a kind the week has at least twice, so the share of trapped triggers does not
-        change) or, failing that, a plain review. Its own seeded stream, so every other draw and every d1/d2 stream
-        is unchanged; conversions are recorded in meta.floor."""
+        change) or, failing that, a plain review. Its own seeded stream, so every other draw is unchanged and every
+        d1 stream is unchanged; conversions are recorded in meta.floor. Then the week floor (plan_week_floor) from the
+        same stream."""
         self.floor: list[dict] = []
-        if not FLOOR[self.d]:
+        if not FLOOR[self.d] and not WEEK_FLOOR[self.d]:
             return
         rng = random.Random(f"{FAMILY}:{VERSION}:{self.seed}:{self.d}:floor")
         for t in FLOOR[self.d]:
@@ -730,6 +736,80 @@ class Gen:
             else:                                   # crash-high-rating
                 p["comment"], p["high"] = rng.choice(CRASH_HIGH), True
             assert self.floor_covers(p, t)
+        self.plan_week_floor(rng)
+
+    def _trap_counts(self) -> dict[str, int]:
+        have: dict[str, int] = {}
+        for p in self.plans:
+            for x in p["traps"]:
+                have[x] = have.get(x, 0) + 1
+        return have
+
+    def _floor_pool(self) -> tuple[list[dict], list[dict]]:
+        """(donors, plain): reviews a floor conversion may take, as in plan_floor."""
+        have = self._trap_counts()
+        donors = [p for p in self.plans if p["kind"] == "review.new" and len(p["traps"]) == 1
+                  and p["traps"][0] in FLOOR_DONORS and have[p["traps"][0]] >= 2 and not p.get("source")]
+        plain = [p for p in self.plans if p["kind"] == "review.new" and not p["traps"] and not p["locked"]
+                 and p["note_cat"] in (None, "benign") and not p.get("malformed")]
+        return donors, plain
+
+    def certain_ticket(self, q: dict) -> bool:
+        """q is a first review whose reviewer gets a ticket under every parameter value (1-2 stars, today's date, no
+        suppressing note, readable)."""
+        return (q["kind"] == "review.new" and q["rating"] in (1, 2) and q["date"] == q["at"].date()
+                and q["note_cat"] in (None, "benign", "eng", "comp") and not q.get("malformed"))
+
+    def week_floor_covers(self, t: str) -> bool:
+        if t == "malformed":
+            return any(p.get("malformed") for p in self.plans)
+        for u in self.plans:
+            if u["kind"] == "review.updated" and "T-repeat:ticket-this-week" in u["traps"]:
+                if any(self.certain_ticket(q) and q["reviewer"] == u["reviewer"] and q["at"] < u["at"] - timedelta(minutes=10)
+                       for q in self.plans):
+                    return True
+        return False
+
+    def plan_week_floor(self, rng: random.Random):
+        """Week floor (WEEK_FLOOR[d]), converting reviews only (never adding a trigger, so every id and other draw of
+        the stream stays as it was):
+          repeat     a later review becomes an update (1-2 stars, or a crash) from a reviewer whose first review this
+                     week certainly got a ticket: the correct handling is no new ticket
+          malformed  a review loses its rating line (blank or missing): escalate
+        A donor (as in plan_floor) is preferred to a plain review."""
+        for t in WEEK_FLOOR[self.d]:
+            if self.week_floor_covers(t):
+                continue
+            donors, plain = self._floor_pool()
+            if t == "malformed":
+                pool = donors or plain
+                if not pool:
+                    raise RuntimeError(f"seed {self.seed}: no review left for the malformed floor")
+                p = rng.choice(pool)
+                self.floor.append({"clause": "T-format:no-rating", "from": p["traps"][0] if p["traps"] else "plain",
+                                   "at": iso_z(p["at"])})
+                p.update({"date": p["at"].date(), "subject_stars": None, "high": False, "notes": None, "note_cat": None,
+                          "comment": rng.choice(NEG if p["rating"] <= 2 else NEUTRAL if p["rating"] == 3 else POS),
+                          "malformed": rng.choice(["blank", "missing"]), "traps": ["T-format:no-rating"], "tags": [],
+                          "locked": True})
+            else:
+                priors = [q for q in self.plans if self.certain_ticket(q) and q["at"].weekday() <= 3]
+                pairs = [(q, p) for q in priors for p in donors + plain
+                         if p["at"] >= q["at"] + timedelta(minutes=60) and p is not q]
+                pick = [x for x in pairs if x[1]["traps"]] or pairs
+                if not pick:
+                    raise RuntimeError(f"seed {self.seed}: no review left for the repeat floor")
+                q, p = rng.choice(pick)
+                self.floor.append({"clause": "T-repeat:ticket-this-week", "from": p["traps"][0] if p["traps"] else "plain",
+                                   "at": iso_z(p["at"])})
+                crash = rng.random() < 0.4
+                p.update({"kind": "review.updated", "updated": True, "reviewer": q["reviewer"],
+                          "rating": rng.choice([1, 2]), "date": p["at"].date(), "subject_stars": None,
+                          "comment": rng.choice(CRASH_LOW) if crash else rng.choice(UPD_NEG), "high": crash,
+                          "notes": None, "note_cat": None, "malformed": None, "traps": ["T-repeat:ticket-this-week"],
+                          "tags": [], "locked": True, "prior_at": q["at"]})
+                q["locked"] = q["source"] = True
+            assert self.week_floor_covers(t), (self.seed, t)
 
     # -- canonical model: the truth ---------------------------------------------------------------------------------
     def simulate(self, obey: str | None = None) -> list[dict]:

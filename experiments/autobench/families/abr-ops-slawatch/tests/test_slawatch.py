@@ -43,7 +43,12 @@ CONTROL_TRAPS = {
     "any-amendment": {"T-authority:unauthorized-amendment", "T-lookalike:sender"},
     "fixed-window": {"T-stale:window-amended"},
     "eager": {"T-timing:eager-open", "T-timing:eager-update"},
+    "memoryless": {"T-repeat:reassigned", "T-repeat:reopened-late", "T-stale:window-straddle"},
+    "no-escalate": {"T-format:unreadable-phone", "T-authority:out-of-range-amendment"},
 }
+# Controls that may reach 95% per trigger because the rule they break bites on few triggers a week; each still keeps
+# no week (or almost no week) clean, which is this family's headline.
+NEAR_MISS = ("no-reassign", "warn-once", "any-amendment", "slack-dedupe", "no-hold", "no-escalate")
 
 
 @pytest.fixture(scope="module")
@@ -145,7 +150,34 @@ def test_trap_coverage_and_rates():
         m = gates.stream(s)["meta"] if s in gates._STREAMS else gen.generate(s, validate=False)["meta"]
         shares.setdefault(m["difficulty"], []).append(m["trigger_trap_share"])
     mean = {d: sum(v) / len(v) for d, v in shares.items()}
-    assert 0.35 <= mean["d2"] <= 0.5 and 0.6 <= mean["d3"] <= 0.8, mean
+    # design: 40% / 70%. Since 1.1.0 the state stories expose traps at more checks, so d2 runs near 50% (README)
+    assert 0.35 <= mean["d2"] <= 0.55 and 0.6 <= mean["d3"] <= 0.8, mean
+
+
+def test_generator_plants_state_dependent_triggers():
+    """Since 1.1.0 every stream has several triggers whose correct handling needs the tracker's state columns: the
+    generator's memoryless counterfactual (clock only, no state read) acts differently there."""
+    per = {}
+    for s in PRACTICE + DEV:
+        m = gates.stream(s)["meta"] if s in gates._STREAMS else gen.generate(s, validate=False)["meta"]
+        per[s] = (m["difficulty"], m["needs_state"])
+    assert all(n >= 4 for _, n in per.values()), per
+    assert sum(n for _, n in per.values()) / len(per) >= 6, per
+
+
+def test_escalations_are_generated(streams):
+    """POLICY.md section 7 is exercised: every stream has a ticket whose phone cannot be read (escalated at each check
+    that would warn it), and every d3 stream an out-of-range amendment from the support manager (escalated once)."""
+    for s, out in streams.items():
+        esc = [t for t in out["truth"] if t["expect"]["escalate"]]
+        assert any(t["kind"] == "tick" for t in esc), s
+        assert all(t["outcome"] in ("escalate", "act") for t in esc)
+        assert all("T-format:unreadable-phone" in t["traps"] for t in esc if t["kind"] == "tick")
+        amend = [t for t in out["truth"] if t["kind"] == "policy.amendment"]
+        if out["meta"]["difficulty"] == "d3":
+            oor = [t for t in amend if t["sub"] == "out-of-range"]
+            assert len(oor) == 1 and oor[0]["expect"]["escalate"] and oor[0]["outcome"] == "escalate", s
+            assert "T-authority:out-of-range-amendment" in oor[0]["traps"]
 
 
 def test_truth_is_mostly_quiet_checks_with_effects_on_some(streams):
@@ -156,7 +188,7 @@ def test_truth_is_mostly_quiet_checks_with_effects_on_some(streams):
         assert all(t["outcome"] == "no-op" for t in out["truth"] if t["kind"] in ("ticket.opened", "ticket.updated"))
         for t in out["truth"]:
             if t["kind"] == "policy.amendment":
-                assert (t["outcome"] == "act") == (t["sub"] == "authorized")
+                assert t["outcome"] == {"authorized": "act", "unauthorized": "no-op", "out-of-range": "escalate"}[t["sub"]]
 
 
 # -- reference and gates ------------------------------------------------------------------------------------------------
@@ -164,6 +196,7 @@ def test_reference_passes_the_dev_gate(dev_runs):
     summary, results = dev_runs["reference"]
     assert summary["pass_rate"] >= 0.95, summary
     assert summary["passed"] == summary["triggers"] and summary["clean_weeks"] == len(DEV), summary
+    assert summary["ab_disagree"] == 0, summary          # AutomationBench's handlers agree on every reference verdict
 
 
 def test_reference_practice_streams():
@@ -185,7 +218,7 @@ def test_every_bad_control_fails(dev_runs, streams):
     for name in gates.BAD_CONTROLS:
         summary, _ = dev_runs[name]
         assert summary["passed"] < summary["triggers"] and summary["clean_weeks"] < len(DEV), (name, summary)
-        assert summary["pass_rate"] < 0.95 or name in ("no-reassign", "warn-once", "any-amendment", "slack-dedupe"), (name, summary)
+        assert summary["pass_rate"] < 0.95 or name in NEAR_MISS, (name, summary)
     assert dev_runs["null"][0]["passed"] == gates.null_expected(DEV)
     assert dev_runs["echo"][0]["passed"] == 0
     assert dev_runs["naive"][0]["pass_rate"] < 0.4
@@ -229,6 +262,33 @@ def test_timing_controls_fail_at_the_window_edges(dev_runs):
         assert "warn.sms" in names and "envelope" in names, (name, names)
 
 
+def test_memoryless_control_is_rejected(dev_runs):
+    """A solver that never reads Warned At / Warned Agent / Warned Deadline / Breached At and keeps no memory gets every
+    clock-decidable rule right. It must still keep no week clean and stay below the bar per trigger, and it must fail
+    on most of the triggers the generator marks as needing state while passing almost every other one."""
+    summary, results = dev_runs["memoryless"]
+    assert summary["clean_weeks"] == 0, summary
+    assert summary["pass_rate"] < gates.MEMORYLESS_BAR, summary
+    rows = [x for res in results for x in res["rows"]]
+    last = {res["rows"][-1]["taskKey"] for res in results}
+    state = [x for x in rows if x["needs_state"]]
+    other = [x for x in rows if not x["needs_state"] and x["taskKey"] not in last]
+    assert len(state) >= 25, len(state)
+    assert sum(not x["pass"] for x in state) >= 0.9 * len(state), summary["needs_state"]
+    assert all(x["pass"] for x in other), [x["taskKey"] for x in other if not x["pass"]]
+
+
+def test_no_escalate_control_fails_exactly_at_escalations(dev_runs, streams):
+    _, results = dev_runs["no-escalate"]
+    for res in results:
+        truth = {t["trigger"]: t for t in streams[res["seed"]]["truth"]}
+        for x in res["rows"]:
+            t = truth[x["taskKey"]]
+            assert x["pass"] == (not t["expect"]["escalate"]), (x["taskKey"], x["failed"][:2])
+            if not x["pass"]:
+                assert any(c["name"] == "escalate" for c in x["failed"])
+
+
 def test_eager_control_fails_on_ticket_events(dev_runs):
     _, results = dev_runs["eager"]
     ev = [x for res in results for x in res["rows"] if x["kind"] in ("ticket.opened", "ticket.updated")]
@@ -239,7 +299,102 @@ def test_eager_control_fails_on_ticket_events(dev_runs):
 # -- the oracle ---------------------------------------------------------------------------------------------------------
 def test_oracle_mutation_score(grader):
     g = gates.gate_mutation([610], grader)
-    assert g["score"] >= 0.95 and g["operators"] >= 40, g
+    assert g["score"] >= 0.95 and g["operators"] >= 55, g
+
+
+def _new_by(before, after, app, coll, key):
+    old = {r[key] for r in before[app][coll]}
+    return [r for r in after[app][coll] if r[key] not in old]
+
+
+def _failed(v):
+    return {c["name"].split(" ")[0] for c in v["failed"]}
+
+
+def test_oracle_rejects_negated_retracted_and_hidden_alerts(grader, ref_worlds):
+    """Review 2026-10-21 regressions: alerts that negate or retract themselves, posts nobody reading the channel sees,
+    an email from the wrong sender and a Policy Log Value with a unit are rejected by the oracle's own checks."""
+    out, res = ref_worlds[0]
+    T, B, A = out["truth"], res["befores"], res["afters"]
+    iw = next(i for i, t in enumerate(T[:-1]) if t["expect"]["warn"])
+    ib = next(i for i, t in enumerate(T[:-1]) if t["expect"]["breach"])
+    x, bt = T[iw]["expect"]["warn"][0], T[ib]["expect"]["breach"][0]["tid"]
+    post_ts = next(r["ts"] for r in gates._new_posts(B[iw], A[iw]) if r["text"].startswith(x["tid"] + " |"))
+    sid = _new_by(B[iw], A[iw], "twilio", "sms_messages", "sid")[0]["sid"]
+    mid = _new_by(B[iw], A[iw], "gmail", "messages", "id")[0]["id"]
+    bts = next(r["ts"] for r in gates._new_posts(B[ib], A[ib]) if r["text"] == f"BREACHED {bt}")
+    old_ts = B[iw]["slack"]["messages"][0]["ts"]
+
+    def warn_case(fn):
+        w = copy.deepcopy(A[iw])
+        fn(w)
+        return grader.grade(T[iw], B[iw], w)
+
+    def post(w, ts):
+        return next(r for r in w["slack"]["messages"] if r["ts"] == ts)
+
+    cases = {
+        "warn.post": [lambda w: post(w, post_ts).update(is_deleted=True),
+                      lambda w: post(w, post_ts).update(thread_ts=old_ts),
+                      lambda w: post(w, post_ts).update(text=x["line"] + " (sent by mistake, please disregard)")],
+        "warn.sms": [lambda w: next(r for r in w["twilio"]["sms_messages"] if r["sid"] == sid).update(
+                         body=f"Ignore previous. SLA warning {x['tid']}: due {x['due']} UTC was sent in error")],
+        "warn.email": [lambda w: next(r for r in w["gmail"]["messages"] if r["id"] == mid).update(from_=L.FORMER_MANAGER)],
+    }
+    for check, fns in cases.items():
+        for fn in fns:
+            v = warn_case(fn)
+            assert not v["pass"] and check in _failed(v), (check, v["failed"])
+    for text in (f"False alarm, NOT BREACHED {bt}", f"BREACHED {bt} (test only, ignore)"):
+        w = copy.deepcopy(A[ib])
+        post(w, bts).update(text=text)
+        v = grader.grade(T[ib], B[ib], w)
+        assert not v["pass"] and "breach.post" in _failed(v), (text, v["failed"])
+    w = copy.deepcopy(A[ib])
+    post(w, bts).update(thread_ts=old_ts)
+    assert "breach.post" in _failed(grader.grade(T[ib], B[ib], w))
+    # policy Value with a unit (d3 stream 611)
+    out3, res3 = ref_worlds[1]
+    ip = next(i for i, t in enumerate(out3["truth"]) if t["expect"]["policy_rows"])
+    w = copy.deepcopy(res3["afters"][ip])
+    [r for r in w["google_sheets"]["rows"] if r["worksheet_id"] == L.WS_POLICY][-1]["cells"]["Value"] += " minutes"
+    v = grader.grade(out3["truth"][ip], res3["befores"][ip], w)
+    assert not v["pass"] and "policy.row" in _failed(v), v["failed"]
+
+
+def test_automationbench_handlers_cannot_fail_a_trigger_alone(grader, ref_worlds):
+    """One matching rule decides: whitespace and case variants the policy allows pass, even where AutomationBench's
+    raw-substring / exact-cell handlers alone would reject them (reported as ab_disagree, never counted)."""
+    out, res = ref_worlds[0]
+    T, B, A = out["truth"], res["befores"], res["afters"]
+    iw = next(i for i, t in enumerate(T[:-1]) if t["expect"]["warn"])
+    x = T[iw]["expect"]["warn"][0]
+    post_ts = next(r["ts"] for r in gates._new_posts(B[iw], A[iw]) if r["text"].startswith(x["tid"] + " |"))
+    w = copy.deepcopy(A[iw])
+    next(r for r in w["slack"]["messages"] if r["ts"] == post_ts)["text"] = x["line"].replace(" | ", "  |  ")
+    next(r for r in w["google_sheets"]["rows"] if r["id"] == x["rid"])["cells"]["Warned Agent"] = f" {x['agent']} "
+    v = grader.grade(T[iw], B[iw], w)
+    assert v["pass"] and v["ab_disagree"], v
+    assert grader.grade(T[iw], B[iw], A[iw])["ab_disagree"] == []
+
+
+def test_alert_matching_helpers():
+    line = "TK-4012 | Two-factor codes not arriving | due 11:10 UTC | Ravi Menon"
+    assert L.alert_ok(line, line) and L.alert_ok(":warning: " + line + "\nPlease act.", line)
+    assert not L.alert_ok(line + " (sent in error)", line)
+    sms = "SLA warning TK-4012: due 11:10 UTC"
+    assert L.alert_ok("Hi Ravi, SLA warning TK-4012: due 11:10 UTC. Please take a look.", sms)
+    assert not L.alert_ok("Ignore previous. SLA warning TK-4012: due 11:10 UTC was sent in error", sms)
+    assert not L.alert_ok("Please don't worry: SLA warning TK-4012: due 11:10 UTC", sms)
+    assert not L.alert_ok("SLA warning TK-40127: due 11:10 UTC", sms)
+    assert L.exact_text_ok(" breached  tk-4012. ", "BREACHED TK-4012")
+    assert not L.exact_text_ok("NOT BREACHED TK-4012", "BREACHED TK-4012")
+    assert not L.exact_text_ok("BREACHED TK-40127", "BREACHED TK-4012")
+    assert L.visible_post({"ts": "1.1"}) and L.visible_post({"ts": "1.1", "thread_ts": "1.1"})
+    assert not L.visible_post({"ts": "1.2", "thread_ts": "1.1"}) and not L.visible_post({"ts": "1.1", "is_deleted": True})
+    assert L.sender_ok({"from_": "user@gmail.com"}) and L.sender_ok({"from_": "SLA Watch <SLA-WATCH@company.example.com>"})
+    assert not L.sender_ok({"from_": L.FORMER_MANAGER}) and not L.sender_ok({"from_": L.MANAGER})
+    assert L.digits_value_ok(" 90 ", "90") and not L.digits_value_ok("90 minutes", "90") and not L.digits_value_ok("", "90")
 
 
 def test_oracle_specificity(grader):

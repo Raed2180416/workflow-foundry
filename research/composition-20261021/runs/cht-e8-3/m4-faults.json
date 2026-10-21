@@ -1,0 +1,1961 @@
+{
+ "subject": "program:research/composition-20261021/runs/cht-e8-3/program",
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds); $0",
+ "worlds": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60
+  }
+ ],
+ "results": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 4449,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 37,
+    "critical": 12,
+    "codes": {
+     "L3:missed": 6
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 37,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "40/43",
+     "reservation": "39/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 7,
+    "incomplete": [
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1011",
+       "release:SKU-1012"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1026"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1001",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1161-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 34665,
+   "injected": 59,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 43,
+    "passed": 37,
+    "critical": 12,
+    "codes": {
+     "L3:missed": 6
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 37,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "40/43",
+     "reservation": "39/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 7,
+    "incomplete": [
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1011",
+       "release:SKU-1012"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1026"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1001",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1161-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 29843,
+   "injected": 52,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 37,
+    "critical": 12,
+    "codes": {
+     "L3:missed": 6
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 37,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "40/43",
+     "reservation": "39/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 7,
+    "incomplete": [
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1011",
+       "release:SKU-1012"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1026"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1001",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1161-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "dup-delayed",
+   "status": "complete",
+   "ms": 8240,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 37,
+    "critical": 12,
+    "codes": {
+     "L3:missed": 6
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 37,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "40/43",
+     "reservation": "39/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 7,
+    "incomplete": [
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1011",
+       "release:SKU-1012"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1026"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1001",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1161-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "dup-same",
+   "status": "complete",
+   "ms": 9212,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 29,
+    "critical": 12,
+    "codes": {
+     "L3:missed": 6,
+     "L2:outside-allowed": 8
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 27,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "41/43",
+     "refund": "40/43",
+     "reservation": "39/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "41/43",
+     "tracking": "33/43",
+     "customer-action": "34/43",
+     "cancellation": "43/43",
+     "notifications": "35/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 7,
+    "incomplete": [
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1011",
+       "release:SKU-1012"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1026"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1001",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1161-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "downstream",
+   "status": "complete",
+   "ms": 3498,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 42,
+    "passed": 35,
+    "critical": 16,
+    "codes": {
+     "L3:missed": 7
+    }
+   },
+   "capabilities": {
+    "completed": 42,
+    "passed": 35,
+    "byCapability": {
+     "intake": "41/42",
+     "fraud": "42/42",
+     "capture": "42/42",
+     "refund": "38/42",
+     "reservation": "37/42",
+     "shipment": "42/42",
+     "compensation": "38/42",
+     "failure": "42/42",
+     "tracking": "40/42",
+     "customer-action": "41/42",
+     "cancellation": "42/42",
+     "notifications": "42/42",
+     "exactly-once": "42/42"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 24,
+    "complete": 17,
+    "incomplete": [
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0006",
+      "fulfilment": "ORD-1161-0006-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1011",
+       "release:SKU-1012"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1026"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0014",
+      "fulfilment": "ORD-1161-0014-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1001",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1161-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 8397,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 36,
+    "critical": 8,
+    "codes": {
+     "L3:missed": 8
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 35,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "40/43",
+     "reservation": "37/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "43/43",
+     "tracking": "40/43",
+     "customer-action": "41/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 6,
+    "incomplete": [
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1162-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0028",
+      "fulfilment": "ORD-1162-0028-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1014"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1010"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1022"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 44151,
+   "injected": 77,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 44,
+    "passed": 36,
+    "critical": 8,
+    "codes": {
+     "L3:missed": 8
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 35,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "40/43",
+     "reservation": "37/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "43/43",
+     "tracking": "40/43",
+     "customer-action": "41/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 6,
+    "incomplete": [
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1162-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0028",
+      "fulfilment": "ORD-1162-0028-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1014"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1010"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1022"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 27792,
+   "injected": 60,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 36,
+    "critical": 8,
+    "codes": {
+     "L3:missed": 8
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 35,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "40/43",
+     "reservation": "37/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "43/43",
+     "tracking": "40/43",
+     "customer-action": "41/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 6,
+    "incomplete": [
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1162-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0028",
+      "fulfilment": "ORD-1162-0028-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1014"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1010"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1022"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "dup-delayed",
+   "status": "complete",
+   "ms": 9407,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 36,
+    "critical": 8,
+    "codes": {
+     "L3:missed": 8
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 35,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "40/43",
+     "reservation": "37/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "43/43",
+     "tracking": "40/43",
+     "customer-action": "41/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 6,
+    "incomplete": [
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1162-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0028",
+      "fulfilment": "ORD-1162-0028-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1014"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1010"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1022"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "dup-same",
+   "status": "complete",
+   "ms": 12586,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 33,
+    "critical": 8,
+    "codes": {
+     "L3:missed": 7,
+     "L2:outside-allowed": 3,
+     "L2:key-split": 1
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 31,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "42/43",
+     "refund": "40/43",
+     "reservation": "37/43",
+     "shipment": "43/43",
+     "compensation": "40/43",
+     "failure": "42/43",
+     "tracking": "37/43",
+     "customer-action": "38/43",
+     "cancellation": "43/43",
+     "notifications": "39/43",
+     "exactly-once": "42/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 1,
+    "money": 0,
+    "examples": [
+     {
+      "case": "o0035",
+      "id": "notify:ORD-1162-0035:cancel-refused",
+      "n": 2
+     }
+    ]
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 6,
+    "incomplete": [
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1162-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0028",
+      "fulfilment": "ORD-1162-0028-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1014"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1010"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0041",
+      "fulfilment": "ORD-1162-0041-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1022"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "downstream",
+   "status": "complete",
+   "ms": 6999,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 46,
+    "passed": 37,
+    "critical": 14,
+    "codes": {
+     "L3:missed": 9
+    }
+   },
+   "capabilities": {
+    "completed": 45,
+    "passed": 36,
+    "byCapability": {
+     "intake": "43/45",
+     "fraud": "45/45",
+     "capture": "45/45",
+     "refund": "41/45",
+     "reservation": "38/45",
+     "shipment": "45/45",
+     "compensation": "41/45",
+     "failure": "45/45",
+     "tracking": "42/45",
+     "customer-action": "43/45",
+     "cancellation": "45/45",
+     "notifications": "45/45",
+     "exactly-once": "45/45"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 29,
+    "complete": 22,
+    "incomplete": [
+     {
+      "case": "o0019",
+      "fulfilment": "ORD-1162-0019-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1013"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1162-0027-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1015"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1162-0027-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1027"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1162-0027-F3",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1004"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0028",
+      "fulfilment": "ORD-1162-0028-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1014"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "none",
+   "status": "complete",
+   "ms": 12952,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 59,
+    "critical": 6,
+    "codes": {
+     "L3:missed": 9,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 58,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "67/67",
+     "refund": "66/67",
+     "reservation": "62/67",
+     "shipment": "67/67",
+     "compensation": "66/67",
+     "failure": "67/67",
+     "tracking": "62/67",
+     "customer-action": "64/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 16,
+    "incomplete": [
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F3",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1030"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 75402,
+   "injected": 111,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 69,
+    "passed": 59,
+    "critical": 6,
+    "codes": {
+     "L3:missed": 9,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 58,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "67/67",
+     "refund": "66/67",
+     "reservation": "62/67",
+     "shipment": "67/67",
+     "compensation": "66/67",
+     "failure": "67/67",
+     "tracking": "62/67",
+     "customer-action": "64/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 16,
+    "incomplete": [
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F3",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1030"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 64048,
+   "injected": 92,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 59,
+    "critical": 6,
+    "codes": {
+     "L3:missed": 9,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 58,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "67/67",
+     "refund": "66/67",
+     "reservation": "62/67",
+     "shipment": "67/67",
+     "compensation": "66/67",
+     "failure": "67/67",
+     "tracking": "62/67",
+     "customer-action": "64/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 16,
+    "incomplete": [
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F3",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1030"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "dup-delayed",
+   "status": "complete",
+   "ms": 20077,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 59,
+    "critical": 6,
+    "codes": {
+     "L3:missed": 9,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 58,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "67/67",
+     "refund": "66/67",
+     "reservation": "62/67",
+     "shipment": "67/67",
+     "compensation": "66/67",
+     "failure": "67/67",
+     "tracking": "62/67",
+     "customer-action": "64/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 16,
+    "incomplete": [
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F3",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1030"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "dup-same",
+   "status": "complete",
+   "ms": 21335,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 45,
+    "critical": 6,
+    "codes": {
+     "L3:missed": 10,
+     "L2:outside-allowed": 10,
+     "L2:key-split": 3,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 38,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "62/67",
+     "refund": "66/67",
+     "reservation": "62/67",
+     "shipment": "67/67",
+     "compensation": "66/67",
+     "failure": "61/67",
+     "tracking": "51/67",
+     "customer-action": "54/67",
+     "cancellation": "67/67",
+     "notifications": "54/67",
+     "exactly-once": "64/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 3,
+    "money": 0,
+    "examples": [
+     {
+      "case": "o0035",
+      "id": "notify:ORD-1164-0035:cancel-refused",
+      "n": 2
+     },
+     {
+      "case": "o0036",
+      "id": "notify:ORD-1164-0036:cancel-refused",
+      "n": 2
+     },
+     {
+      "case": "o0043",
+      "id": "notify:ORD-1164-0043:cancel-refused",
+      "n": 2
+     }
+    ]
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 16,
+    "incomplete": [
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F3",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1030"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "downstream",
+   "status": "complete",
+   "ms": 14218,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 70,
+    "passed": 58,
+    "critical": 14,
+    "codes": {
+     "L3:missed": 11,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 68,
+    "passed": 57,
+    "byCapability": {
+     "intake": "65/68",
+     "fraud": "68/68",
+     "capture": "68/68",
+     "refund": "65/68",
+     "reservation": "61/68",
+     "shipment": "68/68",
+     "compensation": "65/68",
+     "failure": "68/68",
+     "tracking": "63/68",
+     "customer-action": "65/68",
+     "cancellation": "68/68",
+     "notifications": "68/68",
+     "exactly-once": "68/68"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 39,
+    "complete": 33,
+    "incomplete": [
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1029"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F2",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1018"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0027",
+      "fulfilment": "ORD-1164-0027-F3",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1030"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0030",
+      "fulfilment": "ORD-1164-0030-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1012",
+       "release:SKU-1013",
+       "release:SKU-1027"
+      ],
+      "got": [
+       "cancel"
+      ]
+     },
+     {
+      "case": "o0052",
+      "fulfilment": "ORD-1164-0052-F1",
+      "want": [
+       "cancel",
+       "refund",
+       "release:SKU-1027"
+      ],
+      "got": [
+       "cancel"
+      ]
+     }
+    ]
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}

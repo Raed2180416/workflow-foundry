@@ -7,10 +7,11 @@ world0.
 
 Checks per trigger:
   1. effects   every expected effect is found in THIS trigger's ledger (attribution): each review ticket with its exact
-               subject and the comment in its content; each email (thank-you or daily summary) sent to exactly the
-               expected recipient, with the exact subject and the required body text (the summary line with its exact
-               code and counts, and no other `<code>: tickets <n>, thank-yous <m>` line or count pair that contradicts
-               it); the amendment acknowledgement in #app-reviews; the escalation post naming the trigger. A Slack post
+               subject (exact case, except the reviewer address) and the comment in its `content`; each email
+               (thank-you or daily summary) sent to exactly the expected recipient, with the subject (any case) and the
+               required body text (the summary: the count line with its exact code and counts on a line of its own, no
+               other ticket or thank-you figures and nothing that qualifies the counts; see summary_problems); the
+               amendment acknowledgement in #app-reviews; the escalation post naming the trigger. A Slack post
                deleted again during the trigger satisfies nothing (it still counts as a write for the envelope).
   2. envelope  every record created, changed or removed in this trigger is an expected effect or harmless (marking
                mail read or starred, labelling it without trashing, creating Gmail labels). Nothing else.
@@ -29,6 +30,7 @@ is the same verdict without it (reported beside the headline).
 """
 from __future__ import annotations
 
+import html
 import re
 import sys
 from collections import Counter, defaultdict
@@ -114,30 +116,115 @@ def recipients(m: dict) -> list[str]:
     return sorted(L.addr(x) for x in (m.get("to") or []) + (m.get("cc") or []) + (m.get("bcc") or []))
 
 
+HTML_HINT = re.compile(r"<\s*/?\s*(html|body|p|div|br|span|b|strong|i|em|u|table|tr|td|th|ul|ol|li|h[1-6]|blockquote|hr)\b",
+                       re.I)
+HTML_BLOCK = re.compile(r"<\s*/?\s*(br|p|div|li|ul|ol|tr|td|th|table|h[1-6]|blockquote|hr|pre)\b[^>]*>", re.I)
+HTML_TAG = re.compile(r"<[A-Za-z/!][^>]*>")
+
+
 def body_text(m: dict) -> str:
-    return m.get("body_plain") or re.sub(r"<[^>]+>", " ", m.get("body_html") or "")
+    """The body as text. A sent message keeps whatever its MIME part held in body_plain (AutomationBench stores a
+    text/html part there too), so HTML is turned into text either way: block tags become line breaks (the summary
+    line is checked line by line), other tags are dropped and entities decoded."""
+    raw = m.get("body_plain") or m.get("body_html") or ""
+    if HTML_HINT.search(raw):
+        raw = html.unescape(HTML_TAG.sub("", HTML_BLOCK.sub("\n", raw)))
+    return raw
 
 
 def is_sent(m: dict) -> bool:
     return "SENT" in (m.get("label_ids") or [])
 
 
-COUNT_PAIR = re.compile(r"tickets\s+(\d+)\s*,\s*thank-yous\s+(\d+)", re.I)
+# ---------------------------------------------------------------------------------------------------------------------
+# Case (review fixes 2026-10-21). POLICY.md gives the triage code and the ticket subject as literal identifiers, so they compare
+# exactly; only an email address may be in any case (§3 step 5 says so for the subject). Email subjects (the thank-you
+# and the summary) still ignore case: a deliberate leniency, documented in the README.
+# ---------------------------------------------------------------------------------------------------------------------
+ADDRESS = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+
+
+def subject_key(s) -> str:
+    """A ticket subject for comparison: whitespace-normalized, email addresses lower-cased, everything else as is."""
+    return ADDRESS.sub(lambda m: m.group(0).lower(), norm(s))
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The daily summary states one answer (POLICY.md 1.1 §4): the line `<code>: tickets <N>,
+# thank-yous <M>` on a line of its own, and that line is the only place the body gives ticket or thank-you figures, and
+# nothing in the body qualifies the counts. Checked on meaning, not on one wording:
+#   line     some line, stripped of markdown or list decoration and a trailing full stop, IS the expected line (the code
+#            in its exact case; the rest ignoring case). Text before or after it on the same line fails.
+#   figures  no other line names tickets or thank-yous together with a quantity (a number other than a date, a time or
+#            a triage code; or a number word such as one, no, another, more). The parameter names `Ticket ratings` and
+#            `Thank-you ratings` are not mentions.
+#   hedge    no line carries a correction word (recount, correction, revised, estimate, approximately, off by, ...)
+#            together with a number, a count word (count, number, total, figure) or a ticket or thank-you word, nor an
+#            ordinary hedge (possibly, maybe, if, at least, may be, or 4, ...) together with a number or a count word.
+#   codes    no other `<code>: tickets` line (kept from 2026-10-21).
+# A greeting, a sign-off ("Thank you,"), a heading, other news with other numbers, or a policy note is accepted.
+# ---------------------------------------------------------------------------------------------------------------------
 CODE_BEFORE_COUNTS = re.compile(r"(TRIAGE-[A-Za-z0-9-]+)\s*:\s*tickets\b", re.I)
+_CODE = re.compile(r"\bTRIAGE-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*", re.I)
+_DATE_TIME = re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{1,2}:\d{2}(?::\d{2})?Z?)?\b|\b\d{1,2}:\d{2}(?::\d{2})?\b")
+_PARAM_NAMES = re.compile(r"\b(ticket|thank[- ]?you)\s+ratings\b", re.I)
+_MENTION = re.compile(r"\b(tickets?|ticketed|thank[- ]?yous|thank-you|thank\s+you\s+(e-?mails?|mails?|messages?|notes?)"
+                      r"|thanks\s+(e-?mails?|mails?|messages?|notes?)|thanked)\b", re.I)
+_NUMBER_WORDS = (r"zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|"
+                 r"sixteen|seventeen|eighteen|nineteen|twenty|thirty|dozen|none|no|single|couple|few|several|another|"
+                 r"extra|additional|more|fewer|less|higher|lower")
+_QUANTITY = re.compile(r"\d|\b(" + _NUMBER_WORDS + r")\b", re.I)
+_NUMBER_C = re.compile(r"\d|\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|dozen)\b", re.I)
+_COUNT_WORD = re.compile(r"\b(counts?|counted|numbers?|totals?|figures?|tally|tallies|tallied|sum)\b", re.I)
+# strong: words about a count's correctness; they qualify the counts next to a number, a count word or a ticket or
+# thank-you word. weak: ordinary hedges; only next to a number or a count word ("Reply if you need more detail" is fine)
+_HEDGE_STRONG = re.compile(r"\b(re-?count(?:s|ed|ing)?|correct(?:ion|ions|ed|ing)|revis(?:e|ed|ion|ing)|estimated?|"
+                           r"estimates?|approximately|approx|roughly|preliminary|provisional(?:ly)?|tentative(?:ly)?|"
+                           r"unconfirmed|unverified|not\s+final|off\s+by|subject\s+to\s+change|to\s+be\s+confirmed|"
+                           r"tbc|tbd)\b", re.I)
+_HEDGE_WEAK = re.compile(r"\b(possibly|possible|maybe|perhaps|probably|likely|uncertain|unsure|not\s+sure|or\s+more|"
+                         r"or\s+fewer|or\s+less|at\s+least|at\s+most|up\s+to|plus\s+one|minus\s+one|may\s+be|"
+                         r"might\s+be|could\s+be|may\s+change|might\s+change|could\s+change|either|if)\b"
+                         r"|\b(?:about|around)\s+\d|\(\s*or\b|\bor\s+\d|[~≈±]\s*\d|\d\s*[+?]", re.I)
+_DECOR_LEAD = re.compile(r"^[\s>#*\-•+–—|]+")
 
 
-def summary_conflicts(text: str, line: str) -> list[str]:
-    """Count pairs or coded summary lines in a summary body that differ from the expected line `<code>: tickets <n>,
-    thank-yous <m>` (a body that hedges between two counts, or adds last week's code, states no single answer).
-    Other wording around the line (greetings, a week-to-date sentence in other words) is left alone."""
-    code, _, rest = line.partition(": ")
-    want = COUNT_PAIR.search(rest)
-    pairs = {(int(a), int(b)) for a, b in COUNT_PAIR.findall(norm(text))}
-    codes = {c.lower() for c in CODE_BEFORE_COUNTS.findall(norm(text))}
+def _clean_line(s: str) -> str:
+    s = s.replace("*", "").replace("`", "").replace("_", "")
+    s = _DECOR_LEAD.sub("", s)
+    return norm(s).rstrip(" .!;|")
+
+
+def is_count_line(text_line: str, want: str) -> bool:
+    """The line is exactly the expected count line (decoration aside); the code must keep its case."""
+    code = want.partition(": ")[0]
+    s = _clean_line(text_line)
+    return s.lower() == norm(want).lower() and s.startswith(code)
+
+
+def _scrub(s: str) -> str:
+    """A line without the things that are not ticket or thank-you figures: codes, dates, times, parameter names."""
+    return _PARAM_NAMES.sub(" ", _DATE_TIME.sub(" ", _CODE.sub(" ", s)))
+
+
+def summary_problems(text: str, want: str) -> list[str]:
+    """Why a summary body does not state the one answer `want` (the empty list when it does). See the block above."""
+    lines = (text or "").splitlines()
+    hits = {i for i, x in enumerate(lines) if is_count_line(x, want)}
     out = []
-    if want and pairs - {(int(want.group(1)), int(want.group(2)))}:
-        out.append(f"other counts {sorted(pairs)}")
-    if codes - {code.lower()}:
+    if not hits:
+        out.append(f"no line of its own reading {want!r}")
+    for i, x in enumerate(lines):
+        if i in hits or not x.strip():
+            continue
+        y = _scrub(x)
+        if _MENTION.search(y) and _QUANTITY.search(y):
+            out.append(f"other ticket or thank-you figures: {norm(x)[:90]!r}")
+        elif ((_HEDGE_STRONG.search(y) and (_NUMBER_C.search(y) or _COUNT_WORD.search(y) or _MENTION.search(y)))
+              or (_HEDGE_WEAK.search(y) and (_NUMBER_C.search(y) or _COUNT_WORD.search(y)))):
+            out.append(f"a line qualifies the counts: {norm(x)[:90]!r}")
+    codes = {c.lower() for c in CODE_BEFORE_COUNTS.findall(norm(text))}
+    if codes - {want.partition(": ")[0].lower()}:
         out.append(f"other codes {sorted(codes)}")
     return out
 
@@ -194,8 +281,8 @@ class Grader:
         # 1. effects --------------------------------------------------------------------------------------------
         new_tickets = [i for i, it in enumerate(L_) if it["app"] == "hubspot" and it["coll"] == "tickets" and it["op"] == "new"]
         for tc in exp["tickets"]:
-            want = norm(tc["subject"]).lower()
-            cands = [i for i in new_tickets if i not in used and norm(L_[i]["after"].get("subject")).lower() == want]
+            want = subject_key(tc["subject"])                       # exact, except the reviewer address's case
+            cands = [i for i in new_tickets if i not in used and subject_key(L_[i]["after"].get("subject")) == want]
             if not cands:
                 got = [L_[i]["after"].get("subject") for i in new_tickets if i not in used]
                 check("ticket.subject", False, f"no new ticket {tc['subject']!r}" + (f" (new: {got[:3]})" if got else ""))
@@ -218,12 +305,16 @@ class Grader:
                 check(name, False, f"no new email to exactly {em['to']} with subject {em['subject']!r}"
                       + (f" (sent: {near[:3]})" if near else ""))
                 continue
-            ok_i = [i for i in cands if has_token(body_text(L_[i]["after"]), em["body"])]
+            if em["kind"] == "summary":                              # the count line on a line of its own
+                ok_i = [i for i in cands if any(is_count_line(x, em["body"]) for x in body_text(L_[i]["after"]).splitlines())]
+            else:
+                ok_i = [i for i in cands if has_token(body_text(L_[i]["after"]), em["body"])]
             i = (ok_i or cands)[0]
             used.add(i)
-            check(f"{name}.body", bool(ok_i), f"body lacks {em['body']!r}: {body_text(L_[i]['after'])[:120]!r}")
+            check(f"{name}.body", bool(ok_i), f"body lacks {em['body']!r}" + (" on a line of its own" if em["kind"] == "summary" else "")
+                  + f": {body_text(L_[i]['after'])[:120]!r}")
             if em["kind"] == "summary" and ok_i:
-                bad = summary_conflicts(body_text(L_[i]["after"]), em["body"])
+                bad = summary_problems(body_text(L_[i]["after"]), em["body"])
                 check("email.summary.single", not bad, "; ".join(bad))
 
         new_msgs = [i for i, it in enumerate(L_) if it["app"] == "slack" and it["coll"] == "messages" and it["op"] == "new"
@@ -300,8 +391,8 @@ class Grader:
         ids0 |= set(end.get("delta_ticket_ids") or [])          # other teams' tickets, inserted host-side
         tickets = [t for t in after["hubspot"]["tickets"] if _created(t) >= week and t["id"] not in ids0
                    and "app review" in norm(t.get("subject")).lower()]
-        got = Counter(norm(t.get("subject")).lower() for t in tickets)
-        want = Counter(norm(s).lower() for s in end["tickets"])
+        got = Counter(subject_key(t.get("subject")) for t in tickets)
+        want = Counter(subject_key(s) for s in end["tickets"])
         check("end.tickets", got == want, f"missing {sorted((want - got).elements())[:4]}; extra {sorted((got - want).elements())[:4]}")
 
         sent = [m for m in after["gmail"]["messages"] if is_sent(m) and m["id"] not in ids0 and int(m.get("date") or 0) >= week_ms]
@@ -313,8 +404,7 @@ class Grader:
         problems = []
         for s in end["summaries"]:
             hit = [m for m in summ if norm(m.get("subject")).lower() == norm(s["subject"]).lower()
-                   and recipients(m) == [s["to"].lower()] and has_token(body_text(m), s["body"])
-                   and not summary_conflicts(body_text(m), s["body"])]
+                   and recipients(m) == [s["to"].lower()] and not summary_problems(body_text(m), s["body"])]
             if len(hit) != 1:
                 problems.append(f"{len(hit)} summaries {s['subject']!r} with {s['body']!r}")
         if len(summ) != len(end["summaries"]):

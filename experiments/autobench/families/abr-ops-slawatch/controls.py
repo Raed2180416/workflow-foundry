@@ -22,15 +22,26 @@ a do-nothing run, an echo, and plausible-but-wrong runs, and that every policy r
   fixed-window    the reference with the warning window fixed at 120 minutes (Policy Log and amendments ignored)
   late-warning    the reference, but a warning waits for the second check inside the window (one check late)
   early-warning   the reference, but a warning goes out one check before the window opens (one check early)
+  memoryless      reads no state column (Warned At / Agent / Deadline, Breached At) and keeps no memory: it decides from
+                  the clock alone. It warns when the deadline is inside the window now but was not at the previous
+                  scheduled check, breaches when the deadline passed since the previous check, and has no rule 3. Every
+                  timing rule that the clock decides it gets right; it is wrong exactly where the tracker's state
+                  matters (reassignment, a hold cleared late or inside the window, work resumed inside the window, a
+                  short extension, a reopen after the deadline, a window amendment between two checks, a ticket opened
+                  already inside the window, a repeated escalation)
+  no-escalate     the reference, but whatever it cannot decide (an unreadable phone, an out-of-range amendment from
+                  the support manager) it silently skips instead of posting to #automation-review
 """
 from __future__ import annotations
 
 import inspect
 import json
 import re
+from datetime import timedelta
 
 import reference as ref
-from reference import ESCALATION, MANAGER, SLACK, TWILIO, SMS_FROM, SlaWatch, parse_time, table, values_url, TICKETS
+from reference import ESCALATION, MANAGER, SLACK, TWILIO, SMS_FROM, SlaWatch, Undecidable, parse_time, table, values_url, \
+    TICKETS
 
 
 def null(trigger, ctx):
@@ -157,6 +168,38 @@ class EarlyWarning(SlaWatch):
         return 0 < (D - self.now).total_seconds() <= (W + 60) * 60
 
 
+def prev_check(now):
+    """The scheduled check before `now` (hourly 10:00-17:00 UTC, Monday to Friday; POLICY.md section 1)."""
+    t = now - timedelta(hours=1)
+    while not (t.weekday() < 5 and 10 <= t.hour <= 17):
+        t -= timedelta(hours=1)
+    return t
+
+
+class Memoryless(SlaWatch):
+    def decide(self, row, W):
+        if not self.monitored(row) or self.held(row):
+            return None
+        D = self.deadline(row)
+        if D is None:
+            raise Undecidable(f"{row.get('Ticket ID')}: SLA Deadline {row.get('SLA Deadline')!r} cannot be read")
+        p = prev_check(self.now)
+        if self.is_due(D):
+            return "breach" if D > p else None
+        if self.in_window(D, W) and not (timedelta(0) < D - p <= timedelta(minutes=W)):
+            return "warn"
+        return None
+
+
+class NoEscalate(SlaWatch):
+    def escalate(self, reason):
+        return None
+
+    def flush(self):
+        self.escalations = []
+        super().flush()
+
+
 def _wrap(cls):
     def run(trigger, ctx):
         cls(trigger, ctx).run()
@@ -181,4 +224,6 @@ CONTROLS = {
     "fixed-window": _wrap(FixedWindow),
     "late-warning": _wrap(LateWarning),
     "early-warning": _wrap(EarlyWarning),
+    "memoryless": _wrap(Memoryless),
+    "no-escalate": _wrap(NoEscalate),
 }

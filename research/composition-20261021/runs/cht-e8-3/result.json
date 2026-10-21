@@ -1,0 +1,2150 @@
+{
+ "label": "cht-e8-3",
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "conditions": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "practice": {
+   "seeds": [
+    1235,
+    1236,
+    1237
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "grading": {
+   "seeds": [
+    1232,
+    1233,
+    1234
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  }
+ },
+ "build": {
+  "arm": "C-H-T",
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "dryRun": false,
+  "templates": "research/composition-20261021/runs/tpl-opus-1/templates",
+  "smokeRuns": 4,
+  "wallMs": 1496962,
+  "costUsd": 1.1553001,
+  "error": null,
+  "turns": 70
+ },
+ "program": {
+  "modules": [
+   "order-id",
+   "intake",
+   "fraud",
+   "customer-action",
+   "order-progress",
+   "fulfilment",
+   "cancellation",
+   "statuses",
+   "notices"
+  ],
+  "programDigest": "b7d3316c04a9cb79c9172412fc2fbcd198a503c0671e49cbc9948e860d59ea15",
+  "bundleDigest": "375036283cde1bff8789cfce35e4c201db10deb0bff66978630d91a35206f6b2",
+  "problems": []
+ },
+ "tests": {
+  "files": 9,
+  "modules": 9,
+  "modulesWithTests": 9,
+  "pass": 37,
+  "fail": 0,
+  "ok": true,
+  "ran": true
+ },
+ "worlds": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  },
+  {
+   "seed": 1232,
+   "d": 2
+  },
+  {
+   "seed": 1233,
+   "d": 2
+  },
+  {
+   "seed": 1234,
+   "d": 2
+  },
+  {
+   "seed": 1232,
+   "d": 3
+  },
+  {
+   "seed": 1233,
+   "d": 3
+  },
+  {
+   "seed": 1234,
+   "d": 3
+  },
+  {
+   "seed": 1232,
+   "d": 5
+  },
+  {
+   "seed": 1233,
+   "d": 5
+  },
+  {
+   "seed": 1234,
+   "d": 5
+  }
+ ],
+ "summary": {
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 10,
+    "critical": 6,
+    "codes": {
+     "L3:missed": 4
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:34:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T00:19:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-03T02:29:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0012",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T03:13:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0012-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 10,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "13/14",
+     "reservation": "12/14",
+     "shipment": "14/14",
+     "compensation": "13/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 18,
+     "parent->intake": 12,
+     "parent->intake (event)": 24,
+     "parent->statuses": 12,
+     "parent->notices": 12,
+     "parent->fraud": 23,
+     "parent->fraud (event)": 12,
+     "parent->order-progress": 22,
+     "order-progress->statuses": 47,
+     "parent->fulfilment": 210,
+     "parent->fulfilment (event)": 54,
+     "parent->statuses (event)": 45,
+     "fulfilment->statuses": 25,
+     "fulfilment->notices": 1,
+     "parent->cancellation": 5,
+     "cancellation->statuses": 12,
+     "cancellation->fulfilment": 10,
+     "cancellation->notices": 5,
+     "parent->notices (event)": 3,
+     "cancellation->order-progress": 1,
+     "parent->customer-action": 6,
+     "customer-action->statuses": 2,
+     "customer-action->notices": 1
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  "full": {
+   "completed": 1022,
+   "passed": 920,
+   "critical": 202,
+   "capabilitiesPassed": 899,
+   "capabilitiesCompleted": 1001,
+   "interfaceViolations": 0,
+   "armErrors": 0
+  },
+  "worlds": 10,
+  "armErrors": 0
+ },
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 10,
+    "critical": 6,
+    "codes": {
+     "L3:missed": 4
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:34:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T00:19:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-03T02:29:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0012",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T03:13:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0012-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 10,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "13/14",
+     "reservation": "12/14",
+     "shipment": "14/14",
+     "compensation": "13/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 18,
+     "parent->intake": 12,
+     "parent->intake (event)": 24,
+     "parent->statuses": 12,
+     "parent->notices": 12,
+     "parent->fraud": 23,
+     "parent->fraud (event)": 12,
+     "parent->order-progress": 22,
+     "order-progress->statuses": 47,
+     "parent->fulfilment": 210,
+     "parent->fulfilment (event)": 54,
+     "parent->statuses (event)": 45,
+     "fulfilment->statuses": 25,
+     "fulfilment->notices": 1,
+     "parent->cancellation": 5,
+     "cancellation->statuses": 12,
+     "cancellation->fulfilment": 10,
+     "cancellation->notices": 5,
+     "parent->notices (event)": 3,
+     "cancellation->order-progress": 1,
+     "parent->customer-action": 6,
+     "customer-action->statuses": 2,
+     "customer-action->notices": 1
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 52,
+    "passed": 46,
+    "critical": 9,
+    "codes": {
+     "L3:missed": 6
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:34:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T00:19:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-03T02:29:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0039",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T07:58:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0039-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0040",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T11:17:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0040-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0048",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T21:18:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0048-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 52,
+    "passed": 46,
+    "byCapability": {
+     "intake": "51/52",
+     "fraud": "52/52",
+     "capture": "52/52",
+     "refund": "49/52",
+     "reservation": "48/52",
+     "shipment": "52/52",
+     "compensation": "49/52",
+     "failure": "52/52",
+     "tracking": "50/52",
+     "customer-action": "51/52",
+     "cancellation": "52/52",
+     "notifications": "52/52",
+     "exactly-once": "52/52"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 71,
+     "parent->intake": 50,
+     "parent->intake (event)": 100,
+     "parent->statuses": 50,
+     "parent->notices": 50,
+     "parent->fraud": 100,
+     "parent->fraud (event)": 50,
+     "parent->order-progress": 75,
+     "order-progress->statuses": 151,
+     "parent->fulfilment": 530,
+     "parent->fulfilment (event)": 152,
+     "parent->statuses (event)": 145,
+     "parent->customer-action": 104,
+     "customer-action->statuses": 38,
+     "customer-action->notices": 22,
+     "parent->notices (event)": 22,
+     "fulfilment->statuses": 76,
+     "fulfilment->notices": 12,
+     "parent->cancellation": 20,
+     "cancellation->statuses": 61,
+     "cancellation->notices": 20,
+     "parent->customer-action (event)": 4,
+     "cancellation->fulfilment": 12,
+     "cancellation->order-progress": 3
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 51,
+    "passed": 44,
+    "critical": 12,
+    "codes": {
+     "L3:missed": 7
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:22:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T00:48:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T03:41:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0021",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-06T13:47:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0021-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0033",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-08T09:09:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0033-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0048",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T01:48:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0048-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0050",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T02:25:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0050-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 51,
+    "passed": 44,
+    "byCapability": {
+     "intake": "50/51",
+     "fraud": "51/51",
+     "capture": "51/51",
+     "refund": "47/51",
+     "reservation": "46/51",
+     "shipment": "51/51",
+     "compensation": "47/51",
+     "failure": "51/51",
+     "tracking": "49/51",
+     "customer-action": "50/51",
+     "cancellation": "51/51",
+     "notifications": "51/51",
+     "exactly-once": "51/51"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 66,
+     "parent->intake": 50,
+     "parent->intake (event)": 100,
+     "parent->statuses": 50,
+     "parent->notices": 50,
+     "parent->customer-action": 46,
+     "parent->fraud": 98,
+     "parent->fraud (event)": 50,
+     "customer-action->statuses": 19,
+     "customer-action->notices": 10,
+     "parent->notices (event)": 17,
+     "parent->statuses (event)": 196,
+     "parent->cancellation": 13,
+     "cancellation->statuses": 38,
+     "cancellation->notices": 13,
+     "parent->order-progress": 104,
+     "order-progress->statuses": 210,
+     "parent->fulfilment": 855,
+     "parent->fulfilment (event)": 221,
+     "fulfilment->statuses": 112,
+     "fulfilment->notices": 12,
+     "parent->customer-action (event)": 2,
+     "cancellation->fulfilment": 19,
+     "cancellation->order-progress": 4
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 52,
+    "passed": 46,
+    "critical": 12,
+    "codes": {
+     "L3:missed": 6
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:29:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:52:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0002-F2:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-03T04:19:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-02T11:57:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0006-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0047",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T23:46:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0047-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0050",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T11:55:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0050-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 52,
+    "passed": 46,
+    "byCapability": {
+     "intake": "51/52",
+     "fraud": "52/52",
+     "capture": "52/52",
+     "refund": "49/52",
+     "reservation": "47/52",
+     "shipment": "52/52",
+     "compensation": "49/52",
+     "failure": "52/52",
+     "tracking": "50/52",
+     "customer-action": "51/52",
+     "cancellation": "52/52",
+     "notifications": "52/52",
+     "exactly-once": "52/52"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 66,
+     "parent->intake": 50,
+     "parent->intake (event)": 100,
+     "parent->statuses": 50,
+     "parent->notices": 50,
+     "parent->fraud": 100,
+     "parent->fraud (event)": 50,
+     "parent->cancellation": 20,
+     "cancellation->statuses": 61,
+     "cancellation->notices": 20,
+     "parent->order-progress": 80,
+     "order-progress->statuses": 162,
+     "parent->fulfilment": 615,
+     "parent->fulfilment (event)": 173,
+     "parent->statuses (event)": 150,
+     "fulfilment->statuses": 82,
+     "fulfilment->notices": 10,
+     "cancellation->fulfilment": 17,
+     "cancellation->order-progress": 4,
+     "parent->customer-action": 57,
+     "customer-action->statuses": 20,
+     "customer-action->notices": 13,
+     "parent->notices (event)": 17,
+     "parent->customer-action (event)": 3
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 85,
+    "passed": 74,
+    "critical": 25,
+    "codes": {
+     "L3:missed": 11
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:40:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T00:22:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T22:27:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:21:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T02:06:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0005-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-02T09:35:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0008-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0016",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-04T07:08:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0016-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0053",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-10T02:16:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0053-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0054",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-09T23:02:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0054-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0069",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T08:04:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0069-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0072",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T04:46:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0072-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 83,
+    "passed": 72,
+    "byCapability": {
+     "intake": "81/83",
+     "fraud": "83/83",
+     "capture": "83/83",
+     "refund": "77/83",
+     "reservation": "75/83",
+     "shipment": "83/83",
+     "compensation": "77/83",
+     "failure": "83/83",
+     "tracking": "80/83",
+     "customer-action": "81/83",
+     "cancellation": "83/83",
+     "notifications": "83/83",
+     "exactly-once": "83/83"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 139,
+     "parent->intake": 88,
+     "parent->intake (event)": 160,
+     "parent->statuses": 80,
+     "parent->notices": 80,
+     "parent->fraud": 158,
+     "parent->fraud (event)": 93,
+     "parent->order-progress": 154,
+     "order-progress->statuses": 314,
+     "parent->fulfilment": 1505,
+     "parent->fulfilment (event)": 336,
+     "parent->statuses (event)": 304,
+     "parent->cancellation": 26,
+     "cancellation->statuses": 82,
+     "cancellation->fulfilment": 27,
+     "cancellation->order-progress": 6,
+     "cancellation->notices": 26,
+     "parent->customer-action": 89,
+     "customer-action->statuses": 37,
+     "customer-action->notices": 20,
+     "parent->notices (event)": 22,
+     "fulfilment->statuses": 177,
+     "fulfilment->notices": 15,
+     "parent->customer-action (event)": 5
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 81,
+    "passed": 73,
+    "critical": 13,
+    "codes": {
+     "L3:missed": 8
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:23:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:57:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T06:28:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:51:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:57:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0005-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0056",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-10T20:32:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0056-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0068",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T02:36:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0068-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0077",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T06:52:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0077-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 79,
+    "passed": 71,
+    "byCapability": {
+     "intake": "77/79",
+     "fraud": "79/79",
+     "capture": "79/79",
+     "refund": "76/79",
+     "reservation": "74/79",
+     "shipment": "79/79",
+     "compensation": "76/79",
+     "failure": "79/79",
+     "tracking": "76/79",
+     "customer-action": "77/79",
+     "cancellation": "79/79",
+     "notifications": "79/79",
+     "exactly-once": "79/79"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 126,
+     "parent->intake": 85,
+     "parent->intake (event)": 160,
+     "parent->statuses": 80,
+     "parent->notices": 80,
+     "parent->fraud": 156,
+     "parent->fraud (event)": 89,
+     "parent->order-progress": 139,
+     "order-progress->statuses": 281,
+     "parent->fulfilment": 1214,
+     "parent->fulfilment (event)": 290,
+     "parent->statuses (event)": 277,
+     "fulfilment->statuses": 159,
+     "fulfilment->notices": 14,
+     "parent->customer-action": 124,
+     "customer-action->statuses": 54,
+     "customer-action->notices": 31,
+     "parent->notices (event)": 27,
+     "parent->cancellation": 23,
+     "cancellation->statuses": 77,
+     "cancellation->notices": 23,
+     "parent->customer-action (event)": 9,
+     "cancellation->fulfilment": 18,
+     "cancellation->order-progress": 3
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 86,
+    "passed": 77,
+    "critical": 18,
+    "codes": {
+     "L3:missed": 9
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:23:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:08:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0002-F2:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T07:35:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:55:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:06:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0005-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0017",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-03T05:51:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0017-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0020",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-03T09:33:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0020-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0034",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-06T08:13:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0034-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0048",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-07T09:14:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0048-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 84,
+    "passed": 75,
+    "byCapability": {
+     "intake": "82/84",
+     "fraud": "84/84",
+     "capture": "84/84",
+     "refund": "80/84",
+     "reservation": "77/84",
+     "shipment": "84/84",
+     "compensation": "80/84",
+     "failure": "84/84",
+     "tracking": "81/84",
+     "customer-action": "82/84",
+     "cancellation": "84/84",
+     "notifications": "84/84",
+     "exactly-once": "84/84"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 143,
+     "parent->intake": 86,
+     "parent->intake (event)": 160,
+     "parent->statuses": 80,
+     "parent->notices": 80,
+     "parent->customer-action": 129,
+     "parent->fraud": 159,
+     "parent->fraud (event)": 87,
+     "customer-action->statuses": 66,
+     "customer-action->notices": 33,
+     "parent->notices (event)": 29,
+     "parent->statuses (event)": 341,
+     "parent->order-progress": 161,
+     "order-progress->statuses": 326,
+     "parent->fulfilment": 1676,
+     "parent->fulfilment (event)": 337,
+     "fulfilment->statuses": 200,
+     "parent->cancellation": 20,
+     "cancellation->statuses": 64,
+     "cancellation->notices": 20,
+     "parent->customer-action (event)": 10,
+     "cancellation->fulfilment": 26,
+     "cancellation->order-progress": 4,
+     "fulfilment->notices": 5
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 202,
+    "passed": 184,
+    "critical": 36,
+    "codes": {
+     "L3:missed": 18
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:48:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:43:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T08:18:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:21:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T02:07:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0005-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-03T01:21:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0006-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:38:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0007",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:09:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0008-F2:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0018",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-03T02:07:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0018-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0029",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-04T03:17:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0029-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0031",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-03T23:14:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0031-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0100",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-07T22:32:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0100-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0134",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-10T00:06:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0134-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0145",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-10T13:32:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0145-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0163",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-11T13:47:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0163-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0166",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-11T13:45:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0166-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0187",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T02:55:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0187-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0191",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T07:43:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0191-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 197,
+    "passed": 179,
+    "byCapability": {
+     "intake": "194/197",
+     "fraud": "197/197",
+     "capture": "197/197",
+     "refund": "187/197",
+     "reservation": "183/197",
+     "shipment": "197/197",
+     "compensation": "187/197",
+     "failure": "197/197",
+     "tracking": "192/197",
+     "customer-action": "194/197",
+     "cancellation": "197/197",
+     "notifications": "197/197",
+     "exactly-once": "197/197"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 317,
+     "parent->intake": 214,
+     "parent->intake (event)": 400,
+     "parent->statuses": 200,
+     "parent->notices": 200,
+     "parent->fraud": 390,
+     "parent->fraud (event)": 213,
+     "parent->order-progress": 428,
+     "order-progress->statuses": 867,
+     "parent->fulfilment": 4215,
+     "parent->fulfilment (event)": 967,
+     "parent->statuses (event)": 819,
+     "fulfilment->statuses": 494,
+     "parent->cancellation": 50,
+     "cancellation->statuses": 153,
+     "cancellation->fulfilment": 55,
+     "cancellation->notices": 50,
+     "parent->notices (event)": 54,
+     "fulfilment->notices": 54,
+     "parent->customer-action": 189,
+     "customer-action->statuses": 79,
+     "customer-action->notices": 43,
+     "cancellation->order-progress": 10,
+     "parent->customer-action (event)": 10
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 208,
+    "passed": 194,
+    "critical": 24,
+    "codes": {
+     "L3:missed": 14
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:48:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:03:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0002-F2:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T13:14:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:32:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T02:03:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0005-F2:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T21:46:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0006-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:10:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0007",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T00:18:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1233-0008-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0022",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-03T07:27:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0022-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0068",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-06T01:52:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0068-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0071",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-06T08:49:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0071-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0125",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-08T08:02:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0125-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0142",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-09T10:08:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0142-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0175",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-11T12:07:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1233-0175-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 203,
+    "passed": 189,
+    "byCapability": {
+     "intake": "200/203",
+     "fraud": "203/203",
+     "capture": "203/203",
+     "refund": "197/203",
+     "reservation": "192/203",
+     "shipment": "203/203",
+     "compensation": "197/203",
+     "failure": "203/203",
+     "tracking": "198/203",
+     "customer-action": "200/203",
+     "cancellation": "203/203",
+     "notifications": "203/203",
+     "exactly-once": "203/203"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 336,
+     "parent->intake": 226,
+     "parent->intake (event)": 400,
+     "parent->statuses": 200,
+     "parent->notices": 200,
+     "parent->fraud": 396,
+     "parent->fraud (event)": 214,
+     "parent->order-progress": 446,
+     "order-progress->statuses": 897,
+     "parent->fulfilment": 4509,
+     "parent->fulfilment (event)": 946,
+     "parent->statuses (event)": 864,
+     "fulfilment->statuses": 540,
+     "fulfilment->notices": 35,
+     "parent->customer-action": 173,
+     "customer-action->statuses": 84,
+     "customer-action->notices": 41,
+     "parent->notices (event)": 48,
+     "parent->customer-action (event)": 11,
+     "parent->cancellation": 48,
+     "cancellation->statuses": 133,
+     "cancellation->notices": 48,
+     "cancellation->fulfilment": 45,
+     "cancellation->order-progress": 6
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 205,
+    "passed": 182,
+    "critical": 53,
+    "codes": {
+     "L3:missed": 23
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:48:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T01:22:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0002-F2:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T07:41:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:37:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T02:26:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0005-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-02T18:58:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0006-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:40:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0007",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T02:18:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1234-0008-F2:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0020",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-03T12:07:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0020-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0048",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-04T23:50:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0048-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0049",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-05T08:13:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0049-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0064",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-05T15:07:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0064-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0080",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-06T15:13:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0080-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0082",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-06T15:15:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0082-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0101",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-07T11:16:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0101-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0128",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-09T03:15:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0128-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0129",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-09T07:40:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0129-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0133",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-09T11:59:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0133-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0174",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T08:50:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0174-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0185",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T06:42:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0185-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0194",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T15:07:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0194-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0199",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-14T07:00:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0199-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0203",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-14T07:16:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1234-0203-F1",
+       "rule": "R6.2"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 200,
+    "passed": 177,
+    "byCapability": {
+     "intake": "197/200",
+     "fraud": "200/200",
+     "capture": "200/200",
+     "refund": "185/200",
+     "reservation": "180/200",
+     "shipment": "200/200",
+     "compensation": "185/200",
+     "failure": "200/200",
+     "tracking": "195/200",
+     "customer-action": "197/200",
+     "cancellation": "200/200",
+     "notifications": "200/200",
+     "exactly-once": "200/200"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 333,
+     "parent->intake": 215,
+     "parent->intake (event)": 400,
+     "parent->statuses": 200,
+     "parent->notices": 200,
+     "parent->customer-action": 229,
+     "parent->fraud": 393,
+     "parent->fraud (event)": 222,
+     "customer-action->statuses": 113,
+     "customer-action->notices": 62,
+     "parent->notices (event)": 62,
+     "parent->statuses (event)": 763,
+     "parent->customer-action (event)": 21,
+     "parent->order-progress": 395,
+     "order-progress->statuses": 800,
+     "parent->fulfilment": 3752,
+     "parent->fulfilment (event)": 860,
+     "fulfilment->statuses": 443,
+     "fulfilment->notices": 41,
+     "parent->cancellation": 55,
+     "cancellation->statuses": 160,
+     "cancellation->fulfilment": 83,
+     "cancellation->order-progress": 15,
+     "cancellation->notices": 55
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}

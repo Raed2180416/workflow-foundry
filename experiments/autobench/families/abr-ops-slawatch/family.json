@@ -1,9 +1,9 @@
 {
  "id": "abr-ops-slawatch",
- "version": "1.0.0",
+ "version": "1.1.0",
  "domain": "operations",
  "title": "Support SLA early warning",
- "status": "dev: generator, oracle, observable-only reference, 16 bad controls, $0 validity gates and tests built; no arm has run (no model, $0)",
+ "status": "dev: generator 1.1.0, oracle, observable-only reference, 18 bad controls, $0 validity gates and tests built; no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.5",
  "grounding": [
   {"task": "operations.sla_breach_early_warning", "span": "automationbench/domains/operations/tasks.py:20926-21269", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
@@ -26,35 +26,36 @@
   "jira.issue.create in project SUPPORT (summary 'SLA breach <ID>')",
   "google_sheets.row.update Open Tickets: Warned At / Warned Agent / Warned Deadline (warning), Warned Agent (reassignment), Breached At (breach), on the acted ticket's row only",
   "google_sheets.row.append Policy Log (authorized amendment only)",
-  "slack.message.post in #automation-review (escalation only)"
+  "slack.message.post in #automation-review (escalation only: a monitored ticket whose phone cannot be read, at each check that would warn it; an out-of-range amendment from the support manager)"
  ],
  "harmless": ["gmail inbound message is_read / label_ids / is_starred changes"],
  "triggerKinds": {
   "tick": {"perWeek": [40, 40], "d1": [40, 40], "d2": [40, 40], "d3": [40, 40], "at": "hourly 10:00-17:00 UTC, Monday-Friday; the Friday 17:00 check is the week close"},
-  "ticket.opened": {"perWeek": [5, 8], "d1": [5, 6], "d2": [5, 7], "d3": [7, 8], "note": "plus 10-14 tickets open at the start of the week (Waiting on Customer included)"},
-  "ticket.updated": {"perWeek": [5, 10], "d1": [5, 6], "d2": [5, 8], "d3": [7, 10], "note": "resolved or closed, reassigned with a new phone, LGL- hold placed or cleared, deadline extended, reopened, work resumed after Waiting on Customer"},
-  "policy.amendment": {"perWeek": [0, 2], "d1": [0, 0], "d2": [0, 0], "d3": [2, 2], "note": "d3: one from support-manager@ (authorized, in range), one from an agent, a team lead or a look-alike address"}
+  "ticket.opened": {"perWeek": [5, 8], "d1": [5, 6], "d2": [5, 7], "d3": [6, 7], "note": "plus 10-16 tickets open at the start of the week (Waiting on Customer included); some arrive already inside the window, or logged after their deadline passed"},
+  "ticket.updated": {"perWeek": [5, 10], "d1": [5, 6], "d2": [7, 10], "d3": [8, 10], "note": "resolved or closed, reassigned with a new phone, LGL- hold placed or cleared (late or inside the window), deadline extended (short or long), reopened before or after the deadline, work resumed inside the window after Waiting on Customer"},
+  "policy.amendment": {"perWeek": [0, 3], "d1": [0, 0], "d2": [0, 0], "d3": [3, 3], "note": "d3: one from support-manager@ (authorized, in range; effective the same day in 70% of weeks, so the window changes between two checks), one from an agent, a team lead or a look-alike address, and one from support-manager@ asking for a value outside 60-180 (escalate)"}
  },
- "triggersPerWeek": {"d2": [50, 55], "d3": [56, 60], "measured": "seeds 601-650"},
+ "triggersPerWeek": {"d2": [53, 57], "d3": [57, 60], "measured": "seeds 601-650, generator 1.1.0"},
  "trapRates": {
   "d1": 0.0, "d2": 0.4, "d3": 0.7,
   "unit": "share of triggers at which at least one planted trap is exposed (a solver ignoring that one rule would act differently there, or the trap changes the literals of an effect made there)",
-  "measured": {"seeds": "601-650", "d2": 0.425, "d3": 0.647}
+  "measured": {"seeds": "601-650", "generator": "1.1.0", "d2": 0.501, "d3": 0.69, "note": "d2 runs ~10 points above the 40% design rate since 1.1.0: the state stories expose traps at more checks"}
  },
  "trapCatalogue": {
   "T-lookalike": ["id (TK-4012 vs TK-40127: an open or last-week sibling whose posts, SMS and issues share the prefix)", "sender (support-manager@company-example.com and similar)"],
-  "T-stale": ["window-amended (the window changes mid-week: a solver keeping 120 minutes)", "former-manager (d3: a 'Former Support Manager Email' row first in SLA Config)", "old-window-row (d3: an older 180-minute Policy Log row)"],
+  "T-stale": ["window-amended (the window changes mid-week: a solver keeping 120 minutes)", "former-manager (d3: a 'Former Support Manager Email' row first in SLA Config)", "old-window-row (d3: an older 180-minute Policy Log row)", "window-straddle (d3: the authorized amendment lands between two checks with a deadline between the old and the new window edge: warn at the later check when the window widens, no second warning when it narrows)"],
   "T-note": ["legal-hold (LGL- code in Notes, any case, any code; held all week, cleared late or inside the window, or placed mid-week)", "legal-mention (Notes mention legal without a code: not a hold)", "waiting (Waiting on Customer: not monitored until work resumes)", "void-row (archived or void rows with non-date deadlines: world-level)"],
-  "T-authority": ["unauthorized-amendment (an agent or team lead asks to change the window)"],
-  "T-format": ["offset (SLA Deadline written with a UTC offset: -05:00, -04:00, +01:00, +02:00, +05:30)", "phone (agent phones in six US formats; E.164 required)", "status-case (d3: 'in progress', 'OPEN', ' Open ')"],
-  "T-repeat": ["closed-duplicate (a Closed '- duplicate' row with a deadline in the window)", "breached-last-week (In Progress, Breached At already filled)", "reassigned (reassigned after the warning: SMS the new agent only)", "extended (a later deadline: warned once more; also a deadline extended last week)", "reopened (resolved after the warning, reopened before the deadline: no second warning)"],
-  "T-timing": ["exact-window (deadline exactly window minutes after a check: warn at that check)", "exact-deadline (deadline on the hour: breach at that check, not a warning)", "after-hours (deadline between the 17:00 check + window and the next morning: no warning, breach at 10:00)", "eager-open / eager-update (a ticket event whose ticket is already inside the window or past its deadline: nothing until the next check)"]
+  "T-authority": ["unauthorized-amendment (an agent or team lead asks to change the window)", "out-of-range-amendment (d3: the support manager asks for a value outside 60-180: escalate, change nothing)"],
+  "T-format": ["offset (SLA Deadline written with a UTC offset: -05:00, -04:00, +01:00, +02:00, +05:30)", "phone (agent phones in six US formats; E.164 required)", "status-case (d3: 'in progress', 'OPEN', ' Open ')", "unreadable-phone (a monitored ticket's Agent Phone holds no US number: escalate at each check that would warn it, no SMS, post, email or tracker write; breach as usual)"],
+  "T-repeat": ["closed-duplicate (a Closed '- duplicate' row with a deadline in the window)", "breached-last-week (In Progress, Breached At already filled)", "reassigned (reassigned after the warning: SMS the new agent only)", "extended (a later deadline: warned once more; also a deadline extended last week; a short extension is inside the window already at the check before)", "reopened (resolved after the warning, reopened before the deadline: no second warning)", "reopened-late (resolved before the deadline, reopened after the check at which it passed: the breach is owed at the next check)"],
+  "T-timing": ["exact-window (deadline exactly window minutes after a check: warn at that check)", "exact-deadline (deadline on the hour: breach at that check, not a warning)", "after-hours (deadline between the 17:00 check + window and the next morning: no warning, breach at 10:00)", "eager-open / eager-update (a ticket event whose ticket is already inside the window or past its deadline: nothing until the next check; an opened ticket is inside the window already at the check before it existed, or logged after its deadline passed)"]
  },
  "amendable": [
   {"parameter": "Warning window", "owner": "support-manager@company.example.com", "values": "60-180 minutes"}
  ],
  "hardRequirements": ["schedule", "durable-wait"],
- "hardRequirementNote": "A warning is correct only at the first hourly check inside the window (early or late fails), and a breach only at the first check at or after the deadline; the oracle checks each effect's timestamp and the Warned At / Breached At values against the check time.",
+ "hardRequirementNote": "A warning is correct only at the first hourly check inside the window (early or late fails), and a breach only at the first check at or after the deadline; the oracle checks each effect's timestamp and the Warned At / Breached At values against the check time. Qualified (review 2026-10-21): 'schedule' is the binding requirement; 'durable-wait' (cross-trigger state) binds only on a minority of triggers, because most timing can be worked out from the clock. The memoryless control (no state column read, no memory) passes 0.853 of triggers on seeds 601-650 and fails exactly the 368 triggers the generator marks needs_state (6.5 a week at d2, 8.3 at d3) plus every week close; it keeps 0 of 50 weeks clean. The state lives in the tracker (state of record), so an arm needs no private memory, only to read it back.",
+ "headline": {"metric": "clean weeks", "why": "per-trigger rate barely separates a clock-only solver (0.853) from a correct one (1.0), and sits inside the agent-H hypothesis band; a week is clean only if every trigger passes, which the memoryless control never achieves (0/50)", "alsoReported": ["per-trigger pass rate", "pass_core (without the envelope)", "needs_state triggers passed"]},
  "needJob": {
   "unit": "trigger",
   "V": 1,
@@ -66,6 +67,7 @@
  "hypothesis": {
   "label": "forced (typed schedule requirement): workflow",
   "agentH": [0.75, 0.9],
+  "agentHNote": "per trigger; written before the memoryless control existed. That control scores 0.853 per trigger, inside this band, so the band does not discriminate: judge agent-H on clean weeks and on needs_state triggers",
   "cleanWeeks": "rare for agent-H (a double SMS, a missed or early window, a held ticket)",
   "why": "agent-H must rebuild the state from the tracker at every check; about 40 sessions a week go to near-empty checks, which a workflow handles in code with no model. Tests whether the need router's typed guard is also right on economics.",
   "tag": "[I] written before any label"
@@ -80,7 +82,9 @@
   "difficultyRule": "within each block, the first seed is d2 and difficulties alternate d2, d3 (gen.default_difficulty)",
   "referenceGate": [610, 611, 612, 613, 614]
  },
- "controls": ["null", "echo", "naive", "eager", "no-hold", "utc-naive", "status-blind", "no-reassign", "warn-once", "strict-window", "slack-dedupe", "raw-phone", "any-amendment", "fixed-window", "late-warning", "early-warning"],
+ "controls": ["null", "echo", "naive", "eager", "no-hold", "utc-naive", "status-blind", "no-reassign", "warn-once", "strict-window", "slack-dedupe", "raw-phone", "any-amendment", "fixed-window", "late-warning", "early-warning", "memoryless", "no-escalate"],
+ "controlBars": {"memoryless": "per-trigger pass rate < 0.90 and 0 clean weeks on dev 610-614 (gates.MEMORYLESS_BAR; measured 0.858, 0/5)", "all": "below 100% of triggers and not every week clean"},
+ "oracleMatching": "one rule decides a trigger: the oracle's own checks (case and whitespace ignored where POLICY.md allows; 'BREACHED <ID>' exact up to case, whitespace and trailing punctuation; SMS and warning posts carry the literal with at most a short greeting and no negation outside it; top-level undeleted posts; email from the automation inbox; Policy Log Value digits only). AutomationBench's AssertionRegistry handlers run as a reported cross-check (ab_disagree) and never gate.",
  "files": {
   "policy": "POLICY.md",
   "lib": "lib.py",

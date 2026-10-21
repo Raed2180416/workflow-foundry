@@ -1,0 +1,29 @@
+{
+ "toolUses": 14,
+ "reads": [
+  "/var/tmp/foundry-work/compose-patch/ch-e8-3-d1/tests/fraud.test.mjs"
+ ],
+ "writes": [
+  "/var/tmp/foundry-work/compose-patch/ch-e8-3-d1/modules/fraud.mjs",
+  "/var/tmp/foundry-work/compose-patch/ch-e8-3-d1/modules/orderflow.mjs",
+  "/var/tmp/foundry-work/compose-patch/ch-e8-3-d1/tests/fraud.test.mjs"
+ ],
+ "bash": [
+  "ls -la && find . -type f -not -path '*/node_modules/*' | head -100 && cat SPEC-E.md",
+  "cat parent.mjs && cat composition.json && cat modules/fraud.mjs && cat modules/orderflow.mjs",
+  "cat modules/intake.mjs modules/fulfilment.mjs && cat TASK.md && cat smoke.mjs && ls rulebook master 2>&1; ls compose-kit; cat tests/fraud.test.mjs",
+  "cat COMPOSE.md && cat CONTRACT.md",
+  "cat tests/orderflow.test.mjs && cat tests/fulfilment.test.mjs | head -50 && cat tests/intake.test.mjs | head -30 && wc -l tests/*.mjs",
+  "node compose-kit/compose.mjs check; echo \"check exit $?\"; node compose-kit/compose.mjs test 2>&1 | tail -15; echo \"test exit ${PIPESTATUS[0]}\"; grep -n \"timeout\\|fraud-review\\|no usable\" modules/*.mjs parent.mjs composition.json",
+  "cat >> tests/fraud.test.mjs <<'EOF'\n\ntest('an approve exactly at the deadline still clears the order at that time (R2.2)', () => {\n  const now = '2026-03-02T10:01:00+01:00';\n  let s = fraud.step({ op: 'start' }, { key, state: null, now: P, files }).state;\n  s = fraud.step({ op: 'verdict', verdict: '",
+  "timeout 900 node smoke.mjs 2>&1 | tail -80"
+ ],
+ "outsideWorkdirOrOracle": [],
+ "result": {
+  "subtype": "success",
+  "is_error": false,
+  "num_turns": 15,
+  "total_cost_usd": 0.03340128,
+  "duration_ms": 157489
+ }
+}

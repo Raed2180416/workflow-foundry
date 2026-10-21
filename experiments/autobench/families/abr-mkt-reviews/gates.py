@@ -13,9 +13,12 @@ Exit 0 only when every gate passes.
   controls      every bad control fails; null passes exactly the no-op triggers; naive < 60% at d3
   traps         every trap kind appears at least 5 times on the four dev label streams 610-613
   clauses       every d3 week has a review that each floor clause decides (gen.FLOOR), and the d3 label weeks amend
-                both parameters between them (added 2026-10-21)
+                both parameters between them (added 2026-10-21); every d2/d3 week has a repeat update from a reviewer
+                ticketed earlier that week and every d3 week a malformed notification (gen.WEEK_FLOOR, review fixes 2026-10-21)
   mutation      single-fault mutants of the reference's correct worlds are rejected (score >= 0.95)
   specificity   policy-neutral variants of the reference's correct worlds are accepted (no false rejects)
+  probes        whole-stream oracle probes (probes.py, review fixes 2026-10-21): every WRONG probe fails on its own triggers, every
+                CORRECT probe passes every trigger
 """
 from __future__ import annotations
 
@@ -48,6 +51,10 @@ BAD_CONTROLS = ["null", "echo", "naive", "intern-policy", "ignore-notes", "subje
 # controls that break a gen.FLOOR clause: each must fail on every d3 week
 FLOOR_CONTROLS = {"no-abuse": "abuse", "no-bot": "bot", "crash-rating-only": "crash-high-rating",
                   "crash-thanks": "crash-high-rating", "eng-email": "eng-high", "comp-email": "comp-high"}
+# controls that break a gen.WEEK_FLOOR rule (review fixes 2026-10-21): each must fail on every week of these difficulties, on a
+# trigger carrying the trap
+WEEK_FLOOR_CONTROLS = {"no-dedupe": ("T-repeat:ticket-this-week", ("d2", "d3")),
+                       "no-escalate": ("T-format:no-rating", ("d3",))}
 PAYLOAD_KEYS = {"trigger", "at", "app", "event", "data"}
 DATA_KEYS = {"message_id", "thread_id", "from", "to", "subject", "snippet"}
 
@@ -173,6 +180,13 @@ def gate_controls(seeds: list[int], d3_seeds: list[int]) -> dict:
         d3_runs[name] = [r["seed"] for r in results if r["clean_week"]]
         if d3_runs[name]:
             problems.append(f"{name} passes the d3 weeks {d3_runs[name]}")
+    week_runs = {}
+    for name, (trap, diffs) in WEEK_FLOOR_CONTROLS.items():
+        _, results = harness.run(name, seeds)
+        week_runs[name] = [r["seed"] for r in results if r["difficulty"] in diffs
+                           and not any(not x["pass"] and trap in x["traps"] for x in r["rows"])]
+        if week_runs[name]:
+            problems.append(f"{name} never fails on {trap} in the weeks {week_runs[name]}")
     naive_d3, _ = harness.run("naive", d3_seeds)
     if naive_d3["pass_rate"] >= 0.6:
         problems.append(f"naive scores {naive_d3['pass_rate']} at d3")
@@ -180,7 +194,7 @@ def gate_controls(seeds: list[int], d3_seeds: list[int]) -> dict:
     if controls.NAIVE_LINES > 40:
         problems.append(f"naive has {controls.NAIVE_LINES} lines (> 40)")
     return {"pass": not problems, "seeds": seeds, "noop_triggers": noop, "controls": res,
-            "floor_controls_clean_d3_weeks": d3_runs,
+            "floor_controls_clean_d3_weeks": d3_runs, "week_floor_controls_unhit_weeks": week_runs,
             "naive_d3": {"seeds": d3_seeds, "pass_rate": naive_d3["pass_rate"], "lines": controls.NAIVE_LINES},
             "problems": problems}
 
@@ -214,10 +228,22 @@ def gate_clauses(seeds: list[int]) -> dict:
             if n < 1:
                 problems.append(f"{s}: no review decides T-note:{t}")
         params[s] = out["meta"]["amend_param"]
+    week = {}
+    for s in seeds:
+        d = gen.default_difficulty(s)
+        g = gen.Gen(s, d)
+        g.build_staff()
+        g.history()
+        g.plan_week()
+        for t in gen.WEEK_FLOOR[d]:
+            ok = g.week_floor_covers(t)
+            week.setdefault(t, {})[s] = ok
+            if not ok:
+                problems.append(f"{s} ({d}): the week floor {t!r} does not hold")
     label_d3 = [s for s in LABEL if s in params]
     if len(label_d3) >= 2 and set(params[s] for s in label_d3) != set(L.PARAMS):
         problems.append(f"d3 label weeks amend only {sorted(set(params[s] for s in label_d3))}")
-    return {"pass": not problems, "seeds": sorted(params), "floor": floor, "amend_param": params,
+    return {"pass": not problems, "seeds": sorted(params), "floor": floor, "amend_param": params, "week_floor": week,
             "problems": problems}
 
 
@@ -326,6 +352,12 @@ def mutants(before: dict, after: dict, truth: dict, world0: dict):
         code = subj.split(" - ")[-1]
         m("ticket-wrong-code", lambda w: t(w).update(subject=subj.replace(code, code[:-1] + ("9" if code[-1] != "9" else "8"))))
         m("ticket-no-code", lambda w: t(w).update(subject=subj.replace(" - " + code, "")))
+        m("ticket-code-lowercase", lambda w: t(w).update(subject=subj.replace(code, code.lower())))   # review fixes 2026-10-21
+        m("ticket-prefix-case", lambda w: t(w).update(subject=subj.replace("App review", "App Review")))
+        if subj.startswith(L.HIGH):
+            m("ticket-high-case", lambda w: t(w).update(subject=subj.replace(L.HIGH, "[High Priority] ")))
+        m("ticket-content-in-description", lambda w: t(w).update(
+            content=None, properties=dict(t(w).get("properties") or {}, description=t(w)["content"])))
         if subj.startswith(L.HIGH):
             m("ticket-drop-high", lambda w: t(w).update(subject=subj[len(L.HIGH):]))
         else:
@@ -359,6 +391,19 @@ def mutants(before: dict, after: dict, truth: dict, world0: dict):
             m("summary-wrong-code", lambda w: e(w).update(body_plain=body.replace(code, "TRIAGE-QA-31")))
             m("summary-hedged", lambda w: e(w).update(body_plain=body + "\n" + L.summary_line(code, n + 1, mm)))
             m("summary-stale-code-line", lambda w: e(w).update(body_plain=body + "\nTRIAGE-100-W01: " + line.split(": ", 1)[1]))
+            # review fixes 2026-10-21: hedges and second figures in other words, a count line that is not on its own, a code in
+            # another case
+            for op, extra in (("summary-hedge-words", f"\nRecount pending: possibly tickets {n + 1} and thank-yous "
+                                                      f"{mm + 1} once late reviews are included."),
+                              ("summary-hedge-numbers", f"\nRecount pending: possibly {n + 1} and {mm + 1}."),
+                              ("summary-hedge-caveat", "\nThese counts may be off by one until the late reviews are in."),
+                              ("summary-week-to-date", f"\nWeek to date: tickets {n + 4}, thank-yous {mm + 6}"),
+                              ("summary-same-in-words", f"\nToday we opened {n} tickets and sent {mm} thank-you emails.")):
+                m(op, lambda w, extra=extra: e(w).update(body_plain=body + extra))
+            m("summary-hedge-inline", lambda w: e(w).update(body_plain=body.replace(
+                line, line + " (or one more ticket if the late crash review counts)")))
+            m("summary-line-prefixed", lambda w: e(w).update(body_plain=body.replace(line, "Today's counts: " + line)))
+            m("summary-code-lowercase", lambda w: e(w).update(body_plain=body.replace(code, code.lower())))
             m("summary-wrong-date", lambda w: e(w).update(subject=msg["subject"][:-1] + ("0" if msg["subject"][-1] != "0" else "1")))
 
     # -- slack ---------------------------------------------------------------------------------------------------
@@ -404,14 +449,25 @@ def equivalents(before: dict, after: dict, truth: dict):
             return _find(w, "hubspot", "tickets", tid)
         m("ticket-priority-high", lambda w: t(w).update(hs_ticket_priority="HIGH"))
         m("ticket-content-with-context", lambda w: t(w).update(content="Review comment: " + t(w)["content"] + " (iOS)"))
-        m("ticket-subject-case", lambda w: t(w).update(subject=t(w)["subject"].replace("App review", "App Review")))
+        # review fixes 2026-10-21: the subject's literal parts keep their case (POLICY.md §3 step 5); only the address may change
+        m("ticket-address-case", lambda w: t(w).update(subject=" - ".join(
+            x.upper() if "@" in x else x for x in t(w)["subject"].split(" - "))))
     for mid in new_m[:1]:
         def e(w, mid=mid):
             return _find(w, "gmail", "messages", mid)
         m("email-longer-body", lambda w: e(w).update(body_plain="Hello,\n\n" + e(w)["body_plain"] + "\n\nKind regards,\nMarketing"))
         if e(after)["subject"].startswith(L.SUMMARY_SUBJECT):
+            # other figures that are not ticket or thank-you figures (review fixes 2026-10-21: no longer "2 tickets reopened",
+            # which POLICY.md §4 now rules out), markdown, HTML, a greeting and a sign-off
             m("summary-other-words", lambda w: e(w).update(body_plain=e(w)["body_plain"] + "\nWeek so far: 40 reviews "
-                                                           "read, 3 escalations, 2 tickets reopened."))
+                                                           "read, 3 escalations."))
+            line = next(x["body"] for x in truth["expect"]["emails"] if x["kind"] == "summary")
+            m("summary-markdown", lambda w: e(w).update(body_plain=f"## Review triage summary\n\n- **{line}**\n\n"
+                                                        "_Sent by the review triage automation._"))
+            m("summary-html", lambda w: e(w).update(body_plain=f"<html><body><p>Hi team,</p><p><b>{line}</b></p>"
+                                                    "<p>Thank you,<br>Automation</p></body></html>"))
+            m("summary-greeting-signoff", lambda w: e(w).update(body_plain=f"Hi team,\n\n{line}.\n\nPolicy in force: "
+                                                                "Ticket ratings = 1-2.\n\nThank you,\nAutomation"))
         m("email-display-name", lambda w: e(w).update(to=[f"Reviewer <{e(w)['to'][0]}>"]))
     for ts in new_s[:1]:
         m("post-extra-words", lambda w: _slack(w, ts).update(text="FYI " + _slack(w, ts)["text"] + " (thanks)."))
@@ -463,6 +519,36 @@ def gate_specificity(seeds: list[int]) -> dict:
             "rejected": rejected[:20]}
 
 
+def gate_probes(seeds: list[int]) -> dict:
+    """Whole-stream oracle probes (probes.py), run through the real tool path and Grader in carry mode: each WRONG probe
+    fails somewhere, and on at least one trigger of its own variant (probes.WRONG_ON) in every stream that has one;
+    each CORRECT probe passes every trigger of every stream."""
+    import probes
+    grader = oracle.Grader()
+    streams = {s: gen.generate(s) for s in seeds}
+    res, problems = {}, []
+    for name, fn in probes.PROBES.items():
+        runs = [harness.run_stream(streams[s], fn, grader=grader) for s in seeds]
+        rows = [x for r in runs for x in r["rows"]]
+        res[name] = {"passed": sum(x["pass"] for x in rows), "triggers": len(rows),
+                     "clean_weeks": sum(r["clean_week"] for r in runs), "errors": sum(1 for x in rows if x["error"])}
+        if res[name]["errors"]:
+            problems.append(f"{name} raised on {res[name]['errors']} triggers")
+        if name in probes.CORRECT:
+            if res[name]["passed"] != len(rows):
+                bad = [f"{x['taskKey']} {[c['name'] for c in x['failed']]}" for x in rows if not x["pass"]][:3]
+                problems.append(f"{name} (correct) rejected: {bad}")
+            continue
+        want = probes.WRONG_ON[name]
+        for r in runs:
+            mine = [x for x in r["rows"] if want == "any" or x["variant"] == want]
+            if mine and want != "any" and not any(not x["pass"] for x in mine):
+                problems.append(f"{name} passes every {want} trigger of {r['seed']}")
+        if res[name]["passed"] == len(rows):
+            problems.append(f"{name} (wrong) passes every trigger")
+    return {"pass": not problems, "seeds": seeds, "probes": res, "problems": problems}
+
+
 def run_all(seeds: list[int], practice: list[int]) -> dict:
     d3 = [s for s in seeds if gen.default_difficulty(s) == "d3"]
     g = {"determinism": gate_determinism(seeds[:3]),
@@ -472,7 +558,8 @@ def run_all(seeds: list[int], practice: list[int]) -> dict:
          "traps": gate_traps(LABEL),
          "clauses": gate_clauses(practice + seeds),
          "mutation": gate_mutation(seeds),
-         "specificity": gate_specificity(seeds)}
+         "specificity": gate_specificity(seeds),
+         "probes": gate_probes(seeds)}
     return {"family": gen.FAMILY, "version": gen.VERSION, "pass": all(x["pass"] for x in g.values()), "gates": g}
 
 

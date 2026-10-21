@@ -25,6 +25,7 @@ import gen  # noqa: E402
 import harness  # noqa: E402
 import lib as L  # noqa: E402
 import oracle  # noqa: E402
+import probes  # noqa: E402
 import reference  # noqa: E402
 
 DEV = [610, 611, 612, 613, 614]
@@ -122,11 +123,49 @@ def test_every_d3_week_decides_each_floor_clause():
         assert out["meta"]["amend_param"] in L.PARAMS
 
 
-def test_floor_leaves_d1_and_d2_streams_alone():
+def test_floor_leaves_d1_streams_alone_and_d2_note_clauses_alone():
+    """The d3 clause floor never touches d2; d2 gets only the week floor (a repeat update); d1 nothing."""
     for s in (610, 612, 614):
         m = gen.generate(s, validate=False)["meta"]
-        assert m["difficulty"] == "d2" and m["floor"] == [] and m["amend_param"] is None
+        assert m["difficulty"] == "d2" and m["amend_param"] is None
+        assert {f["clause"] for f in m["floor"]} <= {"T-repeat:ticket-this-week"}, m["floor"]
     assert gen.generate(611, "d1", validate=False)["meta"]["floor"] == []
+
+
+def test_week_floor_holds_on_every_week():
+    """Review fixes 2026-10-21: every d2/d3 week has an update from a reviewer whose first review that week certainly got a
+    ticket (one ticket per reviewer per week), and every d3 week a malformed notification (escalate). Before, 601, 603,
+    607, 609 and 610 had no repeat and the d3 dev weeks 611 and 613 no malformed notification."""
+    g = gates.gate_clauses(list(range(601, 631)))
+    assert g["pass"], g["problems"]
+    assert len(g["week_floor"]["repeat"]) == 30 and all(g["week_floor"]["repeat"].values())
+    assert sorted(g["week_floor"]["malformed"]) == [s for s in range(601, 631) if gen.default_difficulty(s) == "d3"]
+    for s, d in ((631, "d2"), (632, "d3"), (633, "d3"), (634, "d2")):     # forced difficulties too
+        out = gen.generate(s, d, validate=False)
+        traps = [x for t in out["truth"] for x in t["traps"]]
+        assert "T-repeat:ticket-this-week" in traps, (s, d)
+        assert (d == "d3") <= any(t["outcome"] == "escalate" for t in out["truth"]), (s, d)
+    for s in (610, 611, 612, 613):
+        out = gen.generate(s, validate=False)
+        rep = [t for t in out["truth"] if "T-repeat:ticket-this-week" in t["traps"]]
+        assert rep and all(t["outcome"] == "no-op" and not t["expect"]["tickets"] for t in rep), s
+
+
+def test_week_floor_converts_reviews_and_keeps_every_other_byte(monkeypatch):
+    """The week floor converts existing reviews and draws only from the ...:floor stream: world0 and every trigger it
+    does not convert are byte-identical to the stream without it, and the trigger count is unchanged."""
+    for s in (601, 610, 611, 613):
+        with_floor = gen.generate(s, validate=False)
+        monkeypatch.setattr(gen, "WEEK_FLOOR", {"d1": (), "d2": (), "d3": ()})
+        without = gen.generate(s, validate=False)
+        monkeypatch.undo()
+        assert gen.canon(with_floor["world0"]) == gen.canon(without["world0"])
+        assert len(with_floor["triggers"]) == len(without["triggers"])
+        conv = {f["at"] for f in with_floor["meta"]["floor"] if not f["clause"].startswith("T-note")}
+        assert [f for f in with_floor["meta"]["floor"] if f["clause"].startswith("T-note")] == without["meta"]["floor"]
+        diff = {a["at"] for a, b in zip(with_floor["triggers"], without["triggers"])
+                if gen.canon(a["payload"]) != gen.canon(b["payload"]) or gen.canon(a["delta"]) != gen.canon(b["delta"])}
+        assert diff == conv, (s, sorted(diff ^ conv))
 
 
 def test_fictional_entities_only():
@@ -299,6 +338,17 @@ def test_floor_controls_fail_every_d3_dev_week(dev_runs, name):
             assert any(not r["pass"] and clause in r["traps"] for r in res["rows"]), (name, res["seed"])
 
 
+@pytest.mark.parametrize("name", sorted(gates.WEEK_FLOOR_CONTROLS))
+def test_week_floor_controls_fail_every_dev_week(dev_runs, name):
+    """Review fixes 2026-10-21: no-dedupe fails on every dev week and no-escalate on every d3 dev week, each on its own trap (before,
+    no-dedupe passed 610 and no-escalate passed both d3 dev weeks)."""
+    trap, diffs = gates.WEEK_FLOOR_CONTROLS[name]
+    _, results = dev_runs[name]
+    for res in results:
+        if res["difficulty"] in diffs:
+            assert any(not r["pass"] and trap in r["traps"] for r in res["rows"]), (name, res["seed"])
+
+
 def test_amendment_controls_fail_on_their_parameter_week(dev_runs):
     weeks = {gen.generate(s, validate=False)["meta"]["amend_param"]: s for s in (611, 613)}
     for name, param in (("ticket-amend-ignored", "Ticket ratings"), ("thanks-amend-ignored", "Thank-you ratings")):
@@ -354,8 +404,12 @@ def test_oracle_rejects_hedged_summaries_and_deleted_posts(ref_worlds, grader):
             line = truth["expect"]["emails"][0]["body"]
             code, rest = line.split(": ", 1)
             mid = gates._new(before, after, "gmail", "messages")[0]
-            for extra, ok in ((f"\nToday so far: {rest}", True),                       # the same counts again
-                              ("\nWeek so far: 40 reviews read, 2 tickets reopened.", True),
+            # review fixes 2026-10-21: POLICY.md §4 now makes the line the only place for ticket or thank-you figures, so the same
+            # counts again and "2 tickets reopened" are rejected too (they were accepted before)
+            for extra, ok in ((f"\nToday so far: {rest}", False),                      # the same counts again
+                              ("\nWeek so far: 40 reviews read, 2 tickets reopened.", False),
+                              ("\nWeek so far: 40 reviews read, 3 escalations.", True),
+                              ("\n\nThank you,\nThe review triage automation", True),
                               (f"\n{code}: tickets 99, thank-yous 0", False),
                               ("\nOr maybe: tickets 0, thank-yous 0", False),
                               (f"\nTRIAGE-100-W01: {rest}", False)):
@@ -372,6 +426,115 @@ def test_oracle_rejects_hedged_summaries_and_deleted_posts(ref_worlds, grader):
             assert not v["pass"] and {"post #app-reviews", "envelope"} <= {c["name"] for c in v["failed"]}
             seen.add("deleted")
     assert seen == {"summary", "deleted"}
+
+
+# review fixes 2026-10-21 (medium): hedges in other words passed; the rule now applies to meaning, POLICY.md §4 states it
+SUMMARY_LINE = "TRIAGE-412-W10: tickets 3, thank-yous 5"
+SUMMARY_ACCEPT = [
+    SUMMARY_LINE,
+    SUMMARY_LINE + ".",
+    f"Hi team,\n\n{SUMMARY_LINE}\n\nThanks,\nReview Triage Automation",
+    f"Hello App Review Team,\n\nHere is the daily review triage summary for 2026-03-04.\n\n{SUMMARY_LINE}\n\nBest regards",
+    f"Daily summary (2026-03-04, 17:00 UTC)\n\n**{SUMMARY_LINE}**\n\nThank you,\nAutomation",
+    f"# Review triage summary 2026-03-04\n\n- {SUMMARY_LINE}\n",
+    f"<html><body><p>Hi team,</p><p>{SUMMARY_LINE}</p><p>Kind regards</p></body></html>",
+    f"<div>Summary:</div><div><b>{SUMMARY_LINE}</b></div>",
+    f"Summary for today:\n{SUMMARY_LINE}\nNo escalations today.",
+    f"{SUMMARY_LINE}\n\nPolicy in force: Ticket ratings = 1-3 (amended by Product on 2026-03-02), Thank-you ratings = 4-5.",
+    f"{SUMMARY_LINE}\n\nQuestions? Reply to this email or ask in #app-reviews if anything looks wrong.",
+    f"{SUMMARY_LINE}\n\nWeek so far: 40 reviews read, 3 escalations.",
+    f"{SUMMARY_LINE}\n{SUMMARY_LINE}",
+    f"| {SUMMARY_LINE} |",
+    f"> `{SUMMARY_LINE}`",
+    f"Summary for TRIAGE-412-W10\n\n{SUMMARY_LINE}\n\nThank you for your attention.",
+    f"{SUMMARY_LINE}\nReply if you need more detail.",                       # weak hedge words without a number
+    f"{SUMMARY_LINE}\nIf you have questions about these tickets, reply here.",
+    f"{SUMMARY_LINE}\nTickets are likely to be triaged tomorrow.",
+]
+SUMMARY_REJECT = [
+    f"{SUMMARY_LINE} (or one more ticket if the late crash review counts)",                       # W-hedge-inline
+    f"{SUMMARY_LINE}\nRecount pending: possibly tickets 4 and thank-yous 6 once late reviews are included.",  # W-hedge
+    f"{SUMMARY_LINE}\nRecount pending: possibly 4 and 6 once late reviews are in.",
+    f"{SUMMARY_LINE}\nThese counts may be off by one.",
+    f"{SUMMARY_LINE}\nWeek to date: tickets 9, thank-yous 14",                                    # review (low)
+    f"{SUMMARY_LINE}\nToday we opened 3 tickets and sent 5 thank-you emails.",
+    f"Counts: {SUMMARY_LINE}",
+    f"{SUMMARY_LINE}\nCorrection: tickets 4",
+    f"{SUMMARY_LINE}\nNote: one more ticket may arrive late.",
+    f"{SUMMARY_LINE}\nThe ticket count could be 4.",
+    f"{SUMMARY_LINE}\nAt least 3 tickets, possibly more.",
+    f"{SUMMARY_LINE}\nThe numbers above are preliminary.",
+    f"{SUMMARY_LINE}\nTotals may change after the late reviews.",
+    f"{SUMMARY_LINE}\n(4 if you count the late crash review)",
+    f"{SUMMARY_LINE}\nThank-yous: 6 (revised)",
+    f"{SUMMARY_LINE}\nAlso: 2 tickets reopened.",
+    f"{SUMMARY_LINE}\nTRIAGE-100-W01: tickets 3, thank-yous 5",
+    f"{SUMMARY_LINE}?",
+    f"{SUMMARY_LINE} or 6",
+    f"{SUMMARY_LINE}\nEither way, 3 or 4.",
+    "triage-412-w10: tickets 3, thank-yous 5",                                                    # review (low): case
+    f"{SUMMARY_LINE}\nTickets may need a recount.",                          # correction words need no number
+    f"{SUMMARY_LINE}\nThe total may be higher.",
+    f"{SUMMARY_LINE}\nThank-yous: revised count to follow.",
+]
+
+
+@pytest.mark.parametrize("body", SUMMARY_ACCEPT)
+def test_summary_rule_accepts_policy_neutral_wording(body):
+    assert oracle.summary_problems(oracle.body_text({"body_plain": body}), SUMMARY_LINE) == []
+
+
+@pytest.mark.parametrize("body", SUMMARY_REJECT)
+def test_summary_rule_rejects_hedges_and_second_figures(body):
+    assert oracle.summary_problems(oracle.body_text({"body_plain": body}), SUMMARY_LINE)
+
+
+def test_ticket_subject_case_is_exact_except_the_address(ref_worlds, grader):
+    """Review fixes 2026-10-21 (low): a lower-cased code or prefix passed every check; the address may be in any case."""
+    stream, res = ref_worlds[0]
+    truth, before, after = next((t, b, a) for t, b, a in zip(stream["truth"], res["befores"], res["afters"])
+                                if t["expect"]["tickets"])
+    tid = gates._new(before, after, "hubspot", "tickets")[0]
+    subj = gates._find(after, "hubspot", "tickets", tid)["subject"]
+    code, addr = subj.split(" - ")[-1], subj.split(" - ")[1]
+    for new, ok in ((subj.replace(code, code.lower()), False), (subj.replace("App review", "app review"), False),
+                    (subj.lower(), False), (subj.replace(addr, addr.upper()), True), ("  " + subj + " ", True)):
+        w = copy.deepcopy(after)
+        gates._find(w, "hubspot", "tickets", tid)["subject"] = new
+        assert grader.grade(truth, before, w)["pass"] is ok, new
+
+
+@pytest.fixture(scope="module")
+def probe_runs(grader):
+    """Every oracle probe (probes.py) on a d2 and both d3 dev label streams, carry mode, real tool path."""
+    streams = {s: gen.generate(s) for s in (610, 611, 613)}
+    return {name: [harness.run_stream(streams[s], fn, grader=grader) for s in streams]
+            for name, fn in probes.PROBES.items()}
+
+
+@pytest.mark.parametrize("name", sorted(probes.WRONG))
+def test_wrong_probes_are_rejected_on_their_own_triggers(probe_runs, name):
+    """The review's rejected wrong outputs (paraphrased content, ack in the wrong channel or for an unauthorized
+    request, yesterday's summary, escalate-and-act) and the ones the fixes added (hedges, week-to-date, a lower-cased code
+    or subject, the comment in another property): each fails, and on its own kind of trigger."""
+    runs = probe_runs[name]
+    rows = [x for r in runs for x in r["rows"]]
+    assert not any(x["error"] for x in rows), name
+    assert not all(x["pass"] for x in rows) and not all(r["clean_week"] for r in runs), name
+    want = probes.WRONG_ON[name]
+    for r in runs:
+        mine = [x for x in r["rows"] if x["variant"] == want]
+        if mine and want != "any":
+            assert any(not x["pass"] for x in mine), (name, r["seed"])
+
+
+@pytest.mark.parametrize("name", sorted(probes.CORRECT))
+def test_correct_probes_pass_every_trigger(probe_runs, name):
+    """The review's accepted variants (C-styled, C-housekeeping, C-thread-reply) and three more (an HTML summary, a
+    summary with a greeting, sign-off and other figures, an upper-case address in the subject)."""
+    for r in probe_runs[name]:
+        assert r["clean_week"], (name, r["seed"], [(x["taskKey"], [c["name"] + ": " + c["detail"][:80] for c in x["failed"]])
+                                                    for x in r["rows"] if not x["pass"]][:3])
 
 
 def test_oracle_mutation_score(ref_worlds, grader):
@@ -439,6 +602,14 @@ def test_policy_states_what_the_generator_uses():
         assert s in policy, s
     for w in L.HIGH_WORDS:
         assert re.search(rf"\b{w}\b", policy), w
+    # review fixes 2026-10-21: the strictness the oracle applies is stated (review findings: hedges, week-to-date figures, case,
+    # the ticket property)
+    flat = " ".join(policy.split())
+    for s in ["on a line of its own", "the only place the summary gives ticket or thank-you figures",
+              "no week-to-date figures", "no alternative, estimate, correction or recount",
+              "Copy the code exactly as posted, letter case included", "letter case included (`[HIGH PRIORITY]`",
+              "Only the reviewer address may be in any case", "the HubSpot ticket property `content`"]:
+        assert s in flat, s
 
 
 def test_family_json_matches_code():

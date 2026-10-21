@@ -26,6 +26,11 @@ Trap annotation (per trigger, host-only): a trap planted on a ticket (or in the 
 is *exposed* there: when a solver that ignores exactly that rule (simulated over the whole week with its own state)
 would produce different effects at that trigger, or, for format and look-alike traps, when the ticket has an effect at
 that trigger whose literals the trap affects.
+
+State annotation (per trigger, host-only, since 1.1.0): `needs_state` is true where a memoryless solver (it reads no
+state column and keeps no memory; it warns when the deadline entered the window since the previous scheduled check and
+breaches when it passed since then) would produce different effects. controls.py's `memoryless` control fails exactly
+there and at the week close.
 """
 from __future__ import annotations
 
@@ -82,26 +87,36 @@ CLEAR_NOTES = ["Legal review complete; hold lifted", "Legal cleared, resume norm
 VOID_DEADLINES = ["N/A", "VOID", "-", "TBD", "see parent ticket"]
 OFFSETS = [-5, -4, 1, 2, 5.5]            # UTC offsets for written deadlines (T-format:offset)
 PHONE_FORMATS = ["paren", "dots", "dashes", "plus-space", "one-dash", "paren-plus"]
+UNREADABLE_PHONES = ["ext. 4410", "see Slack profile", "555-0199", "on file", "x2214 (desk)"]   # no 10-digit US number
 
 # Per-difficulty knobs. Counts are per week; rates are the share of eligible tickets carrying an attribute trap.
 COUNTS = {
     "d1": {"init": (10, 12), "opened": (5, 6), "updated": (5, 6), "history": (3, 4), "void": (1, 1)},
-    "d2": {"init": (10, 13), "opened": (5, 7), "updated": (5, 8), "history": (3, 5), "void": (1, 2)},
-    "d3": {"init": (12, 14), "opened": (7, 8), "updated": (8, 10), "history": (4, 5), "void": (2, 3)},
+    "d2": {"init": (10, 13), "opened": (5, 7), "updated": (7, 10), "history": (3, 5), "void": (1, 2)},
+    "d3": {"init": (12, 14), "opened": (6, 7), "updated": (9, 10), "history": (4, 5), "void": (2, 3)},
 }
-ATTR_RATE = {"d1": 0.0, "d2": 0.18, "d3": 0.8}
-# Story mix (number of tickets per story) per difficulty: (min, max)
+ATTR_RATE = {"d1": 0.0, "d2": 0.12, "d3": 0.8}
+# Story mix (number of tickets per story) per difficulty: (min, max). Since 1.1.0 the mix leans on stories whose correct
+# handling needs the tracker's state columns, not only the clock (a memoryless solver that warns when the deadline
+# enters the window between two checks and breaches when it passes between two checks gets them wrong): reassignment
+# after the warning, a hold cleared after the deadline or inside the window, work resumed inside the window, a short
+# extension whose new deadline is already inside the window, a reopen after the deadline, a window amendment that
+# straddles two checks, a ticket opened already inside the window, and an unreadable phone (escalated at every check
+# that would warn).
 STORIES = {
     "d1": {},
-    "d2": {"hold": (1, 1), "legal-mention": (0, 1), "waiting": (0, 1), "closed-duplicate": (1, 1),
-           "reassign-after-warning": (1, 1), "extend-after-warning": (1, 1), "reopened": (0, 1),
-           "breached-last-week": (1, 1), "exact-window": (1, 1), "exact-deadline": (0, 1), "after-hours": (1, 1),
-           "eager-open": (1, 1), "lookalike": (1, 1)},
-    "d3": {"hold": (2, 2), "legal-mention": (1, 1), "waiting": (1, 1), "closed-duplicate": (1, 2),
-           "reassign-after-warning": (1, 2), "extend-after-warning": (1, 1), "reopened": (1, 1),
-           "breached-last-week": (1, 1), "exact-window": (1, 1), "exact-deadline": (1, 1), "after-hours": (1, 2),
-           "eager-open": (2, 3), "lookalike": (1, 2), "extended-last-week": (0, 1)},
+    "d2": {"hold": (1, 1), "legal-mention": (0, 1), "waiting": (1, 1), "closed-duplicate": (1, 1),
+           "reassign-after-warning": (2, 2), "extend-after-warning": (1, 1), "reopened": (0, 1),
+           "reopened-late": (1, 1), "breached-last-week": (1, 1), "exact-window": (1, 1), "exact-deadline": (0, 1),
+           "after-hours": (1, 1), "eager-open": (1, 2), "lookalike": (1, 1), "unreadable-phone": (1, 1)},
+    "d3": {"hold": (2, 2), "legal-mention": (0, 1), "waiting": (1, 1), "closed-duplicate": (1, 1),
+           "reassign-after-warning": (2, 2), "extend-after-warning": (1, 1), "reopened": (0, 1),
+           "reopened-late": (1, 1), "breached-last-week": (1, 1), "exact-window": (1, 1), "exact-deadline": (1, 1),
+           "after-hours": (1, 1), "eager-open": (2, 3), "lookalike": (1, 1), "extended-last-week": (0, 1),
+           "amend-straddle": (1, 1), "unreadable-phone": (1, 1)},
 }
+HOLD_KINDS = ["hold-cleared-late", "hold-cleared-in-window", "hold-static", "hold-placed"]
+HOLD_WEIGHTS = [0.35, 0.35, 0.15, 0.15]
 
 # Blind solver variants (one rule ignored) and the planted traps whose exposure each variant measures.
 FLAG_TRAPS = {
@@ -116,10 +131,12 @@ FLAG_TRAPS = {
     "strict": {"T-timing:exact-window", "T-timing:exact-deadline"},
     "lookahead": {"T-timing:after-hours"},
     "reopen": {"T-repeat:reopened"},
+    "memoryless": {"T-repeat:reopened-late", "T-stale:window-straddle"},
 }
 # Story tickets that may equally be opened during the week (their story does not need the ticket open on Monday)
 MOVABLE = {"legal-mention", "after-hours", "exact-deadline", "exact-window", "lookalike", "reassign-after-warning",
-           "extend-after-warning", "hold-static", "hold-placed", "hold-cleared-in-window", "hold-cleared-late"}
+           "extend-after-warning", "hold-static", "hold-placed", "hold-cleared-in-window", "hold-cleared-late",
+           "reopened-late", "amend-straddle", "unreadable-phone"}
 WORLD_FLAGS = {"amend-ignored": "T-stale:window-amended", "amend-any": "T-authority:unauthorized-amendment",
                "amend-now": "T-timing:effective-date"}
 TRAP_KINDS = ["T-lookalike", "T-stale", "T-note", "T-authority", "T-format", "T-repeat", "T-timing"]
@@ -159,6 +176,16 @@ def next_check(now: datetime) -> datetime:
         if t.weekday() < 5 and t.hour in L.CHECK_HOURS:
             return t
         t += timedelta(hours=1)
+
+
+def prev_check(now: datetime) -> datetime:
+    """The scheduled hourly check strictly before `now` (any week)."""
+    t = now.replace(minute=0, second=0, microsecond=0)
+    if t == now:
+        t -= timedelta(hours=1)
+    while not (t.weekday() < 5 and t.hour in L.CHECK_HOURS):
+        t -= timedelta(hours=1)
+    return t
 
 
 
@@ -220,14 +247,15 @@ class Gen:
                 return v
         raise RuntimeError("no look-alike id")
 
-    def event_time(self, lo: datetime, hi: datetime) -> datetime | None:
-        """A unique event time in [lo, hi): a weekday, 08:00-17:59, minute != 0, before the week-close check."""
+    def event_time(self, lo: datetime, hi: datetime, hours: range = range(8, 18)) -> datetime | None:
+        """A unique event time in [lo, hi): a weekday, 08:00-17:59 (or `hours`), minute != 0, before the week-close
+        check."""
         hi = min(hi, self.close - timedelta(minutes=1))
         lo = max(lo, self.start + timedelta(minutes=1)).replace(second=0, microsecond=0)
         cands = []
         t = lo
         while t < hi:
-            if t.weekday() < 5 and 8 <= t.hour <= 17 and t.minute != 0 and t not in self.times:
+            if t.weekday() < 5 and t.hour in hours and t.minute != 0 and t not in self.times:
                 cands.append(t)
             t += timedelta(minutes=1)
         if not cands:
@@ -248,8 +276,26 @@ class Gen:
     def W_at(self, now: datetime) -> int:
         """The window in force at `now` (planning helper: the authorized amendments that arrived before `now`)."""
         rows = self.policy0 + [(a["effective"], a["value"], 100 + i) for i, a in enumerate(self.amend)
-                               if a["authorized"] and a["t"] < now]
+                               if a["kind"] == "authorized" and a["t"] < now]
         return self.window(rows, now)
+
+    def window_checks(self, D: datetime) -> list[datetime]:
+        """The hourly checks before D at which D is inside the window then in force."""
+        return [c for c in self.checks if c < D and D - c <= timedelta(minutes=self.W_at(c))]
+
+    def first_window_check(self, D: datetime) -> datetime | None:
+        return next(iter(self.window_checks(D)), None)
+
+    def story_deadline(self, day_lo: int, day_hi: int, hour_lo: int = 10, hour_hi: int = 17, k: int = 2) -> datetime:
+        """A deadline on a working day with at least k checks inside the window before it (a story that acts between
+        the warning check and a later check needs two; a window narrowed to 60 minutes leaves one)."""
+        D = None
+        for _ in range(200):
+            D = self.work_deadline(day_lo, day_hi)
+            D = D.replace(hour=min(hour_hi, max(hour_lo, D.hour)))
+            if D > self.start + timedelta(hours=2) and len(self.window_checks(D)) >= k:
+                return D
+        return D
 
     def work_deadline(self, day_lo: int = 0, day_hi: int = 4, on_hour: bool = False) -> datetime:
         while True:
@@ -271,7 +317,7 @@ class Gen:
         status_cell = {"open": "Open", "in progress": "In Progress", "resolved": "Resolved", "closed": "Closed",
                        "waiting": "Waiting on Customer", "archived": "Archived", "void": "Void"}[st]
         tk = {"rid": self.rid(), "tid": tid or self.tid(), "subject": r.choice(SUBJECTS), "customer": r.choice(CUSTOMERS),
-              "priority": r.choice(PRIORITIES), "agent": agent, "phone10": d10, "phone_fmt": None, "st": st,
+              "priority": r.choice(PRIORITIES), "agent": agent, "phone10": d10, "phone_fmt": None, "phone_raw": None, "st": st,
               "status_cell": status_cell, "D": D, "offset": None, "void_cell": None, "notes": r.choice(PLAIN_NOTES),
               "held": False, "legal_mention": False, "warned_at": None, "warned_agent": None, "warned_deadline": None,
               "breached_at": None, "traps": set(), "story": story, "history": history, "opened_at": opened_at}
@@ -291,7 +337,8 @@ class Gen:
 
     def cells(self, tk: dict, state: bool = True) -> dict:
         c = {"Ticket ID": tk["tid"], "Subject": tk["subject"], "Customer": tk["customer"], "Assigned Agent": tk["agent"],
-             "Agent Phone": render_phone(tk["phone10"], tk["phone_fmt"]), "Priority": tk["priority"],
+             "Agent Phone": tk["phone_raw"] if tk["phone10"] is None else render_phone(tk["phone10"], tk["phone_fmt"]),
+             "Priority": tk["priority"],
              "Status": tk["status_cell"],
              "SLA Deadline": tk["void_cell"] if tk["D"] is None else render_deadline(tk["D"], tk["offset"]),
              "Notes": tk["notes"]}
@@ -322,6 +369,10 @@ class Gen:
         stories = []
         for s, (lo, hi) in STORIES[d].items():
             stories += [s] * r.randint(lo, hi)
+        auth = [a for a in self.amend if a["kind"] == "authorized"]
+        if not auth or auth[0]["effective"] != auth[0]["t"].date():
+            stories = [s for s in stories if s != "amend-straddle"]      # the straddle needs a same-day window change
+        self.n_holds = 0
         r.shuffle(stories)
         for s in stories:
             if s != "eager-open":
@@ -364,13 +415,17 @@ class Gen:
         return True
 
     def plan_amendments(self):
+        """d3: an authorized in-range amendment (between two checks, effective that day in 70% of weeks, so the window
+        changes from one check to the next), an amendment from someone else, and an out-of-range one from the support
+        manager (the policy cannot decide it: escalate)."""
         if self.d != "d3":
             return
         r = self.r
-        t = self.event_time(self.monday + timedelta(days=1, hours=9), self.monday + timedelta(days=3, hours=16))
+        t = self.event_time(self.monday + timedelta(days=1, hours=9), self.monday + timedelta(days=3, hours=16),
+                            hours=range(10, 17))
         value = r.choice([v for v in (60, 90, 150, 180) if v != L.DEFAULT_WINDOW])
-        eff = t.date() + timedelta(days=r.choice([0, 1]))
-        self.amend.append({"t": t, "authorized": True, "from": L.MANAGER, "from_name": MANAGER_NAME, "value": value,
+        eff = t.date() + timedelta(days=0 if r.random() < 0.7 else 1)
+        self.amend.append({"t": t, "kind": "authorized", "from": L.MANAGER, "from_name": MANAGER_NAME, "value": value,
                            "effective": eff, "traps": []})
         t2 = self.event_time(self.monday + timedelta(hours=9), self.monday + timedelta(days=1, hours=16))
         kind = r.choice(["agent", "lookalike", "lead"])
@@ -383,8 +438,12 @@ class Gen:
             name, sender, trap = MANAGER_NAME, r.choice(["support-manager@company-example.com",
                                                          "support.manager@company.example.com",
                                                          "support-manager@cornpany.example.com"]), "T-lookalike:sender"
-        self.amend.append({"t": t2, "authorized": False, "from": sender, "from_name": name,
+        self.amend.append({"t": t2, "kind": "unauthorized", "from": sender, "from_name": name,
                            "value": r.choice([45, 60, 90, 150, 240]), "effective": t2.date(), "traps": [trap]})
+        t3 = self.event_time(self.monday + timedelta(hours=9), self.monday + timedelta(days=4, hours=12))
+        self.amend.append({"t": t3, "kind": "out-of-range", "from": L.MANAGER, "from_name": MANAGER_NAME,
+                           "value": r.choice([30, 45, 200, 240]), "effective": t3.date() + timedelta(days=1),
+                           "traps": ["T-authority:out-of-range-amendment"]})
 
     def plan_history(self):
         """Last week's rows: resolved/closed (warned, some breached), archived/void rows with non-date deadlines."""
@@ -439,8 +498,13 @@ class Gen:
     def make_story(self, s: str):
         r = self.r
         if s == "hold":
-            story = r.choice(["hold-static", "hold-cleared-late", "hold-cleared-in-window", "hold-placed"])
-            tk = self.new_ticket(self.work_deadline(1, 3), story=story)
+            self.n_holds += 1
+            if self.d == "d3" and self.n_holds == 1:          # d3: the first hold is always cleared during the week
+                story = r.choice(HOLD_KINDS[:2])
+            else:
+                story = r.choices(HOLD_KINDS, weights=HOLD_WEIGHTS)[0]
+            D = self.story_deadline(1, 3, 12, 17) if story == "hold-cleared-in-window" else self.work_deadline(1, 3)
+            tk = self.new_ticket(D, story=story)
             tk["traps"].add("T-note:legal-hold")
             if story != "hold-placed":
                 self.set_hold(tk, True)
@@ -449,7 +513,9 @@ class Gen:
             tk["notes"], tk["legal_mention"] = r.choice(LEGAL_MENTION_NOTES), True
             tk["traps"].add("T-note:legal-mention")
         elif s == "waiting":
-            tk = self.new_ticket(self.work_deadline(0, 3), st="waiting", story=r.choice(["waiting", "waiting-then-active"]))
+            story = "waiting-then-active" if r.random() < 0.75 else "waiting"
+            D = self.story_deadline(0, 3, 12, 17) if story == "waiting-then-active" else self.work_deadline(0, 3)
+            tk = self.new_ticket(D, st="waiting", story=story)
             tk["notes"] = "Waiting for customer to confirm the fix"
             tk["traps"].add("T-note:waiting")
         elif s == "closed-duplicate":
@@ -460,14 +526,23 @@ class Gen:
                        customer=base["customer"], notes=f"Duplicate of {base['tid']}")
             dup["traps"].add("T-repeat:closed-duplicate")
         elif s == "reassign-after-warning":
-            D = self.work_deadline(0, 3)
-            self.new_ticket(D.replace(hour=min(17, max(13, D.hour))), story="reassign-after-warning")
+            self.new_ticket(self.story_deadline(0, 3, 13, 17), story="reassign-after-warning")
         elif s == "extend-after-warning":
-            D = self.work_deadline(0, 3)
-            self.new_ticket(D.replace(hour=min(16, max(12, D.hour))), story="extend-after-warning")
+            self.new_ticket(self.story_deadline(0, 3, 12, 16), story="extend-after-warning")
         elif s == "reopened":
-            D = self.work_deadline(1, 3)
-            self.new_ticket(D.replace(hour=min(17, max(14, D.hour))), story="reopened")
+            self.new_ticket(self.story_deadline(1, 3, 14, 17), story="reopened")
+        elif s == "reopened-late":       # resolved before the deadline, reopened after it: the breach is still owed
+            self.new_ticket(self.story_deadline(0, 3, 11, 16, k=1), story="reopened-late")
+        elif s == "amend-straddle":      # the window changes between two checks with the deadline between the old and
+            a = next(a for a in self.amend if a["kind"] == "authorized")      # the new window edge at the earlier one
+            c0 = a["t"].replace(minute=0, second=0, microsecond=0)
+            lo, hi = sorted((self.W_at(c0), a["value"]))
+            tk = self.new_ticket(c0 + timedelta(minutes=lo + 5 * r.randint(1, (hi - lo) // 5)), story="amend-straddle")
+            tk["traps"].add("T-stale:window-straddle")
+        elif s == "unreadable-phone":    # the warning cannot be sent: escalate at every check that would warn
+            tk = self.new_ticket(self.story_deadline(0, 3, 12, 17, k=1), story="unreadable-phone", attrs=False)
+            tk["phone10"], tk["phone_raw"] = None, r.choice(UNREADABLE_PHONES)
+            tk["traps"].add("T-format:unreadable-phone")
         elif s == "breached-last-week":
             D = self.last_week_deadline()
             tk = self.new_ticket(D, st="in progress", story="breached-last-week", attrs=False)
@@ -528,16 +603,30 @@ class Gen:
     def make_opened(self, eager: bool):
         r = self.r
         for _ in range(500):
-            e = self.event_time(self.monday + timedelta(hours=9), self.monday + timedelta(days=4, hours=15))
+            # an eager ticket arrives after 10:00, so the check before its first check is the same day's
+            e = self.event_time(self.monday + timedelta(hours=9), self.monday + timedelta(days=4, hours=15),
+                                hours=range(10, 18) if eager else range(8, 18))
             if e is None:
                 continue
             if eager:
                 c = next_check(e)
-                hi, lo = e + timedelta(minutes=self.W_at(c)), c + timedelta(minutes=5)
-                if c >= self.close or c.date() != e.date() or hi <= lo:
+                W = self.W_at(c)
+                if c >= self.close or c.date() != e.date():
                     self.times.discard(e)
                     continue
-                D = lo + timedelta(minutes=5 * r.randint(0, int((hi - lo).total_seconds() // 300)))
+                if r.random() < 0.35:
+                    # logged after its deadline already passed, before the previous check: the breach is owed at the
+                    # next check although no check saw the deadline pass
+                    D = c - timedelta(minutes=60 + 5 * r.randint(1, 24))
+                else:
+                    # opened inside the window, and inside it already at the previous check (before it existed)
+                    hi, lo = e + timedelta(minutes=W), c + timedelta(minutes=5)
+                    if c + timedelta(minutes=W - 60) > lo:
+                        hi = min(hi, c + timedelta(minutes=W - 60))
+                    if hi <= lo:
+                        self.times.discard(e)
+                        continue
+                    D = lo + timedelta(minutes=5 * r.randint(0, int((hi - lo).total_seconds() // 300)))
             else:
                 D = e + timedelta(minutes=5 * r.randint(30, 340))
                 D = D.replace(minute=(D.minute // 5) * 5, second=0)
@@ -590,15 +679,17 @@ class Gen:
 
         for tk in list(self.tickets):
             p, s = prov.get(tk["rid"], none), tk["story"]
-            if n >= cap - (1 if s == "reopened" else 0):
-                break                    # the week's update budget is spent: later stories keep their initial state
-            if s == "hold-cleared-late":
-                t = self.event_time(tk["D"] + timedelta(minutes=10), tk["D"] + timedelta(hours=26))
+            if n + (2 if s in ("reopened", "reopened-late") else 1) > cap:
+                continue                 # the week's update budget is spent: this story keeps its initial state
+            if s == "hold-cleared-late":         # cleared after a check that already had the deadline passed
+                c = next_check(tk["D"] - timedelta(seconds=1))
+                t = self.event_time(c + timedelta(minutes=1), c + timedelta(hours=26))
                 if t:
                     self.add_update(tk, t, "hold-cleared", {"hold": False})
                     n += 1
-            elif s == "hold-cleared-in-window":
-                t = before_a_check(tk["D"] - timedelta(minutes=self.W_at(tk["D"] - timedelta(hours=1))), tk["D"])
+            elif s == "hold-cleared-in-window":   # cleared after a check that already had the deadline inside the window
+                c1 = self.first_window_check(tk["D"])
+                t = before_a_check(c1, tk["D"]) if c1 else None
                 if t:
                     self.add_update(tk, t, "hold-cleared", {"hold": False})
                     n += 1
@@ -607,8 +698,9 @@ class Gen:
                 if t:
                     self.add_update(tk, t, "hold-placed", {"hold": True})
                     n += 1
-            elif s == "waiting-then-active":     # work resumes inside the window: the first check after it warns
-                t = before_a_check(tk["D"] - timedelta(minutes=self.W_at(tk["D"] - timedelta(hours=1))), tk["D"])
+            elif s == "waiting-then-active":     # work resumes inside the window (after a check that already had the
+                c1 = self.first_window_check(tk["D"])     # deadline inside it): the first check after it warns
+                t = before_a_check(c1, tk["D"]) if c1 else None
                 if t:
                     self.add_update(tk, t, "status", {"st": "in progress", "status_cell": "In Progress",
                                                       "notes": "Customer replied; work resumed"})
@@ -624,13 +716,26 @@ class Gen:
                         tk["traps"].add("T-format:phone")
                     n += 1
             elif s == "extend-after-warning" and p["warn"]:
-                t = self.event_time(p["warn"][0] + timedelta(minutes=1), tk["D"])
+                newD, t = None, None
+                if r.random() < 0.5:     # short: the new deadline is inside the window already an hour before the next check
+                    t = before_a_check(p["warn"][0], tk["D"])
+                    if t:
+                        c = next_check(t)
+                        room = int((c + timedelta(minutes=self.W_at(c) - 60) - tk["D"]).total_seconds() // 300)
+                        if room >= 1:
+                            newD = tk["D"] + timedelta(minutes=5 * r.randint(1, min(room, 9)))
+                        else:
+                            self.times.discard(t)
+                            t = None
+                if t is None:            # long: two to five hours later, warned again when it enters the window
+                    t = self.event_time(p["warn"][0] + timedelta(minutes=1), tk["D"])
+                    if t:
+                        newD = tk["D"] + timedelta(hours=r.randint(2, 5), minutes=r.choice([0, 15, 30, 45]))
+                        if newD.hour >= 18 or newD.hour < 8:
+                            newD += timedelta(hours=15)              # into the next morning's checks
+                        if newD.weekday() >= 5:
+                            newD += timedelta(days=7 - newD.weekday())
                 if t:
-                    newD = tk["D"] + timedelta(hours=r.randint(2, 5), minutes=r.choice([0, 15, 30, 45]))
-                    if newD.hour >= 18 or newD.hour < 8:
-                        newD += timedelta(hours=15)              # into the next morning's checks
-                    if newD.weekday() >= 5:
-                        newD += timedelta(days=7 - newD.weekday())
                     self.add_update(tk, t, "extended", {"D": newD, "notes": "Deadline extended by the support manager"})
                     tk["traps"].add("T-repeat:extended")
                     n += 1
@@ -643,6 +748,19 @@ class Gen:
                     self.add_update(tk, t2, "reopened", {"st": "open", "status_cell": "Open",
                                                          "notes": "Reopened: customer reports the issue again"})
                     tk["traps"].add("T-repeat:reopened")
+                    n += 2
+                elif t1:
+                    self.times.discard(t1)
+            elif s == "reopened-late":
+                lo1 = p["warn"][0] + timedelta(minutes=1) if p["warn"] else (tk["opened_at"] or self.start)
+                t1 = self.event_time(lo1, tk["D"])
+                c = next_check(tk["D"] - timedelta(seconds=1))     # reopened after the check the deadline passed at
+                t2 = self.event_time(c + timedelta(minutes=1), c + timedelta(hours=26)) if t1 else None
+                if t1 and t2:
+                    self.add_update(tk, t1, "resolved", {"st": "resolved", "status_cell": "Resolved"})
+                    self.add_update(tk, t2, "reopened", {"st": "open", "status_cell": "Open",
+                                                         "notes": "Reopened: the fix did not hold"})
+                    tk["traps"].add("T-repeat:reopened-late")
                     n += 2
                 elif t1:
                     self.times.discard(t1)
@@ -684,8 +802,7 @@ class Gen:
     def timeline(self) -> list[dict]:
         evs = [{"kind": "tick", "sub": "hourly_check", "t": c} for c in self.checks]
         evs += [dict(e) for e in self.events]
-        evs += [{"kind": "amendment", "sub": "authorized" if a["authorized"] else "unauthorized", "t": a["t"], "amend": i}
-                for i, a in enumerate(self.amend)]
+        evs += [{"kind": "amendment", "sub": a["kind"], "t": a["t"], "amend": i} for i, a in enumerate(self.amend)]
         evs.sort(key=lambda e: e["t"])
         return evs
 
@@ -707,6 +824,20 @@ class Gen:
         if held:
             return []
         D = naive_deadline(s["D"], s["offset"]) if "offset" in blind else s["D"]
+        phone = "+1" + s["phone10"] if s["phone10"] else None
+        if "memoryless" in blind:        # no state read: the deadline entered the window / passed since the last check
+            p = prev_check(now)
+            if D <= now:
+                if D > p:
+                    s["breached_at"] = now
+                    return [("breach", s["tid"], s["rid"])]
+                return []
+            if timedelta(0) < D - now <= timedelta(minutes=W) and not (timedelta(0) < D - p <= timedelta(minutes=W)):
+                if phone is None:
+                    return [("escalate", s["tid"], s["rid"], "phone")]
+                s["warned_at"], s["warned_agent"], s["warned_deadline"] = now, s["agent"], D
+                return [("warn", s["tid"], s["rid"], phone, hhmm(D), s["agent"], s["subject"], iso_z(D))]
+            return []
         strict = "strict" in blind
         if (D < now) if strict else (D <= now):
             if s["breached_at"] is None:
@@ -718,11 +849,14 @@ class Gen:
         if "lookahead" in blind and now.hour == 17 and D < next_check(now):
             in_win = True
         warned = s["warned_at"] is not None and ("extension" in blind or s["warned_deadline"] == D)
-        phone = "+1" + s["phone10"]
         if in_win and not warned:
+            if phone is None:            # POLICY.md section 7: the phone cannot be read; nothing else for the ticket
+                return [("escalate", s["tid"], s["rid"], "phone")]
             s["warned_at"], s["warned_agent"], s["warned_deadline"] = now, s["agent"], D
             return [("warn", s["tid"], s["rid"], phone, hhmm(D), s["agent"], s["subject"], iso_z(D))]
         if warned and D > now and "reassign" not in blind and L.norm_ci(s["warned_agent"]) != L.norm_ci(s["agent"]):
+            if phone is None:
+                return [("escalate", s["tid"], s["rid"], "phone")]
             s["warned_agent"] = s["agent"]
             return [("reassign", s["tid"], s["rid"], phone, hhmm(D), s["agent"])]
         return []
@@ -762,7 +896,10 @@ class Gen:
                     effs += self.decide(state[rid], ev["t"], W, blind)
             elif ev["kind"] == "amendment":
                 a = self.amend[ev["amend"]]
-                if (a["authorized"] and "amend-ignored" not in blind) or (not a["authorized"] and "amend-any" in blind):
+                if a["kind"] == "out-of-range":          # from the owner but outside 60-180: cannot decide (section 6)
+                    effs.append(("escalate", None, None, "amendment"))
+                elif (a["kind"] == "authorized" and "amend-ignored" not in blind) or \
+                        (a["kind"] == "unauthorized" and "amend-any" in blind):
                     use = ev["t"].date() if "amend-now" in blind else a["effective"]
                     policy.append((use, a["value"], 100 + ev["amend"]))
                     effs.append(("policy", iso_date(a["effective"]), a["value"], a["from"]))
@@ -784,6 +921,11 @@ class Gen:
         self.true = true
         by_tid = {tk["tid"]: tk for tk in self.tickets}
         blinds = {f: self.simulate(frozenset([f])) for f in list(FLAG_TRAPS) + list(WORLD_FLAGS)}
+        # needs_state: a solver that reads no state column and keeps no memory (decides from the clock: warn when the
+        # deadline entered the window since the previous scheduled check, breach when it passed since then) acts
+        # differently at this trigger
+        mem = blinds["memoryless"]["effects"]
+        self.needs_state = [Counter(mem[i]) != Counter(true["effects"][i]) for i in range(len(true["timeline"]))]
         traps_per = []
         for i, ev in enumerate(true["timeline"]):
             exp: set[str] = set()
@@ -807,6 +949,8 @@ class Gen:
                         tk["traps"].add("T-timing:after-hours")
                     exp |= tk["traps"] & FLAG_TRAPS[f]
             for e in te:
+                if e[0] == "escalate" and e[1]:
+                    exp |= by_tid[e[1]]["traps"] & {"T-format:unreadable-phone"}
                 if e[0] in ("warn", "reassign", "breach"):
                     tk = by_tid[e[1]]
                     if "T-lookalike:id" in tk["traps"]:
@@ -888,7 +1032,7 @@ class Gen:
 
     def amend_message(self, a: dict, t: datetime) -> dict:
         mid, thread = self.uid("0123456789abcdef", 16), self.uid("0123456789abcdef", 16)
-        if a["authorized"]:
+        if a["kind"] in ("authorized", "out-of-range"):
             subject = "Warning window change"
             body = (f"Hi,\n\nPlease change the SLA warning window for the hourly checks.\n\nParameter: Warning window\n"
                     f"New value: {a['value']} minutes\nEffective: {iso_date(a['effective'])}\n\nThanks,\n{MANAGER_NAME}\n"
@@ -946,6 +1090,11 @@ class Gen:
                     _, eff, value, who = e
                     exp["policy_rows"].append({"Effective": eff, "Parameter": L.PARAM, "Value": str(value),
                                                "Approved by": L.MANAGER})
+                elif e[0] == "escalate":
+                    if not exp["escalate"]:
+                        asserts.append({"type": "slack_message_exists", "channel_name": L.SINK,
+                                        "text_contains": trig["trigger"]})
+                    exp["escalate"] = True
             # guards: decoys in their decision zone that must get nothing; AB negatives only where nothing was ever sent
             guards = []
             if ev["kind"] == "tick":
@@ -964,10 +1113,12 @@ class Gen:
                     if s["D"] <= ev["t"] and s["tid"] not in breach_ever:
                         asserts.append({"type": "slack_message_not_exists", "channel_name": L.ESC,
                                         "text_contains": f"BREACHED {s['tid']}"})
-            outcome = "act" if (exp["warn"] or exp["reassign"] or exp["breach"] or exp["policy_rows"]) else "no-op"
+            outcome = "act" if (exp["warn"] or exp["reassign"] or exp["breach"] or exp["policy_rows"]) else \
+                "escalate" if exp["escalate"] else "no-op"
             truth.append({"trigger": trig["trigger"], "index": i + 1, "at": trig["at"], "kind": trig["kind"],
                           "sub": trig["sub"], "outcome": outcome, "expect": exp, "guards": sorted(guards),
-                          "traps": trig["traps"], "window": self.true["windows"][i], "assertions": asserts})
+                          "traps": trig["traps"], "needs_state": self.needs_state[i], "window": self.true["windows"][i],
+                          "assertions": asserts})
         return truth
 
     def end_spec(self, truth: list[dict]) -> dict:
@@ -1164,6 +1315,8 @@ def generate(seed: int, difficulty: str | None = None, validate: bool = True) ->
                    "warnings": sum(len(t["expect"]["warn"]) for t in out["truth"]),
                    "reassign_sms": sum(len(t["expect"]["reassign"]) for t in out["truth"]),
                    "breaches": sum(len(t["expect"]["breach"]) for t in out["truth"]),
+                   "escalations": sum(1 for t in out["truth"] if t["expect"]["escalate"]),
+                   "needs_state": sum(1 for t in out["truth"] if t["needs_state"]),
                    "traps": dict(sorted(traps.items())), "trap_kinds": dict(sorted(tkinds.items())),
                    "trigger_trap_share": round(sum(1 for t in out["truth"] if t["traps"]) / max(1, n), 3),
                    "world_traps": out.pop("world_traps"), "stories": out.pop("stories")}
