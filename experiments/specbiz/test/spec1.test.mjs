@@ -51,7 +51,7 @@ test('build item 1: a host bound for a derived arm gives no SPEC-E text in ctx.f
   const seen = {};
   for (const [name, binding] of [['derived', NO_SPEC_BINDING], ['control', e8.binding]]) {
     const files = {};
-    const arm = { id: 'probe', tick(input, ctx) { Object.assign(files, ctx.files); return { decisions: { subject: null }, effects: [] }; } };
+    const arm = { id: 'probe', tick(input, ctx) { Object.assign(files, ctx.files); return { decisions: { subject: null }, effects: [], carry: null }; } };
     const w = e8.generateWorld({ seed: TINY.seed, difficulty: TINY.d, size: TINY.size });
     const { status } = await createHost({ item: binding, world: w, arm, maxWakeups: 2000 }).run();
     assert.equal(status, 'complete');
@@ -69,7 +69,7 @@ test('build item 1: a host bound for a derived arm gives no SPEC-E text in ctx.f
 const PROBE = `export function createSolver() { return { id: 'probe', tick(input, ctx) {
   const f = ctx.files ?? {};
   if (Object.keys(f).some(k => /spec/i.test(k)) || Object.values(f).some(v => String(v).includes('## 4. Rules'))) throw new Error('SAW-SPEC');
-  return { decisions: { subject: null }, effects: [] };
+  return { decisions: { subject: null }, effects: [], carry: null };
 } }; }`;
 
 test('build item 1: the smoke loop and the grading run a derived solver (sandboxed) with no SPEC-E; with E8\'s binding the probe sees it', async () => {

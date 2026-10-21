@@ -3,12 +3,15 @@
 //
 //   node app/cli.mjs start   [--workspace DIR] [--port N] [--no-open]   check this machine, open the dashboard, print how to connect agents
 //   node app/cli.mjs mcp     [--workspace DIR] [--dashboard]            stdio MCP server for Claude Code, Codex, Cursor, ...
+//        [--builder stub|haiku|mercury] [--token-cap N]                    who builds flows: the $0 stub (default), or a cheap model over
+//                                                                           the template library (BUILDER-1); Mercury needs a token cap
 //   node app/cli.mjs doctor  [--workspace DIR]                          what works here and what does not, in plain words
 //   node app/cli.mjs connect [--workspace DIR]                          the exact command or config for each coding agent (prints only)
 //   node app/cli.mjs approve APPROVAL_ID [--workspace DIR]              approve in this terminal (asks you to type yes; needs a real terminal)
 //
 // Safe defaults: the workspace is a private directory (0700) under the user's home; nothing listens beyond 127.0.0.1; no config file of any
-// coding agent is written (connect prints what to paste); no model is called; nothing is sent beyond the local outbox.
+// coding agent is written (connect prints what to paste); no model is called unless --builder names one; nothing is sent beyond the
+// local outbox.
 import { parseArgs } from 'node:util';
 import { homedir, platform } from 'node:os';
 import path from 'node:path';
@@ -19,6 +22,15 @@ import { fileURLToPath } from 'node:url';
 import { FoundryApp } from './core/service.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+// Builder choice: model ids come from the owner policy only (policy/models.json); the stub calls no model.
+export const BUILDERS = Object.freeze({ stub: null, haiku: 'claude-haiku-5-5', mercury: 'mercury-3' });
+export async function makeBuilder(name = 'stub', { workspace, tokenCap = 200000 } = {}) {
+  if (!Object.hasOwn(BUILDERS, name)) throw Object.assign(new Error(`--builder is one of ${Object.keys(BUILDERS).join(', ')}`), { code: 'BUILDER_CHOICE' });
+  if (name === 'stub') return (await import('./core/builder.mjs')).stubBuilder;
+  const { ModelBuilder, createBuilderPort } = await import('./core/builder-model.mjs');
+  const { port } = await createBuilderPort({ model: BUILDERS[name], journalFile: path.join(workspace, 'builder-journal.sqlite'), ...(name === 'mercury' ? { tokenCap } : {}) });
+  return new ModelBuilder({ port, model: BUILDERS[name] });
+}
 export function defaultWorkspace(env = process.env, os = platform()) {
   if (env.FOUNDRY_HOME) return path.resolve(env.FOUNDRY_HOME);
   if (os === 'win32' && env.LOCALAPPDATA) return path.join(env.LOCALAPPDATA, 'Foundry');
@@ -38,8 +50,7 @@ export function doctor({ workspace, env = process.env, os = platform() } = {}) {
   items.push({ check: 'Sandbox for code steps', ok: bwrap, optional: true,
     say: bwrap ? 'Code steps can run in a sandbox.' : os === 'linux' ? 'No sandbox (bubblewrap) found: flows with code steps are refused; everything else works.'
       : `No sandbox on ${os === 'darwin' ? 'macOS' : os === 'win32' ? 'Windows' : os} in this preview: flows with code steps are refused; everything else works.` });
-  items.push({ check: 'Models', ok: true, optional: true, say: env.INCEPTION_API_KEY || env.ANTHROPIC_API_KEY ? 'A model key is set in the environment, but this preview never calls a model.'
-    : 'No model key needed: this preview builds from templates and calls no model.' });
+  items.push({ check: 'Models', ok: true, optional: true, say: 'No model key needed: the default builder fills templates by code and calls no model. --builder haiku or --builder mercury lets a cheap model build from the template library (Mercury needs INCEPTION_API_KEY and a token cap).' });
   items.push({ check: 'Network', ok: true, optional: true, say: 'Works offline. The dashboard listens on 127.0.0.1 only.' });
   return { workspace, ok: items.filter(i => !i.optional).every(i => i.ok), items };
 }
@@ -62,7 +73,8 @@ export function browserOpener(os = platform()) {
 }
 
 async function main() {
-  const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { workspace: { type: 'string' }, port: { type: 'string' }, 'no-open': { type: 'boolean' }, dashboard: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
+  const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { workspace: { type: 'string' }, port: { type: 'string' }, 'no-open': { type: 'boolean' }, dashboard: { type: 'boolean' },
+    builder: { type: 'string' }, 'token-cap': { type: 'string' }, help: { type: 'boolean', short: 'h' } } });
   const [command = 'help', item] = positionals;
   const workspace = path.resolve(args.workspace ?? defaultWorkspace());
   const print = value => process.stdout.write(`${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n`);
@@ -74,7 +86,9 @@ async function main() {
     for (const i of report.items) print(`${i.ok ? 'ok ' : i.optional ? 'note' : 'NO '}  ${i.say}`);
     if (!report.ok) { process.exitCode = 1; return; }
     const { createDashboard } = await import('./dashboard/server.mjs');
-    const app = new FoundryApp({ workspace }), dash = createDashboard(app);
+    const builder = await makeBuilder(args.builder ?? 'stub', { workspace, tokenCap: args['token-cap'] ? Number(args['token-cap']) : undefined });
+    const app = new FoundryApp({ workspace, builder }), dash = createDashboard(app);
+    print(`Builder: ${builder.id}`);
     const { url } = await dash.listen(args.port ? Number(args.port) : 4178).catch(() => dash.listen(0));
     print(`\nYour dashboard: ${url}\n(This link carries a one-time key. Keep it to yourself; anyone with it can approve for you.)`);
     const c = connectInstructions(workspace);
@@ -87,7 +101,8 @@ async function main() {
   if (command === 'mcp') {
     // stdout is the MCP channel: nothing else may be printed there.
     const [{ serveAppMcp }, { createDashboard }] = await Promise.all([import('./mcp/server.mjs'), import('./dashboard/server.mjs')]);
-    const app = new FoundryApp({ workspace });
+    const builder = await makeBuilder(args.builder ?? 'stub', { workspace, tokenCap: args['token-cap'] ? Number(args['token-cap']) : undefined });
+    const app = new FoundryApp({ workspace, builder });
     let base = null;
     // With --dashboard, the first approval that the client cannot show as a dialog starts a loopback dashboard and opens it in the
     // person's browser. The one-time key goes to the browser only; the tool result (which the model reads) gets the bare address.

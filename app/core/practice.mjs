@@ -11,7 +11,7 @@ import { mkdtempSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Foundry } from '../../src/foundry.mjs';
-import { validateWorkflow } from '../../src/validate.mjs';
+import { validateWorkflow, requireWorkflow } from '../../src/validate.mjs';
 import { errorData } from '../../src/data.mjs';
 import { appRegistry } from './capabilities.mjs';
 import { explainRun } from './explain.mjs';
@@ -40,11 +40,12 @@ export async function runInWorld(workflow, { sheets = {}, input = {}, mode = 'pr
   const foundry = new Foundry(path.join(dir, 'store'), { registry });
   const out = { dir, mode, status: 'not-started', verdict: null, passed: false, approvals: { asked: 0, approved: 0, refused: 0 }, error: null };
   try {
-    let saved;
-    try { saved = foundry.save(workflow); }
+    // Validate, then stage the exact version (its id, version number and hash) without a head, as FoundryApp's dry run does.
+    let staged;
+    try { requireWorkflow(workflow, { registry, modelPolicy: foundry.modelPolicy }); staged = foundry.store.stageEvaluationWorkflow(workflow); }
     catch (error) { out.status = 'invalid'; out.error = { ...errorData(error), details: error.details ?? null }; return out; }
     let run;
-    try { run = foundry.createRun(workflow.id, input); }
+    try { run = foundry.createRun(staged.hash, input); }
     catch (error) { out.status = 'input-refused'; out.error = { ...errorData(error), details: error.details ?? null }; return out; }
     let current = await foundry.startRun(run.id).catch(error => ({ status: 'failed', error: errorData(error) }));
     current = foundry.publicRun(foundry.store.run(run.id));
