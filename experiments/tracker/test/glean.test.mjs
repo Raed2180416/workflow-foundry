@@ -2,7 +2,7 @@
 // paid call. Quotes come by pointer from the user's text, never from the model; existing entries are untouched.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,9 +12,10 @@ import { ModelPort, checkPortableSchema } from '../../../src/models/port.mjs';
 import { Journal } from '../../../src/journal.mjs';
 import { ScriptedProvider } from '../../../src/models/providers/scripted.mjs';
 import { subsetPolicy } from '../../lib/models.mjs';
-import { defaultModels } from '../extract.mjs';
+import { defaultModels, budgetedPort, EXTRACT_SYSTEM } from '../extract.mjs';
 import { indexText, writeLedger, readLedger, applyEdits } from '../ledger.mjs';
-import { gleanLedger, gleanPrompt, mergeGleaned, gleanPrefixOf, GLEAN_SCHEMA, GLEAN_PROMPT_ID, main } from '../run.mjs';
+import { gleanLedger, gleanPrompt, mergeGleaned, gleanPrefixOf, GLEAN_SCHEMA, GLEAN_SYSTEM, GLEAN_PROMPT_ID, main, trackedByGit } from '../run.mjs';
+import { WRITER_SYSTEM } from '../checks.mjs';
 import { frozenSpecE, scoreExtraction, GOLD_FILE } from '../eval-e8.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -136,5 +137,85 @@ test('a failed call throws (nothing invented); an empty coverage list makes no c
     writeLedger(f, S0);
     await assert.rejects(main(['glean', '--ledger', f]), /--text/);
     assert.deepEqual(readLedger(f), S0, 'the ledger is untouched');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+// The CLI paths with a scripted model (review m9): main() takes the port factory.
+const scriptedPortFor = script => {
+  const provider = new ScriptedProvider(script);
+  const port = new ModelPort({ policy: subsetPolicy(loadPolicy().policy, [HAIKU]), journal: new Journal(new DatabaseSync(':memory:')), providers: { 'claude-cli': provider } });
+  return { provider, portFor: (out, { budget }) => budgetedPort(port, { capUsd: budget, logFile: path.join(out, 'model-calls.jsonl') }) };
+};
+const TOY = `# Toy shop
+
+Every order must be recorded within 60 min. Refunds are never issued twice.
+When a parcel is lost, notify the customer before the end of the day. The shop sells socks.
+`;
+// extraction: the first sentence only; gleaning call k: entries for both uncovered sentences on k = 0, for the first only after
+const toyScript = () => {
+  let gleans = 0;
+  return args => {
+    if (args.system === EXTRACT_SYSTEM) return { value: { entries: [{ quote: 'Every order must be recorded within 60 min.', kind: 'deadline', summary: 'record within 60 min', context: [] }] }, costUsd: 0.001 };
+    if (args.system === GLEAN_SYSTEM) {
+      const k = gleans++;
+      return { value: { sentences: [
+        { n: 1, verdict: 'entries', entries: [{ kind: 'never', summary: 'no second refund' }] },
+        k === 0 ? { n: 2, verdict: 'entries', entries: [{ kind: 'deadline', summary: 'notify on loss by end of day' }] } : { n: 2, verdict: 'none', entries: [] },
+      ] }, costUsd: 0.0005 };
+    }
+    if (args.system === WRITER_SYSTEM) return { value: { observable: false, fn: '', satisfies: '', violates: '' }, costUsd: 0.0001 };
+    throw new Error('unexpected call');
+  };
+};
+
+test('CLI: extract/all --glean keep every paid extraction and use the gleaned sample 0; glean writes a new ledger, never in place or over a tracked file', async () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'tracker-glean-cli-'));
+  try {
+    const textFile = path.join(dir, 'toy.md');
+    writeFileSync(textFile, TOY);
+    const ids = f => readLedger(f).requirements.map(r => `${r.id}${r.gleaned ? '*' : ''}`);
+    // extract --glean, one sample
+    const one = path.join(dir, 'one');
+    await main(['extract', '--text', textFile, '--glean', '--out', one, '--budget', '1'], { log: () => {}, portFor: scriptedPortFor(toyScript()).portFor });
+    assert.deepEqual(ids(path.join(one, 'ledger.pre-glean.json')), ['Q-001'], 'the paid extraction is kept as it came');
+    assert.deepEqual(ids(path.join(one, 'ledger.json')), ['Q-001', 'Q-002*', 'Q-003*']);
+    // all --glean, two samples, no build: ledger.json is sample 0 gleaned, with the writer's answers
+    const two = path.join(dir, 'two');
+    const { provider, portFor } = scriptedPortFor(toyScript());
+    const lines = [];
+    const r = await main(['all', '--text', textFile, '--samples', '2', '--out', two, '--budget', '1', '--glean'], { log: s => lines.push(s), portFor });
+    assert.deepEqual(readdirSync(two).sort(), ['ledger.json', 'ledger.s0.json', 'ledger.s0.pre-glean.json', 'ledger.s1.json', 'ledger.s1.pre-glean.json', 'model-calls.jsonl']);
+    assert.deepEqual([ids(path.join(two, 'ledger.s0.pre-glean.json')), ids(path.join(two, 'ledger.s1.pre-glean.json'))], [['Q-001'], ['Q-001']]);
+    assert.deepEqual([ids(path.join(two, 'ledger.s0.json')), ids(path.join(two, 'ledger.s1.json'))], [['Q-001', 'Q-002*', 'Q-003*'], ['Q-001', 'Q-002*']]);
+    const first = readLedger(path.join(two, 'ledger.json'));
+    assert.deepEqual(ids(path.join(two, 'ledger.json')), ['Q-001', 'Q-002*', 'Q-003*'], 'the first sample, gleaned, is the one written against');
+    assert.ok(first.requirements.every(x => x.check?.observable === false), 'and the writer ran on it');
+    assert.deepEqual(provider.calls.map(c => c.system === EXTRACT_SYSTEM ? 'extract' : c.system === GLEAN_SYSTEM ? 'glean' : 'write'), ['extract', 'glean', 'extract', 'glean', 'write', 'write', 'write']);
+    assert.ok(Math.abs(r.spentUsd - 0.0033) < 1e-9);
+    assert.ok(lines.some(l => /^glean sample 1: 2 uncovered sentences sent, 1 entries added \(1 -> 2\), 1 answered none/.test(l)));
+    // glean: a new file in --out, a byte copy of the input beside it, the input untouched
+    const input = path.join(two, 'ledger.s1.pre-glean.json'), before = readFileSync(input, 'utf8');
+    const g = path.join(dir, 'g');
+    const res = await main(['glean', '--ledger', input, '--text', textFile, '--out', g, '--budget', '1'], { log: () => {}, portFor: scriptedPortFor(toyScript()).portFor });
+    assert.equal(res.ledgerFile, path.join(g, 'ledger.json'));
+    assert.equal(readFileSync(input, 'utf8'), before, 'the input ledger is not overwritten');
+    assert.equal(readFileSync(path.join(g, 'ledger.pre-glean.json'), 'utf8'), before);
+    assert.deepEqual(ids(path.join(g, 'ledger.json')), ['Q-001', 'Q-002*', 'Q-003*']);
+    assert.ok(existsSync(path.join(g, 'model-calls.jsonl')) && !existsSync(path.join(two, 'journal.sqlite')), 'the call log goes to --out, not next to the input');
+    // never in place, never over a tracked file (refused before any call)
+    const idle = scriptedPortFor(() => { throw new Error('no call expected'); });
+    await assert.rejects(main(['glean', '--ledger', path.join(g, 'ledger.json'), '--text', textFile, '--out', g], { log: () => {}, portFor: idle.portFor }), /in place/);
+    const tracked = path.join(ROOT, 'research/need-router-20261014/tracker-e8');
+    assert.ok(trackedByGit(path.join(tracked, 'ledger.json')) && trackedByGit(path.join(ROOT, GOLD_FILE)));
+    assert.ok(!trackedByGit(input) && !trackedByGit(path.join(ROOT, 'research/no-such-dir/ledger.json')));
+    await assert.rejects(main(['glean', '--ledger', path.join(tracked, 'extraction/haiku.s0.json'), '--text', textFile, '--out', tracked], { log: () => {}, portFor: idle.portFor }), /git tracks it/);
+    const s0File = path.join(tracked, 'extraction/haiku.s0.json'), s0Before = readFileSync(s0File, 'utf8');
+    const edits = path.join(dir, 'edits.json');
+    writeFileSync(edits, JSON.stringify([{ op: 'confirm', id: 'Q-001' }]));
+    const specFile = path.join(dir, 'spec.md');
+    writeFileSync(specFile, SPEC);
+    await assert.rejects(main(['edit', '--ledger', s0File, '--text', specFile, '--edits', edits], { log: () => {} }), /git tracks it/);
+    assert.equal(readFileSync(s0File, 'utf8'), s0Before, 'a committed extraction is never rewritten');
+    assert.equal(idle.provider.calls.length, 0);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

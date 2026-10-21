@@ -5,7 +5,7 @@
 // reference runs and necessity controls instead of builds: analyst-side, in process, never shown to a builder.
 //
 //   node experiments/tracker/run.mjs extract   --text <user text> [--out DIR] [--model ID] [--samples N] [--budget USD] [--glean]
-//   node experiments/tracker/run.mjs glean     --ledger <ledger.json> --text <user text> [--model ID] [--sample N] [--budget USD]
+//   node experiments/tracker/run.mjs glean     --ledger <ledger.json> --text <user text> [--out DIR] [--model ID] [--sample N] [--budget USD]
 //   node experiments/tracker/run.mjs ledger    --text <user text> --entries <gold.json> [--out DIR]          ($0: a frozen list)
 //   node experiments/tracker/run.mjs edit      --ledger <ledger.json> --text <user text> --edits <edits.json>
 //   node experiments/tracker/run.mjs write     --ledger <ledger.json> [--model ID] [--escalate ID|none] [--budget USD] [--reasoning low]
@@ -13,12 +13,17 @@
 //   node experiments/tracker/run.mjs calibrate --ledger <ledger.json> [--teeth <teeth.json>] [--out DIR] [--worlds ...]
 //   node experiments/tracker/run.mjs all       --text <user text> --build <solver.mjs> [--build ...] [--out DIR] [--budget USD] [--glean]
 //
-// `--glean` (extract, all) and `glean` add the second pass over the coverage list (gleanLedger below) to a ledger.
+// `--glean` (extract, all) and `glean` add the second pass over the coverage list (gleanLedger below) to a ledger. Neither
+// overwrites its input: `glean` reads --ledger and writes <out>/ledger.json plus a byte copy of the input as
+// <out>/ledger.pre-glean.json (the default --out is a new directory under DEFAULT_OUT, never the input's folder), and
+// `extract --glean` keeps each sample's extraction as <name>.pre-glean.json beside the gleaned <name>.json. No command
+// writes a ledger to a path git tracks (a committed ledger is evidence; saveLedger refuses).
 // Model calls (extract, glean, write) go through experiments/lib/models.mjs createModelPort (journaled in <out>/journal.sqlite,
 // priced by the provider) and a hard spend cap (--budget, default $2; every call and escalation is also appended to
 // <out>/model-calls.jsonl). Model ids default from policy/models.json (class M; the next class for the one escalation).
 // check / calibrate / ledger / edit cost $0.
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -424,6 +429,20 @@ const parseWorlds = (s, size) => {
 };
 const labelOf = file => path.basename(path.dirname(path.resolve(file))) || path.basename(file, '.mjs');
 
+/** True when git tracks `file`, in whichever repository holds it; a path no repository holds is not tracked. */
+export function trackedByGit(file) {
+  const abs = path.resolve(file);
+  let dir = path.dirname(abs);
+  while (!existsSync(dir) && path.dirname(dir) !== dir) dir = path.dirname(dir);
+  try { execFileSync('git', ['ls-files', '--error-unmatch', '--', abs], { cwd: dir, stdio: 'ignore' }); return true; }
+  catch { return false; }
+}
+/** writeLedger, refusing a path git tracks: committed ledgers (extractions, gleaned ledgers, gold) are evidence. */
+export function saveLedger(file, ledger) {
+  if (trackedByGit(file)) throw new Error(`refusing to write ${rel(file)}: git tracks it (committed ledgers are evidence); write the result to another --out`);
+  writeLedger(file, ledger);
+}
+
 async function modelPortFor(out, { budget, writer, escalate }) {
   const { createModelPort } = await import('../lib/models.mjs');
   const ids = [...new Set([writer, escalate].filter(Boolean))];
@@ -431,7 +450,8 @@ async function modelPortFor(out, { budget, writer, escalate }) {
   return budgetedPort(port, { capUsd: budget, logFile: path.join(out, 'model-calls.jsonl') });
 }
 
-export async function main(argv = process.argv.slice(2), { log = s => console.log(s) } = {}) {
+/** The CLI. `portFor(out, { budget, writer, escalate })` makes the capped model port (tests pass a scripted one). */
+export async function main(argv = process.argv.slice(2), { log = s => console.log(s), portFor = modelPortFor } = {}) {
   const { cmd, opts } = parseArgs(argv);
   const e8 = await import('../../beds/ebed/e8/index.mjs');
   const item = { binding: e8.binding, generateWorld: e8.generateWorld, oracleItem: e8.oracleItem };
@@ -446,27 +466,28 @@ export async function main(argv = process.argv.slice(2), { log = s => console.lo
 
   if (cmd === 'extract' || cmd === 'all') {
     const text = readText(), out = outDefault('tracker');
-    const port = await modelPortFor(out, { budget, writer, escalate });
+    const port = await portFor(out, { budget, writer, escalate });
     const samples = Number(opts.samples ?? 1);
     let first = null;
     for (let s = 0; s < samples; s++) {
       let { ledger } = await extractLedger({ port, modelId: writer, text, source: { file: rel(opts.text) }, sampleIndex: s });
       log(`extract sample ${s}: ${ledger.requirements.length} entries kept, ${ledger.dropped.length} dropped, ${ledger.uncovered.length} uncovered sentences ($${(ledger.extractor.costUsd ?? 0).toFixed(4)})`);
       if (ledger.extractor.lowCoverage) log(`  WARNING sample ${s}: low coverage, ${ledger.uncovered.length} normative sentences uncovered against ${ledger.requirements.length} entries kept${ledger.extractor.turns ? ` (${ledger.extractor.turns} CLI turns)` : ''}; review the coverage list or draw another sample before writing checks`);
+      const name = samples > 1 ? `ledger.s${s}` : 'ledger';
       if (opts.glean) {
-        writeLedger(path.join(out, samples > 1 ? `ledger.s${s}.json` : 'ledger.json'), ledger);     // the paid extraction is kept if gleaning fails
+        saveLedger(path.join(out, `${name}.pre-glean.json`), ledger);     // the paid extraction is kept, gleaned or not
         ({ ledger } = await gleanLedger({ port, modelId: writer, ledger, text, sampleIndex: s }));
         const g = ledger.gleaning?.at(-1);
         log(`glean sample ${s}: ${g ? `${g.sent} uncovered sentences sent, ${g.added} entries added (${g.before.entries} -> ${g.after.entries}), ${g.none} answered none, ${g.unanswered} unanswered, ${g.invalid.length} invalid, ${g.after.uncovered} still uncovered ($${(g.costUsd ?? 0).toFixed(4)})` : 'nothing uncovered, no call'}`);
       }
-      writeLedger(path.join(out, samples > 1 ? `ledger.s${s}.json` : 'ledger.json'), ledger);
+      saveLedger(path.join(out, `${name}.json`), ledger);
       first ??= ledger;
     }
-    if (samples > 1) writeLedger(path.join(out, 'ledger.json'), first);
+    if (samples > 1) saveLedger(path.join(out, 'ledger.json'), first);
     if (cmd === 'extract') { log(`spent $${port.spentUsd.toFixed(4)} of $${budget}; ledger in ${out}`); return { out, spentUsd: port.spentUsd }; }
     log(`write: ${writer}${escalate ? ` (escalation: ${escalate})` : ''}`);
     const w = await writeChecks({ ledger: first, port, writer, escalate, reasoning: opts.reasoning ?? 'low', log });
-    writeLedger(path.join(out, 'ledger.json'), first);
+    saveLedger(path.join(out, 'ledger.json'), first);
     log(`written ${w.written}, pending ${w.pending}${w.stopped ? ` (stopped: ${w.stopped.message})` : ''}; spent $${port.spentUsd.toFixed(4)} of $${budget}`);
     if (w.stopped) return { out, spentUsd: port.spentUsd, stopped: true };
     if (!opts.build?.length) return { out, spentUsd: port.spentUsd };
@@ -479,35 +500,42 @@ export async function main(argv = process.argv.slice(2), { log = s => console.lo
     const text = readText(), out = outDefault('tracker');
     const entries = JSON.parse(readFileSync(opts.entries, 'utf8'));
     const ledger = buildLedger({ text, source: { file: rel(opts.text) }, entries: entries.entries ?? entries, extractor: { model: null, prompt: 'gold', file: rel(opts.entries) }, idPrefix: opts.prefix ?? 'G' });
-    writeLedger(path.join(out, 'ledger.json'), ledger);
+    saveLedger(path.join(out, 'ledger.json'), ledger);
     log(`ledger: ${ledger.requirements.length} entries, ${ledger.dropped.length} dropped, ${ledger.uncovered.length} uncovered; ${path.join(out, 'ledger.json')}`);
     return { out };
   }
   if (!opts.ledger) throw new Error(`usage: run.mjs ${cmd ?? '<command>'} --ledger <ledger.json> ... (see the header of experiments/tracker/run.mjs)`);
   const ledger = readLedger(opts.ledger);
-  const out = opts.out ?? path.dirname(path.resolve(opts.ledger));
   if (cmd === 'glean') {
-    const text = readText();
-    const port = await modelPortFor(out, { budget, writer, escalate: null });
+    // Never in place: the input stays as it is (a byte copy goes to <out>/ledger.pre-glean.json); the journal, the call
+    // log and the gleaned ledger go to <out>, by default a new directory outside the repository.
+    const text = readText(), out = path.resolve(outDefault('glean'));
+    const target = path.join(out, 'ledger.json'), pre = path.join(out, 'ledger.pre-glean.json');
+    if ([target, pre].includes(path.resolve(opts.ledger))) throw new Error(`refusing to glean ${rel(opts.ledger)} in place: pass an --out directory other than its folder`);
+    for (const f of [target, pre]) if (trackedByGit(f)) throw new Error(`refusing to write ${rel(f)}: git tracks it (committed ledgers are evidence); pass another --out`);
+    mkdirSync(out, { recursive: true });
+    copyFileSync(opts.ledger, pre);
+    const port = await portFor(out, { budget, writer, escalate: null });
     const { ledger: gleaned } = await gleanLedger({ port, modelId: writer, ledger, text, sampleIndex: Number(opts.sample ?? 0) });
-    writeLedger(opts.ledger, gleaned);
+    saveLedger(target, gleaned);
     const g = gleaned.gleaning?.at(-1);
     log(g && gleaned !== ledger
-      ? `glean: ${g.sent} uncovered sentences sent, ${g.added} entries added (${g.before.entries} -> ${g.after.entries}), ${g.none} answered none, ${g.unanswered} unanswered, ${g.invalid.length} invalid; ${g.after.uncovered} still uncovered; spent $${port.spentUsd.toFixed(4)} of $${budget}`
-      : 'glean: nothing uncovered, no call');
-    return { out, spentUsd: port.spentUsd };
+      ? `glean: ${g.sent} uncovered sentences sent, ${g.added} entries added (${g.before.entries} -> ${g.after.entries}), ${g.none} answered none, ${g.unanswered} unanswered, ${g.invalid.length} invalid; ${g.after.uncovered} still uncovered; spent $${port.spentUsd.toFixed(4)} of $${budget}; ${target}`
+      : `glean: nothing uncovered, no call; ${target}`);
+    return { out, ledgerFile: target, spentUsd: port.spentUsd };
   }
+  const out = opts.out ?? path.dirname(path.resolve(opts.ledger));
   if (cmd === 'edit') {
     const edited = applyEdits(ledger, readText(), JSON.parse(readFileSync(opts.edits, 'utf8')));
-    writeLedger(opts.ledger, edited);
+    saveLedger(opts.ledger, edited);
     log(`edited: ${edited.requirements.length} entries; ${edited.requirements.filter(needsCheck).length} need a property`);
     return { out };
   }
   if (cmd === 'write') {
-    const port = await modelPortFor(out, { budget, writer, escalate });
+    const port = await portFor(out, { budget, writer, escalate });
     log(`write: ${writer}${escalate ? ` (escalation: ${escalate})` : ''}; ${ledger.requirements.filter(needsCheck).length} entries need a property; cap $${budget}`);
     const w = await writeChecks({ ledger, port, writer, escalate, reasoning: opts.reasoning ?? 'low', log });
-    writeLedger(opts.ledger, ledger);
+    saveLedger(opts.ledger, ledger);
     log(`written ${w.written}, pending ${w.pending}${w.stopped ? ` (stopped: ${w.stopped.message})` : ''}; spent $${port.spentUsd.toFixed(4)} of $${budget}`);
     return { out, spentUsd: port.spentUsd, ...(w.stopped ? { stopped: true } : {}) };
   }
