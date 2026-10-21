@@ -168,7 +168,9 @@ async function main() {
         : 'the Foundry page that opened in your browser (if none opened, run "node app/cli.mjs site" in your own terminal)';
     } : () => null;
     const batches = useSite && args.dashboard ? new (await import('./onboarding/batch.mjs')).Batches(app) : null;
-    await serveAppMcp(app, { dashboardUrl, batches });
+    // With --consent, look for a Claude Code hook that could answer Foundry's dialog for the person; if one exists, ask in the browser.
+    const dialog = args.consent ? !(await (await import('./onboarding/detect.mjs')).detect({ consent: true })).hook.answeringHook : true;
+    await serveAppMcp(app, { dashboardUrl, batches, dialog });
     process.once('exit', () => siteLock?.release?.());
     return;
   }

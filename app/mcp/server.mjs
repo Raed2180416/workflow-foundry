@@ -73,14 +73,16 @@ export function templateCatalog(library = loadLibrary()) {
       ...(s.fields ? { rowFields: s.fields.map(f => ({ name: f.name, type: f.type, ...(f.values ? { values: f.values } : {}) })) } : {}) })) }));
 }
 
-export function toolDefinitions(app, { dashboardUrl = () => null, batches = null } = {}) {
+// dialog: false when a local hook could answer the client's dialog for the person (Claude Code Elicitation hooks; SPEC K12): the person
+// then decides in the browser, as with a client that has no dialog.
+export function toolDefinitions(app, { dashboardUrl = () => null, batches = null, dialog = true } = {}) {
   const where = () => dashboardUrl() ? `The person approves it in ${dashboardUrl()}; you cannot approve it.`
     : 'Ask the person to run `node app/cli.mjs start` in their own terminal and approve it in the page it opens. You cannot approve it.';
   async function approve({ proposalId }, context) {
     const request = app.requestApproval({ proposalId });
     if (!request.ok || request.status === 'approved') return request;
     const server = context?.server, caps = server?.getClientCapabilities?.()?.elicitation;
-    if (caps && (caps.form || Object.keys(caps).length === 0)) {
+    if (dialog && caps && (caps.form || Object.keys(caps).length === 0)) {
       // The client shows this dialog to the PERSON (MCP elicitation, form mode). The model sees only the outcome.
       const s = request.summary;
       let result;
@@ -138,10 +140,10 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
   }));
 }
 
-export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl, batches = null } = {}) {
+export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl, batches = null, dialog = true } = {}) {
   const server = new Server({ name: 'workflow-foundry-surface', version: '0.0.1' }, { capabilities: { tools: {} },
     instructions: 'Workflow Foundry builds small automations that are checked before they run. Use propose_flow for a request, dry_run before approve, and relay `say` to the person. Only the person can approve.' });
-  const defs = toolDefinitions(app, { dashboardUrl, batches });
+  const defs = toolDefinitions(app, { dashboardUrl, batches, dialog });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: defs.map(({ execute, ...spec }) => spec) }));
   server.setRequestHandler(CallToolRequestSchema, async request => {
     const tool = defs.find(t => t.name === request.params.name);

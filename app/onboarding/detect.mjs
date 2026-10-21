@@ -86,6 +86,6 @@ export function detectLines(d) {
   lines.push({ check: 'Keychain', ok: true, optional: true, say: d.keychain === 'none' ? 'No keychain Foundry can use: AI keys cannot be saved (you do not need one).' : `AI keys, if you add one, go into your keychain (${d.keychain}).` });
   if (d.envKeyNames.length) lines.push({ check: 'Keys in your environment', ok: true, optional: true, say: `Set in your terminal: ${d.envKeyNames.join(', ')}. Foundry does not read their values unless you choose an AI builder.` });
   lines.push({ check: 'Port', ok: true, optional: true, say: d.port.free ? `Port ${d.port.default} is free.` : `Port ${d.port.default} is in use; Foundry will pick another.` });
-  if (d.hook.checked && d.hook.answeringHook) lines.push({ check: 'Answering hook', ok: true, optional: true, say: 'Your Claude Code has a hook that could answer for you, so Foundry asks in your browser instead.' });
+  if (d.hook.checked && d.hook.answeringHook) lines.push({ check: 'Answering hook', ok: true, optional: true, say: 'Your Claude Code has a hook that could answer Foundry\'s dialog for you. Start the MCP server with --consent and Foundry asks you in your browser instead.' });
   return lines;
 }

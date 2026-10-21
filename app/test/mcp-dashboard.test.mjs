@@ -18,9 +18,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const MESSY = 'can you send my boss a weekly summary of what the Platform team finished? only to her: boss@example.com';
 const WEEK = { weekOf: '2026-10-19', items: [{ title: 'Ship login fix', status: 'done' }, { title: 'Billing table', status: 'open' }] };
 
-async function connect(app, { elicit = null } = {}) {
+async function connect(app, { elicit = null, dialog = true } = {}) {
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
-  await serveAppMcp(app, { transport: serverSide });
+  await serveAppMcp(app, { transport: serverSide, dialog });
   const client = new Client({ name: 'surface-test', version: '1' }, { capabilities: elicit ? { elicitation: { form: {} } } : {} });
   if (elicit) client.setRequestHandler(ElicitRequestSchema, elicit);
   await client.connect(clientSide);
@@ -83,6 +83,12 @@ test('with a client that shows the person a dialog (elicitation), the person dec
   const a2 = await call2('approve', { proposalId: p2.proposalId });
   assert.equal(a2.status, "awaiting_human", JSON.stringify(a2));
   await client2.close();
+  // A local hook could answer the dialog for the person (SPEC K12): with dialog off, nothing is shown to the client and the person decides elsewhere.
+  let asked = 0;
+  const { call: call3, client: client3 } = await connect(app, { dialog: false, elicit: async () => { asked += 1; return { action: 'accept', content: { decision: 'approve' } }; } });
+  const a3 = await call3('approve', { proposalId: p2.proposalId });
+  assert.equal(a3.status, 'awaiting_human'); assert.equal(asked, 0, 'no dialog a hook could answer');
+  await client3.close();
 }));
 
 test('dashboard: token and host checks, overview, verified run record, version diff, the person decides', async () => withWorkspace(async app => {
