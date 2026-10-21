@@ -23,6 +23,7 @@ export function verify({ view, world0, hf = null, weights = null }) {
   const { checks, outputs } = runChecks({ view, idx, det, hf: grounded, world0 });
   const failed = checks.filter(c => c.status === 'fail');
   const w = c => (weights && weights[c.id] !== undefined ? weights[c.id] : c.hard ? DEFAULT_WEIGHTS.hard : DEFAULT_WEIGHTS.soft);
-  const score = 1 - failed.reduce((a, c) => a + w(c), 0);
+  // More evidence for the same failure costs a little more (at most +20%), which only orders otherwise tied candidates.
+  const score = 1 - failed.reduce((a, c) => a + w(c) * (1 + 0.05 * Math.min(Math.max(c.evidence.length - 1, 0), 4)), 0);
   return { version: VERSION, accept: !failed.some(c => c.hard), score, failed: failed.map(c => c.id), checks, outputs, usedModelFacts: Boolean(grounded) };
 }
