@@ -129,3 +129,44 @@ Strict pass by domain:
   private set (Sonnet 5.5 max 44.75%, Gemini 4 Argon 51.29%; `research/benchmarks-20261015/FRONTIER-20261015.md`).
 
 **Next.** The A1-C review (resumed 2026-10-21), then A1-C on dev60 for Haiku and Sonnet with k ≥ 2.
+
+## A1-C (code-owned harness), Haiku, 2026-10-21
+
+**Run.** `a1c-dev60-dn`: claude-haiku-5-5 in every role, `--harness codeowned` (a1c-v1, manifest a5440401…), the same 60
+devTrain tasks, date note, $0.75 per session, CLI 2.1.306. **In-sample:** the A1-C pipeline was probed on these tasks while
+it was built (review finding 8), so this is not an out-of-sample reading. devCheck (look 1) is queued for that.
+
+| Arm (date note) | Strict pass | Partial credit | Cost |
+|---|---|---|---|
+| Haiku alone (CLI 2.1.306) | 9/60 | 0.458 | $0.75 |
+| Haiku + A1 | 18/60 | 0.642 | $0.94 |
+| **Haiku + A1-C** | **20/60 (33.3%)** | **0.789** | **$2.23** |
+| Sonnet alone | 20/60 | 0.649 | $6.03 |
+| Sonnet + A1 | 28/60 | 0.769 | $6.92 |
+
+**Paired with Haiku + A1-C, exact McNemar.**
+
+| Against | Only A1-C passes | Only the other passes | p |
+|---|---|---|---|
+| Haiku alone | 16 | 5 | 0.027 |
+| Haiku + A1 | 10 | 8 | 0.82 |
+| Sonnet alone | 10 | 10 | 1.00 |
+| Sonnet + A1 | 4 | 12 | 0.077 |
+
+**Reading (development evidence, in-sample, k = 1).**
+- **Haiku + A1-C matches Sonnet alone on strict pass at 37% of its cost** (10 vs 10 discordant). Its mean partial credit
+  is the highest of the five arms, above Sonnet + A1's.
+- **It does not beat Haiku + A1 on strict pass** (10 vs 8, p = 0.82). It gets more of each task right, then misses the last
+  assertion: 13 of its failures miss exactly one assertion.
+- **Its checks are wrong in both directions** (pipeline records):
+
+  | Graded outcome | Termination | Tasks |
+  |---|---|---|
+  | fail | max repair rounds | 21 |
+  | fail | all checks pass (false acceptance) | 16 |
+  | fail | only advisory checks fail | 3 |
+  | pass | max repair rounds (false rejection) | 10 |
+  | pass | all checks pass | 9 |
+  | pass | only advisory checks fail | 1 |
+
+  The near-misses and two tasks read in full are in [A1C-NEARMISS-20261021.md](A1C-NEARMISS-20261021.md).

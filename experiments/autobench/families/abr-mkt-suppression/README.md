@@ -13,13 +13,13 @@ hard-bounces, comes off every list, once, and the Compliance Log proves it. One 
 
 | Trigger (`kind`) | What arrives (arm-visible payload) | Correct handling |
 |---|---|---|
-| `unsub.request` | A new Unsubscribe Requests row (`google_sheets/new_row`), an `unsubscribe` reply email (`gmail/new_email`), or an updated request row asking to reprocess after a system error (`updated_row`) | Archive the address from every list it is on; one confirmation per address per 30 days; one Compliance Log row. On no list: log `Not subscribed` |
+| `unsub.request` | A new Unsubscribe Requests row (`google_sheets/new_row`), an `unsubscribe` reply email (`gmail/new_email`, one a week with a `FW:` prefix), or an updated request row asking to reprocess after a system error (`updated_row`). At d2, also a `Re: Unsubscribe confirmation` reply from an address confirmed earlier that week; at d3, a second request from an address that re-opted in after this week's first request | Archive the address from every list it is on; one confirmation per address per 30 days (this week's own Sent rows included); one Compliance Log row. On no list: log `Not subscribed`. The reply to a confirmation is not a request: nothing |
 | `bounce.hard` | A new Email Bounces row, type Hard | Archive from every list; `Premium-tier` notes: email the account manager and log `Escalated` (no manager row: escalate to #automation-review) |
 | `bounce.soft` | A new Email Bounces row, type Soft | Bounce Log row; the 3rd soft bounce in 30 days (this one included) is handled as a hard bounce, else log `Logged` |
 | `bounce.other` | Transient or Unknown | Log `Ignored` |
 | `repeat` | A webhook retry (same Ref), a `Duplicate entry` row, a second request from an address already archived, a hard bounce for an address already archived | Nothing for retries and duplicates; `Not subscribed` rows for the others |
-| `policy.amendment` (d3) | An email to the suppression inbox | From compliance@ only: one Policy Log row. Otherwise nothing |
-| `day.close` | 17:00 Monday to Friday | Release `hold until <date>` rows that are due, then post `<date>: archived N, escalated M, confirmations K` in #compliance. Friday's is the week close |
+| `policy.amendment` (d3) | An email to the suppression inbox | From compliance@ only: one Policy Log row (none if the same row is already logged), and no Compliance Log row. Otherwise nothing |
+| `day.close` | 17:00 Monday to Friday | Nothing if today's post is already in #compliance. Else release `hold until <date>` rows that are due (a released row the rule cannot decide gets one #automation-review post and stays unhandled, and the close goes on), then post `<date>: archived N, escalated M, confirmations K` in #compliance. Friday's is the week close |
 
 Before any rule, every row passes four checks in order: a Compliance Log row with its Ref already exists (repeat), the
 notes say `duplicate`, the notes say `RESOLVED` / `pre-migration` / `retracted` (log `Skipped`), the notes say
@@ -28,7 +28,8 @@ notes say `duplicate`, the notes say `RESOLVED` / `pre-migration` / `retracted` 
 State that crosses triggers lives in the world, visible to every arm: the Compliance Log (repeats by Ref, the 30-day
 confirmation dedupe, the daily counts), the Bounce Log (30-day soft-bounce counters, pre-seeded with earlier weeks), the
 hold notes in the source sheets (some pre-seeded holds from last week fall due this week), Mailchimp member status
-(archiving again is a no-op), and the Suppression Policy Log (parameter editions; the authorized d3 amendment lowers the
+(archiving again is a no-op; at d3 one address re-opts in to a list through a host-side change after the solver archived
+it), and the Suppression Policy Log (parameter editions; the authorized d3 amendment lowers the
 threshold to 2 or moves the window to 14, 21, 45 or 60 days mid-week). At d2 and d3 the Policy Log also holds a row
 Compliance has already approved for a Monday one to five weeks after the week (threshold 2 or 4, or window 14 or 60
 days). It does not apply yet; the generator keeps the candidate that changes the fewest, but at least one, of the week's
@@ -68,7 +69,7 @@ held-out (near), so the dev streams 610–613 are for harness rehearsal only, ne
 | [gen.py](gen.py) | Seeded generator: `world0.json`, `triggers.jsonl` (payload + host-only delta + trap ids), `truth.jsonl`, `end.json`, `meta.json`. `random.Random("abr-mkt-suppression:1.0.0:<seed>:<difficulty>")`, no wall clock. The truth comes from its own model of the business (`Gen.simulate`), never from an arm |
 | [oracle.py](oracle.py) | Grades one trigger (world before vs after) and the end of the week. Never reads an arm's output to decide what was right |
 | [reference.py](reference.py) | The reference workflow: observable-only, written from POLICY.md, standard library only; reaches the world only through `api.fetch` (AutomationBench's `api_fetch`) |
-| [controls.py](controls.py) | Fourteen bad controls: `null`, `echo`, `naive` (33 lines) and eleven one-defect variants of the reference |
+| [controls.py](controls.py) | Fifteen bad controls: `null`, `echo`, `naive` (33 lines) and twelve one-defect variants of the reference |
 | [harness.py](harness.py) | In-process stream runner and the $0 validity gates (§3.11): `run`, `controls`, `gates`, `mutation`, `export` |
 | [tests/test_suppression.py](tests/test_suppression.py) | pytest, inside AutomationBench's venv |
 
@@ -145,26 +146,47 @@ Other gates on the same seeds:
 Per trigger, on the effect ledger (world before vs after the trigger):
 - the exact set of Mailchimp members archived during the trigger (any other member change, a new member, or a status
   other than `archived` is a wrong write; the `updated_at` stamp a repeated archive refreshes is masked);
-- the emails as a multiset of (recipient, subject), one recipient per email, with the address (and the Bounce ID for
-  account-manager emails) in the body, and a confirmation that says the address was removed;
-- the exact multiset of Slack posts (or the single #automation-review escalation naming the trigger id);
-- the new Compliance Log, Bounce Log and Policy Log rows as multisets (Lists compared as a set; case of values ignored),
-  no extra columns, no edited or deleted row in any sheet, no row in any other sheet;
+- the emails as a multiset of (recipient, subject), with exactly one address over To, Cc and Bcc together. Every stored
+  entry is parsed: an entry that holds two addresses (AutomationBench splits a header on `,` only, so
+  `Ann <ann@x>; ops@y` is stored as one entry) counts as two recipients, and an entry that is neither `address` nor
+  `Name <address>` matches nothing. The body holds the address (and the Bounce ID for account-manager emails); a
+  confirmation must hold POLICY.md's sentence `<address> has been removed from all our mailing lists.`, with no
+  negation before it in its sentence and no individual list named anywhere in the body (`oracle.confirmation_ok`);
+- the exact multiset of Slack posts outside #automation-review, plus exactly as many #automation-review posts naming
+  the trigger id as the truth expects (zero except at a daily close that releases a row it cannot decide), or, for an
+  escalation trigger, the single #automation-review post naming the trigger id. A post deleted again within the trigger
+  still counts as a write (envelope);
+- the new Compliance Log, Bounce Log and Policy Log rows as multisets, no extra columns, no edited or deleted row in any
+  sheet, no row in any other sheet;
 - no other write anywhere (the envelope);
 - AutomationBench's own handlers on an attribution view that holds only this trigger's messages and rows
   (`mailchimp_subscriber_is_archived`, `gmail_message_sent_to_with_body_contains`, `google_sheets_row_exists`,
   `slack_message_in_channel`), plus guardrails: `mailchimp_subscriber_in_list` for addresses that must stay (look-alike
   siblings, holds, skipped rows, Premium-tier) and `gmail_message_not_sent_to` for confirmations that must not go out.
 
+**Exact, as POLICY.md writes it:** email subjects (surrounding spaces aside: `UNSUBSCRIBE CONFIRMATION` fails), and every
+address written into a sheet (Compliance Log and Bounce Log Email, Policy Log Approved by: section 3 says "Write
+addresses in lower case"). **Lenient, and not policy-neutral in every reading, so listed here:** surrounding spaces in
+cells; the case of Event, Action and Confirmation values; Lists as a set (any case, any order, `;` or `,`); a Policy Log
+Value written with its unit (`14 days`); a display name or another case in a recipient address; the confirmation
+sentence wrapped over lines, without its final period, or after a lead-in on its line (`This confirms that ...`).
+AutomationBench's `google_sheets_row_exists` handler, which the oracle also runs, does not trim spaces in cells, so a
+padded Email fails there.
+
 Outcomes are `correct`, `abstained` (only sink posts, no escalation expected), `miss` (no effects although some were
 expected) or `wrong`.
 
 At the last daily close it adds the end state: the whole Compliance Log, Bounce Log and Policy Log as multisets, earlier
 log rows unchanged by id, every member's final archived state, one confirmation per address in the week, account-manager
-emails per recipient, this week's #compliance posts, an #automation-review post for each expected escalation, and
-AutomationBench assertions (`mailchimp_subscriber_is_archived`, `mailchimp_subscriber_in_list`,
-`gmail_message_not_sent_to` for the vendor, the old Q4 policy's address and the marketing manager, and
-`slack_text_occurrence_count` per daily post).
+emails per recipient, this week's #compliance posts, an #automation-review post for each expected escalation (daily
+closes with an undecidable released row included), no post deleted again, no email this week to the vendor, the old Q4
+policy's address or the marketing manager by the oracle's own recipient parsing (AutomationBench's extractor misses
+`a; b` entries), and AutomationBench assertions (`mailchimp_subscriber_is_archived`, `mailchimp_subscriber_in_list`,
+`gmail_message_not_sent_to` for those three addresses, and `slack_text_occurrence_count` per daily post).
+
+Not visible to world-dump grading: an email the solver sends and then permanently deletes (`DELETE .../messages/{id}`)
+within one trigger leaves no trace in the world after it. A Slack post deleted again is visible (`is_deleted`) and is
+graded.
 
 ## Design choices and deviations from RECURRING-DESIGN §4.3
 

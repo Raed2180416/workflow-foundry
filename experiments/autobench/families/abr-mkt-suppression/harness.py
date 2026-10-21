@@ -439,7 +439,7 @@ class Variant(R.Suppression):
         return sorted(name for _, name in lists)
 
     def log(self, today, email, event, action, ref, lists=(), conf=""):
-        self.append(R.COMPLIANCE_LOG, {"Date": today, "Email": f" {email} ", "Event": event.lower(),
+        self.append(R.COMPLIANCE_LOG, {"Date": today, "Email": email, "Event": event.lower(),
                                        "Action": action.upper(), "Lists": ", ".join(sorted((x.upper() for x in lists), reverse=True)),
                                        "Confirmation": conf.upper(), "Ref": ref})
 
