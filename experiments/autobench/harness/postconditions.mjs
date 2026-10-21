@@ -178,6 +178,16 @@ export function worldDiff(before, after, apps = null) {
   return { added, changed, removed };
 }
 
+/** The removals that are certain: the record's app was listed completely in both reads, it was not found by a look-up,
+ * the fresh read still lists records of its kind, and (a sheet row) its spreadsheet was read again. Anything else that is
+ * absent from the fresh read was only not re-read (a capped or partial re-read, a look-up hit, a sheet opened by title). */
+export function certainRemovals(before, after, removed) {
+  const truncated = new Set([...(before?.truncated ?? []), ...(after?.truncated ?? [])].map(t => String(t).split(':')[0]));
+  const sheetsAfter = new Set((after?.records ?? []).filter(r => r.app === 'google_sheets').map(r => r.data?.spreadsheetId).filter(Boolean));
+  const kinds = new Set((after?.records ?? []).map(r => `${r.app}:${r.kind}`));
+  return removed.filter(r => !truncated.has(r.app) && r.data?.term === undefined && kinds.has(`${r.app}:${r.kind}`) && (r.app !== 'google_sheets' || sheetsAfter.has(r.data?.spreadsheetId)));
+}
+
 const has = (text, lit) => norm(text).includes(norm(lit));
 const recipientsOf = d => emails([d.to, d.cc, d.bcc].flat().filter(Boolean).join(' '));
 const fieldValue = (data, field) => {
@@ -222,7 +232,12 @@ export function evaluate(pc, before, after) {
       const v = fieldValue(r.data, P.field);
       return v !== undefined && sameValue(v, P.value) ? { pass: true, evidence: `${P.field} = ${JSON.stringify(v)}` } : { pass: false, evidence: `${P.ptr} ${P.field} = ${JSON.stringify(v ?? null)}, expected ${JSON.stringify(P.value)}` };
     }
-    case 'record_deleted': return after.records.some(x => x.ptr === P.ptr) ? { pass: false, evidence: `${P.ptr} still present` } : { pass: true, evidence: 'gone' };
+    case 'record_deleted': {
+      if (after.records.some(x => x.ptr === P.ptr)) return { pass: false, evidence: `${P.ptr} still present` };
+      const was = before.records.filter(x => x.ptr === P.ptr);
+      // Absent from a re-read that did not cover it is not "gone": undecided (the checker decides, or nobody).
+      return certainRemovals(before, after, was).length ? { pass: true, evidence: 'gone' } : { pass: null, evidence: `${P.ptr} not re-read: cannot tell` };
+    }
     case 'record_created': {
       const fresh = d.added.filter(r => r.app === P.app && (!P.kind || r.kind === P.kind));
       const best = fresh.map(r => ({ r, miss: P.values.filter(v => !has(recordText(r.data), v)) })).sort((x, y) => x.miss.length - y.miss.length)[0];
@@ -258,7 +273,7 @@ Reply with JSON only: {"verdicts": [{"id": "<id>", "pass": true|false, "why": "<
 /** The re-read state a checker needs for one check: new/changed records (compact), capped. */
 export function changesText(before, after, apps = null, maxChars = 12_000) {
   const d = worldDiff(before, after, apps);
-  const lines = [...d.added.map(r => `+ [${r.ptr}] ${compactRecord(r.data, 2500)}`), ...d.changed.map(c => `~ [${c.after.ptr}] ${compactRecord(c.after.data, 2500)}`), ...d.removed.map(r => `- [${r.ptr}] removed`)];
+  const lines = [...d.added.map(r => `+ [${r.ptr}] ${compactRecord(r.data, 2500)}`), ...d.changed.map(c => `~ [${c.after.ptr}] ${compactRecord(c.after.data, 2500)}`), ...certainRemovals(before, after, d.removed).map(r => `- [${r.ptr}] removed`)];
   let s = lines.join('\n');
   if (s.length > maxChars) s = s.slice(0, maxChars) + '\n…(more changes cut)';
   return s;

@@ -6,10 +6,27 @@
 //
 // The client records each batch it issues (node label, the pipeline's model-response count when issued, the number of
 // calls) so the pipeline audit can apply H3 to code-issued steps too.
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
+import { closeSync, constants as fsc, fstatSync, lstatSync, mkdirSync, openSync, readSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export const RESULT_MAX_CHARS = 400_000;
+const MAX_ANSWER_BYTES = 256 * 1024 * 1024;
+
+/** The mailbox is agent-writable (the acting session shares it): the host never follows a link in it. One regular,
+ * single-link file read without following links; null otherwise (absent, a link, a directory, being replaced). */
+function readAnswer(file) {
+  let fd;
+  try { fd = openSync(file, fsc.O_RDONLY | fsc.O_NOFOLLOW | fsc.O_NONBLOCK); } catch { return null; }
+  try {
+    const st = fstatSync(fd);
+    if (!st.isFile() || st.nlink !== 1 || st.size > MAX_ANSWER_BYTES) return null;
+    const buf = Buffer.alloc(st.size);
+    let off = 0;
+    while (off < st.size) { const k = readSync(fd, buf, off, st.size - off, off); if (!k) break; off += k; }
+    return buf.subarray(0, off).toString('utf8');
+  } catch { return null; } finally { closeSync(fd); }
+}
+const isRealDir = p => { try { return lstatSync(p).isDirectory(); } catch { return false; } };
 
 /** A JSON tool call as the session would make it: {name, arguments: "<JSON string>"}. */
 export const toolCall = (name, args) => ({ name, arguments: typeof args === 'string' ? args : JSON.stringify(args) });
@@ -62,18 +79,29 @@ export function bridgeClient({ mailbox, waitMs = 180_000, responsesSoFar = () =>
       log.push({ req: null, node, calls: calls.length, responsesAtIssue: atIssue, t0: Date.now() / 1000, refused: true, notIssued: 'response budget spent' });
       return { error: `not issued: the pipeline has used ${atIssue} of ${maxResponses} model responses (no world step after the last one)` };
     }
+    // A session may have replaced the mailbox by a link, or left files under the next numbers: the host writes only into
+    // the real directory, never through a link (exclusive create), and removes an answer that predates its request.
+    if (!isRealDir(mailbox)) {
+      log.push({ req: null, node, calls: calls.length, responsesAtIssue: atIssue, t0: Date.now() / 1000, refused: true, notIssued: 'mailbox is not a directory' });
+      return { error: 'not issued: the mailbox is not a plain directory' };
+    }
     const n = claim();
     const tmp = path.join(mailbox, `req-${n}.json.tmp`);
-    writeFileSync(tmp, JSON.stringify({ v: 1, calls: calls.map(c => ({ name: c.name, arguments: typeof c.arguments === 'string' ? c.arguments : JSON.stringify(c.arguments ?? {}) })) }));
-    renameSync(tmp, path.join(mailbox, `req-${n}.json`));
-    const entry = { req: n, node, calls: calls.length, responsesAtIssue: atIssue, t0: Date.now() / 1000 };
-    log.push(entry);
     const res = path.join(mailbox, `res-${n}.json`);
+    let planted = false;
+    try { lstatSync(res); planted = true; } catch { /* absent, as it should be */ }
+    rmSync(res, { force: true, recursive: true });
+    rmSync(tmp, { force: true, recursive: true });
+    writeFileSync(tmp, JSON.stringify({ v: 1, calls: calls.map(c => ({ name: c.name, arguments: typeof c.arguments === 'string' ? c.arguments : JSON.stringify(c.arguments ?? {}) })) }), { flag: 'wx' });
+    renameSync(tmp, path.join(mailbox, `req-${n}.json`));
+    const entry = { req: n, node, calls: calls.length, responsesAtIssue: atIssue, t0: Date.now() / 1000, ...(planted ? { plantedAnswerRemoved: true } : {}) };
+    log.push(entry);
     const t0 = Date.now();
     while (Date.now() - t0 < waitMs) {
-      if (existsSync(res)) {
+      const text = readAnswer(res);
+      if (text !== null) {
         try {
-          const r = JSON.parse(readFileSync(res, 'utf8'));
+          const r = JSON.parse(text);
           entry.t1 = Date.now() / 1000;
           entry.refused = Boolean(r.error);
           if (r.results) r.results = r.results.map(x => ({ name: x.name, content: String(x.content ?? '').slice(0, RESULT_MAX_CHARS) }));

@@ -4,7 +4,7 @@
 // The end-to-end tests need the AutomationBench venv and skip without it.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -13,7 +13,7 @@ import { REPO, VENV_PY, readJson } from '../lib.mjs';
 import { runTasks } from '../run.mjs';
 import { loadSplit } from '../split.mjs';
 import { findSpan, copyLiteral, normalizeLedger, mergeLedgers, settleByCode, applyDecisions, readDecisions, sourceMap, ledgerPrompt, parseJsonReply, LEDGER_SYSTEM, ADJUDICATE_SYSTEM } from '../harness/ledger.mjs';
-import { postconditionsFromLedger, evaluate, worldDiff, CHECKER_SYSTEM, PCMAP_SYSTEM } from '../harness/postconditions.mjs';
+import { postconditionsFromLedger, evaluate, worldDiff, changesText, CHECKER_SYSTEM, PCMAP_SYSTEM } from '../harness/postconditions.mjs';
 import { terminationDecision, briefSection } from '../harness/checker.mjs';
 import { auditPipeline, codeownedConfig, codeownedManifest, manifestFiles, nodeModels, parseNodeModels, HARNESS_ID } from '../harness/codeowned.mjs';
 import { entityTerms, listOf, renderInventory, ENUM_PLAN } from '../harness/inventory.mjs';
@@ -173,6 +173,16 @@ test('postcondition evaluation: sent / not sent / posted / field / created / row
   assert.equal(evaluate(pc('gmail_sent', { to: ['ops-team@corp.example'], cc: [], subject: [], body: [] }), INV, INV).pass, false);
   assert.equal(evaluate(pc('gmail_not_sent', { to: ['vendor@out.example'] }), INV, INV).pass, true);
   assert.deepEqual(worldDiff(INV, after).added.map(r => r.ptr).length, 4);
+  // Deletions and "removed" lines only where the re-read covered the record: gone from a complete listing of its kind is
+  // gone; absent because the kind was not re-read (or the app's listing was cut, or a look-up found it) is undecided.
+  const noContact = { records: after.records.filter(r => r.ptr !== 'salesforce:Contact:003A').concat([rec('salesforce:Contact:003B', { Id: '003B' })]), truncated: [] };
+  assert.equal(evaluate(pc('record_deleted', { ptr: 'salesforce:Contact:003A' }), INV, noContact).pass, true);
+  assert.equal(evaluate(pc('record_deleted', { ptr: 'salesforce:Contact:003A' }), INV, after).pass, false);
+  const notReread = { records: after.records.filter(r => r.app !== 'salesforce'), truncated: [] };
+  assert.equal(evaluate(pc('record_deleted', { ptr: 'salesforce:Contact:003A' }), INV, notReread).pass, null);
+  assert.equal(evaluate(pc('record_deleted', { ptr: 'salesforce:Contact:003A' }), INV, { ...noContact, truncated: ['salesforce:Contact'] }).pass, null);
+  assert.doesNotMatch(changesText(INV, notReread), /removed/);
+  assert.match(changesText(INV, noContact), /- \[salesforce:Contact:003A\] removed/);
 });
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -228,6 +238,27 @@ test('bridge client: no code-issued world step once the pipeline has used the of
   assert.match(r2.error, /did not answer/);
   assert.ok(readdirSync(box).some(f => /^req-1\.json$/.test(f)));
   assert.equal(client.log[1].responsesAtIssue, 49);
+  // The mailbox is agent-writable: an answer left under the next number (a forged re-read) is removed before the request,
+  // a link is never followed, and a mailbox replaced by a link gets no request at all.
+  const secret = path.join(tmp('secret'), 'grade.json');
+  writeFileSync(secret, JSON.stringify({ results: [{ name: 'api_search', content: 'SECRET' }] }));
+  writeFileSync(path.join(box, 'res-2.json'), JSON.stringify({ results: [{ name: 'api_search', content: 'FORGED' }] }));
+  symlinkSync(secret, path.join(box, 'res-3.json'));
+  symlinkSync(secret, path.join(box, 'req-4.json.tmp'));
+  for (const k of [2, 3]) {
+    const r3 = await client.batch([toolCall('api_search', { query: 'messages', top_k: 1 })], { node: 'check-3' });
+    assert.match(r3.error, /did not answer/, `req ${k}`);
+    assert.equal(client.log.at(-1).plantedAnswerRemoved, true);
+  }
+  assert.equal(readFileSync(secret, 'utf8').includes('SECRET'), true);   // never overwritten through the link
+  const r4 = await client.batch([toolCall('api_search', { query: 'messages', top_k: 1 })], { node: 'check-3' });
+  assert.match(r4.error, /did not answer/);
+  assert.ok(JSON.parse(readFileSync(secret, 'utf8')).results[0].content === 'SECRET');
+  const box2 = path.join(tmp('box2'), '.tools');
+  const c2 = bridgeClient({ mailbox: box2, waitMs: 60, pollMs: 10 });
+  rmSync(box2, { recursive: true }); symlinkSync(tmp('elsewhere'), box2);
+  assert.match((await c2.batch([toolCall('api_search', { query: 'x', top_k: 1 })])).error, /not a plain directory/);
+  assert.deepEqual(readdirSync(box2), []);
 });
 
 test('auditPipeline: responses summed over every model call in order; the cap applies to the sum; code steps and session steps checked; L5 per node', () => {
@@ -431,6 +462,9 @@ test('end to end (A1-C, scripted): a failing hard check triggers a repair round 
   assert.match(rc.headlineOverride, /H3 step cap: model responses \d+ > 14 \(sum over 4 model call\(s\)\)/);
   assert.equal(rc.final.task_completed_correctly, 0);
   assert.equal(rc.liveFinal.task_completed_correctly, 1);
+  // Past the response budget the check's re-read is not issued (no code-issued step after it).
+  assert.ok(!rc.forks[0].session.violations.some(v => /code-issued/.test(v)), rc.forks[0].session.violations.join('; '));
+  assert.equal(rc.forks[0].session.nodes.find(n => n.name === 'check-0').steps, 0);
 });
 
 test('end to end (A1-C, scripted): an environment fault in any model node stops the pipeline before acting and is the task\'s session error (not a task outcome)', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 600_000 }, async () => {

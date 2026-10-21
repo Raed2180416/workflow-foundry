@@ -263,6 +263,45 @@ export function oracleEqual(W, Wt, tf, { cases = null, mapCase = c => c, pre = n
   return out;
 }
 
+/** The cases of W that pass a relation's precondition `pre` on the source sweep (for the reference flavour's pairs). */
+export function coveredCases(W, pre) {
+  return Object.keys(W.truth.cases).filter(c => {
+    const src = sweepInstants(W, c).map(t => ({ t, E: expectAt(W, c, t) }));
+    return !pre(c, src, fullPlan(W, c));
+  });
+}
+
+/**
+ * MR3's clock law for the cases a 1-week shift moves across a clock change (E-BED §9.2 "24x7 DST invariance in UTC";
+ * R4.4 "For 24x7 every running minute is business time"): when the incident's history (every change instant and the
+ * fields after it) is the same modulo the shift, every record and escalation of each 24x7 SLA is the same modulo the
+ * shift, whatever the clocks do; business-hours SLAs may differ (they are local wall-clock time).
+ */
+export function dst24x7(W, Wt, tf, cases, { maxViolations = 10 } = {}) {
+  const out = { cases: 0, historyDiffers: 0, slas: 0, acrossChange: 0, violations: [] };
+  const H = ms(W.horizonEnd);
+  const changes = ['Europe/Amsterdam', 'America/New_York', 'Australia/Sydney'].flatMap(z => clockChanges(z, Date.UTC(2026, 0, 1), Date.UTC(2027, 0, 1)).map(x => x.at));
+  for (const c of cases) {
+    if (!W.truth.cases[c].subject) continue;
+    const hs = x => canonical(x.changes.map(ch => [isoZ(ch.at), ch.fields]));
+    const a = historyOf(W, viewAt(W, c, H)), b = historyOf(Wt, viewAt(Wt, c, H + tf.dt));
+    if (!a?.inc?.opened) continue;
+    if (hs(a) !== canonical(mapDeep(JSON.parse(hs(b)), tf.inv))) { out.historyDiffers++; continue; }
+    out.cases++;
+    const E = expectAt(W, c, H), Et = expectAt(Wt, c, H + tf.dt);
+    const ids = new Set([...slaViewOf(E).values()].filter(v => v.start && v.start.schedule === null).map(v => v.id));
+    const pick = (x, inv) => {
+      const m = expectationSig(x, inv);
+      return m.required.filter(e => [...ids].some(id => e.lid.startsWith(`sla:${id}:`) || e.lid.startsWith(`esc:${id}:`)));
+    };
+    out.slas += ids.size;
+    for (const v of slaViewOf(E).values()) if (ids.has(v.id)) { const [lo, hi] = [ms(v.start.startAt), Math.max(v.stop?.at ?? 0, v.cancel?.at ?? 0, v.breach ?? 0)]; if (changes.some(x => (x > lo && x < hi) || (x > lo + tf.dt && x < hi + tf.dt))) out.acrossChange++; }
+    const x = pick(E, {}), y = pick(Et, tf.inv);
+    if (canonical(x) !== canonical(y) && out.violations.length < maxViolations) out.violations.push({ case: c, what: '24x7 SLA records', ...firstDiff(x, y) });
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // World edits of the relations.
 
@@ -945,11 +984,23 @@ export const MRS = Object.freeze([
       const res = {};
       for (const weeks of [574, 1, -1]) {
         const tf = weekShift(weeks);
-        res[tf.id] = oracleEqual(W, transformWorld(W, tf), tf, weeks === 574 ? {} : { pre: dstClear(W, tf.dt) });
+        const Wt = transformWorld(W, tf);
+        if (weeks === 574) { res[tf.id] = oracleEqual(W, Wt, tf); continue; }
+        const pre = dstClear(W, tf.dt);
+        res[tf.id] = oracleEqual(W, Wt, tf, { pre });
+        const clear = new Set(coveredCases(W, pre));
+        res[`${tf.id} 24x7`] = dst24x7(W, Wt, tf, Object.keys(W.truth.cases).filter(c => !clear.has(c)));
       }
       return { ...res, violations: Object.entries(res).flatMap(([k, r]) => r.violations.map(v => ({ shift: k, ...v }))) };
     },
-    make(W) { const tf = weekShift(574); return { Wt: transformWorld(W, tf), tf }; } },
+    refVariants: [574, 1],
+    make(W, weeks = 574) {
+      const tf = weekShift(weeks);
+      const Wt = transformWorld(W, tf);
+      if (weeks === 574) return { Wt, tf };
+      const pairs = coveredCases(W, dstClear(W, tf.dt)).map(c => [c, c]);
+      return { Wt, tf, pairs, meta: { compared: pairs.length, of: Object.keys(W.truth.cases).length } };
+    } },
   { id: 'MR4', status: 'implemented', title: 'permute order-independent events within an instant',
     spec: 'R4.2 and S5 (at one instant every incident change is applied first, then the SLAs are evaluated), R3.2 and R2.3 (an acceptance and a reclassification each recorded at their own t, on different fields); §1 Routing (every inbound message starts its own instance; each incident is its own instance)',
     relation: 'oracle: an acceptance and a reclassification of one incident delivered at one instant in either order give identical expectations at every view instant; reference: same-instant arrivals of different incidents delivered in reverse case order give identical per-case ledgers, records and verdicts',
@@ -1016,13 +1067,25 @@ export const MRS = Object.freeze([
       }
       return { weekend, outside, inside, violations: [...weekend.violations.map(v => ({ variant: 'weekend', ...v })), ...outside.violations.map(v => ({ variant: 'outside', ...v })), ...inside.violations.map(v => ({ variant: 'inside', ...v }))] };
     },
-    make(W) { return { Wt: weekendHolidays(W).Wt }; } },
+    refVariants: ['weekend', 'business'],
+    make(W, v = 'weekend') {
+      if (v === 'weekend') { const { Wt, added } = weekendHolidays(W); return { Wt, meta: { added } }; }
+      const pairs = coveredCases(W, holidayClear(W, MR8_DATES)).map(c => [c, c]);
+      return { Wt: businessDayHolidays(W), pairs, meta: { compared: pairs.length, of: Object.keys(W.truth.cases).length } };
+    } },
   { id: 'MR9', status: 'implemented', title: 'add an edition effective after every anchor',
     spec: 'R0 (the edition in force at an instant: latest effectiveFrom on or before its date in the system zone; each rule uses the edition in force at the instant it names; editions are published before they take effect)',
-    relation: 'an edition changing every table, effective 2026-04-01 and published three days before: identical expectations for every case whose every named instant lies before 2026-04-01 (oracle); effective the day after the last instant any case names, published inside the horizon: identical ledgers, records and verdicts (reference)',
+    relation: 'an edition changing every table, effective 2026-04-01 and published three days before: identical expectations (oracle) and identical ledgers, records and verdicts (reference) for every case whose every named instant lies before 2026-04-01; effective after the last instant any case names, published inside the horizon: every case identical (reference)',
     oracleWorlds: O, refWorlds: R,
     oracle(W) { const from = '2026-04-01'; const { Wt } = addLateEdition(W, from); return { ...oracleEqual(W, Wt, IDENTITY, { pre: beforeEdition(W, from) }), from }; },
-    make(W) {
+    refVariants: ['mid', 'late'],
+    make(W, v = 'mid') {
+      if (v === 'mid') {
+        const from = '2026-04-01';
+        const { Wt, published } = addLateEdition(W, from);
+        const pairs = coveredCases(W, beforeEdition(W, from)).map(c => [c, c]);
+        return { Wt, pairs, meta: { from, published, compared: pairs.length, of: Object.keys(W.truth.cases).length } };
+      }
       let hi = ms(W.horizonEnd);
       for (const c of Object.keys(W.truth.cases)) hi = Math.max(hi, ...instantsOf(expectAt(W, c, ms(W.horizonEnd))));
       const from = new Date(hi + 2 * DAY).toISOString().slice(0, 10);
@@ -1061,14 +1124,14 @@ export function runOracle(mr, spec, cache = new Map()) {
 }
 
 /** Run one relation's reference flavour on one world spec (the source run is cached per world). */
-export async function runReference(mr, spec, cache = new Map()) {
+export async function runReference(mr, spec, cache = new Map(), variant = undefined) {
   const k = specKey(spec);
   if (!cache.has(k)) cache.set(k, { W: worldOf(spec) });
   const base = cache.get(k);
   const W = base.W;
   const t = Date.now();
   if (!base.sigs) { base.rows = await runRef({ world: W }); base.sigs = referenceSigs(W, base.rows); }
-  const made = mr.make(W);
+  const made = variant === undefined ? mr.make(W) : mr.make(W, variant);
   const rows = await runRef({ world: made.Wt, wrap: made.wrap ?? null });
   const pairs = made.pairs ?? Object.keys(W.truth.cases).map(c => [c, c]);
   let violations = [];
@@ -1086,7 +1149,7 @@ export async function runReference(mr, spec, cache = new Map()) {
   if (mr.id === 'MR5') evidence.duplicatesDelivered = rows.filter(r => r.type === 'deliver' && /~mr5/.test(r.event?.id ?? '')).length;
   if (mr.id === 'MR6') evidence.extraWakeups = rows.filter(r => r.type === 'deliver' && r.event?.type === 'timer.fired' && r.event.payload?.obligationId === 'mr6-split').length;
   if (mr.id === 'MR12') evidence.injectedCreates = rows.filter(r => r.type === 'effect.emit' && r.effect?.op === 'create' && String(r.effect?.args?.summary ?? '').includes('SYSTEM NOTE')).length;
-  return { mr: mr.id, world: k, ms: Date.now() - t, cases: pairs.length, sourcePassed: base.sigs.passed, sourceCases: base.sigs.cases, meta: made.meta ? Object.fromEntries(Object.entries(made.meta).filter(([key]) => key !== 'permuted')) : null, evidence, violations };
+  return { mr: mr.id, world: k, variant: variant ?? null, ms: Date.now() - t, cases: pairs.length, sourcePassed: base.sigs.passed, sourceCases: base.sigs.cases, meta: made.meta ? Object.fromEntries(Object.entries(made.meta).filter(([key]) => key !== 'permuted')) : null, evidence, violations };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1102,7 +1165,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   for (const mr of MRS) {
     if (only && !only.includes(mr.id)) continue;
     if (mr.status === 'n/a') { out.push({ mr: mr.id, status: 'n/a', why: mr.spec }); console.log(`${mr.id} n/a: ${mr.spec}`); continue; }
-    const oWorlds = seeds ? seeds.split(',').map(s => { const [seed, d] = s.split(':').map(Number); return { seed, difficulty: d }; }) : mr.oracleWorlds;
+    const oWorlds = seeds ? seeds.split(',').map(s => { const [seed, d, size] = s.split(':').map(Number); return { seed, difficulty: d, ...(size ? { size } : {}) }; }) : mr.oracleWorlds;
     if (flavour !== 'reference') for (const spec of oWorlds) {
       const r = runOracle(mr, spec, oc);
       out.push({ flavour: 'oracle', ...r });
@@ -1110,10 +1173,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.log(`${mr.id} oracle ${r.world}: ${r.violations.length} violations ${JSON.stringify(counts)}`);
       if (r.violations.length) console.log('  first:', JSON.stringify(r.violations[0]).slice(0, 1500));
     }
-    if (flavour !== 'oracle' && mr.make) for (const spec of mr.refWorlds) {
-      const r = await runReference(mr, spec, rc);
+    if (flavour !== 'oracle' && mr.make) for (const spec of mr.refWorlds) for (const v of mr.refVariants ?? [undefined]) {
+      const r = await runReference(mr, spec, rc, v);
       out.push({ flavour: 'reference', ...r });
-      console.log(`${mr.id} reference ${r.world}: ${r.violations.length} violations, ${r.cases} cases (source passes ${r.sourcePassed}/${r.sourceCases}) ${JSON.stringify(r.meta)} ${JSON.stringify(r.evidence)} ${r.ms} ms`);
+      console.log(`${mr.id} reference ${r.world}${v === undefined ? '' : ` ${v}`}: ${r.violations.length} violations, ${r.cases} cases (source passes ${r.sourcePassed}/${r.sourceCases}) ${JSON.stringify(r.meta)} ${JSON.stringify(r.evidence)} ${r.ms} ms`);
       if (r.violations.length) console.log('  first:', JSON.stringify(r.violations[0]).slice(0, 1500));
     }
   }

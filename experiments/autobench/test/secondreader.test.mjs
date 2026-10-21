@@ -268,6 +268,9 @@ test('end to end (A0+SR, scripted): the response budget is the sum over every ca
   const rb = b.results[0];
   assert.equal(rb.forks[0].pipeline.skipped, 'no response left for the reader');
   assert.match(rb.headlineOverride, /H3 step cap: model responses \d+ > 10/);
+  // ... and no world step follows the spent budget: the post-read (it serves only the reader) is skipped too.
+  assert.equal(rb.forks[0].pipeline.postRead.done, false);
+  assert.ok(!rb.forks[0].session.violations.some(v => /code-issued/.test(v)), rb.forks[0].session.violations.join('; '));
   // An environment fault in the reader: no repair; the fault is the task's session error, so the runner defers the task.
   const seen = [], live = tmp('fault');
   const c = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'secondreader', det: 'record', liveRoot: live, outDir: null, log: quiet,
