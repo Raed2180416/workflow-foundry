@@ -1,0 +1,358 @@
+{
+ "arm": "B0-H",
+ "case": "O3",
+ "expected": "oncall-digest",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "channel",
+     "slot": null,
+     "question": "Which team chat channel should the digest be posted to (the exact channel name)?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "channel",
+   "slot": null,
+   "question": "Which team chat channel should the digest be posted to (the exact channel name)?",
+   "matched": [
+    "channel"
+   ],
+   "answer": "#eng-alerts please"
+  }
+ ],
+ "modelQuestions": [],
+ "answers": {
+  "channel": "#eng-alerts please"
+ },
+ "cost": {
+  "usd": 0.005259,
+  "tokens": 34372,
+  "inputTokens": 4,
+  "outputTokens": 3098,
+  "cacheReadTokens": 1730,
+  "cacheWriteTokens": 29540,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 497,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14757,
+   "costUsd": 0.002101975,
+   "costUnknown": false,
+   "latencyMs": 4917,
+   "journalId": 22
+  },
+  {
+   "turn": 1,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 2601,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14783,
+   "costUsd": 0.0031572249999999996,
+   "costUnknown": false,
+   "latencyMs": 11539,
+   "journalId": 23
+  }
+ ],
+ "builderWallMs": 16468,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "daily-alerts-digest",
+  "version": 1,
+  "title": "Daily monitoring alerts digest to #eng-alerts",
+  "goal": "Each day, read the alerts sheet, keep the unresolved alerts, and post a digest of them to the #eng-alerts team channel, then verify the post was recorded.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "A digest covers alerts with resolved = false (all unresolved alerts, regardless of age).",
+    "The channel is #eng-alerts.",
+    "The run input 'now' is the digest date."
+   ],
+   "risks": [
+    "Posting to chat is an outside action; a person is asked before each post when the flow runs live.",
+    "If the alerts sheet is missing, the run fails rather than posting an empty digest."
+   ],
+   "successCriteria": [
+    "The digest lists every unresolved alert from the alerts sheet.",
+    "The chat post is delivered once and the audit confirms it in #eng-alerts."
+   ]
+  },
+  "budget": {
+   "maxSteps": 8,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "alerts",
+    "kind": "task",
+    "needs": [],
+    "description": "Read every row of the alerts sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open",
+    "kind": "task",
+    "needs": [
+     "alerts"
+    ],
+    "description": "Keep only unresolved alerts.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.alerts.rows"
+     },
+     "where": [
+      {
+       "field": "resolved",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "lines",
+    "kind": "task",
+    "needs": [
+     "open"
+    ],
+    "description": "Render one line per unresolved alert.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open.rows"
+     },
+     "line": "- [{{severity}}] {{service}}: {{message}} (id {{id}}, at {{at}})",
+     "empty": "No unresolved alerts."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest",
+    "kind": "task",
+    "needs": [
+     "lines",
+     "open"
+    ],
+    "description": "Build the digest text with the date and count.",
+    "tool": "core.template",
+    "args": {
+     "text": "Monitoring alerts digest for {{date}}: {{count}} unresolved\n{{lines}}",
+     "variables": {
+      "date": {
+       "$ref": "input.now"
+      },
+      "count": {
+       "$ref": "nodes.open.count"
+      },
+      "lines": {
+       "$ref": "nodes.lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post",
+    "kind": "task",
+    "needs": [
+     "digest"
+    ],
+    "description": "Post the digest to #eng-alerts.",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#eng-alerts",
+     "text": {
+      "$ref": "nodes.digest.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify",
+    "kind": "verify",
+    "needs": [
+     "post"
+    ],
+    "description": "Independently confirm the digest post is in #eng-alerts.",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#eng-alerts",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.post.posted"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {
+    "#eng-alerts": [
+     "Monitoring alerts digest for 2026-10-21T08:00:00Z: 4 unresolved\n- [warning] ci: Nightly build flaky tests (id C-1, at 2026-10-21T03:00:00Z)\n- [info] web: Cache warmed (id C-2, at 2026-10-21T07:00:00Z)\n- [critical] backup: Backup job failed (id C-3, at 2026-10-20T12:00:00Z)\n- [critical] api: Old latency spike (id C-4, at 2026-10-20T02:00:00Z)"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-HYPZWM",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "The digest lists every unresolved alert from the alerts sheet.",
+    "exact": "the pass of “Independently confirm the digest post is in #eng-alerts.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The chat post is delivered once and the audit confirms it in #eng-alerts.",
+    "exact": "the posted of “Post the digest to #eng-alerts.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify",
+    "plain": "Independently confirm the digest post is in #eng-alerts.",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "chat #eng-alerts: missing an expected item containing \"Nightly build flaky tests\", \"Backup job failed\" without Cache warmed, Old latency spike",
+   "chat #eng-alerts: unexpected or wrong item {\"text\":\"Monitoring alerts digest for 2026-10-21T08:00:00Z: 4 unresolved\\n- [warning] ci: Nightly build flaky tests (id C-1, at 2026-10-21T03:00:00Z)\\n- [info] "
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 1,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

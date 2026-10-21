@@ -77,6 +77,14 @@ test('the repair loop: a failed check goes back to the model, at most 3 rounds, 
   assert.equal(f.status, 'build_failed'); assert.equal(f.buildReport.repairs.length, 4); assert.match(f.reply, /Nothing was created/);
 });
 
+test('a reply cut off at the length limit is retried once with twice the allowance', async () => {
+  let n = 0;
+  const provider = new ScriptedProvider(args => { n++; if (args.system === SELECT_SYSTEM) return n === 1 ? { finishReason: 'length', text: '{"templ' } : { value: { template: 'none', reason: 'r', notCovered: [] } }; throw new Error('no fill'); });
+  const port = new ModelPort({ policy: loadPolicy().policy, providers: { 'claude-cli': provider }, journal: new Journal(new DatabaseSync(':memory:')) });
+  const r = await new ModelBuilder({ port }).build({ request: 'pay my contractors' });
+  assert.equal(r.status, 'unsupported'); assert.deepEqual(provider.calls.map(c => c.decoding.maxTokens), [1500, 3000]);
+});
+
 test('a schema failure is retried at most twice, then the build stops in words', async () => {
   const { port } = scripted({ select: 'weekly-report', fills: [{ slots: { team: 'x' } }] });
   await assert.rejects(new ModelBuilder({ port }).build({ request: 'weekly report to a@b.example' }), { code: 'BUILDER_MODEL' });

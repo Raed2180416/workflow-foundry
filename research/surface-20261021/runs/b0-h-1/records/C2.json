@@ -1,0 +1,436 @@
+{
+ "arm": "B0-H",
+ "case": "C2",
+ "expected": "contact-sync",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003971,
+  "tokens": 19880,
+  "inputTokens": 2,
+  "outputTokens": 4228,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14785,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4228,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14785,
+   "costUsd": 0.003970975,
+   "costUnknown": false,
+   "latencyMs": 18794,
+   "journalId": 18
+  }
+ ],
+ "builderWallMs": 18805,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "sync-paying-customers",
+  "version": 1,
+  "title": "Sync paying CRM customers to mailing list and report",
+  "goal": "Add CRM contacts tagged 'customer' (not unsubscribed; leads excluded) to the newsletter sheet when missing, verify the append, and send a summary report to ari@moss-and-moth.com.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Paying customers are CRM rows whose tags contain 'customer'.",
+    "Contacts marked unsubscribed=true are not added to the mailing list.",
+    "Leads sheet is not read, so leads are never added.",
+    "Matching between CRM and newsletter is by email, ignoring case and spaces.",
+    "Added rows carry email, name and source 'crm-customer'; addedAt is not set because constant values cannot take the run time."
+   ],
+   "risks": [
+    "A CRM tag containing 'customer' in another meaning (e.g. 'non-customer') would be matched.",
+    "Duplicate emails within the CRM could be appended more than once in one run."
+   ],
+   "successCriteria": [
+    "Every CRM customer that is not unsubscribed and is missing from newsletter is appended once.",
+    "No lead or unsubscribed contact is appended.",
+    "The append is verified by sheet.audit and the report is verified by outbox.audit.",
+    "The summary report is sent to ari@moss-and-moth.com."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_crm",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the CRM sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "crm"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_newsletter",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the current mailing list.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "newsletter"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "customers",
+    "kind": "task",
+    "needs": [
+     "read_crm"
+    ],
+    "description": "Keep CRM rows tagged customer that are not unsubscribed.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_crm.rows"
+     },
+     "where": [
+      {
+       "field": "tags",
+       "op": "contains",
+       "value": "customer"
+      },
+      {
+       "field": "unsubscribed",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "recon",
+    "kind": "task",
+    "needs": [
+     "customers",
+     "read_newsletter"
+    ],
+    "description": "Find paying customers not yet on the mailing list, by email.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.customers.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_newsletter.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_contacts",
+    "kind": "task",
+    "needs": [
+     "recon"
+    ],
+    "description": "Shape missing customers as newsletter rows.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recon.missing"
+     },
+     "fields": [
+      "email",
+      "name"
+     ],
+     "set": {
+      "source": "crm-customer"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append",
+    "kind": "task",
+    "needs": [
+     "new_contacts"
+    ],
+    "description": "Append the missing customers to the mailing list.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "newsletter",
+     "rows": {
+      "$ref": "nodes.new_contacts.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit_append",
+    "kind": "verify",
+    "needs": [
+     "append"
+    ],
+    "description": "Independently confirm the appended rows are in the newsletter sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "newsletter",
+     "rows": {
+      "$ref": "nodes.append.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "report_text",
+    "kind": "task",
+    "needs": [
+     "audit_append",
+     "customers",
+     "recon",
+     "append"
+    ],
+    "description": "Build the summary report.",
+    "tool": "core.template",
+    "args": {
+     "text": "Mailing list customer sync report (run {{now}})\nPaying customers in CRM (not unsubscribed, leads excluded): {{customers}}\nAlready on mailing list: {{already}}\nAdded to mailing list: {{added}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "customers": {
+       "$ref": "nodes.customers.count"
+      },
+      "already": {
+       "$ref": "nodes.recon.matched"
+      },
+      "added": {
+       "$ref": "nodes.append.appended"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_report",
+    "kind": "task",
+    "needs": [
+     "report_text"
+    ],
+    "description": "Send the summary report to ari@moss-and-moth.com.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "ari@moss-and-moth.com",
+     "subject": "Mailing list customer sync report",
+     "body": {
+      "$ref": "nodes.report_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit_send",
+    "kind": "verify",
+    "needs": [
+     "send_report"
+    ],
+    "description": "Independently confirm the report was delivered with the expected recipient and body.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      [
+       "ari@moss-and-moth.com"
+      ]
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_report"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_append.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_send.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "rationale": "Customer-only sync: filters on tag and unsubscribed flag, reconciles by email, appends only missing rows, verifies the write, then reports to the requester."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "ari@moss-and-moth.com",
+     "subject": "Mailing list customer sync report",
+     "body": "Mailing list customer sync report (run 2026-10-21T07:00:00Z)\nPaying customers in CRM (not unsubscribed, leads excluded): 3\nAlready on mailing list: 1\nAdded to mailing list: 2"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "newsletter": [
+     {
+      "email": "gil@foxglove.example",
+      "name": "Gil Fox",
+      "source": "crm-customer"
+     },
+     {
+      "email": "iris@stonecrop.example",
+      "name": "Iris Stone",
+      "source": "crm-customer"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-H7WmwT",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every CRM customer that is not unsubscribed and is missing from newsletter is appended once.",
+    "exact": "the pass of “Independently confirm the appended rows are in the newsletter sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No lead or unsubscribed contact is appended.",
+    "exact": "the pass of “Independently confirm the report was delivered with the expected recipient and body.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit_append",
+    "plain": "Independently confirm the appended rows are in the newsletter sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.audit_send",
+    "plain": "Independently confirm the report was delivered with the expected recipient and body.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to ari@moss-and-moth.com containing \"gil@foxglove.example\", \"iris@stonecrop.example\"",
+   "outbox : unexpected or wrong message to ari@moss-and-moth.com (\"Mailing list customer sync report\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

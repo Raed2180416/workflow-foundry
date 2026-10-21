@@ -1,0 +1,353 @@
+{
+ "arm": "B0-H",
+ "case": "O1",
+ "expected": "oncall-digest",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003635,
+  "tokens": 19199,
+  "inputTokens": 2,
+  "outputTokens": 3559,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14773,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3559,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14773,
+   "costUsd": 0.003634975,
+   "costUnknown": false,
+   "latencyMs": 14506,
+   "journalId": 21
+  }
+ ],
+ "builderWallMs": 14515,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "ops-alerts-daily-summary",
+  "version": 1,
+  "title": "Daily unresolved alerts summary to #ops-alerts",
+  "goal": "Every morning, read the alerts sheet, keep alerts from the last 24 hours that are warning or critical and still unresolved, and post a plain summary to #ops-alerts. Nobody is paged.",
+  "domain": "operations",
+  "envelope": {
+   "assumptions": [
+    "The alerts sheet has boolean resolved values and ISO date-time at values with an offset.",
+    "The 24-hour window ends at the run input now.",
+    "The channel named #ops-alerts exists in the chat tool.",
+    "Daily scheduling is handled outside this workflow; each run is one morning summary.",
+    "acknowledged is not used to exclude alerts, because the request asks only for unresolved ones."
+   ],
+   "risks": [
+    "If the alerts sheet has no rows in the window, the post says so instead of staying silent.",
+    "chat.post asks a person before dispatch when run live, so each morning post needs approval.",
+    "No paging or other outbound channel is used."
+   ],
+   "successCriteria": [
+    "Only alerts with severity warning or critical, resolved false, and an age between 0 and 24 hours are included.",
+    "One summary post is made to #ops-alerts and the independent chat audit confirms it."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_alerts",
+    "kind": "task",
+    "needs": [],
+    "description": "Read every row of the alerts sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "age_alerts",
+    "kind": "task",
+    "needs": [
+     "read_alerts"
+    ],
+    "description": "Add ageHours: whole hours between each alert's at time and now.",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_alerts.rows"
+     },
+     "field": "at",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "hours",
+     "as": "ageHours"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "unresolved_alerts",
+    "kind": "task",
+    "needs": [
+     "age_alerts"
+    ],
+    "description": "Keep unresolved warning and critical alerts from the last 24 hours.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.age_alerts.rows"
+     },
+     "where": [
+      {
+       "field": "resolved",
+       "op": "eq",
+       "value": false
+      },
+      {
+       "field": "severity",
+       "op": "in",
+       "value": [
+        "warning",
+        "critical"
+       ]
+      },
+      {
+       "field": "ageHours",
+       "op": "gte",
+       "value": 0
+      },
+      {
+       "field": "ageHours",
+       "op": "lte",
+       "value": 24
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "alert_lines",
+    "kind": "task",
+    "needs": [
+     "unresolved_alerts"
+    ],
+    "description": "Render one line per matching alert, or an empty-state line.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.unresolved_alerts.rows"
+     },
+     "line": "[{{severity}}] {{service}} ({{id}}): {{message}} (at {{at}})",
+     "empty": "No unresolved warning or critical alerts in the last 24 hours."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "compose_summary",
+    "kind": "task",
+    "needs": [
+     "alert_lines",
+     "unresolved_alerts"
+    ],
+    "description": "Build the summary message text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Unresolved warning and critical alerts from the last 24 hours, as of {{now}} ({{count}} total):\n{{body}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "count": {
+       "$ref": "nodes.unresolved_alerts.count"
+      },
+      "body": {
+       "$ref": "nodes.alert_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post_summary",
+    "kind": "task",
+    "needs": [
+     "compose_summary"
+    ],
+    "description": "Post the summary to #ops-alerts. No paging.",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#ops-alerts",
+     "text": {
+      "$ref": "nodes.compose_summary.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_post",
+    "kind": "verify",
+    "needs": [
+     "post_summary"
+    ],
+    "description": "Independently confirm the summary post is in #ops-alerts.",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#ops-alerts",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post_summary"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.post_summary.posted"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_post.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {
+    "#ops-alerts": [
+     "Unresolved warning and critical alerts from the last 24 hours, as of 2026-10-21T08:00:00Z (2 total):\n[critical] checkout-api (A-1): Error rate above 5% on checkout (at 2026-10-21T06:00:00Z)\n[warning] orders-db (A-2): Replica lag over 30s (at 2026-10-20T22:00:00Z)"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-bhx38V",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Only alerts with severity warning or critical, resolved false, and an age between 0 and 24 hours are included.",
+    "exact": "the posted of “Post the summary to #ops-alerts. No paging.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "One summary post is made to #ops-alerts and the independent chat audit confirms it.",
+    "exact": "the pass of “Independently confirm the summary post is in #ops-alerts.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_post",
+    "plain": "Independently confirm the summary post is in #ops-alerts.",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 2,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

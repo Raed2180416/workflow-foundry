@@ -1,0 +1,80 @@
+{
+ "arm": "B0-H",
+ "case": "N3",
+ "expected": "none",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "The listed capabilities only read and write local sheets, do messaging, and run checks; none can fetch competitor websites or read their prices, so daily price-drop monitoring cannot be built.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.001999,
+  "tokens": 15915,
+  "inputTokens": 2,
+  "outputTokens": 292,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14756,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 292,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14756,
+   "costUsd": 0.00199935,
+   "costUnknown": false,
+   "latencyMs": 3111,
+   "journalId": 27
+  }
+ ],
+ "builderWallMs": 3116,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

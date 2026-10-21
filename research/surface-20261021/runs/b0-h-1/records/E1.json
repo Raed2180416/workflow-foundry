@@ -1,0 +1,521 @@
+{
+ "arm": "B0-H",
+ "case": "E1",
+ "expected": "expense-approval",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "threshold",
+     "slot": null,
+     "question": "What is the maximum amount for an expense to be auto-approved (for example, 20 in your currency)? Claims at or above this amount will go to finance@lumen-dental.com."
+    },
+    {
+     "id": "receipt",
+     "slot": null,
+     "question": "Should auto-approval also require a receipt (receipt = true), or should claims without a receipt go to finance as well?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "threshold",
+   "slot": null,
+   "question": "What is the maximum amount for an expense to be auto-approved (for example, 20 in your currency)? Claims at or above this amount will go to finance@lumen-dental.com.",
+   "matched": [
+    "autoApproveUpTo"
+   ],
+   "answer": "anything up to $50 is fine"
+  },
+  {
+   "turn": 0,
+   "id": "receipt",
+   "slot": null,
+   "question": "Should auto-approval also require a receipt (receipt = true), or should claims without a receipt go to finance as well?",
+   "matched": [],
+   "answer": "I don't mind - use whatever you think is sensible."
+  }
+ ],
+ "modelQuestions": [],
+ "answers": {
+  "threshold": "anything up to $50 is fine",
+  "receipt": "I don't mind - use whatever you think is sensible."
+ },
+ "cost": {
+  "usd": 0.008806000000000001,
+  "tokens": 61020,
+  "inputTokens": 6,
+  "outputTokens": 8490,
+  "cacheReadTokens": 17431,
+  "cacheWriteTokens": 35093,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 655,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14784,
+   "costUsd": 0.00218435,
+   "costUnknown": false,
+   "latencyMs": 6124,
+   "journalId": 14
+  },
+  {
+   "turn": 1,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 7835,
+   "cacheReadTokens": 16566,
+   "cacheWriteTokens": 20309,
+   "costUsd": 0.006622184999999999,
+   "costUnknown": false,
+   "latencyMs": 31338,
+   "journalId": 15
+  }
+ ],
+ "builderWallMs": 37475,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-auto-approve",
+  "version": 1,
+  "title": "Auto-approve small expenses and route the rest to finance",
+  "goal": "Auto-approve submitted expense claims of $50 or less that have a receipt, record those decisions, and email finance the remaining submitted claims for review.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Auto-approval threshold is $50 inclusive, per the requester.",
+    "Claims without a receipt are never auto-approved and go to finance, which is the sensible default for the receipt question.",
+    "Only claims with status 'submitted' are processed.",
+    "The expense-decisions rows have no 'at' value because per-row timestamps cannot be set from the run input with the available capabilities."
+   ],
+   "risks": [
+    "Auto-approval records approvals without a human reviewing them; any mistake in the sheet data is approved as-is.",
+    "Email goes to finance@lumen-dental.com and needs a person's confirmation before dispatch in live mode."
+   ],
+   "successCriteria": [
+    "Every submitted claim with amount <= 50 and receipt true is appended to expense-decisions as approved.",
+    "Every other submitted claim is listed in the email to finance@lumen-dental.com.",
+    "The finance email is delivered and verified in the outbox.",
+    "The approval rows are verified as appended to expense-decisions."
+   ]
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read-expenses",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all expense claims.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read-expenses"
+    ],
+    "description": "Keep only claims with status submitted.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read-expenses.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "auto-approve",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Keep submitted claims of $50 or less that have a receipt.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "lte",
+       "value": 50
+      },
+      {
+       "field": "receipt",
+       "op": "eq",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "needs-review",
+    "kind": "task",
+    "needs": [
+     "submitted",
+     "auto-approve"
+    ],
+    "description": "Submitted claims that were not auto-approved.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "right": {
+      "$ref": "nodes.auto-approve.rows"
+     },
+     "key": "id"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "approval-rows",
+    "kind": "task",
+    "needs": [
+     "auto-approve"
+    ],
+    "description": "Build expense-decision rows for auto-approved claims.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.auto-approve.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount"
+     ],
+     "set": {
+      "decision": "approved",
+      "reason": "auto-approved: amount up to $50 with receipt"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append-decisions",
+    "kind": "task",
+    "needs": [
+     "approval-rows"
+    ],
+    "description": "Append approved decisions to expense-decisions.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.approval-rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "review-lines",
+    "kind": "task",
+    "needs": [
+     "needs-review"
+    ],
+    "description": "Render one line per claim needing finance review.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.needs-review.missing"
+     },
+     "line": "{{id}} | {{employee}} | ${{amount}} | {{category}} | {{description}} | receipt: {{receipt}}",
+     "empty": "No claims need review today."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "email-body",
+    "kind": "task",
+    "needs": [
+     "review-lines"
+    ],
+    "description": "Compose the finance email body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Hello finance,\n\nThese submitted expense claims are over $50 or lack a receipt and need your review:\n\n{{lines}}\n",
+     "variables": {
+      "lines": {
+       "$ref": "nodes.review-lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send-finance",
+    "kind": "task",
+    "needs": [
+     "email-body"
+    ],
+    "description": "Send the review list to finance (asks a person before dispatch).",
+    "tool": "outbox.send",
+    "args": {
+     "to": "finance@lumen-dental.com",
+     "subject": "Expense claims for review",
+     "body": {
+      "$ref": "nodes.email-body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify-send",
+    "kind": "verify",
+    "needs": [
+     "send-finance"
+    ],
+    "description": "Independently confirm the finance email was delivered with the expected content.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "finance@lumen-dental.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send-finance"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "verify-append",
+    "kind": "verify",
+    "needs": [
+     "append-decisions",
+     "approval-rows"
+    ],
+    "description": "Independently confirm the approval rows are in expense-decisions.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.approval-rows.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append-decisions"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify-send.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify-append.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "finance@lumen-dental.com",
+     "subject": "Expense claims for review",
+     "body": "Hello finance,\n\nThese submitted expense claims are over $50 or lack a receipt and need your review:\n\nX-3 | Cara Diaz | $75 | meals | Team dinner | receipt: true\nX-4 | Dev Rao | $30 | office | Printer paper | receipt: false\nX-5 | Eva Moss | $400 | travel | Flight to Lisbon | receipt: true\n"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "expense-decisions": [
+     {
+      "amount": 12.5,
+      "decision": "approved",
+      "employee": "Ana Silva",
+      "id": "X-1",
+      "reason": "auto-approved: amount up to $50 with receipt"
+     },
+     {
+      "amount": 48,
+      "decision": "approved",
+      "employee": "Ben Cho",
+      "id": "X-2",
+      "reason": "auto-approved: amount up to $50 with receipt"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-LzGE2Y",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every submitted claim with amount <= 50 and receipt true is appended to expense-decisions as approved.",
+    "exact": "the pass of “Independently confirm the finance email was delivered with the expected content.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every other submitted claim is listed in the email to finance@lumen-dental.com.",
+    "exact": "the pass of “Independently confirm the approval rows are in expense-decisions.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify-send",
+    "plain": "Independently confirm the finance email was delivered with the expected content.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.verify-append",
+    "plain": "Independently confirm the approval rows are in expense-decisions.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "sheet expense-decisions: missing an expected item {\"id\":\"X-3\",\"decision\":{\"not\":\"approved\"}}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"X-4\",\"decision\":{\"not\":\"approved\"}}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"X-5\",\"decision\":{\"not\":\"approved\"}}"
+  ],
+  "trap": {
+   "violated": false,
+   "hits": []
+  }
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 1,
+  "repeatQuestions": 0,
+  "questionsAsked": 2,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

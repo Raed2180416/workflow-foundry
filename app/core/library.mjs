@@ -120,7 +120,8 @@ const escape = s => s.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
 // a number in their words (digits, optional $ and thousands commas). A word that merely appears ("the team chat") is not a channel.
 function grounded(slot, value, text) {
   if (slot.type === 'channel') { const bare = escape(value.slice(1)); return text.includes(value) || new RegExp(`(^|[^a-z0-9_#-])${bare}\\s+channel\\b|\\bchannel\\s+(called\\s+|named\\s+)?${bare}([^a-z0-9_-]|$)`).test(text); }
-  if (slot.type === 'number' || slot.type === 'integer') return (text.match(/\d[\d,]*(\.\d+)?/g) ?? []).map(n => Number(n.replace(/,/g, ''))).includes(value);
+  // "under 200" is often filled as the inclusive limit just below it (199 or 199.99): a value up to 1 below a written number counts.
+  if (slot.type === 'number' || slot.type === 'integer') return (text.match(/\d[\d,]*(\.\d+)?/g) ?? []).map(n => Number(n.replace(/,/g, ''))).some(n => value === n || (value < n && n - value <= 1));
   return has(text, value);
 }
 /** Normalise and check one value against its slot. Returns { value } or { problem }. */
@@ -199,8 +200,10 @@ export function resolveSlots(template, fill, { text = '', base = null } = {}) {
     const fromBase = base && Object.hasOwn(base, slot.name) ? base[slot.name] : undefined;
     const wanted = slot.askWhen ? (values[slot.askWhen] ?? base?.[slot.askWhen] ?? template.slots.find(s => s.name === slot.askWhen)?.default) === true : true;
     if (!incomplete && fromBase !== undefined && !empty(slot, fromBase)) { values[slot.name] = fromBase; continue; }
-    // A list slot (routing rules) is asked about only when an entry is incomplete; an unstated list gets its default (empty).
-    if (slot.ask && wanted && (!slot.askOnlyIfIncomplete || incomplete)) {
+    // A list slot (routing rules) is asked about only when an entry is incomplete, or when the model left it out and asked about it
+    // (it knows rules are wanted but not their targets); an unstated list nobody asked about gets its default (empty).
+    const modelAsked = notStated.has(slot.name) && !!modelQuestion(slot.name);
+    if (slot.ask && wanted && (!slot.askOnlyIfIncomplete || incomplete || modelAsked)) {
       const q = modelQuestion(slot.name);
       questions.push({ id: slot.name, slot: slot.name, question: (q?.question ?? slot.question).trim().slice(0, 300), why: slot.askWhy,
         answerSchema: { type: 'string', ...(slot.type === 'email' ? { description: 'one e-mail address' } : {}) } });

@@ -38,7 +38,9 @@ Rules:
 - assumptions: short plain sentences about what you assumed.
 Reply with JSON only.`;
 
-const SELECT_MAX_TOKENS = 600, FILL_MAX_TOKENS = 3000;
+// Output allowances (Mercury needs them below its per-call cap; the claude CLI ignores them). A truncated reply is retried once with
+// twice the allowance, inside the schema-retry budget.
+const SELECT_MAX_TOKENS = 1500, FILL_MAX_TOKENS = 3000;
 const selectSchema = library => ({ type: 'object', additionalProperties: false, required: ['template', 'reason', 'notCovered'], properties: {
   template: { type: 'string', enum: [...library.map(t => t.id), 'none'], description: 'The template id, or none.' },
   reason: { type: 'string', description: 'One sentence: why this template, or why none fits.' },
@@ -87,10 +89,11 @@ export class ModelBuilder {
   }
 
   async #call(state, nodeKey, system, prompt, schema, maxTokens) {
-    let feedback = null;
+    let feedback = null, allowance = maxTokens, widened = false;
     for (let attempt = 0; attempt <= this.schemaRetries; attempt++) {
-      const r = await this.#once(state, nodeKey, attempt, this.model, system, feedback ? `${prompt}\n\nYour previous reply was refused: ${feedback}. Reply again with JSON that matches the schema.` : prompt, schema, maxTokens);
+      const r = await this.#once(state, nodeKey, attempt, this.model, system, feedback ? `${prompt}\n\nYour previous reply was refused: ${feedback}. Reply again with JSON that matches the schema.` : prompt, schema, allowance);
       if (r.ok) return r.value;
+      if (r.error?.code === 'MODEL_TRUNCATED' && !widened) { widened = true; allowance *= 2; feedback = 'it was cut off at the length limit; answer briefly'; continue; }
       if (r.error?.code !== 'MODEL_SCHEMA') throw new FoundryError('BUILDER_MODEL', `The builder model call ${nodeKey} failed: ${r.error?.code}: ${String(r.error?.message ?? '').slice(0, 300)}`, { code: r.error?.code });
       feedback = r.error.feedback ?? 'it did not match the schema';
     }

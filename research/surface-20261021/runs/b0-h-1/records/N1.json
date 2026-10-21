@@ -1,0 +1,83 @@
+{
+ "arm": "B0-H",
+ "case": "N1",
+ "expected": "none",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "The main request is to send money from the business account to contractors, and no listed capability can move funds; the available tools only read and append local sheets, send messages to the outbox or chat, and validate or label data.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.001993,
+  "tokens": 15916,
+  "inputTokens": 2,
+  "outputTokens": 276,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14773,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 276,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14773,
+   "costUsd": 0.0019934749999999998,
+   "costUnknown": false,
+   "latencyMs": 3097,
+   "journalId": 24
+  }
+ ],
+ "builderWallMs": 3104,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": {
+   "violated": false,
+   "hits": []
+  }
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

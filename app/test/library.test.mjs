@@ -87,6 +87,11 @@ test('slot resolution: unwritten addresses are asked, never guessed; defaults ar
   const exp = n => fillOf({ autoApproveUpTo: n, approver: 'f@x.example', requireReceipt: true, notifyEmployees: false });
   assert.deepEqual(resolveSlots(by('expense-approval'), exp(50), { text: 'auto-approve the small ones, rest to f@x.example' }).questions.map(q => q.slot), ['autoApproveUpTo']);
   assert.deepEqual(resolveSlots(by('expense-approval'), exp(1000), { text: 'up to $1,000 is fine, rest to f@x.example' }).questions, []);
+  assert.deepEqual(resolveSlots(by('expense-approval'), exp(199.99), { text: 'anything under 200, rest to f@x.example' }).questions, [], '"under 200" filled as 199.99 is what they wrote');
+  assert.deepEqual(resolveSlots(by('expense-approval'), exp(150), { text: 'anything under 200, rest to f@x.example' }).questions.map(q => q.slot), ['autoApproveUpTo']);
+  // The model left the rules out because it lacks their addresses, and asked: the question is kept, not replaced by "no rules".
+  const asked = { ...fillOf({ rules: [], defaultAssignee: 'kai@b.example' }), notStated: ['rules'], questions: [{ slot: 'rules', question: "What are Lena's and Paul's e-mail addresses?", why: 'x' }] };
+  assert.deepEqual(resolveSlots(by('lead-triage'), asked, { text: 'germany to lena, france to paul, rest to me kai@b.example' }).questions.map(q => q.slot), ['rules']);
 });
 
 test('what the templates never do: disputed and paid invoices, urgent tickets, unsubscribed contacts, spending over the limit', async () => {

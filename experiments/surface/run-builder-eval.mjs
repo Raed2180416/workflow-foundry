@@ -107,7 +107,7 @@ async function pool(items, n, fn) {
 
 async function main() {
   const { values: a } = parseArgs({ options: { arm: { type: 'string' }, label: { type: 'string' }, cases: { type: 'string' }, concurrency: { type: 'string' }, 'cap-usd': { type: 'string' },
-    'token-cap': { type: 'string' }, 'call-tokens': { type: 'string' }, out: { type: 'string' } } });
+    'token-cap': { type: 'string' }, 'call-tokens': { type: 'string' }, out: { type: 'string' }, manifest: { type: 'string' } } });
   if (!['B-H', 'B-M', 'B0-H', 'REF'].includes(a.arm) || !a.label) throw new Error('usage: --arm B-H|B-M|B0-H|REF --label NAME');
   const doc = JSON.parse(readFileSync(CASES_FILE, 'utf8'));
   const wanted = a.cases ? new Set(a.cases.split(',')) : null;
@@ -132,7 +132,7 @@ async function main() {
   const started = new Date().toISOString();
   let spent = 0; const skipped = [], faults = [];
   mkdirSync(path.join(outDir, 'faults'), { recursive: true });
-  const manifestFile = path.join(root, 'research/surface-20261021/eval/MANIFEST.json');
+  const manifestFile = path.join(root, 'research/surface-20261021/eval', a.manifest ?? 'MANIFEST.json');
   const records = (await pool(cases, concurrency, async c => {
     if (a.arm !== 'B-M' && spent >= capUsd) { skipped.push(c.id); return null; }
     let rec;

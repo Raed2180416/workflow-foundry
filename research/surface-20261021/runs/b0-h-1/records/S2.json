@@ -1,0 +1,639 @@
+{
+ "arm": "B0-H",
+ "case": "S2",
+ "expected": "support-deflection",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "lead-contact",
+     "slot": null,
+     "question": "What email address should tickets go to for your support lead, or which chat channel should I post them to?"
+    },
+    {
+     "id": "close-answered",
+     "slot": null,
+     "question": "After I send the opening-hours or returns reply, should I mark that ticket closed in the tickets sheet, or leave it open for you to review?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "lead-contact",
+   "slot": null,
+   "question": "What email address should tickets go to for your support lead, or which chat channel should I post them to?",
+   "matched": [
+    "escalateTo"
+   ],
+   "answer": "That's Gwen, gwen@harbor-goods.com"
+  },
+  {
+   "turn": 0,
+   "id": "close-answered",
+   "slot": null,
+   "question": "After I send the opening-hours or returns reply, should I mark that ticket closed in the tickets sheet, or leave it open for you to review?",
+   "matched": [],
+   "answer": "I don't mind - use whatever you think is sensible."
+  }
+ ],
+ "modelQuestions": [],
+ "answers": {
+  "lead-contact": "That's Gwen, gwen@harbor-goods.com",
+  "close-answered": "I don't mind - use whatever you think is sensible."
+ },
+ "cost": {
+  "usd": 0.009056,
+  "tokens": 42060,
+  "inputTokens": 4,
+  "outputTokens": 10660,
+  "cacheReadTokens": 1730,
+  "cacheWriteTokens": 29666,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 836,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14801,
+   "costUsd": 0.002276975,
+   "costUnknown": false,
+   "latencyMs": 6719,
+   "journalId": 10
+  },
+  {
+   "turn": 1,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 9824,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14865,
+   "costUsd": 0.006778975,
+   "costUnknown": false,
+   "latencyMs": 46710,
+   "journalId": 13
+  }
+ ],
+ "builderWallMs": 53453,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "support-auto-reply",
+  "version": 1,
+  "title": "Auto-answer easy support tickets, escalate the rest to Gwen",
+  "goal": "Read open support tickets. Reply to tickets asking about opening hours (Mon-Sat 9-6) or returns (any item within 30 days, reply with order number). Route every other ticket, and any urgent, damaged, broken, refund, wrong-item or complaint ticket, to Gwen (gwen@harbor-goods.com) in one digest.",
+  "domain": "support",
+  "envelope": {
+   "assumptions": [
+    "Tickets sheet holds one row per ticket with id, from, subject, body, priority and status.",
+    "Keyword matching on subject and body is the only classifier; no model is used because the budget is zero.",
+    "Sends to customers and to Gwen are approved by a person before each dispatch."
+   ],
+   "risks": [
+    "Keyword routing can misroute a ticket; the escalation keywords are there to catch complaints that mention returns.",
+    "Tickets cannot be marked closed because the sheet tools only append, so answered tickets stay open in the sheet.",
+    "Replies state the stated policy only; no order lookup is done."
+   ],
+   "successCriteria": [
+    "Every open hours or returns ticket that is auto-answered gets exactly one reply to its sender.",
+    "All other open tickets appear in the digest sent to Gwen.",
+    "Independent audit confirms the sent recipients match the expected list."
+   ]
+  },
+  "budget": {
+   "maxSteps": 2500,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_tickets",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all support tickets.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tickets"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_tickets",
+    "kind": "task",
+    "needs": [
+     "read_tickets"
+    ],
+    "description": "Keep only open tickets.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_tickets.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "open_tickets"
+    ],
+    "description": "Label each open ticket hours, returns, or escalate. Urgent and complaint-like tickets always escalate and are checked before returns or hours.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_tickets.rows"
+     },
+     "rules": [
+      {
+       "field": "priority",
+       "op": "eq",
+       "value": "urgent",
+       "set": {
+        "route": "escalate"
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "damag",
+       "set": {
+        "route": "escalate"
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "broken",
+       "set": {
+        "route": "escalate"
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "refund",
+       "set": {
+        "route": "escalate"
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "wrong item",
+       "set": {
+        "route": "escalate"
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "complain",
+       "set": {
+        "route": "escalate"
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "return",
+       "set": {
+        "route": "returns"
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "hours",
+       "set": {
+        "route": "hours"
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "opening",
+       "set": {
+        "route": "hours"
+       }
+      }
+     ],
+     "otherwise": {
+      "route": "escalate"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "auto_rows",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Keep tickets routed to an automatic answer.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "where": [
+      {
+       "field": "route",
+       "op": "in",
+       "value": [
+        "hours",
+        "returns"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "auto_to",
+    "kind": "task",
+    "needs": [
+     "auto_rows"
+    ],
+    "description": "List the customer addresses that should receive an automatic answer.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.auto_rows.rows"
+     },
+     "field": "from"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_replies",
+    "kind": "map",
+    "needs": [
+     "auto_rows"
+    ],
+    "description": "Send one automatic answer per auto-answered ticket.",
+    "items": {
+     "$ref": "nodes.auto_rows.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "reply_hours",
+       "kind": "task",
+       "needs": [],
+       "description": "Send opening hours answer.",
+       "when": {
+        "op": "eq",
+        "left": {
+         "$ref": "item.route"
+        },
+        "right": "hours"
+       },
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.from"
+        },
+        "subject": "Your Harbor Goods support request",
+        "body": "Hi, thanks for getting in touch. We're open Monday to Saturday, 9:00 to 18:00."
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      },
+      {
+       "id": "reply_returns",
+       "kind": "task",
+       "needs": [],
+       "description": "Send returns answer.",
+       "when": {
+        "op": "eq",
+        "left": {
+         "$ref": "item.route"
+        },
+        "right": "returns"
+       },
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.from"
+        },
+        "subject": "Your Harbor Goods support request",
+        "body": "Hi, thanks for getting in touch. You can return anything within 30 days. Just reply to this email with your order number and we'll take it from there."
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "any",
+       "conditions": [
+        {
+         "op": "exists",
+         "value": {
+          "$ref": "nodes.reply_hours.delivered"
+         }
+        },
+        {
+         "op": "exists",
+         "value": {
+          "$ref": "nodes.reply_returns.delivered"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "escalate_rows",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Keep tickets that need a person.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "where": [
+      {
+       "field": "route",
+       "op": "eq",
+       "value": "escalate"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest_text",
+    "kind": "task",
+    "needs": [
+     "escalate_rows"
+    ],
+    "description": "Write the digest of tickets for Gwen.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.escalate_rows.rows"
+     },
+     "line": "Ticket {{id}} from {{from}}: {{subject}}\n{{body}}",
+     "empty": "No tickets needed escalation this run."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_digest",
+    "kind": "task",
+    "needs": [
+     "digest_text",
+     "send_replies"
+    ],
+    "description": "Send the escalation digest to Gwen.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "gwen@harbor-goods.com",
+     "subject": "Support tickets for you to handle",
+     "body": {
+      "$ref": "nodes.digest_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_sends",
+    "kind": "verify",
+    "needs": [
+     "auto_to",
+     "send_digest"
+    ],
+    "description": "Independently confirm the sent recipients match the expected list.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.auto_to.items"
+      },
+      "gwen@harbor-goods.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_digest"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_sends.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_digest.delivered"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 3,
+   "approved": 3,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "pat@inbox.example",
+     "subject": "Your Harbor Goods support request",
+     "body": "Hi, thanks for getting in touch. You can return anything within 30 days. Just reply to this email with your order number and we'll take it from there."
+    },
+    {
+     "to": "gwen@harbor-goods.com",
+     "subject": "Support tickets for you to handle",
+     "body": "Ticket T-203 from shop@retailer.example: Wholesale account\nwe'd like to stock your products\nTicket T-204 from vic@inbox.example: Order arrived broken\nthe mug was smashed"
+    },
+    {
+     "to": "ola@inbox.example",
+     "subject": "Your Harbor Goods support request",
+     "body": "Hi, thanks for getting in touch. We're open Monday to Saturday, 9:00 to 18:00."
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-R2b7q9",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open hours or returns ticket that is auto-answered gets exactly one reply to its sender.",
+    "exact": "the pass of “Independently confirm the sent recipients match the expected list.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "All other open tickets appear in the digest sent to Gwen.",
+    "exact": "the delivered of “Send the escalation digest to Gwen.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_sends",
+    "plain": "Independently confirm the sent recipients match the expected list.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 1,
+  "repeatQuestions": 0,
+  "questionsAsked": 2,
+  "personActions": 6,
+  "personActionsBeforeRun": 3,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

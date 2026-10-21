@@ -1,0 +1,546 @@
+{
+ "arm": "B0-H",
+ "case": "C1",
+ "expected": "contact-sync",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004605,
+  "tokens": 21141,
+  "inputTokens": 2,
+  "outputTokens": 5499,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14775,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 5499,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14775,
+   "costUsd": 0.004605225,
+   "costUnknown": false,
+   "latencyMs": 24276,
+   "journalId": 19
+  }
+ ],
+ "builderWallMs": 24285,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "newsletter-crm-sync",
+  "version": 1,
+  "title": "Sync CRM contacts into newsletter list and report changes",
+  "goal": "Add every non-unsubscribed CRM contact missing from the newsletter list, verify the append, and send a change report to owner@saltandcedar.com.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Contacts marked unsubscribed=true in the CRM are never added to the newsletter; they are only counted in the report.",
+    "Newsletter matching is by email (case-insensitive) as provided by rows.reconcile.",
+    "The source label for added contacts is 'crm'."
+   ],
+   "risks": [
+    "addedAt is not set on appended rows because the capabilities cannot inject the run timestamp into row fields; the newsletter sheet will have an empty addedAt for new rows.",
+    "outbox.send asks a person before dispatch when run live."
+   ],
+   "successCriteria": [
+    "Every subscribed CRM contact with an email is present on the newsletter sheet after the run.",
+    "No unsubscribed CRM contact is added to the newsletter.",
+    "The appended row count matches the number of contacts reported as added.",
+    "The report is delivered to owner@saltandcedar.com and its delivery is independently verified."
+   ]
+  },
+  "budget": {
+   "maxSteps": 30,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_crm",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the CRM contacts.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "crm"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_newsletter",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the current newsletter list.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "newsletter"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "subscribed",
+    "kind": "task",
+    "needs": [
+     "read_crm"
+    ],
+    "description": "Keep CRM contacts that have an email and are not unsubscribed.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_crm.rows"
+     },
+     "where": [
+      {
+       "field": "email",
+       "op": "exists"
+      },
+      {
+       "field": "unsubscribed",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "unsubscribed",
+    "kind": "task",
+    "needs": [
+     "read_crm"
+    ],
+    "description": "Count CRM contacts that are unsubscribed (skipped).",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_crm.rows"
+     },
+     "where": [
+      {
+       "field": "unsubscribed",
+       "op": "eq",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "diff",
+    "kind": "task",
+    "needs": [
+     "subscribed",
+     "read_newsletter"
+    ],
+    "description": "Compare subscribed CRM contacts with the newsletter list by email.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.subscribed.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_newsletter.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "to_add",
+    "kind": "task",
+    "needs": [
+     "diff"
+    ],
+    "description": "Shape missing contacts as newsletter rows.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.diff.missing"
+     },
+     "fields": [
+      "email",
+      "name"
+     ],
+     "set": {
+      "source": "crm"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append",
+    "kind": "task",
+    "needs": [
+     "to_add"
+    ],
+    "description": "Append missing contacts to the newsletter list.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "newsletter",
+     "rows": {
+      "$ref": "nodes.to_add.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "verify_append",
+    "kind": "verify",
+    "needs": [
+     "append"
+    ],
+    "description": "Independently confirm the appended rows are in the newsletter sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "newsletter",
+     "rows": {
+      "$ref": "nodes.append.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "count_added",
+    "kind": "task",
+    "needs": [
+     "to_add"
+    ],
+    "description": "Count contacts added this run.",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "count",
+     "values": {
+      "$ref": "nodes.to_add.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "lines",
+    "kind": "task",
+    "needs": [
+     "to_add"
+    ],
+    "description": "Render one line per added contact.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.to_add.rows"
+     },
+     "line": "{{email}} ({{name}})",
+     "empty": "No new contacts were added."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "report",
+    "kind": "task",
+    "needs": [
+     "count_added",
+     "diff",
+     "unsubscribed",
+     "lines"
+    ],
+    "description": "Build the change report text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Newsletter sync {{now}}\nAdded: {{added}}\nAlready on list: {{matched}}\nSkipped (unsubscribed): {{skipped}}\n\nAdded contacts:\n{{lines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "added": {
+       "$ref": "nodes.count_added.value"
+      },
+      "matched": {
+       "$ref": "nodes.diff.matched"
+      },
+      "skipped": {
+       "$ref": "nodes.unsubscribed.count"
+      },
+      "lines": {
+       "$ref": "nodes.lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "report_artifact",
+    "kind": "task",
+    "needs": [
+     "report"
+    ],
+    "description": "Save the report as a run artifact.",
+    "tool": "core.artifact",
+    "args": {
+     "name": "newsletter-sync-report.txt",
+     "content": {
+      "$ref": "nodes.report.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send",
+    "kind": "task",
+    "needs": [
+     "report",
+     "verify_append"
+    ],
+    "description": "Email the change report to the owner.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "owner@saltandcedar.com",
+     "subject": "Newsletter sync report",
+     "body": {
+      "$ref": "nodes.report.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_send",
+    "kind": "verify",
+    "needs": [
+     "send"
+    ],
+    "description": "Independently confirm the report reached the outbox with the saved hash.",
+    "method": "capability",
+    "tool": "outbox.check",
+    "args": {
+     "messageId": {
+      "$ref": "nodes.send.messageId"
+     },
+     "sha256": {
+      "$ref": "nodes.send.sha256"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_append.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append.appended"
+    },
+    "right": {
+     "$ref": "nodes.count_added.value"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_send.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "owner@saltandcedar.com",
+     "subject": "Newsletter sync report",
+     "body": "Newsletter sync 2026-10-21T07:00:00Z\nAdded: 2\nAlready on list: 2\nSkipped (unsubscribed): 1\n\nAdded contacts:\nbram@kettleworks.example (Bram Kettle)\nesme@quayside.example (Esme Quay)"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "newsletter": [
+     {
+      "email": "bram@kettleworks.example",
+      "name": "Bram Kettle",
+      "source": "crm"
+     },
+     {
+      "email": "esme@quayside.example",
+      "name": "Esme Quay",
+      "source": "crm"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-ex6WOM",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every subscribed CRM contact with an email is present on the newsletter sheet after the run.",
+    "exact": "the pass of “Independently confirm the appended rows are in the newsletter sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No unsubscribed CRM contact is added to the newsletter.",
+    "exact": "the appended of “Append missing contacts to the newsletter list.” equals the value of “Count contacts added this run.”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The appended row count matches the number of contacts reported as added.",
+    "exact": "the delivered of “Email the change report to the owner.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "The report is delivered to owner@saltandcedar.com and its delivery is independently verified.",
+    "exact": "the pass of “Independently confirm the report reached the outbox with the saved hash.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_append",
+    "plain": "Independently confirm the appended rows are in the newsletter sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_send",
+    "plain": "Independently confirm the report reached the outbox with the saved hash.",
+    "exact": "outbox.check (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": {
+   "violated": false,
+   "hits": []
+  }
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 2,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

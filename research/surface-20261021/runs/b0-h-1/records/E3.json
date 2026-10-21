@@ -1,0 +1,353 @@
+{
+ "arm": "B0-H",
+ "case": "E3",
+ "expected": "expense-approval",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003924,
+  "tokens": 19792,
+  "inputTokens": 2,
+  "outputTokens": 4133,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14792,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4133,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14792,
+   "costUsd": 0.00392435,
+   "costUnknown": false,
+   "latencyMs": 19996,
+   "journalId": 17
+  }
+ ],
+ "builderWallMs": 20005,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-approvals",
+  "version": 1,
+  "title": "Expense approvals: auto-approve up to 75",
+  "goal": "For every submitted expense claim not yet in expense-decisions, approve it automatically when the amount is 75 or less (receipt not required), otherwise mark it as waiting for an approver. Append one decision row per claim and verify the append.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Amounts in the expenses sheet are numbers in the same currency.",
+    "Claims with status submitted and no existing row in expense-decisions (matched by id) are the ones to decide.",
+    "Auto-approval ignores the receipt field, as requested.",
+    "Claims over 75 are only recorded as waiting for approver; no one is notified by this flow."
+   ],
+   "risks": [
+    "The at timestamp is not written because rows.route and rows.select only take constant values; the decision rows will have no at value.",
+    "The expenses sheet status is not updated to approved; only expense-decisions gets new rows.",
+    "sheet.append runs once per workflow run; a claim left undecided is picked up on the next run, not repeated within one run."
+   ],
+   "successCriteria": [
+    "Every submitted claim without a decision gets exactly one row in expense-decisions.",
+    "Claims of 75 or less are approved; claims above 75 are waiting for approver.",
+    "The audit of appended rows passes."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 12,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_expenses",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all expense claims.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_decisions",
+    "kind": "task",
+    "needs": [],
+    "description": "Read existing expense decisions so claims are not decided twice.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expense-decisions"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read_expenses"
+    ],
+    "description": "Keep only claims with status submitted.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_expenses.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "undecided",
+    "kind": "task",
+    "needs": [
+     "submitted",
+     "read_decisions"
+    ],
+    "description": "Keep submitted claims that have no decision row yet.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_decisions.rows"
+     },
+     "key": "id"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "undecided"
+    ],
+    "description": "Approve claims of 75 or less automatically; route the rest to an approver.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.undecided.missing"
+     },
+     "rules": [
+      {
+       "field": "amount",
+       "op": "lte",
+       "value": 75,
+       "set": {
+        "decision": "approved",
+        "reason": "amount within 75 auto-approval limit"
+       }
+      }
+     ],
+     "otherwise": {
+      "decision": "waiting for approver",
+      "reason": "amount over 75, needs approver"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "select",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Shape rows to the expense-decisions columns.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount",
+      "decision",
+      "reason"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append",
+    "kind": "task",
+    "needs": [
+     "select"
+    ],
+    "description": "Append the decision rows to expense-decisions.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.select.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "append"
+    ],
+    "description": "Independently confirm the appended decision rows are in the sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "harness_fault",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "SHEET_NOT_FOUND",
+   "message": "There is no sheet named expense-decisions"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-oqfqFV",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every submitted claim without a decision gets exactly one row in expense-decisions.",
+    "exact": "the pass of “Independently confirm the appended decision rows are in the sheet.” equals true",
+    "passed": null
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Independently confirm the appended decision rows are in the sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Read existing expense decisions so claims are not decided twice."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict harness_fault): SHEET_NOT_FOUND",
+   "outbox : missing a message to beth@gladwell-law.com containing \"Z-2\"",
+   "sheet expense-decisions: missing an expected item {\"id\":\"Z-1\",\"decision\":\"approved\"}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"Z-3\",\"decision\":\"approved\"}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"Z-4\",\"decision\":\"approved\"}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"Z-2\",\"decision\":{\"not\":\"approved\"}}"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

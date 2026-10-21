@@ -136,3 +136,12 @@ attempts, fresh run ids). Its spend counts toward the caps. Our own caps (`MODEL
 ## 10. Deviations
 
 None at the time of writing. Any later one is appended here with its time, reason and the results it affects.
+
+- **D1 (2026-10-21, after the three preregistered arms `b-h-1`, `b-m-1`, `b0-h-1` finished; their results stand as run, on the frozen
+  hashes above).** The failures pointed at four defects in the template arms' code and cards, which are fixed after the freeze:
+  (1) a money limit written as "under 200" was filled as 199.99 and the grounding guard rejected it, so the builder asked forever (B-H E2);
+  (2) the question policy dropped the model's own question about routing-rule addresses and routed every lead to the default person
+  (B-H and B-M L3); (3) the contact-sync card did not say it can report without changing anything, so the model refused C3 (B-H);
+  (4) Mercury's select call ran out of its 600-token allowance (B-M E3, C3). Runs with the fixes are labelled `*-fix-*`, are
+  **post-hoc development evidence on the same 24 cases** (training evidence, not held-out), and are never pooled with or substituted for
+  the preregistered results. A new manifest (`eval/MANIFEST-fix.json`) pins the changed files; `eval/MANIFEST.json` is unchanged.

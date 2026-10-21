@@ -1,0 +1,462 @@
+{
+ "arm": "B0-H",
+ "case": "O2",
+ "expected": "oncall-digest",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004521,
+  "tokens": 20989,
+  "inputTokens": 2,
+  "outputTokens": 5326,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14796,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 5326,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14796,
+   "costUsd": 0.00452135,
+   "costUnknown": false,
+   "latencyMs": 24088,
+   "journalId": 25
+  }
+ ],
+ "builderWallMs": 24099,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "overnight-critical-alerts",
+  "version": 1,
+  "title": "Post overnight critical alerts to #oncall and page pager for unacknowledged ones",
+  "goal": "Read the alerts sheet, keep critical alerts from the last 12 hours, post them to #oncall, and email pager@fennec.dev when any of those critical alerts has not been acknowledged.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The alerts sheet has ISO date-time 'at' values with an offset and boolean 'acknowledged' values.",
+    "The run input 'now' is the current time.",
+    "The #oncall channel name is '#oncall'."
+   ],
+   "risks": [
+    "chat.post and outbox.send ask a person before each live dispatch.",
+    "Paging is only sent when at least one critical alert in the window is unacknowledged."
+   ],
+   "successCriteria": [
+    "Every critical alert from the last 12 hours is listed in the #oncall post.",
+    "pager@fennec.dev is emailed exactly when unacknowledged critical alerts exist in the window.",
+    "The #oncall post is confirmed by an independent chat.audit check."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_alerts",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all alert rows.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "age",
+    "kind": "task",
+    "needs": [
+     "read_alerts"
+    ],
+    "description": "Add hours elapsed since each alert's time.",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_alerts.rows"
+     },
+     "field": "at",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "hours",
+     "as": "hoursAgo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "overnight",
+    "kind": "task",
+    "needs": [
+     "age"
+    ],
+    "description": "Keep critical alerts from the last 12 hours.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.age.rows"
+     },
+     "where": [
+      {
+       "field": "severity",
+       "op": "eq",
+       "value": "critical"
+      },
+      {
+       "field": "hoursAgo",
+       "op": "gte",
+       "value": 0
+      },
+      {
+       "field": "hoursAgo",
+       "op": "lte",
+       "value": 12
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "overnight_lines",
+    "kind": "task",
+    "needs": [
+     "overnight"
+    ],
+    "description": "Render one line per overnight critical alert.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.overnight.rows"
+     },
+     "line": "{{service}} | {{at}} | {{message}} | acknowledged: {{acknowledged}}",
+     "empty": "No critical alerts overnight."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post_text",
+    "kind": "task",
+    "needs": [
+     "overnight_lines"
+    ],
+    "description": "Build the #oncall message.",
+    "tool": "core.template",
+    "args": {
+     "text": "Overnight critical alerts (last 12h):\n{{lines}}",
+     "variables": {
+      "lines": {
+       "$ref": "nodes.overnight_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post_oncall",
+    "kind": "task",
+    "needs": [
+     "post_text"
+    ],
+    "description": "Post the overnight critical alerts to #oncall.",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#oncall",
+     "text": {
+      "$ref": "nodes.post_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_post",
+    "kind": "verify",
+    "needs": [
+     "post_oncall"
+    ],
+    "description": "Independently confirm the #oncall post was left in the channel.",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#oncall",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post_oncall"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "unacked",
+    "kind": "task",
+    "needs": [
+     "overnight"
+    ],
+    "description": "Keep overnight critical alerts not yet acknowledged.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.overnight.rows"
+     },
+     "where": [
+      {
+       "field": "acknowledged",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "unacked_lines",
+    "kind": "task",
+    "needs": [
+     "unacked"
+    ],
+    "description": "Render one line per unacknowledged critical alert.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.unacked.rows"
+     },
+     "line": "{{service}} | {{at}} | {{message}}",
+     "empty": "No unacknowledged critical alerts."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "page_text",
+    "kind": "task",
+    "needs": [
+     "unacked_lines"
+    ],
+    "description": "Build the pager email body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Unacknowledged CRITICAL alerts from the last 12 hours. Please acknowledge:\n{{lines}}",
+     "variables": {
+      "lines": {
+       "$ref": "nodes.unacked_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "page_pager",
+    "kind": "task",
+    "needs": [
+     "unacked",
+     "page_text"
+    ],
+    "description": "Email pager@fennec.dev when unacknowledged critical alerts exist.",
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.unacked.count"
+     },
+     "right": 0
+    },
+    "tool": "outbox.send",
+    "args": {
+     "to": "pager@fennec.dev",
+     "subject": "CRITICAL unacknowledged alert - please respond",
+     "body": {
+      "$ref": "nodes.page_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_post.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.unacked.count"
+      },
+      "right": 0
+     },
+     {
+      "op": "all",
+      "conditions": [
+       {
+        "op": "exists",
+        "value": {
+         "$ref": "nodes.page_pager.delivered"
+        }
+       },
+       {
+        "op": "eq",
+        "left": {
+         "$ref": "nodes.page_pager.delivered"
+        },
+        "right": true
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 2,
+   "approved": 2,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "pager@fennec.dev",
+     "subject": "CRITICAL unacknowledged alert - please respond",
+     "body": "Unacknowledged CRITICAL alerts from the last 12 hours. Please acknowledge:\npayments | 2026-10-21T04:00:00Z | Card processor timeouts\nmail | 2026-10-21T03:00:00Z | SMTP relay down"
+    }
+   ],
+   "chat": {
+    "#oncall": [
+     "Overnight critical alerts (last 12h):\npayments | 2026-10-21T04:00:00Z | Card processor timeouts | acknowledged: false\nauth | 2026-10-21T01:00:00Z | Login latency p99 over 5s | acknowledged: true\nmail | 2026-10-21T03:00:00Z | SMTP relay down | acknowledged: false"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-Jyl3Sp",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every critical alert from the last 12 hours is listed in the #oncall post.",
+    "exact": "the pass of “Independently confirm the #oncall post was left in the channel.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "pager@fennec.dev is emailed exactly when unacknowledged critical alerts exist in the window.",
+    "exact": "the count of “Keep overnight critical alerts not yet acknowledged.” equals 0 or the delivered of “Email pager@fennec.dev when unacknowledged critical alerts exist.” exists and the delivered of “Email pager@fennec.dev when unacknowledged critical alerts exist.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_post",
+    "plain": "Independently confirm the #oncall post was left in the channel.",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "chat #oncall: missing an expected item containing \"Card processor timeouts\", \"Login latency\" without Slow image CDN, Index rebuild failed, SMTP relay down",
+   "chat #oncall: unexpected or wrong item {\"text\":\"Overnight critical alerts (last 12h):\\npayments | 2026-10-21T04:00:00Z | Card processor timeouts | acknowledged: false\\nauth | 2026-10-21T01:00:00Z | L"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

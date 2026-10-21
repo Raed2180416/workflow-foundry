@@ -1,0 +1,270 @@
+{
+ "runId": "a1c-devcheck-1",
+ "label": "model claude-haiku-5-5",
+ "model": "claude-haiku-5-5",
+ "scripted": false,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "arm": "A1-C (code-owned harness)",
+ "sealed": true,
+ "testSplitTasks": 0,
+ "harness": {
+  "id": "codeowned",
+  "version": "a1c-v1",
+  "manifestSha256": "5622c9418c7467b79e234dae5fb48b38f41d4ea8fe044fa5ef0c68f9a109c74f",
+  "frozenHashGiven": false,
+  "nodeModels": {
+   "ledger": "claude-haiku-5-5",
+   "adjudicate": "claude-haiku-5-5",
+   "pcmap": "claude-haiku-5-5",
+   "checker": "claude-haiku-5-5",
+   "act": "claude-haiku-5-5",
+   "repair": "claude-haiku-5-5"
+  },
+  "pipeline": {
+   "K": 3,
+   "inventorySteps": 16,
+   "checkSteps": 3,
+   "maxRounds": 2,
+   "actReserveResponses": 8,
+   "minRepairResponses": 4,
+   "nodeTimeoutMs": 240000,
+   "inlineInventoryChars": 70000,
+   "ledgerInventoryChars": 150000,
+   "systemMaxBytes": 90000,
+   "nodeBudgetShare": 0.1,
+   "reserveShare": 0.25,
+   "pcmap": true,
+   "parallelLedgers": true,
+   "minCheckerMs": 45000
+  },
+  "extraModelCalls": 324
+ },
+ "selection": {
+  "pool": "devCheck",
+  "subset": null,
+  "seed": null,
+  "domains": [
+   "sales",
+   "marketing",
+   "operations",
+   "support",
+   "finance",
+   "hr"
+  ]
+ },
+ "tasks": [
+  "sales.contract_renewal_coordinator",
+  "sales.create_contact_for_account",
+  "sales.create_draft_reply",
+  "sales.feedback_routing",
+  "sales.gcal_deal_milestone_tracker",
+  "sales.historical_win_loss_recap",
+  "sales.mark_vip_emails_read",
+  "sales.zoom_attendance_pipeline",
+  "sales.zoom_recurring_meeting_optimizer",
+  "sales.zoom_webinar_lead_scoring",
+  "marketing.ad_platform_audit",
+  "marketing.campaign_handoff",
+  "marketing.campaign_launch_checklist",
+  "marketing.campaign_roi_analysis",
+  "marketing.conversion_tracking",
+  "marketing.facebook_photo_highlight",
+  "marketing.social_engagement_response",
+  "marketing.social_mention_response",
+  "marketing.trending_topic",
+  "marketing.trial_extension_processing",
+  "operations.asana_basecamp_move_planning",
+  "operations.docusign_prospect_nda",
+  "operations.drive_notion_archive",
+  "operations.fleet_vehicle_maintenance",
+  "operations.hubspot_ticket_escalation",
+  "operations.mailchimp_campaign_tracking",
+  "operations.safety_certification_gap_analysis",
+  "operations.space_utilization_analysis",
+  "operations.utility_cost_allocation",
+  "operations.zoom_deal_review",
+  "support.freshdesk_auto_merge",
+  "support.helpscout_reamaze_migration",
+  "support.helpscout_weekly_report",
+  "support.hiver_workload_forecast",
+  "support.reamaze_multi_channel_dedup",
+  "support.reamaze_multilanguage",
+  "support.zendesk_customer_sentiment",
+  "support.zendesk_hubspot_churn_risk",
+  "support.zendesk_weekend_handoff",
+  "support.zoho_freshdesk_escalation",
+  "finance.annual_budget_prep",
+  "finance.deferred_revenue_tracking",
+  "finance.financial_close_checklist",
+  "finance.monthend_journal_entries",
+  "finance.overdue_invoice_followup",
+  "finance.tax_prep_summary",
+  "finance.timesheet_to_invoice",
+  "finance.vendor_credit_application",
+  "finance.xero_quote_to_invoice",
+  "finance.year_end_audit_prep",
+  "hr.benefits_enrollment_review",
+  "hr.candidate_offer_negotiation_tracking",
+  "hr.compliance_training_enrollment",
+  "hr.expense_policy_violation",
+  "hr.interview_scheduling",
+  "hr.monday_pip_tracking",
+  "hr.monday_succession_planning",
+  "hr.survey_distribution",
+  "hr.twilio_interview_reminders",
+  "hr.workforce_planning_forecast"
+ ],
+ "dateNote": true,
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 0.75,
+ "capUsd": 6,
+ "tools": [
+  "Bash"
+ ],
+ "effort": null,
+ "n": 60,
+ "n_graded": 60,
+ "pass_rate": 0.3333333333333333,
+ "mean_partial_credit": 0.7335361468195211,
+ "by_domain": {
+  "sales": {
+   "n": 10,
+   "pass_rate": 0.2,
+   "mean_partial_credit": 0.6502380952380953
+  },
+  "marketing": {
+   "n": 10,
+   "pass_rate": 0.3,
+   "mean_partial_credit": 0.8107142857142857
+  },
+  "operations": {
+   "n": 10,
+   "pass_rate": 0.4,
+   "mean_partial_credit": 0.7577777777777778
+  },
+  "support": {
+   "n": 10,
+   "pass_rate": 0.1,
+   "mean_partial_credit": 0.7433200555203012
+  },
+  "finance": {
+   "n": 10,
+   "pass_rate": 0.4,
+   "mean_partial_credit": 0.6658333333333333
+  },
+  "hr": {
+   "n": 10,
+   "pass_rate": 0.6,
+   "mean_partial_credit": 0.7733333333333333
+  }
+ },
+ "live_pass_rate": 0.3333333333333333,
+ "mean_cost_per_task_usd": 0.03011494166666667,
+ "accounting": {
+  "modelResponses": {
+   "mean": 15.216666666666667,
+   "max": 33
+  },
+  "toolResponses": {
+   "mean": 8.816666666666666,
+   "max": 25
+  },
+  "numTurnsCli": {
+   "mean": 16.016666666666666,
+   "max": 35
+  },
+  "worldSteps": {
+   "mean": 15.016666666666667,
+   "max": 37
+  },
+  "worldCalls": {
+   "mean": 198.18333333333334,
+   "max": 443
+  },
+  "reads": {
+   "mean": 185.21666666666667,
+   "max": 427
+  },
+  "searches": {
+   "mean": 4,
+   "max": 11
+  },
+  "writes": {
+   "mean": 7.783333333333333,
+   "max": 41
+  },
+  "stoppedByStepGuard": 0,
+  "extraModelCalls": 324,
+  "compactions": 0,
+  "capViolations": 0,
+  "l5Violations": 0,
+  "models": [
+   "claude-haiku-5-5"
+  ],
+  "ledger": null
+ },
+ "cost": {
+  "spentUsd": 1.8068965000000001,
+  "knownUsd": 1.8068965000000001,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 60,
+  "skipped": 0
+ },
+ "tokens": {
+  "input": 13561361,
+  "output": 5276,
+  "cachedInput": 8864490,
+  "total": 13566637,
+  "sessions": 60,
+  "byModel": {
+   "claude-haiku-5-5": {
+    "input": 13561361,
+    "output": 5276,
+    "cachedInput": 8864490,
+    "total": 13566637
+   }
+  },
+  "meanPerTask": 226110.61666666667,
+  "sessionBudget": null,
+  "cap": null,
+  "meterSpent": null,
+  "meterUnknownSessions": null,
+  "faultSessions": 0
+ },
+ "launchHistory": [],
+ "envFaults": {
+  "records": 0,
+  "tasks": 0,
+  "sessions": 0,
+  "spentUsd": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "ea1dca70628a80262430b0d693d013fab456aebccefaac9e48db9713d4c87c5f",
+  "policyHash": "7447a8752174cb7ebe7f754a7a2fac7bfa081c6db1787db989cfeca29cf53462",
+  "policyVersion": "2026-10-21.2",
+  "policyFileSha256": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
+  "node": "v24.21.0",
+  "cli": "2.1.306 (Claude Code)",
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  },
+  "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "harnessManifestSha256": "5622c9418c7467b79e234dae5fb48b38f41d4ea8fe044fa5ef0c68f9a109c74f"
+ },
+ "live": "/var/tmp/foundry-work/autobench/a1c-devcheck-1",
+ "finishedAt": "2026-10-21T17:08:08.412Z"
+}

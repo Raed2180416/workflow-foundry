@@ -1,0 +1,80 @@
+{
+ "arm": "B0-H",
+ "case": "N2",
+ "expected": "none",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "The workflow would need to post photos to Instagram and TikTok on a daily schedule, and no listed capability can publish to those platforms; the only outbound tools are e-mail to the local outbox and chat.post to a local chat channel, and no \"content sheet\" is among the available sheets.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.002018,
+  "tokens": 15960,
+  "inputTokens": 2,
+  "outputTokens": 327,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14766,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 327,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14766,
+   "costUsd": 0.0020181,
+   "costUnknown": false,
+   "latencyMs": 3533,
+   "journalId": 26
+  }
+ ],
+ "builderWallMs": 3539,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

@@ -1,0 +1,350 @@
+{
+ "arm": "B0-H",
+ "case": "S3",
+ "expected": "support-deflection",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004204,
+  "tokens": 20367,
+  "inputTokens": 2,
+  "outputTokens": 4688,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14812,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4688,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14812,
+   "costUsd": 0.00420435,
+   "costUnknown": false,
+   "latencyMs": 21654,
+   "journalId": 12
+  }
+ ],
+ "builderWallMs": 21664,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "ticket-auto-replies",
+  "version": 1,
+  "title": "Ticket auto-replies (invoice copy or support redirect)",
+  "goal": "For each open ticket, send one auto-reply signed Nimbus Support. Invoice-copy requests get the Billing > Invoices instruction. All other open tickets get a reply pointing to support@nimbusdesk.app.",
+  "domain": "support",
+  "envelope": {
+   "assumptions": [
+    "Open tickets are those with status 'open'.",
+    "An invoice-copy request is a ticket whose subject or body mentions 'invoice'; every other ticket is 'everything else'.",
+    "'Everything else goes to support@nimbusdesk.app' means the auto-reply tells the customer to contact that address.",
+    "Each outbound reply is approved by a person before it is sent."
+   ],
+   "risks": [
+    "Keyword matching on 'invoice' may catch tickets that do not ask for a copy of an invoice.",
+    "Each reply is an outbound email; a person must approve every send."
+   ],
+   "successCriteria": [
+    "Every open ticket receives exactly one auto-reply at its 'from' address.",
+    "Invoice-copy replies point to Billing > Invoices; all other replies point to support@nimbusdesk.app.",
+    "Every reply is signed Nimbus Support.",
+    "The outbox audit confirms recipients and message bodies."
+   ]
+  },
+  "budget": {
+   "maxSteps": 1000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the tickets sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tickets"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep only open tickets.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "open"
+    ],
+    "description": "Label each open ticket with the reply text: invoice-copy requests get the billing instruction, all others get the support redirect.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open.rows"
+     },
+     "rules": [
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "invoice",
+       "set": {
+        "replyType": "invoice",
+        "replyBody": "Hello,\n\nThanks for contacting us. You can find a copy of your invoice in your account under Billing > Invoices.\n\nNimbus Support"
+       }
+      }
+     ],
+     "otherwise": {
+      "replyType": "support",
+      "replyBody": "Hello,\n\nThanks for contacting us. For this request, please email support@nimbusdesk.app and our team will help you.\n\nNimbus Support"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "addresses",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "List the recipient addresses for the audit.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.route.rows"
+     },
+     "field": "from"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_replies",
+    "kind": "map",
+    "needs": [
+     "route"
+    ],
+    "description": "Send one auto-reply per open ticket.",
+    "items": {
+     "$ref": "nodes.route.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [],
+       "description": "Send the auto-reply to the ticket sender.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.from"
+        },
+        "subject": "Re: your Nimbus Support request",
+        "body": {
+         "$ref": "item.replyBody"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "send_replies",
+     "addresses"
+    ],
+    "description": "Independently re-read the outbox and confirm every reply was delivered to the right address with the recorded body hash.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": {
+      "$ref": "nodes.addresses.items"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.send_replies"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 3,
+   "approved": 3,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "ana@acme.example",
+     "subject": "Re: your Nimbus Support request",
+     "body": "Hello,\n\nThanks for contacting us. You can find a copy of your invoice in your account under Billing > Invoices.\n\nNimbus Support"
+    },
+    {
+     "to": "cy@acme.example",
+     "subject": "Re: your Nimbus Support request",
+     "body": "Hello,\n\nThanks for contacting us. For this request, please email support@nimbusdesk.app and our team will help you.\n\nNimbus Support"
+    },
+    {
+     "to": "bo@acme.example",
+     "subject": "Re: your Nimbus Support request",
+     "body": "Hello,\n\nThanks for contacting us. You can find a copy of your invoice in your account under Billing > Invoices.\n\nNimbus Support"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-2YfDP4",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open ticket receives exactly one auto-reply at its 'from' address.",
+    "exact": "the pass of “Independently re-read the outbox and confirm every reply was delivered to the right address with the recorded body hash.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Independently re-read the outbox and confirm every reply was delivered to the right address with the recorded body hash.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to support@nimbusdesk.app containing one of [T-302 | Charged twice], one of [T-303 | dark mode]",
+   "outbox : unexpected or wrong message to cy@acme.example (\"Re: your Nimbus Support request\")",
+   "outbox : unexpected or wrong message to bo@acme.example (\"Re: your Nimbus Support request\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

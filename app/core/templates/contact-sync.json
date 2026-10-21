@@ -3,7 +3,7 @@
     "id": "contact-sync",
     "title": "Sync the newsletter list from the CRM and report the differences",
     "author": "claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)",
-    "whenToUse": "Someone wants their mailing or newsletter list kept in step with their CRM or customer sheet: add the contacts that are missing, and get a report of what differs.",
+    "whenToUse": "Someone wants their mailing or newsletter list kept in step with their CRM or customer sheet: add the contacts that are missing, or only find out who is missing without changing anything, and get a report of what differs.",
     "notFor": "Sending the newsletter itself, deleting or editing contacts, syncing orders, invoices or payments, or two-way sync.",
     "sources": ["experiments/library/cards/catalog.json P02 fetch -> transform -> write (sync / ETL)", "research/business-20261021/ORG-SCALE-SOURCES.md (reconciliation invariants between systems of record)"],
     "slots": [

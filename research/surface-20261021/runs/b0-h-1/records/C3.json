@@ -1,0 +1,265 @@
+{
+ "arm": "B0-H",
+ "case": "C3",
+ "expected": "contact-sync",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003016,
+  "tokens": 17957,
+  "inputTokens": 2,
+  "outputTokens": 2323,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14767,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 2323,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14767,
+   "costUsd": 0.003016225,
+   "costUnknown": false,
+   "latencyMs": 13214,
+   "journalId": 20
+  }
+ ],
+ "builderWallMs": 13222,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "crm-not-in-newsletter",
+  "version": 1,
+  "title": "CRM contacts missing from the newsletter list",
+  "goal": "List every contact in the CRM sheet whose email is not on the newsletter sheet. Read-only: nothing is appended, sent or posted.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The sheets crm and newsletter exist in the workspace.",
+    "Email matching ignores case and spaces, as rows.reconcile does.",
+    "Unsubscribed CRM contacts are included in the result, since the request only asks about newsletter membership."
+   ],
+   "risks": [
+    "If a newsletter row stores an email differently (for example with extra spaces), that contact may be reported as missing."
+   ],
+   "successCriteria": [
+    "Every CRM row whose email is absent from the newsletter sheet appears in the saved artifact.",
+    "No sheet is modified."
+   ]
+  },
+  "budget": {
+   "maxSteps": 10,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_crm",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the CRM contacts.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "crm"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_newsletter",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the newsletter list.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "newsletter"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "find_missing",
+    "kind": "task",
+    "needs": [
+     "read_crm",
+     "read_newsletter"
+    ],
+    "description": "Find CRM contacts whose email is not on the newsletter list.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.read_crm.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_newsletter.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "serialize",
+    "kind": "task",
+    "needs": [
+     "find_missing"
+    ],
+    "description": "Serialize the missing contacts as pretty JSON.",
+    "tool": "core.json",
+    "args": {
+     "value": {
+      "$ref": "nodes.find_missing.missing"
+     },
+     "pretty": true
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "save_report",
+    "kind": "task",
+    "needs": [
+     "serialize"
+    ],
+    "description": "Save the list as a run artifact (no sheet changes).",
+    "tool": "core.artifact",
+    "args": {
+     "name": "crm-not-on-newsletter.json",
+     "content": {
+      "$ref": "nodes.serialize.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "exists",
+    "value": {
+     "$ref": "nodes.save_report.sha256"
+    }
+   },
+   {
+    "op": "exists",
+    "value": {
+     "$ref": "nodes.find_missing.counts"
+    }
+   }
+  ],
+  "oracle": {
+   "mode": "none",
+   "reason": "No independent check exists for a set difference; a person should spot-check the saved list against the CRM and newsletter sheets."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "unverified",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-p7UGjy",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every CRM row whose email is absent from the newsletter sheet appears in the saved artifact.",
+    "exact": "the sha256 of “Save the list as a run artifact (no sheet changes).” exists",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No sheet is modified.",
+    "exact": "the counts of “Find CRM contacts whose email is not on the newsletter list.” exists",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended succeeded (verdict unverified)",
+   "outbox : missing a message to lee@harborlight.org containing \"mo@ridgeline.example\", \"otto@pebble.example\""
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

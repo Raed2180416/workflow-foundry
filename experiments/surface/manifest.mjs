@@ -9,7 +9,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const OUT = path.join(root, 'research/surface-20261021/eval/MANIFEST.json');
+// --out NAME writes or checks eval/NAME instead (the post-hoc fix runs use MANIFEST-fix.json; MANIFEST.json stays the freeze record).
+const outArg = process.argv.indexOf('--out');
+const OUT = path.join(root, 'research/surface-20261021/eval', outArg > 0 ? process.argv[outArg + 1] : 'MANIFEST.json');
 export const FROZEN = [
   'research/surface-20261021/eval/cases.json',
   'experiments/surface/oracle.mjs', 'experiments/surface/person.mjs', 'experiments/surface/metrics.mjs', 'experiments/surface/run-builder-eval.mjs', 'experiments/surface/b0.mjs',

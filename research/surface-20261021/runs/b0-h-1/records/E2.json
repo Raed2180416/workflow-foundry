@@ -1,0 +1,735 @@
+{
+ "arm": "B0-H",
+ "case": "E2",
+ "expected": "expense-approval",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.007858,
+  "tokens": 27666,
+  "inputTokens": 2,
+  "outputTokens": 11997,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14802,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 11997,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14802,
+   "costUsd": 0.0078576,
+   "costUnknown": false,
+   "latencyMs": 51680,
+   "journalId": 16
+  }
+ ],
+ "builderWallMs": 51695,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-approval-routing",
+  "version": 1,
+  "title": "Expense approval routing with employee notices",
+  "goal": "Auto-approve submitted expense claims under 200 that have a receipt, record every decision, email the claimant when their claim is approved, and send the rest to Ines (ines@parcelpoint.eu) for sign-off.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Amounts are numeric and receipt is a boolean in the expenses sheet.",
+    "A claim is auto-approved only when amount is below 200 AND receipt is true; claims at 200 or more, or without a receipt, are 'waiting for approver' and go to Ines.",
+    "Only rows with status 'submitted' are processed.",
+    "Each run dispatches approval emails through outbox.send, which asks a person before every send."
+   ],
+   "risks": [
+    "Ines's sign-off is requested by email only; the flow does not record her decision and does not change the status of pending claims.",
+    "The sheet tools can only append, so the expenses sheet status stays 'submitted'; a later run would process the same claims again and send duplicate approval emails.",
+    "Decisions are appended with the run time as 'at'; the approval is recorded in expense-decisions, not in the expenses sheet."
+   ],
+   "successCriteria": [
+    "Every submitted claim gets exactly one decision row with decision 'approved' (under 200 with receipt) or 'waiting for approver'.",
+    "Each approved claimant is emailed once and the outbox audit confirms the recipients.",
+    "Ines is emailed a list of waiting claims when there are any, and the decision rows pass the sheet audit."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 1600,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_expenses",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all expense claims.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read_expenses"
+    ],
+    "description": "Keep only claims still awaiting a decision.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_expenses.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Label each claim approved or waiting for approver.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "rules": [
+      {
+       "field": "amount",
+       "op": "gte",
+       "value": 200,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "amount 200 or more"
+       }
+      },
+      {
+       "field": "receipt",
+       "op": "ne",
+       "value": true,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "no receipt"
+       }
+      }
+     ],
+     "otherwise": {
+      "decision": "approved",
+      "reason": "under 200 with receipt"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "decision_rows",
+    "kind": "map",
+    "needs": [
+     "route"
+    ],
+    "description": "Build one decision row per claim, stamped with the run time.",
+    "items": {
+     "$ref": "nodes.route.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "row",
+       "kind": "task",
+       "needs": [],
+       "description": "Shape one decision row.",
+       "tool": "core.identity",
+       "args": {
+        "id": {
+         "$ref": "item.id"
+        },
+        "employee": {
+         "$ref": "item.employee"
+        },
+        "email": {
+         "$ref": "item.email"
+        },
+        "amount": {
+         "$ref": "item.amount"
+        },
+        "decision": {
+         "$ref": "item.decision"
+        },
+        "reason": {
+         "$ref": "item.reason"
+        },
+        "at": {
+         "$ref": "input.now"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.row.id"
+       },
+       "right": {
+        "$ref": "item.id"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "decision_list",
+    "kind": "task",
+    "needs": [
+     "decision_rows"
+    ],
+    "description": "Collect the decision rows.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.decision_rows.items"
+     },
+     "field": "row"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "decision_select",
+    "kind": "task",
+    "needs": [
+     "decision_list"
+    ],
+    "description": "Keep only the expense-decisions columns.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decision_list.items"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount",
+      "decision",
+      "reason",
+      "at"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "append_decisions",
+    "kind": "task",
+    "needs": [
+     "decision_select"
+    ],
+    "description": "Append the decisions to the expense-decisions sheet.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decision_select.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "approved_rows",
+    "kind": "task",
+    "needs": [
+     "decision_list"
+    ],
+    "description": "Claims auto-approved this run.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decision_list.items"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "approved"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "pending_rows",
+    "kind": "task",
+    "needs": [
+     "decision_list"
+    ],
+    "description": "Claims waiting for Ines's sign-off.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decision_list.items"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "waiting for approver"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "notify_map",
+    "kind": "map",
+    "needs": [
+     "approved_rows"
+    ],
+    "description": "Email each claimant that their claim was approved.",
+    "items": {
+     "$ref": "nodes.approved_rows.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "text",
+       "kind": "task",
+       "needs": [],
+       "description": "Compose the approval notice.",
+       "tool": "core.template",
+       "args": {
+        "text": "Hi {{employee}}, your expense claim {{id}} for {{amount}} has been approved.",
+        "variables": {
+         "employee": {
+          "$ref": "item.employee"
+         },
+         "id": {
+          "$ref": "item.id"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "text"
+       ],
+       "description": "Send the approval notice to the claimant.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "subject": "Your expense claim was approved",
+        "body": {
+         "$ref": "nodes.text.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "pending_summary",
+    "kind": "task",
+    "needs": [
+     "pending_rows"
+    ],
+    "description": "List claims waiting for sign-off.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.pending_rows.rows"
+     },
+     "line": "{{employee}} ({{email}}): {{amount}} - {{reason}} [{{id}}]",
+     "empty": "No claims waiting."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "ines_text",
+    "kind": "task",
+    "needs": [
+     "pending_summary"
+    ],
+    "description": "Compose the sign-off request for Ines.",
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.pending_rows.count"
+     },
+     "right": 0
+    },
+    "tool": "core.template",
+    "args": {
+     "text": "Please sign off these expense claims (200 or more, or no receipt):\n{{lines}}",
+     "variables": {
+      "lines": {
+       "$ref": "nodes.pending_summary.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "ines_send",
+    "kind": "task",
+    "needs": [
+     "ines_text"
+    ],
+    "description": "Ask Ines to sign off the waiting claims.",
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.pending_rows.count"
+     },
+     "right": 0
+    },
+    "tool": "outbox.send",
+    "args": {
+     "to": "ines@parcelpoint.eu",
+     "subject": "Expense claims waiting for your sign-off",
+     "body": {
+      "$ref": "nodes.ines_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_decisions",
+    "kind": "verify",
+    "needs": [
+     "append_decisions"
+    ],
+    "description": "Independently confirm the decision rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_decisions.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_decisions"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "approved_emails",
+    "kind": "task",
+    "needs": [
+     "approved_rows"
+    ],
+    "description": "Recipients of the approval notices.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.approved_rows.rows"
+     },
+     "field": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_notify",
+    "kind": "verify",
+    "needs": [
+     "notify_map",
+     "approved_emails"
+    ],
+    "description": "Independently confirm the approval emails went to the approved claimants.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.approved_emails.items"
+      }
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.notify_map"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_decisions.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_notify.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.decision_list.count"
+    },
+    "right": {
+     "$ref": "nodes.submitted.count"
+    }
+   }
+  ],
+  "metadata": {
+   "rationale": "Deterministic routing by amount and receipt, with independent audits of the sheet append and of the approval emails.",
+   "tags": [
+    "expenses",
+    "approvals"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "inconclusive",
+  "passed": false,
+  "approvals": {
+   "asked": 3,
+   "approved": 3,
+   "refused": 0
+  },
+  "error": {
+   "code": "VERIFY_FAILED",
+   "message": "verify_notify: gate verification failed (score 0)"
+  },
+  "effects": {
+   "outbox": [
+    {
+     "to": "jade@parcelpoint.example",
+     "subject": "Your expense claim was approved",
+     "body": "Hi Jade Ng, your expense claim Y-4 for 20 has been approved."
+    },
+    {
+     "to": "gus@parcelpoint.example",
+     "subject": "Your expense claim was approved",
+     "body": "Hi Gus Lind, your expense claim Y-1 for 150 has been approved."
+    },
+    {
+     "to": "ines@parcelpoint.eu",
+     "subject": "Expense claims waiting for your sign-off",
+     "body": "Please sign off these expense claims (200 or more, or no receipt):\nHana Ito (hana@parcelpoint.example): 260 - amount 200 or more [Y-2]\nIvo Kral (ivo@parcelpoint.example): 90 - no receipt [Y-3]"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "expense-decisions": [
+     {
+      "amount": 150,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "approved",
+      "employee": "Gus Lind",
+      "id": "Y-1",
+      "reason": "under 200 with receipt"
+     },
+     {
+      "amount": 260,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Hana Ito",
+      "id": "Y-2",
+      "reason": "amount 200 or more"
+     },
+     {
+      "amount": 90,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Ivo Kral",
+      "id": "Y-3",
+      "reason": "no receipt"
+     },
+     {
+      "amount": 20,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "approved",
+      "employee": "Jade Ng",
+      "id": "Y-4",
+      "reason": "under 200 with receipt"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-GDkvxA",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every submitted claim gets exactly one decision row with decision 'approved' (under 200 with receipt) or 'waiting for approver'.",
+    "exact": "the pass of “Independently confirm the decision rows were written.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Each approved claimant is emailed once and the outbox audit confirms the recipients.",
+    "exact": "the pass of “Independently confirm the approval emails went to the approved claimants.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "Ines is emailed a list of waiting claims when there are any, and the decision rows pass the sheet audit.",
+    "exact": "the count of “Collect the decision rows.” equals the count of “Keep only claims still awaiting a decision.”",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_decisions",
+    "plain": "Independently confirm the decision rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_notify",
+    "plain": "Independently confirm the approval emails went to the approved claimants.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": false
+   }
+  ],
+  "failedStep": "Independently confirm the approval emails went to the approved claimants."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": true,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict inconclusive): VERIFY_FAILED"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}
