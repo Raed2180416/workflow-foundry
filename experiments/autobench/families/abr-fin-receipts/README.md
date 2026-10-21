@@ -179,7 +179,7 @@ posts and no escalation was expected: no credit, and no wrong-answer penalty. `p
 | Oracle specificity (610–614) | 1,319/1,319 policy-neutral variants accepted (18 operators, since 1.1.0 also a dated header line, `- ` / `* ` / `• ` / `1. ` lines, an HTML-only body and HTML in the plain body); an equivalent solver (row-by-id update, channel id, blank-line email) passes 211/211 |
 | Trap coverage, label streams 610–613 | T-authority 8, T-format 42, T-lookalike 12, T-repeat 30, T-state 72 (each ≥ 5); no d3 stream misses a required state |
 | Gates | `gates.py` (determinism, leakage, solvability, controls, traps, mutation, specificity): **all pass**, exit 0 (14 min on a heavily loaded machine) |
-| Tests | `pytest`: **113 passed** in 11 min (load average about 16 on 4 cores; about 4 min on an idle machine) |
+| Tests | `pytest`: **113 passed** in 11 min (on a heavily loaded machine: load average about 16 on 4 cores) |
 
 Controls on dev seeds 610–614 (211 triggers, five weeks; from the gate run). Every control fails. `null` passes
 exactly the 28 no-op triggers:
@@ -230,9 +230,11 @@ exactly the 28 no-op triggers:
 A test asserts that each one-defect control fails on at least one trigger carrying the trap its broken rule resolves.
 A further test takes the reference's own correct worlds and makes one plausible slip each (a logged amount one cent
 off, the reply at the top level instead of in the thread, a rejected receipt logged anyway): every one is graded
-`wrong`. The 1.1.0 controls pass the d2 dev weeks cleanly and fail every d3 week, because their traps are required in
-every d3 week and are random at d2. Clean weeks therefore separate careful handling from careless handling better
-than the per-trigger rate does (0.94–0.99 for a one-defect control).
+`wrong`. Eleven of the twelve 1.1.0 controls scored here fail both d3 dev weeks (611, 613), because their traps are
+required in every d3 week. `category-first` is the exception: it fails 611, 610 and 614 but passes 613, because its
+trap `repost-terse` is not planted every week. Most of them pass the d2 weeks, where those traps are random. 31 of the
+34 one-defect controls scored on 610–614 (`top-level-reply` aside) pass 0.89–0.99 of the triggers. Clean weeks
+therefore separate careful handling from careless handling better than the per-trigger rate does.
 
 ## Review of 2026-10-21 (generator, oracle and reference 1.1.0)
 
@@ -242,9 +244,9 @@ The reviewer's own lazy solvers, rerun unchanged on the 1.1.0 streams of seeds 6
 
 | Reviewer's solver | 1.0.0 (601–630) | 1.1.0 (601–630) |
 |---|---|---|
-| no re-check on corrections (`handle`) | 1,186/1,186, 30/30 clean weeks | 1,195/1,284, **10/30** (every d3 week fails; 55 of 162 corrections wrong) |
-| approve without the pending check (`no_pending_check`) | 1,184/1,186, 29/30 | 1,219/1,284, **5/30** (40 of 105 pre-approval replies wrong) |
-| an earlier message's relative date read on the new message's day (`repost_rel_now`) | 1,184/1,186, 29/30 | 1,242/1,284, **16/30** |
+| no re-check on corrections (`handle`) | 1,186/1,186, 30/30 clean weeks | 1,195/1,284, **10/30** (all 14 d3 weeks fail; 55 of 162 corrections wrong) |
+| approve without the pending check (`no_pending_check`) | 1,184/1,186, 29/30 | 1,219/1,284, **5/30** (all 14 d3 weeks fail; 40 of 105 pre-approval replies wrong) |
+| an earlier message's relative date read on the new message's day (`repost_rel_now`) | 1,184/1,186, 29/30 | 1,242/1,284, **16/30** (all 14 d3 weeks fail; the 16 clean weeks are the d2 weeks) |
 | reposts by amount only (`repost_amount_only`) | 1,162/1,186, 20/30 | 1,240/1,284, 12/30 |
 
 1. **(high) The "corrections re-check from rule 1" state was never exercised.** In 1.0.0 all 114 valid corrections
