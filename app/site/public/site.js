@@ -1,28 +1,48 @@
-// The site shell: copy, token, API wrapper, hash router, focus management, live regions, the "waiting" badge and notice.
-// Views live in /views/*.js and render into <main>. The workspace's key arrives in the URL fragment (#t=...&r=/route), moves to this
-// address's storage (per port: another local port can't read it) and leaves the address bar; every /api call sends it in the
-// x-foundry-token header. Because the key is kept for this address and stays the same across Foundry starts (app/site/session.mjs),
-// a bookmark, a new tab or a typed address works while Foundry runs (P1 and P2 walkthroughs, B2). A link pasted into this tab works
-// without a reload (hashchange). Help and the glossary open without a key.
+// The site shell: copy, key, API wrapper, hash router, focus management, live regions, the "waiting" badge and notice.
+// Views live in /views/*.js and render into <main>. Foundry opens this page with a one-time code in the address (#/route?c=...): the page
+// takes it out of the address at once, trades it for this tab's key (POST /auth/open, app/site/gate.mjs) and keeps the key in this tab's
+// sessionStorage only; every /api call sends it in the x-foundry-token header. A closed tab or a new start of Foundry ends the key; the
+// way back in is `node app/cli.mjs open`, which the page says (security review 2026-10-21, H1 H2: a key kept in localStorage for a
+// fixed port could be read by whatever answered on that port while Foundry was down). A link pasted into this tab works without a
+// reload (hashchange). Help and the glossary open without a key.
 import { el, clear, append } from './components/dom.js';
 export { el };
 
 const state = { copy: null, claims: null, templates: null, token: null, memory: {}, renderId: 0 };
 
-// ------------------------------------------------------------------------------------------------ token and first route
+// ------------------------------------------------------------------------------------------------ key and first route
 const KEY = 'foundry-token';
-function storeToken(t) { for (const s of [() => localStorage, () => sessionStorage]) { try { s().setItem(KEY, t); } catch { /* storage off: keep it in memory */ } } }
-function forgetToken() { for (const s of [() => localStorage, () => sessionStorage]) { try { s().removeItem(KEY); } catch { /* storage off */ } } }
-function takeToken() {
-  const raw = location.hash.slice(1);
-  if (raw.startsWith('t=')) {
-    const params = new URLSearchParams(raw);
-    const t = params.get('t'), r = params.get('r');
-    storeToken(t);
-    history.replaceState(null, '', `${location.pathname}#${r && r.startsWith('/') ? r : '/'}`);
-    return t;
-  }
-  try { return localStorage.getItem(KEY) ?? sessionStorage.getItem(KEY); } catch { return null; }
+function storeToken(t) { try { sessionStorage.setItem(KEY, t); } catch { /* storage off: keep it in memory */ } }
+function forgetToken() { try { sessionStorage.removeItem(KEY); } catch { /* storage off */ } }
+// Before the review the key was also kept in localStorage: remove any copy an older version left there.
+function forgetOldCopy() { try { localStorage.removeItem(KEY); } catch { /* storage off */ } }
+const CODE = /^[A-Za-z0-9_-]{43}$/;
+/** The one-time code in the address (#/route?c=CODE), taken out of the address before anything else happens. */
+function takeCode() {
+  const raw = location.hash.slice(1), at = raw.indexOf('?');
+  if (at < 0) return null;
+  const query = new URLSearchParams(raw.slice(at + 1)), code = query.get('c');
+  if (!code) return null;
+  query.delete('c');
+  const route = raw.slice(0, at).startsWith('/') ? raw.slice(0, at) : '/', rest = query.toString();
+  history.replaceState(null, '', `${location.pathname}#${route}${rest ? `?${rest}` : ''}`);
+  return CODE.test(code) ? code : '';
+}
+/** Trade a code for this tab's key. Returns the key, or null with state.codeProblem set (expired, already used). */
+async function redeem(code) {
+  try {
+    const res = await fetch('/auth/open', { method: 'POST', cache: 'no-store', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && typeof data.key === 'string') { storeToken(data.key); state.codeProblem = null; return data.key; }
+    state.codeProblem = data.code ?? 'CODE_EXPIRED';
+  } catch { state.codeProblem = 'CODE_EXPIRED'; }
+  return null;
+}
+async function takeToken() {
+  forgetOldCopy();
+  const code = takeCode();
+  if (code !== null) { const key = code ? await redeem(code) : (state.codeProblem = 'CODE_SHAPE', null); if (key) return key; }
+  try { return sessionStorage.getItem(KEY); } catch { return null; }
 }
 
 // ------------------------------------------------------------------------------------------------ copy
@@ -79,7 +99,7 @@ export async function api(path, body, { method } = {}) {
     headers: { 'x-foundry-token': state.token ?? '', ...(body ? { 'content-type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const type = res.headers.get('content-type') ?? '';
   const data = type.includes('application/json') ? await res.json() : await res.text();
-  // A key from an earlier start of another folder on this port, or one replaced with --new-key: say so, never loop.
+  // A key from an earlier start of Foundry (every start makes new keys): say so, never loop.
   if (res.status === 401) { forgetToken(); state.token = null; state.staleToken = true; if (state.copy) renderNoToken(); }
   if (!res.ok) throw new ApiError(res.status, typeof data === 'string' ? { error: data } : data);
   if (data && typeof data === 'object' && data.ok === false && data.problem) throw new ApiError(409, data);
@@ -176,8 +196,9 @@ function renderNoToken() {
   const command = el('pre', {}, 'node app/cli.mjs open');
   // The exact command for this folder (absolute path, this workspace): the only thing the server says without a key.
   fetch('/open-info', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(info => { if (info?.open) command.textContent = info.open; }).catch(() => {});
-  append(node, el('div', {}, el('h1', { tabindex: '-1' }, t('shell.noTokenTitle')), el('p', { class: 'lead' }, state.staleToken ? t('shell.noTokenStale') : t('shell.noToken')),
-    command, el('p', {}, t('shell.noTokenNotRunning')), el('p', {}, el('a', { href: '#/help' }, t('shell.noTokenHelp')))));
+  const lead = state.codeProblem === 'CODE_USED' ? t('shell.codeUsed') : state.codeProblem ? t('shell.codeExpired') : state.staleToken ? t('shell.noTokenStale') : t('shell.noToken');
+  append(node, el('div', { dataset: { noKey: state.codeProblem ?? (state.staleToken ? 'stale' : 'none') } }, el('h1', { tabindex: '-1' }, t('shell.noTokenTitle')), el('p', { class: 'lead' }, lead),
+    command, el('p', {}, t('shell.noTokenOwnTerminal')), el('p', {}, t('shell.noTokenNotRunning')), el('p', {}, el('a', { href: '#/help' }, t('shell.noTokenHelp')))));
   setTitle(t('shell.noTokenTitle'));
 }
 
@@ -204,7 +225,7 @@ export async function refreshBadge() {
 
 // ------------------------------------------------------------------------------------------------ start
 async function start() {
-  state.token = takeToken();
+  state.token = await takeToken();
   try { const theme = localStorage.getItem('foundry-theme'); if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme; } catch { /* no storage */ }
   const [copy, registry] = await Promise.all([fetch('/copy/en.json').then(r => r.json()), state.token ? api('/api/claims').catch(() => ({ claims: {} })) : { claims: {} }]);
   state.copy = copy; state.claims = registry.claims ?? {};
@@ -212,9 +233,9 @@ async function start() {
   document.querySelector('.skip').addEventListener('click', e => { e.preventDefault(); const h1 = main().querySelector('h1'); (h1 ?? main()).focus(); });
   const menu = document.querySelector('.menu-button');
   menu.addEventListener('click', () => { const open = document.querySelector('.nav').classList.toggle('open'); menu.setAttribute('aria-expanded', String(open)); });
-  window.addEventListener('hashchange', () => {
-    // A keyed link pasted into this tab: take the key and go on, no reload needed (P2 walkthrough B2).
-    if (location.hash.startsWith('#t=')) { state.token = takeToken(); state.staleToken = false; render(); refreshBadge(); return; }
+  window.addEventListener('hashchange', async () => {
+    // A link with a one-time code pasted into this tab: trade it and go on, no reload needed (P2 walkthrough B2).
+    if (/[?&]c=/.test(location.hash)) { const key = await takeToken(); if (key) { state.token = key; state.staleToken = false; } render(); refreshBadge(); return; }
     if (location.hash.startsWith('#/') || location.hash === '' || location.hash === '#') render();
   });
   state.first = true;

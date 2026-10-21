@@ -175,10 +175,11 @@ test('P2 edges at 390 light: no match creates nothing; a suggestion; nothing to 
   });
 });
 
-// The P2 walkthrough's blockers B2 and B3, after the fixes: the next morning the same browser opens Foundry without the link; the
-// list from yesterday is flagged and replacing it comes first; the new list does not repeat yesterday's reminders; and a browser
-// that never had the key gets the one command that opens Foundry, not a dead end. 1280 light.
-test('P2 the next day: same browser, no link needed; yesterday\'s list replaced first; no reminder made twice; another browser is told how to open', async () => {
+// The P2 walkthrough's blockers B2 and B3, after the fixes and the security review (2026-10-21, H2): the next morning the bookmark
+// opens the page that says the one command that lets this browser in (a key no longer outlives its tab, so nothing on that port can
+// take it); the person runs it and Foundry opens; the list from yesterday is flagged and replacing it comes first; the new list does
+// not repeat yesterday's reminders; and a browser that never had a key gets the same command, not a dead end. 1280 light.
+test('P2 the next day: the bookmark says the one command, which opens Foundry; yesterday\'s list replaced first; no reminder made twice; another browser is told how to open', async () => {
   const DAY = 24 * 3600 * 1000;
   await journey({ name: 'p2-next-day', siteOptions: { asOf: () => NOW + DAY, now: () => NOW + DAY },
     before: async app => {
@@ -187,15 +188,25 @@ test('P2 the next day: same browser, no link needed; yesterday\'s list replaced 
       const batches = new Batches(app, { now: () => NOW });
       const b = await batches.preview('invoice-chase');
       await batches.approve(b.batchId, { channel: 'dashboard' });
-    } }, async ({ page, person, shot, base, log }) => {
+    } }, async ({ page, person, shot, base, site, log }) => {
     const checks = log.checks = {};
     person.precondition('yesterday they turned on "Chase unpaid invoices", dropped their list and made 4 drafts (as in P2), in this browser');
-    // Opening Foundry again from a bookmark: no key in the address; this browser kept it (P2 walkthrough B2).
+    // The next morning, a new tab from a bookmark: no key in the address, and none kept for the port (P2 walkthrough B2; review H2).
+    // A closed tab's sessionStorage is gone; clearing it here stands in for the new tab.
+    await page.evaluate(() => sessionStorage.clear());
     await page.goto(`${base}/`);
-    await page.waitForSelector('main [data-template], main h1');
-    checks.openedWithoutLink = await text(page, 'main h1');
-    assert.doesNotMatch(checks.openedWithoutLink, /Open Foundry from its link/);
-    await shot('bookmark-opens', { note: 'the bookmark without a key opens: this browser kept the key for this computer\'s Foundry' });
+    await page.waitForFunction(() => /cli\.mjs" open --workspace|cli\.mjs open/.test(document.querySelector('main pre')?.textContent ?? ''));
+    checks.bookmark = { title: (await page.locator('main h1').textContent()).trim(), command: (await page.locator('main pre').textContent()).replace(/\/tmp\/[^"]+/g, '<ws>') };
+    assert.match(checks.bookmark.title, /Open Foundry from its link/);
+    await shot('bookmark-says-command', { note: 'the bookmark: no key kept for this port, so the page says the one command that opens Foundry' });
+    // The person runs that command in their terminal; Foundry opens this browser with a one-time code (what the opener would do).
+    person.external('runs the command in their own terminal (node app/cli.mjs open); Foundry opens the page');
+    await page.goto(site.openUrl()); // same tab, so a hash change: the page trades the code without a reload
+    await page.waitForFunction(() => !document.querySelector('main [data-no-key]') && document.querySelector('main h1'));
+    checks.openedWithCommand = (await page.locator('main h1').first().textContent()).replace(/\s+/g, ' ').trim();
+    assert.doesNotMatch(checks.openedWithCommand, /Open Foundry from its link/);
+    assert.equal(await page.evaluate(() => { try { return localStorage.getItem('foundry-token'); } catch { return 'unreadable'; } }), null, 'no key is kept for the port');
+    assert.equal(/[?&]c=/.test(new URL(page.url()).hash), false, 'the code left the address bar');
     await person.click(page.locator('[data-nav="automations"]'));
     await person.click(page.locator('main a[href^="#/automations/invoice-chase"]').first());
     await person.click(page.locator('main .actions a.button.primary'));
@@ -215,14 +226,14 @@ test('P2 the next day: same browser, no link needed; yesterday\'s list replaced 
     checks.secondSummary = await text(page, '[data-decision-card][data-batch] li[data-item] pre');
     assert.match(checks.secondSummary, /Reminder drafts made this run: 0/);
     await shot('no-repeats', { note: 'the reminders made yesterday are remembered; today\'s list has only the summary' });
-    // Another browser (or a cleared one) on the same computer: the page says the one command that opens Foundry with its key.
+    // Another browser (or a cleared one) on the same computer: the page says the one command that opens Foundry.
     const other = await (await browser()).newContext({ viewport: { width: 1280, height: 900 } });
     try {
       const tab = await other.newPage();
       await tab.goto(`${base}/`);
       await tab.waitForFunction(() => /cli\.mjs" open --workspace|cli\.mjs open/.test(document.querySelector('main pre')?.textContent ?? ''));
       checks.otherBrowser = { title: (await tab.locator('main h1').textContent()).trim(), command: (await tab.locator('main pre').textContent()).replace(/\/tmp\/[^"]+/g, '<ws>') };
-      assert.equal(/#t=/.test(await tab.locator('main').textContent()), false, 'the page without the key never shows the key');
+      assert.equal(/#t=|c=[A-Za-z0-9_-]{43}/.test(await tab.locator('main').textContent()), false, 'the page without a key never shows a key or a code');
       await shot('other-browser', { of: tab, note: 'no key in this browser: the exact command to open Foundry (no key shown)' });
     } finally { await other.close(); }
   });

@@ -4,17 +4,20 @@
 // SQLite store read-only and re-verifies every event's chain link; plain-language explanations come from app/core/explain.mjs.
 // Writes: only a person's decisions (turn a version on; allow or refuse one paused action), through FoundryApp with channel 'dashboard'.
 //
-// Boundary: a per-start random token (kept in memory, handed to the person in the URL fragment) and a Host check (DNS rebinding) keep
-// other pages and other local users out. They do NOT keep out a coding agent that runs as the same OS user with a shell: it can do
+// Boundary: keys made per start and per browser tab, each traded for a one-time code (app/site/gate.mjs: the code, not a key, is what
+// reaches the browser opener's command line), a Host check (DNS rebinding) and, on Linux, an OS-account check of the client socket
+// (app/site/peer.mjs) keep other pages and other local users out. They do NOT keep out a coding agent that runs as the same OS user with a shell: it can do
 // anything the person can do on this machine. DESIGN.md §6 says what closes that gap (a separate OS user, or a second authority).
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StoreReader } from '../../tools/run-view/store-adapter.mjs';
 import { digest, errorData } from '../../src/data.mjs';
 import { explainRun, describeWorkflow, failureText } from '../core/explain.mjs';
+import { createGate, pageUrl, CODE_WORDS } from '../site/gate.mjs';
+import { watchPeers, peerAllowed } from '../site/peer.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STATIC = { '/': ['index.html', 'text/html; charset=utf-8'], '/dashboard.js': ['dashboard.js', 'text/javascript; charset=utf-8'], '/dashboard.css': ['dashboard.css', 'text/css; charset=utf-8'] };
@@ -102,14 +105,15 @@ export async function handleDashboardApi(app, req, res, url, send) {
 }
 
 /** Create (not start) the dashboard server for one FoundryApp. */
-export function createDashboard(app, { token = randomBytes(24).toString('base64url') } = {}) {
-  const expected = Buffer.from(token);
+export function createDashboard(app, { token = randomBytes(24).toString('base64url'), workspace = app.root, instance } = {}) {
+  const gate = createGate({ workspace, instance, token });
   let port = null;
   const send = (res, status, body, type = 'application/json; charset=utf-8') => {
     res.writeHead(status, { ...SECURITY, 'content-type': type }); res.end(type.startsWith('application/json') ? JSON.stringify(body) : body);
   };
-  const server = createServer(async (req, res) => {
+  const server = watchPeers(createServer(async (req, res) => {
     try {
+      if (!peerAllowed(req)) return send(res, 403, { error: 'This Foundry page belongs to another account on this computer.' });
       // DNS-rebinding guard: only the loopback names of this exact port.
       if (!['127.0.0.1', 'localhost'].map(h => `${h}:${port}`).includes(req.headers.host ?? '')) return send(res, 421, { error: 'wrong host' });
       const url = new URL(req.url, `http://127.0.0.1:${port}`);
@@ -117,22 +121,31 @@ export function createDashboard(app, { token = randomBytes(24).toString('base64u
         const [file, type] = STATIC[url.pathname];
         return send(res, 200, readFileSync(path.join(here, file)), type);
       }
+      if (req.method === 'POST' && url.pathname === '/auth/open') {
+        if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: 'JSON only' });
+        let size = 0; const chunks = [];
+        for await (const chunk of req) { size += chunk.length; if (size > 1024) return send(res, 413, { error: 'too large' }); chunks.push(chunk); }
+        let code = null; try { code = JSON.parse(Buffer.concat(chunks).toString('utf8')).code; } catch { code = null; }
+        const opened = gate.open(code);
+        return opened.ok ? send(res, 200, { key: opened.key }) : send(res, opened.status, { error: CODE_WORDS[opened.code]?.what ?? 'refused', code: opened.code });
+      }
       if (!url.pathname.startsWith('/api/')) return send(res, 404, { error: 'not found' });
-      const given = Buffer.from(String(req.headers['x-foundry-token'] ?? ''));
-      if (given.length !== expected.length || !timingSafeEqual(given, expected)) return send(res, 401, { error: 'This page needs the link printed by `node app/cli.mjs start`.' });
+      if (!gate.check(String(req.headers['x-foundry-token'] ?? ''))) return send(res, 401, { error: 'This page needs a fresh link: run `node app/cli.mjs start` again in your own terminal.' });
       if (await handleDashboardApi(app, req, res, url, send)) return;
       return send(res, 404, { error: 'not found' });
     } catch (error) {
       return send(res, error.code === 'NOT_FOUND' ? 404 : 409, { error: errorData(error), problem: failureText(errorData(error)) });
     }
-  });
+  }));
   return {
-    server, token,
+    server, token, gate, instance: gate.instance,
     async listen(wanted = 0) {
-      await new Promise((resolve, reject) => { server.once('error', reject); server.listen(wanted, '127.0.0.1', resolve); });
+      await new Promise((resolve, reject) => { const fail = e => reject(e); server.once('error', fail); server.listen(wanted, '127.0.0.1', () => { server.off('error', fail); resolve(); }); });
       port = server.address().port;
-      return { port, url: `http://127.0.0.1:${port}/#t=${token}` };
+      return { port, url: `http://127.0.0.1:${port}/` };
     },
+    /** The address with a fresh one-time code, for the browser opener or a person's own terminal. */
+    openUrl() { if (!port) throw new Error('not listening'); return pageUrl(`http://127.0.0.1:${port}/`, gate.mint()); },
     close: () => new Promise(resolve => server.close(() => resolve()))
   };
 }

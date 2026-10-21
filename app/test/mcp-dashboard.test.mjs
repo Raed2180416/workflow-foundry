@@ -102,7 +102,8 @@ test('dashboard: token and host checks, overview, verified run record, version d
   const { port, url } = await dash.listen(0);
   const base = `http://127.0.0.1:${port}`, headers = { 'x-foundry-token': dash.token };
   try {
-    assert.ok(url.includes('#t='), 'the key travels in the fragment, never in a request line');
+    assert.equal(url, `${base}/`, 'the address it prints lets nobody in');
+    assert.match(dash.openUrl(), /^http:\/\/127\.0\.0\.1:\d+\/#\/\?c=[A-Za-z0-9_-]{43}$/, 'a one-time code travels in the fragment, never a key');
     const page = await fetch(`${base}/`);
     assert.equal(page.status, 200); assert.match(page.headers.get('content-security-policy'), /default-src 'none'/);
     assert.equal(/boss@example|Platform/.test(await page.text()), false, 'the static page holds no workspace data');

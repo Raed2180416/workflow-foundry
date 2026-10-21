@@ -21,7 +21,7 @@ const dash = createDashboard(app); const { url } = await dash.listen(0);
 const browser = await chromium.launch({ executablePath: process.argv[3] ?? '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 1100, height: 1500 } });
 const errors = []; page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); }); page.on('pageerror', e => errors.push(String(e)));
-await page.goto(url); await page.waitForSelector('#inbox .card');
+await page.goto(dash.openUrl()); await page.waitForSelector('#inbox .card');
 await page.screenshot({ path: process.argv[2] + '/dash-overview.png', fullPage: true });
 await page.click('#runs tbody tr:nth-child(3) button'); await page.waitForSelector('#detail-body .card');
 await page.screenshot({ path: process.argv[2] + '/dash-run.png', fullPage: true });

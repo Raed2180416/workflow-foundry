@@ -3,7 +3,7 @@
 //
 //   node app/cli.mjs open    [--workspace DIR]                            open Foundry: the page that is already running, or start it
 //   node app/cli.mjs site    [--workspace DIR] [--port N] [--no-open]   the onboarding site (app/site): cards, tests, turn-on, drafts, runs
-//        [--builder templates|mercury] [--token-cap N] [--new-key]       on 127.0.0.1 only; one Foundry window per workspace (<ws>/.lock)
+//        [--builder templates|mercury] [--token-cap N]                   on 127.0.0.1 only; one Foundry window per workspace (<ws>/.lock)
 //   node app/cli.mjs start   [--workspace DIR] [--port N] [--no-open]   check this machine, open the older dashboard, print how to connect agents
 //   node app/cli.mjs mcp     [--workspace DIR] [--dashboard] [--consent]  stdio MCP server for Claude Code, Codex, Cursor, ...
 //        [--builder stub|haiku|mercury] [--token-cap N]                    who builds flows from words alone: the $0 stub (default), or a cheap
@@ -16,8 +16,11 @@
 //
 // Safe defaults: the workspace is a private directory (0700) under the user's home; nothing listens beyond 127.0.0.1; no config file of any
 // coding agent is written (connect prints what to paste); no model is called unless --builder names one and Settings allow it; nothing is
-// sent beyond the local outbox. The page's key is kept in <ws>/site/session.json (0600), so a bookmark keeps working; it is never printed
-// on stderr or given to a coding agent.
+// sent beyond the local outbox.
+// Getting into the page (security review 2026-10-21, H1 M6 L15): no key is kept on disk or printed. Each start makes its own keys in
+// memory; a browser tab gets one by trading a one-time code (app/site/gate.mjs) that works once, within a minute. The code goes to the
+// browser opener; it is printed only when stdin and stdout are both a terminal (a person reading), never when the output is piped or
+// captured (a coding agent's shell, `! command` in Claude Code), where the output names the command to run instead.
 import { parseArgs } from 'node:util';
 import { homedir, platform } from 'node:os';
 import path from 'node:path';
@@ -52,8 +55,8 @@ export function defaultWorkspace(env = process.env, os = platform()) {
 }
 
 /** Can this machine open a browser window? (an SSH session or a container usually cannot: P1 walkthrough B1) */
-export function canOpenBrowser(env = process.env, os = platform()) {
-  if (env.FOUNDRY_URL_FILE) return true;
+export function canOpenBrowser(env = process.env, os = platform(), workspace = null) {
+  if (env.FOUNDRY_URL_FILE) return !!urlFileIn(env.FOUNDRY_URL_FILE, workspace);
   if (os === 'darwin' || os === 'win32') return true;
   if (env.BROWSER) return true;
   return !!(env.DISPLAY || env.WAYLAND_DISPLAY) && spawnSync('sh', ['-c', 'command -v xdg-open'], { stdio: 'ignore' }).status === 0;
@@ -124,10 +127,20 @@ export function connectText(c) {
     'Then start your agent there and check the connection (in Claude Code: type /mcp). To open Foundry\'s page yourself:', `  ${c.openCommand}`].join('\n');
 }
 
-/** Open a URL in the person's browser. Resolves true when a browser was started; never throws, never prints the URL (it carries the key). */
-export function browserOpener(os = platform(), env = process.env) {
-  // Tests (and people who prefer it) get the address in a file instead of a browser window: FOUNDRY_URL_FILE=<path>.
-  if (env.FOUNDRY_URL_FILE) return async url => { try { writeFileSync(env.FOUNDRY_URL_FILE, `${url}\n`, { mode: 0o600 }); return true; } catch { return false; } };
+/** FOUNDRY_URL_FILE, honoured only for a file inside the workspace (0700): elsewhere it could hand a link to another account (L15). */
+export function urlFileIn(file, workspace) {
+  if (!file || !workspace) return null;
+  const f = path.resolve(file), rel = path.relative(path.resolve(workspace), f);
+  return rel && !rel.startsWith('..') && !path.isAbsolute(rel) ? f : null;
+}
+/** Open a URL in the person's browser. Resolves true when a browser was started; never throws, never prints the URL (it carries a
+ *  one-time code). The URL is http://127.0.0.1:PORT/#/route?c=CODE: no & or %, so cmd.exe passes it whole on Windows (M6). */
+export function browserOpener(os = platform(), env = process.env, { workspace = null } = {}) {
+  // The journeys get the address in a file instead of a browser window: FOUNDRY_URL_FILE=<a file inside the workspace>.
+  if (env.FOUNDRY_URL_FILE) {
+    const file = urlFileIn(env.FOUNDRY_URL_FILE, workspace);
+    return async url => { if (!file) return false; try { writeFileSync(file, `${url}\n`, { mode: 0o600 }); return true; } catch { return false; } };
+  }
   return url => new Promise(resolve => {
     const [cmd, args] = env.BROWSER ? [env.BROWSER, [url]] : os === 'darwin' ? ['open', [url]] : os === 'win32' ? ['cmd', ['/c', 'start', '""', url]] : ['xdg-open', [url]];
     let child;
@@ -137,16 +150,49 @@ export function browserOpener(os = platform(), env = process.env) {
   });
 }
 
+/** Stdin and stdout are a person's terminal (not piped, not captured by a program such as a coding agent's shell). */
+export const personsTerminal = (stdin = process.stdin, stdout = process.stdout) => !!(stdin.isTTY && stdout.isTTY);
+/** The command as anyone on this computer may see it (the page without a key shows it): the home folder is written ~ (L18). */
+export function displayCommand(command, home = homedir(), os = platform()) {
+  if (os === 'win32' || !home || home === '/') return command;
+  return command.split(`"${home}/`).join('~/"');
+}
+/**
+ * Let the person's browser in: open the page with a fresh one-time code; when no browser opens, print a one-time link only to a
+ * person's terminal, and otherwise the command to run there. mint() makes a code; nothing that lasts is printed (H1).
+ */
+async function letIn({ base, mint, route = null, args, print, workspace, openCommand, toPerson = personsTerminal() }) {
+  const { pageUrl } = await import('./site/gate.mjs');
+  if (!args['no-open']) {
+    if (await browserOpener(platform(), process.env, { workspace })(pageUrl(base, mint(), route))) { print(`Opened in your browser: ${base}`); return true; }
+    print('No browser could be opened here.');
+  }
+  if (toPerson) print(`Open this link in a browser on this computer. It works once, within a minute; run this command again for a new one:\n  ${pageUrl(base, mint(), route)}`);
+  else print(`To open it, run this in your own terminal (a link is shown only to a person's terminal, never to a program reading this output):\n  ${openCommand}`);
+  return false;
+}
+/** Listen on the workspace's home port, or, when another program holds it, on a free port for this start only, and say so (H2). */
+async function listenHome(site, { wanted, home, say }) {
+  try { return { ...(await site.listen(wanted)), moved: false }; } catch (error) {
+    if (error.code !== 'EADDRINUSE') throw error;
+    const r = await site.listen(0);
+    say(`Port ${wanted} is in use by another program, so Foundry is on port ${r.port} for this start. Whatever answers at 127.0.0.1:${wanted} now is not Foundry: don't use a bookmark of it until Foundry is back there.`);
+    return { ...r, moved: true };
+  }
+}
+
 async function serveSite({ workspace, args, print }) {
-  const { takeLock, readLock } = await import('./site/lock.mjs');
-  const { siteSession, keyedUrl, DEFAULT_PORT } = await import('./site/session.mjs');
-  const session = siteSession(workspace, { fresh: !!args['new-key'] });
+  const { takeLock, readLock, pageBase } = await import('./site/lock.mjs');
+  const { siteSession, DEFAULT_PORT } = await import('./site/session.mjs');
+  const { mintCode } = await import('./site/gate.mjs');
+  const openCommand = connectInstructions(workspace).openCommand;
   const held = readLock(workspace);
-  // Already running for this folder: open that page (with its key) instead of refusing (P1 B2, P2 B2).
-  if (held?.alive && held.pid !== process.pid && held.url) {
-    const url = keyedUrl(held.url, session.token);
-    print(`Foundry is already running for this folder. Opening it: ${held.url}\n(The link with its key: ${url}\n Keep it to yourself: anyone with it can approve for you.)`);
-    if (!args['no-open'] && !(await browserOpener()(url))) print(`No browser could be opened here. Open the link above in your browser.`);
+  // Already running for this folder: open that page (with a one-time code) instead of refusing (P1 B2, P2 B2). Only an address of
+  // Foundry's own shape, from a live Foundry process of this account (L12).
+  const heldBase = held?.alive && held.pid !== process.pid ? pageBase(held.url) : null;
+  if (heldBase && held.instance) {
+    print(`Foundry is already running for this folder: ${heldBase}`);
+    await letIn({ base: heldBase, mint: () => mintCode(workspace, { instance: held.instance }), args, print, workspace, openCommand });
     return;
   }
   const report = await doctorFull({ workspace });
@@ -156,23 +202,25 @@ async function serveSite({ workspace, args, print }) {
   if (builderRefusal) { process.stderr.write(`${builderRefusal}\n`); process.exitCode = 2; return; }
   const lock = takeLock(workspace, 'site');
   if (!lock.ok) { process.stderr.write(`${lock.say}\n`); process.exitCode = 3; return; }
+  const session = siteSession(workspace);
   const { createSite, siteApp } = await import('./site/server.mjs');
   const app = await siteApp({ workspace, builder: args.builder ?? 'templates', tokenCap: args['token-cap'] ? Number(args['token-cap']) : undefined });
-  const site = createSite(app, { workspace, token: session.token });
-  const wanted = args.port ? Number(args.port) : session.port ?? DEFAULT_PORT;
-  const { url, port } = await site.listen(wanted).catch(() => site.listen(0));
-  session.remember(port);
-  lock.update({ url: url.split('#')[0] });
-  print(`\nFoundry is open: ${url}\n(This link carries this folder's key. Keep it to yourself: anyone with it can approve for you. Bookmark http://127.0.0.1:${port}/ to come back while Foundry runs; after a restart, run: ${connectInstructions(workspace).openCommand})`);
+  const site = createSite(app, { workspace });
+  const home = session.port ?? DEFAULT_PORT, wanted = args.port ? Number(args.port) : home;
+  const { url, port, moved } = await listenHome(site, { wanted, home, say: print });
+  if (!moved) session.remember(port);
+  lock.update({ url, instance: site.instance });
+  print(`\nFoundry is running: ${url}`);
+  await letIn({ base: url, mint: () => site.gate.mint(), args, print, workspace, openCommand });
+  print(`To come back later (a closed tab, another browser), run: ${openCommand}`);
   print(`\nUse a coding agent? See every line with: node ${q(CLI)} connect${path.resolve(workspace) !== defaultWorkspace() ? ` --workspace ${q(workspace)}` : ''}`);
-  if (!args['no-open'] && !(await browserOpener()(url))) print('No browser could be opened here. Open the link above in your browser.');
   const stop = async () => { await site.close(); await app.close(); lock.release(); process.exit(0); };
   process.once('SIGINT', stop); process.once('SIGTERM', stop);
 }
 
 async function main() {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { workspace: { type: 'string' }, port: { type: 'string' }, 'no-open': { type: 'boolean' }, dashboard: { type: 'boolean' },
-    builder: { type: 'string' }, 'token-cap': { type: 'string' }, consent: { type: 'boolean' }, json: { type: 'boolean' }, 'new-key': { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
+    builder: { type: 'string' }, 'token-cap': { type: 'string' }, consent: { type: 'boolean' }, json: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
   const [command = 'help', item] = positionals;
   const workspace = path.resolve(args.workspace ?? defaultWorkspace());
   const print = value => process.stdout.write(`${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n`);
@@ -207,18 +255,18 @@ async function main() {
     if (builderRefusal) { process.stderr.write(`${builderRefusal}\n`); process.exitCode = 2; return; }
     const { createDashboard } = await import('./dashboard/server.mjs');
     const builder = await makeBuilder(args.builder ?? 'stub', { workspace, tokenCap: args['token-cap'] ? Number(args['token-cap']) : undefined });
-    const app = new FoundryApp({ workspace, builder }), dash = createDashboard(app);
+    const app = new FoundryApp({ workspace, builder }), dash = createDashboard(app, { workspace });
     print(`Builder: ${builder.id}`);
-    const { url } = await dash.listen(args.port ? Number(args.port) : 4178).catch(() => dash.listen(0));
-    print(`\nYour dashboard: ${url}\n(This link carries a key for this session. Keep it to yourself; anyone with it can approve for you.)`);
+    const { url } = await listenHome(dash, { wanted: args.port ? Number(args.port) : 4178, home: 4178, say: print });
+    print(`\nYour dashboard: ${url}`);
+    await letIn({ base: url, mint: () => dash.gate.mint(), args, print, workspace, openCommand: `node ${q(CLI)} start${path.resolve(workspace) !== defaultWorkspace() ? ` --workspace ${q(workspace)}` : ''}` });
     print(`\nConnect your coding agent:\n${connectText(connectInstructions(workspace))}`);
-    if (!args['no-open']) await browserOpener()(url);
     const stop = async () => { await dash.close(); await app.close(); process.exit(0); };
     process.once('SIGINT', stop); process.once('SIGTERM', stop);
     return;
   }
   if (command === 'mcp') {
-    // stdout is the MCP channel: nothing else may be printed there, and the page's key never goes to stdout or stderr.
+    // stdout is the MCP channel: nothing else may be printed there, and no code or key goes to stdout or stderr.
     const builderRefusal = await builderAllowed(args.builder, workspace);
     if (builderRefusal) { process.stderr.write(`${builderRefusal}\n`); process.exitCode = 2; return; }
     const [{ serveAppMcp }, { createDashboard }, { SiteBuilder }, { recordDecisions }] = await Promise.all([import('./mcp/server.mjs'), import('./dashboard/server.mjs'),
@@ -230,28 +278,31 @@ async function main() {
     recordDecisions(app);
     let base = null;
     // With --dashboard, the first decision that the client cannot show as a dialog opens the person's Foundry page in their browser:
-    // the page already running for this workspace (a live <ws>/.lock), or one this server starts on the workspace's own port with the
-    // workspace's own key (so the person's bookmark works). The key goes to the browser only; the tool result (which the model reads)
-    // gets plain words. If no browser can be opened here, the result says how the person opens it themselves.
+    // the page already running for this workspace (a live <ws>/.lock), or one this server starts on the workspace's home port. What
+    // goes to the browser opener is a one-time code (app/site/gate.mjs); the tool result (which the model reads) gets plain words and
+    // no link. If no browser can be opened here, the result says how the person opens it themselves, in their own terminal.
     const useSite = process.env.FOUNDRY_UI !== 'dashboard';
-    const [lockModule, siteModule, sessionModule] = useSite && args.dashboard ? await Promise.all([import('./site/lock.mjs'), import('./site/server.mjs'), import('./site/session.mjs')]) : [null, null, null];
+    const [lockModule, siteModule, sessionModule, gateModule] = args.dashboard ? await Promise.all([import('./site/lock.mjs'), import('./site/server.mjs'), import('./site/session.mjs'), import('./site/gate.mjs')]) : [null, null, null, null];
     const openCmd = connectInstructions(workspace).openCommand;
-    let siteLock = null, elsewhere = false, opened = canOpenBrowser();
+    let siteLock = null, elsewhere = false, opened = canOpenBrowser(process.env, platform(), workspace);
+    // stderr reaches the client's log, not the model: a note that the home port was taken goes there, never a link.
+    const note = text => process.stderr.write(`${text}\n`);
     const dashboardUrl = args.dashboard ? (route = '/waiting') => {
       if (!base) {
         const other = useSite ? lockModule.readLock(workspace) : null;
-        const session = useSite ? sessionModule.siteSession(workspace) : null;
-        if (other?.alive && other.pid !== process.pid && other.url) { elsewhere = true; base = Promise.resolve(other.url); }
+        const otherBase = other?.alive && other.pid !== process.pid ? lockModule.pageBase(other.url) : null;
+        if (otherBase && other.instance) { elsewhere = true; base = Promise.resolve({ url: otherBase, mint: () => gateModule.mintCode(workspace, { instance: other.instance }) }); }
         else if (useSite) {
           siteLock = lockModule.takeLock(workspace, 'mcp');
-          const site = siteModule.createSite(app, { workspace, token: session.token });
-          base = site.listen(session.port ?? sessionModule.DEFAULT_PORT).catch(() => site.listen(0)).then(({ url, port }) => { session.remember(port); siteLock.update?.({ url: url.split('#')[0] }); return url.split('#')[0]; });
-        } else base = createDashboard(app).listen(0).then(({ url }) => url);
-        base.then(async url => { if (url && !(await browserOpener()(useSite ? sessionModule.keyedUrl(url, session.token, route) : url))) opened = false; });
+          const session = sessionModule.siteSession(workspace), home = session.port ?? sessionModule.DEFAULT_PORT;
+          const site = siteModule.createSite(app, { workspace });
+          base = listenHome(site, { wanted: home, home, say: note }).then(({ url, port, moved }) => { if (!moved) session.remember(port); siteLock.update?.({ url, instance: site.instance }); return { url, mint: () => site.gate.mint() }; });
+        } else { const dash = createDashboard(app, { workspace }); base = dash.listen(0).then(({ url }) => ({ url, mint: () => dash.gate.mint() })); }
+        base.then(async ({ url, mint }) => { if (!(await browserOpener(platform(), process.env, { workspace })(gateModule.pageUrl(url, mint(), useSite ? route : null)))) opened = false; }).catch(() => { opened = false; });
       }
-      if (!opened) return `the Foundry page. No browser could be opened here, so the person opens it themselves: in their own terminal on this machine they run ${openCmd}`;
+      if (!opened) return `the Foundry page. No browser could be opened here, so the person opens it themselves: in their own terminal on this machine (not through you) they run ${openCmd}`;
       return elsewhere ? 'the Foundry page they already have open (it shows the list under "Waiting for you")'
-        : `the Foundry page that opened in their browser (if none opened, they run ${openCmd} in their own terminal)`;
+        : `the Foundry page that opened in their browser (if none opened, they run ${openCmd} in their own terminal, not through you)`;
     } : () => null;
     // FOUNDRY_TEST_AS_OF fixes the date a list is "as of" for the scripted journeys only; every list shows its date to the person.
     const asOf = process.env.FOUNDRY_TEST_AS_OF ? () => Date.parse(process.env.FOUNDRY_TEST_AS_OF) : undefined;

@@ -87,13 +87,18 @@ Several findings share one cause. These are the mechanisms added or changed.
    - A list therefore leaves out what earlier runs already made. Its summary matches what the run will write.
    - A new list replaces any older open list of the same automation, and a yes closes the others.
    - This removes DESIGN §6's "batch approval across runs" limit [test, journey `p2-next-day`].
-3. **A key and port that last.**
-   - `app/site/session.mjs` keeps the page key and the last port in `<workspace>/site/session.json` (0600).
-   - The browser keeps the key per origin in `localStorage`. A cookie was rejected because cookies are not port-isolated, so
-     another server on 127.0.0.1 would receive it.
-   - `node app/cli.mjs open --workspace DIR` opens the page that is already running, or starts it.
-   - `GET /open-info` needs no key and returns only that command.
-   - The page also handles `#t=` on hashchange, and Help and Glossary render without a key [test, journey `p2-next-day`].
+3. **A key and port that last.** *Superseded on 2026-10-21 by the security review (H1, H2, M6): a key that lasted, kept in
+   `localStorage` for a fixed port and printed by `open`, could be taken by whatever bound that port while Foundry was down and
+   reached coding agents through captured output. What holds now:*
+   - `app/site/session.mjs` keeps only the home port in `<workspace>/site/session.json` (0600); no key is on disk.
+   - Every start makes its own keys in memory. A tab gets one by trading a one-time code (`app/site/gate.mjs`: works once, within a
+     minute, only for that start) and keeps it in `sessionStorage`. A code used twice withdraws the key its first use got.
+   - `node app/cli.mjs open --workspace DIR` opens the page that is already running (a code minted through `<workspace>/site/codes/`),
+     or starts it. It prints a one-time link only to a person's terminal (stdin and stdout a TTY), never to piped output.
+   - A bookmark opens the page that says that one command (`GET /open-info` needs no key, returns only the command, with the home
+     folder written `~`). The "next day" journey now counts running it as one step outside the browser.
+   - On Linux the page answers only connections from this OS account or root (`app/site/peer.mjs`, `/proc/net/tcp`).
+   - Help and Glossary still render without a key [tests `app/site/test/review-security.test.mjs`, journey `p2-next-day`].
 4. **Who decided, kept and checkable.**
    - `app/onboarding/decisions.mjs` names the person as "name (account@host)".
    - Every turn-on, list and single action decision goes to `<workspace>/site/decisions.jsonl`. Each line holds the sha256 of

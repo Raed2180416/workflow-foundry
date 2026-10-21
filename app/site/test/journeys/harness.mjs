@@ -165,7 +165,8 @@ export async function journey(opts, fn) {
   const mark = (milestone, extra = {}) => { log.milestones[milestone] = { steps, asks, ms: Date.now() - started, ...extra }; };
   let failure = null;
   try {
-    await page.goto(url);
+    // Foundry opens the page with a one-time code, as the browser opener would (app/site/gate.mjs).
+    await page.goto(site.openUrl());
     await page.waitForSelector('main h1');
     await fn({ page, person, shot, site, app, base, url, mark, dir, log, settle });
   } catch (error) {

@@ -1,9 +1,17 @@
 // The dashboard page. Every value from the workspace is rendered with textContent: workflow, run and user text is data, never markup.
-const token = (() => {
-  const fromHash = new URLSearchParams(location.hash.slice(1)).get('t');
-  if (fromHash) { try { sessionStorage.setItem('foundry-token', fromHash); } catch { /* storage off */ } history.replaceState(null, '', location.pathname); return fromHash; }
+// The page arrives with a one-time code (#/?c=...), trades it for this tab's key (POST /auth/open) and keeps the key in this tab only.
+let token = null;
+async function takeKey() {
+  const code = (location.hash.match(/[?&]c=([A-Za-z0-9_-]{43})/) ?? [])[1];
+  if (code) {
+    history.replaceState(null, '', location.pathname);
+    const res = await fetch('/auth/open', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.key) { try { sessionStorage.setItem('foundry-token', data.key); } catch { /* storage off: this page only */ } return data.key; }
+    return null;
+  }
   try { return sessionStorage.getItem('foundry-token'); } catch { return null; }
-})();
+}
 const $ = id => document.getElementById(id);
 function el(tag, props = {}, ...children) {
   const node = document.createElement(tag);
@@ -101,7 +109,7 @@ async function showFlow(flowId) {
   } catch (error) { showError(error); }
 }
 async function load() {
-  if (!token) { showError(new Error('Open the link printed by `node app/cli.mjs start` (it carries a one-time key).')); return; }
+  if (!token) { showError(new Error('This tab has no key. Run `node app/cli.mjs start` again in your own terminal: it opens a fresh link (each link works once).')); return; }
   try {
     const o = await api('/api/overview');
     $('error').hidden = true;
@@ -110,5 +118,4 @@ async function load() {
     $('mode').textContent = `Approver: ${o.mode.approvers}. ${o.mode.note} Workspace: ${o.workspace}`;
   } catch (error) { showError(error); }
 }
-load();
-setInterval(() => { if (document.visibilityState === 'visible') load(); }, 5000);
+takeKey().then(k => { token = k; load(); setInterval(() => { if (document.visibilityState === 'visible') load(); }, 5000); });

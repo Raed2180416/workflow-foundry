@@ -1,36 +1,37 @@
-// The page's key and port for one workspace, kept across starts (P1 and P2 walkthroughs, B2: a closed tab, a bookmark or a restart
-// was a dead end, because every start made a new key on a random port).
+// The page's home port for one workspace, kept across starts (P1 and P2 walkthroughs, B2), and nothing secret.
 //
-//   <workspace>/site/session.json   { token, port, createdAt }   0600 in a 0700 folder: readable by this OS user only
+//   <workspace>/site/session.json   { port, createdAt }   0600 in a 0700 folder
 //
-// The same key on the same port means a bookmark of http://127.0.0.1:<port>/ keeps working: the page keeps the key in the browser's
-// storage for that address (per port: another local port cannot read it). `node app/cli.mjs open` prints and opens the keyed link
-// again; `node app/cli.mjs site --new-key` makes a new key (every open page then needs the new link). What the key does not change:
-// a process running as this OS user can read this file, as it can read everything else of the person's (the same-user limit).
+// Until the security review of 2026-10-21 this file also held the page key, reused on every start, and the page kept that key in
+// localStorage, so a bookmark opened Foundry by itself. That let another local account that bound the port while Foundry was down take
+// the key from the browser (H2), and the key reached coding agents through printed links (H1). Now every start makes new keys, a tab
+// gets its key only by trading a one-time code (./gate.mjs), and the key stays in that tab. A bookmark of http://127.0.0.1:<port>/ opens
+// the page that says the one command that lets the browser in again (`node app/cli.mjs open`).
+//
+// The home port is the one a bookmark names. When another program holds it, Foundry starts on a free port for this start only, says so
+// (whatever answers on the home port is then not Foundry), and does not move its home.
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
-import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 
 export const DEFAULT_PORT = 4178;
 const fileOf = workspace => path.join(workspace, 'site', 'session.json');
 
 export function readSession(workspace) {
-  try { const s = JSON.parse(readFileSync(fileOf(workspace), 'utf8')); return /^[A-Za-z0-9_-]{32}$/.test(s?.token ?? '') ? s : null; } catch { return null; }
+  try { const s = JSON.parse(readFileSync(fileOf(workspace), 'utf8')); return Number.isInteger(s?.port) && s.port > 0 && s.port < 65536 ? { port: s.port, createdAt: s.createdAt ?? null } : { port: null, createdAt: s?.createdAt ?? null }; } catch { return null; }
 }
-/** The workspace's session, made on first use; fresh: a new key. */
-export function siteSession(workspace, { fresh = false } = {}) {
-  const current = fresh ? null : readSession(workspace);
-  const session = current ?? { token: randomBytes(24).toString('base64url'), port: readSession(workspace)?.port ?? null, createdAt: new Date().toISOString() };
-  if (!current) save(workspace, session);
+/** The workspace's home port (null until the first start), and remember(port) to make a port the home. Older files' keys are dropped. */
+export function siteSession(workspace) {
+  const current = readSession(workspace);
+  const session = { port: current?.port ?? null, createdAt: current?.createdAt ?? new Date().toISOString() };
+  // A file from before the review may still hold a key: rewrite it without one.
+  try { if (existsSync(fileOf(workspace)) && 'token' in JSON.parse(readFileSync(fileOf(workspace), 'utf8'))) save(workspace, session); } catch { save(workspace, session); }
   return { ...session, remember(port) { if (session.port !== port) { session.port = port; save(workspace, session); } } };
 }
 function save(workspace, session) {
   const file = fileOf(workspace);
   mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
   const tmp = `${file}.tmp-${process.pid}`;
-  writeFileSync(tmp, JSON.stringify({ token: session.token, port: session.port, createdAt: session.createdAt }, null, 2), { mode: 0o600 });
+  writeFileSync(tmp, JSON.stringify({ port: session.port, createdAt: session.createdAt }, null, 2), { mode: 0o600 });
   renameSync(tmp, file);
 }
-/** The keyed link of a running page, or null. */
-export const keyedUrl = (base, token, route = null) => `${base.replace(/\/?(#.*)?$/, '/')}#t=${token}${route ? `&r=${encodeURIComponent(route)}` : ''}`;
 export const sessionExists = workspace => existsSync(fileOf(workspace));

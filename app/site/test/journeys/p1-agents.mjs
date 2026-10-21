@@ -2,7 +2,8 @@
 // it copies the exact line from #/connect-agent, parses it, and spawns that argv over stdio with the MCP SDK client, so the server
 // under test is the one the line starts. With form elicitation (Claude Code) the person approves in the client's dialog; without
 // it (Cursor, Codex) the browser opens on the yes card. Decisions on the exact list happen in the browser page Foundry opens
-// (FOUNDRY_URL_FILE stands in for the browser opener). The agent transcript is rendered to transcript.html and screenshotted.
+// (FOUNDRY_URL_FILE, a file inside the workspace, stands in for the browser opener: it gets the one-time code link). The agent
+// transcript is rendered to transcript.html and screenshotted.
 // Not covered: a real Claude Code, Cursor or Codex client (their own trust and tool prompts are reported, not measured).
 // nice node --test --test-concurrency=1 app/site/test/journeys/p1-agents.mjs
 import test, { after } from 'node:test';
@@ -141,7 +142,8 @@ test('P1 Claude Code: one pasted line, then a request; first verified in 2 actio
       transcript.push({ who: 'agent', text: r.say });
       await showTranscript('run-waits-for-you', 'run_flow: the exact list waits for the person in the browser');
       const url = await waitForFile(urlFile);
-      assert.match(url, /^http:\/\/127\.0\.0\.1:\d+\/#t=[^&]+&r=%2Fwaiting$/);
+      // The browser opener gets a one-time code, never a key (security review H1, M6); the tab trades it for its own key.
+      assert.match(url, /^http:\/\/127\.0\.0\.1:\d+\/#\/waiting\?c=[A-Za-z0-9_-]{43}$/);
       await page.goto(url);
       await page.waitForSelector('[data-action="batch-approve"]');
       await shot('browser-waiting', { note: 'the page Foundry opened: the exact list' });

@@ -2,7 +2,7 @@
 // $0, no model, loopback only. nice -n 15 node --test --test-concurrency=1 app/site/test/walkthrough.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, mkdtempSync, rmSync, appendFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, appendFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,18 +37,21 @@ const CARDS = { 'invoice-chase': { sendSummary: true, summaryTo: 'me@example.com
   'weekly-report': { recipient: 'a@b.example', team: 'Ops' }, 'lead-triage': { defaultAssignee: 's@b.example' }, 'support-deflection': { escalateTo: 's@b.example' },
   'oncall-digest': { channel: '#ops', page: true, pageTo: 'o@b.example' }, 'contact-sync': { reportTo: 'r@b.example' } };
 
-test('P1/P2 B2: the page key and port persist per workspace; the open command needs no key; a stale key is refused', async () => {
+test('P1/P2 B2 after the security review: the home port persists per workspace, no key does; the open command needs no key; a stale key is refused', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'session-'));
   try {
-    const a = siteSession(dir), b = siteSession(dir);
-    assert.equal(a.token, b.token, 'the same key across starts, so a bookmark keeps working');
-    a.remember(4999); assert.equal(readSession(dir).port, 4999);
-    assert.notEqual(siteSession(dir, { fresh: true }).token, a.token, '--new-key makes a new one');
+    // A session file from before the review held the key: it is rewritten without one.
+    mkdirSync(path.join(dir, 'site'), { recursive: true });
+    writeFileSync(path.join(dir, 'site', 'session.json'), JSON.stringify({ token: 'x'.repeat(32), port: 4999 }));
+    const a = siteSession(dir);
+    assert.equal(a.port, 4999, 'the home port is kept, so a bookmark of the address reaches the page that says how to open Foundry');
+    assert.equal('token' in a, false); assert.equal(readFileSync(path.join(dir, 'site', 'session.json'), 'utf8').includes('x'.repeat(32)), false, 'the old key is gone from disk');
+    a.remember(5001); assert.equal(readSession(dir).port, 5001);
   } finally { rmSync(dir, { recursive: true, force: true }); }
   const s = await startSite();
   try {
     const info = await fetch(`${s.base}/open-info`).then(r => r.json());
-    assert.match(info.open, /cli\.mjs" open --workspace /); assert.equal(/#t=|token/i.test(JSON.stringify(info)), false, 'no key without the key');
+    assert.match(info.open, /cli\.mjs" open --workspace /); assert.equal(/#t=|c=|token/i.test(JSON.stringify(info)), false, 'no key without the key');
     const stale = await fetch(`${s.base}/api/overview`, { headers: { 'x-foundry-token': 'x'.repeat(32) } });
     assert.equal(stale.status, 401); assert.match((await stale.json()).error, /open/);
   } finally { await s.close(); }
