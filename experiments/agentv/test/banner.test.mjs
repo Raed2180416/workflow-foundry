@@ -28,6 +28,9 @@ test('UNIT build: the banner must carry K, CASES, SD_RATES or SIGMA_B, and STOP;
   assert.equal(ok.unit, 'build'); assert.equal(ok.buildLevel.K, 8); assert.equal(ok.buildLevel.cases, 1022);
   assert.ok(ok.buildLevel.resolvable && ok.buildLevel.mde > 0.03 && ok.buildLevel.mde < 0.06, `MDE ${ok.buildLevel.mde}`);
   assert.match(ok.buildLevel.line, /BUILD-LEVEL MDE .* at K = 8 per arm, 1022 cases per build/);
+  // At small K the MDE is simulated with the exact permutation test (the t form understates it there).
+  const k4 = bannerUnit(`UNIT build\nK 4\nCASES 1022\nSD_RATES 0.03\nSTOP blocks of 2\n${BASE}`);
+  assert.match(k4.buildLevel.line, /simulated exact permutation\): 8\.9 points at K = 4/);
   // K = 3 per arm: the exact build-level test can never reach p < 0.05; the banner says so.
   const k3 = bannerUnit(`UNIT build\nK 3\nCASES 1022\nSIGMA_B 0.05\nSTOP fixed K = 3\n${BASE}`);
   assert.equal(k3.buildLevel.resolvable, false); assert.equal(k3.buildLevel.mde, Infinity);

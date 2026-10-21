@@ -69,8 +69,8 @@ Interleaving: arms run interleaved per task on identical environments (order rec
     pools cases across builds treats K builds × m cases as K·m independent draws; under the B7
     simulation (σ_b 0.08, 43 cases per build) it rejects a true null about 25% of the time at a
     nominal 5% (`experiments/lib/stats-builds.test.mjs`). Grade every build on the same pool of
-    worlds (paired across shared worlds), at least 400 cases per build (E8: the 9-world pool of
-    1,022 completed cases, $0).
+    worlds (one spec, the same worlds, so the pool's case difficulty is common to every build), at
+    least 400 cases per build (E8: the 9-world pool of 1,022 completed cases, $0).
   - **task** (one fixed harness run on many tasks): paired by task at k = 1. More tasks buy more
     power than repeats at the same budget (120 runs per arm: power 0.70 as 120 × k=1 against 0.58
     as 60 × k=2, FIXES A4); use k ≥ 2 only for pass^k claims.
@@ -82,12 +82,20 @@ Interleaving: arms run interleaved per task on identical environments (order rec
   "directional" in advance.
 - **Build unit.** All of:
   - σ_b measured, not assumed: the SD of build pass rates at the planned cases per build, from
-    existing builds (`node experiments/lib/stats-builds.mjs compare …` prints it), with its source;
-  - the MDE it implies (`stats-builds.mjs mde --K … --m … --sd-rates …`), stated in points;
+    existing builds (`node experiments/lib/stats-builds.mjs compare …` prints it), with its source
+    and its uncertainty (an SD pooled from two arms of K builds has 2(K − 1) degrees of freedom;
+    at K = 3 its 95% interval runs from about 0.6x to 2.9x the estimate);
+  - the MDE it implies (`stats-builds.mjs mde --K … --m … --sd-rates …`; the spread is required),
+    stated in points, at the SD estimate and at its 95% bounds. At K ≤ 6 the MDE is simulated with
+    the exact permutation test (the t form understates it there: by about 20% at K = 4);
   - the K schedule and stop rule: builds added in blocks of 2 per arm up to K_max (default 12),
-    O'Brien-Fleming boundaries on the exact build-level permutation p (`sequentialBuildLook`); or a
-    fixed K with its reason. K = 3 vs 3 can never reach p < 0.05 (smallest attainable p 0.10): such
-    a design reports intervals only and is labelled "cannot resolve at K = 3" in advance;
+    O'Brien-Fleming boundaries on the exact build-level permutation p, and a crossing decides only
+    with a gap of at least 3 points (`sequentialBuildLook`); or a fixed K with its reason. K = 3 vs 3
+    can never reach p < 0.05 (smallest attainable p 0.10): such a design reports intervals only and
+    is labelled "cannot resolve at K = 3" in advance;
+  - for a threshold on one arm (e.g. "mean build pass rate ≥ 0.95"), its operating characteristics
+    at the planned K, simulated (how often it holds, fails or stays unresolved at plausible true
+    rates), stated in advance;
   - the cost per build and the K_max cost.
 - **Task unit, sequential.** The look schedule (task counts per look, disjoint batches), the
   boundary (O'Brien-Fleming by default; nominal levels per look), α per metric if there are
@@ -98,9 +106,12 @@ Interleaving: arms run interleaved per task on identical environments (order rec
 ## 5. Analysis
 - Analysis script path and sha256 (frozen before data collection):
 - Decision rule (e.g. non-inferiority margin δ, CI level), naming the unit (§3):
-  - build unit: the exact build-level permutation test for the headline, and the beta-binomial
-    posterior interval of the difference in mean build pass rate (`buildDifferenceInterval`) beside
-    it. A case-pooled test (z, McNemar or bootstrap over cases pooled across builds) is not admissible
+  - build unit: the exact build-level permutation test for the headline; the difference in mean
+    build pass rate (difference of the arms' sample means of build rates) with Welch's interval on
+    the build rates (`buildDifferenceInterval`) beside it; per arm, the sample mean of build rates
+    as the point estimate with the 95% HPD interval of the logit-normal random-effect posterior
+    (`buildRatePosterior`; it is overconfident for an arm whose builds are all perfect, and says so).
+    A case-pooled test (z, McNemar or bootstrap over cases pooled across builds) is not admissible
     for a comparison between arms of builds. Per-build values are always reported.
   - task unit: the primary test, any co-primary metric and its α share, and the group-sequential
     boundary if there are looks.

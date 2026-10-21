@@ -77,7 +77,7 @@ export function bannerUnit(text) {
   const r = buildMde({ K, m: cases, ...(Number.isFinite(sdRates) ? { sdRates } : { sigmaB }) });
   const spread = Number.isFinite(sdRates) ? `sd of build rates ${sdRates}` : `between-build SD ${sigmaB} + binomial`;
   const line = r.resolvable
-    ? `BUILD-LEVEL MDE (computed by experiments/lib/stats-builds.mjs): ${(100 * r.mde).toFixed(1)} points at K = ${K} per arm, ${cases} cases per build, ${spread}, alpha 0.05, power 0.8${r.casesBelowMinimum ? ` (below the template's ${MIN_CASES_PER_BUILD} cases per build)` : ''}`
+    ? `BUILD-LEVEL MDE (computed by experiments/lib/stats-builds.mjs, ${r.method}): ${(100 * r.mde).toFixed(1)} points at K = ${K} per arm, ${cases} cases per build, ${spread}, alpha 0.05, power 0.8${r.casesBelowMinimum ? ` (below the template's ${MIN_CASES_PER_BUILD} cases per build)` : ''}`
     : `BUILD-LEVEL: cannot resolve at K = ${K} per arm (the exact build-level permutation test never reaches p < 0.05); only intervals can be reported`;
   return { unit: 'build', buildLevel: { K, cases, ...(Number.isFinite(sdRates) ? { sdRates } : { sigmaB }), stop, mde: r.mde, resolvable: r.resolvable, line } };
 }
