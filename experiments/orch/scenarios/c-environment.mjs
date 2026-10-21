@@ -64,8 +64,10 @@ export default [
     invariant: 'a host disk/file-table fault is an environment fault (retried on resume, never scored as a task failure); appending after a torn tail loses no record',
     timeoutMs: 30000,
     async run() {
-      const codes = ['ENOSPC', 'EDQUOT', 'EMFILE', 'ERR_SQLITE_ERROR'];
-      const classified = Object.fromEntries(codes.map(c => [c, metEnvFault({ error: { code: c } })]));
+      // As the faults arrive: errno codes from fs, and node:sqlite's generic code with SQLite's text (what C1 produced).
+      const faults = { ENOSPC: { code: 'ENOSPC', message: 'ENOSPC: no space left on device, write' }, EDQUOT: { code: 'EDQUOT', message: 'EDQUOT: disk quota exceeded' },
+        EMFILE: { code: 'EMFILE', message: 'EMFILE: too many open files' }, 'SQLite full': { code: 'ERR_SQLITE_ERROR', message: 'database or disk is full' } };
+      const classified = Object.fromEntries(Object.entries(faults).map(([k, error]) => [k, metEnvFault({ error })]));
       const file = path.join(tmp('orch-c2-'), 'results.jsonl');
       writeFileSync(file, JSON.stringify({ arm: 'a', taskKey: 't1', trial: 0, pass: true }) + '\n' + '{"arm":"a","taskKey":"t2","tri');
       new Results(file).append({ arm: 'a', taskKey: 't3', trial: 0, pass: true });
@@ -73,7 +75,7 @@ export default [
       return { observed: { ENV_FAULTS: [...ENV_FAULTS], classified, afterTornTail: { t1: reloaded.has('a', 't1', 0), t3: reloaded.has('a', 't3', 0) } },
         checks: [
           { name: 'ENOSPC / EDQUOT / EMFILE / SQLite-full classified as environment faults', pass: Object.values(classified).every(Boolean), observed: classified },
-          { name: 'a record appended after a torn tail survives a reload', pass: reloaded.has('a', 't3', 0), observed: `t3 present: ${reloaded.has('a', 't3', 0)} (the append joined the torn line)` },
+          { name: 'a record appended after a torn tail survives a reload', pass: reloaded.has('a', 't3', 0), observed: reloaded.has('a', 't3', 0) ? 't3 present' : 't3 lost: the append joined the torn line, so neither parses' },
         ] };
     },
   },

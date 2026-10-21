@@ -1,0 +1,113 @@
+diff --git a/src/children.mjs b/src/children.mjs
+index c8a6396..05fe114 100644
+--- a/src/children.mjs
++++ b/src/children.mjs
+@@ -9,7 +9,15 @@
+ //
+ // Dependency-free on purpose (it is imported by process.mjs and sandbox.mjs, which the model providers use).
+ import { AsyncLocalStorage } from 'node:async_hooks';
+-import { readdirSync, readFileSync } from 'node:fs';
++import { existsSync, readdirSync, readFileSync } from 'node:fs';
++
++// Linux only: setpriv(1) sets PR_SET_PDEATHSIG before it execs the command, so the kernel SIGKILLs the child the moment the process that
++// spawned it dies, however it dies (SIGKILL, the OOM killer). Detached groups otherwise outlive a killed owner until a cancel or resume
++// reaps them, and the experiment executors record nothing to reap (orch-20261021 B2, B3). Elsewhere (macOS has no PDEATHSIG) the
++// recorded groups and reapChildren stay the only cleanup.
++const SETPRIV = process.platform === 'linux' ? (['/usr/bin/setpriv', '/bin/setpriv'].find(p => { try { return existsSync(p); } catch { return false; } }) ?? null) : null;
++/** [command, args] for spawn(): `command` wrapped so that it dies with the process that spawns it (see SETPRIV); unchanged without setpriv. */
++export function lifeline(command, args) { return SETPRIV ? [SETPRIV, ['--pdeathsig', 'KILL', '--', command, ...args]] : [command, args]; }
+ 
+ /** Set by the runtime around a sandbox or model call: {add(child), remove(pid)}. */
+ export const childScope = new AsyncLocalStorage();
+diff --git a/src/executors/claude-code.mjs b/src/executors/claude-code.mjs
+index 61fa065..55289f6 100644
+--- a/src/executors/claude-code.mjs
++++ b/src/executors/claude-code.mjs
+@@ -9,6 +9,7 @@ import os from 'node:os';
+ import path from 'node:path';
+ import { FoundryError } from '../data.mjs';
+ import { CHILD_ENV_ALLOWED } from '../models/policy.mjs';
++import { lifeline, trackChild } from '../children.mjs';
+ 
+ // An executor sees only its own workdir under WORK_ROOT and at most one kit under KIT_ROOT.
+ export const WORK_ROOT = '/var/tmp/foundry-work', KIT_ROOT = '/opt/foundry-kit';
+@@ -307,7 +308,10 @@ export async function runClaudeCode({
+   if (effort) args.push('--effort', effort);
+   const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [binary, ...args]);
+   const started = Date.now();
+-  const child = spawn('unshare', [...UNSHARE_ARGS, 'sh', '-c', script], { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
++  // lifeline: the session dies with this process; trackChild: a run executing it can find it after a crash (orch-20261021 B3).
++  const child = spawn(...lifeline('unshare', [...UNSHARE_ARGS, 'sh', '-c', script]), { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
++  const untrack = trackChild(child, 'executor');
++  child.once('close', untrack);
+   let stdout = '', stderr = '', timedOut = false;
+   child.stdout.on('data', d => { stdout += d; });
+   child.stderr.on('data', d => { if (stderr.length < 64 * 1024) stderr += d; });
+diff --git a/src/executors/sandboxed-command.mjs b/src/executors/sandboxed-command.mjs
+index 6d86e83..e022553 100644
+--- a/src/executors/sandboxed-command.mjs
++++ b/src/executors/sandboxed-command.mjs
+@@ -5,6 +5,7 @@
+ // reached only through a unix socket inside the workdir). Used to run B1 scripts.
+ import { spawn } from 'node:child_process';
+ import { FoundryError } from '../data.mjs';
++import { lifeline, trackChild } from '../children.mjs';
+ import { DEFAULT_HIDDEN, UNSHARE_ARGS, maskSteps, sandboxAvailable, sandboxScript, splitReady } from './claude-code.mjs';
+ 
+ const SCRUBBED = /^(GH_TOKEN|GITHUB_TOKEN|GIT_CONFIG_.*|GIT_ASKPASS|CLOUDSDK_AUTH_ACCESS_TOKEN|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|CLAUDE_CODE_SESSION_ACCESS_TOKEN|CLAUDE_SESSION_INGRESS_TOKEN_FILE)$/;
+@@ -17,7 +18,10 @@ export async function runSandboxed({ command, args = [], workdir, env = {}, time
+   // (No NODE_EXTRA_CA_CERTS: the proxy CA bundle lives under the hidden /root; pass it in env with keepRo if ever needed.)
+   const base = { PATH: '/opt/node24/bin:/usr/local/bin:/usr/bin:/bin', LANG: 'C.UTF-8', HOME: workdir };
+   for (const k of Object.keys(env)) if (SCRUBBED.test(k)) throw new FoundryError('SANDBOX_ENV', `refusing to pass credential variable ${k}`);
+-  const child = spawn('unshare', [...UNSHARE_ARGS, ...(network ? [] : ['--net']), 'sh', '-c', script], { env: { ...base, ...env }, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
++  // lifeline: the sandbox dies with this process (its timeout is a timer here); trackChild: a run executing it can find it (orch-20261021 B3).
++  const child = spawn(...lifeline('unshare', [...UNSHARE_ARGS, ...(network ? [] : ['--net']), 'sh', '-c', script]), { env: { ...base, ...env }, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
++  const untrack = trackChild(child, 'sandbox');
++  child.once('close', untrack);
+   let stdout = '', stderr = '', timedOut = false, truncated = false;
+   child.stdout.on('data', d => { if (stdout.length < maxOutputBytes) stdout += d; else truncated = true; });
+   child.stderr.on('data', d => { if (stderr.length < 256 * 1024) stderr += d; });
+diff --git a/src/process.mjs b/src/process.mjs
+index 8886694..a457846 100644
+--- a/src/process.mjs
++++ b/src/process.mjs
+@@ -1,7 +1,7 @@
+ import { spawn } from 'node:child_process';
+ import { StringDecoder } from 'node:string_decoder';
+ import { FoundryError } from './data.mjs';
+-import { trackChild } from './children.mjs';
++import { lifeline, trackChild } from './children.mjs';
+ 
+ /** Bounded argv-only subprocess. No shell parsing or inherited credential env. */
+ export async function runProcess(command, args, { cwd, env, input = '', timeoutMs = 60000, signal, maxBytes = 4 * 1024 * 1024 } = {}) {
+@@ -11,7 +11,7 @@ export async function runProcess(command, args, { cwd, env, input = '', timeoutM
+   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 64 * 1024 * 1024) throw new FoundryError('PROCESS_OUTPUT_LIMIT', 'Output budget must be an integer between one byte and 64 MiB');
+   if (signal?.aborted) throw new FoundryError('CANCELLED', 'Subprocess was cancelled before launch');
+   return new Promise((resolve, reject) => {
+-    const child = spawn(command, args, { cwd, env, shell: false, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
++    const child = spawn(...lifeline(command, args), { cwd, env, shell: false, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
+     const untrack = trackChild(child, 'process'); // recorded with the run executing it (src/children.mjs), so a killed owner's child can be found and stopped
+     let stdout = '', stderr = '', bytes = 0, failure = null, killTimer;
+     const decoders = { stdout: new StringDecoder('utf8'), stderr: new StringDecoder('utf8') };
+diff --git a/src/sandbox.mjs b/src/sandbox.mjs
+index cfceedf..166643b 100644
+--- a/src/sandbox.mjs
++++ b/src/sandbox.mjs
+@@ -1,7 +1,7 @@
+ import { spawn } from 'node:child_process';
+ import { existsSync, readFileSync, realpathSync } from 'node:fs';
+ import { checkData, FoundryError } from './data.mjs';
+-import { trackChild } from './children.mjs';
++import { lifeline, trackChild } from './children.mjs';
+ 
+ // DESIGN §1.2. Code runs in fresh user+net+mount+pid namespaces: every inherited mount is
+ // remounted read-only, the environment holds PATH only, and source plus input arrive on stdin.
+@@ -169,7 +169,7 @@ export async function runCode({ lang, source, input = null, timeoutMs = 10000, m
+   const startedAt = Date.now();
+   return new Promise((resolve, reject) => {
+     let child;
+-    try { child = spawn(unshareBinary, argv, { cwd: '/', env: { PATH: SAFE_PATH }, shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe'], ...identity }); }
++    try { child = spawn(...lifeline(unshareBinary, argv), { cwd: '/', env: { PATH: SAFE_PATH }, shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe'], ...identity }); }
+     catch (error) { reject(new FoundryError('SANDBOX_UNAVAILABLE', `Sandbox launch failed: ${error.message}`)); return; }
+     const untrack = trackChild(child, 'sandbox'); // recorded with the run executing it (src/children.mjs), so a killed owner's sandbox can be found and stopped
+     const stdout = [], stderr = [];

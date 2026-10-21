@@ -1,0 +1,141 @@
+{
+ "model": "claude-haiku-5-5",
+ "capTotalUsd": 1,
+ "at": "2026-10-21T13:17:49.135Z",
+ "probes": {
+  "L1": {
+   "title": "baseline: one short answer, Bash available ($0.05 cap)",
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00011632,
+   "costUnknown": false,
+   "costUpperUsd": 0.00011632,
+   "streamUsage": {
+    "inputTokens": 2,
+    "outputTokens": 5,
+    "cacheReadTokens": 4062,
+    "cacheWriteTokens": 365
+   },
+   "turns": 1,
+   "durationMs": 3481,
+   "result": "PONG",
+   "cliVersion": "2.1.306",
+   "model": "claude-haiku-5-5",
+   "eventTypes": [
+    "system:init",
+    "assistant",
+    "rate_limit_event",
+    "result"
+   ],
+   "resultEvent": {
+    "subtype": "success",
+    "is_error": false,
+    "terminal_reason": "completed",
+    "total_cost_usd": 0.00011632
+   },
+   "toolUses": [],
+   "rateLimitEvents": [
+    "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"allowed\",\"resetsAt\":1792598400,\"rateLimitType\":\"five_hour\",\"overageStatus\":\"rejected\",\"overageDisabledReason\":\"org_level_disabled\",\"isUsingOverage\":false,\"unifiedWindows\":{\"five_hour\":{\"utilization\":0.57,\"resetsAt\":1792598400},\"seven_day\":{\"utilization\":0.14,\"resetsAt\":1793185200}}},\"uuid\":\"3b830127-e895-4295-b15c-a6a580e23fe2\",\"session_id\":\"406672e6-c144-494a-bce9-9d74f906d7e3\"}"
+   ]
+  },
+  "L2": {
+   "title": "SIGTERM to the CLI while its Bash tool runs a 30.71 s python sleep",
+   "ok": false,
+   "error": {
+    "code": "EXECUTOR_PROTOCOL",
+    "exitCode": 143,
+    "stderrTail": ""
+   },
+   "costUsd": null,
+   "costUnknown": true,
+   "costUpperUsd": 0.05,
+   "streamUsage": {
+    "inputTokens": 2,
+    "outputTokens": 16,
+    "cacheReadTokens": 3753,
+    "cacheWriteTokens": 708
+   },
+   "turns": null,
+   "durationMs": 5165,
+   "result": "",
+   "cliVersion": "2.1.306",
+   "model": "claude-haiku-5-5",
+   "eventTypes": [
+    "system:init",
+    "assistant",
+    "rate_limit_event",
+    "user"
+   ],
+   "resultEvent": null,
+   "toolUses": [
+    "Bash:{\"command\":\"python3 -c \\\"import time; time.sleep(30.71)\\\" && echo slept\",\"descri"
+   ],
+   "rateLimitEvents": [
+    "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"allowed\",\"resetsAt\":1792598400,\"rateLimitType\":\"five_hour\",\"overageStatus\":\"rejected\",\"overageDisabledReason\":\"org_level_disabled\",\"isUsingOverage\":false,\"unifiedWindows\":{\"five_hour\":{\"utilization\":0.57,\"resetsAt\":1792598400},\"seven_day\":{\"utilization\":0.14,\"resetsAt\":1793185200}}},\"uuid\":\"3adb93ef-2ca5-41b6-890c-8b8c73809e38\",\"session_id\":\"5dbf9960-5eac-489e-94ed-a86740349e48\"}"
+   ],
+   "acted": {
+    "afterMs": 4638,
+    "cliPid": 24873,
+    "cliCmd": "claude -p --model claude-haiku-5-5 --output-format stream-js",
+    "tree": [
+     "unshare --user --map-root-user --mount --pid --for",
+     "claude -p --model claude-haiku-5-5 --output-format",
+     "/bin/bash -c source /root/.claude/shell-snapshots/",
+     "python3 -c import time; time.sleep(30.71)"
+    ],
+    "error": null
+   },
+   "leftovers": []
+  },
+  "L3": {
+   "title": "executor abort (SIGKILL of the sandbox group) while Bash runs a 30.93 s python sleep",
+   "ok": false,
+   "error": {
+    "code": "EXECUTOR_PROTOCOL",
+    "exitCode": null,
+    "stderrTail": ""
+   },
+   "costUsd": null,
+   "costUnknown": true,
+   "costUpperUsd": 0.05,
+   "streamUsage": {
+    "inputTokens": 2,
+    "outputTokens": 16,
+    "cacheReadTokens": 3753,
+    "cacheWriteTokens": 708
+   },
+   "turns": null,
+   "durationMs": 5169,
+   "result": "",
+   "cliVersion": "2.1.306",
+   "model": "claude-haiku-5-5",
+   "eventTypes": [
+    "system:init",
+    "assistant",
+    "rate_limit_event"
+   ],
+   "resultEvent": null,
+   "toolUses": [
+    "Bash:{\"command\":\"python3 -c \\\"import time; time.sleep(30.93)\\\" && echo slept\",\"descri"
+   ],
+   "rateLimitEvents": [
+    "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"allowed\",\"resetsAt\":1792598400,\"rateLimitType\":\"five_hour\",\"overageStatus\":\"rejected\",\"overageDisabledReason\":\"org_level_disabled\",\"isUsingOverage\":false,\"unifiedWindows\":{\"five_hour\":{\"utilization\":0.57,\"resetsAt\":1792598400},\"seven_day\":{\"utilization\":0.14,\"resetsAt\":1793185200}}},\"uuid\":\"cb3aad0c-e29f-47d0-837f-352b44ee183c\",\"session_id\":\"ecbb2407-75b9-4a79-acb0-bed7c0a18079\"}"
+   ],
+   "acted": {
+    "afterMs": 5130,
+    "cliPid": 25419,
+    "cliCmd": "claude -p --model claude-haiku-5-5 --output-format stream-js",
+    "tree": [
+     "unshare --user --map-root-user --mount --pid --for",
+     "claude -p --model claude-haiku-5-5 --output-format",
+     "/bin/bash -c source /root/.claude/shell-snapshots/",
+     "python3 -c import time; time.sleep(30.93)"
+    ],
+    "error": null
+   },
+   "leftovers": []
+  }
+ },
+ "spentKnownUsd": 0.00011632,
+ "spentUpperUsd": 0.10011632000000001
+}

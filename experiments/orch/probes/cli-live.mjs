@@ -27,9 +27,13 @@ const summary = (r, workdir) => {
   return { ok: r.ok, error: r.error ? { code: r.error.code, exitCode: r.error.exitCode, stderrTail: String(r.error.stderr ?? '').slice(-300) } : null, costUsd: r.costUsd, costUnknown: r.costUnknown, costUpperUsd: r.costUpperUsd,
     streamUsage: r.streamUsage, turns: r.turns, durationMs: r.durationMs, result: String(r.result ?? '').slice(0, 200), cliVersion: init?.claude_code_version ?? null, model: init?.model ?? null,
     eventTypes: ev.map(e => (e.type === 'system' ? `system:${e.subtype}` : e.type)).slice(-12), resultEvent: result ? { subtype: result.subtype, is_error: result.is_error, terminal_reason: result.terminal_reason ?? null, total_cost_usd: result.total_cost_usd } : null,
-    toolUses: (r.toolUses ?? []).map(t => `${t.name}:${JSON.stringify(t.input).slice(0, 80)}`) };
+    toolUses: (r.toolUses ?? []).map(t => `${t.name}:${JSON.stringify(t.input).slice(0, 80)}`),
+    // What the CLI says about the account's limits during a session (no credential in it): kept whole, cut to 600 characters.
+    rateLimitEvents: ev.filter(e => e.type === 'rate_limit_event').map(e => JSON.stringify(e).slice(0, 600)) };
 };
-const SLEEP_PROMPT = marker => `Use the Bash tool exactly once to run this command: ${marker} && echo slept\nAfter the command finishes, reply with the single word DONE.`;
+// CLI 2.1.306 refuses a foreground `sleep` in its Bash tool (observed in the first L2/L3 run, kept in cli-live.json), so the long
+// command is a python sleep; `token` is a number unique to the probe that identifies the process.
+const SLEEP_PROMPT = token => `Use the Bash tool exactly once to run this command: python3 -c "import time; time.sleep(${token})" && echo slept\nAfter the command finishes, reply with the single word DONE.`;
 
 // Run the executor and, once the marked command is running inside the session, deliver `act` (SIGTERM to the CLI, or an abort).
 async function withSignal({ marker, act, budgetUsd = 0.05, timeoutMs = 180000 }) {
@@ -40,7 +44,7 @@ async function withSignal({ marker, act, budgetUsd = 0.05, timeoutMs = 180000 })
     const end = Date.now() + 120000;
     while (Date.now() < end && !acted) {
       const mine = descendants(process.pid);
-      if (mine.some(p => p.cmd.startsWith(marker.split(' ')[0]) && p.cmd.includes(marker.split(' ')[1]))) {
+      if (mine.some(p => p.cmd.includes(`time.sleep(${marker})`))) {
         await delay(1500);
         const cli = mine.find(p => /(^|\/)claude( |$)/.test(p.cmd.split(' ')[0]) || /\/claude-code\/|claude\.js|\bclaude -p\b/.test(p.cmd));
         acted = { atMs: Date.now(), cliPid: cli?.pid ?? null, cliCmd: cli?.cmd.slice(0, 60) ?? null, tree: mine.map(p => p.cmd.slice(0, 50)) };
@@ -55,7 +59,7 @@ async function withSignal({ marker, act, budgetUsd = 0.05, timeoutMs = 180000 })
   const r = await runClaudeCode({ model: MODEL, prompt: SLEEP_PROMPT(marker), workdir, budgetUsd, timeoutMs, tools: ['Bash'], signal: controller.signal });
   await watcher;
   await delay(1500);
-  const leftovers = procs().filter(p => p.state !== 'Z' && p.cmd.includes(marker));
+  const leftovers = procs().filter(p => p.state !== 'Z' && p.cmd.includes(`time.sleep(${marker})`));
   for (const p of leftovers) { try { process.kill(p.pid, 'SIGKILL'); } catch {} }
   const s = summary(r, workdir);
   rmSync(workdir, { recursive: true, force: true });
@@ -67,8 +71,8 @@ const probes = {
     const workdir = path.join(WORK_ROOT, `orch-live-${process.pid}-${Date.now()}`); mkdirSync(workdir, { recursive: true });
     const r = await runClaudeCode({ model: MODEL, prompt: 'Reply with exactly the word PONG and nothing else. Do not use any tool.', workdir, budgetUsd: 0.05, timeoutMs: 120000, tools: ['Bash'] });
     const s = summary(r, workdir); rmSync(workdir, { recursive: true, force: true }); return s; } },
-  L2: { title: 'SIGTERM to the CLI while its Bash tool runs `sleep 30.7`', async run() { return withSignal({ marker: 'sleep 30.7', act: 'sigterm' }); } },
-  L3: { title: 'executor abort (SIGKILL of the sandbox group) while Bash runs `sleep 30.9`', async run() { return withSignal({ marker: 'sleep 30.9', act: 'abort' }); } },
+  L2: { title: 'SIGTERM to the CLI while its Bash tool runs a 30.71 s python sleep', async run() { return withSignal({ marker: '30.71', act: 'sigterm' }); } },
+  L3: { title: 'executor abort (SIGKILL of the sandbox group) while Bash runs a 30.93 s python sleep', async run() { return withSignal({ marker: '30.93', act: 'abort' }); } },
   L4: { title: 'session budget below one call (--max-budget-usd 0.0001)', async run() {
     const workdir = path.join(WORK_ROOT, `orch-live-${process.pid}-${Date.now()}`); mkdirSync(workdir, { recursive: true });
     const r = await runClaudeCode({ model: MODEL, prompt: 'Use Bash to run `echo one`, then `echo two`, then reply OK.', workdir, budgetUsd: 0.0001, timeoutMs: 120000, tools: ['Bash'] });

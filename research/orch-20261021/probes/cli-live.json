@@ -1,0 +1,167 @@
+{
+ "model": "claude-haiku-5-5",
+ "capTotalUsd": 1,
+ "at": "2026-10-21T13:13:15.144Z",
+ "probes": {
+  "L1": {
+   "title": "baseline: one short answer, Bash available ($0.05 cap)",
+   "ok": true,
+   "error": null,
+   "costUsd": 0.0004824500000000001,
+   "costUnknown": false,
+   "costUpperUsd": 0.0004824500000000001,
+   "streamUsage": {
+    "inputTokens": 2,
+    "outputTokens": 5,
+    "cacheReadTokens": 2135,
+    "cacheWriteTokens": 2292
+   },
+   "turns": 1,
+   "durationMs": 3688,
+   "result": "PONG",
+   "cliVersion": "2.1.306",
+   "model": "claude-haiku-5-5",
+   "eventTypes": [
+    "system:init",
+    "assistant",
+    "rate_limit_event",
+    "result"
+   ],
+   "resultEvent": {
+    "subtype": "success",
+    "is_error": false,
+    "terminal_reason": "completed",
+    "total_cost_usd": 0.0004824500000000001
+   },
+   "toolUses": []
+  },
+  "L2": {
+   "title": "SIGTERM to the CLI while its Bash tool runs `sleep 30.7`",
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00045942,
+   "costUnknown": false,
+   "costUpperUsd": 0.00045942,
+   "streamUsage": {
+    "inputTokens": 4,
+    "outputTokens": 19,
+    "cacheReadTokens": 8202,
+    "cacheWriteTokens": 970
+   },
+   "turns": 2,
+   "durationMs": 7314,
+   "result": "The sleep command was blocked by the Bash tool, so it never ran. The tool's guidance says foreground `sleep` is not allowed, and I did not retry it, since you asked for exactly one run.",
+   "cliVersion": "2.1.306",
+   "model": "claude-haiku-5-5",
+   "eventTypes": [
+    "system:init",
+    "assistant",
+    "user",
+    "rate_limit_event",
+    "system:thinking_tokens",
+    "system:thinking_tokens",
+    "system:thinking_tokens",
+    "assistant",
+    "assistant",
+    "result"
+   ],
+   "resultEvent": {
+    "subtype": "success",
+    "is_error": false,
+    "terminal_reason": "completed",
+    "total_cost_usd": 0.00045942
+   },
+   "toolUses": [
+    "Bash:{\"command\":\"sleep 30.7 && echo slept\",\"description\":\"Sleep 30.7 seconds then ech"
+   ],
+   "acted": null,
+   "leftovers": []
+  },
+  "L3": {
+   "title": "executor abort (SIGKILL of the sandbox group) while Bash runs `sleep 30.9`",
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00045242000000000004,
+   "costUnknown": false,
+   "costUpperUsd": 0.00045242000000000004,
+   "streamUsage": {
+    "inputTokens": 4,
+    "outputTokens": 19,
+    "cacheReadTokens": 8202,
+    "cacheWriteTokens": 970
+   },
+   "turns": 2,
+   "durationMs": 7043,
+   "result": "The sleep command was blocked by the sandbox, so it never ran. The block message says foreground `sleep` is not allowed. You asked for exactly one Bash call, so I haven't retried it in another form.",
+   "cliVersion": "2.1.306",
+   "model": "claude-haiku-5-5",
+   "eventTypes": [
+    "system:init",
+    "assistant",
+    "user",
+    "rate_limit_event",
+    "system:thinking_tokens",
+    "system:thinking_tokens",
+    "assistant",
+    "assistant",
+    "result"
+   ],
+   "resultEvent": {
+    "subtype": "success",
+    "is_error": false,
+    "terminal_reason": "completed",
+    "total_cost_usd": 0.00045242000000000004
+   },
+   "toolUses": [
+    "Bash:{\"command\":\"sleep 30.9 && echo slept\",\"description\":\"Sleep 30.9 seconds then ech"
+   ],
+   "acted": null,
+   "leftovers": []
+  },
+  "L4": {
+   "title": "session budget below one call (--max-budget-usd 0.0001)",
+   "ok": false,
+   "error": {
+    "code": "EXECUTOR_BUDGET",
+    "exitCode": 1,
+    "stderrTail": ""
+   },
+   "costUsd": 0.00030943,
+   "costUnknown": false,
+   "costUpperUsd": 0.00030943,
+   "streamUsage": {
+    "inputTokens": 2,
+    "outputTokens": 4,
+    "cacheReadTokens": 3753,
+    "cacheWriteTokens": 676
+   },
+   "turns": 2,
+   "durationMs": 5019,
+   "result": "",
+   "cliVersion": "2.1.306",
+   "model": "claude-haiku-5-5",
+   "eventTypes": [
+    "system:init",
+    "system:thinking_tokens",
+    "system:thinking_tokens",
+    "assistant",
+    "assistant",
+    "user",
+    "assistant",
+    "result"
+   ],
+   "resultEvent": {
+    "subtype": "error_max_budget_usd",
+    "is_error": true,
+    "terminal_reason": "budget_exhausted",
+    "total_cost_usd": 0.00030943
+   },
+   "toolUses": [
+    "Bash:{\"command\":\"echo one\",\"description\":\"Print \\\"one\\\"\"}",
+    "Bash:{\"command\":\"echo two\",\"description\":\"Print \\\"two\\\"\"}"
+   ]
+  }
+ },
+ "spentKnownUsd": 0.0017037200000000001,
+ "spentUpperUsd": 0.0017037200000000001
+}
