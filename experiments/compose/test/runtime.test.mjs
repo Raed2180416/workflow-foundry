@@ -138,6 +138,17 @@ test('loader: static scan, vm isolation (no imports, no shared globals), JSON-on
   const o = createComposedSolver({ manifest, parent: prog.parent, modules: prog.modules, realm: prog.realm }).tick(tickIn(), hostCtx());
   assert.deepEqual(o.decisions.a, { amount: 2, ctor: true });         // files arrive as the module realm's own objects
   assert.equal(o.decisions.leak, 'undefined');                         // the parent cannot see a module's variables
+  // Reads through the bridge: query and status (with the module's local key namespaced), instances for the parent only.
+  const seen = [];
+  const sources2 = { ...sources,
+    'parent.mjs': 'export function tick(input, ctx) { const a = ctx.call("pay", "F", { amount: 2 }); return { decisions: { subject: null, a, inst: ctx.instances({ subject: "O" }) } }; }',
+    'modules/pay.mjs': 'export function step(input, ctx) { let err = null; try { ctx.instances({}); } catch (e) { err = e.code; } return { output: { rows: ctx.query("billing.charges", { where: { orderId: "O" } }), st: ctx.status("billing", "charge"), err } }; }' };
+  const prog2 = loadProgram({ vm, manifest, sources: sources2 });
+  const o2 = createComposedSolver({ manifest, parent: prog2.parent, modules: prog2.modules, realm: prog2.realm }).tick(tickIn(), hostCtx({
+    query: (t, f) => { seen.push(['query', t, f]); return [{ chargeId: 'C1' }]; }, status: (sys, k) => { seen.push(['status', sys, k]); return 'committed'; }, instances: f => [{ instance: 'i-9', subject: f.subject }] }));
+  assert.deepEqual(o2.decisions.a, { rows: [{ chargeId: 'C1' }], st: 'committed', err: 'instances-module' });
+  assert.deepEqual(o2.decisions.inst, [{ instance: 'i-9', subject: 'O' }]);
+  assert.deepEqual(seen, [['query', 'billing.charges', { where: { orderId: 'O' } }], ['status', 'billing', 'pay/F/charge']]);
 });
 
 test('bundle: the harness-built solver.mjs runs as an ordinary tick/1 solver and carries its trace', async () => {

@@ -1,0 +1,586 @@
+{
+ "run": "m3-official-dev60",
+ "harness": "official auto-bench CLI (AutomationBench 1.0.6, api toolset, max_steps 50), --base-url https://api.inceptionlabs.ai/v1",
+ "model": "mercury-3",
+ "tasks": "60 devTrain tasks of SPLIT-v1 (same as a0-dev60-dn); 0 test-split",
+ "meta": {
+  "timestamp": "2026-10-21T12:12:07.375929",
+  "model": "mercury-3",
+  "toolset": "api",
+  "domains": [
+   "sales",
+   "marketing",
+   "operations",
+   "support",
+   "finance",
+   "hr"
+  ],
+  "total_tasks": 60,
+  "duration_seconds": 2815.8703968524933,
+  "benchmark_version": "1.0.6",
+  "reasoning_effort": null,
+  "max_steps": 50
+ },
+ "summary": {
+  "avg_score": 0.07566798941798943,
+  "pass_rate": 0.03333333333333333,
+  "passed_count": 2,
+  "failed_count": 58,
+  "total_input_tokens": 95961472,
+  "total_output_tokens": 1208114,
+  "total_cached_input_tokens": 94350380,
+  "total_reasoning_tokens": 0,
+  "total_tool_calls": 4324,
+  "total_model_time_s": 10874.8,
+  "total_tool_time_s": 85.2,
+  "total_cost": 0.0,
+  "cost_formatted": "$0.0000",
+  "tasks_with_empty_responses": 0,
+  "tasks_with_errors": 0,
+  "tasks_with_zero_output": 0,
+  "tasks_refusal_stopped": 0,
+  "aborted_tasks": []
+ },
+ "perTask": [
+  {
+   "task": "sales.advance_opportunity_stage",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/4",
+   "steps": 50,
+   "input_tokens": 1154469,
+   "output_tokens": 20423
+  },
+  {
+   "task": "sales.qualify_lead",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 50,
+   "input_tokens": 1542952,
+   "output_tokens": 17045
+  },
+  {
+   "task": "sales.soft_matching",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/3",
+   "steps": 50,
+   "input_tokens": 1291222,
+   "output_tokens": 12774
+  },
+  {
+   "task": "sales.zoom_meeting_followup",
+   "passed": false,
+   "score": 0.125,
+   "assertions": "1/8",
+   "steps": 12,
+   "input_tokens": 105303,
+   "output_tokens": 6815
+  },
+  {
+   "task": "sales.docusign_sequential_signing",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 50,
+   "input_tokens": 2390243,
+   "output_tokens": 39369
+  },
+  {
+   "task": "sales.partnership_contract",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/7",
+   "steps": 50,
+   "input_tokens": 1690057,
+   "output_tokens": 18257
+  },
+  {
+   "task": "marketing.social_contest",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/8",
+   "steps": 50,
+   "input_tokens": 1122173,
+   "output_tokens": 20227
+  },
+  {
+   "task": "marketing.community_engagement",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/11",
+   "steps": 50,
+   "input_tokens": 2365017,
+   "output_tokens": 24774
+  },
+  {
+   "task": "marketing.featured_snippet",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/2",
+   "steps": 50,
+   "input_tokens": 1008914,
+   "output_tokens": 12723
+  },
+  {
+   "task": "marketing.win_loss_analysis",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/16",
+   "steps": 50,
+   "input_tokens": 1745956,
+   "output_tokens": 18019
+  },
+  {
+   "task": "marketing.social_content_calendar",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/16",
+   "steps": 50,
+   "input_tokens": 2170310,
+   "output_tokens": 19219
+  },
+  {
+   "task": "sales.competitive_displacement_outreach",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/17",
+   "steps": 50,
+   "input_tokens": 2276963,
+   "output_tokens": 17733
+  },
+  {
+   "task": "marketing.customer_milestone",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/16",
+   "steps": 50,
+   "input_tokens": 1429225,
+   "output_tokens": 27050
+  },
+  {
+   "task": "sales.chatgpt_lead_summary_generator",
+   "passed": false,
+   "score": 0.25,
+   "assertions": "1/4",
+   "steps": 46,
+   "input_tokens": 914555,
+   "output_tokens": 12841
+  },
+  {
+   "task": "sales.chatgpt_proposal_customization",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/20",
+   "steps": 50,
+   "input_tokens": 1308207,
+   "output_tokens": 10579
+  },
+  {
+   "task": "marketing.customer_feedback_aggregation",
+   "passed": false,
+   "score": 0.943,
+   "assertions": "33/35",
+   "steps": 23,
+   "input_tokens": 434373,
+   "output_tokens": 16409
+  },
+  {
+   "task": "marketing.customer_story_intake",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/3",
+   "steps": 50,
+   "input_tokens": 591988,
+   "output_tokens": 8905
+  },
+  {
+   "task": "sales.vendor_review_prep",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/7",
+   "steps": 50,
+   "input_tokens": 601165,
+   "output_tokens": 6974
+  },
+  {
+   "task": "operations.calendar_airtable_maintenance",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/2",
+   "steps": 50,
+   "input_tokens": 1512026,
+   "output_tokens": 14516
+  },
+  {
+   "task": "marketing.linkedin_company_update",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 50,
+   "input_tokens": 1800582,
+   "output_tokens": 11766
+  },
+  {
+   "task": "operations.asana_safety_walk_log",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/4",
+   "steps": 50,
+   "input_tokens": 1999604,
+   "output_tokens": 13518
+  },
+  {
+   "task": "operations.zoom_dr_drill",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/7",
+   "steps": 50,
+   "input_tokens": 1768656,
+   "output_tokens": 24379
+  },
+  {
+   "task": "operations.docusign_contractor_offboard",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 45,
+   "input_tokens": 1418418,
+   "output_tokens": 25593
+  },
+  {
+   "task": "operations.zoom_training_setup",
+   "passed": true,
+   "score": 1.0,
+   "assertions": "4/4",
+   "steps": 18,
+   "input_tokens": 379561,
+   "output_tokens": 14653
+  },
+  {
+   "task": "operations.invoice_shipping_trigger",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/6",
+   "steps": 50,
+   "input_tokens": 1044803,
+   "output_tokens": 16359
+  },
+  {
+   "task": "operations.overtime_threshold_monitoring",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/7",
+   "steps": 50,
+   "input_tokens": 1649178,
+   "output_tokens": 25438
+  },
+  {
+   "task": "operations.parking_allocation_management",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/13",
+   "steps": 50,
+   "input_tokens": 1847683,
+   "output_tokens": 15600
+  },
+  {
+   "task": "operations.cross_training_assignment",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/6",
+   "steps": 50,
+   "input_tokens": 1692786,
+   "output_tokens": 17368
+  },
+  {
+   "task": "operations.loading_dock_scheduling",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/11",
+   "steps": 50,
+   "input_tokens": 1347733,
+   "output_tokens": 25931
+  },
+  {
+   "task": "support.intercom_demo_scheduling",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/30",
+   "steps": 50,
+   "input_tokens": 1647094,
+   "output_tokens": 19121
+  },
+  {
+   "task": "support.gorgias_quality_audit",
+   "passed": false,
+   "score": 0.667,
+   "assertions": "12/18",
+   "steps": 50,
+   "input_tokens": 1887789,
+   "output_tokens": 22236
+  },
+  {
+   "task": "support.helpcrunch_zoho_desk_bridge",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/17",
+   "steps": 50,
+   "input_tokens": 1419737,
+   "output_tokens": 18146
+  },
+  {
+   "task": "support.intercom_sentiment_escalation",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/13",
+   "steps": 50,
+   "input_tokens": 1506157,
+   "output_tokens": 24566
+  },
+  {
+   "task": "support.reamaze_cross_platform_dedup",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/19",
+   "steps": 50,
+   "input_tokens": 2823124,
+   "output_tokens": 38286
+  },
+  {
+   "task": "support.helpcrunch_usage_alerts",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/26",
+   "steps": 50,
+   "input_tokens": 2297106,
+   "output_tokens": 24063
+  },
+  {
+   "task": "support.hiver_mailbox_audit",
+   "passed": true,
+   "score": 1.0,
+   "assertions": "17/17",
+   "steps": 19,
+   "input_tokens": 230697,
+   "output_tokens": 11853
+  },
+  {
+   "task": "support.intercom_multi_product_routing",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/15",
+   "steps": 50,
+   "input_tokens": 1747022,
+   "output_tokens": 17828
+  },
+  {
+   "task": "support.intercom_reactivation_campaign",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/22",
+   "steps": 50,
+   "input_tokens": 2885891,
+   "output_tokens": 22916
+  },
+  {
+   "task": "support.intercom_zoho_customer_360",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/19",
+   "steps": 50,
+   "input_tokens": 1674545,
+   "output_tokens": 17966
+  },
+  {
+   "task": "marketing.engagement_optimization",
+   "passed": false,
+   "score": 0.556,
+   "assertions": "5/9",
+   "steps": 11,
+   "input_tokens": 122496,
+   "output_tokens": 6712
+  },
+  {
+   "task": "finance.vendor_payment_approval",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 50,
+   "input_tokens": 1224273,
+   "output_tokens": 19663
+  },
+  {
+   "task": "finance.budget_variance_analysis",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/6",
+   "steps": 50,
+   "input_tokens": 1331716,
+   "output_tokens": 21299
+  },
+  {
+   "task": "finance.ap_aging_report",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 50,
+   "input_tokens": 2035427,
+   "output_tokens": 32142
+  },
+  {
+   "task": "finance.bad_debt_writeoff",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/7",
+   "steps": 50,
+   "input_tokens": 2840826,
+   "output_tokens": 34659
+  },
+  {
+   "task": "finance.vendor_1099_prep",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/7",
+   "steps": 50,
+   "input_tokens": 2558240,
+   "output_tokens": 21935
+  },
+  {
+   "task": "finance.travel_advance_settlement",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/3",
+   "steps": 50,
+   "input_tokens": 1699832,
+   "output_tokens": 26098
+  },
+  {
+   "task": "finance.project_profitability",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/6",
+   "steps": 50,
+   "input_tokens": 2334730,
+   "output_tokens": 26229
+  },
+  {
+   "task": "finance.quarterly_tax_estimate",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/3",
+   "steps": 50,
+   "input_tokens": 1247705,
+   "output_tokens": 19942
+  },
+  {
+   "task": "finance.forex_gain_loss",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 50,
+   "input_tokens": 2751151,
+   "output_tokens": 28898
+  },
+  {
+   "task": "finance.capex_approval",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/3",
+   "steps": 50,
+   "input_tokens": 2237746,
+   "output_tokens": 22692
+  },
+  {
+   "task": "hr.candidate_rejection_followup",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 50,
+   "input_tokens": 1535357,
+   "output_tokens": 24511
+  },
+  {
+   "task": "hr.referral_bonus_tracking",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/4",
+   "steps": 50,
+   "input_tokens": 1853918,
+   "output_tokens": 21930
+  },
+  {
+   "task": "hr.visa_expiry_tracking",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/7",
+   "steps": 50,
+   "input_tokens": 2460172,
+   "output_tokens": 35869
+  },
+  {
+   "task": "hr.monday_onboarding_pipeline",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/4",
+   "steps": 47,
+   "input_tokens": 2014204,
+   "output_tokens": 16416
+  },
+  {
+   "task": "hr.disciplinary_action_tracking",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/8",
+   "steps": 50,
+   "input_tokens": 1422955,
+   "output_tokens": 14614
+  },
+  {
+   "task": "hr.recruitment_channel_roi",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/6",
+   "steps": 50,
+   "input_tokens": 1626911,
+   "output_tokens": 21379
+  },
+  {
+   "task": "hr.employee_request_routing",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/6",
+   "steps": 50,
+   "input_tokens": 1482870,
+   "output_tokens": 21484
+  },
+  {
+   "task": "hr.salary_adjustment_processing",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/7",
+   "steps": 50,
+   "input_tokens": 1413765,
+   "output_tokens": 14431
+  },
+  {
+   "task": "hr.anniversary_recognition",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/6",
+   "steps": 50,
+   "input_tokens": 1119647,
+   "output_tokens": 15195
+  },
+  {
+   "task": "hr.equipment_provisioning",
+   "passed": false,
+   "score": 0.0,
+   "assertions": "0/5",
+   "steps": 50,
+   "input_tokens": 1924247,
+   "output_tokens": 29778
+  }
+ ]
+}

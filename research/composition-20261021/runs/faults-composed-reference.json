@@ -26,7 +26,7 @@
    "size": 40,
    "fault": "none",
    "status": "complete",
-   "ms": 4893,
+   "ms": 2857,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -78,7 +78,7 @@
    "size": 40,
    "fault": "restart",
    "status": "complete",
-   "ms": 5988,
+   "ms": 2561,
    "injected": 49,
    "sameJournalAsFaultFree": true,
    "oracle": {
@@ -130,7 +130,7 @@
    "size": 40,
    "fault": "crash",
    "status": "complete",
-   "ms": 5804,
+   "ms": 2211,
    "injected": 52,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -182,7 +182,7 @@
    "size": 40,
    "fault": "dup-delayed",
    "status": "complete",
-   "ms": 6727,
+   "ms": 2434,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -234,7 +234,7 @@
    "size": 40,
    "fault": "dup-same",
    "status": "complete",
-   "ms": 5377,
+   "ms": 1984,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -245,16 +245,16 @@
    },
    "capabilities": {
     "completed": 43,
-    "passed": 41,
+    "passed": 43,
     "byCapability": {
      "intake": "43/43",
      "fraud": "43/43",
-     "capture": "41/43",
+     "capture": "43/43",
      "refund": "43/43",
      "reservation": "43/43",
      "shipment": "43/43",
      "compensation": "43/43",
-     "failure": "41/43",
+     "failure": "43/43",
      "tracking": "43/43",
      "customer-action": "43/43",
      "cancellation": "43/43",
@@ -278,7 +278,7 @@
     "dropped": 0,
     "integrity": 0
    },
-   "armErrors": 0
+   "armErrors": 40
   },
   {
    "seed": 1161,
@@ -286,7 +286,7 @@
    "size": 40,
    "fault": "downstream",
    "status": "complete",
-   "ms": 4759,
+   "ms": 1321,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -338,7 +338,7 @@
    "size": 40,
    "fault": "none",
    "status": "complete",
-   "ms": 6223,
+   "ms": 2505,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -390,7 +390,7 @@
    "size": 40,
    "fault": "restart",
    "status": "complete",
-   "ms": 5269,
+   "ms": 3536,
    "injected": 70,
    "sameJournalAsFaultFree": true,
    "oracle": {
@@ -442,7 +442,7 @@
    "size": 40,
    "fault": "crash",
    "status": "complete",
-   "ms": 7167,
+   "ms": 2833,
    "injected": 65,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -494,7 +494,7 @@
    "size": 40,
    "fault": "dup-delayed",
    "status": "complete",
-   "ms": 7998,
+   "ms": 3488,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -546,7 +546,7 @@
    "size": 40,
    "fault": "dup-same",
    "status": "complete",
-   "ms": 7040,
+   "ms": 2876,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -557,16 +557,16 @@
    },
    "capabilities": {
     "completed": 43,
-    "passed": 42,
+    "passed": 43,
     "byCapability": {
      "intake": "43/43",
      "fraud": "43/43",
-     "capture": "42/43",
+     "capture": "43/43",
      "refund": "43/43",
      "reservation": "43/43",
      "shipment": "43/43",
      "compensation": "43/43",
-     "failure": "42/43",
+     "failure": "43/43",
      "tracking": "43/43",
      "customer-action": "43/43",
      "cancellation": "43/43",
@@ -590,7 +590,7 @@
     "dropped": 0,
     "integrity": 0
    },
-   "armErrors": 0
+   "armErrors": 38
   },
   {
    "seed": 1162,
@@ -598,7 +598,7 @@
    "size": 40,
    "fault": "downstream",
    "status": "complete",
-   "ms": 4440,
+   "ms": 1839,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -611,7 +611,7 @@
    },
    "capabilities": {
     "completed": 45,
-    "passed": 44,
+    "passed": 45,
     "byCapability": {
      "intake": "45/45",
      "fraud": "45/45",
@@ -620,7 +620,7 @@
      "reservation": "45/45",
      "shipment": "45/45",
      "compensation": "45/45",
-     "failure": "44/45",
+     "failure": "45/45",
      "tracking": "45/45",
      "customer-action": "45/45",
      "cancellation": "45/45",
@@ -652,7 +652,7 @@
    "size": 60,
    "fault": "none",
    "status": "complete",
-   "ms": 9789,
+   "ms": 4193,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -704,7 +704,7 @@
    "size": 60,
    "fault": "restart",
    "status": "complete",
-   "ms": 9141,
+   "ms": 4012,
    "injected": 99,
    "sameJournalAsFaultFree": true,
    "oracle": {
@@ -756,7 +756,7 @@
    "size": 60,
    "fault": "crash",
    "status": "complete",
-   "ms": 9581,
+   "ms": 3934,
    "injected": 93,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -808,7 +808,7 @@
    "size": 60,
    "fault": "dup-delayed",
    "status": "complete",
-   "ms": 10975,
+   "ms": 6419,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -860,7 +860,7 @@
    "size": 60,
    "fault": "dup-same",
    "status": "complete",
-   "ms": 14404,
+   "ms": 6068,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {
@@ -871,16 +871,16 @@
    },
    "capabilities": {
     "completed": 67,
-    "passed": 61,
+    "passed": 67,
     "byCapability": {
      "intake": "67/67",
      "fraud": "67/67",
-     "capture": "62/67",
+     "capture": "67/67",
      "refund": "67/67",
      "reservation": "67/67",
      "shipment": "67/67",
      "compensation": "67/67",
-     "failure": "61/67",
+     "failure": "67/67",
      "tracking": "67/67",
      "customer-action": "67/67",
      "cancellation": "67/67",
@@ -904,7 +904,7 @@
     "dropped": 0,
     "integrity": 0
    },
-   "armErrors": 0
+   "armErrors": 57
   },
   {
    "seed": 1164,
@@ -912,7 +912,7 @@
    "size": 60,
    "fault": "downstream",
    "status": "complete",
-   "ms": 8028,
+   "ms": 6407,
    "injected": 0,
    "sameJournalAsFaultFree": null,
    "oracle": {

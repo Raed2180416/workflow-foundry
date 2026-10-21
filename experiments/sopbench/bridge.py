@@ -225,12 +225,17 @@ def load_split(path: Path) -> dict:
     return s
 
 
-def allowed_rows(split: dict, sop: str, *, sealed: bool, freeze: Path | None):
-    """The rows a command may touch: the dev rows (build + repair), or every row with --sealed and a valid freeze."""
+def allowed_rows(split: dict, sop: str, *, sealed: bool, freeze: Path | None, world: str = "dev"):
+    """The rows a command may touch: the build rows (world 'build': what a builder sees), the dev rows (build + repair,
+    the default), or every row with --sealed and a valid freeze."""
     if sop not in split["sops"]:
         raise PermissionError(f"{sop} is not in the split")
     e = split["sops"][sop]
     if not sealed:
+        if world == "build":
+            return set(e["build"])
+        if world != "dev":
+            raise PermissionError(f"world {world!r} needs --sealed and a freeze file")
         return set(e["build"]) | set(e["repair"])
     if freeze is None:
         raise PermissionError("--sealed needs --freeze <file>")
@@ -583,6 +588,8 @@ class Rollout:
                 rec = {"name": None, "error": "request", "content": "Error: each call is {\"name\": ..., \"arguments\": ...}", "t": time.time()}
             else:
                 rec = self.world.call(c["name"], c.get("arguments", "{}"))
+                if isinstance(c.get("section"), str):
+                    rec["section"] = c["section"][:200]  # the workflow port's section tag (host log only)
             rec["step"] = self.steps
             self.log.append(rec)
             out.append({"name": rec.get("name"), "content": rec["content"]})
@@ -707,7 +714,7 @@ def cmd_prepare(a):
     split = load_split(Path(a.split))
     sop = Sop(data, a.sop)
     rows = _parse_rows(a.rows)
-    allowed = allowed_rows(split, a.sop, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None)
+    allowed = allowed_rows(split, a.sop, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None, world=a.world)
     check_rows(rows, allowed, a.sop)
     out = Path(a.out)
     (out / "rows").mkdir(parents=True, exist_ok=True)
@@ -729,7 +736,7 @@ def _world(a, up, sop_name):
     data = _data_dir(a, up)
     split = load_split(Path(a.split))
     sop = Sop(data, sop_name)
-    allowed = allowed_rows(split, sop_name, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None)
+    allowed = allowed_rows(split, sop_name, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None, world=a.world)
     return sop, allowed, World(up, sop, allowed)
 
 
@@ -784,7 +791,7 @@ def cmd_grade(a):
         name, rid = q["sop"], int(q["row"])
         if name not in sops:
             sops[name] = Sop(data, name)
-            allowed[name] = allowed_rows(split, name, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None)
+            allowed[name] = allowed_rows(split, name, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None, world=a.world)
         check_rows([rid], allowed[name], name)
         sop = sops[name]
         uv, _ = upstream_verdict(up, sop, rid, q.get("text") or "")
@@ -810,7 +817,7 @@ def cmd_official(a):
             continue
         q = json.loads(line)
         name, rid = q["sop"], int(q["row"])
-        check_rows([rid], allowed_rows(split, name, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None), name)
+        check_rows([rid], allowed_rows(split, name, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None, world=a.world), name)
         if name not in benches:
             sop = Sop(data, name)
             try:
@@ -917,6 +924,7 @@ def main():
             sp.add_argument("--split", required=True)
             sp.add_argument("--sealed", action="store_true")
             sp.add_argument("--freeze", default=None)
+            sp.add_argument("--world", default="dev", choices=["build", "dev"], help="without --sealed: build rows only, or build + repair rows")
 
     s = sub.add_parser("stats"); common(s, split=False); s.set_defaults(fn=cmd_stats)
     s = sub.add_parser("rows"); common(s, split=False); s.add_argument("--sops"); s.set_defaults(fn=cmd_rows)

@@ -1,0 +1,387 @@
+{
+ "label": "dry-cht-stub",
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "conditions": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "practice": {
+   "seeds": [
+    1235,
+    1236,
+    1237
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "grading": {
+   "seeds": [
+    1232,
+    1233,
+    1234
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  }
+ },
+ "build": {
+  "arm": "C-H-T",
+  "model": "stub",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "dryRun": true,
+  "templates": "experiments/compose/builder/templates",
+  "smokeRuns": 1,
+  "wallMs": 13274,
+  "costUsd": 0,
+  "error": null,
+  "turns": 0,
+  "stub": {
+   "check": "composition: OK",
+   "smoke": "smoke request 1 queued; waiting (up to 15 min)\n== practice world 1235 (difficulty 2): complete; 467 wake-ups, 521 ticks, 71 instances, 521 effects emitted\narm errors: 0\neffect results your program received:\n       2  billing.charge error 402 card-declined\n      50  billing.charge ok\n      50  carrier.create ok\n      50  fraud.check ok\n      50  inventory.allocate ok\n      64  inventory.reserve ok\n      50  orders.create ok\n     217  orders.setStatus ok\ninterface violations: 0 (dropped effects 0)\ncalls: parent->intake 50, parent->intake (event) 150, parent->order 68, parent->saga 199, parent->saga (event) 303, parent->order (event) 68\n\n== practice world 1236 (difficulty 3): complete; 782 wake-ups, 875 ticks, 122 instances, 867 effects emitted\narm errors: 0\neffect results your program received:\n      11  billing.charge error 402 card-declined\n      88  billing.charge ok\n      88  carrier.create ok\n      80  fraud.check ok\n      80  inventory.allocate ok\n     122  inventory.reserve ok\n      80  orders.create ok\n     341  orders.setStatus ok\ninterface violations: 0 (dropped effects 0)\ncalls: parent->intake 80, parent->intake (event) 240, parent->order 84, parent->saga 393, parent->saga (event) 543, parent->order (event) 84\n\n== practice world 1237 (difficulty 5): complete; 1667 wake-ups, 2020 ticks, 293 instances, 2191 effects emitted\narm errors: 0\neffect results your program received:\n      92  billing.charge error 400 field-renamed\n      12  billing.charge error 402 card-declined\n     181  billing.charge ok\n       6  carrier.create error permanent permanent-failure\n     175  carrier.create ok\n     200  fraud.check ok\n     200  inventory.allocate ok\n       4  inventory.reserve error 503 batch-item-not-processed\n     362  inventory.reserve ok\n     200  orders.create ok\n     836  orders.setStatus ok\ninterface violations: 0 (dropped effects 0)\ncalls: parent->intake 200, parent->intake (event) 600, parent->order 225, parent->saga 869, parent->saga (event) 1366, parent->order (event) 225\n"
+  }
+ },
+ "program": {
+  "modules": [
+   "intake",
+   "order",
+   "saga"
+  ],
+  "programDigest": "3d1eb9c197cf9e358700c1b721028a62e532e4a3163fb2fef888cea8e3c518e1",
+  "bundleDigest": "0b94852dade34695f258512e9421cfdc4bb1cc76d51b95382c91d188aeb7a406",
+  "problems": []
+ },
+ "tests": {
+  "files": 3,
+  "modules": 3,
+  "modulesWithTests": 3,
+  "pass": 3,
+  "fail": 0,
+  "ok": true,
+  "ran": true
+ },
+ "worlds": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  }
+ ],
+ "summary": {
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 6,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:34:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T00:19:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-03T02:29:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "collection-failed",
+      "first": {
+       "at": "2026-03-07T16:00:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0006-F1",
+       "rule": "R5.1"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-11T15:41:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "ntf:ORD-1232-0008:cancel-refused",
+       "rule": "R6.3"
+      }
+     },
+     {
+      "case": "o0012",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T03:13:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "csh:ORD-1232-0012-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0013",
+      "class": "fraud-reject",
+      "first": {
+       "at": "2026-03-13T06:38:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0013-F1:cancelled",
+       "rule": "R2.1"
+      }
+     },
+     {
+      "case": "o0015",
+      "class": "amend",
+      "first": {
+       "at": "2026-03-14T09:30:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "ost:ORD-1232-0015:customerActionRequired",
+       "rule": "R3.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 6,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "13/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "13/14",
+     "tracking": "12/14",
+     "customer-action": "12/14",
+     "cancellation": "12/14",
+     "notifications": "12/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 12,
+     "parent->intake (event)": 36,
+     "parent->order": 18,
+     "parent->saga": 64,
+     "parent->saga (event)": 98,
+     "parent->order (event)": 18
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  "full": {
+   "completed": 0,
+   "passed": 0,
+   "critical": 0,
+   "capabilitiesPassed": 0,
+   "capabilitiesCompleted": 0,
+   "interfaceViolations": 0,
+   "armErrors": 0
+  },
+  "worlds": 1,
+  "armErrors": 0
+ },
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 6,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:34:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-02T00:19:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0002-F1:cancelled",
+       "rule": "R3.2"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-03T02:29:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0003-F1:completed",
+       "rule": "R4.4"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "collection-failed",
+      "first": {
+       "at": "2026-03-07T16:00:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "rf:ORD-1232-0006-F1",
+       "rule": "R5.1"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-11T15:41:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "ntf:ORD-1232-0008:cancel-refused",
+       "rule": "R6.3"
+      }
+     },
+     {
+      "case": "o0012",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T03:13:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "csh:ORD-1232-0012-F1",
+       "rule": "R6.2"
+      }
+     },
+     {
+      "case": "o0013",
+      "class": "fraud-reject",
+      "first": {
+       "at": "2026-03-13T06:38:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "fst:ORD-1232-0013-F1:cancelled",
+       "rule": "R2.1"
+      }
+     },
+     {
+      "case": "o0015",
+      "class": "amend",
+      "first": {
+       "at": "2026-03-14T09:30:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "ost:ORD-1232-0015:customerActionRequired",
+       "rule": "R3.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 6,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "13/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "13/14",
+     "tracking": "12/14",
+     "customer-action": "12/14",
+     "cancellation": "12/14",
+     "notifications": "12/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 12,
+     "parent->intake (event)": 36,
+     "parent->order": 18,
+     "parent->saga": 64,
+     "parent->saga (event)": 98,
+     "parent->order (event)": 18
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}

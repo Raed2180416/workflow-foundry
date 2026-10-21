@@ -70,9 +70,9 @@ export async function bridgeOk(args, opts) {
 
 /** Start `bridge.py serve` for one row; resolves `ready` once the world is loaded and the mailbox opened. stop() ends
  * the rollout (host-only files are then in hostDir). */
-export function startServe({ liveDir, sop, row, mailbox, hostDir, maxSteps = 10, sealed = false, freeze = null, upstream = UPSTREAM, split = SPLIT_FILE, dataDir = null, readyTimeoutMs = 120_000 }) {
+export function startServe({ liveDir, sop, row, mailbox, hostDir, maxSteps = 10, sealed = false, freeze = null, world = 'dev', upstream = UPSTREAM, split = SPLIT_FILE, dataDir = null, readyTimeoutMs = 120_000 }) {
   const args = ['-I', BRIDGE, 'serve', '--upstream', upstream, ...(dataDir ? ['--data-dir', dataDir] : []), '--split', split, '--sop', sop, '--row', String(row),
-    '--mailbox', mailbox, '--host', hostDir, '--max-steps', String(maxSteps), ...(sealed ? ['--sealed'] : []), ...(freeze ? ['--freeze', freeze] : [])];
+    '--mailbox', mailbox, '--host', hostDir, '--max-steps', String(maxSteps), ...(sealed ? ['--sealed'] : ['--world', world]), ...(freeze ? ['--freeze', freeze] : [])];
   mkdirSync(hostDir, { recursive: true });
   mkdirSync(path.join(liveDir, 'home'), { recursive: true });
   const c = spawn(VENV_PY, args, { cwd: liveDir, env: bridgeEnv(liveDir), stdio: ['pipe', 'pipe', 'pipe'] });
