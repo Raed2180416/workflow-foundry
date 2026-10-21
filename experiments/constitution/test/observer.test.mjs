@@ -81,3 +81,22 @@ test('C1 agrees with the oracle\'s critical verdict on E8 controls: double charg
     for (const d of cmp.disagreements) assert.match(d.kind, /^oracle-only:(stock|money-outside-allowed after the first divergence)/, `${id}: ${JSON.stringify(d)}`);
   }
 });
+
+test('finding: the oracle\'s money-outside-allowed after a first divergence flags money identical to the reference run\'s', async () => {
+  const { runReference } = await import('../../../beds/ebed/oracle/policy.mjs');
+  const { indexJournal } = await import('../../../beds/ebed/oracle/view.mjs');
+  const W = baseWorld({ seed: 1232, d: 2 });
+  const { pools } = await e8.referenceRuns(W);
+  const rows = await runControl('escalate-everything', W);
+  const ref = (await runReference({ item: e8.oracleItem, binding: e8.binding, world: W, timing: 'earliest' })).rows;
+  const money = rs => { const m = new Map(); for (const r of indexJournal(W, rs, { canonicalArgs: e8.canonicalArgs }).ledger.filter(x => x.committed && x.money)) m.set(r.case, [...(m.get(r.case) ?? []), `${r.op}:${JSON.stringify(r.args)}`].sort()); return m; };
+  const mc = money(rows), mr = money(ref);
+  const flagged = e8.oracle(W, rows, { pools }).cases.filter(c => c.critical.some(x => x.code === 'money-outside-allowed'));
+  assert.ok(flagged.length > 0);
+  for (const c of flagged) {
+    assert.ok(c.critical.every(x => Date.parse(x.at) > Date.parse(c.firstDivergence.at)), c.case);
+    assert.deepEqual(mc.get(c.case), mr.get(c.case), c.case);
+  }
+  const { verdict } = observe({ rows, registry: reg, ref: { catalog: W.master.catalog, editions: W.rulebook.editions } });
+  assert.deepEqual(verdict.C1.byCode, {});
+});
