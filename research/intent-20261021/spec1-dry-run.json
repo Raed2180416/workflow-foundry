@@ -1,0 +1,1749 @@
+{
+ "what": "SPEC-1 / INTENT-1 runner, $0 DRY runs (2026-10-21): scripted builders (each copies a fixed existing solver built from SPEC-E), scripted agent sessions and a scripted Haiku stand-in behind the journaled ModelPort. NO model was called. The numbers prove plumbing, caps, journals and scoring only; they say NOTHING about any arm. Readings computed on them are wiring checks, not results.",
+ "commands": [
+  "node experiments/specbiz/spec1.mjs --arm <arm> --dry --lineages 2 --worlds shared,g:1232:2   (each of the six arms)",
+  "node experiments/specbiz/spec1.mjs perfect --dry --worlds shared,g:1232:2",
+  "node experiments/specbiz/score.mjs --runs /var/tmp/foundry-work/spec1-dry/runs --json ... --md ..."
+ ],
+ "liveOutputs": "/var/tmp/foundry-work/spec1-dry",
+ "spendLedger": {
+  "reserves": 24,
+  "settles": 24,
+  "boundsReservedUsd": 40.0,
+  "chargedUsd": 0,
+  "allDry": true
+ },
+ "lineages": [
+  {
+   "label": "dry-spec1-always-ask-p1-l1",
+   "arm": "always-ask",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 14,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 21,
+   "ownerReplayOk": true,
+   "modelPortRows": 20,
+   "smokeRuns": 1,
+   "ledger": null,
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-always-ask-p1-l2",
+   "arm": "always-ask",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 14,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 21,
+   "ownerReplayOk": true,
+   "modelPortRows": 20,
+   "smokeRuns": 1,
+   "ledger": null,
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-derive-ledger-p1-l1",
+   "arm": "derive-ledger",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 14,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 2,
+   "ownerReplayOk": true,
+   "modelPortRows": 3,
+   "smokeRuns": 1,
+   "ledger": {
+    "entries": 26,
+    "confirmed": 18,
+    "corrected": 7,
+    "struck": 1
+   },
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-derive-ledger-p1-l2",
+   "arm": "derive-ledger",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 14,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 2,
+   "ownerReplayOk": true,
+   "modelPortRows": 3,
+   "smokeRuns": 1,
+   "ledger": {
+    "entries": 26,
+    "confirmed": 18,
+    "corrected": 7,
+    "struck": 1
+   },
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-derive-p1-l1",
+   "arm": "derive",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 14,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 5,
+   "ownerReplayOk": true,
+   "modelPortRows": 5,
+   "smokeRuns": 1,
+   "ledger": null,
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-derive-p1-l2",
+   "arm": "derive",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 14,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 5,
+   "ownerReplayOk": true,
+   "modelPortRows": 5,
+   "smokeRuns": 1,
+   "ledger": null,
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-derive-prior-p1-l1",
+   "arm": "derive-prior",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 49,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 11,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 3,
+   "ownerReplayOk": true,
+   "modelPortRows": 3,
+   "smokeRuns": 1,
+   "ledger": null,
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-derive-prior-p1-l2",
+   "arm": "derive-prior",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 49,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 11,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 3,
+   "ownerReplayOk": true,
+   "modelPortRows": 3,
+   "smokeRuns": 1,
+   "ledger": null,
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-no-ask-p1-l1",
+   "arm": "no-ask",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1o-e8-1/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 21,
+     "critical": 0,
+     "armErrors": 32
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 5,
+     "critical": 0,
+     "armErrors": 11
+    }
+   },
+   "asked": 0,
+   "ownerReplayOk": null,
+   "modelPortRows": 0,
+   "smokeRuns": 1,
+   "ledger": null,
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-no-ask-p1-l2",
+   "arm": "no-ask",
+   "kind": "build",
+   "scripted": true,
+   "dryStandIn": "copies research/enterprise-20261014/runs/b1o-e8-1/solver.mjs",
+   "summary": {
+    "grading": {
+     "worlds": 1,
+     "completed": 52,
+     "passed": 21,
+     "critical": 0,
+     "armErrors": 32
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 5,
+     "critical": 0,
+     "armErrors": 11
+    }
+   },
+   "asked": 0,
+   "ownerReplayOk": null,
+   "modelPortRows": 0,
+   "smokeRuns": 1,
+   "ledger": null,
+   "agentTicks": null,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-none-agent-p1-l1",
+   "arm": "none-agent",
+   "kind": "agent",
+   "scripted": true,
+   "dryStandIn": "agentv dryRunner session (minimal output)",
+   "summary": {
+    "grading": {
+     "worlds": 0,
+     "completed": 0,
+     "passed": 0,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 0,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 2,
+   "ownerReplayOk": true,
+   "modelPortRows": 2,
+   "smokeRuns": null,
+   "ledger": null,
+   "agentTicks": 21,
+   "statuses": [
+    "complete"
+   ]
+  },
+  {
+   "label": "dry-spec1-none-agent-p1-l2",
+   "arm": "none-agent",
+   "kind": "agent",
+   "scripted": true,
+   "dryStandIn": "agentv dryRunner session (minimal output)",
+   "summary": {
+    "grading": {
+     "worlds": 0,
+     "completed": 0,
+     "passed": 0,
+     "critical": 0,
+     "armErrors": 0
+    },
+    "shared": {
+     "worlds": 1,
+     "completed": 14,
+     "passed": 0,
+     "critical": 0,
+     "armErrors": 0
+    }
+   },
+   "asked": 2,
+   "ownerReplayOk": true,
+   "modelPortRows": 2,
+   "smokeRuns": null,
+   "ledger": null,
+   "agentTicks": 21,
+   "statuses": [
+    "complete"
+   ]
+  }
+ ],
+ "arms": {
+  "always-ask": {
+   "arm": "always-ask",
+   "experiment": "INTENT-1",
+   "K": 2,
+   "labels": [
+    "dry-spec1-always-ask-p1-l1",
+    "dry-spec1-always-ask-p1-l2"
+   ],
+   "dry": true,
+   "grading": {
+    "completed": 104,
+    "passed": 104,
+    "rate": 1
+   },
+   "shared": {
+    "completed": 28,
+    "passed": 28,
+    "rate": 1
+   },
+   "specRecovery": 1.0183,
+   "specRecoveryPerLineage": [
+    1.0183,
+    1.0183
+   ],
+   "layers": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 16,
+      "recall": 1
+     },
+     "L3": {
+      "n": 32,
+      "implemented": 32,
+      "recall": 1
+     }
+    },
+    "rater2": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 18,
+      "implemented": 18,
+      "recall": 1
+     },
+     "L3": {
+      "n": 30,
+      "implemented": 30,
+      "recall": 1
+     }
+    }
+   },
+   "primary": {
+    "n": 46,
+    "implemented": 46,
+    "recall": 1
+   },
+   "primaryLower": {
+    "n": 36,
+    "implemented": 36,
+    "recall": 1
+   },
+   "masked": false,
+   "layersLower": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 16,
+      "recall": 1
+     },
+     "L3": {
+      "n": 20,
+      "implemented": 20,
+      "recall": 1
+     }
+    }
+   },
+   "statedSharedLower": [
+    6,
+    6
+   ],
+   "primaryDesign": {
+    "n": 48,
+    "implemented": 48,
+    "recall": 1
+   },
+   "primaryShared": {
+    "n": 46,
+    "implemented": 46,
+    "recall": 1
+   },
+   "statedShared": [
+    6,
+    6
+   ],
+   "l3PerLineage": [
+    16,
+    16
+   ],
+   "l3LowerPerLineage": [
+    10,
+    10
+   ],
+   "l3Misses": {
+    "n": 0,
+    "ownerOrRecords": 0
+   },
+   "forward": 9,
+   "ownerOnlyImplemented": 3,
+   "overreach": {
+    "itemsViolatedPerLineage": [
+     0,
+     0
+    ],
+    "violatedIds": [
+     [],
+     []
+    ],
+    "acts": 1102,
+    "violatingActs": 0
+   },
+   "goldilocks": {
+    "upper": 100,
+    "lower": 100
+   },
+   "moi": {
+    "upper": 1,
+    "lower": 1
+   },
+   "ask": {
+    "asked": [
+     21,
+     21
+    ],
+    "askF1": 0.2353,
+    "wastedShare": 0.381,
+    "blockersObtained": [
+     2,
+     2
+    ]
+   },
+   "cost": {
+    "usd": 0
+   }
+  },
+  "derive-ledger": {
+   "arm": "derive-ledger",
+   "experiment": "SPEC-1",
+   "K": 2,
+   "labels": [
+    "dry-spec1-derive-ledger-p1-l1",
+    "dry-spec1-derive-ledger-p1-l2"
+   ],
+   "dry": true,
+   "grading": {
+    "completed": 104,
+    "passed": 104,
+    "rate": 1
+   },
+   "shared": {
+    "completed": 28,
+    "passed": 28,
+    "rate": 1
+   },
+   "specRecovery": 1.0183,
+   "specRecoveryPerLineage": [
+    1.0183,
+    1.0183
+   ],
+   "layers": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 16,
+      "recall": 1
+     },
+     "L3": {
+      "n": 32,
+      "implemented": 32,
+      "recall": 1
+     }
+    },
+    "rater2": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 18,
+      "implemented": 18,
+      "recall": 1
+     },
+     "L3": {
+      "n": 30,
+      "implemented": 30,
+      "recall": 1
+     }
+    }
+   },
+   "primary": {
+    "n": 46,
+    "implemented": 46,
+    "recall": 1
+   },
+   "primaryLower": {
+    "n": 36,
+    "implemented": 36,
+    "recall": 1
+   },
+   "masked": false,
+   "layersLower": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 16,
+      "recall": 1
+     },
+     "L3": {
+      "n": 20,
+      "implemented": 20,
+      "recall": 1
+     }
+    }
+   },
+   "statedSharedLower": [
+    6,
+    6
+   ],
+   "primaryDesign": {
+    "n": 48,
+    "implemented": 48,
+    "recall": 1
+   },
+   "primaryShared": {
+    "n": 46,
+    "implemented": 46,
+    "recall": 1
+   },
+   "statedShared": [
+    6,
+    6
+   ],
+   "l3PerLineage": [
+    16,
+    16
+   ],
+   "l3LowerPerLineage": [
+    10,
+    10
+   ],
+   "l3Misses": {
+    "n": 0,
+    "ownerOrRecords": 0
+   },
+   "forward": 9,
+   "ownerOnlyImplemented": 3,
+   "overreach": {
+    "itemsViolatedPerLineage": [
+     0,
+     0
+    ],
+    "violatedIds": [
+     [],
+     []
+    ],
+    "acts": 1102,
+    "violatingActs": 0
+   },
+   "goldilocks": {
+    "upper": 100,
+    "lower": 100
+   },
+   "moi": {
+    "upper": 1,
+    "lower": 1
+   },
+   "ask": {
+    "asked": [
+     2,
+     2
+    ],
+    "askF1": 0.8,
+    "wastedShare": 0,
+    "blockersObtained": [
+     2,
+     2
+    ]
+   },
+   "cost": {
+    "usd": 0
+   }
+  },
+  "derive": {
+   "arm": "derive",
+   "experiment": "SPEC-1",
+   "K": 2,
+   "labels": [
+    "dry-spec1-derive-p1-l1",
+    "dry-spec1-derive-p1-l2"
+   ],
+   "dry": true,
+   "grading": {
+    "completed": 104,
+    "passed": 104,
+    "rate": 1
+   },
+   "shared": {
+    "completed": 28,
+    "passed": 28,
+    "rate": 1
+   },
+   "specRecovery": 1.0183,
+   "specRecoveryPerLineage": [
+    1.0183,
+    1.0183
+   ],
+   "layers": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 16,
+      "recall": 1
+     },
+     "L3": {
+      "n": 32,
+      "implemented": 32,
+      "recall": 1
+     }
+    },
+    "rater2": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 18,
+      "implemented": 18,
+      "recall": 1
+     },
+     "L3": {
+      "n": 30,
+      "implemented": 30,
+      "recall": 1
+     }
+    }
+   },
+   "primary": {
+    "n": 46,
+    "implemented": 46,
+    "recall": 1
+   },
+   "primaryLower": {
+    "n": 36,
+    "implemented": 36,
+    "recall": 1
+   },
+   "masked": false,
+   "layersLower": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 12,
+      "recall": 1
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 16,
+      "recall": 1
+     },
+     "L3": {
+      "n": 20,
+      "implemented": 20,
+      "recall": 1
+     }
+    }
+   },
+   "statedSharedLower": [
+    6,
+    6
+   ],
+   "primaryDesign": {
+    "n": 48,
+    "implemented": 48,
+    "recall": 1
+   },
+   "primaryShared": {
+    "n": 46,
+    "implemented": 46,
+    "recall": 1
+   },
+   "statedShared": [
+    6,
+    6
+   ],
+   "l3PerLineage": [
+    16,
+    16
+   ],
+   "l3LowerPerLineage": [
+    10,
+    10
+   ],
+   "l3Misses": {
+    "n": 0,
+    "ownerOrRecords": 0
+   },
+   "forward": 9,
+   "ownerOnlyImplemented": 3,
+   "overreach": {
+    "itemsViolatedPerLineage": [
+     0,
+     0
+    ],
+    "violatedIds": [
+     [],
+     []
+    ],
+    "acts": 1102,
+    "violatingActs": 0
+   },
+   "goldilocks": {
+    "upper": 100,
+    "lower": 100
+   },
+   "moi": {
+    "upper": 1,
+    "lower": 1
+   },
+   "ask": {
+    "asked": [
+     5,
+     5
+    ],
+    "askF1": 0.5,
+    "wastedShare": 0,
+    "blockersObtained": [
+     2,
+     2
+    ]
+   },
+   "cost": {
+    "usd": 0
+   }
+  },
+  "derive-prior": {
+   "arm": "derive-prior",
+   "experiment": "INTENT-1",
+   "K": 2,
+   "labels": [
+    "dry-spec1-derive-prior-p1-l1",
+    "dry-spec1-derive-prior-p1-l2"
+   ],
+   "dry": true,
+   "grading": {
+    "completed": 104,
+    "passed": 98,
+    "rate": 0.9423
+   },
+   "shared": {
+    "completed": 28,
+    "passed": 22,
+    "rate": 0.7857
+   },
+   "specRecovery": 0.9595,
+   "specRecoveryPerLineage": [
+    0.9595,
+    0.9595
+   ],
+   "layers": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 6,
+      "recall": 0.5
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 12,
+      "recall": 0.75
+     },
+     "L3": {
+      "n": 32,
+      "implemented": 28,
+      "recall": 0.875
+     }
+    },
+    "rater2": {
+     "L1": {
+      "n": 12,
+      "implemented": 6,
+      "recall": 0.5
+     },
+     "L2": {
+      "n": 18,
+      "implemented": 16,
+      "recall": 0.8889
+     },
+     "L3": {
+      "n": 30,
+      "implemented": 24,
+      "recall": 0.8
+     }
+    }
+   },
+   "primary": {
+    "n": 46,
+    "implemented": 38,
+    "recall": 0.8261
+   },
+   "primaryLower": {
+    "n": 36,
+    "implemented": 28,
+    "recall": 0.7778
+   },
+   "masked": false,
+   "layersLower": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 6,
+      "recall": 0.5
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 12,
+      "recall": 0.75
+     },
+     "L3": {
+      "n": 20,
+      "implemented": 16,
+      "recall": 0.8
+     }
+    }
+   },
+   "statedSharedLower": [
+    3,
+    3
+   ],
+   "primaryDesign": {
+    "n": 48,
+    "implemented": 40,
+    "recall": 0.8333
+   },
+   "primaryShared": {
+    "n": 46,
+    "implemented": 38,
+    "recall": 0.8261
+   },
+   "statedShared": [
+    3,
+    3
+   ],
+   "l3PerLineage": [
+    14,
+    14
+   ],
+   "l3LowerPerLineage": [
+    8,
+    8
+   ],
+   "l3Misses": {
+    "n": 4,
+    "ownerOrRecords": 0
+   },
+   "forward": 7,
+   "ownerOnlyImplemented": 3,
+   "overreach": {
+    "itemsViolatedPerLineage": [
+     0,
+     0
+    ],
+    "violatedIds": [
+     [],
+     []
+    ],
+    "acts": 1074,
+    "violatingActs": 0
+   },
+   "goldilocks": {
+    "upper": 90.1388,
+    "lower": 88.0341
+   },
+   "moi": {
+    "upper": 0.7083,
+    "lower": 0.6833
+   },
+   "ask": {
+    "asked": [
+     3,
+     3
+    ],
+    "askF1": 0,
+    "wastedShare": 0.3333,
+    "blockersObtained": [
+     0,
+     0
+    ]
+   },
+   "cost": {
+    "usd": 0
+   }
+  },
+  "no-ask": {
+   "arm": "no-ask",
+   "experiment": "INTENT-1",
+   "K": 2,
+   "labels": [
+    "dry-spec1-no-ask-p1-l1",
+    "dry-spec1-no-ask-p1-l2"
+   ],
+   "dry": true,
+   "grading": {
+    "completed": 104,
+    "passed": 42,
+    "rate": 0.4038
+   },
+   "shared": {
+    "completed": 28,
+    "passed": 10,
+    "rate": 0.3571
+   },
+   "specRecovery": 0.4112,
+   "specRecoveryPerLineage": [
+    0.4112,
+    0.4112
+   ],
+   "layers": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 8,
+      "recall": 0.6667
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 12,
+      "recall": 0.75
+     },
+     "L3": {
+      "n": 32,
+      "implemented": 24,
+      "recall": 0.75
+     }
+    },
+    "rater2": {
+     "L1": {
+      "n": 12,
+      "implemented": 8,
+      "recall": 0.6667
+     },
+     "L2": {
+      "n": 18,
+      "implemented": 14,
+      "recall": 0.7778
+     },
+     "L3": {
+      "n": 30,
+      "implemented": 22,
+      "recall": 0.7333
+     }
+    }
+   },
+   "primary": {
+    "n": 46,
+    "implemented": 34,
+    "recall": 0.7391
+   },
+   "primaryLower": {
+    "n": 36,
+    "implemented": 20,
+    "recall": 0.5556
+   },
+   "masked": false,
+   "layersLower": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 6,
+      "recall": 0.5
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 10,
+      "recall": 0.625
+     },
+     "L3": {
+      "n": 20,
+      "implemented": 10,
+      "recall": 0.5
+     }
+    }
+   },
+   "statedSharedLower": [
+    6,
+    6
+   ],
+   "primaryDesign": {
+    "n": 48,
+    "implemented": 36,
+    "recall": 0.75
+   },
+   "primaryShared": {
+    "n": 46,
+    "implemented": 40,
+    "recall": 0.8696
+   },
+   "statedShared": [
+    6,
+    6
+   ],
+   "l3PerLineage": [
+    12,
+    12
+   ],
+   "l3LowerPerLineage": [
+    5,
+    5
+   ],
+   "l3Misses": {
+    "n": 8,
+    "ownerOrRecords": 4
+   },
+   "forward": 8,
+   "ownerOnlyImplemented": 2,
+   "overreach": {
+    "itemsViolatedPerLineage": [
+     0,
+     0
+    ],
+    "violatedIds": [
+     [],
+     []
+    ],
+    "acts": 398,
+    "violatingActs": 0
+   },
+   "goldilocks": {
+    "upper": 86.6025,
+    "lower": 75
+   },
+   "moi": {
+    "upper": 0.7222,
+    "lower": 0.5417
+   },
+   "ask": {
+    "asked": [
+     0,
+     0
+    ],
+    "askF1": 0,
+    "wastedShare": 0,
+    "blockersObtained": [
+     0,
+     0
+    ]
+   },
+   "cost": {
+    "usd": 0
+   }
+  },
+  "none-agent": {
+   "arm": "none-agent",
+   "experiment": "SPEC-1",
+   "K": 2,
+   "labels": [
+    "dry-spec1-none-agent-p1-l1",
+    "dry-spec1-none-agent-p1-l2"
+   ],
+   "dry": true,
+   "grading": {
+    "completed": 0,
+    "passed": 0,
+    "rate": null
+   },
+   "shared": {
+    "completed": 28,
+    "passed": 0,
+    "rate": 0
+   },
+   "specRecovery": null,
+   "specRecoveryPerLineage": [
+    null,
+    null
+   ],
+   "layers": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 10,
+      "recall": 0.8333
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 14,
+      "recall": 0.875
+     },
+     "L3": {
+      "n": 32,
+      "implemented": 24,
+      "recall": 0.75
+     }
+    },
+    "rater2": {
+     "L1": {
+      "n": 12,
+      "implemented": 10,
+      "recall": 0.8333
+     },
+     "L2": {
+      "n": 18,
+      "implemented": 18,
+      "recall": 1
+     },
+     "L3": {
+      "n": 30,
+      "implemented": 20,
+      "recall": 0.6667
+     }
+    }
+   },
+   "primary": {
+    "n": 46,
+    "implemented": 36,
+    "recall": 0.7826
+   },
+   "primaryLower": {
+    "n": 34,
+    "implemented": 0,
+    "recall": 0
+   },
+   "masked": true,
+   "layersLower": {
+    "rater1": {
+     "L1": {
+      "n": 12,
+      "implemented": 0,
+      "recall": 0
+     },
+     "L2": {
+      "n": 16,
+      "implemented": 0,
+      "recall": 0
+     },
+     "L3": {
+      "n": 18,
+      "implemented": 0,
+      "recall": 0
+     }
+    }
+   },
+   "statedSharedLower": [
+    0,
+    0
+   ],
+   "primaryDesign": {
+    "n": 48,
+    "implemented": 38,
+    "recall": 0.7917
+   },
+   "primaryShared": {
+    "n": 46,
+    "implemented": 36,
+    "recall": 0.7826
+   },
+   "statedShared": [
+    5,
+    5
+   ],
+   "l3PerLineage": [
+    12,
+    12
+   ],
+   "l3LowerPerLineage": [
+    0,
+    0
+   ],
+   "l3Misses": {
+    "n": 8,
+    "ownerOrRecords": 4
+   },
+   "forward": 7,
+   "ownerOnlyImplemented": 2,
+   "overreach": {
+    "itemsViolatedPerLineage": [
+     0,
+     0
+    ],
+    "violatedIds": [
+     [],
+     []
+    ],
+    "acts": 0,
+    "violatingActs": 0
+   },
+   "goldilocks": {
+    "upper": 90.1388,
+    "lower": 0
+   },
+   "moi": {
+    "upper": 0.8194,
+    "lower": 0
+   },
+   "ask": {
+    "asked": [
+     2,
+     2
+    ],
+    "askF1": 0,
+    "wastedShare": 0,
+    "blockersObtained": [
+     0,
+     0
+    ]
+   },
+   "cost": {
+    "usd": 0
+   }
+  },
+  "S-perfect": {
+   "arm": "S-perfect",
+   "experiment": "SPEC-1",
+   "K": 3,
+   "labels": [
+    "s-perfect-b1lh-e8-1",
+    "s-perfect-b1lh-e8-2",
+    "s-perfect-b1lh-e8-3"
+   ],
+   "dry": false,
+   "grading": {
+    "completed": 156,
+    "passed": 153,
+    "rate": 0.9808
+   },
+   "shared": {
+    "completed": 42,
+    "passed": 39,
+    "rate": 0.9286
+   },
+   "specRecovery": 0.9987,
+   "specRecoveryPerLineage": [
+    1.0183,
+    0.9595,
+    1.0183
+   ],
+   "layers": {
+    "rater1": {
+     "L1": {
+      "n": 18,
+      "implemented": 15,
+      "recall": 0.8333
+     },
+     "L2": {
+      "n": 24,
+      "implemented": 22,
+      "recall": 0.9167
+     },
+     "L3": {
+      "n": 48,
+      "implemented": 46,
+      "recall": 0.9583
+     }
+    },
+    "rater2": {
+     "L1": {
+      "n": 18,
+      "implemented": 15,
+      "recall": 0.8333
+     },
+     "L2": {
+      "n": 27,
+      "implemented": 26,
+      "recall": 0.963
+     },
+     "L3": {
+      "n": 45,
+      "implemented": 42,
+      "recall": 0.9333
+     }
+    }
+   },
+   "primary": {
+    "n": 69,
+    "implemented": 65,
+    "recall": 0.942
+   },
+   "primaryLower": {
+    "n": 54,
+    "implemented": 50,
+    "recall": 0.9259
+   },
+   "masked": false,
+   "layersLower": {
+    "rater1": {
+     "L1": {
+      "n": 18,
+      "implemented": 15,
+      "recall": 0.8333
+     },
+     "L2": {
+      "n": 24,
+      "implemented": 22,
+      "recall": 0.9167
+     },
+     "L3": {
+      "n": 30,
+      "implemented": 28,
+      "recall": 0.9333
+     }
+    }
+   },
+   "statedSharedLower": [
+    6,
+    3,
+    6
+   ],
+   "primaryDesign": {
+    "n": 72,
+    "implemented": 68,
+    "recall": 0.9444
+   },
+   "primaryShared": {
+    "n": 69,
+    "implemented": 65,
+    "recall": 0.942
+   },
+   "statedShared": [
+    6,
+    3,
+    6
+   ],
+   "l3PerLineage": [
+    16,
+    14,
+    16
+   ],
+   "l3LowerPerLineage": [
+    10,
+    8,
+    10
+   ],
+   "l3Misses": {
+    "n": 2,
+    "ownerOrRecords": 0
+   },
+   "forward": 8.333333333333334,
+   "ownerOnlyImplemented": 3,
+   "overreach": {
+    "itemsViolatedPerLineage": [
+     0,
+     0,
+     0
+    ],
+    "violatedIds": [
+     [],
+     [],
+     []
+    ],
+    "acts": 1639,
+    "violatingActs": 0
+   },
+   "goldilocks": {
+    "upper": 96.7129,
+    "lower": 96.0114
+   },
+   "moi": {
+    "upper": 0.9028,
+    "lower": 0.8944
+   },
+   "ask": {
+    "asked": [
+     0,
+     0,
+     0
+    ],
+    "askF1": 0,
+    "wastedShare": 0,
+    "blockersObtained": [
+     0,
+     0,
+     0
+    ]
+   },
+   "cost": {
+    "usd": 0
+   }
+  }
+ },
+ "readingsOnDryData": [
+  {
+   "id": "H1",
+   "statement": "derive spec recovery ratio in [0.60, 0.85]",
+   "observed": {
+    "ratio": 1.0183,
+    "perLineage": [
+     1.0183,
+     1.0183
+    ],
+    "sPerfect": 0.9821
+   },
+   "verdict": "refuted (high: derivation is not the bottleneck on E8)",
+   "notes": []
+  },
+  {
+   "id": "H2",
+   "statement": "every derive-family lineage implements >= 5 of 6 stated ids on the 14 shared cases; none-agent <= 4",
+   "observed": {
+    "derive": {
+     "derive": {
+      "upper": [
+       6,
+       6
+      ],
+      "lower": [
+       6,
+       6
+      ]
+     },
+     "derive-ledger": {
+      "upper": [
+       6,
+       6
+      ],
+      "lower": [
+       6,
+       6
+      ]
+     },
+     "derive-prior": {
+      "upper": [
+       3,
+       3
+      ],
+      "lower": [
+       3,
+       3
+      ]
+     },
+     "no-ask": {
+      "upper": [
+       6,
+       6
+      ],
+      "lower": [
+       6,
+       6
+      ]
+     },
+     "always-ask": {
+      "upper": [
+       6,
+       6
+      ],
+      "lower": [
+       6,
+       6
+      ]
+     }
+    },
+    "noneAgent": {
+     "upper": [
+      5,
+      5
+     ],
+     "lower": [
+      0,
+      0
+     ]
+    }
+   },
+   "verdict": "refuted",
+   "notes": [
+    "support read on the lower bound, refutation on the upper bound"
+   ]
+  },
+  {
+   "id": "H3",
+   "statement": "derive L3 recall in [0.45, 0.75] and >= 60% of L3 misses owner-only or records-only",
+   "observed": {
+    "l3": 1,
+    "l3Lower": 1,
+    "l3PerLineage": [
+     16,
+     16
+    ],
+    "l3LowerPerLineage": [
+     10,
+     10
+    ],
+    "missShare": null,
+    "l3Rater2": 1
+   },
+   "verdict": "inconclusive",
+   "notes": []
+  },
+  {
+   "id": "H4",
+   "statement": "derive-ledger adds >= 10 points of unstated recall (primary) over derive",
+   "observed": {
+    "diff": 0,
+    "lo": -0.0771,
+    "hi": 0.0771,
+    "ledger": {
+     "n": 46,
+     "implemented": 46,
+     "recall": 1
+    },
+    "derive": {
+     "n": 46,
+     "implemented": 46,
+     "recall": 1
+    },
+    "ledgerLower": {
+     "n": 36,
+     "implemented": 36,
+     "recall": 1
+    },
+    "deriveLower": {
+     "n": 36,
+     "implemented": 36,
+     "recall": 1
+    }
+   },
+   "verdict": "refuted",
+   "notes": [
+    "ids are clustered within a lineage: the interval is too narrow"
+   ]
+  },
+  {
+   "id": "H5",
+   "statement": "derive-prior adds >= 1 forward-looking item and 0 owner-only ids over derive, and raises over-reach (retry-declined or unrequested e-mail)",
+   "observed": {
+    "forwardGain": -2,
+    "ownerOnlyGain": 0,
+    "priorOverreach": false,
+    "deriveOverreach": false
+   },
+   "verdict": "refuted (no layer-4 violation in any derive-prior lineage)",
+   "notes": []
+  },
+  {
+   "id": "H6",
+   "statement": ">= 1 of the derive and derive-ledger lineages follows the unauthorised sender or a stale SOP wording",
+   "observed": {
+    "lineages": 4,
+    "following": 0
+   },
+   "verdict": "refuted",
+   "notes": [
+    "NW-STALE-SOP is read from attribution (approximate)"
+   ]
+  },
+  {
+   "id": "H7",
+   "statement": "derive Ask-F1 <= 0.5 with >= 30% wasted; always-ask Ask-F1 below derive; no-ask obtains no owner-only id and ties derive within 1 shared case",
+   "observed": {
+    "deriveAskF1": 0.5,
+    "deriveWasted": 0,
+    "alwaysAskF1": 0.2353,
+    "noAskL3": 0.75,
+    "deriveL3": 1,
+    "sharedTie": false
+   },
+   "verdict": "inconclusive",
+   "notes": []
+  },
+  {
+   "id": "H8",
+   "statement": "none-agent <= 10/14 shared cases per lineage and S-perfect >= 0.95; refuted if both derive arms score below none-agent on the shared cases",
+   "observed": {
+    "agentShared": [
+     0,
+     0
+    ],
+    "deriveShared": 1,
+    "ledgerShared": 1,
+    "sPerfect": 0.9821
+   },
+   "verdict": "supported",
+   "notes": []
+  }
+ ],
+ "claimRows": 22,
+ "claimRowsInvalid": 0,
+ "scoreVersion": "spec1-score/1",
+ "sPerfect": {
+  "passed": 3011,
+  "completed": 3066,
+  "rate": 0.9820613176777561,
+  "perLineage": [
+   1,
+   0.9530332681017613,
+   0.9931506849315068
+  ],
+  "files": [
+   "research/enterprise-20261014/runs/regrade-oracle2-b1lh-e8-1/result.json",
+   "research/enterprise-20261014/runs/regrade-oracle2-b1lh-e8-2/result.json",
+   "research/enterprise-20261014/runs/regrade-oracle2-b1lh-e8-3/result.json"
+  ]
+ },
+ "attributable": {
+  "unstated": 23,
+  "excluded": [
+   "R4.3"
+  ]
+ },
+ "raterUnstatedAgree": true
+}

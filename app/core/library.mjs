@@ -151,7 +151,8 @@ function typed(slot, raw) {
       for (const f of slot.fields) {
         const r = typed({ ...f, name: `${slot.name}[${i}].${f.name}` }, item[f.name]);
         if (r.problem) return r;
-        if (r.value === '' && !f.optional) return { problem: `${slot.name}[${i}].${f.name} is empty` };
+        // An empty address in an entry makes the entry incomplete (asked, in resolveSlots); any other empty field is a problem.
+        if (r.value === '' && !f.optional && !f.grounded) return { problem: `${slot.name}[${i}].${f.name} is empty` };
         row[f.name] = r.value;
       }
       out.push(row);
@@ -181,7 +182,7 @@ export function resolveSlots(template, fill, { text = '', base = null } = {}) {
     if (slot.grounded && STRINGY.has(slot.type) && !grounded(slot, r.value, lowered)) { ungrounded.push({ slot: slot.name, value: r.value }); unknown.add(slot.name); continue; }
     if (slot.type === 'list') {
       // A list entry whose address the person never wrote is incomplete: the list is asked about, never guessed.
-      const bad = r.value.flatMap((item, i) => slot.fields.filter(f => f.grounded && item[f.name] && !grounded(f, item[f.name], lowered)).map(f => ({ slot: `${slot.name}[${i}].${f.name}`, value: item[f.name] })));
+      const bad = r.value.flatMap((item, i) => slot.fields.filter(f => f.grounded && (!item[f.name] || !grounded(f, item[f.name], lowered))).map(f => ({ slot: `${slot.name}[${i}].${f.name}`, value: item[f.name] })));
       if (bad.length) { ungrounded.push(...bad); values[slot.name] = r.value; unknown.add(`${slot.name}:incomplete`); stated.push(slot.name); continue; }
     }
     values[slot.name] = r.value; stated.push(slot.name);
