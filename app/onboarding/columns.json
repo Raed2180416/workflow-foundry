@@ -1,0 +1,144 @@
+{
+  "schema": "foundry-onboarding-columns/1",
+  "note": "The columns each template sheet needs, in plain words, for the CSV drop (app/onboarding/csv.mjs). Types: text, email, number, date (YYYY-MM-DD), datetime (ISO with an offset), enum (values listed; each value has synonyms that map without asking), boolean. A column marked optional may be missing from the person's file. Names and types follow each template's `data` description in app/core/templates/*.json.",
+  "sheets": {
+    "invoice-chase/invoices": {
+      "plain": "invoice list",
+      "rowNoun": "invoices",
+      "columns": [
+        { "name": "invoice", "plain": "invoice number", "type": "text", "synonyms": ["invoice", "invoice no", "invoice number", "invoice #", "inv", "number", "no", "ref", "reference", "document", "id"] },
+        { "name": "customer", "plain": "customer name", "type": "text", "synonyms": ["customer", "customer name", "client", "client name", "company", "name", "account", "bill to", "billed to"] },
+        { "name": "email", "plain": "customer's e-mail address", "type": "email", "synonyms": ["email", "e-mail", "email address", "contact email", "billing email", "customer email", "client email", "mail"] },
+        { "name": "amount", "plain": "amount owed", "type": "number", "synonyms": ["amount", "amount due", "due amount", "balance", "balance due", "outstanding", "open balance", "total", "total due", "value", "sum"] },
+        { "name": "due", "plain": "due date", "type": "date", "synonyms": ["due", "due date", "date due", "payment due", "due on", "due by"] },
+        { "name": "status", "plain": "status", "type": "enum", "synonyms": ["status", "state", "payment status", "invoice status"],
+          "values": {
+            "open": { "plain": "still open (not paid yet)", "synonyms": ["open", "unpaid", "outstanding", "not paid", "due"] },
+            "paid": { "plain": "paid", "synonyms": ["paid", "settled", "paid in full"] },
+            "disputed": { "plain": "disputed (leave it alone)", "synonyms": ["disputed", "in dispute", "dispute", "contested"] }
+          },
+          "ask": { "value": "open", "question": "Your file says {values}. Which of these mean the invoice is still open?", "why": "Only open invoices get a reminder. Reminding someone who already paid is the mistake this question prevents.", "otherwise": "paid" } }
+      ]
+    },
+    "expense-approval/expenses": {
+      "plain": "expense claims",
+      "rowNoun": "claims",
+      "columns": [
+        { "name": "id", "plain": "claim number", "type": "text", "synonyms": ["id", "claim", "claim id", "claim no", "claim number", "ref", "reference", "number"] },
+        { "name": "employee", "plain": "employee name", "type": "text", "synonyms": ["employee", "name", "employee name", "submitted by", "staff", "person"] },
+        { "name": "email", "plain": "employee's e-mail address", "type": "email", "synonyms": ["email", "e-mail", "employee email", "email address"] },
+        { "name": "amount", "plain": "amount", "type": "number", "synonyms": ["amount", "total", "value", "cost", "sum"] },
+        { "name": "category", "plain": "category", "type": "text", "optional": true, "synonyms": ["category", "type", "expense type", "kind"] },
+        { "name": "description", "plain": "description", "type": "text", "optional": true, "synonyms": ["description", "details", "note", "notes", "what", "purpose"] },
+        { "name": "receipt", "plain": "has a receipt", "type": "boolean", "synonyms": ["receipt", "has receipt", "receipt attached", "receipt?"] },
+        { "name": "status", "plain": "status", "type": "enum", "synonyms": ["status", "state"],
+          "values": {
+            "submitted": { "plain": "submitted, waiting for a decision", "synonyms": ["submitted", "new", "pending", "waiting", "open"] },
+            "approved": { "plain": "approved", "synonyms": ["approved", "accepted"] },
+            "rejected": { "plain": "rejected", "synonyms": ["rejected", "declined", "denied"] },
+            "paid": { "plain": "paid out", "synonyms": ["paid", "reimbursed", "paid out"] }
+          },
+          "ask": { "value": "submitted", "question": "Your file says {values}. Which of these mean the claim still needs a decision?", "why": "Only claims that still need a decision are approved or sent on. Deciding a claim twice is the mistake this question prevents.", "otherwise": "approved" } }
+      ]
+    },
+    "weekly-report/tracker": {
+      "plain": "tracker export",
+      "rowNoun": "items",
+      "columns": [
+        { "name": "title", "plain": "item title", "type": "text", "synonyms": ["title", "name", "summary", "task", "item", "issue"] },
+        { "name": "status", "plain": "status", "type": "enum", "synonyms": ["status", "state", "column", "stage"],
+          "values": {
+            "done": { "plain": "done", "synonyms": ["done", "finished", "complete", "completed", "closed", "resolved", "shipped"] },
+            "open": { "plain": "still open", "synonyms": ["open", "to do", "todo", "in progress", "doing", "backlog", "new"] },
+            "blocked": { "plain": "blocked", "synonyms": ["blocked", "on hold", "stuck", "waiting"] }
+          },
+          "ask": { "value": "done", "question": "Your file says {values}. Which of these mean the item is done?", "why": "The report counts what is done. Counting unfinished work as done is the mistake this question prevents.", "otherwise": "open" } },
+        { "name": "owner", "plain": "owner", "type": "text", "optional": true, "synonyms": ["owner", "assignee", "assigned to", "who", "person"] }
+      ]
+    },
+    "lead-triage/leads": {
+      "plain": "leads list",
+      "rowNoun": "leads",
+      "columns": [
+        { "name": "name", "plain": "lead's name", "type": "text", "synonyms": ["name", "full name", "contact", "lead"] },
+        { "name": "email", "plain": "lead's e-mail address", "type": "email", "synonyms": ["email", "e-mail", "email address"] },
+        { "name": "company", "plain": "company", "type": "text", "optional": true, "synonyms": ["company", "organisation", "organization", "account"] },
+        { "name": "region", "plain": "region", "type": "text", "optional": true, "synonyms": ["region", "territory", "area"] },
+        { "name": "country", "plain": "country", "type": "text", "optional": true, "synonyms": ["country", "nation"] },
+        { "name": "source", "plain": "where the lead came from", "type": "text", "optional": true, "synonyms": ["source", "lead source", "channel", "origin"] },
+        { "name": "companySize", "plain": "company size (people)", "type": "number", "optional": true, "synonyms": ["company size", "employees", "size", "headcount"] },
+        { "name": "budget", "plain": "budget", "type": "number", "optional": true, "synonyms": ["budget", "deal size", "value"] },
+        { "name": "message", "plain": "message", "type": "text", "optional": true, "synonyms": ["message", "note", "notes", "comment", "comments"] },
+        { "name": "status", "plain": "status", "type": "enum", "synonyms": ["status", "state", "lead status"],
+          "values": {
+            "new": { "plain": "new, not contacted yet", "synonyms": ["new", "fresh", "open", "uncontacted"] },
+            "contacted": { "plain": "already contacted", "synonyms": ["contacted", "working", "in progress", "qualified"] },
+            "spam": { "plain": "spam", "synonyms": ["spam", "junk"] }
+          },
+          "ask": { "value": "new", "question": "Your file says {values}. Which of these mean the lead is new and should be handed out?", "why": "Only new leads are handed out. Sending an old lead to a second salesperson is the mistake this question prevents.", "otherwise": "contacted" } }
+      ]
+    },
+    "support-deflection/tickets": {
+      "plain": "ticket export",
+      "rowNoun": "tickets",
+      "columns": [
+        { "name": "id", "plain": "ticket number", "type": "text", "synonyms": ["id", "ticket", "ticket id", "number", "ref"] },
+        { "name": "from", "plain": "customer's e-mail address", "type": "email", "synonyms": ["from", "email", "requester", "customer email", "e-mail"] },
+        { "name": "subject", "plain": "subject", "type": "text", "synonyms": ["subject", "title", "summary"] },
+        { "name": "body", "plain": "message", "type": "text", "synonyms": ["body", "message", "description", "text", "question"] },
+        { "name": "priority", "plain": "priority", "type": "enum", "synonyms": ["priority", "urgency"],
+          "values": {
+            "normal": { "plain": "normal", "synonyms": ["normal", "low", "medium"] },
+            "urgent": { "plain": "urgent (always goes to a person)", "synonyms": ["urgent", "high", "critical"] }
+          },
+          "ask": { "value": "urgent", "question": "Your file says {values}. Which of these are urgent?", "why": "Urgent tickets always go to a person. Answering an urgent ticket automatically is the mistake this question prevents.", "otherwise": "normal" } },
+        { "name": "status", "plain": "status", "type": "enum", "synonyms": ["status", "state"],
+          "values": {
+            "open": { "plain": "open", "synonyms": ["open", "new", "pending"] },
+            "closed": { "plain": "closed", "synonyms": ["closed", "solved", "resolved", "done"] }
+          },
+          "ask": { "value": "open", "question": "Your file says {values}. Which of these mean the ticket is still open?", "why": "Only open tickets are answered. Answering a closed ticket again is the mistake this question prevents.", "otherwise": "closed" } }
+      ]
+    },
+    "oncall-digest/alerts": {
+      "plain": "alerts export",
+      "rowNoun": "alerts",
+      "columns": [
+        { "name": "id", "plain": "alert id", "type": "text", "synonyms": ["id", "alert", "alert id", "incident"] },
+        { "name": "at", "plain": "time raised", "type": "datetime", "synonyms": ["at", "time", "timestamp", "created", "raised", "date"] },
+        { "name": "service", "plain": "service", "type": "text", "synonyms": ["service", "system", "app", "component"] },
+        { "name": "severity", "plain": "severity", "type": "enum", "synonyms": ["severity", "level", "priority"],
+          "values": {
+            "info": { "plain": "information only", "synonyms": ["info", "information", "low"] },
+            "warning": { "plain": "warning", "synonyms": ["warning", "warn", "medium"] },
+            "critical": { "plain": "critical", "synonyms": ["critical", "crit", "high", "error", "p1"] }
+          },
+          "ask": { "value": "critical", "question": "Your file says {values}. Which of these are critical?", "why": "Critical alerts can page someone. Missing a critical alert is the mistake this question prevents.", "otherwise": "warning" } },
+        { "name": "message", "plain": "message", "type": "text", "synonyms": ["message", "description", "summary", "text"] },
+        { "name": "acknowledged", "plain": "acknowledged", "type": "boolean", "synonyms": ["acknowledged", "acked", "ack"] },
+        { "name": "resolved", "plain": "resolved", "type": "boolean", "synonyms": ["resolved", "closed", "fixed"] }
+      ]
+    },
+    "contact-sync/crm": {
+      "plain": "customer list (CRM export)",
+      "rowNoun": "contacts",
+      "columns": [
+        { "name": "email", "plain": "e-mail address", "type": "email", "synonyms": ["email", "e-mail", "email address"] },
+        { "name": "name", "plain": "name", "type": "text", "synonyms": ["name", "full name", "contact"] },
+        { "name": "company", "plain": "company", "type": "text", "optional": true, "synonyms": ["company", "organisation", "organization", "account"] },
+        { "name": "tags", "plain": "tags", "type": "text", "optional": true, "synonyms": ["tags", "labels", "segments", "lists"] },
+        { "name": "unsubscribed", "plain": "unsubscribed", "type": "boolean", "synonyms": ["unsubscribed", "opted out", "opt out", "do not email"] }
+      ]
+    },
+    "contact-sync/newsletter": {
+      "plain": "newsletter list",
+      "rowNoun": "subscribers",
+      "columns": [
+        { "name": "email", "plain": "e-mail address", "type": "email", "synonyms": ["email", "e-mail", "email address"] },
+        { "name": "name", "plain": "name", "type": "text", "optional": true, "synonyms": ["name", "full name"] },
+        { "name": "source", "plain": "where they signed up", "type": "text", "optional": true, "synonyms": ["source", "signup source", "origin"] },
+        { "name": "addedAt", "plain": "date added", "type": "date", "optional": true, "synonyms": ["added", "added at", "date added", "subscribed", "signup date", "created"] }
+      ]
+    }
+  }
+}
