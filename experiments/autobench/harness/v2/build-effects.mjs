@@ -2,13 +2,19 @@
 // Build-time generator of harness/v2/effects.json (A1-C v2, mechanism M2; research/automationbench-20261014/A1C-V2-DESIGN.md).
 // NOT imported at run time. It reads ONLY the API schema index the environment ships for api_search
 // (corpus/AutomationBench/automationbench/tools/api/schemas/index.txt: app, operation id, METHOD, path, description) and
-// the per-app schema files beside it (<app>.jsonc: the API name and base URL). Nothing under impl/, rubric/ or the task
-// definitions is read. One row per index line:
-//   {app, appKey, op, method, path, effect: list|get|create|update|delete|send|other, kind, parent: {param, kind}|null, channel}
-//   effect   from METHOD plus the operation id's last token;
+// the per-app schema files beside it (<app>.jsonc: the API name, the base URL and each endpoint's documented request
+// shape). Nothing under impl/, rubric/ or the task definitions is read. One row per index line:
+//   {app, appKey, op, method, path, effect: list|get|create|update|delete|send|other, kind, parent: {param, kind}|null,
+//    channel, creates?, bodyIs?, bodyIsNot?}
+//   effect   from METHOD plus the operation id's last token; an outgoing messaging channel (not "note") makes it "send",
+//            and `creates` marks a send that also creates a record of `kind` (a reply or comment on a ticket);
 //   kind     the operation id's resource token, singularized (for a create on a sub-collection under a {param}: the
-//            sub-collection, with `parent` naming the param and the parent collection's kind);
-//   channel  hand-written for the messaging operations below (email, chat, dm, sms, social, esign, reply), from the schemas.
+//            sub-collection, with `parent` naming the param and the parent collection's kind); a sub-collection create that
+//            shares its METHOD + path with another operation takes the operation id's last token (the path cannot name it);
+//   channel  MESSAGING_RULE below, applied to every operation's index description (no per-operation list);
+//   bodyIs / bodyIsNot  for operations that share one METHOD + path: the request field the schema pins to a constant
+//            (`field: "value" (required)`, e.g. an internal note posted on the reply path with message_type "note"), so a
+//            call is matched to the operation its body selects.
 //   node experiments/autobench/harness/v2/build-effects.mjs [--check]   (--check: exit 1 when effects.json is stale)
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -21,17 +27,50 @@ const REPO = path.resolve(HERE, '../../../..');
 export const SCHEMAS = path.join(REPO, 'corpus/AutomationBench/automationbench/tools/api/schemas');
 export const OUT = path.join(HERE, 'effects.json');
 
-/** Messaging operations (hand-written from the schema descriptions): operation id -> channel. */
-export const CHANNELS = Object.freeze({
-  'gmail.users.messages.send': 'email', 'gmail.users.drafts.send': 'email', 'salesforce.actions.emailSimple': 'email', 'mailchimp.campaigns.send': 'email',
-  'slack.chat.postMessage': 'chat',
-  'linkedin.messages.create': 'dm',
-  'twilio.messages.create': 'sms',
-  'twitter.tweets.create': 'social', 'linkedin.ugcPosts.create': 'social', 'linkedin.companyUpdates.create': 'social', 'facebook_pages.feed.create': 'social',
-  'facebook_pages.photos.create': 'social', 'instagram.media.publish': 'social', 'buffer.updates.create': 'social',
-  'docusign.envelopes.create': 'esign',
-  'helpscout.conversations.reply': 'reply', 'intercom.conversations.reply': 'reply', 'reamaze.conversations.addMessage': 'reply', 'gorgias.tickets.create_message': 'reply',
+/**
+ * MESSAGING_RULE (stated once, applied to every operation; recorded in effects.json): the channel of a write operation
+ * (POST, PUT, PATCH) from its index description. S is the description's first sentence (the operation's summary), D the
+ * whole description; SEND is send|sends|deliver|delivers|dispatch|dispatches. The first match wins:
+ *   sms     S: SEND ... "SMS" or "text message"
+ *   chat    S: SEND ... "message" ... "channel"
+ *   dm      S: SEND ... "direct message"
+ *   email   S: SEND ... e-mail | draft | campaign | invoice | estimate | receipt; or S starts with "Email a(n)"
+ *   esign   S: SEND ... "envelope"
+ *   social  S: publish(es); or queue|create|share|schedule a (new) post; or add|upload ... photo|video ... page|feed|profile
+ *   reply   S: post|send|append|write|attach ... reply|replies|response; or D: "visible to the requester"
+ *   note    S: internal|private ... note|annotation|comment (an agent-only note: not an outgoing message)
+ * Every other operation has no channel. GET and DELETE never have one.
+ */
+export const MESSAGING_RULE = Object.freeze({
+  scope: 'write operations (POST, PUT, PATCH); S = the index description\'s first sentence, D = the whole description; first match wins',
+  order: ['sms', 'chat', 'dm', 'email', 'esign', 'social', 'reply', 'note'],
+  outgoing: ['sms', 'chat', 'dm', 'email', 'esign', 'social', 'reply'],
 });
+const SEND_VERB = '(?:send|sends|deliver|delivers|dispatch|dispatches)';
+const RULES = [
+  ['sms', s => new RegExp(`\\b${SEND_VERB}\\b[^.]*\\b(sms|text message)\\b`, 'i').test(s)],
+  ['chat', s => new RegExp(`\\b${SEND_VERB}\\b[^.]*\\bmessage\\b[^.]*\\bchannel\\b`, 'i').test(s)],
+  ['dm', s => new RegExp(`\\b${SEND_VERB}\\b[^.]*\\bdirect message\\b`, 'i').test(s)],
+  ['email', s => new RegExp(`\\b${SEND_VERB}\\b[^.]*\\b(e-?mail|draft|campaign|invoice|estimate|receipt)s?\\b`, 'i').test(s) || /^e-?mail an? /i.test(s)],
+  ['esign', s => new RegExp(`\\b${SEND_VERB}\\b[^.]*\\benvelope\\b`, 'i').test(s)],
+  ['social', s => /\b(publish|publishes)\b/i.test(s) || /\b(queue|create|share|schedule)s? (a|an) (new )?post\b/i.test(s) || /\b(add|adds|upload|uploads)\b[^.]*\b(photo|video)\b[^.]*\b(page|feed|profile)\b/i.test(s)],
+  ['reply', (s, d) => /\b(post|posts|send|sends|append|appends|write|writes|attach|attaches)\b[^.]*\b(reply|replies|response)\b/i.test(s) || /\bvisible to the requester\b/i.test(d)],
+  ['note', s => /\b(internal|private)\b[^.]*\b(note|annotation|comment)s?\b/i.test(s)],
+];
+/** The messaging channel of one operation by MESSAGING_RULE (null: not a messaging operation). */
+export function channelOf(method, description) {
+  if (!['POST', 'PUT', 'PATCH'].includes(String(method).toUpperCase())) return null;
+  const d = String(description ?? '');
+  const s = (d.match(/^[^.]*\./) ?? [d])[0];
+  for (const [ch, test] of RULES) if (test(s, d)) return ch;
+  return null;
+}
+/** Request fields the schema pins to a constant: `{field: "value" (required), ...}` -> {field: value}. */
+export function requestConstants(request) {
+  const out = {};
+  for (const m of String(request ?? '').matchAll(/(\w+):\s*"([^"]+)"\s*\(required\)/g)) out[m[1]] = m[2];
+  return out;
+}
 
 const sha256 = b => createHash('sha256').update(b).digest('hex');
 const stripComments = t => t.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
@@ -52,7 +91,7 @@ const SEND = /^(send|reply|postmessage|emailsimple|create_message)/i;
 /** effect from METHOD + the operation id's last token. */
 export function effectOf(method, op, p, channel) {
   const last = String(op).split('.').at(-1).replace(/[^A-Za-z_]/g, '');
-  if (channel) return 'send';
+  if (channel && channel !== 'note') return 'send';
   if (method === 'DELETE') return 'delete';
   if (method === 'GET') return /\}$/.test(p) || /^(get|retrieve|read|show|info|view)/i.test(last) ? 'get' : 'list';
   if (SEND.test(last)) return 'send';
@@ -87,27 +126,43 @@ export function kindOf(op, p, effect) {
 
 export function buildEffects({ schemas = SCHEMAS } = {}) {
   const indexText = readFileSync(path.join(schemas, 'index.txt'), 'utf8');
-  const apps = {}, files = {};
+  const apps = {}, files = {}, requests = {};
   for (const f of readdirSync(schemas).filter(x => x.endsWith('.jsonc')).sort()) {
     const raw = readFileSync(path.join(schemas, f));
     files[f] = sha256(raw);
     const j = JSON.parse(stripComments(raw.toString('utf8')));
     apps[j.api] = { appKey: f.replace(/\.jsonc$/, ''), baseUrl: j.baseUrl ?? null };
+    for (const e of Array.isArray(j.endpoints) ? j.endpoints : []) if (e?.id) requests[e.id] = e.request ?? null;
   }
   const rows = [];
   for (const line of indexText.split('\n')) {
     if (!line.trim()) continue;
-    const [app, op, method, p] = line.split('\t');
+    const [app, op, method, p, description] = line.split('\t');
     if (!app || !op || !method || !p) continue;
-    const channel = CHANNELS[op] ?? null;
+    const channel = channelOf(method, description);
+    // The record an operation writes comes from its own effect; an outgoing message is a "send" on top of that.
+    const base = effectOf(method.toUpperCase(), op, p, null);
     const effect = effectOf(method.toUpperCase(), op, p, channel);
-    const { kind, parent } = kindOf(op, p, effect);
-    rows.push({ app, appKey: apps[app]?.appKey ?? app, op, method: method.toUpperCase(), path: p, effect, kind, parent, channel });
+    const { kind, parent } = kindOf(op, p, base);
+    rows.push({ app, appKey: apps[app]?.appKey ?? app, op, method: method.toUpperCase(), path: p, effect, kind, parent, channel, ...(base === 'create' && effect !== 'create' ? { creates: true } : {}) });
+  }
+  // Operations sharing one METHOD + path: the operation id names the kind, and the schema's pinned request constants
+  // tell the calls apart (the operation with a constant matches calls carrying it; the others, calls that do not).
+  const byRoute = new Map();
+  for (const r of rows) { const k = `${r.method} ${r.path}`; if (!byRoute.has(k)) byRoute.set(k, []); byRoute.get(k).push(r); }
+  for (const group of byRoute.values()) {
+    if (group.length < 2) continue;
+    const consts = group.map(r => requestConstants(requests[r.op]));
+    group.forEach((r, i) => {
+      if (r.parent) r.kind = singular(String(r.op).split('.').at(-1).replace(/[^A-Za-z_]/g, ''));
+      if (Object.keys(consts[i]).length) r.bodyIs = consts[i];
+      else { const not = Object.assign({}, ...consts.filter((c, j) => j !== i)); if (Object.keys(not).length) r.bodyIsNot = not; }
+    });
   }
   let commit = null;
   try { commit = spawnSync('git', ['-C', path.resolve(schemas, '../../../..'), 'rev-parse', 'HEAD'], { encoding: 'utf8', timeout: 20_000 }).stdout.trim() || null; } catch { /* no git */ }
   return { generatedBy: 'experiments/autobench/harness/v2/build-effects.mjs', source: { indexTxtSha256: sha256(indexText), corpusCommit: commit, schemaFiles: files },
-    channels: CHANNELS, apps, rows };
+    messagingRule: MESSAGING_RULE, apps, rows };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

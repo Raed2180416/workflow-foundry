@@ -3,18 +3,21 @@
 // session's gate log back without following links and with a size cap (the working directory is agent-writable).
 // The configuration holds only what the lint needs: the messaging routes of the effect table and, per check, the
 // left-out values a majority of readers found with a verbatim rule (hard bodyNot). Nothing grader-side exists here.
-import { chmodSync, closeSync, constants as fsc, fstatSync, mkdirSync, openSync, readSync, writeFileSync } from 'node:fs';
+import { chmodSync, closeSync, constants as fsc, fstatSync, mkdirSync, openSync, readSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { EFFECTS } from './postconditions.mjs';
 
-export { GATE_ENV, GATE_LOG, decide, callFacts, violationsOf, decodeRaw, routeOf, refusalText, names } from './tool-gated.mjs';
+export { GATE_ENV, GATE_LOG, decide, callFacts, violationsOf, decodeRaw, routeOf, refusalText, cappedText, names } from './tool-gated.mjs';
 export const GATE_FILE = 'gate.json';
 export const LOG_MAX_BYTES = 1024 * 1024;
 
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/** URL matchers for the effect table's messaging operations: method, host (the app's base URL host, or a host sharing its
- * last two labels), and the path tail (the operation path minus 0-2 leading segments, params as one segment). */
-export function gateRoutes(effects = EFFECTS, keep = x => Boolean(x.channel)) {
+/** An outgoing messaging operation (an internal "note" is not one). */
+export const outgoing = x => Boolean(x.channel) && x.channel !== 'note';
+/** URL matchers for the effect table's outgoing messaging operations: method, host (the app's base URL host, or a host
+ * sharing its last two labels), the path tail (the operation path minus 0-2 leading segments, params as one segment), and,
+ * for operations that share one path, the body constants that select them. */
+export function gateRoutes(effects = EFFECTS, keep = outgoing) {
   const out = [];
   for (const r of effects.rows.filter(keep)) {
     const base = effects.apps?.[r.app]?.baseUrl ?? null;
@@ -28,7 +31,8 @@ export function gateRoutes(effects = EFFECTS, keep = x => Boolean(x.channel)) {
       const tail = segs.slice(k);
       const lit = tail.filter(s => !/\{[^}]+\}/.test(s)).join('/').length;
       if (!lit) continue;
-      out.push({ op: r.op, app: r.app, appKey: r.appKey, channel: r.channel, method: r.method, effect: r.effect, kind: r.kind, host: hostRe, tail: `(?:^|/)${tail.map(s => esc(s).replace(/\\\{[^}]*\\\}/g, '[^/]+')).join('/')}$`, lit });
+      out.push({ op: r.op, app: r.app, appKey: r.appKey, channel: r.channel, method: r.method, effect: r.effect, kind: r.kind, host: hostRe, tail: `(?:^|/)${tail.map(s => esc(s).replace(/\\\{[^}]*\\\}/g, '[^/]+')).join('/')}$`, lit,
+        ...(r.bodyIs ? { bodyIs: r.bodyIs } : {}), ...(r.bodyIsNot ? { bodyIsNot: r.bodyIsNot } : {}) });
     }
   }
   return out;
@@ -54,10 +58,12 @@ export function gateConfig(pcs, { merged = null, perPair = 1, perSession = 2, ef
   return { v: 1, perPair, perSession, routes: gateRoutes(effects), rules: gateRules(pcs, merged) };
 }
 
-/** Write gate.json (mode 0444) into `dir` (the act session's step-guard directory). */
+/** Write gate.json (mode 0444) into `dir` (the act session's step-guard directory); a file left by an earlier attempt
+ * (a resumed task) is removed first, so a read-only leftover never fails the write. */
 export function writeGate(dir, cfg) {
   mkdirSync(dir, { recursive: true });
   const f = path.join(dir, GATE_FILE);
+  rmSync(f, { force: true });
   writeFileSync(f, JSON.stringify(cfg, null, 1), { mode: 0o444 });
   chmodSync(f, 0o444);
   return f;
@@ -79,5 +85,7 @@ export function readGateLog(file, maxBytes = LOG_MAX_BYTES) {
   } catch { return { lines: [], status: 'unreadable' }; } finally { closeSync(fd); }
 }
 
-/** Counts for the node row: refusals, identical resends, sends past a cap. */
-export const gateSummary = lines => ({ refused: lines.filter(e => e.kind === 'refused').length, resentIdentical: lines.filter(e => e.kind === 'resent').length, capped: lines.filter(e => e.kind === 'capped').length });
+/** Counts for the node row: client invocations that loaded the configuration, refusals, calls held with a refused
+ * batch, identical resends, sends past a cap. */
+export const gateSummary = lines => ({ loaded: lines.filter(e => e.kind === 'loaded').length, refused: lines.filter(e => e.kind === 'refused').length, held: lines.filter(e => e.kind === 'held').length,
+  resentIdentical: lines.filter(e => e.kind === 'resent').length, capped: lines.filter(e => e.kind === 'capped').length });

@@ -53,26 +53,27 @@
    "zoom.jsonc": "8e1bfbc393c84ac3737f6f86473b9864666c3d6170e1c3e8eed2218ea39c7556"
   }
  },
- "channels": {
-  "gmail.users.messages.send": "email",
-  "gmail.users.drafts.send": "email",
-  "salesforce.actions.emailSimple": "email",
-  "mailchimp.campaigns.send": "email",
-  "slack.chat.postMessage": "chat",
-  "linkedin.messages.create": "dm",
-  "twilio.messages.create": "sms",
-  "twitter.tweets.create": "social",
-  "linkedin.ugcPosts.create": "social",
-  "linkedin.companyUpdates.create": "social",
-  "facebook_pages.feed.create": "social",
-  "facebook_pages.photos.create": "social",
-  "instagram.media.publish": "social",
-  "buffer.updates.create": "social",
-  "docusign.envelopes.create": "esign",
-  "helpscout.conversations.reply": "reply",
-  "intercom.conversations.reply": "reply",
-  "reamaze.conversations.addMessage": "reply",
-  "gorgias.tickets.create_message": "reply"
+ "messagingRule": {
+  "scope": "write operations (POST, PUT, PATCH); S = the index description's first sentence, D = the whole description; first match wins",
+  "order": [
+   "sms",
+   "chat",
+   "dm",
+   "email",
+   "esign",
+   "social",
+   "reply",
+   "note"
+  ],
+  "outgoing": [
+   "sms",
+   "chat",
+   "dm",
+   "email",
+   "esign",
+   "social",
+   "reply"
+  ]
  },
  "apps": {
   "airtable": {
@@ -1643,7 +1644,8 @@
    "effect": "send",
    "kind": "update",
    "parent": null,
-   "channel": "social"
+   "channel": "social",
+   "creates": true
   },
   {
    "app": "calendly",
@@ -1863,7 +1865,8 @@
    "effect": "send",
    "kind": "envelope",
    "parent": null,
-   "channel": "esign"
+   "channel": "esign",
+   "creates": true
   },
   {
    "app": "docusign",
@@ -2042,7 +2045,8 @@
    "effect": "send",
    "kind": "feed",
    "parent": null,
-   "channel": "social"
+   "channel": "social",
+   "creates": true
   },
   {
    "app": "facebook_pages",
@@ -2053,7 +2057,8 @@
    "effect": "send",
    "kind": "photo",
    "parent": null,
-   "channel": "social"
+   "channel": "social",
+   "creates": true
   },
   {
    "app": "freshdesk",
@@ -2127,13 +2132,14 @@
    "op": "freshdesk.tickets.notes.create",
    "method": "POST",
    "path": "freshdesk/api/v2/tickets/{ticket_id}/notes",
-   "effect": "create",
+   "effect": "send",
    "kind": "note",
    "parent": {
     "param": "ticket_id",
     "kind": "ticket"
    },
-   "channel": null
+   "channel": "reply",
+   "creates": true
   },
   {
    "app": "freshdesk",
@@ -3077,7 +3083,7 @@
     "param": "conversationId",
     "kind": "conversation"
    },
-   "channel": null
+   "channel": "note"
   },
   {
    "app": "helpscout",
@@ -3396,7 +3402,8 @@
    "effect": "send",
    "kind": "media",
    "parent": null,
-   "channel": "social"
+   "channel": "social",
+   "creates": true
   },
   {
    "app": "instagram",
@@ -3578,7 +3585,11 @@
    "effect": "send",
    "kind": "conversation",
    "parent": null,
-   "channel": "reply"
+   "channel": "reply",
+   "bodyIsNot": {
+    "message_type": "note",
+    "type": "admin"
+   }
   },
   {
    "app": "intercom",
@@ -3587,12 +3598,16 @@
    "method": "POST",
    "path": "intercom/conversations/{conversation_id}/reply",
    "effect": "create",
-   "kind": "reply",
+   "kind": "note",
    "parent": {
     "param": "conversation_id",
     "kind": "conversation"
    },
-   "channel": null
+   "channel": "note",
+   "bodyIs": {
+    "message_type": "note",
+    "type": "admin"
+   }
   },
   {
    "app": "intercom",
@@ -3741,7 +3756,8 @@
    "effect": "send",
    "kind": "ugcpost",
    "parent": null,
-   "channel": "social"
+   "channel": "social",
+   "creates": true
   },
   {
    "app": "linkedin",
@@ -3763,7 +3779,8 @@
    "effect": "send",
    "kind": "companyupdate",
    "parent": null,
-   "channel": "social"
+   "channel": "social",
+   "creates": true
   },
   {
    "app": "linkedin",
@@ -3785,7 +3802,8 @@
    "effect": "send",
    "kind": "message",
    "parent": null,
-   "channel": "dm"
+   "channel": "dm",
+   "creates": true
   },
   {
    "app": "linkedin_ads",
@@ -4325,7 +4343,7 @@
    "effect": "send",
    "kind": "invoice",
    "parent": null,
-   "channel": null
+   "channel": "email"
   },
   {
    "app": "quickbooks",
@@ -4523,7 +4541,7 @@
    "effect": "send",
    "kind": "estimate",
    "parent": null,
-   "channel": null
+   "channel": "email"
   },
   {
    "app": "quickbooks",
@@ -4688,7 +4706,7 @@
    "effect": "send",
    "kind": "salesreceipt",
    "parent": null,
-   "channel": null
+   "channel": "email"
   },
   {
    "app": "quickbooks",
@@ -5269,9 +5287,13 @@
    "method": "POST",
    "path": "reamaze/v1/conversations/{conversation_id}/messages",
    "effect": "send",
-   "kind": "conversation",
-   "parent": null,
-   "channel": "reply"
+   "kind": "message",
+   "parent": {
+    "param": "conversation_id",
+    "kind": "conversation"
+   },
+   "channel": "reply",
+   "creates": true
   },
   {
    "app": "reamaze",
@@ -5791,10 +5813,11 @@
    "op": "recruitee.mailbox.messages.create",
    "method": "POST",
    "path": "recruitee/v1/c/{company_id}/mailbox/messages",
-   "effect": "create",
+   "effect": "send",
    "kind": "message",
    "parent": null,
-   "channel": null
+   "channel": "email",
+   "creates": true
   },
   {
    "app": "recruitee",
@@ -6578,7 +6601,8 @@
    "effect": "send",
    "kind": "message",
    "parent": null,
-   "channel": "sms"
+   "channel": "sms",
+   "creates": true
   },
   {
    "app": "twilio",
@@ -6600,7 +6624,8 @@
    "effect": "send",
    "kind": "tweet",
    "parent": null,
-   "channel": "social"
+   "channel": "social",
+   "creates": true
   },
   {
    "app": "twitter",
@@ -6925,7 +6950,7 @@
    "effect": "send",
    "kind": "invoice",
    "parent": null,
-   "channel": null
+   "channel": "email"
   },
   {
    "app": "wave",
@@ -7164,10 +7189,10 @@
    "op": "xero.invoices.email",
    "method": "POST",
    "path": "xero/api.xro/2.0/Invoices/{InvoiceID}/Email",
-   "effect": "other",
+   "effect": "send",
    "kind": "invoice",
    "parent": null,
-   "channel": null
+   "channel": "email"
   },
   {
    "app": "xero",
@@ -8537,13 +8562,14 @@
    "op": "zoho_desk.tickets.comment",
    "method": "POST",
    "path": "zoho/v1/tickets/{ticketId}/comments",
-   "effect": "create",
+   "effect": "send",
    "kind": "comment",
    "parent": {
     "param": "ticketId",
     "kind": "ticket"
    },
-   "channel": null
+   "channel": "reply",
+   "creates": true
   },
   {
    "app": "zoho_desk",

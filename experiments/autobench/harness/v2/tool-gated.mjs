@@ -1,12 +1,15 @@
 // AutomationBench tool client with the A1-C v2 pre-send lint (harness/v2/gate.mjs writes its configuration). It is copied
 // over tool.mjs in the acting session's working directory when the lint is on, and it is byte-compatible with tool.mjs in
 // usage, output and exit codes: without $AB_GATE_DIR, or with an absent or unreadable $AB_GATE_DIR/gate.json, it IS
-// tool.mjs. With a configuration, an outgoing message (a POST, PUT or PATCH the configuration's routes name as a messaging
-// operation) that carries a value a cited rule leaves out of the message for that recipient or channel is refused once,
-// before it reaches the mailbox (no request file, so no world step), with a "HARNESS GATE" note on stderr and exit 1. At
-// most one refusal per (rule, recipient) and two per session; an identical resend of a refused call is sent. Only the
-// violating calls of a batch are refused; the others are sent, in order, in one step. A call that does not decode passes.
-// Decisions are appended to .tools/gate-log.jsonl. Node built-ins only.
+// tool.mjs. With a configuration, an outgoing message (a POST, PUT or PATCH the configuration's routes name as an
+// outgoing messaging operation) that carries a value a cited rule leaves out of the message for that recipient or channel
+// is refused once, before it reaches the mailbox (no request file, so no world step), with a "HARNESS GATE" note on
+// stderr and exit 1. At most one refusal per (rule, recipient) and two per session; an identical resend of a refused call
+// is sent. A batch with a refused call is refused WHOLE: none of its calls is sent, so re-running the identical batch
+// sends every call exactly once (no partial send, no duplicate). A send past the refusal limit goes out with a note. A
+// call that does not decode passes. Every invocation that loads a configuration logs a "loaded" line, and every decision
+// is appended to .tools/gate-log.jsonl (the host reports the lint inactive when the session made calls and nothing
+// loaded). Node built-ins only.
 //
 //   node tool.mjs list | call <tool_name> '<arguments JSON>'|@file|- | batch '<JSON array>'|@file|-
 import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, writeFileSync } from 'node:fs';
@@ -116,8 +119,10 @@ const leaves = (v, out = [], key = null) => {
   return out;
 };
 const parseMaybe = s => { if (s === null || s === undefined || s === '') return null; if (typeof s === 'object') return s; try { return JSON.parse(s); } catch { return undefined; } };
-/** The route (a messaging operation) a method + URL reach, by the configuration's routes; the most specific wins. */
-export function routeOf(method, url, routes = []) {
+const bodyHas = (body, want) => Object.entries(want ?? {}).every(([k, v]) => body && typeof body === 'object' && String(body[k]) === String(v));
+/** The route (a messaging operation) a method + URL (and, where operations share a path, the body) reach, by the
+ * configuration's routes; the most specific wins. */
+export function routeOf(method, url, routes = [], body = null) {
   let u;
   try { u = new URL(String(url)); } catch { return null; }
   let p;
@@ -127,6 +132,8 @@ export function routeOf(method, url, routes = []) {
     if (String(method).toUpperCase() !== r.method) continue;
     if (!new RegExp(r.host, 'i').test(u.host)) continue;
     if (!new RegExp(r.tail).test(p)) continue;
+    if (r.bodyIs && !bodyHas(body, r.bodyIs)) continue;
+    if (r.bodyIsNot && bodyHas(body, r.bodyIsNot)) continue;
     if (!best || r.lit > best.lit) best = r;
   }
   return best;
@@ -136,10 +143,10 @@ export function callFacts(call, routes) {
   if (!call || call.name !== 'api_fetch') return null;
   const args = parseMaybe(call.arguments);
   if (!args || typeof args !== 'object') return null;
-  const route = routeOf(args.method ?? 'GET', args.url, routes);
-  if (!route) return null;
   let body = parseMaybe(args.body);
   if (body === undefined) body = typeof args.body === 'string' ? { text: args.body } : null;
+  const route = routeOf(args.method ?? 'GET', args.url, routes, body);
+  if (!route) return null;
   const params = parseMaybe(args.params) ?? null;
   const recipients = new Set(), channels = new Set();
   const texts = [];
@@ -185,24 +192,30 @@ export function gateState(lines = []) {
   return s;
 }
 /**
- * decide(calls, cfg, logLines) -> [{i, action: 'send'|'refuse'|'resend'|'cap', violation?, hash}] per call, in order.
+ * decide(calls, cfg, logLines) -> [{i, action: 'send'|'refuse'|'resend'|'cap'|'held', violation?, hash}] per call, in order.
  * A refusal needs: a violation, the call not refused before (else an identical resend: sent), fewer than perSession
- * refusals so far and fewer than perPair for that (rule, recipient).
+ * refusals so far and fewer than perPair for that (rule, recipient). Resends are recognised against EARLIER log lines only
+ * (a call repeated inside one batch is not its own resend). When any call of a batch is refused, every other call of the
+ * batch is held (not sent): the batch is refused whole.
  */
 export function decide(calls, cfg, logLines = []) {
   const st = gateState(logLines);
   const perPair = cfg?.perPair ?? 1, perSession = cfg?.perSession ?? 2;
-  return calls.map((c, i) => {
+  const pairs = new Map(st.pairs);
+  let total = st.total;
+  const ds = calls.map((c, i) => {
     const hash = callHash(c);
     let vs;
     try { vs = violationsOf(callFacts(c, cfg?.routes ?? []), cfg?.rules ?? []); } catch { vs = []; }
     if (!vs.length) return { i, action: 'send', hash };
     if (st.hashes.has(hash)) return { i, action: 'resend', violation: vs[0], hash };
-    const v = vs.find(x => (st.pairs.get(`${x.rule.pid}|${x.recipient}`) ?? 0) < perPair);
-    if (!v || st.total >= perSession) return { i, action: 'cap', violation: vs[0], hash };
-    st.total += 1; st.pairs.set(`${v.rule.pid}|${v.recipient}`, (st.pairs.get(`${v.rule.pid}|${v.recipient}`) ?? 0) + 1); st.hashes.add(hash);
+    const v = vs.find(x => (pairs.get(`${x.rule.pid}|${x.recipient}`) ?? 0) < perPair);
+    if (!v || total >= perSession) return { i, action: 'cap', violation: vs[0], hash };
+    total += 1; pairs.set(`${v.rule.pid}|${v.recipient}`, (pairs.get(`${v.rule.pid}|${v.recipient}`) ?? 0) + 1);
     return { i, action: 'refuse', violation: v, hash };
   });
+  if (ds.some(d => d.action === 'refuse')) for (const d of ds) if (d.action !== 'refuse') d.action = 'held';
+  return ds;
 }
 /** The refusal note (stderr). */
 export function refusalText(d, call, { batch = false } = {}) {
@@ -213,8 +226,10 @@ export function refusalText(d, call, { batch = false } = {}) {
   const v = d.violation;
   const quote = String(v.literal.rule?.quote ?? v.rule.rule?.quote ?? '').replace(/\s+/g, ' ').slice(0, 200);
   const src = v.literal.rule?.source ?? v.rule.rule?.source ?? '?';
-  return `HARNESS GATE: not sent (no world step used). Call ${d.i + 1} (${String(a.method ?? '?').toUpperCase()} ${p}) to ${v.recipient} contains "${v.literal.text}", which ${v.rule.pid} leaves out of this message (rule ${src}: "${quote}"). Remove it and send again. ${batch ? 'The other calls of this batch were sent; if the message must contain it, send this call again unchanged (without the calls already sent): it will be sent.' : 'If the message must contain it, run the identical command again: it will be sent.'}`;
+  return `HARNESS GATE: not sent (no world step used). Call ${d.i + 1} (${String(a.method ?? '?').toUpperCase()} ${p}) to ${v.recipient} contains "${v.literal.text}", which ${v.rule.pid} leaves out of this message (rule ${src}: "${quote}"). ${batch ? 'No call of this batch was sent. Remove it and send the batch again; if the message must contain it, run the identical command again: every call will be sent once.' : 'Remove it and send again. If the message must contain it, run the identical command again: it will be sent.'}`;
 }
+/** The note on a send past the refusal limit (stderr; the call was sent). */
+export const cappedText = d => `HARNESS GATE: call ${d.i + 1} was sent unchecked (the limit on refusals for this session is reached).`;
 
 function loadGate() {
   const dir = process.env[GATE_ENV];
@@ -257,15 +272,21 @@ async function main() {
   const cfg = loadGate();
   const ds = cfg ? decide(calls, cfg, readLog()) : calls.map((c, i) => ({ i, action: 'send' }));
   const refused = ds.filter(d => d.action === 'refuse');
-  if (cfg) log(ds.filter(d => d.action !== 'send').map(d => ({ t: Date.now() / 1000, kind: d.action === 'refuse' ? 'refused' : d.action === 'resend' ? 'resent' : 'capped', call: d.i + 1, of: calls.length, rule: d.violation.rule.pid, recipient: d.violation.recipient, literal: d.violation.literal.text, hash: d.hash })));
-  for (const d of refused) console.error(refusalText(d, calls[d.i], { batch: cmd === 'batch' && calls.length > 1 }));
-  const keep = ds.filter(d => d.action !== 'refuse').map(d => d.i);
-  if (!keep.length) process.exit(1);
-  const r = await send(keep.map(i => calls[i]));
+  if (cfg) {
+    const t = Date.now() / 1000;
+    const KIND = { refuse: 'refused', resend: 'resent', cap: 'capped', held: 'held' };
+    log([{ t, kind: 'loaded', rules: cfg.rules.length, calls: calls.length },
+      ...ds.filter(d => d.action !== 'send').map(d => ({ t, kind: KIND[d.action], call: d.i + 1, of: calls.length, ...(d.violation ? { rule: d.violation.rule.pid, recipient: d.violation.recipient, literal: d.violation.literal.text } : {}), hash: d.hash }))]);
+  }
+  if (refused.length) {
+    for (const d of refused) console.error(refusalText(d, calls[d.i], { batch: cmd === 'batch' && calls.length > 1 }));
+    process.exit(1);
+  }
+  const r = await send(calls);
   if (r.error) { console.error(r.error); process.exit(1); }
+  for (const d of ds.filter(x => x.action === 'cap')) console.error(cappedText(d));
   if (cmd === 'call') process.stdout.write(String(r.results[0].content) + '\n');
-  else for (const [k, x] of r.results.entries()) process.stdout.write(`### result ${keep[k] + 1}: ${x.name}\n${x.content}\n`);
-  if (refused.length) process.exit(1);
+  else for (const [k, x] of r.results.entries()) process.stdout.write(`### result ${k + 1}: ${x.name}\n${x.content}\n`);
 }
 
 // Run as the client (`node tool.mjs ...`), not when imported (host-side tests and replays import the lint).

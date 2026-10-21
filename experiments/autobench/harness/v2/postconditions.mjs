@@ -16,7 +16,7 @@
 import { readFileSync } from 'node:fs';
 import { CHECKER_SYSTEM, PCMAP_SYSTEM, checkerPrompt, worldDiff, certainRemovals, changesText, LITERAL_MAX } from '../postconditions.mjs';
 import { ENUM_PLAN, buildInventory, recordText, compactRecord } from './inventory.mjs';
-import { BODY_FIELDS, EMAIL_FIELDS, META_FIELDS, isMessageItem } from './ledger.mjs';
+import { BODY_FIELDS, EMAIL_FIELDS, META_FIELDS, isMessageItem, majorityOf } from './ledger.mjs';
 import { EMAIL_RE, hasValue, identifyingValue, norm, sameValue, valueKey, valueType } from './literals.mjs';
 
 export { CHECKER_SYSTEM, PCMAP_SYSTEM, checkerPrompt, worldDiff, certainRemovals, changesText, LITERAL_MAX };
@@ -29,10 +29,12 @@ export const TYPES = Object.freeze(['gmail_sent', 'gmail_not_sent', 'slack_poste
 export const EFFECTS = JSON.parse(readFileSync(new URL('./effects.json', import.meta.url), 'utf8'));
 const appKey = a => String(a ?? '').toLowerCase();
 const rowsOf = app => EFFECTS.rows.filter(r => r.appKey === appKey(app) || r.app === appKey(app));
-/** The messaging channels an app's operations reach (email, chat, dm, sms, social, esign, reply). */
-export const channelsOf = app => new Set(rowsOf(app).map(r => r.channel).filter(Boolean));
-/** Kinds an app's create operations make, with their parent kind. */
-export const createKindsOf = app => rowsOf(app).filter(r => r.effect === 'create').map(r => ({ kind: r.kind, parent: r.parent }));
+/** The outgoing messaging channels an app's operations reach (email, chat, dm, sms, social, esign, reply; an internal
+ * "note" is not outgoing). */
+export const channelsOf = app => new Set(rowsOf(app).map(r => r.channel).filter(c => c && c !== 'note'));
+/** Kinds an app's create operations make (a send that also creates a record, such as a comment on a ticket, included),
+ * with their parent kind. */
+export const createKindsOf = app => rowsOf(app).filter(r => r.effect === 'create' || r.creates).map(r => ({ kind: r.kind, parent: r.parent }));
 const singular = w => { const s = String(w ?? '').toLowerCase().replace(/[^a-z0-9_]/g, ''); return s.length > 3 && /ies$/.test(s) ? `${s.slice(0, -3)}y` : s.length > 3 && /(ches|shes|xes|zes|sses)$/.test(s) ? s.slice(0, -2) : s.length > 3 && /s$/.test(s) && !/(ss|us|is)$/.test(s) ? s.slice(0, -1) : s; };
 /** Kind names match case-insensitively, singular or plural (ride-along 7). */
 /** A record kind's key: singular, case-insensitive, and a listing named '<kind>_list' holds records of <kind>. */
@@ -40,7 +42,21 @@ const kindKey = k => singular(String(k ?? '').replace(/_list$/i, ''));
 export const sameKind = (a, b) => Boolean(a && b) && kindKey(a) === kindKey(b);
 /** Apps the re-read can list (an enumeration plan entry that is not a probe), and google_sheets through google_drive. */
 export const observable = app => app === 'google_sheets' || ENUM_PLAN.some(e => e.app === app && !e.probe);
-const l0Kinds = app => ENUM_PLAN.filter(e => e.app === app).flatMap(e => e.l0.map(c => c.kind));
+const l0Kinds = app => ENUM_PLAN.filter(e => e.app === app && !e.probe).flatMap(e => e.l0.map(c => c.kind));
+// Listings whose records carry another kind name (Slack histories and replies hold messages; sheet values hold rows).
+const RECORD_KIND = Object.freeze({ history: 'message', replies: 'message', values: 'row' });
+/**
+ * The record kinds a read LISTED for an app: every enumeration-plan listing that answered (status 200), even when it
+ * returned no record (listable but empty). This is capability, decided before looking at the outcome. Look-ups by
+ * search term (the first read's mailbox and social searches) are not listings and are not repeated by the re-read.
+ * A read without per-app listing state (hand-built test fixtures) falls back to its records' kinds and the app's
+ * first-level plan kinds.
+ */
+export function listedKinds(read, app) {
+  if (read?.apps) return Object.entries(read.apps[app]?.kinds ?? {}).filter(([, n]) => n > 0).map(([k]) => RECORD_KIND[k] ?? k);
+  return [...new Set([...(read?.records ?? []).filter(r => r.app === app).map(r => r.kind), ...l0Kinds(app)])];
+}
+const lists = (read, app, pred) => listedKinds(read, app).some(pred);
 
 // ---------------------------------------------------------------------------------------------------------------
 // Channels
@@ -68,8 +84,10 @@ export function resolveChannel(spec, inv) {
     const im = cs.find(c => c.user === String(u.id));
     return { id: im?.id ?? null, name: `@${u.name ?? u.real_name ?? u.id}`, dm: true, user: String(u.id) };
   }
+  // A #channel the records do not list yet (one the work may create) keeps its name; anything else that resolves to no
+  // channel or member is no channel (never the first word of the target).
   const m = /#([\w-]+)/.exec(s);
-  return { id: null, name: m ? m[1] : bare.split(/\s+/)[0] };
+  return m ? { id: null, name: m[1] } : null;
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -91,7 +109,9 @@ export function messageRoute(item, inv) {
     if (app && [...channelsOf(app)].some(c => ['social', 'chat', 'sms', 'dm'].includes(c))) return 'channel';
     return null;
   }
-  if (!app || app === 'gmail') return 'gmail';
+  // An e-mail item without an app goes to Gmail only when Gmail is connected (else no app can be read for it).
+  if (app === 'gmail' || (!app && (!(inv?.connected?.length) || inv.connected.includes('gmail')))) return 'gmail';
+  if (!app) return null;
   // Another app: its own posts (social, chat, sms, direct messages) are checked there; anything else (an e-mail or reply
   // the app sends itself, or an app with no messaging operation) is judged, never re-routed to Gmail or Slack.
   return [...channelsOf(app)].some(c => ['social', 'chat', 'sms', 'dm'].includes(c)) ? 'channel' : null;
@@ -124,7 +144,7 @@ export function coOccurring(fs, item, sources) {
  * (the bans dropped as unsatisfiable) and .stats attached. pc: {id, item, statement, source, app, polarity, type, params,
  * hard, soft: [literals not enforced], softNot: [bans not enforced], why}.
  */
-export function postconditionsFromLedger(merged, inv, { majority = Math.ceil((merged?.readers ?? 1) / 2), sources = new Map(), P = {} } = {}) {
+export function postconditionsFromLedger(merged, inv, { majority = majorityOf(merged), sources = new Map(), P = {} } = {}) {
   const pcs = [], satisfiability = [];
   const stats = { contentLimits: 0, satisfiabilityDrops: 0, coSoft: 0, sheetWide: 0, unobservableAtCompile: 0 };
   const add = (item, type, params, extra = {}) => pcs.push({ id: `P${pcs.length + 1}`, item: item.id, statement: item.statement, source: item.source, app: extra.app ?? item.app ?? null, polarity: item.polarity, type, params, hard: Boolean(extra.hard), soft: extra.soft ?? [], softNot: extra.softNot ?? [], why: extra.why ?? null });
@@ -264,8 +284,11 @@ export function kindFor(item, inv) {
   const table = createKindsOf(item.app);
   const listed = [...new Set((inv?.records ?? []).filter(r => r.app === item.app).map(r => r.kind))].map(k => ({ kind: k, parent: null }));
   let named = [...table, ...listed].filter(k => at(k.kind, tt) >= 0 || at(k.kind, st) >= 0);
-  // A kind named together with its parent kind ("a calendar event", "a note on the card") is the child.
-  const parents = new Set(table.filter(t => t.parent && named.some(n => sameKind(n.kind, t.kind))).map(t => kindKey(t.parent.kind)));
+  // A kind named next to its own parent kind ("a calendar event", "a note on the card") is the child: that parent kind is
+  // dropped. A parent named elsewhere ("create a card and add a comment") stays a candidate.
+  const PREP = /^(on|to|for|in|under|of|onto)$/;
+  const nextTo = (child, parent, ws) => { const c = forms(child), p = forms(parent); return ws.some((w, i) => (p.has(w) && c.has(ws[i + 1] ?? '')) || (c.has(w) && PREP.test(ws[i + 1] ?? '') && [ws[i + 2], ws[i + 3]].some(x => p.has(x ?? '')))); };
+  const parents = new Set(table.filter(t => t.parent && named.some(n => sameKind(n.kind, t.kind)) && [tt, st].some(ws => nextTo(t.kind, t.parent.kind, ws))).map(t => kindKey(t.parent.kind)));
   if (named.some(n => !parents.has(kindKey(n.kind)))) named = named.filter(n => !parents.has(kindKey(n.kind)));
   if (!named.length) return null;
   const verb = st.findIndex(w => CREATE_VERB.test(w));
@@ -302,22 +325,48 @@ export function validateMapped(p, sources, inv, { item = null, majority = 2, P =
   const checkApp = appOfType ?? (p.type === 'record_field' || p.type === 'record_deleted' || p.type === 'record_unchanged' ? String(Pm.ptr ?? '').split(':')[0] : p.type === 'child_created' ? String(Pm.parent ?? '').split(':')[0] : p.type === 'sheet_row' || p.type === 'row_not_exists' ? 'google_sheets' : Pm.app ? String(Pm.app) : null);
   if (want && checkApp && want !== checkApp && !(want === 'google_drive' && checkApp === 'google_sheets')) return null;
   let r = null;
+  // A positive check whose value list is empty once minority values are split off is not hard (hardValue false): it would
+  // pass on any message, post, row or record of its kind (review of 2026-10-21, M4).
   switch (p.type) {
-    case 'gmail_sent': { const to = (Pm.to ?? []).flatMap(emails); if (!to.length) return null; const s = split(Pm.subject), b = split(Pm.body); r = { params: { to, cc: (Pm.cc ?? []).flatMap(emails), subject: s.hard, body: b.hard, bodyNot: [] }, soft: [...s.soft, ...b.soft] }; break; }
+    case 'gmail_sent': { const to = (Pm.to ?? []).flatMap(emails); if (!to.length) return null; const s = split(Pm.subject), b = split(Pm.body); r = { params: { to, cc: (Pm.cc ?? []).flatMap(emails), subject: s.hard, body: b.hard, bodyNot: [] }, soft: [...s.soft, ...b.soft], hardValue: s.hard.length + b.hard.length > 0 }; break; }
     case 'gmail_not_sent': { const to = (Pm.to ?? []).flatMap(emails); r = to.length ? { params: { to }, soft: [] } : null; break; }
-    case 'slack_posted': { const ch = resolveChannel(Pm.channel, inv); const t = split(Pm.text); r = ch ? { params: { channel: ch, text: t.hard, bodyNot: [] }, soft: t.soft } : null; break; }
+    case 'slack_posted': { const ch = resolveChannel(Pm.channel, inv); const t = split(Pm.text); r = ch ? { params: { channel: ch, text: t.hard, bodyNot: [] }, soft: t.soft, hardValue: t.hard.length > 0 } : null; break; }
     case 'slack_not_posted': { const ch = resolveChannel(Pm.channel, inv); r = ch ? { params: { channel: ch }, soft: [] } : null; break; }
-    case 'channel_posted': { if (!Pm.app) return null; const t = split(Pm.text); r = { params: { app: String(Pm.app), channel: Pm.channel ? String(Pm.channel) : null, text: t.hard, bodyNot: [] }, soft: t.soft }; break; }
+    case 'channel_posted': { if (!Pm.app) return null; const t = split(Pm.text); r = { params: { app: String(Pm.app), channel: Pm.channel ? String(Pm.channel) : null, text: t.hard, bodyNot: [] }, soft: t.soft, hardValue: t.hard.length > 0 }; break; }
     case 'record_field': r = inv.records.some(x => x.ptr === Pm.ptr) && Pm.field && ok(String(Pm.value ?? '')) ? { params: { ptr: Pm.ptr, field: String(Pm.field), value: String(Pm.value) }, soft: [], hardValue: majorityValue(String(Pm.value)) } : null; break;
-    case 'record_created': { const v = split(Pm.values); r = Pm.app && (v.hard.length || v.soft.length) ? { params: { app: String(Pm.app), kind: Pm.kind ? String(Pm.kind) : null, values: v.hard }, soft: v.soft } : null; break; }
-    case 'child_created': { const v = split(Pm.values); r = inv.records.some(x => x.ptr === Pm.parent) && Pm.kind ? { params: { parent: Pm.parent, kind: String(Pm.kind), values: v.hard }, soft: v.soft } : null; break; }
+    case 'record_created': { const v = split(Pm.values); r = Pm.app && (v.hard.length || v.soft.length) ? { params: { app: String(Pm.app), kind: Pm.kind ? String(Pm.kind) : null, values: v.hard }, soft: v.soft, hardValue: v.hard.length > 0 } : null; break; }
+    case 'child_created': { const v = split(Pm.values); r = inv.records.some(x => x.ptr === Pm.parent) && Pm.kind ? { params: { parent: Pm.parent, kind: String(Pm.kind), values: v.hard }, soft: v.soft, hardValue: v.hard.length > 0 } : null; break; }
     case 'record_deleted': r = inv.records.some(x => x.ptr === Pm.ptr) ? { params: { ptr: Pm.ptr }, soft: [] } : null; break;
     case 'record_unchanged': r = inv.records.some(x => x.ptr === Pm.ptr) ? { params: { ptr: Pm.ptr }, soft: [] } : null; break;
-    case 'sheet_row': { const v = split(Pm.values); r = v.hard.length || v.soft.length ? { params: { spreadsheetId: Pm.spreadsheetId ?? null, values: v.hard }, soft: v.soft } : null; break; }
+    case 'sheet_row': { const v = split(Pm.values); r = v.hard.length || v.soft.length ? { params: { spreadsheetId: Pm.spreadsheetId ?? null, values: v.hard }, soft: v.soft, hardValue: v.hard.length > 0 } : null; break; }
     case 'row_not_exists': { const v = (Pm.values ?? []).map(String).filter(ok); r = v.length ? { params: { spreadsheetId: Pm.spreadsheetId ?? null, values: v }, soft: [] } : null; break; }
     default: return null;
   }
   return r;
+}
+
+/**
+ * Apply a mapping reply to the compiled checks: each mapped check replaces its item's judged check when validateMapped
+ * accepts it. Shared by the pipeline (codeowned.mjs) and the replay tools (replay/lib.mjs), so B4 and P0 measure the
+ * pipeline's own compile. `itemFor(c)` names the requirement a mapped check answers (the pipeline: by id; a recorded
+ * reply: by statement). Hard only when the item has majority support and validateMapped keeps a hard value; minority
+ * values join the check's soft list. -> { pcs, mapped }
+ */
+export function applyMapped(pcs, reply, { itemFor, sources, inv, majority, P = {}, why = 'mapped by the mapping call; values found in sources' }) {
+  const out = [...pcs];
+  let mapped = 0;
+  for (const c of Array.isArray(reply?.checks) ? reply.checks : []) {
+    const item = itemFor(c);
+    const v = item ? validateMapped(c, sources, inv, { item, majority, P }) : null;
+    if (!v) continue;
+    const idx = out.findIndex(p => p.item === item.id && p.type === 'judged');
+    if (idx < 0) continue;
+    out[idx] = { ...out[idx], type: c.type, params: v.params, app: c.type.startsWith('gmail') ? 'gmail' : c.type.startsWith('slack') ? 'slack' : v.params.app ?? out[idx].app, hard: item.support >= majority && (v.hardValue ?? true),
+      soft: [...(out[idx].soft ?? []), ...v.soft.map(value => ({ name: 'value', value, why: 'a value fewer than a majority of readers wrote' }))], why };
+    mapped += 1;
+  }
+  out.satisfiability = pcs.satisfiability; out.stats = pcs.stats;
+  return { pcs: out, mapped };
 }
 
 export function pcmapPrompt({ items, inventoryText, dateNote = null }) {
@@ -401,11 +450,21 @@ const MSG_TEXT = d => `${d.subject ?? ''}\n${d.body_plain ?? d.snippet ?? ''}\n$
 const POST_KINDS = /feed|update|post|tweet|message|status|share|media/i;
 const banned = (text, list) => (list ?? []).filter(s => hasValue(text, s));
 
-/** Evaluate one check on (initial inventory, fresh read). -> {pass: true|false|null, evidence, unobservable?} */
+// Two kinds of undecided verdict, both null and both decided before the outcome is looked at:
+//   unobservable  the first read never LISTED what the check reads (no listing for the app or kind, or a listing that
+//                 cannot tie a child to its parent): capability, never a failure;
+//   notReread     the first read listed it but the bounded re-read did not reach it (its step cap): no evidence either way.
+// A kind that was listed, even empty, is observable: a missing post or record then FAILS.
+const FIXED_KIND = Object.freeze({ gmail_sent: ['gmail', 'message'], gmail_not_sent: ['gmail', 'message'], slack_posted: ['slack', 'message'], slack_not_posted: ['slack', 'message'], sheet_row: ['google_sheets', 'row'], row_not_exists: ['google_sheets', 'row'] });
+const unobs = why => ({ pass: null, evidence: `unobservable: ${why}`, unobservable: true });
+const notReread = why => ({ pass: null, evidence: `not re-read: ${why}`, notReread: true });
+/** Evaluate one check on (initial inventory, fresh read). -> {pass: true|false|null, evidence, unobservable?, notReread?} */
 export function evaluate(pc, before, after) {
   if (!isObservable(pc)) return { pass: null, evidence: 'unobservable', unobservable: true };
-  const d = worldDiff(before, after);
   const P = pc.params;
+  const fixed = FIXED_KIND[pc.type];
+  if (fixed && lists(before, fixed[0], k => sameKind(k, fixed[1])) && !lists(after, fixed[0], k => sameKind(k, fixed[1]))) return notReread(`${fixed[0]} ${fixed[1]} records were not listed again`);
+  const d = worldDiff(before, after);
   switch (pc.type) {
     case 'gmail_sent': {
       const sent = d.added.filter(r => r.app === 'gmail' && r.kind === 'message');
@@ -429,15 +488,19 @@ export function evaluate(pc, before, after) {
       return scored[0].miss.length ? { pass: false, evidence: `message ${scored[0].r.ptr}: ${scored[0].miss.join(', ')}` } : { pass: true, evidence: `message ${scored[0].r.ptr}` };
     }
     case 'channel_posted': {
-      const fresh = d.added.filter(r => r.app === P.app && (!P.channel || hasValue(recordText(r.data), P.channel) || String(r.ptr).includes(P.channel)));
-      // The app's listing may show only the account (no posts): then a missing post cannot be observed.
-      if (!fresh.length && !after.records.some(r => r.app === P.app && POST_KINDS.test(r.kind))) return { pass: null, evidence: `unobservable: the ${P.app} listing shows no posts`, unobservable: true };
+      // Capability from the first read: an app whose listings hold no post-like kind (only the account) cannot show a post.
+      const postKind = k => POST_KINDS.test(String(k));
+      if (!lists(before, P.app, postKind)) return unobs(`the ${P.app} listings hold no posts`);
+      if (!lists(after, P.app, postKind)) return notReread(`the ${P.app} posts were not listed again`);
+      const fresh = d.added.filter(r => r.app === P.app && postKind(r.kind) && (!P.channel || hasValue(recordText(r.data), P.channel) || String(r.ptr).includes(P.channel)));
       if (!fresh.length) return { pass: false, evidence: `no new ${P.app} post${P.channel ? ` in ${P.channel}` : ''}` };
       const scored = fresh.map(r => { const text = recordText(r.data); return { r, miss: [...(P.text ?? []).filter(s => !hasValue(text, s)).map(s => `"${s}"`), ...banned(text, P.bodyNot).map(s => `left-out "${s}" present`)] }; }).sort((x, y) => x.miss.length - y.miss.length);
       return scored[0].miss.length ? { pass: false, evidence: `post ${scored[0].r.ptr}: ${scored[0].miss.join(', ')}` } : { pass: true, evidence: `post ${scored[0].r.ptr}` };
     }
     case 'record_field': {
       const r = after.records.find(x => x.ptr === P.ptr);
+      const [rApp, rKind] = String(P.ptr).split(':');
+      if (!r && !lists(after, rApp, k => k === rKind || sameKind(k, rKind))) return notReread(`${rApp} ${rKind} records were not listed again`);
       if (!r) return { pass: false, evidence: `record ${P.ptr} not found on re-read` };
       const v = fieldValue(r.data, P.field);
       return fieldMatches(v, P.value) ? { pass: true, evidence: `${P.field} = ${JSON.stringify(v).slice(0, 200)}` } : { pass: false, evidence: `${P.ptr} ${P.field} = ${JSON.stringify(v ?? null).slice(0, 200)}, expected ${JSON.stringify(P.value)}` };
@@ -454,33 +517,30 @@ export function evaluate(pc, before, after) {
       return JSON.stringify(was.data) === JSON.stringify(now.data) ? { pass: true, evidence: 'unchanged' } : { pass: false, evidence: `${P.ptr} changed` };
     }
     case 'record_created': {
-      const fresh = d.added.filter(r => r.app === P.app && (!P.kind || sameKind(r.kind, P.kind)));
+      // Capability from the first read: the kind was listed (even empty), else no new record of it can be seen.
+      const kindOk = k => !P.kind || sameKind(k, P.kind);
+      if (P.kind && !lists(before, P.app, kindOk)) return unobs(`${P.app} ${P.kind} records are not listed`);
+      if (!lists(after, P.app, kindOk)) return notReread(`${P.app}${P.kind ? ` ${P.kind}` : ''} records were not listed again`);
+      const fresh = d.added.filter(r => r.app === P.app && kindOk(r.kind));
       const best = fresh.map(r => ({ r, miss: P.values.filter(v => !hasValue(recordText(r.data), v)) })).sort((x, y) => x.miss.length - y.miss.length)[0];
-      if (!best) {
-        // A kind the app's listing never shows (none before or after, not a listed kind) cannot be observed.
-        if (P.kind && ![...before.records, ...after.records].some(r => r.app === P.app && sameKind(r.kind, P.kind)) && !l0Kinds(P.app).some(k => sameKind(k, P.kind))) return { pass: null, evidence: `unobservable: ${P.app} ${P.kind} records are not listed`, unobservable: true };
-        return { pass: false, evidence: `no new ${P.app}${P.kind ? ` ${P.kind}` : ''} record` };
-      }
+      if (!best) return { pass: false, evidence: `no new ${P.app}${P.kind ? ` ${P.kind}` : ''} record` };
       return best.miss.length ? { pass: false, evidence: `new record ${best.r.ptr} lacks ${best.miss.map(v => `"${v}"`).join(', ')}` } : { pass: true, evidence: `record ${best.r.ptr}` };
     }
     case 'child_created': {
-      const app = String(P.parent).split(':')[0], pid = String(P.parent).split(':').slice(2).join(':');
-      const kids = d.added.filter(r => r.app === app && sameKind(r.kind, P.kind) && (Object.values(r.data ?? {}).some(v => String(v) === pid) || recordText(r.data).includes(pid)));
+      const app = String(P.parent).split(':')[0], parentKind = String(P.parent).split(':')[1], pid = String(P.parent).split(':').slice(2).join(':');
+      const kindOk = k => sameKind(k, P.kind);
+      const scalar = v => typeof v === 'string' || typeof v === 'number';
+      // Capability from the first read: the child kind was listed (even empty), and its listing ties a record to its
+      // parent by an exact field value (records of the kind there name a record of the parent kind; an empty listing is
+      // a per-parent listing, which carries the parent's id). The parent's own change is never read as the child.
+      if (!lists(before, app, kindOk)) return unobs(`${app} ${P.kind} records are not listed`);
+      const parentIds = new Set(before.records.filter(r => r.app === app && sameKind(r.kind, parentKind)).map(r => String(r.id)));
+      const ofKind = before.records.filter(r => r.app === app && kindOk(r.kind));
+      if (ofKind.length && !ofKind.some(r => Object.values(r.data ?? {}).some(v => scalar(v) && parentIds.has(String(v))))) return unobs(`the ${app} ${P.kind} listing does not name its parent`);
+      if (!lists(after, app, kindOk)) return notReread(`${app} ${P.kind} records were not listed again`);
+      const kids = d.added.filter(r => r.app === app && kindOk(r.kind) && Object.values(r.data ?? {}).some(v => scalar(v) && String(v) === pid));
       const best = kids.map(r => ({ r, miss: P.values.filter(v => !hasValue(recordText(r.data), v)) })).sort((x, y) => x.miss.length - y.miss.length)[0];
       if (best) return best.miss.length ? { pass: false, evidence: `new ${P.kind} ${best.r.ptr} lacks ${best.miss.map(v => `"${v}"`).join(', ')}` } : { pass: true, evidence: `${P.kind} ${best.r.ptr}` };
-      const ch = d.changed.find(c => c.after.ptr === P.parent);
-      if (ch) { const miss = P.values.filter(v => !hasValue(recordText(ch.after.data), v)); return miss.length ? { pass: false, evidence: `${P.parent} changed but lacks ${miss.map(v => `"${v}"`).join(', ')}` } : { pass: true, evidence: `${P.parent} now carries the values` }; }
-      const ofKind = [...before.records, ...after.records].filter(r => r.app === app && sameKind(r.kind, P.kind));
-      if (!ofKind.length) return { pass: null, evidence: `unobservable: ${app} ${P.kind} records are not listed`, unobservable: true };
-      // A listing whose records of this kind never name a parent (events listed per calendar, say) cannot tie a new one to
-      // its parent: then any new record of the kind carrying the values counts.
-      const parentKind = String(P.parent).split(':')[1];
-      const parentIds = new Set(before.records.filter(r => r.app === app && r.kind === parentKind).map(r => String(r.id)));
-      const tied = ofKind.some(r => Object.values(r.data ?? {}).some(v => parentIds.has(String(v))));
-      if (!tied) {
-        const loose = d.added.filter(r => r.app === app && sameKind(r.kind, P.kind)).map(r => ({ r, miss: P.values.filter(v => !hasValue(recordText(r.data), v)) })).sort((x, y) => x.miss.length - y.miss.length)[0];
-        if (loose) return loose.miss.length ? { pass: false, evidence: `new ${P.kind} ${loose.r.ptr} lacks ${loose.miss.map(v => `"${v}"`).join(', ')}` } : { pass: true, evidence: `${P.kind} ${loose.r.ptr} (the listing does not name its parent)` };
-      }
       return { pass: false, evidence: `no new ${P.kind} on ${P.parent}` };
     }
     case 'sheet_row':
@@ -496,4 +556,4 @@ export function evaluate(pc, before, after) {
   }
 }
 
-export const _internal = { singular, fieldValue, compactRecord };
+export const _internal = { singular, fieldValue, compactRecord, RECORD_KIND };

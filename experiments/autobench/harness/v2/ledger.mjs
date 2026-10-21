@@ -276,6 +276,8 @@ const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() 
 export function mergeLedgers(ledgers, { sources = new Map(), hostDate = null, entityKeyMerge = true } = {}) {
   const items = [], contentNegs = [];
   const K = ledgers.length;
+  // Support is counted over the readers that answered (a reply that yielded a ledger), at least one (review M2).
+  const answered = Math.max(1, ledgers.filter(L => L.ok).length);
   for (const L of ledgers) {
     const reqs = L.requirements.filter(r => !(r.polarity === 'negative' && r.scope === 'content'));
     contentNegs.push(...L.requirements.filter(r => r.polarity === 'negative' && r.scope === 'content'));
@@ -316,7 +318,7 @@ export function mergeLedgers(ledgers, { sources = new Map(), hostDate = null, en
       candidates.push({ record: rec, known: c.known, eligible: yes >= no ? (yes > no ? true : null) : false, decidingField: c.decidingField, value: c.value, valueInRecord: c.valueInRecord, ruleSource: c.ruleSource, votes: `${yes}/${c.votes.length}`, yes, no });
     }
     return { id, polarity: it.polarity, action: it.action, app: it.app, target: it.target, statement: it.statement, source: it.source, rule: it.members.find(m => m.rule)?.rule ?? null, scope: it.scope ?? null,
-      fields, candidates, support: it.readers.size, of: K, readers: [...it.readers].sort(), memberIds: it.members.map(m => m.id), exclusions: [] };
+      fields, candidates, support: it.readers.size, of: answered, readers: [...it.readers].sort(), memberIds: it.members.map(m => m.id), exclusions: [] };
   });
   // Content negatives (M4): attached to the positive they limit (its reader's item id, else the same effect); never a
   // polarity conflict.
@@ -349,6 +351,12 @@ export function mergeLedgers(ledgers, { sources = new Map(), hostDate = null, en
   const today = [...todayVotes.values()].sort((a, b) => b.votes - a.votes || Number(Boolean(b.verified)) - Number(Boolean(a.verified)))[0] ?? null;
   return { items: merged, conflicts, today, dropped: ledgers.flatMap(L => L.dropped), readers: K, readersOk: ledgers.filter(L => L.ok).length, unattachedContent };
 }
+
+/** Readers whose reply yielded a ledger (at least one), and the majority over them: floor(n / 2) + 1 (2 of 3, 2 of 2,
+ * 1 of 1). With every reader answering this is v1's 2 of 3; with readers lost it does not silently drop every item and
+ * literal to "possible" (review of 2026-10-21, M2). */
+export const answeredOf = merged => Math.max(1, merged?.readersOk ?? merged?.readers ?? 1);
+export const majorityOf = merged => Math.floor(answeredOf(merged) / 2) + 1;
 
 /** v1's applyDecisions, except that a polarity decision never supersedes a content-limited positive (M4). */
 export function applyDecisions(merged, decisions) {
@@ -397,7 +405,7 @@ const columnValues = (inv, app, field) => {
 export function typeLedger(merged, sources, inv, P = {}) {
   const o = { clauseWords: P.clauseWords ?? 9, clauseLenRatio: P.clauseLenRatio ?? 3, clauseMinChars: P.clauseMinChars ?? 40 };
   const derivedAgreement = P.derivedAgreement ?? 2;
-  const majority = Math.ceil((merged.readers ?? 1) / 2);
+  const majority = majorityOf(merged);
   const stats = { demotedLiterals: 0, slotsFilled: 0, softLiterals: 0, clauseLiterals: 0, slotLiterals: 0, completenessLiterals: 0, standingExclusions: 0 };
   for (const item of merged.items) {
     if (item.superseded) continue;
@@ -406,6 +414,8 @@ export function typeLedger(merged, sources, inv, P = {}) {
     const single = eligible.length === 1 ? recOf(inv, eligible[0].record) : null;
     const decidingKeys = new Set(item.candidates.map(c => c.value).filter(v => v !== null && v !== undefined && String(v).trim()).map(valueKey));
     const itemMajority = item.support >= majority;
+    // A value is asked for only when its asked_by quote is found in the item's own cited source (not in another source).
+    const askedOwn = f => Boolean(f.askedBy && f.askedBy.verified === 'cited' && f.askedBy.source === item.source);
     for (const f of item.fields) {
       const recordField = !META_FIELDS.has(f.name);
       const ctx = { ...o, sourceText: sources.get(f.source)?.text ?? '', statement: item.statement, recordField, columnValues: recordField ? columnValues(inv, item.app, f.name) : null };
@@ -418,30 +428,31 @@ export function typeLedger(merged, sources, inv, P = {}) {
       }
       if (vt.type === 'clause') { stats.clauseLiterals += 1; stats.demotedLiterals += 1; }
       f.vtype = vt.type; f.accepted = vt.accepted; f.typeReason = vt.reason ?? null;
-      if (message && BODY_FIELDS.has(f.name) && f.name !== 'subject' && decidingKeys.has(valueKey(f.value))) f.demoted ??= 'a deciding-field value (not required in the message)';
+      if (message && BODY_FIELDS.has(f.name) && f.name !== 'subject' && decidingKeys.has(valueKey(f.value)) && !askedOwn(f)) f.demoted ??= 'a deciding-field value (not required in the message)';
       if (message && BODY_FIELDS.has(f.name) && vt.type === 'date' && vt.machine && P.humanizeMachineValues !== false) { f.machine = true; f.display = humanRendering(f.value, sources.get(f.source)?.text) ?? null; }
       const verified = f.verified === 'cited' || f.verified === 'other' || Boolean(f.slotFilled);
       const supported = f.derived ? (f.support ?? 1) >= derivedAgreement || Boolean(f.adjudicated) : (f.support ?? 1) >= majority || Boolean(f.adjudicated);
       f.hardLit = P.valueTyping === false ? null : Boolean(vt.accepted && (verified || (f.derived && supported)) && supported && itemMajority && !f.demoted && String(f.value).trim().length <= 160);
       if (!f.hardLit && vt.type !== 'clause' && !(vt.type === 'slot' && !f.slotFilled)) stats.softLiterals += 1;
     }
-    // Completeness literals: the identifying value of each majority-eligible candidate of a message item; hard only when a
-    // verified asked_by (request, system or cited record) asks for values to appear.
-    if (message && P.completeness !== 'off') {
-      const asked = item.fields.some(f => f.askedBy?.verified);
+    // Completeness literals (privacy over grader fit, review of 2026-10-21): the identifying value of a majority-eligible
+    // candidate of a message item is added ONLY when the item's own cited source asks for values to appear (asked_by
+    // verified there), only as a hard value (never as "may mention"), and never for a candidate whose record carries a
+    // different recipient's address (another person's record does not go into this recipient's message).
+    if (message && P.completeness !== 'off' && itemMajority && item.fields.some(askedOwn)) {
       const have = new Set(item.fields.map(f => valueKey(f.value)));
       const to = new Set(item.fields.filter(f => EMAIL_FIELDS.has(f.name)).flatMap(f => emailsIn(f.value)).concat(emailsIn(item.target)));
       for (const c of eligible) {
         const r = recOf(inv, c.record);
         const idv = r ? identifyingValue(r.data) : null;
         if (!idv || have.has(valueKey(idv))) continue;
-        if (emailsIn(recordText(r.data)).some(e => to.has(e)) && !asked) continue;   // the candidate is the recipient
-        have.add(valueKey(idv));
+        const own = emailsIn(recordText(r.data));
+        if (own.length && !own.some(e => to.has(e))) continue;   // another recipient's record
         const vt = valueType(idv, { ...o, sourceText: sources.get(r.ptr)?.text ?? '', statement: item.statement });
-        const hard = Boolean(asked && vt.accepted && itemMajority && (c.yes ?? 1) >= majority);
-        item.fields.push({ name: item.action === 'post_message' ? 'text' : 'body', value: idv, verified: 'cited', source: r.ptr, derived: false, support: c.yes ?? 1, completeness: true, vtype: vt.type, accepted: vt.accepted, hardLit: hard });
+        if (!(vt.accepted && (c.yes ?? 1) >= majority)) continue;
+        have.add(valueKey(idv));
+        item.fields.push({ name: item.action === 'post_message' ? 'text' : 'body', value: idv, verified: 'cited', source: r.ptr, derived: false, support: c.yes ?? 1, completeness: true, vtype: vt.type, accepted: vt.accepted, hardLit: true });
         stats.completenessLiterals += 1;
-        if (!hard) stats.softLiterals += 1;
       }
     }
     // Standing rule (M4c): a content negative citing the standing instructions excludes the identifying values of the
@@ -507,7 +518,7 @@ export function renderLedger(merged) {
     }
     const fs = shownFields.join('; ');
     const cs = i.candidates.length ? ` | candidates: ${i.candidates.map(c => `${c.record} ${c.eligible === true ? 'eligible' : c.eligible === false ? 'not eligible' : 'undecided'} (${c.decidingField ?? '?'}=${c.value ?? '?'})`).join(', ')}` : '';
-    const label = i.polarity === 'negative' ? 'MUST NOT' : i.support >= Math.ceil((i.of ?? 1) / 2) ? 'MUST' : 'POSSIBLE: only one reader found it; act only if the sources confirm it';
+    const label = i.polarity === 'negative' ? 'MUST NOT' : i.support >= Math.floor(Math.max(1, i.of ?? 1) / 2) + 1 ? 'MUST' : 'POSSIBLE: fewer than a majority of readers found it; act only if the sources confirm it';
     // Only exclusions a majority of readers found (with a verbatim rule) are shown: a single reader's exclusion could
     // remove required content.
     const ex = (i.exclusions ?? []).filter(e => e.hard);
