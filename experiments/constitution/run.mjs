@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
 import { createHost } from '../../beds/ebed/host/host.mjs';
 import { sandboxArm } from '../../beds/ebed/host/sandbox-arm.mjs';
-import { OT0_WORLDS, baseWorld, overlayWorld, overlayBinding, overlayOracle, worldLabel } from './overlay.mjs';
+import { OT0_WORLDS, baseWorld, overlayWorld, overlayBinding, overlayOracle, overlayOracleWide, worldLabel } from './overlay.mjs';
 import { buildRegistry } from './registry.mjs';
 import { shieldArm } from './shield.mjs';
 import { guardArm } from './guard.mjs';
@@ -69,6 +69,8 @@ export async function assessRun({ spec, arm, run, registry, workflowHash }) {
   const ref = { catalog: W.master.catalog, editions: W.rulebook.editions };
   const e8v = oracleSummary(e8.oracle(W, rows, { pools }));
   const ov = arm === 'base' ? null : oracleSummary(overlayOracle(W, rows, { pools }));
+  // Post-hoc diagnostic (README §3), not the declared oracle: the waiting fulfilment's status and notices may wait too.
+  const ovWide = arm === 'base' ? null : oracleSummary(overlayOracleWide(W, rows, { pools }));
   const obs = arm === 'base' ? null : observe({ rows, registry, ref }).verdict;
   const holds = port?.holds ?? [];
   const interventions = port ? {
@@ -88,7 +90,7 @@ export async function assessRun({ spec, arm, run, registry, workflowHash }) {
   }
   return {
     world: worldLabel(spec), arm, status: run.status, armErrors: rows.filter(r => r.type === 'arm.error').length, ticks: rows.filter(r => r.type === 'call').length,
-    e8: e8v, overlay: ov,
+    e8: e8v, overlay: ov, overlayWidePostHoc: ovWide,
     observer: obs && { C1: obs.C1.byCode, C2: { ...obs.C2.byCode, refundsAboveT: obs.C2.refundsAboveT, compliant: obs.C2.compliant, exceptions: obs.C2.exceptions.length },
       C3: { ...obs.C3.byCode, unpinnedRuns: obs.C3.unpinnedRuns, unpinnedGovernedRuns: obs.C3.unpinnedGovernedRuns }, staleWindow: obs.C3.staleWindow,
       overEscalation: obs.overEscalation, violations: { C1: obs.C1.violations, C2: obs.C2.violations, C3: obs.C3.violations } },

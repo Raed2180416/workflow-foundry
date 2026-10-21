@@ -37,20 +37,21 @@ export function regradeTables(file) {
   const arms = ['base', 'W-blind', 'W-S', 'G'].filter(a => R.rows.some(r => r.arm === a));
   for (const scope of ['full', 'sized']) {
     out.push(`\n**${scope === 'full' ? '9 full worlds (1232-1234 × d2, d3, d5)' : 'Sized world 1232 d2 size 12 (the 14 shared cases)'}**\n`);
-    out.push('| lineage | arm | E8 oracle | E8 + C2 overlay | C1 | C2 violations (refunds above pinned T; compliant) | C3 violations | unpinned runs (governed) | stale window (handled under T₁ / band orders) | interventions | arm errors |');
-    out.push('|---|---|---|---|---|---|---|---|---|---|---|');
+    out.push('| lineage | arm | E8 oracle | E8 + C2 overlay (declared) | same, wide (post-hoc) | C1 | C2 violations (refunds above pinned T; compliant) | C3 violations | unpinned runs (governed) | stale window (handled under T₁ / band orders) | interventions | arm errors |');
+    out.push('|---|---|---|---|---|---|---|---|---|---|---|---|');
     for (const l of lineages) for (const a of arms) {
       const rs = R.rows.filter(r => r.lineage === l && r.arm === a && (scope === 'sized' ? sized(r) : !sized(r)));
       if (!rs.length) continue;
       const e8 = `${sum(rs, r => r.e8.passed)}/${sum(rs, r => r.e8.completed)}`;
       const ov = a === 'base' ? '–' : `${sum(rs, r => r.overlay.passed)}/${sum(rs, r => r.overlay.completed)}`;
-      if (a === 'base') { out.push(`| ${l} | base (no overlay) | ${e8} | – | – | – | – | – | – | – | ${sum(rs, r => r.armErrors)} |`); continue; }
+      const ow = a === 'base' || !rs[0].overlayWidePostHoc ? '–' : `${sum(rs, r => r.overlayWidePostHoc.passed)}/${sum(rs, r => r.overlayWidePostHoc.completed)}`;
+      if (a === 'base') { out.push(`| ${l} | base (no overlay) | ${e8} | – | – | – | – | – | – | – | – | ${sum(rs, r => r.armErrors)} |`); continue; }
       const o = rs.map(r => r.observer);
       const c2 = merge(o, x => ({ ...x.C2, refundsAboveT: 0, compliant: 0, exceptions: 0 }));
       const c3 = merge(o, x => ({ ...x.C3, unpinnedRuns: 0, unpinnedGovernedRuns: 0 }));
       const iv = rs[0].interventions ? merge(rs, r => ({ holds: r.interventions.holds, released: r.interventions.released, open: r.interventions.openAtHorizon, reAsks: r.interventions.reAsks,
         breakGlass: r.interventions.breakGlass, abandoned: r.interventions.abandoned, verified: r.interventions.verified, closeDeferred: r.interventions.closeDeferred, mergeWithHold: r.interventions.mergeWithHold })) : null;
-      out.push(`| ${l} | ${a} | ${e8} | ${ov} | ${fmt(merge(o, x => x.C1))} | ${fmt(c2)} (${sum(o, x => x.C2.refundsAboveT)}; ${sum(o, x => x.C2.compliant)}) | ${fmt(c3)} | ${sum(o, x => x.C3.unpinnedRuns)} (${sum(o, x => x.C3.unpinnedGovernedRuns)}) | `
+      out.push(`| ${l} | ${a} | ${e8} | ${ov} | ${ow} | ${fmt(merge(o, x => x.C1))} | ${fmt(c2)} (${sum(o, x => x.C2.refundsAboveT)}; ${sum(o, x => x.C2.compliant)}) | ${fmt(c3)} | ${sum(o, x => x.C3.unpinnedRuns)} (${sum(o, x => x.C3.unpinnedGovernedRuns)}) | `
         + `${sum(o, x => x.staleWindow.handledUnderT1)}/${sum(o, x => x.staleWindow.orders)} | ${iv ? fmt(iv) : '–'} | ${sum(rs, r => r.armErrors)} |`);
     }
   }

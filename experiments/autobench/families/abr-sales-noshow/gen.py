@@ -33,7 +33,8 @@ from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 FAMILY = "abr-sales-noshow"
-VERSION = "1.0.0"
+VERSION = "1.1.0"       # 1.1.0: no duplicate report after a retraction of the same no-show; no repeat history on
+                        # the calendar day 14 days before an act (both asserted in compute_truth). Streams differ from 1.0.0
 HERE = Path(__file__).resolve().parent
 UTC = timezone.utc
 
@@ -176,6 +177,15 @@ def scheduled(dt: datetime) -> str:
 
 def description(start: datetime, pipeline: int, repeat: bool) -> str:
     return f"{scheduled(start)} | Account pipeline: {money(pipeline)}" + (" | Repeat no-show" if repeat else "")
+
+
+def near_repeat_boundary(start: datetime, prior_start: datetime) -> bool:
+    """POLICY.md 2.7 counts earlier no-shows 'that started in the 14 days before this event's start'. Read as elapsed
+    time (the truth: start - 14 days <= prior < start) or as calendar days, the readings can differ only when the
+    earlier start lies on the calendar day 14 days before, or within 12 hours of the exact boundary. The generator
+    never places a prior no-show there, so the repeat verdict is the same under either reading."""
+    s, q = start.astimezone(UTC), prior_start.astimezone(UTC)
+    return (s.date() - q.date()).days == 14 or abs((s - q) - REPEAT_WINDOW) < timedelta(hours=12)
 
 
 def default_difficulty(seed: int) -> str:
@@ -404,9 +414,17 @@ class Gen:
         for day in sorted(days):
             acts.append(self.plan_act(self.pick_target(used_acc), day))
         for _ in range(n_rep_week):        # the same invitee no-shows again later in the week (cross-trigger state)
-            base = r.choice([a for a in acts if a["day"] < 4 and not a.get("repeat_base")])
+            # the repeat's day avoids the calendar day 14 days after any earlier no-show of the invitee: history is
+            # placed relative to the base act, so a later day could otherwise land on the 14-day boundary
+            opts = {id(a): [x for x in range(a["day"] + 1, 5) if self.repeat_day_clear(a["contact"], x)]
+                    for a in acts if a["day"] < 4 and not a.get("repeat_base")}
+            bases = [a for a in acts if opts.get(id(a))]
+            if not bases:                  # (never on seeds 601-650) keep the report count: an ordinary act instead
+                acts.append(self.plan_act(self.pick_target(used_acc), r.randint(0, 4)))
+                continue
+            base = r.choice(bases)
             base["repeat_base"] = True
-            acts.append(self.plan_act(base["contact"], r.randint(base["day"] + 1, 4), in_week_repeat=True))
+            acts.append(self.plan_act(base["contact"], r.choice(opts[id(base)]), in_week_repeat=True))
         self.acts = acts
         for _ in range(n_esc):
             self.plan_escalation(used_acc)
@@ -414,12 +432,20 @@ class Gen:
             self.plan_internal()
         for _ in range(n_dup):
             self.plan_duplicate(acts)
-        for a in r.sample(acts, min(n_ret, len(acts))):
+        # a retraction comes after any duplicate report of the same no-show (a "+1, X never joined" after "X joined
+        # late, not a no-show" would be an incoherent story that invites a fair escalation), so it needs room after it
+        ret_ok = [a for a in acts if self.retraction_room(a) >= 6]
+        for a in r.sample(ret_ok, min(n_ret, len(ret_ok))):
             self.plan_retraction(a)
         for _ in range(n_chat):
             self.plan_chatter()
         self.plans.append({"kind": "week.close", "variant": "week_close", "at": self.unique_time(self.week_close),
                            "traps": []})
+
+    def repeat_day_clear(self, contact, day: int) -> bool:
+        """No earlier no-show of the contact lies on the calendar day 14 days before `day` of this week."""
+        d = (self.monday + timedelta(days=day)).date()
+        return all((d - q["start"].astimezone(UTC).date()).days != 14 for q in self.prior.get(contact["email"], []))
 
     def plan_act(self, contact, day: int, in_week_repeat: bool = False):
         r = self.r
@@ -528,8 +554,10 @@ class Gen:
                     o["amount"] = r.choice(SMALL)
                 self.add_opp(acc, THRESHOLD, open_=True)
             elif t in HISTORY_TRAPS:
-                # before Monday; a weekend landing moves up to 2 days earlier, so repeat history stays <= 13 days
-                # back and old history >= 16 days back: never on the 14-day boundary
+                # before Monday; a weekend landing moves up to 2 days earlier, so repeat history stays <= 13 calendar
+                # days before THIS act and old history >= 16. A later in-week repeat of the same invitee sees this
+                # history up to 4 days further back; plan_week keeps that repeat off the 14-day boundary
+                # (near_repeat_boundary, asserted for every act in compute_truth)
                 min_days = max(3, act["day"] + 1)
                 k = r.randint(16, 24) if t == "T-history:old" else r.randint(min_days, 11)
                 s = (ev["start"] - timedelta(days=k)).replace(minute=0 if r.random() < 0.5 else 30)
@@ -594,22 +622,31 @@ class Gen:
             if a.get("later_start"):   # once the later meeting starts, two events are in the window (an escalation)
                 end = min(end, a["later_start"] - timedelta(minutes=2))
             return int((end - a["at"]).total_seconds() // 60)
-        ok = [a for a in acts if room(a) >= 3]
+        ok = [a for a in acts if room(a) >= 3 and not a.get("dup_at")]
         if not ok:
             return
         act = r.choice(ok)
         at = self.unique_time(act["at"] + timedelta(minutes=r.randint(1, min(40, room(act) - 1)), seconds=r.randint(0, 59)))
+        act["dup_at"] = at                 # a retraction of this no-show, if any, comes later (plan_retraction)
         reporter = r.choice([x for x in self.reps if x is not act["reporter"]])
         text = r.choice(DUPLICATE_T).format(email=act["contact"]["email"], event=act["event"]["name"])
         self.plans.append({"kind": "noshow.reported", "variant": "duplicate", "at": at, "reporter": reporter,
                            "text": text, "of": act, "traps": ["T-repeat:duplicate-report"], "decoys": []})
 
+    def retraction_limit(self, act) -> datetime:
+        return (self.monday + timedelta(days=act["day"], hours=16, minutes=58)) if act["day"] == 4 else \
+            (self.monday + timedelta(days=act["day"], hours=20))
+
+    def retraction_room(self, act) -> int:
+        """Minutes between the last report of the no-show (the duplicate, if any) and the retraction's latest time."""
+        last = max(act["at"], act.get("dup_at") or act["at"])
+        return int((self.retraction_limit(act) - last).total_seconds() // 60)
+
     def plan_retraction(self, act):
         r = self.r
-        limit = (self.monday + timedelta(days=act["day"], hours=16, minutes=58)) if act["day"] == 4 else \
-            (self.monday + timedelta(days=act["day"], hours=20))
-        room = int((limit - act["at"]).total_seconds() // 60)
-        at = self.unique_time(act["at"] + timedelta(minutes=r.randint(5, max(5, min(90, room - 1))), seconds=r.randint(0, 59)))
+        last = max(act["at"], act.get("dup_at") or act["at"])
+        room = self.retraction_room(act)
+        at = self.unique_time(last + timedelta(minutes=r.randint(5, max(5, min(90, room - 1))), seconds=r.randint(0, 59)))
         c = act["contact"]
         text = r.choice(RETRACT_T).format(event=act["event"]["name"], name=c["name"], email=c["email"])
         act["retract_at"] = at
@@ -715,6 +752,10 @@ class Gen:
             outcome = "no-op"
             if p["variant"] == "act":
                 c, ev, inv, at = p["contact"], p["event"], p["invitee"], p["at"]
+                near = [q for q in self.prior.get(c["email"], [])
+                        if q["start"] < ev["start"] and near_repeat_boundary(ev["start"], q["start"])]
+                if near:                   # generator invariant (near_repeat_boundary): no ambiguous repeat verdict
+                    raise AssertionError(f"{p['tid']}: prior no-show at {near[0]['start']} on the 14-day boundary")
                 acc_id = c["account_id"]
                 opps = self.open_opps(acc_id)
                 pipe = sum(o["amount"] for o in opps)
@@ -763,6 +804,8 @@ class Gen:
                 ab += [{"type": "calendly_invitee_not_no_show", "invitee_id": g} for g in sorted(set(guards))]
                 outcome = "escalate"
             elif p["variant"] in ("internal", "duplicate", "chatter"):
+                if p["variant"] == "duplicate" and p["of"].get("retract_at") and p["of"]["retract_at"] < p["at"]:
+                    raise AssertionError(f"{p['tid']}: duplicate report after the retraction of the same no-show")
                 ab = [{"type": "calendly_invitee_not_no_show", "invitee_id": g} for g in sorted(set(guards))]
             elif p["variant"] == "week_close":
                 n_ret = sum(1 for a in week_acts if a.get("retract_at") is not None and a["retract_at"] < p["at"])

@@ -64,3 +64,14 @@ test('G\'s journal: its interventions carry no constitution hash (Q4) and its ru
   assert.equal(c.pass.Q4, false); assert.equal(c.pass.Q5, false);
   assert.match(c.why.Q4.join(), /carry no constitution hash/);
 });
+
+test('a break-glass refund (C2-X1: three failed requests, then the controller) is an authorised exception listed for review', async () => {
+  const r = await runArm({ spec: { seed: 1232, d: 3, size: null }, arm: 'W-S', registry: reg, workflowHash: WF, make: () => sandboxArm({ id: 'L1', solverSource: L1, timeoutMs: 20_000 }) });
+  const a = audit({ host: r.full, registry: reg.journal() });
+  const bg = a.queries.Q3.population.filter(p => p.breakGlass);
+  assert.equal(bg.length, 1);
+  assert.deepEqual([bg[0].approver, bg[0].approverHoldsRole, bg[0].sodOk], ['u-ctl1', true, true]);
+  assert.deepEqual(a.queries.Q3.exceptionsForReview, [bg[0].key]);
+  const c = compare(a, groundTruth({ world: r.world, rows: r.rows, registry: reg, port: r.port, workflowHash: WF }));
+  assert.deepEqual(c.pass, { Q1: true, Q2: true, Q3: true, Q4: true, Q5: true });
+});

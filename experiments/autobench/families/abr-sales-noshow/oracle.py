@@ -7,14 +7,20 @@ before and just after the arm handled the trigger), and, at the week-close trigg
 Checks per trigger:
   1. effects   every expected effect is found in THIS trigger's ledger (attribution): the reported invitee newly
                flagged; exactly one new follow-up task with the exact subject, contact, status, priority and the
-               description parts; the retracted task changed to Completed with `Retracted` appended; the week-close
-               post with the exact count; the escalation post naming the trigger id.
+               exact POLICY.md 2.7 description (whitespace runs and one trailing period are policy-neutral), no
+               WhatId other than the contact's own account and IsClosed consistent with its status; the retracted
+               task changed to Completed with exactly ` | Retracted: joined late` appended to its old description;
+               the week-close post with the exact count and no other number; the escalation post naming the
+               trigger id.
   2. envelope  every record created, changed or removed in this trigger is an expected effect (nothing else).
   3. guards    decoy invitees (other events of the same email, colleagues, escalation/internal invitees) unflagged.
   4. ab        the truth's AutomationBench assertion dicts, checked with AutomationBench's own AssertionRegistry on
                world_after (content cross-check with the upstream matching rules).
-  5. end       (week close only) the end-of-week state: exactly the expected flags, exactly one follow-up task per
-               handled no-show this week with its final status and priority, and no pre-existing record changed.
+
+Week verdict (week close only, reported apart from the trigger): the end-of-week state, i.e. exactly the expected
+flags, exactly one follow-up task per handled no-show this week with its final status, priority and description, and
+no pre-existing record changed. It is returned as `week` and never folded into the week-close trigger's own verdict,
+so an earlier trigger's mistake is charged once to that trigger, not again to the week-close post.
 
 Outcome: correct (all checks pass) | abstained (only #automation-review posts, truth is not an escalation) |
 miss (no effect at all, truth expected effects) | wrong (anything else). `pass` includes the envelope; `pass_core`
@@ -27,6 +33,7 @@ import re
 from collections import defaultdict
 
 SUBJECT_PREFIX = "Follow up on missed call - "
+RETRACT_SUFFIX = " | Retracted: joined late"      # POLICY.md section 3 (gen.RETRACT_SUFFIX, checked by the tests)
 REVIEW, ALERTS = "automation-review", "sales-alerts"
 VOLATILE = {"last_modified_date", "updated_at", "no_show_marked_at", "edited_at"}
 FLAG_FIELDS = {"is_no_show", "no_show_marked_at", "updated_at"}
@@ -96,6 +103,36 @@ def _norm(s) -> str:
     return " ".join(str(s or "").split())
 
 
+def _drop_period(s: str) -> str:
+    """One trailing period is policy-neutral ('... | Account pipeline: $87,000.')."""
+    return s[:-1] if s.endswith(".") else s
+
+
+def desc_eq(actual, expected: str) -> bool:
+    """A description equals the prescribed string exactly, up to whitespace runs and one trailing period. Field
+    order, cents, added text and a second value all fail."""
+    return _drop_period(_norm(actual)) == _norm(expected)
+
+
+def is_retracted(desc) -> bool:
+    """The description ends with the exact POLICY.md section 3 suffix (one trailing period allowed)."""
+    return _drop_period(_norm(desc)).endswith(RETRACT_SUFFIX)
+
+
+def count_post_ok(text, token: str, allow: tuple[str, ...] = ()) -> bool:
+    """`token` ('No-shows this week: 3') occurs in `text` (has_token), and nothing else in the post is a number that
+    could be read as a count: an explanation may follow ('... (Mon-Fri, retractions excluded)'), but a second or a
+    contradicting count may not ('...: 3 (actually 4)', '...: 3.5', the post twice with two numbers). ISO dates, HH:MM
+    times and the strings in `allow` (the trigger id) are not counts."""
+    if not has_token(text, token):
+        return False
+    rest = re.sub(re.escape(_norm(token).lower()) + r"(?!\w|,\d)", " ", _norm(text).lower())
+    for a in allow:
+        rest = rest.replace(_norm(a).lower(), " ")
+    rest = re.sub(r"\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}:\d{2}\b", " ", rest)
+    return re.search(r"\d", rest) is None
+
+
 def has_token(text, token: str) -> bool:
     """`token` occurs in `text` (whitespace-normalized, ignoring case) and is not the prefix of a longer number or
     id: 'No-shows this week: 1' does not match '... week: 12', 'Account pipeline: $1,250' does not match '$1,250,000',
@@ -106,6 +143,12 @@ def has_token(text, token: str) -> bool:
 def _task_matches(t: dict, contact_id: str, subject: str, sched: str) -> bool:
     return (t.get("contact_id") == contact_id and _norm(t.get("subject")) == subject
             and sched in (t.get("description") or ""))
+
+
+def verdict_ok(v: dict) -> bool:
+    """The trigger passed and, when the week was graded with it (week close), so did the week verdict. Used by the
+    mutation and specificity gates, which ask whether ANY verdict notices a fault."""
+    return bool(v["pass"]) and bool(v.get("week", {"pass": True})["pass"])
 
 
 def summarize(it: dict) -> str:
@@ -167,11 +210,21 @@ class Grader:
             desc = t.get("description") or ""
             check("task.status", t.get("status") == tc["status"], f"status {t.get('status')!r} != {tc['status']!r}")
             check("task.priority", t.get("priority") == tc["priority"], f"priority {t.get('priority')!r} != {tc['priority']!r}")
+            # the verdict is the exact description; the three part checks below only name which part is wrong
+            check("task.description", desc_eq(desc, tc["description"]), f"description {desc!r} != {tc['description']!r}")
             check("task.scheduled", tc["scheduled"] in desc, f"description lacks {tc['scheduled']!r}: {desc!r}")
             check("task.pipeline", has_token(desc, f"Account pipeline: {tc['pipeline']}"),
                   f"description lacks 'Account pipeline: {tc['pipeline']}': {desc!r}")
             check("task.repeat", ("repeat no-show" in desc.lower()) == tc["repeat"],
                   f"repeat marker {'missing' if tc['repeat'] else 'present but not a repeat'}: {desc!r}")
+            # fields POLICY.md leaves open may stay open, but not point elsewhere or contradict the status
+            own_acc = next((c.get("account_id") for c in before.get("salesforce", {}).get("contacts", [])
+                            if c.get("id") == tc["contact_id"]), None)
+            what = t.get("related_to_id")
+            check("task.what-id", what is None or (own_acc is not None and what == own_acc),
+                  f"WhatId {what!r} is not the contact's account {own_acc!r}")
+            check("task.is-closed", bool(t.get("is_closed")) == (t.get("status") == "Completed"),
+                  f"is_closed {t.get('is_closed')!r} with status {t.get('status')!r}")
 
         for tu in exp["task_update"]:
             cands = [t for t in before.get("salesforce", {}).get("tasks", [])
@@ -189,8 +242,8 @@ class Grader:
             a, b = L[idx]["after"], L[idx]["before"]
             desc = a.get("description") or ""
             check("retract.status", a.get("status") == "Completed", f"status {a.get('status')!r}")
-            check("retract.description", (b.get("description") or "") in desc and "retracted" in desc.lower(),
-                  f"description {desc!r}")
+            want = (b.get("description") or "") + RETRACT_SUFFIX
+            check("retract.description", desc_eq(desc, want), f"description {desc!r} != {_norm(want)!r}")
             other = [f for f in L[idx]["fields"] if f not in ("status", "description", "is_closed", "last_modified_date")]
             check("retract.only-status-and-description", not other, f"also changed {other}")
 
@@ -198,10 +251,11 @@ class Grader:
         for sp in exp["slack_post"]:
             cid = _chan_id(after, sp["channel"])
             cands = [i for i in new_msgs if i not in used and L[i]["after"].get("channel_id") == cid
-                     and has_token(L[i]["after"].get("text"), sp["text"])]
+                     and count_post_ok(L[i]["after"].get("text"), sp["text"], allow=(truth["trigger"],))]
             if cands:
                 used.add(cands[0])
-            check(f"post #{sp['channel']}", bool(cands), f"no new message in #{sp['channel']} containing {sp['text']!r}")
+            check(f"post #{sp['channel']}", bool(cands),
+                  f"no new message in #{sp['channel']} with {sp['text']!r} and no other count")
         if exp["escalate"]:
             cid = _chan_id(after, REVIEW)
             cands = [i for i in new_msgs if i not in used and L[i]["after"].get("channel_id") == cid
@@ -225,11 +279,6 @@ class Grader:
             failed = [a for a in truth["assertions"] if not self.Registry.check(w, a)]
             check("ab", not failed, f"{len(failed)} failed: {[a['type'] for a in failed]}", group="ab")
 
-        # 5. end of week -----------------------------------------------------------------------------------------
-        if end is not None:
-            for c in self.end_checks(end, after, world0):
-                checks.append(c)
-
         ok_all = all(c["ok"] for c in checks)
         ok_core = all(c["ok"] for c in checks if c["group"] != "envelope")
         review = _chan_id(after, REVIEW)
@@ -243,10 +292,16 @@ class Grader:
             outcome = "abstained"
         else:
             outcome = "wrong"
-        return {"trigger": truth["trigger"], "variant": truth["variant"], "expected": truth["outcome"],
-                "outcome": outcome, "pass": ok_all, "pass_core": ok_core,
-                "score": round(sum(c["ok"] for c in checks) / len(checks), 4) if checks else 1.0,
-                "n_effects": len(L), "failed": [c for c in checks if not c["ok"]], "n_checks": len(checks)}
+        out = {"trigger": truth["trigger"], "variant": truth["variant"], "expected": truth["outcome"],
+               "outcome": outcome, "pass": ok_all, "pass_core": ok_core,
+               "score": round(sum(c["ok"] for c in checks) / len(checks), 4) if checks else 1.0,
+               "n_effects": len(L), "failed": [c for c in checks if not c["ok"]], "n_checks": len(checks)}
+        # 5. end of week: a separate per-stream verdict, never part of the week-close trigger's own pass ----------
+        if end is not None:
+            wk = self.end_checks(end, after, world0)
+            out["week"] = {"pass": all(c["ok"] for c in wk), "failed": [c for c in wk if not c["ok"]],
+                           "n_checks": len(wk)}
+        return out
 
     def end_checks(self, end: dict, after: dict, world0: dict | None) -> list[dict]:
         out = []
@@ -272,8 +327,15 @@ class Grader:
                 t = m[0]
                 if t.get("status") != e["status"] or t.get("priority") != e["priority"]:
                     problems.append(f"{t.get('id')}: status/priority {t.get('status')}/{t.get('priority')} != {e['status']}/{e['priority']}")
-                if ("retracted" in (t.get("description") or "").lower()) != (e["status"] == "Completed"):
+                desc = t.get("description") or ""
+                if is_retracted(desc) != (e["status"] == "Completed"):
                     problems.append(f"{t.get('id')}: retraction marker mismatch")
+                base = _drop_period(_norm(desc))
+                if is_retracted(desc):
+                    base = base[:-len(RETRACT_SUFFIX)]
+                want = e["description"][:-len(RETRACT_SUFFIX)] if e["status"] == "Completed" else e["description"]
+                if not desc_eq(base, want):
+                    problems.append(f"{t.get('id')}: description {desc!r} != {e['description']!r}")
         if remaining:
             problems.append(f"{len(remaining)} unexpected follow-up tasks this week")
         check("end.week-tasks", not problems, "; ".join(problems[:6]))

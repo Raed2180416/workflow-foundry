@@ -27,6 +27,7 @@ WINDOW = timedelta(hours=3)
 REPEAT_WINDOW = timedelta(days=14)
 PREFIX = "Follow up on missed call - "
 RETRACT_SUFFIX = " | Retracted: joined late"
+RETRACTED = "Retracted"          # POLICY.md 2.7: a no-show is retracted when its follow-up task contains `Retracted`
 CLOSED = ("Closed Won", "Closed Lost")
 
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
@@ -150,7 +151,7 @@ class NoShowWorkflow:
         def retracted(e):
             sched = scheduled(parse_dt(e["start_time"]))
             return any((t.get("Subject") or "").strip() == PREFIX + e["name"] and sched in (t.get("Description") or "")
-                       and "retracted" in (t.get("Description") or "").lower() for t in tasks)
+                       and RETRACTED in (t.get("Description") or "") for t in tasks)
         return any(not retracted(e) for e in flagged)
 
     # -- retraction --------------------------------------------------------------------------------------------------
@@ -181,7 +182,7 @@ class NoShowWorkflow:
         tasks = soql(self.ctx, "SELECT Id, Subject, Description, CreatedDate FROM Task")
         return sum(1 for t in tasks if (t.get("Subject") or "").startswith(PREFIX)
                    and t.get("CreatedDate") and parse_dt(t["CreatedDate"]) >= monday
-                   and "retracted" not in (t.get("Description") or "").lower())
+                   and RETRACTED not in (t.get("Description") or ""))
 
     def week_close(self):
         n = self.week_count()

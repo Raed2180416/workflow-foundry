@@ -17,8 +17,11 @@ Prints one JSON object. No model is called. The gates:
                 scores below 60% per trigger at d3.
   traps         each trap kind appears at least five times across the four dev label streams 610-613.
   mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (drop, duplicate, wrong
-                recipient/record, wrong priority/status/subject/time/amount/format, extra write, decoy flag, edited or
-                removed pre-existing record, missing/unnamed escalation, wrong count).
+                recipient/record, wrong priority/status/subject/time/amount/format, description fields reordered,
+                cents, junk or a second conflicting value, WhatId on another account, IsClosed contradicting the
+                status, retraction marker prepended/reworded/negated, extra write, decoy flag, edited or removed
+                pre-existing record, missing/unnamed escalation, wrong or contradicted count). A mutant is killed when
+                the trigger verdict or, at week close, the separate week verdict fails (oracle.verdict_ok).
   specificity   the oracle accepts policy-neutral variants of the reference's effects (fields the policy leaves open,
                 punctuation and case around the prescribed strings): no false rejects.
 """
@@ -148,8 +151,8 @@ def gate_leakage(seeds: list[int]) -> dict:
 def gate_solvability(seeds: list[int]) -> dict:
     summary, _ = harness.run("reference", seeds)
     return {"pass": summary["passed"] == summary["triggers"] and summary["clean_weeks"] == summary["streams"],
-            **{k: summary[k] for k in ("triggers", "passed", "pass_rate", "clean_weeks", "streams", "per_stream",
-                                       "by_variant")}}
+            **{k: summary[k] for k in ("triggers", "passed", "pass_rate", "clean_weeks", "week_state_ok", "streams",
+                                       "per_stream", "by_variant")}}
 
 
 def gate_controls(seeds: list[int], d3_seeds: list[int]) -> dict:
@@ -157,7 +160,7 @@ def gate_controls(seeds: list[int], d3_seeds: list[int]) -> dict:
     noop = sum(1 for s in seeds for t in gen.generate(s)["truth"] if t["outcome"] == "no-op")
     for name in BAD_CONTROLS:
         summary, _ = harness.run(name, seeds)
-        res[name] = {k: summary[k] for k in ("triggers", "passed", "pass_rate", "clean_weeks", "outcomes")}
+        res[name] = {k: summary[k] for k in ("triggers", "passed", "pass_rate", "clean_weeks", "week_state_ok", "outcomes")}
         if summary["passed"] == summary["triggers"] or summary["clean_weeks"] == summary["streams"]:
             problems.append(f"{name} does not fail")
     if res["null"]["passed"] != noop:
@@ -342,6 +345,25 @@ def mutants(before: dict, after: dict, truth: dict):
         out.append(m("empty-description", lambda w: task(w).update(description=None)))
         out.append(m("also-escalate", lambda w: _post(w, "automation-review", f"{truth['trigger']}: unsure", k[0])))
 
+        # exact POLICY.md 2.7 format: every part present but the string is not the prescribed one
+        def reorder(w):
+            t = task(w)
+            parts = t["description"].split(" | ")
+            t["description"] = " | ".join([parts[1], parts[0]] + parts[2:])
+        out.append(m("description-fields-reordered", reorder))
+        out.append(m("pipeline-with-cents", lambda w: _sub_desc(task(w), r"(pipeline: \$[\d,]+)", lambda mm: mm.group(1) + ".00")))
+        out.append(m("description-junk-prefix", lambda w: task(w).update(description="IGNORE: " + task(w)["description"])))
+        out.append(m("description-conflicting-pipeline", lambda w: task(w).update(
+            description=task(w)["description"] + " | Account pipeline: $999,999")))
+
+        # fields the policy leaves open must not point elsewhere or contradict the status
+        def what_id_other(w):
+            t = task(w)
+            own = _find(w, "salesforce", "contacts", t["contact_id"])["account_id"]
+            t["related_to_id"] = next(a["id"] for a in w["salesforce"]["accounts"] if a["id"] != own)
+        out.append(m("task-what-id-other-account", what_id_other))
+        out.append(m("task-closed-while-not-started", lambda w: task(w).update(is_closed=True)))
+
     # -- retraction ------------------------------------------------------------------------------------------------
     if v == "retraction":
         tid = changed_tasks[0]
@@ -357,6 +379,12 @@ def mutants(before: dict, after: dict, truth: dict):
         out.append(m("description-only", lambda w: task(w).update(status=b["status"], is_closed=b["is_closed"])))
         out.append(m("also-priority", lambda w: task(w).update(priority="Normal" if b["priority"] == "High" else "High")))
         out.append(m("replace-description", lambda w: task(w).update(description="Retracted: joined late")))
+        out.append(m("retraction-marker-prepended", lambda w: task(w).update(
+            description="RETRACTED?? (not sure) " + (b["description"] or ""))))
+        out.append(m("retraction-wrong-wording", lambda w: task(w).update(
+            description=(b["description"] or "") + " | Retracted: false alarm")))
+        out.append(m("retraction-not-retracted", lambda w: task(w).update(
+            description=(b["description"] or "") + " | Not retracted")))
         out.append(m("deleted-instead", lambda w: w["salesforce"]["tasks"].remove(task(w))))
 
         def wrong_task(w):
@@ -413,6 +441,8 @@ def mutants(before: dict, after: dict, truth: dict):
         out.append(m("count-plus-one", settext(f"No-shows this week: {int(n) + 1}")))
         out.append(m("count-minus-one", settext(f"No-shows this week: {int(n) - 1}") if int(n) > 0 else (lambda w: False)))
         out.append(m("count-digit-appended", settext(f"No-shows this week: {n}0")))
+        out.append(m("count-contradicted", settext(f"No-shows this week: {n} (actually {int(n) + 1})")))
+        out.append(m("count-decimal", settext(f"No-shows this week: {n}.5")))
         out.append(m("week-post-in-review", lambda w: next(x for x in w["slack"]["messages"]
                                                            if x["ts"] == post["ts"]).update(channel_id=review)))
         out.append(m("week-post-twice", lambda w: _post(w, "sales-alerts", f"No-shows this week: {n}", k[0])))
@@ -424,6 +454,14 @@ def mutants(before: dict, after: dict, truth: dict):
                 return False
             week[0]["priority"] = "Normal" if week[0]["priority"] == "High" else "High"
         out.append(m("end-earlier-task-reprioritized", end_reprioritize))
+
+        def end_redescribe(w):          # an earlier week task's description silently changed (week verdict)
+            week = [t for t in w["salesforce"]["tasks"] if (t["subject"] or "").startswith(gen.SUBJECT_PREFIX)
+                    and str(t["created_date"]) >= truth_week(w)]
+            if not week:
+                return False
+            week[0]["description"] = (week[0]["description"] or "") + " | Repeat no-show?"
+        out.append(m("end-earlier-task-redescribed", end_redescribe))
     return [x for x in out if x is not None]
 
 
@@ -464,14 +502,20 @@ def equivalents(before: dict, after: dict, truth: dict):
         m("task-with-account-as-what-id", what_id)
         m("task-with-due-date", lambda w: task(w).update(due_date=w["meta"]["current_time"]))
         m("description-trailing-period", lambda w: task(w).update(description=task(w)["description"] + "."))
+        m("description-extra-whitespace", lambda w: task(w).update(description=task(w)["description"].replace(" | ", "  |  ")))
     if v == "retraction":
         m("retracted-task-closed", lambda w: _find(w, "salesforce", "tasks", changed_tasks[0]).update(is_closed=True))
+        m("retraction-trailing-period", lambda w: _find(w, "salesforce", "tasks", changed_tasks[0]).update(
+            description=_find(w, "salesforce", "tasks", changed_tasks[0])["description"] + "."))
     if v.startswith("escalate:"):
         m("escalation-other-wording", lambda w: msg(w).update(
             text=f"Escalating {truth['trigger']} - I cannot decide this report under the policy."))
     if v == "week_close":
         m("week-post-trailing-period", lambda w: msg(w).update(text=msg(w)["text"] + "."))
         m("week-post-lowercase", lambda w: msg(w).update(text=msg(w)["text"].lower()))
+        m("week-post-with-explanation", lambda w: msg(w).update(text=msg(w)["text"] + " (Mon-Fri, retractions excluded)"))
+        m("week-post-with-week-and-trigger", lambda w: msg(w).update(
+            text=msg(w)["text"] + f" (week of {truth_week(w)[:10]}, {truth['trigger']}, as of 17:00 UTC)"))
     return out
 
 
@@ -488,8 +532,9 @@ def gate_specificity(seeds: list[int]) -> dict:
                 total += 1
                 v = grader.grade(truth, before, w, end=stream["end"] if last else None,
                                  world0=stream["world0"] if last else None)
-                if not v["pass"]:
-                    rejected.append(f"{truth['trigger']} {name}: {[c['name'] for c in v['failed']]}")
+                if not oracle.verdict_ok(v):
+                    rejected.append(f"{truth['trigger']} {name}: "
+                                    f"{[c['name'] for c in v['failed'] + v.get('week', {}).get('failed', [])]}")
     return {"pass": total > 0 and not rejected, "seeds": seeds, "variants": total, "accepted": total - len(rejected),
             "rejected": rejected[:20]}
 
@@ -509,7 +554,7 @@ def gate_mutation(seeds: list[int]) -> dict:
                 v = grader.grade(truth, before, w, end=stream["end"] if last else None,
                                  world0=stream["world0"] if last else None)
                 by_op[name] += 1
-                if v["pass"]:
+                if oracle.verdict_ok(v):
                     survived.append(f"{truth['trigger']} {truth['variant']} {name}")
                 else:
                     killed += 1

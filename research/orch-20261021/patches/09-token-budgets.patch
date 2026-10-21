@@ -1,0 +1,136 @@
+diff --git a/experiments/lib/services.mjs b/experiments/lib/services.mjs
+index 89c5b3b..82d8bec 100644
+--- a/experiments/lib/services.mjs
++++ b/experiments/lib/services.mjs
+@@ -29,12 +29,16 @@ const readBody = req => new Promise((resolve, reject) => {
+ // whose spend could not be observed (a killed hosted call) add their bound to unknownUpperUsd (null: unbounded).
+ // A call in flight holds a reservation against the cap (reserveFor), so concurrent calls cannot overshoot it;
+ // refusals counts requests the gateway turned away (GATEWAY_BUDGET, GATEWAY_MODEL, MODEL_NOT_IN_POLICY, ...).
++// A session token cap beside the dollar cap (orch-20261021 E2; the $0-priced model that ran 97M tokens): tokens as the runtime counts
++// them (input, output, cache writes, a tenth of cache reads). null = no token cap.
++export const DEFAULT_SESSION_TOKENS = 5000000;
+ export class Ledger {
+-  constructor({ capUsd, label }) {
+-    this.capUsd = capUsd; this.label = label; this.spentUsd = 0; this.imputedUsd = 0; this.calls = 0; this.errors = {}; this.unknownCalls = 0; this.unknownUpperUsd = 0;
++  constructor({ capUsd, label, tokenCap = DEFAULT_SESSION_TOKENS }) {
++    this.capUsd = capUsd; this.label = label; this.tokenCap = tokenCap; this.spentUsd = 0; this.imputedUsd = 0; this.calls = 0; this.errors = {}; this.unknownCalls = 0; this.unknownUpperUsd = 0;
+     this.reservedUsd = 0; this.inFlight = 0; this.refusals = {}; this.waiters = [];
+   }
+   remaining() { return this.capUsd - this.spentUsd - this.reservedUsd; }
++  tokensUsed() { const u = this.usage; return u ? Math.ceil(u.inputTokens + u.outputTokens + u.cacheWriteTokens + 0.1 * u.cacheReadTokens) : 0; }
+   // The share of prompt tokens read from the prompt cache (cache reads / all prompt tokens), or null before any usage.
+   cacheReadShare() {
+     const u = this.usage; if (!u) return null;
+@@ -147,6 +151,10 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
+       if (url.pathname === '/model') {
+         if (!modelPort) { ledger.refuse?.('GATEWAY_NO_MODELS'); return json(res, 403, { error: 'no model access in this session' }); }
+         if (allowedModels && !allowedModels.includes(body.model)) { ledger.refuse('GATEWAY_MODEL'); log(`/model refused: ${body.model} not allowed`); return json(res, 403, { error: `model not allowed in this session: ${body.model}` }); }
++        if (ledger.tokenCap != null && ledger.tokensUsed() >= ledger.tokenCap) {
++          ledger.refuse('GATEWAY_TOKENS'); log(`/model refused: token budget (${ledger.tokensUsed()} of ${ledger.tokenCap})`);
++          return json(res, 402, { error: 'token budget exhausted', tokensUsed: ledger.tokensUsed(), tokenCap: ledger.tokenCap });
++        }
+         const schema = body.schema ?? { type: 'object', properties: { text: { type: 'string' } }, required: ['text'], additionalProperties: false };
+         const entry = modelPort.policy?.models?.find(m => m.id === body.model);
+         const reserve = reserveFor(modelPort.policy, { ...body, schema }, modelPort.providers?.[entry?.provider]?.maxBudgetUsd ?? 1);
+diff --git a/schemas/workflow.schema.json b/schemas/workflow.schema.json
+index c1c8d4d..a3a8a93 100644
+--- a/schemas/workflow.schema.json
++++ b/schemas/workflow.schema.json
+@@ -30,7 +30,8 @@
+         "maxSteps": {"type": "integer", "minimum": 1, "maximum": 100000},
+         "maxConcurrency": {"type": "integer", "minimum": 1, "maximum": 16},
+         "maxDurationMs": {"type": "integer", "minimum": 1, "maximum": 2592000000},
+-        "maxCost": {"type": "number", "minimum": 0, "maximum": 1000000}
++        "maxCost": {"type": "number", "minimum": 0, "maximum": 1000000},
++        "maxTokens": {"type": "integer", "minimum": 1, "maximum": 10000000000, "description": "Model tokens the run may use (input, output and cache writes in full, cache reads at a tenth), whatever they cost in dollars."}
+       }
+     },
+     "nodes": {"$ref": "#/definitions/nodes"},
+diff --git a/src/runtime.mjs b/src/runtime.mjs
+index c8cc9c3..cf5de08 100644
+--- a/src/runtime.mjs
++++ b/src/runtime.mjs
+@@ -88,12 +88,14 @@ const providerFaults = new Set(['MODEL_PROTOCOL', 'MODEL_BUDGET']);
+ const retryable = new Set(['MODEL_SCHEMA', 'MODEL_TRUNCATED']);
+ // onError:"continue" and map failure:"collect" never hide an environment fault, a budget stop, a cancellation,
+ // a policy violation or a harness integrity failure.
+-const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
++const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'COST_BUDGET', 'TOKEN_BUDGET', 'STEP_BUDGET',
+   'DEADLINE', 'STATE_BUDGET', 'STATE_CONFLICT', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
+   'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT', 'JOURNAL_TAMPERED', 'APPROVAL_TAMPERED', 'STATE_DRIFT', 'STATE_CORRUPT',
+   // Cross-run state faults of the harness, not refusals of the data (src/state.mjs STATE_REFUSALS are the handleable ones).
+   'STATE_CLOCK', 'STATE_OP', 'STATE_TRANSACTION', 'STATE_SLOT_UNKNOWN']);
+ const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
++// Tokens a call used, as the token budget counts them: input, output and cache writes in full, cache reads at a tenth (their price ratio).
++const tokensOf = u => !u ? 0 : Math.ceil((u.inputTokens ?? 0) + (u.outputTokens ?? 0) + (u.cacheWriteTokens ?? 0) + 0.1 * (u.cacheReadTokens ?? 0));
+ // Outages (orch-20261021): up to ENV_RETRIES inline retries of a model call, each at most ENV_RETRY_INLINE_MAX_MS away; past that an agent
+ // node parks (status waiting, timer at retryAt) at most MAX_PARKS times. retry-after (seconds) in the provider's message wins; a usage
+ // limit ("resets ...") parks for 15 minutes at a time; otherwise exponential backoff with jitter.
+@@ -180,7 +182,7 @@ const cancelRequested = run => run.cancelRequest ? new FoundryError('RUN_CLOSED'
+ const PARKED = new Set(['waiting', 'awaiting_human', 'awaiting_approval']);
+ const policyDefaults = registry => ({
+   allowedCapabilities: registry.list().filter(c => c.risk === 'low').map(c => c.name),
+-  maxSteps: 5000, maxConcurrency: 4, maxDurationMs: 3600000, maxCost: 0, maxResumes: 1000
++  maxSteps: 5000, maxConcurrency: 4, maxDurationMs: 3600000, maxCost: 0, maxResumes: 1000, maxTokens: 5000000
+ });
+ 
+ export class Runtime {
+@@ -193,7 +195,7 @@ export class Runtime {
+   // constructing the runtime turns it on, so an edit of a run record (`extra` is not bound to the birth event) cannot make a host kill itself.
+   constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now, faultHooks = false } = {}) {
+     this.store = store; this.registry = registry; this.policy = { ...policyDefaults(registry), ...clone(policy) };
+-    for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
++    for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes', 'maxTokens']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
+     if (!Array.isArray(this.policy.allowedCapabilities) || this.policy.allowedCapabilities.some(x => !registry.get(x))) throw new FoundryError('POLICY', 'Allowed capabilities must be registered');
+     if (!Number.isFinite(this.policy.maxCost) || this.policy.maxCost < 0) throw new FoundryError('POLICY', 'maxCost must be nonnegative');
+     const owner = modelPolicy?.policy ?? modelPolicy;
+@@ -585,6 +587,7 @@ class Invocation {
+     if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
+     if (run.steps >= Math.min(run.policy.maxSteps, this.workflow.budget.maxSteps)) throw new FoundryError('STEP_BUDGET', 'Run step budget exhausted');
+     if (run.cost + cost > Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost) + 1e-12) throw new FoundryError('COST_BUDGET', 'Run cost budget exhausted');
++    if ((run.tokens ?? 0) >= this.tokenLimit(run)) throw new FoundryError('TOKEN_BUDGET', `Run token budget exhausted (${run.tokens} of ${this.tokenLimit(run)} tokens)`);
+     // The stored size and JSON value count of the run (kept by the store as rows change), not a re-serialisation of it.
+     let bytes = run[STATE_BYTES], items = run[STATE_ITEMS];
+     if (bytes === undefined || items === undefined) ({ bytes, items } = this.rows.raw(this.runId));
+@@ -613,6 +616,9 @@ class Invocation {
+     }, status === 'handled_error' ? 'node.handled_error' : 'node.completed', { outputHash: digest(output), output, ...state });
+   }
+   costLimit(run) { return Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost); }
++  // Tokens bound a run whatever the model costs (a $0-priced local model ran 97M tokens under a dollar budget: orch-20261021 E2). A run
++  // created before the token budget existed has none in its bound policy and keeps no limit but the workflow's.
++  tokenLimit(run) { return Math.min(run.policy.maxTokens ?? Infinity, this.workflow.budget.maxTokens ?? Infinity); }
+   // The integrity labels a reference in `templates` can inherit (inheritedLabel): the frame's own labels plus the non-trusted output label of each
+   // node a reference names (`nodes.X...`; a bare `nodes` reads them all). Only those nodes' labels are fetched.
+   labelScope(frameKey, ...templates) {
+@@ -1263,6 +1269,7 @@ class Invocation {
+         journalId: result.journalId ?? null, replayed: result.replayed === true && !recovered, ...(result.replayedFrom ? { replayedFrom: result.replayedFrom } : {}), ...unknownOf(result) });
+       const spent = this.head();
+       if (spent.cost > this.costLimit(spent) + 1e-12) throw new FoundryError('COST_BUDGET', `Run cost budget exhausted by a model call at ${node.id}`);
++      if ((spent.tokens ?? 0) > this.tokenLimit(spent)) throw new FoundryError('TOKEN_BUDGET', `Run token budget exhausted by a model call at ${node.id} (${spent.tokens} of ${this.tokenLimit(spent)} tokens)`);
+       if (!result.ok) {
+         const message = result.error?.message ?? code;
+         if (environmentFaults.has(code)) {
+@@ -1310,8 +1317,9 @@ class Invocation {
+       const s = f.nodes[node.id], seen = s.journalIds ?? [];
+       if (call.journalId != null && seen.includes(call.journalId)) return; // already charged before a crash
+       s.journalIds = [...seen, call.journalId]; s.modelCalls = (s.modelCalls ?? 0) + 1;
+-      const cost = call.costUsd ?? 0;
++      const cost = call.costUsd ?? 0, tokens = tokensOf(call.usage);
+       s.costUsd = (s.costUsd ?? 0) + cost; s.imputedUsd = (s.imputedUsd ?? 0) + (call.imputedUsd ?? 0); r.cost += cost;
++      if (tokens) { s.tokens = (s.tokens ?? 0) + tokens; r.tokens = (r.tokens ?? 0) + tokens; }
+       if (call.costUnknown === true) for (const t of [s, r]) { t.costUnknownCalls = (t.costUnknownCalls ?? 0) + 1; t.costUnknownUpperUsd = addBound(t.costUnknownUpperUsd, call.costUpperUsd); }
+     }, type, event);
+   }
+diff --git a/src/verdict.mjs b/src/verdict.mjs
+index 22115a8..2a1d03d 100644
+--- a/src/verdict.mjs
++++ b/src/verdict.mjs
+@@ -16,7 +16,7 @@ export const AUTHORITY_FLAGS = Object.freeze({ grantsActionAuthority: false, est
+ // the awaited event did not come within its declared bound (src/signals.mjs); and a wait whose timer falls after the run deadline (WAIT_DEADLINE)
+ // is the run's time budget, as DEADLINE is.
+ export const INCONCLUSIVE_CODES = Object.freeze(['VERIFY_FAILED', 'ACCEPTANCE_FAILED', 'ASSERTION_FAILED', 'NODE_CHECK_FAILED',
+-  'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'DEADLINE', 'STATE_VERSION_CONFLICT', 'STATE_FULL', 'WAIT_TIMEOUT', 'WAIT_DEADLINE']);
++  'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'TOKEN_BUDGET', 'DEADLINE', 'STATE_VERSION_CONFLICT', 'STATE_FULL', 'WAIT_TIMEOUT', 'WAIT_DEADLINE']);
+ export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE',
+   'NETWORK', 'MODEL_TRANSPORT', 'ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT',
+   'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT']);

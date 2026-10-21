@@ -111,8 +111,10 @@ export const overlayBinding = Object.freeze({
   actors: { answer, counterparty: e8.actors.counterparty },
 });
 
-/** E8 + C2 overlay: the item's transition with the approval wait permitted (see the header). */
-export function overlayTransition(world, view) {
+/** E8 + C2 overlay: the item's transition with the approval wait permitted (see the header). `wide` (a post-hoc
+ *  diagnostic, labelled as such in README §3; not the declared oracle) also moves the waiting fulfilment's status and
+ *  notice windows, for workflows that set them only after the compensation completes. */
+export function overlayTransition(world, view, { wide = false } = {}) {
   const E = e8.referenceTransition(world, view);
   const t0 = Date.parse(world.t0), H = Date.parse(world.horizonEnd);
   const perm = [{ kind: APPROVAL_KIND, role: 'finance-approver', window: { earliest: t0, latest: H } }, { kind: APPROVAL_KIND, role: 'controller', window: { earliest: t0, latest: H } }];
@@ -126,11 +128,17 @@ export function overlayTransition(world, view) {
     ext.set(F, Math.max(ext.get(F) ?? 0, end));
   }
   if (!ext.size) return { ...E, humanTasks: { ...E.humanTasks, permitted: [...E.humanTasks.permitted, ...perm] } };
+  const anyExt = Math.max(...ext.values());
   const required = E.effects.required.map(e => {
-    const F = e.match?.fulfilmentId;
+    const F = e.match?.fulfilmentId ?? null;
     const comp = (e.system === 'billing' && e.op === 'refund') || (e.system === 'inventory' && e.op === 'release');
-    if (!comp || !ext.has(F)) return e;
-    const latest = Math.max(e.window.latest, Math.min(H, ext.get(F) + 120 * MIN));
+    // wide (post-hoc): also the waiting fulfilment's terminal status and notice, and the order's terminal status and notices
+    const wideF = wide && ((e.system === 'orders' && e.op === 'setStatus' && F && ['failed', 'cancelled'].includes(e.match?.status)) || (e.system === 'notify' && e.op === 'send' && ext.has(e.match?.about)));
+    const orderNotice = e.system === 'notify' && e.op === 'send' && !/-F\d+$/.test(String(e.match?.about ?? ''));
+    const wideO = wide && ((e.system === 'orders' && e.op === 'setStatus' && F === null && ['failed', 'cancelled', 'completed'].includes(e.match?.status)) || orderNotice);
+    const until = comp ? ext.get(F) : wideF ? ext.get(F ?? e.match.about) : wideO ? anyExt : undefined;
+    if (until === undefined) return e;
+    const latest = Math.max(e.window.latest, Math.min(H, until + 120 * MIN));
     return latest === e.window.latest ? e : { ...e, window: { ...e.window, latest } };
   });
   return { ...E, effects: { ...E.effects, required }, humanTasks: { ...E.humanTasks, permitted: [...E.humanTasks.permitted, ...perm] } };
@@ -139,6 +147,9 @@ export function overlayTransition(world, view) {
 /** The oracle item for "E8 + C2 overlay" (E8's hooks with the wrapped transition). */
 export const overlayItem = Object.freeze({ ...e8.oracleItem, referenceTransition: overlayTransition });
 export const overlayOracle = (world, rows, { pools = null, arm = null } = {}) => gradeStream({ item: overlayItem, world, rows, pools, arm });
+/** The post-hoc wide variant (diagnostic only; see overlayTransition). */
+export const overlayItemWide = Object.freeze({ ...e8.oracleItem, referenceTransition: (w, v) => overlayTransition(w, v, { wide: true }) });
+export const overlayOracleWide = (world, rows, { pools = null, arm = null } = {}) => gradeStream({ item: overlayItemWide, world, rows, pools, arm });
 
 /** The orders of a world with placement, customer and amounts (analyst-side ground truth for the observer's tests). */
 export function ordersOf(world) {

@@ -220,3 +220,26 @@ Implementation of §2–§8, with the parameters the freeze records. Deviations 
   know_your_business. Each cell's workflows are built under its own catalog, on dev rows, like the primary ones.
 - **Models** are policy ids (`--builder-model`, `--judge-model`, `--agent-model` at freeze time); the harness accepts only
   `claude-cli` models today and says so for any other provider.
+- **patient_intake (owner decision D3, `research/decisions-20261021.md`)**: built, repaired, frozen and run sealed k=3 with
+  both arms like the others, but as a **separately reported cell**. The primary set stays the 12 SOPs of §6, so the
+  primary comparison stays matched to the phase-1 dev baseline, and the decision rule (§7) covers the primary run only.
+  The freeze lists `primarySops` (the 12) and `sops` (13: every SOP whose sealed rows it opens, which the bridge checks);
+  a cell's sealed summary carries `decision: null` and a `cellNote`.
+- **Builds (dev rows: training evidence, not a result)**: 9 of the 12 primary workflows pass all their dev rows;
+  traffic_spoofing_detection 15/20 (round 0 kept; neither repair round improved it), video_classification 19/20 and
+  warehouse_package_inspection 17/20 (round 1 kept). patient_intake 16/16; the four ablation workflows 20/20.
+  Phase-2 spend before the sealed run: $3.53 (primary builds $2.67; `FREEZE-p2.json` `spendBeforeSealedUsd`).
+  `node experiments/sopbench/report2.mjs --builds p2-pilot,p2-main,p2-abl-v1,p2-abl-v2,p2-pi` prints the table.
+- **What the builder made**: 11 of the 12 primary workflows make no model call at run time (judge calls per run 0); only
+  email_intent calls the judge (1.2 calls per run). The Haiku builder compiled each SOP into deterministic typed
+  sections (3–12 per run). The sealed run therefore measures how well code fitted on 20 dev rows generalises to the
+  sealed rows, against a per-row agent; it is not a comparison of two model loops.
+- **Committed workflows were checked for upstream text** (CC BY-NC): the longest run of words shared with an SOP is 20
+  (referral_abuse_detection_v1: its violation-to-action label table); no distinctive dev-row value (ids, amounts, free
+  text) appears in any workflow's code beyond category labels.
+- **Deviation:** `bridge.py`'s catalog loader was changed (catalog files now hold no upstream text) while the p2-main
+  build was running. Only `--catalog` runs use it, so no primary build was affected; all ablation builds started after
+  the change.
+- **Freeze**: `FREEZE-p2.json` with the workflows under `experiments/sopbench/frozen/p2/` (primary, `ablation/`,
+  `separate/`) and the vendored SDK (`frozen/p2/sdk/`). Cells: `V1-minimal`, `V2-bloated`, `patient_intake`. Sealed-run
+  caps: primary $40, each cell $5, so phase 2 stays under $100 even if every cap were reached.

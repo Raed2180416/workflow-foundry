@@ -1,0 +1,524 @@
+{
+ "runId": "p2-main",
+ "evidence": "development: builds and repairs on SPLIT.json build/repair rows only; no sealed row was prepared, served or graded",
+ "stopped": null,
+ "builderModel": "claude-haiku-5-5",
+ "judgeModels": [
+  "claude-haiku-5-5"
+ ],
+ "budgets": {
+  "build": 3,
+  "repair": 1.5,
+  "buildMinutes": 30,
+  "repairMinutes": 20,
+  "rounds": 2,
+  "builderJudgeUsd": 0.5
+ },
+ "prompts": {
+  "buildTemplateSha256": "8c69d8b593015f86dbb2de1bbccf783bee097223bb20e5c620a363af4805f132",
+  "repairTemplateSha256": "f5ff28a3e56b5050c5857298c82d64418c07a1d25155361202f06585c4cf2aa5"
+ },
+ "spentUsd": 2.305489385,
+ "capUsd": 25,
+ "sops": {
+  "aircraft_inspection": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 1,
+   "artifactSha256": "807e62da1cdff3d99054b6804adb73f8bfa92c0937f279f590c7d69af7789ed2",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.20379184999999997,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.18301185999999997,
+     "judgeUsd": 0.00027695,
+     "checkUsd": 0,
+     "turns": 28,
+     "minutes": 6.3,
+     "buildPass": 5,
+     "repairPass": 14,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 8,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "50275b9ece977b08d3ff17459d2a2f63eb10c19473a390104921b0e22ecad6f9"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.02050304,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 13,
+     "minutes": 1.7,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 8,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "807e62da1cdff3d99054b6804adb73f8bfa92c0937f279f590c7d69af7789ed2"
+    }
+   ]
+  },
+  "order_fulfillment": {
+   "devPass": 7,
+   "devRows": 7,
+   "buildPass": 5,
+   "repairPass": 2,
+   "bestRound": 1,
+   "artifactSha256": "5c7fe6e08d93951f39bf45d214c052236e69ac84c967a02d1755532f91d3d6a2",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.058071010000000006,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.036207590000000005,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 20,
+     "minutes": 2.5,
+     "buildPass": 5,
+     "repairPass": 1,
+     "kept": true,
+     "statuses": {
+      "done": 7
+     },
+     "sectionsPerRun": 4,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "0d6d0b5002e1535c2a0a141a391211bcc024e5465526fef23557e0e2cce8c413"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.02186342,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 14,
+     "minutes": 1.7,
+     "buildPass": 5,
+     "repairPass": 2,
+     "kept": true,
+     "statuses": {
+      "done": 7
+     },
+     "sectionsPerRun": 4,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "5c7fe6e08d93951f39bf45d214c052236e69ac84c967a02d1755532f91d3d6a2"
+    }
+   ]
+  },
+  "referral_abuse_detection_v1": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 0,
+   "artifactSha256": "45bf386d188438e68f54ca8ed27262185622e38e41db756b094b633f65ecf55b",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.05815666000000001,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.05815666000000001,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 22,
+     "minutes": 4.4,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 5,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "45bf386d188438e68f54ca8ed27262185622e38e41db756b094b633f65ecf55b"
+    }
+   ]
+  },
+  "know_your_business": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 2,
+   "artifactSha256": "d2a30e99b710f19a48d3f389cfa1dfbc93f44b561fcfe5c1991af785d78ba8f0",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.6671907000000001,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.4191695000000001,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 32,
+     "minutes": 9.5,
+     "buildPass": 5,
+     "repairPass": 11,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 12,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "45c8f2ca9418a514d8b334fbb777f8eca6097077312d6a20b38fc3c19b421309"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.19603160000000003,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 29,
+     "minutes": 6.7,
+     "buildPass": 5,
+     "repairPass": 14,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 12,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "a4cc5d826c11397763c5a5867dee81b741a9cde209fc2318f4bdff478d37e846"
+    },
+    {
+     "round": 2,
+     "sessionError": null,
+     "costUsd": 0.05198960000000001,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 23,
+     "minutes": 3.8,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 12,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "d2a30e99b710f19a48d3f389cfa1dfbc93f44b561fcfe5c1991af785d78ba8f0"
+    }
+   ]
+  },
+  "referral_abuse_detection_v2": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 0,
+   "artifactSha256": "c0c031c0d84564f51dbc37e02110bec70428e6f5e23aefc5d3f445b3f91628c5",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.08238229,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.08238229,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 18,
+     "minutes": 4.5,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "c0c031c0d84564f51dbc37e02110bec70428e6f5e23aefc5d3f445b3f91628c5"
+    }
+   ]
+  },
+  "video_annotation": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 1,
+   "artifactSha256": "d60dd9ac43cb9ac9953dad718b4555ba08a1979d4ec2afc73459fb2cccdcd4e3",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.18648591000000003,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.15935969000000003,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 29,
+     "minutes": 5.2,
+     "buildPass": 5,
+     "repairPass": 12,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 4.75,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "29ccd4e02753495d6e86658dc553fa80a388e16841533e1bff26bffd6fbf5071"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.02712622,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 22,
+     "minutes": 1.9,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 4.15,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "d60dd9ac43cb9ac9953dad718b4555ba08a1979d4ec2afc73459fb2cccdcd4e3"
+    }
+   ]
+  },
+  "traffic_spoofing_detection": {
+   "devPass": 15,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 10,
+   "bestRound": 0,
+   "artifactSha256": "8da234424e5452bb50b22eff24d3dfdff877fc5611a0862bd4651013a0c7898f",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.48038762,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.18576568999999998,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 17,
+     "minutes": 6,
+     "buildPass": 5,
+     "repairPass": 10,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "8da234424e5452bb50b22eff24d3dfdff877fc5611a0862bd4651013a0c7898f"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.21438789000000003,
+     "judgeUsd": 0.004516439999999999,
+     "checkUsd": 0,
+     "turns": 36,
+     "minutes": 6.1,
+     "buildPass": 5,
+     "repairPass": 10,
+     "kept": false,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "f2fed205d444038a31bb0e2784cbd54c00082b5108b15fbfd7ff52e72bf4ba7e"
+    },
+    {
+     "round": 2,
+     "sessionError": null,
+     "costUsd": 0.0757176,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 21,
+     "minutes": 3.7,
+     "buildPass": 5,
+     "repairPass": 10,
+     "kept": false,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "dcd61ecdd387b6ff19bff55378e1f590338c893229e8f2ccaa9b179a9b4afed9"
+    }
+   ]
+  },
+  "video_classification": {
+   "devPass": 19,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 14,
+   "bestRound": 1,
+   "artifactSha256": "441d9738323ffcac9691d389c4012be41375a127ee937e4e4eb336dd65a0e5a3",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.19635866500000002,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.07896708,
+     "judgeUsd": 0.00025482500000000003,
+     "checkUsd": 0,
+     "turns": 24,
+     "minutes": 5.2,
+     "buildPass": 5,
+     "repairPass": 9,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7.45,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "d90bb82388ae39b9c438f28f9946904f7406c5767aacfc6ac6ba9316fca60341"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.09273940000000001,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 37,
+     "minutes": 4.7,
+     "buildPass": 5,
+     "repairPass": 14,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7.45,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "441d9738323ffcac9691d389c4012be41375a127ee937e4e4eb336dd65a0e5a3"
+    },
+    {
+     "round": 2,
+     "sessionError": null,
+     "costUsd": 0.02439736,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 11,
+     "minutes": 2.2,
+     "buildPass": 5,
+     "repairPass": 14,
+     "kept": false,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7.45,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "441d9738323ffcac9691d389c4012be41375a127ee937e4e4eb336dd65a0e5a3"
+    }
+   ]
+  },
+  "warehouse_package_inspection": {
+   "devPass": 17,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 12,
+   "bestRound": 1,
+   "artifactSha256": "c005e10e5089e8eb52524609f02273937de5df2fabab6b51e08ec2eb3cda1ff5",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.37266467999999997,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.046758959999999995,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 21,
+     "minutes": 3.7,
+     "buildPass": 5,
+     "repairPass": 6,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 5.65,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "2adf5eeeab0d12089a0da377590065749bcb9127348d107e46da982de657e55a"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.19517205,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 30,
+     "minutes": 6.4,
+     "buildPass": 5,
+     "repairPass": 12,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 5.65,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "c005e10e5089e8eb52524609f02273937de5df2fabab6b51e08ec2eb3cda1ff5"
+    },
+    {
+     "round": 2,
+     "sessionError": null,
+     "costUsd": 0.13073366999999997,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 27,
+     "minutes": 6,
+     "buildPass": 5,
+     "repairPass": 12,
+     "kept": false,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 5.65,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "9b772f8f9ee612b4f1c595dcecd291ea3fa970b7a0aeb855880c675b8034adff"
+    }
+   ]
+  }
+ },
+ "live": "/var/tmp/foundry-work/sopbench/p2-main",
+ "finishedAt": "2026-10-21T13:28:42.033Z"
+}

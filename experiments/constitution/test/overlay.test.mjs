@@ -85,6 +85,11 @@ test('E8 + C2 overlay: the approval task is permitted and a waiting refund windo
   assert.equal(rf1.window.latest, Math.max(rf0.window.latest, answered + 120 * 60_000));
   const other = E1.effects.required.find(e => e.op === 'refund' && e.match.fulfilmentId !== 'ORD-1232-0012-F2');
   if (other) assert.equal(other.window.latest, E0.effects.required.find(e => e.lid === other.lid).window.latest, 'other fulfilments keep their windows');
+  const fst = E1.effects.required.find(e => e.lid === 'fst:ORD-1232-0012-F2:cancelled');
+  if (fst) {
+    assert.equal(fst.window.latest, E0.effects.required.find(e => e.lid === fst.lid).window.latest, 'the declared overlay leaves the status window alone');
+    assert.ok(overlayTransition(W, fake, { wide: true }).effects.required.find(e => e.lid === fst.lid).window.latest >= answered + 120 * 60_000, 'the post-hoc wide variant moves it');
+  }
   const open = { ...fake, taskEvents: [] };
   assert.equal(overlayTransition(W, open).effects.required.find(e => e.op === 'refund' && e.match.fulfilmentId === 'ORD-1232-0012-F2').window.latest, Date.parse(W.horizonEnd), 'an open approval defers the refund to the horizon');
 });

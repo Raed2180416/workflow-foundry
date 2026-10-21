@@ -18,6 +18,11 @@ and the tools only; the truth, the delta and the generator stay in this process'
 
 Modes (RECURRING-DESIGN §3.6): carry (headline) - the solver's world evolves with its own effects; rebased
 (diagnostic) - before each trigger the world is replaced by the reference run's world at that point.
+
+Verdicts. Each trigger is graded on its own effects only (`pass`, the headline per-trigger rate). The end-of-week state
+(flags, this week's follow-up tasks, untouched pre-existing records) is graded once per stream, at the week-close
+trigger, as a separate `week_state` verdict; it is not folded into the week-close trigger, so one earlier mistake is
+charged to one trigger. A clean week is every trigger passed and the week state passed.
 """
 from __future__ import annotations
 
@@ -171,6 +176,8 @@ def run_stream(stream: dict, solver, mode: str = "carry", ref_befores: list | No
         last = trig is stream["triggers"][-1]
         v = grader.grade(truth, before, after, end=stream["end"] if last else None,
                          world0=stream["world0"] if last else None)
+        if last:
+            week_state = v["week"]
         rows.append({"taskKey": f"s{seed}/t{trig['index']:02d}", "stream": seed, "trigger": trig["index"],
                      "kind": trig["kind"], "variant": trig["variant"], "difficulty": stream["meta"]["difficulty"],
                      "pass": v["pass"], "pass_core": v["pass_core"], "outcome": v["outcome"], "score": v["score"],
@@ -181,7 +188,8 @@ def run_stream(stream: dict, solver, mode: str = "carry", ref_befores: list | No
             afters.append(after)
         world = after
     out = {"seed": seed, "difficulty": stream["meta"]["difficulty"], "rows": rows,
-           "clean_week": all(x["pass"] for x in rows),
+           "week_state": {"pass": week_state["pass"], "failed": week_state["failed"]},
+           "clean_week": all(x["pass"] for x in rows) and week_state["pass"],
            "first_failure": next((x["trigger"] for x in rows if not x["pass"]), None)}
     if keep_worlds:
         out["befores"], out["afters"] = befores, afters
@@ -215,6 +223,7 @@ def summarize(results: list[dict]) -> dict:
             "pass_rate": round(sum(x["pass"] for x in rows) / max(1, len(rows)), 4),
             "pass_core_rate": round(sum(x["pass_core"] for x in rows) / max(1, len(rows)), 4),
             "clean_weeks": sum(res["clean_week"] for res in results), "streams": len(results),
+            "week_state_ok": sum(res["week_state"]["pass"] for res in results),
             "outcomes": outcomes, "by_variant": {k: f"{a}/{n}" for k, (a, n) in sorted(by_variant.items())},
             "per_stream": {res["seed"]: f"{sum(x['pass'] for x in res['rows'])}/{len(res['rows'])} ({res['difficulty']})"
                            for res in results}}
@@ -255,6 +264,11 @@ def main(argv=None):
                 for x in res["rows"]:
                     f.write(json.dumps({k: v for k, v in x.items() if k != "failed"} | {"failedChecks": [c["name"] for c in x["failed"]]}) + "\n")
         (d / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
+        with open(d / "weeks.jsonl", "w") as f:
+            for res in results:
+                f.write(json.dumps({"stream": res["seed"], "difficulty": res["difficulty"], "clean_week": res["clean_week"],
+                                    "week_state": res["week_state"]["pass"],
+                                    "failedChecks": [c["name"] for c in res["week_state"]["failed"]]}) + "\n")
     if a.failures:
         for res in results:
             for x in res["rows"]:
@@ -262,6 +276,10 @@ def main(argv=None):
                     print(f"{x['taskKey']} {x['variant']} {x['outcome']} err={x['error']}")
                     for c in x["failed"]:
                         print(f"   - {c['name']}: {c['detail']}")
+            if not res["week_state"]["pass"]:
+                print(f"s{res['seed']} week_state wrong")
+                for c in res["week_state"]["failed"]:
+                    print(f"   - {c['name']}: {c['detail']}")
     print(json.dumps(summary))
 
 

@@ -104,12 +104,18 @@ export function audit({ host, registry = null, sampleSize = 10 }) {
       const ans = answers.filter(a => bound.some(t => t.task.id === a.taskId && t.instance === a.instance) && a.decision === 'approve' && a.at <= r.emittedAt);
       if (bound.some(t => t.task.subject === O && t.task.subject !== F)) unbound += 1;
       const sod = [...(entered.get(O)?.values() ?? [])].filter(Boolean);
-      const a = ans[0] ?? null;
+      // C2-X1: a break-glass request (its question says so) answered by a controller is an authorised exception, listed
+      // for after-the-fact review; any other approver must hold finance-approver. The first valid answer is the evidence.
+      const judged = ans.map(x => {
+        const bg = /^BREAK-GLASS/.test(bound.find(t => t.task.id === x.taskId)?.task.question ?? '');
+        return { ...x, breakGlass: bg, role: holds(v.doc, x.user, 'finance-approver') || (bg && holds(v.doc, x.user, 'controller')), sodOk: !sod.includes(x.user) };
+      });
+      const a = judged.find(x => x.role && x.sodOk) ?? judged[0] ?? null;
       pop.push({ key: r.key, order: O, fulfilment: F, amountMinor: amount, thresholdMinor: T, version: v.version, approver: a?.user ?? null,
-        approverHoldsRole: a ? holds(v.doc, a.user, 'finance-approver') : null, sodOk: a ? !sod.includes(a.user) : null, enteredBy: sod });
+        approverHoldsRole: a ? a.role : null, sodOk: a ? a.sodOk : null, breakGlass: a?.breakGlass ?? false, enteredBy: sod });
     }
     if (unbound) why.push(`${unbound} approvals name only the order, not the refund: the decision is not bound to the effect`);
-    Q.Q3 = { answerable: !why.length, population: pop, why };
+    Q.Q3 = { answerable: !why.length, population: pop, why, exceptionsForReview: pop.filter(p => p.breakGlass).map(p => p.key) };
   }
   // Q4
   {
