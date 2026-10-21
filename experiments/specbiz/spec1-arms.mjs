@@ -41,7 +41,7 @@ export const DERIVE_ITEM = Object.freeze({ ...e8, binding: NO_SPEC_BINDING, spec
 export const TASK_EDITS = Object.freeze([
   ['that implements every rule of SPEC-E.md exactly.', 'that handles this shop\'s orders the way the shop wants them handled (see "The shop" below).'],
   ['calendar, the spec, the instance\'s records', 'calendar, the instance\'s records'],
-  ['Work carefully through every rule, race and reading\nin SPEC-E.md.', 'Work carefully through every rule, race and reading\nthe shop\'s documents and its owner give you.'],
+  ['Work carefully through every rule, race and reading in SPEC-E.md.', 'Work carefully through every rule, race and reading the shop\'s\ndocuments and its owner give you.'],
 ]);
 
 export const SHOP_SECTION = `

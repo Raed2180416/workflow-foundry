@@ -64,6 +64,9 @@ COUNTS = {  # per difficulty: (lo, hi) per kind; escalations are part of deal.si
     "d3": dict(signed=(12, 14), won=(12, 14), repeat=(4, 5), reopen=(1, 2), ref=(3, 4), amend=(2, 2), esc=(1, 2)),
 }
 TRAP_RATE = {"d1": 0.0, "d2": 0.5, "d3": 0.8}
+# Share of completed envelopes whose earlier 'sent' copy is already in the world. The same for every envelope a trigger
+# completes (fresh, escalation, signed after won; v1.2.0), so the copy says nothing about the trigger's kind.
+PENDING_SHARE = 0.7
 
 
 def iso(dt: datetime) -> str:
@@ -531,6 +534,11 @@ class Gen:
                              "status": "completed", "routing_order": "1"}],
                 "documents": [{"document_id": "1", "name": f"Order Form - {deal_name}.pdf", "pages": str(self.rng.randint(4, 14))}]}
 
+    def maybe_pending(self, env: dict):
+        """One rng draw per completed envelope, in event-building order: with PENDING_SHARE, world0 holds its 'sent' copy."""
+        if self.rng.random() < PENDING_SHARE:
+            self.envelopes[env["id"]] = self.pending_copy(env)
+
     def pending_copy(self, env: dict) -> dict:
         e = copy.deepcopy(env)
         e["status"] = "sent"
@@ -558,8 +566,7 @@ class Gen:
         signer = rng.choice(self.contacts_of(acct))
         completed = t - timedelta(minutes=rng.randint(1, 3))
         env = self.envelope(opp, signer, env_amount, opp["currency"], deal_name, with_id, completed, "euro-decimal" in kinds)
-        if rng.random() < 0.7:
-            self.envelopes[env["id"]] = self.pending_copy(env)
+        self.maybe_pending(env)
         data = {"event_id": self.hexid("evt_ds_", 12), "envelope_id": env["id"], "deal_name": deal_name,
                 "amount": env["custom_fields"]["Amount"], "currency": env["custom_fields"]["Currency"],
                 "completed_at": iso(completed)}
@@ -592,6 +599,7 @@ class Gen:
             signer = dict(real, email=f"{local}@{fake_dom}")
         completed = t - timedelta(minutes=rng.randint(1, 3))
         env = self.envelope(opp, signer, opp["amount"], "USD", name, False, completed, False)
+        self.maybe_pending(env)
         data = {"event_id": self.hexid("evt_ds_", 12), "envelope_id": env["id"], "deal_name": name,
                 "amount": env["custom_fields"]["Amount"], "currency": "USD", "completed_at": iso(completed)}
         return {"kind": "deal.signed", "sub": f"escalate-{sub}", "t": t, "app": "docusign", "event": "envelope_completed",
@@ -638,6 +646,7 @@ class Gen:
                 completed = t - timedelta(minutes=2)
                 env = self.envelope(opp, rng.choice(self.contacts_of(acct)), opp["amount"], opp["currency"], opp["name"],
                                     True, completed, False)
+                self.maybe_pending(env)
                 data = {"event_id": self.hexid("evt_ds_", 12), "envelope_id": env["id"], "deal_name": opp["name"],
                         "amount": env["custom_fields"]["Amount"], "currency": opp["currency"], "completed_at": iso(completed)}
                 ev = {"kind": "deal.repeat", "sub": sub, "t": t, "app": "docusign", "event": "envelope_completed", "data": data,

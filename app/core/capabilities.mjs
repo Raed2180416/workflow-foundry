@@ -6,11 +6,13 @@
 //   practice  outbox.send writes to a practice outbox and needs no approval; the practice registry therefore has another hash, and
 //             every dry run records which registry it ran against. A practice pass is evidence about the workflow, not about delivery.
 // "Delivery" is a local outbox file in both modes. Real e-mail or chat delivery needs a connector the spike does not have.
+// The template library adds local stand-ins for sheets and chat and row operations (./stand-ins.mjs), bound to a world directory.
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, existsSync, lstatSync } from 'node:fs';
 import path from 'node:path';
 import { createDefaultRegistry } from '../../src/capabilities.mjs';
 import { FoundryError } from '../../src/data.mjs';
+import { registerStandIns } from './stand-ins.mjs';
 
 const sha256 = text => createHash('sha256').update(text).digest('hex');
 const ITEM = { type: 'object', additionalProperties: false, required: ['title', 'status'],
@@ -25,10 +27,13 @@ function outboxFile(dir, messageId) {
   return path.join(dir, `${messageId}.json`);
 }
 
-/** The live or practice registry: the core tools plus report.tally, outbox.send and outbox.check. */
-export function appRegistry({ mode, outboxDir }) {
+/** The live or practice registry: the core tools plus report.tally, outbox.send and outbox.check, and the local stand-ins (sheets, chat,
+ *  row operations, audits) bound to `worldDir` (default: a `world` directory beside the outbox). */
+export function appRegistry({ mode, outboxDir, worldDir = null }) {
   if (!['live', 'practice'].includes(mode)) throw new FoundryError('APP_REGISTRY', 'mode is live or practice');
   if (typeof outboxDir !== 'string' || !path.isAbsolute(outboxDir)) throw new FoundryError('APP_REGISTRY', 'outboxDir must be an absolute path');
+  const world = worldDir ?? path.join(path.dirname(outboxDir), 'world');
+  if (!path.isAbsolute(world)) throw new FoundryError('APP_REGISTRY', 'worldDir must be an absolute path');
   const registry = createDefaultRegistry();
   const base = { version: '1', risk: 'low', maxTimeoutMs: 10000, cost: 0, cancellation: 'cooperative', requiresApproval: false };
   registry.register({ ...base, name: 'report.tally', implementation: 'foundry-surface-spike/report.tally', effects: 'none',
@@ -72,5 +77,6 @@ export function appRegistry({ mode, outboxDir }) {
       return actual === expected ? { pass: true, score: 1, reasons: ['The delivered text is byte-for-byte the saved report'] }
         : { pass: false, score: 0, reasons: ['The delivered text differs from the saved report'] };
     } });
+  registerStandIns(registry, { mode, outboxDir, worldDir: world, base });
   return registry;
 }

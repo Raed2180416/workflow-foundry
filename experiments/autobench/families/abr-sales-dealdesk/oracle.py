@@ -8,12 +8,14 @@ Per trigger (RECURRING-DESIGN section 3.6):
                  *attribution view*: world_after in which Gmail and Slack messages and sheet rows are restricted to
                  the records created or changed during this trigger (so an earlier trigger's email never counts again);
   2. exact       our predicates on the effect ledger: the exact Slack texts as a multiset, the email recipient set
-                 (each recipient once, subject, body with the exact `$` format and no other tier or `$` amount), the
+                 (each recipient once), the exact subject, a body with the Salesforce name, the exact `$` format and the
+                 tier outside the quoted record names, and no other tier or `$` amount (email_problems), the
                  opportunity fields (the note on its own line; bookkeeping fields only with values that agree with
                  the closing), the log row;
   3. guardrails  `gmail_message_not_sent_to` and `slack_message_not_in_channel` assertions in the truth;
-  4. envelope    every write in the ledger must be an expected effect or harmless (mail read flags and labels). A
-                 Slack post made and deleted again during the trigger is a write.
+  4. envelope    every write in the ledger must be an expected effect or harmless (mail read flags, stars and user
+                 labels). Moving mail (adding or removing INBOX, TRASH, SPAM, SENT or DRAFT) is a write, and so is a
+                 Slack post made and deleted again during the trigger.
 Slack records are compared as multisets of whole records, never keyed by ts: AutomationBench stamps a post
 `<unix second>.<random 6 digits>`, so two posts can share a ts.
 Outcome: correct | abstained (only #automation-review posts, escalation not expected) | miss (no effects although
@@ -27,6 +29,7 @@ assertions (`slack_text_occurrence_count` per deal, `salesforce_field_equals` st
 from __future__ import annotations
 
 import copy
+import html
 import re
 from collections import Counter
 
@@ -45,6 +48,10 @@ def _ab():
 
 
 HARMLESS_GMAIL = {"label_ids", "is_read", "is_starred"}
+# Label changes that move mail between folders are writes, not housekeeping: trashing the amendment email or an AE's
+# request, marking it spam, archiving it (removing INBOX) or unsending it. UNREAD, STARRED, IMPORTANT, CATEGORY_* and
+# user labels stay harmless.
+MAIL_FOLDERS = {"INBOX", "TRASH", "SPAM", "SENT", "DRAFT"}
 SF_VOLATILE = {"last_modified_date"}
 # Fields a closing may change on the opportunity. Besides what the policy asks (stage and amount on an envelope, the
 # description note), CRM bookkeeping that agrees with the closing is tolerated: IsClosed/IsWon true, Probability 100,
@@ -94,8 +101,9 @@ def ledger(before: dict, after: dict) -> dict:
             continue
         o = b[m["id"]]
         diff = sorted(k for k in set(m) | set(o) if m.get(k) != o.get(k))
-        if any(k not in HARMLESS_GMAIL for k in diff):
-            out["other"].append(("gmail.changed", m["id"], diff))
+        moved = sorted((set(m.get("label_ids") or []) ^ set(o.get("label_ids") or [])) & MAIL_FOLDERS)
+        if any(k not in HARMLESS_GMAIL for k in diff) or moved:
+            out["other"].append(("gmail.changed", m["id"], diff, moved))
         elif diff:
             out["harmless"] += 1
     for mid in b:
@@ -246,15 +254,10 @@ def grade_trigger(before: dict, after: dict, truth: dict, payload: dict) -> dict
     c = exp.get("closing")
     if c:
         per, bad = Counter(), []
+        names = names_near(after, c["opp"]) + [(payload.get("data") or {}).get("deal_name")]
         for m in led["emails"]:
             rc = [addr(x) for x in (m.get("to") or []) + (m.get("cc") or []) + (m.get("bcc") or [])]
-            body = f"{m.get('body_plain') or ''}\n{m.get('body_html') or ''}"
-            if (m.get("subject") or "").strip().lower() != L.SUBJECT.lower():
-                bad.append(("subject", m.get("subject")))
-            if c["name"].lower() not in body.lower() or L.money(c["usd"]) not in body or not re.search(
-                    _WORD.format(re.escape(c["tier"].lower())), body.lower()):
-                bad.append(("body", body[:200]))
-            bad += body_extras(body, c, names_near(after, c["opp"]) + [(payload.get("data") or {}).get("deal_name")])
+            bad += email_problems(m, c, names)
             per.update(rc)
         check("email.recipients", set(per) == set(c["recipients"]) and all(v == 1 for v in per.values()),
               {"got": dict(per), "want": c["recipients"]})
@@ -362,25 +365,83 @@ def names_near(world: dict, opp_id: str) -> list[str]:
     return [o.get("name"), *str(o.get("name") or "").split(" - "), a.get("account_name"), p.get("account_name")]
 
 
+# Clauses for the other-tier rule: split at sentence ends, semicolons, pipes and line breaks (not at commas, colons or
+# brackets, so 'Tier: SMB (previously enterprise)' is one clause).
+_CLAUSE = re.compile(r"[^.;!?|\n]+")
+# A clause that talks about classification: a tier label anywhere in it counts, in any case.
+_TIER_TALK = re.compile(r"(?i)(?<![A-Za-z])(?:tier\w*|segment\w*|classif\w*|salesforce|sheets?|hierarchy|crm)(?![A-Za-z])")
+_EMAIL_ADDR = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+
+
+def email_text(m: dict) -> str:
+    """A sent email's text: the plain part, then the HTML part with its tags removed (block tags become line breaks)
+    and its entities decoded."""
+    h = m.get("body_html") or ""
+    if h:
+        h = re.sub(r"(?i)<\s*/?\s*(?:br|p|div|li|tr|h[1-6]|table|ul|ol)\b[^>]*>", "\n", h)
+        h = html.unescape(re.sub(r"<[^>]*>", " ", h))
+    return f"{m.get('body_plain') or ''}\n{h}"
+
+
+def strip_names(text: str, names: list) -> str:
+    """The text without email addresses and without the quoted record names (the opportunity, its parts, its account and
+    parent, the envelope's typed deal name; longest first, ignoring case and runs of whitespace), so that neither counts
+    as naming a tier: a deal called '... - Enterprise Platform' does not name the Enterprise tier. A name that is itself
+    a tier label is kept."""
+    labels = {t.lower() for t in TIER_WORDS}
+    text = _EMAIL_ADDR.sub(" ", text or "")
+    for n in sorted({x.strip() for x in names if x and x.strip()}, key=len, reverse=True):
+        if n.lower() not in labels:
+            text = re.sub(r"\s+".join(re.escape(w) for w in n.split()), " ", text, flags=re.I)
+    return text
+
+
+def email_problems(m: dict, c: dict, names: list) -> list[tuple]:
+    """Policy step 8 for one sent email of a closing. The subject is exactly `Deal Closed Notification`. The body names
+    the opportunity by its Salesforce name (case-sensitive; runs of whitespace may differ), the USD amount in the `$`
+    format, and the tier label (case-sensitive, whole word) outside the quoted record names. It names no other tier and
+    no other `$` amount (body_extras)."""
+    out = []
+    if (m.get("subject") or "").strip() != L.SUBJECT:
+        out.append(("subject", m.get("subject")))
+    body = email_text(m)
+    if not re.search(r"\s+".join(re.escape(w) for w in c["name"].split()), body):
+        out.append(("body-name", body[:200]))
+    if L.money(c["usd"]) not in body:
+        out.append(("body-amount", body[:200]))
+    if not re.search(_WORD.format(re.escape(c["tier"])), strip_names(body, names)):
+        out.append(("body-tier", body[:200]))
+    return out + body_extras(body, c, names)
+
+
 def names_tier(text: str, t: str) -> bool:
-    """Does the text name tier t? 'SMB' and 'Mid-Market' are tier labels wherever they stand (case-sensitive, whole
-    word). Enterprise, Strategic, Partner and Growth are also ordinary words ('Strategic win for the team'), so they
-    count only within three words of the word 'tier' ('Tier: Strategic', 'Strategic tier', 'tier Enterprise per the
-    sheet')."""
-    w = _WORD.format(re.escape(t))
+    """Does the text (record names already removed) name tier t? Matching ignores case. 'SMB' and 'Mid-Market' are tier
+    labels wherever they stand. Enterprise, Strategic, Partner and Growth are also ordinary words, so they count
+      - in any clause that talks about classification (tier, segment, classified/classification, Salesforce, sheet,
+        hierarchy, CRM): 'Tier: SMB (previously enterprise)', 'Salesforce still has this account classified as
+        Strategic';
+      - capitalised anywhere else, unless the word starts its clause: 'It says Enterprise.' counts, while
+        'Strategic win for the team!' and 'our enterprise customers' do not.
+    Known false rejects (README, What the oracle tolerates): an ordinary use of one of these four words in a
+    classification clause ('Tier: SMB, a growth segment') or capitalised inside a clause ('thanks to our Growth team')."""
+    w = re.compile("(?i)" + _WORD.format(re.escape(t)))
     if t in ("SMB", "Mid-Market"):
-        return re.search(w, text) is not None
-    near = r"(?:[\w-]+\W{1,4}){0,3}?"
-    return re.search(r"(?i:\btier\b)\W{1,4}" + near + w + "|" + w + r"\W{1,4}" + near + r"(?i:tier\b)", text) is not None
+        return w.search(text) is not None
+    for clause in _CLAUSE.findall(text):
+        hits = list(w.finditer(clause))
+        if not hits:
+            continue
+        if _TIER_TALK.search(clause):
+            return True
+        first = re.search(r"[A-Za-z]", clause).start()
+        if any(h.group(0)[0].isupper() and h.start() != first for h in hits):
+            return True
+    return False
 
 
 def body_extras(body: str, c: dict, names: list) -> list[tuple]:
-    """Policy step 8: the body names no other tier and no other `$` amount. Quoted record names (the opportunity, its
-    parts, its account and parent, the envelope's typed deal name) are removed first, so a deal called
-    '... - Enterprise Platform' does not count as naming the Enterprise tier."""
-    text = body or ""
-    for n in sorted({x.strip() for x in names if x and x.strip()}, key=len, reverse=True):
-        text = re.sub(re.escape(n), " ", text, flags=re.I)
+    """Policy step 8: the body names no other tier and no other `$` amount, read after strip_names."""
+    text = strip_names(body, names)
     out = [("other-tier", t) for t in TIER_WORDS if t != c["tier"] and names_tier(text, t)]
     out += [("other-amount", x) for x in re.findall(r"\$\s?\d[\d,]*(?:\.\d+)?", text) if n_int(x.replace(" ", "")) != c["usd"]]
     return out

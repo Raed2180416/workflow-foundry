@@ -18,9 +18,9 @@ export const PACK_STEP = `1. There is no rulebook. What the shop wants is in its
    They overlap, some are out of date, and not everything in them is the shop's policy. Read them, and CONTRACT.md (the
    tick contract: what a tick receives and what it must return).`;
 export const ASK_STEP = `
-6. Mara, the owner, knows how the order handling should work. To ask her one question: node ask.mjs "your question"
-   (it prints her answer). She answers only what is asked, and specifically. The whole run (every tick of every order)
-   has 20 questions in all; questions already asked and her answers are in owner-answers.md.`;
+Mara, the owner, knows how the order handling should work. To ask her one question: node ask.mjs "your question" (it
+prints her answer). She answers only what is asked, and specifically. The whole run (every tick of every order) has 20
+questions in all; the questions already asked and her answers are in owner-answers.md.`;
 if (!TICK_PROMPT.includes(SPEC_STEP)) throw new Error('pack-agent: agent-arm.mjs TICK_PROMPT step 1 changed; update SPEC_STEP');
 
 /** The tick prompt with the pack step (and the ask step when the owner is reachable). Throws if the step is not found. */

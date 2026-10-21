@@ -280,9 +280,21 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
         mut("extra-recipient", lambda a: a["gmail"]["messages"][em[0]].__setitem__("cc", [other]))
         mut("email-amount-format", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", r"\$(\d{1,3}),(\d{3})", r"$\1\2"))
         mut("email-subject", lambda a: a["gmail"]["messages"][em[0]].__setitem__("subject", "Deal closed"))
-        if (truth["expect"].get("closing") or {}).get("tier"):
-            wrong_tier = next(t for t in O.TIER_WORDS if t != truth["expect"]["closing"]["tier"])
+        mut("email-subject-case", lambda a: a["gmail"]["messages"][em[0]].__setitem__("subject", L.SUBJECT.lower()))
+        cl = truth["expect"].get("closing") or {}
+        if cl.get("tier"):
+            tier = cl["tier"]
+            wrong_tier = next(t for t in O.TIER_WORDS if t != tier)
+            far = "Strategic" if tier != "Strategic" else "Enterprise"
             mut("email-other-tier", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", r"$", f"\nSalesforce tier: {wrong_tier}"))
+            # hedges (review of v1.1.0): another tier in lower case next to the right one, and a capitalised one far from 'tier'
+            mut("email-other-tier-lower", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", rf"Tier: {re.escape(tier)}\n",
+                                                         f"Tier: {tier} (previously {wrong_tier.lower()})\n"))
+            mut("email-other-tier-far", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", r"$",
+                                                       f"\nNote: Salesforce still has this account classified as {far}."))
+            # no tier line: the deal's name may contain the tier word ('... - Enterprise Platform'), which does not count
+            mut("email-omit-tier", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", rf"Tier: {re.escape(tier)}\n", ""))
+            mut("email-name-case", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", re.escape(cl["name"]), cl["name"].lower()))
             mut("email-other-amount", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", r"$", "\nList price: $1,000"))
     if sl:
         mut("drop-slack", lambda a: a["slack"]["messages"].pop(sl[-1]))
@@ -340,6 +352,14 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
                                                                     "channel_id": L.CHANNELS["exec-wins"], "text": "CLOSED: test", "is_deleted": True}))
     mut("sink-post", lambda a: a["slack"]["messages"].append({**copy.deepcopy(a["slack"]["messages"][0]), "ts": "1999999999.000003",
                                                              "channel_id": L.CHANNELS["automation-review"], "text": "checked"}))
+    # moving inbox mail is a write, not housekeeping (review of v1.1.0): trash or archive the newest inbox email
+    inbox = [i for i, m in enumerate(after["gmail"]["messages"]) if "INBOX" in (m.get("label_ids") or [])]
+    if inbox:
+        def relabel(a, add):
+            m = a["gmail"]["messages"][inbox[-1]]
+            m["label_ids"] = [x for x in m["label_ids"] if x != "INBOX"] + add
+        mut("trash-mail", lambda a: relabel(a, ["TRASH"]))
+        mut("archive-mail", lambda a: relabel(a, []))
     return out
 
 

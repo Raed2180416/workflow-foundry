@@ -10,7 +10,7 @@ import re
 from decimal import ROUND_HALF_UP, Decimal
 
 FAMILY = "abr-sales-dealdesk"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 APPS = ["salesforce", "docusign", "google_sheets", "gmail", "slack"]
 
 ORG = "company.example.com"
@@ -59,9 +59,10 @@ def to_usd(amount: Decimal, rate: Decimal | None) -> int:
 
 
 def parse_amount(text: str) -> Decimal:
-    """An envelope amount as typed: '125000', '125,000.00', '125.000,00' (comma decimal mark)."""
+    """An envelope amount as typed: '125000', '125,000.00', '125.000,00' or '125.000,5'. A comma before one or two final
+    digits is the decimal mark, the same rule as reference.parse_amount (aligned in v1.2.0)."""
     s = str(text).strip().replace(" ", "").replace(" ", "")
-    if re.search(r",\d{2}$", s):  # comma decimal mark
+    if re.search(r",\d{1,2}$", s):  # comma decimal mark
         s = s.replace(".", "").replace(",", ".")
     else:
         s = s.replace(",", "")
