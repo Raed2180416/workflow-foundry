@@ -10,6 +10,7 @@ import { checkData, clone, digest, errorData, FoundryError } from './data.mjs';
 import { TrialRunner } from './trials.mjs';
 import { loadPolicy } from './models/policy.mjs';
 import { cancelRun, stopAll } from './control.mjs';
+import { remedyOf } from './verdict.mjs';
 
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skillRoot = path.join(packageRoot, 'skills');
@@ -92,9 +93,10 @@ export class Foundry {
       limits: ['Local completion is not independent task qualification.', 'Proprietary-product equivalence and arbitrary worst-case robustness are not established.']
     };
   }
+  // `remedy` (orch-20261021 rank 15): for a run that stopped or is parked, the cause, whether it can continue and the next action.
   publicRun(run) {
     const { policy, extra, owner, ...visible } = run;
-    return { ...visible, executionActive: !!owner, independentTaskVerified: false };
+    return { ...visible, executionActive: !!owner, independentTaskVerified: false, remedy: remedyOf(run) };
   }
   inspectRun(id) { return { ...this.publicRun(this.store.run(id)), events: this.store.events(id) }; }
   // Only the documented run options pass through; fault injection (extra) stays a trusted test-only path.

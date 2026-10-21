@@ -64,21 +64,84 @@ function succeeded(run, workflow) {
   return result('pass', 'Run succeeded and its acceptance gated on a check that a wrong answer can fail', null, extra);
 }
 
+// What the user can do after a stop (orch-20261021 rank 15; Conductor's failure contract): for each stop code, whether the run can continue
+// and the next action, in words that name a real command. A run that stopped on a code not listed is a harness or workflow failure.
+const remedy = (continuable, action, text) => Object.freeze({ continuable, action, text });
+const OUTAGE = remedy(true, 'resume', 'The model provider or the network failed, not the workflow; resume the run (foundry resume RUN) once it is back. Completed work is kept.');
+const HOST = remedy(true, 'fix-host', 'The host failed, not the workflow; fix it, then resume the run (foundry resume RUN). Completed work is kept.');
+const CHECK = remedy(false, 'repair', 'Final: a check failed, so the answer is not established and this run cannot continue; inspect the failed check (foundry inspect RUN), repair the workflow or its input, then start a new run.');
+const budget = name => remedy(false, 'raise-budget', `Final: the run's budget is bound when it is created, so this run cannot continue; raise ${name} (the workflow budget or the host policy) and start a new run. Completed work stays in the record.`);
+export const REMEDIES = Object.freeze({
+  MODEL_RATE_LIMIT: remedy(true, 'resume-after', 'The provider limited the rate or the usage; resume the run (foundry resume RUN) after the limit resets. Completed work is kept.'),
+  ...Object.fromEntries(ENV_FAULT_CODES.filter(code => !['MODEL_RATE_LIMIT', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE'].includes(code)).map(code => [code, OUTAGE])),
+  SANDBOX_UNAVAILABLE: remedy(true, 'fix-host', 'The code sandbox could not start; enable user, mount and pid namespaces on the host, then resume the run (foundry resume RUN).'),
+  STORAGE_FULL: remedy(true, 'free-space', 'The workspace disk is full; free space, then resume the run (foundry resume RUN). The failed write committed nothing.'),
+  STORAGE_UNAVAILABLE: HOST,
+  COST_BUDGET: budget('maxCost'), TOKEN_BUDGET: budget('maxTokens'), STEP_BUDGET: budget('maxSteps'),
+  DEADLINE: budget('maxDurationMs'), WAIT_DEADLINE: budget('maxDurationMs'),
+  WAIT_TIMEOUT: remedy(false, 'rerun', 'Final: the awaited event did not arrive within its declared bound, so this run cannot continue; start a new run when the event can arrive in time.'),
+  STATE_VERSION_CONFLICT: remedy(false, 'rerun', 'Final: another writer changed the shared state first, so this run cannot continue; start a new run to act on the current state.'),
+  STATE_FULL: remedy(false, 'rerun', 'Final: the shared state slot is full, so this run cannot continue; make room under its declared bound, then start a new run.'),
+  VERIFY_FAILED: CHECK, ACCEPTANCE_FAILED: CHECK, ASSERTION_FAILED: CHECK, NODE_CHECK_FAILED: CHECK, LOOP_EXHAUSTED: CHECK,
+  CANCELLED: remedy(false, 'none', 'Final: the run was cancelled and cannot continue; start a new run if the work is still wanted.')
+});
+const HARNESS = remedy(false, 'investigate', 'Final: the harness or the workflow failed and this run cannot continue; inspect it (foundry inspect RUN, foundry verify-run RUN), fix the cause, then start a new run.');
+const at = ms => Number.isFinite(ms) ? new Date(ms).toISOString() : 'its retry time';
+const statesOf = run => [['root', run.nodes ?? {}], ...Object.entries(run.frames && typeof run.frames === 'object' ? run.frames : {}).map(([key, frame]) => [key, frame?.nodes ?? {}])]
+  .flatMap(([frame, nodes]) => Object.entries(nodes).map(([id, state]) => ({ nodeKey: `${frame}/${id}`, state })));
+
+/** What the record tells the user about a stop, for a run of any status: {code, cause, continuable, action, text, ...}, or null for a run
+ *  that succeeded or is still running. Pure function of the record (no clock): the CLI prints it and terminal verdicts seal it. */
+export function remedyOf(run) {
+  if (!run || typeof run !== 'object' || ['succeeded', 'running', 'pending'].includes(run.status)) return null;
+  const states = statesOf(run), code = run.error?.code ?? null, cause = run.error?.message ?? null;
+  if (run.status === 'uncertain') {
+    const effects = states.filter(s => s.state?.status === 'uncertain').map(s => ({ nodeKey: s.nodeKey, tool: s.state.tool ?? null }));
+    const named = effects.map(e => `${e.nodeKey}${e.tool ? ` (${e.tool})` : ''}`).join(', ') || 'the effect in flight';
+    return { code: code ?? 'EFFECT_UNCERTAIN', cause: cause ?? 'An effect may or may not have happened', continuable: false, action: 'reconcile', effects,
+      text: `Check whether ${named} took effect in the external system it targets: only that system's owner can say, Foundry cannot. The run cannot continue until the effect is reconciled there; if it did not happen, start a new run.` };
+  }
+  if (run.status === 'awaiting_human') {
+    const keys = states.filter(s => s.state?.status === 'awaiting_human').map(s => s.nodeKey);
+    return { code: 'AWAITING_HUMAN', cause: `A person's answer is needed at ${keys.join(', ') || 'a human node'}`, continuable: true, action: 'answer', nodeKeys: keys,
+      text: `The run can continue: answer ${keys[0] ?? 'the question'} (foundry answer RUN --node ${keys[0] ?? 'KEY'} --answer JSON), then resume it (foundry resume RUN).` };
+  }
+  if (run.status === 'awaiting_approval') {
+    const ids = Object.entries(run.approvals ?? {}).filter(([, a]) => a?.status === 'pending' || a?.approved == null).map(([id]) => id);
+    return { code: 'AWAITING_APPROVAL', cause: 'An effect waits for an approval', continuable: true, action: 'approve', approvalIds: ids,
+      text: `The run can continue: approve or reject the pending effect (foundry approve RUN ${ids[0] ?? 'APPROVAL_ID'} --approved|--rejected), then resume it (foundry resume RUN).` };
+  }
+  if (run.status === 'waiting') {
+    const parked = states.filter(s => s.state?.status === 'waiting' && s.state.parked).map(s => ({ nodeKey: s.nodeKey, ...s.state.parked }));
+    if (parked.length) {
+      const first = parked.reduce((a, b) => (b.retryAt < a.retryAt ? b : a)), base = REMEDIES[first.code] ?? OUTAGE;
+      return { code: first.code, cause: first.message ?? first.code, continuable: true, action: 'resume-after', retryAt: first.retryAt, parked,
+        text: `Parked, not failed: ${first.nodeKey} hit ${first.code}. The run can continue and resumes after ${at(first.retryAt)} (foundry tick, or foundry resume RUN after that time). ${base.text}` };
+    }
+    return { code: 'WAITING', cause: 'The run waits for a timer or a signal', continuable: true, action: 'wait',
+      text: 'The run can continue: it resumes when its timer is due or its signal arrives (foundry tick; foundry signal RUN for a signal).' };
+  }
+  const r = REMEDIES[code] ?? HARNESS;
+  return { code, cause, ...r };
+}
+
 // `discovery` comes from the workflow (§1.5); confirmed findings are entries with confirmed:true,
 // or a count supplied by the caller that confirmed them. `workflow` also carries the acceptance contract:
 // without it a succeeded run cannot be a `pass`.
 export function verdictOf(run, { workflow, discovery = workflow?.discovery ?? run?.discovery, findings = run?.findings } = {}) {
   if (!run || typeof run !== 'object') throw new FoundryError('VERDICT_INPUT', 'A run record is required');
   if (!terminal.has(run.status)) throw new FoundryError('RUN_NOT_TERMINAL', `Run status ${run.status} has no verdict yet`);
-  if (run.status === 'uncertain') return result('uncertain', 'An effect may or may not have happened; reconciliation is required', run.error?.code ?? null);
   if (run.status === 'succeeded') {
     const count = confirmed(findings);
     if (discovery === true && count > 0) return result('finding', `Discovery workflow succeeded with ${count} confirmed finding${count === 1 ? '' : 's'}`);
     return succeeded(run, workflow);
   }
+  // Every stop carries its remedy (rank 15): whether the run can continue and the next action. It is sealed with the verdict.
+  const { continuable, action, text } = remedyOf(run), remedied = { remedy: { continuable, action, text } };
+  if (run.status === 'uncertain') return result('uncertain', 'An effect may or may not have happened; reconciliation is required', run.error?.code ?? null, remedied);
   const code = run.error?.code ?? null;
-  if (run.status === 'cancelled') return result('inconclusive', `Run was stopped before reaching a decision${code ? ` (${code})` : ''}`, code);
-  if (inconclusive.has(code)) return result('inconclusive', `A check or budget stopped the run without a decision (${code})`, code);
-  if (env.has(code)) return result('env_fault', `The environment failed, not the workflow (${code})`, code);
-  return result('harness_fault', `The harness or workflow failed (${code ?? 'no error code'})`, code);
+  if (run.status === 'cancelled') return result('inconclusive', `Run was stopped before reaching a decision${code ? ` (${code})` : ''}`, code, remedied);
+  if (inconclusive.has(code)) return result('inconclusive', `A check or budget stopped the run without a decision (${code})`, code, remedied);
+  if (env.has(code)) return result('env_fault', `The environment failed, not the workflow (${code})`, code, remedied);
+  return result('harness_fault', `The harness or workflow failed (${code ?? 'no error code'})`, code, remedied);
 }

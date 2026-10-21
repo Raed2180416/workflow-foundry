@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AUTHORITY, AUTHORITY_FLAGS, authorityOf, ENV_FAULT_CODES, INCONCLUSIVE_CODES, UNVERIFIED_CODES, VERDICTS, verdictOf } from '../src/verdict.mjs';
+import { AUTHORITY, AUTHORITY_FLAGS, authorityOf, ENV_FAULT_CODES, INCONCLUSIVE_CODES, REMEDIES, remedyOf, UNVERIFIED_CODES, VERDICTS, verdictOf } from '../src/verdict.mjs';
 
 // R-17: a succeeded run is a pass only if its acceptance can fail a wrong answer. These tests are about the verdict mapping, so
 // the workflows they pass in hold a predicate that gates.
@@ -83,7 +83,7 @@ test('verdict: a succeeded run is unverified unless its acceptance gates; eviden
 });
 
 test('verdict: checks, loops, budgets, deadlines, lost state compare-and-swaps, full state slots and failing wait timeouts are inconclusive', () => {
-  assert.deepEqual([...INCONCLUSIVE_CODES], ['VERIFY_FAILED', 'ACCEPTANCE_FAILED', 'ASSERTION_FAILED', 'NODE_CHECK_FAILED', 'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'DEADLINE',
+  assert.deepEqual([...INCONCLUSIVE_CODES], ['VERIFY_FAILED', 'ACCEPTANCE_FAILED', 'ASSERTION_FAILED', 'NODE_CHECK_FAILED', 'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'TOKEN_BUDGET', 'DEADLINE',
     'STATE_VERSION_CONFLICT', 'STATE_FULL', 'WAIT_TIMEOUT', 'WAIT_DEADLINE']);
   for (const code of INCONCLUSIVE_CODES) check(failed(code), 'inconclusive', code);
 });
@@ -122,4 +122,40 @@ test('verdict: authority vocabulary maps to ARC states and never grants authorit
   assert.deepEqual({ ...AUTHORITY_FLAGS }, { grantsActionAuthority: false, establishesCompletion: false });
   assert.ok(Object.isFrozen(AUTHORITY) && Object.isFrozen(AUTHORITY_FLAGS));
   assert.throws(() => { 'use strict'; AUTHORITY_FLAGS.grantsActionAuthority = true; }, TypeError);
+});
+
+// orch-20261021 rank 15 (chaos G1): every stop says whether the run can continue and what to do next; terminal verdicts seal it.
+test('remedy: every stop code names continuability and a next action; terminal verdicts carry it, success and running runs have none', () => {
+  for (const code of [...ENV_FAULT_CODES, ...INCONCLUSIVE_CODES, 'CANCELLED']) {
+    const r = REMEDIES[code];
+    assert.ok(r, `a remedy for ${code}`);
+    assert.equal(typeof r.continuable, 'boolean'); assert.ok(r.action && r.text.length > 20);
+    assert.match(r.text, r.continuable ? /resume/ : /Final|cannot continue/, code);
+  }
+  for (const code of ['MODEL_RATE_LIMIT', 'STORAGE_FULL', 'COST_BUDGET', 'TOKEN_BUDGET', 'MODEL_PROTOCOL']) {
+    const v = verdictOf({ status: 'failed', error: { code, message: 'x' } }, { workflow: gating });
+    assert.deepEqual(v.remedy, (({ continuable, action, text }) => ({ continuable, action, text }))(remedyOf({ status: 'failed', error: { code } })), code);
+  }
+  assert.equal(verdictOf({ status: 'failed', error: { code: 'STORAGE_FULL' } }).remedy.action, 'free-space');
+  assert.equal(verdictOf({ status: 'failed', error: { code: 'COST_BUDGET' } }).remedy.continuable, false);
+  assert.equal(verdictOf({ status: 'failed', error: { code: 'MODEL_PROTOCOL' } }).remedy.action, 'investigate', 'an unlisted code is a harness failure to investigate');
+  assert.equal(verdictOf({ status: 'succeeded', nodes: { a: { status: 'completed' } }, outputs: { a: { total: 3 } } }, { workflow: gating }).remedy, undefined);
+  for (const status of ['succeeded', 'running', 'pending']) assert.equal(remedyOf({ status }), null);
+});
+
+test('remedy: a parked, a questioning, an approving and an uncertain run each say what continues them', () => {
+  const parked = remedyOf({ status: 'waiting', nodes: { a: { status: 'waiting', parked: { code: 'MODEL_RATE_LIMIT', message: 'a: 429', retryAt: Date.parse('2026-10-21T15:00:00Z') } } }, frames: {} });
+  assert.deepEqual([parked.code, parked.continuable, parked.action, parked.retryAt], ['MODEL_RATE_LIMIT', true, 'resume-after', Date.parse('2026-10-21T15:00:00Z')]);
+  assert.match(parked.text, /Parked, not failed: root\/a .*2026-10-21T15:00:00.000Z/);
+  const timer = remedyOf({ status: 'waiting', nodes: { w: { status: 'waiting' } } });
+  assert.deepEqual([timer.code, timer.action], ['WAITING', 'wait']);
+  const human = remedyOf({ status: 'awaiting_human', nodes: {}, frames: { 'root/m:0': { nodes: { ask: { status: 'awaiting_human' } } } } });
+  assert.deepEqual([human.code, human.continuable, human.nodeKeys], ['AWAITING_HUMAN', true, ['root/m:0/ask']]);
+  assert.match(human.text, /foundry answer RUN --node root\/m:0\/ask/);
+  const approval = remedyOf({ status: 'awaiting_approval', approvals: { ap1: { status: 'pending' } } });
+  assert.deepEqual([approval.code, approval.approvalIds], ['AWAITING_APPROVAL', ['ap1']]);
+  const doubt = remedyOf({ status: 'uncertain', error: null, nodes: { pay: { status: 'uncertain', tool: 'billing.charge' } } });
+  assert.deepEqual([doubt.code, doubt.continuable, doubt.action, doubt.effects], ['EFFECT_UNCERTAIN', false, 'reconcile', [{ nodeKey: 'root/pay', tool: 'billing.charge' }]]);
+  assert.match(doubt.text, /Check whether root\/pay \(billing.charge\) took effect/);
+  assert.equal(verdictOf(doubt && { status: 'uncertain', nodes: { pay: { status: 'uncertain', tool: 'billing.charge' } } }).remedy.action, 'reconcile');
 });
