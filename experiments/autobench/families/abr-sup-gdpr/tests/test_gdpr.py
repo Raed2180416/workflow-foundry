@@ -35,7 +35,7 @@ BRIDGE = FAMILY_DIR.parents[1] / "bridge.py"
 REVIEW_OPERATORS = {"ticket-tag-case", "ticket-other-tags-case", "ticket-prefix-spacing", "ticket-subject-padded",
                     "trash-own-sent", "post-trailing-period", "post-double-space", "log-at-seconds",
                     "log-request-id-case", "log-request-id-padded", "log-reference-case", "log-transition-case",
-                    "log-reference-semicolon"}
+                    "log-reference-semicolon", "log-at-other-offset"}
 # control -> trap labels (or trigger kinds) its broken rule must show up on
 ONE_DEFECT = {
     "any-sender": {"spoof-lookalike", "spoof-forward", "spoof-display", "spoof-colleague", "wrong-id"},
