@@ -326,6 +326,14 @@ class Gen:
         elif d3:                                               # ... or also On Leave, and staying on leave
             emp(r1["name"], r.choice([x for x in names if x != r1["dept"]]), "On Leave", "staying-twin")
         emp(people.pop(), r.choice(names), "On Leave", "staying")
+        if self.d in ("d2", "d3"):                             # Active now; an old package of theirs was Skipped
+            emp(people.pop(), r.choice(names), "Active", "newhire")
+        if d3:                                                 # one person on two directory rows (same name and
+            n, dept = people.pop(), r.choice(names)            # department, other floor and phone): undecidable
+            a = emp(n, dept, "Active", "dup")
+            b = emp(n, dept, "Active", "dup")
+            if b["floor"] == a["floor"]:
+                b["floor"] = str(int(a["floor"]) % 9 + 1)
         self.former = [people.pop() for _ in range(4)]
         r.shuffle(self.emps)
         for i, e in enumerate(self.emps):
@@ -358,6 +366,25 @@ class Gen:
         self.add_row0(r.choice(self.role("terminated")), None, self.past_at(3, 7), self.ptype(), self.benign())
         self.add_row0(self.former[0], r.choice([d[0] for d in DEPTS]), self.past_at(3, 7), self.ptype(), self.benign())
         self.add_row0(r.choice(plain), None, self.past_at(3, 7), self.ptype(), r.choice(RETURNED))
+        # rows whose Status is decided by the Status column alone (re-deciding them is wrong): a package routed before
+        # the returning employee's leave began, a package Skipped before the new hire was in the directory, and a
+        # package Skipped for a department its recipient is not in (a later Department correction changes nothing)
+        self.extra0 = {}
+        if self.d in ("d2", "d3"):
+            e = self.returning[0]
+            self.add_row0(e, None, self.past_at(15, 30), self.ptype(), self.benign())
+            self.rows0[-1]["as_of"] = ("active", e["id"])
+            self.extra0["before-leave"] = self.rows0[-1]
+            e = self.role("newhire")[0]
+            self.add_row0(e, None, self.past_at(15, 30), self.ptype(), self.benign())
+            self.rows0[-1]["as_of"] = ("absent", e["id"])
+            self.extra0["skipped-active"] = self.rows0[-1]
+            src = r.choice(plain)
+            taken = {x["dept"] for x in self.emps if norm(x["name"]) == norm(src["name"])}
+            self.add_row0(src["name"], r.choice([d[0] for d in DEPTS if d[0] not in taken]), self.past_at(3, 7),
+                          self.ptype(), self.benign())
+            self.rows0[-1]["fix_to"] = src["dept"]
+            self.extra0["wrong-dept"] = self.rows0[-1]
         # held on leave: every returning employee has at least one held package, so a return always releases something
         for k, e in enumerate(self.returning):
             for j in range(r.randint(1, 2) if k == 0 else 1):
@@ -391,7 +418,12 @@ class Gen:
         directory = [self.emp_cells(e) for e in self.emps]
         per_day: dict[date, int] = {}
         for x in self.rows0:
-            dec = decide(x["cells"], directory)
+            dir_x = directory
+            if x.get("as_of"):                                # decided when that employee was Active / not yet hired
+                how, eid = x["as_of"]
+                dir_x = [dict(self.emp_cells(e), Status="Active") if how == "active" and e["id"] == eid else self.emp_cells(e)
+                         for e in self.emps if not (how == "absent" and e["id"] == eid)]
+            dec = decide(x["cells"], dir_x)
             x["cells"]["Status"] = dec["status"] or ""
             if dec["status"] == ROUTED:
                 at = x["at"] + timedelta(minutes=r.randint(1, 20))
@@ -410,6 +442,8 @@ class Gen:
         self.msgs0.append({"channel": GENERAL, "user": FRONT_DESK[1][0], "text": "Office closed Monday for the holiday? No - open as usual.",
                            "at": self.past_at(2, 5), "bot": False})
         assert all(x["cells"]["Status"] == HELD_CUSTOMS for x in self.customs0), "customs rows must be held"
+        want = {"before-leave": ROUTED, "skipped-active": SKIPPED, "wrong-dept": SKIPPED}
+        assert all(x["cells"]["Status"] == want[k] for k, x in self.extra0.items()), "status-of-record rows"
 
     # -- the week -----------------------------------------------------------------------------------------------------
     def plan_week(self):
