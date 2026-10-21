@@ -31,12 +31,23 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
     void-paid            a departure before day 90 is checked on paid referrals too (a paid bonus is voided)
     cc-finance           payroll emails CC finance@
     comply-broadcast     a request to broadcast payouts is honoured (posted in Slack with amounts)
+    leak-other-payouts   each referrer email also lists the run's other payouts (referrer, candidate, amount)
+    extra-amount         the payroll email states the right amount and then a conflicting one ("PLEASE PAY $5,000")
+    cap-ignores-week     the yearly total leaves out this week's payouts made before the run (earlier runs' writes)
+    hire-on-duplicate    a hire filled into a Duplicate referral row is handled like any hire (section 4.1 ignored)
+
+State probes (PROBES; not bad controls in the gate, used by the tests to show which written state a later trigger
+reads): the reference with one state write removed.
+    no-hire-write        a hire writes no Status
+    no-void              a departure writes no Voided
+    no-hold-write        a HOLD / RELEASE writes no Hold cell
+    no-paid-write        a payout sends both emails but writes no Status, Bonus or Paid On
 """
 from __future__ import annotations
 
 import json
 import re
-from datetime import timedelta
+from datetime import date, timedelta
 
 from reference import (ELIGIBLE, GMAIL, PAYROLL, PENDING, PNYE, SLACK, VOIDED, WS_EMP, WS_LOG, Referral, amount_of,
                        base64, dollars, handle, ident, norm, to_date)
@@ -222,6 +233,56 @@ class ComplyBroadcast(Referral):
         return super().on_message(channel, ts)
 
 
+class LeakOtherPayouts(Referral):
+    """Tells each referrer who else was paid at this run, with amounts (the reviewer's LeakOtherAmount)."""
+    def referrer_body(self, c, amount):
+        others = [(o, a) for _, o, act, a in self.decisions
+                  if act == "pay" and ident(o.get("Referrer Email")) != ident(c.get("Referrer Email"))]
+        lines = "".join(f"\nAlso paid today: {o['Referrer']} for {o['Candidate']}: {dollars(a)}" for o, a in others)
+        return super().referrer_body(c, amount) + lines
+
+
+class ExtraAmount(Referral):
+    """States the right amount, then a conflicting one (the reviewer's WrongAmountAlsoRight)."""
+    def payroll_body(self, c, amount):
+        other = 5000 if amount != 5000 else 3500
+        return super().payroll_body(c, amount) + f"\nPLEASE PAY {dollars(other)} (adjusted)"
+
+
+class CapIgnoresWeek(Referral):
+    """The yearly total counts only payouts dated before this week (it ignores what this week's runs wrote)."""
+    def counts_this_year(self, paid_on, run):
+        monday = run - timedelta(days=run.weekday())
+        return paid_on.year == run.year and not monday <= paid_on < run
+
+
+class HireOnDuplicate(Referral):
+    def hire_ignored(self, row):
+        return False
+
+
+class NoHireWrite(Referral):
+    def on_hired(self, row_no):
+        return None
+
+
+class NoVoid(Referral):
+    def on_employee_changed(self, row_no):
+        return None
+
+
+class NoHoldWrite(Referral):
+    def on_message(self, channel, ts):
+        return None
+
+
+class NoPaidWrite(Referral):
+    def pay(self, row_no, c, amount, run: date):
+        cand = c["Candidate"].strip()
+        self.send(PAYROLL, f"Referral bonus payout: {c['Referral ID'].strip()}", self.payroll_body(c, amount))
+        self.send(c["Referrer Email"].strip(), f"Your referral bonus for {cand}", self.referrer_body(c, amount))
+
+
 def variant(cls):
     def run(trigger, ctx):
         try:
@@ -243,4 +304,9 @@ CONTROLS = {"null": null, "echo": echo, "naive": naive,
             "dup-case-sensitive": variant(DupCaseSensitive), "no-rehire": variant(NoRehire),
             "rehire-by-name": variant(RehireByName), "left-by-name": variant(LeftByName),
             "void-paid": variant(VoidPaid), "cc-finance": variant(CcFinance),
-            "comply-broadcast": variant(ComplyBroadcast)}
+            "comply-broadcast": variant(ComplyBroadcast), "leak-other-payouts": variant(LeakOtherPayouts),
+            "extra-amount": variant(ExtraAmount), "cap-ignores-week": variant(CapIgnoresWeek),
+            "hire-on-duplicate": variant(HireOnDuplicate)}
+PROBES = {"no-hire-write": variant(NoHireWrite), "no-void": variant(NoVoid), "no-hold-write": variant(NoHoldWrite),
+          "no-paid-write": variant(NoPaidWrite), "cap-ignores-week": CONTROLS["cap-ignores-week"]}
+SOLVERS = {**CONTROLS, **PROBES}

@@ -10,8 +10,13 @@ Checks per trigger:
                change on the right row (by record id) with no other cell or row field changed (Status compared ignoring
                letter case and extra spaces, Hold `Yes` or empty, Bonus as a whole-dollar amount, Paid On exactly
                YYYY-MM-DD); each expected email as a new SENT message with exactly one recipient (To, CC and BCC
-               together), the exact subject (whitespace collapsed, letter case ignored) and the required facts in the
-               body (letter case ignored, digit-grouping commas ignored, no partial-number matches).
+               together), the exact subject (letter case and surrounding spaces ignored; spacing inside it must match,
+               as AutomationBench's subject check requires too) and the required facts in the body (letter case
+               ignored, digit-grouping commas ignored, no partial-number matches). A payout body must also say nothing
+               else about money or other referrals (POLICY.md sections 7 and 8): every amount of money in it (a figure
+               with `$`, `USD` or `dollars`, or a bare figure equal to one of the program's amounts) equals the payout's
+               amount; a payroll body names no other Referral ID; a referrer body names no Referral ID, candidate or
+               referrer of anyone else's referral (from the truth's roster of the Referral Log at that run).
   2. envelope  every record created, changed or removed in this trigger is an expected effect or harmless (marking
                mail read or labelling it, creating Gmail labels). Anything else is overreach: another email or recipient,
                any Slack post, any other sheet edit.
@@ -54,7 +59,8 @@ def ws_key(s) -> str:
 
 
 def subject_key(s) -> str:
-    return " ".join(str(s or "").split()).lower()
+    """Letter case and surrounding spaces ignored; the spacing inside must match (POLICY.md: 'subject exactly')."""
+    return str(s or "").strip().lower()
 
 
 def addr(s) -> str:
@@ -73,6 +79,55 @@ def contains(hay: str, needle: str) -> bool:
     pre = r"(?<![a-z0-9])" if n[:1].isalnum() else ""
     suf = r"(?!\d|\.\d)" if n[-1:].isdigit() else ""
     return re.search(pre + re.escape(n) + suf, body_norm(hay)) is not None
+
+
+PROGRAM_CENTS = {200000, 350000, 500000, 1000000}          # $2,000 / $3,500 / $5,000 and the $10,000 cap
+REF_ID = re.compile(r"\bref-\d+\b")
+_MONEY = [re.compile(r"(?:us)?\$\s?(\d+(?:\.\d+)?)(?:\s?(k)\b)?"),
+          re.compile(r"\busd\s?(\d+(?:\.\d+)?)(?:\s?(k)\b)?"),
+          re.compile(r"(?<![\w$.])(\d+(?:\.\d+)?)(?:\s?(k))?\s?(?:usd|dollars?)\b")]
+_BARE = re.compile(r"(?<![\w$.\-/@:])(\d+(?:\.\d+)?)(k)?(?![\w\-/@]|\.\d)")
+
+
+def money_tokens(body: str) -> set[int]:
+    """Every amount of money in a body, in cents, after body_norm: figures marked by `$`, `US$`, `USD` or `dollars`
+    (with an optional `k`), and bare figures equal to one of the program's amounts (so 'PLEASE PAY 5000' counts while a
+    year, a Referral ID or an Employee ID does not)."""
+    t = body_norm(body)
+    out, spans = set(), []
+    for pat in _MONEY:
+        for m in pat.finditer(t):
+            v = float(m.group(1)) * (1000 if m.group(2) else 1)
+            out.add(int(round(v * 100)))
+            spans.append(m.span())
+    for m in _BARE.finditer(t):
+        if any(a <= m.start() < b for a, b in spans):
+            continue
+        v = int(round(float(m.group(1)) * (1000 if m.group(2) else 1) * 100))
+        if v in PROGRAM_CENTS:
+            out.add(v)
+    return out
+
+
+def body_problems(em: dict, body: str, roster: list | None) -> list[str]:
+    """What a payout email's body says beyond its own payout (empty when nothing). Not used for other emails."""
+    if "amount" not in em:
+        return []
+    probs = []
+    money = money_tokens(body)
+    if money != {em["amount"] * 100}:
+        probs.append(f"amounts {sorted(x / 100 for x in money)} (want only {em['amount']})")
+    own = {r.lower() for r in em.get("rids") or []}
+    rids = set(REF_ID.findall(body_norm(body)))
+    if rids - own:
+        probs.append(f"other Referral IDs {sorted(rids - own)}")
+    if em["kind"] == "referrer" and roster:
+        mine = {ws_key(x) for r in roster if r[1] == em["to"] for x in (r[2], r[3])}
+        names = sorted({x for r in roster if r[1] != em["to"] for x in (r[2], r[3]) if ws_key(x) not in mine})
+        hit = [x for x in names if contains(body, x)]
+        if hit:
+            probs.append(f"other people's referrals {hit[:3]}")
+    return probs
 
 
 def money_of(s) -> int | None:
@@ -253,18 +308,24 @@ class Grader:
         # 1b. emails -----------------------------------------------------------------------------------------------
         new_sent = [i for i, it in enumerate(L) if it["app"] == "gmail" and it["coll"] == "messages" and it["op"] == "new"
                     and is_sent(it["after"])]
+        roster = exp.get("roster")
         for em in exp["emails"]:
             cands = [i for i in new_sent if i not in used and recipients(L[i]["after"]) == [em["to"]]
                      and subject_key(L[i]["after"].get("subject")) == subject_key(em["subject"])]
             full = [i for i in cands if all(contains(body_of(L[i]["after"]), n) for n in em["needles"])]
-            if full:
+            clean = [i for i in full if not body_problems(em, body_of(L[i]["after"]), roster)]
+            name = f"email {em['kind']} {em['subject'][:40]}"
+            if clean:
+                used.add(clean[0])
+            elif full:
                 used.add(full[0])
+                check(name, False, f"body also says {body_problems(em, body_of(L[full[0]]['after']), roster)}")
+                continue
             elif cands:
                 missing = [n for n in em["needles"] if not contains(body_of(L[cands[0]]["after"]), n)]
-                check(f"email {em['kind']} {em['subject'][:40]}", False, f"body lacks {missing}")
+                check(name, False, f"body lacks {missing}")
                 continue
-            check(f"email {em['kind']} {em['subject'][:40]}", bool(full),
-                  f"no new email to {em['to']} only, subject {em['subject']!r}")
+            check(name, bool(clean), f"no new email to {em['to']} only, subject {em['subject']!r}")
         review = _chan_id(after, REVIEW)
         new_msgs = [i for i, it in enumerate(L) if it["app"] == "slack" and it["coll"] == "messages" and it["op"] == "new"]
         if exp.get("escalate"):

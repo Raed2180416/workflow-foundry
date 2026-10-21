@@ -105,13 +105,13 @@ class Ctx:
 
 
 def load_solver(name: str):
-    """'reference', a control name from controls.CONTROLS, or path/to/module.py[:function] (default handle)."""
+    """'reference', a control or probe name from controls.SOLVERS, or path/to/module.py[:function] (default handle)."""
     if name == "reference":
         import reference
         return reference.handle
     import controls
-    if name in controls.CONTROLS:
-        return controls.CONTROLS[name]
+    if name in controls.SOLVERS:
+        return controls.SOLVERS[name]
     path, _, fn = name.partition(":")
     spec = importlib.util.spec_from_file_location("solver_mod", path)
     mod = importlib.util.module_from_spec(spec)

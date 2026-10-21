@@ -918,6 +918,7 @@ class Gen:
         fixed += ["near-dup"] * {"d1": 0, "d2": 1, "d3": 1}[d]
         if d == "d3":
             fixed.append("flight-six")      # the 6-hour boundary appears every d3 week
+            fixed.append("hotel-intl")      # and the international nightly limit ($350, not $250)
         cap_in = d == "d3" or (d == "d2" and not self.cap_hist)
         cap_under = d == "d3"
         n_scen = ((3 if cap_in else 0) + (3 if cap_under else 0) + (1 if self.cap_hist else 0)

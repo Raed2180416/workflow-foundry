@@ -137,11 +137,14 @@ class Referral:
         row = dict(self.sheet(WS_LOG)).get(row_no)
         if row is None:
             raise LookupError(f"no Referral Log row {row_no}")
-        if norm(row.get("Status")) == norm(DUPLICATE):
+        if self.hire_ignored(row):
             return None
         hire = self.hire_date(row)
         rehire = self.is_rehire(row, hire, [c for _, c in self.sheet(WS_EMP)])
         self.set_cells(row_no, {"Status": REHIRE if rehire else PNYE})
+
+    def hire_ignored(self, row: dict) -> bool:                       # section 4.1
+        return norm(row.get("Status")) == norm(DUPLICATE)
 
     def hire_date(self, row: dict) -> date:
         return to_date(row.get("Hire Date"))
@@ -199,19 +202,30 @@ class Referral:
 
     # -- section 7: payout run ------------------------------------------------------------------------------------------
     def payout(self, run: date):
+        self.decisions = self.decide(run)
+        for n, c, action, amount in self.decisions:
+            if action == "cap":
+                self.set_cells(n, {"Status": CAPPED})
+            else:
+                self.pay(n, c, amount, run)
+
+    def decide(self, run: date) -> list[tuple[int, dict, str, int]]:
+        """[(row number, cells, 'pay' | 'cap', amount)] in row order; reads the sheets, writes nothing."""
         log = self.sheet(WS_LOG)
         emps = {ident(e.get("Employee ID")): e for _, e in self.sheet(WS_EMP)}
         totals = self.year_totals(log, run)
+        out = []
         for n, c in log:
             if not self.eligible(c, emps, run):
                 continue
             amount = self.amount(c)
             key = self.referrer_key(c)
             if self.over_cap(totals.get(key, 0), amount):
-                self.set_cells(n, {"Status": CAPPED})
+                out.append((n, c, "cap", amount))
                 continue
-            self.pay(n, c, amount, run)
+            out.append((n, c, "pay", amount))
             totals[key] = totals.get(key, 0) + amount
+        return out
 
     def referrer_key(self, c: dict) -> str:
         return ident(c.get("Referrer Email"))
@@ -249,10 +263,8 @@ class Referral:
         return bool(c.get("Hold", "").strip())
 
     def employee(self, c: dict, emps: dict) -> dict | None:
-        emp = emps.get(ident(c.get("Employee ID")))
-        if emp is None:
-            raise LookupError(f"{c.get('Referral ID')}: no Employees row {c.get('Employee ID')!r}")
-        return emp
+        """Section 7, condition 4: no Employees row with that Employee ID -> not eligible (None)."""
+        return emps.get(ident(c.get("Employee ID")))
 
     def due(self, c: dict, run: date) -> bool:
         return run >= self.hire_date(c) + timedelta(days=90)
@@ -267,15 +279,19 @@ class Referral:
         return {1: 2000, 2: 2000, 3: 3500, 4: 3500}[int(m.group(2))]
 
     def pay(self, row_no: int, c: dict, amount: int, run: date):
-        rid, cand, ref = c["Referral ID"].strip(), c["Candidate"].strip(), c["Referrer"].strip()
-        self.send(PAYROLL, f"Referral bonus payout: {rid}",
-                  f"Referral bonus payout {rid}\n\nReferrer: {ref} ({c['Referrer Email'].strip()})\n"
-                  f"Referred employee: {cand} ({c['Employee ID'].strip()})\nLevel: {c['Role Level'].strip()}\n"
-                  f"Amount: {dollars(amount)}\n\nPlease include it in the next payroll.")
-        self.send(c["Referrer Email"].strip(), f"Your referral bonus for {cand}",
-                  f"Hi {ref.split()[0]},\n\nThank you for referring {cand}. Your referral bonus of {dollars(amount)} "
-                  f"will be included in your next payroll.\n\nPeople Operations")
+        rid, cand = c["Referral ID"].strip(), c["Candidate"].strip()
+        self.send(PAYROLL, f"Referral bonus payout: {rid}", self.payroll_body(c, amount))
+        self.send(c["Referrer Email"].strip(), f"Your referral bonus for {cand}", self.referrer_body(c, amount))
         self.set_cells(row_no, {"Status": PAID, "Bonus": dollars(amount), "Paid On": run.isoformat()})
+
+    def payroll_body(self, c: dict, amount: int) -> str:              # section 7: these facts, nothing else
+        return (f"Referral bonus payout {c['Referral ID'].strip()}\n\nReferrer: {c['Referrer'].strip()} "
+                f"({c['Referrer Email'].strip()})\nReferred employee: {c['Candidate'].strip()} ({c['Employee ID'].strip()})\n"
+                f"Level: {c['Role Level'].strip()}\nAmount: {dollars(amount)}\n\nPlease include it in the next payroll.")
+
+    def referrer_body(self, c: dict, amount: int) -> str:             # the amount; nobody else's referral
+        return (f"Hi {c['Referrer'].strip().split()[0]},\n\nThank you for referring {c['Candidate'].strip()}. Your referral "
+                f"bonus of {dollars(amount)} will be included in your next payroll.\n\nPeople Operations")
 
 
 def handle(trigger: dict, ctx):

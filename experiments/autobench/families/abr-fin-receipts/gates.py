@@ -24,7 +24,8 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
                 the cap's own-row rule, two corrections in a thread, a relative date in a correction, a pre-approval
                 that survives a correction and one given while not pending, a Rejected row in a later cap and in the
                 weekly totals, a repeated and a not-pending approval, reposts and a near-duplicate read relative to
-                their own dates).
+                their own dates, a date correction rejected by the daily cap of its new date), plus a business flight of
+                exactly 6 hours and an international hotel.
   mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (since 1.1.0 also an Amount
                 cell as `$1,975.89`, `1,975.89`, `145.000` or `145`, and wrong or extra email lines behind list markers
                 or HTML).
@@ -73,7 +74,9 @@ DEV_RANGE = list(range(601, 651))
 # Every d3 week carries these states (generator 1.1.0; review 2026-10-21).
 D3_REQUIRED = ["correction-recheck", "correction-cap", "correction-own-row", "correction-multi", "correction-relative-date",
                "correction-preapproved", "correction-early-approval", "cap-rejected-row", "total-rejected-row",
-               "approval-again", "approval-not-pending", "repost-relative", "near-dup-relative"]
+               "approval-again", "approval-not-pending", "repost-relative", "near-dup-relative",
+               # the two boundary traps of the one-defect controls six-hours-ok and domestic-only
+               "flight-six", "hotel-intl"]
 TRAP_KINDS = ["T-format", "T-authority", "T-repeat", "T-lookalike", "T-state"]
 TRUTH_WORDS = ["traps", "truth", "expect", "lookalike", "look-alike", "oracle", "repost", "near-dup", "namesake",
                "wrong-approver", "wrong-corrector", "meal-cap", "cap-history", "cap-under", "display-name",
