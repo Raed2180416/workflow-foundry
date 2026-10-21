@@ -64,7 +64,9 @@ function validateRemoteChatProvider(name, p) {
 // CLI builds by about 165 tokens, see research/review-20261007/cli-flags-20261008/). A value is "1" (set) or null (removed from the child).
 // "0" is rejected: the CLI tests some of these variables for presence, so "0" does not reliably mean off (measured 2026-10-08:
 // CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 behaves exactly as =1, FORCE_PROMPT_CACHING_5M=0 as absent; cli-flags-20261008/zero-probe.json).
-export const CHILD_ENV_ALLOWED = Object.freeze(['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_ERROR_REPORTING', 'DISABLE_AUTOUPDATER']);
+// DISABLE_UPDATES (compromise C2, 2026-10-21): with DISABLE_AUTOUPDATER, keeps a CLI from replacing itself under a run (incident I3); the
+// pin by bytes is src/cli-pin.mjs. Neither changes the decoding.
+export const CHILD_ENV_ALLOWED = Object.freeze(['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_ERROR_REPORTING', 'DISABLE_AUTOUPDATER', 'DISABLE_UPDATES']);
 /** Check a childEnv block ({ NAME: "1" | null }); `where` names it in the error. Returns the block. */
 export function validateChildEnv(childEnv, where = 'childEnv') {
   // A plain object only: a Map or class instance has no enumerable entries and would pass as an empty block.

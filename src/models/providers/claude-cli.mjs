@@ -7,6 +7,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { FoundryError } from '../../data.mjs';
+import { resolveCli } from '../../cli-pin.mjs';
 import { runProcess } from '../../process.mjs';
 import { CHILD_ENV_ALLOWED, isPolicyModel, validateChildEnv } from '../policy.mjs';
 import { DECODING_BY_KIND, THINKING } from '../port.mjs';
@@ -19,7 +20,6 @@ export { THINKING };
 const SCRUBBED = SCRUBBED_ENV;
 // Rate limits, overload and subscription usage limits are environment faults, never model outcomes.
 const RATE = /\b(429|529)\b|overloaded|rate.?limit|usage limit|hit your (usage )?limit|limit reached/i;
-const versions = new Map();
 
 const fail = (code, message, extra = {}) => Object.assign(new FoundryError(code, message), extra);
 // Wait for a shared promise (the per-binary version probe), but stop waiting when this caller's signal aborts. The probe keeps
@@ -118,25 +118,32 @@ export function interpretResult(result, { modelId, stderr = '' } = {}) {
 export class ClaudeCliProvider {
   // childEnv: replaces the policy's `childEnv` block (an A/B measurement can pass nulls to switch the flags off); absent (undefined), the
   // policy block applies, and absent there the DEFAULT_CHILD_ENV. An explicit null is not "absent": it is refused like any non-object.
-  constructor({ policy, providerName = 'claude-cli', binary, maxBudgetUsd = 1, timeoutMs = 300000, env = process.env, maxOutputBytes = 8 * 1024 * 1024, childEnv } = {}) {
+  // cliLock (compromise C2, src/cli-pin.mjs): a lock file that pins the CLI by bytes; every call then runs the verified pinned binary by its
+  // absolute path, never the configured name on PATH. Default: FOUNDRY_CLI_LOCK in `env`; absent, the configured binary runs unpinned.
+  constructor({ policy, providerName = 'claude-cli', binary, maxBudgetUsd = 1, timeoutMs = 300000, env = process.env, maxOutputBytes = 8 * 1024 * 1024, childEnv,
+    cliLock = env?.FOUNDRY_CLI_LOCK || null, cliRoot = env?.FOUNDRY_CLI_ROOT || undefined } = {}) {
     const config = policy?.providers?.[providerName];
     if (!config || config.kind !== 'claude-cli') throw new FoundryError('MODEL_POLICY_INVALID', `Policy has no claude-cli provider named ${providerName}`);
     if (config.invocation.some(a => a === '--fallback-model' || a.startsWith('--fallback-model='))) throw new FoundryError('MODEL_POLICY_INVALID', '--fallback-model is never passed');
     if (typeof maxBudgetUsd !== 'number' || !(maxBudgetUsd > 0 && maxBudgetUsd <= 25)) throw new FoundryError('MODEL_REQUEST', 'maxBudgetUsd must be in (0, 25]');
     // Only an absent block means "the default": an explicit null in a policy object that bypassed validatePolicy is refused, not defaulted.
     const block = childEnv === undefined ? validateChildEnv(config.childEnv === undefined ? DEFAULT_CHILD_ENV : config.childEnv, `provider ${providerName} childEnv`) : validateChildEnv(childEnv, 'childEnv');
-    Object.assign(this, { policy, providerName, binary: binary ?? config.binary, invocation: [...config.invocation], maxBudgetUsd, timeoutMs, env, maxOutputBytes, childEnv: Object.freeze({ ...block }) });
+    Object.assign(this, { policy, providerName, binary: binary ?? config.binary, invocation: [...config.invocation], maxBudgetUsd, timeoutMs, env, maxOutputBytes, childEnv: Object.freeze({ ...block }),
+      cliLock, cliRoot });
   }
 
+  // The binary this call runs and the version that serves it ({binary, engineVersion}). Pinned: the lock's version, after the bytes were
+  // checked (src/cli-pin.mjs; hashed once per process, re-hashed when the file's identity changes; CLI_DRIFT on a mismatch). Unpinned:
+  // `--version` is asked for every call (the Agent SDK's per-connect check; each `claude -p` is a connect, about 50 ms against a call of
+  // seconds), so a CLI that updated itself between two calls of one run is recorded as the version that served each (orch-20261021 rank
+  // 16, chaos D4; it was cached per binary per process, and a run spanning two versions recorded one). verify-run flags a run whose calls
+  // span versions (MIXED_ENGINE_VERSIONS).
   async engineVersion() {
-    if (!versions.has(this.binary)) {
-      // Same child environment as a call (minus the thinking budget), so the probe does no non-essential startup traffic either.
-      const probe = runProcess(this.binary, ['--version'], { env: claudeChildEnv(this.env, this.childEnv), timeoutMs: 30000, maxBytes: 64 * 1024 })
-        .then(r => `claude-code ${r.stdout.trim().split(/\s+/)[0]}`);
-      versions.set(this.binary, probe);
-      probe.catch(() => versions.delete(this.binary));
-    }
-    return versions.get(this.binary);
+    const pin = resolveCli({ lockFile: this.cliLock, ...(this.cliRoot ? { cliRoot: this.cliRoot } : {}) });
+    if (pin) return { binary: pin.path, engineVersion: `claude-code ${pin.version} sha256:${pin.sha256.slice(0, 12)}`, pinned: pin };
+    // Same child environment as a call (minus the thinking budget), so the probe does no non-essential startup traffic either.
+    const r = await runProcess(this.binary, ['--version'], { env: claudeChildEnv(this.env, this.childEnv), timeoutMs: 30000, maxBytes: 64 * 1024 });
+    return { binary: this.binary, engineVersion: `claude-code ${r.stdout.trim().split(/\s+/)[0]}`, pinned: null };
   }
 
   effectiveDecoding(decoding) { return claudeCliDecoding(decoding); }
@@ -150,22 +157,25 @@ export class ClaudeCliProvider {
 
   async complete({ modelEntry, system, prompt, schema, decoding = {}, signal, timeoutMs = this.timeoutMs }) {
     if (!modelEntry || !isPolicyModel(this.policy, modelEntry.id) || modelEntry.provider !== this.providerName) throw new FoundryError('MODEL_NOT_IN_POLICY', `Model ${modelEntry?.id} is not a ${this.providerName} model in the policy`);
-    let engineVersion;
-    try { engineVersion = await untilAborted(this.engineVersion(), signal); }
+    let engineVersion, binary;
+    try { ({ engineVersion, binary } = await untilAborted(this.engineVersion(), signal)); }
     catch (error) {
-      // A cancellation (or the port's deadline) while the shared version probe runs ends this call at once; no call was launched, so no spend.
+      // A cancellation (or the port's deadline) while the version probe runs ends this call at once; no call was launched, so no spend.
       if (error.code === 'CANCELLED') throw error;
+      // A pin that cannot be honoured is never worked around: the call fails as a harness fault (MODEL_PROTOCOL, terminal, never retried
+      // as an outage), its message naming CLI_DRIFT, CLI_UNPINNED or CLI_LOCK_INVALID.
+      if (/^CLI_/.test(error.code ?? '')) throw fail('MODEL_PROTOCOL', `${error.code}: ${error.message}`, { cliError: error.code });
       throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`);
     }
     const args = this.args({ modelEntry, system, schema, decoding }), applied = claudeCliDecoding(decoding);
     const childProcessEnv = claudeChildEnv(this.env, this.childEnv, applied.thinkingTokens);
-    const request = { binary: path.basename(this.binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,
+    const request = { binary: path.basename(binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,
       maxTokens: applied.maxTokens, effort: applied.effort, thinkingTokens: applied.thinkingTokens, maxBudgetUsd: this.maxBudgetUsd,
       env: childEnvRecord(childProcessEnv, this.childEnv) };
     const cwd = mkdtempSync(path.join(tmpdir(), 'foundry-claude-'));
     let processResult, launchError;
     try {
-      processResult = await runProcess(this.binary, args, { cwd, env: childProcessEnv, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
+      processResult = await runProcess(binary, args, { cwd, env: childProcessEnv, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
     } catch (error) {
       launchError = error; processResult = error.processResult;
     } finally { rmSync(cwd, { recursive: true, force: true }); }

@@ -10,6 +10,7 @@ import path from 'node:path';
 import { FoundryError } from '../data.mjs';
 import { CHILD_ENV_ALLOWED } from '../models/policy.mjs';
 import { lifeline, trackChild } from '../children.mjs';
+import { resolveCli } from '../cli-pin.mjs';
 
 // An executor sees only its own workdir under WORK_ROOT and at most one kit under KIT_ROOT.
 export const WORK_ROOT = '/var/tmp/foundry-work', KIT_ROOT = '/opt/foundry-kit';
@@ -124,7 +125,8 @@ export function executorEnv({ env = process.env, extraEnv = {}, hidden = DEFAULT
     if (k === 'HOME') throw new FoundryError('SANDBOX_ENV', 'HOME is set by the executor (a hidden path), not by the caller');
   }
   const base = Object.fromEntries(Object.entries(env).filter(([k, v]) => typeof v === 'string' && (EXECUTOR_ENV_ALLOWED.includes(k) || EXECUTOR_ENV_PATTERN.test(k))));
-  return { ...base, TMPDIR: '/tmp', HOME: executorHome(env, hidden), ...extraEnv };
+  // The CLI never replaces itself during a session (compromise C2; incident I3): both switches the CLI has read, set last.
+  return { ...base, TMPDIR: '/tmp', HOME: executorHome(env, hidden), ...extraEnv, DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' };
 }
 
 // Transcript scan (pre-registered: a count > 0 voids the run). Tool uses that start a nested Claude CLI or call the
@@ -295,14 +297,20 @@ export function sessionError({ result, stderr = '', timedOut = false, sandboxRea
 // then costUnknown is true and costUpperUsd is the session budget (a soft bound: the CLI checks it between turns).
 export async function runClaudeCode({
   model, prompt, workdir, files = {}, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, tools = DEFAULT_TOOLS,
-  hidden = DEFAULT_HIDDEN, keepRo = DEFAULT_KEEP_RO, kitDir = null, systemPrompt = null, appendSystemPrompt = null, effort = null, binary = 'claude', signal,
-  env: extraEnv = {}, hostEnv = process.env,
+  hidden = DEFAULT_HIDDEN, keepRo = DEFAULT_KEEP_RO, kitDir = null, systemPrompt = null, appendSystemPrompt = null, effort = null, binary = null, signal,
+  env: extraEnv = {}, hostEnv = process.env, cliLock = hostEnv?.FOUNDRY_CLI_LOCK || null, cliRoot = hostEnv?.FOUNDRY_CLI_ROOT || undefined,
 } = {}) {
   if (!model) throw new FoundryError('EXECUTOR_MODEL', 'An explicit model id from the policy file is required');
   if (!sandboxAvailable()) throw new FoundryError('SANDBOX_UNAVAILABLE', 'User/mount/pid namespaces are required to hide oracles from executors');
   // Extra variables for the whole session (C0: the model gateway, so even a direct call of the kit's CLI is policed).
   // hostEnv is the environment the allow-list draws from (tests seed a fake one).
   const env = executorEnv({ env: hostEnv, extraEnv, hidden });
+  // Compromise C2 (src/cli-pin.mjs): with a lock named, the session runs the verified pinned CLI by its absolute path, kept visible
+  // read-only in the sandbox; CLI_UNPINNED or CLI_DRIFT stops it before launch. A binary the caller names (a step guard, a test fake)
+  // runs as given. Without a lock, `claude` on PATH, as before.
+  const pin = binary ? null : resolveCli({ lockFile: cliLock, ...(cliRoot ? { cliRoot } : {}) });
+  const program = binary ?? pin?.path ?? 'claude';
+  if (pin) keepRo = [...keepRo, pin.path];
   materialize(workdir, files);
   const args = ['-p', '--model', model, '--output-format', 'stream-json', '--verbose', '--no-session-persistence',
     '--safe-mode', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--disable-slash-commands',
@@ -310,7 +318,7 @@ export async function runClaudeCode({
   if (systemPrompt) args.push('--system-prompt', systemPrompt);
   if (appendSystemPrompt) args.push('--append-system-prompt', appendSystemPrompt);
   if (effort) args.push('--effort', effort);
-  const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [binary, ...args]);
+  const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [program, ...args]);
   const started = Date.now();
   // lifeline: the session dies with this process; trackChild: a run executing it can find it after a crash (orch-20261021 B3).
   const child = spawn(...lifeline('unshare', [...UNSHARE_ARGS, 'sh', '-c', script]), { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
@@ -346,6 +354,7 @@ export async function runClaudeCode({
     streamUsage: streamUsageOf(events), turns: result?.num_turns ?? null, sessionId: init?.session_id ?? result?.session_id ?? null,
     usage: result?.usage ?? null, durationMs: Date.now() - started, toolUses,
     label: `executor:claude-code:${model}`, transcript: path.join(workdir, '.executor-transcript.jsonl'),
+    cli: pin ? { version: pin.version, sha256: pin.sha256, pinned: true } : null,
   };
 }
 

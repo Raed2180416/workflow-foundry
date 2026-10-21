@@ -316,5 +316,24 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
   for (const miss of replay.mismatches) add(onlyThisEngine ? 'error' : 'warn', 'WAIT_REPLAY_MISMATCH', `Event ${miss.seq}${miss.nodeKey ? ` (${miss.nodeKey})` : ''}: ${miss.message} [${miss.code}]`, { seq: miss.seq, nodeKey: miss.nodeKey, rule: miss.code });
   for (const drift of signalCheckpointDrift(run, events)) add('error', 'SIGNAL_EDITED', `The run record's ${drift} differs from what its chain recorded`, { drift });
   checks.waits = { waits: replay.waits, deliveries: replay.deliveries, decisions: replay.decisions, mismatches: replay.mismatches.length };
+
+  // 6d. Harness versions (orch-20261021 rank 16, chaos D4): every model call records the version of the harness that served it (the
+  // claude-cli provider asks on every call, or names its pinned bytes). A run whose calls were served by more than one version of one
+  // harness (a CLI that updated itself mid-run, or a resume on another machine) is flagged: its results mix two programs. A warning,
+  // not an error: the record is intact, the evidence is mixed.
+  const served = new Map();
+  for (const e of events) {
+    if (!CALL_EVENTS.has(e.type) || typeof e.engineVersion !== 'string' || !e.engineVersion.trim()) continue;
+    const [harness, ...rest] = e.engineVersion.trim().split(/\s+/), version = rest.join(' ') || '(unversioned)';
+    const byVersion = served.get(harness) ?? new Map();
+    if (!byVersion.has(version)) byVersion.set(version, { version, firstSeq: e.seq, calls: 0 });
+    byVersion.get(version).calls++;
+    served.set(harness, byVersion);
+  }
+  for (const [harness, byVersion] of served) if (byVersion.size > 1) {
+    const versions = [...byVersion.values()].sort((a, b) => a.firstSeq - b.firstSeq);
+    add('warn', 'MIXED_ENGINE_VERSIONS', `The run's ${harness} calls were served by ${versions.length} versions (${versions.map(v => `${v.version} from event ${v.firstSeq}, ${v.calls} call${v.calls === 1 ? '' : 's'}`).join('; ')}): pin the CLI (research/manifests/claude-cli.lock.json, FOUNDRY_CLI_LOCK) for runs whose evidence must come from one program`, { harness, versions });
+  }
+  checks.harness = Object.fromEntries([...served].map(([harness, byVersion]) => [harness, [...byVersion.keys()]]));
   return result();
 }

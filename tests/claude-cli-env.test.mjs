@@ -17,6 +17,8 @@ const { policy } = loadPolicy();
 const HAIKU = 'claude-haiku-5-5';
 const schema = { type: 'object', properties: { label: { type: 'string' } }, required: ['label'], additionalProperties: false };
 const NE = 'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', CACHE = 'FORCE_PROMPT_CACHING_5M';
+// The owner policy's block since 2026-10-21.3 also switches the CLI's self-update off (compromise C2): the default policy block is these four.
+const POLICY_ENV = Object.freeze({ [NE]: '1', [CACHE]: '1', DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' });
 // Cache-tier variables outside the closed list (recorded when inherited); stripped from the test rig's base environment like the closed list.
 const CACHE_TIER = /^(DISABLE_PROMPT_CACHING(_[A-Z]+)?|ENABLE_PROMPT_CACHING_1H(_BEDROCK)?|CLAUDE_CODE_(SUBAGENT_)?PROMPT_CACHE_TTL)$/;
 
@@ -57,7 +59,7 @@ function rig(t, { policy: pol = policy, ambient = {}, script = FAKE, ...options 
 const withChildEnv = childEnv => { const p = structuredClone(policy); if (childEnv === undefined) delete p.providers['claude-cli'].childEnv; else p.providers['claude-cli'].childEnv = childEnv; return p; };
 
 test('the owner policy carries the two flags, and the child process sees them by default', async t => {
-  assert.deepEqual(policy.providers['claude-cli'].childEnv, { [NE]: '1', [CACHE]: '1' });
+  assert.deepEqual(policy.providers['claude-cli'].childEnv, POLICY_ENV);
   assert.deepEqual(DEFAULT_CHILD_ENV, { [NE]: '1', [CACHE]: '1' });
   const { call, seen, journal } = rig(t);
   const r = await call();
@@ -66,7 +68,7 @@ test('the owner policy carries the two flags, and the child process sees them by
   assert.equal(child[NE], '1'); assert.equal(child[CACHE], '1');
   assert.equal(child.MAX_THINKING_TOKENS, '0', 'the decoding-driven variable is still set per call');
   assert.equal(child.GH_TOKEN, null, 'repository credentials are still scrubbed');
-  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' }, 'the flags are auditable in the journal request');
+  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, POLICY_ENV, 'the flags are auditable in the journal request');
 });
 
 // A CLI that dies without a result object, and one that is cancelled mid-call: the journal row of a failed call names the flags too.
@@ -95,7 +97,7 @@ test('a failed or cancelled call records the flags in its journal row as well; a
   const dying = rig(t, { script: DYING });
   const failed = await dying.call();
   assert.equal(failed.ok, false); assert.equal(failed.error.code, 'MODEL_PROTOCOL');
-  assert.deepEqual(dying.journal.get(failed.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' });
+  assert.deepEqual(dying.journal.get(failed.journalId).request.providerRequest.env, POLICY_ENV);
   assert.equal(dying.seen()[0][NE], '1', 'the dying child still ran with the flags');
 
   const slow = rig(t, { script: SLOW });
@@ -110,7 +112,7 @@ test('a failed or cancelled call records the flags in its journal row as well; a
   controller.abort();
   await assert.rejects(pending, error => {
     assert.equal(error.code, 'CANCELLED');
-    assert.deepEqual(slow.journal.get(error.details.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' });
+    assert.deepEqual(slow.journal.get(error.details.journalId).request.providerRequest.env, POLICY_ENV);
     return true;
   });
   // No orphan: the CLI and its helper both ignore SIGTERM; the group SIGKILL ends them (allow the kernel a moment).
@@ -138,7 +140,7 @@ test('the journal records what the child saw: a closed-list variable the block l
   // The default block plus an inherited DISABLE_AUTOUPDATER: both flags and the inherited variable are on the record.
   const dflt = rig(t, { ambient: { DISABLE_AUTOUPDATER: '1' } });
   const d = await dflt.call();
-  assert.deepEqual(dflt.journal.get(d.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1', DISABLE_AUTOUPDATER: '1' });
+  assert.deepEqual(dflt.journal.get(d.journalId).request.providerRequest.env, POLICY_ENV);
   // Only closed-list names are ever recorded; the rest of the environment (credentials included) never is.
   assert.deepEqual(childEnvRecord({ PATH: '/bin', GH_TOKEN: 'x', ANTHROPIC_BASE_URL: 'http://x', [CACHE]: '1' }, { [NE]: null }), { [NE]: null, [CACHE]: '1' });
 });
@@ -247,7 +249,7 @@ test('an inherited cache-tier variable that can override the cache flag is on th
   const { call, seen, journal } = rig(t, { ambient: { DISABLE_PROMPT_CACHING: '1', CLAUDE_CODE_PROMPT_CACHE_TTL: '1h' } });
   const r = await call();
   assert.equal(seen()[0].DISABLE_PROMPT_CACHING, '1', 'not a decoding variable: it passes through');
-  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1', CLAUDE_CODE_PROMPT_CACHE_TTL: '1h', DISABLE_PROMPT_CACHING: '1' });
+  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { ...POLICY_ENV, CLAUDE_CODE_PROMPT_CACHE_TTL: '1h', DISABLE_PROMPT_CACHING: '1' });
   assert.deepEqual(childEnvRecord({ PATH: '/bin', ENABLE_PROMPT_CACHING_1H: '1', DISABLE_PROMPT_CACHING_HAIKU: '1' }, {}), { DISABLE_PROMPT_CACHING_HAIKU: '1', ENABLE_PROMPT_CACHING_1H: '1' });
 });
 

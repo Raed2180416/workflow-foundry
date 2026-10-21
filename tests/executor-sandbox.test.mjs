@@ -90,7 +90,7 @@ test('executorEnv is an allow-list: no credential-like name but CLAUDE_CODE_OAUT
   assert.ok(Object.keys(host).filter(k => CREDENTIAL_LIKE.test(k)).length >= 27, 'the fake environment carries the probe\'s credential load');
   const env = executorEnv({ env: host, hidden });
   assert.deepEqual(Object.keys(env).filter(k => CREDENTIAL_LIKE.test(k)), ['CLAUDE_CODE_OAUTH_TOKEN']);
-  assert.deepEqual(Object.keys(env).sort(), ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'CLAUDE_CODE_OAUTH_TOKEN', 'DISABLE_AUTOUPDATER', 'FORCE_PROMPT_CACHING_5M', 'HOME', 'LANG', 'LC_ALL', 'LC_TIME', 'LOGNAME', 'PATH', 'TERM', 'TMPDIR', 'USER']);
+  assert.deepEqual(Object.keys(env).sort(), ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'CLAUDE_CODE_OAUTH_TOKEN', 'DISABLE_AUTOUPDATER', 'DISABLE_UPDATES', 'FORCE_PROMPT_CACHING_5M', 'HOME', 'LANG', 'LC_ALL', 'LC_TIME', 'LOGNAME', 'PATH', 'TERM', 'TMPDIR', 'USER']);
   assert.equal(env.TMPDIR, '/tmp'); assert.equal(env.HOME, home);
   for (const k of Object.keys(env)) assert.ok(['TMPDIR', 'HOME'].includes(k) || EXECUTOR_ENV_ALLOWED.includes(k) || /^LC_/.test(k), k);
   // The old deny-list would have passed the third-party keys (the measured leak).
