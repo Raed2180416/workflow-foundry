@@ -20,6 +20,7 @@ import { buildRegistry, practiceRegistry } from './registry.mjs';
 import { withConstitutionFiles, CONSTITUTION_ARM_TEXT } from './arms.mjs';
 import { runArm, assessRun, ROOT } from './run.mjs';
 import { sha } from './port.mjs';
+import { preregCheck } from './freeze.mjs';
 
 export const PRACTICE = Object.freeze({ seeds: [1235, 1236, 1237], difficulties: [2, 3, 5] });   // B1's build-loop practice worlds
 const T0 = '2026-03-02T00:00:00+01:00';
@@ -143,6 +144,7 @@ async function main() {
   const model = dry ? 'stub' : arg('--model', null);
   if (!dry && model !== 'claude-haiku-5-5') throw new Error('W-C runs under B1L-H conditions: --model claude-haiku-5-5 (policy/models.json)');
   if (!dry && !isSessionModel(model)) throw new Error(`not a policy model id: ${model}`);
+  const prereg = dry ? null : preregCheck();            // a paid build needs the frozen PREREG-OT0.md with matching file hashes
   const out = dry ? path.join('/var/tmp/foundry-work/ot0-dry', label) : path.join(ROOT, 'research/org-20261021/runs', label);
   if (existsSync(path.join(out, 'result.json'))) throw new Error(`${out}/result.json exists`);
   mkdirSync(out, { recursive: true });
@@ -169,7 +171,7 @@ async function main() {
   console.log(`build: ${JSON.stringify(build)}`);
   const worlds = dry ? OT0_WORLDS.filter(w => w.size) : OT0_WORLDS;
   const rows = await gradeWC({ label, source, worlds });
-  writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, arm: 'W-C', dry, build, solverSha256: sha(source), worlds: worlds.map(worldLabel), rows }, null, 1));
+  writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, arm: 'W-C', dry, prereg, build, solverSha256: sha(source), worlds: worlds.map(worldLabel), rows }, null, 1));
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();

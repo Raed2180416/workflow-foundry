@@ -119,10 +119,12 @@ export async function sealedRun(o) {
   const freeze = verifyFreeze(o.freeze, { split, checkCode: o.checkCode ?? true, root: o.root ?? REPO });
   const io = { split: splitFile, dataDir, upstream };
   const arms = o.arms ?? ['W', 'A'];
-  // A distractor-ablation cell (DESIGN.md §8) runs its own SOPs, rows, catalogs and workflows; the default is the primary run.
-  const cell = o.cell ? (freeze.ablation?.cells ?? []).find(c => c.id === o.cell) : null;
-  if (o.cell && !cell) throw new Error(`no ablation cell ${o.cell} in the freeze`);
-  const sops = (o.sops ?? cell?.sops ?? freeze.sops).filter(s => (cell?.sops ?? freeze.sops).includes(s));
+  // A cell runs its own SOPs, rows, catalogs and workflows: a distractor-ablation cell (DESIGN.md §8) or a separately reported
+  // SOP (owner decision D3). The default is the primary run: freeze.primarySops (older freezes: freeze.sops).
+  const cell = o.cell ? (freeze.cells ?? []).find(c => c.id === o.cell) : null;
+  if (o.cell && !cell) throw new Error(`no cell ${o.cell} in the freeze`);
+  const primary = freeze.primarySops ?? freeze.sops;
+  const sops = (o.sops ?? cell?.sops ?? primary).filter(s => (cell?.sops ?? primary).includes(s));
   const artifactsOf = cell ? cell.artifacts : freeze.artifacts;
   const rowsOf = s => (cell ? cell.rows[s].sealed : split.sops[s].sealed);
   const catalogOf = s => (cell?.catalogs?.[s] ? path.resolve(o.root ?? REPO, cell.catalogs[s].file) : null);
@@ -221,7 +223,8 @@ export async function sealedRun(o) {
     const buildUsd = freeze.arms.W.buildCostUsd ?? null;
     const wRuns = all.filter(r => r.arm === 'W').length;
     const w = buildUsd !== null && wRuns ? { amortisedPerRunUsd: (buildUsd + an.arms.W.costUsd) / wRuns } : undefined;
-    Object.assign(summary, { analysis: an, analysisWithoutOrchestrationOnly: anNoOrch, wCost: w ?? null, decision: arms.length === 2 ? decide(an, anNoOrch, w) : null,
+    Object.assign(summary, { analysis: an, analysisWithoutOrchestrationOnly: anNoOrch, wCost: w ?? null, decision: arms.length === 2 && !cell ? decide(an, anNoOrch, w) : null,   // the decision rule covers the primary run only
+      ...(cell ? { cellNote: cell.separate ? 'separately reported SOP (owner decision D3): not in the primary set or the decision rule' : `ablation cell: ${cell.compareWith ?? 'see DESIGN.md §8'}` } : {}),
       statuses: Object.fromEntries(arms.map(a => [a, all.filter(r => r.arm === a).reduce((m, r) => ({ ...m, [r.status ?? (r.violations?.length ? 'violation' : 'session')]: (m[r.status ?? (r.violations?.length ? 'violation' : 'session')] ?? 0) + 1 }), {})])),
       graderDisagreements: all.filter(r => r.graderAgree && (r.graderAgree.strict === false || r.graderAgree.upstream === false)).length });
   }

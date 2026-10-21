@@ -286,4 +286,14 @@ test('sealed run (toy SOP): refused without a valid freeze; with one, both arms 
   assert.equal(summary.analysis.arms.A.macroPassK, ships / n);
   assert.equal(summary.graderDisagreements, 0);
   assert.equal(typeof summary.decision.beatsAgent, 'boolean');
+  // A separately reported cell (owner decision D3): its own SOPs and rows, outside the primary set; an unknown cell is refused.
+  const rows2 = split.sops.toy_sop.sealed.slice(0, 2);
+  writeJson(fz, { ...freeze, primarySops: [], cells: [{ id: 'sep', separate: true, sops: ['toy_sop'], catalogs: {}, artifacts: freeze.artifacts,
+    rows: { toy_sop: { sealed: rows2 } } }] });
+  const base = { freeze: fz, capUsd: 1, split: file, dataDir: FIXTURE, checkCode: false, root: '/', runner, noModels: true, rowsRoot: path.join(dir, 'rows'), outDir: null, concurrency: 2, log: () => {} };
+  await assert.rejects(sealedRun({ ...base, runId: `toy-nocell-${Date.now()}`, cell: 'nope' }), /no cell nope/);
+  const sep = await sealedRun({ ...base, runId: `toy-sep-${Date.now()}`, cell: 'sep', arms: ['W'] });
+  assert.equal(sep.stopped, null);
+  assert.equal(sep.summary.runs, rows2.length * 2);
+  assert.equal(sep.summary.analysis.arms.W.macroPassK, 1);
 });

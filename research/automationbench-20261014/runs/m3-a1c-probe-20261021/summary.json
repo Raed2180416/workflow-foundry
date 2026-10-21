@@ -1,0 +1,196 @@
+{
+ "runId": "m3-a1c-probe-20261021",
+ "label": "model claude-haiku-5-5",
+ "model": "claude-haiku-5-5",
+ "scripted": false,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "arm": "A1-C (code-owned harness)",
+ "sealed": false,
+ "testSplitTasks": 0,
+ "harness": {
+  "id": "codeowned",
+  "version": "a1c-v1",
+  "manifestSha256": "ef5c338216addc0a0d4797cf0cb9861f8063514e07abf9a002d2e052a76b9f9b",
+  "frozenHashGiven": false,
+  "nodeModels": {
+   "ledger": "mercury-3",
+   "adjudicate": "claude-haiku-5-5",
+   "pcmap": "claude-haiku-5-5",
+   "checker": "mercury-3",
+   "act": "claude-haiku-5-5",
+   "repair": "claude-haiku-5-5"
+  },
+  "pipeline": {
+   "K": 3,
+   "inventorySteps": 16,
+   "checkSteps": 3,
+   "maxRounds": 2,
+   "actReserveResponses": 8,
+   "minRepairResponses": 4,
+   "nodeTimeoutMs": 240000,
+   "inlineInventoryChars": 70000,
+   "ledgerInventoryChars": 150000,
+   "systemMaxBytes": 90000,
+   "nodeBudgetShare": 0.1,
+   "reserveShare": 0.25,
+   "pcmap": true,
+   "parallelLedgers": true,
+   "minCheckerMs": 45000
+  },
+  "extraModelCalls": 13
+ },
+ "selection": {
+  "tasks": [
+   "operations.zoom_training_setup",
+   "finance.travel_advance_settlement"
+  ]
+ },
+ "tasks": [
+  "operations.zoom_training_setup",
+  "finance.travel_advance_settlement"
+ ],
+ "dateNote": true,
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 0.75,
+ "capUsd": 2,
+ "tools": [
+  "Bash"
+ ],
+ "effort": null,
+ "n": 2,
+ "n_graded": 2,
+ "pass_rate": 0.5,
+ "mean_partial_credit": 0.8,
+ "by_domain": {
+  "operations": {
+   "n": 1,
+   "pass_rate": 1,
+   "mean_partial_credit": 1
+  },
+  "finance": {
+   "n": 1,
+   "pass_rate": 0,
+   "mean_partial_credit": 0.6
+  }
+ },
+ "live_pass_rate": 0.5,
+ "mean_cost_per_task_usd": 0.016324739999999997,
+ "accounting": {
+  "modelResponses": {
+   "mean": 19,
+   "max": 24
+  },
+  "toolResponses": {
+   "mean": 11.5,
+   "max": 16
+  },
+  "numTurnsCli": {
+   "mean": 20,
+   "max": 25
+  },
+  "worldSteps": {
+   "mean": 18,
+   "max": 26
+  },
+  "worldCalls": {
+   "mean": 236,
+   "max": 320
+  },
+  "reads": {
+   "mean": 213.5,
+   "max": 287
+  },
+  "searches": {
+   "mean": 7.5,
+   "max": 13
+  },
+  "writes": {
+   "mean": 12.5,
+   "max": 19
+  },
+  "stoppedByStepGuard": 0,
+  "extraModelCalls": 13,
+  "compactions": 0,
+  "capViolations": 0,
+  "l5Violations": 0,
+  "models": [
+   "claude-haiku-5-5",
+   "mercury-3"
+  ],
+  "ledger": null
+ },
+ "cost": {
+  "spentUsd": 0.032649479999999995,
+  "knownUsd": 0.032649479999999995,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 2,
+  "skipped": 0
+ },
+ "tokens": {
+  "input": 535370,
+  "output": 56727,
+  "cachedInput": 414268,
+  "total": 592097,
+  "sessions": 2,
+  "byModel": {
+   "mercury-3": {
+    "input": 27973,
+    "output": 56556,
+    "cachedInput": 0,
+    "total": 84529
+   },
+   "claude-haiku-5-5": {
+    "input": 507397,
+    "output": 171,
+    "cachedInput": 414268,
+    "total": 507568
+   }
+  },
+  "meanPerTask": 296048.5,
+  "sessionBudget": 300000,
+  "cap": 600000,
+  "meterSpent": 84529,
+  "meterUnknownSessions": 0,
+  "metered": [
+   "mercury-3"
+  ],
+  "callTokens": 100000,
+  "faultSessions": 0
+ },
+ "launchHistory": [],
+ "envFaults": {
+  "records": 0,
+  "tasks": 0,
+  "sessions": 0,
+  "spentUsd": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "ea1dca70628a80262430b0d693d013fab456aebccefaac9e48db9713d4c87c5f",
+  "policyHash": "5f99b66fc915ddac8864af04aa6c1632c13b67050b3ac76d5f4d90b441ed787f",
+  "policyVersion": "2026-10-21.1",
+  "policyFileSha256": "c5b31ae3eb121b9aed70add285ac9124eeea6e46390853af5456095b63a93ac8",
+  "node": "v24.21.0",
+  "cli": "2.1.306 (Claude Code)",
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  },
+  "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "harnessManifestSha256": "ef5c338216addc0a0d4797cf0cb9861f8063514e07abf9a002d2e052a76b9f9b"
+ },
+ "live": "/var/tmp/foundry-work/autobench/m3-a1c-probe-20261021",
+ "finishedAt": "2026-10-21T13:01:57.426Z"
+}

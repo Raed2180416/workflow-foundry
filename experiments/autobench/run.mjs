@@ -109,7 +109,7 @@ export function remoteSessionExecutor(policy, model, { pipeline = false } = {}) 
  * request. A call settles at the tokens it reported (its budget when it reported none).
  */
 export const DEFAULT_CALL_TOKENS = 100_000;
-export function pipelineDispatch({ policy, taskTokens, callTokens = DEFAULT_CALL_TOKENS, claude = runClaudeCode }) {
+export function pipelineDispatch({ policy, taskTokens, callTokens = DEFAULT_CALL_TOKENS, claude = runClaudeCode, remoteArgs = {} }) {   // remoteArgs: tests (a loopback endpoint)
   const pool = { budget: taskTokens, callTokens, spent: 0, reserved: 0, calls: 0, refused: 0 };
   const run = async args => {
     const ex = executorForModel(policy, args.model);
@@ -121,7 +121,7 @@ export function pipelineDispatch({ policy, taskTokens, callTokens = DEFAULT_CALL
         turns: 0, toolUses: [], tokens: { input: 0, output: 0, cachedInput: 0, reasoning: 0, total: 0, budget: 0, usageMissing: false } };
     }
     pool.reserved += want; pool.calls += 1;
-    try { const r = await ex.run({ ...args, policy, tokenBudget: want }); pool.spent += r?.tokens && !r.tokens.usageMissing ? r.tokens.total : want; return r; }
+    try { const r = await ex.run({ ...args, ...remoteArgs, policy, tokenBudget: want }); pool.spent += r?.tokens && !r.tokens.usageMissing ? r.tokens.total : want; return r; }
     finally { pool.reserved -= want; }
   };
   return { run, pool };
@@ -157,7 +157,7 @@ const tokenTotals = forks => {
     ...(Object.keys(byModel).length ? { byModel } : {}) };
 };
 /** The tokens the run meter books for one fork: with remote models named, only theirs (a pipeline's claude tokens are recorded, not metered). */
-const meteredTokens = (t, remoteIds) => (!t ? null : t.byModel && remoteIds.size ? Object.entries(t.byModel).filter(([m]) => remoteIds.has(m)).reduce((s, [, b]) => s + b.total, 0) : t.total);
+export const meteredTokens = (t, remoteIds) => (!t ? null : t.byModel && remoteIds.size ? Object.entries(t.byModel).filter(([m]) => remoteIds.has(m)).reduce((s, [, b]) => s + b.total, 0) : t.total);
 
 /** A hard USD cap over reserved session budgets: a session starts only if spent + reserved + its budget <= cap. */
 export function makeLedger(capUsd) {

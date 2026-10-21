@@ -1,0 +1,142 @@
+{
+ "runId": "p2-abl-v2",
+ "evidence": "development: builds and repairs on SPLIT.json build/repair rows only; no sealed row was prepared, served or graded",
+ "stopped": null,
+ "builderModel": "claude-haiku-5-5",
+ "judgeModels": [
+  "claude-haiku-5-5"
+ ],
+ "budgets": {
+  "build": 3,
+  "repair": 1.5,
+  "buildMinutes": 30,
+  "repairMinutes": 20,
+  "rounds": 2,
+  "builderJudgeUsd": 0.5
+ },
+ "prompts": {
+  "buildTemplateSha256": "8c69d8b593015f86dbb2de1bbccf783bee097223bb20e5c620a363af4805f132",
+  "repairTemplateSha256": "f5ff28a3e56b5050c5857298c82d64418c07a1d25155361202f06585c4cf2aa5"
+ },
+ "spentUsd": 0.48634573999999997,
+ "capUsd": 10,
+ "sops": {
+  "dangerous_goods": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 0,
+   "artifactSha256": "222c4f9b41d73cd965209e7bf524c60b7f91fa6a3fd4ac1c0899527500d4ee03",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.036997890000000005,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.036997890000000005,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 18,
+     "minutes": 2.8,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "222c4f9b41d73cd965209e7bf524c60b7f91fa6a3fd4ac1c0899527500d4ee03"
+    }
+   ]
+  },
+  "customer_service": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 0,
+   "artifactSha256": "8beca536a5e7fe5fe91ade91869ebbd05e2fcd2b2417fc10ff37c33a81c7aa04",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.18859759999999998,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.18859759999999998,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 23,
+     "minutes": 5.7,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 5.15,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "8beca536a5e7fe5fe91ade91869ebbd05e2fcd2b2417fc10ff37c33a81c7aa04"
+    }
+   ]
+  },
+  "know_your_business": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 1,
+   "artifactSha256": "b38fd52ffb3b7eb3aec53d768872b25df3043777ef33a868d6bd73dbbe551e77",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.26075025,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.14715072,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 24,
+     "minutes": 6,
+     "buildPass": 5,
+     "repairPass": 11,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 9,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "4fd205c8fa01dd907ca661456f9ea9f3a71f19534ad2b9e38a54e50aaca69049"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.11359953,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 28,
+     "minutes": 5.1,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 9,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "b38fd52ffb3b7eb3aec53d768872b25df3043777ef33a868d6bd73dbbe551e77"
+    }
+   ]
+  }
+ },
+ "live": "/var/tmp/foundry-work/sopbench/p2-abl-v2",
+ "finishedAt": "2026-10-21T13:01:24.292Z"
+}

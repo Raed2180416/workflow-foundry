@@ -25,6 +25,7 @@ import { baseWorld, overlayWorld, overlayBinding } from './overlay.mjs';
 import { buildRegistry } from './registry.mjs';
 import { withConstitutionFiles, constitutionRunner, contractWithConstitution } from './arms.mjs';
 import { assessRun, ROOT } from './run.mjs';
+import { preregCheck } from './freeze.mjs';
 
 export const SIZED = Object.freeze({ seed: 1232, d: 2, size: 12 });
 export const PAID_MODELS = Object.freeze({ 'A-F': ['claude-sonnet-5-5', 'claude-opus-5-5'], 'A-HV': ['claude-haiku-5-5'] });
@@ -33,16 +34,17 @@ const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? proces
 /** The $0 scripted session for --dry: it writes a minimal valid output (closes the instance), proving the wiring only. */
 export const dryRunner = async ({ workdir, prompt }) => {
   if (!/Hollin Retail B\.V\. runs this order process under a constitution/.test(prompt)) throw new Error('dry: the constitution is not in the prompt');
-  const files = ['CONTRACT.md', 'files/constitution/log.json'].filter(f => existsSync(path.join(workdir, f)));
+  if (!existsSync(path.join(workdir, 'files/constitution/log.json'))) throw new Error('dry: the registry is not in the files');
+  if (!readFileSync(path.join(workdir, 'CONTRACT.md'), 'utf8').includes('runs this order process under a constitution')) throw new Error('dry: the constitution is not in CONTRACT.md');
   writeFileSync(path.join(workdir, 'output.json'), JSON.stringify({ decisions: { subject: null, constitution: { pins: {} } }, carry: null, close: true }));
-  return { costUsd: 0, turns: 0, error: null, seen: files };
+  return { costUsd: 0, turns: 0, error: null };
 };
 
 /** Build the arm (no host). */
 export function makeAgentArm({ arm, model, label, workRoot, journal, dry = false, tickBudget, tickMinutes, registry }) {
   const contract = contractWithConstitution(contractText());
   const real = dry ? null : executorForModel(loadPolicy().policy, model).run;
-  const runner = dry ? dryRunner : constitutionRunner(arm === 'A-HV' ? runClaudeCode : real);
+  const runner = constitutionRunner(dry ? dryRunner : arm === 'A-HV' ? runClaudeCode : real);
   const inner = arm === 'A-HV'
     ? agentVArm({ id: label, model, workRoot, contract, budgetUsdPerTick: tickBudget, minutesPerTick: tickMinutes, journal, schemas: bindItem(overlayBinding).schemas, retries: 1, runner })
     : agentArm({ id: label, model, workRoot, contract, budgetUsdPerTick: tickBudget, minutesPerTick: tickMinutes, journal, runner });
@@ -58,6 +60,7 @@ async function main() {
   if (dry && !label.startsWith('dry-')) throw new Error('a --dry label must start with dry-');
   const cap = Number(arg('--cap', dry ? '0' : 'NaN'));
   if (!dry && !(cap > 0 && cap <= 50)) throw new Error('--cap (USD, at most 50 per arm) is required for a paid run');
+  const prereg = dry ? null : preregCheck();            // a paid row needs the frozen PREREG-OT0.md with matching file hashes
   const tickBudget = Number(arg('--tick-budget', arm === 'A-HV' ? '0.4' : '1')), tickMinutes = Number(arg('--tick-minutes', '8'));
   const liveDir = path.join(dry ? '/var/tmp/foundry-work/ot0-dry' : '/var/tmp/foundry-work/ot0-arms', label);
   const outDir = dry ? liveDir : path.join(ROOT, 'research/org-20261021/runs', label);
@@ -81,7 +84,7 @@ async function main() {
   const run = { world: W, rows: host.journal.contentRows(), full: host.journal.rows.map(r => ({ ...r })), status, port: null };
   const assessed = await assessRun({ spec: SIZED, arm, run, registry, workflowHash: null });
   const costs = run.rows.filter(r => r.type === 'call').flatMap(r => r.costs ?? []);
-  const result = { label, arm, model, dry, capUsd: cap, spentUsd: spent.usd, costUsd: costs.reduce((s, c) => s + (c.costUsd ?? 0), 0), costUnknown: costs.filter(c => c.costUnknown).length,
+  const result = { label, arm, model, dry, prereg, capUsd: cap, spentUsd: spent.usd, costUsd: costs.reduce((s, c) => s + (c.costUsd ?? 0), 0), costUnknown: costs.filter(c => c.costUnknown).length,
     tickBudgetUsd: tickBudget, tickMinutes, wallMs: Date.now() - t, world: SIZED, ...assessed };
   writeFileSync(path.join(outDir, 'result.json'), JSON.stringify(result, null, 1));
   if (!dry && existsSync(liveTicks)) copyFileSync(liveTicks, path.join(outDir, 'ticks.jsonl'));

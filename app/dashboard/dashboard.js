@@ -31,6 +31,13 @@ async function decide(body, button) {
 }
 function showError(error) { $('error').hidden = false; $('error').textContent = error.message; }
 
+// A version-2+ approval leads with what is different: the step texts of added, removed and changed steps, and changed checks or limits.
+function changeText(a) {
+  const text = id => a.summary.steps.find(s => s.id === id)?.text ?? id, c = a.changes ?? {};
+  const parts = [...(c.added ?? []).map(id => `new step “${text(id)}”`), ...(c.removed ?? []).map(id => `removed step ${id}`), ...(c.changed ?? []).map(id => `changed “${text(id)}”`),
+    ...(c.acceptanceChanged ? ['the definition of done'] : []), ...(c.budgetChanged ? ['the limits'] : [])];
+  return parts.length ? parts.join('; ') : 'nothing in the steps';
+}
 function renderInbox(inbox) {
   const box = $('inbox'); box.replaceChildren();
   if (!inbox.count) { box.append(el('p', { class: 'muted' }, 'Nothing is waiting for you.')); return; }
@@ -38,7 +45,9 @@ function renderInbox(inbox) {
     const yes = el('button', { class: 'primary', on: { click: e => decide({ kind: 'activation', approvalId: a.approvalId, decision: 'approve' }, e.target) } }, 'Turn it on');
     const no = el('button', { on: { click: e => decide({ kind: 'activation', approvalId: a.approvalId, decision: 'reject' }, e.target) } }, 'No');
     box.append(el('div', { class: 'card' }, el('h3', {}, `Turn on “${a.title}”? (version ${a.version})`),
-      el('p', {}, a.summary.goal), el('p', { class: 'muted' }, 'Steps: ', a.summary.steps.map(s => s.text).join(' → ')),
+      el('p', {}, a.summary.goal),
+      a.version > 1 ? el('p', { class: 'wait' }, 'What changes from the version that is on now: ', changeText(a)) : null,
+      el('p', { class: 'muted' }, 'Steps: ', a.summary.steps.map(s => s.text).join(' → ')),
       el('p', {}, 'Done means:'), checksList(a.summary.checks.map(c => ({ ...c, passed: a.practice.find(p => p.id === c.id)?.passed ?? null }))),
       el('p', { class: 'muted' }, 'Ticks show the practice run. Each send will still ask you first.'), el('div', { class: 'row' }, yes, no)));
   }

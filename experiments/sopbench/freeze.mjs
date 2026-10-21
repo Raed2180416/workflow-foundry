@@ -7,6 +7,7 @@
 //
 //   node experiments/sopbench/freeze.mjs --id p2 --builds p2-pilot,p2-main --sops a,b,... --cap 40 [--agent-model <policy id>]
 //     [--v1-build <run>] [--v2-build <run> --v2-sops a,b,c --v2-rows 40]   (distractor-ablation workflows, built on dev rows too)
+//     [--separate patient_intake=<run>]   (separately reported SOPs: owner decision D3)
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { WORK_ROOT } from '../../src/executors/claude-code.mjs';
@@ -79,7 +80,19 @@ export function ablationCells({ id, v1Build, v2Build, v2Sops, v2Rows = 40, split
   return cells;
 }
 
-export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haiku-5-5', ablation = null, split = loadSplit() }) {
+/** Separately reported SOPs (owner decision D3, research/decisions-20261021.md: patient_intake): built, frozen and run like
+ * the others, k = 3, both arms, but outside the primary set and the decision rule. One cell per SOP. */
+export function separateCells({ id, separate, split }) {
+  return Object.entries(separate).map(([sop, run]) => {
+    const r = latestBuilds([run])[sop];
+    if (!r?.artifactDir) throw new Error(`separate ${sop}: no workflow in ${run}`);
+    return { id: sop, separate: true, compareWith: 'reported separately (not in the primary set or the decision rule)', sops: [sop], catalogs: {},
+      artifacts: { [sop]: freezeArtifact(r, path.join(REPO, 'experiments/sopbench/frozen', id, 'separate', sop)) },
+      rows: { [sop]: { sealed: split.sops[sop].sealed, sealedSha256: split.sops[sop].sealedSha256 } } };
+  });
+}
+
+export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haiku-5-5', ablation = null, separate = {}, split = loadSplit() }) {
   // The latest record per SOP across the given build runs (a later run in the list wins).
   const recs = latestBuilds(builds);
   const missing = sops.filter(s => !recs[s] || recs[s].failedBuild || !recs[s].artifactDir);
@@ -101,8 +114,11 @@ export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haik
   const freeze = {
     kind: 'sopbench-freeze', version: 1, id, createdAt: new Date().toISOString(),
     note: 'Freeze for the SOP-Bench phase-2 sealed run (research/sopbench-20261021/DESIGN.md). Commit before any sealed row is touched.',
-    splitSha256: split.splitSha256, sops, withoutWorkflow: missing,
-    rows: Object.fromEntries(sops.map(s => [s, { n: split.sops[s].sealed.length, sealedSha256: split.sops[s].sealedSha256, sealed: split.sops[s].sealed }])),
+    splitSha256: split.splitSha256,
+    primarySops: sops,
+    sops: [...sops, ...Object.keys(separate)],   // every SOP whose sealed rows this freeze opens (the bridge checks this list)
+    withoutWorkflow: missing,
+    rows: Object.fromEntries([...sops, ...Object.keys(separate)].map(s => [s, { n: split.sops[s].sealed.length, sealedSha256: split.sops[s].sealedSha256, sealed: split.sops[s].sealed }])),
     k: DECISION_RULE.k,
     arms: {
       W: { builderModels, judgeModels, buildRuns: builds, sdk, maxSteps: W_DEFAULTS.maxSteps, budgetUsdPerRun: W_DEFAULTS.budgetUsd, timeoutMs: W_DEFAULTS.timeoutMs, buildCostUsd,
@@ -116,7 +132,8 @@ export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haik
     dependencies: dependencyHashes(),
     decisionRule: DECISION_RULE,
     caps: { sealedRunCapUsd: capUsd, phase2CapUsd: 100 },
-    ablation: ablation ? { design: 'DESIGN.md §8', cells: ablationCells({ id, split, ...ablation }) } : null,
+    ablation: ablation ? { design: 'DESIGN.md §8: each cell is compared with the primary run (see compareWith)' } : null,
+    cells: [...(ablation ? ablationCells({ id, split, ...ablation }) : []), ...separateCells({ id, separate, split })],
   };
   return freeze;
 }
@@ -125,7 +142,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const argv = process.argv.slice(2), a = {};
   for (let i = 0; i < argv.length; i++) a[argv[i].slice(2)] = argv[++i];
   const ablation = a['v1-build'] || a['v2-build'] ? { v1Build: a['v1-build'], v2Build: a['v2-build'], v2Sops: (a['v2-sops'] ?? 'dangerous_goods,customer_service,know_your_business').split(','), v2Rows: Number(a['v2-rows'] ?? 40) } : null;
-  const f = makeFreeze({ id: a.id, builds: a.builds.split(','), sops: a.sops.split(','), capUsd: Number(a.cap), agentModel: a['agent-model'] ?? 'claude-haiku-5-5', ablation });
+  const separate = a.separate ? Object.fromEntries(a.separate.split(',').map(x => x.split('='))) : {};
+  const f = makeFreeze({ id: a.id, builds: a.builds.split(','), sops: a.sops.split(','), capUsd: Number(a.cap), agentModel: a['agent-model'] ?? 'claude-haiku-5-5', ablation, separate });
   const out = path.join(RESEARCH, `FREEZE-${a.id}.json`);
   if (existsSync(out)) throw new Error(`${out} exists: a freeze is written once`);
   writeJson(out, f);

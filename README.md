@@ -440,6 +440,7 @@ propose/apply and export. The repair walkthrough is in
 | `scripts/setup-node24.sh` | Idempotent, sha256-checked install of the pinned Node 24.21.0. |
 | `skills/` | Portable `SKILL.md` packs: construction, runtime, steering, evaluation, components, domains (software, browser, SRE, security, science, robotics, healthcare). |
 | `web/` | Visual workflow UI served by `foundry serve`. |
+| `app/` | Product-surface spike (2026-10-21, development): an MCP server, a read-only dashboard over real run journals, and an n8n importer over the unchanged engine. Proposals are version-bound, a practice run is required before approval, and a person approves through a channel the model cannot act on. Design: [research/surface-20261021/DESIGN.md](research/surface-20261021/DESIGN.md). Tests: `node --test --test-concurrency=1 app/test/*.test.mjs`. |
 | `tools/` | Developer tools, such as the read-only run-viewer prototype `tools/run-view/` and the tier-0 human-task form sidecar `tools/ui/` (G21: forms compiled from `answerSchema`, the OpenUI-shaped `formState` adapter, host re-validation). |
 | `beds/` | Task families (Tier A) and sealed families, with independent oracles and `AUDIT.md` files. Contract: `beds/CONTRACT.md`. |
 | `experiments/` | Experiment runners and analyzers: `p1/`, `c0/`, shared `lib/`, hand-written `workflows/`, `kev-data/`, `replicate/` (R-bench pilot). Run data lives in `experiments/runs/`. |

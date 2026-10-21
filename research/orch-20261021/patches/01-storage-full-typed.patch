@@ -1,0 +1,61 @@
+diff --git a/src/runtime.mjs b/src/runtime.mjs
+index 9a4729d..c3f18be 100644
+--- a/src/runtime.mjs
++++ b/src/runtime.mjs
+@@ -88,7 +88,7 @@ const providerFaults = new Set(['MODEL_PROTOCOL', 'MODEL_BUDGET']);
+ const retryable = new Set(['MODEL_SCHEMA', 'MODEL_TRUNCATED']);
+ // onError:"continue" and map failure:"collect" never hide an environment fault, a budget stop, a cancellation,
+ // a policy violation or a harness integrity failure.
+-const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
++const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
+   'DEADLINE', 'STATE_BUDGET', 'STATE_CONFLICT', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
+   'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT', 'JOURNAL_TAMPERED', 'APPROVAL_TAMPERED', 'STATE_DRIFT', 'STATE_CORRUPT',
+   // Cross-run state faults of the harness, not refusals of the data (src/state.mjs STATE_REFUSALS are the handleable ones).
+diff --git a/src/store.mjs b/src/store.mjs
+index 79bcb22..a11efa4 100644
+--- a/src/store.mjs
++++ b/src/store.mjs
+@@ -17,6 +17,16 @@ function liveJobOwner(job) {
+ const COUNT_EVERY = 64;
+ const timerRow = row => ({ runId: row.run_id, nodeKey: row.node_key, wakeAt: row.wake_at });
+ 
++// A full disk, a quota or an exhausted file table is an environment fault the user can act on (free space, then resume): it
++// is typed STORAGE_FULL / STORAGE_UNAVAILABLE instead of surfacing as a raw SQLite or errno error (orch-20261021 C1).
++const FULL = /SQLITE_FULL|database or disk is full|ENOSPC|EDQUOT|no space left/i, UNAVAILABLE = /SQLITE_IOERR|SQLITE_CANTOPEN|EMFILE|ENFILE|EROFS/i;
++export function storageFault(error) {
++  if (!error || error instanceof FoundryError) return error;
++  const text = `${error.code ?? ''} ${error.errstr ?? ''} ${error.message ?? ''}`;
++  if (FULL.test(text)) return new FoundryError('STORAGE_FULL', `The workspace disk is full (${(error.errstr ?? error.message ?? '').slice(0, 120)}): free space, then resume the run; nothing was committed by the failed write`, { cause: error.code ?? null });
++  if (UNAVAILABLE.test(text)) return new FoundryError('STORAGE_UNAVAILABLE', `The workspace store cannot be written (${(error.errstr ?? error.message ?? '').slice(0, 120)}): fix the host, then resume`, { cause: error.code ?? null });
++  return error;
++}
+ export class Store {
+   // The updateRun in progress (its run id and the decisions recorded during it), so a decision commits with its chain event.
+   #scope = null;
+@@ -65,7 +75,12 @@ export class Store {
+   transaction(fn) {
+     this.db.exec('BEGIN IMMEDIATE'); this.#depth++;
+     try { const result = fn(); this.db.exec('COMMIT'); return result; }
+-    catch (error) { this.db.exec('ROLLBACK'); throw error; }
++    catch (error) {
++      // SQLite rolls a transaction back by itself on some errors (SQLITE_FULL on COMMIT among them). A second ROLLBACK then
++      // throws "cannot rollback - no transaction is active" and would replace the error that matters (orch-20261021 C1).
++      if (this.db.isTransaction) { try { this.db.exec('ROLLBACK'); } catch { /* keep the original error */ } }
++      throw storageFault(error);
++    }
+     finally { this.#depth--; }
+   }
+   #workflow(hash) {
+diff --git a/src/verdict.mjs b/src/verdict.mjs
+index 65b2410..22115a8 100644
+--- a/src/verdict.mjs
++++ b/src/verdict.mjs
+@@ -17,7 +17,7 @@ export const AUTHORITY_FLAGS = Object.freeze({ grantsActionAuthority: false, est
+ // is the run's time budget, as DEADLINE is.
+ export const INCONCLUSIVE_CODES = Object.freeze(['VERIFY_FAILED', 'ACCEPTANCE_FAILED', 'ASSERTION_FAILED', 'NODE_CHECK_FAILED',
+   'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'DEADLINE', 'STATE_VERSION_CONFLICT', 'STATE_FULL', 'WAIT_TIMEOUT', 'WAIT_DEADLINE']);
+-export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'SANDBOX_UNAVAILABLE',
++export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE',
+   'NETWORK', 'MODEL_TRANSPORT', 'ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT',
+   'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT']);
+ const inconclusive = new Set(INCONCLUSIVE_CODES), env = new Set(ENV_FAULT_CODES);

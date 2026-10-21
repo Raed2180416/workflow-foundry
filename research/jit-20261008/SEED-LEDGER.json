@@ -1095,7 +1095,7 @@
    "allow": [
     "ebed-rehearsal"
    ],
-   "use": "E8 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, B1 build-loop practice worlds 1235-1237 (experiments/ebed/smoke-service.mjs; assigned 2026-10-14), specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1238-1240 unassigned)",
+   "use": "E8 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, B1 build-loop practice worlds 1235-1237 (experiments/ebed/smoke-service.mjs; assigned 2026-10-14), specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1238-1240 unassigned). OT-0 (research/org-20261021, 2026-10-21, $0): re-uses the dev rehearsals 1232-1234 at d2, d3, d5 and 1232 d2 size 12 under the org overlay (experiments/constitution/overlay.mjs; world ids unchanged) and the practice worlds 1235-1237 for the W-C smoke loop under a practice registry; no other seed",
    "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
   },
   {

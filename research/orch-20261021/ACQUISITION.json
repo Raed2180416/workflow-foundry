@@ -13,7 +13,6 @@
   "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
   "commit": "6a188eea837b77db33e2254397dc25b6c726b5cc",
   "commitDate": "2026-10-20T16:41:15-04:00",
-  "checkedOutFiles": 903,
   "bytesOnDisk": 1159168,
   "licenses": [
    {
@@ -21,7 +20,9 @@
     "firstLine": "The MIT License"
    }
   ],
-  "deletedAt": "2026-10-21T12:56:33.763Z"
+  "deletedAt": "2026-10-21T12:56:33.763Z",
+  "trackedFiles": 903,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
  },
  {
   "repository": "restatedev/sdk-typescript",
@@ -34,7 +35,6 @@
   "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
   "commit": "b1080a11984b35419e0e825a0e82bc17c656a22d",
   "commitDate": "2026-10-20T20:30:52+02:00",
-  "checkedOutFiles": 437,
   "bytesOnDisk": 4128768,
   "licenses": [
    {
@@ -42,7 +42,9 @@
     "firstLine": "MIT License"
    }
   ],
-  "deletedAt": "2026-10-21T12:57:00.772Z"
+  "deletedAt": "2026-10-21T12:57:00.772Z",
+  "trackedFiles": 437,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
  },
  {
   "repository": "dbos-inc/dbos-transact-ts",
@@ -55,7 +57,6 @@
   "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
   "commit": "69e4805fd8c8f246e6476e11e49e294056d07498",
   "commitDate": "2026-10-20T13:09:34-07:00",
-  "checkedOutFiles": 339,
   "bytesOnDisk": 1523712,
   "licenses": [
    {
@@ -63,7 +64,9 @@
     "firstLine": "MIT License"
    }
   ],
-  "deletedAt": "2026-10-21T12:57:22.837Z"
+  "deletedAt": "2026-10-21T12:57:22.837Z",
+  "trackedFiles": 339,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
  },
  {
   "repository": "inngest/inngest-js",
@@ -78,10 +81,16 @@
   "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
   "commit": "eceb780afb11e42c208a12b017602cc6fc068755",
   "commitDate": "2026-10-21T00:42:00+01:00",
-  "checkedOutFiles": 1299,
   "bytesOnDisk": 1572864,
-  "licenses": [],
-  "deletedAt": "2026-10-21T12:57:48.394Z"
+  "licenses": [
+   {
+    "path": "packages/inngest/LICENSE.md",
+    "firstLine": "Apache License Version 2.0 (read from the clone during study; no root LICENSE)"
+   }
+  ],
+  "deletedAt": "2026-10-21T12:57:48.394Z",
+  "trackedFiles": 1299,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
  },
  {
   "repository": "langchain-ai/langgraph",
@@ -93,16 +102,245 @@
    "libs/langgraph/langgraph/types.py",
    "libs/langgraph/langgraph/errors.py"
   ],
-  "outcome": "cloned-sparse-source-not-executed",
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
   "commit": "3cd57c038ad827d05f80c6488adea9994156c58c",
   "commitDate": "2026-10-21T21:22:40+09:00",
-  "checkedOutFiles": 695,
   "bytesOnDisk": 1220608,
   "licenses": [
    {
     "path": "LICENSE",
     "firstLine": "MIT License"
    }
-  ]
+  ],
+  "deletedAt": "2026-10-21T12:58:23.863Z",
+  "trackedFiles": 695,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "openai/openai-agents-python",
+  "url": "https://github.com/openai/openai-agents-python.git",
+  "acquiredAt": "2026-10-21T12:58:23.920Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "src/agents/run.py",
+   "src/agents/handoffs",
+   "src/agents/handoffs.py",
+   "src/agents/guardrail.py",
+   "src/agents/exceptions.py",
+   "src/agents/run_internal",
+   "src/agents/agent.py",
+   "src/agents/run_config.py"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "64cd5dfc5a1579870dcbed0ea42b27aa84033fee",
+  "commitDate": "2026-10-19T17:14:50+00:00",
+  "bytesOnDisk": 2289664,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "MIT License"
+   }
+  ],
+  "deletedAt": "2026-10-21T12:58:42.334Z",
+  "trackedFiles": 1685,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "anthropics/claude-agent-sdk-python",
+  "url": "https://github.com/anthropics/claude-agent-sdk-python.git",
+  "acquiredAt": "2026-10-21T12:58:47.278Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "src/claude_agent_sdk/_internal/transport",
+   "src/claude_agent_sdk/types.py",
+   "src/claude_agent_sdk/_errors.py",
+   "src/claude_agent_sdk/_internal/query.py"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "dd27b703647a4f8989ab656f00c85f98090a60fd",
+  "commitDate": "2026-10-21T04:15:29+00:00",
+  "bytesOnDisk": 626688,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "MIT License"
+   }
+  ],
+  "deletedAt": "2026-10-21T12:59:08.850Z",
+  "trackedFiles": 160,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "microsoft/agent-framework",
+  "url": "https://github.com/microsoft/agent-framework.git",
+  "acquiredAt": "2026-10-21T12:59:14.749Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "python/packages/core/agent_framework/_workflows"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "02005995380d5a09167e5c43b5d0f88328979145",
+  "commitDate": "2026-10-21T11:31:29+00:00",
+  "bytesOnDisk": 2412544,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "MIT License"
+   }
+  ],
+  "deletedAt": "2026-10-21T12:59:34.362Z",
+  "trackedFiles": 5536,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "crewAIInc/crewAI",
+  "url": "https://github.com/crewAIInc/crewAI.git",
+  "acquiredAt": "2026-10-21T12:59:34.430Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "lib/crewai/src/crewai/crew.py",
+   "lib/crewai/src/crewai/agent",
+   "lib/crewai/src/crewai/agents",
+   "lib/crewai/src/crewai/utilities/rpm_controller.py",
+   "lib/crewai/src/crewai/tools/agent_tools",
+   "src/crewai/crew.py",
+   "src/crewai/agents",
+   "src/crewai/utilities/rpm_controller.py",
+   "src/crewai/tools/agent_tools"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "af4efdc685000172d803db06119faf0c9d082ca5",
+  "commitDate": "2026-10-21T08:35:41+00:00",
+  "bytesOnDisk": 6283264,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "Copyright (c) 2025 crewAI, Inc."
+   }
+  ],
+  "deletedAt": "2026-10-21T12:59:56.330Z",
+  "trackedFiles": 35780,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "microsoft/durabletask-go",
+  "url": "https://github.com/microsoft/durabletask-go.git",
+  "acquiredAt": "2026-10-21T12:59:56.391Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "task",
+   "backend/orchestration.go",
+   "backend/runtimestate.go",
+   "api"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "c713409eb9a4295884169c144df9221f9a42aef6",
+  "commitDate": "2026-10-12T14:39:34-07:00",
+  "bytesOnDisk": 1241088,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "Apache License"
+   }
+  ],
+  "deletedAt": "2026-10-21T13:00:14.526Z",
+  "trackedFiles": 343,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "hatchet-dev/hatchet",
+  "url": "https://github.com/hatchet-dev/hatchet.git",
+  "acquiredAt": "2026-10-21T13:00:14.598Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "frontend/docs/pages/home"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "8f8964f067c8ebc5bfdddf11bd8554268d44af63",
+  "commitDate": "2026-10-20T20:59:08-04:00",
+  "bytesOnDisk": 1245184,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "MIT License"
+   }
+  ],
+  "deletedAt": "2026-10-21T13:00:35.065Z",
+  "trackedFiles": 5146,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "triggerdotdev/trigger.dev",
+  "url": "https://github.com/triggerdotdev/trigger.dev.git",
+  "acquiredAt": "2026-10-21T13:00:39.897Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "docs/idempotency.mdx",
+   "docs/queue-concurrency.mdx",
+   "docs/runs/max-duration.mdx",
+   "docs/wait.mdx",
+   "docs/wait-for-token.mdx",
+   "docs/triggering.mdx",
+   "docs/errors-retrying.mdx",
+   "docs/how-it-works.mdx"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "98adb6662562dbfa99f7c026ddb544c4486e03f6",
+  "commitDate": "2026-10-21T12:43:16+00:00",
+  "bytesOnDisk": 2248704,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "Apache License"
+   }
+  ],
+  "deletedAt": "2026-10-21T13:00:59.501Z",
+  "trackedFiles": 7339,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "ray-project/ray",
+  "url": "https://github.com/ray-project/ray.git",
+  "acquiredAt": "2026-10-21T13:01:05.166Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "doc/source/ray-core/fault_tolerance",
+   "doc/source/ray-core/fault-tolerance.rst"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "42cc211acbc25f53e24ee67d04b3db6d1a34fba9",
+  "commitDate": "2026-10-21T06:41:28-04:00",
+  "bytesOnDisk": 2080768,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "Apache License"
+   }
+  ],
+  "deletedAt": "2026-10-21T13:01:22.950Z",
+  "trackedFiles": 10463,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
+ },
+ {
+  "repository": "conductor-oss/conductor",
+  "url": "https://github.com/conductor-oss/conductor.git",
+  "acquiredAt": "2026-10-21T13:01:23.091Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "docs"
+  ],
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
+  "commit": "4ed6f796b1530f0587ede8f2d1fd898de170a914",
+  "commitDate": "2026-10-19T15:29:26-07:00",
+  "bytesOnDisk": 14749696,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "Apache License"
+   }
+  ],
+  "deletedAt": "2026-10-21T13:01:47.423Z",
+  "trackedFiles": 4389,
+  "note": "trackedFiles counts the whole tree index (git ls-files); only the sparse paths and root LICENSE/README/NOTICE were checked out"
  }
 ]
