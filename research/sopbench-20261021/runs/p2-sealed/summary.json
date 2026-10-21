@@ -4,7 +4,7 @@
  "freeze": "research/sopbench-20261021/FREEZE-p2.json",
  "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
  "evidence": "SEALED rows (frozen split, frozen workflows and code)",
- "stopped": "environment fault at A-referral_abuse_detection_v2-74-2: MODEL_RATE_LIMIT",
+ "stopped": "environment fault at A-customer_service-135-2: MODEL_RATE_LIMIT",
  "k": 3,
  "arms": [
   "W",
@@ -24,9 +24,9 @@
   "video_classification",
   "warehouse_package_inspection"
  ],
- "runs": 4602,
- "spentUsd": 4.1917133950000025,
+ "runs": 7362,
+ "spentUsd": 6.647820274999982,
  "capUsd": 40,
- "finishedAt": "2026-10-21T20:32:05.027Z",
+ "finishedAt": "2026-10-21T23:29:29.971Z",
  "dependencyDrift": []
 }
