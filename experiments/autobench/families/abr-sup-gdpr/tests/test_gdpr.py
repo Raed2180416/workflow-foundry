@@ -180,6 +180,22 @@ def test_world0_has_no_overdue_open_request(streams):
                 assert (fri0 - date.fromisoformat(v["date"])).days < 30, rid
 
 
+def test_held_requests_past_day_30_are_not_closed(streams):
+    """deadline-held (added 2026-10-21): a request blocked by a legal hold reaches day 30 at a daily close. It is verified
+    and answered, so the truth closes only requests in Verification Sent, and the exposure is at a close."""
+    exposed = [t for out in streams.values() for t in out["truth"] if "deadline-held" in t["traps"]]
+    assert exposed and all(t["kind"] == "day.close" for t in exposed)
+    for out in streams.values():
+        state = {}
+        for c in out["end"]["log0"]:
+            state[c["Request ID"]] = c["Transition"]
+        for t in out["truth"]:
+            for x in t["expect"]["log"]:
+                if x["Transition"] == gen.CLOSED:
+                    assert state.get(x["Request ID"]) == gen.VS, (t["trigger"], x["Request ID"], state.get(x["Request ID"]))
+                state[x["Request ID"]] = x["Transition"]
+
+
 # -- leakage -----------------------------------------------------------------------------------------------------------
 def test_no_hidden_truth_reaches_the_arm():
     g = gates.gate_leakage(DEV)

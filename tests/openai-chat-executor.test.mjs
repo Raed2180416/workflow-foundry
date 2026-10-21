@@ -232,7 +232,7 @@ test('budget: a priced model stops between turns once the policy price times the
   assert.equal(free.requests.length, 2); assert.ok(f.tokens.total <= 1300);
   assert.deepEqual({ ...f.tokens }, { input: 800, output: 200, cachedInput: 0, reasoning: 0, total: 1000, budget: 1300, usageMissing: false });
   const last = readStream(f.transcript).at(-1);
-  assert.equal(last.subtype, 'error_max_budget_tokens'); assert.match(last.error, /token budget: 1000 tokens used, and the next request \(about \d+ input tokens\) would pass the 1300-token session budget/);
+  assert.equal(last.subtype, 'error_max_budget_tokens'); assert.match(last.error, /token budget: 1000 tokens used, and the next request \(about \d+ tokens with its output\) would pass the 1300-token session budget/);
   assert.equal(ENV_FAULTS.has(f.error.code), false, 'a task outcome, not an environment fault');
   const missing = await fakeEndpoint(t, [{ body: { model: 'mercury-2.5', choices: [{ message: { role: 'assistant', content: 'no usage reported' } }] } }]);
   const m = await run(t, { model: 'mercury-2.5', baseUrl: missing.baseUrl, budgetUsd: 0.3 });

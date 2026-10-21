@@ -6,7 +6,7 @@
 // per-row grade is printed while the run is open; the repo gets the aggregate summary and the decision-rule evaluation.
 //
 //   node experiments/sopbench/sealed.mjs --freeze research/sopbench-20261021/FREEZE-p2.json --run-id p2-sealed --cap 40
-// Options: --arms W,A (default both) --sops a,b (a subset of the frozen SOPs) --concurrency 4 --resume
+// Options: --arms W,A (default both) --sops a,b (a subset of the frozen SOPs) --cell <ablation cell id> --concurrency 4 --resume
 //   --grade-every 40 (answers graded in batches)
 // Environment faults (rate/usage limit, sandbox, a workflow env status) stop the run (exit 3) and are never scored; rerun
 // the same command with --resume. The cap stops it too (exit 4).
@@ -104,7 +104,19 @@ export async function sealedRun(o) {
   const freeze = verifyFreeze(o.freeze, { split, checkCode: o.checkCode ?? true, root: o.root ?? REPO });
   const io = { split: splitFile, dataDir, upstream };
   const arms = o.arms ?? ['W', 'A'];
-  const sops = (o.sops ?? freeze.sops).filter(s => freeze.sops.includes(s));
+  // A distractor-ablation cell (DESIGN.md §8) runs its own SOPs, rows, catalogs and workflows; the default is the primary run.
+  const cell = o.cell ? (freeze.ablation?.cells ?? []).find(c => c.id === o.cell) : null;
+  if (o.cell && !cell) throw new Error(`no ablation cell ${o.cell} in the freeze`);
+  const sops = (o.sops ?? cell?.sops ?? freeze.sops).filter(s => (cell?.sops ?? freeze.sops).includes(s));
+  const artifactsOf = cell ? cell.artifacts : freeze.artifacts;
+  const rowsOf = s => (cell ? cell.rows[s].sealed : split.sops[s].sealed);
+  const catalogOf = s => (cell?.catalogs?.[s] ? path.resolve(o.root ?? REPO, cell.catalogs[s].file) : null);
+  if (cell) for (const s of sops) {
+    if (!cell.rows[s].sealed.every(r => split.sops[s].sealed.includes(r))) throw new Error(`cell ${cell.id}: rows of ${s} are not sealed rows`);
+    if (cell.catalogs?.[s] && sha256(readFileSync(catalogOf(s))) !== cell.catalogs[s].sha256) throw new Error(`cell ${cell.id}: catalog of ${s} changed since the freeze`);
+    const f = artifactFiles(path.resolve(o.root ?? REPO, cell.artifacts[s].dir));
+    if (!f || artifactSha256(f) !== cell.artifacts[s].sha256) throw new Error(`cell ${cell.id}: artifact of ${s} changed since the freeze`);
+  }
   const k = freeze.k;
   const policy = loadPolicy();
   for (const m of [freeze.arms.A.model, ...freeze.arms.W.judgeModels]) if (modelById(policy.policy, m).provider !== 'claude-cli') throw new Error(`model ${m} is not served by claude-cli (this harness's executor)`);
@@ -112,20 +124,20 @@ export async function sealedRun(o) {
   const rowsDir = path.join(o.rowsRoot ?? ROWS_ROOT, o.runId);
   mkdirSync(live, { recursive: true }); mkdirSync(rowsDir, { recursive: true });
   const rawFile = path.join(rowsDir, 'runs.raw.jsonl'), gradedFile = path.join(rowsDir, 'runs.sealed.jsonl'), faultsFile = path.join(rowsDir, 'faults.jsonl');
-  const launch = { freezeSha256: sha256(readFileSync(o.freeze)), arms, sops, k, capUsd: o.capUsd };
+  const launch = { freezeSha256: sha256(readFileSync(o.freeze)), cell: o.cell ?? 'primary', arms, sops, k, capUsd: o.capUsd };
   const launchFile = path.join(live, 'launch.json');
   if (existsSync(launchFile) && !o.resume) throw new Error(`${live} holds a run: --resume or a new --run-id`);
   if (existsSync(launchFile) && readJson(launchFile).freezeSha256 !== launch.freezeSha256) throw new Error('resume refused: another freeze file');
   writeJson(launchFile, { ...launch, history: [...(existsSync(launchFile) ? readJson(launchFile).history ?? [] : []), new Date().toISOString()] });
   // Prepare every SOP's sealed rows (refused by the bridge without this freeze).
-  for (const s of sops) if (!existsSync(path.join(live, 'prep', s, 'meta.json'))) await prepareRows({ sop: s, rows: split.sops[s].sealed, live, sealed: true, freeze: o.freeze, ...io });
-  const files = Object.fromEntries(sops.map(s => [s, artifactFiles(path.resolve(o.root ?? REPO, freeze.artifacts[s].dir))]));
+  for (const s of sops) if (!existsSync(path.join(live, 'prep', s, 'meta.json'))) await prepareRows({ sop: s, rows: rowsOf(s), live, sealed: true, freeze: o.freeze, catalog: catalogOf(s), ...io });
+  const files = Object.fromEntries(sops.map(s => [s, artifactsOf[s] ? artifactFiles(path.resolve(o.root ?? REPO, artifactsOf[s].dir)) : null]));
   const expectedOf = (s, r) => readJson(path.join(live, 'prep', s, 'rows', String(r), 'expected.json'));
   // Jobs: rows round-robin over SOPs; per row k forks; per fork both arms (order alternates).
   const done = new Set([...readRecords(gradedFile), ...readRecords(rawFile)].map(r => `${r.arm}:${r.sop}:${r.row}:${r.fork}`));
-  const maxRows = Math.max(...sops.map(s => split.sops[s].sealed.length));
+  const maxRows = Math.max(...sops.map(s => rowsOf(s).length));
   const jobs = [];
-  for (let i = 0; i < maxRows; i++) for (const s of sops) { const row = split.sops[s].sealed[i]; if (row === undefined) continue;
+  for (let i = 0; i < maxRows; i++) for (const s of sops) { const row = rowsOf(s)[i]; if (row === undefined) continue;
     for (let fork = 0; fork < k; fork++) for (const arm of (fork % 2 ? [...arms].reverse() : arms)) if (!done.has(`${arm}:${s}:${row}:${fork}`)) jobs.push({ arm, sop: s, row, fork }); }
   log(`[sealed] ${o.runId}: ${jobs.length} runs to go (${sops.length} SOPs, k=${k}, arms ${arms.join('+')})`);
   const { port, db } = o.noModels ? { port: null, db: { close() {} } } : createModelPort({ journalFile: path.join(live, 'journal.sqlite'), allowedModels: [...new Set(freeze.arms.W.judgeModels)], concurrency: { 'claude-cli': 4 } });
@@ -148,15 +160,18 @@ export async function sealedRun(o) {
         reserved += b;
         const tag = `${job.arm}-${job.sop}-${job.row}-${job.fork}`;
         let rec;
-        if (job.arm === 'W') {
+        if (job.arm === 'W' && !files[job.sop]) {
+          // A SOP whose build failed has no workflow: every W run of it is a fail (DESIGN.md §10).
+          rec = { ...job, status: 'no-workflow', answerText: '', costUsd: 0, envFault: false };
+        } else if (job.arm === 'W') {
           const w = freeze.arms.W;
           const x = await runWorkflowRow({ files: files[job.sop], prepDir: path.join(live, 'prep', job.sop), sop: job.sop, row: job.row, live, tag, sealed: true, freeze: o.freeze,
-            modelPort: port, judgeModels: w.judgeModels, budgetUsd: w.budgetUsdPerRun, timeoutMs: w.timeoutMs, maxSteps: w.maxSteps, ...io });
+            modelPort: port, judgeModels: w.judgeModels, budgetUsd: w.budgetUsdPerRun, timeoutMs: w.timeoutMs, maxSteps: w.maxSteps, catalog: catalogOf(job.sop), ...io });
           rec = { ...job, status: x.status, answerText: x.answerText, costUsd: x.costUsd, judgeCalls: x.judgeCalls, steps: x.steps, toolCalls: x.toolCalls, sections: x.sections.length,
             deopt: x.deopt, error: x.error ? String(x.error).slice(-400) : null, durationMs: x.durationMs, envFault: x.status === 'env' };
         } else {
           const a = freeze.arms.A;
-          const { rec: r } = await runAgentRow({ sop: job.sop, row: job.row, prepDir: path.join(live, 'prep', job.sop), live, tag, hostDir: path.join(live, 'host', tag), runner: o.runner ?? runClaudeCode, ...io,
+          const { rec: r } = await runAgentRow({ sop: job.sop, row: job.row, prepDir: path.join(live, 'prep', job.sop), live, tag, hostDir: path.join(live, 'host', tag), runner: o.runner ?? runClaudeCode, catalog: catalogOf(job.sop), ...io,
             model: a.model, budgetUsd: a.budgetUsd, maxSteps: a.maxSteps, timeoutMin: a.timeoutMin, effort: a.effort, tools: a.tools, sealed: true, freeze: o.freeze, audit: true });
           const v = [...(r.session?.violations ?? []), ...(r.nestedModelUses ? ['nested model use'] : [])];
           rec = { ...job, answerText: v.length ? '' : r.answerText ?? '', liveAnswerSha256: sha256(r.answerText ?? ''), violations: v, costUsd: r.costUsd, steps: r.steps ?? null,
@@ -179,7 +194,7 @@ export async function sealedRun(o) {
   const orphans = readRecords(rawFile).filter(r => !gradedKeys.has(`${r.arm}:${r.sop}:${r.row}:${r.fork}`));
   if (orphans.length) { pending.push(...orphans); await gradePending(); }
   const all = readRecords(gradedFile);
-  const summary = { runId: o.runId, freeze: path.relative(REPO, o.freeze), freezeSha256: launch.freezeSha256, evidence: 'SEALED rows (frozen split, frozen workflows and code)', stopped, k, arms, sops,
+  const summary = { runId: o.runId, cell: launch.cell, freeze: path.relative(REPO, o.freeze), freezeSha256: launch.freezeSha256, evidence: 'SEALED rows (frozen split, frozen workflows and code)', stopped, k, arms, sops,
     runs: all.length, spentUsd: spent, capUsd: o.capUsd, finishedAt: new Date().toISOString() };
   if (!stopped) {
     const an = analyse(all, { sops, arms, k });
@@ -205,7 +220,7 @@ export async function sealedRun(o) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const argv = process.argv.slice(2), a = {};
   for (let i = 0; i < argv.length; i++) { const n = argv[i].slice(2); if (n === 'resume') a.resume = true; else a[n] = argv[++i]; }
-  const { summary, stopped } = await sealedRun({ freeze: path.resolve(a.freeze), runId: a['run-id'], capUsd: Number(a.cap), resume: Boolean(a.resume),
+  const { summary, stopped } = await sealedRun({ freeze: path.resolve(a.freeze), runId: a['run-id'], capUsd: Number(a.cap), resume: Boolean(a.resume), cell: a.cell,
     arms: a.arms ? a.arms.split(',') : undefined, sops: a.sops ? a.sops.split(',') : undefined, concurrency: a.concurrency ? Number(a.concurrency) : 4, gradeEvery: a['grade-every'] ? Number(a['grade-every']) : 40 });
   const { analysis, analysisWithoutOrchestrationOnly, ...head } = summary;
   console.log(JSON.stringify({ ...head, macro: analysis?.arms ?? null }, null, 1));

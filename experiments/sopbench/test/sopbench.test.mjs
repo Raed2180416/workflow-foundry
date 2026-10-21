@@ -251,3 +251,39 @@ test('canon matches the bridge canonical JSON', { skip: SKIP }, async () => {
   assert.match(r.stderr, /does not match its sha256/);
   assert.equal(canon({ b: [1, 2], a: { d: 'x', c: null } }), '{"a":{"c":null,"d":"x"},"b":[1,2]}');
 });
+
+test('sealed run (toy SOP): refused without a valid freeze; with one, both arms run k times on sealed rows, are graded, analysed and decided', { skip: SKIP }, async () => {
+  const { sealedRun, verifyFreeze } = await import('../sealed.mjs');
+  const { artifactFiles, artifactSha256 } = await import('../exec.mjs');
+  const dir = tmp('sealed');
+  const { split, file } = await toySplit(dir);
+  const wf = path.join(HERE, 'test/fixtures/reference/toy_sop');
+  const files = artifactFiles(wf);
+  const fz = path.join(dir, 'freeze.json');
+  const freeze = { kind: 'sopbench-freeze', splitSha256: split.splitSha256, sops: ['toy_sop'], k: 2,
+    rows: { toy_sop: { n: split.sops.toy_sop.sealed.length, sealedSha256: split.sops.toy_sop.sealedSha256 } },
+    artifacts: { toy_sop: { dir: wf, sha256: artifactSha256(files) } },
+    arms: { W: { judgeModels: ['claude-haiku-5-5'], budgetUsdPerRun: 0.05, timeoutMs: 120000, maxSteps: 40, buildCostUsd: 0 },
+      A: { model: 'claude-haiku-5-5', budgetUsd: 0.25, maxSteps: 10, timeoutMin: 5, effort: null, tools: ['Bash'] } }, code: {} };
+  writeJson(fz, { ...freeze, artifacts: { toy_sop: { dir: wf, sha256: 'not-it' } } });
+  assert.throws(() => verifyFreeze(fz, { split: loadSplit(file), checkCode: false, root: '/' }), /artifact toy_sop/);
+  writeJson(fz, freeze);
+  // A scripted "agent": always answers ship (no model).
+  // It writes a minimal transcript, which the host audit (L5) requires of every agent session.
+  const runner = async ({ workdir }) => {
+    const text = '<final_output>{"decision": "ship"}</final_output>';
+    writeFileSync(path.join(workdir, '.executor-transcript.jsonl'), [{ type: 'assistant', message: { id: 'm1', model: 'claude-haiku-5-5', content: [{ type: 'text', text }] } },
+      { type: 'result', subtype: 'success', num_turns: 1, result: text, modelUsage: { 'claude-haiku-5-5': {} } }].map(e => JSON.stringify(e)).join('\n') + '\n');
+    return { ok: true, error: null, result: text, costUsd: 0, costUnknown: false, costUpperUsd: 0, turns: 1, durationMs: 1, toolUses: [] };
+  };
+  const { summary, stopped } = await sealedRun({ freeze: fz, runId: `toy-${Date.now()}`, capUsd: 1, split: file, dataDir: FIXTURE, checkCode: false, root: '/', runner, noModels: true,
+    rowsRoot: path.join(dir, 'rows'), outDir: null, concurrency: 2, log: () => {} });
+  assert.equal(stopped, null);
+  const n = split.sops.toy_sop.sealed.length;
+  assert.equal(summary.runs, n * 2 * 2);
+  assert.equal(summary.analysis.arms.W.macroPassK, 1);             // the toy workflow is right on every sealed row, twice
+  const ships = split.sops.toy_sop.sealed.filter(r => [0, 3, 6, 7].includes(r)).length;   // rows whose decision is ship
+  assert.equal(summary.analysis.arms.A.macroPassK, ships / n);
+  assert.equal(summary.graderDisagreements, 0);
+  assert.equal(typeof summary.decision.beatsAgent, 'boolean');
+});

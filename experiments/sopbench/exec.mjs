@@ -77,7 +77,7 @@ export async function runWorkflowRow(o) {
     if (o.modelPort) svc = await startServices({ modelPort: o.modelPort, ledger, allowedModels: o.judgeModels, socketDir: path.join(runDir, 'tools'), runId: `sopbench-wf:${tag}` });
     writeFiles(runDir, { ...files, 'task.json': JSON.stringify(workflowTask(task), null, 1),
       ...sdkFiles({ catalog, outputColumns: task.output_columns, gateway: svc ? { socket: 'gw.sock', token: svc.token } : { url: 'http://127.0.0.1:9', token: 'no-model-access' } }) });
-    bridge = startServe({ liveDir: live, sop, row, mailbox: path.join(runDir, '.tools'), hostDir, maxSteps, sealed: o.sealed, freeze: o.freeze, world: o.world ?? 'dev',
+    bridge = startServe({ liveDir: live, sop, row, mailbox: path.join(runDir, '.tools'), hostDir, maxSteps, sealed: o.sealed, freeze: o.freeze, world: o.world ?? 'dev', catalog: o.catalog ?? null,
       split: o.split ?? SPLIT_FILE, upstream: o.upstream ?? UPSTREAM, dataDir: o.dataDir ?? null });
     await bridge.ready;
     r = await runSandboxed({ command: 'node', args: ['solve.mjs', 'task.json'], workdir: runDir, network: false, timeoutMs });
@@ -113,10 +113,10 @@ export async function runWorkflowRow(o) {
 }
 
 /** Prepare one SOP's rows for workflow runs (bridge prepare; refused for sealed rows without --sealed and a freeze). */
-export async function prepareRows({ sop, rows, live, world = 'dev', sealed = false, freeze = null, split = SPLIT_FILE, upstream = UPSTREAM, dataDir = null }) {
+export async function prepareRows({ sop, rows, live, world = 'dev', sealed = false, freeze = null, catalog = null, prepName = null, split = SPLIT_FILE, upstream = UPSTREAM, dataDir = null }) {
   const { bridgeOk } = await import('./lib.mjs');
-  const prepDir = path.join(live, 'prep', sop);
-  await bridgeOk(['prepare', '--sop', sop, '--rows', rows.join(','), '--out', prepDir, ...(sealed ? ['--sealed', '--freeze', freeze] : ['--world', world])], { liveDir: live, split, upstream, dataDir });
+  const prepDir = path.join(live, 'prep', prepName ?? sop);
+  await bridgeOk(['prepare', '--sop', sop, '--rows', rows.join(','), '--out', prepDir, ...(sealed ? ['--sealed', '--freeze', freeze] : ['--world', world]), ...(catalog ? ['--catalog', catalog] : [])], { liveDir: live, split, upstream, dataDir });
   return prepDir;
 }
 
@@ -128,7 +128,7 @@ export async function runWorkflowSet(o) {
   const { gradeAnswers } = await import('./run.mjs');
   const { sop, files, rows, live } = o;
   const k = o.k ?? 1, concurrency = o.concurrency ?? 2, log = o.log ?? (() => {});
-  const prepDir = o.prepDir ?? await prepareRows({ sop, rows, live, world: o.world, sealed: o.sealed, freeze: o.freeze, split: o.split, upstream: o.upstream, dataDir: o.dataDir });
+  const prepDir = o.prepDir ?? await prepareRows({ sop, rows, live, world: o.world, sealed: o.sealed, freeze: o.freeze, catalog: o.catalog, split: o.split, upstream: o.upstream, dataDir: o.dataDir });
   const jobs = rows.flatMap(row => Array.from({ length: k }, (_, fork) => ({ row, fork })));
   const out = new Array(jobs.length);
   let next = 0;

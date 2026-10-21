@@ -456,20 +456,20 @@ export async function runOpenAIChat({
       if (failed) throw new SessionStop(failed, failed === 'SANDBOX_UNAVAILABLE' ? `the sandbox could not be set up: ${sandbox.stderr.slice(-500)}` : `the command server did not start: ${sandbox.stderr.slice(-500)}`);
     }
     const messages = [{ role: 'system', content: system }, { role: 'user', content: prompt }];
-    // The next request's input, projected before it is sent: the last reported prompt plus what was appended since, at
-    // CHARS_PER_TOKEN (the whole request when nothing was reported yet). The token budget is checked against used + this,
-    // so a session stops before the request that would cross it, not after.
+    // The next request, projected before it is sent: its input (the last reported prompt plus what was appended since, at
+    // CHARS_PER_TOKEN; the whole request when nothing was reported yet) and its output (the largest output so far, at least
+    // 256). The token budget is checked against used + this, so a session stops before the request that would cross it.
     const toolChars = toolList.length ? JSON.stringify(toolDefinitions(toolList)).length : 0;
-    let lastPrompt = null, charsAtLast = 0;
+    let lastPrompt = null, charsAtLast = 0, maxOut = 256;
     const projectNext = () => {
       const chars = JSON.stringify(messages).length + toolChars;
-      return lastPrompt === null ? Math.ceil(chars / CHARS_PER_TOKEN) : lastPrompt + Math.ceil(Math.max(0, chars - charsAtLast) / CHARS_PER_TOKEN);
+      return (lastPrompt === null ? Math.ceil(chars / CHARS_PER_TOKEN) : lastPrompt + Math.ceil(Math.max(0, chars - charsAtLast) / CHARS_PER_TOKEN)) + maxOut;
     };
     while (true) {
       if (priced && costUsd >= budgetUsd) throw new SessionStop('EXECUTOR_BUDGET', `spent $${costUsd.toFixed(6)} of the $${budgetUsd} session budget`, 'error_max_budget_usd');
       if (tokenBudget !== null) {
         const used = totals.input + totals.output, next = projectNext();
-        if (used + next > tokenBudget) throw new SessionStop('EXECUTOR_BUDGET', `token budget: ${used} tokens used, and the next request (about ${next} input tokens) would pass the ${tokenBudget}-token session budget`, 'error_max_budget_tokens');
+        if (used + next > tokenBudget) throw new SessionStop('EXECUTOR_BUDGET', `token budget: ${used} tokens used, and the next request (about ${next} tokens with its output) would pass the ${tokenBudget}-token session budget`, 'error_max_budget_tokens');
       }
       const charsNow = JSON.stringify(messages).length + toolChars;
       const data = await complete(messages);
@@ -484,7 +484,7 @@ export async function runOpenAIChat({
       const byModel = served.get(servedModel) ?? { inputTokens: 0, outputTokens: 0, cacheReadInputTokens: 0, reasoningTokens: 0, responses: 0 };
       served.set(servedModel, byModel); byModel.responses += 1;
       if (u) {
-        lastPrompt = u.input; charsAtLast = charsNow;
+        lastPrompt = u.input; charsAtLast = charsNow; maxOut = Math.max(maxOut, u.output);
         for (const k of Object.keys(totals)) totals[k] += u[k];
         costUsd += priceUsage(u, price);
         byModel.inputTokens += u.input; byModel.outputTokens += u.output; byModel.cacheReadInputTokens += u.cached; byModel.reasoningTokens += u.reasoning;

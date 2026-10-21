@@ -189,7 +189,7 @@ export async function runAgentRow(o) {
     rmSync(workdir, { recursive: true, force: true });
     rmSync(hostDir, { recursive: true, force: true });
     materializeWorkdir(workdir, catalog);
-    bridge = startServe({ liveDir: live, sop, row, mailbox: path.join(workdir, '.tools'), hostDir, maxSteps: o.maxSteps, sealed: o.sealed, freeze: o.freeze, upstream: o.upstream, split: o.split, dataDir: o.dataDir });
+    bridge = startServe({ liveDir: live, sop, row, mailbox: path.join(workdir, '.tools'), hostDir, maxSteps: o.maxSteps, sealed: o.sealed, freeze: o.freeze, catalog: o.catalog ?? null, upstream: o.upstream, split: o.split, dataDir: o.dataDir });
     await bridge.ready;
     started = true;
     const sopText = readFileSync(path.join(pdir, 'sop.txt'), 'utf8');

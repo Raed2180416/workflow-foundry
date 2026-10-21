@@ -73,12 +73,12 @@ function workdirFiles({ prepDir, rows, catalog }) {
 }
 
 /** One builder or repair session: services up (gateway for judges, bridge on the given world), the session, services down. */
-async function session({ sop, workdir, world, firstRow, live, round, model, prompt, budgetUsd, minutes, modelPort, judgeModels, judgeUsd, catalog, outputColumns, runner = runClaudeCode }) {
+async function session({ sop, workdir, world, firstRow, live, round, model, prompt, budgetUsd, minutes, modelPort, judgeModels, judgeUsd, catalog, outputColumns, catalogFile = null, runner = runClaudeCode }) {
   const ledger = new Ledger({ capUsd: judgeUsd, label: `build:${sop}:r${round}` });
   const svc = await startServices({ modelPort, ledger, allowedModels: judgeModels, socketDir: path.join(workdir, 'tools'), runId: `sopbench-build:${sop}:r${round}:${Date.now()}` });
   writeFiles(workdir, { ...sdkFiles({ catalog, outputColumns, gateway: { socket: 'gw.sock', token: svc.token } }), 'output-schema.json': JSON.stringify(outputSchemaOf(outputColumns), null, 1) });
   rmSync(path.join(workdir, '.tools'), { recursive: true, force: true });
-  const bridge = startServe({ liveDir: live, sop, row: firstRow, mailbox: path.join(workdir, '.tools'), hostDir: path.join(live, 'build', sop, `bridge-r${round}`), maxSteps: 1_000_000, world });
+  const bridge = startServe({ liveDir: live, sop, row: firstRow, mailbox: path.join(workdir, '.tools'), hostDir: path.join(live, 'build', sop, `bridge-r${round}`), maxSteps: 1_000_000, world, catalog: catalogFile });
   let r = null, error = null;
   try {
     await bridge.ready;
@@ -94,9 +94,9 @@ async function session({ sop, workdir, world, firstRow, live, round, model, prom
 }
 
 /** Evaluate an artifact on dev rows (build rows in the build world, repair rows in the dev world). */
-async function evaluate({ sop, files, live, split, buildRows, repairRows, modelPort, judgeModels, tagPrefix, concurrency }) {
+async function evaluate({ sop, files, live, split, buildRows, repairRows, modelPort, judgeModels, tagPrefix, concurrency, catalog = null }) {
   const out = { build: null, repair: null };
-  const common = { sop, files, live, modelPort, judgeModels, concurrency, tagPrefix };
+  const common = { sop, files, live, modelPort, judgeModels, concurrency, tagPrefix, catalog };
   out.build = await runWorkflowSet({ ...common, rows: buildRows, world: 'build', prepDir: path.join(live, 'prep', sop) });
   if (repairRows.length) out.repair = await runWorkflowSet({ ...common, rows: repairRows, world: 'dev', prepDir: path.join(live, 'prep', sop) });
   const records = [...out.build.records, ...(out.repair?.records ?? [])];
@@ -123,14 +123,13 @@ export async function buildSop(o) {
   const { sop, split, live, modelPort, judgeModels, builderModel, log } = o;
   const e = split.sops[sop];
   const buildRows = e.build, repairRows = e.repair;
-  const prepDir = await prepareRows({ sop, rows: [...buildRows, ...repairRows], live, world: 'dev' });
+  const prepDir = await prepareRows({ sop, rows: [...buildRows, ...repairRows], live, world: 'dev', catalog: o.catalogFile ?? null });
   const catalog = readJson(path.join(prepDir, 'catalog.json'));
-  if (o.catalogFile) throw new Error('alternate catalogs (the distractor ablation) are not wired to the bridge yet');
   const outputColumns = readJson(path.join(prepDir, 'meta.json')).output_columns;
   const workdir = path.join(live, 'build', sop, 'w');
   rmSync(workdir, { recursive: true, force: true });
   mkdirSync(workdir, { recursive: true });
-  const rec = { sop, builderModel, judgeModels, rounds: [], costUsd: 0, catalogSha256: sha256(JSON.stringify(catalog)), buildRows, repairRows };
+  const rec = { sop, builderModel, judgeModels, rounds: [], costUsd: 0, catalogSha256: sha256(JSON.stringify(catalog)), catalogFile: o.catalogFile ?? null, buildRows, repairRows };
   const prompt0 = BUILD_PROMPT({ cols: outputColumns, n: buildRows.length, judgeTiers: judgeModels });
   rec.buildPromptSha256 = sha256(prompt0);
   writeFiles(workdir, { ...workdirFiles({ prepDir, rows: buildRows, catalog }), 'BRIEF.md': prompt0 });
@@ -151,7 +150,7 @@ export async function buildSop(o) {
     if (!(await o.reserve(budget))) { rec.stopped = 'cap'; break; }
     log(`[build] ${sop} round ${round}: session (${o.builderModel}, $${budget}, ${minutes} min, world ${world})`);
     const s = await session({ sop, workdir, world, firstRow: buildRows[0], live, round, model: builderModel, prompt, budgetUsd: budget, minutes, modelPort, judgeModels,
-      judgeUsd: o.builderJudgeUsd, catalog, outputColumns, runner: o.runner });
+      judgeUsd: o.builderJudgeUsd, catalog, outputColumns, catalogFile: o.catalogFile ?? null, runner: o.runner });
     o.settle(budget, s.costUsd + s.judgeUsd);
     rec.costUsd += s.costUsd + s.judgeUsd;
     const roundRec = { round, world, sessionError: s.sessionError, costUsd: s.costUsd, costUnknown: s.costUnknown, judgeUsd: s.judgeUsd, judgeCalls: s.judgeCalls, turns: s.turns,
@@ -165,7 +164,7 @@ export async function buildSop(o) {
     const adir = path.join(live, 'artifacts', sop, `r${round}`);
     rmSync(adir, { recursive: true, force: true }); writeFiles(adir, files);
     if (!(await o.reserve(0.05 * (buildRows.length + repairRows.length)))) { rec.stopped = 'cap'; break; }
-    const ev = await evaluate({ sop, files, live, split, buildRows, repairRows, modelPort, judgeModels, tagPrefix: `r${round}`, concurrency: o.checkConcurrency });
+    const ev = await evaluate({ sop, files, live, split, buildRows, repairRows, modelPort, judgeModels, tagPrefix: `r${round}`, concurrency: o.checkConcurrency, catalog: o.catalogFile ?? null });
     o.settle(0.05 * (buildRows.length + repairRows.length), ev.costUsd);
     rec.costUsd += ev.costUsd;
     Object.assign(roundRec, { buildPass: ev.buildPass, repairPass: ev.repairPass, devPass: ev.pass.size, statuses: ev.statuses, checkUsd: ev.costUsd, envFaults: ev.envFaults,
