@@ -35,4 +35,13 @@ print(f'A2: step-cap tasks {len(cap)}; with an identical (tool, args) call >= 3 
       f'share of their steps after the first 3rd repeat {after3 / total:.3f}; median step of the first 3rd repeat {first3s[len(first3s) // 2]}')
 last = collections.Counter((t.get('stop_reasons') or ['none'])[-1] for t in tasks)
 print(f'A2: final stop reason per task {dict(last)}; tasks ending with "stop" under the cap '
-      f'{sum(1 for t in tasks if t["steps"] < 50 and (t.get("stop_reasons") or [""])[-1] == "stop")}')
+      f'{sum(1 for t in tasks if t["steps"] < 50 and (t.get("stop_reasons") or [""])[-1] == "stop")}'
+      f', at the cap {sum(1 for t in tasks if t["steps"] >= 50 and (t.get("stop_reasons") or [""])[-1] == "stop")}')
+# Two fields hold the per-response reason (review finding 5): stop_reasons (one per response) and finish_reasons.
+sr = [x for t in tasks for x in (t.get('stop_reasons') or [])]
+fr = [x for t in tasks for x in (t.get('finish_reasons') or [])]
+gap = collections.Counter(len(t.get('stop_reasons') or []) - len(t.get('finish_reasons') or []) for t in tasks)
+print(f'A2: stop_reasons entries {len(sr)} {dict(collections.Counter(sr))}; finish_reasons entries {len(fr)} '
+      f'{dict(collections.Counter(fr))}, last per task {dict(collections.Counter((t.get("finish_reasons") or ["none"])[-1] for t in tasks))}; '
+      f'stop_reasons minus finish_reasons per task {dict(gap)}')
+print(f'A6: reasoning_tokens summed over tasks {sum(t.get("reasoning_tokens") or 0 for t in tasks)}')

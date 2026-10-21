@@ -43,3 +43,10 @@ ks.sort(); acs.sort()
 q = lambda v, p: v[int(p * (len(v) - 1))]
 print('boundary kappa 95%% bootstrap CI %.2f-%.2f; AC1 CI %.2f-%.2f' % (q(ks, .025), q(ks, .975), q(acs, .025), q(acs, .975)))
 l4 = [(a, b) for a, b in pairs if a == 4]; print('L4 units', len(l4), 'r2 unwanted', sum(b == 4 for _, b in l4))
+# Per-rater size of the gold L3 set (review finding 11): DESIGN.md §4's I-2 and I-6 counts ("7-12 of 16", "13/16") are
+# rater 1's. Under rater 2 the gold L3 set differs, so the thresholds are read as proportions of each rater's set.
+gold = [x for x in json.load(open(f'{d}/truth-e8-seed1.json'))['items'] if x.get('gold')]
+g1 = [x for x in gold if x['layer'] == 3]; g2 = [x for x in gold if lab2(r2[x['id']]) == 3]
+both = {x['id'] for x in g1} & {x['id'] for x in g2}
+print('gold ids', len(gold), 'gold L3: rater 1', len(g1), 'rater 2', len(g2), 'shared', len(both))
+print('owner-only gold L3: rater 1', sum(x['carrier'] == 'owner' for x in g1), 'rater 2', sum(x['carrier'] == 'owner' for x in g2))
