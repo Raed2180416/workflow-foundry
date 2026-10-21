@@ -1,0 +1,92 @@
+Compromise register, Action 0 checks: aggregate outputs of the scripts in this directory, run 2026-10-21 on the
+worktree at 9a3b4bb (development evidence, $0, no model call). Commands are in each script's header.
+
+# a1a2.py (Mercury 3 official dev60 transcripts, /var/tmp/foundry-work/autobench/m3-official-dev60/results.json)
+A1: responses 2821; input 95,961,472; cached 94,350,380; mean input per response 34,017; cached share 0.983
+A6: output share of all tokens 0.0124; reasoning tokens 0
+A2: step-cap tasks 52; with an identical (tool, args) call >= 3 times 52; share of their steps after the first 3rd repeat 0.643; median step of the first 3rd repeat 17
+A2: final stop reason per task {'tool_calls': 51, 'stop': 9}; tasks ending with "stop" under the cap 8
+
+# a4.py (stored A0/A1 dev60 replications, /var/tmp/foundry-work/autobench)
+tasks 60 A0 passes per run [12, 9] A1 [22, 18]
+flips A0 9 A1 6
+[add-half (Jeffreys)] mean p0 0.283 p1 0.389; s2_between 0.0696; s2_within 0.3056
+  budget 120 runs/arm: n=120 x k=1: analytic SE 0.0559, normal-approx power 0.47
+  budget 120 runs/arm: n=60 x k=2: analytic SE 0.0609, normal-approx power 0.41
+  budget 120 runs/arm: n=40 x k=3: analytic SE 0.0655, normal-approx power 0.36
+  budget 240 runs/arm: n=240 x k=1: analytic SE 0.0395, normal-approx power 0.76
+  budget 240 runs/arm: n=120 x k=2: analytic SE 0.0431, normal-approx power 0.69
+  budget 240 runs/arm: n=80 x k=3: analytic SE 0.0463, normal-approx power 0.63
+  MC sign test, budget 120: n=120 x k=1: power 0.41
+  MC sign test, budget 120: n=60 x k=2: power 0.25
+[add-one (Laplace)] mean p0 0.338 p1 0.417; s2_between 0.0392; s2_within 0.3906
+  budget 120 runs/arm: n=120 x k=1: analytic SE 0.0598, normal-approx power 0.26
+  budget 120 runs/arm: n=60 x k=2: analytic SE 0.0625, normal-approx power 0.24
+  budget 120 runs/arm: n=40 x k=3: analytic SE 0.0651, normal-approx power 0.23
+  budget 240 runs/arm: n=240 x k=1: analytic SE 0.0423, normal-approx power 0.46
+  budget 240 runs/arm: n=120 x k=2: analytic SE 0.0442, normal-approx power 0.43
+  budget 240 runs/arm: n=80 x k=3: analytic SE 0.0460, normal-approx power 0.41
+  MC sign test, budget 120: n=120 x k=1: power 0.23
+  MC sign test, budget 120: n=60 x k=2: power 0.16
+Not reproduced: FIXES A4's power 0.70 (120 x 1) against 0.58 (60 x 2); the ordering holds, the level depends on the
+effect size assumed.
+
+# b2_reach.py (SOP-Bench content_flagging, 20 dev rows, bridge dev world; labels not printed)
+{"rows": 20, "labelReachable": 12, "labelUnreachable": 8, "alwaysMatch": 3, "exactMeanMatchRate": 0.3576}
+experiments/sopbench/cf_ceiling.py 40, re-run the same day:
+{"rows": 20, "N": 40, "mean_match_rate": 0.3475, "rows_always_match": 4, "rows_never_match": 8, "modal_decision_matches": 6, "rows_with_varying_decision": 10}
+
+# b3.py (research/intent-20261021: rater2-labels.json against truth-e8-seed1.json)
+units 69 r1 layers Counter({3: 27, 4: 23, 2: 13, 1: 6}) r2 layers Counter({3: 28, 4: 23, 2: 12, 1: 6})
+3-class: n 46 agree 35 kappa 0.567 AC1 0.670
+confusion r1->r2 {'1->1': 6, '2->2': 7, '2->3': 6, '3->2': 5, '3->3': 22}
+boundary L2/L3 (both raters in L2 or L3): n 40 agree 29 kappa 0.360 AC1 0.518
+boundary kappa 95% bootstrap CI 0.04-0.66; AC1 CI 0.23-0.77
+L4 units 23 r2 unwanted 23
+
+# b8.py (/opt/corpus/n8n, createdAt only)
+files 594 with createdAt 594 unreadable 0
+by year {'2020': 5, '2021': 1, '2022': 1, '2023': 3, '2024': 23, '2025': 358, '2026': 203}
+2026 by month {'2026-01': 33, '2026-02': 21, '2026-03': 29, '2026-04': 19, '2026-05': 10, '2026-06': 14, '2026-07': 20, '2026-08': 29, '2026-09': 22, '2026-10': 6}
+created >= 2026-07-01 (after a June 2026 cutoff): 77
+index.json createdAt agrees with file createdAt for 594 of 594
+
+# e4.py (research/composition-20261021/runs/ch-e8-{1,2,3}/result.json; selected fields)
+ch-e8-1: build.costUsd 1.729; paired oracle 11/14; full 974/1022; capabilities 953/1001; interfaceViolations 0
+ch-e8-2: build.costUsd 0.532; paired oracle 11/14; full 955/1022; capabilities 934/1001; interfaceViolations 0
+ch-e8-3: build.costUsd 0.857; paired oracle 13/14; full 886/1022; capabilities 865/1001; interfaceViolations 0
+
+# d3_trunc.mjs (src/audit.mjs appendAnchor/readAnchors on a temp file)
+full file: anchors 3
+last line dropped: anchors 2 (accepted)
+middle line dropped: refused ANCHOR_FILE
+
+# Checked by hand (no script)
+- B6: research/composition-20261021/runs/faults-b1lh-e8-{1,2,3}.json, world 1161 d2 s40: oracle passed under dup-same
+  35/43, 32/43, 35/43; fault-free 43/43, 40/43, 43/43. World 1232 d2 s12: dup-same 13/14, 10/14, 13/14 against
+  14/14, 11/14, 14/14.
+- E1: research/need-router-20261014/tracker-e8/results.json: ids missed by Haiku s0 [R3.1 S1 S2 S3 S4 S9 S7], s1 [S3 S4],
+  s2 all 30; Sonnet s0-s2 miss 13-14 ids each, all including S3 and S4. Union of the three Haiku samples: 28/30.
+- C2: npm view @anthropic-ai/claude-code@2.1.300 (published, not deprecated; optional dependency
+  @anthropic-ai/claude-code-linux-x64@2.1.300, unpacked 266,972,930 bytes);
+  https://downloads.claude.ai/claude-code-releases/2.1.300/manifest.json: linux-x64 checksum
+  674deba0bba9aee479f4503c438b49303b6fdd304b9a471b14977aaec5215453, size 266972344; the linux-x64 binary URL answers
+  HTTP 200 (headers only; nothing downloaded).
+- A6: docs.inceptionlabs.ai/capabilities/reasoning-efforts: four values instant, low, medium, high; "If
+  reasoning_effort is omitted, mercury-3 defaults to low". src/executors/openai-chat.mjs:48 EFFORTS = low, medium, high;
+  :306 throws EXECUTOR_EFFORT for any other value.
+- A7: platform.claude.com/docs/en/about-claude/pricing (read 2026-10-21): Claude Sonnet 5.5 cache hits $0.10 / MTok,
+  "Cache hits and refreshes on Claude Opus 5.5 and Claude Sonnet 5.5 are priced at 0.05x the base input price";
+  Opus 5.5 $0.20; Haiku 5.5 $0.01 (<= 100K prompt) and $0.05 (> 100K). The bundled claude-api skill (cached 2026-10-06)
+  says Sonnet 5.5 cache reads $0.20. docs.inceptionlabs.ai/get-started/models: mercury-3 input $0.10 (was $0.20),
+  cached input $0.01 (was $0.02), output $0.35 (was $0.70) per MTok. policy/models.json executorModels mercury-3:
+  inputPerMTok 0, outputPerMTok 0, cacheReadPerMTok 0.
+- B8: platform.claude.com/docs/en/about-claude/models/overview: Claude Haiku 5.5 reliable knowledge cutoff and training
+  data cutoff Jun 2026.
+- C6: src/runtime.mjs:576-585 (charge registers the wait's timer at its fixed wakeAt), :913-921 (wait reuses
+  state.wakeAt), :448 (tick), :848 (a wait is charged with waitIntent, so wakeAt is in its state from the start),
+  src/http.mjs:135 (serve scanner), tests/timers.test.mjs:54 and :106. tests/construction-intent.test.mjs:282 still
+  passes, asserting the old limit, because it deletes wakeAt from the node state before resuming: a state the current
+  charge never leaves.
+- D3: src/audit.mjs:1-12 (what the chain binds), :107-118 (readAnchors checks each line's link to the previous one
+  only, so a dropped last line verifies), :141 (appendAnchor); bin/foundry.mjs --append-anchor is opt-in.
