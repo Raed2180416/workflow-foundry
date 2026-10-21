@@ -1,0 +1,487 @@
+{
+"sales.chatgpt_lead_summary_generator": {
+"nsteps": 8,
+"cuts": {
+"0": 8
+},
+"actEnd": 8
+},
+"sales.qualify_lead": {
+"nsteps": 7,
+"cuts": {
+"0": 7
+},
+"actEnd": 7
+},
+"sales.soft_matching": {
+"nsteps": 15,
+"cuts": {
+"0": 8,
+"1": 12,
+"2": 15
+},
+"actEnd": 8
+},
+"sales.docusign_sequential_signing": {
+"nsteps": 22,
+"cuts": {
+"0": 8,
+"1": 17,
+"2": 22
+},
+"actEnd": 8
+},
+"sales.advance_opportunity_stage": {
+"nsteps": 7,
+"cuts": {
+"0": 7
+},
+"actEnd": 7
+},
+"sales.vendor_review_prep": {
+"nsteps": 12,
+"cuts": {
+"0": 8,
+"1": 10,
+"2": 12
+},
+"actEnd": 8
+},
+"sales.competitive_displacement_outreach": {
+"nsteps": 10,
+"cuts": {
+"0": 10
+},
+"actEnd": 10
+},
+"sales.zoom_meeting_followup": {
+"nsteps": 25,
+"cuts": {
+"0": 8,
+"1": 20,
+"2": 25
+},
+"actEnd": 8
+},
+"sales.partnership_contract": {
+"nsteps": 10,
+"cuts": {
+"0": 10
+},
+"actEnd": 10
+},
+"sales.chatgpt_proposal_customization": {
+"nsteps": 16,
+"cuts": {
+"0": 9,
+"1": 13,
+"2": 16
+},
+"actEnd": 9
+},
+"marketing.linkedin_company_update": {
+"nsteps": 22,
+"cuts": {
+"0": 7,
+"1": 13,
+"2": 22
+},
+"actEnd": 7
+},
+"marketing.win_loss_analysis": {
+"nsteps": 8,
+"cuts": {
+"0": 8
+},
+"actEnd": 8
+},
+"marketing.customer_story_intake": {
+"nsteps": 7,
+"cuts": {
+"0": 7
+},
+"actEnd": 7
+},
+"marketing.customer_feedback_aggregation": {
+"nsteps": 8,
+"cuts": {
+"0": 8
+},
+"actEnd": 8
+},
+"marketing.engagement_optimization": {
+"nsteps": 25,
+"cuts": {
+"0": 10,
+"1": 16,
+"2": 25
+},
+"actEnd": 10
+},
+"marketing.social_contest": {
+"nsteps": 29,
+"cuts": {
+"0": 15,
+"1": 21,
+"2": 29
+},
+"actEnd": 15
+},
+"marketing.community_engagement": {
+"nsteps": 10,
+"cuts": {
+"0": 10
+},
+"actEnd": 10
+},
+"marketing.featured_snippet": {
+"nsteps": 8,
+"cuts": {
+"0": 8
+},
+"actEnd": 8
+},
+"marketing.customer_milestone": {
+"nsteps": 22,
+"cuts": {
+"0": 9,
+"1": 17,
+"2": 22
+},
+"actEnd": 9
+},
+"marketing.social_content_calendar": {
+"nsteps": 27,
+"cuts": {
+"0": 12,
+"1": 20,
+"2": 27
+},
+"actEnd": 12
+},
+"operations.parking_allocation_management": {
+"nsteps": 21,
+"cuts": {
+"0": 9,
+"1": 15,
+"2": 21
+},
+"actEnd": 9
+},
+"operations.zoom_dr_drill": {
+"nsteps": 32,
+"cuts": {
+"0": 9,
+"1": 17,
+"2": 32
+},
+"actEnd": 9
+},
+"operations.cross_training_assignment": {
+"nsteps": 29,
+"cuts": {
+"0": 11,
+"1": 21,
+"2": 29
+},
+"actEnd": 11
+},
+"operations.loading_dock_scheduling": {
+"nsteps": 8,
+"cuts": {
+"0": 8
+},
+"actEnd": 8
+},
+"operations.docusign_contractor_offboard": {
+"nsteps": 23,
+"cuts": {
+"0": 12,
+"1": 19,
+"2": 23
+},
+"actEnd": 12
+},
+"operations.zoom_training_setup": {
+"nsteps": 36,
+"cuts": {
+"0": 14,
+"1": 28,
+"2": 36
+},
+"actEnd": 14
+},
+"operations.overtime_threshold_monitoring": {
+"nsteps": 26,
+"cuts": {
+"0": 10,
+"1": 15,
+"2": 26
+},
+"actEnd": 10
+},
+"operations.calendar_airtable_maintenance": {
+"nsteps": 14,
+"cuts": {
+"0": 7,
+"1": 10,
+"2": 14
+},
+"actEnd": 7
+},
+"operations.invoice_shipping_trigger": {
+"nsteps": 23,
+"cuts": {
+"0": 9,
+"1": 16,
+"2": 23
+},
+"actEnd": 9
+},
+"operations.asana_safety_walk_log": {
+"nsteps": 48,
+"cuts": {
+"0": 15,
+"1": 31,
+"2": 48
+},
+"actEnd": 15
+},
+"support.intercom_reactivation_campaign": {
+"nsteps": 23,
+"cuts": {
+"0": 10,
+"1": 18,
+"2": 23
+},
+"actEnd": 10
+},
+"support.intercom_zoho_customer_360": {
+"nsteps": 24,
+"cuts": {
+"0": 11,
+"1": 19,
+"2": 24
+},
+"actEnd": 11
+},
+"support.intercom_demo_scheduling": {
+"nsteps": 34,
+"cuts": {
+"0": 11,
+"1": 28,
+"2": 34
+},
+"actEnd": 11
+},
+"support.intercom_sentiment_escalation": {
+"nsteps": 24,
+"cuts": {
+"0": 12,
+"1": 17,
+"2": 24
+},
+"actEnd": 12
+},
+"support.gorgias_quality_audit": {
+"nsteps": 10,
+"cuts": {
+"0": 10
+},
+"actEnd": 10
+},
+"support.reamaze_cross_platform_dedup": {
+"nsteps": 33,
+"cuts": {
+"0": 9,
+"1": 22,
+"2": 33
+},
+"actEnd": 9
+},
+"support.helpcrunch_usage_alerts": {
+"nsteps": 17,
+"cuts": {
+"0": 7,
+"1": 12,
+"2": 17
+},
+"actEnd": 7
+},
+"support.intercom_multi_product_routing": {
+"nsteps": 29,
+"cuts": {
+"0": 10,
+"1": 17,
+"2": 29
+},
+"actEnd": 10
+},
+"support.helpcrunch_zoho_desk_bridge": {
+"nsteps": 28,
+"cuts": {
+"0": 12,
+"1": 21,
+"2": 28
+},
+"actEnd": 12
+},
+"support.hiver_mailbox_audit": {
+"nsteps": 23,
+"cuts": {
+"0": 23
+},
+"actEnd": 23
+},
+"finance.vendor_payment_approval": {
+"nsteps": 16,
+"cuts": {
+"0": 10,
+"1": 16
+},
+"actEnd": 10
+},
+"finance.bad_debt_writeoff": {
+"nsteps": 9,
+"cuts": {
+"0": 9
+},
+"actEnd": 9
+},
+"finance.vendor_1099_prep": {
+"nsteps": 9,
+"cuts": {
+"0": 9
+},
+"actEnd": 9
+},
+"finance.forex_gain_loss": {
+"nsteps": 7,
+"cuts": {
+"0": 7
+},
+"actEnd": 7
+},
+"finance.project_profitability": {
+"nsteps": 8,
+"cuts": {
+"0": 8
+},
+"actEnd": 8
+},
+"finance.budget_variance_analysis": {
+"nsteps": 10,
+"cuts": {
+"0": 10
+},
+"actEnd": 10
+},
+"finance.travel_advance_settlement": {
+"nsteps": 13,
+"cuts": {
+"0": 8,
+"1": 13
+},
+"actEnd": 8
+},
+"finance.ap_aging_report": {
+"nsteps": 22,
+"cuts": {
+"0": 9,
+"1": 22
+},
+"actEnd": 9
+},
+"finance.capex_approval": {
+"nsteps": 9,
+"cuts": {
+"0": 9
+},
+"actEnd": 9
+},
+"finance.quarterly_tax_estimate": {
+"nsteps": 9,
+"cuts": {
+"0": 9
+},
+"actEnd": 9
+},
+"hr.anniversary_recognition": {
+"nsteps": 8,
+"cuts": {
+"0": 8
+},
+"actEnd": 8
+},
+"hr.visa_expiry_tracking": {
+"nsteps": 23,
+"cuts": {
+"0": 8,
+"1": 16,
+"2": 23
+},
+"actEnd": 8
+},
+"hr.monday_onboarding_pipeline": {
+"nsteps": 33,
+"cuts": {
+"0": 14,
+"1": 24,
+"2": 33
+},
+"actEnd": 14
+},
+"hr.candidate_rejection_followup": {
+"nsteps": 8,
+"cuts": {
+"0": 8
+},
+"actEnd": 8
+},
+"hr.employee_request_routing": {
+"nsteps": 7,
+"cuts": {
+"0": 7
+},
+"actEnd": 7
+},
+"hr.referral_bonus_tracking": {
+"nsteps": 11,
+"cuts": {
+"0": 11
+},
+"actEnd": 11
+},
+"hr.recruitment_channel_roi": {
+"nsteps": 11,
+"cuts": {
+"0": 11
+},
+"actEnd": 11
+},
+"hr.equipment_provisioning": {
+"nsteps": 24,
+"cuts": {
+"0": 11,
+"1": 18,
+"2": 24
+},
+"actEnd": 11
+},
+"hr.salary_adjustment_processing": {
+"nsteps": 26,
+"cuts": {
+"0": 9,
+"1": 19,
+"2": 26
+},
+"actEnd": 9
+},
+"hr.disciplinary_action_tracking": {
+"nsteps": 10,
+"cuts": {
+"0": 10
+},
+"actEnd": 10
+}
+}
