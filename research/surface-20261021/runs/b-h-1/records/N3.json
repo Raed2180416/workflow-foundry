@@ -1,0 +1,88 @@
+{
+ "arm": "B-H",
+ "case": "N3",
+ "expected": "none",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": {
+    "template": "none",
+    "reason": "The request is to monitor competitor websites for price drops, which requires reading websites live; none of the templates cover web scraping or price monitoring, and the templates are for mailing lists, invoices, leads, alerts, support tickets, and team reports.",
+    "notCovered": [
+     "Checking three competitor websites daily for price changes",
+     "Reading external websites",
+     "Detecting and alerting on price drops"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "I cannot build that with the flows I know. (The request is to monitor competitor websites for price drops, which requires reading websites live; none of the templates cover web scraping or price monitoring, and the templates are for mailing lists, invoices, leads, alerts, support tickets, and team reports.) I can build: sync the newsletter list from the crm and report the differences; approve small expenses automatically; send bigger ones to an approver; chase unpaid invoices with a reminder cadence (dunning); route new leads to the right salesperson; on-call digest of unresolved alerts to a chat channel, with optional paging; answer common support questions with your own replies; send the rest to a person; weekly progress report from a tracker export. Nothing was created.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.000316,
+  "tokens": 2639,
+  "inputTokens": 2,
+  "outputTokens": 212,
+  "cacheReadTokens": 812,
+  "cacheWriteTokens": 1613,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 212,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1613,
+   "costUsd": 0.000315945,
+   "costUnknown": false,
+   "latencyMs": 2861,
+   "journalId": 63
+  }
+ ],
+ "builderWallMs": 2864,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

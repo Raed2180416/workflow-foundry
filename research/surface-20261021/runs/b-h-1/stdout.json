@@ -1,0 +1,71 @@
+{
+ "arm": "B-H",
+ "label": "b-h-1",
+ "started": "2026-10-21T16:59:49.163Z",
+ "finished": "2026-10-21T17:01:53.983Z",
+ "casesFile": "research/surface-20261021/eval/cases.json",
+ "casesSha256": "ee852fb05277fe526f77e93e5f67860919a7109f892582cbf75c55d782d25006",
+ "manifestSha256": "0fd70ccd81affee0d0d684644b06fea32ea56e7beaca94021dc00987ca5a6905",
+ "libraryHash": "32026fedb9743079defa78d813bd3351cabbf991d46c48ee81c360253fa0144d",
+ "capUsd": 1.2,
+ "notScored": [],
+ "environmentFaults": [],
+ "spentUsdIncludingFaults": 0.026426,
+ "tokenMeter": {},
+ "cases": 24,
+ "fitCases": 21,
+ "noneCases": 3,
+ "verified": 18,
+ "verifiedRate": 0.8571,
+ "oraclePassIgnoringVerdict": 18,
+ "builtAndValid": 19,
+ "correctRefusals": 3,
+ "falseRefusals": 1,
+ "outcomes": {
+  "ready": 19,
+  "too_many_questions": 1,
+  "unsupported": 4
+ },
+ "templateCorrect": 23,
+ "slotChecks": {
+  "ok": 54,
+  "total": 57
+ },
+ "requiredQuestions": {
+  "asked": 7,
+  "total": 9
+ },
+ "questionRecall": 0.7778,
+ "unnecessaryQuestions": 3,
+ "repeatQuestions": 0,
+ "questionsAsked": 10,
+ "modelProposedQuestions": 7,
+ "traps": {
+  "total": 5,
+  "avoided": 5,
+  "violated": []
+ },
+ "personActionsToFirstVerifiedRun": {
+  "mean": 3.5,
+  "median": 3,
+  "beforeRunMean": 1.33
+ },
+ "cost": {
+  "usdTotal": 0.0264,
+  "usdPerRequest": 0.0011,
+  "tokensTotal": 188012,
+  "tokensPerRequest": 7834,
+  "calls": 64,
+  "costUnknownCalls": 0
+ },
+ "wallSeconds": {
+  "mean": 10.2,
+  "median": 7.7,
+  "total": 244.5
+ },
+ "repairs": {
+  "rounds": 0,
+  "casesWithRepair": 0
+ },
+ "errors": []
+}

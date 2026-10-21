@@ -1,0 +1,515 @@
+{
+ "arm": "B-H",
+ "case": "O3",
+ "expected": "oncall-digest",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": "oncall-digest",
+   "selection": {
+    "template": "oncall-digest",
+    "reason": "The request is a regular digest of monitoring alerts posted to a team chat channel, which matches oncall-digest's purpose of summarizing unresolved alerts to a chat channel.",
+    "notCovered": [
+     "Daily cadence may need to be set up as a schedule; the template's default frequency may differ.",
+     "The request does not mention paging, so the optional e-mail page for critical alerts is not needed."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "channel",
+     "slot": "channel",
+     "question": "Which chat channel should the digest go to? For example, #ops."
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": "oncall-digest",
+   "selection": {
+    "template": "oncall-digest",
+    "reason": "The request is a regular digest of monitoring alerts posted to a team chat channel, which matches oncall-digest's purpose of summarizing unresolved alerts to a chat channel (#eng-alerts).",
+    "notCovered": [
+     "Daily cadence may need to be confirmed against the template's schedule options",
+     "Posting target is #eng-alerts as the user specified; channel-specific setup is needed"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "channel",
+   "slot": "channel",
+   "question": "Which chat channel should the digest go to? For example, #ops.",
+   "matched": [
+    "channel"
+   ],
+   "answer": "#eng-alerts please"
+  }
+ ],
+ "modelQuestions": [
+  {
+   "turn": 0,
+   "slot": "channel",
+   "question": "Which chat channel should the digest go to? For example, #ops."
+  }
+ ],
+ "answers": {
+  "channel": "#eng-alerts please"
+ },
+ "cost": {
+  "usd": 0.001464,
+  "tokens": 11269,
+  "inputTokens": 8,
+  "outputTokens": 1479,
+  "cacheReadTokens": 4332,
+  "cacheWriteTokens": 5450,
+  "calls": 4,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 220,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1612,
+   "costUsd": 0.00031982,
+   "costUnknown": false,
+   "latencyMs": 1816,
+   "journalId": 57
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 530,
+   "cacheReadTokens": 1354,
+   "cacheWriteTokens": 1087,
+   "costUsd": 0.000414615,
+   "costUnknown": false,
+   "latencyMs": 4125,
+   "journalId": 59
+  },
+  {
+   "turn": 1,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 221,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1638,
+   "costUsd": 0.00032357,
+   "costUnknown": false,
+   "latencyMs": 2050,
+   "journalId": 61
+  },
+  {
+   "turn": 1,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 508,
+   "cacheReadTokens": 1354,
+   "cacheWriteTokens": 1113,
+   "costUsd": 0.00040686499999999996,
+   "costUnknown": false,
+   "latencyMs": 4101,
+   "journalId": 64
+  }
+ ],
+ "builderWallMs": 12214,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "oncall-digest",
+ "slots": {
+  "channel": "#eng-alerts",
+  "windowHours": 24,
+  "minSeverity": "warning",
+  "page": false,
+  "pageTo": ""
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "oncall-digest",
+  "version": 1,
+  "title": "On-call digest for #eng-alerts",
+  "goal": "Each run, post one digest of the unresolved alerts of the last 24 hours (warning and above) to #eng-alerts after a person approves the post.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The alerts sheet holds one row per alert with id, at, service, severity, message, acknowledged and resolved",
+    "The channel is a local file standing in for chat and the outbox stands in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Posting to the wrong channel",
+    "Missing a critical alert",
+    "Paging the wrong person or paging for nothing"
+   ],
+   "successCriteria": [
+    "One digest was posted to the channel you named",
+    "This run left exactly the planned post and e-mails, each intact (checked by re-reading them)"
+   ],
+   "unsupported": [
+    "Fixing anything",
+    "Phone or SMS paging",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the alerts sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Work out how many hours ago each alert was raised",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "field": "at",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "hours",
+     "as": "hoursAgo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "recent",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Keep unresolved alerts in the window at the chosen severity or above",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "hoursAgo",
+       "op": "lte",
+       "value": 24
+      },
+      {
+       "field": "hoursAgo",
+       "op": "gte",
+       "value": 0
+      },
+      {
+       "field": "resolved",
+       "op": "ne",
+       "value": true
+      },
+      {
+       "field": "severity",
+       "op": "in",
+       "value": [
+        "warning",
+        "critical"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "lines",
+    "kind": "task",
+    "needs": [
+     "recent"
+    ],
+    "description": "List the alerts",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recent.rows"
+     },
+     "line": "- [{{severity}}] {{service}}: {{message}} (alert {{id}}, {{hoursAgo}}h ago, acknowledged: {{acknowledged}})",
+     "empty": "- nothing unresolved. A quiet shift."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest",
+    "kind": "task",
+    "needs": [
+     "lines"
+    ],
+    "description": "Write the digest",
+    "tool": "core.template",
+    "args": {
+     "text": "On-call digest: {{n}} unresolved alert(s) in the last 24 hours (warning and above)\n{{lines}}",
+     "variables": {
+      "n": {
+       "$ref": "nodes.lines.count"
+      },
+      "lines": {
+       "$ref": "nodes.lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post",
+    "kind": "task",
+    "needs": [
+     "digest"
+    ],
+    "description": "Post the digest to #eng-alerts (asks you first)",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#eng-alerts",
+     "text": {
+      "$ref": "nodes.digest.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "chatAudit",
+    "kind": "verify",
+    "needs": [
+     "post"
+    ],
+    "description": "Re-read the channel: exactly one digest from this run, intact",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#eng-alerts",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "mailAudit",
+    "kind": "verify",
+    "needs": [
+     "post"
+    ],
+    "description": "Re-read the outbox: only the planned pages went out (none when paging is off)",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": []
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.post.posted"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.chatAudit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.mailAudit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P01 linear pipeline, P04 draft -> check -> deliver",
+    "research/intent-20261021/corpus-prior.md (messaging automations: schedules 44%, failure notification 15%)",
+    "app/core/templates/oncall-digest.json sha256 afa75d3e3383ace11cd449670ddd50672249841a86722860e8b6f293b7930486"
+   ],
+   "tags": [
+    "template:oncall-digest",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974)",
+    "slots:{\"channel\":\"#eng-alerts\",\"minSeverity\":\"warning\",\"page\":false,\"pageTo\":\"\",\"windowHours\":24}"
+   ],
+   "rationale": "Frontier-written template \"oncall-digest\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {
+    "#eng-alerts": [
+     "On-call digest: 2 unresolved alert(s) in the last 24 hours (warning and above)\n- [warning] ci: Nightly build flaky tests (alert C-1, 5h ago, acknowledged: false)\n- [critical] backup: Backup job failed (alert C-3, 20h ago, acknowledged: false)"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b-h-1/worlds/foundry-live-7arLxO",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "One digest was posted to the channel you named",
+    "exact": "the posted of “Post the digest to #eng-alerts (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "This run left exactly the planned post and e-mails, each intact (checked by re-reading them)",
+    "exact": "the pass of “Re-read the channel: exactly one digest from this run, intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "the pass of “Re-read the outbox: only the planned pages went out (none when paging is off)” equals true",
+    "exact": "the pass of “Re-read the outbox: only the planned pages went out (none when paging is off)” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.chatAudit",
+    "plain": "Re-read the channel: exactly one digest from this run, intact",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.mailAudit",
+    "plain": "Re-read the outbox: only the planned pages went out (none when paging is off)",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 1,
+  "personActions": 3,
+  "personActionsBeforeRun": 2,
+  "slotChecks": 3,
+  "slotChecksOk": 3
+ }
+}

@@ -20,3 +20,5 @@ B-H O1: ready oncall-digest verified=true refusal=null trap=- $0.0008 tok=5544 6
 B-H O2: ready oncall-digest verified=true refusal=null trap=- $0.0007 tok=5683 7s
 B-H N1: unsupported verified=null refusal=true trap=false $0.0003 tok=2628 2s
 B-H N2: unsupported verified=null refusal=true trap=- $0.0003 tok=2614 2s
+B-H N3: unsupported verified=null refusal=true trap=- $0.0003 tok=2639 3s
+B-H O3: ready oncall-digest verified=true refusal=null trap=- $0.0015 tok=11269 12s
