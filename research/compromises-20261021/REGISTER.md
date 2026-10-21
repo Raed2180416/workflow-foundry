@@ -48,6 +48,7 @@ The orchestration attack, task #75, covers concurrency and failure more broadly.
 | C4 | Usage limits kill agents mid-run | 10-15 workflows | in-flight (#75) |
 | C5 | Concurrent agents edit the same files, and one agent's kill reached another | run.mjs 3-way merge; `pgrep \| xargs kill` | in-flight (#75); isolate agents in worktrees |
 | C6 | The IR has no `call`, `compensate` or continue-as-new | `src/construction-durable.mjs:191` | open |
+| C7 | `claude -p` puts the session account's e-mail address into the model's context. It leaked into committed run records (redacted at tip 728de1a; 4 earlier commits still hold it), and it is a possible confound in every CLI-based arm: a model can address mail to it when a recipient is ambiguous (BUILDER-1 B0 did) | research/surface-20261021/runs/JOURNALS-MOVED.md; BUILDER-1 report | open (engine: strip or declare account identity in the CLI provider; audit AutomationBench/SOP-Bench agent transcripts for it) |
 
 ## D. Governance and the principal model
 
