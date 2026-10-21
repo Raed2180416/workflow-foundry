@@ -1,0 +1,123 @@
+{
+ "version": 1,
+ "parent": {
+  "file": "parent.mjs",
+  "calls": [
+   "intake",
+   "order",
+   "saga"
+  ],
+  "effects": []
+ },
+ "modules": {
+  "intake": {
+   "file": "modules/intake.mjs",
+   "purpose": "read the plan and the fraud verdict, record the order",
+   "rules": [
+    "R1.1",
+    "R1.2",
+    "R2.1"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "placed"
+    ],
+    "properties": {
+     "placed": {
+      "type": "object"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ],
+    "properties": {
+     "ready": {
+      "type": "boolean"
+     },
+     "fulfilments": {
+      "type": "array"
+     },
+     "customerId": {
+      "type": "string"
+     }
+    }
+   },
+   "effects": [
+    "inventory.allocate",
+    "fraud.check",
+    "orders.create"
+   ],
+   "reads": [
+    "orders"
+   ]
+  },
+  "order": {
+   "file": "modules/order.mjs",
+   "purpose": "order statuses",
+   "rules": [
+    "R4.1",
+    "R4.5"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "status"
+    ],
+    "properties": {
+     "status": {
+      "enum": [
+       "processing",
+       "completed"
+      ]
+     }
+    }
+   },
+   "output": {
+    "type": "null"
+   },
+   "effects": [
+    "orders.setStatus:order"
+   ]
+  },
+  "saga": {
+   "file": "modules/saga.mjs",
+   "purpose": "one fulfilment: reserve, charge, ship, track",
+   "rules": [
+    "R4.2",
+    "R4.4"
+   ],
+   "input": {
+    "type": "object",
+    "properties": {
+     "start": {
+      "type": "object"
+     },
+     "report": {
+      "type": "object"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ],
+    "properties": {
+     "done": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "inventory.reserve",
+    "billing.charge",
+    "carrier.create",
+    "orders.setStatus:fulfilment"
+   ]
+  }
+ }
+}

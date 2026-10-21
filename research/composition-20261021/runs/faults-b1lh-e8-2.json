@@ -1,0 +1,610 @@
+{
+ "subject": "solver:research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds); $0",
+ "worlds": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40
+  }
+ ],
+ "results": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "fault": "none",
+   "status": "complete",
+   "ms": 1231,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 14,
+    "passed": 11,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 11,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 4,
+    "complete": 4,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 5069,
+   "injected": 23,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 14,
+    "passed": 11,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 11,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 4,
+    "complete": 4,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 5238,
+   "injected": 25,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 14,
+    "passed": 11,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 11,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 4,
+    "complete": 4,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "fault": "dup-delayed",
+   "status": "complete",
+   "ms": 1092,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 14,
+    "passed": 11,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 11,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 4,
+    "complete": 4,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "fault": "dup-same",
+   "status": "complete",
+   "ms": 1166,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 14,
+    "passed": 10,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3,
+     "L2:outside-allowed": 1
+    }
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 10,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "11/14",
+     "customer-action": "12/14",
+     "cancellation": "14/14",
+     "notifications": "13/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 4,
+    "complete": 4,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "fault": "downstream",
+   "status": "complete",
+   "ms": 846,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 14,
+    "passed": 11,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 11,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 9,
+    "complete": 9,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 2213,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 40,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 40,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 14519,
+   "injected": 65,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 43,
+    "passed": 40,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 40,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 14885,
+   "injected": 66,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 39,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3,
+     "L2:outside-allowed": 1
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 39,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "42/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "42/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "dup-delayed",
+   "status": "complete",
+   "ms": 2802,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 40,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 40,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "dup-same",
+   "status": "complete",
+   "ms": 2718,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 32,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3,
+     "L2:outside-allowed": 8
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 30,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "41/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "41/43",
+     "tracking": "33/43",
+     "customer-action": "34/43",
+     "cancellation": "43/43",
+     "notifications": "35/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "downstream",
+   "status": "complete",
+   "ms": 1846,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 42,
+    "passed": 39,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 42,
+    "passed": 39,
+    "byCapability": {
+     "intake": "41/42",
+     "fraud": "42/42",
+     "capture": "42/42",
+     "refund": "42/42",
+     "reservation": "41/42",
+     "shipment": "42/42",
+     "compensation": "42/42",
+     "failure": "42/42",
+     "tracking": "40/42",
+     "customer-action": "41/42",
+     "cancellation": "42/42",
+     "notifications": "42/42",
+     "exactly-once": "42/42"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 24,
+    "complete": 24,
+    "incomplete": []
+   },
+   "interface": null,
+   "armErrors": 0
+  }
+ ]
+}

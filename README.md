@@ -49,6 +49,20 @@ sealed or claim-bearing result.*
   2026-10-08; `foundry cancel` and `foundry stop-all` landed on 2026-10-09 (see "Cancel and
   stop-all" in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)). It ends in a named engine
   freeze, E1, before any new comparative run.
+- **2026-10-21 (cloud session, resumed after the weekly limit).** Development evidence only:
+  - **AutomationBench dev60** is complete for 4 arms; Sonnet + the A1 harness is best at 28/60
+    ([DEV60-A0-A1](research/automationbench-20261014/runs/DEV60-A0-A1.md)). The code-owned harness A1-C passed review (GO
+    with conditions).
+  - **SOP-Bench** is acquired, with exact upstream parity and a 73.8% strict Haiku agent baseline. Phase 2 (build-once,
+    sealed k = 3) is running.
+  - **New programs:**
+    - composition: an E8 composed arm with capability contracts, faults and drift
+      ([PLAN](research/composition-20261021/PLAN.md));
+    - intent recovery from messy requests: SPEC-0 is built, and a second rater gives κ 0.57
+      ([DESIGN](research/intent-20261021/DESIGN.md));
+    - Mercury 3 as a second cheap model ([PROVISIONING](research/mercury-20261021/PROVISIONING.md));
+    - the org layer and the open-core line ([v0](research/business-20261021/OPEN-CORE-AND-INVARIANTS.md)).
+  - **Benchmark landscape:** `research/benchmarks-20261015/`.
 - **2026-10-09: the cloud session ended** (usage limit); work continues on the owner's laptop. Stream run data, journals and
   the Kev held-out material were lost with the container (`research/jit-20261008/HANDOFF.md`). The two in-flight workflows
   were finished by hand:
