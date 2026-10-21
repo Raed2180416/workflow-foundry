@@ -1,8 +1,8 @@
 # abr-sales-dealdesk: closed-won deal desk (AutomationBench-R family 1)
 
-**Status (2026-10-21, v1.1.0).** Development, $0. The generator, oracle, observable-only reference workflow, bad
-controls, oracle attack tests and tests are built, and were reviewed on 2026-10-21 (section "Review" below). No arm has
-run and no model was called. Nothing here is a capability result. Design:
+**Status (2026-10-21, v1.2.0).** Development, $0. The generator, oracle, observable-only reference workflow, bad
+controls, oracle attack tests and tests are built. They were reviewed twice on 2026-10-21 (sections "Review" and
+"Second review" below). No arm has run and no model was called. Nothing here is a capability result. Design:
 [RECURRING-DESIGN.md §4.1](../../../../research/automationbench-20261014/RECURRING-DESIGN.md).
 
 ## What it is
@@ -54,10 +54,10 @@ Label at V = $1, N = 160: workflow. At N = 1: agent (the build cost dominates). 
 
 | File | Role |
 |---|---|
-| [POLICY.md](POLICY.md) | The standing policy every arm gets (frozen text for v1.1.0) |
+| [POLICY.md](POLICY.md) | The standing policy every arm gets (frozen text since v1.1.0; v1.2.0 left it unchanged) |
 | [family.json](family.json) | Id, apps, envelope, trigger kinds and rates per difficulty, trap catalogue, amendable parameters, need job, hypothesis, seeds |
 | [lib.py](lib.py) | Constants and pure helpers shared by the generator and the oracle (not by the reference) |
-| [gen.py](gen.py) | Seeded generator: `world0.json`, `triggers.jsonl` (payload + host-only delta + trap ids), `truth.jsonl`, `end.json`, `meta.json`. `random.Random("abr-sales-dealdesk:1.1.0:<seed>:<difficulty>")`, no wall clock. The truth comes from its own model of the business (`Gen.simulate`), never from an arm |
+| [gen.py](gen.py) | Seeded generator: `world0.json`, `triggers.jsonl` (payload + host-only delta + trap ids), `truth.jsonl`, `end.json`, `meta.json`. `random.Random("abr-sales-dealdesk:1.2.0:<seed>:<difficulty>")`, no wall clock. The truth comes from its own model of the business (`Gen.simulate`), never from an arm |
 | [oracle.py](oracle.py) | Grades one trigger (world before vs after) and the end of the week. Never reads an arm's output to decide what was right |
 | [reference.py](reference.py) | The reference workflow: observable-only, written from POLICY.md, standard library only; reaches the world only through `api.fetch` (AutomationBench's `api_fetch`) |
 | [controls.py](controls.py) | Ten bad controls: `null`, `echo`, `naive` (≤ 40 lines) and seven one-defect variants of the reference |
@@ -129,14 +129,20 @@ Other gates on the same seeds:
 
 Per trigger, on the effect ledger (world before vs after the trigger):
 - the exact multiset of Slack posts (or the single #automation-review escalation naming the trigger id);
-- the email recipient set, each recipient once, the subject, and a body with the deal, the `$` amount and the tier, and
-  no other tier or `$` amount (policy step 8). 'SMB' and 'Mid-Market' count anywhere; Enterprise, Strategic, Partner
-  and Growth, which are also ordinary words, count only within three words of "tier". Quoted record names are
-  removed first;
+- the email (policy step 8): the recipient set, each recipient once; the subject exactly `Deal Closed Notification`; a
+  body with the opportunity's Salesforce name verbatim, the `$` amount, and the tier label (case-sensitive, whole word)
+  outside the quoted record names, so a deal called `... - Enterprise Platform` does not name the Enterprise tier; and
+  no other tier or `$` amount. HTML is read as text. For the other-tier rule, email addresses and quoted record names
+  (the opportunity, its parts, its account and parent, the envelope's typed deal name) are removed first, and case is
+  ignored. 'SMB' and 'Mid-Market' count anywhere. Enterprise, Strategic, Partner and Growth, which are also ordinary
+  words, count inside any clause that talks about classification (tier, segment, classified, Salesforce, sheet,
+  hierarchy, CRM, previously, formerly), and when capitalised anywhere else unless they start their clause. A clause
+  ends at `.`, `;`, `!`, `?`, `|` or a line break;
 - the opportunity: only the closing opportunity changes, with the stage and amount on an envelope and the description
   note appended exactly once, on its own line, with the old text kept;
 - the log row (or the single Status change to `Retracted`) and the Policy Log row;
-- no other write anywhere (the envelope), including a Slack post made and deleted again during the trigger;
+- no other write anywhere (the envelope), including a Slack post made and deleted again during the trigger, and mail
+  moved out of the inbox or into Trash or Spam;
 - AutomationBench's own handlers on an attribution view that holds only this trigger's messages and rows.
 
 Outcomes are `correct`, `abstained` (only sink posts, no escalation expected), `miss` (no effects although some were
@@ -162,7 +168,17 @@ each expected escalation, notifications per recipient, and `slack_text_occurrenc
   100, CloseDate equal to the close date. Other values, such as CloseDate 2020-01-01 or Probability 3, are overreach.
 - **A trailing period** after the description note. The per-trigger check and the week-close check read it the same
   way.
-- **Mail housekeeping:** read flags, labels and stars, and a draft that is sent within the same trigger.
+- **Mail housekeeping:** read flags, stars, `IMPORTANT`, categories and user labels, and a draft that is sent within the
+  same trigger. Moving mail is not housekeeping: adding or removing `INBOX`, `TRASH`, `SPAM`, `SENT` or `DRAFT` is a
+  write (since v1.2.0), so trashing or archiving the amendment email or an AE's request fails the envelope.
+- **Not tolerated: case changes in the email** (since v1.2.0). The subject, the opportunity's Salesforce name and the
+  tier label are compared case-sensitively, as POLICY.md step 8 asks for them exactly. AutomationBench's own
+  `gmail_message_sent_to_with_body_contains` ignores case but not whitespace, so a name with changed spacing fails
+  there too.
+- **Known false rejects of the other-tier rule** (the price of catching hedges): Enterprise, Strategic, Partner or Growth
+  used as an ordinary word inside a classification clause ("Tier: SMB, a growth segment"), or capitalised inside a
+  clause ("thanks to our Growth team"), counts as naming that tier. Lower-case use elsewhere ("our enterprise
+  customers") and a capitalised word that starts its clause ("Strategic win for the team!") pass.
 
 ## Review (2026-10-21, v1.0.0 → v1.1.0)
 

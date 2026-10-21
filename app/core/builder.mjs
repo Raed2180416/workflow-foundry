@@ -94,10 +94,18 @@ export function buildFromIntent({ request, answers = {}, base = null }) {
     why: 'The report can only go to one e-mail address.', answerSchema: { type: 'string', pattern: EMAIL.source } });
   if (questions.length) return { status: 'needs_answers', builder: BUILDER_ID, template: template.id, questions: questions.slice(0, 3), understood };
   const workflow = weeklyReportWorkflow({ team, recipient, version: base ? base.version + 1 : 1, id: base?.id });
-  return { status: 'ready', builder: BUILDER_ID, template: template.id, workflow, understood, sampleInput: SAMPLE_INPUT,
+  return { status: 'ready', builder: BUILDER_ID, template: template.id, workflow, understood, sampleInput: SAMPLE_INPUT, args: { request, answers },
     willDo: [`Count the items in the export you give it and list the finished ones`, `Save the report on this machine`,
       `Send it to ${recipient} only, after you approve each send`, 'Check that what was sent is exactly what was saved'],
     willNotDo: ['Send to anyone else, or more than one message per run', 'Read your tracker, e-mail or files by itself',
       `Run by itself ${understood.schedule === 'when you run it' ? 'on a schedule' : understood.schedule}: there is no scheduler yet, so you (or your coding agent) start each run`,
       'Use a paid model: this flow has no model step at all'] };
 }
+
+/** The stub as a builder object (FoundryApp's default): synchronous, $0, no model. Every result names it. */
+export const stubBuilder = Object.freeze({
+  id: BUILDER_ID,
+  async: false,
+  build: args => buildFromIntent(args),
+  rebase: (built, base) => built.status === 'ready' ? buildFromIntent({ ...built.args, base }) : built
+});

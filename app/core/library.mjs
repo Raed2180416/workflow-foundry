@@ -50,13 +50,14 @@ const DERIVE = {
     keywordsText: v => v.answers.map(a => `"${a.keyword}"`).join(', ') || 'none'
   },
   'expense-approval': {
+    receiptText: v => v.requireReceipt ? ' with a receipt' : '',
     decisionRules: v => [...(v.requireReceipt ? [{ field: 'receipt', op: 'ne', value: true, set: { decision: 'waiting for approver', reason: 'no receipt' } }] : []),
       { field: 'amount', op: 'lte', value: v.autoApproveUpTo, set: { decision: 'approved', reason: 'within the limit' } }]
   },
   'contact-sync': {
     eligibleWhere: v => [{ field: 'unsubscribed', op: 'ne', value: true }, { field: 'email', op: 'exists' }, ...(v.onlyTag ? [{ field: 'tags', op: 'contains', value: v.onlyTag }] : [])],
     scopeText: v => v.onlyTag ? `contacts tagged "${v.onlyTag}"` : 'all contacts',
-    verb: v => v.addMissing ? 'Added' : 'Found (not added)'
+    verbText: v => v.addMissing ? 'Added' : 'Found (not added)'
   },
   'oncall-digest': {
     severities: v => SEVERITIES.slice(SEVERITIES.indexOf(v.minSeverity))
@@ -193,7 +194,8 @@ export function resolveSlots(template, fill, { text = '', base = null } = {}) {
     const fromBase = base && Object.hasOwn(base, slot.name) ? base[slot.name] : undefined;
     const wanted = slot.askWhen ? (values[slot.askWhen] ?? base?.[slot.askWhen] ?? template.slots.find(s => s.name === slot.askWhen)?.default) === true : true;
     if (!incomplete && fromBase !== undefined && !empty(slot, fromBase)) { values[slot.name] = fromBase; continue; }
-    if (slot.ask && wanted) {
+    // A list slot (routing rules) is asked about only when an entry is incomplete; an unstated list gets its default (empty).
+    if (slot.ask && wanted && (!slot.askOnlyIfIncomplete || incomplete)) {
       const q = modelQuestion(slot.name);
       questions.push({ id: slot.name, slot: slot.name, question: (q?.question ?? slot.question).trim().slice(0, 300), why: slot.askWhy,
         answerSchema: { type: 'string', ...(slot.type === 'email' ? { description: 'one e-mail address' } : {}) } });

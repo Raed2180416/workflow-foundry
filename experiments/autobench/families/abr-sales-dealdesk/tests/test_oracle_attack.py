@@ -485,6 +485,7 @@ BODIES = [  # (body, expected extras) for a closing with tier SMB and $156,000; 
     ("Tier: SMB, $156,000. The CRM record disagrees. It says Enterprise.", [("other-tier", "Enterprise")]),
     ("tier smb, $156,000; hierarchy sheet: smb, salesforce: growth", [("other-tier", "Growth")]),
     ("Segment SMB, $156,000 (partner in the old sheet)", [("other-tier", "Partner")]),
+    ("Tier: SMB, $156,000.\nEnterprise previously.", [("other-tier", "Enterprise")]),
 ]
 
 

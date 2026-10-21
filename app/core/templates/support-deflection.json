@@ -1,0 +1,77 @@
+{
+  "template": {
+    "id": "support-deflection",
+    "title": "Answer common support questions with your own replies; send the rest to a person",
+    "author": "claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)",
+    "whenToUse": "Someone wants open support tickets that ask a common question (matched by a keyword) answered with a reply they wrote, and every other ticket, and every urgent one, sent to a person in one digest.",
+    "notFor": "AI-written or translated answers, closing or editing tickets, refunds, live chat, or answering every ticket automatically.",
+    "sources": ["experiments/library/cards/catalog.json P09 judge -> confidence gate -> review queue (escalate, never guess)", "small-business ticket deflection pattern (escalate urgent and unmatched tickets to a person)"],
+    "slots": [
+      { "name": "answers", "type": "list", "maxItems": 8, "default": [], "description": "Canned replies: when a ticket's subject or text contains the keyword, it gets this reply. Use the person's own facts only.",
+        "fields": [
+          { "name": "keyword", "type": "string", "maxLength": 40, "description": "A word or short phrase that marks the question, e.g. shipping, password, opening hours." },
+          { "name": "reply", "type": "text", "maxLength": 1200, "description": "The answer to send, in the person's words and facts; no promises they did not make." } ] },
+      { "name": "escalateTo", "type": "email", "grounded": true, "ask": "wrong-target", "question": "Who should get the tickets that need a person? (one e-mail address)", "askWhy": "Tickets contain customers' messages; I will not guess where they go.", "description": "E-mail address that gets the digest of tickets a person must handle." },
+      { "name": "signature", "type": "string", "maxLength": 80, "default": "The support team", "description": "How automatic replies are signed." }
+    ],
+    "capabilities": ["sheet.read", "rows.filter", "rows.route", "rows.lines", "core.template", "core.pluck", "outbox.send", "outbox.audit"],
+    "data": { "tickets": "one row per ticket: id, from (customer e-mail), subject, body, priority (normal | urgent), status (open | closed)" },
+    "willDo": ["Read the open tickets", "Answer a ticket automatically only when it mentions one of your keywords ([[keywordsText]]) and is not urgent, with your reply for that keyword", "Send every other ticket, including every urgent one, to [[escalateTo]] in one digest",
+      "Ask you before every e-mail", "Check, by re-reading the outbox, that exactly the planned e-mails went out"],
+    "willNotDo": ["Answer urgent tickets automatically", "Write new answers: it only sends the replies you gave", "Close, edit or tag tickets", "Run by itself: you (or your coding agent) start each run"],
+    "practice": {
+      "now": "2026-10-14T10:00:00Z",
+      "sheets": { "tickets": [
+        { "id": "P-1", "from": "ann@customer-practice.example", "subject": "How long is shipping?", "body": "When will my order arrive?", "priority": "normal", "status": "open" },
+        { "id": "P-2", "from": "bob@customer-practice.example", "subject": "Forgot my password", "body": "I cannot log in", "priority": "normal", "status": "open" },
+        { "id": "P-3", "from": "cy@customer-practice.example", "subject": "Site down??", "body": "Checkout broken, shipping page errors", "priority": "urgent", "status": "open" },
+        { "id": "P-4", "from": "dee@customer-practice.example", "subject": "Wholesale pricing", "body": "Do you sell in bulk?", "priority": "normal", "status": "open" },
+        { "id": "P-5", "from": "eve@customer-practice.example", "subject": "Shipping to Canada", "body": "Thanks!", "priority": "normal", "status": "closed" } ] }
+    }
+  },
+  "workflow": {
+    "schemaVersion": "1.0", "id": "support-deflection", "version": 1,
+    "title": "Support ticket answers and escalation",
+    "goal": "Each run, answer the open, non-urgent tickets that mention a known keyword with the person's reply for it, and send every other open ticket to [[escalateTo]] in one digest, after a person approves each e-mail.",
+    "domain": "general",
+    "envelope": {
+      "assumptions": ["The tickets sheet holds one row per ticket with id, from, subject, body, priority and status", "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"],
+      "risks": ["An urgent or unusual ticket answered by a canned reply", "A ticket that nobody sees"],
+      "successCriteria": ["Every open ticket was either answered with a matching reply or sent to the person", "No urgent ticket was answered automatically", "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)"],
+      "unsupported": ["Closing tickets", "Writing new answers", "Running on a schedule by itself"]
+    },
+    "inputSchema": { "type": "object", "additionalProperties": false, "required": ["now"], "properties": { "now": { "type": "string", "minLength": 10, "maxLength": 40 } } },
+    "budget": { "maxSteps": 3000, "maxConcurrency": 2, "maxDurationMs": 300000, "maxCost": 0 },
+    "nodes": [
+      { "id": "read", "kind": "task", "needs": [], "description": "Read the tickets sheet", "tool": "sheet.read", "args": { "sheet": "tickets" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "open", "kind": "task", "needs": ["read"], "description": "Keep the open tickets", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.read.rows" }, "where": [{ "field": "status", "op": "eq", "value": "open" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "routed", "kind": "task", "needs": ["open"], "description": "Decide for each ticket: a known answer, or a person (urgent tickets always go to a person)", "tool": "rows.route", "args": { "rows": { "$ref": "nodes.open.rows" }, "rules": { "$derive": "routeRules" }, "otherwise": { "route": "person", "answer": "" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "auto", "kind": "task", "needs": ["routed"], "description": "The tickets with a known answer", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.routed.rows" }, "where": [{ "field": "route", "op": "eq", "value": "auto" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "person", "kind": "task", "needs": ["routed"], "description": "The tickets a person must handle", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.routed.rows" }, "where": [{ "field": "route", "op": "eq", "value": "person" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "urgentAuto", "kind": "task", "needs": ["auto"], "description": "Urgent tickets among the automatic answers (used by a check: must be none)", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.auto.rows" }, "where": [{ "field": "priority", "op": "eq", "value": "urgent" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "reply", "kind": "map", "needs": ["auto"], "description": "Send each known answer", "items": { "$ref": "nodes.auto.rows" }, "maxItems": 500, "concurrency": 1,
+        "body": {
+          "nodes": [
+            { "id": "compose", "kind": "task", "needs": [], "description": "Write the reply", "tool": "core.template",
+              "args": { "text": "Hi,\n\nThanks for getting in touch about \"{{subject}}\".\n\n{{answer}}\n\nIf this does not answer your question, just reply to this e-mail and a person will pick it up.\n\n[[signature]]", "variables": { "subject": { "$ref": "item.subject", "default": "your message" }, "answer": { "$ref": "item.answer" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+            { "id": "subject", "kind": "task", "needs": [], "description": "Write the subject line", "tool": "core.template", "args": { "text": "Re: {{subject}} [ticket {{id}}]", "variables": { "subject": { "$ref": "item.subject", "default": "your message" }, "id": { "$ref": "item.id" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+            { "id": "send", "kind": "task", "needs": ["compose", "subject"], "description": "E-mail the answer to the customer (asks you first)", "tool": "outbox.send", "args": { "to": { "$ref": "item.from" }, "subject": { "$ref": "nodes.subject.text" }, "body": { "$ref": "nodes.compose.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } }
+          ],
+          "acceptance": [{ "op": "eq", "left": { "$ref": "nodes.send.delivered" }, "right": true }]
+        } },
+      { "id": "personLines", "kind": "task", "needs": ["person"], "description": "List the tickets for a person", "tool": "rows.lines", "args": { "rows": { "$ref": "nodes.person.rows" }, "line": "- ticket {{id}} [{{priority}}] {{subject}} (from {{from}})\n  {{body}}", "empty": "- none today" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "digest", "kind": "task", "needs": ["personLines", "auto"], "description": "Write the digest for the person", "tool": "core.template",
+        "args": { "text": "Tickets that need a person ({{count}}):\n{{lines}}\n\nAnswered automatically with your replies: {{auto}}.", "variables": { "count": { "$ref": "nodes.personLines.count" }, "lines": { "$ref": "nodes.personLines.text" }, "auto": { "$ref": "nodes.auto.count" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "digestSubject", "kind": "task", "needs": ["personLines"], "description": "Write the digest subject", "tool": "core.template", "args": { "text": "Support: {{count}} ticket(s) need a person", "variables": { "count": { "$ref": "nodes.personLines.count" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "sendDigest", "kind": "task", "needs": ["digest", "digestSubject", "reply"], "description": "E-mail the digest to [[escalateTo]] (asks you first)", "tool": "outbox.send", "args": { "to": { "$slot": "escalateTo" }, "subject": { "$ref": "nodes.digestSubject.text" }, "body": { "$ref": "nodes.digest.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } },
+      { "id": "expected", "kind": "task", "needs": ["auto"], "description": "Which customers should have received an answer", "tool": "core.pluck", "args": { "items": { "$ref": "nodes.auto.rows" }, "field": "from" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "audit", "kind": "verify", "needs": ["expected", "sendDigest"], "description": "Re-read the outbox: one answer per matched ticket plus one digest, each intact", "method": "capability", "tool": "outbox.audit", "args": { "to": [{ "$ref": "nodes.expected.items" }, { "$slot": "escalateTo" }] }, "subject": { "$ref": "nodes.reply" }, "independence": "execution", "gate": true, "timeoutMs": 10000 }
+    ],
+    "acceptance": [
+      { "op": "eq", "left": { "$ref": "nodes.reply.count" }, "right": { "$ref": "nodes.auto.count" } },
+      { "op": "eq", "left": { "$ref": "nodes.urgentAuto.count" }, "right": 0 },
+      { "op": "eq", "left": { "$ref": "nodes.sendDigest.delivered" }, "right": true },
+      { "op": "eq", "left": { "$ref": "nodes.audit.pass" }, "right": true }
+    ]
+  }
+}

@@ -1,9 +1,9 @@
 {
  "id": "abr-sales-dealdesk",
- "version": "1.1.0",
+ "version": "1.2.0",
  "domain": "sales",
  "title": "Closed-won deal desk",
- "status": "dev: generator, oracle, observable-only reference, controls and oracle attack tests built; reviewed 2026-10-21 (v1.1.0); no arm has run (no model, $0)",
+ "status": "dev: generator, oracle, observable-only reference, controls and oracle attack tests built; reviewed twice 2026-10-21 (v1.1.0, then v1.2.0: hedged-tier rule, tier outside the deal name, exact subject and name, mail moves are writes, pending envelope copies for every kind, parse_amount aligned); no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.1",
  "grounding": [
   {"task": "sales.multi_hop_lookup", "span": "automationbench/domains/sales/tasks.py:40-355", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
@@ -29,7 +29,7 @@
   "google_sheets.row.update Deal Desk Log Status -> Retracted (the reopened deal's Announced row only)",
   "google_sheets.row.append Deal Desk Policy Log (authorized amendment only)"
  ],
- "harmless": ["gmail.message is_read / label_ids / is_starred changes", "gmail labels"],
+ "harmless": ["gmail.message is_read / is_starred changes", "gmail.message label changes other than INBOX, TRASH, SPAM, SENT and DRAFT (UNREAD, STARRED, IMPORTANT, CATEGORY_*, user labels)", "gmail labels (creating a user label)"],
  "triggerKinds": {
   "deal.signed": {"perWeek": [10, 14], "d1": [10, 11], "d2": [11, 13], "d3": [12, 14], "note": "DocuSign envelope completed; includes 1 (d2) or 1-2 (d3) envelopes that must be escalated (two opportunities with the deal name on the signer's account, or a look-alike signer domain)"},
   "deal.won": {"perWeek": [10, 14], "d1": [10, 11], "d2": [12, 13], "d3": [12, 14], "note": "Salesforce stage -> Closed Won; at most one is a re-close of a deal reopened this week"},

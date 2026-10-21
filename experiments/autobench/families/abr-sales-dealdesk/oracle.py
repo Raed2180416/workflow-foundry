@@ -369,7 +369,7 @@ def names_near(world: dict, opp_id: str) -> list[str]:
 # brackets, so 'Tier: SMB (previously enterprise)' is one clause).
 _CLAUSE = re.compile(r"[^.;!?|\n]+")
 # A clause that talks about classification: a tier label anywhere in it counts, in any case.
-_TIER_TALK = re.compile(r"(?i)(?<![A-Za-z])(?:tier\w*|segment\w*|classif\w*|salesforce|sheets?|hierarchy|crm)(?![A-Za-z])")
+_TIER_TALK = re.compile(r"(?i)(?<![A-Za-z])(?:tier\w*|segment\w*|classif\w*|salesforce|sheets?|hierarchy|crm|previous\w*|former\w*)(?![A-Za-z])")
 _EMAIL_ADDR = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 
 
@@ -422,8 +422,8 @@ def names_tier(text: str, t: str) -> bool:
     """Does the text (record names already removed) name tier t? Matching ignores case. 'SMB' and 'Mid-Market' are tier
     labels wherever they stand. Enterprise, Strategic, Partner and Growth are also ordinary words, so they count
       - in any clause that talks about classification (tier, segment, classified/classification, Salesforce, sheet,
-        hierarchy, CRM): 'Tier: SMB (previously enterprise)', 'Salesforce still has this account classified as
-        Strategic';
+        hierarchy, CRM, previously, formerly): 'Tier: SMB (previously enterprise)', 'Salesforce still has this account
+        classified as Strategic', 'Enterprise previously.';
       - capitalised anywhere else, unless the word starts its clause: 'It says Enterprise.' counts, while
         'Strategic win for the team!' and 'our enterprise customers' do not.
     Known false rejects (README, What the oracle tolerates): an ordinary use of one of these four words in a

@@ -1,0 +1,82 @@
+{
+  "template": {
+    "id": "expense-approval",
+    "title": "Approve small expenses automatically; send bigger ones to an approver",
+    "author": "claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)",
+    "whenToUse": "Someone wants submitted expense claims up to a limit (with a receipt) approved automatically and recorded, and everything over the limit sent to one approver by e-mail.",
+    "notFor": "Paying people, reimbursing, payroll, invoices from suppliers, or approvals by more than one approver.",
+    "sources": ["research/business-20261021/OPEN-CORE-AND-INVARIANTS.md (delegation-of-authority thresholds)", "experiments/library/cards/catalog.json P09 gate -> review queue"],
+    "slots": [
+      { "name": "autoApproveUpTo", "type": "number", "min": 0, "max": 100000, "ask": "not-wanted", "question": "Up to what amount should I approve an expense without asking anyone?", "askWhy": "A wrong limit would approve spending you would refuse. I will not guess it.", "description": "Expenses up to and including this amount are approved automatically (0: none are)." },
+      { "name": "approver", "type": "email", "grounded": true, "ask": "wrong-target", "question": "Who approves the expenses over the limit? (one e-mail address)", "askWhy": "Expense details go to this person; I will not guess who it is.", "description": "E-mail address of the person who decides on the expenses over the limit." },
+      { "name": "requireReceipt", "type": "boolean", "default": true, "description": "Only approve automatically when the expense has a receipt; without one it goes to the approver." },
+      { "name": "notifyEmployees", "type": "boolean", "default": false, "description": "E-mail each employee when their expense is approved automatically." }
+    ],
+    "capabilities": ["sheet.read", "rows.filter", "rows.route", "rows.select", "rows.lines", "core.template", "core.pluck", "sheet.append", "outbox.send", "outbox.audit", "sheet.audit"],
+    "data": { "expenses": "one row per claim: id, employee, email, amount, category, description, receipt (true | false), status (submitted | approved | rejected | paid)", "expense-decisions": "the flow appends one row per submitted claim: id, employee, amount, decision ('approved' or 'waiting for approver'), reason, at" },
+    "willDo": ["Read the submitted expense claims", { "if": "requireReceipt", "text": "Approve automatically each claim up to [[autoApproveUpTo]] that has a receipt" }, { "if": "!requireReceipt", "text": "Approve automatically each claim up to [[autoApproveUpTo]]" },
+      "Record every decision in the expense-decisions sheet", "E-mail [[approver]] the claims that need a decision, after you approve the send", { "if": "notifyEmployees", "text": "Tell each employee when their claim was approved automatically" },
+      "Check that nothing over the limit was approved, and re-read the outbox and the decisions sheet"],
+    "willNotDo": ["Pay or reimburse anyone", "Approve anything over [[autoApproveUpTo]]", "Change the expenses sheet", "Run by itself: you (or your coding agent) start each run"],
+    "practice": {
+      "now": "2026-10-15T12:00:00Z",
+      "sheets": { "expenses": [
+        { "id": "PX-1", "employee": "Practice Ana", "email": "ana@practice.example", "amount": 18.5, "category": "meals", "description": "Lunch with a client", "receipt": true, "status": "submitted" },
+        { "id": "PX-2", "employee": "Practice Ben", "email": "ben@practice.example", "amount": 640, "category": "travel", "description": "Train to Leeds", "receipt": true, "status": "submitted" },
+        { "id": "PX-3", "employee": "Practice Cal", "email": "cal@practice.example", "amount": 9, "category": "office", "description": "Pens", "receipt": false, "status": "submitted" },
+        { "id": "PX-4", "employee": "Practice Dee", "email": "dee@practice.example", "amount": 50, "category": "software", "description": "Plugin", "receipt": true, "status": "paid" } ] }
+    }
+  },
+  "workflow": {
+    "schemaVersion": "1.0", "id": "expense-approval", "version": 1,
+    "title": "Expense approvals",
+    "goal": "Each run, approve automatically the submitted claims up to [[autoApproveUpTo]][[receiptText]], record every decision, and e-mail [[approver]] the claims that need a decision, after a person approves the send.",
+    "domain": "general",
+    "envelope": {
+      "assumptions": ["The expenses sheet holds one row per claim with id, employee, email, amount, category, description, receipt and status", "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"],
+      "risks": ["Approving spending over the limit", "A claim nobody decides on"],
+      "successCriteria": ["Every approval is within the limit (and has a receipt when required)", "Every submitted claim is recorded with its decision", "The approver received the claims that need a decision", "This run delivered exactly the planned e-mails and rows (checked by re-reading them)"],
+      "unsupported": ["Payments", "Several approvers", "Running on a schedule by itself"]
+    },
+    "inputSchema": { "type": "object", "additionalProperties": false, "required": ["now"], "properties": { "now": { "type": "string", "minLength": 10, "maxLength": 40 } } },
+    "budget": { "maxSteps": 3000, "maxConcurrency": 2, "maxDurationMs": 300000, "maxCost": 0 },
+    "nodes": [
+      { "id": "read", "kind": "task", "needs": [], "description": "Read the expenses sheet", "tool": "sheet.read", "args": { "sheet": "expenses" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "submitted", "kind": "task", "needs": ["read"], "description": "Keep the submitted claims", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.read.rows" }, "where": [{ "field": "status", "op": "eq", "value": "submitted" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "decided", "kind": "task", "needs": ["submitted"], "description": "Decide each claim: approved within the limit, otherwise waiting for the approver", "tool": "rows.route", "args": { "rows": { "$ref": "nodes.submitted.rows" }, "rules": { "$derive": "decisionRules" }, "otherwise": { "decision": "waiting for approver", "reason": "over the limit" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "approved", "kind": "task", "needs": ["decided"], "description": "The claims approved automatically", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.decided.rows" }, "where": [{ "field": "decision", "op": "eq", "value": "approved" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "waiting", "kind": "task", "needs": ["decided"], "description": "The claims that need the approver", "tool": "rows.filter", "args": { "rows": { "$ref": "nodes.decided.rows" }, "where": [{ "field": "decision", "op": "eq", "value": "waiting for approver" }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "withinLimit", "kind": "task", "needs": ["approved"], "description": "Recheck the approvals against the limit a second way (used by a check)", "tool": "rows.filter",
+        "args": { "rows": { "$ref": "nodes.approved.rows" }, "where": [{ "field": "amount", "op": "lte", "value": { "$slot": "autoApproveUpTo" } }, { "$includeIf": "requireReceipt", "field": "receipt", "op": "eq", "value": true }] }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "recordRows", "kind": "task", "needs": ["decided"], "description": "Prepare the decision rows", "tool": "rows.select", "args": { "rows": { "$ref": "nodes.decided.rows" }, "fields": ["id", "employee", "amount", "decision", "reason"], "set": { "at": { "$ref": "input.now" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "record", "kind": "task", "needs": ["recordRows", "withinLimit"], "description": "Record every decision in the expense-decisions sheet", "tool": "sheet.append", "args": { "sheet": "expense-decisions", "rows": { "$ref": "nodes.recordRows.rows" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "waitingLines", "kind": "task", "needs": ["waiting"], "description": "List the claims for the approver", "tool": "rows.lines", "args": { "rows": { "$ref": "nodes.waiting.rows" }, "line": "- {{id}} {{employee}}: {{amount}} for {{description}} ({{category}}; {{reason}})", "empty": "- nothing today" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "approvedLines", "kind": "task", "needs": ["approved"], "description": "List the claims approved automatically", "tool": "rows.lines", "args": { "rows": { "$ref": "nodes.approved.rows" }, "line": "- {{id}} {{employee}}: {{amount}} for {{description}}", "empty": "- none" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "message", "kind": "task", "needs": ["waitingLines", "approvedLines"], "description": "Write the e-mail to the approver", "tool": "core.template",
+        "args": { "text": "Expense claims waiting for your decision ({{n}}):\n{{waiting}}\n\nApproved automatically (up to [[autoApproveUpTo]][[receiptText]]) ({{m}}):\n{{approved}}\n\nReply to approve or reject the waiting ones. This flow never pays anything.",
+          "variables": { "n": { "$ref": "nodes.waitingLines.count" }, "waiting": { "$ref": "nodes.waitingLines.text" }, "m": { "$ref": "nodes.approvedLines.count" }, "approved": { "$ref": "nodes.approvedLines.text" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "subject", "kind": "task", "needs": ["waitingLines"], "description": "Write the subject line", "tool": "core.template", "args": { "text": "Expenses: {{n}} waiting for your approval", "variables": { "n": { "$ref": "nodes.waitingLines.count" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "sendApprover", "kind": "task", "needs": ["message", "subject", "record"], "description": "E-mail [[approver]] the claims that need a decision (asks you first)", "tool": "outbox.send", "args": { "to": { "$slot": "approver" }, "subject": { "$ref": "nodes.subject.text" }, "body": { "$ref": "nodes.message.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } },
+      { "$includeIf": "notifyEmployees", "id": "notify", "kind": "map", "needs": ["approved", "sendApprover"], "description": "Tell each employee their claim was approved", "items": { "$ref": "nodes.approved.rows" }, "maxItems": 500, "concurrency": 1,
+        "body": {
+          "nodes": [
+            { "id": "compose", "kind": "task", "needs": [], "description": "Write the note", "tool": "core.template", "args": { "text": "Hi {{employee}},\n\nYour expense claim {{id}} ({{amount}} for {{description}}) was approved.", "variables": { "employee": { "$ref": "item.employee", "default": "" }, "id": { "$ref": "item.id" }, "amount": { "$ref": "item.amount" }, "description": { "$ref": "item.description", "default": "" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+            { "id": "subject", "kind": "task", "needs": [], "description": "Write the subject", "tool": "core.template", "args": { "text": "Expense {{id}} approved", "variables": { "id": { "$ref": "item.id" } } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+            { "id": "send", "kind": "task", "needs": ["compose", "subject"], "description": "E-mail the employee (asks you first)", "tool": "outbox.send", "args": { "to": { "$ref": "item.email" }, "subject": { "$ref": "nodes.subject.text" }, "body": { "$ref": "nodes.compose.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } }
+          ],
+          "acceptance": [{ "op": "eq", "left": { "$ref": "nodes.send.delivered" }, "right": true }]
+        } },
+      { "$includeIf": "notifyEmployees", "id": "employees", "kind": "task", "needs": ["approved"], "description": "Which employees should have been told", "tool": "core.pluck", "args": { "items": { "$ref": "nodes.approved.rows" }, "field": "email" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+      { "id": "audit", "kind": "verify", "needs": { "$if": "notifyEmployees", "then": ["sendApprover", "notify", "employees"], "else": ["sendApprover"] }, "description": "Re-read the outbox: exactly the planned e-mails went out, each intact", "method": "capability", "tool": "outbox.audit",
+        "args": { "to": [{ "$slot": "approver" }, { "$if": "notifyEmployees", "then": { "$ref": "nodes.employees.items" }, "else": [] }] }, "subject": { "$ref": "nodes.sendApprover" }, "independence": "execution", "gate": true, "timeoutMs": 10000 },
+      { "id": "sheetAudit", "kind": "verify", "needs": ["record", "decided"], "description": "Re-read the decisions sheet: one row per submitted claim", "method": "capability", "tool": "sheet.audit", "args": { "sheet": "expense-decisions", "rows": { "$ref": "nodes.decided.count" } }, "subject": { "$ref": "nodes.record" }, "independence": "execution", "gate": true, "timeoutMs": 10000 }
+    ],
+    "acceptance": [
+      { "op": "eq", "left": { "$ref": "nodes.withinLimit.count" }, "right": { "$ref": "nodes.approved.count" } },
+      { "op": "eq", "left": { "$ref": "nodes.sendApprover.delivered" }, "right": true },
+      { "op": "eq", "left": { "$ref": "nodes.audit.pass" }, "right": true },
+      { "op": "eq", "left": { "$ref": "nodes.sheetAudit.pass" }, "right": true },
+      { "$includeIf": "notifyEmployees", "op": "eq", "left": { "$ref": "nodes.notify.count" }, "right": { "$ref": "nodes.approved.count" } }
+    ]
+  }
+}

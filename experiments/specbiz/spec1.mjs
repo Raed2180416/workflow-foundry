@@ -80,16 +80,19 @@ export const DRY_PRACTICE = Object.freeze({ seeds: [1235], difficulties: [2], si
 export const S_PERFECT_LINEAGES = Object.freeze(['b1lh-e8-1', 'b1lh-e8-2', 'b1lh-e8-3']);
 
 export const worldKey = s => `${s.seed}/${s.d}/${s.size ?? ''}`;
-/** '--worlds' → world specs: grading | shared | grading,shared | seed:d[:size],... */
+/** '--worlds' → world specs: grading | shared | grading,shared | g:seed:d (one grading world) | seed:d[:size] (extra), comma-separated */
 export function parseWorlds(spec = 'grading,shared') {
   const out = [];
   for (const part of String(spec).split(',').map(x => x.trim()).filter(Boolean)) {
     if (part === 'grading') out.push(...GRADING);
     else if (part === 'shared') out.push(SHARED);
     else {
-      const [seed, d, size] = part.split(':').map(Number);
+      // seed:d[:size] is an extra world (set 'other'); g:seed:d names one of the grading worlds (set 'grading')
+      const g = part.startsWith('g:');
+      const [seed, d, size] = (g ? part.slice(2) : part).split(':').map(Number);
       if (!Number.isInteger(seed) || !Number.isInteger(d)) throw new Error(`bad world ${part}`);
-      out.push({ seed, d, size: Number.isInteger(size) ? size : null, set: 'other' });
+      if (g) { const w = GRADING.find(x => x.seed === seed && x.d === d); if (!w) throw new Error(`${part} is not a grading world`); out.push(w); }
+      else out.push({ seed, d, size: Number.isInteger(size) ? size : null, set: 'other' });
     }
   }
   return out;
@@ -144,16 +147,15 @@ export function violationOrder(v) {
  * could ever fail on it, so recall on it is vacuous; score.mjs reports recall with and without such ids.
  */
 const DIV_CODES = Object.freeze(['missed', 'early', 'late', 'duplicate', 'order', 'key-reuse', 'outside-allowed']);
-export function exercisableIds(world, refRows, completedCases) {
-  const ids = new Set();
-  const add = xs => { for (const x of xs) ids.add(x); };
-  const want = new Set(completedCases.map(c => c.case));
+export function exercisesByCase(world, refRows, completedCases) {
+  const by = new Map(completedCases.map(c => [c.case, new Set([...(CLASS_READINGS[c.class] ?? []), ...attributeDivergence({ code: 'records' }), ...attributeDivergence({ code: 'decision' }), ...attributeDivergence({ code: 'over-escalation' })])]));
   const h = historyOf(world, refRows);
-  for (const r of h.ledger) if (want.has(r.case) && r.key) for (const code of DIV_CODES) add(attributeDivergence({ code, lid: r.key, system: r.system, op: r.op }));
-  for (const t of h.tasks) if (want.has(t.case) && t.task?.id) add(lidRules(String(t.task.id).replace(/#\d+$/, '')));
-  if (completedCases.length) for (const code of ['records', 'decision', 'over-escalation']) add(attributeDivergence({ code }));
-  for (const c of completedCases) add(CLASS_READINGS[c.class] ?? []);
-  return [...ids].sort();
+  for (const r of h.ledger) { const s = by.get(r.case); if (s && r.key) for (const code of DIV_CODES) for (const id of attributeDivergence({ code, lid: r.key, system: r.system, op: r.op })) s.add(id); }
+  for (const t of h.tasks) { const s = by.get(t.case); if (s && t.task?.id) for (const id of lidRules(String(t.task.id).replace(/#\d+$/, ''))) s.add(id); }
+  return new Map([...by].map(([c, ids]) => [c, [...ids].sort()]));
+}
+export function exercisableIds(world, refRows, completedCases) {
+  return [...new Set([...exercisesByCase(world, refRows, completedCases).values()].flat())].sort();
 }
 
 /** One world's verdict record: completed cases (with first divergences), critical violations, predicates, acts. */
@@ -162,7 +164,9 @@ export function verdictRecord({ world, rows, pools, label, spec, status, digest,
   const subjectOf = c => world.truth?.cases?.[c]?.subject ?? null;
   const caseOfOrder = new Map(Object.entries(world.truth?.cases ?? {}).filter(([, t]) => t.subject).map(([c, t]) => [t.subject, c]));
   const comp = v.cases.filter(c => c.pool === 'completed');
-  const cases = comp.map(c => ({ case: c.case, class: c.class, pool: c.pool, pass: !!c.pass, armCensored: !!c.armCensored, tail: !!c.tail, subject: subjectOf(c.case), firstDivergence: compactDiv(c.firstDivergence) }));
+  const ex = refRows ? exercisesByCase(world, refRows, comp) : null;
+  const cases = comp.map(c => ({ case: c.case, class: c.class, pool: c.pool, pass: !!c.pass, armCensored: !!c.armCensored, tail: !!c.tail, subject: subjectOf(c.case), firstDivergence: compactDiv(c.firstDivergence),
+    ...(ex ? { ex: ex.get(c.case) } : {}) }));
   const h = historyOf(world, rows);
   const preds = checkHistory(h);
   const predicates = Object.fromEntries(Object.entries(preds).map(([n, vs]) => [n, { n: vs.length, cases: [...new Set(vs.map(x => caseOfOrder.get(violationOrder(x))).filter(Boolean))].sort(), sample: vs.slice(0, 5) }]));
@@ -172,7 +176,7 @@ export function verdictRecord({ world, rows, pools, label, spec, status, digest,
     completed: comp.length, passed: comp.filter(c => c.pass).length, tail: comp.filter(c => c.tail).length, tailPassed: comp.filter(c => c.tail && c.pass).length,
     critical: v.critical.map(x => ({ code: x.code, fulfilment: x.fulfilment ?? null, case: x.case ?? null })), armErrors: rows.filter(r => r.type === 'arm.error').length, armErrorsByCode: errs.byCode,
     acts: { attempted: h.ledger.length, committed: h.ledger.filter(r => r.committed).length, tasks: h.tasks.length },
-    exercisable: refRows ? exercisableIds(world, refRows, cases) : null,
+    exercisable: ex ? [...new Set([...ex.values()].flat())].sort() : null,
     cases, predicates,
   };
 }

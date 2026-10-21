@@ -80,12 +80,14 @@ def test_stream_shape_matches_the_family_spec(gens):
 
 def test_trap_shares_match_the_spec(gens):
     """Spec: at least one trap on about 50% (d2) / 80% (d3) of deal triggers. The planted share of fresh closings is
-    exact per week; repeats, reopens and escalations are traps by construction, so the share of deal triggers is higher."""
+    exact per week; repeats, reopens and escalations are traps by construction, so the share of deal triggers is higher:
+    over seeds 601-650 it spans 0.58-0.71 at d2 and 0.82-0.91 at d3 (v1.2.0; v1.1.0 spanned 0.57-0.68 and 0.82-0.94, so
+    the earlier bound of target + 0.15 only held on the dev seeds by chance)."""
     for s, g in gens.items():
         m = g["meta"]
         target = {"d2": 0.5, "d3": 0.8}[m["difficulty"]]
         assert abs(m["trap_rate_planted"] - target) <= 0.03, (s, m["trap_rate_planted"])
-        assert target <= m["trap_rate_deal_triggers"] <= target + 0.15, (s, m["trap_rate_deal_triggers"])
+        assert target <= m["trap_rate_deal_triggers"] <= min(1.0, target + 0.22), (s, m["trap_rate_deal_triggers"])
 
 
 def test_pending_envelope_copy_is_not_a_kind_cue():
