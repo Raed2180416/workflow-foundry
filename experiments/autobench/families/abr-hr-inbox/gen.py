@@ -1109,7 +1109,7 @@ class Gen:
                     "grievances": {str(k): v for k, v in sorted(B.griev.items())},
                     "policy_log": B.policy, "mail_counts": dict(sorted(week_mail.items())),
                     "escalations": n_escalations, "case_ids": all_cases, "counts": {k: B.counts.get(k, 0) for k in COUNT_LABELS},
-                    "assertions": end_asserts}
+                    "slack_secrets": secrets, "assertions": end_asserts}
         self.check_week()
 
     # -- texts of the week's emails --------------------------------------------------------------------------------------
