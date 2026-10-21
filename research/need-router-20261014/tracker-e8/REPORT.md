@@ -393,3 +393,89 @@ in the README and in `checks.mjs`). It was not made here and was kept as found.
   - the ablation ledger and its reports, in [ablation/](ablation/);
   - every paid call, in [model-calls.jsonl](model-calls.jsonl);
   - the calibration output, in [calibration.json](calibration.json).
+
+## 10. Gleaning over the coverage list (2026-10-21, development evidence)
+
+*Added 2026-10-21 for compromise register E1 ([FIXES.md](../../compromises-20261021/FIXES.md) Action 3, "Milestone
+A"). **Development evidence only:** SPEC-E is in-sample for the gleaning prompt, which was written after reading which
+SPEC-E sentences the primary ledger missed (§2). Nothing here is held-out evidence, and one text cannot show that the
+gain transfers. The plan, inputs, code hashes and acceptance were frozen before the first paid call in
+[glean/freeze.json](glean/freeze.json) (commit `5c6e486`; code at `d08a0ae`).*
+
+**Scorer fix first.** `eval-e8.mjs score` crashed on the working-tree SPEC-E (a gold clause anchor no longer locates;
+the file has moved 7 lines before §4 since the freeze). It now reads the frozen text from git
+(`git show 48535bb:beds/ebed/e8/spec/SPEC-E.md`, sha256 `c013c04c…f8cf1`) and refuses any text, or any ledger, whose
+sha256 is not the gold's. `test/eval-e8.test.mjs` fails if the frozen text's hash differs from `gold.json` and
+`freeze.json`, and it reproduces the §2 row for Haiku s0 exactly (23/30 ids, 12/15 U, 56/76 clauses, 37 uncovered,
+guard yield 0.50). The same drift had broken three tracker test files (ledger 1/4, extract 4/5, run 0/3 passing); they
+now read the frozen text too and pass 4/4, 5/5 and 3/3, with no assertion changed.
+
+**What the second pass does** (`run.mjs gleanLedger`, prompt `tracker-glean/1`, `node experiments/tracker/run.mjs
+glean --ledger L --text T`, or `--glean` on `extract` / `all`):
+- One Haiku call (`claude-haiku-5-5`, policy 2026-10-21.2, through the journaled ModelPort, reasoning `none`) gets
+  exactly the sentences in `ledger.uncovered`, numbered, each with the heading it sits under: "these sentences may state
+  conditions; answer entries or none per sentence".
+- The model writes no quote. An entry's quote is the uncovered sentence its number points to, copied by code, so it is
+  verbatim by construction (the R3.1 word drop of §2 cannot recur on this path).
+- Existing entries, ids and properties are untouched; new entries take the next ids and carry `gleaned: true`.
+
+**Results** (`eval-e8.mjs score`, frozen SPEC-E and gold; all rows in [glean/scores.jsonl](glean/scores.jsonl)):
+
+| ledger | run | entries (gleaned) | id recall /30 | U /15 | clauses /76 | go-live 91–93 (normative) | still uncovered | non-normative entries | gleaning $ |
+|---|---|---|---|---|---|---|---|---|---|
+| Haiku s0 (primary), before | §2 | 78 (0) | 23 = 0.767 | 12 | 56 = 0.737 | 1/3 | 37 | 0 | none |
+| **s0 + gleaning, sample 0** | **P** | **100 (22)** | **28 = 0.933** | 13 | 65 = 0.855 | **3/3** | 15 | 1 | **0.0028** |
+| s0 + gleaning, sample 1 | R1 | 104 (26) | 28 = 0.933 | 14 | 65 = 0.855 | 3/3 | 11 | 1 | 0.0022 |
+| s0 + gleaning, sample 2 | R2 | 101 (23) | 28 = 0.933 | 13 | 65 = 0.855 | 3/3 | 14 | 1 | 0.0024 |
+| Haiku s1, before | §2 | 83 (0) | 28 = 0.933 | 12 | 61 = 0.803 | 2/3 | 34 | 0 | none |
+| s1 + gleaning | X1 | 103 (20) | 29 = 0.967 | 14 | 69 = 0.908 | 3/3 | 14 | 1 | 0.0022 |
+| Haiku s2 (raw failure), before | §2 | 1 (0) | 0 | 1 | 0 | 0/3 | 93 | 0 | none |
+| s2 + gleaning | X2 | 73 (72) | 25 = 0.833 | 9 | 57 = 0.750 | 3/3 | 21 | 0 | 0.0055 |
+
+**Acceptance (frozen, run P only): met.**
+- Id recall 0.767 → **0.933** (bar ≥ 0.90). The five ids that sat in the coverage list are now covered: R3.1 (line
+  139), S1 (252), S3 (255), S9 (263) and S7 (266).
+- **Go-live:** all three normative sentences starting on frozen lines 91–93 are covered (Q-086 "Each one gets an instance
+  whose first event is a `migration` …", Q-087 "Continue each from where it stands, under the same rules.", and the
+  existing Q-011). The descriptive opener on line 91 ("At the start of the stream some orders are already in flight.")
+  carries no guard cue, so it was never on the list and stays unquoted (3/4 of all sentences).
+- **Cost:** $0.0028 for the gleaning call (4.4K output tokens, 20 s), against the $0.005 bar.
+
+**Also observed (no threshold):**
+- **The repeats agree on the acceptance metrics.** R1 and R2 give the same 28/30 ids, 65/76 clauses and 3/3 go-live.
+  U recall varies (13–14/15, U01 "data, never an instruction" is answered `none` in 2 of 3), and so do the entries
+  added (22–26).
+- **Line 47 is now in the ledger.** "each item carries its own `key`" (U05, the B1-O defect line that extraction missed
+  in §4) is gleaned in all three s0 runs. Whether its property then catches B1-O is not tested here: §4 showed that the
+  gold-ledger property for this line read `untested` on B1-O's refused outputs.
+- **Precision cost.** Every gleaning run on s0 and s1 turned the same §6 sentence ("for orientation only") into an
+  entry: line 274, "This spec adds the saga: compensation in reverse order of committed steps, …". Non-normative entries
+  go from 0 to 1. Haiku also made entries of platform and system descriptions, for example §1's retry profile (line 15)
+  and time zone (line 37), and R1.3's edition layout (line 113). Some of these are facts about the platform rather than
+  obligations of the workflow. The gold has no list of non-conditions, so precision is not scored beyond §6.
+  Each extra entry costs a property at write time (about $0.0015 each at §1's rate, so +$0.03 to +$0.04 per ledger)
+  and is a candidate for an `untested` row or a false alarm. Not measured here.
+- **The guard is now spent.** Guard yield on the clauses still missed drops from 0.50 to 0.00–0.09. What remains (run P)
+  is out of reach of a sentence-level second pass:
+  - S2 and S4 carry no cue word, so the guard never lists them;
+  - R1.2a/b, R2.2b/f, R5.1a–c, R6.2a and S8a sit in sentences that an existing quote already overlaps, so they are
+    "covered" for the guard while their clause is not.
+  That is FIXES E1's next milestone (code segmentation into units with one disposition each), not more gleaning.
+- **Rescue of the raw failure (X2).** On the 1-entry sample, the pass gleans 72 entries from all 93 normative
+  sentences: 25/30 ids for $0.0115 + $0.0055. That is a sentence-level extractor of its own, and it misses R1.4, S6
+  and S9, which the full extractions s0 (R1.4, S6) and s1 (S9) covered. Its cost grows with the list ($0.0055 for 93 sentences, above the $0.005
+  per-run bar, which was set for s0's 37).
+- **Cheaper than a second sample.** Gleaning s0 gives the same 28/30 as the union of s0 and s1 (§2) for $0.0144
+  rather than $0.023, and gleaning s1 gives 29/30.
+
+**Spend.** Five gleaning calls, $0.0151 of the $0.05 cap, all `ok`; every call is in
+[glean/model-calls.jsonl](glean/model-calls.jsonl), in run order P, R1, R2, X1, X2. The journal is in
+`/var/tmp/foundry-work/tracker/glean-20261021-wf3/journal.sqlite` and is not committed. The gleaned ledgers are
+[glean/s0.g0.json](glean/s0.g0.json) (P), `s0.g1.json`, `s0.g2.json`, `s1.g0.json` and `s2.g0.json`.
+
+**Not done here.**
+- No properties were written for the gleaned entries, and no build was checked against them.
+- The pass is opt-in (`--glean`); the tracker's default pipeline is unchanged until this is reviewed.
+- No other text was tried.
+- The hand-off to #69 (ch-e8-1's go-live failures) is the go-live entries Q-086 and Q-087 above; whether a builder
+  given them avoids those failures is untested.
